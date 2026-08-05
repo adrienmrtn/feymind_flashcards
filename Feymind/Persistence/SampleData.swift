@@ -81,7 +81,7 @@ enum SampleData {
         summary: "Comment les végétaux transforment la lumière en matière organique, des pigments chlorophylliens jusqu'au cycle de Calvin.",
         readingMinutes: 7,
         blocks: [
-            .paragraph(ParagraphBlock(text: "La photosynthèse est la réaction qui permet aux végétaux chlorophylliens de fabriquer de la **matière organique** à partir de matière minérale, en utilisant l'==énergie lumineuse==. C'est la porte d'entrée de l'énergie dans presque toutes les chaînes alimentaires.")),
+            .paragraph(ParagraphBlock(text: "La photosynthèse est la réaction qui permet aux végétaux chlorophylliens de fabriquer de la **matière organique** à partir de matière minérale, en utilisant l'==énergie lumineuse==. C'est la ==porte d'entrée de l'énergie== dans presque toutes les chaînes alimentaires.")),
 
             .callout(CalloutBlock(
                 variant: .memo,
@@ -96,7 +96,7 @@ enum SampleData {
 
             .heading(HeadingBlock(level: 2, text: "1. Où se déroule la réaction ?")),
 
-            .paragraph(ParagraphBlock(text: "Tout se joue dans le **chloroplaste**, un organite délimité par une double membrane. Il contient des empilements de sacs aplatis, les *thylakoïdes*, baignés dans un liquide appelé stroma.")),
+            .paragraph(ParagraphBlock(text: "Tout se joue dans le **chloroplaste**, un organite délimité par une double membrane. Il contient des empilements de sacs aplatis, les *thylakoïdes*, baignés dans un liquide appelé ==stroma==.")),
 
             .tree(TreeBlock(
                 title: "Organisation du chloroplaste",
@@ -169,7 +169,7 @@ enum SampleData {
 
             .heading(HeadingBlock(level: 2, text: "4. Les facteurs limitants")),
 
-            .paragraph(ParagraphBlock(text: "L'intensité de la photosynthèse dépend de plusieurs paramètres. Quand l'un d'eux est insuffisant, il devient le **facteur limitant** et bloque le rendement, même si les autres sont optimaux.")),
+            .paragraph(ParagraphBlock(text: "L'intensité de la photosynthèse dépend de plusieurs paramètres. Quand l'un d'eux est insuffisant, il devient le ==facteur limitant== et bloque le rendement, même si les autres sont optimaux.")),
 
             .chart(ChartBlock(
                 title: "Rendement relatif selon l'intensité lumineuse",

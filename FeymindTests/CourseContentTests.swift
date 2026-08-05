@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import Feymind
 
@@ -94,4 +95,30 @@ final class CourseContentTests: XCTestCase {
         XCTAssertEqual(block.title, "T, U")
         XCTAssertEqual(block.columns[0].items[0], "E, F")
     }
+
+
+    func testOverlayHighlightsApplyBackground() {
+        let source = "La **photosynthèse** produit du glucose."
+        let plain = InlineMarkup.plainText(source)
+        // "glucose" starts after "La photosynthèse produit du "
+        let start = (plain as NSString).range(of: "glucose").location
+        XCTAssertNotEqual(start, NSNotFound)
+        let attributed = InlineMarkup.attributed(
+            source,
+            overlays: [
+                InlineMarkup.OverlayHighlight(start: start, length: 7, color: .mint)
+            ]
+        )
+        var found = false
+        attributed.enumerateAttribute(.backgroundColor, in: NSRange(location: 0, length: attributed.length)) { value, _, _ in
+            if value != nil { found = true }
+        }
+        XCTAssertTrue(found, "Le surlignage utilisateur doit peindre un fond.")
+    }
+
+    func testPlainTextOffsetsIgnoreMarkup() {
+        let source = "==clé== et **gras**"
+        XCTAssertEqual(InlineMarkup.plainText(source), "clé et gras")
+    }
+
 }

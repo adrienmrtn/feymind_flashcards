@@ -121,6 +121,10 @@ struct OfflineAIService: AIService {
         Passage sélectionné : « \(request.selection.prefix(180)) »
         """
     }
+
+    func generatePodcast(_ request: PodcastGenerationRequest) async throws -> GeneratedPodcast {
+        throw AIServiceError.missingProviderKey
+    }
 }
 
 extension String {

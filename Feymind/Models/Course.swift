@@ -49,6 +49,12 @@ final class Course {
     @Relationship(deleteRule: .cascade, inverse: \Flashcard.course)
     var flashcards: [Flashcard]? = []
 
+    @Relationship(deleteRule: .cascade, inverse: \TextHighlight.course)
+    var highlights: [TextHighlight]? = []
+
+    @Relationship(deleteRule: .cascade, inverse: \CoursePodcast.course)
+    var podcasts: [CoursePodcast]? = []
+
     init(
         id: UUID = UUID(),
         title: String,
@@ -77,6 +83,8 @@ final class Course {
         self.isFromLibrary = isFromLibrary
         self.blockEntities = []
         self.flashcards = []
+        self.highlights = []
+        self.podcasts = []
     }
 
     var source: CourseSource {
@@ -95,6 +103,14 @@ final class Course {
 
     var dueCards: [Flashcard] {
         cards.filter { $0.isDue() }
+    }
+
+    var latestPodcast: CoursePodcast? {
+        (podcasts ?? []).sorted { $0.createdAt > $1.createdAt }.first
+    }
+
+    func highlights(for blockId: UUID) -> [TextHighlight] {
+        (highlights ?? []).filter { $0.blockId == blockId }
     }
 
     /// Contexte condensé du cours, envoyé à l'IA pour les explications.
