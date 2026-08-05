@@ -8,13 +8,23 @@ struct FeymindApp: App {
     init() {
         do {
             container = try ModelContainer(
-                for: Course.self, CourseBlockEntity.self, Flashcard.self, ReviewLog.self,
+                for: Course.self,
+                CourseBlockEntity.self,
+                Flashcard.self,
+                ReviewLog.self,
+                TextHighlight.self,
+                CoursePodcast.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: false)
             )
         } catch {
             // En cas d'incompatibilité de schéma, on repart d'une base propre plutôt que de planter.
             container = try! ModelContainer(
-                for: Course.self, CourseBlockEntity.self, Flashcard.self, ReviewLog.self,
+                for: Course.self,
+                CourseBlockEntity.self,
+                Flashcard.self,
+                ReviewLog.self,
+                TextHighlight.self,
+                CoursePodcast.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true)
             )
         }

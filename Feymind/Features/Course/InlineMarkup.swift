@@ -17,6 +17,13 @@ enum InlineMarkup {
         var style: Style
     }
 
+    /// Surlignage utilisateur, exprimé en coordonnées de texte brut.
+    struct OverlayHighlight: Hashable {
+        var start: Int
+        var length: Int
+        var color: HighlightColor
+    }
+
     // MARK: - Analyse
 
     static func runs(in source: String) -> [Run] {
@@ -89,8 +96,15 @@ enum InlineMarkup {
 
     private static let cache = NSCache<NSString, NSAttributedString>()
 
-    static func attributed(_ source: String, options: RenderOptions = .courseBody) -> NSAttributedString {
-        let key = "\(options.hashValue)|\(source)" as NSString
+    static func attributed(
+        _ source: String,
+        options: RenderOptions = .courseBody,
+        overlays: [OverlayHighlight] = []
+    ) -> NSAttributedString {
+        let overlayKey = overlays
+            .map { "\($0.start):\($0.length):\($0.color.rawValue)" }
+            .joined(separator: "|")
+        let key = "\(options.hashValue)|\(overlayKey)|\(source)" as NSString
         if let cached = cache.object(forKey: key) { return cached }
 
         let paragraph = NSMutableParagraphStyle()
@@ -100,9 +114,12 @@ enum InlineMarkup {
 
         let metrics = UIFontMetrics(forTextStyle: .body)
         let result = NSMutableAttributedString()
+        // Les surlignages utilisateur sont stockés en offsets UTF-16, comme UITextView.
+        var plainOffset = 0
 
         for run in runs(in: source) {
             guard !run.text.isEmpty else { continue }
+            let utf16Length = (run.text as NSString).length
 
             var attributes: [NSAttributedString.Key: Any] = [
                 .paragraphStyle: paragraph,
@@ -129,15 +146,61 @@ enum InlineMarkup {
             attributes[.font] = metrics.scaledFont(for: baseFont)
 
             if run.style.highlighted {
-                attributes[.backgroundColor] = options.highlightColor
+                // Marqueur fluo : bande opaque un peu chaude, comme un surligneur.
+                attributes[.backgroundColor] = options.highlightColor.withAlphaComponent(0.92)
                 attributes[.foregroundColor] = UIColor(FeyColor.ink)
             }
 
+            let start = result.length
             result.append(NSAttributedString(string: run.text, attributes: attributes))
+            let runRange = NSRange(location: start, length: utf16Length)
+
+            applyOverlays(
+                overlays,
+                plainStart: plainOffset,
+                plainLength: utf16Length,
+                into: result,
+                utf16Range: runRange
+            )
+
+            plainOffset += utf16Length
         }
 
         cache.setObject(result, forKey: key)
         return result
+    }
+
+    /// Applique les surlignages utilisateur qui chevauchent le run courant.
+    private static func applyOverlays(
+        _ overlays: [OverlayHighlight],
+        plainStart: Int,
+        plainLength: Int,
+        into result: NSMutableAttributedString,
+        utf16Range: NSRange
+    ) {
+        guard plainLength > 0 else { return }
+        let plainEnd = plainStart + plainLength
+
+        for overlay in overlays {
+            let overlayEnd = overlay.start + overlay.length
+            let start = max(plainStart, overlay.start)
+            let end = min(plainEnd, overlayEnd)
+            guard end > start else { continue }
+
+            let relativeStart = start - plainStart
+            let relativeLength = end - start
+            let target = NSRange(
+                location: utf16Range.location + relativeStart,
+                length: relativeLength
+            )
+            guard NSMaxRange(target) <= result.length else { continue }
+
+            result.addAttribute(
+                .backgroundColor,
+                value: overlay.color.uiColor.withAlphaComponent(0.88),
+                range: target
+            )
+        }
     }
 
     /// Version SwiftUI, pour les titres et les libellés courts.

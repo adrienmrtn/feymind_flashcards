@@ -9,7 +9,12 @@ final class StudyQueueTests: XCTestCase {
 
     override func setUpWithError() throws {
         container = try ModelContainer(
-            for: Course.self, CourseBlockEntity.self, Flashcard.self, ReviewLog.self,
+            for: Course.self,
+            CourseBlockEntity.self,
+            Flashcard.self,
+            ReviewLog.self,
+            TextHighlight.self,
+            CoursePodcast.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         context = ModelContext(container)

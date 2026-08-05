@@ -1,13 +1,21 @@
 import SwiftUI
 import UIKit
 
-/// Texte de cours sélectionnable qui ajoute l'action « Demander à l'IA » au menu d'édition.
+/// Texte de cours sélectionnable : « Demander à l'IA » et surlignages colorés.
 struct SelectableTextView: UIViewRepresentable {
     let attributed: NSAttributedString
     var onAsk: (String) -> Void
+    var onHighlight: ((NSRange, HighlightColor) -> Void)?
+    var onClearHighlights: ((NSRange) -> Void)?
+    var hasOverlappingHighlight: ((NSRange) -> Bool)?
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onAsk: onAsk)
+        Coordinator(
+            onAsk: onAsk,
+            onHighlight: onHighlight,
+            onClearHighlights: onClearHighlights,
+            hasOverlappingHighlight: hasOverlappingHighlight
+        )
     }
 
     func makeUIView(context: Context) -> UITextView {
@@ -30,6 +38,9 @@ struct SelectableTextView: UIViewRepresentable {
 
     func updateUIView(_ uiView: UITextView, context: Context) {
         context.coordinator.onAsk = onAsk
+        context.coordinator.onHighlight = onHighlight
+        context.coordinator.onClearHighlights = onClearHighlights
+        context.coordinator.hasOverlappingHighlight = hasOverlappingHighlight
         if uiView.attributedText != attributed {
             uiView.attributedText = attributed
         }
@@ -43,9 +54,20 @@ struct SelectableTextView: UIViewRepresentable {
 
     final class Coordinator: NSObject, UITextViewDelegate {
         var onAsk: (String) -> Void
+        var onHighlight: ((NSRange, HighlightColor) -> Void)?
+        var onClearHighlights: ((NSRange) -> Void)?
+        var hasOverlappingHighlight: ((NSRange) -> Bool)?
 
-        init(onAsk: @escaping (String) -> Void) {
+        init(
+            onAsk: @escaping (String) -> Void,
+            onHighlight: ((NSRange, HighlightColor) -> Void)?,
+            onClearHighlights: ((NSRange) -> Void)?,
+            hasOverlappingHighlight: ((NSRange) -> Bool)?
+        ) {
             self.onAsk = onAsk
+            self.onHighlight = onHighlight
+            self.onClearHighlights = onClearHighlights
+            self.hasOverlappingHighlight = hasOverlappingHighlight
         }
 
         func textView(
@@ -59,6 +81,8 @@ struct SelectableTextView: UIViewRepresentable {
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             guard !selected.isEmpty else { return UIMenu(children: suggestedActions) }
 
+            var custom: [UIMenuElement] = []
+
             let ask = UIAction(
                 title: "Demander à l'IA",
                 image: UIImage(systemName: "sparkles")
@@ -66,22 +90,61 @@ struct SelectableTextView: UIViewRepresentable {
                 textView?.selectedTextRange = nil
                 self.onAsk(selected)
             }
+            custom.append(ask)
 
-            return UIMenu(children: [ask] + suggestedActions)
+            if onHighlight != nil {
+                let colorActions = HighlightColor.allCases.map { color in
+                    UIAction(
+                        title: color.label,
+                        image: UIImage(systemName: color.systemImage)
+                    ) { [weak textView] _ in
+                        textView?.selectedTextRange = nil
+                        self.onHighlight?(range, color)
+                    }
+                }
+                custom.append(UIMenu(
+                    title: "Surligner",
+                    image: UIImage(systemName: "highlighter"),
+                    children: colorActions
+                ))
+            }
+
+            if hasOverlappingHighlight?(range) == true, onClearHighlights != nil {
+                custom.append(UIAction(
+                    title: "Effacer le surlignage",
+                    image: UIImage(systemName: "eraser"),
+                    attributes: .destructive
+                ) { [weak textView] _ in
+                    textView?.selectedTextRange = nil
+                    self.onClearHighlights?(range)
+                })
+            }
+
+            return UIMenu(children: custom + suggestedActions)
         }
     }
 }
 
-/// Enveloppe pratique : applique le balisage puis rend le texte sélectionnable.
+/// Enveloppe pratique : applique le balisage, les surlignages, puis rend le texte sélectionnable.
 struct CourseText: View {
     let source: String
     var options: InlineMarkup.RenderOptions = .courseBody
+    var overlays: [InlineMarkup.OverlayHighlight] = []
     var onAsk: (String) -> Void
+    var onHighlight: ((NSRange, HighlightColor) -> Void)? = nil
+    var onClearHighlights: ((NSRange) -> Void)? = nil
 
     var body: some View {
         SelectableTextView(
-            attributed: InlineMarkup.attributed(source, options: options),
-            onAsk: onAsk
+            attributed: InlineMarkup.attributed(source, options: options, overlays: overlays),
+            onAsk: onAsk,
+            onHighlight: onHighlight,
+            onClearHighlights: onClearHighlights,
+            hasOverlappingHighlight: { range in
+                overlays.contains {
+                    NSIntersectionRange(NSRange(location: $0.start, length: $0.length), range).length > 0
+                }
+            }
         )
         .frame(maxWidth: .infinity, alignment: .leading)
     }
