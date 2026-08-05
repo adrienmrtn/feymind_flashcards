@@ -106,12 +106,10 @@ struct SettingsView: View {
     }
 
     private func eraseEverything() {
-        for course in CourseRepository.allCourses(in: modelContext) {
-            modelContext.delete(course)
-        }
-        for card in CourseRepository.allCards(in: modelContext) {
-            modelContext.delete(card)
-        }
+        try? modelContext.delete(model: ReviewLog.self)
+        try? modelContext.delete(model: Flashcard.self)
+        try? modelContext.delete(model: CourseBlockEntity.self)
+        try? modelContext.delete(model: Course.self)
         try? modelContext.save()
         dismiss()
     }

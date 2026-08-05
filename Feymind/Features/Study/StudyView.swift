@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UIKit
 
 struct StudyView: View {
     let source: StudySource

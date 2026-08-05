@@ -177,7 +177,7 @@ struct CourseView: View {
                 }
 
                 Button {
-                    Task { await generateCards(replacing: false) }
+                    Task { await generateCards() }
                 } label: {
                     Label("Générer d'autres cartes", systemImage: "sparkles")
                 }
@@ -200,14 +200,14 @@ struct CourseView: View {
     @MainActor
     private func startTraining() async {
         if course.cards.isEmpty {
-            await generateCards(replacing: false)
+            await generateCards()
             guard !course.cards.isEmpty else { return }
         }
         showFlashcards = true
     }
 
     @MainActor
-    private func generateCards(replacing: Bool) async {
+    private func generateCards() async {
         guard !isGeneratingCards else { return }
         isGeneratingCards = true
         defer { isGeneratingCards = false }

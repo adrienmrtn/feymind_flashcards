@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Aiguille chaque bloc vers sa représentation visuelle.
 struct CourseBlockView: View {

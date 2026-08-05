@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Les cinq pages : le tableau de bord est au centre, deux onglets de chaque côté.
 struct RootTabView: View {

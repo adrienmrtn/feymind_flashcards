@@ -1,10 +1,5 @@
+import Combine
 import SwiftUI
-
-/// Étapes affichées pendant un appel à l'IA.
-struct GenerationStep: Identifiable, Equatable {
-    let id = UUID()
-    var label: String
-}
 
 /// Voile plein écran avec progression étape par étape.
 struct GenerationOverlay: View {

@@ -9,6 +9,9 @@ struct TodayView: View {
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
     @State private var sessionToken = UUID()
+    /// Une fois lancée, la session reste affichée même quand plus aucune carte n'est due :
+    /// les cartes d'apprentissage doivent pouvoir revenir dans les vingt minutes.
+    @State private var isSessionActive = false
 
     private var dueCards: [Flashcard] {
         allCards.filter { $0.isDue() }
@@ -17,30 +20,34 @@ struct TodayView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if dueCards.isEmpty {
-                    emptyState
-                } else {
+                if isSessionActive {
                     StudyView(source: .allDue, isEmbedded: true)
                         .id(sessionToken)
+                } else {
+                    emptyState
                 }
             }
             .feyScreenBackground()
             .navigationTitle("Révisions du jour")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if !dueCards.isEmpty {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            sessionToken = UUID()
-                        } label: {
-                            Image(systemName: "arrow.counterclockwise")
-                                .foregroundStyle(FeyColor.inkSecondary)
-                        }
-                        .accessibilityLabel("Redémarrer la session")
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: restart) {
+                        Image(systemName: "arrow.counterclockwise")
+                            .foregroundStyle(FeyColor.inkSecondary)
                     }
+                    .accessibilityLabel("Relancer la session")
                 }
             }
+            .onAppear {
+                if !isSessionActive { isSessionActive = !dueCards.isEmpty }
+            }
         }
+    }
+
+    private func restart() {
+        isSessionActive = !dueCards.isEmpty
+        sessionToken = UUID()
     }
 
     private var emptyState: some View {

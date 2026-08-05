@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Jetons de style de Feymind. Palette claire, papier chaud, accent indigo.
 enum FeyColor {

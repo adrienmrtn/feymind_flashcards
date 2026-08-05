@@ -140,7 +140,7 @@ final class Flashcard {
             newIntervalDays: outcome.intervalDays,
             easeAfter: outcome.easeFactor
         )
-        log.card = self
+        // On ne renseigne qu'un seul côté : SwiftData maintient la relation inverse.
         logs = (logs ?? []) + [log]
     }
 

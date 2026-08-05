@@ -73,7 +73,7 @@ final class StudySession {
 
         pending = usable.map { Entry(card: $0, availableAt: min($0.dueDate, now)) }
         initialCount = pending.count
-        advance(now: now)
+        advance()
     }
 
     /// Quand rien n'est dû, on propose quand même les cartes les plus proches de l'échéance.
@@ -110,7 +110,7 @@ final class StudySession {
 
         current = nil
         isRevealed = false
-        advance(now: now)
+        advance()
     }
 
     /// Repousse la carte courante à la fin de la file sans la noter.
@@ -119,7 +119,7 @@ final class StudySession {
         pending.append(Entry(card: card, availableAt: now.addingTimeInterval(60)))
         current = nil
         isRevealed = false
-        advance(now: now)
+        advance()
     }
 
     func suspendCurrent() {
@@ -131,7 +131,7 @@ final class StudySession {
         advance()
     }
 
-    private func advance(now: Date = Date()) {
+    private func advance() {
         guard !pending.isEmpty else {
             current = nil
             isFinished = true
