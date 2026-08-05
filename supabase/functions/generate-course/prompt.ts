@@ -11,7 +11,7 @@ RÈGLES DE STYLE
 
 BALISAGE DANS LES TEXTES
 - **gras** pour les termes structurants.
-- ==surligné== pour les définitions clés et les résultats à mémoriser. Deux à quatre surlignages par page maximum.
+- ==surligné== pour les définitions clés, formules mentales et résultats à mémoriser. Utilise généreusement le surlignage : environ un passage ==surligné== tous les deux ou trois paragraphes, plus dans les callouts "memo" et les définitions. Surlignage court (quelques mots), jamais une phrase entière.
 - *italique* pour les nuances.
 - \`code\` pour les notations techniques courtes.
 - Aucun autre balisage. Pas de titres markdown (#), pas de listes markdown (-), pas de tableaux markdown.

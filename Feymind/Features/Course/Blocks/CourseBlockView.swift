@@ -5,28 +5,57 @@ import UIKit
 struct CourseBlockView: View {
     let payload: CourseBlockPayload
     let accent: Color
+    var overlays: [InlineMarkup.OverlayHighlight] = []
     var onAsk: (String) -> Void
+    var onHighlight: ((NSRange, HighlightColor) -> Void)? = nil
+    var onClearHighlights: ((NSRange) -> Void)? = nil
 
     var body: some View {
         switch payload {
         case .heading(let block):
             HeadingBlockView(block: block, accent: accent)
         case .paragraph(let block):
-            CourseText(source: block.text, onAsk: onAsk)
+            CourseText(
+                source: block.text,
+                overlays: overlays,
+                onAsk: onAsk,
+                onHighlight: onHighlight,
+                onClearHighlights: onClearHighlights
+            )
         case .list(let block):
             ListBlockView(block: block, accent: accent, onAsk: onAsk)
         case .keyPoints(let block):
             KeyPointsBlockView(block: block, accent: accent, onAsk: onAsk)
         case .callout(let block):
-            CalloutBlockView(block: block, onAsk: onAsk)
+            CalloutBlockView(
+                block: block,
+                overlays: overlays,
+                onAsk: onAsk,
+                onHighlight: onHighlight,
+                onClearHighlights: onClearHighlights
+            )
         case .definition(let block):
-            DefinitionBlockView(block: block, accent: accent, onAsk: onAsk)
+            DefinitionBlockView(
+                block: block,
+                accent: accent,
+                overlays: overlays,
+                onAsk: onAsk,
+                onHighlight: onHighlight,
+                onClearHighlights: onClearHighlights
+            )
         case .formula(let block):
             FormulaBlockView(block: block, accent: accent)
         case .table(let block):
             TableBlockView(block: block, accent: accent)
         case .quote(let block):
-            QuoteBlockView(block: block, accent: accent, onAsk: onAsk)
+            QuoteBlockView(
+                block: block,
+                accent: accent,
+                overlays: overlays,
+                onAsk: onAsk,
+                onHighlight: onHighlight,
+                onClearHighlights: onClearHighlights
+            )
         case .divider:
             DividerBlockView()
         case .flow(let block):
@@ -165,7 +194,10 @@ struct KeyPointsBlockView: View {
 
 struct CalloutBlockView: View {
     let block: CalloutBlock
+    var overlays: [InlineMarkup.OverlayHighlight] = []
     var onAsk: (String) -> Void
+    var onHighlight: ((NSRange, HighlightColor) -> Void)? = nil
+    var onClearHighlights: ((NSRange) -> Void)? = nil
 
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
@@ -185,7 +217,10 @@ struct CalloutBlockView: View {
                 CourseText(
                     source: block.text,
                     options: bodyOptions,
-                    onAsk: onAsk
+                    overlays: overlays,
+                    onAsk: onAsk,
+                    onHighlight: onHighlight,
+                    onClearHighlights: onClearHighlights
                 )
             }
             .padding(.vertical, FeySpacing.sm)
@@ -230,7 +265,10 @@ struct CalloutBlockView: View {
 struct DefinitionBlockView: View {
     let block: DefinitionBlock
     let accent: Color
+    var overlays: [InlineMarkup.OverlayHighlight] = []
     var onAsk: (String) -> Void
+    var onHighlight: ((NSRange, HighlightColor) -> Void)? = nil
+    var onClearHighlights: ((NSRange) -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -241,7 +279,13 @@ struct DefinitionBlockView: View {
                     .foregroundStyle(FeyColor.ink)
             }
 
-            CourseText(source: block.text, onAsk: onAsk)
+            CourseText(
+                source: block.text,
+                overlays: overlays,
+                onAsk: onAsk,
+                onHighlight: onHighlight,
+                onClearHighlights: onClearHighlights
+            )
         }
         .feyCard(padding: FeySpacing.md, radius: FeyRadius.lg, elevated: false)
     }
@@ -287,7 +331,10 @@ struct FormulaBlockView: View {
 struct QuoteBlockView: View {
     let block: QuoteBlock
     let accent: Color
+    var overlays: [InlineMarkup.OverlayHighlight] = []
     var onAsk: (String) -> Void
+    var onHighlight: ((NSRange, HighlightColor) -> Void)? = nil
+    var onClearHighlights: ((NSRange) -> Void)? = nil
 
     var body: some View {
         HStack(alignment: .top, spacing: FeySpacing.sm) {
@@ -296,7 +343,14 @@ struct QuoteBlockView: View {
                 .frame(width: 3)
 
             VStack(alignment: .leading, spacing: 6) {
-                CourseText(source: block.text, options: quoteOptions, onAsk: onAsk)
+                CourseText(
+                    source: block.text,
+                    options: quoteOptions,
+                    overlays: overlays,
+                    onAsk: onAsk,
+                    onHighlight: onHighlight,
+                    onClearHighlights: onClearHighlights
+                )
 
                 if let author = block.author?.nilIfBlank {
                     Text(author)

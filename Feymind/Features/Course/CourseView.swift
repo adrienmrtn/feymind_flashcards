@@ -12,6 +12,7 @@ struct CourseView: View {
     @State private var isGeneratingCards = false
     @State private var generationError: String?
     @State private var showFlashcards = false
+    @State private var showPodcast = false
     @State private var showDeleteConfirmation = false
 
     private var accent: Color { Color(hexString: course.accentHex) }
@@ -21,12 +22,24 @@ struct CourseView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: FeySpacing.md) {
                     header
+                    podcastBanner
 
                     ForEach(course.orderedBlocks) { entity in
                         if let payload = entity.payload {
-                            CourseBlockView(payload: payload, accent: accent) { selection in
-                                askSelection = AskSelection(text: selection)
-                            }
+                            CourseBlockView(
+                                payload: payload,
+                                accent: accent,
+                                overlays: overlays(for: entity.id),
+                                onAsk: { selection in
+                                    askSelection = AskSelection(text: selection)
+                                },
+                                onHighlight: { range, color in
+                                    addHighlight(blockId: entity.id, range: range, color: color)
+                                },
+                                onClearHighlights: { range in
+                                    clearHighlights(blockId: entity.id, overlapping: range)
+                                }
+                            )
                         }
                     }
 
@@ -46,6 +59,12 @@ struct CourseView: View {
         .sheet(item: $askSelection) { selection in
             AskAISheet(course: course, selection: selection.text)
                 .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(28)
+        }
+        .sheet(isPresented: $showPodcast) {
+            PodcastSheet(course: course)
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)
         }
@@ -99,6 +118,9 @@ struct CourseView: View {
                     HStack(spacing: FeySpacing.xs) {
                         Label("\(course.readingMinutes) min", systemImage: "clock")
                         Label("\(course.cards.count) cartes", systemImage: "rectangle.on.rectangle")
+                        if !(course.highlights ?? []).isEmpty {
+                            Label("\((course.highlights ?? []).count)", systemImage: "highlighter")
+                        }
                     }
                     .font(FeyFont.micro)
                     .foregroundStyle(FeyColor.inkTertiary)
@@ -119,9 +141,9 @@ struct CourseView: View {
             }
 
             HStack(spacing: 6) {
-                Image(systemName: "hand.tap")
+                Image(systemName: "highlighter")
                     .font(.system(size: 10, weight: .bold))
-                Text("Sélectionnez un passage pour demander à l'IA")
+                Text("Sélectionnez un passage pour surligner ou demander à l'IA")
                     .font(FeyFont.micro)
             }
             .foregroundStyle(accent)
@@ -135,6 +157,46 @@ struct CourseView: View {
                 .padding(.top, FeySpacing.xxs)
         }
         .padding(.bottom, FeySpacing.xxs)
+    }
+
+    private var podcastBanner: some View {
+        Button {
+            showPodcast = true
+        } label: {
+            HStack(spacing: FeySpacing.sm) {
+                Image(systemName: course.latestPodcast == nil ? "headphones" : "play.circle.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 42, height: 42)
+                    .background(
+                        LinearGradient(
+                            colors: [accent, FeyColor.accentDeep],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous)
+                    )
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(course.latestPodcast == nil ? "Écouter en podcast" : "Reprendre le podcast")
+                        .font(FeyFont.cardTitle)
+                        .foregroundStyle(FeyColor.ink)
+                    Text(course.latestPodcast == nil
+                         ? "Deux voix expliquent le cours à l'oral"
+                         : "\(course.latestPodcast!.durationLabel) · \(course.latestPodcast!.hostVoice.label) × \(course.latestPodcast!.guestVoice.label)")
+                        .font(FeyFont.micro)
+                        .foregroundStyle(FeyColor.inkTertiary)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(FeyColor.inkTertiary.opacity(0.7))
+            }
+            .feyCard(padding: FeySpacing.sm + 2, radius: FeyRadius.lg, elevated: false)
+        }
+        .buttonStyle(.plain)
     }
 
     private var footerHint: some View {
@@ -171,6 +233,12 @@ struct CourseView: View {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 Button {
+                    showPodcast = true
+                } label: {
+                    Label("Écouter en podcast", systemImage: "headphones")
+                }
+
+                Button {
                     showFlashcards = true
                 } label: {
                     Label("Voir les flashcards", systemImage: "rectangle.on.rectangle")
@@ -180,6 +248,14 @@ struct CourseView: View {
                     Task { await generateCards() }
                 } label: {
                     Label("Générer d'autres cartes", systemImage: "sparkles")
+                }
+
+                if !(course.highlights ?? []).isEmpty {
+                    Button {
+                        clearAllHighlights()
+                    } label: {
+                        Label("Effacer tous les surlignages", systemImage: "eraser")
+                    }
                 }
 
                 Divider()
@@ -193,6 +269,52 @@ struct CourseView: View {
                 Image(systemName: "ellipsis.circle")
             }
         }
+    }
+
+    // MARK: - Surlignage
+
+    private func overlays(for blockId: UUID) -> [InlineMarkup.OverlayHighlight] {
+        course.highlights(for: blockId).map {
+            InlineMarkup.OverlayHighlight(start: $0.start, length: $0.length, color: $0.color)
+        }
+    }
+
+    private func addHighlight(blockId: UUID, range: NSRange, color: HighlightColor) {
+        guard range.length > 0 else { return }
+
+        // On remplace les surlignages qui se chevauchent pour éviter les empilements.
+        clearHighlights(blockId: blockId, overlapping: range, save: false)
+
+        let highlight = TextHighlight(
+            blockId: blockId,
+            start: range.location,
+            length: range.length,
+            color: color,
+            course: course
+        )
+        modelContext.insert(highlight)
+        course.updatedAt = Date()
+        try? modelContext.save()
+    }
+
+    private func clearHighlights(blockId: UUID, overlapping range: NSRange, save: Bool = true) {
+        let victims = course.highlights(for: blockId).filter { $0.overlaps(range) }
+        guard !victims.isEmpty else { return }
+        for highlight in victims {
+            modelContext.delete(highlight)
+        }
+        if save {
+            course.updatedAt = Date()
+            try? modelContext.save()
+        }
+    }
+
+    private func clearAllHighlights() {
+        for highlight in course.highlights ?? [] {
+            modelContext.delete(highlight)
+        }
+        course.updatedAt = Date()
+        try? modelContext.save()
     }
 
     // MARK: - Actions
@@ -223,7 +345,6 @@ struct CourseView: View {
             let generated = try await aiService.generateFlashcards(request)
             try CourseRepository.addFlashcards(generated, to: course, in: modelContext)
         } catch {
-            // Sans clé IA, on propose quand même un jeu de cartes construit localement.
             if shouldFallBackOffline(error) {
                 let offline = OfflineCourseBuilder.buildFlashcards(
                     from: GeneratedCourse(

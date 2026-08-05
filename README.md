@@ -42,6 +42,7 @@ L'application appelle trois Edge Functions Supabase. Le code source est dans `su
 | `generate-course` | Transforme le texte et les pages du PDF en cours structuré en blocs |
 | `generate-flashcards` | Produit un jeu de cartes recto verso à partir du cours |
 | `explain-passage` | Explique un passage sélectionné, dans le contexte du cours |
+| `generate-podcast` | Script à deux voix + synthèse MiniMax Turbo (podcast court) |
 
 ### 1. Ajouter la clé fal.ai
 
@@ -58,6 +59,7 @@ supabase link --project-ref votre-ref
 supabase functions deploy generate-course
 supabase functions deploy generate-flashcards
 supabase functions deploy explain-passage
+supabase functions deploy generate-podcast
 ```
 
 ### 3. Renseigner le projet dans l'application
@@ -90,6 +92,13 @@ L'IA renvoie un cours découpé en blocs typés, rendus nativement en SwiftUI :
 
 Les textes acceptent un balisage court : `**gras**`, `*italique*`, `==surligné==`, `` `code` ``.
 Les tirets cadratins sont interdits côté prompt et retirés côté client comme côté serveur.
+
+Dans la vue du cours, sélectionner un passage permet de **surligner** (jaune, menthe ou lilas)
+ou de **demander à l'IA**. Les surlignages de l'étudiant sont stockés localement.
+
+Un bandeau **Écouter en podcast** génère un dialogue court entre deux voix françaises
+(MiniMax Speech-02 Turbo, ~0,06 $/1k caractères). Les voix sont modifiables, la durée cible
+reste volontairement courte (3 à 7 min) pour limiter le coût.
 
 ## Structure
 
