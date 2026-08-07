@@ -32,7 +32,8 @@ struct DashboardView: View {
     }
 
     private var visibleCourses: [Course] {
-        guard subjectFilter != allSubjectsFilter else { return courses }
+        // Le filtre retombe sur « Tous » si la matière sélectionnée n'existe plus.
+        guard subjectFilter != allSubjectsFilter, subjects.contains(subjectFilter) else { return courses }
         return courses.filter { $0.subject?.nilIfBlank == subjectFilter }
     }
 

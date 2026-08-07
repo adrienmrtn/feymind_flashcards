@@ -20,6 +20,10 @@ struct StudyView: View {
         }
     }
 
+    private var progressLabel: String {
+        session.isFinished ? "Session terminée" : "\(session.answeredCount) répondues"
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             headerBar
@@ -49,13 +53,17 @@ struct StudyView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
+                    // Intégrée dans l'onglet Réviser, la vue n'a pas besoin de répéter son titre.
+                    Text(isEmbedded ? progressLabel : title)
                         .font(FeyFont.cardTitle)
                         .foregroundStyle(FeyColor.ink)
                         .lineLimit(1)
-                    Text(session.isFinished ? "Session terminée" : "\(session.answeredCount) répondues")
-                        .font(FeyFont.micro)
-                        .foregroundStyle(FeyColor.inkTertiary)
+
+                    if !isEmbedded {
+                        Text(progressLabel)
+                            .font(FeyFont.micro)
+                            .foregroundStyle(FeyColor.inkTertiary)
+                    }
                 }
 
                 Spacer(minLength: 0)

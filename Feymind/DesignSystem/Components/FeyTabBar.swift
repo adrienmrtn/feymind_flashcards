@@ -37,10 +37,17 @@ final class TabRouter {
 }
 
 /// Barre d'onglets flottante : pilule sombre, onglet actif dans un cercle blanc.
+/// Reste absente des aperçus, où aucun routeur n'est fourni.
 struct FeyTabBar: View {
-    @Environment(TabRouter.self) private var router
+    @Environment(TabRouter.self) private var router: TabRouter?
 
     var body: some View {
+        if let router {
+            bar(router)
+        }
+    }
+
+    private func bar(_ router: TabRouter) -> some View {
         HStack(spacing: 4) {
             ForEach(RootTab.allCases) { tab in
                 Button {

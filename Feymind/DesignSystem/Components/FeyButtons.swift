@@ -72,6 +72,14 @@ enum FeyCircleStyle {
         case .glass: Color.black.opacity(0.32)
         }
     }
+
+    /// Une pastille posée sur une couverture n'a pas besoin d'ombre.
+    var shadowOpacity: Double {
+        switch self {
+        case .light, .dark: 0.08
+        case .glass: 0
+        }
+    }
 }
 
 /// Pastille circulaire. Utilisée seule dans un `Menu`, ou enveloppée par `FeyCircleButton`.
@@ -86,7 +94,7 @@ struct FeyCircleIcon: View {
             .foregroundStyle(style.foreground)
             .frame(width: size, height: size)
             .background(style.background, in: Circle())
-            .shadow(color: Color.black.opacity(style == .glass ? 0 : 0.08), radius: 10, x: 0, y: 4)
+            .shadow(color: Color.black.opacity(style.shadowOpacity), radius: 10, x: 0, y: 4)
     }
 }
 

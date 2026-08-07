@@ -14,14 +14,23 @@ Application iOS native de révision : vos cours PDF ou vos notes deviennent des 
 | Bibliothèque | Cours partagés par la communauté (en attente de l'authentification) |
 | Profil | Statistiques, amis (en attente de l'authentification) et réglages |
 
-Le parcours principal : bouton `+` sur l'accueil, choix PDF ou texte, import, génération des flashcards,
-visualisation et édition, puis entraînement.
+Le parcours principal tient en trois écrans : bouton `+` sur l'accueil, choix PDF ou texte,
+génération des flashcards, visualisation et édition, puis entraînement.
+
+## Direction visuelle
+
+- Fond gris neutre, surfaces blanches très arrondies, ombres à peine visibles
+- Palette monochrome : l'encre est la seule couleur d'action, la couleur ne sert qu'aux couvertures
+- Typographie système sans empattement, titres resserrés, hiérarchie par la taille et par l'air
+- Barre d'onglets flottante en pilule sombre, masquée dès qu'un écran de détail est ouvert
+- Chaque cours porte une couverture : la première page du PDF importé, sinon un dégradé de sa
+  teinte avec son emoji
 
 ## Pile technique
 
 - SwiftUI, iOS 17 minimum, projet Xcode natif (`Feymind.xcodeproj`)
 - SwiftData pour le stockage local (aucune donnée n'est envoyée hors des appels IA)
-- PDFKit pour l'extraction du texte et le rendu des pages
+- PDFKit pour l'extraction du texte, le rendu des pages et la couverture
 - Supabase Edge Functions comme relais vers fal.ai (`google/gemini-flash-1.5`)
 
 ## Ouvrir le projet
@@ -35,13 +44,12 @@ Le projet utilise les groupes synchronisés avec le système de fichiers : tout 
 
 ## Configuration de l'IA
 
-L'application appelle des Edge Functions Supabase. Le code source est dans `supabase/functions/`.
+L'application appelle deux Edge Functions Supabase. Le code source est dans `supabase/functions/`.
 
 | Fonction | Rôle |
 | --- | --- |
-| `generate-course` | Analyse le texte et les pages du PDF pour en tirer un titre, un résumé et un contexte |
-| `generate-flashcards` | Produit un jeu de cartes recto verso à partir du contenu importé |
-| `explain-passage` | Explique un passage sélectionné, dans le contexte du cours |
+| `generate-course` | Lit le texte et les pages du PDF, renvoie titre, matière, résumé et fiche de travail |
+| `generate-flashcards` | Produit un jeu de cartes recto verso à partir de cette fiche |
 
 ### 1. Ajouter la clé fal.ai
 
@@ -57,7 +65,6 @@ FAL_KEY = votre clé fal.ai
 supabase link --project-ref votre-ref
 supabase functions deploy generate-course
 supabase functions deploy generate-flashcards
-supabase functions deploy explain-passage
 ```
 
 ### 3. Renseigner le projet dans l'application
@@ -67,6 +74,13 @@ modifiables à l'exécution depuis `Profil`, `Réglages`, sans recompiler.
 
 Tant que `FAL_KEY` n'est pas configurée, l'import reste utilisable : Feymind propose de construire
 les cartes hors ligne, à partir du texte brut.
+
+## Contenu analysé
+
+`generate-course` renvoie une fiche de travail à plat : une notion par ligne, sans mise en forme.
+Elle n'est jamais affichée, elle sert de contexte pour rédiger les cartes et pour en ajouter
+plus tard. La lecture du client reste tolérante : si la fonction déployée renvoie encore l'ancien
+format en blocs structurés, seuls les textes sont conservés.
 
 ## Répétition espacée
 
@@ -81,21 +95,13 @@ les cartes hors ligne, à partir du texte brut.
 Les quatre boutons `À revoir`, `Difficile`, `Correct`, `Facile` affichent l'intervalle réel qu'ils
 appliqueront. Les tests de `FeymindTests/SM2SchedulerTests.swift` verrouillent ces valeurs.
 
-## Flashcards
-
-Après l'import, l'application ouvre directement la liste des flashcards. Vous pouvez les modifier,
-en ajouter, en supprimer, puis lancer l'entraînement.
-
-Les textes acceptent un balisage court côté contenu source : `**gras**`, `*italique*`, `==surligné==`, `` `code` ``.
-Les tirets cadratins sont interdits côté prompt et retirés côté client comme côté serveur.
-
 ## Structure
 
 ```
 Feymind/
   App/             point d'entrée et conteneur SwiftData
-  DesignSystem/    couleurs, typographies, composants réutilisables
-  Models/          entités SwiftData et format des blocs de cours
+  DesignSystem/    jetons de style et composants réutilisables
+  Models/          entités SwiftData et réponses de l'IA
   Persistence/     enregistrement des cours et contenu de démonstration
   SRS/             planificateur SM-2, file d'attente, statistiques
   Services/        client IA, extraction PDF, nettoyage de texte
