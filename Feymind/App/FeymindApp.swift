@@ -5,24 +5,10 @@ import SwiftUI
 struct FeymindApp: App {
     private let container: ModelContainer
 
-    init() {
-        do {
-            container = try ModelContainer(
-                for: Course.self,
-                Flashcard.self,
-                ReviewLog.self,
-                configurations: ModelConfiguration(isStoredInMemoryOnly: false)
-            )
-        } catch {
-            // En cas d'incompatibilité de schéma, on repart d'une base propre plutôt que de planter.
-            container = try! ModelContainer(
-                for: Course.self,
-                Flashcard.self,
-                ReviewLog.self,
-                configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-            )
-        }
+    private static let schema = Schema([Course.self, Flashcard.self, ReviewLog.self])
 
+    init() {
+        container = Self.makeContainer()
         SampleData.seedIfNeeded(in: container.mainContext)
     }
 
@@ -33,5 +19,49 @@ struct FeymindApp: App {
                 .tint(FeyColor.ink)
         }
         .modelContainer(container)
+    }
+
+    // MARK: - Stockage
+
+    private static func makeContainer() -> ModelContainer {
+        try? FileManager.default.createDirectory(
+            at: URL.applicationSupportDirectory,
+            withIntermediateDirectories: true
+        )
+
+        if let container = try? persistentContainer() {
+            return container
+        }
+
+        // Le schéma a changé : on repart d'un fichier vide plutôt que de perdre l'écriture sur disque.
+        removeStore()
+        if let container = try? persistentContainer() {
+            return container
+        }
+
+        return try! ModelContainer(
+            for: schema,
+            configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        )
+    }
+
+    private static func persistentContainer() throws -> ModelContainer {
+        try ModelContainer(
+            for: schema,
+            configurations: ModelConfiguration(schema: schema, url: storeURL)
+        )
+    }
+
+    private static var storeURL: URL {
+        URL.applicationSupportDirectory.appending(path: "Feymind.store")
+    }
+
+    private static func removeStore() {
+        let manager = FileManager.default
+        for path in [storeURL.path, storeURL.path + "-shm", storeURL.path + "-wal"] {
+            try? manager.removeItem(atPath: path)
+        }
+        // Le contenu de démonstration revient : sans lui, l'application repart vide et paraît cassée.
+        UserDefaults.standard.removeObject(forKey: SampleData.seedKey)
     }
 }

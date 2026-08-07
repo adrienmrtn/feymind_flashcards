@@ -4,7 +4,7 @@ import SwiftData
 /// Contenu de démonstration inséré au premier lancement pour que l'application
 /// soit immédiatement explorable, même sans clé IA.
 enum SampleData {
-    private static let seedKey = "feymind.didSeedSampleData"
+    static let seedKey = "feymind.didSeedSampleData"
 
     static func seedIfNeeded(in context: ModelContext) {
         let defaults = UserDefaults.standard
