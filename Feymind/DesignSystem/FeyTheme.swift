@@ -1,52 +1,41 @@
 import SwiftUI
 import UIKit
 
-/// Jetons de style de Feymind. Palette claire, papier chaud, accent indigo.
+/// Jetons de style de Feymind. Fond gris neutre, surfaces blanches, une seule couleur d'action : l'encre.
 enum FeyColor {
     // Fonds
-    static let canvas = Color(hex: 0xFBFAF8)
+    static let canvas = Color(hex: 0xEFEFF1)
     static let surface = Color.white
-    static let surfaceMuted = Color(hex: 0xF4F2EE)
-    static let surfaceSunken = Color(hex: 0xF0EEEA)
-    static let stroke = Color(hex: 0xE8E4DC)
-    static let strokeStrong = Color(hex: 0xD8D3C9)
+    static let surfaceMuted = Color(hex: 0xF4F4F6)
+    static let surfaceSunken = Color(hex: 0xE4E4E8)
+    static let stroke = Color(hex: 0xE3E3E7)
+    static let strokeStrong = Color(hex: 0xD3D3D9)
 
-    // Texte
-    static let ink = Color(hex: 0x1A1A20)
-    static let inkSecondary = Color(hex: 0x5B5B68)
-    static let inkTertiary = Color(hex: 0x9797A5)
+    // Encre
+    static let ink = Color(hex: 0x121214)
+    static let inkSecondary = Color(hex: 0x6B6B75)
+    static let inkTertiary = Color(hex: 0x9B9BA4)
 
-    // Accent
-    static let accent = Color(hex: 0x5B54E8)
-    static let accentDeep = Color(hex: 0x413AC4)
-    static let accentSoft = Color(hex: 0xEEEDFE)
-    static let accentTint = Color(hex: 0xDCD9FC)
+    // Sur fond sombre
+    static let onInk = Color.white
+    static let onInkMuted = Color(hex: 0xAFAFB8)
 
-    // Sémantique
-    static let amber = Color(hex: 0xE8930C)
-    static let amberSoft = Color(hex: 0xFDF1DC)
-    static let mint = Color(hex: 0x11A97F)
-    static let mintSoft = Color(hex: 0xDFF5EE)
-    static let coral = Color(hex: 0xE05260)
-    static let coralSoft = Color(hex: 0xFCE7E9)
-    static let sky = Color(hex: 0x2C8FD6)
-    static let skySoft = Color(hex: 0xE2F0FB)
+    // Retours d'information, volontairement désaturés
+    static let positive = Color(hex: 0x2E7D63)
+    static let caution = Color(hex: 0xA5762F)
+    static let negative = Color(hex: 0xB1544E)
+    static let info = Color(hex: 0x3C6A93)
 
-    // Surlignage de texte dans les cours
-    static let highlightYellow = Color(hex: 0xFFE9A8)
-    static let highlightMint = Color(hex: 0xC9F0E1)
-    static let highlightLilac = Color(hex: 0xE1DEFF)
-
-    /// Couleurs d'accent attribuées aux cours.
+    /// Teintes de couverture attribuées aux cours, lisibles avec du texte blanc.
     static let courseAccents: [Color] = [
-        Color(hex: 0x5B54E8),
-        Color(hex: 0x11A97F),
-        Color(hex: 0xE8930C),
-        Color(hex: 0xE05260),
-        Color(hex: 0x2C8FD6),
-        Color(hex: 0x9B51E0),
-        Color(hex: 0xD6336C),
-        Color(hex: 0x1F9E8F)
+        Color(hex: 0x2F4858),
+        Color(hex: 0x3A5A40),
+        Color(hex: 0x6B4E71),
+        Color(hex: 0x8C5B3F),
+        Color(hex: 0x2C4A6E),
+        Color(hex: 0x545460),
+        Color(hex: 0x7A4A52),
+        Color(hex: 0x3F6B6B)
     ]
 }
 
@@ -64,31 +53,42 @@ enum FeySpacing {
 }
 
 enum FeyRadius {
-    static let sm: CGFloat = 10
-    static let md: CGFloat = 14
-    static let lg: CGFloat = 20
-    static let xl: CGFloat = 26
+    static let sm: CGFloat = 12
+    static let md: CGFloat = 16
+    static let lg: CGFloat = 22
+    static let xl: CGFloat = 28
+    static let xxl: CGFloat = 34
     static let pill: CGFloat = 999
+}
+
+enum FeyLayout {
+    /// Hauteur de la barre d'onglets flottante.
+    static let tabBarHeight: CGFloat = 62
+    /// Espace à réserver en bas des écrans pour ne pas passer sous la barre.
+    static let tabBarClearance: CGFloat = 104
+    /// Espace à réserver au-dessus d'un bouton d'action ancré en bas.
+    static let bottomBarClearance: CGFloat = 108
 }
 
 enum FeyFont {
     static func display(_ size: CGFloat) -> Font {
-        .system(size: size, weight: .bold, design: .rounded)
+        .system(size: size, weight: .semibold)
     }
 
-    static let screenTitle = Font.system(size: 30, weight: .bold, design: .rounded)
-    static let sectionTitle = Font.system(size: 19, weight: .semibold, design: .rounded)
-    static let cardTitle = Font.system(size: 17, weight: .semibold, design: .rounded)
-    static let body = Font.system(size: 16, weight: .regular)
-    static let bodyEmphasis = Font.system(size: 16, weight: .semibold)
-    static let caption = Font.system(size: 13, weight: .medium, design: .rounded)
-    static let micro = Font.system(size: 11, weight: .semibold, design: .rounded)
+    static let screenTitle = Font.system(size: 27, weight: .semibold)
+    static let pageTitle = Font.system(size: 22, weight: .semibold)
+    static let sectionTitle = Font.system(size: 18, weight: .semibold)
+    static let cardTitle = Font.system(size: 16, weight: .semibold)
+    static let body = Font.system(size: 15, weight: .regular)
+    static let bodyEmphasis = Font.system(size: 15, weight: .medium)
+    static let caption = Font.system(size: 13, weight: .regular)
+    static let captionEmphasis = Font.system(size: 13, weight: .medium)
+    static let micro = Font.system(size: 11, weight: .medium)
+}
 
-    /// Corps de texte des cours : légèrement plus grand et plus aéré.
-    static let courseBody = Font.system(size: 17, weight: .regular)
-    static let courseH1 = Font.system(size: 26, weight: .bold, design: .rounded)
-    static let courseH2 = Font.system(size: 21, weight: .bold, design: .rounded)
-    static let courseH3 = Font.system(size: 18, weight: .semibold, design: .rounded)
+enum FeyTracking {
+    /// Resserrement appliqué aux grands titres.
+    static let tight: CGFloat = -0.5
 }
 
 extension Color {
@@ -102,13 +102,13 @@ extension Color {
         )
     }
 
-    /// Décode `#RRGGBB` (ou `RRGGBB`) et retombe sur l'accent en cas d'échec.
+    /// Décode `#RRGGBB` (ou `RRGGBB`) et retombe sur la première teinte de cours en cas d'échec.
     init(hexString: String) {
         let cleaned = hexString.trimmingCharacters(in: CharacterSet(charactersIn: "# ")).uppercased()
         if let value = UInt32(cleaned, radix: 16), cleaned.count == 6 {
             self.init(hex: value)
         } else {
-            self.init(hex: 0x5B54E8)
+            self.init(hex: 0x2F4858)
         }
     }
 
@@ -118,6 +118,20 @@ extension Color {
         let green = Int((components.count > 1 ? components[1] : 0) * 255)
         let blue = Int((components.count > 2 ? components[2] : 0) * 255)
         return String(format: "%02X%02X%02X", red, green, blue)
+    }
+
+    func darkened(by amount: Double) -> Color {
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var alpha: CGFloat = 0
+        UIColor(self).getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        return Color(
+            hue: Double(hue),
+            saturation: Double(saturation),
+            brightness: Double(max(0, brightness * CGFloat(1 - amount))),
+            opacity: Double(alpha)
+        )
     }
 }
 
@@ -132,15 +146,11 @@ struct FeyCardStyle: ViewModifier {
         content
             .padding(padding)
             .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(FeyColor.stroke, lineWidth: 1)
-            }
             .shadow(
-                color: elevated ? Color.black.opacity(0.045) : .clear,
-                radius: elevated ? 14 : 0,
+                color: Color.black.opacity(elevated ? 0.05 : 0),
+                radius: elevated ? 16 : 0,
                 x: 0,
-                y: elevated ? 6 : 0
+                y: elevated ? 8 : 0
             )
     }
 }
@@ -148,6 +158,11 @@ struct FeyCardStyle: ViewModifier {
 extension View {
     func feyCard(padding: CGFloat = FeySpacing.md, radius: CGFloat = FeyRadius.lg, elevated: Bool = true) -> some View {
         modifier(FeyCardStyle(padding: padding, radius: radius, elevated: elevated))
+    }
+
+    /// Ombre douce des éléments posés sur le fond, sans passer par une carte complète.
+    func feySoftShadow(strength: Double = 0.06) -> some View {
+        shadow(color: Color.black.opacity(strength), radius: 16, x: 0, y: 8)
     }
 
     /// Applique le fond de l'application et masque le fond système du conteneur.

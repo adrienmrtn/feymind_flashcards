@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// Deuxième page : la pile de flashcards de tous les cours dus aujourd'hui.
+/// La pile de flashcards de tous les cours dues aujourd'hui.
 struct TodayView: View {
     @Environment(\.modelContext) private var modelContext
 
@@ -21,28 +21,56 @@ struct TodayView: View {
         NavigationStack {
             Group {
                 if isSessionActive {
-                    StudyView(source: .allDue, isEmbedded: true)
-                        .id(sessionToken)
+                    VStack(spacing: 0) {
+                        header
+                        StudyView(source: .allDue, isEmbedded: true)
+                            .id(sessionToken)
+                    }
                 } else {
-                    emptyState
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: FeySpacing.lg) {
+                            header
+                            emptyState
+                        }
+                        .padding(.bottom, FeyLayout.tabBarClearance)
+                    }
                 }
             }
             .feyScreenBackground()
-            .navigationTitle("Révisions du jour")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: restart) {
-                        Image(systemName: "arrow.counterclockwise")
-                            .foregroundStyle(FeyColor.inkSecondary)
-                    }
-                    .accessibilityLabel("Relancer la session")
-                }
-            }
+            .feyTabBar()
+            .toolbar(.hidden, for: .navigationBar)
             .onAppear {
                 if !isSessionActive { isSessionActive = !dueCards.isEmpty }
             }
         }
+    }
+
+    private var header: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(StudyStats.formattedDate())
+                    .font(FeyFont.caption)
+                    .foregroundStyle(FeyColor.inkTertiary)
+
+                Text("Réviser")
+                    .font(FeyFont.screenTitle)
+                    .foregroundStyle(FeyColor.ink)
+                    .tracking(FeyTracking.tight)
+            }
+
+            Spacer(minLength: FeySpacing.sm)
+
+            FeyCircleButton(
+                systemImage: "arrow.counterclockwise",
+                size: 44,
+                accessibilityTitle: "Relancer la session"
+            ) {
+                restart()
+            }
+        }
+        .padding(.horizontal, FeySpacing.screen)
+        .padding(.top, FeySpacing.xs)
+        .padding(.bottom, FeySpacing.sm)
     }
 
     private func restart() {
@@ -51,49 +79,42 @@ struct TodayView: View {
     }
 
     private var emptyState: some View {
-        ScrollView {
-            VStack(spacing: FeySpacing.lg) {
-                FeyEmptyState(
-                    systemImage: "checkmark.circle.fill",
-                    title: allCards.isEmpty ? "Pas encore de flashcards" : "Tout est à jour",
-                    message: allCards.isEmpty
-                        ? "Importez un cours puis générez vos premières cartes pour démarrer la répétition espacée."
-                        : "Aucune carte n'arrive à échéance. Vous pouvez réviser en avance depuis un cours."
-                )
-                .padding(.top, FeySpacing.xl)
+        VStack(alignment: .leading, spacing: FeySpacing.lg) {
+            FeyEmptyState(
+                systemImage: allCards.isEmpty ? "rectangle.on.rectangle.angled" : "checkmark",
+                title: allCards.isEmpty ? "Pas encore de flashcards" : "Tout est à jour",
+                message: allCards.isEmpty
+                    ? "Importez un cours pour créer vos premières flashcards et démarrer la répétition espacée."
+                    : "Aucune carte n'arrive à échéance. Vous pouvez réviser en avance depuis un cours."
+            )
 
-                if !nextDueSummary.isEmpty {
-                    VStack(alignment: .leading, spacing: FeySpacing.sm) {
-                        FeySectionHeader(title: "Prochaines échéances")
-                        ForEach(nextDueSummary, id: \.course.id) { entry in
-                            HStack(spacing: FeySpacing.sm) {
-                                Text(entry.course.emoji)
-                                    .font(.system(size: 18))
-                                    .frame(width: 36, height: 36)
-                                    .background(
-                                        Color(hexString: entry.course.accentHex).opacity(0.10),
-                                        in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous)
-                                    )
+            if !nextDueSummary.isEmpty {
+                VStack(alignment: .leading, spacing: FeySpacing.sm) {
+                    FeySectionHeader(title: "Prochaines échéances")
 
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(entry.course.title)
-                                        .font(FeyFont.bodyEmphasis)
-                                        .foregroundStyle(FeyColor.ink)
-                                        .lineLimit(1)
-                                    Text(entry.label)
-                                        .font(FeyFont.micro)
-                                        .foregroundStyle(FeyColor.inkTertiary)
-                                }
+                    ForEach(nextDueSummary, id: \.course.id) { entry in
+                        HStack(spacing: FeySpacing.sm) {
+                            CourseCover(course: entry.course, emojiSize: 18)
+                                .frame(width: 42, height: 42)
+                                .clipShape(RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
 
-                                Spacer(minLength: 0)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(entry.course.title)
+                                    .font(FeyFont.bodyEmphasis)
+                                    .foregroundStyle(FeyColor.ink)
+                                    .lineLimit(1)
+                                Text(entry.label)
+                                    .font(FeyFont.micro)
+                                    .foregroundStyle(FeyColor.inkTertiary)
                             }
-                            .feyCard(padding: FeySpacing.sm, radius: FeyRadius.md, elevated: false)
+
+                            Spacer(minLength: 0)
                         }
+                        .feyCard(padding: FeySpacing.sm, radius: FeyRadius.lg, elevated: false)
                     }
-                    .padding(.horizontal, FeySpacing.screen)
                 }
+                .padding(.horizontal, FeySpacing.screen)
             }
-            .padding(.bottom, FeySpacing.xl)
         }
     }
 

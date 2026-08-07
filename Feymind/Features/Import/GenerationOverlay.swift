@@ -5,7 +5,6 @@ import SwiftUI
 struct GenerationOverlay: View {
     let title: String
     let steps: [String]
-    var accent: Color = FeyColor.accent
 
     @State private var currentStep = 0
     @State private var pulse = false
@@ -14,29 +13,27 @@ struct GenerationOverlay: View {
 
     var body: some View {
         ZStack {
-            FeyColor.canvas.opacity(0.97).ignoresSafeArea()
+            FeyColor.canvas.opacity(0.98).ignoresSafeArea()
 
             VStack(spacing: FeySpacing.lg) {
                 ZStack {
                     Circle()
-                        .fill(accent.opacity(0.10))
-                        .frame(width: 108, height: 108)
-                        .scaleEffect(pulse ? 1.12 : 0.94)
-
-                    Circle()
-                        .fill(accent.opacity(0.16))
-                        .frame(width: 76, height: 76)
-                        .scaleEffect(pulse ? 0.94 : 1.1)
+                        .fill(FeyColor.surfaceSunken)
+                        .frame(width: 104, height: 104)
+                        .scaleEffect(pulse ? 1.1 : 0.94)
 
                     Image(systemName: "sparkles")
-                        .font(.system(size: 30, weight: .medium))
-                        .foregroundStyle(accent)
+                        .font(.system(size: 28, weight: .medium))
+                        .foregroundStyle(FeyColor.onInk)
+                        .frame(width: 72, height: 72)
+                        .background(FeyColor.ink, in: Circle())
                 }
                 .animation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true), value: pulse)
 
                 Text(title)
                     .font(FeyFont.screenTitle)
                     .foregroundStyle(FeyColor.ink)
+                    .tracking(FeyTracking.tight)
                     .multilineTextAlignment(.center)
 
                 VStack(alignment: .leading, spacing: FeySpacing.sm) {
@@ -44,17 +41,17 @@ struct GenerationOverlay: View {
                         HStack(spacing: FeySpacing.sm) {
                             ZStack {
                                 Circle()
-                                    .fill(index <= currentStep ? accent : FeyColor.surfaceSunken)
+                                    .fill(index <= currentStep ? FeyColor.ink : FeyColor.surfaceSunken)
                                     .frame(width: 20, height: 20)
 
                                 if index < currentStep {
                                     Image(systemName: "checkmark")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundStyle(.white)
+                                        .font(.system(size: 9, weight: .bold))
+                                        .foregroundStyle(FeyColor.onInk)
                                 } else if index == currentStep {
                                     Circle()
-                                        .fill(.white)
-                                        .frame(width: 7, height: 7)
+                                        .fill(FeyColor.onInk)
+                                        .frame(width: 6, height: 6)
                                 }
                             }
 
@@ -65,7 +62,6 @@ struct GenerationOverlay: View {
                         .animation(.easeInOut(duration: 0.3), value: currentStep)
                     }
                 }
-                .padding(FeySpacing.md)
                 .frame(maxWidth: 340, alignment: .leading)
 
                 Text("Cela prend en général moins d'une minute.")
@@ -85,7 +81,7 @@ struct GenerationOverlay: View {
 
 #Preview {
     GenerationOverlay(
-        title: "Création du cours",
-        steps: ["Lecture du document", "Repérage des idées clés", "Mise en forme des schémas", "Derniers ajustements"]
+        title: "Création des flashcards",
+        steps: ["Lecture du document", "Repérage des notions clés", "Rédaction des questions", "Vérification des réponses"]
     )
 }

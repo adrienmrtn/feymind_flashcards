@@ -3,7 +3,7 @@ import XCTest
 @testable import Feymind
 
 final class CourseContentTests: XCTestCase {
-    func testUnknownBlockTypeIsSkippedWithoutLosingTheRest() throws {
+    func testStructuredBlocksAreFlattenedIntoContext() throws {
         let json = """
         {
           "title": "Titre",
@@ -17,27 +17,40 @@ final class CourseContentTests: XCTestCase {
         """
 
         let course = try JSONDecoder().decode(GeneratedCourse.self, from: Data(json.utf8))
+        let lines = course.contextText.components(separatedBy: "\n")
 
-        XCTAssertEqual(course.blocks.count, 2)
-        XCTAssertEqual(course.blocks[0].plainText, "Premier")
-        XCTAssertEqual(course.blocks[1].kind, .heading)
+        XCTAssertEqual(course.title, "Titre")
+        XCTAssertEqual(lines, ["Premier", "Second"])
     }
 
-    func testBlocksSurviveAnEncodeDecodeRoundTrip() throws {
-        let blocks: [CourseBlockPayload] = [
-            .heading(HeadingBlock(level: 1, text: "Titre")),
-            .callout(CalloutBlock(variant: .memo, title: "À retenir", text: "L'essentiel")),
-            .chart(ChartBlock(title: "Rendement", caption: nil, bars: [ChartBar(label: "A", value: 40, unit: "%")])),
-            .tree(TreeBlock(title: nil, root: TreeNode(label: "Racine", detail: nil, children: [
-                TreeNode(label: "Enfant", detail: "Détail", children: nil)
-            ]))),
-            .divider
-        ]
+    func testNestedBlocksKeepTheirText() throws {
+        let json = """
+        {
+          "title": "Titre",
+          "summary": "S",
+          "blocks": [
+            {"type": "comparison", "title": "Comparaison", "columns": [
+              {"title": "Colonne", "items": ["Premier point", "Second point"]}
+            ]},
+            {"type": "chart", "title": "Rendement", "bars": [{"label": "A", "value": 40, "unit": "%"}]}
+          ]
+        }
+        """
 
-        let data = try JSONEncoder().encode(blocks)
-        let decoded = try JSONDecoder().decode([CourseBlockPayload].self, from: data)
+        let course = try JSONDecoder().decode(GeneratedCourse.self, from: Data(json.utf8))
 
-        XCTAssertEqual(decoded, blocks)
+        XCTAssertTrue(course.contextText.contains("Premier point"))
+        XCTAssertTrue(course.contextText.contains("Colonne"))
+        XCTAssertTrue(course.contextText.contains("Rendement"))
+        // Les valeurs numériques ne portent pas de sens hors de leur graphique.
+        XCTAssertFalse(course.contextText.contains("40"))
+    }
+
+    func testContextTextIsUsedWhenTheServerSendsItDirectly() throws {
+        let json = #"{"title": "T", "summary": "S", "contextText": "Une seule ligne"}"#
+        let course = try JSONDecoder().decode(GeneratedCourse.self, from: Data(json.utf8))
+
+        XCTAssertEqual(course.contextText, "Une seule ligne")
     }
 
     func testMissingTitleFallsBackInsteadOfFailing() throws {
@@ -45,26 +58,7 @@ final class CourseContentTests: XCTestCase {
         let course = try JSONDecoder().decode(GeneratedCourse.self, from: Data(json.utf8))
 
         XCTAssertEqual(course.title, "Cours sans titre")
-        XCTAssertEqual(course.blocks.count, 1)
-    }
-
-    // MARK: - Balisage
-
-    func testInlineMarkupSplitsStyledRuns() {
-        let runs = InlineMarkup.runs(in: "Un **terme** et une ==définition==.")
-
-        XCTAssertEqual(runs.count, 5)
-        XCTAssertTrue(runs[1].style.bold)
-        XCTAssertEqual(runs[1].text, "terme")
-        XCTAssertTrue(runs[3].style.highlighted)
-        XCTAssertEqual(runs[3].text, "définition")
-    }
-
-    func testPlainTextDropsTheMarkup() {
-        XCTAssertEqual(
-            InlineMarkup.plainText("Un **terme** et `du code`"),
-            "Un terme et du code"
-        )
+        XCTAssertEqual(course.contextText, "a")
     }
 
     // MARK: - Nettoyage
@@ -77,48 +71,42 @@ final class CourseContentTests: XCTestCase {
         XCTAssertEqual(TextSanitizer.removeEmDashes("mot—mot"), "mot-mot")
     }
 
-    func testSanitizationReachesNestedBlocks() {
+    func testInlineMarkupIsStripped() {
+        XCTAssertEqual(
+            TextSanitizer.clean("Un **terme** et une ==définition== avec `du code`"),
+            "Un terme et une définition avec du code"
+        )
+    }
+
+    func testSanitizationReachesTitleSummaryAndContext() {
         let course = GeneratedCourse(
             title: "A — B",
-            summary: "S",
-            blocks: [.comparison(ComparisonBlock(title: "T — U", columns: [
-                ComparisonColumn(title: "C — D", items: ["E — F"])
-            ]))]
+            subject: "C — D",
+            summary: "**Résumé**",
+            contextText: "E — F"
         )
 
         let clean = course.sanitized()
 
         XCTAssertEqual(clean.title, "A, B")
-        guard case .comparison(let block) = clean.blocks[0] else {
-            return XCTFail("Le type de bloc a changé pendant le nettoyage.")
-        }
-        XCTAssertEqual(block.title, "T, U")
-        XCTAssertEqual(block.columns[0].items[0], "E, F")
+        XCTAssertEqual(clean.subject, "C, D")
+        XCTAssertEqual(clean.summary, "Résumé")
+        XCTAssertEqual(clean.contextText, "E, F")
     }
 
+    // MARK: - Repli hors ligne
 
-    func testOverlayHighlightsApplyBackground() {
-        let source = "La **photosynthèse** produit du glucose."
-        let plain = InlineMarkup.plainText(source)
-        // "glucose" starts after "La photosynthèse produit du "
-        let start = (plain as NSString).range(of: "glucose").location
-        XCTAssertNotEqual(start, NSNotFound)
-        let attributed = InlineMarkup.attributed(
-            source,
-            overlays: [
-                InlineMarkup.OverlayHighlight(start: start, length: 7, color: .mint)
-            ]
-        )
-        var found = false
-        attributed.enumerateAttribute(.backgroundColor, in: NSRange(location: 0, length: attributed.length)) { value, _, _ in
-            if value != nil { found = true }
-        }
-        XCTAssertTrue(found, "Le surlignage utilisateur doit peindre un fond.")
+    func testOfflineBuilderProducesCardsFromRawText() {
+        let source = """
+        Les fonctions affines
+        Une fonction affine s'écrit toujours sous la forme f(x) = ax + b, où a et b sont deux nombres fixés.
+        Le coefficient directeur a mesure la pente de la droite représentative de la fonction.
+        """
+
+        let course = OfflineCourseBuilder.build(from: source, hintTitle: nil, sourceName: nil)
+        let cards = OfflineCourseBuilder.buildFlashcards(from: course, count: 5)
+
+        XCTAssertFalse(cards.isEmpty)
+        XCTAssertTrue(cards.allSatisfy { !$0.front.isEmpty && !$0.back.isEmpty })
     }
-
-    func testPlainTextOffsetsIgnoreMarkup() {
-        let source = "==clé== et **gras**"
-        XCTAssertEqual(InlineMarkup.plainText(source), "clé et gras")
-    }
-
 }

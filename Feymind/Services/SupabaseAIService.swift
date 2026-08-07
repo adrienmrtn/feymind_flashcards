@@ -5,9 +5,8 @@ import Foundation
 struct SupabaseAIService: AIService {
     var session: URLSession = {
         let configuration = URLSessionConfiguration.default
-        // Les podcasts enchaînent plusieurs appels TTS : laisser une marge confortable.
-        configuration.timeoutIntervalForRequest = 240
-        configuration.timeoutIntervalForResource = 420
+        configuration.timeoutIntervalForRequest = 120
+        configuration.timeoutIntervalForResource = 180
         configuration.waitsForConnectivity = true
         return URLSession(configuration: configuration)
     }()
@@ -63,55 +62,6 @@ struct SupabaseAIService: AIService {
             throw AIServiceError.invalidResponse
         }
         return cards
-    }
-
-    // MARK: - Explication d'un passage
-
-    func explain(_ request: ExplainRequest) async throws -> String {
-        let payload: [String: Any] = [
-            "selection": String(request.selection.prefix(4_000)),
-            "title": request.courseTitle,
-            "context": String(request.courseContext.prefix(20_000)),
-            "angle": request.angle.rawValue,
-            "model": AppConfig.aiModel
-        ]
-
-        let data = try await post(function: "explain-passage", payload: payload)
-        let envelope = try decodeEnvelope(data)
-
-        guard let answer = envelope["answer"] as? String, !answer.isEmpty else {
-            throw AIServiceError.invalidResponse
-        }
-        return answer
-    }
-
-    // MARK: - Podcast
-
-    func generatePodcast(_ request: PodcastGenerationRequest) async throws -> GeneratedPodcast {
-        let context = request.courseContext.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard context.count >= 80 else { throw AIServiceError.emptySource }
-
-        let payload: [String: Any] = [
-            "title": request.courseTitle,
-            "context": String(context.prefix(18_000)),
-            "hostVoiceId": request.hostVoiceId,
-            "guestVoiceId": request.guestVoiceId,
-            "targetMinutes": min(max(request.targetMinutes, 3), 8),
-            "model": AppConfig.aiModel
-        ]
-
-        let data = try await post(function: "generate-podcast", payload: payload)
-        let envelope = try decodeEnvelope(data)
-
-        guard let podcastObject = envelope["podcast"] else {
-            throw AIServiceError.invalidResponse
-        }
-        let podcastData = try JSONSerialization.data(withJSONObject: podcastObject)
-        guard let podcast = try? JSONDecoder().decode(GeneratedPodcast.self, from: podcastData),
-              !podcast.segments.isEmpty else {
-            throw AIServiceError.invalidResponse
-        }
-        return podcast
     }
 
     // MARK: - Transport

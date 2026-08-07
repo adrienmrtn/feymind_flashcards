@@ -1,73 +1,46 @@
 import Foundation
 
-/// Construit un cours structuré sans appeler l'IA.
+/// Analyse un import sans appeler l'IA.
 /// Sert de repli quand la clé fal n'est pas encore configurée, et pour les aperçus SwiftUI.
 enum OfflineCourseBuilder {
     static func build(from rawText: String, hintTitle: String?, sourceName: String?) -> GeneratedCourse {
         let cleaned = TextSanitizer.normalizeExtractedText(rawText)
-        let paragraphs = cleaned
-            .components(separatedBy: "\n")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
+        let lines = usableLines(of: cleaned)
 
         let title = hintTitle?.nilIfBlank
             ?? sourceName?.nilIfBlank
-            ?? paragraphs.first.map { String($0.prefix(60)) }
+            ?? lines.first.map { String($0.prefix(60)) }
             ?? "Nouveau cours"
-
-        var blocks: [CourseBlockPayload] = []
-        blocks.append(.callout(CalloutBlock(
-            variant: .info,
-            title: "Cours généré hors ligne",
-            text: "Ce cours reprend votre texte tel quel. Ajoutez la clé **fal.ai** dans Supabase pour obtenir une mise en forme complète avec schémas et surlignages."
-        )))
-
-        var currentSectionCount = 0
-        for paragraph in paragraphs.prefix(120) {
-            if isLikelyHeading(paragraph) {
-                currentSectionCount += 1
-                blocks.append(.heading(HeadingBlock(level: currentSectionCount == 1 ? 1 : 2, text: paragraph)))
-            } else {
-                blocks.append(.paragraph(ParagraphBlock(text: paragraph)))
-            }
-        }
-
-        let keyPoints = paragraphs
-            .filter { $0.count > 40 && !isLikelyHeading($0) }
-            .prefix(4)
-            .map { String($0.prefix(140)) }
-
-        if !keyPoints.isEmpty {
-            blocks.append(.divider)
-            blocks.append(.keyPoints(KeyPointsBlock(title: "À retenir", items: Array(keyPoints))))
-        }
 
         return GeneratedCourse(
             title: title,
-            subject: nil,
             emoji: "📝",
-            summary: String(cleaned.prefix(220)),
-            readingMinutes: TextSanitizer.estimatedReadingMinutes(for: cleaned),
-            blocks: blocks
+            summary: String(cleaned.prefix(200)),
+            contextText: String(cleaned.prefix(12_000))
         )
     }
 
     static func buildFlashcards(from course: GeneratedCourse, count: Int) -> [GeneratedFlashcard] {
+        let lines = usableLines(of: course.contextText)
         var cards: [GeneratedFlashcard] = []
+        var currentSection: String?
 
-        for block in course.blocks {
+        for line in lines {
             guard cards.count < count else { break }
-            switch block {
-            case .definition(let definition):
-                cards.append(GeneratedFlashcard(front: "Que signifie « \(definition.term) » ?", back: definition.text, hint: nil))
-            case .keyPoints(let points):
-                for item in points.items where cards.count < count {
-                    cards.append(GeneratedFlashcard(front: "Complétez : \(shortened(item))", back: item, hint: nil))
-                }
-            case .heading(let heading) where heading.level <= 2:
-                cards.append(GeneratedFlashcard(front: "Qu'avez-vous retenu sur « \(heading.text) » ?", back: "Reformulez cette partie du cours avec vos mots.", hint: nil))
-            default:
-                continue
+
+            if isLikelyHeading(line) {
+                currentSection = line
+                cards.append(GeneratedFlashcard(
+                    front: "Qu'avez-vous retenu sur « \(line) » ?",
+                    back: "Reformulez cette partie du cours avec vos mots.",
+                    hint: nil
+                ))
+            } else if line.count >= 60 {
+                cards.append(GeneratedFlashcard(
+                    front: "Complétez : \(shortened(line))",
+                    back: line,
+                    hint: currentSection
+                ))
             }
         }
 
@@ -81,6 +54,13 @@ enum OfflineCourseBuilder {
         return Array(cards.prefix(count))
     }
 
+    private static func usableLines(of text: String) -> [String] {
+        text
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { $0.count >= 12 }
+    }
+
     private static func shortened(_ text: String) -> String {
         let words = text.split(separator: " ")
         guard words.count > 6 else { return text }
@@ -90,8 +70,8 @@ enum OfflineCourseBuilder {
     private static func isLikelyHeading(_ line: String) -> Bool {
         guard line.count <= 80 else { return false }
         if line.hasSuffix(".") || line.hasSuffix(",") { return false }
-        let uppercaseRatio = Double(line.filter(\.isUppercase).count) / Double(max(1, line.filter(\.isLetter).count))
-        if uppercaseRatio > 0.6 { return true }
+        let letters = max(1, line.filter(\.isLetter).count)
+        if Double(line.filter(\.isUppercase).count) / Double(letters) > 0.6 { return true }
         return line.count <= 60 && line.split(separator: " ").count <= 9
     }
 }
@@ -109,21 +89,12 @@ struct OfflineAIService: AIService {
 
     func generateFlashcards(_ request: FlashcardGenerationRequest) async throws -> [GeneratedFlashcard] {
         try await Task.sleep(nanoseconds: 300_000_000)
-        let course = OfflineCourseBuilder.build(from: request.courseContext, hintTitle: request.courseTitle, sourceName: nil)
+        let course = OfflineCourseBuilder.build(
+            from: request.courseContext,
+            hintTitle: request.courseTitle,
+            sourceName: nil
+        )
         return OfflineCourseBuilder.buildFlashcards(from: course, count: request.desiredCount)
-    }
-
-    func explain(_ request: ExplainRequest) async throws -> String {
-        try await Task.sleep(nanoseconds: 300_000_000)
-        return """
-        **Mode hors ligne.** Ajoutez la clé fal.ai dans Supabase pour obtenir une vraie explication.
-
-        Passage sélectionné : « \(request.selection.prefix(180)) »
-        """
-    }
-
-    func generatePodcast(_ request: PodcastGenerationRequest) async throws -> GeneratedPodcast {
-        throw AIServiceError.missingProviderKey
     }
 }
 

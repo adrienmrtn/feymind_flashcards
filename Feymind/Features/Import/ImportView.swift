@@ -1,8 +1,9 @@
 import SwiftData
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
-/// Écran d'import : texte collé ou PDF, puis génération du cours.
+/// Écran d'import : texte collé ou PDF, puis génération des flashcards.
 struct ImportView: View {
     let kind: ImportKind
     var onCreated: (Course) -> Void
@@ -45,7 +46,7 @@ struct ImportView: View {
                     }
                     .padding(.horizontal, FeySpacing.screen)
                     .padding(.top, FeySpacing.xs)
-                    .padding(.bottom, 120)
+                    .padding(.bottom, FeyLayout.bottomBarClearance)
                 }
                 .feyScreenBackground()
                 .scrollDismissesKeyboard(.interactively)
@@ -56,10 +57,11 @@ struct ImportView: View {
                     } label: {
                         HStack(spacing: FeySpacing.xs) {
                             Image(systemName: "sparkles")
-                            Text("Générer le cours")
+                                .font(.system(size: 13, weight: .semibold))
+                            Text("Générer les flashcards")
                         }
                     }
-                    .buttonStyle(FeyPrimaryButtonStyle(tint: canGenerate ? FeyColor.accent : FeyColor.inkTertiary))
+                    .buttonStyle(FeyPrimaryButtonStyle(tint: canGenerate ? FeyColor.ink : FeyColor.strokeStrong))
                     .disabled(!canGenerate || isGenerating)
                 }
             }
@@ -81,12 +83,12 @@ struct ImportView: View {
             .overlay {
                 if isGenerating {
                     GenerationOverlay(
-                        title: "Création du cours",
+                        title: "Création des flashcards",
                         steps: [
                             kind == .pdf ? "Lecture du document" : "Lecture de vos notes",
-                            "Repérage des idées clés",
-                            "Mise en forme et schémas",
-                            "Derniers ajustements"
+                            "Repérage des notions clés",
+                            "Rédaction des questions",
+                            "Vérification des réponses"
                         ]
                     )
                 }
@@ -109,44 +111,32 @@ struct ImportView: View {
     // MARK: - Sections
 
     private var intro: some View {
-        HStack(alignment: .top, spacing: FeySpacing.sm) {
-            Image(systemName: kind.systemImage)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(kind.tint)
-                .frame(width: 40, height: 40)
-                .background(kind.tint.opacity(0.11), in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
-
-            Text(kind == .pdf
-                 ? "Feymind lit le texte du PDF et observe les figures pour reconstruire un cours clair."
-                 : "Collez vos notes, même brutes. Feymind les réorganise en cours structuré.")
-                .font(FeyFont.body)
-                .foregroundStyle(FeyColor.inkSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+        Text(kind == .pdf
+             ? "Feymind lit le PDF, observe les figures et en tire un jeu de flashcards prêt à réviser."
+             : "Collez vos notes, même brutes. Feymind en fait des flashcards.")
+            .font(FeyFont.body)
+            .foregroundStyle(FeyColor.inkSecondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var titleField: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 7) {
             Text("Titre")
-                .font(FeyFont.caption)
+                .font(FeyFont.captionEmphasis)
                 .foregroundStyle(FeyColor.ink)
 
             TextField("Facultatif, l'IA en proposera un", text: $title)
                 .font(FeyFont.body)
                 .padding(FeySpacing.sm)
-                .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous)
-                        .strokeBorder(FeyColor.stroke, lineWidth: 1)
-                }
+                .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: FeyRadius.lg, style: .continuous))
         }
     }
 
     private var textInput: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 7) {
             HStack {
                 Text("Contenu")
-                    .font(FeyFont.caption)
+                    .font(FeyFont.captionEmphasis)
                     .foregroundStyle(FeyColor.ink)
                 Spacer()
                 Text("\(pastedText.count) caractères")
@@ -169,11 +159,7 @@ struct ImportView: View {
                         .allowsHitTesting(false)
                 }
             }
-            .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous)
-                    .strokeBorder(FeyColor.stroke, lineWidth: 1)
-            }
+            .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: FeyRadius.lg, style: .continuous))
         }
     }
 
@@ -183,15 +169,13 @@ struct ImportView: View {
             if let extraction {
                 VStack(alignment: .leading, spacing: FeySpacing.sm) {
                     HStack(spacing: FeySpacing.sm) {
-                        Image(systemName: "doc.fill")
-                            .font(.system(size: 18))
-                            .foregroundStyle(FeyColor.accent)
+                        coverPreview(extraction)
 
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(extraction.fileName)
                                 .font(FeyFont.cardTitle)
                                 .foregroundStyle(FeyColor.ink)
-                                .lineLimit(1)
+                                .lineLimit(2)
                             Text("\(extraction.pageCount) pages, \(extraction.text.count) caractères lus")
                                 .font(FeyFont.micro)
                                 .foregroundStyle(FeyColor.inkTertiary)
@@ -209,7 +193,7 @@ struct ImportView: View {
                             systemImage: "eye"
                         )
                         .font(FeyFont.caption)
-                        .foregroundStyle(FeyColor.amber)
+                        .foregroundStyle(FeyColor.caution)
                     }
                 }
                 .feyCard(padding: FeySpacing.sm + 2, radius: FeyRadius.lg, elevated: false)
@@ -217,10 +201,11 @@ struct ImportView: View {
                 Button {
                     showFileImporter = true
                 } label: {
-                    VStack(spacing: FeySpacing.xs) {
-                        Image(systemName: "arrow.up.doc.fill")
-                            .font(.system(size: 26))
-                            .foregroundStyle(FeyColor.accent)
+                    VStack(spacing: FeySpacing.xxs) {
+                        Image(systemName: "arrow.up.doc")
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundStyle(FeyColor.ink)
+                            .padding(.bottom, FeySpacing.xxs)
                         Text("Choisir un PDF")
                             .font(FeyFont.cardTitle)
                             .foregroundStyle(FeyColor.ink)
@@ -230,10 +215,10 @@ struct ImportView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, FeySpacing.xl)
-                    .background(FeyColor.accentSoft, in: RoundedRectangle(cornerRadius: FeyRadius.lg, style: .continuous))
+                    .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: FeyRadius.xl, style: .continuous))
                     .overlay {
-                        RoundedRectangle(cornerRadius: FeyRadius.lg, style: .continuous)
-                            .strokeBorder(FeyColor.accentTint, style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
+                        RoundedRectangle(cornerRadius: FeyRadius.xl, style: .continuous)
+                            .strokeBorder(FeyColor.strokeStrong, style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
                     }
                 }
                 .buttonStyle(.plain)
@@ -249,14 +234,32 @@ struct ImportView: View {
                         .foregroundStyle(FeyColor.inkTertiary)
                 }
             }
-            .tint(FeyColor.accent)
+            .tint(FeyColor.ink)
+            .padding(.horizontal, FeySpacing.xxs)
+        }
+    }
+
+    @ViewBuilder
+    private func coverPreview(_ extraction: PDFExtraction) -> some View {
+        if let data = extraction.coverImage, let image = UIImage(data: data) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 44, height: 56)
+                .clipShape(RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
+        } else {
+            Image(systemName: "doc")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(FeyColor.ink)
+                .frame(width: 44, height: 56)
+                .background(FeyColor.surfaceMuted, in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
         }
     }
 
     private var aiNote: some View {
-        HStack(spacing: FeySpacing.xs) {
-            Image(systemName: "lock.fill")
-                .font(.system(size: 10, weight: .bold))
+        HStack(spacing: 6) {
+            Image(systemName: "lock")
+                .font(.system(size: 10, weight: .semibold))
             Text("Le traitement passe par vos Edge Functions Supabase. Modèle : \(AppConfig.aiModel).")
                 .font(FeyFont.micro)
                 .fixedSize(horizontal: false, vertical: true)
@@ -303,17 +306,20 @@ struct ImportView: View {
         let rawText: String
         let images: [Data]
         let fileName: String?
+        let cover: Data?
 
         switch kind {
         case .text:
             rawText = pastedText
             images = []
             fileName = nil
+            cover = nil
         case .pdf:
             guard let extraction else { return }
             rawText = extraction.text
             images = analyzeVisuals ? extraction.pageImages : []
             fileName = extraction.fileName
+            cover = extraction.coverImage
         }
 
         let request = CourseGenerationRequest(
@@ -340,8 +346,34 @@ struct ImportView: View {
                 source: kind == .pdf ? .pdf : .text,
                 rawText: rawText,
                 fileName: fileName,
+                coverImageData: cover,
                 in: modelContext
             )
+
+            let cards: [GeneratedFlashcard]
+            if offline {
+                cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
+            } else {
+                do {
+                    cards = try await aiService.generateFlashcards(
+                        FlashcardGenerationRequest(
+                            courseTitle: course.title,
+                            courseContext: course.contextSnippet(limit: 30_000),
+                            desiredCount: 12,
+                            existingFronts: []
+                        )
+                    )
+                } catch {
+                    // Les flashcards sont le produit principal : repli hors ligne plutôt qu'un cours vide.
+                    if isRecoverable(error) {
+                        cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
+                    } else {
+                        throw error
+                    }
+                }
+            }
+
+            try CourseRepository.addFlashcards(cards, to: course, in: modelContext)
             onCreated(course)
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription

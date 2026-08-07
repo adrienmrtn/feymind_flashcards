@@ -59,20 +59,21 @@ Deno.serve(async (request: Request) => {
     if (body.sourceName) sections.push(`Nom du fichier source : ${body.sourceName}`);
     if (text.length > 0) sections.push(`TEXTE EXTRAIT DU DOCUMENT :\n${text}`);
     if (visualNotes) sections.push(`DESCRIPTION DES VISUELS DU DOCUMENT :\n${visualNotes}`);
-    sections.push("Produis maintenant le JSON du cours.");
+    sections.push("Produis maintenant le JSON de la fiche.");
 
     const output = await callModel({
       prompt: sections.join("\n\n"),
       systemPrompt: COURSE_SYSTEM_PROMPT,
       model: body.model,
       temperature: 0.4,
-      maxTokens: 8_000,
+      maxTokens: 4_000,
     });
 
     const course = deepStripEmDashes(extractJSON<Record<string, unknown>>(output));
+    const contextText = typeof course.contextText === "string" ? course.contextText.trim() : "";
 
-    if (!Array.isArray(course.blocks) || course.blocks.length === 0) {
-      throw new FalError("Le modèle n'a pas produit de blocs de cours exploitables.", 502);
+    if (contextText.length < 40) {
+      throw new FalError("Le modèle n'a pas produit de contenu exploitable.", 502);
     }
 
     return jsonResponse({ course, usedVision: images.length > 0 && visualNotes.length > 0 });

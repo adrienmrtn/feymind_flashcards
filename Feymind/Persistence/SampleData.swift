@@ -4,7 +4,7 @@ import SwiftData
 /// Contenu de démonstration inséré au premier lancement pour que l'application
 /// soit immédiatement explorable, même sans clé IA.
 enum SampleData {
-    private static let seedKey = "feymind.didSeedSampleData"
+    static let seedKey = "feymind.didSeedSampleData"
 
     static func seedIfNeeded(in context: ModelContext) {
         let defaults = UserDefaults.standard
@@ -20,7 +20,7 @@ enum SampleData {
             let photosynthesis = try CourseRepository.save(
                 photosynthesisCourse,
                 source: .sample,
-                rawText: photosynthesisCourse.blocks.map(\.plainText).joined(separator: "\n"),
+                rawText: photosynthesisCourse.contextText,
                 accentIndex: 1,
                 in: context
             )
@@ -32,8 +32,8 @@ enum SampleData {
             let affine = try CourseRepository.save(
                 affineFunctionsCourse,
                 source: .sample,
-                rawText: affineFunctionsCourse.blocks.map(\.plainText).joined(separator: "\n"),
-                accentIndex: 0,
+                rawText: affineFunctionsCourse.contextText,
+                accentIndex: 4,
                 in: context
             )
             affine.createdAt = Date().addingTimeInterval(-86_400)
@@ -79,150 +79,18 @@ enum SampleData {
         subject: "SVT",
         emoji: "🌿",
         summary: "Comment les végétaux transforment la lumière en matière organique, des pigments chlorophylliens jusqu'au cycle de Calvin.",
-        readingMinutes: 7,
-        blocks: [
-            .paragraph(ParagraphBlock(text: "La photosynthèse est la réaction qui permet aux végétaux chlorophylliens de fabriquer de la **matière organique** à partir de matière minérale, en utilisant l'==énergie lumineuse==. C'est la ==porte d'entrée de l'énergie== dans presque toutes les chaînes alimentaires.")),
-
-            .callout(CalloutBlock(
-                variant: .memo,
-                title: "L'essentiel en une phrase",
-                text: "Lumière + CO₂ + eau donnent du glucose et du dioxygène, grâce à la ==chlorophylle== située dans les chloroplastes."
-            )),
-
-            .formula(FormulaBlock(
-                expression: "6 CO₂ + 6 H₂O + lumière → C₆H₁₂O₆ + 6 O₂",
-                caption: "Bilan global de la photosynthèse"
-            )),
-
-            .heading(HeadingBlock(level: 2, text: "1. Où se déroule la réaction ?")),
-
-            .paragraph(ParagraphBlock(text: "Tout se joue dans le **chloroplaste**, un organite délimité par une double membrane. Il contient des empilements de sacs aplatis, les *thylakoïdes*, baignés dans un liquide appelé ==stroma==.")),
-
-            .tree(TreeBlock(
-                title: "Organisation du chloroplaste",
-                root: TreeNode(
-                    label: "Chloroplaste",
-                    detail: "Organite de 5 à 10 µm",
-                    children: [
-                        TreeNode(label: "Thylakoïdes", detail: "Membranes empilées en granum", children: [
-                            TreeNode(label: "Chlorophylle a et b", detail: "Captent le bleu et le rouge", children: nil),
-                            TreeNode(label: "Caroténoïdes", detail: "Pigments accessoires", children: nil)
-                        ]),
-                        TreeNode(label: "Stroma", detail: "Milieu liquide riche en enzymes", children: [
-                            TreeNode(label: "Cycle de Calvin", detail: "Fixation du CO₂", children: nil)
-                        ])
-                    ]
-                )
-            )),
-
-            .heading(HeadingBlock(level: 2, text: "2. Les deux phases")),
-
-            .flow(FlowBlock(
-                title: "De la lumière au sucre",
-                steps: [
-                    StepItem(label: "Capture de la lumière", detail: "Les pigments excitent leurs électrons"),
-                    StepItem(label: "Photolyse de l'eau", detail: "H₂O se sépare, le O₂ est libéré"),
-                    StepItem(label: "Production d'ATP et de NADPH", detail: "Énergie chimique transportable"),
-                    StepItem(label: "Cycle de Calvin", detail: "Le CO₂ devient du glucose")
-                ]
-            )),
-
-            .comparison(ComparisonBlock(
-                title: "Phase claire et phase sombre",
-                columns: [
-                    ComparisonColumn(title: "Phase photochimique", items: [
-                        "Se déroule dans les thylakoïdes",
-                        "Nécessite directement la lumière",
-                        "Produit ATP, NADPH et O₂",
-                        "Très rapide, de l'ordre de la milliseconde"
-                    ]),
-                    ComparisonColumn(title: "Phase biochimique", items: [
-                        "Se déroule dans le stroma",
-                        "N'a pas besoin de lumière directe",
-                        "Consomme ATP et NADPH",
-                        "Fixe le CO₂ sur le ribulose"
-                    ])
-                ]
-            )),
-
-            .definition(DefinitionBlock(
-                term: "Photolyse de l'eau",
-                text: "Rupture de la molécule d'eau sous l'action de la lumière. Elle fournit les électrons nécessaires à la chaîne photosynthétique et libère le dioxygène que nous respirons."
-            )),
-
-            .heading(HeadingBlock(level: 2, text: "3. Le cycle de Calvin")),
-
-            .cycle(CycleBlock(
-                title: "Trois étapes qui se répètent",
-                steps: [
-                    StepItem(label: "Fixation", detail: "Le CO₂ se lie au RuBP grâce à la Rubisco"),
-                    StepItem(label: "Réduction", detail: "L'ATP et le NADPH forment du G3P"),
-                    StepItem(label: "Régénération", detail: "Le RuBP est reconstitué pour recommencer")
-                ]
-            )),
-
-            .callout(CalloutBlock(
-                variant: .warning,
-                title: "Piège classique",
-                text: "Le cycle de Calvin est souvent appelé « phase sombre », mais il ne se déroule **pas** la nuit : il dépend des produits fabriqués à la lumière."
-            )),
-
-            .heading(HeadingBlock(level: 2, text: "4. Les facteurs limitants")),
-
-            .paragraph(ParagraphBlock(text: "L'intensité de la photosynthèse dépend de plusieurs paramètres. Quand l'un d'eux est insuffisant, il devient le ==facteur limitant== et bloque le rendement, même si les autres sont optimaux.")),
-
-            .chart(ChartBlock(
-                title: "Rendement relatif selon l'intensité lumineuse",
-                caption: "Au-delà d'un certain seuil, la courbe plafonne : c'est la saturation lumineuse.",
-                bars: [
-                    ChartBar(label: "Obscurité", value: 0, unit: "%"),
-                    ChartBar(label: "Faible", value: 35, unit: "%"),
-                    ChartBar(label: "Moyenne", value: 78, unit: "%"),
-                    ChartBar(label: "Forte", value: 96, unit: "%"),
-                    ChartBar(label: "Saturation", value: 100, unit: "%")
-                ]
-            )),
-
-            .table(TableBlock(
-                headers: ["Facteur", "Effet si insuffisant", "Optimum courant"],
-                rows: [
-                    ["Lumière", "Moins d'ATP produit", "Forte, sans excès"],
-                    ["CO₂", "Cycle de Calvin ralenti", "0,1 % environ"],
-                    ["Température", "Enzymes moins actives", "25 à 30 °C"],
-                    ["Eau", "Fermeture des stomates", "Sol humide"]
-                ]
-            )),
-
-            .keyPoints(KeyPointsBlock(
-                title: "À retenir",
-                items: [
-                    "La photosynthèse convertit l'énergie lumineuse en énergie chimique.",
-                    "La phase photochimique produit ATP, NADPH et dioxygène.",
-                    "Le cycle de Calvin fixe le CO₂ pour former du glucose.",
-                    "Le rendement est plafonné par le facteur le plus limitant."
-                ]
-            )),
-
-            .timeline(TimelineBlock(
-                title: "Quelques découvertes clés",
-                events: [
-                    TimelineEvent(date: "1771", label: "Priestley", detail: "Les plantes « restaurent » l'air vicié"),
-                    TimelineEvent(date: "1779", label: "Ingenhousz", detail: "La lumière est indispensable"),
-                    TimelineEvent(date: "1948", label: "Calvin et Benson", detail: "Le cycle de fixation du carbone est décrit")
-                ]
-            )),
-
-            .quote(QuoteBlock(
-                text: "La feuille est une usine chimique qui fonctionne à l'énergie solaire, sans bruit et sans déchet.",
-                author: "Jean-Marie Pelt"
-            )),
-
-            .list(ListBlock(ordered: false, items: [
-                "Vérifier que vous savez replacer chaque étape dans le chloroplaste.",
-                "Savoir écrire le bilan chimique de mémoire.",
-                "Être capable d'expliquer un facteur limitant avec un exemple concret."
-            ]))
-        ]
+        contextText: """
+        La photosynthèse permet aux végétaux chlorophylliens de fabriquer de la matière organique à partir de matière minérale, en utilisant l'énergie lumineuse.
+        Bilan global : 6 CO₂ + 6 H₂O + lumière donnent C₆H₁₂O₆ + 6 O₂.
+        Tout se déroule dans le chloroplaste, qui contient les thylakoïdes empilés et le stroma.
+        La phase photochimique se déroule dans les thylakoïdes, dépend de la lumière et produit ATP, NADPH et dioxygène.
+        La phase biochimique se déroule dans le stroma, consomme ATP et NADPH et fixe le CO₂ sur le ribulose.
+        La photolyse de l'eau est la rupture de la molécule d'eau sous l'action de la lumière : elle fournit les électrons et libère le dioxygène.
+        Le cycle de Calvin comporte trois étapes : fixation du CO₂ par la Rubisco, réduction en G3P, régénération du RuBP.
+        Le cycle de Calvin est parfois appelé phase sombre, mais il dépend des produits fabriqués à la lumière.
+        Le rendement est plafonné par le facteur limitant : lumière, CO₂, température ou eau.
+        Les pigments qui captent la lumière sont la chlorophylle a et b, épaulées par les caroténoïdes.
+        """
     )
 
     static let photosynthesisCards: [GeneratedFlashcard] = [
@@ -243,60 +111,14 @@ enum SampleData {
         subject: "Mathématiques",
         emoji: "📐",
         summary: "Reconnaître, tracer et interpréter une fonction de la forme f(x) = ax + b.",
-        readingMinutes: 4,
-        blocks: [
-            .paragraph(ParagraphBlock(text: "Une fonction affine s'écrit toujours sous la forme **f(x) = ax + b**, où a et b sont deux nombres fixés. Le nombre ==a est le coefficient directeur== et ==b l'ordonnée à l'origine==.")),
-
-            .formula(FormulaBlock(expression: "f(x) = ax + b", caption: "Forme canonique d'une fonction affine")),
-
-            .definition(DefinitionBlock(
-                term: "Coefficient directeur",
-                text: "Il mesure la pente de la droite. Si a est positif la fonction est croissante, s'il est négatif elle est décroissante, et s'il est nul la fonction est constante."
-            )),
-
-            .comparison(ComparisonBlock(
-                title: "Lire le signe de a",
-                columns: [
-                    ComparisonColumn(title: "a > 0", items: ["Droite montante", "Fonction croissante", "Exemple : f(x) = 2x + 1"]),
-                    ComparisonColumn(title: "a < 0", items: ["Droite descendante", "Fonction décroissante", "Exemple : f(x) = -3x + 4"])
-                ]
-            )),
-
-            .heading(HeadingBlock(level: 2, text: "Tracer la droite")),
-
-            .flow(FlowBlock(
-                title: "Méthode en trois gestes",
-                steps: [
-                    StepItem(label: "Placer b", detail: "Le point (0 ; b) est l'ordonnée à l'origine"),
-                    StepItem(label: "Utiliser a", detail: "Avancer de 1 puis monter de a"),
-                    StepItem(label: "Tracer", detail: "Relier les deux points obtenus")
-                ]
-            )),
-
-            .callout(CalloutBlock(
-                variant: .tip,
-                title: "Astuce de calcul",
-                text: "Pour deux points connus, a = (y₂ - y₁) / (x₂ - x₁). Retenez-le comme la ==variation verticale divisée par la variation horizontale==."
-            )),
-
-            .table(TableBlock(
-                headers: ["Fonction", "a", "b", "Sens de variation"],
-                rows: [
-                    ["f(x) = 2x + 3", "2", "3", "Croissante"],
-                    ["g(x) = -x + 1", "-1", "1", "Décroissante"],
-                    ["h(x) = 5", "0", "5", "Constante"]
-                ]
-            )),
-
-            .keyPoints(KeyPointsBlock(
-                title: "À retenir",
-                items: [
-                    "La représentation graphique d'une fonction affine est toujours une droite.",
-                    "a se lit comme une pente, b comme un point de départ.",
-                    "Une fonction linéaire est une fonction affine avec b = 0."
-                ]
-            ))
-        ]
+        contextText: """
+        Une fonction affine s'écrit f(x) = ax + b, où a est le coefficient directeur et b l'ordonnée à l'origine.
+        Le coefficient directeur mesure la pente de la droite : positif la fonction croît, négatif elle décroît, nul elle est constante.
+        Pour deux points connus, a = (y₂ - y₁) / (x₂ - x₁), soit la variation verticale divisée par la variation horizontale.
+        Pour tracer la droite : placer le point (0 ; b), avancer de 1 puis monter de a, relier les deux points.
+        La représentation graphique d'une fonction affine est toujours une droite.
+        Une fonction linéaire est une fonction affine dont l'ordonnée à l'origine b vaut 0.
+        """
     )
 
     static let affineFunctionsCards: [GeneratedFlashcard] = [

@@ -39,7 +39,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Backend")
                 } footer: {
-                    Text("Les appels passent par les Edge Functions generate-course, generate-flashcards et explain-passage. La clé fal.ai reste côté serveur, dans le secret FAL_KEY.")
+                    Text("Les appels passent par les Edge Functions generate-course et generate-flashcards. La clé fal.ai reste côté serveur, dans le secret FAL_KEY.")
                 }
 
                 Section("Modèle") {
@@ -73,6 +73,9 @@ struct SettingsView: View {
                     LabeledContent("Répétition espacée", value: "SM-2, réglages Anki")
                 }
             }
+            .scrollContentBackground(.hidden)
+            .feyScreenBackground()
+            .tint(FeyColor.ink)
             .navigationTitle("Réglages")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -84,6 +87,7 @@ struct SettingsView: View {
                         dismiss()
                     }
                     .font(FeyFont.cardTitle)
+                    .foregroundStyle(FeyColor.ink)
                 }
             }
             .confirmationDialog(
@@ -108,9 +112,6 @@ struct SettingsView: View {
     private func eraseEverything() {
         try? modelContext.delete(model: ReviewLog.self)
         try? modelContext.delete(model: Flashcard.self)
-        try? modelContext.delete(model: TextHighlight.self)
-        try? modelContext.delete(model: CoursePodcast.self)
-        try? modelContext.delete(model: CourseBlockEntity.self)
         try? modelContext.delete(model: Course.self)
         try? modelContext.save()
         dismiss()

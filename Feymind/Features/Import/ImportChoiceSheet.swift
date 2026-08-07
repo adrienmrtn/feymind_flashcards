@@ -23,14 +23,7 @@ enum ImportKind: String, Identifiable {
     var systemImage: String {
         switch self {
         case .text: "text.alignleft"
-        case .pdf: "doc.fill"
-        }
-    }
-
-    var tint: Color {
-        switch self {
-        case .text: FeyColor.mint
-        case .pdf: FeyColor.accent
+        case .pdf: "doc"
         }
     }
 }
@@ -41,15 +34,16 @@ struct ImportChoiceSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: FeySpacing.md) {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Nouveau cours")
                     .font(FeyFont.screenTitle)
                     .foregroundStyle(FeyColor.ink)
-                Text("Feymind met en forme le contenu, puis crée vos flashcards.")
+                    .tracking(FeyTracking.tight)
+                Text("Feymind transforme le contenu en flashcards à réviser.")
                     .font(FeyFont.caption)
                     .foregroundStyle(FeyColor.inkTertiary)
             }
-            .padding(.top, FeySpacing.sm)
+            .padding(.top, FeySpacing.md)
 
             VStack(spacing: FeySpacing.sm) {
                 ForEach([ImportKind.pdf, ImportKind.text]) { kind in
@@ -75,10 +69,10 @@ struct ImportChoiceSheet: View {
     private func optionRow(_ kind: ImportKind) -> some View {
         HStack(spacing: FeySpacing.sm) {
             Image(systemName: kind.systemImage)
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(kind.tint)
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(FeyColor.ink)
                 .frame(width: 46, height: 46)
-                .background(kind.tint.opacity(0.11), in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
+                .background(FeyColor.surfaceMuted, in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(kind.title)
@@ -92,8 +86,8 @@ struct ImportChoiceSheet: View {
             Spacer(minLength: 0)
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(FeyColor.inkTertiary.opacity(0.6))
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(FeyColor.inkTertiary.opacity(0.7))
         }
         .feyCard(padding: FeySpacing.sm + 2, radius: FeyRadius.lg, elevated: false)
         .contentShape(Rectangle())
@@ -101,11 +95,11 @@ struct ImportChoiceSheet: View {
 
     private var comingSoonRow: some View {
         HStack(spacing: FeySpacing.sm) {
-            Image(systemName: "globe.europe.africa.fill")
-                .font(.system(size: 17, weight: .semibold))
+            Image(systemName: "globe.europe.africa")
+                .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(FeyColor.inkTertiary)
                 .frame(width: 46, height: 46)
-                .background(FeyColor.surfaceMuted, in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
+                .background(FeyColor.surfaceMuted, in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Depuis la bibliothèque")
@@ -118,10 +112,10 @@ struct ImportChoiceSheet: View {
 
             Spacer(minLength: 0)
 
-            FeyChip(text: "Bientôt", tint: FeyColor.inkTertiary)
+            FeyChip(text: "Bientôt")
         }
         .padding(FeySpacing.sm + 2)
-        .background(FeyColor.surfaceMuted.opacity(0.5), in: RoundedRectangle(cornerRadius: FeyRadius.lg, style: .continuous))
+        .background(FeyColor.surfaceMuted.opacity(0.6), in: RoundedRectangle(cornerRadius: FeyRadius.lg, style: .continuous))
     }
 }
 
@@ -129,6 +123,6 @@ struct ImportChoiceSheet: View {
     Color.clear
         .sheet(isPresented: .constant(true)) {
             ImportChoiceSheet { _ in }
-                .presentationDetents([.height(320)])
+                .presentationDetents([.height(330)])
         }
 }

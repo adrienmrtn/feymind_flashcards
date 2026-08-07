@@ -2,13 +2,14 @@ import Foundation
 import SwiftData
 
 enum CourseRepository {
-    /// Transforme un cours généré en entités SwiftData et l'enregistre immédiatement.
+    /// Enregistre un cours analysé, sans ses cartes.
     @discardableResult
     static func save(
         _ generated: GeneratedCourse,
         source: CourseSource,
         rawText: String,
         fileName: String? = nil,
+        coverImageData: Data? = nil,
         accentIndex: Int? = nil,
         in context: ModelContext
     ) throws -> Course {
@@ -25,15 +26,10 @@ enum CourseRepository {
             source: source,
             sourceFileName: fileName,
             rawText: rawText,
-            readingMinutes: clean.readingMinutes ?? TextSanitizer.estimatedReadingMinutes(for: rawText)
+            contextText: clean.contextText,
+            coverImageData: coverImageData
         )
         context.insert(course)
-
-        for (position, payload) in clean.blocks.enumerated() {
-            let entity = CourseBlockEntity(position: position, payload: payload)
-            entity.course = course
-            context.insert(entity)
-        }
 
         try context.save()
         return course

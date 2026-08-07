@@ -15,41 +15,6 @@ struct FlashcardGenerationRequest {
     var existingFronts: [String]
 }
 
-struct ExplainRequest {
-    var selection: String
-    var courseTitle: String
-    var courseContext: String
-    /// Angle demandé par l'étudiant (explication simple, exemple, etc.).
-    var angle: ExplainAngle
-}
-
-enum ExplainAngle: String, CaseIterable, Identifiable {
-    case explain
-    case simpler
-    case example
-    case why
-
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .explain: "Expliquer"
-        case .simpler: "Plus simple"
-        case .example: "Un exemple"
-        case .why: "Pourquoi ?"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .explain: "sparkles"
-        case .simpler: "figure.child"
-        case .example: "list.bullet.rectangle"
-        case .why: "questionmark.circle"
-        }
-    }
-}
-
 struct GeneratedFlashcard: Codable, Hashable {
     var front: String
     var back: String
@@ -85,6 +50,4 @@ enum AIServiceError: LocalizedError {
 protocol AIService {
     func generateCourse(_ request: CourseGenerationRequest) async throws -> GeneratedCourse
     func generateFlashcards(_ request: FlashcardGenerationRequest) async throws -> [GeneratedFlashcard]
-    func explain(_ request: ExplainRequest) async throws -> String
-    func generatePodcast(_ request: PodcastGenerationRequest) async throws -> GeneratedPodcast
 }
