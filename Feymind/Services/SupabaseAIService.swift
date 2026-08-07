@@ -64,26 +64,6 @@ struct SupabaseAIService: AIService {
         return cards
     }
 
-    // MARK: - Explication d'un passage
-
-    func explain(_ request: ExplainRequest) async throws -> String {
-        let payload: [String: Any] = [
-            "selection": String(request.selection.prefix(4_000)),
-            "title": request.courseTitle,
-            "context": String(request.courseContext.prefix(20_000)),
-            "angle": request.angle.rawValue,
-            "model": AppConfig.aiModel
-        ]
-
-        let data = try await post(function: "explain-passage", payload: payload)
-        let envelope = try decodeEnvelope(data)
-
-        guard let answer = envelope["answer"] as? String, !answer.isEmpty else {
-            throw AIServiceError.invalidResponse
-        }
-        return answer
-    }
-
     // MARK: - Transport
 
     private func post(function: String, payload: [String: Any]) async throws -> Data {

@@ -1,61 +1,106 @@
 import SwiftUI
 
-/// Vignette de cours utilisée sur le tableau de bord et dans « Mes cours ».
-struct CourseCard: View {
+/// Grande vignette de cours, avec sa couverture.
+struct CourseCoverCard: View {
     let course: Course
-    var showsProgress: Bool = true
-
-    private var accent: Color { Color(hexString: course.accentHex) }
+    var height: CGFloat = 208
 
     private var dueCount: Int { course.dueCards.count }
 
     var body: some View {
-        HStack(alignment: .top, spacing: FeySpacing.sm) {
-            Text(course.emoji)
-                .font(.system(size: 22))
-                .frame(width: 44, height: 44)
-                .background(accent.opacity(0.10), in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
+        ZStack(alignment: .bottomLeading) {
+            CourseCover(course: course, emojiSize: 46)
+            FeyCoverScrim()
 
             VStack(alignment: .leading, spacing: 5) {
+                if let subject = course.subject?.nilIfBlank {
+                    FeyGlassChip(text: subject)
+                        .padding(.bottom, 2)
+                }
+
                 Text(course.title)
-                    .font(FeyFont.cardTitle)
-                    .foregroundStyle(FeyColor.ink)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(FeyColor.onInk)
+                    .tracking(FeyTracking.tight)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
 
-                if !course.summary.isEmpty {
-                    Text(course.summary)
-                        .font(.system(size: 13))
-                        .foregroundStyle(FeyColor.inkTertiary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                }
+                Text(metaLabel)
+                    .font(FeyFont.caption)
+                    .foregroundStyle(Color.white.opacity(0.78))
+            }
+            .padding(FeySpacing.md)
+        }
+        .frame(height: height)
+        .frame(maxWidth: .infinity)
+        .clipShape(RoundedRectangle(cornerRadius: FeyRadius.xl, style: .continuous))
+        .overlay(alignment: .topTrailing) {
+            if dueCount > 0 {
+                Text("\(dueCount) à réviser")
+                    .font(FeyFont.micro)
+                    .foregroundStyle(FeyColor.ink)
+                    .padding(.vertical, 7)
+                    .padding(.horizontal, 12)
+                    .background(FeyColor.surface, in: Capsule())
+                    .padding(FeySpacing.sm)
+            }
+        }
+        .feySoftShadow(strength: 0.1)
+    }
 
-                HStack(spacing: 6) {
-                    if let subject = course.subject?.nilIfBlank {
-                        FeyChip(text: subject, tint: accent)
-                    }
-                    FeyChip(
-                        text: "\(course.cards.count) cartes",
-                        systemImage: "rectangle.on.rectangle",
-                        tint: FeyColor.inkTertiary
-                    )
-                    if showsProgress, dueCount > 0 {
-                        FeyChip(text: "\(dueCount) à revoir", tint: accent, filled: true)
-                    }
-                }
-                .padding(.top, 1)
+    private var metaLabel: String {
+        let total = course.cards.count
+        guard total > 0 else { return "Aucune carte pour l'instant" }
+        return dueCount > 0
+            ? "\(total) cartes"
+            : "\(total) cartes, tout est à jour"
+    }
+}
+
+/// Ligne compacte utilisée dans « Mes cours ».
+struct CourseRow: View {
+    let course: Course
+
+    private var dueCount: Int { course.dueCards.count }
+
+    var body: some View {
+        HStack(spacing: FeySpacing.sm) {
+            CourseCover(course: course, emojiSize: 24)
+                .frame(width: 58, height: 58)
+                .clipShape(RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(course.title)
+                    .font(FeyFont.cardTitle)
+                    .foregroundStyle(FeyColor.ink)
+                    .lineLimit(1)
+                    .multilineTextAlignment(.leading)
+
+                Text(metaLabel)
+                    .font(FeyFont.caption)
+                    .foregroundStyle(FeyColor.inkTertiary)
+                    .lineLimit(1)
             }
 
-            Spacer(minLength: 0)
+            Spacer(minLength: FeySpacing.xs)
+
+            if dueCount > 0 {
+                FeyChip(text: "\(dueCount)", tint: FeyColor.ink, filled: true)
+            }
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(FeyColor.inkTertiary.opacity(0.6))
-                .padding(.top, 6)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(FeyColor.inkTertiary.opacity(0.7))
         }
-        .feyCard(padding: FeySpacing.sm + 2, radius: FeyRadius.lg, elevated: false)
+        .feyCard(padding: FeySpacing.sm, radius: FeyRadius.lg, elevated: false)
         .contentShape(Rectangle())
+    }
+
+    private var metaLabel: String {
+        var parts: [String] = []
+        if let subject = course.subject?.nilIfBlank { parts.append(subject) }
+        parts.append("\(course.cards.count) cartes")
+        return parts.joined(separator: " · ")
     }
 }
 
@@ -76,81 +121,81 @@ struct TodayCTACard: View {
         VStack(alignment: .leading, spacing: FeySpacing.md) {
             HStack(alignment: .center, spacing: FeySpacing.md) {
                 ZStack {
-                    FeyProgressRing(progress: progress, lineWidth: 9, tint: .white, track: Color.white.opacity(0.28))
-                        .frame(width: 68, height: 68)
+                    FeyProgressRing(
+                        progress: progress,
+                        lineWidth: 8,
+                        tint: FeyColor.onInk,
+                        track: Color.white.opacity(0.22)
+                    )
+                    .frame(width: 66, height: 66)
 
                     VStack(spacing: 0) {
                         Text("\(dueCount)")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
+                            .font(.system(size: 21, weight: .semibold))
+                            .foregroundStyle(FeyColor.onInk)
                         Text(dueCount > 1 ? "cartes" : "carte")
-                            .font(.system(size: 10, weight: .semibold, design: .rounded))
-                            .foregroundStyle(Color.white.opacity(0.8))
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(Color.white.opacity(0.7))
                     }
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(dueCount > 0 ? "Révisions du jour" : "Tout est à jour")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .font(FeyFont.pageTitle)
+                        .foregroundStyle(FeyColor.onInk)
+                        .tracking(FeyTracking.tight)
 
                     Text(subtitle)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Color.white.opacity(0.85))
+                        .font(FeyFont.caption)
+                        .foregroundStyle(Color.white.opacity(0.72))
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer(minLength: 0)
             }
 
-            HStack(spacing: FeySpacing.sm) {
+            HStack(spacing: FeySpacing.xs) {
                 Button(action: action) {
                     HStack(spacing: 6) {
                         Image(systemName: dueCount > 0 ? "play.fill" : "arrow.clockwise")
+                            .font(.system(size: 12, weight: .semibold))
                         Text(dueCount > 0 ? "Réviser maintenant" : "Réviser en avance")
                     }
                     .font(FeyFont.cardTitle)
-                    .foregroundStyle(FeyColor.accentDeep)
+                    .foregroundStyle(FeyColor.ink)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 13)
-                    .background(.white, in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
+                    .padding(.vertical, 15)
+                    .background(FeyColor.surface, in: Capsule())
                 }
                 .buttonStyle(.plain)
 
                 if streak > 0 {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 5) {
                         Image(systemName: "flame.fill")
-                            .font(.system(size: 13, weight: .bold))
+                            .font(.system(size: 12, weight: .semibold))
                         Text("\(streak)")
                             .font(FeyFont.cardTitle)
                     }
-                    .foregroundStyle(.white)
-                    .padding(.vertical, 13)
-                    .padding(.horizontal, 15)
-                    .background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
+                    .foregroundStyle(FeyColor.onInk)
+                    .padding(.vertical, 15)
+                    .padding(.horizontal, 17)
+                    .background(Color.white.opacity(0.14), in: Capsule())
                 }
             }
         }
         .padding(FeySpacing.md)
-        .background(
-            LinearGradient(
-                colors: [FeyColor.accent, FeyColor.accentDeep],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            ),
-            in: RoundedRectangle(cornerRadius: FeyRadius.xl, style: .continuous)
-        )
-        .shadow(color: FeyColor.accent.opacity(0.28), radius: 18, x: 0, y: 10)
+        .background(FeyColor.ink, in: RoundedRectangle(cornerRadius: FeyRadius.xl, style: .continuous))
+        .feySoftShadow(strength: 0.14)
     }
 
     private var subtitle: String {
         if dueCount == 0 {
             return reviewedToday > 0
-                ? "\(reviewedToday) cartes déjà travaillées aujourd'hui."
-                : "Aucune carte n'arrive à échéance aujourd'hui."
+                ? "\(reviewedToday) cartes travaillées aujourd'hui."
+                : "Aucune carte n'arrive à échéance."
         }
         return reviewedToday > 0
             ? "\(reviewedToday) déjà faites, il en reste \(dueCount)."
-            : "Prenez quelques minutes pour ancrer vos cours."
+            : "Quelques minutes suffisent."
     }
 }

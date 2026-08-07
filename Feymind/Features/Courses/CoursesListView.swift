@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// Troisième page : tous les cours importés, plus ceux repris depuis la bibliothèque.
+/// Tous les cours importés, plus ceux repris depuis la bibliothèque.
 struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
 
@@ -56,73 +56,88 @@ struct CoursesListView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            Group {
-                if courses.isEmpty {
-                    ScrollView {
-                        FeyEmptyState(
-                            systemImage: "books.vertical.fill",
-                            title: "Votre bibliothèque est vide",
-                            message: "Les cours que vous importez depuis l'accueil apparaîtront ici."
-                        )
-                        .padding(.top, FeySpacing.xxl)
-                    }
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: FeySpacing.md) {
-                            sortPicker
-
-                            if !imported.isEmpty {
-                                section(title: "Mes imports", courses: imported)
-                            }
-
-                            if !fromLibrary.isEmpty {
-                                section(title: "Depuis la bibliothèque", courses: fromLibrary)
-                            }
-
-                            if filtered.isEmpty {
-                                FeyEmptyState(
-                                    systemImage: "magnifyingglass",
-                                    title: "Aucun résultat",
-                                    message: "Essayez un autre mot-clé."
-                                )
-                            }
-                        }
+            ScrollView {
+                VStack(alignment: .leading, spacing: FeySpacing.lg) {
+                    header
                         .padding(.horizontal, FeySpacing.screen)
-                        .padding(.top, FeySpacing.xs)
-                        .padding(.bottom, FeySpacing.xl)
+
+                    if !courses.isEmpty {
+                        SearchField(text: $searchText)
+                            .padding(.horizontal, FeySpacing.screen)
+
+                        sortPicker
                     }
+
+                    content
+                        .padding(.horizontal, FeySpacing.screen)
                 }
+                .padding(.top, FeySpacing.xs)
+                .padding(.bottom, FeyLayout.tabBarClearance)
             }
             .feyScreenBackground()
-            .navigationTitle("Mes cours")
-            .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $searchText, prompt: "Rechercher un cours")
+            .feyTabBar()
+            .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
             }
         }
     }
 
+    // MARK: - Sections
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(courses.isEmpty ? "Aucun cours" : "\(courses.count) cours")
+                .font(FeyFont.caption)
+                .foregroundStyle(FeyColor.inkTertiary)
+
+            Text("Mes cours")
+                .font(FeyFont.screenTitle)
+                .foregroundStyle(FeyColor.ink)
+                .tracking(FeyTracking.tight)
+        }
+        .padding(.top, FeySpacing.xs)
+    }
+
     private var sortPicker: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: FeySpacing.xs) {
                 ForEach(SortOrder.allCases) { order in
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) { sortOrder = order }
-                    } label: {
-                        Text(order.label)
-                            .font(FeyFont.caption)
-                            .foregroundStyle(order == sortOrder ? .white : FeyColor.inkSecondary)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 14)
-                            .background(order == sortOrder ? FeyColor.accent : FeyColor.surfaceMuted, in: Capsule())
+                    FeySelectChip(title: order.label, isSelected: order == sortOrder) {
+                        withAnimation(.easeOut(duration: 0.2)) { sortOrder = order }
                     }
-                    .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, FeySpacing.screen)
             .padding(.vertical, 2)
         }
         .scrollClipDisabled()
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if courses.isEmpty {
+            FeyEmptyState(
+                systemImage: "books.vertical",
+                title: "Votre liste est vide",
+                message: "Les cours que vous importez depuis l'accueil apparaîtront ici."
+            )
+        } else if filtered.isEmpty {
+            FeyEmptyState(
+                systemImage: "magnifyingglass",
+                title: "Aucun résultat",
+                message: "Essayez un autre mot-clé."
+            )
+        } else {
+            VStack(alignment: .leading, spacing: FeySpacing.lg) {
+                if !imported.isEmpty {
+                    section(title: "Mes imports", courses: imported)
+                }
+                if !fromLibrary.isEmpty {
+                    section(title: "Depuis la bibliothèque", courses: fromLibrary)
+                }
+            }
+        }
     }
 
     private func section(title: String, courses list: [Course]) -> some View {
@@ -133,7 +148,7 @@ struct CoursesListView: View {
                 Button {
                     path.append(course)
                 } label: {
-                    CourseCard(course: course)
+                    CourseRow(course: course)
                 }
                 .buttonStyle(.plain)
                 .contextMenu {
@@ -147,5 +162,38 @@ struct CoursesListView: View {
                 }
             }
         }
+    }
+}
+
+/// Champ de recherche en pilule blanche.
+private struct SearchField: View {
+    @Binding var text: String
+
+    var body: some View {
+        HStack(spacing: FeySpacing.xs) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(FeyColor.inkTertiary)
+
+            TextField("Rechercher un cours", text: $text)
+                .font(FeyFont.body)
+                .foregroundStyle(FeyColor.ink)
+                .autocorrectionDisabled()
+
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(FeyColor.inkTertiary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Effacer la recherche")
+            }
+        }
+        .padding(.vertical, 15)
+        .padding(.horizontal, FeySpacing.md)
+        .background(FeyColor.surface, in: Capsule())
     }
 }

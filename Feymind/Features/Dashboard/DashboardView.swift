@@ -1,6 +1,9 @@
 import SwiftData
 import SwiftUI
 
+/// Valeur du filtre par matière qui n'exclut rien.
+private let allSubjectsFilter = "Tous"
+
 struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
 
@@ -13,6 +16,7 @@ struct DashboardView: View {
     @State private var pendingImport: ImportKind?
     @State private var activeImport: ImportKind?
     @State private var showStudy = false
+    @State private var subjectFilter = allSubjectsFilter
 
     private var dueCards: [Flashcard] {
         allCards.filter { $0.isDue() }
@@ -22,37 +26,49 @@ struct DashboardView: View {
         reviewLogs.map(\.reviewedAt)
     }
 
+    private var subjects: [String] {
+        let names = Set(courses.compactMap { $0.subject?.nilIfBlank })
+        return [allSubjectsFilter] + names.sorted()
+    }
+
+    private var visibleCourses: [Course] {
+        guard subjectFilter != allSubjectsFilter else { return courses }
+        return courses.filter { $0.subject?.nilIfBlank == subjectFilter }
+    }
+
     var body: some View {
         NavigationStack(path: $path) {
-            ZStack(alignment: .bottomTrailing) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: FeySpacing.lg) {
-                        greeting
+            ScrollView {
+                VStack(alignment: .leading, spacing: FeySpacing.lg) {
+                    header
+                        .padding(.horizontal, FeySpacing.screen)
 
-                        TodayCTACard(
-                            dueCount: dueCards.count,
-                            reviewedToday: StudyStats.reviewsToday(reviewDates: reviewDates),
-                            streak: StudyStats.streak(reviewDates: reviewDates)
-                        ) {
-                            showStudy = true
-                        }
-
-                        statsRow
-                        recentCourses
+                    TodayCTACard(
+                        dueCount: dueCards.count,
+                        reviewedToday: StudyStats.reviewsToday(reviewDates: reviewDates),
+                        streak: StudyStats.streak(reviewDates: reviewDates)
+                    ) {
+                        showStudy = true
                     }
                     .padding(.horizontal, FeySpacing.screen)
-                    .padding(.top, FeySpacing.xs)
-                    .padding(.bottom, 96)
-                }
-                .feyScreenBackground()
 
-                FeyFloatingButton {
-                    showImportChoice = true
+                    if subjects.count > 2 {
+                        FeySelectChipRow(titles: subjects, selection: $subjectFilter)
+                    }
+
+                    coursesSection
+                        .padding(.horizontal, FeySpacing.screen)
+
+                    if !courses.isEmpty {
+                        statsRow
+                            .padding(.horizontal, FeySpacing.screen)
+                    }
                 }
-                .padding(.trailing, FeySpacing.screen)
-                .padding(.bottom, FeySpacing.lg)
+                .padding(.top, FeySpacing.xs)
+                .padding(.bottom, FeyLayout.tabBarClearance)
             }
-            .navigationBarTitleDisplayMode(.inline)
+            .feyScreenBackground()
+            .feyTabBar()
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
@@ -63,9 +79,9 @@ struct DashboardView: View {
                 pendingImport = kind
                 showImportChoice = false
             }
-            .presentationDetents([.height(320)])
+            .presentationDetents([.height(330)])
             .presentationDragIndicator(.visible)
-            .presentationCornerRadius(28)
+            .presentationCornerRadius(FeyRadius.xxl)
         }
         .fullScreenCover(item: $activeImport) { kind in
             ImportView(kind: kind) { course in
@@ -80,56 +96,78 @@ struct DashboardView: View {
 
     // MARK: - Sections
 
-    private var greeting: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(StudyStats.formattedDate())
-                .font(FeyFont.caption)
-                .foregroundStyle(FeyColor.inkTertiary)
+    private var header: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(StudyStats.formattedDate())
+                    .font(FeyFont.caption)
+                    .foregroundStyle(FeyColor.inkTertiary)
 
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(StudyStats.greeting())
                     .font(FeyFont.screenTitle)
                     .foregroundStyle(FeyColor.ink)
-                Text("Feymind")
-                    .font(FeyFont.display(20))
-                    .foregroundStyle(FeyColor.accent)
+                    .tracking(FeyTracking.tight)
+            }
+
+            Spacer(minLength: FeySpacing.sm)
+
+            FeyCircleButton(
+                systemImage: "plus",
+                style: .dark,
+                size: 48,
+                accessibilityTitle: "Importer un cours"
+            ) {
+                showImportChoice = true
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, FeySpacing.xs)
+    }
+
+    @ViewBuilder
+    private var coursesSection: some View {
+        if courses.isEmpty {
+            FeyEmptyState(
+                systemImage: "square.and.arrow.down",
+                title: "Aucun cours",
+                message: "Importez un PDF ou collez vos notes : Feymind en fait des flashcards prêtes à réviser.",
+                actionTitle: "Importer un cours"
+            ) {
+                showImportChoice = true
+            }
+        } else {
+            VStack(alignment: .leading, spacing: FeySpacing.sm) {
+                FeySectionHeader(
+                    title: "Vos cours",
+                    subtitle: visibleCourses.count > 1 ? "\(visibleCourses.count) au total" : nil
+                )
+
+                ForEach(visibleCourses.prefix(6)) { course in
+                    Button {
+                        path.append(course)
+                    } label: {
+                        CourseCoverCard(course: course)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 
     private var statsRow: some View {
         HStack(spacing: FeySpacing.sm) {
-            statTile(
-                value: "\(courses.count)",
-                label: courses.count > 1 ? "cours" : "cours",
-                systemImage: "book.fill",
-                tint: FeyColor.accent
-            )
-            statTile(
-                value: "\(allCards.count)",
-                label: "cartes",
-                systemImage: "rectangle.on.rectangle",
-                tint: FeyColor.mint
-            )
+            statTile(value: "\(courses.count)", label: "cours")
+            statTile(value: "\(allCards.count)", label: "cartes")
             statTile(
                 value: "\(StudyStats.reviewsToday(reviewDates: reviewDates))",
-                label: "aujourd'hui",
-                systemImage: "checkmark.circle.fill",
-                tint: FeyColor.amber
+                label: "aujourd'hui"
             )
         }
     }
 
-    private func statTile(value: String, label: String, systemImage: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Image(systemName: systemImage)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(tint)
-
+    private func statTile(value: String, label: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
             Text(value)
-                .font(FeyFont.display(21))
+                .font(FeyFont.display(22))
                 .foregroundStyle(FeyColor.ink)
 
             Text(label)
@@ -138,37 +176,6 @@ struct DashboardView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .feyCard(padding: FeySpacing.sm + 2, radius: FeyRadius.lg, elevated: false)
-    }
-
-    @ViewBuilder
-    private var recentCourses: some View {
-        VStack(alignment: .leading, spacing: FeySpacing.sm) {
-            FeySectionHeader(
-                title: "Cours récents",
-                subtitle: courses.isEmpty ? nil : "\(courses.count) au total"
-            )
-
-            if courses.isEmpty {
-                FeyEmptyState(
-                    systemImage: "square.and.arrow.down",
-                    title: "Aucun cours pour l'instant",
-                    message: "Importez un PDF ou collez vos notes : Feymind en fait des flashcards prêtes à réviser.",
-                    actionTitle: "Importer un cours"
-                ) {
-                    showImportChoice = true
-                }
-                .feyCard(padding: FeySpacing.xs, radius: FeyRadius.xl, elevated: false)
-            } else {
-                ForEach(courses.prefix(5)) { course in
-                    Button {
-                        path.append(course)
-                    } label: {
-                        CourseCard(course: course)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
     }
 
     // MARK: - Import

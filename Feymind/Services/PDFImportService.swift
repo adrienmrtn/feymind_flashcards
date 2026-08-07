@@ -6,6 +6,8 @@ struct PDFExtraction {
     var text: String
     /// Pages rendues en JPEG pour l'analyse visuelle des schémas.
     var pageImages: [Data]
+    /// Première page, conservée comme couverture du cours.
+    var coverImage: Data?
     var pageCount: Int
     var fileName: String
 
@@ -35,6 +37,9 @@ enum PDFImportService {
         var maxImageDimension: CGFloat = 1400
         var jpegQuality: CGFloat = 0.55
         var includeImages: Bool = true
+        /// La couverture est affichée dans l'application : plus petite, mieux compressée.
+        var coverDimension: CGFloat = 900
+        var coverQuality: CGFloat = 0.7
 
         static let `default` = Options()
     }
@@ -61,9 +66,14 @@ enum PDFImportService {
 
         guard !text.isEmpty || !images.isEmpty else { throw PDFImportError.empty }
 
+        let cover = document.page(at: 0).flatMap {
+            render($0, maxDimension: options.coverDimension, quality: options.coverQuality)
+        }
+
         return PDFExtraction(
             text: text,
             pageImages: images,
+            coverImage: cover,
             pageCount: document.pageCount,
             fileName: url.deletingPathExtension().lastPathComponent
         )
@@ -72,33 +82,29 @@ enum PDFImportService {
     /// Rend un échantillon de pages réparti sur tout le document.
     private static func renderPages(of document: PDFDocument, options: Options) -> [Data] {
         let indices = sampledPageIndices(pageCount: document.pageCount, limit: options.maxImagePages)
-        var result: [Data] = []
-
-        for index in indices {
-            guard let page = document.page(at: index) else { continue }
-            let bounds = page.bounds(for: .mediaBox)
-            guard bounds.width > 0, bounds.height > 0 else { continue }
-
-            let scale = min(
-                options.maxImageDimension / max(bounds.width, bounds.height),
-                2.0
-            )
-            let size = CGSize(width: bounds.width * scale, height: bounds.height * scale)
-
-            let renderer = UIGraphicsImageRenderer(size: size)
-            let image = renderer.image { context in
-                UIColor.white.setFill()
-                context.fill(CGRect(origin: .zero, size: size))
-                context.cgContext.translateBy(x: 0, y: size.height)
-                context.cgContext.scaleBy(x: scale, y: -scale)
-                page.draw(with: .mediaBox, to: context.cgContext)
-            }
-
-            if let data = image.jpegData(compressionQuality: options.jpegQuality) {
-                result.append(data)
+        return indices.compactMap { index in
+            document.page(at: index).flatMap {
+                render($0, maxDimension: options.maxImageDimension, quality: options.jpegQuality)
             }
         }
-        return result
+    }
+
+    private static func render(_ page: PDFPage, maxDimension: CGFloat, quality: CGFloat) -> Data? {
+        let bounds = page.bounds(for: .mediaBox)
+        guard bounds.width > 0, bounds.height > 0 else { return nil }
+
+        let scale = min(maxDimension / max(bounds.width, bounds.height), 2.0)
+        let size = CGSize(width: bounds.width * scale, height: bounds.height * scale)
+
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let image = renderer.image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+            context.cgContext.translateBy(x: 0, y: size.height)
+            context.cgContext.scaleBy(x: scale, y: -scale)
+            page.draw(with: .mediaBox, to: context.cgContext)
+        }
+        return image.jpegData(compressionQuality: quality)
     }
 
     private static func sampledPageIndices(pageCount: Int, limit: Int) -> [Int] {

@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// Cinquième page : profil, amis et réglages.
+/// Profil, statistiques et réglages.
 struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
 
@@ -17,6 +17,7 @@ struct ProfileView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: FeySpacing.lg) {
+                    header
                     identityCard
                     statsGrid
                     activityChart
@@ -24,53 +25,56 @@ struct ProfileView: View {
                 }
                 .padding(.horizontal, FeySpacing.screen)
                 .padding(.top, FeySpacing.xs)
-                .padding(.bottom, FeySpacing.xl)
+                .padding(.bottom, FeyLayout.tabBarClearance)
             }
             .feyScreenBackground()
-            .navigationTitle("Profil")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gearshape.fill")
-                            .foregroundStyle(FeyColor.inkSecondary)
-                    }
-                }
-            }
+            .feyTabBar()
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
         }
     }
 
-    private var identityCard: some View {
-        HStack(spacing: FeySpacing.md) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [FeyColor.accent, FeyColor.accentDeep],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 62, height: 62)
-                Image(systemName: "person.fill")
-                    .font(.system(size: 26))
-                    .foregroundStyle(.white)
-            }
-
+    private var header: some View {
+        HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("Étudiant")
-                    .font(FeyFont.sectionTitle)
-                    .foregroundStyle(FeyColor.ink)
-                Text("Compte local, aucune donnée envoyée")
+                Text("Compte local")
                     .font(FeyFont.caption)
                     .foregroundStyle(FeyColor.inkTertiary)
-                FeyChip(text: "Connexion bientôt", systemImage: "lock.fill", tint: FeyColor.accent)
-                    .padding(.top, 2)
+
+                Text("Profil")
+                    .font(FeyFont.screenTitle)
+                    .foregroundStyle(FeyColor.ink)
+                    .tracking(FeyTracking.tight)
+            }
+
+            Spacer(minLength: FeySpacing.sm)
+
+            FeyCircleButton(systemImage: "gearshape", accessibilityTitle: "Réglages") {
+                showSettings = true
+            }
+        }
+        .padding(.top, FeySpacing.xs)
+    }
+
+    private var identityCard: some View {
+        HStack(spacing: FeySpacing.md) {
+            Image(systemName: "person.fill")
+                .font(.system(size: 24))
+                .foregroundStyle(FeyColor.onInk)
+                .frame(width: 62, height: 62)
+                .background(FeyColor.ink, in: Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Étudiant")
+                    .font(FeyFont.pageTitle)
+                    .foregroundStyle(FeyColor.ink)
+                    .tracking(FeyTracking.tight)
+                Text("Aucune donnée envoyée hors des appels IA")
+                    .font(FeyFont.caption)
+                    .foregroundStyle(FeyColor.inkTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer(minLength: 0)
@@ -86,19 +90,16 @@ struct ProfileView: View {
                 columns: [GridItem(.flexible(), spacing: FeySpacing.sm), GridItem(.flexible(), spacing: FeySpacing.sm)],
                 spacing: FeySpacing.sm
             ) {
-                statTile("\(StudyStats.streak(reviewDates: reviewDates))", "jours de série", "flame.fill", FeyColor.amber)
-                statTile("\(logs.count)", "révisions totales", "checkmark.circle.fill", FeyColor.mint)
-                statTile("\(courses.count)", "cours", "book.fill", FeyColor.accent)
-                statTile("\(cards.count)", "flashcards", "rectangle.on.rectangle", FeyColor.sky)
+                statTile("\(StudyStats.streak(reviewDates: reviewDates))", "jours de série")
+                statTile("\(logs.count)", "révisions totales")
+                statTile("\(courses.count)", "cours")
+                statTile("\(cards.count)", "flashcards")
             }
         }
     }
 
-    private func statTile(_ value: String, _ label: String, _ icon: String, _ tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(tint)
+    private func statTile(_ value: String, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
             Text(value)
                 .font(FeyFont.display(24))
                 .foregroundStyle(FeyColor.ink)
@@ -119,12 +120,10 @@ struct ProfileView: View {
 
             HStack(alignment: .bottom, spacing: 5) {
                 ForEach(Array(counts.enumerated()), id: \.offset) { _, count in
-                    VStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 3, style: .continuous)
-                            .fill(count > 0 ? FeyColor.accent.opacity(0.85) : FeyColor.surfaceSunken)
-                            .frame(height: max(6, CGFloat(count) / CGFloat(maximum) * 76))
-                    }
-                    .frame(maxWidth: .infinity)
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .fill(count > 0 ? FeyColor.ink : FeyColor.surfaceSunken)
+                        .frame(height: max(6, CGFloat(count) / CGFloat(maximum) * 76))
+                        .frame(maxWidth: .infinity)
                 }
             }
             .frame(height: 84, alignment: .bottom)
@@ -136,14 +135,17 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: FeySpacing.sm) {
             FeySectionHeader(title: "Amis")
 
-            VStack(spacing: FeySpacing.sm) {
-                Image(systemName: "person.2.fill")
-                    .font(.system(size: 24))
-                    .foregroundStyle(FeyColor.accent)
+            VStack(spacing: FeySpacing.xs) {
+                Image(systemName: "person.2")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(FeyColor.inkTertiary)
+                    .frame(width: 56, height: 56)
+                    .background(FeyColor.surfaceMuted, in: Circle())
 
                 Text("Révisez à plusieurs")
                     .font(FeyFont.cardTitle)
                     .foregroundStyle(FeyColor.ink)
+                    .padding(.top, FeySpacing.xxs)
 
                 Text("Ajoutez vos amis, comparez vos séries et partagez vos paquets. Cette section s'activera avec les comptes.")
                     .font(FeyFont.body)
@@ -151,12 +153,7 @@ struct ProfileView: View {
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
-            .padding(FeySpacing.lg)
-            .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: FeyRadius.xl, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: FeyRadius.xl, style: .continuous)
-                    .strokeBorder(FeyColor.stroke, lineWidth: 1)
-            }
+            .feyCard(padding: FeySpacing.lg, radius: FeyRadius.xl, elevated: false)
         }
     }
 }

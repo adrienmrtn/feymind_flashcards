@@ -33,24 +33,21 @@ final class Course {
     var subject: String?
     var summary: String = ""
     var emoji: String = "📘"
-    var accentHex: String = "5B54E8"
+    var accentHex: String = "2F4858"
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
     var sourceRaw: String = CourseSource.text.rawValue
     var sourceFileName: String?
-    /// Texte source brut, conservé pour régénérer des flashcards ou expliquer un passage.
+    /// Texte source brut, conservé pour régénérer des flashcards.
     var rawText: String = ""
-    var readingMinutes: Int = 5
+    /// Contenu analysé par l'IA, servant de contexte aux nouvelles cartes.
+    var contextText: String = ""
+    /// Première page du PDF importé, utilisée comme couverture.
+    @Attribute(.externalStorage) var coverImageData: Data?
     var isFromLibrary: Bool = false
-
-    @Relationship(deleteRule: .cascade, inverse: \CourseBlockEntity.course)
-    var blockEntities: [CourseBlockEntity]? = []
 
     @Relationship(deleteRule: .cascade, inverse: \Flashcard.course)
     var flashcards: [Flashcard]? = []
-
-    @Relationship(deleteRule: .cascade, inverse: \TextHighlight.course)
-    var highlights: [TextHighlight]? = []
 
     init(
         id: UUID = UUID(),
@@ -58,11 +55,12 @@ final class Course {
         subject: String? = nil,
         summary: String = "",
         emoji: String = "📘",
-        accentHex: String = "5B54E8",
+        accentHex: String = "2F4858",
         source: CourseSource = .text,
         sourceFileName: String? = nil,
         rawText: String = "",
-        readingMinutes: Int = 5,
+        contextText: String = "",
+        coverImageData: Data? = nil,
         isFromLibrary: Bool = false
     ) {
         self.id = id
@@ -76,11 +74,10 @@ final class Course {
         self.sourceRaw = source.rawValue
         self.sourceFileName = sourceFileName
         self.rawText = rawText
-        self.readingMinutes = readingMinutes
+        self.contextText = contextText
+        self.coverImageData = coverImageData
         self.isFromLibrary = isFromLibrary
-        self.blockEntities = []
         self.flashcards = []
-        self.highlights = []
     }
 
     var source: CourseSource {
@@ -88,62 +85,30 @@ final class Course {
         set { sourceRaw = newValue.rawValue }
     }
 
-    /// Blocs triés dans l'ordre de lecture.
-    var orderedBlocks: [CourseBlockEntity] {
-        (blockEntities ?? []).sorted { $0.position < $1.position }
-    }
-
     var cards: [Flashcard] {
         flashcards ?? []
+    }
+
+    var orderedCards: [Flashcard] {
+        cards.sorted { $0.position < $1.position }
     }
 
     var dueCards: [Flashcard] {
         cards.filter { $0.isDue() }
     }
 
-    func highlights(for blockId: UUID) -> [TextHighlight] {
-        (highlights ?? []).filter { $0.blockId == blockId }
+    var newCards: [Flashcard] {
+        cards.filter { $0.state == .new }
     }
 
-    /// Contexte condensé du cours, envoyé à l'IA pour les flashcards.
+    /// Contexte condensé du cours, envoyé à l'IA pour rédiger de nouvelles cartes.
     func contextSnippet(limit: Int = 6000) -> String {
-        var text = "Titre : \(title)\n"
-        if let subject { text += "Matière : \(subject)\n" }
-        text += summary + "\n\n"
-        for block in orderedBlocks {
-            guard let payload = block.payload else { continue }
-            let line = payload.plainText
-            if line.isEmpty { continue }
-            if text.count + line.count > limit { break }
-            text += line + "\n"
-        }
-        if orderedBlocks.isEmpty, !rawText.isEmpty {
-            text += String(rawText.prefix(max(0, limit - text.count)))
-        }
-        return text
-    }
-}
+        var header = "Titre : \(title)\n"
+        if let subject, !subject.isEmpty { header += "Matière : \(subject)\n" }
+        if !summary.isEmpty { header += summary + "\n\n" }
 
-@Model
-final class CourseBlockEntity {
-    var id: UUID = UUID()
-    var position: Int = 0
-    var kindRaw: String = CourseBlockKind.paragraph.rawValue
-    var payloadData: Data = Data()
-    var course: Course?
-
-    init(position: Int, payload: CourseBlockPayload) {
-        self.id = UUID()
-        self.position = position
-        self.kindRaw = payload.kind.rawValue
-        self.payloadData = (try? JSONEncoder().encode(payload)) ?? Data()
-    }
-
-    var kind: CourseBlockKind {
-        CourseBlockKind(rawValue: kindRaw) ?? .paragraph
-    }
-
-    var payload: CourseBlockPayload? {
-        try? JSONDecoder().decode(CourseBlockPayload.self, from: payloadData)
+        let body = contextText.isEmpty ? rawText : contextText
+        let remaining = max(0, limit - header.count)
+        return header + String(body.prefix(remaining))
     }
 }

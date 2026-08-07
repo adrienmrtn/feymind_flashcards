@@ -4,7 +4,6 @@ import SwiftUI
 /// Modification d'une carte existante.
 struct FlashcardEditorSheet: View {
     @Bindable var card: Flashcard
-    let accent: Color
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -20,17 +19,14 @@ struct FlashcardEditorSheet: View {
                     get: { card.hint ?? "" },
                     set: { card.hint = $0.nilIfBlank }
                 ),
-                accent: accent,
-                footer: {
-                    AnyView(schedulingSummary)
-                }
+                footer: { AnyView(schedulingSummary) }
             )
             .navigationTitle("Modifier la carte")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Supprimer", role: .destructive) { showDeleteConfirmation = true }
-                        .foregroundStyle(FeyColor.coral)
+                        .foregroundStyle(FeyColor.negative)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Terminé") {
@@ -39,7 +35,7 @@ struct FlashcardEditorSheet: View {
                         dismiss()
                     }
                     .font(FeyFont.cardTitle)
-                    .foregroundStyle(accent)
+                    .foregroundStyle(FeyColor.ink)
                 }
             }
             .confirmationDialog("Supprimer cette carte ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
@@ -53,9 +49,9 @@ struct FlashcardEditorSheet: View {
     }
 
     private var schedulingSummary: some View {
-        VStack(alignment: .leading, spacing: FeySpacing.xs) {
+        VStack(alignment: .leading, spacing: FeySpacing.sm) {
             Text("Progression")
-                .font(FeyFont.caption)
+                .font(FeyFont.captionEmphasis)
                 .foregroundStyle(FeyColor.inkTertiary)
 
             HStack(spacing: FeySpacing.sm) {
@@ -70,9 +66,9 @@ struct FlashcardEditorSheet: View {
                 try? modelContext.save()
             }
             .buttonStyle(FeyQuietButtonStyle())
-            .padding(.top, FeySpacing.xxs)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .feyCard(padding: FeySpacing.md, radius: FeyRadius.lg, elevated: false)
     }
 
     private func summaryItem(_ value: String, _ label: String) -> some View {
@@ -80,6 +76,7 @@ struct FlashcardEditorSheet: View {
             Text(value)
                 .font(FeyFont.cardTitle)
                 .foregroundStyle(FeyColor.ink)
+                .lineLimit(1)
             Text(label)
                 .font(FeyFont.micro)
                 .foregroundStyle(FeyColor.inkTertiary)
@@ -91,7 +88,6 @@ struct FlashcardEditorSheet: View {
 /// Création d'une carte à la main.
 struct FlashcardCreatorSheet: View {
     let course: Course
-    let accent: Color
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -110,7 +106,6 @@ struct FlashcardCreatorSheet: View {
                 front: $front,
                 back: $back,
                 hint: $hint,
-                accent: accent,
                 footer: { AnyView(EmptyView()) }
             )
             .navigationTitle("Nouvelle carte")
@@ -123,7 +118,7 @@ struct FlashcardCreatorSheet: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Ajouter") { save() }
                         .font(FeyFont.cardTitle)
-                        .foregroundStyle(canSave ? accent : FeyColor.inkTertiary)
+                        .foregroundStyle(canSave ? FeyColor.ink : FeyColor.inkTertiary)
                         .disabled(!canSave)
                 }
             }
@@ -142,7 +137,6 @@ private struct FlashcardForm: View {
     @Binding var front: String
     @Binding var back: String
     @Binding var hint: String
-    let accent: Color
     let footer: () -> AnyView
 
     var body: some View {
@@ -161,10 +155,10 @@ private struct FlashcardForm: View {
     }
 
     private func field(title: String, subtitle: String, text: Binding<String>, minHeight: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 6) {
                 Text(title)
-                    .font(FeyFont.caption)
+                    .font(FeyFont.captionEmphasis)
                     .foregroundStyle(FeyColor.ink)
                 Text(subtitle)
                     .font(FeyFont.micro)
@@ -177,11 +171,7 @@ private struct FlashcardForm: View {
                 .scrollContentBackground(.hidden)
                 .padding(FeySpacing.sm)
                 .frame(minHeight: minHeight, alignment: .topLeading)
-                .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous)
-                        .strokeBorder(FeyColor.stroke, lineWidth: 1)
-                }
+                .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: FeyRadius.lg, style: .continuous))
         }
     }
 }
