@@ -109,7 +109,6 @@ struct SettingsView: View {
         try? modelContext.delete(model: ReviewLog.self)
         try? modelContext.delete(model: Flashcard.self)
         try? modelContext.delete(model: TextHighlight.self)
-        try? modelContext.delete(model: CoursePodcast.self)
         try? modelContext.delete(model: CourseBlockEntity.self)
         try? modelContext.delete(model: Course.self)
         try? modelContext.save()

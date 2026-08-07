@@ -86,5 +86,4 @@ protocol AIService {
     func generateCourse(_ request: CourseGenerationRequest) async throws -> GeneratedCourse
     func generateFlashcards(_ request: FlashcardGenerationRequest) async throws -> [GeneratedFlashcard]
     func explain(_ request: ExplainRequest) async throws -> String
-    func generatePodcast(_ request: PodcastGenerationRequest) async throws -> GeneratedPodcast
 }

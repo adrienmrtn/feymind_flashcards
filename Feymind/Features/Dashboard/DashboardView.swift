@@ -55,7 +55,7 @@ struct DashboardView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Course.self) { course in
-                CourseView(course: course)
+                FlashcardsView(course: course)
             }
         }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
@@ -152,7 +152,7 @@ struct DashboardView: View {
                 FeyEmptyState(
                     systemImage: "square.and.arrow.down",
                     title: "Aucun cours pour l'instant",
-                    message: "Importez un PDF ou collez vos notes : Feymind en fait un cours illustré, puis des flashcards.",
+                    message: "Importez un PDF ou collez vos notes : Feymind en fait des flashcards prêtes à réviser.",
                     actionTitle: "Importer un cours"
                 ) {
                     showImportChoice = true

@@ -1,17 +1,19 @@
 import SwiftData
 import SwiftUI
 
-/// Page « flashcards créées » : relecture, modification, ajout, suppression, puis entraînement.
+/// Page principale des flashcards : visualisation, modification, puis entraînement.
 struct FlashcardsView: View {
     @Bindable var course: Course
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiService) private var aiService
+    @Environment(\.dismiss) private var dismiss
 
     @State private var editingCard: Flashcard?
     @State private var isCreating = false
     @State private var isGenerating = false
     @State private var showStudy = false
+    @State private var showDeleteConfirmation = false
     @State private var errorMessage: String?
 
     private var accent: Color { Color(hexString: course.accentHex) }
@@ -42,7 +44,7 @@ struct FlashcardsView: View {
             }
         }
         .feyScreenBackground()
-        .navigationTitle("Flashcards")
+        .navigationTitle(course.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -65,8 +67,14 @@ struct FlashcardsView: View {
                             Label("Réinitialiser la progression", systemImage: "arrow.counterclockwise")
                         }
                     }
+                    Divider()
+                    Button(role: .destructive) {
+                        showDeleteConfirmation = true
+                    } label: {
+                        Label("Supprimer le cours", systemImage: "trash")
+                    }
                 } label: {
-                    Image(systemName: "plus.circle.fill")
+                    Image(systemName: "ellipsis.circle")
                         .foregroundStyle(accent)
                 }
             }
@@ -84,7 +92,7 @@ struct FlashcardsView: View {
             if isGenerating {
                 GenerationOverlay(
                     title: "Nouvelles flashcards",
-                    steps: ["Relecture du cours", "Choix des notions", "Rédaction", "Vérification"],
+                    steps: ["Analyse du contenu", "Choix des notions", "Rédaction", "Vérification"],
                     accent: accent
                 )
             }
@@ -93,6 +101,15 @@ struct FlashcardsView: View {
             Button("Fermer", role: .cancel) { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "")
+        }
+        .confirmationDialog("Supprimer ce cours ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Supprimer", role: .destructive) {
+                try? CourseRepository.delete(course, in: modelContext)
+                dismiss()
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("Le cours et ses \(course.cards.count) flashcards seront définitivement effacés.")
         }
     }
 
@@ -103,7 +120,7 @@ struct FlashcardsView: View {
                 FeyEmptyState(
                     systemImage: "rectangle.on.rectangle.angled",
                     title: "Aucune flashcard",
-                    message: "Générez un jeu de cartes à partir du cours, ou créez-en une à la main.",
+                    message: "Générez un jeu de cartes à partir du contenu importé, ou créez-en une à la main.",
                     actionTitle: "Générer avec l'IA"
                 ) {
                     Task { await generateMore() }

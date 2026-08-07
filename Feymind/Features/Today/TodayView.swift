@@ -57,7 +57,7 @@ struct TodayView: View {
                     systemImage: "checkmark.circle.fill",
                     title: allCards.isEmpty ? "Pas encore de flashcards" : "Tout est à jour",
                     message: allCards.isEmpty
-                        ? "Importez un cours puis générez vos premières cartes pour démarrer la répétition espacée."
+                        ? "Importez un cours pour créer vos premières flashcards et démarrer la répétition espacée."
                         : "Aucune carte n'arrive à échéance. Vous pouvez réviser en avance depuis un cours."
                 )
                 .padding(.top, FeySpacing.xl)

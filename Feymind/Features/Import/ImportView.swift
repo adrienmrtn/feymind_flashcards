@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Écran d'import : texte collé ou PDF, puis génération du cours.
+/// Écran d'import : texte collé ou PDF, puis génération des flashcards.
 struct ImportView: View {
     let kind: ImportKind
     var onCreated: (Course) -> Void
@@ -56,7 +56,7 @@ struct ImportView: View {
                     } label: {
                         HStack(spacing: FeySpacing.xs) {
                             Image(systemName: "sparkles")
-                            Text("Générer le cours")
+                            Text("Générer les flashcards")
                         }
                     }
                     .buttonStyle(FeyPrimaryButtonStyle(tint: canGenerate ? FeyColor.accent : FeyColor.inkTertiary))
@@ -81,12 +81,12 @@ struct ImportView: View {
             .overlay {
                 if isGenerating {
                     GenerationOverlay(
-                        title: "Création du cours",
+                        title: "Création des flashcards",
                         steps: [
                             kind == .pdf ? "Lecture du document" : "Lecture de vos notes",
-                            "Repérage des idées clés",
-                            "Mise en forme et schémas",
-                            "Derniers ajustements"
+                            "Repérage des notions clés",
+                            "Rédaction des questions",
+                            "Vérification des réponses"
                         ]
                     )
                 }
@@ -117,8 +117,8 @@ struct ImportView: View {
                 .background(kind.tint.opacity(0.11), in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
 
             Text(kind == .pdf
-                 ? "Feymind lit le texte du PDF et observe les figures pour reconstruire un cours clair."
-                 : "Collez vos notes, même brutes. Feymind les réorganise en cours structuré.")
+                 ? "Feymind lit le PDF et en tire un jeu de flashcards prêt à réviser."
+                 : "Collez vos notes, même brutes. Feymind en fait des flashcards.")
                 .font(FeyFont.body)
                 .foregroundStyle(FeyColor.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -342,6 +342,31 @@ struct ImportView: View {
                 fileName: fileName,
                 in: modelContext
             )
+
+            let cards: [GeneratedFlashcard]
+            if offline {
+                cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
+            } else {
+                do {
+                    cards = try await aiService.generateFlashcards(
+                        FlashcardGenerationRequest(
+                            courseTitle: course.title,
+                            courseContext: course.contextSnippet(limit: 30_000),
+                            desiredCount: 12,
+                            existingFronts: []
+                        )
+                    )
+                } catch {
+                    // Les flashcards sont le produit principal : repli hors ligne plutôt qu'un cours vide.
+                    if isRecoverable(error) {
+                        cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
+                    } else {
+                        throw error
+                    }
+                }
+            }
+
+            try CourseRepository.addFlashcards(cards, to: course, in: modelContext)
             onCreated(course)
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription

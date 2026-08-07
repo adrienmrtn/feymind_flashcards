@@ -1,6 +1,6 @@
 import Foundation
 
-/// Construit un cours structuré sans appeler l'IA.
+/// Construit un contexte de cours et des flashcards sans appeler l'IA.
 /// Sert de repli quand la clé fal n'est pas encore configurée, et pour les aperçus SwiftUI.
 enum OfflineCourseBuilder {
     static func build(from rawText: String, hintTitle: String?, sourceName: String?) -> GeneratedCourse {
@@ -18,8 +18,8 @@ enum OfflineCourseBuilder {
         var blocks: [CourseBlockPayload] = []
         blocks.append(.callout(CalloutBlock(
             variant: .info,
-            title: "Cours généré hors ligne",
-            text: "Ce cours reprend votre texte tel quel. Ajoutez la clé **fal.ai** dans Supabase pour obtenir une mise en forme complète avec schémas et surlignages."
+            title: "Mode hors ligne",
+            text: "Le contenu reprend votre texte tel quel. Ajoutez la clé **fal.ai** dans Supabase pour des flashcards plus précises."
         )))
 
         var currentSectionCount = 0
@@ -120,10 +120,6 @@ struct OfflineAIService: AIService {
 
         Passage sélectionné : « \(request.selection.prefix(180)) »
         """
-    }
-
-    func generatePodcast(_ request: PodcastGenerationRequest) async throws -> GeneratedPodcast {
-        throw AIServiceError.missingProviderKey
     }
 }
 

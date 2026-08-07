@@ -52,9 +52,6 @@ final class Course {
     @Relationship(deleteRule: .cascade, inverse: \TextHighlight.course)
     var highlights: [TextHighlight]? = []
 
-    @Relationship(deleteRule: .cascade, inverse: \CoursePodcast.course)
-    var podcasts: [CoursePodcast]? = []
-
     init(
         id: UUID = UUID(),
         title: String,
@@ -84,7 +81,6 @@ final class Course {
         self.blockEntities = []
         self.flashcards = []
         self.highlights = []
-        self.podcasts = []
     }
 
     var source: CourseSource {
@@ -105,15 +101,11 @@ final class Course {
         cards.filter { $0.isDue() }
     }
 
-    var latestPodcast: CoursePodcast? {
-        (podcasts ?? []).sorted { $0.createdAt > $1.createdAt }.first
-    }
-
     func highlights(for blockId: UUID) -> [TextHighlight] {
         (highlights ?? []).filter { $0.blockId == blockId }
     }
 
-    /// Contexte condensé du cours, envoyé à l'IA pour les explications.
+    /// Contexte condensé du cours, envoyé à l'IA pour les flashcards.
     func contextSnippet(limit: Int = 6000) -> String {
         var text = "Titre : \(title)\n"
         if let subject { text += "Matière : \(subject)\n" }
@@ -124,6 +116,9 @@ final class Course {
             if line.isEmpty { continue }
             if text.count + line.count > limit { break }
             text += line + "\n"
+        }
+        if orderedBlocks.isEmpty, !rawText.isEmpty {
+            text += String(rawText.prefix(max(0, limit - text.count)))
         }
         return text
     }

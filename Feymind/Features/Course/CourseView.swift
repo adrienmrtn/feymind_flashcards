@@ -1,6 +1,8 @@
 import SwiftData
 import SwiftUI
 
+/// Lecture du contenu structuré d'un cours (accès secondaire).
+/// Le parcours principal reste import → flashcards → entraînement.
 struct CourseView: View {
     @Bindable var course: Course
 
@@ -12,7 +14,6 @@ struct CourseView: View {
     @State private var isGeneratingCards = false
     @State private var generationError: String?
     @State private var showFlashcards = false
-    @State private var showPodcast = false
     @State private var showDeleteConfirmation = false
 
     private var accent: Color { Color(hexString: course.accentHex) }
@@ -22,7 +23,6 @@ struct CourseView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: FeySpacing.md) {
                     header
-                    podcastBanner
 
                     ForEach(course.orderedBlocks) { entity in
                         if let payload = entity.payload {
@@ -62,12 +62,6 @@ struct CourseView: View {
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)
         }
-        .sheet(isPresented: $showPodcast) {
-            PodcastSheet(course: course)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(28)
-        }
         .navigationDestination(isPresented: $showFlashcards) {
             FlashcardsView(course: course)
         }
@@ -76,7 +70,7 @@ struct CourseView: View {
                 GenerationOverlay(
                     title: "Création des flashcards",
                     steps: [
-                        "Relecture du cours",
+                        "Analyse du contenu",
                         "Sélection des notions à mémoriser",
                         "Rédaction des questions",
                         "Vérification des réponses"
@@ -116,7 +110,6 @@ struct CourseView: View {
                         FeyChip(text: subject, tint: accent)
                     }
                     HStack(spacing: FeySpacing.xs) {
-                        Label("\(course.readingMinutes) min", systemImage: "clock")
                         Label("\(course.cards.count) cartes", systemImage: "rectangle.on.rectangle")
                         if !(course.highlights ?? []).isEmpty {
                             Label("\((course.highlights ?? []).count)", systemImage: "highlighter")
@@ -159,52 +152,9 @@ struct CourseView: View {
         .padding(.bottom, FeySpacing.xxs)
     }
 
-    private var podcastBanner: some View {
-        Button {
-            showPodcast = true
-        } label: {
-            HStack(spacing: FeySpacing.sm) {
-                Image(systemName: course.latestPodcast == nil ? "headphones" : "play.circle.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 42, height: 42)
-                    .background(
-                        LinearGradient(
-                            colors: [accent, FeyColor.accentDeep],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous)
-                    )
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(course.latestPodcast == nil ? "Écouter en podcast" : "Reprendre le podcast")
-                        .font(FeyFont.cardTitle)
-                        .foregroundStyle(FeyColor.ink)
-                    Text(course.latestPodcast == nil
-                         ? "Deux voix expliquent le cours à l'oral"
-                         : "\(course.latestPodcast!.durationLabel) · \(course.latestPodcast!.hostVoice.label) × \(course.latestPodcast!.guestVoice.label)")
-                        .font(FeyFont.micro)
-                        .foregroundStyle(FeyColor.inkTertiary)
-                }
-
-                Spacer(minLength: 0)
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(FeyColor.inkTertiary.opacity(0.7))
-            }
-            .feyCard(padding: FeySpacing.sm + 2, radius: FeyRadius.lg, elevated: false)
-        }
-        .buttonStyle(.plain)
-    }
-
     private var footerHint: some View {
         VStack(spacing: FeySpacing.xs) {
-            Text("Fin du cours")
-                .font(FeyFont.caption)
-                .foregroundStyle(FeyColor.inkTertiary)
-            Text("Passez à l'entraînement pour ancrer ces notions.")
+            Text("Passez aux flashcards pour mémoriser.")
                 .font(FeyFont.caption)
                 .foregroundStyle(FeyColor.inkTertiary)
         }
@@ -216,11 +166,11 @@ struct CourseView: View {
 
     private var trainButton: some View {
         Button {
-            Task { await startTraining() }
+            Task { await openFlashcards() }
         } label: {
             HStack(spacing: FeySpacing.xs) {
-                Image(systemName: course.cards.isEmpty ? "sparkles" : "bolt.fill")
-                Text(course.cards.isEmpty ? "S'entraîner" : "S'entraîner (\(course.cards.count))")
+                Image(systemName: course.cards.isEmpty ? "sparkles" : "rectangle.on.rectangle")
+                Text(course.cards.isEmpty ? "Créer les flashcards" : "Voir les flashcards (\(course.cards.count))")
             }
         }
         .buttonStyle(FeyPrimaryButtonStyle(tint: accent, fullWidth: false))
@@ -232,12 +182,6 @@ struct CourseView: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
-                Button {
-                    showPodcast = true
-                } label: {
-                    Label("Écouter en podcast", systemImage: "headphones")
-                }
-
                 Button {
                     showFlashcards = true
                 } label: {
@@ -320,7 +264,7 @@ struct CourseView: View {
     // MARK: - Actions
 
     @MainActor
-    private func startTraining() async {
+    private func openFlashcards() async {
         if course.cards.isEmpty {
             await generateCards()
             guard !course.cards.isEmpty else { return }

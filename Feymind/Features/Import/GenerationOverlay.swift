@@ -85,7 +85,7 @@ struct GenerationOverlay: View {
 
 #Preview {
     GenerationOverlay(
-        title: "Création du cours",
-        steps: ["Lecture du document", "Repérage des idées clés", "Mise en forme des schémas", "Derniers ajustements"]
+        title: "Création des flashcards",
+        steps: ["Lecture du document", "Repérage des notions clés", "Rédaction des questions", "Vérification des réponses"]
     )
 }

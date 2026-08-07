@@ -98,7 +98,7 @@ struct CoursesListView: View {
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $searchText, prompt: "Rechercher un cours")
             .navigationDestination(for: Course.self) { course in
-                CourseView(course: course)
+                FlashcardsView(course: course)
             }
         }
     }

@@ -14,7 +14,6 @@ final class StudyQueueTests: XCTestCase {
             Flashcard.self,
             ReviewLog.self,
             TextHighlight.self,
-            CoursePodcast.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         context = ModelContext(container)

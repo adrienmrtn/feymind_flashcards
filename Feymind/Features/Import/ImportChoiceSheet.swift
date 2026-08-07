@@ -45,7 +45,7 @@ struct ImportChoiceSheet: View {
                 Text("Nouveau cours")
                     .font(FeyFont.screenTitle)
                     .foregroundStyle(FeyColor.ink)
-                Text("Feymind met en forme le contenu, puis crée vos flashcards.")
+                Text("Feymind transforme le contenu en flashcards à réviser.")
                     .font(FeyFont.caption)
                     .foregroundStyle(FeyColor.inkTertiary)
             }

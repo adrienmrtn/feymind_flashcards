@@ -13,7 +13,6 @@ struct FeymindApp: App {
                 Flashcard.self,
                 ReviewLog.self,
                 TextHighlight.self,
-                CoursePodcast.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: false)
             )
         } catch {
@@ -24,7 +23,6 @@ struct FeymindApp: App {
                 Flashcard.self,
                 ReviewLog.self,
                 TextHighlight.self,
-                CoursePodcast.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: true)
             )
         }
