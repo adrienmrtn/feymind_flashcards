@@ -1,26 +1,31 @@
 import SwiftUI
 import UIKit
 
-/// Les cinq pages, dans la barre d'onglets native du système (icône + libellé,
-/// teintée avec l'accent de l'app). Chaque page gère elle-même sa barre de
-/// navigation ; seule la barre d'onglets, elle, reste du ressort du système.
+/// Les cinq pages, balayables horizontalement. La barre d'onglets est dessinée
+/// par chaque page racine, ce qui la fait disparaître dès qu'un écran de détail
+/// est poussé ; le balayage est alors aussi désactivé.
 struct RootTabView: View {
-    @State private var selection: RootTab = .dashboard
+    @State private var router = TabRouter()
 
     init() {
         Self.configureAppearance()
     }
 
     var body: some View {
-        TabView(selection: $selection) {
+        @Bindable var router = router
+
+        TabView(selection: $router.selection) {
             ForEach(RootTab.allCases) { tab in
                 tabContent(for: tab)
                     .tag(tab)
-                    .tabItem {
-                        Label(tab.label, systemImage: tab.systemImage)
-                    }
             }
         }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .background {
+            TabPagingScrollBridge(isEnabled: router.allowsPaging)
+        }
+        .environment(router)
+        .animation(.easeOut(duration: 0.22), value: router.selection)
     }
 
     @ViewBuilder

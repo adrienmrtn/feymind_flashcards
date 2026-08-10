@@ -6,6 +6,7 @@ private let allSubjectsFilter = "Tous"
 
 struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(TabRouter.self) private var router: TabRouter?
 
     @Query(sort: \Course.createdAt, order: .reverse) private var courses: [Course]
     @Query private var allCards: [Flashcard]
@@ -66,13 +67,16 @@ struct DashboardView: View {
                     }
                 }
                 .padding(.top, FeySpacing.xs)
-                .padding(.bottom, FeySpacing.xl)
+                .padding(.bottom, FeyLayout.tabBarClearance)
             }
             .feyScreenBackground()
+            .feyTabBar()
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
             }
+            .onAppear { syncPagingDepth() }
+            .onChange(of: path.count) { _, _ in syncPagingDepth() }
         }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
             ImportChoiceSheet { kind in
@@ -187,5 +191,9 @@ struct DashboardView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             activeImport = kind
         }
+    }
+
+    private func syncPagingDepth() {
+        router?.setNavigationDepth(path.count, for: .dashboard)
     }
 }

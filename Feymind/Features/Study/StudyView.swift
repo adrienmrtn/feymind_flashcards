@@ -162,7 +162,7 @@ struct StudyView: View {
         }
         .padding(.horizontal, FeySpacing.screen)
         .padding(.top, FeySpacing.md)
-        .padding(.bottom, FeySpacing.lg)
+        .padding(.bottom, isEmbedded ? FeyLayout.tabBarClearance : FeySpacing.lg)
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: session.isRevealed)
     }
 
@@ -379,7 +379,7 @@ private struct CompletionView: View {
             Button(isEmbedded ? "Recharger" : "Terminer", action: onFinish)
                 .buttonStyle(FeyPrimaryButtonStyle())
                 .padding(.horizontal, FeySpacing.screen)
-                .padding(.bottom, FeySpacing.lg)
+                .padding(.bottom, isEmbedded ? FeyLayout.tabBarClearance : FeySpacing.lg)
         }
     }
 
