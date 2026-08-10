@@ -32,7 +32,7 @@ struct FeyTabBar: View {
                             Image(systemName: tab.systemImage)
                                 .font(.system(size: 21, weight: .regular))
                             Text(tab.label)
-                                .font(.system(size: 10, weight: .medium))
+                                .font(FeyFont.hanken(10, weight: .medium))
                         }
                         .foregroundStyle(tab == router.selection ? FeyColor.accent : FeyColor.inkTertiary)
                         .frame(maxWidth: .infinity)

@@ -8,6 +8,7 @@ struct FeymindApp: App {
     private static let schema = Schema([Course.self, Flashcard.self, ReviewLog.self])
 
     init() {
+        FontLoader.registerFonts()
         container = Self.makeContainer()
         SampleData.seedIfNeeded(in: container.mainContext)
     }

@@ -8,6 +8,7 @@ struct RootTabView: View {
     @State private var router = TabRouter()
 
     init() {
+        FontLoader.registerFonts()
         Self.configureAppearance()
     }
 
@@ -46,7 +47,7 @@ struct RootTabView: View {
         navigationBar.shadowColor = .clear
         navigationBar.titleTextAttributes = [
             .foregroundColor: UIColor(FeyColor.ink),
-            .font: UIFont.systemFont(ofSize: 16, weight: .semibold)
+            .font: UIFont(name: "HankenGrotesk-SemiBold", size: 16) ?? UIFont.systemFont(ofSize: 16, weight: .semibold)
         ]
         UINavigationBar.appearance().standardAppearance = navigationBar
         UINavigationBar.appearance().scrollEdgeAppearance = navigationBar

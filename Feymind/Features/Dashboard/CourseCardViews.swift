@@ -19,7 +19,7 @@ struct CourseCoverCard: View {
                 }
 
                 Text(course.title)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(FeyFont.hanken(20, weight: .semibold))
                     .foregroundStyle(FeyColor.onInk)
                     .tracking(FeyTracking.tight)
                     .lineLimit(2)
@@ -131,10 +131,10 @@ struct TodayCTACard: View {
 
                     VStack(spacing: 0) {
                         Text("\(dueCount)")
-                            .font(.system(size: 21, weight: .semibold))
+                            .font(FeyFont.hanken(21, weight: .semibold))
                             .foregroundStyle(FeyColor.onInk)
                         Text(dueCount > 1 ? "cartes" : "carte")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(FeyFont.hanken(10, weight: .medium))
                             .foregroundStyle(Color.white.opacity(0.7))
                     }
                 }

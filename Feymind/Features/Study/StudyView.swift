@@ -246,12 +246,12 @@ struct StudyCardFace: View {
                             .frame(width: 40, height: 1)
 
                         Text(card.back)
-                            .font(.system(size: 21, weight: .medium))
+                            .font(FeyFont.hanken(21, weight: .medium))
                             .foregroundStyle(FeyColor.ink)
                             .multilineTextAlignment(.center)
                     } else {
                         Text(card.front)
-                            .font(.system(size: 24, weight: .semibold))
+                            .font(FeyFont.hanken(24, weight: .semibold))
                             .foregroundStyle(FeyColor.ink)
                             .tracking(FeyTracking.tight)
                             .multilineTextAlignment(.center)
@@ -299,7 +299,7 @@ struct GradeButtons: View {
                 } label: {
                     VStack(spacing: 3) {
                         Text(rating.shortLabel)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(FeyFont.hanken(14, weight: .semibold))
                             .foregroundStyle(tint(for: rating))
                         Text(labels[rating] ?? "")
                             .font(FeyFont.micro)
