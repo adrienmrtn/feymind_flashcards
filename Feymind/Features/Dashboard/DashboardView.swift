@@ -142,8 +142,11 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: FeySpacing.sm) {
                 FeySectionHeader(
                     title: "Vos cours",
-                    subtitle: visibleCourses.count > 1 ? "\(visibleCourses.count) au total" : nil
-                )
+                    subtitle: visibleCourses.count > 1 ? "\(visibleCourses.count) au total" : nil,
+                    actionTitle: courses.count > 6 ? "Tout voir" : nil
+                ) {
+                    router?.selection = .courses
+                }
 
                 ForEach(visibleCourses.prefix(6)) { course in
                     Button {

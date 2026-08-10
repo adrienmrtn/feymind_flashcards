@@ -21,10 +21,12 @@ génération des flashcards, visualisation et édition, puis entraînement.
 
 - Fond gris neutre, surfaces blanches très arrondies, ombres à peine visibles
 - Palette monochrome : l'encre est la seule couleur d'action, la couleur ne sert qu'aux couvertures
-- Typographie système sans empattement, titres resserrés, hiérarchie par la taille et par l'air
-- Barre d'onglets flottante en pilule sombre, masquée dès qu'un écran de détail est ouvert
+- Typographie Hanken Grotesk (embarquée, sans dépendance réseau), titres resserrés, hiérarchie par
+  la taille et par l'air
+- Barre d'onglets fixe en pied d'écran, masquée dès qu'un écran de détail est ouvert
+- Réviser condense la file du jour en un seul grand chiffre, sur une carte sombre pleine page
 - Chaque cours porte une couverture : la première page du PDF importé, sinon un dégradé de sa
-  teinte avec son emoji
+  teinte avec son emoji ; l'écran de détail affiche cette teinte en grand, en fond pastel
 
 ## Pile technique
 

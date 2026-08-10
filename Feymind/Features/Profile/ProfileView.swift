@@ -60,11 +60,11 @@ struct ProfileView: View {
 
     private var identityCard: some View {
         HStack(spacing: FeySpacing.md) {
-            Image(systemName: "person.fill")
-                .font(.system(size: 24))
-                .foregroundStyle(FeyColor.onInk)
+            Text("É")
+                .font(FeyFont.hanken(20, weight: .semibold))
+                .foregroundStyle(Color(hex: 0x47665A))
                 .frame(width: 62, height: 62)
-                .background(FeyColor.ink, in: Circle())
+                .background(Color(hex: 0xE4ECE6), in: Circle())
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Étudiant")

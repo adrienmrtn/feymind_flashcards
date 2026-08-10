@@ -3,7 +3,20 @@ import SwiftUI
 /// Bibliothèque publique des cours partagés.
 /// Vide tant que l'authentification n'est pas branchée.
 struct LibraryView: View {
-    private let previewSubjects = ["Mathématiques", "SVT", "Histoire", "Physique", "Droit", "Économie"]
+    private struct SubjectPreview: Identifiable {
+        let name: String
+        let background: Color
+        let swatch: Color
+        let tint: Color
+        var id: String { name }
+    }
+
+    private let previewSubjects: [SubjectPreview] = [
+        SubjectPreview(name: "Sciences", background: Color(hex: 0xE4ECE6), swatch: Color(hex: 0xC3D5C8), tint: Color(hex: 0x47665A)),
+        SubjectPreview(name: "Histoire", background: Color(hex: 0xEFE6E2), swatch: Color(hex: 0xDCC9BD), tint: Color(hex: 0x6B5548)),
+        SubjectPreview(name: "Langues", background: Color(hex: 0xE6E9F0), swatch: Color(hex: 0xC7CEDE), tint: Color(hex: 0x4F5A72)),
+        SubjectPreview(name: "Médecine", background: Color(hex: 0xF0E8EC), swatch: Color(hex: 0xDCC7D2), tint: Color(hex: 0x6E5566))
+    ]
 
     var body: some View {
         NavigationStack {
@@ -70,22 +83,24 @@ struct LibraryView: View {
                 columns: [GridItem(.flexible(), spacing: FeySpacing.sm), GridItem(.flexible(), spacing: FeySpacing.sm)],
                 spacing: FeySpacing.sm
             ) {
-                ForEach(previewSubjects, id: \.self) { subject in
-                    HStack(spacing: FeySpacing.xs) {
-                        Circle()
-                            .fill(FeyColor.strokeStrong)
-                            .frame(width: 7, height: 7)
-                        Text(subject)
-                            .font(FeyFont.caption)
-                            .foregroundStyle(FeyColor.inkTertiary)
+                ForEach(previewSubjects) { subject in
+                    VStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(subject.swatch)
+                            .frame(width: 22, height: 22)
+
                         Spacer(minLength: 0)
+
+                        Text(subject.name)
+                            .font(FeyFont.cardTitle)
+                            .foregroundStyle(subject.tint)
                     }
-                    .padding(.vertical, 15)
-                    .padding(.horizontal, FeySpacing.sm)
-                    .background(FeyColor.surfaceMuted, in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
+                    .padding(FeySpacing.sm)
+                    .frame(height: 78, alignment: .topLeading)
+                    .frame(maxWidth: .infinity)
+                    .background(subject.background, in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
                 }
             }
-            .redacted(reason: .placeholder)
             .allowsHitTesting(false)
         }
     }
