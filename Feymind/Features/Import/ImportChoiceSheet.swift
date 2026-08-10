@@ -15,8 +15,8 @@ enum ImportKind: String, Identifiable {
 
     var subtitle: String {
         switch self {
-        case .text: "Vos notes, un chapitre, un article"
-        case .pdf: "Cours, polycopié, diaporama exporté"
+        case .text: "Vos propres notes"
+        case .pdf: "Cours, polycopié, notes"
         }
     }
 
@@ -50,14 +50,11 @@ struct ImportChoiceSheet: View {
         VStack(alignment: .leading, spacing: FeySpacing.md) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Nouveau cours")
-                    .font(FeyFont.screenTitle)
+                    .font(FeyFont.hanken(20, weight: .bold))
                     .foregroundStyle(FeyColor.ink)
-                    .tracking(FeyTracking.tight)
-                Text("Feymind transforme le contenu en flashcards à réviser.")
-                    .font(FeyFont.caption)
-                    .foregroundStyle(FeyColor.inkTertiary)
+                    .tracking(-0.2)
             }
-            .padding(.top, FeySpacing.md)
+            .padding(.top, 8)
 
             VStack(spacing: FeySpacing.sm) {
                 ForEach([ImportKind.pdf, ImportKind.text]) { kind in
@@ -81,55 +78,54 @@ struct ImportChoiceSheet: View {
     }
 
     private func optionRow(_ kind: ImportKind) -> some View {
-        HStack(spacing: FeySpacing.sm) {
+        HStack(spacing: 14) {
             Image(systemName: kind.systemImage)
-                .font(.system(size: 17, weight: .medium))
+                .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(kind.swatchTint)
-                .frame(width: 46, height: 46)
-                .background(kind.swatchBackground, in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
+                .frame(width: 42, height: 42)
+                .background(kind.swatchBackground, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(kind.title)
-                    .font(FeyFont.cardTitle)
+                    .font(FeyFont.hanken(15, weight: .semibold))
                     .foregroundStyle(FeyColor.ink)
                 Text(kind.subtitle)
-                    .font(FeyFont.caption)
+                    .font(FeyFont.hanken(12, weight: .regular))
                     .foregroundStyle(FeyColor.inkTertiary)
             }
 
             Spacer(minLength: 0)
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(FeyColor.inkTertiary.opacity(0.7))
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color(hex: 0xC9C3B8))
         }
-        .feyCard(padding: FeySpacing.sm + 2, radius: FeyRadius.lg, elevated: false)
+        .feyCard(padding: 16, radius: FeyRadius.button, elevated: false)
         .contentShape(Rectangle())
     }
 
     private var comingSoonRow: some View {
-        HStack(spacing: FeySpacing.sm) {
-            Image(systemName: "globe.europe.africa")
+        HStack(spacing: 14) {
+            Image(systemName: "book.closed")
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(FeyColor.inkTertiary)
-                .frame(width: 46, height: 46)
-                .background(FeyColor.surfaceMuted, in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
+                .frame(width: 42, height: 42)
+                .background(FeyColor.surfaceSunken, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text("Depuis la bibliothèque")
-                    .font(FeyFont.cardTitle)
-                    .foregroundStyle(FeyColor.inkTertiary)
-                Text("Disponible avec la connexion")
-                    .font(FeyFont.caption)
+                    .font(FeyFont.hanken(15, weight: .semibold))
+                    .foregroundStyle(FeyColor.inkSecondary)
+                Text("Bientôt disponible")
+                    .font(FeyFont.hanken(12, weight: .regular))
                     .foregroundStyle(FeyColor.inkTertiary)
             }
 
             Spacer(minLength: 0)
-
-            FeyChip(text: "Bientôt")
         }
-        .padding(FeySpacing.sm + 2)
-        .background(FeyColor.surfaceMuted.opacity(0.6), in: RoundedRectangle(cornerRadius: FeyRadius.lg, style: .continuous))
+        .padding(16)
+        .background(FeyColor.surfaceMuted, in: RoundedRectangle(cornerRadius: FeyRadius.button, style: .continuous))
+        .opacity(0.6)
     }
 }
 

@@ -1,92 +1,187 @@
 import SwiftData
 import SwiftUI
 
-/// La pile de flashcards de tous les cours dues aujourd'hui.
+/// Écran « Réviser » : la file d'attente du jour, condensée en un seul chiffre,
+/// puis un lancement plein écran de la session d'entraînement.
 struct TodayView: View {
-    @Environment(\.modelContext) private var modelContext
-
     @Query private var allCards: [Flashcard]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
-    @State private var sessionToken = UUID()
-    /// Une fois lancée, la session reste affichée même quand plus aucune carte n'est due :
-    /// les cartes d'apprentissage doivent pouvoir revenir dans les vingt minutes.
-    @State private var isSessionActive = false
+    @State private var showStudy = false
 
     private var dueCards: [Flashcard] {
         allCards.filter { $0.isDue() }
     }
 
+    private var newCount: Int {
+        dueCards.filter { $0.state == .new }.count
+    }
+
+    private var learningCount: Int {
+        dueCards.filter { $0.state == .learning || $0.state == .relearning }.count
+    }
+
+    private var reviewCount: Int {
+        dueCards.filter { $0.state == .review }.count
+    }
+
+    private var lateCount: Int {
+        learningCount + reviewCount
+    }
+
+    private var coursesWithDue: Int {
+        Set(dueCards.compactMap { $0.course?.id }).count
+    }
+
+    private var estimatedMinutes: Int {
+        max(1, Int((Double(dueCards.count) * 30 / 60).rounded(.up)))
+    }
+
     var body: some View {
         NavigationStack {
             Group {
-                if isSessionActive {
-                    VStack(spacing: 0) {
-                        header
-                        StudyView(source: .allDue, isEmbedded: true)
-                            .id(sessionToken)
-                    }
-                } else {
+                if dueCards.isEmpty {
                     ScrollView {
                         VStack(alignment: .leading, spacing: FeySpacing.lg) {
                             header
                             emptyState
                         }
-                        .padding(.bottom, FeyLayout.tabBarClearance)
+                        .padding(.bottom, FeySpacing.xl)
+                    }
+                } else {
+                    VStack(spacing: 0) {
+                        header
+                        sessionCard
+                            .padding(.horizontal, FeySpacing.screen)
+                            .padding(.bottom, FeySpacing.md)
+                            .frame(maxHeight: .infinity)
                     }
                 }
             }
             .feyScreenBackground()
-            .feyTabBar()
             .toolbar(.hidden, for: .navigationBar)
-            .onAppear {
-                if !isSessionActive { isSessionActive = !dueCards.isEmpty }
-            }
+        }
+        .fullScreenCover(isPresented: $showStudy) {
+            StudyView(source: .allDue)
         }
     }
 
     private var header: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(StudyStats.formattedDate())
-                    .font(FeyFont.caption)
-                    .foregroundStyle(FeyColor.inkTertiary)
-
-                Text("Réviser")
-                    .font(FeyFont.screenTitle)
-                    .foregroundStyle(FeyColor.ink)
-                    .tracking(FeyTracking.tight)
-            }
+            Text("Réviser")
+                .font(FeyFont.hanken(26, weight: .bold))
+                .foregroundStyle(FeyColor.ink)
+                .tracking(-0.4)
 
             Spacer(minLength: FeySpacing.sm)
-
-            FeyCircleButton(
-                systemImage: "arrow.counterclockwise",
-                size: 44,
-                accessibilityTitle: "Relancer la session"
-            ) {
-                restart()
-            }
         }
         .padding(.horizontal, FeySpacing.screen)
         .padding(.top, FeySpacing.xs)
         .padding(.bottom, FeySpacing.sm)
     }
 
-    private func restart() {
-        isSessionActive = !dueCards.isEmpty
-        sessionToken = UUID()
+    private var sessionCard: some View {
+        VStack(spacing: 22) {
+            HStack {
+                Text("SESSION DU JOUR")
+                    .font(FeyFont.hanken(12, weight: .medium))
+                    .tracking(0.8)
+                    .foregroundStyle(Color(hex: 0x8F8B82))
+
+                Spacer()
+
+                Text(coursesWithDue > 1 ? "\(coursesWithDue) cours" : "1 cours")
+                    .font(FeyFont.hanken(12, weight: .semibold))
+                    .foregroundStyle(Color(hex: 0xC9B98A))
+            }
+
+            VStack(spacing: 8) {
+                Text("\(dueCards.count)")
+                    .font(FeyFont.hanken(112, weight: .bold))
+                    .tracking(-4)
+                    .foregroundStyle(FeyColor.onInk)
+                    .minimumScaleFactor(0.35)
+                    .lineLimit(1)
+
+                Text(dueCards.count > 1 ? "cartes dues aujourd'hui" : "carte due aujourd'hui")
+                    .font(FeyFont.hanken(16, weight: .medium))
+                    .foregroundStyle(Color(hex: 0x9A958A))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            VStack(spacing: 14) {
+                progressSegments
+
+                HStack {
+                    Text(breakdownLabel)
+                        .font(FeyFont.hanken(12, weight: .regular))
+                        .foregroundStyle(Color(hex: 0x8F8B82))
+                    Spacer()
+                    Text("≈ \(estimatedMinutes) min")
+                        .font(FeyFont.hanken(12, weight: .regular))
+                        .foregroundStyle(Color(hex: 0x8F8B82))
+                }
+
+                Button {
+                    showStudy = true
+                } label: {
+                    Text("Commencer la session")
+                        .font(FeyFont.hanken(15, weight: .semibold))
+                        .foregroundStyle(FeyColor.ink)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(FeyColor.canvas, in: RoundedRectangle(cornerRadius: FeyRadius.button, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(26)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(FeyColor.ink, in: RoundedRectangle(cornerRadius: FeyRadius.xxl, style: .continuous))
+    }
+
+    private var breakdownLabel: String {
+        var parts: [String] = []
+        if lateCount > 0 { parts.append("\(lateCount) en retard") }
+        if newCount > 0 { parts.append("\(newCount) nouvelle\(newCount > 1 ? "s" : "")") }
+        return parts.isEmpty ? "Tout est nouveau" : parts.joined(separator: " · ")
+    }
+
+    private var progressSegments: some View {
+        GeometryReader { proxy in
+            let total = max(1, dueCards.count)
+            let spacing: CGFloat = 6
+            let usable = max(0, proxy.size.width - spacing * 2)
+
+            HStack(spacing: spacing) {
+                segment(color: Color(hex: 0xC9B98A), count: reviewCount, total: total, usable: usable)
+                segment(color: FeyColor.accent, count: learningCount, total: total, usable: usable)
+                segment(color: Color(hex: 0x4A463F), count: newCount, total: total, usable: usable)
+            }
+        }
+        .frame(height: 7)
+    }
+
+    @ViewBuilder
+    private func segment(color: Color, count: Int, total: Int, usable: CGFloat) -> some View {
+        if count > 0 {
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(color)
+                .frame(width: max(4, usable * CGFloat(count) / CGFloat(total)))
+        }
     }
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: FeySpacing.lg) {
-            FeyEmptyState(
-                systemImage: allCards.isEmpty ? "rectangle.on.rectangle.angled" : "checkmark",
-                title: allCards.isEmpty ? "Pas encore de flashcards" : "Tout est à jour",
-                message: allCards.isEmpty
-                    ? "Importez un cours pour créer vos premières flashcards et démarrer la répétition espacée."
-                    : "Aucune carte n'arrive à échéance. Vous pouvez réviser en avance depuis un cours."
-            )
+            if allCards.isEmpty {
+                FeyEmptyState(
+                    systemImage: "rectangle.on.rectangle.angled",
+                    title: "Pas encore de flashcards",
+                    message: "Importez un cours pour créer vos premières flashcards et démarrer la répétition espacée."
+                )
+            } else {
+                doneState
+            }
 
             if !nextDueSummary.isEmpty {
                 VStack(alignment: .leading, spacing: FeySpacing.sm) {
@@ -94,9 +189,7 @@ struct TodayView: View {
 
                     ForEach(nextDueSummary, id: \.course.id) { entry in
                         HStack(spacing: FeySpacing.sm) {
-                            CourseCover(course: entry.course, emojiSize: 18)
-                                .frame(width: 42, height: 42)
-                                .clipShape(RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
+                            CourseThumb(course: entry.course)
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(entry.course.title)
@@ -110,12 +203,34 @@ struct TodayView: View {
 
                             Spacer(minLength: 0)
                         }
-                        .feyCard(padding: FeySpacing.sm, radius: FeyRadius.lg, elevated: false)
                     }
                 }
                 .padding(.horizontal, FeySpacing.screen)
             }
         }
+    }
+
+    private var doneState: some View {
+        VStack(spacing: FeySpacing.sm) {
+            Image(systemName: "checkmark")
+                .font(.system(size: 26, weight: .semibold))
+                .foregroundStyle(Color(hex: 0x5C8571))
+                .frame(width: 74, height: 74)
+                .background(Color(hex: 0xE4ECE6), in: Circle())
+
+            Text("Tout est à jour")
+                .font(FeyFont.hanken(18, weight: .semibold))
+                .foregroundStyle(FeyColor.ink)
+                .padding(.top, FeySpacing.xxs)
+
+            Text("Aucune carte due aujourd'hui. Revenez demain.")
+                .font(FeyFont.body)
+                .foregroundStyle(FeyColor.inkTertiary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 300)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, FeySpacing.xl)
     }
 
     private var nextDueSummary: [(course: Course, label: String)] {
