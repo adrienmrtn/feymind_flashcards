@@ -1,9 +1,8 @@
 import SwiftUI
 import UIKit
 
-/// Les cinq pages, balayables horizontalement. La barre d'onglets est dessinée
-/// par chaque page racine, ce qui la fait disparaître dès qu'un écran de détail
-/// est poussé ; le balayage est alors aussi désactivé.
+/// Les cinq pages. Barre d'onglets native du système ; sélection partagée via `TabRouter`
+/// pour permettre un basculement programmatique (ex. « Tout voir »).
 struct RootTabView: View {
     @State private var router = TabRouter()
 
@@ -16,28 +15,28 @@ struct RootTabView: View {
         @Bindable var router = router
 
         TabView(selection: $router.selection) {
-            ForEach(RootTab.allCases) { tab in
-                tabContent(for: tab)
-                    .tag(tab)
-            }
-        }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .background {
-            TabPagingScrollBridge(isEnabled: router.allowsPaging)
-        }
-        .environment(router)
-        .animation(.easeOut(duration: 0.22), value: router.selection)
-    }
+            TodayView()
+                .tag(RootTab.today)
+                .tabItem { Label(RootTab.today.label, systemImage: RootTab.today.systemImage) }
 
-    @ViewBuilder
-    private func tabContent(for tab: RootTab) -> some View {
-        switch tab {
-        case .today: TodayView()
-        case .courses: CoursesListView()
-        case .dashboard: DashboardView()
-        case .library: LibraryView()
-        case .profile: ProfileView()
+            CoursesListView()
+                .tag(RootTab.courses)
+                .tabItem { Label(RootTab.courses.label, systemImage: RootTab.courses.systemImage) }
+
+            DashboardView()
+                .tag(RootTab.dashboard)
+                .tabItem { Label(RootTab.dashboard.label, systemImage: RootTab.dashboard.systemImage) }
+
+            LibraryView()
+                .tag(RootTab.library)
+                .tabItem { Label(RootTab.library.label, systemImage: RootTab.library.systemImage) }
+
+            ProfileView()
+                .tag(RootTab.profile)
+                .tabItem { Label(RootTab.profile.label, systemImage: RootTab.profile.systemImage) }
         }
+        .tint(FeyColor.accent)
+        .environment(router)
     }
 
     private static func configureAppearance() {
@@ -47,7 +46,8 @@ struct RootTabView: View {
         navigationBar.shadowColor = .clear
         navigationBar.titleTextAttributes = [
             .foregroundColor: UIColor(FeyColor.ink),
-            .font: UIFont(name: "HankenGrotesk-SemiBold", size: 16) ?? UIFont.systemFont(ofSize: 16, weight: .semibold)
+            .font: UIFont(name: "HankenGrotesk-SemiBold", size: 16)
+                ?? UIFont.systemFont(ofSize: 16, weight: .semibold)
         ]
         UINavigationBar.appearance().standardAppearance = navigationBar
         UINavigationBar.appearance().scrollEdgeAppearance = navigationBar

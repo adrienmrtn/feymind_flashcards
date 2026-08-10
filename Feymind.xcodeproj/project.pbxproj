@@ -12,9 +12,26 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		FE00000000000000000010 /* Feymind */ = {isa = PBXFileSystemSynchronizedRootGroup; path = Feymind; sourceTree = "<group>"; };
+		FE00000000000000000010 /* Feymind */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FE00000000000000000012 /* Exceptions for "Feymind" folder in "Feymind" target */,
+			);
+			path = Feymind;
+			sourceTree = "<group>";
+		};
 		FE00000000000000000011 /* FeymindTests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = FeymindTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FE00000000000000000012 /* Exceptions for "Feymind" folder in "Feymind" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FE00000000000000000040 /* Feymind */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		FE00000000000000000020 /* Frameworks */ = {
@@ -322,6 +339,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Feymind/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Feymind;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -353,6 +371,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Feymind/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Feymind;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

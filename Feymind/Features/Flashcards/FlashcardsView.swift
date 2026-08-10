@@ -1,8 +1,9 @@
 import SwiftData
 import SwiftUI
 
-/// Écran principal d'un cours : un en-tête pastel dans la teinte du cours, les flashcards
-/// modifiables en liste compacte, puis l'entraînement.
+/// Écran principal d'un cours — calqué sur la maquette :
+/// en-tête pastel plat (pas de grands arrondis), liste compacte de questions
+/// avec pastille de statut, CTA « Commencer l'entraînement » en bas.
 struct FlashcardsView: View {
     @Bindable var course: Course
 
@@ -21,32 +22,32 @@ struct FlashcardsView: View {
     private var dueCount: Int { course.dueCards.count }
 
     private var heroTint: Color { Color(hexString: course.accentHex) }
-    private var heroBackground: Color { heroTint.lightened(by: 0.84) }
-    private var heroTextTint: Color { heroTint.darkened(by: 0.32) }
+    private var heroBackground: Color { heroTint.lightened(by: 0.82) }
+    private var heroText: Color { heroTint.darkened(by: 0.28) }
+    private var heroMuted: Color { heroTint.darkened(by: 0.05).opacity(0.85) }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                hero
-                listPanel
-                    .offset(y: -20)
+        VStack(spacing: 0) {
+            hero
+
+            ScrollView {
+                listContent
+                    .padding(.horizontal, FeySpacing.screen)
+                    .padding(.top, FeySpacing.md)
+                    .padding(.bottom, cards.isEmpty ? FeySpacing.xxl : FeyLayout.bottomBarClearance)
             }
         }
-        .scrollIndicators(.hidden)
         .feyScreenBackground()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
         .overlay(alignment: .bottom) {
             if !cards.isEmpty {
                 FeyBottomBar {
                     Button {
                         showStudy = true
                     } label: {
-                        HStack(spacing: FeySpacing.xs) {
-                            Image(systemName: "play.fill")
-                                .font(.system(size: 13, weight: .semibold))
-                            Text(dueCount > 0 ? "Commencer l'entraînement (\(dueCount))" : "Réviser en avance")
-                        }
+                        Text("Commencer l'entraînement")
                     }
                     .buttonStyle(FeyPrimaryButtonStyle())
                 }
@@ -85,14 +86,15 @@ struct FlashcardsView: View {
         }
     }
 
-    // MARK: - En-tête pastel
+    // MARK: - En-tête pastel plat
 
     private var hero: some View {
-        VStack(alignment: .leading, spacing: FeySpacing.md) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack {
                 FeyCircleButton(
                     systemImage: "chevron.left",
-                    style: .tinted(heroTextTint),
+                    style: .tinted(heroText),
+                    size: 34,
                     accessibilityTitle: "Retour"
                 ) {
                     dismiss()
@@ -101,66 +103,54 @@ struct FlashcardsView: View {
                 Spacer()
 
                 Menu {
-                    Button {
-                        isCreating = true
-                    } label: {
+                    Button { isCreating = true } label: {
                         Label("Ajouter une carte", systemImage: "plus")
                     }
-
-                    Button {
-                        Task { await generateMore() }
-                    } label: {
+                    Button { Task { await generateMore() } } label: {
                         Label("Générer avec l'IA", systemImage: "sparkles")
                     }
-
                     if !cards.isEmpty {
-                        Button {
-                            resetProgress()
-                        } label: {
+                        Button { resetProgress() } label: {
                             Label("Réinitialiser la progression", systemImage: "arrow.counterclockwise")
                         }
                     }
-
                     Divider()
-
-                    Button(role: .destructive) {
-                        showDeleteConfirmation = true
-                    } label: {
+                    Button(role: .destructive) { showDeleteConfirmation = true } label: {
                         Label("Supprimer le cours", systemImage: "trash")
                     }
                 } label: {
-                    FeyCircleIcon(systemImage: "ellipsis", style: .tinted(heroTextTint))
+                    FeyCircleIcon(systemImage: "ellipsis", style: .tinted(heroText), size: 34)
                 }
                 .accessibilityLabel("Actions du cours")
             }
+            .padding(.bottom, FeySpacing.md)
 
-            VStack(alignment: .leading, spacing: FeySpacing.xs) {
-                Text(course.title)
-                    .font(FeyFont.hanken(24, weight: .bold))
-                    .foregroundStyle(heroTextTint)
-                    .tracking(FeyTracking.tight)
+            Text(course.title)
+                .font(FeyFont.hanken(22, weight: .bold))
+                .foregroundStyle(heroText)
+                .tracking(FeyTracking.tight)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if !course.summary.isEmpty {
+                Text(course.summary)
+                    .font(FeyFont.body)
+                    .foregroundStyle(heroMuted)
+                    .padding(.top, 8)
                     .fixedSize(horizontal: false, vertical: true)
+            }
 
-                if !course.summary.isEmpty {
-                    Text(course.summary)
-                        .font(FeyFont.body)
-                        .foregroundStyle(heroTextTint.opacity(0.72))
-                        .fixedSize(horizontal: false, vertical: true)
+            if !cards.isEmpty {
+                HStack(spacing: 7) {
+                    heroChip("\(cards.count) cartes")
+                    if dueCount > 0 { heroChip("\(dueCount) dues") }
+                    if let subject = course.subject?.nilIfBlank { heroChip(subject) }
                 }
-
-                if !cards.isEmpty {
-                    HStack(spacing: FeySpacing.xs) {
-                        heroChip("\(cards.count) cartes")
-                        if dueCount > 0 { heroChip("\(dueCount) dues") }
-                        if let subject = course.subject?.nilIfBlank { heroChip(subject) }
-                    }
-                    .padding(.top, FeySpacing.xxs)
-                }
+                .padding(.top, 14)
             }
         }
-        .padding(.horizontal, FeySpacing.screen)
-        .padding(.top, FeySpacing.xs)
-        .padding(.bottom, FeySpacing.xl + FeySpacing.sm)
+        .padding(.horizontal, 18)
+        .padding(.top, 14)
+        .padding(.bottom, 22)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(heroBackground)
     }
@@ -168,92 +158,73 @@ struct FlashcardsView: View {
     private func heroChip(_ text: String) -> some View {
         Text(text)
             .font(FeyFont.micro)
-            .foregroundStyle(heroTextTint)
+            .foregroundStyle(heroText)
             .padding(.vertical, 6)
             .padding(.horizontal, 11)
-            .background(Color.white.opacity(0.55), in: Capsule())
+            .background(Color.white.opacity(0.6), in: Capsule())
     }
 
-    // MARK: - Liste des cartes
+    // MARK: - Liste
 
-    private var listPanel: some View {
-        VStack(alignment: .leading, spacing: FeySpacing.md) {
-            if cards.isEmpty {
-                FeyEmptyState(
-                    systemImage: "rectangle.on.rectangle.angled",
-                    title: "Aucune flashcard",
-                    message: "Générez un jeu de cartes à partir du contenu importé, ou créez-en une à la main.",
-                    actionTitle: "Générer avec l'IA"
-                ) {
-                    Task { await generateMore() }
-                }
-            } else {
-                HStack(alignment: .firstTextBaseline) {
+    @ViewBuilder
+    private var listContent: some View {
+        if cards.isEmpty {
+            FeyEmptyState(
+                systemImage: "rectangle.on.rectangle.angled",
+                title: "Aucune flashcard",
+                message: "Générez un jeu de cartes à partir du contenu importé, ou créez-en une à la main.",
+                actionTitle: "Générer avec l'IA"
+            ) {
+                Task { await generateMore() }
+            }
+        } else {
+            VStack(alignment: .leading, spacing: FeySpacing.sm) {
+                HStack {
                     Text("Cartes")
-                        .font(FeyFont.cardTitle)
+                        .font(FeyFont.hanken(14, weight: .semibold))
                         .foregroundStyle(FeyColor.ink)
                     Spacer()
                     Text("\(cards.count)")
-                        .font(FeyFont.caption)
+                        .font(FeyFont.hanken(12, weight: .medium))
                         .foregroundStyle(FeyColor.inkTertiary)
                 }
 
-                cardList
-            }
-        }
-        .padding(.horizontal, FeySpacing.screen)
-        .padding(.top, FeySpacing.lg)
-        .padding(.bottom, cards.isEmpty ? FeySpacing.xxl : FeyLayout.bottomBarClearance)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            FeyColor.canvas,
-            in: UnevenRoundedRectangle(
-                topLeadingRadius: FeyRadius.xl,
-                topTrailingRadius: FeyRadius.xl,
-                style: .continuous
-            )
-        )
-    }
+                VStack(spacing: 0) {
+                    ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
+                        Button {
+                            editingCard = card
+                        } label: {
+                            HStack(alignment: .center, spacing: 10) {
+                                Text(card.front)
+                                    .font(FeyFont.hanken(13, weight: .medium))
+                                    .foregroundStyle(Color(hex: 0x2A2823))
+                                    .multilineTextAlignment(.leading)
+                                    .lineLimit(2)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
 
-    private var cardList: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
-                Button {
-                    editingCard = card
-                } label: {
-                    HStack(spacing: FeySpacing.sm) {
-                        Text(card.front)
-                            .font(FeyFont.bodyEmphasis)
-                            .foregroundStyle(FeyColor.ink)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                                Circle()
+                                    .fill(statusColor(for: card))
+                                    .frame(width: 8, height: 8)
+                            }
+                            .padding(.vertical, 12)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .contextMenu {
+                            Button { editingCard = card } label: {
+                                Label("Modifier", systemImage: "pencil")
+                            }
+                            Button(role: .destructive) { delete(card) } label: {
+                                Label("Supprimer", systemImage: "trash")
+                            }
+                        }
 
-                        Circle()
-                            .fill(statusColor(for: card))
-                            .frame(width: 8, height: 8)
+                        if index < cards.count - 1 {
+                            Rectangle()
+                                .fill(FeyColor.stroke)
+                                .frame(height: 1)
+                        }
                     }
-                    .padding(.vertical, FeySpacing.sm + 2)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .contextMenu {
-                    Button {
-                        editingCard = card
-                    } label: {
-                        Label("Modifier", systemImage: "pencil")
-                    }
-                    Button(role: .destructive) {
-                        delete(card)
-                    } label: {
-                        Label("Supprimer", systemImage: "trash")
-                    }
-                }
-
-                if index < cards.count - 1 {
-                    Rectangle()
-                        .fill(FeyColor.stroke)
-                        .frame(height: 1)
                 }
             }
         }
@@ -263,7 +234,7 @@ struct FlashcardsView: View {
         if card.isDue() {
             Color(hex: 0xC9B98A)
         } else if card.state == .new {
-            FeyColor.inkTertiary.opacity(0.5)
+            FeyColor.inkTertiary.opacity(0.55)
         } else {
             Color(hex: 0x7FBF9A)
         }

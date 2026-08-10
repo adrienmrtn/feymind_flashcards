@@ -33,7 +33,6 @@ struct TodayView: View {
         Set(dueCards.compactMap { $0.course?.id }).count
     }
 
-    /// Estimation grossière : environ 30 secondes par carte.
     private var estimatedMinutes: Int {
         max(1, Int((Double(dueCards.count) * 30 / 60).rounded(.up)))
     }
@@ -47,20 +46,19 @@ struct TodayView: View {
                             header
                             emptyState
                         }
-                        .padding(.bottom, FeyLayout.tabBarClearance)
+                        .padding(.bottom, FeySpacing.xl)
                     }
                 } else {
                     VStack(spacing: 0) {
                         header
                         sessionCard
                             .padding(.horizontal, FeySpacing.screen)
-                            .padding(.bottom, FeyLayout.tabBarClearance)
+                            .padding(.bottom, FeySpacing.md)
                             .frame(maxHeight: .infinity)
                     }
                 }
             }
             .feyScreenBackground()
-            .feyTabBar()
             .toolbar(.hidden, for: .navigationBar)
         }
         .fullScreenCover(isPresented: $showStudy) {
@@ -68,20 +66,12 @@ struct TodayView: View {
         }
     }
 
-    // MARK: - En-tête
-
     private var header: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(StudyStats.formattedDate())
-                    .font(FeyFont.caption)
-                    .foregroundStyle(FeyColor.inkTertiary)
-
-                Text("Réviser")
-                    .font(FeyFont.screenTitle)
-                    .foregroundStyle(FeyColor.ink)
-                    .tracking(FeyTracking.tight)
-            }
+            Text("Réviser")
+                .font(FeyFont.hanken(26, weight: .bold))
+                .foregroundStyle(FeyColor.ink)
+                .tracking(-0.4)
 
             Spacer(minLength: FeySpacing.sm)
         }
@@ -90,14 +80,12 @@ struct TodayView: View {
         .padding(.bottom, FeySpacing.sm)
     }
 
-    // MARK: - Carte de session
-
     private var sessionCard: some View {
-        VStack(spacing: FeySpacing.lg) {
+        VStack(spacing: 22) {
             HStack {
                 Text("SESSION DU JOUR")
                     .font(FeyFont.hanken(12, weight: .medium))
-                    .tracking(0.06)
+                    .tracking(0.8)
                     .foregroundStyle(Color(hex: 0x8F8B82))
 
                 Spacer()
@@ -110,18 +98,18 @@ struct TodayView: View {
             VStack(spacing: 8) {
                 Text("\(dueCards.count)")
                     .font(FeyFont.hanken(112, weight: .bold))
-                    .tracking(-2)
+                    .tracking(-4)
                     .foregroundStyle(FeyColor.onInk)
                     .minimumScaleFactor(0.35)
                     .lineLimit(1)
 
                 Text(dueCards.count > 1 ? "cartes dues aujourd'hui" : "carte due aujourd'hui")
                     .font(FeyFont.hanken(16, weight: .medium))
-                    .foregroundStyle(Color.white.opacity(0.6))
+                    .foregroundStyle(Color(hex: 0x9A958A))
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            VStack(spacing: FeySpacing.sm + 2) {
+            VStack(spacing: 14) {
                 progressSegments
 
                 HStack {
@@ -138,19 +126,18 @@ struct TodayView: View {
                     showStudy = true
                 } label: {
                     Text("Commencer la session")
-                        .font(FeyFont.cardTitle)
+                        .font(FeyFont.hanken(15, weight: .semibold))
                         .foregroundStyle(FeyColor.ink)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(FeyColor.canvas, in: Capsule())
+                        .background(FeyColor.canvas, in: RoundedRectangle(cornerRadius: FeyRadius.button, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(FeySpacing.lg + 2)
+        .padding(26)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(FeyColor.ink, in: RoundedRectangle(cornerRadius: FeyRadius.xl + 4, style: .continuous))
-        .feySoftShadow(strength: 0.16)
+        .background(FeyColor.ink, in: RoundedRectangle(cornerRadius: FeyRadius.xxl, style: .continuous))
     }
 
     private var breakdownLabel: String {
@@ -169,7 +156,7 @@ struct TodayView: View {
             HStack(spacing: spacing) {
                 segment(color: Color(hex: 0xC9B98A), count: reviewCount, total: total, usable: usable)
                 segment(color: FeyColor.accent, count: learningCount, total: total, usable: usable)
-                segment(color: Color.white.opacity(0.3), count: newCount, total: total, usable: usable)
+                segment(color: Color(hex: 0x4A463F), count: newCount, total: total, usable: usable)
             }
         }
         .frame(height: 7)
@@ -183,8 +170,6 @@ struct TodayView: View {
                 .frame(width: max(4, usable * CGFloat(count) / CGFloat(total)))
         }
     }
-
-    // MARK: - États vides
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: FeySpacing.lg) {
@@ -204,9 +189,7 @@ struct TodayView: View {
 
                     ForEach(nextDueSummary, id: \.course.id) { entry in
                         HStack(spacing: FeySpacing.sm) {
-                            CourseCover(course: entry.course, emojiSize: 18)
-                                .frame(width: 42, height: 42)
-                                .clipShape(RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
+                            CourseThumb(course: entry.course)
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(entry.course.title)
@@ -220,7 +203,6 @@ struct TodayView: View {
 
                             Spacer(minLength: 0)
                         }
-                        .feyCard(padding: FeySpacing.sm, radius: FeyRadius.lg, elevated: false)
                     }
                 }
                 .padding(.horizontal, FeySpacing.screen)
@@ -228,8 +210,6 @@ struct TodayView: View {
         }
     }
 
-    /// Fond vert doux et coche, distincts du gris neutre des autres états vides :
-    /// il ne s'agit pas d'un manque, mais d'un objectif atteint.
     private var doneState: some View {
         VStack(spacing: FeySpacing.sm) {
             Image(systemName: "checkmark")
@@ -239,12 +219,11 @@ struct TodayView: View {
                 .background(Color(hex: 0xE4ECE6), in: Circle())
 
             Text("Tout est à jour")
-                .font(FeyFont.pageTitle)
+                .font(FeyFont.hanken(18, weight: .semibold))
                 .foregroundStyle(FeyColor.ink)
-                .tracking(FeyTracking.tight)
                 .padding(.top, FeySpacing.xxs)
 
-            Text("Aucune carte n'arrive à échéance. Vous pouvez réviser en avance depuis un cours.")
+            Text("Aucune carte due aujourd'hui. Revenez demain.")
                 .font(FeyFont.body)
                 .foregroundStyle(FeyColor.inkTertiary)
                 .multilineTextAlignment(.center)

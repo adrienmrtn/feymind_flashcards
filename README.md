@@ -19,14 +19,13 @@ génération des flashcards, visualisation et édition, puis entraînement.
 
 ## Direction visuelle
 
-- Fond gris neutre, surfaces blanches très arrondies, ombres à peine visibles
-- Palette monochrome : l'encre est la seule couleur d'action, la couleur ne sert qu'aux couvertures
-- Typographie Hanken Grotesk (embarquée, sans dépendance réseau), titres resserrés, hiérarchie par
-  la taille et par l'air
-- Barre d'onglets fixe en pied d'écran, masquée dès qu'un écran de détail est ouvert
-- Réviser condense la file du jour en un seul grand chiffre, sur une carte sombre pleine page
-- Chaque cours porte une couverture : la première page du PDF importé, sinon un dégradé de sa
-  teinte avec son emoji ; l'écran de détail affiche cette teinte en grand, en fond pastel
+- Fond ivoire (`#FAF9F6`), surfaces blanches, encre `#1A1917`, accent indigo `#5B5BD6`
+- Typographie Hanken Grotesk embarquée (Regular / Medium / SemiBold / Bold)
+- Coins mesurés : 9 pt (miniatures), 14 pt (boutons), 18 pt (cartes) — pas de capsules partout
+- Barre d'onglets **native** iOS ; bouton « + » flottant en bas à droite sur l'accueil
+- Réviser : carte sombre avec le nombre de cartes dues en très grand
+- Détail cours : en-tête pastel plat dérivé de la teinte du cours, liste compacte à pastilles
+- Chaque cours porte une couverture miniature : première page PDF, sinon initiales sur pastel
 
 ## Pile technique
 

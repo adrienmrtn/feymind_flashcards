@@ -18,11 +18,11 @@ struct FeyChip: View {
         }
         .foregroundStyle(filled ? FeyColor.onInk : tint)
         .padding(.vertical, 6)
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 11)
         .background(filled ? tint : FeyColor.surface, in: Capsule())
         .overlay {
             if !filled {
-                Capsule().strokeBorder(FeyColor.stroke, lineWidth: 1)
+                Capsule().strokeBorder(FeyColor.strokeStrong, lineWidth: 1)
             }
         }
     }
@@ -52,12 +52,12 @@ struct FeySelectChip: View {
         Button(action: action) {
             Text(title)
                 .font(FeyFont.captionEmphasis)
-                .foregroundStyle(isSelected ? FeyColor.onInk : FeyColor.inkSecondary)
-                .padding(.vertical, 11)
-                .padding(.horizontal, 18)
+                .foregroundStyle(isSelected ? FeyColor.onInk : Color(hex: 0x4A463F))
+                .padding(.vertical, 8)
+                .padding(.horizontal, 14)
                 .background(isSelected ? FeyColor.ink : FeyColor.surface, in: Capsule())
                 .overlay {
-                    Capsule().strokeBorder(isSelected ? Color.clear : FeyColor.stroke, lineWidth: 1)
+                    Capsule().strokeBorder(isSelected ? Color.clear : FeyColor.strokeStrong, lineWidth: 1)
                 }
         }
         .buttonStyle(.plain)
@@ -96,9 +96,8 @@ struct FeySectionHeader: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(FeyFont.sectionTitle)
+                    .font(FeyFont.cardTitle)
                     .foregroundStyle(FeyColor.ink)
-                    .tracking(FeyTracking.tight)
                 if let subtitle {
                     Text(subtitle)
                         .font(FeyFont.caption)
@@ -128,12 +127,14 @@ struct FeyEmptyState: View {
                 .font(.system(size: 26, weight: .regular))
                 .foregroundStyle(FeyColor.inkTertiary)
                 .frame(width: 74, height: 74)
-                .background(FeyColor.surfaceMuted, in: Circle())
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(FeyColor.strokeStrong, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                }
 
             Text(title)
-                .font(FeyFont.pageTitle)
+                .font(FeyFont.hanken(17, weight: .semibold))
                 .foregroundStyle(FeyColor.ink)
-                .tracking(FeyTracking.tight)
                 .multilineTextAlignment(.center)
                 .padding(.top, FeySpacing.xxs)
 
@@ -145,12 +146,14 @@ struct FeyEmptyState: View {
 
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .buttonStyle(FeyPrimaryButtonStyle(fullWidth: false))
+                    .buttonStyle(FeyPrimaryButtonStyle())
                     .padding(.top, FeySpacing.xs)
+                    .frame(maxWidth: 260)
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, FeySpacing.xl)
+        .padding(.horizontal, FeySpacing.lg)
     }
 }
 
@@ -177,7 +180,7 @@ struct FeyProgressRing: View {
 /// Barre de progression fine, utilisée en haut des sessions d'entraînement.
 struct FeyProgressBar: View {
     let progress: Double
-    var tint: Color = FeyColor.ink
+    var tint: Color = FeyColor.accent
     var track: Color = FeyColor.surfaceSunken
 
     var body: some View {

@@ -21,67 +21,56 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: FeySpacing.lg) {
-                    header
+                VStack(alignment: .leading, spacing: 0) {
                     hero
-                    subjectsPreview
-                    waitlistNote
+
+                    VStack(alignment: .leading, spacing: 18) {
+                        subjectsPreview
+                        waitlistNote
+                    }
+                    .padding(.horizontal, FeySpacing.screen)
+                    .padding(.top, 18)
+                    .padding(.bottom, FeySpacing.xl)
                 }
-                .padding(.horizontal, FeySpacing.screen)
-                .padding(.top, FeySpacing.xs)
-                .padding(.bottom, FeyLayout.tabBarClearance)
             }
             .feyScreenBackground()
-            .feyTabBar()
             .toolbar(.hidden, for: .navigationBar)
         }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text("Bientôt disponible")
-                .font(FeyFont.caption)
-                .foregroundStyle(FeyColor.inkTertiary)
-
-            Text("Bibliothèque")
-                .font(FeyFont.screenTitle)
-                .foregroundStyle(FeyColor.ink)
-                .tracking(FeyTracking.tight)
-        }
-        .padding(.top, FeySpacing.xs)
-    }
-
     private var hero: some View {
-        VStack(alignment: .leading, spacing: FeySpacing.sm) {
-            Image(systemName: "globe.europe.africa")
-                .font(.system(size: 20, weight: .medium))
-                .foregroundStyle(FeyColor.onInk)
-                .frame(width: 46, height: 46)
-                .background(Color.white.opacity(0.14), in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
+        VStack(alignment: .leading, spacing: 10) {
+            Text("BIBLIOTHÈQUE")
+                .font(FeyFont.hanken(12, weight: .medium))
+                .tracking(0.8)
+                .foregroundStyle(Color(hex: 0x8F8B82))
 
             Text("Les cours de la communauté")
-                .font(FeyFont.pageTitle)
+                .font(FeyFont.hanken(24, weight: .bold))
                 .foregroundStyle(FeyColor.onInk)
-                .tracking(FeyTracking.tight)
+                .tracking(-0.2)
 
-            Text("Parcourez les paquets partagés par les autres étudiants, importez-les en un geste et récupérez leurs flashcards.")
+            Text("Des milliers de jeux de cartes partagés, prêts à importer.")
                 .font(FeyFont.body)
-                .foregroundStyle(Color.white.opacity(0.75))
+                .foregroundStyle(Color(hex: 0x9A958A))
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(FeySpacing.md)
+        .padding(.horizontal, FeySpacing.screen)
+        .padding(.top, 26)
+        .padding(.bottom, 30)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(FeyColor.ink, in: RoundedRectangle(cornerRadius: FeyRadius.xl, style: .continuous))
-        .feySoftShadow(strength: 0.12)
+        .background(FeyColor.ink)
     }
 
     private var subjectsPreview: some View {
         VStack(alignment: .leading, spacing: FeySpacing.sm) {
-            FeySectionHeader(title: "Explorer par matière", subtitle: "Aperçu de ce qui arrive")
+            Text("Explorer par matière")
+                .font(FeyFont.hanken(14, weight: .semibold))
+                .foregroundStyle(FeyColor.ink)
 
             LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: FeySpacing.sm), GridItem(.flexible(), spacing: FeySpacing.sm)],
-                spacing: FeySpacing.sm
+                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                spacing: 12
             ) {
                 ForEach(previewSubjects) { subject in
                     VStack(alignment: .leading) {
@@ -92,13 +81,13 @@ struct LibraryView: View {
                         Spacer(minLength: 0)
 
                         Text(subject.name)
-                            .font(FeyFont.cardTitle)
+                            .font(FeyFont.hanken(13, weight: .semibold))
                             .foregroundStyle(subject.tint)
                     }
-                    .padding(FeySpacing.sm)
+                    .padding(12)
                     .frame(height: 78, alignment: .topLeading)
                     .frame(maxWidth: .infinity)
-                    .background(subject.background, in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
+                    .background(subject.background, in: RoundedRectangle(cornerRadius: FeyRadius.button, style: .continuous))
                 }
             }
             .allowsHitTesting(false)
@@ -106,28 +95,32 @@ struct LibraryView: View {
     }
 
     private var waitlistNote: some View {
-        VStack(spacing: FeySpacing.xs) {
+        HStack(spacing: 12) {
             Image(systemName: "lock")
-                .font(.system(size: 20, weight: .medium))
-                .foregroundStyle(FeyColor.inkTertiary)
-                .frame(width: 56, height: 56)
-                .background(FeyColor.surfaceMuted, in: Circle())
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(FeyColor.inkSecondary)
+                .frame(width: 34, height: 34)
+                .background(Color(hex: 0xE0D9CC), in: Circle())
 
-            Text("Connexion requise")
-                .font(FeyFont.cardTitle)
-                .foregroundStyle(FeyColor.ink)
-                .padding(.top, FeySpacing.xxs)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Connexion requise")
+                    .font(FeyFont.hanken(13, weight: .semibold))
+                    .foregroundStyle(Color(hex: 0x4A463F))
+                Text("La bibliothèque n'est pas encore active.")
+                    .font(FeyFont.hanken(12, weight: .regular))
+                    .foregroundStyle(FeyColor.inkTertiary)
+            }
 
-            Text("La bibliothèque partagée ouvrira avec les comptes Feymind. En attendant, tous vos cours restent sur votre appareil.")
-                .font(FeyFont.body)
-                .foregroundStyle(FeyColor.inkTertiary)
-                .multilineTextAlignment(.center)
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity)
-        .feyCard(padding: FeySpacing.lg, radius: FeyRadius.xl, elevated: false)
+        .padding(16)
+        .background(
+            FeyColor.surfaceMuted,
+            in: RoundedRectangle(cornerRadius: FeyRadius.button, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: FeyRadius.button, style: .continuous)
+                .strokeBorder(Color(hex: 0xE8E2D6), lineWidth: 1)
+        }
     }
-}
-
-#Preview {
-    LibraryView()
 }

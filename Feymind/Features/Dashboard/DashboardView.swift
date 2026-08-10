@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 /// Valeur du filtre par matière qui n'exclut rien.
-private let allSubjectsFilter = "Tous"
+private let allSubjectsFilter = "Tout"
 
 struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
@@ -33,57 +33,61 @@ struct DashboardView: View {
     }
 
     private var visibleCourses: [Course] {
-        // Le filtre retombe sur « Tous » si la matière sélectionnée n'existe plus.
         guard subjectFilter != allSubjectsFilter, subjects.contains(subjectFilter) else { return courses }
         return courses.filter { $0.subject?.nilIfBlank == subjectFilter }
     }
 
     var body: some View {
         NavigationStack(path: $path) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: FeySpacing.lg) {
-                    header
-                        .padding(.horizontal, FeySpacing.screen)
-
-                    TodayCTACard(
-                        dueCount: dueCards.count,
-                        reviewedToday: StudyStats.reviewsToday(reviewDates: reviewDates),
-                        streak: StudyStats.streak(reviewDates: reviewDates)
-                    ) {
-                        showStudy = true
-                    }
-                    .padding(.horizontal, FeySpacing.screen)
-
-                    if subjects.count > 2 {
-                        FeySelectChipRow(titles: subjects, selection: $subjectFilter)
-                    }
-
-                    coursesSection
-                        .padding(.horizontal, FeySpacing.screen)
-
-                    if !courses.isEmpty {
-                        statsRow
+            ZStack(alignment: .bottomTrailing) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        header
                             .padding(.horizontal, FeySpacing.screen)
+
+                        if courses.isEmpty {
+                            emptyState
+                                .padding(.horizontal, FeySpacing.screen)
+                        } else {
+                            TodayCTACard(
+                                dueCount: dueCards.count,
+                                reviewedToday: StudyStats.reviewsToday(reviewDates: reviewDates),
+                                streak: StudyStats.streak(reviewDates: reviewDates)
+                            ) {
+                                showStudy = true
+                            }
+                            .padding(.horizontal, FeySpacing.screen)
+
+                            if subjects.count > 2 {
+                                FeySelectChipRow(titles: subjects, selection: $subjectFilter)
+                            }
+
+                            coursesSection
+                                .padding(.horizontal, FeySpacing.screen)
+                        }
                     }
+                    .padding(.top, FeySpacing.xs)
+                    .padding(.bottom, FeyLayout.fabClearance)
                 }
-                .padding(.top, FeySpacing.xs)
-                .padding(.bottom, FeyLayout.tabBarClearance)
+                .feyScreenBackground()
+
+                FeyFloatingAddButton {
+                    showImportChoice = true
+                }
+                .padding(.trailing, 18)
+                .padding(.bottom, 18)
             }
-            .feyScreenBackground()
-            .feyTabBar()
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
             }
-            .onAppear { syncPagingDepth() }
-            .onChange(of: path.count) { _, _ in syncPagingDepth() }
         }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
             ImportChoiceSheet { kind in
                 pendingImport = kind
                 showImportChoice = false
             }
-            .presentationDetents([.height(330)])
+            .presentationDetents([.height(320)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(FeyRadius.xxl)
         }
@@ -101,58 +105,45 @@ struct DashboardView: View {
     // MARK: - Sections
 
     private var header: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(StudyStats.formattedDate())
-                    .font(FeyFont.caption)
-                    .foregroundStyle(FeyColor.inkTertiary)
+        VStack(alignment: .leading, spacing: 7) {
+            Text(StudyStats.formattedDate())
+                .font(FeyFont.hanken(13, weight: .medium))
+                .foregroundStyle(FeyColor.inkTertiary)
 
-                Text(StudyStats.greeting())
-                    .font(FeyFont.screenTitle)
-                    .foregroundStyle(FeyColor.ink)
-                    .tracking(FeyTracking.tight)
-            }
-
-            Spacer(minLength: FeySpacing.sm)
-
-            FeyCircleButton(
-                systemImage: "plus",
-                style: .dark,
-                size: 48,
-                accessibilityTitle: "Importer un cours"
-            ) {
-                showImportChoice = true
-            }
+            Text(StudyStats.greeting())
+                .font(FeyFont.hanken(26, weight: .bold))
+                .foregroundStyle(FeyColor.ink)
+                .tracking(-0.4)
         }
         .padding(.top, FeySpacing.xs)
     }
 
-    @ViewBuilder
-    private var coursesSection: some View {
-        if courses.isEmpty {
-            FeyEmptyState(
-                systemImage: "square.and.arrow.down",
-                title: "Aucun cours",
-                message: "Importez un PDF ou collez vos notes : Feymind en fait des flashcards prêtes à réviser.",
-                actionTitle: "Importer un cours"
-            ) {
-                showImportChoice = true
-            }
-        } else {
-            VStack(alignment: .leading, spacing: FeySpacing.sm) {
-                FeySectionHeader(
-                    title: "Vos cours",
-                    subtitle: visibleCourses.count > 1 ? "\(visibleCourses.count) au total" : nil,
-                    actionTitle: courses.count > 6 ? "Tout voir" : nil
-                ) {
-                    router?.selection = .courses
-                }
+    private var emptyState: some View {
+        FeyEmptyState(
+            systemImage: "doc.text",
+            title: "Aucun cours pour l'instant",
+            message: "Importez un PDF ou collez du texte pour générer vos premières flashcards.",
+            actionTitle: "Importer un cours"
+        ) {
+            showImportChoice = true
+        }
+    }
 
+    private var coursesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FeySectionHeader(
+                title: "Vos cours",
+                actionTitle: "Tout voir"
+            ) {
+                router?.selection = .courses
+            }
+
+            VStack(spacing: 12) {
                 ForEach(visibleCourses.prefix(6)) { course in
                     Button {
                         path.append(course)
                     } label: {
-                        CourseCoverCard(course: course)
+                        CourseRow(course: course)
                     }
                     .buttonStyle(.plain)
                 }
@@ -160,43 +151,13 @@ struct DashboardView: View {
         }
     }
 
-    private var statsRow: some View {
-        HStack(spacing: FeySpacing.sm) {
-            statTile(value: "\(courses.count)", label: "cours")
-            statTile(value: "\(allCards.count)", label: "cartes")
-            statTile(
-                value: "\(StudyStats.reviewsToday(reviewDates: reviewDates))",
-                label: "aujourd'hui"
-            )
-        }
-    }
-
-    private func statTile(value: String, label: String) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(value)
-                .font(FeyFont.display(22))
-                .foregroundStyle(FeyColor.ink)
-
-            Text(label)
-                .font(FeyFont.micro)
-                .foregroundStyle(FeyColor.inkTertiary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .feyCard(padding: FeySpacing.sm + 2, radius: FeyRadius.lg, elevated: false)
-    }
-
     // MARK: - Import
 
     private func launchPendingImport() {
         guard let kind = pendingImport else { return }
         pendingImport = nil
-        // Laisse la feuille se refermer avant d'ouvrir l'écran d'import.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             activeImport = kind
         }
-    }
-
-    private func syncPagingDepth() {
-        router?.setNavigationDepth(path.count, for: .dashboard)
     }
 }

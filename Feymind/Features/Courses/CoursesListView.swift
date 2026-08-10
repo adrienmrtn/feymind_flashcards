@@ -4,7 +4,6 @@ import SwiftUI
 /// Tous les cours importés, plus ceux repris depuis la bibliothèque.
 struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(TabRouter.self) private var router: TabRouter?
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
@@ -26,14 +25,6 @@ struct CoursesListView: View {
             case .due: "À réviser"
             }
         }
-    }
-
-    private var imported: [Course] {
-        filtered.filter { !$0.isFromLibrary }
-    }
-
-    private var fromLibrary: [Course] {
-        filtered.filter(\.isFromLibrary)
     }
 
     private var filtered: [Course] {
@@ -58,7 +49,7 @@ struct CoursesListView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView {
-                VStack(alignment: .leading, spacing: FeySpacing.lg) {
+                VStack(alignment: .leading, spacing: 18) {
                     header
                         .padding(.horizontal, FeySpacing.screen)
 
@@ -67,39 +58,35 @@ struct CoursesListView: View {
                             .padding(.horizontal, FeySpacing.screen)
 
                         sortPicker
-                    }
 
-                    content
-                        .padding(.horizontal, FeySpacing.screen)
+                        content
+                            .padding(.horizontal, FeySpacing.screen)
+                    } else {
+                        content
+                            .padding(.horizontal, FeySpacing.screen)
+                    }
                 }
                 .padding(.top, FeySpacing.xs)
-                .padding(.bottom, FeyLayout.tabBarClearance)
+                .padding(.bottom, FeySpacing.xl)
             }
             .feyScreenBackground()
-            .feyTabBar()
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
             }
-            .onAppear { router?.setNavigationDepth(path.count, for: .courses) }
-            .onChange(of: path.count) { _, count in
-                router?.setNavigationDepth(count, for: .courses)
-            }
         }
     }
 
-    // MARK: - Sections
-
     private var header: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(courses.isEmpty ? "Aucun cours" : "\(courses.count) cours")
-                .font(FeyFont.caption)
+                .font(FeyFont.hanken(13, weight: .medium))
                 .foregroundStyle(FeyColor.inkTertiary)
 
             Text("Mes cours")
-                .font(FeyFont.screenTitle)
+                .font(FeyFont.hanken(26, weight: .bold))
                 .foregroundStyle(FeyColor.ink)
-                .tracking(FeyTracking.tight)
+                .tracking(-0.4)
         }
         .padding(.top, FeySpacing.xs)
     }
@@ -134,35 +121,22 @@ struct CoursesListView: View {
                 message: "Essayez un autre mot-clé."
             )
         } else {
-            VStack(alignment: .leading, spacing: FeySpacing.lg) {
-                if !imported.isEmpty {
-                    section(title: "Mes imports", courses: imported)
-                }
-                if !fromLibrary.isEmpty {
-                    section(title: "Depuis la bibliothèque", courses: fromLibrary)
-                }
-            }
-        }
-    }
-
-    private func section(title: String, courses list: [Course]) -> some View {
-        VStack(alignment: .leading, spacing: FeySpacing.sm) {
-            FeySectionHeader(title: title, subtitle: "\(list.count) cours")
-
-            ForEach(list) { course in
-                Button {
-                    path.append(course)
-                } label: {
-                    CourseRow(course: course)
-                }
-                .buttonStyle(.plain)
-                .contextMenu {
-                    Button(role: .destructive) {
-                        withAnimation {
-                            try? CourseRepository.delete(course, in: modelContext)
-                        }
+            VStack(spacing: 14) {
+                ForEach(filtered) { course in
+                    Button {
+                        path.append(course)
                     } label: {
-                        Label("Supprimer", systemImage: "trash")
+                        CourseRow(course: course, showsChevron: true)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            withAnimation {
+                                try? CourseRepository.delete(course, in: modelContext)
+                            }
+                        } label: {
+                            Label("Supprimer", systemImage: "trash")
+                        }
                     }
                 }
             }
@@ -170,12 +144,12 @@ struct CoursesListView: View {
     }
 }
 
-/// Champ de recherche en pilule blanche.
+/// Champ de recherche — coins 12 pt, bordure fine (maquette `.field`).
 private struct SearchField: View {
     @Binding var text: String
 
     var body: some View {
-        HStack(spacing: FeySpacing.xs) {
+        HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(FeyColor.inkTertiary)
@@ -197,8 +171,12 @@ private struct SearchField: View {
                 .accessibilityLabel("Effacer la recherche")
             }
         }
-        .padding(.vertical, 15)
-        .padding(.horizontal, FeySpacing.md)
-        .background(FeyColor.surface, in: Capsule())
+        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous)
+                .strokeBorder(Color(hex: 0xE6E0D5), lineWidth: 1)
+        }
     }
 }

@@ -63,21 +63,25 @@ enum FeySpacing {
 }
 
 enum FeyRadius {
+    /// Couvertures miniatures (52×66 dans la maquette).
+    static let cover: CGFloat = 9
     static let sm: CGFloat = 12
+    /// Boutons CTA principaux (`.cta` dans la maquette).
+    static let button: CGFloat = 14
     static let md: CGFloat = 16
-    static let lg: CGFloat = 20
-    static let xl: CGFloat = 24
-    static let xxl: CGFloat = 28
+    /// Cartes d'appel (accueil, stats).
+    static let card: CGFloat = 18
+    static let lg: CGFloat = 18
+    static let xl: CGFloat = 22
+    static let xxl: CGFloat = 24
     static let pill: CGFloat = 999
 }
 
 enum FeyLayout {
-    /// Hauteur de la barre d'onglets fixe, hors zone de sécurité.
-    static let tabBarHeight: CGFloat = 58
-    /// Espace à réserver en bas des écrans pour ne pas passer sous la barre.
-    static let tabBarClearance: CGFloat = 100
     /// Espace à réserver au-dessus d'un bouton d'action ancré en bas.
     static let bottomBarClearance: CGFloat = 108
+    /// Espace sous le FAB flottant de l'accueil.
+    static let fabClearance: CGFloat = 88
 }
 
 /// Typographie de l'app : Hanken Grotesk, embarquée et enregistrée par `FontLoader`.
@@ -89,12 +93,16 @@ enum FeyFont {
     }
 
     private static func postscriptName(for weight: Font.Weight) -> String {
-        switch weight {
-        case .bold, .heavy, .black: "HankenGrotesk-Bold"
-        case .semibold: "HankenGrotesk-SemiBold"
-        case .medium: "HankenGrotesk-Medium"
-        default: "HankenGrotesk-Regular"
+        if weight == .bold || weight == .heavy || weight == .black {
+            return "HankenGrotesk-Bold"
         }
+        if weight == .semibold {
+            return "HankenGrotesk-SemiBold"
+        }
+        if weight == .medium {
+            return "HankenGrotesk-Medium"
+        }
+        return "HankenGrotesk-Regular"
     }
 
     static func display(_ size: CGFloat) -> Font {
@@ -181,24 +189,30 @@ extension Color {
 
 struct FeyCardStyle: ViewModifier {
     var padding: CGFloat = FeySpacing.md
-    var radius: CGFloat = FeyRadius.lg
+    var radius: CGFloat = FeyRadius.card
     var elevated: Bool = true
 
     func body(content: Content) -> some View {
         content
             .padding(padding)
             .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay {
+                if !elevated {
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .strokeBorder(FeyColor.stroke, lineWidth: 1)
+                }
+            }
             .shadow(
                 color: Color.black.opacity(elevated ? 0.05 : 0),
-                radius: elevated ? 16 : 0,
+                radius: elevated ? 12 : 0,
                 x: 0,
-                y: elevated ? 8 : 0
+                y: elevated ? 6 : 0
             )
     }
 }
 
 extension View {
-    func feyCard(padding: CGFloat = FeySpacing.md, radius: CGFloat = FeyRadius.lg, elevated: Bool = true) -> some View {
+    func feyCard(padding: CGFloat = FeySpacing.md, radius: CGFloat = FeyRadius.card, elevated: Bool = true) -> some View {
         modifier(FeyCardStyle(padding: padding, radius: radius, elevated: elevated))
     }
 

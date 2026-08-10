@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Les cinq destinations de la barre d'onglets.
+/// Les cinq destinations de la barre d'onglets native.
 enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     case today
     case courses
@@ -31,20 +31,8 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     }
 }
 
-/// Onglet actif et profondeur de navigation, partagés par les cinq pages.
+/// Onglet actif, partagé pour permettre un basculement programmatique.
 @Observable
 final class TabRouter {
     var selection: RootTab = .dashboard
-
-    /// Profondeur de pile par onglet : le balayage horizontal ne reste actif
-    /// que sur la racine de l'onglet courant.
-    private var navigationDepth: [RootTab: Int] = [:]
-
-    var allowsPaging: Bool {
-        navigationDepth[selection, default: 0] == 0
-    }
-
-    func setNavigationDepth(_ depth: Int, for tab: RootTab) {
-        navigationDepth[tab] = max(0, depth)
-    }
 }
