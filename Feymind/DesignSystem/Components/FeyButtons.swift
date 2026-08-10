@@ -57,11 +57,14 @@ enum FeyCircleStyle: Equatable {
     case dark
     /// Posé sur une couverture, quelle que soit sa clarté.
     case glass
+    /// Posé sur un panneau pastel : verre blanc, icône dans la teinte du cours.
+    case tinted(Color)
 
     var foreground: Color {
         switch self {
         case .light: FeyColor.ink
         case .dark, .glass: FeyColor.onInk
+        case .tinted(let color): color
         }
     }
 
@@ -70,6 +73,7 @@ enum FeyCircleStyle: Equatable {
         case .light: FeyColor.surface
         case .dark: FeyColor.ink
         case .glass: Color.black.opacity(0.32)
+        case .tinted: Color.white.opacity(0.7)
         }
     }
 
@@ -77,7 +81,7 @@ enum FeyCircleStyle: Equatable {
     var shadowOpacity: Double {
         switch self {
         case .light, .dark: 0.08
-        case .glass: 0
+        case .glass, .tinted: 0
         }
     }
 }
