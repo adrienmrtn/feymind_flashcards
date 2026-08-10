@@ -75,7 +75,7 @@ struct SettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .feyScreenBackground()
-            .tint(FeyColor.ink)
+            .tint(FeyColor.accent)
             .navigationTitle("Réglages")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

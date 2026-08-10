@@ -21,10 +21,10 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
 
     var systemImage: String {
         switch self {
-        case .today: "rectangle.stack"
+        case .today: "arrow.triangle.2.circlepath"
         case .courses: "books.vertical"
         case .dashboard: "house"
-        case .library: "globe.europe.africa"
+        case .library: "book"
         case .profile: "person"
         }
     }
@@ -36,7 +36,7 @@ final class TabRouter {
     var selection: RootTab = .dashboard
 }
 
-/// Barre d'onglets flottante : pilule sombre, onglet actif dans un cercle blanc.
+/// Barre d'onglets fixe, en pied d'écran : icône + libellé, l'onglet actif en accent.
 /// Reste absente des aperçus, où aucun routeur n'est fourni.
 struct FeyTabBar: View {
     @Environment(TabRouter.self) private var router: TabRouter?
@@ -48,31 +48,38 @@ struct FeyTabBar: View {
     }
 
     private func bar(_ router: TabRouter) -> some View {
-        HStack(spacing: 4) {
-            ForEach(RootTab.allCases) { tab in
-                Button {
-                    router.selection = tab
-                } label: {
-                    Image(systemName: tab.systemImage)
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(tab == router.selection ? FeyColor.ink : FeyColor.onInkMuted)
-                        .frame(width: 46, height: 46)
-                        .background {
-                            if tab == router.selection {
-                                Circle().fill(FeyColor.surface)
-                            }
-                        }
+        ZStack(alignment: .top) {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay(FeyColor.surface.opacity(0.7))
+                .overlay(alignment: .top) {
+                    Rectangle().fill(FeyColor.stroke).frame(height: 1)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(tab.label)
+                .ignoresSafeArea(edges: .bottom)
+
+            HStack(spacing: 0) {
+                ForEach(RootTab.allCases) { tab in
+                    Button {
+                        router.selection = tab
+                    } label: {
+                        VStack(spacing: 5) {
+                            Image(systemName: tab.systemImage)
+                                .font(.system(size: 21, weight: .regular))
+                            Text(tab.label)
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        .foregroundStyle(tab == router.selection ? FeyColor.accent : FeyColor.inkTertiary)
+                        .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(tab.label)
+                }
             }
+            .padding(.top, FeySpacing.xs)
         }
-        .padding(.horizontal, FeySpacing.xs)
         .frame(height: FeyLayout.tabBarHeight)
-        .background(FeyColor.ink, in: Capsule())
-        .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 8)
-        .padding(.bottom, FeySpacing.xs)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: router.selection)
+        .animation(.easeOut(duration: 0.18), value: router.selection)
     }
 }
 

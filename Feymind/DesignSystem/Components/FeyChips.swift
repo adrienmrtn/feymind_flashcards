@@ -19,7 +19,12 @@ struct FeyChip: View {
         .foregroundStyle(filled ? FeyColor.onInk : tint)
         .padding(.vertical, 6)
         .padding(.horizontal, 10)
-        .background(filled ? tint : FeyColor.surfaceMuted, in: Capsule())
+        .background(filled ? tint : FeyColor.surface, in: Capsule())
+        .overlay {
+            if !filled {
+                Capsule().strokeBorder(FeyColor.stroke, lineWidth: 1)
+            }
+        }
     }
 }
 
@@ -104,7 +109,7 @@ struct FeySectionHeader: View {
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
                     .font(FeyFont.captionEmphasis)
-                    .foregroundStyle(FeyColor.ink)
+                    .foregroundStyle(FeyColor.accent)
             }
         }
     }

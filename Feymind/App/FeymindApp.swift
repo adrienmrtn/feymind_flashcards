@@ -16,7 +16,7 @@ struct FeymindApp: App {
         WindowGroup {
             RootTabView()
                 .preferredColorScheme(.light)
-                .tint(FeyColor.ink)
+                .tint(FeyColor.accent)
         }
         .modelContainer(container)
     }
