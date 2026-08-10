@@ -66,10 +66,9 @@ struct DashboardView: View {
                     }
                 }
                 .padding(.top, FeySpacing.xs)
-                .padding(.bottom, FeyLayout.tabBarClearance)
+                .padding(.bottom, FeySpacing.xl)
             }
             .feyScreenBackground()
-            .feyTabBar()
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)

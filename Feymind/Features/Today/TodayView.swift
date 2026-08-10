@@ -32,12 +32,11 @@ struct TodayView: View {
                             header
                             emptyState
                         }
-                        .padding(.bottom, FeyLayout.tabBarClearance)
+                        .padding(.bottom, FeySpacing.xl)
                     }
                 }
             }
             .feyScreenBackground()
-            .feyTabBar()
             .toolbar(.hidden, for: .navigationBar)
             .onAppear {
                 if !isSessionActive { isSessionActive = !dueCards.isEmpty }
