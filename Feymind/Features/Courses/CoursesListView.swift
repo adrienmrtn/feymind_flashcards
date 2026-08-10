@@ -4,6 +4,7 @@ import SwiftUI
 /// Tous les cours importés, plus ceux repris depuis la bibliothèque.
 struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(TabRouter.self) private var router: TabRouter?
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
@@ -72,12 +73,17 @@ struct CoursesListView: View {
                         .padding(.horizontal, FeySpacing.screen)
                 }
                 .padding(.top, FeySpacing.xs)
-                .padding(.bottom, FeySpacing.xl)
+                .padding(.bottom, FeyLayout.tabBarClearance)
             }
             .feyScreenBackground()
+            .feyTabBar()
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
+            }
+            .onAppear { router?.setNavigationDepth(path.count, for: .courses) }
+            .onChange(of: path.count) { _, count in
+                router?.setNavigationDepth(count, for: .courses)
             }
         }
     }

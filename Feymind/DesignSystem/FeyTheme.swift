@@ -72,6 +72,10 @@ enum FeyRadius {
 }
 
 enum FeyLayout {
+    /// Hauteur de la barre d'onglets fixe, hors zone de sécurité.
+    static let tabBarHeight: CGFloat = 58
+    /// Espace à réserver en bas des écrans pour ne pas passer sous la barre.
+    static let tabBarClearance: CGFloat = 100
     /// Espace à réserver au-dessus d'un bouton d'action ancré en bas.
     static let bottomBarClearance: CGFloat = 108
 }
