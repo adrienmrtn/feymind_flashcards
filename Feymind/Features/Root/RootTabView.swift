@@ -1,40 +1,37 @@
 import SwiftUI
 import UIKit
 
-/// Les cinq pages. La barre d'onglets est dessinée par chaque page racine,
-/// ce qui la fait disparaître dès qu'un écran de détail est poussé.
+/// Les cinq pages, dans la barre d'onglets native du système (icône + libellé,
+/// teintée avec l'accent de l'app). Chaque page gère elle-même sa barre de
+/// navigation ; seule la barre d'onglets, elle, reste du ressort du système.
 struct RootTabView: View {
-    @State private var router = TabRouter()
+    @State private var selection: RootTab = .dashboard
 
     init() {
         Self.configureAppearance()
     }
 
     var body: some View {
-        @Bindable var router = router
-
-        TabView(selection: $router.selection) {
-            TodayView()
-                .tag(RootTab.today)
-                .toolbar(.hidden, for: .tabBar)
-
-            CoursesListView()
-                .tag(RootTab.courses)
-                .toolbar(.hidden, for: .tabBar)
-
-            DashboardView()
-                .tag(RootTab.dashboard)
-                .toolbar(.hidden, for: .tabBar)
-
-            LibraryView()
-                .tag(RootTab.library)
-                .toolbar(.hidden, for: .tabBar)
-
-            ProfileView()
-                .tag(RootTab.profile)
-                .toolbar(.hidden, for: .tabBar)
+        TabView(selection: $selection) {
+            ForEach(RootTab.allCases) { tab in
+                tabContent(for: tab)
+                    .tag(tab)
+                    .tabItem {
+                        Label(tab.label, systemImage: tab.systemImage)
+                    }
+            }
         }
-        .environment(router)
+    }
+
+    @ViewBuilder
+    private func tabContent(for tab: RootTab) -> some View {
+        switch tab {
+        case .today: TodayView()
+        case .courses: CoursesListView()
+        case .dashboard: DashboardView()
+        case .library: LibraryView()
+        case .profile: ProfileView()
+        }
     }
 
     private static func configureAppearance() {

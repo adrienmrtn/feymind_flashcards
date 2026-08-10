@@ -52,7 +52,7 @@ struct FeyQuietButtonStyle: ButtonStyle {
     }
 }
 
-enum FeyCircleStyle {
+enum FeyCircleStyle: Equatable {
     case light
     case dark
     /// Posé sur une couverture, quelle que soit sa clarté.
@@ -94,6 +94,11 @@ struct FeyCircleIcon: View {
             .foregroundStyle(style.foreground)
             .frame(width: size, height: size)
             .background(style.background, in: Circle())
+            .overlay {
+                if style == .light {
+                    Circle().strokeBorder(FeyColor.strokeStrong, lineWidth: 1)
+                }
+            }
             .shadow(color: Color.black.opacity(style.shadowOpacity), radius: 10, x: 0, y: 4)
     }
 }

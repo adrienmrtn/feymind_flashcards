@@ -71,7 +71,7 @@ struct StudyView: View {
                 countsView
             }
 
-            FeyProgressBar(progress: session.progress)
+            FeyProgressBar(progress: session.progress, tint: FeyColor.accent)
         }
         .padding(.horizontal, FeySpacing.screen)
         .padding(.top, isEmbedded ? FeySpacing.xxs : FeySpacing.md)
@@ -162,7 +162,7 @@ struct StudyView: View {
         }
         .padding(.horizontal, FeySpacing.screen)
         .padding(.top, FeySpacing.md)
-        .padding(.bottom, isEmbedded ? FeyLayout.tabBarClearance : FeySpacing.lg)
+        .padding(.bottom, FeySpacing.lg)
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: session.isRevealed)
     }
 
@@ -222,7 +222,7 @@ struct StudyCardFace: View {
             HStack {
                 Text(isBack ? "Réponse" : "Question")
                     .font(FeyFont.micro)
-                    .foregroundStyle(FeyColor.inkTertiary)
+                    .foregroundStyle(isBack ? FeyColor.accent : FeyColor.inkTertiary)
                 Spacer()
                 if let subject = card.course?.subject?.nilIfBlank {
                     Text(subject)
@@ -303,11 +303,11 @@ struct GradeButtons: View {
                             .foregroundStyle(tint(for: rating))
                         Text(labels[rating] ?? "")
                             .font(FeyFont.micro)
-                            .foregroundStyle(FeyColor.inkTertiary)
+                            .foregroundStyle(tint(for: rating).opacity(0.75))
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 13)
-                    .background(FeyColor.surface, in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
+                    .background(softTint(for: rating), in: RoundedRectangle(cornerRadius: FeyRadius.md, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }
@@ -318,8 +318,17 @@ struct GradeButtons: View {
         switch rating {
         case .again: FeyColor.negative
         case .hard: FeyColor.caution
-        case .good: FeyColor.ink
-        case .easy: FeyColor.positive
+        case .good: FeyColor.positive
+        case .easy: FeyColor.accent
+        }
+    }
+
+    private func softTint(for rating: ReviewRating) -> Color {
+        switch rating {
+        case .again: FeyColor.negativeSoft
+        case .hard: FeyColor.cautionSoft
+        case .good: FeyColor.positiveSoft
+        case .easy: FeyColor.infoSoft
         }
     }
 }
@@ -370,7 +379,7 @@ private struct CompletionView: View {
             Button(isEmbedded ? "Recharger" : "Terminer", action: onFinish)
                 .buttonStyle(FeyPrimaryButtonStyle())
                 .padding(.horizontal, FeySpacing.screen)
-                .padding(.bottom, isEmbedded ? FeyLayout.tabBarClearance : FeySpacing.lg)
+                .padding(.bottom, FeySpacing.lg)
         }
     }
 

@@ -70,7 +70,7 @@ struct ImportView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Annuler") { dismiss() }
-                        .foregroundStyle(FeyColor.inkSecondary)
+                        .foregroundStyle(FeyColor.accent)
                 }
             }
             .fileImporter(
@@ -201,11 +201,12 @@ struct ImportView: View {
                 Button {
                     showFileImporter = true
                 } label: {
-                    VStack(spacing: FeySpacing.xxs) {
+                    VStack(spacing: FeySpacing.sm) {
                         Image(systemName: "arrow.up.doc")
-                            .font(.system(size: 24, weight: .medium))
-                            .foregroundStyle(FeyColor.ink)
-                            .padding(.bottom, FeySpacing.xxs)
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundStyle(Color(hex: 0x47665A))
+                            .frame(width: 52, height: 52)
+                            .background(Color(hex: 0xE4ECE6), in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
                         Text("Choisir un PDF")
                             .font(FeyFont.cardTitle)
                             .foregroundStyle(FeyColor.ink)
@@ -234,7 +235,7 @@ struct ImportView: View {
                         .foregroundStyle(FeyColor.inkTertiary)
                 }
             }
-            .tint(FeyColor.ink)
+            .tint(FeyColor.accent)
             .padding(.horizontal, FeySpacing.xxs)
         }
     }

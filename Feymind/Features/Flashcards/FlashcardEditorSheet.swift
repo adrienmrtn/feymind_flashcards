@@ -113,7 +113,7 @@ struct FlashcardCreatorSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Annuler") { dismiss() }
-                        .foregroundStyle(FeyColor.inkSecondary)
+                        .foregroundStyle(FeyColor.accent)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Ajouter") { save() }

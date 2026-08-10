@@ -26,6 +26,20 @@ enum ImportKind: String, Identifiable {
         case .pdf: "doc"
         }
     }
+
+    var swatchTint: Color {
+        switch self {
+        case .text: Color(hex: 0x4F5A72)
+        case .pdf: Color(hex: 0x47665A)
+        }
+    }
+
+    var swatchBackground: Color {
+        switch self {
+        case .text: Color(hex: 0xE6E9F0)
+        case .pdf: Color(hex: 0xE4ECE6)
+        }
+    }
 }
 
 /// Panneau qui remonte du bas quand on touche le bouton « + ».
@@ -70,9 +84,9 @@ struct ImportChoiceSheet: View {
         HStack(spacing: FeySpacing.sm) {
             Image(systemName: kind.systemImage)
                 .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(FeyColor.ink)
+                .foregroundStyle(kind.swatchTint)
                 .frame(width: 46, height: 46)
-                .background(FeyColor.surfaceMuted, in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
+                .background(kind.swatchBackground, in: RoundedRectangle(cornerRadius: FeyRadius.sm, style: .continuous))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(kind.title)

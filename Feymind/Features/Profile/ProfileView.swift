@@ -25,10 +25,9 @@ struct ProfileView: View {
                 }
                 .padding(.horizontal, FeySpacing.screen)
                 .padding(.top, FeySpacing.xs)
-                .padding(.bottom, FeyLayout.tabBarClearance)
+                .padding(.bottom, FeySpacing.xl)
             }
             .feyScreenBackground()
-            .feyTabBar()
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSettings) {
                 SettingsView()

@@ -1,41 +1,51 @@
 import SwiftUI
 import UIKit
 
-/// Jetons de style de Feymind. Fond gris neutre, surfaces blanches, une seule couleur d'action : l'encre.
+/// Jetons de style de Feymind. Fond ivoire chaud, surfaces blanches, encre presque noire,
+/// un accent indigo pour les liens et éléments interactifs secondaires.
 enum FeyColor {
     // Fonds
-    static let canvas = Color(hex: 0xEFEFF1)
+    static let canvas = Color(hex: 0xFAF9F6)
     static let surface = Color.white
-    static let surfaceMuted = Color(hex: 0xF4F4F6)
-    static let surfaceSunken = Color(hex: 0xE4E4E8)
-    static let stroke = Color(hex: 0xE3E3E7)
-    static let strokeStrong = Color(hex: 0xD3D3D9)
+    static let surfaceMuted = Color(hex: 0xF2EFE8)
+    static let surfaceSunken = Color(hex: 0xE4DFD5)
+    static let stroke = Color(hex: 0xEEE7DB)
+    static let strokeStrong = Color(hex: 0xDDD7CB)
 
     // Encre
-    static let ink = Color(hex: 0x121214)
-    static let inkSecondary = Color(hex: 0x6B6B75)
-    static let inkTertiary = Color(hex: 0x9B9BA4)
+    static let ink = Color(hex: 0x1A1917)
+    static let inkSecondary = Color(hex: 0x8A857B)
+    static let inkTertiary = Color(hex: 0xB3ADA2)
 
     // Sur fond sombre
-    static let onInk = Color.white
-    static let onInkMuted = Color(hex: 0xAFAFB8)
+    static let onInk = Color(hex: 0xFAF9F6)
+    static let onInkMuted = Color(hex: 0x9A958A)
+
+    /// Accent unique de l'app : liens, sélections, éléments interactifs secondaires.
+    static let accent = Color(hex: 0x5B5BD6)
 
     // Retours d'information, volontairement désaturés
-    static let positive = Color(hex: 0x2E7D63)
-    static let caution = Color(hex: 0xA5762F)
-    static let negative = Color(hex: 0xB1544E)
-    static let info = Color(hex: 0x3C6A93)
+    static let positive = Color(hex: 0x4D7A53)
+    static let caution = Color(hex: 0x9A7A2E)
+    static let negative = Color(hex: 0xC0392B)
+    static let info = Color(hex: 0x4A4AC0)
+
+    // Fonds doux assortis, utilisés pour les états de notation en session.
+    static let positiveSoft = Color(hex: 0xE6EFE4)
+    static let cautionSoft = Color(hex: 0xF4ECD9)
+    static let negativeSoft = Color(hex: 0xF7E7E2)
+    static let infoSoft = Color(hex: 0xE7E7F5)
 
     /// Teintes de couverture attribuées aux cours, lisibles avec du texte blanc.
     static let courseAccents: [Color] = [
-        Color(hex: 0x2F4858),
-        Color(hex: 0x3A5A40),
-        Color(hex: 0x6B4E71),
-        Color(hex: 0x8C5B3F),
-        Color(hex: 0x2C4A6E),
-        Color(hex: 0x545460),
-        Color(hex: 0x7A4A52),
-        Color(hex: 0x3F6B6B)
+        Color(hex: 0x47665A),
+        Color(hex: 0x6B5548),
+        Color(hex: 0x4F5A72),
+        Color(hex: 0x6E5566),
+        Color(hex: 0x5B5BD6),
+        Color(hex: 0x8C6A3F),
+        Color(hex: 0x4A6741),
+        Color(hex: 0x5C4A66)
     ]
 }
 
@@ -55,28 +65,24 @@ enum FeySpacing {
 enum FeyRadius {
     static let sm: CGFloat = 12
     static let md: CGFloat = 16
-    static let lg: CGFloat = 22
-    static let xl: CGFloat = 28
-    static let xxl: CGFloat = 34
+    static let lg: CGFloat = 20
+    static let xl: CGFloat = 24
+    static let xxl: CGFloat = 28
     static let pill: CGFloat = 999
 }
 
 enum FeyLayout {
-    /// Hauteur de la barre d'onglets flottante.
-    static let tabBarHeight: CGFloat = 62
-    /// Espace à réserver en bas des écrans pour ne pas passer sous la barre.
-    static let tabBarClearance: CGFloat = 104
     /// Espace à réserver au-dessus d'un bouton d'action ancré en bas.
     static let bottomBarClearance: CGFloat = 108
 }
 
 enum FeyFont {
     static func display(_ size: CGFloat) -> Font {
-        .system(size: size, weight: .semibold)
+        .system(size: size, weight: .bold)
     }
 
-    static let screenTitle = Font.system(size: 27, weight: .semibold)
-    static let pageTitle = Font.system(size: 22, weight: .semibold)
+    static let screenTitle = Font.system(size: 27, weight: .bold)
+    static let pageTitle = Font.system(size: 22, weight: .bold)
     static let sectionTitle = Font.system(size: 18, weight: .semibold)
     static let cardTitle = Font.system(size: 16, weight: .semibold)
     static let body = Font.system(size: 15, weight: .regular)
