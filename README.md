@@ -1,8 +1,8 @@
-# Feymind
+# Micabo
 
 Application iOS native de révision : vos cours PDF ou vos notes deviennent des flashcards en répétition espacée façon Anki.
 
-<img src="Feymind/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="120" alt="Icône Feymind" />
+<img src="Micabo/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="120" alt="Icône Micabo" />
 
 ## Ce que fait l'application
 
@@ -29,7 +29,7 @@ génération des flashcards, visualisation et édition, puis entraînement.
 
 ## Pile technique
 
-- SwiftUI, iOS 17 minimum, projet Xcode natif (`Feymind.xcodeproj`)
+- SwiftUI, iOS 17 minimum, projet Xcode natif (`Micabo.xcodeproj`)
 - SwiftData pour le stockage local (aucune donnée n'est envoyée hors des appels IA)
 - PDFKit pour l'extraction du texte, le rendu des pages et la couverture
 - Supabase Edge Functions comme relais vers fal.ai (`google/gemini-flash-1.5`)
@@ -37,11 +37,11 @@ génération des flashcards, visualisation et édition, puis entraînement.
 ## Ouvrir le projet
 
 ```bash
-open Feymind.xcodeproj
+open Micabo.xcodeproj
 ```
 
 Le projet utilise les groupes synchronisés avec le système de fichiers : tout fichier ajouté dans
-`Feymind/` est automatiquement compilé, sans manipulation du `.pbxproj`.
+`Micabo/` est automatiquement compilé, sans manipulation du `.pbxproj`.
 
 ## Configuration de l'IA
 
@@ -70,10 +70,10 @@ supabase functions deploy generate-flashcards
 
 ### 3. Renseigner le projet dans l'application
 
-L'URL et la clé publique par défaut sont dans `Feymind/Services/AppConfig.swift`. Elles restent
+L'URL et la clé publique par défaut sont dans `Micabo/Services/AppConfig.swift`. Elles restent
 modifiables à l'exécution depuis `Profil`, `Réglages`, sans recompiler.
 
-Tant que `FAL_KEY` n'est pas configurée, l'import reste utilisable : Feymind propose de construire
+Tant que `FAL_KEY` n'est pas configurée, l'import reste utilisable : Micabo propose de construire
 les cartes hors ligne, à partir du texte brut.
 
 ## Contenu analysé
@@ -85,7 +85,7 @@ format en blocs structurés, seuls les textes sont conservés.
 
 ## Répétition espacée
 
-`Feymind/SRS/SM2Scheduler.swift` implémente SM-2 avec les réglages par défaut d'Anki :
+`Micabo/SRS/SM2Scheduler.swift` implémente SM-2 avec les réglages par défaut d'Anki :
 
 - paliers d'apprentissage 1 min puis 10 min, réapprentissage 10 min
 - sortie d'apprentissage à 1 jour, bouton « Facile » à 4 jours
@@ -94,12 +94,12 @@ format en blocs structurés, seuls les textes sont conservés.
 - dispersion aléatoire des échéances au-delà de 2,5 jours
 
 Les quatre boutons `À revoir`, `Difficile`, `Correct`, `Facile` affichent l'intervalle réel qu'ils
-appliqueront. Les tests de `FeymindTests/SM2SchedulerTests.swift` verrouillent ces valeurs.
+appliqueront. Les tests de `MicaboTests/SM2SchedulerTests.swift` verrouillent ces valeurs.
 
 ## Structure
 
 ```
-Feymind/
+Micabo/
   App/             point d'entrée et conteneur SwiftData
   DesignSystem/    jetons de style et composants réutilisables
   Models/          entités SwiftData et réponses de l'IA
@@ -114,5 +114,5 @@ scripts/             génération de l'icône
 ## Tests
 
 ```bash
-xcodebuild test -project Feymind.xcodeproj -scheme Feymind -destination 'platform=iOS Simulator,name=iPhone 16'
+xcodebuild test -project Micabo.xcodeproj -scheme Micabo -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
