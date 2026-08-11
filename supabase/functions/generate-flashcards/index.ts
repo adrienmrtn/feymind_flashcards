@@ -24,7 +24,7 @@ interface GeneratedCard {
 }
 
 const SYSTEM_PROMPT =
-  `Tu conçois des flashcards de révision en français pour l'application Feymind, dans l'esprit d'Anki.
+  `Tu conçois des flashcards de révision en français pour l'application Micabo, dans l'esprit d'Anki.
 
 RÈGLES
 - Une carte teste UNE seule idée. Recto court, verso précis et autonome.

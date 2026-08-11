@@ -1,4 +1,4 @@
-"""Génère l'icône de l'application Feymind (1024x1024) dans le catalogue d'assets."""
+"""Génère l'icône de l'application Micabo (1024x1024) dans le catalogue d'assets."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageFilter
 SIZE = 1024
 OUTPUT = (
     pathlib.Path(__file__).resolve().parents[1]
-    / "Feymind/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
+    / "Micabo/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
 )
 
 PAPER_TOP = (250, 249, 255)

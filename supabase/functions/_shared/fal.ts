@@ -1,5 +1,5 @@
 /**
- * Client fal.ai partagé par les Edge Functions de Feymind.
+ * Client fal.ai partagé par les Edge Functions de Micabo.
  * La clé reste côté serveur, dans le secret `FAL_KEY` du projet Supabase.
  */
 
@@ -112,7 +112,7 @@ export function extractJSON<T>(output: string): T {
   }
 }
 
-/** Retire les tirets cadratins, bannis de tous les contenus Feymind. */
+/** Retire les tirets cadratins, bannis de tous les contenus Micabo. */
 export function stripEmDashes(value: string): string {
   return value
     .replace(/\s+[—–―]\s+/g, ", ")

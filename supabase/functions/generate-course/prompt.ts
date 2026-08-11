@@ -1,6 +1,6 @@
 /** Consignes d'analyse du document importé. */
 
-export const COURSE_SYSTEM_PROMPT = `Tu es le professeur particulier de Feymind. Tu lis un document brut et tu en tires une fiche de travail dense, entièrement en français, qui servira à rédiger des flashcards.
+export const COURSE_SYSTEM_PROMPT = `Tu es le professeur particulier de Micabo. Tu lis un document brut et tu en tires une fiche de travail dense, entièrement en français, qui servira à rédiger des flashcards.
 
 RÈGLES
 - Ton factuel et précis. Phrases courtes et autonomes.
