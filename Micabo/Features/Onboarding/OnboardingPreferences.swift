@@ -56,12 +56,15 @@ enum OnboardingPreferences {
         static let goal = "micabo.onboarding.goal"
         static let forgetsOften = "micabo.onboarding.forgetsOften"
         static let subjects = "micabo.onboarding.subjects"
+        static let institutionId = "micabo.onboarding.institutionId"
+        static let institutionName = "micabo.onboarding.institutionName"
         static let dailyMinutes = "micabo.onboarding.dailyMinutes"
         static let notificationsOptIn = "micabo.onboarding.notificationsOptIn"
         static let completedAt = "micabo.onboarding.completedAt"
 
         static let all = [
             completed, goal, forgetsOften, subjects,
+            institutionId, institutionName,
             dailyMinutes, notificationsOptIn, completedAt
         ]
     }
@@ -95,6 +98,28 @@ enum OnboardingPreferences {
     static var subjects: [String] {
         get { defaults.stringArray(forKey: Key.subjects) ?? [] }
         set { defaults.set(newValue, forKey: Key.subjects) }
+    }
+
+    static var institutionId: String? {
+        get { defaults.string(forKey: Key.institutionId) }
+        set {
+            if let newValue, !newValue.isEmpty {
+                defaults.set(newValue, forKey: Key.institutionId)
+            } else {
+                defaults.removeObject(forKey: Key.institutionId)
+            }
+        }
+    }
+
+    static var institutionName: String? {
+        get { defaults.string(forKey: Key.institutionName) }
+        set {
+            if let newValue, !newValue.isEmpty {
+                defaults.set(newValue, forKey: Key.institutionName)
+            } else {
+                defaults.removeObject(forKey: Key.institutionName)
+            }
+        }
     }
 
     /// Objectif quotidien en minutes. 15 minutes par défaut, comme le curseur.

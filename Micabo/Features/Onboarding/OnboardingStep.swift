@@ -13,9 +13,9 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case demoImport
     case demoWrite
     case demoReview
-    case video
-    case generatedCards
     case subjects
+    case school
+    case schoolPeers
     case dailyTime
     case projection
     case notifications
