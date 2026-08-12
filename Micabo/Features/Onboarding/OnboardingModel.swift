@@ -10,6 +10,8 @@ final class OnboardingModel {
     var goal: LearningGoal?
     var forgetsOften: Bool?
     var subjects: Set<String> = []
+    var institutionId: String?
+    var institutionName: String?
     var dailyMinutes = 15
     var notificationsOptIn = false
 
@@ -31,6 +33,8 @@ final class OnboardingModel {
         OnboardingPreferences.goal = goal
         OnboardingPreferences.forgetsOften = forgetsOften
         OnboardingPreferences.subjects = subjects.sorted()
+        OnboardingPreferences.institutionId = institutionId
+        OnboardingPreferences.institutionName = institutionName
         OnboardingPreferences.dailyMinutes = dailyMinutes
         OnboardingPreferences.notificationsOptIn = notificationsOptIn
     }

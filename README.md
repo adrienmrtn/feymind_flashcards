@@ -21,23 +21,29 @@ génération des flashcards, visualisation et édition, puis entraînement.
 
 Au premier lancement, `RootView` affiche `OnboardingFlowView` à la place de la barre d'onglets.
 Le parcours est **strictement linéaire** : chaque écran pousse le suivant, il n'y a ni retour
-arrière ni balayage. Les vingt étapes sont décrites par `OnboardingStep` et rendues par
+arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues par
 `Micabo/Features/Onboarding/Steps/`.
 
 | Bloc | Écrans |
 | --- | --- |
 | Accroche | bienvenue, langue, annonce des questions |
-| Questions | objectif, rapport à l'oubli, matières, temps quotidien |
-| Démonstration | courbe de mémorisation, preuves scientifiques, import → génération → révision en trois écrans manipulables, vidéo, pile de cartes |
+| Questions | objectif, rapport à l'oubli, matières, établissement, preuve sociale, temps quotidien |
+| Démonstration | courbe de mémorisation, preuves scientifiques, import → génération → révision en trois écrans manipulables |
 | Sortie | projection annuelle, notifications, personnalisation, essai de 3 jours, paywall |
 
 Les réponses sont écrites au fil de l'eau dans `OnboardingPreferences` (clés `micabo.onboarding.*`)
 et survivent donc à une fermeture en cours de route. `Réglages` propose **Refaire l'onboarding**,
 qui efface ces clés et relance le parcours sans toucher aux cours.
 
-L'écran 6 s'appuie sur `RetentionCurve` : une décroissance exponentielle de la rétention, remise
-à 100 % à chaque révision, avec une stabilité qui augmente à chaque passage. Les travaux cités à
-l'écran 7 (Ebbinghaus 1885, Landauer & Bjork 1978, Cepeda et al. 2006, Karpicke & Roediger 2008,
+Après le choix des matières, **Tu étudies où ?** propose un autocomplete hybride : un catalogue
+embarqué (`LocalInstitutions.json`, ~600 établissements FR/EU prioritaires) pour l'instantané,
+puis la RPC Supabase `search_institutions` sur la table `institutions` (~14 500 lignes : unis
+mondiales, grandes écoles FR, lycées FR). Le texte libre reste accepté ; l'`id` est stocké
+quand un résultat matche. L'écran suivant anime un compteur (30–70) : « X personnes de … utilisent déjà Micabo ».
+
+L'écran courbe s'appuie sur `RetentionCurve` : une décroissance exponentielle de la rétention, remise
+à 100 % à chaque révision, avec une stabilité qui augmente à chaque passage. Les travaux cités
+(Ebbinghaus 1885, Landauer & Bjork 1978, Cepeda et al. 2006, Karpicke & Roediger 2008,
 Dunlosky et al. 2013) sont réels et rapportés sans arrondir leurs résultats.
 
 Le paywall utilise `SubscriptionStoreView` de StoreKit 2. Aucun produit n'est publié :

@@ -1,0 +1,4602 @@
+[
+  {
+    "id": "fr-ge:cole-polytechnique",
+    "name": "École polytechnique",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "X",
+      "Polytechnique",
+      "l'X"
+    ]
+  },
+  {
+    "id": "fr-ge:ens-ulm",
+    "name": "ENS Ulm",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "École normale supérieure",
+      "ENS Paris",
+      "Ulm"
+    ]
+  },
+  {
+    "id": "fr-ge:ens-lyon",
+    "name": "ENS Lyon",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "École normale supérieure de Lyon"
+    ]
+  },
+  {
+    "id": "fr-ge:ens-paris-saclay",
+    "name": "ENS Paris-Saclay",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "ENS Cachan"
+    ]
+  },
+  {
+    "id": "fr-ge:ens-rennes",
+    "name": "ENS Rennes",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:hec-paris",
+    "name": "HEC Paris",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "HEC"
+    ]
+  },
+  {
+    "id": "fr-ge:essec-business-school",
+    "name": "ESSEC Business School",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "ESSEC"
+    ]
+  },
+  {
+    "id": "fr-ge:escp-business-school",
+    "name": "ESCP Business School",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "ESCP"
+    ]
+  },
+  {
+    "id": "fr-ge:emlyon-business-school",
+    "name": "emlyon business school",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "EM Lyon",
+      "emlyon"
+    ]
+  },
+  {
+    "id": "fr-ge:edhec-business-school",
+    "name": "EDHEC Business School",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "EDHEC"
+    ]
+  },
+  {
+    "id": "fr-ge:sciences-po-paris",
+    "name": "Sciences Po Paris",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "IEP Paris",
+      "Sciences Po"
+    ]
+  },
+  {
+    "id": "fr-ge:sciences-po-lyon",
+    "name": "Sciences Po Lyon",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "IEP Lyon"
+    ]
+  },
+  {
+    "id": "fr-ge:sciences-po-lille",
+    "name": "Sciences Po Lille",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "IEP Lille"
+    ]
+  },
+  {
+    "id": "fr-ge:sciences-po-bordeaux",
+    "name": "Sciences Po Bordeaux",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "IEP Bordeaux"
+    ]
+  },
+  {
+    "id": "fr-ge:sciences-po-grenoble",
+    "name": "Sciences Po Grenoble",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "IEP Grenoble"
+    ]
+  },
+  {
+    "id": "fr-ge:sciences-po-strasbourg",
+    "name": "Sciences Po Strasbourg",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "IEP Strasbourg"
+    ]
+  },
+  {
+    "id": "fr-ge:sciences-po-aix",
+    "name": "Sciences Po Aix",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "IEP Aix"
+    ]
+  },
+  {
+    "id": "fr-ge:sciences-po-toulouse",
+    "name": "Sciences Po Toulouse",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "IEP Toulouse"
+    ]
+  },
+  {
+    "id": "fr-ge:sciences-po-rennes",
+    "name": "Sciences Po Rennes",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "IEP Rennes"
+    ]
+  },
+  {
+    "id": "fr-ge:centralesup-lec",
+    "name": "CentraleSupélec",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Centrale Paris",
+      "Supélec",
+      "CentraleSupélec"
+    ]
+  },
+  {
+    "id": "fr-ge:cole-centrale-de-lyon",
+    "name": "École Centrale de Lyon",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Centrale Lyon"
+    ]
+  },
+  {
+    "id": "fr-ge:cole-centrale-de-lille",
+    "name": "École Centrale de Lille",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Centrale Lille"
+    ]
+  },
+  {
+    "id": "fr-ge:cole-centrale-de-nantes",
+    "name": "École Centrale de Nantes",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Centrale Nantes"
+    ]
+  },
+  {
+    "id": "fr-ge:cole-centrale-de-marseille",
+    "name": "École Centrale de Marseille",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Centrale Marseille"
+    ]
+  },
+  {
+    "id": "fr-ge:mines-paris-psl",
+    "name": "Mines Paris - PSL",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "École des Mines de Paris",
+      "Mines ParisTech"
+    ]
+  },
+  {
+    "id": "fr-ge:mines-saint-tienne",
+    "name": "Mines Saint-Étienne",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "École des Mines de Saint-Étienne"
+    ]
+  },
+  {
+    "id": "fr-ge:imt-atlantique",
+    "name": "IMT Atlantique",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Telecom Bretagne",
+      "Mines Nantes"
+    ]
+  },
+  {
+    "id": "fr-ge:t-l-com-paris",
+    "name": "Télécom Paris",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Telecom ParisTech"
+    ]
+  },
+  {
+    "id": "fr-ge:t-l-com-sudparis",
+    "name": "Télécom SudParis",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:ensta-paris",
+    "name": "ENSTA Paris",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "ENSTA"
+    ]
+  },
+  {
+    "id": "fr-ge:ensae-paris",
+    "name": "ENSAE Paris",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "ENSAE"
+    ]
+  },
+  {
+    "id": "fr-ge:ensiie",
+    "name": "ENSIIE",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:insa-lyon",
+    "name": "INSA Lyon",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Institut national des sciences appliquées de Lyon"
+    ]
+  },
+  {
+    "id": "fr-ge:insa-toulouse",
+    "name": "INSA Toulouse",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:insa-rennes",
+    "name": "INSA Rennes",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:insa-rouen",
+    "name": "INSA Rouen",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:insa-strasbourg",
+    "name": "INSA Strasbourg",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:insa-hauts-de-france",
+    "name": "INSA Hauts-de-France",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "INSA Valenciennes"
+    ]
+  },
+  {
+    "id": "fr-ge:insa-centre-val-de-loire",
+    "name": "INSA Centre Val de Loire",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:utc",
+    "name": "UTC",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Université de technologie de Compiègne"
+    ]
+  },
+  {
+    "id": "fr-ge:utt",
+    "name": "UTT",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Université de technologie de Troyes"
+    ]
+  },
+  {
+    "id": "fr-ge:utbm",
+    "name": "UTBM",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Université de technologie de Belfort-Montbéliard"
+    ]
+  },
+  {
+    "id": "fr-ge:arts-et-m-tiers",
+    "name": "Arts et Métiers",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "ENSAM",
+      "Arts et Métiers ParisTech"
+    ]
+  },
+  {
+    "id": "fr-ge:cole-des-ponts-paristech",
+    "name": "École des Ponts ParisTech",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Ponts",
+      "ENPC"
+    ]
+  },
+  {
+    "id": "fr-ge:agroparistech",
+    "name": "AgroParisTech",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:agrosup-dijon",
+    "name": "AgroSup Dijon",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:vetagro-sup",
+    "name": "VetAgro Sup",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:cole-navale",
+    "name": "École navale",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:cole-de-l-air-et-de-l-espace",
+    "name": "École de l'air et de l'espace",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "École de l'air"
+    ]
+  },
+  {
+    "id": "fr-ge:saint-cyr",
+    "name": "Saint-Cyr",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "École spéciale militaire de Saint-Cyr",
+      "ESM Saint-Cyr"
+    ]
+  },
+  {
+    "id": "fr-ge:isae-supa-ro",
+    "name": "Isae-Supaéro",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "ISAE",
+      "Supaéro"
+    ]
+  },
+  {
+    "id": "fr-ge:isae-ensma",
+    "name": "ISAE-ENSMA",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "ENSMA"
+    ]
+  },
+  {
+    "id": "fr-ge:estaca",
+    "name": "ESTACA",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:ece-paris",
+    "name": "ECE Paris",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "ECE"
+    ]
+  },
+  {
+    "id": "fr-ge:epita",
+    "name": "EPITA",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:epitech",
+    "name": "EPITECH",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:esilv",
+    "name": "ESILV",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:efrei",
+    "name": "EFREI",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:isep",
+    "name": "ISEP",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:esiea",
+    "name": "ESIEA",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:esigelec",
+    "name": "ESIGELEC",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:ece-lyon",
+    "name": "ECE Lyon",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:kedge-business-school",
+    "name": "KEDGE Business School",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "KEDGE"
+    ]
+  },
+  {
+    "id": "fr-ge:neoma-business-school",
+    "name": "NEOMA Business School",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "NEOMA",
+      "Rouen Business School",
+      "Reims Management School"
+    ]
+  },
+  {
+    "id": "fr-ge:skema-business-school",
+    "name": "SKEMA Business School",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "SKEMA"
+    ]
+  },
+  {
+    "id": "fr-ge:audencia",
+    "name": "Audencia",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Audencia Business School"
+    ]
+  },
+  {
+    "id": "fr-ge:grenoble-cole-de-management",
+    "name": "Grenoble École de Management",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "GEM"
+    ]
+  },
+  {
+    "id": "fr-ge:toulouse-business-school",
+    "name": "Toulouse Business School",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "TBS"
+    ]
+  },
+  {
+    "id": "fr-ge:montpellier-business-school",
+    "name": "Montpellier Business School",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "MBS"
+    ]
+  },
+  {
+    "id": "fr-ge:icn-business-school",
+    "name": "ICN Business School",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "ICN"
+    ]
+  },
+  {
+    "id": "fr-ge:essca",
+    "name": "ESSCA",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:ieseg-school-of-management",
+    "name": "IESEG School of Management",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "IESEG"
+    ]
+  },
+  {
+    "id": "fr-ge:em-normandie",
+    "name": "EM Normandie",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:excelia",
+    "name": "Excelia",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Excelia Group",
+      "La Rochelle Business School"
+    ]
+  },
+  {
+    "id": "fr-ge:psb-paris-school-of-business",
+    "name": "PSB Paris School of Business",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "PSB"
+    ]
+  },
+  {
+    "id": "fr-ge:ipag-business-school",
+    "name": "IPAG Business School",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "IPAG"
+    ]
+  },
+  {
+    "id": "fr-ge:ebs-paris",
+    "name": "EBS Paris",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": []
+  },
+  {
+    "id": "fr-ge:universit-paris-dauphine-psl",
+    "name": "Université Paris-Dauphine - PSL",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "Dauphine",
+      "Paris Dauphine"
+    ]
+  },
+  {
+    "id": "fr-ge:conservatoire-national-des-arts-et-m-tiers",
+    "name": "Conservatoire national des arts et métiers",
+    "countryCode": "FR",
+    "kind": "grande_ecole",
+    "aliases": [
+      "CNAM"
+    ]
+  },
+  {
+    "id": "hipo:fr-national-institute-of-applied-sciences-of-toulouse",
+    "name": "National Institute of Applied Sciences of Toulouse",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-i-seg-school-of-management",
+    "name": "IÉSEG School of Management",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-central-sup-lec",
+    "name": "Central Supélec",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-acad-mie-de-paris",
+    "name": "Académie de Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-acad-mie-d-aix-marseille",
+    "name": "Académie d'Aix-Marseille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-acad-mie-de-cr-teil",
+    "name": "Académie de Créteil",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-42-fr",
+    "name": "42 FR",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-de-l-air",
+    "name": "Ecole de l'Air",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-agroparistech",
+    "name": "AgroParisTech",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-d-agronomie-de-rennes",
+    "name": "Ecole Nationale Supérieure d'Agronomie de Rennes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-agrosup-dijon",
+    "name": "AgroSup Dijon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-american-graduate-school-in-paris",
+    "name": "American Graduate School in Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-american-university-of-paris",
+    "name": "American University of Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-sophia-antipolis",
+    "name": "Ecole Supérieure de Commerce de Sophia Antipolis",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-centre-d-etudes-sup-rieures-industrielles-paris",
+    "name": "Centre d'Etudes Supérieures Industrielles Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-centre-de-formation-et-de-perfectionnement-des-journalistes",
+    "name": "Centre de Formation et de Perfectionnement des Journalistes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-conservatoire-national-des-arts-et-m-tiers",
+    "name": "Conservatoire National des Arts et Métiers",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-centre-national-d-etudes-agronomiques-des-r-gions-chaudes",
+    "name": "Centre National d'Etudes Agronomiques des Régions Chaudes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-chimie-physique-electronique-de-lyon",
+    "name": "Ecole Supérieure de Chimie Physique Electronique de Lyon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-bordeaux-i",
+    "name": "Université Bordeaux I",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-des-sciences-de-l-ing-nieur-de-clermont-ferrand",
+    "name": "Institut des Sciences de l'Ingénieur de Clermont-Ferrand",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-paris-dauphine-paris-ix",
+    "name": "Université Paris-Dauphine (Paris IX)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-superieur-d-ingenieurs-leonard-de-vinci",
+    "name": "Ecole Superieur d'Ingenieurs Leonard de Vinci",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-d-ing-nieurs-en-informatique-pour-l-industrie",
+    "name": "Ecole d'Ingénieurs en Informatique pour l'Industrie",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-europ-en-des-affaires",
+    "name": "Ecole Européen des Affaires",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-european-business-school",
+    "name": "European Business School",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-catholique-d-arts-metiers",
+    "name": "Ecole Catholique d'Arts & Metiers",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-centrale-d-electronique-ece",
+    "name": "Ecole Centrale d'Electronique - ECE",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-imt-atlantique",
+    "name": "IMT Atlantique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-centrale-de-lille",
+    "name": "Ecole Centrale de Lille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-centrale-de-lyon",
+    "name": "Ecole Centrale de Lyon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-centrale-de-nantes",
+    "name": "Ecole Centrale de Nantes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-centrale-de-marseille",
+    "name": "Ecole Centrale de Marseille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-idrac-institut-de-recherche-en-action-commerciale",
+    "name": "IDRAC (Institut de recherche en action commerciale)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-des-hautes-etudes-commerciales-du-nord",
+    "name": "Ecole des Hautes Etudes Commerciales du Nord",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-pour-les-etudes-et-la-recherche-en-informatique-et-electronique",
+    "name": "Ecole pour les Etudes et la Recherche en Informatique et Electronique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-fran-aise-de-papeterie-et-des-industries-graphiques",
+    "name": "Ecole Française de Papeterie et des Industries Graphiques",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-fran-aise-d-electronique-et-d-informatique",
+    "name": "Ecole Française d'Electronique et d'Informatique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-des-ing-nieurs-de-la-ville-de-paris",
+    "name": "Ecole des Ingénieurs de la Ville de Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-european-management-center-paris",
+    "name": "European Management Center Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-lyon",
+    "name": "Ecole Supérieure de Commerce de Lyon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-des-mines-de-st-etienne",
+    "name": "Ecole Nationale Supérieure des Mines de St-Etienne",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-de-l-aviation-civile",
+    "name": "Ecole Nationale de l'Aviation Civile",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-d-administration",
+    "name": "Ecole Nationale d'Administration",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-enic-telecom-lille-1",
+    "name": "ENIC Telecom Lille 1",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-d-ing-nieurs-de-metz",
+    "name": "Ecole Nationale d'Ingénieurs de Metz",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-d-ing-nieurs-de-saint-etienne",
+    "name": "Ecole Nationale d'Ingénieurs de Saint-Etienne",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-d-ing-nieurs-des-travaux-agricoles-de-bordeaux",
+    "name": "Ecole Nationale d'Ingénieurs des Travaux Agricoles de Bordeaux",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-d-ing-nieurs-des-travaux-agricoles-de-clermont-ferrand",
+    "name": "Ecole Nationale d'Ingénieurs des Travaux Agricoles de Clermont-Ferrand",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-d-ing-nieurs-de-tarbes",
+    "name": "Ecole Nationale d'Ingénieurs de Tarbes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-d-ing-nieurs-des-techniques-des-industries-agricoles-et-alimenta",
+    "name": "Ecole Nationale d'Ingénieurs des Techniques des Industries Agricoles et Alimentaires",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-de-la-m-t-orologie",
+    "name": "Ecole Nationale de la Météorologie",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-des-ponts-et-chausees",
+    "name": "Ecole Nationale des Ponts et Chausees",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieur-de-m-caniques-et-des-microtechniques",
+    "name": "Ecole Nationale Supérieur de Mécaniques et des Microtechniques",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-de-la-statistique-et-de-l-administration-economique",
+    "name": "Ecole Nationale de la Statistique et de l'Administration Economique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-d-agronomie-et-des-industries-alimentaires",
+    "name": "Ecole Nationale Supérieure d'Agronomie et des Industries Alimentaires",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-de-la-statistique-et-de-l-analyse-de-l-information",
+    "name": "Ecole Nationale de la Statistique et de l'Analyse de l'information",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-des-arts-et-industries-textiles",
+    "name": "Ecole Nationale Supérieure des Arts et Industries Textiles",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-d-agronomie-de-montpellier",
+    "name": "Ecole Nationale Supérieure d'Agronomie de Montpellier",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-agronomique-de-toulouse",
+    "name": "Ecole Nationale Supérieure Agronomique de Toulouse",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-cole-normale-sup-rieure-paris-saclay",
+    "name": "École normale supérieure Paris-Saclay",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-chimie-de-clermont-ferrand",
+    "name": "Ecole Nationale Supérieure de Chimie de Clermont-Ferrand",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-chimie-de-lille",
+    "name": "Ecole Nationale Supérieure de Chimie de Lille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-chimie-de-montpellier",
+    "name": "Ecole Nationale Supérieure de Chimie de Montpellier",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-chimie-de-mulhouse",
+    "name": "Ecole Nationale Supérieure de Chimie de Mulhouse",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-chimie-et-de-physique-de-bordeaux",
+    "name": "Ecole Nationale Supérieure de Chimie et de Physique de Bordeaux",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-chimie-de-paris",
+    "name": "Ecole Nationale Supérieure de Chimie de Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-chimie-de-rennes",
+    "name": "Ecole Nationale Supérieure de Chimie de Rennes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-l-electronique-et-de-ses-applications",
+    "name": "Ecole Nationale Supérieure de l'Electronique et de ses Applications",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-en-electrotechnique-electronique-informatique-et-hydr",
+    "name": "Ecole Nationale Supérieure en Electrotechnique, Electronique, Informatique et Hydraulique de Toulouse",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-electricit-et-m-canique",
+    "name": "Ecole Nationale Supérieure Electricité et Mécanique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-d-electronique-et-de-radioelectricite-de-bordeaux",
+    "name": "Ecole Nationale Supérieure d'Electronique et de Radioelectricite de Bordeaux",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-normale-sup-rieure-de-fontenay-saint-cloud",
+    "name": "Ecole Normale Supérieure de Fontenay-Saint Cloud",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-normale-sup-rieure-de-paris",
+    "name": "Ecole Normale Supérieure de Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-des-sciences-g-ographiques",
+    "name": "Ecole Nationale des Sciences Géographiques",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieur-de-g-ologie-de-nancy",
+    "name": "Ecole Nationale Supérieur de Géologie de Nancy",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieur-d-ing-nieurs-de-constructions-a-ronautique",
+    "name": "Ecole Nationale Supérieur d'Ingénieurs de Constructions Aéronautique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-des-industries-chimiques-de-nancy",
+    "name": "Ecole Nationale Supérieure des Industries Chimiques de Nancy",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieur-des-ing-nieur-des-etudes-et-techniques-d-armement",
+    "name": "Ecole Nationale Supérieur des Ingénieur des Etudes et Techniques d'Armement",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-des-industries-textiles-de-mulhouse",
+    "name": "Ecole Nationale Supérieure des Industries Textiles de Mulhouse",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-normale-sup-rieure-de-lyon",
+    "name": "Ecole Normale Supérieure de Lyon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieur-de-m-canique-et-d-a-ronautique",
+    "name": "Ecole Nationale Supérieur de Mécanique et d'Aéronautique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-des-mines-d-al-s",
+    "name": "Ecole Nationale Supérieure des Mines d'Alès",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-des-mines-de-douai",
+    "name": "Ecole Nationale Supérieure des Mines de Douai",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-des-mines-de-paris",
+    "name": "Ecole Nationale Supérieure des Mines de Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-physique-de-marseille",
+    "name": "Ecole Nationale Supérieure de Physique de Marseille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-techniques-avanc-es",
+    "name": "Ecole Nationale Supérieure de Techniques Avancées",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-des-telecommunications-de-bretagne",
+    "name": "Ecole Nationale Supérieure des Telecommunications de Bretagne",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-des-telecommunications-de-paris",
+    "name": "Ecole Nationale Supérieure des Telecommunications de Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-des-travaux-publics-de-l-etat",
+    "name": "Ecole Nationale des Travaux Publics de l'Etat",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-v-t-rinaire-de-toulouse",
+    "name": "Ecole Nationale Vétérinaire de Toulouse",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-epf-ecole-d-ing-nieurs",
+    "name": "EPF Ecole d'Ingénieurs",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-d-agriculture-de-purpan",
+    "name": "Ecole Supérieure d'Agriculture de Purpan",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-bordeaux",
+    "name": "Ecole Supérieure de Commerce de Bordeaux",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-brest",
+    "name": "Ecole Supérieure de Commerce de Brest",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-clermont-school-of-business",
+    "name": "Clermont School of Business",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-dijon",
+    "name": "Ecole Supérieure de Commerce de Dijon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-et-management",
+    "name": "Ecole Supérieure de Commerce et Management",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-lille",
+    "name": "Ecole Supérieure de Commerce de Lille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-marseille-provence",
+    "name": "Ecole Supérieure de Commerce de Marseille-Provence",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-nantes-atlantique",
+    "name": "Ecole Supérieure de Commerce de Nantes-Atlantique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-le-havre-caen",
+    "name": "Ecole Supérieure de Commerce de Le Havre/Caen",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-chimie-organique-et-min-rale",
+    "name": "Ecole Supérieure de Chimie Organique et Minérale",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-pau",
+    "name": "Ecole Supérieure de Commerce de Pau",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-paris",
+    "name": "Ecole Supérieure de Commerce de Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-reims",
+    "name": "Ecole Supérieure de Commerce de Reims",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-rouen",
+    "name": "Ecole Supérieure de Commerce de Rouen",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-commerce-de-toulouse",
+    "name": "Ecole Supérieure de Commerce de Toulouse",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-d-electronique-de-l-ouest",
+    "name": "Ecole Supérieure d'Electronique de l'Ouest",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-internationale-d-administration-des-entreprises",
+    "name": "Ecole Supérieure Internationale d'Administration des Entreprises",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-d-informatique-electronique-automatique",
+    "name": "Ecole Supérieure d'Informatique-Electronique-Automatique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-d-ing-nieurs-en-electronique-et-electrotechnique",
+    "name": "Ecole Supérieure d'Ingénieurs en Electronique et Electrotechnique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-d-ing-nieurs-en-g-nie-electrique",
+    "name": "Ecole Supérieure d'Ingénieurs en Génie Electrique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-d-ing-nieurs-de-marseille",
+    "name": "Ecole Supérieure d'Ingénieurs de Marseille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-d-ing-nieurs-et-de-techniciens-pour-l-agriculture",
+    "name": "Ecole Supérieure d'Ingénieurs et de Techniciens pour l'Agriculture",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sp-ciale-de-m-canique-et-d-electricit",
+    "name": "Ecole Spéciale de Mécanique et d'Electricité",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-de-physique-et-de-chimie-industrielles",
+    "name": "Ecole Supérieure de Physique et de Chimie Industrielles",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-des-sciences-commerciales-d-angers",
+    "name": "Ecole Supérieure des Sciences Commerciales d'Angers",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-des-sciences-economiques-et-commerciales",
+    "name": "Ecole Supérieure des Sciences Economiques et Commerciales",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-des-sciences-et-technologie-de-l-ing-nieur-de-nancy",
+    "name": "Ecole Supérieure des Sciences et Technologie de l'Ingénieur de Nancy",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sp-ciale-des-travaux-publics-du-b-timent-et-de-l-industrie",
+    "name": "Ecole Spéciale des Travaux Publics du Bâtiment et de l'Industrie",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-universitaire-d-ing-nieurs-de-lille",
+    "name": "Ecole Universitaire d'Ingénieurs de Lille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-catholique-de-lille",
+    "name": "Université Catholique de Lille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-grenoble-ecole-de-management",
+    "name": "Grenoble Ecole de Management",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-d-agriculture-d-angers",
+    "name": "Ecole Supérieure d'Agriculture d'Angers",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-cole-des-hautes-tudes-commerciales-hec-business-school",
+    "name": "École des Hautes Études Commerciales (HEC Business School)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-des-hautes-etudes-industrielles-de-lille",
+    "name": "Ecole des Hautes Etudes Industrielles de Lille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-catholique-d-arts-et-m-tiers-lille",
+    "name": "Institut Catholique d'Arts et Métiers Lille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-commercial-de-nancy",
+    "name": "Institut Commercial de Nancy",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-catholique-de-paris",
+    "name": "Institut Catholique de Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-catholique-de-toulouse",
+    "name": "Institut Catholique de Toulouse",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-d-etudes-politiques-de-bordeaux",
+    "name": "Institut d'Etudes Politiques de Bordeaux",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-du-p-trole-et-des-monteurs",
+    "name": "Ecole Nationale Supérieure du Pétrole et des Monteurs",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-national-polytechnique-de-toulouse",
+    "name": "Institut National Polytechnique de Toulouse",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-national-polytechnique-de-lorraine",
+    "name": "Institut National Polytechnique de Lorraine",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-national-des-sciences-appliqu-es-de-lyon",
+    "name": "Institut National des Sciences Appliquées de Lyon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-national-des-sciences-appliqu-es-de-rennes",
+    "name": "Institut National des Sciences Appliquées de Rennes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-national-des-sciences-appliqu-es-de-rouen",
+    "name": "Institut National des Sciences Appliquées de Rouen",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-national-des-sciences-appliqu-es-de-toulouse",
+    "name": "Institut National des Sciences Appliquées de Toulouse",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-des-hautes-tudes-conomiques-et-commerciales",
+    "name": "Institut des hautes études économiques et commerciales",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-national-des-t-l-communications",
+    "name": "Institut National des Télécommunications",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-d-optique",
+    "name": "Ecole Supérieure d'Optique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-de-recherche-et-coordination-acoustique-musique",
+    "name": "Institut de Recherche et Coordination Acoustique/Musique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-de-recherche-et-d-enseignement-sup-rieur-aux-techniques-de-l-lectroniqu",
+    "name": "Institut de Recherche et d'Enseignement Supérieur aux Techniques de l'électronique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-sup-rieur-agricole-de-beauvais",
+    "name": "Institut Supérieur Agricole de Beauvais",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-sup-rieur-d-agriculture-lille",
+    "name": "Institut Supérieur d'Agriculture Lille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-sup-rieur-d-agriculture-rhone-alpes",
+    "name": "Institut Supérieur d'Agriculture Rhone-Alpes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-sup-rieure-d-electronique-du-nord",
+    "name": "Institut Supérieure d'Electronique du Nord",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-sup-rieure-d-electronique-de-paris",
+    "name": "Institut Supérieure d'Electronique de Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-des-sciences-de-l-ing-nieur-de-montpellier",
+    "name": "Institut des Sciences de l'Ingénieur de Montpellier",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-centre-d-etudes-sup-rieures-des-techniques-industrielles",
+    "name": "Centre d'Etudes Supérieures des Techniques Industrielles",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-des-sciences-de-la-mati-re-et-du-rayonnement",
+    "name": "Institut des Sciences de la Matière et du Rayonnement",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-textile-et-chimique-de-lyon",
+    "name": "Institut Textile et Chimique de Lyon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-sorbonne-universit-facult-des-sciences-paris-vi",
+    "name": "Sorbonne Université - Faculté des Sciences (Paris VI)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-des-mines-de-nancy",
+    "name": "Ecole Nationale Supérieure des Mines de Nancy",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-michel-de-montaigne-bordeaux-iii",
+    "name": "Université Michel de Montaigne (Bordeaux III )",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-montesquieu-bordeaux-iv",
+    "name": "Université Montesquieu (Bordeaux IV)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-d-architecture-de-nancy",
+    "name": "Ecole d'Architecture de Nancy",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-paris-sorbonne-paris-iv",
+    "name": "Université Paris-Sorbonne (Paris IV)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-d-arts-et-m-tiers-de-paris",
+    "name": "Ecole Nationale Supérieure d'Arts et Métiers de Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-polytechnique-universitaire-de-lille",
+    "name": "Ecole Polytechnique Universitaire de Lille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-polytechnique-marseille",
+    "name": "Ecole Polytechnique Marseille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-cole-polytechnique",
+    "name": "École Polytechnique",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-schiller-international-university-paris",
+    "name": "Schiller International University, Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-schiller-international-university-strasbourg",
+    "name": "Schiller International University, Strasbourg",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-d-etudes-politiques-de-paris-sciences-po",
+    "name": "Institut d'Etudes Politiques de Paris (Sciences Po)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-denis-diderot-paris-vii",
+    "name": "Université Denis Diderot (Paris VII)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-superieure-robert-de-sorbon",
+    "name": "Ecole Superieure Robert de Sorbon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-l-a-ronautique-et-de-l-espace",
+    "name": "Ecole Nationale Supérieure de l'Aéronautique et de l'Espace",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-groupe-sup-de-co-amiens-picardie",
+    "name": "Groupe Sup de Co Amiens Picardie",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-groupe-sup-de-co-montpellier",
+    "name": "Groupe Sup de Co Montpellier",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-sup-rieure-d-electricit",
+    "name": "Ecole Supérieure d'Electricité",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-d-aix-marseille-iii",
+    "name": "Université d'Aix-Marseille III",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-victor-segalen-bordeaux-ii",
+    "name": "Université Victor Segalen (Bordeaux II)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-bourgogne-franche-comt",
+    "name": "Université Bourgogne - Franche-Comté",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-cergy-pontoise",
+    "name": "Université de Cergy-Pontoise",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-d-auvergne-clermont-ferrand-i",
+    "name": "Université d'Auvergne (Clermont-Ferrand I)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-catholique-de-l-ouest",
+    "name": "Université Catholique de l' Ouest",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-grenoble-alpes",
+    "name": "Université Grenoble Alpes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-rennes-ii-haute-bretagne",
+    "name": "Université Rennes II - Haute-Bretagne",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-henri-poincar-nancy-i",
+    "name": "Université Henri Poincaré (Nancy I)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-caen-basse-normandie",
+    "name": "Université de Caen Basse Normandie",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-nice-sophia-antipolis",
+    "name": "Université de Nice-Sophia Antipolis",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-limoges",
+    "name": "Université de Limoges",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-d-angers",
+    "name": "Université d'Angers",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-d-artois",
+    "name": "Université d'Artois",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-d-avignon",
+    "name": "Université d'Avignon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-blaise-pascal-clermont-ferrand-ii",
+    "name": "Université Blaise Pascal (Clermont-Ferrand II)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-bretagne-occidentale",
+    "name": "Université de Bretagne Occidentale",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-catholique-de-lyon",
+    "name": "Université Catholique de Lyon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-corse-pascal-paoli",
+    "name": "Université de Corse Pascal Paoli",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-d-evry-val-d-essonne",
+    "name": "Université d'Evry Val d'Essonne",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-du-havre",
+    "name": "Université du Havre",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-du-maine",
+    "name": "Université du Maine",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-des-sciences-et-technologies-de-lille-lille-i",
+    "name": "Université des Sciences et Technologies de Lille (Lille I)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-du-droit-et-de-la-sante-lille-ii",
+    "name": "Université du Droit et de la Sante (Lille II)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-charles-de-gaulle-lille-iii",
+    "name": "Université Charles-de-Gaulle (Lille III)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-du-littoral-cote-d-opale",
+    "name": "Université du Littoral Cote d'Opale",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-lorraine",
+    "name": "Université de Lorraine",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-la-rochelle",
+    "name": "Université de La Rochelle",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-claude-bernard-lyon-i",
+    "name": "Université Claude Bernard (Lyon I)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-lumi-re-lyon-ii",
+    "name": "Université Lumiére (Lyon II)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-jean-moulin-lyon-iii",
+    "name": "Université Jean Moulin (Lyon III)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-la-m-diterran-e-aix-marseille-ii",
+    "name": "Université de la Méditerranée (Aix Marseille II)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-metz",
+    "name": "Université de Metz",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-paris-est-marne-la-vall-e",
+    "name": "Université Paris-Est Marne-la-Vallée",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-montpellier",
+    "name": "Université de Montpellier",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-paul-val-ry-montpellier-iii",
+    "name": "Université Paul Valéry (Montpellier III)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-haute-alsace",
+    "name": "Université de Haute-Alsace",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-nancy-ii",
+    "name": "Université Nancy II",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-nantes",
+    "name": "Université de Nantes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-d-orl-ans",
+    "name": "Université d'Orléans",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-val-de-marne-paris-xii",
+    "name": "Université Val-de-Marne (Paris XII)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-paris-nord-paris-xiii",
+    "name": "Université Paris Nord (Paris XIII)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-panth-on-sorbonne-paris-i",
+    "name": "Université Panthéon-Sorbonne (Paris I)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-sorbonne-nouvelle-paris-iii",
+    "name": "Université Sorbonne-Nouvelle (Paris III)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-ren-descartes-paris-v",
+    "name": "Université René Descartes (Paris V)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-vincennes-saint-denis-paris-viii",
+    "name": "Université Vincennes Saint-Denis (Paris VIII)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-pau-et-des-pays-de-l-adour",
+    "name": "Université de Pau et des Pays de l'Adour",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-perpignan",
+    "name": "Université de Perpignan",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-poitiers",
+    "name": "Université de Poitiers",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-reims-champagne-ardenne",
+    "name": "Université de Reims Champagne-Ardenne",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-rennes-i",
+    "name": "Université Rennes I",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-rouen-haute-normandie",
+    "name": "Université de Rouen - Haute Normandie",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-savoie",
+    "name": "Université de Savoie",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-jean-monnet",
+    "name": "Université Jean Monnet",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-du-sud-toulon-et-var",
+    "name": "Université du Sud, Toulon et Var",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-des-sciences-sociales-toulouse-i",
+    "name": "Université des Sciences Sociales (Toulouse I)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-toulouse-le-mirail-toulouse-ii",
+    "name": "Université de Toulouse-le-Mirail (Toulouse II)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-toulouse-le-mirail-toulouse-iii",
+    "name": "Université de Toulouse-le-Mirail (Toulouse III)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-toulouse",
+    "name": "Université de Toulouse",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-fran-ois-rabelais-de-tours",
+    "name": "Université François Rabelais de Tours",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-bretagne-sud",
+    "name": "Université de Bretagne Sud",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-valenciennes-et-du-hainaut-cambr-sis",
+    "name": "Université de Valenciennes et du Hainaut-Cambrésis",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-paris-nanterre-paris-x",
+    "name": "Université Paris Nanterre (Paris X)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-panth-on-assas-paris-ii",
+    "name": "Université Panthéon-Assas (Paris II)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-picardie-jules-verne",
+    "name": "Université de Picardie Jules-Verne",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-paul-sabatier-toulouse-iii",
+    "name": "Université Paul Sabatier (Toulouse III)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-paris-sud-paris-xi",
+    "name": "Université Paris Sud (Paris XI)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-d-aix-marseille",
+    "name": "Université d'Aix-Marseille",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-provence-aix-marseille-i",
+    "name": "Université de Provence (Aix-Marseille I)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-des-sciences-humaines-strasbourg-ii",
+    "name": "Université des Sciences Humaines (Strasbourg II)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-technologie-de-belfort-montb-liard",
+    "name": "Université de Technologie de Belfort Montbéliard",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-technologie-de-compi-gne",
+    "name": "Université de Technologie de Compiègne",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-technologie-de-troyes",
+    "name": "Université de Technologie de Troyes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-versailles-saint-quentin-en-yvelines",
+    "name": "Université de Versailles Saint-Quentin-en-Yvelines",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-v-t-rinaire-d-alfort",
+    "name": "Ecole Nationale Vétérinaire d'Alfort",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-v-t-rinaire-de-lyon",
+    "name": "Ecole Nationale Vétérinaire de Lyon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-v-t-rinaire-de-nantes",
+    "name": "Ecole Nationale Vétérinaire de Nantes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-europ-enne-de-chimie-polym-res-et-mat-riaux-de-strasbourg",
+    "name": "Ecole Européenne de Chimie, Polymères et Matériaux de Strasbourg",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-du-g-nie-de-l-eau-et-de-l-environnement-de-strasbourg",
+    "name": "Ecole Nationale du Génie de l'Eau et de l'Environnement de Strasbourg",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-des-arts-et-industries-de-strasbourg",
+    "name": "Ecole Nationale Supérieure des Arts et Industries de Strasbourg",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-polytechnique-de-grenoble",
+    "name": "Institut polytechnique de Grenoble",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-nationale-sup-rieure-de-physique-de-strasbourg",
+    "name": "Ecole Nationale Supérieure de Physique de Strasbourg",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-louis-pasteur-strasbourg-i",
+    "name": "Université Louis Pasteur (Strasbourg I)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-robert-schuman-strasbourg-iii",
+    "name": "Université Robert Schuman (Strasbourg III)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-strasbourg",
+    "name": "Université de Strasbourg",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-pour-l-informatique-et-les-nouvelles-technologies",
+    "name": "Ecole pour l'Informatique et les nouvelles Technologies",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-pour-l-informatique-et-les-techniques-avancees",
+    "name": "Ecole Pour l'Informatique et les Techniques Avancees",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-polytechnique-des-sciences-avancees",
+    "name": "Institut polytechnique des sciences avancees",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-ecole-des-technologies-numeriques-appliquees",
+    "name": "Ecole des technologies numeriques appliquees",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-sup-biotech-de-paris",
+    "name": "Institut Sup'Biotech de Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-dut-mmi-universit-bordeaux-montaigne",
+    "name": "DUT MMI - Université Bordeaux Montaigne",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-campus-saint-marc",
+    "name": "Campus Saint Marc",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-d-tudes-politiques-de-rennes",
+    "name": "Institut d'études politiques de Rennes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-rennes-school-of-business",
+    "name": "Rennes School of Business",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-audencia",
+    "name": "Audencia",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-acad-mie-d-orl-ans-tours",
+    "name": "Académie d'Orléans-Tours",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-acad-mie-de-besan-on",
+    "name": "Académie de Besançon",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-clermont-auvergne",
+    "name": "Université Clermont Auvergne",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-skema-business-school",
+    "name": "SKEMA Business School",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-insead",
+    "name": "INSEAD",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-acad-mie-de-mayotte",
+    "name": "Académie de Mayotte",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-coll-ge-de-france",
+    "name": "Collège de France",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-university-of-burgundy",
+    "name": "University of Burgundy",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-acad-mie-de-bordeaux",
+    "name": "Académie de Bordeaux",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-paris-saclay",
+    "name": "Université Paris-Saclay",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institute-fran-ais-de-la-mode",
+    "name": "Institute Français de la Mode",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-eigsi-la-rochelle",
+    "name": "EIGSI La Rochelle",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-rennes-2",
+    "name": "Université de Rennes 2",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-franche-comt",
+    "name": "Université de Franche Comté",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-paris-iv-sorbonne",
+    "name": "Université de Paris IV Sorbonne",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-diderot-paris-7",
+    "name": "Université Diderot Paris 7",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-paris-ouest-paris-x-nanterre",
+    "name": "Université Paris Ouest Paris X Nanterre",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-de-nimes",
+    "name": "Université de Nimes",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-champollion",
+    "name": "Université Champollion",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-pierre-mend-s-france",
+    "name": "Université Pierre Mendès France",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-universit-paris-est-cr-teil-val-de-marne-paris-xii",
+    "name": "Université Paris est Créteil Val de Marne Paris XII",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-american-business-school-of-paris",
+    "name": "American Business School of Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-eslsca-business-school-paris",
+    "name": "ESLSCA Business School Paris",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-unilasalle",
+    "name": "UniLaSalle",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-yncrea",
+    "name": "Yncrea",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-iae-france",
+    "name": "IAE France",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:fr-institut-sup-rieur-des-techniques-productiques-istp",
+    "name": "Institut Supérieur des Techniques Productiques (ISTP)",
+    "countryCode": "FR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "fr-lycee:0560101F",
+    "name": "Lycée Saint-Louis — Lorient",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Saint-Louis",
+      "Lycée Saint-Louis Lorient"
+    ]
+  },
+  {
+    "id": "fr-lycee:0630069H",
+    "name": "Lycée général et technologique Jean Zay — Thiers",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée général et technologique Jean Zay",
+      "Lycée général et technologique Jean Zay Thiers"
+    ]
+  },
+  {
+    "id": "fr-lycee:0690712Z",
+    "name": "Lycée professionnel privé Saint-Louis - Saint-Bruno — Lyon",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée professionnel privé Saint-Louis - Saint-Bruno",
+      "Lycée professionnel privé Saint-Louis - Saint-Bruno Lyon"
+    ]
+  },
+  {
+    "id": "fr-lycee:0440163N",
+    "name": "Lycée général et technologique privé Saint-Stanislas — Nantes",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée général et technologique privé Saint-Stanislas",
+      "Lycée général et technologique privé Saint-Stanislas Nantes"
+    ]
+  },
+  {
+    "id": "fr-lycee:0220058U",
+    "name": "Lycée polyvalent Chaptal — Saint-Brieuc",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent Chaptal",
+      "Lycée polyvalent Chaptal Saint-Brieuc"
+    ]
+  },
+  {
+    "id": "fr-lycee:0630068G",
+    "name": "Lycée général et technologique Montdory — Thiers",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée général et technologique Montdory",
+      "Lycée général et technologique Montdory Thiers"
+    ]
+  },
+  {
+    "id": "fr-lycee:0170100S",
+    "name": "Lycée polyvalent privé Fénelon Notre-Dame — La Rochelle",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent privé Fénelon Notre-Dame",
+      "Lycée polyvalent privé Fénelon Notre-Dame La Rochelle"
+    ]
+  },
+  {
+    "id": "fr-lycee:0480007X",
+    "name": "Lycée Chaptal — Mende",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Chaptal",
+      "Lycée Chaptal Mende"
+    ]
+  },
+  {
+    "id": "fr-lycee:0020050U",
+    "name": "Lycée Condorcet — Saint-Quentin",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Condorcet",
+      "Lycée Condorcet Saint-Quentin"
+    ]
+  },
+  {
+    "id": "fr-lycee:9711265Y",
+    "name": "Collège-Lycée Victor Hugo — Saint-Martin",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Collège-Lycée Victor Hugo",
+      "Collège-Lycée Victor Hugo Saint-Martin"
+    ]
+  },
+  {
+    "id": "fr-lycee:9741582B",
+    "name": "Section d'enseignement professionnel du Lycée Jean Joly — Saint-Louis",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement professionnel du Lycée Jean Joly",
+      "Section d'enseignement professionnel du Lycée Jean Joly Saint-Louis"
+    ]
+  },
+  {
+    "id": "fr-lycee:0542208G",
+    "name": "Lycée des métiers de l'hôtellerie-restauration et de l'alimentation Stanislas — Villers-lès-Nancy",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée des métiers de l'hôtellerie-restauration et de l'alimentation Stanislas",
+      "Lycée des métiers de l'hôtellerie-restauration et de l'alimentation Stanislas Villers-lès-Nancy"
+    ]
+  },
+  {
+    "id": "fr-lycee:0132280H",
+    "name": "Lycée polyvalent Henri Leroy — Port-Saint-Louis-du-Rhône",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent Henri Leroy",
+      "Lycée polyvalent Henri Leroy Port-Saint-Louis-du-Rhône"
+    ]
+  },
+  {
+    "id": "fr-lycee:0130043B",
+    "name": "Lycée Victor Hugo — Marseille",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Victor Hugo",
+      "Lycée Victor Hugo Marseille"
+    ]
+  },
+  {
+    "id": "fr-lycee:0930122C",
+    "name": "Lycée Condorcet — Montreuil",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Condorcet",
+      "Lycée Condorcet Montreuil"
+    ]
+  },
+  {
+    "id": "fr-lycee:0542292Y",
+    "name": "Section d'enseignement professionnel du Lycée polyvalent Stanislas — Villers-lès-Nancy",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement professionnel du Lycée polyvalent Stanislas",
+      "Section d'enseignement professionnel du Lycée polyvalent Stanislas Villers-lès-Nancy"
+    ]
+  },
+  {
+    "id": "fr-lycee:0020079A",
+    "name": "Lycée professionnel Condorcet — Saint-Quentin",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée professionnel Condorcet",
+      "Lycée professionnel Condorcet Saint-Quentin"
+    ]
+  },
+  {
+    "id": "fr-lycee:0670080Y",
+    "name": "Lycée Kléber — Strasbourg",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Kléber",
+      "Lycée Kléber Strasbourg"
+    ]
+  },
+  {
+    "id": "fr-lycee:0573227Y",
+    "name": "Lycée polyvalent Louis de Cormontaigne — Metz",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent Louis de Cormontaigne",
+      "Lycée polyvalent Louis de Cormontaigne Metz"
+    ]
+  },
+  {
+    "id": "fr-lycee:0590035T",
+    "name": "Lycée Fénelon — Cambrai",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Fénelon",
+      "Lycée Fénelon Cambrai"
+    ]
+  },
+  {
+    "id": "fr-lycee:0060674A",
+    "name": "Lycée Fénelon — Grasse",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Fénelon",
+      "Lycée Fénelon Grasse"
+    ]
+  },
+  {
+    "id": "fr-lycee:0750657G",
+    "name": "Lycée Montaigne — Paris",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Montaigne",
+      "Lycée Montaigne Paris"
+    ]
+  },
+  {
+    "id": "fr-lycee:0690563M",
+    "name": "Lycée Saint-Louis - Saint-Bruno — Lyon",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Saint-Louis - Saint-Bruno",
+      "Lycée Saint-Louis - Saint-Bruno Lyon"
+    ]
+  },
+  {
+    "id": "fr-lycee:0750699C",
+    "name": "Lycée Janson de Sailly — Paris",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Janson de Sailly",
+      "Lycée Janson de Sailly Paris"
+    ]
+  },
+  {
+    "id": "fr-lycee:0840075A",
+    "name": "Lycée Saint-Louis — Orange",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Saint-Louis",
+      "Lycée Saint-Louis Orange"
+    ]
+  },
+  {
+    "id": "fr-lycee:0290070U",
+    "name": "Lycée technologique Jean Chaptal — Quimper",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée technologique Jean Chaptal",
+      "Lycée technologique Jean Chaptal Quimper"
+    ]
+  },
+  {
+    "id": "fr-lycee:0060029Z",
+    "name": "Lycée du Parc Impérial — Nice",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée du Parc Impérial",
+      "Lycée du Parc Impérial Nice"
+    ]
+  },
+  {
+    "id": "fr-lycee:0830099G",
+    "name": "Lycée Fénelon — Toulon",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Fénelon",
+      "Lycée Fénelon Toulon"
+    ]
+  },
+  {
+    "id": "fr-lycee:0440177D",
+    "name": "Lycée Saint-Louis — Saint-Nazaire",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Saint-Louis",
+      "Lycée Saint-Louis Saint-Nazaire"
+    ]
+  },
+  {
+    "id": "fr-lycee:0060729K",
+    "name": "Lycée Stanislas — Nice",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Stanislas",
+      "Lycée Stanislas Nice"
+    ]
+  },
+  {
+    "id": "fr-lycee:0060030A",
+    "name": "Lycée Masséna — Nice",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Masséna",
+      "Lycée Masséna Nice"
+    ]
+  },
+  {
+    "id": "fr-lycee:0380027Y",
+    "name": "Lycée général Champollion — Grenoble",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée général Champollion",
+      "Lycée général Champollion Grenoble"
+    ]
+  },
+  {
+    "id": "fr-lycee:0690026D",
+    "name": "Lycée du Parc — Lyon",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée du Parc",
+      "Lycée du Parc Lyon"
+    ]
+  },
+  {
+    "id": "fr-lycee:0332468D",
+    "name": "Lycée Saint-Louis — Bordeaux",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Saint-Louis",
+      "Lycée Saint-Louis Bordeaux"
+    ]
+  },
+  {
+    "id": "fr-lycee:0134101M",
+    "name": "Lycée polyvalent privé Saint-Louis — Marseille",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent privé Saint-Louis",
+      "Lycée polyvalent privé Saint-Louis Marseille"
+    ]
+  },
+  {
+    "id": "fr-lycee:0631074A",
+    "name": "Lycée général et technologique privé Fénelon — Clermont-Ferrand",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée général et technologique privé Fénelon",
+      "Lycée général et technologique privé Fénelon Clermont-Ferrand"
+    ]
+  },
+  {
+    "id": "fr-lycee:0631033F",
+    "name": "Lycée général et technologique privé Sévigné Saint-Louis — Issoire",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée général et technologique privé Sévigné Saint-Louis",
+      "Lycée général et technologique privé Sévigné Saint-Louis Issoire"
+    ]
+  },
+  {
+    "id": "fr-lycee:0220070G",
+    "name": "Section d'enseignement professionnel du lycée polyvalent Chaptal — Saint-Brieuc",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement professionnel du lycée polyvalent Chaptal",
+      "Section d'enseignement professionnel du lycée polyvalent Chaptal Saint-Brieuc"
+    ]
+  },
+  {
+    "id": "fr-lycee:0630078T",
+    "name": "Lycée professionnel Germaine Tillion — Thiers",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée professionnel Germaine Tillion",
+      "Lycée professionnel Germaine Tillion Thiers"
+    ]
+  },
+  {
+    "id": "fr-lycee:0342090M",
+    "name": "Lycée polyvalent Victor Hugo — Lunel",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent Victor Hugo",
+      "Lycée polyvalent Victor Hugo Lunel"
+    ]
+  },
+  {
+    "id": "fr-lycee:0940122X",
+    "name": "Lycée polyvalent Condorcet — Saint-Maur-des-Fossés",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent Condorcet",
+      "Lycée polyvalent Condorcet Saint-Maur-des-Fossés"
+    ]
+  },
+  {
+    "id": "fr-lycee:0110045P",
+    "name": "Lycée privé polyvalent Saint-Louis — Carcassonne",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée privé polyvalent Saint-Louis",
+      "Lycée privé polyvalent Saint-Louis Carcassonne"
+    ]
+  },
+  {
+    "id": "fr-lycee:0782000A",
+    "name": "Section d'enseignement professionnel du lycée polivalent Condorcet — Limay",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement professionnel du lycée polivalent Condorcet",
+      "Section d'enseignement professionnel du lycée polivalent Condorcet Limay"
+    ]
+  },
+  {
+    "id": "fr-lycee:0660768B",
+    "name": "Lycée privé Saint-Louis de Gonzague — Perpignan",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée privé Saint-Louis de Gonzague",
+      "Lycée privé Saint-Louis de Gonzague Perpignan"
+    ]
+  },
+  {
+    "id": "fr-lycee:9741182S",
+    "name": "Lycée polyvalent Jean Joly — Saint-Louis",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent Jean Joly",
+      "Lycée polyvalent Jean Joly Saint-Louis"
+    ]
+  },
+  {
+    "id": "fr-lycee:0290072W",
+    "name": "Lycée professionnel Jean Chaptal — Quimper",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée professionnel Jean Chaptal",
+      "Lycée professionnel Jean Chaptal Quimper"
+    ]
+  },
+  {
+    "id": "fr-lycee:9740004L",
+    "name": "Lycée professionnel Roches Maigres — Saint-Louis",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée professionnel Roches Maigres",
+      "Lycée professionnel Roches Maigres Saint-Louis"
+    ]
+  },
+  {
+    "id": "fr-lycee:0750648X",
+    "name": "Lycée Victor Hugo — Paris",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Victor Hugo",
+      "Lycée Victor Hugo Paris"
+    ]
+  },
+  {
+    "id": "fr-lycee:0341837M",
+    "name": "Section d'enseignement professionnel du Lycée Jean-François Champollion — Lattes",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement professionnel du Lycée Jean-François Champollion",
+      "Section d'enseignement professionnel du Lycée Jean-François Champollion Lattes"
+    ]
+  },
+  {
+    "id": "fr-lycee:0171580A",
+    "name": "Section d'enseignement professionnel du Lycée privé Fénelon Notre Dame — La Rochelle",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement professionnel du Lycée privé Fénelon Notre Dame",
+      "Section d'enseignement professionnel du Lycée privé Fénelon Notre Dame La Rochelle"
+    ]
+  },
+  {
+    "id": "fr-lycee:0332747G",
+    "name": "Lycée Jean Condorcet — Bordeaux",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Jean Condorcet",
+      "Lycée Jean Condorcet Bordeaux"
+    ]
+  },
+  {
+    "id": "fr-lycee:0753873C",
+    "name": "Lycée privé Fénelon Sainte-Marie La Plaine Monceau — Paris",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée privé Fénelon Sainte-Marie La Plaine Monceau",
+      "Lycée privé Fénelon Sainte-Marie La Plaine Monceau Paris"
+    ]
+  },
+  {
+    "id": "fr-lycee:0142059M",
+    "name": "Lycée Victor Hugo — Caen",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Victor Hugo",
+      "Lycée Victor Hugo Caen"
+    ]
+  },
+  {
+    "id": "fr-lycee:0753840S",
+    "name": "Lycée privé Stanislas — Paris",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée privé Stanislas",
+      "Lycée privé Stanislas Paris"
+    ]
+  },
+  {
+    "id": "fr-lycee:0920145H",
+    "name": "Lycée Lakanal — Sceaux",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Lakanal",
+      "Lycée Lakanal Sceaux"
+    ]
+  },
+  {
+    "id": "fr-lycee:0060673Z",
+    "name": "Lycée Stanislas — Cannes",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Stanislas",
+      "Lycée Stanislas Cannes"
+    ]
+  },
+  {
+    "id": "fr-lycee:0573231C",
+    "name": "Lycée des métiers des sciences et des technologies de l'information et de la communication Condorcet — Schoeneck",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée des métiers des sciences et des technologies de l'information et de la communication Condorcet",
+      "Lycée des métiers des sciences et des technologies de l'information et de la communication Condorcet Schoeneck"
+    ]
+  },
+  {
+    "id": "fr-lycee:0290340M",
+    "name": "Estran - Lycée Fénelon — Brest",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Estran - Lycée Fénelon",
+      "Estran - Lycée Fénelon Brest"
+    ]
+  },
+  {
+    "id": "fr-lycee:0672723W",
+    "name": "Section d'enseignement professionnel du Lycée Stanislas — Wissembourg",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement professionnel du Lycée Stanislas",
+      "Section d'enseignement professionnel du Lycée Stanislas Wissembourg"
+    ]
+  },
+  {
+    "id": "fr-lycee:0680086Z",
+    "name": "Section d'enseignement professionnel du Lycée Jean Mermoz — Saint-Louis",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement professionnel du Lycée Jean Mermoz",
+      "Section d'enseignement professionnel du Lycée Jean Mermoz Saint-Louis"
+    ]
+  },
+  {
+    "id": "fr-lycee:0371591D",
+    "name": "Section d'enseignement général et technologique du Lycée professionnel Jean Chaptal — Amboise",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement général et technologique du Lycée professionnel Jean Chaptal",
+      "Section d'enseignement général et technologique du Lycée professionnel Jean Chaptal Amboise"
+    ]
+  },
+  {
+    "id": "fr-lycee:0342221E",
+    "name": "Section d'enseignement professionnel du Lycée Victor Hugo — Lunel",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement professionnel du Lycée Victor Hugo",
+      "Section d'enseignement professionnel du Lycée Victor Hugo Lunel"
+    ]
+  },
+  {
+    "id": "fr-lycee:0573401M",
+    "name": "Section d'enseignement professionnel du Lycée polyvalent Condorcet — Schoeneck",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement professionnel du Lycée polyvalent Condorcet",
+      "Section d'enseignement professionnel du Lycée polyvalent Condorcet Schoeneck"
+    ]
+  },
+  {
+    "id": "fr-lycee:0761708U",
+    "name": "Lycée privé Fénelon — Elbeuf",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée privé Fénelon",
+      "Lycée privé Fénelon Elbeuf"
+    ]
+  },
+  {
+    "id": "fr-lycee:0290156M",
+    "name": "Lycée Saint-Louis — Châteaulin",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Saint-Louis",
+      "Lycée Saint-Louis Châteaulin"
+    ]
+  },
+  {
+    "id": "fr-lycee:0530004S",
+    "name": "Lycée Victor Hugo — Château-Gontier-sur-Mayenne",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Victor Hugo",
+      "Lycée Victor Hugo Château-Gontier-sur-Mayenne"
+    ]
+  },
+  {
+    "id": "fr-lycee:0782562L",
+    "name": "Lycée Hoche — Versailles",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Hoche",
+      "Lycée Hoche Versailles"
+    ]
+  },
+  {
+    "id": "fr-lycee:0890008A",
+    "name": "Lycée polyvalent du Parc des Chaumes — Avallon",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent du Parc des Chaumes",
+      "Lycée polyvalent du Parc des Chaumes Avallon"
+    ]
+  },
+  {
+    "id": "fr-lycee:0460010L",
+    "name": "Lycée général et technologique Champollion — Figeac",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée général et technologique Champollion",
+      "Lycée général et technologique Champollion Figeac"
+    ]
+  },
+  {
+    "id": "fr-lycee:0670114K",
+    "name": "Lycée polyvalent Stanislas — Wissembourg",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent Stanislas",
+      "Lycée polyvalent Stanislas Wissembourg"
+    ]
+  },
+  {
+    "id": "fr-lycee:0680066C",
+    "name": "Lycée polyvalent Jean Mermoz — Saint-Louis",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent Jean Mermoz",
+      "Lycée polyvalent Jean Mermoz Saint-Louis"
+    ]
+  },
+  {
+    "id": "fr-lycee:0332194F",
+    "name": "Lycée professionnel Condorcet — Arcachon",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée professionnel Condorcet",
+      "Lycée professionnel Condorcet Arcachon"
+    ]
+  },
+  {
+    "id": "fr-lycee:0781884Z",
+    "name": "Lycée Condorcet — Limay",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Condorcet",
+      "Lycée Condorcet Limay"
+    ]
+  },
+  {
+    "id": "fr-lycee:0421980Z",
+    "name": "Lycée polyvalent La Salle - Saint-Louis - Sainte-Barbe site Franklin — Saint-Etienne",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée polyvalent La Salle - Saint-Louis - Sainte-Barbe site Franklin",
+      "Lycée polyvalent La Salle - Saint-Louis - Sainte-Barbe site Franklin Saint-Etienne"
+    ]
+  },
+  {
+    "id": "fr-lycee:0750667T",
+    "name": "Lycée Condorcet — Paris",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Condorcet",
+      "Lycée Condorcet Paris"
+    ]
+  },
+  {
+    "id": "fr-lycee:0312093G",
+    "name": "Lycée général et technologique international Victor Hugo — Colomiers",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée général et technologique international Victor Hugo",
+      "Lycée général et technologique international Victor Hugo Colomiers"
+    ]
+  },
+  {
+    "id": "fr-lycee:0810023K",
+    "name": "Lycée général et technologique Victor Hugo — Gaillac",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée général et technologique Victor Hugo",
+      "Lycée général et technologique Victor Hugo Gaillac"
+    ]
+  },
+  {
+    "id": "fr-lycee:0310036W",
+    "name": "Lycée général Pierre de Fermat — Toulouse",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée général Pierre de Fermat",
+      "Lycée général Pierre de Fermat Toulouse"
+    ]
+  },
+  {
+    "id": "fr-lycee:0420976H",
+    "name": "Campus La Salle - Saint-Louis - Sainte-Barbe — Saint-Etienne",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Campus La Salle - Saint-Louis - Sainte-Barbe",
+      "Campus La Salle - Saint-Louis - Sainte-Barbe Saint-Etienne"
+    ]
+  },
+  {
+    "id": "fr-lycee:0860034V",
+    "name": "Lycée Victor Hugo — Poitiers",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Victor Hugo",
+      "Lycée Victor Hugo Poitiers"
+    ]
+  },
+  {
+    "id": "fr-lycee:0601865B",
+    "name": "Lycée Condorcet — Méru",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Condorcet",
+      "Lycée Condorcet Méru"
+    ]
+  },
+  {
+    "id": "fr-lycee:0801194N",
+    "name": "Lycée professionnel Montaigne — Amiens",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée professionnel Montaigne",
+      "Lycée professionnel Montaigne Amiens"
+    ]
+  },
+  {
+    "id": "fr-lycee:0010013J",
+    "name": "Lycée Lalande — Bourg-en-Bresse",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Lalande",
+      "Lycée Lalande Bourg-en-Bresse"
+    ]
+  },
+  {
+    "id": "fr-lycee:0590116F",
+    "name": "Lycée Fénelon — Lille",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Lycée Fénelon",
+      "Lycée Fénelon Lille"
+    ]
+  },
+  {
+    "id": "fr-lycee:0941965A",
+    "name": "Section d'enseignement professionnel du Lycée Condorcet — Saint-Maur-des-Fossés",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Section d'enseignement professionnel du Lycée Condorcet",
+      "Section d'enseignement professionnel du Lycée Condorcet Saint-Maur-des-Fossés"
+    ]
+  },
+  {
+    "id": "hipo:id-universitas-nusa-putra",
+    "name": "Universitas Nusa Putra",
+    "countryCode": "ID",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-toronto-baptist-seminary-and-bible-college",
+    "name": "Toronto Baptist Seminary and Bible College",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-columbia-college-sc",
+    "name": "Columbia College (SC)",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-yosemite-community-college-district",
+    "name": "Yosemite Community College District",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-columbia-basin-college",
+    "name": "Columbia Basin College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-columbia-college-chicago",
+    "name": "Columbia College Chicago",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-columbia-southern-university",
+    "name": "Columbia Southern University",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-columbia-union-college",
+    "name": "Columbia Union College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-columbia-university",
+    "name": "Columbia University",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-harvard-university",
+    "name": "Harvard University",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-heidelberg-college",
+    "name": "Heidelberg College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-hobart-and-william-smith-colleges",
+    "name": "Hobart and William Smith Colleges",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-johnson-c-smith-university",
+    "name": "Johnson C. Smith University",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-princeton-university",
+    "name": "Princeton University",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-smith-college",
+    "name": "Smith College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-stanford-university",
+    "name": "Stanford University",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-summit-university-of-louisiana",
+    "name": "Summit University of Louisiana",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-university-of-arkansas-fort-smith",
+    "name": "University of Arkansas - Fort Smith",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-university-of-california-berkeley",
+    "name": "University of California, Berkeley",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-university-of-the-district-of-columbia",
+    "name": "University of the District of Columbia",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-ursinus-college",
+    "name": "Ursinus College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-william-mitchell-college-of-law",
+    "name": "William Mitchell College of Law",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-yale-university",
+    "name": "Yale University",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:au-macquarie-university",
+    "name": "Macquarie University",
+    "countryCode": "AU",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:az-azerbaijan-state-customs-committee-academy",
+    "name": "Azerbaijan State Customs Committee Academy",
+    "countryCode": "AZ",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:be-european-carolus-magnus-university",
+    "name": "European Carolus Magnus University",
+    "countryCode": "BE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:bg-academy-of-economics-dimitur-a-tscenov",
+    "name": "Academy of Economics \"Dimitur A. Tscenov\"",
+    "countryCode": "BG",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-british-columbia-institute-of-technology",
+    "name": "British Columbia Institute of Technology",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-british-columbia-open-university",
+    "name": "British Columbia Open University",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-columbia-college",
+    "name": "Columbia College",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-dalhousie-university",
+    "name": "Dalhousie University",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-mcgill-university",
+    "name": "McGill University",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-university-of-toronto-scarborough",
+    "name": "University of Toronto, Scarborough",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-university-of-british-columbia",
+    "name": "University of British Columbia",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-university-of-northern-british-columbia",
+    "name": "University of Northern British Columbia",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-university-of-toronto-mississauga",
+    "name": "University of Toronto, Mississauga",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-university-of-toronto",
+    "name": "University of Toronto",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-victoria-university-toronto-university-of-toronto",
+    "name": "Victoria University Toronto, University of Toronto",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:cn-peking-university",
+    "name": "Peking University",
+    "countryCode": "CN",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:cn-tsinghua-university",
+    "name": "Tsinghua University",
+    "countryCode": "CN",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:co-polit-cnico-columbiano-jaime-isaza-cadavid",
+    "name": "Politécnico Columbiano \"Jaime Isaza Cadavid\"",
+    "countryCode": "CO",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:gm-euclid-university",
+    "name": "EUCLID University",
+    "countryCode": "GM",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:de-fachhochschule-gelsenkirchen",
+    "name": "Fachhochschule Gelsenkirchen",
+    "countryCode": "DE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:de-fachhochschule-heidelberg",
+    "name": "Fachhochschule Heidelberg",
+    "countryCode": "DE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:de-fachhochschule-des-mittelstandes-fhm",
+    "name": "Fachhochschule des Mittelstandes (FHM)",
+    "countryCode": "DE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:de-hochschule-f-r-j-dische-studien-heidelberg",
+    "name": "Hochschule für Jüdische Studien Heidelberg",
+    "countryCode": "DE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:de-hochschule-mittweida-university-of-applied-sciences",
+    "name": "Hochschule Mittweida, University of Applied Sciences",
+    "countryCode": "DE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:de-nordakademie-staatlich-anerkannte-private-fachhochschule-mit-dualen-studieng-nge",
+    "name": "Nordakademie, Staatlich anerkannte private Fachhochschule mit dualen Studiengängen",
+    "countryCode": "DE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:de-p-dagogische-hochschule-heidelberg",
+    "name": "Pädagogische Hochschule Heidelberg",
+    "countryCode": "DE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:de-schiller-international-university-heidelberg",
+    "name": "Schiller International University, Heidelberg",
+    "countryCode": "DE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:de-ruprecht-karls-universit-t-heidelberg",
+    "name": "Ruprecht-Karls-Universität Heidelberg",
+    "countryCode": "DE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:hu-janus-pannonius-university",
+    "name": "Janus Pannonius University",
+    "countryCode": "HU",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:in-amity-university",
+    "name": "Amity University",
+    "countryCode": "IN",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:in-lalit-narayan-mithila-university",
+    "name": "Lalit Narayan Mithila University",
+    "countryCode": "IN",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:in-sikha-o-anushandhan-university",
+    "name": "Sikha 'O' Anushandhan University",
+    "countryCode": "IN",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:id-akademi-farmasi-mitra-sehat-mandiri-sidoarjo",
+    "name": "Akademi Farmasi Mitra Sehat Mandiri Sidoarjo",
+    "countryCode": "ID",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:id-binus-university",
+    "name": "Binus University",
+    "countryCode": "ID",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:id-universitas-dian-nuswantoro",
+    "name": "Universitas Dian Nuswantoro",
+    "countryCode": "ID",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:id-universitas-indonusa-esa-unggul",
+    "name": "Universitas Indonusa Esa Unggul",
+    "countryCode": "ID",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:id-stmik-sinar-nusantara",
+    "name": "STMIK Sinar Nusantara",
+    "countryCode": "ID",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:id-universitas-nusa-cendana",
+    "name": "Universitas Nusa Cendana",
+    "countryCode": "ID",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:id-universitas-islam-nusantara",
+    "name": "Universitas Islam Nusantara",
+    "countryCode": "ID",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ir-allameh-tabatabaie-university",
+    "name": "Allameh Tabatabaie University",
+    "countryCode": "IR",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:it-bocconi-university",
+    "name": "Bocconi University",
+    "countryCode": "IT",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-denki-university",
+    "name": "Tokyo Denki University",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-national-university-of-fine-arts-and-music",
+    "name": "Tokyo National University of Fine Arts and Music",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-metropolitan-university-of-health-sciences",
+    "name": "Tokyo Metropolitan University of Health Sciences",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-metropolitan-university",
+    "name": "Tokyo Metropolitan University",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-mie-university",
+    "name": "Mie University",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-university-of-agriculture",
+    "name": "Tokyo University of Agriculture",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-science-university-of-tokyo",
+    "name": "Science University of Tokyo",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-dental-college",
+    "name": "Tokyo Dental College",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-engineering-university",
+    "name": "Tokyo Engineering University",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-institute-of-technology",
+    "name": "Tokyo Institute of Technology",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-international-university",
+    "name": "Tokyo International University",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-institute-of-polytechnics",
+    "name": "Tokyo Institute of Polytechnics",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-keizai-university",
+    "name": "Tokyo Keizai University",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-medical-and-dental-university",
+    "name": "Tokyo Medical and Dental University",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-metropolitan-institute-of-technology",
+    "name": "Tokyo Metropolitan Institute of Technology",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-kasei-university",
+    "name": "Tokyo Kasei University",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-medical-college",
+    "name": "Tokyo Medical College",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-college-of-music",
+    "name": "Tokyo College of Music",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-university-of-fisheries",
+    "name": "Tokyo University of Fisheries",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-university-of-mercantile-marine",
+    "name": "Tokyo University of Mercantile Marine",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-university-of-pharmacy-and-life-science",
+    "name": "Tokyo University of Pharmacy and Life Science",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-university-of-agriculture-and-technology",
+    "name": "Tokyo University of Agriculture and Technology",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-university-of-foreign-studies",
+    "name": "Tokyo University of Foreign Studies",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-university-of-information-sciences",
+    "name": "Tokyo University of Information Sciences",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-women-s-college-of-physical-education",
+    "name": "Tokyo Women's College of Physical Education",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-woman-s-christian-university",
+    "name": "Tokyo Woman's Christian University",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-women-s-medial-college",
+    "name": "Tokyo Women's Medial College",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-gakugei-university",
+    "name": "Tokyo Gakugei University",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-university-of-the-sacred-heart-tokyo",
+    "name": "University of the Sacred Heart Tokyo",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-university-of-tokyo",
+    "name": "University of Tokyo",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-science-university-of-tokyo-in-yamaguchi",
+    "name": "Science University of Tokyo in Yamaguchi",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jp-tokyo-university-of-art-and-design",
+    "name": "Tokyo University of Art and Design",
+    "countryCode": "JP",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:jo-hashemite-university",
+    "name": "Hashemite University",
+    "countryCode": "JO",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:lt-vytautas-magnus-university",
+    "name": "Vytautas Magnus University",
+    "countryCode": "LT",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:md-moldova-state-university-of-medicine-and-pharmacy-n-testemitsanu",
+    "name": "Moldova State University of Medicine and Pharmacy \"N. Testemitsanu\"",
+    "countryCode": "MD",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:nl-delft-university-of-technology",
+    "name": "Delft University of Technology",
+    "countryCode": "NL",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:pk-nuclear-institute-for-agriculture-and-biology-niab",
+    "name": "Nuclear Institute for Agriculture and Biology (NIAB)",
+    "countryCode": "PK",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:py-universidad-columbia-del-paraguay",
+    "name": "Universidad Columbia del Paraguay",
+    "countryCode": "PY",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ru-obninsk-state-technical-university-for-nuclear-power-engineering",
+    "name": "Obninsk State Technical University for Nuclear Power Engineering",
+    "countryCode": "RU",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:sg-yale-nus",
+    "name": "yale-NUS",
+    "countryCode": "SG",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:es-ie-university",
+    "name": "IE University",
+    "countryCode": "ES",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:se-karolinska-institute-stockholm",
+    "name": "Karolinska Institute Stockholm",
+    "countryCode": "SE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ch-epfl-epf-lausanne",
+    "name": "EPFL - EPF Lausanne",
+    "countryCode": "CH",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ch-ethz-eth-zurich",
+    "name": "ETHZ - ETH Zurich",
+    "countryCode": "CH",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:tw-national-tsinghua-university",
+    "name": "National Tsinghua University",
+    "countryCode": "TW",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ae-paris-sorbonne-university-abu-dhabi",
+    "name": "Paris-Sorbonne University Abu Dhabi",
+    "countryCode": "AE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:gb-oxford-brookes-university",
+    "name": "Oxford Brookes University",
+    "countryCode": "GB",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:gb-university-of-cambridge",
+    "name": "University of Cambridge",
+    "countryCode": "GB",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:gb-chelsea-college-of-art-and-design",
+    "name": "Chelsea College of Art and Design",
+    "countryCode": "GB",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:gb-goldsmiths-college-university-of-london",
+    "name": "Goldsmiths College, University of London",
+    "countryCode": "GB",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:gb-imperial-college-london",
+    "name": "Imperial College London",
+    "countryCode": "GB",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:gb-imperial-college-school-of-medicine",
+    "name": "Imperial College School of Medicine",
+    "countryCode": "GB",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:gb-university-of-oxford",
+    "name": "University of Oxford",
+    "countryCode": "GB",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:vn-rmit-international-university-vietnam",
+    "name": "RMIT International University Vietnam",
+    "countryCode": "VN",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-berkeley-city-college",
+    "name": "Berkeley City College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-columbia-college-mo",
+    "name": "Columbia College (MO)",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-columbia-college-ca",
+    "name": "Columbia College (CA)",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-columbia-greene-community-college",
+    "name": "Columbia-Greene Community College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-mitchell-community-college",
+    "name": "Mitchell Community College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-columbia-gorge-community-college",
+    "name": "Columbia Gorge Community College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-mitchell-technical-institute",
+    "name": "Mitchell Technical Institute",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-columbia-state-community-college",
+    "name": "Columbia State Community College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-lower-columbia-college",
+    "name": "Lower Columbia College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:ca-toronto-metropolitan-university",
+    "name": "Toronto Metropolitan University",
+    "countryCode": "CA",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:de-technische-hochschule-mittelhessen",
+    "name": "Technische Hochschule Mittelhessen",
+    "countryCode": "DE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:hu-corvinus-university-of-budapest",
+    "name": "Corvinus University of Budapest",
+    "countryCode": "HU",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:es-esade-business-law-school",
+    "name": "ESADE Business & Law School",
+    "countryCode": "ES",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-johnson-c-smith-theological-seminary",
+    "name": "Johnson C Smith Theological Seminary *",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-philander-smith-college",
+    "name": "Philander Smith College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:at-umit-tirol",
+    "name": "UMIT Tirol",
+    "countryCode": "AT",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:us-berkeley-college",
+    "name": "Berkeley College",
+    "countryCode": "US",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:in-mit-world-peace-university",
+    "name": "MIT World Peace University",
+    "countryCode": "IN",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "hipo:be-ku-leuven",
+    "name": "KU Leuven",
+    "countryCode": "BE",
+    "kind": "university",
+    "aliases": []
+  },
+  {
+    "id": "fr-lycee:0750654D",
+    "name": "Lycée Henri-IV — Paris",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Henri-IV",
+      "Henri IV",
+      "Lycée Henri IV",
+      "Lycée Henri-IV"
+    ]
+  },
+  {
+    "id": "fr-lycee:0750655E",
+    "name": "Lycée Louis Le Grand — Paris",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Louis-le-Grand",
+      "Louis le Grand",
+      "LLG"
+    ]
+  },
+  {
+    "id": "fr-lycee:0753873W",
+    "name": "Lycée privé Stanislas — Paris",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Stanislas",
+      "Stan"
+    ]
+  },
+  {
+    "id": "fr-lycee:0750698B",
+    "name": "Lycée Condorcet — Paris",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Condorcet"
+    ]
+  },
+  {
+    "id": "fr-lycee:0750660K",
+    "name": "Lycée Janson-de-Sailly — Paris",
+    "countryCode": "FR",
+    "kind": "lycee",
+    "aliases": [
+      "Janson",
+      "Janson-de-Sailly"
+    ]
+  }
+]
