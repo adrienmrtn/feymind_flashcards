@@ -67,12 +67,11 @@ struct PaywallStepView: View {
 
     // MARK: - Actions
 
+    @MainActor
     private func loadProducts() async {
         let products = try? await Product.products(for: MicaboProducts.all)
-        await MainActor.run {
-            withAnimation(.easeOut(duration: 0.3)) {
-                state = (products?.isEmpty == false) ? .available : .unavailable
-            }
+        withAnimation(.easeOut(duration: 0.3)) {
+            state = (products?.isEmpty == false) ? .available : .unavailable
         }
     }
 

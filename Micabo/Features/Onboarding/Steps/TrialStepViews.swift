@@ -183,7 +183,7 @@ private struct RingingBell: View {
             } animation: { angle in
                 angle == 1.0 ? .easeInOut(duration: 1.5) : .spring(response: 0.17, dampingFraction: 0.42)
             }
-            .onAppear(perform: Haptics.tick)
+            .onAppear { Haptics.tick() }
     }
 }
 

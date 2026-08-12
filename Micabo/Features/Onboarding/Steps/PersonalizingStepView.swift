@@ -73,6 +73,9 @@ struct PersonalizingStepView: View {
         guard !didStart else { return }
         didStart = true
 
+        // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.
+        let flow = model
+
         for index in phases.indices {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.9 + Double(index) * 1.15) {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -84,7 +87,7 @@ struct PersonalizingStepView: View {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.9 + Double(phases.count) * 1.15 + 0.5) {
             Haptics.success()
-            model.advance()
+            flow.advance()
         }
     }
 }

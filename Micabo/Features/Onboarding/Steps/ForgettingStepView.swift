@@ -40,9 +40,12 @@ struct ForgettingStepView: View {
         guard selection == nil else { return }
         Haptics.selection()
         selection = answer
-        model.forgetsOften = answer
+
+        // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.
+        let flow = model
+        flow.forgetsOften = answer
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) {
-            model.advance()
+            flow.advance()
         }
     }
 }

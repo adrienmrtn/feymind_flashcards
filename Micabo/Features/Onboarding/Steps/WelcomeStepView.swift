@@ -1,10 +1,9 @@
+import Combine
 import SwiftUI
 
 /// Écran 1 : accroche. Un petit paquet de cartes se rebat tout seul derrière le titre.
 struct WelcomeStepView: View {
     @Environment(OnboardingModel.self) private var model
-
-    @State private var titleVisible = false
 
     var body: some View {
         VStack(spacing: 0) {

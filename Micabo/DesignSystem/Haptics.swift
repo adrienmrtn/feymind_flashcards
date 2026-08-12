@@ -2,6 +2,10 @@ import UIKit
 
 /// Retours haptiques de l'app. Les générateurs sont conservés et préparés à l'avance :
 /// sans cela, la première vibration arrive avec un retard visible sur l'animation.
+///
+/// Le type n'est pas isolé au `MainActor` : tous les appels partent déjà du fil principal
+/// (corps de vue, `onAppear`, blocs postés sur `DispatchQueue.main`), et l'isoler ferait
+/// remonter des erreurs sur les blocs différés qui rythment les animations du parcours.
 enum Haptics {
     private static let selectionGenerator = UISelectionFeedbackGenerator()
     private static let lightGenerator = UIImpactFeedbackGenerator(style: .light)

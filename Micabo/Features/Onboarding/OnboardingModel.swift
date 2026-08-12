@@ -7,25 +7,11 @@ import SwiftUI
 final class OnboardingModel {
     private(set) var step: OnboardingStep = .welcome
 
-    var goal: LearningGoal? {
-        didSet { OnboardingPreferences.goal = goal }
-    }
-
-    var forgetsOften: Bool? {
-        didSet { OnboardingPreferences.forgetsOften = forgetsOften }
-    }
-
-    var subjects: Set<String> = [] {
-        didSet { OnboardingPreferences.subjects = subjects.sorted() }
-    }
-
-    var dailyMinutes: Int = 15 {
-        didSet { OnboardingPreferences.dailyMinutes = dailyMinutes }
-    }
-
-    var notificationsOptIn: Bool = false {
-        didSet { OnboardingPreferences.notificationsOptIn = notificationsOptIn }
-    }
+    var goal: LearningGoal?
+    var forgetsOften: Bool?
+    var subjects: Set<String> = []
+    var dailyMinutes = 15
+    var notificationsOptIn = false
 
     /// Nombre de cartes que l'utilisateur peut espérer mémoriser en un an,
     /// au rythme qu'il vient de choisir.
@@ -34,12 +20,19 @@ final class OnboardingModel {
     }
 
     func advance() {
+        persist()
         guard let next = step.next else { return }
         step = next
     }
 
-    func jump(to step: OnboardingStep) {
-        self.step = step
+    /// Recopie les réponses dans les réglages à chaque changement d'écran :
+    /// une sortie en cours de route ne perd que la question en cours.
+    private func persist() {
+        OnboardingPreferences.goal = goal
+        OnboardingPreferences.forgetsOften = forgetsOften
+        OnboardingPreferences.subjects = subjects.sorted()
+        OnboardingPreferences.dailyMinutes = dailyMinutes
+        OnboardingPreferences.notificationsOptIn = notificationsOptIn
     }
 }
 

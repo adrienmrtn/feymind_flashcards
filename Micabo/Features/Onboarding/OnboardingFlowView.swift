@@ -30,7 +30,7 @@ struct OnboardingFlowView: View {
         }
         .environment(model)
         .preferredColorScheme(.light)
-        .onAppear(perform: Haptics.prepare)
+        .onAppear { Haptics.prepare() }
     }
 
     @ViewBuilder

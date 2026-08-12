@@ -33,9 +33,12 @@ struct GoalStepView: View {
         guard selection == nil else { return }
         Haptics.selection()
         selection = goal
-        model.goal = goal
+
+        // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.
+        let flow = model
+        flow.goal = goal
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) {
-            model.advance()
+            flow.advance()
         }
     }
 }

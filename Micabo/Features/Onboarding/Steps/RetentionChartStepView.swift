@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 /// Écran 6 : la démonstration visuelle. Deux courbes de mémorisation qui partent
