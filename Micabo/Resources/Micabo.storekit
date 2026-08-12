@@ -1,0 +1,97 @@
+{
+  "identifier" : "A1B2C3D4",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "",
+    "_developerTeamID" : "",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "fr_FR",
+    "_storefront" : "FRA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21571390",
+      "localizations" : [
+        {
+          "description" : "Accès complet à Micabo",
+          "displayName" : "Micabo Pro",
+          "locale" : "fr_FR"
+        }
+      ],
+      "name" : "Micabo Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6741220001",
+          "introductoryOffer" : {
+            "internalID" : "6741220003",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3D"
+          },
+          "localizations" : [
+            {
+              "description" : "Cours et flashcards illimités, toute l'année.",
+              "displayName" : "Annuel",
+              "locale" : "fr_FR"
+            }
+          ],
+          "productID" : "com.micabo.app.pro.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Micabo Pro annuel",
+          "subscriptionGroupID" : "21571390",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "6.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6741220002",
+          "introductoryOffer" : {
+            "internalID" : "6741220004",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3D"
+          },
+          "localizations" : [
+            {
+              "description" : "Cours et flashcards illimités, sans engagement.",
+              "displayName" : "Mensuel",
+              "locale" : "fr_FR"
+            }
+          ],
+          "productID" : "com.micabo.app.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Micabo Pro mensuel",
+          "subscriptionGroupID" : "21571390",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

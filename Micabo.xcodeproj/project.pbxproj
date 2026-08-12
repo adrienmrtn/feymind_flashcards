@@ -28,6 +28,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Resources/Micabo.storekit,
 			);
 			target = FE00000000000000000040 /* Micabo */;
 		};

@@ -17,6 +17,33 @@ Application iOS native de révision : vos cours PDF ou vos notes deviennent des 
 Le parcours principal tient en trois écrans : bouton `+` sur l'accueil, choix PDF ou texte,
 génération des flashcards, visualisation et édition, puis entraînement.
 
+## Parcours d'accueil
+
+Au premier lancement, `RootView` affiche `OnboardingFlowView` à la place de la barre d'onglets.
+Le parcours est **strictement linéaire** : chaque écran pousse le suivant, il n'y a ni retour
+arrière ni balayage. Les vingt étapes sont décrites par `OnboardingStep` et rendues par
+`Micabo/Features/Onboarding/Steps/`.
+
+| Bloc | Écrans |
+| --- | --- |
+| Accroche | bienvenue, langue, annonce des questions |
+| Questions | objectif, rapport à l'oubli, matières, temps quotidien |
+| Démonstration | courbe de mémorisation, preuves scientifiques, import → génération → révision en trois écrans manipulables, vidéo, pile de cartes |
+| Sortie | projection annuelle, notifications, personnalisation, essai de 3 jours, paywall |
+
+Les réponses sont écrites au fil de l'eau dans `OnboardingPreferences` (clés `micabo.onboarding.*`)
+et survivent donc à une fermeture en cours de route. `Réglages` propose **Refaire l'onboarding**,
+qui efface ces clés et relance le parcours sans toucher aux cours.
+
+L'écran 6 s'appuie sur `RetentionCurve` : une décroissance exponentielle de la rétention, remise
+à 100 % à chaque révision, avec une stabilité qui augmente à chaque passage. Les travaux cités à
+l'écran 7 (Ebbinghaus 1885, Landauer & Bjork 1978, Cepeda et al. 2006, Karpicke & Roediger 2008,
+Dunlosky et al. 2013) sont réels et rapportés sans arrondir leurs résultats.
+
+Le paywall utilise `SubscriptionStoreView` de StoreKit 2. Aucun produit n'est publié :
+`Micabo/Resources/Micabo.storekit`, référencé par le scheme, permet de faire tourner l'écran en
+local. Quand aucun produit ne se charge, un repli affiche l'offre et laisse entrer dans l'app.
+
 ## Direction visuelle
 
 - Fond ivoire (`#FAF9F6`), surfaces blanches, encre `#1A1917`, accent indigo `#5B5BD6`
@@ -26,6 +53,7 @@ génération des flashcards, visualisation et édition, puis entraînement.
 - Réviser : carte sombre avec le nombre de cartes dues en très grand
 - Détail cours : en-tête pastel plat dérivé de la teinte du cours, liste compacte à pastilles
 - Chaque cours porte une couverture miniature : première page PDF, sinon initiales sur pastel
+- Animations en cascade et retours haptiques centralisés dans `Haptics`
 
 ## Pile technique
 

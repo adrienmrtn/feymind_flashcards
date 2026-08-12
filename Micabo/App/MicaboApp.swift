@@ -15,7 +15,7 @@ struct MicaboApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootTabView()
+            RootView()
                 .preferredColorScheme(.light)
                 .tint(MicaboColor.accent)
         }
