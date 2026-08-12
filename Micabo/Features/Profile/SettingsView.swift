@@ -68,6 +68,16 @@ struct SettingsView: View {
                     Text("Vos cours et flashcards sont stockés uniquement sur cet appareil.")
                 }
 
+                Section {
+                    Button("Refaire l'onboarding") {
+                        replayOnboarding()
+                    }
+                } header: {
+                    Text("Test")
+                } footer: {
+                    Text("Relance le parcours d'accueil et efface les réponses données à l'inscription. Vos cours ne sont pas touchés.")
+                }
+
                 Section("À propos") {
                     LabeledContent("Version", value: appVersion)
                     LabeledContent("Répétition espacée", value: "SM-2, réglages Anki")
@@ -107,6 +117,15 @@ struct SettingsView: View {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
         return "\(version) (\(build))"
+    }
+
+    /// La feuille se referme d'abord : la bascule vers l'onboarding remplace toute
+    /// la hiérarchie de vues, autant ne pas le faire pendant l'animation de fermeture.
+    private func replayOnboarding() {
+        dismiss()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            OnboardingPreferences.reset()
+        }
     }
 
     private func eraseEverything() {
