@@ -7,7 +7,7 @@ import SwiftUI
 final class OnboardingModel {
     private(set) var step: OnboardingStep = .welcome
 
-    var goal: LearningGoal?
+    var goals: Set<LearningGoal> = []
     var forgetsOften: Bool?
     var subjects: Set<String> = []
     var institutionId: String?
@@ -30,7 +30,7 @@ final class OnboardingModel {
     /// Recopie les réponses dans les réglages à chaque changement d'écran :
     /// une sortie en cours de route ne perd que la question en cours.
     private func persist() {
-        OnboardingPreferences.goal = goal
+        OnboardingPreferences.goals = goals.map(\.rawValue).sorted()
         OnboardingPreferences.forgetsOften = forgetsOften
         OnboardingPreferences.subjects = subjects.sorted()
         OnboardingPreferences.institutionId = institutionId

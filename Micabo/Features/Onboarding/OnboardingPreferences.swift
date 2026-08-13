@@ -54,6 +54,7 @@ enum OnboardingPreferences {
     enum Key {
         static let completed = "micabo.onboarding.completed"
         static let goal = "micabo.onboarding.goal"
+        static let goals = "micabo.onboarding.goals"
         static let forgetsOften = "micabo.onboarding.forgetsOften"
         static let subjects = "micabo.onboarding.subjects"
         static let institutionId = "micabo.onboarding.institutionId"
@@ -63,7 +64,7 @@ enum OnboardingPreferences {
         static let completedAt = "micabo.onboarding.completedAt"
 
         static let all = [
-            completed, goal, forgetsOften, subjects,
+            completed, goal, goals, forgetsOften, subjects,
             institutionId, institutionName,
             dailyMinutes, notificationsOptIn, completedAt
         ]
@@ -76,9 +77,18 @@ enum OnboardingPreferences {
         set { defaults.set(newValue, forKey: Key.completed) }
     }
 
-    static var goal: LearningGoal? {
-        get { defaults.string(forKey: Key.goal).flatMap(LearningGoal.init(rawValue:)) }
-        set { defaults.set(newValue?.rawValue, forKey: Key.goal) }
+    /// Objectifs déclarés. Une seule réponse était possible auparavant : la clé
+    /// historique est relue tant que la nouvelle n'a pas été écrite.
+    static var goals: [String] {
+        get {
+            if let stored = defaults.stringArray(forKey: Key.goals) { return stored }
+            return defaults.string(forKey: Key.goal).map { [$0] } ?? []
+        }
+        set { defaults.set(newValue, forKey: Key.goals) }
+    }
+
+    static var learningGoals: [LearningGoal] {
+        goals.compactMap(LearningGoal.init(rawValue:))
     }
 
     static var forgetsOften: Bool? {

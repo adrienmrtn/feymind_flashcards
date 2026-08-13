@@ -29,11 +29,26 @@ enum OnboardingDemo {
         )
     ]
 
-    /// Largeurs relatives des fausses lignes de texte du document.
-    static let pageLines: [CGFloat] = [
-        1.0, 0.94, 0.98, 0.62,
-        0.96, 1.0, 0.88, 0.97, 0.55,
-        0.99, 0.92, 0.7
+    /// Le contenu de la page affichée pendant la démonstration : du vrai texte de cours,
+    /// pour que l'écran ressemble à un document et non à une maquette de traits gris.
+    static let pageHeading = "Chapitre 3 · L'année 1789"
+
+    static let pageParagraphs: [String] = [
+        """
+        Au printemps 1789, la convocation des États généraux réunit à Versailles les représentants \
+        des trois ordres. Le tiers état, qui représente plus de 95 % de la population, réclame le \
+        vote par tête et non par ordre.
+        """,
+        """
+        Le 17 juin, les députés du tiers état se proclament Assemblée nationale. Trois jours plus \
+        tard, réunis dans la salle du Jeu de paume, ils jurent de ne pas se séparer avant d'avoir \
+        donné une constitution au royaume.
+        """,
+        """
+        Le 14 juillet, la foule parisienne prend la Bastille, forteresse royale devenue le symbole \
+        de l'arbitraire. Dans la nuit du 4 août, l'Assemblée abolit les privilèges ; le 26 août, \
+        elle vote la Déclaration des droits de l'homme et du citoyen.
+        """
     ]
 }
 
@@ -41,7 +56,8 @@ enum OnboardingDemo {
 struct DemoDocumentPage: View {
     var isScanning: Bool
     var isAnalyzed: Bool
-    var sweepOffset: CGFloat
+    /// Position du balayage, de 0 (au-dessus de la page) à 1 (en dessous).
+    var sweepProgress: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -70,53 +86,57 @@ struct DemoDocumentPage: View {
             .background(MicaboColor.surfaceMuted)
 
             VStack(alignment: .leading, spacing: 9) {
-                RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .fill(isAnalyzed || isScanning ? MicaboColor.ink : MicaboColor.surfaceSunken)
-                    .frame(width: 132, height: 11)
-                    .padding(.bottom, 4)
+                Text(OnboardingDemo.courseTitle)
+                    .font(MicaboFont.hanken(13, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
 
-                ForEach(Array(OnboardingDemo.pageLines.enumerated()), id: \.offset) { index, width in
-                    GeometryReader { proxy in
-                        RoundedRectangle(cornerRadius: 2, style: .continuous)
-                            .fill(lineColor(index: index))
-                            .frame(width: proxy.size.width * width, height: 6)
-                    }
-                    .frame(height: 6)
-                    .animation(
-                        .easeOut(duration: 0.25).delay(Double(index) * 0.085),
-                        value: isScanning
-                    )
+                Text(OnboardingDemo.pageHeading)
+                    .font(MicaboFont.hanken(9, weight: .semibold))
+                    .tracking(0.5)
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .padding(.bottom, 2)
+
+                ForEach(Array(OnboardingDemo.pageParagraphs.enumerated()), id: \.offset) { _, paragraph in
+                    Text(paragraph)
+                        .font(MicaboFont.hanken(8.5, weight: .regular))
+                        .foregroundStyle(bodyColor)
+                        .lineSpacing(2.5)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .animation(.easeOut(duration: 0.35), value: isScanning)
         }
         .background(MicaboColor.surface)
+        .overlay(alignment: .top) {
+            if isScanning {
+                GeometryReader { proxy in
+                    LinearGradient(
+                        colors: [
+                            MicaboColor.accent.opacity(0),
+                            MicaboColor.accent.opacity(0.4),
+                            MicaboColor.accent.opacity(0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 54)
+                    .offset(y: sweepProgress * (proxy.size.height + 54) - 54)
+                }
+                .allowsHitTesting(false)
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
         }
-        .overlay(alignment: .top) {
-            if isScanning {
-                LinearGradient(
-                    colors: [MicaboColor.accent.opacity(0), MicaboColor.accent.opacity(0.45), MicaboColor.accent.opacity(0)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: 46)
-                .offset(y: sweepOffset)
-                .allowsHitTesting(false)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
         .shadow(color: Color.black.opacity(0.07), radius: 16, x: 0, y: 10)
     }
 
-    private func lineColor(index: Int) -> Color {
-        if isAnalyzed || isScanning {
-            return index.isMultiple(of: 4) ? MicaboColor.inkSecondary : Color(hex: 0xC9C3B7)
-        }
-        return MicaboColor.surfaceSunken
+    /// Le texte s'assombrit pendant la lecture : la page passe de « posée là » à « lue ».
+    private var bodyColor: Color {
+        isAnalyzed || isScanning ? Color(hex: 0x4A463F) : Color(hex: 0x9A958A)
     }
 }

@@ -59,8 +59,12 @@ struct DemoWriteStepView: View {
                 }
             }
         } footer: {
-            OnboardingContinueButton(isEnabled: isFinished) {
-                model.advance()
+            // Rien tant que les cartes s'écrivent : le bouton arrive avec le résultat.
+            if isFinished {
+                OnboardingContinueButton {
+                    model.advance()
+                }
+                .transition(.opacity)
             }
         }
     }
@@ -109,7 +113,7 @@ struct DemoWriteStepView: View {
 
         for index in OnboardingDemo.cards.indices {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.75 + Double(index) * 0.62) {
-                withAnimation(.spring(response: 0.45, dampingFraction: 0.72)) {
+                withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.4)) {
                     revealedCards = index + 1
                 }
                 Haptics.tick()

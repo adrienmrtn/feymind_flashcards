@@ -1,145 +1,206 @@
 import SwiftUI
 
-/// Écran 7 : la méthode et les travaux qui la soutiennent. Les sources sont réelles
-/// et citées telles quelles, sans arrondir les résultats.
+/// Écran 7 : la méthode, révélée bloc par bloc. Chaque appui découvre le bloc suivant ;
+/// le bouton d'avancement n'apparaît qu'une fois les deux blocs à l'écran.
 struct ScienceStepView: View {
     @Environment(OnboardingModel.self) private var model
 
-    private struct Proof: Identifiable {
-        let id = UUID()
-        let headline: String
-        let detail: String
-        let source: String
-    }
+    /// Nombre de blocs découverts. Deux blocs en tout.
+    @State private var revealed = 0
 
-    private let proofs: [Proof] = [
-        Proof(
-            headline: "254 études",
-            detail: "Passées en revue, plus de 14 000 participants : espacer ses révisions l'emporte sur le bachotage dans la quasi-totalité des expériences recensées.",
-            source: "Cepeda, Pashler, Vul, Wixted & Rohrer — Psychological Bulletin, 2006"
-        ),
-        Proof(
-            headline: "80 % contre 35 %",
-            detail: "Une semaine après la leçon, les étudiants qui s'étaient testés en restituaient environ 80 %. Ceux qui s'étaient contentés de relire, environ 35 %.",
-            source: "Karpicke & Roediger — Science, 2008"
-        ),
-        Proof(
-            headline: "Note maximale",
-            detail: "Sur dix méthodes d'apprentissage passées au crible, seules la pratique de rappel et l'espacement décrochent la mention « utilité élevée ».",
-            source: "Dunlosky, Rawson, Marsh, Nathan & Willingham — Psychological Science in the Public Interest, 2013"
-        )
-    ]
+    private let blockCount = 2
+
+    private var isComplete: Bool { revealed >= blockCount }
 
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Répétition espacée",
             title: "La courbe de l'oubli, prise à contre-pied.",
-            subtitle: "Ebbinghaus l'a mesurée dès 1885 : sans y revenir, une grande partie d'une leçon s'efface en vingt-quatre heures. Micabo repose chaque carte juste avant ce décrochage, avec des intervalles qui s'allongent à chaque réussite.",
-            titleSize: 27
+            titleSize: 27,
+            scrolls: false
         ) {
-            VStack(alignment: .leading, spacing: 18) {
-                IntervalLadder()
-
-                VStack(spacing: 10) {
-                    ForEach(proofs) { proof in
-                        ProofCard(headline: proof.headline, detail: proof.detail, source: proof.source)
-                    }
+            VStack(alignment: .leading, spacing: 14) {
+                if revealed >= 1 {
+                    ForgettingParagraph()
+                        .transition(blockTransition)
                 }
+
+                if revealed >= 2 {
+                    IntervalTimeline()
+                        .transition(blockTransition)
+                }
+
+                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: revealNext)
         } footer: {
-            OnboardingContinueButton {
-                model.advance()
+            if isComplete {
+                OnboardingContinueButton {
+                    model.advance()
+                }
+                .transition(.opacity)
+            } else {
+                OnboardingHint(text: "Appuie pour découvrir la suite")
             }
+        }
+    }
+
+    private var blockTransition: AnyTransition {
+        .asymmetric(
+            insertion: .offset(y: 14).combined(with: .opacity),
+            removal: .opacity
+        )
+    }
+
+    private func revealNext() {
+        guard revealed < blockCount else { return }
+        Haptics.soft()
+        withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.42)) {
+            revealed += 1
         }
     }
 }
 
-/// Échelle des intervalles : 10 min, 1 jour, 3 jours, 1 semaine, 1 mois.
-private struct IntervalLadder: View {
-    private let steps = ["10 min", "1 jour", "3 jours", "1 sem.", "1 mois"]
+// MARK: - Bloc 1 : le constat d'Ebbinghaus
 
-    @State private var shown = 0
+/// Le texte se met en gras mot après mot, au rythme d'une lecture normale.
+private struct ForgettingParagraph: View {
+    private static let sentence = """
+    Dès 1885, Ebbinghaus mesure l'oubli : sans y revenir, une leçon s'efface presque \
+    entièrement en vingt-quatre heures. Micabo repose chaque carte juste avant ce décrochage.
+    """
+
+    private let words = sentence.split(separator: " ").map(String.init)
+
+    @State private var readCount = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
-                ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
-                    if index > 0 {
-                        Rectangle()
-                            .fill(index < shown ? MicaboColor.ink : MicaboColor.stroke)
-                            .frame(height: 1.5)
-                            .frame(maxWidth: .infinity)
-                    }
-
-                    Text(step)
-                        .font(MicaboFont.hanken(11, weight: .semibold))
-                        .foregroundStyle(index < shown ? MicaboColor.onInk : MicaboColor.inkTertiary)
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 8)
-                        .background(
-                            index < shown ? MicaboColor.ink : MicaboColor.surfaceMuted,
-                            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        )
-                        .scaleEffect(index < shown ? 1 : 0.92)
-                }
-            }
-
-            Text("Intervalles expansifs (Landauer & Bjork, 1978), calculés carte par carte par l'algorithme SM-2.")
-                .font(MicaboFont.hanken(11, weight: .regular))
+            Text("EBBINGHAUS, 1885")
+                .font(MicaboFont.hanken(10, weight: .semibold))
+                .tracking(1.4)
                 .foregroundStyle(MicaboColor.inkTertiary)
+
+            paragraph
+                .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
         }
-        .onAppear(perform: revealSteps)
+        .onAppear(perform: followReading)
     }
 
-    private func revealSteps() {
-        for index in steps.indices {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45 + Double(index) * 0.16) {
-                withAnimation(.spring(response: 0.34, dampingFraction: 0.68)) {
-                    shown = index + 1
-                }
-                Haptics.tick()
+    private var paragraph: Text {
+        words.indices.reduce(Text("")) { partial, index in
+            let isRead = index < readCount
+            return partial + Text(words[index] + (index == words.count - 1 ? "" : " "))
+                .font(MicaboFont.hanken(15, weight: isRead ? .bold : .regular))
+                .foregroundStyle(isRead ? MicaboColor.ink : MicaboColor.inkTertiary)
+        }
+    }
+
+    /// Un mot toutes les 110 ms : assez lent pour être suivi, assez court pour ne pas lasser.
+    private func followReading() {
+        for index in words.indices {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.28 + Double(index) * 0.11) {
+                readCount = index + 1
             }
         }
     }
 }
 
-private struct ProofCard: View {
-    let headline: String
-    let detail: String
-    let source: String
+// MARK: - Bloc 2 : les intervalles
+
+/// Échelle verticale des intervalles : chaque palier a la place d'être lu.
+private struct IntervalTimeline: View {
+    private struct Stage: Identifiable {
+        let id = UUID()
+        let interval: String
+        let caption: String
+    }
+
+    private let stages: [Stage] = [
+        Stage(interval: "10 min", caption: "Juste après la découverte"),
+        Stage(interval: "1 jour", caption: "Avant la nuit qui efface tout"),
+        Stage(interval: "3 jours", caption: "La carte tient déjà mieux"),
+        Stage(interval: "1 semaine", caption: "L'écart peut doubler"),
+        Stage(interval: "1 mois", caption: "C'est acquis")
+    ]
+
+    @State private var shown = 0
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text(headline)
-                .font(MicaboFont.hanken(19, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .tracking(-0.3)
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(stages.enumerated()), id: \.element.id) { index, stage in
+                HStack(alignment: .top, spacing: 12) {
+                    rail(isLast: index == stages.count - 1, isActive: index < shown)
 
-            Text(detail)
-                .font(MicaboFont.hanken(13, weight: .regular))
-                .foregroundStyle(Color(hex: 0x4A463F))
-                .lineSpacing(2)
-                .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(stage.interval)
+                            .font(MicaboFont.hanken(14, weight: .semibold))
+                            .foregroundStyle(index < shown ? MicaboColor.ink : MicaboColor.inkTertiary)
 
-            Text(source)
-                .font(MicaboFont.hanken(10, weight: .medium))
+                        Text(stage.caption)
+                            .font(MicaboFont.hanken(12, weight: .regular))
+                            .foregroundStyle(MicaboColor.inkTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.bottom, index == stages.count - 1 ? 0 : 14)
+
+                    Spacer(minLength: 0)
+                }
+                .opacity(index < shown ? 1 : 0.35)
+            }
+
+            Text("Intervalles expansifs (Landauer & Bjork, 1978), recalculés carte par carte.")
+                .font(MicaboFont.hanken(11, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 2)
+                .padding(.top, 14)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
+        .padding(16)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-        .overlay(alignment: .leading) {
+        .overlay {
             RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+        }
+        .onAppear(perform: revealStages)
+    }
+
+    private func rail(isLast: Bool, isActive: Bool) -> some View {
+        VStack(spacing: 0) {
+            Circle()
+                .fill(isActive ? MicaboColor.ink : MicaboColor.strokeStrong)
+                .frame(width: 8, height: 8)
+                .padding(.top, 5)
+
+            if !isLast {
+                Rectangle()
+                    .fill(isActive ? MicaboColor.strokeStrong : MicaboColor.stroke)
+                    .frame(width: 1.5)
+                    .frame(maxHeight: .infinity)
+                    .padding(.vertical, 3)
+            }
+        }
+        .frame(width: 8)
+    }
+
+    private func revealStages() {
+        for index in stages.indices {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2 + Double(index) * 0.14) {
+                withAnimation(.easeOut(duration: 0.28)) {
+                    shown = index + 1
+                }
+                Haptics.tick()
+            }
         }
     }
 }

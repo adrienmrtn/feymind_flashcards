@@ -9,6 +9,9 @@ struct SchoolStepView: View {
     @State private var isSearching = false
     @State private var selected: Institution?
     @State private var searchTask: Task<Void, Never>?
+    /// Texte posé par l'app (choix d'un résultat, reprise d'une réponse) : il ne doit
+    /// pas relancer de recherche, sinon la liste se rouvre juste après la sélection.
+    @State private var programmaticQuery: String?
     @FocusState private var isFocused: Bool
 
     private var canContinue: Bool {
@@ -63,10 +66,16 @@ struct SchoolStepView: View {
         .onAppear {
             isFocused = true
             if let existing = model.institutionName, query.isEmpty {
+                programmaticQuery = existing
                 query = existing
             }
         }
         .onChange(of: query) { _, newValue in
+            guard programmaticQuery != newValue else {
+                programmaticQuery = nil
+                return
+            }
+            programmaticQuery = nil
             selected = nil
             scheduleSearch(for: newValue)
         }
@@ -197,7 +206,10 @@ struct SchoolStepView: View {
 
     private func select(_ institution: Institution) {
         Haptics.selection()
+        searchTask?.cancel()
+        isSearching = false
         selected = institution
+        programmaticQuery = institution.name
         query = institution.name
         suggestions = []
         isFocused = false
