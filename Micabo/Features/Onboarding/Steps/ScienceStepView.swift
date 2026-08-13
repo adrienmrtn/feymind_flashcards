@@ -98,12 +98,19 @@ private struct ForgettingParagraph: View {
     }
 
     private var paragraph: Text {
-        words.indices.reduce(Text("")) { partial, index in
+        var result = Text("")
+        for index in words.indices {
             let isRead = index < readCount
-            return partial + Text(words[index] + (index == words.count - 1 ? "" : " "))
-                .font(MicaboFont.hanken(15, weight: isRead ? .bold : .regular))
-                .foregroundStyle(isRead ? MicaboColor.ink : MicaboColor.inkTertiary)
+            let isLast = index == words.count - 1
+            let piece = isLast ? words[index] : words[index] + " "
+            let weight: Font.Weight = isRead ? .bold : .regular
+            let color: Color = isRead ? MicaboColor.ink : MicaboColor.inkTertiary
+
+            result = result + Text(piece)
+                .font(MicaboFont.hanken(15, weight: weight))
+                .foregroundStyle(color)
         }
+        return result
     }
 
     /// Un mot toutes les 110 ms : assez lent pour être suivi, assez court pour ne pas lasser.

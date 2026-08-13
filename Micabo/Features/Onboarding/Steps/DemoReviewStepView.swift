@@ -126,7 +126,7 @@ struct DemoReviewStepView: View {
 
         // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.
         let flow = model
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
             flow.advance()
         }
     }
