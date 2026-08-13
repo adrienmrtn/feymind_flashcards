@@ -30,10 +30,13 @@ struct FlashcardsView: View {
             hero
 
             ScrollView {
-                listContent
-                    .padding(.horizontal, MicaboSpacing.screen)
-                    .padding(.top, MicaboSpacing.md)
-                    .padding(.bottom, cards.isEmpty ? MicaboSpacing.xxl : MicaboLayout.bottomBarClearance)
+                VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                    summaryCard
+                    listContent
+                }
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, MicaboSpacing.md)
+                .padding(.bottom, cards.isEmpty ? MicaboSpacing.xxl : MicaboLayout.bottomBarClearance)
             }
         }
         .micaboScreenBackground()
@@ -175,8 +178,6 @@ struct FlashcardsView: View {
             }
         } else {
             VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-                summaryCard
-
                 HStack {
                     Text("Cartes")
                         .font(MicaboFont.hanken(14, weight: .semibold))
@@ -244,7 +245,6 @@ struct FlashcardsView: View {
                     RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
                         .strokeBorder(MicaboColor.stroke, lineWidth: 1)
                 }
-                .padding(.bottom, MicaboSpacing.xxs)
         }
     }
 

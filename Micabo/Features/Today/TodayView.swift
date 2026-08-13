@@ -25,10 +25,6 @@ struct TodayView: View {
         dueCards.filter { $0.state == .review }.count
     }
 
-    private var lateCount: Int {
-        learningCount + reviewCount
-    }
-
     private var coursesWithDue: Int {
         Set(dueCards.compactMap { $0.course?.id }).count
     }
@@ -199,11 +195,12 @@ struct TodayView: View {
     }
 
     private var dueByCourse: [(course: Course, count: Int)] {
-        courses.compactMap { course in
+        let entries: [(course: Course, count: Int)] = courses.compactMap { course in
             let count = course.dueCards.count
-            return count > 0 ? (course, count) : nil
+            guard count > 0 else { return nil }
+            return (course: course, count: count)
         }
-        .sorted { $0.count > $1.count }
+        return entries.sorted { $0.count > $1.count }
     }
 
     private var progressSegments: some View {

@@ -72,7 +72,7 @@ private struct ForgettingParagraph: View {
     entièrement en vingt-quatre heures. Micabo repose chaque carte juste avant ce décrochage.
     """
 
-    private let words = sentence.split(separator: " ").map(String.init)
+    private let words = ForgettingParagraph.sentence.split(separator: " ").map(String.init)
 
     @State private var readCount = 0
 
@@ -128,9 +128,8 @@ private struct IntervalTimeline: View {
 
     private let stages: [Stage] = [
         Stage(interval: "10 min", caption: "Juste après la découverte"),
-        Stage(interval: "1 jour", caption: "Avant la nuit qui efface tout"),
-        Stage(interval: "3 jours", caption: "La carte tient déjà mieux"),
-        Stage(interval: "1 semaine", caption: "L'écart peut doubler"),
+        Stage(interval: "1 jour", caption: "Avant la nuit qui efface"),
+        Stage(interval: "1 semaine", caption: "La carte tient déjà mieux"),
         Stage(interval: "1 mois", caption: "C'est acquis")
     ]
 

@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 /// Couverture d'un cours : un emoji posé sur un aplat pastel dérivé de la teinte du cours.
@@ -77,7 +78,7 @@ enum CourseEmoji {
         ("🩺", ["medecine", "anatomie", "physiolog", "pharmac", "sante", "infirm"]),
         ("🗣️", ["anglais", "espagnol", "allemand", "italien", "langue", "vocabulaire", "grammaire"]),
         ("📖", ["litterature", "francais", "poesie", "roman", "theatre"]),
-        ("🎨", ["art", "dessin", "design", "architecture"]),
+        ("🎨", ["arts", "dessin", "design", "architecture", "peinture"]),
         ("🎵", ["musique", "solfege", "harmonie"]),
         ("🏗️", ["ingenier", "genie", "materiaux", "construction"]),
         ("🌍", ["geopolit", "international", "europe"])
