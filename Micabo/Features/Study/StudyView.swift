@@ -11,6 +11,7 @@ struct StudyView: View {
 
     @State private var session = StudySession()
     @State private var didStart = false
+    @State private var showHint = false
 
     private var totalLabel: String {
         let answered = session.answeredCount
@@ -66,7 +67,8 @@ struct StudyView: View {
                 StudyCardFace(
                     card: card,
                     showAnswer: session.isRevealed,
-                    isInteractive: true
+                    isHintVisible: showHint,
+                    onToggleHint: toggleHint
                 )
                 .id(card.id)
                 .onTapGesture {
@@ -78,6 +80,16 @@ struct StudyView: View {
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .frame(maxHeight: .infinity)
+        .onChange(of: session.current?.id) { _, _ in
+            showHint = false
+        }
+    }
+
+    private func toggleHint() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        withAnimation(.easeOut(duration: 0.25)) {
+            showHint.toggle()
+        }
     }
 
     // MARK: - Commandes
@@ -155,7 +167,8 @@ struct StudyView: View {
 struct StudyCardFace: View {
     let card: Flashcard
     let showAnswer: Bool
-    var isInteractive: Bool = true
+    var isHintVisible: Bool = false
+    var onToggleHint: (() -> Void)?
 
     var body: some View {
         VStack(alignment: showAnswer ? .leading : .center, spacing: 14) {
@@ -199,6 +212,10 @@ struct StudyCardFace: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 Spacer(minLength: 0)
+
+                if onToggleHint != nil {
+                    hintArea
+                }
             }
         }
         .padding(showAnswer ? 26 : 30)
@@ -209,6 +226,76 @@ struct StudyCardFace: View {
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
         }
         .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 6)
+    }
+
+    /// Ampoule au pied de la question : un appui donne un coup de pouce sans livrer la réponse.
+    @ViewBuilder
+    private var hintArea: some View {
+        if isHintVisible {
+            HStack(alignment: .top, spacing: 9) {
+                Image(systemName: "lightbulb.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(MicaboColor.caution)
+
+                Text(StudyHint.text(for: card))
+                    .font(MicaboFont.hanken(13, weight: .medium))
+                    .foregroundStyle(Color(hex: 0x4A463F))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .background(MicaboColor.cautionSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
+            .transition(.opacity)
+        } else {
+            Button {
+                onToggleHint?()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "lightbulb")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Indice")
+                        .font(MicaboFont.hanken(13, weight: .semibold))
+                }
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 14)
+                .background(MicaboColor.surfaceMuted, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Afficher un indice")
+        }
+    }
+}
+
+/// Indice affiché pendant la révision. Les cartes écrites par l'IA en portent souvent un ;
+/// pour les autres, on en dérive un de la réponse plutôt que de laisser l'ampoule vide.
+enum StudyHint {
+    static func text(for card: Flashcard) -> String {
+        if let written = card.hint?.nilIfBlank {
+            return written
+        }
+        return derived(from: card.back)
+    }
+
+    static func derived(from answer: String) -> String {
+        let words = answer
+            .split(whereSeparator: { $0 == " " || $0.isNewline })
+            .map(String.init)
+
+        guard let first = words.first else {
+            return "Pas d'indice pour cette carte."
+        }
+
+        guard words.count > 2 else {
+            return "La réponse commence par « \(first) »."
+        }
+
+        let shown = max(1, min(3, words.count / 4))
+        let start = words.prefix(shown).joined(separator: " ")
+        return "Commence par « \(start)… », \(words.count) mots en tout."
     }
 }
 

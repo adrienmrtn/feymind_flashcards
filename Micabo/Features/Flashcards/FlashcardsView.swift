@@ -24,7 +24,6 @@ struct FlashcardsView: View {
     private var heroTint: Color { Color(hexString: course.accentHex) }
     private var heroBackground: Color { heroTint.lightened(by: 0.82) }
     private var heroText: Color { heroTint.darkened(by: 0.28) }
-    private var heroMuted: Color { heroTint.darkened(by: 0.05).opacity(0.85) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -41,6 +40,7 @@ struct FlashcardsView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
+        .enablesSwipeBack()
         .overlay(alignment: .bottom) {
             if !cards.isEmpty {
                 MicaboBottomBar {
@@ -125,19 +125,15 @@ struct FlashcardsView: View {
             }
             .padding(.bottom, MicaboSpacing.md)
 
+            Text(CourseEmoji.resolve(for: course))
+                .font(.system(size: 30))
+                .padding(.bottom, 8)
+
             Text(course.title)
                 .font(MicaboFont.hanken(22, weight: .bold))
                 .foregroundStyle(heroText)
                 .tracking(MicaboTracking.tight)
                 .fixedSize(horizontal: false, vertical: true)
-
-            if !course.summary.isEmpty {
-                Text(course.summary)
-                    .font(MicaboFont.body)
-                    .foregroundStyle(heroMuted)
-                    .padding(.top, 8)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
 
             if !cards.isEmpty {
                 HStack(spacing: 7) {
@@ -179,6 +175,8 @@ struct FlashcardsView: View {
             }
         } else {
             VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
+                summaryCard
+
                 HStack {
                     Text("Cartes")
                         .font(MicaboFont.hanken(14, weight: .semibold))
@@ -227,6 +225,26 @@ struct FlashcardsView: View {
                     }
                 }
             }
+        }
+    }
+
+    /// Le résumé vit sous l'en-tête : le bandeau pastel reste court quelle que soit sa longueur.
+    @ViewBuilder
+    private var summaryCard: some View {
+        if let summary = course.summary.nilIfBlank {
+            Text(summary)
+                .font(MicaboFont.body)
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
+                        .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+                }
+                .padding(.bottom, MicaboSpacing.xxs)
         }
     }
 

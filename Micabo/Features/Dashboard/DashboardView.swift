@@ -78,6 +78,7 @@ struct DashboardView: View {
                 .padding(.bottom, 18)
             }
             .toolbar(.hidden, for: .navigationBar)
+            .swipeBetweenTabs()
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
             }

@@ -1,7 +1,6 @@
 import SwiftUI
-import UIKit
 
-/// Miniature 52×66 de la maquette : couverture PDF ou initiales sur fond pastel.
+/// Miniature 52×66 de la maquette : l'emoji du cours sur son aplat pastel.
 struct CourseThumb: View {
     let course: Course
 
@@ -9,25 +8,12 @@ struct CourseThumb: View {
 
     var body: some View {
         ZStack {
-            if let data = course.coverImageData, let image = UIImage(data: data) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                tint.lightened(by: 0.82)
-                Text(initials)
-                    .font(MicaboFont.hanken(10, weight: .semibold))
-                    .foregroundStyle(tint)
-            }
+            tint.lightened(by: 0.82)
+            Text(CourseEmoji.resolve(for: course))
+                .font(.system(size: 24))
         }
         .frame(width: 52, height: 66)
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.cover, style: .continuous))
-    }
-
-    private var initials: String {
-        let words = course.title.split(separator: " ").prefix(2)
-        let letters = words.compactMap { $0.first.map(String.init) }
-        return letters.joined().uppercased()
     }
 }
 
