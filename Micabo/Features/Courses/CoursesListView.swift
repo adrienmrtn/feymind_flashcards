@@ -71,6 +71,7 @@ struct CoursesListView: View {
             }
             .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
+            .swipeBetweenTabs()
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
             }

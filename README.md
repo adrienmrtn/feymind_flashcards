@@ -27,9 +27,15 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 | Bloc | Écrans |
 | --- | --- |
 | Accroche | bienvenue, langue, annonce des questions |
-| Questions | objectif, rapport à l'oubli, matières, établissement, preuve sociale, temps quotidien |
-| Démonstration | courbe de mémorisation, preuves scientifiques, import → génération → révision en trois écrans manipulables |
+| Questions | objectifs (plusieurs réponses), rapport à l'oubli, matières, établissement, preuve sociale, temps quotidien |
+| Démonstration | courbe de mémorisation, répétition espacée, import → génération → révision en trois écrans manipulables |
 | Sortie | projection annuelle, notifications, personnalisation, essai de 3 jours, paywall |
+
+Les trois écrans de démonstration se passent de bouton : c'est le geste qui fait avancer.
+L'import enchaîne à la fin de l'analyse, la génération fait apparaître le bouton une fois les
+cartes écrites, et la note donnée à la carte vaut validation. L'écran de répétition espacée se
+découvre au doigt : un appui par bloc, le texte d'Ebbinghaus se met en gras au rythme de la
+lecture, puis l'échelle des intervalles se déroule ; le bouton n'arrive qu'ensuite.
 
 Les réponses sont écrites au fil de l'eau dans `OnboardingPreferences` (clés `micabo.onboarding.*`)
 et survivent donc à une fermeture en cours de route. `Réglages` propose **Refaire l'onboarding**,
@@ -39,12 +45,11 @@ Après le choix des matières, **Tu étudies où ?** propose un autocomplete hyb
 embarqué (`LocalInstitutions.json`, ~600 établissements FR/EU prioritaires) pour l'instantané,
 puis la RPC Supabase `search_institutions` sur la table `institutions` (~14 500 lignes : unis
 mondiales, grandes écoles FR, lycées FR). Le texte libre reste accepté ; l'`id` est stocké
-quand un résultat matche. L'écran suivant anime un compteur (30–70) : « X personnes de … utilisent déjà Micabo ».
+quand un résultat matche. L'écran suivant annonce l'effectif (30–70) : « X personnes de … utilisent déjà Micabo ».
 
 L'écran courbe s'appuie sur `RetentionCurve` : une décroissance exponentielle de la rétention, remise
 à 100 % à chaque révision, avec une stabilité qui augmente à chaque passage. Les travaux cités
-(Ebbinghaus 1885, Landauer & Bjork 1978, Cepeda et al. 2006, Karpicke & Roediger 2008,
-Dunlosky et al. 2013) sont réels et rapportés sans arrondir leurs résultats.
+(Ebbinghaus 1885, Landauer & Bjork 1978) sont réels et rapportés sans arrondir leurs résultats.
 
 Le paywall utilise `SubscriptionStoreView` de StoreKit 2. Aucun produit n'est publié :
 `Micabo/Resources/Micabo.storekit`, référencé par le scheme, permet de faire tourner l'écran en
@@ -56,16 +61,18 @@ local. Quand aucun produit ne se charge, un repli affiche l'offre et laisse entr
 - Typographie Hanken Grotesk embarquée (Regular / Medium / SemiBold / Bold)
 - Coins mesurés : 9 pt (miniatures), 14 pt (boutons), 18 pt (cartes) — pas de capsules partout
 - Barre d'onglets **native** iOS ; bouton « + » flottant en bas à droite sur l'accueil
-- Réviser : carte sombre avec le nombre de cartes dues en très grand
-- Détail cours : en-tête pastel plat dérivé de la teinte du cours, liste compacte à pastilles
-- Chaque cours porte une couverture miniature : première page PDF, sinon initiales sur pastel
+- Balayage horizontal pour passer d'un onglet à l'autre, geste de retour du système sur les écrans poussés
+- Réviser : le nombre de cartes dues posé à même le fond ivoire, puis la répartition et les cours concernés
+- Détail cours : en-tête pastel plat (emoji, titre, pastilles), résumé en carte juste en dessous
+- Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose pas
+- En session, une ampoule donne un indice : celui de la carte, sinon un début de réponse
 - Animations en cascade et retours haptiques centralisés dans `Haptics`
 
 ## Pile technique
 
 - SwiftUI, iOS 17 minimum, projet Xcode natif (`Micabo.xcodeproj`)
 - SwiftData pour le stockage local (aucune donnée n'est envoyée hors des appels IA)
-- PDFKit pour l'extraction du texte, le rendu des pages et la couverture
+- PDFKit pour l'extraction du texte et le rendu des pages
 - Supabase Edge Functions comme relais vers fal.ai (`google/gemini-flash-1.5`)
 
 ## Ouvrir le projet

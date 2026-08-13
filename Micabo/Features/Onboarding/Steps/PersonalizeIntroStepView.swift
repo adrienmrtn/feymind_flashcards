@@ -15,20 +15,17 @@ struct PersonalizeIntroStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             VStack(alignment: .leading, spacing: 18) {
-                PulsingBadge()
-                    .onboardingAppear(index: 0, stagger: 0.1)
-
                 Text("Quelques questions\npour personnaliser\nton expérience.")
                     .font(MicaboFont.hanken(32, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(-0.8)
                     .fixedSize(horizontal: false, vertical: true)
-                    .onboardingAppear(index: 1, stagger: 0.1)
+                    .onboardingAppear(index: 0, stagger: 0.1)
 
                 Text("Trois minutes, pas plus. Tout reste sur ton téléphone.")
                     .font(MicaboFont.hanken(15, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
-                    .onboardingAppear(index: 2, stagger: 0.1)
+                    .onboardingAppear(index: 1, stagger: 0.1)
 
                 VStack(alignment: .leading, spacing: 14) {
                     ForEach(Array(points.enumerated()), id: \.offset) { index, point in
@@ -44,7 +41,7 @@ struct PersonalizeIntroStepView: View {
                                 .foregroundStyle(Color(hex: 0x4A463F))
                                 .fixedSize(horizontal: false, vertical: true)
                         }
-                        .onboardingAppear(index: 3 + index, stagger: 0.1)
+                        .onboardingAppear(index: 2 + index, stagger: 0.1)
                     }
                 }
                 .padding(.top, MicaboSpacing.xs)
@@ -58,33 +55,7 @@ struct PersonalizeIntroStepView: View {
                 OnboardingContinueButton(title: "C'est parti") {
                     model.advance()
                 }
-                .onboardingAppear(index: 6, stagger: 0.1)
-            }
-        }
-    }
-}
-
-/// Pastille qui respire, posée au-dessus du titre.
-private struct PulsingBadge: View {
-    @State private var isPulsing = false
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(MicaboColor.infoSoft)
-                .frame(width: 58, height: 58)
-                .scaleEffect(isPulsing ? 1.18 : 1)
-                .opacity(isPulsing ? 0 : 0.9)
-
-            Image(systemName: "wand.and.stars")
-                .font(.system(size: 20, weight: .medium))
-                .foregroundStyle(MicaboColor.onInk)
-                .frame(width: 52, height: 52)
-                .background(MicaboColor.ink, in: Circle())
-        }
-        .onAppear {
-            withAnimation(.easeOut(duration: 1.6).repeatForever(autoreverses: false)) {
-                isPulsing = true
+                .onboardingAppear(index: 5, stagger: 0.1)
             }
         }
     }

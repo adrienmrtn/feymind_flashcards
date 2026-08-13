@@ -132,7 +132,7 @@ private struct OnboardingAppear: ViewModifier {
             .blur(radius: isVisible ? 0 : 5)
             .onAppear {
                 withAnimation(
-                    .spring(response: 0.6, dampingFraction: 0.86)
+                    .timingCurve(0.22, 0.61, 0.36, 1, duration: 0.42)
                     .delay(0.06 + Double(index) * stagger)
                 ) {
                     isVisible = true
@@ -242,6 +242,6 @@ struct OnboardingChoiceRow: View {
             .scaleEffect(isSelected ? 0.985 : 1)
         }
         .buttonStyle(.plain)
-        .animation(.spring(response: 0.32, dampingFraction: 0.72), value: isSelected)
+        .animation(.easeOut(duration: 0.22), value: isSelected)
     }
 }

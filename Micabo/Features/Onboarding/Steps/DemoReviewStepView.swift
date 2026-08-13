@@ -49,10 +49,6 @@ struct DemoReviewStepView: View {
 
                 controls
             }
-        } footer: {
-            OnboardingContinueButton(isEnabled: verdict != nil) {
-                model.advance()
-            }
         }
     }
 
@@ -104,10 +100,7 @@ struct DemoReviewStepView: View {
 
     private func verdictButton(_ value: Verdict, title: String, systemImage: String) -> some View {
         Button {
-            Haptics.success()
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.76)) {
-                verdict = value
-            }
+            choose(value)
         } label: {
             HStack(spacing: 7) {
                 Image(systemName: systemImage)
@@ -123,10 +116,25 @@ struct DemoReviewStepView: View {
         .buttonStyle(.plain)
     }
 
+    /// La note vaut validation : on laisse voir la prochaine échéance, puis on enchaîne.
+    private func choose(_ value: Verdict) {
+        guard verdict == nil else { return }
+        Haptics.success()
+        withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.4)) {
+            verdict = value
+        }
+
+        // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.
+        let flow = model
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
+            flow.advance()
+        }
+    }
+
     private func flip() {
         guard !isFlipped else { return }
         Haptics.rigid()
-        withAnimation(.spring(response: 0.55, dampingFraction: 0.78)) {
+        withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.45)) {
             isFlipped = true
         }
     }

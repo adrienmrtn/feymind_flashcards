@@ -25,7 +25,8 @@ struct OnboardingFlowView: View {
                         )
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .animation(.spring(response: 0.5, dampingFraction: 0.88), value: model.step)
+                // Glissement franc, sans rebond : la courbe s'arrête net à l'arrivée.
+                .animation(.timingCurve(0.25, 0.1, 0.25, 1, duration: 0.38), value: model.step)
             }
         }
         .environment(model)
@@ -80,6 +81,6 @@ private struct OnboardingProgressBar: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, MicaboSpacing.xs)
         .padding(.bottom, MicaboSpacing.xs)
-        .animation(.spring(response: 0.5, dampingFraction: 0.9), value: step)
+        .animation(.easeInOut(duration: 0.38), value: step)
     }
 }

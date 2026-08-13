@@ -21,7 +21,7 @@ enum CourseRepository {
             title: clean.title.nilIfBlank ?? "Nouveau cours",
             subject: clean.subject?.nilIfBlank,
             summary: clean.summary,
-            emoji: clean.emoji?.nilIfBlank ?? "📘",
+            emoji: CourseEmoji.resolve(proposed: clean.emoji, subject: clean.subject, title: clean.title),
             accentHex: accent.hexString,
             source: source,
             sourceFileName: fileName,

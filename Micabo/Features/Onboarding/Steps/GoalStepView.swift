@@ -1,16 +1,16 @@
 import SwiftUI
 
-/// Écran 4 : objectif principal. Pas de bouton, le choix fait avancer le parcours.
+/// Écran 4 : objectifs. Plusieurs réponses possibles, validées par le bouton du bas.
 struct GoalStepView: View {
     @Environment(OnboardingModel.self) private var model
 
-    @State private var selection: LearningGoal?
+    @State private var selection: Set<LearningGoal> = []
 
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Question 1 sur 3",
-            title: "C'est quoi ton objectif ?",
-            subtitle: "Choisis ce qui te ressemble le plus."
+            title: "C'est quoi tes objectifs ?",
+            subtitle: "Choisis tout ce qui te ressemble."
         ) {
             VStack(spacing: 10) {
                 ForEach(LearningGoal.allCases) { goal in
@@ -18,27 +18,32 @@ struct GoalStepView: View {
                         title: goal.title,
                         subtitle: goal.subtitle,
                         systemImage: goal.systemImage,
-                        isSelected: selection == goal
+                        isSelected: selection.contains(goal)
                     ) {
-                        select(goal)
+                        toggle(goal)
                     }
                 }
             }
         } footer: {
-            OnboardingHint(text: "Appuie sur une réponse pour continuer")
+            OnboardingContinueButton(isEnabled: !selection.isEmpty) {
+                model.goals = selection
+                model.advance()
+            }
+        }
+        .onAppear {
+            if selection.isEmpty {
+                selection = model.goals
+            }
         }
     }
 
-    private func select(_ goal: LearningGoal) {
-        guard selection == nil else { return }
+    private func toggle(_ goal: LearningGoal) {
         Haptics.selection()
-        selection = goal
-
-        // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.
-        let flow = model
-        flow.goal = goal
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) {
-            flow.advance()
+        if selection.contains(goal) {
+            selection.remove(goal)
+        } else {
+            selection.insert(goal)
         }
+        model.goals = selection
     }
 }

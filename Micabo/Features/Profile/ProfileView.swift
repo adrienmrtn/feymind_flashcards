@@ -29,6 +29,7 @@ struct ProfileView: View {
             }
             .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
+            .swipeBetweenTabs()
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
