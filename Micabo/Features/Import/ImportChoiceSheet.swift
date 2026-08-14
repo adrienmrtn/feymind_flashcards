@@ -1,43 +1,64 @@
 import SwiftUI
 
 enum ImportKind: String, Identifiable {
-    case text
     case pdf
+    case photo
+    case docx
+    case text
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .text: "Coller du texte"
         case .pdf: "Importer un PDF"
+        case .photo: "Scanner ou photos"
+        case .docx: "Document Word"
+        case .text: "Coller du texte"
         }
     }
 
     var subtitle: String {
         switch self {
-        case .text: "Vos propres notes"
         case .pdf: "Cours, polycopié, notes"
+        case .photo: "Plusieurs pages, à la suite"
+        case .docx: "Fichier .docx"
+        case .text: "Vos propres notes"
         }
     }
 
     var systemImage: String {
         switch self {
-        case .text: "text.alignleft"
         case .pdf: "doc"
+        case .photo: "camera.viewfinder"
+        case .docx: "doc.richtext"
+        case .text: "text.alignleft"
         }
     }
 
     var swatchTint: Color {
         switch self {
-        case .text: Color(hex: 0x4F5A72)
         case .pdf: Color(hex: 0x47665A)
+        case .photo: Color(hex: 0x8A5A3A)
+        case .docx: Color(hex: 0x3D5A80)
+        case .text: Color(hex: 0x4F5A72)
         }
     }
 
     var swatchBackground: Color {
         switch self {
-        case .text: Color(hex: 0xE6E9F0)
         case .pdf: Color(hex: 0xE4ECE6)
+        case .photo: Color(hex: 0xF3E6DC)
+        case .docx: Color(hex: 0xE3EAF3)
+        case .text: Color(hex: 0xE6E9F0)
+        }
+    }
+
+    var courseSource: CourseSource {
+        switch self {
+        case .pdf: .pdf
+        case .photo: .photo
+        case .docx: .docx
+        case .text: .text
         }
     }
 }
@@ -47,33 +68,34 @@ struct ImportChoiceSheet: View {
     var onSelect: (ImportKind) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Nouveau cours")
-                    .font(MicaboFont.hanken(20, weight: .bold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .tracking(-0.2)
-            }
-            .padding(.top, 22)
-
-            VStack(spacing: MicaboSpacing.sm) {
-                ForEach([ImportKind.pdf, ImportKind.text]) { kind in
-                    Button {
-                        onSelect(kind)
-                    } label: {
-                        optionRow(kind)
-                    }
-                    .buttonStyle(.plain)
+        ScrollView {
+            VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Nouveau cours")
+                        .font(MicaboFont.hanken(20, weight: .bold))
+                        .foregroundStyle(MicaboColor.ink)
+                        .tracking(-0.2)
                 }
+                .padding(.top, 22)
 
-                comingSoonRow
+                VStack(spacing: MicaboSpacing.sm) {
+                    ForEach([ImportKind.pdf, ImportKind.photo, ImportKind.docx, ImportKind.text]) { kind in
+                        Button {
+                            onSelect(kind)
+                        } label: {
+                            optionRow(kind)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    comingSoonRow
+                }
             }
-
-            Spacer(minLength: 0)
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.bottom, MicaboSpacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.bottom, MicaboSpacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .scrollIndicators(.hidden)
         .micaboScreenBackground()
     }
 
@@ -133,6 +155,6 @@ struct ImportChoiceSheet: View {
     Color.clear
         .sheet(isPresented: .constant(true)) {
             ImportChoiceSheet { _ in }
-                .presentationDetents([.height(400)])
+                .presentationDetents([.height(540)])
         }
 }
