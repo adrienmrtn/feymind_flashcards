@@ -8,6 +8,7 @@ struct TodayView: View {
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
     @State private var showStudy = false
+    @State private var path: [Course] = []
 
     private var dueCards: [Flashcard] {
         allCards.filter { $0.isDue() }
@@ -34,7 +35,7 @@ struct TodayView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if dueCards.isEmpty {
                     ScrollView {
@@ -70,7 +71,11 @@ struct TodayView: View {
             }
             .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
-            .swipeBetweenTabs()
+            .micaboTabBar()
+            .reportsPaging(for: .today, depth: path.count)
+            .navigationDestination(for: Course.self) { course in
+                FlashcardsView(course: course)
+            }
         }
         .fullScreenCover(isPresented: $showStudy) {
             StudyView(source: .allDue)
@@ -97,16 +102,18 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Text("\(dueCards.count)")
-                    .font(MicaboFont.hanken(76, weight: .bold))
-                    .tracking(-3)
+                    .font(MicaboFont.hanken(72, weight: .bold))
+                    .tracking(-1.5)
                     .foregroundStyle(MicaboColor.ink)
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
+                    .padding(.trailing, 6)
 
                 Text(dueCards.count > 1 ? "cartes\nà revoir" : "carte\nà revoir")
                     .font(MicaboFont.hanken(16, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .lineSpacing(1)
+                    .fixedSize()
 
                 Spacer(minLength: 0)
             }
@@ -172,22 +179,32 @@ struct TodayView: View {
 
                 VStack(spacing: 12) {
                     ForEach(entries, id: \.course.id) { entry in
-                        HStack(spacing: MicaboSpacing.sm) {
-                            CourseThumb(course: entry.course)
+                        Button {
+                            path.append(entry.course)
+                        } label: {
+                            HStack(spacing: MicaboSpacing.sm) {
+                                CourseThumb(course: entry.course)
 
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(entry.course.title)
-                                    .font(MicaboFont.hanken(14, weight: .semibold))
-                                    .foregroundStyle(MicaboColor.ink)
-                                    .lineLimit(1)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(entry.course.title)
+                                        .font(MicaboFont.hanken(14, weight: .semibold))
+                                        .foregroundStyle(MicaboColor.ink)
+                                        .lineLimit(1)
 
-                                Text("\(entry.count) carte\(entry.count > 1 ? "s" : "") à revoir")
-                                    .font(MicaboFont.hanken(12, weight: .regular))
-                                    .foregroundStyle(MicaboColor.inkTertiary)
+                                    Text("\(entry.count) carte\(entry.count > 1 ? "s" : "") à revoir")
+                                        .font(MicaboFont.hanken(12, weight: .regular))
+                                        .foregroundStyle(MicaboColor.inkTertiary)
+                                }
+
+                                Spacer(minLength: 0)
+
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(Color(hex: 0xC9C3B8))
                             }
-
-                            Spacer(minLength: 0)
+                            .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }

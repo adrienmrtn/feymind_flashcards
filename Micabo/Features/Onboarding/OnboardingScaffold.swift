@@ -190,6 +190,44 @@ struct OnboardingHint: View {
     }
 }
 
+/// Invitation à tapoter, volontairement trop visible pour qu'on ne la rate pas.
+struct OnboardingTapPrompt: View {
+    var text: String = "Appuie pour découvrir la suite"
+
+    @State private var isVisible = false
+    @State private var isPulsing = false
+    @State private var bounce = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "hand.tap.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .offset(y: bounce ? -3 : 2)
+
+            Text(text)
+                .font(MicaboFont.hanken(15, weight: .bold))
+        }
+        .foregroundStyle(MicaboColor.onInk)
+        .padding(.vertical, 14)
+        .padding(.horizontal, 18)
+        .frame(maxWidth: .infinity)
+        .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+        .scaleEffect(isPulsing ? 1.03 : 0.98)
+        .opacity(isVisible ? 1 : 0)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.35).delay(0.15)) {
+                isVisible = true
+            }
+            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true).delay(0.2)) {
+                isPulsing = true
+            }
+            withAnimation(.easeInOut(duration: 0.55).repeatForever(autoreverses: true).delay(0.2)) {
+                bounce = true
+            }
+        }
+    }
+}
+
 /// Rangée de choix : icône, libellé, coche. Utilisée pour l'objectif et les questions fermées.
 struct OnboardingChoiceRow: View {
     let title: String

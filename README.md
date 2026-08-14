@@ -60,8 +60,8 @@ local. Quand aucun produit ne se charge, un repli affiche l'offre et laisse entr
 - Fond ivoire (`#FAF9F6`), surfaces blanches, encre `#1A1917`, accent indigo `#5B5BD6`
 - Typographie Hanken Grotesk embarquée (Regular / Medium / SemiBold / Bold)
 - Coins mesurés : 9 pt (miniatures), 14 pt (boutons), 18 pt (cartes) — pas de capsules partout
-- Barre d'onglets **native** iOS ; bouton « + » flottant en bas à droite sur l'accueil
-- Balayage horizontal pour passer d'un onglet à l'autre, geste de retour du système sur les écrans poussés
+- Barre d'onglets en pied d'écran ; bouton « + » flottant en bas à droite sur l'accueil
+- Balayage horizontal natif (pages qui suivent le doigt) pour changer d'onglet ; geste de retour du système sur les écrans poussés
 - Réviser : le nombre de cartes dues posé à même le fond ivoire, puis la répartition et les cours concernés
 - Détail cours : en-tête pastel plat (emoji, titre, pastilles), résumé en carte juste en dessous
 - Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose pas
