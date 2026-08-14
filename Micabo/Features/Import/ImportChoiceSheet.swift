@@ -54,7 +54,7 @@ struct ImportChoiceSheet: View {
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(-0.2)
             }
-            .padding(.top, 8)
+            .padding(.top, 22)
 
             VStack(spacing: MicaboSpacing.sm) {
                 ForEach([ImportKind.pdf, ImportKind.text]) { kind in
@@ -133,6 +133,6 @@ struct ImportChoiceSheet: View {
     Color.clear
         .sheet(isPresented: .constant(true)) {
             ImportChoiceSheet { _ in }
-                .presentationDetents([.height(330)])
+                .presentationDetents([.height(400)])
         }
 }

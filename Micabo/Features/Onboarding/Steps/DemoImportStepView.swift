@@ -14,6 +14,8 @@ struct DemoImportStepView: View {
     @State private var phase: Phase = .idle
     @State private var sweepProgress: Double = 0
     @State private var hintPulse = false
+    @State private var floatUp = false
+    @State private var showClickHint = false
 
     var body: some View {
         OnboardingScaffold(
@@ -23,15 +25,30 @@ struct DemoImportStepView: View {
             titleSize: 28
         ) {
             Button(action: startScan) {
-                DemoDocumentPage(
-                    isScanning: phase != .idle,
-                    isAnalyzed: phase == .done,
-                    sweepProgress: sweepProgress
-                )
+                ZStack(alignment: .bottomTrailing) {
+                    DemoDocumentPage(
+                        isScanning: phase != .idle,
+                        isAnalyzed: phase == .done,
+                        sweepProgress: sweepProgress
+                    )
+
+                    if phase == .idle, showClickHint {
+                        clickHint
+                            .transition(.scale(scale: 0.7).combined(with: .opacity))
+                            .padding(14)
+                    }
+                }
             }
             .buttonStyle(.plain)
             .disabled(phase != .idle)
-            .scaleEffect(phase == .idle ? 1 : 0.97)
+            .offset(y: phase == .idle && floatUp ? -7 : 0)
+            .scaleEffect(phase == .idle ? (floatUp ? 1.015 : 0.99) : 0.97)
+            .shadow(
+                color: Color.black.opacity(phase == .idle && floatUp ? 0.14 : 0.06),
+                radius: phase == .idle && floatUp ? 22 : 12,
+                x: 0,
+                y: phase == .idle && floatUp ? 14 : 8
+            )
             .animation(.easeOut(duration: 0.35), value: phase)
         } footer: {
             statusLabel
@@ -42,7 +59,31 @@ struct DemoImportStepView: View {
             withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
                 hintPulse = true
             }
+            withAnimation(.easeInOut(duration: 1.35).repeatForever(autoreverses: true)) {
+                floatUp = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                guard phase == .idle else { return }
+                withAnimation(.spring(response: 0.42, dampingFraction: 0.72)) {
+                    showClickHint = true
+                }
+                Haptics.tick()
+            }
         }
+    }
+
+    private var clickHint: some View {
+        HStack(spacing: 6) {
+            Text("👆")
+                .font(.system(size: 18))
+            Text("Clique ici")
+                .font(MicaboFont.hanken(13, weight: .bold))
+                .foregroundStyle(MicaboColor.onInk)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(MicaboColor.ink, in: Capsule())
+        .shadow(color: Color.black.opacity(0.16), radius: 10, x: 0, y: 4)
     }
 
     @ViewBuilder

@@ -78,7 +78,8 @@ struct DashboardView: View {
                 .padding(.bottom, 18)
             }
             .toolbar(.hidden, for: .navigationBar)
-            .swipeBetweenTabs()
+            .micaboTabBar()
+            .reportsPaging(for: .dashboard, depth: path.count)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
             }
@@ -88,7 +89,7 @@ struct DashboardView: View {
                 pendingImport = kind
                 showImportChoice = false
             }
-            .presentationDetents([.height(320)])
+            .presentationDetents([.height(400)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.xxl)
         }
@@ -136,7 +137,9 @@ struct DashboardView: View {
                 title: "Vos cours",
                 actionTitle: "Tout voir"
             ) {
-                router?.selection = .courses
+                withAnimation(.easeOut(duration: 0.28)) {
+                    router?.selection = .courses
+                }
             }
 
             VStack(spacing: 12) {

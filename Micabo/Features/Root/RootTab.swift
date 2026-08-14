@@ -35,4 +35,14 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
 @Observable
 final class TabRouter {
     var selection: RootTab = .dashboard
+    /// Profondeur de navigation par onglet : le balayage n'est actif que sur une racine.
+    private var navigationDepth: [RootTab: Int] = [:]
+
+    var allowsPaging: Bool {
+        navigationDepth[selection, default: 0] == 0
+    }
+
+    func setDepth(_ depth: Int, for tab: RootTab) {
+        navigationDepth[tab] = depth
+    }
 }

@@ -21,15 +21,8 @@ struct DemoWriteStepView: View {
                 courseHeader
 
                 if !isGenerating {
-                    Button(action: generate) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "sparkles")
-                                .font(.system(size: 14, weight: .semibold))
-                            Text("Générer les cartes")
-                        }
-                    }
-                    .buttonStyle(MicaboSecondaryButtonStyle())
-                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                    GenerateCardsButton(action: generate)
+                        .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
 
                 VStack(spacing: 10) {
@@ -123,6 +116,44 @@ struct DemoWriteStepView: View {
                         Haptics.success()
                     }
                 }
+            }
+        }
+    }
+}
+
+/// CTA de génération : fond encre, étincelles, légère respiration pour donner envie de tapoter.
+private struct GenerateCardsButton: View {
+    var action: () -> Void
+
+    @State private var pulse = false
+    @State private var sparkle = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 16, weight: .semibold))
+                    .symbolEffect(.pulse, options: .repeating, isActive: sparkle)
+
+                Text("Générer les cartes")
+                    .font(MicaboFont.hanken(16, weight: .bold))
+            }
+            .foregroundStyle(MicaboColor.onInk)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+            }
+            .shadow(color: MicaboColor.ink.opacity(pulse ? 0.28 : 0.12), radius: pulse ? 18 : 8, x: 0, y: pulse ? 10 : 4)
+            .scaleEffect(pulse ? 1.035 : 1)
+        }
+        .buttonStyle(.plain)
+        .onAppear {
+            sparkle = true
+            withAnimation(.easeInOut(duration: 1.05).repeatForever(autoreverses: true)) {
+                pulse = true
             }
         }
     }

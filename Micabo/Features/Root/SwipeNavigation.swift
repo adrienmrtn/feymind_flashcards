@@ -1,45 +1,66 @@
 import SwiftUI
 import UIKit
 
-// MARK: - Balayage entre les onglets
+/// Active ou coupe le défilement horizontal du `TabView` en style page,
+/// pour éviter de changer d'onglet pendant qu'un écran de détail est ouvert.
+struct TabPagingScrollBridge: UIViewRepresentable {
+    var isEnabled: Bool
 
-/// Fait passer d'un onglet à l'autre au balayage horizontal, sans toucher à la barre
-/// d'onglets du système. Le geste est simultané : les listes continuent de défiler,
-/// et un mouvement franchement vertical ne change jamais de page.
-private struct SwipeBetweenTabs: ViewModifier {
-    @Environment(TabRouter.self) private var router: TabRouter?
+    func makeUIView(context: Context) -> BridgeView {
+        let view = BridgeView()
+        view.isUserInteractionEnabled = false
+        view.backgroundColor = .clear
+        return view
+    }
 
-    /// Course horizontale minimale pour valider un changement d'onglet.
-    private let threshold: CGFloat = 70
+    func updateUIView(_ uiView: BridgeView, context: Context) {
+        uiView.isPagingEnabled = isEnabled
+        uiView.applyPagingEnabled()
+    }
 
-    func body(content: Content) -> some View {
-        content.simultaneousGesture(
-            DragGesture(minimumDistance: 24)
-                .onEnded { value in
-                    guard let router else { return }
-                    let horizontal = value.translation.width
-                    let vertical = value.translation.height
-                    guard abs(horizontal) > threshold, abs(horizontal) > abs(vertical) * 2 else { return }
-                    move(router, by: horizontal < 0 ? 1 : -1)
+    final class BridgeView: UIView {
+        var isPagingEnabled = true
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            applyPagingEnabled()
+        }
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            applyPagingEnabled()
+        }
+
+        func applyPagingEnabled() {
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                for scrollView in Self.pagingScrollViews(from: self) {
+                    if scrollView.isScrollEnabled != self.isPagingEnabled {
+                        scrollView.isScrollEnabled = self.isPagingEnabled
+                    }
                 }
-        )
-    }
+            }
+        }
 
-    private func move(_ router: TabRouter, by offset: Int) {
-        let tabs = RootTab.allCases
-        guard let index = tabs.firstIndex(of: router.selection) else { return }
-        let target = index + offset
-        guard tabs.indices.contains(target) else { return }
-        Haptics.selection()
-        router.selection = tabs[target]
-    }
-}
+        private static func pagingScrollViews(from view: UIView) -> [UIScrollView] {
+            var root: UIView = view
+            while let superview = root.superview {
+                root = superview
+            }
 
-extension View {
-    /// À poser sur chaque page racine, à l'intérieur de son `NavigationStack` :
-    /// le balayage cesse ainsi dès qu'un écran de détail est ouvert.
-    func swipeBetweenTabs() -> some View {
-        modifier(SwipeBetweenTabs())
+            var result: [UIScrollView] = []
+            collectPagingScrollViews(in: root, into: &result)
+            return result
+        }
+
+        private static func collectPagingScrollViews(in view: UIView, into result: inout [UIScrollView]) {
+            if let scrollView = view as? UIScrollView, scrollView.isPagingEnabled {
+                result.append(scrollView)
+            }
+            for child in view.subviews {
+                collectPagingScrollViews(in: child, into: &result)
+            }
+        }
     }
 }
 

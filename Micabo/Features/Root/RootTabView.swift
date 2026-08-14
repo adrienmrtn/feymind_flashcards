@@ -1,8 +1,9 @@
 import SwiftUI
 import UIKit
 
-/// Les cinq pages. Barre d'onglets native du système ; sélection partagée via `TabRouter`
-/// pour permettre un basculement programmatique (ex. « Tout voir »).
+/// Les cinq pages, balayables comme un carrousel natif. La barre d'onglets est
+/// dessinée par chaque page racine : elle disparaît dès qu'un détail est poussé,
+/// et le balayage est alors coupé.
 struct RootTabView: View {
     @State private var router = TabRouter()
 
@@ -17,26 +18,27 @@ struct RootTabView: View {
         TabView(selection: $router.selection) {
             TodayView()
                 .tag(RootTab.today)
-                .tabItem { Label(RootTab.today.label, systemImage: RootTab.today.systemImage) }
 
             CoursesListView()
                 .tag(RootTab.courses)
-                .tabItem { Label(RootTab.courses.label, systemImage: RootTab.courses.systemImage) }
 
             DashboardView()
                 .tag(RootTab.dashboard)
-                .tabItem { Label(RootTab.dashboard.label, systemImage: RootTab.dashboard.systemImage) }
 
             LibraryView()
                 .tag(RootTab.library)
-                .tabItem { Label(RootTab.library.label, systemImage: RootTab.library.systemImage) }
 
             ProfileView()
                 .tag(RootTab.profile)
-                .tabItem { Label(RootTab.profile.label, systemImage: RootTab.profile.systemImage) }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .background(MicaboColor.canvas)
+        .background {
+            TabPagingScrollBridge(isEnabled: router.allowsPaging)
         }
         .tint(MicaboColor.accent)
         .environment(router)
+        .animation(.easeOut(duration: 0.28), value: router.selection)
     }
 
     private static func configureAppearance() {

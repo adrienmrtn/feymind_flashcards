@@ -42,7 +42,7 @@ struct ScienceStepView: View {
                 }
                 .transition(.opacity)
             } else {
-                OnboardingHint(text: "Appuie pour découvrir la suite")
+                OnboardingTapPrompt()
             }
         }
     }
