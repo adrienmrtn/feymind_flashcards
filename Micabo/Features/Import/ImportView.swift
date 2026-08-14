@@ -229,8 +229,8 @@ struct ImportView: View {
 
     @ViewBuilder
     private var fileInput: some View {
-        if let imported {
-            importedCard(imported) {
+        if let document = imported {
+            importedCard(document) {
                 showFileImporter = true
             }
         } else {
@@ -248,8 +248,8 @@ struct ImportView: View {
 
     @ViewBuilder
     private var photoInput: some View {
-        if let imported {
-            importedCard(imported) {
+        if let document = imported {
+            importedCard(document) {
                 imported = nil
                 photoItems = []
             }
