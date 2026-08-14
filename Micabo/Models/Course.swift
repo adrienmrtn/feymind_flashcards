@@ -4,6 +4,8 @@ import SwiftData
 enum CourseSource: String, Codable, CaseIterable {
     case text
     case pdf
+    case photo
+    case docx
     case library
     case sample
 
@@ -11,6 +13,8 @@ enum CourseSource: String, Codable, CaseIterable {
         switch self {
         case .text: "Texte"
         case .pdf: "PDF"
+        case .photo: "Photos"
+        case .docx: "Word"
         case .library: "Bibliothèque"
         case .sample: "Exemple"
         }
@@ -20,6 +24,8 @@ enum CourseSource: String, Codable, CaseIterable {
         switch self {
         case .text: "text.alignleft"
         case .pdf: "doc.fill"
+        case .photo: "photo.on.rectangle.angled"
+        case .docx: "doc.richtext"
         case .library: "globe.europe.africa.fill"
         case .sample: "sparkles"
         }
@@ -42,7 +48,7 @@ final class Course {
     var rawText: String = ""
     /// Contenu analysé par l'IA, servant de contexte aux nouvelles cartes.
     var contextText: String = ""
-    /// Première page du PDF importé, utilisée comme couverture.
+    /// Première page ou photo, utilisée comme couverture.
     @Attribute(.externalStorage) var coverImageData: Data?
     var isFromLibrary: Bool = false
 

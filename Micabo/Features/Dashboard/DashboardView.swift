@@ -89,7 +89,7 @@ struct DashboardView: View {
                 pendingImport = kind
                 showImportChoice = false
             }
-            .presentationDetents([.height(400)])
+            .presentationDetents([.height(540)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.xxl)
         }
@@ -124,7 +124,7 @@ struct DashboardView: View {
         MicaboEmptyState(
             systemImage: "doc.text",
             title: "Aucun cours pour l'instant",
-            message: "Importez un PDF ou collez du texte pour générer vos premières flashcards.",
+            message: "Importez un PDF, des photos, un Word ou collez du texte pour générer vos premières flashcards.",
             actionTitle: "Importer un cours"
         ) {
             showImportChoice = true

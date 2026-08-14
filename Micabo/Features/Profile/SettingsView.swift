@@ -39,7 +39,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Backend")
                 } footer: {
-                    Text("Les appels passent par les Edge Functions generate-course et generate-flashcards. La clé fal.ai reste côté serveur, dans le secret FAL_KEY.")
+                    Text("Le texte des PDF, photos et Word est lu sur l'appareil. Les Edge Functions generate-course et generate-flashcards ne servent qu'à rédiger les cartes. La clé fal.ai reste côté serveur, dans le secret FAL_KEY.")
                 }
 
                 Section("Modèle") {
