@@ -68,6 +68,12 @@ local. Quand aucun produit ne se charge, un repli affiche l'offre et laisse entr
 - En session, une ampoule donne un indice : celui de la carte, sinon un début de réponse
 - Animations en cascade et retours haptiques centralisés dans `Haptics`
 
+## Feuille de route
+
+`docs/plan-amelioration.md` réunit l'audit du produit (parcours d'accueil, écrans, textes, design
+system), la comparaison avec Anki, Quizlet, Knowt, RemNote, Brainscape et Duolingo, et le plan de
+travail qui en découle, en quatre lots.
+
 ## Pile technique
 
 - SwiftUI, iOS 17 minimum, projet Xcode natif (`Micabo.xcodeproj`)
