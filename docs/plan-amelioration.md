@@ -604,7 +604,32 @@ Un onglet sur cinq occupé par une promesse. Deux options :
   avec l'app, par matière, alignés sur les matières de l'onboarding. Pas de backend, pas de compte,
   et l'onglet tient enfin sa promesse. C'est aussi la réserve où puiser le pack de démarrage du §4.6.
 
-### 6.7 Profil et Réglages
+### 6.7 Les garde-fous manquants
+
+Plusieurs actions destructrices s'exécutent sans filet, et surtout **sans cohérence entre elles** —
+la même gravité est tantôt confirmée, tantôt pas :
+
+| Action | Aujourd'hui | Devrait |
+| --- | --- | --- |
+| Supprimer un cours depuis le menu contextuel de « Mes cours » | **Suppression immédiate**, aucune confirmation | Même dialogue que dans le détail du cours, qui existe déjà et est bien écrit |
+| Supprimer un cours depuis son détail | Dialogue de confirmation avec le nombre de cartes | Référence à garder |
+| « Réinitialiser la progression » d'un cours | **Immédiat**, aucune confirmation | Confirmation : c'est un historique de révision qui disparaît |
+| « Mettre en pause » une carte en session | Immédiat, sans explication | Un mot sur ce que ça fait (la carte ne reviendra plus) et de quoi annuler |
+| Fermer une session en cours | Ferme sans rien dire | Rien à confirmer si la reprise est implémentée (§6.3), sinon prévenir |
+| Échec de la caméra de scan | **Annulation silencieuse** | Un message : l'utilisateur croit avoir mal appuyé |
+
+Deux incohérences de traitement d'erreur méritent le même passage :
+
+- En cas d'échec de l'IA, **l'import propose « Créer sans IA »** (repli sur `OfflineCourseBuilder`)
+  mais **le détail d'un cours affiche une alerte « Oups » sans aucun repli**, alors que le même
+  code de secours est disponible.
+- `GenerationOverlay` fait avancer ses étapes sur une minuterie fixe de 2,2 s, indépendamment du
+  travail réel. C'est le même artifice que la fausse barre de personnalisation (§4.2) : quand la
+  génération dure 40 s, les quatre étapes sont cochées depuis longtemps et l'utilisateur regarde
+  un écran figé. Brancher les étapes sur les phases réelles (lecture → appel → écriture des
+  cartes), ou n'en afficher aucune.
+
+### 6.8 Profil et Réglages
 
 **Profil :** les statistiques sont bonnes (série, révisions, cours, cartes, graphique 14 jours).
 Retirer la section « Amis · Bientôt » tant qu'elle n'existe pas. Ajouter ce qui manque vraiment :
@@ -697,6 +722,16 @@ Les libellés actuels des quatre boutons (`Flashcard.swift`) : « À revoir », 
 | Titre de l'alerte | Génération impossible | **On n'a pas pu générer les cartes** |
 | Bouton de repli | Créer sans IA | **Créer les cartes sans IA** |
 
+Même traitement pour les erreurs remontées par `SupabaseAIService`, qui sont aujourd'hui des
+instructions de déploiement affichées à l'utilisateur final : « Clé Supabase refusée ({code}).
+Vérifiez la clé publique dans Réglages. » et « Fonction Supabase introuvable. Déployez les Edge
+Functions du dossier supabase/functions. ». Ces deux cas doivent afficher le même message que
+ci-dessus et être **journalisés**, pas montrés.
+
+À l'inverse, les messages d'erreur d'extraction sont bons et doivent servir de modèle — ils disent
+la cause et la sortie : « Ce PDF est protégé par un mot de passe. », « Aucune page lisible.
+Réessayez avec des photos plus nettes. » (à passer au tutoiement).
+
 Et dans l'import : remplacer « Seule la rédaction des cartes passe par vos Edge Functions
 (google/gemini-flash-1.5) » par **« Le texte de ton document est lu sur ton téléphone. Seul le
 texte nécessaire à la rédaction des cartes est envoyé. »** — même information, sans jargon, et
@@ -753,7 +788,16 @@ en dur.
 
 ### 8.2 La dérive du design system
 
-Le thème est bien fait, mais les vues le contournent régulièrement. Exemples relevés :
+Le thème est bien fait — 24 jetons nommés plus 8 teintes de cours, utilisés 212 fois — mais les
+vues le contournent tout aussi régulièrement : **54 appels `Color(hex:)` en dur** répartis dans
+17 fichiers, pour 35 valeurs distinctes, et environ **300 lignes d'espacements numériques** hors
+jetons pour 24 valeurs distinctes. Le padding le plus fréquent de l'app (14 pt, 39 occurrences)
+n'existe pas dans `MicaboSpacing` ; l'espacement de bloc le plus courant (18 pt) diffère du jeton
+prévu (`lg` = 20).
+
+Une quinzaine des couleurs en dur **recopient un jeton existant** (`#47665A` = `courseAccents[0]`,
+`#9A958A` = `onInkMuted`, `#8A857B` = `inkSecondary`). Exemples des autres, qui ont un rôle réel
+sans avoir de nom :
 `Color(hex: 0x4A463F)` pour du texte (session, bibliothèque), `Color(hex: 0xC9C3B8)` pour les
 chevrons (trois fichiers), `Color(hex: 0x8F8B82)` et `Color(hex: 0x9A958A)` pour des textes sur
 fond sombre, `Color(hex: 0xC9B98A)` pour l'état « dû », `Color(hex: 0xB5573C)` pour le bouton
@@ -763,10 +807,27 @@ Ces couleurs ont un rôle réel — il leur manque juste un nom. À ajouter au t
 `inkOnDark`, `inkOnDarkMuted`, `chevron`, `due`, `ratingAgain`, `trophy`, `trophyBackground`,
 `hintText`. Sans ça, le mode sombre sera ingérable.
 
-Même dérive côté typographie : `MicaboFont` définit une échelle (11, 13, 15, 16, 18, 22, 27) mais
-les vues appellent `MicaboFont.hanken(...)` avec des tailles hors échelle — 10, 12, 14, 17, 20, 21,
-24, 26, 30, 72. Recommandation : figer une échelle de huit valeurs, la nommer par rôle, et rendre
-l'appel direct à `hanken(_:weight:)` exceptionnel.
+Même dérive côté typographie, en pire : `MicaboFont` définit neuf rôles sur sept tailles
+(11, 13, 15, 16, 18, 22, 27), mais l'app utilise en tout **27 tailles distinctes** — les vues
+appellent `MicaboFont.hanken(...)` avec des valeurs hors échelle (8,5 · 9 · 19 · 21 · 26 · 28 · 32 ·
+38 · 60 · 64 · 72) et **57 appels à `.font(.system(...))`** ajoutent 18 tailles de plus pour les
+icônes. Les alias sémantiques, eux, sont peu adoptés : `screenTitle` n'est utilisé qu'une fois.
+Recommandation : figer une échelle de huit valeurs nommées par rôle, et faire de l'appel direct à
+`hanken(_:weight:)` l'exception.
+
+Deux autres écarts à corriger au passage :
+
+- **L'`AccentColor` du catalogue d'assets ne correspond pas à l'accent du thème** : `#5B54E8` côté
+  asset contre `#5B5BD6` dans `MicaboColor.accent`. L'asset sert de teinte système partout où
+  `.tint()` n'est pas appliqué explicitement — deux indigos différents cohabitent donc.
+- **Quatre composants du design system ne sont utilisés nulle part** (`MicaboChip`,
+  `MicaboGlassChip`, `CourseCover`, `MicaboCoverScrim`) pendant que des vues réimplémentent à la
+  main ce qu'ils font : `SubjectChip` double `MicaboSelectChip`, `LanguageRow` double
+  `OnboardingChoiceRow`, le champ de recherche de l'écran établissement double celui de « Mes
+  cours », `CourseThumb` double `CourseCover`, et l'état vide de « Réviser » est écrit à la main
+  alors que `MicaboEmptyState` existe. Même chose côté retours haptiques : la session appelle
+  `UIImpactFeedbackGenerator` directement au lieu de passer par `Haptics`, qui centralise pourtant
+  tout le reste de l'app.
 
 ### 8.3 Accessibilité
 
@@ -777,16 +838,36 @@ C'est le point le plus faible du design actuel, et le plus simple à traiter.
   agrandit la police du système. Sur une app de lecture destinée à des étudiants qui révisent des
   heures, c'est un vrai problème. Correction mécanique dans `MicaboFont` :
   `.custom(postscriptName(for: weight), size: size, relativeTo: textStyle)`.
-- **Les contrastes secondaires sont limites.** `inkTertiary` (#B3ADA2) sur le fond ivoire (#FAF9F6)
-  tourne autour de 2:1 — nettement sous le seuil AA de 4,5:1 pour du texte courant. Cette couleur
-  porte pourtant des informations utiles (compteurs, méta-données des cours, sous-titres). À
-  assombrir, ou à réserver à du décoratif.
+- **Les contrastes secondaires échouent au seuil AA** (4,5:1 pour du texte courant) :
+
+  | Couleur | Sur | Ratio | Verdict |
+  | --- | --- | --- | --- |
+  | `inkTertiary` #B3ADA2 | canvas #FAF9F6 | **2,12:1** | échec |
+  | `inkTertiary` #B3ADA2 | surface blanche | **2,23:1** | échec |
+  | Chevrons #C9C3B8 | canvas | **1,66:1** | échec net |
+  | `inkSecondary` #8A857B | canvas | **3,49:1** | échec (passe en grand texte) |
+  | `accent` #5B5BD6 | canvas | 5,10:1 | conforme |
+  | `onInkMuted` #9A958A | ink #1A1917 | 5,89:1 | conforme |
+
+  `inkTertiary` porte pourtant de l'information utile partout : compteurs, méta-données des cours,
+  sous-titres, dates. À assombrir d'un cran plutôt qu'à réserver au décoratif — c'est une
+  modification d'un jeton, pas d'un écran.
 - **Le mouvement réduit n'est pas respecté.** L'app est très animée (cascades, compteurs animés,
   tracé de courbe sur 1,9 s, halos pulsés en boucle). Aucune vérification de
   `accessibilityReduceMotion`.
-- **VoiceOver est partiel.** Des étiquettes existent aux bons endroits (onglets, bouton d'indice,
-  bouton retour), mais les cartes de cours, les statistiques et les boutons de notation lisent leur
-  contenu brut.
+- **VoiceOver est quasi absent.** On compte **huit** étiquettes d'accessibilité dans tout le
+  projet (les onglets, le bouton d'indice, le bouton retour, l'effacement de la recherche, le menu
+  du cours, les réglages, le bouton d'import). Tout le reste — boutons de notation, cartes de
+  cours, chips, boutons du parcours d'accueil, curseurs, interrupteurs — n'expose que son contenu
+  brut.
+- **Rien n'est localisé.** Aucun catalogue de chaînes, aucun `String(localized:)` : le français est
+  écrit en dur dans les vues et jusque dans les énumérations du modèle (`ReviewRating`, `RootTab`,
+  `ImportKind`). C'est cohérent avec le fait de ne livrer qu'une langue, mais l'écran « Langue » du
+  parcours d'accueil en promet quatre autres : il faut soit retirer l'écran (§4.2), soit poser
+  l'infrastructure.
+- **L'iPad est déclaré, pas traité.** La cible accepte les deux familles d'appareils
+  (`TARGETED_DEVICE_FAMILY = 1,2`) et toutes les orientations sur iPad, alors que toutes les mises
+  en page sont pensées pour une colonne étroite. Soit on restreint à l'iPhone, soit on adapte.
 
 ### 8.4 Micro-interactions
 
@@ -851,9 +932,12 @@ choses fausses.*
 | Retirer ou brancher les invites mortes | `WelcomeStepView.swift`, `LibraryView.swift` |
 | Uniformiser le tutoiement | 6 fichiers de vues |
 | Un seul mot pour « à réviser » | `CourseCardViews.swift`, `TodayView.swift`, `DashboardView.swift` |
+| Confirmer les suppressions et la réinitialisation de progression | `CoursesListView.swift`, `FlashcardsView.swift` |
+| Étendre le repli « sans IA » au détail du cours | `FlashcardsView.swift` |
+| Aligner l'`AccentColor` des assets sur le thème | `Assets.xcassets/AccentColor.colorset` |
 
 **Critère de sortie :** aucune affirmation invérifiable, aucun terme technique tourné vers
-l'utilisateur, une seule personne grammaticale.
+l'utilisateur, une seule personne grammaticale, et aucune donnée qui disparaît sans confirmation.
 
 ### Lot 1 — La session mérite son statut de cœur du produit
 
@@ -892,10 +976,14 @@ demande d'autorisation. C'est le lot qui décide de la rétention J7 et J30.
 
 ### Hors lots — à instruire séparément
 
-Le mode sombre, la taille dynamique et le compte/synchronisation sont des chantiers transverses.
-La taille dynamique et les contrastes devraient être traités **avant** le mode sombre : ce sont des
-corrections mécaniques, alors que le mode sombre demande de renommer et de dédoubler toute la
-palette.
+Le mode sombre, la taille dynamique, la localisation, l'iPad et le compte/synchronisation sont des
+chantiers transverses.
+
+L'ordre compte : **la taille dynamique et les contrastes d'abord** (deux corrections mécaniques,
+`MicaboFont` et deux jetons), **la tokenisation ensuite** (nommer les 35 couleurs en dur et figer
+l'échelle typographique), **le mode sombre en dernier** — il ne devient réaliste qu'une fois la
+palette entièrement nommée et déplacée dans le catalogue d'assets. Attaquer le mode sombre avant
+la tokenisation revient à repeindre 54 valeurs à la main dans 17 fichiers.
 
 ---
 
@@ -967,6 +1055,13 @@ utilisateurs qui n'atteignent jamais un jalon de valeur sont perdus en deux sema
 13. Une série qui se casse un jour où l'app n'avait rien à proposer.
 14. Des intervalles calculés et jamais affichés.
 15. Un mode « embarqué » de la session, écrit et jamais utilisé.
+16. Un cours se supprime sans confirmation depuis la liste, avec confirmation depuis son détail.
+17. L'import propose « Créer sans IA » quand la génération échoue ; le détail du cours, non.
+18. Les étapes de l'écran de génération avancent sur une minuterie, pas sur le travail réel.
+19. Deux indigos différents : `#5B5BD6` dans le thème, `#5B54E8` dans l'`AccentColor` des assets.
+20. Quatre composants du design system inutilisés, pendant que cinq vues les réimplémentent.
+21. Un écran « Langue » qui propose quatre langues, dans une app sans aucune infrastructure de traduction.
+22. L'iPad est déclaré comme cible, sans aucune mise en page adaptée.
 
 ---
 
