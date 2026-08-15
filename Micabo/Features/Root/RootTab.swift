@@ -35,10 +35,12 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
 @Observable
 final class TabRouter {
     var selection: RootTab = .dashboard
-    /// Profondeur de navigation par onglet : le balayage n'est actif que sur une racine.
+    /// Profondeur de navigation par onglet : la barre d'onglets et le balayage
+    /// n'ont cours que sur une racine.
     private var navigationDepth: [RootTab: Int] = [:]
 
-    var allowsPaging: Bool {
+    /// Vrai tant que l'onglet affiché ne montre pas d'écran poussé.
+    var isAtRoot: Bool {
         navigationDepth[selection, default: 0] == 0
     }
 

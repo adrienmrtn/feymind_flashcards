@@ -29,8 +29,8 @@ struct ProfileView: View {
             }
             .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
-            .micaboTabBar()
-            .reportsPaging(for: .profile, depth: 0)
+            .micaboTabBarClearance()
+            .reportsNavigationDepth(for: .profile, depth: 0)
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }

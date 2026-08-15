@@ -71,8 +71,8 @@ struct CoursesListView: View {
             }
             .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
-            .micaboTabBar()
-            .reportsPaging(for: .courses, depth: path.count)
+            .micaboTabBarClearance()
+            .reportsNavigationDepth(for: .courses, depth: path.count)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
             }

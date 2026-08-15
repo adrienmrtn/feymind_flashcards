@@ -35,8 +35,8 @@ struct LibraryView: View {
             }
             .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
-            .micaboTabBar()
-            .reportsPaging(for: .library, depth: 0)
+            .micaboTabBarClearance()
+            .reportsNavigationDepth(for: .library, depth: 0)
         }
     }
 

@@ -2,8 +2,10 @@ import SwiftUI
 import UIKit
 
 /// Les cinq pages, balayables comme un carrousel natif. La barre d'onglets est
-/// dessinée par chaque page racine : elle disparaît dès qu'un détail est poussé,
-/// et le balayage est alors coupé.
+/// posée par-dessus le carrousel, et non dans les pages : le balayage fait donc
+/// défiler les pages seules, la barre ne bouge pas. Chaque page racine réserve sa
+/// hauteur (`micaboTabBarClearance`) et signale sa profondeur de navigation, ce qui
+/// retire la barre et coupe le balayage dès qu'un écran de détail est poussé.
 struct RootTabView: View {
     @State private var router = TabRouter()
 
@@ -15,27 +17,35 @@ struct RootTabView: View {
     var body: some View {
         @Bindable var router = router
 
-        TabView(selection: $router.selection) {
-            TodayView()
-                .tag(RootTab.today)
+        ZStack(alignment: .bottom) {
+            TabView(selection: $router.selection) {
+                TodayView()
+                    .tag(RootTab.today)
 
-            CoursesListView()
-                .tag(RootTab.courses)
+                CoursesListView()
+                    .tag(RootTab.courses)
 
-            DashboardView()
-                .tag(RootTab.dashboard)
+                DashboardView()
+                    .tag(RootTab.dashboard)
 
-            LibraryView()
-                .tag(RootTab.library)
+                LibraryView()
+                    .tag(RootTab.library)
 
-            ProfileView()
-                .tag(RootTab.profile)
+                ProfileView()
+                    .tag(RootTab.profile)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .background(MicaboColor.canvas)
+            .background {
+                TabPagingScrollBridge(isEnabled: router.isAtRoot)
+            }
+
+            if router.isAtRoot {
+                MicaboTabBar()
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+            }
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .background(MicaboColor.canvas)
-        .background {
-            TabPagingScrollBridge(isEnabled: router.allowsPaging)
-        }
+        .animation(.easeOut(duration: 0.25), value: router.isAtRoot)
         .tint(MicaboColor.accent)
         .environment(router)
         .animation(.easeOut(duration: 0.28), value: router.selection)
