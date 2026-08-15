@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Barre d'onglets dessinée par chaque page racine, pour qu'elle disparaisse
-/// dès qu'un écran de détail est poussé. Le `TabView` page fournit le balayage.
+/// Barre d'onglets, dessinée par `RootTabView` par-dessus le carrousel : posée
+/// dans une page, elle suivrait le doigt pendant le balayage. Les pages racines
+/// n'en gardent qu'une copie masquée, qui réserve sa hauteur.
 struct MicaboTabBar: View {
     @Environment(TabRouter.self) private var router: TabRouter?
 
@@ -50,21 +51,26 @@ struct MicaboTabBar: View {
 }
 
 extension View {
-    /// Pose la barre d'onglets sous le contenu d'une page racine, à l'intérieur
-    /// du `NavigationStack` pour qu'elle disparaisse sur les écrans poussés.
-    func micaboTabBar() -> some View {
+    /// Réserve, sous le contenu d'une page racine, la hauteur exacte de la barre
+    /// d'onglets que `RootTabView` dessine par-dessus. Une copie masquée sert de
+    /// gabarit : elle suit la police et la taille dynamique sans constante à tenir
+    /// à jour. Cette réserve vit dans le `NavigationStack`, donc elle s'efface
+    /// avec la page dès qu'un écran de détail est poussé.
+    func micaboTabBarClearance() -> some View {
         safeAreaInset(edge: .bottom, spacing: 0) {
             MicaboTabBar()
+                .hidden()
         }
     }
 
-    /// Signale au routeur si cette page a un écran poussé, pour couper le balayage.
-    func reportsPaging(for tab: RootTab, depth: Int) -> some View {
-        modifier(PagingDepthReporter(tab: tab, depth: depth))
+    /// Signale au routeur si cette page a un écran poussé : le balayage est alors
+    /// coupé et la barre d'onglets se retire.
+    func reportsNavigationDepth(for tab: RootTab, depth: Int) -> some View {
+        modifier(NavigationDepthReporter(tab: tab, depth: depth))
     }
 }
 
-private struct PagingDepthReporter: ViewModifier {
+private struct NavigationDepthReporter: ViewModifier {
     @Environment(TabRouter.self) private var router: TabRouter?
     let tab: RootTab
     let depth: Int

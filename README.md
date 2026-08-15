@@ -61,7 +61,8 @@ local. Quand aucun produit ne se charge, un repli affiche l'offre et laisse entr
 - Typographie Hanken Grotesk embarquée (Regular / Medium / SemiBold / Bold)
 - Coins mesurés : 9 pt (miniatures), 14 pt (boutons), 18 pt (cartes) — pas de capsules partout
 - Barre d'onglets en pied d'écran ; bouton « + » flottant en bas à droite sur l'accueil
-- Balayage horizontal natif (pages qui suivent le doigt) pour changer d'onglet ; geste de retour du système sur les écrans poussés
+- Balayage horizontal natif (pages qui suivent le doigt) pour changer d'onglet : seules les pages défilent, la barre d'onglets reste posée en pied d'écran
+- Geste de retour du système sur les écrans poussés, qui emportent la barre d'onglets avec eux
 - Réviser : le nombre de cartes dues posé à même le fond ivoire, puis la répartition et les cours concernés
 - Détail cours : en-tête pastel plat (emoji, titre, pastilles), résumé en carte juste en dessous
 - Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose pas

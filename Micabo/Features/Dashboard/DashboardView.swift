@@ -78,8 +78,8 @@ struct DashboardView: View {
                 .padding(.bottom, 18)
             }
             .toolbar(.hidden, for: .navigationBar)
-            .micaboTabBar()
-            .reportsPaging(for: .dashboard, depth: path.count)
+            .micaboTabBarClearance()
+            .reportsNavigationDepth(for: .dashboard, depth: path.count)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
             }
