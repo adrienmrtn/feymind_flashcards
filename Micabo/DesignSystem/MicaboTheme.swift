@@ -86,7 +86,7 @@ enum MicaboSpacing {
 enum MicaboRadius {
     /// Tuile pastel d'une rangée : carré arrondi, emoji ou symbole au centre.
     static let tile: CGFloat = 13
-    /// Ancien nom de la tuile, conservé pour les vignettes de cours.
+    /// Même valeur que la tuile, pour les vignettes du parcours d'accueil.
     static let cover: CGFloat = 13
     static let sm: CGFloat = 12
     /// Boutons CTA principaux.

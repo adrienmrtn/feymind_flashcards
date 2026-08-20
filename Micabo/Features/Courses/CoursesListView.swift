@@ -175,8 +175,9 @@ struct CoursesListView: View {
             )
             .padding(.horizontal, MicaboSpacing.screen)
         } else {
+            let items = filtered
             VStack(spacing: 0) {
-                ForEach(Array(filtered.enumerated()), id: \.element.id) { index, course in
+                ForEach(Array(items.enumerated()), id: \.element.id) { index, course in
                     MicaboRow.course(course) {
                         path.append(course)
                     }
@@ -190,7 +191,7 @@ struct CoursesListView: View {
                         }
                     }
 
-                    if index < filtered.count - 1 {
+                    if index < items.count - 1 {
                         MicaboHairline(inset: MicaboSpacing.md, onCanvas: true)
                             .padding(.trailing, MicaboSpacing.xxs)
                     }
