@@ -3,6 +3,9 @@ import SwiftUI
 
 /// Écran 6 : la démonstration visuelle. Deux courbes de mémorisation qui partent
 /// ensemble puis divergent à la première révision.
+///
+/// L'écran doit se lire en trois secondes : un titre, le graphe avec ses intervalles
+/// étiquetés, et deux lignes de légende. Aucun paragraphe.
 struct RetentionChartStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -10,19 +13,9 @@ struct RetentionChartStepView: View {
         OnboardingScaffold(
             eyebrow: "Rappel actif",
             title: "Relire ne suffit pas.\nSe souvenir, oui.",
-            subtitle: "Chaque fois que tu ressors une information de ta tête au lieu de la relire, tu la rends plus solide. Micabo te fait faire ça, au bon moment.",
             titleSize: 28
         ) {
-            VStack(alignment: .leading, spacing: 14) {
-                RetentionChart()
-                    .frame(height: 236)
-
-                Text("Chaque pic est une révision : quelques secondes qui remettent la carte à 100 %, et qui rallongent le temps avant l'oubli suivant.")
-                    .font(MicaboFont.hanken(12, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            RetentionChart()
         } footer: {
             OnboardingContinueButton {
                 model.advance()
@@ -38,6 +31,11 @@ struct RetentionChartStepView: View {
 enum RetentionCurve {
     static let horizonDays = 30.0
     static let reviewDays: [Double] = [1, 3, 7, 16]
+
+    /// Intervalle réel affiché sous chaque révision du graphe.
+    static func intervalLabel(forDay day: Double) -> String {
+        "\(Int(day)) j"
+    }
 
     /// Stabilité (en jours) de chaque segment. La première est identique à celle
     /// de la courbe sans révision : les deux tracés partent donc confondus.
@@ -88,7 +86,7 @@ private struct RetentionChart: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            legend
+            heading
 
             GeometryReader { proxy in
                 let size = proxy.size
@@ -117,18 +115,21 @@ private struct RetentionChart: View {
 
                     markers(in: size)
 
+                    intervalLabels(in: size)
+
                     endLabels(in: size)
                 }
             }
+            .frame(height: 168)
 
             axisLabels
+
+            MicaboHairline()
+
+            legend
         }
         .padding(16)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
+        .micaboGroup()
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
                 isRunning = true
@@ -145,36 +146,73 @@ private struct RetentionChart: View {
 
     // MARK: - Éléments
 
+    /// Ce que le graphe raconte, dit avant de le regarder. Les intervalles réels sont
+    /// posés sur les points ; l'écran suivant les reprend en liste.
+    private var heading: some View {
+        Text("Ta mémoire, avec et sans révision")
+            .font(MicaboFont.hanken(14, weight: .semibold))
+            .foregroundStyle(MicaboColor.ink)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// Deux lignes, une par courbe : c'est toute l'explication de l'écran.
     private var legend: some View {
-        HStack(spacing: 14) {
-            legendItem(color: MicaboColor.accent, label: "Avec Micabo", dashed: false)
-            legendItem(color: MicaboColor.inkTertiary, label: "Sans Micabo", dashed: true)
-            Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: 7) {
+            legendItem(
+                color: MicaboColor.inkTertiary,
+                dashed: true,
+                label: "Sans révision, tu oublies en quelques jours."
+            )
+            legendItem(
+                color: MicaboColor.accent,
+                dashed: false,
+                label: "Chaque rappel au bon moment rallonge ta mémoire."
+            )
         }
     }
 
-    private func legendItem(color: Color, label: String, dashed: Bool) -> some View {
-        HStack(spacing: 6) {
-            Capsule()
-                .fill(color)
-                .frame(width: dashed ? 6 : 16, height: 3)
-                .overlay(alignment: .trailing) {
-                    if dashed {
-                        Capsule()
-                            .fill(color)
-                            .frame(width: 6, height: 3)
-                            .offset(x: 10)
-                    }
+    private func legendItem(color: Color, dashed: Bool, label: String) -> some View {
+        HStack(alignment: .center, spacing: 8) {
+            HStack(spacing: 2) {
+                if dashed {
+                    Capsule().fill(color).frame(width: 5, height: 3)
+                    Capsule().fill(color).frame(width: 5, height: 3)
+                    Capsule().fill(color).frame(width: 5, height: 3)
+                } else {
+                    Capsule().fill(color).frame(width: 19, height: 3)
                 }
+            }
+            .frame(width: 19, alignment: .leading)
+
             Text(label)
-                .font(MicaboFont.hanken(11, weight: .semibold))
+                .font(MicaboFont.hanken(12, weight: .medium))
                 .foregroundStyle(MicaboColor.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// Chaque révision porte son intervalle réel, posé juste au-dessus du point.
+    private func intervalLabels(in size: CGSize) -> some View {
+        ForEach(Array(RetentionCurve.reviewDays.enumerated()), id: \.offset) { _, day in
+            let x = day / RetentionCurve.horizonDays
+            let isVisible = progress >= x
+
+            Text(RetentionCurve.intervalLabel(forDay: day))
+                .font(MicaboFont.hanken(9.5, weight: .bold))
+                .foregroundStyle(MicaboColor.accent)
+                .monospacedDigit()
+                .fixedSize()
+                .opacity(isVisible ? 1 : 0)
+                // Le premier point est collé au bord : on cale l'étiquette pour
+                // qu'elle reste entière.
+                .position(x: max(15, CGFloat(x) * size.width), y: 7)
+                .animation(.easeOut(duration: 0.25), value: isVisible)
         }
     }
 
     private func grid(in size: CGSize) -> some View {
         ForEach(0..<4) { index in
-            let y = size.height * CGFloat(index) / 3
+            let y = point(x: 0, y: 1 - Double(index) / 3, in: size).y
             Path { path in
                 path.move(to: CGPoint(x: 0, y: y))
                 path.addLine(to: CGPoint(x: size.width, y: y))
@@ -237,8 +275,16 @@ private struct RetentionChart: View {
 
     // MARK: - Géométrie
 
+    /// Marge haute réservée aux étiquettes d'intervalle, pour qu'elles ne se posent
+    /// pas sur les points de révision.
+    private static let topInset: CGFloat = 20
+
     private func point(_ value: CGPoint, in size: CGSize) -> CGPoint {
-        CGPoint(x: value.x * size.width, y: (1 - value.y) * size.height)
+        let usableHeight = max(1, size.height - Self.topInset)
+        return CGPoint(
+            x: value.x * size.width,
+            y: Self.topInset + (1 - value.y) * usableHeight
+        )
     }
 
     private func point(x: Double, y: Double, in size: CGSize) -> CGPoint {

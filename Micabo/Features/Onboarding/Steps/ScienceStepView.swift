@@ -81,8 +81,7 @@ private struct ForgettingParagraph: View {
     var isRushed: Bool = false
 
     private static let sentence = """
-    Dès 1885, Ebbinghaus mesure l'oubli : sans y revenir, une leçon s'efface presque \
-    entièrement en vingt-quatre heures. Micabo repose chaque carte juste avant ce décrochage.
+    Dès 1885, Ebbinghaus le mesure : sans y revenir, une leçon s'efface en un jour.
     """
 
     private let words = ForgettingParagraph.sentence.split(separator: " ").map(String.init)
@@ -102,11 +101,7 @@ private struct ForgettingParagraph: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
+        .micaboGroup()
         .onAppear(perform: followReading)
         .onChange(of: isRushed) { _, rushed in
             guard rushed else { return }
@@ -146,7 +141,8 @@ private struct ForgettingParagraph: View {
 
 // MARK: - Bloc 2 : les intervalles
 
-/// Échelle verticale des intervalles : chaque palier a la place d'être lu.
+/// Échelle verticale des intervalles. Un titre dit ce qu'on regarde, et chaque palier
+/// porte son intervalle réel en pastille : la liste se comprend sans la lire en entier.
 private struct IntervalTimeline: View {
     private struct Stage: Identifiable {
         let id = UUID()
@@ -165,23 +161,39 @@ private struct IntervalTimeline: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            Text("Voici les intervalles de révision optimaux pour ton cerveau")
+                .font(MicaboFont.hanken(14, weight: .semibold))
+                .foregroundStyle(MicaboColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.bottom, 14)
+
+            // Intervalle et légende sur une seule ligne : la liste se parcourt d'un
+            // coup d'œil, et l'écran tient sans défilement même sur un petit iPhone.
             ForEach(Array(stages.enumerated()), id: \.element.id) { index, stage in
                 HStack(alignment: .top, spacing: 12) {
                     rail(isLast: index == stages.count - 1, isActive: index < shown)
 
-                    VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 9) {
                         Text(stage.interval)
-                            .font(MicaboFont.hanken(14, weight: .semibold))
-                            .foregroundStyle(index < shown ? MicaboColor.ink : MicaboColor.inkTertiary)
+                            .font(MicaboFont.hanken(13, weight: .bold))
+                            .foregroundStyle(index < shown ? MicaboColor.accent : MicaboColor.inkTertiary)
+                            .monospacedDigit()
+                            .padding(.vertical, 3)
+                            .padding(.horizontal, 8)
+                            .background(
+                                index < shown ? MicaboColor.accentSoft : MicaboColor.surfaceMuted,
+                                in: Capsule()
+                            )
 
                         Text(stage.caption)
                             .font(MicaboFont.hanken(12, weight: .regular))
                             .foregroundStyle(MicaboColor.inkTertiary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(.bottom, index == stages.count - 1 ? 0 : 14)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
 
-                    Spacer(minLength: 0)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.bottom, index == stages.count - 1 ? 0 : 10)
                 }
                 .opacity(index < shown ? 1 : 0.35)
             }
@@ -194,20 +206,16 @@ private struct IntervalTimeline: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
+        .micaboGroup()
         .onAppear(perform: revealStages)
     }
 
     private func rail(isLast: Bool, isActive: Bool) -> some View {
         VStack(spacing: 0) {
             Circle()
-                .fill(isActive ? MicaboColor.ink : MicaboColor.strokeStrong)
+                .fill(isActive ? MicaboColor.accent : MicaboColor.strokeStrong)
                 .frame(width: 8, height: 8)
-                .padding(.top, 5)
+                .padding(.top, 9)
 
             if !isLast {
                 Rectangle()
