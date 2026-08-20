@@ -1,67 +1,51 @@
 import SwiftUI
 
-/// Miniature 52×66 de la maquette : l'emoji du cours sur son aplat pastel.
-struct CourseThumb: View {
-    let course: Course
+extension MicaboRow {
+    /// Rangée d'un cours : vignette, titre, matière et nombre de cartes, état à droite.
+    static func course(_ course: Course, action: (() -> Void)? = nil) -> MicaboRow {
+        MicaboRow(
+            tile: MicaboTile.course(course),
+            title: course.title,
+            subtitle: CourseRowLabels.meta(for: course),
+            accessory: CourseRowLabels.accessory(for: course),
+            action: action
+        )
+    }
 
-    private var tint: Color { Color(hexString: course.accentHex) }
-
-    var body: some View {
-        ZStack {
-            tint.lightened(by: 0.82)
-            Text(CourseEmoji.resolve(for: course))
-                .font(.system(size: 24))
-        }
-        .frame(width: 52, height: 66)
-        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.cover, style: .continuous))
+    /// Rangée d'un cours pendant une session : le nombre de cartes à revoir en pastille.
+    static func courseDue(_ course: Course, dueCount: Int, action: (() -> Void)? = nil) -> MicaboRow {
+        MicaboRow(
+            tile: MicaboTile.course(course),
+            title: course.title,
+            subtitle: course.subject?.nilIfBlank,
+            accessory: .badge("\(dueCount) à revoir", .accent),
+            action: action
+        )
     }
 }
 
-/// Ligne compacte utilisée sur Accueil et Mes cours (maquette).
-struct CourseRow: View {
-    let course: Course
-    var showsChevron: Bool = false
-
-    private var dueCount: Int { course.dueCards.count }
-
-    var body: some View {
-        HStack(spacing: MicaboSpacing.sm) {
-            CourseThumb(course: course)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(course.title)
-                    .font(MicaboFont.hanken(14, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .lineLimit(1)
-                    .multilineTextAlignment(.leading)
-
-                Text(metaLabel)
-                    .font(MicaboFont.hanken(12, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .lineLimit(1)
-            }
-
-            Spacer(minLength: MicaboSpacing.xs)
-
-            if showsChevron {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Color(hex: 0xC9C3B8))
-            }
-        }
-        .contentShape(Rectangle())
+/// Ce qu'une rangée de cours raconte : la matière, le volume, et l'état de la file.
+enum CourseRowLabels {
+    static func meta(for course: Course) -> String {
+        let cards = "\(course.cards.count) carte\(course.cards.count > 1 ? "s" : "")"
+        guard let subject = course.subject?.nilIfBlank else { return cards }
+        return "\(subject) · \(cards)"
     }
 
-    private var metaLabel: String {
-        let total = course.cards.count
-        if dueCount > 0 {
-            return "\(total) cartes · \(dueCount) à réviser"
+    static func accessory(for course: Course) -> MicaboRowAccessory {
+        let due = course.dueCards.count
+        if due > 0 {
+            return .badge("\(due) due\(due > 1 ? "s" : "")", .accent)
         }
-        return "\(total) cartes"
+        if course.cards.isEmpty {
+            return .badge("vide", .neutral)
+        }
+        return .badge("à jour", .neutral)
     }
 }
 
-/// Carte sombre « Réviser maintenant » de l'accueil (maquette).
+/// Bloc d'appel « Réviser maintenant » : le seul aplat d'encre de l'app,
+/// pour que le geste du jour ne se confonde pas avec le reste.
 struct TodayCTACard: View {
     let dueCount: Int
     let reviewedToday: Int
@@ -75,40 +59,45 @@ struct TodayCTACard: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     Text(streak > 0 ? "SÉRIE · \(streak) JOUR\(streak > 1 ? "S" : "")" : "AUJOURD'HUI")
-                        .font(MicaboFont.hanken(12, weight: .medium))
-                        .tracking(0.5)
-                        .foregroundStyle(Color(hex: 0x8F8B82))
+                        .font(MicaboFont.eyebrow)
+                        .tracking(MicaboTracking.caps)
+                        .foregroundStyle(MicaboColor.onInkMuted)
 
                     Spacer()
 
-                    Text(dueCount > 0 ? "\(dueCount) carte\(dueCount > 1 ? "s" : "") due\(dueCount > 1 ? "s" : "")" : "À jour")
-                        .font(MicaboFont.hanken(12, weight: .semibold))
-                        .foregroundStyle(Color(hex: 0xC9B98A))
+                    if dueCount > 0 {
+                        Text("\(dueCount) carte\(dueCount > 1 ? "s" : "") due\(dueCount > 1 ? "s" : "")")
+                            .font(MicaboFont.hanken(11, weight: .semibold))
+                            .foregroundStyle(MicaboColor.onInk)
+                            .padding(.vertical, 5)
+                            .padding(.horizontal, 9)
+                            .background(Color.white.opacity(0.14), in: Capsule())
+                    }
                 }
 
                 Text(dueCount > 0 ? "Réviser maintenant" : "Tout est à jour")
-                    .font(MicaboFont.hanken(21, weight: .bold))
+                    .font(MicaboFont.hanken(23, weight: .bold))
                     .foregroundStyle(MicaboColor.onInk)
-                    .tracking(-0.2)
+                    .tracking(-0.4)
 
                 HStack {
                     Text(dueCount > 0 ? "≈ \(estimatedMinutes) min aujourd'hui" : subtitleIdle)
                         .font(MicaboFont.hanken(13, weight: .regular))
-                        .foregroundStyle(Color(hex: 0x9A958A))
+                        .foregroundStyle(MicaboColor.onInkMuted)
 
                     Spacer()
 
                     Image(systemName: "arrow.right")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(MicaboColor.ink)
-                        .frame(width: 34, height: 34)
+                        .frame(width: 36, height: 36)
                         .background(MicaboColor.onInk, in: Circle())
                 }
             }
-            .padding(18)
+            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
         }

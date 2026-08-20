@@ -1,9 +1,9 @@
 import SwiftData
 import SwiftUI
 
-/// Écran principal d'un cours — calqué sur la maquette :
-/// en-tête pastel plat (pas de grands arrondis), liste compacte de questions
-/// avec pastille de statut, CTA « Commencer l'entraînement » en bas.
+/// Écran principal d'un cours : une barre de retour posée sur le fond ivoire,
+/// la vignette et le titre du cours, son résumé, puis la liste des questions
+/// dans un bloc blanc. CTA « Commencer l'entraînement » ancré en bas.
 struct FlashcardsView: View {
     @Bindable var course: Course
 
@@ -21,23 +21,21 @@ struct FlashcardsView: View {
     private var cards: [Flashcard] { course.orderedCards }
     private var dueCount: Int { course.dueCards.count }
 
-    private var heroTint: Color { Color(hexString: course.accentHex) }
-    private var heroBackground: Color { heroTint.lightened(by: 0.82) }
-    private var heroText: Color { heroTint.darkened(by: 0.28) }
-
     var body: some View {
         VStack(spacing: 0) {
-            hero
+            navBar
 
             ScrollView {
-                VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                    titleBlock
                     summaryCard
                     listContent
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, MicaboSpacing.md)
+                .padding(.top, MicaboSpacing.xs)
                 .padding(.bottom, cards.isEmpty ? MicaboSpacing.xxl : MicaboLayout.bottomBarClearance)
             }
+            .scrollIndicators(.hidden)
         }
         .micaboScreenBackground()
         .navigationBarBackButtonHidden(true)
@@ -89,78 +87,64 @@ struct FlashcardsView: View {
         }
     }
 
-    // MARK: - En-tête pastel plat
+    // MARK: - En-tête
 
-    private var hero: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                MicaboCircleButton(
-                    systemImage: "chevron.left",
-                    style: .tinted(heroText),
-                    size: 34,
-                    accessibilityTitle: "Retour"
-                ) {
-                    dismiss()
-                }
-
-                Spacer()
-
-                Menu {
-                    Button { isCreating = true } label: {
-                        Label("Ajouter une carte", systemImage: "plus")
-                    }
-                    Button { Task { await generateMore() } } label: {
-                        Label("Générer avec l'IA", systemImage: "sparkles")
-                    }
-                    if !cards.isEmpty {
-                        Button { resetProgress() } label: {
-                            Label("Réinitialiser la progression", systemImage: "arrow.counterclockwise")
-                        }
-                    }
-                    Divider()
-                    Button(role: .destructive) { showDeleteConfirmation = true } label: {
-                        Label("Supprimer le cours", systemImage: "trash")
-                    }
-                } label: {
-                    MicaboCircleIcon(systemImage: "ellipsis", style: .tinted(heroText), size: 34)
-                }
-                .accessibilityLabel("Actions du cours")
+    private var navBar: some View {
+        HStack {
+            MicaboCircleButton(systemImage: "chevron.left", size: 38, accessibilityTitle: "Retour") {
+                dismiss()
             }
-            .padding(.bottom, MicaboSpacing.md)
 
-            Text(CourseEmoji.resolve(for: course))
-                .font(.system(size: 30))
-                .padding(.bottom, 8)
+            Spacer()
+
+            Menu {
+                Button { isCreating = true } label: {
+                    Label("Ajouter une carte", systemImage: "plus")
+                }
+                Button { Task { await generateMore() } } label: {
+                    Label("Générer avec l'IA", systemImage: "sparkles")
+                }
+                if !cards.isEmpty {
+                    Button { resetProgress() } label: {
+                        Label("Réinitialiser la progression", systemImage: "arrow.counterclockwise")
+                    }
+                }
+                Divider()
+                Button(role: .destructive) { showDeleteConfirmation = true } label: {
+                    Label("Supprimer le cours", systemImage: "trash")
+                }
+            } label: {
+                MicaboCircleIcon(systemImage: "ellipsis", size: 38)
+            }
+            .accessibilityLabel("Actions du cours")
+        }
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.vertical, MicaboSpacing.xs)
+    }
+
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            MicaboTile.course(course, size: 56)
 
             Text(course.title)
-                .font(MicaboFont.hanken(22, weight: .bold))
-                .foregroundStyle(heroText)
+                .font(MicaboFont.hanken(27, weight: .bold))
+                .foregroundStyle(MicaboColor.ink)
                 .tracking(MicaboTracking.tight)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if !cards.isEmpty {
-                HStack(spacing: 7) {
-                    heroChip("\(cards.count) cartes")
-                    if dueCount > 0 { heroChip("\(dueCount) dues") }
-                    if let subject = course.subject?.nilIfBlank { heroChip(subject) }
+            HStack(spacing: 6) {
+                if let subject = course.subject?.nilIfBlank {
+                    MicaboBadge(text: subject, tone: .neutral)
                 }
-                .padding(.top, 14)
+                if !cards.isEmpty {
+                    MicaboBadge(text: "\(cards.count) carte\(cards.count > 1 ? "s" : "")", tone: .neutral)
+                }
+                if dueCount > 0 {
+                    MicaboBadge(text: "\(dueCount) due\(dueCount > 1 ? "s" : "")", tone: .accent)
+                }
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 14)
-        .padding(.bottom, 22)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(heroBackground)
-    }
-
-    private func heroChip(_ text: String) -> some View {
-        Text(text)
-            .font(MicaboFont.micro)
-            .foregroundStyle(heroText)
-            .padding(.vertical, 6)
-            .padding(.horizontal, 11)
-            .background(Color.white.opacity(0.6), in: Capsule())
+        .padding(.top, MicaboSpacing.xxs)
     }
 
     // MARK: - Liste
@@ -177,38 +161,35 @@ struct FlashcardsView: View {
                 Task { await generateMore() }
             }
         } else {
-            VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-                HStack {
-                    Text("Cartes")
-                        .font(MicaboFont.hanken(14, weight: .semibold))
-                        .foregroundStyle(MicaboColor.ink)
-                    Spacer()
-                    Text("\(cards.count)")
-                        .font(MicaboFont.hanken(12, weight: .medium))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                }
+            VStack(alignment: .leading, spacing: 8) {
+                MicaboSectionCaption(text: "Cartes · \(cards.count)")
 
                 VStack(spacing: 0) {
                     ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
                         Button {
                             editingCard = card
                         } label: {
-                            HStack(alignment: .center, spacing: 10) {
+                            HStack(alignment: .center, spacing: 12) {
+                                Circle()
+                                    .fill(statusColor(for: card))
+                                    .frame(width: 8, height: 8)
+
                                 Text(card.front)
-                                    .font(MicaboFont.hanken(13, weight: .medium))
-                                    .foregroundStyle(Color(hex: 0x2A2823))
+                                    .font(MicaboFont.hanken(14, weight: .medium))
+                                    .foregroundStyle(MicaboColor.ink)
                                     .multilineTextAlignment(.leading)
                                     .lineLimit(2)
                                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                                Circle()
-                                    .fill(statusColor(for: card))
-                                    .frame(width: 8, height: 8)
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(MicaboColor.inkTertiary.opacity(0.7))
                             }
-                            .padding(.vertical, 12)
+                            .padding(.vertical, 14)
+                            .padding(.horizontal, MicaboSpacing.md)
                             .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(MicaboRowButtonStyle())
                         .contextMenu {
                             Button { editingCard = card } label: {
                                 Label("Modifier", systemImage: "pencil")
@@ -219,42 +200,37 @@ struct FlashcardsView: View {
                         }
 
                         if index < cards.count - 1 {
-                            Rectangle()
-                                .fill(MicaboColor.stroke)
-                                .frame(height: 1)
+                            MicaboHairline(inset: 36)
                         }
                     }
                 }
+                .micaboGroup()
             }
         }
     }
 
-    /// Le résumé vit sous l'en-tête : le bandeau pastel reste court quelle que soit sa longueur.
+    /// Le résumé vit sous le titre, dans une surface blanche à part.
     @ViewBuilder
     private var summaryCard: some View {
         if let summary = course.summary.nilIfBlank {
             Text(summary)
                 .font(MicaboFont.body)
                 .foregroundStyle(MicaboColor.inkSecondary)
-                .lineSpacing(2)
+                .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
-                        .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-                }
+                .padding(16)
+                .micaboGroup()
         }
     }
 
     private func statusColor(for card: Flashcard) -> Color {
         if card.isDue() {
-            Color(hex: 0xC9B98A)
+            MicaboColor.caution
         } else if card.state == .new {
-            MicaboColor.inkTertiary.opacity(0.55)
+            MicaboColor.inkTertiary.opacity(0.5)
         } else {
-            Color(hex: 0x7FBF9A)
+            MicaboColor.positive
         }
     }
 

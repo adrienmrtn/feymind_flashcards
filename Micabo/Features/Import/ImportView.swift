@@ -349,10 +349,10 @@ struct ImportView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, MicaboSpacing.xl)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous)
-                    .strokeBorder(MicaboColor.strokeStrong, style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
+                RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous)
+                    .strokeBorder(MicaboColor.strokeStrong, style: StrokeStyle(lineWidth: 1.5, dash: [7, 6]))
             }
         }
         .buttonStyle(.plain)
@@ -377,17 +377,18 @@ struct ImportView: View {
 
     private var visionToggle: some View {
         Toggle(isOn: $analyzeVisuals) {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text("Analyser les schémas et images")
-                    .font(MicaboFont.body)
+                    .font(MicaboFont.rowTitle)
                     .foregroundStyle(MicaboColor.ink)
                 Text("Option payante : jusqu'à 6 pages partent au modèle de vision. Le texte, lui, a déjà été lu ici.")
-                    .font(MicaboFont.micro)
+                    .font(MicaboFont.hanken(12, weight: .regular))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
         }
         .tint(MicaboColor.accent)
-        .padding(.horizontal, MicaboSpacing.xxs)
+        .padding(16)
+        .micaboGroup()
     }
 
     private var aiNote: some View {

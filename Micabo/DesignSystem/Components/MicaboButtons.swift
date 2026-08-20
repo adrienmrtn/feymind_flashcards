@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Bouton d'action principal : rectangle sombre à coins 14 pt (pas une capsule).
+/// Bouton d'action principal : bloc d'encre à coins 16 pt, qui s'enfonce à l'appui.
 struct MicaboPrimaryButtonStyle: ButtonStyle {
     var tint: Color = MicaboColor.ink
     var fullWidth: Bool = true
@@ -10,15 +10,16 @@ struct MicaboPrimaryButtonStyle: ButtonStyle {
             .font(MicaboFont.cardTitle)
             .foregroundStyle(MicaboColor.onInk)
             .frame(maxWidth: fullWidth ? .infinity : nil)
-            .padding(.vertical, 15)
-            .padding(.horizontal, fullWidth ? 0 : 22)
+            .padding(.vertical, 16)
+            .padding(.horizontal, fullWidth ? 0 : 24)
             .background(tint, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .opacity(configuration.isPressed ? 0.88 : 1)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .opacity(configuration.isPressed ? 0.9 : 1)
             .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 
-/// Bouton secondaire : fond blanc, bordure fine, mêmes coins 14 pt.
+/// Bouton secondaire : surface blanche sans bordure, le fond ivoire suffit à la détacher.
 struct MicaboSecondaryButtonStyle: ButtonStyle {
     var fullWidth: Bool = true
 
@@ -27,14 +28,12 @@ struct MicaboSecondaryButtonStyle: ButtonStyle {
             .font(MicaboFont.cardTitle)
             .foregroundStyle(MicaboColor.ink)
             .frame(maxWidth: fullWidth ? .infinity : nil)
-            .padding(.vertical, 15)
-            .padding(.horizontal, fullWidth ? 0 : 22)
+            .padding(.vertical, 16)
+            .padding(.horizontal, fullWidth ? 0 : 24)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
-            }
-            .opacity(configuration.isPressed ? 0.88 : 1)
+            .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 
@@ -71,19 +70,21 @@ enum MicaboCircleStyle: Equatable {
         case .light: MicaboColor.surface
         case .dark: MicaboColor.ink
         case .glass: Color.black.opacity(0.32)
-        case .tinted: Color.white.opacity(0.7)
+        case .tinted: Color.white.opacity(0.75)
         }
     }
 
     var shadowOpacity: Double {
         switch self {
-        case .light, .dark: 0.08
+        case .light: 0.05
+        case .dark: 0.12
         case .glass, .tinted: 0
         }
     }
 }
 
-/// Pastille circulaire. Utilisée seule dans un `Menu`, ou enveloppée par `MicaboCircleButton`.
+/// Pastille circulaire blanche, sans bordure. Utilisée seule dans un `Menu`,
+/// ou enveloppée par `MicaboCircleButton`.
 struct MicaboCircleIcon: View {
     let systemImage: String
     var style: MicaboCircleStyle = .light
@@ -91,16 +92,11 @@ struct MicaboCircleIcon: View {
 
     var body: some View {
         Image(systemName: systemImage)
-            .font(.system(size: size * 0.36, weight: .semibold))
+            .font(.system(size: size * 0.38, weight: .medium))
             .foregroundStyle(style.foreground)
             .frame(width: size, height: size)
             .background(style.background, in: Circle())
-            .overlay {
-                if style == .light {
-                    Circle().strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
-                }
-            }
-            .shadow(color: Color.black.opacity(style.shadowOpacity), radius: 8, x: 0, y: 3)
+            .shadow(color: Color.black.opacity(style.shadowOpacity), radius: 10, x: 0, y: 4)
     }
 }
 

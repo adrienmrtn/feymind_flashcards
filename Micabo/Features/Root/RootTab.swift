@@ -29,6 +29,17 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         case .profile: "person"
         }
     }
+
+    /// Variante pleine, affichée quand l'onglet est actif.
+    var selectedSystemImage: String {
+        switch self {
+        case .today: "arrow.triangle.2.circlepath"
+        case .courses: "books.vertical.fill"
+        case .dashboard: "house.fill"
+        case .library: "book.fill"
+        case .profile: "person.fill"
+        }
+    }
 }
 
 /// Onglet actif, partagé pour permettre un basculement programmatique.

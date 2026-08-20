@@ -43,15 +43,17 @@ struct TodayView: View {
                             header
                             emptyState
                         }
-                        .padding(.bottom, MicaboSpacing.xl)
+                        .padding(.horizontal, MicaboSpacing.screen)
+                        .padding(.bottom, MicaboSpacing.xxl)
                     }
+                    .scrollIndicators(.hidden)
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                             header
                             countBlock
-                            breakdownCard
                             coursesSection
+                            breakdownSection
                         }
                         .padding(.horizontal, MicaboSpacing.screen)
                         .padding(.bottom, MicaboLayout.bottomBarClearance)
@@ -60,6 +62,7 @@ struct TodayView: View {
                     .overlay(alignment: .bottom) {
                         MicaboBottomBar {
                             Button {
+                                Haptics.medium()
                                 showStudy = true
                             } label: {
                                 Text("Commencer la session")
@@ -83,31 +86,20 @@ struct TodayView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(StudyStats.formattedDate())
-                .font(MicaboFont.hanken(13, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
-
-            Text("Réviser")
-                .font(MicaboFont.hanken(26, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .tracking(-0.4)
-        }
-        .padding(.horizontal, dueCards.isEmpty ? MicaboSpacing.screen : 0)
-        .padding(.top, MicaboSpacing.xs)
+        MicaboScreenHeader(title: "Réviser", eyebrow: StudyStats.formattedDate())
+            .padding(.top, MicaboSpacing.xs)
     }
 
     /// Le chiffre du jour, posé à même le fond ivoire : pas de panneau sombre.
     private var countBlock: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: 14) {
                 Text("\(dueCards.count)")
-                    .font(MicaboFont.hanken(72, weight: .bold))
-                    .tracking(-1.5)
+                    .font(MicaboFont.hanken(76, weight: .bold))
+                    .tracking(-2)
                     .foregroundStyle(MicaboColor.ink)
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
-                    .padding(.trailing, 6)
 
                 Text(dueCards.count > 1 ? "cartes\nà revoir" : "carte\nà revoir")
                     .font(MicaboFont.hanken(16, weight: .medium))
@@ -127,88 +119,58 @@ struct TodayView: View {
         }
     }
 
-    private var breakdownCard: some View {
-        VStack(spacing: 0) {
-            breakdownRow(color: Color(hex: 0xC9B98A), label: "En révision", count: reviewCount)
-            breakdownRow(color: MicaboColor.accent, label: "En apprentissage", count: learningCount)
-            breakdownRow(color: Color(hex: 0x8A857B), label: "Nouvelles", count: newCount, isLast: true)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 4)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
-    }
-
-    private func breakdownRow(color: Color, label: String, count: Int, isLast: Bool = false) -> some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                Circle()
-                    .fill(count > 0 ? color : MicaboColor.strokeStrong)
-                    .frame(width: 8, height: 8)
-
-                Text(label)
-                    .font(MicaboFont.hanken(14, weight: .medium))
-                    .foregroundStyle(count > 0 ? MicaboColor.ink : MicaboColor.inkTertiary)
-
-                Spacer(minLength: 0)
-
-                Text("\(count)")
-                    .font(MicaboFont.hanken(14, weight: .semibold))
-                    .foregroundStyle(count > 0 ? MicaboColor.ink : MicaboColor.inkTertiary)
-                    .monospacedDigit()
-            }
-            .padding(.vertical, 12)
-
-            if !isLast {
-                Rectangle()
-                    .fill(MicaboColor.stroke)
-                    .frame(height: 1)
-            }
-        }
-    }
-
     @ViewBuilder
     private var coursesSection: some View {
         let entries = dueByCourse
         if !entries.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
-                MicaboSectionHeader(title: "Au programme")
+            VStack(alignment: .leading, spacing: 8) {
+                MicaboSectionCaption(text: "Au programme")
 
-                VStack(spacing: 12) {
-                    ForEach(entries, id: \.course.id) { entry in
-                        Button {
+                MicaboRowGroup(
+                    rows: entries.map { entry in
+                        MicaboRow.courseDue(entry.course, dueCount: entry.count) {
                             path.append(entry.course)
-                        } label: {
-                            HStack(spacing: MicaboSpacing.sm) {
-                                CourseThumb(course: entry.course)
-
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(entry.course.title)
-                                        .font(MicaboFont.hanken(14, weight: .semibold))
-                                        .foregroundStyle(MicaboColor.ink)
-                                        .lineLimit(1)
-
-                                    Text("\(entry.count) carte\(entry.count > 1 ? "s" : "") à revoir")
-                                        .font(MicaboFont.hanken(12, weight: .regular))
-                                        .foregroundStyle(MicaboColor.inkTertiary)
-                                }
-
-                                Spacer(minLength: 0)
-
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(Color(hex: 0xC9C3B8))
-                            }
-                            .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
                     }
-                }
+                )
             }
         }
+    }
+
+    private var breakdownSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Répartition")
+
+            VStack(spacing: 0) {
+                breakdownRow(color: MicaboColor.caution, label: "En révision", count: reviewCount)
+                MicaboHairline(inset: MicaboSpacing.md)
+                breakdownRow(color: MicaboColor.accent, label: "En apprentissage", count: learningCount)
+                MicaboHairline(inset: MicaboSpacing.md)
+                breakdownRow(color: MicaboColor.inkTertiary, label: "Nouvelles", count: newCount)
+            }
+            .micaboGroup()
+        }
+    }
+
+    private func breakdownRow(color: Color, label: String, count: Int) -> some View {
+        HStack(spacing: 11) {
+            Circle()
+                .fill(count > 0 ? color : MicaboColor.surfaceSunken)
+                .frame(width: 9, height: 9)
+
+            Text(label)
+                .font(MicaboFont.hanken(15, weight: .medium))
+                .foregroundStyle(count > 0 ? MicaboColor.ink : MicaboColor.inkTertiary)
+
+            Spacer(minLength: 0)
+
+            Text("\(count)")
+                .font(MicaboFont.hanken(15, weight: .semibold))
+                .foregroundStyle(count > 0 ? MicaboColor.ink : MicaboColor.inkTertiary)
+                .monospacedDigit()
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, MicaboSpacing.md)
     }
 
     private var dueByCourse: [(course: Course, count: Int)] {
@@ -227,20 +189,20 @@ struct TodayView: View {
             let usable = max(0, proxy.size.width - spacing * 2)
 
             HStack(spacing: spacing) {
-                segment(color: Color(hex: 0xC9B98A), count: reviewCount, total: total, usable: usable)
+                segment(color: MicaboColor.caution, count: reviewCount, total: total, usable: usable)
                 segment(color: MicaboColor.accent, count: learningCount, total: total, usable: usable)
-                segment(color: Color(hex: 0xD8D2C6), count: newCount, total: total, usable: usable)
+                segment(color: MicaboColor.surfaceSunken, count: newCount, total: total, usable: usable)
             }
         }
-        .frame(height: 6)
+        .frame(height: 7)
     }
 
     @ViewBuilder
     private func segment(color: Color, count: Int, total: Int, usable: CGFloat) -> some View {
         if count > 0 {
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
+            Capsule()
                 .fill(color)
-                .frame(width: max(4, usable * CGFloat(count) / CGFloat(total)))
+                .frame(width: max(5, usable * CGFloat(count) / CGFloat(total)))
         }
     }
 
@@ -257,28 +219,20 @@ struct TodayView: View {
             }
 
             if !nextDueSummary.isEmpty {
-                VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-                    MicaboSectionHeader(title: "Prochaines échéances")
+                VStack(alignment: .leading, spacing: 8) {
+                    MicaboSectionCaption(text: "Prochaines échéances")
 
-                    ForEach(nextDueSummary, id: \.course.id) { entry in
-                        HStack(spacing: MicaboSpacing.sm) {
-                            CourseThumb(course: entry.course)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(entry.course.title)
-                                    .font(MicaboFont.bodyEmphasis)
-                                    .foregroundStyle(MicaboColor.ink)
-                                    .lineLimit(1)
-                                Text(entry.label)
-                                    .font(MicaboFont.micro)
-                                    .foregroundStyle(MicaboColor.inkTertiary)
-                            }
-
-                            Spacer(minLength: 0)
+                    MicaboRowGroup(
+                        rows: nextDueSummary.map { entry in
+                            MicaboRow(
+                                tile: MicaboTile.course(entry.course),
+                                title: entry.course.title,
+                                subtitle: entry.label,
+                                accessory: .none
+                            )
                         }
-                    }
+                    )
                 }
-                .padding(.horizontal, MicaboSpacing.screen)
             }
         }
     }
@@ -287,18 +241,19 @@ struct TodayView: View {
         VStack(spacing: MicaboSpacing.sm) {
             Image(systemName: "checkmark")
                 .font(.system(size: 26, weight: .semibold))
-                .foregroundStyle(Color(hex: 0x5C8571))
-                .frame(width: 74, height: 74)
-                .background(Color(hex: 0xE4ECE6), in: Circle())
+                .foregroundStyle(MicaboColor.positive)
+                .frame(width: 76, height: 76)
+                .background(MicaboColor.positiveSoft, in: Circle())
 
             Text("Tout est à jour")
-                .font(MicaboFont.hanken(18, weight: .semibold))
+                .font(MicaboFont.hanken(19, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
+                .tracking(-0.3)
                 .padding(.top, MicaboSpacing.xxs)
 
             Text("Aucune carte due aujourd'hui. Revenez demain.")
                 .font(MicaboFont.body)
-                .foregroundStyle(MicaboColor.inkTertiary)
+                .foregroundStyle(MicaboColor.inkSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 300)
         }

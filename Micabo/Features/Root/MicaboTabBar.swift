@@ -20,13 +20,15 @@ struct MicaboTabBar: View {
                         router.selection = tab
                     }
                 } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: tab.systemImage)
-                            .font(.system(size: 20, weight: .regular))
+                    let isSelected = tab == router.selection
+                    VStack(spacing: 5) {
+                        Image(systemName: isSelected ? tab.selectedSystemImage : tab.systemImage)
+                            .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
+                            .contentTransition(.symbolEffect(.replace))
                         Text(tab.label)
-                            .font(MicaboFont.hanken(10, weight: .medium))
+                            .font(MicaboFont.hanken(10, weight: isSelected ? .semibold : .medium))
                     }
-                    .foregroundStyle(tab == router.selection ? MicaboColor.accent : MicaboColor.inkTertiary)
+                    .foregroundStyle(isSelected ? MicaboColor.accent : MicaboColor.inkTertiary)
                     .frame(maxWidth: .infinity)
                     .contentShape(Rectangle())
                 }
@@ -35,14 +37,14 @@ struct MicaboTabBar: View {
                 .accessibilityAddTraits(tab == router.selection ? .isSelected : [])
             }
         }
-        .padding(.top, 8)
+        .padding(.top, 10)
         .padding(.bottom, 2)
         .background {
             Rectangle()
                 .fill(.ultraThinMaterial)
-                .overlay(MicaboColor.canvas.opacity(0.55))
+                .overlay(MicaboColor.canvas.opacity(0.72))
                 .overlay(alignment: .top) {
-                    Rectangle().fill(MicaboColor.stroke).frame(height: 1)
+                    Rectangle().fill(MicaboColor.hairlineOnCanvas).frame(height: 0.5)
                 }
                 .ignoresSafeArea(edges: .bottom)
         }

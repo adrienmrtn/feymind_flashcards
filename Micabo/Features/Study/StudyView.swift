@@ -183,9 +183,7 @@ struct StudyCardFace: View {
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Rectangle()
-                    .fill(MicaboColor.stroke)
-                    .frame(height: 1)
+                MicaboHairline()
 
                 ScrollView {
                     Text(card.back)
@@ -220,12 +218,8 @@ struct StudyCardFace: View {
         }
         .padding(showAnswer ? 26 : 30)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: showAnswer ? .topLeading : .center)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
-        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 6)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
+        .shadow(color: Color.black.opacity(0.05), radius: 18, x: 0, y: 8)
     }
 
     /// Ampoule au pied de la question : un appui donne un coup de pouce sans livrer la réponse.
@@ -315,11 +309,11 @@ struct GradeButtons: View {
                     onSelect(rating)
                 } label: {
                     Text(rating.label)
-                        .font(MicaboFont.hanken(13, weight: .semibold))
+                        .font(MicaboFont.hanken(14, weight: .semibold))
                         .foregroundStyle(tint(for: rating))
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 13)
-                        .background(softTint(for: rating), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                        .padding(.vertical, 15)
+                        .background(softTint(for: rating), in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }
@@ -358,9 +352,9 @@ private struct CompletionView: View {
 
             Image(systemName: session.answeredCount > 0 ? "trophy" : "moon.zzz")
                 .font(.system(size: 28, weight: .medium))
-                .foregroundStyle(Color(hex: 0xB39A5A))
-                .frame(width: 76, height: 76)
-                .background(Color(hex: 0xF0ECE2), in: Circle())
+                .foregroundStyle(MicaboColor.caution)
+                .frame(width: 78, height: 78)
+                .background(MicaboColor.cautionSoft, in: Circle())
                 .padding(.bottom, 8)
 
             Text(session.answeredCount > 0 ? "Session terminée" : "Rien à réviser")
@@ -406,11 +400,7 @@ private struct CompletionView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
+        .micaboGroup(radius: MicaboRadius.button)
     }
 
     private var durationLabel: String {

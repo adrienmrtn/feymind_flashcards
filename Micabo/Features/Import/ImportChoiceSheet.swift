@@ -35,6 +35,25 @@ enum ImportKind: String, Identifiable {
         }
     }
 
+    var emoji: String {
+        switch self {
+        case .pdf: "📄"
+        case .photo: "📸"
+        case .docx: "📝"
+        case .text: "✍️"
+        }
+    }
+
+    /// Pastel de la tuile dans la feuille d'import.
+    var tilePastel: Color {
+        switch self {
+        case .pdf: Color(hex: 0xE7EFE9)
+        case .photo: Color(hex: 0xF5ECE3)
+        case .docx: Color(hex: 0xE8EDF3)
+        case .text: Color(hex: 0xEDEAF7)
+        }
+    }
+
     var swatchTint: Color {
         switch self {
         case .pdf: Color(hex: 0x47665A)
@@ -67,29 +86,35 @@ enum ImportKind: String, Identifiable {
 struct ImportChoiceSheet: View {
     var onSelect: (ImportKind) -> Void
 
+    private let kinds: [ImportKind] = [.pdf, .photo, .docx, .text]
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Nouveau cours")
-                        .font(MicaboFont.hanken(20, weight: .bold))
+                VStack(alignment: .leading, spacing: 5) {
+                    MicaboEyebrow(text: "Nouveau cours")
+
+                    Text("D'où part-on ?")
+                        .font(MicaboFont.hanken(25, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
-                        .tracking(-0.2)
+                        .tracking(MicaboTracking.tight)
                 }
-                .padding(.top, 22)
+                .padding(.top, 24)
 
-                VStack(spacing: MicaboSpacing.sm) {
-                    ForEach([ImportKind.pdf, ImportKind.photo, ImportKind.docx, ImportKind.text]) { kind in
-                        Button {
+                MicaboRowGroup(
+                    rows: kinds.map { kind in
+                        MicaboRow(
+                            tile: MicaboTile(glyph: .emoji(kind.emoji), background: kind.tilePastel),
+                            title: kind.title,
+                            subtitle: kind.subtitle,
+                            accessory: .chevron
+                        ) {
                             onSelect(kind)
-                        } label: {
-                            optionRow(kind)
                         }
-                        .buttonStyle(.plain)
                     }
+                )
 
-                    comingSoonRow
-                }
+                comingSoonRow
             }
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.bottom, MicaboSpacing.md)
@@ -99,55 +124,16 @@ struct ImportChoiceSheet: View {
         .micaboScreenBackground()
     }
 
-    private func optionRow(_ kind: ImportKind) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: kind.systemImage)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(kind.swatchTint)
-                .frame(width: 42, height: 42)
-                .background(kind.swatchBackground, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(kind.title)
-                    .font(MicaboFont.hanken(15, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                Text(kind.subtitle)
-                    .font(MicaboFont.hanken(12, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-            }
-
-            Spacer(minLength: 0)
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Color(hex: 0xC9C3B8))
-        }
-        .micaboCard(padding: 16, radius: MicaboRadius.button, elevated: false)
-        .contentShape(Rectangle())
-    }
-
     private var comingSoonRow: some View {
-        HStack(spacing: 14) {
-            Image(systemName: "book.closed")
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .frame(width: 42, height: 42)
-                .background(MicaboColor.surfaceSunken, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Depuis la bibliothèque")
-                    .font(MicaboFont.hanken(15, weight: .semibold))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                Text("Bientôt disponible")
-                    .font(MicaboFont.hanken(12, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .padding(16)
-        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-        .opacity(0.6)
+        MicaboRow(
+            tile: MicaboTile(glyph: .emoji("🌍"), background: MicaboColor.surfaceMuted),
+            title: "Depuis la bibliothèque",
+            subtitle: "Les cours de la communauté",
+            accessory: .badge("bientôt", .neutral)
+        )
+        .padding(.vertical, 2)
+        .micaboGroup()
+        .opacity(0.75)
     }
 }
 

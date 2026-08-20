@@ -31,7 +31,7 @@ struct GenerationOverlay: View {
                 .animation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true), value: pulse)
 
                 Text(title)
-                    .font(MicaboFont.screenTitle)
+                    .font(MicaboFont.hanken(25, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(MicaboTracking.tight)
                     .multilineTextAlignment(.center)

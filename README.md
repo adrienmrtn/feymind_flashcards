@@ -57,16 +57,32 @@ local. Quand aucun produit ne se charge, un repli affiche l'offre et laisse entr
 
 ## Direction visuelle
 
-- Fond ivoire (`#FAF9F6`), surfaces blanches, encre `#1A1917`, accent indigo `#5B5BD6`
+Du papier, pas des cartes empilées. Le fond ivoire est assez marqué pour que le blanc se
+détache seul : les surfaces n'ont donc ni bordure ni ombre appuyée. Tout ce qui se liste est
+une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un accessoire à droite.
+
+- Fond ivoire (`#F6F4ED`), surfaces blanches, encre `#191714`, accent indigo `#5B5BD6`
 - Typographie Hanken Grotesk embarquée (Regular / Medium / SemiBold / Bold)
-- Coins mesurés : 9 pt (miniatures), 14 pt (boutons), 18 pt (cartes) — pas de capsules partout
-- Barre d'onglets en pied d'écran ; bouton « + » flottant en bas à droite sur l'accueil
+- Coins : 13 pt (tuiles), 16 pt (boutons, recherche), 20 pt (blocs et cartes), 28 pt (feuilles)
+- Chaque écran s'ouvre sur un sur-titre en capitales grises puis un grand titre serré (32 pt)
+- Deux mises en page de liste : posée à même le fond avec un filet entre les rangées (Cours),
+  ou regroupée dans un bloc blanc sous un intitulé en capitales (Réglages, Au programme)
+- Pastilles d'état au bout d'une rangée : indigo pour ce qui attend, ocre pour une échéance,
+  gris pour « à jour »
+- L'indigo ne sert qu'à ce qui est actif : onglet courant, filtre choisi, cartes dues
+- Le seul aplat d'encre est le bloc « Réviser maintenant » de l'accueil
+- Barre d'onglets en pied d'écran, symbole plein sur l'onglet actif ; bouton « + » rond dans
+  l'en-tête des cours, et flottant en bas à droite sur l'accueil
 - Balayage horizontal natif (pages qui suivent le doigt) pour changer d'onglet ; geste de retour du système sur les écrans poussés
-- Réviser : le nombre de cartes dues posé à même le fond ivoire, puis la répartition et les cours concernés
-- Détail cours : en-tête pastel plat (emoji, titre, pastilles), résumé en carte juste en dessous
+- Réviser : le nombre de cartes dues posé à même le fond ivoire, puis les cours au programme et la répartition
+- Détail cours : retour rond sur le fond, vignette et titre, résumé, puis les cartes en bloc blanc
 - Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose pas
 - En session, une ampoule donne un indice : celui de la carte, sinon un début de réponse
 - Animations en cascade et retours haptiques centralisés dans `Haptics`
+
+Les composants vivent dans `Micabo/DesignSystem/Components/` : `MicaboRows.swift` (tuile,
+pastille, rangée, blocs, intitulés de section) et `MicaboHeaders.swift` (en-têtes d'écran,
+barre de retour, champ de recherche).
 
 ## Pile technique
 

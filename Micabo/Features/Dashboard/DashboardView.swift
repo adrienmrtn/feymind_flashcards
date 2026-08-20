@@ -41,7 +41,7 @@ struct DashboardView: View {
         NavigationStack(path: $path) {
             ZStack(alignment: .bottomTrailing) {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                         header
                             .padding(.horizontal, MicaboSpacing.screen)
 
@@ -64,6 +64,7 @@ struct DashboardView: View {
 
                             coursesSection
                                 .padding(.horizontal, MicaboSpacing.screen)
+                                .padding(.top, MicaboSpacing.xxs)
                         }
                     }
                     .padding(.top, MicaboSpacing.xs)
@@ -91,7 +92,7 @@ struct DashboardView: View {
             }
             .presentationDetents([.height(540)])
             .presentationDragIndicator(.visible)
-            .presentationCornerRadius(MicaboRadius.xxl)
+            .presentationCornerRadius(MicaboRadius.sheet)
         }
         .fullScreenCover(item: $activeImport) { kind in
             ImportView(kind: kind) { course in
@@ -107,17 +108,8 @@ struct DashboardView: View {
     // MARK: - Sections
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text(StudyStats.formattedDate())
-                .font(MicaboFont.hanken(13, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
-
-            Text(StudyStats.greeting())
-                .font(MicaboFont.hanken(26, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .tracking(-0.4)
-        }
-        .padding(.top, MicaboSpacing.xs)
+        MicaboScreenHeader(title: StudyStats.greeting(), eyebrow: StudyStats.formattedDate())
+            .padding(.top, MicaboSpacing.xs)
     }
 
     private var emptyState: some View {
@@ -132,7 +124,7 @@ struct DashboardView: View {
     }
 
     private var coursesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             MicaboSectionHeader(
                 title: "Vos cours",
                 actionTitle: "Tout voir"
@@ -142,16 +134,13 @@ struct DashboardView: View {
                 }
             }
 
-            VStack(spacing: 12) {
-                ForEach(visibleCourses.prefix(6)) { course in
-                    Button {
+            MicaboRowGroup(
+                rows: visibleCourses.prefix(6).map { course in
+                    MicaboRow.course(course) {
                         path.append(course)
-                    } label: {
-                        CourseRow(course: course)
                     }
-                    .buttonStyle(.plain)
                 }
-            }
+            )
         }
     }
 

@@ -16,57 +16,58 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                     header
                     identityCard
                     statsGrid
-                    activityChart
-                    friendsSection
+                    activityCard
+                    optionsSection
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, MicaboSpacing.xs)
-                .padding(.bottom, MicaboSpacing.xl)
+                .padding(.bottom, MicaboSpacing.xxl)
             }
+            .scrollIndicators(.hidden)
             .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
             .micaboTabBar()
             .reportsPaging(for: .profile, depth: 0)
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+                    .presentationCornerRadius(MicaboRadius.sheet)
             }
         }
     }
 
     private var header: some View {
-        HStack(alignment: .center) {
-            Text("Profil")
-                .font(MicaboFont.hanken(26, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .tracking(-0.4)
-
-            Spacer(minLength: MicaboSpacing.sm)
-
-            MicaboCircleButton(systemImage: "gearshape", accessibilityTitle: "Réglages") {
+        MicaboScreenHeader(title: "Profil", eyebrow: streakLabel) {
+            MicaboCircleButton(systemImage: "gearshape", size: 44, accessibilityTitle: "Réglages") {
                 showSettings = true
             }
         }
         .padding(.top, MicaboSpacing.xs)
     }
 
+    private var streakLabel: String {
+        let streak = StudyStats.streak(reviewDates: reviewDates)
+        guard streak > 0 else { return "Aucune série en cours" }
+        return "Série de \(streak) jour\(streak > 1 ? "s" : "")"
+    }
+
     private var identityCard: some View {
         HStack(spacing: 14) {
             Text("É")
-                .font(MicaboFont.hanken(20, weight: .semibold))
-                .foregroundStyle(Color(hex: 0x47665A))
+                .font(MicaboFont.hanken(21, weight: .semibold))
+                .foregroundStyle(MicaboColor.accent)
                 .frame(width: 54, height: 54)
-                .background(Color(hex: 0xE4ECE6), in: Circle())
+                .background(MicaboColor.accentSoft, in: Circle())
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text("Étudiant")
                     .font(MicaboFont.hanken(17, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
-                Text("Aucune donnée envoyée hors des appels IA")
-                    .font(MicaboFont.hanken(12, weight: .regular))
+                Text("Tout reste sur cet appareil")
+                    .font(MicaboFont.rowSubtitle)
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -74,22 +75,23 @@ struct ProfileView: View {
             Spacer(minLength: 0)
         }
         .padding(18)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .micaboGroup()
     }
 
     private var statsGrid: some View {
-        LazyVGrid(
-            columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
-            spacing: 10
-        ) {
-            statTile("\(StudyStats.streak(reviewDates: reviewDates))", "jours de série")
-            statTile(formattedCount(logs.count), "révisions")
-            statTile("\(courses.count)", "cours")
-            statTile("\(cards.count)", "flashcards")
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Statistiques")
+
+            LazyVGrid(
+                columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)],
+                spacing: 12
+            ) {
+                statTile("\(StudyStats.streak(reviewDates: reviewDates))", "jours de série")
+                statTile(formattedCount(logs.count), "révisions")
+                statTile("\(courses.count)", "cours")
+                statTile("\(cards.count)", "flashcards")
+            }
         }
     }
 
@@ -101,84 +103,75 @@ struct ProfileView: View {
     }
 
     private func statTile(_ value: String, _ label: String) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 4) {
             Text(value)
-                .font(MicaboFont.hanken(22, weight: .bold))
+                .font(MicaboFont.hanken(26, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
-                .tracking(-0.3)
+                .tracking(MicaboTracking.tight)
             Text(label)
-                .font(MicaboFont.hanken(11, weight: .medium))
-                .foregroundStyle(Color(hex: 0x9A958A))
+                .font(MicaboFont.hanken(12, weight: .medium))
+                .foregroundStyle(MicaboColor.inkTertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 14)
-        .padding(.horizontal, 12)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
+        .padding(.vertical, 16)
+        .padding(.horizontal, 15)
+        .micaboGroup(radius: MicaboRadius.md)
     }
 
-    private var activityChart: some View {
+    private var activityCard: some View {
         let counts = StudyStats.dailyCounts(reviewDates: reviewDates, days: 14)
         let maximum = max(counts.max() ?? 1, 1)
         let total = counts.reduce(0, +)
 
-        return VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("14 derniers jours")
-                    .font(MicaboFont.hanken(13, weight: .semibold))
+        return VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "14 derniers jours")
+
+            VStack(alignment: .leading, spacing: 16) {
+                Text("\(total) révision\(total > 1 ? "s" : "")")
+                    .font(MicaboFont.hanken(20, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
-                Spacer()
-                Text("\(total) révisions")
-                    .font(MicaboFont.hanken(12, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-            }
+                    .tracking(MicaboTracking.tight)
 
-            HStack(alignment: .bottom, spacing: 4) {
-                ForEach(Array(counts.enumerated()), id: \.offset) { index, count in
-                    let isToday = index == counts.count - 1
-                    let isPeak = count == maximum && count > 0 && !isToday
-                    RoundedRectangle(cornerRadius: 2, style: .continuous)
-                        .fill(barColor(count: count, isToday: isToday, isPeak: isPeak))
-                        .frame(height: max(4, CGFloat(count) / CGFloat(maximum) * 52))
-                        .frame(maxWidth: .infinity)
+                HStack(alignment: .bottom, spacing: 5) {
+                    ForEach(Array(counts.enumerated()), id: \.offset) { index, count in
+                        let isToday = index == counts.count - 1
+                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                            .fill(barColor(count: count, isToday: isToday))
+                            .frame(height: max(4, CGFloat(count) / CGFloat(maximum) * 56))
+                            .frame(maxWidth: .infinity)
+                    }
                 }
+                .frame(height: 56, alignment: .bottom)
             }
-            .frame(height: 52, alignment: .bottom)
-        }
-        .padding(16)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .micaboGroup()
         }
     }
 
-    private func barColor(count: Int, isToday: Bool, isPeak: Bool) -> Color {
-        if count == 0 { return MicaboColor.surfaceSunken }
-        if isToday { return MicaboColor.ink }
-        if isPeak { return MicaboColor.accent }
-        return MicaboColor.surfaceSunken
+    private func barColor(count: Int, isToday: Bool) -> Color {
+        if count == 0 { return MicaboColor.surfaceMuted }
+        if isToday { return MicaboColor.accent }
+        return MicaboColor.accent.opacity(0.35)
     }
 
-    private var friendsSection: some View {
-        HStack {
-            Text("Amis")
-                .font(MicaboFont.hanken(13, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkSecondary)
-            Spacer()
-            Text("Bientôt")
-                .font(MicaboFont.hanken(12, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
-        }
-        .padding(16)
-        .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
-                .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
-                .foregroundStyle(Color(hex: 0xDDD6C8))
-        }
+    private var optionsSection: some View {
+        MicaboSettingsSection(
+            caption: "Compte",
+            rows: [
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("⚙️"), background: MicaboColor.tilePastels[0]),
+                    title: "Réglages",
+                    accessory: .chevron,
+                    action: { showSettings = true }
+                ),
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("👋"), background: MicaboColor.tilePastels[2]),
+                    title: "Amis",
+                    subtitle: "Comparer vos séries",
+                    accessory: .badge("bientôt", .neutral)
+                )
+            ]
+        )
     }
 }
