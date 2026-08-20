@@ -28,15 +28,26 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 | --- | --- |
 | Accroche | bienvenue, langue, annonce des questions |
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli, matières, établissement, preuve sociale, temps quotidien |
-| Démonstration | courbe de mémorisation, répétition espacée, import → génération → révision en trois écrans manipulables |
+| Démonstration | courbe de mémorisation, répétition espacée, dépôt → génération → révision en trois écrans manipulables |
 | Sortie | projection annuelle, notifications, personnalisation, essai de 3 jours, paywall |
 
-Les trois écrans de démonstration se passent de bouton d'avancement : c'est le geste qui fait
-avancer. L'import enchaîne à la fin de l'analyse, la génération garde son bouton en place mais
-en état chargement le temps que les cartes s'écrivent, et la note donnée à la carte vaut
-validation. L'écran de répétition espacée se découvre au doigt : un appui par bloc, sur le
-contenu **ou** sur l'invitation en bas d'écran, qui est un vrai bouton ; le second appui
-termine aussi la mise en gras du texte d'Ebbinghaus si elle court encore.
+### Les trois écrans de démonstration
+
+Ils se traversent en dix secondes, sans bouton d'avancement : c'est le geste qui fait avancer.
+Le document d'exemple est embarqué (`OnboardingDemo`) : **un chapitre de SVT d'une page sur le
+cycle de l'eau**, avec sa figure en trois temps, choisi pour être reconnaissable à tous les
+niveaux. Aucune permission n'est demandée, aucun appel réseau n'est fait, rien n'est
+enregistré : la démonstration tourne en avion.
+
+| Écran | Geste | Ce qui se passe |
+| --- | --- | --- |
+| Dépôt | glisser la vignette dans la zone en pointillés | La vignette ressemble à un vrai PDF (bandeau de fichier, titre, deux phrases, figure). Après deux secondes sans geste elle respire, et un simple appui fait la même chose. Le dépôt enchaîne. |
+| Génération | aucun | Trois secondes : la page se balaye, trois étapes se cochent, et la page se transforme en éventail de trois cartes. Aucune latence n'est mimée. |
+| Révision | appuyer sur la carte, puis se noter | Une pile de trois cartes, une ligne au recto, une ligne au verso. La note affiche la prochaine échéance et enchaîne. Deux phrases d'explication au maximum. |
+
+L'écran de répétition espacée, lui, se découvre au doigt : un appui par bloc, sur le contenu
+**ou** sur l'invitation en bas d'écran, qui est un vrai bouton ; le second appui termine aussi
+la mise en gras du texte d'Ebbinghaus si elle court encore.
 
 Deux règles valent pour tout le tunnel :
 
@@ -63,8 +74,12 @@ remplacement ni excuse. Quand il s'affiche, l'effectif annoncé va de 1 à 10 pe
 dérivé de l'`id` : il ne bouge pas d'un affichage à l'autre.
 
 L'écran courbe s'appuie sur `RetentionCurve` : une décroissance exponentielle de la rétention, remise
-à 100 % à chaque révision, avec une stabilité qui augmente à chaque passage. Les travaux cités
-(Ebbinghaus 1885, Landauer & Bjork 1978) sont réels et rapportés sans arrondir leurs résultats.
+à 100 % à chaque révision, avec une stabilité qui augmente à chaque passage. Il doit se lire en trois
+secondes, sans paragraphe : un titre qui annonce ce qu'on regarde, l'intervalle réel étiqueté au-dessus
+de chaque point de révision (1 j, 3 j, 7 j, 16 j), et deux lignes de légende sous le graphe — une par
+courbe, « sans révision tu oublies » et « chaque rappel rallonge ta mémoire ». L'écran suivant reprend
+ces intervalles en liste, sous un titre qui dit ce qu'elle représente. Les travaux cités (Ebbinghaus
+1885, Landauer & Bjork 1978) sont réels et rapportés sans arrondir leurs résultats.
 
 Le paywall utilise `SubscriptionStoreView` de StoreKit 2. Aucun produit n'est publié :
 `Micabo/Resources/Micabo.storekit`, référencé par le scheme, permet de faire tourner l'écran en
