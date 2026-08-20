@@ -72,7 +72,7 @@ struct SchoolPeersStepView: View {
     }
 
     private var countBlock: some View {
-        VStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 4) {
             Text("\(peers)")
                 .font(MicaboFont.hanken(72, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
@@ -86,11 +86,10 @@ struct SchoolPeersStepView: View {
             )
             .font(MicaboFont.hanken(16, weight: .medium))
             .foregroundStyle(MicaboColor.inkSecondary)
-            .multilineTextAlignment(.center)
             .lineSpacing(3)
             .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, MicaboSpacing.sm)
     }
 

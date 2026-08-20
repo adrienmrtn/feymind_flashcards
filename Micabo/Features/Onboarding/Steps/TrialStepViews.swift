@@ -1,6 +1,10 @@
 import SwiftUI
 
 /// Écran 16 : annonce de l'essai gratuit.
+///
+/// Composition à part dans le parcours : le visuel déborde de la marge droite et le texte
+/// se lit en bas, fer à gauche comme partout. Il tombe entre l'écran indigo de
+/// personnalisation et la liste des jalons, ce qui casse la répétition des mises en page.
 struct TrialOfferStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -8,53 +12,39 @@ struct TrialOfferStepView: View {
     @State private var haloScale = 0.8
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: 0) {
+            Spacer(minLength: MicaboSpacing.md)
 
-            VStack(spacing: 24) {
-                ZStack {
-                    Circle()
-                        .fill(MicaboColor.infoSoft)
-                        .frame(width: 132, height: 132)
-                        .scaleEffect(haloScale)
-                        .opacity(0.8)
+            gift
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.trailing, -54)
 
-                    Image(systemName: "gift.fill")
-                        .font(.system(size: 40, weight: .medium))
-                        .foregroundStyle(MicaboColor.onInk)
-                        .frame(width: 96, height: 96)
-                        .background(MicaboColor.ink, in: Circle())
-                        .scaleEffect(giftScale)
-                }
+            Spacer(minLength: MicaboSpacing.md)
 
-                VStack(spacing: 12) {
-                    Text("3 jours offerts")
-                        .font(MicaboFont.hanken(13, weight: .semibold))
-                        .tracking(1.4)
-                        .foregroundStyle(MicaboColor.accent)
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 12)
-                        .background(MicaboColor.infoSoft, in: Capsule())
+            VStack(alignment: .leading, spacing: 12) {
+                Text("3 jours offerts")
+                    .font(MicaboFont.hanken(13, weight: .semibold))
+                    .tracking(1.4)
+                    .foregroundStyle(MicaboColor.accent)
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+                    .background(MicaboColor.accentSoft, in: Capsule())
 
-                    Text("On t'offre Micabo\npendant 3 jours.")
-                        .font(MicaboFont.hanken(32, weight: .bold))
-                        .foregroundStyle(MicaboColor.ink)
-                        .tracking(-0.8)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
+                Text("On t'offre Micabo\npendant 3 jours.")
+                    .font(MicaboFont.hanken(32, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .tracking(-0.8)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                    Text("Cours illimités, génération de cartes, révisions : tout est ouvert, sans engagement.")
-                        .font(MicaboFont.hanken(15, weight: .regular))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(3)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, MicaboSpacing.xs)
-                }
+                Text("Cours illimités, génération de cartes, révisions : tout est ouvert, sans engagement.")
+                    .font(MicaboFont.hanken(15, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, MicaboSpacing.screen)
-
-            Spacer(minLength: 0)
+            .padding(.bottom, MicaboSpacing.lg)
 
             MicaboBottomBar {
                 OnboardingContinueButton {
@@ -63,6 +53,22 @@ struct TrialOfferStepView: View {
             }
         }
         .onAppear(perform: animateIn)
+    }
+
+    private var gift: some View {
+        ZStack {
+            Circle()
+                .fill(MicaboColor.accentSoft)
+                .frame(width: 210, height: 210)
+                .scaleEffect(haloScale)
+
+            Image(systemName: "gift.fill")
+                .font(.system(size: 52, weight: .medium))
+                .foregroundStyle(MicaboColor.onInk)
+                .frame(width: 124, height: 124)
+                .background(MicaboColor.ink, in: Circle())
+                .scaleEffect(giftScale)
+        }
     }
 
     private func animateIn() {
@@ -119,21 +125,21 @@ struct TrialReminderStepView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
 
-            VStack(spacing: 26) {
+            VStack(alignment: .leading, spacing: 22) {
                 RingingBell()
 
-                VStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 10) {
                     Text("On te prévient un jour\navant la fin.")
                         .font(MicaboFont.hanken(28, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(-0.6)
-                        .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text("Tu gardes la main du début à la fin.")
                         .font(MicaboFont.hanken(15, weight: .regular))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(spacing: 0) {
                     ForEach(Array(milestones.enumerated()), id: \.element.id) { index, milestone in
@@ -148,11 +154,7 @@ struct TrialReminderStepView: View {
                     }
                 }
                 .padding(16)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-                .overlay {
-                    RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
-                        .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-                }
+                .micaboGroup()
             }
             .padding(.horizontal, MicaboSpacing.screen)
 

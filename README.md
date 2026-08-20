@@ -62,7 +62,7 @@ L'écran de répétition espacée, lui, se découvre au doigt : un appui par blo
 **ou** sur l'invitation en bas d'écran, qui est un vrai bouton ; le second appui termine aussi
 la mise en gras du texte d'Ebbinghaus si elle court encore.
 
-Deux règles valent pour tout le tunnel :
+Trois règles valent pour tout le tunnel :
 
 - **la jauge est unique** — même couleur (`MicaboColor.progress`) et même barre du premier
   écran au paywall, sans jamais disparaître. Tout ce qui indique une progression ailleurs dans
@@ -70,6 +70,19 @@ Deux règles valent pour tout le tunnel :
 - **aucun bouton ne reste muet** — l'enfoncement (échelle 0,975) part en 80 ms, et un bouton
   derrière lequel tourne une opération passe en état chargement, annonce ce qu'il fait et
   refuse les appuis suivants.
+- **deux écrans voisins ne se ressemblent pas** — les compositions alternent (plein cadre,
+  visuel qui déborde, liste, grand chiffre, graphe) et trois écrans quittent le crème :
+  l'accroche et la courbe de l'oubli passent sur l'encre (`OnboardingSurface.ink`), la
+  personnalisation sur l'indigo. En revanche le texte reste **fer à gauche** partout et le
+  bouton **collé au bas de la zone sûre** : la variété s'arrête aux couleurs et aux volumes.
+
+`OnboardingScaffold` porte cette bascule : `surface:` change le fond, la couleur des textes,
+celle du bouton (clair sur fond sombre) et le fondu de la barre du bas. Les écrans hors
+scaffold posent la même valeur dans `\.onboardingSurface`.
+
+L'écran de personnalisation est le seul indigo plein cadre. Il fait tourner trois signaux
+d'activité en même temps — une barre qui avance image par image, un pourcentage qui compte, et
+une accroche qui change à chaque étape — pour qu'on ne puisse jamais le croire figé.
 
 Les réponses sont écrites au fil de l'eau dans `OnboardingPreferences` (clés `micabo.onboarding.*`)
 et survivent donc à une fermeture en cours de route. `Réglages` propose **Refaire l'onboarding**,
@@ -214,6 +227,22 @@ format en blocs structurés, seuls les textes sont conservés.
 
 Les quatre boutons `À revoir`, `Difficile`, `Correct`, `Facile` affichent l'intervalle réel qu'ils
 appliqueront. Les tests de `MicaboTests/SM2SchedulerTests.swift` verrouillent ces valeurs.
+
+### Le rythme quotidien commande la charge
+
+`Micabo/SRS/DailyLoad.swift` fait le lien entre le temps que l'utilisateur s'accorde et ce que
+l'app lui sert — sans ce lien, le curseur de l'onboarding ne serait qu'un décor.
+
+- le curseur va de **5 min à 2 h**, par paliers de 5 minutes jusqu'à la demi-heure puis de
+  15 minutes au-delà (il glisse sur les paliers, pas sur les minutes)
+- il affiche le rythme correspondant (« le rythme de croisière », « le rythme intensif »…)
+- il en dérive un **plafond de cartes neuves par jour** : une carte neuve revient huit fois
+  avant d'être acquise, donc `minutes × 4 ÷ 8`. Quinze minutes donnent 8 cartes neuves,
+  deux heures en donnent 60.
+- ce plafond est appliqué pour de vrai par `StudyQueueBuilder.Limits.daily()` dans chaque
+  session, il est réglable dans `Réglages › Révision`, et l'écran Réviser compte la file
+  plafonnée — il annonce même les cartes neuves gardées pour les jours suivants
+- `MicaboTests/DailyLoadTests.swift` verrouille les paliers, les libellés et le plafond
 
 ## Structure
 

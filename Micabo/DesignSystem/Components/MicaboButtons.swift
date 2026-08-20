@@ -24,14 +24,16 @@ extension View {
 }
 
 /// Bouton d'action principal : bloc d'encre à coins 16 pt, qui s'enfonce à l'appui.
+/// Sur un écran sombre, on inverse : surface claire, texte encre.
 struct MicaboPrimaryButtonStyle: ButtonStyle {
     var tint: Color = MicaboColor.ink
+    var foreground: Color = MicaboColor.onInk
     var fullWidth: Bool = true
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(MicaboFont.cardTitle)
-            .foregroundStyle(MicaboColor.onInk)
+            .foregroundStyle(foreground)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .padding(.vertical, 16)
             .padding(.horizontal, fullWidth ? 0 : 24)
@@ -150,14 +152,16 @@ struct MicaboCircleButton: View {
     }
 }
 
-/// Zone d'action ancrée en bas d'un écran, avec fondu vers le fond.
+/// Zone d'action ancrée en bas d'un écran, avec fondu vers le fond. Le bouton est
+/// toujours collé au bas de la zone sûre, quel que soit le fond de l'écran.
 struct MicaboBottomBar<Content: View>: View {
+    var background: Color = MicaboColor.canvas
     @ViewBuilder var content: Content
 
     var body: some View {
         VStack(spacing: 0) {
             LinearGradient(
-                colors: [MicaboColor.canvas.opacity(0), MicaboColor.canvas],
+                colors: [background.opacity(0), background],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -166,7 +170,7 @@ struct MicaboBottomBar<Content: View>: View {
             content
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, MicaboSpacing.sm)
-                .background(MicaboColor.canvas)
+                .background(background)
         }
     }
 }

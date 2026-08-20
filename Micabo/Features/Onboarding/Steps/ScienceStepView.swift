@@ -23,7 +23,8 @@ struct ScienceStepView: View {
             eyebrow: "Répétition espacée",
             title: "La courbe de l'oubli, prise à contre-pied.",
             titleSize: 27,
-            scrolls: false
+            scrolls: false,
+            surface: .ink
         ) {
             VStack(alignment: .leading, spacing: 14) {
                 if revealed >= 1 {
