@@ -171,14 +171,16 @@ struct DemoWriteStepView: View {
         }
 
         for index in steps.indices {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7 + Double(index) * 0.75) {
+            // La première étape se coche à la fin du balayage, pas avant : sinon la
+            // lueur de lecture disparaît en pleine descente.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.85 + Double(index) * 0.75) {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     completedSteps = index + 1
                 }
                 Haptics.tick()
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9 + Double(index) * 0.75) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.05 + Double(index) * 0.75) {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) {
                     cardsOut = min(index + 1, cards.count)
                 }
