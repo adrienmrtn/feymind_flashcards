@@ -1,7 +1,14 @@
 import SwiftUI
 
-/// Bibliothèque publique des cours partagés.
-/// Vide tant que l'authentification n'est pas branchée.
+/// Disponibilité de la bibliothèque partagée. Elle attend l'authentification : tant
+/// que ce drapeau est faux, le sous-onglet « Découvrir » de l'onglet Cours n'existe
+/// pas — un onglet qui ne mène à rien est un appui perdu.
+enum LibraryAccess {
+    static let isAvailable = false
+}
+
+/// Bibliothèque publique des cours partagés, affichée en sous-onglet de Cours.
+/// Le contenu est un aperçu : rien n'est cliquable tant que la bibliothèque dort.
 struct LibraryView: View {
     private struct SubjectPreview: Identifiable {
         let name: String
@@ -18,35 +25,15 @@ struct LibraryView: View {
     ]
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                    header
-                    subjectsPreview
-                    waitlistNote
-                }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, MicaboSpacing.xs)
-                .padding(.bottom, MicaboSpacing.xxl)
-            }
-            .scrollIndicators(.hidden)
-            .micaboScreenBackground()
-            .toolbar(.hidden, for: .navigationBar)
-            .micaboTabBar()
-            .reportsPaging(for: .library, depth: 0)
-        }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            MicaboScreenHeader(title: "Bibliothèque", eyebrow: "Communauté")
-
-            Text("Des milliers de jeux de cartes partagés, prêts à importer.")
+        VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+            Text("Des milliers de jeux de cartes partagés, prêts à reprendre.")
                 .font(MicaboFont.body)
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            subjectsPreview
+            waitlistNote
         }
-        .padding(.top, MicaboSpacing.xs)
     }
 
     private var subjectsPreview: some View {
@@ -78,7 +65,7 @@ struct LibraryView: View {
         MicaboRow(
             tile: MicaboTile(glyph: .emoji("🔒"), background: MicaboColor.surfaceMuted),
             title: "Connexion requise",
-            subtitle: "La bibliothèque n'est pas encore active.",
+            subtitle: "La bibliothèque n'est pas encore ouverte.",
             accessory: .none
         )
         .padding(.vertical, 2)

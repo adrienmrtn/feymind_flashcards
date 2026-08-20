@@ -171,20 +171,3 @@ struct MicaboBottomBar<Content: View>: View {
     }
 }
 
-/// Bouton « + » flottant de l'accueil (bas droite, au-dessus de la tab bar).
-struct MicaboFloatingAddButton: View {
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "plus")
-                .font(.system(size: 22, weight: .regular))
-                .foregroundStyle(MicaboColor.onInk)
-                .frame(width: 56, height: 56)
-                .background(MicaboColor.ink, in: Capsule())
-                .shadow(color: Color.black.opacity(0.3), radius: 14, x: 0, y: 8)
-        }
-        .buttonStyle(MicaboPressableButtonStyle())
-        .accessibilityLabel("Importer un cours")
-    }
-}

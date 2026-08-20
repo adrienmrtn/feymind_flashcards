@@ -1,9 +1,11 @@
 import SwiftData
 import SwiftUI
 
-/// Tous les cours importés, plus ceux repris depuis la bibliothèque.
-/// Mise en page : sur-titre compteur, grand titre, recherche, filtres,
-/// puis une liste posée à même le fond et séparée par des filets.
+/// Onglet **Cours** : tout ce qui a été importé, avec recherche et filtres.
+///
+/// Il accueillera la bibliothèque en second rayon, « Découvrir », dès que
+/// `LibraryAccess.isAvailable` passera à vrai. Tant qu'elle dort, le sélecteur de
+/// rayon n'apparaît pas : un onglet qui ne mène à rien est un appui perdu.
 struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
 
@@ -12,10 +14,26 @@ struct CoursesListView: View {
     @State private var searchText = ""
     @State private var sortOrder: SortOrder = .recent
     @State private var subjectFilter: String?
+    @State private var shelf: Shelf = .mine
     @State private var path: [Course] = []
     @State private var showImportChoice = false
     @State private var pendingImport: ImportKind?
     @State private var activeImport: ImportKind?
+
+    /// Les deux rayons de l'onglet.
+    enum Shelf: String, CaseIterable, Identifiable {
+        case mine
+        case discover
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .mine: "Tes cours"
+            case .discover: "Découvrir"
+            }
+        }
+    }
 
     enum SortOrder: String, CaseIterable, Identifiable {
         case due
@@ -71,15 +89,12 @@ struct CoursesListView: View {
                     header
                         .padding(.horizontal, MicaboSpacing.screen)
 
-                    if !courses.isEmpty {
-                        MicaboSearchField(text: $searchText, placeholder: "Rechercher un cours ou une carte")
+                    if LibraryAccess.isAvailable {
+                        shelfPicker
                             .padding(.horizontal, MicaboSpacing.screen)
-
-                        filterRow
                     }
 
-                    content
-                        .padding(.top, courses.isEmpty ? MicaboSpacing.md : 0)
+                    shelfContent
                 }
                 .padding(.top, MicaboSpacing.xs)
                 .padding(.bottom, MicaboSpacing.xxl)
@@ -121,9 +136,42 @@ struct CoursesListView: View {
 
     private var countLabel: String {
         guard !courses.isEmpty else { return "Aucun cours" }
-        let coursesLabel = "\(courses.count) cours"
-        let cardsLabel = "\(cardCount) carte\(cardCount > 1 ? "s" : "")"
-        return "\(coursesLabel) · \(cardsLabel)"
+        return "\(MicaboCopy.courses(courses.count)) · \(MicaboCopy.cards(cardCount))"
+    }
+
+    private var shelfPicker: some View {
+        HStack(spacing: MicaboSpacing.xs) {
+            ForEach(Shelf.allCases) { value in
+                MicaboSelectChip(title: value.label, isSelected: value == shelf) {
+                    Haptics.selection()
+                    withAnimation(.easeOut(duration: 0.2)) { shelf = value }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var shelfContent: some View {
+        switch shelf {
+        case .mine:
+            myCourses
+        case .discover:
+            LibraryView()
+                .padding(.horizontal, MicaboSpacing.screen)
+        }
+    }
+
+    @ViewBuilder
+    private var myCourses: some View {
+        if !courses.isEmpty {
+            MicaboSearchField(text: $searchText, placeholder: "Rechercher un cours ou une carte")
+                .padding(.horizontal, MicaboSpacing.screen)
+
+            filterRow
+        }
+
+        content
+            .padding(.top, courses.isEmpty ? MicaboSpacing.md : 0)
     }
 
     /// Tri puis matières, dans une seule bande qui défile.
@@ -161,7 +209,7 @@ struct CoursesListView: View {
             MicaboEmptyState(
                 systemImage: "books.vertical",
                 title: "Aucun cours pour l'instant",
-                message: "Importez un PDF, des photos, un Word ou collez du texte : Micabo en tire vos premières cartes.",
+                message: "Importe un PDF, des photos, un Word ou colle du texte : Micabo en tire tes premières cartes.",
                 actionTitle: "Importer un cours"
             ) {
                 showImportChoice = true
@@ -171,7 +219,7 @@ struct CoursesListView: View {
             MicaboEmptyState(
                 systemImage: "magnifyingglass",
                 title: "Aucun résultat",
-                message: "Essayez un autre mot-clé, ou retirez le filtre de matière."
+                message: "Essaie un autre mot-clé, ou retire le filtre de matière."
             )
             .padding(.horizontal, MicaboSpacing.screen)
         } else {

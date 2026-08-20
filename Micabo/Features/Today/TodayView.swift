@@ -1,14 +1,23 @@
 import SwiftData
 import SwiftUI
 
-/// Écran « Réviser » : la file d'attente du jour, condensée en un seul chiffre,
-/// puis un lancement plein écran de la session d'entraînement.
+/// Écran d'ouverture de l'app : **Réviser**. Il porte à la fois la file du jour et ce
+/// que faisait l'accueil (salutation, série, import, accès aux cours).
+///
+/// Le bouton de session est ancré en bas, donc visible sans faire défiler : entre le
+/// lancement de l'app et la première carte, il n'y a qu'un appui.
 struct TodayView: View {
+    @Environment(TabRouter.self) private var router: TabRouter?
+
     @Query private var allCards: [Flashcard]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
+    @Query private var reviewLogs: [ReviewLog]
 
     @State private var showStudy = false
     @State private var path: [Course] = []
+    @State private var showImportChoice = false
+    @State private var pendingImport: ImportKind?
+    @State private var activeImport: ImportKind?
 
     private var dueCards: [Flashcard] {
         allCards.filter { $0.isDue() }
@@ -34,45 +43,44 @@ struct TodayView: View {
         max(1, Int((Double(dueCards.count) * 30 / 60).rounded(.up)))
     }
 
+    private var streak: Int {
+        StudyStats.streak(reviewDates: reviewLogs.map(\.reviewedAt))
+    }
+
     var body: some View {
         NavigationStack(path: $path) {
-            Group {
-                if dueCards.isEmpty {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                            header
-                            emptyState
-                        }
-                        .padding(.horizontal, MicaboSpacing.screen)
-                        .padding(.bottom, MicaboSpacing.xxl)
+            ScrollView {
+                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                    header
+
+                    if dueCards.isEmpty {
+                        restState
+                    } else {
+                        countBlock
+                        dueCoursesSection
+                        breakdownSection
                     }
-                    .scrollIndicators(.hidden)
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                            header
-                            countBlock
-                            coursesSection
-                            breakdownSection
+
+                    coursesSection
+                }
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.bottom, hasSessionButton ? MicaboLayout.bottomBarClearance : MicaboSpacing.xxl)
+            }
+            .scrollIndicators(.hidden)
+            .micaboScreenBackground()
+            .overlay(alignment: .bottom) {
+                if hasSessionButton {
+                    MicaboBottomBar {
+                        Button {
+                            Haptics.medium()
+                            showStudy = true
+                        } label: {
+                            Text(sessionButtonTitle)
                         }
-                        .padding(.horizontal, MicaboSpacing.screen)
-                        .padding(.bottom, MicaboLayout.bottomBarClearance)
-                    }
-                    .scrollIndicators(.hidden)
-                    .overlay(alignment: .bottom) {
-                        MicaboBottomBar {
-                            Button {
-                                Haptics.medium()
-                                showStudy = true
-                            } label: {
-                                Text("Commencer la session")
-                            }
-                            .buttonStyle(MicaboPrimaryButtonStyle())
-                        }
+                        .buttonStyle(MicaboPrimaryButtonStyle())
                     }
                 }
             }
-            .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
             .micaboTabBar()
             .reportsPaging(for: .today, depth: path.count)
@@ -80,17 +88,45 @@ struct TodayView: View {
                 FlashcardsView(course: course)
             }
         }
+        .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
+            ImportChoiceSheet { kind in
+                pendingImport = kind
+                showImportChoice = false
+            }
+            .presentationDetents([.height(540)])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(MicaboRadius.sheet)
+        }
+        .fullScreenCover(item: $activeImport) { kind in
+            ImportView(kind: kind) { course in
+                activeImport = nil
+                path = [course]
+            }
+        }
         .fullScreenCover(isPresented: $showStudy) {
             StudyView(source: .allDue)
         }
     }
 
+    // MARK: - En-tête
+
     private var header: some View {
-        MicaboScreenHeader(title: "Réviser", eyebrow: StudyStats.formattedDate())
-            .padding(.top, MicaboSpacing.xs)
+        MicaboScreenHeader(title: StudyStats.greeting(), eyebrow: headerEyebrow) {
+            MicaboCircleButton(systemImage: "plus", size: 44, accessibilityTitle: "Importer un cours") {
+                showImportChoice = true
+            }
+        }
+        .padding(.top, MicaboSpacing.xs)
     }
 
-    /// Le chiffre du jour, posé à même le fond ivoire : pas de panneau sombre.
+    private var headerEyebrow: String {
+        guard streak > 0 else { return StudyStats.formattedDate() }
+        return "\(StudyStats.formattedDate()) · série de \(streak) jour\(streak > 1 ? "s" : "")"
+    }
+
+    // MARK: - Le chiffre du jour
+
+    /// Posé à même le fond ivoire : pas de panneau, c'est déjà le sujet de l'écran.
     private var countBlock: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 14) {
@@ -101,7 +137,7 @@ struct TodayView: View {
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
 
-                Text(dueCards.count > 1 ? "cartes\nà revoir" : "carte\nà revoir")
+                Text(dueCards.count > 1 ? "cartes\nà réviser" : "carte\nà réviser")
                     .font(MicaboFont.hanken(16, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .lineSpacing(1)
@@ -120,7 +156,7 @@ struct TodayView: View {
     }
 
     @ViewBuilder
-    private var coursesSection: some View {
+    private var dueCoursesSection: some View {
         let entries = dueByCourse
         if !entries.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
@@ -206,32 +242,38 @@ struct TodayView: View {
         }
     }
 
-    private var emptyState: some View {
-        VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-            if allCards.isEmpty {
-                MicaboEmptyState(
-                    systemImage: "rectangle.on.rectangle.angled",
-                    title: "Pas encore de flashcards",
-                    message: "Importez un cours pour créer vos premières flashcards et démarrer la répétition espacée."
-                )
-            } else {
-                doneState
+    // MARK: - Rien à réviser
+
+    @ViewBuilder
+    private var restState: some View {
+        if allCards.isEmpty {
+            MicaboEmptyState(
+                systemImage: "rectangle.on.rectangle.angled",
+                title: "Pas encore de cartes",
+                message: "Importe un cours : Micabo en tire tes premières cartes et te les repose au bon moment.",
+                actionTitle: "Importer un cours"
+            ) {
+                showImportChoice = true
             }
+        } else {
+            VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                doneState
 
-            if !nextDueSummary.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    MicaboSectionCaption(text: "Prochaines échéances")
+                if !nextDueSummary.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        MicaboSectionCaption(text: "Prochaines échéances")
 
-                    MicaboRowGroup(
-                        rows: nextDueSummary.map { entry in
-                            MicaboRow(
-                                tile: MicaboTile.course(entry.course),
-                                title: entry.course.title,
-                                subtitle: entry.label,
-                                accessory: .none
-                            )
-                        }
-                    )
+                        MicaboRowGroup(
+                            rows: nextDueSummary.map { entry in
+                                MicaboRow(
+                                    tile: MicaboTile.course(entry.course),
+                                    title: entry.course.title,
+                                    subtitle: entry.label,
+                                    accessory: .none
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -251,14 +293,14 @@ struct TodayView: View {
                 .tracking(-0.3)
                 .padding(.top, MicaboSpacing.xxs)
 
-            Text("Aucune carte due aujourd'hui. Revenez demain.")
+            Text("Aucune carte à réviser aujourd'hui. Reviens demain, ou prends de l'avance.")
                 .font(MicaboFont.body)
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 300)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, MicaboSpacing.xl)
+        .padding(.vertical, MicaboSpacing.lg)
     }
 
     private var nextDueSummary: [(course: Course, label: String)] {
@@ -270,5 +312,49 @@ struct TodayView: View {
         }
         .prefix(4)
         .map { $0 }
+    }
+
+    // MARK: - Tes cours
+
+    @ViewBuilder
+    private var coursesSection: some View {
+        if !courses.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                MicaboSectionHeader(title: "Tes cours", actionTitle: "Tout voir") {
+                    withAnimation(.easeOut(duration: 0.28)) {
+                        router?.selection = .courses
+                    }
+                }
+
+                MicaboRowGroup(
+                    rows: courses.prefix(4).map { course in
+                        MicaboRow.course(course) {
+                            path.append(course)
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    // MARK: - Session
+
+    /// Un seul bouton de session dans l'app, et il garde son nom d'un écran à l'autre.
+    private var hasSessionButton: Bool {
+        !allCards.isEmpty
+    }
+
+    private var sessionButtonTitle: String {
+        dueCards.isEmpty ? "Réviser en avance" : MicaboCopy.reviewButton(count: dueCards.count)
+    }
+
+    // MARK: - Import
+
+    private func launchPendingImport() {
+        guard let kind = pendingImport else { return }
+        pendingImport = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            activeImport = kind
+        }
     }
 }

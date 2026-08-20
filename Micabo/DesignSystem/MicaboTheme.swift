@@ -113,8 +113,6 @@ enum MicaboRadius {
 enum MicaboLayout {
     /// Espace à réserver au-dessus d'un bouton d'action ancré en bas.
     static let bottomBarClearance: CGFloat = 108
-    /// Espace sous le FAB flottant de l'accueil.
-    static let fabClearance: CGFloat = 88
 }
 
 /// Typographie de l'app : Hanken Grotesk, embarquée et enregistrée par `FontLoader`.

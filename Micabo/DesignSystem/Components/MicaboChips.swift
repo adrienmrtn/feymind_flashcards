@@ -60,27 +60,6 @@ struct MicaboSelectChip: View {
     }
 }
 
-/// Rangée horizontale de pilules de sélection.
-struct MicaboSelectChipRow: View {
-    let titles: [String]
-    @Binding var selection: String
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: MicaboSpacing.xs) {
-                ForEach(titles, id: \.self) { title in
-                    MicaboSelectChip(title: title, isSelected: title == selection) {
-                        selection = title
-                    }
-                }
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.vertical, 2)
-        }
-        .scrollClipDisabled()
-    }
-}
-
 /// Intitulé d'une section de contenu : capitales grises, et un lien à droite.
 struct MicaboSectionHeader: View {
     let title: String
@@ -171,7 +150,7 @@ struct MicaboProgressRing: View {
     }
 }
 
-/// Barre de progression fine : jauge du parcours d'accueil et sessions d'entraînement.
+/// Barre de progression fine : jauge du parcours d'accueil et sessions de révision.
 /// La couleur ne se surcharge pas : c'est toujours `MicaboColor.progress`.
 struct MicaboProgressBar: View {
     let progress: Double
