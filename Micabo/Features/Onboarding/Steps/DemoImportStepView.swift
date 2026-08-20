@@ -39,7 +39,7 @@ struct DemoImportStepView: View {
                     }
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MicaboPressableButtonStyle(dimming: false))
             .disabled(phase != .idle)
             .offset(y: phase == .idle && floatUp ? -7 : 0)
             .scaleEffect(phase == .idle ? (floatUp ? 1.015 : 0.99) : 0.97)
@@ -106,7 +106,7 @@ struct DemoImportStepView: View {
             HStack(spacing: 8) {
                 ProgressView()
                     .controlSize(.small)
-                    .tint(MicaboColor.accent)
+                    .tint(MicaboColor.progress)
                 Text("Lecture des 12 pages…")
                     .font(MicaboFont.hanken(13, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)

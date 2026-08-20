@@ -111,9 +111,9 @@ struct DemoReviewStepView: View {
             .foregroundStyle(value.tint)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 13)
-            .background(value.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+                .background(value.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle())
     }
 
     /// La note vaut validation : on laisse voir la prochaine échéance, puis on enchaîne.

@@ -111,6 +111,6 @@ private struct SubjectChip: View {
             }
             .scaleEffect(isSelected ? 1.03 : 1)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
     }
 }

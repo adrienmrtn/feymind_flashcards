@@ -56,7 +56,7 @@ struct PaywallStepView: View {
         VStack(spacing: 14) {
             ProgressView()
                 .controlSize(.large)
-                .tint(MicaboColor.ink)
+                .tint(MicaboColor.progress)
             Text("Chargement de l'offre…")
                 .font(MicaboFont.hanken(13, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)

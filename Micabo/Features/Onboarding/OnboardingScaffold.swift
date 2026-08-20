@@ -149,23 +149,40 @@ extension View {
 
 // MARK: - Bouton d'avancement
 
-/// CTA principal du parcours : plein largeur, coins 14 pt, retour haptique moyen.
+/// CTA principal du parcours : pleine largeur, retour haptique moyen, et un état
+/// de chargement pour les actions qui ne rendent pas la main tout de suite.
+///
+/// Quand `isLoading` est vrai, le bouton annonce ce qu'il fait et refuse les appuis :
+/// c'est ce qui évite les doubles taps quand une opération tourne derrière.
 struct OnboardingContinueButton: View {
     var title: String = "Continuer"
     var isEnabled: Bool = true
+    var isLoading: Bool = false
+    var loadingTitle: String = "Un instant…"
     var action: () -> Void
 
     var body: some View {
         Button {
-            guard isEnabled else { return }
+            guard isEnabled, !isLoading else { return }
             Haptics.medium()
             action()
         } label: {
-            Text(title)
+            HStack(spacing: 9) {
+                if isLoading {
+                    // Blanc et non indigo : un indicateur posé sur l'encre doit rester lisible.
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(MicaboColor.onInk)
+                }
+
+                Text(isLoading ? loadingTitle : title)
+            }
+            .frame(maxWidth: .infinity)
         }
         .buttonStyle(MicaboPrimaryButtonStyle(tint: isEnabled ? MicaboColor.ink : MicaboColor.strokeStrong))
-        .disabled(!isEnabled)
+        .disabled(!isEnabled || isLoading)
         .animation(.easeOut(duration: 0.2), value: isEnabled)
+        .animation(.easeOut(duration: 0.2), value: isLoading)
     }
 }
 
@@ -191,29 +208,37 @@ struct OnboardingHint: View {
 }
 
 /// Invitation à tapoter, volontairement trop visible pour qu'on ne la rate pas.
+///
+/// C'est un vrai bouton : il ressemble au CTA principal, il doit donc marcher comme
+/// lui. Le contenu de l'écran reste tapable en parallèle, les deux gestes appellent
+/// la même action.
 struct OnboardingTapPrompt: View {
     var text: String = "Appuie pour découvrir la suite"
+    var action: () -> Void
 
     @State private var isVisible = false
     @State private var isPulsing = false
     @State private var bounce = false
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "hand.tap.fill")
-                .font(.system(size: 16, weight: .semibold))
-                .offset(y: bounce ? -3 : 2)
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: "hand.tap.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .offset(y: bounce ? -3 : 2)
 
-            Text(text)
-                .font(MicaboFont.hanken(15, weight: .bold))
+                Text(text)
+                    .font(MicaboFont.hanken(15, weight: .bold))
+            }
+            .foregroundStyle(MicaboColor.onInk)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 18)
+            .frame(maxWidth: .infinity)
+            .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+            .scaleEffect(isPulsing ? 1.03 : 0.98)
+            .opacity(isVisible ? 1 : 0)
         }
-        .foregroundStyle(MicaboColor.onInk)
-        .padding(.vertical, 14)
-        .padding(.horizontal, 18)
-        .frame(maxWidth: .infinity)
-        .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-        .scaleEffect(isPulsing ? 1.03 : 0.98)
-        .opacity(isVisible ? 1 : 0)
+        .buttonStyle(MicaboPressableButtonStyle())
         .onAppear {
             withAnimation(.easeOut(duration: 0.35).delay(0.15)) {
                 isVisible = true
@@ -279,7 +304,7 @@ struct OnboardingChoiceRow: View {
             }
             .scaleEffect(isSelected ? 0.985 : 1)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
         .animation(.easeOut(duration: 0.22), value: isSelected)
     }
 }

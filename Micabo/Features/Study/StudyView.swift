@@ -46,7 +46,7 @@ struct StudyView: View {
                 }
             }
 
-            MicaboProgressBar(progress: session.progress, tint: MicaboColor.accent, track: MicaboColor.surfaceSunken)
+            MicaboProgressBar(progress: session.progress)
                 .frame(height: 5)
 
             Text(totalLabel)

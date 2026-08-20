@@ -41,7 +41,7 @@ struct GenerationOverlay: View {
                         HStack(spacing: MicaboSpacing.sm) {
                             ZStack {
                                 Circle()
-                                    .fill(index <= currentStep ? MicaboColor.ink : MicaboColor.surfaceSunken)
+                                    .fill(index <= currentStep ? MicaboColor.progress : MicaboColor.progressTrack)
                                     .frame(width: 20, height: 20)
 
                                 if index < currentStep {

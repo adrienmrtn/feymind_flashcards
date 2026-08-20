@@ -21,9 +21,7 @@ struct PersonalizingStepView: View {
             VStack(spacing: 26) {
                 MicaboProgressRing(
                     progress: Double(completedPhases) / Double(phases.count),
-                    lineWidth: 6,
-                    tint: MicaboColor.ink,
-                    track: MicaboColor.surfaceSunken
+                    lineWidth: 6
                 )
                 .frame(width: 84, height: 84)
                 .overlay {
@@ -108,7 +106,7 @@ private struct PhaseRow: View {
                 } else if isActive {
                     ProgressView()
                         .controlSize(.small)
-                        .tint(MicaboColor.accent)
+                        .tint(MicaboColor.progress)
                 } else {
                     Circle()
                         .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1.5)

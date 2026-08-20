@@ -2,11 +2,17 @@ import SwiftUI
 
 /// Écran 7 : la méthode, révélée bloc par bloc. Chaque appui découvre le bloc suivant ;
 /// le bouton d'avancement n'apparaît qu'une fois les deux blocs à l'écran.
+///
+/// L'invitation en bas d'écran est un bouton, pas une décoration : elle a l'allure du
+/// CTA principal, donc c'est là qu'on appuie en premier. Le second appui termine aussi
+/// la lecture en cours du paragraphe, pour que rien ne reste à attendre.
 struct ScienceStepView: View {
     @Environment(OnboardingModel.self) private var model
 
     /// Nombre de blocs découverts. Deux blocs en tout.
     @State private var revealed = 0
+    /// Passe la mise en gras du paragraphe à la fin, sans attendre la lecture mot à mot.
+    @State private var rushesParagraph = false
 
     private let blockCount = 2
 
@@ -21,7 +27,7 @@ struct ScienceStepView: View {
         ) {
             VStack(alignment: .leading, spacing: 14) {
                 if revealed >= 1 {
-                    ForgettingParagraph()
+                    ForgettingParagraph(isRushed: rushesParagraph)
                         .transition(blockTransition)
                 }
 
@@ -42,7 +48,7 @@ struct ScienceStepView: View {
                 }
                 .transition(.opacity)
             } else {
-                OnboardingTapPrompt()
+                OnboardingTapPrompt(action: revealNext)
             }
         }
     }
@@ -57,6 +63,9 @@ struct ScienceStepView: View {
     private func revealNext() {
         guard revealed < blockCount else { return }
         Haptics.soft()
+        if revealed >= 1 {
+            rushesParagraph = true
+        }
         withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.42)) {
             revealed += 1
         }
@@ -66,7 +75,11 @@ struct ScienceStepView: View {
 // MARK: - Bloc 1 : le constat d'Ebbinghaus
 
 /// Le texte se met en gras mot après mot, au rythme d'une lecture normale.
+/// `isRushed` termine la mise en gras d'un coup : un appui ne doit jamais obliger
+/// à attendre la fin d'une animation.
 private struct ForgettingParagraph: View {
+    var isRushed: Bool = false
+
     private static let sentence = """
     Dès 1885, Ebbinghaus mesure l'oubli : sans y revenir, une leçon s'efface presque \
     entièrement en vingt-quatre heures. Micabo repose chaque carte juste avant ce décrochage.
@@ -95,6 +108,12 @@ private struct ForgettingParagraph: View {
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
         }
         .onAppear(perform: followReading)
+        .onChange(of: isRushed) { _, rushed in
+            guard rushed else { return }
+            withAnimation(.easeOut(duration: 0.18)) {
+                readCount = words.count
+            }
+        }
     }
 
     private var paragraph: Text {
@@ -113,10 +132,12 @@ private struct ForgettingParagraph: View {
         return result
     }
 
-    /// Un mot toutes les 110 ms : assez lent pour être suivi, assez court pour ne pas lasser.
+    /// Un mot toutes les 75 ms : assez lent pour être suivi des yeux, assez rapide pour
+    /// que la phrase entière soit lue en moins de deux secondes.
     private func followReading() {
         for index in words.indices {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.28 + Double(index) * 0.11) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2 + Double(index) * 0.075) {
+                guard readCount < index + 1 else { return }
                 readCount = index + 1
             }
         }

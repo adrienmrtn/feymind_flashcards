@@ -55,7 +55,7 @@ struct MicaboSelectChip: View {
                     Capsule().strokeBorder(isSelected ? Color.clear : MicaboColor.stroke, lineWidth: 1)
                 }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle())
         .animation(.easeOut(duration: 0.18), value: isSelected)
     }
 }
@@ -155,8 +155,8 @@ struct MicaboEmptyState: View {
 struct MicaboProgressRing: View {
     let progress: Double
     var lineWidth: CGFloat = 8
-    var tint: Color = MicaboColor.ink
-    var track: Color = MicaboColor.surfaceSunken
+    var tint: Color = MicaboColor.progress
+    var track: Color = MicaboColor.progressTrack
 
     var body: some View {
         ZStack {
@@ -171,11 +171,12 @@ struct MicaboProgressRing: View {
     }
 }
 
-/// Barre de progression fine, utilisée en haut des sessions d'entraînement.
+/// Barre de progression fine : jauge du parcours d'accueil et sessions d'entraînement.
+/// La couleur ne se surcharge pas : c'est toujours `MicaboColor.progress`.
 struct MicaboProgressBar: View {
     let progress: Double
-    var tint: Color = MicaboColor.accent
-    var track: Color = MicaboColor.surfaceSunken
+    var tint: Color = MicaboColor.progress
+    var track: Color = MicaboColor.progressTrack
 
     var body: some View {
         GeometryReader { proxy in

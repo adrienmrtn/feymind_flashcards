@@ -31,11 +31,21 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 | Démonstration | courbe de mémorisation, répétition espacée, import → génération → révision en trois écrans manipulables |
 | Sortie | projection annuelle, notifications, personnalisation, essai de 3 jours, paywall |
 
-Les trois écrans de démonstration se passent de bouton : c'est le geste qui fait avancer.
-L'import enchaîne à la fin de l'analyse, la génération fait apparaître le bouton une fois les
-cartes écrites, et la note donnée à la carte vaut validation. L'écran de répétition espacée se
-découvre au doigt : un appui par bloc, le texte d'Ebbinghaus se met en gras au rythme de la
-lecture, puis l'échelle des intervalles se déroule ; le bouton n'arrive qu'ensuite.
+Les trois écrans de démonstration se passent de bouton d'avancement : c'est le geste qui fait
+avancer. L'import enchaîne à la fin de l'analyse, la génération garde son bouton en place mais
+en état chargement le temps que les cartes s'écrivent, et la note donnée à la carte vaut
+validation. L'écran de répétition espacée se découvre au doigt : un appui par bloc, sur le
+contenu **ou** sur l'invitation en bas d'écran, qui est un vrai bouton ; le second appui
+termine aussi la mise en gras du texte d'Ebbinghaus si elle court encore.
+
+Deux règles valent pour tout le tunnel :
+
+- **la jauge est unique** — même couleur (`MicaboColor.progress`) et même barre du premier
+  écran au paywall, sans jamais disparaître. Tout ce qui indique une progression ailleurs dans
+  l'app (session de révision, anneaux, curseurs, indicateurs d'attente) prend cette couleur.
+- **aucun bouton ne reste muet** — l'enfoncement (échelle 0,975) part en 80 ms, et un bouton
+  derrière lequel tourne une opération passe en état chargement, annonce ce qu'il fait et
+  refuse les appuis suivants.
 
 Les réponses sont écrites au fil de l'eau dans `OnboardingPreferences` (clés `micabo.onboarding.*`)
 et survivent donc à une fermeture en cours de route. `Réglages` propose **Refaire l'onboarding**,
@@ -44,8 +54,13 @@ qui efface ces clés et relance le parcours sans toucher aux cours.
 Après le choix des matières, **Tu étudies où ?** propose un autocomplete hybride : un catalogue
 embarqué (`LocalInstitutions.json`, ~600 établissements FR/EU prioritaires) pour l'instantané,
 puis la RPC Supabase `search_institutions` sur la table `institutions` (~14 500 lignes : unis
-mondiales, grandes écoles FR, lycées FR). Le texte libre reste accepté ; l'`id` est stocké
-quand un résultat matche. L'écran suivant annonce l'effectif (30–70) : « X personnes de … utilisent déjà Micabo ».
+mondiales, grandes écoles FR, lycées FR). Le texte libre reste accepté, mais il ne donne pas
+d'`id` : seul un résultat choisi dans la liste en pose un.
+
+L'écran communauté qui suit n'apparaît **que** si un établissement a été reconnu de cette façon
+(`OnboardingModel.hasRecognizedInstitution`). Sinon `advance()` le saute, sans écran de
+remplacement ni excuse. Quand il s'affiche, l'effectif annoncé va de 1 à 10 personnes et il est
+dérivé de l'`id` : il ne bouge pas d'un affichage à l'autre.
 
 L'écran courbe s'appuie sur `RetentionCurve` : une décroissance exponentielle de la rétention, remise
 à 100 % à chaque révision, avec une stabilité qui augmente à chaque passage. Les travaux cités

@@ -22,7 +22,7 @@ struct DailyTimeStepView: View {
 
                 VStack(spacing: 10) {
                     Slider(value: $minutes, in: range, step: step)
-                        .tint(MicaboColor.ink)
+                        .tint(MicaboColor.progress)
                         .onChange(of: minutes) { oldValue, newValue in
                             guard isReady, oldValue != newValue else { return }
                             Haptics.selection()

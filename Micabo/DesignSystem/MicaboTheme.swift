@@ -35,6 +35,13 @@ enum MicaboColor {
     static let accent = Color(hex: 0x5B5BD6)
     static let accentSoft = Color(hex: 0xE9E9FB)
 
+    /// Toute progression porte cette couleur, sans exception : jauge du parcours
+    /// d'accueil, barre de session, anneaux, curseurs, indicateurs d'attente.
+    /// Une seule couleur pour « ça avance », sinon l'utilisateur cherche un sens
+    /// derrière chaque nuance.
+    static let progress = accent
+    static let progressTrack = Color(hex: 0xE4DFD2)
+
     // Retours d'information, volontairement désaturés
     static let positive = Color(hex: 0x4D7A53)
     static let caution = Color(hex: 0x9A7A2E)

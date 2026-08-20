@@ -20,8 +20,10 @@ struct DemoWriteStepView: View {
             VStack(spacing: 14) {
                 courseHeader
 
-                if !isGenerating {
-                    GenerateCardsButton(action: generate)
+                // Le bouton reste en place pendant la rédaction, en état chargement :
+                // il disparaîtrait sinon juste sous le doigt, sans rien confirmer.
+                if !isFinished {
+                    GenerateCardsButton(isLoading: isGenerating, action: generate)
                         .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
 
@@ -37,18 +39,6 @@ struct DemoWriteStepView: View {
                                 )
                         }
                     }
-                }
-
-                if isGenerating, !isFinished {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(MicaboColor.accent)
-                        Text("Rédaction en cours…")
-                            .font(MicaboFont.hanken(13, weight: .medium))
-                            .foregroundStyle(MicaboColor.inkSecondary)
-                    }
-                    .padding(.top, 4)
                 }
             }
         } footer: {
@@ -100,12 +90,11 @@ struct DemoWriteStepView: View {
     private func generate() {
         guard !isGenerating else { return }
         Haptics.medium()
-        withAnimation(.easeOut(duration: 0.25)) {
-            isGenerating = true
-        }
+        // Sans animation : l'état chargement doit être à l'écran dès l'appui.
+        isGenerating = true
 
         for index in OnboardingDemo.cards.indices {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.75 + Double(index) * 0.62) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45 + Double(index) * 0.5) {
                 withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.4)) {
                     revealedCards = index + 1
                 }
@@ -121,8 +110,11 @@ struct DemoWriteStepView: View {
     }
 }
 
-/// CTA de génération : fond encre, étincelles, légère respiration pour donner envie de tapoter.
+/// CTA de génération : fond encre, étincelles, légère respiration pour donner envie de
+/// tapoter. Pendant la rédaction il passe en état chargement et refuse les appuis, au
+/// lieu de rester muet le temps que la première carte arrive.
 private struct GenerateCardsButton: View {
+    var isLoading: Bool = false
     var action: () -> Void
 
     @State private var pulse = false
@@ -131,11 +123,17 @@ private struct GenerateCardsButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 16, weight: .semibold))
-                    .symbolEffect(.pulse, options: .repeating, isActive: sparkle)
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(MicaboColor.onInk)
+                } else {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 16, weight: .semibold))
+                        .symbolEffect(.pulse, options: .repeating, isActive: sparkle)
+                }
 
-                Text("Générer les cartes")
+                Text(isLoading ? "Rédaction en cours…" : "Générer les cartes")
                     .font(MicaboFont.hanken(16, weight: .bold))
             }
             .foregroundStyle(MicaboColor.onInk)
@@ -146,10 +144,17 @@ private struct GenerateCardsButton: View {
                 RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
             }
-            .shadow(color: MicaboColor.ink.opacity(pulse ? 0.28 : 0.12), radius: pulse ? 18 : 8, x: 0, y: pulse ? 10 : 4)
-            .scaleEffect(pulse ? 1.035 : 1)
+            .shadow(
+                color: MicaboColor.ink.opacity(pulse && !isLoading ? 0.28 : 0.12),
+                radius: pulse && !isLoading ? 18 : 8,
+                x: 0,
+                y: pulse && !isLoading ? 10 : 4
+            )
+            .scaleEffect(pulse && !isLoading ? 1.035 : 1)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle())
+        .disabled(isLoading)
+        .animation(.easeOut(duration: 0.2), value: isLoading)
         .onAppear {
             sparkle = true
             withAnimation(.easeInOut(duration: 1.05).repeatForever(autoreverses: true)) {

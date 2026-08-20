@@ -1,5 +1,28 @@
 import SwiftUI
 
+/// Réaction à l'appui, commune à tous les boutons de l'app.
+///
+/// Un doigt posé doit se voir tout de suite : l'enfoncement part sur une courbe de
+/// 80 ms, bien en dessous des 100 ms au-delà desquelles on croit que rien n'a été
+/// enregistré. Le relâchement est un peu plus lent, pour qu'on le remarque.
+enum MicaboPress {
+    static let scale: CGFloat = 0.975
+    static let opacity: Double = 0.92
+
+    static func animation(isPressed: Bool) -> Animation {
+        .easeOut(duration: isPressed ? 0.08 : 0.16)
+    }
+}
+
+extension View {
+    /// Enfoncement standard, à appliquer dans un `ButtonStyle`.
+    func micaboPressEffect(isPressed: Bool, dimming: Bool = true) -> some View {
+        scaleEffect(isPressed ? MicaboPress.scale : 1)
+            .opacity(isPressed && dimming ? MicaboPress.opacity : 1)
+            .animation(MicaboPress.animation(isPressed: isPressed), value: isPressed)
+    }
+}
+
 /// Bouton d'action principal : bloc d'encre à coins 16 pt, qui s'enfonce à l'appui.
 struct MicaboPrimaryButtonStyle: ButtonStyle {
     var tint: Color = MicaboColor.ink
@@ -13,9 +36,7 @@ struct MicaboPrimaryButtonStyle: ButtonStyle {
             .padding(.vertical, 16)
             .padding(.horizontal, fullWidth ? 0 : 24)
             .background(tint, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .opacity(configuration.isPressed ? 0.9 : 1)
-            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+            .micaboPressEffect(isPressed: configuration.isPressed)
     }
 }
 
@@ -32,8 +53,19 @@ struct MicaboSecondaryButtonStyle: ButtonStyle {
             .padding(.horizontal, fullWidth ? 0 : 24)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
             .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+            .micaboPressEffect(isPressed: configuration.isPressed)
+    }
+}
+
+/// Style des boutons qui dessinent eux-mêmes leur habillage : la seule chose que
+/// le style ajoute est l'enfoncement. À préférer à `.plain`, qui ne réagit pas.
+struct MicaboPressableButtonStyle: ButtonStyle {
+    var dimming: Bool = true
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(Rectangle())
+            .micaboPressEffect(isPressed: configuration.isPressed, dimming: dimming)
     }
 }
 
@@ -45,7 +77,8 @@ struct MicaboQuietButtonStyle: ButtonStyle {
             .foregroundStyle(MicaboColor.inkSecondary)
             .padding(.vertical, 10)
             .padding(.horizontal, 16)
-            .opacity(configuration.isPressed ? 0.6 : 1)
+            .opacity(configuration.isPressed ? 0.55 : 1)
+            .animation(MicaboPress.animation(isPressed: configuration.isPressed), value: configuration.isPressed)
     }
 }
 
@@ -112,7 +145,7 @@ struct MicaboCircleButton: View {
         Button(action: action) {
             MicaboCircleIcon(systemImage: systemImage, style: style, size: size)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle())
         .accessibilityLabel(accessibilityTitle ?? systemImage)
     }
 }
@@ -151,7 +184,7 @@ struct MicaboFloatingAddButton: View {
                 .background(MicaboColor.ink, in: Capsule())
                 .shadow(color: Color.black.opacity(0.3), radius: 14, x: 0, y: 8)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle())
         .accessibilityLabel("Importer un cours")
     }
 }
