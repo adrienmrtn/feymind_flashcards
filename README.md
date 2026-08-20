@@ -220,6 +220,43 @@ Elle n'est jamais affichée, elle sert de contexte pour rédiger les cartes et p
 plus tard. La lecture du client reste tolérante : si la fonction déployée renvoie encore l'ancien
 format en blocs structurés, seuls les textes sont conservés.
 
+## Types de cartes
+
+Une carte recto verso muette ne sert ni l'anatomie, ni les langues, ni la physique. Trois
+formats s'ajoutent donc au format de base, sans nouvelle dépendance ni permission système.
+
+| Format | Ce que ça sert | Comment |
+| --- | --- | --- |
+| Occlusion d'image | Anatomie, géographie, géologie | `Masquer un schéma` dans le menu d'un cours : on choisit une image, on trace les zones au doigt, on les nomme. **Une carte par zone**, image et `groupID` partagés, planification indépendante. Le cache se lève au retournement et laisse un cadre sur la zone. |
+| Audio | Langues | Champ facultatif sur chaque carte (`Prononciation`) : un fichier audio est recopié dans la carte, puis lu par un bouton au recto comme au verso. Aucun micro, donc aucune autorisation. |
+| Sens inverse | Langues | `Ajouter les cartes inverses`, et automatiquement à l'import quand `SubjectHeuristics.isLanguage` reconnaît un cours de langue. La carte inverse est une vraie carte : même `groupID`, **planification séparée**, et le recto annonce « sens inverse ». |
+
+Les formules écrites en LaTeX entre `$…$` sont transposées en Unicode par `FormulaRenderer`
+(exposants, indices, lettres grecques, fractions, racines) et composées en italique à
+empattements par `FormulaText`. Micabo n'embarque pas de moteur LaTeX : `$E = mc^2$` devient
+« E = mc² », `$H_2O$` devient « H₂O », mais les matrices et les intégrales à bornes ne sont
+pas rendues. Mieux vaut une formule lisible qu'un `\frac{}{}` affiché tel quel.
+
+## Quand l'import échoue
+
+Trois échecs sont traités nommément, chacun avec une sortie.
+
+- **Document illisible** — `ImportReadiness` contrôle le texte extrait *avant* de dépenser un
+  appel. Sous 120 caractères, il dit ce qui a été lu (« seuls 18 caractères ont été lus »),
+  pourquoi (écriture manuscrite serrée, PDF scanné, document vide) et propose d'envoyer les
+  pages au modèle de vision quand l'option est encore disponible.
+- **Génération interrompue à mi-parcours** — l'import se fait en trois temps. Si l'analyse
+  échoue, rien n'est créé et on propose de construire les cartes sans IA. Si elle réussit
+  mais que les cartes échouent, **le cours reste enregistré** et l'alerte propose de l'ouvrir
+  pour relancer la génération : le travail déjà fait n'est jamais perdu. Si aucune carte n'est
+  exploitable, même traitement.
+- **Doublons** — `CourseFingerprint` normalise le contenu (sans accents, sans ponctuation) et
+  en garde une empreinte, enregistrée sur le cours. Réimporter le même chapitre, même sous un
+  autre nom de fichier, propose d'ouvrir le cours existant plutôt que de créer un doublon. Un
+  titre identique suffit aussi à déclencher la question.
+
+`MicaboTests/CardFormatsTests.swift` verrouille les trois formats et les cas d'échec.
+
 ## Répétition espacée
 
 `Micabo/SRS/SM2Scheduler.swift` implémente SM-2 avec les réglages par défaut d'Anki :

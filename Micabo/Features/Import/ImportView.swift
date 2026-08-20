@@ -25,8 +25,11 @@ struct ImportView: View {
 
     @State private var isReading = false
     @State private var isGenerating = false
-    @State private var errorMessage: String?
-    @State private var offlineFallbackAvailable = false
+    /// Échec raconté à l'utilisateur, avec ce qu'il peut faire.
+    @State private var failure: ImportFailure?
+    /// Cours déjà importé qui ressemble à celui-ci : on demande avant de doubler.
+    @State private var duplicate: Course?
+    @State private var ignoresDuplicate = false
 
     private var canGenerate: Bool {
         switch kind {
@@ -132,19 +135,58 @@ struct ImportView: View {
                     )
                 }
             }
-            .alert("Génération impossible", isPresented: .constant(errorMessage != nil)) {
-                if offlineFallbackAvailable {
-                    Button("Créer sans IA") {
-                        errorMessage = nil
-                        Task { await generate(offline: true) }
-                    }
+            .alert(failure?.title ?? "", isPresented: .constant(failure != nil), presenting: failure) { failure in
+                recoveryButton(for: failure.recovery)
+                Button("Fermer", role: .cancel) { self.failure = nil }
+            } message: { failure in
+                Text(failure.message)
+            }
+            .confirmationDialog(
+                "Ce chapitre semble déjà importé",
+                isPresented: .constant(duplicate != nil),
+                titleVisibility: .visible,
+                presenting: duplicate
+            ) { existing in
+                Button("Ouvrir « \(existing.title) »") {
+                    duplicate = nil
+                    onCreated(existing)
                 }
-                Button("Fermer", role: .cancel) { errorMessage = nil }
-            } message: {
-                Text(errorMessage ?? "")
+                Button("Importer quand même") {
+                    duplicate = nil
+                    ignoresDuplicate = true
+                    Task { await generate(offline: false) }
+                }
+                Button("Annuler", role: .cancel) { duplicate = nil }
+            } message: { existing in
+                Text("« \(existing.title) » contient déjà ce contenu. Tu peux l'ouvrir plutôt que d'en créer un doublon.")
             }
         }
         .interactiveDismissDisabled(isGenerating || isReading)
+    }
+
+    /// Le bouton d'action de l'alerte : chaque échec propose une sortie utile.
+    @ViewBuilder
+    private func recoveryButton(for recovery: ImportFailure.Recovery) -> some View {
+        switch recovery {
+        case .none:
+            EmptyView()
+        case .buildOffline:
+            Button("Créer sans IA") {
+                failure = nil
+                Task { await generate(offline: true) }
+            }
+        case .enableVision:
+            Button("Analyser les schémas") {
+                failure = nil
+                analyzeVisuals = true
+                Task { await generate(offline: false) }
+            }
+        case .openCourse(let course):
+            Button("Voir le cours") {
+                failure = nil
+                onCreated(course)
+            }
+        }
     }
 
     private var readingStepTitle: String {
@@ -412,7 +454,7 @@ struct ImportView: View {
     private func handleFileSelection(_ result: Result<[URL], Error>) {
         guard case .success(let urls) = result, let url = urls.first else {
             if case .failure(let error) = result {
-                errorMessage = error.localizedDescription
+                report(error, title: "Fichier illisible")
             }
             return
         }
@@ -437,8 +479,7 @@ struct ImportView: View {
             }
             applyImported(parsed)
         } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            offlineFallbackAvailable = false
+            report(error, title: "Lecture impossible")
         }
     }
 
@@ -456,7 +497,7 @@ struct ImportView: View {
         }
 
         guard !images.isEmpty else {
-            errorMessage = PhotoImportError.unreadable.localizedDescription
+            report(PhotoImportError.unreadable, title: "Photos illisibles")
             return
         }
         await ingestPhotos(images)
@@ -471,8 +512,7 @@ struct ImportView: View {
             let parsed = try await PhotoImportService.importImages(images)
             applyImported(parsed)
         } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            offlineFallbackAvailable = false
+            report(error, title: "Lecture impossible")
         }
     }
 
@@ -489,8 +529,6 @@ struct ImportView: View {
     @MainActor
     private func generate(offline: Bool) async {
         guard !isGenerating else { return }
-        isGenerating = true
-        defer { isGenerating = false }
 
         let rawText: String
         let images: [Data]
@@ -514,6 +552,31 @@ struct ImportView: View {
             source = imported.source
         }
 
+        // Un texte illisible ne donnera rien de bon : on le dit avant de dépenser un appel.
+        if let unreadable = ImportReadiness.failure(
+            text: rawText,
+            hasImages: !images.isEmpty,
+            canEnableVision: showsVisionToggle && !analyzeVisuals,
+            kind: kind
+        ) {
+            failure = unreadable
+            return
+        }
+
+        // Le même chapitre deux fois : on propose d'ouvrir l'existant plutôt que de doubler.
+        if !ignoresDuplicate,
+           let existing = CourseRepository.duplicate(
+               title: title.nilIfBlank ?? fileName ?? "",
+               rawText: rawText,
+               in: modelContext
+           ) {
+            duplicate = existing
+            return
+        }
+
+        isGenerating = true
+        defer { isGenerating = false }
+
         let request = CourseGenerationRequest(
             rawText: rawText,
             pageImages: images,
@@ -521,19 +584,31 @@ struct ImportView: View {
             sourceName: fileName
         )
 
-        do {
-            let generated: GeneratedCourse
-            if offline {
-                generated = OfflineCourseBuilder.build(
-                    from: rawText,
-                    hintTitle: title.nilIfBlank,
-                    sourceName: fileName
-                )
-            } else {
+        // Étape 1 : la fiche du cours. Si elle échoue, rien n'a été créé.
+        let generated: GeneratedCourse
+        if offline {
+            generated = OfflineCourseBuilder.build(
+                from: rawText,
+                hintTitle: title.nilIfBlank,
+                sourceName: fileName
+            )
+        } else {
+            do {
                 generated = try await aiService.generateCourse(request)
+            } catch {
+                failure = ImportFailure(
+                    title: "L'analyse du document a échoué",
+                    message: "\(describe(error)) Le document n'a pas été importé.",
+                    recovery: isRecoverable(error) ? .buildOffline : .none
+                )
+                return
             }
+        }
 
-            let course = try CourseRepository.save(
+        // Étape 2 : le cours est enregistré. À partir d'ici, un échec ne doit plus rien perdre.
+        let course: Course
+        do {
+            course = try CourseRepository.save(
                 generated,
                 source: source,
                 rawText: rawText,
@@ -541,35 +616,70 @@ struct ImportView: View {
                 coverImageData: cover,
                 in: modelContext
             )
+        } catch {
+            failure = ImportFailure(
+                title: "Enregistrement impossible",
+                message: "\(describe(error)) Réessaie dans un instant.",
+                recovery: .none
+            )
+            return
+        }
 
-            let cards: [GeneratedFlashcard]
-            if offline {
-                cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
-            } else {
-                do {
-                    cards = try await aiService.generateFlashcards(
-                        FlashcardGenerationRequest(
-                            courseTitle: course.title,
-                            courseContext: course.contextSnippet(limit: 30_000),
-                            desiredCount: 12,
-                            existingFronts: []
-                        )
+        // Étape 3 : les cartes. Le cours existe déjà, donc tout échec est récupérable.
+        var cards: [GeneratedFlashcard] = []
+        if offline {
+            cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
+        } else {
+            do {
+                cards = try await aiService.generateFlashcards(
+                    FlashcardGenerationRequest(
+                        courseTitle: course.title,
+                        courseContext: course.contextSnippet(limit: 30_000),
+                        desiredCount: 12,
+                        existingFronts: []
                     )
-                } catch {
-                    if isRecoverable(error) {
-                        cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
-                    } else {
-                        throw error
-                    }
+                )
+            } catch {
+                if isRecoverable(error) {
+                    cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
+                } else {
+                    failure = ImportFailure(
+                        title: "Le cours est là, les cartes non",
+                        message: "\(describe(error)) « \(course.title) » est enregistré : relance la génération depuis le cours quand tu veux.",
+                        recovery: .openCourse(course)
+                    )
+                    return
                 }
             }
-
-            try CourseRepository.addFlashcards(cards, to: course, in: modelContext)
-            onCreated(course)
-        } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            offlineFallbackAvailable = isRecoverable(error)
         }
+
+        let inserted = (try? CourseRepository.addFlashcards(cards, to: course, in: modelContext)) ?? []
+
+        guard !inserted.isEmpty else {
+            failure = ImportFailure(
+                title: "Aucune carte exploitable",
+                message: "Le cours « \(course.title) » est enregistré, mais rien n'a pu être transformé en carte. Ouvre-le pour en écrire une à la main ou relancer la génération.",
+                recovery: .openCourse(course)
+            )
+            return
+        }
+
+        // Les langues se révisent dans les deux sens : la carte inverse est créée d'office,
+        // avec sa propre planification.
+        if SubjectHeuristics.isLanguage(subject: course.subject, title: course.title) {
+            try? CourseRepository.addReverseCards(for: course, in: modelContext)
+        }
+
+        onCreated(course)
+    }
+
+    private func report(_ error: Error, title: String) {
+        failure = ImportFailure(title: title, message: describe(error), recovery: .none)
+    }
+
+    private func describe(_ error: Error) -> String {
+        let text = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        return text.hasSuffix(".") ? text : "\(text)."
     }
 
     private func isRecoverable(_ error: Error) -> Bool {
@@ -579,6 +689,74 @@ struct ImportView: View {
             return true
         case .emptySource:
             return false
+        }
+    }
+}
+
+/// Un échec d'import raconté à l'utilisateur : ce qui a lâché, et par où sortir.
+struct ImportFailure: Identifiable {
+    enum Recovery {
+        case none
+        /// Construire les cartes à partir du texte brut, sans IA.
+        case buildOffline
+        /// Relancer en envoyant les pages au modèle de vision.
+        case enableVision
+        /// Le cours est enregistré : on l'ouvre au lieu de perdre le travail.
+        case openCourse(Course)
+    }
+
+    let id = UUID()
+    var title: String
+    var message: String
+    var recovery: Recovery
+}
+
+/// Contrôle du texte extrait avant d'appeler quoi que ce soit.
+///
+/// C'est le cas de la photo de cahier manuscrit : l'OCR rend trois mots, et sans ce garde
+/// l'utilisateur attendait une génération pour récolter des cartes vides.
+enum ImportReadiness {
+    /// En dessous, il n'y a pas de quoi écrire des cartes.
+    static let minimumCharacters = 120
+
+    static func failure(
+        text: String,
+        hasImages: Bool,
+        canEnableVision: Bool,
+        kind: ImportKind
+    ) -> ImportFailure? {
+        let usable = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard usable.count < minimumCharacters, !hasImages else { return nil }
+
+        let read = usable.isEmpty
+            ? "Aucun texte n'a été lu."
+            : "Seuls \(usable.count) caractères ont été lus."
+
+        switch kind {
+        case .photo:
+            return ImportFailure(
+                title: "Ces pages sont illisibles",
+                message: "\(read) Une écriture manuscrite serrée ou une photo floue résistent à l'OCR. Reprends la photo bien à plat et en pleine lumière\(canEnableVision ? ", ou laisse le modèle de vision analyser les pages" : "").",
+                recovery: canEnableVision ? .enableVision : .none
+            )
+        case .pdf:
+            return ImportFailure(
+                title: "Ce PDF ne contient presque pas de texte",
+                message: "\(read) Il s'agit sans doute d'un scan d'images\(canEnableVision ? " : active l'analyse des schémas pour l'envoyer au modèle de vision" : "").",
+                recovery: canEnableVision ? .enableVision : .none
+            )
+        case .docx:
+            return ImportFailure(
+                title: "Ce document est presque vide",
+                message: "\(read) Vérifie qu'il ne contient pas seulement des images, puis réessaie.",
+                recovery: .none
+            )
+        case .text:
+            return ImportFailure(
+                title: "Il manque du texte",
+                message: "\(read) Colle au moins un paragraphe : c'est le minimum pour en tirer des cartes.",
+                recovery: .none
+            )
         }
     }
 }
