@@ -16,6 +16,7 @@ struct FlashcardsView: View {
     @State private var isCreating = false
     @State private var isGenerating = false
     @State private var showStudy = false
+    @State private var studyMode: StudyMode = .scheduled
     @State private var showDeleteConfirmation = false
     @State private var errorMessage: String?
 
@@ -44,9 +45,12 @@ struct FlashcardsView: View {
                 MicaboBottomBar {
                     Button {
                         Haptics.medium()
+                        // Sans carte due, une vraie session serait vide : on annonce
+                        // l'entraînement libre au lieu de promettre une révision.
+                        studyMode = dueCount > 0 ? .scheduled : .practice
                         showStudy = true
                     } label: {
-                        Text(MicaboCopy.reviewButton(count: cards.count))
+                        Text(dueCount > 0 ? MicaboCopy.reviewButton(count: dueCount) : "Entraînement libre")
                     }
                     .buttonStyle(MicaboPrimaryButtonStyle())
                 }
@@ -59,7 +63,7 @@ struct FlashcardsView: View {
             FlashcardCreatorSheet(course: course)
         }
         .fullScreenCover(isPresented: $showStudy) {
-            StudyView(source: .course(course))
+            StudyView(source: .course(course), mode: studyMode)
         }
         .overlay {
             if isGenerating {
@@ -115,6 +119,14 @@ struct FlashcardsView: View {
 
     private var courseMenu: some View {
         Menu {
+            if !cards.isEmpty {
+                Button {
+                    studyMode = .practice
+                    showStudy = true
+                } label: {
+                    Label("Entraînement libre", systemImage: "dumbbell")
+                }
+            }
             Button { isCreating = true } label: {
                 Label("Ajouter une carte", systemImage: "plus")
             }

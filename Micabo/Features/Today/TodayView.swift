@@ -113,7 +113,9 @@ struct TodayView: View {
             }
         }
         .fullScreenCover(isPresented: $showStudy) {
-            StudyView(source: .allDue)
+            // Rien à réviser : on ouvre franchement un entraînement libre plutôt que de
+            // faire passer des cartes en avance pour une vraie session.
+            StudyView(source: .allDue, mode: dueCards.isEmpty ? .practice : .scheduled)
         }
     }
 
@@ -368,7 +370,7 @@ struct TodayView: View {
     }
 
     private var sessionButtonTitle: String {
-        dueCards.isEmpty ? "Réviser en avance" : MicaboCopy.reviewButton(count: dueCards.count)
+        dueCards.isEmpty ? "Entraînement libre" : MicaboCopy.reviewButton(count: dueCards.count)
     }
 
     // MARK: - Import

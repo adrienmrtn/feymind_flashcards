@@ -233,6 +233,32 @@ format en blocs structurés, seuls les textes sont conservés.
 Les quatre boutons `À revoir`, `Difficile`, `Correct`, `Facile` affichent l'intervalle réel qu'ils
 appliqueront. Les tests de `MicaboTests/SM2SchedulerTests.swift` verrouillent ces valeurs.
 
+### En session
+
+`StudySession` pilote la file ; `StudyView` en montre quatre états, et pas seulement la pile
+de cartes.
+
+- **Annuler** — un bouton dans la barre du haut, actif dès la première note. Il ne recalcule
+  pas une note inverse : `CardScheduling` photographie l'état de répétition espacée avant
+  chaque note, l'annulation le remet à l'identique, supprime le journal écrit et rend la file
+  telle qu'elle était. Mettre une carte de côté s'annule de la même façon.
+- **Corriger ou écarter sans sortir** — sous la carte, `Modifier` ouvre l'éditeur de la carte
+  affichée et `Mettre de côté` la sort de la session. Les deux restent à portée avant comme
+  après la réponse : c'est souvent en lisant le verso qu'on voit qu'une carte est fausse.
+- **Reprise d'une session interrompue** — l'état est écrit après chaque note
+  (`StudySessionStore`, une entrée dans les réglages). Au lancement suivant, l'app propose
+  « Tu en étais à la carte 12 sur 22 » avec **Reprendre** ou **Recommencer** ; passé 12 heures,
+  la reprise n'est plus proposée et les cartes repartent dans la file du jour. Fermer la
+  session ne perd donc rien.
+- **Rien à réviser** — quand la file du jour est vide, un écran le dit, félicite sobrement et
+  annonce la prochaine échéance, au lieu de basculer en douce sur des cartes non dues.
+- **Entraînement libre** — `StudyMode.practice` révise un cours entier sans toucher au
+  planning : aucune échéance déplacée, aucun journal écrit, rien à reprendre. L'écran l'annonce
+  en permanence (« Entraînement libre · ton planning n'est pas modifié ») et une carte ratée
+  revient dans le tour. C'est l'action proposée quand un cours n'a rien à réviser.
+
+`MicaboTests/StudySessionTests.swift` verrouille l'annulation, l'entraînement libre et la reprise.
+
 ### Le rythme quotidien commande la charge
 
 `Micabo/SRS/DailyLoad.swift` fait le lien entre le temps que l'utilisateur s'accorde et ce que
