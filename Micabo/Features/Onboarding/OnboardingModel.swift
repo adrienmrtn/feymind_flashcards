@@ -21,10 +21,32 @@ final class OnboardingModel {
         LearningProjection.cardsPerYear(dailyMinutes: dailyMinutes)
     }
 
+    /// Vrai seulement si l'établissement a été choisi dans la liste de résultats.
+    /// Un nom tapé à la main n'a pas d'`id` : on ne connaît alors personne là-bas,
+    /// et on ne prétend pas le contraire.
+    var hasRecognizedInstitution: Bool {
+        institutionId?.nilIfBlank != nil
+    }
+
     func advance() {
         persist()
-        guard let next = step.next else { return }
+
+        var candidate = step.next
+        while let next = candidate, !shows(next) {
+            candidate = next.next
+        }
+        guard let next = candidate else { return }
         step = next
+    }
+
+    /// Les écrans qui n'ont rien à dire sont sautés, sans écran de remplacement.
+    private func shows(_ step: OnboardingStep) -> Bool {
+        switch step {
+        case .schoolPeers:
+            return hasRecognizedInstitution
+        default:
+            return true
+        }
     }
 
     /// Recopie les réponses dans les réglages à chaque changement d'écran :
