@@ -1,5 +1,23 @@
+import CoreGraphics
 import Foundation
 import SwiftData
+
+/// Ce que la carte demande à l'utilisateur.
+///
+/// `occlusion` sert les matières qui s'apprennent sur un schéma — anatomie, géographie,
+/// géologie : une zone est masquée sur l'image, le masque se lève au retournement. Une
+/// carte par zone, toutes partagent le même schéma.
+enum CardKind: String, Codable, CaseIterable {
+    case basic
+    case occlusion
+
+    var label: String {
+        switch self {
+        case .basic: "Recto verso"
+        case .occlusion: "Schéma"
+        }
+    }
+}
 
 /// États d'une carte, calqués sur ceux d'Anki.
 enum CardState: String, Codable, CaseIterable {
@@ -66,6 +84,25 @@ final class Flashcard {
     var updatedAt: Date = Date()
     var isSuspended: Bool = false
 
+    // Type de carte et pièces jointes. Tout a une valeur par défaut : les bases déjà
+    // installées se migrent sans conversion.
+    var kindRaw: String = CardKind.basic.rawValue
+    /// Schéma d'une carte à occlusion, partagé par toutes les zones de la même image.
+    @Attribute(.externalStorage) var imageData: Data?
+    /// Zone masquée, en coordonnées relatives (0…1) : indépendante de la taille d'affichage.
+    var maskX: Double = 0
+    var maskY: Double = 0
+    var maskWidth: Double = 0
+    var maskHeight: Double = 0
+    /// Prononciation attachée à la carte. Optionnelle, et surtout utile en langues.
+    @Attribute(.externalStorage) var audioData: Data?
+    /// Lie les cartes issues d'un même élément : les zones d'un schéma, les deux sens
+    /// d'une paire de langue.
+    var groupID: UUID?
+    /// Vrai pour le sens « langue étrangère → français » d'une paire. Sa planification
+    /// reste indépendante de celle de l'autre sens.
+    var isReversed: Bool = false
+
     // État de répétition espacée (SM-2)
     var stateRaw: String = CardState.new.rawValue
     var dueDate: Date = Date()
@@ -105,6 +142,31 @@ final class Flashcard {
     var state: CardState {
         get { CardState(rawValue: stateRaw) ?? .new }
         set { stateRaw = newValue.rawValue }
+    }
+
+    var kind: CardKind {
+        get { CardKind(rawValue: kindRaw) ?? .basic }
+        set { kindRaw = newValue.rawValue }
+    }
+
+    /// Zone masquée du schéma, en coordonnées relatives.
+    var maskRect: CGRect {
+        get { CGRect(x: maskX, y: maskY, width: maskWidth, height: maskHeight) }
+        set {
+            maskX = newValue.origin.x
+            maskY = newValue.origin.y
+            maskWidth = newValue.size.width
+            maskHeight = newValue.size.height
+        }
+    }
+
+    /// Une occlusion n'a de sens que si elle porte une image et une zone non vide.
+    var isOcclusion: Bool {
+        kind == .occlusion && imageData != nil && maskWidth > 0 && maskHeight > 0
+    }
+
+    var hasAudio: Bool {
+        audioData != nil
     }
 
     func isDue(at date: Date = Date()) -> Bool {

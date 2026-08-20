@@ -334,36 +334,56 @@ struct StudyCardFace: View {
                     .tracking(1.4)
                     .foregroundStyle(MicaboColor.accent)
 
-                Text(card.front)
-                    .font(MicaboFont.hanken(17, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
+                FormulaText(source: card.front, size: 17, weight: .semibold)
                     .fixedSize(horizontal: false, vertical: true)
 
                 MicaboHairline()
 
                 ScrollView {
-                    Text(card.back)
-                        .font(MicaboFont.hanken(15, weight: .regular))
-                        .foregroundStyle(Color(hex: 0x4A463F))
+                    VStack(alignment: .leading, spacing: 14) {
+                        if card.isOcclusion {
+                            OcclusionFigure(card: card, isRevealed: true)
+                        }
+
+                        FormulaText(
+                            source: card.back,
+                            size: 15,
+                            color: Color(hex: 0x4A463F)
+                        )
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
+
+                        if card.hasAudio {
+                            CardAudioButton(card: card)
+                        }
+                    }
                 }
             } else {
                 Spacer(minLength: 0)
 
-                if let subject = card.course?.subject?.nilIfBlank ?? card.course?.title {
-                    Text(subject.uppercased())
+                if let label = frontEyebrow {
+                    Text(label.uppercased())
                         .font(MicaboFont.hanken(11, weight: .semibold))
                         .tracking(1.4)
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
 
-                Text(card.front)
-                    .font(MicaboFont.hanken(24, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .tracking(-0.2)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+                if card.isOcclusion {
+                    OcclusionFigure(card: card, isRevealed: false)
+                }
+
+                FormulaText(
+                    source: card.front,
+                    size: card.isOcclusion ? 18 : 24,
+                    weight: .semibold,
+                    alignment: .center
+                )
+                .tracking(-0.2)
+                .fixedSize(horizontal: false, vertical: true)
+
+                if card.hasAudio {
+                    CardAudioButton(card: card)
+                }
 
                 Spacer(minLength: 0)
 
@@ -376,6 +396,14 @@ struct StudyCardFace: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: showAnswer ? .topLeading : .center)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
         .shadow(color: Color.black.opacity(0.05), radius: 18, x: 0, y: 8)
+    }
+
+    /// Le sens de révision compte en langues : on annonce lequel est demandé.
+    private var frontEyebrow: String? {
+        if card.isReversed {
+            return "Sens inverse"
+        }
+        return card.course?.subject?.nilIfBlank ?? card.course?.title
     }
 
     /// Ampoule au pied de la question : un appui donne un coup de pouce sans livrer la réponse.

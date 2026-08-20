@@ -14,6 +14,7 @@ struct FlashcardsView: View {
 
     @State private var editingCard: Flashcard?
     @State private var isCreating = false
+    @State private var isMasking = false
     @State private var isGenerating = false
     @State private var showStudy = false
     @State private var studyMode: StudyMode = .scheduled
@@ -61,6 +62,9 @@ struct FlashcardsView: View {
         }
         .sheet(isPresented: $isCreating) {
             FlashcardCreatorSheet(course: course)
+        }
+        .sheet(isPresented: $isMasking) {
+            OcclusionEditorSheet(course: course)
         }
         .fullScreenCover(isPresented: $showStudy) {
             StudyView(source: .course(course), mode: studyMode)
@@ -130,8 +134,16 @@ struct FlashcardsView: View {
             Button { isCreating = true } label: {
                 Label("Ajouter une carte", systemImage: "plus")
             }
+            Button { isMasking = true } label: {
+                Label("Masquer un schéma", systemImage: "rectangle.dashed")
+            }
             Button { Task { await generateMore() } } label: {
                 Label("Générer avec l'IA", systemImage: "sparkles")
+            }
+            if canAddReverseCards {
+                Button { addReverseCards() } label: {
+                    Label("Ajouter les cartes inverses", systemImage: "arrow.left.arrow.right")
+                }
             }
             if !cards.isEmpty {
                 Button { resetProgress() } label: {
@@ -175,12 +187,20 @@ struct FlashcardsView: View {
                                     .fill(statusColor(for: card))
                                     .frame(width: 8, height: 8)
 
-                                Text(card.front)
+                                // Le recto d'une occlusion est toujours le même : dans une
+                                // liste, c'est le nom de la zone qui distingue les cartes.
+                                Text(FormulaRenderer.stripped(card.isOcclusion ? card.back : card.front))
                                     .font(MicaboFont.hanken(14, weight: .medium))
                                     .foregroundStyle(MicaboColor.ink)
                                     .multilineTextAlignment(.leading)
                                     .lineLimit(2)
                                     .frame(maxWidth: .infinity, alignment: .leading)
+
+                                ForEach(badges(for: card), id: \.self) { badge in
+                                    Image(systemName: badge)
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundStyle(MicaboColor.accent)
+                                }
 
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 11, weight: .semibold))
@@ -223,6 +243,32 @@ struct FlashcardsView: View {
                 .padding(16)
                 .micaboGroup()
         }
+    }
+
+    /// Ce que la rangée signale d'un coup d'œil : schéma, son, sens inverse.
+    private func badges(for card: Flashcard) -> [String] {
+        var symbols: [String] = []
+        if card.isOcclusion { symbols.append("rectangle.dashed") }
+        if card.hasAudio { symbols.append("speaker.wave.2") }
+        if card.isReversed { symbols.append("arrow.left.arrow.right") }
+        return symbols
+    }
+
+    /// Proposé dès qu'une carte n'a pas encore son sens inverse.
+    private var canAddReverseCards: Bool {
+        let reversedGroups = Set(cards.filter(\.isReversed).compactMap(\.groupID))
+        return cards.contains { card in
+            guard !card.isReversed, card.kind == .basic else { return false }
+            guard let group = card.groupID else { return true }
+            return !reversedGroups.contains(group)
+        }
+    }
+
+    private func addReverseCards() {
+        withAnimation {
+            try? CourseRepository.addReverseCards(for: course, in: modelContext)
+        }
+        Haptics.success()
     }
 
     private func statusColor(for card: Flashcard) -> Color {

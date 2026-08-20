@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Modification d'une carte existante. Même en-tête que partout : croix, sur-titre,
 /// grand titre — pas de barre de navigation système.
@@ -10,6 +11,7 @@ struct FlashcardEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showDeleteConfirmation = false
+    @State private var showAudioImporter = false
 
     var body: some View {
         FlashcardForm(
@@ -20,8 +22,15 @@ struct FlashcardEditorSheet: View {
                 set: { card.hint = $0.nilIfBlank }
             ),
             header: { AnyView(header) },
-            footer: { AnyView(schedulingSummary) }
+            footer: { AnyView(attachments) }
         )
+        .fileImporter(
+            isPresented: $showAudioImporter,
+            allowedContentTypes: [.audio],
+            allowsMultipleSelection: false
+        ) { result in
+            attachAudio(from: result)
+        }
         .confirmationDialog("Supprimer cette carte ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
             Button("Supprimer", role: .destructive) {
                 try? CourseRepository.delete(card, in: modelContext)
@@ -40,6 +49,73 @@ struct FlashcardEditorSheet: View {
             Button("Terminé", action: save)
                 .font(MicaboFont.hanken(15, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
+        }
+    }
+
+    private var attachments: some View {
+        VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+            audioSection
+
+            if card.isOcclusion {
+                occlusionSection
+            }
+
+            schedulingSummary
+        }
+    }
+
+    /// Le son est facultatif, et c'est ce qui manquait pour les langues : une carte de
+    /// vocabulaire muette n'apprend pas à prononcer.
+    private var audioSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Prononciation")
+
+            VStack(spacing: 0) {
+                if card.hasAudio {
+                    HStack(spacing: MicaboSpacing.sm) {
+                        CardAudioButton(card: card, title: "Écouter")
+
+                        Spacer(minLength: 0)
+
+                        Button("Retirer") {
+                            card.audioData = nil
+                            try? modelContext.save()
+                        }
+                        .font(MicaboFont.captionEmphasis)
+                        .foregroundStyle(MicaboColor.negative)
+                        .buttonStyle(MicaboPressableButtonStyle())
+                    }
+                    .padding(.vertical, 11)
+                    .padding(.horizontal, MicaboSpacing.md)
+                } else {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("🔊"), background: MicaboColor.accentSoft),
+                        title: "Ajouter un son",
+                        subtitle: "Un fichier audio depuis tes fichiers",
+                        accessory: .chevron,
+                        action: { showAudioImporter = true }
+                    )
+                }
+            }
+            .micaboGroup()
+        }
+    }
+
+    private var occlusionSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Schéma")
+
+            VStack(alignment: .leading, spacing: 10) {
+                OcclusionFigure(card: card, isRevealed: true, maxHeight: 200)
+
+                Text("La zone encadrée est celle que cette carte demande. Le verso ci-dessus en est la réponse.")
+                    .font(MicaboFont.hanken(12, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(MicaboSpacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .micaboGroup()
         }
     }
 
@@ -93,6 +169,20 @@ struct FlashcardEditorSheet: View {
         card.updatedAt = Date()
         try? modelContext.save()
         dismiss()
+    }
+
+    /// Le fichier est recopié dans la carte : il reste lisible même si l'original bouge.
+    private func attachAudio(from result: Result<[URL], Error>) {
+        guard case .success(let urls) = result, let url = urls.first else { return }
+
+        let needsScope = url.startAccessingSecurityScopedResource()
+        defer { if needsScope { url.stopAccessingSecurityScopedResource() } }
+
+        guard let data = try? Data(contentsOf: url) else { return }
+        card.audioData = data
+        card.updatedAt = Date()
+        try? modelContext.save()
+        Haptics.success()
     }
 }
 
