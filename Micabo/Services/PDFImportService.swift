@@ -92,7 +92,7 @@ enum PDFImportService {
             document.text = ocrText
             document.extractionNote = ocrText.count >= 200
                 ? "PDF scanné : texte lu sur l'appareil (OCR), sans frais."
-                : "OCR incomplet : vous pouvez activer l'analyse des schémas."
+                : "OCR incomplet : tu peux activer l'analyse des schémas."
         }
 
         guard document.hasUsableText || !document.pageImages.isEmpty else {

@@ -95,7 +95,7 @@ enum SampleData {
     )
 
     static let photosynthesisCards: [GeneratedFlashcard] = [
-        GeneratedFlashcard(front: "Quel est le bilan chimique de la photosynthèse ?", back: "6 CO₂ + 6 H₂O + lumière → C₆H₁₂O₆ + 6 O₂", hint: "Pensez aux six molécules de départ."),
+        GeneratedFlashcard(front: "Quel est le bilan chimique de la photosynthèse ?", back: "6 CO₂ + 6 H₂O + lumière → C₆H₁₂O₆ + 6 O₂", hint: "Pense aux six molécules de départ."),
         GeneratedFlashcard(front: "Où se déroule la phase photochimique ?", back: "Dans la membrane des thylakoïdes du chloroplaste.", hint: nil),
         GeneratedFlashcard(front: "Que produit la photolyse de l'eau ?", back: "Des électrons, des protons H⁺ et du dioxygène.", hint: nil),
         GeneratedFlashcard(front: "Quelles sont les trois étapes du cycle de Calvin ?", back: "Fixation du CO₂, réduction en G3P, régénération du RuBP.", hint: nil),

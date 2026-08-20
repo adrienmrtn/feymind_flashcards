@@ -90,7 +90,7 @@ struct ProfileView: View {
                 statTile("\(StudyStats.streak(reviewDates: reviewDates))", "jours de série")
                 statTile(formattedCount(logs.count), "révisions")
                 statTile("\(courses.count)", "cours")
-                statTile("\(cards.count)", "flashcards")
+                statTile("\(cards.count)", "cartes")
             }
         }
     }
@@ -168,7 +168,7 @@ struct ProfileView: View {
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("👋"), background: MicaboColor.tilePastels[2]),
                     title: "Amis",
-                    subtitle: "Comparer vos séries",
+                    subtitle: "Comparer tes séries",
                     accessory: .badge("bientôt", .neutral)
                 )
             ]

@@ -53,7 +53,7 @@ struct SettingsView: View {
             Button("Tout effacer", role: .destructive, action: eraseEverything)
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Cours, flashcards et historique de révision seront supprimés.")
+            Text("Tes cours, tes cartes et ton historique de révision seront supprimés.")
         }
     }
 
@@ -132,7 +132,7 @@ struct SettingsView: View {
                     action: { showResetConfirmation = true }
                 )
             ],
-            footnote: "Vos cours et vos flashcards ne quittent jamais cet appareil."
+            footnote: "Tes cours et tes cartes ne quittent jamais cet appareil."
         )
     }
 
@@ -147,7 +147,7 @@ struct SettingsView: View {
                     action: replayOnboarding
                 )
             ],
-            footnote: "Relance le parcours d'accueil et efface les réponses données à l'inscription. Vos cours ne sont pas touchés."
+            footnote: "Relance le parcours d'accueil et efface les réponses données à l'inscription. Tes cours ne sont pas touchés."
         )
     }
 

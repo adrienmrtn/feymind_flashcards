@@ -30,7 +30,7 @@ struct WelcomeStepView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .onboardingAppear(index: 1, stagger: 0.12)
 
-                Text("Tes cours deviennent des flashcards, et Micabo te les repose pile au moment où tu allais les oublier.")
+                Text("Tes cours deviennent des cartes, et Micabo te les repose pile au moment où tu allais les oublier.")
                     .font(MicaboFont.hanken(15, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .lineSpacing(3)

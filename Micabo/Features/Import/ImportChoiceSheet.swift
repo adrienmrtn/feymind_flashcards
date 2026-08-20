@@ -22,7 +22,7 @@ enum ImportKind: String, Identifiable {
         case .pdf: "Cours, polycopié, notes"
         case .photo: "Plusieurs pages, à la suite"
         case .docx: "Fichier .docx"
-        case .text: "Vos propres notes"
+        case .text: "Tes notes, telles quelles"
         }
     }
 

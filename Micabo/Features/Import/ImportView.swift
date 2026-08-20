@@ -5,7 +5,7 @@ import UIKit
 import UniformTypeIdentifiers
 import VisionKit
 
-/// Écran d'import : texte, PDF, photos/scan ou Word, puis génération des flashcards.
+/// Écran d'import : texte, PDF, photos/scan ou Word, puis génération des cartes.
 struct ImportView: View {
     let kind: ImportKind
     var onCreated: (Course) -> Void
@@ -75,7 +75,7 @@ struct ImportView: View {
                         HStack(spacing: MicaboSpacing.xs) {
                             Image(systemName: "sparkles")
                                 .font(.system(size: 13, weight: .semibold))
-                            Text("Générer les flashcards")
+                            Text("Générer les cartes")
                         }
                     }
                     .buttonStyle(MicaboPrimaryButtonStyle(tint: canGenerate ? MicaboColor.ink : MicaboColor.strokeStrong))
@@ -128,7 +128,7 @@ struct ImportView: View {
                     )
                 } else if isGenerating {
                     GenerationOverlay(
-                        title: "Création des flashcards",
+                        title: "Création des cartes",
                         steps: [
                             readingStepTitle,
                             "Repérage des notions clés",
@@ -156,7 +156,7 @@ struct ImportView: View {
     private var readingStepTitle: String {
         switch kind {
         case .photo: "Lecture des photos"
-        case .text: "Lecture de vos notes"
+        case .text: "Lecture de tes notes"
         case .pdf, .docx: "Lecture du document"
         }
     }
@@ -175,11 +175,11 @@ struct ImportView: View {
         case .pdf:
             "Le texte est lu sur l'appareil. Un PDF scanné passe par l'OCR d'Apple, sans frais. L'analyse des schémas est facultative."
         case .photo:
-            "Scannez plusieurs pages ou choisissez des photos. Le texte est lu ici, hors ligne."
+            "Scanne plusieurs pages ou choisis des photos. Le texte est lu ici, hors ligne."
         case .docx:
             "Micabo extrait le texte du document Word sur l'appareil, sans l'envoyer nulle part."
         case .text:
-            "Collez vos notes, même brutes. Micabo en fait des flashcards."
+            "Colle tes notes, même brutes. Micabo en fait des cartes."
         }
     }
 
@@ -216,7 +216,7 @@ struct ImportView: View {
                     .frame(minHeight: 260, alignment: .topLeading)
 
                 if pastedText.isEmpty {
-                    Text("Collez ici votre chapitre, vos notes de cours ou un article.")
+                    Text("Colle ici ton chapitre, tes notes de cours ou un article.")
                         .font(MicaboFont.body)
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .padding(MicaboSpacing.sm + 4)
@@ -395,7 +395,7 @@ struct ImportView: View {
         HStack(spacing: 6) {
             Image(systemName: "lock")
                 .font(.system(size: 10, weight: .semibold))
-            Text("Le texte est extrait sur l'appareil. Seule la rédaction des cartes passe par vos Edge Functions (\(AppConfig.aiModel)).")
+            Text("Le texte est extrait sur l'appareil. Seule la rédaction des cartes passe par tes Edge Functions (\(AppConfig.aiModel)).")
                 .font(MicaboFont.micro)
                 .fixedSize(horizontal: false, vertical: true)
         }

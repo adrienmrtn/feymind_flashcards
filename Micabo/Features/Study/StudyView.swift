@@ -2,6 +2,7 @@ import SwiftData
 import SwiftUI
 import UIKit
 
+/// Une session de révision : la file du jour, carte après carte.
 struct StudyView: View {
     let source: StudySource
     var isEmbedded: Bool = false
@@ -363,8 +364,8 @@ private struct CompletionView: View {
                 .tracking(-0.2)
 
             Text(session.answeredCount > 0
-                 ? "\(session.answeredCount) cartes révisées en \(durationLabel)"
-                 : "Revenez plus tard, ou entraînez-vous en avance depuis un cours.")
+                 ? "\(MicaboCopy.cards(session.answeredCount)) révisées en \(durationLabel)"
+                 : "Reviens plus tard, ou prends de l'avance depuis un cours.")
                 .font(MicaboFont.body)
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .multilineTextAlignment(.center)

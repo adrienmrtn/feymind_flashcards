@@ -114,7 +114,7 @@ struct SupabaseAIService: AIService {
             return .missingProviderKey
         }
         if status == 401 || status == 403 {
-            return .server("Clé Supabase refusée (\(status)). Vérifiez la clé publique dans Réglages.")
+            return .server("Clé Supabase refusée (\(status)). Vérifie la clé publique dans Réglages.")
         }
         if status == 404 {
             return .server("Fonction Supabase introuvable. Déployez les Edge Functions du dossier supabase/functions.")

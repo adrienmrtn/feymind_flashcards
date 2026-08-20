@@ -8,7 +8,7 @@ enum StudySource {
     case cards([Flashcard])
 }
 
-/// Pilote une session d'entraînement : file d'attente, réponses, statistiques.
+/// Pilote une session de révision : file d'attente, réponses, statistiques.
 @Observable
 final class StudySession {
     struct Entry {

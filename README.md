@@ -1,21 +1,34 @@
 # Micabo
 
-Application iOS native de révision : vos cours (PDF, photos, Word ou notes) deviennent des flashcards en répétition espacée façon Anki.
+Application iOS native de révision : tes cours (PDF, photos, Word ou notes) deviennent des cartes en répétition espacée façon Anki.
 
 <img src="Micabo/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="120" alt="Icône Micabo" />
 
 ## Ce que fait l'application
 
+Trois onglets, pas plus. L'app **ouvre sur Réviser**, et le bouton de session y est ancré en
+bas de l'écran : entre le lancement et la première carte, il n'y a qu'un appui.
+
 | Onglet | Rôle |
 | --- | --- |
-| Réviser | La pile de flashcards dues aujourd'hui, tous cours confondus |
-| Mes cours | Les cours importés, avec recherche et tri |
-| Accueil | Tableau de bord : révisions du jour, statistiques, cours récents, bouton d'import |
-| Bibliothèque | Cours partagés par la communauté (en attente de l'authentification) |
+| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui, la série, les cours au programme, la répartition de la file, tes cours récents et le bouton d'import |
+| Cours | Tout ce qui est importé, avec recherche, tri et filtre par matière. Second rayon « Découvrir » pour la bibliothèque partagée, masqué tant que `LibraryAccess.isAvailable` est faux |
 | Profil | Statistiques, amis (en attente de l'authentification) et réglages |
 
-Le parcours principal tient en trois écrans : bouton `+` sur l'accueil, choix du format
-(PDF, scan/photos, Word ou texte), génération des flashcards, puis entraînement.
+Le parcours d'import tient en trois écrans : bouton `+` dans l'en-tête de Réviser ou de Cours,
+choix du format (PDF, scan/photos, Word ou texte), génération des cartes, puis session.
+
+## Lexique
+
+Le vocabulaire est verrouillé dans `Micabo/DesignSystem/MicaboCopy.swift`, et il vaut pour
+toute l'interface :
+
+- **un seul mot par concept** — un contenu importé est un *cours*, une question-réponse est une
+  *carte* (« flashcard » ne vit que dans le code et les noms d'Edge Functions), un passage de
+  révision est une *session*, et l'action est *réviser* : ni « entraînement », ni « exercice »
+- **tutoiement systématique**, de l'onboarding aux messages d'erreur
+- **un bouton garde son nom du début à la fin d'un parcours** — celui qui ouvre une session
+  s'appelle « Réviser N cartes », qu'on parte de l'onglet Réviser ou d'un cours
 
 ## Parcours d'accueil
 
@@ -99,12 +112,12 @@ une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un acces
   ou regroupée dans un bloc blanc sous un intitulé en capitales (Réglages, Au programme)
 - Pastilles d'état au bout d'une rangée : indigo pour ce qui attend, ocre pour une échéance,
   gris pour « à jour »
-- L'indigo ne sert qu'à ce qui est actif : onglet courant, filtre choisi, cartes dues
-- Le seul aplat d'encre est le bloc « Réviser maintenant » de l'accueil
-- Barre d'onglets en pied d'écran, symbole plein sur l'onglet actif ; bouton « + » rond dans
-  l'en-tête des cours, et flottant en bas à droite sur l'accueil
+- L'indigo ne sert qu'à ce qui est actif : onglet courant, filtre choisi, cartes à réviser
+- Le seul aplat d'encre est le bouton d'action principal, ancré en bas de l'écran
+- Barre de trois onglets en pied d'écran, symbole plein sur l'onglet actif ; bouton « + » rond
+  dans l'en-tête de Réviser et de Cours, jamais de bouton flottant
 - Balayage horizontal natif (pages qui suivent le doigt) pour changer d'onglet ; geste de retour du système sur les écrans poussés
-- Réviser : le nombre de cartes dues posé à même le fond ivoire, puis les cours au programme et la répartition
+- Réviser : le nombre de cartes à réviser posé à même le fond ivoire, puis les cours au programme et la répartition
 - Détail cours : retour rond sur le fond, vignette et titre, résumé, puis les cartes en bloc blanc
 - Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose pas
 - En session, une ampoule donne un indice : celui de la carte, sinon un début de réponse
@@ -180,7 +193,7 @@ L'option **Analyser les schémas et images** est le seul extra payant : jusqu'à
 partent alors au modèle de vision fal.ai. Elle est décochée dès que le texte extrait
 est suffisant, et proposée si le document ressemble à un scan pauvre en texte.
 
-Les anciens `.doc` binaires ne sont pas lus : exportez-les en `.docx` depuis Word.
+Les anciens `.doc` binaires ne sont pas lus : exporte-les en `.docx` depuis Word.
 
 ## Contenu analysé
 
@@ -207,7 +220,7 @@ appliqueront. Les tests de `MicaboTests/SM2SchedulerTests.swift` verrouillent ce
 ```
 Micabo/
   App/             point d'entrée et conteneur SwiftData
-  DesignSystem/    jetons de style et composants réutilisables
+  DesignSystem/    jetons de style, lexique et composants réutilisables
   Models/          entités SwiftData et réponses de l'IA
   Persistence/     enregistrement des cours et contenu de démonstration
   SRS/             planificateur SM-2, file d'attente, statistiques

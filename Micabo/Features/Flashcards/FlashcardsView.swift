@@ -3,7 +3,8 @@ import SwiftUI
 
 /// Écran principal d'un cours : une barre de retour posée sur le fond ivoire,
 /// la vignette et le titre du cours, son résumé, puis la liste des questions
-/// dans un bloc blanc. CTA « Commencer l'entraînement » ancré en bas.
+/// dans un bloc blanc. Le bouton de session, ancré en bas, porte le même nom
+/// que sur l'onglet Réviser.
 struct FlashcardsView: View {
     @Bindable var course: Course
 
@@ -46,9 +47,10 @@ struct FlashcardsView: View {
             if !cards.isEmpty {
                 MicaboBottomBar {
                     Button {
+                        Haptics.medium()
                         showStudy = true
                     } label: {
-                        Text("Commencer l'entraînement")
+                        Text(MicaboCopy.reviewButton(count: cards.count))
                     }
                     .buttonStyle(MicaboPrimaryButtonStyle())
                 }
@@ -66,7 +68,7 @@ struct FlashcardsView: View {
         .overlay {
             if isGenerating {
                 GenerationOverlay(
-                    title: "Nouvelles flashcards",
+                    title: "Nouvelles cartes",
                     steps: ["Relecture du contenu", "Choix des notions", "Rédaction", "Vérification"]
                 )
             }
@@ -83,7 +85,7 @@ struct FlashcardsView: View {
             }
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Le cours et ses \(cards.count) flashcards seront définitivement effacés.")
+            Text("Le cours et ses \(MicaboCopy.cards(cards.count)) seront définitivement effacés.")
         }
     }
 
@@ -154,8 +156,8 @@ struct FlashcardsView: View {
         if cards.isEmpty {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
-                title: "Aucune flashcard",
-                message: "Générez un jeu de cartes à partir du contenu importé, ou créez-en une à la main.",
+                title: "Aucune carte",
+                message: "Génère un jeu de cartes à partir du contenu importé, ou crée-en une à la main.",
                 actionTitle: "Générer avec l'IA"
             ) {
                 Task { await generateMore() }
