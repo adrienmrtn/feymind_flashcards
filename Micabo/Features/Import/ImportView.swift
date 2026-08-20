@@ -46,6 +46,7 @@ struct ImportView: View {
             ZStack(alignment: .bottom) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                        header
                         intro
                         titleField
 
@@ -82,14 +83,7 @@ struct ImportView: View {
                     .disabled(!canGenerate || isGenerating || isReading)
                 }
             }
-            .navigationTitle(kind.title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Annuler") { dismiss() }
-                        .foregroundStyle(MicaboColor.accent)
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .fileImporter(
                 isPresented: $showFileImporter,
                 allowedContentTypes: kind == .docx ? [UTType.docx] : [.pdf],
@@ -162,6 +156,16 @@ struct ImportView: View {
     }
 
     // MARK: - Sections
+
+    private var header: some View {
+        MicaboScreenHeader(
+            title: kind.title,
+            eyebrow: "Nouveau cours",
+            back: MicaboHeaderBack.close { dismiss() }
+        )
+        .padding(.top, MicaboSpacing.xs)
+        .padding(.bottom, MicaboSpacing.xxs)
+    }
 
     private var intro: some View {
         Text(introCopy)

@@ -120,7 +120,11 @@ une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un acces
 - Fond ivoire (`#F6F4ED`), surfaces blanches, encre `#191714`, accent indigo `#5B5BD6`
 - Typographie Hanken Grotesk embarquée (Regular / Medium / SemiBold / Bold)
 - Coins : 13 pt (tuiles), 16 pt (boutons, recherche), 20 pt (blocs et cartes), 28 pt (feuilles)
-- Chaque écran s'ouvre sur un sur-titre en capitales grises puis un grand titre serré (32 pt)
+- **Un seul en-tête pour toute l'app** : `MicaboScreenHeader`, sur fond crème, sur-titre en
+  capitales grises puis grand titre serré (32 pt). Aucun écran n'a droit à son bandeau : un
+  écran poussé ou une feuille ajoute un bouton rond au-dessus du sur-titre, et une page qui
+  doit porter une couleur — le détail d'un cours — la porte dans sa **tuile**. Plus de barre
+  de navigation système nulle part : les titres système ont tous été remplacés.
 - Deux mises en page de liste : posée à même le fond avec un filet entre les rangées (Cours),
   ou regroupée dans un bloc blanc sous un intitulé en capitales (Réglages, Au programme)
 - Pastilles d'état au bout d'une rangée : indigo pour ce qui attend, ocre pour une échéance,
@@ -131,7 +135,8 @@ une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un acces
   dans l'en-tête de Réviser et de Cours, jamais de bouton flottant
 - Balayage horizontal natif (pages qui suivent le doigt) pour changer d'onglet ; geste de retour du système sur les écrans poussés
 - Réviser : le nombre de cartes à réviser posé à même le fond ivoire, puis les cours au programme et la répartition
-- Détail cours : retour rond sur le fond, vignette et titre, résumé, puis les cartes en bloc blanc
+- Détail cours : même en-tête que les autres écrans — tuile du cours, matière et volume en
+  sur-titre, titre — puis le résumé et les cartes en bloc blanc
 - Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose pas
 - En session, une ampoule donne un indice : celui de la carte, sinon un début de réponse
 - Animations en cascade et retours haptiques centralisés dans `Haptics`

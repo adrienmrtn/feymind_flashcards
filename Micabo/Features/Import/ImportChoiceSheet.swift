@@ -91,15 +91,8 @@ struct ImportChoiceSheet: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                VStack(alignment: .leading, spacing: 5) {
-                    MicaboEyebrow(text: "Nouveau cours")
-
-                    Text("D'où part-on ?")
-                        .font(MicaboFont.hanken(25, weight: .bold))
-                        .foregroundStyle(MicaboColor.ink)
-                        .tracking(MicaboTracking.tight)
-                }
-                .padding(.top, 24)
+                MicaboScreenHeader(title: "D'où part-on ?", eyebrow: "Nouveau cours")
+                    .padding(.top, 24)
 
                 MicaboRowGroup(
                     rows: kinds.map { kind in

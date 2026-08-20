@@ -23,29 +23,22 @@ struct SettingsView: View {
     ]
 
     var body: some View {
-        VStack(spacing: 0) {
-            MicaboNavHeader(title: "Réglages", onBack: saveAndClose) {
-                Button("Terminé", action: saveAndClose)
-                    .font(MicaboFont.hanken(15, weight: .semibold))
-                    .foregroundStyle(MicaboColor.accent)
+        ScrollView {
+            VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                header
+                reviewSection
+                intelligenceSection
+                connectionSection
+                dataSection
+                testSection
+                aboutSection
             }
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                    reviewSection
-                    intelligenceSection
-                    connectionSection
-                    dataSection
-                    testSection
-                    aboutSection
-                }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, MicaboSpacing.md)
-                .padding(.bottom, MicaboSpacing.xxl)
-            }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.interactively)
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, MicaboSpacing.xs)
+            .padding(.bottom, MicaboSpacing.xxl)
         }
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
         .micaboScreenBackground()
         .confirmationDialog(
             "Effacer toutes les données ?",
@@ -60,6 +53,15 @@ struct SettingsView: View {
     }
 
     // MARK: - Sections
+
+    private var header: some View {
+        MicaboScreenHeader(title: "Réglages", back: MicaboHeaderBack.back(saveAndClose)) {
+            Button("Terminé", action: saveAndClose)
+                .font(MicaboFont.hanken(15, weight: .semibold))
+                .foregroundStyle(MicaboColor.accent)
+        }
+        .padding(.top, MicaboSpacing.xs)
+    }
 
     /// Le rythme quotidien commande le plafond de cartes neuves : les deux rangées se
     /// lisent ensemble, et la seconde n'est qu'une conséquence de la première.

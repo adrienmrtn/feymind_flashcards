@@ -1,7 +1,8 @@
 import SwiftData
 import SwiftUI
 
-/// Modification d'une carte existante.
+/// Modification d'une carte existante. Même en-tête que partout : croix, sur-titre,
+/// grand titre — pas de barre de navigation système.
 struct FlashcardEditorSheet: View {
     @Bindable var card: Flashcard
 
@@ -11,48 +12,40 @@ struct FlashcardEditorSheet: View {
     @State private var showDeleteConfirmation = false
 
     var body: some View {
-        NavigationStack {
-            FlashcardForm(
-                front: $card.front,
-                back: $card.back,
-                hint: Binding(
-                    get: { card.hint ?? "" },
-                    set: { card.hint = $0.nilIfBlank }
-                ),
-                footer: { AnyView(schedulingSummary) }
-            )
-            .navigationTitle("Modifier la carte")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Supprimer", role: .destructive) { showDeleteConfirmation = true }
-                        .foregroundStyle(MicaboColor.negative)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Terminé") {
-                        card.updatedAt = Date()
-                        try? modelContext.save()
-                        dismiss()
-                    }
-                    .font(MicaboFont.cardTitle)
-                    .foregroundStyle(MicaboColor.ink)
-                }
+        FlashcardForm(
+            front: $card.front,
+            back: $card.back,
+            hint: Binding(
+                get: { card.hint ?? "" },
+                set: { card.hint = $0.nilIfBlank }
+            ),
+            header: { AnyView(header) },
+            footer: { AnyView(schedulingSummary) }
+        )
+        .confirmationDialog("Supprimer cette carte ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Supprimer", role: .destructive) {
+                try? CourseRepository.delete(card, in: modelContext)
+                dismiss()
             }
-            .confirmationDialog("Supprimer cette carte ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
-                Button("Supprimer", role: .destructive) {
-                    try? CourseRepository.delete(card, in: modelContext)
-                    dismiss()
-                }
-                Button("Annuler", role: .cancel) {}
-            }
+            Button("Annuler", role: .cancel) {}
+        }
+    }
+
+    private var header: some View {
+        MicaboScreenHeader(
+            title: "Modifier la carte",
+            eyebrow: card.course?.title,
+            back: MicaboHeaderBack.close(save)
+        ) {
+            Button("Terminé", action: save)
+                .font(MicaboFont.hanken(15, weight: .semibold))
+                .foregroundStyle(MicaboColor.accent)
         }
     }
 
     private var schedulingSummary: some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-            Text("Progression")
-                .font(MicaboFont.captionEmphasis)
-                .foregroundStyle(MicaboColor.inkTertiary)
+            MicaboSectionCaption(text: "Progression")
 
             HStack(spacing: MicaboSpacing.sm) {
                 summaryItem(card.state.label, "État")
@@ -61,14 +54,26 @@ struct FlashcardEditorSheet: View {
                 summaryItem("\(card.lapses)", "Oublis")
             }
 
-            Button("Réinitialiser cette carte") {
-                card.resetScheduling()
-                try? modelContext.save()
+            HStack(spacing: MicaboSpacing.md) {
+                Button("Réinitialiser cette carte") {
+                    card.resetScheduling()
+                    try? modelContext.save()
+                }
+                .buttonStyle(MicaboQuietButtonStyle())
+
+                Button("Supprimer la carte") {
+                    showDeleteConfirmation = true
+                }
+                .font(MicaboFont.captionEmphasis)
+                .foregroundStyle(MicaboColor.negative)
+                .buttonStyle(MicaboPressableButtonStyle())
+
+                Spacer(minLength: 0)
             }
-            .buttonStyle(MicaboQuietButtonStyle())
         }
+        .padding(MicaboSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .micaboCard(padding: MicaboSpacing.md, radius: MicaboRadius.lg, elevated: false)
+        .micaboGroup()
     }
 
     private func summaryItem(_ value: String, _ label: String) -> some View {
@@ -82,6 +87,12 @@ struct FlashcardEditorSheet: View {
                 .foregroundStyle(MicaboColor.inkTertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func save() {
+        card.updatedAt = Date()
+        try? modelContext.save()
+        dismiss()
     }
 }
 
@@ -101,31 +112,30 @@ struct FlashcardCreatorSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            FlashcardForm(
-                front: $front,
-                back: $back,
-                hint: $hint,
-                footer: { AnyView(EmptyView()) }
-            )
-            .navigationTitle("Nouvelle carte")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Annuler") { dismiss() }
-                        .foregroundStyle(MicaboColor.accent)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Ajouter") { save() }
-                        .font(MicaboFont.cardTitle)
-                        .foregroundStyle(canSave ? MicaboColor.ink : MicaboColor.inkTertiary)
-                        .disabled(!canSave)
-                }
-            }
+        FlashcardForm(
+            front: $front,
+            back: $back,
+            hint: $hint,
+            header: { AnyView(header) },
+            footer: { AnyView(EmptyView()) }
+        )
+    }
+
+    private var header: some View {
+        MicaboScreenHeader(
+            title: "Nouvelle carte",
+            eyebrow: course.title,
+            back: MicaboHeaderBack.close { dismiss() }
+        ) {
+            Button("Ajouter", action: save)
+                .font(MicaboFont.hanken(15, weight: .semibold))
+                .foregroundStyle(canSave ? MicaboColor.accent : MicaboColor.inkTertiary)
+                .disabled(!canSave)
         }
     }
 
     private func save() {
+        guard canSave else { return }
         let generated = GeneratedFlashcard(front: front, back: back, hint: hint.nilIfBlank)
         try? CourseRepository.addFlashcards([generated], to: course, in: modelContext)
         dismiss()
@@ -137,19 +147,25 @@ private struct FlashcardForm: View {
     @Binding var front: String
     @Binding var back: String
     @Binding var hint: String
+    let header: () -> AnyView
     let footer: () -> AnyView
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                header()
+                    .padding(.bottom, MicaboSpacing.xxs)
+
                 field(title: "Recto", subtitle: "La question posée", text: $front, minHeight: 96)
                 field(title: "Verso", subtitle: "La réponse attendue", text: $back, minHeight: 140)
                 field(title: "Indice", subtitle: "Facultatif", text: $hint, minHeight: 60)
                 footer()
             }
             .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.vertical, MicaboSpacing.md)
+            .padding(.top, MicaboSpacing.xs)
+            .padding(.bottom, MicaboSpacing.xl)
         }
+        .scrollIndicators(.hidden)
         .micaboScreenBackground()
         .scrollDismissesKeyboard(.interactively)
     }
@@ -168,10 +184,11 @@ private struct FlashcardForm: View {
             TextEditor(text: text)
                 .font(MicaboFont.body)
                 .foregroundStyle(MicaboColor.ink)
+                .tint(MicaboColor.accent)
                 .scrollContentBackground(.hidden)
                 .padding(MicaboSpacing.sm)
                 .frame(minHeight: minHeight, alignment: .topLeading)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+                .micaboGroup(radius: MicaboRadius.lg)
         }
     }
 }

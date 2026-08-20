@@ -1,10 +1,10 @@
 import SwiftData
 import SwiftUI
 
-/// Écran principal d'un cours : une barre de retour posée sur le fond ivoire,
-/// la vignette et le titre du cours, son résumé, puis la liste des questions
-/// dans un bloc blanc. Le bouton de session, ancré en bas, porte le même nom
-/// que sur l'onglet Réviser.
+/// Écran principal d'un cours. Il porte le même en-tête que tous les autres écrans —
+/// crème, sur-titre puis grand titre — la seule couleur propre au cours étant sa tuile.
+/// Suivent le résumé et la liste des questions dans un bloc blanc ; le bouton de
+/// session, ancré en bas, porte le même nom que sur l'onglet Réviser.
 struct FlashcardsView: View {
     @Bindable var course: Course
 
@@ -23,21 +23,17 @@ struct FlashcardsView: View {
     private var dueCount: Int { course.dueCards.count }
 
     var body: some View {
-        VStack(spacing: 0) {
-            navBar
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                    titleBlock
-                    summaryCard
-                    listContent
-                }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, MicaboSpacing.xs)
-                .padding(.bottom, cards.isEmpty ? MicaboSpacing.xxl : MicaboLayout.bottomBarClearance)
+        ScrollView {
+            VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                header
+                summaryCard
+                listContent
             }
-            .scrollIndicators(.hidden)
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, MicaboSpacing.xs)
+            .padding(.bottom, cards.isEmpty ? MicaboSpacing.xxl : MicaboLayout.bottomBarClearance)
         }
+        .scrollIndicators(.hidden)
         .micaboScreenBackground()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -91,62 +87,53 @@ struct FlashcardsView: View {
 
     // MARK: - En-tête
 
-    private var navBar: some View {
-        HStack {
-            MicaboCircleButton(systemImage: "chevron.left", size: 38, accessibilityTitle: "Retour") {
-                dismiss()
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            MicaboScreenHeader(
+                title: course.title,
+                eyebrow: headerEyebrow,
+                tile: MicaboTile.course(course, size: 52),
+                back: MicaboHeaderBack.back { dismiss() }
+            ) {
+                courseMenu
             }
 
-            Spacer()
-
-            Menu {
-                Button { isCreating = true } label: {
-                    Label("Ajouter une carte", systemImage: "plus")
-                }
-                Button { Task { await generateMore() } } label: {
-                    Label("Générer avec l'IA", systemImage: "sparkles")
-                }
-                if !cards.isEmpty {
-                    Button { resetProgress() } label: {
-                        Label("Réinitialiser la progression", systemImage: "arrow.counterclockwise")
-                    }
-                }
-                Divider()
-                Button(role: .destructive) { showDeleteConfirmation = true } label: {
-                    Label("Supprimer le cours", systemImage: "trash")
-                }
-            } label: {
-                MicaboCircleIcon(systemImage: "ellipsis", size: 38)
+            if dueCount > 0 {
+                MicaboBadge(text: "\(dueCount) à réviser", tone: .accent)
             }
-            .accessibilityLabel("Actions du cours")
         }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.vertical, MicaboSpacing.xs)
+        .padding(.top, MicaboSpacing.xs)
     }
 
-    private var titleBlock: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            MicaboTile.course(course, size: 56)
+    /// Matière et volume dans le sur-titre : c'est la place de ce genre d'information,
+    /// et le cours n'a donc pas besoin d'un bandeau à lui.
+    private var headerEyebrow: String {
+        let volume = MicaboCopy.cards(cards.count)
+        guard let subject = course.subject?.nilIfBlank else { return volume }
+        return "\(subject) · \(volume)"
+    }
 
-            Text(course.title)
-                .font(MicaboFont.hanken(27, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .tracking(MicaboTracking.tight)
-                .fixedSize(horizontal: false, vertical: true)
-
-            HStack(spacing: 6) {
-                if let subject = course.subject?.nilIfBlank {
-                    MicaboBadge(text: subject, tone: .neutral)
-                }
-                if !cards.isEmpty {
-                    MicaboBadge(text: "\(cards.count) carte\(cards.count > 1 ? "s" : "")", tone: .neutral)
-                }
-                if dueCount > 0 {
-                    MicaboBadge(text: "\(dueCount) due\(dueCount > 1 ? "s" : "")", tone: .accent)
+    private var courseMenu: some View {
+        Menu {
+            Button { isCreating = true } label: {
+                Label("Ajouter une carte", systemImage: "plus")
+            }
+            Button { Task { await generateMore() } } label: {
+                Label("Générer avec l'IA", systemImage: "sparkles")
+            }
+            if !cards.isEmpty {
+                Button { resetProgress() } label: {
+                    Label("Réinitialiser la progression", systemImage: "arrow.counterclockwise")
                 }
             }
+            Divider()
+            Button(role: .destructive) { showDeleteConfirmation = true } label: {
+                Label("Supprimer le cours", systemImage: "trash")
+            }
+        } label: {
+            MicaboCircleIcon(systemImage: "ellipsis", size: 38)
         }
-        .padding(.top, MicaboSpacing.xxs)
+        .accessibilityLabel("Actions du cours")
     }
 
     // MARK: - Liste
