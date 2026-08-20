@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var supabaseURL = AppConfig.supabaseURL
     @State private var anonKey = AppConfig.supabaseAnonKey
     @State private var model = AppConfig.aiModel
+    @State private var dailyMinutes = OnboardingPreferences.dailyMinutes
     @State private var showResetConfirmation = false
 
     private let models = [
@@ -31,6 +32,7 @@ struct SettingsView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                    reviewSection
                     intelligenceSection
                     connectionSection
                     dataSection
@@ -58,6 +60,45 @@ struct SettingsView: View {
     }
 
     // MARK: - Sections
+
+    /// Le rythme quotidien commande le plafond de cartes neuves : les deux rangées se
+    /// lisent ensemble, et la seconde n'est qu'une conséquence de la première.
+    private var reviewSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Révision")
+
+            VStack(spacing: 0) {
+                Menu {
+                    Picker("Objectif quotidien", selection: $dailyMinutes) {
+                        ForEach(DailyLoad.steps, id: \.self) { minutes in
+                            Text(DailyLoad.label(forMinutes: minutes)).tag(minutes)
+                        }
+                    }
+                } label: {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("⏱️"), background: MicaboColor.tilePastels[1]),
+                        title: "Objectif quotidien",
+                        accessory: .value(DailyLoad.label(forMinutes: dailyMinutes))
+                    )
+                }
+
+                MicaboHairline(inset: 71)
+
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("🆕"), background: MicaboColor.accentSoft),
+                    title: "Nouvelles cartes / jour",
+                    accessory: .value("\(DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes)) max")
+                )
+            }
+            .micaboGroup()
+
+            MicaboSectionFootnote(text: "Une carte neuve revient huit fois avant d'être acquise : le plafond découle du temps que tu t'accordes.")
+        }
+        .onChange(of: dailyMinutes) { _, newValue in
+            OnboardingPreferences.dailyMinutes = newValue
+            Haptics.selection()
+        }
+    }
 
     private var intelligenceSection: some View {
         VStack(alignment: .leading, spacing: 8) {

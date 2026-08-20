@@ -68,7 +68,7 @@ final class StudySession {
         self.context = context
         startedAt = now
 
-        let queue = StudyQueueBuilder.build(from: cards, now: now, limits: .unlimited)
+        let queue = StudyQueueBuilder.build(from: cards, now: now, limits: .daily())
         let usable = queue.isEmpty ? earlyReviewFallback(from: cards) : queue
 
         pending = usable.map { Entry(card: $0, availableAt: min($0.dueDate, now)) }

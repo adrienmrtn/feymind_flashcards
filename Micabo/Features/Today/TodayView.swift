@@ -19,8 +19,17 @@ struct TodayView: View {
     @State private var pendingImport: ImportKind?
     @State private var activeImport: ImportKind?
 
+    /// La file telle que la session va la servir : le plafond de cartes neuves du jour,
+    /// hérité du rythme choisi à l'inscription, est déjà appliqué. Le chiffre affiché est
+    /// donc exactement celui qu'on va réviser.
     private var dueCards: [Flashcard] {
-        allCards.filter { $0.isDue() }
+        StudyQueueBuilder.build(from: allCards, limits: .daily())
+    }
+
+    /// Cartes neuves dues mais gardées pour les jours suivants, à cause du plafond.
+    private var heldBackNewCards: Int {
+        let dueNew = allCards.filter { $0.isDue() && $0.state == .new }.count
+        return max(0, dueNew - newCount)
     }
 
     private var newCount: Int {
@@ -152,6 +161,14 @@ struct TodayView: View {
 
             progressSegments
                 .padding(.top, 4)
+
+            if heldBackNewCards > 0 {
+                Text("\(MicaboCopy.cards(heldBackNewCards)) neuves gardées pour les jours suivants, pour tenir ton rythme de \(DailyLoad.label(forMinutes: OnboardingPreferences.dailyMinutes)) par jour.")
+                    .font(MicaboFont.hanken(12, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 2)
+            }
         }
     }
 
@@ -209,10 +226,16 @@ struct TodayView: View {
         .padding(.horizontal, MicaboSpacing.md)
     }
 
+    /// Compté sur la file du jour, plafond compris : « au programme » doit dire la vérité.
     private var dueByCourse: [(course: Course, count: Int)] {
+        var counts: [UUID: Int] = [:]
+        for card in dueCards {
+            guard let id = card.course?.id else { continue }
+            counts[id, default: 0] += 1
+        }
+
         let entries: [(course: Course, count: Int)] = courses.compactMap { course in
-            let count = course.dueCards.count
-            guard count > 0 else { return nil }
+            guard let count = counts[course.id], count > 0 else { return nil }
             return (course: course, count: count)
         }
         return entries.sorted { $0.count > $1.count }
