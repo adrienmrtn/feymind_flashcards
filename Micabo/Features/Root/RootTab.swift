@@ -1,30 +1,30 @@
 import SwiftUI
 
-/// Les trois destinations de la barre d'onglets.
+/// Les trois destinations de la barre d'onglets, dans l'ordre où elles se balayent.
 ///
-/// L'app ouvre sur **Réviser**, qui porte aussi ce que faisait l'accueil : entre le
-/// lancement et la première carte, il ne doit y avoir aucun appui parasite. **Cours**
-/// regroupe tout ce qui est importé, et accueillera la bibliothèque en sous-onglet
-/// « Découvrir » quand elle sera réellement active.
+/// **Réviser** est au milieu, et c'est là que l'app ouvre : c'est l'écran du quotidien,
+/// donc celui qu'on rejoint d'un seul balayage depuis n'importe où. **Cours** regroupe
+/// tout ce qui est importé, et accueillera la bibliothèque en sous-onglet « Découvrir »
+/// quand elle sera réellement active.
 enum RootTab: Int, CaseIterable, Identifiable, Hashable {
-    case today
     case courses
+    case today
     case profile
 
     var id: Int { rawValue }
 
     var label: String {
         switch self {
-        case .today: "Réviser"
         case .courses: "Cours"
+        case .today: "Réviser"
         case .profile: "Profil"
         }
     }
 
     var systemImage: String {
         switch self {
-        case .today: "arrow.triangle.2.circlepath"
         case .courses: "books.vertical"
+        case .today: "arrow.triangle.2.circlepath"
         case .profile: "person"
         }
     }
@@ -32,8 +32,8 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     /// Variante pleine, affichée quand l'onglet est actif.
     var selectedSystemImage: String {
         switch self {
-        case .today: "arrow.triangle.2.circlepath"
         case .courses: "books.vertical.fill"
+        case .today: "arrow.triangle.2.circlepath"
         case .profile: "person.fill"
         }
     }
@@ -46,7 +46,10 @@ final class TabRouter {
     /// Profondeur de navigation par onglet : le balayage n'est actif que sur une racine.
     private var navigationDepth: [RootTab: Int] = [:]
 
-    var allowsPaging: Bool {
+    /// Vrai quand la page affichée est sur sa racine. C'est là, et seulement là, que le
+    /// balayage entre onglets et la barre du bas ont un sens : sur un écran poussé, les
+    /// deux disparaissent.
+    var isAtRoot: Bool {
         navigationDepth[selection, default: 0] == 0
     }
 

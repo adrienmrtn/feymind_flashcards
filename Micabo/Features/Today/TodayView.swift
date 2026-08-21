@@ -1,14 +1,13 @@
 import SwiftData
 import SwiftUI
 
-/// Écran d'ouverture de l'app : **Réviser**. Il porte à la fois la file du jour et ce
-/// que faisait l'accueil (salutation, série, import, accès aux cours).
+/// Écran d'ouverture de l'app : **Réviser**. Salutation, série, et la file du jour.
 ///
-/// Le bouton de session est ancré en bas, donc visible sans faire défiler : entre le
-/// lancement de l'app et la première carte, il n'y a qu'un appui.
+/// Il ne parle que de la révision du jour : pas de date, pas de liste de cours, pas de
+/// bouton d'import — tout ça vit dans l'onglet Cours, à un balayage de là. Le bouton de
+/// session est ancré en bas, donc visible sans faire défiler : entre le lancement de
+/// l'app et la première carte, il n'y a qu'un appui.
 struct TodayView: View {
-    @Environment(TabRouter.self) private var router: TabRouter?
-
     @Query private var allCards: [Flashcard]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
     @Query private var reviewLogs: [ReviewLog]
@@ -69,8 +68,6 @@ struct TodayView: View {
                         dueCoursesSection
                         breakdownSection
                     }
-
-                    coursesSection
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, hasSessionButton ? MicaboLayout.bottomBarClearance : MicaboSpacing.xxl)
@@ -91,7 +88,6 @@ struct TodayView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
-            .micaboTabBar()
             .reportsPaging(for: .today, depth: path.count)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
@@ -122,17 +118,16 @@ struct TodayView: View {
     // MARK: - En-tête
 
     private var header: some View {
-        MicaboScreenHeader(title: StudyStats.greeting(), eyebrow: headerEyebrow) {
-            MicaboCircleButton(systemImage: "plus", size: 44, accessibilityTitle: "Importer un cours") {
-                showImportChoice = true
-            }
-        }
-        .padding(.top, MicaboSpacing.xs)
+        MicaboScreenHeader(title: StudyStats.greeting(), eyebrow: headerEyebrow)
+            .padding(.top, MicaboSpacing.xs)
     }
 
-    private var headerEyebrow: String {
-        guard streak > 0 else { return StudyStats.formattedDate() }
-        return "\(StudyStats.formattedDate()) · série de \(streak) jour\(streak > 1 ? "s" : "")"
+    /// La date du jour n'apparaît pas : l'écran dit déjà ce qu'il y a à faire
+    /// aujourd'hui, et le téléphone porte l'heure juste au-dessus. Reste la série,
+    /// qui est la seule chose que l'utilisateur risque de perdre.
+    private var headerEyebrow: String? {
+        guard streak > 0 else { return nil }
+        return "Série de \(streak) jour\(streak > 1 ? "s" : "")"
     }
 
     // MARK: - Le chiffre du jour
@@ -337,29 +332,6 @@ struct TodayView: View {
         }
         .prefix(4)
         .map { $0 }
-    }
-
-    // MARK: - Tes cours
-
-    @ViewBuilder
-    private var coursesSection: some View {
-        if !courses.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionHeader(title: "Tes cours", actionTitle: "Tout voir") {
-                    withAnimation(.easeOut(duration: 0.28)) {
-                        router?.selection = .courses
-                    }
-                }
-
-                MicaboRowGroup(
-                    rows: courses.prefix(4).map { course in
-                        MicaboRow.course(course) {
-                            path.append(course)
-                        }
-                    }
-                )
-            }
-        }
     }
 
     // MARK: - Session

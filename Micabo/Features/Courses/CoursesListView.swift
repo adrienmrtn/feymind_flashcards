@@ -97,12 +97,12 @@ struct CoursesListView: View {
                     shelfContent
                 }
                 .padding(.top, MicaboSpacing.xs)
-                .padding(.bottom, MicaboSpacing.xxl)
+                .padding(.bottom, courses.isEmpty ? MicaboSpacing.xxl : MicaboLayout.bottomBarClearance)
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
+            .overlay(alignment: .bottomTrailing) { importButton }
             .toolbar(.hidden, for: .navigationBar)
-            .micaboTabBar()
             .reportsPaging(for: .courses, depth: path.count)
             .navigationDestination(for: Course.self) { course in
                 FlashcardsView(course: course)
@@ -126,12 +126,28 @@ struct CoursesListView: View {
     }
 
     private var header: some View {
-        MicaboScreenHeader(title: "Cours", eyebrow: countLabel) {
-            MicaboCircleButton(systemImage: "plus", size: 44, accessibilityTitle: "Importer un cours") {
+        MicaboScreenHeader(title: "Cours", eyebrow: countLabel)
+            .padding(.top, MicaboSpacing.xs)
+    }
+
+    /// Le seul bouton flottant de l'app : en bas à droite, là où le pouce tombe, et
+    /// posé au-dessus de la barre du bas. Quand la liste est vide, l'écran d'accueil
+    /// porte déjà son propre appel à importer : deux boutons pour la même action
+    /// feraient hésiter.
+    @ViewBuilder
+    private var importButton: some View {
+        if !courses.isEmpty {
+            MicaboCircleButton(
+                systemImage: "plus",
+                style: .dark,
+                size: 56,
+                accessibilityTitle: "Importer un cours"
+            ) {
                 showImportChoice = true
             }
+            .padding(.trailing, MicaboSpacing.screen)
+            .padding(.bottom, MicaboSpacing.md)
         }
-        .padding(.top, MicaboSpacing.xs)
     }
 
     private var countLabel: String {

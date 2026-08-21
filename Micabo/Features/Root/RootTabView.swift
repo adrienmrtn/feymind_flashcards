@@ -1,9 +1,11 @@
 import SwiftUI
 import UIKit
 
-/// Les trois pages, balayables comme un carrousel natif. La barre d'onglets est
-/// dessinée par chaque page racine : elle disparaît dès qu'un détail est poussé,
-/// et le balayage est alors coupé.
+/// Les trois pages, balayables comme un carrousel natif, avec **Réviser** au milieu.
+///
+/// La barre d'onglets est posée à ce niveau, hors du carrousel : elle ne balaye pas
+/// avec les pages, elle les regarde passer. Elle s'efface en revanche dès qu'un écran
+/// de détail est poussé, et le balayage est alors coupé lui aussi.
 struct RootTabView: View {
     @State private var router = TabRouter()
 
@@ -16,11 +18,11 @@ struct RootTabView: View {
         @Bindable var router = router
 
         TabView(selection: $router.selection) {
-            TodayView()
-                .tag(RootTab.today)
-
             CoursesListView()
                 .tag(RootTab.courses)
+
+            TodayView()
+                .tag(RootTab.today)
 
             ProfileView()
                 .tag(RootTab.profile)
@@ -28,7 +30,15 @@ struct RootTabView: View {
         .tabViewStyle(.page(indexDisplayMode: .never))
         .background(MicaboColor.canvas)
         .background {
-            TabPagingScrollBridge(isEnabled: router.allowsPaging)
+            TabPagingScrollBridge(isEnabled: router.isAtRoot)
+        }
+        // La barre du bas est posée ici, à l'extérieur du carrousel : les pages glissent
+        // sous elle, elle ne bouge pas d'un pixel. Elle s'efface dès qu'un écran de
+        // détail est poussé, où le balayage est de toute façon coupé.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if router.isAtRoot {
+                MicaboTabBar()
+            }
         }
         .tint(MicaboColor.accent)
         .environment(router)

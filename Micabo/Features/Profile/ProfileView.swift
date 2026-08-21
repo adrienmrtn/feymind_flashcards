@@ -30,7 +30,6 @@ struct ProfileView: View {
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
-            .micaboTabBar()
             .reportsPaging(for: .profile, depth: 0)
             .sheet(isPresented: $showSettings) {
                 SettingsView()
