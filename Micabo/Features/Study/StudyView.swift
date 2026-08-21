@@ -19,6 +19,8 @@ struct StudyView: View {
     @State private var session = StudySession()
     @State private var didStart = false
     @State private var showHint = false
+    /// Proposition choisie sur un QCM, remise à zéro à chaque carte.
+    @State private var selectedChoice: Int?
     @State private var editingCard: Flashcard?
     /// Session retrouvée au lancement : on ne démarre rien avant que l'utilisateur choisisse.
     @State private var resumable: StudySessionSnapshot?
@@ -95,6 +97,7 @@ struct StudyView: View {
                             session.undo()
                         }
                         showHint = false
+                        selectedChoice = nil
                     }
                     .transition(.scale(scale: 0.6).combined(with: .opacity))
                 }
@@ -134,7 +137,9 @@ struct StudyView: View {
                     card: card,
                     showAnswer: session.isRevealed,
                     isHintVisible: showHint,
-                    onToggleHint: toggleHint
+                    onToggleHint: toggleHint,
+                    selectedChoice: selectedChoice,
+                    onSelectChoice: selectChoice
                 )
                 .id(card.id)
                 .onTapGesture {
@@ -148,6 +153,7 @@ struct StudyView: View {
         .frame(maxHeight: .infinity)
         .onChange(of: session.current?.id) { _, _ in
             showHint = false
+            selectedChoice = nil
         }
     }
 
@@ -155,6 +161,23 @@ struct StudyView: View {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         withAnimation(.easeOut(duration: 0.25)) {
             showHint.toggle()
+        }
+    }
+
+    /// Répondre à un QCM retourne la carte : le choix vaut la réponse, on ne redemande
+    /// pas un appui pour la même chose. La notation, elle, reste à l'utilisateur.
+    private func selectChoice(_ index: Int) {
+        guard let card = session.current, !session.isRevealed else { return }
+        selectedChoice = index
+
+        if index == card.correctChoiceIndex {
+            Haptics.success()
+        } else {
+            Haptics.warning()
+        }
+
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+            session.reveal()
         }
     }
 
@@ -325,6 +348,8 @@ struct StudyCardFace: View {
     let showAnswer: Bool
     var isHintVisible: Bool = false
     var onToggleHint: (() -> Void)?
+    var selectedChoice: Int?
+    var onSelectChoice: ((Int) -> Void)?
 
     var body: some View {
         VStack(alignment: showAnswer ? .leading : .center, spacing: 14) {
@@ -343,6 +368,10 @@ struct StudyCardFace: View {
                     VStack(alignment: .leading, spacing: 14) {
                         if card.isOcclusion {
                             OcclusionFigure(card: card, isRevealed: true)
+                        }
+
+                        if card.format == .choice {
+                            ChoiceList(card: card, selected: selectedChoice, isRevealed: true)
                         }
 
                         FormulaText(
@@ -374,12 +403,22 @@ struct StudyCardFace: View {
 
                 FormulaText(
                     source: card.front,
-                    size: card.isOcclusion ? 18 : 24,
+                    size: frontSize,
                     weight: .semibold,
-                    alignment: .center
+                    alignment: card.format == .choice ? .leading : .center
                 )
                 .tracking(-0.2)
                 .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: card.format == .choice ? .leading : .center)
+
+                if card.format == .choice {
+                    ChoiceList(
+                        card: card,
+                        selected: selectedChoice,
+                        isRevealed: false,
+                        onSelect: onSelectChoice
+                    )
+                }
 
                 if card.hasAudio {
                     CardAudioButton(card: card)
@@ -387,8 +426,8 @@ struct StudyCardFace: View {
 
                 Spacer(minLength: 0)
 
-                if onToggleHint != nil {
-                    hintArea
+                if let hint = card.hint?.nilIfBlank, onToggleHint != nil {
+                    hintArea(hint)
                 }
             }
         }
@@ -398,24 +437,41 @@ struct StudyCardFace: View {
         .shadow(color: Color.black.opacity(0.05), radius: 18, x: 0, y: 8)
     }
 
-    /// Le sens de révision compte en langues : on annonce lequel est demandé.
+    /// Le sens de révision compte en langues, et le format compte partout : on annonce
+    /// ce qui est demandé avant de le demander.
     private var frontEyebrow: String? {
         if card.isReversed {
             return "Sens inverse"
         }
-        return card.course?.subject?.nilIfBlank ?? card.course?.title
+        switch card.format {
+        case .cloze, .choice:
+            return card.format.label
+        case .basic, .occlusion:
+            return card.course?.subject?.nilIfBlank ?? card.course?.title
+        }
+    }
+
+    /// Une question à trou ou à propositions se lit sur plusieurs lignes : elle ne peut
+    /// pas garder le corps d'une question d'une ligne.
+    private var frontSize: CGFloat {
+        switch card.format {
+        case .occlusion: 18
+        case .choice: 19
+        case .cloze: 22
+        case .basic: 24
+        }
     }
 
     /// Ampoule au pied de la question : un appui donne un coup de pouce sans livrer la réponse.
     @ViewBuilder
-    private var hintArea: some View {
+    private func hintArea(_ hint: String) -> some View {
         if isHintVisible {
             HStack(alignment: .top, spacing: 9) {
                 Image(systemName: "lightbulb.fill")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(MicaboColor.caution)
 
-                Text(StudyHint.text(for: card))
+                Text(hint)
                     .font(MicaboFont.hanken(13, weight: .medium))
                     .foregroundStyle(Color(hex: 0x4A463F))
                     .multilineTextAlignment(.leading)
@@ -448,32 +504,133 @@ struct StudyCardFace: View {
     }
 }
 
-/// Indice affiché pendant la révision. Les cartes écrites par l'IA en portent souvent un ;
-/// pour les autres, on en dérive un de la réponse plutôt que de laisser l'ampoule vide.
-enum StudyHint {
-    static func text(for card: Flashcard) -> String {
-        if let written = card.hint?.nilIfBlank {
-            return written
+// MARK: - Propositions d'un QCM
+
+/// Les propositions d'un QCM. Avant la réponse, ce sont des boutons ; après, la bonne
+/// est marquée et l'erreur éventuelle aussi, pour qu'on voie ce qu'on avait choisi.
+private struct ChoiceList: View {
+    let card: Flashcard
+    var selected: Int?
+    var isRevealed: Bool
+    var onSelect: ((Int) -> Void)?
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ForEach(Array(card.choices.enumerated()), id: \.offset) { index, choice in
+                if isRevealed || onSelect == nil {
+                    row(index: index, choice: choice)
+                } else {
+                    Button {
+                        onSelect?(index)
+                    } label: {
+                        row(index: index, choice: choice)
+                    }
+                    .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+                }
+            }
         }
-        return derived(from: card.back)
     }
 
-    static func derived(from answer: String) -> String {
-        let words = answer
-            .split(whereSeparator: { $0 == " " || $0.isNewline })
-            .map(String.init)
+    private func row(index: Int, choice: String) -> some View {
+        let style = state(for: index)
 
-        guard let first = words.first else {
-            return "Pas d'indice pour cette carte."
+        return HStack(alignment: .top, spacing: 10) {
+            Text(letter(index))
+                .font(MicaboFont.hanken(12, weight: .bold))
+                .foregroundStyle(style.markForeground)
+                .frame(width: 22, height: 22)
+                .background(style.markBackground, in: Circle())
+
+            FormulaText(source: choice, size: 15, weight: .medium, color: style.text)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+
+            if let symbol = style.symbol {
+                Image(systemName: symbol)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(style.markBackground)
+            }
+        }
+        .padding(.vertical, 11)
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(style.background, in: RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous)
+                .strokeBorder(style.border, lineWidth: 1)
+        }
+    }
+
+    private func letter(_ index: Int) -> String {
+        let letters = Array("ABCDEFGH")
+        return index < letters.count ? String(letters[index]) : "\(index + 1)"
+    }
+
+    /// Quatre situations seulement : à choisir, choisie, juste, fausse.
+    private enum ChoiceState {
+        case pending
+        case picked
+        case correct
+        case wrong
+        case dismissed
+
+        var background: Color {
+            switch self {
+            case .pending: MicaboColor.canvas
+            case .picked: MicaboColor.accentSoft
+            case .correct: MicaboColor.positiveSoft
+            case .wrong: MicaboColor.negativeSoft
+            case .dismissed: MicaboColor.canvas
+            }
         }
 
-        guard words.count > 2 else {
-            return "La réponse commence par « \(first) »."
+        var border: Color {
+            switch self {
+            case .pending, .dismissed: MicaboColor.stroke
+            case .picked: MicaboColor.accent
+            case .correct: MicaboColor.positive
+            case .wrong: MicaboColor.negative
+            }
         }
 
-        let shown = max(1, min(3, words.count / 4))
-        let start = words.prefix(shown).joined(separator: " ")
-        return "Commence par « \(start)… », \(words.count) mots en tout."
+        var text: Color {
+            self == .dismissed ? MicaboColor.inkTertiary : MicaboColor.ink
+        }
+
+        var markBackground: Color {
+            switch self {
+            case .pending, .dismissed: MicaboColor.surfaceMuted
+            case .picked: MicaboColor.accent
+            case .correct: MicaboColor.positive
+            case .wrong: MicaboColor.negative
+            }
+        }
+
+        var markForeground: Color {
+            switch self {
+            case .pending, .dismissed: MicaboColor.inkSecondary
+            case .picked, .correct, .wrong: MicaboColor.onInk
+            }
+        }
+
+        var symbol: String? {
+            switch self {
+            case .correct: "checkmark.circle.fill"
+            case .wrong: "xmark.circle.fill"
+            case .pending, .picked, .dismissed: nil
+            }
+        }
+    }
+
+    private func state(for index: Int) -> ChoiceState {
+        guard isRevealed else {
+            return selected == index ? .picked : .pending
+        }
+        if index == card.correctChoiceIndex {
+            return .correct
+        }
+        return selected == index ? .wrong : .dismissed
     }
 }
 

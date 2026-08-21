@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 5 : question fermée sur l'oubli. Sert d'accroche à la démonstration qui suit.
+/// Écran 6 : question fermée sur l'oubli. Sert d'accroche à la démonstration qui suit.
 struct ForgettingStepView: View {
     @Environment(OnboardingModel.self) private var model
 

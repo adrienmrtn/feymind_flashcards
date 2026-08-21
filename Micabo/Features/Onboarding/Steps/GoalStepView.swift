@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 4 : objectifs. Plusieurs réponses possibles, validées par le bouton du bas.
+/// Écran 5 : objectifs. Plusieurs réponses possibles, validées par le bouton du bas.
 struct GoalStepView: View {
     @Environment(OnboardingModel.self) private var model
 

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 8a : le geste, et rien d'autre. Une vignette de PDF en haut, une zone de
+/// Écran 9a : le geste, et rien d'autre. Une vignette de PDF en haut, une zone de
 /// dépôt en pointillés juste en dessous, et une consigne de quatre mots.
 ///
 /// Le doigt fait glisser la vignette dans la zone. Au bout de deux secondes sans

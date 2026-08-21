@@ -118,6 +118,110 @@ final class CardFormatsTests: XCTestCase {
         XCTAssertTrue(cards.allSatisfy { $0.state == .new })
     }
 
+    // MARK: - Textes à trou
+
+    func testClozeCardKeepsItsGapEvenWrittenWithUnderscores() throws {
+        let course = try makeCourse()
+        let cards = try CourseRepository.addFlashcards(
+            [GeneratedFlashcard(front: "La capitale du Pérou est ___.", back: "Lima", kind: "cloze")],
+            to: course,
+            in: context
+        )
+
+        let card = try XCTUnwrap(cards.first)
+        XCTAssertEqual(card.kind, .cloze)
+        XCTAssertEqual(card.format, .cloze)
+        XCTAssertEqual(card.front, "La capitale du Pérou est \(ClozeGap.marker).", "Les tirets bas sont mangés par le nettoyage : le trou doit être posé avant")
+    }
+
+    func testClozeWithoutAGapFallsBackOnTheBasicFormat() throws {
+        let course = try makeCourse()
+        let cards = try CourseRepository.addFlashcards(
+            [GeneratedFlashcard(front: "Quelle est la capitale du Pérou ?", back: "Lima", kind: "cloze")],
+            to: course,
+            in: context
+        )
+
+        XCTAssertEqual(cards.first?.kind, .basic, "Un texte à trou sans trou n'est qu'une carte recto verso")
+    }
+
+    // MARK: - QCM
+
+    func testMultipleChoiceCardKeepsItsChoicesAndAnswer() throws {
+        let course = try makeCourse()
+        let cards = try CourseRepository.addFlashcards(
+            [
+                GeneratedFlashcard(
+                    front: "Où se déroule le cycle de Calvin ?",
+                    back: "Dans le stroma du chloroplaste.",
+                    kind: "choice",
+                    choices: ["Dans les thylakoïdes", "Dans le stroma", "Dans la mitochondrie"],
+                    answerIndex: 1
+                )
+            ],
+            to: course,
+            in: context
+        )
+
+        let card = try XCTUnwrap(cards.first)
+        XCTAssertEqual(card.format, .choice)
+        XCTAssertTrue(card.isMultipleChoice)
+        XCTAssertEqual(card.choices.count, 3)
+        XCTAssertEqual(card.correctChoice, "Dans le stroma")
+    }
+
+    func testAnswerIsRecoveredFromTheBackWhenTheIndexIsMissingOrWrong() throws {
+        let course = try makeCourse()
+        let cards = try CourseRepository.addFlashcards(
+            [
+                GeneratedFlashcard(front: "Capitale du Pérou ?", back: "Lima", kind: "choice", choices: ["Quito", "Lima", "La Paz"]),
+                GeneratedFlashcard(front: "Capitale du Chili ?", back: "Santiago", kind: "choice", choices: ["Santiago", "Lima"], answerIndex: 9)
+            ],
+            to: course,
+            in: context
+        )
+
+        XCTAssertEqual(cards.count, 2)
+        XCTAssertEqual(cards[0].correctChoice, "Lima")
+        XCTAssertEqual(cards[1].correctChoice, "Santiago")
+    }
+
+    func testAQcmThatCannotStandUpBecomesABasicCard() throws {
+        let course = try makeCourse()
+        let cards = try CourseRepository.addFlashcards(
+            [
+                // Une seule proposition, et un doublon qui n'en fait toujours qu'une.
+                GeneratedFlashcard(front: "Capitale du Pérou ?", back: "Lima", kind: "choice", choices: ["Lima", "Lima"], answerIndex: 0),
+                // Aucune proposition ne reprend le verso, et l'index est absent.
+                GeneratedFlashcard(front: "Capitale du Chili ?", back: "Santiago", kind: "choice", choices: ["Quito", "Lima"])
+            ],
+            to: course,
+            in: context
+        )
+
+        XCTAssertEqual(cards.map(\.format), [.basic, .basic])
+        XCTAssertFalse(cards.contains(where: \.isMultipleChoice))
+        XCTAssertEqual(cards.map(\.back), ["Lima", "Santiago"], "La question et la réponse restent bonnes : on ne jette pas la carte")
+    }
+
+    func testTheGeneratedKindIsIgnoredWhenItIsNotAWrittenFormat() {
+        XCTAssertEqual(GeneratedFlashcard(front: "a", back: "b").resolvedKind, .basic)
+        XCTAssertEqual(GeneratedFlashcard(front: "a", back: "b", kind: "n'importe quoi").resolvedKind, .basic)
+        XCTAssertEqual(
+            GeneratedFlashcard(front: "a", back: "b", kind: "occlusion").resolvedKind,
+            .basic,
+            "Une occlusion se dessine sur une image, elle ne se génère pas depuis du texte"
+        )
+    }
+
+    // MARK: - Choix des formats
+
+    func testTheBasicFormatCannotBeSwitchedOff() {
+        XCTAssertEqual(QuestionMix.default.wireValues, ["basic", "cloze", "choice"])
+        XCTAssertEqual(QuestionMix.basicOnly.wireValues, ["basic"])
+        XCTAssertEqual(QuestionMix(includesCloze: false, includesChoice: true).wireValues, ["basic", "choice"])
+    }
+
     // MARK: - Sens inverse
 
     func testReverseCardsAreCreatedOncePerCard() throws {

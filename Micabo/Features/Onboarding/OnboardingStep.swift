@@ -4,6 +4,7 @@ import Foundation
 /// linéaire : aucun retour en arrière, on n'expose donc jamais d'étape précédente.
 enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case welcome
+    case builtByStudents
     case language
     case personalizeIntro
     case goal
@@ -28,6 +29,17 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
 
     var next: OnboardingStep? {
         OnboardingStep(rawValue: rawValue + 1)
+    }
+
+    /// Fond de l'étape, et seule source de vérité à ce sujet : l'écran s'y peint, mais
+    /// aussi le bandeau qui porte la jauge et la zone d'état au-dessus. Une bande claire
+    /// posée au-dessus d'un écran sombre se lit comme un bug d'affichage.
+    var surface: OnboardingSurface {
+        switch self {
+        case .welcome, .science: .ink
+        case .personalizing: .indigo
+        default: .canvas
+        }
     }
 
     /// Position de l'étape dans la jauge, entre 0 et 1.

@@ -37,6 +37,17 @@ enum OnboardingSurface {
         }
     }
 
+    /// Teinte de la jauge du parcours. Une seule couleur par fond : l'indigo sur le
+    /// crème, l'inverse de l'encre sur les fonds sombres — un indigo posé sur l'indigo
+    /// ne se verrait pas.
+    var progressTint: Color {
+        isDark ? MicaboColor.onInk : MicaboColor.progress
+    }
+
+    var progressTrack: Color {
+        isDark ? MicaboColor.onInk.opacity(0.22) : MicaboColor.progressTrack
+    }
+
     /// Surface du bouton d'action, inversée sur fond sombre.
     var buttonTint: Color {
         isDark ? MicaboColor.onInk : MicaboColor.ink

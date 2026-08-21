@@ -15,8 +15,10 @@ struct MicaboApp: App {
 
     var body: some Scene {
         WindowGroup {
+            // Le thème clair n'est pas posé ici : le parcours d'accueil bascule en
+            // sombre le temps de ses écrans d'encre, et une valeur fixée au-dessus de
+            // lui l'en empêcherait. `RootView` l'applique donc à l'app elle-même.
             RootView()
-                .preferredColorScheme(.light)
                 .tint(MicaboColor.accent)
         }
         .modelContainer(container)

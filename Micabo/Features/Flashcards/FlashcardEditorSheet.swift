@@ -56,11 +56,50 @@ struct FlashcardEditorSheet: View {
         VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
             audioSection
 
+            if card.isMultipleChoice {
+                choicesSection
+            }
+
             if card.isOcclusion {
                 occlusionSection
             }
 
             schedulingSummary
+        }
+    }
+
+    /// Les propositions d'un QCM se relisent ici. Elles ne se réécrivent pas encore :
+    /// une liste de propositions avec sa bonne réponse demande son propre éditeur, et
+    /// en attendant le verso reste modifiable comme sur n'importe quelle carte.
+    private var choicesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Propositions")
+
+            VStack(spacing: 0) {
+                ForEach(Array(card.choices.enumerated()), id: \.offset) { index, choice in
+                    let isCorrect = index == card.correctChoiceIndex
+
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: isCorrect ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(isCorrect ? MicaboColor.positive : MicaboColor.strokeStrong)
+
+                        Text(choice)
+                            .font(MicaboFont.body)
+                            .foregroundStyle(isCorrect ? MicaboColor.ink : MicaboColor.inkSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.vertical, 11)
+                    .padding(.horizontal, MicaboSpacing.md)
+
+                    if index < card.choices.count - 1 {
+                        MicaboHairline(inset: MicaboSpacing.md)
+                    }
+                }
+            }
+            .micaboGroup()
         }
     }
 

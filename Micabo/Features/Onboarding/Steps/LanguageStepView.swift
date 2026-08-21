@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 2 : choix de la langue. Seul le français est disponible pour l'instant,
+/// Écran 3 : choix de la langue. Seul le français est disponible pour l'instant,
 /// les autres restent visibles mais grisées.
 struct LanguageStepView: View {
     @Environment(OnboardingModel.self) private var model

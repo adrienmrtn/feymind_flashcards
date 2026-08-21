@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Barre d'onglets dessinée par chaque page racine, pour qu'elle disparaisse
-/// dès qu'un écran de détail est poussé. Le `TabView` page fournit le balayage.
+/// Barre d'onglets dessinée une seule fois par `RootTabView`, à l'extérieur du
+/// carrousel : elle reste immobile pendant qu'on balaye d'une page à l'autre.
+/// C'est le routeur qui la retire sur les écrans poussés.
 struct MicaboTabBar: View {
     @Environment(TabRouter.self) private var router: TabRouter?
 
@@ -52,15 +53,8 @@ struct MicaboTabBar: View {
 }
 
 extension View {
-    /// Pose la barre d'onglets sous le contenu d'une page racine, à l'intérieur
-    /// du `NavigationStack` pour qu'elle disparaisse sur les écrans poussés.
-    func micaboTabBar() -> some View {
-        safeAreaInset(edge: .bottom, spacing: 0) {
-            MicaboTabBar()
-        }
-    }
-
-    /// Signale au routeur si cette page a un écran poussé, pour couper le balayage.
+    /// Signale au routeur si cette page a un écran poussé, pour couper le balayage
+    /// et retirer la barre du bas.
     func reportsPaging(for tab: RootTab, depth: Int) -> some View {
         modifier(PagingDepthReporter(tab: tab, depth: depth))
     }

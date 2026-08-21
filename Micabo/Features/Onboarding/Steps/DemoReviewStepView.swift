@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 8c : le geste de révision. Une pile de trois cartes, la première se retourne
+/// Écran 9c : le geste de révision. Une pile de trois cartes, la première se retourne
 /// au doigt, et la note donnée fixe la prochaine date.
 ///
 /// Deux phrases d'explication au maximum sur tout l'écran : la pédagogie de la

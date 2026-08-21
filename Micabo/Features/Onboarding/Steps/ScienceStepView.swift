@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 7 : la méthode, révélée bloc par bloc. Chaque appui découvre le bloc suivant ;
+/// Écran 8 : la méthode, révélée bloc par bloc. Chaque appui découvre le bloc suivant ;
 /// le bouton d'avancement n'apparaît qu'une fois les deux blocs à l'écran.
 ///
 /// L'invitation en bas d'écran est un bouton, pas une décoration : elle a l'allure du
@@ -24,7 +24,7 @@ struct ScienceStepView: View {
             title: "La courbe de l'oubli, prise à contre-pied.",
             titleSize: 27,
             scrolls: false,
-            surface: .ink
+            surface: OnboardingStep.science.surface
         ) {
             VStack(alignment: .leading, spacing: 14) {
                 if revealed >= 1 {
@@ -151,12 +151,23 @@ private struct IntervalTimeline: View {
         let caption: String
     }
 
-    private let stages: [Stage] = [
-        Stage(interval: "10 min", caption: "Juste après la découverte"),
-        Stage(interval: "1 jour", caption: "Avant la nuit qui efface"),
-        Stage(interval: "1 semaine", caption: "La carte tient déjà mieux"),
-        Stage(interval: "1 mois", caption: "C'est acquis")
+    /// Une légende par révision du graphe de l'écran précédent, dans le même ordre.
+    private static let captions = [
+        "Avant la nuit qui efface",
+        "La carte tient déjà mieux",
+        "Tu la retrouves sans effort",
+        "C'est acquis"
     ]
+
+    /// Les intervalles viennent de `RetentionCurve` : ce sont ceux étiquetés sur le
+    /// graphe, pas une seconde échelle écrite à la main.
+    private let stages = IntervalTimeline.makeStages()
+
+    private static func makeStages() -> [Stage] {
+        zip(RetentionCurve.intervalLabels, captions).map { interval, caption in
+            Stage(interval: interval, caption: caption)
+        }
+    }
 
     @State private var shown = 0
 

@@ -23,6 +23,10 @@ struct ImportView: View {
     @State private var showScanner = false
     @State private var photoItems: [PhotosPickerItem] = []
 
+    /// Formats de questions retenus d'un import à l'autre.
+    @AppStorage(QuestionMixPreferences.Key.cloze) private var includesCloze = true
+    @AppStorage(QuestionMixPreferences.Key.choice) private var includesChoice = true
+
     @State private var isReading = false
     @State private var isGenerating = false
     /// Échec raconté à l'utilisateur, avec ce qu'il peut faire.
@@ -44,6 +48,10 @@ struct ImportView: View {
         kind == .pdf || kind == .photo
     }
 
+    private var questionMix: QuestionMix {
+        QuestionMix(includesCloze: includesCloze, includesChoice: includesChoice)
+    }
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
@@ -62,6 +70,8 @@ struct ImportView: View {
                         if showsVisionToggle {
                             visionToggle
                         }
+
+                        questionMixSection
 
                         aiNote
                     }
@@ -437,6 +447,53 @@ struct ImportView: View {
         .micaboGroup()
     }
 
+    /// Les formats de questions, réglés juste avant d'appuyer sur « Générer les cartes ».
+    /// Le recto verso ne se coupe pas : c'est le format qui marche sur n'importe quel
+    /// cours, les deux autres viennent en plus quand le passage s'y prête.
+    private var questionMixSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Types de questions")
+
+            VStack(spacing: 0) {
+                formatToggle(
+                    title: "Textes à trou",
+                    detail: "Une phrase du cours, un terme à retrouver.",
+                    isOn: $includesCloze
+                )
+
+                MicaboHairline(inset: MicaboSpacing.md)
+
+                formatToggle(
+                    title: "QCM",
+                    detail: "Une question, trois ou quatre propositions, une seule bonne.",
+                    isOn: $includesChoice
+                )
+            }
+            .micaboGroup()
+
+            Text("Le recto verso est toujours de la partie.")
+                .font(MicaboFont.micro)
+                .foregroundStyle(MicaboColor.inkTertiary)
+        }
+    }
+
+    private func formatToggle(title: String, detail: String, isOn: Binding<Bool>) -> some View {
+        Toggle(isOn: isOn) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(MicaboFont.rowTitle)
+                    .foregroundStyle(MicaboColor.ink)
+                Text(detail)
+                    .font(MicaboFont.hanken(12, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .tint(MicaboColor.accent)
+        .padding(.vertical, 12)
+        .padding(.horizontal, MicaboSpacing.md)
+    }
+
     private var aiNote: some View {
         HStack(spacing: 6) {
             Image(systemName: "lock")
@@ -636,7 +693,8 @@ struct ImportView: View {
                         courseTitle: course.title,
                         courseContext: course.contextSnippet(limit: 30_000),
                         desiredCount: 12,
-                        existingFronts: []
+                        existingFronts: [],
+                        mix: questionMix
                     )
                 )
             } catch {

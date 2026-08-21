@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 11 : choix des matières. Sélection multiple, catalogue volontairement large.
+/// Écran 12 : choix des matières. Sélection multiple, catalogue volontairement large.
 struct SubjectsStepView: View {
     @Environment(OnboardingModel.self) private var model
 

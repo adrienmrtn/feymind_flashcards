@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 8b : la génération. Elle est simulée, donc elle va vite — trois secondes,
+/// Écran 9b : la génération. Elle est simulée, donc elle va vite — trois secondes,
 /// le temps de voir la page se transformer en pile de cartes et les étapes se cocher.
 /// Aucune latence n'est mimée : l'écran montre un mécanisme, il ne fait pas patienter.
 struct DemoWriteStepView: View {

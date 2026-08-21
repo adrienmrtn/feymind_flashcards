@@ -15,6 +15,34 @@ final class OnboardingFlowTests: XCTestCase {
         return model
     }
 
+    // MARK: - Ouverture
+
+    func testMissionScreenComesRightAfterTheHook() {
+        let model = OnboardingModel()
+        XCTAssertEqual(model.step, .welcome)
+
+        model.advance()
+        XCTAssertEqual(model.step, .builtByStudents, "L'écran « conçu par des étudiants » suit l'accroche")
+
+        model.advance()
+        XCTAssertEqual(model.step, .language)
+    }
+
+    // MARK: - Fond des écrans
+
+    func testShellKnowsWhichScreensLeaveTheCanvas() {
+        XCTAssertEqual(OnboardingStep.welcome.surface, .ink)
+        XCTAssertEqual(OnboardingStep.science.surface, .ink)
+        XCTAssertEqual(OnboardingStep.personalizing.surface, .indigo)
+
+        let dark = OnboardingStep.allCases.filter(\.surface.isDark)
+        XCTAssertEqual(dark, [.welcome, .science, .personalizing], "Trois écrans seulement quittent le crème")
+
+        for step in OnboardingStep.allCases where !dark.contains(step) {
+            XCTAssertEqual(step.surface, .canvas, "\(step) devrait rester sur le crème")
+        }
+    }
+
     // MARK: - Preuve sociale
 
     func testCommunityStepIsSkippedWhenInstitutionWasTypedByHand() {
@@ -76,6 +104,17 @@ final class OnboardingFlowTests: XCTestCase {
             XCTAssertLessThanOrEqual(value, SchoolPeers.maximum, "Effectif trop haut pour \(id)")
             XCTAssertEqual(value, SchoolPeers.count(forInstitutionId: id), "Le même établissement doit donner le même chiffre")
         }
+    }
+
+    // MARK: - Intervalles
+
+    func testSpacedRepetitionListReusesTheChartIntervals() {
+        XCTAssertEqual(RetentionCurve.intervalLabels, ["1 j", "3 j", "7 j", "16 j"])
+        XCTAssertEqual(
+            RetentionCurve.intervalLabels.count,
+            RetentionCurve.reviewDays.count,
+            "La liste des intervalles doit couvrir toutes les révisions du graphe"
+        )
     }
 
     // MARK: - Jauge
