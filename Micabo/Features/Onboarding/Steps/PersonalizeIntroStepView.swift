@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 3 : transition avant les questions de personnalisation.
+/// Écran 4 : transition avant les questions de personnalisation.
 struct PersonalizeIntroStepView: View {
     @Environment(OnboardingModel.self) private var model
 

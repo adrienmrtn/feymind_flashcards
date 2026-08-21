@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 13 : projection sur un an au rythme choisi. Le nombre se déroule à l'écran.
+/// Écran 14 : projection sur un an au rythme choisi. Le nombre se déroule à l'écran.
 ///
 /// Composition volontairement différente de l'écran du curseur qui la précède : pas de
 /// panneau blanc, le chiffre est posé à même le crème, et une frise de douze mois montre

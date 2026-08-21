@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 16 : annonce de l'essai gratuit.
+/// Écran 17 : annonce de l'essai gratuit.
 ///
 /// Composition à part dans le parcours : le visuel déborde de la marge droite et le texte
 /// se lit en bas, fer à gauche comme partout. Il tombe entre l'écran indigo de
@@ -84,7 +84,7 @@ struct TrialOfferStepView: View {
     }
 }
 
-/// Écran 17 : promesse de rappel avant la fin de l'essai.
+/// Écran 18 : promesse de rappel avant la fin de l'essai.
 struct TrialReminderStepView: View {
     @Environment(OnboardingModel.self) private var model
 

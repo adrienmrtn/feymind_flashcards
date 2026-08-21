@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 14 : rappels quotidiens. L'autorisation système n'est pas encore demandée,
+/// Écran 15 : rappels quotidiens. L'autorisation système n'est pas encore demandée,
 /// on n'enregistre pour l'instant que l'intention de l'utilisateur.
 struct NotificationsStepView: View {
     @Environment(OnboardingModel.self) private var model

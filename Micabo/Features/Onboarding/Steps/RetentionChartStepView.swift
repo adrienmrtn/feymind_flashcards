@@ -1,7 +1,7 @@
 import Combine
 import SwiftUI
 
-/// Écran 6 : la démonstration visuelle. Deux courbes de mémorisation qui partent
+/// Écran 7 : la démonstration visuelle. Deux courbes de mémorisation qui partent
 /// ensemble puis divergent à la première révision.
 ///
 /// L'écran doit se lire en trois secondes : un titre, le graphe avec ses intervalles
@@ -35,6 +35,13 @@ enum RetentionCurve {
     /// Intervalle réel affiché sous chaque révision du graphe.
     static func intervalLabel(forDay day: Double) -> String {
         "\(Int(day)) j"
+    }
+
+    /// Les mêmes intervalles, en liste. L'écran de la répétition espacée les reprend
+    /// tels quels : deux écrans voisins qui parlent des mêmes révisions ne peuvent pas
+    /// annoncer deux échéanciers différents.
+    static var intervalLabels: [String] {
+        reviewDays.map(intervalLabel(forDay:))
     }
 
     /// Stabilité (en jours) de chaque segment. La première est identique à celle
