@@ -7,9 +7,16 @@ struct OnboardingFlowView: View {
 
     @State private var model = OnboardingModel()
 
+    private var surface: OnboardingSurface { model.step.surface }
+
     var body: some View {
         ZStack {
-            MicaboColor.canvas.ignoresSafeArea()
+            // Le fond de l'écran monte jusqu'en haut de la zone d'état : la jauge et
+            // l'heure du téléphone reposent sur la couleur de l'écran, jamais sur une
+            // bande crème rapportée.
+            surface.background
+                .ignoresSafeArea()
+                .animation(.easeInOut(duration: 0.3), value: model.step)
 
             VStack(spacing: 0) {
                 OnboardingProgressBar(step: model.step)
@@ -30,7 +37,10 @@ struct OnboardingFlowView: View {
             }
         }
         .environment(model)
-        .preferredColorScheme(.light)
+        .environment(\.onboardingSurface, surface)
+        // Sur fond sombre, l'heure et la batterie doivent passer en clair : sinon elles
+        // disparaissent dans l'encre.
+        .preferredColorScheme(surface.isDark ? .dark : .light)
         .onAppear { Haptics.prepare() }
     }
 
@@ -38,6 +48,7 @@ struct OnboardingFlowView: View {
     private var stepView: some View {
         switch model.step {
         case .welcome: WelcomeStepView()
+        case .builtByStudents: BuiltByStudentsStepView()
         case .language: LanguageStepView()
         case .personalizeIntro: PersonalizeIntroStepView()
         case .goal: GoalStepView()
@@ -67,12 +78,16 @@ struct OnboardingFlowView: View {
 }
 
 /// Jauge fine en haut de l'écran, présente du premier écran au dernier.
-/// Elle ne prend jamais d'autre couleur que `MicaboColor.progress`.
+///
+/// Elle garde l'indigo de la progression partout où le fond est clair, et s'inverse sur
+/// les écrans sombres : c'est la lisibilité qui décide, pas l'écran.
 private struct OnboardingProgressBar: View {
     let step: OnboardingStep
 
+    private var surface: OnboardingSurface { step.surface }
+
     var body: some View {
-        MicaboProgressBar(progress: step.progress)
+        MicaboProgressBar(progress: step.progress, tint: surface.progressTint, track: surface.progressTrack)
             .frame(height: 4)
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.top, MicaboSpacing.xs)

@@ -1,7 +1,7 @@
 import Combine
 import SwiftUI
 
-/// Écran 15 : mise en place du profil. Purement visuel — les réponses sont déjà
+/// Écran 16 : mise en place du profil. Purement visuel — les réponses sont déjà
 /// enregistrées — mais il ne doit jamais laisser croire que l'app a gelé.
 ///
 /// C'est le seul écran indigo plein cadre du parcours : après une série d'écrans crème,
@@ -10,6 +10,8 @@ import SwiftUI
 /// chaque étape.
 struct PersonalizingStepView: View {
     @Environment(OnboardingModel.self) private var model
+
+    private let surface = OnboardingStep.personalizing.surface
 
     private struct Phase {
         let headline: String
@@ -90,7 +92,8 @@ struct PersonalizingStepView: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, MicaboSpacing.lg)
         .padding(.bottom, MicaboSpacing.xl)
-        .background(MicaboColor.accent.ignoresSafeArea(edges: .bottom))
+        .background(surface.background.ignoresSafeArea(edges: .bottom))
+        .environment(\.onboardingSurface, surface)
         .onReceive(ticker) { _ in
             tick()
         }

@@ -9,7 +9,11 @@ struct RootView: View {
     var body: some View {
         ZStack {
             if didCompleteOnboarding {
+                // L'app est écrite en couleurs fixes : elle reste claire quel que soit
+                // le réglage du téléphone. Le parcours d'accueil, lui, gère sa propre
+                // bascule écran par écran.
                 RootTabView()
+                    .preferredColorScheme(.light)
                     .transition(.opacity)
             } else {
                 OnboardingFlowView {

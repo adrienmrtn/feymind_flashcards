@@ -9,7 +9,7 @@ import SwiftUI
 struct WelcomeStepView: View {
     @Environment(OnboardingModel.self) private var model
 
-    private let surface = OnboardingSurface.ink
+    private let surface = OnboardingStep.welcome.surface
 
     var body: some View {
         VStack(spacing: 0) {
