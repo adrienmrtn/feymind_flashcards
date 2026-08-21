@@ -48,6 +48,7 @@ struct SupabaseAIService: AIService {
             "context": String(request.courseContext.prefix(40_000)),
             "count": request.desiredCount,
             "existing": request.existingFronts,
+            "kinds": request.mix.wireValues,
             "model": AppConfig.aiModel
         ]
 

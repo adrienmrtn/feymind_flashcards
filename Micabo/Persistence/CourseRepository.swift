@@ -90,7 +90,12 @@ enum CourseRepository {
         var inserted: [Flashcard] = []
 
         for candidate in generated {
-            let front = TextSanitizer.clean(candidate.front)
+            // Le trou est normalisé avant le nettoyage : celui-ci mange les tirets bas
+            // avec le reste du balisage, et emporterait le blanc avec eux.
+            let rawFront = candidate.resolvedKind == .cloze
+                ? ClozeGap.normalize(candidate.front)
+                : candidate.front
+            let front = TextSanitizer.clean(rawFront)
             let back = TextSanitizer.clean(candidate.back)
             guard !front.isEmpty, !back.isEmpty else { continue }
 
@@ -101,6 +106,8 @@ enum CourseRepository {
                 position: startPosition,
                 course: course
             )
+            applyFormat(of: candidate, to: card)
+
             context.insert(card)
             inserted.append(card)
             startPosition += 1
@@ -109,6 +116,42 @@ enum CourseRepository {
         course.updatedAt = Date()
         try context.save()
         return inserted
+    }
+
+    /// Applique le format annoncé par la génération, en refusant ce qui ne tient pas
+    /// debout : un texte à trou sans trou, ou un QCM sans propositions distinctes,
+    /// redevient une carte recto verso. La question et la réponse, elles, restent
+    /// bonnes : on ne jette pas la carte pour un format raté.
+    private static func applyFormat(of candidate: GeneratedFlashcard, to card: Flashcard) {
+        switch candidate.resolvedKind {
+        case .cloze:
+            guard ClozeGap.isPresent(in: card.front) else { return }
+            card.kind = .cloze
+
+        case .choice:
+            let choices = (candidate.choices ?? [])
+                .map(TextSanitizer.clean)
+                .filter { !$0.isEmpty }
+            var unique: [String] = []
+            for choice in choices where !unique.contains(choice) {
+                unique.append(choice)
+            }
+
+            // L'index annoncé prime ; s'il est absent ou faux, la proposition qui
+            // reprend le verso fait l'affaire.
+            let declared = candidate.answerIndex.flatMap { index -> Int? in
+                unique.indices.contains(index) ? index : nil
+            }
+            let matched = unique.firstIndex { $0.caseInsensitiveCompare(card.back) == .orderedSame }
+            guard unique.count >= 2, let index = declared ?? matched else { return }
+
+            card.choices = unique
+            card.correctChoiceIndex = index
+            card.kind = .choice
+
+        case .basic, .occlusion:
+            break
+        }
     }
 
     /// Crée une carte par zone masquée d'un même schéma. Les cartes partagent l'image et

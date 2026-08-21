@@ -245,10 +245,10 @@ struct FlashcardsView: View {
         }
     }
 
-    /// Ce que la rangée signale d'un coup d'œil : schéma, son, sens inverse.
+    /// Ce que la rangée signale d'un coup d'œil : format, son, sens inverse.
     private func badges(for card: Flashcard) -> [String] {
         var symbols: [String] = []
-        if card.isOcclusion { symbols.append("rectangle.dashed") }
+        if let format = card.format.badgeSystemImage { symbols.append(format) }
         if card.hasAudio { symbols.append("speaker.wave.2") }
         if card.isReversed { symbols.append("arrow.left.arrow.right") }
         return symbols
@@ -306,7 +306,8 @@ struct FlashcardsView: View {
             courseTitle: course.title,
             courseContext: course.contextSnippet(limit: 30_000),
             desiredCount: 10,
-            existingFronts: course.cards.map(\.front)
+            existingFronts: course.cards.map(\.front),
+            mix: QuestionMixPreferences.current
         )
 
         do {

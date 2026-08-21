@@ -4,18 +4,61 @@ import SwiftData
 
 /// Ce que la carte demande à l'utilisateur.
 ///
-/// `occlusion` sert les matières qui s'apprennent sur un schéma — anatomie, géographie,
-/// géologie : une zone est masquée sur l'image, le masque se lève au retournement. Une
-/// carte par zone, toutes partagent le même schéma.
+/// `cloze` est un texte à trou : le recto porte la phrase amputée, le verso ce qui
+/// manque. `choice` est un QCM : les propositions sont dans `Flashcard.choices` et une
+/// seule est bonne. `occlusion` sert les matières qui s'apprennent sur un schéma —
+/// anatomie, géographie, géologie : une zone est masquée sur l'image, le masque se lève
+/// au retournement. Une carte par zone, toutes partagent le même schéma.
 enum CardKind: String, Codable, CaseIterable {
     case basic
+    case cloze
+    case choice
     case occlusion
 
     var label: String {
         switch self {
         case .basic: "Recto verso"
+        case .cloze: "Texte à trou"
+        case .choice: "QCM"
         case .occlusion: "Schéma"
         }
+    }
+
+    /// Symbole qui signale le format dans une liste de cartes. Le recto verso est la
+    /// règle : il ne se signale pas.
+    var badgeSystemImage: String? {
+        switch self {
+        case .basic: nil
+        case .cloze: "ellipsis.rectangle"
+        case .choice: "list.bullet"
+        case .occlusion: "rectangle.dashed"
+        }
+    }
+}
+
+/// Le trou d'un texte à trou.
+///
+/// Une seule graphie dans toute l'app, pour que le recto se lise pareil qu'il vienne du
+/// modèle, du mode hors ligne ou d'une correction à la main. Les tirets bas ne peuvent
+/// pas servir : `TextSanitizer.clean` les retire avec le reste du balisage.
+enum ClozeGap {
+    static let marker = "…"
+
+    /// Ramène à notre graphie les blancs que le modèle écrit à sa façon.
+    static func normalize(_ text: String) -> String {
+        var result = text
+        for candidate in ["[...]", "(...)", "[…]", "(…)", "_____", "____", "___", "__", "..."] {
+            result = result.replacingOccurrences(of: candidate, with: marker)
+        }
+        // Plusieurs blancs collés ne font qu'un seul trou.
+        while result.contains(marker + marker) {
+            result = result.replacingOccurrences(of: marker + marker, with: marker)
+        }
+        return result
+    }
+
+    static func isPresent(in text: String) -> Bool {
+        text.contains(marker)
     }
 }
 
@@ -94,6 +137,11 @@ final class Flashcard {
     var maskY: Double = 0
     var maskWidth: Double = 0
     var maskHeight: Double = 0
+    /// Propositions d'un QCM, la bonne comprise, dans l'ordre d'affichage. Vide partout
+    /// ailleurs.
+    var choices: [String] = []
+    /// Index de la bonne proposition dans `choices`.
+    var correctChoiceIndex: Int = 0
     /// Prononciation attachée à la carte. Optionnelle, et surtout utile en langues.
     @Attribute(.externalStorage) var audioData: Data?
     /// Lie les cartes issues d'un même élément : les zones d'un schéma, les deux sens
@@ -163,6 +211,29 @@ final class Flashcard {
     /// Une occlusion n'a de sens que si elle porte une image et une zone non vide.
     var isOcclusion: Bool {
         kind == .occlusion && imageData != nil && maskWidth > 0 && maskHeight > 0
+    }
+
+    /// Un QCM n'a de sens qu'avec au moins deux propositions et une bonne réponse qui
+    /// existe vraiment.
+    var isMultipleChoice: Bool {
+        kind == .choice && choices.count >= 2 && choices.indices.contains(correctChoiceIndex)
+    }
+
+    var correctChoice: String? {
+        guard isMultipleChoice else { return nil }
+        return choices[correctChoiceIndex]
+    }
+
+    /// Format réellement affichable. Une carte annoncée QCM sans propositions valides,
+    /// ou occlusion sans image, se révise en recto verso : mieux vaut une carte simple
+    /// qu'un écran cassé.
+    var format: CardKind {
+        switch kind {
+        case .basic: .basic
+        case .cloze: ClozeGap.isPresent(in: front) ? .cloze : .basic
+        case .choice: isMultipleChoice ? .choice : .basic
+        case .occlusion: isOcclusion ? .occlusion : .basic
+        }
     }
 
     var hasAudio: Bool {

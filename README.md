@@ -6,16 +6,17 @@ Application iOS native de révision : tes cours (PDF, photos, Word ou notes) dev
 
 ## Ce que fait l'application
 
-Trois onglets, pas plus. L'app **ouvre sur Réviser**, et le bouton de session y est ancré en
-bas de l'écran : entre le lancement et la première carte, il n'y a qu'un appui.
+Trois onglets, pas plus, avec **Réviser au milieu** : c'est là que l'app ouvre, et c'est à un
+balayage de n'importe où. Le bouton de session y est ancré en bas de l'écran : entre le
+lancement et la première carte, il n'y a qu'un appui.
 
 | Onglet | Rôle |
 | --- | --- |
-| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui, la série, les cours au programme, la répartition de la file, tes cours récents et le bouton d'import |
 | Cours | Tout ce qui est importé, avec recherche, tri et filtre par matière. Second rayon « Découvrir » pour la bibliothèque partagée, masqué tant que `LibraryAccess.isAvailable` est faux |
+| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui, la série, les cours au programme et la répartition de la file. Rien d'autre : ni date, ni liste de cours, ni bouton d'import |
 | Profil | Statistiques, amis (en attente de l'authentification) et réglages |
 
-Le parcours d'import tient en trois écrans : bouton `+` dans l'en-tête de Réviser ou de Cours,
+Le parcours d'import tient en trois écrans : bouton `+` flottant en bas à droite de Cours,
 choix du format (PDF, scan/photos, Word ou texte), génération des cartes, puis session.
 
 ## Lexique
@@ -142,14 +143,20 @@ une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un acces
   gris pour « à jour »
 - L'indigo ne sert qu'à ce qui est actif : onglet courant, filtre choisi, cartes à réviser
 - Le seul aplat d'encre est le bouton d'action principal, ancré en bas de l'écran
-- Barre de trois onglets en pied d'écran, symbole plein sur l'onglet actif ; bouton « + » rond
-  dans l'en-tête de Réviser et de Cours, jamais de bouton flottant
+- Barre de trois onglets en pied d'écran, symbole plein sur l'onglet actif. Elle est dessinée
+  par `RootTabView`, **hors du carrousel** : les pages glissent sous elle, elle ne bouge pas.
+  Elle s'efface sur les écrans poussés, où le balayage est de toute façon coupé
+- Un seul bouton flottant dans l'app : le « + » d'import, en bas à droite de Cours, là où le
+  pouce tombe. Il n'apparaît pas quand la liste est vide, où l'écran d'accueil porte déjà son
+  propre appel à importer
 - Balayage horizontal natif (pages qui suivent le doigt) pour changer d'onglet ; geste de retour du système sur les écrans poussés
 - Réviser : le nombre de cartes à réviser posé à même le fond ivoire, puis les cours au programme et la répartition
 - Détail cours : même en-tête que les autres écrans — tuile du cours, matière et volume en
   sur-titre, titre — puis le résumé et les cartes en bloc blanc
 - Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose pas
-- En session, une ampoule donne un indice : celui de la carte, sinon un début de réponse
+- En session, une ampoule donne l'indice de la carte. Les cartes qui n'en ont pas n'affichent
+  pas l'ampoule : un indice tiré de la forme de la réponse (initiale, nombre de mots) n'apprend
+  rien et fait perdre confiance dans les vrais indices
 - Animations en cascade et retours haptiques centralisés dans `Haptics`
 
 Les composants vivent dans `Micabo/DesignSystem/Components/` : `MicaboRows.swift` (tuile,
@@ -233,14 +240,27 @@ format en blocs structurés, seuls les textes sont conservés.
 
 ## Types de cartes
 
-Une carte recto verso muette ne sert ni l'anatomie, ni les langues, ni la physique. Trois
+Une carte recto verso muette ne sert ni l'anatomie, ni les langues, ni la physique. Cinq
 formats s'ajoutent donc au format de base, sans nouvelle dépendance ni permission système.
 
 | Format | Ce que ça sert | Comment |
 | --- | --- | --- |
+| Texte à trou | Définitions, formulations exactes, vocabulaire | Le recto est une phrase du cours dont le terme clé est remplacé par un blanc, le verso est ce terme. Un seul trou par carte, et une seule graphie du blanc dans toute l'app (`ClozeGap`) : les tirets bas ne peuvent pas servir, `TextSanitizer.clean` les retire avec le balisage. |
+| QCM | Se tester quand on ne sait pas encore reformuler | Trois ou quatre propositions courtes, une seule bonne (`Flashcard.choices` et `correctChoiceIndex`). En session, choisir une proposition **retourne la carte** : le choix vaut la réponse. La bonne est marquée, l'erreur aussi, et la notation reste à l'utilisateur. |
 | Occlusion d'image | Anatomie, géographie, géologie | `Masquer un schéma` dans le menu d'un cours : on choisit une image, on trace les zones au doigt, on les nomme. **Une carte par zone**, image et `groupID` partagés, planification indépendante. Le cache se lève au retournement et laisse un cadre sur la zone. |
 | Audio | Langues | Champ facultatif sur chaque carte (`Prononciation`) : un fichier audio est recopié dans la carte, puis lu par un bouton au recto comme au verso. Aucun micro, donc aucune autorisation. |
 | Sens inverse | Langues | `Ajouter les cartes inverses`, et automatiquement à l'import quand `SubjectHeuristics.isLanguage` reconnaît un cours de langue. La carte inverse est une vraie carte : même `groupID`, **planification séparée**, et le recto annonce « sens inverse ». |
+
+Le texte à trou et le QCM se **décochent au moment de générer**, dans « Types de questions »
+juste au-dessus du bouton `Générer les cartes` ; le choix est retenu d'un import à l'autre
+(`QuestionMixPreferences`). Le recto verso, lui, ne se coupe pas : c'est le format qui marche
+sur n'importe quel cours.
+
+Un format annoncé qui ne tient pas debout **retombe sur le recto verso** plutôt que de casser
+l'écran : texte à trou sans trou, QCM à une seule proposition ou dont aucune ne correspond à la
+réponse, occlusion sans image. La question et la réponse restent bonnes, donc la carte n'est
+jamais jetée. `Flashcard.format` porte cette règle, et c'est elle que l'interface consulte —
+`kind` dit ce qui était voulu, `format` ce qui est affichable.
 
 Les formules écrites en LaTeX entre `$…$` sont transposées en Unicode par `FormulaRenderer`
 (exposants, indices, lettres grecques, fractions, racines) et composées en italique à
@@ -266,7 +286,7 @@ Trois échecs sont traités nommément, chacun avec une sortie.
   autre nom de fichier, propose d'ouvrir le cours existant plutôt que de créer un doublon. Un
   titre identique suffit aussi à déclencher la question.
 
-`MicaboTests/CardFormatsTests.swift` verrouille les trois formats et les cas d'échec.
+`MicaboTests/CardFormatsTests.swift` verrouille les formats, leurs replis et les cas d'échec.
 
 ## Répétition espacée
 
@@ -300,6 +320,9 @@ de cartes.
   session ne perd donc rien.
 - **Rien à réviser** — quand la file du jour est vide, un écran le dit, félicite sobrement et
   annonce la prochaine échéance, au lieu de basculer en douce sur des cartes non dues.
+- **Répondre à un QCM retourne la carte** — le choix vaut la réponse, on ne redemande pas un
+  appui pour la même chose. La bonne proposition passe au vert, celle qui a été choisie à tort
+  au rouge, et la notation reste à l'utilisateur : c'est lui qui sait s'il a deviné.
 - **Entraînement libre** — `StudyMode.practice` révise un cours entier sans toucher au
   planning : aucune échéance déplacée, aucun journal écrit, rien à reprendre. L'écran l'annonce
   en permanence (« Entraînement libre · ton planning n'est pas modifié ») et une carte ratée
