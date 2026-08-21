@@ -39,7 +39,7 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 
 | Bloc | Écrans |
 | --- | --- |
-| Accroche | bienvenue, langue, annonce des questions |
+| Accroche | bienvenue, « conçu par des étudiants », langue, annonce des questions |
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli, matières, établissement, preuve sociale, temps quotidien |
 | Démonstration | courbe de mémorisation, répétition espacée, dépôt → génération → révision en trois écrans manipulables |
 | Sortie | projection annuelle, notifications, personnalisation, essai de 3 jours, paywall |
@@ -64,9 +64,11 @@ la mise en gras du texte d'Ebbinghaus si elle court encore.
 
 Trois règles valent pour tout le tunnel :
 
-- **la jauge est unique** — même couleur (`MicaboColor.progress`) et même barre du premier
-  écran au paywall, sans jamais disparaître. Tout ce qui indique une progression ailleurs dans
-  l'app (session de révision, anneaux, curseurs, indicateurs d'attente) prend cette couleur.
+- **la jauge est unique** — même barre du premier écran au paywall, sans jamais disparaître,
+  et toujours l'indigo de `MicaboColor.progress`. Elle ne s'inverse (`MicaboColor.onInk`) que
+  sur les fonds sombres, où un indigo posé sur l'indigo ne se verrait plus. Tout ce qui indique
+  une progression ailleurs dans l'app (session de révision, anneaux, curseurs, indicateurs
+  d'attente) prend cette couleur.
 - **aucun bouton ne reste muet** — l'enfoncement (échelle 0,975) part en 80 ms, et un bouton
   derrière lequel tourne une opération passe en état chargement, annonce ce qu'il fait et
   refuse les appuis suivants.
@@ -76,9 +78,16 @@ Trois règles valent pour tout le tunnel :
   personnalisation sur l'indigo. En revanche le texte reste **fer à gauche** partout et le
   bouton **collé au bas de la zone sûre** : la variété s'arrête aux couleurs et aux volumes.
 
-`OnboardingScaffold` porte cette bascule : `surface:` change le fond, la couleur des textes,
-celle du bouton (clair sur fond sombre) et le fondu de la barre du bas. Les écrans hors
-scaffold posent la même valeur dans `\.onboardingSurface`.
+`OnboardingStep.surface` est la seule source de vérité sur ce point, et `OnboardingScaffold`
+porte la bascule : `surface:` change le fond, la couleur des textes, celle du bouton (clair sur
+fond sombre) et le fondu de la barre du bas. Les écrans hors scaffold lisent la même valeur
+depuis leur étape et la reposent dans `\.onboardingSurface`.
+
+**Le haut de l'écran suit la couleur de l'écran.** Le fond de l'étape monte jusqu'en haut de la
+zone d'état : la jauge, l'heure et la batterie reposent sur l'encre quand l'écran est sombre, sur
+l'indigo quand il est indigo, jamais sur une bande crème rapportée. Le thème clair est donc posé
+par `RootView` sur l'app elle-même, pas au-dessus du parcours : celui-ci passe en sombre le temps
+de ses écrans d'encre pour que l'heure du téléphone reste lisible.
 
 L'écran de personnalisation est le seul indigo plein cadre. Il fait tourner trois signaux
 d'activité en même temps — une barre qui avance image par image, un pourcentage qui compte, et
@@ -104,7 +113,9 @@ L'écran courbe s'appuie sur `RetentionCurve` : une décroissance exponentielle 
 secondes, sans paragraphe : un titre qui annonce ce qu'on regarde, l'intervalle réel étiqueté au-dessus
 de chaque point de révision (1 j, 3 j, 7 j, 16 j), et deux lignes de légende sous le graphe — une par
 courbe, « sans révision tu oublies » et « chaque rappel rallonge ta mémoire ». L'écran suivant reprend
-ces intervalles en liste, sous un titre qui dit ce qu'elle représente. Les travaux cités (Ebbinghaus
+ces intervalles en liste, sous un titre qui dit ce qu'elle représente : **ce sont exactement les mêmes
+valeurs**, lues dans `RetentionCurve.intervalLabels`, parce que deux écrans voisins qui parlent des
+mêmes révisions ne peuvent pas annoncer deux échéanciers différents. Les travaux cités (Ebbinghaus
 1885, Landauer & Bjork 1978) sont réels et rapportés sans arrondir leurs résultats.
 
 Le paywall utilise `SubscriptionStoreView` de StoreKit 2. Aucun produit n'est publié :
