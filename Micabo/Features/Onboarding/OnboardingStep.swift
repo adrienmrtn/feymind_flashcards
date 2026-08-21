@@ -30,18 +30,15 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         OnboardingStep(rawValue: rawValue + 1)
     }
 
-    /// Les écrans d'accroche et la fin du parcours se passent de jauge.
-    var showsProgress: Bool {
-        switch self {
-        case .welcome, .personalizing, .trialOffer, .trialReminder, .paywall: false
-        default: true
-        }
-    }
-
     /// Position de l'étape dans la jauge, entre 0 et 1.
+    ///
+    /// La jauge couvre le parcours entier, du premier écran au paywall : elle ne
+    /// disparaît sur aucune étape, et elle avance toujours dans le même sens. Le
+    /// plancher garde un filet visible dès le premier écran, pour qu'elle ne
+    /// ressemble jamais à une barre cassée.
     var progress: Double {
-        let tracked = OnboardingStep.allCases.filter(\.showsProgress)
-        guard let index = tracked.firstIndex(of: self), tracked.count > 1 else { return 0 }
-        return Double(index) / Double(tracked.count - 1)
+        let last = Double(OnboardingStep.allCases.count - 1)
+        guard last > 0 else { return 1 }
+        return max(0.02, Double(rawValue) / last)
     }
 }

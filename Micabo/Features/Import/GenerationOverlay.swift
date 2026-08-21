@@ -31,7 +31,7 @@ struct GenerationOverlay: View {
                 .animation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true), value: pulse)
 
                 Text(title)
-                    .font(MicaboFont.screenTitle)
+                    .font(MicaboFont.hanken(25, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(MicaboTracking.tight)
                     .multilineTextAlignment(.center)
@@ -41,7 +41,7 @@ struct GenerationOverlay: View {
                         HStack(spacing: MicaboSpacing.sm) {
                             ZStack {
                                 Circle()
-                                    .fill(index <= currentStep ? MicaboColor.ink : MicaboColor.surfaceSunken)
+                                    .fill(index <= currentStep ? MicaboColor.progress : MicaboColor.progressTrack)
                                     .frame(width: 20, height: 20)
 
                                 if index < currentStep {
@@ -81,7 +81,7 @@ struct GenerationOverlay: View {
 
 #Preview {
     GenerationOverlay(
-        title: "Création des flashcards",
+        title: "Création des cartes",
         steps: ["Lecture du document", "Repérage des notions clés", "Rédaction des questions", "Vérification des réponses"]
     )
 }

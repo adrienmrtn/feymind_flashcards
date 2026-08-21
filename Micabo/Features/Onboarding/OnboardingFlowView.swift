@@ -66,21 +66,19 @@ struct OnboardingFlowView: View {
     }
 }
 
-/// Jauge fine en haut de l'écran, masquée sur les écrans d'accroche.
+/// Jauge fine en haut de l'écran, présente du premier écran au dernier.
+/// Elle ne prend jamais d'autre couleur que `MicaboColor.progress`.
 private struct OnboardingProgressBar: View {
     let step: OnboardingStep
 
     var body: some View {
-        MicaboProgressBar(
-            progress: step.showsProgress ? step.progress : 0,
-            tint: MicaboColor.ink,
-            track: MicaboColor.surfaceSunken
-        )
-        .frame(height: 4)
-        .opacity(step.showsProgress ? 1 : 0)
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, MicaboSpacing.xs)
-        .padding(.bottom, MicaboSpacing.xs)
-        .animation(.easeInOut(duration: 0.38), value: step)
+        MicaboProgressBar(progress: step.progress)
+            .frame(height: 4)
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, MicaboSpacing.xs)
+            .padding(.bottom, MicaboSpacing.xs)
+            .animation(.easeInOut(duration: 0.38), value: step)
+            .accessibilityLabel("Progression du parcours")
+            .accessibilityValue("\(Int(step.progress * 100)) %")
     }
 }

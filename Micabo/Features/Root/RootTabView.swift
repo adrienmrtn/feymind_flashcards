@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-/// Les cinq pages, balayables comme un carrousel natif. La barre d'onglets est
+/// Les trois pages, balayables comme un carrousel natif. La barre d'onglets est
 /// dessinée par chaque page racine : elle disparaît dès qu'un détail est poussé,
 /// et le balayage est alors coupé.
 struct RootTabView: View {
@@ -21,12 +21,6 @@ struct RootTabView: View {
 
             CoursesListView()
                 .tag(RootTab.courses)
-
-            DashboardView()
-                .tag(RootTab.dashboard)
-
-            LibraryView()
-                .tag(RootTab.library)
 
             ProfileView()
                 .tag(RootTab.profile)

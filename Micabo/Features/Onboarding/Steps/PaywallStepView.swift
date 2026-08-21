@@ -56,7 +56,7 @@ struct PaywallStepView: View {
         VStack(spacing: 14) {
             ProgressView()
                 .controlSize(.large)
-                .tint(MicaboColor.ink)
+                .tint(MicaboColor.progress)
             Text("Chargement de l'offre…")
                 .font(MicaboFont.hanken(13, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
@@ -84,7 +84,7 @@ struct PaywallStepView: View {
 /// Bandeau de présentation affiché au-dessus des options d'abonnement.
 private struct PaywallMarketingContent: View {
     private let advantages = [
-        ("infinity", "Cours et flashcards illimités"),
+        ("infinity", "Cours et cartes illimités"),
         ("wand.and.stars", "Génération à partir de tes PDF, photos et Word"),
         ("chart.line.uptrend.xyaxis", "Répétition espacée et statistiques"),
         ("icloud", "Tes cours te suivent partout")

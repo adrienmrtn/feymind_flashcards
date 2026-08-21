@@ -2,8 +2,15 @@ import SwiftData
 import SwiftUI
 import UIKit
 
+/// Une session de révision : la file du jour, carte après carte.
+///
+/// Trois états cohabitent avant la pile de cartes : la proposition de reprise d'une
+/// session interrompue, l'écran « rien à réviser » avec la prochaine échéance, et
+/// l'entraînement libre, annoncé explicitement pour qu'on ne le confonde pas avec une
+/// vraie session.
 struct StudyView: View {
     let source: StudySource
+    var mode: StudyMode = .scheduled
     var isEmbedded: Bool = false
 
     @Environment(\.modelContext) private var modelContext
@@ -12,6 +19,9 @@ struct StudyView: View {
     @State private var session = StudySession()
     @State private var didStart = false
     @State private var showHint = false
+    @State private var editingCard: Flashcard?
+    /// Session retrouvée au lancement : on ne démarre rien avant que l'utilisateur choisisse.
+    @State private var resumable: StudySessionSnapshot?
 
     private var totalLabel: String {
         let answered = session.answeredCount
@@ -22,7 +32,22 @@ struct StudyView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if session.isFinished {
+            if let resumable {
+                ResumePromptView(
+                    snapshot: resumable,
+                    canClose: !isEmbedded,
+                    onResume: { resume(resumable) },
+                    onRestart: restart,
+                    onClose: { dismiss() }
+                )
+            } else if session.isEmpty {
+                NothingDueView(
+                    nextDueLabel: nextDueLabel,
+                    canPractice: !practiceCards.isEmpty,
+                    onPractice: startPractice,
+                    onClose: finish
+                )
+            } else if session.isFinished {
                 CompletionView(session: session, isEmbedded: isEmbedded) {
                     finish()
                 }
@@ -33,30 +58,71 @@ struct StudyView: View {
             }
         }
         .micaboScreenBackground()
-        .onAppear(perform: startIfNeeded)
+        .onAppear(perform: prepare)
+        .sheet(item: $editingCard) { card in
+            FlashcardEditorSheet(card: card)
+                .onDisappear { session.cardWasEdited() }
+        }
     }
 
-    // MARK: - En-tête (maquette : X · barre · 4/12)
+    // MARK: - En-tête (X · barre · 4/12 · annuler)
 
     private var headerBar: some View {
-        HStack(spacing: 14) {
-            if !isEmbedded {
-                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: "Fermer") {
-                    finish()
+        VStack(spacing: 12) {
+            HStack(spacing: 14) {
+                if !isEmbedded {
+                    MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: "Fermer") {
+                        finish()
+                    }
+                }
+
+                MicaboProgressBar(progress: session.progress)
+                    .frame(height: 5)
+
+                Text(totalLabel)
+                    .font(MicaboFont.hanken(12, weight: .semibold))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .monospacedDigit()
+
+                if session.canUndo {
+                    MicaboCircleButton(
+                        systemImage: "arrow.uturn.backward",
+                        size: 32,
+                        accessibilityTitle: "Annuler la dernière note"
+                    ) {
+                        Haptics.rigid()
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                            session.undo()
+                        }
+                        showHint = false
+                    }
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
                 }
             }
+            .animation(.easeOut(duration: 0.2), value: session.canUndo)
 
-            MicaboProgressBar(progress: session.progress, tint: MicaboColor.accent, track: MicaboColor.surfaceSunken)
-                .frame(height: 5)
-
-            Text(totalLabel)
-                .font(MicaboFont.hanken(12, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .monospacedDigit()
+            if !session.mode.affectsSchedule {
+                practiceBanner
+            }
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 8)
-        .padding(.bottom, 22)
+        .padding(.bottom, 18)
+    }
+
+    /// Dit noir sur blanc que rien ne sera enregistré.
+    private var practiceBanner: some View {
+        HStack(spacing: 7) {
+            Image(systemName: "dumbbell")
+                .font(.system(size: 12, weight: .semibold))
+            Text("Entraînement libre · ton planning n'est pas modifié")
+                .font(MicaboFont.hanken(12, weight: .semibold))
+        }
+        .foregroundStyle(MicaboColor.accent)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 13)
+        .frame(maxWidth: .infinity)
+        .background(MicaboColor.accentSoft, in: Capsule())
     }
 
     // MARK: - Carte
@@ -117,17 +183,9 @@ struct StudyView: View {
                     Text("Afficher la réponse")
                 }
                 .buttonStyle(MicaboPrimaryButtonStyle())
-
-                HStack(spacing: 24) {
-                    Button("Passer") { withAnimation { session.skip() } }
-                        .font(MicaboFont.hanken(13, weight: .medium))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                    Button("Mettre en pause") { session.suspendCurrent() }
-                        .font(MicaboFont.hanken(13, weight: .medium))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                }
-                .buttonStyle(.plain)
             }
+
+            cardActions
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 20)
@@ -135,12 +193,93 @@ struct StudyView: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: session.isRevealed)
     }
 
-    // MARK: - Actions
+    /// Corriger, passer ou écarter une carte sans quitter la session. Ces actions restent
+    /// à portée avant comme après la réponse : c'est souvent en lisant le verso qu'on
+    /// s'aperçoit qu'une carte est fausse.
+    private var cardActions: some View {
+        HStack(spacing: 20) {
+            if !session.isRevealed {
+                quietAction("Passer", systemImage: "arrow.right.to.line") {
+                    withAnimation { session.skip() }
+                }
+            }
 
-    private func startIfNeeded() {
+            quietAction("Modifier", systemImage: "pencil") {
+                guard let card = session.current else { return }
+                Haptics.light()
+                editingCard = card
+            }
+
+            quietAction("Mettre de côté", systemImage: "tray.and.arrow.down") {
+                Haptics.warning()
+                withAnimation { session.setAsideCurrent() }
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func quietAction(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 11, weight: .semibold))
+                Text(title)
+                    .font(MicaboFont.hanken(13, weight: .medium))
+            }
+            .foregroundStyle(MicaboColor.inkTertiary)
+        }
+        .buttonStyle(MicaboPressableButtonStyle())
+    }
+
+    // MARK: - Démarrage, reprise, sortie
+
+    /// Au premier affichage : soit on propose de reprendre, soit on démarre.
+    private func prepare() {
+        guard !didStart, resumable == nil else { return }
+
+        if mode.affectsSchedule,
+           let key = source.persistenceKey,
+           let snapshot = StudySessionStore.load(for: key) {
+            resumable = snapshot
+            return
+        }
+
+        start()
+    }
+
+    private func start() {
         guard !didStart else { return }
         didStart = true
-        session.start(with: resolveCards(), context: modelContext)
+        session.start(
+            with: resolveCards(),
+            context: modelContext,
+            mode: mode,
+            sourceKey: source.persistenceKey
+        )
+    }
+
+    private func resume(_ snapshot: StudySessionSnapshot) {
+        resumable = nil
+        didStart = true
+        session.resume(snapshot, cards: resolveCards(), context: modelContext)
+    }
+
+    private func restart() {
+        StudySessionStore.clear()
+        resumable = nil
+        start()
+    }
+
+    /// L'entraînement libre repart de zéro sur les mêmes cartes.
+    private func startPractice() {
+        session = StudySession()
+        didStart = true
+        session.start(
+            with: practiceCards,
+            context: modelContext,
+            mode: .practice,
+            sourceKey: nil
+        )
     }
 
     private func resolveCards() -> [Flashcard] {
@@ -151,11 +290,28 @@ struct StudyView: View {
         }
     }
 
+    /// Cartes disponibles pour un entraînement libre depuis l'écran « rien à réviser ».
+    private var practiceCards: [Flashcard] {
+        resolveCards().filter { !$0.isSuspended }
+    }
+
+    /// Prochaine échéance annoncée quand il n'y a rien à réviser.
+    private var nextDueLabel: String? {
+        let upcoming = practiceCards
+            .map(\.dueDate)
+            .filter { $0 > Date() }
+            .min()
+        guard let upcoming else { return nil }
+        return SM2Scheduler.format(delay: upcoming.timeIntervalSinceNow)
+    }
+
+    /// Fermer en cours de route ne perd rien : l'état est déjà écrit après chaque note,
+    /// et la reprise sera proposée au prochain lancement.
     private func finish() {
         if isEmbedded {
             session = StudySession()
             didStart = false
-            startIfNeeded()
+            prepare()
         } else {
             dismiss()
         }
@@ -178,38 +334,56 @@ struct StudyCardFace: View {
                     .tracking(1.4)
                     .foregroundStyle(MicaboColor.accent)
 
-                Text(card.front)
-                    .font(MicaboFont.hanken(17, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
+                FormulaText(source: card.front, size: 17, weight: .semibold)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Rectangle()
-                    .fill(MicaboColor.stroke)
-                    .frame(height: 1)
+                MicaboHairline()
 
                 ScrollView {
-                    Text(card.back)
-                        .font(MicaboFont.hanken(15, weight: .regular))
-                        .foregroundStyle(Color(hex: 0x4A463F))
+                    VStack(alignment: .leading, spacing: 14) {
+                        if card.isOcclusion {
+                            OcclusionFigure(card: card, isRevealed: true)
+                        }
+
+                        FormulaText(
+                            source: card.back,
+                            size: 15,
+                            color: Color(hex: 0x4A463F)
+                        )
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
+
+                        if card.hasAudio {
+                            CardAudioButton(card: card)
+                        }
+                    }
                 }
             } else {
                 Spacer(minLength: 0)
 
-                if let subject = card.course?.subject?.nilIfBlank ?? card.course?.title {
-                    Text(subject.uppercased())
+                if let label = frontEyebrow {
+                    Text(label.uppercased())
                         .font(MicaboFont.hanken(11, weight: .semibold))
                         .tracking(1.4)
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
 
-                Text(card.front)
-                    .font(MicaboFont.hanken(24, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .tracking(-0.2)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+                if card.isOcclusion {
+                    OcclusionFigure(card: card, isRevealed: false)
+                }
+
+                FormulaText(
+                    source: card.front,
+                    size: card.isOcclusion ? 18 : 24,
+                    weight: .semibold,
+                    alignment: .center
+                )
+                .tracking(-0.2)
+                .fixedSize(horizontal: false, vertical: true)
+
+                if card.hasAudio {
+                    CardAudioButton(card: card)
+                }
 
                 Spacer(minLength: 0)
 
@@ -220,12 +394,16 @@ struct StudyCardFace: View {
         }
         .padding(showAnswer ? 26 : 30)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: showAnswer ? .topLeading : .center)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
+        .shadow(color: Color.black.opacity(0.05), radius: 18, x: 0, y: 8)
+    }
+
+    /// Le sens de révision compte en langues : on annonce lequel est demandé.
+    private var frontEyebrow: String? {
+        if card.isReversed {
+            return "Sens inverse"
         }
-        .shadow(color: Color.black.opacity(0.06), radius: 12, x: 0, y: 6)
+        return card.course?.subject?.nilIfBlank ?? card.course?.title
     }
 
     /// Ampoule au pied de la question : un appui donne un coup de pouce sans livrer la réponse.
@@ -315,11 +493,11 @@ struct GradeButtons: View {
                     onSelect(rating)
                 } label: {
                     Text(rating.label)
-                        .font(MicaboFont.hanken(13, weight: .semibold))
+                        .font(MicaboFont.hanken(14, weight: .semibold))
                         .foregroundStyle(tint(for: rating))
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 13)
-                        .background(softTint(for: rating), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                        .padding(.vertical, 15)
+                        .background(softTint(for: rating), in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }
@@ -345,6 +523,126 @@ struct GradeButtons: View {
     }
 }
 
+// MARK: - Reprise d'une session interrompue
+
+/// Proposée au lancement quand une session a été laissée en cours. On ne reprend jamais
+/// dans le dos de l'utilisateur : il choisit de continuer ou de repartir de zéro.
+private struct ResumePromptView: View {
+    let snapshot: StudySessionSnapshot
+    var canClose: Bool
+    var onResume: () -> Void
+    var onRestart: () -> Void
+    var onClose: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if canClose {
+                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: "Fermer", action: onClose)
+                    .padding(.horizontal, MicaboSpacing.screen)
+                    .padding(.top, 8)
+            }
+
+            Spacer(minLength: MicaboSpacing.lg)
+
+            VStack(alignment: .leading, spacing: 12) {
+                MicaboEyebrow(text: "Session interrompue")
+
+                Text("Tu en étais à la carte \(snapshot.position) sur \(max(snapshot.initialCount, snapshot.position)).")
+                    .font(MicaboFont.hanken(28, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .tracking(-0.6)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("Les notes déjà données sont enregistrées. Tu peux continuer la file où tu l'as laissée, ou repartir de la première carte du jour.")
+                    .font(MicaboFont.body)
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, MicaboSpacing.screen)
+
+            Spacer(minLength: MicaboSpacing.lg)
+
+            MicaboBottomBar {
+                VStack(spacing: 2) {
+                    Button("Reprendre", action: onResume)
+                        .buttonStyle(MicaboPrimaryButtonStyle())
+
+                    Button("Recommencer", action: onRestart)
+                        .buttonStyle(MicaboQuietButtonStyle())
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Rien à réviser
+
+/// Ce qui manquait : quand la file du jour est vide, on le dit, on félicite sobrement et
+/// on annonce la prochaine échéance — au lieu de basculer en douce sur d'autres cartes.
+private struct NothingDueView: View {
+    let nextDueLabel: String?
+    var canPractice: Bool
+    var onPractice: () -> Void
+    var onClose: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Spacer()
+                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: "Fermer", action: onClose)
+            }
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, 8)
+
+            Spacer(minLength: MicaboSpacing.lg)
+
+            VStack(alignment: .leading, spacing: 14) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(MicaboColor.positive)
+                    .frame(width: 68, height: 68)
+                    .background(MicaboColor.positiveSoft, in: Circle())
+
+                Text("Tout est à jour.")
+                    .font(MicaboFont.hanken(28, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .tracking(-0.6)
+
+                Text(detail)
+                    .font(MicaboFont.body)
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, MicaboSpacing.screen)
+
+            Spacer(minLength: MicaboSpacing.lg)
+
+            MicaboBottomBar {
+                VStack(spacing: 2) {
+                    if canPractice {
+                        Button("Entraînement libre", action: onPractice)
+                            .buttonStyle(MicaboSecondaryButtonStyle())
+                    }
+
+                    Button("Fermer", action: onClose)
+                        .buttonStyle(MicaboQuietButtonStyle())
+                }
+            }
+        }
+    }
+
+    private var detail: String {
+        guard let nextDueLabel else {
+            return "Aucune carte ne t'attend. Importe un cours pour en créer de nouvelles."
+        }
+        return "Aucune carte à réviser pour l'instant. La prochaine revient dans \(nextDueLabel)."
+    }
+}
+
 // MARK: - Fin de session
 
 private struct CompletionView: View {
@@ -352,25 +650,27 @@ private struct CompletionView: View {
     let isEmbedded: Bool
     var onFinish: () -> Void
 
+    private var isPractice: Bool {
+        !session.mode.affectsSchedule
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             Spacer()
 
             Image(systemName: session.answeredCount > 0 ? "trophy" : "moon.zzz")
                 .font(.system(size: 28, weight: .medium))
-                .foregroundStyle(Color(hex: 0xB39A5A))
-                .frame(width: 76, height: 76)
-                .background(Color(hex: 0xF0ECE2), in: Circle())
+                .foregroundStyle(MicaboColor.caution)
+                .frame(width: 78, height: 78)
+                .background(MicaboColor.cautionSoft, in: Circle())
                 .padding(.bottom, 8)
 
-            Text(session.answeredCount > 0 ? "Session terminée" : "Rien à réviser")
+            Text(title)
                 .font(MicaboFont.hanken(24, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
                 .tracking(-0.2)
 
-            Text(session.answeredCount > 0
-                 ? "\(session.answeredCount) cartes révisées en \(durationLabel)"
-                 : "Revenez plus tard, ou entraînez-vous en avance depuis un cours.")
+            Text(detail)
                 .font(MicaboFont.body)
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .multilineTextAlignment(.center)
@@ -406,11 +706,20 @@ private struct CompletionView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+        .micaboGroup(radius: MicaboRadius.button)
+    }
+
+    private var title: String {
+        guard session.answeredCount > 0 else { return "Rien à réviser" }
+        return isPractice ? "Entraînement terminé" : "Session terminée"
+    }
+
+    private var detail: String {
+        guard session.answeredCount > 0 else {
+            return "Reviens plus tard, ou prends de l'avance depuis un cours."
         }
+        let volume = "\(MicaboCopy.cards(session.answeredCount)) revues en \(durationLabel)"
+        return isPractice ? "\(volume). Ton planning n'a pas bougé." : "\(volume)."
     }
 
     private var durationLabel: String {

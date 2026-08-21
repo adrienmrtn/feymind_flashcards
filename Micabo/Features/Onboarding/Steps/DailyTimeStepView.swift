@@ -1,14 +1,28 @@
 import SwiftUI
 
-/// Écran 12 : rythme quotidien. Curseur de 5 minutes à 1 heure, par paliers de 5.
+/// Écran 12 : rythme quotidien. Le curseur va de 5 minutes à 2 heures, par paliers de
+/// 5 minutes jusqu'à la demi-heure puis de 15 minutes au-delà — il glisse donc sur les
+/// paliers de `DailyLoad`, pas sur les minutes.
+///
+/// La valeur n'est pas décorative : elle fixe le plafond de cartes neuves par jour,
+/// affiché juste en dessous et recalculé à chaque cran.
 struct DailyTimeStepView: View {
     @Environment(OnboardingModel.self) private var model
 
-    @State private var minutes = 15.0
+    @State private var stepIndex = Double(DailyLoad.stepIndex(for: 15))
     @State private var isReady = false
 
-    private let range = 5.0...60.0
-    private let step = 5.0
+    private var minutes: Int {
+        DailyLoad.minutes(atStepIndex: Int(stepIndex.rounded()))
+    }
+
+    private var pace: DailyLoad.Pace {
+        DailyLoad.pace(forDailyMinutes: minutes)
+    }
+
+    private var newCardsPerDay: Int {
+        DailyLoad.newCardsPerDay(dailyMinutes: minutes)
+    }
 
     var body: some View {
         OnboardingScaffold(
@@ -17,91 +31,124 @@ struct DailyTimeStepView: View {
             subtitle: "Mieux vaut dix minutes tous les jours qu'une heure le dimanche. Tu pourras changer d'avis quand tu veux.",
             titleSize: 28
         ) {
-            VStack(spacing: 22) {
-                readout
-
-                VStack(spacing: 10) {
-                    Slider(value: $minutes, in: range, step: step)
-                        .tint(MicaboColor.ink)
-                        .onChange(of: minutes) { oldValue, newValue in
-                            guard isReady, oldValue != newValue else { return }
-                            Haptics.selection()
-                            model.dailyMinutes = Int(newValue)
-                        }
-
-                    HStack {
-                        Text("5 min")
-                        Spacer()
-                        Text("1 h")
-                    }
-                    .font(MicaboFont.hanken(11, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                }
-
-                paceLabel
-            }
-            .padding(18)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
-                    .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+            VStack(spacing: 14) {
+                dial
+                loadNote
             }
         } footer: {
             OnboardingContinueButton {
-                model.dailyMinutes = Int(minutes)
+                commit()
                 model.advance()
             }
         }
         .onAppear {
-            minutes = Double(model.dailyMinutes)
+            stepIndex = Double(DailyLoad.stepIndex(for: model.dailyMinutes))
             isReady = true
         }
     }
 
+    private var dial: some View {
+        VStack(spacing: 20) {
+            readout
+
+            VStack(spacing: 10) {
+                Slider(
+                    value: $stepIndex,
+                    in: 0...Double(DailyLoad.steps.count - 1),
+                    step: 1
+                )
+                .tint(MicaboColor.progress)
+                .onChange(of: stepIndex) { oldValue, newValue in
+                    guard isReady, oldValue != newValue else { return }
+                    Haptics.selection()
+                    commit()
+                }
+
+                HStack {
+                    Text("\(DailyLoad.minimumMinutes) min")
+                    Spacer()
+                    Text("2 h")
+                }
+                .font(MicaboFont.hanken(11, weight: .medium))
+                .foregroundStyle(MicaboColor.inkTertiary)
+            }
+
+            paceLabel
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity)
+        .micaboGroup()
+    }
+
     private var readout: some View {
         HStack(alignment: .lastTextBaseline, spacing: 6) {
-            Text("\(Int(minutes))")
+            Text(readoutValue)
                 .font(MicaboFont.hanken(64, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
                 .tracking(-2)
                 .monospacedDigit()
-                .contentTransition(.numericText(value: minutes))
+                .contentTransition(.numericText(value: Double(minutes)))
                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: minutes)
 
-            Text("min / jour")
+            Text(readoutUnit)
                 .font(MicaboFont.hanken(15, weight: .medium))
                 .foregroundStyle(MicaboColor.inkSecondary)
         }
         .frame(maxWidth: .infinity)
     }
 
+    /// Au-delà de l'heure, on parle en heures : « 90 min » se lit moins bien que « 1 h 30 ».
+    private var readoutValue: String {
+        guard minutes >= 60 else { return "\(minutes)" }
+        let hours = minutes / 60
+        let rest = minutes % 60
+        return rest == 0 ? "\(hours)" : "\(hours) h \(rest)"
+    }
+
+    private var readoutUnit: String {
+        guard minutes >= 60 else { return "min / jour" }
+        return minutes % 60 == 0 ? "h / jour" : "/ jour"
+    }
+
     private var paceLabel: some View {
         HStack(spacing: 7) {
-            Image(systemName: paceIcon)
+            Image(systemName: pace.systemImage)
                 .font(.system(size: 12, weight: .semibold))
-            Text(paceText)
+            Text("C'est \(pace.label)")
                 .font(MicaboFont.hanken(12, weight: .semibold))
         }
         .foregroundStyle(MicaboColor.accent)
         .padding(.vertical, 8)
         .padding(.horizontal, 13)
-        .background(MicaboColor.infoSoft, in: Capsule())
+        .background(MicaboColor.accentSoft, in: Capsule())
         .contentTransition(.opacity)
+        .animation(.easeOut(duration: 0.2), value: pace.label)
     }
 
-    private var paceIcon: String {
-        switch Int(minutes) {
-        case ..<15: "leaf"
-        case 15..<35: "figure.walk"
-        default: "flame"
+    /// Ce que le curseur décide vraiment.
+    private var loadNote: some View {
+        HStack(alignment: .top, spacing: 11) {
+            Image(systemName: "tray.and.arrow.down")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(MicaboColor.accent)
+                .frame(width: 20)
+
+            Text("On introduit au maximum \(MicaboCopy.cards(newCardsPerDay)) neuves par jour, pour que ta charge quotidienne reste sous \(DailyLoad.label(forMinutes: minutes)).")
+                .font(MicaboFont.hanken(13, weight: .medium))
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .contentTransition(.numericText(value: Double(newCardsPerDay)))
+                .animation(.easeOut(duration: 0.25), value: newCardsPerDay)
+
+            Spacer(minLength: 0)
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(MicaboColor.accentSoft.opacity(0.6), in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
     }
 
-    private var paceText: String {
-        switch Int(minutes) {
-        case ..<15: "Tranquille, mais régulier"
-        case 15..<35: "Le rythme de croisière"
-        default: "Objectif concours"
-        }
+    private func commit() {
+        model.dailyMinutes = minutes
     }
 }

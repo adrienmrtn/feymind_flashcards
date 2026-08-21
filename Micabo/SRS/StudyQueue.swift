@@ -18,6 +18,16 @@ enum StudyQueueBuilder {
 
         static let `default` = Limits(newPerSession: 20, reviewsPerSession: 200)
         static let unlimited = Limits(newPerSession: .max, reviewsPerSession: .max)
+
+        /// Plafond issu du rythme quotidien choisi à l'inscription : c'est ce qui rend le
+        /// curseur de l'onboarding utile. Les révisions dues ne sont pas rationnées, seule
+        /// l'introduction de cartes neuves l'est.
+        static func daily(minutes: Int = OnboardingPreferences.dailyMinutes) -> Limits {
+            Limits(
+                newPerSession: DailyLoad.newCardsPerDay(dailyMinutes: minutes),
+                reviewsPerSession: .max
+            )
+        }
     }
 
     /// Ordonne les cartes comme Anki : apprentissage en retard, puis révisions, puis nouvelles.

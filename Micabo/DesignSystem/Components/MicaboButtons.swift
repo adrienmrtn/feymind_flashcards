@@ -1,24 +1,48 @@
 import SwiftUI
 
-/// Bouton d'action principal : rectangle sombre à coins 14 pt (pas une capsule).
+/// Réaction à l'appui, commune à tous les boutons de l'app.
+///
+/// Un doigt posé doit se voir tout de suite : l'enfoncement part sur une courbe de
+/// 80 ms, bien en dessous des 100 ms au-delà desquelles on croit que rien n'a été
+/// enregistré. Le relâchement est un peu plus lent, pour qu'on le remarque.
+enum MicaboPress {
+    static let scale: CGFloat = 0.975
+    static let opacity: Double = 0.92
+
+    static func animation(isPressed: Bool) -> Animation {
+        .easeOut(duration: isPressed ? 0.08 : 0.16)
+    }
+}
+
+extension View {
+    /// Enfoncement standard, à appliquer dans un `ButtonStyle`.
+    func micaboPressEffect(isPressed: Bool, dimming: Bool = true) -> some View {
+        scaleEffect(isPressed ? MicaboPress.scale : 1)
+            .opacity(isPressed && dimming ? MicaboPress.opacity : 1)
+            .animation(MicaboPress.animation(isPressed: isPressed), value: isPressed)
+    }
+}
+
+/// Bouton d'action principal : bloc d'encre à coins 16 pt, qui s'enfonce à l'appui.
+/// Sur un écran sombre, on inverse : surface claire, texte encre.
 struct MicaboPrimaryButtonStyle: ButtonStyle {
     var tint: Color = MicaboColor.ink
+    var foreground: Color = MicaboColor.onInk
     var fullWidth: Bool = true
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(MicaboFont.cardTitle)
-            .foregroundStyle(MicaboColor.onInk)
+            .foregroundStyle(foreground)
             .frame(maxWidth: fullWidth ? .infinity : nil)
-            .padding(.vertical, 15)
-            .padding(.horizontal, fullWidth ? 0 : 22)
+            .padding(.vertical, 16)
+            .padding(.horizontal, fullWidth ? 0 : 24)
             .background(tint, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .opacity(configuration.isPressed ? 0.88 : 1)
-            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+            .micaboPressEffect(isPressed: configuration.isPressed)
     }
 }
 
-/// Bouton secondaire : fond blanc, bordure fine, mêmes coins 14 pt.
+/// Bouton secondaire : surface blanche sans bordure, le fond ivoire suffit à la détacher.
 struct MicaboSecondaryButtonStyle: ButtonStyle {
     var fullWidth: Bool = true
 
@@ -27,14 +51,23 @@ struct MicaboSecondaryButtonStyle: ButtonStyle {
             .font(MicaboFont.cardTitle)
             .foregroundStyle(MicaboColor.ink)
             .frame(maxWidth: fullWidth ? .infinity : nil)
-            .padding(.vertical, 15)
-            .padding(.horizontal, fullWidth ? 0 : 22)
+            .padding(.vertical, 16)
+            .padding(.horizontal, fullWidth ? 0 : 24)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
-            }
-            .opacity(configuration.isPressed ? 0.88 : 1)
+            .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
+            .micaboPressEffect(isPressed: configuration.isPressed)
+    }
+}
+
+/// Style des boutons qui dessinent eux-mêmes leur habillage : la seule chose que
+/// le style ajoute est l'enfoncement. À préférer à `.plain`, qui ne réagit pas.
+struct MicaboPressableButtonStyle: ButtonStyle {
+    var dimming: Bool = true
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(Rectangle())
+            .micaboPressEffect(isPressed: configuration.isPressed, dimming: dimming)
     }
 }
 
@@ -46,7 +79,8 @@ struct MicaboQuietButtonStyle: ButtonStyle {
             .foregroundStyle(MicaboColor.inkSecondary)
             .padding(.vertical, 10)
             .padding(.horizontal, 16)
-            .opacity(configuration.isPressed ? 0.6 : 1)
+            .opacity(configuration.isPressed ? 0.55 : 1)
+            .animation(MicaboPress.animation(isPressed: configuration.isPressed), value: configuration.isPressed)
     }
 }
 
@@ -71,19 +105,21 @@ enum MicaboCircleStyle: Equatable {
         case .light: MicaboColor.surface
         case .dark: MicaboColor.ink
         case .glass: Color.black.opacity(0.32)
-        case .tinted: Color.white.opacity(0.7)
+        case .tinted: Color.white.opacity(0.75)
         }
     }
 
     var shadowOpacity: Double {
         switch self {
-        case .light, .dark: 0.08
+        case .light: 0.05
+        case .dark: 0.12
         case .glass, .tinted: 0
         }
     }
 }
 
-/// Pastille circulaire. Utilisée seule dans un `Menu`, ou enveloppée par `MicaboCircleButton`.
+/// Pastille circulaire blanche, sans bordure. Utilisée seule dans un `Menu`,
+/// ou enveloppée par `MicaboCircleButton`.
 struct MicaboCircleIcon: View {
     let systemImage: String
     var style: MicaboCircleStyle = .light
@@ -91,16 +127,11 @@ struct MicaboCircleIcon: View {
 
     var body: some View {
         Image(systemName: systemImage)
-            .font(.system(size: size * 0.36, weight: .semibold))
+            .font(.system(size: size * 0.38, weight: .medium))
             .foregroundStyle(style.foreground)
             .frame(width: size, height: size)
             .background(style.background, in: Circle())
-            .overlay {
-                if style == .light {
-                    Circle().strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
-                }
-            }
-            .shadow(color: Color.black.opacity(style.shadowOpacity), radius: 8, x: 0, y: 3)
+            .shadow(color: Color.black.opacity(style.shadowOpacity), radius: 10, x: 0, y: 4)
     }
 }
 
@@ -116,19 +147,21 @@ struct MicaboCircleButton: View {
         Button(action: action) {
             MicaboCircleIcon(systemImage: systemImage, style: style, size: size)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle())
         .accessibilityLabel(accessibilityTitle ?? systemImage)
     }
 }
 
-/// Zone d'action ancrée en bas d'un écran, avec fondu vers le fond.
+/// Zone d'action ancrée en bas d'un écran, avec fondu vers le fond. Le bouton est
+/// toujours collé au bas de la zone sûre, quel que soit le fond de l'écran.
 struct MicaboBottomBar<Content: View>: View {
+    var background: Color = MicaboColor.canvas
     @ViewBuilder var content: Content
 
     var body: some View {
         VStack(spacing: 0) {
             LinearGradient(
-                colors: [MicaboColor.canvas.opacity(0), MicaboColor.canvas],
+                colors: [background.opacity(0), background],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -137,25 +170,8 @@ struct MicaboBottomBar<Content: View>: View {
             content
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, MicaboSpacing.sm)
-                .background(MicaboColor.canvas)
+                .background(background)
         }
     }
 }
 
-/// Bouton « + » flottant de l'accueil (bas droite, au-dessus de la tab bar).
-struct MicaboFloatingAddButton: View {
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "plus")
-                .font(.system(size: 22, weight: .regular))
-                .foregroundStyle(MicaboColor.onInk)
-                .frame(width: 56, height: 56)
-                .background(MicaboColor.ink, in: Capsule())
-                .shadow(color: Color.black.opacity(0.3), radius: 14, x: 0, y: 8)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Importer un cours")
-    }
-}

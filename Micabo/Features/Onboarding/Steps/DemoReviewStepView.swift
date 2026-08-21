@@ -1,7 +1,10 @@
 import SwiftUI
 
-/// Écran 8c : dernier temps. L'utilisateur retourne une vraie carte et se note,
-/// puis voit la date de la prochaine révision se calculer.
+/// Écran 8c : le geste de révision. Une pile de trois cartes, la première se retourne
+/// au doigt, et la note donnée fixe la prochaine date.
+///
+/// Deux phrases d'explication au maximum sur tout l'écran : la pédagogie de la
+/// répétition espacée a déjà eu ses écrans, ici on révise.
 struct DemoReviewStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -16,13 +19,6 @@ struct DemoReviewStepView: View {
             }
         }
 
-        var message: String {
-            switch self {
-            case .again: "Pas grave. Micabo te la repose tout à l'heure, avant qu'elle ne s'efface."
-            case .known: "Bien joué. L'intervalle s'allonge : la carte revient plus tard, et pour plus longtemps."
-            }
-        }
-
         var tint: Color {
             switch self {
             case .again: MicaboColor.caution
@@ -34,47 +30,70 @@ struct DemoReviewStepView: View {
     @State private var isFlipped = false
     @State private var verdict: Verdict?
 
-    private var card: OnboardingDemo.Card { OnboardingDemo.cards[0] }
+    private var cards: [OnboardingDemo.Card] { OnboardingDemo.cards }
+    private var card: OnboardingDemo.Card { cards[0] }
 
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Comment ça marche · 3 sur 3",
             title: "À toi de jouer.",
-            subtitle: "Retourne la carte, puis dis honnêtement si tu savais. C'est cette réponse qui fixe la prochaine date.",
-            titleSize: 28
+            subtitle: "Appuie sur la carte, puis dis si tu savais.",
+            titleSize: 28,
+            scrolls: false
         ) {
-            VStack(spacing: 16) {
-                FlipCard(front: card.front, back: card.back, isFlipped: isFlipped)
-                    .onTapGesture(perform: flip)
-
+            VStack(spacing: 20) {
+                cardStack
                 controls
+                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
     }
+
+    // MARK: - La pile
+
+    /// Les deux cartes restantes dépassent derrière : on voit qu'il y en a d'autres,
+    /// sans les lire.
+    private var cardStack: some View {
+        ZStack {
+            ForEach(Array(cards.dropFirst().enumerated()), id: \.element.id) { index, _ in
+                RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous)
+                    .fill(MicaboColor.surface)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous)
+                            .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+                    }
+                    .frame(height: 176)
+                    .scaleEffect(1 - CGFloat(index + 1) * 0.04)
+                    .offset(y: CGFloat(index + 1) * 12)
+                    .opacity(0.7)
+            }
+
+            FlipCard(front: card.front, back: card.back, isFlipped: isFlipped)
+                .onTapGesture(perform: flip)
+                .accessibilityElement()
+                .accessibilityAddTraits(.isButton)
+                .accessibilityLabel(isFlipped ? card.back : card.front)
+                .accessibilityHint(isFlipped ? "" : "Appuie pour voir la réponse")
+        }
+        .padding(.top, 4)
+    }
+
+    // MARK: - Commandes
 
     @ViewBuilder
     private var controls: some View {
         if let verdict {
-            VStack(spacing: 8) {
-                HStack(spacing: 7) {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text("Prochaine révision \(verdict.interval)")
-                        .font(MicaboFont.hanken(13, weight: .semibold))
-                }
-                .foregroundStyle(verdict.tint)
-                .padding(.vertical, 9)
-                .padding(.horizontal, 14)
-                .background(verdict.tint.opacity(0.12), in: Capsule())
-
-                Text(verdict.message)
-                    .font(MicaboFont.hanken(13, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, MicaboSpacing.xs)
+            HStack(spacing: 7) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 13, weight: .semibold))
+                Text("Elle revient \(verdict.interval)")
+                    .font(MicaboFont.hanken(14, weight: .semibold))
             }
+            .foregroundStyle(verdict.tint)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 15)
+            .background(verdict.tint.opacity(0.12), in: Capsule())
             .frame(maxWidth: .infinity)
             .transition(.scale(scale: 0.92).combined(with: .opacity))
         } else if isFlipped {
@@ -87,13 +106,14 @@ struct DemoReviewStepView: View {
             HStack(spacing: 7) {
                 Image(systemName: "hand.tap.fill")
                     .font(.system(size: 12, weight: .medium))
-                Text("Appuie sur la carte pour voir la réponse")
+                Text("Appuie sur la carte")
                     .font(MicaboFont.hanken(13, weight: .semibold))
             }
             .foregroundStyle(MicaboColor.ink)
             .padding(.vertical, 9)
             .padding(.horizontal, 14)
             .background(MicaboColor.surfaceMuted, in: Capsule())
+            .frame(maxWidth: .infinity)
             .transition(.opacity)
         }
     }
@@ -110,23 +130,25 @@ struct DemoReviewStepView: View {
             }
             .foregroundStyle(value.tint)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 13)
+            .padding(.vertical, 14)
             .background(value.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle())
     }
+
+    // MARK: - Actions
 
     /// La note vaut validation : on laisse voir la prochaine échéance, puis on enchaîne.
     private func choose(_ value: Verdict) {
         guard verdict == nil else { return }
         Haptics.success()
-        withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.4)) {
+        withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.35)) {
             verdict = value
         }
 
         // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.
         let flow = model
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
             flow.advance()
         }
     }
@@ -134,13 +156,13 @@ struct DemoReviewStepView: View {
     private func flip() {
         guard !isFlipped else { return }
         Haptics.rigid()
-        withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.45)) {
+        withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.4)) {
             isFlipped = true
         }
     }
 }
 
-/// Carte qui pivote sur son axe vertical.
+/// Carte qui pivote sur son axe vertical. Une ligne au recto, une ligne au verso.
 private struct FlipCard: View {
     let front: String
     let back: String
@@ -148,7 +170,7 @@ private struct FlipCard: View {
 
     var body: some View {
         ZStack {
-            face(label: OnboardingDemo.subject.uppercased(), text: front, isAnswer: false)
+            face(label: OnboardingDemo.subject, text: front, isAnswer: false)
                 .opacity(isFlipped ? 0 : 1)
 
             face(label: "Réponse", text: back, isAnswer: true)
@@ -161,12 +183,12 @@ private struct FlipCard: View {
     private func face(label: String, text: String, isAnswer: Bool) -> some View {
         VStack(spacing: 12) {
             Text(label.uppercased())
-                .font(MicaboFont.hanken(10, weight: .semibold))
-                .tracking(1.5)
+                .font(MicaboFont.eyebrow)
+                .tracking(MicaboTracking.caps)
                 .foregroundStyle(isAnswer ? MicaboColor.accent : MicaboColor.inkTertiary)
 
             Text(text)
-                .font(MicaboFont.hanken(isAnswer ? 18 : 20, weight: .semibold))
+                .font(MicaboFont.hanken(isAnswer ? 22 : 20, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
                 .tracking(-0.2)
                 .multilineTextAlignment(.center)
@@ -174,12 +196,12 @@ private struct FlipCard: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity)
-        .frame(height: 190)
+        .frame(height: 176)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous)
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
         }
-        .shadow(color: Color.black.opacity(0.06), radius: 14, x: 0, y: 8)
+        .shadow(color: Color.black.opacity(0.07), radius: 16, x: 0, y: 9)
     }
 }

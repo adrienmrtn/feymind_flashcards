@@ -51,6 +51,8 @@ final class Course {
     /// Première page ou photo, utilisée comme couverture.
     @Attribute(.externalStorage) var coverImageData: Data?
     var isFromLibrary: Bool = false
+    /// Empreinte du contenu importé, pour reconnaître un chapitre déjà présent.
+    var fingerprint: String = ""
 
     @Relationship(deleteRule: .cascade, inverse: \Flashcard.course)
     var flashcards: [Flashcard]? = []

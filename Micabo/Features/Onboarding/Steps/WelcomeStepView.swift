@@ -1,9 +1,15 @@
 import Combine
 import SwiftUI
 
-/// Écran 1 : accroche. Un petit paquet de cartes se rebat tout seul derrière le titre.
+/// Écran 1 : accroche. Un paquet de cartes se rebat tout seul au-dessus du titre.
+///
+/// Seul écran sur fond d'encre de l'ouverture : les cartes blanches y ressortent, et le
+/// parcours démarre sur une image plutôt que sur un formulaire. Le texte reste fer à
+/// gauche et le bouton collé en bas, comme partout ailleurs.
 struct WelcomeStepView: View {
     @Environment(OnboardingModel.self) private var model
+
+    private let surface = OnboardingSurface.ink
 
     var body: some View {
         VStack(spacing: 0) {
@@ -19,20 +25,20 @@ struct WelcomeStepView: View {
                 Text("Bienvenue sur Micabo")
                     .font(MicaboFont.hanken(13, weight: .semibold))
                     .tracking(1.4)
-                    .foregroundStyle(MicaboColor.accent)
+                    .foregroundStyle(surface.eyebrow)
                     .onboardingAppear(index: 0, stagger: 0.12)
 
                 Text("Apprends tout,\nplus vite.")
                     .font(MicaboFont.hanken(38, weight: .bold))
-                    .foregroundStyle(MicaboColor.ink)
+                    .foregroundStyle(surface.title)
                     .tracking(-1)
                     .lineSpacing(-2)
                     .fixedSize(horizontal: false, vertical: true)
                     .onboardingAppear(index: 1, stagger: 0.12)
 
-                Text("Tes cours deviennent des flashcards, et Micabo te les repose pile au moment où tu allais les oublier.")
+                Text("Tes cours deviennent des cartes, et Micabo te les repose pile au moment où tu allais les oublier.")
                     .font(MicaboFont.hanken(15, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .foregroundStyle(surface.prose)
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
                     .onboardingAppear(index: 2, stagger: 0.12)
@@ -41,13 +47,15 @@ struct WelcomeStepView: View {
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.bottom, MicaboSpacing.lg)
 
-            MicaboBottomBar {
+            MicaboBottomBar(background: surface.background) {
                 OnboardingContinueButton(title: "Commencer") {
                     model.advance()
                 }
                 .onboardingAppear(index: 3, stagger: 0.12)
             }
         }
+        .background(surface.background.ignoresSafeArea(edges: .bottom))
+        .environment(\.onboardingSurface, surface)
     }
 }
 
@@ -145,10 +153,6 @@ private struct WelcomeCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: 168)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
-        .shadow(color: Color.black.opacity(0.07), radius: 14, x: 0, y: 8)
+        .shadow(color: Color.black.opacity(0.35), radius: 18, x: 0, y: 10)
     }
 }

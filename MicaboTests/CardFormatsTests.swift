@@ -1,0 +1,279 @@
+import CoreGraphics
+import SwiftData
+import XCTest
+@testable import Micabo
+
+/// Les trois formats ajoutés : formules, occlusion d'image, sens inverse.
+final class CardFormatsTests: XCTestCase {
+    private var container: ModelContainer!
+    private var context: ModelContext!
+
+    override func setUpWithError() throws {
+        container = try ModelContainer(
+            for: Course.self,
+            Flashcard.self,
+            ReviewLog.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        context = ModelContext(container)
+    }
+
+    override func tearDown() {
+        context = nil
+        container = nil
+    }
+
+    private func makeCourse(title: String = "Cours", subject: String? = nil, rawText: String = "") throws -> Course {
+        try CourseRepository.save(
+            GeneratedCourse(title: title, subject: subject, emoji: "📘", summary: "", contextText: rawText),
+            source: .text,
+            rawText: rawText,
+            in: context
+        )
+    }
+
+    // MARK: - Formules
+
+    func testTextWithoutFormulaIsLeftAlone() {
+        let segments = FormulaRenderer.segments(of: "Une phrase normale.")
+
+        XCTAssertEqual(segments, [FormulaRenderer.Segment(text: "Une phrase normale.", isMath: false)])
+        XCTAssertFalse(FormulaRenderer.containsFormula("Une phrase normale."))
+    }
+
+    func testFormulaIsIsolatedAndTransposed() {
+        let segments = FormulaRenderer.segments(of: "L'énergie vaut $E = mc^2$ toujours.")
+
+        XCTAssertEqual(segments.count, 3)
+        XCTAssertEqual(segments[0], FormulaRenderer.Segment(text: "L'énergie vaut ", isMath: false))
+        XCTAssertEqual(segments[1], FormulaRenderer.Segment(text: "E = mc²", isMath: true))
+        XCTAssertEqual(segments[2], FormulaRenderer.Segment(text: " toujours.", isMath: false))
+    }
+
+    func testSubscriptsSuperscriptsAndSymbols() {
+        XCTAssertEqual(FormulaRenderer.plain("H_2O"), "H₂O")
+        XCTAssertEqual(FormulaRenderer.plain("x^{10}"), "x¹⁰")
+        XCTAssertEqual(FormulaRenderer.plain("\\Delta v = a \\times t"), "Δv = a × t")
+        XCTAssertEqual(FormulaRenderer.plain("\\alpha + \\beta \\leq \\pi"), "α + β ≤ π")
+    }
+
+    func testIntegralIsNotEatenByTheMembershipSymbol() {
+        XCTAssertEqual(FormulaRenderer.plain("\\int"), "∫")
+        XCTAssertEqual(FormulaRenderer.plain("\\infty"), "∞")
+        XCTAssertEqual(FormulaRenderer.plain("x \\in \\mathbb{R}"), "x ∈ ℝ")
+    }
+
+    func testFractionsAndRoots() {
+        XCTAssertEqual(FormulaRenderer.plain("\\frac{1}{2}"), "1/2")
+        XCTAssertEqual(FormulaRenderer.plain("\\frac{a + b}{c}"), "(a + b)/c")
+        XCTAssertEqual(FormulaRenderer.plain("\\sqrt{2}"), "√2")
+    }
+
+    func testUnbalancedDelimiterStaysLiteral() {
+        let segments = FormulaRenderer.segments(of: "Le prix est de 12 $ environ")
+
+        XCTAssertFalse(segments.contains { $0.isMath })
+    }
+
+    func testStrippedTextDropsTheDelimiters() {
+        XCTAssertEqual(FormulaRenderer.stripped("Calcule $x^2$ ici"), "Calcule x² ici")
+    }
+
+    // MARK: - Occlusion
+
+    func testOneCardPerNamedZone() throws {
+        let course = try makeCourse()
+        let image = Data([0x01, 0x02, 0x03])
+        let zones = [
+            OcclusionZone(rect: CGRect(x: 0.1, y: 0.1, width: 0.2, height: 0.2), label: "Fémur"),
+            OcclusionZone(rect: CGRect(x: 0.5, y: 0.5, width: 0.2, height: 0.2), label: "Tibia"),
+            OcclusionZone(rect: CGRect(x: 0.8, y: 0.8, width: 0.1, height: 0.1), label: "   ")
+        ]
+
+        let cards = try CourseRepository.addOcclusionCards(zones, image: image, to: course, in: context)
+
+        XCTAssertEqual(cards.count, 2, "Une zone sans nom ne donne pas de carte")
+        XCTAssertEqual(cards.map(\.back), ["Fémur", "Tibia"])
+        XCTAssertTrue(cards.allSatisfy { $0.kind == .occlusion })
+        XCTAssertTrue(cards.allSatisfy { $0.isOcclusion })
+        XCTAssertTrue(cards.allSatisfy { $0.imageData == image })
+        XCTAssertEqual(Set(cards.compactMap(\.groupID)).count, 1, "Les zones d'un même schéma partagent un groupe")
+        XCTAssertEqual(cards[0].maskRect.origin.x, 0.1, accuracy: 0.0001)
+        XCTAssertEqual(cards[1].maskRect.size.height, 0.2, accuracy: 0.0001)
+    }
+
+    func testOcclusionCardsAreScheduledIndependently() throws {
+        let course = try makeCourse()
+        let cards = try CourseRepository.addOcclusionCards(
+            [
+                OcclusionZone(rect: CGRect(x: 0, y: 0, width: 0.2, height: 0.2), label: "A"),
+                OcclusionZone(rect: CGRect(x: 0.4, y: 0.4, width: 0.2, height: 0.2), label: "B")
+            ],
+            image: Data([0x01]),
+            to: course,
+            in: context
+        )
+
+        XCTAssertEqual(Set(cards.map(\.id)).count, 2)
+        XCTAssertTrue(cards.allSatisfy { $0.state == .new })
+    }
+
+    // MARK: - Sens inverse
+
+    func testReverseCardsAreCreatedOncePerCard() throws {
+        let course = try makeCourse(title: "Espagnol", subject: "Espagnol")
+        try CourseRepository.addFlashcards(
+            [
+                GeneratedFlashcard(front: "la maison", back: "la casa", hint: nil),
+                GeneratedFlashcard(front: "le chien", back: "el perro", hint: nil)
+            ],
+            to: course,
+            in: context
+        )
+
+        let created = try CourseRepository.addReverseCards(for: course, in: context)
+
+        XCTAssertEqual(created.count, 2)
+        XCTAssertEqual(created.map(\.front).sorted(), ["el perro", "la casa"])
+        XCTAssertTrue(created.allSatisfy(\.isReversed))
+        XCTAssertEqual(course.cards.count, 4)
+
+        // Deuxième passage : rien de nouveau, on ne double pas les paires.
+        let again = try CourseRepository.addReverseCards(for: course, in: context)
+        XCTAssertTrue(again.isEmpty)
+        XCTAssertEqual(course.cards.count, 4)
+    }
+
+    func testReversePairSharesAGroupButNotItsSchedule() throws {
+        let course = try makeCourse(title: "Japonais", subject: "Japonais")
+        try CourseRepository.addFlashcards(
+            [GeneratedFlashcard(front: "l'eau", back: "みず", hint: nil)],
+            to: course,
+            in: context
+        )
+
+        let reverse = try CourseRepository.addReverseCards(for: course, in: context).first
+        let original = course.cards.first { !$0.isReversed }
+
+        XCTAssertNotNil(reverse)
+        XCTAssertEqual(reverse?.groupID, original?.groupID)
+        XCTAssertNotEqual(reverse?.id, original?.id)
+
+        // Noter un sens ne touche pas l'autre.
+        let outcome = SM2Scheduler.schedule(
+            snapshot: SM2CardSnapshot(card: original!),
+            rating: .good,
+            now: Date(),
+            config: .deterministic
+        )
+        original?.apply(outcome, at: Date())
+
+        XCTAssertEqual(reverse?.state, .new)
+        XCTAssertEqual(reverse?.intervalDays, 0)
+    }
+
+    func testLanguageCoursesAreRecognised() {
+        XCTAssertTrue(SubjectHeuristics.isLanguage(subject: "Espagnol", title: "Unité 3"))
+        XCTAssertTrue(SubjectHeuristics.isLanguage(subject: nil, title: "Vocabulaire japonais"))
+        XCTAssertTrue(SubjectHeuristics.isLanguage(subject: "Anglais", title: "Irregular verbs"))
+        XCTAssertFalse(SubjectHeuristics.isLanguage(subject: "SVT", title: "La photosynthèse"))
+        XCTAssertFalse(SubjectHeuristics.isLanguage(subject: "Mathématiques", title: "Les fonctions affines"))
+    }
+}
+
+/// Ce qui se passe quand l'import échoue : message utile, doublons repérés.
+final class ImportFailureTests: XCTestCase {
+    private var container: ModelContainer!
+    private var context: ModelContext!
+
+    override func setUpWithError() throws {
+        container = try ModelContainer(
+            for: Course.self,
+            Flashcard.self,
+            ReviewLog.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        context = ModelContext(container)
+    }
+
+    override func tearDown() {
+        context = nil
+        container = nil
+    }
+
+    private func isEnableVision(_ recovery: ImportFailure.Recovery) -> Bool {
+        if case .enableVision = recovery { return true }
+        return false
+    }
+
+    private let longText = String(repeating: "La photosynthèse transforme la lumière en matière organique. ", count: 6)
+
+    func testHandwrittenPhotoThatGivesNothingIsExplained() {
+        let failure = ImportReadiness.failure(text: "  ", hasImages: false, canEnableVision: true, kind: .photo)
+
+        XCTAssertNotNil(failure)
+        XCTAssertEqual(failure?.title, "Ces pages sont illisibles")
+        XCTAssertTrue(failure?.message.contains("Aucun texte") ?? false)
+        XCTAssertTrue(isEnableVision(failure?.recovery ?? .none), "On doit proposer le modèle de vision")
+    }
+
+    func testScannedPdfSuggestsVisionOnlyWhenItIsStillAvailable() {
+        let withOption = ImportReadiness.failure(text: "Chapitre 1", hasImages: false, canEnableVision: true, kind: .pdf)
+        let withoutOption = ImportReadiness.failure(text: "Chapitre 1", hasImages: false, canEnableVision: false, kind: .pdf)
+
+        XCTAssertTrue(isEnableVision(withOption?.recovery ?? .none))
+        XCTAssertFalse(isEnableVision(withoutOption?.recovery ?? .none))
+    }
+
+    func testEnoughTextPassesThrough() {
+        XCTAssertNil(ImportReadiness.failure(text: longText, hasImages: false, canEnableVision: true, kind: .pdf))
+    }
+
+    func testImagesSentToVisionAreEnoughOnTheirOwn() {
+        XCTAssertNil(ImportReadiness.failure(text: "", hasImages: true, canEnableVision: false, kind: .pdf))
+    }
+
+    // MARK: - Doublons
+
+    func testSameChapterImportedTwiceIsDetected() throws {
+        let raw = longText
+        _ = try CourseRepository.save(
+            GeneratedCourse(title: "La photosynthèse", subject: "SVT", emoji: "🌿", summary: "", contextText: raw),
+            source: .pdf,
+            rawText: raw,
+            in: context
+        )
+
+        let duplicate = CourseRepository.duplicate(title: "Chapitre 4", rawText: raw, in: context)
+
+        XCTAssertEqual(duplicate?.title, "La photosynthèse", "Le même contenu doit être reconnu, même sous un autre nom")
+    }
+
+    func testSameTitleIsAlsoEnough() throws {
+        _ = try CourseRepository.save(
+            GeneratedCourse(title: "La photosynthèse", subject: "SVT", emoji: "🌿", summary: "", contextText: "court"),
+            source: .pdf,
+            rawText: "court",
+            in: context
+        )
+
+        XCTAssertNotNil(CourseRepository.duplicate(title: "la  Photosynthese ", rawText: "autre chose", in: context))
+    }
+
+    func testADifferentChapterIsNotADuplicate() throws {
+        _ = try CourseRepository.save(
+            GeneratedCourse(title: "La photosynthèse", subject: "SVT", emoji: "🌿", summary: "", contextText: longText),
+            source: .pdf,
+            rawText: longText,
+            in: context
+        )
+
+        let other = String(repeating: "Les fonctions affines s'écrivent f(x) = ax + b partout. ", count: 6)
+        XCTAssertNil(CourseRepository.duplicate(title: "Les fonctions affines", rawText: other, in: context))
+    }
+
+    func testShortTextsDoNotFingerprintAndSoDoNotCollide() {
+        XCTAssertEqual(CourseFingerprint.make(from: "trop court"), "")
+        XCTAssertFalse(CourseFingerprint.make(from: longText).isEmpty)
+    }
+}

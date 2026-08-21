@@ -7,7 +7,7 @@ enum PhotoImportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .empty:
-            return "Aucune page lisible. Réessayez avec des photos plus nettes."
+            return "Aucune page lisible. Réessaie avec des photos plus nettes."
         case .unreadable:
             return "Ces photos n'ont pas pu être lues."
         }
@@ -39,7 +39,7 @@ enum PhotoImportService {
             source: .photo,
             extractionNote: text.count >= 200
                 ? "Texte lu sur l'appareil (OCR), sans frais."
-                : "Peu de texte lu : activez l'analyse des schémas si vos pages en contiennent."
+                : "Peu de texte lu : active l'analyse des schémas si tes pages en contiennent."
         )
     }
 }

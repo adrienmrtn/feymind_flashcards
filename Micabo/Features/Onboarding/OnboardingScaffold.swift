@@ -1,5 +1,68 @@
 import SwiftUI
 
+/// Fond d'un écran du parcours. Le crème est la règle, mais quelques écraas basculent
+/// sur l'encre ou l'indigo pour donner du rythme : deux écrans voisins ne doivent pas
+/// se ressembler. Le texte reste fer à gauche et le bouton collé en bas, quel que soit
+/// le fond — la variété s'arrête aux couleurs et aux compositions.
+enum OnboardingSurface {
+    case canvas
+    case ink
+    case indigo
+
+    var background: Color {
+        switch self {
+        case .canvas: MicaboColor.canvas
+        case .ink: MicaboColor.ink
+        case .indigo: MicaboColor.accent
+        }
+    }
+
+    var isDark: Bool {
+        self != .canvas
+    }
+
+    var title: Color {
+        isDark ? MicaboColor.onInk : MicaboColor.ink
+    }
+
+    var prose: Color {
+        isDark ? MicaboColor.onInk.opacity(0.78) : MicaboColor.inkSecondary
+    }
+
+    var eyebrow: Color {
+        switch self {
+        case .canvas: MicaboColor.accent
+        case .ink: MicaboColor.accentSoft
+        case .indigo: MicaboColor.onInk.opacity(0.72)
+        }
+    }
+
+    /// Surface du bouton d'action, inversée sur fond sombre.
+    var buttonTint: Color {
+        isDark ? MicaboColor.onInk : MicaboColor.ink
+    }
+
+    var buttonForeground: Color {
+        isDark ? MicaboColor.ink : MicaboColor.onInk
+    }
+
+    var disabledButtonTint: Color {
+        isDark ? MicaboColor.onInk.opacity(0.3) : MicaboColor.strokeStrong
+    }
+}
+
+private struct OnboardingSurfaceKey: EnvironmentKey {
+    static let defaultValue = OnboardingSurface.canvas
+}
+
+extension EnvironmentValues {
+    /// Lu par les boutons du parcours pour s'inverser sur fond sombre.
+    var onboardingSurface: OnboardingSurface {
+        get { self[OnboardingSurfaceKey.self] }
+        set { self[OnboardingSurfaceKey.self] = newValue }
+    }
+}
+
 /// Mise en page commune à tous les écrans du parcours : sur-titre, titre, sous-titre,
 /// contenu, puis une zone d'action ancrée en bas. Le tout arrive en cascade.
 struct OnboardingScaffold<Content: View, Footer: View>: View {
@@ -9,6 +72,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     var titleSize: CGFloat = 30
     var contentSpacing: CGFloat = MicaboSpacing.lg
     var scrolls: Bool = true
+    var surface: OnboardingSurface = .canvas
     var content: () -> Content
     var footer: () -> Footer
 
@@ -19,6 +83,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         titleSize: CGFloat = 30,
         contentSpacing: CGFloat = MicaboSpacing.lg,
         scrolls: Bool = true,
+        surface: OnboardingSurface = .canvas,
         @ViewBuilder content: @escaping () -> Content,
         @ViewBuilder footer: @escaping () -> Footer
     ) {
@@ -28,6 +93,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.titleSize = titleSize
         self.contentSpacing = contentSpacing
         self.scrolls = scrolls
+        self.surface = surface
         self.content = content
         self.footer = footer
     }
@@ -43,11 +109,13 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                 stack(inScrollView: false)
             }
 
-            MicaboBottomBar {
+            MicaboBottomBar(background: surface.background) {
                 footer()
                     .onboardingAppear(index: 4)
             }
         }
+        .background(surface.background.ignoresSafeArea(edges: .bottom))
+        .environment(\.onboardingSurface, surface)
     }
 
     private func stack(inScrollView: Bool) -> some View {
@@ -57,13 +125,13 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     Text(eyebrow.uppercased())
                         .font(MicaboFont.hanken(11, weight: .semibold))
                         .tracking(1.6)
-                        .foregroundStyle(MicaboColor.accent)
+                        .foregroundStyle(surface.eyebrow)
                         .onboardingAppear(index: 0)
                 }
 
                 Text(title)
                     .font(MicaboFont.hanken(titleSize, weight: .bold))
-                    .foregroundStyle(MicaboColor.ink)
+                    .foregroundStyle(surface.title)
                     .tracking(-0.6)
                     .fixedSize(horizontal: false, vertical: true)
                     .onboardingAppear(index: 1)
@@ -71,7 +139,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                 if let subtitle {
                     Text(subtitle)
                         .font(MicaboFont.hanken(15, weight: .regular))
-                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .foregroundStyle(surface.prose)
                         .lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
                         .onboardingAppear(index: 2)
@@ -101,6 +169,7 @@ extension OnboardingScaffold where Footer == EmptyView {
         titleSize: CGFloat = 30,
         contentSpacing: CGFloat = MicaboSpacing.lg,
         scrolls: Bool = true,
+        surface: OnboardingSurface = .canvas,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.init(
@@ -110,6 +179,7 @@ extension OnboardingScaffold where Footer == EmptyView {
             titleSize: titleSize,
             contentSpacing: contentSpacing,
             scrolls: scrolls,
+            surface: surface,
             content: content,
             footer: { EmptyView() }
         )
@@ -149,23 +219,48 @@ extension View {
 
 // MARK: - Bouton d'avancement
 
-/// CTA principal du parcours : plein largeur, coins 14 pt, retour haptique moyen.
+/// CTA principal du parcours : pleine largeur, retour haptique moyen, et un état
+/// de chargement pour les actions qui ne rendent pas la main tout de suite.
+///
+/// Quand `isLoading` est vrai, le bouton annonce ce qu'il fait et refuse les appuis :
+/// c'est ce qui évite les doubles taps quand une opération tourne derrière.
 struct OnboardingContinueButton: View {
     var title: String = "Continuer"
     var isEnabled: Bool = true
+    var isLoading: Bool = false
+    var loadingTitle: String = "Un instant…"
     var action: () -> Void
+
+    @Environment(\.onboardingSurface) private var surface
 
     var body: some View {
         Button {
-            guard isEnabled else { return }
+            guard isEnabled, !isLoading else { return }
             Haptics.medium()
             action()
         } label: {
-            Text(title)
+            HStack(spacing: 9) {
+                if isLoading {
+                    // L'indicateur prend la couleur du texte du bouton, pas celle de la
+                    // progression : posé sur un aplat, il doit d'abord rester lisible.
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(surface.buttonForeground)
+                }
+
+                Text(isLoading ? loadingTitle : title)
+            }
+            .frame(maxWidth: .infinity)
         }
-        .buttonStyle(MicaboPrimaryButtonStyle(tint: isEnabled ? MicaboColor.ink : MicaboColor.strokeStrong))
-        .disabled(!isEnabled)
+        .buttonStyle(
+            MicaboPrimaryButtonStyle(
+                tint: isEnabled ? surface.buttonTint : surface.disabledButtonTint,
+                foreground: surface.buttonForeground
+            )
+        )
+        .disabled(!isEnabled || isLoading)
         .animation(.easeOut(duration: 0.2), value: isEnabled)
+        .animation(.easeOut(duration: 0.2), value: isLoading)
     }
 }
 
@@ -173,12 +268,14 @@ struct OnboardingContinueButton: View {
 struct OnboardingHint: View {
     let text: String
 
+    @Environment(\.onboardingSurface) private var surface
+
     @State private var isVisible = false
 
     var body: some View {
         Text(text)
             .font(MicaboFont.hanken(12, weight: .medium))
-            .foregroundStyle(MicaboColor.inkTertiary)
+            .foregroundStyle(surface.isDark ? MicaboColor.onInk.opacity(0.6) : MicaboColor.inkTertiary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .opacity(isVisible ? 1 : 0)
@@ -191,29 +288,39 @@ struct OnboardingHint: View {
 }
 
 /// Invitation à tapoter, volontairement trop visible pour qu'on ne la rate pas.
+///
+/// C'est un vrai bouton : il ressemble au CTA principal, il doit donc marcher comme
+/// lui. Le contenu de l'écran reste tapable en parallèle, les deux gestes appellent
+/// la même action.
 struct OnboardingTapPrompt: View {
     var text: String = "Appuie pour découvrir la suite"
+    var action: () -> Void
+
+    @Environment(\.onboardingSurface) private var surface
 
     @State private var isVisible = false
     @State private var isPulsing = false
     @State private var bounce = false
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "hand.tap.fill")
-                .font(.system(size: 16, weight: .semibold))
-                .offset(y: bounce ? -3 : 2)
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: "hand.tap.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .offset(y: bounce ? -3 : 2)
 
-            Text(text)
-                .font(MicaboFont.hanken(15, weight: .bold))
+                Text(text)
+                    .font(MicaboFont.hanken(15, weight: .bold))
+            }
+            .foregroundStyle(surface.buttonForeground)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 18)
+            .frame(maxWidth: .infinity)
+            .background(surface.buttonTint, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+            .scaleEffect(isPulsing ? 1.03 : 0.98)
+            .opacity(isVisible ? 1 : 0)
         }
-        .foregroundStyle(MicaboColor.onInk)
-        .padding(.vertical, 14)
-        .padding(.horizontal, 18)
-        .frame(maxWidth: .infinity)
-        .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-        .scaleEffect(isPulsing ? 1.03 : 0.98)
-        .opacity(isVisible ? 1 : 0)
+        .buttonStyle(MicaboPressableButtonStyle())
         .onAppear {
             withAnimation(.easeOut(duration: 0.35).delay(0.15)) {
                 isVisible = true
@@ -279,7 +386,7 @@ struct OnboardingChoiceRow: View {
             }
             .scaleEffect(isSelected ? 0.985 : 1)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
         .animation(.easeOut(duration: 0.22), value: isSelected)
     }
 }

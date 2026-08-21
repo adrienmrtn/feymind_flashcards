@@ -1,7 +1,11 @@
 import SwiftData
 import SwiftUI
 
-/// Tous les cours importés, plus ceux repris depuis la bibliothèque.
+/// Onglet **Cours** : tout ce qui a été importé, avec recherche et filtres.
+///
+/// Il accueillera la bibliothèque en second rayon, « Découvrir », dès que
+/// `LibraryAccess.isAvailable` passera à vrai. Tant qu'elle dort, le sélecteur de
+/// rayon n'apparaît pas : un onglet qui ne mène à rien est un appui perdu.
 struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
 
@@ -9,12 +13,32 @@ struct CoursesListView: View {
 
     @State private var searchText = ""
     @State private var sortOrder: SortOrder = .recent
+    @State private var subjectFilter: String?
+    @State private var shelf: Shelf = .mine
     @State private var path: [Course] = []
+    @State private var showImportChoice = false
+    @State private var pendingImport: ImportKind?
+    @State private var activeImport: ImportKind?
+
+    /// Les deux rayons de l'onglet.
+    enum Shelf: String, CaseIterable, Identifiable {
+        case mine
+        case discover
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .mine: "Tes cours"
+            case .discover: "Découvrir"
+            }
+        }
+    }
 
     enum SortOrder: String, CaseIterable, Identifiable {
+        case due
         case recent
         case alphabetical
-        case due
 
         var id: String { rawValue }
 
@@ -27,14 +51,22 @@ struct CoursesListView: View {
         }
     }
 
+    private var subjects: [String] {
+        Set(courses.compactMap { $0.subject?.nilIfBlank }).sorted()
+    }
+
     private var filtered: [Course] {
-        let base = searchText.isEmpty
+        var base = searchText.isEmpty
             ? courses
             : courses.filter {
                 $0.title.localizedCaseInsensitiveContains(searchText)
                     || ($0.subject ?? "").localizedCaseInsensitiveContains(searchText)
                     || $0.summary.localizedCaseInsensitiveContains(searchText)
             }
+
+        if let subjectFilter {
+            base = base.filter { $0.subject?.nilIfBlank == subjectFilter }
+        }
 
         switch sortOrder {
         case .recent:
@@ -46,29 +78,28 @@ struct CoursesListView: View {
         }
     }
 
+    private var cardCount: Int {
+        courses.reduce(0) { $0 + $1.cards.count }
+    }
+
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: MicaboSpacing.md) {
                     header
                         .padding(.horizontal, MicaboSpacing.screen)
 
-                    if !courses.isEmpty {
-                        SearchField(text: $searchText)
-                            .padding(.horizontal, MicaboSpacing.screen)
-
-                        sortPicker
-
-                        content
-                            .padding(.horizontal, MicaboSpacing.screen)
-                    } else {
-                        content
+                    if LibraryAccess.isAvailable {
+                        shelfPicker
                             .padding(.horizontal, MicaboSpacing.screen)
                     }
+
+                    shelfContent
                 }
                 .padding(.top, MicaboSpacing.xs)
-                .padding(.bottom, MicaboSpacing.xl)
+                .padding(.bottom, MicaboSpacing.xxl)
             }
+            .scrollIndicators(.hidden)
             .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
             .micaboTabBar()
@@ -77,28 +108,92 @@ struct CoursesListView: View {
                 FlashcardsView(course: course)
             }
         }
+        .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
+            ImportChoiceSheet { kind in
+                pendingImport = kind
+                showImportChoice = false
+            }
+            .presentationDetents([.height(540)])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(MicaboRadius.sheet)
+        }
+        .fullScreenCover(item: $activeImport) { kind in
+            ImportView(kind: kind) { course in
+                activeImport = nil
+                path = [course]
+            }
+        }
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(courses.isEmpty ? "Aucun cours" : "\(courses.count) cours")
-                .font(MicaboFont.hanken(13, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
-
-            Text("Mes cours")
-                .font(MicaboFont.hanken(26, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .tracking(-0.4)
+        MicaboScreenHeader(title: "Cours", eyebrow: countLabel) {
+            MicaboCircleButton(systemImage: "plus", size: 44, accessibilityTitle: "Importer un cours") {
+                showImportChoice = true
+            }
         }
         .padding(.top, MicaboSpacing.xs)
     }
 
-    private var sortPicker: some View {
+    private var countLabel: String {
+        guard !courses.isEmpty else { return "Aucun cours" }
+        return "\(MicaboCopy.courses(courses.count)) · \(MicaboCopy.cards(cardCount))"
+    }
+
+    private var shelfPicker: some View {
+        HStack(spacing: MicaboSpacing.xs) {
+            ForEach(Shelf.allCases) { value in
+                MicaboSelectChip(title: value.label, isSelected: value == shelf) {
+                    Haptics.selection()
+                    withAnimation(.easeOut(duration: 0.2)) { shelf = value }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var shelfContent: some View {
+        switch shelf {
+        case .mine:
+            myCourses
+        case .discover:
+            LibraryView()
+                .padding(.horizontal, MicaboSpacing.screen)
+        }
+    }
+
+    @ViewBuilder
+    private var myCourses: some View {
+        if !courses.isEmpty {
+            MicaboSearchField(text: $searchText, placeholder: "Rechercher un cours ou une carte")
+                .padding(.horizontal, MicaboSpacing.screen)
+
+            filterRow
+        }
+
+        content
+            .padding(.top, courses.isEmpty ? MicaboSpacing.md : 0)
+    }
+
+    /// Tri puis matières, dans une seule bande qui défile.
+    private var filterRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: MicaboSpacing.xs) {
                 ForEach(SortOrder.allCases) { order in
-                    MicaboSelectChip(title: order.label, isSelected: order == sortOrder) {
-                        withAnimation(.easeOut(duration: 0.2)) { sortOrder = order }
+                    MicaboSelectChip(title: order.label, isSelected: order == sortOrder && subjectFilter == nil) {
+                        Haptics.selection()
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            sortOrder = order
+                            subjectFilter = nil
+                        }
+                    }
+                }
+
+                ForEach(subjects, id: \.self) { subject in
+                    MicaboSelectChip(title: subject, isSelected: subjectFilter == subject) {
+                        Haptics.selection()
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            subjectFilter = subjectFilter == subject ? nil : subject
+                        }
                     }
                 }
             }
@@ -113,24 +208,27 @@ struct CoursesListView: View {
         if courses.isEmpty {
             MicaboEmptyState(
                 systemImage: "books.vertical",
-                title: "Votre liste est vide",
-                message: "Les cours que vous importez depuis l'accueil apparaîtront ici."
-            )
+                title: "Aucun cours pour l'instant",
+                message: "Importe un PDF, des photos, un Word ou colle du texte : Micabo en tire tes premières cartes.",
+                actionTitle: "Importer un cours"
+            ) {
+                showImportChoice = true
+            }
+            .padding(.horizontal, MicaboSpacing.screen)
         } else if filtered.isEmpty {
             MicaboEmptyState(
                 systemImage: "magnifyingglass",
                 title: "Aucun résultat",
-                message: "Essayez un autre mot-clé."
+                message: "Essaie un autre mot-clé, ou retire le filtre de matière."
             )
+            .padding(.horizontal, MicaboSpacing.screen)
         } else {
-            VStack(spacing: 14) {
-                ForEach(filtered) { course in
-                    Button {
+            let items = filtered
+            VStack(spacing: 0) {
+                ForEach(Array(items.enumerated()), id: \.element.id) { index, course in
+                    MicaboRow.course(course) {
                         path.append(course)
-                    } label: {
-                        CourseRow(course: course, showsChevron: true)
                     }
-                    .buttonStyle(.plain)
                     .contextMenu {
                         Button(role: .destructive) {
                             withAnimation {
@@ -140,45 +238,22 @@ struct CoursesListView: View {
                             Label("Supprimer", systemImage: "trash")
                         }
                     }
+
+                    if index < items.count - 1 {
+                        MicaboHairline(inset: MicaboSpacing.md, onCanvas: true)
+                            .padding(.trailing, MicaboSpacing.xxs)
+                    }
                 }
             }
+            .padding(.horizontal, MicaboSpacing.xxs)
         }
     }
-}
 
-/// Champ de recherche — coins 12 pt, bordure fine (maquette `.field`).
-private struct SearchField: View {
-    @Binding var text: String
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
-
-            TextField("Rechercher un cours", text: $text)
-                .font(MicaboFont.body)
-                .foregroundStyle(MicaboColor.ink)
-                .autocorrectionDisabled()
-
-            if !text.isEmpty {
-                Button {
-                    text = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 15))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Effacer la recherche")
-            }
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 14)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous)
-                .strokeBorder(Color(hex: 0xE6E0D5), lineWidth: 1)
+    private func launchPendingImport() {
+        guard let kind = pendingImport else { return }
+        pendingImport = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            activeImport = kind
         }
     }
 }

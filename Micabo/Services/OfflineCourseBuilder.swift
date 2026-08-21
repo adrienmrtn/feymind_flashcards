@@ -31,13 +31,13 @@ enum OfflineCourseBuilder {
             if isLikelyHeading(line) {
                 currentSection = line
                 cards.append(GeneratedFlashcard(
-                    front: "Qu'avez-vous retenu sur « \(line) » ?",
-                    back: "Reformulez cette partie du cours avec vos mots.",
+                    front: "Qu'as-tu retenu sur « \(line) » ?",
+                    back: "Reformule cette partie du cours avec tes mots.",
                     hint: nil
                 ))
             } else if line.count >= 60 {
                 cards.append(GeneratedFlashcard(
-                    front: "Complétez : \(shortened(line))",
+                    front: "Complète : \(shortened(line))",
                     back: line,
                     hint: currentSection
                 ))
@@ -46,8 +46,8 @@ enum OfflineCourseBuilder {
 
         if cards.isEmpty {
             cards.append(GeneratedFlashcard(
-                front: "Résumez « \(course.title) » en trois phrases.",
-                back: course.summary.isEmpty ? "Reformulez le cours avec vos mots." : course.summary,
+                front: "Résume « \(course.title) » en trois phrases.",
+                back: course.summary.isEmpty ? "Reformule le cours avec tes mots." : course.summary,
                 hint: nil
             ))
         }

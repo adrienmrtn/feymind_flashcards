@@ -40,9 +40,9 @@ enum AIServiceError: LocalizedError {
         case .server(let message):
             message
         case .invalidResponse:
-            "La réponse de l'IA n'a pas pu être lue. Réessayez."
+            "La réponse de l'IA n'a pas pu être lue. Réessaie."
         case .missingProviderKey:
-            "La clé fal.ai est absente côté Supabase. Ajoutez le secret FAL_KEY à votre projet."
+            "La clé fal.ai est absente côté Supabase. Ajoute le secret FAL_KEY à ton projet."
         }
     }
 }

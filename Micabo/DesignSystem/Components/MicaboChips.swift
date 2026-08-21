@@ -19,12 +19,7 @@ struct MicaboChip: View {
         .foregroundStyle(filled ? MicaboColor.onInk : tint)
         .padding(.vertical, 6)
         .padding(.horizontal, 11)
-        .background(filled ? tint : MicaboColor.surface, in: Capsule())
-        .overlay {
-            if !filled {
-                Capsule().strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
-            }
-        }
+        .background(filled ? tint : MicaboColor.surfaceMuted, in: Capsule())
     }
 }
 
@@ -42,7 +37,7 @@ struct MicaboGlassChip: View {
     }
 }
 
-/// Pilule de sélection : sombre quand elle est active, blanche sinon.
+/// Pilule de sélection : encre pleine quand elle est active, blanche cerclée sinon.
 struct MicaboSelectChip: View {
     let title: String
     let isSelected: Bool
@@ -51,41 +46,21 @@ struct MicaboSelectChip: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(MicaboFont.captionEmphasis)
-                .foregroundStyle(isSelected ? MicaboColor.onInk : Color(hex: 0x4A463F))
-                .padding(.vertical, 8)
-                .padding(.horizontal, 14)
+                .font(MicaboFont.hanken(14, weight: .medium))
+                .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkSecondary)
+                .padding(.vertical, 9)
+                .padding(.horizontal, 16)
                 .background(isSelected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
                 .overlay {
-                    Capsule().strokeBorder(isSelected ? Color.clear : MicaboColor.strokeStrong, lineWidth: 1)
+                    Capsule().strokeBorder(isSelected ? Color.clear : MicaboColor.stroke, lineWidth: 1)
                 }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle())
         .animation(.easeOut(duration: 0.18), value: isSelected)
     }
 }
 
-/// Rangée horizontale de pilules de sélection.
-struct MicaboSelectChipRow: View {
-    let titles: [String]
-    @Binding var selection: String
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: MicaboSpacing.xs) {
-                ForEach(titles, id: \.self) { title in
-                    MicaboSelectChip(title: title, isSelected: title == selection) {
-                        selection = title
-                    }
-                }
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.vertical, 2)
-        }
-        .scrollClipDisabled()
-    }
-}
-
+/// Intitulé d'une section de contenu : capitales grises, et un lien à droite.
 struct MicaboSectionHeader: View {
     let title: String
     var subtitle: String?
@@ -94,10 +69,8 @@ struct MicaboSectionHeader: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(MicaboFont.cardTitle)
-                    .foregroundStyle(MicaboColor.ink)
+            VStack(alignment: .leading, spacing: 3) {
+                MicaboEyebrow(text: title)
                 if let subtitle {
                     Text(subtitle)
                         .font(MicaboFont.caption)
@@ -107,10 +80,11 @@ struct MicaboSectionHeader: View {
             Spacer(minLength: MicaboSpacing.xs)
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .font(MicaboFont.captionEmphasis)
+                    .font(MicaboFont.hanken(13, weight: .semibold))
                     .foregroundStyle(MicaboColor.accent)
             }
         }
+        .padding(.leading, MicaboSpacing.xxs)
     }
 }
 
@@ -125,29 +99,28 @@ struct MicaboEmptyState: View {
         VStack(spacing: MicaboSpacing.sm) {
             Image(systemName: systemImage)
                 .font(.system(size: 26, weight: .regular))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .frame(width: 74, height: 74)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(MicaboColor.strokeStrong, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-                }
+                .foregroundStyle(MicaboColor.accent.opacity(0.75))
+                .frame(width: 76, height: 76)
+                .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
 
             Text(title)
-                .font(MicaboFont.hanken(17, weight: .semibold))
+                .font(MicaboFont.hanken(19, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
+                .tracking(-0.3)
                 .multilineTextAlignment(.center)
                 .padding(.top, MicaboSpacing.xxs)
 
             Text(message)
                 .font(MicaboFont.body)
-                .foregroundStyle(MicaboColor.inkTertiary)
+                .foregroundStyle(MicaboColor.inkSecondary)
                 .multilineTextAlignment(.center)
+                .lineSpacing(2)
                 .frame(maxWidth: 300)
 
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
                     .buttonStyle(MicaboPrimaryButtonStyle())
-                    .padding(.top, MicaboSpacing.xs)
+                    .padding(.top, MicaboSpacing.sm)
                     .frame(maxWidth: 260)
             }
         }
@@ -161,8 +134,8 @@ struct MicaboEmptyState: View {
 struct MicaboProgressRing: View {
     let progress: Double
     var lineWidth: CGFloat = 8
-    var tint: Color = MicaboColor.ink
-    var track: Color = MicaboColor.surfaceSunken
+    var tint: Color = MicaboColor.progress
+    var track: Color = MicaboColor.progressTrack
 
     var body: some View {
         ZStack {
@@ -177,11 +150,12 @@ struct MicaboProgressRing: View {
     }
 }
 
-/// Barre de progression fine, utilisée en haut des sessions d'entraînement.
+/// Barre de progression fine : jauge du parcours d'accueil et sessions de révision.
+/// La couleur ne se surcharge pas : c'est toujours `MicaboColor.progress`.
 struct MicaboProgressBar: View {
     let progress: Double
-    var tint: Color = MicaboColor.accent
-    var track: Color = MicaboColor.surfaceSunken
+    var tint: Color = MicaboColor.progress
+    var track: Color = MicaboColor.progressTrack
 
     var body: some View {
         GeometryReader { proxy in

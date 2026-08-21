@@ -38,7 +38,7 @@ struct SchoolStepView: View {
                     HStack(spacing: 8) {
                         ProgressView()
                             .controlSize(.small)
-                            .tint(MicaboColor.accent)
+                            .tint(MicaboColor.progress)
                         Text("Recherche…")
                             .font(MicaboFont.hanken(13, weight: .medium))
                             .foregroundStyle(MicaboColor.inkTertiary)
@@ -116,7 +116,7 @@ struct SchoolStepView: View {
                         .font(.system(size: 16))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(MicaboPressableButtonStyle())
             }
         }
         .padding(.horizontal, 14)
@@ -160,7 +160,7 @@ struct SchoolStepView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(MicaboRowButtonStyle())
 
                 if index < suggestions.count - 1 {
                     Rectangle()
