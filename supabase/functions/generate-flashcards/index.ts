@@ -51,7 +51,7 @@ Chaque carte porte un champ "kind" :
 - "choice" : QCM. Le recto est la question, "choices" contient 3 ou 4 propositions courtes (8 mots maximum), toutes plausibles et de même longueur environ, "answerIndex" est l'index de la bonne (0 pour la première), et le verso reprend la bonne réponse en l'expliquant en une phrase.
 
 FORMAT DE SORTIE
-Réponds uniquement par un tableau JSON, sans texte autour :
+Réponds uniquement par un tableau JSON compact, une seule ligne, sans texte autour :
 [{"kind":"basic","front":"...","back":"...","hint":"..."},{"kind":"cloze","front":"La phrase avec un … à la place du terme.","back":"le terme"},{"kind":"choice","front":"...","choices":["...","...","..."],"answerIndex":1,"back":"..."}]`;
 
 interface OutputCard {
@@ -157,7 +157,7 @@ Deno.serve(async (request: Request) => {
       systemPrompt: SYSTEM_PROMPT,
       model: body.model,
       temperature: 0.5,
-      maxTokens: 4_000,
+      maxTokens: 8_192,
     });
 
     const parsed = extractJSON<GeneratedCard[] | { cards?: GeneratedCard[] }>(output);

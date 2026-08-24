@@ -34,17 +34,22 @@ export function extractJSONCandidate(output: string): string {
 
 export function parseModelJSON<T>(output: string): T {
   const candidate = extractJSONCandidate(output);
+  const attempts = [
+    candidate,
+    repairModelJSON(candidate),
+    closeOpenStructures(candidate),
+    closeOpenStructures(repairModelJSON(candidate)),
+  ];
 
-  try {
-    return JSON.parse(candidate) as T;
-  } catch {
-    const repaired = repairModelJSON(candidate);
+  let lastError: Error = new Error("JSON invalide.");
+  for (const attempt of attempts) {
     try {
-      return JSON.parse(repaired) as T;
+      return JSON.parse(attempt) as T;
     } catch (error) {
-      throw new Error((error as Error).message);
+      lastError = error as Error;
     }
   }
+  throw lastError;
 }
 
 /** Répare les fautes que les modèles font le plus souvent dans un JSON. */
@@ -54,8 +59,77 @@ export function repairModelJSON(source: string): string {
   text = repairStrings(text);
   text = quoteUnquotedKeys(text);
   text = insertMissingPunctuation(text);
+  text = text.replace(/\}\s*\{/g, "},{");
+  text = text.replace(/\]\s*\[/g, "],[");
   text = removeTrailingCommas(text);
   return text;
+}
+
+/**
+ * Recolle un JSON coupé en fin de génération (limite de jetons).
+ *
+ * C'est le cas « Expected ',' or ']' after array element » à la ligne 500 :
+ * le modèle a été interrompu au milieu de `blocks`. On referme les chaînes
+ * et les crochets, et on jette la dernière propriété inachevée.
+ */
+export function closeOpenStructures(source: string): string {
+  let text = source.trim();
+  if (text.length === 0) return text;
+
+  const first = scanStructure(text);
+  if (first.inString) text += "\"";
+
+  text = stripIncompleteTail(text);
+
+  const next = scanStructure(text);
+  for (let index = next.stack.length - 1; index >= 0; index--) {
+    text += next.stack[index] === "{" ? "}" : "]";
+  }
+  return text;
+}
+
+function scanStructure(text: string): { inString: boolean; stack: Array<"{" | "["> } {
+  const stack: Array<"{" | "["> = [];
+  let inString = false;
+  let escape = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escape) escape = false;
+      else if (ch === "\\") escape = true;
+      else if (ch === "\"") inString = false;
+      continue;
+    }
+    if (ch === "\"") {
+      inString = true;
+      continue;
+    }
+    if (ch === "{") stack.push("{");
+    else if (ch === "[") stack.push("[");
+    else if (ch === "}" && stack[stack.length - 1] === "{") stack.pop();
+    else if (ch === "]" && stack[stack.length - 1] === "[") stack.pop();
+  }
+
+  return { inString, stack };
+}
+
+function stripIncompleteTail(text: string): string {
+  let current = text.replace(/[\s,]+$/, "");
+  let previous = "";
+
+  while (current !== previous) {
+    previous = current;
+    current = current
+      .replace(/,\s*$/, "")
+      .replace(/,\s*\{\s*$/, "")
+      .replace(/,\s*\[\s*$/, "")
+      .replace(/,\s*"[^"\\]*"\s*:\s*$/, "")
+      .replace(/,\s*"[^"\\]*"\s*$/, "")
+      .replace(/:\s*$/, "");
+  }
+
+  return current;
 }
 
 function sliceBalanced(text: string): string | null {
