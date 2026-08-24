@@ -6,6 +6,7 @@ enum CourseSource: String, Codable, CaseIterable {
     case pdf
     case photo
     case docx
+    case youtube
     case library
     case sample
 
@@ -15,6 +16,7 @@ enum CourseSource: String, Codable, CaseIterable {
         case .pdf: "PDF"
         case .photo: "Photos"
         case .docx: "Word"
+        case .youtube: "YouTube"
         case .library: "Bibliothèque"
         case .sample: "Exemple"
         }
@@ -26,6 +28,7 @@ enum CourseSource: String, Codable, CaseIterable {
         case .pdf: "doc.fill"
         case .photo: "photo.on.rectangle.angled"
         case .docx: "doc.richtext"
+        case .youtube: "play.rectangle.fill"
         case .library: "globe.europe.africa.fill"
         case .sample: "sparkles"
         }

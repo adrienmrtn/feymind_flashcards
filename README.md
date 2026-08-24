@@ -14,13 +14,18 @@ lancement et la première carte, il n'y a qu'un appui.
 | Onglet | Rôle |
 | --- | --- |
 | Cours | Tout ce qui est importé, avec recherche, tri et filtre par matière. Second rayon « Découvrir » pour la bibliothèque partagée, masqué tant que `LibraryAccess.isAvailable` est faux |
-| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui, la série, les cours au programme et la répartition de la file. Rien d'autre : ni date, ni liste de cours, ni bouton d'import |
+| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui, la série, les cours au programme, la répartition de la file et le prochain examen. Rien d'autre : ni date, ni liste de cours, ni bouton d'import |
 | Profil | Statistiques, amis (en attente de l'authentification) et réglages |
 
+**Il n'y aura pas de quatrième onglet.** Trois onglets avec Réviser au milieu est une règle
+de composition, pas un état des lieux : à quatre, il n'y a plus de milieu. Les écrans qui
+arrivent se poussent donc depuis l'onglet dont ils relèvent, comme la page Examens depuis
+Réviser.
+
 Le parcours d'import tient en trois écrans : bouton `+` flottant en bas à droite de Cours,
-choix du format (PDF, scan/photos, Word ou texte), puis **la fiche du cours**. Les cartes ne
-sont plus produites au passage : elles se demandent depuis la fiche, et c'est le premier
-bouton de l'écran tant qu'il n'y en a aucune.
+choix de la source (PDF, scan/photos, vidéo YouTube, Word ou texte), puis **la fiche du
+cours**. Les cartes ne sont plus produites au passage : elles se demandent depuis la fiche,
+et c'est le premier bouton de l'écran tant qu'il n'y en a aucune.
 
 ```
 import -> lecture sur l'appareil -> cours fiché -> (facultatif) cartes -> session
@@ -204,6 +209,7 @@ L'application appelle deux Edge Functions Supabase. Le code source est dans `sup
 | `generate-course` | Reçoit le texte déjà extrait (et, en option, jusqu'à 6 pages JPEG), renvoie titre, matière, résumé et **la fiche** |
 | `generate-flashcards` | Produit un jeu de cartes recto verso à partir de cette fiche |
 | `explain-selection` | Explique un passage sélectionné dans la fiche, en s'appuyant sur le reste du cours |
+| `youtube-transcript` | Métadonnées d'une vidéo puis, après confirmation, ses sous-titres. C'est la seule fonction qui n'appelle aucun modèle |
 
 ### 1. Ajouter la clé fal.ai
 
@@ -220,7 +226,13 @@ supabase link --project-ref votre-ref
 supabase functions deploy generate-course
 supabase functions deploy generate-flashcards
 supabase functions deploy explain-selection
+supabase functions deploy youtube-transcript
 ```
+
+`youtube-transcript` n'a pas besoin de `FAL_KEY` : elle ne parle qu'à YouTube. Elle lit le
+lecteur par son API interne, avec repli sur la page HTML, et c'est la partie la plus fragile
+du dépôt : YouTube change de forme sans préavis. Les deux chemins existent pour cette raison,
+et un échec y est toujours traduit en refus nommé plutôt qu'en écran cassé.
 
 La version à plat de la fiche (`contextText`) est **calculée par la fonction**, pas demandée
 au modèle : deux rédactions du même contenu finiraient par se contredire, et celle-ci est
@@ -246,12 +258,96 @@ Le texte n'est **jamais** envoyé à un OCR cloud. Tout se passe sur l'iPhone.
 | Photos / scan multi-pages | Appareil photo (`VNDocumentCamera`) ou photothèque, puis le même OCR | Gratuit |
 | Word `.docx` | ZIP local + `word/document.xml` | Gratuit |
 | Texte collé | Tel quel | Gratuit |
+| Vidéo YouTube | Sous-titres de la vidéo, récupérés par l'Edge Function `youtube-transcript` | Gratuit, mais **pas sur l'appareil** |
+
+La vidéo est la seule exception à la règle ci-dessus, et l'écran d'import le dit : le lien
+part à l'Edge Function, qui va chercher les sous-titres. Rien d'autre ne quitte le
+téléphone, et l'audio n'est jamais envoyé nulle part.
 
 L'option **Analyser les schémas et images** est le seul extra payant : jusqu'à 6 JPEG
 partent alors au modèle de vision fal.ai. Elle est décochée dès que le texte extrait
 est suffisant, et proposée si le document ressemble à un scan pauvre en texte.
 
 Les anciens `.doc` binaires ne sont pas lus : exporte-les en `.docx` depuis Word.
+
+## Importer une vidéo YouTube
+
+On colle un lien, on voit la vidéo, on confirme, et on obtient une fiche. Le parcours est
+celui des autres sources, avec une étape en plus au début.
+
+```
+lien collé -> aperçu -> confirmation -> transcription -> fiche -> (facultatif) cartes
+```
+
+**Micabo lit les sous-titres, jamais l'audio.** Une vidéo qui n'en a pas est refusée, et ce
+n'est pas une limite technique : transcrire une heure d'audio coûte cher, prend des minutes,
+et rend un texte moins fiable que des sous-titres écrits à la main. Mieux vaut le dire tout
+de suite que faire attendre pour un mauvais résultat.
+
+### L'aperçu, et pourquoi il existe
+
+Coller une URL est le seul import où l'on ne voit pas ce qu'on importe : un identifiant de
+onze caractères ne dit rien, et se tromper d'onglet est banal. L'aperçu montre donc la
+vignette, le titre, la chaîne, la durée et la piste de sous-titres retenue, **avant** de
+dépenser quoi que ce soit. Il sert aussi à refuser : une vidéo trop longue ou sans
+sous-titres s'affiche quand même, avec la raison écrite dessous, plutôt que de renvoyer une
+alerte sur un écran vide.
+
+L'aperçu ne télécharge aucune transcription. C'est ce découpage qui permet d'écarter une
+vidéo de trois heures sans avoir lancé un seul appel de génération.
+
+### Quelle piste de sous-titres
+
+La langue de l'utilisateur d'abord, la piste par défaut de la vidéo ensuite. À langue égale,
+les sous-titres **écrits à la main** passent devant ceux générés automatiquement : ils sont
+ponctués, et un texte ponctué donne de meilleures cartes. Les langues envoyées viennent de
+`Locale.preferredLanguages`, réduites à leur code de langue, et `fr` vaut pour `fr-CA`.
+Quand la piste retenue est automatique, l'aperçu l'annonce : un texte transcrit à la machine
+n'est pas ponctué, et l'utilisateur doit savoir d'où vient un texte irrégulier.
+
+### Les refus, et leurs phrases
+
+| Cas | Message |
+| --- | --- |
+| Lien qui n'est pas une vidéo YouTube | « Ce lien n'est pas une vidéo YouTube. » |
+| Vidéo privée, supprimée ou à accès restreint | « Cette vidéo n'est pas accessible. » |
+| Aucun sous-titre | « Cette vidéo n'a pas de sous-titres. Micabo ne peut pas la lire. » |
+| Transcription trop courte | « Cette vidéo est trop courte pour générer des cartes. » |
+| Vidéo trop longue | « Cette vidéo dure 2 h 14. Micabo lit les vidéos jusqu'à 1 h 30. » |
+
+Deux règles tiennent ces messages. Le **code** renvoyé par l'Edge Function décide, jamais la
+forme de son message : le serveur peut reformuler ses journaux sans qu'un mot change dans
+l'application. Et les phrases vivent en un seul endroit, `YouTubeImportError`, y compris
+celle du garde de `ImportReadiness`, qui ne réécrit pas la sienne.
+
+La limite est **toujours annoncée** quand une vidéo est trop longue : un refus qui ne dit pas
+jusqu'où on peut aller laisse essayer au hasard. Le plafond est de 1 h 30, appliqué par
+l'application depuis la durée de l'aperçu et revérifié par la fonction avant de télécharger
+le texte.
+
+Le lien lui-même est validé **sur l'appareil**, avant tout appel : une adresse Vimeo ou un
+morceau de texte se refusent sans réseau, et le message s'affiche sous le champ plutôt que
+dans une alerte, là où l'erreur a été faite. Un identifiant collé seul n'est pas accepté :
+onze caractères alphanumériques peuvent être n'importe quoi.
+
+### Quand le réseau lâche en cours de route
+
+L'import se fait en trois temps, et chacun garde ce qu'il a obtenu : l'aperçu, puis la
+transcription, puis l'analyse. « Réessayer » **reprend** au lieu de recommencer, donc une
+transcription réussie ne repart pas sur le réseau parce que l'analyse a échoué.
+
+Rien n'est écrit en base avant que l'analyse ait réussi : le cours est enregistré d'un seul
+coup, avec sa fiche. Il n'existe aucun état intermédiaire où un cours serait à moitié là.
+« Réessayer » n'apparaît d'ailleurs que quand réessayer peut marcher : une vidéo sans
+sous-titres n'en aura pas plus au second essai.
+
+### Ce qui arrive dans le pipeline
+
+Une fois transcrite, **une vidéo n'est plus une vidéo** : c'est un `ImportedDocument` dont le
+texte a été obtenu autrement. Elle repart donc dans le chemin d'un PDF, sans branche à elle,
+et c'est pour cette raison que la fiche puis les cartes marchent sans une ligne de plus. La
+vignette de la vidéo devient la couverture du cours, et la piste retenue est notée sous le
+titre du document importé.
 
 ## Le cours fiché
 
@@ -407,12 +503,123 @@ Trois échecs sont traités nommément, chacun avec une sortie.
   Si l'analyse échoue, rien n'est créé et on propose de construire la fiche sans IA. Comme
   les cartes ne sont plus écrites pendant l'import, il n'y a plus d'état intermédiaire où un
   cours existerait à moitié.
+- **Vidéo illisible** — les cinq refus de l'import YouTube sont décrits plus haut, avec leurs
+  phrases. Trois d'entre eux tombent avant le moindre appel de génération : le lien invalide
+  sans réseau du tout, l'absence de sous-titres et la durée hors limite dès l'aperçu.
 - **Doublons** — `CourseFingerprint` normalise le contenu (sans accents, sans ponctuation) et
   en garde une empreinte, enregistrée sur le cours. Réimporter le même chapitre, même sous un
   autre nom de fichier, propose d'ouvrir le cours existant plutôt que de créer un doublon. Un
   titre identique suffit aussi à déclencher la question.
 
 `MicaboTests/CardFormatsTests.swift` verrouille les formats, leurs replis et les cas d'échec.
+
+## Examens et mode examen
+
+La répétition espacée optimise la mémoire à long terme. Elle repousse les cartes de plus en
+plus loin, et **elle se fiche de la date du contrôle** : une carte revue hier avec un
+intervalle de vingt jours retombera trois semaines après l'examen, au pire moment possible.
+Le mode examen corrige exactement ça.
+
+La page se pousse depuis l'onglet Réviser, où une rangée annonce le prochain examen et son
+compte à rebours.
+
+### Le calendrier
+
+Un mois à la fois, la semaine commençant le lundi partout et quel que soit le réglage
+régional du téléphone (`MicaboCalendar`). Une pastille ocre par examen sur son jour, trois au
+maximum par case : au delà, la case ne se lit plus et le compte se lit dans la liste. Ocre
+parce que c'est la couleur des échéances dans toute l'app, et un examen est une échéance.
+
+Un appui sur un jour ouvre sa section en dessous ; un second appui la referme. Un appui sur
+un débord du mois voisin fait suivre le calendrier.
+
+Un examen se **prend dans la liste et se pose sur un jour** pour être déplacé. La liste est
+la source, le calendrier la cible, et pas l'inverse : glisser depuis une pastille de trois
+points de large serait injouable au doigt, et un examen déplacé par erreur emporte tout un
+planning. La date reste modifiable dans la feuille d'édition, qui est le chemin fiable.
+
+Ouvrir, modifier, supprimer se font depuis la rangée et son menu contextuel.
+
+### Déclarer un examen
+
+Quatre champs, dans cet ordre : **nom**, **date**, **cours au programme**, **intensité**.
+L'intensité ne change pas quoi réviser mais combien de fois chaque carte repasse avant le
+jour J, de deux à quatre passages. C'est le seul réglage : demander un nombre de cartes par
+jour serait demander à l'étudiant de faire le calcul que l'app est là pour faire.
+
+### La projection, avant de confirmer
+
+Un mode qui réorganise tout un planning ne se lance pas sur un bouton « Activer ». La
+projection apparaît dès que la date et un cours sont là, et elle bouge quand on change
+d'intensité : c'est comme ça qu'on comprend ce que l'intensité veut dire.
+
+| Ce qu'elle annonce | Pourquoi |
+| --- | --- |
+| Cartes concernées | Le volume en jeu, celui qui fait la charge |
+| Jours restants | Le temps dont on dispose vraiment |
+| Charge quotidienne moyenne | Ce que ça coûte par jour |
+| Jour le plus chargé | Le chiffre le plus utile : c'est lui qui fait reculer d'une intensité |
+
+Un histogramme complète les quatre chiffres, parce qu'il dit ce qu'ils ne disent pas : si la
+charge est plate, ou si elle s'écrase sur les derniers jours.
+
+### Comment la replanification marche
+
+`Micabo/SRS/ExamPlanner.swift` est pur : il prend des valeurs, il rend des jours, et il se
+teste sans base de données. Trois règles composent l'échelle de passages de chaque carte.
+
+- **Le dernier passage tombe dans les trois derniers jours**, décalé d'une carte à l'autre.
+  Tout mettre sur la veille garantirait le pic de rétention, et une session de trois cents
+  cartes que personne ne fait.
+- **Le premier passage est échelonné** lui aussi, pour que le premier jour ne prenne pas tout.
+- **Entre les deux, les passages sont régulièrement espacés**, ce qui donne une charge
+  quotidienne à peu près constante, la seule qu'on puisse tenir.
+
+Le nombre de passages part de l'intensité, plus un pour une carte jamais vue, moins un pour
+une carte acquise depuis plus de trois semaines. Jamais moins d'un : une carte du programme
+se révise au moins une fois. On ne voit pas une carte deux fois le même jour, donc le nombre
+de passages est borné par le nombre de jours disponibles.
+
+L'ordre des cartes décide de leur décalage, donc du lissage : les cartes en retard passent
+devant, puis les neuves, puis les moins solides. Si le temps manque, c'est ce qui doit être vu
+d'abord.
+
+### Ce qui fait tenir le plan
+
+Replanifier les échéances au moment de déclarer l'examen **ne suffit pas** : à la première
+note donnée, SM-2 renverrait la carte à trois semaines et le plan serait défait. Deux
+mécanismes de plus s'en chargent.
+
+- **Le plafond d'intervalle** (`ExamDeadlines`) : tant que l'examen approche, aucune carte
+  concernée ne se replanifie au delà du jour J. `SM2Scheduler` n'en sait rien et n'a pas
+  changé d'une ligne ; son résultat est rabattu sur l'échéance avant d'être appliqué. Trois
+  refus : un palier d'apprentissage, qui se compte en minutes, n'est jamais rabattu ; une
+  échéance déjà en deçà n'a rien à corriger ; et à moins de vingt-quatre heures il n'y a plus
+  de planning à faire. Les intervalles annoncés sous les boutons de notation tiennent compte
+  du plafond, et la session affiche « Mode examen » pour que des intervalles courts ne
+  passent pas pour un planificateur cassé.
+- **La levée du plafond de cartes neuves** : une carte sous échéance échappe au rythme
+  quotidien. Sans cette exception, la projection serait un mensonge, puisqu'elle promet
+  quarante cartes aujourd'hui là où le rythme n'en laisserait passer que huit. Le plafond
+  garde tout son sens hors examen, où il n'y a pas de date à tenir.
+
+### Réversible, toujours
+
+Le plan garde une photographie des échéances d'avant (`Exam.scheduleBackup`), prise une seule
+fois. Supprimer un examen, ou choisir « Rendre le planning normal », rend aux cartes leurs
+échéances d'origine. Sans ça, supprimer un examen laisserait les cartes revenir tous les deux
+jours pour un contrôle qui n'existe plus.
+
+Modifier ou déplacer un examen **défait puis refait** son plan : garder des échéances
+calculées pour une autre date, ou pour d'autres cours, donnerait un planning qui ne
+correspond plus à rien.
+
+Un examen désigne ses cours par leur identifiant et ne les possède pas : supprimer un cours
+ne supprime pas l'examen et ne l'empêche pas de s'ouvrir, le cours disparu sort simplement de
+la liste.
+
+`MicaboTests/ExamPlannerTests.swift` verrouille l'échelle de passages, la projection, la
+réversibilité et le plafond d'intervalle.
 
 ## Répétition espacée
 
@@ -470,6 +677,8 @@ l'app lui sert — sans ce lien, le curseur de l'onboarding ne serait qu'un déc
 - ce plafond est appliqué pour de vrai par `StudyQueueBuilder.Limits.daily()` dans chaque
   session, il est réglable dans `Réglages › Révision`, et l'écran Réviser compte la file
   plafonnée — il annonce même les cartes neuves gardées pour les jours suivants
+- une carte sous échéance d'examen y échappe : il n'y a pas de rythme de croisière à tenir
+  quand il y a une date à tenir
 - `MicaboTests/DailyLoadTests.swift` verrouille les paliers, les libellés et le plafond
 
 ## Structure
@@ -478,11 +687,11 @@ l'app lui sert — sans ce lien, le curseur de l'onboarding ne serait qu'un déc
 Micabo/
   App/             point d'entrée et conteneur SwiftData
   DesignSystem/    jetons de style, lexique et composants réutilisables
-  Models/          entités SwiftData, fiche d'un cours et réponses de l'IA
-  Persistence/     enregistrement des cours et contenu de démonstration
-  SRS/             planificateur SM-2, file d'attente, statistiques
-  Services/        client IA, balisage de la fiche, PDF / OCR / DOCX, nettoyage de texte
-  Features/        un dossier par écran, dont Course/ pour le cours fiché
+  Models/          entités SwiftData, fiche d'un cours, examens et réponses de l'IA
+  Persistence/     enregistrement des cours, des examens et contenu de démonstration
+  SRS/             planificateur SM-2, file d'attente, mode examen, statistiques
+  Services/        client IA, balisage de la fiche, PDF / OCR / DOCX / YouTube
+  Features/        un dossier par écran, dont Course/ et Exams/
 supabase/functions/  Edge Functions Deno
 scripts/             génération de l'icône
 ```
@@ -492,6 +701,14 @@ scripts/             génération de l'icône
 `MicaboTests/CourseSheetTests.swift` verrouille la fiche : le balisage en ligne et ses cas
 limites, le décodage tolérant, le nettoyage, l'aplatissement vers le contexte des cartes, la
 fiche hors ligne et ce qui vaut une sélection.
+
+`MicaboTests/YouTubeImportTests.swift` verrouille l'import vidéo : les formes de lien
+acceptées et refusées, **les cinq phrases de refus au mot près**, la traduction des codes du
+serveur, le choix de la piste de sous-titres et ce que l'aperçu décide sans rien télécharger.
+
+`MicaboTests/ExamPlannerTests.swift` verrouille le mode examen : l'échelle de passages et ses
+cas limites, les quatre chiffres de la projection, la réversibilité d'une replanification, le
+plafond d'intervalle et la levée du plafond de cartes neuves.
 
 ```bash
 xcodebuild test -project Micabo.xcodeproj -scheme Micabo -destination 'platform=iOS Simulator,name=iPhone 16'

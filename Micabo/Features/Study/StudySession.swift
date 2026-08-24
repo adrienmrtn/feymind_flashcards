@@ -69,6 +69,9 @@ final class StudySession {
     private var context: ModelContext?
     private var sourceKey: String?
     private var undoStack: [UndoStep] = []
+    /// Les examens en cours. Ils décident de l'ordre de la file et plafonnent les
+    /// intervalles : sans eux, la première note donnée renverrait la carte au delà du jour J.
+    private var deadlines: ExamDeadlines = .empty
 
     /// Vrai dès la première note donnée : c'est ce qui active le bouton d'annulation.
     var canUndo: Bool {
@@ -106,7 +109,16 @@ final class StudySession {
     /// aucune échéance ne bouge : les aperçus n'auraient rien à annoncer.
     var previewLabels: [ReviewRating: String] {
         guard mode.affectsSchedule, let current else { return [:] }
-        return SM2Scheduler.previewLabels(for: SM2CardSnapshot(card: current))
+        return SM2Scheduler.previewLabels(
+            for: SM2CardSnapshot(card: current),
+            deadline: deadlines.deadline(for: current)
+        )
+    }
+
+    /// Vrai quand la carte affichée dépend d'un examen : la session peut le signaler.
+    var isCurrentUnderExamDeadline: Bool {
+        guard let current else { return false }
+        return deadlines.covers(current)
     }
 
     // MARK: - Cycle de vie
@@ -124,12 +136,13 @@ final class StudySession {
         self.context = context
         self.mode = mode
         self.sourceKey = mode.affectsSchedule ? sourceKey : nil
+        self.deadlines = mode.affectsSchedule ? ExamDeadlines.active(in: context, now: now) : .empty
         startedAt = now
 
         let usable: [Flashcard]
         switch mode {
         case .scheduled:
-            usable = StudyQueueBuilder.build(from: cards, now: now, limits: .daily())
+            usable = StudyQueueBuilder.build(from: cards, now: now, limits: .daily(), deadlines: deadlines)
         case .practice:
             // Tout le cours, dans l'ordre des cartes : on s'entraîne, on ne rattrape rien.
             usable = cards
@@ -156,6 +169,7 @@ final class StudySession {
         self.context = context
         mode = .scheduled
         sourceKey = snapshot.sourceKey
+        deadlines = ExamDeadlines.active(in: context, now: now)
         // La durée affichée en fin de session reste celle du temps réellement passé.
         startedAt = now.addingTimeInterval(-snapshot.elapsed)
 
@@ -202,7 +216,11 @@ final class StudySession {
 
         if mode.affectsSchedule {
             let logsBefore = Set((card.logs ?? []).map(\.id))
-            let outcome = SM2Scheduler.schedule(snapshot: SM2CardSnapshot(card: card), rating: rating, now: now)
+            // La note est calculée par SM-2, puis rabattue sur la date de l'examen quand la
+            // carte en dépend : c'est ce qui l'empêche de repartir au delà du jour J.
+            let outcome = SM2Scheduler
+                .schedule(snapshot: SM2CardSnapshot(card: card), rating: rating, now: now)
+                .clamped(to: deadlines.deadline(for: card), now: now)
             card.apply(outcome, at: now)
             try? context?.save()
 
