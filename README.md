@@ -42,11 +42,23 @@ Réviser.
 Le parcours d'import tient en trois écrans : bouton `+` flottant en bas à droite de Cours,
 choix de la source (PDF, scan/photos, vidéo YouTube, Word ou texte), puis **la fiche du
 cours**. Les cartes ne sont plus produites au passage : elles se demandent depuis la fiche,
-et c'est le premier bouton de l'écran tant qu'il n'y en a aucune.
+et c'est le premier bouton de l'écran tant qu'il n'y en a aucune. Une fois écrites, **elles
+s'ouvrent d'elles-mêmes** : on retombait avant sur la fiche, qu'il fallait faire défiler
+jusqu'en bas pour trouver la rangée « Cartes » et découvrir ce qui venait d'être produit.
 
 ```
 import -> lecture sur l'appareil -> cours fiché -> (facultatif) cartes -> session
 ```
+
+**Ce qu'on regarde pendant que Micabo travaille** (`GenerationOverlay`) montre la page en
+train de se faire : un filet de titre, des lignes, un passage surligné, un tableau, un graphe,
+qui se posent l'un après l'autre pendant qu'un balayage de lecture descend en boucle. C'est la
+même image que celle du parcours d'accueil, et c'est voulu — ce qu'on a promis à l'inscription
+est ce qu'on montre en train d'arriver. L'écran d'avant cochait quatre étapes sur un minuteur
+de 2,2 secondes : le problème n'était pas la laideur, c'était que les coches n'étaient reliées
+à rien. Rien n'est du faux texte, seulement des formes, et la page ne se vide jamais pour
+repartir : une page qui s'effacerait toutes les trois secondes se lirait comme un travail qui
+recommence, donc comme un échec.
 
 ## Lexique
 
@@ -488,10 +500,22 @@ Quatre marques, et chacune a une raison d'exister sur une fiche de révision
 
 | Écriture | Rendu | À quoi ça sert |
 | --- | --- | --- |
-| `**terme**` | gras | le mot que l'examen attend, une à trois fois par paragraphe |
+| `**terme**` | gras | le mot que l'examen attend, une à trois fois par paragraphe, jamais zéro dans un paragraphe qui introduit une notion |
 | `*nuance*` | italique | un mot étranger, un titre d'œuvre, une réserve |
-| `==l'essentiel==` | surligné | ce qu'on relit en dernier, **cinq passages au maximum sur toute la fiche** |
+| `==l'essentiel==` | surligné | ce qu'on relit en dernier, **six à huit passages sur la fiche, et jamais moins de cinq** |
 | `$E = mc^2$` | formule | transposée par `FormulaRenderer`, comme sur les cartes |
+
+**Le surligneur a longtemps été absent des fiches, et c'était le prompt.** Il ne parlait de
+mise en valeur qu'en plafonds — « cinq surlignages au maximum », « trois mots en gras c'est
+trois de trop », plus une consigne interdisant « les emphases partout » — et le modèle lisait
+l'ensemble comme un ordre de sobriété : il n'en produisait aucun. Une fiche sans marques est
+une fiche que personne ne relit, puisque c'est le surligneur qui fait retrouver l'essentiel en
+dix secondes la veille au soir. Le prompt donne donc maintenant un plancher, et surtout **où**
+surligner : la phrase d'enjeu du premier paragraphe, la conclusion de chaque partie de niveau
+1, ce qui distingue une définition de sa voisine, le résultat chiffré qu'un correcteur attend,
+et l'encadré « essentiel », où le surlignage n'est jamais facultatif. Même logique pour le
+reste : un tableau dès que le document oppose deux choses, un graphe dès qu'il porte deux
+valeurs comparables dans la même unité — sans jamais inventer un chiffre.
 
 Hanken Grotesk n'embarque pas d'italique : elle est penchée à la main par une matrice de
 fonte, ce qui reste préférable à un changement de famille en plein paragraphe. Le
@@ -533,8 +557,10 @@ noter que », « en effet », « en conclusion ») et les méta-commentaires sur
 
 Mais une consigne se respecte à peu près, alors que **les plafonds se respectent toujours** :
 `supabase/functions/_shared/sheet.ts` limite les blocs d'étapes à deux par fiche, les
-passages surlignés à cinq, les colonnes d'un tableau à quatre, et retire les puces et les
-dièses de markdown qui ont fui hors de leur structure. `CourseSheet.sanitized()` refait le
+passages surlignés à neuf, les colonnes d'un tableau à quatre, et retire les puces et les
+dièses de markdown qui ont fui hors de leur structure. Ce plafond de surlignages était à
+cinq, et il a suivi le prompt : un garde-fou réglé sous ce qu'on exige efface exactement ce
+qu'on vient de demander. `CourseSheet.sanitized()` refait le
 même travail côté application, sur les fiches comme sur ce qu'un serveur plus ancien renvoie.
 
 Un bloc d'un type inconnu, un tableau à une seule colonne, un graphe à une seule barre ou
