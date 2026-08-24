@@ -36,7 +36,7 @@ struct DemoSheetStepView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         } footer: {
-            OnboardingContinueButton(title: "S'entraîner", isEnabled: isFinished) {
+            OnboardingContinueButton(title: "S'entraîner", isEnabled: isFinished, isShiny: true) {
                 model.advance()
             }
         }

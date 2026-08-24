@@ -69,6 +69,11 @@ enum OnboardingSurface {
 /// donnent un parcours qui tremble. Les quatre courbes sont donc monotones : elles partent
 /// vite, elles ralentissent, elles s'arrêtent net.
 ///
+/// L'exception est déclarée ailleurs et volontairement unique : le bouton `isShiny` de la
+/// démonstration respire et se laisse balayer d'un reflet. C'est le seul écran où l'on a
+/// regardé une animation sans rien toucher, donc le seul où il faut aller chercher un doigt
+/// immobile.
+///
 /// Les avoir ici plutôt que dans chaque écran n'est pas une coquetterie : c'est ce qui fait
 /// qu'un écran ne peut pas se mettre à bouger autrement que ses voisins.
 enum OnboardingMotion {
@@ -377,9 +382,21 @@ struct OnboardingContinueButton: View {
     var isEnabled: Bool = true
     var isLoading: Bool = false
     var loadingTitle: String = "Un instant…"
+    /// Reflet qui balaie le bouton, et respiration qui le fait rebondir sur place.
+    ///
+    /// Réservé au bouton qui clôt une animation qu'on vient de regarder sans rien faire :
+    /// après dix secondes de démonstration, la main est immobile, et il faut lui dire
+    /// franchement où appuyer. Le reste du parcours n'y a pas droit — un bouton qui brille
+    /// à chaque écran ne brille plus nulle part.
+    var isShiny: Bool = false
     var action: () -> Void
 
     @Environment(\.onboardingSurface) private var surface
+
+    @State private var shinePhase: CGFloat = 0
+    @State private var isBouncing = false
+
+    private var isLively: Bool { isShiny && isEnabled && !isLoading }
 
     var body: some View {
         Button {
@@ -406,9 +423,54 @@ struct OnboardingContinueButton: View {
                 foreground: surface.buttonForeground
             )
         )
+        .overlay { if isLively { shine } }
+        .scaleEffect(isBouncing ? 1.028 : 1)
         .disabled(!isEnabled || isLoading)
         .animation(.easeOut(duration: 0.2), value: isEnabled)
         .animation(.easeOut(duration: 0.2), value: isLoading)
+        .onAppear(perform: startLiveliness)
+        .onChange(of: isLively) { _, _ in startLiveliness() }
+    }
+
+    /// Bande claire inclinée qui traverse le bouton, découpée à sa forme pour qu'elle
+    /// n'aille pas baver sur le fond de l'écran.
+    private var shine: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let band = max(60, width * 0.34)
+
+            LinearGradient(
+                colors: [
+                    surface.buttonForeground.opacity(0),
+                    surface.buttonForeground.opacity(0.4),
+                    surface.buttonForeground.opacity(0)
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            // Deux fois la hauteur du bouton, remontée de moitié : une bande inclinée
+            // qui ferait juste la hauteur laisserait deux coins non balayés.
+            .frame(width: band, height: proxy.size.height * 2)
+            .rotationEffect(.degrees(16))
+            .offset(x: shinePhase * (width + band * 2) - band, y: -proxy.size.height / 2)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+        .allowsHitTesting(false)
+    }
+
+    private func startLiveliness() {
+        guard isLively else {
+            withAnimation(.easeOut(duration: 0.2)) { isBouncing = false }
+            return
+        }
+
+        shinePhase = 0
+        withAnimation(.linear(duration: 1.7).repeatForever(autoreverses: false)) {
+            shinePhase = 1
+        }
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.4).repeatForever(autoreverses: true)) {
+            isBouncing = true
+        }
     }
 }
 
