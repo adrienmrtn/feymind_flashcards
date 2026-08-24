@@ -35,7 +35,12 @@ struct DemoImportStepView: View {
             scrolls: false
         ) {
             VStack(spacing: 14) {
+                // La page passe **au-dessus** de la zone de dépôt, pas dessous : un
+                // document qu'on fait glisser sous sa cible se lit comme un document
+                // qu'on perd, et le geste ne ressemble plus à ce qu'il imite.
                 thumbnail
+                    .zIndex(1)
+
                 dropZone
                 Spacer(minLength: 0)
             }
