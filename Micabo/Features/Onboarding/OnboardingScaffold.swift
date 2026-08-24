@@ -483,6 +483,47 @@ struct OnboardingChoiceRow: View {
     }
 }
 
+/// Case de choix, à poser côte à côte : deux réponses, deux blocs de même largeur.
+///
+/// Une question fermée à deux réponses n'a pas besoin d'une liste. Deux cases côte à côte
+/// se comparent d'un seul regard, là où deux rangées empilées se lisent l'une après
+/// l'autre et laissent croire que la première compte plus que la seconde.
+struct OnboardingChoiceTile: View {
+    let title: String
+    var systemImage: String?
+    var isSelected: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 10) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(isSelected ? MicaboColor.ink : MicaboColor.inkTertiary)
+                }
+
+                Text(title)
+                    .font(MicaboFont.hanken(16, weight: .semibold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.vertical, MicaboSpacing.lg)
+            .padding(.horizontal, 14)
+            .frame(maxWidth: .infinity)
+            .frame(height: 132)
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous)
+                    .strokeBorder(isSelected ? MicaboColor.ink : MicaboColor.stroke, lineWidth: isSelected ? 1.8 : 1)
+            }
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .animation(OnboardingMotion.tap, value: isSelected)
+    }
+}
+
 /// Pastille de choix, pour les questions à réponses courtes.
 ///
 /// Sept niveaux d'études en sept rangées font un écran qu'on fait défiler. En pastilles qui
