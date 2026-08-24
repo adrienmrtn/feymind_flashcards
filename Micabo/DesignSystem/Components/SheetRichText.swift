@@ -152,11 +152,27 @@ struct SheetProse: UIViewRepresentable {
         }
     }
 
+    /// Un paragraphe prend la largeur qu'on lui propose et en déduit sa hauteur.
+    ///
+    /// SwiftUI mesure aussi la souplesse d'une vue en lui proposant une largeur absente ou
+    /// infinie. Y répondre par la mesure d'une ligne interminable ferait croire au
+    /// conteneur qu'un paragraphe veut trois mètres de large : on répond par la largeur
+    /// d'une colonne de fiche, qui est la seule qu'un paragraphe occupe jamais.
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: UITextView, context: Context) -> CGSize? {
-        guard let width = proposal.width, width > 0, width < .infinity else { return nil }
-        let fitting = uiView.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
+        guard let proposed = proposal.width, proposed.isFinite else {
+            return measured(uiView, width: Self.columnWidth)
+        }
+        return measured(uiView, width: max(1, proposed))
+    }
+
+    private func measured(_ view: UITextView, width: CGFloat) -> CGSize {
+        let fitting = view.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
         return CGSize(width: width, height: ceil(fitting.height))
     }
+
+    /// Largeur de référence d'une colonne de fiche : un écran de téléphone, marges de
+    /// l'app retirées. Elle ne sert qu'à mesurer, jamais à dessiner.
+    private static let columnWidth: CGFloat = 390 - MicaboSpacing.screen * 2
 
     final class Coordinator: NSObject, UITextViewDelegate {
         var onExplain: ((String) -> Void)?

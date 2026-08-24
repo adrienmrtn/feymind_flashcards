@@ -298,7 +298,7 @@ struct SheetChartView: View {
 
                 Capsule()
                     .fill(tint.opacity(0.85))
-                    .frame(width: max(5, proxy.size.width * ratio(of: value)))
+                    .frame(width: max(5, proxy.size.width * CGFloat(ratio(of: value))))
             }
         }
         .frame(height: 9)
