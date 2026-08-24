@@ -101,6 +101,17 @@ extension EnvironmentValues {
     }
 }
 
+/// Échappatoire d'un écran de question, posée en haut à droite de l'écran.
+///
+/// Elle n'existe que là où la réponse est réellement facultative. Demander son
+/// établissement à quelqu'un qui n'en a pas, qui est entre deux écoles, ou qui n'a pas envie
+/// de le dire, ne doit pas fermer le parcours : un écran sans issue se quitte en quittant
+/// l'app, et on ne le retrouve jamais.
+struct OnboardingSkip {
+    var title: String = "Passer"
+    var action: () -> Void
+}
+
 /// Mise en page commune à tous les écrans du parcours : sur-titre, titre, sous-titre,
 /// contenu, puis une zone d'action ancrée en bas. Le tout arrive en cascade.
 ///
@@ -117,6 +128,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     var contentSpacing: CGFloat = MicaboSpacing.xl
     var scrolls: Bool = true
     var surface: OnboardingSurface = .canvas
+    var skip: OnboardingSkip?
     var content: () -> Content
     var footer: () -> Footer
 
@@ -128,6 +140,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         contentSpacing: CGFloat = MicaboSpacing.xl,
         scrolls: Bool = true,
         surface: OnboardingSurface = .canvas,
+        skip: OnboardingSkip? = nil,
         @ViewBuilder content: @escaping () -> Content,
         @ViewBuilder footer: @escaping () -> Footer
     ) {
@@ -138,6 +151,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.contentSpacing = contentSpacing
         self.scrolls = scrolls
         self.surface = surface
+        self.skip = skip
         self.content = content
         self.footer = footer
     }
@@ -165,12 +179,25 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     private func stack(inScrollView: Bool) -> some View {
         VStack(alignment: .leading, spacing: contentSpacing) {
             VStack(alignment: .leading, spacing: 9) {
-                if let eyebrow {
-                    Text(eyebrow.uppercased())
-                        .font(MicaboFont.hanken(11, weight: .semibold))
-                        .tracking(1.6)
-                        .foregroundStyle(surface.eyebrow)
-                        .onboardingAppear(index: 0)
+                // Le sur-titre et l'échappatoire partagent la même ligne : « Passer » se
+                // pose ainsi en haut à droite de l'écran sans ajouter une rangée vide
+                // au-dessus du titre.
+                if eyebrow != nil || skip != nil {
+                    HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.sm) {
+                        if let eyebrow {
+                            Text(eyebrow.uppercased())
+                                .font(MicaboFont.hanken(11, weight: .semibold))
+                                .tracking(1.6)
+                                .foregroundStyle(surface.eyebrow)
+                        }
+
+                        Spacer(minLength: 0)
+
+                        if let skip {
+                            skipButton(skip)
+                        }
+                    }
+                    .onboardingAppear(index: 0)
                 }
 
                 Text(title)
@@ -204,6 +231,32 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         .padding(.bottom, inScrollView ? MicaboSpacing.lg : 0)
         .frame(maxWidth: .infinity, maxHeight: inScrollView ? nil : .infinity, alignment: .topLeading)
     }
+
+    /// Volontairement discret : c'est une sortie, pas une proposition. Un « Passer » aussi
+    /// visible que le bouton du bas ferait douter de l'intérêt de la question.
+    private func skipButton(_ skip: OnboardingSkip) -> some View {
+        Button {
+            Haptics.light()
+            skip.action()
+        } label: {
+            HStack(spacing: 3) {
+                Text(skip.title)
+                    .font(MicaboFont.hanken(13.5, weight: .semibold))
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 9, weight: .bold))
+            }
+            .foregroundStyle(surface.isDark ? MicaboColor.onInk.opacity(0.72) : MicaboColor.inkSecondary)
+            .padding(.vertical, 7)
+            .padding(.horizontal, 11)
+            .background(
+                surface.isDark ? MicaboColor.onInk.opacity(0.12) : MicaboColor.surfaceMuted,
+                in: Capsule()
+            )
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .accessibilityLabel("\(skip.title) cette question")
+    }
 }
 
 extension OnboardingScaffold where Footer == EmptyView {
@@ -215,6 +268,7 @@ extension OnboardingScaffold where Footer == EmptyView {
         contentSpacing: CGFloat = MicaboSpacing.lg,
         scrolls: Bool = true,
         surface: OnboardingSurface = .canvas,
+        skip: OnboardingSkip? = nil,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.init(
@@ -225,6 +279,7 @@ extension OnboardingScaffold where Footer == EmptyView {
             contentSpacing: contentSpacing,
             scrolls: scrolls,
             surface: surface,
+            skip: skip,
             content: content,
             footer: { EmptyView() }
         )
