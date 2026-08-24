@@ -423,11 +423,14 @@ struct OnboardingContinueButton: View {
                 foreground: surface.buttonForeground
             )
         )
-        .overlay { if isLively { shine } }
-        .scaleEffect(isBouncing ? 1.028 : 1)
         .disabled(!isEnabled || isLoading)
         .animation(.easeOut(duration: 0.2), value: isEnabled)
         .animation(.easeOut(duration: 0.2), value: isLoading)
+        // Le reflet et la respiration se posent au-dessus des animations d'état, et pas
+        // dedans : le bouton s'active à l'instant où il se met à respirer, et une courbe
+        // d'activation qui s'appliquerait à la respiration lui mangerait sa répétition.
+        .overlay { if isLively { shine } }
+        .scaleEffect(isBouncing ? 1.028 : 1)
         .onAppear(perform: startLiveliness)
         .onChange(of: isLively) { _, _ in startLiveliness() }
     }

@@ -53,9 +53,9 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 
 | Bloc | Écrans |
 | --- | --- |
-| Accroche | bienvenue, niveau d'études, « on a fait Micabo pour nous », langue, annonce des questions |
+| Accroche | bienvenue, niveau d'études, langue, annonce des questions |
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli |
-| Démonstration | courbe de mémorisation, puis dépôt → fiche → cartes en trois écrans manipulables, puis le mode examen |
+| Démonstration | courbe de mémorisation, puis dépôt → fiche → révisions en trois écrans, puis le mode examen |
 | Personnalisation | matières, établissement, temps quotidien |
 | Sortie | projection annuelle, notifications, personnalisation, essai de 3 jours, paywall |
 
@@ -70,8 +70,18 @@ Ce qui a été retiré, et pourquoi, vaut d'être écrit noir sur blanc :
 - **les paragraphes dans des blocs blancs à coins arrondis.** Trois rangées à picto sous un
   intitulé, c'est exactement à quoi ressemble un texte que personne n'a relu. Les trois
   promesses qui vivaient là sont désormais *montrées* par les trois écrans de démonstration.
+- **l'écran « on a fait Micabo pour nous ».** Il racontait d'où venait l'app à quelqu'un qui
+  ne l'a pas encore vue fonctionner : c'est demander de la confiance avant d'avoir rien
+  montré. La démonstration est le seul argument du parcours.
+- **l'annonce des questions à venir.** L'écran listait les trois questions suivantes avec un
+  sous-titre et trois rangées à picto ; les annoncer prenait plus longtemps que d'y répondre.
+  Il ne reste que la phrase, dont **le gras se pose mot par mot**
+  (`OnboardingWordByWordTitle`), et le bouton n'arrive qu'une fois le dernier mot en place.
 - **les icônes de décoration.** Une pastille colorée par ligne de réponse fait lire des
   pictogrammes au lieu des réponses. `OnboardingChoiceRow` n'a plus que son libellé et sa coche.
+- **la liste, quand la question n'a que deux réponses.** Empilées, les deux rangées se lisent
+  l'une après l'autre et laissent croire que la première compte plus. La question de l'oubli
+  pose donc ses deux réponses côte à côte (`OnboardingChoiceTile`), à taille égale.
 - **les choix qu'on ne peut pas faire.** L'écran de langue affichait cinq rangées à drapeau
   dont quatre grisées ; il en affiche une, et une ligne annonce la suite.
 - **le flou d'apparition.** Il coûtait une passe de rendu par image, rendait le texte illisible
@@ -89,13 +99,16 @@ Le passage d'un écran à l'autre est un glissement de **vingt-huit points** ave
 non un glissement pleine largeur : faire traverser tout l'écran à une page donne l'impression
 de feuilleter un carrousel, et attire l'œil sur le mouvement plutôt que sur le contenu.
 
-La seule oscillation qui reste dans le parcours est celle de la cloche de l'écran de rappel,
-parce qu'une cloche qui sonne oscille.
+Les seules oscillations qui restent sont celles de la cloche de l'écran de rappel, parce
+qu'une cloche qui sonne oscille, et celle du bouton `isShiny` : il se laisse balayer d'un
+reflet et respire sur place, uniquement sur l'écran où l'on vient de regarder une animation
+sans rien toucher. La main y est immobile depuis dix secondes, il faut aller la chercher — et
+un bouton qui brille à chaque écran ne brille plus nulle part.
 
 ### Les trois écrans de démonstration
 
 Ils se traversent en une dizaine de secondes et montrent **le même document à trois états** :
-brut quand on le dépose, fiché après lecture, décomposé en cartes ensuite. C'est ce fil qui
+brut quand on le dépose, fiché après lecture, découpé en révisions ensuite. C'est ce fil qui
 fait comprendre l'app, là où trois illustrations sans rapport ne montreraient que trois
 animations. Le document est embarqué (`OnboardingDemo`) : un chapitre de SVT sur le cycle de
 l'eau, reconnaissable à tous les niveaux. Aucune permission, aucun appel réseau, rien
@@ -103,14 +116,25 @@ d'enregistré : la démonstration tourne en avion.
 
 | Écran | Geste | Ce qui se passe |
 | --- | --- | --- |
-| Dépôt | glisser la page dans la zone en pointillés | La page est **volontairement brute** : un mur de texte sans hiérarchie, titre noyé au milieu, tel qu'on reçoit un polycopié. Sans un vrai avant, l'écran suivant ne transforme rien. Après deux secondes sans geste elle respire, et un simple appui fait la même chose. |
-| Fiche | aucun | Le balayage de lecture passe sur la page brute, puis la fiche **s'écrit par-dessus, bloc par bloc** : le filet de titre, le paragraphe, la définition, le passage surligné, la figure. Les deux états occupent la même place, ce qui fait lire une transformation et non deux illustrations. Le bouton dit « S'entraîner ». |
-| Cartes | appuyer sur la carte, puis se noter | La fiche de l'écran précédent se **défait en trois cartes** ouvertes en éventail, une par format (recto verso, QCM, texte à trou), puis la première passe devant et devient jouable. La note affiche la prochaine échéance et enchaîne. |
+| Dépôt | glisser la page dans la zone en pointillés | La page est **volontairement brute** : un mur de texte sans hiérarchie, titre noyé au milieu, tel qu'on reçoit un polycopié. Sans un vrai avant, l'écran suivant ne transforme rien. Elle passe **au-dessus** de la zone de dépôt, jamais dessous : un document qu'on fait glisser sous sa cible se lit comme un document qu'on perd. Après deux secondes sans geste elle respire, et un simple appui fait la même chose. |
+| Fiche | aucun | Le balayage de lecture passe sur la page brute, puis la fiche **s'écrit par-dessus, bloc par bloc** : le filet de titre, le paragraphe, la définition, le passage surligné, le schéma. Les deux états occupent la même place, ce qui fait lire une transformation et non deux illustrations. Le bouton dit « S'entraîner », et c'est le seul du parcours qui brille et respire. |
+| Révisions | aucun | La fiche se **découpe en quatre vignettes** — schéma, recto verso, QCM, texte à trou — qui sortent une à une, puis se remplissent toutes seules. Le bouton s'ouvre dès que les quatre sont là. |
 
-L'écran de génération simulée qui occupait la place de la fiche a été retiré : il cochait des
-étapes pendant trois secondes, c'est-à-dire qu'il faisait patienter devant un travail qu'on ne
-voyait pas. Un écran qui montre le résultat en train d'apparaître dit la même chose et se
-regarde.
+Deux écrans ont été retirés d'ici, pour la même raison. La génération simulée cochait des
+étapes pendant trois secondes : elle faisait patienter devant un travail qu'on ne voyait pas.
+Et le troisième écran demandait d'appuyer sur une carte puis de se noter : c'était faire passer
+un examen à quelqu'un qui n'a pas encore ouvert l'app, sur un cours qui n'est pas le sien.
+**Ce qu'il y a à montrer, c'est ce que Micabo produit à partir d'un cours** — le produire est
+le travail de l'app, y répondre viendra plus tard, avec ses propres cours. Le troisième écran
+est donc une animation, et rien d'autre.
+
+Le schéma compte autant que les cartes, et il a longtemps été le maillon faible : le filet de
+la définition de la fiche était un `Capsule` en `maxHeight: .infinity`, ce qui rendait tout le
+bloc gourmand en hauteur. La fiche s'étirait ou se comprimait selon la place que lui laissait
+l'écran, et c'était toujours la figure qui payait — elle n'a pas de taille propre à défendre,
+elle se tassait jusqu'à disparaître. Un trou blanc à la place d'un schéma ne prouve rien. Le
+filet est maintenant posé en surimpression du texte, la fiche fait exactement sa hauteur
+(`fixedSize`), et la figure est grossie et cernée d'un filet pour se lire comme un schéma.
 
 ### Ce que le mode examen promet
 
