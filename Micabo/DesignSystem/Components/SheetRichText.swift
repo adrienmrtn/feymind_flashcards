@@ -126,21 +126,23 @@ struct SheetProse: UIViewRepresentable {
         let layoutManager = MarkerLayoutManager()
         storage.addLayoutManager(layoutManager)
 
-        let container = NSTextContainer(size: CGSize(width: 0, height: .greatestFiniteMagnitude))
+        let container = NSTextContainer(
+            size: CGSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
+        )
         container.widthTracksTextView = true
         container.lineFragmentPadding = 0
         layoutManager.addTextContainer(container)
 
-        let view = UITextView(frame: .zero, textContainer: container)
+        let view = UITextView(frame: CGRect.zero, textContainer: container)
         view.isEditable = false
         view.isSelectable = true
         view.isScrollEnabled = false
-        view.backgroundColor = .clear
-        view.textContainerInset = .zero
+        view.backgroundColor = UIColor.clear
+        view.textContainerInset = UIEdgeInsets.zero
         view.dataDetectorTypes = []
         view.tintColor = UIColor(MicaboColor.accent)
         view.delegate = context.coordinator
-        view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        view.setContentCompressionResistancePriority(UILayoutPriority.defaultLow, for: .horizontal)
         return view
     }
 
@@ -166,7 +168,7 @@ struct SheetProse: UIViewRepresentable {
     }
 
     private func measured(_ view: UITextView, width: CGFloat) -> CGSize {
-        let fitting = view.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
+        let fitting = view.sizeThatFits(CGSize(width: width, height: CGFloat.greatestFiniteMagnitude))
         return CGSize(width: width, height: ceil(fitting.height))
     }
 
