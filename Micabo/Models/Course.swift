@@ -53,9 +53,6 @@ final class Course {
     /// SwiftData, parce qu'elle se lit et s'écrit toujours d'un bloc, jamais par morceaux.
     /// Nulle sur un cours importé avant la fiche, ou quand l'analyse a échoué.
     var sheetData: Data?
-    /// Quand la fiche a été écrite. Sert à dire « fiche refaite » sans toucher à
-    /// `updatedAt`, qui suit la révision.
-    var sheetUpdatedAt: Date?
     /// Première page ou photo, utilisée comme couverture.
     @Attribute(.externalStorage) var coverImageData: Data?
     var isFromLibrary: Bool = false
@@ -93,7 +90,6 @@ final class Course {
         self.rawText = rawText
         self.contextText = contextText
         self.sheetData = sheet?.encoded()
-        self.sheetUpdatedAt = sheet == nil ? nil : Date()
         self.coverImageData = coverImageData
         self.isFromLibrary = isFromLibrary
         self.flashcards = []
@@ -132,9 +128,8 @@ final class Course {
         CourseSheet.decode(from: sheetData)
     }
 
-    func apply(_ sheet: CourseSheet?, at date: Date = Date()) {
+    func apply(_ sheet: CourseSheet?) {
         sheetData = sheet?.encoded()
-        sheetUpdatedAt = sheetData == nil ? nil : date
     }
 
     /// Contexte condensé du cours, envoyé à l'IA pour rédiger de nouvelles cartes ou

@@ -323,7 +323,6 @@ final class CourseSheetPersistenceTests: XCTestCase {
         )
 
         XCTAssertTrue(course.hasSheet)
-        XCTAssertNotNil(course.sheetUpdatedAt)
         XCTAssertEqual(course.decodedSheet(), SampleData.photosynthesisSheet.sanitized())
         // Sans contexte envoyé par le serveur, il est reconstitué depuis la fiche : c'est
         // lui qui sert à écrire les cartes.

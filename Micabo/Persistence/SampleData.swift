@@ -80,7 +80,7 @@ enum SampleData {
         subject: "SVT",
         emoji: "🌿",
         summary: "Comment les végétaux transforment la lumière en matière organique, des pigments chlorophylliens jusqu'au cycle de Calvin.",
-        sheet: photosynthesisSheet,
+        sheet: SampleData.photosynthesisSheet,
         contextText: """
         La photosynthèse permet aux végétaux chlorophylliens de fabriquer de la matière organique à partir de matière minérale, en utilisant l'énergie lumineuse.
         Bilan global : 6 CO₂ + 6 H₂O + lumière donnent C₆H₁₂O₆ + 6 O₂.
@@ -218,7 +218,7 @@ enum SampleData {
         subject: "Mathématiques",
         emoji: "📐",
         summary: "Reconnaître, tracer et interpréter une fonction de la forme f(x) = ax + b.",
-        sheet: affineFunctionsSheet,
+        sheet: SampleData.affineFunctionsSheet,
         contextText: """
         Une fonction affine s'écrit f(x) = ax + b, où a est le coefficient directeur et b l'ordonnée à l'origine.
         Le coefficient directeur mesure la pente de la droite : positif la fonction croît, négatif elle décroît, nul elle est constante.
