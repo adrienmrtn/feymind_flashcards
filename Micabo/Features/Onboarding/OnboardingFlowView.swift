@@ -24,16 +24,10 @@ struct OnboardingFlowView: View {
                 ZStack {
                     stepView
                         .id(model.step)
-                        .transition(
-                            .asymmetric(
-                                insertion: .move(edge: .trailing).combined(with: .opacity),
-                                removal: .move(edge: .leading).combined(with: .opacity)
-                            )
-                        )
+                        .transition(.onboardingPage)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                // Glissement franc, sans rebond : la courbe s'arrête net à l'arrivée.
-                .animation(.timingCurve(0.25, 0.1, 0.25, 1, duration: 0.38), value: model.step)
+                .animation(OnboardingMotion.page, value: model.step)
             }
         }
         .environment(model)
@@ -48,19 +42,19 @@ struct OnboardingFlowView: View {
     private var stepView: some View {
         switch model.step {
         case .welcome: WelcomeStepView()
+        case .level: LevelStepView()
         case .builtByStudents: BuiltByStudentsStepView()
         case .language: LanguageStepView()
         case .personalizeIntro: PersonalizeIntroStepView()
         case .goal: GoalStepView()
         case .forgetting: ForgettingStepView()
         case .retentionChart: RetentionChartStepView()
-        case .science: ScienceStepView()
         case .demoImport: DemoImportStepView()
-        case .demoWrite: DemoWriteStepView()
+        case .demoSheet: DemoSheetStepView()
         case .demoReview: DemoReviewStepView()
+        case .examPromise: ExamPromiseStepView()
         case .subjects: SubjectsStepView()
         case .school: SchoolStepView()
-        case .schoolPeers: SchoolPeersStepView()
         case .dailyTime: DailyTimeStepView()
         case .projection: ProjectionStepView()
         case .notifications: NotificationsStepView()
@@ -74,6 +68,21 @@ struct OnboardingFlowView: View {
     private func finish() {
         OnboardingPreferences.markCompleted()
         onFinish()
+    }
+}
+
+extension AnyTransition {
+    /// Passage d'un écran au suivant : un glissement de vingt-huit points et un fondu.
+    ///
+    /// Pas un glissement pleine largeur. Faire traverser tout l'écran à une page donne
+    /// l'impression de feuilleter un carrousel, ça attire l'œil sur le mouvement au lieu du
+    /// contenu, et sur vingt écrans ça fatigue. Un décalage court suffit à dire « on
+    /// avance », et le fondu fait le reste.
+    static var onboardingPage: AnyTransition {
+        .asymmetric(
+            insertion: .offset(x: 28).combined(with: .opacity),
+            removal: .offset(x: -28).combined(with: .opacity)
+        )
     }
 }
 

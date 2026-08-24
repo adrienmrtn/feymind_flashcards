@@ -1,12 +1,25 @@
 import SwiftUI
 
-/// Écran 9c : le geste de révision. Une pile de trois cartes, la première se retourne
-/// au doigt, et la note donnée fixe la prochaine date.
+/// Démonstration, 3 sur 3 : la fiche se décompose en cartes, puis on en révise une.
 ///
-/// Deux phrases d'explication au maximum sur tout l'écran : la pédagogie de la
-/// répétition espacée a déjà eu ses écrans, ici on révise.
+/// L'écran s'ouvre sur **la fiche de l'écran précédent**, au même endroit et à la même
+/// taille : c'est ce qui fait comprendre d'où viennent les cartes. Elle se défait ensuite en
+/// trois cartes qui s'ouvrent en éventail, une par format, puis la première passe devant et
+/// devient jouable.
+///
+/// Deux phrases d'explication au maximum sur tout l'écran : la répétition espacée a déjà eu
+/// son écran, ici on révise.
 struct DemoReviewStepView: View {
     @Environment(OnboardingModel.self) private var model
+
+    private enum Phase {
+        /// La fiche, telle qu'on l'a laissée.
+        case sheet
+        /// Elle s'ouvre en trois cartes.
+        case fan
+        /// La première carte passe devant, à portée de doigt.
+        case play
+    }
 
     private enum Verdict {
         case again
@@ -27,8 +40,10 @@ struct DemoReviewStepView: View {
         }
     }
 
+    @State private var phase: Phase = .sheet
     @State private var isFlipped = false
     @State private var verdict: Verdict?
+    @State private var didStart = false
 
     private var cards: [OnboardingDemo.Card] { OnboardingDemo.cards }
     private var card: OnboardingDemo.Card { cards[0] }
@@ -36,25 +51,67 @@ struct DemoReviewStepView: View {
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Comment ça marche · 3 sur 3",
-            title: "À toi de jouer.",
-            subtitle: "Appuie sur la carte, puis dis si tu savais.",
-            titleSize: 28,
+            title: phase == .play ? "À toi de jouer." : "Ta fiche devient des cartes.",
+            subtitle: phase == .play ? "Appuie sur la carte, puis dis si tu savais." : nil,
+            titleSize: 30,
+            contentSpacing: MicaboSpacing.lg,
             scrolls: false
         ) {
-            VStack(spacing: 20) {
-                cardStack
+            VStack(spacing: 18) {
+                stage
                 controls
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
+        .animation(OnboardingMotion.shift, value: phase)
+        .onAppear(perform: run)
     }
 
-    // MARK: - La pile
+    // MARK: - La scène
 
-    /// Les deux cartes restantes dépassent derrière : on voit qu'il y en a d'autres,
-    /// sans les lire.
-    private var cardStack: some View {
+    private var stage: some View {
+        ZStack {
+            DemoSheetPage()
+                .frame(width: 232)
+                .opacity(phase == .sheet ? 1 : 0)
+                .scaleEffect(phase == .sheet ? 1 : 0.9)
+                .shadow(color: Color.black.opacity(0.08), radius: 18, x: 0, y: 10)
+
+            fan
+                .opacity(phase == .fan ? 1 : 0)
+
+            playCard
+                .opacity(phase == .play ? 1 : 0)
+        }
+        .frame(height: 210)
+    }
+
+    /// Les trois formats ouverts en éventail. Chacun porte son étiquette : c'est là qu'on
+    /// voit que Micabo ne fait pas que du recto verso.
+    private var fan: some View {
+        ZStack {
+            ForEach(Array(cards.enumerated()), id: \.element.id) { index, entry in
+                DemoMiniCard(card: entry, isCompact: true)
+                    .frame(width: 150)
+                    .rotationEffect(.degrees(fanRotation(index)))
+                    .offset(x: fanOffset(index), y: CGFloat(abs(index - 1)) * 8)
+                    .zIndex(index == 1 ? 3 : Double(2 - index))
+            }
+        }
+    }
+
+    private func fanRotation(_ index: Int) -> Double {
+        [-9, 0, 9][min(index, 2)]
+    }
+
+    private func fanOffset(_ index: Int) -> CGFloat {
+        [-64, 0, 64][min(index, 2)]
+    }
+
+    /// La carte jouable, et les deux autres qui dépassent derrière : on voit qu'il y en a
+    /// d'autres sans les lire.
+    private var playCard: some View {
         ZStack {
             ForEach(Array(cards.dropFirst().enumerated()), id: \.element.id) { index, _ in
                 RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous)
@@ -63,10 +120,10 @@ struct DemoReviewStepView: View {
                         RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous)
                             .strokeBorder(MicaboColor.stroke, lineWidth: 1)
                     }
-                    .frame(height: 176)
+                    .frame(height: 172)
                     .scaleEffect(1 - CGFloat(index + 1) * 0.04)
-                    .offset(y: CGFloat(index + 1) * 12)
-                    .opacity(0.7)
+                    .offset(y: CGFloat(index + 1) * 11)
+                    .opacity(0.65)
             }
 
             FlipCard(front: card.front, back: card.back, isFlipped: isFlipped)
@@ -76,7 +133,6 @@ struct DemoReviewStepView: View {
                 .accessibilityLabel(isFlipped ? card.back : card.front)
                 .accessibilityHint(isFlipped ? "" : "Appuie pour voir la réponse")
         }
-        .padding(.top, 4)
     }
 
     // MARK: - Commandes
@@ -84,38 +140,42 @@ struct DemoReviewStepView: View {
     @ViewBuilder
     private var controls: some View {
         if let verdict {
-            HStack(spacing: 7) {
-                Image(systemName: "clock.arrow.circlepath")
-                    .font(.system(size: 13, weight: .semibold))
-                Text("Elle revient \(verdict.interval)")
-                    .font(MicaboFont.hanken(14, weight: .semibold))
-            }
-            .foregroundStyle(verdict.tint)
-            .padding(.vertical, 10)
-            .padding(.horizontal, 15)
-            .background(verdict.tint.opacity(0.12), in: Capsule())
-            .frame(maxWidth: .infinity)
-            .transition(.scale(scale: 0.92).combined(with: .opacity))
+            pill(
+                systemImage: "clock.arrow.circlepath",
+                text: "Elle revient \(verdict.interval)",
+                tint: verdict.tint,
+                background: verdict.tint.opacity(0.12)
+            )
+            .transition(.opacity)
         } else if isFlipped {
             HStack(spacing: 10) {
                 verdictButton(.again, title: "À revoir", systemImage: "arrow.counterclockwise")
                 verdictButton(.known, title: "Je savais", systemImage: "checkmark")
             }
-            .transition(.move(edge: .bottom).combined(with: .opacity))
-        } else {
-            HStack(spacing: 7) {
-                Image(systemName: "hand.tap.fill")
-                    .font(.system(size: 12, weight: .medium))
-                Text("Appuie sur la carte")
-                    .font(MicaboFont.hanken(13, weight: .semibold))
-            }
-            .foregroundStyle(MicaboColor.ink)
-            .padding(.vertical, 9)
-            .padding(.horizontal, 14)
-            .background(MicaboColor.surfaceMuted, in: Capsule())
-            .frame(maxWidth: .infinity)
+            .transition(.opacity)
+        } else if phase == .play {
+            pill(
+                systemImage: "hand.tap.fill",
+                text: "Appuie sur la carte",
+                tint: MicaboColor.ink,
+                background: MicaboColor.surfaceMuted
+            )
             .transition(.opacity)
         }
+    }
+
+    private func pill(systemImage: String, text: String, tint: Color, background: Color) -> some View {
+        HStack(spacing: 7) {
+            Image(systemName: systemImage)
+                .font(.system(size: 12, weight: .semibold))
+            Text(text)
+                .font(MicaboFont.hanken(13, weight: .semibold))
+        }
+        .foregroundStyle(tint)
+        .padding(.vertical, 9)
+        .padding(.horizontal, 14)
+        .background(background, in: Capsule())
+        .frame(maxWidth: .infinity)
     }
 
     private func verdictButton(_ value: Verdict, title: String, systemImage: String) -> some View {
@@ -136,27 +196,42 @@ struct DemoReviewStepView: View {
         .buttonStyle(MicaboPressableButtonStyle())
     }
 
-    // MARK: - Actions
+    // MARK: - Déroulé
+
+    /// La fiche se défait en un peu plus d'une seconde, puis la main est rendue.
+    private func run() {
+        guard !didStart else { return }
+        didStart = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(OnboardingMotion.shift) { phase = .fan }
+            Haptics.tick()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation(OnboardingMotion.shift) { phase = .play }
+            Haptics.light()
+        }
+    }
 
     /// La note vaut validation : on laisse voir la prochaine échéance, puis on enchaîne.
     private func choose(_ value: Verdict) {
         guard verdict == nil else { return }
         Haptics.success()
-        withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.35)) {
+        withAnimation(OnboardingMotion.shift) {
             verdict = value
         }
 
         // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.
         let flow = model
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
             flow.advance()
         }
     }
 
     private func flip() {
-        guard !isFlipped else { return }
+        guard phase == .play, !isFlipped else { return }
         Haptics.rigid()
-        withAnimation(.timingCurve(0.22, 0.61, 0.36, 1, duration: 0.4)) {
+        withAnimation(OnboardingMotion.shift) {
             isFlipped = true
         }
     }
@@ -196,12 +271,12 @@ private struct FlipCard: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity)
-        .frame(height: 176)
+        .frame(height: 172)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous)
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
         }
-        .shadow(color: Color.black.opacity(0.07), radius: 16, x: 0, y: 9)
+        .shadow(color: Color.black.opacity(0.07), radius: 15, x: 0, y: 8)
     }
 }

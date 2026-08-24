@@ -53,28 +53,71 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 
 | Bloc | Écrans |
 | --- | --- |
-| Accroche | bienvenue, « conçu par des étudiants », langue, annonce des questions |
-| Questions | objectifs (plusieurs réponses), rapport à l'oubli, matières, établissement, preuve sociale, temps quotidien |
-| Démonstration | courbe de mémorisation, répétition espacée, dépôt → génération → révision en trois écrans manipulables |
+| Accroche | bienvenue, niveau d'études, « on a fait Micabo pour nous », langue, annonce des questions |
+| Questions | objectifs (plusieurs réponses), rapport à l'oubli |
+| Démonstration | courbe de mémorisation, puis dépôt → fiche → cartes en trois écrans manipulables, puis le mode examen |
+| Personnalisation | matières, établissement, temps quotidien |
 | Sortie | projection annuelle, notifications, personnalisation, essai de 3 jours, paywall |
+
+### Un écran, une chose
+
+C'est la règle qui gouverne tout le tunnel, et c'est celle qui a été la plus mal tenue :
+**un titre court, une ligne de sous-titre au plus, et une seule chose à regarder.** Un écran
+d'inscription se lit en deux secondes ou ne se lit pas.
+
+Ce qui a été retiré, et pourquoi, vaut d'être écrit noir sur blanc :
+
+- **les paragraphes dans des blocs blancs à coins arrondis.** Trois rangées à picto sous un
+  intitulé, c'est exactement à quoi ressemble un texte que personne n'a relu. Les trois
+  promesses qui vivaient là sont désormais *montrées* par les trois écrans de démonstration.
+- **les icônes de décoration.** Une pastille colorée par ligne de réponse fait lire des
+  pictogrammes au lieu des réponses. `OnboardingChoiceRow` n'a plus que son libellé et sa coche.
+- **les choix qu'on ne peut pas faire.** L'écran de langue affichait cinq rangées à drapeau
+  dont quatre grisées ; il en affiche une, et une ligne annonce la suite.
+- **le flou d'apparition.** Il coûtait une passe de rendu par image, rendait le texte illisible
+  pendant sa propre arrivée, et il est devenu la signature des interfaces faites à la chaîne.
+  Huit points de montée et un fondu suffisent.
+
+### Le mouvement, en un seul endroit
+
+`OnboardingMotion` porte les quatre courbes du parcours, et une seule règle les explique :
+**rien ne rebondit.** Un ressort dépasse sa cible puis revient, et vingt écrans qui dépassent
+leur cible donnent un parcours qui tremble. Les courbes sont donc monotones : elles partent
+vite, ralentissent, s'arrêtent net.
+
+Le passage d'un écran à l'autre est un glissement de **vingt-huit points** avec un fondu, et
+non un glissement pleine largeur : faire traverser tout l'écran à une page donne l'impression
+de feuilleter un carrousel, et attire l'œil sur le mouvement plutôt que sur le contenu.
+
+La seule oscillation qui reste dans le parcours est celle de la cloche de l'écran de rappel,
+parce qu'une cloche qui sonne oscille.
 
 ### Les trois écrans de démonstration
 
-Ils se traversent en dix secondes, sans bouton d'avancement : c'est le geste qui fait avancer.
-Le document d'exemple est embarqué (`OnboardingDemo`) : **un chapitre de SVT d'une page sur le
-cycle de l'eau**, avec sa figure en trois temps, choisi pour être reconnaissable à tous les
-niveaux. Aucune permission n'est demandée, aucun appel réseau n'est fait, rien n'est
-enregistré : la démonstration tourne en avion.
+Ils se traversent en une dizaine de secondes et montrent **le même document à trois états** :
+brut quand on le dépose, fiché après lecture, décomposé en cartes ensuite. C'est ce fil qui
+fait comprendre l'app, là où trois illustrations sans rapport ne montreraient que trois
+animations. Le document est embarqué (`OnboardingDemo`) : un chapitre de SVT sur le cycle de
+l'eau, reconnaissable à tous les niveaux. Aucune permission, aucun appel réseau, rien
+d'enregistré : la démonstration tourne en avion.
 
 | Écran | Geste | Ce qui se passe |
 | --- | --- | --- |
-| Dépôt | glisser la vignette dans la zone en pointillés | La vignette ressemble à un vrai PDF (bandeau de fichier, titre, deux phrases, figure). Après deux secondes sans geste elle respire, et un simple appui fait la même chose. Le dépôt enchaîne. |
-| Génération | aucun | Trois secondes : la page se balaye, trois étapes se cochent, et la page se transforme en éventail de trois cartes. Aucune latence n'est mimée. |
-| Révision | appuyer sur la carte, puis se noter | Une pile de trois cartes, une ligne au recto, une ligne au verso. La note affiche la prochaine échéance et enchaîne. Deux phrases d'explication au maximum. |
+| Dépôt | glisser la page dans la zone en pointillés | La page est **volontairement brute** : un mur de texte sans hiérarchie, titre noyé au milieu, tel qu'on reçoit un polycopié. Sans un vrai avant, l'écran suivant ne transforme rien. Après deux secondes sans geste elle respire, et un simple appui fait la même chose. |
+| Fiche | aucun | Le balayage de lecture passe sur la page brute, puis la fiche **s'écrit par-dessus, bloc par bloc** : le filet de titre, le paragraphe, la définition, le passage surligné, la figure. Les deux états occupent la même place, ce qui fait lire une transformation et non deux illustrations. Le bouton dit « S'entraîner ». |
+| Cartes | appuyer sur la carte, puis se noter | La fiche de l'écran précédent se **défait en trois cartes** ouvertes en éventail, une par format (recto verso, QCM, texte à trou), puis la première passe devant et devient jouable. La note affiche la prochaine échéance et enchaîne. |
 
-L'écran de répétition espacée, lui, se découvre au doigt : un appui par bloc, sur le contenu
-**ou** sur l'invitation en bas d'écran, qui est un vrai bouton ; le second appui termine aussi
-la mise en gras du texte d'Ebbinghaus si elle court encore.
+L'écran de génération simulée qui occupait la place de la fiche a été retiré : il cochait des
+étapes pendant trois secondes, c'est-à-dire qu'il faisait patienter devant un travail qu'on ne
+voyait pas. Un écran qui montre le résultat en train d'apparaître dit la même chose et se
+regarde.
+
+### Ce que le mode examen promet
+
+Après la démonstration, un écran montre un calendrier où une date se cerne de rouge, prend son
+nom (« EXAMEN · Maths · vecteurs »), puis voit les jours qui la précèdent s'allumer un à un de
+points de révision, en se resserrant à l'approche du jour J. C'est exactement ce que fait
+`ExamPlanner`, et le voir vaut mieux que le lire.
 
 Trois règles valent pour tout le tunnel :
 
@@ -86,11 +129,12 @@ Trois règles valent pour tout le tunnel :
 - **aucun bouton ne reste muet** — l'enfoncement (échelle 0,975) part en 80 ms, et un bouton
   derrière lequel tourne une opération passe en état chargement, annonce ce qu'il fait et
   refuse les appuis suivants.
-- **deux écrans voisins ne se ressemblent pas** — les compositions alternent (plein cadre,
-  visuel qui déborde, liste, grand chiffre, graphe) et trois écrans quittent le crème :
-  l'accroche et la courbe de l'oubli passent sur l'encre (`OnboardingSurface.ink`), la
-  personnalisation sur l'indigo. En revanche le texte reste **fer à gauche** partout et le
-  bouton **collé au bas de la zone sûre** : la variété s'arrête aux couleurs et aux volumes.
+- **deux écrans voisins ne se ressemblent pas** — les compositions alternent (paquet de cartes,
+  pastilles, liste, graphe, calendrier, grand chiffre), et **deux écrans seulement** quittent
+  le crème : l'accroche sur l'encre, la personnalisation sur l'indigo. C'est un de moins
+  qu'avant, parce que la variété d'un parcours ne vient pas de ses fonds mais de ce qu'il y a
+  à regarder. Le texte reste **fer à gauche** partout et le bouton **collé au bas de la zone
+  sûre**.
 
 `OnboardingStep.surface` est la seule source de vérité sur ce point, et `OnboardingScaffold`
 porte la bascule : `surface:` change le fond, la couleur des textes, celle du bouton (clair sur
@@ -111,26 +155,28 @@ Les réponses sont écrites au fil de l'eau dans `OnboardingPreferences` (clés 
 et survivent donc à une fermeture en cours de route. `Réglages` propose **Refaire l'onboarding**,
 qui efface ces clés et relance le parcours sans toucher aux cours.
 
+La toute première question est **Tu en es où ?** : lycée, prépa, licence, PASS-santé, master,
+concours ou autre. Elle vient juste après l'accroche parce qu'elle situe tout le reste, un
+lycéen et un PASS n'ayant ni les mêmes matières, ni les mêmes examens, ni le même rythme. Sept
+réponses en pastilles et non en rangées : sept rangées feraient un écran qu'on fait défiler
+pour répondre à une question fermée.
+
 Après le choix des matières, **Tu étudies où ?** propose un autocomplete hybride : un catalogue
 embarqué (`LocalInstitutions.json`, ~600 établissements FR/EU prioritaires) pour l'instantané,
 puis la RPC Supabase `search_institutions` sur la table `institutions` (~14 500 lignes : unis
 mondiales, grandes écoles FR, lycées FR). Le texte libre reste accepté, mais il ne donne pas
 d'`id` : seul un résultat choisi dans la liste en pose un.
 
-L'écran communauté qui suit n'apparaît **que** si un établissement a été reconnu de cette façon
-(`OnboardingModel.hasRecognizedInstitution`). Sinon `advance()` le saute, sans écran de
-remplacement ni excuse. Quand il s'affiche, l'effectif annoncé va de 1 à 10 personnes et il est
-dérivé de l'`id` : il ne bouge pas d'un affichage à l'autre.
+Le parcours est désormais une **file droite** : aucun écran ne se saute. L'écran de preuve
+sociale, qui était le seul conditionnel, a été retiré, et le mécanisme d'écran sauté avec lui.
 
 L'écran courbe s'appuie sur `RetentionCurve` : une décroissance exponentielle de la rétention, remise
 à 100 % à chaque révision, avec une stabilité qui augmente à chaque passage. Il doit se lire en trois
 secondes, sans paragraphe : un titre qui annonce ce qu'on regarde, l'intervalle réel étiqueté au-dessus
-de chaque point de révision (1 j, 3 j, 7 j, 16 j), et deux lignes de légende sous le graphe — une par
-courbe, « sans révision tu oublies » et « chaque rappel rallonge ta mémoire ». L'écran suivant reprend
-ces intervalles en liste, sous un titre qui dit ce qu'elle représente : **ce sont exactement les mêmes
-valeurs**, lues dans `RetentionCurve.intervalLabels`, parce que deux écrans voisins qui parlent des
-mêmes révisions ne peuvent pas annoncer deux échéanciers différents. Les travaux cités (Ebbinghaus
-1885, Landauer & Bjork 1978) sont réels et rapportés sans arrondir leurs résultats.
+de chaque point de révision (1 j, 3 j, 7 j, 16 j), et deux lignes de légende sous le graphe, une par
+courbe. C'est le seul écran de pédagogie qui reste : celui qui reprenait ensuite les mêmes intervalles
+en liste, sous le titre « la courbe de l'oubli prise à contre-pied », disait une deuxième fois ce que
+le graphe montrait déjà.
 
 Le paywall utilise `SubscriptionStoreView` de StoreKit 2. Aucun produit n'est publié :
 `Micabo/Resources/Micabo.storekit`, référencé par le scheme, permet de faire tourner l'écran en

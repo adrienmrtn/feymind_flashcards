@@ -242,7 +242,7 @@ private struct RetentionChart: View {
                 .scaleEffect(isVisible ? 1 : 0.1)
                 .opacity(isVisible ? 1 : 0)
                 .position(point(x: x, y: 1, in: size))
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isVisible)
+                .animation(OnboardingMotion.shift, value: isVisible)
         }
     }
 

@@ -145,7 +145,7 @@ struct PersonalizingStepView: View {
             }
         }
         .frame(width: 22, height: 22)
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isDone)
+        .animation(OnboardingMotion.shift, value: isDone)
     }
 
     // MARK: - Jauge

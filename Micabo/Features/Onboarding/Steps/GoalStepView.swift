@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 5 : objectifs. Plusieurs réponses possibles, validées par le bouton du bas.
+/// Objectifs. Plusieurs réponses possibles, validées par le bouton du bas.
 struct GoalStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -9,15 +9,13 @@ struct GoalStepView: View {
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Question 1 sur 3",
-            title: "C'est quoi tes objectifs ?",
-            subtitle: "Choisis tout ce qui te ressemble."
+            title: "Tu veux retenir quoi ?",
+            subtitle: "Plusieurs réponses possibles."
         ) {
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 ForEach(LearningGoal.allCases) { goal in
                     OnboardingChoiceRow(
                         title: goal.title,
-                        subtitle: goal.subtitle,
-                        systemImage: goal.systemImage,
                         isSelected: selection.contains(goal)
                     ) {
                         toggle(goal)

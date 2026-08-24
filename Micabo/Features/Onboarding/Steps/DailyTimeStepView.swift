@@ -28,7 +28,7 @@ struct DailyTimeStepView: View {
         OnboardingScaffold(
             eyebrow: "Ton rythme",
             title: "Combien de temps par jour ?",
-            subtitle: "Mieux vaut dix minutes tous les jours qu'une heure le dimanche. Tu pourras changer d'avis quand tu veux.",
+            subtitle: "Dix minutes chaque jour valent mieux qu'une heure le dimanche.",
             titleSize: 28
         ) {
             VStack(spacing: 14) {
@@ -88,7 +88,7 @@ struct DailyTimeStepView: View {
                 .tracking(-2)
                 .monospacedDigit()
                 .contentTransition(.numericText(value: Double(minutes)))
-                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: minutes)
+                .animation(OnboardingMotion.shift, value: minutes)
 
             Text(readoutUnit)
                 .font(MicaboFont.hanken(15, weight: .medium))

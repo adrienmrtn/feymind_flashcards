@@ -40,7 +40,7 @@ struct SubjectsStepView: View {
         OnboardingScaffold(
             eyebrow: "Question 3 sur 3",
             title: "Tu révises quoi ?",
-            subtitle: "Choisis autant de matières que tu veux. Ça nous sert à te proposer les bons cours partagés.",
+            subtitle: "Autant de matières que tu veux.",
             titleSize: 28
         ) {
             VStack(alignment: .leading, spacing: 20) {
@@ -76,7 +76,7 @@ struct SubjectsStepView: View {
 
     private func toggle(_ subject: String) {
         Haptics.selection()
-        withAnimation(.spring(response: 0.28, dampingFraction: 0.7)) {
+        withAnimation(OnboardingMotion.tap) {
             if model.subjects.contains(subject) {
                 model.subjects.remove(subject)
             } else {

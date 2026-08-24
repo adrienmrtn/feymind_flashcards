@@ -7,6 +7,7 @@ import SwiftUI
 final class OnboardingModel {
     private(set) var step: OnboardingStep = .welcome
 
+    var level: StudyLevel?
     var goals: Set<LearningGoal> = []
     var forgetsOften: Bool?
     var subjects: Set<String> = []
@@ -33,30 +34,19 @@ final class OnboardingModel {
         institutionId?.nilIfBlank != nil
     }
 
+    /// Le parcours est une file droite : chaque écran a quelque chose à demander ou à
+    /// montrer, donc aucun ne se saute. Le mécanisme d'écran conditionnel qui existait ici
+    /// ne servait qu'à la preuve sociale, qui a été retirée.
     func advance() {
         persist()
-
-        var candidate = step.next
-        while let next = candidate, !shows(next) {
-            candidate = next.next
-        }
-        guard let next = candidate else { return }
+        guard let next = step.next else { return }
         step = next
-    }
-
-    /// Les écrans qui n'ont rien à dire sont sautés, sans écran de remplacement.
-    private func shows(_ step: OnboardingStep) -> Bool {
-        switch step {
-        case .schoolPeers:
-            return hasRecognizedInstitution
-        default:
-            return true
-        }
     }
 
     /// Recopie les réponses dans les réglages à chaque changement d'écran :
     /// une sortie en cours de route ne perd que la question en cours.
     private func persist() {
+        OnboardingPreferences.level = level?.rawValue
         OnboardingPreferences.goals = goals.map(\.rawValue).sorted()
         OnboardingPreferences.forgetsOften = forgetsOften
         OnboardingPreferences.subjects = subjects.sorted()

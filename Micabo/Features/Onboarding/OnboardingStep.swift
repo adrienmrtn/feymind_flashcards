@@ -2,21 +2,27 @@ import Foundation
 
 /// Les écrans du parcours d'accueil, dans l'ordre. Le parcours est strictement
 /// linéaire : aucun retour en arrière, on n'expose donc jamais d'étape précédente.
+///
+/// L'ordre raconte quelque chose : on accroche, on demande où en est l'étudiant, on
+/// explique la méthode, on la lui fait faire, puis on personnalise. La démonstration suit
+/// exactement le parcours réel de l'app — on dépose un cours, il est mis en fiche, il se
+/// décompose en cartes — parce qu'une démonstration qui montre autre chose que le produit
+/// est une promesse qu'il faudra tenir deux fois.
 enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case welcome
+    case level
     case builtByStudents
     case language
     case personalizeIntro
     case goal
     case forgetting
     case retentionChart
-    case science
     case demoImport
-    case demoWrite
+    case demoSheet
     case demoReview
+    case examPromise
     case subjects
     case school
-    case schoolPeers
     case dailyTime
     case projection
     case notifications
@@ -34,9 +40,13 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// Fond de l'étape, et seule source de vérité à ce sujet : l'écran s'y peint, mais
     /// aussi le bandeau qui porte la jauge et la zone d'état au-dessus. Une bande claire
     /// posée au-dessus d'un écran sombre se lit comme un bug d'affichage.
+    ///
+    /// Deux écrans seulement quittent le crème, et c'est un de moins qu'avant : la variété
+    /// d'un parcours ne vient pas de ses fonds, elle vient de ce qu'il y a à regarder. Le
+    /// noir sert l'accroche, l'indigo sert l'attente.
     var surface: OnboardingSurface {
         switch self {
-        case .welcome, .science: .ink
+        case .welcome: .ink
         case .personalizing: .indigo
         default: .canvas
         }
