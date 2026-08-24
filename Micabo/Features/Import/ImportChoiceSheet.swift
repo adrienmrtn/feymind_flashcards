@@ -3,6 +3,7 @@ import SwiftUI
 enum ImportKind: String, Identifiable {
     case pdf
     case photo
+    case youtube
     case docx
     case text
 
@@ -12,6 +13,7 @@ enum ImportKind: String, Identifiable {
         switch self {
         case .pdf: "Importer un PDF"
         case .photo: "Scanner ou photos"
+        case .youtube: "Vidéo YouTube"
         case .docx: "Document Word"
         case .text: "Coller du texte"
         }
@@ -21,6 +23,7 @@ enum ImportKind: String, Identifiable {
         switch self {
         case .pdf: "Cours, polycopié, notes"
         case .photo: "Plusieurs pages, à la suite"
+        case .youtube: "Un lien, ses sous-titres"
         case .docx: "Fichier .docx"
         case .text: "Tes notes, telles quelles"
         }
@@ -30,6 +33,7 @@ enum ImportKind: String, Identifiable {
         switch self {
         case .pdf: "doc"
         case .photo: "camera.viewfinder"
+        case .youtube: "play.rectangle"
         case .docx: "doc.richtext"
         case .text: "text.alignleft"
         }
@@ -39,6 +43,7 @@ enum ImportKind: String, Identifiable {
         switch self {
         case .pdf: "📄"
         case .photo: "📸"
+        case .youtube: "▶️"
         case .docx: "📝"
         case .text: "✍️"
         }
@@ -49,15 +54,19 @@ enum ImportKind: String, Identifiable {
         switch self {
         case .pdf: Color(hex: 0xE7EFE9)
         case .photo: Color(hex: 0xF5ECE3)
+        case .youtube: Color(hex: 0xF4E5E2)
         case .docx: Color(hex: 0xE8EDF3)
         case .text: Color(hex: 0xEDEAF7)
         }
     }
 
+    /// Le rouge de YouTube n'entre pas dans la palette de Micabo : la tuile porte une
+    /// brique désaturée, comme les autres sources portent un vert ou un bleu éteints.
     var swatchTint: Color {
         switch self {
         case .pdf: Color(hex: 0x47665A)
         case .photo: Color(hex: 0x8A5A3A)
+        case .youtube: Color(hex: 0x8C4038)
         case .docx: Color(hex: 0x3D5A80)
         case .text: Color(hex: 0x4F5A72)
         }
@@ -67,6 +76,7 @@ enum ImportKind: String, Identifiable {
         switch self {
         case .pdf: Color(hex: 0xE4ECE6)
         case .photo: Color(hex: 0xF3E6DC)
+        case .youtube: Color(hex: 0xF1E0DD)
         case .docx: Color(hex: 0xE3EAF3)
         case .text: Color(hex: 0xE6E9F0)
         }
@@ -76,6 +86,7 @@ enum ImportKind: String, Identifiable {
         switch self {
         case .pdf: .pdf
         case .photo: .photo
+        case .youtube: .youtube
         case .docx: .docx
         case .text: .text
         }
@@ -86,7 +97,7 @@ enum ImportKind: String, Identifiable {
 struct ImportChoiceSheet: View {
     var onSelect: (ImportKind) -> Void
 
-    private let kinds: [ImportKind] = [.pdf, .photo, .docx, .text]
+    private let kinds: [ImportKind] = [.pdf, .photo, .youtube, .docx, .text]
 
     var body: some View {
         ScrollView {
@@ -134,6 +145,6 @@ struct ImportChoiceSheet: View {
     Color.clear
         .sheet(isPresented: .constant(true)) {
             ImportChoiceSheet { _ in }
-                .presentationDetents([.height(540)])
+                .presentationDetents([.height(604)])
         }
 }

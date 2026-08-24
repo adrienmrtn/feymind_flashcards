@@ -16,6 +16,42 @@ struct FlashcardGenerationRequest {
     var mix: QuestionMix = .default
 }
 
+/// Un passage de la fiche que l'utilisateur a sélectionné et veut comprendre.
+///
+/// Le passage seul ne suffit pas : « la Rubisco » n'a de sens que dans son cours. On envoie
+/// donc aussi le contexte, et le modèle répond en s'appuyant dessus au lieu de réciter une
+/// définition d'encyclopédie.
+struct SelectionExplanationRequest {
+    var selection: String
+    var courseTitle: String
+    var subject: String?
+    var courseContext: String
+}
+
+/// Ce que l'IA renvoie sur un passage sélectionné.
+///
+/// La réponse est découpée, et pas rendue en un bloc de texte, pour une raison
+/// d'affichage : `headline` est ce qu'on lit en premier et doit répondre seule, `body`
+/// développe, et les deux derniers champs n'apparaissent que s'ils apportent quelque
+/// chose. Le texte porte le balisage de la fiche, donc du gras et du surlignage.
+struct SelectionExplanation: Codable, Equatable {
+    /// Une phrase qui répond, sans préambule.
+    var headline: String
+    /// Deux à quatre phrases qui développent.
+    var body: String
+    /// Un exemple concret, s'il éclaire vraiment.
+    var example: String?
+    /// La confusion classique sur ce point.
+    var watchOut: String?
+    /// Une carte prête à être ajoutée au cours, pour ne pas reperdre ce qu'on vient de
+    /// comprendre.
+    var card: GeneratedFlashcard?
+
+    var isUsable: Bool {
+        !headline.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
 /// Formats de questions autorisés pour une génération.
 ///
 /// Le recto verso est toujours là : c'est le format qui marche pour n'importe quel
@@ -40,12 +76,13 @@ struct QuestionMix: Equatable {
     }
 }
 
-/// Le choix des formats, retenu d'un import à l'autre : personne n'a envie de le
-/// refaire à chaque cours.
+/// Les réglages de génération, retenus d'un cours à l'autre : personne n'a envie de les
+/// refaire à chaque fois.
 enum QuestionMixPreferences {
     enum Key {
         static let cloze = "micabo.generation.cloze"
         static let choice = "micabo.generation.choice"
+        static let count = "micabo.generation.count"
     }
 
     /// Absent vaut activé : un nouvel utilisateur doit voir les trois formats avant de
@@ -56,6 +93,17 @@ enum QuestionMixPreferences {
             includesCloze: defaults.object(forKey: Key.cloze) as? Bool ?? true,
             includesChoice: defaults.object(forKey: Key.choice) as? Bool ?? true
         )
+    }
+
+    /// Volumes proposés. Douze cartes est le défaut : de quoi couvrir un chapitre sans
+    /// transformer la première session en épreuve d'endurance.
+    static let countChoices = [8, 12, 20]
+    static let defaultCount = 12
+
+    static var count: Int {
+        let stored = UserDefaults.standard.object(forKey: Key.count) as? Int
+        guard let stored, countChoices.contains(stored) else { return defaultCount }
+        return stored
     }
 }
 
@@ -108,6 +156,10 @@ enum AIServiceError: LocalizedError {
 }
 
 protocol AIService {
+    /// Analyse un import et en écrit la fiche.
     func generateCourse(_ request: CourseGenerationRequest) async throws -> GeneratedCourse
+    /// Écrit des cartes à partir d'un cours déjà fiché.
     func generateFlashcards(_ request: FlashcardGenerationRequest) async throws -> [GeneratedFlashcard]
+    /// Explique un passage sélectionné dans la fiche.
+    func explain(_ request: SelectionExplanationRequest) async throws -> SelectionExplanation
 }

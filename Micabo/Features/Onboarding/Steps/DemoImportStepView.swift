@@ -1,11 +1,14 @@
 import SwiftUI
 
-/// Écran 9a : le geste, et rien d'autre. Une vignette de PDF en haut, une zone de
-/// dépôt en pointillés juste en dessous, et une consigne de quatre mots.
+/// Démonstration, 1 sur 3 : le geste, et rien d'autre.
 ///
-/// Le doigt fait glisser la vignette dans la zone. Au bout de deux secondes sans
-/// rien, la vignette se met à respirer pour montrer où aller, et un simple appui
-/// déclenche exactement la même chose.
+/// Une page de cours dense en haut, une zone de dépôt juste en dessous, une consigne de
+/// quatre mots. Le doigt fait glisser la page dans la zone ; au bout de deux secondes sans
+/// rien, elle se met à respirer, et un simple appui fait la même chose.
+///
+/// Le document est **volontairement brut** : un mur de texte sans hiérarchie, tel qu'on
+/// reçoit un polycopié. C'est le point de départ de la transformation que montre l'écran
+/// suivant, et sans un vrai avant, il n'y a pas d'après.
 struct DemoImportStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -14,21 +17,21 @@ struct DemoImportStepView: View {
     @State private var isDropped = false
     @State private var didSignalZone = false
     @State private var floats = false
-    @State private var showsTapHint = false
 
     /// Descente à partir de laquelle le dépôt compte. La zone est juste dessous,
     /// donc large : le geste doit réussir du premier coup.
     private let dropThreshold: CGFloat = 70
-    /// Trajet de la vignette quand elle tombe dans la zone.
-    private let dropTravel: CGFloat = 160
+    private let dropTravel: CGFloat = 150
 
     private var isOverZone: Bool { drag.height > dropThreshold }
 
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Comment ça marche · 1 sur 3",
-            title: "Glisse ce cours ici.",
-            titleSize: 28,
+            title: "Glisse ton cours ici.",
+            subtitle: "PDF, diapos, vidéo YouTube ou simple texte.",
+            titleSize: 30,
+            contentSpacing: MicaboSpacing.lg,
             scrolls: false
         ) {
             VStack(spacing: 14) {
@@ -37,31 +40,29 @@ struct DemoImportStepView: View {
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        } footer: {
-            hint
         }
         .onAppear(perform: scheduleNudge)
     }
 
-    // MARK: - La vignette
+    // MARK: - La page
 
     private var thumbnail: some View {
-        DemoDocumentPage()
-            .frame(width: 178)
-            .rotationEffect(.degrees(isDragging ? -2.5 : 0))
-            .scaleEffect(isDropped ? 0.38 : (isDragging ? 1.03 : 1))
+        DemoRawPage()
+            .frame(width: 172)
+            .rotationEffect(.degrees(isDragging ? -2 : 0))
+            .scaleEffect(isDropped ? 0.4 : (isDragging ? 1.02 : 1))
             .shadow(
-                color: Color.black.opacity(isDragging ? 0.18 : 0.08),
-                radius: isDragging ? 26 : 14,
+                color: Color.black.opacity(isDragging ? 0.16 : 0.07),
+                radius: isDragging ? 24 : 13,
                 x: 0,
-                y: isDragging ? 16 : 8
+                y: isDragging ? 15 : 7
             )
             .offset(drag)
-            .offset(y: floats && !isDragging && !isDropped ? 12 : 0)
+            .offset(y: floats && !isDragging && !isDropped ? 10 : 0)
             .opacity(isDropped ? 0 : 1)
             .gesture(dragGesture)
             .onTapGesture(perform: drop)
-            .animation(.spring(response: 0.32, dampingFraction: 0.72), value: isDragging)
+            .animation(OnboardingMotion.tap, value: isDragging)
             .accessibilityElement()
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel("Cours d'exemple, \(OnboardingDemo.fileName)")
@@ -79,8 +80,8 @@ struct DemoImportStepView: View {
                     Haptics.light()
                 }
 
-                // Le geste attendu est vertical : l'horizontale suit de loin, et la
-                // vignette ne remonte quasiment pas.
+                // Le geste attendu est vertical : l'horizontale suit de loin, et la page ne
+                // remonte quasiment pas.
                 let height = max(-24, value.translation.height)
                 drag = CGSize(width: value.translation.width * 0.45, height: height)
 
@@ -99,7 +100,7 @@ struct DemoImportStepView: View {
                 if isOverZone {
                     drop()
                 } else {
-                    withAnimation(.spring(response: 0.42, dampingFraction: 0.7)) {
+                    withAnimation(OnboardingMotion.shift) {
                         drag = .zero
                     }
                 }
@@ -108,6 +109,8 @@ struct DemoImportStepView: View {
 
     // MARK: - La zone de dépôt
 
+    /// Une icône et un mot. Il y avait ici un symbole, un titre et un sous-titre, soit
+    /// trois lignes pour dire « pose-le là ».
     private var dropZone: some View {
         ZStack {
             RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous)
@@ -122,26 +125,18 @@ struct DemoImportStepView: View {
                     )
                 )
 
-            if isDropped {
-                zoneLabel(
-                    symbol: "checkmark.circle.fill",
-                    title: OnboardingDemo.fileName,
-                    subtitle: "1 page, prête à être lue",
-                    tint: MicaboColor.positive
-                )
-                .transition(.scale(scale: 0.9).combined(with: .opacity))
-            } else {
-                zoneLabel(
-                    symbol: "arrow.down.circle",
-                    title: "Dépose-le ici",
-                    subtitle: "PDF, photo de tableau ou notes",
-                    tint: isOverZone ? MicaboColor.accent : MicaboColor.inkTertiary
-                )
+            HStack(spacing: 9) {
+                Image(systemName: isDropped ? "checkmark.circle.fill" : "arrow.down.circle")
+                    .font(.system(size: 19, weight: .medium))
+
+                Text(isDropped ? "Cours déposé" : "Dépose-le ici")
+                    .font(MicaboFont.hanken(15, weight: .semibold))
             }
+            .foregroundStyle(labelTint)
         }
-        .frame(height: 106)
-        .animation(.easeOut(duration: 0.18), value: isOverZone)
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isDropped)
+        .frame(height: 96)
+        .animation(OnboardingMotion.tap, value: isOverZone)
+        .animation(OnboardingMotion.shift, value: isDropped)
     }
 
     private var zoneFill: Color {
@@ -154,50 +149,9 @@ struct DemoImportStepView: View {
         return isOverZone ? MicaboColor.accent : MicaboColor.strokeStrong
     }
 
-    private func zoneLabel(symbol: String, title: String, subtitle: String, tint: Color) -> some View {
-        VStack(spacing: 7) {
-            Image(systemName: symbol)
-                .font(.system(size: 22, weight: .medium))
-                .foregroundStyle(tint)
-
-            Text(title)
-                .font(MicaboFont.hanken(15, weight: .semibold))
-                .foregroundStyle(MicaboColor.ink)
-                .lineLimit(1)
-
-            Text(subtitle)
-                .font(MicaboFont.hanken(12, weight: .regular))
-                .foregroundStyle(MicaboColor.inkTertiary)
-        }
-        .padding(.horizontal, MicaboSpacing.md)
-    }
-
-    // MARK: - Consigne
-
-    @ViewBuilder
-    private var hint: some View {
-        HStack(spacing: 7) {
-            Image(systemName: isDropped ? "checkmark.circle.fill" : "hand.draw")
-                .font(.system(size: 12, weight: .semibold))
-
-            Text(hintText)
-                .font(MicaboFont.hanken(13, weight: .semibold))
-        }
-        .foregroundStyle(isDropped ? MicaboColor.positive : MicaboColor.ink)
-        .padding(.vertical, 9)
-        .padding(.horizontal, 14)
-        .background(
-            isDropped ? MicaboColor.positiveSoft : MicaboColor.surfaceMuted,
-            in: Capsule()
-        )
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
-        .animation(.easeOut(duration: 0.2), value: isDropped)
-    }
-
-    private var hintText: String {
-        if isDropped { return "Cours déposé" }
-        return showsTapHint ? "Glisse la vignette, ou appuie dessus" : "Attrape la vignette avec ton doigt"
+    private var labelTint: Color {
+        if isDropped { return MicaboColor.positive }
+        return isOverZone ? MicaboColor.accent : MicaboColor.inkTertiary
     }
 
     // MARK: - Actions
@@ -207,27 +161,24 @@ struct DemoImportStepView: View {
         guard !isDropped else { return }
         Haptics.success()
 
-        withAnimation(.spring(response: 0.36, dampingFraction: 0.78)) {
+        withAnimation(OnboardingMotion.shift) {
             drag = CGSize(width: 0, height: dropTravel)
             isDropped = true
         }
 
         // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.
         let flow = model
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
             flow.advance()
         }
     }
 
-    /// Deux secondes sans geste : la vignette respire et on mentionne l'appui.
+    /// Deux secondes sans geste : la page respire pour montrer où aller.
     private func scheduleNudge() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             guard !isDropped, !isDragging else { return }
-            withAnimation(.easeInOut(duration: 0.85).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
                 floats = true
-            }
-            withAnimation(.easeOut(duration: 0.3)) {
-                showsTapHint = true
             }
             Haptics.tick()
         }

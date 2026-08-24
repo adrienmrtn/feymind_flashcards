@@ -72,7 +72,7 @@ struct TrialOfferStepView: View {
     }
 
     private func animateIn() {
-        withAnimation(.spring(response: 0.55, dampingFraction: 0.55).delay(0.15)) {
+        withAnimation(OnboardingMotion.shift.delay(0.15)) {
             giftScale = 1
         }
         withAnimation(.easeOut(duration: 1.8).repeatForever(autoreverses: true).delay(0.4)) {
@@ -177,6 +177,9 @@ private struct RingingBell: View {
             .foregroundStyle(MicaboColor.onInk)
             .frame(width: 78, height: 78)
             .background(MicaboColor.ink, in: Circle())
+            // Le seul ressort qui reste dans le parcours, et il est justifié : une cloche
+            // qui sonne oscille. Partout ailleurs, `OnboardingMotion` interdit le rebond.
+            //
             // Les angles sont tous distincts : deux phases identiques d'affilée
             // empêcheraient l'animateur de repartir. La dernière tient la pose,
             // ce qui donne la pause entre deux sonneries.

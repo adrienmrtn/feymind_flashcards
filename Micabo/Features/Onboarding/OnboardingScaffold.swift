@@ -62,6 +62,28 @@ enum OnboardingSurface {
     }
 }
 
+/// **Le mouvement du parcours d'accueil, en un seul endroit.**
+///
+/// Une seule règle, et elle explique toutes les courbes ci-dessous : **rien ne rebondit.**
+/// Un ressort dépasse sa cible puis revient, et vingt écrans qui dépassent leur cible
+/// donnent un parcours qui tremble. Les quatre courbes sont donc monotones : elles partent
+/// vite, elles ralentissent, elles s'arrêtent net.
+///
+/// Les avoir ici plutôt que dans chaque écran n'est pas une coquetterie : c'est ce qui fait
+/// qu'un écran ne peut pas se mettre à bouger autrement que ses voisins.
+enum OnboardingMotion {
+    /// Entrée d'un élément à l'ouverture d'un écran.
+    static let enter = Animation.timingCurve(0.2, 0.7, 0.2, 1, duration: 0.42)
+    /// Réaction à un appui : elle doit être finie avant qu'on ait relevé le doigt.
+    static let tap = Animation.timingCurve(0.3, 0, 0.2, 1, duration: 0.2)
+    /// Un élément qui se déplace ou change de forme sous les yeux.
+    static let shift = Animation.timingCurve(0.25, 0.8, 0.25, 1, duration: 0.48)
+    /// Passage d'un écran au suivant.
+    static let page = Animation.timingCurve(0.32, 0.72, 0.2, 1, duration: 0.36)
+    /// Décalage entre deux éléments qui entrent à la suite.
+    static let stagger = 0.075
+}
+
 private struct OnboardingSurfaceKey: EnvironmentKey {
     static let defaultValue = OnboardingSurface.canvas
 }
@@ -76,12 +98,18 @@ extension EnvironmentValues {
 
 /// Mise en page commune à tous les écrans du parcours : sur-titre, titre, sous-titre,
 /// contenu, puis une zone d'action ancrée en bas. Le tout arrive en cascade.
+///
+/// Un écran de ce parcours tient en **un titre court, une ligne de sous-titre au plus, et
+/// une seule chose à regarder.** Ce n'est pas une préférence esthétique : un écran
+/// d'inscription se lit en deux secondes ou ne se lit pas, et un paragraphe posé dans un
+/// bloc blanc à coins arrondis est exactement ce à quoi ressemble un texte que personne n'a
+/// relu.
 struct OnboardingScaffold<Content: View, Footer: View>: View {
     var eyebrow: String?
     var title: String
     var subtitle: String?
     var titleSize: CGFloat = 30
-    var contentSpacing: CGFloat = MicaboSpacing.lg
+    var contentSpacing: CGFloat = MicaboSpacing.xl
     var scrolls: Bool = true
     var surface: OnboardingSurface = .canvas
     var content: () -> Content
@@ -92,7 +120,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         title: String,
         subtitle: String? = nil,
         titleSize: CGFloat = 30,
-        contentSpacing: CGFloat = MicaboSpacing.lg,
+        contentSpacing: CGFloat = MicaboSpacing.xl,
         scrolls: Bool = true,
         surface: OnboardingSurface = .canvas,
         @ViewBuilder content: @escaping () -> Content,
@@ -131,7 +159,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
 
     private func stack(inScrollView: Bool) -> some View {
         VStack(alignment: .leading, spacing: contentSpacing) {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 9) {
                 if let eyebrow {
                     Text(eyebrow.uppercased())
                         .font(MicaboFont.hanken(11, weight: .semibold))
@@ -143,7 +171,8 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                 Text(title)
                     .font(MicaboFont.hanken(titleSize, weight: .bold))
                     .foregroundStyle(surface.title)
-                    .tracking(-0.6)
+                    .tracking(-0.7)
+                    .lineSpacing(-1)
                     .fixedSize(horizontal: false, vertical: true)
                     .onboardingAppear(index: 1)
 
@@ -199,23 +228,24 @@ extension OnboardingScaffold where Footer == EmptyView {
 
 // MARK: - Entrée en cascade
 
-/// Fait monter l'élément avec un léger flou, décalé selon sa position dans l'écran.
+/// Fait monter l'élément d'un rien, décalé selon sa position dans l'écran.
+///
+/// Le flou de mise au point qu'il y avait ici est parti : c'est un effet qui coûte une
+/// passe de rendu à chaque image, qui rend le texte illisible pendant sa propre apparition,
+/// et qui est devenu la signature des interfaces produites à la chaîne. Huit points de
+/// montée et un fondu suffisent à faire arriver un élément.
 private struct OnboardingAppear: ViewModifier {
     let index: Int
-    var stagger: Double = 0.07
+    var stagger: Double = OnboardingMotion.stagger
 
     @State private var isVisible = false
 
     func body(content: Content) -> some View {
         content
             .opacity(isVisible ? 1 : 0)
-            .offset(y: isVisible ? 0 : 16)
-            .blur(radius: isVisible ? 0 : 5)
+            .offset(y: isVisible ? 0 : 8)
             .onAppear {
-                withAnimation(
-                    .timingCurve(0.22, 0.61, 0.36, 1, duration: 0.42)
-                    .delay(0.06 + Double(index) * stagger)
-                ) {
+                withAnimation(OnboardingMotion.enter.delay(0.04 + Double(index) * stagger)) {
                     isVisible = true
                 }
             }
@@ -223,7 +253,7 @@ private struct OnboardingAppear: ViewModifier {
 }
 
 extension View {
-    func onboardingAppear(index: Int, stagger: Double = 0.07) -> some View {
+    func onboardingAppear(index: Int, stagger: Double = OnboardingMotion.stagger) -> some View {
         modifier(OnboardingAppear(index: index, stagger: stagger))
     }
 }
@@ -298,84 +328,29 @@ struct OnboardingHint: View {
     }
 }
 
-/// Invitation à tapoter, volontairement trop visible pour qu'on ne la rate pas.
+/// Rangée de choix : libellé, coche, et rien de plus.
 ///
-/// C'est un vrai bouton : il ressemble au CTA principal, il doit donc marcher comme
-/// lui. Le contenu de l'écran reste tapable en parallèle, les deux gestes appellent
-/// la même action.
-struct OnboardingTapPrompt: View {
-    var text: String = "Appuie pour découvrir la suite"
-    var action: () -> Void
-
-    @Environment(\.onboardingSurface) private var surface
-
-    @State private var isVisible = false
-    @State private var isPulsing = false
-    @State private var bounce = false
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: "hand.tap.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .offset(y: bounce ? -3 : 2)
-
-                Text(text)
-                    .font(MicaboFont.hanken(15, weight: .bold))
-            }
-            .foregroundStyle(surface.buttonForeground)
-            .padding(.vertical, 14)
-            .padding(.horizontal, 18)
-            .frame(maxWidth: .infinity)
-            .background(surface.buttonTint, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .scaleEffect(isPulsing ? 1.03 : 0.98)
-            .opacity(isVisible ? 1 : 0)
-        }
-        .buttonStyle(MicaboPressableButtonStyle())
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.35).delay(0.15)) {
-                isVisible = true
-            }
-            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true).delay(0.2)) {
-                isPulsing = true
-            }
-            withAnimation(.easeInOut(duration: 0.55).repeatForever(autoreverses: true).delay(0.2)) {
-                bounce = true
-            }
-        }
-    }
-}
-
-/// Rangée de choix : icône, libellé, coche. Utilisée pour l'objectif et les questions fermées.
+/// La tuile d'icône a disparu. Une icône par ligne sur six lignes fait six pastilles
+/// colorées qui n'apprennent rien, et c'est précisément ce qui rendait ces écrans
+/// bavards : on lisait des pictogrammes au lieu de lire les réponses.
 struct OnboardingChoiceRow: View {
     let title: String
     var subtitle: String?
-    var systemImage: String?
     var isSelected: Bool
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 14) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkSecondary)
-                        .frame(width: 42, height: 42)
-                        .background(
-                            isSelected ? MicaboColor.ink : MicaboColor.surfaceMuted,
-                            in: RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous)
-                        )
-                }
-
+            HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(MicaboFont.hanken(16, weight: .semibold))
+                        .font(MicaboFont.hanken(16, weight: .medium))
                         .foregroundStyle(MicaboColor.ink)
                         .multilineTextAlignment(.leading)
+
                     if let subtitle {
                         Text(subtitle)
-                            .font(MicaboFont.hanken(12, weight: .regular))
+                            .font(MicaboFont.hanken(12.5, weight: .regular))
                             .foregroundStyle(MicaboColor.inkTertiary)
                             .multilineTextAlignment(.leading)
                     }
@@ -384,20 +359,43 @@ struct OnboardingChoiceRow: View {
                 Spacer(minLength: MicaboSpacing.xs)
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 20, weight: .regular))
+                    .font(.system(size: 19, weight: .regular))
                     .foregroundStyle(isSelected ? MicaboColor.ink : MicaboColor.strokeStrong)
-                    .contentTransition(.symbolEffect(.replace))
             }
-            .padding(14)
+            .padding(.vertical, 15)
+            .padding(.horizontal, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
-                    .strokeBorder(isSelected ? MicaboColor.ink : MicaboColor.stroke, lineWidth: isSelected ? 1.6 : 1)
+                RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
+                    .strokeBorder(isSelected ? MicaboColor.ink : Color.clear, lineWidth: 1.5)
             }
-            .scaleEffect(isSelected ? 0.985 : 1)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
-        .animation(.easeOut(duration: 0.22), value: isSelected)
+        .animation(OnboardingMotion.tap, value: isSelected)
+    }
+}
+
+/// Pastille de choix, pour les questions à réponses courtes.
+///
+/// Sept niveaux d'études en sept rangées font un écran qu'on fait défiler. En pastilles qui
+/// s'enroulent, ils tiennent en trois lignes et se lisent d'un coup d'œil, ce qui est tout
+/// ce qu'on demande à une question fermée.
+struct OnboardingChoiceChip: View {
+    let title: String
+    let isSelected: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(MicaboFont.hanken(15, weight: .medium))
+                .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.ink)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 18)
+                .background(isSelected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .animation(OnboardingMotion.tap, value: isSelected)
     }
 }

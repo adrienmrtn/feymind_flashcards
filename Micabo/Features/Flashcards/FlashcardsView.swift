@@ -1,10 +1,14 @@
 import SwiftData
 import SwiftUI
 
-/// Écran principal d'un cours. Il porte le même en-tête que tous les autres écrans —
-/// crème, sur-titre puis grand titre — la seule couleur propre au cours étant sa tuile.
-/// Suivent le résumé et la liste des questions dans un bloc blanc ; le bouton de
-/// session, ancré en bas, porte le même nom que sur l'onglet Réviser.
+/// **Les cartes d'un cours.**
+///
+/// Cet écran vient un cran après la fiche, qui est l'écran du cours : on y arrive parce
+/// qu'on a demandé des cartes, et il ne parle donc que d'elles. Le résumé et le contenu du
+/// cours n'y sont pas répétés, ils sont juste derrière, dans la fiche.
+///
+/// Il porte le même en-tête que tous les autres écrans, la seule couleur propre au cours
+/// étant sa tuile ; le bouton de session, ancré en bas, porte le nom qu'il a partout.
 struct FlashcardsView: View {
     @Bindable var course: Course
 
@@ -16,9 +20,9 @@ struct FlashcardsView: View {
     @State private var isCreating = false
     @State private var isMasking = false
     @State private var isGenerating = false
+    @State private var showCardOptions = false
     @State private var showStudy = false
     @State private var studyMode: StudyMode = .scheduled
-    @State private var showDeleteConfirmation = false
     @State private var errorMessage: String?
 
     private var cards: [Flashcard] { course.orderedCards }
@@ -28,7 +32,6 @@ struct FlashcardsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                 header
-                summaryCard
                 listContent
             }
             .padding(.horizontal, MicaboSpacing.screen)
@@ -66,6 +69,13 @@ struct FlashcardsView: View {
         .sheet(isPresented: $isMasking) {
             OcclusionEditorSheet(course: course)
         }
+        .sheet(isPresented: $showCardOptions) {
+            GenerateCardsSheet(course: course) { options in
+                Task { await generateMore(options) }
+            }
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(MicaboRadius.sheet)
+        }
         .fullScreenCover(isPresented: $showStudy) {
             StudyView(source: .course(course), mode: studyMode)
         }
@@ -73,7 +83,7 @@ struct FlashcardsView: View {
             if isGenerating {
                 GenerationOverlay(
                     title: "Nouvelles cartes",
-                    steps: ["Relecture du contenu", "Choix des notions", "Rédaction", "Vérification"]
+                    steps: ["Relecture de la fiche", "Choix des notions", "Rédaction", "Vérification"]
                 )
             }
         }
@@ -81,15 +91,6 @@ struct FlashcardsView: View {
             Button("Fermer", role: .cancel) { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "")
-        }
-        .confirmationDialog("Supprimer ce cours ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
-            Button("Supprimer", role: .destructive) {
-                try? CourseRepository.delete(course, in: modelContext)
-                dismiss()
-            }
-            Button("Annuler", role: .cancel) {}
-        } message: {
-            Text("Le cours et ses \(MicaboCopy.cards(cards.count)) seront définitivement effacés.")
         }
     }
 
@@ -113,8 +114,8 @@ struct FlashcardsView: View {
         .padding(.top, MicaboSpacing.xs)
     }
 
-    /// Matière et volume dans le sur-titre : c'est la place de ce genre d'information,
-    /// et le cours n'a donc pas besoin d'un bandeau à lui.
+    /// Le titre de l'écran est le cours, le sur-titre dit qu'on est dans ses cartes : sans
+    /// ça, deux écrans du même cours porteraient exactement le même en-tête.
     private var headerEyebrow: String {
         let volume = MicaboCopy.cards(cards.count)
         guard let subject = course.subject?.nilIfBlank else { return volume }
@@ -137,7 +138,7 @@ struct FlashcardsView: View {
             Button { isMasking = true } label: {
                 Label("Masquer un schéma", systemImage: "rectangle.dashed")
             }
-            Button { Task { await generateMore() } } label: {
+            Button { showCardOptions = true } label: {
                 Label("Générer avec l'IA", systemImage: "sparkles")
             }
             if canAddReverseCards {
@@ -150,14 +151,10 @@ struct FlashcardsView: View {
                     Label("Réinitialiser la progression", systemImage: "arrow.counterclockwise")
                 }
             }
-            Divider()
-            Button(role: .destructive) { showDeleteConfirmation = true } label: {
-                Label("Supprimer le cours", systemImage: "trash")
-            }
         } label: {
             MicaboCircleIcon(systemImage: "ellipsis", size: 38)
         }
-        .accessibilityLabel("Actions du cours")
+        .accessibilityLabel("Actions des cartes")
     }
 
     // MARK: - Liste
@@ -168,10 +165,10 @@ struct FlashcardsView: View {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
                 title: "Aucune carte",
-                message: "Génère un jeu de cartes à partir du contenu importé, ou crée-en une à la main.",
-                actionTitle: "Générer avec l'IA"
+                message: "Micabo peut en écrire à partir de la fiche du cours, et tu peux aussi en créer une à la main.",
+                actionTitle: MicaboCopy.cardsButton
             ) {
-                Task { await generateMore() }
+                showCardOptions = true
             }
         } else {
             VStack(alignment: .leading, spacing: 8) {
@@ -230,21 +227,6 @@ struct FlashcardsView: View {
         }
     }
 
-    /// Le résumé vit sous le titre, dans une surface blanche à part.
-    @ViewBuilder
-    private var summaryCard: some View {
-        if let summary = course.summary.nilIfBlank {
-            Text(summary)
-                .font(MicaboFont.body)
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .lineSpacing(3)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(16)
-                .micaboGroup()
-        }
-    }
-
     /// Ce que la rangée signale d'un coup d'œil : format, son, sens inverse.
     private func badges(for card: Flashcard) -> [String] {
         var symbols: [String] = []
@@ -297,22 +279,14 @@ struct FlashcardsView: View {
     }
 
     @MainActor
-    private func generateMore() async {
+    private func generateMore(_ options: CardGeneration.Options) async {
         guard !isGenerating else { return }
         isGenerating = true
         defer { isGenerating = false }
 
-        let request = FlashcardGenerationRequest(
-            courseTitle: course.title,
-            courseContext: course.contextSnippet(limit: 30_000),
-            desiredCount: 10,
-            existingFronts: course.cards.map(\.front),
-            mix: QuestionMixPreferences.current
-        )
-
         do {
-            let generated = try await aiService.generateFlashcards(request)
-            try CourseRepository.addFlashcards(generated, to: course, in: modelContext)
+            try await CardGeneration.run(for: course, options: options, using: aiService, in: modelContext)
+            Haptics.success()
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }

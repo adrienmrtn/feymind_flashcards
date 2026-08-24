@@ -60,7 +60,7 @@ struct ProjectionStepView: View {
                         .fill(index < grownMonths ? MicaboColor.accent : MicaboColor.surfaceSunken)
                         .frame(height: barHeight(for: index))
                         .frame(maxWidth: .infinity)
-                        .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(index) * 0.04), value: grownMonths)
+                        .animation(OnboardingMotion.shift.delay(Double(index) * 0.04), value: grownMonths)
                 }
             }
             .frame(height: 84, alignment: .bottom)

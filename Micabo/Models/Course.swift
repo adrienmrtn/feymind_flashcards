@@ -6,6 +6,7 @@ enum CourseSource: String, Codable, CaseIterable {
     case pdf
     case photo
     case docx
+    case youtube
     case library
     case sample
 
@@ -15,6 +16,7 @@ enum CourseSource: String, Codable, CaseIterable {
         case .pdf: "PDF"
         case .photo: "Photos"
         case .docx: "Word"
+        case .youtube: "YouTube"
         case .library: "Bibliothèque"
         case .sample: "Exemple"
         }
@@ -26,6 +28,7 @@ enum CourseSource: String, Codable, CaseIterable {
         case .pdf: "doc.fill"
         case .photo: "photo.on.rectangle.angled"
         case .docx: "doc.richtext"
+        case .youtube: "play.rectangle.fill"
         case .library: "globe.europe.africa.fill"
         case .sample: "sparkles"
         }
@@ -44,10 +47,15 @@ final class Course {
     var updatedAt: Date = Date()
     var sourceRaw: String = CourseSource.text.rawValue
     var sourceFileName: String?
-    /// Texte source brut, conservé pour régénérer des flashcards.
+    /// Texte source brut, conservé pour régénérer la fiche ou des cartes.
     var rawText: String = ""
     /// Contenu analysé par l'IA, servant de contexte aux nouvelles cartes.
     var contextText: String = ""
+    /// La **fiche** du cours, mise en page : c'est ce que l'utilisateur lit après un
+    /// import. Elle est encodée en JSON (`CourseSheet`) plutôt que stockée en blocs
+    /// SwiftData, parce qu'elle se lit et s'écrit toujours d'un bloc, jamais par morceaux.
+    /// Nulle sur un cours importé avant la fiche, ou quand l'analyse a échoué.
+    var sheetData: Data?
     /// Première page ou photo, utilisée comme couverture.
     @Attribute(.externalStorage) var coverImageData: Data?
     var isFromLibrary: Bool = false
@@ -68,6 +76,7 @@ final class Course {
         sourceFileName: String? = nil,
         rawText: String = "",
         contextText: String = "",
+        sheet: CourseSheet? = nil,
         coverImageData: Data? = nil,
         isFromLibrary: Bool = false
     ) {
@@ -83,6 +92,7 @@ final class Course {
         self.sourceFileName = sourceFileName
         self.rawText = rawText
         self.contextText = contextText
+        self.sheetData = sheet?.encoded()
         self.coverImageData = coverImageData
         self.isFromLibrary = isFromLibrary
         self.flashcards = []
@@ -109,13 +119,31 @@ final class Course {
         cards.filter { $0.state == .new }
     }
 
-    /// Contexte condensé du cours, envoyé à l'IA pour rédiger de nouvelles cartes.
+    /// Vrai dès qu'une fiche a été enregistrée. Se lit sans décoder le JSON, donc à
+    /// volonté dans une liste.
+    var hasSheet: Bool {
+        (sheetData?.isEmpty == false)
+    }
+
+    /// La fiche décodée. Le décodage n'est pas gratuit : un écran la lit une fois et la
+    /// garde, il ne l'appelle pas depuis un corps de vue.
+    func decodedSheet() -> CourseSheet? {
+        CourseSheet.decode(from: sheetData)
+    }
+
+    func apply(_ sheet: CourseSheet?) {
+        sheetData = sheet?.encoded()
+    }
+
+    /// Contexte condensé du cours, envoyé à l'IA pour rédiger de nouvelles cartes ou
+    /// expliquer un passage. La fiche passe devant le reste : c'est le texte le mieux
+    /// organisé dont on dispose sur ce cours.
     func contextSnippet(limit: Int = 6000) -> String {
         var header = "Titre : \(title)\n"
         if let subject, !subject.isEmpty { header += "Matière : \(subject)\n" }
         if !summary.isEmpty { header += summary + "\n\n" }
 
-        let body = contextText.isEmpty ? rawText : contextText
+        let body = contextText.nilIfBlank ?? rawText
         let remaining = max(0, limit - header.count)
         return header + String(body.prefix(remaining))
     }

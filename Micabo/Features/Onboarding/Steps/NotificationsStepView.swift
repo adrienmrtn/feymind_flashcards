@@ -12,7 +12,7 @@ struct NotificationsStepView: View {
         OnboardingScaffold(
             eyebrow: "Dernière chose",
             title: "On te rappelle\nau bon moment.",
-            subtitle: "Un seul rappel par jour, à l'heure où tes cartes arrivent à échéance. Rien d'autre.",
+            subtitle: "Un rappel par jour, quand tes cartes arrivent à échéance.",
             titleSize: 28
         ) {
             VStack(spacing: 22) {
@@ -53,7 +53,7 @@ struct NotificationsStepView: View {
             bellRings.toggle()
             Haptics.tick()
         }
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.7)) {
+        withAnimation(OnboardingMotion.shift.delay(0.7)) {
             bannerVisible = true
         }
     }

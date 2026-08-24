@@ -5,7 +5,18 @@ import UIKit
 import UniformTypeIdentifiers
 import VisionKit
 
-/// Écran d'import : texte, PDF, photos/scan ou Word, puis génération des cartes.
+/// Écran d'import : texte, PDF, photos/scan, vidéo YouTube ou Word, puis écriture de la
+/// fiche.
+///
+/// L'import s'arrête à la **fiche**. Il ne génère plus de cartes au passage, et c'est un
+/// choix de parcours : un étudiant qui dépose un chapitre veut d'abord le lire, et
+/// personne n'a envie de régler des formats de questions avant d'avoir vu ce que Micabo a
+/// compris de son document. Les cartes se demandent depuis le cours, une fois la fiche
+/// sous les yeux.
+///
+/// Les cinq sources convergent vers un `ImportedDocument` avant que quoi que ce soit soit
+/// analysé. Une vidéo n'a donc pas de branche à elle dans la génération : une fois ses
+/// sous-titres transcrits, c'est un document dont le texte a été obtenu autrement.
 struct ImportView: View {
     let kind: ImportKind
     var onCreated: (Course) -> Void
@@ -23,9 +34,11 @@ struct ImportView: View {
     @State private var showScanner = false
     @State private var photoItems: [PhotosPickerItem] = []
 
-    /// Formats de questions retenus d'un import à l'autre.
-    @AppStorage(QuestionMixPreferences.Key.cloze) private var includesCloze = true
-    @AppStorage(QuestionMixPreferences.Key.choice) private var includesChoice = true
+    // Vidéo YouTube. Le lien, son aperçu, puis sa transcription : les trois sont gardés le
+    // temps de l'écran, de sorte qu'un réseau coupé au milieu ne fasse pas tout reprendre.
+    @State private var youtubeLink = ""
+    @State private var youtubeVideo: YouTubeVideo?
+    @State private var isCheckingLink = false
 
     @State private var isReading = false
     @State private var isGenerating = false
@@ -35,21 +48,30 @@ struct ImportView: View {
     @State private var duplicate: Course?
     @State private var ignoresDuplicate = false
 
+    private let youtube = YouTubeImportService()
+
     private var canGenerate: Bool {
         switch kind {
         case .text:
             pastedText.trimmingCharacters(in: .whitespacesAndNewlines).count >= 40
+        case .youtube:
+            // La transcription n'est pas encore là : ce qui autorise à continuer, c'est un
+            // aperçu que rien ne bloque.
+            imported != nil || youtubeIsReady
         case .pdf, .photo, .docx:
             imported != nil
         }
     }
 
-    private var showsVisionToggle: Bool {
-        kind == .pdf || kind == .photo
+    /// Un aperçu obtenu, et rien qui empêche de lire la vidéo.
+    private var youtubeIsReady: Bool {
+        guard let youtubeVideo else { return false }
+        return youtubeVideo.blockingReason == nil
     }
 
-    private var questionMix: QuestionMix {
-        QuestionMix(includesCloze: includesCloze, includesChoice: includesChoice)
+    /// Une transcription n'a pas de pages : l'analyse des schémas ne veut rien dire ici.
+    private var showsVisionToggle: Bool {
+        kind == .pdf || kind == .photo
     }
 
     var body: some View {
@@ -65,13 +87,12 @@ struct ImportView: View {
                         case .text: textInput
                         case .pdf, .docx: fileInput
                         case .photo: photoInput
+                        case .youtube: youtubeInput
                         }
 
                         if showsVisionToggle {
                             visionToggle
                         }
-
-                        questionMixSection
 
                         aiNote
                     }
@@ -84,12 +105,12 @@ struct ImportView: View {
 
                 MicaboBottomBar {
                     Button {
-                        Task { await generate(offline: false) }
+                        Task { await start(offline: false) }
                     } label: {
                         HStack(spacing: MicaboSpacing.xs) {
                             Image(systemName: "sparkles")
                                 .font(.system(size: 13, weight: .semibold))
-                            Text("Générer les cartes")
+                            Text(MicaboCopy.sheetButton)
                         }
                     }
                     .buttonStyle(MicaboPrimaryButtonStyle(tint: canGenerate ? MicaboColor.ink : MicaboColor.strokeStrong))
@@ -125,23 +146,11 @@ struct ImportView: View {
             }
             .overlay {
                 if isReading {
-                    GenerationOverlay(
-                        title: "Lecture des pages",
-                        steps: [
-                            "Préparation des images",
-                            "OCR sur l'appareil",
-                            "Nettoyage du texte"
-                        ]
-                    )
+                    GenerationOverlay(title: readingOverlayTitle, steps: readingOverlaySteps)
                 } else if isGenerating {
                     GenerationOverlay(
-                        title: "Création des cartes",
-                        steps: [
-                            readingStepTitle,
-                            "Repérage des notions clés",
-                            "Rédaction des questions",
-                            "Vérification des réponses"
-                        ]
+                        title: "Écriture de la fiche",
+                        steps: SheetGenerationSteps.all(reading: readingStepTitle)
                     )
                 }
             }
@@ -164,7 +173,7 @@ struct ImportView: View {
                 Button("Importer quand même") {
                     duplicate = nil
                     ignoresDuplicate = true
-                    Task { await generate(offline: false) }
+                    Task { await start(offline: false) }
                 }
                 Button("Annuler", role: .cancel) { duplicate = nil }
             } message: { existing in
@@ -183,18 +192,20 @@ struct ImportView: View {
         case .buildOffline:
             Button("Créer sans IA") {
                 failure = nil
-                Task { await generate(offline: true) }
+                Task { await start(offline: true) }
             }
         case .enableVision:
             Button("Analyser les schémas") {
                 failure = nil
                 analyzeVisuals = true
-                Task { await generate(offline: false) }
+                Task { await start(offline: false) }
             }
-        case .openCourse(let course):
-            Button("Voir le cours") {
+        case .retry:
+            // Reprise, pas reprise à zéro : ce qui a déjà été obtenu est gardé, donc une
+            // transcription réussie ne repart pas sur le réseau parce que l'analyse a lâché.
+            Button("Réessayer") {
                 failure = nil
-                onCreated(course)
+                Task { await start(offline: false) }
             }
         }
     }
@@ -203,8 +214,19 @@ struct ImportView: View {
         switch kind {
         case .photo: "Lecture des photos"
         case .text: "Lecture de tes notes"
+        case .youtube: "Lecture des sous-titres"
         case .pdf, .docx: "Lecture du document"
         }
+    }
+
+    private var readingOverlayTitle: String {
+        kind == .youtube ? "Lecture de la vidéo" : "Lecture des pages"
+    }
+
+    private var readingOverlaySteps: [String] {
+        kind == .youtube
+            ? ["Choix de la piste de sous-titres", "Téléchargement de la transcription", "Nettoyage du texte"]
+            : ["Préparation des images", "OCR sur l'appareil", "Nettoyage du texte"]
     }
 
     // MARK: - Sections
@@ -229,13 +251,15 @@ struct ImportView: View {
     private var introCopy: String {
         switch kind {
         case .pdf:
-            "Le texte est lu sur l'appareil. Un PDF scanné passe par l'OCR d'Apple, sans frais. L'analyse des schémas est facultative."
+            "Le texte est lu sur l'appareil. Un PDF scanné passe par l'OCR d'Apple, sans frais. Micabo en écrit ensuite la fiche."
         case .photo:
-            "Scanne plusieurs pages ou choisis des photos. Le texte est lu ici, hors ligne."
+            "Scanne plusieurs pages ou choisis des photos. Le texte est lu ici, hors ligne, puis mis en fiche."
+        case .youtube:
+            "Micabo lit les sous-titres de la vidéo, jamais son audio. Une vidéo qui n'en a pas ne peut donc pas être fichée."
         case .docx:
-            "Micabo extrait le texte du document Word sur l'appareil, sans l'envoyer nulle part."
+            "Micabo extrait le texte du document Word sur l'appareil, puis en écrit la fiche."
         case .text:
-            "Colle tes notes, même brutes. Micabo en fait des cartes."
+            "Colle tes notes, même brutes. Micabo en fait une fiche qui se relit."
         }
     }
 
@@ -351,6 +375,30 @@ struct ImportView: View {
         }
     }
 
+    @ViewBuilder
+    private var youtubeInput: some View {
+        if let document = imported {
+            // La transcription est déjà là : c'est un document comme un autre, et on
+            // l'affiche comme tel.
+            importedCard(document) { resetYouTube() }
+        } else {
+            YouTubeImportSection(
+                link: $youtubeLink,
+                video: youtubeVideo,
+                isChecking: isCheckingLink,
+                onCheck: { Task { await checkLink() } },
+                onReset: resetYouTube
+            )
+            .onChange(of: youtubeLink) { _, new in
+                // Un lien collé est complet du premier coup : on va chercher l'aperçu sans
+                // demander un appui de plus. Un lien tapé à la main ne devient valide qu'à
+                // son dernier caractère, donc la règle vaut aussi pour lui.
+                guard youtubeVideo == nil, !isCheckingLink, YouTubeLink.isValid(new) else { return }
+                Task { await checkLink() }
+            }
+        }
+    }
+
     private func importedCard(_ document: ImportedDocument, replace: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
             HStack(spacing: MicaboSpacing.sm) {
@@ -447,63 +495,26 @@ struct ImportView: View {
         .micaboGroup()
     }
 
-    /// Les formats de questions, réglés juste avant d'appuyer sur « Générer les cartes ».
-    /// Le recto verso ne se coupe pas : c'est le format qui marche sur n'importe quel
-    /// cours, les deux autres viennent en plus quand le passage s'y prête.
-    private var questionMixSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Types de questions")
-
-            VStack(spacing: 0) {
-                formatToggle(
-                    title: "Textes à trou",
-                    detail: "Une phrase du cours, un terme à retrouver.",
-                    isOn: $includesCloze
-                )
-
-                MicaboHairline(inset: MicaboSpacing.md)
-
-                formatToggle(
-                    title: "QCM",
-                    detail: "Une question, trois ou quatre propositions, une seule bonne.",
-                    isOn: $includesChoice
-                )
-            }
-            .micaboGroup()
-
-            Text("Le recto verso est toujours de la partie.")
-                .font(MicaboFont.micro)
-                .foregroundStyle(MicaboColor.inkTertiary)
-        }
-    }
-
-    private func formatToggle(title: String, detail: String, isOn: Binding<Bool>) -> some View {
-        Toggle(isOn: isOn) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(MicaboFont.rowTitle)
-                    .foregroundStyle(MicaboColor.ink)
-                Text(detail)
-                    .font(MicaboFont.hanken(12, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .tint(MicaboColor.accent)
-        .padding(.vertical, 12)
-        .padding(.horizontal, MicaboSpacing.md)
-    }
-
+    /// Ce qui part de l'appareil, dit franchement. La vidéo est la seule source dont le
+    /// texte n'est pas extrait ici : ses sous-titres sont récupérés par l'Edge Function, et
+    /// l'écrire autrement serait mentir sur la seule promesse que l'app tient partout
+    /// ailleurs.
     private var aiNote: some View {
         HStack(spacing: 6) {
             Image(systemName: "lock")
                 .font(.system(size: 10, weight: .semibold))
-            Text("Le texte est extrait sur l'appareil. Seule la rédaction des cartes passe par tes Edge Functions (\(AppConfig.aiModel)).")
+            Text(privacyCopy)
                 .font(MicaboFont.micro)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .foregroundStyle(MicaboColor.inkTertiary)
         .padding(.top, MicaboSpacing.xxs)
+    }
+
+    private var privacyCopy: String {
+        kind == .youtube
+            ? "Le lien et les sous-titres passent par tes Edge Functions, qui écrivent ensuite la fiche (\(AppConfig.aiModel))."
+            : "Le texte est extrait sur l'appareil. Seule la rédaction de la fiche passe par tes Edge Functions (\(AppConfig.aiModel))."
     }
 
     // MARK: - Fichiers et photos
@@ -577,11 +588,118 @@ struct ImportView: View {
     private func applyImported(_ document: ImportedDocument) {
         imported = document
         if title.isEmpty { title = document.fileName }
-        // Vision seulement si le texte est trop mince : sinon on économise l'appel.
-        analyzeVisuals = !document.hasUsableText
+        // Vision seulement si le texte est trop mince, et jamais sur une transcription qui
+        // n'a pas de pages : sinon on dépense un appel pour rien.
+        analyzeVisuals = showsVisionToggle && !document.hasUsableText
+    }
+
+    // MARK: - Vidéo YouTube
+
+    /// L'aperçu de la vidéo. Aucune transcription n'est téléchargée à ce stade, et aucune
+    /// génération n'est lancée : c'est ce qui permet de refuser une vidéo de trois heures
+    /// sans avoir rien dépensé.
+    @MainActor
+    private func checkLink() async {
+        let link = youtubeLink.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard YouTubeLink.isValid(link) else {
+            youtubeVideo = nil
+            failure = youtubeFailure(YouTubeImportError.invalidLink)
+            return
+        }
+
+        guard !isCheckingLink else { return }
+        isCheckingLink = true
+        defer { isCheckingLink = false }
+
+        do {
+            let video = try await youtube.preview(link: link)
+            youtubeVideo = video
+            if title.isEmpty { title = video.title }
+        } catch {
+            youtubeVideo = nil
+            failure = youtubeFailure(error)
+        }
+    }
+
+    /// Un refus de l'import vidéo, avec son titre et sa sortie. Le message vient de
+    /// `YouTubeImportError` et n'est pas retouché : ce sont les phrases que l'utilisateur
+    /// doit lire, au mot près.
+    private func youtubeFailure(_ error: Error) -> ImportFailure {
+        guard let youtubeError = error as? YouTubeImportError else {
+            return ImportFailure(
+                title: "Lecture impossible",
+                message: describe(error),
+                recovery: isRecoverable(error) ? .retry : .none
+            )
+        }
+        return ImportFailure(
+            title: youtubeError.failureTitle,
+            message: youtubeError.errorDescription ?? "",
+            recovery: youtubeError.allowsRetry ? .retry : .none
+        )
+    }
+
+    private func resetYouTube() {
+        // Le titre proposé venait de la vidéo : garder celui de la précédente serait pire
+        // que de le vider. Un titre saisi à la main, lui, reste.
+        if let previous = youtubeVideo?.title, title == previous {
+            title = ""
+        }
+        imported = nil
+        youtubeVideo = nil
+        youtubeLink = ""
+    }
+
+    /// Télécharge la transcription et en fait un document d'import.
+    ///
+    /// Rend `false` quand ça a échoué, pour que l'appelant n'enchaîne pas sur l'analyse. Le
+    /// document obtenu reste en mémoire : si l'analyse échoue ensuite, « Réessayer » repart
+    /// d'ici, pas du lien.
+    @MainActor
+    private func loadTranscript() async -> Bool {
+        guard let video = youtubeVideo else { return false }
+
+        // Le garde qui compte : une vidéo hors limite, ou sans sous-titres, ne déclenche
+        // aucun appel, ni de transcription ni de génération.
+        if let reason = video.blockingReason {
+            failure = youtubeFailure(reason)
+            return false
+        }
+
+        isReading = true
+        defer { isReading = false }
+
+        do {
+            let transcript = try await youtube.transcript(link: youtubeLink)
+            let cover = await youtube.cover(for: video)
+            applyImported(
+                YouTubeImportService.document(video: video, transcript: transcript, cover: cover)
+            )
+            return true
+        } catch {
+            failure = youtubeFailure(error)
+            return false
+        }
     }
 
     // MARK: - Génération
+
+    /// Le bouton du bas, et toutes les reprises.
+    ///
+    /// La vidéo est la seule source dont le texte s'obtient en ligne, donc la seule qui a
+    /// une étape avant l'analyse. Elle est ici et pas dans `generate` pour que la reprise
+    /// soit franche : ce qui a déjà été obtenu n'est pas redemandé, et rien n'est écrit en
+    /// base avant que l'analyse ait réussi.
+    @MainActor
+    private func start(offline: Bool) async {
+        guard !isGenerating, !isReading else { return }
+
+        if kind == .youtube, imported == nil {
+            guard await loadTranscript() else { return }
+        }
+        await generate(offline: offline)
+    }
 
     @MainActor
     private func generate(offline: Bool) async {
@@ -600,7 +718,7 @@ struct ImportView: View {
             fileName = nil
             cover = nil
             source = .text
-        case .pdf, .photo, .docx:
+        case .pdf, .photo, .docx, .youtube:
             guard let imported else { return }
             rawText = imported.text
             images = analyzeVisuals ? imported.pageImages : []
@@ -641,7 +759,7 @@ struct ImportView: View {
             sourceName: fileName
         )
 
-        // Étape 1 : la fiche du cours. Si elle échoue, rien n'a été créé.
+        // Étape 1 : la fiche. Si elle échoue, rien n'a été créé.
         let generated: GeneratedCourse
         if offline {
             generated = OfflineCourseBuilder.build(
@@ -662,10 +780,10 @@ struct ImportView: View {
             }
         }
 
-        // Étape 2 : le cours est enregistré. À partir d'ici, un échec ne doit plus rien perdre.
-        let course: Course
+        // Étape 2 : le cours est enregistré avec sa fiche. L'import s'arrête là : les
+        // cartes se demandent depuis le cours, la fiche sous les yeux.
         do {
-            course = try CourseRepository.save(
+            let course = try CourseRepository.save(
                 generated,
                 source: source,
                 rawText: rawText,
@@ -673,62 +791,14 @@ struct ImportView: View {
                 coverImageData: cover,
                 in: modelContext
             )
+            onCreated(course)
         } catch {
             failure = ImportFailure(
                 title: "Enregistrement impossible",
                 message: "\(describe(error)) Réessaie dans un instant.",
                 recovery: .none
             )
-            return
         }
-
-        // Étape 3 : les cartes. Le cours existe déjà, donc tout échec est récupérable.
-        var cards: [GeneratedFlashcard] = []
-        if offline {
-            cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
-        } else {
-            do {
-                cards = try await aiService.generateFlashcards(
-                    FlashcardGenerationRequest(
-                        courseTitle: course.title,
-                        courseContext: course.contextSnippet(limit: 30_000),
-                        desiredCount: 12,
-                        existingFronts: [],
-                        mix: questionMix
-                    )
-                )
-            } catch {
-                if isRecoverable(error) {
-                    cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
-                } else {
-                    failure = ImportFailure(
-                        title: "Le cours est là, les cartes non",
-                        message: "\(describe(error)) « \(course.title) » est enregistré : relance la génération depuis le cours quand tu veux.",
-                        recovery: .openCourse(course)
-                    )
-                    return
-                }
-            }
-        }
-
-        let inserted = (try? CourseRepository.addFlashcards(cards, to: course, in: modelContext)) ?? []
-
-        guard !inserted.isEmpty else {
-            failure = ImportFailure(
-                title: "Aucune carte exploitable",
-                message: "Le cours « \(course.title) » est enregistré, mais rien n'a pu être transformé en carte. Ouvre-le pour en écrire une à la main ou relancer la génération.",
-                recovery: .openCourse(course)
-            )
-            return
-        }
-
-        // Les langues se révisent dans les deux sens : la carte inverse est créée d'office,
-        // avec sa propre planification.
-        if SubjectHeuristics.isLanguage(subject: course.subject, title: course.title) {
-            try? CourseRepository.addReverseCards(for: course, in: modelContext)
-        }
-
-        onCreated(course)
     }
 
     private func report(_ error: Error, title: String) {
@@ -755,12 +825,12 @@ struct ImportView: View {
 struct ImportFailure: Identifiable {
     enum Recovery {
         case none
-        /// Construire les cartes à partir du texte brut, sans IA.
+        /// Construire la fiche à partir du texte brut, sans IA.
         case buildOffline
         /// Relancer en envoyant les pages au modèle de vision.
         case enableVision
-        /// Le cours est enregistré : on l'ouvre au lieu de perdre le travail.
-        case openCourse(Course)
+        /// Reprendre là où ça s'est arrêté : le réseau a lâché, rien n'est perdu.
+        case retry
     }
 
     let id = UUID()
@@ -772,9 +842,9 @@ struct ImportFailure: Identifiable {
 /// Contrôle du texte extrait avant d'appeler quoi que ce soit.
 ///
 /// C'est le cas de la photo de cahier manuscrit : l'OCR rend trois mots, et sans ce garde
-/// l'utilisateur attendait une génération pour récolter des cartes vides.
+/// l'utilisateur attendait une analyse pour récolter une fiche vide.
 enum ImportReadiness {
-    /// En dessous, il n'y a pas de quoi écrire des cartes.
+    /// En dessous, il n'y a pas de quoi écrire une fiche.
     static let minimumCharacters = 120
 
     static func failure(
@@ -812,7 +882,16 @@ enum ImportReadiness {
         case .text:
             return ImportFailure(
                 title: "Il manque du texte",
-                message: "\(read) Colle au moins un paragraphe : c'est le minimum pour en tirer des cartes.",
+                message: "\(read) Colle au moins un paragraphe : c'est le minimum pour en tirer une fiche.",
+                recovery: .none
+            )
+        case .youtube:
+            // Le serveur refuse déjà une transcription trop courte, avec son propre seuil.
+            // Ce garde n'est là que si elle passe quand même : la phrase reste la même,
+            // écrite en un seul endroit.
+            return ImportFailure(
+                title: YouTubeImportError.transcriptTooShort.failureTitle,
+                message: YouTubeImportError.transcriptTooShort.errorDescription ?? "",
                 recovery: .none
             )
         }

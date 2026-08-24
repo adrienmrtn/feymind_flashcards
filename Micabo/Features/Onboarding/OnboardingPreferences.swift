@@ -1,6 +1,10 @@
 import Foundation
 
 /// Objectif déclaré à l'inscription. Sert plus tard à ajuster les rappels et les suggestions.
+///
+/// Un libellé, et rien d'autre. Le sous-titre et l'icône qui accompagnaient chaque objectif
+/// ont disparu avec les rangées qui les affichaient : sept lignes à picto et sous-titre font
+/// lire des pictogrammes au lieu des réponses.
 enum LearningGoal: String, CaseIterable, Identifiable {
     case language
     case exam
@@ -24,27 +28,33 @@ enum LearningGoal: String, CaseIterable, Identifiable {
         }
     }
 
-    var subtitle: String {
-        switch self {
-        case .language: "Vocabulaire, conjugaison, expressions"
-        case .exam: "Bac, partiels, certification"
-        case .competition: "Prépa, médecine, fonction publique"
-        case .lectures: "Amphis, PDF, prises de notes"
-        case .profession: "Process, produits, certifications"
-        case .curiosity: "Histoire, sciences, arts"
-        case .other: "On s'adapte quand même"
-        }
-    }
+}
 
-    var systemImage: String {
+/// Où en est l'étudiant dans ses études.
+///
+/// Une seule réponse, et sept possibilités : c'est la question qui situe tout le reste, et
+/// elle est posée juste après l'accroche parce qu'un lycéen et un PASS n'ont ni les mêmes
+/// matières, ni les mêmes examens, ni le même rythme.
+enum StudyLevel: String, CaseIterable, Identifiable {
+    case lycee
+    case prepa
+    case licence
+    case sante
+    case master
+    case concours
+    case other
+
+    var id: String { rawValue }
+
+    var title: String {
         switch self {
-        case .language: "globe.europe.africa"
-        case .exam: "graduationcap"
-        case .competition: "flag.checkered"
-        case .lectures: "text.book.closed"
-        case .profession: "briefcase"
-        case .curiosity: "sparkles"
-        case .other: "ellipsis.circle"
+        case .lycee: "Lycée"
+        case .prepa: "Prépa"
+        case .licence: "Licence"
+        case .sante: "PASS, santé"
+        case .master: "Master"
+        case .concours: "Concours"
+        case .other: "Autre"
         }
     }
 }
@@ -53,6 +63,7 @@ enum LearningGoal: String, CaseIterable, Identifiable {
 enum OnboardingPreferences {
     enum Key {
         static let completed = "micabo.onboarding.completed"
+        static let level = "micabo.onboarding.level"
         static let goal = "micabo.onboarding.goal"
         static let goals = "micabo.onboarding.goals"
         static let forgetsOften = "micabo.onboarding.forgetsOften"
@@ -64,7 +75,7 @@ enum OnboardingPreferences {
         static let completedAt = "micabo.onboarding.completedAt"
 
         static let all = [
-            completed, goal, goals, forgetsOften, subjects,
+            completed, level, goal, goals, forgetsOften, subjects,
             institutionId, institutionName,
             dailyMinutes, notificationsOptIn, completedAt
         ]
@@ -75,6 +86,21 @@ enum OnboardingPreferences {
     static var isCompleted: Bool {
         get { defaults.bool(forKey: Key.completed) }
         set { defaults.set(newValue, forKey: Key.completed) }
+    }
+
+    static var level: String? {
+        get { defaults.string(forKey: Key.level) }
+        set {
+            if let newValue, !newValue.isEmpty {
+                defaults.set(newValue, forKey: Key.level)
+            } else {
+                defaults.removeObject(forKey: Key.level)
+            }
+        }
+    }
+
+    static var studyLevel: StudyLevel? {
+        level.flatMap(StudyLevel.init(rawValue:))
     }
 
     /// Objectifs déclarés. Une seule réponse était possible auparavant : la clé

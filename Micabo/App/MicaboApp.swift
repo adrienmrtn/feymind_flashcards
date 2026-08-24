@@ -5,7 +5,7 @@ import SwiftUI
 struct MicaboApp: App {
     private let container: ModelContainer
 
-    private static let schema = Schema([Course.self, Flashcard.self, ReviewLog.self])
+    private static let schema = Schema([Course.self, Flashcard.self, ReviewLog.self, Exam.self])
 
     init() {
         FontLoader.registerFonts()

@@ -8,6 +8,7 @@ import {
   FalError,
   jsonResponse,
 } from "../_shared/fal.ts";
+import { normalizeSheet, sheetToPlainText, stripInlineMarkup } from "../_shared/sheet.ts";
 import { COURSE_SYSTEM_PROMPT, VISION_SYSTEM_PROMPT } from "./prompt.ts";
 
 interface RequestBody {
@@ -35,7 +36,8 @@ Deno.serve(async (request: Request) => {
       throw new FalError("Le document ne contient pas assez de contenu à analyser.", 400);
     }
 
-    // Passe visuelle : le modèle décrit les schémas que l'extraction texte ne voit pas.
+    // Passe visuelle : le modèle décrit les schémas que l'extraction texte ne voit pas, et
+    // relève leurs valeurs, sans quoi la fiche ne pourrait pas porter de graphe.
     let visualNotes = "";
     if (images.length > 0) {
       try {
@@ -49,7 +51,7 @@ Deno.serve(async (request: Request) => {
           maxTokens: 1600,
         });
       } catch (_error) {
-        // Un échec de la passe visuelle ne doit pas bloquer la génération du cours.
+        // Un échec de la passe visuelle ne doit pas bloquer l'écriture de la fiche.
         visualNotes = "";
       }
     }
@@ -59,22 +61,38 @@ Deno.serve(async (request: Request) => {
     if (body.sourceName) sections.push(`Nom du fichier source : ${body.sourceName}`);
     if (text.length > 0) sections.push(`TEXTE EXTRAIT DU DOCUMENT :\n${text}`);
     if (visualNotes) sections.push(`DESCRIPTION DES VISUELS DU DOCUMENT :\n${visualNotes}`);
-    sections.push("Produis maintenant le JSON de la fiche.");
+    sections.push("Écris maintenant le JSON de la fiche.");
 
     const output = await callModel({
       prompt: sections.join("\n\n"),
       systemPrompt: COURSE_SYSTEM_PROMPT,
       model: body.model,
-      temperature: 0.4,
-      maxTokens: 4_000,
+      temperature: 0.45,
+      maxTokens: 8_000,
     });
 
-    const course = deepStripEmDashes(extractJSON<Record<string, unknown>>(output));
-    const contextText = typeof course.contextText === "string" ? course.contextText.trim() : "";
+    const parsed = deepStripEmDashes(extractJSON<Record<string, unknown>>(output));
+    const blocks = normalizeSheet(parsed.sheet ?? parsed.blocks);
 
+    if (blocks.length < 3) {
+      throw new FalError("Le modèle n'a pas produit de fiche exploitable.", 502);
+    }
+
+    // La version à plat est calculée ici, pas demandée au modèle : deux rédactions du même
+    // contenu finiraient par se contredire, et celle-ci est déterministe.
+    const contextText = sheetToPlainText(blocks);
     if (contextText.length < 40) {
       throw new FalError("Le modèle n'a pas produit de contenu exploitable.", 502);
     }
+
+    const course = {
+      title: typeof parsed.title === "string" ? parsed.title : "",
+      subject: typeof parsed.subject === "string" ? parsed.subject : undefined,
+      emoji: typeof parsed.emoji === "string" ? parsed.emoji : undefined,
+      summary: typeof parsed.summary === "string" ? stripInlineMarkup(parsed.summary) : "",
+      sheet: { blocks },
+      contextText,
+    };
 
     return jsonResponse({ course, usedVision: images.length > 0 && visualNotes.length > 0 });
   } catch (error) {

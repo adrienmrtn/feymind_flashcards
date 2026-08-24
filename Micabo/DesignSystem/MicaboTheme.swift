@@ -27,6 +27,15 @@ enum MicaboColor {
     static let inkSecondary = Color(hex: 0x6F6A60)
     static let inkTertiary = Color(hex: 0xA6A199)
 
+    /// Encre des longs paragraphes d'une fiche. Un noir de titre tenu sur trente lignes
+    /// fatigue : celui-ci est à peine remonté vers le brun du papier.
+    static let inkReading = Color(hex: 0x2B2822)
+
+    /// Le surligneur de la fiche. Il est jaune parce qu'un surligneur est jaune, et
+    /// surtout parce que l'indigo est réservé à ce qui est actif : un passage surligné
+    /// est du contenu, pas un état.
+    static let marker = Color(hex: 0xFBEFB8)
+
     // Sur fond sombre
     static let onInk = Color(hex: 0xF8F6F0)
     static let onInkMuted = Color(hex: 0x9A958A)
@@ -123,7 +132,35 @@ enum MicaboFont {
         .custom(postscriptName(for: weight), size: size)
     }
 
-    private static func postscriptName(for weight: Font.Weight) -> String {
+    /// La même police, côté UIKit : la fiche compose ses paragraphes dans un `UITextView`
+    /// pour que la sélection d'un passage soit celle du système, et il lui faut donc des
+    /// `UIFont`. Hanken Grotesk n'embarque pas d'italique : elle est penchée à la main,
+    /// ce qui reste préférable à un changement de famille en plein paragraphe.
+    static func uiFont(_ size: CGFloat, weight: Font.Weight = .regular, italic: Bool = false) -> UIFont {
+        let name = postscriptName(for: weight)
+        let fallback = UIFont.systemFont(ofSize: size, weight: uiWeight(for: weight))
+
+        guard italic else {
+            return UIFont(name: name, size: size) ?? fallback
+        }
+
+        guard UIFont(name: name, size: size) != nil else {
+            return UIFont(descriptor: fallback.fontDescriptor.withSymbolicTraits(.traitItalic) ?? fallback.fontDescriptor, size: size)
+        }
+
+        let descriptor = UIFontDescriptor(fontAttributes: [.name: name, .size: size])
+            .withMatrix(CGAffineTransform(a: 1, b: 0, c: SheetTypography.obliqueSlant, d: 1, tx: 0, ty: 0))
+        return UIFont(descriptor: descriptor, size: 0)
+    }
+
+    private static func uiWeight(for weight: Font.Weight) -> UIFont.Weight {
+        if weight == .bold || weight == .heavy || weight == .black { return .bold }
+        if weight == .semibold { return .semibold }
+        if weight == .medium { return .medium }
+        return .regular
+    }
+
+    static func postscriptName(for weight: Font.Weight) -> String {
         if weight == .bold || weight == .heavy || weight == .black {
             return "HankenGrotesk-Bold"
         }
@@ -154,6 +191,35 @@ enum MicaboFont {
     static let micro = hanken(11, weight: .medium)
     /// Sur-titres et intitulés de section, toujours en capitales.
     static let eyebrow = hanken(11, weight: .semibold)
+}
+
+/// Le réglage typographique de la fiche d'un cours.
+///
+/// C'est le seul endroit de l'app où l'on lit vraiment : les autres écrans sont des listes
+/// et des rangées. Une fiche demande donc un corps plus grand, un interligne plus généreux
+/// et une largeur de colonne tenue, faute de quoi l'œil se perd d'une ligne à l'autre.
+enum SheetTypography {
+    /// Corps du texte courant.
+    static let body: CGFloat = 16.5
+    /// Interligne ajouté aux paragraphes.
+    static let lineSpacing: CGFloat = 7.5
+    /// Chapeau posé sous le titre du cours.
+    static let lead: CGFloat = 17.5
+    /// Titre de partie.
+    static let headingLarge: CGFloat = 22
+    /// Titre de sous-partie.
+    static let headingSmall: CGFloat = 16.5
+    /// Formule mise en valeur dans son bloc.
+    static let formula: CGFloat = 20
+
+    /// Espace au-dessus d'un titre de partie, et d'un titre de sous-partie.
+    static let spaceBeforeLargeHeading: CGFloat = 26
+    static let spaceBeforeSmallHeading: CGFloat = 16
+    /// Espace entre deux blocs de même nature.
+    static let blockSpacing: CGFloat = 15
+
+    /// Inclinaison de l'italique synthétique, Hanken Grotesk n'ayant pas de fonte penchée.
+    static let obliqueSlant: CGFloat = 0.19
 }
 
 enum MicaboTracking {

@@ -106,6 +106,8 @@ struct StudyView: View {
 
             if !session.mode.affectsSchedule {
                 practiceBanner
+            } else if session.isCurrentUnderExamDeadline {
+                examBanner
             }
         }
         .padding(.horizontal, MicaboSpacing.screen)
@@ -115,17 +117,37 @@ struct StudyView: View {
 
     /// Dit noir sur blanc que rien ne sera enregistré.
     private var practiceBanner: some View {
+        banner(
+            systemImage: "dumbbell",
+            text: "Entraînement libre · ton planning n'est pas modifié",
+            tint: MicaboColor.accent,
+            background: MicaboColor.accentSoft
+        )
+    }
+
+    /// Dit pourquoi les intervalles annoncés sous les boutons sont plus courts que d'habitude.
+    /// Sans ce bandeau, l'utilisateur croirait le planificateur cassé.
+    private var examBanner: some View {
+        banner(
+            systemImage: "calendar.badge.clock",
+            text: "Mode examen · aucune carte ne repart au delà du jour J",
+            tint: MicaboColor.caution,
+            background: MicaboColor.cautionSoft
+        )
+    }
+
+    private func banner(systemImage: String, text: String, tint: Color, background: Color) -> some View {
         HStack(spacing: 7) {
-            Image(systemName: "dumbbell")
+            Image(systemName: systemImage)
                 .font(.system(size: 12, weight: .semibold))
-            Text("Entraînement libre · ton planning n'est pas modifié")
+            Text(text)
                 .font(MicaboFont.hanken(12, weight: .semibold))
         }
-        .foregroundStyle(MicaboColor.accent)
+        .foregroundStyle(tint)
         .padding(.vertical, 8)
         .padding(.horizontal, 13)
         .frame(maxWidth: .infinity)
-        .background(MicaboColor.accentSoft, in: Capsule())
+        .background(background, in: Capsule())
     }
 
     // MARK: - Carte

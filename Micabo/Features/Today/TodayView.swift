@@ -11,18 +11,30 @@ struct TodayView: View {
     @Query private var allCards: [Flashcard]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
     @Query private var reviewLogs: [ReviewLog]
+    @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
 
     @State private var showStudy = false
-    @State private var path: [Course] = []
+    @State private var path = NavigationPath()
     @State private var showImportChoice = false
     @State private var pendingImport: ImportKind?
     @State private var activeImport: ImportKind?
 
+    /// Les échéances d'examen en cours. L'écran doit les connaître : ce sont elles qui
+    /// lèvent le plafond de cartes neuves, donc qui décident du chiffre annoncé.
+    private var deadlines: ExamDeadlines {
+        ExamDeadlines.active(exams: exams, courses: courses)
+    }
+
     /// La file telle que la session va la servir : le plafond de cartes neuves du jour,
-    /// hérité du rythme choisi à l'inscription, est déjà appliqué. Le chiffre affiché est
-    /// donc exactement celui qu'on va réviser.
+    /// hérité du rythme choisi à l'inscription, est déjà appliqué, exception faite des
+    /// cartes sous échéance d'examen. Le chiffre affiché est donc exactement celui qu'on va
+    /// réviser.
     private var dueCards: [Flashcard] {
-        StudyQueueBuilder.build(from: allCards, limits: .daily())
+        StudyQueueBuilder.build(from: allCards, limits: .daily(), deadlines: deadlines)
+    }
+
+    private var nextExam: Exam? {
+        exams.first { !$0.isPast() }
     }
 
     /// Cartes neuves dues mais gardées pour les jours suivants, à cause du plafond.
@@ -68,6 +80,8 @@ struct TodayView: View {
                         dueCoursesSection
                         breakdownSection
                     }
+
+                    examSection
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, hasSessionButton ? MicaboLayout.bottomBarClearance : MicaboSpacing.xxl)
@@ -90,7 +104,13 @@ struct TodayView: View {
             .toolbar(.hidden, for: .navigationBar)
             .reportsPaging(for: .today, depth: path.count)
             .navigationDestination(for: Course.self) { course in
-                FlashcardsView(course: course)
+                CourseSheetView(course: course)
+            }
+            .navigationDestination(for: CourseCardsRoute.self) { route in
+                FlashcardsView(course: route.course)
+            }
+            .navigationDestination(for: ExamsRoute.self) { _ in
+                ExamsView()
             }
         }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
@@ -98,14 +118,14 @@ struct TodayView: View {
                 pendingImport = kind
                 showImportChoice = false
             }
-            .presentationDetents([.height(540)])
+            .presentationDetents([.height(604)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
         .fullScreenCover(item: $activeImport) { kind in
             ImportView(kind: kind) { course in
                 activeImport = nil
-                path = [course]
+                path = NavigationPath([course])
             }
         }
         .fullScreenCover(isPresented: $showStudy) {
@@ -200,6 +220,54 @@ struct TodayView: View {
             }
             .micaboGroup()
         }
+    }
+
+    // MARK: - Examens
+
+    /// L'entrée vers la page Examens, et le compte à rebours du prochain.
+    ///
+    /// Elle vit ici parce qu'un examen est une affaire de planning, et que le planning est
+    /// le sujet de cet onglet. Elle reste visible même sans examen déclaré : c'est une
+    /// fonctionnalité qu'on ne cherche pas si on ne sait pas qu'elle existe.
+    @ViewBuilder
+    private var examSection: some View {
+        // Sans une seule carte, planifier un examen ne mène à rien : la rangée n'apparaît
+        // qu'une fois qu'il y a de quoi réviser.
+        if !allCards.isEmpty || !exams.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                MicaboSectionCaption(text: "Examens")
+
+                Button {
+                    path.append(ExamsRoute())
+                } label: {
+                    MicaboRow(
+                        tile: MicaboTile(
+                            glyph: .symbol("calendar"),
+                            background: nextExam == nil ? MicaboColor.surfaceMuted : MicaboColor.cautionSoft,
+                            tint: nextExam == nil ? MicaboColor.inkSecondary : MicaboColor.caution
+                        ),
+                        title: nextExam?.name ?? "Planifier un examen",
+                        subtitle: examSubtitle,
+                        accessory: examAccessory
+                    )
+                }
+                .buttonStyle(MicaboRowButtonStyle())
+                .micaboGroup()
+            }
+        }
+    }
+
+    private var examAccessory: MicaboRowAccessory {
+        guard let nextExam else { return .chevron }
+        return .badge(nextExam.countdownLabel(), .warm)
+    }
+
+    private var examSubtitle: String {
+        guard let nextExam else {
+            return "Micabo replanifie tes révisions pour le jour J"
+        }
+        return MicaboCalendar.dayLabel(nextExam.date)
+            + (nextExam.isPlanned ? " · révisions replanifiées" : " · planning normal")
     }
 
     private func breakdownRow(color: Color, label: String, count: Int) -> some View {

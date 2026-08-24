@@ -46,7 +46,10 @@ enum CourseFingerprint {
 }
 
 enum CourseRepository {
-    /// Enregistre un cours analysé, sans ses cartes.
+    /// Enregistre un cours fiché, sans ses cartes.
+    ///
+    /// Depuis que l'import produit d'abord une fiche, c'est ici que s'arrête le parcours
+    /// d'import : les cartes viennent plus tard, si l'utilisateur les demande.
     @discardableResult
     static func save(
         _ generated: GeneratedCourse,
@@ -70,11 +73,39 @@ enum CourseRepository {
             source: source,
             sourceFileName: fileName,
             rawText: rawText,
-            contextText: clean.contextText,
+            contextText: clean.contextText.nilIfBlank ?? (clean.sheet?.plainText() ?? ""),
+            sheet: clean.sheet,
             coverImageData: coverImageData
         )
         course.fingerprint = CourseFingerprint.make(from: rawText)
         context.insert(course)
+
+        try context.save()
+        return course
+    }
+
+    /// Remplace la fiche d'un cours existant : c'est le chemin de « Refaire la fiche », et
+    /// celui d'un cours importé avant que la fiche n'existe.
+    ///
+    /// Le titre, la matière et l'emoji ne sont pas retouchés. Un cours renommé à la main
+    /// ne doit pas reprendre le nom que le modèle lui trouve au second passage.
+    @discardableResult
+    static func updateSheet(
+        of course: Course,
+        with generated: GeneratedCourse,
+        in context: ModelContext
+    ) throws -> Course {
+        let clean = generated.sanitized()
+        guard let sheet = clean.sheet, !sheet.isEmpty else {
+            throw AIServiceError.invalidResponse
+        }
+
+        course.apply(sheet)
+        course.contextText = clean.contextText.nilIfBlank ?? sheet.plainText()
+        if course.summary.isEmpty {
+            course.summary = clean.summary
+        }
+        course.updatedAt = Date()
 
         try context.save()
         return course

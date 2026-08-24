@@ -350,14 +350,20 @@ enum SM2Scheduler {
     // MARK: - Aperçu des boutons
 
     /// Libellés « 1 min / 10 min / 1 j / 4 j » affichés sous les boutons de maîtrise.
+    ///
+    /// La date butoir d'un examen, quand il y en a une, est appliquée avant l'affichage : un
+    /// bouton qui annonce trois semaines alors que la carte reviendra dans quatre jours ment
+    /// à l'utilisateur, et c'est le seul endroit de l'app où il lit un intervalle.
     static func previewLabels(
         for snapshot: SM2CardSnapshot,
         now: Date = Date(),
-        config: Configuration = .deterministic
+        config: Configuration = .deterministic,
+        deadline: Date? = nil
     ) -> [ReviewRating: String] {
         var labels: [ReviewRating: String] = [:]
         for rating in ReviewRating.allCases {
             let outcome = schedule(snapshot: snapshot, rating: rating, now: now, config: config)
+                .clamped(to: deadline, now: now)
             labels[rating] = format(delay: outcome.delay(from: now))
         }
         return labels

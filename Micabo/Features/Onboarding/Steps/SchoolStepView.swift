@@ -26,7 +26,7 @@ struct SchoolStepView: View {
         OnboardingScaffold(
             eyebrow: "Ton établissement",
             title: "Tu étudies où ?",
-            subtitle: "Université, grande école ou lycée. Commence à taper, on te propose des résultats.",
+            subtitle: "Commence à taper, on cherche pour toi.",
             titleSize: 28
         ) {
             VStack(alignment: .leading, spacing: 14) {

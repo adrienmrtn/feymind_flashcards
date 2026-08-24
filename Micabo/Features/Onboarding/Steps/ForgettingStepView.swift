@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 6 : question fermée sur l'oubli. Sert d'accroche à la démonstration qui suit.
+/// Question fermée sur l'oubli. Sert d'accroche à la démonstration qui suit.
 struct ForgettingStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -9,25 +9,16 @@ struct ForgettingStepView: View {
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Question 2 sur 3",
-            title: "Tu as l'impression d'oublier ce que tu apprends ?",
-            subtitle: "Sois honnête, personne ne regarde."
+            title: "Tu oublies ce que\ntu apprends ?",
+            subtitle: "Sois honnête, personne ne regarde.",
+            scrolls: false
         ) {
-            VStack(spacing: 10) {
-                OnboardingChoiceRow(
-                    title: "Oui, tout le temps",
-                    subtitle: "Relu la veille, envolé le lendemain",
-                    systemImage: "cloud.rain",
-                    isSelected: selection == true
-                ) {
+            VStack(spacing: 8) {
+                OnboardingChoiceRow(title: "Oui, tout le temps", isSelected: selection == true) {
                     select(true)
                 }
 
-                OnboardingChoiceRow(
-                    title: "Non, ça va",
-                    subtitle: "Je retiens plutôt bien",
-                    systemImage: "checkmark.seal",
-                    isSelected: selection == false
-                ) {
+                OnboardingChoiceRow(title: "Non, ça va", isSelected: selection == false) {
                     select(false)
                 }
             }
