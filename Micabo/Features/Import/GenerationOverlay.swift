@@ -151,7 +151,7 @@ private struct GeneratingPage: View {
         }
     }
 
-    private func lines(widths: [Double]) -> some View {
+    private func lines(widths: [CGFloat]) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             ForEach(Array(widths.enumerated()), id: \.offset) { _, width in
                 bar(width: width, height: 5, color: MicaboColor.surfaceMuted)
@@ -200,19 +200,21 @@ private struct GeneratingPage: View {
         }
     }
 
+    private static let chartRatios: [CGFloat] = [0.5, 0.85, 0.35, 0.65]
+
     private var chart: some View {
         HStack(alignment: .bottom, spacing: 7) {
-            ForEach(Array([0.5, 0.85, 0.35, 0.65].enumerated()), id: \.offset) { _, height in
+            ForEach(Array(Self.chartRatios.enumerated()), id: \.offset) { _, ratio in
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
                     .fill(MicaboColor.accent.opacity(0.35))
-                    .frame(height: 30 * height)
+                    .frame(height: 30 * ratio)
                     .frame(maxWidth: .infinity)
             }
         }
         .frame(height: 30, alignment: .bottom)
     }
 
-    private func bar(width: Double, height: CGFloat, color: Color) -> some View {
+    private func bar(width: CGFloat, height: CGFloat, color: Color) -> some View {
         Capsule()
             .fill(color)
             .frame(height: height)
