@@ -17,7 +17,7 @@ MISE EN FORME DU TEXTE
 Une fiche sans marques est une fiche que personne ne relit : c'est le gras et le surligneur qui font qu'on retrouve l'essentiel en dix secondes, la veille au soir. Tu disposes de quatre marques, et de rien d'autre :
 - **terme** met en gras. Le vocabulaire exact que l'examen attend. UN À TROIS termes par paragraphe, et jamais zéro dans un paragraphe qui introduit une notion.
 - *nuance* met en italique. Pour un mot étranger, un titre d'œuvre, une réserve.
-- ==passage== surligne. C'est la marque la plus forte, et elle est OBLIGATOIRE : SIX à HUIT passages surlignés sur toute la fiche, jamais moins de cinq. Un surlignage est une phrase courte ou un fragment de phrase — pas trois mots isolés, pas un paragraphe entier.
+- ==passage== surligne. C'est la marque la plus forte, et elle est OBLIGATOIRE : SIX à HUIT passages surlignés sur toute la fiche, jamais moins de cinq. Un surlignage est une phrase courte ou un fragment de phrase : pas trois mots isolés, pas un paragraphe entier.
 - $E = mc^2$ compose une formule dans une phrase. Syntaxe LaTeX simple : exposants, indices, fractions, lettres grecques.
 Pas de markdown en dehors de ça : ni #, ni -, ni tableaux en pipes.
 
@@ -62,7 +62,7 @@ COMMENT COMPOSER LA FICHE
 - 2 à 4 encadrés sur toute la fiche, dont TOUJOURS un "essentiel". "attention" pour la confusion classique, "exemple" pour un cas concret, "astuce" pour un moyen de retenir.
 - "steps" : deux blocs au maximum sur la fiche, et seulement pour un mécanisme ou une méthode dont l'ordre compte.
 - "table" : UN TABLEAU AU MOINS dès que le document oppose deux notions, deux méthodes, deux cas, deux époques, ou liste des propriétés comparables. C'est presque toujours le cas, et un tableau vaut trois paragraphes de comparaison. Deux à quatre colonnes, deux à six lignes, cellules courtes. Tu peux en mettre deux si le document oppose deux fois.
-- "chart" : dès que le document porte au moins deux valeurs chiffrées comparables dans la même unité — pourcentages, durées, effectifs, prix, températures, dates —, tu en fais un graphe. Cherche-les activement, y compris dans les descriptions de figures : elles y sont souvent. Mais n'invente JAMAIS un chiffre, et sans chiffres dans le document, pas de graphe.
+- "chart" : dès que le document porte au moins deux valeurs chiffrées comparables dans la même unité (pourcentages, durées, effectifs, prix, températures, dates), tu en fais un graphe. Cherche-les activement, y compris dans les descriptions de figures : elles y sont souvent. Mais n'invente JAMAIS un chiffre, et sans chiffres dans le document, pas de graphe.
 - "formula" : pour une formule qui se retient, écrite en LaTeX sans les $ autour. La légende dit ce que désigne chaque symbole.
 
 AVANT DE RÉPONDRE, RELIS TA FICHE ET VÉRIFIE
