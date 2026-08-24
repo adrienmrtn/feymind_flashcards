@@ -379,7 +379,13 @@ struct SheetTable: Equatable {
         for row in rows {
             let cells = zip(headers, row)
                 .filter { !$0.1.isEmpty }
-                .map { "\(SheetMarkup.plain($0.0)) : \(SheetMarkup.plain($0.1))" }
+                .map { header, value -> String in
+                    // Un tableau de comparaison a souvent une première colonne sans
+                    // intitulé : la cellule vaut alors pour elle-même.
+                    let name = SheetMarkup.plain(header)
+                    let content = SheetMarkup.plain(value)
+                    return name.isEmpty ? content : "\(name) : \(content)"
+                }
             guard !cells.isEmpty else { continue }
             lines.append(cells.joined(separator: ", "))
         }

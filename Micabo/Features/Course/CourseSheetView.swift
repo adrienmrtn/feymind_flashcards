@@ -238,7 +238,7 @@ struct CourseSheetView: View {
                         HStack(spacing: MicaboSpacing.xs) {
                             Image(systemName: "sparkles")
                                 .font(.system(size: 12, weight: .semibold))
-                            Text("Générer les cartes")
+                            Text(MicaboCopy.cardsButton)
                         }
                     }
                     .buttonStyle(MicaboSecondaryButtonStyle())
@@ -287,7 +287,7 @@ struct CourseSheetView: View {
                     HStack(spacing: MicaboSpacing.xs) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 13, weight: .semibold))
-                        Text("Générer les cartes")
+                        Text(MicaboCopy.cardsButton)
                     }
                 }
                 .buttonStyle(MicaboPrimaryButtonStyle())

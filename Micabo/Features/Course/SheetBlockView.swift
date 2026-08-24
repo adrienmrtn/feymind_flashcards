@@ -74,9 +74,12 @@ struct SheetBlockView: View {
 
     private func definition(term: String, text: String) -> some View {
         HStack(alignment: .top, spacing: 13) {
+            // Le filet doit courir sur toute la hauteur du bloc : sans cette hauteur
+            // flexible, l'alignement en haut le réduirait à rien.
             Capsule()
                 .fill(tint.opacity(0.55))
                 .frame(width: 3)
+                .frame(maxHeight: .infinity)
 
             VStack(alignment: .leading, spacing: 5) {
                 SheetInlineText(

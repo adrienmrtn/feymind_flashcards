@@ -300,6 +300,8 @@ export function sheetToPlainText(blocks: SheetBlock[]): string {
       case "table": {
         if (block.title) lines.push(stripInlineMarkup(block.title));
         for (const row of block.rows) {
+          // Un tableau de comparaison a souvent une première colonne sans intitulé : la
+          // cellule vaut alors pour elle-même.
           const cells = row
             .map((cell, index) => [stripInlineMarkup(block.headers[index] ?? ""), stripInlineMarkup(cell)])
             .filter(([, value]) => value.length > 0)

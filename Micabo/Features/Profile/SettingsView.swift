@@ -124,7 +124,7 @@ struct SettingsView: View {
             }
             .micaboGroup()
 
-            MicaboSectionFootnote(text: "Le modèle rédige les cartes à partir du texte lu sur l'appareil. Le choix se garde entre deux lancements.")
+            MicaboSectionFootnote(text: "Le modèle écrit les fiches et les cartes à partir du texte lu sur l'appareil. Le choix se garde entre deux lancements.")
         }
     }
 
@@ -153,7 +153,7 @@ struct SettingsView: View {
             }
             .micaboGroup()
 
-            MicaboSectionFootnote(text: "Les Edge Functions generate-course et generate-flashcards ne servent qu'à écrire les cartes. La clé fal.ai reste côté serveur, dans le secret FAL_KEY.")
+            MicaboSectionFootnote(text: "Les Edge Functions generate-course, generate-flashcards et explain-selection écrivent les fiches, les cartes et les explications. La clé fal.ai reste côté serveur, dans le secret FAL_KEY.")
         }
     }
 

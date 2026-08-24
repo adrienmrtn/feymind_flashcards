@@ -76,7 +76,7 @@ enum OfflineSheetBuilder {
     /// « Photolyse : rupture de la molécule d'eau. » se reconnaît sans rien comprendre au
     /// cours : un terme court, un deux-points, une phrase.
     static func definition(in line: String) -> (term: String, text: String)? {
-        for separator in [" : ", " : ", ": "] {
+        for separator in [" : ", "\u{00A0}: ", ": "] {
             guard let range = line.range(of: separator) else { continue }
             let term = String(line[line.startIndex..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
             let text = String(line[range.upperBound...]).trimmingCharacters(in: .whitespaces)

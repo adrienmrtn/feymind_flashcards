@@ -35,8 +35,6 @@ enum MicaboColor {
     /// surtout parce que l'indigo est réservé à ce qui est actif : un passage surligné
     /// est du contenu, pas un état.
     static let marker = Color(hex: 0xFBEFB8)
-    /// Filet d'un titre de partie, dérivé de la teinte du cours à l'affichage.
-    static let rule = Color(hex: 0xDDD7C7)
 
     // Sur fond sombre
     static let onInk = Color(hex: 0xF8F6F0)

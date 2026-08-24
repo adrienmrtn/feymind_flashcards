@@ -32,7 +32,7 @@ struct GenerateCardsSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                     MicaboScreenHeader(
-                        title: existingCount > 0 ? "Nouvelles cartes" : "Générer les cartes",
+                        title: existingCount > 0 ? "Nouvelles cartes" : MicaboCopy.cardsButton,
                         eyebrow: course.title,
                         back: MicaboHeaderBack.close { dismiss() }
                     )
@@ -54,14 +54,14 @@ struct GenerateCardsSheet: View {
 
             MicaboBottomBar {
                 Button {
-                    let options = options
+                    let chosen = options
                     dismiss()
-                    onGenerate(options)
+                    onGenerate(chosen)
                 } label: {
                     HStack(spacing: MicaboSpacing.xs) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 13, weight: .semibold))
-                        Text("Générer les cartes")
+                        Text(MicaboCopy.cardsButton)
                     }
                 }
                 .buttonStyle(MicaboPrimaryButtonStyle())

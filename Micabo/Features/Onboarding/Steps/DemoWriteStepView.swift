@@ -18,7 +18,7 @@ struct DemoWriteStepView: View {
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Comment ça marche · 2 sur 3",
-            title: "Micabo écrit tes cartes.",
+            title: "Micabo fiche ton cours, puis écrit tes cartes.",
             titleSize: 28,
             scrolls: false
         ) {

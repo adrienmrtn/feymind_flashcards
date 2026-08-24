@@ -35,10 +35,11 @@ enum OnboardingDemo {
         "En altitude elle se condense en nuages, puis retombe en pluie ou en neige."
     ]
 
-    /// Étapes cochées pendant la génération simulée.
+    /// Étapes cochées pendant la génération simulée. Elles suivent l'ordre réel de
+    /// l'application : la fiche d'abord, les cartes ensuite.
     static let generationSteps = [
         "Lecture de la page",
-        "Repérage des notions",
+        "Fiche du cours",
         "Rédaction des cartes"
     ]
 }
