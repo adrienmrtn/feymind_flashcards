@@ -258,6 +258,113 @@ extension View {
     }
 }
 
+// MARK: - Titre qui s'écrit mot par mot
+
+/// Titre dont le **gras se pose mot par mot**, de gauche à droite, comme si on le
+/// soulignait en le lisant.
+///
+/// Chaque mot est composé deux fois au même endroit — une fois maigre, une fois gras — et
+/// occupe toujours la largeur de sa version grasse. C'est ce qui permet au gras d'arriver
+/// sans que la ligne se recompose : un titre qui se réaligne à chaque mot se lit comme un
+/// bug, pas comme une animation.
+///
+/// Les retours à la ligne écrits dans le titre sont respectés, et chaque ligne peut
+/// elle-même se replier si l'écran est trop étroit.
+struct OnboardingWordByWordTitle: View {
+    let text: String
+    var size: CGFloat = 32
+    /// Temps entre deux mots.
+    var wordDelay: Double = 0.16
+    /// Temps mort avant le premier mot, le temps que l'écran arrive.
+    var startDelay: Double = 0.3
+    /// Appelé une fois le dernier mot en gras.
+    var onFinish: () -> Void = {}
+
+    @Environment(\.onboardingSurface) private var surface
+
+    @State private var boldCount = 0
+    @State private var didStart = false
+
+    private var lines: [[String]] {
+        text.components(separatedBy: "\n").map { line in
+            line.split(separator: " ").map(String.init)
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(lineOffsets.enumerated()), id: \.offset) { lineIndex, offset in
+                MicaboFlowLayout(spacing: size * 0.26, lineSpacing: 2, alignment: .leading) {
+                    ForEach(Array(lines[lineIndex].enumerated()), id: \.offset) { wordIndex, word in
+                        self.word(word, isBold: offset + wordIndex < boldCount)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement()
+        .accessibilityLabel(text.replacingOccurrences(of: "\n", with: " "))
+        .onAppear(perform: run)
+    }
+
+    /// Index du premier mot de chaque ligne, pour que le gras avance d'une ligne à
+    /// l'autre sans repartir de zéro.
+    private var lineOffsets: [Int] {
+        var offsets: [Int] = []
+        var total = 0
+        for line in lines {
+            offsets.append(total)
+            total += line.count
+        }
+        return offsets
+    }
+
+    private var wordCount: Int {
+        lines.reduce(0) { $0 + $1.count }
+    }
+
+    /// Le gabarit gras, invisible, réserve la place ; les deux vraies versions se
+    /// croisent par-dessus, calées à gauche.
+    private func word(_ word: String, isBold: Bool) -> some View {
+        Text(word)
+            .font(MicaboFont.hanken(size, weight: .bold))
+            .tracking(-0.7)
+            .opacity(0)
+            .overlay(alignment: .leading) {
+                ZStack(alignment: .leading) {
+                    Text(word)
+                        .font(MicaboFont.hanken(size, weight: .regular))
+                        .foregroundStyle(surface.title.opacity(0.3))
+                        .opacity(isBold ? 0 : 1)
+
+                    Text(word)
+                        .font(MicaboFont.hanken(size, weight: .bold))
+                        .foregroundStyle(surface.title)
+                        .opacity(isBold ? 1 : 0)
+                }
+                .tracking(-0.7)
+                .fixedSize()
+            }
+            .animation(.easeOut(duration: 0.22), value: isBold)
+    }
+
+    private func run() {
+        guard !didStart else { return }
+        didStart = true
+
+        for index in 0..<wordCount {
+            DispatchQueue.main.asyncAfter(deadline: .now() + startDelay + Double(index) * wordDelay) {
+                boldCount = index + 1
+                Haptics.tick()
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + startDelay + Double(wordCount) * wordDelay) {
+            onFinish()
+        }
+    }
+}
+
 // MARK: - Bouton d'avancement
 
 /// CTA principal du parcours : pleine largeur, retour haptique moyen, et un état
