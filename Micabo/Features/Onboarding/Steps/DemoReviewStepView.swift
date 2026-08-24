@@ -1,282 +1,341 @@
 import SwiftUI
 
-/// Démonstration, 3 sur 3 : la fiche se décompose en cartes, puis on en révise une.
+/// Démonstration, 3 sur 3 : la fiche se découpe en tout ce qui sert à réviser.
 ///
 /// L'écran s'ouvre sur **la fiche de l'écran précédent**, au même endroit et à la même
-/// taille : c'est ce qui fait comprendre d'où viennent les cartes. Elle se défait ensuite en
-/// trois cartes qui s'ouvrent en éventail, une par format, puis la première passe devant et
-/// devient jouable.
+/// taille : c'est ce qui fait comprendre d'où vient le reste. Elle se défait ensuite en
+/// quatre vignettes — un schéma, une carte recto verso, un QCM, un texte à trou — qui
+/// sortent une à une, puis montrent chacune leur réponse toutes seules.
 ///
-/// Deux phrases d'explication au maximum sur tout l'écran : la répétition espacée a déjà eu
-/// son écran, ici on révise.
+/// **On ne répond à rien ici, et c'est le point.** L'écran précédent demandait d'appuyer sur
+/// une carte puis de se noter : on faisait passer un examen à quelqu'un qui n'a pas encore
+/// ouvert l'app, sur un cours qui n'est pas le sien. Ce qu'il faut montrer, c'est ce que
+/// Micabo produit à partir d'un cours ; le produire est le travail de l'app, y répondre
+/// viendra plus tard, avec ses propres cours. L'écran se regarde donc, et le bouton attend
+/// en bas.
 struct DemoReviewStepView: View {
     @Environment(OnboardingModel.self) private var model
 
     private enum Phase {
         /// La fiche, telle qu'on l'a laissée.
         case sheet
-        /// Elle s'ouvre en trois cartes.
-        case fan
-        /// La première carte passe devant, à portée de doigt.
-        case play
-    }
-
-    private enum Verdict {
-        case again
-        case known
-
-        var interval: String {
-            switch self {
-            case .again: "dans 10 minutes"
-            case .known: "dans 3 jours"
-            }
-        }
-
-        var tint: Color {
-            switch self {
-            case .again: MicaboColor.caution
-            case .known: MicaboColor.positive
-            }
-        }
+        /// Elle se découpe en quatre vignettes.
+        case split
     }
 
     @State private var phase: Phase = .sheet
-    @State private var isFlipped = false
-    @State private var verdict: Verdict?
+    /// Nombre de vignettes sorties de la fiche.
+    @State private var shown = 0
+    /// Nombre de vignettes qui ont montré leur réponse.
+    @State private var solved = 0
     @State private var didStart = false
 
-    private var cards: [OnboardingDemo.Card] { OnboardingDemo.cards }
-    private var card: OnboardingDemo.Card { cards[0] }
+    private var outputs: [OnboardingDemo.Output] { OnboardingDemo.Output.allCases }
+
+    /// Le bouton s'ouvre dès que les quatre vignettes sont là. Les réponses continuent de
+    /// se dévoiler derrière : personne ne doit attendre la fin d'une animation qu'il a
+    /// déjà comprise.
+    private var canContinue: Bool { shown >= outputs.count }
 
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Comment ça marche · 3 sur 3",
-            title: phase == .play ? "À toi de jouer." : "Ta fiche devient des cartes.",
-            subtitle: phase == .play ? "Appuie sur la carte, puis dis si tu savais." : nil,
+            title: "Ta fiche devient\ntes révisions.",
+            subtitle: "Schémas, cartes, QCM, textes à trou. Rien à saisir, rien à répondre.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false
         ) {
-            VStack(spacing: 18) {
+            VStack(spacing: 0) {
                 stage
-                controls
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        } footer: {
+            OnboardingContinueButton(isEnabled: canContinue) {
+                model.advance()
+            }
         }
-        .animation(OnboardingMotion.shift, value: phase)
         .onAppear(perform: run)
     }
 
     // MARK: - La scène
 
+    /// La fiche et la grille occupent la même place : le découpage se lit comme une
+    /// transformation, et non comme un changement d'écran.
     private var stage: some View {
         ZStack {
             DemoSheetPage()
-                .frame(width: 232)
-                .opacity(phase == .sheet ? 1 : 0)
-                .scaleEffect(phase == .sheet ? 1 : 0.9)
+                .frame(width: DemoSheetPage.width)
                 .shadow(color: Color.black.opacity(0.08), radius: 18, x: 0, y: 10)
+                .opacity(phase == .sheet ? 1 : 0)
+                .scaleEffect(phase == .sheet ? 1 : 0.88)
+                .blur(radius: phase == .sheet ? 0 : 3)
 
-            fan
-                .opacity(phase == .fan ? 1 : 0)
-
-            playCard
-                .opacity(phase == .play ? 1 : 0)
+            grid
+                .opacity(phase == .sheet ? 0 : 1)
         }
-        .frame(height: 210)
-    }
-
-    /// Les trois formats ouverts en éventail. Chacun porte son étiquette : c'est là qu'on
-    /// voit que Micabo ne fait pas que du recto verso.
-    private var fan: some View {
-        ZStack {
-            ForEach(Array(cards.enumerated()), id: \.element.id) { index, entry in
-                DemoMiniCard(card: entry, isCompact: true)
-                    .frame(width: 150)
-                    .rotationEffect(.degrees(fanRotation(index)))
-                    .offset(x: fanOffset(index), y: CGFloat(abs(index - 1)) * 8)
-                    .zIndex(index == 1 ? 3 : Double(2 - index))
-            }
-        }
-    }
-
-    private func fanRotation(_ index: Int) -> Double {
-        [-9, 0, 9][min(index, 2)]
-    }
-
-    private func fanOffset(_ index: Int) -> CGFloat {
-        [-64, 0, 64][min(index, 2)]
-    }
-
-    /// La carte jouable, et les deux autres qui dépassent derrière : on voit qu'il y en a
-    /// d'autres sans les lire.
-    private var playCard: some View {
-        ZStack {
-            ForEach(Array(cards.dropFirst().enumerated()), id: \.element.id) { index, _ in
-                RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous)
-                    .fill(MicaboColor.surface)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous)
-                            .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-                    }
-                    .frame(height: 172)
-                    .scaleEffect(1 - CGFloat(index + 1) * 0.04)
-                    .offset(y: CGFloat(index + 1) * 11)
-                    .opacity(0.65)
-            }
-
-            FlipCard(front: card.front, back: card.back, isFlipped: isFlipped)
-                .onTapGesture(perform: flip)
-                .accessibilityElement()
-                .accessibilityAddTraits(.isButton)
-                .accessibilityLabel(isFlipped ? card.back : card.front)
-                .accessibilityHint(isFlipped ? "" : "Appuie pour voir la réponse")
-        }
-    }
-
-    // MARK: - Commandes
-
-    @ViewBuilder
-    private var controls: some View {
-        if let verdict {
-            pill(
-                systemImage: "clock.arrow.circlepath",
-                text: "Elle revient \(verdict.interval)",
-                tint: verdict.tint,
-                background: verdict.tint.opacity(0.12)
-            )
-            .transition(.opacity)
-        } else if isFlipped {
-            HStack(spacing: 10) {
-                verdictButton(.again, title: "À revoir", systemImage: "arrow.counterclockwise")
-                verdictButton(.known, title: "Je savais", systemImage: "checkmark")
-            }
-            .transition(.opacity)
-        } else if phase == .play {
-            pill(
-                systemImage: "hand.tap.fill",
-                text: "Appuie sur la carte",
-                tint: MicaboColor.ink,
-                background: MicaboColor.surfaceMuted
-            )
-            .transition(.opacity)
-        }
-    }
-
-    private func pill(systemImage: String, text: String, tint: Color, background: Color) -> some View {
-        HStack(spacing: 7) {
-            Image(systemName: systemImage)
-                .font(.system(size: 12, weight: .semibold))
-            Text(text)
-                .font(MicaboFont.hanken(13, weight: .semibold))
-        }
-        .foregroundStyle(tint)
-        .padding(.vertical, 9)
-        .padding(.horizontal, 14)
-        .background(background, in: Capsule())
         .frame(maxWidth: .infinity)
+        .animation(OnboardingMotion.shift, value: phase)
     }
 
-    private func verdictButton(_ value: Verdict, title: String, systemImage: String) -> some View {
-        Button {
-            choose(value)
-        } label: {
-            HStack(spacing: 7) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 12, weight: .semibold))
-                Text(title)
-                    .font(MicaboFont.hanken(14, weight: .semibold))
+    private var grid: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                tile(0)
+                tile(1)
             }
-            .foregroundStyle(value.tint)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(value.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+            HStack(spacing: 10) {
+                tile(2)
+                tile(3)
+            }
         }
-        .buttonStyle(MicaboPressableButtonStyle())
+    }
+
+    private func tile(_ index: Int) -> some View {
+        DemoOutputTile(output: outputs[index], isSolved: index < solved)
+            .opacity(index < shown ? 1 : 0)
+            .scaleEffect(index < shown ? 1 : 0.9)
+            .offset(y: index < shown ? 0 : 10)
+            .animation(OnboardingMotion.shift, value: shown)
     }
 
     // MARK: - Déroulé
 
-    /// La fiche se défait en un peu plus d'une seconde, puis la main est rendue.
+    /// Un peu plus d'une seconde pour sortir les quatre vignettes, une de plus pour qu'elles
+    /// se remplissent. Rien n'attend un geste : c'est une animation, pas un exercice.
     private func run() {
         guard !didStart else { return }
         didStart = true
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            withAnimation(OnboardingMotion.shift) { phase = .fan }
-            Haptics.tick()
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation(OnboardingMotion.shift) { phase = .play }
-            Haptics.light()
-        }
-    }
-
-    /// La note vaut validation : on laisse voir la prochaine échéance, puis on enchaîne.
-    private func choose(_ value: Verdict) {
-        guard verdict == nil else { return }
-        Haptics.success()
-        withAnimation(OnboardingMotion.shift) {
-            verdict = value
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            withAnimation(OnboardingMotion.shift) { phase = .split }
         }
 
-        // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.
-        let flow = model
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
-            flow.advance()
+        for index in 0..<outputs.count {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55 + Double(index) * 0.16) {
+                shown = index + 1
+                Haptics.tick()
+            }
         }
-    }
 
-    private func flip() {
-        guard phase == .play, !isFlipped else { return }
-        Haptics.rigid()
-        withAnimation(OnboardingMotion.shift) {
-            isFlipped = true
+        for index in 0..<outputs.count {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.55 + Double(index) * 0.24) {
+                withAnimation(OnboardingMotion.shift) { solved = index + 1 }
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.55 + Double(outputs.count) * 0.24) {
+            Haptics.success()
         }
     }
 }
 
-/// Carte qui pivote sur son axe vertical. Une ligne au recto, une ligne au verso.
-private struct FlipCard: View {
-    let front: String
-    let back: String
-    let isFlipped: Bool
+// MARK: - Les quatre vignettes
+
+/// Une des quatre formes que prend la fiche. Chacune montre sa réponse toute seule quand
+/// `isSolved` passe à vrai : la vignette se résout sous les yeux, on ne la résout pas.
+private struct DemoOutputTile: View {
+    let output: OnboardingDemo.Output
+    let isSolved: Bool
+
+    private static let height: CGFloat = 156
 
     var body: some View {
-        ZStack {
-            face(label: OnboardingDemo.subject, text: front, isAnswer: false)
-                .opacity(isFlipped ? 0 : 1)
-
-            face(label: "Réponse", text: back, isAnswer: true)
-                .opacity(isFlipped ? 1 : 0)
-                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+        VStack(alignment: .leading, spacing: 8) {
+            header
+            content
+            Spacer(minLength: 0)
         }
-        .rotation3DEffect(.degrees(isFlipped ? 180 : 0), axis: (x: 0, y: 1, z: 0))
-    }
-
-    private func face(label: String, text: String, isAnswer: Bool) -> some View {
-        VStack(spacing: 12) {
-            Text(label.uppercased())
-                .font(MicaboFont.eyebrow)
-                .tracking(MicaboTracking.caps)
-                .foregroundStyle(isAnswer ? MicaboColor.accent : MicaboColor.inkTertiary)
-
-            Text(text)
-                .font(MicaboFont.hanken(isAnswer ? 22 : 20, weight: .semibold))
-                .foregroundStyle(MicaboColor.ink)
-                .tracking(-0.2)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity)
-        .frame(height: 172)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous))
+        .padding(11)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: Self.height)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous)
+            RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
         }
-        .shadow(color: Color.black.opacity(0.07), radius: 15, x: 0, y: 8)
+        .shadow(color: Color.black.opacity(0.05), radius: 9, x: 0, y: 4)
+        .animation(OnboardingMotion.tap, value: isSolved)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var header: some View {
+        HStack(spacing: 5) {
+            Image(systemName: output.systemImage)
+                .font(.system(size: 8.5, weight: .bold))
+
+            Text(output.label.uppercased())
+                .font(MicaboFont.hanken(8, weight: .bold))
+                .tracking(0.9)
+                .lineLimit(1)
+        }
+        .foregroundStyle(OnboardingDemo.accent)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch output {
+        case .schema: DemoSchemaMini(showsLoop: isSolved)
+        case .flashcard: flashcard
+        case .quiz: quiz
+        case .gap: gap
+        }
+    }
+
+    // MARK: Recto verso
+
+    private var flashcard: some View {
+        let card = OnboardingDemo.cards[0]
+
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(card.front)
+                .font(MicaboFont.hanken(10.5, weight: .semibold))
+                .foregroundStyle(MicaboColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Rectangle()
+                .fill(MicaboColor.hairline)
+                .frame(height: 1)
+
+            Text(isSolved ? card.back : "…")
+                .font(MicaboFont.hanken(10, weight: .medium))
+                .foregroundStyle(isSolved ? OnboardingDemo.accent : MicaboColor.inkTertiary)
+                .fixedSize(horizontal: false, vertical: true)
+                .contentTransition(.opacity)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: QCM
+
+    private var quiz: some View {
+        let card = OnboardingDemo.cards[1]
+
+        return VStack(alignment: .leading, spacing: 5) {
+            Text(card.front)
+                .font(MicaboFont.hanken(9.5, weight: .semibold))
+                .foregroundStyle(MicaboColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            ForEach(Array(card.choices.enumerated()), id: \.offset) { index, choice in
+                let isAnswer = isSolved && index == card.answerIndex
+
+                HStack(spacing: 4) {
+                    Text(choice)
+                        .font(MicaboFont.hanken(8.5, weight: .medium))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+
+                    Spacer(minLength: 0)
+
+                    if isAnswer {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 7, weight: .bold))
+                    }
+                }
+                .foregroundStyle(isAnswer ? MicaboColor.positive : MicaboColor.inkSecondary)
+                .padding(.vertical, 3)
+                .padding(.horizontal, 7)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    isAnswer ? MicaboColor.positiveSoft : MicaboColor.surfaceMuted,
+                    in: Capsule()
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: Texte à trou
+
+    /// La phrase est composée d'un seul tenant : le mot manquant remplace le blanc à sa
+    /// place, sans que le paragraphe se recompose autour.
+    private var gap: some View {
+        gapText
+            .font(MicaboFont.hanken(10.5, weight: .medium))
+            .foregroundStyle(MicaboColor.inkReading)
+            .lineSpacing(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentTransition(.opacity)
+    }
+
+    private var gapText: Text {
+        let filled = Text(OnboardingDemo.gapAnswer)
+            .font(MicaboFont.hanken(10.5, weight: .bold))
+            .foregroundStyle(OnboardingDemo.accent)
+
+        let blank = Text("________")
+            .font(MicaboFont.hanken(10.5, weight: .bold))
+            .foregroundStyle(MicaboColor.inkTertiary)
+
+        return Text(OnboardingDemo.gapBefore + " ")
+            + (isSolved ? filled : blank)
+            + Text(OnboardingDemo.gapAfter)
+    }
+}
+
+/// Le schéma du cycle de l'eau en vignette : trois temps empilés, et la boucle du retour
+/// à la mer qui se ferme à la fin.
+///
+/// C'est une composition verticale, et non la figure de la fiche réduite : à cette largeur,
+/// trois étiquettes côte à côte tombent sous la taille où un mot se lit encore.
+private struct DemoSchemaMini: View {
+    let showsLoop: Bool
+
+    private let stages: [(symbol: String, label: String, tint: Color)] = [
+        ("sun.max.fill", "Évaporation", MicaboColor.caution),
+        ("cloud.fill", "Condensation", MicaboColor.inkSecondary),
+        ("cloud.rain.fill", "Précipitations", OnboardingDemo.accent)
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(Array(stages.enumerated()), id: \.offset) { index, stage in
+                HStack(spacing: 6) {
+                    Image(systemName: stage.symbol)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(stage.tint)
+                        .frame(width: 13)
+
+                    Text(stage.label)
+                        .font(MicaboFont.hanken(9, weight: .semibold))
+                        .foregroundStyle(MicaboColor.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.65)
+                }
+
+                if index < stages.count - 1 {
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 6.5, weight: .bold))
+                        .foregroundStyle(OnboardingDemo.accent.opacity(0.55))
+                        .frame(width: 13)
+                }
+            }
+
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.uturn.left")
+                    .font(.system(size: 7, weight: .bold))
+
+                Text("retour à la mer")
+                    .font(MicaboFont.hanken(8, weight: .semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .foregroundStyle(OnboardingDemo.accent)
+            .padding(.vertical, 2.5)
+            .padding(.horizontal, 6)
+            .background(OnboardingDemo.accent.opacity(0.14), in: Capsule())
+            .opacity(showsLoop ? 1 : 0)
+            .padding(.top, 2)
+        }
+        .padding(7)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
+        .background(
+            OnboardingDemo.accent.opacity(0.07),
+            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+        )
     }
 }

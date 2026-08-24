@@ -42,7 +42,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .demoSheet, "Le cours déposé est d'abord mis en fiche")
 
         model.advance()
-        XCTAssertEqual(model.step, .demoReview, "La fiche se décompose ensuite en cartes")
+        XCTAssertEqual(model.step, .demoReview, "La fiche se découpe ensuite en révisions")
 
         model.advance()
         XCTAssertEqual(model.step, .examPromise, "Le mode examen vient après la démonstration")
@@ -142,6 +142,28 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertTrue(kinds.contains(.basic))
         XCTAssertTrue(kinds.contains(.choice))
         XCTAssertTrue(kinds.contains(.gap))
+    }
+
+    /// Le troisième écran montre les quatre formes que prend une fiche. Le schéma en fait
+    /// partie : une démonstration qui n'aurait que des cartes laisserait croire que Micabo
+    /// ne sait pas dessiner un cours.
+    func testDemoOutputsCoverTheFourFormats() {
+        XCTAssertEqual(OnboardingDemo.Output.allCases, [.schema, .flashcard, .quiz, .gap])
+
+        for output in OnboardingDemo.Output.allCases {
+            XCTAssertFalse(output.label.isEmpty, "\(output) doit avoir un libellé")
+            XCTAssertFalse(output.systemImage.isEmpty, "\(output) doit avoir un symbole")
+        }
+    }
+
+    /// Le texte à trou de la démonstration doit vraiment avoir un trou, et le mot qui le
+    /// remplit doit être celui du cours déposé.
+    func testTheGapExerciseComesFromTheRawCourse() {
+        XCTAssertFalse(OnboardingDemo.gapBefore.isEmpty)
+        XCTAssertFalse(OnboardingDemo.gapAnswer.isEmpty)
+
+        let raw = OnboardingDemo.rawLines.joined(separator: " ").lowercased()
+        XCTAssertTrue(raw.contains(OnboardingDemo.gapAnswer.lowercased()))
     }
 
     /// Le document déposé doit être plus dense que la fiche qui en sort, sinon l'écran de

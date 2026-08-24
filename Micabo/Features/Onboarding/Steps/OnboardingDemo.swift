@@ -47,27 +47,12 @@ enum OnboardingDemo {
     // MARK: - Les cartes
 
     /// Ce qu'une carte demande. Les trois formats de l'app, pour que la démonstration ne
-    /// laisse pas croire que Micabo ne fait que du recto verso.
+    /// laisse pas croire que Micabo ne fait que du recto verso. Les libellés et les
+    /// symboles vivent sur `Output`, qui est ce que l'écran affiche.
     enum CardKind {
         case basic
         case choice
         case gap
-
-        var label: String {
-            switch self {
-            case .basic: "Recto verso"
-            case .choice: "QCM"
-            case .gap: "Texte à trou"
-            }
-        }
-
-        var systemImage: String {
-            switch self {
-            case .basic: "rectangle.on.rectangle.angled"
-            case .choice: "list.bullet"
-            case .gap: "ellipsis.rectangle"
-            }
-        }
     }
 
     struct Card: Identifiable {
@@ -79,6 +64,44 @@ enum OnboardingDemo {
         var choices: [String] = []
         var answerIndex = 0
     }
+
+    /// Les quatre formes que prend une fiche quand Micabo la découpe, dans l'ordre où
+    /// le troisième écran les fait sortir.
+    ///
+    /// Le schéma est là parce que c'est le format qu'on oublie toujours d'annoncer : une
+    /// démonstration qui ne montre que des cartes laisse croire que Micabo ne fait que des
+    /// cartes.
+    enum Output: Int, CaseIterable, Identifiable {
+        case schema
+        case flashcard
+        case quiz
+        case gap
+
+        var id: Int { rawValue }
+
+        var label: String {
+            switch self {
+            case .schema: "Schéma"
+            case .flashcard: "Recto verso"
+            case .quiz: "QCM"
+            case .gap: "Texte à trou"
+            }
+        }
+
+        var systemImage: String {
+            switch self {
+            case .schema: "arrow.triangle.branch"
+            case .flashcard: "rectangle.on.rectangle.angled"
+            case .quiz: "list.bullet"
+            case .gap: "ellipsis.rectangle"
+            }
+        }
+    }
+
+    /// Phrase du texte à trou, coupée là où le mot manque.
+    static let gapBefore = "Les gouttelettes trop lourdes retombent en"
+    static let gapAnswer = "précipitations"
+    static let gapAfter = "."
 
     /// Une ligne au recto, une ligne au verso : la démonstration se lit d'un coup d'œil.
     static let cards: [Card] = [
@@ -358,60 +381,6 @@ struct DemoWaterCycleFigure: View {
                 .minimumScaleFactor(0.6)
         }
         .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Les cartes
-
-/// Carte telle qu'elle sort de la fiche : son format, sa question, et de quoi voir que les
-/// trois formats ne se ressemblent pas.
-struct DemoMiniCard: View {
-    let card: OnboardingDemo.Card
-    var isCompact: Bool = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: isCompact ? 6 : 9) {
-            HStack(spacing: 5) {
-                Image(systemName: card.kind.systemImage)
-                    .font(.system(size: isCompact ? 8 : 9, weight: .semibold))
-                Text(card.kind.label.uppercased())
-                    .font(MicaboFont.hanken(isCompact ? 7.5 : 8, weight: .bold))
-                    .tracking(1)
-            }
-            .foregroundStyle(OnboardingDemo.accent)
-
-            Text(card.front)
-                .font(MicaboFont.hanken(isCompact ? 11 : 14, weight: .semibold))
-                .foregroundStyle(MicaboColor.ink)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if card.kind == .choice, !isCompact {
-                choices
-            }
-        }
-        .padding(isCompact ? 11 : 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
-        .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 5)
-    }
-
-    private var choices: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            ForEach(Array(card.choices.enumerated()), id: \.offset) { _, choice in
-                Text(choice)
-                    .font(MicaboFont.hanken(10, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 9)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(MicaboColor.surfaceMuted, in: Capsule())
-            }
-        }
     }
 }
 
