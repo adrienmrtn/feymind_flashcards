@@ -18,17 +18,18 @@ import SwiftData
 /// porte le même titre. La suppression d'un cours emporte ses cartes et leurs journaux de
 /// révision, par cascade : la série affichée ne compte donc plus de révisions fantômes.
 enum SampleContentPurge {
-    private static let key = "micabo.didPurgeSampleContent"
+    static let key = "micabo.didPurgeSampleContent"
 
     /// Drapeaux d'insertion des versions précédentes. On les retire au passage, sans quoi un
     /// retour en arrière sur une ancienne version réinsérerait les deux cours.
-    private static let legacySeedKeys = [
+    static let legacySeedKeys = [
         "micabo.didSeedSampleData",
         "feymind.didSeedSampleData"
     ]
 
-    static func purgeIfNeeded(in context: ModelContext) {
-        let defaults = UserDefaults.standard
+    /// `defaults` est un paramètre pour que le test puisse travailler sur son propre domaine
+    /// plutôt que sur les réglages de la machine qui lance la suite.
+    static func purgeIfNeeded(in context: ModelContext, defaults: UserDefaults = .standard) {
         guard !defaults.bool(forKey: key) else { return }
 
         // Le drapeau est posé avant le travail, pas après : si la suppression échoue, on ne

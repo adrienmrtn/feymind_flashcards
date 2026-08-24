@@ -7,15 +7,32 @@ Application iOS native de révision : tes cours (PDF, photos, Word ou notes) dev
 
 ## Ce que fait l'application
 
-Trois onglets, pas plus, avec **Réviser au milieu** : c'est là que l'app ouvre, et c'est à un
-balayage de n'importe où. Le bouton de session y est ancré en bas de l'écran : entre le
-lancement et la première carte, il n'y a qu'un appui.
+Trois onglets, pas plus, avec **Réviser au milieu** : c'est là que l'app ouvre, et c'est
+l'onglet qui doit être sous le pouce. Le bouton de session y est ancré en bas de l'écran :
+entre le lancement et la première carte, il n'y a qu'un appui.
 
 | Onglet | Rôle |
 | --- | --- |
 | Cours | Tout ce qui est importé, avec recherche, tri et filtre par matière. Second rayon « Découvrir » pour la bibliothèque partagée, masqué tant que `LibraryAccess.isAvailable` est faux |
-| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui, la série, les cours au programme, la répartition de la file et le prochain examen. Rien d'autre : ni date, ni liste de cours, ni bouton d'import |
+| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui dans une carte unique — le chiffre, la durée, la barre de composition et sa légende — puis les cours au programme et le prochain examen. Rien d'autre : ni salutation, ni date, ni liste de cours, ni bouton d'import |
 | Profil | Statistiques, amis (en attente de l'authentification) et réglages |
+
+**On ne balaye pas d'un onglet à l'autre.** Le carrousel qui vivait là était un `TabView` en
+style page : un défilement horizontal qui traîne sur un tiers de geste rend chaque écran mou,
+il entre en conflit avec tout ce qui se balaye à l'intérieur d'une page, et il fallait un
+bricolage parcourant la hiérarchie UIKit à chaque passe de mise en page pour le couper dès
+qu'un écran de détail était poussé. Les pages restent montées en même temps, simplement
+masquées, pour garder leur défilement et leur pile ; le changement d'onglet est un fondu
+court. Le geste de retour du système, lui, reste : ce n'est pas le même geste, et le retirer
+n'aurait fluidifié que le travail du pouce.
+
+**L'app part vide.** Deux cours de démonstration étaient insérés au premier lancement ; ils
+ne montraient pas ce que fait Micabo, ils montraient ce que quelqu'un d'autre avait importé,
+et le premier geste devenait de les supprimer. Les écrans d'accueil vides existaient déjà et
+ne se voyaient jamais. `SampleContentPurge` efface une fois les cours marqués `sample` restés
+sur les téléphones où l'app a déjà tourné ; un cours importé par l'utilisateur n'est jamais
+touché. Les deux fiches écrites à la main vivent maintenant dans la cible de test, où elles
+servent de référence de mise en page.
 
 **Il n'y aura pas de quatrième onglet.** Trois onglets avec Réviser au milieu est une règle
 de composition, pas un état des lieux : à quatre, il n'y a plus de milieu. Les écrans qui
@@ -56,8 +73,14 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 | Accroche | bienvenue, niveau d'études, langue, annonce des questions |
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli |
 | Démonstration | courbe de mémorisation, puis dépôt → fiche → révisions en trois écrans, puis le mode examen |
-| Personnalisation | matières, établissement, temps quotidien |
+| Personnalisation | matières, établissement (avec « Passer »), temps quotidien |
 | Sortie | projection annuelle, notifications, personnalisation, essai de 3 jours, paywall |
+
+Un seul écran offre une échappatoire, et elle est posée en haut à droite sur la ligne du
+sur-titre (`OnboardingSkip`) : demander son établissement à quelqu'un qui n'en a pas, qui est
+entre deux écoles, ou qui n'a pas envie de le dire ne doit pas fermer le parcours. Passer
+laisse le champ vide **et l'écrit**, plutôt que de garder la moitié d'un nom tapé puis
+abandonné.
 
 ### Un écran, une chose
 
@@ -99,11 +122,19 @@ Le passage d'un écran à l'autre est un glissement de **vingt-huit points** ave
 non un glissement pleine largeur : faire traverser tout l'écran à une page donne l'impression
 de feuilleter un carrousel, et attire l'œil sur le mouvement plutôt que sur le contenu.
 
-Les seules oscillations qui restent sont celles de la cloche de l'écran de rappel, parce
-qu'une cloche qui sonne oscille, et celle du bouton `isShiny` : il se laisse balayer d'un
-reflet et respire sur place, uniquement sur l'écran où l'on vient de regarder une animation
-sans rien toucher. La main y est immobile depuis dix secondes, il faut aller la chercher — et
-un bouton qui brille à chaque écran ne brille plus nulle part.
+Trois oscillations seulement échappent à la règle, et chacune est déclarée là où elle vit :
+
+- **la cloche de l'écran de rappel**, parce qu'une cloche qui sonne oscille ;
+- **le bouton `isShiny`**, qui se laisse balayer d'un reflet et respire sur place, uniquement
+  sur l'écran où l'on vient de regarder une animation sans rien toucher. La main y est
+  immobile depuis dix secondes, il faut aller la chercher — et un bouton qui brille à chaque
+  écran ne brille plus nulle part ;
+- **le calendrier du mode examen**, où l'on regarde un planificateur travailler. Le cercle du
+  jour J s'y trace au stylo, une onde rouge repart en boucle sous la date, le compte à rebours
+  égrène ses chiffres de J-28 à J-19, et les six points de révision *tombent* sur leur case.
+  La règle protège les transitions d'écran et les entrées de contenu, où un dépassement se lit
+  comme un tremblement ; un point qui se pose a le droit de tomber, et c'est le seul moyen de
+  faire lire six événements en une seconde et demie.
 
 ### Les trois écrans de démonstration
 
@@ -138,10 +169,12 @@ filet est maintenant posé en surimpression du texte, la fiche fait exactement s
 
 ### Ce que le mode examen promet
 
-Après la démonstration, un écran montre un calendrier où une date se cerne de rouge, prend son
-nom (« EXAMEN · Maths · vecteurs »), puis voit les jours qui la précèdent s'allumer un à un de
-points de révision, en se resserrant à l'approche du jour J. C'est exactement ce que fait
-`ExamPlanner`, et le voir vaut mieux que le lire.
+Après la démonstration, un écran montre un calendrier où le jour J se cerne de rouge au stylo,
+prend son nom (« EXAMEN · Maths DS sur table »), égrène son compte à rebours de J-28 à J-19,
+puis voit les jours qui le précèdent s'allumer un à un de points de révision, en se resserrant
+à l'approche de l'épreuve. Une ligne conclut sur ce qui vient de se passer : « 6 révisions
+placées avant le jour J ». C'est exactement ce que fait `ExamPlanner`, et le voir vaut mieux
+que le lire.
 
 Trois règles valent pour tout le tunnel :
 
@@ -227,8 +260,10 @@ une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un acces
 - L'indigo ne sert qu'à ce qui est actif : onglet courant, filtre choisi, cartes à réviser
 - Le seul aplat d'encre est le bouton d'action principal, ancré en bas de l'écran
 - Barre de trois onglets en pied d'écran, symbole plein sur l'onglet actif. Elle est dessinée
-  par `RootTabView`, **hors du carrousel** : les pages glissent sous elle, elle ne bouge pas.
-  Elle s'efface sur les écrans poussés, où le balayage est de toute façon coupé
+  par `RootTabView`, **hors des pages** : elles se remplacent sous elle, elle ne bouge pas
+  d'un pixel. Depuis que le balayage entre onglets a disparu, c'est le seul moyen de changer
+  de page. Elle s'efface sur les écrans poussés, où changer d'onglet depuis le fond d'une pile
+  ne voudrait rien dire
 - Un seul bouton flottant dans l'app : le « + » d'import, en bas à droite de Cours, là où le
   pouce tombe. Il n'apparaît pas quand la liste est vide, où l'écran d'accueil porte déjà son
   propre appel à importer
@@ -758,7 +793,7 @@ Micabo/
   App/             point d'entrée et conteneur SwiftData
   DesignSystem/    jetons de style, lexique et composants réutilisables
   Models/          entités SwiftData, fiche d'un cours, examens et réponses de l'IA
-  Persistence/     enregistrement des cours, des examens et contenu de démonstration
+  Persistence/     enregistrement des cours et des examens
   SRS/             planificateur SM-2, file d'attente, mode examen, statistiques
   Services/        client IA, balisage de la fiche, PDF / OCR / DOCX / YouTube
   Features/        un dossier par écran, dont Course/ et Exams/
