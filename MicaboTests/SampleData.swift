@@ -1,78 +1,16 @@
 import Foundation
-import SwiftData
+@testable import Micabo
 
-/// Contenu de démonstration inséré au premier lancement pour que l'application
-/// soit immédiatement explorable, même sans clé IA.
+/// Deux cours écrits à la main, servant de **matériel de test**.
+///
+/// Ils vivaient dans l'app, et étaient insérés au premier lancement pour qu'elle soit
+/// immédiatement explorable. Ils n'y sont plus : une app d'apprentissage qui s'ouvre sur
+/// deux cours qui ne sont pas les tiens ne montre pas ce qu'elle fait, elle montre ce que
+/// quelqu'un d'autre a importé — et le premier geste devient de les supprimer. L'app part
+/// donc vide, sur ses écrans d'accueil, et ces deux fiches restent ici : elles servent de
+/// référence à ce qu'une bonne fiche est censée être, du dosage du surlignage à la longueur
+/// des paragraphes, et les tests de mise en page s'appuient dessus.
 enum SampleData {
-    static let seedKey = "micabo.didSeedSampleData"
-
-    static func seedIfNeeded(in context: ModelContext) {
-        let defaults = UserDefaults.standard
-        migrateLegacySeedFlag(in: defaults)
-        guard !defaults.bool(forKey: seedKey) else { return }
-
-        let existing = (try? context.fetchCount(FetchDescriptor<Course>())) ?? 0
-        guard existing == 0 else {
-            defaults.set(true, forKey: seedKey)
-            return
-        }
-
-        do {
-            let photosynthesis = try CourseRepository.save(
-                photosynthesisCourse,
-                source: .sample,
-                rawText: photosynthesisCourse.contextText,
-                accentIndex: 1,
-                in: context
-            )
-            photosynthesis.createdAt = Date().addingTimeInterval(-3 * 86_400)
-            photosynthesis.updatedAt = Date().addingTimeInterval(-3 * 86_400)
-            let biologyCards = try CourseRepository.addFlashcards(photosynthesisCards, to: photosynthesis, in: context)
-            schedule(biologyCards, pattern: [.dueNow, .dueNow, .dueNow, .dueNow, .learned(3), .learned(10), .dueNow, .learned(21)])
-
-            let affine = try CourseRepository.save(
-                affineFunctionsCourse,
-                source: .sample,
-                rawText: affineFunctionsCourse.contextText,
-                accentIndex: 4,
-                in: context
-            )
-            affine.createdAt = Date().addingTimeInterval(-86_400)
-            affine.updatedAt = Date().addingTimeInterval(-86_400)
-            let mathCards = try CourseRepository.addFlashcards(affineFunctionsCards, to: affine, in: context)
-            schedule(mathCards, pattern: [.dueNow, .dueNow, .learned(2), .dueNow, .learned(6)])
-
-            try context.save()
-            defaults.set(true, forKey: seedKey)
-        } catch {
-            // Le contenu de démonstration ne doit jamais empêcher le lancement.
-            defaults.set(true, forKey: seedKey)
-        }
-    }
-
-    private enum SchedulePattern {
-        case dueNow
-        case learned(Double)
-    }
-
-    private static func schedule(_ cards: [Flashcard], pattern: [SchedulePattern]) {
-        for (index, card) in cards.enumerated() {
-            let entry = pattern.indices.contains(index) ? pattern[index] : .dueNow
-            switch entry {
-            case .dueNow:
-                card.state = .new
-                card.dueDate = Date().addingTimeInterval(-60)
-            case .learned(let interval):
-                card.state = .review
-                card.intervalDays = interval
-                card.repetitions = max(1, Int(interval / 3))
-                card.easeFactor = 2.5
-                card.lastReviewedAt = Date().addingTimeInterval(-interval * 43_200)
-                card.dueDate = Date().addingTimeInterval(interval * 43_200)
-            }
-        }
-    }
-
     // MARK: - Cours de biologie
 
     static let photosynthesisCourse = GeneratedCourse(
@@ -95,12 +33,8 @@ enum SampleData {
         """
     )
 
-    /// La fiche du cours de démonstration.
-    ///
-    /// Elle est écrite à la main, et pas générée au premier lancement : la première fiche
-    /// qu'on voit dans Micabo doit montrer ce que la mise en page sait faire, sans dépendre
-    /// d'une clé d'API ni d'une connexion. Elle sert donc aussi de référence à ce qu'une
-    /// bonne fiche est censée être, du dosage du surlignage à la longueur des paragraphes.
+    /// Fiche de référence : elle exerce presque tous les blocs de mise en page, du tableau
+    /// au graphe en passant par le surlignage et les encadrés.
     static let photosynthesisSheet = CourseSheet(blocks: [
         .paragraph(text: "Une plante ne mange pas. Elle **fabrique** sa propre matière organique à partir de trois choses gratuites : le dioxyde de carbone de l'air, l'eau puisée par les racines et la lumière du Soleil. C'est par cette réaction que presque toute la matière vivante de la planète entre dans les chaînes alimentaires."),
 
@@ -229,9 +163,8 @@ enum SampleData {
         """
     )
 
-    /// La fiche du second cours de démonstration. Elle existe surtout pour montrer une
-    /// fiche de matière scientifique : formules dans le texte, tableau de signes, et un
-    /// graphe qui n'illustre pas un chiffre mais une régularité.
+    /// Seconde fiche de référence, de matière scientifique : formules dans le texte,
+    /// tableau de signes, et un graphe qui n'illustre pas un chiffre mais une régularité.
     static let affineFunctionsSheet = CourseSheet(blocks: [
         .paragraph(text: "Une fonction affine est la plus simple des fonctions qui varient, et c'est celle qu'on croise partout : un abonnement avec frais d'ouverture, un trajet à vitesse constante, une facture au compteur. Sa représentation graphique est **toujours une droite**, et la réciproque est vraie : toute droite non verticale est la courbe d'une fonction affine."),
 
@@ -322,11 +255,4 @@ enum SampleData {
             answerIndex: 0
         )
     ]
-
-    private static func migrateLegacySeedFlag(in defaults: UserDefaults) {
-        let legacy = "feymind.didSeedSampleData"
-        guard !defaults.bool(forKey: seedKey), defaults.bool(forKey: legacy) else { return }
-        defaults.set(true, forKey: seedKey)
-        defaults.removeObject(forKey: legacy)
-    }
 }
