@@ -204,10 +204,3 @@ enum MicaboCalendar {
         return formatter.string(from: date).capitalizedFirstLetter
     }
 }
-
-extension String {
-    var capitalizedFirstLetter: String {
-        guard let first else { return self }
-        return first.uppercased() + dropFirst()
-    }
-}

@@ -14,7 +14,8 @@ struct ExamDeadlines {
     /// Par carte, le jour de l'examen le plus proche qui la concerne.
     private let byCard: [UUID: Date]
 
-    static let none = ExamDeadlines(byCard: [:])
+    /// Aucun examen en cours : c'est le cas ordinaire, et le défaut partout.
+    static let empty = ExamDeadlines(byCard: [:])
 
     init(byCard: [UUID: Date]) {
         self.byCard = byCard
@@ -65,7 +66,7 @@ struct ExamDeadlines {
     /// Même chose, lue directement depuis la base : c'est la forme dont une session a besoin.
     static func active(in context: ModelContext, now: Date = Date()) -> ExamDeadlines {
         let exams = (try? context.fetch(FetchDescriptor<Exam>())) ?? []
-        guard !exams.isEmpty else { return .none }
+        guard !exams.isEmpty else { return .empty }
         return active(exams: exams, courses: CourseRepository.allCourses(in: context), now: now)
     }
 }

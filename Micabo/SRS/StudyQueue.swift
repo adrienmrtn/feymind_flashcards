@@ -40,7 +40,7 @@ enum StudyQueueBuilder {
         from cards: [Flashcard],
         now: Date = Date(),
         limits: Limits = .default,
-        deadlines: ExamDeadlines = .none
+        deadlines: ExamDeadlines = .empty
     ) -> [Flashcard] {
         let due = cards.filter { $0.isDue(at: now) }
 
@@ -90,7 +90,7 @@ enum StudyQueueBuilder {
         for cards: [Flashcard],
         now: Date = Date(),
         limits: Limits = .default,
-        deadlines: ExamDeadlines = .none
+        deadlines: ExamDeadlines = .empty
     ) -> StudyCounts {
         let queue = build(from: cards, now: now, limits: limits, deadlines: deadlines)
         return StudyCounts(

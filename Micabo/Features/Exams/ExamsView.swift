@@ -38,15 +38,18 @@ struct ExamsView: View {
         exams.filter { !$0.isPast(from: today, calendar: calendar) }
     }
 
+    /// Du plus récent au plus ancien : un examen passé qu'on relit est celui qu'on vient de
+    /// passer, pas celui de l'an dernier.
     private var past: [Exam] {
-        exams.filter { $0.isPast(from: today, calendar: calendar) }.reversed()
+        Array(exams.filter { $0.isPast(from: today, calendar: calendar) }.reversed())
     }
 
     private var examsByDay: [Date: [Exam]] {
         Dictionary(grouping: exams) { calendar.startOfDay(for: $0.date) }
     }
 
-    /// Les examens du jour sélectionné, ou toute la liste à venir quand aucun jour ne l'est.
+    /// Les examens du jour sélectionné. Vide quand aucun jour ne l'est, ou quand le jour
+    /// choisi est libre : la section propose alors d'y placer un examen.
     private var selectedExams: [Exam] {
         guard let selectedDay else { return [] }
         return examsByDay[calendar.startOfDay(for: selectedDay)] ?? []
@@ -75,7 +78,7 @@ struct ExamsView: View {
                 }
 
                 if !past.isEmpty {
-                    section(title: "Passés", exams: Array(past))
+                    section(title: "Passés", exams: past)
                 }
 
                 if exams.isEmpty {

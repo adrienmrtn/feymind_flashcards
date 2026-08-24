@@ -71,7 +71,7 @@ final class StudySession {
     private var undoStack: [UndoStep] = []
     /// Les examens en cours. Ils décident de l'ordre de la file et plafonnent les
     /// intervalles : sans eux, la première note donnée renverrait la carte au delà du jour J.
-    private var deadlines: ExamDeadlines = .none
+    private var deadlines: ExamDeadlines = .empty
 
     /// Vrai dès la première note donnée : c'est ce qui active le bouton d'annulation.
     var canUndo: Bool {
@@ -136,7 +136,7 @@ final class StudySession {
         self.context = context
         self.mode = mode
         self.sourceKey = mode.affectsSchedule ? sourceKey : nil
-        self.deadlines = mode.affectsSchedule ? ExamDeadlines.active(in: context, now: now) : .none
+        self.deadlines = mode.affectsSchedule ? ExamDeadlines.active(in: context, now: now) : .empty
         startedAt = now
 
         let usable: [Flashcard]

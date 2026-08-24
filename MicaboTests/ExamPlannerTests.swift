@@ -566,7 +566,7 @@ final class ExamDeadlinesTests: XCTestCase {
         }
         try context.save()
 
-        let capped = StudyQueueBuilder.build(from: cards, limits: smallLimits, deadlines: .none)
+        let capped = StudyQueueBuilder.build(from: cards, limits: smallLimits, deadlines: .empty)
         XCTAssertEqual(capped.count, 3)
 
         _ = try exam(name: "Examen", inDays: 7, courses: [course], planned: true)

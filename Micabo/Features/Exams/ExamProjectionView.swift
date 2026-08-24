@@ -125,9 +125,11 @@ struct ExamLoadChart: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let spacing = load.count > 24 ? 1.5 : 3.0
-            let available = proxy.size.width - spacing * Double(max(0, load.count - 1))
-            let width = max(2, available / Double(max(1, load.count)))
+            // Les barres se resserrent quand les jours sont nombreux : un mois de révisions
+            // dans la largeur d'un téléphone ne laisse pas trois points entre chaque.
+            let spacing: CGFloat = load.count > 24 ? 1.5 : 3
+            let gaps = spacing * CGFloat(max(0, load.count - 1))
+            let width = max(2, (proxy.size.width - gaps) / CGFloat(max(1, load.count)))
 
             HStack(alignment: .bottom, spacing: spacing) {
                 ForEach(Array(load.enumerated()), id: \.offset) { offset, count in

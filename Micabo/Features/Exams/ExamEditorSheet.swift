@@ -24,6 +24,7 @@ struct ExamEditorSheet: View {
     @State private var intensity: ExamIntensity = .standard
     @State private var errorMessage: String?
     @State private var didLoad = false
+    @State private var showDeleteConfirmation = false
 
     private let calendar = MicaboCalendar.shared
 
@@ -63,6 +64,10 @@ struct ExamEditorSheet: View {
                         ExamProjectionView(plan: plan)
                     } else {
                         emptyProjection
+                    }
+
+                    if exam != nil {
+                        dangerZone
                     }
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
@@ -226,6 +231,52 @@ struct ExamEditorSheet: View {
         )
     }
 
+    /// Les deux actions qui défont quelque chose.
+    ///
+    /// Elles vivent aussi dans le menu contextuel de la liste, mais elles ne peuvent pas y
+    /// vivre **seulement** : ce menu partage l'appui long avec le glisser-déposer du
+    /// calendrier, et une action qu'un geste peut voler n'est pas une action accessible.
+    @ViewBuilder
+    private var dangerZone: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Annuler")
+
+            VStack(spacing: 0) {
+                if exam?.isPlanned == true {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .symbol("arrow.uturn.backward"), background: MicaboColor.surfaceMuted),
+                        title: "Rendre le planning normal",
+                        subtitle: "Les cartes retrouvent leurs échéances d'avant",
+                        accessory: .none,
+                        action: unplan
+                    )
+
+                    MicaboHairline(inset: 71)
+                }
+
+                MicaboRow(
+                    tile: MicaboTile(glyph: .symbol("trash"), background: MicaboColor.negativeSoft, tint: MicaboColor.negative),
+                    title: "Supprimer l'examen",
+                    subtitle: exam?.isPlanned == true ? "La replanification est défaite" : nil,
+                    accessory: .none,
+                    titleColor: MicaboColor.negative,
+                    action: { showDeleteConfirmation = true }
+                )
+            }
+            .micaboGroup()
+        }
+        .confirmationDialog("Supprimer cet examen ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Supprimer", role: .destructive, action: delete)
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text(
+                exam?.isPlanned == true
+                    ? "Les révisions replanifiées retrouveront leurs échéances d'avant."
+                    : "L'examen sera retiré du calendrier."
+            )
+        }
+    }
+
     // MARK: - Actions
 
     private func load() {
@@ -271,7 +322,33 @@ struct ExamEditorSheet: View {
             Haptics.success()
             dismiss()
         } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            errorMessage = describe(error)
         }
+    }
+
+    private func unplan() {
+        guard let exam else { return }
+        do {
+            try ExamRepository.unplan(exam, in: modelContext)
+            Haptics.light()
+            dismiss()
+        } catch {
+            errorMessage = describe(error)
+        }
+    }
+
+    private func delete() {
+        guard let exam else { return }
+        do {
+            try ExamRepository.delete(exam, in: modelContext)
+            Haptics.success()
+            dismiss()
+        } catch {
+            errorMessage = describe(error)
+        }
+    }
+
+    private func describe(_ error: Error) -> String {
+        (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }
 }
