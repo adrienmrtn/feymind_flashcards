@@ -13,12 +13,22 @@ struct ForgettingStepView: View {
             subtitle: "Sois honnête, personne ne regarde.",
             scrolls: false
         ) {
-            VStack(spacing: 8) {
-                OnboardingChoiceRow(title: "Oui, tout le temps", isSelected: selection == true) {
+            // Deux réponses, deux cases de même taille posées côte à côte : la question
+            // est un choix, et un choix se regarde d'un coup.
+            HStack(spacing: 10) {
+                OnboardingChoiceTile(
+                    title: "Oui, tout le temps",
+                    systemImage: "arrow.down.right.circle",
+                    isSelected: selection == true
+                ) {
                     select(true)
                 }
 
-                OnboardingChoiceRow(title: "Non, ça va", isSelected: selection == false) {
+                OnboardingChoiceTile(
+                    title: "Non, ça va",
+                    systemImage: "checkmark.circle",
+                    isSelected: selection == false
+                ) {
                     select(false)
                 }
             }

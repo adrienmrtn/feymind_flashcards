@@ -27,7 +27,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .level)
 
         model.advance()
-        XCTAssertEqual(model.step, .builtByStudents)
+        XCTAssertEqual(model.step, .language)
     }
 
     // MARK: - Démonstration
@@ -42,7 +42,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .demoSheet, "Le cours déposé est d'abord mis en fiche")
 
         model.advance()
-        XCTAssertEqual(model.step, .demoReview, "La fiche se décompose ensuite en cartes")
+        XCTAssertEqual(model.step, .demoReview, "La fiche se découpe ensuite en révisions")
 
         model.advance()
         XCTAssertEqual(model.step, .examPromise, "Le mode examen vient après la démonstration")
@@ -50,15 +50,17 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Écrans retirés
 
-    /// Ces trois écrans ont été retirés du parcours : la génération simulée, qui faisait
-    /// patienter devant un travail invisible, la courbe de l'oubli prise à contre-pied, qui
-    /// répétait l'écran précédent, et la preuve sociale.
+    /// Ces écrans ont été retirés du parcours : la génération simulée, qui faisait patienter
+    /// devant un travail invisible, la courbe de l'oubli prise à contre-pied, qui répétait
+    /// l'écran précédent, la preuve sociale, et « on a fait Micabo pour nous », qui racontait
+    /// d'où venait l'app à quelqu'un qui ne l'a pas encore vue fonctionner.
     func testRemovedScreensAreGoneFromTheFlow() {
         let names = OnboardingStep.allCases.map(String.init(describing:))
 
         XCTAssertFalse(names.contains("demoWrite"))
         XCTAssertFalse(names.contains("science"))
         XCTAssertFalse(names.contains("schoolPeers"))
+        XCTAssertFalse(names.contains("builtByStudents"))
     }
 
     /// Le parcours est une file droite : aucun écran ne se saute, donc avancer depuis
@@ -140,6 +142,28 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertTrue(kinds.contains(.basic))
         XCTAssertTrue(kinds.contains(.choice))
         XCTAssertTrue(kinds.contains(.gap))
+    }
+
+    /// Le troisième écran montre les quatre formes que prend une fiche. Le schéma en fait
+    /// partie : une démonstration qui n'aurait que des cartes laisserait croire que Micabo
+    /// ne sait pas dessiner un cours.
+    func testDemoOutputsCoverTheFourFormats() {
+        XCTAssertEqual(OnboardingDemo.Output.allCases, [.schema, .flashcard, .quiz, .gap])
+
+        for output in OnboardingDemo.Output.allCases {
+            XCTAssertFalse(output.label.isEmpty, "\(output) doit avoir un libellé")
+            XCTAssertFalse(output.systemImage.isEmpty, "\(output) doit avoir un symbole")
+        }
+    }
+
+    /// Le texte à trou de la démonstration doit vraiment avoir un trou, et le mot qui le
+    /// remplit doit être celui du cours déposé.
+    func testTheGapExerciseComesFromTheRawCourse() {
+        XCTAssertFalse(OnboardingDemo.gapBefore.isEmpty)
+        XCTAssertFalse(OnboardingDemo.gapAnswer.isEmpty)
+
+        let raw = OnboardingDemo.rawLines.joined(separator: " ").lowercased()
+        XCTAssertTrue(raw.contains(OnboardingDemo.gapAnswer.lowercased()))
     }
 
     /// Le document déposé doit être plus dense que la fiche qui en sort, sinon l'écran de

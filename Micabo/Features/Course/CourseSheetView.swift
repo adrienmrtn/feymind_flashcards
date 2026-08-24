@@ -31,6 +31,9 @@ struct CourseSheetView: View {
     @State private var studyMode: StudyMode = .scheduled
     @State private var showDeleteConfirmation = false
     @State private var errorMessage: String?
+    /// Les cartes à ouvrir dès qu'elles existent. C'est ce qui fait de la génération un
+    /// parcours qui aboutit, plutôt qu'une opération dont il faut aller chercher le résultat.
+    @State private var generatedCards: CourseCardsRoute?
 
     /// L'invitation à sélectionner un passage disparaît une fois le geste découvert : une
     /// consigne qu'on a suivie n'a plus rien à dire.
@@ -81,6 +84,11 @@ struct CourseSheetView: View {
             }
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
+        }
+        // Les cartes fraîchement écrites s'ouvrent d'elles-mêmes. Le chemin est celui de la
+        // rangée « Cartes » plus bas, donc le chevron de retour ramène bien à la fiche.
+        .navigationDestination(item: $generatedCards) { route in
+            FlashcardsView(course: route.course)
         }
         .fullScreenCover(isPresented: $showStudy) {
             StudyView(source: .course(course), mode: studyMode)
@@ -349,16 +357,25 @@ struct CourseSheetView: View {
         }
     }
 
+    /// Génère les cartes, **puis ouvre l'écran des cartes**.
+    ///
+    /// Avant, on retombait sur la fiche : il fallait la faire défiler jusqu'en bas pour
+    /// trouver la rangée « Cartes » et découvrir ce qui venait d'être écrit. Une action qui
+    /// produit quelque chose doit mener à ce qu'elle a produit.
     @MainActor
     private func generateCards(_ options: CardGeneration.Options) async {
         guard isWorking == nil else { return }
         isWorking = .cards
-        defer { isWorking = nil }
 
         do {
             try await CardGeneration.run(for: course, options: options, using: aiService, in: modelContext)
             Haptics.success()
+            // Le voile tombe avant la poussée : pousser un écran par-dessus un plein écran
+            // opaque montrerait la transition à travers lui.
+            isWorking = nil
+            generatedCards = CourseCardsRoute(course: course)
         } catch {
+            isWorking = nil
             errorMessage = describe(error)
         }
     }

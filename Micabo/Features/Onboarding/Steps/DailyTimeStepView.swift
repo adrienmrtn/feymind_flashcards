@@ -28,7 +28,6 @@ struct DailyTimeStepView: View {
         OnboardingScaffold(
             eyebrow: "Ton rythme",
             title: "Combien de temps par jour ?",
-            subtitle: "Dix minutes chaque jour valent mieux qu'une heure le dimanche.",
             titleSize: 28
         ) {
             VStack(spacing: 14) {

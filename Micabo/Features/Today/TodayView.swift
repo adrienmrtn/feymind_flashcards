@@ -1,12 +1,23 @@
 import SwiftData
 import SwiftUI
 
-/// Écran d'ouverture de l'app : **Réviser**. Salutation, série, et la file du jour.
+/// Écran d'ouverture de l'app : **Réviser**. Le chiffre du jour, et ce qu'il contient.
 ///
 /// Il ne parle que de la révision du jour : pas de date, pas de liste de cours, pas de
-/// bouton d'import — tout ça vit dans l'onglet Cours, à un balayage de là. Le bouton de
-/// session est ancré en bas, donc visible sans faire défiler : entre le lancement de
-/// l'app et la première carte, il n'y a qu'un appui.
+/// bouton d'import — tout ça vit dans l'onglet Cours. Le bouton de session est ancré en bas,
+/// donc visible sans faire défiler : entre le lancement de l'app et la première carte, il
+/// n'y a qu'un appui.
+///
+/// **Le haut de l'écran a été refait.** Il portait une salutation en grand
+/// (« Bonsoir »), un sur-titre de série, un nombre de 76 points posé à même le fond avec
+/// deux lignes de légende à sa droite, une barre segmentée sans légende, puis un bloc
+/// « Répartition » qui redonnait en rangées les trois chiffres de la barre. Beaucoup de
+/// hauteur, trois niveaux de gris, et deux fois la même information.
+///
+/// Il ne reste qu'un titre d'écran, la série en pastille à sa droite, et **une seule carte**
+/// qui porte le chiffre, la durée, la barre et sa légende. La barre devient lisible parce
+/// qu'elle est légendée juste dessous, et le bloc « Répartition » disparaît puisque c'est
+/// exactement ce que la légende dit.
 struct TodayView: View {
     @Query private var allCards: [Flashcard]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
@@ -76,9 +87,8 @@ struct TodayView: View {
                     if dueCards.isEmpty {
                         restState
                     } else {
-                        countBlock
+                        dueCard
                         dueCoursesSection
-                        breakdownSection
                     }
 
                     examSection
@@ -102,7 +112,7 @@ struct TodayView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
-            .reportsPaging(for: .today, depth: path.count)
+            .reportsNavigationDepth(for: .today, depth: path.count)
             .navigationDestination(for: Course.self) { course in
                 CourseSheetView(course: course)
             }
@@ -137,56 +147,117 @@ struct TodayView: View {
 
     // MARK: - En-tête
 
+    /// Le titre de l'écran, et la série à sa droite. Pas de salutation : c'est le seul
+    /// endroit de l'app où l'on ouvre, et ce qu'on vient y chercher est le chiffre juste
+    /// dessous.
     private var header: some View {
-        MicaboScreenHeader(title: StudyStats.greeting(), eyebrow: headerEyebrow)
-            .padding(.top, MicaboSpacing.xs)
+        MicaboScreenHeader(title: "Réviser") {
+            if streak > 0 {
+                streakPill
+            }
+        }
+        .padding(.top, MicaboSpacing.xs)
     }
 
-    /// La date du jour n'apparaît pas : l'écran dit déjà ce qu'il y a à faire
-    /// aujourd'hui, et le téléphone porte l'heure juste au-dessus. Reste la série,
-    /// qui est la seule chose que l'utilisateur risque de perdre.
-    private var headerEyebrow: String? {
-        guard streak > 0 else { return nil }
-        return "Série de \(streak) jour\(streak > 1 ? "s" : "")"
+    /// La série est la seule chose que l'utilisateur risque de perdre : elle mérite d'être
+    /// visible, pas d'être un sur-titre gris au-dessus du titre.
+    private var streakPill: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "flame.fill")
+                .font(.system(size: 12, weight: .semibold))
+
+            Text("\(streak) j")
+                .font(MicaboFont.hanken(14, weight: .semibold))
+                .monospacedDigit()
+        }
+        .foregroundStyle(MicaboColor.caution)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 13)
+        .background(MicaboColor.cautionSoft, in: Capsule())
+        .accessibilityLabel("Série de \(streak) jour\(streak > 1 ? "s" : "")")
     }
 
     // MARK: - Le chiffre du jour
 
-    /// Posé à même le fond ivoire : pas de panneau, c'est déjà le sujet de l'écran.
-    private var countBlock: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline, spacing: 14) {
+    /// **Une seule carte pour tout ce qui décrit la file du jour** : le chiffre, ce qu'il
+    /// coûte en temps, et de quoi il est fait. Les quatre blocs qui se succédaient à même le
+    /// fond donnaient trois gris à lire de haut en bas ; là, il y a un objet à regarder.
+    private var dueCard: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .center, spacing: 14) {
                 Text("\(dueCards.count)")
-                    .font(MicaboFont.hanken(76, weight: .bold))
+                    .font(MicaboFont.hanken(58, weight: .bold))
                     .tracking(-2)
                     .foregroundStyle(MicaboColor.ink)
-                    .minimumScaleFactor(0.5)
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.6)
                     .lineLimit(1)
+                    .contentTransition(.numericText(value: Double(dueCards.count)))
+                    .animation(.easeOut(duration: 0.3), value: dueCards.count)
 
-                Text(dueCards.count > 1 ? "cartes\nà réviser" : "carte\nà réviser")
-                    .font(MicaboFont.hanken(16, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .lineSpacing(1)
-                    .fixedSize()
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(dueCards.count > 1 ? "cartes à réviser" : "carte à réviser")
+                        .font(MicaboFont.hanken(16, weight: .semibold))
+                        .foregroundStyle(MicaboColor.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text("≈ \(estimatedMinutes) min · \(coursesWithDue > 1 ? "\(coursesWithDue) cours" : "1 cours")")
+                        .font(MicaboFont.hanken(13, weight: .medium))
+                        .foregroundStyle(MicaboColor.inkTertiary)
+                }
 
                 Spacer(minLength: 0)
             }
 
-            Text("≈ \(estimatedMinutes) min · \(coursesWithDue > 1 ? "\(coursesWithDue) cours" : "1 cours")")
-                .font(MicaboFont.hanken(13, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
-
-            progressSegments
-                .padding(.top, 4)
+            VStack(alignment: .leading, spacing: 11) {
+                progressSegments
+                legend
+            }
 
             if heldBackNewCards > 0 {
-                Text("\(MicaboCopy.cards(heldBackNewCards)) neuves gardées pour les jours suivants, pour tenir ton rythme de \(DailyLoad.label(forMinutes: OnboardingPreferences.dailyMinutes)) par jour.")
-                    .font(MicaboFont.hanken(12, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 2)
+                heldBackNote
             }
         }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .micaboGroup()
+    }
+
+    /// Ce que la barre veut dire. Sans elle, trois couleurs empilées ne sont qu'un
+    /// dégradé — et c'est pour la remplacer qu'un bloc « Répartition » existait plus bas.
+    private var legend: some View {
+        MicaboFlowLayout(spacing: 14, lineSpacing: 7) {
+            ForEach(visibleSegments) { segment in
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(segment.color)
+                        .frame(width: 7, height: 7)
+
+                    Text("\(segment.count) \(segment.label)")
+                        .font(MicaboFont.hanken(12.5, weight: .medium))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                }
+            }
+        }
+    }
+
+    /// Dit pourquoi le chiffre du haut est plus petit que le nombre de cartes réellement
+    /// dues : sans cette ligne, le plafond de rythme passerait pour un bug.
+    private var heldBackNote: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "tray.and.arrow.down")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(MicaboColor.inkTertiary)
+
+            Text("\(MicaboCopy.cards(heldBackNewCards)) neuves gardées pour les jours suivants, pour tenir ton rythme de \(DailyLoad.label(forMinutes: OnboardingPreferences.dailyMinutes)) par jour.")
+                .font(MicaboFont.hanken(12, weight: .regular))
+                .foregroundStyle(MicaboColor.inkTertiary)
+                .lineSpacing(1.5)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.top, 2)
     }
 
     @ViewBuilder
@@ -204,21 +275,6 @@ struct TodayView: View {
                     }
                 )
             }
-        }
-    }
-
-    private var breakdownSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Répartition")
-
-            VStack(spacing: 0) {
-                breakdownRow(color: MicaboColor.caution, label: "En révision", count: reviewCount)
-                MicaboHairline(inset: MicaboSpacing.md)
-                breakdownRow(color: MicaboColor.accent, label: "En apprentissage", count: learningCount)
-                MicaboHairline(inset: MicaboSpacing.md)
-                breakdownRow(color: MicaboColor.inkTertiary, label: "Nouvelles", count: newCount)
-            }
-            .micaboGroup()
         }
     }
 
@@ -270,27 +326,6 @@ struct TodayView: View {
             + (nextExam.isPlanned ? " · révisions replanifiées" : " · planning normal")
     }
 
-    private func breakdownRow(color: Color, label: String, count: Int) -> some View {
-        HStack(spacing: 11) {
-            Circle()
-                .fill(count > 0 ? color : MicaboColor.surfaceSunken)
-                .frame(width: 9, height: 9)
-
-            Text(label)
-                .font(MicaboFont.hanken(15, weight: .medium))
-                .foregroundStyle(count > 0 ? MicaboColor.ink : MicaboColor.inkTertiary)
-
-            Spacer(minLength: 0)
-
-            Text("\(count)")
-                .font(MicaboFont.hanken(15, weight: .semibold))
-                .foregroundStyle(count > 0 ? MicaboColor.ink : MicaboColor.inkTertiary)
-                .monospacedDigit()
-        }
-        .padding(.vertical, 14)
-        .padding(.horizontal, MicaboSpacing.md)
-    }
-
     /// Compté sur la file du jour, plafond compris : « au programme » doit dire la vérité.
     private var dueByCourse: [(course: Course, count: Int)] {
         var counts: [UUID: Int] = [:]
@@ -306,28 +341,76 @@ struct TodayView: View {
         return entries.sorted { $0.count > $1.count }
     }
 
-    private var progressSegments: some View {
-        GeometryReader { proxy in
-            let total = max(1, dueCards.count)
-            let spacing: CGFloat = 4
-            let usable = max(0, proxy.size.width - spacing * 2)
+    // MARK: - La barre et sa légende
 
-            HStack(spacing: spacing) {
-                segment(color: MicaboColor.caution, count: reviewCount, total: total, usable: usable)
-                segment(color: MicaboColor.accent, count: learningCount, total: total, usable: usable)
-                segment(color: MicaboColor.surfaceSunken, count: newCount, total: total, usable: usable)
-            }
-        }
-        .frame(height: 7)
+    /// Les trois natures de cartes de la file, dans l'ordre où elles se lisent. Une seule
+    /// source pour la barre et pour sa légende : deux listes séparées finiraient par ne plus
+    /// dire la même chose.
+    private struct Segment: Identifiable {
+        let label: String
+        let color: Color
+        let count: Int
+
+        var id: String { label }
     }
 
-    @ViewBuilder
-    private func segment(color: Color, count: Int, total: Int, usable: CGFloat) -> some View {
-        if count > 0 {
-            Capsule()
-                .fill(color)
-                .frame(width: max(5, usable * CGFloat(count) / CGFloat(total)))
+    /// Une part de la barre, une fois sa largeur arrêtée.
+    private struct SizedSegment: Identifiable {
+        let id: String
+        let color: Color
+        let width: CGFloat
+    }
+
+    private var visibleSegments: [Segment] {
+        [
+            Segment(label: "en révision", color: MicaboColor.caution, count: reviewCount),
+            Segment(label: "en apprentissage", color: MicaboColor.accent, count: learningCount),
+            Segment(label: "nouvelles", color: MicaboColor.inkTertiary, count: newCount)
+        ]
+        .filter { $0.count > 0 }
+    }
+
+    private var progressSegments: some View {
+        GeometryReader { proxy in
+            let spacing: CGFloat = 3
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(MicaboColor.surfaceMuted)
+
+                HStack(spacing: spacing) {
+                    ForEach(segmentWidths(in: proxy.size.width, spacing: spacing)) { entry in
+                        Capsule()
+                            .fill(entry.color)
+                            .frame(width: entry.width)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+            }
         }
+        .frame(height: 8)
+        .animation(.easeOut(duration: 0.3), value: dueCards.count)
+    }
+
+    /// Les largeurs sont calculées puis **renormalisées**. Chaque part reçoit un plancher de
+    /// six points, sans quoi une seule carte neuve dans une file de cinquante ne se voit
+    /// pas ; ces planchers mis bout à bout peuvent dépasser la largeur disponible, et une
+    /// rangée qui dépasse déborde de la carte.
+    private func segmentWidths(in width: CGFloat, spacing: CGFloat) -> [SizedSegment] {
+        let segments = visibleSegments
+        let usable = width - spacing * CGFloat(max(0, segments.count - 1))
+        guard !segments.isEmpty, usable > 0 else { return [] }
+
+        let total = CGFloat(max(1, dueCards.count))
+        var widths = segments.map { max(6, usable * CGFloat($0.count) / total) }
+
+        let sum = widths.reduce(0, +)
+        if sum > usable {
+            widths = widths.map { $0 * usable / sum }
+        }
+
+        return zip(segments, widths).map { SizedSegment(id: $0.label, color: $0.color, width: $1) }
     }
 
     // MARK: - Rien à réviser

@@ -105,7 +105,7 @@ struct CoursesListView: View {
             .micaboScreenBackground()
             .overlay(alignment: .bottomTrailing) { importButton }
             .toolbar(.hidden, for: .navigationBar)
-            .reportsPaging(for: .courses, depth: path.count)
+            .reportsNavigationDepth(for: .courses, depth: path.count)
             .navigationDestination(for: Course.self) { course in
                 CourseSheetView(course: course)
             }

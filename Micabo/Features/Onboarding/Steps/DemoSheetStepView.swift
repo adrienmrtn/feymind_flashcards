@@ -36,7 +36,7 @@ struct DemoSheetStepView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         } footer: {
-            OnboardingContinueButton(title: "S'entraîner", isEnabled: isFinished) {
+            OnboardingContinueButton(title: "S'entraîner", isEnabled: isFinished, isShiny: true) {
                 model.advance()
             }
         }
@@ -58,7 +58,7 @@ struct DemoSheetStepView: View {
                 .opacity(written > 0 ? 1 : 0)
                 .scaleEffect(written > 0 ? 1 : 1.02)
         }
-        .frame(width: 232)
+        .frame(width: DemoSheetPage.width)
         .shadow(color: Color.black.opacity(0.08), radius: 18, x: 0, y: 10)
         .animation(OnboardingMotion.shift, value: written)
     }

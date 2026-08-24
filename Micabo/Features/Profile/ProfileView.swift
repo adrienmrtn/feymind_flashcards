@@ -30,7 +30,7 @@ struct ProfileView: View {
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
-            .reportsPaging(for: .profile, depth: 0)
+            .reportsNavigationDepth(for: .profile, depth: 0)
             .sheet(isPresented: $showSettings) {
                 SettingsView()
                     .presentationCornerRadius(MicaboRadius.sheet)

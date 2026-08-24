@@ -43,7 +43,6 @@ struct OnboardingFlowView: View {
         switch model.step {
         case .welcome: WelcomeStepView()
         case .level: LevelStepView()
-        case .builtByStudents: BuiltByStudentsStepView()
         case .language: LanguageStepView()
         case .personalizeIntro: PersonalizeIntroStepView()
         case .goal: GoalStepView()

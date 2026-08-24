@@ -10,7 +10,7 @@ struct MicaboApp: App {
     init() {
         FontLoader.registerFonts()
         container = Self.makeContainer()
-        SampleData.seedIfNeeded(in: container.mainContext)
+        SampleContentPurge.purgeIfNeeded(in: container.mainContext)
     }
 
     var body: some Scene {
@@ -79,7 +79,5 @@ struct MicaboApp: App {
         for path in [storeURL.path, storeURL.path + "-shm", storeURL.path + "-wal"] {
             try? manager.removeItem(atPath: path)
         }
-        // Le contenu de démonstration revient : sans lui, l'application repart vide et paraît cassée.
-        UserDefaults.standard.removeObject(forKey: SampleData.seedKey)
     }
 }

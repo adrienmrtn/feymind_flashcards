@@ -27,7 +27,8 @@ struct SchoolStepView: View {
             eyebrow: "Ton établissement",
             title: "Tu étudies où ?",
             subtitle: "Commence à taper, on cherche pour toi.",
-            titleSize: 28
+            titleSize: 28,
+            skip: OnboardingSkip(action: skipAndAdvance)
         ) {
             VStack(alignment: .leading, spacing: 14) {
                 searchField
@@ -238,6 +239,20 @@ struct SchoolStepView: View {
                 }
             }
         }
+    }
+
+    /// Passer laisse le champ vide **et l'écrit** : on ne garde pas la moitié d'un nom tapé
+    /// puis abandonné, sinon l'app se met à parler d'un établissement que personne n'a
+    /// confirmé.
+    private func skipAndAdvance() {
+        searchTask?.cancel()
+        isSearching = false
+        isFocused = false
+
+        let flow = model
+        flow.institutionId = nil
+        flow.institutionName = nil
+        flow.advance()
     }
 
     private func commitAndAdvance() {

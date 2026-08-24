@@ -7,15 +7,32 @@ Application iOS native de révision : tes cours (PDF, photos, Word ou notes) dev
 
 ## Ce que fait l'application
 
-Trois onglets, pas plus, avec **Réviser au milieu** : c'est là que l'app ouvre, et c'est à un
-balayage de n'importe où. Le bouton de session y est ancré en bas de l'écran : entre le
-lancement et la première carte, il n'y a qu'un appui.
+Trois onglets, pas plus, avec **Réviser au milieu** : c'est là que l'app ouvre, et c'est
+l'onglet qui doit être sous le pouce. Le bouton de session y est ancré en bas de l'écran :
+entre le lancement et la première carte, il n'y a qu'un appui.
 
 | Onglet | Rôle |
 | --- | --- |
 | Cours | Tout ce qui est importé, avec recherche, tri et filtre par matière. Second rayon « Découvrir » pour la bibliothèque partagée, masqué tant que `LibraryAccess.isAvailable` est faux |
-| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui, la série, les cours au programme, la répartition de la file et le prochain examen. Rien d'autre : ni date, ni liste de cours, ni bouton d'import |
+| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui dans une carte unique — le chiffre, la durée, la barre de composition et sa légende — puis les cours au programme et le prochain examen. Rien d'autre : ni salutation, ni date, ni liste de cours, ni bouton d'import |
 | Profil | Statistiques, amis (en attente de l'authentification) et réglages |
+
+**On ne balaye pas d'un onglet à l'autre.** Le carrousel qui vivait là était un `TabView` en
+style page : un défilement horizontal qui traîne sur un tiers de geste rend chaque écran mou,
+il entre en conflit avec tout ce qui se balaye à l'intérieur d'une page, et il fallait un
+bricolage parcourant la hiérarchie UIKit à chaque passe de mise en page pour le couper dès
+qu'un écran de détail était poussé. Les pages restent montées en même temps, simplement
+masquées, pour garder leur défilement et leur pile ; le changement d'onglet est un fondu
+court. Le geste de retour du système, lui, reste : ce n'est pas le même geste, et le retirer
+n'aurait fluidifié que le travail du pouce.
+
+**L'app part vide.** Deux cours de démonstration étaient insérés au premier lancement ; ils
+ne montraient pas ce que fait Micabo, ils montraient ce que quelqu'un d'autre avait importé,
+et le premier geste devenait de les supprimer. Les écrans d'accueil vides existaient déjà et
+ne se voyaient jamais. `SampleContentPurge` efface une fois les cours marqués `sample` restés
+sur les téléphones où l'app a déjà tourné ; un cours importé par l'utilisateur n'est jamais
+touché. Les deux fiches écrites à la main vivent maintenant dans la cible de test, où elles
+servent de référence de mise en page.
 
 **Il n'y aura pas de quatrième onglet.** Trois onglets avec Réviser au milieu est une règle
 de composition, pas un état des lieux : à quatre, il n'y a plus de milieu. Les écrans qui
@@ -25,11 +42,23 @@ Réviser.
 Le parcours d'import tient en trois écrans : bouton `+` flottant en bas à droite de Cours,
 choix de la source (PDF, scan/photos, vidéo YouTube, Word ou texte), puis **la fiche du
 cours**. Les cartes ne sont plus produites au passage : elles se demandent depuis la fiche,
-et c'est le premier bouton de l'écran tant qu'il n'y en a aucune.
+et c'est le premier bouton de l'écran tant qu'il n'y en a aucune. Une fois écrites, **elles
+s'ouvrent d'elles-mêmes** : on retombait avant sur la fiche, qu'il fallait faire défiler
+jusqu'en bas pour trouver la rangée « Cartes » et découvrir ce qui venait d'être produit.
 
 ```
 import -> lecture sur l'appareil -> cours fiché -> (facultatif) cartes -> session
 ```
+
+**Ce qu'on regarde pendant que Micabo travaille** (`GenerationOverlay`) montre la page en
+train de se faire : un filet de titre, des lignes, un passage surligné, un tableau, un graphe,
+qui se posent l'un après l'autre pendant qu'un balayage de lecture descend en boucle. C'est la
+même image que celle du parcours d'accueil, et c'est voulu — ce qu'on a promis à l'inscription
+est ce qu'on montre en train d'arriver. L'écran d'avant cochait quatre étapes sur un minuteur
+de 2,2 secondes : le problème n'était pas la laideur, c'était que les coches n'étaient reliées
+à rien. Rien n'est du faux texte, seulement des formes, et la page ne se vide jamais pour
+repartir : une page qui s'effacerait toutes les trois secondes se lirait comme un travail qui
+recommence, donc comme un échec.
 
 ## Lexique
 
@@ -53,11 +82,17 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 
 | Bloc | Écrans |
 | --- | --- |
-| Accroche | bienvenue, niveau d'études, « on a fait Micabo pour nous », langue, annonce des questions |
+| Accroche | bienvenue, niveau d'études, langue, annonce des questions |
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli |
-| Démonstration | courbe de mémorisation, puis dépôt → fiche → cartes en trois écrans manipulables, puis le mode examen |
-| Personnalisation | matières, établissement, temps quotidien |
+| Démonstration | courbe de mémorisation, puis dépôt → fiche → révisions en trois écrans, puis le mode examen |
+| Personnalisation | matières, établissement (avec « Passer »), temps quotidien |
 | Sortie | projection annuelle, notifications, personnalisation, essai de 3 jours, paywall |
+
+Un seul écran offre une échappatoire, et elle est posée en haut à droite sur la ligne du
+sur-titre (`OnboardingSkip`) : demander son établissement à quelqu'un qui n'en a pas, qui est
+entre deux écoles, ou qui n'a pas envie de le dire ne doit pas fermer le parcours. Passer
+laisse le champ vide **et l'écrit**, plutôt que de garder la moitié d'un nom tapé puis
+abandonné.
 
 ### Un écran, une chose
 
@@ -70,8 +105,18 @@ Ce qui a été retiré, et pourquoi, vaut d'être écrit noir sur blanc :
 - **les paragraphes dans des blocs blancs à coins arrondis.** Trois rangées à picto sous un
   intitulé, c'est exactement à quoi ressemble un texte que personne n'a relu. Les trois
   promesses qui vivaient là sont désormais *montrées* par les trois écrans de démonstration.
+- **l'écran « on a fait Micabo pour nous ».** Il racontait d'où venait l'app à quelqu'un qui
+  ne l'a pas encore vue fonctionner : c'est demander de la confiance avant d'avoir rien
+  montré. La démonstration est le seul argument du parcours.
+- **l'annonce des questions à venir.** L'écran listait les trois questions suivantes avec un
+  sous-titre et trois rangées à picto ; les annoncer prenait plus longtemps que d'y répondre.
+  Il ne reste que la phrase, dont **le gras se pose mot par mot**
+  (`OnboardingWordByWordTitle`), et le bouton n'arrive qu'une fois le dernier mot en place.
 - **les icônes de décoration.** Une pastille colorée par ligne de réponse fait lire des
   pictogrammes au lieu des réponses. `OnboardingChoiceRow` n'a plus que son libellé et sa coche.
+- **la liste, quand la question n'a que deux réponses.** Empilées, les deux rangées se lisent
+  l'une après l'autre et laissent croire que la première compte plus. La question de l'oubli
+  pose donc ses deux réponses côte à côte (`OnboardingChoiceTile`), à taille égale.
 - **les choix qu'on ne peut pas faire.** L'écran de langue affichait cinq rangées à drapeau
   dont quatre grisées ; il en affiche une, et une ligne annonce la suite.
 - **le flou d'apparition.** Il coûtait une passe de rendu par image, rendait le texte illisible
@@ -89,13 +134,24 @@ Le passage d'un écran à l'autre est un glissement de **vingt-huit points** ave
 non un glissement pleine largeur : faire traverser tout l'écran à une page donne l'impression
 de feuilleter un carrousel, et attire l'œil sur le mouvement plutôt que sur le contenu.
 
-La seule oscillation qui reste dans le parcours est celle de la cloche de l'écran de rappel,
-parce qu'une cloche qui sonne oscille.
+Trois oscillations seulement échappent à la règle, et chacune est déclarée là où elle vit :
+
+- **la cloche de l'écran de rappel**, parce qu'une cloche qui sonne oscille ;
+- **le bouton `isShiny`**, qui se laisse balayer d'un reflet et respire sur place, uniquement
+  sur l'écran où l'on vient de regarder une animation sans rien toucher. La main y est
+  immobile depuis dix secondes, il faut aller la chercher — et un bouton qui brille à chaque
+  écran ne brille plus nulle part ;
+- **le calendrier du mode examen**, où l'on regarde un planificateur travailler. Le cercle du
+  jour J s'y trace au stylo, une onde rouge repart en boucle sous la date, le compte à rebours
+  égrène ses chiffres de J-28 à J-19, et les six points de révision *tombent* sur leur case.
+  La règle protège les transitions d'écran et les entrées de contenu, où un dépassement se lit
+  comme un tremblement ; un point qui se pose a le droit de tomber, et c'est le seul moyen de
+  faire lire six événements en une seconde et demie.
 
 ### Les trois écrans de démonstration
 
 Ils se traversent en une dizaine de secondes et montrent **le même document à trois états** :
-brut quand on le dépose, fiché après lecture, décomposé en cartes ensuite. C'est ce fil qui
+brut quand on le dépose, fiché après lecture, découpé en révisions ensuite. C'est ce fil qui
 fait comprendre l'app, là où trois illustrations sans rapport ne montreraient que trois
 animations. Le document est embarqué (`OnboardingDemo`) : un chapitre de SVT sur le cycle de
 l'eau, reconnaissable à tous les niveaux. Aucune permission, aucun appel réseau, rien
@@ -103,21 +159,34 @@ d'enregistré : la démonstration tourne en avion.
 
 | Écran | Geste | Ce qui se passe |
 | --- | --- | --- |
-| Dépôt | glisser la page dans la zone en pointillés | La page est **volontairement brute** : un mur de texte sans hiérarchie, titre noyé au milieu, tel qu'on reçoit un polycopié. Sans un vrai avant, l'écran suivant ne transforme rien. Après deux secondes sans geste elle respire, et un simple appui fait la même chose. |
-| Fiche | aucun | Le balayage de lecture passe sur la page brute, puis la fiche **s'écrit par-dessus, bloc par bloc** : le filet de titre, le paragraphe, la définition, le passage surligné, la figure. Les deux états occupent la même place, ce qui fait lire une transformation et non deux illustrations. Le bouton dit « S'entraîner ». |
-| Cartes | appuyer sur la carte, puis se noter | La fiche de l'écran précédent se **défait en trois cartes** ouvertes en éventail, une par format (recto verso, QCM, texte à trou), puis la première passe devant et devient jouable. La note affiche la prochaine échéance et enchaîne. |
+| Dépôt | glisser la page dans la zone en pointillés | La page est **volontairement brute** : un mur de texte sans hiérarchie, titre noyé au milieu, tel qu'on reçoit un polycopié. Sans un vrai avant, l'écran suivant ne transforme rien. Elle passe **au-dessus** de la zone de dépôt, jamais dessous : un document qu'on fait glisser sous sa cible se lit comme un document qu'on perd. Après deux secondes sans geste elle respire, et un simple appui fait la même chose. |
+| Fiche | aucun | Le balayage de lecture passe sur la page brute, puis la fiche **s'écrit par-dessus, bloc par bloc** : le filet de titre, le paragraphe, la définition, le passage surligné, le schéma. Les deux états occupent la même place, ce qui fait lire une transformation et non deux illustrations. Le bouton dit « S'entraîner », et c'est le seul du parcours qui brille et respire. |
+| Révisions | aucun | La fiche se **découpe en quatre vignettes** — schéma, recto verso, QCM, texte à trou — qui sortent une à une, puis se remplissent toutes seules. Le bouton s'ouvre dès que les quatre sont là. |
 
-L'écran de génération simulée qui occupait la place de la fiche a été retiré : il cochait des
-étapes pendant trois secondes, c'est-à-dire qu'il faisait patienter devant un travail qu'on ne
-voyait pas. Un écran qui montre le résultat en train d'apparaître dit la même chose et se
-regarde.
+Deux écrans ont été retirés d'ici, pour la même raison. La génération simulée cochait des
+étapes pendant trois secondes : elle faisait patienter devant un travail qu'on ne voyait pas.
+Et le troisième écran demandait d'appuyer sur une carte puis de se noter : c'était faire passer
+un examen à quelqu'un qui n'a pas encore ouvert l'app, sur un cours qui n'est pas le sien.
+**Ce qu'il y a à montrer, c'est ce que Micabo produit à partir d'un cours** — le produire est
+le travail de l'app, y répondre viendra plus tard, avec ses propres cours. Le troisième écran
+est donc une animation, et rien d'autre.
+
+Le schéma compte autant que les cartes, et il a longtemps été le maillon faible : le filet de
+la définition de la fiche était un `Capsule` en `maxHeight: .infinity`, ce qui rendait tout le
+bloc gourmand en hauteur. La fiche s'étirait ou se comprimait selon la place que lui laissait
+l'écran, et c'était toujours la figure qui payait — elle n'a pas de taille propre à défendre,
+elle se tassait jusqu'à disparaître. Un trou blanc à la place d'un schéma ne prouve rien. Le
+filet est maintenant posé en surimpression du texte, la fiche fait exactement sa hauteur
+(`fixedSize`), et la figure est grossie et cernée d'un filet pour se lire comme un schéma.
 
 ### Ce que le mode examen promet
 
-Après la démonstration, un écran montre un calendrier où une date se cerne de rouge, prend son
-nom (« EXAMEN · Maths · vecteurs »), puis voit les jours qui la précèdent s'allumer un à un de
-points de révision, en se resserrant à l'approche du jour J. C'est exactement ce que fait
-`ExamPlanner`, et le voir vaut mieux que le lire.
+Après la démonstration, un écran montre un calendrier où le jour J se cerne de rouge au stylo,
+prend son nom (« EXAMEN · Maths DS sur table »), égrène son compte à rebours de J-28 à J-19,
+puis voit les jours qui le précèdent s'allumer un à un de points de révision, en se resserrant
+à l'approche de l'épreuve. Une ligne conclut sur ce qui vient de se passer : « 6 révisions
+placées avant le jour J ». C'est exactement ce que fait `ExamPlanner`, et le voir vaut mieux
+que le lire.
 
 Trois règles valent pour tout le tunnel :
 
@@ -203,8 +272,10 @@ une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un acces
 - L'indigo ne sert qu'à ce qui est actif : onglet courant, filtre choisi, cartes à réviser
 - Le seul aplat d'encre est le bouton d'action principal, ancré en bas de l'écran
 - Barre de trois onglets en pied d'écran, symbole plein sur l'onglet actif. Elle est dessinée
-  par `RootTabView`, **hors du carrousel** : les pages glissent sous elle, elle ne bouge pas.
-  Elle s'efface sur les écrans poussés, où le balayage est de toute façon coupé
+  par `RootTabView`, **hors des pages** : elles se remplacent sous elle, elle ne bouge pas
+  d'un pixel. Depuis que le balayage entre onglets a disparu, c'est le seul moyen de changer
+  de page. Elle s'efface sur les écrans poussés, où changer d'onglet depuis le fond d'une pile
+  ne voudrait rien dire
 - Un seul bouton flottant dans l'app : le « + » d'import, en bas à droite de Cours, là où le
   pouce tombe. Il n'apparaît pas quand la liste est vide, où l'écran d'accueil porte déjà son
   propre appel à importer
@@ -429,10 +500,22 @@ Quatre marques, et chacune a une raison d'exister sur une fiche de révision
 
 | Écriture | Rendu | À quoi ça sert |
 | --- | --- | --- |
-| `**terme**` | gras | le mot que l'examen attend, une à trois fois par paragraphe |
+| `**terme**` | gras | le mot que l'examen attend, une à trois fois par paragraphe, jamais zéro dans un paragraphe qui introduit une notion |
 | `*nuance*` | italique | un mot étranger, un titre d'œuvre, une réserve |
-| `==l'essentiel==` | surligné | ce qu'on relit en dernier, **cinq passages au maximum sur toute la fiche** |
+| `==l'essentiel==` | surligné | ce qu'on relit en dernier, **six à huit passages sur la fiche, et jamais moins de cinq** |
 | `$E = mc^2$` | formule | transposée par `FormulaRenderer`, comme sur les cartes |
+
+**Le surligneur a longtemps été absent des fiches, et c'était le prompt.** Il ne parlait de
+mise en valeur qu'en plafonds — « cinq surlignages au maximum », « trois mots en gras c'est
+trois de trop », plus une consigne interdisant « les emphases partout » — et le modèle lisait
+l'ensemble comme un ordre de sobriété : il n'en produisait aucun. Une fiche sans marques est
+une fiche que personne ne relit, puisque c'est le surligneur qui fait retrouver l'essentiel en
+dix secondes la veille au soir. Le prompt donne donc maintenant un plancher, et surtout **où**
+surligner : la phrase d'enjeu du premier paragraphe, la conclusion de chaque partie de niveau
+1, ce qui distingue une définition de sa voisine, le résultat chiffré qu'un correcteur attend,
+et l'encadré « essentiel », où le surlignage n'est jamais facultatif. Même logique pour le
+reste : un tableau dès que le document oppose deux choses, un graphe dès qu'il porte deux
+valeurs comparables dans la même unité — sans jamais inventer un chiffre.
 
 Hanken Grotesk n'embarque pas d'italique : elle est penchée à la main par une matrice de
 fonte, ce qui reste préférable à un changement de famille en plein paragraphe. Le
@@ -474,8 +557,10 @@ noter que », « en effet », « en conclusion ») et les méta-commentaires sur
 
 Mais une consigne se respecte à peu près, alors que **les plafonds se respectent toujours** :
 `supabase/functions/_shared/sheet.ts` limite les blocs d'étapes à deux par fiche, les
-passages surlignés à cinq, les colonnes d'un tableau à quatre, et retire les puces et les
-dièses de markdown qui ont fui hors de leur structure. `CourseSheet.sanitized()` refait le
+passages surlignés à neuf, les colonnes d'un tableau à quatre, et retire les puces et les
+dièses de markdown qui ont fui hors de leur structure. Ce plafond de surlignages était à
+cinq, et il a suivi le prompt : un garde-fou réglé sous ce qu'on exige efface exactement ce
+qu'on vient de demander. `CourseSheet.sanitized()` refait le
 même travail côté application, sur les fiches comme sur ce qu'un serveur plus ancien renvoie.
 
 Un bloc d'un type inconnu, un tableau à une seule colonne, un graphe à une seule barre ou
@@ -734,7 +819,7 @@ Micabo/
   App/             point d'entrée et conteneur SwiftData
   DesignSystem/    jetons de style, lexique et composants réutilisables
   Models/          entités SwiftData, fiche d'un cours, examens et réponses de l'IA
-  Persistence/     enregistrement des cours, des examens et contenu de démonstration
+  Persistence/     enregistrement des cours et des examens
   SRS/             planificateur SM-2, file d'attente, mode examen, statistiques
   Services/        client IA, balisage de la fiche, PDF / OCR / DOCX / YouTube
   Features/        un dossier par écran, dont Course/ et Exams/

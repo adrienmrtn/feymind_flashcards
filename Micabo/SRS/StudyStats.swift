@@ -1,6 +1,12 @@
 import Foundation
 
 /// Statistiques dérivées de l'historique de révision.
+///
+/// La salutation de l'écran Réviser et la date du jour vivaient ici, et les deux sont
+/// parties avec l'en-tête de cet écran : « Bonsoir » n'apprend rien à quelqu'un qui vient
+/// d'ouvrir son téléphone, et la date est écrite deux centimètres plus haut par le système.
+/// Un écran qui n'a qu'une chose à dire doit la dire en premier — ici, le nombre de cartes
+/// à réviser.
 enum StudyStats {
     /// Nombre de jours consécutifs avec au moins une révision, aujourd'hui inclus ou non.
     static func streak(reviewDates: [Date], calendar: Calendar = .current, now: Date = Date()) -> Int {
@@ -45,20 +51,6 @@ enum StudyStats {
         }
     }
 
-    static func greeting(for date: Date = Date(), calendar: Calendar = .current) -> String {
-        switch calendar.component(.hour, from: date) {
-        case 5..<12: "Bonjour"
-        case 12..<18: "Bon après-midi"
-        default: "Bonsoir"
-        }
-    }
-
-    static func formattedDate(_ date: Date = Date()) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "EEEE d MMMM"
-        return formatter.string(from: date).capitalizedFirstLetter
-    }
 }
 
 extension String {

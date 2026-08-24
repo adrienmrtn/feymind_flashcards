@@ -32,8 +32,15 @@ export const SHEET_LIMITS = {
   tableColumns: 4,
   tableRows: 8,
   chartBars: 6,
-  /** Nombre de passages surlignés sur toute la fiche. Au delà, plus rien ne ressort. */
-  highlights: 5,
+  /**
+   * Nombre de passages surlignés sur toute la fiche. Au delà, plus rien ne ressort.
+   *
+   * Le plafond était de cinq, et le prompt demandait « cinq au maximum » : le modèle lisait
+   * les deux comme un ordre de sobriété et n'en produisait aucun. Il en demande maintenant
+   * six à huit, et le plafond a suivi — sinon le garde-fou effaçait précisément ce qu'on
+   * venait d'exiger.
+   */
+  highlights: 9,
 } as const;
 
 const TONES = new Set(["essentiel", "attention", "exemple", "astuce"]);

@@ -69,6 +69,11 @@ enum OnboardingSurface {
 /// donnent un parcours qui tremble. Les quatre courbes sont donc monotones : elles partent
 /// vite, elles ralentissent, elles s'arrêtent net.
 ///
+/// L'exception est déclarée ailleurs et volontairement unique : le bouton `isShiny` de la
+/// démonstration respire et se laisse balayer d'un reflet. C'est le seul écran où l'on a
+/// regardé une animation sans rien toucher, donc le seul où il faut aller chercher un doigt
+/// immobile.
+///
 /// Les avoir ici plutôt que dans chaque écran n'est pas une coquetterie : c'est ce qui fait
 /// qu'un écran ne peut pas se mettre à bouger autrement que ses voisins.
 enum OnboardingMotion {
@@ -96,6 +101,17 @@ extension EnvironmentValues {
     }
 }
 
+/// Échappatoire d'un écran de question, posée en haut à droite de l'écran.
+///
+/// Elle n'existe que là où la réponse est réellement facultative. Demander son
+/// établissement à quelqu'un qui n'en a pas, qui est entre deux écoles, ou qui n'a pas envie
+/// de le dire, ne doit pas fermer le parcours : un écran sans issue se quitte en quittant
+/// l'app, et on ne le retrouve jamais.
+struct OnboardingSkip {
+    var title: String = "Passer"
+    var action: () -> Void
+}
+
 /// Mise en page commune à tous les écrans du parcours : sur-titre, titre, sous-titre,
 /// contenu, puis une zone d'action ancrée en bas. Le tout arrive en cascade.
 ///
@@ -112,6 +128,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     var contentSpacing: CGFloat = MicaboSpacing.xl
     var scrolls: Bool = true
     var surface: OnboardingSurface = .canvas
+    var skip: OnboardingSkip?
     var content: () -> Content
     var footer: () -> Footer
 
@@ -123,6 +140,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         contentSpacing: CGFloat = MicaboSpacing.xl,
         scrolls: Bool = true,
         surface: OnboardingSurface = .canvas,
+        skip: OnboardingSkip? = nil,
         @ViewBuilder content: @escaping () -> Content,
         @ViewBuilder footer: @escaping () -> Footer
     ) {
@@ -133,6 +151,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.contentSpacing = contentSpacing
         self.scrolls = scrolls
         self.surface = surface
+        self.skip = skip
         self.content = content
         self.footer = footer
     }
@@ -160,12 +179,25 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     private func stack(inScrollView: Bool) -> some View {
         VStack(alignment: .leading, spacing: contentSpacing) {
             VStack(alignment: .leading, spacing: 9) {
-                if let eyebrow {
-                    Text(eyebrow.uppercased())
-                        .font(MicaboFont.hanken(11, weight: .semibold))
-                        .tracking(1.6)
-                        .foregroundStyle(surface.eyebrow)
-                        .onboardingAppear(index: 0)
+                // Le sur-titre et l'échappatoire partagent la même ligne : « Passer » se
+                // pose ainsi en haut à droite de l'écran sans ajouter une rangée vide
+                // au-dessus du titre.
+                if eyebrow != nil || skip != nil {
+                    HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.sm) {
+                        if let eyebrow {
+                            Text(eyebrow.uppercased())
+                                .font(MicaboFont.hanken(11, weight: .semibold))
+                                .tracking(1.6)
+                                .foregroundStyle(surface.eyebrow)
+                        }
+
+                        Spacer(minLength: 0)
+
+                        if let skip {
+                            skipButton(skip)
+                        }
+                    }
+                    .onboardingAppear(index: 0)
                 }
 
                 Text(title)
@@ -199,6 +231,32 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         .padding(.bottom, inScrollView ? MicaboSpacing.lg : 0)
         .frame(maxWidth: .infinity, maxHeight: inScrollView ? nil : .infinity, alignment: .topLeading)
     }
+
+    /// Volontairement discret : c'est une sortie, pas une proposition. Un « Passer » aussi
+    /// visible que le bouton du bas ferait douter de l'intérêt de la question.
+    private func skipButton(_ skip: OnboardingSkip) -> some View {
+        Button {
+            Haptics.light()
+            skip.action()
+        } label: {
+            HStack(spacing: 3) {
+                Text(skip.title)
+                    .font(MicaboFont.hanken(13.5, weight: .semibold))
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 9, weight: .bold))
+            }
+            .foregroundStyle(surface.isDark ? MicaboColor.onInk.opacity(0.72) : MicaboColor.inkSecondary)
+            .padding(.vertical, 7)
+            .padding(.horizontal, 11)
+            .background(
+                surface.isDark ? MicaboColor.onInk.opacity(0.12) : MicaboColor.surfaceMuted,
+                in: Capsule()
+            )
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .accessibilityLabel("\(skip.title) cette question")
+    }
 }
 
 extension OnboardingScaffold where Footer == EmptyView {
@@ -210,6 +268,7 @@ extension OnboardingScaffold where Footer == EmptyView {
         contentSpacing: CGFloat = MicaboSpacing.lg,
         scrolls: Bool = true,
         surface: OnboardingSurface = .canvas,
+        skip: OnboardingSkip? = nil,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.init(
@@ -220,6 +279,7 @@ extension OnboardingScaffold where Footer == EmptyView {
             contentSpacing: contentSpacing,
             scrolls: scrolls,
             surface: surface,
+            skip: skip,
             content: content,
             footer: { EmptyView() }
         )
@@ -258,6 +318,113 @@ extension View {
     }
 }
 
+// MARK: - Titre qui s'écrit mot par mot
+
+/// Titre dont le **gras se pose mot par mot**, de gauche à droite, comme si on le
+/// soulignait en le lisant.
+///
+/// Chaque mot est composé deux fois au même endroit — une fois maigre, une fois gras — et
+/// occupe toujours la largeur de sa version grasse. C'est ce qui permet au gras d'arriver
+/// sans que la ligne se recompose : un titre qui se réaligne à chaque mot se lit comme un
+/// bug, pas comme une animation.
+///
+/// Les retours à la ligne écrits dans le titre sont respectés, et chaque ligne peut
+/// elle-même se replier si l'écran est trop étroit.
+struct OnboardingWordByWordTitle: View {
+    let text: String
+    var size: CGFloat = 32
+    /// Temps entre deux mots.
+    var wordDelay: Double = 0.16
+    /// Temps mort avant le premier mot, le temps que l'écran arrive.
+    var startDelay: Double = 0.3
+    /// Appelé une fois le dernier mot en gras.
+    var onFinish: () -> Void = {}
+
+    @Environment(\.onboardingSurface) private var surface
+
+    @State private var boldCount = 0
+    @State private var didStart = false
+
+    private var lines: [[String]] {
+        text.components(separatedBy: "\n").map { line in
+            line.split(separator: " ").map(String.init)
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(lineOffsets.enumerated()), id: \.offset) { lineIndex, offset in
+                MicaboFlowLayout(spacing: size * 0.26, lineSpacing: 2, alignment: .leading) {
+                    ForEach(Array(lines[lineIndex].enumerated()), id: \.offset) { wordIndex, word in
+                        self.word(word, isBold: offset + wordIndex < boldCount)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement()
+        .accessibilityLabel(text.replacingOccurrences(of: "\n", with: " "))
+        .onAppear(perform: run)
+    }
+
+    /// Index du premier mot de chaque ligne, pour que le gras avance d'une ligne à
+    /// l'autre sans repartir de zéro.
+    private var lineOffsets: [Int] {
+        var offsets: [Int] = []
+        var total = 0
+        for line in lines {
+            offsets.append(total)
+            total += line.count
+        }
+        return offsets
+    }
+
+    private var wordCount: Int {
+        lines.reduce(0) { $0 + $1.count }
+    }
+
+    /// Le gabarit gras, invisible, réserve la place ; les deux vraies versions se
+    /// croisent par-dessus, calées à gauche.
+    private func word(_ word: String, isBold: Bool) -> some View {
+        Text(word)
+            .font(MicaboFont.hanken(size, weight: .bold))
+            .tracking(-0.7)
+            .opacity(0)
+            .overlay(alignment: .leading) {
+                ZStack(alignment: .leading) {
+                    Text(word)
+                        .font(MicaboFont.hanken(size, weight: .regular))
+                        .foregroundStyle(surface.title.opacity(0.3))
+                        .opacity(isBold ? 0 : 1)
+
+                    Text(word)
+                        .font(MicaboFont.hanken(size, weight: .bold))
+                        .foregroundStyle(surface.title)
+                        .opacity(isBold ? 1 : 0)
+                }
+                .tracking(-0.7)
+                .fixedSize()
+            }
+            .animation(.easeOut(duration: 0.22), value: isBold)
+    }
+
+    private func run() {
+        guard !didStart else { return }
+        didStart = true
+
+        for index in 0..<wordCount {
+            DispatchQueue.main.asyncAfter(deadline: .now() + startDelay + Double(index) * wordDelay) {
+                boldCount = index + 1
+                Haptics.tick()
+            }
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + startDelay + Double(wordCount) * wordDelay) {
+            onFinish()
+        }
+    }
+}
+
 // MARK: - Bouton d'avancement
 
 /// CTA principal du parcours : pleine largeur, retour haptique moyen, et un état
@@ -270,9 +437,21 @@ struct OnboardingContinueButton: View {
     var isEnabled: Bool = true
     var isLoading: Bool = false
     var loadingTitle: String = "Un instant…"
+    /// Reflet qui balaie le bouton, et respiration qui le fait rebondir sur place.
+    ///
+    /// Réservé au bouton qui clôt une animation qu'on vient de regarder sans rien faire :
+    /// après dix secondes de démonstration, la main est immobile, et il faut lui dire
+    /// franchement où appuyer. Le reste du parcours n'y a pas droit — un bouton qui brille
+    /// à chaque écran ne brille plus nulle part.
+    var isShiny: Bool = false
     var action: () -> Void
 
     @Environment(\.onboardingSurface) private var surface
+
+    @State private var shinePhase: CGFloat = 0
+    @State private var isBouncing = false
+
+    private var isLively: Bool { isShiny && isEnabled && !isLoading }
 
     var body: some View {
         Button {
@@ -302,6 +481,54 @@ struct OnboardingContinueButton: View {
         .disabled(!isEnabled || isLoading)
         .animation(.easeOut(duration: 0.2), value: isEnabled)
         .animation(.easeOut(duration: 0.2), value: isLoading)
+        // Le reflet et la respiration se posent au-dessus des animations d'état, et pas
+        // dedans : le bouton s'active à l'instant où il se met à respirer, et une courbe
+        // d'activation qui s'appliquerait à la respiration lui mangerait sa répétition.
+        .overlay { if isLively { shine } }
+        .scaleEffect(isBouncing ? 1.028 : 1)
+        .onAppear(perform: startLiveliness)
+        .onChange(of: isLively) { _, _ in startLiveliness() }
+    }
+
+    /// Bande claire inclinée qui traverse le bouton, découpée à sa forme pour qu'elle
+    /// n'aille pas baver sur le fond de l'écran.
+    private var shine: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let band = max(60, width * 0.34)
+
+            LinearGradient(
+                colors: [
+                    surface.buttonForeground.opacity(0),
+                    surface.buttonForeground.opacity(0.4),
+                    surface.buttonForeground.opacity(0)
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            // Deux fois la hauteur du bouton, remontée de moitié : une bande inclinée
+            // qui ferait juste la hauteur laisserait deux coins non balayés.
+            .frame(width: band, height: proxy.size.height * 2)
+            .rotationEffect(.degrees(16))
+            .offset(x: shinePhase * (width + band * 2) - band, y: -proxy.size.height / 2)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+        .allowsHitTesting(false)
+    }
+
+    private func startLiveliness() {
+        guard isLively else {
+            withAnimation(.easeOut(duration: 0.2)) { isBouncing = false }
+            return
+        }
+
+        shinePhase = 0
+        withAnimation(.linear(duration: 1.7).repeatForever(autoreverses: false)) {
+            shinePhase = 1
+        }
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.4).repeatForever(autoreverses: true)) {
+            isBouncing = true
+        }
     }
 }
 
@@ -369,6 +596,47 @@ struct OnboardingChoiceRow: View {
             .overlay {
                 RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                     .strokeBorder(isSelected ? MicaboColor.ink : Color.clear, lineWidth: 1.5)
+            }
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .animation(OnboardingMotion.tap, value: isSelected)
+    }
+}
+
+/// Case de choix, à poser côte à côte : deux réponses, deux blocs de même largeur.
+///
+/// Une question fermée à deux réponses n'a pas besoin d'une liste. Deux cases côte à côte
+/// se comparent d'un seul regard, là où deux rangées empilées se lisent l'une après
+/// l'autre et laissent croire que la première compte plus que la seconde.
+struct OnboardingChoiceTile: View {
+    let title: String
+    var systemImage: String?
+    var isSelected: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 10) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(isSelected ? MicaboColor.ink : MicaboColor.inkTertiary)
+                }
+
+                Text(title)
+                    .font(MicaboFont.hanken(16, weight: .semibold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.vertical, MicaboSpacing.lg)
+            .padding(.horizontal, 14)
+            .frame(maxWidth: .infinity)
+            .frame(height: 132)
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous)
+                    .strokeBorder(isSelected ? MicaboColor.ink : MicaboColor.stroke, lineWidth: isSelected ? 1.8 : 1)
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))

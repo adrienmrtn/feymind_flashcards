@@ -1,11 +1,21 @@
 import SwiftUI
 import UIKit
 
-/// Les trois pages, balayables comme un carrousel natif, avec **Réviser** au milieu.
+/// Les trois pages de l'app, avec **Réviser** au milieu, et la barre du bas qui les
+/// commande.
 ///
-/// La barre d'onglets est posée à ce niveau, hors du carrousel : elle ne balaye pas
-/// avec les pages, elle les regarde passer. Elle s'efface en revanche dès qu'un écran
-/// de détail est poussé, et le balayage est alors coupé lui aussi.
+/// **On ne balaye plus d'une page à l'autre.** Le carrousel qui vivait ici était un
+/// `TabView` en style page : trois écrans montés côte à côte, qui suivaient le doigt. Ça
+/// coûtait cher pour ce que ça donnait. Un défilement horizontal qui traîne sur un tiers de
+/// geste rend chaque écran mou ; il entrait en conflit avec tout ce qui se balaye à
+/// l'intérieur d'une page ; et il fallait un bricolage qui parcourait toute la hiérarchie
+/// UIKit à chaque passe de mise en page pour le couper dès qu'un écran de détail était
+/// poussé. Les onglets s'atteignent maintenant par la barre du bas, et le changement de page
+/// est un fondu court.
+///
+/// Les trois pages restent **montées en même temps**, simplement masquées : c'est ce qui
+/// permet à chacune de garder son défilement, sa recherche et sa pile de navigation quand on
+/// la quitte et qu'on y revient.
 struct RootTabView: View {
     @State private var router = TabRouter()
 
@@ -15,26 +25,16 @@ struct RootTabView: View {
     }
 
     var body: some View {
-        @Bindable var router = router
+        ZStack {
+            MicaboColor.canvas
+                .ignoresSafeArea()
 
-        TabView(selection: $router.selection) {
-            CoursesListView()
-                .tag(RootTab.courses)
-
-            TodayView()
-                .tag(RootTab.today)
-
-            ProfileView()
-                .tag(RootTab.profile)
+            page(.courses) { CoursesListView() }
+            page(.today) { TodayView() }
+            page(.profile) { ProfileView() }
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .background(MicaboColor.canvas)
-        .background {
-            TabPagingScrollBridge(isEnabled: router.isAtRoot)
-        }
-        // La barre du bas est posée ici, à l'extérieur du carrousel : les pages glissent
-        // sous elle, elle ne bouge pas d'un pixel. Elle s'efface dès qu'un écran de
-        // détail est poussé, où le balayage est de toute façon coupé.
+        // La barre du bas est posée à l'extérieur des pages : elles passent dessous, elle ne
+        // bouge pas d'un pixel. Elle s'efface dès qu'un écran de détail est poussé.
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if router.isAtRoot {
                 MicaboTabBar()
@@ -42,7 +42,20 @@ struct RootTabView: View {
         }
         .tint(MicaboColor.accent)
         .environment(router)
-        .animation(.easeOut(duration: 0.28), value: router.selection)
+    }
+
+    /// Une page masquée reste montée, mais ne prend ni les appuis ni le lecteur d'écran :
+    /// sans ça, on toucherait un bouton invisible en visant celui d'à côté.
+    @ViewBuilder
+    private func page<Content: View>(_ tab: RootTab, @ViewBuilder content: () -> Content) -> some View {
+        let isActive = router.selection == tab
+
+        content()
+            .opacity(isActive ? 1 : 0)
+            .allowsHitTesting(isActive)
+            .accessibilityHidden(!isActive)
+            .zIndex(isActive ? 1 : 0)
+            .animation(.easeOut(duration: 0.22), value: isActive)
     }
 
     private static func configureAppearance() {

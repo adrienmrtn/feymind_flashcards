@@ -1,70 +1,12 @@
 import SwiftUI
 import UIKit
 
-/// Active ou coupe le défilement horizontal du `TabView` en style page,
-/// pour éviter de changer d'onglet pendant qu'un écran de détail est ouvert.
-struct TabPagingScrollBridge: UIViewRepresentable {
-    var isEnabled: Bool
-
-    func makeUIView(context: Context) -> BridgeView {
-        let view = BridgeView()
-        view.isUserInteractionEnabled = false
-        view.backgroundColor = .clear
-        return view
-    }
-
-    func updateUIView(_ uiView: BridgeView, context: Context) {
-        uiView.isPagingEnabled = isEnabled
-        uiView.applyPagingEnabled()
-    }
-
-    final class BridgeView: UIView {
-        var isPagingEnabled = true
-
-        override func didMoveToWindow() {
-            super.didMoveToWindow()
-            applyPagingEnabled()
-        }
-
-        override func layoutSubviews() {
-            super.layoutSubviews()
-            applyPagingEnabled()
-        }
-
-        func applyPagingEnabled() {
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                for scrollView in Self.pagingScrollViews(from: self) {
-                    if scrollView.isScrollEnabled != self.isPagingEnabled {
-                        scrollView.isScrollEnabled = self.isPagingEnabled
-                    }
-                }
-            }
-        }
-
-        private static func pagingScrollViews(from view: UIView) -> [UIScrollView] {
-            var root: UIView = view
-            while let superview = root.superview {
-                root = superview
-            }
-
-            var result: [UIScrollView] = []
-            collectPagingScrollViews(in: root, into: &result)
-            return result
-        }
-
-        private static func collectPagingScrollViews(in view: UIView, into result: inout [UIScrollView]) {
-            if let scrollView = view as? UIScrollView, scrollView.isPagingEnabled {
-                result.append(scrollView)
-            }
-            for child in view.subviews {
-                collectPagingScrollViews(in: child, into: &result)
-            }
-        }
-    }
-}
-
-// MARK: - Balayage de retour
+/// Le seul geste de balayage qui reste dans l'app : **le retour en arrière du système.**
+///
+/// Le défilement horizontal entre onglets est parti, et le bricolage qui allait le couper
+/// dans la hiérarchie UIKit avec lui. Celui-ci n'a rien à voir : c'est le geste que tout
+/// iPhone fait sur un écran poussé, et le retirer ne fluidifie rien — ça oblige à viser un
+/// bouton là où le pouce a l'habitude de partir du bord.
 
 /// Délégué unique du geste de retour. Il vit aussi longtemps que l'app : confier ce rôle
 /// à un objet lié à un écran laisserait le geste sans délégué une fois l'écran dépilé,
