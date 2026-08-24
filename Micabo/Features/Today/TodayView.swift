@@ -101,7 +101,7 @@ struct TodayView: View {
                 pendingImport = kind
                 showImportChoice = false
             }
-            .presentationDetents([.height(540)])
+            .presentationDetents([.height(604)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
