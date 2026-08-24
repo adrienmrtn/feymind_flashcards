@@ -197,6 +197,11 @@ struct DemoSheetPage: View {
 
     static let blockCount = 5
 
+    /// Largeur de la fiche partout où elle apparaît. Les deux écrans de démonstration la
+    /// posent au même endroit à la même taille : c'est ce qui fait lire une transformation
+    /// plutôt que deux illustrations.
+    static let width: CGFloat = 244
+
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             block(0) { titleBlock }
@@ -207,6 +212,11 @@ struct DemoSheetPage: View {
         }
         .padding(13)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // La fiche fait exactement sa hauteur, ni plus ni moins. Sans cette ligne, elle
+        // s'étire ou se comprime selon la place que lui laisse l'écran qui l'accueille, et
+        // c'est toujours la figure qui paie : elle se tasse jusqu'à disparaître, ce qui
+        // laisse un trou blanc là où il devrait y avoir un schéma.
+        .fixedSize(horizontal: false, vertical: true)
         .background(MicaboColor.surface)
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
         .overlay {
@@ -243,24 +253,29 @@ struct DemoSheetPage: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
+    /// Le filet de la définition est **posé en surimpression** du texte, et non à côté de
+    /// lui dans une rangée. Un `Capsule` en `maxHeight: .infinity` rendait le bloc gourmand
+    /// en hauteur : la fiche entière s'étirait alors pour remplir l'écran qui l'accueille,
+    /// en poussant la figure hors de vue. En surimpression, le filet prend exactement la
+    /// hauteur du texte et ne pèse rien sur la mise en page.
     private var definition: some View {
-        HStack(alignment: .top, spacing: 7) {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(OnboardingDemo.sheetTerm)
+                .font(MicaboFont.hanken(8, weight: .semibold))
+                .foregroundStyle(OnboardingDemo.accent)
+
+            Text(OnboardingDemo.sheetDefinition)
+                .font(MicaboFont.hanken(7, weight: .regular))
+                .foregroundStyle(MicaboColor.inkReading)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.leading, 9)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .leading) {
             Capsule()
                 .fill(OnboardingDemo.accent.opacity(0.5))
                 .frame(width: 2)
-                .frame(maxHeight: .infinity)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(OnboardingDemo.sheetTerm)
-                    .font(MicaboFont.hanken(8, weight: .semibold))
-                    .foregroundStyle(OnboardingDemo.accent)
-
-                Text(OnboardingDemo.sheetDefinition)
-                    .font(MicaboFont.hanken(7, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkReading)
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
     }
 
@@ -276,10 +291,18 @@ struct DemoSheetPage: View {
 }
 
 /// Figure de la fiche : les trois temps du cycle, avec la boucle du retour à la mer.
+///
+/// Elle a été **grossie et cernée d'un filet**. Dans sa version précédente, elle était
+/// composée en corps 6,5 sur un fond bleu à 5 % : à côté du texte de la fiche, ça ne se
+/// lisait pas comme un schéma mais comme un blanc dans la page. Un schéma qu'on ne voit
+/// pas ne prouve rien, et c'est précisément la promesse que cet écran doit tenir.
+///
+/// La hauteur est fixée par le contenu (`fixedSize`) et jamais négociée : c'est ce qui
+/// l'empêche de se tasser à zéro quand la fiche est posée dans un cadre trop court.
 struct DemoWaterCycleFigure: View {
     var body: some View {
-        VStack(spacing: 5) {
-            HStack(spacing: 3) {
+        VStack(spacing: 7) {
+            HStack(spacing: 4) {
                 stage(symbol: "sun.max.fill", label: "Évaporation", tint: MicaboColor.caution)
                 arrow
                 stage(symbol: "cloud.fill", label: "Condensation", tint: MicaboColor.inkSecondary)
@@ -289,42 +312,50 @@ struct DemoWaterCycleFigure: View {
 
             HStack(spacing: 5) {
                 Image(systemName: "arrow.uturn.left")
-                    .font(.system(size: 6.5, weight: .bold))
+                    .font(.system(size: 8, weight: .bold))
 
                 Text("Les rivières ramènent l'eau à la mer")
-                    .font(MicaboFont.hanken(6.5, weight: .medium))
+                    .font(MicaboFont.hanken(8, weight: .semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .foregroundStyle(OnboardingDemo.accent)
-            .padding(.vertical, 2.5)
-            .padding(.horizontal, 7)
+            .padding(.vertical, 3.5)
+            .padding(.horizontal, 8)
             .frame(maxWidth: .infinity)
-            .background(OnboardingDemo.accent.opacity(0.1), in: Capsule())
+            .background(OnboardingDemo.accent.opacity(0.14), in: Capsule())
         }
-        .padding(7)
+        .padding(9)
         .frame(maxWidth: .infinity)
+        .fixedSize(horizontal: false, vertical: true)
         .background(
-            OnboardingDemo.accent.opacity(0.05),
-            in: RoundedRectangle(cornerRadius: 7, style: .continuous)
+            OnboardingDemo.accent.opacity(0.09),
+            in: RoundedRectangle(cornerRadius: 9, style: .continuous)
         )
+        .overlay {
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .strokeBorder(OnboardingDemo.accent.opacity(0.28), lineWidth: 1)
+        }
     }
 
     private var arrow: some View {
         Image(systemName: "arrow.right")
-            .font(.system(size: 6.5, weight: .bold))
-            .foregroundStyle(MicaboColor.inkTertiary)
+            .font(.system(size: 8, weight: .bold))
+            .foregroundStyle(OnboardingDemo.accent.opacity(0.55))
     }
 
     private func stage(symbol: String, label: String, tint: Color) -> some View {
-        VStack(spacing: 3) {
+        VStack(spacing: 4) {
             Image(systemName: symbol)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(tint)
+                .frame(height: 17)
 
             Text(label)
-                .font(MicaboFont.hanken(6.5, weight: .semibold))
+                .font(MicaboFont.hanken(8, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.6)
         }
         .frame(maxWidth: .infinity)
     }
@@ -383,3 +414,4 @@ struct DemoMiniCard: View {
         }
     }
 }
+
