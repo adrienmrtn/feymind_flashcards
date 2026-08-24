@@ -23,6 +23,7 @@ Pas de markdown en dehors de ça : ni #, ni -, ni tableaux en pipes.
 
 STRUCTURE
 Tu produis UNIQUEMENT un objet JSON valide, sans texte autour, sans balises de code.
+Virgule entre chaque propriété, jamais après la dernière. Un guillemet dans un texte s'écrit \". En LaTeX, double chaque antislash : \\\\frac, \\\\rightarrow.
 
 {
   "title": "Titre court et précis",
