@@ -146,11 +146,14 @@ const BROWSER_HEADERS: Record<string, string> = {
  * de forme, ce qui arrive.
  */
 export async function fetchVideoMetadata(videoId: string, language: string): Promise<VideoMetadata> {
-  const player = (await fetchFromInnerTube(videoId, language)) ??
-    (await fetchFromWatchPage(videoId, language));
+  // Un premier chemin qui répond sans rien dire de la vidéo n'est pas une réponse : on
+  // passe au second. Sans ce garde, un changement de forme de l'API interne ferait échouer
+  // toutes les vidéos alors que la page HTML, elle, répond encore.
+  const player = usable(await fetchFromInnerTube(videoId, language)) ??
+    usable(await fetchFromWatchPage(videoId, language));
 
   if (!player) {
-    throw new YouTubeError("unavailable", "La page de la vidéo n'a pas pu être lue.", 502);
+    throw new YouTubeError("unavailable", "La page de la vidéo n'a pas pu être lue.");
   }
 
   const status = asRecord(player.playabilityStatus);
@@ -170,6 +173,11 @@ export async function fetchVideoMetadata(videoId: string, language: string): Pro
     thumbnailUrl: bestThumbnail(details, videoId),
     captions: captionTracks(player),
   };
+}
+
+/** Une réponse du lecteur n'est exploitable que si elle décrit la vidéo. */
+function usable(player: Record<string, unknown> | null): Record<string, unknown> | null {
+  return asRecord(player?.videoDetails) ? player : null;
 }
 
 async function fetchFromInnerTube(
@@ -306,9 +314,8 @@ function runsText(value: Record<string, unknown> | null): string {
 }
 
 function bestThumbnail(details: Record<string, unknown>, videoId: string): string {
-  const thumbnails = Array.isArray(asRecord(details.thumbnail)?.thumbnails)
-    ? (asRecord(details.thumbnail)!.thumbnails as unknown[])
-    : [];
+  const container = asRecord(details.thumbnail);
+  const thumbnails: unknown[] = Array.isArray(container?.thumbnails) ? container.thumbnails : [];
 
   let best = "";
   let bestWidth = 0;

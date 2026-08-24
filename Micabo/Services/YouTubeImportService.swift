@@ -339,9 +339,13 @@ struct YouTubeImportService {
     /// une erreur : le cours retombe sur sa tuile d'emoji, comme n'importe quel import.
     func cover(for video: YouTubeVideo) async -> Data? {
         guard let url = video.thumbnailURL else { return nil }
-        guard let (data, _) = try? await URLSession.shared.data(from: url),
-              let image = UIImage(data: data) else { return nil }
-        return ImagePrep.jpeg(image, maxDimension: 900, quality: 0.7)
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            guard let image = UIImage(data: data) else { return nil }
+            return ImagePrep.jpeg(image, maxDimension: 900, quality: 0.7)
+        } catch {
+            return nil
+        }
     }
 
     private func call<T: Decodable>(payload: [String: Any], key: String) async throws -> T {
