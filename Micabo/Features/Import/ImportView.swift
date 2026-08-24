@@ -542,7 +542,7 @@ struct ImportView: View {
                 parsed = try await PDFImportService.extractWithOCR(from: url)
             case .docx:
                 parsed = try DocxImportService.extract(from: url)
-            case .text, .photo:
+            case .text, .photo, .youtube:
                 return
             }
             applyImported(parsed)
@@ -902,6 +902,5 @@ private extension UTType {
     static var docx: UTType {
         UTType(filenameExtension: "docx")
             ?? UTType(importedAs: "org.openxmlformats.wordprocessingml.document")
-            ?? .data
     }
 }

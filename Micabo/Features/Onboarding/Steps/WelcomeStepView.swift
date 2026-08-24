@@ -55,35 +55,37 @@ struct WelcomeStepView: View {
 
 // MARK: - Le paquet
 
-/// Paquet de cartes qui se rebat en boucle, un format après l'autre.
-private struct WelcomeDeck: View {
-    private enum Face {
-        case question(String)
-        case choice(question: String, options: [String], answer: Int)
-        case gap(before: String, after: String, answer: String)
+/// Face d'une carte d'accroche. Déclarée au fichier, pas dans le paquet : `WelcomeCard`
+/// doit pouvoir la lire, et un type imbriqué `private` la lui refuse.
+private enum WelcomeFace {
+    case question(String)
+    case choice(question: String, options: [String], answer: Int)
+    case gap(before: String, after: String, answer: String)
 
-        var badge: String {
-            switch self {
-            case .question: "Recto verso"
-            case .choice: "QCM"
-            case .gap: "Texte à trou"
-            }
-        }
-
-        var symbol: String {
-            switch self {
-            case .question: "rectangle.on.rectangle.angled"
-            case .choice: "list.bullet"
-            case .gap: "ellipsis.rectangle"
-            }
+    var badge: String {
+        switch self {
+        case .question: "Recto verso"
+        case .choice: "QCM"
+        case .gap: "Texte à trou"
         }
     }
 
+    var symbol: String {
+        switch self {
+        case .question: "rectangle.on.rectangle.angled"
+        case .choice: "list.bullet"
+        case .gap: "ellipsis.rectangle"
+        }
+    }
+}
+
+/// Paquet de cartes qui se rebat en boucle, un format après l'autre.
+private struct WelcomeDeck: View {
     private struct DeckCard: Identifiable {
         let id = UUID()
         let subject: String
         let tint: Color
-        let face: Face
+        let face: WelcomeFace
     }
 
     /// Quatre cartes, trois formats, quatre matières. Elles ne sont pas là pour être lues
@@ -123,13 +125,7 @@ private struct WelcomeDeck: View {
     var body: some View {
         ZStack {
             ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
-                let depth = (index - top + cards.count) % cards.count
-                WelcomeCard(subject: card.subject, tint: card.tint, face: card.face)
-                    .scaleEffect(1 - CGFloat(depth) * 0.05)
-                    .offset(y: CGFloat(depth) * 15 - (hasAppeared ? 0 : 26))
-                    .rotationEffect(.degrees(rotation(for: depth)))
-                    .opacity(depth >= 3 ? 0 : 1 - Double(depth) * 0.14)
-                    .zIndex(Double(cards.count - depth))
+                stacked(card, depth: (index - top + cards.count) % cards.count)
             }
         }
         .opacity(hasAppeared ? 1 : 0)
@@ -148,6 +144,15 @@ private struct WelcomeDeck: View {
         }
     }
 
+    private func stacked(_ card: DeckCard, depth: Int) -> some View {
+        WelcomeCard(subject: card.subject, tint: card.tint, face: card.face)
+            .scaleEffect(1 - CGFloat(depth) * 0.05)
+            .offset(y: CGFloat(depth) * 15 - (hasAppeared ? 0 : 26))
+            .rotationEffect(.degrees(rotation(for: depth)))
+            .opacity(depth >= 3 ? 0 : 1 - Double(depth) * 0.14)
+            .zIndex(Double(cards.count - depth))
+    }
+
     private func rotation(for depth: Int) -> Double {
         switch depth {
         case 0: -1
@@ -161,7 +166,7 @@ private struct WelcomeDeck: View {
 private struct WelcomeCard: View {
     let subject: String
     let tint: Color
-    let face: WelcomeDeck.Face
+    let face: WelcomeFace
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -198,40 +203,50 @@ private struct WelcomeCard: View {
     private var content: some View {
         switch face {
         case .question(let question):
+            questionContent(question)
+        case .choice(let question, let options, let answer):
+            choiceContent(question: question, options: options, answer: answer)
+        case .gap(let before, let after, let answer):
+            gapContent(before: before, after: after, answer: answer)
+        }
+    }
+
+    private func questionContent(_ question: String) -> some View {
+        Text(question)
+            .font(MicaboFont.hanken(19, weight: .semibold))
+            .foregroundStyle(MicaboColor.ink)
+            .tracking(-0.3)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func choiceContent(question: String, options: [String], answer: Int) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
             Text(question)
-                .font(MicaboFont.hanken(19, weight: .semibold))
+                .font(MicaboFont.hanken(15, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
-                .tracking(-0.3)
                 .fixedSize(horizontal: false, vertical: true)
 
-        case .choice(let question, let options, let answer):
-            VStack(alignment: .leading, spacing: 8) {
-                Text(question)
-                    .font(MicaboFont.hanken(15, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                VStack(alignment: .leading, spacing: 5) {
-                    ForEach(Array(options.enumerated()), id: \.offset) { index, option in
-                        choiceRow(option, isAnswer: index == answer)
-                    }
+            VStack(alignment: .leading, spacing: 5) {
+                ForEach(Array(options.enumerated()), id: \.offset) { index, option in
+                    choiceRow(option, isAnswer: index == answer)
                 }
             }
+        }
+    }
 
-        case .gap(let before, let after, let answer):
-            VStack(alignment: .leading, spacing: 10) {
-                Text(gapSentence(before: before, after: after))
-                    .font(MicaboFont.hanken(17, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .fixedSize(horizontal: false, vertical: true)
+    private func gapContent(before: String, after: String, answer: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(gapSentence(before: before, after: after))
+                .font(MicaboFont.hanken(17, weight: .semibold))
+                .foregroundStyle(MicaboColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
 
-                Text(answer)
-                    .font(.system(size: 13, weight: .semibold, design: .serif).italic())
-                    .foregroundStyle(tint)
-                    .padding(.vertical, 3)
-                    .padding(.horizontal, 9)
-                    .background(tint.opacity(0.1), in: Capsule())
-            }
+            Text(answer)
+                .font(.system(size: 13, weight: .semibold, design: .serif).italic())
+                .foregroundStyle(tint)
+                .padding(.vertical, 3)
+                .padding(.horizontal, 9)
+                .background(tint.opacity(0.1), in: Capsule())
         }
     }
 
