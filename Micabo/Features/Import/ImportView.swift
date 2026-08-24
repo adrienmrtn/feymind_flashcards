@@ -5,7 +5,13 @@ import UIKit
 import UniformTypeIdentifiers
 import VisionKit
 
-/// Écran d'import : texte, PDF, photos/scan ou Word, puis génération des cartes.
+/// Écran d'import : texte, PDF, photos/scan ou Word, puis écriture de la fiche.
+///
+/// L'import s'arrête à la **fiche**. Il ne génère plus de cartes au passage, et c'est un
+/// choix de parcours : un étudiant qui dépose un chapitre veut d'abord le lire, et
+/// personne n'a envie de régler des formats de questions avant d'avoir vu ce que Micabo a
+/// compris de son document. Les cartes se demandent depuis le cours, une fois la fiche
+/// sous les yeux.
 struct ImportView: View {
     let kind: ImportKind
     var onCreated: (Course) -> Void
@@ -22,10 +28,6 @@ struct ImportView: View {
     @State private var showPhotoPicker = false
     @State private var showScanner = false
     @State private var photoItems: [PhotosPickerItem] = []
-
-    /// Formats de questions retenus d'un import à l'autre.
-    @AppStorage(QuestionMixPreferences.Key.cloze) private var includesCloze = true
-    @AppStorage(QuestionMixPreferences.Key.choice) private var includesChoice = true
 
     @State private var isReading = false
     @State private var isGenerating = false
@@ -48,10 +50,6 @@ struct ImportView: View {
         kind == .pdf || kind == .photo
     }
 
-    private var questionMix: QuestionMix {
-        QuestionMix(includesCloze: includesCloze, includesChoice: includesChoice)
-    }
-
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
@@ -71,8 +69,6 @@ struct ImportView: View {
                             visionToggle
                         }
 
-                        questionMixSection
-
                         aiNote
                     }
                     .padding(.horizontal, MicaboSpacing.screen)
@@ -89,7 +85,7 @@ struct ImportView: View {
                         HStack(spacing: MicaboSpacing.xs) {
                             Image(systemName: "sparkles")
                                 .font(.system(size: 13, weight: .semibold))
-                            Text("Générer les cartes")
+                            Text(MicaboCopy.sheetButton)
                         }
                     }
                     .buttonStyle(MicaboPrimaryButtonStyle(tint: canGenerate ? MicaboColor.ink : MicaboColor.strokeStrong))
@@ -135,13 +131,8 @@ struct ImportView: View {
                     )
                 } else if isGenerating {
                     GenerationOverlay(
-                        title: "Création des cartes",
-                        steps: [
-                            readingStepTitle,
-                            "Repérage des notions clés",
-                            "Rédaction des questions",
-                            "Vérification des réponses"
-                        ]
+                        title: "Écriture de la fiche",
+                        steps: SheetGenerationSteps.all(reading: readingStepTitle)
                     )
                 }
             }
@@ -191,11 +182,6 @@ struct ImportView: View {
                 analyzeVisuals = true
                 Task { await generate(offline: false) }
             }
-        case .openCourse(let course):
-            Button("Voir le cours") {
-                failure = nil
-                onCreated(course)
-            }
         }
     }
 
@@ -229,13 +215,13 @@ struct ImportView: View {
     private var introCopy: String {
         switch kind {
         case .pdf:
-            "Le texte est lu sur l'appareil. Un PDF scanné passe par l'OCR d'Apple, sans frais. L'analyse des schémas est facultative."
+            "Le texte est lu sur l'appareil. Un PDF scanné passe par l'OCR d'Apple, sans frais. Micabo en écrit ensuite la fiche."
         case .photo:
-            "Scanne plusieurs pages ou choisis des photos. Le texte est lu ici, hors ligne."
+            "Scanne plusieurs pages ou choisis des photos. Le texte est lu ici, hors ligne, puis mis en fiche."
         case .docx:
-            "Micabo extrait le texte du document Word sur l'appareil, sans l'envoyer nulle part."
+            "Micabo extrait le texte du document Word sur l'appareil, puis en écrit la fiche."
         case .text:
-            "Colle tes notes, même brutes. Micabo en fait des cartes."
+            "Colle tes notes, même brutes. Micabo en fait une fiche qui se relit."
         }
     }
 
@@ -447,58 +433,11 @@ struct ImportView: View {
         .micaboGroup()
     }
 
-    /// Les formats de questions, réglés juste avant d'appuyer sur « Générer les cartes ».
-    /// Le recto verso ne se coupe pas : c'est le format qui marche sur n'importe quel
-    /// cours, les deux autres viennent en plus quand le passage s'y prête.
-    private var questionMixSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Types de questions")
-
-            VStack(spacing: 0) {
-                formatToggle(
-                    title: "Textes à trou",
-                    detail: "Une phrase du cours, un terme à retrouver.",
-                    isOn: $includesCloze
-                )
-
-                MicaboHairline(inset: MicaboSpacing.md)
-
-                formatToggle(
-                    title: "QCM",
-                    detail: "Une question, trois ou quatre propositions, une seule bonne.",
-                    isOn: $includesChoice
-                )
-            }
-            .micaboGroup()
-
-            Text("Le recto verso est toujours de la partie.")
-                .font(MicaboFont.micro)
-                .foregroundStyle(MicaboColor.inkTertiary)
-        }
-    }
-
-    private func formatToggle(title: String, detail: String, isOn: Binding<Bool>) -> some View {
-        Toggle(isOn: isOn) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(MicaboFont.rowTitle)
-                    .foregroundStyle(MicaboColor.ink)
-                Text(detail)
-                    .font(MicaboFont.hanken(12, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .tint(MicaboColor.accent)
-        .padding(.vertical, 12)
-        .padding(.horizontal, MicaboSpacing.md)
-    }
-
     private var aiNote: some View {
         HStack(spacing: 6) {
             Image(systemName: "lock")
                 .font(.system(size: 10, weight: .semibold))
-            Text("Le texte est extrait sur l'appareil. Seule la rédaction des cartes passe par tes Edge Functions (\(AppConfig.aiModel)).")
+            Text("Le texte est extrait sur l'appareil. Seule la rédaction de la fiche passe par tes Edge Functions (\(AppConfig.aiModel)).")
                 .font(MicaboFont.micro)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -641,7 +580,7 @@ struct ImportView: View {
             sourceName: fileName
         )
 
-        // Étape 1 : la fiche du cours. Si elle échoue, rien n'a été créé.
+        // Étape 1 : la fiche. Si elle échoue, rien n'a été créé.
         let generated: GeneratedCourse
         if offline {
             generated = OfflineCourseBuilder.build(
@@ -662,10 +601,10 @@ struct ImportView: View {
             }
         }
 
-        // Étape 2 : le cours est enregistré. À partir d'ici, un échec ne doit plus rien perdre.
-        let course: Course
+        // Étape 2 : le cours est enregistré avec sa fiche. L'import s'arrête là : les
+        // cartes se demandent depuis le cours, la fiche sous les yeux.
         do {
-            course = try CourseRepository.save(
+            let course = try CourseRepository.save(
                 generated,
                 source: source,
                 rawText: rawText,
@@ -673,62 +612,14 @@ struct ImportView: View {
                 coverImageData: cover,
                 in: modelContext
             )
+            onCreated(course)
         } catch {
             failure = ImportFailure(
                 title: "Enregistrement impossible",
                 message: "\(describe(error)) Réessaie dans un instant.",
                 recovery: .none
             )
-            return
         }
-
-        // Étape 3 : les cartes. Le cours existe déjà, donc tout échec est récupérable.
-        var cards: [GeneratedFlashcard] = []
-        if offline {
-            cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
-        } else {
-            do {
-                cards = try await aiService.generateFlashcards(
-                    FlashcardGenerationRequest(
-                        courseTitle: course.title,
-                        courseContext: course.contextSnippet(limit: 30_000),
-                        desiredCount: 12,
-                        existingFronts: [],
-                        mix: questionMix
-                    )
-                )
-            } catch {
-                if isRecoverable(error) {
-                    cards = OfflineCourseBuilder.buildFlashcards(from: generated, count: 12)
-                } else {
-                    failure = ImportFailure(
-                        title: "Le cours est là, les cartes non",
-                        message: "\(describe(error)) « \(course.title) » est enregistré : relance la génération depuis le cours quand tu veux.",
-                        recovery: .openCourse(course)
-                    )
-                    return
-                }
-            }
-        }
-
-        let inserted = (try? CourseRepository.addFlashcards(cards, to: course, in: modelContext)) ?? []
-
-        guard !inserted.isEmpty else {
-            failure = ImportFailure(
-                title: "Aucune carte exploitable",
-                message: "Le cours « \(course.title) » est enregistré, mais rien n'a pu être transformé en carte. Ouvre-le pour en écrire une à la main ou relancer la génération.",
-                recovery: .openCourse(course)
-            )
-            return
-        }
-
-        // Les langues se révisent dans les deux sens : la carte inverse est créée d'office,
-        // avec sa propre planification.
-        if SubjectHeuristics.isLanguage(subject: course.subject, title: course.title) {
-            try? CourseRepository.addReverseCards(for: course, in: modelContext)
-        }
-
-        onCreated(course)
     }
 
     private func report(_ error: Error, title: String) {
@@ -755,12 +646,10 @@ struct ImportView: View {
 struct ImportFailure: Identifiable {
     enum Recovery {
         case none
-        /// Construire les cartes à partir du texte brut, sans IA.
+        /// Construire la fiche à partir du texte brut, sans IA.
         case buildOffline
         /// Relancer en envoyant les pages au modèle de vision.
         case enableVision
-        /// Le cours est enregistré : on l'ouvre au lieu de perdre le travail.
-        case openCourse(Course)
     }
 
     let id = UUID()
@@ -772,9 +661,9 @@ struct ImportFailure: Identifiable {
 /// Contrôle du texte extrait avant d'appeler quoi que ce soit.
 ///
 /// C'est le cas de la photo de cahier manuscrit : l'OCR rend trois mots, et sans ce garde
-/// l'utilisateur attendait une génération pour récolter des cartes vides.
+/// l'utilisateur attendait une analyse pour récolter une fiche vide.
 enum ImportReadiness {
-    /// En dessous, il n'y a pas de quoi écrire des cartes.
+    /// En dessous, il n'y a pas de quoi écrire une fiche.
     static let minimumCharacters = 120
 
     static func failure(
@@ -812,7 +701,7 @@ enum ImportReadiness {
         case .text:
             return ImportFailure(
                 title: "Il manque du texte",
-                message: "\(read) Colle au moins un paragraphe : c'est le minimum pour en tirer des cartes.",
+                message: "\(read) Colle au moins un paragraphe : c'est le minimum pour en tirer une fiche.",
                 recovery: .none
             )
         }

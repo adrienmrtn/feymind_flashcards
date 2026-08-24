@@ -51,12 +51,20 @@ enum TextSanitizer {
 
 extension GeneratedCourse {
     /// Nettoie tous les textes produits par le modèle avant enregistrement.
+    ///
+    /// Le titre, la matière, le résumé et le contexte sont ramenés au texte nu : personne
+    /// ne les met en forme. La **fiche**, elle, garde son balisage en ligne, qui est
+    /// justement ce qui la met en page : elle passe donc par `CourseSheet.sanitized()`,
+    /// qui retire les tirets cadratins et les puces sans toucher au gras ni au surlignage.
     func sanitized() -> GeneratedCourse {
-        GeneratedCourse(
+        let cleanSheet = sheet?.sanitized()
+
+        return GeneratedCourse(
             title: TextSanitizer.clean(title),
             subject: subject.map(TextSanitizer.clean),
             emoji: emoji,
             summary: TextSanitizer.clean(summary),
+            sheet: (cleanSheet?.isEmpty == false) ? cleanSheet : nil,
             contextText: TextSanitizer.clean(contextText)
         )
     }

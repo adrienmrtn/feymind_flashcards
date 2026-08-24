@@ -13,7 +13,7 @@ struct TodayView: View {
     @Query private var reviewLogs: [ReviewLog]
 
     @State private var showStudy = false
-    @State private var path: [Course] = []
+    @State private var path = NavigationPath()
     @State private var showImportChoice = false
     @State private var pendingImport: ImportKind?
     @State private var activeImport: ImportKind?
@@ -90,7 +90,10 @@ struct TodayView: View {
             .toolbar(.hidden, for: .navigationBar)
             .reportsPaging(for: .today, depth: path.count)
             .navigationDestination(for: Course.self) { course in
-                FlashcardsView(course: course)
+                CourseSheetView(course: course)
+            }
+            .navigationDestination(for: CourseCardsRoute.self) { route in
+                FlashcardsView(course: route.course)
             }
         }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
@@ -105,7 +108,7 @@ struct TodayView: View {
         .fullScreenCover(item: $activeImport) { kind in
             ImportView(kind: kind) { course in
                 activeImport = nil
-                path = [course]
+                path = NavigationPath([course])
             }
         }
         .fullScreenCover(isPresented: $showStudy) {

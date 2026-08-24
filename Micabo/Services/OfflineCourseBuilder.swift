@@ -16,6 +16,7 @@ enum OfflineCourseBuilder {
             title: title,
             emoji: "📝",
             summary: String(cleaned.prefix(200)),
+            sheet: OfflineSheetBuilder.build(from: cleaned, title: title),
             contextText: String(cleaned.prefix(12_000))
         )
     }
@@ -52,6 +53,37 @@ enum OfflineCourseBuilder {
             ))
         }
         return Array(cards.prefix(count))
+    }
+
+    /// Explication d'un passage sans appel réseau : on ne fabrique pas de savoir, on rend
+    /// le passage du cours où le terme apparaît. Sert aux aperçus, et c'est mieux qu'une
+    /// alerte vide si le réseau lâche.
+    static func explain(_ request: SelectionExplanationRequest) -> SelectionExplanation {
+        let selection = SheetSelection.trimmed(request.selection)
+        let sentences = request.courseContext
+            .components(separatedBy: CharacterSet(charactersIn: ".\n"))
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { $0.count >= 20 }
+
+        let matching = sentences.filter { $0.localizedCaseInsensitiveContains(selection) }
+
+        guard let first = matching.first else {
+            return SelectionExplanation(
+                headline: "« \(selection) » n'a pas pu être expliqué hors ligne.",
+                body: "Micabo n'a pas trouvé ce passage dans le cours et n'a pas pu joindre l'IA. Vérifie ta connexion, puis réessaie.",
+                example: nil,
+                watchOut: nil,
+                card: nil
+            )
+        }
+
+        return SelectionExplanation(
+            headline: "**\(selection)** apparaît dans « \(request.courseTitle) ».",
+            body: matching.prefix(3).joined(separator: ". ") + ".",
+            example: nil,
+            watchOut: nil,
+            card: GeneratedFlashcard(front: "Que dit ton cours sur « \(selection) » ?", back: first + ".")
+        )
     }
 
     private static func usableLines(of text: String) -> [String] {
@@ -95,6 +127,11 @@ struct OfflineAIService: AIService {
             sourceName: nil
         )
         return OfflineCourseBuilder.buildFlashcards(from: course, count: request.desiredCount)
+    }
+
+    func explain(_ request: SelectionExplanationRequest) async throws -> SelectionExplanation {
+        try await Task.sleep(nanoseconds: 300_000_000)
+        return OfflineCourseBuilder.explain(request)
     }
 }
 

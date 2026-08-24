@@ -15,7 +15,9 @@ struct CoursesListView: View {
     @State private var sortOrder: SortOrder = .recent
     @State private var subjectFilter: String?
     @State private var shelf: Shelf = .mine
-    @State private var path: [Course] = []
+    /// Un cours mène à sa fiche, un `CourseCardsRoute` à ses cartes : deux destinations
+    /// pour le même cours, donc un chemin hétérogène.
+    @State private var path = NavigationPath()
     @State private var showImportChoice = false
     @State private var pendingImport: ImportKind?
     @State private var activeImport: ImportKind?
@@ -105,7 +107,10 @@ struct CoursesListView: View {
             .toolbar(.hidden, for: .navigationBar)
             .reportsPaging(for: .courses, depth: path.count)
             .navigationDestination(for: Course.self) { course in
-                FlashcardsView(course: course)
+                CourseSheetView(course: course)
+            }
+            .navigationDestination(for: CourseCardsRoute.self) { route in
+                FlashcardsView(course: route.course)
             }
         }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
@@ -120,7 +125,9 @@ struct CoursesListView: View {
         .fullScreenCover(item: $activeImport) { kind in
             ImportView(kind: kind) { course in
                 activeImport = nil
-                path = [course]
+                // Un import se termine sur la fiche : c'est le résultat, et c'est ce qu'on
+                // veut lire avant de décider si on en fait des cartes.
+                path = NavigationPath([course])
             }
         }
     }

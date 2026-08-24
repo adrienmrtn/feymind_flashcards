@@ -65,6 +65,36 @@ struct SupabaseAIService: AIService {
         return cards
     }
 
+    // MARK: - Explication d'un passage
+
+    func explain(_ request: SelectionExplanationRequest) async throws -> SelectionExplanation {
+        let selection = request.selection.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard selection.count >= SheetSelection.minimumCharacters else {
+            throw AIServiceError.emptySource
+        }
+
+        let payload: [String: Any] = [
+            "selection": String(selection.prefix(SheetSelection.maximumCharacters)),
+            "title": request.courseTitle,
+            "subject": request.subject ?? "",
+            "context": String(request.courseContext.prefix(16_000)),
+            "model": AppConfig.aiModel
+        ]
+
+        let data = try await post(function: "explain-selection", payload: payload)
+        let envelope = try decodeEnvelope(data)
+
+        guard let object = envelope["explanation"] else {
+            throw AIServiceError.invalidResponse
+        }
+        let explanationData = try JSONSerialization.data(withJSONObject: object)
+        guard let explanation = try? JSONDecoder().decode(SelectionExplanation.self, from: explanationData),
+              explanation.isUsable else {
+            throw AIServiceError.invalidResponse
+        }
+        return explanation
+    }
+
     // MARK: - Transport
 
     private func post(function: String, payload: [String: Any]) async throws -> Data {
