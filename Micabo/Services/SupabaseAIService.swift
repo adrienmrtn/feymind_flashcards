@@ -103,9 +103,24 @@ extension AIServiceError {
                 self = .server("Fonction Supabase introuvable. Déployez les Edge Functions du dossier supabase/functions.")
             } else if message.isEmpty {
                 self = .server("Le serveur a répondu \(status).")
+            } else if Self.isParserJargon(message) {
+                self = .server("L'écriture a échoué. Réessaie, rien n'a été perdu.")
             } else {
                 self = .server(message)
             }
         }
+    }
+
+    /// Le parseur JSON parle à un développeur. L'étudiant n'a pas à lire
+    /// « after array element at position 25458 ».
+    private static func isParserJargon(_ message: String) -> Bool {
+        let lower = message.lowercased()
+        if lower.contains("json") { return true }
+        if lower.contains("after property") || lower.contains("after array") { return true }
+        if lower.contains("unexpected token") || lower.contains("unexpected non-whitespace") { return true }
+        if lower.contains("expected") && (lower.contains("position") || lower.contains("column")) {
+            return true
+        }
+        return false
     }
 }

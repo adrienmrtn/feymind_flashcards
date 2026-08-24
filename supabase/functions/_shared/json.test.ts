@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseModelJSON, repairModelJSON } from "./json.ts";
+import { closeOpenStructures, parseModelJSON, repairModelJSON } from "./json.ts";
 
 describe("parseModelJSON", () => {
   it("lit un JSON déjà valide", () => {
@@ -74,11 +74,67 @@ describe("parseModelJSON", () => {
     const parsed = parseModelJSON<{ title: string }>("```json\n{\"title\":\"Cours\"}\n```");
     assert.equal(parsed.title, "Cours");
   });
+
+  it("répare une virgule oubliée entre deux éléments d'un tableau", () => {
+    const broken = `{
+      "sheet": {
+        "blocks": [
+          {"type": "paragraph", "text": "Premier paragraphe assez long pour rester."}
+          {"type": "heading", "level": 1, "text": "Suite"}
+        ]
+      }
+    }`;
+
+    assert.throws(() => JSON.parse(broken), /array element|property value|Expected/);
+
+    const parsed = parseModelJSON<{
+      sheet: { blocks: Array<{ type: string }> };
+    }>(broken);
+    assert.equal(parsed.sheet.blocks.length, 2);
+    assert.equal(parsed.sheet.blocks[1].type, "heading");
+  });
+
+  it("referme une fiche coupée au milieu du tableau de blocs", () => {
+    const truncated = `{
+      "title": "Le cycle de l'eau",
+      "subject": "SVT",
+      "summary": "L'eau circule.",
+      "sheet": {
+        "blocks": [
+          {"type": "paragraph", "text": "L'eau change d'état sans jamais quitter la planète et c'est tout le sujet."},
+          {"type": "heading", "level": 1, "text": "Trois temps"},
+          {"type": "paragraph", "text": "L'évaporation précède la condensation, puis la précipitation referme la boucle."},
+          {"type": "definition", "term": "Condensation", "text":`;
+
+    assert.throws(() => JSON.parse(truncated));
+
+    const parsed = parseModelJSON<{
+      title: string;
+      sheet: { blocks: Array<{ type: string }> };
+    }>(truncated);
+    assert.equal(parsed.title, "Le cycle de l'eau");
+    assert.ok(parsed.sheet.blocks.length >= 3);
+    assert.equal(parsed.sheet.blocks[0].type, "paragraph");
+  });
 });
 
 describe("repairModelJSON", () => {
   it("ne casse pas un JSON déjà valide", () => {
     const source = `{"title":"Cours","sheet":{"blocks":[{"type":"paragraph","text":"Ok"}]}}`;
     assert.deepEqual(JSON.parse(repairModelJSON(source)), JSON.parse(source));
+  });
+});
+
+describe("closeOpenStructures", () => {
+  it("referme un tableau coupé sans jeter les blocs déjà écrits", () => {
+    const truncated =
+      `{"title":"Cours","sheet":{"blocks":[{"type":"paragraph","text":"Un paragraphe assez long."},{"type":"heading"`;
+    const closed = closeOpenStructures(truncated);
+    const parsed = JSON.parse(closed) as {
+      title: string;
+      sheet: { blocks: Array<{ type: string }> };
+    };
+    assert.equal(parsed.title, "Cours");
+    assert.equal(parsed.sheet.blocks[0].type, "paragraph");
   });
 });

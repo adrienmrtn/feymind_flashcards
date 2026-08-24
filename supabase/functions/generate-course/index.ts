@@ -4,12 +4,33 @@ import {
   CORS_HEADERS,
   deepStripEmDashes,
   errorResponse,
-  extractJSON,
   FalError,
   jsonResponse,
 } from "../_shared/fal.ts";
+import { parseModelJSON } from "../_shared/json.ts";
 import { normalizeSheet, sheetToPlainText, stripInlineMarkup } from "../_shared/sheet.ts";
 import { COURSE_SYSTEM_PROMPT, VISION_SYSTEM_PROMPT } from "./prompt.ts";
+
+const OUTPUT_TOKEN_LIMIT = 8_192;
+
+async function writeSheet(
+  prompt: string,
+  model: string | undefined,
+  temperature: number,
+): Promise<Record<string, unknown> | null> {
+  try {
+    const output = await callModel({
+      prompt,
+      systemPrompt: COURSE_SYSTEM_PROMPT,
+      model,
+      temperature,
+      maxTokens: OUTPUT_TOKEN_LIMIT,
+    });
+    return deepStripEmDashes(parseModelJSON<Record<string, unknown>>(output));
+  } catch {
+    return null;
+  }
+}
 
 interface RequestBody {
   text?: string;
@@ -61,17 +82,29 @@ Deno.serve(async (request: Request) => {
     if (body.sourceName) sections.push(`Nom du fichier source : ${body.sourceName}`);
     if (text.length > 0) sections.push(`TEXTE EXTRAIT DU DOCUMENT :\n${text}`);
     if (visualNotes) sections.push(`DESCRIPTION DES VISUELS DU DOCUMENT :\n${visualNotes}`);
+    sections.push(
+      text.length > 12_000
+        ? "Ce document est long : 14 blocs suffisent. JSON compact, une seule ligne."
+        : "JSON compact, une seule ligne, sans indentation.",
+    );
     sections.push("Écris maintenant le JSON de la fiche.");
 
-    const output = await callModel({
-      prompt: sections.join("\n\n"),
-      systemPrompt: COURSE_SYSTEM_PROMPT,
-      model: body.model,
-      temperature: 0.45,
-      maxTokens: 8_000,
-    });
+    const prompt = sections.join("\n\n");
+    let parsed = await writeSheet(prompt, body.model, 0.3);
 
-    const parsed = deepStripEmDashes(extractJSON<Record<string, unknown>>(output));
+    // Une fiche coupée ou illisible : on redemande plus court plutôt que d'abandonner.
+    if (!parsed || normalizeSheet(parsed.sheet ?? parsed.blocks).length < 3) {
+      parsed = await writeSheet(
+        `${prompt}\n\nRéécris PLUS COURT : 12 blocs, JSON compact sur une seule ligne.`,
+        body.model,
+        0.15,
+      );
+    }
+
+    if (!parsed) {
+      throw new FalError("L'écriture de la fiche a échoué. Réessaie, le document n'a rien perdu.", 502);
+    }
+
     const blocks = normalizeSheet(parsed.sheet ?? parsed.blocks);
 
     if (blocks.length < 3) {

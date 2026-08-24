@@ -41,7 +41,7 @@ MISE EN FORME
 Tu peux utiliser **gras** pour un terme clé, *italique* pour une nuance, et $x^2$ pour une formule. Pas de surlignage, pas de markdown.
 
 FORMAT DE SORTIE
-Réponds uniquement par un objet JSON valide, sans texte autour :
+Réponds uniquement par un objet JSON compact, une seule ligne, sans texte autour :
 
 {
   "headline": "Une phrase qui répond, et qui se suffit à elle-même.",

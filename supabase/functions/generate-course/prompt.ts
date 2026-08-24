@@ -22,7 +22,7 @@ Dans les champs de texte, tu disposes de quatre marques et de rien d'autre :
 Pas de markdown en dehors de ça : ni #, ni -, ni tableaux en pipes.
 
 STRUCTURE
-Tu produis UNIQUEMENT un objet JSON valide, sans texte autour, sans balises de code.
+Tu produis UNIQUEMENT un objet JSON compact, une seule ligne, sans indentation ni saut de ligne, sans texte autour, sans balises de code.
 Virgule entre chaque propriété, jamais après la dernière. Un guillemet dans un texte s'écrit \". En LaTeX, double chaque antislash : \\\\frac, \\\\rightarrow.
 
 {
@@ -45,7 +45,7 @@ LES HUIT BLOCS DISPONIBLES
 {"type":"formula","latex":"6 CO_2 + 6 H_2O \\rightarrow C_6H_{12}O_6 + 6 O_2","caption":"Ce que chaque terme désigne"}
 
 COMMENT COMPOSER LA FICHE
-- Entre 12 et 30 blocs, selon la richesse du document.
+- Entre 12 et 20 blocs, selon la richesse du document. Un document long ne s'écrit pas plus long : on garde l'essentiel.
 - Ouvre sur un paragraphe, jamais sur un titre : on doit entrer dans le sujet dès la première ligne.
 - Les paragraphes sont majoritaires. Un cours se lit, il ne se scanne pas.
 - 2 à 5 titres de partie (level 1), et des sous-parties seulement si une partie est longue.
