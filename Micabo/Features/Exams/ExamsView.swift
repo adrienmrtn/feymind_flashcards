@@ -166,17 +166,10 @@ struct ExamsView: View {
             }
 
             if selectedExams.isEmpty {
-                Button {
-                    Haptics.medium()
-                    editing = ExamEdition(exam: nil, date: selectedDay ?? today)
-                } label: {
-                    HStack(spacing: MicaboSpacing.xs) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 12, weight: .semibold))
-                        Text("Placer un examen ce jour-là")
-                    }
-                }
-                .buttonStyle(MicaboSecondaryButtonStyle())
+                // Pas de bouton ici : celui du bas prend déjà le jour sélectionné comme
+                // date. Deux boutons pour la même action à trois centimètres d'écart font
+                // douter qu'ils fassent la même chose.
+                MicaboSectionFootnote(text: "Rien ce jour-là. « Ajouter un examen » le placera à cette date.")
             } else {
                 rows(selectedExams)
             }
@@ -300,15 +293,14 @@ struct ExamsView: View {
         return courses.filter { wanted.contains($0.id) }.count
     }
 
+    /// Sans bouton : celui du bas de l'écran est le même, et il est déjà là. Un écran
+    /// d'accueil n'a à porter une action que s'il est seul à la porter.
     private var emptyState: some View {
         MicaboEmptyState(
             systemImage: "calendar",
             title: "Aucun examen prévu",
-            message: "Déclare une date et les cours au programme : Micabo replanifie tes révisions pour que chaque carte soit au sommet de sa rétention le jour J, et pas trois semaines après.",
-            actionTitle: "Ajouter un examen"
-        ) {
-            editing = ExamEdition(exam: nil, date: today)
-        }
+            message: "Déclare une date et les cours au programme : Micabo replanifie tes révisions pour que chaque carte soit au sommet de sa rétention le jour J, et pas trois semaines après."
+        )
     }
 
     // MARK: - Actions
