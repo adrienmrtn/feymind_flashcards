@@ -11,7 +11,6 @@ import Foundation
 enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case welcome
     case level
-    case builtByStudents
     case language
     case personalizeIntro
     case goal

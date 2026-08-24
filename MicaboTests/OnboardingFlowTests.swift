@@ -27,7 +27,7 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .level)
 
         model.advance()
-        XCTAssertEqual(model.step, .builtByStudents)
+        XCTAssertEqual(model.step, .language)
     }
 
     // MARK: - Démonstration
@@ -50,15 +50,17 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Écrans retirés
 
-    /// Ces trois écrans ont été retirés du parcours : la génération simulée, qui faisait
-    /// patienter devant un travail invisible, la courbe de l'oubli prise à contre-pied, qui
-    /// répétait l'écran précédent, et la preuve sociale.
+    /// Ces écrans ont été retirés du parcours : la génération simulée, qui faisait patienter
+    /// devant un travail invisible, la courbe de l'oubli prise à contre-pied, qui répétait
+    /// l'écran précédent, la preuve sociale, et « on a fait Micabo pour nous », qui racontait
+    /// d'où venait l'app à quelqu'un qui ne l'a pas encore vue fonctionner.
     func testRemovedScreensAreGoneFromTheFlow() {
         let names = OnboardingStep.allCases.map(String.init(describing:))
 
         XCTAssertFalse(names.contains("demoWrite"))
         XCTAssertFalse(names.contains("science"))
         XCTAssertFalse(names.contains("schoolPeers"))
+        XCTAssertFalse(names.contains("builtByStudents"))
     }
 
     /// Le parcours est une file droite : aucun écran ne se saute, donc avancer depuis
