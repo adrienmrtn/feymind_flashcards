@@ -3,6 +3,8 @@
  * La clé reste côté serveur, dans le secret `FAL_KEY` du projet Supabase.
  */
 
+import { parseModelJSON } from "./json.ts";
+
 const TEXT_ENDPOINT = "https://fal.run/fal-ai/any-llm";
 const VISION_ENDPOINT = "https://fal.run/fal-ai/any-llm/vision";
 
@@ -84,31 +86,17 @@ export async function callModel(options: CallOptions): Promise<string> {
 
 /** Extrait le premier objet ou tableau JSON d'une réponse, même entourée de texte ou de balises. */
 export function extractJSON<T>(output: string): T {
-  let text = output.trim();
-
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fenced) text = fenced[1].trim();
-
-  const firstBrace = text.indexOf("{");
-  const firstBracket = text.indexOf("[");
-  const start = firstBrace === -1
-    ? firstBracket
-    : firstBracket === -1
-    ? firstBrace
-    : Math.min(firstBrace, firstBracket);
-
-  if (start === -1) throw new FalError("Le modèle n'a pas renvoyé de JSON.", 502);
-
-  const opening = text[start];
-  const closing = opening === "{" ? "}" : "]";
-  const end = text.lastIndexOf(closing);
-  if (end <= start) throw new FalError("JSON incomplet renvoyé par le modèle.", 502);
-
-  const candidate = text.slice(start, end + 1);
   try {
-    return JSON.parse(candidate) as T;
+    return parseModelJSON<T>(output);
   } catch (error) {
-    throw new FalError(`JSON invalide renvoyé par le modèle : ${(error as Error).message}`, 502);
+    const detail = error instanceof Error ? error.message : "";
+    if (detail.includes("n'a pas renvoyé de JSON")) {
+      throw new FalError("Le modèle n'a pas renvoyé de JSON.", 502);
+    }
+    throw new FalError(
+      "L'écriture de la fiche a échoué. Réessaie, le document n'a rien perdu.",
+      502,
+    );
   }
 }
 
