@@ -31,10 +31,16 @@ enum StudyQueueBuilder {
     }
 
     /// Ordonne les cartes comme Anki : apprentissage en retard, puis révisions, puis nouvelles.
+    ///
+    /// Les cartes sous échéance d'examen font exception au plafond de cartes neuves. Sans
+    /// cette exception, le plan annoncé à la confirmation serait un mensonge : il promet
+    /// quarante cartes aujourd'hui, et le rythme quotidien n'en laisserait passer que huit.
+    /// Le plafond garde tout son sens hors examen, où il n'y a pas de date à tenir.
     static func build(
         from cards: [Flashcard],
         now: Date = Date(),
-        limits: Limits = .default
+        limits: Limits = .default,
+        deadlines: ExamDeadlines = .none
     ) -> [Flashcard] {
         let due = cards.filter { $0.isDue(at: now) }
 
@@ -44,19 +50,49 @@ enum StudyQueueBuilder {
 
         let reviews = due
             .filter { $0.state == .review }
-            .sorted { $0.dueDate < $1.dueDate }
+            .sorted { byDeadline(deadlines.deadline(for: $0), $0.dueDate, deadlines.deadline(for: $1), $1.dueDate) }
             .prefix(limits.reviewsPerSession)
 
-        let fresh = due
-            .filter { $0.state == .new }
-            .sorted { ($0.position, $0.createdAt) < ($1.position, $1.createdAt) }
+        let byPosition: (Flashcard, Flashcard) -> Bool = {
+            ($0.position, $0.createdAt) < ($1.position, $1.createdAt)
+        }
+        let newCards = due.filter { $0.state == .new }
+        let examNewCards = newCards.filter { deadlines.covers($0) }.sorted(by: byPosition)
+        let otherNewCards = newCards
+            .filter { !deadlines.covers($0) }
+            .sorted(by: byPosition)
             .prefix(limits.newPerSession)
 
-        return learning + Array(reviews) + Array(fresh)
+        return learning + Array(reviews) + examNewCards + Array(otherNewCards)
     }
 
-    static func counts(for cards: [Flashcard], now: Date = Date(), limits: Limits = .default) -> StudyCounts {
-        let queue = build(from: cards, now: now, limits: limits)
+    /// Une carte sous échéance passe devant, et l'échéance la plus proche devant les autres.
+    /// À égalité, l'ordre reste celui d'Anki : la plus en retard d'abord.
+    private static func byDeadline(
+        _ firstDeadline: Date?,
+        _ firstDue: Date,
+        _ secondDeadline: Date?,
+        _ secondDue: Date
+    ) -> Bool {
+        switch (firstDeadline, secondDeadline) {
+        case (.some(let first), .some(let second)):
+            return first == second ? firstDue < secondDue : first < second
+        case (.some, .none):
+            return true
+        case (.none, .some):
+            return false
+        case (.none, .none):
+            return firstDue < secondDue
+        }
+    }
+
+    static func counts(
+        for cards: [Flashcard],
+        now: Date = Date(),
+        limits: Limits = .default,
+        deadlines: ExamDeadlines = .none
+    ) -> StudyCounts {
+        let queue = build(from: cards, now: now, limits: limits, deadlines: deadlines)
         return StudyCounts(
             newCards: queue.filter { $0.state == .new }.count,
             learning: queue.filter { $0.state == .learning || $0.state == .relearning }.count,
