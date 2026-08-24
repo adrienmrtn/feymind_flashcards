@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// Barre d'onglets dessinée une seule fois par `RootTabView`, à l'extérieur du
-/// carrousel : elle reste immobile pendant qu'on balaye d'une page à l'autre.
-/// C'est le routeur qui la retire sur les écrans poussés.
+/// Barre d'onglets dessinée une seule fois par `RootTabView`, à l'extérieur des pages :
+/// elle reste immobile pendant qu'elles se remplacent. C'est le routeur qui la retire sur
+/// les écrans poussés. Depuis que le balayage entre onglets a disparu, c'est **le seul
+/// moyen de changer de page** : elle ne peut donc pas se permettre d'être discrète.
 struct MicaboTabBar: View {
     @Environment(TabRouter.self) private var router: TabRouter?
 
@@ -53,14 +54,13 @@ struct MicaboTabBar: View {
 }
 
 extension View {
-    /// Signale au routeur si cette page a un écran poussé, pour couper le balayage
-    /// et retirer la barre du bas.
-    func reportsPaging(for tab: RootTab, depth: Int) -> some View {
-        modifier(PagingDepthReporter(tab: tab, depth: depth))
+    /// Signale au routeur si cette page a un écran poussé, pour retirer la barre du bas.
+    func reportsNavigationDepth(for tab: RootTab, depth: Int) -> some View {
+        modifier(NavigationDepthReporter(tab: tab, depth: depth))
     }
 }
 
-private struct PagingDepthReporter: ViewModifier {
+private struct NavigationDepthReporter: ViewModifier {
     @Environment(TabRouter.self) private var router: TabRouter?
     let tab: RootTab
     let depth: Int
