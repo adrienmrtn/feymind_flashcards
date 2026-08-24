@@ -120,29 +120,12 @@ struct SheetProse: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> UITextView {
-        // TextKit 1 explicitement : le surligneur est dessiné par un gestionnaire de mise
-        // en page à nous, et TextKit 2 ne donne pas la main sur le fond d'un fragment.
-        let storage = NSTextStorage()
-        let layoutManager = MarkerLayoutManager()
-        storage.addLayoutManager(layoutManager)
-
-        let container = NSTextContainer(
-            size: CGSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
-        )
-        container.widthTracksTextView = true
-        container.lineFragmentPadding = 0
-        layoutManager.addTextContainer(container)
-
-        let view = UITextView(frame: CGRect.zero, textContainer: container)
-        view.isEditable = false
-        view.isSelectable = true
-        view.isScrollEnabled = false
-        view.backgroundColor = UIColor.clear
-        view.textContainerInset = UIEdgeInsets.zero
-        view.dataDetectorTypes = []
+        // La construction vit dans `SheetTextViewFactory`, un fichier UIKit seul : ici,
+        // SwiftUI et UIKit sont importés ensemble et le compilateur n'arrive plus à
+        // choisir entre leurs `.clear`, `.zero` et `.horizontal`.
+        let view = SheetTextViewFactory.makeView()
         view.tintColor = UIColor(MicaboColor.accent)
         view.delegate = context.coordinator
-        view.setContentCompressionResistancePriority(UILayoutPriority.defaultLow, for: .horizontal)
         return view
     }
 
@@ -161,15 +144,14 @@ struct SheetProse: UIViewRepresentable {
     /// conteneur qu'un paragraphe veut trois mètres de large : on répond par la largeur
     /// d'une colonne de fiche, qui est la seule qu'un paragraphe occupe jamais.
     func sizeThatFits(_ proposal: ProposedViewSize, uiView: UITextView, context: Context) -> CGSize? {
-        guard let proposed = proposal.width, proposed.isFinite else {
-            return measured(uiView, width: Self.columnWidth)
+        let proposedWidth = proposal.width
+        let width: CGFloat
+        if let proposedWidth, proposedWidth.isFinite {
+            width = max(CGFloat(1), proposedWidth)
+        } else {
+            width = Self.columnWidth
         }
-        return measured(uiView, width: max(1, proposed))
-    }
-
-    private func measured(_ view: UITextView, width: CGFloat) -> CGSize {
-        let fitting = view.sizeThatFits(CGSize(width: width, height: CGFloat.greatestFiniteMagnitude))
-        return CGSize(width: width, height: ceil(fitting.height))
+        return SheetTextViewFactory.measuredSize(of: uiView, width: width)
     }
 
     /// Largeur de référence d'une colonne de fiche : un écran de téléphone, marges de
@@ -306,35 +288,5 @@ enum SheetAttributedText {
             weight: span.isBold ? .semibold : style.weight,
             italic: span.isItalic
         )
-    }
-}
-
-/// Dessine le surligneur.
-///
-/// Le fond d'un fragment attribué est, par défaut, un rectangle qui prend toute la hauteur
-/// de ligne : posé sur un paragraphe à interligne généreux, ça donne une bande grasse qui
-/// écrase le texte. On le remplace par un rectangle arrondi, resserré en hauteur et
-/// débordant de quelques points sur les côtés, ce qui est exactement la trace que laisse un
-/// marqueur passé à la main.
-private final class MarkerLayoutManager: NSLayoutManager {
-    override func fillBackgroundRectArray(
-        _ rectArray: UnsafePointer<CGRect>,
-        count rectCount: Int,
-        forCharacterRange charRange: NSRange,
-        color: UIColor
-    ) {
-        guard let context = UIGraphicsGetCurrentContext() else {
-            super.fillBackgroundRectArray(rectArray, count: rectCount, forCharacterRange: charRange, color: color)
-            return
-        }
-
-        context.saveGState()
-        color.setFill()
-        for index in 0..<rectCount {
-            let rect = rectArray[index].insetBy(dx: -3, dy: 2.5)
-            guard rect.width > 0, rect.height > 0 else { continue }
-            UIBezierPath(roundedRect: rect, cornerRadius: 5).fill()
-        }
-        context.restoreGState()
     }
 }
