@@ -851,6 +851,12 @@ Et **[`docs/data-flywheel.md`](docs/data-flywheel.md)** propose ce qu'il faudrai
 pour que ces données deviennent un avantage : rien n'y est implémenté, c'est une note de
 conception.
 
+**[`docs/web.md`](docs/web.md)** en est une autre, et elle part du même schéma : le site,
+l'iPhone est la poche et le web est le bureau, ce que le partage d'une fiche ouvre, et comment un
+abonnement acheté d'un côté se reconnaît de l'autre. Rien n'y est implémenté non plus, mais trois
+de ses décisions coûtent cher à changer après coup — l'identité de l'utilisateur au moment de
+l'achat, la clé qui autorise les Edge Functions, et la place du compte dans le parcours.
+
 ## Import : extraire bien, sans faire exploser la facture
 
 Le texte n'est **jamais** envoyé à un OCR cloud. Tout se passe sur l'iPhone.
