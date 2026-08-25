@@ -17,7 +17,6 @@ final class OnboardingModel {
     var institutionId: String?
     var institutionName: String?
     var dailyMinutes = 15
-    var notificationsOptIn = false
 
     /// Le registre de rédaction, seule forme sous laquelle le niveau sort du parcours.
     var level: StudyLevel? {
@@ -85,7 +84,6 @@ final class OnboardingModel {
         OnboardingPreferences.institutionId = institutionId
         OnboardingPreferences.institutionName = institutionName
         OnboardingPreferences.dailyMinutes = dailyMinutes
-        OnboardingPreferences.notificationsOptIn = notificationsOptIn
     }
 }
 

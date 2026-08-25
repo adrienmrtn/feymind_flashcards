@@ -257,13 +257,17 @@ enum OnboardingPreferences {
         static let institutionId = "micabo.onboarding.institutionId"
         static let institutionName = "micabo.onboarding.institutionName"
         static let dailyMinutes = "micabo.onboarding.dailyMinutes"
-        static let notificationsOptIn = "micabo.onboarding.notificationsOptIn"
+        /// Écrite par l'écran des rappels, qui n'existe plus. Elle reste listée pour que la
+        /// remise à zéro l'efface sur les appareils qui ont fait l'ancien parcours : une clé
+        /// oubliée dans les réglages est une clé qu'on retrouve un jour en croyant qu'elle
+        /// veut encore dire quelque chose.
+        static let retiredNotificationsOptIn = "micabo.onboarding.notificationsOptIn"
         static let completedAt = "micabo.onboarding.completedAt"
 
         static let all = [
             completed, level, stage, tier, country, goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
-            dailyMinutes, notificationsOptIn, completedAt
+            dailyMinutes, retiredNotificationsOptIn, completedAt
         ]
     }
 
@@ -439,11 +443,6 @@ enum OnboardingPreferences {
             return stored == 0 ? 15 : stored
         }
         set { defaults.set(newValue, forKey: Key.dailyMinutes) }
-    }
-
-    static var notificationsOptIn: Bool {
-        get { defaults.bool(forKey: Key.notificationsOptIn) }
-        set { defaults.set(newValue, forKey: Key.notificationsOptIn) }
     }
 
     static func markCompleted() {

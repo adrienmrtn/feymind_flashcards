@@ -147,6 +147,32 @@ final class OnboardingFlowTests: XCTestCase {
         // L'écran de la langue annonçait « Micabo parle français » avec une seule réponse,
         // cochée d'avance : la langue se déduit du pays de scolarisation.
         XCTAssertFalse(names.contains("language"))
+        // « On te rappelle au bon moment » ne demandait rien au système : il notait une
+        // intention que personne ne lisait, juste avant l'écran qui construit le parcours.
+        XCTAssertFalse(names.contains("notifications"))
+    }
+
+    /// La question des rappels partie, la projection mène directement à la construction du
+    /// parcours : c'est la suite qu'elle promettait déjà.
+    func testTheProjectionLeadsStraightToTheBuild() {
+        let model = self.model(advancingTo: .projection)
+
+        model.advance()
+        XCTAssertEqual(model.step, .personalizing)
+    }
+
+    /// La clé de l'écran retiré reste listée : sur un appareil qui a fait l'ancien parcours,
+    /// la remise à zéro doit encore savoir l'effacer.
+    func testTheRetiredNotificationKeyIsStillErased() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        let key = OnboardingPreferences.Key.retiredNotificationsOptIn
+        UserDefaults.standard.set(true, forKey: key)
+
+        OnboardingPreferences.reset()
+
+        XCTAssertFalse(UserDefaults.standard.bool(forKey: key))
     }
 
     /// Le parcours est une file droite : aucun écran ne se saute, donc avancer depuis

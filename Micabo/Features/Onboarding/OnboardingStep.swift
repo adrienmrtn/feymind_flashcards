@@ -15,6 +15,13 @@ import Foundation
 /// monde. La langue se déduit du même écran, et l'écran qui annonçait « Micabo parle
 /// français » a disparu avec : il demandait une réponse qu'on ne pouvait pas donner.
 ///
+/// **L'écran des rappels a disparu.** Il demandait « on te rappelle au bon moment ? » sans
+/// rien demander au système : il notait une intention que rien ne lisait, et il la
+/// demandait juste avant l'écran qui construit le parcours, c'est-à-dire au moment où l'on
+/// est le plus près d'entrer dans l'app. Une autorisation de notification se demande quand
+/// elle sert — la première fois qu'il y a des cartes à rappeler — et pas au milieu d'une
+/// inscription.
+///
 /// La fin du parcours a sa propre progression, et elle est délibérée : le parcours vient
 /// d'être construit sous les yeux (`personalizing`), d'autres l'ont déjà suivi
 /// (`socialProof`), c'est maintenant à cet étudiant-là de s'y mettre (`yourTurn`), et on
@@ -36,7 +43,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case school
     case dailyTime
     case projection
-    case notifications
     case personalizing
     case socialProof
     case yourTurn
