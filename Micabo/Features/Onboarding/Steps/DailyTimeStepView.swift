@@ -8,6 +8,13 @@ import SwiftUI
 /// affiché juste en dessous et recalculé à chaque cran. Le sous-titre le dit avant qu'on
 /// touche le curseur : une question qui annonce ce qu'elle sert à décider se répond mieux
 /// qu'une question posée sèchement.
+///
+/// **Le curseur est posé à même le fond, sans bloc autour.** Il vivait dans une carte
+/// blanche, avec la conséquence dans un second encadré juste dessous : deux cadres empilés
+/// sur un écran qui ne porte qu'une seule commande, et un grand nombre enfermé dans une
+/// boîte se lit comme la valeur d'un formulaire, pas comme une décision qu'on prend. Le
+/// chiffre, la piste et la phrase qui en découle se lisent mieux à l'air libre, et l'écran
+/// ressemble alors aux autres questions du parcours, qui n'encadrent pas leurs réponses.
 struct DailyTimeStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -33,7 +40,7 @@ struct DailyTimeStepView: View {
             subtitle: "Ça nous aide à créer un parcours parfaitement personnalisé à tes besoins.",
             titleSize: 27
         ) {
-            VStack(spacing: 14) {
+            VStack(spacing: 18) {
                 dial
                 loadNote
             }
@@ -59,7 +66,11 @@ struct DailyTimeStepView: View {
                     in: 0...Double(DailyLoad.steps.count - 1),
                     step: 1
                 )
-                .tint(MicaboColor.accentVivid)
+                // Le menthe vif du logo tenait sur le blanc du bloc ; sur le crème, un filet
+                // de quatre points dans cette teinte ne se distingue plus de sa piste. C'est
+                // la règle de la palette, et elle vaut ici comme partout : sur fond clair,
+                // c'est l'accent sombre qui porte une progression.
+                .tint(MicaboColor.progress)
                 .onChange(of: stepIndex) { oldValue, newValue in
                     guard isReady, oldValue != newValue else { return }
                     Haptics.selection()
@@ -77,9 +88,7 @@ struct DailyTimeStepView: View {
 
             paceLabel
         }
-        .padding(18)
         .frame(maxWidth: .infinity)
-        .micaboGroup()
     }
 
     private var readout: some View {
@@ -127,7 +136,8 @@ struct DailyTimeStepView: View {
         .animation(.easeOut(duration: 0.2), value: pace.label)
     }
 
-    /// Ce que le curseur décide vraiment.
+    /// Ce que le curseur décide vraiment. Une phrase, un pictogramme, et pas de cadre : la
+    /// conséquence se lit sous le curseur, elle n'est pas un encart à côté de lui.
     private var loadNote: some View {
         HStack(alignment: .top, spacing: 11) {
             Image(systemName: "tray.and.arrow.down")
@@ -145,9 +155,7 @@ struct DailyTimeStepView: View {
 
             Spacer(minLength: 0)
         }
-        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.accentSoft.opacity(0.6), in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
     }
 
     private func commit() {
