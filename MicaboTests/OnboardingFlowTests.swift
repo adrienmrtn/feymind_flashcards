@@ -457,6 +457,67 @@ final class OnboardingFlowTests: XCTestCase {
         }
     }
 
+    // MARK: - Matières
+
+    /// **Une matière, un emoji.** Trente-huit pastilles s'enroulent sur cet écran : deux qui
+    /// portent le même dessin obligent à lire les libellés un par un, et c'est justement le
+    /// travail que l'emoji devait éviter. La table en servait un pour six matières voisines —
+    /// quatre matières de santé pour un seul stéthoscope, dix langues pour une seule bouche.
+    func testEverySubjectOfTheCatalogueHasItsOwnEmoji() {
+        var seen: [String: String] = [:]
+
+        for subject in SubjectCatalog.allSubjects {
+            let emoji = SubjectCatalog.emoji(for: subject)
+
+            XCTAssertNotEqual(
+                emoji,
+                CourseEmoji.fallback,
+                "\(subject) retombe sur le livre générique : la table ne la connaît pas"
+            )
+
+            if let other = seen[emoji] {
+                XCTFail("\(subject) et \(other) portent le même emoji \(emoji)")
+            }
+            seen[emoji] = subject
+        }
+
+        XCTAssertEqual(seen.count, SubjectCatalog.allSubjects.count)
+    }
+
+    /// Un drapeau se reconnaît sans lire, et c'est tout ce qu'on demande à un emoji posé sur
+    /// une pastille. Les langues anciennes n'en ont pas : le drapeau d'un pays qui n'existait
+    /// pas ne dirait rien.
+    func testEachLivingLanguageCarriesItsFlag() {
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Espagnol"), "🇪🇸")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Anglais"), "🇬🇧")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Allemand"), "🇩🇪")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Japonais"), "🇯🇵")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Latin & grec"), "🏺")
+
+        // Le repli des langues attrape ce qui parle de langue sans nommer laquelle.
+        XCTAssertEqual(CourseEmoji.derive(subject: "LV2", title: "Thème grammatical"), "🗣️")
+    }
+
+    /// L'ordre de la table est sa règle : une entrée large ne passe jamais avant une entrée
+    /// précise. « Code de la route » contenait « code » et sortait un ordinateur portable.
+    func testAPreciseSubjectWinsOverAWideOne() {
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Code de la route"), "🚗")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Statistiques"), "📊")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Mécanique"), "⚙️")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Algorithmique"), "🧩")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Génie civil"), "🏗️")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Kinésithérapie"), "🦴")
+    }
+
+    /// L'emoji d'une matière et celui d'un cours de cette matière viennent de la même table :
+    /// deux listes tenues en parallèle finiraient par ne plus dire la même chose.
+    func testACourseAndItsSubjectShareTheSameTable() {
+        XCTAssertEqual(
+            CourseEmoji.derive(subject: "Espagnol", title: "Le subjonctif imparfait"),
+            SubjectCatalog.emoji(for: "Espagnol")
+        )
+    }
+
     // MARK: - Pays de scolarisation
 
     /// « Les attendus du bac » ne veut rien dire pour un lycéen belge : le pays est écrit

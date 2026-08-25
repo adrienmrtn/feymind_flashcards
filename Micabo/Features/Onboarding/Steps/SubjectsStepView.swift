@@ -1,40 +1,11 @@
 import SwiftUI
 
 /// Écran 12 : choix des matières. Sélection multiple, catalogue volontairement large.
+///
+/// Le catalogue vit dans `SubjectCatalog`, hors de la vue : c'est ce qui permet de vérifier
+/// qu'aucune matière d'une même famille ne porte l'emoji d'une autre.
 struct SubjectsStepView: View {
     @Environment(OnboardingModel.self) private var model
-
-    private struct Family: Identifiable {
-        let id = UUID()
-        let name: String
-        let subjects: [String]
-    }
-
-    private let families: [Family] = [
-        Family(name: "Sciences", subjects: [
-            "Mathématiques", "Physique", "Chimie", "SVT", "Statistiques", "Astronomie", "Géologie"
-        ]),
-        Family(name: "Santé", subjects: [
-            "Médecine", "Pharmacie", "Soins infirmiers", "Kinésithérapie", "Anatomie", "Nutrition"
-        ]),
-        Family(name: "Sciences humaines", subjects: [
-            "Histoire", "Géographie", "Philosophie", "Sociologie", "Psychologie", "Sciences politiques"
-        ]),
-        Family(name: "Langues", subjects: [
-            "Anglais", "Espagnol", "Allemand", "Italien", "Portugais", "Japonais",
-            "Chinois", "Arabe", "Russe", "Latin & grec", "Français"
-        ]),
-        Family(name: "Droit & économie", subjects: [
-            "Droit", "Économie", "Comptabilité", "Finance", "Management", "Marketing"
-        ]),
-        Family(name: "Technique", subjects: [
-            "Informatique", "Algorithmique", "Réseaux", "Électronique", "Mécanique",
-            "Génie civil", "Architecture"
-        ]),
-        Family(name: "Et aussi", subjects: [
-            "Arts", "Musique", "Cinéma", "Sport & STAPS", "Code de la route", "Culture générale"
-        ])
-    ]
 
     var body: some View {
         OnboardingScaffold(
@@ -44,7 +15,7 @@ struct SubjectsStepView: View {
             animatesTitle: true
         ) {
             VStack(alignment: .leading, spacing: 20) {
-                ForEach(families) { family in
+                ForEach(SubjectCatalog.families) { family in
                     VStack(alignment: .leading, spacing: 10) {
                         Text(family.name.uppercased())
                             .font(MicaboFont.hanken(10, weight: .semibold))
@@ -58,7 +29,7 @@ struct SubjectsStepView: View {
                                     // L'emoji d'une matière vient d'où viennent ceux des
                                     // cours : une table unique, et pas une deuxième liste à
                                     // maintenir en parallèle de celle-ci.
-                                    emoji: CourseEmoji.derive(subject: subject, title: subject),
+                                    emoji: SubjectCatalog.emoji(for: subject),
                                     isSelected: model.subjects.contains(subject)
                                 ) {
                                     toggle(subject)
