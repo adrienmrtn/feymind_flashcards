@@ -897,15 +897,34 @@ private struct NothingDueView: View {
 /// pourcentage, donc la même information une troisième fois. Et rien ne disait ce qui compte
 /// en refermant l'app : **est-ce que c'est fini ?**
 ///
-/// L'écran répond maintenant dans cet ordre : ce qui a été appris, comment les notes se
-/// répartissent, et quand la session revient.
+/// L'écran répond dans cet ordre : ce qui a été appris, comment les notes se répartissent, et
+/// quand la session revient.
+///
+/// **Il se construit sous les yeux.** C'est le seul écran de récompense de l'app, et il
+/// s'affichait d'un bloc, chiffres finaux compris : le travail de vingt minutes apparaissait
+/// comme une facture. Les nombres partent donc de zéro et montent, les barres de répartition
+/// se remplissent en cascade, et le reste arrive derrière elles. Rien ne dure : un bilan qui
+/// se fait attendre est un bilan qu'on quitte avant la fin, donc tout est posé en une seconde.
+///
+/// L'animation ne se rejoue pas. Un chiffre qui remonte à chaque retour sur l'écran cesse
+/// d'être une récompense et devient un décor.
 private struct CompletionView: View {
     let session: StudySession
     let isEmbedded: Bool
     var onFinish: () -> Void
 
+    /// Passe à vrai une fois, à l'apparition. Chaque élément déclare son propre retard, ce qui
+    /// évite une machine à états pour trois cents millisecondes de cascade.
+    @State private var isRevealed = false
+
     private var isPractice: Bool {
         !session.mode.affectsSchedule
+    }
+
+    /// Ce que valent les chiffres tant que l'écran n'est pas arrivé : zéro, pour qu'ils aient
+    /// quelque part à monter.
+    private var factor: Double {
+        isRevealed ? 1 : 0
     }
 
     var body: some View {
@@ -931,7 +950,36 @@ private struct CompletionView: View {
                 Button(isEmbedded ? "Recharger la session" : "Terminer", action: onFinish)
                     .buttonStyle(MicaboPrimaryButtonStyle())
             }
+            .opacity(isRevealed ? 1 : 0)
+            .animation(.easeOut(duration: 0.3).delay(Timing.button), value: isRevealed)
         }
+        .onAppear(perform: reveal)
+    }
+
+    /// Les retards de la cascade, en un endroit : c'est ce qui permet de la relire comme une
+    /// partition plutôt que de chasser des nombres dans six modificateurs.
+    private enum Timing {
+        static let badge = 0.05
+        static let title = 0.18
+        static let bars = 0.3
+        static let barStagger = 0.07
+        static let numbers = 0.34
+        static let comeback = 0.6
+        static let button = 0.66
+        /// Durée de la montée des nombres. Assez longue pour qu'on la voie compter, assez
+        /// courte pour ne pas faire attendre un total qu'on connaît déjà.
+        static let count = 0.85
+    }
+
+    private func reveal() {
+        guard !isRevealed else { return }
+        isRevealed = true
+
+        guard session.answeredCount > 0 else { return }
+        Haptics.success()
+        // Le même geste que la projection du parcours d'accueil : les impulsions suivent la
+        // montée des chiffres, et le compteur se sent autant qu'il se voit.
+        Haptics.burst(count: 14, over: Timing.count, intensity: 0.3)
     }
 
     // MARK: - En-tête
@@ -943,18 +991,27 @@ private struct CompletionView: View {
                 .foregroundStyle(MicaboColor.positive)
                 .frame(width: 74, height: 74)
                 .background(MicaboColor.positiveSoft, in: Circle())
+                // La pastille arrive en grandissant, et le glyphe rebondit une fois : c'est
+                // le seul rebond de l'app, et il est celui du système, sur un symbole.
+                .scaleEffect(isRevealed ? 1 : 0.86)
+                .opacity(isRevealed ? 1 : 0)
+                .symbolEffect(.bounce, value: isRevealed)
+                .animation(.easeOut(duration: 0.32).delay(Timing.badge), value: isRevealed)
 
-            Text(title)
-                .font(MicaboFont.hanken(26, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .tracking(MicaboTracking.tight)
-                .multilineTextAlignment(.center)
+            VStack(spacing: 10) {
+                Text(title)
+                    .font(MicaboFont.hanken(26, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .tracking(MicaboTracking.tight)
+                    .multilineTextAlignment(.center)
 
-            Text(detail)
-                .font(MicaboFont.body)
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
+                Text(detail)
+                    .font(MicaboFont.body)
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .rise(isRevealed, delay: Timing.title)
         }
     }
 
@@ -971,20 +1028,25 @@ private struct CompletionView: View {
                 MicaboSectionCaption(text: "Tes réponses")
 
                 VStack(spacing: 11) {
-                    ForEach(given) { rating in
-                        ratingRow(rating)
+                    ForEach(Array(given.enumerated()), id: \.element) { index, rating in
+                        ratingRow(rating, index: index)
                     }
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .micaboGroup()
             }
+            .rise(isRevealed, delay: Timing.bars)
         }
     }
 
-    private func ratingRow(_ rating: ReviewRating) -> some View {
+    /// Une note, son compte et sa part. La barre se remplit depuis la gauche, chaque ligne un
+    /// cran après la précédente : c'est ce qui fait lire une répartition plutôt que quatre
+    /// barres déjà là.
+    private func ratingRow(_ rating: ReviewRating, index: Int) -> some View {
         let count = session.count(of: rating)
         let share = Double(count) / Double(max(session.answeredCount, 1))
+        let delay = Timing.bars + Double(index) * Timing.barStagger
 
         return VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.xs) {
@@ -994,10 +1056,12 @@ private struct CompletionView: View {
 
                 Spacer(minLength: 0)
 
-                Text("\(count)")
-                    .font(MicaboFont.number(14))
-                    .foregroundStyle(GradeButtons.tint(for: rating))
-                    .monospacedDigit()
+                CountingText(
+                    value: Double(count) * factor,
+                    font: MicaboFont.number(14),
+                    color: GradeButtons.tint(for: rating)
+                )
+                .animation(.easeOut(duration: Timing.count).delay(delay), value: factor)
             }
 
             GeometryReader { proxy in
@@ -1005,7 +1069,8 @@ private struct CompletionView: View {
                     Capsule().fill(MicaboColor.surfaceMuted)
                     Capsule()
                         .fill(GradeButtons.tint(for: rating))
-                        .frame(width: max(6, proxy.size.width * share))
+                        .frame(width: max(6, proxy.size.width * share) * factor)
+                        .animation(.timingCurve(0.2, 0.7, 0.2, 1, duration: 0.55).delay(delay), value: factor)
                 }
             }
             .frame(height: 7)
@@ -1018,21 +1083,50 @@ private struct CompletionView: View {
     private var tiles: some View {
         HStack(spacing: 10) {
             if !isPractice {
-                tile("\(session.graduatedCount)", "apprises", MicaboColor.positive)
+                tile("apprises", MicaboColor.positive) {
+                    counter(Double(session.graduatedCount), color: MicaboColor.positive)
+                }
             }
-            tile("\(Int(session.accuracy * 100)) %", "de réussite", MicaboColor.accent)
-            tile(durationLabel, "de révision", MicaboColor.inkSecondary)
+
+            tile("de réussite", MicaboColor.accent) {
+                // Le pourcentage monte comme les autres, et son signe reste collé au nombre :
+                // un « % » qui s'éloigne pendant que le chiffre grandit se lit comme un défaut
+                // d'alignement.
+                HStack(spacing: 1) {
+                    counter(session.accuracy * 100, color: MicaboColor.accent)
+                    Text("%")
+                        .font(MicaboFont.number(21))
+                        .foregroundStyle(MicaboColor.accent)
+                }
+            }
+
+            tile("de révision", MicaboColor.inkSecondary) {
+                // La durée ne compte pas : « 12 min » qui monterait de zéro se lirait comme un
+                // chronomètre qui tourne encore, et « < 1 min » n'a pas de nombre à monter.
+                Text(durationLabel)
+                    .font(MicaboFont.number(21))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .monospacedDigit()
+            }
         }
+        .rise(isRevealed, delay: Timing.numbers)
     }
 
-    private func tile(_ value: String, _ label: String, _ tint: Color) -> some View {
+    private func counter(_ value: Double, color: Color) -> some View {
+        CountingText(value: value * factor, font: MicaboFont.number(21), color: color)
+            .animation(.easeOut(duration: Timing.count).delay(Timing.numbers), value: factor)
+    }
+
+    private func tile<Value: View>(
+        _ label: String,
+        _ tint: Color,
+        @ViewBuilder value: () -> Value
+    ) -> some View {
         VStack(spacing: 4) {
-            Text(value)
-                .font(MicaboFont.number(21))
-                .foregroundStyle(tint)
-                .monospacedDigit()
+            value()
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
+
             Text(label)
                 .font(MicaboFont.hanken(11, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
@@ -1068,6 +1162,7 @@ private struct CompletionView: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+        .rise(isRevealed, delay: Timing.comeback)
     }
 
     private func comebackText(delay: TimeInterval, today: Int) -> String {
@@ -1098,5 +1193,17 @@ private struct CompletionView: View {
     private var durationLabel: String {
         let minutes = Int(session.elapsed / 60)
         return minutes < 1 ? "< 1 min" : "\(minutes) min"
+    }
+}
+
+private extension View {
+    /// Arrive en montant de dix points, après son retard. Le même geste que l'entrée en
+    /// cascade du parcours d'accueil : douze points de montée et un fondu suffisent à faire
+    /// arriver un élément, et un flou de mise au point coûterait une passe de rendu par image
+    /// pour rendre le texte illisible pendant sa propre apparition.
+    func rise(_ isRevealed: Bool, delay: Double) -> some View {
+        opacity(isRevealed ? 1 : 0)
+            .offset(y: isRevealed ? 0 : 10)
+            .animation(.timingCurve(0.2, 0.7, 0.2, 1, duration: 0.42).delay(delay), value: isRevealed)
     }
 }
