@@ -358,7 +358,7 @@ struct ExamsView: View {
     private func unplan(_ exam: Exam) {
         do {
             try ExamRepository.unplan(exam, in: modelContext)
-            Haptics.light()
+            Haptics.success()
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }

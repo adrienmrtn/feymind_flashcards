@@ -565,7 +565,7 @@ struct SettingsView: View {
         supabaseURL = AppConfig.supabaseURL
         anonKey = AppConfig.supabaseAnonKey
         model = AppConfig.aiModel
-        Haptics.selection()
+        Haptics.success()
     }
 
     /// La feuille se referme d'abord : la bascule vers l'onboarding remplace toute

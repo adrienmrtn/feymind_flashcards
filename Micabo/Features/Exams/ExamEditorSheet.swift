@@ -328,7 +328,7 @@ struct ExamEditorSheet: View {
         guard let exam else { return }
         do {
             try ExamRepository.unplan(exam, in: modelContext)
-            Haptics.light()
+            Haptics.success()
             dismiss()
         } catch {
             errorMessage = describe(error)
