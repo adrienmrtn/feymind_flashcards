@@ -84,6 +84,15 @@ extension View {
         modifier(NavigationDepthReporter(tab: tab, depth: depth))
     }
 
+    /// Vide la pile de cette page quand quelqu'un demande à revenir à l'accueil.
+    ///
+    /// À appliquer sur la racine de chaque onglet, à côté de `reportsNavigationDepth`. Sans
+    /// elle, `TabRouter.goHome()` changerait d'onglet en laissant les trois piles ouvertes
+    /// derrière lui.
+    func returnsHome(path: Binding<NavigationPath>) -> some View {
+        modifier(HomeReturnListener(path: path))
+    }
+
     /// **Réserve la place de la barre d'onglets, et pose au-dessus d'elle ce que la page
     /// ancre en bas.** À appliquer au contenu défilant d'une page racine, à l'intérieur de
     /// son `NavigationStack`.
@@ -135,6 +144,19 @@ private struct NavigationDepthReporter: ViewModifier {
             .onAppear { router?.setDepth(depth, for: tab) }
             .onChange(of: depth) { _, newValue in
                 router?.setDepth(newValue, for: tab)
+            }
+    }
+}
+
+private struct HomeReturnListener: ViewModifier {
+    @Environment(TabRouter.self) private var router: TabRouter?
+    @Binding var path: NavigationPath
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: router?.homeRequests ?? 0) { _, _ in
+                guard !path.isEmpty else { return }
+                path = NavigationPath()
             }
     }
 }

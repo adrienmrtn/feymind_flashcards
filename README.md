@@ -86,7 +86,7 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli |
 | Démonstration | courbe de mémorisation, puis dépôt → fiche → révisions en trois écrans, puis le mode examen |
 | Personnalisation | matières, établissement (avec « Passer »), temps quotidien |
-| Sortie | projection annuelle, génération du parcours, preuve sociale, passage de relais, connexion, essai de 3 jours, paywall |
+| Sortie | projection annuelle, génération du parcours, preuve sociale, passage de relais, connexion, chronologie de l'essai, promesse du rappel, paywall |
 
 **L'écran des rappels a été retiré.** « On te rappelle au bon moment » proposait d'activer les
 notifications sans rien demander au système : il notait une intention que personne ne lisait
@@ -319,7 +319,7 @@ l'app redemandait un compte juste après le parcours, sur un second écran de co
 passe maintenant par `AuthController` (voir [Comptes et sauvegarde](#comptes-et-sauvegarde)) —
 Apple par son bouton natif, que ses règles d'interface imposent, Google par une page web
 isolée. C'est le passage à l'état « connecté » qui fait avancer, quel que soit le fournisseur
-emprunté, et l'écran suivant est l'offre d'essai.
+emprunté, et l'écran suivant est la chronologie de l'essai.
 
 Les deux boutons sont montrés sans condition, et non plus seulement quand le projet Supabase
 annonce le fournisseur : un fournisseur éteint côté serveur le dit dans son message d'erreur,
@@ -382,9 +382,115 @@ courbe. C'est le seul écran de pédagogie qui reste : celui qui reprenait ensui
 en liste, sous le titre « la courbe de l'oubli prise à contre-pied », disait une deuxième fois ce que
 le graphe montrait déjà.
 
-Le paywall utilise `SubscriptionStoreView` de StoreKit 2. Aucun produit n'est publié :
-`Micabo/Resources/Micabo.storekit`, référencé par le scheme, permet de faire tourner l'écran en
-local. Quand aucun produit ne se charge, un repli affiche l'offre et laisse entrer dans l'app.
+### La sortie : l'essai, puis les deux paywalls
+
+Trois écrans séparent la connexion de l'app, et chacun répond à une question qu'on ne pose pas
+à voix haute.
+
+**La chronologie** (`TrialOfferStepView`) répond à « quand est-ce qu'on me prélève ? ». Quatre
+étapes empilées — compte créé, aujourd'hui tout est ouvert, rappel au jour 2, fin au jour 3 avec
+**la date écrite en clair** — qui arrivent l'une après l'autre, le filet qui les relie poussant
+en même temps que celle qu'il annonce. Le vert marque ce qui est acquis, l'encre ce qui commence,
+le sable ce qui n'est pas encore arrivé : la chronologie se lit sans lire les libellés. La date
+sort de `TrialTimeline`, qui prend sa date d'origine en paramètre — c'est ce qui permet de
+vérifier le premier prélèvement sans attendre trois jours.
+
+**La promesse du rappel** (`TrialReminderStepView`) tient en une phrase et une image. La phrase
+se met en gras mot à mot (`OnboardingWordByWordTitle`, en version centrée) parce que c'est une
+inquiétude qu'on désamorce, et qu'une inquiétude se désamorce en se faisant lire en entier. La
+cloche **se balance** au lieu de sonner : la version précédente partait en six secousses de
+ressort, ce qui dit « ça sonne maintenant » alors que l'écran promet une notification dans deux
+jours. Elle est au jaune plein (`MicaboColor.cautionVivid`), le seul emploi de cette couleur — le
+`caution` de l'app est assombri pour porter du texte, ce qui en fait un ocre terne dès qu'on le
+tient sur cent points de haut.
+
+**Le paywall est natif et il en compte deux** (`PaywallStepView`). `SubscriptionStoreView` a été
+retiré : l'écran système impose sa mise en page, sa typographie et son bouton, et il n'affiche
+rien du tout tant qu'App Store Connect n'a pas répondu.
+
+| Écran | Ce qu'il montre | Ce que fait la croix |
+| --- | --- | --- |
+| Premier paywall (`PaywallOfferView`) | Une seule offre, une seule phrase : « Essaie 3 jours gratuitement, puis 5,00 € / mois (facturé 59,99 € par an) », et un lien « Voir toutes les offres » | Ouvre le second |
+| Second paywall (`PaywallPlansView`) | La grille Gratuit / Pro en six lignes, puis les deux offres à choisir, l'annuelle cochée d'avance avec sa remise | Entre dans l'app |
+
+**Une croix ne ment jamais** : elle est présente dès la première image, elle réagit au premier
+appui, et le second appui sort pour de bon. Un paywall dont la sortie se dérobe se ferme en
+fermant l'app, ce qui ne fait pas un abonné de plus mais un utilisateur de moins.
+
+Les deux offres, leurs prix et la remise vivent dans `PaywallCatalog` : **annuel à 59,99 €** et
+**hebdomadaire à 7,99 €**, trois jours offerts sur les deux. Le prix mensuel équivalent et la
+remise sont **calculés**, jamais écrits à la main — un pourcentage qui contredit les deux prix
+affichés juste en dessous ne se remarque qu'en production. `MicaboTests/PaywallTests.swift`
+verrouille les prix, la remise et la date de premier prélèvement.
+
+Rien n'est encore branché sur une boutique. `PaywallPurchases` est le seul point de passage d'un
+achat, il répond `unavailable`, et le paywall traite cette réponse comme une entrée dans l'app :
+sans cela, le dernier écran du parcours n'aurait pas de sortie. Le fichier documente les cinq
+étapes du branchement RevenueCat. `Micabo/Resources/Micabo.storekit`, référencé par le scheme,
+décrit les deux mêmes produits pour les essais en local.
+
+## Le gratuit et le payant
+
+**La version gratuite laisse faire un cours entier à moitié.** C'est le compromis de tout le
+modèle : assez pour que Micabo tourne sur ses propres notes de cours et prouve qu'il sert à
+quelque chose, pas assez pour s'en servir toute l'année. Un essai qui ne montre rien ne convertit
+personne, un essai qui montre tout non plus.
+
+Les trois nombres vivent dans **`FreeTier`**, et nulle part ailleurs. Éparpillés dans les écrans,
+ils auraient dérivé au premier ajustement, et le gratuit se serait mis à dire deux choses
+différentes selon la porte par laquelle on l'a rencontré.
+
+| Ce qui est ouvert | Ce qui s'arrête | Où |
+| --- | --- | --- |
+| Le premier cours importé | Le deuxième | Le « + » de Cours, les états vides de Cours et de Réviser |
+| Les 70 % de chaque fiche | La fin, floutée et fondue dans le papier | `CourseSheetView` |
+| La génération de cartes, sans limite | — | `GenerateCardsSheet` |
+| Les 5 premières cartes d'une session | La sixième | `StudyView` |
+| Réviser ce qui est dû | L'entraînement libre, en entier | Réviser, la fiche, les cartes |
+
+**`ProAccess`** est le seul objet qui réponde à « est-ce que cette personne est abonnée ? ». Il
+est créé une fois dans `MicaboApp` et posé dans l'environnement, comme `AuthController` : deux
+écrans qui décideraient chacun de leur côté finiraient par ne pas être d'accord, et un
+utilisateur qui vient de payer verrait encore un cadenas quelque part.
+
+**La fiche se coupe en blocs, pas en caractères** (`SheetGate`). Trancher un paragraphe au
+septième dixième de son texte donnerait une phrase interrompue au milieu d'un mot, ce qui
+ressemble à un bug d'affichage plutôt qu'à une limite assumée. Les blocs restants sont **bel et
+bien composés**, puis floutés et fondus dans l'ivoire sur trois cents points : une fiche coupée
+net se lit comme une fiche courte, et une fiche courte ne donne envie de rien, là où une fiche
+dont on voit la suite se dissoudre donne envie de la lire. Ni le doigt ni le lecteur d'écran
+n'entrent dans la zone floutée — un texte illisible qu'on peut sélectionner reste un texte qu'on
+peut copier.
+
+**La session s'arrête après la note, jamais avant.** Une carte lue, retournée et notée doit être
+comptée : couper avant la note ferait disparaître le travail à l'instant même où l'on demande de
+payer. Une session qui se termine exactement sur la cinquième carte est épargnée — elle a été
+révisée en entier, et poser un paywall par-dessus l'écran de fin reviendrait à facturer ce qu'on
+vient d'offrir.
+
+`SessionPaywallView` est le seul écran d'abonnement qui **interrompt quelque chose en cours**, et
+le seul écrit autrement. Il ne propose pas, il tranche, et ses deux issues sont écrites en toutes
+lettres : s'abonner, ou revenir à l'accueil. Aucune des deux ne se cache derrière la croix — une
+sortie qu'il faut deviner n'est pas une sortie. La croix, elle, demande confirmation (« Tu es sûr
+d'abandonner ta progression ? », dont le bouton principal est **Revenir**) : c'est le seul endroit
+de l'app où une croix pose une question, et c'est justifié, elle abandonne une session commencée.
+« Revenir à l'accueil » passe par `TabRouter.goHome()`, qui vide les trois piles — une session
+lancée depuis la fiche d'un cours est deux écrans plus loin que Réviser.
+
+**Les refus arrivent avant le travail, pas après.** Le deuxième import se refuse au moment où
+l'on ouvre le choix du type de document, et non une fois le PDF choisi et l'analyse attendue : un
+paywall qui tombe après le travail est un paywall qui fait désinstaller. De même, les boutons
+« Entraînement libre » portent leur cadenas avant l'appui plutôt que de faire surgir un paywall à
+la place d'une session.
+
+Les cours **repris dans la bibliothèque** ne comptent pas dans le quota d'import : ils n'ont rien
+coûté à produire, et faire payer un import qu'on n'a pas fait serait incompréhensible.
+
+L'abonnement n'est branché sur aucune boutique. `Réglages → Test → Micabo Pro` est un
+**interrupteur de relecture**, pas une fonctionnalité : sans lui, les écrans de blocage ne se
+verraient qu'une fois, le bouton du paywall ouvrant tout. Il disparaîtra le jour où RevenueCat
+décidera à sa place. `MicaboTests/FreemiumTests.swift` verrouille les trois nombres et la coupure
+de la fiche.
 
 ## Direction visuelle
 

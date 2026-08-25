@@ -377,6 +377,10 @@ extension View {
 struct OnboardingWordByWordTitle: View {
     let text: String
     var size: CGFloat = 32
+    /// Fer à gauche partout, sauf sur les deux écrans qui n'ont qu'une phrase et une image
+    /// au milieu de la page : y aligner le titre à gauche laisserait le texte pendre d'un
+    /// côté d'une composition qui est centrée.
+    var alignment: HorizontalAlignment = .leading
     /// Temps entre deux mots.
     var wordDelay: Double = 0.16
     /// Temps mort avant le premier mot, le temps que l'écran arrive.
@@ -396,16 +400,16 @@ struct OnboardingWordByWordTitle: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: alignment, spacing: 0) {
             ForEach(Array(lineOffsets.enumerated()), id: \.offset) { lineIndex, offset in
-                MicaboFlowLayout(spacing: size * 0.26, lineSpacing: 2, alignment: .leading) {
+                MicaboFlowLayout(spacing: size * 0.26, lineSpacing: 2, alignment: alignment) {
                     ForEach(Array(lines[lineIndex].enumerated()), id: \.offset) { wordIndex, word in
                         self.word(word, isBold: offset + wordIndex < boldCount)
                     }
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: Alignment(horizontal: alignment, vertical: .center))
         .accessibilityElement()
         .accessibilityLabel(text.replacingOccurrences(of: "\n", with: " "))
         .onAppear(perform: run)

@@ -36,7 +36,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "39.99",
+          "displayPrice" : "59.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "6741220001",
@@ -65,7 +65,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "6.99",
+          "displayPrice" : "7.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "6741220002",
@@ -77,13 +77,13 @@
           "localizations" : [
             {
               "description" : "Cours et flashcards illimités, sans engagement.",
-              "displayName" : "Mensuel",
+              "displayName" : "Hebdomadaire",
               "locale" : "fr_FR"
             }
           ],
-          "productID" : "com.micabo.app.pro.monthly",
-          "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Micabo Pro mensuel",
+          "productID" : "com.micabo.app.pro.weekly",
+          "recurringSubscriptionPeriod" : "P1W",
+          "referenceName" : "Micabo Pro hebdomadaire",
           "subscriptionGroupID" : "21571390",
           "type" : "RecurringSubscription"
         }

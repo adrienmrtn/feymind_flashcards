@@ -30,6 +30,8 @@ struct StudyView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(ProAccess.self) private var pro: ProAccess?
+    @Environment(TabRouter.self) private var router: TabRouter?
 
     @State private var session = StudySession()
     @State private var didStart = false
@@ -39,6 +41,10 @@ struct StudyView: View {
     @State private var editingCard: Flashcard?
     /// Session retrouvée au lancement : on ne démarre rien avant que l'utilisateur choisisse.
     @State private var resumable: StudySessionSnapshot?
+    /// La session gratuite a servi ses cinq cartes : plus rien ne passe tant que l'écran
+    /// d'abonnement n'a pas été tranché.
+    @State private var isGated = false
+    @State private var paywall: PaywallTrigger?
 
     private var totalLabel: String {
         let answered = session.answeredCount
@@ -61,6 +67,7 @@ struct StudyView: View {
                 NothingDueView(
                     nextDueLabel: nextDueLabel,
                     canPractice: !practiceCards.isEmpty,
+                    isPracticeLocked: !(pro?.canPractice ?? true),
                     onPractice: startPractice,
                     onClose: finish
                 )
@@ -85,6 +92,16 @@ struct StudyView: View {
             FlashcardEditorSheet(card: card)
                 .onDisappear { session.cardWasEdited() }
         }
+        // Bloquant, et sans échappatoire discrète : les deux issues sont écrites sur
+        // l'écran, et la croix demande confirmation avant d'abandonner la session.
+        .fullScreenCover(isPresented: $isGated) {
+            SessionPaywallView(
+                reviewedCount: session.answeredCount,
+                onGoHome: leaveForHome,
+                onSubscribed: { isGated = false }
+            )
+        }
+        .micaboPaywall($paywall)
     }
 
     // MARK: - En-tête (X · barre · 4/12 · annuler)
@@ -245,6 +262,7 @@ struct StudyView: View {
                     withAnimation(StudyMotion.next) {
                         session.answer(rating)
                     }
+                    gateIfNeeded()
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             } else {
@@ -338,6 +356,9 @@ struct StudyView: View {
         resumable = nil
         didStart = true
         session.resume(snapshot, cards: resolveCards(), context: modelContext)
+        // Une session reprise a déjà des cartes à son compteur : sans ce contrôle, elle
+        // servirait une carte de plus avant de buter sur la limite.
+        gateIfNeeded()
     }
 
     private func restart() {
@@ -348,6 +369,10 @@ struct StudyView: View {
 
     /// L'entraînement libre repart de zéro sur les mêmes cartes.
     private func startPractice() {
+        guard pro?.canPractice ?? true else {
+            paywall = .practice
+            return
+        }
         session = StudySession()
         didStart = true
         session.start(
@@ -379,6 +404,37 @@ struct StudyView: View {
             .min()
         guard let upcoming else { return nil }
         return SM2Scheduler.format(delay: upcoming.timeIntervalSinceNow)
+    }
+
+    // MARK: - La limite gratuite
+
+    /// Arrête la session à la cinquième carte, et pas une de plus.
+    ///
+    /// La vérification a lieu **après** la note, jamais avant : une carte qu'on a lue,
+    /// retournée et notée doit être comptée, sinon le travail déjà fait disparaît au moment
+    /// où l'on demande de payer. La session terminée est exclue — une file de cinq cartes
+    /// qui se termine exactement sur la limite a été révisée en entier, et poser un paywall
+    /// par-dessus l'écran de fin reviendrait à facturer ce qu'on vient d'offrir.
+    private func gateIfNeeded() {
+        guard !isGated, !session.isFinished else { return }
+        guard pro?.hasReachedSessionLimit(answered: session.answeredCount) == true else { return }
+        session.flush()
+        isGated = true
+    }
+
+    /// « Revenir à l'accueil » : la session s'arrête, les piles se vident, l'app revient
+    /// sur Réviser. Fermer la seule couverture du paywall laisserait l'utilisateur devant
+    /// la carte suivante, c'est-à-dire exactement là où il ne peut plus rien faire.
+    private func leaveForHome() {
+        isGated = false
+        session.flush()
+        router?.goHome()
+
+        // On laisse la couverture du paywall se refermer avant celle de la session : deux
+        // fermetures dans la même image en annulent une.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            finish()
+        }
     }
 
     /// Fermer en cours de route ne perd rien : la file est écrite après chaque note, et le
@@ -828,6 +884,9 @@ private struct ResumePromptView: View {
 private struct NothingDueView: View {
     let nextDueLabel: String?
     var canPractice: Bool
+    /// L'entraînement libre est proposé mais cadenassé : le retirer de l'écran laisserait
+    /// croire qu'il n'existe pas, et personne ne s'abonne pour ce qu'il n'a jamais vu.
+    var isPracticeLocked: Bool = false
     var onPractice: () -> Void
     var onClose: () -> Void
 
@@ -868,8 +927,17 @@ private struct NothingDueView: View {
             MicaboBottomBar {
                 VStack(spacing: 2) {
                     if canPractice {
-                        Button("Entraînement libre", action: onPractice)
-                            .buttonStyle(MicaboSecondaryButtonStyle())
+                        Button(action: onPractice) {
+                            HStack(spacing: MicaboSpacing.xs) {
+                                Text("Entraînement libre")
+
+                                if isPracticeLocked {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 11, weight: .bold))
+                                }
+                            }
+                        }
+                        .buttonStyle(MicaboSecondaryButtonStyle())
                     }
 
                     Button("Fermer", action: onClose)

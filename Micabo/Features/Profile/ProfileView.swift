@@ -58,6 +58,7 @@ struct ProfileView: View {
             .tabBarClearance()
             .toolbar(.hidden, for: .navigationBar)
             .reportsNavigationDepth(for: .profile, depth: path.count)
+            .returnsHome(path: $path)
             .navigationDestination(for: FriendsRoute.self) { _ in
                 FriendsView { person in
                     path.append(person)
