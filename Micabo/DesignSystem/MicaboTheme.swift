@@ -41,10 +41,17 @@ enum MicaboColor {
     /// fatigue : celui-ci est à peine remonté vers le brun du papier.
     static let inkReading = Color(hex: 0x2B2822)
 
-    /// Le surligneur de la fiche. Il est jaune parce qu'un surligneur est jaune, et
-    /// surtout parce que le vert de l'accent est réservé à ce qui est actif : un passage surligné
-    /// est du contenu, pas un état.
-    static let marker = Color(hex: 0xFBEFB8)
+    /// La couleur des passages que la fiche met en avant.
+    ///
+    /// **Le surligneur jaune a été retiré.** Un fond posé derrière le texte se battait avec
+    /// lui : la bande débordait sous les jambages, changeait d'épaisseur d'une ligne à
+    /// l'autre, et sur un paragraphe à interligne serré elle écrasait ce qu'elle voulait
+    /// mettre en valeur. Un `NSLayoutManager` entier ne servait qu'à en arrondir les coins.
+    ///
+    /// C'est maintenant la couleur du texte lui-même. Un vert plus dense que l'accent,
+    /// parce qu'un mot en couleur au milieu d'un paragraphe doit se voir sans qu'on le
+    /// cherche, et rester lisible à quatorze points sur l'ivoire.
+    static let sheetEmphasis = Color(hex: 0x0A6E52)
 
     // Sur fond sombre
     static let onInk = Color(hex: 0xF8F6F0)
@@ -261,27 +268,65 @@ enum MicaboFont {
 /// Le réglage typographique de la fiche d'un cours.
 ///
 /// C'est le seul endroit de l'app où l'on lit vraiment : les autres écrans sont des listes
-/// et des rangées. Une fiche demande donc un corps plus grand, un interligne plus généreux
-/// et une largeur de colonne tenue, faute de quoi l'œil se perd d'une ligne à l'autre.
+/// et des rangées. Une fiche demande donc un corps tenu, un interligne régulier et une
+/// largeur de colonne stable, faute de quoi l'œil se perd d'une ligne à l'autre.
+///
+/// **Toute l'échelle a perdu un dixième**, et pas seulement le corps du texte. Réduire le
+/// corps seul aurait fait grossir les titres par contraste : ce qui compte sur une page,
+/// c'est le rapport entre les tailles, pas leur valeur absolue. Chaque taille ci-dessous est
+/// donc l'ancienne multipliée par 0,9, arrondie au demi-point.
+///
+/// **Les espaces verticaux ont baissé plus que ça** — de l'interligne aux marges d'un objet.
+/// Une fiche est une page dense par nature : on la relit la veille au soir, et le blanc qui
+/// aère un écran d'accueil fait ici scroller pour rien. Toutes les valeurs vivent ici :
+/// c'est ce qui permet de resserrer la page d'un cran sans chasser des nombres dans six
+/// fichiers.
 enum SheetTypography {
+    // MARK: Tailles
+
     /// Corps du texte courant.
-    static let body: CGFloat = 16.5
-    /// Interligne ajouté aux paragraphes.
-    static let lineSpacing: CGFloat = 7.5
+    static let body: CGFloat = 14.85
     /// Chapeau posé sous le titre du cours.
-    static let lead: CGFloat = 17.5
+    static let lead: CGFloat = 15.75
+    /// Corps d'un objet : encadré, définition, étape. Un cran sous la page, pour qu'un
+    /// objet n'ait pas l'air de porter le cours à sa place.
+    static let secondary: CGFloat = 14
+    /// Intitulé d'un objet : titre d'un tableau, d'un graphe, d'une suite d'étapes, terme
+    /// d'une définition. Au-dessus du corps de l'objet : un intitulé plus petit que le texte
+    /// qu'il introduit n'introduit rien.
+    static let objectTitle: CGFloat = 14.5
+    /// Cellule de tableau, et étiquette d'un graphe.
+    static let cell: CGFloat = 12
+    /// Légende sous un tableau, un graphe ou une formule.
+    static let caption: CGFloat = 11.5
     /// Titre de partie.
-    static let headingLarge: CGFloat = 22
-    /// Titre de sous-partie.
-    static let headingSmall: CGFloat = 16.5
+    static let headingLarge: CGFloat = 19.8
+    /// Titre de sous-partie. C'est la taille du corps : un sous-titre se distingue par son
+    /// poids et par l'air au-dessus de lui, pas en grossissant.
+    static let headingSmall: CGFloat = 14.85
     /// Formule mise en valeur dans son bloc.
-    static let formula: CGFloat = 20
+    static let formula: CGFloat = 18
+
+    // MARK: Espaces
+
+    /// Interligne ajouté aux paragraphes.
+    static let lineSpacing: CGFloat = 6
+    /// Interligne d'un objet, dont le corps est déjà plus petit.
+    static let secondaryLineSpacing: CGFloat = 4.5
+    /// Interligne d'une cellule, d'une légende, d'un titre.
+    static let tightLineSpacing: CGFloat = 2.5
 
     /// Espace au-dessus d'un titre de partie, et d'un titre de sous-partie.
-    static let spaceBeforeLargeHeading: CGFloat = 26
-    static let spaceBeforeSmallHeading: CGFloat = 16
+    ///
+    /// Un sous-titre a la taille du corps : c'est **l'air au-dessus de lui** qui dit qu'une
+    /// sous-partie commence, avec son demi-gras. Il lui faut donc nettement plus que
+    /// l'espace entre deux blocs ordinaires — à un point près, il n'y aurait plus de plan.
+    static let spaceBeforeLargeHeading: CGFloat = 20
+    static let spaceBeforeSmallHeading: CGFloat = 15
     /// Espace entre deux blocs de même nature.
-    static let blockSpacing: CGFloat = 15
+    static let blockSpacing: CGFloat = 11
+    /// Marge intérieure d'un objet encarté.
+    static let objectPadding: CGFloat = 13
 
     /// Inclinaison de l'italique synthétique, Hanken Grotesk n'ayant pas de fonte penchée.
     static let obliqueSlant: CGFloat = 0.19

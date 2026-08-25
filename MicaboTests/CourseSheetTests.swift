@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UIKit
 import XCTest
 @testable import Micabo
 
@@ -327,6 +328,119 @@ final class SheetHighlighterTests: XCTestCase {
         ])
 
         XCTAssertEqual(sheet.highlighted(), sheet)
+    }
+}
+
+/// Le rendu d'un passage mis en avant, et l'échelle typographique de la fiche.
+final class SheetRenderingTests: XCTestCase {
+    /// **Le surligneur a été retiré.** Un fond posé derrière le texte débordait sous les
+    /// jambages, changeait d'épaisseur d'une ligne à l'autre, et se battait avec l'interligne
+    /// au lieu de servir la lecture. Le passage change d'encre, et rien d'autre : pas de
+    /// fond, nulle part.
+    func testAnEmphasisedPassageChangesTheInkAndCarriesNoBackground() throws {
+        let composed = SheetAttributedText.make("Un ==passage marqué== dans une phrase.", style: .prose)
+        let text = composed.string as NSString
+
+        var backgrounds = 0
+        composed.enumerateAttribute(
+            .backgroundColor,
+            in: NSRange(location: 0, length: composed.length)
+        ) { value, _, _ in
+            if value != nil { backgrounds += 1 }
+        }
+        XCTAssertEqual(backgrounds, 0, "Plus aucun fond : c'était exactement ce qui rendait mal")
+
+        let marked = text.range(of: "passage marqué")
+        let plain = text.range(of: "dans une phrase")
+        XCTAssertNotEqual(marked.location, NSNotFound)
+        XCTAssertNotEqual(plain.location, NSNotFound)
+
+        let markedInk = try XCTUnwrap(
+            composed.attribute(.foregroundColor, at: marked.location, effectiveRange: nil) as? UIColor
+        )
+        let plainInk = try XCTUnwrap(
+            composed.attribute(.foregroundColor, at: plain.location, effectiveRange: nil) as? UIColor
+        )
+        XCTAssertNotEqual(markedInk, plainInk, "Le passage change d'encre, le reste non")
+
+        // Et cette encre est verte : c'est la couleur que la fiche donne à ce qu'elle met en
+        // avant, et elle doit se distinguer sans qu'on la cherche.
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        markedInk.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        XCTAssertGreaterThan(green, red)
+        XCTAssertGreaterThan(green, blue)
+    }
+
+    /// La couleur ne s'accompagne pas d'un changement de poids : le gras est déjà une marque,
+    /// et deux marques sur le même passage n'en font aucune.
+    func testEmphasisLeavesTheWeightAlone() throws {
+        let composed = SheetAttributedText.make("Un ==passage marqué== ici.", style: .prose)
+
+        var fonts: Set<UIFont> = []
+        composed.enumerateAttribute(.font, in: NSRange(location: 0, length: composed.length)) { value, _, _ in
+            if let font = value as? UIFont { fonts.insert(font) }
+        }
+
+        XCTAssertEqual(fonts.count, 1, "Une seule fonte : seule l'encre change")
+        XCTAssertEqual(try XCTUnwrap(fonts.first).pointSize, SheetTypography.body, accuracy: 0.01)
+    }
+
+    /// Le gras, l'italique et les formules continuent de vivre à l'intérieur d'un passage
+    /// marqué : la couleur s'ajoute au style, elle ne le remplace pas.
+    func testBoldSurvivesInsideAnEmphasisedPassage() {
+        let spans = SheetMarkup.spans("==La **condensation** referme la boucle==.")
+
+        XCTAssertTrue(spans.contains { $0.isHighlighted && $0.isBold })
+    }
+
+    /// Toute l'échelle a perdu un dixième, corps comme titres : ce qui compte sur une page,
+    /// c'est le rapport entre les tailles. Réduire le corps seul aurait fait grossir les
+    /// titres par contraste.
+    func testTheWholeScaleLostATenth() {
+        XCTAssertEqual(SheetTypography.body, 16.5 * 0.9, accuracy: 0.01)
+        XCTAssertEqual(SheetTypography.headingLarge, 22 * 0.9, accuracy: 0.01)
+        XCTAssertEqual(SheetTypography.formula, 20 * 0.9, accuracy: 0.01)
+    }
+
+    /// La hiérarchie tient après la réduction, et elle est monotone : du titre de partie à la
+    /// légende, chaque cran est plus petit que le précédent. Un intitulé d'objet plus petit
+    /// que le texte qu'il introduit n'introduirait rien.
+    func testTheHierarchyStillHolds() {
+        let scale = [
+            SheetTypography.headingLarge,
+            SheetTypography.body,
+            SheetTypography.objectTitle,
+            SheetTypography.secondary,
+            SheetTypography.cell,
+            SheetTypography.caption
+        ]
+
+        XCTAssertEqual(scale, scale.sorted(by: >), "L'échelle doit descendre sans remonter")
+        XCTAssertEqual(SheetTypography.headingSmall, SheetTypography.body)
+    }
+
+    /// Les espaces ont baissé plus que les tailles : une fiche se relit la veille au soir, et
+    /// le blanc qui aère un écran d'accueil fait ici scroller pour rien.
+    func testTheVerticalRhythmIsTighterThanTheTypeScale() {
+        XCTAssertLessThan(SheetTypography.lineSpacing, 7.5 * 0.9)
+        XCTAssertLessThan(SheetTypography.blockSpacing, 15 * 0.9)
+        XCTAssertLessThan(SheetTypography.spaceBeforeLargeHeading, 26 * 0.9)
+        XCTAssertLessThanOrEqual(SheetTypography.spaceBeforeSmallHeading, 16)
+    }
+
+    /// Un sous-titre a la taille du corps : c'est l'air au-dessus de lui qui dit qu'une
+    /// sous-partie commence. Un point de plus qu'un bloc ordinaire ne se verrait pas, et il
+    /// n'y aurait plus de plan.
+    func testASubHeadingGetsRealAirAboveIt() {
+        XCTAssertGreaterThan(SheetTypography.spaceBeforeLargeHeading, SheetTypography.spaceBeforeSmallHeading)
+        XCTAssertGreaterThanOrEqual(
+            SheetTypography.spaceBeforeSmallHeading,
+            SheetTypography.blockSpacing + 3,
+            "À un point près, un sous-titre ne se distinguerait plus d'un paragraphe"
+        )
     }
 }
 

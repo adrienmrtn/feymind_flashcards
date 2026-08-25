@@ -130,15 +130,103 @@ describe("ensureHighlights", () => {
 });
 
 describe("normalizeSheet", () => {
-  it("plafonne le surligneur sur toute la fiche", () => {
+  it("plafonne les passages mis en avant sur toute la fiche", () => {
     const marked = Array.from({ length: 12 }, (_, index) => ({
       type: "paragraph",
-      text: `==Passage numéro ${index} surligné== et une suite de phrase pour tenir la longueur.`,
+      text: `==Passage numéro ${index} marqué== et une suite de phrase pour tenir la longueur.`,
     }));
 
     const blocks = normalizeSheet(marked);
 
     assert.equal(blocks.length, 12);
     assert.ok(countMarks(blocks) <= SHEET_LIMITS.highlights);
+  });
+
+  // Le garde-fou contre la fiche en accordéon : chaque bloc est peut-être juste, mais une
+  // file d'objets encartés ne se lit plus, elle se feuillette.
+  it("écarte le troisième objet d'une file", () => {
+    const blocks = normalizeSheet([
+      paragraph("Le cycle de l'eau ne perd rien, et c'est ce que la suite va détailler ici."),
+      { type: "definition", term: "Évaporation", text: "Passage de l'état liquide à la vapeur." },
+      { type: "callout", tone: "attention", text: "Ne confonds pas évaporation et ébullition." },
+      { type: "formula", latex: "H_2O" },
+      {
+        type: "table",
+        headers: ["Phase", "Lieu"],
+        rows: [["Photochimique", "Thylakoïdes"], ["Non photochimique", "Stroma"]],
+      },
+    ]);
+
+    assert.deepEqual(blocks.map((block) => block.type), [
+      "paragraph",
+      "definition",
+      "callout",
+    ]);
+  });
+
+  it("laisse repartir la file dès qu'un paragraphe ou un titre la coupe", () => {
+    const object = { type: "definition" as const, term: "Terme", text: "Ce que le terme désigne." };
+
+    const blocks = normalizeSheet([
+      object,
+      object,
+      paragraph("Une phrase qui relie ce qui précède à ce qui suit, et qui rouvre la page."),
+      object,
+      object,
+      { type: "heading", level: 2, text: "Une sous-partie" },
+      object,
+    ]);
+
+    assert.deepEqual(blocks.map((block) => block.type), [
+      "definition",
+      "definition",
+      "paragraph",
+      "definition",
+      "definition",
+      "heading",
+      "definition",
+    ]);
+  });
+
+  // Le prompt demande à l'encadré « essentiel » de fermer la fiche : le garde-fou ne doit pas
+  // emporter la seule chose qu'on avait exigée parce qu'elle arrive après deux objets.
+  it("garde l'encadré essentiel même au bout d'une file", () => {
+    const blocks = normalizeSheet([
+      paragraph("Le cycle de l'eau ne perd rien, et c'est ce que la suite va détailler ici."),
+      {
+        type: "table",
+        headers: ["Phase", "Lieu"],
+        rows: [["Photochimique", "Thylakoïdes"], ["Non photochimique", "Stroma"]],
+      },
+      { type: "formula", latex: "H_2O" },
+      { type: "callout", tone: "essentiel", text: "Le cycle est fermé : la quantité ne varie pas." },
+    ]);
+
+    assert.deepEqual(blocks.map((block) => block.type), [
+      "paragraph",
+      "table",
+      "formula",
+      "callout",
+    ]);
+  });
+
+  it("n'épargne que l'essentiel, pas les autres encadrés", () => {
+    const blocks = normalizeSheet([
+      { type: "definition", term: "Un", text: "Ce que le premier terme désigne exactement." },
+      { type: "definition", term: "Deux", text: "Ce que le deuxième terme désigne exactement." },
+      { type: "callout", tone: "astuce", text: "Un moyen de retenir la chose, en une phrase." },
+    ]);
+
+    assert.equal(blocks.length, SHEET_LIMITS.objectRun);
+  });
+
+  it("compte les objets d'affilée quel que soit leur type", () => {
+    const blocks = normalizeSheet([
+      { type: "definition", term: "Un", text: "Ce que le premier terme désigne exactement." },
+      { type: "definition", term: "Deux", text: "Ce que le deuxième terme désigne exactement." },
+      { type: "definition", term: "Trois", text: "Ce que le troisième terme désigne exactement." },
+    ]);
+
+    assert.equal(blocks.length, SHEET_LIMITS.objectRun);
   });
 });

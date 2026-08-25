@@ -1,28 +1,33 @@
 import Foundation
 
-/// Le surligneur de la fiche, garanti par le code.
+/// Les passages mis en avant sur la fiche, garantis par le code.
 ///
-/// Le prompt réclame six à huit passages surlignés depuis plusieurs versions, et les fiches
-/// arrivaient quand même sans une seule marque : une consigne de mise en forme est la
-/// première chose qu'un modèle lâche quand il se concentre sur le contenu. Le surligneur est
-/// donc passé de son côté à celui-ci, où il ne dépend plus de la bonne volonté du modèle. La
-/// fonction jumelle vit dans `supabase/functions/_shared/sheet.ts`, comme les autres
-/// garde-fous de la fiche : celle du serveur marque ce qui s'enregistre, celle-ci rattrape
-/// les fiches déjà en base et les imports faits avant la mise à jour des fonctions.
+/// Le prompt réclame des passages marqués depuis plusieurs versions, et les fiches arrivaient
+/// quand même sans une seule marque : une consigne de mise en forme est la première chose
+/// qu'un modèle lâche quand il se concentre sur le contenu. La marque est donc passée de son
+/// côté à celui-ci, où elle ne dépend plus de la bonne volonté du modèle. La fonction jumelle
+/// vit dans `supabase/functions/_shared/sheet.ts`, comme les autres garde-fous de la fiche :
+/// celle du serveur marque ce qui s'enregistre, celle-ci rattrape les fiches déjà en base et
+/// les imports faits avant la mise à jour des fonctions.
 ///
 /// Une fiche qui porte déjà ses marques n'est jamais touchée : ce code ne sait pas repérer ce
 /// qui compte dans un cours, il sait seulement qu'une fiche sans marque ne se relit pas.
+///
+/// La marque, elle, a changé de nature : ce n'est plus un fond jaune derrière le texte mais
+/// **la couleur du texte lui-même**. Le balisage `==` n'a pas bougé — il est écrit dans les
+/// fiches déjà en base — mais il se voit beaucoup plus, et le plancher a baissé en
+/// conséquence.
 enum SheetHighlighter {
-    /// Plancher garanti. Quatre marques, pas huit : ce que le code choisit vaut moins que ce
-    /// que le modèle choisit, et une fiche entièrement jaune ne se relit pas mieux qu'une
-    /// fiche nue.
-    static let minimumHighlights = 4
+    /// Plancher garanti. Trois marques, pas huit : ce que le code choisit vaut moins que ce
+    /// que le modèle choisit, et une page dont chaque phrase est en couleur ne se relit pas
+    /// mieux qu'une page nue.
+    static let minimumHighlights = 3
 
-    /// Un surlignage plus court n'est plus une phrase, plus long n'est plus une marque.
+    /// Un passage plus court n'est plus une phrase, plus long n'est plus une marque.
     private static let minimumLength = 40
     private static let maximumLength = 170
 
-    /// Rend la fiche avec ses passages surlignés, en n'ajoutant que ce qui manque.
+    /// Rend la fiche avec ses passages marqués, en n'ajoutant que ce qui manque.
     static func ensuring(_ blocks: [SheetBlock], minimum: Int = minimumHighlights) -> [SheetBlock] {
         var result = blocks
         var total = blocks.reduce(0) { $0 + highlightCount(in: $1) }

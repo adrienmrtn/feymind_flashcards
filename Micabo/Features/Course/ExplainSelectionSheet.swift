@@ -68,20 +68,22 @@ struct ExplainSelectionSheet: View {
         }
     }
 
-    /// Le passage cité, sur le jaune du surligneur : on doit reconnaître ce qu'on a
-    /// sélectionné sans avoir à s'en souvenir. Il est composé en texte nu, sans passer par
-    /// le balisage, parce qu'un astérisque présent dans le cours ne doit pas se mettre à
-    /// styler la citation.
+    /// Le passage cité : on doit reconnaître ce qu'on a sélectionné sans avoir à s'en
+    /// souvenir. Il est composé en texte nu, sans passer par le balisage, parce qu'un
+    /// astérisque présent dans le cours ne doit pas se mettre à styler la citation.
+    ///
+    /// Il reposait sur le jaune du surligneur, qui n'existe plus : c'est le vert pâle de la
+    /// fiche qui le porte, comme tout ce qu'elle met en avant.
     private var quote: some View {
         Text(FormulaRenderer.stripped(quoted))
-            .font(MicaboFont.hanken(16, weight: .medium))
+            .font(MicaboFont.hanken(15, weight: .medium))
             .foregroundStyle(MicaboColor.ink)
-            .lineSpacing(5)
+            .lineSpacing(4)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(14)
+            .padding(13)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                MicaboColor.marker.opacity(0.6),
+                MicaboColor.accentSoft,
                 in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
             )
     }

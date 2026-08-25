@@ -159,11 +159,12 @@ private struct GeneratingPage: View {
         }
     }
 
-    /// Le surligneur de la fiche, montré ici parce que c'est la marque qu'on reconnaît d'une
-    /// fiche Micabo, et qu'on la découvre mieux en la voyant arriver.
+    /// Le passage mis en avant, montré ici parce que c'est la marque qu'on reconnaît d'une
+    /// fiche Micabo, et qu'on la découvre mieux en la voyant arriver. Il portait le jaune du
+    /// surligneur ; il prend le vert de la fiche, comme elle.
     private var highlightedLine: some View {
         VStack(alignment: .leading, spacing: 6) {
-            bar(width: 0.88, height: 7, color: MicaboColor.marker)
+            bar(width: 0.88, height: 5, color: MicaboColor.sheetEmphasis.opacity(0.65))
             bar(width: 0.44, height: 5, color: MicaboColor.surfaceMuted)
         }
     }
