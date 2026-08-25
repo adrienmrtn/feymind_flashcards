@@ -219,23 +219,20 @@ private struct FriendRow: View {
     var body: some View {
         HStack(spacing: 13) {
             Button(action: open) {
-                HStack(spacing: 13) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(person.handle)
-                            .font(MicaboFont.rowTitle)
-                            .foregroundStyle(MicaboColor.ink)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(person.handle)
+                        .font(MicaboFont.rowTitle)
+                        .foregroundStyle(MicaboColor.ink)
+                        .lineLimit(1)
+
+                    if let school = person.institutionName?.nilIfBlank {
+                        Text(school)
+                            .font(MicaboFont.rowSubtitle)
+                            .foregroundStyle(MicaboColor.inkTertiary)
                             .lineLimit(1)
-
-                        if let school = person.institutionName?.nilIfBlank {
-                            Text(school)
-                                .font(MicaboFont.rowSubtitle)
-                                .foregroundStyle(MicaboColor.inkTertiary)
-                                .lineLimit(1)
-                        }
                     }
-
-                    Spacer(minLength: 0)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
             .disabled(person.relation != .friends)

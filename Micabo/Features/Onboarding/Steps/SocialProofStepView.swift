@@ -116,21 +116,18 @@ struct SocialProofStepView: View {
 
             Spacer(minLength: 0)
 
-            HStack(spacing: 10) {
-                // Pas de rond avec une initiale dedans : c'est une photo de profil qui
-                // n'existe pas, et sur un avis elle a en plus l'air d'un client inventé.
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(review.name)
-                        .font(MicaboFont.hanken(14, weight: .semibold))
-                        .foregroundStyle(MicaboColor.ink)
+            // Pas de rond avec une initiale dedans : c'est une photo de profil qui n'existe
+            // pas, et sur un avis elle a en plus l'air d'un client inventé.
+            VStack(alignment: .leading, spacing: 1) {
+                Text(review.name)
+                    .font(MicaboFont.hanken(14, weight: .semibold))
+                    .foregroundStyle(MicaboColor.ink)
 
-                    Text(review.level)
-                        .font(MicaboFont.hanken(12, weight: .regular))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                }
-
-                Spacer(minLength: 0)
+                Text(review.level)
+                    .font(MicaboFont.hanken(12, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkTertiary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(18)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
