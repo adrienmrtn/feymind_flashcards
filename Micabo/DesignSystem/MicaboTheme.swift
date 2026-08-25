@@ -159,6 +159,20 @@ enum MicaboLayout {
     /// qui réserve la hauteur exacte de son contenu au lieu de la deviner, et surtout la
     /// pose au-dessus de la barre d'onglets au lieu de dessous.
     static let bottomBarClearance: CGFloat = 108
+
+    /// Hauteur de la barre d'onglets, hors zone sûre.
+    ///
+    /// Elle est déclarée ici et pas déduite du contenu : c'est cette hauteur que
+    /// `safeAreaInset` réserve aux pages, et une barre qui se mesure elle-même donne une
+    /// réserve qui change avec la longueur des libellés.
+    static let tabBarHeight: CGFloat = 60
+
+    /// Air laissé entre la barre d'onglets et ce qu'une page ancre juste au-dessus d'elle :
+    /// le « + » de Cours, le bouton de session de Réviser.
+    ///
+    /// Sans cet air, les deux se touchent, et un bouton collé sous une barre translucide se
+    /// lit comme un bouton à moitié caché — c'est exactement ce qu'on nous a signalé.
+    static let tabBarGap: CGFloat = 12
 }
 
 /// Typographie de l'app : Hanken Grotesk, embarquée et enregistrée par `FontLoader`.

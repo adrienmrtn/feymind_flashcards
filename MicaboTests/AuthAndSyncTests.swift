@@ -159,6 +159,12 @@ final class CloudRecordTests: XCTestCase {
 
         XCTAssertEqual(OnboardingPreferences.studyLevel, .sante)
         XCTAssertEqual(OnboardingPreferences.schoolingCountry, .be)
+        // Le cloud ne transporte que le registre d'écriture, pas le nom du palier : c'est
+        // volontaire, il n'y a pas de colonne à ajouter, et le palier se retrouve dans les
+        // termes du pays. Un étudiant en santé en Belgique lit « Médecine, santé », pas
+        // « PASS, santé ».
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "be.medecine")
+        XCTAssertEqual(OnboardingPreferences.contentLanguage, .fr)
         XCTAssertEqual(OnboardingPreferences.dailyMinutes, 30)
         XCTAssertEqual(OnboardingPreferences.subjects, ["Médecine"])
         XCTAssertEqual(SheetPreferences.length, .deep)

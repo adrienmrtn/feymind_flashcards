@@ -153,6 +153,12 @@ const COUNTRY_BRIEFS: Record<string, string> = {
     `L'étudiant est scolarisé en CÔTE D'IVOIRE. Réfère-toi au système ivoirien : baccalauréat, licence, master, concours d'entrée aux grandes écoles.`,
   lu:
     `L'étudiant est scolarisé au LUXEMBOURG. Réfère-toi au système luxembourgeois : diplôme de fin d'études secondaires, bachelor, master.`,
+  uk:
+    `L'étudiant est scolarisé au ROYAUME-UNI. Réfère-toi au système britannique : GCSE, A-Levels, undergraduate degree, postgraduate, entrée en medical school. Ne parle jamais du baccalauréat, des classes préparatoires ni du PASS : rien de tout cela n'existe là-bas.`,
+  us:
+    `L'étudiant est scolarisé aux ÉTATS-UNIS. Réfère-toi au système américain : middle school, high school, AP courses, college (undergraduate), graduate school, pre-med et MCAT. Ne parle jamais du baccalauréat, des classes préparatoires ni du PASS.`,
+  other:
+    `Le système scolaire de l'étudiant n'est pas connu. N'invoque aucun examen national ni aucun diplôme nommé : parle de « l'examen », de « ton programme », de « ton cursus ». Une fiche qui renvoie à une épreuve qui n'existe pas là où on étudie perd sa raison d'être, et une épreuve inventée est pire qu'une épreuve absente.`,
 };
 
 export function audienceBrief(level: string | undefined, country?: string): string {

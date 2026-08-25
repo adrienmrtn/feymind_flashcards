@@ -15,7 +15,7 @@ struct SettingsView: View {
     @Environment(AuthController.self) private var auth
     @Environment(CloudSync.self) private var sync
 
-    @State private var studyLevel = OnboardingPreferences.studyLevel
+    @State private var stage = OnboardingPreferences.educationStage
     @State private var country = OnboardingPreferences.schoolingCountry
     @AppStorage(SheetPreferences.lengthKey) private var sheetLength = SheetLength.default
     @State private var showResetConfirmation = false
@@ -184,24 +184,8 @@ struct SettingsView: View {
             MicaboSectionCaption(text: "Tes études")
 
             VStack(spacing: 0) {
-                Menu {
-                    Picker("Stade d'étude", selection: $studyLevel) {
-                        ForEach(StudyLevel.allCases) { level in
-                            Text(level.title).tag(Optional(level))
-                        }
-                        Text("Non précisé").tag(Optional<StudyLevel>.none)
-                    }
-                } label: {
-                    MicaboRow(
-                        tile: MicaboTile(glyph: .emoji("🎓"), background: MicaboColor.tilePastels[0]),
-                        title: "Stade d'étude",
-                        subtitle: studyLevel?.detail ?? "Rédaction équilibrée, sans niveau supposé.",
-                        accessory: .value(studyLevel?.title ?? "Non précisé")
-                    )
-                }
-
-                MicaboHairline(inset: 71)
-
+                // Le pays passe avant le stade, comme dans le parcours d'accueil : c'est lui
+                // qui décide des paliers proposés juste en dessous.
                 Menu {
                     Picker("Pays", selection: $country) {
                         ForEach(SchoolingCountry.allCases) { value in
@@ -212,8 +196,26 @@ struct SettingsView: View {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji(country.flag), background: MicaboColor.tilePastels[2]),
                         title: "Pays",
-                        subtitle: country.systemHint,
+                        subtitle: "\(country.systemHint) · \(country.language.label)",
                         accessory: .value(country.name)
+                    )
+                }
+
+                MicaboHairline(inset: 71)
+
+                Menu {
+                    Picker("Stade d'étude", selection: $stage) {
+                        ForEach(country.stages) { value in
+                            Text("\(value.emoji) \(value.title)").tag(Optional(value))
+                        }
+                        Text("Non précisé").tag(Optional<EducationStage>.none)
+                    }
+                } label: {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji(stage?.emoji ?? "🎓"), background: MicaboColor.tilePastels[0]),
+                        title: "Stade d'étude",
+                        subtitle: stage?.level.detail ?? "Rédaction équilibrée, sans niveau supposé.",
+                        accessory: .value(stage?.title ?? "Non précisé")
                     )
                 }
 
@@ -236,14 +238,19 @@ struct SettingsView: View {
             }
             .micaboGroup()
 
-            MicaboSectionFootnote(text: "Micabo écrit les fiches pour ce niveau et ce système scolaire : le vocabulaire, la profondeur des explications et les examens auxquels la fiche renvoie en dépendent. La longueur se choisit aussi au moment d'un import.")
+            MicaboSectionFootnote(text: "Micabo écrit les fiches pour ce niveau et ce système scolaire, et dans la langue du pays : le vocabulaire, la profondeur des explications et les examens auxquels la fiche renvoie en dépendent. La longueur se choisit aussi au moment d'un import.")
         }
-        .onChange(of: studyLevel) { _, newValue in
-            OnboardingPreferences.studyLevel = newValue
+        .onChange(of: stage) { _, newValue in
+            OnboardingPreferences.educationStage = newValue
             Haptics.selection()
         }
+        // Changer de pays change la liste des paliers : celui qui était choisi est reporté
+        // sur son équivalent quand il en a un, et abandonné sinon. Garder « PASS » après un
+        // passage aux États-Unis laisserait affiché un palier absent du menu.
         .onChange(of: country) { _, newValue in
             OnboardingPreferences.schoolingCountry = newValue
+            stage = newValue.resolvedStage(id: nil, orLevel: stage?.level)
+            OnboardingPreferences.educationStage = stage
             Haptics.selection()
         }
         .onChange(of: sheetLength) { _, _ in

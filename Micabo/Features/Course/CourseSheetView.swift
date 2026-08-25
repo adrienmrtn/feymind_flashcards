@@ -375,6 +375,7 @@ struct CourseSheetView: View {
             sourceName: course.sourceFileName,
             studyLevel: OnboardingPreferences.studyLevel,
             country: OnboardingPreferences.schoolingCountry,
+            language: OnboardingPreferences.contentLanguage,
             sheetLength: length,
             // Ici la matière est connue, trouvée au premier passage ou corrigée à la main :
             // elle vaut mieux que des mots comptés sur le texte.

@@ -180,7 +180,8 @@ struct ExplainSelectionSheet: View {
             selection: quoted,
             courseTitle: course.title,
             subject: course.subject,
-            courseContext: course.contextSnippet(limit: 16_000)
+            courseContext: course.contextSnippet(limit: 16_000),
+            language: OnboardingPreferences.contentLanguage
         )
 
         do {

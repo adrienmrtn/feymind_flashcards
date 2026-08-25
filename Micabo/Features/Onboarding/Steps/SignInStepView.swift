@@ -1,11 +1,7 @@
+import AuthenticationServices
 import SwiftUI
 
 /// Fournisseur d'identité proposé à la fin du parcours.
-///
-/// **Rien n'est encore branché.** Les deux flux OAuth seront configurés plus tard ; en
-/// attendant, l'écran existe, il est à sa place dans le parcours, et il passe par
-/// `SignInStepView.signIn(with:)` — un seul point d'entrée, pour que le branchement ne
-/// touche qu'une ligne le jour où les identifiants seront là.
 enum OnboardingSignInProvider: String, CaseIterable, Identifiable {
     case apple
     case google
@@ -20,18 +16,36 @@ enum OnboardingSignInProvider: String, CaseIterable, Identifiable {
     }
 }
 
-/// Écran 19 : la connexion, posée juste avant l'offre.
+/// La connexion, posée juste après « c'est à ton tour » et juste avant l'offre d'essai.
 ///
-/// Elle arrive à la fin et pas au début, et c'est la seule position défendable : demander
-/// un compte à l'ouverture, c'est demander un compte pour une app qu'on n'a pas encore vue
+/// Elle arrive à la fin et pas au début, et c'est la seule position défendable : demander un
+/// compte à l'ouverture, c'est demander un compte pour une app qu'on n'a pas encore vue
 /// fonctionner. Ici, la démonstration est passée, le parcours est construit, et le compte
-/// sert à ne pas le perdre — ce que les trois lignes du milieu disent, plutôt que de
-/// promettre « une expérience personnalisée ».
+/// sert à ne pas le perdre.
 ///
-/// « Continuer sans compte » reste ouvert et volontairement discret. Un écran de connexion
-/// sans issue se quitte en quittant l'app, et on ne revoit jamais celui qui l'a fait.
+/// **Les deux flux sont branchés pour de vrai.** L'écran se contentait d'appeler
+/// `model.advance()` sur les deux boutons : on croyait s'être connecté, rien n'était créé, et
+/// l'app redemandait un compte juste après le parcours. Apple passe par son bouton natif —
+/// ses règles d'interface l'imposent — et Google par une page web isolée. Une connexion
+/// réussie avance d'elle-même vers l'offre ; un refus laisse l'écran en place avec sa raison.
+///
+/// Les boutons ne sont pas conditionnés à ce que le projet Supabase annonce. Un fournisseur
+/// éteint côté serveur le dit clairement dans le message d'erreur, ce qui est plus utile
+/// qu'un bouton absent dont personne ne peut deviner la cause.
+///
+/// Le « Passer » en haut à droite est temporaire, et il fait deux choses : il avance, et il
+/// **referme la porte du compte** pour que l'app ne repose pas la question à l'écran suivant.
 struct SignInStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(AuthController.self) private var auth
+
+    /// Le même drapeau que celui lu par `RootView` : passer ici vaut passer pour de bon.
+    @AppStorage(AccountGate.skippedKey) private var didSkipAccount = false
+
+    /// Un nonce ne sert qu'une fois : le suivant est prêt avant même que celui-ci soit
+    /// vérifié.
+    @State private var appleNonce = AppleNonce()
+    @State private var didAdvance = false
 
     private struct Benefit: Identifiable {
         let id = UUID()
@@ -52,31 +66,111 @@ struct SignInStepView: View {
             subtitle: "Ton parcours est prêt. Un compte, et il te suit partout.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
-            scrolls: false
+            scrolls: false,
+            skip: OnboardingSkip(title: "Skip", action: skip)
         ) {
-            VStack(spacing: 0) {
-                ForEach(Array(benefits.enumerated()), id: \.element.id) { index, benefit in
-                    benefitRow(benefit)
+            VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
+                VStack(spacing: 0) {
+                    ForEach(Array(benefits.enumerated()), id: \.element.id) { index, benefit in
+                        benefitRow(benefit)
 
-                    if index < benefits.count - 1 {
-                        MicaboHairline(inset: 46)
+                        if index < benefits.count - 1 {
+                            MicaboHairline(inset: 46)
+                        }
                     }
                 }
+                .padding(.horizontal, 16)
+                .micaboGroup()
+
+                if let failure {
+                    Text(failure)
+                        .font(MicaboFont.hanken(13, weight: .medium))
+                        .foregroundStyle(MicaboColor.negative)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .transition(.opacity)
+                }
             }
-            .padding(.horizontal, 16)
-            .micaboGroup()
         } footer: {
             VStack(spacing: 10) {
-                providerButton(.apple)
-                providerButton(.google)
+                appleButton
+                googleButton
+            }
+            .animation(OnboardingMotion.tap, value: auth.isWorking)
+        }
+        // La connexion se termine dans le contrôleur, pas dans le bouton : c'est le passage à
+        // l'état « connecté » qui fait avancer, quel que soit le fournisseur emprunté.
+        .onChange(of: auth.isSignedIn) { _, isSignedIn in
+            guard isSignedIn else { return }
+            advanceOnce()
+        }
+        .onAppear {
+            // Déjà connecté avant d'arriver ici, par un lien reçu par courriel par exemple :
+            // on ne redemande pas.
+            if auth.isSignedIn { advanceOnce() }
+        }
+    }
 
-                Button("Continuer sans compte") {
-                    Haptics.light()
-                    model.advance()
-                }
-                .buttonStyle(MicaboQuietButtonStyle())
+    /// Ce que l'écran a à dire quand ça n'a pas marché. Une annulation ne dit rien : elle
+    /// n'est pas un échec, et `AuthController` la laisse déjà sans message.
+    private var failure: String? {
+        guard case .error(let detail) = auth.message else { return nil }
+        return detail
+    }
+
+    // MARK: - Fournisseurs
+
+    /// Le bouton d'Apple est dessiné par le système, et ce n'est pas négociable : ses règles
+    /// d'interface imposent sa forme, son libellé et sa hauteur dès qu'on propose sa
+    /// connexion. Il construit aussi sa propre requête, d'où le nonce gardé ici le temps de
+    /// l'aller-retour.
+    private var appleButton: some View {
+        SignInWithAppleButton(.continue) { request in
+            request.requestedScopes = [.fullName, .email]
+            request.nonce = appleNonce.hashed
+        } onCompletion: { result in
+            let nonce = appleNonce.raw
+            appleNonce = AppleNonce()
+            Haptics.medium()
+            Task { await auth.signInWithApple(result: result, nonce: nonce) }
+        }
+        .signInWithAppleButtonStyle(.black)
+        .frame(height: 54)
+        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+        .disabled(auth.isWorking)
+        .accessibilityLabel(OnboardingSignInProvider.apple.title)
+    }
+
+    private var googleButton: some View {
+        Button {
+            Haptics.medium()
+            Task { await auth.signInWithGoogle() }
+        } label: {
+            HStack(spacing: 10) {
+                // Le G de Google est dessiné ici en attendant sa marque officielle, qui ne
+                // se redessine pas à la main une fois qu'on l'a.
+                Text("G")
+                    .font(MicaboFont.hanken(16, weight: .bold))
+                    .foregroundStyle(Color(hex: 0x4285F4))
+
+                Text(OnboardingSignInProvider.google.title)
+                    .font(MicaboFont.cardTitle)
+                    .foregroundStyle(MicaboColor.ink)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .background(
+                MicaboColor.surface,
+                in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
             }
         }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .disabled(auth.isWorking)
+        .opacity(auth.isWorking ? 0.5 : 1)
+        .accessibilityLabel(OnboardingSignInProvider.google.title)
     }
 
     private func benefitRow(_ benefit: Benefit) -> some View {
@@ -96,55 +190,17 @@ struct SignInStepView: View {
         .padding(.vertical, 15)
     }
 
-    private func providerButton(_ provider: OnboardingSignInProvider) -> some View {
-        Button {
-            Haptics.medium()
-            signIn(with: provider)
-        } label: {
-            HStack(spacing: 10) {
-                mark(for: provider)
+    // MARK: - Sorties
 
-                Text(provider.title)
-                    .font(MicaboFont.cardTitle)
-            }
-            .foregroundStyle(provider == .apple ? MicaboColor.onInk : MicaboColor.ink)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(
-                provider == .apple ? MicaboColor.ink : MicaboColor.surface,
-                in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-            )
-            .overlay {
-                if provider == .google {
-                    RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                        .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
-                }
-            }
-        }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
-        .accessibilityLabel(provider.title)
-    }
-
-    /// La pomme vient de SF Symbols. Le G de Google est dessiné ici en attendant le vrai
-    /// logo : il arrive avec le SDK, et sa marque officielle ne se redessine pas à la main
-    /// une fois qu'on l'a.
-    @ViewBuilder
-    private func mark(for provider: OnboardingSignInProvider) -> some View {
-        switch provider {
-        case .apple:
-            Image(systemName: "apple.logo")
-                .font(.system(size: 17, weight: .medium))
-        case .google:
-            Text("G")
-                .font(MicaboFont.hanken(16, weight: .bold))
-                .foregroundStyle(Color(hex: 0x4285F4))
-        }
-    }
-
-    /// Le jour où les flux OAuth seront configurés, c'est ici qu'ils se branchent : la
-    /// connexion réussie appellera `model.advance()`, l'échec laissera l'écran en place
-    /// avec son message. En attendant, on ne bloque personne.
-    private func signIn(with provider: OnboardingSignInProvider) {
+    private func advanceOnce() {
+        guard !didAdvance else { return }
+        didAdvance = true
+        auth.clearMessage()
         model.advance()
+    }
+
+    private func skip() {
+        didSkipAccount = true
+        advanceOnce()
     }
 }

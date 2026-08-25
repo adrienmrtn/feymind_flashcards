@@ -104,14 +104,18 @@ enum StudyLevel: String, CaseIterable, Identifiable {
 
 /// Où l'étudiant est scolarisé.
 ///
-/// La question est posée juste après la langue, et pour la même raison : parler français ne
-/// dit pas dans quel système on étudie. « Les attendus du bac » ne veut rien dire pour un
-/// lycéen belge, un étudiant québécois ne passe pas de concours de première année de santé,
-/// et « baccalauréat » désigne au Québec un diplôme universitaire. Une fiche qui renvoie à un
-/// examen qui n'existe pas là où on étudie perd sa raison d'être.
+/// **C'est la première question du parcours**, avant même « tu en es où ? », et cet ordre
+/// est le fond de l'affaire : parler français ne dit pas dans quel système on étudie, et
+/// surtout les paliers d'études n'existent pas partout. « Les attendus du bac » ne veut rien
+/// dire pour un lycéen belge, un étudiant québécois ne passe pas de concours de première
+/// année de santé, « baccalauréat » désigne au Québec un diplôme universitaire, et proposer
+/// « Prépa » ou « PASS » à un Américain ne lui laisse aucune réponse juste. Le pays commande
+/// donc les réponses du niveau (`stages`) et la langue de rédaction (`language`).
 ///
-/// Dix pays, et pas une liste mondiale : ce sont ceux où l'on étudie en français. Le drapeau
-/// tient lieu d'icône, parce qu'il se reconnaît plus vite que son nom.
+/// La liste n'est pas mondiale, et `other` est là pour ça : elle couvre les pays où l'on
+/// étudie en français, plus les deux systèmes anglophones les plus demandés, et retombe
+/// ailleurs sur une échelle générique. Le drapeau tient lieu d'icône, parce qu'il se
+/// reconnaît plus vite que son nom.
 enum SchoolingCountry: String, CaseIterable, Identifiable {
     case fr
     case be
@@ -123,6 +127,10 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
     case sn
     case ci
     case lu
+    case uk
+    case us
+    /// Un pays dont on ne connaît pas le système scolaire : les paliers y sont génériques.
+    case other
 
     var id: String { rawValue }
 
@@ -138,6 +146,9 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
         case .sn: "Sénégal"
         case .ci: "Côte d'Ivoire"
         case .lu: "Luxembourg"
+        case .uk: "Royaume-Uni"
+        case .us: "États-Unis"
+        case .other: "Ailleurs"
         }
     }
 
@@ -153,6 +164,9 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
         case .sn: "🇸🇳"
         case .ci: "🇨🇮"
         case .lu: "🇱🇺"
+        case .uk: "🇬🇧"
+        case .us: "🇺🇸"
+        case .other: "🌍"
         }
     }
 
@@ -169,6 +183,9 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
         case .sn: "Bac, licence, grandes écoles"
         case .ci: "Bac, licence, grandes écoles"
         case .lu: "Diplôme de fin d'études, bachelor"
+        case .uk: "GCSE, A-Levels, university"
+        case .us: "High school, college, grad school"
+        case .other: "Middle school, high school, college"
         }
     }
 
@@ -224,6 +241,9 @@ enum OnboardingPreferences {
     enum Key {
         static let completed = "micabo.onboarding.completed"
         static let level = "micabo.onboarding.level"
+        /// Le palier tel qu'il se nomme dans le pays choisi. `level` reste écrit à côté :
+        /// c'est lui que la fonction lit, et lui que le cloud synchronise.
+        static let stage = "micabo.onboarding.stage"
         static let country = "micabo.onboarding.country"
         static let goal = "micabo.onboarding.goal"
         static let goals = "micabo.onboarding.goals"
@@ -237,7 +257,7 @@ enum OnboardingPreferences {
         static let completedAt = "micabo.onboarding.completedAt"
 
         static let all = [
-            completed, level, country, goal, goals, forgetting, forgetsOften, subjects,
+            completed, level, stage, country, goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
             dailyMinutes, notificationsOptIn, completedAt
         ]
@@ -268,6 +288,39 @@ enum OnboardingPreferences {
     static var studyLevel: StudyLevel? {
         get { level.flatMap(StudyLevel.init(rawValue:)) }
         set { level = newValue?.rawValue }
+    }
+
+    /// L'identifiant du palier choisi, dans les termes du pays.
+    static var educationStageId: String? {
+        get { defaults.string(forKey: Key.stage) }
+        set {
+            if let newValue, !newValue.isEmpty {
+                defaults.set(newValue, forKey: Key.stage)
+            } else {
+                defaults.removeObject(forKey: Key.stage)
+            }
+        }
+    }
+
+    /// Le palier d'études, résolu dans le pays courant.
+    ///
+    /// Écrire le palier écrit aussi son registre : c'est `level` que la fonction reçoit et
+    /// que le cloud synchronise, et le garder à jour ici évite d'avoir deux réponses à la
+    /// même question.
+    static var educationStage: EducationStage? {
+        get { schoolingCountry.resolvedStage(id: educationStageId, orLevel: studyLevel) }
+        set {
+            educationStageId = newValue?.id
+            studyLevel = newValue?.level
+        }
+    }
+
+    /// La langue dans laquelle Micabo écrit, déduite du pays de scolarisation.
+    ///
+    /// Elle n'est pas stockée : une copie du pays finirait par le contredire, et l'écran qui
+    /// la demandait n'offrait de toute façon qu'une réponse.
+    static var contentLanguage: ContentLanguage {
+        schoolingCountry.language
     }
 
     /// Le pays de scolarisation. Absent, on suppose la France : c'est ce que l'app faisait

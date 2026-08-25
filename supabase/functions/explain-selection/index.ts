@@ -8,6 +8,7 @@ import {
   FalError,
   jsonResponse,
 } from "../_shared/fal.ts";
+import { languageBrief } from "../_shared/language.ts";
 
 interface RequestBody {
   /** Le passage sélectionné dans la fiche. */
@@ -16,6 +17,8 @@ interface RequestBody {
   subject?: string;
   /** La fiche à plat : c'est elle qui ancre l'explication dans LE cours de l'étudiant. */
   context?: string;
+  /** Langue de l'explication, la même que celle de la fiche : « fr » ou « en ». */
+  language?: string;
   model?: string;
 }
 
@@ -83,6 +86,7 @@ Deno.serve(async (request: Request) => {
     }
 
     const sections = [
+      languageBrief(body.language),
       `Cours : ${body.title || "Sans titre"}`,
       body.subject ? `Matière : ${body.subject}` : "",
       `PASSAGE SÉLECTIONNÉ :\n${selection}`,

@@ -799,6 +799,7 @@ struct ImportView: View {
             sourceName: fileName,
             studyLevel: OnboardingPreferences.studyLevel,
             country: OnboardingPreferences.schoolingCountry,
+            language: OnboardingPreferences.contentLanguage,
             sheetLength: sheetLength,
             // La matière n'est pas encore connue : c'est le modèle qui la trouve, et la
             // fonction la devine sur le texte pour choisir ses consignes de rédaction.

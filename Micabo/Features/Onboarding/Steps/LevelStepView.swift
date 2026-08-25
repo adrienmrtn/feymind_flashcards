@@ -1,20 +1,14 @@
 import SwiftUI
 
-/// Écran 2 : où en est l'étudiant.
+/// Écran 3 : où en est l'étudiant. **Les réponses sont celles de son pays.**
 ///
-/// C'est la première question du parcours, et elle vient juste après l'accroche parce
-/// qu'elle situe tout le reste : un lycéen et un PASS n'ont ni les mêmes matières, ni les
-/// mêmes examens, ni le même rythme.
+/// L'écran servait sept réponses françaises à tout le monde — Lycée, Prépa, Licence, PASS,
+/// Master, Concours — ce qui laissait un Américain, un Britannique ou un Québécois sans une
+/// seule réponse juste. La question vient donc après le pays, et sa liste vient de lui : les
+/// paliers réels du système choisi, et à défaut une échelle générique en anglais.
 ///
-/// Les sept réponses **occupent la page**, et c'est un changement de pied assumé. Elles
-/// tenaient avant en pastilles serrées sous le titre : tout était visible d'un coup, mais
-/// les deux tiers de l'écran restaient vides en dessous, et une question posée dans le
-/// coin supérieur d'une page blanche se lit comme un formulaire. En rangées qui se
-/// partagent la hauteur, le regard tombe sur les réponses, et le pouce les atteint sans
-/// viser. Rien ne défile pour autant : sept rangées tiennent dans la page.
-///
-/// Le choix n'enchaîne pas tout seul : on peut se tromper, et « Continuer » laisse le
-/// temps de se corriger.
+/// Aucune réponse n'est cochée d'avance : c'est la question qui situe la rédaction de toutes
+/// les fiches, et on ne la devine pas à la place de l'étudiant.
 struct LevelStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -28,19 +22,19 @@ struct LevelStepView: View {
             animatesTitle: true,
             expandsContent: true
         ) {
-            OnboardingAnswerList(StudyLevel.allCases, spacing: 8) { level in
+            OnboardingAnswerList(model.country.stages, spacing: 8) { stage in
                 OnboardingChoiceRow(
-                    title: level.title,
-                    emoji: level.emoji,
-                    isSelected: model.level == level,
+                    title: stage.title,
+                    emoji: stage.emoji,
+                    isSelected: model.stage == stage,
                     fillsHeight: true
                 ) {
                     Haptics.selection()
-                    model.level = level
+                    model.stage = stage
                 }
             }
         } footer: {
-            OnboardingContinueButton(isEnabled: model.level != nil) {
+            OnboardingContinueButton(isEnabled: model.stage != nil) {
                 model.advance()
             }
         }

@@ -1,25 +1,32 @@
 import SwiftUI
 
-/// Fond d'un écran du parcours. Le crème est la règle, mais deux écrans basculent sur
-/// l'encre ou sur l'accent pour donner du rythme : deux écrans voisins ne doivent pas se
-/// ressembler. Le texte reste fer à gauche et le bouton collé en bas, quel que soit le
+/// Fond d'un écran du parcours. Le crème est la règle, mais quelques écrans basculent sur
+/// l'encre ou sur le vert pastel pour donner du rythme : deux écrans voisins ne doivent pas
+/// se ressembler. Le texte reste fer à gauche et le bouton collé en bas, quel que soit le
 /// fond : la variété s'arrête aux couleurs et aux compositions.
 enum OnboardingSurface {
     case canvas
     case ink
-    /// Le vert de Micabo en pleine page. Il s'appelait `indigo` quand l'accent l'était.
-    case accent
+    /// Le vert de Micabo, en pastel.
+    ///
+    /// Le vert plein qui servait ici tapait trop fort : un aplat saturé tenu plusieurs
+    /// secondes derrière du texte blanc fatigue, et c'était précisément l'écran où l'on
+    /// demande d'attendre. Le pastel garde la rupture de couleur et rend l'encre lisible,
+    /// donc il se traite comme un fond clair.
+    case accentSoft
 
     var background: Color {
         switch self {
         case .canvas: MicaboColor.canvas
         case .ink: MicaboColor.ink
-        case .accent: MicaboColor.accent
+        case .accentSoft: MicaboColor.accentSoft
         }
     }
 
+    /// Vrai quand le texte doit s'inverser. Le pastel n'en fait pas partie : l'encre s'y lit
+    /// mieux que le blanc.
     var isDark: Bool {
-        self != .canvas
+        self == .ink
     }
 
     var title: Color {
@@ -32,9 +39,8 @@ enum OnboardingSurface {
 
     var eyebrow: Color {
         switch self {
-        case .canvas: MicaboColor.accent
+        case .canvas, .accentSoft: MicaboColor.accent
         case .ink: MicaboColor.accentSoft
-        case .accent: MicaboColor.onInk.opacity(0.72)
         }
     }
 
@@ -46,7 +52,13 @@ enum OnboardingSurface {
     }
 
     var progressTrack: Color {
-        isDark ? MicaboColor.onInk.opacity(0.22) : MicaboColor.progressTrack
+        switch self {
+        case .canvas: MicaboColor.progressTrack
+        case .ink: MicaboColor.onInk.opacity(0.22)
+        // La piste beige du crème disparaîtrait sur le menthe : c'est l'accent lui-même,
+        // très dilué, qui fait la piste.
+        case .accentSoft: MicaboColor.accent.opacity(0.18)
+        }
     }
 
     /// Surface du bouton d'action, inversée sur fond sombre.
