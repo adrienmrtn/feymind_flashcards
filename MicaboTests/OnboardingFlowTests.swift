@@ -356,10 +356,13 @@ final class OnboardingFlowTests: XCTestCase {
     }
 
     /// Le profil que le cloud renvoie ne transporte que le registre : il n'y a pas de colonne
-    /// pour la marche, et il n'en faut pas. Le registre se résout alors sur le palier **le
-    /// plus haut** qui le partage, parce que prendre le premier de la liste ramenait un
-    /// « lycee » américain sur « Middle school ».
-    func testALevelWithoutATierResolvesToTheHighestStageSharingIt() {
+    /// pour la marche, et il n'en faut pas. Le registre désigne alors sa marche de référence,
+    /// et c'est le palier qui s'y trouve qu'on retient.
+    ///
+    /// Prendre le premier de la liste ramenait un « lycee » américain sur « Middle school » ;
+    /// prendre le plus haut ramenait un « lycee » québécois sur « Cégep », qui est
+    /// post-secondaire. La marche de référence donne les deux bonnes réponses.
+    func testALevelWithoutATierResolvesToItsReferenceRung() {
         OnboardingPreferences.reset()
         defer { OnboardingPreferences.reset() }
 
@@ -371,6 +374,63 @@ final class OnboardingFlowTests: XCTestCase {
 
         OnboardingPreferences.schoolingCountry = .uk
         XCTAssertEqual(OnboardingPreferences.educationStage?.id, "uk.alevels")
+
+        OnboardingPreferences.schoolingCountry = .ca
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "ca.secondaire", "Le cégep est post-secondaire")
+
+        OnboardingPreferences.schoolingCountry = .other
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "generic.high")
+    }
+
+    /// Chaque registre désigne une marche, et chaque pays a bien un palier à cette marche
+    /// pour les registres qu'il propose : sans quoi le repli du cloud tomberait à côté.
+    func testEveryLevelPointsAtARungItsCountriesActuallyHave() {
+        for country in SchoolingCountry.allCases {
+            let tiers = country.stages.map(\.tier)
+            XCTAssertEqual(
+                Set(tiers).count,
+                tiers.count,
+                "\(country) place deux paliers sur la même marche : la résolution deviendrait arbitraire"
+            )
+
+            for stage in country.stages where country.stages.filter({ $0.level == stage.level }).count > 1 {
+                XCTAssertTrue(
+                    country.stages.contains { $0.level == stage.level && $0.tier == stage.level.canonicalTier },
+                    "\(country) partage le registre \(stage.level) sans palier à sa marche de référence"
+                )
+            }
+        }
+    }
+
+    /// Le profil distant est autoritaire sur le registre et le pays, et il ne transporte pas
+    /// le palier : les traces du palier local doivent donc partir avec, sinon elles gagnent
+    /// contre lui et le réécrivent au premier passage dans les réglages.
+    func testApplyingARemoteProfileDropsTheLocalStage() throws {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        OnboardingPreferences.schoolingCountry = .fr
+        OnboardingPreferences.educationStage = try XCTUnwrap(
+            SchoolingCountry.fr.stages.first { $0.id == "fr.lycee" }
+        )
+
+        let remote = ProfileRecord(
+            id: UUID(),
+            display_name: nil,
+            study_level: "master",
+            country_code: "us",
+            learning_goals: [],
+            subjects: [],
+            institution_id: nil,
+            institution_name: nil,
+            daily_minutes: 15,
+            sheet_length: SheetLength.standard.rawValue,
+            onboarding_completed_at: nil
+        )
+        remote.applyToLocalPreferences()
+
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "us.graduate")
+        XCTAssertEqual(OnboardingPreferences.studyLevel, .master)
     }
 
     func testEveryLevelHasALabel() {

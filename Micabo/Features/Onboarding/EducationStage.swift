@@ -78,6 +78,26 @@ private func stage(
     EducationStage(id: id, title: title, emoji: emoji, level: level, tier: tier)
 }
 
+extension StudyLevel {
+    /// La marche que ce registre désigne quand on n'a que lui.
+    ///
+    /// Plusieurs paliers peuvent partager un registre — « lycee » couvre le collège, le lycée
+    /// et le cégep — et il faut alors savoir lequel il désignait. Sans cette table, le profil
+    /// rendu par le cloud, qui ne transporte que le registre, retombait sur le premier palier
+    /// de la liste : un « lycee » américain devenait « Middle school ».
+    var canonicalTier: EducationTier {
+        switch self {
+        case .lycee: .upperSecondary
+        case .prepa: .preUniversity
+        case .licence: .undergraduate
+        case .sante: .health
+        case .master: .graduate
+        case .concours: .competitive
+        case .other: .other
+        }
+    }
+}
+
 /// La langue dans laquelle Micabo écrit.
 ///
 /// Elle n'est plus demandée : un écran entier disait « Micabo parle français » pour une
@@ -277,22 +297,20 @@ extension SchoolingCountry {
         }
 
         guard let level else { return nil }
-        return highestSharing(level: level)
+        return matchingStage(for: level)
     }
 
-    /// Le palier le plus haut parmi ceux qui écrivent dans ce registre.
+    /// Le palier de ce pays qui écrit dans ce registre, à la marche que le registre désigne.
     ///
     /// C'est le dernier recours, et il ne sert qu'à une donnée sans marche : le profil que le
     /// cloud renvoie ne transporte que le registre. Prendre le premier de la liste ramenait un
-    /// « lycee » américain sur « Middle school » et un « lycee » québécois sur « Secondaire »,
-    /// c'est-à-dire exactement l'erreur que la marche existe pour éviter. On monte, comme
-    /// partout ailleurs ici : une fiche un cran trop exigeante se lit, une fiche trop simple
-    /// ne s'utilise pas.
-    private func highestSharing(level: StudyLevel) -> EducationStage? {
+    /// « lycee » américain sur « Middle school », c'est-à-dire exactement l'erreur que la
+    /// marche existe pour éviter ; prendre le plus haut ramenait un « lycee » québécois sur
+    /// « Cégep », qui est post-secondaire. Chaque registre a une marche de référence
+    /// (`StudyLevel.canonicalTier`), et c'est celle-là qu'on cherche.
+    private func matchingStage(for level: StudyLevel) -> EducationStage? {
         let matching = stages.filter { $0.level == level }
-        return matching.max { left, right in
-            (left.tier.ladderIndex ?? -1) < (right.tier.ladderIndex ?? -1)
-        }
+        return matching.first { $0.tier == level.canonicalTier } ?? matching.first
     }
 
     /// La marche la plus proche de celle demandée. À distance égale, on monte : un palier
