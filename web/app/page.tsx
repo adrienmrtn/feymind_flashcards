@@ -9,9 +9,11 @@ import {
   curveWithMicabo,
   curveWithoutReview,
   dailyMinutesLabel,
+  entitlement,
   newCardSnapshot,
   newCardsPerDay,
   previewLabels,
+  pricing,
   type CardSnapshot,
 } from "@micabo/core";
 
@@ -51,9 +53,97 @@ export default function FoundationsPage() {
       <RetentionSection />
       <SchedulerSection />
       <DailyLoadSection />
+      <FreeTierSection />
       <ColorSection />
       <MotionSection />
     </main>
+  );
+}
+
+// MARK: - Le gratuit
+
+function FreeTierSection() {
+  const blockCounts = [10, 14, 20, 3, 1];
+
+  return (
+    <Section
+      eyebrow="Le gratuit"
+      title="Un cours, sept dixièmes de la fiche, cinq cartes."
+      note="Les nombres viennent de ProAccess.swift : c'est l'app qui fait foi, et un cours flouté
+      aux sept dixièmes sur le téléphone et à la moitié sur le web serait le même produit qui dit
+      deux choses. Le verrou est construit ici, mais il n'est pas armé — il n'y a pas encore de
+      table à lire, et le fermer maintenant enfermerait dehors qui vient de payer sur son
+      téléphone."
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card title="Où la fiche se coupe">
+          <p className="mb-4 text-[13px] text-ink-tertiary">
+            La coupure se compte <strong className="font-semibold text-ink-secondary">en blocs</strong>
+            , pas en caractères : couper un paragraphe au septième dixième de son texte donnerait
+            une phrase interrompue au milieu d&apos;un mot, ce qui ressemble à un bug plutôt
+            qu&apos;à une limite assumée.
+          </p>
+          <div className="space-y-1.5 text-[13px]">
+            {blockCounts.map((count) => (
+              <div
+                key={count}
+                className="flex items-baseline justify-between border-b border-hairline py-1.5 last:border-0"
+              >
+                <span className="text-ink-secondary">
+                  <span className="numeral font-bold text-ink">{count}</span> bloc
+                  {count > 1 ? "s" : ""}
+                </span>
+                <span className="text-ink-secondary">
+                  <span className="numeral font-bold text-accent">
+                    {entitlement.sheetLockIndex(count)}
+                  </span>{" "}
+                  lisible{entitlement.sheetLockIndex(count) > 1 ? "s" : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-[13px] text-ink-tertiary">
+            Toujours au moins un bloc à lire, jamais plus qu&apos;il n&apos;y en a. Et{" "}
+            <span className="numeral font-bold text-ink">
+              {entitlement.lockedSheetPercent()} %
+            </span>{" "}
+            restent derrière le cadenas.
+          </p>
+        </Card>
+
+        <Card title="Les deux offres">
+          <p className="mb-4 text-[13px] text-ink-tertiary">
+            Deux, pas trois : un paywall à trois colonnes fait comparer des colonnes au lieu de
+            faire choisir.
+          </p>
+          <div className="space-y-2.5">
+            {pricing.PLANS.map((plan) => (
+              <div
+                key={plan.kind}
+                className="flex items-baseline justify-between rounded-tile bg-surface-muted px-4 py-3"
+              >
+                <span>
+                  <span className="block text-[13px] font-semibold text-ink">{plan.title}</span>
+                  <span className="block text-[11px] text-ink-tertiary">
+                    {pricing.planCaption(plan)}
+                  </span>
+                </span>
+                <span className="numeral text-base font-bold text-ink">
+                  {pricing.priceText(plan.price)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-[13px] text-ink-tertiary">
+            L&apos;annuel économise{" "}
+            <span className="numeral font-bold text-accent">{pricing.savingsPercent()} %</span> — un
+            nombre <strong className="font-semibold text-ink-secondary">calculé</strong> depuis les
+            deux prix, jamais écrit. La spec du parcours annonçait 60 % ; c&apos;est le calcul qui a
+            raison, et il suivra le jour où un prix bougera.
+          </p>
+        </Card>
+      </div>
+    </Section>
   );
 }
 

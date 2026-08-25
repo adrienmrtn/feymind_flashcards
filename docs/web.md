@@ -34,7 +34,7 @@ L'état réel du projet, vérifié :
 | CORS des Edge Functions | `Access-Control-Allow-Origin: *`, préflight géré |
 | Autorisation des Edge Functions | la **clé anonyme** suffit ; aucune fonction ne lit l'utilisateur |
 | Limitation d'usage | **aucune**, nulle part |
-| Abonnements | aucune table, aucun droit, aucun RevenueCat. `SubscriptionStoreView` est décoratif, et tout compte connecté est de fait Pro |
+| Abonnements | **corrigé** — le gratuit existe depuis la PR #37 : `ProAccess.swift`, `SheetGate`, deux paywalls natifs, et `docs/revenuecat.md`. Il n'y a en revanche **aucune table `entitlements`** : `ProAccess` lit un drapeau local, donc le site n'a rien à lire |
 | Ce qui ne monte jamais | images d'occlusion, audio des cartes, couvertures, `Exam.scheduleBackup` |
 | Ce que l'iPhone ne redescend jamais | `exams`, `review_logs` (montés seulement) |
 
@@ -478,9 +478,12 @@ Pourquoi RevenueCat plutôt que « Stripe + les notifications serveur d'Apple, �
   période de grâce, relance de facturation, remboursement — **et** les webhooks Stripe, **et** la
   réconciliation des deux. C'est le code le plus propice aux bugs qu'on puisse écrire, ses bugs
   sont invisibles (un étudiant perd son accès en silence), et ce n'est pas le produit ;
-- côté iOS il n'y a **rien** aujourd'hui : `SubscriptionStoreView` est décoratif, aucun test de
-  droit n'existe nulle part. Puisque tout est à écrire, l'écrire contre RevenueCat coûte le même
-  travail que contre StoreKit 2 directement, et donne la partie multiplateforme en prime ;
+- côté iOS, les portes existent maintenant mais **rien ne les commande depuis un serveur** :
+  `ProAccess` lit un drapeau dans les réglages de l'appareil, et `PaywallPurchases` répond
+  `unavailable`. Il reste donc tout l'encaissement à écrire, et **[`docs/revenuecat.md`](revenuecat.md)
+  décrit déjà la procédure** — jusqu'au remplacement de `refresh()` par la lecture de
+  l'entitlement `pro`. Cette note-là confirme la recommandation au lieu de la contredire : il n'y
+  a rien à défaire, il y a le rail web à ajouter à côté du rail App Store ;
 - le prix : gratuit sous 2 500 $ de revenu suivi par mois, puis ~1 %. Ce 1 % achète le fait de ne
   pas écrire la machine à états.
 
@@ -658,12 +661,26 @@ veut dire qu'un déploiement compile et tourne sans que personne n'ait rien coll
 de bord. Seuls les secrets **serveur** — clé de service, Stripe, webhook RevenueCat — sont de
 vraies variables, et ils n'arrivent qu'à l'étape 5.
 
-**Le `rootDirectory` se règle à la création, donc le projet se crée à ce moment-là.** Le projet
-`micabo` existant a été créé sans, et son dernier déploiement part de la racine du dépôt — donc
-d'un projet Xcode. Il n'y a pas d'API dans ce MCP pour le corriger. Le projet de travail sera
-donc créé avec `rootDirectory: web`, et si Vercel refuse d'en créer un second sur le même dépôt,
-il reste un clic à faire : **Settings → Build & Development → Root Directory → `web`**. C'est le
-seul réglage qui casse tout si on l'oublie, et le seul que je ne peux pas garantir sans vous.
+**Le `rootDirectory` se règle à la création, et la création a échoué.** Ce n'est plus une
+hypothèse : la tentative de créer un second projet sur le même dépôt a rendu un identifiant puis
+un `404` — le projet n'existe pas. Il ne reste donc que `micabo`, créé sans `rootDirectory`, et
+aucune API de ce MCP ne permet de le corriger.
+
+Et le journal de compilation dit exactement ce que ça produit :
+
+```
+Running "vercel build"
+Build Completed in /vercel/output [147ms]
+```
+
+**Cent quarante-sept millisecondes, et rien de compilé.** Vercel ne trouve pas de framework à la
+racine du dépôt, donc il publie l'arborescence telle quelle — le déploiement est vert, et le site
+n'existe pas. C'est le piège le plus désagréable de la liste, parce qu'il ne ressemble pas à une
+panne.
+
+Il reste donc **un clic, et il est indispensable** : *Settings → Build & Development → Root
+Directory → `web`*. Après lui, tout le reste suit sans rien d'autre — pas même une variable
+d'environnement.
 
 Le domaine, enfin : `micabo.app` est **libre, à 9,99 $ pour un an** ; `micabo.com` est pris ;
 `micabo.io` et `micabo.co` sont à ~30 $. Je peux l'acheter depuis ici, sur devis puis
@@ -736,12 +753,13 @@ critique.**
    bien meilleure question que « combien de minutes par jour », et l'ajouter casserait le rythme du
    tunnel. On garde le défaut de 15 minutes, soit 8 cartes neuves par jour, corrigeable dans les
    réglages — c'est déjà le défaut de l'app.
-2. **« Économise 60 % » est arithmétiquement faux** aux prix déclarés dans `Micabo.storekit` :
-   6,99 € × 12 = 83,88 €, et 39,99 € font **−52 %**, pas −60 %. Pour dire 60 % il faut passer
-   l'annuel à **33,55 €**. Un pourcentage d'économie faux sur un site public est une allégation
-   commerciale fausse, et c'est le genre de détail qu'Apple relève aussi. Deux issues : écrire
-   « Économise 52 % », ou fixer l'annuel à **33,99 €** (−59,5 %, qui s'arrondit honnêtement à 60).
-   J'écris 52 % par défaut, c'est réversible en une constante.
+2. **« Économise 60 % » ne se calcule pas, et l'app a déjà réglé ça.** Le nombre était faux, et
+   il l'est resté après le changement de prix — c'est 86 % aux prix du catalogue. Mais la bonne
+   correction n'est pas d'écrire le bon nombre : `PaywallCatalog.savingsPercent` le **calcule**
+   depuis les deux prix, pour la raison que son commentaire donne — « une remise annoncée à côté
+   de deux prix qui la contredisent est le genre de détail qu'on ne remarque qu'une fois en
+   production ». Le site fait pareil, et l'écran 8 n'écrira aucun pourcentage à la main. Voir
+   [Les offres](#les-offres-et-léconomie-annoncée).
 3. **La connexion par courriel ne marchera pas en production**, et pas à cause du site : le projet
    répond `mailer_autoconfirm: false`, donc l'adresse doit être confirmée avant la première
    connexion — ce qui contredit « crée ton compte en 10 secondes » — et l'envoyeur de démonstration
@@ -757,39 +775,70 @@ critique.**
 
 ## Le verrou du gratuit
 
-**Il n'existe nulle part.** « Même système freemium que sur iOS » décrit ce qu'on veut, pas ce
-qu'il y a : aucun test de droit n'existe dans l'app, et tout compte connecté est de fait Pro. Le
-verrou est donc à concevoir des deux côtés, et il doit être **le même des deux côtés** — sinon un
-cours flouté sur le web se lit en entier sur le téléphone, et le paywall ne veut plus rien dire.
+**Correction : il existe, et il n'est plus à concevoir.** Ce document a d'abord écrit que « même
+système freemium que sur iOS » décrivait ce qu'on voulait plutôt que ce qu'il y avait. C'était
+vrai du dépôt que j'avais sous les yeux ; la PR #37 a livré entre-temps `ProAccess.swift`,
+`SheetGate`, deux paywalls natifs enchaînés, un paywall de session, `FreemiumTests` qui verrouille
+les nombres, et **[`docs/revenuecat.md`](revenuecat.md)** qui détaille le branchement complet.
 
-La forme demandée est la bonne, et c'est celle qui convertit : **on génère, puis on floute.** On
-dépose son polycopié, on regarde Micabo travailler, la fiche apparaît — et c'est *à ce moment-là*
-qu'elle se referme. Bloquer l'import serait moins cher en appels fal et beaucoup moins efficace :
-on ne désire pas ce qu'on n'a pas vu.
+C'est donc l'app qui fait foi, et le site s'y aligne au chiffre près. Un cours flouté aux sept
+dixièmes sur le téléphone et à la moitié sur le web serait le même produit qui dit deux choses.
 
 | | Gratuit | Pro |
 | --- | --- | --- |
-| **Fiches** | La **première est entière**. À partir de la deuxième : le chapeau et les trois premiers blocs se lisent, le reste est **flouté sous un cadenas** | tout |
-| **Cartes** | Les **dix premières** d'un cours sont utilisables. Les suivantes sont dans la liste, floutées, cadenassées. Une session ne tire que dans les débloquées | tout |
-| **Mode examen** | verrouillé | tout |
-| **Sessions, statistiques, bibliothèque, amis** | libres | libres |
+| **Cours importés** | **un**, et un seul. Un cours *repris* dans la bibliothèque ne consomme pas le quota : il n'a rien coûté à produire | sans limite |
+| **Fiche** | les **sept dixièmes de ses blocs**. La suite est composée, puis floutée et fondue dans le papier, avec le cadenas posé au bas du fondu | entière |
+| **Session** | **cinq cartes**, la cinquième comprise | sans limite |
+| **Entraînement libre** | fermé | ouvert |
 
-Le mode examen fermé est délibéré et cohérent : le tunnel demande la date de l'examen à l'écran 5,
-promet « un parcours adapté à ton examen », et le paywall arrive trois écrans plus loin. Le verrou
-est posé exactement sur ce qui vient d'être promis.
+La forme est celle qui convertit, et elle est déjà en place : **on génère, puis on floute.** Les
+blocs restants sont *bel et bien composés* avant d'être brouillés — c'est ce qui fait la
+différence entre « il y a une suite » et « ça s'arrête là ». Une fiche coupée net se lit comme une
+fiche courte, et une fiche courte ne donne envie de rien.
 
-Deux principes d'implémentation qui évitent la réécriture :
+Deux détails d'implémentation valent d'être repris tels quels, parce qu'ils sont justes :
 
-- **Le droit se lit à un seul endroit**, `packages/core/entitlement.ts`, une fonction pure qui
-  prend le droit et un index et rend `libre` ou `verrouillé`. Le flou est un composant qui
-  l'interroge, jamais un `if` recopié dans six écrans ;
-- **on construit le verrou, on ne l'arme pas.** Jusqu'à l'étape 5, la fonction rend `isPro: true`
-  pour tout le monde. L'armer, ensuite, est une ligne. Ça évite de livrer un site qui floute des
-  fiches avant qu'on puisse les déverrouiller en payant.
+- **la coupure se compte en blocs, pas en caractères.** Couper un paragraphe au septième dixième
+  de son texte donnerait une phrase interrompue au milieu d'un mot, ce qui ressemble à un bug
+  d'affichage plutôt qu'à une limite assumée. Et il reste toujours au moins un bloc lisible ;
+- **le pourcentage restant est calculé**, pas écrit. « Il te reste 30 % de ce cours à lire » sort
+  du ratio, donc il suivra si le ratio bouge.
 
-Et le plafond d'`ai_usage` est **autre chose** : ce n'est pas un palier commercial, c'est un
-fusible contre la facture fal. Il compte les générations par jour, pour un compte gratuit comme
-pour un compte Pro, et il vit côté serveur.
+### Ce que le site en fait
+
+`packages/core/src/entitlement.ts` porte les mêmes nombres et la même coupure, et
+`test/entitlement.test.ts` reprend les valeurs de `MicaboTests/FreemiumTests.swift`. Mais
+**`ARMED` reste à `false`**, et la raison a changé : ce n'est plus « l'encaissement n'existe pas
+encore », c'est qu'il n'y a **rien à lire**. `ProAccess` s'appuie sur un drapeau dans les réglages
+de l'appareil ; il n'existe aucune table `entitlements`, donc le site ne peut pas savoir qui est
+abonné. Armer le verrou maintenant enfermerait dehors un étudiant qui vient de payer sur son
+téléphone — ce qui est exactement la panne que ce document met en garde contre depuis le début.
+
+L'interrupteur bascule à l'étape 5, quand le webhook écrira le droit en base.
+
+## Les offres, et l'économie annoncée
+
+Les prix ont bougé avec la PR #37, et la forme de l'offre aussi : ce n'est plus un mensuel mais
+un **hebdomadaire**.
+
+| Offre | Prix | Sur douze mois |
+| --- | --- | --- |
+| Annuel — recommandé | **59,99 €** | 59,99 € |
+| Hebdomadaire | **7,99 €** | 415,48 € |
+
+Ce qui règle le trou n° 2 de la spec, mais pas dans le sens prévu : **l'app calcule son
+pourcentage d'économie au lieu de l'écrire**, et aux prix du catalogue l'annuel économise
+**86 %**, pas 60. Le commentaire de `PaywallCatalog.savingsPercent` dit exactement pourquoi :
+« une remise annoncée à côté de deux prix qui la contredisent est le genre de détail qu'on ne
+remarque qu'une fois en production ».
+
+Le site fait donc pareil : `packages/core/src/pricing.ts` porte les deux offres et calcule. **Le
+paywall du parcours d'accueil n'écrira aucun pourcentage à la main**, et « Économise 60 % » de la
+spec devient « Économise {calcul} % ».
+
+Deux conséquences de forme sur l'écran 8 : le « prix ramené au mois » ne vaut que pour l'annuel
+— 5,00 € / mois — et l'hebdomadaire porte « facturé chaque semaine », parce qu'il n'y a pas de
+mois à ramener. L'essai reste de **trois jours**.
 
 ## Le plan, en cinq étapes
 
@@ -805,6 +854,28 @@ pour un compte Pro, et il vit côté serveur.
 d'entrée d'IA appelable depuis un navigateur, sans jeton et sans plafond. Et l'étape 5 est la seule
 qui **touche l'app iOS**, donc la seule qui demande une soumission App Store.
 
+### Où en est l'étape 1
+
+Faite, à un clic près. Le monorepo est dans [`web/`](../web/README.md), les jetons sont dans
+`app/globals.css`, et `packages/core` porte **104 tests** — dont ceux de `SM2SchedulerTests`,
+`FreemiumTests` et `PaywallTests` repris nombre pour nombre.
+
+Le port sur le code plutôt que sur un résumé a rattrapé trois choses, et c'est sa justification :
+
+- **l'arrondi de `DailyLoad` va au plus loin de zéro**, donc 25 minutes donnent 13 cartes neuves
+  et non 12. Sur un an, c'est une carte par jour de moins ;
+- **un `**` non fermé n'est pas laissé littéral** par `SheetMarkup` : la première astérisque
+  ouvre une italique que la seconde ferme, et les deux marques disparaissent. Le port reproduit
+  le comportement plutôt que de le corriger — une fiche rendue autrement sur le web serait une
+  fiche différente. Le jour où ça se corrige, ça se corrige des deux côtés ;
+- **le gratuit et les prix avaient changé** sous mes pieds, ce qui est le sujet des deux sections
+  plus haut.
+
+Ce qui reste ouvert à la fin de l'étape : la page à la racine est **la référence des fondations,
+pas la page d'accueil** — elle affiche les jetons et calcule tous ses nombres avec
+`packages/core`, ce qui en fait aussi une vérification de bout en bout. Et le site n'est pas
+indexable, parce qu'il n'y a rien à trouver encore.
+
 ## Les décisions prises
 
 | # | Question | Réponse |
@@ -814,7 +885,7 @@ qui **touche l'app iOS**, donc la seule qui demande une soumission App Store.
 | 3 | Le parcours d'accueil du web | Fourni, transcrit ci-dessus. **Le compte est au deuxième écran**, avant les questions |
 | 4 | La police des nombres | **Nunito**, variable, et **uniquement pour les nombres** |
 | 5 | L'encaissement | **Stripe Checkout derrière RevenueCat** |
-| 6 | Le gratuit | Le flou et le cadenas, tel que spécifié ci-dessus |
+| 6 | Le gratuit | Aligné au chiffre près sur `ProAccess.swift` : un cours, sept dixièmes de la fiche, cinq cartes par session |
 | 7 | La couche de composants | **Base UI**, habillée par coss.com/ui, complétée par les variantes Base UI de ReUI |
 | 8 | Les icônes | **Phosphor**, pour sa variante pleine — contour par défaut, plein pour l'actif |
 | 9 | Le mouvement | La fréquence décide. **La session ne s'animera pas**, la démonstration si |
@@ -876,8 +947,8 @@ silence ne coûte rien.
 | Les **« 500 000 étudiants »** de l'écran de preuve sociale | **rien** : le chiffre n'apparaît pas sur le site | Sur un site indexé c'est une allégation commerciale. Mieux vaut pas de chiffre qu'un chiffre indéfendable. La section se remplit en une constante le jour où il y a un vrai nombre |
 | La **langue** du site | **français seul**, mais toute la copie dans un seul module, à la manière de `MicaboCopy.swift` | Ajouter `/en` devient alors un dictionnaire de plus, pas une refonte du routage |
 | Le **partage de fiche** | rien avant l'étape 5 | `courses.visibility` a déjà trois valeurs ; un lien web public est un quatrième état et je préfère le modéliser franchement plus tard que surcharger `public` maintenant |
-| Le **prix du web** | identique à iOS : 39,99 €/an, 6,99 €/mois | Simple et honnête ; l'écart de marge est invisible pour l'étudiant. Réversible en une constante |
-| L'**économie annoncée** sur l'annuel | **« Économise 52 % »** | C'est le vrai chiffre. Voir le trou n° 2 ci-dessus |
+| Le **prix du web** | identique à iOS : 59,99 €/an, 7,99 €/semaine | Simple et honnête ; l'écart de marge est invisible pour l'étudiant, et les deux offres vivent déjà dans une seule constante partagée |
+| L'**économie annoncée** sur l'annuel | **calculée**, donc 86 % aujourd'hui | Elle sort des deux prix et les suivra. Rien à décider |
 
 ### Une idée qui règle une tension
 
@@ -906,11 +977,11 @@ donc à faire à la main, et c'est tout ce qui manque.
 | # | Où | Quoi | Ce que ça débloque |
 | --- | --- | --- | --- |
 | 1 | Supabase → Authentication → **URL Configuration** | Les trois **Redirect URLs** (dont le joker de prévisualisation), et la **Site URL** | **La connexion sur le web.** Je peux écrire tout l'écran, je ne peux pas vérifier l'aller-retour OAuth |
-| 2 | Vercel → Settings → Build & Development | **Root Directory → `web`** — et seulement si la création du projet par le MCP ne l'a pas déjà posé | La compilation. Sans ça elle part de la racine du dépôt et échoue sur le projet Xcode |
+| 2 | Vercel → Settings → Build & Development | **Root Directory → `web`**. Ce n'est plus conditionnel : la création d'un second projet par le MCP a échoué | **Tout le site.** Sans lui, la compilation ne trouve pas de framework à la racine, publie l'arborescence du dépôt en 147 ms et rend un déploiement **vert** — la panne ne ressemble pas à une panne |
 | 3 | Vercel → Domains, puis Supabase et Apple | Acheter `micabo.app`, le rattacher, puis reporter le domaine dans la Site URL, les Redirect URLs et le Service ID Apple | Le vrai domaine. Peut attendre : les URL `*.vercel.app` suffisent pour tout construire |
 | 4 | Supabase → Project Settings → **SMTP** | Un vrai envoyeur (Resend, Postmark, SES) | La connexion par **courriel** de l'écran 1. Apple et Google marchent sans |
 
 Ce que je peux faire moi-même, en revanche, et qui couvre le reste : appliquer des migrations,
-déployer des Edge Functions, lire les avis de sécurité, créer le projet Vercel avec son
-`rootDirectory`, déployer, et **lire les journaux de compilation** — donc corriger un build cassé
-sans attendre.
+déployer des Edge Functions, lire les avis de sécurité, déployer, et **lire les journaux de
+compilation** — donc corriger un build cassé sans attendre, ce qui est la capacité qui compte le
+plus dans la liste.

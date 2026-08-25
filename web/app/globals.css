@@ -66,6 +66,10 @@
   /* ---- Retours d'information ---- */
   --color-positive: #3f7d53;
   --color-caution: #b3872b;
+  /* Le jaune des **grandes** surfaces, et d'elles seules. Même partage que l'accent :
+     `caution` est assombri pour porter du texte de onze points sur un fond pastel, ce qui en
+     fait un ocre terne dès qu'on le tient sur cent points de haut. */
+  --color-caution-vivid: #e8b23c;
   --color-negative: #c93b2b;
   --color-info: #3a6fc4;
   --color-positive-soft: #e3f1e2;

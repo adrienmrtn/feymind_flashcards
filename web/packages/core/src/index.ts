@@ -117,8 +117,11 @@ export {
   type CurvePoint,
 } from "./retention";
 
-// Le verrou du gratuit — construit, pas armé.
+// Le verrou du gratuit — aligné sur `ProAccess.swift`, construit mais pas armé.
 export * as entitlement from "./entitlement";
+
+// Les offres, dont le pourcentage d'économie est calculé et jamais écrit.
+export * as pricing from "./pricing";
 
 // Les deux palettes qui sont des données.
 export {

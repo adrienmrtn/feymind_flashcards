@@ -1,22 +1,53 @@
 /**
- * Le verrou du gratuit — **construit, pas armé.**
+ * Le verrou du gratuit, **aligné sur celui de l'app**.
  *
- * Il n'existe nulle part aujourd'hui : aucun test de droit dans l'app iOS, aucune table
- * `entitlements`, et tout compte connecté est de fait Pro. Ce module est donc le premier
- * endroit du produit où la question se pose, et il est écrit pour qu'elle ne se pose qu'ici :
- * une fonction pure, appelée par un composant de flou, jamais un `if` recopié dans six écrans.
+ * Il existe maintenant côté iOS — `Micabo/Services/ProAccess.swift`, arrivé après que ce plan a
+ * été écrit — et c'est lui qui fait foi. Les trois nombres et la coupure de la fiche sont donc
+ * portés depuis `FreeTier` et `SheetGate`, pas décidés ici : un cours flouté aux sept dixièmes
+ * sur le téléphone et à la moitié sur le web serait le même produit qui dit deux choses.
+ * `test/entitlement.test.ts` reprend les valeurs de `MicaboTests/FreemiumTests.swift`.
  *
- * **`ARMED` est à `false` jusqu'à l'étape 5.** Livrer un site qui floute des fiches avant
- * qu'on puisse les déverrouiller en payant serait livrer une panne. L'armer, ensuite, est
- * cette ligne-là.
- *
- * La forme du verrou est délibérée : **on génère, puis on floute.** On dépose son polycopié,
- * on regarde Micabo travailler, la fiche apparaît — et c'est à ce moment-là qu'elle se
- * referme. Bloquer l'import serait moins cher en appels au modèle et beaucoup moins efficace :
- * on ne désire pas ce qu'on n'a pas vu.
+ * **`ARMED` reste à `false`, et pas par paresse.** Sur l'iPhone, `ProAccess` lit un drapeau
+ * local ; il n'y a pas encore de table `entitlements`, donc le site n'a **rien à lire**. Armer
+ * le verrou maintenant reviendrait à enfermer dehors un étudiant qui vient de payer sur son
+ * téléphone. L'interrupteur bascule à l'étape 5, quand le webhook RevenueCat écrira le droit en
+ * base — c'est-à-dire quand la question aura une réponse.
  */
 
 export const ARMED = false;
+
+/** Le nom de l'entitlement chez RevenueCat. Il est déjà fixé par `docs/revenuecat.md`. */
+export const ENTITLEMENT_ID = "pro";
+
+/**
+ * Ce que la version gratuite laisse faire, et rien de plus.
+ *
+ * Les nombres se répondent : un cours qu'on lit aux sept dixièmes, cinq cartes par session, un
+ * seul import. Éparpillés dans les écrans, ils dériveraient au premier ajustement.
+ */
+export const FREE_TIER = {
+  /**
+   * Un cours importé, et un seul. Ce n'est pas zéro, et c'est le point : un paywall posé avant
+   * le premier import demande de payer pour un produit qu'on n'a pas vu tourner sur ses propres
+   * cours.
+   */
+  courses: 1,
+  /**
+   * La part de la fiche qui se lit sans payer. Sept dixièmes, pas la moitié : il faut que la
+   * fiche ait le temps d'être utile avant de s'arrêter. Une coupure au milieu se lit comme une
+   * démonstration, une coupure à la fin se lit comme un manque — et c'est le manque qui fait
+   * payer.
+   */
+  readableSheetRatio: 0.7,
+  /** Le nombre de cartes qu'une session gratuite sert avant de s'arrêter. */
+  cardsPerSession: 5,
+  /**
+   * L'entraînement libre est réservé à Pro. C'est la seule limite qui ferme une porte entière
+   * plutôt que d'en entrouvrir une : réviser ce qui est dû est le service que Micabo rend,
+   * s'entraîner à volonté sur tout un paquet est ce qu'on fait la veille d'un partiel.
+   */
+  allowsPractice: false,
+} as const;
 
 /** Ce que le webhook RevenueCat écrira dans `entitlements`, à l'étape 5. */
 export interface Entitlement {
@@ -32,16 +63,6 @@ export interface Entitlement {
 export const FREE: Entitlement = { isPro: false };
 export const PRO: Entitlement = { isPro: true };
 
-/** Les plafonds du palier gratuit. Chacun est une constante, donc chacun se change seul. */
-export const FREE_LIMITS = {
-  /** Fiches entièrement lisibles. La première prouve la qualité, les suivantes la vendent. */
-  fullSheets: 1,
-  /** Blocs lisibles d'une fiche verrouillée, chapeau compris. */
-  visibleBlocks: 3,
-  /** Cartes utilisables par cours. Les suivantes sont dans la liste, floutées. */
-  cardsPerCourse: 10,
-} as const;
-
 /**
  * Le droit effectif.
  *
@@ -56,51 +77,70 @@ export function resolve(...sources: (Entitlement | null | undefined)[]): Entitle
   return known.find((source) => source.isPro) ?? FREE;
 }
 
-export type LockReason = "sheetBeyondFree" | "cardBeyondFree" | "examMode";
+// MARK: - Les portes
 
-export interface Lock {
-  locked: boolean;
-  reason?: LockReason;
+/** Ce dont la porte de l'import a besoin pour compter, et rien de plus. */
+export interface CountedCourse {
+  /**
+   * Un cours repris dans la bibliothèque n'a rien coûté à produire : le faire compter dans le
+   * quota ferait payer un import qu'on n'a pas fait.
+   */
+  isFromLibrary: boolean;
 }
 
-const OPEN: Lock = { locked: false };
+export function canImportCourse(entitlement: Entitlement, courses: CountedCourse[]): boolean {
+  if (entitlement.isPro) return true;
+  return courses.filter((course) => !course.isFromLibrary).length < FREE_TIER.courses;
+}
+
+export function canPractice(entitlement: Entitlement): boolean {
+  return entitlement.isPro || FREE_TIER.allowsPractice;
+}
+
+/** Vrai à partir de la carte qui doit rester derrière le paywall. */
+export function hasReachedSessionLimit(entitlement: Entitlement, answered: number): boolean {
+  return !entitlement.isPro && answered >= FREE_TIER.cardsPerSession;
+}
+
+// MARK: - La coupure de la fiche
 
 /**
- * Une fiche est-elle lisible en entier ?
+ * Où s'arrête la lecture d'une fiche, pour qui n'est pas abonné.
  *
- * `rank` est le rang du cours dans la bibliothèque de l'étudiant, du plus ancien au plus
- * récent, à partir de zéro. C'est le rang et non la date qui décide : sinon le premier cours
- * se refermerait tout seul le jour où l'étudiant en importe un deuxième.
+ * La coupure se compte **en blocs et non en caractères** : couper un paragraphe au septième
+ * dixième de son texte donnerait une phrase interrompue au milieu d'un mot, ce qui ressemble à
+ * un bug d'affichage plutôt qu'à une limite assumée.
+ *
+ * Toujours au moins un bloc lisible, et jamais plus qu'il n'y en a.
  */
-export function sheetLock(entitlement: Entitlement, rank: number): Lock {
-  if (entitlement.isPro) return OPEN;
-  if (rank < FREE_LIMITS.fullSheets) return OPEN;
-  return { locked: true, reason: "sheetBeyondFree" };
-}
-
-/** Combien de blocs d'une fiche se lisent, pour ce droit et ce rang. */
-export function visibleBlockCount(
-  entitlement: Entitlement,
-  rank: number,
+export function sheetLockIndex(
   blockCount: number,
+  ratio: number = FREE_TIER.readableSheetRatio,
 ): number {
-  return sheetLock(entitlement, rank).locked
-    ? Math.min(FREE_LIMITS.visibleBlocks, blockCount)
-    : blockCount;
+  if (blockCount <= 0) return 0;
+  const raw = Math.round(blockCount * ratio);
+  return Math.max(1, Math.min(blockCount, raw));
 }
 
-/** Une carte est-elle utilisable ? `index` est son rang dans son cours, à partir de zéro. */
-export function cardLock(entitlement: Entitlement, index: number): Lock {
-  if (entitlement.isPro) return OPEN;
-  if (index < FREE_LIMITS.cardsPerCourse) return OPEN;
-  return { locked: true, reason: "cardBeyondFree" };
+/** Coupe la fiche en deux : ce qui se lit, ce qui se devine. */
+export function splitSheet<Block>(
+  blocks: Block[],
+  entitlement: Entitlement,
+  ratio: number = FREE_TIER.readableSheetRatio,
+): { readable: Block[]; locked: Block[] } {
+  if (entitlement.isPro || blocks.length === 0) return { readable: blocks, locked: [] };
+  const index = sheetLockIndex(blocks.length, ratio);
+  return { readable: blocks.slice(0, index), locked: blocks.slice(index) };
 }
 
 /**
- * Le mode examen est réservé, et c'est cohérent : le parcours d'accueil demande la date de
- * l'examen, promet « un parcours adapté à ton examen », et le paywall arrive trois écrans plus
- * loin. Le verrou est posé exactement sur ce qui vient d'être promis.
+ * La part de la fiche qui reste à lire, en pourcentage entier.
+ *
+ * C'est le nombre de la phrase du cadenas — « il te reste 30 % de ce cours à lire ». Il est
+ * calculé et non écrit, pour la même raison que le pourcentage d'économie du paywall : une
+ * valeur écrite à la main à côté d'un ratio qui la contredit est le genre de détail qu'on ne
+ * remarque qu'en production.
  */
-export function examModeLock(entitlement: Entitlement): Lock {
-  return entitlement.isPro ? OPEN : { locked: true, reason: "examMode" };
+export function lockedSheetPercent(ratio: number = FREE_TIER.readableSheetRatio): number {
+  return Math.round((1 - ratio) * 100);
 }
