@@ -21,15 +21,12 @@ enum ExamIntensity: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    var detail: String {
-        switch self {
-        case .light: "Deux passages par carte. Pour un contrôle sur un chapitre déjà su."
-        case .standard: "Trois passages par carte. Le réglage qui convient à un contrôle ordinaire."
-        case .intense: "Quatre passages par carte. Pour un examen qui compte, ou un cours mal su."
-        }
-    }
-
     /// Passages de base, avant l'ajustement dû à l'état de la carte.
+    ///
+    /// Deux pour un chapitre déjà su, trois pour un contrôle ordinaire, quatre pour un examen
+    /// qui compte. Ces phrases s'écrivaient sous les trois pastilles ; elles ont disparu avec
+    /// les autres notes explicatives, et la projection juste en dessous dit la même chose en
+    /// chiffres — combien de cartes, sur combien de jours, et à quoi ressemble le pire jour.
     var basePasses: Int {
         switch self {
         case .light: 2

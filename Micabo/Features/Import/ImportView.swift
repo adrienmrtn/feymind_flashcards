@@ -614,9 +614,11 @@ struct ImportView: View {
     private func applyImported(_ document: ImportedDocument) {
         imported = document
         if title.isEmpty { title = document.fileName }
-        // Vision seulement si le texte est trop mince, et jamais sur une transcription qui
-        // n'a pas de pages : sinon on dépense un appel pour rien.
-        analyzeVisuals = supportsVisionAnalysis && !document.hasUsableText
+        // La vision ne s'allume pas d'elle-même, même sur un scan sans texte. Elle le faisait,
+        // du temps où l'interrupteur était à l'écran : on voyait la case se cocher, donc on
+        // pouvait la décocher. Sans l'interrupteur, ce serait un appel payant déclenché en
+        // silence — c'est l'échec qui la propose maintenant, avec la raison.
+        analyzeVisuals = false
     }
 
     // MARK: - Vidéo YouTube
