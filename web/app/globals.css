@@ -266,6 +266,27 @@ video {
   }
 }
 
+/* Le retournement d'une carte de démonstration.
+ *
+ * Trois façons de le déclencher, et ce n'est pas de la générosité : **le survol ne peut pas être
+ * la seule**. Il est enfermé derrière `hover: hover` et `pointer: fine`, parce que sur un écran
+ * tactile un appui déclenche un faux survol et la carte resterait retournée après que le doigt
+ * est parti. Restent donc l'appui, qui est le geste juste là-bas, et le clavier — la carte est un
+ * `<button>`, et une réponse qu'on ne peut atteindre qu'à la souris est une réponse inaccessible.
+ *
+ * C'est aussi ce qui rend la démonstration vérifiable : un navigateur piloté n'annonce pas
+ * toujours un pointeur fin, et une interaction qui n'existe qu'au survol est une interaction que
+ * personne ne peut tester. */
+.group:focus-visible .hover-flip {
+  transform: rotateY(180deg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .hover-flip {
+    transform: rotateY(180deg);
+  }
+}
+
 /* Les nombres qui se lisent comme un résultat, et eux seuls. */
 @utility numeral {
   font-family: var(--font-number);
@@ -273,13 +294,18 @@ video {
   letter-spacing: var(--tracking-display);
 }
 
-/* Sur-titre en capitales, au-dessus d'un grand titre. */
+/* Sur-titre en capitales, au-dessus d'un grand titre.
+ *
+ * **Il ne pose pas de couleur, et c'est délibéré.** Il en posait une, et elle écrasait
+ * silencieusement le `text-accent` d'un appel précis — deux utilitaires qui déclarent la même
+ * propriété se départagent sur l'ordre du fichier, pas sur l'intention de celui qui écrit la
+ * classe. Un sur-titre est une forme typographique : un corps, une graisse, un écartement, des
+ * capitales. Sa couleur se dit à l'endroit où on l'emploie. */
 @utility eyebrow {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
-  color: var(--color-ink-tertiary);
 }
 
 /* --------------------------------------------------------------------------

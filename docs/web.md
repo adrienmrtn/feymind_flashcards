@@ -876,6 +876,56 @@ pas la page d'accueil** — elle affiche les jetons et calcule tous ses nombres 
 `packages/core`, ce qui en fait aussi une vérification de bout en bout. Et le site n'est pas
 indexable, parce qu'il n'y a rien à trouver encore.
 
+### Où en est l'étape 2
+
+Faite. La page d'accueil existe, sous `/` ; la référence des fondations est passée sous
+`/fondations`.
+
+**La signature fonctionne, et c'est ce qui a demandé le plus de reprises.** Le polycopié brut et
+la fiche occupent le même rectangle, qui reste immobile pendant qu'on défile : le balayage de
+lecture descend sur la page brute, puis la fiche s'écrit par-dessus, bloc après bloc. Deux
+défauts ont dû être corrigés avant que ça tienne, et le premier était une erreur de conception de
+ma part :
+
+- **c'est la fiche qui doit dimensionner le rectangle, pas la page brute.** La première version
+  faisait l'inverse — page brute en flux, fiche en `absolute inset-0` — et la fiche, bien plus
+  haute que les cinq lignes qui la portaient, se faisait rogner aux deux tiers. Le rectangle était
+  bien unique, et c'était le mauvais ;
+- **le balayage se déplace en pixels, pas en pourcentage.** Un pourcentage de `translateY` se
+  compte sur la hauteur de *l'élément déplacé* — la bande — et non sur celle de la page : le
+  balayage ne parcourait qu'un quart du chemin.
+
+Trois décisions d'honnêteté, parce qu'une page d'accueil qui promet ce qui n'existe pas coûte plus
+cher que celle qui l'admet :
+
+| Ce qui manque | Pourquoi, et ce qui est à la place |
+| --- | --- |
+| **La zone de dépôt de l'accroche** | Elle ne peut pas encore mener quelque part : la génération demande le jeton utilisateur et le plafond d'usage, qui sont à l'étape 4. Une zone qui accepte un document et ne le lit pas est exactement le faux appel à l'action que ce site s'interdit. Elle arrivera avec le parcours d'accueil, qui est ce qu'il y a derrière |
+| **Le badge App Store** | L'app n'est pas publiée. Un badge qui ne mène nulle part est un mensonge ; le pied de page dit « l'app iOS arrive » |
+| **Le bouton d'abonnement** | Il n'y a pas d'encaissement avant l'étape 5. Les prix sont écrits — une grille qui cache son prix se lit comme un tunnel de vente — et il n'y a pas de bouton |
+
+À la place, **l'appel à l'action est une liste d'attente, et elle écrit vraiment en base.** Une
+table `waitlist`, insertion anonyme et **aucune politique de lecture** : une politique de lecture
+même restreinte exposerait la liste des adresses de tous les inscrits à n'importe quel visiteur.
+La forme de l'adresse est vérifiée dans la politique et pas seulement dans le formulaire, parce
+qu'une validation côté client se contourne avec une console. Les quatre comportements ont été
+vérifiés contre le vrai projet : insertion acceptée, doublon refusé sur la casse, adresse malformée
+refusée par la politique, et lecture anonyme qui ne rend rien.
+
+Au passage, le conseiller de sécurité de Supabase signalait une erreur qui n'a rien à voir avec le
+site : **`_seed_buf`**, le brouillon laissé par l'import de l'annuaire des établissements, était
+exposé sans cloisonnement — un point d'écriture ouvert à tout le monde, sur la facture du projet.
+Le cloisonnement y est activé sans aucune politique, ce qui la rend inerte depuis l'API tout en la
+laissant utilisable par la clé de service.
+
+Et `thinking-orbs` sert enfin là où elle doit : en 20 px, à même la ligne du bouton, pendant qu'on
+parle au serveur. Monochrome, donc elle ne se bat pas avec le vert.
+
+**Ce qui a été vérifié à l'écran**, plutôt que déduit du code : le rectangle reste immobile et la
+fiche n'est plus rognée, les cartes se retournent au survol, à l'appui **et au clavier** — le
+survol seul ne pouvait pas suffire, une réponse qu'on n'atteint qu'à la souris est une réponse
+inaccessible — et la page tient à 400 px de large sans débordement horizontal.
+
 ## Les décisions prises
 
 | # | Question | Réponse |
