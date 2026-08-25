@@ -127,8 +127,17 @@ export function jsonResponse(payload: unknown, status = 200): Response {
   });
 }
 
+/**
+ * Le refus, dans les mots de celui qui refuse.
+ *
+ * Le statut est lu sur l'erreur elle-même, et non sur son type : `FalError` n'est plus la seule à
+ * en porter un — `CallerError` refuse en 401 ou en 429, et un plafond atteint rendu en 500 serait
+ * lu comme une panne par l'app comme par le site.
+ */
 export function errorResponse(error: unknown): Response {
-  const status = error instanceof FalError ? error.status : 500;
+  const status = error && typeof (error as { status?: unknown }).status === "number"
+    ? (error as { status: number }).status
+    : 500;
   const message = error instanceof Error ? error.message : "Erreur inconnue.";
   return jsonResponse({ error: message }, status);
 }
