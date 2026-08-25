@@ -144,9 +144,10 @@ faire autre chose, si.
 - largeur de contenu ~1100 px, **et ~680 px pour une colonne de fiche**, parce que c'est le seul
   endroit du produit où l'on lit vraiment.
 
-Deux points ouverts, tous deux dans [Questions](#questions) : la police des **nombres** (SF
-Rounded n'existe pas sur le web, et « un grand nombre en arrondi ressemble à un score » est un
-choix d'intention de l'app, pas un détail), et la langue du site.
+Reste le cas des **nombres**. SF Rounded n'existe pas sur le web, et « un grand nombre en arrondi
+ressemble à un score » est un choix d'intention de l'app, pas un détail : c'est **Nunito** qui le
+tient, variable, et uniquement sur les chiffres — jamais un mot. Voir
+[Les décisions prises](#les-décisions-prises).
 
 ### Le survol
 
@@ -298,7 +299,7 @@ Mais quel que soit le chemin de l'argent : **un utilisateur, un droit, lisible p
 clients.** Sinon l'étudiant qui s'abonne sur le site voit le paywall sur son téléphone, et c'est
 la panne la plus coûteuse qu'on puisse livrer.
 
-### Ce que je recommande
+### Ce qui est retenu
 
 **RevenueCat comme source de vérité unique, avec deux rails d'achat derrière : StoreKit sur iOS,
 Stripe sur le web, branchés sur le même projet RevenueCat.**
@@ -468,9 +469,39 @@ Le projet existe déjà (`adriens-projects-145ae26c/micabo`). Les étapes, dans 
    `process.env.VERCEL_ENV !== 'production'`. Sinon Google indexe une prévisualisation et la
    présente à la place du site.
 
-Une précision : **je n'ai pas d'accès MCP à Vercel dans cette session** — seulement Supabase. Je
-ne peux donc ni lire ni régler le projet moi-même. Soit vous cliquez les six étapes, soit vous me
-donnez un jeton Vercel en secret et je le fais à la CLI.
+### Ce que l'accès Vercel permet, et ce qu'il ne permet pas
+
+Le MCP Vercel est branché, et il vaut la peine d'écrire précisément ses limites, parce que deux
+d'entre elles décident de la façon dont le projet est câblé.
+
+| Je peux | Je ne peux pas |
+| --- | --- |
+| Lire les projets, les déploiements, **les journaux de compilation et d'exécution** | Poser une **variable d'environnement** |
+| **Créer** un projet lié au dépôt **avec son `rootDirectory`** | Changer le `rootDirectory`, le framework ou les commandes d'un projet **déjà créé** |
+| Déployer, mettre en pause, régler la protection de déploiement | **Rattacher un domaine** à un projet, ou toucher au DNS |
+| Vérifier la disponibilité d'un domaine, son prix, et **l'acheter** | |
+
+Deux conséquences, et la première est heureuse :
+
+**Le site n'aura besoin d'aucune variable d'environnement avant l'étape 5.** L'URL Supabase et la
+clé publiable sont publiques par nature et sont **déjà écrites en clair dans le dépôt**
+(`AppConfig.swift`) : le web fait pareil, une valeur par défaut dans `web/lib/config.ts`, que
+`process.env.NEXT_PUBLIC_*` remplace si elle existe. C'est exactement le motif de l'app, et ça
+veut dire qu'un déploiement compile et tourne sans que personne n'ait rien collé dans un tableau
+de bord. Seuls les secrets **serveur** — clé de service, Stripe, webhook RevenueCat — sont de
+vraies variables, et ils n'arrivent qu'à l'étape 5.
+
+**Le `rootDirectory` se règle à la création, donc le projet se crée à ce moment-là.** Le projet
+`micabo` existant a été créé sans, et son dernier déploiement part de la racine du dépôt — donc
+d'un projet Xcode. Il n'y a pas d'API dans ce MCP pour le corriger. Le projet de travail sera
+donc créé avec `rootDirectory: web`, et si Vercel refuse d'en créer un second sur le même dépôt,
+il reste un clic à faire : **Settings → Build & Development → Root Directory → `web`**. C'est le
+seul réglage qui casse tout si on l'oublie, et le seul que je ne peux pas garantir sans vous.
+
+Le domaine, enfin : `micabo.app` est **libre, à 9,99 $ pour un an** ; `micabo.com` est pris ;
+`micabo.io` et `micabo.co` sont à ~30 $. Je peux l'acheter depuis ici, sur devis puis
+confirmation explicite — mais **je ne peux pas le rattacher au projet**, donc l'achat ne sert à
+rien avant que vous fassiez ce clic-là. Autant l'acheter vous-même dans le même passage.
 
 ## Ce que le site casse côté iOS
 
@@ -488,68 +519,189 @@ compte sur le cloisonnement pour ne pas ramasser les lignes des autres est une r
 politique ajoutée un jour recasse.** Chaque descente du web porte son filtre `user_id`, y compris
 celles dont la table n'a qu'une seule politique.
 
-## L'ordre du travail
+## Le parcours d'accueil du web
 
-| Phase | Contenu | Livrable visible |
+**Ce n'est pas la page d'accueil, et ce n'est pas celui de l'iPhone.** Neuf écrans contre
+vingt-deux, et surtout un ordre inversé sur le point qui compte : **le compte se crée au deuxième
+écran**, avant toute question. C'est juste ici et faux là-bas — quelqu'un qui a installé une app
+s'est engagé, et le tunnel iOS a dix-sept écrans pour donner une raison ; sur le web, où la
+question suivante est « dans quel pays », un compte demandé tôt est un compte demandé avant qu'on
+ait rien à perdre. Et ça tombe bien : la règle de l'abonnement veut qu'**on ne vende jamais avant
+la connexion**, et le paywall est le dernier écran.
+
+| # | Écran | Contenu |
 | --- | --- | --- |
-| **A** | Monorepo, `web/`, Root Directory sur Vercel, port du thème, `packages/core` **avec ses tests**, Redirect URLs Supabase | rien — et c'est normal |
-| **B** | La page d'accueil, en entier, vrais composants, vrai document de démonstration, feuille d'impression | le site public |
-| **C** | Connexion, liste des cours, lecture d'une fiche, lecture des cartes | on se connecte et on lit ses cours |
-| **D** | Import (dépôt, collage, YouTube), génération de fiche et de cartes, session au clavier | le web produit |
-| **E** | `entitlements`, webhook RevenueCat, encaissement, verrou, branchement RevenueCat sur iOS | le web encaisse |
-| **F** | Liens de partage de fiche, première fiche sans compte | la boucle de croissance |
+| 0 | **Accueil** | « Bienvenue sur la première intelligence artificielle qui aide les élèves à travailler et à approcher les examens sans stress. » |
+| 1 | **Le compte** | Titre « L'application que les meilleurs élèves ne veulent pas que tu connaisses. », sous-titre « Crée ton compte en 10 secondes. » Apple, Google, courriel. Mention des CGU et de la politique de confidentialité |
+| 2 | **Le pays** | « Tu étudies dans quel pays ? » / « Pour te proposer le bon système scolaire. » Le pays détecté **en premier et déjà en évidence**, drapeau compris, puis les plus fréquents |
+| 3 | **Le niveau** | « Qu'est-ce qui te décrit le mieux ? » Les réponses sont **celles du pays choisi** (`EducationStage`) |
+| 4 | **Les matières** | L'écran du mobile, adapté au web : les sept familles de `SubjectCatalog`, un emoji par matière, sans tuile |
+| 5 | **La date d'examen** | « C'est quand, ton prochain examen ? » / « Micabo te créera un parcours adapté à ton examen, pour que tu arrives plus prêt que jamais. » Un calendrier posé directement, les mois défilent, **il est toujours calé sur aujourd'hui**. Au-dessus, le raccourci « Je sais pas encore ». Dès qu'une date est prise, le bouton **« Réussir cet examen »** apparaît et brille ; au clic, « Il te reste X jours. On va bien s'organiser. » s'écrit **mot par mot**, puis « Voir comment ça marche » |
+| 6 | **La démonstration** | Les trois étapes du mobile, mêmes animations, adaptées au web. Et une chose que le mobile ne peut pas faire : sur la troisième, **les cartes se retournent au survol de la souris** |
+| 7 | **L'école** | « Tu étudies dans quelle école ? », le même autocomplete hybride qu'iOS — catalogue embarqué puis la RPC `search_institutions` — et le même « Passer » |
+| 8 | **Le paywall** | « Ne rate pas l'occasion de devenir le meilleur de ta classe » / « Débloque tout Micabo et arrive préparé. » Les avantages en tableau, une ligne par point. Deux formules, l'annuelle en avant avec son économie et son prix ramené au mois. **Une croix pour fermer, visible tout de suite.** En bas, les liens légaux. **Vide pour l'instant** — il se remplit à l'étape 5 |
 
-La réparation des Edge Functions **bloque la phase D** : on ne livre pas un point d'entrée d'IA
-appelable depuis un navigateur, sans jeton et sans plafond.
+L'habillage, commun aux écrans 2 à 8 : une barre de progression en haut, un bouton retour, et le
+bouton principal en bas **gris tant qu'on n'a pas répondu**.
 
-## Questions
+Le bouton retour est une **divergence assumée** avec l'iPhone, où le parcours est « strictement
+linéaire, ni retour arrière ni balayage ». Un navigateur a une flèche retour de toute façon : ne
+pas la servir ne rend pas le parcours linéaire, ça le rend cassé.
 
-Il y en a douze, et les six premières changent le code qu'on écrit.
+### Ce que le parcours écrit
 
-1. **Le domaine.** `micabo.app` est-il acheté ? Je propose un seul domaine avec l'app sous
-   `/app` — les liens de partage et la vitrine profitent alors du même domaine, et le cookie de
-   session est plus simple qu'avec un sous-domaine.
-2. **Le nom.** Le projet Supabase s'appelle `Feymind_flashcards` et des branches parlent de
-   `feymind`. **Micabo** est-il définitif ? Il va se retrouver dans l'URL, les balises de partage
-   et le Service ID Apple.
-3. **Le parcours d'accueil du web.** Envoyez-le. Deux choses à me dire avec : est-ce qu'il tourne
-   **avant** ou **après** la connexion, et est-ce qu'il écrit dans `profiles` (pays, stade,
-   matières, rythme) ? Mon hypothèse est oui, les mêmes colonnes, et l'iPhone **saute alors son
-   propre parcours** pour quelqu'un qui a commencé sur le web. C'est un changement du premier
-   lancement de l'app, donc je veux une confirmation.
-4. **Les « 500 000 étudiants »** de l'écran de preuve sociale : est-ce un vrai chiffre ? Sur un
-   site indexé, c'est une affirmation commerciale. S'il est aspirationnel, je mets un vrai chiffre
-   ou rien.
-5. **Les nombres arrondis.** SF Rounded n'existe pas sur le web, et « un grand nombre en arrondi
-   ressemble à un score » est un choix d'intention de l'app. Trois options : (a) Nunito, la plus
-   proche des arrondies libres, (b) renoncer à la seconde famille sur le web et utiliser Hanken
-   Grotesk en chiffres tabulaires, (c) acheter une police arrondie. Laquelle ?
-6. **L'abonnement — la décision qui me manque le plus.** (a) RevenueCat comme source de vérité
-   avec **Stripe Checkout** sur le web : le plus de contrôle, le plus de code. (b) RevenueCat avec
-   son **Web Billing** : le plus rapide, paywall hébergé, aucun webhook à écrire, mais moins de
-   prise sur la page de paiement et sur la TVA/les factures. (c) **Stripe seul** sur le web et
-   StoreKit seul sur iOS, réconciliés à la main : le moins de commission, de très loin le plus de
-   code et de risque. Je recommande **(b) pour ouvrir, (a) plus tard** si la page de paiement doit
-   devenir la vôtre.
-7. **Le même prix partout ?** 39,99 €/an et 6,99 €/mois sont déclarés dans `Micabo.storekit`. Sur
-   le web, le même prix rapporte ~38,80 € au lieu de ~28 € après la commission d'Apple la première
-   année. On garde des prix identiques — simple et honnête, l'écart de marge est invisible pour
-   l'étudiant — ou le web est moins cher ?
-8. **Le gratuit.** Le paywall promet « cours et cartes illimités », ce qui suppose un palier
-   gratuit limité — et rien n'est limité aujourd'hui. **Qu'est-ce qui est gratuit ?** Ma
-   proposition : 3 fiches, les cartes sur toutes, les sessions sans limite, le mode examen réservé
-   au Pro. Ça décide à la fois du plafond d'`ai_usage` et de la section prix du site.
-9. **Une fiche gratuite sans compte** : oui ou non ? C'est le plus gros levier de conversion du
-   site **et** le plus gros risque de facture fal.
-10. **Le partage de fiche.** Des liens publics, sans authentification, indexables ? Je les ferais
-    **non listés par défaut** : accessibles par le lien, en `noindex`, avec un « publier »
-    explicite pour les rendre indexables. À noter : `courses.visibility` a déjà trois valeurs — un
-    lien web public est un quatrième état, et je préfère le modéliser franchement plutôt que
-    surcharger `public`.
-11. **La langue du site.** Français seul à l'ouverture, ou français et anglais ? L'app écrit déjà
-    les fiches dans la langue du pays de scolarisation, donc la question est ouverte — mais elle
-    change le routage (`/en/…`) et elle coûte beaucoup moins cher tranchée maintenant.
-12. **L'ouverture du site touche l'app iOS** (jeton utilisateur sur les Edge Functions, plus les
-    deux descentes manquantes de `CloudSync`). D'accord pour une soumission App Store dans la même
-    fenêtre ? Les fonctions accepteront les deux clés pendant une version pour ne pas casser les
-    app déjà installées.
+Les écrans 2, 3, 4 et 7 remplissent `profiles` — `country_code`, `study_level`, `subjects`,
+`institution_id`, `institution_name`, `onboarding_completed_at` — dans les mêmes colonnes que
+l'iPhone. Un étudiant qui commence sur le web arrive donc **déjà configuré** sur son téléphone, et
+l'app doit sauter son propre parcours : `onboarding_completed_at` non nul, redescendu par
+`CloudSync`, en est le signal.
+
+L'écran 5 est le seul qui écrit ailleurs : il **crée une ligne dans `exams`**. C'est une bonne
+nouvelle pour le produit et une contrainte technique immédiate — `CloudSync` monte `exams` mais ne
+les redescend **jamais**. En l'état, un étudiant qui donne sa date d'examen sur le web ouvre son
+téléphone et n'y trouve aucun examen. **La descente d'`exams` passe donc de dette à chemin
+critique.**
+
+### Cinq trous dans la spec, et ce que je propose
+
+1. **`dailyMinutes` n'est demandé nulle part**, et c'est lui qui commande le plafond de cartes
+   neuves (`max(2, round(minutes / 2))`). Je **n'ajoute pas d'écran** : la date d'examen est une
+   bien meilleure question que « combien de minutes par jour », et l'ajouter casserait le rythme du
+   tunnel. On garde le défaut de 15 minutes, soit 8 cartes neuves par jour, corrigeable dans les
+   réglages — c'est déjà le défaut de l'app.
+2. **« Économise 60 % » est arithmétiquement faux** aux prix déclarés dans `Micabo.storekit` :
+   6,99 € × 12 = 83,88 €, et 39,99 € font **−52 %**, pas −60 %. Pour dire 60 % il faut passer
+   l'annuel à **33,55 €**. Un pourcentage d'économie faux sur un site public est une allégation
+   commerciale fausse, et c'est le genre de détail qu'Apple relève aussi. Deux issues : écrire
+   « Économise 52 % », ou fixer l'annuel à **33,99 €** (−59,5 %, qui s'arrondit honnêtement à 60).
+   J'écris 52 % par défaut, c'est réversible en une constante.
+3. **La connexion par courriel ne marchera pas en production**, et pas à cause du site : le projet
+   répond `mailer_autoconfirm: false`, donc l'adresse doit être confirmée avant la première
+   connexion — ce qui contredit « crée ton compte en 10 secondes » — et l'envoyeur de démonstration
+   de Supabase est plafonné à quelques courriels par heure. Il faut brancher un vrai envoyeur
+   (Resend, Postmark, SES) dans *Project Settings → Authentication → SMTP*. En attendant, Apple et
+   Google sont en premier et le courriel est en troisième position, où son échec ne bloque personne.
+4. **« Restaurer mes achats » est une notion iOS.** Sur le web, avec Stripe, il n'y a rien à
+   restaurer : ce qu'il faut à cette place, c'est « J'ai déjà un abonnement », qui mène à la
+   connexion. Le libellé iOS reste sur iOS.
+5. Les objectifs et le rapport à l'oubli du tunnel iOS **ne sont pas repris**, et c'est sans
+   conséquence : `learning_goals` ne sert à rien dans la rédaction d'une fiche aujourd'hui. La
+   colonne reste vide pour un compte né sur le web.
+
+## Le verrou du gratuit
+
+**Il n'existe nulle part.** « Même système freemium que sur iOS » décrit ce qu'on veut, pas ce
+qu'il y a : aucun test de droit n'existe dans l'app, et tout compte connecté est de fait Pro. Le
+verrou est donc à concevoir des deux côtés, et il doit être **le même des deux côtés** — sinon un
+cours flouté sur le web se lit en entier sur le téléphone, et le paywall ne veut plus rien dire.
+
+La forme demandée est la bonne, et c'est celle qui convertit : **on génère, puis on floute.** On
+dépose son polycopié, on regarde Micabo travailler, la fiche apparaît — et c'est *à ce moment-là*
+qu'elle se referme. Bloquer l'import serait moins cher en appels fal et beaucoup moins efficace :
+on ne désire pas ce qu'on n'a pas vu.
+
+| | Gratuit | Pro |
+| --- | --- | --- |
+| **Fiches** | La **première est entière**. À partir de la deuxième : le chapeau et les trois premiers blocs se lisent, le reste est **flouté sous un cadenas** | tout |
+| **Cartes** | Les **dix premières** d'un cours sont utilisables. Les suivantes sont dans la liste, floutées, cadenassées. Une session ne tire que dans les débloquées | tout |
+| **Mode examen** | verrouillé | tout |
+| **Sessions, statistiques, bibliothèque, amis** | libres | libres |
+
+Le mode examen fermé est délibéré et cohérent : le tunnel demande la date de l'examen à l'écran 5,
+promet « un parcours adapté à ton examen », et le paywall arrive trois écrans plus loin. Le verrou
+est posé exactement sur ce qui vient d'être promis.
+
+Deux principes d'implémentation qui évitent la réécriture :
+
+- **Le droit se lit à un seul endroit**, `packages/core/entitlement.ts`, une fonction pure qui
+  prend le droit et un index et rend `libre` ou `verrouillé`. Le flou est un composant qui
+  l'interroge, jamais un `if` recopié dans six écrans ;
+- **on construit le verrou, on ne l'arme pas.** Jusqu'à l'étape 5, la fonction rend `isPro: true`
+  pour tout le monde. L'armer, ensuite, est une ligne. Ça évite de livrer un site qui floute des
+  fiches avant qu'on puisse les déverrouiller en payant.
+
+Et le plafond d'`ai_usage` est **autre chose** : ce n'est pas un palier commercial, c'est un
+fusible contre la facture fal. Il compte les générations par jour, pour un compte gratuit comme
+pour un compte Pro, et il vit côté serveur.
+
+## Le plan, en cinq étapes
+
+| Étape | Contenu | Ce qui est vrai à la fin |
+| --- | --- | --- |
+| **1. Les fondations** | Monorepo `web/`, projet Vercel avec `rootDirectory`, port de `MicaboTheme` en CSS, client Supabase avec ses valeurs par défaut committées, Redirect URLs. Et **`packages/core` avec ses tests** : schéma de fiche, balisage en ligne, SM-2, `DailyLoad`, file d'étude, `ExamPlanner`, `RetentionCurve` | Un déploiement vert, et les nombres de `SM2SchedulerTests` vérifiés en TypeScript |
+| **2. La page d'accueil** | Les neuf sections, les vrais composants, le vrai document de démonstration, les règles de survol, la feuille d'impression, `thinking-orbs` là où elle sert | Le site public existe et se lit |
+| **3. Le parcours d'accueil** | Les neuf écrans ci-dessus, la barre de progression, le retour, le bouton gris. Écriture dans `profiles`, création de la ligne `exams`, paywall vide | On crée un compte sur le web et on en sort configuré |
+| **4. L'app web** | Cours, fiche, cartes, **session au clavier**, examens, import (dépôt, collage, YouTube). Et d'abord la réparation : jeton utilisateur sur les Edge Functions, `ai_usage`, CORS resserré | Le web est un produit qu'on utilise |
+| **5. L'argent, et l'accord des deux clients** | `entitlements`, webhook RevenueCat, Stripe Checkout, **le verrou armé**. Côté iOS : RevenueCat, le jeton sur les Edge Functions, et les descentes d'`exams` et de `review_logs` | Le web encaisse, et l'iPhone est d'accord avec lui |
+
+**La réparation de l'étape 4 bloque l'import**, et pas l'inverse : on ne livre pas un point
+d'entrée d'IA appelable depuis un navigateur, sans jeton et sans plafond. Et l'étape 5 est la seule
+qui **touche l'app iOS**, donc la seule qui demande une soumission App Store.
+
+## Les décisions prises
+
+| # | Question | Réponse |
+| --- | --- | --- |
+| 1 | Le domaine | **`micabo.app`**, acheté par Adrien. Libre, 9,99 $/an. `micabo.com` est pris. Un seul domaine, l'app sous `/app` |
+| 2 | Le nom public | **Micabo**, définitif |
+| 3 | Le parcours d'accueil du web | Fourni, transcrit ci-dessus. **Le compte est au deuxième écran**, avant les questions |
+| 4 | La police des nombres | **Nunito**, variable, et **uniquement pour les nombres** |
+| 5 | L'encaissement | **Stripe Checkout derrière RevenueCat** |
+| 6 | Le gratuit | Le flou et le cadenas, tel que spécifié ci-dessus |
+
+**Sur le choix 4**, puisqu'il m'était laissé : Nunito est la plus proche des arrondies libres de
+l'intention de SF Rounded — de vraies terminaisons arrondies, et une graisse variable de 200 à
+1000, donc un seul fichier. Le reproche qu'on peut lui faire est d'être partout ; il ne porte pas
+ici, parce qu'elle ne compose **jamais un mot**. Elle ne sert qu'aux nombres qui se lisent comme un
+résultat — le compte de cartes du jour, la série, les statistiques d'une session, les jours qui
+restent avant l'examen — exactement le domaine de `MicaboFont.number`. Une police qu'on ne voit que
+sur des chiffres ne se reconnaît pas.
+
+## Ce qui reste ouvert, et ce que j'en fais en attendant
+
+Rien là-dedans ne bloque les étapes 1 à 4. Chaque ligne dit ce que je fais par défaut, pour qu'un
+silence ne coûte rien.
+
+| Point | Par défaut, je fais | Pourquoi |
+| --- | --- | --- |
+| Les **« 500 000 étudiants »** de l'écran de preuve sociale | **rien** : le chiffre n'apparaît pas sur le site | Sur un site indexé c'est une allégation commerciale. Mieux vaut pas de chiffre qu'un chiffre indéfendable. La section se remplit en une constante le jour où il y a un vrai nombre |
+| La **langue** du site | **français seul**, mais toute la copie dans un seul module, à la manière de `MicaboCopy.swift` | Ajouter `/en` devient alors un dictionnaire de plus, pas une refonte du routage |
+| Le **partage de fiche** | rien avant l'étape 5 | `courses.visibility` a déjà trois valeurs ; un lien web public est un quatrième état et je préfère le modéliser franchement plus tard que surcharger `public` maintenant |
+| Le **prix du web** | identique à iOS : 39,99 €/an, 6,99 €/mois | Simple et honnête ; l'écart de marge est invisible pour l'étudiant. Réversible en une constante |
+| L'**économie annoncée** sur l'annuel | **« Économise 52 % »** | C'est le vrai chiffre. Voir le trou n° 2 ci-dessus |
+
+### Une idée qui règle une tension
+
+La page d'accueil veut une zone de dépôt à la place du bouton, et le parcours veut un compte au
+deuxième écran. Les deux se contredisent en apparence, et ils se complètent en fait : **on dépose
+son polycopié sur la page d'accueil, et la fiche s'écrit pendant qu'on crée son compte.**
+
+La génération prend une trentaine de secondes, et c'est du temps mort qu'on passe aujourd'hui à
+regarder une animation. Le parcours d'accueil dure, lui, une ou deux minutes. Les faire tourner
+**en parallèle** ne coûte rien, et ça change deux choses : le paywall du dernier écran tombe au
+moment exact où une fiche finie attend derrière lui, et le premier écran de l'app n'est pas une
+liste vide mais **son cours à soi, déjà fiché**.
+
+Ça demande la session anonyme de Supabase (`anonymous_users` est à `false` aujourd'hui) pour que
+la fiche ait un propriétaire avant que le compte existe, puis une liaison d'identité à l'écran 1.
+Le cloisonnement continue de marcher sans une ligne de SQL en plus. Et ça demande le fusible
+d'`ai_usage`, parce qu'une génération offerte par visiteur est une génération offerte à tout le
+monde.
+
+## Les quatre clics que je ne peux pas faire
+
+Ni le MCP Supabase ni le MCP Vercel n'exposent la configuration d'un projet — l'un fait du SQL, des
+Edge Functions et des branches, l'autre lit des déploiements et crée des projets. Ce qui suit est
+donc à faire à la main, et c'est tout ce qui manque.
+
+| # | Où | Quoi | Ce que ça débloque |
+| --- | --- | --- | --- |
+| 1 | Supabase → Authentication → **URL Configuration** | Les trois **Redirect URLs** (dont le joker de prévisualisation), et la **Site URL** | **La connexion sur le web.** Je peux écrire tout l'écran, je ne peux pas vérifier l'aller-retour OAuth |
+| 2 | Vercel → Settings → Build & Development | **Root Directory → `web`** — et seulement si la création du projet par le MCP ne l'a pas déjà posé | La compilation. Sans ça elle part de la racine du dépôt et échoue sur le projet Xcode |
+| 3 | Vercel → Domains, puis Supabase et Apple | Acheter `micabo.app`, le rattacher, puis reporter le domaine dans la Site URL, les Redirect URLs et le Service ID Apple | Le vrai domaine. Peut attendre : les URL `*.vercel.app` suffisent pour tout construire |
+| 4 | Supabase → Project Settings → **SMTP** | Un vrai envoyeur (Resend, Postmark, SES) | La connexion par **courriel** de l'écran 1. Apple et Google marchent sans |
+
+Ce que je peux faire moi-même, en revanche, et qui couvre le reste : appliquer des migrations,
+déployer des Edge Functions, lire les avis de sécurité, créer le projet Vercel avec son
+`rootDirectory`, déployer, et **lire les journaux de compilation** — donc corriger un build cassé
+sans attendre.
