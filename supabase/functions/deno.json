@@ -1,0 +1,10 @@
+{
+  "tasks": {
+    "check": "deno check generate-course/index.ts generate-flashcards/index.ts explain-selection/index.ts youtube-transcript/index.ts",
+    "test": "deno test --allow-all",
+    "verify": "deno task check && deno task test"
+  },
+  "fmt": {
+    "lineWidth": 100
+  }
+}

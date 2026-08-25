@@ -285,9 +285,15 @@ function captionTracks(player: Record<string, unknown>): CaptionTrack[] {
   const tracks: CaptionTrack[] = [];
 
   for (const [index, entry] of raw.entries()) {
+    // Le refus se fait ici, et pas piste par piste sur chaque champ : sans lui, `track`
+    // reste nullable jusqu'au bout de la boucle, et c'est ce qui empêchait la fonction de
+    // se déployer. Une Edge Function qui ne compile pas n'est pas déployée, et l'app
+    // répondait « Fonction Supabase introuvable » à chaque import de vidéo.
     const track = asRecord(entry);
-    const baseUrl = typeof track?.baseUrl === "string" ? track.baseUrl : "";
-    const languageCode = typeof track?.languageCode === "string" ? track.languageCode : "";
+    if (!track) continue;
+
+    const baseUrl = typeof track.baseUrl === "string" ? track.baseUrl : "";
+    const languageCode = typeof track.languageCode === "string" ? track.languageCode : "";
     if (baseUrl.length === 0 || languageCode.length === 0) continue;
 
     const name = asRecord(track.name);

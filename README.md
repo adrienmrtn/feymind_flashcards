@@ -352,12 +352,21 @@ FAL_KEY = votre clé fal.ai
 ### 2. Déployer les fonctions
 
 ```bash
+cd supabase/functions && deno task verify && cd -
 supabase link --project-ref votre-ref
 supabase functions deploy generate-course
 supabase functions deploy generate-flashcards
 supabase functions deploy explain-selection
 supabase functions deploy youtube-transcript
 ```
+
+**`deno task verify` d'abord, et ce n'est pas une politesse.** Une fonction qui ne passe pas
+la vérification de types n'est pas déployée, et l'application ne le sait pas : elle reçoit un
+404 et affiche « Fonction Supabase introuvable ». C'est exactement ce qui est arrivé à
+`youtube-transcript`, restée non déployée à cause de deux `null` non gardés dans
+`_shared/youtube.ts` : l'import de vidéo était donc cassé pour tout le monde, sans qu'une
+seule ligne du chemin YouTube soit en cause. La tâche vérifie les quatre points d'entrée et
+lance les tests des modules partagés.
 
 `youtube-transcript` n'a pas besoin de `FAL_KEY` : elle ne parle qu'à YouTube. Elle lit le
 lecteur par son API interne, avec repli sur la page HTML, et c'est la partie la plus fragile
