@@ -94,11 +94,15 @@ struct TodayView: View {
                     examSection
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.bottom, hasSessionButton ? MicaboLayout.bottomBarClearance : MicaboSpacing.xxl)
+                .padding(.bottom, MicaboSpacing.xxl)
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
-            .overlay(alignment: .bottom) {
+            // Comme le « + » de l'onglet Cours : `safeAreaInset` et non `overlay`. Un overlay
+            // se cale sur les bords de la vue et passait sous la barre d'onglets, qui est
+            // dessinée par la racine par-dessus les pages. Le bouton de session, le premier
+            // appui de l'app, en était couvert.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 if hasSessionButton {
                     MicaboBottomBar {
                         Button {

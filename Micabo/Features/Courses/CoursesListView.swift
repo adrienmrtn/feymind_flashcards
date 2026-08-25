@@ -99,11 +99,16 @@ struct CoursesListView: View {
                     shelfContent
                 }
                 .padding(.top, MicaboSpacing.xs)
-                .padding(.bottom, courses.isEmpty ? MicaboSpacing.xxl : MicaboLayout.bottomBarClearance)
+                .padding(.bottom, MicaboSpacing.xxl)
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
-            .overlay(alignment: .bottomTrailing) { importButton }
+            // Le bouton est posé par `safeAreaInset` et non par un `overlay` : un overlay se
+            // cale sur les bords de la vue, pas sur sa zone sûre, et la barre d'onglets,
+            // dessinée par la racine par-dessus les pages, retombait dessus. Le « + » était
+            // couvert aux deux tiers, donc à moitié cliquable. Posé ici, il se range
+            // au-dessus de la barre, et la liste réserve sa hauteur d'elle-même.
+            .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) { importButton }
             .toolbar(.hidden, for: .navigationBar)
             .reportsNavigationDepth(for: .courses, depth: path.count)
             .navigationDestination(for: Course.self) { course in
@@ -137,10 +142,9 @@ struct CoursesListView: View {
             .padding(.top, MicaboSpacing.xs)
     }
 
-    /// Le seul bouton flottant de l'app : en bas à droite, là où le pouce tombe, et
-    /// posé au-dessus de la barre du bas. Quand la liste est vide, l'écran d'accueil
-    /// porte déjà son propre appel à importer : deux boutons pour la même action
-    /// feraient hésiter.
+    /// Le seul bouton flottant de l'app : en bas à droite, là où le pouce tombe, et posé
+    /// au-dessus de la barre du bas. Quand la liste est vide, l'écran d'accueil porte déjà
+    /// son propre appel à importer : deux boutons pour la même action feraient hésiter.
     @ViewBuilder
     private var importButton: some View {
         if !courses.isEmpty {
@@ -153,7 +157,7 @@ struct CoursesListView: View {
                 showImportChoice = true
             }
             .padding(.trailing, MicaboSpacing.screen)
-            .padding(.bottom, MicaboSpacing.md)
+            .padding(.bottom, MicaboSpacing.sm)
         }
     }
 
