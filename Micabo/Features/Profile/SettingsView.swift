@@ -14,6 +14,9 @@ struct SettingsView: View {
     @State private var dailyMinutes = OnboardingPreferences.dailyMinutes
     @Environment(AuthController.self) private var auth
     @Environment(CloudSync.self) private var sync
+    @Environment(SocialService.self) private var social
+
+    @State private var username = ""
 
     @State private var stage = OnboardingPreferences.educationStage
     @State private var country = OnboardingPreferences.schoolingCountry
@@ -35,6 +38,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                 header
                 accountSection
+                identitySection
                 studiesSection
                 reviewSection
                 intelligenceSection
@@ -172,6 +176,81 @@ struct SettingsView: View {
         formatter.dateFormat = "HH:mm"
         return formatter
     }()
+
+    /// Le nom d'utilisateur, et rien d'autre dans cette section.
+    ///
+    /// Il est donné à l'inscription, dérivé de ce que le fournisseur OAuth a fourni — « Adrien
+    /// Martinot » devient `adrien-7910` — pour qu'on n'ait rien à choisir avant d'avoir compris
+    /// à quoi ça sert. Il se change ici, parce qu'un identifiant qu'on va dicter à ses
+    /// camarades doit pouvoir être le sien.
+    ///
+    /// Le champ ne refuse rien : ce qu'on tape est mis en forme au fur et à mesure, majuscules
+    /// et accents compris. C'est la base qui a le dernier mot sur l'unicité, et le message
+    /// vient d'elle.
+    @ViewBuilder
+    private var identitySection: some View {
+        if auth.isSignedIn {
+            VStack(alignment: .leading, spacing: 8) {
+                MicaboSectionCaption(text: "Nom d'utilisateur")
+
+                HStack(spacing: 11) {
+                    Text("@")
+                        .font(MicaboFont.hanken(16, weight: .semibold))
+                        .foregroundStyle(MicaboColor.inkTertiary)
+
+                    TextField("nom d'utilisateur", text: $username)
+                        .font(MicaboFont.rowTitle)
+                        .foregroundStyle(MicaboColor.ink)
+                        .tint(MicaboColor.accent)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .onSubmit { commitUsername() }
+
+                    if social.isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(MicaboColor.progress)
+                    } else if username != (social.username ?? ""), !username.isEmpty {
+                        Button("Enregistrer", action: commitUsername)
+                            .font(MicaboFont.hanken(13, weight: .semibold))
+                            .foregroundStyle(MicaboColor.accent)
+                    }
+                }
+                .padding(.vertical, 13)
+                .padding(.horizontal, MicaboSpacing.md)
+                .micaboGroup()
+
+                MicaboSectionFootnote(
+                    text: usernameNotice ?? "C'est le nom que tes camarades tapent pour t'ajouter. Trois à vingt caractères, sans espace ni accent."
+                )
+                .foregroundStyle(usernameNotice == nil ? MicaboColor.inkTertiary : MicaboColor.negative)
+            }
+            .onAppear { username = social.username ?? "" }
+            .onChange(of: social.username) { _, new in
+                guard let new else { return }
+                username = new
+            }
+            .onChange(of: username) { _, new in
+                // La mise en forme se fait sous les doigts : voir « Adrien Martinot » devenir
+                // « adrien-martinot » en le tapant explique la règle mieux qu'une phrase.
+                let normalized = Username.normalize(new)
+                if normalized != new { username = normalized }
+            }
+        }
+    }
+
+    private func commitUsername() {
+        let candidate = username
+        Task {
+            let saved = await social.setUsername(candidate)
+            if saved { Haptics.success() }
+        }
+    }
+
+    private var usernameNotice: String? {
+        social.failure
+    }
 
     /// Pour qui les fiches sont écrites, et à quelle longueur.
     ///

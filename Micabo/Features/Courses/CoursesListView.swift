@@ -8,6 +8,7 @@ import SwiftUI
 /// rayon n'apparaît pas : un onglet qui ne mène à rien est un appui perdu.
 struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AuthController.self) private var auth
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
@@ -93,7 +94,7 @@ struct CoursesListView: View {
                     header
                         .padding(.horizontal, MicaboSpacing.screen)
 
-                    if LibraryAccess.isAvailable {
+                    if LibraryAccess.isAvailable(signedIn: auth.isSignedIn) {
                         shelfPicker
                             .padding(.horizontal, MicaboSpacing.screen)
                     }
@@ -118,6 +119,15 @@ struct CoursesListView: View {
             }
             .navigationDestination(for: CourseCardsRoute.self) { route in
                 FlashcardsView(course: route.course)
+            }
+            // Reprendre un cours partagé atterrit sur **sa** fiche, dans sa propre pile : le
+            // chemin est remplacé, donc le retour ramène à la liste de ses cours et non à la
+            // bibliothèque. Un cours qu'on vient de s'approprier n'est plus un cours partagé.
+            .navigationDestination(for: SharedCourseRoute.self) { route in
+                SharedCourseView(route: route) { adopted in
+                    shelf = .mine
+                    path = NavigationPath([adopted])
+                }
             }
         }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
@@ -192,8 +202,10 @@ struct CoursesListView: View {
         case .mine:
             myCourses
         case .discover:
-            LibraryView()
-                .padding(.horizontal, MicaboSpacing.screen)
+            LibraryView { course, author in
+                path.append(SharedCourseRoute(course: course, author: author))
+            }
+            .padding(.horizontal, MicaboSpacing.screen)
         }
     }
 

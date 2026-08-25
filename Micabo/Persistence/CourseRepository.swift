@@ -84,6 +84,70 @@ enum CourseRepository {
         return course
     }
 
+    /// Reprend le cours de quelqu'un d'autre dans « Mes cours ».
+    ///
+    /// Trois décisions, et chacune se paye si on la prend à l'envers :
+    ///
+    /// - **Un nouvel identifiant.** L'identifiant local devient la clé primaire distante :
+    ///   garder celui de l'auteur ferait écrire une ligne qui lui appartient, et le
+    ///   cloisonnement la refuserait — au mieux. Le cours repris est un cours à soi, pas une
+    ///   référence vers le sien.
+    /// - **Privé par défaut.** Reprendre un cours ne donne pas le droit de le rediffuser sous
+    ///   son propre nom. Il reste dans l'app de celui qui l'a repris, et c'est à lui de décider
+    ///   ensuite s'il le repartage.
+    /// - **Sans les cartes.** Elles ne sont pas transportées, et ce n'est pas un manque :
+    ///   l'état de répétition espacée de quelqu'un d'autre dit exactement ce qu'il sait mal.
+    ///   Celui qui reprend le cours écrit les siennes depuis la fiche, ce qui lui sert mieux.
+    @discardableResult
+    static func adopt(
+        _ shared: SharedCourseRecord,
+        from author: String?,
+        in context: ModelContext
+    ) throws -> Course {
+        let title = TextSanitizer.clean(shared.title).nilIfBlank ?? "Cours repris"
+        let index = abs(title.hashValue) % MicaboColor.courseAccents.count
+
+        let course = Course(
+            title: title,
+            subject: shared.subject.flatMap { TextSanitizer.clean($0).nilIfBlank },
+            summary: TextSanitizer.clean(shared.summary) ?? "",
+            emoji: CourseEmoji.resolve(
+                proposed: shared.emoji,
+                subject: shared.subject,
+                title: title
+            ),
+            accentHex: shared.accent_hex?.nilIfBlank
+                ?? MicaboColor.courseAccents[index].hexString,
+            source: .library,
+            // Le nom de l'auteur prend la place du nom de fichier : c'est ce que l'écran du
+            // cours affiche en provenance, et un cours repris doit dire d'où il vient.
+            sourceFileName: author.map { Username.display($0) },
+            rawText: shared.raw_text,
+            contextText: shared.context_text,
+            sheet: CourseSheet.decode(from: shared.sheet?.data),
+            isFromLibrary: true
+        )
+        course.visibility = .private
+        course.fingerprint = CourseFingerprint.make(from: shared.raw_text)
+        context.insert(course)
+
+        try context.save()
+        return course
+    }
+
+    /// Le cours repris est-il déjà là ? On compare l'empreinte, comme pour un import : reprendre
+    /// deux fois le même cours depuis la bibliothèque est le geste le plus facile à faire par
+    /// erreur, puisqu'il ne coûte qu'un appui.
+    static func adopted(_ shared: SharedCourseRecord, in context: ModelContext) -> Course? {
+        let fingerprint = CourseFingerprint.make(from: shared.raw_text)
+        guard !fingerprint.isEmpty else { return nil }
+
+        let descriptor = FetchDescriptor<Course>(
+            predicate: #Predicate { $0.fingerprint == fingerprint }
+        )
+        return try? context.fetch(descriptor).first
+    }
+
     /// Crée un **paquet de cartes** : un cours sans document et sans fiche.
     ///
     /// Tout passait par un import, donc par une fiche, et il n'y avait aucun moyen de

@@ -193,6 +193,7 @@ final class CloudSync {
             sheet: JSONCodable(data: course.sheetData),
             context_text: course.contextText,
             is_from_library: course.isFromLibrary,
+            visibility: course.visibilityRaw,
             created_at: course.createdAt,
             updated_at: course.updatedAt,
             deleted_at: nil
@@ -231,6 +232,12 @@ final class CloudSync {
         course.sheetData = remote.sheet?.data
         course.contextText = remote.context_text
         course.isFromLibrary = remote.is_from_library
+        // Une valeur inconnue d'une version plus ancienne du serveur ne change rien : le
+        // cours garde la visibilité qu'il avait plutôt que de retomber sur « public », ce qui
+        // serait le pire des replis possibles pour un réglage de partage.
+        if CourseVisibility(rawValue: remote.visibility) != nil {
+            course.visibilityRaw = remote.visibility
+        }
         course.createdAt = remote.created_at
         course.updatedAt = remote.updated_at
     }

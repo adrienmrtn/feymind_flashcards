@@ -21,6 +21,7 @@ struct CourseSheetView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiService) private var aiService
     @Environment(\.dismiss) private var dismiss
+    @Environment(CloudSync.self) private var sync
 
     /// La fiche décodée une fois, pas à chaque passage dans le corps de la vue.
     @State private var sheet: CourseSheet?
@@ -155,6 +156,21 @@ struct CourseSheetView: View {
                 Label(sheet == nil ? "Ficher ce cours" : "Refaire la fiche", systemImage: "text.book.closed")
             }
             .disabled(course.rawText.nilIfBlank == nil || !course.source.expectsSheet)
+
+            // Le partage se règle là où le cours se lit, et pas dans les réglages : c'est en
+            // ayant sa fiche sous les yeux qu'on sait si on veut la laisser voir.
+            Menu {
+                ForEach(CourseVisibility.allCases) { value in
+                    Button {
+                        setVisibility(value)
+                    } label: {
+                        Label(value.title, systemImage: value.systemImage)
+                    }
+                }
+            } label: {
+                Label(course.visibility.title, systemImage: course.visibility.systemImage)
+            }
+
             Divider()
             Button(role: .destructive) { showDeleteConfirmation = true } label: {
                 Label("Supprimer le cours", systemImage: "trash")
@@ -163,6 +179,21 @@ struct CourseSheetView: View {
             MicaboCircleIcon(systemImage: "ellipsis", size: 38)
         }
         .accessibilityLabel("Actions du cours")
+    }
+
+    /// Change qui peut retrouver ce cours dans la bibliothèque.
+    ///
+    /// L'écriture est locale, et la synchro la remonte à son prochain passage : refermer un
+    /// cours doit être immédiat à l'écran, même dans un train sans réseau. C'est le bon sens
+    /// pour ce réglage-là — le cours reste visible en ligne quelques minutes de plus, mais
+    /// l'app ne fait jamais attendre quelqu'un qui vient de décider de se refermer.
+    private func setVisibility(_ value: CourseVisibility) {
+        guard value != course.visibility else { return }
+        Haptics.selection()
+        course.visibility = value
+        course.updatedAt = Date()
+        try? modelContext.save()
+        Task { await sync.sync(context: modelContext) }
     }
 
     private var deleteWarning: String {

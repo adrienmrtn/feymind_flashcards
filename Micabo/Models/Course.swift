@@ -69,6 +69,9 @@ final class Course {
     /// Première page ou photo, utilisée comme couverture.
     @Attribute(.externalStorage) var coverImageData: Data?
     var isFromLibrary: Bool = false
+    /// Qui peut retrouver ce cours dans la bibliothèque. Voir `CourseVisibility` : c'est le
+    /// cours qui porte le réglage, pas le compte.
+    var visibilityRaw: String = CourseVisibility.standard.rawValue
     /// Empreinte du contenu importé, pour reconnaître un chapitre déjà présent.
     var fingerprint: String = ""
 
@@ -111,6 +114,11 @@ final class Course {
     var source: CourseSource {
         get { CourseSource(rawValue: sourceRaw) ?? .text }
         set { sourceRaw = newValue.rawValue }
+    }
+
+    var visibility: CourseVisibility {
+        get { CourseVisibility(rawValue: visibilityRaw) ?? .standard }
+        set { visibilityRaw = newValue.rawValue }
     }
 
     var cards: [Flashcard] {
