@@ -86,7 +86,7 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli |
 | Démonstration | courbe de mémorisation, puis dépôt → fiche → révisions en trois écrans, puis le mode examen |
 | Personnalisation | matières, établissement (avec « Passer »), temps quotidien |
-| Sortie | projection annuelle, notifications, personnalisation, essai de 3 jours, paywall |
+| Sortie | projection annuelle, notifications, génération du parcours, preuve sociale, passage de relais, connexion, essai de 3 jours, paywall |
 
 Un seul écran offre une échappatoire, et elle est posée en haut à droite sur la ligne du
 sur-titre (`OnboardingSkip`) : demander son établissement à quelqu'un qui n'en a pas, qui est
@@ -114,9 +114,10 @@ Ce qui a été retiré, et pourquoi, vaut d'être écrit noir sur blanc :
   (`OnboardingWordByWordTitle`), et le bouton n'arrive qu'une fois le dernier mot en place.
 - **les icônes de décoration.** Une pastille colorée par ligne de réponse fait lire des
   pictogrammes au lieu des réponses. `OnboardingChoiceRow` n'a plus que son libellé et sa coche.
-- **la liste, quand la question n'a que deux réponses.** Empilées, les deux rangées se lisent
-  l'une après l'autre et laissent croire que la première compte plus. La question de l'oubli
-  pose donc ses deux réponses côte à côte (`OnboardingChoiceTile`), à taille égale.
+- **les réponses tassées en haut de la page.** Sur un écran de question, les réponses *sont*
+  le contenu : les serrer sous le titre laisse les deux tiers de l'écran vides en dessous et
+  fait lire un formulaire. `expandsContent` sur `OnboardingScaffold` et
+  `OnboardingAnswerList` leur donnent la page entière, à hauteur égale entre elles.
 - **les choix qu'on ne peut pas faire.** L'écran de langue affichait cinq rangées à drapeau
   dont quatre grisées ; il en affiche une, et une ligne annonce la suite.
 - **le flou d'apparition.** Il coûtait une passe de rendu par image, rendait le texte illisible
@@ -199,11 +200,12 @@ Trois règles valent pour tout le tunnel :
   derrière lequel tourne une opération passe en état chargement, annonce ce qu'il fait et
   refuse les appuis suivants.
 - **deux écrans voisins ne se ressemblent pas** — les compositions alternent (paquet de cartes,
-  pastilles, liste, graphe, calendrier, grand chiffre), et **deux écrans seulement** quittent
-  le crème : l'accroche sur l'encre, la personnalisation sur l'indigo. C'est un de moins
-  qu'avant, parce que la variété d'un parcours ne vient pas de ses fonds mais de ce qu'il y a
-  à regarder. Le texte reste **fer à gauche** partout et le bouton **collé au bas de la zone
-  sûre**.
+  liste, graphe, calendrier, curseur, carrousel), et **trois écrans seulement** quittent le
+  crème : l'accroche et le passage de relais sur l'encre, la génération du parcours sur
+  l'indigo. La variété d'un parcours ne vient pas de ses fonds mais de ce qu'il y a à
+  regarder, et l'encre est réservée aux deux moments où le parcours s'adresse à quelqu'un au
+  lieu de lui montrer quelque chose. Le texte reste **fer à gauche** partout et le bouton
+  **collé au bas de la zone sûre**.
 
 `OnboardingStep.surface` est la seule source de vérité sur ce point, et `OnboardingScaffold`
 porte la bascule : `surface:` change le fond, la couleur des textes, celle du bouton (clair sur
@@ -216,9 +218,32 @@ l'indigo quand il est indigo, jamais sur une bande crème rapportée. Le thème 
 par `RootView` sur l'app elle-même, pas au-dessus du parcours : celui-ci passe en sombre le temps
 de ses écrans d'encre pour que l'heure du téléphone reste lisible.
 
-L'écran de personnalisation est le seul indigo plein cadre. Il fait tourner trois signaux
-d'activité en même temps — une barre qui avance image par image, un pourcentage qui compte, et
-une accroche qui change à chaque étape — pour qu'on ne puisse jamais le croire figé.
+### La génération du parcours, et ce qui vient après
+
+L'écran de génération est le seul indigo plein cadre. Il tient en trois bandes qui ne bougent
+plus une fois posées — l'accroche en haut sur une hauteur réservée d'avance, l'anneau au
+centre, les quatre étapes en bas — parce que sa version précédente empilait tout en haut de
+l'écran et changeait de hauteur à chaque phrase, si bien que l'écran tremblait pendant qu'il
+travaillait. L'anneau fait son tour pendant que le pourcentage compte image par image : deux
+façons de dire la même chose, et c'est la seule chose que cet écran a à dire.
+
+**Il dure quatre secondes et demie, et c'est un plancher verrouillé par un test**
+(`PersonalizingStepView.duration`). Un écran qui annonce qu'il construit un parcours puis
+disparaît en une seconde n'a rien construit : on ne lit ni ce qu'il dit ni ce qu'il coche, et
+la promesse du parcours personnalisé passe pour du décor.
+
+Les trois écrans qui suivent forment la fin du parcours, et leur ordre est délibéré :
+
+| Écran | Ce qu'il dit | Pourquoi là |
+| --- | --- | --- |
+| Preuve sociale | « Nous avons aidé 500 000 étudiants », puis quatre avis en carrousel qui défilent seuls et se font défiler à la main | Posée en ouverture, elle demande de croire une app qu'on n'a pas vue ; posée ici, elle répond à la seule question qui reste après la génération du parcours : est-ce que ça marche pour d'autres que moi ? |
+| Passage de relais | « C'est maintenant à ton tour de découvrir la méthode d'apprentissage que tous les meilleurs élèves utilisent », dont le gras se pose mot par mot | C'est le pivot : jusque-là on montrait, à partir de là c'est l'étudiant qui s'y met. D'où l'encre, et le bouton qui n'arrive qu'une fois le dernier mot posé. |
+| Connexion | Apple et Google, trois lignes sur ce qu'un compte sauvegarde, et « Continuer sans compte » | Demander un compte à l'ouverture, c'est le demander pour une app qu'on n'a pas encore vue fonctionner. Ici le parcours est construit, et le compte sert à ne pas le perdre. |
+
+Les deux flux OAuth **ne sont pas encore branchés** : `OnboardingSignInProvider` décrit les
+fournisseurs, et tout passe par `SignInStepView.signIn(with:)`, seul point d'entrée à
+compléter le jour où les identifiants seront là. « Continuer sans compte » reste ouvert et
+volontairement discret — un écran de connexion sans issue se quitte en quittant l'app.
 
 Les réponses sont écrites au fil de l'eau dans `OnboardingPreferences` (clés `micabo.onboarding.*`)
 et survivent donc à une fermeture en cours de route. `Réglages` propose **Refaire l'onboarding**,
@@ -226,9 +251,28 @@ qui efface ces clés et relance le parcours sans toucher aux cours.
 
 La toute première question est **Tu en es où ?** : lycée, prépa, licence, PASS-santé, master,
 concours ou autre. Elle vient juste après l'accroche parce qu'elle situe tout le reste, un
-lycéen et un PASS n'ayant ni les mêmes matières, ni les mêmes examens, ni le même rythme. Sept
-réponses en pastilles et non en rangées : sept rangées feraient un écran qu'on fait défiler
-pour répondre à une question fermée.
+lycéen et un PASS n'ayant ni les mêmes matières, ni les mêmes examens, ni le même rythme. Les
+sept réponses **occupent la page**, en rangées qui se partagent la hauteur à égalité. Elles
+tenaient avant en pastilles serrées sous le titre : tout était visible d'un coup, mais les
+deux tiers de l'écran restaient vides en dessous, et une question posée dans le coin
+supérieur d'une page blanche se lit comme un formulaire. Rien ne défile pour autant.
+
+La question de l'oubli, **En général, oublies-tu ce que tu apprends ?**, a quatre réponses là
+où elle en avait deux (`ForgettingHabit`). Un oui/non sur un sujet aussi personnel force la
+caricature : celui qui retient bien quand il s'y prend correctement n'est ni « oui, tout le
+temps » ni « non, ça va », et devant deux cases il choisit celle qui le décrit le moins mal,
+ce qui ne renseigne personne. Les deux réponses du milieu sont les plus utiles — elles disent
+que le problème est la méthode. La clé historique `micabo.onboarding.forgetsOften` reste tenue
+à jour, les quatre réponses s'y ramenant en oui ou non.
+
+Le **temps quotidien** annonce ce qu'il sert à décider (« Ça nous aide à créer un parcours
+parfaitement personnalisé à tes besoins »), et la **projection annuelle** qui le suit met son
+chiffre dans le titre : « À ce rythme, dans un an, tu auras appris 5 480 cartes sur le bout des
+doigts ». Le nombre vivait avant en corps 64 sous un titre qui annonçait sa venue et un
+sous-titre qui répétait le rythme choisi à l'écran précédent — trois éléments pour une seule
+information. Le titre dit maintenant la chose entière, en une phrase qu'on peut répéter à
+quelqu'un, et ce qui reste sous lui est la preuve : douze mois qui montent, puis le calcul posé
+ligne à ligne.
 
 Après le choix des matières, **Tu étudies où ?** propose un autocomplete hybride : un catalogue
 embarqué (`LocalInstitutions.json`, ~600 établissements FR/EU prioritaires) pour l'instantané,
@@ -236,8 +280,8 @@ puis la RPC Supabase `search_institutions` sur la table `institutions` (~14 500 
 mondiales, grandes écoles FR, lycées FR). Le texte libre reste accepté, mais il ne donne pas
 d'`id` : seul un résultat choisi dans la liste en pose un.
 
-Le parcours est désormais une **file droite** : aucun écran ne se saute. L'écran de preuve
-sociale, qui était le seul conditionnel, a été retiré, et le mécanisme d'écran sauté avec lui.
+Le parcours est une **file droite** : aucun écran ne se saute, et le mécanisme d'écran
+conditionnel qui existait pour la preuve sociale a disparu avec sa première version.
 
 L'écran courbe s'appuie sur `RetentionCurve` : une décroissance exponentielle de la rétention, remise
 à 100 % à chaque révision, avec une stabilité qui augmente à chaque passage. Il doit se lire en trois

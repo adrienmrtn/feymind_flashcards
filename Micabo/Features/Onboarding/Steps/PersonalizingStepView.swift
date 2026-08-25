@@ -1,13 +1,20 @@
 import Combine
 import SwiftUI
 
-/// Écran 16 : mise en place du profil. Purement visuel — les réponses sont déjà
+/// Écran 16 : génération du parcours. Purement visuel — les réponses sont déjà
 /// enregistrées — mais il ne doit jamais laisser croire que l'app a gelé.
 ///
 /// C'est le seul écran indigo plein cadre du parcours : après une série d'écrans crème,
-/// il tranche. Trois signaux d'activité tournent en même temps : une barre qui avance en
-/// continu, un pourcentage qui compte image par image, et une accroche qui change à
-/// chaque étape.
+/// il tranche. Sa mise en page tient en trois bandes qui ne bougent plus une fois posées :
+/// l'accroche en haut, l'anneau au centre, les étapes en bas. La version précédente
+/// empilait tout en haut de l'écran derrière un ressort, si bien que la hauteur du bloc
+/// changeait à chaque phrase et que l'écran tremblait pendant qu'il travaillait.
+///
+/// **Le chargement dure quatre secondes et demie**, et c'est un plancher, pas une
+/// approximation. Un écran qui annonce qu'il construit un parcours puis disparaît en une
+/// seconde n'a rien construit : on ne lit ni ce qu'il dit ni ce qu'il coche, et la promesse
+/// du parcours personnalisé passe pour du décor. Quatre phases lisibles, un anneau qui fait
+/// son tour complet, et on arrive sur la suite en ayant vu le travail se faire.
 struct PersonalizingStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -31,13 +38,21 @@ struct PersonalizingStepView: View {
             step: "Calibrage de la répétition"
         ),
         Phase(
+            headline: "On trace ton parcours.",
+            detail: "Matière par matière, du premier jour jusqu'à tes examens.",
+            step: "Tracé de ton parcours"
+        ),
+        Phase(
             headline: "On prépare ta première session.",
             detail: "Elle t'attendra dès l'ouverture de l'app.",
             step: "Préparation de ta session"
         )
     ]
 
-    private let duration = 3.3
+    /// Durée du chargement, en secondes. Un plancher, et il est verrouillé par un test :
+    /// un écran de génération qui passe en une seconde n'a rien généré aux yeux de
+    /// personne.
+    static let duration = 4.5
 
     @State private var elapsed = 0.0
     @State private var completed = 0
@@ -46,7 +61,7 @@ struct PersonalizingStepView: View {
     private let ticker = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
 
     private var progress: Double {
-        min(1, elapsed / duration)
+        min(1, elapsed / Self.duration)
     }
 
     private var isDone: Bool {
@@ -59,34 +74,16 @@ struct PersonalizingStepView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("PERSONNALISATION")
-                    .font(MicaboFont.eyebrow)
-                    .tracking(MicaboTracking.caps)
-                    .foregroundStyle(MicaboColor.onInk.opacity(0.7))
-
-                Text(isDone ? "Ton profil est prêt." : current.headline)
-                    .font(MicaboFont.hanken(30, weight: .bold))
-                    .foregroundStyle(MicaboColor.onInk)
-                    .tracking(-0.7)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .contentTransition(.opacity)
-                    .animation(.easeOut(duration: 0.28), value: current.headline)
-
-                Text(isDone ? "On y va." : current.detail)
-                    .font(MicaboFont.hanken(15, weight: .regular))
-                    .foregroundStyle(MicaboColor.onInk.opacity(0.78))
-                    .lineSpacing(3)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .contentTransition(.opacity)
-                    .animation(.easeOut(duration: 0.28), value: current.detail)
-            }
-
-            stepList
+            headline
 
             Spacer(minLength: 0)
 
-            gauge
+            ring
+                .frame(maxWidth: .infinity)
+
+            Spacer(minLength: 0)
+
+            stepList
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .padding(.horizontal, MicaboSpacing.screen)
@@ -97,6 +94,77 @@ struct PersonalizingStepView: View {
         .onReceive(ticker) { _ in
             tick()
         }
+    }
+
+    // MARK: - Accroche
+
+    /// La hauteur du bloc est réservée d'avance : les quatre accroches n'ont pas le même
+    /// nombre de lignes, et un titre qui se recompose à chaque phase fait sauter l'anneau.
+    private var headline: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("PERSONNALISATION")
+                .font(MicaboFont.eyebrow)
+                .tracking(MicaboTracking.caps)
+                .foregroundStyle(MicaboColor.onInk.opacity(0.7))
+
+            Text(isDone ? "Ton parcours est prêt." : current.headline)
+                .font(MicaboFont.hanken(30, weight: .bold))
+                .foregroundStyle(MicaboColor.onInk)
+                .tracking(-0.7)
+                .fixedSize(horizontal: false, vertical: true)
+                .contentTransition(.opacity)
+                .animation(.easeOut(duration: 0.28), value: current.headline)
+
+            Text(isDone ? "On y va." : current.detail)
+                .font(MicaboFont.hanken(15, weight: .regular))
+                .foregroundStyle(MicaboColor.onInk.opacity(0.78))
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+                .contentTransition(.opacity)
+                .animation(.easeOut(duration: 0.28), value: current.detail)
+        }
+        .frame(maxWidth: .infinity, minHeight: 118, alignment: .topLeading)
+    }
+
+    // MARK: - Anneau
+
+    /// L'anneau fait son tour en même temps que le parcours se construit, et le
+    /// pourcentage compte image par image : deux façons de dire la même chose, parce que
+    /// c'est la seule chose que cet écran a à dire.
+    ///
+    /// Il est plafonné, pas fixé : sur un petit écran, il rend la place à l'accroche et aux
+    /// étapes, qui elles doivent rester lisibles en entier.
+    private var ring: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.white.opacity(0.2), lineWidth: 10)
+
+            Circle()
+                .trim(from: 0, to: max(0.005, progress))
+                .stroke(MicaboColor.onInk, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+
+            VStack(spacing: 2) {
+                Text("\(Int(progress * 100)) %")
+                    .font(MicaboFont.hanken(44, weight: .bold))
+                    .foregroundStyle(MicaboColor.onInk)
+                    .tracking(-1.4)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+
+                Text(isDone ? "Terminé" : "Micabo travaille")
+                    .font(MicaboFont.hanken(12, weight: .medium))
+                    .foregroundStyle(MicaboColor.onInk.opacity(0.72))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 24)
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .frame(maxWidth: 184, maxHeight: 184)
+        .accessibilityElement()
+        .accessibilityLabel("Génération de ton parcours")
+        .accessibilityValue("\(Int(progress * 100)) %")
     }
 
     // MARK: - Étapes
@@ -148,43 +216,11 @@ struct PersonalizingStepView: View {
         .animation(OnboardingMotion.shift, value: isDone)
     }
 
-    // MARK: - Jauge
-
-    /// La barre avance à chaque image : c'est elle qui dit que rien n'est figé.
-    private var gauge: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.white.opacity(0.22))
-
-                    Capsule()
-                        .fill(MicaboColor.onInk)
-                        .frame(width: max(6, proxy.size.width * progress))
-                }
-            }
-            .frame(height: 8)
-
-            HStack {
-                Text(isDone ? "Terminé" : "Micabo travaille…")
-                    .font(MicaboFont.hanken(13, weight: .medium))
-                    .foregroundStyle(MicaboColor.onInk.opacity(0.75))
-
-                Spacer()
-
-                Text("\(Int(progress * 100)) %")
-                    .font(MicaboFont.hanken(13, weight: .bold))
-                    .foregroundStyle(MicaboColor.onInk)
-                    .monospacedDigit()
-            }
-        }
-    }
-
     // MARK: - Déroulé
 
     private func tick() {
-        guard elapsed < duration else { return }
-        elapsed = min(duration, elapsed + 1.0 / 60.0)
+        guard elapsed < Self.duration else { return }
+        elapsed = min(Self.duration, elapsed + 1.0 / 60.0)
 
         let reached = min(phases.count, Int(progress * Double(phases.count)))
         if reached > completed {
@@ -194,7 +230,7 @@ struct PersonalizingStepView: View {
             Haptics.tick()
         }
 
-        if elapsed >= duration {
+        if elapsed >= Self.duration {
             finish()
         }
     }
@@ -206,7 +242,7 @@ struct PersonalizingStepView: View {
 
         // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.
         let flow = model
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             flow.advance()
         }
     }

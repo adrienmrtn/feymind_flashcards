@@ -59,6 +59,37 @@ enum StudyLevel: String, CaseIterable, Identifiable {
     }
 }
 
+/// Rapport de l'étudiant à l'oubli.
+///
+/// Quatre réponses là où il n'y avait qu'un oui et un non. Une question fermée à deux
+/// branches sur un sujet aussi personnel force la caricature : celui qui retient bien
+/// quand il s'y prend correctement n'est ni « oui, tout le temps » ni « non, ça va », et
+/// devant deux cases il choisit celle qui le décrit le moins mal, ce qui ne renseigne
+/// personne. Les deux réponses du milieu sont d'ailleurs les plus utiles : elles disent
+/// que le problème est la méthode, ce que Micabo apporte.
+enum ForgettingHabit: String, CaseIterable, Identifiable {
+    case always
+    case withMethod
+    case sometimes
+    case never
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .always: "Oui, tout le temps"
+        case .withMethod: "Oui, mais quand j'ai les bonnes méthodes je retiens bien"
+        case .sometimes: "Non, mais ça m'arrive d'oublier des notions"
+        case .never: "Non, jamais"
+        }
+    }
+
+    /// Ce que la réponse dit en oui ou non, pour le réglage historique.
+    var forgetsOften: Bool {
+        self == .always || self == .withMethod
+    }
+}
+
 /// Réponses de l'onboarding, conservées localement pour personnaliser l'app.
 enum OnboardingPreferences {
     enum Key {
@@ -66,6 +97,7 @@ enum OnboardingPreferences {
         static let level = "micabo.onboarding.level"
         static let goal = "micabo.onboarding.goal"
         static let goals = "micabo.onboarding.goals"
+        static let forgetting = "micabo.onboarding.forgetting"
         static let forgetsOften = "micabo.onboarding.forgetsOften"
         static let subjects = "micabo.onboarding.subjects"
         static let institutionId = "micabo.onboarding.institutionId"
@@ -75,7 +107,7 @@ enum OnboardingPreferences {
         static let completedAt = "micabo.onboarding.completedAt"
 
         static let all = [
-            completed, level, goal, goals, forgetsOften, subjects,
+            completed, level, goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
             dailyMinutes, notificationsOptIn, completedAt
         ]
@@ -117,6 +149,20 @@ enum OnboardingPreferences {
         goals.compactMap(LearningGoal.init(rawValue:))
     }
 
+    /// La réponse détaillée à la question de l'oubli.
+    static var forgetting: ForgettingHabit? {
+        get { defaults.string(forKey: Key.forgetting).flatMap(ForgettingHabit.init(rawValue:)) }
+        set {
+            if let newValue {
+                defaults.set(newValue.rawValue, forKey: Key.forgetting)
+            } else {
+                defaults.removeObject(forKey: Key.forgetting)
+            }
+        }
+    }
+
+    /// Le même rapport à l'oubli, en oui ou non. Conservé parce que la clé est déjà posée
+    /// sur les appareils qui ont fait le parcours à deux réponses.
     static var forgetsOften: Bool? {
         get {
             guard defaults.object(forKey: Key.forgetsOften) != nil else { return nil }
