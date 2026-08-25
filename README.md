@@ -721,9 +721,15 @@ l'aurait forcé à choisir entre tout ouvrir et tout fermer, c'est-à-dire à to
 valeurs (`CourseVisibility`) : `public` se lit par les camarades du même établissement **et**
 par les amis — quelqu'un qui change d'école ne perd pas l'accès aux cours de ses amis ;
 `friends` ne se lit que par les amis ; `private` par personne. Le défaut est `public`, assumé :
-une bibliothèque où personne ne dépose rien n'intéresse personne. Le réglage se change là où le
-cours se lit, dans le menu de sa fiche, parce que c'est en l'ayant sous les yeux qu'on sait si
-on veut la laisser voir.
+une bibliothèque où personne ne dépose rien n'intéresse personne.
+
+Le réglage se choisit **à l'import**, et se change ensuite là où le cours se lit, dans le menu
+de sa fiche. Les deux moments comptent, et le premier manquait : quand on sait, en déposant le
+document, qu'on ne veut pas le partager, un cours qui part public le temps qu'on y pense est un
+cours qui a été visible — le refermer après ne rattrape pas la minute passée. Le choix se garde
+d'un import à l'autre (`CourseVisibility.importKey`), parce que c'est une habitude plutôt qu'une
+propriété du document. Le paquet de cartes y gagne plus encore : n'ayant pas de fiche, il n'avait
+aucun écran où l'on pouvait le refermer, donc il restait public à vie.
 
 **On ne relâche que le `SELECT`.** Les politiques existantes ne bougent pas : personne ne peut
 modifier le cours de quelqu'un d'autre. Une seconde politique de lecture s'ajoute à la première,
@@ -862,9 +868,11 @@ La vidéo est la seule exception à la règle ci-dessus, et l'écran d'import le
 part à l'Edge Function, qui va chercher les sous-titres. Rien d'autre ne quitte le
 téléphone, et l'audio n'est jamais envoyé nulle part.
 
-L'option **Analyser les schémas et images** est le seul extra payant : jusqu'à 6 JPEG
-partent alors au modèle de vision fal.ai. Elle est décochée dès que le texte extrait
-est suffisant, et proposée si le document ressemble à un scan pauvre en texte.
+L'**analyse des schémas** est le seul extra payant : jusqu'à 6 JPEG partent alors au modèle
+de vision fal.ai. Ce n'est plus une case à cocher d'avance — cocher une option payante avant
+de savoir si elle sert est une décision qu'on ne peut pas prendre, et l'écran la posait en
+premier. Elle s'allume toute seule quand le texte extrait est trop mince, et l'échec la
+propose comme sortie quand un scan n'a rien rendu d'exploitable.
 
 Les anciens `.doc` binaires ne sont pas lus : exporte-les en `.docx` depuis Word.
 
@@ -969,8 +977,11 @@ Le stade se corrige dans **Profil → Réglages → Tes études**, parce qu'on c
 qu'une réponse donnée en trente secondes le premier jour ne doit pas se payer pendant deux ans.
 
 La **longueur** se choisit au même endroit, et aussi sur l'écran d'import, juste avant le bouton
-qui l'utilise : la réponse dépend du document qu'on vient de déposer. Trois formats, et pas un
-curseur de blocs, parce que ce qu'on choisit est un usage :
+qui l'utilise : la réponse dépend du document qu'on vient de déposer. Elle s'y règle au
+**curseur** — trois pastilles côte à côte se pèsent l'une contre l'autre, alors que le geste
+réel est de vouloir plus court ou plus long que la dernière fois — et le format retenu s'écrit
+au bout de la ligne du titre avec sa durée de lecture. Trois crans, et pas un curseur de blocs,
+parce que ce qu'on choisit est un usage :
 
 | Format | Blocs demandés | Pour quoi |
 | --- | --- | --- |
@@ -1521,6 +1532,40 @@ L'écran répond maintenant dans cet ordre :
 L'annulation rend ce détail comme elle rendait les deux compteurs. Et une sauvegarde de session
 écrite avant que ce détail existe se reprend toujours : ses deux chiffres suffisent, et tout ce
 qui n'était pas « à revoir » y devient « correct ».
+
+**Il se construit sous les yeux.** C'est le seul écran de récompense de l'app, et il tombait
+d'un bloc, chiffres finaux compris : vingt minutes de travail s'affichaient comme une facture.
+Les nombres partent de zéro et montent, les barres se remplissent en cascade, la pastille
+grandit en entrant, et les impulsions haptiques suivent la montée des chiffres — le même geste
+que la projection du parcours d'accueil. Tout est posé en une seconde, parce qu'un bilan qui se
+fait attendre est un bilan qu'on quitte avant la fin ; la durée, elle, ne compte pas, parce
+qu'un « 12 min » qui monterait de zéro se lirait comme un chronomètre qui tourne encore. Et
+l'animation ne se rejoue pas : un chiffre qui remonte à chaque retour sur l'écran cesse d'être
+une récompense pour devenir un décor.
+
+### Ce qu'une note écrit, et quand
+
+**Une note ne touche pas le disque.** Chacune enregistrait : un `save()` SwiftData, donc une
+transaction SQLite, sur le fil principal, à l'intérieur du bloc d'animation qui faisait entrer
+la carte suivante — l'animation ne pouvait pas commencer avant la fin de l'écriture. Et le
+`save()` coûtait deux fois, la seconde étant la plus lourde : il publie les changements au
+contexte, donc les **trois pages d'onglets rafraîchissent leurs requêtes** — elles restent
+montées toutes les trois — et chacune recompte ses séries, ses files et ses histogrammes sur
+tout l'historique. Quatre notes par seconde déclenchaient douze recalculs.
+
+Les actions s'accumulent donc en mémoire et partent par paquets de cinq, posés après l'image
+plutôt que dedans. Le risque est borné et se répare seul : une app tuée au milieu d'un paquet
+perd ses notes, et les cartes concernées se retrouvent simplement dues à la prochaine session.
+La fin de la file, la sortie de session et le passage en arrière-plan forcent l'écriture, ce qui
+couvre tous les cas où l'on quitte pour de bon. L'instantané de la file, lui, reste écrit à
+chaque note : c'est un petit JSON dans les réglages.
+
+Les ressorts sont partis avec. Un ressort dépasse sa cible puis y revient, et sur le geste le
+plus répété de l'app ce retour se sent comme un retard : on voyait la carte suivante s'installer
+pendant presque une demi-seconde après avoir appuyé. `StudyMotion` tient les deux courbes qui
+restent, courtes et monotones comme celles du parcours d'accueil, et la carte sortante s'efface
+en reculant pendant que l'entrante arrive du bas — un changement d'identité sans transition ne
+donnait qu'un fondu, et un fondu ne dit pas qu'on a avancé d'une carte.
 
 `MicaboTests/StudySessionTests.swift` verrouille l'annulation, l'entraînement libre, la reprise,
 le détail des notes et l'échéance annoncée.

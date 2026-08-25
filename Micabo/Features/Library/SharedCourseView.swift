@@ -144,11 +144,6 @@ struct SharedCourseView: View {
             Text("Ce cours n'a pas de fiche")
                 .font(MicaboFont.cardTitle)
                 .foregroundStyle(MicaboColor.ink)
-
-            Text("Tu peux le reprendre quand même : son texte arrive avec, et Micabo t'en écrira la fiche.")
-                .font(MicaboFont.body)
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(MicaboSpacing.md)

@@ -92,14 +92,6 @@ enum SheetLength: String, CaseIterable, Identifiable {
         }
     }
 
-    var detail: String {
-        switch self {
-        case .brief: "Le plan et ce qu'il faut retenir, à relire juste avant l'épreuve."
-        case .standard: "Le format habituel : tout le chapitre, sans remplissage."
-        case .deep: "Chaque notion développée, définitions et exemples compris."
-        }
-    }
-
     /// Durée de lecture annoncée à côté du format. Elle vient du nombre de blocs demandé
     /// au modèle, pas d'une estimation d'ambiance.
     var readingHint: String {
@@ -109,6 +101,22 @@ enum SheetLength: String, CaseIterable, Identifiable {
         case .deep: "≈ 8 min"
         }
     }
+
+    // MARK: - Le curseur
+
+    /// Le réglage se fait au **curseur**, et les trois valeurs sont donc une échelle : de la
+    /// plus courte à la plus longue, dans l'ordre de déclaration. Trois pastilles côte à côte
+    /// donnaient trois options à peser ; un curseur donne un cran à pousser, ce qui est ce
+    /// qu'on fait vraiment — on veut plus court ou plus long que la dernière fois.
+    var step: Int {
+        Self.allCases.firstIndex(of: self) ?? 1
+    }
+
+    static func at(step: Int) -> SheetLength {
+        allCases[min(max(step, 0), allCases.count - 1)]
+    }
+
+    static var lastStep: Int { allCases.count - 1 }
 }
 
 /// La longueur de fiche retenue, réglée à l'import comme dans les réglages.

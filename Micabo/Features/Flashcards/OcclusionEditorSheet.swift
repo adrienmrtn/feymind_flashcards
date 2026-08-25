@@ -69,11 +69,6 @@ struct OcclusionEditorSheet: View {
 
     private var picker: some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-            Text("Choisis une planche, une carte de géographie ou une coupe : tu masqueras ensuite les zones à retenir.")
-                .font(MicaboFont.body)
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-
             Button {
                 showPhotoPicker = true
             } label: {

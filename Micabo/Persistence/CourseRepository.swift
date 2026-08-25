@@ -58,6 +58,9 @@ enum CourseRepository {
         fileName: String? = nil,
         coverImageData: Data? = nil,
         accentIndex: Int? = nil,
+        /// Décidée à l'import : un cours qu'on sait privé doit l'être dès sa création, et non
+        /// à partir du moment où l'on pense à le refermer.
+        visibility: CourseVisibility = .standard,
         in context: ModelContext
     ) throws -> Course {
         let clean = generated.sanitized()
@@ -77,6 +80,7 @@ enum CourseRepository {
             sheet: clean.sheet,
             coverImageData: coverImageData
         )
+        course.visibility = visibility
         course.fingerprint = CourseFingerprint.make(from: rawText)
         context.insert(course)
 
@@ -178,6 +182,9 @@ enum CourseRepository {
         title: String,
         subject: String? = nil,
         rawText: String = "",
+        /// Décidée à la création. Un paquet n'a pas de fiche, donc pas d'écran où l'on
+        /// pourrait le refermer après coup : sans ce choix ici, il resterait public à vie.
+        visibility: CourseVisibility = .standard,
         in context: ModelContext
     ) throws -> Course {
         let cleanTitle = TextSanitizer.clean(title).nilIfBlank ?? "Nouveau paquet"
@@ -195,6 +202,7 @@ enum CourseRepository {
             rawText: text,
             contextText: text
         )
+        course.visibility = visibility
         // Pas d'empreinte : deux paquets du même nom ne sont pas un doublon, et rien n'a été
         // importé qu'on risquerait d'importer deux fois.
         context.insert(course)

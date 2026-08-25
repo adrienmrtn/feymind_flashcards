@@ -131,7 +131,7 @@ struct FriendProfileView: View {
                 .font(MicaboFont.cardTitle)
                 .foregroundStyle(MicaboColor.ink)
 
-            Text("\(person.handle) n'a pas de cours partagé. Chacun décide cours par cours de ce qu'il laisse voir.")
+            Text("\(person.handle) n'a pas de cours partagé.")
                 .font(MicaboFont.body)
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)

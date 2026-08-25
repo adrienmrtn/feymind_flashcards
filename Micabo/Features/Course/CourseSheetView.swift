@@ -289,26 +289,19 @@ struct CourseSheetView: View {
             MicaboSectionCaption(text: "Cartes")
 
             if cards.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Aucune carte pour ce cours. La fiche se lit très bien sans, mais ce sont les cartes qui font tenir le contenu dans le temps.")
-                        .font(MicaboFont.caption)
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Button {
-                        showCardOptions = true
-                    } label: {
-                        HStack(spacing: MicaboSpacing.xs) {
-                            Image(systemName: "sparkles")
-                                .font(.system(size: 12, weight: .semibold))
-                            Text(MicaboCopy.cardsButton)
-                        }
+                // Un bouton, et rien au-dessus de lui. La phrase qui l'introduisait disait
+                // que la fiche se lit très bien sans cartes, ce dont personne n'a besoin
+                // d'être convaincu à l'endroit exact où l'on vient d'en lire une.
+                Button {
+                    showCardOptions = true
+                } label: {
+                    HStack(spacing: MicaboSpacing.xs) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text(MicaboCopy.cardsButton)
                     }
-                    .buttonStyle(MicaboSecondaryButtonStyle())
                 }
-                .padding(15)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .micaboGroup(radius: MicaboRadius.lg)
+                .buttonStyle(MicaboSecondaryButtonStyle())
             } else {
                 NavigationLink(value: CourseCardsRoute(course: course)) {
                     MicaboRow(

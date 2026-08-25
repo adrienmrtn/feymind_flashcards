@@ -21,8 +21,6 @@ struct ExamProjectionView: View {
                 chart
             }
             .micaboGroup()
-
-            MicaboSectionFootnote(text: footnote)
         }
     }
 
@@ -104,12 +102,6 @@ struct ExamProjectionView: View {
         }
     }
 
-    private var footnote: String {
-        guard projection.daysRemaining > 1 else {
-            return "L'examen est trop proche pour étaler les révisions : toutes les cartes passeront aujourd'hui."
-        }
-        return "Chaque carte repasse plusieurs fois d'ici l'examen, le dernier passage dans les trois derniers jours. Aucune carte concernée ne sera replanifiée au delà du jour J."
-    }
 }
 
 /// Histogramme de la charge quotidienne. Une barre par jour, la plus haute en ocre :
