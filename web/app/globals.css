@@ -1,0 +1,353 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Les jetons de Micabo, sur le web.
+
+   Portés valeur par valeur depuis `Micabo/DesignSystem/MicaboTheme.swift`. C'est le seul
+   endroit où une couleur, un rayon, une durée ou une courbe est écrite : une couleur déclarée
+   deux fois finit par différer, et c'est comme ça qu'une interface se met à « sonner faux ».
+
+   Direction : du papier, pas des cartes empilées. Le fond ivoire est assez marqué pour que le
+   blanc se détache seul — les surfaces n'ont donc ni bordure ni ombre appuyée.
+
+   Une mise au point qui vaut d'être écrite ici : ce crème est aussi, à quelques points près,
+   celui que les pages d'accueil produites à la chaîne ont adopté. Il ne se change pas pour
+   autant — c'est l'identité livrée de l'app — mais il ne peut plus servir d'argument, et deux
+   règles en découlent : **aucun display serif**, et **aucun accent terracotta**. La distinction
+   vient d'ailleurs : une page, deux états, la même empreinte.
+   ========================================================================== */
+
+@theme {
+  /* ---- Fonds ---- */
+  --color-canvas: #f6f4ed;
+  --color-surface: #ffffff;
+  --color-surface-muted: #efebe1;
+  --color-surface-sunken: #e2ddd0;
+  --color-stroke: #e9e4d7;
+  --color-stroke-strong: #dad4c5;
+
+  /* Filet de séparation d'une rangée à l'autre. Il reste une bordure : une ombre porte la
+     profondeur, une bordure porte la structure, et un séparateur est de la structure. */
+  --color-hairline: #edeae2;
+  --color-hairline-on-canvas: #e6e1d4;
+
+  /* ---- Encre ---- */
+  --color-ink: #191714;
+  --color-ink-secondary: #6f6a60;
+  --color-ink-tertiary: #a6a199;
+  /* Encre des longs paragraphes d'une fiche. Un noir de titre tenu sur trente lignes fatigue :
+     celui-ci est à peine remonté vers le brun du papier. */
+  --color-ink-reading: #2b2822;
+
+  --color-on-ink: #f8f6f0;
+  --color-on-ink-muted: #9a958a;
+
+  /* Le crème teinté de vert, pour les écrans qui ne sont ni une liste ni une lecture. */
+  --color-canvas-sage: #e8efe6;
+
+  /* ---- Accent ----
+     Deux verts, et la distinction est fonctionnelle. `accent` est assez sombre pour porter du
+     texte de onze points sur un fond pastel ; `accent-vivid` est le vert du logo et ne remplit
+     que de grandes surfaces posées sur du blanc. */
+  --color-accent: #0b8a66;
+  --color-accent-soft: #dff4ec;
+  --color-accent-vivid: #16c08c;
+
+  /* Toute progression porte cette couleur, sans exception. Une seule couleur pour « ça
+     avance », sinon on cherche un sens derrière chaque nuance. */
+  --color-progress: #0b8a66;
+  --color-progress-track: #e4dfd2;
+
+  /* La couleur des passages que la fiche met en avant. C'est l'encre qui change, pas le fond :
+     un surligneur posé derrière le texte déborde sous les jambages et se bat avec
+     l'interligne. */
+  --color-sheet-emphasis: #0a6e52;
+
+  /* ---- Retours d'information ---- */
+  --color-positive: #3f7d53;
+  --color-caution: #b3872b;
+  --color-negative: #c93b2b;
+  --color-info: #3a6fc4;
+  --color-positive-soft: #e3f1e2;
+  --color-caution-soft: #faf0d8;
+  --color-negative-soft: #fae6e1;
+  --color-info-soft: #e2ecf9;
+
+  /* ---- Typographie ----
+     Hanken Grotesk écrit les mots. Nunito écrit **les nombres**, et rien d'autre : un grand
+     nombre en grotesque serré ressemble à un indicateur de tableau de bord, le même en arrondi
+     ressemble à un score, et un élève doit avoir envie de le faire monter. C'est le report sur
+     le web du couple Hanken + SF Rounded de l'app, pas une nouvelle décision. */
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-number: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+
+  --tracking-tight-title: -0.5px;
+  --tracking-display: -0.9px;
+  --tracking-caps: 1.1px;
+
+  /* ---- Rayons ----
+     Les quatre valeurs de l'app sont les **repères**, pas des valeurs à imbriquer telles
+     quelles : un rayon extérieur vaut le rayon intérieur plus la marge, et 13 dans 20 avec 16
+     de marge voudrait 29. Sur le web, l'imbriqué se calcule. */
+  --radius-tile: 13px;
+  --radius-button: 16px;
+  --radius-group: 20px;
+  --radius-sheet: 28px;
+  --radius-pill: 999px;
+
+  /* ---- Espacement ---- */
+  --spacing-screen: 20px;
+  --container-reading: 680px;
+  --container-page: 1100px;
+
+  /* ---- Mouvement ----
+     Rien ne rebondit. Un ressort dépasse sa cible puis revient, et vingt écrans qui dépassent
+     leur cible donnent un produit qui tremble. Les courbes sont monotones : elles partent vite,
+     ralentissent, s'arrêtent net. */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Budgets. `ease-in` n'apparaît nulle part : il démarre lentement, donc il retarde
+     exactement l'instant qu'on regarde. */
+  --duration-press: 160ms;
+  --duration-hover: 150ms;
+  --duration-tooltip: 180ms;
+  --duration-menu: 220ms;
+  --duration-sheet: 320ms;
+}
+
+/* --------------------------------------------------------------------------
+   Ombres
+
+   « Les ombres portent la profondeur, les bordures portent la structure. » Une bordure posée
+   pour décoller une carte devient donc une ombre en trois couches — la première tient lieu de
+   filet de 1 px, les deux autres donnent la levée puis l'ambiance. Elles sont transparentes,
+   donc elles s'adaptent au fond, ce qu'une bordure de couleur fixe ne fait pas.
+
+   Les valeurs sont plus discrètes que la recette d'origine : sur l'ivoire de Micabo, le blanc
+   se détache déjà seul.
+   -------------------------------------------------------------------------- */
+@theme {
+  --shadow-paper:
+    0 0 0 1px oklch(0 0 0 / 0.04), 0 1px 2px -1px oklch(0 0 0 / 0.05),
+    0 2px 4px 0 oklch(0 0 0 / 0.03);
+  --shadow-paper-hover:
+    0 0 0 1px oklch(0 0 0 / 0.06), 0 1px 3px -1px oklch(0 0 0 / 0.07),
+    0 4px 10px 0 oklch(0 0 0 / 0.05);
+  /* Ce qui flotte vraiment : un menu, une feuille. */
+  --shadow-floating: 0 0 0 1px oklch(0 0 0 / 0.05), 0 12px 32px -8px oklch(0 0 0 / 0.14);
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  /* Un seul fond pour tout le site, accroche comprise. Pas de bandeau sombre. */
+  background-color: var(--color-canvas);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  /* Les chiffres s'alignent en colonne dès qu'ils se comparent, ce qui est le cas partout
+     dans un produit qui compte des cartes. */
+  font-variant-numeric: tabular-nums;
+  text-rendering: optimizeLegibility;
+}
+
+/* Les titres se resserrent, et se coupent en lignes équilibrées plutôt qu'avec un mot seul
+   sur la dernière. */
+h1,
+h2,
+h3 {
+  letter-spacing: var(--tracking-tight-title);
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Un contour d'image est **du noir pur à faible opacité**, jamais une teinte de la palette :
+   un contour teinté attrape la couleur du fond et se lit comme de la saleté sur le bord de
+   l'image. Sur un ivoire, c'est le piège qu'on tendrait en prenant `--color-stroke`. */
+img,
+video {
+  outline: 1px solid oklch(0 0 0 / 0.1);
+  outline-offset: -1px;
+}
+
+/* Le focus se voit, et il suit l'accent. Pas d'anneau décalé : sur du papier, un halo
+   flottant autour d'un bouton se lit comme un artefact. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Les deux régimes de mouvement
+
+   La vitrine explique, une seule visite : elle peut durer et échelonner. Le produit sert, tous
+   les jours : il reste court, et il ne déplace rien au survol. C'est la table des fréquences —
+   ce qui décide d'animer n'est pas le goût, c'est le nombre de fois par jour qu'on le voit.
+   -------------------------------------------------------------------------- */
+
+@utility paper {
+  box-shadow: var(--shadow-paper);
+  transition-property: box-shadow;
+  transition-duration: var(--duration-hover);
+  transition-timing-function: var(--ease-out-strong);
+}
+
+/* Dans le produit, **seule l'ombre change**. Rien ne monte, rien ne grossit : un texte qui
+   grossit se rend flou pendant sa propre transition. Et le survol est enfermé derrière
+   `hover: hover` — sur un écran tactile, un appui déclenche un faux survol et l'élément reste
+   dans son état après que le doigt est parti. */
+@media (hover: hover) and (pointer: fine) {
+  .paper:hover {
+    box-shadow: var(--shadow-paper-hover);
+  }
+}
+
+/* Sur la vitrine, et là seulement, une carte a le droit de se soulever de deux points. */
+@utility lift {
+  transition-property: box-shadow, translate;
+  transition-duration: var(--duration-hover);
+  transition-timing-function: var(--ease-out-strong);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lift:hover {
+    box-shadow: var(--shadow-paper-hover);
+    translate: 0 -2px;
+  }
+}
+
+/* Le retour d'appui : `0.97`, et la même valeur partout. En dessous de `0.95` le geste devient
+   théâtral ; au-dessus, on ne le sent plus. */
+@utility pressable {
+  transition-property: scale, background-color, color;
+  transition-duration: var(--duration-press);
+  transition-timing-function: var(--ease-out-strong);
+}
+
+.pressable:active {
+  scale: 0.97;
+}
+
+/* **La seule fioriture du site.** Un filet de 1 px qui se trace depuis la gauche : c'est le
+   survol qui a le plus l'air fait à la main, et il ne coûte qu'une transition de
+   `background-size`. */
+@utility underline-draw {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  transition-property: background-size;
+  transition-duration: var(--duration-hover);
+  transition-timing-function: var(--ease-out-strong);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .underline-draw:hover {
+    background-size: 100% 1px;
+  }
+}
+
+/* Les nombres qui se lisent comme un résultat, et eux seuls. */
+@utility numeral {
+  font-family: var(--font-number);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-display);
+}
+
+/* Sur-titre en capitales, au-dessus d'un grand titre. */
+@utility eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-ink-tertiary);
+}
+
+/* --------------------------------------------------------------------------
+   Mouvement réduit
+
+   Réduire, pas annuler : on garde ce qui aide à comprendre — les opacités, les couleurs — et
+   on retire les déplacements. Une interface sans aucun retour est moins accessible, pas plus.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 120ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .lift:hover {
+    translate: none;
+  }
+
+  .pressable:active {
+    scale: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   L'impression
+
+   Une fiche **est** une page — c'est ce que le produit dit depuis le début. Les fiches se
+   relisent sur papier la veille au soir, et une feuille de style d'impression coûte presque
+   rien. C'est aussi la seconde signature du site : personne ne soigne son `@media print` sur
+   une page d'accueil produite à la chaîne.
+   -------------------------------------------------------------------------- */
+@media print {
+  @page {
+    margin: 18mm 16mm;
+  }
+
+  html,
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  /* Rien de ce qui sert à naviguer n'a de sens sur une feuille. */
+  [data-print="hide"] {
+    display: none !important;
+  }
+
+  /* Un titre ne se retrouve pas seul en bas de page, et un objet de la fiche ne se coupe pas
+     en deux. */
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  [data-print="keep"] {
+    break-inside: avoid;
+  }
+
+  /* L'encre de lecture et les passages en avant restent lisibles en noir et blanc. */
+  a::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #555555;
+  }
+
+  a[href^="#"]::after,
+  a[data-print="bare"]::after {
+    content: "";
+  }
+}
