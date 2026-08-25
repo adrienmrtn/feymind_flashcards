@@ -122,13 +122,44 @@ Ce qu'on **ne met pas**, et chaque ligne est un tell :
 
 ## Le design, et comment il n'a pas l'air fait par une IA
 
-Le fond de l'affaire, c'est que Micabo **a déjà une identité visuelle**, et que cette identité
-est du papier. C'est ce qui la sauve : personne qui génère une page d'accueil ne tombe sur de
-l'ivoire chaud. Les tells d'une page faite à la chaîne sont connus et tiennent en une liste
-courte — tout est centré, trois colonnes de fonctionnalités à tuiles arrondies, un dégradé
-violet-bleu en fond de bandeau sombre, des cartes en verre dépoli qui flottent, Inter en quatre
-graisses, des sous-titres `gris 400`, un emoji par section. Ne pas les faire ne suffit pas ; en
-faire autre chose, si.
+Le fond de l'affaire, c'est que Micabo **a déjà une identité visuelle**, et que cette identité est
+du papier. Les tells d'une page faite à la chaîne sont connus et tiennent en une liste courte —
+tout est centré, trois colonnes de fonctionnalités à tuiles arrondies, un dégradé violet-bleu en
+fond de bandeau sombre, des cartes en verre dépoli qui flottent, Inter en quatre graisses, des
+sous-titres `gris 400`, un emoji par section. Ne pas les faire ne suffit pas ; en faire autre
+chose, si.
+
+**Et il faut corriger une chose que j'avais écrite ici.** J'avais posé que l'ivoire nous sauvait,
+au motif que « personne qui génère une page d'accueil ne tombe sur de l'ivoire chaud ». C'est
+faux, et la source qui le dit est celle d'Anthropic sur la conception d'interfaces : le premier
+des trois clichés qu'elle nomme est **« un fond crème chaud, près de `#F4F1EA`, avec un display
+serif très contrasté et un accent terracotta »**. Le crème de Micabo est `#F6F4ED`. C'est le même.
+
+Ça ne change pas la couleur — la même source dit que lorsqu'une direction visuelle est déjà
+arrêtée, elle gagne, et l'ivoire de Micabo n'est pas un choix libre que je dépenserais ici : c'est
+une identité livrée, documentée et argumentée. Ça change deux choses :
+
+- **le crème cesse d'être l'argument.** Il est neutre, et il devient un passif dès qu'on lui
+  ajoute les deux autres marqueurs du cliché. Donc, règle explicite : **aucun display serif sur le
+  site**, et aucun accent terracotta ou brique. Le grotesque et le vert de Micabo l'en sortent
+  déjà, mais il ne faut pas les lâcher en route ;
+- **la distinction doit venir d'un élément signature**, pas de la palette.
+
+### La signature
+
+Une seule chose dont le site doit se souvenir, et elle est déjà dans le produit : **une page, deux
+états, la même empreinte.** Le polycopié brut et la fiche occupent le *même rectangle*, au pixel,
+et c'est la barre de défilement qui fait passer de l'un à l'autre.
+
+Ce n'est pas une trouvaille de site web, c'est l'observation que l'app a déjà faite pour son écran
+de démonstration : « Les deux états occupent la même place, ce qui fait lire une transformation et
+non deux illustrations. » Deux images côte à côte donnent une comparaison ; deux états au même
+endroit donnent une transformation, et la transformation *est* le produit. C'est la thèse de
+l'accroche, et tout le reste de la page doit rester calme autour d'elle.
+
+La seconde signature ne se voit pas à l'écran : **le site s'imprime.** Une fiche sort en page A4
+propre, avec ses objets, sans la navigation. Personne ne soigne son `@media print` sur une page
+d'accueil générée — et les fiches se relisent sur papier la veille au soir.
 
 `MicaboTheme.swift` se porte donc **tel quel** en variables CSS, valeur par valeur :
 
@@ -149,26 +180,162 @@ ressemble à un score » est un choix d'intention de l'app, pas un détail : c'e
 tient, variable, et uniquement sur les chiffres — jamais un mot. Voir
 [Les décisions prises](#les-décisions-prises).
 
-### Le survol
+### Le mouvement : la fréquence décide, pas le goût
 
-Le survol est demandé, et c'est justement ce qui distingue un site soigné d'un site généré — à
-condition qu'il obéisse à la règle de mouvement de l'app : **rien ne rebondit.** Courbes
-monotones, 120 à 180 ms, et **une seule chose par élément**.
+C'est la correction la plus utile que les ressources apportent, et elle vaut plus que n'importe
+quelle courbe : **ce qui décide d'animer ou non, c'est le nombre de fois par jour qu'on le voit.**
+Une animation vue une fois est un cadeau ; la même vue trois cents fois est un péage.
+
+| Fréquence | Décision |
+| --- | --- |
+| **100+ fois par jour** — raccourci clavier, notation d'une carte | **aucune animation. Jamais.** |
+| Des dizaines de fois — survol d'une rangée, changement d'onglet | réduire au strict minimum, ou supprimer |
+| Occasionnel — feuille, panneau, message | animation standard |
+| Rare ou une seule fois — accueil, démonstration, réussite | on a le droit d'enchanter |
+
+Ce qui a une conséquence directe et contre-intuitive sur ce qui était prévu : **la session au
+clavier ne s'animera pas.** Espace retourne la carte, 1 à 4 la notent, et ces deux gestes se font
+des centaines de fois par soirée de révision — une carte qui pivote joliment à chaque appui
+deviendrait, au bout de vingt cartes, la chose qui ralentit le travail. La carte se retourne
+**instantanément**.
+
+Et la contrepartie, qui est le même raisonnement dans l'autre sens : **les cartes de l'écran de
+démonstration, elles, se retourneront au survol** comme demandé. Cet écran se voit une fois dans
+une vie. C'est exactement là que le budget d'enchantement doit être dépensé.
+
+D'où deux régimes, et il faut les tenir séparés dans le code :
+
+| | `/` — la vitrine | `/app` — le produit |
+| --- | --- | --- |
+| Rôle | expliquer, une seule visite | servir, tous les jours |
+| Durées | peuvent dépasser 300 ms | **sous 300 ms**, et le plus souvent sous 160 |
+| Survol | une carte peut monter de 2 px, l'ombre s'approfondit | **l'ombre seule change.** Rien ne se déplace |
+| Séquences | entrées échelonnées, défilement piloté | aucune |
+
+Le survol, dans le détail, et **une seule chose par élément** :
 
 | Élément | Ce qui change |
 | --- | --- |
-| Rangée de cours | le fond passe de transparent à blanc. Rien ne bouge |
-| Carte, tuile | monte de 2 px, son ombre s'approfondit. **Pas de mise à l'échelle** — un texte qui grossit se rend flou pendant sa propre transition |
+| Rangée de cours | le fond passe de transparent à blanc. Rien ne bouge, rien ne monte |
+| Carte, tuile | **l'ombre** passe de `--shadow-border` à `--shadow-border-hover`. Pas de mise à l'échelle : un texte qui grossit se rend flou pendant sa propre transition |
 | Bouton | s'assombrit, et son libellé ne se déplace pas d'un pixel |
 | Lien | un filet de 1 px **se trace depuis la gauche**. C'est la seule fioriture du site, et c'est le survol qui a le plus l'air fait à la main |
 | Vignette de la démonstration | le balayage de lecture repart, une fois |
 
-Et `prefers-reduced-motion` coupe tout, y compris l'animation de défilement.
+Tout survol qui *bouge* est enfermé dans `@media (hover: hover) and (pointer: fine)` : sur un
+écran tactile, un appui déclenche un faux survol, et l'élément reste dans son état de survol après
+que le doigt est parti.
+
+### Les jetons de mouvement
+
+Ces valeurs se copient, elles ne s'approximent pas. Cinq cubic-bezier qui se ressemblent presque
+sont un défaut en soi.
+
+```css
+--ease-out:     cubic-bezier(0.23, 1, 0.32, 1);     /* entrée, sortie — le défaut */
+--ease-in-out:  cubic-bezier(0.77, 0, 0.175, 1);    /* déplacement à l'écran */
+--ease-drawer:  cubic-bezier(0.32, 0.72, 0, 1);     /* panneau qui glisse */
+```
+
+- **`ease-in` sur une interface est toujours une faute** : il démarre lentement, donc il retarde
+  exactement l'instant que l'utilisateur regarde.
+- Budgets : appui 100–160 ms, infobulle 125–200, menu 150–250, feuille 200–500. La vitrine
+  s'affranchit de ces bornes, le produit non.
+- **Appui** : `transform: scale(0.97)` avec `transform 160ms ease-out`. Les deux références que
+  j'ai lues se contredisent d'un centième — l'une dit 0,96, l'autre 0,97 — et les deux tiennent la
+  fourchette 0,95–0,98. Je prends **0,97**, le plus retenu des deux, parce que le mouvement de
+  Micabo est retenu partout ailleurs.
+- **Jamais `scale(0)`** : rien n'apparaît de rien. Une entrée part de `scale(0.9–0.97)` avec
+  `opacity: 0`.
+- Un menu, une infobulle, un popover **s'ouvrent depuis leur déclencheur**, pas depuis leur
+  centre : `transform-origin: var(--transform-origin)`, que Base UI fournit. Une feuille modale est
+  l'exception — elle arrive au centre, et c'est juste.
+- **Transitions CSS pour tout ce qui est réversible**, images-clés seulement pour une séquence qui
+  ne joue qu'une fois : une transition se recible en cours de route, une image-clé repart de zéro.
+- On n'anime que `transform` et `opacity`. **Jamais `transition: all`**, et les propriétés sont
+  toujours nommées. `filter: blur()` reste sous 20 px, sinon Safari décroche.
+- Échelonnement : 30 à 80 ms pour une liste, ~100 ms pour une entrée de héros au premier
+  chargement. Jamais sur une interaction fréquente, et jamais bloquant.
+- `prefers-reduced-motion` **réduit, il n'annule pas** : on garde ce qui aide à comprendre — les
+  opacités, les couleurs — on retire les déplacements.
+
+**Et « rien ne rebondit » reste la règle de la maison.** Les références recommandent un ressort
+Apple à `bounce: 0.2` ; l'app a tranché l'inverse, écrit pourquoi, et s'est réservé trois
+exceptions nommées. Une décision de conception documentée ne se rejuge pas au motif qu'un guide
+générique conseille autre chose : `bounce` reste à **0**.
 
 Le défilement, justement : la section de transformation est **liée à la barre de défilement**
 (`animation-timeline: view()`) et non déclenchée une fois au croisement. La différence se sent —
 une animation qu'on pilote appartient à la page, une animation qui part toute seule appartient à
 un modèle de site. Là où ce n'est pas supporté, l'état final s'affiche, et c'est tout.
+
+### Les composants : on prend le comportement, on jette la peau
+
+Une couche sans style, et une seule : **Base UI**. Les primitives viennent de **coss.com/ui**, qui
+en est l'habillage, et les pièces composées — celles qui coûtent des jours à écrire — de **ReUI**,
+qui les publie précisément en variante Base UI en plus de la variante Radix. Un seul socle sans
+style, donc pas deux jeux de primitives qui se marchent dessus.
+
+Six pièces de ReUI répondent à un besoin déjà écrit dans ce document, et ce sont celles qui font
+gagner le plus de temps :
+
+| Pièce | Où elle sert |
+| --- | --- |
+| **Stepper** | Les neuf écrans du parcours, sa barre de progression, sa validation par étape |
+| **Event Calendar** (mois/semaine/jour, glisser-déposer) | Les examens — l'iPhone a déjà le glisser-déposer sur son calendrier |
+| **Calendar / Date Picker** | L'écran 5, la date d'examen |
+| **Combobox** asynchrone | L'école, sur la RPC `search_institutions` |
+| **Dropzone** | La zone de dépôt de l'accroche, et l'import |
+| **Data Grid** | La correction de vingt cartes à la suite, ce que le téléphone ne peut pas faire |
+
+Et **`Kbd`**, de coss, pour afficher les touches de la session.
+
+**Le piège est dans le style, et il est sérieux.** ReUI est du shadcn/ui, et le look par défaut de
+shadcn — palette zinc, `--radius` par défaut, une bordure sur chaque chose, l'anneau de focus avec
+son `ring-offset` — **est lui-même l'un des clichés qu'on cherche à éviter**. Copier un composant
+et laisser ses jetons donne un site qui ressemble à tous les sites shadcn. La discipline est donc
+littérale : **on copie le comportement, on jette la peau.** Les variables de shadcn
+(`--background`, `--foreground`, `--primary`, `--radius`) sont remappées sur les vraies valeurs de
+`MicaboTheme`, et tout ce qui se bat avec la direction papier — les bordures partout, l'échelle
+d'ombres par défaut — est retiré, pas atténué.
+
+### Trois détails qui font qu'une interface « sonne juste »
+
+**Les rayons doivent être concentriques, et ceux de Micabo ne le sont pas.** La règle est
+`rayon extérieur = rayon intérieur + marge intérieure`, et c'est la première cause de cette
+sensation qu'« il y a quelque chose qui ne va pas » sans qu'on sache dire quoi. Or les valeurs
+d'iOS — tuile 13, bouton 16, bloc 20, feuille 28 — n'ont pas été choisies l'une pour l'autre : une
+tuile de 13 dans un bloc de 20 avec 16 de marge voudrait un extérieur à 29. Sur le web, **les
+rayons se calculent, ils ne se recopient pas** ; les quatre valeurs restent les repères, et
+l'imbriqué se dérive. Au-delà de 24 px de marge, les deux surfaces sont indépendantes et chacune
+prend le rayon qu'elle veut.
+
+**Les ombres portent la profondeur, les bordures portent la structure.** Une bordure qui n'est là
+que pour décoller une carte devient un `box-shadow` en trois couches — ce qui tombe bien, c'est
+déjà la doctrine de l'app (« pas de bordure, et une ombre presque invisible juste pour décoller le
+bloc »). Restent des bordures les filets qui séparent : `MicaboHairline` ne devient pas une ombre.
+Et le contour d'une image est **du noir pur à 10 %**, jamais une teinte de la palette : un contour
+teinté attrape la couleur du fond et se lit comme de la saleté sur le bord de l'image. Sur un fond
+ivoire, c'est exactement le piège qu'on tendrait en prenant `stroke`.
+
+**Une seule bibliothèque d'icônes, et son trait suit le poids du texte** — 1,5 px à côté d'un texte
+régulier, 2 px à côté d'un demi-gras. iOS utilise SF Symbols, qui n'existe pas sur le web : je
+prends **Phosphor**, et pas Lucide, pour une raison précise — Phosphor a une variante pleine, donc
+elle sait faire « contour par défaut, plein pour l'état actif », qui est déjà la règle de la barre
+d'onglets de l'app (« symbole plein sur l'onglet actif »). Une icône est un seul SVG en
+`currentColor` qui prend ses états de la couleur, jamais deux fichiers.
+
+### Ce qui fait qu'un composant est fini
+
+Emprunté à la discipline des systèmes de composants : un composant n'est pas fini quand il
+s'affiche, il est fini quand **tous ses états** existent — repos, survol, focus visible, actif,
+désactivé, chargement, erreur, et **vide**. L'état vide est celui qu'on oublie et celui qu'un
+étudiant voit en premier, le jour où il n'a encore rien importé ; l'app a déjà des écrans d'accueil
+vides écrits pour ça, et ils sont le modèle.
+
+Et les fondations passent avant les composants : les jetons — couleur, typographie, espacement,
+rayons, ombres, mouvement — sont posés à l'étape 1, une fois, et rien plus tard ne redéfinit une
+couleur en local.
 
 ### `thinking-orbs`, ce que c'est vraiment
 
@@ -648,14 +815,56 @@ qui **touche l'app iOS**, donc la seule qui demande une soumission App Store.
 | 4 | La police des nombres | **Nunito**, variable, et **uniquement pour les nombres** |
 | 5 | L'encaissement | **Stripe Checkout derrière RevenueCat** |
 | 6 | Le gratuit | Le flou et le cadenas, tel que spécifié ci-dessus |
+| 7 | La couche de composants | **Base UI**, habillée par coss.com/ui, complétée par les variantes Base UI de ReUI |
+| 8 | Les icônes | **Phosphor**, pour sa variante pleine — contour par défaut, plein pour l'actif |
+| 9 | Le mouvement | La fréquence décide. **La session ne s'animera pas**, la démonstration si |
 
 **Sur le choix 4**, puisqu'il m'était laissé : Nunito est la plus proche des arrondies libres de
 l'intention de SF Rounded — de vraies terminaisons arrondies, et une graisse variable de 200 à
 1000, donc un seul fichier. Le reproche qu'on peut lui faire est d'être partout ; il ne porte pas
 ici, parce qu'elle ne compose **jamais un mot**. Elle ne sert qu'aux nombres qui se lisent comme un
 résultat — le compte de cartes du jour, la série, les statistiques d'une session, les jours qui
-restent avant l'examen — exactement le domaine de `MicaboFont.number`. Une police qu'on ne voit que
-sur des chiffres ne se reconnaît pas.
+restent avant l'examen — exactement le domaine de `MicaboFont.number`.
+
+Et ce n'est pas une nouvelle décision de typographie, c'est le report d'une décision existante :
+l'app fait déjà tourner ce couple exact, un grotesque pour les mots et une arrondie pour les
+nombres. La règle « on n'introduit pas une police pour cocher une case » est donc respectée — deux
+familles, chacune avec un domaine net, et un contraste réel entre elles plutôt que deux sans-serif
+presque identiques, ce qui se lirait comme une erreur.
+
+## Où vivent les standards
+
+Les ressources d'interface sont **installées dans le dépôt**, sous `.agents/skills/`, plutôt que
+lues une fois et oubliées. Elles portent des valeurs exactes — des cubic-bezier, des opacités, des
+durées — et une valeur exacte lue de mémoire devient une valeur approximative.
+
+| Skill | Ce qu'elle tranche |
+| --- | --- |
+| `better-ui` | Rayons concentriques, ombres contre bordures, contours d'images, appui à `0.97`, transitions interruptibles |
+| `better-typography` | Choix et appairage des familles, échelle, chiffres tabulaires, césure et ponctuation |
+| `better-layout` | Groupement, alignement, ordre de lecture, espacement, adaptativité |
+| `better-accessibility` | Focus, clavier, ARIA, zones de touche, mouvement réduit |
+| `better-writing` | Libellés, erreurs, états vides — à lire **avec** `MicaboCopy.swift`, qui garde le dernier mot sur le vocabulaire |
+| `improve-animations` | Le catalogue de mouvement d'Emil Kowalski, dont la table des fréquences |
+| `frontend-design` | La direction visuelle, et la liste des clichés à ne pas produire |
+
+Deux précautions valent d'être écrites, parce qu'elles vont se poser en pratique :
+
+**Ces guides ne rejugent pas les décisions de Micabo.** Leur propre règle le dit — une décision de
+conception documentée se respecte. Quand `improve-animations` recommande un ressort à `bounce: 0.2`
+et que le README explique sur dix lignes pourquoi rien ne rebondit, c'est le README qui gagne. Idem
+pour le crème, pour le lexique, pour les trois onglets.
+
+**Et là où ils se contredisent entre eux, on tranche et on l'écrit.** Ils divergent déjà sur
+l'échelle d'appui (0,96 contre 0,97) et sur l'échelonnement (100 ms contre 30–80 ms). Un projet qui
+suit deux guides sans arbitrer finit avec les deux valeurs dans son code.
+
+Une dernière chose que je n'ai pas pu faire : **`designsystemchecklist.com` n'a jamais répondu**,
+sur trois essais. J'en connais la structure — langage de conception, fondations, composants,
+maintenance — mais pas ses items un par un, et je ne vais pas prétendre le contraire. Ce que j'en
+retiens est l'ordre de travail, qui est de toute façon le bon : **les fondations avant les
+composants**, et un composant fini est un composant qui a tous ses états. Si vous y tenez, un
+export JSON de leur site suffirait à le brancher pour de vrai.
 
 ## Ce qui reste ouvert, et ce que j'en fais en attendant
 
