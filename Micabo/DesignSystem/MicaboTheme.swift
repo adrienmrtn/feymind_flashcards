@@ -100,6 +100,13 @@ enum MicaboColor {
     /// deux verts qui veulent dire deux choses ne peuvent pas être le même vert.
     static let positive = Color(hex: 0x3F7D53)
     static let caution = Color(hex: 0xB3872B)
+    /// Le jaune des **grandes** surfaces, et d'elles seules : la cloche du rappel d'essai.
+    ///
+    /// Même partage que `accent` et `accentVivid`. `caution` est assombri pour porter du
+    /// texte de onze points sur un fond pastel, ce qui en fait un ocre terne dès qu'on le
+    /// tient sur cent points de haut ; celui-ci est le jaune qu'on attend d'une cloche, et
+    /// il ne porte jamais rien d'écrit.
+    static let cautionVivid = Color(hex: 0xE8B23C)
     static let negative = Color(hex: 0xC93B2B)
     static let info = Color(hex: 0x3A6FC4)
 
