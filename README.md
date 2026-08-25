@@ -596,6 +596,8 @@ c'est-à-dire après une déconnexion depuis les réglages.
 | `flashcards` | Les cartes, **état de répétition espacée compris** : une révision faite sur le téléphone doit compter sur le web, sinon la carte revient deux fois |
 | `review_logs` | Chaque révision, en ajout seul : une révision est un fait daté, elle ne se corrige pas |
 | `exams` | Les examens et leur plan |
+| `directory` | **La vitrine d'un profil** : nom d'utilisateur et établissement, et rien d'autre. Tenue par un déclencheur depuis `profiles` |
+| `friendships` | Une ligne par relation : qui a demandé à qui, et où ça en est |
 
 Ce qui **ne** monte pas : les images d'occlusion, les couvertures et les enregistrements audio.
 Ce sont des mégaoctets par cours, et une colonne `bytea` transforme une base Postgres en disque
@@ -620,13 +622,111 @@ cette synchro (voir `docs/data-flywheel.md`).
 
 ### Le cloisonnement
 
-Chaque table porte la même règle et c'est la seule : `(select auth.uid()) = user_id`.
-`auth.uid()` est lu dans le jeton, donc l'app n'a aucun moyen de demander les cours de
-quelqu'un d'autre, même en trafiquant sa requête. Vérifié depuis un client anonyme : la lecture
-rend une liste vide, l'écriture est refusée par la politique.
+Chaque table porte la même règle : `(select auth.uid()) = user_id`. `auth.uid()` est lu dans le
+jeton, donc l'app n'a aucun moyen de demander les cours de quelqu'un d'autre, même en
+trafiquant sa requête. Vérifié depuis un client anonyme : la lecture rend une liste vide,
+l'écriture est refusée par la politique.
 
 Un bug de session ne peut donc pas faire fuiter des données — il ne peut que rendre une liste
 vide, et c'est exactement le comportement qu'on veut d'un échec.
+
+## La bibliothèque, les amis, et qui voit quoi
+
+Ouvrir la bibliothèque veut dire ouvrir une brèche dans la règle ci-dessus, et une brèche dans
+une règle de cloisonnement se conçoit avant de s'écrire. Quatre décisions la tiennent.
+
+**La visibilité est portée par le cours, pas par le compte.** Le même étudiant partage
+volontiers son chapitre de SVT et garde ses notes de psychanalyse pour lui ; un réglage global
+l'aurait forcé à choisir entre tout ouvrir et tout fermer, c'est-à-dire à tout fermer. Trois
+valeurs (`CourseVisibility`) : `public` se lit par les camarades du même établissement **et**
+par les amis — quelqu'un qui change d'école ne perd pas l'accès aux cours de ses amis ;
+`friends` ne se lit que par les amis ; `private` par personne. Le défaut est `public`, assumé :
+une bibliothèque où personne ne dépose rien n'intéresse personne. Le réglage se change là où le
+cours se lit, dans le menu de sa fiche, parce que c'est en l'ayant sous les yeux qu'on sait si
+on veut la laisser voir.
+
+**On ne relâche que le `SELECT`.** Les politiques existantes ne bougent pas : personne ne peut
+modifier le cours de quelqu'un d'autre. Une seconde politique de lecture s'ajoute à la première,
+et deux politiques se cumulent — c'est ce cumul qui a cassé la synchro le premier jour, voir
+plus bas.
+
+**Les préférences d'un profil ne sortent jamais.** Le cloisonnement de Postgres filtre des
+lignes, pas des colonnes : une politique de lecture sur `profiles` aurait exposé la ligne
+entière, donc le stade d'étude, le pays, les objectifs et le rythme quotidien. `directory` ne
+porte que le nom d'utilisateur et l'établissement, et un déclencheur la tient à jour. Trois
+colonnes dupliquées contre la certitude qu'une préférence ne peut pas fuir. Le prix se paye en
+une requête de plus : il n'y a pas de clé étrangère entre `courses` et `directory`, donc pas de
+jointure, donc l'app demande les auteurs à part.
+
+**Les cartes ne sortent pas non plus.** Reprendre un cours copie sa fiche, et l'étudiant écrit
+ses propres cartes. C'est plus utile pour lui, et ça évite d'exposer l'état de répétition
+espacée de quelqu'un d'autre, qui dit exactement ce qu'il sait mal.
+
+### Les deux fonctions qu'appellent les politiques
+
+`are_friends` et `share_institution` sont **sans privilège** (`security invoker`), et ce n'est
+pas un détail : une politique s'évalue avec les droits de celui qui interroge, donc une fonction
+`security definer` aurait dû rester exécutable par `authenticated`, et n'importe qui aurait pu
+l'appeler en RPC pour sonder le graphe des amitiés de tout le monde. Sans privilège, elles ne
+lisent que ce que l'appelant peut déjà lire — ses propres amitiés, l'annuaire — donc elles ne
+répondent que sur lui.
+
+Corollaire à ne pas casser : `share_institution` lit `directory` et non `profiles`. Si elle
+lisait `profiles`, cloisonné au propriétaire, elle rendrait toujours faux et le partage entre
+camarades ne marcherait plus du tout, sans que rien ne le signale.
+
+### Ce que la brèche a cassé, et comment
+
+La descente de la synchro n'avait **pas de filtre** : elle demandait `courses` et s'appuyait sur
+le cloisonnement pour ne recevoir que ses lignes. La seconde politique de lecture a donc suffi à
+faire entrer les cours des camarades dans « Mes cours ». Et le second effet était pire que le
+premier : la montée renvoie chaque cours local avec son identifiant et **son** `user_id`, ce qui
+revient à réécrire la ligne d'un camarade ; la politique d'écriture la refuse, la synchro échoue,
+le repère n'avance pas, et les mêmes lignes reviennent à chaque lancement.
+
+La leçon tient en une phrase, et elle vaut pour la prochaine politique qu'on ajoutera : **une
+requête qui compte sur le cloisonnement pour ne pas ramasser les lignes des autres est une
+requête qu'une politique ajoutée un jour recasse.** Les deux descentes portent maintenant leur
+filtre `user_id`, y compris celle des cartes, dont la table n'a pourtant qu'une seule politique.
+
+### Reprendre le cours de quelqu'un
+
+`CourseRepository.adopt` fait trois choses qui se payent si on les prend à l'envers. **Un nouvel
+identifiant**, parce que l'identifiant local devient la clé primaire distante et que garder
+celui de l'auteur ferait écrire une ligne qui lui appartient. **Privé par défaut**, parce que
+reprendre un cours ne donne pas le droit de le rediffuser sous son propre nom — c'est le seul
+chemin de l'app qui crée un cours non public. **Sans les cartes**, pour la raison dite plus haut.
+
+Reprendre deux fois le même cours est le geste le plus facile à faire par erreur : il ne coûte
+qu'un appui. L'empreinte le reconnaît, comme pour un import, et le titre prend le relais quand
+le texte est trop court pour en avoir une — un paquet de cartes partagé se serait sinon laissé
+reprendre indéfiniment.
+
+Rien de ce qui vient des autres n'est gardé sur l'appareil. Un cours partagé change sans qu'on
+le sache, peut redevenir privé, et un ami peut se retirer : une copie locale les figerait, donc
+mentirait. Ce qui entre vraiment dans l'app, c'est le cours qu'on reprend, et celui-là devient
+le nôtre.
+
+### Le nom d'utilisateur
+
+On ne s'ajoute pas en ami avec un UUID, et une adresse électronique n'a pas à circuler dans un
+annuaire d'école. Le nom d'utilisateur est donc un **identifiant** et pas un pseudonyme
+d'affichage : minuscules, sans accent, sans espace, pour qu'il se dicte sans ambiguïté.
+
+Il est **donné à l'inscription**, dérivé de ce que le fournisseur OAuth a fourni — « Adrien
+Martinot » devient `adrien-7910` — pour qu'on n'ait rien à choisir avant d'avoir compris à quoi
+ça sert. La coupe se fait sur un tiret et jamais au milieu d'un mot : `adrien-martino` avait
+l'air d'un nom mal orthographié.
+
+Les règles sont écrites deux fois, dans `Username` et dans une contrainte de la base
+(`profiles_username_shape`), et les tests verrouillent la première **sur** la seconde : un nom
+que l'app accepte et que la base refuse donne un aller-retour pour rien et un message que
+personne ne comprend. Le champ ne refuse rien de ce qui peut être sauvé — ce qu'on tape est mis
+en forme à l'enregistrement, et la ligne du dessous annonce ce que ça va donner.
+
+Le nom voyage **seul**, sans le reste du profil : la synchro envoie le profil entier à chaque
+passage, et s'il voyageait avec, un appareil dont la copie locale est en retard écraserait le nom
+qu'on vient de changer sur l'autre.
 
 ### L'authentification
 
