@@ -356,6 +356,9 @@ struct StudyView: View {
         resumable = nil
         didStart = true
         session.resume(snapshot, cards: resolveCards(), context: modelContext)
+        // Une session reprise a déjà des cartes à son compteur : sans ce contrôle, elle
+        // servirait une carte de plus avant de buter sur la limite.
+        gateIfNeeded()
     }
 
     private func restart() {

@@ -480,11 +480,13 @@ struct SettingsView: View {
                     tile: MicaboTile(glyph: .emoji("🔓"), background: MicaboColor.accentSoft),
                     title: "Micabo Pro",
                     subtitle: isPro ? "Tout est ouvert" : "Version gratuite : 1 cours, 70 % de la fiche, 5 cartes",
+                    // La rangée fait vibrer la liaison elle-même : pas de `buzzing()` ici,
+                    // sinon l'interrupteur répondrait deux fois au même appui.
                     accessory: .toggle(
                         Binding(
                             get: { isPro },
                             set: { pro?.setPro($0) }
-                        ).buzzing()
+                        )
                     )
                 ),
                 MicaboRow(

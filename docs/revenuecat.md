@@ -212,16 +212,40 @@ Tant que l'offering n'a pas répondu, l'écran garde les valeurs écrites en dur
 
 ## 9. Fermer les portes de l'app
 
-Rien n'est verrouillé aujourd'hui, et le paywall se traverse sans payer. Une fois l'entitlement
-en place, la lecture se fait en un endroit :
+**Les portes existent déjà**, et elles lisent toutes le même objet : `ProAccess`
+(`Micabo/Services/ProAccess.swift`), créé au lancement dans `MicaboApp` à côté de
+`AuthController`. Ce qu'il ferme est décrit dans le README, section « Le gratuit et le payant » :
+un cours importé, 70 % de chaque fiche, cinq cartes par session, pas d'entraînement libre.
+
+Il n'y a donc que **deux endroits** à changer dans ce fichier :
 
 ```swift
-let isPro = try await Purchases.shared.customerInfo().entitlements["pro"]?.isActive == true
+// 1. refresh() lit l'entitlement au lieu des réglages de l'appareil
+func refresh() async {
+    let info = try? await Purchases.shared.customerInfo()
+    isPro = info?.entitlements["pro"]?.isActive == true
+}
+
+// 2. et l'app se tient au courant sans qu'on le lui demande
+private func observe() {
+    Task {
+        for await info in Purchases.shared.customerInfoStream {
+            isPro = info.entitlements["pro"]?.isActive == true
+        }
+    }
+}
 ```
 
-À poser dans un objet observable créé au lancement, à côté de `AuthController`, et à relire sur
-`Purchases.shared.customerInfoStream`. Ce qui doit se fermer relève d'un autre arbitrage que ce
-document.
+Le flux est ce qui fait qu'un abonnement résilié se referme tout seul, sans redémarrage.
+
+Trois choses disparaissent le même jour :
+
+1. **`ProAccess.unlock()` appelé sur `unavailable`** — dans `PaywallFlowView.buy(_:)` et
+   `SessionPaywallView.buy()`. Aujourd'hui c'est ce qui rend le bouton d'abonnement testable
+   sans boutique ; demain, un échec réseau offrirait l'abonnement.
+2. **`ProAccess.lock()` et `setPro(_:)`** — ils n'existent que pour l'interrupteur de relecture.
+3. **La rangée « Micabo Pro » de `Réglages → Test`** — un interrupteur qui ment sur l'état réel
+   d'un abonnement payé est pire que pas d'interrupteur du tout.
 
 ## 10. Tester
 

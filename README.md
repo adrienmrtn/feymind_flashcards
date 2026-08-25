@@ -429,6 +429,69 @@ sans cela, le dernier écran du parcours n'aurait pas de sortie. Le fichier docu
 étapes du branchement RevenueCat. `Micabo/Resources/Micabo.storekit`, référencé par le scheme,
 décrit les deux mêmes produits pour les essais en local.
 
+## Le gratuit et le payant
+
+**La version gratuite laisse faire un cours entier à moitié.** C'est le compromis de tout le
+modèle : assez pour que Micabo tourne sur ses propres notes de cours et prouve qu'il sert à
+quelque chose, pas assez pour s'en servir toute l'année. Un essai qui ne montre rien ne convertit
+personne, un essai qui montre tout non plus.
+
+Les trois nombres vivent dans **`FreeTier`**, et nulle part ailleurs. Éparpillés dans les écrans,
+ils auraient dérivé au premier ajustement, et le gratuit se serait mis à dire deux choses
+différentes selon la porte par laquelle on l'a rencontré.
+
+| Ce qui est ouvert | Ce qui s'arrête | Où |
+| --- | --- | --- |
+| Le premier cours importé | Le deuxième | Le « + » de Cours, les états vides de Cours et de Réviser |
+| Les 70 % de chaque fiche | La fin, floutée et fondue dans le papier | `CourseSheetView` |
+| La génération de cartes, sans limite | — | `GenerateCardsSheet` |
+| Les 5 premières cartes d'une session | La sixième | `StudyView` |
+| Réviser ce qui est dû | L'entraînement libre, en entier | Réviser, la fiche, les cartes |
+
+**`ProAccess`** est le seul objet qui réponde à « est-ce que cette personne est abonnée ? ». Il
+est créé une fois dans `MicaboApp` et posé dans l'environnement, comme `AuthController` : deux
+écrans qui décideraient chacun de leur côté finiraient par ne pas être d'accord, et un
+utilisateur qui vient de payer verrait encore un cadenas quelque part.
+
+**La fiche se coupe en blocs, pas en caractères** (`SheetGate`). Trancher un paragraphe au
+septième dixième de son texte donnerait une phrase interrompue au milieu d'un mot, ce qui
+ressemble à un bug d'affichage plutôt qu'à une limite assumée. Les blocs restants sont **bel et
+bien composés**, puis floutés et fondus dans l'ivoire sur trois cents points : une fiche coupée
+net se lit comme une fiche courte, et une fiche courte ne donne envie de rien, là où une fiche
+dont on voit la suite se dissoudre donne envie de la lire. Ni le doigt ni le lecteur d'écran
+n'entrent dans la zone floutée — un texte illisible qu'on peut sélectionner reste un texte qu'on
+peut copier.
+
+**La session s'arrête après la note, jamais avant.** Une carte lue, retournée et notée doit être
+comptée : couper avant la note ferait disparaître le travail à l'instant même où l'on demande de
+payer. Une session qui se termine exactement sur la cinquième carte est épargnée — elle a été
+révisée en entier, et poser un paywall par-dessus l'écran de fin reviendrait à facturer ce qu'on
+vient d'offrir.
+
+`SessionPaywallView` est le seul écran d'abonnement qui **interrompt quelque chose en cours**, et
+le seul écrit autrement. Il ne propose pas, il tranche, et ses deux issues sont écrites en toutes
+lettres : s'abonner, ou revenir à l'accueil. Aucune des deux ne se cache derrière la croix — une
+sortie qu'il faut deviner n'est pas une sortie. La croix, elle, demande confirmation (« Tu es sûr
+d'abandonner ta progression ? », dont le bouton principal est **Revenir**) : c'est le seul endroit
+de l'app où une croix pose une question, et c'est justifié, elle abandonne une session commencée.
+« Revenir à l'accueil » passe par `TabRouter.goHome()`, qui vide les trois piles — une session
+lancée depuis la fiche d'un cours est deux écrans plus loin que Réviser.
+
+**Les refus arrivent avant le travail, pas après.** Le deuxième import se refuse au moment où
+l'on ouvre le choix du type de document, et non une fois le PDF choisi et l'analyse attendue : un
+paywall qui tombe après le travail est un paywall qui fait désinstaller. De même, les boutons
+« Entraînement libre » portent leur cadenas avant l'appui plutôt que de faire surgir un paywall à
+la place d'une session.
+
+Les cours **repris dans la bibliothèque** ne comptent pas dans le quota d'import : ils n'ont rien
+coûté à produire, et faire payer un import qu'on n'a pas fait serait incompréhensible.
+
+L'abonnement n'est branché sur aucune boutique. `Réglages → Test → Micabo Pro` est un
+**interrupteur de relecture**, pas une fonctionnalité : sans lui, les écrans de blocage ne se
+verraient qu'une fois, le bouton du paywall ouvrant tout. Il disparaîtra le jour où RevenueCat
+décidera à sa place. `MicaboTests/FreemiumTests.swift` verrouille les trois nombres et la coupure
+de la fiche.
+
 ## Direction visuelle
 
 Du papier, pas des cartes empilées. Le fond ivoire est assez marqué pour que le blanc se
