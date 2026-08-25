@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 18 : le passage de relais. Une phrase, et rien d'autre.
+/// Le passage de relais. Une phrase, et rien d'autre.
 ///
 /// C'est le pivot du parcours : jusqu'ici on a montré ce que Micabo fait et ce qu'il a fait
 /// pour d'autres, à partir d'ici c'est cet étudiant-là qui s'y met. L'écran passe donc sur

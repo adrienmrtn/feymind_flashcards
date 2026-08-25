@@ -10,7 +10,7 @@ enum MicaboProducts {
     static let all = [yearly, monthly]
 }
 
-/// Écran 19 : paywall natif StoreKit. L'achat n'est branché à rien pour l'instant,
+/// Paywall natif StoreKit. L'achat n'est branché à rien pour l'instant,
 /// il sert uniquement à terminer le parcours.
 struct PaywallStepView: View {
     var onFinish: () -> Void

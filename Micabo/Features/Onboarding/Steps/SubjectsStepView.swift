@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 12 : choix des matières. Sélection multiple, catalogue volontairement large.
+/// Choix des matières. Sélection multiple, catalogue volontairement large.
 ///
 /// Le catalogue vit dans `SubjectCatalog`, hors de la vue : c'est ce qui permet de vérifier
 /// qu'aucune matière d'une même famille ne porte l'emoji d'une autre.

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 14 : projection sur un an au rythme choisi.
+/// Projection sur un an au rythme choisi.
 ///
 /// **Le chiffre est passé dans le titre.** Il vivait avant en corps 64 sous un titre qui
 /// annonçait sa venue (« À ce rythme, dans un an… »), et sous un sous-titre qui répétait le

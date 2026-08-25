@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 1 : l'accroche. Un paquet de cartes se rebat tout seul, et rien d'autre.
+/// L'accroche. Un paquet de cartes se rebat tout seul, et rien d'autre.
 ///
 /// Le paragraphe d'explication qui vivait ici est parti. Sur le premier écran d'une app,
 /// personne ne lit trois lignes sur le fonctionnement d'un algorithme : on regarde. Les

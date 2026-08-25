@@ -1,6 +1,5 @@
 import SwiftData
 import SwiftUI
-import UIKit
 
 /// Une session de révision : la file du jour, carte après carte.
 ///

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 3 : où en est l'étudiant. **Les réponses sont celles de son pays.**
+/// Où en est l'étudiant. **Les réponses sont celles de son pays.**
 ///
 /// L'écran servait sept réponses françaises à tout le monde — Lycée, Prépa, Licence, PASS,
 /// Master, Concours — ce qui laissait un Américain, un Britannique ou un Québécois sans une

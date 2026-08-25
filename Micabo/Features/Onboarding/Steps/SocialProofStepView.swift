@@ -2,7 +2,7 @@ import Combine
 import StoreKit
 import SwiftUI
 
-/// Écran 17 : la preuve sociale, juste après la génération du parcours.
+/// La preuve sociale, juste après la génération du parcours.
 ///
 /// Sa place dans le parcours est tout le sujet. Une preuve sociale posée en ouverture
 /// demande de croire une app qu'on n'a pas encore vue ; posée ici, elle arrive sur un

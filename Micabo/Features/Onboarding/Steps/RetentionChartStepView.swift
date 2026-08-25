@@ -1,7 +1,7 @@
 import Combine
 import SwiftUI
 
-/// Écran 7 : la démonstration visuelle. Deux courbes de mémorisation qui partent
+/// La démonstration visuelle. Deux courbes de mémorisation qui partent
 /// ensemble puis divergent à la première révision.
 ///
 /// L'écran doit se lire en trois secondes : un titre, le graphe avec ses intervalles

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 2 : où l'étudiant est scolarisé. **C'est la première question du parcours.**
+/// Où l'étudiant est scolarisé. **C'est la première question du parcours.**
 ///
 /// Elle passe devant « tu en es où ? », et cet ordre est tout l'intérêt de l'écran : ce sont
 /// les paliers du pays choisi qui deviennent les réponses de la question suivante. « Les

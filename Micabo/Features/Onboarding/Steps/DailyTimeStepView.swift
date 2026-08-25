@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Écran 13 : rythme quotidien. Le curseur va de 5 minutes à 2 heures, par paliers de
+/// Rythme quotidien. Le curseur va de 5 minutes à 2 heures, par paliers de
 /// 5 minutes jusqu'à la demi-heure puis de 15 minutes au-delà — il glisse donc sur les
 /// paliers de `DailyLoad`, pas sur les minutes.
 ///
