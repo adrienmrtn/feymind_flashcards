@@ -220,8 +220,6 @@ private struct FriendRow: View {
         HStack(spacing: 13) {
             Button(action: open) {
                 HStack(spacing: 13) {
-                    initial
-
                     VStack(alignment: .leading, spacing: 2) {
                         Text(person.handle)
                             .font(MicaboFont.rowTitle)
@@ -246,14 +244,6 @@ private struct FriendRow: View {
         }
         .padding(.vertical, 11)
         .padding(.horizontal, 16)
-    }
-
-    private var initial: some View {
-        Text(person.username.first.map { String($0).uppercased() } ?? "?")
-            .font(MicaboFont.hanken(15, weight: .semibold))
-            .foregroundStyle(MicaboColor.accent)
-            .frame(width: 38, height: 38)
-            .background(MicaboColor.accentSoft, in: Circle())
     }
 
     @ViewBuilder

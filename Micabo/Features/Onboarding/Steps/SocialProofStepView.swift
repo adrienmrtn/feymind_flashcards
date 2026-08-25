@@ -117,12 +117,8 @@ struct SocialProofStepView: View {
             Spacer(minLength: 0)
 
             HStack(spacing: 10) {
-                Text(String(review.name.prefix(1)))
-                    .font(MicaboFont.hanken(14, weight: .bold))
-                    .foregroundStyle(MicaboColor.accent)
-                    .frame(width: 32, height: 32)
-                    .background(MicaboColor.accentSoft, in: Circle())
-
+                // Pas de rond avec une initiale dedans : c'est une photo de profil qui
+                // n'existe pas, et sur un avis elle a en plus l'air d'un client inventé.
                 VStack(alignment: .leading, spacing: 1) {
                     Text(review.name)
                         .font(MicaboFont.hanken(14, weight: .semibold))
