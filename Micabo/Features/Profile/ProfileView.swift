@@ -96,7 +96,7 @@ struct ProfileView: View {
     /// tuile pastel de la rangée : une roue crantée grise en glyphe système était le seul
     /// endroit de l'app où une icône n'avait pas sa pastille.
     private var header: some View {
-        MicaboScreenHeader(title: "Profil", eyebrow: identityLabel) {
+        MicaboScreenHeader(title: "Profil") {
             Button {
                 Haptics.light()
                 showSettings = true
@@ -109,9 +109,12 @@ struct ProfileView: View {
         .padding(.top, MicaboSpacing.xs)
     }
 
-    /// **Qui l'on est, en sur-titre.** Le nom d'utilisateur passe devant l'adresse : c'est lui
-    /// qu'on dicte à un camarade, et une adresse électronique affichée en grand sur un écran
-    /// qu'on montre n'a rien à y faire.
+    /// **Qui l'on est**, sur une ligne, en tête du panneau.
+    ///
+    /// Le nom d'utilisateur passe devant l'adresse : c'est lui qu'on dicte à un camarade, et
+    /// une adresse électronique affichée sur un écran qu'on montre n'a rien à y faire. Il ne
+    /// va pas dans le sur-titre de l'en-tête, qui met ce qu'il reçoit en capitales : un nom
+    /// d'utilisateur n'est pas un intitulé de section, et « @MARIE-DUPONT » ne se lit pas.
     private var identityLabel: String {
         if let username = social.username { return Username.display(username) }
         if let name = auth.user?.label.nilIfBlank { return name }
@@ -125,7 +128,13 @@ struct ProfileView: View {
     /// séparées en deux blocs, elles se répétaient ; ensemble, la seconde explique la
     /// première.
     private var streakPanel: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(identityLabel)
+                .font(MicaboFont.hanken(13, weight: .semibold))
+                .foregroundStyle(MicaboColor.inkTertiary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+
             if logs.isEmpty {
                 firstReviewInvitation
             } else {
@@ -133,6 +142,7 @@ struct ProfileView: View {
             }
 
             activityChart
+                .padding(.top, 4)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
