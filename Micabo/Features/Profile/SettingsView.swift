@@ -12,10 +12,15 @@ struct SettingsView: View {
     @State private var anonKey = AppConfig.supabaseAnonKey
     @State private var model = AppConfig.aiModel
     @State private var dailyMinutes = OnboardingPreferences.dailyMinutes
+    @Environment(AuthController.self) private var auth
+    @Environment(CloudSync.self) private var sync
+
     @State private var studyLevel = OnboardingPreferences.studyLevel
     @State private var country = OnboardingPreferences.schoolingCountry
     @AppStorage(SheetPreferences.lengthKey) private var sheetLength = SheetLength.default
     @State private var showResetConfirmation = false
+    @State private var showSignOutConfirmation = false
+    @State private var showAuth = false
 
     private let models = [
         "google/gemini-flash-1.5",
@@ -29,6 +34,7 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                 header
+                accountSection
                 studiesSection
                 reviewSection
                 intelligenceSection
@@ -54,6 +60,33 @@ struct SettingsView: View {
         } message: {
             Text("Tes cours, tes cartes et ton historique de révision seront supprimés.")
         }
+        .confirmationDialog(
+            "Se déconnecter ?",
+            isPresented: $showSignOutConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Se déconnecter", role: .destructive) {
+                Task {
+                    // On remonte une dernière fois avant de partir : une révision faite dans
+                    // la minute qui précède ne doit pas être le prix d'une déconnexion.
+                    await sync.sync(context: modelContext)
+                    await auth.signOut()
+                    sync.forget()
+                }
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("Tes cours restent sur cet appareil et sur ton compte. Tu les retrouveras à la prochaine connexion.")
+        }
+        .sheet(isPresented: $showAuth) {
+            AuthView { showAuth = false }
+                .presentationCornerRadius(MicaboRadius.sheet)
+                .onChange(of: auth.isSignedIn) { _, isSignedIn in
+                    guard isSignedIn else { return }
+                    showAuth = false
+                    Task { await sync.sync(context: modelContext) }
+                }
+        }
     }
 
     // MARK: - Sections
@@ -66,6 +99,79 @@ struct SettingsView: View {
         }
         .padding(.top, MicaboSpacing.xs)
     }
+
+    /// Le compte, et l'état de la synchro.
+    ///
+    /// C'est le seul endroit où l'on voit si les cours sont en sécurité ailleurs que sur ce
+    /// téléphone, et il le dit franchement dans les deux cas. Un utilisateur resté en local
+    /// n'est pas harcelé : une rangée, une phrase, et il décide.
+    @ViewBuilder
+    private var accountSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Compte")
+
+            VStack(spacing: 0) {
+                if let user = auth.user {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("👤"), background: MicaboColor.accentSoft),
+                        title: user.label,
+                        subtitle: user.email ?? "Connecté",
+                        accessory: .none
+                    )
+
+                    MicaboHairline(inset: 71)
+
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("☁️"), background: MicaboColor.tilePastels[3]),
+                        title: "Sauvegarde",
+                        subtitle: syncSubtitle,
+                        accessory: .none,
+                        action: { Task { await sync.sync(context: modelContext) } }
+                    )
+
+                    MicaboHairline(inset: 71)
+
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("🚪"), background: MicaboColor.surfaceMuted),
+                        title: "Se déconnecter",
+                        accessory: .none,
+                        titleColor: MicaboColor.negative,
+                        action: { showSignOutConfirmation = true }
+                    )
+                } else {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("☁️"), background: MicaboColor.tilePastels[3]),
+                        title: "Créer un compte ou se connecter",
+                        subtitle: "Retrouver tes cours sur tes autres appareils",
+                        accessory: .chevron,
+                        action: { showAuth = true }
+                    )
+                }
+            }
+            .micaboGroup()
+
+            MicaboSectionFootnote(text: auth.isSignedIn
+                ? "Tes cours, tes cartes et ton planning sont copiés sur ton compte. Les images et les enregistrements audio restent sur cet appareil."
+                : "Sans compte, tout reste sur cet appareil : effacer l'app efface tes cours."
+            )
+        }
+    }
+
+    private var syncSubtitle: String {
+        switch sync.state {
+        case .idle: "Toucher pour synchroniser"
+        case .syncing: "Synchronisation…"
+        case .done(let date): "À jour · " + Self.timeFormatter.string(from: date)
+        case .failed(let message): message
+        }
+    }
+
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
 
     /// Pour qui les fiches sont écrites, et à quelle longueur.
     ///
@@ -257,7 +363,7 @@ struct SettingsView: View {
                     action: { showResetConfirmation = true }
                 )
             ],
-            footnote: "Tes cours et tes cartes ne quittent jamais cet appareil."
+            footnote: "Effacer tes cours les efface aussi de ton compte à la prochaine synchronisation."
         )
     }
 

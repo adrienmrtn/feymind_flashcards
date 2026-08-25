@@ -4,6 +4,11 @@ import SwiftUI
 @main
 struct MicaboApp: App {
     private let container: ModelContainer
+    /// L'état du compte, créé une fois pour toute l'app et posé dans l'environnement. Deux
+    /// écrans qui décideraient chacun s'il y a quelqu'un de connecté finiraient par ne pas
+    /// être d'accord.
+    @State private var auth = AuthController()
+    @State private var sync: CloudSync
 
     private static let schema = Schema([Course.self, Flashcard.self, ReviewLog.self, Exam.self])
 
@@ -11,6 +16,10 @@ struct MicaboApp: App {
         FontLoader.registerFonts()
         container = Self.makeContainer()
         SampleContentPurge.purgeIfNeeded(in: container.mainContext)
+
+        let auth = AuthController()
+        _auth = State(initialValue: auth)
+        _sync = State(initialValue: CloudSync(auth: auth))
     }
 
     var body: some Scene {
@@ -20,6 +29,20 @@ struct MicaboApp: App {
             // lui l'en empêcherait. `RootView` l'applique donc à l'app elle-même.
             RootView()
                 .tint(MicaboColor.accent)
+                .environment(auth)
+                .environment(sync)
+                .task {
+                    await auth.restore()
+                    await sync.sync(context: container.mainContext)
+                }
+                // Les liens de confirmation et de connexion reviennent sur le schéma de
+                // Micabo : c'est ici qu'ils ouvrent la session, quel que soit l'écran affiché.
+                .onOpenURL { url in
+                    Task {
+                        await auth.handle(callback: url)
+                        await sync.sync(context: container.mainContext)
+                    }
+                }
         }
         .modelContainer(container)
     }

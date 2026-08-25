@@ -2,7 +2,11 @@ import Foundation
 
 /// Valeur JSON de forme quelconque, utilisée pour lire les réponses de l'IA
 /// sans dépendre de leur structure exacte.
-enum JSONValue: Decodable {
+///
+/// Elle se réécrit aussi, et pas seulement pour la symétrie : c'est ce qui permet à la fiche
+/// d'un cours de traverser la synchro sans être interprétée. Un morceau de JSON qu'on relit et
+/// réécrit à l'identique ne peut rien perdre en route.
+enum JSONValue: Codable {
     case string(String)
     case number(Double)
     case bool(Bool)
@@ -28,6 +32,25 @@ enum JSONValue: Decodable {
         } else {
             self = .null
         }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let value): try container.encode(value)
+        case .number(let value): try container.encode(value)
+        case .bool(let value): try container.encode(value)
+        case .array(let values): try container.encode(values)
+        case .object(let fields): try container.encode(fields)
+        case .null: try container.encodeNil()
+        }
+    }
+
+    /// La valeur quand c'est une chaîne, et rien sinon. Sert à lire un champ nommé dans un
+    /// objet dont on ne connaît pas la forme, comme les métadonnées d'un fournisseur OAuth.
+    var stringValue: String? {
+        guard case .string(let value) = self else { return nil }
+        return value
     }
 
     /// Toutes les chaînes de l'arbre, dans un ordre de lecture plausible.

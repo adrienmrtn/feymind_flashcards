@@ -11,5 +11,26 @@
 		<string>HankenGrotesk-SemiBold.ttf</string>
 		<string>HankenGrotesk-Bold.ttf</string>
 	</array>
+	<!--
+	Le schéma de retour des connexions.
+
+	Il sert deux fois : au retour d'une page OAuth (Google et les suivants), et à l'ouverture
+	d'un lien de confirmation ou de connexion reçu par courriel. La même chaîne doit figurer
+	dans les « Redirect URLs » du tableau de bord Supabase, sinon le retour est refusé côté
+	serveur avant d'arriver ici. Elle est aussi écrite dans `AuthRedirect.scheme`.
+	-->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.micabo.app.auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>micabo</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

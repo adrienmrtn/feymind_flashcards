@@ -4,6 +4,7 @@ import SwiftUI
 /// Profil, statistiques et réglages.
 struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AuthController.self) private var auth
 
     @Query private var courses: [Course]
     @Query private var cards: [Flashcard]
@@ -65,19 +66,37 @@ struct ProfileView: View {
         return "Série de \(streak) jour\(streak > 1 ? "s" : "")"
     }
 
+    private var initial: String {
+        let label = auth.user?.label ?? "Étudiant"
+        return label.first.map { String($0).uppercased() } ?? "É"
+    }
+
+    private var identitySubtitle: String {
+        if let email = auth.user?.email?.nilIfBlank { return email }
+        if auth.isSignedIn { return "Connecté" }
+        return "Sans compte · tout reste sur cet appareil"
+    }
+
+    /// La carte d'identité, qui dit maintenant quelque chose de vrai.
+    ///
+    /// Elle affichait « Étudiant » et « Tout reste sur cet appareil » pour tout le monde. La
+    /// seconde phrase est devenue fausse le jour où les comptes sont arrivés, et la première
+    /// n'a jamais rien dit : elle porte l'initiale, le nom et l'adresse de qui est connecté, et
+    /// reste franche quand personne ne l'est.
     private var identityCard: some View {
         HStack(spacing: 14) {
-            Text("É")
+            Text(initial)
                 .font(MicaboFont.hanken(21, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
                 .frame(width: 54, height: 54)
                 .background(MicaboColor.accentSoft, in: Circle())
 
             VStack(alignment: .leading, spacing: 3) {
-                Text("Étudiant")
+                Text(auth.user?.label ?? "Étudiant")
                     .font(MicaboFont.hanken(17, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
-                Text("Tout reste sur cet appareil")
+                    .lineLimit(1)
+                Text(identitySubtitle)
                     .font(MicaboFont.rowSubtitle)
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .fixedSize(horizontal: false, vertical: true)
