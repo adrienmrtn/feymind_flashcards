@@ -68,7 +68,11 @@ struct SharedCourseView: View {
         .enablesSwipeBack()
         .overlay(alignment: .bottom) { bottomBar }
         .task {
-            sheet = CourseSheet.decode(from: course.sheet?.data)
+            // `highlighted()` et pas seulement `decode` : c'est ce que fait `Course.decodedSheet`
+            // pour ses propres cours, et une fiche partagée qui arriverait sans ses passages en
+            // couleur se lirait moins bien que la sienne — exactement ce que cet écran promet de
+            // ne pas faire.
+            sheet = CourseSheet.decode(from: course.sheet?.data)?.highlighted()
             existing = CourseRepository.adopted(course, in: modelContext)
         }
         .alert("Oups", isPresented: .constant(failure != nil)) {

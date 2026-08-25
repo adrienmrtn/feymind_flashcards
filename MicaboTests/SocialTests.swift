@@ -150,9 +150,13 @@ final class SharedCourseAdoptionTests: XCTestCase {
         container = nil
     }
 
+    /// Le texte est délibérément long : `CourseFingerprint.make` rend une chaîne vide en dessous
+    /// de quatre-vingts caractères utiles, et un texte court aurait fait passer le test de la
+    /// détection de doublon pour la mauvaise raison.
     private func shared(
         title: String = "Le cycle de l'eau",
-        rawText: String = "L'eau change d'état sans jamais quitter la planète, et le cycle est fermé."
+        rawText: String = "L'eau change d'état sans jamais quitter la planète, et le cycle est fermé. "
+            + "L'évaporation précède la condensation, puis la précipitation referme la boucle."
     ) -> SharedCourseRecord {
         SharedCourseRecord(
             id: UUID(),
@@ -211,6 +215,18 @@ final class SharedCourseAdoptionTests: XCTestCase {
         XCTAssertEqual(found?.id, adopted.id)
     }
 
+    /// Un cours trop court pour avoir une empreinte se reconnaît par son titre. Sans ce repli,
+    /// un paquet de cartes partagé se laissait reprendre indéfiniment, une copie par appui.
+    func testACourseTooShortForAFingerprintIsStillRecognized() throws {
+        let tiny = shared(title: "Vocabulaire allemand", rawText: "der, die, das")
+        XCTAssertTrue(CourseFingerprint.make(from: tiny.raw_text).isEmpty, "Ce texte est trop court pour une empreinte")
+        XCTAssertNil(CourseRepository.adopted(tiny, in: context))
+
+        let adopted = try CourseRepository.adopt(tiny, from: "camille", in: context)
+
+        XCTAssertEqual(CourseRepository.adopted(tiny, in: context)?.id, adopted.id)
+    }
+
     /// Deux cours différents ne se confondent pas, même repris à la suite.
     func testTwoDifferentCoursesStayTwoCourses() throws {
         let first = shared(title: "Le cycle de l'eau", rawText: String(repeating: "La condensation referme la boucle. ", count: 4))
@@ -222,6 +238,46 @@ final class SharedCourseAdoptionTests: XCTestCase {
         XCTAssertNotEqual(one.id, two.id)
         XCTAssertEqual(CourseRepository.adopted(first, in: context)?.id, one.id)
         XCTAssertEqual(CourseRepository.adopted(second, in: context)?.id, two.id)
+    }
+}
+
+/// Ce qui part dans un filtre PostgREST.
+///
+/// La virgule, les parenthèses et le point sont structurels dans la grammaire d'un `or=(…)` :
+/// une recherche qui en contient composait un filtre malformé, et le serveur répondait 400 pour
+/// une recherche parfaitement valide.
+final class LibrarySearchTests: XCTestCase {
+    func testAShortNeedleAsksForNothing() {
+        XCTAssertNil(SocialService.searchPattern(""))
+        XCTAssertNil(SocialService.searchPattern(" "))
+        XCTAssertNil(SocialService.searchPattern("a"))
+    }
+
+    func testTheValueIsQuotedSoItsPunctuationStaysAValue() throws {
+        let pattern = try XCTUnwrap(SocialService.searchPattern("Chapitre 3, suite"))
+
+        XCTAssertTrue(pattern.hasPrefix("\""), "La valeur doit être entre guillemets")
+        XCTAssertTrue(pattern.hasSuffix("\""))
+        XCTAssertTrue(pattern.contains("Chapitre 3, suite"))
+        XCTAssertTrue(pattern.contains("*"), "La recherche reste partielle")
+    }
+
+    /// Les jokers de `LIKE` ne se tapent pas volontairement : les laisser passer ferait rendre
+    /// toute la bibliothèque à quelqu'un qui cherche « 100_% ».
+    func testLikeWildcardsDoNotSurvive() throws {
+        let pattern = try XCTUnwrap(SocialService.searchPattern("100_%"))
+
+        XCTAssertFalse(pattern.dropFirst().dropLast().contains("_"))
+        XCTAssertFalse(pattern.contains("%"))
+    }
+
+    /// Un guillemet dans la recherche fermerait la valeur : il part.
+    func testAQuoteCannotCloseTheValueEarly() throws {
+        let pattern = try XCTUnwrap(SocialService.searchPattern("le \"cycle\" de l'eau"))
+        let inner = pattern.dropFirst().dropLast()
+
+        XCTAssertFalse(inner.contains("\""))
+        XCTAssertTrue(inner.contains("cycle"))
     }
 }
 

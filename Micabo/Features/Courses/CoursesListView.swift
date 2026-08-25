@@ -196,9 +196,12 @@ struct CoursesListView: View {
         }
     }
 
+    /// Le rayon affiché, en retombant sur ses cours dès que la bibliothèque n'est plus
+    /// accessible : le sélecteur disparaît à la déconnexion, et sans ce repli on restait
+    /// bloqué sur « Découvrir » sans aucun moyen d'en sortir.
     @ViewBuilder
     private var shelfContent: some View {
-        switch shelf {
+        switch LibraryAccess.isAvailable(signedIn: auth.isSignedIn) ? shelf : .mine {
         case .mine:
             myCourses
         case .discover:

@@ -1,4 +1,3 @@
-import SwiftData
 import SwiftUI
 
 /// Disponibilité de la bibliothèque partagée.
@@ -25,7 +24,6 @@ enum LibraryAccess {
 /// donc mentirait. Ce qui entre vraiment dans l'app, c'est le cours qu'on reprend.
 struct LibraryView: View {
     @Environment(SocialService.self) private var social
-    @Environment(AuthController.self) private var auth
 
     /// Ouvre le lecteur d'un cours partagé. La destination vit dans la pile de l'onglet Cours :
     /// reprendre un cours doit atterrir dans « Mes cours », pas dans une feuille modale qu'on

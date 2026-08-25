@@ -211,7 +211,7 @@ struct SettingsView: View {
                         ProgressView()
                             .controlSize(.small)
                             .tint(MicaboColor.progress)
-                    } else if username != (social.username ?? ""), !username.isEmpty {
+                    } else if hasUsernameChange {
                         Button("Enregistrer", action: commitUsername)
                             .font(MicaboFont.hanken(13, weight: .semibold))
                             .foregroundStyle(MicaboColor.accent)
@@ -221,35 +221,57 @@ struct SettingsView: View {
                 .padding(.horizontal, MicaboSpacing.md)
                 .micaboGroup()
 
-                MicaboSectionFootnote(
-                    text: usernameNotice ?? "C'est le nom que tes camarades tapent pour t'ajouter. Trois à vingt caractères, sans espace ni accent."
-                )
-                .foregroundStyle(usernameNotice == nil ? MicaboColor.inkTertiary : MicaboColor.negative)
+                usernameFootnote
             }
             .onAppear { username = social.username ?? "" }
             .onChange(of: social.username) { _, new in
                 guard let new else { return }
                 username = new
             }
-            .onChange(of: username) { _, new in
-                // La mise en forme se fait sous les doigts : voir « Adrien Martinot » devenir
-                // « adrien-martinot » en le tapant explique la règle mieux qu'une phrase.
-                let normalized = Username.normalize(new)
-                if normalized != new { username = normalized }
-            }
         }
+    }
+
+    /// Ce que le nom va devenir, ou ce qui l'empêche.
+    ///
+    /// La mise en forme **ne se fait plus sous les doigts**, et c'était un vrai défaut : elle
+    /// retirait le séparateur en attente à chaque frappe, si bien que taper « Adrien Martinot »
+    /// lettre par lettre donnait `adrienmartinot`. Seul un collage marchait. Le champ laisse
+    /// donc taper ce qu'on veut, et la ligne du dessous annonce ce qui sera enregistré.
+    @ViewBuilder
+    private var usernameFootnote: some View {
+        if let notice = social.failure, hasUsernameChange {
+            Text(notice)
+                .font(MicaboFont.caption)
+                .foregroundStyle(MicaboColor.negative)
+                .fixedSize(horizontal: false, vertical: true)
+        } else if hasUsernameChange {
+            let preview = Username.normalize(username)
+            MicaboSectionFootnote(
+                text: preview.isEmpty
+                    ? "Trois à vingt caractères, en commençant par une lettre ou un chiffre."
+                    : "Sera enregistré sous \(Username.display(preview))."
+            )
+        } else {
+            MicaboSectionFootnote(
+                text: "C'est le nom que tes camarades tapent pour t'ajouter. Trois à vingt caractères, sans espace ni accent."
+            )
+        }
+    }
+
+    private var hasUsernameChange: Bool {
+        let typed = username.trimmingCharacters(in: .whitespaces)
+        return !typed.isEmpty && Username.normalize(typed) != (social.username ?? "")
     }
 
     private func commitUsername() {
         let candidate = username
         Task {
             let saved = await social.setUsername(candidate)
-            if saved { Haptics.success() }
+            if saved {
+                Haptics.success()
+                username = social.username ?? candidate
+            }
         }
-    }
-
-    private var usernameNotice: String? {
-        social.failure
     }
 
     /// Pour qui les fiches sont écrites, et à quelle longueur.

@@ -148,13 +148,20 @@ struct FriendsView: View {
 
     // MARK: - Sections
 
+    /// Les rangées relisent leur relation **au moment de l'affichage**, et pas celle que la
+    /// requête a rapportée.
+    ///
+    /// Les résultats de recherche et les camarades sont des valeurs figées : après avoir envoyé
+    /// une demande, leur `relation` disait encore « inconnu », le bouton disait encore
+    /// « Ajouter », et un second appui créait un doublon que la base refusait. Elle est donc
+    /// recalculée ici, à partir de ce que le service vient de relire.
     private func section(_ caption: String, people: [SocialService.Person]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             MicaboSectionCaption(text: caption)
 
             VStack(spacing: 0) {
                 ForEach(Array(people.enumerated()), id: \.element.id) { index, person in
-                    FriendRow(person: person) {
+                    FriendRow(person: refreshed(person)) {
                         onOpen(person)
                     }
 
@@ -181,6 +188,12 @@ struct FriendsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(MicaboSpacing.md)
         .micaboGroup()
+    }
+
+    private func refreshed(_ person: SocialService.Person) -> SocialService.Person {
+        var updated = person
+        updated.relation = social.relation(with: person.id)
+        return updated
     }
 
     private func notice(_ text: String) -> some View {

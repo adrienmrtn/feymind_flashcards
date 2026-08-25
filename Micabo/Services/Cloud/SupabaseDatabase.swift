@@ -133,6 +133,7 @@ struct SupabaseDatabase {
         from table: String,
         select: String = "*",
         updatedSince: Date? = nil,
+        filters: [URLQueryItem] = [],
         limit: Int = 1_000
     ) async throws -> [T] {
         var query = [
@@ -140,6 +141,7 @@ struct SupabaseDatabase {
             URLQueryItem(name: "limit", value: String(limit)),
             URLQueryItem(name: "order", value: "updated_at.asc")
         ]
+        query.append(contentsOf: filters)
         if let updatedSince {
             query.append(URLQueryItem(name: "updated_at", value: "gt." + isoFormatter.string(from: updatedSince)))
         }

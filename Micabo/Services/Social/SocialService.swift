@@ -302,12 +302,20 @@ final class SocialService {
     /// requête dise ce qu'elle veut, et pour qu'une politique relâchée par erreur un jour ne se
     /// traduise pas immédiatement par des cours privés à l'écran.
     func library(search: String = "", subject: String? = nil, limit: Int = 60) async -> [SharedCourseRecord] {
-        var filters = [URLQueryItem(name: "visibility", value: "neq.private")]
+        guard let me = auth.user?.id else { return [] }
 
-        let needle = search.trimmingCharacters(in: .whitespacesAndNewlines)
-        if needle.count >= 2 {
+        // Ses propres cours ne sont pas dans sa bibliothèque. La politique de partage les
+        // exclut déjà (`auth.uid() <> user_id`), mais elle n'est pas la seule sur la table :
+        // celle du propriétaire s'y ajoute, et deux politiques se cumulent. Sans ce filtre, on
+        // se voyait proposer de reprendre son propre cours.
+        var filters = [
+            URLQueryItem(name: "user_id", value: "neq.\(me.uuidString.lowercased())"),
+            URLQueryItem(name: "visibility", value: "neq.private")
+        ]
+
+        if let needle = Self.searchPattern(search) {
             filters.append(
-                URLQueryItem(name: "or", value: "(title.ilike.*\(needle)*,subject.ilike.*\(needle)*)")
+                URLQueryItem(name: "or", value: "(title.ilike.\(needle),subject.ilike.\(needle))")
             )
         }
         if let subject = subject?.nilIfBlank {
@@ -317,10 +325,32 @@ final class SocialService {
         return await shared(filters: filters, limit: limit)
     }
 
+    /// Le motif de recherche, sous une forme que PostgREST relit sans se tromper.
+    ///
+    /// La virgule, les parenthèses et le point sont **structurels** dans la grammaire d'un
+    /// `or=(…)` : chercher « Chapitre 3, suite » composait un filtre malformé, le serveur
+    /// répondait 400, et l'écran affichait une erreur de réseau pour une recherche valide. Les
+    /// guillemets isolent la valeur ; `%` et `_` sont retirés parce que ce sont les jokers de
+    /// `LIKE` et que personne ne les tape en pensant s'en servir.
+    nonisolated static func searchPattern(_ raw: String) -> String? {
+        let cleaned = raw
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\"", with: "")
+            .replacingOccurrences(of: "\\", with: "")
+            .replacingOccurrences(of: "%", with: " ")
+            .replacingOccurrences(of: "_", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard cleaned.count >= 2 else { return nil }
+        return "\"*\(cleaned)*\""
+    }
+
     /// Les cours d'une personne, tels qu'elle nous les laisse voir. C'est la base qui trie :
     /// demander les cours de quelqu'un dont on n'est pas ami rend une liste vide.
     func courses(of person: Person, limit: Int = 60) async -> [SharedCourseRecord] {
-        await shared(
+        guard person.id != auth.user?.id else { return [] }
+
+        return await shared(
             filters: [
                 URLQueryItem(name: "user_id", value: "eq.\(person.id.uuidString.lowercased())"),
                 URLQueryItem(name: "visibility", value: "neq.private")
@@ -404,16 +434,21 @@ final class SocialService {
     /// pas en milliers.
     private func perform(_ work: @escaping () async throws -> Void) async {
         isLoading = true
+        var raised: String?
         do {
             try await work()
-            failure = nil
         } catch let error as SupabaseDatabase.Failure where error.isDuplicate {
-            failure = "Cette demande existe déjà."
+            raised = "Cette demande existe déjà."
         } catch {
-            failure = describe(error)
+            raised = describe(error)
         }
         isLoading = false
+
         await refresh()
+        // La relecture remet le message à zéro sur son chemin heureux, et elle a lieu **après**
+        // l'écriture : sans cette ligne, toute erreur d'une demande d'amitié était effacée
+        // avant que l'écran ait pu l'afficher, et l'action échouait en silence.
+        if let raised { failure = raised }
     }
 
     private func describe(_ error: Error) -> String {

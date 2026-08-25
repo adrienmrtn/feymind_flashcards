@@ -105,19 +105,19 @@ enum CourseRepository {
         in context: ModelContext
     ) throws -> Course {
         let title = TextSanitizer.clean(shared.title).nilIfBlank ?? "Cours repris"
-        let index = abs(title.hashValue) % MicaboColor.courseAccents.count
+        let index = title.hashValue.magnitude % UInt(MicaboColor.courseAccents.count)
 
         let course = Course(
             title: title,
             subject: shared.subject.flatMap { TextSanitizer.clean($0).nilIfBlank },
-            summary: TextSanitizer.clean(shared.summary) ?? "",
+            summary: TextSanitizer.clean(shared.summary),
             emoji: CourseEmoji.resolve(
                 proposed: shared.emoji,
                 subject: shared.subject,
                 title: title
             ),
             accentHex: shared.accent_hex?.nilIfBlank
-                ?? MicaboColor.courseAccents[index].hexString,
+                ?? MicaboColor.courseAccents[Int(index)].hexString,
             source: .library,
             // Le nom de l'auteur prend la place du nom de fichier : c'est ce que l'écran du
             // cours affiche en provenance, et un cours repris doit dire d'où il vient.
@@ -135,15 +135,31 @@ enum CourseRepository {
         return course
     }
 
-    /// Le cours repris est-il déjà là ? On compare l'empreinte, comme pour un import : reprendre
-    /// deux fois le même cours depuis la bibliothèque est le geste le plus facile à faire par
-    /// erreur, puisqu'il ne coûte qu'un appui.
+    /// Le cours repris est-il déjà là ?
+    ///
+    /// Reprendre deux fois le même cours est le geste le plus facile à faire par erreur : il ne
+    /// coûte qu'un appui, et l'écran ne dit rien tant qu'on ne l'a pas fait. On compare
+    /// l'empreinte, comme pour un import.
+    ///
+    /// **Et le titre quand il n'y a pas d'empreinte.** `CourseFingerprint.make` rend une chaîne
+    /// vide en dessous de quatre-vingts caractères utiles : un paquet de cartes partagé, ou un
+    /// cours très court, n'en a donc pas, et se serait laissé reprendre indéfiniment. Le titre
+    /// est un repère plus faible, mais il vaut mieux qu'aucun.
     static func adopted(_ shared: SharedCourseRecord, in context: ModelContext) -> Course? {
         let fingerprint = CourseFingerprint.make(from: shared.raw_text)
-        guard !fingerprint.isEmpty else { return nil }
+
+        if !fingerprint.isEmpty {
+            let descriptor = FetchDescriptor<Course>(
+                predicate: #Predicate { $0.fingerprint == fingerprint }
+            )
+            if let found = try? context.fetch(descriptor).first { return found }
+        }
+
+        let title = TextSanitizer.clean(shared.title).nilIfBlank ?? shared.title
+        guard !title.isEmpty else { return nil }
 
         let descriptor = FetchDescriptor<Course>(
-            predicate: #Predicate { $0.fingerprint == fingerprint }
+            predicate: #Predicate { $0.isFromLibrary && $0.title == title }
         )
         return try? context.fetch(descriptor).first
     }
