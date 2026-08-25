@@ -57,6 +57,24 @@ enum StudyLevel: String, CaseIterable, Identifiable {
         case .other: "Autre"
         }
     }
+
+    /// Ce à quoi le stade engage la fiche, dit en une ligne dans les réglages.
+    ///
+    /// Le même chapitre ne s'écrit pas pareil pour un terminale et pour un PASS : ce n'est
+    /// pas une question de longueur, c'est le niveau d'exigence du vocabulaire et la nature
+    /// de ce qui est attendu à l'épreuve. La phrase le dit, parce qu'un réglage dont on ne
+    /// voit pas l'effet ne se touche pas.
+    var detail: String {
+        switch self {
+        case .lycee: "Vocabulaire du programme, attendus du bac."
+        case .prepa: "Raisonnements complets, exigence de concours."
+        case .licence: "Termes du cours magistral, cadrage disciplinaire."
+        case .sante: "Densité et précision d'un tutorat santé."
+        case .master: "Débats du champ, nuances et limites."
+        case .concours: "Ce qui tombe, et les pièges classiques."
+        case .other: "Rédaction équilibrée, sans niveau supposé."
+        }
+    }
 }
 
 /// Réponses de l'onboarding, conservées localement pour personnaliser l'app.
@@ -99,8 +117,13 @@ enum OnboardingPreferences {
         }
     }
 
+    /// Le stade d'étude, tel que le reste de l'app le lit.
+    ///
+    /// Il est demandé à l'inscription et se corrige dans les réglages : c'est lui qui dit au
+    /// modèle pour qui il écrit, et on change d'année.
     static var studyLevel: StudyLevel? {
-        level.flatMap(StudyLevel.init(rawValue:))
+        get { level.flatMap(StudyLevel.init(rawValue:)) }
+        set { level = newValue?.rawValue }
     }
 
     /// Objectifs déclarés. Une seule réponse était possible auparavant : la clé

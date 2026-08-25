@@ -143,7 +143,15 @@ struct CourseSheetView: View {
             Button { showCardOptions = true } label: {
                 Label(cards.isEmpty ? MicaboCopy.cardsButton : "Générer de nouvelles cartes", systemImage: "sparkles")
             }
-            Button { Task { await writeSheet() } } label: {
+            // Refaire la fiche est l'endroit où la longueur se choisit vraiment : on a la
+            // fiche sous les yeux, et c'est en la lisant qu'on la trouve trop courte.
+            Menu {
+                ForEach(SheetLength.allCases) { length in
+                    Button { Task { await writeSheet(length: length) } } label: {
+                        Text("\(length.title) · \(length.readingHint)")
+                    }
+                }
+            } label: {
                 Label(sheet == nil ? "Ficher ce cours" : "Refaire la fiche", systemImage: "text.book.closed")
             }
             .disabled(course.rawText.nilIfBlank == nil)
@@ -335,9 +343,12 @@ struct CourseSheetView: View {
         explaining = ExplainedPassage(text: selection)
     }
 
+    /// Écrit ou réécrit la fiche. La longueur retenue est celle choisie, et elle devient le
+    /// réglage courant : on ne redemande pas à chaque fois ce qu'on vient de trancher.
     @MainActor
-    private func writeSheet() async {
+    private func writeSheet(length: SheetLength = SheetPreferences.length) async {
         guard isWorking == nil, let rawText = course.rawText.nilIfBlank else { return }
+        SheetPreferences.length = length
         isWorking = .sheet
         defer { isWorking = nil }
 
@@ -345,7 +356,9 @@ struct CourseSheetView: View {
             rawText: rawText,
             pageImages: [],
             hintTitle: course.title,
-            sourceName: course.sourceFileName
+            sourceName: course.sourceFileName,
+            studyLevel: OnboardingPreferences.studyLevel,
+            sheetLength: length
         )
 
         do {

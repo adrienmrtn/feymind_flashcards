@@ -214,12 +214,41 @@ final class CardFormatsTests: XCTestCase {
         )
     }
 
-    // MARK: - Choix des formats
+    // MARK: - Combien de cartes, par format
 
-    func testTheBasicFormatCannotBeSwitchedOff() {
-        XCTAssertEqual(QuestionMix.default.wireValues, ["basic", "cloze", "choice"])
-        XCTAssertEqual(QuestionMix.basicOnly.wireValues, ["basic"])
-        XCTAssertEqual(QuestionMix(includesCloze: false, includesChoice: true).wireValues, ["basic", "choice"])
+    func testOnlyTheRequestedFormatsAreAnnounced() {
+        XCTAssertEqual(QuestionQuota.default.wireKinds, ["basic", "cloze", "choice"])
+        XCTAssertEqual(QuestionQuota(basic: 8, cloze: 0, choice: 0).wireKinds, ["basic"])
+        XCTAssertEqual(QuestionQuota(basic: 4, cloze: 0, choice: 5).wireKinds, ["basic", "choice"])
+        XCTAssertEqual(
+            QuestionQuota(basic: 0, cloze: 5, choice: 5).wireCounts,
+            ["basic": 0, "cloze": 5, "choice": 5]
+        )
+    }
+
+    /// Un format à zéro est un choix légitime, et il est respecté à la lettre : c'est tout
+    /// l'intérêt d'un nombre plutôt que d'un interrupteur.
+    func testAFormatSetToZeroIsKept() {
+        let quota = QuestionQuota(basic: 0, cloze: 6, choice: 6).clamped()
+
+        XCTAssertEqual(quota.basic, 0)
+        XCTAssertEqual(quota.total, 12)
+        XCTAssertEqual(quota.kinds, [.cloze, .choice])
+    }
+
+    func testAnEmptyQuotaFallsBackOnBasicCards() {
+        let quota = QuestionQuota(basic: 0, cloze: 0, choice: 0).clamped()
+
+        XCTAssertEqual(quota.total, QuestionQuota.totalRange.lowerBound)
+        XCTAssertEqual(quota.kinds, [.basic])
+    }
+
+    /// Le plafond rogne le format le plus nombreux : une petite commande passe entière.
+    func testTheCapTrimsTheLargestFormatFirst() {
+        let quota = QuestionQuota(basic: 20, cloze: 20, choice: 3).clamped()
+
+        XCTAssertEqual(quota.total, QuestionQuota.totalRange.upperBound)
+        XCTAssertEqual(quota.choice, 3)
     }
 
     // MARK: - Sens inverse

@@ -54,11 +54,11 @@ LES HUIT BLOCS DISPONIBLES
 {"type":"formula","latex":"6 CO_2 + 6 H_2O \\rightarrow C_6H_{12}O_6 + 6 O_2","caption":"Ce que chaque terme désigne"}
 
 COMMENT COMPOSER LA FICHE
-- Entre 14 et 22 blocs, selon la richesse du document. Un document long ne s'écrit pas plus long : on garde l'essentiel.
+- Le volume est fixé par la consigne de longueur qui accompagne le document, et il ne se discute pas. Un document long ne donne pas une fiche plus longue : on garde l'essentiel.
 - Ouvre sur un paragraphe, jamais sur un titre : on doit entrer dans le sujet dès la première ligne.
 - Les paragraphes restent majoritaires. Un cours se lit, il ne se scanne pas.
 - 2 à 5 titres de partie (level 1), et des sous-parties seulement si une partie est longue.
-- 3 à 5 blocs "definition". Une définition ne se noie pas dans un paragraphe : c'est ce que l'étudiant vient chercher en premier.
+- Des blocs "definition" pour les termes que l'étudiant vient chercher en premier. Une définition ne se noie pas dans un paragraphe.
 - 2 à 4 encadrés sur toute la fiche, dont TOUJOURS un "essentiel". "attention" pour la confusion classique, "exemple" pour un cas concret, "astuce" pour un moyen de retenir.
 - "steps" : deux blocs au maximum sur la fiche, et seulement pour un mécanisme ou une méthode dont l'ordre compte.
 - "table" : UN TABLEAU AU MOINS dès que le document oppose deux notions, deux méthodes, deux cas, deux époques, ou liste des propriétés comparables. C'est presque toujours le cas, et un tableau vaut trois paragraphes de comparaison. Deux à quatre colonnes, deux à six lignes, cellules courtes. Tu peux en mettre deux si le document oppose deux fois.
@@ -70,6 +70,7 @@ AVANT DE RÉPONDRE, RELIS TA FICHE ET VÉRIFIE
 - Chaque paragraphe qui introduit une notion porte au moins un terme en **gras**.
 - Il y a un tableau, sauf si le document ne compare vraiment rien.
 - Il y a un graphe si le document contenait deux valeurs comparables.
+- Le nombre de blocs correspond à la longueur demandée.
 Si l'un de ces points manque, corrige-le avant de répondre.
 
 FIDÉLITÉ
@@ -89,3 +90,87 @@ Page N : description des figures, des axes, des valeurs lisibles, des relations 
 Relève les valeurs chiffrées que portent les graphiques et les tableaux, avec leur unité : elles serviront à reconstruire la figure dans la fiche.
 Si une page ne contient aucun élément visuel utile, écris simplement "Page N : aucun visuel notable".
 N'utilise jamais de tiret cadratin. Pas de markdown.`;
+
+/**
+ * Pour qui la fiche est écrite.
+ *
+ * Le même chapitre de génétique ne s'écrit pas pareil pour un terminale et pour un PASS, et
+ * la différence n'est pas une question de longueur : c'est le vocabulaire attendu, la
+ * profondeur des mécanismes, et ce qu'un correcteur ira chercher. Sans cette consigne, le
+ * modèle visait un étudiant moyen qui n'existe pas.
+ */
+const AUDIENCE_BRIEFS: Record<string, string> = {
+  lycee:
+    `Tu écris pour un LYCÉEN. Tiens-toi au vocabulaire du programme du secondaire et définis tout terme qui n'y figure pas. Les mécanismes s'expliquent pas à pas, en partant de ce qui est déjà connu. Ce qui est signalé comme à retenir est ce qui tombe au bac : définitions, schémas de raisonnement, exemples d'application. Pas de renvoi à la littérature scientifique, pas de débat d'école.`,
+  prepa:
+    `Tu écris pour un étudiant de CLASSE PRÉPARATOIRE. Le raisonnement compte autant que le résultat : une étape sautée est une faute. Les démonstrations et les enchaînements logiques sont écrits, pas résumés. Signale les conditions d'application d'un résultat et les cas limites, parce que c'est là que se joue l'écrit. Le vocabulaire technique est le tien, sans paraphrase.`,
+  licence:
+    `Tu écris pour un étudiant de LICENCE. Reprends les termes du cours magistral tels quels : c'est ce vocabulaire que l'examen attend. Situe la notion dans sa discipline, distingue nettement les définitions des exemples, et garde les nuances que le document porte. Les mécanismes sont détaillés sans être vulgarisés.`,
+  sante:
+    `Tu écris pour un étudiant de SANTÉ (PASS, LAS, médecine, pharmacie, maïeutique). L'exigence est la densité et la précision : rien d'approximatif, aucune valeur arrondie sans le dire. Nomenclature exacte, valeurs seuils, unités systématiques. Signale explicitement les confusions classiques et les pièges de QCM, et privilégie les tableaux de comparaison : c'est comme ça que ces cours se révisent.`,
+  master:
+    `Tu écris pour un étudiant de MASTER. La notion est supposée connue : ce qui compte est ce qu'on en fait, ses limites et les positions qui s'opposent dans le champ. Garde les nuances, les conditions de validité, les critiques que le document mentionne. Pas de rappel de niveau licence, sauf s'il est nécessaire à un raisonnement du document.`,
+  concours:
+    `Tu écris pour un candidat à un CONCOURS. La fiche est un outil de bachotage : ce qui tombe passe devant ce qui est intéressant. Chiffres à connaître, définitions à réciter, plans de réponse, pièges classiques. Sois direct et hiérarchisé, et signale explicitement ce qui est attendu par un correcteur.`,
+};
+
+export function audienceBrief(level: string | undefined): string {
+  const brief = AUDIENCE_BRIEFS[(level ?? "").trim().toLowerCase()];
+  if (brief) return `POUR QUI TU ÉCRIS\n${brief}`;
+  return `POUR QUI TU ÉCRIS\nLe niveau d'étude n'est pas connu. Écris pour un étudiant du supérieur en début de cursus : définis les termes techniques la première fois, et n'exige aucun prérequis que le document ne donne pas.`;
+}
+
+/**
+ * Longueur de la fiche.
+ *
+ * Le volume était figé à quatorze ou vingt-deux blocs, et c'était le même pour deux pages
+ * de notes et pour un chapitre entier. Trois formats, choisis par l'étudiant, et le nombre
+ * de blocs qui va avec : c'est la seule chose que le prompt a besoin de savoir.
+ */
+interface LengthSpec {
+  /** Nombre de blocs demandé, borne basse et borne haute. */
+  blocks: [number, number];
+  /** Volume de repli quand la première tentative n'aboutit pas. */
+  retryBlocks: number;
+  brief: string;
+}
+
+const LENGTH_SPECS: Record<string, LengthSpec> = {
+  brief: {
+    blocks: [8, 12],
+    retryBlocks: 7,
+    brief:
+      `Fiche COURTE : entre 8 et 12 blocs. Elle se relit dans le couloir, cinq minutes avant l'épreuve. Tu gardes le plan, les définitions indispensables, l'encadré "essentiel" et un tableau de comparaison s'il y a lieu. Ce qui n'est ni une définition, ni un résultat, ni un mécanisme central ne rentre pas.`,
+  },
+  standard: {
+    blocks: [14, 22],
+    retryBlocks: 12,
+    brief:
+      `Fiche ÉQUILIBRÉE : entre 14 et 22 blocs selon la richesse du document. C'est le format de référence, celui qui remplace la relecture du cours sans le recopier.`,
+  },
+  deep: {
+    blocks: [24, 34],
+    retryBlocks: 18,
+    brief:
+      `Fiche APPROFONDIE : entre 24 et 34 blocs. Elle doit pouvoir remplacer le cours pour quelqu'un qui a manqué la séance. Chaque notion du document est traitée, avec sa définition, son mécanisme et un exemple concret quand le document en donne un. Tu détailles, mais tu n'inventes rien et tu ne délayes pas : un bloc de plus doit apporter un contenu de plus.`,
+  },
+};
+
+function spec(length: string | undefined): LengthSpec {
+  return LENGTH_SPECS[(length ?? "").trim().toLowerCase()] ?? LENGTH_SPECS.standard;
+}
+
+export function lengthBrief(length: string | undefined, isLongDocument: boolean): string {
+  const chosen = spec(length);
+  const note = isLongDocument
+    ? ` Le document est long : reste à la borne basse, ${chosen.blocks[0]} blocs.`
+    : "";
+  return `LONGUEUR DEMANDÉE\n${chosen.brief}${note}`;
+}
+
+/** Consigne du second essai : plus court, et le volume est nommé. */
+export function retryBrief(length: string | undefined): string {
+  return `Réécris PLUS COURT : ${
+    spec(length).retryBlocks
+  } blocs, JSON compact sur une seule ligne.`;
+}

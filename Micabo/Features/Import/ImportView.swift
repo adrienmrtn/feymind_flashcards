@@ -29,6 +29,9 @@ struct ImportView: View {
     @State private var pastedText = ""
     @State private var imported: ImportedDocument?
     @State private var analyzeVisuals = false
+    /// Longueur de la fiche à écrire. Le choix se garde d'un import à l'autre, et se
+    /// retrouve dans les réglages : c'est le même réglage, réglé là où il sert.
+    @AppStorage(SheetPreferences.lengthKey) private var sheetLength = SheetLength.default
     @State private var showFileImporter = false
     @State private var showPhotoPicker = false
     @State private var showScanner = false
@@ -89,6 +92,8 @@ struct ImportView: View {
                         case .photo: photoInput
                         case .youtube: youtubeInput
                         }
+
+                        lengthSection
 
                         if showsVisionToggle {
                             visionToggle
@@ -479,6 +484,26 @@ struct ImportView: View {
         }
     }
 
+    /// Combien de fiche on veut. Le réglage est ici, juste avant le bouton qui l'utilise,
+    /// parce que la réponse dépend du document qu'on vient de déposer : un chapitre entier
+    /// et deux pages de notes ne demandent pas la même fiche.
+    private var lengthSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Longueur de la fiche")
+
+            HStack(spacing: MicaboSpacing.xs) {
+                ForEach(SheetLength.allCases) { value in
+                    MicaboSelectChip(title: value.title, isSelected: value == sheetLength) {
+                        Haptics.selection()
+                        withAnimation(.easeOut(duration: 0.2)) { sheetLength = value }
+                    }
+                }
+            }
+
+            MicaboSectionFootnote(text: "\(sheetLength.detail) \(sheetLength.readingHint) de lecture.")
+        }
+    }
+
     private var visionToggle: some View {
         Toggle(isOn: $analyzeVisuals) {
             VStack(alignment: .leading, spacing: 3) {
@@ -756,7 +781,9 @@ struct ImportView: View {
             rawText: rawText,
             pageImages: images,
             hintTitle: title.nilIfBlank,
-            sourceName: fileName
+            sourceName: fileName,
+            studyLevel: OnboardingPreferences.studyLevel,
+            sheetLength: sheetLength
         )
 
         // Étape 1 : la fiche. Si elle échoue, rien n'a été créé.

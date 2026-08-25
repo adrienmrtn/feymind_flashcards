@@ -12,6 +12,8 @@ struct SettingsView: View {
     @State private var anonKey = AppConfig.supabaseAnonKey
     @State private var model = AppConfig.aiModel
     @State private var dailyMinutes = OnboardingPreferences.dailyMinutes
+    @State private var studyLevel = OnboardingPreferences.studyLevel
+    @AppStorage(SheetPreferences.lengthKey) private var sheetLength = SheetLength.default
     @State private var showResetConfirmation = false
 
     private let models = [
@@ -26,6 +28,7 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                 header
+                studiesSection
                 reviewSection
                 intelligenceSection
                 connectionSection
@@ -61,6 +64,63 @@ struct SettingsView: View {
                 .foregroundStyle(MicaboColor.accent)
         }
         .padding(.top, MicaboSpacing.xs)
+    }
+
+    /// Pour qui les fiches sont écrites, et à quelle longueur.
+    ///
+    /// Le stade d'étude est demandé à l'inscription et servait uniquement à cadrer le
+    /// discours du parcours d'accueil ; il commande maintenant la rédaction des fiches. Il
+    /// se corrige donc ici, parce qu'on change d'année, et parce qu'une réponse donnée en
+    /// trente secondes le premier jour ne doit pas se payer pendant deux ans.
+    private var studiesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Tes études")
+
+            VStack(spacing: 0) {
+                Menu {
+                    Picker("Stade d'étude", selection: $studyLevel) {
+                        ForEach(StudyLevel.allCases) { level in
+                            Text(level.title).tag(Optional(level))
+                        }
+                        Text("Non précisé").tag(Optional<StudyLevel>.none)
+                    }
+                } label: {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("🎓"), background: MicaboColor.tilePastels[0]),
+                        title: "Stade d'étude",
+                        subtitle: studyLevel?.detail ?? "Rédaction équilibrée, sans niveau supposé.",
+                        accessory: .value(studyLevel?.title ?? "Non précisé")
+                    )
+                }
+
+                MicaboHairline(inset: 71)
+
+                Menu {
+                    Picker("Longueur des fiches", selection: $sheetLength) {
+                        ForEach(SheetLength.allCases) { length in
+                            Text("\(length.title) · \(length.readingHint)").tag(length)
+                        }
+                    }
+                } label: {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("📄"), background: MicaboColor.tilePastels[3]),
+                        title: "Longueur des fiches",
+                        subtitle: sheetLength.detail,
+                        accessory: .value(sheetLength.title)
+                    )
+                }
+            }
+            .micaboGroup()
+
+            MicaboSectionFootnote(text: "Micabo écrit les fiches pour ce niveau : le vocabulaire, la profondeur des explications et ce qui est signalé comme attendu à l'épreuve en dépendent. La longueur se choisit aussi au moment d'un import.")
+        }
+        .onChange(of: studyLevel) { _, newValue in
+            OnboardingPreferences.studyLevel = newValue
+            Haptics.selection()
+        }
+        .onChange(of: sheetLength) { _, _ in
+            Haptics.selection()
+        }
     }
 
     /// Le rythme quotidien commande le plafond de cartes neuves : les deux rangées se

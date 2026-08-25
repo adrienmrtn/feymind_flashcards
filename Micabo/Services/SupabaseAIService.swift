@@ -13,11 +13,16 @@ struct SupabaseAIService: AIService {
             throw AIServiceError.emptySource
         }
 
+        // Le stade d'étude et la longueur partent en clair : c'est la fonction qui sait les
+        // traduire en consignes. Deux formulations, une ici et une là, finiraient par se
+        // contredire, et celle du serveur est la seule qu'on peut corriger sans mise à jour.
         let payload: [String: Any] = [
             "text": String(trimmed.prefix(60_000)),
             "images": request.pageImages.map { "data:image/jpeg;base64," + $0.base64EncodedString() },
             "hintTitle": request.hintTitle ?? "",
             "sourceName": request.sourceName ?? "",
+            "level": request.studyLevel?.rawValue ?? "",
+            "length": request.sheetLength.rawValue,
             "model": AppConfig.aiModel
         ]
 
@@ -28,12 +33,15 @@ struct SupabaseAIService: AIService {
     // MARK: - Flashcards
 
     func generateFlashcards(_ request: FlashcardGenerationRequest) async throws -> [GeneratedFlashcard] {
+        // `count` et `kinds` restent envoyés en plus du quota : une fonction déployée avant
+        // les quotas les comprend encore, et produira le bon volume à défaut du bon détail.
         let payload: [String: Any] = [
             "title": request.courseTitle,
             "context": String(request.courseContext.prefix(40_000)),
-            "count": request.desiredCount,
+            "count": request.quota.total,
+            "quota": request.quota.wireCounts,
             "existing": request.existingFronts,
-            "kinds": request.mix.wireValues,
+            "kinds": request.quota.wireKinds,
             "model": AppConfig.aiModel
         ]
 

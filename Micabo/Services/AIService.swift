@@ -6,14 +6,16 @@ struct CourseGenerationRequest {
     var pageImages: [Data]
     var hintTitle: String?
     var sourceName: String?
+    /// Pour qui la fiche est écrite. Absent, le modèle écrit sans niveau supposé.
+    var studyLevel: StudyLevel? = nil
+    var sheetLength: SheetLength = .default
 }
 
 struct FlashcardGenerationRequest {
     var courseTitle: String
     var courseContext: String
-    var desiredCount: Int
     var existingFronts: [String]
-    var mix: QuestionMix = .default
+    var quota: QuestionQuota = .default
 }
 
 /// Un passage de la fiche que l'utilisateur a sélectionné et veut comprendre.
@@ -52,58 +54,212 @@ struct SelectionExplanation: Codable, Equatable {
     }
 }
 
-/// Formats de questions autorisés pour une génération.
+/// Longueur de la fiche demandée au modèle.
 ///
-/// Le recto verso est toujours là : c'est le format qui marche pour n'importe quel
-/// cours. Les deux autres viennent en plus, et l'utilisateur les coupe au moment de
-/// lancer la génération s'il ne veut que des cartes classiques.
-struct QuestionMix: Equatable {
-    var includesCloze: Bool
-    var includesChoice: Bool
+/// Trois formats, et pas un curseur de blocs : ce que l'étudiant choisit n'est pas un
+/// nombre, c'est un usage. « L'essentiel » se relit dans le couloir avant l'épreuve,
+/// « Approfondie » remplace le cours quand on a manqué l'amphi.
+enum SheetLength: String, CaseIterable, Identifiable {
+    case brief
+    case standard
+    case deep
 
-    static let `default` = QuestionMix(includesCloze: true, includesChoice: true)
-    static let basicOnly = QuestionMix(includesCloze: false, includesChoice: false)
+    static let `default` = SheetLength.standard
 
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .brief: "L'essentiel"
+        case .standard: "Équilibrée"
+        case .deep: "Approfondie"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .brief: "Le plan et ce qu'il faut retenir, à relire juste avant l'épreuve."
+        case .standard: "Le format habituel : tout le chapitre, sans remplissage."
+        case .deep: "Chaque notion développée, définitions et exemples compris."
+        }
+    }
+
+    /// Durée de lecture annoncée à côté du format. Elle vient du nombre de blocs demandé
+    /// au modèle, pas d'une estimation d'ambiance.
+    var readingHint: String {
+        switch self {
+        case .brief: "≈ 2 min"
+        case .standard: "≈ 4 min"
+        case .deep: "≈ 8 min"
+        }
+    }
+}
+
+/// La longueur de fiche retenue, réglée à l'import comme dans les réglages.
+enum SheetPreferences {
+    static let lengthKey = "micabo.sheet.length"
+
+    static var length: SheetLength {
+        get {
+            UserDefaults.standard.string(forKey: lengthKey)
+                .flatMap(SheetLength.init(rawValue:)) ?? .default
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: lengthKey) }
+    }
+}
+
+/// Combien de cartes de chaque format une génération doit produire.
+///
+/// Ce qui vivait ici était une paire d'interrupteurs : ils disaient « j'accepte des QCM »,
+/// et le modèle en écrivait deux ou onze selon son humeur. **Un nombre par format est une
+/// commande, pas une autorisation** : l'étudiant qui veut cinq QCM et cinq textes à trou
+/// pour son contrôle de la semaine peut désormais le demander.
+struct QuestionQuota: Equatable {
+    var basic: Int
+    var cloze: Int
+    var choice: Int
+
+    /// Douze cartes, en trois parts : de quoi couvrir un chapitre sans transformer la
+    /// première session en épreuve d'endurance.
+    static let `default` = QuestionQuota(basic: 6, cloze: 3, choice: 3)
+
+    /// Ce qu'un format accepte. Zéro veut dire « pas de ce format », et c'est un choix
+    /// légitime : le plafond, lui, protège la session qui suivra.
+    static let perFormatRange = 0...20
+    /// Une carte ne suffit pas à faire une session, trente sont déjà trop pour une seule.
+    static let totalRange = 3...30
+
+    var total: Int { basic + cloze + choice }
+
+    func count(of kind: CardKind) -> Int {
+        switch kind {
+        case .basic: basic
+        case .cloze: cloze
+        case .choice: choice
+        case .occlusion: 0
+        }
+    }
+
+    /// Les formats réellement demandés. Un format à zéro n'a rien à faire dans la consigne.
     var kinds: [CardKind] {
-        var result: [CardKind] = [.basic]
-        if includesCloze { result.append(.cloze) }
-        if includesChoice { result.append(.choice) }
+        [CardKind.basic, .cloze, .choice].filter { count(of: $0) > 0 }
+    }
+
+    var wireKinds: [String] {
+        kinds.map(\.rawValue)
+    }
+
+    var wireCounts: [String: Int] {
+        ["basic": basic, "cloze": cloze, "choice": choice]
+    }
+
+    /// Chaque format dans ses bornes, sans toucher au total. C'est la forme sous laquelle un
+    /// quota se retient : ce que l'utilisateur a réglé, y compris un total nul, qui veut dire
+    /// qu'il n'a pas encore choisi.
+    func formatBounded() -> QuestionQuota {
+        QuestionQuota(basic: Self.clamp(basic), cloze: Self.clamp(cloze), choice: Self.clamp(choice))
+    }
+
+    /// Ramène le quota dans ses bornes, total compris. C'est la forme sous laquelle il part
+    /// au modèle.
+    ///
+    /// Un quota entièrement à zéro ne demande rien : plutôt que de partir écrire zéro
+    /// carte, on retombe sur le recto verso, le seul format qui marche sur n'importe quel
+    /// cours. Un total au-delà du plafond est rogné en commençant par le format le plus
+    /// nombreux, pour que les petites commandes soient respectées à la carte près.
+    func clamped() -> QuestionQuota {
+        var result = formatBounded()
+
+        if result.total == 0 {
+            return QuestionQuota(basic: Self.totalRange.lowerBound, cloze: 0, choice: 0)
+        }
+
+        while result.total > Self.totalRange.upperBound {
+            if result.basic >= result.cloze, result.basic >= result.choice {
+                result.basic -= 1
+            } else if result.cloze >= result.choice {
+                result.cloze -= 1
+            } else {
+                result.choice -= 1
+            }
+        }
+
+        // Sous le plancher, on complète en recto verso : c'est le format qu'on peut ajouter
+        // à n'importe quel cours sans que la carte sonne faux.
+        if result.total < Self.totalRange.lowerBound {
+            result.basic += Self.totalRange.lowerBound - result.total
+        }
+
         return result
     }
 
-    var wireValues: [String] {
-        kinds.map(\.rawValue)
+    private static func clamp(_ value: Int) -> Int {
+        min(perFormatRange.upperBound, max(perFormatRange.lowerBound, value))
     }
 }
 
 /// Les réglages de génération, retenus d'un cours à l'autre : personne n'a envie de les
 /// refaire à chaque fois.
-enum QuestionMixPreferences {
+enum QuestionQuotaPreferences {
     enum Key {
-        static let cloze = "micabo.generation.cloze"
-        static let choice = "micabo.generation.choice"
-        static let count = "micabo.generation.count"
+        static let basic = "micabo.generation.basicCount"
+        static let cloze = "micabo.generation.clozeCount"
+        static let choice = "micabo.generation.choiceCount"
+
+        /// Les clés d'avant les quotas : un volume total et deux interrupteurs.
+        static let legacyCount = "micabo.generation.count"
+        static let legacyCloze = "micabo.generation.cloze"
+        static let legacyChoice = "micabo.generation.choice"
     }
 
-    /// Absent vaut activé : un nouvel utilisateur doit voir les trois formats avant de
-    /// décider d'en couper.
-    static var current: QuestionMix {
+    /// Le quota courant, ou sa traduction depuis les anciens réglages.
+    ///
+    /// Un utilisateur qui avait coupé les QCM ne doit pas les retrouver au premier
+    /// lancement : ses interrupteurs sont relus tant que les nouvelles clés n'ont pas été
+    /// écrites, et son volume est réparti entre les formats qu'il gardait.
+    ///
+    /// Le total n'est pas rétabli ici : ce qui a été réglé se relit tel quel, et c'est la
+    /// génération qui refuse de partir sans rien à écrire.
+    static var current: QuestionQuota {
         let defaults = UserDefaults.standard
-        return QuestionMix(
-            includesCloze: defaults.object(forKey: Key.cloze) as? Bool ?? true,
-            includesChoice: defaults.object(forKey: Key.choice) as? Bool ?? true
-        )
+
+        if let basic = defaults.object(forKey: Key.basic) as? Int {
+            return QuestionQuota(
+                basic: basic,
+                cloze: defaults.object(forKey: Key.cloze) as? Int ?? 0,
+                choice: defaults.object(forKey: Key.choice) as? Int ?? 0
+            ).formatBounded()
+        }
+
+        return migrated(from: defaults).formatBounded()
     }
 
-    /// Volumes proposés. Douze cartes est le défaut : de quoi couvrir un chapitre sans
-    /// transformer la première session en épreuve d'endurance.
-    static let countChoices = [8, 12, 20]
-    static let defaultCount = 12
+    static func save(_ quota: QuestionQuota) {
+        let bounded = quota.formatBounded()
+        let defaults = UserDefaults.standard
+        defaults.set(bounded.basic, forKey: Key.basic)
+        defaults.set(bounded.cloze, forKey: Key.cloze)
+        defaults.set(bounded.choice, forKey: Key.choice)
+    }
 
-    static var count: Int {
-        let stored = UserDefaults.standard.object(forKey: Key.count) as? Int
-        guard let stored, countChoices.contains(stored) else { return defaultCount }
-        return stored
+    private static func migrated(from defaults: UserDefaults) -> QuestionQuota {
+        let legacyKeys = [Key.legacyCount, Key.legacyCloze, Key.legacyChoice]
+        guard legacyKeys.contains(where: { defaults.object(forKey: $0) != nil }) else {
+            // Rien à traduire : c'est une première génération.
+            return .default
+        }
+
+        let total = defaults.object(forKey: Key.legacyCount) as? Int ?? QuestionQuota.default.total
+        let keepsCloze = defaults.object(forKey: Key.legacyCloze) as? Bool ?? true
+        let keepsChoice = defaults.object(forKey: Key.legacyChoice) as? Bool ?? true
+
+        let shares = 1 + (keepsCloze ? 1 : 0) + (keepsChoice ? 1 : 0)
+        let share = max(1, total / shares)
+        return QuestionQuota(
+            basic: total - (keepsCloze ? share : 0) - (keepsChoice ? share : 0),
+            cloze: keepsCloze ? share : 0,
+            choice: keepsChoice ? share : 0
+        )
     }
 }
 

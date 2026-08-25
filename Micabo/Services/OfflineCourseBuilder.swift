@@ -126,7 +126,7 @@ struct OfflineAIService: AIService {
             hintTitle: request.courseTitle,
             sourceName: nil
         )
-        return OfflineCourseBuilder.buildFlashcards(from: course, count: request.desiredCount)
+        return OfflineCourseBuilder.buildFlashcards(from: course, count: request.quota.total)
     }
 
     func explain(_ request: SelectionExplanationRequest) async throws -> SelectionExplanation {

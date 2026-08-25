@@ -8,8 +8,19 @@ import {
   jsonResponse,
 } from "../_shared/fal.ts";
 import { parseModelJSON } from "../_shared/json.ts";
-import { normalizeSheet, sheetToPlainText, stripInlineMarkup } from "../_shared/sheet.ts";
-import { COURSE_SYSTEM_PROMPT, VISION_SYSTEM_PROMPT } from "./prompt.ts";
+import {
+  ensureHighlights,
+  normalizeSheet,
+  sheetToPlainText,
+  stripInlineMarkup,
+} from "../_shared/sheet.ts";
+import {
+  audienceBrief,
+  COURSE_SYSTEM_PROMPT,
+  lengthBrief,
+  retryBrief,
+  VISION_SYSTEM_PROMPT,
+} from "./prompt.ts";
 
 const OUTPUT_TOKEN_LIMIT = 8_192;
 
@@ -37,11 +48,17 @@ interface RequestBody {
   images?: string[];
   hintTitle?: string;
   sourceName?: string;
+  /** Stade d'étude choisi à l'inscription : « lycee », « prepa », « sante »… */
+  level?: string;
+  /** Longueur de fiche demandée : « brief », « standard » ou « deep ». */
+  length?: string;
   model?: string;
 }
 
 const MAX_TEXT_LENGTH = 60_000;
 const MAX_IMAGES = 6;
+/** Au delà, on reste à la borne basse du format demandé : la fiche resterait illisible. */
+const LONG_DOCUMENT_LENGTH = 12_000;
 
 Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") {
@@ -80,13 +97,13 @@ Deno.serve(async (request: Request) => {
     const sections: string[] = [];
     if (body.hintTitle) sections.push(`Titre souhaité par l'étudiant : ${body.hintTitle}`);
     if (body.sourceName) sections.push(`Nom du fichier source : ${body.sourceName}`);
+    // Le destinataire et le volume passent avant le document : ce sont les deux consignes qui
+    // décident de la façon de lire tout ce qui suit.
+    sections.push(audienceBrief(body.level));
+    sections.push(lengthBrief(body.length, text.length > LONG_DOCUMENT_LENGTH));
     if (text.length > 0) sections.push(`TEXTE EXTRAIT DU DOCUMENT :\n${text}`);
     if (visualNotes) sections.push(`DESCRIPTION DES VISUELS DU DOCUMENT :\n${visualNotes}`);
-    sections.push(
-      text.length > 12_000
-        ? "Ce document est long : 14 blocs suffisent. JSON compact, une seule ligne."
-        : "JSON compact, une seule ligne, sans indentation.",
-    );
+    sections.push("JSON compact, une seule ligne, sans indentation.");
     sections.push("Écris maintenant le JSON de la fiche.");
 
     const prompt = sections.join("\n\n");
@@ -95,7 +112,7 @@ Deno.serve(async (request: Request) => {
     // Une fiche coupée ou illisible : on redemande plus court plutôt que d'abandonner.
     if (!parsed || normalizeSheet(parsed.sheet ?? parsed.blocks).length < 3) {
       parsed = await writeSheet(
-        `${prompt}\n\nRéécris PLUS COURT : 12 blocs, JSON compact sur une seule ligne.`,
+        `${prompt}\n\n${retryBrief(body.length)}`,
         body.model,
         0.15,
       );
@@ -105,7 +122,10 @@ Deno.serve(async (request: Request) => {
       throw new FalError("L'écriture de la fiche a échoué. Réessaie, le document n'a rien perdu.", 502);
     }
 
-    const blocks = normalizeSheet(parsed.sheet ?? parsed.blocks);
+    // Le surligneur est appliqué ici, après la normalisation : le prompt l'exige depuis
+    // longtemps et les fiches arrivaient sans une seule marque. Une fiche qui en porte déjà
+    // n'est pas touchée.
+    const blocks = ensureHighlights(normalizeSheet(parsed.sheet ?? parsed.blocks));
 
     if (blocks.length < 3) {
       throw new FalError("Le modèle n'a pas produit de fiche exploitable.", 502);

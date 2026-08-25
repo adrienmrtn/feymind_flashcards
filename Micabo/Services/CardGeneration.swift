@@ -10,12 +10,11 @@ import SwiftData
 /// produire les mêmes cartes.
 enum CardGeneration {
     struct Options {
-        var count: Int = QuestionMixPreferences.defaultCount
-        var mix: QuestionMix = .default
+        var quota: QuestionQuota = .default
 
         /// Ce que les réglages retiennent d'une génération à l'autre.
         static var remembered: Options {
-            Options(count: QuestionMixPreferences.count, mix: QuestionMixPreferences.current)
+            Options(quota: QuestionQuotaPreferences.current)
         }
     }
 
@@ -34,12 +33,12 @@ enum CardGeneration {
         using service: any AIService,
         in modelContext: ModelContext
     ) async throws -> [Flashcard] {
+        let quota = options.quota.clamped()
         let request = FlashcardGenerationRequest(
             courseTitle: course.title,
             courseContext: context(for: course),
-            desiredCount: options.count,
             existingFronts: course.cards.map(\.front),
-            mix: options.mix
+            quota: quota
         )
 
         var generated: [GeneratedFlashcard]
@@ -55,7 +54,7 @@ enum CardGeneration {
                     hintTitle: course.title,
                     sourceName: nil
                 ),
-                count: options.count
+                count: quota.total
             )
         }
 
