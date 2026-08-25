@@ -55,9 +55,18 @@ struct ProfileRecord: Codable {
     /// C'est ce qui fait qu'une réinstallation retrouve un étudiant en PASS au Maroc et non un
     /// lycéen français par défaut, sans lui refaire passer l'inscription.
     func applyToLocalPreferences() {
-        if let study_level { OnboardingPreferences.level = study_level }
         if let country = SchoolingCountry(rawValue: country_code) {
             OnboardingPreferences.schoolingCountry = country
+        }
+        if let study_level {
+            OnboardingPreferences.level = study_level
+            // Le profil distant ne transporte que le registre : il n'y a pas de colonne pour
+            // le palier, et il n'en faut pas. Mais les traces du palier local doivent partir
+            // avec, sinon elles gagnent contre lui — un lycéen français qui se connecte à un
+            // compte « master aux États-Unis » resterait affiché en lycée, et le palier
+            // périmé finirait par réécrire le registre au premier passage dans les réglages.
+            OnboardingPreferences.educationStageId = nil
+            OnboardingPreferences.educationTier = nil
         }
         if !learning_goals.isEmpty { OnboardingPreferences.goals = learning_goals }
         if !subjects.isEmpty { OnboardingPreferences.subjects = subjects }

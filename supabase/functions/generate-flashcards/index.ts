@@ -9,6 +9,7 @@ import {
   jsonResponse,
 } from "../_shared/fal.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
+import { languageBrief } from "../_shared/language.ts";
 
 interface RequestBody {
   title?: string;
@@ -21,6 +22,8 @@ interface RequestBody {
   quota?: Record<string, number>;
   /** Matière du cours, quand elle est connue : elle change ce qu'une carte doit demander. */
   subject?: string;
+  /** Langue des cartes, la même que celle de la fiche : « fr » ou « en ». */
+  language?: string;
   model?: string;
 }
 
@@ -261,6 +264,7 @@ Deno.serve(async (request: Request) => {
     const subjectBrief = disciplineBrief(detectDiscipline(context, body.title, body.subject));
 
     const sections = [
+      languageBrief(body.language),
       `Cours : ${body.title ?? "Sans titre"}`,
       subjectBrief,
       `Génère exactement ${count} flashcards, réparties ainsi : ${breakdown}. Ces nombres ne se négocient pas.`,

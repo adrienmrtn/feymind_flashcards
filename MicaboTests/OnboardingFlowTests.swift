@@ -18,21 +18,21 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Ouverture
 
-    /// La question du niveau vient juste après l'accroche : c'est elle qui situe tout le
-    /// reste du parcours. Le pays suit la langue, parce que parler français ne dit pas dans
-    /// quel système on étudie.
-    func testLevelQuestionComesRightAfterTheHook() {
+    /// **Le pays passe avant le niveau.** Ce sont les paliers du pays choisi qui deviennent
+    /// les réponses de « tu en es où ? » : dans l'autre sens, il fallait proposer les mêmes
+    /// sept réponses françaises à un Américain, qui n'en avait aucune de juste.
+    func testTheCountryIsAskedBeforeTheLevel() {
         let model = OnboardingModel()
         XCTAssertEqual(model.step, .welcome)
+
+        model.advance()
+        XCTAssertEqual(model.step, .country, "Le pays vient d'abord : il commande les réponses du niveau")
 
         model.advance()
         XCTAssertEqual(model.step, .level)
 
         model.advance()
-        XCTAssertEqual(model.step, .language)
-
-        model.advance()
-        XCTAssertEqual(model.step, .country)
+        XCTAssertEqual(model.step, .personalizeIntro)
     }
 
     // MARK: - Démonstration
@@ -78,17 +78,22 @@ final class OnboardingFlowTests: XCTestCase {
     /// L'écran de génération du parcours ne doit pas passer plus vite qu'on ne le lit : un
     /// chargement qui s'évapore en une seconde n'a rien généré aux yeux de personne.
     func testTheGenerationScreenLastsLongEnoughToBeRead() {
-        XCTAssertGreaterThanOrEqual(PersonalizingStepView.duration, 3)
+        XCTAssertGreaterThanOrEqual(PersonalizingStepView.duration, 5)
     }
 
-    /// Les deux fournisseurs sont annoncés, même si les flux OAuth ne sont pas encore
-    /// branchés : l'écran doit rester complet le jour où ils le seront.
+    /// Les deux fournisseurs sont proposés, et ils disent tous les deux ce qu'ils font.
     func testSignInOffersBothProviders() {
         XCTAssertEqual(OnboardingSignInProvider.allCases, [.apple, .google])
 
         for provider in OnboardingSignInProvider.allCases {
             XCTAssertTrue(provider.title.hasPrefix("Continuer avec"), "\(provider) doit dire ce qu'il fait")
         }
+    }
+
+    /// Passer la connexion referme la porte du compte : sans la clé partagée, l'app
+    /// reposait la question juste après le parcours, sur un second écran de connexion.
+    func testSkippingTheAccountUsesTheKeyReadByTheRoot() {
+        XCTAssertEqual(AccountGate.skippedKey, "micabo.auth.skipped")
     }
 
     // MARK: - Rapport à l'oubli
@@ -139,6 +144,9 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertFalse(names.contains("science"))
         XCTAssertFalse(names.contains("schoolPeers"))
         XCTAssertFalse(names.contains("builtByStudents"))
+        // L'écran de la langue annonçait « Micabo parle français » avec une seule réponse,
+        // cochée d'avance : la langue se déduit du pays de scolarisation.
+        XCTAssertFalse(names.contains("language"))
     }
 
     /// Le parcours est une file droite : aucun écran ne se saute, donc avancer depuis
@@ -163,33 +171,266 @@ final class OnboardingFlowTests: XCTestCase {
     /// Trois écrans seulement quittent le crème : la variété d'un parcours ne vient pas de
     /// ses fonds. L'encre est réservée aux deux moments où le parcours s'adresse
     /// directement à l'étudiant, l'accroche et le passage à son tour.
+    ///
+    /// L'écran de génération, lui, est passé du vert plein au vert pastel : un aplat saturé
+    /// tenu cinq secondes derrière du texte blanc fatigue, et c'est celui où l'on demande
+    /// justement de patienter. Il ne compte donc plus parmi les fonds sombres.
     func testOnlyThreeScreensLeaveTheCanvas() {
         XCTAssertEqual(OnboardingStep.welcome.surface, .ink)
         XCTAssertEqual(OnboardingStep.yourTurn.surface, .ink)
-        XCTAssertEqual(OnboardingStep.personalizing.surface, .accent)
+        XCTAssertEqual(OnboardingStep.personalizing.surface, .accentSoft)
 
         let dark = OnboardingStep.allCases.filter(\.surface.isDark)
-        XCTAssertEqual(dark, [.welcome, .personalizing, .yourTurn])
+        XCTAssertEqual(dark, [.welcome, .yourTurn], "Seuls les deux écrans d'encre s'inversent")
 
-        for step in OnboardingStep.allCases where !dark.contains(step) {
-            XCTAssertEqual(step.surface, .canvas, "\(step) devrait rester sur le crème")
-        }
+        let coloured = OnboardingStep.allCases.filter { $0.surface != .canvas }
+        XCTAssertEqual(coloured, [.welcome, .personalizing, .yourTurn])
     }
 
     // MARK: - Niveau
 
-    /// Le niveau est écrit dès le changement d'écran : une sortie en cours de route ne perd
-    /// que la question en cours.
-    func testLevelIsPersistedOnAdvance() {
+    /// Le palier est écrit dès le changement d'écran, et il écrit son registre avec lui :
+    /// c'est ce registre que la fonction reçoit et que le cloud synchronise.
+    func testStageIsPersistedOnAdvanceWithItsWritingRegister() throws {
         OnboardingPreferences.reset()
         defer { OnboardingPreferences.reset() }
 
         let model = self.model(advancingTo: .level)
-        model.level = .sante
+        let sante = try XCTUnwrap(model.country.stages.first { $0.level == .sante })
+        model.stage = sante
         model.advance()
 
+        XCTAssertEqual(OnboardingPreferences.educationStageId, "fr.sante")
         XCTAssertEqual(OnboardingPreferences.level, "sante")
         XCTAssertEqual(OnboardingPreferences.studyLevel, .sante)
+        XCTAssertEqual(OnboardingPreferences.educationStage, sante)
+    }
+
+    /// Chaque pays propose les paliers qui existent chez lui, et rien d'autre : « PASS » et
+    /// « Prépa » n'ont pas cours aux États-Unis, « A-Levels » n'en a pas en France.
+    func testEachCountryOffersItsOwnStages() {
+        for country in SchoolingCountry.allCases {
+            let stages = country.stages
+            XCTAssertGreaterThanOrEqual(stages.count, 4, "\(country) doit proposer un vrai parcours")
+
+            for stage in stages {
+                XCTAssertFalse(stage.title.isEmpty, "\(stage.id) doit avoir un libellé")
+                XCTAssertFalse(stage.emoji.isEmpty, "\(stage.id) doit porter un emoji")
+            }
+
+            let ids = stages.map(\.id)
+            XCTAssertEqual(Set(ids).count, ids.count, "\(country) répète un identifiant de palier")
+        }
+
+        XCTAssertEqual(SchoolingCountry.fr.stages.map(\.title).first, "Lycée")
+        XCTAssertTrue(SchoolingCountry.us.stages.contains { $0.title == "High school" })
+        XCTAssertTrue(SchoolingCountry.uk.stages.contains { $0.title == "A-Levels" })
+        XCTAssertFalse(SchoolingCountry.us.stages.contains { $0.title.contains("PASS") })
+        XCTAssertFalse(SchoolingCountry.uk.stages.contains { $0.title == "Prépa" })
+    }
+
+    /// Un pays qu'on ne connaît pas retombe sur l'échelle générique, en anglais : inventer
+    /// des paliers pour un système scolaire qu'on ignore donnerait des réponses fausses, et
+    /// une réponse fausse est pire qu'une réponse large.
+    func testAnUnknownCountryFallsBackToTheGenericLadder() {
+        XCTAssertEqual(SchoolingCountry.other.stages, SchoolingCountry.genericStages)
+        XCTAssertEqual(
+            SchoolingCountry.genericStages.map(\.title),
+            ["Middle school", "High school", "College", "University", "Other"]
+        )
+    }
+
+    /// La langue vient du pays, et de nulle part ailleurs : c'est ce qui a permis de retirer
+    /// l'écran qui la demandait.
+    func testTheLanguageComesFromTheCountry() {
+        XCTAssertEqual(SchoolingCountry.fr.language, .fr)
+        XCTAssertEqual(SchoolingCountry.ca.language, .fr)
+        XCTAssertEqual(SchoolingCountry.us.language, .en)
+        XCTAssertEqual(SchoolingCountry.uk.language, .en)
+        XCTAssertEqual(SchoolingCountry.other.language, .en)
+
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        OnboardingPreferences.schoolingCountry = .uk
+        XCTAssertEqual(OnboardingPreferences.contentLanguage, .en)
+    }
+
+    /// Changer de pays reporte la réponse sur le palier **équivalent**, pas sur le premier
+    /// de la liste qui écrit pareil.
+    ///
+    /// C'est tout l'intérêt de l'échelle : un lycéen et un collégien partagent le registre
+    /// « lycée », donc chercher par registre ramenait un lycéen français en « Middle
+    /// school » dès qu'il passait aux États-Unis.
+    func testChangingCountryCarriesTheStageOverToItsRealEquivalent() throws {
+        let model = OnboardingModel()
+
+        model.stage = try XCTUnwrap(SchoolingCountry.fr.stages.first { $0.id == "fr.lycee" })
+        model.select(country: .us)
+        XCTAssertEqual(model.stage?.id, "us.high", "Un lycéen n'est pas un collégien")
+        XCTAssertEqual(model.language, .en)
+
+        model.select(country: .uk)
+        XCTAssertEqual(model.stage?.id, "uk.alevels", "A-Levels, pas GCSE")
+
+        model.select(country: .fr)
+        XCTAssertEqual(model.stage?.id, "fr.lycee", "L'aller-retour revient au point de départ")
+    }
+
+    /// Une filière santé se retrouve dans l'autre pays, et elle ne se convertit jamais en
+    /// marche d'échelle : un étudiant en santé n'est pas un « undergraduate » parce que son
+    /// pays d'accueil n'a pas de filière nommée.
+    func testHealthAndCompetitiveTracksAreNotLadderRungs() throws {
+        let model = OnboardingModel()
+
+        model.stage = try XCTUnwrap(SchoolingCountry.fr.stages.first { $0.id == "fr.sante" })
+        model.select(country: .uk)
+        XCTAssertEqual(model.stage?.id, "uk.medicine")
+
+        model.stage = try XCTUnwrap(SchoolingCountry.fr.stages.first { $0.id == "fr.concours" })
+        model.select(country: .us)
+        XCTAssertNil(model.stage, "Les États-Unis n'ont pas de concours : l'écran redemande")
+    }
+
+    /// Sans équivalent exact, on prend la marche la plus proche, et on monte à égalité de
+    /// distance : la Suisse n'a pas de prépa, et « Bachelor » sert mieux un préparationnaire
+    /// qu'une fiche écrite pour le secondaire.
+    func testAStageWithoutAnEquivalentLandsOnTheNearestRungAbove() throws {
+        let model = OnboardingModel()
+        model.stage = try XCTUnwrap(SchoolingCountry.fr.stages.first { $0.id == "fr.prepa" })
+
+        model.select(country: .ch)
+
+        XCTAssertEqual(model.stage?.id, "ch.bachelor")
+        XCTAssertEqual(model.level, .licence)
+    }
+
+    /// Le cégep québécois est un palier pré-universitaire : il retrouve la prépa française,
+    /// et pas le lycée, même si les deux partagent le registre du secondaire.
+    func testThePreUniversityRungTravels() throws {
+        let model = OnboardingModel()
+        model.select(country: .ca)
+        model.stage = try XCTUnwrap(SchoolingCountry.ca.stages.first { $0.id == "ca.cegep" })
+
+        model.select(country: .fr)
+
+        XCTAssertEqual(model.stage?.id, "fr.prepa")
+    }
+
+    /// L'échelle se déduit de l'ordre de déclaration : une marche ajoutée au milieu se place
+    /// à sa vraie hauteur, et aucune liste écrite à la main ne peut l'oublier.
+    func testTheLadderIsTheDeclarationOrderOfItsRungs() {
+        XCTAssertEqual(
+            EducationTier.ladder,
+            [.lowerSecondary, .upperSecondary, .preUniversity, .undergraduate, .graduate]
+        )
+
+        for tier in EducationTier.allCases {
+            XCTAssertEqual(
+                tier.isRung,
+                tier.ladderIndex != nil,
+                "\(tier) doit être sur l'échelle si et seulement si c'est une marche"
+            )
+        }
+
+        // Une voie n'a pas de hauteur : la convertir en marche donnerait une réponse fausse.
+        XCTAssertNil(EducationTier.health.ladderIndex)
+        XCTAssertNil(EducationTier.competitive.ladderIndex)
+        XCTAssertNil(EducationTier.other.ladderIndex)
+    }
+
+    /// La marche est écrite à côté du palier, et c'est elle qui le retrouve à la relecture.
+    /// Sans elle, le chemin de lecture retombait sur le registre, qui ne distingue pas un
+    /// collégien d'un lycéen.
+    func testTheTierIsPersistedBesideTheStage() throws {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        OnboardingPreferences.schoolingCountry = .us
+        OnboardingPreferences.educationStage = try XCTUnwrap(
+            SchoolingCountry.us.stages.first { $0.id == "us.high" }
+        )
+
+        XCTAssertEqual(OnboardingPreferences.educationTier, .upperSecondary)
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "us.high")
+    }
+
+    /// Le profil que le cloud renvoie ne transporte que le registre : il n'y a pas de colonne
+    /// pour la marche, et il n'en faut pas. Le registre désigne alors sa marche de référence,
+    /// et c'est le palier qui s'y trouve qu'on retient.
+    ///
+    /// Prendre le premier de la liste ramenait un « lycee » américain sur « Middle school » ;
+    /// prendre le plus haut ramenait un « lycee » québécois sur « Cégep », qui est
+    /// post-secondaire. La marche de référence donne les deux bonnes réponses.
+    func testALevelWithoutATierResolvesToItsReferenceRung() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        OnboardingPreferences.schoolingCountry = .us
+        OnboardingPreferences.level = "lycee"
+
+        XCTAssertNil(OnboardingPreferences.educationTier)
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "us.high")
+
+        OnboardingPreferences.schoolingCountry = .uk
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "uk.alevels")
+
+        OnboardingPreferences.schoolingCountry = .ca
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "ca.secondaire", "Le cégep est post-secondaire")
+
+        OnboardingPreferences.schoolingCountry = .other
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "generic.high")
+    }
+
+    /// Chaque registre désigne une marche, et chaque pays a bien un palier à cette marche
+    /// pour les registres qu'il propose : sans quoi le repli du cloud tomberait à côté.
+    func testEveryLevelPointsAtARungItsCountriesActuallyHave() {
+        for country in SchoolingCountry.allCases {
+            let tiers = country.stages.map(\.tier)
+            XCTAssertEqual(
+                Set(tiers).count,
+                tiers.count,
+                "\(country) place deux paliers sur la même marche : la résolution deviendrait arbitraire"
+            )
+
+            for stage in country.stages where country.stages.filter({ $0.level == stage.level }).count > 1 {
+                XCTAssertTrue(
+                    country.stages.contains { $0.level == stage.level && $0.tier == stage.level.canonicalTier },
+                    "\(country) partage le registre \(stage.level) sans palier à sa marche de référence"
+                )
+            }
+        }
+    }
+
+    /// Le profil distant est autoritaire sur le registre et le pays, et il ne transporte pas
+    /// le palier : les traces du palier local doivent donc partir avec, sinon elles gagnent
+    /// contre lui et le réécrivent au premier passage dans les réglages.
+    func testApplyingARemoteProfileDropsTheLocalStage() throws {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        OnboardingPreferences.schoolingCountry = .fr
+        OnboardingPreferences.educationStage = try XCTUnwrap(
+            SchoolingCountry.fr.stages.first { $0.id == "fr.lycee" }
+        )
+
+        let remote = ProfileRecord(
+            id: UUID(),
+            display_name: nil,
+            study_level: "master",
+            country_code: "us",
+            learning_goals: [],
+            subjects: [],
+            institution_id: nil,
+            institution_name: nil,
+            daily_minutes: 15,
+            sheet_length: SheetLength.standard.rawValue,
+            onboarding_completed_at: nil
+        )
+        remote.applyToLocalPreferences()
+
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "us.graduate")
+        XCTAssertEqual(OnboardingPreferences.studyLevel, .master)
     }
 
     func testEveryLevelHasALabel() {
@@ -225,7 +466,7 @@ final class OnboardingFlowTests: XCTestCase {
         defer { OnboardingPreferences.reset() }
 
         let model = self.model(advancingTo: .country)
-        model.country = .be
+        model.select(country: .be)
         model.advance()
 
         XCTAssertEqual(OnboardingPreferences.schoolingCountry, .be)

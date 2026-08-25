@@ -3,11 +3,17 @@ import Foundation
 /// Les écrans du parcours d'accueil, dans l'ordre. Le parcours est strictement
 /// linéaire : aucun retour en arrière, on n'expose donc jamais d'étape précédente.
 ///
-/// L'ordre raconte quelque chose : on accroche, on demande où en est l'étudiant, on
-/// explique la méthode, on la lui fait faire, puis on personnalise. La démonstration suit
-/// exactement le parcours réel de l'app — on dépose un cours, il est mis en fiche, il se
-/// décompose en cartes — parce qu'une démonstration qui montre autre chose que le produit
-/// est une promesse qu'il faudra tenir deux fois.
+/// L'ordre raconte quelque chose : on accroche, on demande où étudie l'étudiant puis où il
+/// en est, on explique la méthode, on la lui fait faire, puis on personnalise. La
+/// démonstration suit exactement le parcours réel de l'app — on dépose un cours, il est mis
+/// en fiche, il se décompose en cartes — parce qu'une démonstration qui montre autre chose
+/// que le produit est une promesse qu'il faudra tenir deux fois.
+///
+/// **Le pays passe avant le niveau**, et ce n'est pas un détail d'ordre : ce sont les
+/// paliers d'études du pays choisi qui deviennent les réponses de « tu en es où ? ». Poser
+/// le niveau d'abord obligeait à proposer les mêmes sept réponses françaises à tout le
+/// monde. La langue se déduit du même écran, et l'écran qui annonçait « Micabo parle
+/// français » a disparu avec : il demandait une réponse qu'on ne pouvait pas donner.
 ///
 /// La fin du parcours a sa propre progression, et elle est délibérée : le parcours vient
 /// d'être construit sous les yeux (`personalizing`), d'autres l'ont déjà suivi
@@ -16,9 +22,8 @@ import Foundation
 /// d'avoir rien montré, c'est demander un compte pour une app qu'on n'a pas encore vue.
 enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case welcome
-    case level
-    case language
     case country
+    case level
     case personalizeIntro
     case goal
     case forgetting
@@ -53,11 +58,15 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// Trois écrans seulement quittent le crème : la variété d'un parcours ne vient pas de
     /// ses fonds, elle vient de ce qu'il y a à regarder. L'encre sert les deux moments où
     /// le parcours s'adresse directement à l'étudiant — l'accroche et le passage à son
-    /// tour — et le vert sert l'attente.
+    /// tour — et le vert pastel sert l'attente.
+    ///
+    /// L'écran de génération était sur le vert plein, et il tapait trop fort : un aplat
+    /// saturé tenu cinq secondes, avec du texte blanc dessus, fatigue là où l'on demande
+    /// justement de patienter. Le pastel dit la même chose sans crier.
     var surface: OnboardingSurface {
         switch self {
         case .welcome, .yourTurn: .ink
-        case .personalizing: .accent
+        case .personalizing: .accentSoft
         default: .canvas
         }
     }

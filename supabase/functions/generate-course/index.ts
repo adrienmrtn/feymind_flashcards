@@ -15,6 +15,7 @@ import {
   stripInlineMarkup,
 } from "../_shared/sheet.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
+import { languageBrief } from "../_shared/language.ts";
 import {
   audienceBrief,
   COURSE_SYSTEM_PROMPT,
@@ -54,6 +55,8 @@ interface RequestBody {
   level?: string;
   /** Pays de scolarisation, en deux lettres : « fr », « be », « ca »… */
   country?: string;
+  /** Langue de la fiche, déduite du pays côté application : « fr » ou « en ». */
+  language?: string;
   /** Longueur de fiche demandée : « brief », « standard » ou « deep ». */
   length?: string;
   /** Matière, quand l'application la connaît déjà. Sinon elle est devinée. */
@@ -102,7 +105,10 @@ Deno.serve(async (request: Request) => {
       }
     }
 
-    const sections: string[] = [];
+    // La langue passe en tête, avant même le titre : en queue de message, derrière un
+    // document de soixante mille caractères, le modèle la perd et retombe sur le français
+    // du prompt système.
+    const sections: string[] = [languageBrief(body.language)];
     if (body.hintTitle) sections.push(`Titre souhaité par l'étudiant : ${body.hintTitle}`);
     if (body.sourceName) sections.push(`Nom du fichier source : ${body.sourceName}`);
     // Le destinataire, la matière et le volume passent avant le document : ce sont les

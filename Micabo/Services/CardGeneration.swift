@@ -41,7 +41,8 @@ enum CardGeneration {
             quota: quota,
             // Une carte de droit ne demande pas la même chose qu'une carte de langue : la
             // matière du cours décide de ce qu'il faut interroger.
-            subject: course.subject
+            subject: course.subject,
+            language: OnboardingPreferences.contentLanguage
         )
 
         var generated: [GeneratedFlashcard]

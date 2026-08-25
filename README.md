@@ -82,21 +82,40 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 
 | Bloc | Écrans |
 | --- | --- |
-| Accroche | bienvenue, stade d'étude, langue, pays de scolarisation, annonce des questions |
+| Accroche | bienvenue, pays de scolarisation, stade d'étude, annonce des questions |
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli |
 | Démonstration | courbe de mémorisation, puis dépôt → fiche → révisions en trois écrans, puis le mode examen |
 | Personnalisation | matières, établissement (avec « Passer »), temps quotidien |
 | Sortie | projection annuelle, notifications, génération du parcours, preuve sociale, passage de relais, connexion, essai de 3 jours, paywall |
 
-Un seul écran offre une échappatoire, et elle est posée en haut à droite sur la ligne du
-sur-titre (`OnboardingSkip`) : demander son établissement à quelqu'un qui n'en a pas, qui est
-entre deux écoles, ou qui n'a pas envie de le dire ne doit pas fermer le parcours. Passer
-laisse le champ vide **et l'écrit**, plutôt que de garder la moitié d'un nom tapé puis
-abandonné.
+**Le pays passe avant le stade d'étude**, et l'ordre est le fond de l'affaire : ce sont les
+paliers du pays choisi qui deviennent les réponses de « tu en es où ? ». Dans l'autre sens, il
+fallait servir les mêmes sept réponses françaises à tout le monde — Lycée, Prépa, Licence,
+PASS, Master, Concours — ce qui ne laissait aucune réponse juste à un Américain, un
+Britannique ou un Québécois. `EducationStage` porte les paliers réels de chaque pays, et un
+pays qu'on ne connaît pas retombe sur une échelle générique en anglais plutôt que sur des
+paliers inventés.
 
-Les réponses sont gardées en local (`OnboardingPreferences`), et deux d'entre elles pèsent sur
-le reste de l'app : le temps quotidien commande le plafond de cartes neuves, et le **stade
-d'étude** commande la rédaction des fiches. Les deux se corrigent dans les réglages.
+Chaque palier porte deux clés qui ne servent pas à la même chose : son `level`, le **registre
+de rédaction** envoyé à l'Edge Function, volontairement grossier parce qu'un cégep québécois et
+un lycée français demandent la même écriture ; et son `tier`, la **marche sur une échelle
+comparable d'un pays à l'autre**, qui sert à retrouver l'équivalent quand on change de pays.
+Le registre ne pouvait pas s'en charger : un lycéen et un collégien le partagent, et chercher
+par registre ramenait un lycéen français en « Middle school » dès qu'il passait aux
+États-Unis. Sans équivalent exact, on prend la marche la plus proche en montant ; la santé et
+les concours ne sont pas des marches et ne se convertissent jamais.
+
+Deux écrans offrent une échappatoire, posée en haut à droite sur la ligne du sur-titre
+(`OnboardingSkip`) : l'établissement, parce que le demander à quelqu'un qui n'en a pas, qui est
+entre deux écoles ou qui n'a pas envie de le dire ne doit pas fermer le parcours — passer laisse
+le champ vide **et l'écrit** ; et la connexion, par un « Skip » temporaire qui referme aussi la
+porte du compte pour que l'app ne repose pas la question à l'écran suivant.
+
+Les réponses sont gardées en local (`OnboardingPreferences`), et trois d'entre elles pèsent sur
+le reste de l'app : le temps quotidien commande le plafond de cartes neuves, le **stade
+d'étude** commande la rédaction des fiches, et le **pays** commande à la fois le système
+scolaire de référence et la **langue** dans laquelle Micabo écrit. Toutes se corrigent dans les
+réglages, où le pays est posé au-dessus du stade pour la même raison que dans le parcours.
 
 ### Un écran, une chose
 
@@ -123,8 +142,16 @@ Ce qui a été retiré, et pourquoi, vaut d'être écrit noir sur blanc :
   le contenu : les serrer sous le titre laisse les deux tiers de l'écran vides en dessous et
   fait lire un formulaire. `expandsContent` sur `OnboardingScaffold` et
   `OnboardingAnswerList` leur donnent la page entière, à hauteur égale entre elles.
-- **les choix qu'on ne peut pas faire.** L'écran de langue affichait cinq rangées à drapeau
-  dont quatre grisées ; il en affiche une, et une ligne annonce la suite.
+- **l'écran de la langue, en entier.** Il annonçait « Micabo parle français » avec une seule
+  réponse, cochée d'avance : un écran complet pour une information, et une question dont on ne
+  pouvait pas changer la réponse. La langue se déduit du pays de scolarisation, et se lit sous
+  ses pastilles, à côté du système scolaire retenu — là où elle est la conséquence d'un choix
+  qu'on vient de faire.
+- **l'avancement automatique après le chargement.** L'écran de génération enchaînait tout seul
+  six dixièmes de seconde après son dernier coche : le seul moment du parcours où l'on attend
+  quelque chose se terminait par un écran arraché sous les yeux, avant qu'on ait pu lire « ton
+  parcours est prêt ». Le bouton occupe sa place depuis le début, éteint, et c'est l'étudiant
+  qui appuie.
 - **le flou d'apparition.** Il coûtait une passe de rendu par image, rendait le texte illisible
   pendant sa propre arrivée, et il est devenu la signature des interfaces faites à la chaîne.
   Huit points de montée et un fondu suffisent.
@@ -165,7 +192,7 @@ d'enregistré : la démonstration tourne en avion.
 
 | Écran | Geste | Ce qui se passe |
 | --- | --- | --- |
-| Dépôt | glisser la page dans la zone en pointillés | La page est **volontairement brute** : un mur de texte sans hiérarchie, titre noyé au milieu, tel qu'on reçoit un polycopié. Sans un vrai avant, l'écran suivant ne transforme rien. Elle passe **au-dessus** de la zone de dépôt, jamais dessous : un document qu'on fait glisser sous sa cible se lit comme un document qu'on perd. Après deux secondes sans geste elle respire, et un simple appui fait la même chose. |
+| Dépôt | glisser la page dans la zone en pointillés | La page est **volontairement brute** : un mur de texte sans hiérarchie, titre noyé au milieu, tel qu'on reçoit un polycopié. Sans un vrai avant, l'écran suivant ne transforme rien. Elle passe **au-dessus** de la zone de dépôt, jamais dessous : un document qu'on fait glisser sous sa cible se lit comme un document qu'on perd. Une **flèche coule entre les deux** — trois chevrons qui descendent en cascade — parce que la page qui respirait sur place disait qu'il fallait la toucher, pas où l'emmener ; elle s'efface dès que le doigt prend le relais. La zone fait la moitié de la hauteur de la page : une bande de la hauteur d'un bouton se lit comme un bouton, pas comme un endroit où poser un document. Après deux secondes sans geste la page respire, et un simple appui fait la même chose. |
 | Fiche | aucun | Le balayage de lecture passe sur la page brute, puis la fiche **s'écrit par-dessus, bloc par bloc** : le filet de titre, le paragraphe, la définition, le passage surligné, le schéma. Les deux états occupent la même place, ce qui fait lire une transformation et non deux illustrations. Le bouton dit « S'entraîner », et c'est le seul du parcours qui brille et respire. |
 | Révisions | aucun | La fiche se **découpe en quatre vignettes** — schéma, recto verso, QCM, texte à trou — qui sortent une à une, puis se remplissent toutes seules. Le bouton s'ouvre dès que les quatre sont là. |
 
@@ -216,7 +243,7 @@ Trois règles valent pour tout le tunnel :
 - **deux écrans voisins ne se ressemblent pas** — les compositions alternent (paquet de cartes,
   pastilles, liste, graphe, calendrier, curseur, carrousel), et **trois écrans seulement**
   quittent le crème : l'accroche et le passage de relais sur l'encre, la génération du parcours
-  sur le vert. La variété d'un parcours ne vient pas de ses fonds mais de ce qu'il y a à
+  sur le vert pastel. La variété d'un parcours ne vient pas de ses fonds mais de ce qu'il y a à
   regarder, et l'encre est réservée aux deux moments où le parcours s'adresse à quelqu'un au
   lieu de lui montrer quelque chose. Le texte reste **fer à gauche** partout et le bouton
   **collé au bas de la zone sûre**.
@@ -228,23 +255,34 @@ depuis leur étape et la reposent dans `\.onboardingSurface`.
 
 **Le haut de l'écran suit la couleur de l'écran.** Le fond de l'étape monte jusqu'en haut de la
 zone d'état : la jauge, l'heure et la batterie reposent sur l'encre quand l'écran est sombre, sur
-le vert quand il est vert, jamais sur une bande crème rapportée. Le thème clair est donc posé
+le menthe quand il est vert, jamais sur une bande crème rapportée. Le thème clair est donc posé
 par `RootView` sur l'app elle-même, pas au-dessus du parcours : celui-ci passe en sombre le temps
 de ses écrans d'encre pour que l'heure du téléphone reste lisible.
 
 ### La génération du parcours, et ce qui vient après
 
-L'écran de génération est le seul vert plein cadre. Il tient en trois bandes qui ne bougent
+L'écran de génération est le seul en vert pleine page. Il tient en trois bandes qui ne bougent
 plus une fois posées — l'accroche en haut sur une hauteur réservée d'avance, l'anneau au
 centre, les quatre étapes en bas — parce que sa version précédente empilait tout en haut de
 l'écran et changeait de hauteur à chaque phrase, si bien que l'écran tremblait pendant qu'il
 travaillait. L'anneau fait son tour pendant que le pourcentage compte image par image : deux
 façons de dire la même chose, et c'est la seule chose que cet écran a à dire.
 
-**Il dure quatre secondes et demie, et c'est un plancher verrouillé par un test**
+**Il dure cinq secondes, et c'est un plancher verrouillé par un test**
 (`PersonalizingStepView.duration`). Un écran qui annonce qu'il construit un parcours puis
 disparaît en une seconde n'a rien construit : on ne lit ni ce qu'il dit ni ce qu'il coche, et
 la promesse du parcours personnalisé passe pour du décor.
+
+**La fin ne se saute pas d'elle-même.** L'écran enchaînait tout seul six dixièmes de seconde
+après son dernier coche : le seul moment du parcours où l'on ait attendu quelque chose se
+terminait par un écran arraché sous les yeux, avant qu'on ait pu lire « ton parcours est prêt ».
+C'est l'étudiant qui appuie, et le bouton occupe sa place depuis le début — éteint, avec son
+indicateur — pour que rien ne saute quand il s'active.
+
+**Le fond est passé du vert plein au vert pastel.** Un aplat saturé tenu cinq secondes derrière
+du texte blanc fatigue, et c'était précisément l'écran où l'on demande de patienter. Le pastel
+garde la rupture de couleur, rend l'encre lisible, et se traite donc comme un fond clair :
+`OnboardingSurface.isDark` ne vaut plus que pour l'encre.
 
 Les trois écrans qui suivent forment la fin du parcours, et leur ordre est délibéré :
 
@@ -252,25 +290,42 @@ Les trois écrans qui suivent forment la fin du parcours, et leur ordre est dél
 | --- | --- | --- |
 | Preuve sociale | « Nous avons aidé 500 000 étudiants », puis quatre avis en carrousel qui défilent seuls et se font défiler à la main | Posée en ouverture, elle demande de croire une app qu'on n'a pas vue ; posée ici, elle répond à la seule question qui reste après la génération du parcours : est-ce que ça marche pour d'autres que moi ? |
 | Passage de relais | « C'est maintenant à ton tour de découvrir la méthode d'apprentissage que tous les meilleurs élèves utilisent », dont le gras se pose mot par mot | C'est le pivot : jusque-là on montrait, à partir de là c'est l'étudiant qui s'y met. D'où l'encre, et le bouton qui n'arrive qu'une fois le dernier mot posé. |
-| Connexion | Apple et Google, trois lignes sur ce qu'un compte sauvegarde, et « Continuer sans compte » | Demander un compte à l'ouverture, c'est le demander pour une app qu'on n'a pas encore vue fonctionner. Ici le parcours est construit, et le compte sert à ne pas le perdre. |
+| Connexion | Continuer avec Apple, continuer avec Google, trois lignes sur ce qu'un compte sauvegarde, et un « Skip » en haut à droite | Demander un compte à l'ouverture, c'est le demander pour une app qu'on n'a pas encore vue fonctionner. Ici le parcours est construit, et le compte sert à ne pas le perdre. |
 
-Les boutons du parcours passent par `SignInStepView.signIn(with:)`. Les flux Apple et Google
-sont implémentés dans `AuthController` (voir [Comptes et sauvegarde](#comptes-et-sauvegarde)) :
-ils n'apparaissent que si les fournisseurs sont activés côté Supabase. « Continuer sans compte »
-reste ouvert et volontairement discret — un écran de connexion sans issue se quitte en quittant
-l'app.
+**Les deux flux sont branchés pour de vrai.** `SignInStepView` se contentait d'appeler
+`model.advance()` sur les deux boutons : on croyait s'être connecté, rien n'était créé, et
+l'app redemandait un compte juste après le parcours, sur un second écran de connexion. Elle
+passe maintenant par `AuthController` (voir [Comptes et sauvegarde](#comptes-et-sauvegarde)) —
+Apple par son bouton natif, que ses règles d'interface imposent, Google par une page web
+isolée. C'est le passage à l'état « connecté » qui fait avancer, quel que soit le fournisseur
+emprunté, et l'écran suivant est l'offre d'essai.
+
+Les deux boutons sont montrés sans condition, et non plus seulement quand le projet Supabase
+annonce le fournisseur : un fournisseur éteint côté serveur le dit dans son message d'erreur,
+ce qui est plus utile qu'un bouton absent dont personne ne peut deviner la cause.
+
+Le « Skip » est temporaire et il fait deux choses : il avance, et il **referme la porte du
+compte** (`AccountGate.skippedKey`, la clé que relit `RootView`). Sans cette clé partagée,
+passer la connexion pendant le parcours se payait par un écran de connexion à la sortie.
 
 Les réponses sont écrites au fil de l'eau dans `OnboardingPreferences` (clés `micabo.onboarding.*`)
 et survivent donc à une fermeture en cours de route. `Réglages` propose **Refaire l'onboarding**,
 qui efface ces clés et relance le parcours sans toucher aux cours.
 
-La toute première question est **Tu en es où ?** : lycée, prépa, licence, PASS-santé, master,
-concours ou autre. Elle vient juste après l'accroche parce qu'elle situe tout le reste, un
-lycéen et un PASS n'ayant ni les mêmes matières, ni les mêmes examens, ni le même rythme. Les
-sept réponses **occupent la page**, en rangées qui se partagent la hauteur à égalité. Elles
-tenaient avant en pastilles serrées sous le titre : tout était visible d'un coup, mais les
-deux tiers de l'écran restaient vides en dessous, et une question posée dans le coin
-supérieur d'une page blanche se lit comme un formulaire. Rien ne défile pour autant.
+La toute première question est **Tu étudies où ?**, en pastilles à drapeau. Elle passe devant
+« tu en es où ? » parce qu'elle commande ses réponses, et elle décide aussi de la langue : les
+deux conséquences se lisent sous les pastilles, à côté du système scolaire retenu. « Ailleurs »
+n'est pas un aveu d'échec — la liste ne peut pas couvrir le monde, et une échelle générique vaut
+mieux que des paliers inventés.
+
+Vient ensuite **Tu en es où ?**, dont les réponses sont celles du pays : lycée, prépa, licence,
+PASS-santé, master, concours en France ; middle school, high school, college, pre-med, graduate
+school aux États-Unis ; GCSE, A-Levels, undergraduate, medicine, postgraduate au Royaume-Uni.
+Elle situe tout le reste, un lycéen et un PASS n'ayant ni les mêmes matières, ni les mêmes
+examens, ni le même rythme. Les réponses **occupent la page**, en rangées qui se partagent la
+hauteur à égalité. Elles tenaient avant en pastilles serrées sous le titre : tout était visible
+d'un coup, mais les deux tiers de l'écran restaient vides en dessous, et une question posée dans
+le coin supérieur d'une page blanche se lit comme un formulaire. Rien ne défile pour autant.
 
 La question de l'oubli, **En général, oublies-tu ce que tu apprends ?**, a quatre réponses là
 où elle en avait deux (`ForgettingHabit`). Un oui/non sur un sujet aussi personnel force la
@@ -360,6 +415,13 @@ l'une écrit les mots, l'autre les nombres.
   d'un pixel. Depuis que le balayage entre onglets a disparu, c'est le seul moyen de changer
   de page. Elle s'efface sur les écrans poussés, où changer d'onglet depuis le fond d'une pile
   ne voudrait rien dire
+- **La barre est en verre, et elle flotte.** C'était une bande pleine largeur collée au bas de
+  l'écran, avec un flou noyé sous un aplat crème à 72 % : autant dire un bandeau opaque, et un
+  bandeau opaque qui touche ce qu'une page ancre au-dessus de lui donne un bouton qu'on croit
+  coupé. C'est maintenant une pastille posée à distance des bords, sur un flou franc, un filet
+  clair et sa propre ombre. Sa hauteur est déclarée (`MicaboLayout.tabBarHeight`) et non mesurée
+  sur ses libellés, parce que c'est cette hauteur que les pages réservent, et l'air qu'elle
+  laisse au-dessus d'elle l'est aussi (`MicaboLayout.tabBarGap`)
 - Un seul bouton flottant dans l'app : le « + » d'import, en bas à droite de Cours, là où le
   pouce tombe. Il n'apparaît pas quand la liste est vide, où l'écran d'accueil porte déjà son
   propre appel à importer
@@ -510,12 +572,17 @@ Micabo a fonctionné sans compte pendant tout son développement : tout vivait d
 sur un seul téléphone, et « Tout reste sur cet appareil » était écrit dans l'écran Profil.
 Effacer l'app effaçait deux ans de fiches.
 
-**Le compte arrive après le parcours d'accueil, et il reste facultatif.** Les deux moitiés de
-cette phrase sont des décisions. Après, parce que demander un effort avant d'avoir donné une
-raison ne marche pas, et que les vingt écrans d'accueil existent pour donner cette raison.
-Facultatif, parce que l'app doit continuer de s'ouvrir dans un train sans réseau :
-« Continuer sans compte » n'est pas une dérobade, c'est le mode d'origine, et il se rattrape à
+**Le compte se demande à la fin du parcours d'accueil, et il reste facultatif.** Les deux
+moitiés de cette phrase sont des décisions. À la fin, parce que demander un effort avant
+d'avoir donné une raison ne marche pas, et que les vingt écrans d'accueil existent pour donner
+cette raison. Facultatif, parce que l'app doit continuer de s'ouvrir dans un train sans
+réseau : rester local n'est pas une dérobade, c'est le mode d'origine, et il se rattrape à
 tout moment depuis les réglages — la synchro remonte alors ce qui a été accumulé entre-temps.
+
+L'écran de compte de `RootView` est resté, mais comme **rattrapage** : il se demandait là, à la
+sortie du parcours, ce qui donnait deux écrans de connexion à la suite. Il ne s'affiche
+maintenant que pour quelqu'un qui a fini le parcours sans compte et sans passer explicitement,
+c'est-à-dire après une déconnexion depuis les réglages.
 
 ### Ce qui est stocké
 
@@ -899,9 +966,22 @@ l'envoie et c'est elle qui gagne, pour la fiche comme pour les cartes.
 scolarisation** en système de référence. Le second n'est pas une politesse : « les attendus du
 bac » ne veut rien dire pour un lycéen belge, un étudiant québécois ne passe pas de concours de
 première année de santé, et au Québec « baccalauréat » désigne un diplôme universitaire. Une
-fiche qui renvoie à un examen qui n'existe pas là où on étudie perd sa raison d'être. Dix pays
-où l'on étudie en français, demandés juste après la langue et corrigeables dans les réglages ;
-sans réponse, la France est supposée, ce que l'app faisait déjà en silence.
+fiche qui renvoie à un examen qui n'existe pas là où on étudie perd sa raison d'être. Le pays
+est la première question du parcours et se corrige dans les réglages ; sans réponse, la France
+est supposée, ce que l'app faisait déjà en silence.
+
+**Les deux consignes ont des domaines séparés, et il a fallu les y tenir.** Le registre décrit
+une façon d'écrire et ne nomme aucune épreuve ; le pays nomme les épreuves et les diplômes.
+Elles disaient « ce qui tombe au bac » et « PASS, LAS », ce qui, depuis que l'application
+propose le Royaume-Uni et les États-Unis, arrivait collé à un « ne parle jamais du
+baccalauréat » : le modèle recevait deux ordres contraires dans le même paragraphe. Une ligne
+finale tranche désormais en faveur du pays.
+
+La **langue** part avec, et en tête du message : `_shared/language.ts` porte la consigne, et
+elle est placée avant le document parce qu'en queue, derrière soixante mille caractères, le
+modèle la perd et retombe sur le français du prompt système. Les prompts système restent en
+français — ce sont eux qui portent les règles, les noms de blocs et les exemples, et les
+traduire doublerait la surface à maintenir pour la même consigne.
 
 ### Sans clé, sans réseau
 

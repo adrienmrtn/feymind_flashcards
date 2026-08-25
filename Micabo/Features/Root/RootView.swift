@@ -1,21 +1,35 @@
 import SwiftUI
 
-/// Aiguillage au lancement : parcours d'accueil, puis compte, puis l'application.
+/// La porte du compte, et la clé qui la referme.
 ///
-/// **L'ordre est un choix de parcours.** Le compte vient après les vingt écrans d'accueil,
-/// parce que demander un effort avant d'avoir donné une raison ne marche pas ; et il vient
-/// avant le premier import, parce qu'un cours importé sans compte n'aurait nulle part à aller.
+/// Le drapeau est partagé : c'est l'écran de connexion du parcours d'accueil qui le pose
+/// quand on choisit de passer, et `RootView` qui le relit. Sans une clé commune, passer la
+/// connexion pendant le parcours se payait par un second écran de connexion à la sortie.
+enum AccountGate {
+    static let skippedKey = "micabo.auth.skipped"
+}
+
+/// Aiguillage au lancement : parcours d'accueil, puis l'application.
 ///
-/// Il reste **facultatif**, et ce n'est pas une faiblesse : Micabo a fonctionné sans compte
-/// depuis le premier jour, tout est écrit sur l'appareil, et l'app doit continuer de s'ouvrir
-/// dans un train sans réseau. « Continuer sans compte » n'est donc pas une dérobade, c'est le
-/// mode d'origine — il se rattrape à tout moment depuis les réglages, et la synchro remonte
-/// alors ce qui a été accumulé entre-temps.
+/// **Le compte se demande maintenant dans le parcours**, entre « c'est à ton tour » et
+/// l'offre d'essai. Il s'est longtemps demandé ici, après le parcours, ce qui donnait deux
+/// écrans de connexion à la suite : celui du parcours ne branchait rien, et celui-ci
+/// reposait la question à quelqu'un qui venait d'y répondre.
+///
+/// L'écran ci-dessous reste, mais comme **rattrapage** : il ne s'affiche que pour quelqu'un
+/// qui a fini le parcours sans compte et sans passer explicitement — un cas qui n'arrive
+/// plus que sur une déconnexion depuis les réglages.
+///
+/// Le compte reste **facultatif**, et ce n'est pas une faiblesse : Micabo a fonctionné sans
+/// compte depuis le premier jour, tout est écrit sur l'appareil, et l'app doit continuer de
+/// s'ouvrir dans un train sans réseau. « Continuer sans compte » n'est donc pas une dérobade,
+/// c'est le mode d'origine — il se rattrape à tout moment depuis les réglages, et la synchro
+/// remonte alors ce qui a été accumulé entre-temps.
 struct RootView: View {
     @AppStorage(OnboardingPreferences.Key.completed) private var didCompleteOnboarding = false
     /// Vrai quand on a explicitement choisi de rester local. Le drapeau est nécessaire :
     /// sans lui, l'écran de compte reviendrait à chaque lancement.
-    @AppStorage("micabo.auth.skipped") private var didSkipAccount = false
+    @AppStorage(AccountGate.skippedKey) private var didSkipAccount = false
 
     @Environment(AuthController.self) private var auth
 

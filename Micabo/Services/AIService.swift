@@ -10,6 +10,9 @@ struct CourseGenerationRequest {
     var studyLevel: StudyLevel? = nil
     /// Où l'étudiant est scolarisé : « attendus du bac » ne veut rien dire en Belgique.
     var country: SchoolingCountry? = nil
+    /// La langue de la fiche. Elle vient du pays de scolarisation, et non d'une question à
+    /// part : l'écran qui la demandait n'offrait qu'une réponse.
+    var language: ContentLanguage = .fr
     var sheetLength: SheetLength = .default
     /// Matière, quand elle est déjà connue. À l'import elle ne l'est pas : c'est le modèle
     /// qui la trouve, et la fonction la devine sur le texte pour choisir ses consignes.
@@ -25,6 +28,9 @@ struct FlashcardGenerationRequest {
     var existingFronts: [String]
     var quota: QuestionQuota = .default
     var subject: String? = nil
+    /// Les cartes se posent dans la langue de la fiche : un paquet moitié français moitié
+    /// anglais ne se révise pas.
+    var language: ContentLanguage = .fr
 }
 
 /// Un passage de la fiche que l'utilisateur a sélectionné et veut comprendre.
@@ -37,6 +43,7 @@ struct SelectionExplanationRequest {
     var courseTitle: String
     var subject: String?
     var courseContext: String
+    var language: ContentLanguage = .fr
 }
 
 /// Ce que l'IA renvoie sur un passage sélectionné.

@@ -108,16 +108,23 @@ N'utilise jamais de tiret cadratin. Pas de markdown.`;
  * la différence n'est pas une question de longueur : c'est le vocabulaire attendu, la
  * profondeur des mécanismes, et ce qu'un correcteur ira chercher. Sans cette consigne, le
  * modèle visait un étudiant moyen qui n'existe pas.
+ *
+ * Ces consignes décrivent un **registre d'écriture**, jamais un système scolaire, et
+ * aucune ne nomme d'épreuve : c'est le rôle de `COUNTRY_BRIEFS` juste en dessous, et les
+ * deux sont concaténées. Elles disaient « ce qui tombe au bac » et « PASS, LAS », ce qui,
+ * depuis que l'application propose le Royaume-Uni et les États-Unis, arrivait collé à un
+ * « ne parle jamais du baccalauréat » : le modèle recevait deux ordres contraires dans le
+ * même paragraphe.
  */
 const AUDIENCE_BRIEFS: Record<string, string> = {
   lycee:
-    `Tu écris pour un LYCÉEN. Tiens-toi au vocabulaire du programme du secondaire et définis tout terme qui n'y figure pas. Les mécanismes s'expliquent pas à pas, en partant de ce qui est déjà connu. Ce qui est signalé comme à retenir est ce qui tombe au bac : définitions, schémas de raisonnement, exemples d'application. Pas de renvoi à la littérature scientifique, pas de débat d'école.`,
+    `Tu écris pour un élève du SECONDAIRE. Tiens-toi au vocabulaire de son programme et définis tout terme qui n'y figure pas. Les mécanismes s'expliquent pas à pas, en partant de ce qui est déjà connu. Ce qui est signalé comme à retenir est ce qui tombe à l'examen de fin de secondaire : définitions, schémas de raisonnement, exemples d'application. Pas de renvoi à la littérature scientifique, pas de débat d'école.`,
   prepa:
     `Tu écris pour un étudiant de CLASSE PRÉPARATOIRE. Le raisonnement compte autant que le résultat : une étape sautée est une faute. Les démonstrations et les enchaînements logiques sont écrits, pas résumés. Signale les conditions d'application d'un résultat et les cas limites, parce que c'est là que se joue l'écrit. Le vocabulaire technique est le tien, sans paraphrase.`,
   licence:
     `Tu écris pour un étudiant de LICENCE. Reprends les termes du cours magistral tels quels : c'est ce vocabulaire que l'examen attend. Situe la notion dans sa discipline, distingue nettement les définitions des exemples, et garde les nuances que le document porte. Les mécanismes sont détaillés sans être vulgarisés.`,
   sante:
-    `Tu écris pour un étudiant de SANTÉ (PASS, LAS, médecine, pharmacie, maïeutique). L'exigence est la densité et la précision : rien d'approximatif, aucune valeur arrondie sans le dire. Nomenclature exacte, valeurs seuils, unités systématiques. Signale explicitement les confusions classiques et les pièges de QCM, et privilégie les tableaux de comparaison : c'est comme ça que ces cours se révisent.`,
+    `Tu écris pour un étudiant en FILIÈRE DE SANTÉ (médecine, pharmacie, sciences infirmières, maïeutique, ou l'année d'entrée qui y mène). L'exigence est la densité et la précision : rien d'approximatif, aucune valeur arrondie sans le dire. Nomenclature exacte, valeurs seuils, unités systématiques. Signale explicitement les confusions classiques et les pièges de QCM, et privilégie les tableaux de comparaison : c'est comme ça que ces cours se révisent.`,
   master:
     `Tu écris pour un étudiant de MASTER. La notion est supposée connue : ce qui compte est ce qu'on en fait, ses limites et les positions qui s'opposent dans le champ. Garde les nuances, les conditions de validité, les critiques que le document mentionne. Pas de rappel de niveau licence, sauf s'il est nécessaire à un raisonnement du document.`,
   concours:
@@ -153,14 +160,24 @@ const COUNTRY_BRIEFS: Record<string, string> = {
     `L'étudiant est scolarisé en CÔTE D'IVOIRE. Réfère-toi au système ivoirien : baccalauréat, licence, master, concours d'entrée aux grandes écoles.`,
   lu:
     `L'étudiant est scolarisé au LUXEMBOURG. Réfère-toi au système luxembourgeois : diplôme de fin d'études secondaires, bachelor, master.`,
+  uk:
+    `L'étudiant est scolarisé au ROYAUME-UNI. Réfère-toi au système britannique : GCSE, A-Levels, undergraduate degree, postgraduate, entrée en medical school. Ne parle jamais du baccalauréat, des classes préparatoires ni du PASS : rien de tout cela n'existe là-bas.`,
+  us:
+    `L'étudiant est scolarisé aux ÉTATS-UNIS. Réfère-toi au système américain : middle school, high school, AP courses, college (undergraduate), graduate school, pre-med et MCAT. Ne parle jamais du baccalauréat, des classes préparatoires ni du PASS.`,
+  other:
+    `Le système scolaire de l'étudiant n'est pas connu. N'invoque aucun examen national ni aucun diplôme nommé : parle de « l'examen », de « ton programme », de « ton cursus ». Une fiche qui renvoie à une épreuve qui n'existe pas là où on étudie perd sa raison d'être, et une épreuve inventée est pire qu'une épreuve absente.`,
 };
 
 export function audienceBrief(level: string | undefined, country?: string): string {
   const brief = AUDIENCE_BRIEFS[(level ?? "").trim().toLowerCase()] ??
     `Le niveau d'étude n'est pas connu. Écris pour un étudiant du supérieur en début de cursus : définis les termes techniques la première fois, et n'exige aucun prérequis que le document ne donne pas.`;
 
+  // Le pays passe après le registre, et il tranche : c'est lui qui connaît les noms
+  // d'épreuves et de diplômes, là où le registre ne décrit qu'une façon d'écrire.
   const place = COUNTRY_BRIEFS[(country ?? "").trim().toLowerCase()];
-  const lines = place ? `${brief}\n${place}` : brief;
+  const lines = place
+    ? `${brief}\n${place}\nEn cas de désaccord entre les deux lignes ci-dessus sur le nom d'une épreuve, d'un diplôme ou d'un niveau, c'est la seconde qui vaut.`
+    : brief;
   return `POUR QUI TU ÉCRIS\n${lines}`;
 }
 

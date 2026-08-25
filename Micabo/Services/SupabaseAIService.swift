@@ -23,6 +23,7 @@ struct SupabaseAIService: AIService {
             "sourceName": request.sourceName ?? "",
             "level": request.studyLevel?.rawValue ?? "",
             "country": request.country?.rawValue ?? "",
+            "language": request.language.rawValue,
             "length": request.sheetLength.rawValue,
             "subject": request.subject ?? "",
             "source": request.sourceKind?.rawValue ?? "",
@@ -46,6 +47,7 @@ struct SupabaseAIService: AIService {
             "existing": request.existingFronts,
             "kinds": request.quota.wireKinds,
             "subject": request.subject ?? "",
+            "language": request.language.rawValue,
             "model": AppConfig.aiModel
         ]
 
@@ -66,6 +68,7 @@ struct SupabaseAIService: AIService {
             "title": request.courseTitle,
             "subject": request.subject ?? "",
             "context": String(request.courseContext.prefix(16_000)),
+            "language": request.language.rawValue,
             "model": AppConfig.aiModel
         ]
 
