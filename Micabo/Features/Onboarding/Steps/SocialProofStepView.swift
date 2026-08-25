@@ -43,9 +43,20 @@ struct SocialProofStepView: View {
         )
     ]
 
-    @State private var index = 0
+    /// L'avis posé au milieu de l'écran. Le carrousel est un `ScrollView` horizontal qui
+    /// s'aligne sur ses vues, et non un `TabView` paginé : il se peint sur le crème sans
+    /// rapporter de fond, et le défilement automatique n'est qu'une écriture de plus dans
+    /// cette variable.
+    @State private var visible: UUID?
 
     private let ticker = Timer.publish(every: 3.5, on: .main, in: .common).autoconnect()
+
+    private var index: Int {
+        guard let visible, let position = reviews.firstIndex(where: { $0.id == visible }) else {
+            return 0
+        }
+        return position
+    }
 
     var body: some View {
         OnboardingScaffold(
@@ -69,22 +80,28 @@ struct SocialProofStepView: View {
                 model.advance()
             }
         }
+        .onAppear {
+            visible = reviews.first?.id
+        }
         .onReceive(ticker) { _ in
             advanceCarousel()
         }
     }
 
     private var carousel: some View {
-        TabView(selection: $index) {
-            ForEach(Array(reviews.enumerated()), id: \.element.id) { position, review in
-                card(review)
-                    .padding(.horizontal, 2)
-                    .padding(.bottom, 6)
-                    .tag(position)
+        ScrollView(.horizontal) {
+            HStack(spacing: 12) {
+                ForEach(reviews) { review in
+                    card(review)
+                        .containerRelativeFrame(.horizontal)
+                }
             }
+            .scrollTargetLayout()
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .frame(height: 230)
+        .scrollIndicators(.hidden)
+        .scrollTargetBehavior(.viewAligned)
+        .scrollPosition(id: $visible)
+        .frame(height: 226)
     }
 
     private func card(_ review: Review) -> some View {
@@ -151,8 +168,9 @@ struct SocialProofStepView: View {
     }
 
     private func advanceCarousel() {
+        let next = (index + 1) % reviews.count
         withAnimation(OnboardingMotion.shift) {
-            index = (index + 1) % reviews.count
+            visible = reviews[next].id
         }
     }
 }
