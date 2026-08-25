@@ -275,8 +275,11 @@ productivité : sérieux, un peu froid, et sans rapport avec le logo, qui porte 
 menthe depuis le premier jour. Une app qu'on ouvre pour réviser gagne à être vive, et le vert
 dit « c'est acquis » dans la même langue que les boutons de notation. Deux verts, et la
 distinction est fonctionnelle, pas décorative : `accent` (`#0B8A66`) est assez sombre pour
-porter du texte de onze points sur un fond pastel, `accentVivid` (`#16C08C`) est celui du logo
-et ne remplit que des surfaces sur lesquelles rien n'est écrit — jauges, barres, remplissages.
+porter du texte de onze points sur un fond pastel et pour qu'un filet de quatre points se
+détache de sa piste, `accentVivid` (`#16C08C`) est celui du logo et ne remplit que de **grandes**
+surfaces — le curseur du rythme quotidien, les colonnes de l'histogramme du profil. C'est la
+raison pour laquelle la jauge n'est pas au vert vif : sur le crème, on ne verrait pas où elle en
+est.
 `positive` reste un vert plus forestier : deux verts qui veulent dire deux choses ne peuvent
 pas être le même vert. Les pastels des tuiles et les teintes de couverture des cours sont
 remontés d'un cran, parce que six gris teintés ne donnaient pas de couleur à un écran, ils lui

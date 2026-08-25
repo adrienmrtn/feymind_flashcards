@@ -57,15 +57,20 @@ enum MicaboColor {
     static let accent = Color(hex: 0x0B8A66)
     static let accentSoft = Color(hex: 0xDFF4EC)
 
-    /// Le vert du logo, celui de son rond. Il ne porte jamais de texte : il remplit.
+    /// Le vert du logo, celui de son rond.
+    ///
+    /// Il ne porte jamais de texte, et il ne sert qu'aux **grandes** surfaces : un curseur,
+    /// un histogramme, un remplissage. Sur un filet de quatre points posé sur le crème, il
+    /// n'a pas assez de contraste avec sa piste pour qu'on voie où en est la barre — c'est
+    /// `accent` qui prend le relais dans ce cas, et cette règle vaut mieux qu'un vert vif
+    /// qu'on ne distingue pas.
     static let accentVivid = Color(hex: 0x16C08C)
 
     /// Toute progression porte cette couleur, sans exception : jauge du parcours
     /// d'accueil, barre de session, anneaux, curseurs, indicateurs d'attente.
     /// Une seule couleur pour « ça avance », sinon l'utilisateur cherche un sens
-    /// derrière chaque nuance. Et une progression n'a rien d'écrit dessus : c'est le vert
-    /// vif qui la porte, celui qui donne envie de la remplir.
-    static let progress = accentVivid
+    /// derrière chaque nuance.
+    static let progress = accent
     static let progressTrack = Color(hex: 0xE4DFD2)
 
     /// Retours d'information. Ils étaient désaturés au point de se ressembler tous ; ils

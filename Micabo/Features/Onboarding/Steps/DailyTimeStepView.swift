@@ -56,7 +56,7 @@ struct DailyTimeStepView: View {
                     in: 0...Double(DailyLoad.steps.count - 1),
                     step: 1
                 )
-                .tint(MicaboColor.progress)
+                .tint(MicaboColor.accentVivid)
                 .onChange(of: stepIndex) { oldValue, newValue in
                     guard isReady, oldValue != newValue else { return }
                     Haptics.selection()

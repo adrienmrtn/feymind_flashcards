@@ -161,8 +161,10 @@ struct ProfileView: View {
 
     private func barColor(count: Int, isToday: Bool) -> Color {
         if count == 0 { return MicaboColor.surfaceMuted }
-        if isToday { return MicaboColor.accent }
-        return MicaboColor.accent.opacity(0.35)
+        // Une colonne d'histogramme est une surface, pas un filet : c'est le vert du logo
+        // qui la remplit, et celui du jour est le plus franc de la rangée.
+        if isToday { return MicaboColor.accentVivid }
+        return MicaboColor.accentVivid.opacity(0.4)
     }
 
     private var optionsSection: some View {
