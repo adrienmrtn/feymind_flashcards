@@ -169,19 +169,19 @@ final class OnboardingFlowTests: XCTestCase {
     // MARK: - Fond des écrans
 
     /// Trois écrans seulement quittent le crème : la variété d'un parcours ne vient pas de
-    /// ses fonds. L'encre est réservée aux deux moments où le parcours s'adresse
-    /// directement à l'étudiant, l'accroche et le passage à son tour.
+    /// ses fonds.
     ///
-    /// L'écran de génération, lui, est passé du vert plein au vert pastel : un aplat saturé
-    /// tenu cinq secondes derrière du texte blanc fatigue, et c'est celui où l'on demande
-    /// justement de patienter. Il ne compte donc plus parmi les fonds sombres.
-    func testOnlyThreeScreensLeaveTheCanvas() {
-        XCTAssertEqual(OnboardingStep.welcome.surface, .ink)
+    /// **Le noir ne sert plus qu'une fois**, au passage de relais. Ouvrir l'app sur un écran
+    /// entièrement noir posait le contraste maximal du parcours avant d'avoir rien à lire :
+    /// l'accroche est sur la sauge, un crème teinté de vert, et l'écran de génération sur le
+    /// menthe. Aucun des deux ne s'inverse — l'encre s'y lit mieux que le blanc.
+    func testOnlyOneScreenIsDarkAndItIsTheHandover() {
+        XCTAssertEqual(OnboardingStep.welcome.surface, .sage, "L'accroche n'est plus noire")
         XCTAssertEqual(OnboardingStep.yourTurn.surface, .ink)
         XCTAssertEqual(OnboardingStep.personalizing.surface, .accentSoft)
 
         let dark = OnboardingStep.allCases.filter(\.surface.isDark)
-        XCTAssertEqual(dark, [.welcome, .yourTurn], "Seuls les deux écrans d'encre s'inversent")
+        XCTAssertEqual(dark, [.yourTurn], "Le passage de relais est le seul écran d'encre")
 
         let coloured = OnboardingStep.allCases.filter { $0.surface != .canvas }
         XCTAssertEqual(coloured, [.welcome, .personalizing, .yourTurn])

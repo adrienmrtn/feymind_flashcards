@@ -149,7 +149,11 @@ struct WelcomeDeck: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: 182)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous))
-            .shadow(color: Color.black.opacity(0.32), radius: 20, x: 0, y: 12)
+            // L'ombre était réglée pour un fond noir, où il fallait presque un tiers de noir
+            // pour qu'un blanc se décolle. Sur la sauge, la même ombre salit le fond autour
+            // du paquet : le contraste des deux surfaces fait déjà le travail, l'ombre n'a
+            // plus qu'à donner l'épaisseur du papier.
+            .shadow(color: Color.black.opacity(0.1), radius: 16, x: 0, y: 9)
         }
 
         private var header: some View {

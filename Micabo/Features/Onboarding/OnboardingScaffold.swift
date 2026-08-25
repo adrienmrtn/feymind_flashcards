@@ -14,17 +14,20 @@ enum OnboardingSurface {
     /// demande d'attendre. Le pastel garde la rupture de couleur et rend l'encre lisible,
     /// donc il se traite comme un fond clair.
     case accentSoft
+    /// Le crème teinté de vert de l'accroche, un cran plus sobre que le menthe.
+    case sage
 
     var background: Color {
         switch self {
         case .canvas: MicaboColor.canvas
         case .ink: MicaboColor.ink
         case .accentSoft: MicaboColor.accentSoft
+        case .sage: MicaboColor.canvasSage
         }
     }
 
-    /// Vrai quand le texte doit s'inverser. Le pastel n'en fait pas partie : l'encre s'y lit
-    /// mieux que le blanc.
+    /// Vrai quand le texte doit s'inverser. Les deux pastels n'en font pas partie : l'encre
+    /// s'y lit mieux que le blanc.
     var isDark: Bool {
         self == .ink
     }
@@ -39,7 +42,7 @@ enum OnboardingSurface {
 
     var eyebrow: Color {
         switch self {
-        case .canvas, .accentSoft: MicaboColor.accent
+        case .canvas, .accentSoft, .sage: MicaboColor.accent
         case .ink: MicaboColor.accentSoft
         }
     }
@@ -55,9 +58,10 @@ enum OnboardingSurface {
         switch self {
         case .canvas: MicaboColor.progressTrack
         case .ink: MicaboColor.onInk.opacity(0.22)
-        // La piste beige du crème disparaîtrait sur le menthe : c'est l'accent lui-même,
+        // La piste beige du crème disparaîtrait sur les verts : c'est l'accent lui-même,
         // très dilué, qui fait la piste.
         case .accentSoft: MicaboColor.accent.opacity(0.18)
+        case .sage: MicaboColor.accent.opacity(0.16)
         }
     }
 

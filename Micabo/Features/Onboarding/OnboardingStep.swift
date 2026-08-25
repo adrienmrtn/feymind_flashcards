@@ -56,16 +56,22 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// posée au-dessus d'un écran sombre se lit comme un bug d'affichage.
     ///
     /// Trois écrans seulement quittent le crème : la variété d'un parcours ne vient pas de
-    /// ses fonds, elle vient de ce qu'il y a à regarder. L'encre sert les deux moments où
-    /// le parcours s'adresse directement à l'étudiant — l'accroche et le passage à son
-    /// tour — et le vert pastel sert l'attente.
+    /// ses fonds, elle vient de ce qu'il y a à regarder.
     ///
-    /// L'écran de génération était sur le vert plein, et il tapait trop fort : un aplat
-    /// saturé tenu cinq secondes, avec du texte blanc dessus, fatigue là où l'on demande
-    /// justement de patienter. Le pastel dit la même chose sans crier.
+    /// **L'accroche n'est plus sur l'encre.** Ouvrir sur un écran entièrement noir donne le
+    /// ton d'un outil de développeur, là où Micabo est une app d'école : on posait le
+    /// contraste maximal de l'app avant d'avoir quoi que ce soit à lire, et tout ce qui
+    /// suivait était forcément un repli. Elle est sur la sauge, un crème teinté de vert
+    /// assez discret pour que l'écran suivant ne se lise pas comme une rupture.
+    ///
+    /// Reste un seul écran d'encre, et c'est le bon : le passage de relais, le seul moment
+    /// où le parcours s'arrête de montrer pour s'adresser à quelqu'un. Le menthe, lui, sert
+    /// l'attente — l'écran de génération était sur le vert plein, et un aplat saturé tenu
+    /// cinq secondes derrière du texte blanc fatigue là où l'on demande de patienter.
     var surface: OnboardingSurface {
         switch self {
-        case .welcome, .yourTurn: .ink
+        case .welcome: .sage
+        case .yourTurn: .ink
         case .personalizing: .accentSoft
         default: .canvas
         }

@@ -57,6 +57,20 @@ enum MicaboColor {
     static let onInk = Color(hex: 0xF8F6F0)
     static let onInkMuted = Color(hex: 0x9A958A)
 
+    /// Le crème, teinté de vert : le fond des écrans qui ne sont ni une liste ni une lecture.
+    ///
+    /// **C'est ce qui a remplacé l'encre sur l'accroche.** Un premier écran entièrement noir
+    /// annonce une app d'outillage, pas une app d'école : il pose un contraste maximal avant
+    /// qu'on ait rien à lire, il oblige tout le parcours à s'inverser dès le deuxième écran,
+    /// et il fait du blanc des cartes la seule chose qu'on voie. Ce vert-là est un papier
+    /// dans la palette de Micabo — assez proche du crème pour que le passage à l'écran
+    /// suivant ne se voie pas comme une rupture, assez teinté pour ne pas passer pour du
+    /// gris sale.
+    ///
+    /// Il se distingue de `accentSoft`, qui est plus franc et sert l'attente : le menthe
+    /// veut qu'on remarque qu'il se passe quelque chose, la sauge veut se faire oublier.
+    static let canvasSage = Color(hex: 0xE8EFE6)
+
     /// Accent unique de l'app : sélection, onglet actif, éléments interactifs.
     ///
     /// Assez sombre pour qu'une pastille de onze points reste lisible sur `accentSoft` :
