@@ -222,7 +222,9 @@ final class CloudSync {
         let course = Course(
             id: remote.id,
             title: remote.title,
-            subject: remote.subject,
+            // La matière est décapitalisée à la descente comme à l'import : une ligne écrite
+            // par une version qui criait encore ne doit pas rapporter ses capitales ici.
+            subject: remote.subject.map(TextSanitizer.subject),
             summary: remote.summary,
             emoji: remote.emoji ?? CourseEmoji.fallback,
             accentHex: remote.accent_hex ?? "2F4858",
@@ -239,7 +241,7 @@ final class CloudSync {
 
     private func apply(_ remote: CourseRecord, to course: Course) {
         course.title = remote.title
-        course.subject = remote.subject
+        course.subject = remote.subject.map(TextSanitizer.subject)
         course.summary = remote.summary
         if let emoji = remote.emoji { course.emoji = emoji }
         if let accent = remote.accent_hex { course.accentHex = accent }
