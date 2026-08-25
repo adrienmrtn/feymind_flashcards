@@ -180,6 +180,21 @@ enum MicaboLayout {
     /// Sans cet air, les deux se touchent, et un bouton collé sous une barre translucide se
     /// lit comme un bouton à moitié caché — c'est exactement ce qu'on nous a signalé.
     static let tabBarGap: CGFloat = 12
+
+    /// **Tout ce que la barre d'onglets occupe**, de son air du dessus au bord de la zone
+    /// sûre : c'est la hauteur qu'une page racine doit se réserver.
+    ///
+    /// Elle est déclarée ici parce qu'il faut la réserver **à la main**, et ce n'est pas un
+    /// choix. La barre est posée par la racine, à l'extérieur des trois pages, et chaque
+    /// page est un `NavigationStack` : or un `safeAreaInset` **ne franchit pas** la frontière
+    /// d'un `NavigationStack`, qui rétablit sa zone sûre depuis la fenêtre. L'inset de la
+    /// racine dessine donc la barre sans jamais rien réserver à l'intérieur des pages, et
+    /// tout ce qu'une page ancrait en bas se retrouvait sous la barre.
+    ///
+    /// La somme suit exactement ce que `MicaboTabBar` dessine : son air du dessus, sa
+    /// hauteur, et les quatre points qui l'empêchent de buter sur le bord d'un téléphone
+    /// sans zone sûre.
+    static var tabBarSpace: CGFloat { tabBarGap + tabBarHeight + MicaboSpacing.xxs }
 }
 
 /// Typographie de l'app : Hanken Grotesk, embarquée et enregistrée par `FontLoader`.

@@ -96,15 +96,16 @@ struct TodayView: View {
                     examSection
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.bottom, MicaboSpacing.xxl)
+                .padding(.bottom, MicaboSpacing.md)
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
-            // Comme le « + » de l'onglet Cours : `safeAreaInset` et non `overlay`. Un overlay
-            // se cale sur les bords de la vue et passait sous la barre d'onglets, qui est
-            // dessinée par la racine par-dessus les pages. Le bouton de session, le premier
-            // appui de l'app, en était couvert.
-            .safeAreaInset(edge: .bottom, spacing: 0) {
+            // Le bouton de session se pose au-dessus de la barre d'onglets, et la page
+            // réserve la hauteur des deux. C'est la page qui doit le faire : l'inset de la
+            // racine ne franchit pas la frontière du `NavigationStack`, et le premier appui
+            // de l'app passait sous la barre dès qu'il apparaissait — voir
+            // `tabBarClearance`.
+            .tabBarClearance {
                 if hasSessionButton {
                     MicaboBottomBar {
                         Button {

@@ -28,10 +28,13 @@ struct ProfileView: View {
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, MicaboSpacing.xs)
-                .padding(.bottom, MicaboSpacing.xxl)
+                .padding(.bottom, MicaboSpacing.md)
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
+            // Le Profil n'ancre rien en bas, mais sa dernière rangée se lisait à travers le
+            // verre de la barre : la réserve n'est pas réservée aux pages qui ont un bouton.
+            .tabBarClearance()
             .toolbar(.hidden, for: .navigationBar)
             .reportsNavigationDepth(for: .profile, depth: path.count)
             .navigationDestination(for: FriendsRoute.self) { _ in

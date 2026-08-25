@@ -84,6 +84,46 @@ extension View {
     func reportsNavigationDepth(for tab: RootTab, depth: Int) -> some View {
         modifier(NavigationDepthReporter(tab: tab, depth: depth))
     }
+
+    /// **Réserve la place de la barre d'onglets, et pose au-dessus d'elle ce que la page
+    /// ancre en bas.** À appliquer au contenu défilant d'une page racine, à l'intérieur de
+    /// son `NavigationStack`.
+    ///
+    /// Ce n'est pas une commodité, c'est le seul endroit où cette place peut être réservée.
+    /// La barre est dessinée par la racine, à l'extérieur des pages, par un `safeAreaInset` —
+    /// et **un `safeAreaInset` ne franchit pas la frontière d'un `NavigationStack`**, qui
+    /// rétablit sa zone sûre depuis la fenêtre. L'inset de la racine ne réservait donc rien
+    /// du tout à l'intérieur des pages : le « + » de Cours et le bouton de session de
+    /// Réviser se posaient au bas de leur zone sûre, c'est-à-dire exactement là où la barre
+    /// est peinte, et passaient dessous. Le premier appui de l'app était à moitié cliquable.
+    ///
+    /// On a longtemps cru que passer de l'`overlay` au `safeAreaInset` côté racine réglait
+    /// la question. Les deux tombent au même endroit, et c'est pour cette raison que le
+    /// symptôme n'avait pas bougé : ce qui manquait n'était pas le bon modificateur, c'était
+    /// la réservation, **de l'autre côté de la frontière**.
+    ///
+    /// L'accessoire décide de sa propre largeur : le bouton de session prend toute la
+    /// laisse, le « + » se cale à droite.
+    func tabBarClearance<Accessory: View>(@ViewBuilder accessory: () -> Accessory) -> some View {
+        safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 0) {
+                accessory()
+
+                // La hauteur de la barre, en creux. Elle ne prend pas les appuis : elle
+                // recouvre la barre, et une surface transparente qui les avale rendrait les
+                // trois onglets inertes.
+                Color.clear
+                    .frame(height: MicaboLayout.tabBarSpace)
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+
+    /// La même réserve, pour une page qui n'ancre rien en bas : sans elle, sa dernière
+    /// rangée se lit à travers le verre de la barre.
+    func tabBarClearance() -> some View {
+        tabBarClearance { EmptyView() }
+    }
 }
 
 private struct NavigationDepthReporter: ViewModifier {
