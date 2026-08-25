@@ -12,6 +12,11 @@ import SwiftUI
 /// les déplacer. La **liste** en dessous montre ce qu'un calendrier ne peut pas dire : le
 /// nom, les cours, le volume de cartes, et si la replanification est active.
 struct ExamsView: View {
+    /// Appelé par l'état vide quand il n'y a pas encore de quoi planifier : l'écran se
+    /// referme et l'import s'ouvre. Sans ce chemin, l'écran expliquait ce qu'il fallait faire
+    /// sans donner le moyen de le faire, et il fallait ressortir à la main.
+    var onImport: (() -> Void)?
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
@@ -55,6 +60,20 @@ struct ExamsView: View {
         return examsByDay[calendar.startOfDay(for: selectedDay)] ?? []
     }
 
+    /// Les cours qui ont de quoi être replanifiés.
+    ///
+    /// C'est **la même condition que celle du bouton de la feuille** (`canConfirm` demande
+    /// au moins une carte active) : un cours sans carte ne se planifie pas, et compter les
+    /// cours plutôt que les cartes laissait proposer un examen qu'on ne pouvait pas
+    /// confirmer.
+    private var plannableCourses: [Course] {
+        courses.filter { course in
+            course.cards.contains { !$0.isSuspended }
+        }
+    }
+
+    private var canPlan: Bool { !plannableCourses.isEmpty }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
@@ -95,19 +114,23 @@ struct ExamsView: View {
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .enablesSwipeBack()
+        // Sans une carte à replanifier, le bouton mènerait à une feuille qu'on ne peut pas
+        // confirmer : c'est l'état vide qui parle, et il porte alors sa propre sortie.
         .overlay(alignment: .bottom) {
-            MicaboBottomBar {
-                Button {
-                    Haptics.medium()
-                    editing = ExamEdition(exam: nil, date: selectedDay ?? today)
-                } label: {
-                    HStack(spacing: MicaboSpacing.xs) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 13, weight: .semibold))
-                        Text("Ajouter un examen")
+            if canPlan {
+                MicaboBottomBar {
+                    Button {
+                        Haptics.medium()
+                        editing = ExamEdition(exam: nil, date: selectedDay ?? today)
+                    } label: {
+                        HStack(spacing: MicaboSpacing.xs) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 13, weight: .semibold))
+                            Text("Ajouter un examen")
+                        }
                     }
+                    .buttonStyle(MicaboPrimaryButtonStyle())
                 }
-                .buttonStyle(MicaboPrimaryButtonStyle())
             }
         }
         .sheet(item: $editing) { edition in
@@ -293,14 +316,44 @@ struct ExamsView: View {
         return courses.filter { wanted.contains($0.id) }.count
     }
 
-    /// Sans bouton : celui du bas de l'écran est le même, et il est déjà là. Un écran
-    /// d'accueil n'a à porter une action que s'il est seul à la porter.
+    /// **Deux états vides, parce qu'il y a deux situations**, et qu'elles ne demandent pas la
+    /// même chose.
+    ///
+    /// Avec des cartes, il ne manque qu'une date : l'état vide explique ce que la
+    /// replanification fait et laisse le bouton du bas faire le reste — un écran d'accueil
+    /// n'a à porter une action que s'il est seul à la porter.
+    ///
+    /// Sans carte, planifier est impossible : la feuille ne se confirmerait pas. L'écran le
+    /// dit et **donne la sortie** au lieu de laisser un bouton qui ne mène nulle part. C'est
+    /// ce qui manquait : la page se contentait de ne rien proposer, ce qui se lit comme une
+    /// fonctionnalité cassée plutôt que comme une étape qui n'est pas encore venue.
+    @ViewBuilder
     private var emptyState: some View {
-        MicaboEmptyState(
-            systemImage: "calendar",
-            title: "Aucun examen prévu",
-            message: "Déclare une date et les cours au programme : Micabo replanifie tes révisions pour que chaque carte soit au sommet de sa rétention le jour J, et pas trois semaines après."
-        )
+        if canPlan {
+            MicaboEmptyState(
+                systemImage: "calendar",
+                title: "Aucun examen prévu",
+                message: "Déclare une date et les cours au programme : Micabo replanifie tes révisions pour que chaque carte soit au sommet de sa rétention le jour J, et pas trois semaines après."
+            )
+        } else if courses.isEmpty {
+            MicaboEmptyState(
+                systemImage: "calendar.badge.plus",
+                title: "Un cours d'abord",
+                message: "Un examen replanifie les révisions de tes cartes : il en faut donc. Importe un cours, et cette page saura quoi faire de ta date.",
+                actionTitle: onImport == nil ? nil : "Importer un cours"
+            ) {
+                onImport?()
+            }
+        } else {
+            // Des cours, mais pas une carte : la sortie n'est pas l'import, c'est la
+            // génération, et elle se fait dans le cours lui-même. Proposer « importer »
+            // ici enverrait chercher un deuxième cours pour un problème qui n'en est pas un.
+            MicaboEmptyState(
+                systemImage: "calendar.badge.plus",
+                title: "Des cartes d'abord",
+                message: "Un examen agit sur des cartes, et tes cours n'en ont pas encore. Ouvre un cours, génère ses cartes, puis reviens poser ta date."
+            )
+        }
     }
 
     // MARK: - Actions
