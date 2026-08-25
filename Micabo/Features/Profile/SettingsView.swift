@@ -332,7 +332,7 @@ struct SettingsView: View {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("📄"), background: MicaboColor.tilePastels[3]),
                         title: "Longueur des fiches",
-                        subtitle: sheetLength.detail,
+                        subtitle: sheetLength.readingHint + " de lecture",
                         accessory: .value(sheetLength.title)
                     )
                 }

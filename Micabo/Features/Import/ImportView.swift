@@ -32,10 +32,16 @@ struct ImportView: View {
     @State private var title = ""
     @State private var pastedText = ""
     @State private var imported: ImportedDocument?
+    /// L'analyse des schémas n'est plus une case à cocher d'avance : elle ne s'allume que
+    /// depuis l'échec qui la réclame, quand un document scanné n'a rendu aucun texte
+    /// exploitable. Cocher une option payante avant de savoir si elle sert est une décision
+    /// qu'on ne peut pas prendre, et l'écran la posait en premier.
     @State private var analyzeVisuals = false
     /// Longueur de la fiche à écrire. Le choix se garde d'un import à l'autre, et se
     /// retrouve dans les réglages : c'est le même réglage, réglé là où il sert.
     @AppStorage(SheetPreferences.lengthKey) private var sheetLength = SheetLength.default
+    /// Qui pourra retrouver le cours. Gardé d'un import à l'autre pour la même raison.
+    @AppStorage(CourseVisibility.importKey) private var visibility = CourseVisibility.standard
     @State private var showFileImporter = false
     @State private var showPhotoPicker = false
     @State private var showScanner = false
@@ -56,6 +62,12 @@ struct ImportView: View {
     @State private var ignoresDuplicate = false
 
     private let youtube = YouTubeImportService()
+
+    /// Vrai quand le document a des pages à envoyer au modèle de vision. Une transcription
+    /// n'en a pas, et l'analyse des schémas n'y voudrait rien dire.
+    private var supportsVisionAnalysis: Bool {
+        kind == .pdf || kind == .photo
+    }
 
     private var canGenerate: Bool {
         switch kind {
@@ -79,18 +91,12 @@ struct ImportView: View {
         return youtubeVideo.blockingReason == nil
     }
 
-    /// Une transcription n'a pas de pages : l'analyse des schémas ne veut rien dire ici.
-    private var showsVisionToggle: Bool {
-        kind == .pdf || kind == .photo
-    }
-
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: MicaboSpacing.md) {
                         header
-                        intro
                         titleField
 
                         switch kind {
@@ -102,12 +108,7 @@ struct ImportView: View {
                         }
 
                         lengthSection
-
-                        if showsVisionToggle {
-                            visionToggle
-                        }
-
-                        aiNote
+                        visibilitySection
                     }
                     .padding(.horizontal, MicaboSpacing.screen)
                     .padding(.top, MicaboSpacing.xs)
@@ -253,30 +254,6 @@ struct ImportView: View {
         )
         .padding(.top, MicaboSpacing.xs)
         .padding(.bottom, MicaboSpacing.xxs)
-    }
-
-    private var intro: some View {
-        Text(introCopy)
-            .font(MicaboFont.body)
-            .foregroundStyle(MicaboColor.inkSecondary)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private var introCopy: String {
-        switch kind {
-        case .pdf:
-            "Le texte est lu sur l'appareil. Un PDF scanné passe par l'OCR d'Apple, sans frais. Micabo en écrit ensuite la fiche."
-        case .photo:
-            "Scanne plusieurs pages ou choisis des photos. Le texte est lu ici, hors ligne, puis mis en fiche."
-        case .youtube:
-            "Micabo lit les sous-titres de la vidéo, jamais son audio. Une vidéo qui n'en a pas ne peut donc pas être fichée."
-        case .docx:
-            "Micabo extrait le texte du document Word sur l'appareil, puis en écrit la fiche."
-        case .text:
-            "Colle tes notes, même brutes. Micabo en fait une fiche qui se relit."
-        case .cards:
-            "Un paquet de cartes n'a pas de document à lire. Il se crée depuis son propre écran."
-        }
     }
 
     private var titleField: some View {
@@ -495,64 +472,75 @@ struct ImportView: View {
         }
     }
 
-    /// Combien de fiche on veut. Le réglage est ici, juste avant le bouton qui l'utilise,
-    /// parce que la réponse dépend du document qu'on vient de déposer : un chapitre entier
-    /// et deux pages de notes ne demandent pas la même fiche.
+    /// **Combien de fiche on veut, au curseur.**
+    ///
+    /// C'étaient trois pastilles, et une note en dessous qui décrivait celle qu'on venait de
+    /// choisir. Trois options côte à côte se pèsent l'une contre l'autre ; un curseur se
+    /// pousse, ce qui est le geste réel — on veut plus court ou plus long que la dernière
+    /// fois, pas « L'essentiel » dans l'absolu. Le format choisi s'écrit au bout de la ligne
+    /// du titre, et sa durée de lecture avec : c'est tout ce que la note disait d'utile.
     private var lengthSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Longueur de la fiche")
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                MicaboSectionCaption(text: "Longueur de la fiche")
 
-            // En flux et non en rangée : les trois libellés ne tiennent pas sur une ligne
-            // d'iPhone compact, et une pastille tronquée ne dit plus ce qu'elle choisit.
-            MicaboFlowLayout(spacing: MicaboSpacing.xs, lineSpacing: MicaboSpacing.xs) {
-                ForEach(SheetLength.allCases) { value in
-                    MicaboSelectChip(title: value.title, isSelected: value == sheetLength) {
+                Spacer(minLength: MicaboSpacing.xs)
+
+                Text("\(sheetLength.title) · \(sheetLength.readingHint)")
+                    .font(MicaboFont.captionEmphasis)
+                    .foregroundStyle(MicaboColor.ink)
+                    .contentTransition(.opacity)
+                    .animation(.easeOut(duration: 0.2), value: sheetLength)
+            }
+
+            // Le curseur glisse sur les trois formats, pas sur des nombres : c'est la même
+            // règle que le rythme quotidien du parcours d'accueil, qui glisse sur ses paliers.
+            Slider(
+                value: lengthStep,
+                in: 0...Double(SheetLength.lastStep),
+                step: 1
+            )
+            .tint(MicaboColor.progress)
+        }
+    }
+
+    /// Le curseur écrit dans le même réglage que les pastilles écrivaient, en passant par le
+    /// numéro de cran. Le pont est ici et non dans une variable d'état de plus : deux sources
+    /// pour la même valeur finiraient par se contredire au retour sur l'écran.
+    private var lengthStep: Binding<Double> {
+        Binding(
+            get: { Double(sheetLength.step) },
+            set: { newValue in
+                let value = SheetLength.at(step: Int(newValue.rounded()))
+                guard value != sheetLength else { return }
+                Haptics.selection()
+                sheetLength = value
+            }
+        )
+    }
+
+    /// **Qui pourra la retrouver, décidé à l'import.**
+    ///
+    /// La visibilité ne se réglait qu'après coup, depuis la fiche. C'est trop tard pour le
+    /// seul cas qui compte : celui où l'on sait, en déposant le document, qu'on ne veut pas le
+    /// partager. Un cours part alors public le temps qu'on y pense, et le refermer ensuite ne
+    /// rattrape pas la minute où il était visible.
+    ///
+    /// Le choix se garde d'un import à l'autre, comme la longueur : quelqu'un qui travaille en
+    /// privé n'a pas à le redire à chaque document.
+    private var visibilitySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            MicaboSectionCaption(text: "Qui peut la retrouver")
+
+            HStack(spacing: MicaboSpacing.xs) {
+                ForEach(CourseVisibility.allCases) { value in
+                    MicaboSelectChip(title: value.title, isSelected: value == visibility) {
                         Haptics.selection()
-                        withAnimation(.easeOut(duration: 0.2)) { sheetLength = value }
+                        withAnimation(.easeOut(duration: 0.2)) { visibility = value }
                     }
                 }
             }
-
-            MicaboSectionFootnote(text: "\(sheetLength.detail) \(sheetLength.readingHint) de lecture.")
         }
-    }
-
-    private var visionToggle: some View {
-        Toggle(isOn: $analyzeVisuals) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Analyser les schémas et images")
-                    .font(MicaboFont.rowTitle)
-                    .foregroundStyle(MicaboColor.ink)
-                Text("Option payante : jusqu'à 6 pages partent au modèle de vision. Le texte, lui, a déjà été lu ici.")
-                    .font(MicaboFont.hanken(12, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-            }
-        }
-        .tint(MicaboColor.accent)
-        .padding(16)
-        .micaboGroup()
-    }
-
-    /// Ce qui part de l'appareil, dit franchement. La vidéo est la seule source dont le
-    /// texte n'est pas extrait ici : ses sous-titres sont récupérés par l'Edge Function, et
-    /// l'écrire autrement serait mentir sur la seule promesse que l'app tient partout
-    /// ailleurs.
-    private var aiNote: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "lock")
-                .font(.system(size: 10, weight: .semibold))
-            Text(privacyCopy)
-                .font(MicaboFont.micro)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .foregroundStyle(MicaboColor.inkTertiary)
-        .padding(.top, MicaboSpacing.xxs)
-    }
-
-    private var privacyCopy: String {
-        kind == .youtube
-            ? "Le lien et les sous-titres passent par tes Edge Functions, qui écrivent ensuite la fiche (\(AppConfig.aiModel))."
-            : "Le texte est extrait sur l'appareil. Seule la rédaction de la fiche passe par tes Edge Functions (\(AppConfig.aiModel))."
     }
 
     // MARK: - Fichiers et photos
@@ -628,7 +616,7 @@ struct ImportView: View {
         if title.isEmpty { title = document.fileName }
         // Vision seulement si le texte est trop mince, et jamais sur une transcription qui
         // n'a pas de pages : sinon on dépense un appel pour rien.
-        analyzeVisuals = showsVisionToggle && !document.hasUsableText
+        analyzeVisuals = supportsVisionAnalysis && !document.hasUsableText
     }
 
     // MARK: - Vidéo YouTube
@@ -771,7 +759,7 @@ struct ImportView: View {
         if let unreadable = ImportReadiness.failure(
             text: rawText,
             hasImages: !images.isEmpty,
-            canEnableVision: showsVisionToggle && !analyzeVisuals,
+            canEnableVision: supportsVisionAnalysis && !analyzeVisuals,
             kind: kind
         ) {
             failure = unreadable
@@ -836,6 +824,7 @@ struct ImportView: View {
                 rawText: rawText,
                 fileName: fileName,
                 coverImageData: cover,
+                visibility: visibility,
                 in: modelContext
             )
             onCreated(course)

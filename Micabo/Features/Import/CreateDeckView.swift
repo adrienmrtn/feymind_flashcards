@@ -21,6 +21,8 @@ struct CreateDeckView: View {
     @State private var title = ""
     @State private var subject = ""
     @State private var pastedText = ""
+    /// Qui pourra retrouver le paquet. Même réglage retenu qu'à l'import.
+    @AppStorage(CourseVisibility.importKey) private var visibility = CourseVisibility.standard
     @State private var isWorking = false
     @State private var errorMessage: String?
     @FocusState private var focus: Field?
@@ -54,13 +56,9 @@ struct CreateDeckView: View {
                         )
                         .padding(.top, MicaboSpacing.xs)
 
-                        Text("Un paquet se révise comme un cours : il entre dans ta file du jour et dans tes plans d'examen. Il n'a simplement rien à ficher.")
-                            .font(MicaboFont.body)
-                            .foregroundStyle(MicaboColor.inkSecondary)
-                            .fixedSize(horizontal: false, vertical: true)
-
                         nameSection
                         materialSection
+                        visibilitySection
                     }
                     .padding(.horizontal, MicaboSpacing.screen)
                     .padding(.top, MicaboSpacing.xs)
@@ -169,17 +167,24 @@ struct CreateDeckView: View {
                             .allowsHitTesting(false)
                     }
                 }
-
-            MicaboSectionFootnote(text: materialFootnote)
         }
     }
 
-    private var materialFootnote: String {
-        guard hasMaterial else {
-            return "Sans texte, le paquet s'ouvre vide et tu écris tes cartes une à une."
+    /// Un paquet n'a pas de fiche, donc pas d'écran où l'on pourrait le refermer plus tard :
+    /// c'est ici ou jamais.
+    private var visibilitySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            MicaboSectionCaption(text: "Qui peut le retrouver")
+
+            HStack(spacing: MicaboSpacing.xs) {
+                ForEach(CourseVisibility.allCases) { value in
+                    MicaboSelectChip(title: value.title, isSelected: value == visibility) {
+                        Haptics.selection()
+                        withAnimation(.easeOut(duration: 0.2)) { visibility = value }
+                    }
+                }
+            }
         }
-        let quota = QuestionQuotaPreferences.current.clamped()
-        return "\(MicaboCopy.cards(quota.total)) seront écrites, selon les formats réglés la dernière fois. Tu pourras en redemander."
     }
 
     private func field(
@@ -219,6 +224,7 @@ struct CreateDeckView: View {
                 title: name,
                 subject: subject.nilIfBlank,
                 rawText: pastedText,
+                visibility: visibility,
                 in: modelContext
             )
         } catch {

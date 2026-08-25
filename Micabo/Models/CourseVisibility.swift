@@ -24,6 +24,13 @@ enum CourseVisibility: String, Codable, CaseIterable, Identifiable {
     /// Ce que l'app suppose quand rien n'a été choisi, et ce que la base met par défaut.
     static let standard = CourseVisibility.public
 
+    /// Le choix retenu à l'import, gardé d'un document à l'autre.
+    ///
+    /// Il vit dans les réglages de l'app et non dans le cours, parce que c'est une habitude
+    /// plutôt qu'une propriété : quelqu'un qui travaille en privé n'a pas à le redire à chaque
+    /// import. Le cours, lui, garde la visibilité qu'il avait au moment où il a été créé.
+    static let importKey = "micabo.course.visibility.default"
+
     var title: String {
         switch self {
         case .public: "Public"
