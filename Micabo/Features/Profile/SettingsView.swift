@@ -83,7 +83,9 @@ struct SettingsView: View {
             Text("Tes cours restent sur cet appareil et sur ton compte. Tu les retrouveras à la prochaine connexion.")
         }
         .sheet(isPresented: $showAuth) {
-            AuthView { showAuth = false }
+            // Plus de « continuer sans compte » : `AuthView` n'a plus de sortie, et la
+            // feuille se referme toute seule dès que la connexion aboutit.
+            AuthView()
                 .presentationCornerRadius(MicaboRadius.sheet)
                 .onChange(of: auth.isSignedIn) { _, isSignedIn in
                     guard isSignedIn else { return }
