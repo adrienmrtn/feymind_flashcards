@@ -402,6 +402,22 @@ la vérification de types n'est pas déployée, et l'application ne le sait pas 
 seule ligne du chemin YouTube soit en cause. La tâche vérifie les quatre points d'entrée et
 lance les tests des modules partagés.
 
+Le diagnostic se refait en une commande, et c'est la bonne façon de savoir ce qui tourne
+vraiment :
+
+```bash
+for FN in generate-course generate-flashcards explain-selection youtube-transcript; do
+  curl -s -X POST "$SUPABASE_URL/functions/v1/$FN" \
+    -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
+    -H "Content-Type: application/json" -d '{}' | head -c 80; echo " ← $FN"
+done
+```
+
+Une fonction déployée répond par **son propre refus** (« Le document ne contient pas assez de
+contenu à analyser. »), ce qui prouve qu'elle tourne. Une fonction absente répond
+`{"code":"NOT_FOUND"}`. C'est cette différence, et pas les logs, qui dit en trois secondes si
+un déploiement est passé.
+
 `youtube-transcript` n'a pas besoin de `FAL_KEY` : elle ne parle qu'à YouTube. Elle lit le
 lecteur par son API interne, avec repli sur la page HTML, et c'est la partie la plus fragile
 du dépôt : YouTube change de forme sans préavis. Les deux chemins existent pour cette raison,
@@ -422,6 +438,17 @@ supabase db push
 et le stockage des cours**. La seconde crée cinq tables, leurs règles de cloisonnement et le
 déclencheur qui crée un profil à l'inscription. Elle est écrite pour être rejouable : chaque
 objet est créé avec `if not exists` ou remplacé.
+
+Pour savoir où en est un projet, sans ouvrir le tableau de bord :
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" "$SUPABASE_URL/rest/v1/courses?select=id&limit=1" \
+  -H "apikey: $KEY"
+```
+
+`200` avec un tableau vide veut dire que la migration est passée **et** que le cloisonnement
+fonctionne : la table existe, et un client anonyme n'y voit rien. `404` veut dire que la
+migration n'a pas encore été appliquée sur ce projet.
 
 ### 4. Renseigner le projet dans l'application
 
