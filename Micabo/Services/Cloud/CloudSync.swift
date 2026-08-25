@@ -110,11 +110,25 @@ final class CloudSync {
     /// rien.
     private func pull(context: ModelContext) async throws {
         let since = lastPulledAt
+        guard let userID = auth.user?.id else { throw SupabaseDatabase.Failure.notSignedIn }
+        let mine = URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")
 
+        // **Le filtre est indispensable depuis que la bibliothèque existe.**
+        //
+        // Cette requête n'en avait pas : elle s'appuyait sur le cloisonnement, qui ne rendait
+        // que ses propres lignes. Ouvrir la bibliothèque a ajouté une seconde politique de
+        // lecture sur `courses`, et deux politiques se cumulent : la même requête rendait donc
+        // aussi les cours de ses camarades, que la boucle plus bas insérait dans « Mes cours ».
+        //
+        // Le second effet était pire que le premier. La montée renvoie chaque cours local avec
+        // son identifiant et **son** `user_id` : réécrire ainsi la ligne d'un camarade est
+        // refusé par la politique d'écriture, la synchro échouait, le repère n'avançait pas, et
+        // les mêmes lignes revenaient à chaque lancement.
         let remoteCourses = try await database.fetch(
             CourseRecord.self,
             from: CloudTable.courses,
-            updatedSince: since
+            updatedSince: since,
+            filters: [mine]
         )
         let localCourses = Dictionary(
             ((try? context.fetch(FetchDescriptor<Course>())) ?? []).map { ($0.id, $0) },
@@ -133,10 +147,14 @@ final class CloudSync {
             }
         }
 
+        // Les cartes n'ont qu'une politique de lecture, la sienne, mais le filtre est posé de la
+        // même façon : une synchro qui dépend d'un cloisonnement pour ne pas ramasser les
+        // lignes des autres est une synchro qu'une politique ajoutée un jour recasse.
         let remoteCards = try await database.fetch(
             FlashcardRecord.self,
             from: CloudTable.flashcards,
-            updatedSince: since
+            updatedSince: since,
+            filters: [mine]
         )
         let coursesByID = Dictionary(
             ((try? context.fetch(FetchDescriptor<Course>())) ?? []).map { ($0.id, $0) },
@@ -193,6 +211,7 @@ final class CloudSync {
             sheet: JSONCodable(data: course.sheetData),
             context_text: course.contextText,
             is_from_library: course.isFromLibrary,
+            visibility: course.visibilityRaw,
             created_at: course.createdAt,
             updated_at: course.updatedAt,
             deleted_at: nil
@@ -231,6 +250,12 @@ final class CloudSync {
         course.sheetData = remote.sheet?.data
         course.contextText = remote.context_text
         course.isFromLibrary = remote.is_from_library
+        // Une valeur inconnue d'une version plus ancienne du serveur ne change rien : le
+        // cours garde la visibilité qu'il avait plutôt que de retomber sur « public », ce qui
+        // serait le pire des replis possibles pour un réglage de partage.
+        if CourseVisibility(rawValue: remote.visibility) != nil {
+            course.visibilityRaw = remote.visibility
+        }
         course.createdAt = remote.created_at
         course.updatedAt = remote.updated_at
     }

@@ -12,15 +12,23 @@ struct SupabaseDatabase {
         case notConfigured
         case notSignedIn
         case network(String)
-        case server(status: Int, message: String)
+        case server(status: Int, message: String, code: String? = nil)
 
         var errorDescription: String? {
             switch self {
             case .notConfigured: "L'accès au cloud n'est pas configuré."
             case .notSignedIn: "Aucun compte connecté."
             case .network(let detail): "Connexion impossible. \(detail)"
-            case .server(_, let message): message
+            case .server(_, let message, _): message
             }
+        }
+
+        /// Vrai quand une contrainte d'unicité a refusé l'écriture : un nom d'utilisateur déjà
+        /// pris, une demande d'amitié déjà envoyée. `23505` est le code de Postgres, et c'est
+        /// lui qu'on lit plutôt que la phrase, qui change avec les versions.
+        var isDuplicate: Bool {
+            guard case .server(let status, _, let code) = self else { return false }
+            return code == "23505" || status == 409
         }
     }
 
@@ -56,12 +64,76 @@ struct SupabaseDatabase {
 
     // MARK: - Lecture
 
+    /// Envoie des lignes **sans** écraser celles qui existent.
+    ///
+    /// C'est le contraire de `upsert`, et c'est voulu là où le doublon est l'information : une
+    /// demande d'amitié déjà envoyée doit se signaler, pas s'écrire une seconde fois.
+    func insert<T: Encodable>(_ rows: [T], into table: String) async throws {
+        guard !rows.isEmpty else { return }
+        _ = try await send(
+            method: "POST",
+            path: table,
+            query: [],
+            body: try encoder.encode(rows),
+            prefer: "return=minimal"
+        )
+    }
+
+    /// Modifie les lignes que le filtre désigne. Le cloisonnement décide du reste : un filtre
+    /// qui viserait la ligne de quelqu'un d'autre ne trouve rien.
+    func patch<T: Encodable>(_ values: T, in table: String, matching filters: [URLQueryItem]) async throws {
+        _ = try await send(
+            method: "PATCH",
+            path: table,
+            query: filters,
+            body: try encoder.encode(values),
+            prefer: "return=minimal"
+        )
+    }
+
+    func remove(from table: String, matching filters: [URLQueryItem]) async throws {
+        _ = try await send(
+            method: "DELETE",
+            path: table,
+            query: filters,
+            body: nil,
+            prefer: "return=minimal"
+        )
+    }
+
+    /// Lit une table avec les filtres qu'on lui donne, sans ordre ni fenêtre imposés.
+    ///
+    /// `fetch` ci-dessous sert la synchro, qui demande toujours la même chose : tout, par ordre
+    /// de modification. La bibliothèque et les amis, eux, filtrent, trient et paginent
+    /// autrement à chaque écran.
+    func rows<T: Decodable>(
+        _ type: T.Type,
+        from table: String,
+        select: String = "*",
+        filters: [URLQueryItem] = [],
+        order: String? = nil,
+        limit: Int? = nil
+    ) async throws -> [T] {
+        var query = [URLQueryItem(name: "select", value: select)]
+        query.append(contentsOf: filters)
+        if let order { query.append(URLQueryItem(name: "order", value: order)) }
+        if let limit { query.append(URLQueryItem(name: "limit", value: String(limit))) }
+
+        let data = try await send(method: "GET", path: table, query: query, body: nil, prefer: nil)
+        do {
+            return try decoder.decode([T].self, from: data)
+        } catch {
+            throw Failure.server(status: 200, message: "Réponse illisible pour \(table).")
+        }
+    }
+
     /// Relit une table, éventuellement en ne demandant que ce qui a changé depuis une date.
     func fetch<T: Decodable>(
         _ type: T.Type,
         from table: String,
         select: String = "*",
         updatedSince: Date? = nil,
+        filters: [URLQueryItem] = [],
         limit: Int = 1_000
     ) async throws -> [T] {
         var query = [
@@ -69,6 +141,7 @@ struct SupabaseDatabase {
             URLQueryItem(name: "limit", value: String(limit)),
             URLQueryItem(name: "order", value: "updated_at.asc")
         ]
+        query.append(contentsOf: filters)
         if let updatedSince {
             query.append(URLQueryItem(name: "updated_at", value: "gt." + isoFormatter.string(from: updatedSince)))
         }
@@ -122,9 +195,13 @@ struct SupabaseDatabase {
         }
         guard (200..<300).contains(http.statusCode) else {
             let payload = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+            // Le code de Postgres passe avec l'erreur : c'est lui qui distingue « ce nom est
+            // déjà pris » de « le serveur est tombé », et l'écran n'a pas à deviner en lisant
+            // une phrase anglaise.
             throw Failure.server(
                 status: http.statusCode,
-                message: (payload?["message"] as? String) ?? "Le serveur a répondu \(http.statusCode)."
+                message: (payload?["message"] as? String) ?? "Le serveur a répondu \(http.statusCode).",
+                code: payload?["code"] as? String
             )
         }
         return data

@@ -5,17 +5,19 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AuthController.self) private var auth
+    @Environment(SocialService.self) private var social
 
     @Query private var courses: [Course]
     @Query private var cards: [Flashcard]
     @Query private var logs: [ReviewLog]
 
     @State private var showSettings = false
+    @State private var path = NavigationPath()
 
     private var reviewDates: [Date] { logs.map(\.reviewedAt) }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                     header
@@ -31,7 +33,28 @@ struct ProfileView: View {
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
             .toolbar(.hidden, for: .navigationBar)
-            .reportsNavigationDepth(for: .profile, depth: 0)
+            .reportsNavigationDepth(for: .profile, depth: path.count)
+            .navigationDestination(for: FriendsRoute.self) { _ in
+                FriendsView { person in
+                    path.append(person)
+                }
+            }
+            .navigationDestination(for: SocialService.Person.self) { person in
+                FriendProfileView(person: person) { course, author in
+                    path.append(SharedCourseRoute(course: course, author: author))
+                }
+            }
+            // Reprendre le cours d'un ami depuis son profil : la fiche reprise s'ouvre là où
+            // on était, dans la pile du Profil. On y arrive par le même écran que depuis la
+            // bibliothèque, parce que c'est le même geste.
+            .navigationDestination(for: SharedCourseRoute.self) { route in
+                SharedCourseView(route: route) { adopted in
+                    path.append(adopted)
+                }
+            }
+            .navigationDestination(for: Course.self) { course in
+                CourseSheetView(course: course)
+            }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
                     .presentationCornerRadius(MicaboRadius.sheet)
@@ -71,7 +94,10 @@ struct ProfileView: View {
         return label.first.map { String($0).uppercased() } ?? "É"
     }
 
+    /// Le nom d'utilisateur passe devant l'adresse : c'est lui qu'on dicte à un camarade, et
+    /// une adresse électronique affichée en grand sur un écran qu'on montre n'a rien à y faire.
     private var identitySubtitle: String {
+        if let username = social.username { return Username.display(username) }
         if let email = auth.user?.email?.nilIfBlank { return email }
         if auth.isSignedIn { return "Connecté" }
         return "Sans compte · tout reste sur cet appareil"
@@ -186,6 +212,9 @@ struct ProfileView: View {
         return MicaboColor.accentVivid.opacity(0.4)
     }
 
+    /// « Amis » n'est plus une promesse. La rangée dit ce qu'on y trouve et, quand quelqu'un
+    /// attend une réponse, elle le compte : une demande d'amitié qui dort dans un écran qu'on
+    /// n'ouvre pas est une demande refusée en silence.
     private var optionsSection: some View {
         MicaboSettingsSection(
             caption: "Compte",
@@ -193,10 +222,36 @@ struct ProfileView: View {
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("👋"), background: MicaboColor.tilePastels[2]),
                     title: "Amis",
-                    subtitle: "Comparer tes séries",
-                    accessory: .badge("bientôt", .neutral)
-                )
+                    subtitle: friendsSubtitle,
+                    accessory: friendsAccessory
+                ) {
+                    guard auth.isSignedIn else {
+                        showSettings = true
+                        return
+                    }
+                    Haptics.light()
+                    path.append(FriendsRoute())
+                }
             ]
         )
     }
+
+    private var friendsSubtitle: String {
+        guard auth.isSignedIn else { return "Il faut un compte pour ajouter quelqu'un" }
+        if !social.friends.isEmpty {
+            return social.friends.count == 1 ? "1 ami" : "\(social.friends.count) amis"
+        }
+        return "Retrouve les cours de tes camarades"
+    }
+
+    private var friendsAccessory: MicaboRowAccessory {
+        guard auth.isSignedIn else { return .chevron }
+        let pending = social.pendingCount
+        guard pending > 0 else { return .chevron }
+        return .badge("\(pending)", .accent)
+    }
 }
+
+/// La destination « Amis ». Un type vide plutôt qu'une chaîne : deux destinations différentes
+/// ne doivent pas pouvoir se confondre dans le même chemin de navigation.
+struct FriendsRoute: Hashable {}

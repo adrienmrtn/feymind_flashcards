@@ -9,6 +9,7 @@ struct MicaboApp: App {
     /// être d'accord.
     @State private var auth = AuthController()
     @State private var sync: CloudSync
+    @State private var social: SocialService
 
     private static let schema = Schema([Course.self, Flashcard.self, ReviewLog.self, Exam.self])
 
@@ -20,6 +21,7 @@ struct MicaboApp: App {
         let auth = AuthController()
         _auth = State(initialValue: auth)
         _sync = State(initialValue: CloudSync(auth: auth))
+        _social = State(initialValue: SocialService(auth: auth))
     }
 
     var body: some Scene {
@@ -31,9 +33,13 @@ struct MicaboApp: App {
                 .tint(MicaboColor.accent)
                 .environment(auth)
                 .environment(sync)
+                .environment(social)
                 .task {
                     await auth.restore()
                     await sync.sync(context: container.mainContext)
+                    // L'annuaire et les amitiés viennent après la synchro : ils n'ont de sens
+                    // qu'avec un compte, et la synchro est ce qui confirme qu'il y en a un.
+                    await social.refresh()
                 }
                 // Les liens de confirmation et de connexion reviennent sur le schéma de
                 // Micabo : c'est ici qu'ils ouvrent la session, quel que soit l'écran affiché.
@@ -41,6 +47,7 @@ struct MicaboApp: App {
                     Task {
                         await auth.handle(callback: url)
                         await sync.sync(context: container.mainContext)
+                        await social.refresh()
                     }
                 }
         }

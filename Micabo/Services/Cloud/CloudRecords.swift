@@ -18,6 +18,15 @@ enum CloudTable {
     static let flashcards = "flashcards"
     static let reviewLogs = "review_logs"
     static let exams = "exams"
+    /// La vitrine d'un profil : le nom d'utilisateur et l'établissement, et rien d'autre.
+    ///
+    /// `profiles` reste cloisonné au propriétaire. Une politique de lecture dessus aurait
+    /// exposé la ligne entière — le cloisonnement de Postgres filtre des lignes, pas des
+    /// colonnes — donc le stade d'étude, le pays, les objectifs et le rythme quotidien avec.
+    /// Cette table est tenue à jour par un déclencheur : trois colonnes dupliquées contre la
+    /// certitude qu'une préférence ne peut pas fuir.
+    static let directory = "directory"
+    static let friendships = "friendships"
 }
 
 struct ProfileRecord: Codable {
@@ -100,9 +109,90 @@ struct CourseRecord: Codable {
     var sheet: JSONCodable?
     var context_text: String
     var is_from_library: Bool
+    /// « public », « friends » ou « private ». Le brut voyage, pas l'énumération : une valeur
+    /// inconnue d'une version plus ancienne de l'app ne doit pas faire échouer le décodage de
+    /// toute la ligne.
+    var visibility: String
     var created_at: Date
     var updated_at: Date
     var deleted_at: Date?
+}
+
+/// Un cours de quelqu'un d'autre, tel qu'on peut le lire.
+///
+/// C'est volontairement moins qu'un `CourseRecord` : ni empreinte, ni couverture, ni
+/// horodatage de suppression. Ce qu'on reprend d'un cours partagé, c'est **sa fiche** — le
+/// reste appartient à celui qui l'a importé.
+///
+/// Les cartes n'y sont pas non plus, et ce n'est pas un oubli : l'état de répétition espacée
+/// de quelqu'un d'autre dit exactement ce qu'il sait mal, et il n'a rien à faire ici. Celui
+/// qui reprend le cours écrit ses propres cartes, ce qui lui sert mieux de toute façon.
+struct SharedCourseRecord: Codable, Identifiable, Equatable {
+    var id: UUID
+    var user_id: UUID
+    var title: String
+    var subject: String?
+    var summary: String
+    var emoji: String?
+    var accent_hex: String?
+    var raw_text: String
+    var sheet: JSONCodable?
+    var context_text: String
+    var visibility: String
+    var updated_at: Date
+
+    /// Les colonnes demandées à PostgREST. Écrites ici et pas à l'appel : une liste qui
+    /// diverge des propriétés ci-dessus donne un décodage qui échoue à l'exécution.
+    static let columns = [
+        "id", "user_id", "title", "subject", "summary", "emoji", "accent_hex",
+        "raw_text", "sheet", "context_text", "visibility", "updated_at"
+    ].joined(separator: ",")
+
+    static func == (lhs: SharedCourseRecord, rhs: SharedCourseRecord) -> Bool {
+        lhs.id == rhs.id && lhs.updated_at == rhs.updated_at
+    }
+}
+
+/// Une entrée de l'annuaire : de quoi désigner quelqu'un et le reconnaître.
+struct DirectoryRecord: Codable, Identifiable, Hashable {
+    var id: UUID
+    var username: String
+    var institution_id: String?
+    var institution_name: String?
+}
+
+/// Le nom d'utilisateur, seul, pour l'écrire sans toucher au reste du profil.
+///
+/// La synchro envoie le profil entier à chaque passage. Si le nom d'utilisateur voyageait
+/// avec, une synchro partie d'un appareil dont la copie locale est en retard écraserait le nom
+/// qu'on vient de changer sur l'autre. Il s'écrit donc seul, et il se relit depuis l'annuaire.
+struct UsernameRecord: Codable {
+    var username: String
+}
+
+/// Une demande d'amitié, ou une amitié : la même ligne, et son état.
+///
+/// Le sens est conservé — qui a demandé à qui — parce que l'écran des demandes en dépend, et
+/// parce qu'accepter n'appartient qu'au destinataire.
+struct FriendshipRecord: Codable, Identifiable, Hashable {
+    var requester_id: UUID
+    var addressee_id: UUID
+    var status: String
+    var created_at: Date?
+    var responded_at: Date?
+
+    /// La paire, dans un ordre stable : il n'y a qu'une ligne pour deux personnes.
+    var id: String { "\(requester_id)-\(addressee_id)" }
+
+    static let pending = "pending"
+    static let accepted = "accepted"
+
+    var isAccepted: Bool { status == Self.accepted }
+
+    /// L'autre personne, vue de `me`.
+    func other(than me: UUID) -> UUID {
+        requester_id == me ? addressee_id : requester_id
+    }
 }
 
 struct FlashcardRecord: Codable {
