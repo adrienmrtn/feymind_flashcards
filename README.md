@@ -667,6 +667,72 @@ tout à zéro disparaissent au lieu de casser la page. Un bloc mal formé ne fai
 fiche entière : c'est la différence entre une fiche à laquelle il manque un encadré et un
 écran vide.
 
+### Se méfier des mots mal lus
+
+Un court écrit manuscrit parlait d'**abréaction**. L'OCR a lu « absraction », et le modèle en a
+tiré une définition entière de l'abstraction : fausse, parfaitement crédible, et révisée telle
+quelle pendant des semaines. C'est la faute la plus grave que Micabo puisse commettre, parce
+qu'elle ne ressemble pas à une erreur.
+
+Le prompt porte donc une section entière là-dessus, et elle ne demande pas de la prudence en
+général :
+
+- **vérifier qu'un terme existe avant de le définir**, et quand un mot inexistant ne diffère
+  que d'une ou deux lettres d'un terme réel de la matière, écrire le terme réel ;
+- retenir **le mot que le contexte réclame**, pas celui dont l'orthographe est la plus proche.
+  « Absraction » est plus près d'« abstraction », qui existe pourtant ; c'est « abréaction »
+  que le voisinage de « catharsis » et de « refoulement » impose ;
+- **ne rien construire** sur un mot douteux quand le contexte ne tranche pas : pas de bloc
+  `definition`, pas de phrase bâtie autour. Il n'apparaît simplement pas dans la fiche ;
+- ne jamais signaler la correction dans la fiche, et ne jamais écrire « le texte semble
+  dire ». On écrit ce qui est juste, ou on se tait.
+
+La **provenance** du texte part avec lui, parce que les erreurs typiques d'une photo passée à
+l'OCR (rn/m, l/i/1, accents perdus) ne sont pas celles d'une transcription de sous-titres
+(noms propres, chiffres, ponctuation). Et un document de moins de 1 800 caractères reçoit un
+avertissement de plus : il n'a aucune redondance pour rattraper une erreur de lecture, donc un
+seul terme mal compris fausserait toute la fiche.
+
+### Une fiche écrite pour une matière
+
+Une fiche de philosophie sans auteurs ni œuvres n'est pas une fiche de philosophie, et une
+fiche d'économie qui ne donne qu'une lecture d'un débat est fausse par omission. Ces exigences
+ne peuvent pas vivre dans le prompt général : elles se contredisent d'une matière à l'autre, et
+les empiler toutes ferait un prompt que le modèle survole.
+
+`supabase/functions/_shared/discipline.ts` détecte donc la matière et n'ajoute **qu'une**
+consigne :
+
+| Matière | Ce que la fiche doit porter |
+| --- | --- |
+| Philosophie | Auteurs, œuvres, thèses ; les positions qui s'opposent ; thèse, argument, exemple distingués |
+| Économie | Les écoles nommées, les visions qui s'opposent sur chaque controverse, le prérequis de première quand la notion en dépend |
+| Droit | La source de chaque règle (article, code, arrêt), principe / conditions / exceptions, hiérarchie des normes |
+| Santé | Nomenclature exacte, valeurs seuils, unités, confusions classiques et pièges de QCM |
+| Histoire | Chaque fait avec sa date, causes et conséquences, le fait distingué de son interprétation |
+| Maths | Chaque théorème avec ses hypothèses, démonstrations conservées, équivalence distinguée de l'implication |
+| Physique-chimie | Unités partout, domaine de validité de chaque loi |
+| SVT | L'échelle annoncée (molécule, cellule, organisme, écosystème) et jamais mélangée |
+| Lettres | Les passages cités, les procédés nommés avec leur effet, l'œuvre située |
+| Langues | Chaque terme dans sa langue suivi de sa traduction, genre et construction signalés |
+| Informatique | Entrées, sorties, complexité ; les étapes en blocs `steps` |
+
+La détection est côté serveur, et pas dans l'application, pour une raison : **à l'import, la
+matière n'est pas encore connue**, c'est le modèle qui la trouve. On la devine donc sur le titre
+et le début du texte, avec au moins deux mots-clés distincts — un seul rangerait un cours
+d'histoire en économie parce qu'il parle de marchés. Quand l'application la connaît déjà, elle
+l'envoie et c'est elle qui gagne, pour la fiche comme pour les cartes.
+
+### Pour qui, et dans quel système scolaire
+
+`audienceBrief` traduit le **stade d'étude** en consigne de rédaction, et le **pays de
+scolarisation** en système de référence. Le second n'est pas une politesse : « les attendus du
+bac » ne veut rien dire pour un lycéen belge, un étudiant québécois ne passe pas de concours de
+première année de santé, et au Québec « baccalauréat » désigne un diplôme universitaire. Une
+fiche qui renvoie à un examen qui n'existe pas là où on étudie perd sa raison d'être. Dix pays
+où l'on étudie en français, demandés juste après la langue et corrigeables dans les réglages ;
+sans réponse, la France est supposée, ce que l'app faisait déjà en silence.
+
 ### Sans clé, sans réseau
 
 `OfflineSheetBuilder` construit une fiche à partir du seul texte extrait. Elle ne met **rien**
@@ -684,6 +750,25 @@ la fiche n'en a pas : son écran propose alors de l'écrire à partir du texte d
 « Refaire la fiche » fait la même chose sur un cours qui en a déjà une. Ni l'un ni l'autre ne
 renomme le cours : un titre corrigé à la main ne doit pas être écrasé par celui que le modèle
 trouve au second passage.
+
+## Un paquet de cartes, sans cours
+
+Tout partait d'un import, donc d'une fiche, et on ne pouvait pas simplement se faire un paquet
+de vocabulaire, de dates ou de formules. C'est pourtant la moitié de ce qu'on révise : des
+choses déjà comprises qu'il faut retenir, et pour lesquelles il n'y a aucun cours à ficher.
+
+La feuille du « + » sépare donc deux blocs — cinq sources qui produisent une fiche, et un paquet
+qui n'en produit pas. `CreateDeckView` ne demande que le nom, la matière si on veut, et un texte
+facultatif : **collé**, il sert de matière aux premières cartes ; **vide**, le paquet s'ouvre nu
+et se remplit à la main. Les deux mènent à l'écran des cartes, qui sait déjà ajouter, corriger,
+masquer un schéma et générer.
+
+Un paquet (`CourseSource.deck`) reste un cours pour tout le reste de l'app : il entre dans la
+file du jour, dans les plans d'examen et dans les filtres de la liste. Deux choses seulement le
+distinguent, et elles découlent de sa source : son écran ne promet pas une fiche qui ne viendra
+jamais (`CourseSource.expectsSheet`), et « Générer avec l'IA » disparaît d'un paquet nu, où il ne
+mènerait qu'à une erreur. Il n'a pas non plus d'empreinte : deux paquets du même nom ne sont pas
+un doublon, puisque rien n'a été importé.
 
 ## Types de cartes
 
@@ -920,7 +1005,32 @@ de cartes.
   en permanence (« Entraînement libre · ton planning n'est pas modifié ») et une carte ratée
   revient dans le tour. C'est l'action proposée quand un cours n'a rien à réviser.
 
-`MicaboTests/StudySessionTests.swift` verrouille l'annulation, l'entraînement libre et la reprise.
+### Le bilan de fin de session
+
+Trois chiffres en tenaient lieu : « acquises », « à revoir », « réussite ». Le premier rangeait
+« difficile » avec « facile », c'est-à-dire effaçait la distinction qu'on venait de faire carte
+par carte ; le troisième était le premier moins le second en pourcentage, donc la même
+information une troisième fois. Et rien ne répondait à la question qu'on se pose en refermant
+l'app : **est-ce que c'est fini ?**
+
+L'écran répond maintenant dans cet ordre :
+
+1. **la répartition des quatre notes**, une barre par note, dans les couleurs des boutons qu'on
+   vient d'appuyer. Elles sont publiées par `GradeButtons` : deux échelles de couleurs pour les
+   mêmes quatre notes finiraient par ne plus se répondre. Une note jamais donnée n'a pas de
+   ligne, parce qu'une liste de zéros ne dit rien ;
+2. **ce que la session a produit** : les cartes passées en révision (`graduatedCount`), le taux
+   de réussite, le temps passé ;
+3. **quand ça revient** : le délai avant la première carte, et combien repassent aujourd'hui.
+   Trois cartes qui reviennent dans dix minutes ne terminent pas une session de la même façon
+   que tout ce qui repart à quatre jours.
+
+L'annulation rend ce détail comme elle rendait les deux compteurs. Et une sauvegarde de session
+écrite avant que ce détail existe se reprend toujours : ses deux chiffres suffisent, et tout ce
+qui n'était pas « à revoir » y devient « correct ».
+
+`MicaboTests/StudySessionTests.swift` verrouille l'annulation, l'entraînement libre, la reprise,
+le détail des notes et l'échéance annoncée.
 
 ### Le rythme quotidien commande la charge
 
@@ -949,7 +1059,7 @@ Micabo/
   Models/          entités SwiftData, fiche d'un cours, examens et réponses de l'IA
   Persistence/     enregistrement des cours et des examens
   SRS/             planificateur SM-2, file d'attente, mode examen, statistiques
-  Services/        client IA, balisage de la fiche, PDF / OCR / DOCX / YouTube
+  Services/        client IA, balisage et surligneur de la fiche, PDF / OCR / DOCX / YouTube
   Features/        un dossier par écran, dont Course/ et Exams/
 supabase/functions/  Edge Functions Deno
 scripts/             génération de l'icône
@@ -963,7 +1073,14 @@ contexte des cartes, la fiche hors ligne et ce qui vaut une sélection.
 
 `supabase/functions/_shared/sheet.test.ts` verrouille les mêmes garde-fous côté serveur : le
 plafond du surligneur, son plancher, le choix du passage et les blocs qu'il ne touche jamais.
-Les tests des Edge Functions se lancent avec `deno test --allow-all supabase/functions`.
+`discipline.test.ts` verrouille la détection de matière, y compris ce qu'elle refuse de trancher
+sur un seul mot-clé.
+
+Les Edge Functions se vérifient d'un coup, **avant tout déploiement** :
+
+```bash
+cd supabase/functions && deno task verify
+```
 
 `MicaboTests/YouTubeImportTests.swift` verrouille l'import vidéo : les formes de lien
 acceptées et refusées, **les cinq phrases de refus au mot près**, la traduction des codes du
