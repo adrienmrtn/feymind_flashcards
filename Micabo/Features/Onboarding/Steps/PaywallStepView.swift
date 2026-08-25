@@ -1,78 +1,93 @@
-import StoreKit
 import SwiftUI
 
-/// Identifiants des abonnements. Rien n'est encore déclaré côté App Store Connect :
-/// le fichier `Micabo.storekit` permet de faire tourner l'écran en local.
-enum MicaboProducts {
-    static let yearly = "com.micabo.app.pro.yearly"
-    static let monthly = "com.micabo.app.pro.monthly"
-
-    static let all = [yearly, monthly]
-}
-
-/// Paywall natif StoreKit. L'achat n'est branché à rien pour l'instant,
-/// il sert uniquement à terminer le parcours.
+/// La dernière étape du parcours, et elle tient en **deux paywalls qui s'enchaînent**.
+///
+/// Le premier ne montre qu'une offre et qu'un prix ; sa croix n'entre pas dans l'app, elle
+/// ouvre le second, qui compare ce que Pro ouvre et met les deux offres côte à côte. C'est
+/// la croix du second qui entre dans l'app.
+///
+/// La règle de cet écran : **une croix ne ment jamais.** Elle est présente d'emblée, elle
+/// réagit au premier appui, et le second appui sort pour de bon. Un paywall dont la sortie
+/// se dérobe se ferme en fermant l'app, ce qui ne fait pas un abonné de plus mais un
+/// utilisateur de moins.
+///
+/// Rien n'est encore branché sur une boutique : `PaywallPurchases` décrit ce qu'il reste à
+/// faire, et tant qu'elle répond `unavailable`, l'abonnement laisse entrer dans l'app plutôt
+/// que d'enfermer le parcours dans un écran sans issue.
 struct PaywallStepView: View {
     var onFinish: () -> Void
 
-    private enum StoreState {
-        case loading
-        case available
-        case unavailable
+    private enum Stage {
+        case offer
+        case plans
     }
 
-    @State private var state: StoreState = .loading
+    @State private var stage: Stage = .offer
+    @State private var isPurchasing = false
 
     var body: some View {
-        Group {
-            switch state {
-            case .loading:
-                loadingView
-            case .available:
-                storeView
-            case .unavailable:
-                UnavailableStoreView(onFinish: finish)
+        ZStack {
+            switch stage {
+            case .offer:
+                PaywallOfferView(
+                    plan: PaywallCatalog.recommended,
+                    isPurchasing: isPurchasing,
+                    onClose: showPlans,
+                    onSeeAllPlans: showPlans,
+                    onSubscribe: { Task { await buy(PaywallCatalog.recommended) } },
+                    onRestore: { Task { await restore() } }
+                )
+                .transition(.paywallStage)
+
+            case .plans:
+                PaywallPlansView(
+                    isPurchasing: isPurchasing,
+                    onClose: finish,
+                    onSubscribe: { plan in Task { await buy(plan) } },
+                    onRestore: { Task { await restore() } }
+                )
+                .transition(.paywallStage)
             }
         }
-        .task { await loadProducts() }
-    }
-
-    // MARK: - Paywall système
-
-    private var storeView: some View {
-        SubscriptionStoreView(productIDs: MicaboProducts.all) {
-            PaywallMarketingContent()
-        }
-        .subscriptionStoreButtonLabel(.multiline)
-        .storeButton(.visible, for: .restorePurchases)
-        .tint(MicaboColor.ink)
-        .onInAppPurchaseCompletion { _, result in
-            guard case .success(let purchase) = result, case .success = purchase else { return }
-            await MainActor.run { finish() }
-        }
-    }
-
-    private var loadingView: some View {
-        VStack(spacing: 14) {
-            ProgressView()
-                .controlSize(.large)
-                .tint(MicaboColor.progress)
-            Text("Chargement de l'offre…")
-                .font(MicaboFont.hanken(13, weight: .medium))
-                .foregroundStyle(MicaboColor.inkTertiary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .animation(OnboardingMotion.page, value: stage)
         .micaboScreenBackground()
     }
 
-    // MARK: - Actions
+    private func showPlans() {
+        guard stage != .plans else { return }
+        stage = .plans
+    }
+
+    /// L'achat entre dans l'app **aussi quand la boutique est muette**. Tant qu'aucun
+    /// produit n'est publié, `unavailable` est la réponse normale : la traiter comme un
+    /// échec laisserait le parcours coincé sur son dernier écran, sans issue et sans
+    /// explication.
+    @MainActor
+    private func buy(_ plan: PaywallPlan) async {
+        guard !isPurchasing else { return }
+        isPurchasing = true
+
+        let outcome = await PaywallPurchases.buy(plan)
+        isPurchasing = false
+
+        switch outcome {
+        case .purchased, .unavailable:
+            finish()
+        case .cancelled:
+            break
+        }
+    }
 
     @MainActor
-    private func loadProducts() async {
-        let products = try? await Product.products(for: MicaboProducts.all)
-        withAnimation(.easeOut(duration: 0.3)) {
-            state = (products?.isEmpty == false) ? .available : .unavailable
-        }
+    private func restore() async {
+        guard !isPurchasing else { return }
+        isPurchasing = true
+
+        let outcome = await PaywallPurchases.restore()
+        isPurchasing = false
+
+        guard outcome == .purchased else { return }
+        finish()
     }
 
     private func finish() {
@@ -81,93 +96,11 @@ struct PaywallStepView: View {
     }
 }
 
-/// Bandeau de présentation affiché au-dessus des options d'abonnement.
-private struct PaywallMarketingContent: View {
-    private let advantages = [
-        ("infinity", "Cours et cartes illimités"),
-        ("wand.and.stars", "Génération à partir de tes PDF, photos et Word"),
-        ("chart.line.uptrend.xyaxis", "Répétition espacée et statistiques"),
-        ("icloud", "Tes cours te suivent partout")
-    ]
-
-    var body: some View {
-        VStack(spacing: 18) {
-            Image(systemName: "square.stack.3d.up.fill")
-                .font(.system(size: 26, weight: .medium))
-                .foregroundStyle(MicaboColor.onInk)
-                .frame(width: 66, height: 66)
-                .background(MicaboColor.ink, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-
-            VStack(spacing: 8) {
-                Text("Micabo, en entier")
-                    .font(MicaboFont.hanken(27, weight: .bold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .tracking(-0.6)
-
-                Text("3 jours offerts, puis tu décides.")
-                    .font(MicaboFont.hanken(14, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-            }
-
-            VStack(alignment: .leading, spacing: 11) {
-                ForEach(Array(advantages.enumerated()), id: \.offset) { _, advantage in
-                    HStack(spacing: 11) {
-                        Image(systemName: advantage.0)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(MicaboColor.accent)
-                            .frame(width: 24)
-
-                        Text(advantage.1)
-                            .font(MicaboFont.hanken(14, weight: .medium))
-                            .foregroundStyle(Color(hex: 0x4A463F))
-
-                        Spacer(minLength: 0)
-                    }
-                }
-            }
-            .padding(.horizontal, MicaboSpacing.xs)
-        }
-        .multilineTextAlignment(.center)
-        .padding(.top, MicaboSpacing.lg)
-    }
-}
-
-/// Repli quand aucun produit n'est disponible : sans configuration StoreKit,
-/// l'écran resterait vide et le parcours n'aurait aucune sortie.
-private struct UnavailableStoreView: View {
-    var onFinish: () -> Void
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(spacing: 20) {
-                    PaywallMarketingContent()
-
-                    VStack(spacing: 6) {
-                        Text("Offre bientôt disponible")
-                            .font(MicaboFont.hanken(14, weight: .semibold))
-                            .foregroundStyle(MicaboColor.ink)
-
-                        Text("Les abonnements ne sont pas encore publiés. En attendant, l'application reste ouverte.")
-                            .font(MicaboFont.hanken(13, weight: .regular))
-                            .foregroundStyle(MicaboColor.inkSecondary)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(16)
-                    .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
-                }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.bottom, MicaboSpacing.lg)
-            }
-            .scrollIndicators(.hidden)
-
-            MicaboBottomBar {
-                OnboardingContinueButton(title: "Commencer à réviser") {
-                    onFinish()
-                }
-            }
-        }
-        .micaboScreenBackground()
+private extension AnyTransition {
+    /// Le passage d'un paywall à l'autre. Un fondu et six points de montée : les deux
+    /// écrans partagent leur croix et leur bouton, et les faire glisser latéralement
+    /// donnerait l'impression d'avoir changé d'écran alors qu'on a déplié le même.
+    static var paywallStage: AnyTransition {
+        .opacity.combined(with: .offset(y: 6))
     }
 }
