@@ -51,7 +51,7 @@ import -> lecture sur l'appareil -> cours fiché -> (facultatif) cartes -> sessi
 ```
 
 **Ce qu'on regarde pendant que Micabo travaille** (`GenerationOverlay`) montre la page en
-train de se faire : un filet de titre, des lignes, un passage surligné, un tableau, un graphe,
+train de se faire : un filet de titre, des lignes, un passage en couleur, un tableau, un graphe,
 qui se posent l'un après l'autre pendant qu'un balayage de lecture descend en boucle. C'est la
 même image que celle du parcours d'accueil, et c'est voulu — ce qu'on a promis à l'inscription
 est ce qu'on montre en train d'arriver. L'écran d'avant cochait quatre étapes sur un minuteur
@@ -441,9 +441,12 @@ l'une écrit les mots, l'autre les nombres.
   et durée de lecture en sur-titre, titre — et se distinguent par leur sur-titre, pas par un
   bandeau. La fiche pose son texte à même l'ivoire et n'encadre que les objets : définitions,
   encadrés, tableaux, graphes, formules
-- Le surligneur de la fiche est jaune (`MicaboColor.marker`), parce qu'un surligneur est
-  jaune, et surtout parce que le vert de l'accent est réservé à ce qui est actif : un passage
-  surligné est du contenu, pas un état. Les encadrés reprennent pour la même raison les couleurs de
+- Ce que la fiche met en avant change **d'encre**, pas de fond (`MicaboColor.sheetEmphasis`).
+  Le surligneur jaune a été retiré : une bande posée derrière le texte débordait sous les
+  jambages, changeait d'épaisseur d'une ligne à l'autre, et se battait avec l'interligne au
+  lieu de servir la lecture — un `NSLayoutManager` entier ne servait qu'à en arrondir les
+  coins. C'est un vert plus dense que l'accent, parce qu'un mot en couleur au milieu d'un
+  paragraphe doit se voir sans qu'on le cherche. Les encadrés, eux, gardent les couleurs de
   retour d'information de l'app, volontairement désaturées
 - Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose pas
 - En session, une ampoule donne l'indice de la carte. Les cartes qui n'en ont pas n'affichent
@@ -803,7 +806,7 @@ différente à chaque cours.
 | Bloc | Ce qu'il porte | Comment il est rendu |
 | --- | --- | --- |
 | `heading` | Titre de partie (niveau 1) ou de sous-partie | Filet court dans la teinte du cours, puis grand titre resserré |
-| `paragraph` | Deux à quatre phrases rédigées | Corps 16,5 pt, interligne 7,5, posé à même l'ivoire |
+| `paragraph` | Deux à quatre phrases rédigées | Corps 14,85 pt, interligne 6, posé à même l'ivoire |
 | `definition` | Un terme et son sens | Bloc blanc, filet vertical dans la teinte du cours, terme en demi-gras |
 | `callout` | `essentiel`, `attention`, `exemple` ou `astuce` | Fond assorti à l'intention, intitulé en capitales |
 | `steps` | Un mécanisme dont l'ordre compte | Pastilles numérotées dans un bloc blanc |
@@ -815,6 +818,37 @@ La règle de composition tient en une phrase : **le texte est posé sur le papie
 sont dans des surfaces.** Un paragraphe n'est pas une carte, et une fiche entièrement
 encartée ne se lirait pas.
 
+**Un objet n'en suit jamais un autre.** Six blocs sur huit sont des objets, et le modèle les
+alignait : une définition, un encadré, un tableau, un graphe, collés les uns aux autres. Chaque
+bloc était peut-être juste, mais la page se feuilletait au lieu de se lire, et on ne savait plus
+ce qui répondait à quoi. Le prompt tient donc la forme d'une partie — le titre, un paragraphe
+qui pose la notion, l'objet qui l'éclaire s'il y en a un, un paragraphe qui en tire la
+conséquence — avec un objet pour deux paragraphes au plus, un seul encadré « essentiel » qui
+ferme la fiche, un tableau seulement quand le document oppose vraiment deux choses, et un
+graphe seulement quand la comparaison chiffrée est ce qu'il faut retenir.
+
+Et comme une consigne se respecte à peu près là où un plafond se respecte toujours,
+`normalizeSheet` écarte le troisième objet d'une file (`SHEET_LIMITS.objectRun`). Un titre ou
+un paragraphe remet le compteur à zéro. Le garde-fou est côté serveur, donc à la création : les
+fiches déjà en base gardent leur forme jusqu'à ce qu'on demande « Refaire la fiche », parce que
+jeter un tableau d'une fiche enregistrée serait perdre du contenu que l'étudiant a payé.
+
+### Le réglage typographique
+
+Tout vit dans `SheetTypography` : c'est ce qui permet de resserrer la page d'un cran sans
+chasser des nombres dans six fichiers.
+
+**Toute l'échelle a perdu un dixième**, corps comme titres. Réduire le corps seul aurait fait
+grossir les titres par contraste : ce qui compte sur une page, c'est le rapport entre les
+tailles, pas leur valeur absolue. Le corps passe donc de 16,5 à 14,85 pt, le titre de partie de
+22 à 19,8, et un sous-titre vaut exactement la taille du corps — il se distingue par son poids
+et par l'air au-dessus de lui, pas en grossissant.
+
+**Les espaces verticaux ont baissé plus que ça** : interligne de 7,5 à 6, espace entre blocs de
+15 à 11, air au-dessus d'un titre de partie de 26 à 20, marge intérieure d'un objet de 15 à 13.
+Une fiche est une page dense par nature — on la relit la veille au soir — et le blanc qui aère
+un écran d'accueil fait ici scroller pour rien.
+
 ### Le balisage en ligne
 
 Quatre marques, et chacune a une raison d'exister sur une fiche de révision
@@ -822,43 +856,47 @@ Quatre marques, et chacune a une raison d'exister sur une fiche de révision
 
 | Écriture | Rendu | À quoi ça sert |
 | --- | --- | --- |
-| `**terme**` | gras | le mot que l'examen attend, une à trois fois par paragraphe, jamais zéro dans un paragraphe qui introduit une notion |
+| `**terme**` | gras | le mot que l'examen attend, une à deux fois par paragraphe, jamais zéro dans un paragraphe qui introduit une notion |
 | `*nuance*` | italique | un mot étranger, un titre d'œuvre, une réserve |
-| `==l'essentiel==` | surligné | ce qu'on relit en dernier, **six à huit passages sur la fiche, et jamais moins de cinq** |
+| `==l'essentiel==` | texte en couleur | ce qu'on relit en dernier, **trois à cinq passages sur la fiche**, jamais deux dans le même paragraphe |
 | `$E = mc^2$` | formule | transposée par `FormulaRenderer`, comme sur les cartes |
 
-**Le surligneur a longtemps été absent des fiches, et c'était le prompt.** Il ne parlait de
-mise en valeur qu'en plafonds — « cinq surlignages au maximum », « trois mots en gras c'est
-trois de trop », plus une consigne interdisant « les emphases partout » — et le modèle lisait
-l'ensemble comme un ordre de sobriété : il n'en produisait aucun. Une fiche sans marques est
-une fiche que personne ne relit, puisque c'est le surligneur qui fait retrouver l'essentiel en
-dix secondes la veille au soir. Le prompt donne donc un plancher, et surtout **où** surligner :
-la phrase d'enjeu du premier paragraphe, la conclusion de chaque partie de niveau 1, ce qui
-distingue une définition de sa voisine, le résultat chiffré qu'un correcteur attend, et
-l'encadré « essentiel », où le surlignage n'est jamais facultatif. Même logique pour le reste :
-un tableau dès que le document oppose deux choses, un graphe dès qu'il porte deux valeurs
-comparables dans la même unité, sans jamais inventer un chiffre.
+**Le surligneur jaune a été retiré, et c'était son rendu.** Un fond posé derrière le texte
+débordait sous les jambages, changeait d'épaisseur d'une ligne à l'autre, et se battait avec
+l'interligne au lieu de servir la lecture — il fallait un `NSLayoutManager` entier pour en
+arrondir les coins, et ça ne suffisait pas. C'est maintenant **la couleur du texte lui-même**.
+Le balisage n'a pas bougé : `==` est écrit dans les fiches déjà en base, le renommer les aurait
+toutes cassées. Seul le rendu change, et le poids n'est pas touché non plus — le gras est déjà
+une marque, et deux marques sur le même passage n'en font aucune.
 
-**Et le surligneur ne dépend plus du prompt.** Le plancher a été demandé plusieurs versions
-de suite, et des fiches continuaient d'arriver sans une seule marque : une consigne de mise en
-forme est la première chose qu'un modèle lâche quand il se concentre sur le contenu. Le
-surligneur est donc passé côté code, aux deux endroits où vivent les garde-fous de la fiche :
+Comme la marque est maintenant beaucoup plus forte, **elle est devenue rare** : trois à cinq
+passages là où le prompt en demandait six à huit, plafond à six côté serveur, plancher à trois.
+Neuf phrases vertes sur une page en feraient une page verte.
+
+**Elle a longtemps été absente des fiches, et c'était le prompt.** Il ne parlait de mise en
+valeur qu'en plafonds — « cinq marques au maximum », « trois mots en gras c'est trois de trop »,
+plus une consigne interdisant « les emphases partout » — et le modèle lisait l'ensemble comme un
+ordre de sobriété : il n'en produisait aucune. Le prompt donne donc un plancher, et surtout
+**où** marquer : la phrase d'enjeu du premier paragraphe, la phrase que l'étudiant devra
+réciter dans chaque partie, le résultat chiffré qu'un correcteur attend, et l'encadré
+« essentiel ».
+
+**Et la marque ne dépend plus du prompt.** Le plancher a été demandé plusieurs versions de
+suite, et des fiches continuaient d'arriver sans une seule marque : une consigne de mise en
+forme est la première chose qu'un modèle lâche quand il se concentre sur le contenu. Elle est
+donc passée côté code, aux deux endroits où vivent les garde-fous de la fiche :
 `ensureHighlights` dans `supabase/functions/_shared/sheet.ts` marque ce qui s'enregistre,
 `SheetHighlighter` dans `Micabo/Services/SheetHighlighter.swift` marque ce qui se relit, ce qui
 rattrape les cours importés avant la mise à jour des fonctions. Les deux garantissent
-**quatre passages au minimum**, ne touchent jamais une fiche déjà marquée, et choisissent dans
+**trois passages au minimum**, ne touchent jamais une fiche déjà marquée, et choisissent dans
 le même ordre : l'encadré « essentiel », l'enjeu du premier paragraphe, les définitions, puis
-le reste. Un marqueur porte sur une phrase, ponctuation finale exclue, ramenée à sa première
+le reste. Une marque porte sur une phrase, ponctuation finale exclue, ramenée à sa première
 proposition quand elle dépasse 170 caractères, et la phrase qui contient déjà un terme en gras
-passe devant, parce que c'est là que le modèle a placé ce qui compte. Quatre et pas huit : ce
+passe devant, parce que c'est là que le modèle a placé ce qui compte. Trois et pas huit : ce
 que le code choisit vaut moins que ce que le modèle choisit.
 
 Hanken Grotesk n'embarque pas d'italique : elle est penchée à la main par une matrice de
-fonte, ce qui reste préférable à un changement de famille en plein paragraphe. Le
-surlignage, lui, n'est pas le fond rectangulaire par défaut d'un fragment attribué, qui
-donnerait une bande grasse sur toute la hauteur de ligne : `MarkerLayoutManager` le dessine
-en rectangle arrondi, resserré en hauteur et débordant sur les côtés, comme la trace d'un
-marqueur passé à la main.
+fonte, ce qui reste préférable à un changement de famille en plein paragraphe.
 
 Un délimiteur sans fermeture reste un caractère ordinaire. Sans cette règle, un cours de
 statistiques où l'astérisque signale un résultat significatif partirait en italique jusqu'au
@@ -878,7 +916,7 @@ Les paragraphes sont pour cela composés dans un `UITextView` (`SheetProse`) et 
 `Text` SwiftUI : `.textSelection(.enabled)` autorise le copier mais ne dit jamais ce qui a
 été sélectionné. Le passage part alors à `explain-selection` **avec la fiche à plat en
 contexte**, parce que « la Rubisco » n'a de sens que dans son cours, et la réponse s'ouvre
-dans une feuille qui cite le passage surligné avant même d'avoir répondu. Elle se termine sur
+dans une feuille qui cite le passage sélectionné avant même d'avoir répondu. Elle se termine sur
 « En faire une carte » : ce qu'on vient de comprendre est exactement ce qu'on oubliera.
 
 Un mot, une phrase, jusqu'à 600 caractères. En dessous de deux caractères, ou sans une seule
@@ -892,12 +930,14 @@ cadratins, les listes à puces en série, les phrases de remplissage (« il est 
 noter que », « en effet », « en conclusion ») et les méta-commentaires sur le document.
 
 Mais une consigne se respecte à peu près, alors que **les plafonds se respectent toujours** :
-`supabase/functions/_shared/sheet.ts` limite les blocs d'étapes à deux par fiche, les
-passages surlignés à neuf, les colonnes d'un tableau à quatre, et retire les puces et les
-dièses de markdown qui ont fui hors de leur structure. Ce plafond de surlignages était à
-cinq, et il a suivi le prompt : un garde-fou réglé sous ce qu'on exige efface exactement ce
-qu'on vient de demander. `CourseSheet.sanitized()` refait le
-même travail côté application, sur les fiches comme sur ce qu'un serveur plus ancien renvoie.
+`supabase/functions/_shared/sheet.ts` limite les blocs d'étapes à deux par fiche, les passages
+marqués à six, les objets qui se suivent à deux, les colonnes d'un tableau à quatre, et retire
+les puces et les dièses de markdown qui ont fui hors de leur structure. Un garde-fou réglé sous
+ce qu'on exige efface exactement ce qu'on vient de demander : chaque plafond suit donc le
+prompt, dans les deux sens. `CourseSheet.sanitized()` refait le même travail côté application,
+sur les fiches comme sur ce qu'un serveur plus ancien renvoie — à une exception près, la file
+d'objets, qui n'est coupée qu'à la création : jeter un tableau d'une fiche déjà enregistrée
+serait perdre du contenu que l'étudiant a payé.
 
 Un bloc d'un type inconnu, un tableau à une seule colonne, un graphe à une seule barre ou
 tout à zéro disparaissent au lieu de casser la page. Un bloc mal formé ne fait pas échouer la
@@ -1309,7 +1349,7 @@ Micabo/
   Models/          entités SwiftData, fiche d'un cours, examens et réponses de l'IA
   Persistence/     enregistrement des cours et des examens
   SRS/             planificateur SM-2, file d'attente, mode examen, statistiques
-  Services/        client IA, balisage et surligneur de la fiche, PDF / OCR / DOCX / YouTube
+  Services/        client IA, balisage et mise en avant de la fiche, PDF / OCR / DOCX / YouTube
     Auth/          session, trousseau, Apple et OAuth
     Cloud/         PostgREST, lignes transportées, synchronisation
   Features/        un dossier par écran, dont Course/ et Exams/
@@ -1322,11 +1362,13 @@ scripts/             génération de l'icône
 ## Tests
 
 `MicaboTests/CourseSheetTests.swift` verrouille la fiche : le balisage en ligne et ses cas
-limites, le décodage tolérant, le nettoyage, le surligneur garanti, l'aplatissement vers le
+limites, le décodage tolérant, le nettoyage, la marque garantie et son rendu en couleur,
+l'aplatissement vers le
 contexte des cartes, la fiche hors ligne et ce qui vaut une sélection.
 
 `supabase/functions/_shared/sheet.test.ts` verrouille les mêmes garde-fous côté serveur : le
-plafond du surligneur, son plancher, le choix du passage et les blocs qu'il ne touche jamais.
+plafond des marques, leur plancher, le choix du passage, les blocs qu'elles ne touchent jamais,
+et la file d'objets qu'on écarte.
 `discipline.test.ts` verrouille la détection de matière, y compris ce qu'elle refuse de trancher
 sur un seul mot-clé.
 

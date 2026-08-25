@@ -207,7 +207,7 @@ struct CourseSheetView: View {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(sheet.blocks.enumerated()), id: \.offset) { index, block in
                     SheetBlockView(block: block, tint: tint, onExplain: explain)
-                        .padding(.top, index == 0 ? MicaboSpacing.lg : SheetBlockView.spacing(before: block))
+                        .padding(.top, index == 0 ? MicaboSpacing.md : SheetBlockView.spacing(before: block))
                 }
             }
             .padding(.bottom, MicaboSpacing.xs)

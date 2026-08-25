@@ -33,26 +33,48 @@ export const SHEET_LIMITS = {
   tableRows: 8,
   chartBars: 6,
   /**
-   * Nombre de passages surlignés sur toute la fiche. Au delà, plus rien ne ressort.
+   * Nombre de passages mis en avant sur toute la fiche. Au delà, plus rien ne ressort.
    *
-   * Le plafond était de cinq, et le prompt demandait « cinq au maximum » : le modèle lisait
-   * les deux comme un ordre de sobriété et n'en produisait aucun. Il en demande maintenant
-   * six à huit, et le plafond a suivi, sinon le garde-fou effaçait précisément ce qu'on
-   * venait d'exiger.
+   * Il était de neuf du temps du surligneur jaune, un fond pâle qu'on pouvait multiplier
+   * sans que la page crie. Le passage se met maintenant en **couleur d'encre**, ce qui est
+   * une marque bien plus forte : neuf phrases vertes sur une page en font une page verte.
    */
-  highlights: 9,
+  highlights: 6,
   /**
    * Plancher garanti par `ensureHighlights`, quoi que le modèle ait rendu.
    *
-   * Le prompt exige six à huit surlignages depuis plusieurs versions, et les fiches
+   * Le prompt exige des passages en avant depuis plusieurs versions, et les fiches
    * arrivaient quand même sans une seule marque : une consigne de mise en forme est ce
-   * qu'un modèle lâche en premier quand il se concentre sur le contenu. Le surligneur est
-   * donc passé côté code, où il ne dépend plus de la bonne volonté du modèle.
+   * qu'un modèle lâche en premier quand il se concentre sur le contenu. La marque est donc
+   * passée côté code, où elle ne dépend plus de la bonne volonté du modèle.
    */
-  minimumHighlights: 4,
+  minimumHighlights: 3,
+  /**
+   * Nombre d'objets qui peuvent se suivre sans un paragraphe entre eux.
+   *
+   * C'est le garde-fou contre la fiche en accordéon : une définition, puis un encadré, puis
+   * un tableau, puis un graphe, collés les uns aux autres sans une ligne pour les relier.
+   * Chaque bloc y est peut-être juste, mais la page ne se lit plus — elle se feuillette, et
+   * on ne sait plus ce qui répond à quoi. Trois objets d'affilée ne sont jamais une fiche
+   * écrite, c'est un vidage de notes ; au-delà de deux, le surplus est écarté.
+   */
+  objectRun: 2,
 } as const;
 
 const TONES = new Set(["essentiel", "attention", "exemple", "astuce"]);
+
+/**
+ * Les blocs qui prennent une surface au lieu de reposer sur le papier.
+ *
+ * C'est la distinction qui porte la mise en page de la fiche côté application, et c'est
+ * aussi celle qui décide du rythme : le texte est posé à même la page, les objets sont
+ * encartés. Deux objets qui se touchent font deux cartes empilées.
+ */
+const OBJECT_TYPES = new Set(["definition", "callout", "steps", "table", "chart", "formula"]);
+
+function isObject(block: SheetBlock): boolean {
+  return OBJECT_TYPES.has(block.type);
+}
 
 /**
  * Nettoie un texte de bloc.
@@ -105,6 +127,7 @@ export function normalizeSheet(raw: unknown): SheetBlock[] {
   const blocks: SheetBlock[] = [];
   let stepsBlocks = 0;
   let highlights = 0;
+  let objectRun = 0;
 
   for (const entry of source) {
     if (blocks.length >= SHEET_LIMITS.blocks) break;
@@ -115,9 +138,18 @@ export function normalizeSheet(raw: unknown): SheetBlock[] {
     const block = normalizeBlock(type, record, () => stepsBlocks < SHEET_LIMITS.stepsBlocks);
     if (!block) continue;
 
+    // Le rythme de la page, tenu par le code. Un titre remet le compteur à zéro comme un
+    // paragraphe : il ouvre une partie, donc il rompt la file d'objets.
+    if (isObject(block)) {
+      if (objectRun >= SHEET_LIMITS.objectRun) continue;
+      objectRun += 1;
+    } else {
+      objectRun = 0;
+    }
+
     if (block.type === "steps") stepsBlocks += 1;
 
-    // Le surligneur est plafonné sur toute la fiche : passé le quota, les marques
+    // La mise en avant est plafonnée sur toute la fiche : passé le quota, les marques
     // suivantes sont retirées plutôt que de tout faire ressortir.
     const counted = countHighlights(block);
     if (highlights + counted > SHEET_LIMITS.highlights) {

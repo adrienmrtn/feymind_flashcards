@@ -19,28 +19,39 @@ struct SheetTextStyle {
         size: SheetTypography.lead,
         weight: .medium,
         color: MicaboColor.ink,
-        lineSpacing: 6
+        lineSpacing: SheetTypography.secondaryLineSpacing
     )
 
     /// Corps d'un encadré : à peine plus petit que le texte courant, il ne doit pas
     /// concurrencer la page.
-    static let callout = SheetTextStyle(size: 15.5, color: MicaboColor.ink, lineSpacing: 6)
+    static let callout = SheetTextStyle(
+        size: SheetTypography.secondary,
+        color: MicaboColor.ink,
+        lineSpacing: SheetTypography.secondaryLineSpacing
+    )
 
     /// Corps d'une définition, d'une étape, d'une explication.
-    static let compact = SheetTextStyle(size: 15.5, lineSpacing: 5.5)
+    static let compact = SheetTextStyle(
+        size: SheetTypography.secondary,
+        lineSpacing: SheetTypography.secondaryLineSpacing
+    )
 
     /// Cellule de tableau.
     static func cell(emphasized: Bool = false) -> SheetTextStyle {
         SheetTextStyle(
-            size: 13.5,
+            size: SheetTypography.cell,
             weight: emphasized ? .semibold : .regular,
             color: emphasized ? MicaboColor.ink : MicaboColor.inkReading,
-            lineSpacing: 3
+            lineSpacing: SheetTypography.tightLineSpacing
         )
     }
 
     /// Légende sous un tableau, un graphe ou une formule.
-    static let caption = SheetTextStyle(size: 12.5, color: MicaboColor.inkTertiary, lineSpacing: 3)
+    static let caption = SheetTextStyle(
+        size: SheetTypography.caption,
+        color: MicaboColor.inkTertiary,
+        lineSpacing: SheetTypography.tightLineSpacing
+    )
 
     func with(size: CGFloat? = nil, weight: Font.Weight? = nil, color: Color? = nil, centered: Bool? = nil) -> SheetTextStyle {
         SheetTextStyle(
@@ -61,29 +72,35 @@ struct SheetTextStyle {
                 size: SheetTypography.headingLarge,
                 weight: .bold,
                 color: MicaboColor.ink,
-                lineSpacing: 2,
+                lineSpacing: SheetTypography.tightLineSpacing,
                 tracking: MicaboTracking.tight
             )
             : SheetTextStyle(
                 size: SheetTypography.headingSmall,
                 weight: .semibold,
                 color: MicaboColor.ink,
-                lineSpacing: 2
+                lineSpacing: SheetTypography.tightLineSpacing
             )
     }
 
     /// Intitulé d'un objet : titre d'un tableau, d'un graphe, d'une suite d'étapes.
-    static let objectTitle = SheetTextStyle(size: 15, weight: .semibold, color: MicaboColor.ink, lineSpacing: 2)
+    static let objectTitle = SheetTextStyle(
+        size: SheetTypography.objectTitle,
+        weight: .semibold,
+        color: MicaboColor.ink,
+        lineSpacing: SheetTypography.tightLineSpacing
+    )
 }
 
 // MARK: - Rendu non sélectionnable
 
-/// Texte balisé rendu par SwiftUI : gras, italique, surlignage et formules, sans sélection.
+/// Texte balisé rendu par SwiftUI : gras, italique, passages en couleur et formules, sans
+/// sélection.
 ///
 /// C'est le rendu des titres, des cellules de tableau, des étiquettes et des légendes,
 /// partout où l'on ne sélectionne pas de passage. Il passe par une `AttributedString`
-/// plutôt que par une concaténation de `Text`, parce que c'est la seule façon d'obtenir un
-/// fond de surlignage qui suive le texte au retour à la ligne.
+/// plutôt que par une concaténation de `Text`, parce que c'est la seule façon de composer un
+/// paragraphe dont les fragments changent de fonte et de couleur sans casser l'interligne.
 struct SheetInlineText: View {
     let markup: String
     var style: SheetTextStyle = .prose
@@ -105,10 +122,9 @@ struct SheetInlineText: View {
 /// C'est la raison d'être de ce composant. Sélectionner un passage et demander ce qu'il
 /// veut dire est le geste central de la fiche, et il n'existe pas de façon d'obtenir la
 /// sélection d'un `Text` SwiftUI : `.textSelection(.enabled)` autorise le copier, mais ne
-/// dit jamais ce qui a été sélectionné. On compose donc dans un `UITextView`, ce qui a
-/// trois avantages : la sélection est celle du système (poignées, loupe, double appui),
-/// « Expliquer » se pose dans le menu d'édition natif, et le surlignage se dessine sous
-/// les glyphes au lieu d'entourer les mots.
+/// dit jamais ce qui a été sélectionné. On compose donc dans un `UITextView` : la sélection
+/// est celle du système (poignées, loupe, double appui), et « Expliquer » se pose dans le
+/// menu d'édition natif.
 struct SheetProse: UIViewRepresentable {
     let markup: String
     var style: SheetTextStyle = .prose
@@ -226,14 +242,11 @@ enum SheetAttributedText {
         for span in SheetMarkup.spans(markup) {
             var attributes: [NSAttributedString.Key: Any] = [
                 .font: uiFont(for: span, style: style),
-                .foregroundColor: UIColor(style.color),
+                .foregroundColor: UIColor(color(for: span, style: style)),
                 .paragraphStyle: paragraph
             ]
             if style.tracking != 0 {
                 attributes[.kern] = style.tracking
-            }
-            if span.isHighlighted {
-                attributes[.backgroundColor] = UIColor(MicaboColor.marker)
             }
             result.append(NSAttributedString(string: span.text, attributes: attributes))
         }
@@ -247,14 +260,25 @@ enum SheetAttributedText {
         for span in SheetMarkup.spans(markup) {
             var piece = AttributedString(span.text)
             piece.font = font(for: span, style: style)
-            piece.foregroundColor = style.color
-            if span.isHighlighted {
-                piece.backgroundColor = MicaboColor.marker
-            }
+            piece.foregroundColor = color(for: span, style: style)
             result.append(piece)
         }
 
         return result
+    }
+
+    // MARK: Couleur
+
+    /// L'encre du fragment. Un passage mis en avant change de **couleur**, et de rien
+    /// d'autre.
+    ///
+    /// Il portait un fond jaune, et ce fond était le problème : une bande derrière le texte
+    /// déborde sous les jambages, change d'épaisseur d'une ligne à l'autre, et se battait
+    /// avec l'interligne au lieu de servir la lecture. Le poids n'est pas touché non plus,
+    /// parce que le gras est déjà une marque : deux marques sur le même passage n'en font
+    /// aucune.
+    private static func color(for span: SheetMarkup.Span, style: SheetTextStyle) -> Color {
+        span.isHighlighted ? MicaboColor.sheetEmphasis : style.color
     }
 
     // MARK: Fontes

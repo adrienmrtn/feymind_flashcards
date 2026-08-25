@@ -302,14 +302,15 @@ struct DemoSheetPage: View {
         }
     }
 
-    /// Le surligneur de l'app, en miniature : c'est la marque qu'on reconnaît d'une fiche.
+    /// La marque de la fiche, en miniature.
+    ///
+    /// C'était un fond jaune, comme le surligneur de l'app ; c'est maintenant du texte en
+    /// couleur, comme lui. Une démonstration qui promettrait une marque que la fiche ne fait
+    /// plus serait une promesse à tenir deux fois.
     private var highlight: some View {
         Text(OnboardingDemo.sheetHighlight)
-            .font(MicaboFont.hanken(7.5, weight: .medium))
-            .foregroundStyle(MicaboColor.ink)
-            .padding(.vertical, 2)
-            .padding(.horizontal, 4)
-            .background(MicaboColor.marker, in: RoundedRectangle(cornerRadius: 3, style: .continuous))
+            .font(MicaboFont.hanken(7.5, weight: .semibold))
+            .foregroundStyle(MicaboColor.sheetEmphasis)
     }
 }
 

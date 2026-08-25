@@ -58,7 +58,7 @@ struct SheetBlockView: View {
     @ViewBuilder
     private func heading(level: Int, text: String) -> some View {
         if level == 1 {
-            VStack(alignment: .leading, spacing: 11) {
+            VStack(alignment: .leading, spacing: 7) {
                 Capsule()
                     .fill(tint)
                     .frame(width: 26, height: 3)
@@ -81,17 +81,21 @@ struct SheetBlockView: View {
                 .frame(width: 3)
                 .frame(maxHeight: .infinity)
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 4) {
                 SheetInlineText(
                     markup: term,
-                    style: SheetTextStyle(size: 15, weight: .semibold, color: tint.darkened(by: 0.32), lineSpacing: 2)
+                    style: SheetTextStyle(
+                        size: SheetTypography.objectTitle,
+                        weight: .semibold,
+                        color: tint.darkened(by: 0.32),
+                        lineSpacing: SheetTypography.tightLineSpacing
+                    )
                 )
 
                 SheetProse(markup: text, style: .compact, onExplain: onExplain)
             }
         }
-        .padding(.vertical, 15)
-        .padding(.horizontal, 15)
+        .padding(SheetTypography.objectPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .micaboGroup(radius: MicaboRadius.lg)
     }
@@ -99,7 +103,7 @@ struct SheetBlockView: View {
     // MARK: - Encadré
 
     private func callout(tone: SheetCalloutTone, text: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: tone.systemImage)
                     .font(.system(size: 9, weight: .bold))
@@ -111,7 +115,7 @@ struct SheetBlockView: View {
 
             SheetProse(markup: text, style: .callout, onExplain: onExplain)
         }
-        .padding(15)
+        .padding(SheetTypography.objectPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             calloutBackground(tone),
@@ -130,9 +134,12 @@ struct SheetBlockView: View {
         }
     }
 
+    /// L'encadré « essentiel » portait le jaune du surligneur : c'était la même couleur pour
+    /// deux choses différentes, et elle est partie avec lui. Il prend le vert pâle, qui est
+    /// désormais la couleur de ce que la fiche met en avant.
     private func calloutBackground(_ tone: SheetCalloutTone) -> Color {
         switch tone {
-        case .essentiel: MicaboColor.marker.opacity(0.45)
+        case .essentiel: MicaboColor.accentSoft
         case .attention: MicaboColor.cautionSoft
         case .exemple: MicaboColor.surfaceMuted
         case .astuce: MicaboColor.positiveSoft
@@ -142,18 +149,18 @@ struct SheetBlockView: View {
     // MARK: - Étapes
 
     private func steps(title: String?, items: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 9) {
             if let title = title?.nilIfBlank {
                 SheetInlineText(markup: title, style: .objectTitle)
             }
 
-            VStack(alignment: .leading, spacing: 11) {
+            VStack(alignment: .leading, spacing: 8) {
                 ForEach(Array(items.enumerated()), id: \.offset) { index, item in
-                    HStack(alignment: .top, spacing: 11) {
+                    HStack(alignment: .top, spacing: 10) {
                         Text("\(index + 1)")
-                            .font(MicaboFont.hanken(11.5, weight: .bold))
+                            .font(MicaboFont.hanken(11, weight: .bold))
                             .foregroundStyle(tint.darkened(by: 0.3))
-                            .frame(width: 21, height: 21)
+                            .frame(width: 19, height: 19)
                             .background(tint.lightened(by: 0.82), in: Circle())
                             .padding(.top, 1)
 
@@ -162,7 +169,7 @@ struct SheetBlockView: View {
                 }
             }
         }
-        .padding(15)
+        .padding(SheetTypography.objectPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .micaboGroup(radius: MicaboRadius.lg)
     }
@@ -170,7 +177,7 @@ struct SheetBlockView: View {
     // MARK: - Formule
 
     private func formula(latex: String, caption: String?) -> some View {
-        VStack(spacing: 9) {
+        VStack(spacing: 7) {
             // Le balisage mathématique de l'app est celui des cartes : entre `$…$`, c'est
             // `FormulaRenderer` qui transpose, et la fiche n'a pas sa propre convention.
             SheetInlineText(
@@ -179,7 +186,7 @@ struct SheetBlockView: View {
                     size: SheetTypography.formula,
                     weight: .regular,
                     color: MicaboColor.ink,
-                    lineSpacing: 3,
+                    lineSpacing: SheetTypography.tightLineSpacing,
                     isCentered: true
                 )
             )
@@ -188,8 +195,8 @@ struct SheetBlockView: View {
                 SheetInlineText(markup: caption, style: .caption.with(centered: true))
             }
         }
-        .padding(.vertical, 18)
-        .padding(.horizontal, 16)
+        .padding(.vertical, 15)
+        .padding(.horizontal, SheetTypography.objectPadding)
         .frame(maxWidth: .infinity)
         .background(
             MicaboColor.surfaceMuted,
@@ -207,7 +214,7 @@ struct SheetTableView: View {
     let tint: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             if let title = table.title?.nilIfBlank {
                 SheetInlineText(markup: title, style: .objectTitle)
             }
@@ -231,7 +238,7 @@ struct SheetTableView: View {
     }
 
     private func row(cells: [String], isHeader: Bool) -> some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: 9) {
             ForEach(Array(cells.enumerated()), id: \.offset) { index, cell in
                 SheetInlineText(
                     markup: cell,
@@ -240,8 +247,8 @@ struct SheetTableView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .padding(.vertical, isHeader ? 10 : 11)
-        .padding(.horizontal, 13)
+        .padding(.vertical, isHeader ? 8 : 9)
+        .padding(.horizontal, 11)
     }
 }
 
@@ -255,22 +262,27 @@ struct SheetChartView: View {
     let tint: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 13) {
+        VStack(alignment: .leading, spacing: 10) {
             if let title = chart.title?.nilIfBlank {
                 SheetInlineText(markup: title, style: .objectTitle)
             }
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 9) {
                 ForEach(Array(chart.bars.enumerated()), id: \.offset) { _, entry in
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 4) {
                         HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.xs) {
                             SheetInlineText(
                                 markup: entry.label,
-                                style: SheetTextStyle(size: 13.5, weight: .medium, color: MicaboColor.ink, lineSpacing: 2)
+                                style: SheetTextStyle(
+                                    size: SheetTypography.cell,
+                                    weight: .medium,
+                                    color: MicaboColor.ink,
+                                    lineSpacing: SheetTypography.tightLineSpacing
+                                )
                             )
 
                             Text(chart.formatted(entry.value))
-                                .font(MicaboFont.hanken(13.5, weight: .semibold))
+                                .font(MicaboFont.hanken(SheetTypography.cell, weight: .semibold))
                                 .foregroundStyle(MicaboColor.inkSecondary)
                                 .monospacedDigit()
                                 .fixedSize()
@@ -285,7 +297,7 @@ struct SheetChartView: View {
                 SheetInlineText(markup: caption, style: .caption)
             }
         }
-        .padding(16)
+        .padding(SheetTypography.objectPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .micaboGroup(radius: MicaboRadius.lg)
     }
@@ -301,7 +313,7 @@ struct SheetChartView: View {
                     .frame(width: max(5, proxy.size.width * CGFloat(ratio(of: value))))
             }
         }
-        .frame(height: 9)
+        .frame(height: 7)
     }
 
     private func ratio(of value: Double) -> Double {

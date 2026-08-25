@@ -13,7 +13,7 @@ enum SheetTextViewFactory {
 
     static func makeView() -> UITextView {
         let storage = NSTextStorage()
-        let layoutManager = MarkerLayoutManager()
+        let layoutManager = NSLayoutManager()
         storage.addLayoutManager(layoutManager)
 
         let container = NSTextContainer(
@@ -43,32 +43,8 @@ enum SheetTextViewFactory {
     }
 }
 
-/// Dessine le surligneur.
-///
-/// Le fond d'un fragment attribué est, par défaut, un rectangle qui prend toute la hauteur
-/// de ligne : posé sur un paragraphe à interligne généreux, ça donne une bande grasse qui
-/// écrase le texte. On le remplace par un rectangle arrondi, resserré en hauteur et
-/// débordant de quelques points sur les côtés, ce qui est exactement la trace que laisse un
-/// marqueur passé à la main.
-final class MarkerLayoutManager: NSLayoutManager {
-    override func fillBackgroundRectArray(
-        _ rectArray: UnsafePointer<CGRect>,
-        count rectCount: Int,
-        forCharacterRange charRange: NSRange,
-        color: UIColor
-    ) {
-        guard let context = UIGraphicsGetCurrentContext() else {
-            super.fillBackgroundRectArray(rectArray, count: rectCount, forCharacterRange: charRange, color: color)
-            return
-        }
-
-        context.saveGState()
-        color.setFill()
-        for index in 0..<rectCount {
-            let rect = rectArray[index].insetBy(dx: -3, dy: 2.5)
-            guard rect.width > 0, rect.height > 0 else { continue }
-            UIBezierPath(roundedRect: rect, cornerRadius: 5).fill()
-        }
-        context.restoreGState()
-    }
-}
+// Il y avait ici un `MarkerLayoutManager`, une sous-classe entière dont le seul rôle était
+// d'arrondir les coins du fond de surlignage : le rectangle par défaut prend toute la hauteur
+// de ligne, ce qui donnait une bande grasse posée sur le texte. Le surlignage a été retiré au
+// profit d'une couleur d'encre, et cette classe avec : un gestionnaire de mise en page
+// standard suffit.
