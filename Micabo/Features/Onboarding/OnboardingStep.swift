@@ -8,6 +8,12 @@ import Foundation
 /// exactement le parcours réel de l'app — on dépose un cours, il est mis en fiche, il se
 /// décompose en cartes — parce qu'une démonstration qui montre autre chose que le produit
 /// est une promesse qu'il faudra tenir deux fois.
+///
+/// La fin du parcours a sa propre progression, et elle est délibérée : le parcours vient
+/// d'être construit sous les yeux (`personalizing`), d'autres l'ont déjà suivi
+/// (`socialProof`), c'est maintenant à cet étudiant-là de s'y mettre (`yourTurn`), et on
+/// ne lui demande de compte (`signIn`) qu'à cet instant. Demander de se connecter avant
+/// d'avoir rien montré, c'est demander un compte pour une app qu'on n'a pas encore vue.
 enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case welcome
     case level
@@ -27,6 +33,9 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case projection
     case notifications
     case personalizing
+    case socialProof
+    case yourTurn
+    case signIn
     case trialOffer
     case trialReminder
     case paywall
@@ -41,12 +50,13 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// aussi le bandeau qui porte la jauge et la zone d'état au-dessus. Une bande claire
     /// posée au-dessus d'un écran sombre se lit comme un bug d'affichage.
     ///
-    /// Deux écrans seulement quittent le crème, et c'est un de moins qu'avant : la variété
-    /// d'un parcours ne vient pas de ses fonds, elle vient de ce qu'il y a à regarder. Le
-    /// noir sert l'accroche, le vert sert l'attente.
+    /// Trois écrans seulement quittent le crème : la variété d'un parcours ne vient pas de
+    /// ses fonds, elle vient de ce qu'il y a à regarder. L'encre sert les deux moments où
+    /// le parcours s'adresse directement à l'étudiant — l'accroche et le passage à son
+    /// tour — et le vert sert l'attente.
     var surface: OnboardingSurface {
         switch self {
-        case .welcome: .ink
+        case .welcome, .yourTurn: .ink
         case .personalizing: .accent
         default: .canvas
         }

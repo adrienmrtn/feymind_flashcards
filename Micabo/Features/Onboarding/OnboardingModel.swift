@@ -10,12 +10,17 @@ final class OnboardingModel {
     var level: StudyLevel?
     var country: SchoolingCountry = .fallback
     var goals: Set<LearningGoal> = []
-    var forgetsOften: Bool?
+    var forgetting: ForgettingHabit?
     var subjects: Set<String> = []
     var institutionId: String?
     var institutionName: String?
     var dailyMinutes = 15
     var notificationsOptIn = false
+
+    /// Le rapport à l'oubli ramené à un oui ou un non, pour le réglage historique.
+    var forgetsOften: Bool? {
+        forgetting?.forgetsOften
+    }
 
     /// Nombre de cartes que l'utilisateur peut espérer mémoriser en un an,
     /// au rythme qu'il vient de choisir.
@@ -36,8 +41,7 @@ final class OnboardingModel {
     }
 
     /// Le parcours est une file droite : chaque écran a quelque chose à demander ou à
-    /// montrer, donc aucun ne se saute. Le mécanisme d'écran conditionnel qui existait ici
-    /// ne servait qu'à la preuve sociale, qui a été retirée.
+    /// montrer, donc aucun ne se saute.
     func advance() {
         persist()
         guard let next = step.next else { return }
@@ -50,6 +54,7 @@ final class OnboardingModel {
         OnboardingPreferences.level = level?.rawValue
         OnboardingPreferences.schoolingCountry = country
         OnboardingPreferences.goals = goals.map(\.rawValue).sorted()
+        OnboardingPreferences.forgetting = forgetting
         OnboardingPreferences.forgetsOften = forgetsOften
         OnboardingPreferences.subjects = subjects.sorted()
         OnboardingPreferences.institutionId = institutionId

@@ -135,6 +135,12 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     /// l'utilise pas sur un écran de démonstration, où le regard doit aller au contenu, ni
     /// sur un écran qu'on traverse en deux secondes.
     var animatesTitle: Bool = false
+    /// Donne au contenu toute la hauteur restante au lieu de le tasser sous le titre.
+    ///
+    /// Sur un écran de question, les réponses *sont* le contenu : les serrer en haut de la
+    /// page laisse un grand vide en dessous et les fait passer pour une note. Elles
+    /// occupent alors la page, et le regard tombe dessus au lieu de les chercher.
+    var expandsContent: Bool = false
     var surface: OnboardingSurface = .canvas
     var skip: OnboardingSkip?
     var content: () -> Content
@@ -148,6 +154,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         contentSpacing: CGFloat = MicaboSpacing.xl,
         scrolls: Bool = true,
         animatesTitle: Bool = false,
+        expandsContent: Bool = false,
         surface: OnboardingSurface = .canvas,
         skip: OnboardingSkip? = nil,
         @ViewBuilder content: @escaping () -> Content,
@@ -160,6 +167,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.contentSpacing = contentSpacing
         self.scrolls = scrolls
         self.animatesTitle = animatesTitle
+        self.expandsContent = expandsContent
         self.surface = surface
         self.skip = skip
         self.content = content
@@ -234,9 +242,10 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             content()
+                .frame(maxHeight: expandsContent && !inScrollView ? CGFloat.infinity : nil)
                 .onboardingAppear(index: 3)
 
-            if !inScrollView {
+            if !inScrollView, !expandsContent {
                 Spacer(minLength: 0)
             }
         }
@@ -281,6 +290,8 @@ extension OnboardingScaffold where Footer == EmptyView {
         titleSize: CGFloat = 30,
         contentSpacing: CGFloat = MicaboSpacing.lg,
         scrolls: Bool = true,
+        animatesTitle: Bool = false,
+        expandsContent: Bool = false,
         surface: OnboardingSurface = .canvas,
         skip: OnboardingSkip? = nil,
         @ViewBuilder content: @escaping () -> Content
@@ -292,6 +303,8 @@ extension OnboardingScaffold where Footer == EmptyView {
             titleSize: titleSize,
             contentSpacing: contentSpacing,
             scrolls: scrolls,
+            animatesTitle: animatesTitle,
+            expandsContent: expandsContent,
             surface: surface,
             skip: skip,
             content: content,
@@ -576,11 +589,16 @@ struct OnboardingHint: View {
 /// **Un emoji n'est pas une tuile.** Posé à même la ligne, sans fond ni cadre, il donne à
 /// chaque réponse un point d'accroche que l'œil retrouve sans lire, et une liste de réponses
 /// scolaires cesse de ressembler à un formulaire administratif.
+///
+/// `fillsHeight` fait grandir la rangée avec la place qu'on lui laisse. C'est ce qui
+/// permet à une liste de réponses d'occuper la page entière plutôt que de se tasser sous
+/// le titre : le rembourrage vertical fixe est un plancher, pas un plafond.
 struct OnboardingChoiceRow: View {
     let title: String
     var emoji: String?
     var subtitle: String?
     var isSelected: Bool
+    var fillsHeight: Bool = false
     var action: () -> Void
 
     var body: some View {
@@ -613,7 +631,7 @@ struct OnboardingChoiceRow: View {
             }
             .padding(.vertical, 15)
             .padding(.horizontal, 16)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: fillsHeight ? CGFloat.infinity : nil, alignment: .leading)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
@@ -625,8 +643,32 @@ struct OnboardingChoiceRow: View {
     }
 }
 
-/// Case de choix, à poser côte à côte : deux réponses, deux blocs de même largeur.
+/// Liste de réponses qui occupe toute la hauteur qu'on lui laisse.
 ///
+/// Les rangées se partagent la place à égalité : aucune réponse n'est plus grande qu'une
+/// autre, et la question ne se lit pas comme un formulaire posé en haut d'une page vide.
+struct OnboardingAnswerList<Item: Identifiable, Content: View>: View {
+    private let items: [Item]
+    private let spacing: CGFloat
+    private let row: (Item) -> Content
+
+    init(_ items: [Item], spacing: CGFloat = 10, @ViewBuilder row: @escaping (Item) -> Content) {
+        self.items = items
+        self.spacing = spacing
+        self.row = row
+    }
+
+    var body: some View {
+        VStack(spacing: spacing) {
+            ForEach(items) { item in
+                row(item)
+                    .frame(maxHeight: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
 /// Une question fermée à deux réponses n'a pas besoin d'une liste. Deux cases côte à côte
 /// se comparent d'un seul regard, là où deux rangées empilées se lisent l'une après
 /// l'autre et laissent croire que la première compte plus que la seconde.
@@ -672,11 +714,9 @@ struct OnboardingChoiceTile: View {
 
 /// Pastille de choix, pour les questions à réponses courtes.
 ///
-/// Sept niveaux d'études en sept rangées font un écran qu'on fait défiler. En pastilles qui
-/// s'enroulent, ils tiennent en trois lignes et se lisent d'un coup d'œil, ce qui est tout
-/// ce qu'on demande à une question fermée. L'emoji tient sur la même ligne que le libellé :
-/// il aide à retrouver sa réponse d'un regard, et un drapeau se reconnaît plus vite que le
-/// nom du pays.
+/// Dix pays en dix rangées font un écran qu'on fait défiler. En pastilles qui s'enroulent,
+/// ils tiennent en quelques lignes et se lisent d'un coup d'œil. L'emoji tient sur la même
+/// ligne que le libellé : un drapeau se reconnaît plus vite que le nom du pays.
 struct OnboardingChoiceChip: View {
     let title: String
     var emoji: String?

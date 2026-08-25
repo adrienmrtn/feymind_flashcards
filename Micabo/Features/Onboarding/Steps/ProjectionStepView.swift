@@ -1,30 +1,32 @@
 import SwiftUI
 
-/// Écran 14 : projection sur un an au rythme choisi. Le nombre se déroule à l'écran.
+/// Écran 14 : projection sur un an au rythme choisi.
 ///
-/// Composition volontairement différente de l'écran du curseur qui la précède : pas de
-/// panneau blanc, le chiffre est posé à même le crème, et une frise de douze mois montre
-/// l'accumulation.
+/// **Le chiffre est passé dans le titre.** Il vivait avant en corps 64 sous un titre qui
+/// annonçait sa venue (« À ce rythme, dans un an… »), et sous un sous-titre qui répétait le
+/// rythme déjà choisi à l'écran d'avant. Trois éléments pour une seule information : le
+/// titre dit maintenant la chose entière, en une phrase qu'on peut répéter à quelqu'un.
+///
+/// Ce qui reste sous le titre n'est pas une redite mais la preuve : douze mois qui montent,
+/// puis le calcul posé ligne à ligne. Rien n'est sorti d'un chapeau.
 struct ProjectionStepView: View {
     @Environment(OnboardingModel.self) private var model
 
-    @State private var displayed = 0.0
     @State private var grownMonths = 0
     @State private var didStart = false
 
-    private var target: Double {
-        Double(model.projectedCardsPerYear)
+    private var cards: String {
+        CountingText.formatted(model.projectedCardsPerYear)
     }
 
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Ta projection",
-            title: "À ce rythme, dans un an…",
-            subtitle: "\(DailyLoad.label(forMinutes: model.dailyMinutes)) par jour, tous les jours.",
-            titleSize: 28
+            title: "À ce rythme, dans un an, tu auras appris \(cards) cartes sur le bout des doigts",
+            subtitle: "Et tout ça, juste en suivant ton parcours Micabo.",
+            titleSize: 27
         ) {
             VStack(alignment: .leading, spacing: 22) {
-                headline
                 monthStrip
                 breakdown
             }
@@ -34,21 +36,6 @@ struct ProjectionStepView: View {
             }
         }
         .onAppear(perform: run)
-    }
-
-    private var headline: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            CountingText(
-                value: displayed,
-                font: MicaboFont.number(64),
-                color: MicaboColor.ink
-            )
-            .tracking(-2)
-
-            Text("cartes mémorisées")
-                .font(MicaboFont.hanken(16, weight: .medium))
-                .foregroundStyle(MicaboColor.inkSecondary)
-        }
     }
 
     /// Douze mois qui montent : la projection devient une image, pas seulement un nombre.
@@ -63,7 +50,7 @@ struct ProjectionStepView: View {
                         .animation(OnboardingMotion.shift.delay(Double(index) * 0.04), value: grownMonths)
                 }
             }
-            .frame(height: 84, alignment: .bottom)
+            .frame(height: 104, alignment: .bottom)
 
             HStack {
                 Text("1er mois")
@@ -77,7 +64,7 @@ struct ProjectionStepView: View {
 
     private func barHeight(for index: Int) -> CGFloat {
         let ratio = CGFloat(index + 1) / 12
-        return 14 + ratio * 70
+        return 16 + ratio * 88
     }
 
     private var breakdown: some View {
@@ -118,9 +105,6 @@ struct ProjectionStepView: View {
         didStart = true
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            withAnimation(.easeOut(duration: 1.6)) {
-                displayed = target
-            }
             grownMonths = 12
             Haptics.burst(count: 18, over: 1.5, intensity: 0.3)
 

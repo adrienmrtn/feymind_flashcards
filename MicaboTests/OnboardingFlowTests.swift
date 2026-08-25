@@ -1,3 +1,4 @@
+import SwiftUI
 import XCTest
 @testable import Micabo
 
@@ -52,12 +53,85 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .examPromise, "Le mode examen vient après la démonstration")
     }
 
+    // MARK: - Sortie du parcours
+
+    /// La fin du parcours a un ordre, et il est délibéré : on construit le parcours sous les
+    /// yeux, on montre que d'autres l'ont suivi, on passe la main à l'étudiant, et c'est
+    /// seulement là qu'on lui demande un compte. Demander de se connecter plus tôt, c'est
+    /// demander un compte pour une app qu'on n'a pas encore vue fonctionner.
+    func testTheAccountIsAskedOnlyOnceTheJourneyIsBuilt() {
+        let model = self.model(advancingTo: .personalizing)
+
+        model.advance()
+        XCTAssertEqual(model.step, .socialProof, "La preuve sociale arrive sur un parcours déjà construit")
+
+        model.advance()
+        XCTAssertEqual(model.step, .yourTurn, "Puis on passe la main à l'étudiant")
+
+        model.advance()
+        XCTAssertEqual(model.step, .signIn, "Le compte n'est demandé qu'à ce moment-là")
+
+        model.advance()
+        XCTAssertEqual(model.step, .trialOffer, "L'offre vient après la connexion")
+    }
+
+    /// L'écran de génération du parcours ne doit pas passer plus vite qu'on ne le lit : un
+    /// chargement qui s'évapore en une seconde n'a rien généré aux yeux de personne.
+    func testTheGenerationScreenLastsLongEnoughToBeRead() {
+        XCTAssertGreaterThanOrEqual(PersonalizingStepView.duration, 3)
+    }
+
+    /// Les deux fournisseurs sont annoncés, même si les flux OAuth ne sont pas encore
+    /// branchés : l'écran doit rester complet le jour où ils le seront.
+    func testSignInOffersBothProviders() {
+        XCTAssertEqual(OnboardingSignInProvider.allCases, [.apple, .google])
+
+        for provider in OnboardingSignInProvider.allCases {
+            XCTAssertTrue(provider.title.hasPrefix("Continuer avec"), "\(provider) doit dire ce qu'il fait")
+        }
+    }
+
+    // MARK: - Rapport à l'oubli
+
+    /// Quatre réponses, et non plus un oui et un non : les deux réponses du milieu sont
+    /// celles où la plupart des étudiants se reconnaissent, et ce sont les plus utiles.
+    func testForgettingHasFourAnswers() {
+        XCTAssertEqual(ForgettingHabit.allCases, [.always, .withMethod, .sometimes, .never])
+
+        for habit in ForgettingHabit.allCases {
+            XCTAssertFalse(habit.title.isEmpty, "\(habit) doit avoir un libellé")
+        }
+    }
+
+    /// Les quatre réponses se ramènent au oui ou non de la clé historique : les deux qui
+    /// commencent par « oui » disent qu'on oublie, les deux autres non.
+    func testForgettingAnswersFoldBackToTheLegacyYesOrNo() {
+        XCTAssertTrue(ForgettingHabit.always.forgetsOften)
+        XCTAssertTrue(ForgettingHabit.withMethod.forgetsOften)
+        XCTAssertFalse(ForgettingHabit.sometimes.forgetsOften)
+        XCTAssertFalse(ForgettingHabit.never.forgetsOften)
+    }
+
+    /// La réponse détaillée est écrite au changement d'écran, et la clé historique reste
+    /// tenue à jour pour les appareils qui ont fait le parcours à deux réponses.
+    func testForgettingIsPersistedOnAdvance() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        let model = self.model(advancingTo: .forgetting)
+        model.forgetting = .withMethod
+        model.advance()
+
+        XCTAssertEqual(OnboardingPreferences.forgetting, .withMethod)
+        XCTAssertEqual(OnboardingPreferences.forgetsOften, true)
+    }
+
     // MARK: - Écrans retirés
 
     /// Ces écrans ont été retirés du parcours : la génération simulée, qui faisait patienter
     /// devant un travail invisible, la courbe de l'oubli prise à contre-pied, qui répétait
-    /// l'écran précédent, la preuve sociale, et « on a fait Micabo pour nous », qui racontait
-    /// d'où venait l'app à quelqu'un qui ne l'a pas encore vue fonctionner.
+    /// l'écran précédent, et « on a fait Micabo pour nous », qui racontait d'où venait l'app
+    /// à quelqu'un qui ne l'a pas encore vue fonctionner.
     func testRemovedScreensAreGoneFromTheFlow() {
         let names = OnboardingStep.allCases.map(String.init(describing:))
 
@@ -86,14 +160,16 @@ final class OnboardingFlowTests: XCTestCase {
 
     // MARK: - Fond des écrans
 
-    /// Deux écrans seulement quittent le crème, et c'est un de moins qu'avant : la variété
-    /// d'un parcours ne vient pas de ses fonds.
-    func testOnlyTwoScreensLeaveTheCanvas() {
+    /// Trois écrans seulement quittent le crème : la variété d'un parcours ne vient pas de
+    /// ses fonds. L'encre est réservée aux deux moments où le parcours s'adresse
+    /// directement à l'étudiant, l'accroche et le passage à son tour.
+    func testOnlyThreeScreensLeaveTheCanvas() {
         XCTAssertEqual(OnboardingStep.welcome.surface, .ink)
+        XCTAssertEqual(OnboardingStep.yourTurn.surface, .ink)
         XCTAssertEqual(OnboardingStep.personalizing.surface, .accent)
 
         let dark = OnboardingStep.allCases.filter(\.surface.isDark)
-        XCTAssertEqual(dark, [.welcome, .personalizing])
+        XCTAssertEqual(dark, [.welcome, .personalizing, .yourTurn])
 
         for step in OnboardingStep.allCases where !dark.contains(step) {
             XCTAssertEqual(step.surface, .canvas, "\(step) devrait rester sur le crème")
@@ -134,6 +210,9 @@ final class OnboardingFlowTests: XCTestCase {
         }
         for country in SchoolingCountry.allCases {
             XCTAssertFalse(country.flag.isEmpty, "\(country) doit porter son drapeau")
+        }
+        for habit in ForgettingHabit.allCases {
+            XCTAssertFalse(habit.emoji.isEmpty, "\(habit) doit porter un emoji")
         }
     }
 

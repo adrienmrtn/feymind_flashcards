@@ -5,7 +5,9 @@ import SwiftUI
 /// paliers de `DailyLoad`, pas sur les minutes.
 ///
 /// La valeur n'est pas décorative : elle fixe le plafond de cartes neuves par jour,
-/// affiché juste en dessous et recalculé à chaque cran.
+/// affiché juste en dessous et recalculé à chaque cran. Le sous-titre le dit avant qu'on
+/// touche le curseur : une question qui annonce ce qu'elle sert à décider se répond mieux
+/// qu'une question posée sèchement.
 struct DailyTimeStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -27,8 +29,9 @@ struct DailyTimeStepView: View {
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Ton rythme",
-            title: "Combien de temps par jour ?",
-            titleSize: 28
+            title: "Combien de temps veux-tu réviser par jour ?",
+            subtitle: "Ça nous aide à créer un parcours parfaitement personnalisé à tes besoins.",
+            titleSize: 27
         ) {
             VStack(spacing: 14) {
                 dial
