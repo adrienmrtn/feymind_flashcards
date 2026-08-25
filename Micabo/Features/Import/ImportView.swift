@@ -785,7 +785,11 @@ struct ImportView: View {
             hintTitle: title.nilIfBlank,
             sourceName: fileName,
             studyLevel: OnboardingPreferences.studyLevel,
-            sheetLength: sheetLength
+            country: OnboardingPreferences.schoolingCountry,
+            sheetLength: sheetLength,
+            // La matière n'est pas encore connue : c'est le modèle qui la trouve, et la
+            // fonction la devine sur le texte pour choisir ses consignes de rédaction.
+            sourceKind: source
         )
 
         // Étape 1 : la fiche. Si elle échoue, rien n'a été créé.

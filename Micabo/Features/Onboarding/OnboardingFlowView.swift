@@ -44,6 +44,7 @@ struct OnboardingFlowView: View {
         case .welcome: WelcomeStepView()
         case .level: LevelStepView()
         case .language: LanguageStepView()
+        case .country: CountryStepView()
         case .personalizeIntro: PersonalizeIntroStepView()
         case .goal: GoalStepView()
         case .forgetting: ForgettingStepView()

@@ -22,7 +22,11 @@ struct LevelStepView: View {
         ) {
             MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
                 ForEach(StudyLevel.allCases) { level in
-                    OnboardingChoiceChip(title: level.title, isSelected: model.level == level) {
+                    OnboardingChoiceChip(
+                        title: level.title,
+                        emoji: level.emoji,
+                        isSelected: model.level == level
+                    ) {
                         Haptics.selection()
                         model.level = level
                     }

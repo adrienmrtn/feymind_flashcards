@@ -28,6 +28,19 @@ enum LearningGoal: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Un emoji par réponse. Il ne remplace pas le libellé, il l'accroche : on retrouve sa
+    /// réponse d'un regard au lieu de relire sept lignes qui commencent toutes par un verbe.
+    var emoji: String {
+        switch self {
+        case .language: "🗣️"
+        case .exam: "📝"
+        case .competition: "🏁"
+        case .lectures: "📚"
+        case .profession: "💼"
+        case .curiosity: "🧠"
+        case .other: "✨"
+        }
+    }
 }
 
 /// Où en est l'étudiant dans ses études.
@@ -58,6 +71,18 @@ enum StudyLevel: String, CaseIterable, Identifiable {
         }
     }
 
+    var emoji: String {
+        switch self {
+        case .lycee: "🎒"
+        case .prepa: "📐"
+        case .licence: "🎓"
+        case .sante: "🩺"
+        case .master: "🔬"
+        case .concours: "🏁"
+        case .other: "✨"
+        }
+    }
+
     /// Ce à quoi le stade engage la fiche, dit en une ligne dans les réglages.
     ///
     /// Le même chapitre ne s'écrit pas pareil pour un terminale et pour un PASS : ce n'est
@@ -77,11 +102,87 @@ enum StudyLevel: String, CaseIterable, Identifiable {
     }
 }
 
+/// Où l'étudiant est scolarisé.
+///
+/// La question est posée juste après la langue, et pour la même raison : parler français ne
+/// dit pas dans quel système on étudie. « Les attendus du bac » ne veut rien dire pour un
+/// lycéen belge, un étudiant québécois ne passe pas de concours de première année de santé,
+/// et « baccalauréat » désigne au Québec un diplôme universitaire. Une fiche qui renvoie à un
+/// examen qui n'existe pas là où on étudie perd sa raison d'être.
+///
+/// Dix pays, et pas une liste mondiale : ce sont ceux où l'on étudie en français. Le drapeau
+/// tient lieu d'icône, parce qu'il se reconnaît plus vite que son nom.
+enum SchoolingCountry: String, CaseIterable, Identifiable {
+    case fr
+    case be
+    case ch
+    case ca
+    case ma
+    case dz
+    case tn
+    case sn
+    case ci
+    case lu
+
+    var id: String { rawValue }
+
+    var name: String {
+        switch self {
+        case .fr: "France"
+        case .be: "Belgique"
+        case .ch: "Suisse"
+        case .ca: "Canada"
+        case .ma: "Maroc"
+        case .dz: "Algérie"
+        case .tn: "Tunisie"
+        case .sn: "Sénégal"
+        case .ci: "Côte d'Ivoire"
+        case .lu: "Luxembourg"
+        }
+    }
+
+    var flag: String {
+        switch self {
+        case .fr: "🇫🇷"
+        case .be: "🇧🇪"
+        case .ch: "🇨🇭"
+        case .ca: "🇨🇦"
+        case .ma: "🇲🇦"
+        case .dz: "🇩🇿"
+        case .tn: "🇹🇳"
+        case .sn: "🇸🇳"
+        case .ci: "🇨🇮"
+        case .lu: "🇱🇺"
+        }
+    }
+
+    /// Le système scolaire, dit en trois mots. C'est ce qui justifie la question.
+    var systemHint: String {
+        switch self {
+        case .fr: "Brevet, bac, prépa, PASS"
+        case .be: "CESS, bachelier, master"
+        case .ch: "Maturité, bachelor, master"
+        case .ca: "Secondaire, cégep, université"
+        case .ma: "Bac marocain, prépa, concours"
+        case .dz: "Bac algérien, licence, master"
+        case .tn: "Bac tunisien, licence, mastère"
+        case .sn: "Bac, licence, grandes écoles"
+        case .ci: "Bac, licence, grandes écoles"
+        case .lu: "Diplôme de fin d'études, bachelor"
+        }
+    }
+
+    /// Ce que Micabo suppose quand la question n'a pas été posée : c'est le pays de la
+    /// grande majorité des utilisateurs, et le seul que l'app connaissait avant.
+    static let fallback = SchoolingCountry.fr
+}
+
 /// Réponses de l'onboarding, conservées localement pour personnaliser l'app.
 enum OnboardingPreferences {
     enum Key {
         static let completed = "micabo.onboarding.completed"
         static let level = "micabo.onboarding.level"
+        static let country = "micabo.onboarding.country"
         static let goal = "micabo.onboarding.goal"
         static let goals = "micabo.onboarding.goals"
         static let forgetsOften = "micabo.onboarding.forgetsOften"
@@ -93,7 +194,7 @@ enum OnboardingPreferences {
         static let completedAt = "micabo.onboarding.completedAt"
 
         static let all = [
-            completed, level, goal, goals, forgetsOften, subjects,
+            completed, level, country, goal, goals, forgetsOften, subjects,
             institutionId, institutionName,
             dailyMinutes, notificationsOptIn, completedAt
         ]
@@ -124,6 +225,22 @@ enum OnboardingPreferences {
     static var studyLevel: StudyLevel? {
         get { level.flatMap(StudyLevel.init(rawValue:)) }
         set { level = newValue?.rawValue }
+    }
+
+    /// Le pays de scolarisation. Absent, on suppose la France : c'est ce que l'app faisait
+    /// implicitement avant de poser la question.
+    static var schoolingCountry: SchoolingCountry {
+        get {
+            defaults.string(forKey: Key.country)
+                .flatMap(SchoolingCountry.init(rawValue:)) ?? .fallback
+        }
+        set { defaults.set(newValue.rawValue, forKey: Key.country) }
+    }
+
+    /// Vrai quand la question a été posée. Sert aux réglages, pour distinguer un choix d'un
+    /// défaut.
+    static var hasChosenCountry: Bool {
+        defaults.string(forKey: Key.country) != nil
     }
 
     /// Objectifs déclarés. Une seule réponse était possible auparavant : la clé

@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var model = AppConfig.aiModel
     @State private var dailyMinutes = OnboardingPreferences.dailyMinutes
     @State private var studyLevel = OnboardingPreferences.studyLevel
+    @State private var country = OnboardingPreferences.schoolingCountry
     @AppStorage(SheetPreferences.lengthKey) private var sheetLength = SheetLength.default
     @State private var showResetConfirmation = false
 
@@ -96,6 +97,23 @@ struct SettingsView: View {
                 MicaboHairline(inset: 71)
 
                 Menu {
+                    Picker("Pays", selection: $country) {
+                        ForEach(SchoolingCountry.allCases) { value in
+                            Text("\(value.flag) \(value.name)").tag(value)
+                        }
+                    }
+                } label: {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji(country.flag), background: MicaboColor.tilePastels[2]),
+                        title: "Pays",
+                        subtitle: country.systemHint,
+                        accessory: .value(country.name)
+                    )
+                }
+
+                MicaboHairline(inset: 71)
+
+                Menu {
                     Picker("Longueur des fiches", selection: $sheetLength) {
                         ForEach(SheetLength.allCases) { length in
                             Text("\(length.title) · \(length.readingHint)").tag(length)
@@ -112,10 +130,14 @@ struct SettingsView: View {
             }
             .micaboGroup()
 
-            MicaboSectionFootnote(text: "Micabo écrit les fiches pour ce niveau : le vocabulaire, la profondeur des explications et ce qui est signalé comme attendu à l'épreuve en dépendent. La longueur se choisit aussi au moment d'un import.")
+            MicaboSectionFootnote(text: "Micabo écrit les fiches pour ce niveau et ce système scolaire : le vocabulaire, la profondeur des explications et les examens auxquels la fiche renvoie en dépendent. La longueur se choisit aussi au moment d'un import.")
         }
         .onChange(of: studyLevel) { _, newValue in
             OnboardingPreferences.studyLevel = newValue
+            Haptics.selection()
+        }
+        .onChange(of: country) { _, newValue in
+            OnboardingPreferences.schoolingCountry = newValue
             Haptics.selection()
         }
         .onChange(of: sheetLength) { _, _ in

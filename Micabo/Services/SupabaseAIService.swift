@@ -22,7 +22,10 @@ struct SupabaseAIService: AIService {
             "hintTitle": request.hintTitle ?? "",
             "sourceName": request.sourceName ?? "",
             "level": request.studyLevel?.rawValue ?? "",
+            "country": request.country?.rawValue ?? "",
             "length": request.sheetLength.rawValue,
+            "subject": request.subject ?? "",
+            "source": request.sourceKind?.rawValue ?? "",
             "model": AppConfig.aiModel
         ]
 
@@ -42,6 +45,7 @@ struct SupabaseAIService: AIService {
             "quota": request.quota.wireCounts,
             "existing": request.existingFronts,
             "kinds": request.quota.wireKinds,
+            "subject": request.subject ?? "",
             "model": AppConfig.aiModel
         ]
 

@@ -8,6 +8,7 @@ import {
   FalError,
   jsonResponse,
 } from "../_shared/fal.ts";
+import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
 
 interface RequestBody {
   title?: string;
@@ -18,6 +19,8 @@ interface RequestBody {
   kinds?: string[];
   /** Nombre exact de cartes par format : { basic, cloze, choice }. */
   quota?: Record<string, number>;
+  /** Matière du cours, quand elle est connue : elle change ce qu'une carte doit demander. */
+  subject?: string;
   model?: string;
 }
 
@@ -253,8 +256,13 @@ Deno.serve(async (request: Request) => {
       .map((format) => `${quota[format]} ${FORMAT_LABELS[format]}`)
       .join(", ");
 
+    // La matière change ce qu'une carte doit demander : une date en histoire, une condition
+    // d'application en droit, un mot dans sa langue en langue vivante.
+    const subjectBrief = disciplineBrief(detectDiscipline(context, body.title, body.subject));
+
     const sections = [
       `Cours : ${body.title ?? "Sans titre"}`,
+      subjectBrief,
       `Génère exactement ${count} flashcards, réparties ainsi : ${breakdown}. Ces nombres ne se négocient pas.`,
       allowedKinds.size > 1
         ? `Écris-les dans l'ordre : d'abord les "basic", puis les "cloze", puis les "choice".`

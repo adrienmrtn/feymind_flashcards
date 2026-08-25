@@ -16,6 +16,7 @@ struct GoalStepView: View {
                 ForEach(LearningGoal.allCases) { goal in
                     OnboardingChoiceRow(
                         title: goal.title,
+                        emoji: goal.emoji,
                         isSelected: selection.contains(goal)
                     ) {
                         toggle(goal)

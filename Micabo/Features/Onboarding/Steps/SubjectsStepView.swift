@@ -40,7 +40,6 @@ struct SubjectsStepView: View {
         OnboardingScaffold(
             eyebrow: "Question 3 sur 3",
             title: "Tu révises quoi ?",
-            subtitle: "Autant de matières que tu veux.",
             titleSize: 28
         ) {
             VStack(alignment: .leading, spacing: 20) {
@@ -55,6 +54,10 @@ struct SubjectsStepView: View {
                             ForEach(family.subjects, id: \.self) { subject in
                                 SubjectChip(
                                     title: subject,
+                                    // L'emoji d'une matière vient d'où viennent ceux des
+                                    // cours : une table unique, et pas une deuxième liste à
+                                    // maintenir en parallèle de celle-ci.
+                                    emoji: CourseEmoji.derive(subject: subject, title: subject),
                                     isSelected: model.subjects.contains(subject)
                                 ) {
                                     toggle(subject)
@@ -88,6 +91,7 @@ struct SubjectsStepView: View {
 
 private struct SubjectChip: View {
     let title: String
+    var emoji: String?
     let isSelected: Bool
     var action: () -> Void
 
@@ -97,6 +101,9 @@ private struct SubjectChip: View {
                 if isSelected {
                     Image(systemName: "checkmark")
                         .font(.system(size: 9, weight: .bold))
+                } else if let emoji {
+                    Text(emoji)
+                        .font(.system(size: 13))
                 }
                 Text(title)
                     .font(MicaboFont.hanken(13, weight: .medium))

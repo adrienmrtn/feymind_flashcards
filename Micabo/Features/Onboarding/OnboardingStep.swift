@@ -12,6 +12,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case welcome
     case level
     case language
+    case country
     case personalizeIntro
     case goal
     case forgetting

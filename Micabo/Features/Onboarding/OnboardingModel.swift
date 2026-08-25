@@ -8,6 +8,7 @@ final class OnboardingModel {
     private(set) var step: OnboardingStep = .welcome
 
     var level: StudyLevel?
+    var country: SchoolingCountry = .fallback
     var goals: Set<LearningGoal> = []
     var forgetsOften: Bool?
     var subjects: Set<String> = []
@@ -47,6 +48,7 @@ final class OnboardingModel {
     /// une sortie en cours de route ne perd que la question en cours.
     private func persist() {
         OnboardingPreferences.level = level?.rawValue
+        OnboardingPreferences.schoolingCountry = country
         OnboardingPreferences.goals = goals.map(\.rawValue).sorted()
         OnboardingPreferences.forgetsOften = forgetsOften
         OnboardingPreferences.subjects = subjects.sorted()

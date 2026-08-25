@@ -18,7 +18,8 @@ final class OnboardingFlowTests: XCTestCase {
     // MARK: - Ouverture
 
     /// La question du niveau vient juste après l'accroche : c'est elle qui situe tout le
-    /// reste du parcours.
+    /// reste du parcours. Le pays suit la langue, parce que parler français ne dit pas dans
+    /// quel système on étudie.
     func testLevelQuestionComesRightAfterTheHook() {
         let model = OnboardingModel()
         XCTAssertEqual(model.step, .welcome)
@@ -28,6 +29,9 @@ final class OnboardingFlowTests: XCTestCase {
 
         model.advance()
         XCTAssertEqual(model.step, .language)
+
+        model.advance()
+        XCTAssertEqual(model.step, .country)
     }
 
     // MARK: - Démonstration
@@ -117,6 +121,55 @@ final class OnboardingFlowTests: XCTestCase {
             XCTAssertFalse(level.title.isEmpty, "\(level) doit avoir un libellé")
         }
         XCTAssertEqual(StudyLevel.allCases.count, 7)
+    }
+
+    /// Chaque réponse porte son emoji : c'est ce qui fait retrouver sa réponse d'un regard
+    /// au lieu de relire sept lignes qui commencent toutes pareil.
+    func testEveryAnswerCarriesAnEmoji() {
+        for level in StudyLevel.allCases {
+            XCTAssertFalse(level.emoji.isEmpty, "\(level) doit porter un emoji")
+        }
+        for goal in LearningGoal.allCases {
+            XCTAssertFalse(goal.emoji.isEmpty, "\(goal) doit porter un emoji")
+        }
+        for country in SchoolingCountry.allCases {
+            XCTAssertFalse(country.flag.isEmpty, "\(country) doit porter son drapeau")
+        }
+    }
+
+    // MARK: - Pays de scolarisation
+
+    /// « Les attendus du bac » ne veut rien dire pour un lycéen belge : le pays est écrit
+    /// comme le niveau, et il commande les mêmes consignes de rédaction.
+    func testCountryIsPersistedOnAdvance() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        let model = self.model(advancingTo: .country)
+        model.country = .be
+        model.advance()
+
+        XCTAssertEqual(OnboardingPreferences.schoolingCountry, .be)
+        XCTAssertTrue(OnboardingPreferences.hasChosenCountry)
+    }
+
+    /// Sans réponse, on suppose la France : c'est ce que l'app faisait implicitement avant
+    /// que la question existe, et les fiches déjà écrites ne doivent pas changer de sens.
+    func testFranceIsAssumedWhenTheQuestionWasNeverAsked() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        XCTAssertFalse(OnboardingPreferences.hasChosenCountry)
+        XCTAssertEqual(OnboardingPreferences.schoolingCountry, .fr)
+    }
+
+    func testEveryCountryDescribesItsSchoolSystem() {
+        for country in SchoolingCountry.allCases {
+            XCTAssertFalse(country.name.isEmpty, "\(country) doit avoir un nom")
+            XCTAssertFalse(country.systemHint.isEmpty, "\(country) doit dire son système scolaire")
+        }
+        // Le brut est envoyé à la fonction : le renommer changerait la consigne de rédaction.
+        XCTAssertEqual(SchoolingCountry.fr.rawValue, "fr")
     }
 
     // MARK: - Intervalles

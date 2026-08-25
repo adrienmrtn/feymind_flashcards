@@ -8,7 +8,15 @@ struct CourseGenerationRequest {
     var sourceName: String?
     /// Pour qui la fiche est écrite. Absent, le modèle écrit sans niveau supposé.
     var studyLevel: StudyLevel? = nil
+    /// Où l'étudiant est scolarisé : « attendus du bac » ne veut rien dire en Belgique.
+    var country: SchoolingCountry? = nil
     var sheetLength: SheetLength = .default
+    /// Matière, quand elle est déjà connue. À l'import elle ne l'est pas : c'est le modèle
+    /// qui la trouve, et la fonction la devine sur le texte pour choisir ses consignes.
+    var subject: String? = nil
+    /// Comment le texte a été obtenu. Une photo passée à l'OCR ne se relit pas comme un
+    /// document Word, et c'est ce qui permet de se méfier des mots mal lus.
+    var sourceKind: CourseSource? = nil
 }
 
 struct FlashcardGenerationRequest {
@@ -16,6 +24,7 @@ struct FlashcardGenerationRequest {
     var courseContext: String
     var existingFronts: [String]
     var quota: QuestionQuota = .default
+    var subject: String? = nil
 }
 
 /// Un passage de la fiche que l'utilisateur a sélectionné et veut comprendre.

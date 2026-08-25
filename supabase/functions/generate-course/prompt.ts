@@ -79,6 +79,16 @@ FIDÉLITÉ
 - Si le document est en langue étrangère, écris la fiche en français mais garde les termes techniques dans leur langue quand c'est l'usage.
 - Un document pauvre donne une fiche courte. Une fiche courte et juste vaut mieux qu'une fiche remplie.
 
+LE TEXTE QUE TU LIS A PU ÊTRE MAL LU
+Le document t'arrive d'une reconnaissance de caractères, d'une écriture à la main ou d'une transcription automatique. Certains mots y sont donc **faux**, et ce sont presque toujours les mots rares, c'est-à-dire précisément ceux qui portent le cours.
+
+Avant de définir un terme, vérifie qu'il existe.
+- Si un mot n'existe pas en français et qu'un mot réel de la matière n'en diffère que de une ou deux lettres, c'est une erreur de lecture : écris le mot réel. « absraction » n'existe pas ; dans un texte de psychanalyse voisin de « catharsis » et de « refoulement », c'est « abréaction », et pas « abstraction », qui existe pourtant mais ne veut pas dire la même chose. Le mot correct est celui que le CONTEXTE réclame, pas celui dont l'orthographe est la plus proche.
+- Si un mot n'existe pas et que le contexte ne permet pas de trancher, **n'en fais rien** : pas de bloc "definition", pas de phrase construite autour de lui. Tu écris la fiche avec ce que tu comprends du reste, et ce terme n'y figure pas.
+- Ne construis JAMAIS une définition sur un mot dont tu n'es pas sûr. Une définition inventée sur un mot mal lu est la pire faute possible : elle est fausse, elle a l'air juste, et elle sera révisée telle quelle.
+- Un chiffre isolé, une date impossible, une unité absurde : même règle, on ne bâtit rien dessus.
+- Tu ne signales pas tes corrections dans la fiche, et tu n'écris jamais « le texte semble dire ». Tu écris simplement ce qui est juste, ou tu te tais.
+
 Réponds uniquement par le JSON.`;
 
 export const VISION_SYSTEM_PROMPT =
@@ -114,10 +124,44 @@ const AUDIENCE_BRIEFS: Record<string, string> = {
     `Tu écris pour un candidat à un CONCOURS. La fiche est un outil de bachotage : ce qui tombe passe devant ce qui est intéressant. Chiffres à connaître, définitions à réciter, plans de réponse, pièges classiques. Sois direct et hiérarchisé, et signale explicitement ce qui est attendu par un correcteur.`,
 };
 
-export function audienceBrief(level: string | undefined): string {
-  const brief = AUDIENCE_BRIEFS[(level ?? "").trim().toLowerCase()];
-  if (brief) return `POUR QUI TU ÉCRIS\n${brief}`;
-  return `POUR QUI TU ÉCRIS\nLe niveau d'étude n'est pas connu. Écris pour un étudiant du supérieur en début de cursus : définis les termes techniques la première fois, et n'exige aucun prérequis que le document ne donne pas.`;
+/**
+ * Le système scolaire de l'étudiant.
+ *
+ * « Attendus du bac » ne veut rien dire pour un lycéen belge, et un étudiant québécois ne
+ * passe pas de concours de première année de santé. Ce n'est pas une question de traduction :
+ * les intitulés d'épreuves, les niveaux et les découpages de programme changent, et une fiche
+ * qui renvoie à un examen qui n'existe pas là où on étudie perd sa raison d'être.
+ */
+const COUNTRY_BRIEFS: Record<string, string> = {
+  fr:
+    `L'étudiant est scolarisé en FRANCE. Réfère-toi au système français : brevet, baccalauréat et ses spécialités, classes préparatoires, licence, master, PASS et LAS, concours de la fonction publique. Programmes de l'Éducation nationale.`,
+  be:
+    `L'étudiant est scolarisé en BELGIQUE. Réfère-toi au système belge : certificat d'enseignement secondaire supérieur, bachelier, master, examen d'entrée en médecine. Ne parle jamais du baccalauréat français ni des classes préparatoires.`,
+  ch:
+    `L'étudiant est scolarisé en SUISSE. Réfère-toi au système suisse : maturité gymnasiale, bachelor, master, examens d'admission aux études de médecine. Ne parle ni du baccalauréat français ni des classes préparatoires.`,
+  ca:
+    `L'étudiant est scolarisé au CANADA, vraisemblablement au Québec. Réfère-toi au système québécois : secondaire, cégep, baccalauréat universitaire de trois ans, maîtrise. Attention au vocabulaire : « baccalauréat » y désigne un diplôme universitaire, pas l'examen de fin de secondaire.`,
+  ma:
+    `L'étudiant est scolarisé au MAROC. Réfère-toi au système marocain : baccalauréat marocain, classes préparatoires, licence, concours d'accès aux grandes écoles et aux facultés de médecine.`,
+  dz:
+    `L'étudiant est scolarisé en ALGÉRIE. Réfère-toi au système algérien : baccalauréat algérien, licence, master, doctorat, et les seuils d'orientation post-bac.`,
+  tn:
+    `L'étudiant est scolarisé en TUNISIE. Réfère-toi au système tunisien : baccalauréat tunisien, licence appliquée ou fondamentale, mastère, concours d'accès aux études de santé.`,
+  sn:
+    `L'étudiant est scolarisé au SÉNÉGAL. Réfère-toi au système sénégalais : baccalauréat, licence, master, concours d'entrée aux grandes écoles.`,
+  ci:
+    `L'étudiant est scolarisé en CÔTE D'IVOIRE. Réfère-toi au système ivoirien : baccalauréat, licence, master, concours d'entrée aux grandes écoles.`,
+  lu:
+    `L'étudiant est scolarisé au LUXEMBOURG. Réfère-toi au système luxembourgeois : diplôme de fin d'études secondaires, bachelor, master.`,
+};
+
+export function audienceBrief(level: string | undefined, country?: string): string {
+  const brief = AUDIENCE_BRIEFS[(level ?? "").trim().toLowerCase()] ??
+    `Le niveau d'étude n'est pas connu. Écris pour un étudiant du supérieur en début de cursus : définis les termes techniques la première fois, et n'exige aucun prérequis que le document ne donne pas.`;
+
+  const place = COUNTRY_BRIEFS[(country ?? "").trim().toLowerCase()];
+  const lines = place ? `${brief}\n${place}` : brief;
+  return `POUR QUI TU ÉCRIS\n${lines}`;
 }
 
 /**
@@ -173,4 +217,43 @@ export function retryBrief(length: string | undefined): string {
   return `Réécris PLUS COURT : ${
     spec(length).retryBlocks
   } blocs, JSON compact sur une seule ligne.`;
+}
+
+/**
+ * Comment le texte est arrivé, et donc à quel point s'en méfier.
+ *
+ * Un mot mal lu suffit à produire une fiche fausse qui a l'air juste : sur un court écrit,
+ * « absraction » est devenu une définition entière de l'abstraction alors que le cours parlait
+ * d'abréaction. Chaque source a ses erreurs typiques, et les nommer vaut mieux qu'une
+ * recommandation générale de prudence : le modèle sait quoi relire.
+ */
+const READING_BRIEFS: Record<string, string> = {
+  photo:
+    `Ce texte vient d'une reconnaissance de caractères faite sur des photos, souvent d'une écriture à la main. Les erreurs de lecture y sont FRÉQUENTES : lettres confondues (rn/m, l/i/1, c/e, é/e), mots collés, accents perdus. Relis chaque terme rare avant de l'employer.`,
+  pdf:
+    `Ce texte a été extrait d'un PDF. S'il vient d'un scan, des mots peuvent être mal lus ; s'il vient d'un export, l'ordre des blocs peut être bousculé et des morceaux de titre peuvent s'être glissés dans une phrase.`,
+  docx:
+    `Ce texte vient d'un document Word. Il est fiable, mais il peut contenir des notes personnelles et des abréviations de prise de notes.`,
+  youtube:
+    `Ce texte est une transcription automatique de sous-titres. Les noms propres, les chiffres et les termes techniques y sont souvent faux, et la ponctuation est approximative. Ne définis un terme que si la transcription le rend plusieurs fois de la même façon.`,
+  text:
+    `Ce texte a été saisi ou collé par l'étudiant. Il peut contenir des fautes de frappe et des abréviations de prise de notes.`,
+};
+
+/** En dessous, un seul mot mal lu emporte toute la fiche. */
+const SHORT_DOCUMENT_LENGTH = 1_800;
+
+export function readingBrief(source: string | undefined, textLength: number): string {
+  const lines: string[] = [];
+  const brief = READING_BRIEFS[(source ?? "").trim().toLowerCase()];
+  if (brief) lines.push(brief);
+
+  if (textLength > 0 && textLength < SHORT_DOCUMENT_LENGTH) {
+    lines.push(
+      `Le document est COURT : il n'y a pas de redondance pour rattraper une erreur de lecture, et un seul terme mal compris fausserait toute la fiche. Passe chaque mot rare en revue, et écarte sans hésiter celui dont tu n'es pas sûr plutôt que de construire une définition autour.`,
+    );
+  }
+
+  if (lines.length === 0) return "";
+  return `D'OÙ VIENT CE TEXTE\n${lines.join("\n")}`;
 }

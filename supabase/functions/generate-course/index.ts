@@ -14,10 +14,12 @@ import {
   sheetToPlainText,
   stripInlineMarkup,
 } from "../_shared/sheet.ts";
+import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
 import {
   audienceBrief,
   COURSE_SYSTEM_PROMPT,
   lengthBrief,
+  readingBrief,
   retryBrief,
   VISION_SYSTEM_PROMPT,
 } from "./prompt.ts";
@@ -50,8 +52,14 @@ interface RequestBody {
   sourceName?: string;
   /** Stade d'étude choisi à l'inscription : « lycee », « prepa », « sante »… */
   level?: string;
+  /** Pays de scolarisation, en deux lettres : « fr », « be », « ca »… */
+  country?: string;
   /** Longueur de fiche demandée : « brief », « standard » ou « deep ». */
   length?: string;
+  /** Matière, quand l'application la connaît déjà. Sinon elle est devinée. */
+  subject?: string;
+  /** Comment le texte a été obtenu : « photo », « pdf », « youtube », « text », « docx ». */
+  source?: string;
   model?: string;
 }
 
@@ -97,10 +105,19 @@ Deno.serve(async (request: Request) => {
     const sections: string[] = [];
     if (body.hintTitle) sections.push(`Titre souhaité par l'étudiant : ${body.hintTitle}`);
     if (body.sourceName) sections.push(`Nom du fichier source : ${body.sourceName}`);
-    // Le destinataire et le volume passent avant le document : ce sont les deux consignes qui
-    // décident de la façon de lire tout ce qui suit.
-    sections.push(audienceBrief(body.level));
+    // Le destinataire, la matière et le volume passent avant le document : ce sont les
+    // consignes qui décident de la façon de lire tout ce qui suit.
+    sections.push(audienceBrief(body.level, body.country));
+
+    const discipline = detectDiscipline(text, body.hintTitle, body.subject);
+    const subjectBrief = disciplineBrief(discipline);
+    if (subjectBrief) sections.push(subjectBrief);
+
     sections.push(lengthBrief(body.length, text.length > LONG_DOCUMENT_LENGTH));
+
+    const reading = readingBrief(body.source, text.length);
+    if (reading) sections.push(reading);
+
     if (text.length > 0) sections.push(`TEXTE EXTRAIT DU DOCUMENT :\n${text}`);
     if (visualNotes) sections.push(`DESCRIPTION DES VISUELS DU DOCUMENT :\n${visualNotes}`);
     sections.push("JSON compact, une seule ligne, sans indentation.");

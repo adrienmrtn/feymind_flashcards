@@ -555,13 +555,16 @@ struct OnboardingHint: View {
     }
 }
 
-/// Rangée de choix : libellé, coche, et rien de plus.
+/// Rangée de choix : un emoji, un libellé, une coche.
 ///
-/// La tuile d'icône a disparu. Une icône par ligne sur six lignes fait six pastilles
-/// colorées qui n'apprennent rien, et c'est précisément ce qui rendait ces écrans
-/// bavards : on lisait des pictogrammes au lieu de lire les réponses.
+/// Les tuiles pastel qui vivaient ici ont été retirées, et à juste titre : six pastilles
+/// colorées à gauche de six lignes faisaient lire des pictogrammes au lieu des réponses.
+/// **Un emoji n'est pas une tuile.** Posé à même la ligne, sans fond ni cadre, il donne à
+/// chaque réponse un point d'accroche que l'œil retrouve sans lire, et une liste de réponses
+/// scolaires cesse de ressembler à un formulaire administratif.
 struct OnboardingChoiceRow: View {
     let title: String
+    var emoji: String?
     var subtitle: String?
     var isSelected: Bool
     var action: () -> Void
@@ -569,6 +572,11 @@ struct OnboardingChoiceRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
+                if let emoji {
+                    Text(emoji)
+                        .font(.system(size: 22))
+                }
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(MicaboFont.hanken(16, weight: .medium))
@@ -611,13 +619,17 @@ struct OnboardingChoiceRow: View {
 struct OnboardingChoiceTile: View {
     let title: String
     var systemImage: String?
+    var emoji: String?
     var isSelected: Bool
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
             VStack(spacing: 10) {
-                if let systemImage {
+                if let emoji {
+                    Text(emoji)
+                        .font(.system(size: 30))
+                } else if let systemImage {
                     Image(systemName: systemImage)
                         .font(.system(size: 22, weight: .medium))
                         .foregroundStyle(isSelected ? MicaboColor.ink : MicaboColor.inkTertiary)
@@ -648,20 +660,30 @@ struct OnboardingChoiceTile: View {
 ///
 /// Sept niveaux d'études en sept rangées font un écran qu'on fait défiler. En pastilles qui
 /// s'enroulent, ils tiennent en trois lignes et se lisent d'un coup d'œil, ce qui est tout
-/// ce qu'on demande à une question fermée.
+/// ce qu'on demande à une question fermée. L'emoji tient sur la même ligne que le libellé :
+/// il aide à retrouver sa réponse d'un regard, et un drapeau se reconnaît plus vite que le
+/// nom du pays.
 struct OnboardingChoiceChip: View {
     let title: String
+    var emoji: String?
     let isSelected: Bool
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(MicaboFont.hanken(15, weight: .medium))
-                .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.ink)
-                .padding(.vertical, 12)
-                .padding(.horizontal, 18)
-                .background(isSelected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
+            HStack(spacing: 7) {
+                if let emoji {
+                    Text(emoji)
+                        .font(.system(size: 17))
+                }
+
+                Text(title)
+                    .font(MicaboFont.hanken(15, weight: .medium))
+                    .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.ink)
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 18)
+            .background(isSelected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
         .animation(OnboardingMotion.tap, value: isSelected)

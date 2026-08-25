@@ -18,7 +18,7 @@ struct ForgettingStepView: View {
             HStack(spacing: 10) {
                 OnboardingChoiceTile(
                     title: "Oui, tout le temps",
-                    systemImage: "arrow.down.right.circle",
+                    emoji: "😮‍💨",
                     isSelected: selection == true
                 ) {
                     select(true)
@@ -26,7 +26,7 @@ struct ForgettingStepView: View {
 
                 OnboardingChoiceTile(
                     title: "Non, ça va",
-                    systemImage: "checkmark.circle",
+                    emoji: "😌",
                     isSelected: selection == false
                 ) {
                     select(false)

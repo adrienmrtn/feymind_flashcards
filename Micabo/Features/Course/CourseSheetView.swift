@@ -374,7 +374,12 @@ struct CourseSheetView: View {
             hintTitle: course.title,
             sourceName: course.sourceFileName,
             studyLevel: OnboardingPreferences.studyLevel,
-            sheetLength: length
+            country: OnboardingPreferences.schoolingCountry,
+            sheetLength: length,
+            // Ici la matière est connue, trouvée au premier passage ou corrigée à la main :
+            // elle vaut mieux que des mots comptés sur le texte.
+            subject: course.subject,
+            sourceKind: course.source
         )
 
         do {

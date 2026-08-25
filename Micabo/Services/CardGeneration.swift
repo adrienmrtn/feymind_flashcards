@@ -38,7 +38,10 @@ enum CardGeneration {
             courseTitle: course.title,
             courseContext: context(for: course),
             existingFronts: course.cards.map(\.front),
-            quota: quota
+            quota: quota,
+            // Une carte de droit ne demande pas la même chose qu'une carte de langue : la
+            // matière du cours décide de ce qu'il faut interroger.
+            subject: course.subject
         )
 
         var generated: [GeneratedFlashcard]
