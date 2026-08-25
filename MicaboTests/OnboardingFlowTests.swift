@@ -90,7 +90,7 @@ final class OnboardingFlowTests: XCTestCase {
     /// d'un parcours ne vient pas de ses fonds.
     func testOnlyTwoScreensLeaveTheCanvas() {
         XCTAssertEqual(OnboardingStep.welcome.surface, .ink)
-        XCTAssertEqual(OnboardingStep.personalizing.surface, .indigo)
+        XCTAssertEqual(OnboardingStep.personalizing.surface, .accent)
 
         let dark = OnboardingStep.allCases.filter(\.surface.isDark)
         XCTAssertEqual(dark, [.welcome, .personalizing])

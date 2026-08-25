@@ -88,7 +88,7 @@ extension AnyTransition {
 
 /// Jauge fine en haut de l'écran, présente du premier écran au dernier.
 ///
-/// Elle garde l'indigo de la progression partout où le fond est clair, et s'inverse sur
+/// Elle garde le vert de la progression partout où le fond est clair, et s'inverse sur
 /// les écrans sombres : c'est la lisibilité qui décide, pas l'écran.
 private struct OnboardingProgressBar: View {
     let step: OnboardingStep

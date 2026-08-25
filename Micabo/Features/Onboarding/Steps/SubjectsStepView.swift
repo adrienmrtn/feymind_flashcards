@@ -40,7 +40,8 @@ struct SubjectsStepView: View {
         OnboardingScaffold(
             eyebrow: "Question 3 sur 3",
             title: "Tu révises quoi ?",
-            titleSize: 28
+            titleSize: 28,
+            animatesTitle: true
         ) {
             VStack(alignment: .leading, spacing: 20) {
                 ForEach(families) { family in

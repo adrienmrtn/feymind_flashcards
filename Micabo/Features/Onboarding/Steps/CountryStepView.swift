@@ -20,7 +20,8 @@ struct CountryStepView: View {
             eyebrow: "Ton école",
             title: "Tu étudies où ?",
             titleSize: 32,
-            scrolls: false
+            scrolls: false,
+            animatesTitle: true
         ) {
             VStack(alignment: .leading, spacing: 14) {
                 MicaboFlowLayout(spacing: 8, lineSpacing: 8) {

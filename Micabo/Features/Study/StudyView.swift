@@ -82,7 +82,7 @@ struct StudyView: View {
                     .frame(height: 5)
 
                 Text(totalLabel)
-                    .font(MicaboFont.hanken(12, weight: .semibold))
+                    .font(MicaboFont.number(12, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .monospacedDigit()
 
@@ -688,7 +688,7 @@ struct GradeButtons: View {
 
                         if let interval = intervals[rating] {
                             Text(interval)
-                                .font(MicaboFont.hanken(11, weight: .medium))
+                                .font(MicaboFont.number(11, weight: .semibold))
                                 .monospacedDigit()
                                 .opacity(0.7)
                         }
@@ -969,7 +969,7 @@ private struct CompletionView: View {
                 Spacer(minLength: 0)
 
                 Text("\(count)")
-                    .font(MicaboFont.hanken(14, weight: .bold))
+                    .font(MicaboFont.number(14))
                     .foregroundStyle(GradeButtons.tint(for: rating))
                     .monospacedDigit()
             }
@@ -1002,7 +1002,7 @@ private struct CompletionView: View {
     private func tile(_ value: String, _ label: String, _ tint: Color) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(MicaboFont.hanken(21, weight: .bold))
+                .font(MicaboFont.number(21))
                 .foregroundStyle(tint)
                 .monospacedDigit()
                 .lineLimit(1)

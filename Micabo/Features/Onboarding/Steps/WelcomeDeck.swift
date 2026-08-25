@@ -123,12 +123,12 @@ struct WelcomeDeck: View {
             ),
             Item(
                 subject: "Maths",
-                tint: Color(hex: 0x5B5BD6),
+                tint: MicaboColor.accent,
                 face: .gap(before: "La dérivée de ln(x) vaut", after: "sur son intervalle.", answer: "1/x")
             ),
             Item(
                 subject: "Espagnol",
-                tint: Color(hex: 0x6E5566),
+                tint: Color(hex: 0x8A4A6B),
                 face: .question("Comment dit-on « apprendre par cœur » ?")
             )
         ]

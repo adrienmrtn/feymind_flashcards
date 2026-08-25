@@ -12,12 +12,14 @@ OUTPUT = (
     / "Micabo/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
 )
 
-PAPER_TOP = (250, 249, 255)
-PAPER_BOTTOM = (233, 230, 253)
-INDIGO = (91, 84, 232)
-INDIGO_DEEP = (66, 58, 200)
+# Le vert de Micabo, et pas l'indigo : l'icône portait un violet d'app de productivité,
+# avec un rond menthe pour seul rappel du vert. C'est le vert qui mène maintenant, dans les
+# deux nuances de l'app — le vert profond porte la carte, le menthe vif ponctue.
+PAPER_TOP = (251, 255, 253)
+PAPER_BOTTOM = (222, 244, 235)
+GREEN = (13, 145, 108)
 AMBER = (247, 181, 56)
-MINT = (32, 191, 148)
+MINT = (34, 214, 160)
 
 
 def vertical_gradient(size: int, top: tuple[int, int, int], bottom: tuple[int, int, int]) -> Image.Image:
@@ -55,7 +57,7 @@ def drop_shadow(layer: Image.Image, blur: int, opacity: int) -> Image.Image:
     alpha = layer.split()[3].point(lambda value: min(opacity, value))
     canvas = Image.new("L", (layer.width + pad * 2, layer.height + pad * 2), 0)
     canvas.paste(alpha, (pad, pad))
-    shadow = Image.new("RGBA", canvas.size, (40, 34, 90, 0))
+    shadow = Image.new("RGBA", canvas.size, (18, 52, 42, 0))
     shadow.putalpha(canvas)
     return shadow.filter(ImageFilter.GaussianBlur(blur))
 
@@ -72,7 +74,7 @@ def build() -> Image.Image:
 
     front = Image.new("RGBA", (card_w, card_h), (0, 0, 0, 0))
     front_draw = ImageDraw.Draw(front)
-    front_draw.rounded_rectangle([(0, 0), (card_w - 1, card_h - 1)], radius=radius, fill=INDIGO + (255,))
+    front_draw.rounded_rectangle([(0, 0), (card_w - 1, card_h - 1)], radius=radius, fill=GREEN + (255,))
 
     # Lignes de « prise de notes » sur la carte de devant.
     line_x = 72

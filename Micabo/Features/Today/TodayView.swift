@@ -179,7 +179,7 @@ struct TodayView: View {
                 .font(.system(size: 12, weight: .semibold))
 
             Text("\(streak) j")
-                .font(MicaboFont.hanken(14, weight: .semibold))
+                .font(MicaboFont.number(14, weight: .semibold))
                 .monospacedDigit()
         }
         .foregroundStyle(MicaboColor.caution)
@@ -198,8 +198,8 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .center, spacing: 14) {
                 Text("\(dueCards.count)")
-                    .font(MicaboFont.hanken(58, weight: .bold))
-                    .tracking(-2)
+                    .font(MicaboFont.number(58))
+                    .tracking(-1.5)
                     .foregroundStyle(MicaboColor.ink)
                     .monospacedDigit()
                     .minimumScaleFactor(0.6)

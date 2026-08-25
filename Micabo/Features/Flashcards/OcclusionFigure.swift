@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-/// Schéma d'une carte à occlusion. La zone à trouver est couverte d'un cache indigo au
+/// Schéma d'une carte à occlusion. La zone à trouver est couverte d'un cache à l'accent au
 /// recto ; au verso le cache se lève et laisse un cadre qui montre où regarder.
 ///
 /// Les coordonnées de la zone sont relatives (0…1) : le même schéma se rend correctement

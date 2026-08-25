@@ -1,19 +1,20 @@
 import SwiftUI
 
-/// Fond d'un écran du parcours. Le crème est la règle, mais quelques écraas basculent
-/// sur l'encre ou l'indigo pour donner du rythme : deux écrans voisins ne doivent pas
-/// se ressembler. Le texte reste fer à gauche et le bouton collé en bas, quel que soit
-/// le fond — la variété s'arrête aux couleurs et aux compositions.
+/// Fond d'un écran du parcours. Le crème est la règle, mais deux écrans basculent sur
+/// l'encre ou sur l'accent pour donner du rythme : deux écrans voisins ne doivent pas se
+/// ressembler. Le texte reste fer à gauche et le bouton collé en bas, quel que soit le
+/// fond : la variété s'arrête aux couleurs et aux compositions.
 enum OnboardingSurface {
     case canvas
     case ink
-    case indigo
+    /// Le vert de Micabo en pleine page. Il s'appelait `indigo` quand l'accent l'était.
+    case accent
 
     var background: Color {
         switch self {
         case .canvas: MicaboColor.canvas
         case .ink: MicaboColor.ink
-        case .indigo: MicaboColor.accent
+        case .accent: MicaboColor.accent
         }
     }
 
@@ -33,13 +34,13 @@ enum OnboardingSurface {
         switch self {
         case .canvas: MicaboColor.accent
         case .ink: MicaboColor.accentSoft
-        case .indigo: MicaboColor.onInk.opacity(0.72)
+        case .accent: MicaboColor.onInk.opacity(0.72)
         }
     }
 
-    /// Teinte de la jauge du parcours. Une seule couleur par fond : l'indigo sur le
-    /// crème, l'inverse de l'encre sur les fonds sombres — un indigo posé sur l'indigo
-    /// ne se verrait pas.
+    /// Teinte de la jauge du parcours. Une seule couleur par fond : le vert sur le crème,
+    /// l'inverse de l'encre sur les fonds sombres, puisqu'un vert posé sur le vert ne se
+    /// verrait pas.
     var progressTint: Color {
         isDark ? MicaboColor.onInk : MicaboColor.progress
     }
@@ -127,6 +128,13 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     var titleSize: CGFloat = 30
     var contentSpacing: CGFloat = MicaboSpacing.xl
     var scrolls: Bool = true
+    /// Le titre s'écrit mot à mot au lieu d'apparaître d'un bloc.
+    ///
+    /// Réservé aux **questions** : un titre qui s'écrit sous les yeux donne le rythme d'une
+    /// conversation, et l'animation dure exactement le temps qu'il faut pour la lire. On ne
+    /// l'utilise pas sur un écran de démonstration, où le regard doit aller au contenu, ni
+    /// sur un écran qu'on traverse en deux secondes.
+    var animatesTitle: Bool = false
     var surface: OnboardingSurface = .canvas
     var skip: OnboardingSkip?
     var content: () -> Content
@@ -139,6 +147,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         titleSize: CGFloat = 30,
         contentSpacing: CGFloat = MicaboSpacing.xl,
         scrolls: Bool = true,
+        animatesTitle: Bool = false,
         surface: OnboardingSurface = .canvas,
         skip: OnboardingSkip? = nil,
         @ViewBuilder content: @escaping () -> Content,
@@ -150,6 +159,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.titleSize = titleSize
         self.contentSpacing = contentSpacing
         self.scrolls = scrolls
+        self.animatesTitle = animatesTitle
         self.surface = surface
         self.skip = skip
         self.content = content
@@ -200,13 +210,17 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     .onboardingAppear(index: 0)
                 }
 
-                Text(title)
-                    .font(MicaboFont.hanken(titleSize, weight: .bold))
-                    .foregroundStyle(surface.title)
-                    .tracking(-0.7)
-                    .lineSpacing(-1)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .onboardingAppear(index: 1)
+                if animatesTitle {
+                    OnboardingWordByWordTitle(text: title, size: titleSize)
+                } else {
+                    Text(title)
+                        .font(MicaboFont.hanken(titleSize, weight: .bold))
+                        .foregroundStyle(surface.title)
+                        .tracking(-0.7)
+                        .lineSpacing(-1)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .onboardingAppear(index: 1)
+                }
 
                 if let subtitle {
                     Text(subtitle)

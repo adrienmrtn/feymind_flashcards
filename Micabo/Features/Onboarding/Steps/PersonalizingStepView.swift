@@ -4,7 +4,7 @@ import SwiftUI
 /// Écran 16 : mise en place du profil. Purement visuel — les réponses sont déjà
 /// enregistrées — mais il ne doit jamais laisser croire que l'app a gelé.
 ///
-/// C'est le seul écran indigo plein cadre du parcours : après une série d'écrans crème,
+/// C'est le seul écran vert plein cadre du parcours : après une série d'écrans crème,
 /// il tranche. Trois signaux d'activité tournent en même temps : une barre qui avance en
 /// continu, un pourcentage qui compte image par image, et une accroche qui change à
 /// chaque étape.

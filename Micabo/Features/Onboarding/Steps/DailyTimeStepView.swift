@@ -82,9 +82,9 @@ struct DailyTimeStepView: View {
     private var readout: some View {
         HStack(alignment: .lastTextBaseline, spacing: 6) {
             Text(readoutValue)
-                .font(MicaboFont.hanken(64, weight: .bold))
+                .font(MicaboFont.number(64))
                 .foregroundStyle(MicaboColor.ink)
-                .tracking(-2)
+                .tracking(-1.5)
                 .monospacedDigit()
                 .contentTransition(.numericText(value: Double(minutes)))
                 .animation(OnboardingMotion.shift, value: minutes)

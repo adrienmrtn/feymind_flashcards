@@ -3,7 +3,7 @@ import SwiftUI
 /// Écran 17 : annonce de l'essai gratuit.
 ///
 /// Composition à part dans le parcours : le visuel déborde de la marge droite et le texte
-/// se lit en bas, fer à gauche comme partout. Il tombe entre l'écran indigo de
+/// se lit en bas, fer à gauche comme partout. Il tombe entre l'écran vert de
 /// personnalisation et la liste des jalons, ce qui casse la répétition des mises en page.
 struct TrialOfferStepView: View {
     @Environment(OnboardingModel.self) private var model

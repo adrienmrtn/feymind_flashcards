@@ -18,7 +18,8 @@ struct LevelStepView: View {
             eyebrow: "Pour commencer",
             title: "Tu en es où ?",
             titleSize: 32,
-            scrolls: false
+            scrolls: false,
+            animatesTitle: true
         ) {
             MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
                 ForEach(StudyLevel.allCases) { level in

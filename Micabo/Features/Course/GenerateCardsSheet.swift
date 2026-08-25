@@ -210,7 +210,7 @@ struct MicaboStepper: View {
             }
 
             Text("\(value)")
-                .font(MicaboFont.hanken(16, weight: .semibold))
+                .font(MicaboFont.number(16, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
                 .monospacedDigit()
                 .frame(minWidth: 26)

@@ -10,8 +10,8 @@ struct ForgettingStepView: View {
         OnboardingScaffold(
             eyebrow: "Question 2 sur 3",
             title: "Tu oublies ce que\ntu apprends ?",
-            subtitle: "Sois honnête, personne ne regarde.",
-            scrolls: false
+            scrolls: false,
+            animatesTitle: true
         ) {
             // Deux réponses, deux cases de même taille posées côte à côte : la question
             // est un choix, et un choix se regarde d'un coup.

@@ -10,7 +10,8 @@ struct GoalStepView: View {
         OnboardingScaffold(
             eyebrow: "Question 1 sur 3",
             title: "Tu veux retenir quoi ?",
-            subtitle: "Plusieurs réponses possibles."
+            subtitle: "Plusieurs réponses possibles.",
+            animatesTitle: true
         ) {
             VStack(spacing: 8) {
                 ForEach(LearningGoal.allCases) { goal in

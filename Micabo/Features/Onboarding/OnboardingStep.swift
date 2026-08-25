@@ -43,11 +43,11 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     ///
     /// Deux écrans seulement quittent le crème, et c'est un de moins qu'avant : la variété
     /// d'un parcours ne vient pas de ses fonds, elle vient de ce qu'il y a à regarder. Le
-    /// noir sert l'accroche, l'indigo sert l'attente.
+    /// noir sert l'accroche, le vert sert l'attente.
     var surface: OnboardingSurface {
         switch self {
         case .welcome: .ink
-        case .personalizing: .indigo
+        case .personalizing: .accent
         default: .canvas
         }
     }

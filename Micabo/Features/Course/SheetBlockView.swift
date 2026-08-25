@@ -119,7 +119,7 @@ struct SheetBlockView: View {
         )
     }
 
-    /// L'indigo n'apparaît pas ici : il ne sert qu'à ce qui est actif. Un encadré porte
+    /// L'accent n'apparaît pas ici : il ne sert qu'à ce qui est actif. Un encadré porte
     /// donc les couleurs de retour d'information de l'app, volontairement désaturées.
     private func calloutForeground(_ tone: SheetCalloutTone) -> Color {
         switch tone {

@@ -40,10 +40,10 @@ struct ProjectionStepView: View {
         VStack(alignment: .leading, spacing: 2) {
             CountingText(
                 value: displayed,
-                font: MicaboFont.hanken(64, weight: .bold),
+                font: MicaboFont.number(64),
                 color: MicaboColor.ink
             )
-            .tracking(-2.5)
+            .tracking(-2)
 
             Text("cartes mémorisées")
                 .font(MicaboFont.hanken(16, weight: .medium))

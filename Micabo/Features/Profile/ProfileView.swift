@@ -116,9 +116,8 @@ struct ProfileView: View {
     private func statTile(_ value: String, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
-                .font(MicaboFont.hanken(26, weight: .bold))
+                .font(MicaboFont.number(26))
                 .foregroundStyle(MicaboColor.ink)
-                .tracking(MicaboTracking.tight)
             Text(label)
                 .font(MicaboFont.hanken(12, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
@@ -139,7 +138,7 @@ struct ProfileView: View {
 
             VStack(alignment: .leading, spacing: 16) {
                 Text("\(total) révision\(total > 1 ? "s" : "")")
-                    .font(MicaboFont.hanken(20, weight: .bold))
+                    .font(MicaboFont.number(20))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(MicaboTracking.tight)
 

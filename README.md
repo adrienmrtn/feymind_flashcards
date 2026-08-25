@@ -82,7 +82,7 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 
 | Bloc | Écrans |
 | --- | --- |
-| Accroche | bienvenue, stade d'étude, langue, annonce des questions |
+| Accroche | bienvenue, stade d'étude, langue, pays de scolarisation, annonce des questions |
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli |
 | Démonstration | courbe de mémorisation, puis dépôt → fiche → révisions en trois écrans, puis le mode examen |
 | Personnalisation | matières, établissement (avec « Passer »), temps quotidien |
@@ -192,11 +192,20 @@ puis voit les jours qui le précèdent s'allumer un à un de points de révision
 placées avant le jour J ». C'est exactement ce que fait `ExamPlanner`, et le voir vaut mieux
 que le lire.
 
+**Les réponses portent un emoji, et les questions s'écrivent mot à mot.** Les tuiles pastel qui
+vivaient à gauche des réponses ont été retirées à juste titre, elles faisaient lire des
+pictogrammes au lieu des réponses ; un emoji posé à même la ligne, sans fond ni cadre, donne un
+point d'accroche sans rien remplacer, et une liste de réponses scolaires cesse de ressembler à
+un formulaire. Le titre des cinq écrans de question s'écrit ensuite mot à mot
+(`OnboardingScaffold(animatesTitle:)`) : l'animation dure exactement le temps de lire la
+question, et donne au parcours le rythme d'une conversation. Les écrans de démonstration en
+sont exclus, parce que le regard doit y aller au contenu.
+
 Trois règles valent pour tout le tunnel :
 
 - **la jauge est unique** — même barre du premier écran au paywall, sans jamais disparaître,
-  et toujours l'indigo de `MicaboColor.progress`. Elle ne s'inverse (`MicaboColor.onInk`) que
-  sur les fonds sombres, où un indigo posé sur l'indigo ne se verrait plus. Tout ce qui indique
+  et toujours le vert vif de `MicaboColor.progress`. Elle ne s'inverse (`MicaboColor.onInk`) que
+  sur les fonds sombres, où un vert posé sur le vert ne se verrait plus. Tout ce qui indique
   une progression ailleurs dans l'app (session de révision, anneaux, curseurs, indicateurs
   d'attente) prend cette couleur.
 - **aucun bouton ne reste muet** — l'enfoncement (échelle 0,975) part en 80 ms, et un bouton
@@ -204,7 +213,7 @@ Trois règles valent pour tout le tunnel :
   refuse les appuis suivants.
 - **deux écrans voisins ne se ressemblent pas** — les compositions alternent (paquet de cartes,
   pastilles, liste, graphe, calendrier, grand chiffre), et **deux écrans seulement** quittent
-  le crème : l'accroche sur l'encre, la personnalisation sur l'indigo. C'est un de moins
+  le crème : l'accroche sur l'encre, la personnalisation sur le vert. C'est un de moins
   qu'avant, parce que la variété d'un parcours ne vient pas de ses fonds mais de ce qu'il y a
   à regarder. Le texte reste **fer à gauche** partout et le bouton **collé au bas de la zone
   sûre**.
@@ -216,11 +225,11 @@ depuis leur étape et la reposent dans `\.onboardingSurface`.
 
 **Le haut de l'écran suit la couleur de l'écran.** Le fond de l'étape monte jusqu'en haut de la
 zone d'état : la jauge, l'heure et la batterie reposent sur l'encre quand l'écran est sombre, sur
-l'indigo quand il est indigo, jamais sur une bande crème rapportée. Le thème clair est donc posé
+le vert quand il est vert, jamais sur une bande crème rapportée. Le thème clair est donc posé
 par `RootView` sur l'app elle-même, pas au-dessus du parcours : celui-ci passe en sombre le temps
 de ses écrans d'encre pour que l'heure du téléphone reste lisible.
 
-L'écran de personnalisation est le seul indigo plein cadre. Il fait tourner trois signaux
+L'écran de personnalisation est le seul vert plein cadre. Il fait tourner trois signaux
 d'activité en même temps — une barre qui avance image par image, un pourcentage qui compte, et
 une accroche qui change à chaque étape — pour qu'on ne puisse jamais le croire figé.
 
@@ -261,8 +270,29 @@ Du papier, pas des cartes empilées. Le fond ivoire est assez marqué pour que l
 détache seul : les surfaces n'ont donc ni bordure ni ombre appuyée. Tout ce qui se liste est
 une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un accessoire à droite.
 
-- Fond ivoire (`#F6F4ED`), surfaces blanches, encre `#191714`, accent indigo `#5B5BD6`
-- Typographie Hanken Grotesk embarquée (Regular / Medium / SemiBold / Bold)
+**L'accent est le vert de Micabo, et non plus l'indigo.** L'indigo était le violet d'une app de
+productivité : sérieux, un peu froid, et sans rapport avec le logo, qui porte un rond vert
+menthe depuis le premier jour. Une app qu'on ouvre pour réviser gagne à être vive, et le vert
+dit « c'est acquis » dans la même langue que les boutons de notation. Deux verts, et la
+distinction est fonctionnelle, pas décorative : `accent` (`#0B8A66`) est assez sombre pour
+porter du texte de onze points sur un fond pastel, `accentVivid` (`#16C08C`) est celui du logo
+et ne remplit que des surfaces sur lesquelles rien n'est écrit — jauges, barres, remplissages.
+`positive` reste un vert plus forestier : deux verts qui veulent dire deux choses ne peuvent
+pas être le même vert. Les pastels des tuiles et les teintes de couverture des cours sont
+remontés d'un cran, parce que six gris teintés ne donnaient pas de couleur à un écran, ils lui
+donnaient une brume. L'icône de l'app suit (`scripts/generate_app_icon.py`).
+
+**Les nombres qui se lisent comme un résultat sont en SF Rounded** (`MicaboFont.number`) : le
+compte de cartes du jour, la série, les statistiques d'une session, les minutes d'un objectif.
+Un grand nombre en grotesque serré ressemble à un indicateur de tableau de bord ; le même en
+arrondi ressemble à un score, et un élève doit avoir envie de le faire monter. Le texte reste
+en Hanken Grotesk : deux familles sur une page ne tiennent que si chacune a un domaine net,
+l'une écrit les mots, l'autre les nombres.
+
+- Fond ivoire (`#F6F4ED`), surfaces blanches, encre `#191714`, **accent vert `#0B8A66`** et
+  vert vif `#16C08C` pour les remplissages
+- Typographie Hanken Grotesk embarquée (Regular / Medium / SemiBold / Bold), et **SF Rounded
+  pour les nombres** qui se lisent comme un résultat (`MicaboFont.number`)
 - Coins : 13 pt (tuiles), 16 pt (boutons, recherche), 20 pt (blocs et cartes), 28 pt (feuilles)
 - **Un seul en-tête pour toute l'app** : `MicaboScreenHeader`, sur fond crème, sur-titre en
   capitales grises puis grand titre serré (32 pt). Aucun écran n'a droit à son bandeau : un
@@ -271,9 +301,10 @@ une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un acces
   de navigation système nulle part : les titres système ont tous été remplacés.
 - Deux mises en page de liste : posée à même le fond avec un filet entre les rangées (Cours),
   ou regroupée dans un bloc blanc sous un intitulé en capitales (Réglages, Au programme)
-- Pastilles d'état au bout d'une rangée : indigo pour ce qui attend, ocre pour une échéance,
+- Pastilles d'état au bout d'une rangée : vert pour ce qui attend, ocre pour une échéance,
   gris pour « à jour »
-- L'indigo ne sert qu'à ce qui est actif : onglet courant, filtre choisi, cartes à réviser
+- Le vert de l'accent ne sert qu'à ce qui est actif : onglet courant, filtre choisi, cartes à
+  réviser
 - Le seul aplat d'encre est le bouton d'action principal, ancré en bas de l'écran
 - Barre de trois onglets en pied d'écran, symbole plein sur l'onglet actif. Elle est dessinée
   par `RootTabView`, **hors des pages** : elles se remplacent sous elle, elle ne bouge pas
@@ -300,8 +331,8 @@ une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un acces
   bandeau. La fiche pose son texte à même l'ivoire et n'encadre que les objets : définitions,
   encadrés, tableaux, graphes, formules
 - Le surligneur de la fiche est jaune (`MicaboColor.marker`), parce qu'un surligneur est
-  jaune, et surtout parce que l'indigo est réservé à ce qui est actif : un passage surligné
-  est du contenu, pas un état. Les encadrés reprennent pour la même raison les couleurs de
+  jaune, et surtout parce que le vert de l'accent est réservé à ce qui est actif : un passage
+  surligné est du contenu, pas un état. Les encadrés reprennent pour la même raison les couleurs de
   retour d'information de l'app, volontairement désaturées
 - Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose pas
 - En session, une ampoule donne l'indice de la carte. Les cartes qui n'en ont pas n'affichent

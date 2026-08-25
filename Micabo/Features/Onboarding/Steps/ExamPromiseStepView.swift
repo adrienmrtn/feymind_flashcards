@@ -15,7 +15,6 @@ struct ExamPromiseStepView: View {
         OnboardingScaffold(
             eyebrow: "Mode examen",
             title: "Un parcours pour\nchaque examen.",
-            subtitle: "Affronte tes examens avec moins de stress et plus de préparation.",
             titleSize: 30
         ) {
             ExamCountdownCalendar()
@@ -180,7 +179,7 @@ private struct ExamCountdownCalendar: View {
             Spacer(minLength: MicaboSpacing.xs)
 
             Text("J-\(daysLeft)")
-                .font(MicaboFont.hanken(12, weight: .semibold))
+                .font(MicaboFont.number(12, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .monospacedDigit()
                 .contentTransition(.numericText(countsDown: true))

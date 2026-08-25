@@ -152,7 +152,7 @@ struct MicaboProgressRing: View {
 
 /// Barre de progression fine : jauge du parcours d'accueil et sessions de révision.
 /// La couleur reste `MicaboColor.progress` ; elle ne s'inverse que posée sur un fond
-/// sombre, où l'indigo ne se verrait plus.
+/// sombre, où le vert ne se verrait plus.
 struct MicaboProgressBar: View {
     let progress: Double
     var tint: Color = MicaboColor.progress

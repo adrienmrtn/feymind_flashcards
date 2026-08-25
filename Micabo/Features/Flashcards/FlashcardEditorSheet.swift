@@ -285,8 +285,8 @@ private struct FlashcardForm: View {
                 header()
                     .padding(.bottom, MicaboSpacing.xxs)
 
-                field(title: "Recto", subtitle: "La question posée", text: $front, minHeight: 96)
-                field(title: "Verso", subtitle: "La réponse attendue", text: $back, minHeight: 140)
+                field(title: "Recto", text: $front, minHeight: 96)
+                field(title: "Verso", text: $back, minHeight: 140)
                 field(title: "Indice", subtitle: "Facultatif", text: $hint, minHeight: 60)
                 footer()
             }
@@ -299,15 +299,25 @@ private struct FlashcardForm: View {
         .scrollDismissesKeyboard(.interactively)
     }
 
-    private func field(title: String, subtitle: String, text: Binding<String>, minHeight: CGFloat) -> some View {
+    /// Le sous-titre est devenu facultatif, et il ne reste que là où il apprend quelque
+    /// chose : « Indice · Facultatif ». Un recto **est** la question et un verso **est** la
+    /// réponse, donc « La question posée » sous « Recto » ne faisait que réécrire l'intitulé.
+    private func field(
+        title: String,
+        subtitle: String? = nil,
+        text: Binding<String>,
+        minHeight: CGFloat
+    ) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 6) {
                 Text(title)
                     .font(MicaboFont.captionEmphasis)
                     .foregroundStyle(MicaboColor.ink)
-                Text(subtitle)
-                    .font(MicaboFont.micro)
-                    .foregroundStyle(MicaboColor.inkTertiary)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(MicaboFont.micro)
+                        .foregroundStyle(MicaboColor.inkTertiary)
+                }
             }
 
             TextEditor(text: text)
