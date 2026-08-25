@@ -116,10 +116,6 @@ struct FriendsView: View {
             .padding(.vertical, 11)
             .padding(.horizontal, 14)
             .micaboGroup(radius: MicaboRadius.lg)
-
-            MicaboSectionFootnote(
-                text: "Un nom d'utilisateur, pas une adresse : c'est ce qui permet de s'ajouter sans échanger son courriel."
-            )
         }
     }
 
@@ -180,7 +176,7 @@ struct FriendsView: View {
                 .font(MicaboFont.cardTitle)
                 .foregroundStyle(MicaboColor.ink)
 
-            Text("Un ami voit les cours que tu laisses en « Mes amis », et tu vois les siens. C'est aussi ce qui remonte ses cours dans ta bibliothèque, même s'il a changé d'école.")
+            Text("Cherche un nom d'utilisateur pour ajouter quelqu'un.")
                 .font(MicaboFont.body)
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)

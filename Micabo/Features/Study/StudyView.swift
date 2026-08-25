@@ -770,12 +770,6 @@ private struct ResumePromptView: View {
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(-0.6)
                     .fixedSize(horizontal: false, vertical: true)
-
-                Text("Les notes déjà données sont enregistrées. Tu peux continuer la file où tu l'as laissée, ou repartir de la première carte du jour.")
-                    .font(MicaboFont.body)
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .lineSpacing(3)
-                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, MicaboSpacing.screen)

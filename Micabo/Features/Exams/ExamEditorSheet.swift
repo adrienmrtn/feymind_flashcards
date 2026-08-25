@@ -218,17 +218,13 @@ struct ExamEditorSheet: View {
                     }
                 }
             }
-
-            MicaboSectionFootnote(text: intensity.detail)
         }
     }
 
+    /// Sans cours choisi, il n'y a rien à projeter — et une phrase pour le dire serait une
+    /// phrase de plus à lire avant de cocher la première case.
     private var emptyProjection: some View {
-        MicaboSectionFootnote(
-            text: selectedCourses.isEmpty
-                ? "Choisis les cours au programme : Micabo te dira ce que ça représente par jour avant de replanifier quoi que ce soit."
-                : "Les cours choisis n'ont aucune carte. Génère-les depuis leur fiche, puis reviens ici."
-        )
+        EmptyView()
     }
 
     /// Les deux actions qui défont quelque chose.

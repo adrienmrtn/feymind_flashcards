@@ -126,20 +126,7 @@ struct GenerateCardsSheet: View {
                 )
             }
             .micaboGroup()
-
-            MicaboSectionFootnote(text: totalFootnote)
         }
-    }
-
-    private var totalFootnote: String {
-        let total = quota.total
-        if isAtCap {
-            return "\(MicaboCopy.cards(total)) au total, le maximum d'une génération. Tu pourras en redemander une fois celles-ci révisées."
-        }
-        if total == 0 {
-            return "Aucune carte demandée. Choisis au moins un format : un chapitre tient en général en douze cartes."
-        }
-        return "\(MicaboCopy.cards(total)) au total. Un chapitre tient en général en douze cartes, et tu peux en redemander plus tard."
     }
 
     private func counterRow(

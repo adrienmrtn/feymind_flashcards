@@ -153,11 +153,6 @@ struct SettingsView: View {
                 }
             }
             .micaboGroup()
-
-            MicaboSectionFootnote(text: auth.isSignedIn
-                ? "Tes cours, tes cartes et ton planning sont copiés sur ton compte. Les images et les enregistrements audio restent sur cet appareil."
-                : "Sans compte, tout reste sur cet appareil : effacer l'app efface tes cours."
-            )
         }
     }
 
@@ -251,10 +246,6 @@ struct SettingsView: View {
                     ? "Trois à vingt caractères, en commençant par une lettre ou un chiffre."
                     : "Sera enregistré sous \(Username.display(preview))."
             )
-        } else {
-            MicaboSectionFootnote(
-                text: "C'est le nom que tes camarades tapent pour t'ajouter. Trois à vingt caractères, sans espace ni accent."
-            )
         }
     }
 
@@ -338,8 +329,6 @@ struct SettingsView: View {
                 }
             }
             .micaboGroup()
-
-            MicaboSectionFootnote(text: "Micabo écrit les fiches pour ce niveau et ce système scolaire, et dans la langue du pays : le vocabulaire, la profondeur des explications et les examens auxquels la fiche renvoie en dépendent. La longueur se choisit aussi au moment d'un import.")
         }
         // Le changement de pays écrit déjà le palier qu'il vient de reporter : sans ce
         // garde, la réaction en chaîne l'écrirait deux fois et vibrerait deux fois pour un
@@ -393,8 +382,6 @@ struct SettingsView: View {
                 )
             }
             .micaboGroup()
-
-            MicaboSectionFootnote(text: "Une carte neuve revient huit fois avant d'être acquise : le plafond découle du temps que tu t'accordes.")
         }
         .onChange(of: dailyMinutes) { _, newValue in
             OnboardingPreferences.dailyMinutes = newValue
@@ -423,8 +410,6 @@ struct SettingsView: View {
                 }
             }
             .micaboGroup()
-
-            MicaboSectionFootnote(text: "Le modèle écrit les fiches et les cartes à partir du texte lu sur l'appareil. Le choix se garde entre deux lancements.")
         }
     }
 
@@ -452,8 +437,6 @@ struct SettingsView: View {
                 )
             }
             .micaboGroup()
-
-            MicaboSectionFootnote(text: "Les Edge Functions generate-course, generate-flashcards et explain-selection écrivent les fiches, les cartes et les explications. La clé fal.ai reste côté serveur, dans le secret FAL_KEY.")
         }
     }
 

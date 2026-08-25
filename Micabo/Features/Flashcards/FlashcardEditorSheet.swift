@@ -144,15 +144,8 @@ struct FlashcardEditorSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             MicaboSectionCaption(text: "Schéma")
 
-            VStack(alignment: .leading, spacing: 10) {
-                OcclusionFigure(card: card, isRevealed: true, maxHeight: 200)
-
-                Text("La zone encadrée est celle que cette carte demande. Le verso ci-dessus en est la réponse.")
-                    .font(MicaboFont.hanken(12, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(MicaboSpacing.md)
+            OcclusionFigure(card: card, isRevealed: true, maxHeight: 200)
+                .padding(MicaboSpacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
             .micaboGroup()
         }
