@@ -15,6 +15,7 @@ struct SettingsView: View {
     @Environment(AuthController.self) private var auth
     @Environment(CloudSync.self) private var sync
     @Environment(SocialService.self) private var social
+    @Environment(ProAccess.self) private var pro: ProAccess?
 
     @State private var username = ""
 
@@ -466,10 +467,26 @@ struct SettingsView: View {
         )
     }
 
+    /// L'interrupteur Pro n'est pas une fonctionnalité, c'est un outil de relecture.
+    ///
+    /// Sans lui, les écrans de blocage ne se voient **qu'une fois** : le bouton du paywall
+    /// ouvre tout, et il faudrait réinstaller l'app pour revoir la fiche coupée ou la
+    /// cinquième carte. Il disparaîtra le jour où RevenueCat décidera à sa place.
     private var testSection: some View {
         MicaboSettingsSection(
             caption: "Test",
             rows: [
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("🔓"), background: MicaboColor.accentSoft),
+                    title: "Micabo Pro",
+                    subtitle: isPro ? "Tout est ouvert" : "Version gratuite : 1 cours, 70 % de la fiche, 5 cartes",
+                    accessory: .toggle(
+                        Binding(
+                            get: { isPro },
+                            set: { pro?.setPro($0) }
+                        ).buzzing()
+                    )
+                ),
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("🔁"), background: MicaboColor.tilePastels[2]),
                     title: "Refaire l'onboarding",
@@ -477,9 +494,11 @@ struct SettingsView: View {
                     action: replayOnboarding
                 )
             ],
-            footnote: "Relance le parcours d'accueil et efface les réponses données à l'inscription. Tes cours ne sont pas touchés."
+            footnote: "L'abonnement n'est branché sur aucune boutique : cet interrupteur tient lieu d'achat, et permet de revoir les écrans de blocage. Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
         )
     }
+
+    private var isPro: Bool { pro?.isPro ?? false }
 
     private var aboutSection: some View {
         MicaboSettingsSection(

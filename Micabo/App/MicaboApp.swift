@@ -10,6 +10,9 @@ struct MicaboApp: App {
     @State private var auth = AuthController()
     @State private var sync: CloudSync
     @State private var social: SocialService
+    /// L'abonnement, créé une fois pour toute l'app : tout ce qui se ferme lui pose la
+    /// même question, et personne n'y répond de son côté.
+    @State private var pro = ProAccess()
 
     private static let schema = Schema([Course.self, Flashcard.self, ReviewLog.self, Exam.self])
 
@@ -35,7 +38,9 @@ struct MicaboApp: App {
                 .environment(auth)
                 .environment(sync)
                 .environment(social)
+                .environment(pro)
                 .task {
+                    await pro.refresh()
                     await auth.restore()
                     await sync.sync(context: container.mainContext)
                     // L'annuaire et les amitiés viennent après la synchro : ils n'ont de sens

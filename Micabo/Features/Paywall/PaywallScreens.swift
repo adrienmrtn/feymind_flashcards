@@ -1,109 +1,5 @@
 import SwiftUI
 
-// MARK: - Habillage commun aux deux paywalls
-
-/// La croix, en haut à gauche.
-///
-/// Elle est **toujours là, et elle ne se fait pas attendre**. Un paywall dont la sortie
-/// apparaît au bout de cinq secondes fait fermer l'app au lieu de la faire refuser : on perd
-/// l'utilisateur au lieu de perdre l'abonnement.
-private struct PaywallCloseButton: View {
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "xmark")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                // La zone touchable fait 44 points, le signe reste calé sur la marge.
-                .frame(width: 44, height: 44, alignment: .leading)
-        }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
-        .accessibilityLabel("Fermer")
-    }
-}
-
-/// Bandeau du haut : la croix, et rien d'autre.
-private struct PaywallHeader: View {
-    var onClose: () -> Void
-
-    var body: some View {
-        HStack(spacing: 0) {
-            PaywallCloseButton(action: onClose)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, MicaboSpacing.xs)
-    }
-}
-
-/// Le bouton d'abonnement, identique sur les deux écrans.
-private struct PaywallCallToAction: View {
-    var isPurchasing: Bool
-    var action: () -> Void
-
-    var body: some View {
-        Button {
-            guard !isPurchasing else { return }
-            action()
-        } label: {
-            HStack(spacing: 9) {
-                if isPurchasing {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(MicaboColor.onInk)
-                }
-
-                Text("Démarrer mes \(PaywallCatalog.freeTrialDays) jours gratuits")
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(MicaboPrimaryButtonStyle())
-        .disabled(isPurchasing)
-        .animation(.easeOut(duration: 0.2), value: isPurchasing)
-    }
-}
-
-/// Restauration et mentions légales, en pied de page.
-private struct PaywallLegalFooter: View {
-    var onRestore: () -> Void
-
-    @Environment(\.openURL) private var openURL
-
-    var body: some View {
-        HStack(spacing: 7) {
-            entry("Restaurer", action: onRestore)
-            separator
-            entry("Conditions d'utilisation") { open(PaywallLinks.terms) }
-            separator
-            entry("Confidentialité") { open(PaywallLinks.privacy) }
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var separator: some View {
-        Text("·")
-            .font(MicaboFont.hanken(11.5, weight: .regular))
-            .foregroundStyle(MicaboColor.inkTertiary)
-    }
-
-    private func entry(_ title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(MicaboFont.hanken(11.5, weight: .regular))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
-        }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: true))
-    }
-
-    private func open(_ address: String) {
-        guard let url = URL(string: address) else { return }
-        openURL(url)
-    }
-}
-
 // MARK: - Premier paywall : une seule offre, une seule phrase
 
 /// Le paywall d'entrée.
@@ -115,6 +11,9 @@ private struct PaywallLegalFooter: View {
 /// ouvre la grille à ceux qui la cherchent.
 struct PaywallOfferView: View {
     let plan: PaywallPlan
+    /// Ce qui a ouvert l'écran, en une ligne. Absent à la sortie du parcours d'accueil : on
+    /// n'y vient de nulle part, on y arrive.
+    var headline: String?
     var isPurchasing: Bool
     var onClose: () -> Void
     var onSeeAllPlans: () -> Void
@@ -128,18 +27,29 @@ struct PaywallOfferView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             VStack(spacing: 20) {
+                if let headline {
+                    Text(headline)
+                        .font(MicaboFont.hanken(12.5, weight: .semibold))
+                        .foregroundStyle(MicaboColor.accent)
+                        .multilineTextAlignment(.center)
+                        .padding(.vertical, 7)
+                        .padding(.horizontal, 14)
+                        .background(MicaboColor.accentSoft, in: Capsule())
+                        .onboardingAppear(index: 0)
+                }
+
                 Image(systemName: "graduationcap.fill")
                     .font(.system(size: 38, weight: .medium))
                     .foregroundStyle(MicaboColor.ink)
-                    .onboardingAppear(index: 0)
+                    .onboardingAppear(index: 1)
 
-                pitch
+                PaywallPitch.text(for: plan)
                     .font(MicaboFont.hanken(21, weight: .bold))
                     .tracking(-0.4)
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
-                    .onboardingAppear(index: 1)
+                    .onboardingAppear(index: 2)
 
                 Button(action: onSeeAllPlans) {
                     Text("Voir toutes les offres")
@@ -147,7 +57,7 @@ struct PaywallOfferView: View {
                         .foregroundStyle(MicaboColor.info)
                 }
                 .buttonStyle(MicaboPressableButtonStyle(dimming: true))
-                .onboardingAppear(index: 2)
+                .onboardingAppear(index: 3)
             }
             .padding(.horizontal, MicaboSpacing.xl)
 
@@ -155,7 +65,7 @@ struct PaywallOfferView: View {
             Spacer(minLength: 0)
 
             VStack(spacing: 14) {
-                Text("Deux appuis pour commencer, résiliable en quinze secondes.")
+                Text(PaywallPitch.reassurance)
                     .font(MicaboFont.hanken(12.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .multilineTextAlignment(.center)
@@ -166,25 +76,8 @@ struct PaywallOfferView: View {
             }
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.bottom, MicaboSpacing.sm)
-            .onboardingAppear(index: 3)
+            .onboardingAppear(index: 4)
         }
-    }
-
-    /// Le vert ne porte que la partie gratuite. Colorer la phrase entière n'aurait mis en
-    /// avant que le prix, colorer le prix aurait mis en avant ce qu'on demande.
-    private var pitch: Text {
-        let free = Text("Essaie \(PaywallCatalog.freeTrialDays) jours gratuitement, ")
-            .foregroundStyle(MicaboColor.accent)
-        let price = Text(priceSentence)
-            .foregroundStyle(MicaboColor.ink)
-        return free + price
-    }
-
-    private var priceSentence: String {
-        if let monthly = plan.monthlyEquivalent {
-            return "puis \(monthly) / mois (facturé \(plan.displayPrice) par an)."
-        }
-        return "puis \(plan.displayPrice) par \(plan.period.unit)."
     }
 }
 
