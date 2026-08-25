@@ -21,6 +21,8 @@ struct CoursesListView: View {
     @State private var showImportChoice = false
     @State private var pendingImport: ImportKind?
     @State private var activeImport: ImportKind?
+    /// Un paquet de cartes ne passe pas par l'écran d'import : il n'y a rien à lire.
+    @State private var isCreatingDeck = false
 
     /// Les deux rayons de l'onglet.
     enum Shelf: String, CaseIterable, Identifiable {
@@ -133,6 +135,13 @@ struct CoursesListView: View {
                 // Un import se termine sur la fiche : c'est le résultat, et c'est ce qu'on
                 // veut lire avant de décider si on en fait des cartes.
                 path = NavigationPath([course])
+            }
+        }
+        .fullScreenCover(isPresented: $isCreatingDeck) {
+            CreateDeckView { course in
+                isCreatingDeck = false
+                // Un paquet se termine sur ses cartes : il n'a pas de fiche à lire.
+                path = NavigationPath([CourseCardsRoute(course: course)])
             }
         }
     }
@@ -280,7 +289,11 @@ struct CoursesListView: View {
         guard let kind = pendingImport else { return }
         pendingImport = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            activeImport = kind
+            if kind.producesSheet {
+                activeImport = kind
+            } else {
+                isCreatingDeck = true
+            }
         }
     }
 }

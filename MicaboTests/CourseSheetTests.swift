@@ -488,6 +488,43 @@ final class CourseSheetPersistenceTests: XCTestCase {
         XCTAssertEqual(course.contextText, "Nouveau contenu à plat.")
     }
 
+    /// Un paquet de cartes est un cours comme un autre pour le reste de l'app, à ceci près
+    /// qu'il n'attend pas de fiche : lui en promettre une serait une impasse.
+    func testADeckIsACourseWithoutASheet() throws {
+        let deck = try CourseRepository.makeDeck(
+            title: "Vocabulaire allemand",
+            subject: "Allemand",
+            in: context
+        )
+
+        XCTAssertEqual(deck.title, "Vocabulaire allemand")
+        XCTAssertEqual(deck.subject, "Allemand")
+        XCTAssertEqual(deck.source, .deck)
+        XCTAssertFalse(deck.hasSheet)
+        XCTAssertFalse(deck.source.expectsSheet)
+        XCTAssertTrue(deck.cards.isEmpty)
+        // Rien n'a été importé : deux paquets du même nom ne sont pas un doublon.
+        XCTAssertTrue(deck.fingerprint.isEmpty)
+    }
+
+    func testADeckKeepsItsPastedTextAsMaterialForTheModel() throws {
+        let deck = try CourseRepository.makeDeck(
+            title: "Dates de la Révolution",
+            rawText: "1789 : prise de la Bastille.\n1792 : proclamation de la République.",
+            in: context
+        )
+
+        XCTAssertTrue(deck.contextText.contains("Bastille"))
+        XCTAssertTrue(deck.rawText.contains("Bastille"))
+        XCTAssertTrue(deck.contextSnippet().contains("Bastille"))
+    }
+
+    func testADeckWithoutANameStillOpens() throws {
+        let deck = try CourseRepository.makeDeck(title: "   ", in: context)
+
+        XCTAssertEqual(deck.title, "Nouveau paquet")
+    }
+
     func testAnEmptySheetIsRefusedRatherThanStored() throws {
         let course = try CourseRepository.save(
             GeneratedCourse(title: "Chapitre 4", summary: "Résumé.", contextText: "Contenu à plat."),

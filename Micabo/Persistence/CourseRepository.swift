@@ -84,6 +84,45 @@ enum CourseRepository {
         return course
     }
 
+    /// Crée un **paquet de cartes** : un cours sans document et sans fiche.
+    ///
+    /// Tout passait par un import, donc par une fiche, et il n'y avait aucun moyen de
+    /// simplement se faire un paquet de vocabulaire ou de dates. Un paquet est un cours comme
+    /// un autre pour le reste de l'app — il se révise, il compte dans la file du jour, il
+    /// entre dans un plan d'examen — il n'a simplement rien à ficher.
+    ///
+    /// Le texte est facultatif : collé, il sert de matière au modèle pour écrire les
+    /// premières cartes ; absent, le paquet démarre vide et se remplit à la main.
+    @discardableResult
+    static func makeDeck(
+        title: String,
+        subject: String? = nil,
+        rawText: String = "",
+        in context: ModelContext
+    ) throws -> Course {
+        let cleanTitle = TextSanitizer.clean(title).nilIfBlank ?? "Nouveau paquet"
+        let cleanSubject = subject.flatMap { TextSanitizer.clean($0).nilIfBlank }
+        let index = abs(cleanTitle.hashValue) % MicaboColor.courseAccents.count
+        let text = TextSanitizer.normalizeExtractedText(rawText)
+
+        let course = Course(
+            title: cleanTitle,
+            subject: cleanSubject,
+            summary: "",
+            emoji: CourseEmoji.resolve(proposed: nil, subject: cleanSubject, title: cleanTitle),
+            accentHex: MicaboColor.courseAccents[index].hexString,
+            source: .deck,
+            rawText: text,
+            contextText: text
+        )
+        // Pas d'empreinte : deux paquets du même nom ne sont pas un doublon, et rien n'a été
+        // importé qu'on risquerait d'importer deux fois.
+        context.insert(course)
+
+        try context.save()
+        return course
+    }
+
     /// Remplace la fiche d'un cours existant : c'est le chemin de « Refaire la fiche », et
     /// celui d'un cours importé avant que la fiche n'existe.
     ///

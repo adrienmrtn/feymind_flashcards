@@ -6,8 +6,16 @@ enum ImportKind: String, Identifiable {
     case youtube
     case docx
     case text
+    /// Pas un import : un paquet de cartes, sans document et sans fiche.
+    case cards
 
     var id: String { rawValue }
+
+    /// Vrai pour les quatre sources qui produisent une fiche. `cards` ne passe pas par
+    /// l'écran d'import du tout : il n'y a rien à lire, donc rien à analyser.
+    var producesSheet: Bool {
+        self != .cards
+    }
 
     var title: String {
         switch self {
@@ -16,6 +24,7 @@ enum ImportKind: String, Identifiable {
         case .youtube: "Vidéo YouTube"
         case .docx: "Document Word"
         case .text: "Coller du texte"
+        case .cards: "Créer des cartes"
         }
     }
 
@@ -26,6 +35,7 @@ enum ImportKind: String, Identifiable {
         case .youtube: "Un lien, ses sous-titres"
         case .docx: "Fichier .docx"
         case .text: "Tes notes, telles quelles"
+        case .cards: "Un paquet, sans fiche"
         }
     }
 
@@ -36,6 +46,7 @@ enum ImportKind: String, Identifiable {
         case .youtube: "play.rectangle"
         case .docx: "doc.richtext"
         case .text: "text.alignleft"
+        case .cards: "rectangle.on.rectangle.angled"
         }
     }
 
@@ -46,6 +57,7 @@ enum ImportKind: String, Identifiable {
         case .youtube: "▶️"
         case .docx: "📝"
         case .text: "✍️"
+        case .cards: "🃏"
         }
     }
 
@@ -57,6 +69,7 @@ enum ImportKind: String, Identifiable {
         case .youtube: Color(hex: 0xF4E5E2)
         case .docx: Color(hex: 0xE8EDF3)
         case .text: Color(hex: 0xEDEAF7)
+        case .cards: Color(hex: 0xE3F1EA)
         }
     }
 
@@ -69,6 +82,7 @@ enum ImportKind: String, Identifiable {
         case .youtube: Color(hex: 0x8C4038)
         case .docx: Color(hex: 0x3D5A80)
         case .text: Color(hex: 0x4F5A72)
+        case .cards: Color(hex: 0x2F6B57)
         }
     }
 
@@ -79,6 +93,7 @@ enum ImportKind: String, Identifiable {
         case .youtube: Color(hex: 0xF1E0DD)
         case .docx: Color(hex: 0xE3EAF3)
         case .text: Color(hex: 0xE6E9F0)
+        case .cards: Color(hex: 0xDFEEE7)
         }
     }
 
@@ -89,11 +104,17 @@ enum ImportKind: String, Identifiable {
         case .youtube: .youtube
         case .docx: .docx
         case .text: .text
+        case .cards: .deck
         }
     }
 }
 
 /// Panneau qui remonte du bas quand on touche le bouton « + ».
+///
+/// Deux blocs, et la séparation compte : les cinq premières entrées partent d'un document
+/// et donnent une fiche, la dernière ne part de rien et ne donne que des cartes. C'est ce
+/// qu'on veut quand on révise du vocabulaire, des dates ou des formules qu'on connaît déjà :
+/// il n'y a pas de cours à ficher, il y a des choses à retenir.
 struct ImportChoiceSheet: View {
     var onSelect: (ImportKind) -> Void
 
@@ -102,21 +123,15 @@ struct ImportChoiceSheet: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                MicaboScreenHeader(title: "D'où part-on ?", eyebrow: "Nouveau cours")
+                MicaboScreenHeader(title: "D'où part-on ?", eyebrow: "Nouveau")
                     .padding(.top, 24)
 
-                MicaboRowGroup(
-                    rows: kinds.map { kind in
-                        MicaboRow(
-                            tile: MicaboTile(glyph: .emoji(kind.emoji), background: kind.tilePastel),
-                            title: kind.title,
-                            subtitle: kind.subtitle,
-                            accessory: .chevron
-                        ) {
-                            onSelect(kind)
-                        }
-                    }
-                )
+                MicaboRowGroup(rows: kinds.map(row(for:)))
+
+                VStack(alignment: .leading, spacing: 8) {
+                    MicaboSectionCaption(text: "Sans cours")
+                    MicaboRowGroup(rows: [row(for: .cards)])
+                }
 
                 comingSoonRow
             }
@@ -126,6 +141,17 @@ struct ImportChoiceSheet: View {
         }
         .scrollIndicators(.hidden)
         .micaboScreenBackground()
+    }
+
+    private func row(for kind: ImportKind) -> MicaboRow {
+        MicaboRow(
+            tile: MicaboTile(glyph: .emoji(kind.emoji), background: kind.tilePastel),
+            title: kind.title,
+            subtitle: kind.subtitle,
+            accessory: .chevron
+        ) {
+            onSelect(kind)
+        }
     }
 
     private var comingSoonRow: some View {

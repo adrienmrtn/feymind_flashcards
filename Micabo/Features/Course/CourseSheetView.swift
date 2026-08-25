@@ -154,7 +154,7 @@ struct CourseSheetView: View {
             } label: {
                 Label(sheet == nil ? "Ficher ce cours" : "Refaire la fiche", systemImage: "text.book.closed")
             }
-            .disabled(course.rawText.nilIfBlank == nil)
+            .disabled(course.rawText.nilIfBlank == nil || !course.source.expectsSheet)
             Divider()
             Button(role: .destructive) { showDeleteConfirmation = true } label: {
                 Label("Supprimer le cours", systemImage: "trash")
@@ -216,20 +216,36 @@ struct CourseSheetView: View {
         }
     }
 
-    /// Un cours sans fiche : importé avant que la fiche n'existe, ou analysé pendant une
-    /// panne. On ne montre pas un écran vide, on propose de l'écrire.
+    /// Un cours sans fiche : un paquet de cartes, un import fait avant que la fiche n'existe,
+    /// ou une analyse tombée pendant une panne. On ne montre pas un écran vide.
+    ///
+    /// Un paquet, lui, n'attend pas de fiche : il n'a pas de document, et lui en promettre
+    /// une serait une impasse. Son écran renvoie donc à ses cartes, qui sont tout son contenu.
+    @ViewBuilder
     private var missingSheet: some View {
-        MicaboEmptyState(
-            systemImage: "text.book.closed",
-            title: "Ce cours n'est pas encore fiché",
-            message: course.rawText.nilIfBlank == nil
-                ? "Le texte d'origine n'a pas été conservé : réimporte le document pour en obtenir une fiche."
-                : "Micabo a gardé le document. Il peut en écrire la fiche : le plan, les définitions et ce qu'il faut retenir.",
-            actionTitle: course.rawText.nilIfBlank == nil ? nil : "Ficher ce cours"
-        ) {
-            Task { await writeSheet() }
+        if course.source.expectsSheet {
+            MicaboEmptyState(
+                systemImage: "text.book.closed",
+                title: "Ce cours n'est pas encore fiché",
+                message: course.rawText.nilIfBlank == nil
+                    ? "Le texte d'origine n'a pas été conservé : réimporte le document pour en obtenir une fiche."
+                    : "Micabo a gardé le document. Il peut en écrire la fiche : le plan, les définitions et ce qu'il faut retenir.",
+                actionTitle: course.rawText.nilIfBlank == nil ? nil : "Ficher ce cours"
+            ) {
+                Task { await writeSheet() }
+            }
+            .padding(.top, MicaboSpacing.md)
+        } else {
+            MicaboEmptyState(
+                systemImage: "rectangle.on.rectangle.angled",
+                title: "Un paquet de cartes",
+                message: "Celui-ci n'a pas de fiche : il n'y avait pas de document derrière, seulement des choses à retenir.",
+                actionTitle: "Voir les cartes"
+            ) {
+                generatedCards = CourseCardsRoute(course: course)
+            }
+            .padding(.top, MicaboSpacing.md)
         }
-        .padding(.top, MicaboSpacing.md)
     }
 
     // MARK: - Les cartes

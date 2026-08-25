@@ -9,6 +9,8 @@ enum CourseSource: String, Codable, CaseIterable {
     case youtube
     case library
     case sample
+    /// Un paquet créé pour ses cartes, sans document derrière et sans fiche à écrire.
+    case deck
 
     var label: String {
         switch self {
@@ -19,6 +21,7 @@ enum CourseSource: String, Codable, CaseIterable {
         case .youtube: "YouTube"
         case .library: "Bibliothèque"
         case .sample: "Exemple"
+        case .deck: "Cartes"
         }
     }
 
@@ -31,7 +34,14 @@ enum CourseSource: String, Codable, CaseIterable {
         case .youtube: "play.rectangle.fill"
         case .library: "globe.europe.africa.fill"
         case .sample: "sparkles"
+        case .deck: "rectangle.on.rectangle.angled"
         }
+    }
+
+    /// Vrai quand il n'y a rien à ficher : un paquet de cartes n'a pas de document, donc pas
+    /// de fiche, et son écran ne doit pas proposer d'en écrire une.
+    var expectsSheet: Bool {
+        self != .deck
     }
 }
 

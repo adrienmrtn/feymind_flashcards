@@ -138,8 +138,10 @@ struct FlashcardsView: View {
             Button { isMasking = true } label: {
                 Label("Masquer un schéma", systemImage: "rectangle.dashed")
             }
-            Button { showCardOptions = true } label: {
-                Label("Générer avec l'IA", systemImage: "sparkles")
+            if canGenerate {
+                Button { showCardOptions = true } label: {
+                    Label("Générer avec l'IA", systemImage: "sparkles")
+                }
             }
             if canAddReverseCards {
                 Button { addReverseCards() } label: {
@@ -159,16 +161,27 @@ struct FlashcardsView: View {
 
     // MARK: - Liste
 
+    /// Vrai quand le modèle a de quoi écrire : la fiche d'un cours, ou le texte collé dans un
+    /// paquet. Un paquet nu n'a rien à relire, et proposer de générer n'y mènerait qu'à une
+    /// erreur.
+    private var canGenerate: Bool {
+        course.contextText.nilIfBlank != nil || course.rawText.nilIfBlank != nil
+    }
+
     @ViewBuilder
     private var listContent: some View {
         if cards.isEmpty {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
                 title: "Aucune carte",
-                message: "Micabo peut en écrire à partir de la fiche du cours, et tu peux aussi en créer une à la main.",
-                actionTitle: MicaboCopy.cardsButton
+                message: emptyMessage,
+                actionTitle: canGenerate ? MicaboCopy.cardsButton : "Écrire une carte"
             ) {
-                showCardOptions = true
+                if canGenerate {
+                    showCardOptions = true
+                } else {
+                    isCreating = true
+                }
             }
         } else {
             VStack(alignment: .leading, spacing: 8) {
@@ -225,6 +238,15 @@ struct FlashcardsView: View {
                 .micaboGroup()
             }
         }
+    }
+
+    private var emptyMessage: String {
+        guard canGenerate else {
+            return "Ce paquet est nu. Écris ta première carte : un recto, un verso, et elle entre dans ta file du jour."
+        }
+        return course.source == .deck
+            ? "Micabo peut en écrire à partir du texte du paquet, et tu peux aussi en créer une à la main."
+            : "Micabo peut en écrire à partir de la fiche du cours, et tu peux aussi en créer une à la main."
     }
 
     /// Ce que la rangée signale d'un coup d'œil : format, son, sens inverse.
