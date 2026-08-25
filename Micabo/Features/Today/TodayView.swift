@@ -24,6 +24,8 @@ struct TodayView: View {
     @Query private var reviewLogs: [ReviewLog]
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
 
+    @Environment(ProAccess.self) private var pro: ProAccess?
+
     @State private var showStudy = false
     @State private var path = NavigationPath()
     @State private var showImportChoice = false
@@ -31,6 +33,7 @@ struct TodayView: View {
     @State private var activeImport: ImportKind?
     /// Un paquet de cartes ne passe pas par l'écran d'import : il n'y a rien à lire.
     @State private var isCreatingDeck = false
+    @State private var paywall: PaywallTrigger?
 
     /// Les échéances d'examen en cours. L'écran doit les connaître : ce sont elles qui
     /// lèvent le plafond de cartes neuves, donc qui décident du chiffre annoncé.
@@ -108,10 +111,15 @@ struct TodayView: View {
             .tabBarClearance {
                 if hasSessionButton {
                     MicaboBottomBar {
-                        Button {
-                            showStudy = true
-                        } label: {
-                            Text(sessionButtonTitle)
+                        Button(action: startSession) {
+                            HStack(spacing: MicaboSpacing.xs) {
+                                Text(sessionButtonTitle)
+
+                                if dueCards.isEmpty, !canPractice {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 11, weight: .bold))
+                                }
+                            }
                         }
                         .buttonStyle(MicaboPrimaryButtonStyle())
                     }
@@ -119,6 +127,7 @@ struct TodayView: View {
             }
             .toolbar(.hidden, for: .navigationBar)
             .reportsNavigationDepth(for: .today, depth: path.count)
+            .returnsHome(path: $path)
             .navigationDestination(for: Course.self) { course in
                 CourseSheetView(course: course)
             }
@@ -132,7 +141,7 @@ struct TodayView: View {
                 ExamsView {
                     path.removeLast()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                        showImportChoice = true
+                        requestImport()
                     }
                 }
             }
@@ -163,6 +172,7 @@ struct TodayView: View {
             // faire passer des cartes en avance pour une vraie session.
             StudyView(source: .allDue, mode: dueCards.isEmpty ? .practice : .scheduled)
         }
+        .micaboPaywall($paywall)
     }
 
     // MARK: - En-tête
@@ -452,7 +462,7 @@ struct TodayView: View {
                 message: "Importe un cours : Micabo en tire tes premières cartes et te les repose au bon moment.",
                 actionTitle: "Importer un cours"
             ) {
-                showImportChoice = true
+                requestImport()
             }
         } else {
             VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
@@ -524,7 +534,32 @@ struct TodayView: View {
         dueCards.isEmpty ? "Entraînement libre" : MicaboCopy.reviewButton(count: dueCards.count)
     }
 
+    private var canPractice: Bool { pro?.canPractice ?? true }
+
+    /// Réviser ce qui est dû reste gratuit. Prendre de l'avance sur tout un paquet, non :
+    /// c'est ce qu'on fait la veille d'un partiel, et c'est ce que Pro ouvre.
+    private func startSession() {
+        guard !dueCards.isEmpty || canPractice else {
+            paywall = .practice
+            return
+        }
+        showStudy = true
+    }
+
     // MARK: - Import
+
+    /// Le premier cours est offert, le deuxième s'achète.
+    ///
+    /// Le contrôle est ici plutôt que dans l'écran d'import : on refuse **avant** d'avoir
+    /// fait choisir un PDF, sélectionner des photos et attendre une analyse. Un paywall qui
+    /// tombe après le travail est un paywall qui fait désinstaller.
+    private func requestImport() {
+        guard pro?.canImportCourse(existingCourses: courses) ?? true else {
+            paywall = .secondCourse
+            return
+        }
+        showImportChoice = true
+    }
 
     private func launchPendingImport() {
         guard let kind = pendingImport else { return }

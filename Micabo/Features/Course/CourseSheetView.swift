@@ -22,6 +22,7 @@ struct CourseSheetView: View {
     @Environment(\.aiService) private var aiService
     @Environment(\.dismiss) private var dismiss
     @Environment(CloudSync.self) private var sync
+    @Environment(ProAccess.self) private var pro: ProAccess?
 
     /// La fiche décodée une fois, pas à chaque passage dans le corps de la vue.
     @State private var sheet: CourseSheet?
@@ -35,6 +36,7 @@ struct CourseSheetView: View {
     /// Les cartes à ouvrir dès qu'elles existent. C'est ce qui fait de la génération un
     /// parcours qui aboutit, plutôt qu'une opération dont il faut aller chercher le résultat.
     @State private var generatedCards: CourseCardsRoute?
+    @State private var paywall: PaywallTrigger?
 
     /// L'invitation à sélectionner un passage disparaît une fois le geste découvert : une
     /// consigne qu'on a suivie n'a plus rien à dire.
@@ -48,6 +50,7 @@ struct CourseSheetView: View {
     private var cards: [Flashcard] { course.orderedCards }
     private var dueCount: Int { course.dueCards.count }
     private var tint: Color { Color(hexString: course.accentHex) }
+    private var isPro: Bool { pro?.isPro ?? true }
 
     var body: some View {
         ScrollView {
@@ -94,6 +97,7 @@ struct CourseSheetView: View {
         .fullScreenCover(isPresented: $showStudy) {
             StudyView(source: .course(course), mode: studyMode)
         }
+        .micaboPaywall($paywall)
         .alert("Oups", isPresented: .constant(errorMessage != nil)) {
             Button("Fermer", role: .cancel) { errorMessage = nil }
         } message: {
@@ -232,13 +236,26 @@ struct CourseSheetView: View {
 
     // MARK: - La fiche
 
+    /// La fiche, coupée aux sept dixièmes tant qu'on n'est pas abonné.
+    ///
+    /// La coupure se compte en blocs (`SheetGate`) et non en caractères : couper un
+    /// paragraphe en plein milieu d'un mot ressemble à un bug d'affichage, pas à une limite
+    /// assumée.
     @ViewBuilder
     private var content: some View {
         if let sheet {
+            let parts = SheetGate.split(sheet.blocks, isPro: isPro)
+
             VStack(alignment: .leading, spacing: 0) {
-                ForEach(Array(sheet.blocks.enumerated()), id: \.offset) { index, block in
+                ForEach(Array(parts.readable.enumerated()), id: \.offset) { index, block in
                     SheetBlockView(block: block, tint: tint, onExplain: explain)
                         .padding(.top, index == 0 ? MicaboSpacing.md : SheetBlockView.spacing(before: block))
+                }
+
+                if !parts.locked.isEmpty {
+                    LockedSheetTail(blocks: parts.locked, tint: tint) {
+                        paywall = .lockedSheet
+                    }
                 }
             }
             .padding(.bottom, MicaboSpacing.xs)
@@ -347,15 +364,31 @@ struct CourseSheetView: View {
                 }
                 .buttonStyle(MicaboPrimaryButtonStyle())
             } else {
-                Button {
-                    studyMode = dueCount > 0 ? .scheduled : .practice
-                    showStudy = true
-                } label: {
-                    Text(dueCount > 0 ? MicaboCopy.reviewButton(count: dueCount) : "Entraînement libre")
+                Button(action: startSession) {
+                    HStack(spacing: MicaboSpacing.xs) {
+                        Text(dueCount > 0 ? MicaboCopy.reviewButton(count: dueCount) : "Entraînement libre")
+
+                        if dueCount == 0, !(pro?.canPractice ?? true) {
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 11, weight: .bold))
+                        }
+                    }
                 }
                 .buttonStyle(MicaboPrimaryButtonStyle())
             }
         }
+    }
+
+    /// Réviser ce qui est dû reste gratuit. **L'entraînement libre, non** : c'est ce qu'on
+    /// fait la veille d'un partiel, et le cadenas sur le bouton le dit avant l'appui plutôt
+    /// que de faire surgir un paywall à la place d'une session.
+    private func startSession() {
+        guard dueCount > 0 || (pro?.canPractice ?? true) else {
+            paywall = .practice
+            return
+        }
+        studyMode = dueCount > 0 ? .scheduled : .practice
+        showStudy = true
     }
 
     @ViewBuilder

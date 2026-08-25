@@ -56,4 +56,20 @@ final class TabRouter {
     func setDepth(_ depth: Int, for tab: RootTab) {
         navigationDepth[tab] = depth
     }
+
+    /// Compteur de demandes de retour à l'accueil. Chaque onglet l'observe et vide sa pile.
+    ///
+    /// Un compteur, et pas un booléen : deux retours de suite doivent se distinguer, et un
+    /// drapeau qu'il faut remettre à faux se fait forcément oublier une fois.
+    private(set) var homeRequests = 0
+
+    /// **Ramène l'app à son écran d'accueil**, quelle que soit la profondeur d'où l'on part.
+    ///
+    /// Une session lancée depuis la fiche d'un cours est deux écrans plus loin que
+    /// « Réviser » : changer d'onglet sans vider les piles laisserait l'utilisateur devant
+    /// le cours qu'il vient de quitter dès qu'il retourne dans Cours.
+    func goHome() {
+        homeRequests += 1
+        selection = .today
+    }
 }

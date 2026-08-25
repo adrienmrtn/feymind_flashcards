@@ -9,6 +9,7 @@ import SwiftUI
 struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AuthController.self) private var auth
+    @Environment(ProAccess.self) private var pro: ProAccess?
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
@@ -24,6 +25,7 @@ struct CoursesListView: View {
     @State private var activeImport: ImportKind?
     /// Un paquet de cartes ne passe pas par l'écran d'import : il n'y a rien à lire.
     @State private var isCreatingDeck = false
+    @State private var paywall: PaywallTrigger?
 
     /// Les deux rayons de l'onglet.
     enum Shelf: String, CaseIterable, Identifiable {
@@ -113,6 +115,7 @@ struct CoursesListView: View {
             .tabBarClearance { importButton }
             .toolbar(.hidden, for: .navigationBar)
             .reportsNavigationDepth(for: .courses, depth: path.count)
+            .returnsHome(path: $path)
             .navigationDestination(for: Course.self) { course in
                 CourseSheetView(course: course)
             }
@@ -153,6 +156,7 @@ struct CoursesListView: View {
                 path = NavigationPath([CourseCardsRoute(course: course)])
             }
         }
+        .micaboPaywall($paywall)
     }
 
     private var header: some View {
@@ -167,12 +171,12 @@ struct CoursesListView: View {
     private var importButton: some View {
         if !courses.isEmpty {
             MicaboCircleButton(
-                systemImage: "plus",
+                systemImage: canImport ? "plus" : "lock.fill",
                 style: .dark,
                 size: 56,
-                accessibilityTitle: "Importer un cours"
+                accessibilityTitle: canImport ? "Importer un cours" : "Importer un cours, réservé à Micabo Pro"
             ) {
-                showImportChoice = true
+                requestImport()
             }
             .padding(.trailing, MicaboSpacing.screen)
             .padding(.bottom, MicaboSpacing.sm)
@@ -260,7 +264,7 @@ struct CoursesListView: View {
                 message: "Importe un PDF, des photos, un Word ou colle du texte : Micabo en tire tes premières cartes.",
                 actionTitle: "Importer un cours"
             ) {
-                showImportChoice = true
+                requestImport()
             }
             .padding(.horizontal, MicaboSpacing.screen)
         } else if filtered.isEmpty {
@@ -295,6 +299,23 @@ struct CoursesListView: View {
             }
             .padding(.horizontal, MicaboSpacing.xxs)
         }
+    }
+
+    private var canImport: Bool {
+        pro?.canImportCourse(existingCourses: courses) ?? true
+    }
+
+    /// Le premier cours est offert, le deuxième s'achète.
+    ///
+    /// Le contrôle est ici plutôt que dans l'écran d'import : on refuse **avant** d'avoir
+    /// fait choisir un PDF, sélectionner des photos et attendre une analyse. Un paywall qui
+    /// tombe après le travail est un paywall qui fait désinstaller.
+    private func requestImport() {
+        guard canImport else {
+            paywall = .secondCourse
+            return
+        }
+        showImportChoice = true
     }
 
     private func launchPendingImport() {

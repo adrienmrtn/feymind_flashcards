@@ -15,6 +15,7 @@ struct FlashcardsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiService) private var aiService
     @Environment(\.dismiss) private var dismiss
+    @Environment(ProAccess.self) private var pro: ProAccess?
 
     @State private var editingCard: Flashcard?
     @State private var isCreating = false
@@ -24,9 +25,11 @@ struct FlashcardsView: View {
     @State private var showStudy = false
     @State private var studyMode: StudyMode = .scheduled
     @State private var errorMessage: String?
+    @State private var paywall: PaywallTrigger?
 
     private var cards: [Flashcard] { course.orderedCards }
     private var dueCount: Int { course.dueCards.count }
+    private var canPractice: Bool { pro?.canPractice ?? true }
 
     var body: some View {
         ScrollView {
@@ -47,13 +50,15 @@ struct FlashcardsView: View {
         .overlay(alignment: .bottom) {
             if !cards.isEmpty {
                 MicaboBottomBar {
-                    Button {
-                        // Sans carte due, une vraie session serait vide : on annonce
-                        // l'entraînement libre au lieu de promettre une révision.
-                        studyMode = dueCount > 0 ? .scheduled : .practice
-                        showStudy = true
-                    } label: {
-                        Text(dueCount > 0 ? MicaboCopy.reviewButton(count: dueCount) : "Entraînement libre")
+                    Button(action: startSession) {
+                        HStack(spacing: MicaboSpacing.xs) {
+                            Text(dueCount > 0 ? MicaboCopy.reviewButton(count: dueCount) : "Entraînement libre")
+
+                            if dueCount == 0, !canPractice {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                            }
+                        }
                     }
                     .buttonStyle(MicaboPrimaryButtonStyle())
                 }
@@ -78,6 +83,7 @@ struct FlashcardsView: View {
         .fullScreenCover(isPresented: $showStudy) {
             StudyView(source: .course(course), mode: studyMode)
         }
+        .micaboPaywall($paywall)
         .overlay {
             if isGenerating {
                 GenerationOverlay(
@@ -124,11 +130,8 @@ struct FlashcardsView: View {
     private var courseMenu: some View {
         Menu {
             if !cards.isEmpty {
-                Button {
-                    studyMode = .practice
-                    showStudy = true
-                } label: {
-                    Label("Entraînement libre", systemImage: "dumbbell")
+                Button(action: startPractice) {
+                    Label("Entraînement libre", systemImage: canPractice ? "dumbbell" : "lock.fill")
                 }
             }
             Button { isCreating = true } label: {
@@ -156,6 +159,30 @@ struct FlashcardsView: View {
             MicaboCircleIcon(systemImage: "ellipsis", size: 38)
         }
         .accessibilityLabel("Actions des cartes")
+    }
+
+    // MARK: - Session
+
+    /// Réviser ce qui est dû reste gratuit ; l'entraînement libre demande un abonnement.
+    ///
+    /// Sans carte due, une vraie session serait vide : le bouton annonce l'entraînement
+    /// libre au lieu de promettre une révision, et il porte son cadenas.
+    private func startSession() {
+        guard dueCount > 0 else {
+            startPractice()
+            return
+        }
+        studyMode = .scheduled
+        showStudy = true
+    }
+
+    private func startPractice() {
+        guard canPractice else {
+            paywall = .practice
+            return
+        }
+        studyMode = .practice
+        showStudy = true
     }
 
     // MARK: - Liste
