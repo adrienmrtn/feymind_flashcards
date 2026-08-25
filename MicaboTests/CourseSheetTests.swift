@@ -201,6 +201,118 @@ final class CourseSheetSanitizationTests: XCTestCase {
     }
 }
 
+/// Le surligneur garanti par le code. Le prompt le réclame depuis longtemps et les fiches
+/// arrivaient nues : ce plancher ne dépend plus du modèle.
+final class SheetHighlighterTests: XCTestCase {
+    private func highlightCount(_ sheet: CourseSheet) -> Int {
+        sheet.blocks.reduce(0) { total, block in
+            let texts: [String]
+            switch block {
+            case .paragraph(let text), .callout(_, let text), .heading(_, let text):
+                texts = [text]
+            case .definition(let term, let text):
+                texts = [term, text]
+            default:
+                texts = []
+            }
+            return total + texts.reduce(0) { $0 + ($1.components(separatedBy: "==").count - 1) / 2 }
+        }
+    }
+
+    func testAnUnmarkedSheetGetsItsMarker() {
+        let sheet = CourseSheet(blocks: [
+            .paragraph(text: "L'eau change d'état sans jamais quitter la planète, et c'est tout le sujet du chapitre."),
+            .heading(level: 1, text: "Les trois temps"),
+            .paragraph(text: "L'évaporation précède la condensation, puis la précipitation referme la boucle du cycle."),
+            .definition(
+                term: "Condensation",
+                text: "Passage de la vapeur à l'état liquide, autour de noyaux de condensation minuscules."
+            ),
+            .callout(
+                tone: .essentiel,
+                text: "Le cycle de l'eau est fermé : la quantité totale d'eau sur Terre ne varie jamais."
+            )
+        ])
+
+        XCTAssertEqual(highlightCount(sheet), 0)
+        XCTAssertGreaterThanOrEqual(highlightCount(sheet.highlighted()), SheetHighlighter.minimumHighlights)
+    }
+
+    /// L'encadré « essentiel » tient tout le chapitre : c'est le premier passage marqué.
+    func testTheEssentialCalloutIsMarkedFirst() {
+        let sheet = CourseSheet(blocks: [
+            .callout(
+                tone: .essentiel,
+                text: "La quantité totale d'eau sur Terre ne varie pas : le cycle est entièrement fermé."
+            ),
+            .paragraph(text: "L'évaporation précède la condensation, puis la précipitation referme la boucle.")
+        ])
+
+        let marked = CourseSheet(blocks: SheetHighlighter.ensuring(sheet.blocks, minimum: 1))
+
+        guard case .callout(_, let callout) = marked.blocks[0],
+              case .paragraph(let paragraph) = marked.blocks[1] else {
+            return XCTFail("Les deux blocs doivent être gardés")
+        }
+        XCTAssertTrue(callout.contains("=="))
+        XCTAssertFalse(paragraph.contains("=="))
+    }
+
+    func testASheetAlreadyMarkedIsLeftAlone() {
+        let sheet = CourseSheet(blocks: [
+            .paragraph(text: "==L'eau change d'état== sans jamais quitter la planète, et voilà le sujet."),
+            .paragraph(text: "==L'évaporation précède la condensation== puis la précipitation referme.")
+        ])
+
+        XCTAssertEqual(CourseSheet(blocks: SheetHighlighter.ensuring(sheet.blocks, minimum: 2)), sheet)
+    }
+
+    /// Le marqueur porte sur une phrase, jamais sur un paragraphe entier, et il laisse la
+    /// ponctuation finale dehors.
+    func testTheMarkerCoversASentenceAndNotThePunctuation() throws {
+        let marked = try XCTUnwrap(
+            SheetHighlighter.marked(
+                "L'eau circule sans jamais quitter la planète, et cette boucle est fermée. "
+                    + "La **condensation** transforme la vapeur en gouttelettes autour de noyaux minuscules."
+            )
+        )
+
+        XCTAssertTrue(marked.contains("==La **condensation**"))
+        XCTAssertTrue(marked.contains("minuscules==."))
+    }
+
+    func testASentenceTooLongIsCutOnItsFirstClause() throws {
+        let long = "La photosynthèse convertit l'énergie lumineuse en énergie chimique, "
+            + "ce qui suppose une chaîne de transporteurs, des pigments capables d'absorber "
+            + "certaines longueurs d'onde, et une organisation membranaire que seuls les "
+            + "thylakoïdes des chloroplastes rendent possible dans la cellule végétale."
+
+        let marked = try XCTUnwrap(SheetHighlighter.marked(long))
+        let passage = SheetMarkup.spans(marked).first { $0.isHighlighted }
+
+        XCTAssertNotNil(passage)
+        XCTAssertLessThanOrEqual(passage?.text.count ?? .max, 170)
+    }
+
+    func testNothingIsMarkedWhenNoSentenceIsWorthIt() {
+        XCTAssertNil(SheetHighlighter.marked("Trop court."))
+        XCTAssertNil(SheetHighlighter.marked("Un texte ==déjà marqué== et assez long pour être choisi."))
+    }
+
+    /// Ni les titres, ni les tableaux : ils portent déjà leur mise en valeur.
+    func testHeadingsAndTablesAreNeverMarked() {
+        let sheet = CourseSheet(blocks: [
+            .heading(level: 1, text: "Un titre qui pourrait tenir une phrase entière sans problème"),
+            .table(SheetTable(
+                headers: ["Phase", "Lieu"],
+                rows: [["Photochimique", "Thylakoïdes"], ["Biochimique", "Stroma"]]
+            ))
+        ])
+
+        XCTAssertEqual(sheet.highlighted(), sheet)
+    }
+}
+
 /// La fiche à plat : c'est ce texte qui part au modèle pour écrire des cartes ou expliquer
 /// un passage, donc rien de ce qui se mémorise ne doit y disparaître.
 final class CourseSheetFlatteningTests: XCTestCase {
@@ -323,7 +435,10 @@ final class CourseSheetPersistenceTests: XCTestCase {
         )
 
         XCTAssertTrue(course.hasSheet)
-        XCTAssertEqual(course.decodedSheet(), SampleData.photosynthesisSheet.sanitized())
+        // Ce qui est enregistré est ce que le modèle a écrit ; ce qui se relit porte en plus
+        // le surligneur garanti par l'app.
+        XCTAssertEqual(course.decodedSheet(), SampleData.photosynthesisSheet.sanitized().highlighted())
+        XCTAssertEqual(CourseSheet.decode(from: course.sheetData), SampleData.photosynthesisSheet.sanitized())
         // Sans contexte envoyé par le serveur, il est reconstitué depuis la fiche : c'est
         // lui qui sert à écrire les cartes.
         XCTAssertFalse(course.contextText.isEmpty)

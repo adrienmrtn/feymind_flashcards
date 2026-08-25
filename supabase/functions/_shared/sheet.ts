@@ -37,10 +37,19 @@ export const SHEET_LIMITS = {
    *
    * Le plafond était de cinq, et le prompt demandait « cinq au maximum » : le modèle lisait
    * les deux comme un ordre de sobriété et n'en produisait aucun. Il en demande maintenant
-   * six à huit, et le plafond a suivi — sinon le garde-fou effaçait précisément ce qu'on
+   * six à huit, et le plafond a suivi, sinon le garde-fou effaçait précisément ce qu'on
    * venait d'exiger.
    */
   highlights: 9,
+  /**
+   * Plancher garanti par `ensureHighlights`, quoi que le modèle ait rendu.
+   *
+   * Le prompt exige six à huit surlignages depuis plusieurs versions, et les fiches
+   * arrivaient quand même sans une seule marque : une consigne de mise en forme est ce
+   * qu'un modèle lâche en premier quand il se concentre sur le contenu. Le surligneur est
+   * donc passé côté code, où il ne dépend plus de la bonne volonté du modèle.
+   */
+  minimumHighlights: 4,
 } as const;
 
 const TONES = new Set(["essentiel", "attention", "exemple", "astuce"]);
@@ -263,6 +272,164 @@ function removeHighlights(block: SheetBlock): SheetBlock {
     default:
       return block;
   }
+}
+
+// MARK: Surligneur
+
+/**
+ * Garantit qu'une fiche porte des passages surlignés.
+ *
+ * Le choix des passages suit l'ordre dans lequel un étudiant les chercherait : ce que
+ * l'encadré "essentiel" retient, l'enjeu posé par le premier paragraphe, ce qui distingue
+ * une définition de sa voisine, puis la conclusion des parties suivantes. On ne surligne
+ * jamais deux fois le même bloc, et on s'arrête dès le plancher atteint : une fiche
+ * entièrement jaune ne se relit pas mieux qu'une fiche sans marque.
+ */
+export function ensureHighlights(
+  blocks: SheetBlock[],
+  minimum: number = SHEET_LIMITS.minimumHighlights,
+): SheetBlock[] {
+  const result = [...blocks];
+  let total = result.reduce((sum, block) => sum + countHighlights(block), 0);
+  if (total >= minimum) return result;
+
+  const marked = new Set<number>();
+
+  for (const index of highlightOrder(result)) {
+    if (total >= minimum) break;
+    if (marked.has(index)) continue;
+
+    const block = result[index];
+    const updated = markBlock(block);
+    if (!updated) continue;
+
+    result[index] = updated;
+    marked.add(index);
+    total += 1;
+  }
+
+  return result;
+}
+
+/** L'ordre dans lequel les blocs se voient proposer le marqueur. */
+function highlightOrder(blocks: SheetBlock[]): number[] {
+  const essentials: number[] = [];
+  const firstParagraph: number[] = [];
+  const definitions: number[] = [];
+  const others: number[] = [];
+
+  blocks.forEach((block, index) => {
+    switch (block.type) {
+      case "callout":
+        if (block.tone === "essentiel") essentials.push(index);
+        else others.push(index);
+        break;
+      case "paragraph":
+        if (firstParagraph.length === 0) firstParagraph.push(index);
+        else others.push(index);
+        break;
+      case "definition":
+        definitions.push(index);
+        break;
+      default:
+        break;
+    }
+  });
+
+  return [...essentials, ...firstParagraph, ...definitions, ...others];
+}
+
+/** Repasse le texte d'un bloc avec une marque, ou rend `null` si rien ne s'y prête. */
+function markBlock(block: SheetBlock): SheetBlock | null {
+  switch (block.type) {
+    case "paragraph":
+    case "callout": {
+      const text = markPassage(block.text);
+      return text ? { ...block, text } : null;
+    }
+    case "definition": {
+      const text = markPassage(block.text);
+      return text ? { ...block, text } : null;
+    }
+    default:
+      return null;
+  }
+}
+
+/**
+ * Enveloppe d'un `==` le passage du texte qui mérite le marqueur.
+ *
+ * On cherche une phrase, pas un texte entier : un surlignage doit se lire d'un coup d'œil.
+ * La phrase qui porte un terme en gras passe devant, parce que c'est là que le modèle a
+ * déjà placé ce qui compte. Une phrase trop longue est ramenée à sa première proposition,
+ * coupée sur une virgule ou un deux-points, ce qui est exactement là où on relèverait le
+ * marqueur à la main.
+ */
+export function markPassage(text: string): string | null {
+  if (text.includes("==")) return null;
+
+  const candidates = sentenceRanges(text).filter(([start, end]) => {
+    const sentence = text.slice(start, end);
+    return !sentence.includes("$") && sentence.length >= HIGHLIGHT_MINIMUM_LENGTH;
+  });
+  if (candidates.length === 0) return null;
+
+  const scored = candidates
+    .map(([start, end]) => {
+      const sentence = text.slice(start, end);
+      const trimmed = trimToClause(sentence);
+      if (!trimmed) return null;
+      return { start: start + trimmed[0], end: start + trimmed[1], hasBold: sentence.includes("**") };
+    })
+    .filter((entry): entry is { start: number; end: number; hasBold: boolean } => entry !== null);
+  if (scored.length === 0) return null;
+
+  const best = scored.find((entry) => entry.hasBold) ?? scored[0];
+  return `${text.slice(0, best.start)}==${text.slice(best.start, best.end)}==${text.slice(best.end)}`;
+}
+
+const HIGHLIGHT_MINIMUM_LENGTH = 40;
+const HIGHLIGHT_MAXIMUM_LENGTH = 170;
+
+/** Bornes de chaque phrase du texte, ponctuation finale comprise. */
+function sentenceRanges(text: string): [number, number][] {
+  const ranges: [number, number][] = [];
+  let start = 0;
+
+  for (let index = 0; index < text.length; index += 1) {
+    if (!".!?".includes(text[index])) continue;
+    // Un point suivi d'une lettre est une abréviation ou une décimale, pas une fin.
+    const next = text[index + 1];
+    if (next !== undefined && next !== " ") continue;
+    ranges.push([start, index + 1]);
+    start = index + 2;
+  }
+
+  if (start < text.length) ranges.push([start, text.length]);
+  return ranges;
+}
+
+/**
+ * Le morceau de phrase à marquer : la phrase sans sa ponctuation finale, ou sa première
+ * proposition quand elle est trop longue. Rend `null` si rien de la bonne taille n'en sort.
+ */
+function trimToClause(sentence: string): [number, number] | null {
+  let end = sentence.length;
+  while (end > 0 && " .!?,;:".includes(sentence[end - 1])) end -= 1;
+
+  let start = 0;
+  while (start < end && sentence[start] === " ") start += 1;
+
+  if (end - start < HIGHLIGHT_MINIMUM_LENGTH) return null;
+  if (end - start <= HIGHLIGHT_MAXIMUM_LENGTH) return [start, end];
+
+  // Trop long : on s'arrête à la dernière coupure naturelle qui tient dans la limite.
+  let cut = -1;
+  for (let index = start; index < start + HIGHLIGHT_MAXIMUM_LENGTH && index < end; index += 1) {
+    if (",;:".includes(sentence[index])) cut = index;
+  }
+  if (cut - start < HIGHLIGHT_MINIMUM_LENGTH) return null;
+  return [start, cut];
 }
 
 /** Retire le balisage en ligne : c'est la version qui part au modèle pour les cartes. */

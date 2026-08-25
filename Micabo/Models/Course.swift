@@ -125,10 +125,14 @@ final class Course {
         (sheetData?.isEmpty == false)
     }
 
-    /// La fiche décodée. Le décodage n'est pas gratuit : un écran la lit une fois et la
-    /// garde, il ne l'appelle pas depuis un corps de vue.
+    /// La fiche décodée, surligneur garanti. Le décodage n'est pas gratuit : un écran la lit
+    /// une fois et la garde, il ne l'appelle pas depuis un corps de vue.
+    ///
+    /// Le surlignage est posé à la lecture et non à l'enregistrement : ce qui est en base
+    /// reste ce que le modèle a écrit, et les fiches importées avant que le surligneur existe
+    /// se relisent marquées sans qu'on ait à les refaire.
     func decodedSheet() -> CourseSheet? {
-        CourseSheet.decode(from: sheetData)
+        CourseSheet.decode(from: sheetData)?.highlighted()
     }
 
     func apply(_ sheet: CourseSheet?) {
