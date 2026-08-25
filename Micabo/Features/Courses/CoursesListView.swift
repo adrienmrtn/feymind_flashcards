@@ -102,16 +102,15 @@ struct CoursesListView: View {
                     shelfContent
                 }
                 .padding(.top, MicaboSpacing.xs)
-                .padding(.bottom, MicaboSpacing.xxl)
+                .padding(.bottom, MicaboSpacing.md)
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
-            // Le bouton est posé par `safeAreaInset` et non par un `overlay` : un overlay se
-            // cale sur les bords de la vue, pas sur sa zone sûre, et la barre d'onglets,
-            // dessinée par la racine par-dessus les pages, retombait dessus. Le « + » était
-            // couvert aux deux tiers, donc à moitié cliquable. Posé ici, il se range
-            // au-dessus de la barre, et la liste réserve sa hauteur d'elle-même.
-            .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) { importButton }
+            // Le « + » se pose au-dessus de la barre d'onglets, et la liste réserve la
+            // hauteur des deux. C'est la page qui doit le faire : l'inset de la racine ne
+            // franchit pas la frontière du `NavigationStack`, et le bouton se retrouvait
+            // sous la barre — voir `tabBarClearance`.
+            .tabBarClearance { importButton }
             .toolbar(.hidden, for: .navigationBar)
             .reportsNavigationDepth(for: .courses, depth: path.count)
             .navigationDestination(for: Course.self) { course in
@@ -177,6 +176,7 @@ struct CoursesListView: View {
             }
             .padding(.trailing, MicaboSpacing.screen)
             .padding(.bottom, MicaboSpacing.sm)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 

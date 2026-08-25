@@ -109,7 +109,7 @@ enum CourseRepository {
 
         let course = Course(
             title: title,
-            subject: shared.subject.flatMap { TextSanitizer.clean($0).nilIfBlank },
+            subject: shared.subject.flatMap { TextSanitizer.subject($0).nilIfBlank },
             summary: TextSanitizer.clean(shared.summary),
             emoji: CourseEmoji.resolve(
                 proposed: shared.emoji,
@@ -181,7 +181,7 @@ enum CourseRepository {
         in context: ModelContext
     ) throws -> Course {
         let cleanTitle = TextSanitizer.clean(title).nilIfBlank ?? "Nouveau paquet"
-        let cleanSubject = subject.flatMap { TextSanitizer.clean($0).nilIfBlank }
+        let cleanSubject = subject.flatMap { TextSanitizer.subject($0).nilIfBlank }
         let index = abs(cleanTitle.hashValue) % MicaboColor.courseAccents.count
         let text = TextSanitizer.normalizeExtractedText(rawText)
 

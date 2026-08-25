@@ -60,28 +60,24 @@ struct FriendProfileView: View {
         .padding(.top, MicaboSpacing.xs)
     }
 
+    /// Ce que ce profil a à dire de plus que son en-tête : le compte de ses cours partagés.
+    ///
+    /// La pastille d'initiale qui vivait ici est partie — un rond coloré avec une lettre
+    /// dedans est une photo de profil qui n'existe pas — et le nom avec elle : l'en-tête le
+    /// porte déjà en grand, deux centimètres plus haut. Ne reste que la ligne qui compte.
     private var identity: some View {
-        HStack(spacing: 14) {
-            Text(person.username.first.map { String($0).uppercased() } ?? "?")
-                .font(MicaboFont.hanken(21, weight: .semibold))
+        HStack(spacing: 12) {
+            Image(systemName: "books.vertical")
+                .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(MicaboColor.accent)
-                .frame(width: 54, height: 54)
-                .background(MicaboColor.accentSoft, in: Circle())
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(person.handle)
-                    .font(MicaboFont.hanken(17, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .lineLimit(1)
-
-                Text(countLabel)
-                    .font(MicaboFont.rowSubtitle)
-                    .foregroundStyle(MicaboColor.inkTertiary)
-            }
+            Text(countLabel)
+                .font(MicaboFont.bodyEmphasis)
+                .foregroundStyle(MicaboColor.ink)
 
             Spacer(minLength: 0)
         }
-        .padding(18)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .micaboGroup()
     }

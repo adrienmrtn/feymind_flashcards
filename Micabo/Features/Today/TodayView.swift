@@ -96,15 +96,16 @@ struct TodayView: View {
                     examSection
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.bottom, MicaboSpacing.xxl)
+                .padding(.bottom, MicaboSpacing.md)
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
-            // Comme le « + » de l'onglet Cours : `safeAreaInset` et non `overlay`. Un overlay
-            // se cale sur les bords de la vue et passait sous la barre d'onglets, qui est
-            // dessinée par la racine par-dessus les pages. Le bouton de session, le premier
-            // appui de l'app, en était couvert.
-            .safeAreaInset(edge: .bottom, spacing: 0) {
+            // Le bouton de session se pose au-dessus de la barre d'onglets, et la page
+            // réserve la hauteur des deux. C'est la page qui doit le faire : l'inset de la
+            // racine ne franchit pas la frontière du `NavigationStack`, et le premier appui
+            // de l'app passait sous la barre dès qu'il apparaissait — voir
+            // `tabBarClearance`.
+            .tabBarClearance {
                 if hasSessionButton {
                     MicaboBottomBar {
                         Button {
@@ -125,7 +126,15 @@ struct TodayView: View {
                 FlashcardsView(course: route.course)
             }
             .navigationDestination(for: ExamsRoute.self) { _ in
-                ExamsView()
+                // L'état vide des examens renvoie à l'import, et c'est cet écran-ci qui sait
+                // l'ouvrir : la feuille d'import vit ici. Elle attend la fin du retour —
+                // une feuille présentée pendant une transition de pile ne s'ouvre pas.
+                ExamsView {
+                    path.removeLast()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        showImportChoice = true
+                    }
+                }
             }
         }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
@@ -296,31 +305,34 @@ struct TodayView: View {
     /// Elle vit ici parce qu'un examen est une affaire de planning, et que le planning est
     /// le sujet de cet onglet. Elle reste visible même sans examen déclaré : c'est une
     /// fonctionnalité qu'on ne cherche pas si on ne sait pas qu'elle existe.
-    @ViewBuilder
+    /// **La rangée des examens est toujours là**, même sans un seul cours.
+    ///
+    /// Elle n'apparaissait qu'une fois qu'il y avait des cartes, au motif que planifier ne
+    /// mène à rien sans elles. C'était confondre deux choses : une fonctionnalité qui ne
+    /// s'applique pas encore n'est pas une fonctionnalité qui n'existe pas. Un écran d'accueil
+    /// dont une entrée entière n'apparaît qu'après un import ne s'apprend pas — on ne
+    /// découvre pas ce qu'on n'a jamais vu — et la page qu'elle ouvre sait maintenant se
+    /// présenter à vide.
     private var examSection: some View {
-        // Sans une seule carte, planifier un examen ne mène à rien : la rangée n'apparaît
-        // qu'une fois qu'il y a de quoi réviser.
-        if !allCards.isEmpty || !exams.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: "Examens")
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Examens")
 
-                Button {
-                    path.append(ExamsRoute())
-                } label: {
-                    MicaboRow(
-                        tile: MicaboTile(
-                            glyph: .symbol("calendar"),
-                            background: nextExam == nil ? MicaboColor.surfaceMuted : MicaboColor.cautionSoft,
-                            tint: nextExam == nil ? MicaboColor.inkSecondary : MicaboColor.caution
-                        ),
-                        title: nextExam?.name ?? "Planifier un examen",
-                        subtitle: examSubtitle,
-                        accessory: examAccessory
-                    )
-                }
-                .buttonStyle(MicaboRowButtonStyle())
-                .micaboGroup()
+            Button {
+                path.append(ExamsRoute())
+            } label: {
+                MicaboRow(
+                    tile: MicaboTile(
+                        glyph: .symbol("calendar"),
+                        background: nextExam == nil ? MicaboColor.surfaceMuted : MicaboColor.cautionSoft,
+                        tint: nextExam == nil ? MicaboColor.inkSecondary : MicaboColor.caution
+                    ),
+                    title: nextExam?.name ?? "Planifier un examen",
+                    subtitle: examSubtitle,
+                    accessory: examAccessory
+                )
             }
+            .buttonStyle(MicaboRowButtonStyle())
+            .micaboGroup()
         }
     }
 
@@ -330,11 +342,16 @@ struct TodayView: View {
     }
 
     private var examSubtitle: String {
-        guard let nextExam else {
-            return "Micabo replanifie tes révisions pour le jour J"
+        if let nextExam {
+            return MicaboCalendar.dayLabel(nextExam.date)
+                + (nextExam.isPlanned ? " · révisions replanifiées" : " · planning normal")
         }
-        return MicaboCalendar.dayLabel(nextExam.date)
-            + (nextExam.isPlanned ? " · révisions replanifiées" : " · planning normal")
+        // La rangée dit ce qu'il manque plutôt que de promettre ce qu'elle ne peut pas
+        // encore faire : un examen agit sur des cartes.
+        guard !allCards.isEmpty else {
+            return "Dès que tu auras des cartes à replanifier"
+        }
+        return "Micabo replanifie tes révisions pour le jour J"
     }
 
     /// Compté sur la file du jour, plafond compris : « au programme » doit dire la vérité.

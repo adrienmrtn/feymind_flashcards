@@ -36,7 +36,7 @@ Virgule entre chaque propriété, jamais après la dernière. Un guillemet dans 
 
 {
   "title": "Titre court et précis",
-  "subject": "Matière, par exemple SVT ou Mathématiques",
+  "subject": "Matière en capitalisation normale : Histoire, Mathématiques, Physique-chimie. Jamais tout en capitales, même si le document est titré ainsi. Les sigles gardent les leurs : SVT, SES, STAPS",
   "emoji": "un seul emoji représentatif",
   "summary": "Deux phrases qui disent l'enjeu du cours, sans balisage",
   "sheet": { "blocks": [ ... ] }

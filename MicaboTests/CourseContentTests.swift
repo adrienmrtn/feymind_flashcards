@@ -94,6 +94,43 @@ final class CourseContentTests: XCTestCase {
         XCTAssertEqual(clean.contextText, "E, F")
     }
 
+    // MARK: - La casse d'une matière
+
+    /// Le modèle rend la casse du titre qu'il a lu : « HISTOIRE » quand le polycopié criait.
+    /// Sur une pastille de filtre, une matière en capitales hurle au milieu d'un écran qui ne
+    /// crie jamais.
+    func testAScreamingSubjectGetsItsCaseBack() {
+        XCTAssertEqual(TextSanitizer.subject("HISTOIRE"), "Histoire")
+        XCTAssertEqual(TextSanitizer.subject("PHYSIQUE-CHIMIE"), "Physique-Chimie")
+        XCTAssertEqual(TextSanitizer.subject("DROIT CONSTITUTIONNEL"), "Droit Constitutionnel")
+        XCTAssertEqual(TextSanitizer.subject("MATHÉMATIQUES"), "Mathématiques")
+    }
+
+    /// **Un sigle garde ses capitales.** « Svt » ou « Staps » se lit comme une faute, là
+    /// qu'« ARTS » laissé en capitales n'est qu'un cas non corrigé : entre les deux, la règle
+    /// choisit de ne pas se tromper. Un mot de quatre lettres avec deux voyelles est un mot ;
+    /// le reste est probablement un sigle.
+    func testAnAcronymKeepsItsCapitals() {
+        for acronym in ["SVT", "SES", "PASS", "STAPS", "HGGSP", "QCM", "PIB"] {
+            XCTAssertEqual(TextSanitizer.subject(acronym), acronym, "\(acronym) est un sigle")
+        }
+    }
+
+    /// Une matière déjà écrite comme quelqu'un l'écrirait n'est pas touchée : il n'y a rien à
+    /// y redire, et une règle qui repasse sur du texte correct finit par l'abîmer.
+    func testASubjectThatAlreadyHasCaseIsLeftAlone() {
+        XCTAssertEqual(TextSanitizer.subject("Histoire des arts"), "Histoire des arts")
+        XCTAssertEqual(TextSanitizer.subject("Physique-chimie"), "Physique-chimie")
+        XCTAssertEqual(TextSanitizer.subject("SVT et biologie"), "SVT et biologie")
+    }
+
+    /// La règle passe par le nettoyage : une matière criée **et** balisée ressort propre des
+    /// deux côtés, et c'est ce chemin-là que prend un cours importé.
+    func testTheImportPathCleansAndLowersTheSubject() {
+        let course = GeneratedCourse(title: "T", subject: "**HISTOIRE**", summary: "S")
+        XCTAssertEqual(course.sanitized().subject, "Histoire")
+    }
+
     // MARK: - Repli hors ligne
 
     func testOfflineBuilderProducesCardsFromRawText() {

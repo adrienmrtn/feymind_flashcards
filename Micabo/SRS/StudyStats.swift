@@ -32,6 +32,29 @@ enum StudyStats {
         return count
     }
 
+    /// La plus longue série jamais tenue, aujourd'hui comprise.
+    ///
+    /// Elle sert de repère à côté de la série en cours : un chiffre seul ne dit pas s'il est
+    /// bon. Elle se calcule sur tout l'historique et non sur une fenêtre, parce que c'est un
+    /// record — un record qu'on perdrait en changeant de fenêtre n'en serait pas un.
+    static func bestStreak(reviewDates: [Date], calendar: Calendar = .current) -> Int {
+        guard !reviewDates.isEmpty else { return 0 }
+
+        let days = Set(reviewDates.map { calendar.startOfDay(for: $0) }).sorted()
+        var best = 1
+        var run = 1
+
+        for (previous, day) in zip(days, days.dropFirst()) {
+            if calendar.date(byAdding: .day, value: 1, to: previous) == day {
+                run += 1
+                best = max(best, run)
+            } else {
+                run = 1
+            }
+        }
+        return best
+    }
+
     static func reviewsToday(reviewDates: [Date], calendar: Calendar = .current, now: Date = Date()) -> Int {
         let today = calendar.startOfDay(for: now)
         return reviewDates.filter { calendar.startOfDay(for: $0) == today }.count

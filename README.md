@@ -14,8 +14,8 @@ entre le lancement et la première carte, il n'y a qu'un appui.
 | Onglet | Rôle |
 | --- | --- |
 | Cours | Tout ce qui est importé, avec recherche, tri et filtre par matière. Second rayon « Découvrir » : les cours que ton école et tes amis partagent, masqué sans compte |
-| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui dans une carte unique — le chiffre, la durée, la barre de composition et sa légende — puis les cours au programme et le prochain examen. Rien d'autre : ni salutation, ni date, ni liste de cours, ni bouton d'import |
-| Profil | Statistiques, amis — demandes, liste, profil d'un ami et ses cours — et réglages |
+| Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui dans une carte unique — le chiffre, la durée, la barre de composition et sa légende — puis les cours au programme et les examens. Rien d'autre : ni salutation, ni date, ni liste de cours, ni bouton d'import |
+| Profil | **Un tableau de bord** : la série et la courbe des quinze derniers jours dans un panneau, les trois totaux dans une bande, la porte des amis. Et les réglages, en haut à droite |
 
 **On ne balaye pas d'un onglet à l'autre.** Le carrousel qui vivait là était un `TabView` en
 style page : un défilement horizontal qui traîne sur un tiers de geste rend chaque écran mou,
@@ -446,15 +446,21 @@ l'une écrit les mots, l'autre les nombres.
 - Un seul bouton flottant dans l'app : le « + » d'import, en bas à droite de Cours, là où le
   pouce tombe. Il n'apparaît pas quand la liste est vide, où l'écran d'accueil porte déjà son
   propre appel à importer
-- **Ce qui est ancré en bas d'une page d'onglet est posé par `safeAreaInset`, jamais par un
-  `overlay`.** Un overlay se cale sur les bords de la vue et ignore la zone sûre : le « + » de
-  Cours et le bouton de session de Réviser passaient donc **sous** la barre d'onglets, qui est
-  dessinée par la racine par-dessus les pages. Ils étaient couverts aux deux tiers, donc à
-  moitié cliquables, et c'était le premier appui de l'app. Posés en zone sûre, ils se rangent
-  au-dessus de la barre, et le défilement réserve leur hauteur exacte au lieu de la deviner
-  avec une constante. Les écrans qui masquent la barre d'onglets — une fiche, ses cartes, les
-  examens, une feuille — gardent l'`overlay` et la constante `bottomBarClearance` : sous eux,
-  il n'y a que le repose-doigt
+- **Ce qui est ancré en bas d'une page d'onglet passe par `tabBarClearance`**, à l'intérieur
+  du `NavigationStack` de la page. Le « + » de Cours et le bouton de session de Réviser
+  passaient **sous** la barre d'onglets, et le remède qu'on avait appliqué — remplacer
+  l'`overlay` par un `safeAreaInset` côté racine — n'avait rien changé, parce que les deux
+  tombent au même endroit. La cause est ailleurs : **un `safeAreaInset` ne franchit pas la
+  frontière d'un `NavigationStack`**, qui rétablit sa zone sûre depuis la fenêtre. La barre
+  étant posée par la racine, à l'extérieur des trois pages, son inset la dessine sans jamais
+  rien réserver *dans* les pages ; tout ce qu'une page ancrait en bas se posait donc au bas de
+  sa propre zone sûre, c'est-à-dire exactement là où la barre est peinte. Le modificateur fait
+  les deux choses du bon côté de la frontière : il pose l'accessoire de la page et laisse la
+  hauteur de la barre en creux sous lui (`MicaboLayout.tabBarSpace`), sans prendre les appuis —
+  une surface transparente qui les avalerait rendrait les trois onglets inertes. Le Profil, qui
+  n'ancre rien, la réserve aussi : sa dernière rangée se lisait à travers le verre. Les écrans
+  qui masquent la barre — une fiche, ses cartes, les examens, une feuille — gardent l'`overlay`
+  et la constante `bottomBarClearance` : sous eux, il n'y a que le repose-doigt
 - Balayage horizontal natif (pages qui suivent le doigt) pour changer d'onglet ; geste de retour du système sur les écrans poussés
 - Réviser : le nombre de cartes à réviser posé à même le fond ivoire, puis les cours au programme et la répartition
 - Un cours a deux écrans : sa **fiche**, qui est l'écran du cours, et ses **cartes**, un cran
@@ -479,6 +485,17 @@ l'une écrit les mots, l'autre les nombres.
   matières qu'elles englobent : « Code de la route » contient « code », et sortait un
   ordinateur portable. Le catalogue des matières vit dans `SubjectCatalog`, hors de la vue qui
   l'affiche, pour que la règle se vérifie
+- **La matière ne crie pas.** Le modèle rend la casse du titre qu'il a lu : un polycopié titré
+  « HISTOIRE » donnait une matière « HISTOIRE », qui hurle sur une pastille de filtre au milieu
+  d'un écran qui ne crie jamais — et deux cours de la même matière écrits différemment font
+  deux matières dans les filtres. `TextSanitizer.subject` lui rend sa casse mot par mot, en
+  laissant les sigles tranquilles : un mot de quatre lettres ou plus avec au moins deux
+  voyelles est un mot, le reste garde ses capitales. C'est ce qui distingue « DROIT » de
+  « STAPS », « PASS », « SVT » ou « HGGSP », qui sont les noms réels de filières françaises —
+  écrire « Svt » est une faute qu'on lit tout de suite, laisser « ARTS » en capitales n'est
+  qu'un cas non corrigé. La règle s'applique à l'import, à la reprise d'un cours partagé, à la
+  création d'un paquet et à la descente du cloud ; une passe unique au lancement
+  (`SubjectCasePass`) corrige les cours déjà là, sans toucher leur date de modification
 - En session, une ampoule donne l'indice de la carte. Les cartes qui n'en ont pas n'affichent
   pas l'ampoule : un indice tiré de la forme de la réponse (initiale, nombre de mots) n'apprend
   rien et fait perdre confiance dans les vrais indices
@@ -633,17 +650,22 @@ Micabo a fonctionné sans compte pendant tout son développement : tout vivait d
 sur un seul téléphone, et « Tout reste sur cet appareil » était écrit dans l'écran Profil.
 Effacer l'app effaçait deux ans de fiches.
 
-**Le compte se demande à la fin du parcours d'accueil, et il reste facultatif.** Les deux
-moitiés de cette phrase sont des décisions. À la fin, parce que demander un effort avant
-d'avoir donné une raison ne marche pas, et que les vingt écrans d'accueil existent pour donner
-cette raison. Facultatif, parce que l'app doit continuer de s'ouvrir dans un train sans
-réseau : rester local n'est pas une dérobade, c'est le mode d'origine, et il se rattrape à
-tout moment depuis les réglages — la synchro remonte alors ce qui a été accumulé entre-temps.
+**Le compte se demande à la fin du parcours d'accueil.** C'est une décision : demander un
+effort avant d'avoir donné une raison ne marche pas, et les vingt écrans d'accueil existent
+pour donner cette raison. On peut le passer une fois, là, quand on n'a encore rien à perdre.
 
 L'écran de compte de `RootView` est resté, mais comme **rattrapage** : il se demandait là, à la
 sortie du parcours, ce qui donnait deux écrans de connexion à la suite. Il ne s'affiche
 maintenant que pour quelqu'un qui a fini le parcours sans compte et sans passer explicitement,
-c'est-à-dire après une déconnexion depuis les réglages.
+c'est-à-dire après une déconnexion depuis les réglages — et il ne propose plus de continuer
+sans compte : après une déconnexion volontaire, proposer de rester dehors revient à proposer
+d'abandonner ce qu'on vient de mettre en sécurité.
+
+**C'est le même écran que celui du parcours, et pas une copie.** Les deux boutons, les trois
+avantages qu'ils annoncent et le message d'échec vivent dans `SignInPanel`, que les deux
+écrans montent. La reconnexion était le plus mal tenu de l'app — adresse, mot de passe, lien
+de connexion, mot de passe oublié, bascule connexion/inscription, et une sortie sans compte —
+ce qui n'est pas un hasard : on ne la voit presque jamais.
 
 ### Ce qui est stocké
 
@@ -789,8 +811,16 @@ qu'on vient de changer sur l'autre.
 ### L'authentification
 
 GoTrue en HTTP direct (`SupabaseAuthClient`), comme les Edge Functions, plutôt qu'un SDK :
-l'authentification tient en six appels, qu'on relit en une fois, là où une dépendance externe
-coûterait un gestionnaire de paquets, une surface de mise à jour et un binaire.
+l'authentification tient en quatre appels — ouvrir une session depuis un jeton Apple, en
+ouvrir une depuis un code OAuth, la rafraîchir, la fermer — qu'on relit en une fois, là où une
+dépendance externe coûterait un gestionnaire de paquets, une surface de mise à jour et un
+binaire.
+
+**Il n'y a plus de mot de passe.** Micabo se connecte par Apple ou par Google, et rien
+d'autre : les quatre appels du courriel (inscription, connexion, lien de connexion,
+réinitialisation) sont partis avec l'écran qui les portait. C'est aussi ce qui a fait tomber
+trois des quatre messages du contrôleur : ils annonçaient qu'un courriel venait d'être envoyé,
+et un fournisseur ne renvoie rien à lire — il réussit, ou il explique pourquoi.
 
 La session vit dans le **trousseau**, et pas dans les réglages : un jeton de rafraîchissement
 donne accès au compte sans mot de passe, et dans `UserDefaults` il se lirait en clair dans une
@@ -799,11 +829,11 @@ backup sur un autre téléphone ne connecte personne. Le jeton d'accès est rafr
 endroit, `AuthController.validAccessToken()`, une minute avant son échéance : personne d'autre
 n'a à savoir qu'un jeton expire.
 
-**L'écran de connexion n'affiche que ce qui marche.** `AuthProviders` est lu au lancement
-(`GET /auth/v1/settings`) et décide de ce qu'on montre : les boutons Apple et Google
-n'apparaissent que si les fournisseurs sont activés côté Supabase. Un bouton « Continuer avec
-Google » qui mène à une page d'erreur coûte plus cher qu'un bouton absent, et ceux-là
-apparaîtront d'eux-mêmes le jour de la configuration, **sans mise à jour de l'app**.
+**L'écran de connexion affiche les deux boutons, toujours.** Il interrogeait le projet au
+lancement (`GET /auth/v1/settings`) pour ne montrer que les fournisseurs activés — un appel
+réseau de plus au démarrage, et un écran qui pouvait n'avoir plus rien à proposer du tout. Un
+fournisseur éteint côté Supabase le dit clairement dans son message d'erreur, ce qui est plus
+utile qu'un bouton absent dont personne ne peut deviner la cause.
 
 Les étapes complètes de cette configuration, iOS et web, sont dans
 **[`docs/oauth-setup.md`](docs/oauth-setup.md)**. Ce qu'il faut retenir en une ligne : Apple
@@ -1309,7 +1339,18 @@ intervalle de vingt jours retombera trois semaines après l'examen, au pire mome
 Le mode examen corrige exactement ça.
 
 La page se pousse depuis l'onglet Réviser, où une rangée annonce le prochain examen et son
-compte à rebours.
+compte à rebours. **Cette rangée est toujours là**, même sans un seul cours. Elle
+n'apparaissait qu'une fois qu'il y avait des cartes, au motif que planifier ne mène à rien
+sans elles : c'était confondre une fonctionnalité qui ne s'applique pas encore avec une
+fonctionnalité qui n'existe pas, et une entrée d'accueil qui n'apparaît qu'après un import ne
+s'apprend pas — on ne découvre pas ce qu'on n'a jamais vu.
+
+La page sait donc se présenter à vide, et elle distingue les deux situations. Sans cours, elle
+propose d'en importer un et ouvre l'import. Avec des cours mais sans carte, elle renvoie à la
+génération : ce n'est pas un deuxième cours qu'il faut. Dans les deux cas son bouton du bas
+disparaît, parce qu'il menait à une feuille qu'on ne pouvait pas confirmer — la confirmation
+demande au moins une carte active, donc la page compte les cartes, comme la feuille, et non
+les cours.
 
 ### Le calendrier
 

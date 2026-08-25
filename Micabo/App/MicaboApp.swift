@@ -17,6 +17,7 @@ struct MicaboApp: App {
         FontLoader.registerFonts()
         container = Self.makeContainer()
         SampleContentPurge.purgeIfNeeded(in: container.mainContext)
+        SubjectCasePass.runIfNeeded(in: container.mainContext)
 
         let auth = AuthController()
         _auth = State(initialValue: auth)
