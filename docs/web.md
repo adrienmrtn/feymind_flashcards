@@ -983,6 +983,90 @@ Google les exigent toutes les deux pour un écran de connexion — donc les lien
 plutôt que de pointer dans le vide, et **elles restent à écrire avant l'ouverture**. C'est un texte
 juridique, pas du code.
 
+### Où en est l'étape 4
+
+L'app web existe et **tourne de bout en bout** : on importe un cours, la fiche s'écrit, on en tire
+des cartes, on les révise au clavier, et tout se retrouve en base. Vérifié sur le vrai projet, avec
+de vrais appels au modèle — un cours de photosynthèse, une fiche de neuf blocs, quatorze cartes,
+huit révisions écrites.
+
+**La réparation d'abord, comme annoncé.** `_shared/caller.ts` dit qui appelle et décompte. La
+signature du jeton n'est pas revérifiée — la passerelle l'a déjà fait — ce qu'on lit est ce qu'elle
+ne regarde pas : le **rôle**. Un jeton d'utilisateur porte `authenticated` et un `sub`, la clé
+publiable porte `anon` et aucun `sub`, et c'est cette différence seule qui distingue quelqu'un de
+n'importe qui. `ANON_GRACE` laisse passer les versions déjà installées, sans quota, le temps d'une
+version ; la transition tient sur une ligne nommée, et c'est tout ce qu'il y aura à supprimer.
+
+Le décompte est **en base et atomique** : deux appels lancés en même temps liraient sinon le même
+compteur et passeraient tous les deux. Et un refus n'incrémente pas, sinon un client qui insiste
+repousse indéfiniment sa propre remise à zéro. Le CORS est resserré par une **enveloppe** plutôt
+que par les en-têtes de chaque réponse — il y en a une dizaine par fonction, et une seule oubliée
+suffit à laisser la porte ouverte.
+
+**Ce qui a été vérifié, et comment.** Douze tests Deno sur les rôles et les origines, dont deux
+cas qui n'auraient pas été trouvés autrement : un sous-domaine `vercel.app` à deux segments n'est
+pas une prévisualisation du projet, et l'étoile que `jsonResponse` pose encore doit être écrasée en
+sortie. Le décompte a été exercé en base — deux appels passent avec un plafond de deux, le
+troisième est refusé sans incrémenter — et la fonction n'est appelable **ni par un utilisateur ni
+par un anonyme**.
+
+**Ce qui n'est pas fait, et il faut le dire.** Les fonctions ne sont **pas déployées** : le
+déploiement par MCP exige d'inliner toutes les dépendances relatives, environ soixante-cinq
+kilo-octets par fonction, et le budget valait mieux ailleurs. Le test de bout en bout l'a confirmé
+sans ambiguïté — `ai_usage` est resté à **zéro ligne** après deux appels réussis, parce que ce sont
+les anciennes fonctions qui ont répondu. Quatre commandes restent à passer :
+
+```bash
+supabase functions deploy generate-course
+supabase functions deploy generate-flashcards
+supabase functions deploy explain-selection
+supabase functions deploy youtube-transcript
+```
+
+#### Ce que le web fait autrement
+
+| | iOS | Web |
+| --- | --- | --- |
+| Navigation | trois onglets en pied d'écran | **barre latérale** toujours visible, et Cours en écran d'ouverture |
+| Import | scan, photo, PDF, Word, YouTube | **glisser-déposer, collage, YouTube** — pas de scanner, un `input capture` sur un portable ouvrant une webcam |
+| Extraction | PDFKit et reconnaissance de texte, sur l'appareil | **`pdfjs` dans l'onglet** : seul le texte extrait part au modèle |
+| Cartes | une par une, sous le pouce | **en table**, pour en corriger vingt à la suite |
+| Session | quatre boutons, le pouce | **le clavier** : espace retourne, 1 à 4 notent |
+
+**La session ne s'anime pas, et c'est la décision la mieux fondée du chantier.** Espace et 1 à 4 se
+font des centaines de fois par soirée : au-delà de cent fois par jour, la règle n'est pas
+« animer discrètement », c'est ne pas animer. Les mêmes cartes se retournent au survol sur la page
+d'accueil et dans la démonstration, où elles se voient une fois. C'est la même animation, juste à
+un endroit et fausse à l'autre.
+
+#### Un défaut que seul le test de bout en bout pouvait trouver
+
+Le bilan annonçait **six cartes apprises pour deux**. Je comptais « apprise » depuis le bouton
+pressé : « Correct » sur une carte neuve comptait pour une carte acquise. C'est faux — une carte
+neuve notée « Correct » avance d'un palier d'apprentissage et revient dans dix minutes ; seule la
+sortie du dernier palier, ou un « Facile », la fait passer en révision. Le compte vient maintenant
+de **ce que le serveur a écrit**, pas de ce que le doigt a fait.
+
+Ce n'est pas un détail d'affichage : annoncer six cartes acquises pour deux, c'est promettre un
+progrès qui n'a pas eu lieu, et c'est exactement le genre de chiffre qu'on ne vérifie jamais.
+
+#### Ce qui reste, et pourquoi c'est délibéré
+
+**L'écran des examens n'est pas fait**, et c'est un choix plutôt qu'un oubli. Le planificateur
+**écrit dans les échéances de tout un jeu de cartes** : c'est le code du produit qui peut faire le
+plus de dégâts en silence, et un plan à moitié essayé déplace des révisions que personne ne
+remarquera avant l'examen. Le port est fait et testé dans le noyau, l'écran attend l'étape 5.
+
+Manque aussi **l'explication d'un passage** (`explain-selection`), qui demande la sélection de
+texte dans la fiche, et le `.docx`, dont la lecture demande un décompresseur — l'app le fait à la
+main sur un ZIP, ce qui se refera ici mais pas à moitié.
+
+Enfin, une entrée par mot de passe réservée au développement (`/auth/dev`) a été ajoutée, sans
+quoi rien de ce qui vit derrière la porte n'aurait pu être essayé ni montré. **Ce n'est pas un
+contournement** : elle appelle `signInWithPassword`, donc elle exige le mot de passe, elle est
+inerte en production et n'accepte que les adresses en `@micabo.test`. Elle disparaît le jour où
+l'aller-retour OAuth aura été essayé une fois.
+
 ## Les décisions prises
 
 | # | Question | Réponse |
