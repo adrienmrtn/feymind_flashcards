@@ -76,6 +76,9 @@ final class StudySession {
 
     private var context: ModelContext?
     private var sourceKey: String?
+    /// Actions faites depuis la dernière écriture sur le disque : notes, annulations, cartes
+    /// mises de côté. Le compte sert de seuil, pas de statistique.
+    private var unwritten = 0
     private var undoStack: [UndoStep] = []
     /// Les cartes notées, dans l'ordre. Servent au bilan de fin de session, qui lit leur
     /// échéance pour dire quand le travail de la session revient.
@@ -200,7 +203,7 @@ final class StudySession {
         pending = queue(from: usable, now: now)
         initialCount = pending.count
         advance()
-        persist()
+        writeSnapshot()
     }
 
     /// Reprend une session interrompue à la carte près.
@@ -232,7 +235,7 @@ final class StudySession {
         graduatedCount = snapshot.graduatedCount ?? 0
 
         advance()
-        persist()
+        writeSnapshot()
     }
 
     /// Conserve l'ordre reçu : `advance()` trie par disponibilité, on échelonne donc les
@@ -271,8 +274,10 @@ final class StudySession {
                 .schedule(snapshot: SM2CardSnapshot(card: card), rating: rating, now: now)
                 .clamped(to: deadlines.deadline(for: card), now: now)
             card.apply(outcome, at: now)
-            try? context?.save()
 
+            // Pas de `save()` ici : c'est ce qui rendait l'appui pâteux. Voir `write(force:)`.
+            // Le journal que la note vient d'écrire est dans la relation, en mémoire, donc on
+            // le retrouve sans passer par le disque.
             step.log = (card.logs ?? []).first { !logsBefore.contains($0.id) }
 
             if outcome.state == .review, stateBefore != .review {
@@ -300,7 +305,7 @@ final class StudySession {
         current = nil
         isRevealed = false
         advance()
-        persist()
+        write()
     }
 
     /// Revient sur la dernière action et remet la carte exactement dans son état d'avant.
@@ -311,7 +316,6 @@ final class StudySession {
             context?.delete(log)
         }
         step.scheduling.restore(on: step.card)
-        try? context?.save()
 
         pending = step.pending
         answered = step.answered
@@ -322,7 +326,7 @@ final class StudySession {
         current = step.card
         // La réponse était sous les yeux au moment de la note : on la laisse visible.
         isRevealed = true
-        persist()
+        write()
     }
 
     /// Repousse la carte courante à la fin de la file sans la noter.
@@ -332,7 +336,7 @@ final class StudySession {
         current = nil
         isRevealed = false
         advance()
-        persist()
+        write()
     }
 
     /// Met la carte de côté : elle sort de la session et ne reviendra pas tant qu'on ne
@@ -353,25 +357,30 @@ final class StudySession {
 
         if mode.affectsSchedule {
             card.isSuspended = true
-            try? context?.save()
         }
 
         undoStack.append(step)
         current = nil
         isRevealed = false
         advance()
-        persist()
+        write()
     }
 
     /// À appeler après une modification de la carte affichée, pour que la file reste juste.
+    ///
+    /// Écrit tout de suite : on ne revient pas d'une feuille d'édition dans l'urgence, et
+    /// personne n'attend l'image suivante.
     func cardWasEdited() {
-        try? context?.save()
+        flush()
     }
 
     private func advance() {
         guard !pending.isEmpty else {
             current = nil
             isFinished = true
+            // La file est vide : plus personne n'attend une carte, donc c'est le moment
+            // d'écrire ce qui restait en mémoire.
+            flush()
             return
         }
 
@@ -389,11 +398,59 @@ final class StudySession {
             .map(\.card)
     }
 
+    // MARK: - Écriture
+
+    /// Nombre d'actions gardées en mémoire avant de toucher le disque.
+    private static let writeEvery = 5
+
+    /// **Ce qui se passe après une note, et surtout ce qui ne se passe plus.**
+    ///
+    /// Chaque note enregistrait sur le disque : un `save()` SwiftData, donc une transaction
+    /// SQLite, sur le fil principal, à l'intérieur du bloc d'animation qui faisait entrer la
+    /// carte suivante. L'animation ne pouvait pas démarrer avant que l'écriture soit finie, et
+    /// c'est exactement le poil de latence qu'on sentait entre l'appui et la carte d'après.
+    ///
+    /// Le `save()` était même deux fois coûteux, et la seconde est la plus lourde : il publie
+    /// les changements au contexte, donc **les trois pages d'onglets rafraîchissent leurs
+    /// requêtes** — elles restent montées toutes les trois — et chacune recompte ses séries,
+    /// ses files et ses histogrammes sur tout l'historique. Quatre notes par seconde
+    /// déclenchaient douze recalculs.
+    ///
+    /// Les actions s'accumulent donc en mémoire et partent par paquets. Ce qu'on risque est
+    /// borné et se répare tout seul : une app tuée avant l'écriture perd les notes du paquet
+    /// en cours, et les cartes concernées se retrouvent simplement dues à la prochaine
+    /// session. En échange, l'appui est instantané. La sortie de session et le passage en
+    /// arrière-plan forcent l'écriture, ce qui couvre tous les cas où l'on quitte pour de bon.
+    private func write() {
+        writeSnapshot()
+
+        guard mode.affectsSchedule else { return }
+        unwritten += 1
+        guard unwritten >= Self.writeEvery else { return }
+
+        // Après l'image, pas dedans : l'animation de la carte suivante a le temps de partir
+        // avant que le disque soit touché.
+        DispatchQueue.main.async { [weak self] in
+            self?.flush()
+        }
+    }
+
+    /// Écrit maintenant. À appeler quand on quitte la session, ou quand l'app passe en
+    /// arrière-plan : à ces deux instants, personne n'attend l'image suivante.
+    func flush() {
+        guard unwritten > 0 || context?.hasChanges == true else { return }
+        unwritten = 0
+        try? context?.save()
+    }
+
     // MARK: - Reprise
 
-    /// Écrit l'état après chaque action. L'entraînement libre ne se reprend pas : il ne
-    /// laisse aucune trace, c'est tout l'intérêt.
-    private func persist() {
+    /// Écrit l'état de la file après chaque action. Un petit JSON dans les réglages : c'est
+    /// assez léger pour rester à chaque note, là où le planning part par paquets.
+    ///
+    /// L'entraînement libre ne se reprend pas : il ne laisse aucune trace, c'est tout
+    /// l'intérêt.
+    private func writeSnapshot() {
         guard mode.affectsSchedule, let sourceKey else { return }
 
         let remaining = ([current].compactMap { $0 } + pending.map(\.card)).map(\.id)

@@ -2,6 +2,21 @@ import SwiftData
 import SwiftUI
 import UIKit
 
+/// **Le mouvement d'une session.**
+///
+/// Les courbes sont courtes et ne rebondissent pas, comme celles du parcours d'accueil : un
+/// ressort dépasse sa cible puis revient, et sur un geste qu'on répète cinquante fois de
+/// suite, ce retour se sent comme un retard. La note enchaînait sur un ressort de 400 ms —
+/// c'est-à-dire qu'on voyait la carte suivante s'installer pendant presque une demi-seconde
+/// après avoir appuyé.
+enum StudyMotion {
+    /// Passage à la carte suivante, après une note. C'est le geste le plus répété de l'app :
+    /// il doit être fini avant qu'on ait relevé le doigt.
+    static let next = Animation.timingCurve(0.3, 0, 0.2, 1, duration: 0.22)
+    /// Retournement de la carte. Un peu plus long : il y a quelque chose à lire au bout.
+    static let reveal = Animation.timingCurve(0.25, 0.8, 0.25, 1, duration: 0.3)
+}
+
 /// Une session de révision : la file du jour, carte après carte.
 ///
 /// Trois états cohabitent avant la pile de cartes : la proposition de reprise d'une
@@ -15,6 +30,7 @@ struct StudyView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var session = StudySession()
     @State private var didStart = false
@@ -61,6 +77,11 @@ struct StudyView: View {
         }
         .micaboScreenBackground()
         .onAppear(perform: prepare)
+        // Les notes s'écrivent par paquets pour que l'appui reste instantané : quitter l'app
+        // au milieu d'un paquet doit donc le poser sur le disque avant de partir.
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { session.flush() }
+        }
         .sheet(item: $editingCard) { card in
             FlashcardEditorSheet(card: card)
                 .onDisappear { session.cardWasEdited() }
@@ -93,7 +114,7 @@ struct StudyView: View {
                         accessibilityTitle: "Annuler la dernière note"
                     ) {
                         Haptics.rigid()
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                        withAnimation(StudyMotion.next) {
                             session.undo()
                         }
                         showHint = false
@@ -164,8 +185,17 @@ struct StudyView: View {
                     onSelectChoice: selectChoice
                 )
                 .id(card.id)
+                // La sortante s'efface en reculant, l'entrante arrive du bas : sans
+                // transition déclarée, le changement d'identité ne donnait qu'un fondu, et un
+                // fondu ne dit pas qu'on a avancé d'une carte.
+                .transition(
+                    .asymmetric(
+                        insertion: .opacity.combined(with: .offset(y: 16)),
+                        removal: .opacity.combined(with: .scale(scale: 0.97))
+                    )
+                )
                 .onTapGesture {
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                    withAnimation(StudyMotion.reveal) {
                         session.reveal()
                     }
                 }
@@ -198,7 +228,7 @@ struct StudyView: View {
             Haptics.warning()
         }
 
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+        withAnimation(StudyMotion.reveal) {
             session.reveal()
         }
     }
@@ -214,14 +244,14 @@ struct StudyView: View {
                     .foregroundStyle(MicaboColor.inkTertiary)
 
                 GradeButtons(intervals: session.previewLabels) { rating in
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                    withAnimation(StudyMotion.next) {
                         session.answer(rating)
                     }
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             } else {
                 Button {
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                    withAnimation(StudyMotion.reveal) {
                         session.reveal()
                     }
                 } label: {
@@ -235,7 +265,7 @@ struct StudyView: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 20)
         .padding(.bottom, 24)
-        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: session.isRevealed)
+        .animation(StudyMotion.reveal, value: session.isRevealed)
     }
 
     /// Corriger, passer ou écarter une carte sans quitter la session. Ces actions restent
@@ -350,9 +380,11 @@ struct StudyView: View {
         return SM2Scheduler.format(delay: upcoming.timeIntervalSinceNow)
     }
 
-    /// Fermer en cours de route ne perd rien : l'état est déjà écrit après chaque note,
-    /// et la reprise sera proposée au prochain lancement.
+    /// Fermer en cours de route ne perd rien : la file est écrite après chaque note, et le
+    /// planning est écrit ici, à l'instant où plus personne n'attend une carte.
     private func finish() {
+        session.flush()
+
         if isEmbedded {
             session = StudySession()
             didStart = false
