@@ -20,11 +20,10 @@ enum AccountGate {
 /// qui a fini le parcours sans compte et sans passer explicitement — un cas qui n'arrive
 /// plus que sur une déconnexion depuis les réglages.
 ///
-/// Le compte reste **facultatif**, et ce n'est pas une faiblesse : Micabo a fonctionné sans
-/// compte depuis le premier jour, tout est écrit sur l'appareil, et l'app doit continuer de
-/// s'ouvrir dans un train sans réseau. « Continuer sans compte » n'est donc pas une dérobade,
-/// c'est le mode d'origine — il se rattrape à tout moment depuis les réglages, et la synchro
-/// remonte alors ce qui a été accumulé entre-temps.
+/// **Il ne propose plus de continuer sans compte.** Passer la connexion reste possible une
+/// fois, pendant le parcours, où l'on n'a encore rien à perdre. Après une déconnexion
+/// volontaire, la seule suite qui a du sens est de se reconnecter : proposer de rester
+/// dehors reviendrait à proposer d'abandonner ce qu'on vient de mettre en sécurité.
 struct RootView: View {
     @AppStorage(OnboardingPreferences.Key.completed) private var didCompleteOnboarding = false
     /// Vrai quand on a explicitement choisi de rester local. Le drapeau est nécessaire :
@@ -45,7 +44,7 @@ struct RootView: View {
                 }
                 .transition(.opacity.combined(with: .scale(scale: 1.03)))
             } else if showsAccountGate {
-                AuthView { didSkipAccount = true }
+                AuthView()
                     .preferredColorScheme(.light)
                     .transition(.opacity)
             } else {

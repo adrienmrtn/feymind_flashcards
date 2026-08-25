@@ -18,17 +18,18 @@ final class AuthController {
     }
 
     private(set) var state: State = .restoring
-    private(set) var providers: AuthProviders = .emailOnly
     /// Vrai pendant une opération : l'écran grise ses boutons plutôt que d'en accepter deux.
     private(set) var isWorking = false
     private(set) var message: AuthMessage?
 
-    /// Ce que l'écran de connexion a à dire, et qui n'est pas toujours une erreur.
+    /// Ce que l'écran de connexion a à dire.
+    ///
+    /// Il n'y a plus qu'un cas, et c'est le signe que le mot de passe est bien parti : les
+    /// trois autres annonçaient qu'un courriel venait d'être envoyé — confirmation, lien de
+    /// connexion, réinitialisation. Apple et Google ne renvoient rien à lire, ils
+    /// réussissent ou ils expliquent pourquoi.
     enum AuthMessage: Equatable {
         case error(String)
-        case confirmationSent(String)
-        case magicLinkSent(String)
-        case passwordResetSent(String)
     }
 
     private let client: SupabaseAuthClient
@@ -49,11 +50,9 @@ final class AuthController {
 
     // MARK: - Reprise
 
-    /// À appeler au lancement. Relit la session du trousseau, la rafraîchit si son jeton a
-    /// expiré, et demande au projet ce qu'il autorise.
+    /// À appeler au lancement. Relit la session du trousseau et la rafraîchit si son jeton a
+    /// expiré.
     func restore() async {
-        async let discovered = client.providers()
-
         if let stored = AuthTokenStore.load() {
             if stored.isExpired {
                 // Le jeton d'accès dure une heure : au lancement, il a presque toujours
@@ -72,8 +71,6 @@ final class AuthController {
         } else {
             state = .signedOut
         }
-
-        providers = await discovered
     }
 
     /// Le jeton d'accès à jour, rafraîchi au besoin. C'est le seul point d'entrée pour tout
@@ -87,44 +84,6 @@ final class AuthController {
         }
         adopt(renewed)
         return renewed.accessToken
-    }
-
-    // MARK: - Courriel
-
-    func signUp(email: String, password: String, displayName: String?) async {
-        await perform {
-            if let session = try await self.client.signUp(
-                email: email,
-                password: password,
-                displayName: displayName
-            ) {
-                self.adopt(session)
-            } else {
-                // Confirmation demandée : il n'y a pas encore de session, et le dire vaut
-                // mieux que laisser croire à un échec.
-                self.message = .confirmationSent(email)
-            }
-        }
-    }
-
-    func signIn(email: String, password: String) async {
-        await perform {
-            self.adopt(try await self.client.signIn(email: email, password: password))
-        }
-    }
-
-    func sendMagicLink(email: String) async {
-        await perform {
-            try await self.client.sendMagicLink(email: email, redirectTo: AuthRedirect.url)
-            self.message = .magicLinkSent(email)
-        }
-    }
-
-    func sendPasswordReset(email: String) async {
-        await perform {
-            try await self.client.sendPasswordReset(email: email, redirectTo: AuthRedirect.url)
-            self.message = .passwordResetSent(email)
-        }
     }
 
     // MARK: - Fournisseurs
