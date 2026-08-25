@@ -46,9 +46,10 @@ final class StudySession {
         /// Le journal écrit par la note, à supprimer si on l'annule.
         var log: ReviewLog?
         let pending: [Entry]
+        let answered: [Flashcard]
         let answeredCount: Int
-        let againCount: Int
-        let goodCount: Int
+        let ratingCounts: [ReviewRating: Int]
+        let graduatedCount: Int
     }
 
     /// Une carte replanifiée à moins de 20 minutes revient dans la même session, comme dans Anki.
@@ -59,8 +60,15 @@ final class StudySession {
     private(set) var isRevealed = false
     private(set) var initialCount = 0
     private(set) var answeredCount = 0
-    private(set) var againCount = 0
-    private(set) var goodCount = 0
+    /// Combien de fois chaque note a été donnée.
+    ///
+    /// Le détail était perdu : on comptait « à revoir » d'un côté et tout le reste de
+    /// l'autre, ce qui rangeait « difficile » avec « facile » et rendait le bilan de fin de
+    /// session muet sur la seule chose qu'on veut y lire, l'endroit où ça a coincé.
+    private(set) var ratingCounts: [ReviewRating: Int] = [:]
+    /// Cartes passées en révision pendant la session : ce qui a été appris, et pas seulement
+    /// revu. C'est le chiffre qui donne à une session le sentiment d'avoir servi.
+    private(set) var graduatedCount = 0
     private(set) var startedAt = Date()
     private(set) var isFinished = false
     private(set) var mode: StudyMode = .scheduled
@@ -69,6 +77,9 @@ final class StudySession {
     private var context: ModelContext?
     private var sourceKey: String?
     private var undoStack: [UndoStep] = []
+    /// Les cartes notées, dans l'ordre. Servent au bilan de fin de session, qui lit leur
+    /// échéance pour dire quand le travail de la session revient.
+    private var answered: [Flashcard] = []
     /// Les examens en cours. Ils décident de l'ordre de la file et plafonnent les
     /// intervalles : sans eux, la première note donnée renverrait la carte au delà du jour J.
     private var deadlines: ExamDeadlines = .empty
@@ -96,6 +107,18 @@ final class StudySession {
         return min(1, Double(answeredCount) / Double(max(initialCount, answeredCount + pending.count)))
     }
 
+    func count(of rating: ReviewRating) -> Int {
+        ratingCounts[rating] ?? 0
+    }
+
+    var againCount: Int {
+        count(of: .again)
+    }
+
+    var goodCount: Int {
+        answeredCount - againCount
+    }
+
     var accuracy: Double {
         guard answeredCount > 0 else { return 0 }
         return Double(answeredCount - againCount) / Double(answeredCount)
@@ -103,6 +126,30 @@ final class StudySession {
 
     var elapsed: TimeInterval {
         Date().timeIntervalSince(startedAt)
+    }
+
+    /// Délai avant que la première carte de la session ne revienne.
+    ///
+    /// C'est la question qu'on se pose en refermant l'app, et elle n'avait pas de réponse :
+    /// une session « terminée » dont trois cartes reviennent dans dix minutes n'est pas
+    /// terminée de la même façon qu'une session dont tout repart à quatre jours. Nul en
+    /// entraînement libre, où rien n'a été replanifié.
+    func nextReturn(from now: Date = Date()) -> TimeInterval? {
+        guard mode.affectsSchedule else { return nil }
+        let upcoming = answered
+            .filter { !$0.isSuspended }
+            .map(\.dueDate)
+            .filter { $0 > now }
+            .min()
+        return upcoming.map { $0.timeIntervalSince(now) }
+    }
+
+    /// Combien de cartes de la session repassent dans la journée. Ce sont celles qui n'ont
+    /// pas encore tenu : les annoncer évite de croire le travail fini.
+    func returningToday(from now: Date = Date(), calendar: Calendar = MicaboCalendar.shared) -> Int {
+        guard mode.affectsSchedule else { return 0 }
+        let endOfDay = calendar.startOfDay(for: now).addingTimeInterval(24 * 3_600)
+        return answered.filter { !$0.isSuspended && $0.dueDate > now && $0.dueDate < endOfDay }.count
     }
 
     /// Aperçus « 1 min / 10 min / 1 j / 4 j » sous les boutons. En entraînement libre,
@@ -181,8 +228,8 @@ final class StudySession {
         pending = queue(from: restored, now: now)
         initialCount = max(snapshot.initialCount, snapshot.answeredCount + pending.count)
         answeredCount = snapshot.answeredCount
-        againCount = snapshot.againCount
-        goodCount = snapshot.goodCount
+        ratingCounts = snapshot.ratingCounts
+        graduatedCount = snapshot.graduatedCount ?? 0
 
         advance()
         persist()
@@ -209,13 +256,15 @@ final class StudySession {
             scheduling: CardScheduling(card: card),
             log: nil,
             pending: pending,
+            answered: answered,
             answeredCount: answeredCount,
-            againCount: againCount,
-            goodCount: goodCount
+            ratingCounts: ratingCounts,
+            graduatedCount: graduatedCount
         )
 
         if mode.affectsSchedule {
             let logsBefore = Set((card.logs ?? []).map(\.id))
+            let stateBefore = card.state
             // La note est calculée par SM-2, puis rabattue sur la date de l'examen quand la
             // carte en dépend : c'est ce qui l'empêche de repartir au delà du jour J.
             let outcome = SM2Scheduler
@@ -225,6 +274,10 @@ final class StudySession {
             try? context?.save()
 
             step.log = (card.logs ?? []).first { !logsBefore.contains($0.id) }
+
+            if outcome.state == .review, stateBefore != .review {
+                graduatedCount += 1
+            }
 
             if outcome.dueDate.timeIntervalSince(now) <= learnAheadWindow {
                 pending.append(Entry(card: card, availableAt: outcome.dueDate))
@@ -237,10 +290,11 @@ final class StudySession {
         undoStack.append(step)
 
         answeredCount += 1
-        if rating == .again {
-            againCount += 1
-        } else {
-            goodCount += 1
+        ratingCounts[rating, default: 0] += 1
+        // Une carte réapprise dans la même session ne compte qu'une fois : ce qui intéresse
+        // le bilan est l'échéance finale, pas le nombre de passages.
+        if !answered.contains(where: { $0.id == card.id }) {
+            answered.append(card)
         }
 
         current = nil
@@ -260,9 +314,10 @@ final class StudySession {
         try? context?.save()
 
         pending = step.pending
+        answered = step.answered
         answeredCount = step.answeredCount
-        againCount = step.againCount
-        goodCount = step.goodCount
+        ratingCounts = step.ratingCounts
+        graduatedCount = step.graduatedCount
         isFinished = false
         current = step.card
         // La réponse était sous les yeux au moment de la note : on la laisse visible.
@@ -290,9 +345,10 @@ final class StudySession {
             scheduling: CardScheduling(card: card),
             log: nil,
             pending: pending,
+            answered: answered,
             answeredCount: answeredCount,
-            againCount: againCount,
-            goodCount: goodCount
+            ratingCounts: ratingCounts,
+            graduatedCount: graduatedCount
         )
 
         if mode.affectsSchedule {
@@ -355,7 +411,10 @@ final class StudySession {
                 againCount: againCount,
                 goodCount: goodCount,
                 elapsed: elapsed,
-                savedAt: Date()
+                savedAt: Date(),
+                hardCount: count(of: .hard),
+                easyCount: count(of: .easy),
+                graduatedCount: graduatedCount
             )
         )
     }

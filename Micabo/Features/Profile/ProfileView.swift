@@ -38,11 +38,23 @@ struct ProfileView: View {
         }
     }
 
+    /// Un seul accès aux réglages, et c'est celui du coin.
+    ///
+    /// Il y en avait deux : la roue crantée en haut à droite, et une rangée « Réglages » dans
+    /// le bloc « Compte », juste en dessous. Deux chemins vers le même écran font douter de
+    /// leur différence. Reste celui qu'on cherche d'instinct, en haut à droite, mais avec la
+    /// tuile pastel de la rangée : une roue crantée grise en glyphe système était le seul
+    /// endroit de l'app où une icône n'avait pas sa pastille.
     private var header: some View {
         MicaboScreenHeader(title: "Profil", eyebrow: streakLabel) {
-            MicaboCircleButton(systemImage: "gearshape", size: 44, accessibilityTitle: "Réglages") {
+            Button {
+                Haptics.light()
                 showSettings = true
+            } label: {
+                MicaboTile(glyph: .emoji("⚙️"), background: MicaboColor.tilePastels[0], size: 44)
             }
+            .buttonStyle(MicaboPressableButtonStyle())
+            .accessibilityLabel("Réglages")
         }
         .padding(.top, MicaboSpacing.xs)
     }
@@ -158,12 +170,6 @@ struct ProfileView: View {
         MicaboSettingsSection(
             caption: "Compte",
             rows: [
-                MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("⚙️"), background: MicaboColor.tilePastels[0]),
-                    title: "Réglages",
-                    accessory: .chevron,
-                    action: { showSettings = true }
-                ),
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("👋"), background: MicaboColor.tilePastels[2]),
                     title: "Amis",

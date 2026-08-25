@@ -201,6 +201,122 @@ final class StudySessionTests: XCTestCase {
         XCTAssertTrue(session.isFinished)
         XCTAssertNil(StudySessionStore.load(for: "allDue", now: now))
     }
+
+    // MARK: - Bilan de fin de session
+
+    /// « Difficile » ne se range plus avec « facile » : c'est la distinction qu'on vient de
+    /// faire carte par carte, le bilan ne peut pas l'effacer.
+    func testEachRatingIsCountedSeparately() {
+        let cards = (0..<4).map { makeCard("carte \($0)", state: .review, due: -60, interval: 10, position: $0) }
+
+        let session = StudySession()
+        session.start(with: cards, context: context, sourceKey: nil, now: now)
+        session.answer(.easy, now: now)
+        session.answer(.hard, now: now)
+        session.answer(.hard, now: now)
+        session.answer(.good, now: now)
+
+        XCTAssertEqual(session.count(of: .easy), 1)
+        XCTAssertEqual(session.count(of: .hard), 2)
+        XCTAssertEqual(session.count(of: .good), 1)
+        XCTAssertEqual(session.count(of: .again), 0)
+        XCTAssertEqual(session.goodCount, 4, "Tout ce qui n'est pas « à revoir » reste acquis")
+    }
+
+    func testUndoRestoresTheRatingBreakdown() {
+        let cards = (0..<2).map { makeCard("carte \($0)", state: .review, due: -60, interval: 10, position: $0) }
+
+        let session = StudySession()
+        session.start(with: cards, context: context, sourceKey: nil, now: now)
+        session.answer(.hard, now: now)
+        session.undo()
+
+        XCTAssertEqual(session.count(of: .hard), 0)
+        XCTAssertEqual(session.answeredCount, 0)
+    }
+
+    /// Le chiffre qui donne à une session le sentiment d'avoir servi : ce qui est passé en
+    /// révision, et pas seulement ce qui a été revu.
+    func testGraduatedCardsAreCountedOnce() {
+        let card = makeCard("neuve", state: .new, due: -60, interval: 0)
+
+        let session = StudySession()
+        session.start(with: [card], context: context, sourceKey: nil, now: now)
+        session.answer(.easy, now: now)
+
+        XCTAssertEqual(session.graduatedCount, 1)
+        XCTAssertEqual(card.state, .review)
+    }
+
+    func testARatingThatStaysInLearningGraduatesNothing() {
+        let card = makeCard("neuve", state: .new, due: -60, interval: 0)
+
+        let session = StudySession()
+        session.start(with: [card], context: context, sourceKey: nil, now: now)
+        session.answer(.again, now: now)
+
+        XCTAssertEqual(session.graduatedCount, 0)
+        XCTAssertEqual(card.state, .learning)
+    }
+
+    /// « Session terminée » ne veut pas dire la même chose selon que trois cartes repassent
+    /// dans dix minutes ou que tout repart à quatre jours.
+    func testTheSessionAnnouncesWhenItsCardsComeBack() {
+        let card = makeCard(state: .review, due: -60, interval: 10)
+
+        let session = StudySession()
+        session.start(with: [card], context: context, sourceKey: nil, now: now)
+        session.answer(.good, now: now)
+
+        let delay = session.nextReturn(from: now)
+
+        XCTAssertNotNil(delay)
+        XCTAssertGreaterThan(delay ?? 0, SM2Scheduler.day, "Une carte correcte repart à plusieurs jours")
+        XCTAssertEqual(session.returningToday(from: now), 0)
+    }
+
+    func testPracticeAnnouncesNoComebackAtAll() {
+        let session = StudySession()
+        session.start(with: [makeCard(due: 86_400)], context: context, mode: .practice, sourceKey: nil, now: now)
+        session.answer(.good, now: now)
+
+        XCTAssertNil(session.nextReturn(from: now), "Un entraînement libre ne replanifie rien")
+        XCTAssertEqual(session.returningToday(from: now), 0)
+    }
+
+    /// Une sauvegarde écrite avant que le détail des notes existe doit se reprendre : ses
+    /// deux chiffres suffisent, et tout ce qui n'était pas « à revoir » devient « correct ».
+    func testALegacySnapshotStillResumes() {
+        let snapshot = StudySessionSnapshot(
+            sourceKey: "allDue",
+            remainingCardIDs: [UUID()],
+            initialCount: 5,
+            answeredCount: 4,
+            againCount: 1,
+            goodCount: 3,
+            elapsed: 60,
+            savedAt: now
+        )
+
+        XCTAssertEqual(snapshot.ratingCounts[.again], 1)
+        XCTAssertEqual(snapshot.ratingCounts[.good], 3)
+        XCTAssertEqual(snapshot.ratingCounts[.hard], 0)
+        XCTAssertEqual(snapshot.ratingCounts[.easy], 0)
+    }
+
+    func testTheSavedSnapshotCarriesTheRatingDetail() {
+        let cards = (0..<3).map { makeCard("carte \($0)", state: .review, due: -60, interval: 10, position: $0) }
+
+        let session = StudySession()
+        session.start(with: cards, context: context, sourceKey: "allDue", now: now)
+        session.answer(.hard, now: now)
+
+        let snapshot = StudySessionStore.load(for: "allDue", now: now)
+
+        XCTAssertEqual(snapshot?.hardCount, 1)
+        XCTAssertEqual(snapshot?.ratingCounts[.hard], 1)
+        XCTAssertEqual(snapshot?.ratingCounts[.good], 0)
+    }
 }
 
 /// La sauvegarde elle-même : ce qu'on relit, ce qu'on refuse.

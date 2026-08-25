@@ -15,9 +15,29 @@ struct StudySessionSnapshot: Codable, Equatable {
     var elapsed: TimeInterval
     var savedAt: Date
 
+    /// Le détail des notes, ajouté quand le bilan de fin de session a cessé de ranger
+    /// « difficile » avec « facile ». Facultatifs, parce qu'une sauvegarde écrite par une
+    /// version précédente ne les porte pas : elle se reprend alors avec ses deux chiffres,
+    /// et le bilan range tout ce qui n'était pas « à revoir » dans « correct ».
+    var hardCount: Int?
+    var easyCount: Int?
+    var graduatedCount: Int?
+
     /// « Carte 12 sur 22 » : la position qu'on annonce à la reprise.
     var position: Int {
         min(answeredCount + 1, max(initialCount, 1))
+    }
+
+    /// Les notes reconstituées, telles que la session les recompte à la reprise.
+    var ratingCounts: [ReviewRating: Int] {
+        let hard = hardCount ?? 0
+        let easy = easyCount ?? 0
+        return [
+            .again: againCount,
+            .hard: hard,
+            .easy: easy,
+            .good: max(0, goodCount - hard - easy)
+        ]
     }
 }
 

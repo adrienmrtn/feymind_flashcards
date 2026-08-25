@@ -711,7 +711,10 @@ struct GradeButtons: View {
         return "\(rating.label), revient dans \(interval)"
     }
 
-    private func tint(for rating: ReviewRating) -> Color {
+    /// La couleur d'une note. Elle est publiée parce que le bilan de fin de session s'en
+    /// sert : on doit y relire son propre geste, et deux échelles de couleurs pour les mêmes
+    /// quatre notes finiraient par ne plus se répondre.
+    static func tint(for rating: ReviewRating) -> Color {
         switch rating {
         case .again: Color(hex: 0xB5573C)
         case .hard: MicaboColor.caution
@@ -720,13 +723,21 @@ struct GradeButtons: View {
         }
     }
 
-    private func softTint(for rating: ReviewRating) -> Color {
+    static func softTint(for rating: ReviewRating) -> Color {
         switch rating {
         case .again: MicaboColor.negativeSoft
         case .hard: MicaboColor.cautionSoft
         case .good: MicaboColor.positiveSoft
         case .easy: MicaboColor.infoSoft
         }
+    }
+
+    private func tint(for rating: ReviewRating) -> Color {
+        Self.tint(for: rating)
+    }
+
+    private func softTint(for rating: ReviewRating) -> Color {
+        Self.softTint(for: rating)
     }
 }
 
@@ -852,6 +863,16 @@ private struct NothingDueView: View {
 
 // MARK: - Fin de session
 
+/// Le bilan d'une session.
+///
+/// Trois chiffres tenaient lieu de bilan : « acquises », « à revoir », « réussite ». Le
+/// premier rangeait « difficile » avec « facile », ce qui est précisément la distinction
+/// qu'on vient de faire carte par carte ; le troisième était le premier moins le second en
+/// pourcentage, donc la même information une troisième fois. Et rien ne disait ce qui compte
+/// en refermant l'app : **est-ce que c'est fini ?**
+///
+/// L'écran répond maintenant dans cet ordre : ce qui a été appris, comment les notes se
+/// répartissent, et quand la session revient.
 private struct CompletionView: View {
     let session: StudySession
     let isEmbedded: Bool
@@ -862,70 +883,189 @@ private struct CompletionView: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: MicaboSpacing.lg) {
+                banner
 
-            Image(systemName: session.answeredCount > 0 ? "trophy" : "moon.zzz")
-                .font(.system(size: 28, weight: .medium))
-                .foregroundStyle(MicaboColor.caution)
-                .frame(width: 78, height: 78)
-                .background(MicaboColor.cautionSoft, in: Circle())
-                .padding(.bottom, 8)
-
-            Text(title)
-                .font(MicaboFont.hanken(24, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .tracking(-0.2)
-
-            Text(detail)
-                .font(MicaboFont.body)
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, MicaboSpacing.lg)
-                .padding(.bottom, 20)
-
-            if session.answeredCount > 0 {
-                HStack(spacing: 10) {
-                    stat("\(session.goodCount)", "acquises", MicaboColor.positive)
-                    stat("\(session.againCount)", "à revoir", MicaboColor.caution)
-                    stat("\(Int(session.accuracy * 100)) %", "réussite", MicaboColor.accent)
+                if session.answeredCount > 0 {
+                    ratingBreakdown
+                    tiles
+                    if let comeback {
+                        comebackNote(comeback)
+                    }
                 }
-                .padding(.horizontal, MicaboSpacing.screen)
             }
-
-            Spacer()
-
-            Button(isEmbedded ? "Recharger la session" : "Terminer", action: onFinish)
-                .buttonStyle(MicaboPrimaryButtonStyle())
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.bottom, MicaboSpacing.lg)
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, MicaboSpacing.xl)
+            .padding(.bottom, MicaboSpacing.xxl)
+        }
+        .scrollIndicators(.hidden)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            MicaboBottomBar {
+                Button(isEmbedded ? "Recharger la session" : "Terminer", action: onFinish)
+                    .buttonStyle(MicaboPrimaryButtonStyle())
+            }
         }
     }
 
-    private func stat(_ value: String, _ label: String, _ tint: Color) -> some View {
+    // MARK: - En-tête
+
+    private var banner: some View {
+        VStack(spacing: 10) {
+            Image(systemName: session.answeredCount > 0 ? "checkmark" : "moon.zzz")
+                .font(.system(size: 26, weight: .semibold))
+                .foregroundStyle(MicaboColor.positive)
+                .frame(width: 74, height: 74)
+                .background(MicaboColor.positiveSoft, in: Circle())
+
+            Text(title)
+                .font(MicaboFont.hanken(26, weight: .bold))
+                .foregroundStyle(MicaboColor.ink)
+                .tracking(MicaboTracking.tight)
+                .multilineTextAlignment(.center)
+
+            Text(detail)
+                .font(MicaboFont.body)
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// La répartition des notes, une ligne par note.
+    ///
+    /// Les quatre couleurs sont celles des boutons qu'on vient d'appuyer : on relit son
+    /// propre geste, et « difficile » ne se confond plus avec « facile ». Une note jamais
+    /// donnée n'a pas de ligne : une liste de zéros ne dit rien.
+    @ViewBuilder
+    private var ratingBreakdown: some View {
+        let given = ReviewRating.allCases.filter { session.count(of: $0) > 0 }
+        if !given.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                MicaboSectionCaption(text: "Tes réponses")
+
+                VStack(spacing: 11) {
+                    ForEach(given) { rating in
+                        ratingRow(rating)
+                    }
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .micaboGroup()
+            }
+        }
+    }
+
+    private func ratingRow(_ rating: ReviewRating) -> some View {
+        let count = session.count(of: rating)
+        let share = Double(count) / Double(max(session.answeredCount, 1))
+
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.xs) {
+                Text(rating.label)
+                    .font(MicaboFont.hanken(14, weight: .semibold))
+                    .foregroundStyle(MicaboColor.ink)
+
+                Spacer(minLength: 0)
+
+                Text("\(count)")
+                    .font(MicaboFont.hanken(14, weight: .bold))
+                    .foregroundStyle(GradeButtons.tint(for: rating))
+                    .monospacedDigit()
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(MicaboColor.surfaceMuted)
+                    Capsule()
+                        .fill(GradeButtons.tint(for: rating))
+                        .frame(width: max(6, proxy.size.width * share))
+                }
+            }
+            .frame(height: 7)
+        }
+        .accessibilityElement()
+        .accessibilityLabel("\(rating.label) : \(count) sur \(session.answeredCount)")
+    }
+
+    /// Ce que la session a produit, et ce qu'elle a coûté.
+    private var tiles: some View {
+        HStack(spacing: 10) {
+            if !isPractice {
+                tile("\(session.graduatedCount)", "apprises", MicaboColor.positive)
+            }
+            tile("\(Int(session.accuracy * 100)) %", "de réussite", MicaboColor.accent)
+            tile(durationLabel, "de révision", MicaboColor.inkSecondary)
+        }
+    }
+
+    private func tile(_ value: String, _ label: String, _ tint: Color) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(MicaboFont.hanken(22, weight: .bold))
+                .font(MicaboFont.hanken(21, weight: .bold))
                 .foregroundStyle(tint)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
             Text(label)
-                .font(MicaboFont.hanken(10, weight: .medium))
+                .font(MicaboFont.hanken(11, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
+        .padding(.horizontal, 6)
         .micaboGroup(radius: MicaboRadius.button)
+    }
+
+    /// Quand ça revient. C'est la question qu'on se pose en refermant l'app, et l'écran
+    /// annonçait « Session terminée » sans y répondre : trois cartes qui repassent dans dix
+    /// minutes ne terminent pas une session de la même façon que tout ce qui repart à
+    /// quatre jours.
+    private func comebackNote(_ delay: TimeInterval) -> some View {
+        let today = session.returningToday()
+
+        return HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "clock.arrow.circlepath")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(MicaboColor.accent)
+
+            Text(comebackText(delay: delay, today: today))
+                .font(MicaboFont.hanken(13, weight: .regular))
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+    }
+
+    private func comebackText(delay: TimeInterval, today: Int) -> String {
+        let next = "La prochaine carte revient dans \(SM2Scheduler.format(delay: delay))."
+        guard today > 0 else { return next + " Rien d'autre avant demain." }
+        return next + " \(MicaboCopy.cards(today)) repassent aujourd'hui."
+    }
+
+    private var comeback: TimeInterval? {
+        guard session.answeredCount > 0 else { return nil }
+        return session.nextReturn()
     }
 
     private var title: String {
         guard session.answeredCount > 0 else { return "Rien à réviser" }
-        return isPractice ? "Entraînement terminé" : "Session terminée"
+        if isPractice { return "Entraînement terminé" }
+        return session.againCount == 0 ? "Sans faute." : "Session terminée"
     }
 
     private var detail: String {
         guard session.answeredCount > 0 else {
             return "Reviens plus tard, ou prends de l'avance depuis un cours."
         }
-        let volume = "\(MicaboCopy.cards(session.answeredCount)) revues en \(durationLabel)"
+        let volume = "\(MicaboCopy.cards(session.answeredCount)) revues"
         return isPractice ? "\(volume). Ton planning n'a pas bougé." : "\(volume)."
     }
 
