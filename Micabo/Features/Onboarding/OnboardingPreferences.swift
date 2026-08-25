@@ -244,6 +244,10 @@ enum OnboardingPreferences {
         /// Le palier tel qu'il se nomme dans le pays choisi. `level` reste écrit à côté :
         /// c'est lui que la fonction lit, et lui que le cloud synchronise.
         static let stage = "micabo.onboarding.stage"
+        /// Sa marche sur l'échelle comparable d'un pays à l'autre. Elle est écrite parce que
+        /// c'est elle qui retrouve le palier après un changement de pays : sans elle, la
+        /// relecture retombe sur le registre, qui ne distingue pas un collégien d'un lycéen.
+        static let tier = "micabo.onboarding.tier"
         static let country = "micabo.onboarding.country"
         static let goal = "micabo.onboarding.goal"
         static let goals = "micabo.onboarding.goals"
@@ -257,7 +261,7 @@ enum OnboardingPreferences {
         static let completedAt = "micabo.onboarding.completedAt"
 
         static let all = [
-            completed, level, stage, country, goal, goals, forgetting, forgetsOften, subjects,
+            completed, level, stage, tier, country, goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
             dailyMinutes, notificationsOptIn, completedAt
         ]
@@ -302,15 +306,35 @@ enum OnboardingPreferences {
         }
     }
 
+    /// La marche du palier choisi, écrite à côté de son identifiant.
+    static var educationTier: EducationTier? {
+        get { defaults.string(forKey: Key.tier).flatMap(EducationTier.init(rawValue:)) }
+        set {
+            if let newValue {
+                defaults.set(newValue.rawValue, forKey: Key.tier)
+            } else {
+                defaults.removeObject(forKey: Key.tier)
+            }
+        }
+    }
+
     /// Le palier d'études, résolu dans le pays courant.
     ///
-    /// Écrire le palier écrit aussi son registre : c'est `level` que la fonction reçoit et
-    /// que le cloud synchronise, et le garder à jour ici évite d'avoir deux réponses à la
-    /// même question.
+    /// Écrire le palier écrit aussi sa marche et son registre. Les trois servent à des choses
+    /// différentes et aucun ne remplace les autres : l'identifiant retrouve la réponse exacte,
+    /// la marche la retrouve dans un autre pays, et le registre est ce que la fonction reçoit
+    /// et ce que le cloud synchronise.
     static var educationStage: EducationStage? {
-        get { schoolingCountry.resolvedStage(id: educationStageId, tier: nil, level: studyLevel) }
+        get {
+            schoolingCountry.resolvedStage(
+                id: educationStageId,
+                tier: educationTier,
+                level: studyLevel
+            )
+        }
         set {
             educationStageId = newValue?.id
+            educationTier = newValue?.tier
             studyLevel = newValue?.level
         }
     }

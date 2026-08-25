@@ -36,9 +36,10 @@ final class OnboardingModel {
 
     /// Changer de pays change les réponses de la question suivante.
     ///
-    /// Le palier déjà choisi est reporté quand le nouveau pays a un équivalent de même
-    /// registre, et abandonné sinon : garder « PASS » après un passage aux États-Unis
-    /// laisserait une réponse qui n'existe pas dans la liste affichée.
+    /// Le palier déjà choisi est reporté sur son équivalent dans le nouveau pays — sa marche
+    /// exacte, sinon la plus proche en montant — et abandonné quand il n'a pas d'équivalent :
+    /// garder « PASS » après un passage aux États-Unis laisserait affichée une réponse qui
+    /// n'existe pas dans la liste.
     func select(country newCountry: SchoolingCountry) {
         guard newCountry != country else { return }
         let previous = stage

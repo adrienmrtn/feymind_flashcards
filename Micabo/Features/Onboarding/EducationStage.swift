@@ -30,11 +30,14 @@ struct EducationStage: Identifiable, Hashable {
 
 /// Le palier ramené à une échelle comparable d'un pays à l'autre.
 ///
-/// Les cinq premiers cas forment une **échelle ordonnée** : c'est elle qui permet de trouver
-/// le voisin le plus proche quand le nouveau pays n'a pas l'équivalent exact. Les trois
-/// derniers n'en font pas partie, et c'est volontaire : la santé, les concours et « autre »
-/// sont des voies, pas des marches, et un étudiant en santé ne devient pas « undergraduate »
-/// parce que son pays d'accueil n'a pas de filière santé nommée.
+/// **L'ordre de déclaration des cas est l'ordre de l'échelle**, du plus bas au plus haut :
+/// `ladder` s'en déduit, et un cas ajouté au milieu se place donc à sa vraie hauteur. C'est
+/// cette échelle qui permet de trouver le voisin le plus proche quand le nouveau pays n'a pas
+/// l'équivalent exact.
+///
+/// Les trois derniers cas n'en font pas partie, et c'est volontaire : la santé, les concours
+/// et « autre » sont des voies, pas des marches. Un étudiant en santé ne devient pas
+/// « undergraduate » parce que son pays d'accueil n'a pas de filière santé nommée.
 enum EducationTier: String, CaseIterable, Hashable {
     case lowerSecondary
     case upperSecondary
@@ -45,10 +48,20 @@ enum EducationTier: String, CaseIterable, Hashable {
     case competitive
     case other
 
+    /// Vrai pour les paliers qui se comparent en hauteur d'un pays à l'autre.
+    ///
+    /// Le `switch` est exhaustif exprès : ajouter un palier oblige à dire s'il est une marche
+    /// de l'échelle, plutôt qu'à l'oublier dans une liste écrite à la main — un palier absent
+    /// de l'échelle perd silencieusement la recherche du voisin le plus proche.
+    var isRung: Bool {
+        switch self {
+        case .lowerSecondary, .upperSecondary, .preUniversity, .undergraduate, .graduate: true
+        case .health, .competitive, .other: false
+        }
+    }
+
     /// Les marches de l'échelle, de la plus basse à la plus haute.
-    static let ladder: [EducationTier] = [
-        .lowerSecondary, .upperSecondary, .preUniversity, .undergraduate, .graduate
-    ]
+    static let ladder: [EducationTier] = allCases.filter { $0.isRung }
 
     var ladderIndex: Int? {
         Self.ladder.firstIndex(of: self)
@@ -264,7 +277,22 @@ extension SchoolingCountry {
         }
 
         guard let level else { return nil }
-        return stages.first { $0.level == level }
+        return highestSharing(level: level)
+    }
+
+    /// Le palier le plus haut parmi ceux qui écrivent dans ce registre.
+    ///
+    /// C'est le dernier recours, et il ne sert qu'à une donnée sans marche : le profil que le
+    /// cloud renvoie ne transporte que le registre. Prendre le premier de la liste ramenait un
+    /// « lycee » américain sur « Middle school » et un « lycee » québécois sur « Secondaire »,
+    /// c'est-à-dire exactement l'erreur que la marche existe pour éviter. On monte, comme
+    /// partout ailleurs ici : une fiche un cran trop exigeante se lit, une fiche trop simple
+    /// ne s'utilise pas.
+    private func highestSharing(level: StudyLevel) -> EducationStage? {
+        let matching = stages.filter { $0.level == level }
+        return matching.max { left, right in
+            (left.tier.ladderIndex ?? -1) < (right.tier.ladderIndex ?? -1)
+        }
     }
 
     /// La marche la plus proche de celle demandée. À distance égale, on monte : un palier

@@ -317,6 +317,62 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.stage?.id, "fr.prepa")
     }
 
+    /// L'échelle se déduit de l'ordre de déclaration : une marche ajoutée au milieu se place
+    /// à sa vraie hauteur, et aucune liste écrite à la main ne peut l'oublier.
+    func testTheLadderIsTheDeclarationOrderOfItsRungs() {
+        XCTAssertEqual(
+            EducationTier.ladder,
+            [.lowerSecondary, .upperSecondary, .preUniversity, .undergraduate, .graduate]
+        )
+
+        for tier in EducationTier.allCases {
+            XCTAssertEqual(
+                tier.isRung,
+                tier.ladderIndex != nil,
+                "\(tier) doit être sur l'échelle si et seulement si c'est une marche"
+            )
+        }
+
+        // Une voie n'a pas de hauteur : la convertir en marche donnerait une réponse fausse.
+        XCTAssertNil(EducationTier.health.ladderIndex)
+        XCTAssertNil(EducationTier.competitive.ladderIndex)
+        XCTAssertNil(EducationTier.other.ladderIndex)
+    }
+
+    /// La marche est écrite à côté du palier, et c'est elle qui le retrouve à la relecture.
+    /// Sans elle, le chemin de lecture retombait sur le registre, qui ne distingue pas un
+    /// collégien d'un lycéen.
+    func testTheTierIsPersistedBesideTheStage() throws {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        OnboardingPreferences.schoolingCountry = .us
+        OnboardingPreferences.educationStage = try XCTUnwrap(
+            SchoolingCountry.us.stages.first { $0.id == "us.high" }
+        )
+
+        XCTAssertEqual(OnboardingPreferences.educationTier, .upperSecondary)
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "us.high")
+    }
+
+    /// Le profil que le cloud renvoie ne transporte que le registre : il n'y a pas de colonne
+    /// pour la marche, et il n'en faut pas. Le registre se résout alors sur le palier **le
+    /// plus haut** qui le partage, parce que prendre le premier de la liste ramenait un
+    /// « lycee » américain sur « Middle school ».
+    func testALevelWithoutATierResolvesToTheHighestStageSharingIt() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        OnboardingPreferences.schoolingCountry = .us
+        OnboardingPreferences.level = "lycee"
+
+        XCTAssertNil(OnboardingPreferences.educationTier)
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "us.high")
+
+        OnboardingPreferences.schoolingCountry = .uk
+        XCTAssertEqual(OnboardingPreferences.educationStage?.id, "uk.alevels")
+    }
+
     func testEveryLevelHasALabel() {
         for level in StudyLevel.allCases {
             XCTAssertFalse(level.title.isEmpty, "\(level) doit avoir un libellé")

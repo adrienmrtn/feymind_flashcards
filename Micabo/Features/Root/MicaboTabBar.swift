@@ -72,8 +72,9 @@ struct MicaboTabBar: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, MicaboLayout.tabBarGap)
         // Sur un téléphone à bouton, la zone sûre du bas est nulle : sans ces quatre points,
-        // la pastille et son ombre viennent buter contre le bord de l'écran, ce qui est tout
-        // le contraire de flotter.
+        // la pastille vient buter contre le bord de l'écran, ce qui est tout le contraire de
+        // flotter. L'ombre, elle, va plus loin que ça et se fait couper : c'est ce qu'on
+        // veut, quatre points de plus se paieraient sur la hauteur réservée aux pages.
         .padding(.bottom, MicaboSpacing.xxs)
     }
 }
