@@ -1,6 +1,10 @@
 import SwiftUI
 
 /// Objectifs. Plusieurs réponses possibles, validées par le bouton du bas.
+///
+/// La question demandait « tu veux retenir quoi ? », et les réponses n'y répondaient pas :
+/// « préparer un concours » ou « monter en compétences » ne sont pas des choses qu'on
+/// retient, ce sont des raisons d'apprendre. Elle demande donc ce qu'elle demande vraiment.
 struct GoalStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -9,7 +13,7 @@ struct GoalStepView: View {
     var body: some View {
         OnboardingScaffold(
             eyebrow: "Question 1 sur 3",
-            title: "Tu veux retenir quoi ?",
+            title: "Quels sont tes objectifs ?",
             subtitle: "Plusieurs réponses possibles.",
             animatesTitle: true
         ) {
