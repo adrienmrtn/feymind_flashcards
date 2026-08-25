@@ -122,10 +122,11 @@ enum MicaboRadius {
 enum MicaboLayout {
     /// Espace à réserver au-dessus d'un bouton d'action ancré en bas.
     ///
-    /// Ne sert plus qu'aux écrans qui empilent leur barre dans un `ZStack`, faute de zone
-    /// sûre à leur disposition : une feuille modale, un plein écran d'import. Les pages qui
-    /// vivent sous la barre d'onglets posent la leur avec `safeAreaInset`, qui réserve la
-    /// hauteur exacte de son contenu au lieu de la deviner.
+    /// Ne vaut que pour les écrans qui masquent la barre d'onglets et posent la leur en
+    /// `overlay` ou dans un `ZStack` : une feuille, un plein écran, un écran poussé. Les
+    /// deux pages d'onglet qui ancrent quelque chose en bas passent par `safeAreaInset`,
+    /// qui réserve la hauteur exacte de son contenu au lieu de la deviner, et surtout la
+    /// pose au-dessus de la barre d'onglets au lieu de dessous.
     static let bottomBarClearance: CGFloat = 108
 }
 

@@ -491,7 +491,9 @@ struct ImportView: View {
         VStack(alignment: .leading, spacing: 8) {
             MicaboSectionCaption(text: "Longueur de la fiche")
 
-            HStack(spacing: MicaboSpacing.xs) {
+            // En flux et non en rangée : les trois libellés ne tiennent pas sur une ligne
+            // d'iPhone compact, et une pastille tronquée ne dit plus ce qu'elle choisit.
+            MicaboFlowLayout(spacing: MicaboSpacing.xs, lineSpacing: MicaboSpacing.xs) {
                 ForEach(SheetLength.allCases) { value in
                     MicaboSelectChip(title: value.title, isSelected: value == sheetLength) {
                         Haptics.selection()

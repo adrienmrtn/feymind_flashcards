@@ -289,7 +289,9 @@ une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un acces
   dessinée par la racine par-dessus les pages. Ils étaient couverts aux deux tiers, donc à
   moitié cliquables, et c'était le premier appui de l'app. Posés en zone sûre, ils se rangent
   au-dessus de la barre, et le défilement réserve leur hauteur exacte au lieu de la deviner
-  avec une constante
+  avec une constante. Les écrans qui masquent la barre d'onglets — une fiche, ses cartes, les
+  examens, une feuille — gardent l'`overlay` et la constante `bottomBarClearance` : sous eux,
+  il n'y a que le repose-doigt
 - Balayage horizontal natif (pages qui suivent le doigt) pour changer d'onglet ; geste de retour du système sur les écrans poussés
 - Réviser : le nombre de cartes à réviser posé à même le fond ivoire, puis les cours au programme et la répartition
 - Un cours a deux écrans : sa **fiche**, qui est l'écran du cours, et ses **cartes**, un cran

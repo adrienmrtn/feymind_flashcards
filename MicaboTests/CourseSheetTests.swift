@@ -297,6 +297,23 @@ final class SheetHighlighterTests: XCTestCase {
     func testNothingIsMarkedWhenNoSentenceIsWorthIt() {
         XCTAssertNil(SheetHighlighter.marked("Trop court."))
         XCTAssertNil(SheetHighlighter.marked("Un texte ==déjà marqué== et assez long pour être choisi."))
+        XCTAssertNil(
+            SheetHighlighter.marked("Le seuil est $p < 0,05$ et rien d'autre ne compte vraiment ici pour nous."),
+            "Une formule est déjà mise en valeur par son rendu"
+        )
+    }
+
+    /// Le marqueur posé par le code doit être lu par le parseur de l'app, sinon il n'aurait
+    /// servi à rien, et il ne doit pas déplacer un caractère du texte du cours.
+    func testTheMarkerIsReadBackByTheAppAndChangesNoText() throws {
+        let source = "L'eau circule sans jamais quitter la planète, et cette boucle est fermée. "
+            + "La **condensation** transforme la vapeur en gouttelettes autour de noyaux minuscules."
+        let marked = try XCTUnwrap(SheetHighlighter.marked(source))
+        let spans = SheetMarkup.spans(marked)
+
+        XCTAssertTrue(spans.contains { $0.isHighlighted })
+        XCTAssertTrue(spans.contains { $0.isBold }, "Le gras survit à l'intérieur de la marque")
+        XCTAssertEqual(SheetMarkup.plain(marked), SheetMarkup.plain(source))
     }
 
     /// Ni les titres, ni les tableaux : ils portent déjà leur mise en valeur.
