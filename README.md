@@ -13,7 +13,7 @@ entre le lancement et la première carte, il n'y a qu'un appui.
 
 | Onglet | Rôle |
 | --- | --- |
-| Cours | Tout ce qui est importé, avec recherche, tri et filtre par matière. Second rayon « Découvrir » pour la bibliothèque partagée, masqué tant que `LibraryAccess.isAvailable` est faux |
+| Cours | Tout ce qui est importé, avec recherche, tri et filtre par matière. Second rayon « Découvrir » : les cours que ton école et tes amis partagent, masqué sans compte |
 | Réviser | Écran d'ouverture : les cartes à réviser aujourd'hui dans une carte unique — le chiffre, la durée, la barre de composition et sa légende — puis les cours au programme et le prochain examen. Rien d'autre : ni salutation, ni date, ni liste de cours, ni bouton d'import |
 | Profil | Statistiques, amis (en attente de l'authentification) et réglages |
 
