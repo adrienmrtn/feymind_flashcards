@@ -412,13 +412,107 @@ au modèle : deux rédactions du même contenu finiraient par se contredire, et 
 déterministe. Un client plus ancien qu'un serveur redéployé continue donc de fonctionner, et
 un client à jour reconstitue le contexte depuis la fiche si le serveur ne l'envoie pas.
 
-### 3. Renseigner le projet dans l'application
+### 3. Appliquer les migrations
+
+```bash
+supabase db push
+```
+
+`supabase/migrations/` porte deux migrations : l'annuaire des établissements, et **les comptes
+et le stockage des cours**. La seconde crée cinq tables, leurs règles de cloisonnement et le
+déclencheur qui crée un profil à l'inscription. Elle est écrite pour être rejouable : chaque
+objet est créé avec `if not exists` ou remplacé.
+
+### 4. Renseigner le projet dans l'application
 
 L'URL et la clé publique par défaut sont dans `Micabo/Services/AppConfig.swift`. Elles restent
 modifiables à l'exécution depuis `Profil`, `Réglages`, sans recompiler.
 
 Tant que `FAL_KEY` n'est pas configurée, l'import reste utilisable : Micabo propose de
 construire la fiche hors ligne, à partir du texte brut.
+
+## Comptes et sauvegarde
+
+Micabo a fonctionné sans compte pendant tout son développement : tout vivait dans SwiftData,
+sur un seul téléphone, et « Tout reste sur cet appareil » était écrit dans l'écran Profil.
+Effacer l'app effaçait deux ans de fiches.
+
+**Le compte arrive après le parcours d'accueil, et il reste facultatif.** Les deux moitiés de
+cette phrase sont des décisions. Après, parce que demander un effort avant d'avoir donné une
+raison ne marche pas, et que les vingt écrans d'accueil existent pour donner cette raison.
+Facultatif, parce que l'app doit continuer de s'ouvrir dans un train sans réseau :
+« Continuer sans compte » n'est pas une dérobade, c'est le mode d'origine, et il se rattrape à
+tout moment depuis les réglages — la synchro remonte alors ce qui a été accumulé entre-temps.
+
+### Ce qui est stocké
+
+| Table | Contenu |
+| --- | --- |
+| `profiles` | Les réponses de l'inscription : stade d'étude, pays, matières, rythme, longueur de fiche. C'est ce qui fait qu'une réinstallation retrouve un étudiant en santé en Belgique, et non un lycéen français par défaut |
+| `courses` | **L'original et le transformé dans la même ligne** : `raw_text` est le document tel qu'il a été lu, `sheet` est la fiche que le modèle en a écrite |
+| `flashcards` | Les cartes, **état de répétition espacée compris** : une révision faite sur le téléphone doit compter sur le web, sinon la carte revient deux fois |
+| `review_logs` | Chaque révision, en ajout seul : une révision est un fait daté, elle ne se corrige pas |
+| `exams` | Les examens et leur plan |
+
+Ce qui **ne** monte pas : les images d'occlusion, les couvertures et les enregistrements audio.
+Ce sont des mégaoctets par cours, et une colonne `bytea` transforme une base Postgres en disque
+dur. Leur place est le stockage objet de Supabase, et c'est la première chose à ajouter après
+cette synchro (voir `docs/data-flywheel.md`).
+
+### Trois décisions de schéma
+
+1. **L'identifiant vient du client.** L'app crée un `UUID` local au moment de l'import, bien
+   avant de savoir s'il y a un compte, et c'est ce même identifiant qui devient la clé primaire
+   distante. Sans ça, il faudrait une table de correspondance, et deux appareils qui remontent
+   le même cours créeraient deux lignes. Avec, une remontée est répétable à volonté :
+   `resolution=merge-duplicates` met à jour au lieu de refuser un doublon, ce qui permet de tout
+   renvoyer après trois jours hors ligne sans tenir de journal de ce qui a changé.
+2. **Rien ne se supprime vraiment.** `deleted_at` remplace le `DELETE` : un appareil resté hors
+   ligne doit apprendre qu'un cours a disparu, et une ligne effacée ne peut rien lui apprendre.
+3. **Le dernier qui écrit gagne**, arbitré par `updated_at` — posé par un trigger, jamais par le
+   client, dont on n'a pas à croire l'horloge. C'est le bon compromis ici : les données de
+   Micabo sont personnelles et modifiées à un endroit à la fois. Deux appareils qui révisent la
+   même carte dans la même minute sont un cas théorique ; l'un des deux resté trois jours hors
+   ligne est le cas réel, et l'horodatage le tranche correctement.
+
+### Le cloisonnement
+
+Chaque table porte la même règle et c'est la seule : `(select auth.uid()) = user_id`.
+`auth.uid()` est lu dans le jeton, donc l'app n'a aucun moyen de demander les cours de
+quelqu'un d'autre, même en trafiquant sa requête. Vérifié depuis un client anonyme : la lecture
+rend une liste vide, l'écriture est refusée par la politique.
+
+Un bug de session ne peut donc pas faire fuiter des données — il ne peut que rendre une liste
+vide, et c'est exactement le comportement qu'on veut d'un échec.
+
+### L'authentification
+
+GoTrue en HTTP direct (`SupabaseAuthClient`), comme les Edge Functions, plutôt qu'un SDK :
+l'authentification tient en six appels, qu'on relit en une fois, là où une dépendance externe
+coûterait un gestionnaire de paquets, une surface de mise à jour et un binaire.
+
+La session vit dans le **trousseau**, et pas dans les réglages : un jeton de rafraîchissement
+donne accès au compte sans mot de passe, et dans `UserDefaults` il se lirait en clair dans une
+sauvegarde. `ThisDeviceOnly` l'empêche en plus de partir dans iCloud, donc restaurer un vieux
+backup sur un autre téléphone ne connecte personne. Le jeton d'accès est rafraîchi à un seul
+endroit, `AuthController.validAccessToken()`, une minute avant son échéance : personne d'autre
+n'a à savoir qu'un jeton expire.
+
+**L'écran de connexion n'affiche que ce qui marche.** `AuthProviders` est lu au lancement
+(`GET /auth/v1/settings`) et décide de ce qu'on montre : les boutons Apple et Google
+n'apparaissent que si les fournisseurs sont activés côté Supabase. Un bouton « Continuer avec
+Google » qui mène à une page d'erreur coûte plus cher qu'un bouton absent, et ceux-là
+apparaîtront d'eux-mêmes le jour de la configuration, **sans mise à jour de l'app**.
+
+Les étapes complètes de cette configuration, iOS et web, sont dans
+**[`docs/oauth-setup.md`](docs/oauth-setup.md)**. Ce qu'il faut retenir en une ligne : Apple
+demande que le **bundle de l'app et le Service ID soient tous les deux** dans le champ
+« Client IDs », parce que le jeton du bouton natif porte le premier et celui du retour web le
+second.
+
+Et **[`docs/data-flywheel.md`](docs/data-flywheel.md)** propose ce qu'il faudrait garder en plus
+pour que ces données deviennent un avantage : rien n'y est implémenté, c'est une note de
+conception.
 
 ## Import : extraire bien, sans faire exploser la facture
 
@@ -1057,14 +1151,18 @@ l'app lui sert — sans ce lien, le curseur de l'onboarding ne serait qu'un déc
 
 ```
 Micabo/
-  App/             point d'entrée et conteneur SwiftData
+  App/             point d'entrée, conteneur SwiftData, compte et synchro
   DesignSystem/    jetons de style, lexique et composants réutilisables
   Models/          entités SwiftData, fiche d'un cours, examens et réponses de l'IA
   Persistence/     enregistrement des cours et des examens
   SRS/             planificateur SM-2, file d'attente, mode examen, statistiques
   Services/        client IA, balisage et surligneur de la fiche, PDF / OCR / DOCX / YouTube
+    Auth/          session, trousseau, Apple et OAuth
+    Cloud/         PostgREST, lignes transportées, synchronisation
   Features/        un dossier par écran, dont Course/ et Exams/
 supabase/functions/  Edge Functions Deno
+supabase/migrations/ schéma Postgres, règles de cloisonnement comprises
+docs/                configuration OAuth, note sur la donnée
 scripts/             génération de l'icône
 ```
 
@@ -1092,6 +1190,12 @@ serveur, le choix de la piste de sous-titres et ce que l'aperçu décide sans ri
 `MicaboTests/ExamPlannerTests.swift` verrouille le mode examen : l'échelle de passages et ses
 cas limites, les quatre chiffres de la projection, la réversibilité d'une replanification, le
 plafond d'intervalle et la levée du plafond de cartes neuves.
+
+`MicaboTests/AuthAndSyncTests.swift` verrouille les comptes et la synchro sur des charges
+utiles GoTrue réelles : le décodage d'une session, l'échéance calculée à la réception, le nom
+trouvé quel que soit le nom que le fournisseur donne au champ, et surtout **la fiche qui
+traverse la synchro sans être touchée**. Ce dernier test est celui à ne pas laisser tomber : si
+la fiche se dégrade d'un aller-retour à l'autre, personne ne le voit avant des semaines.
 
 ```bash
 xcodebuild test -project Micabo.xcodeproj -scheme Micabo -destination 'platform=iOS Simulator,name=iPhone 16'
