@@ -1,4 +1,5 @@
 import Combine
+import StoreKit
 import SwiftUI
 
 /// Écran 17 : la preuve sociale, juste après la génération du parcours.
@@ -10,8 +11,15 @@ import SwiftUI
 ///
 /// Les avis défilent seuls, et on peut les faire défiler à la main. Trois secondes et demie
 /// par avis : le temps de lire une phrase, pas celui de s'installer.
+///
+/// **C'est aussi l'écran qui demande la note.** La demande du système est posée là et
+/// nulle part ailleurs : l'écran parle déjà d'avis, cinq étoiles sont à l'écran, et la
+/// question arrive donc dans son sujet plutôt qu'au milieu d'une révision. Elle part au
+/// premier changement d'avis, une fois qu'on en a lu un — pas à l'ouverture, où l'alerte
+/// couvrirait l'écran avant qu'on ait vu ce qu'il raconte.
 struct SocialProofStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(\.requestReview) private var requestReview
 
     private struct Review: Identifiable {
         let id = UUID()
@@ -172,5 +180,18 @@ struct SocialProofStepView: View {
         withAnimation(OnboardingMotion.shift) {
             visible = reviews[next].id
         }
+        askForRatingOnce()
+    }
+
+    /// La demande de note du système, une seule fois.
+    ///
+    /// Elle n'est pas garantie de s'afficher, et c'est très bien ainsi : le système décide,
+    /// plafonne à trois demandes par an et ignore les suivantes. Ce qui est à nous, c'est de
+    /// ne pas la dépenser deux fois au même endroit — d'où le drapeau, qui survit à un
+    /// second passage dans le parcours.
+    private func askForRatingOnce() {
+        guard !OnboardingPreferences.ratingAsked else { return }
+        OnboardingPreferences.ratingAsked = true
+        requestReview()
     }
 }

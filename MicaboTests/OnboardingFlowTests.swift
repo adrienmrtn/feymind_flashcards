@@ -161,6 +161,22 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(model.step, .personalizing)
     }
 
+    /// La note ne se demande qu'une fois. Le système plafonne déjà les demandes à trois par
+    /// an, mais il les compte même quand il ne les affiche pas : les dépenser deux fois sur
+    /// le même écran, c'est n'en avoir plus aucune le jour où l'app a vraiment rendu service.
+    func testTheRatingIsOnlyEverAskedOnce() {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        XCTAssertFalse(OnboardingPreferences.ratingAsked)
+
+        OnboardingPreferences.ratingAsked = true
+        XCTAssertTrue(OnboardingPreferences.ratingAsked)
+
+        OnboardingPreferences.reset()
+        XCTAssertFalse(OnboardingPreferences.ratingAsked, "Refaire le parcours repart de zéro")
+    }
+
     /// La clé de l'écran retiré reste listée : sur un appareil qui a fait l'ancien parcours,
     /// la remise à zéro doit encore savoir l'effacer.
     func testTheRetiredNotificationKeyIsStillErased() {
