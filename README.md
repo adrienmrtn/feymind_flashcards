@@ -82,7 +82,7 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 
 | Bloc | Écrans |
 | --- | --- |
-| Accroche | bienvenue, niveau d'études, langue, annonce des questions |
+| Accroche | bienvenue, stade d'étude, langue, annonce des questions |
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli |
 | Démonstration | courbe de mémorisation, puis dépôt → fiche → révisions en trois écrans, puis le mode examen |
 | Personnalisation | matières, établissement (avec « Passer »), temps quotidien |
@@ -93,6 +93,10 @@ sur-titre (`OnboardingSkip`) : demander son établissement à quelqu'un qui n'en
 entre deux écoles, ou qui n'a pas envie de le dire ne doit pas fermer le parcours. Passer
 laisse le champ vide **et l'écrit**, plutôt que de garder la moitié d'un nom tapé puis
 abandonné.
+
+Les réponses sont gardées en local (`OnboardingPreferences`), et deux d'entre elles pèsent sur
+le reste de l'app : le temps quotidien commande le plafond de cartes neuves, et le **stade
+d'étude** commande la rédaction des fiches. Les deux se corrigent dans les réglages.
 
 ### Un écran, une chose
 
@@ -279,6 +283,13 @@ une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un acces
 - Un seul bouton flottant dans l'app : le « + » d'import, en bas à droite de Cours, là où le
   pouce tombe. Il n'apparaît pas quand la liste est vide, où l'écran d'accueil porte déjà son
   propre appel à importer
+- **Ce qui est ancré en bas d'une page d'onglet est posé par `safeAreaInset`, jamais par un
+  `overlay`.** Un overlay se cale sur les bords de la vue et ignore la zone sûre : le « + » de
+  Cours et le bouton de session de Réviser passaient donc **sous** la barre d'onglets, qui est
+  dessinée par la racine par-dessus les pages. Ils étaient couverts aux deux tiers, donc à
+  moitié cliquables, et c'était le premier appui de l'app. Posés en zone sûre, ils se rangent
+  au-dessus de la barre, et le défilement réserve leur hauteur exacte au lieu de la deviner
+  avec une constante
 - Balayage horizontal natif (pages qui suivent le doigt) pour changer d'onglet ; geste de retour du système sur les écrans poussés
 - Réviser : le nombre de cartes à réviser posé à même le fond ivoire, puis les cours au programme et la répartition
 - Un cours a deux écrans : sa **fiche**, qui est l'écran du cours, et ses **cartes**, un cran
@@ -471,6 +482,38 @@ titre du document importé.
 Un import produit une **fiche** : la page qu'on relit la veille du contrôle. C'est le
 résultat de l'import, et l'écran d'un cours. Les cartes viennent après, si on les demande.
 
+### Pour qui elle est écrite, et à quelle longueur
+
+Le même chapitre de génétique ne s'écrit pas pareil pour un terminale et pour un PASS, et la
+différence n'est pas une question de longueur : c'est le vocabulaire attendu, la profondeur des
+mécanismes, et ce qu'un correcteur ira chercher. Le **stade d'étude** était demandé au deuxième
+écran de l'inscription et ne servait qu'à cadrer le discours du parcours d'accueil ; il commande
+maintenant la rédaction. `audienceBrief` (`supabase/functions/generate-course/prompt.ts`) traduit
+les sept réponses de `StudyLevel` en consigne : programme du secondaire et attendus du bac pour
+un lycéen, raisonnements complets et cas limites en prépa, densité, valeurs seuils et pièges de
+QCM en santé, limites et débats du champ en master, plans de réponse et pièges classiques pour un
+concours. Sans réponse connue, le modèle écrit pour un début de cursus supérieur et ne suppose
+aucun prérequis que le document ne donne pas.
+
+Le stade se corrige dans **Profil → Réglages → Tes études**, parce qu'on change d'année et
+qu'une réponse donnée en trente secondes le premier jour ne doit pas se payer pendant deux ans.
+
+La **longueur** se choisit au même endroit, et aussi sur l'écran d'import, juste avant le bouton
+qui l'utilise : la réponse dépend du document qu'on vient de déposer. Trois formats, et pas un
+curseur de blocs, parce que ce qu'on choisit est un usage :
+
+| Format | Blocs demandés | Pour quoi |
+| --- | --- | --- |
+| L'essentiel | 8 à 12 | Se relit dans le couloir, cinq minutes avant l'épreuve |
+| Équilibrée | 14 à 22 | Le format de référence : remplace la relecture du cours sans le recopier |
+| Approfondie | 24 à 34 | Remplace le cours pour quelqu'un qui a manqué la séance |
+
+Le volume ne vit plus dans le prompt système, qui renvoie à la consigne de longueur, et la
+seconde tentative en cas d'échec suit le même format au lieu de retomber sur douze blocs
+invariables. Un document long reste tenu à la borne basse : au-delà, la fiche ne se lirait plus.
+« Refaire la fiche », dans le menu du cours, ouvre directement les trois longueurs, parce que
+c'est en lisant une fiche qu'on la trouve trop courte, et le choix devient le réglage courant.
+
 ### Ce qu'est une fiche
 
 Huit blocs, décrits par `Micabo/Models/CourseSheet.swift`, et pas un de plus. Chacun a un
@@ -510,12 +553,26 @@ mise en valeur qu'en plafonds — « cinq surlignages au maximum », « trois mo
 trois de trop », plus une consigne interdisant « les emphases partout » — et le modèle lisait
 l'ensemble comme un ordre de sobriété : il n'en produisait aucun. Une fiche sans marques est
 une fiche que personne ne relit, puisque c'est le surligneur qui fait retrouver l'essentiel en
-dix secondes la veille au soir. Le prompt donne donc maintenant un plancher, et surtout **où**
-surligner : la phrase d'enjeu du premier paragraphe, la conclusion de chaque partie de niveau
-1, ce qui distingue une définition de sa voisine, le résultat chiffré qu'un correcteur attend,
-et l'encadré « essentiel », où le surlignage n'est jamais facultatif. Même logique pour le
-reste : un tableau dès que le document oppose deux choses, un graphe dès qu'il porte deux
-valeurs comparables dans la même unité — sans jamais inventer un chiffre.
+dix secondes la veille au soir. Le prompt donne donc un plancher, et surtout **où** surligner :
+la phrase d'enjeu du premier paragraphe, la conclusion de chaque partie de niveau 1, ce qui
+distingue une définition de sa voisine, le résultat chiffré qu'un correcteur attend, et
+l'encadré « essentiel », où le surlignage n'est jamais facultatif. Même logique pour le reste :
+un tableau dès que le document oppose deux choses, un graphe dès qu'il porte deux valeurs
+comparables dans la même unité, sans jamais inventer un chiffre.
+
+**Et le surligneur ne dépend plus du prompt.** Le plancher a été demandé plusieurs versions
+de suite, et des fiches continuaient d'arriver sans une seule marque : une consigne de mise en
+forme est la première chose qu'un modèle lâche quand il se concentre sur le contenu. Le
+surligneur est donc passé côté code, aux deux endroits où vivent les garde-fous de la fiche :
+`ensureHighlights` dans `supabase/functions/_shared/sheet.ts` marque ce qui s'enregistre,
+`SheetHighlighter` dans `Micabo/Services/SheetHighlighter.swift` marque ce qui se relit, ce qui
+rattrape les cours importés avant la mise à jour des fonctions. Les deux garantissent
+**quatre passages au minimum**, ne touchent jamais une fiche déjà marquée, et choisissent dans
+le même ordre : l'encadré « essentiel », l'enjeu du premier paragraphe, les définitions, puis
+le reste. Un marqueur porte sur une phrase, ponctuation finale exclue, ramenée à sa première
+proposition quand elle dépasse 170 caractères, et la phrase qui contient déjà un terme en gras
+passe devant, parce que c'est là que le modèle a placé ce qui compte. Quatre et pas huit : ce
+que le code choisit vaut moins que ce que le modèle choisit.
 
 Hanken Grotesk n'embarque pas d'italique : elle est penchée à la main par une matrice de
 fonte, ce qui reste préférable à un changement de famille en plein paragraphe. Le
@@ -600,10 +657,31 @@ formats s'ajoutent donc au format de base, sans nouvelle dépendance ni permissi
 | Sens inverse | Langues | `Ajouter les cartes inverses`, et automatiquement à l'import quand `SubjectHeuristics.isLanguage` reconnaît un cours de langue. La carte inverse est une vraie carte : même `groupID`, **planification séparée**, et le recto annonce « sens inverse ». |
 
 Les cartes ne sont plus une conséquence de l'import : ce sont une demande, et une demande se
-règle. `GenerateCardsSheet` s'ouvre sur le volume (8, 12 ou 20) et sur les formats, juste
-au-dessus du bouton `Générer les cartes` qui les utilise, et le choix est retenu d'un cours à
-l'autre (`QuestionMixPreferences`). Le recto verso, lui, ne se coupe pas : c'est le format qui
-marche sur n'importe quel cours.
+règle. `GenerateCardsSheet` s'ouvre sur **un compteur par format**, juste au-dessus du bouton
+`Générer les cartes` qui les utilise, et le choix est retenu d'un cours à l'autre
+(`QuestionQuotaPreferences`).
+
+**Un nombre par format, et non un volume plus des interrupteurs.** Les interrupteurs disaient
+« j'accepte des QCM » et laissaient le modèle décider combien : on demandait vingt cartes et on
+en recevait deux à trous. Un étudiant qui prépare un contrôle sait ce qu'il veut travailler, et
+il le commande à la carte près : cinq QCM et cinq textes à trou. Le quota (`QuestionQuota`) part
+en clair dans la requête, la consigne le répète format par format, et la fonction **trie la
+réponse par format** au lieu de garder les trente premières cartes venues. Un format réglé à
+zéro n'apparaît pas du tout, et le total reste borné entre 3 et 30 : le bouton « plus » s'éteint
+au plafond, plutôt que de rogner un format après validation. Les anciens réglages ne sont pas
+perdus : le volume et les deux interrupteurs sont relus une dernière fois et répartis entre les
+formats gardés.
+
+Reste un rattrapage, et il est volontaire : quand un format est resté en deçà de sa commande, le
+total est complété avec les cartes écartées au tri. Un QCM dont les propositions étaient
+inexploitables est retombé en recto verso, et cette carte-là est juste ; renvoyer huit cartes au
+lieu de douze parce que le modèle a mal compté serait payer son erreur deux fois.
+
+**Les cartes sont écrites courtes.** Le prompt ouvre sur la concision plutôt que de la
+mentionner en passant, et il la chiffre : quinze mots au recto, vingt au verso, une seule idée
+par carte, pas de reprise de la question dans la réponse, pas de « il s'agit de ». Une carte se
+répond de mémoire en trois secondes ; une carte bavarde se relit, ce qui n'est pas la même chose
+et n'apprend rien.
 
 `CardGeneration` est le seul chemin d'écriture des cartes, qu'on parte de la fiche ou de
 l'écran des cartes : c'est là que vivent le repli hors ligne et la création automatique des
@@ -787,6 +865,14 @@ de cartes.
 - **Répondre à un QCM retourne la carte** — le choix vaut la réponse, on ne redemande pas un
   appui pour la même chose. La bonne proposition passe au vert, celle qui a été choisie à tort
   au rouge, et la notation reste à l'utilisateur : c'est lui qui sait s'il a deviné.
+- **Chaque note annonce quand la carte revient** — sous « À revoir », « Difficile », « Correct »
+  et « Facile », le délai que la note programme : `1 min`, `10 min`, `1 j`, `4 j`. Il manquait, et
+  c'était le principal reproche fait à la session : on notait sans savoir si la carte revenait
+  dans dix minutes ou le mois prochain, donc sans pouvoir arbitrer entre « difficile » et
+  « correct ». Anki l'affiche depuis toujours, pour la même raison. Les libellés viennent du
+  planificateur lui-même (`SM2Scheduler.previewLabels`), **date d'examen comprise** : un bouton
+  qui annoncerait trois semaines alors que la carte reviendra avant le jour J mentirait. En
+  entraînement libre, où rien ne bouge, les boutons se contentent de leur libellé.
 - **Entraînement libre** — `StudyMode.practice` révise un cours entier sans toucher au
   planning : aucune échéance déplacée, aucun journal écrit, rien à reprendre. L'écran l'annonce
   en permanence (« Entraînement libre · ton planning n'est pas modifié ») et une carte ratée
@@ -830,8 +916,12 @@ scripts/             génération de l'icône
 ## Tests
 
 `MicaboTests/CourseSheetTests.swift` verrouille la fiche : le balisage en ligne et ses cas
-limites, le décodage tolérant, le nettoyage, l'aplatissement vers le contexte des cartes, la
-fiche hors ligne et ce qui vaut une sélection.
+limites, le décodage tolérant, le nettoyage, le surligneur garanti, l'aplatissement vers le
+contexte des cartes, la fiche hors ligne et ce qui vaut une sélection.
+
+`supabase/functions/_shared/sheet.test.ts` verrouille les mêmes garde-fous côté serveur : le
+plafond du surligneur, son plancher, le choix du passage et les blocs qu'il ne touche jamais.
+Les tests des Edge Functions se lancent avec `deno test --allow-all supabase/functions`.
 
 `MicaboTests/YouTubeImportTests.swift` verrouille l'import vidéo : les formes de lien
 acceptées et refusées, **les cinq phrases de refus au mot près**, la traduction des codes du
