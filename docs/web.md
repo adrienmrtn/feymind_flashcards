@@ -926,6 +926,63 @@ fiche n'est plus rognée, les cartes se retournent au survol, à l'appui **et au
 survol seul ne pouvait pas suffire, une réponse qu'on n'atteint qu'à la souris est une réponse
 inaccessible — et la page tient à 400 px de large sans débordement horizontal.
 
+### Où en est l'étape 3
+
+Faite. Les neuf écrans existent sous `/commencer`, chacun à sa propre URL — donc le retour du
+navigateur marche sans qu'on ait rien à écrire, et la barre de progression avec son bouton retour
+n'apparaît qu'à partir du troisième, parce qu'avant il n'y a rien derrière soi.
+
+**Les données du parcours sont dans le noyau**, pas dans les écrans : les treize pays, leurs
+paliers, les sept familles de matières et la table d'emojis, avec leurs invariants portés depuis
+`OnboardingFlowTests`. Le noyau passe de 104 à **126 tests**.
+
+Deux choses valent d'être signalées.
+
+**Le port a trouvé un bug dans l'app.** La table d'emojis contient le mot-clé `grammaire`, et le
+test iOS `testEachLivingLanguageCarriesItsFlag` attend que « Thème grammatical » soit reconnu comme
+une matière de langue. Or « grammatical » ne contient pas « grammaire » : **ce test échoue sur
+`main`**, et l'exemple que le commentaire de la table donne depuis le début retombait sur le livre
+générique. Le radical est passé à `grammat` des deux côtés — c'est la seule fois où ce chantier
+touche l'app hors de l'étape 5, et c'est une correction d'un mot.
+
+**Les réponses s'accumulent sur l'appareil et se déversent à la fin.** C'est le motif de
+`OnboardingPreferences`, et il vaut ici pour une raison de plus : écrire dans `profiles` à chaque
+réponse voudrait dire une session à chaque écran, et un jeton qui expire au cinquième perdrait les
+quatre premiers. Le parcours reste donc traversable **sans compte** — ce qui est aussi la seule
+raison pour laquelle il a pu être vérifié, la connexion par fournisseur ne pouvant pas aboutir ici.
+
+Ce qui est écrit en base, quand il y a une session : `country_code`, `study_level`, `subjects`,
+`institution_id`, `institution_name`, `onboarding_completed_at` — **les mêmes colonnes que
+l'iPhone** — et une ligne dans `exams`. Cette ligne part avec `is_planned` à faux, et c'est
+délibéré : planifier veut dire déplacer les échéances de tout un jeu de cartes, et il n'y a pas
+encore une seule carte. Un plan posé sur rien n'est pas un plan.
+
+Deux défauts trouvés en regardant l'écran, et le second est le plus instructif :
+
+- **« Je sais pas encore » était introuvable.** Il était là où l'iPhone le met — en gris de treize
+  points dans le coin du sur-titre — et une relecture attentive de l'écran ne l'a pas trouvé. Sur
+  un téléphone ce coin est près du contenu ; sur une colonne de 560 px au milieu d'un grand écran,
+  il est loin du calendrier. Et ce n'est pas une échappatoire de confort : pour tous ceux qui n'ont
+  pas encore de date, c'est **la** réponse, et une réponse qu'on ne trouve pas se paye en dates
+  choisies au hasard. Elle est maintenant posée juste au-dessus du calendrier.
+- **L'animation mot à mot ne tournait pas**, et la cause était dans mon code : la branche
+  `prefers-reduced-motion` **sautait** le dévoilement au lieu de l'accélérer. C'était mal raisonné —
+  ce réglage protège du mouvement, et un mot qui change de couleur et de graisse ne se déplace pas
+  d'un pixel. La règle est de réduire, pas d'annuler.
+
+  Ce qui a coûté le plus n'est pas le défaut, c'est qu'il était **invisible depuis l'extérieur** :
+  trois lectures vidéo image par image ont dit « aucun état intermédiaire » sans pouvoir dire
+  pourquoi. Le composant écrit désormais son avancement sur son nœud (`data-words-shown`), et la
+  vérification tient en une ligne dans une console. **Une animation qu'on ne peut pas mesurer est
+  une animation qu'on ne peut pas réparer** — et c'est la leçon à garder pour l'étape 4, où la
+  session au clavier aura des états qu'aucune capture d'écran ne montrera.
+
+Et deux liens morts, attrapés par la vérification de types des routes : les pages **conditions
+d'utilisation** et **confidentialité** n'existent pas. Elles ne sont pas décoratives — Apple et
+Google les exigent toutes les deux pour un écran de connexion — donc les liens ont été retirés
+plutôt que de pointer dans le vide, et **elles restent à écrire avant l'ouverture**. C'est un texte
+juridique, pas du code.
+
 ## Les décisions prises
 
 | # | Question | Réponse |

@@ -147,6 +147,12 @@ enum CourseEmoji {
         ("💡", ["culture generale", "actualite"]),
         // Le filet de sécurité des langues : il attrape « LV2 », « vocabulaire », « thème
         // grammatical » — tout ce qui parle de langue sans nommer laquelle.
-        ("🗣️", ["langue", "vocabulaire", "grammaire", "conjugaison"])
+        //
+        // Le radical est **`grammat`** et non `grammaire`, et c'est ce qui manquait : « thème
+        // grammatical » ne contient pas « grammaire », donc l'exemple que ce commentaire donne
+        // depuis le début retombait sur le livre générique — et le test qui le vérifie
+        // (`testEachLivingLanguageCarriesItsFlag`) échouait. Un mot-clé écrit en entier ne
+        // rattrape pas ses dérivés ; c'est pour ça que le reste de la table est en radicaux.
+        ("🗣️", ["langue", "vocabulaire", "grammat", "conjugaison"])
     ]
 }

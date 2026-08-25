@@ -131,3 +131,30 @@ export {
   lightened,
   tilePastel,
 } from "./palette";
+
+// Le parcours d'accueil : les pays, leurs paliers, les matières, et les emojis.
+export {
+  COUNTRIES,
+  FALLBACK_COUNTRY,
+  countryFor,
+  guessCountry,
+  languageFor,
+  type ContentLanguage,
+  type Country,
+  type CountryCode,
+} from "./onboarding/countries";
+export {
+  TIER_LADDER,
+  resolveStage,
+  stagesFor,
+  type EducationStage,
+  type EducationTier,
+  type StudyLevel,
+} from "./onboarding/stages";
+export {
+  ALL_SUBJECTS,
+  SUBJECT_FAMILIES,
+  subjectEmoji,
+  type SubjectFamily,
+} from "./onboarding/subjects";
+export { FALLBACK_EMOJI, deriveEmoji, resolveEmoji } from "./emoji";
