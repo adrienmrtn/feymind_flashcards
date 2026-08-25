@@ -213,7 +213,7 @@ struct StudyView: View {
                     .font(MicaboFont.hanken(11, weight: .medium))
                     .foregroundStyle(MicaboColor.inkTertiary)
 
-                GradeButtons { rating in
+                GradeButtons(intervals: session.previewLabels) { rating in
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
                         session.answer(rating)
                     }
@@ -658,7 +658,18 @@ private struct ChoiceList: View {
 
 // MARK: - Boutons de maîtrise (grille 2×2 de la maquette)
 
+/// Les quatre notes, en grille 2×2, **avec le délai que chacune programme**.
+///
+/// Le délai manquait, et c'était le principal reproche fait à la session : on répondait « à
+/// revoir » sans savoir si la carte revenait dans dix minutes ou le mois prochain, donc sans
+/// pouvoir arbitrer entre « difficile » et « correct ». Anki l'affiche depuis toujours, et
+/// pour la même raison : c'est le seul retour qu'une note donne sur ce qu'elle vient de faire.
+/// Les libellés viennent du planificateur lui-même, date d'examen comprise, et non d'une
+/// table de correspondance qui vieillirait à côté de lui.
 struct GradeButtons: View {
+    /// Délai programmé par chaque note. Vide en entraînement libre, où rien ne bouge : les
+    /// boutons se contentent alors de leur libellé.
+    var intervals: [ReviewRating: String] = [:]
     var onSelect: (ReviewRating) -> Void
 
     var body: some View {
@@ -671,16 +682,33 @@ struct GradeButtons: View {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     onSelect(rating)
                 } label: {
-                    Text(rating.label)
-                        .font(MicaboFont.hanken(14, weight: .semibold))
-                        .foregroundStyle(tint(for: rating))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 15)
-                        .background(softTint(for: rating), in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+                    VStack(spacing: 2) {
+                        Text(rating.label)
+                            .font(MicaboFont.hanken(14, weight: .semibold))
+
+                        if let interval = intervals[rating] {
+                            Text(interval)
+                                .font(MicaboFont.hanken(11, weight: .medium))
+                                .monospacedDigit()
+                                .opacity(0.7)
+                        }
+                    }
+                    .foregroundStyle(tint(for: rating))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, intervals[rating] == nil ? 15 : 11)
+                    .background(softTint(for: rating), in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(accessibilityLabel(for: rating))
             }
         }
+    }
+
+    /// Le lecteur d'écran annonce la note et son délai d'une seule voix : deux éléments
+    /// séparés feraient lire « à revoir », puis « 10 min », sans dire que l'un est l'autre.
+    private func accessibilityLabel(for rating: ReviewRating) -> String {
+        guard let interval = intervals[rating] else { return rating.label }
+        return "\(rating.label), revient dans \(interval)"
     }
 
     private func tint(for rating: ReviewRating) -> Color {
