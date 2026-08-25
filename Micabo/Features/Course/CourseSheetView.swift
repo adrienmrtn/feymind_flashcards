@@ -344,7 +344,6 @@ struct CourseSheetView: View {
         MicaboBottomBar {
             if cards.isEmpty {
                 Button {
-                    Haptics.medium()
                     showCardOptions = true
                 } label: {
                     HStack(spacing: MicaboSpacing.xs) {
@@ -356,7 +355,6 @@ struct CourseSheetView: View {
                 .buttonStyle(MicaboPrimaryButtonStyle())
             } else {
                 Button {
-                    Haptics.medium()
                     studyMode = dueCount > 0 ? .scheduled : .practice
                     showStudy = true
                 } label: {

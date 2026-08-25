@@ -239,7 +239,7 @@ private struct FriendRow: View {
                     Spacer(minLength: 0)
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MicaboPressableButtonStyle(dimming: false))
             .disabled(person.relation != .friends)
 
             action
@@ -300,10 +300,7 @@ private struct FriendRow: View {
     }
 
     private func compact(_ title: String, isProminent: Bool, action: @escaping () -> Void) -> some View {
-        Button {
-            Haptics.light()
-            action()
-        } label: {
+        Button(action: action) {
             Text(title)
                 .font(MicaboFont.hanken(13, weight: .semibold))
                 .foregroundStyle(isProminent ? MicaboColor.onInk : MicaboColor.inkSecondary)
@@ -320,7 +317,6 @@ private struct FriendRow: View {
 
     private func open() {
         guard person.relation == .friends else { return }
-        Haptics.light()
         onOpen()
     }
 }

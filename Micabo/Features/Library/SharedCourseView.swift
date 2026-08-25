@@ -162,7 +162,6 @@ struct SharedCourseView: View {
         MicaboBottomBar {
             if let existing {
                 Button {
-                    Haptics.medium()
                     onAdopted(existing)
                 } label: {
                     HStack(spacing: MicaboSpacing.xs) {

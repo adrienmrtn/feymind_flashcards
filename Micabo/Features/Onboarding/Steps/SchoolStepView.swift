@@ -111,7 +111,6 @@ struct SchoolStepView: View {
                     query = ""
                     suggestions = []
                     selected = nil
-                    Haptics.light()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 16))
@@ -161,7 +160,7 @@ struct SchoolStepView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(MicaboRowButtonStyle())
+                .buttonStyle(MicaboRowButtonStyle(feedback: .selection))
 
                 if index < suggestions.count - 1 {
                     Rectangle()
@@ -206,7 +205,6 @@ struct SchoolStepView: View {
     }
 
     private func select(_ institution: Institution) {
-        Haptics.selection()
         searchTask?.cancel()
         isSearching = false
         selected = institution

@@ -176,7 +176,9 @@ struct MicaboRow: View {
         case .badge(let text, let tone):
             MicaboBadge(text: text, tone: tone)
         case .toggle(let binding):
-            Toggle("", isOn: binding)
+            // L'interrupteur système ne vibre pas de lui-même : on le fait par la liaison,
+            // pour qu'un réglage qu'on bascule réponde comme une rangée qu'on touche.
+            Toggle("", isOn: binding.buzzing())
                 .labelsHidden()
                 .tint(MicaboColor.accent)
         case .symbol(let name):
@@ -187,12 +189,17 @@ struct MicaboRow: View {
     }
 }
 
-/// Appui d'une rangée : un voile ivoire, sans changement de forme.
+/// Appui d'une rangée : un voile ivoire, sans changement de forme. Une rangée ne s'enfonce
+/// pas — elle est trop large pour que la mise à l'échelle se lise — mais elle vibre comme
+/// tout le reste, sinon les listes seraient les seuls écrans muets de l'app.
 struct MicaboRowButtonStyle: ButtonStyle {
+    var feedback: Haptics.Press = .light
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(configuration.isPressed ? MicaboColor.surfaceMuted.opacity(0.7) : Color.clear)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .micaboPressFeedback(isPressed: configuration.isPressed, feedback: feedback)
     }
 }
 

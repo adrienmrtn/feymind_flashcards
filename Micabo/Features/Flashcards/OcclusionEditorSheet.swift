@@ -59,6 +59,7 @@ struct OcclusionEditorSheet: View {
             Button("Créer", action: save)
                 .font(MicaboFont.hanken(15, weight: .semibold))
                 .foregroundStyle(canSave ? MicaboColor.accent : MicaboColor.inkTertiary)
+                .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
                 .disabled(!canSave)
         }
         .padding(.top, MicaboSpacing.xs)

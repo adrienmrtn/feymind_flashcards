@@ -146,7 +146,6 @@ struct SignInStepView: View {
 
     private var googleButton: some View {
         Button {
-            Haptics.medium()
             Task { await auth.signInWithGoogle() }
         } label: {
             HStack(spacing: 10) {
@@ -171,7 +170,7 @@ struct SignInStepView: View {
                     .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
             }
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
         .disabled(auth.isWorking)
         .opacity(auth.isWorking ? 0.5 : 1)
         .accessibilityLabel(OnboardingSignInProvider.google.title)

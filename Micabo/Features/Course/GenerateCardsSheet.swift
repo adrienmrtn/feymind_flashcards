@@ -233,17 +233,14 @@ struct MicaboStepper: View {
     }
 
     private func button(systemImage: String, isEnabled: Bool, action: @escaping () -> Void) -> some View {
-        Button {
-            Haptics.selection()
-            action()
-        } label: {
+        Button(action: action) {
             Image(systemName: systemImage)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(isEnabled ? MicaboColor.ink : MicaboColor.inkTertiary.opacity(0.4))
                 .frame(width: 28, height: 28)
                 .background(isEnabled ? MicaboColor.surface : Color.clear, in: Circle())
         }
-        .buttonStyle(MicaboPressableButtonStyle())
+        .buttonStyle(MicaboPressableButtonStyle(feedback: .selection))
         .disabled(!isEnabled)
     }
 }

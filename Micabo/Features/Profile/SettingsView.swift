@@ -100,6 +100,7 @@ struct SettingsView: View {
             Button("Terminé", action: saveAndClose)
                 .font(MicaboFont.hanken(15, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
+                .buttonStyle(MicaboPressableButtonStyle())
         }
         .padding(.top, MicaboSpacing.xs)
     }
@@ -215,6 +216,7 @@ struct SettingsView: View {
                         Button("Enregistrer", action: commitUsername)
                             .font(MicaboFont.hanken(13, weight: .semibold))
                             .foregroundStyle(MicaboColor.accent)
+                            .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
                     }
                 }
                 .padding(.vertical, 13)

@@ -306,12 +306,12 @@ struct AuthView: View {
 
             HStack(spacing: MicaboSpacing.md) {
                 Button(mode == .signIn ? "Créer un compte" : "J'ai déjà un compte") {
-                    Haptics.light()
                     auth.clearMessage()
                     mode = mode == .signIn ? .signUp : .signIn
                 }
                 .font(MicaboFont.hanken(13, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
+                .buttonStyle(MicaboPressableButtonStyle())
 
                 Spacer(minLength: 0)
 
@@ -327,6 +327,7 @@ struct AuthView: View {
                     }
                     .font(MicaboFont.hanken(13, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
+                    .buttonStyle(MicaboPressableButtonStyle())
                     .disabled(auth.isWorking)
                 }
             }
@@ -339,13 +340,14 @@ struct AuthView: View {
         switch focus {
         case .name: focus = .email
         case .email: focus = .password
-        case .password, nil: submit()
+        case .password, nil:
+            Haptics.medium()
+            submit()
         }
     }
 
     private func submit() {
         guard canSubmit else { return }
-        Haptics.medium()
         focus = nil
 
         Task {

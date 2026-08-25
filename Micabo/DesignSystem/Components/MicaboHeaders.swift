@@ -133,7 +133,7 @@ struct MicaboSearchField: View {
                         .font(.system(size: 15))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(MicaboPressableButtonStyle())
                 .accessibilityLabel("Effacer la recherche")
             }
         }

@@ -171,7 +171,6 @@ struct ExamEditorSheet: View {
         let count = course.cards.filter { !$0.isSuspended }.count
 
         return Button {
-            Haptics.selection()
             if isSelected {
                 selection.remove(course.id)
             } else {
@@ -203,7 +202,7 @@ struct ExamEditorSheet: View {
             .padding(.horizontal, MicaboSpacing.md)
             .contentShape(Rectangle())
         }
-        .buttonStyle(MicaboRowButtonStyle())
+        .buttonStyle(MicaboRowButtonStyle(feedback: .selection))
     }
 
     private var intensitySection: some View {
@@ -213,7 +212,6 @@ struct ExamEditorSheet: View {
             HStack(spacing: MicaboSpacing.xs) {
                 ForEach(ExamIntensity.allCases) { value in
                     MicaboSelectChip(title: value.label, isSelected: value == intensity) {
-                        Haptics.selection()
                         withAnimation(.easeOut(duration: 0.2)) { intensity = value }
                     }
                 }

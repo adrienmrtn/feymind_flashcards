@@ -108,7 +108,6 @@ struct TodayView: View {
                 if hasSessionButton {
                     MicaboBottomBar {
                         Button {
-                            Haptics.medium()
                             showStudy = true
                         } label: {
                             Text(sessionButtonTitle)

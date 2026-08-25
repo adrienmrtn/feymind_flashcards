@@ -29,7 +29,6 @@ struct MicaboTabBar: View {
         HStack(spacing: 0) {
             ForEach(RootTab.allCases) { tab in
                 Button {
-                    Haptics.selection()
                     withAnimation(.easeOut(duration: 0.28)) {
                         router.selection = tab
                     }
@@ -46,7 +45,7 @@ struct MicaboTabBar: View {
                     .frame(maxWidth: .infinity)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
                 .accessibilityLabel(tab.label)
                 .accessibilityAddTraits(tab == router.selection ? .isSelected : [])
             }

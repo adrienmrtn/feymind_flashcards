@@ -94,7 +94,8 @@ struct LibraryView: View {
                         .font(.system(size: 15))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(MicaboPressableButtonStyle())
+                .accessibilityLabel("Effacer la recherche")
             }
         }
         .padding(.vertical, 11)
@@ -105,13 +106,11 @@ struct LibraryView: View {
     private var subjectFilter: some View {
         MicaboFlowLayout(spacing: MicaboSpacing.xs, lineSpacing: MicaboSpacing.xs) {
             MicaboSelectChip(title: "Toutes", isSelected: subject == nil) {
-                Haptics.selection()
                 subject = nil
             }
 
             ForEach(subjects, id: \.self) { value in
                 MicaboSelectChip(title: value, isSelected: subject == value) {
-                    Haptics.selection()
                     subject = subject == value ? nil : value
                 }
             }
@@ -135,7 +134,6 @@ struct LibraryView: View {
                     subtitle: subtitle(for: course),
                     accessory: .chevron
                 ) {
-                    Haptics.light()
                     onOpen(course, authors[course.user_id])
                 }
             })

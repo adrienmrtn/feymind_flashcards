@@ -475,7 +475,7 @@ struct ImportView: View {
                     .strokeBorder(MicaboColor.strokeStrong, style: StrokeStyle(lineWidth: 1.5, dash: [7, 6]))
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .soft))
     }
 
     @ViewBuilder
@@ -507,7 +507,6 @@ struct ImportView: View {
             MicaboFlowLayout(spacing: MicaboSpacing.xs, lineSpacing: MicaboSpacing.xs) {
                 ForEach(SheetLength.allCases) { value in
                     MicaboSelectChip(title: value.title, isSelected: value == sheetLength) {
-                        Haptics.selection()
                         withAnimation(.easeOut(duration: 0.2)) { sheetLength = value }
                     }
                 }
@@ -518,7 +517,7 @@ struct ImportView: View {
     }
 
     private var visionToggle: some View {
-        Toggle(isOn: $analyzeVisuals) {
+        Toggle(isOn: $analyzeVisuals.buzzing()) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Analyser les schémas et images")
                     .font(MicaboFont.rowTitle)

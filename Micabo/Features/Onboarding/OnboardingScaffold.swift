@@ -274,10 +274,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     /// Volontairement discret : c'est une sortie, pas une proposition. Un « Passer » aussi
     /// visible que le bouton du bas ferait douter de l'intérêt de la question.
     private func skipButton(_ skip: OnboardingSkip) -> some View {
-        Button {
-            Haptics.light()
-            skip.action()
-        } label: {
+        Button(action: skip.action) {
             HStack(spacing: 3) {
                 Text(skip.title)
                     .font(MicaboFont.hanken(13.5, weight: .semibold))
@@ -499,7 +496,6 @@ struct OnboardingContinueButton: View {
     var body: some View {
         Button {
             guard isEnabled, !isLoading else { return }
-            Haptics.medium()
             action()
         } label: {
             HStack(spacing: 9) {
@@ -654,7 +650,7 @@ struct OnboardingChoiceRow: View {
                     .strokeBorder(isSelected ? MicaboColor.ink : Color.clear, lineWidth: 1.5)
             }
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         .animation(OnboardingMotion.tap, value: isSelected)
     }
 }
@@ -723,7 +719,7 @@ struct OnboardingChoiceTile: View {
                     .strokeBorder(isSelected ? MicaboColor.ink : MicaboColor.stroke, lineWidth: isSelected ? 1.8 : 1)
             }
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         .animation(OnboardingMotion.tap, value: isSelected)
     }
 }
@@ -755,7 +751,7 @@ struct OnboardingChoiceChip: View {
             .padding(.horizontal, 18)
             .background(isSelected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         .animation(OnboardingMotion.tap, value: isSelected)
     }
 }

@@ -72,7 +72,6 @@ struct ProfileView: View {
     private var header: some View {
         MicaboScreenHeader(title: "Profil", eyebrow: streakLabel) {
             Button {
-                Haptics.light()
                 showSettings = true
             } label: {
                 MicaboTile(glyph: .emoji("⚙️"), background: MicaboColor.tilePastels[0], size: 44)
@@ -229,7 +228,6 @@ struct ProfileView: View {
                         showSettings = true
                         return
                     }
-                    Haptics.light()
                     path.append(FriendsRoute())
                 }
             ]

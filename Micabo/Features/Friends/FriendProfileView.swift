@@ -106,7 +106,6 @@ struct FriendProfileView: View {
                     subtitle: course.subject?.nilIfBlank ?? "Cours partagé",
                     accessory: .chevron
                 ) {
-                    Haptics.light()
                     onOpen(course, person)
                 }
             })

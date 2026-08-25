@@ -189,7 +189,6 @@ struct CoursesListView: View {
         HStack(spacing: MicaboSpacing.xs) {
             ForEach(Shelf.allCases) { value in
                 MicaboSelectChip(title: value.label, isSelected: value == shelf) {
-                    Haptics.selection()
                     withAnimation(.easeOut(duration: 0.2)) { shelf = value }
                 }
             }
@@ -231,7 +230,6 @@ struct CoursesListView: View {
             HStack(spacing: MicaboSpacing.xs) {
                 ForEach(SortOrder.allCases) { order in
                     MicaboSelectChip(title: order.label, isSelected: order == sortOrder && subjectFilter == nil) {
-                        Haptics.selection()
                         withAnimation(.easeOut(duration: 0.2)) {
                             sortOrder = order
                             subjectFilter = nil
@@ -241,7 +239,6 @@ struct CoursesListView: View {
 
                 ForEach(subjects, id: \.self) { subject in
                     MicaboSelectChip(title: subject, isSelected: subjectFilter == subject) {
-                        Haptics.selection()
                         withAnimation(.easeOut(duration: 0.2)) {
                             subjectFilter = subjectFilter == subject ? nil : subject
                         }

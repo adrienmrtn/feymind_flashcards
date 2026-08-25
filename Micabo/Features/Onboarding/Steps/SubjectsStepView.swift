@@ -79,7 +79,6 @@ struct SubjectsStepView: View {
     }
 
     private func toggle(_ subject: String) {
-        Haptics.selection()
         withAnimation(OnboardingMotion.tap) {
             if model.subjects.contains(subject) {
                 model.subjects.remove(subject)
@@ -119,6 +118,6 @@ private struct SubjectChip: View {
             }
             .scaleEffect(isSelected ? 1.03 : 1)
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
     }
 }

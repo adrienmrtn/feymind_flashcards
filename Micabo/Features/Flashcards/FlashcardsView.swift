@@ -48,7 +48,6 @@ struct FlashcardsView: View {
             if !cards.isEmpty {
                 MicaboBottomBar {
                     Button {
-                        Haptics.medium()
                         // Sans carte due, une vraie session serait vide : on annonce
                         // l'entraînement libre au lieu de promettre une révision.
                         studyMode = dueCount > 0 ? .scheduled : .practice

@@ -55,7 +55,7 @@ struct MicaboSelectChip: View {
                     Capsule().strokeBorder(isSelected ? Color.clear : MicaboColor.stroke, lineWidth: 1)
                 }
         }
-        .buttonStyle(MicaboPressableButtonStyle())
+        .buttonStyle(MicaboPressableButtonStyle(feedback: .selection))
         .animation(.easeOut(duration: 0.18), value: isSelected)
     }
 }
@@ -82,6 +82,7 @@ struct MicaboSectionHeader: View {
                 Button(actionTitle, action: action)
                     .font(MicaboFont.hanken(13, weight: .semibold))
                     .foregroundStyle(MicaboColor.accent)
+                    .buttonStyle(MicaboPressableButtonStyle())
             }
         }
         .padding(.leading, MicaboSpacing.xxs)

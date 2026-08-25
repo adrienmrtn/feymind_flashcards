@@ -41,7 +41,6 @@ struct ForgettingStepView: View {
 
     private func select(_ answer: ForgettingHabit) {
         guard selection == nil else { return }
-        Haptics.selection()
         selection = answer
 
         // Résolu maintenant : lire l'environnement depuis un bloc différé n'est pas sûr.

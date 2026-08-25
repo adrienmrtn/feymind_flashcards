@@ -67,7 +67,7 @@ struct YouTubeImportSection: View {
                             .font(.system(size: 15))
                             .foregroundStyle(MicaboColor.inkTertiary)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(MicaboPressableButtonStyle())
                     .accessibilityLabel("Effacer le lien")
                 }
             }

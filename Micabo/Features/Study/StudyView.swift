@@ -90,9 +90,9 @@ struct StudyView: View {
                     MicaboCircleButton(
                         systemImage: "arrow.uturn.backward",
                         size: 32,
-                        accessibilityTitle: "Annuler la dernière note"
+                        accessibilityTitle: "Annuler la dernière note",
+                        feedback: .rigid
                     ) {
-                        Haptics.rigid()
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                             session.undo()
                         }
@@ -180,7 +180,6 @@ struct StudyView: View {
     }
 
     private func toggleHint() {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
         withAnimation(.easeOut(duration: 0.25)) {
             showHint.toggle()
         }
@@ -251,19 +250,22 @@ struct StudyView: View {
 
             quietAction("Modifier", systemImage: "pencil") {
                 guard let card = session.current else { return }
-                Haptics.light()
                 editingCard = card
             }
 
-            quietAction("Mettre de côté", systemImage: "tray.and.arrow.down") {
-                Haptics.warning()
+            quietAction("Mettre de côté", systemImage: "tray.and.arrow.down", feedback: .warning) {
                 withAnimation { session.setAsideCurrent() }
             }
         }
         .frame(maxWidth: .infinity)
     }
 
-    private func quietAction(_ title: String, systemImage: String, action: @escaping () -> Void) -> some View {
+    private func quietAction(
+        _ title: String,
+        systemImage: String,
+        feedback: Haptics.Press = .light,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             HStack(spacing: 5) {
                 Image(systemName: systemImage)
@@ -273,7 +275,7 @@ struct StudyView: View {
             }
             .foregroundStyle(MicaboColor.inkTertiary)
         }
-        .buttonStyle(MicaboPressableButtonStyle())
+        .buttonStyle(MicaboPressableButtonStyle(feedback: feedback))
     }
 
     // MARK: - Démarrage, reprise, sortie
@@ -520,7 +522,7 @@ struct StudyCardFace: View {
                 .padding(.horizontal, 14)
                 .background(MicaboColor.surfaceMuted, in: Capsule())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(MicaboPressableButtonStyle())
             .accessibilityLabel("Afficher un indice")
         }
     }
@@ -547,7 +549,7 @@ private struct ChoiceList: View {
                     } label: {
                         row(index: index, choice: choice)
                     }
-                    .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+                    .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .none))
                 }
             }
         }
@@ -679,7 +681,6 @@ struct GradeButtons: View {
         ) {
             ForEach(ReviewRating.allCases) { rating in
                 Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     onSelect(rating)
                 } label: {
                     VStack(spacing: 2) {
@@ -698,7 +699,7 @@ struct GradeButtons: View {
                     .padding(.vertical, intervals[rating] == nil ? 15 : 11)
                     .background(softTint(for: rating), in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(MicaboPressableButtonStyle(dimming: false))
                 .accessibilityLabel(accessibilityLabel(for: rating))
             }
         }

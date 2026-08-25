@@ -38,7 +38,6 @@ struct GoalStepView: View {
     }
 
     private func toggle(_ goal: LearningGoal) {
-        Haptics.selection()
         if selection.contains(goal) {
             selection.remove(goal)
         } else {

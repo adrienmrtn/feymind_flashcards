@@ -40,7 +40,6 @@ struct CountryStepView: View {
                             emoji: country.flag,
                             isSelected: model.country == country
                         ) {
-                            Haptics.selection()
                             withAnimation(OnboardingMotion.tap) {
                                 model.select(country: country)
                             }

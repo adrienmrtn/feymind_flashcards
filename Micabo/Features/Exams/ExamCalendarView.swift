@@ -47,7 +47,6 @@ struct ExamCalendarView: View {
 
     private func stepButton(systemImage: String, step: Int, title: String) -> some View {
         Button {
-            Haptics.selection()
             onStep(step)
         } label: {
             Image(systemName: systemImage)
@@ -56,7 +55,7 @@ struct ExamCalendarView: View {
                 .frame(width: 32, height: 32)
                 .background(MicaboColor.surfaceMuted, in: Circle())
         }
-        .buttonStyle(MicaboPressableButtonStyle())
+        .buttonStyle(MicaboPressableButtonStyle(feedback: .selection))
         .accessibilityLabel(title)
     }
 
@@ -92,7 +91,6 @@ struct ExamCalendarView: View {
         let isOutside = !calendar.isDate(day, equalTo: month, toGranularity: .month)
 
         return Button {
-            Haptics.selection()
             onSelect(day)
         } label: {
             VStack(spacing: 3) {
@@ -117,7 +115,7 @@ struct ExamCalendarView: View {
             .background(background(isSelected: isSelected, isToday: isToday))
             .contentShape(RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         .dropDestination(for: ExamTransfer.self) { items, _ in
             guard let id = items.first?.id else { return false }
             return onDrop(id, day)

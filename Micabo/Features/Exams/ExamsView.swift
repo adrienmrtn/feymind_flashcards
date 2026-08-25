@@ -98,7 +98,6 @@ struct ExamsView: View {
         .overlay(alignment: .bottom) {
             MicaboBottomBar {
                 Button {
-                    Haptics.medium()
                     editing = ExamEdition(exam: nil, date: selectedDay ?? today)
                 } label: {
                     HStack(spacing: MicaboSpacing.xs) {
@@ -163,6 +162,7 @@ struct ExamsView: View {
                 }
                 .font(MicaboFont.hanken(13, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
+                .buttonStyle(MicaboPressableButtonStyle())
             }
 
             if selectedExams.isEmpty {

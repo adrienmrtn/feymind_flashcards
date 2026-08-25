@@ -29,7 +29,6 @@ struct LevelStepView: View {
                     isSelected: model.stage == stage,
                     fillsHeight: true
                 ) {
-                    Haptics.selection()
                     model.stage = stage
                 }
             }
