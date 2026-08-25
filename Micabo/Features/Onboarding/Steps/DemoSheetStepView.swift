@@ -10,6 +10,11 @@ import SwiftUI
 ///
 /// La page de gauche ne disparaît pas d'un coup : elle s'efface pendant que la fiche
 /// s'écrit, de sorte qu'on voie les deux états du même document au même endroit.
+///
+/// **La page est au milieu de l'écran, pas sous le titre.** Elle était calée en haut avec
+/// tout le vide en dessous : sur l'écran où l'on regarde un document se réécrire, c'est le
+/// document qui doit tomber sous les yeux, et un bloc collé au titre avec un tiers d'écran
+/// blanc sous lui se lit comme une illustration de paragraphe.
 struct DemoSheetStepView: View {
     @Environment(OnboardingModel.self) private var model
 
@@ -27,14 +32,16 @@ struct DemoSheetStepView: View {
             title: "Micabo le met au propre.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
-            scrolls: false
+            scrolls: false,
+            expandsContent: true
         ) {
             VStack(spacing: 16) {
+                Spacer(minLength: 0)
                 stage
                 caption
                 Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         } footer: {
             OnboardingContinueButton(title: "S'entraîner", isEnabled: isFinished, isShiny: true) {
                 model.advance()
