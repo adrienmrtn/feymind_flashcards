@@ -77,6 +77,18 @@ function isObject(block: SheetBlock): boolean {
 }
 
 /**
+ * L'encadré « essentiel » ne s'écarte jamais, même au milieu d'une file d'objets.
+ *
+ * Le prompt lui demande de fermer la fiche, `ensureHighlights` le marque en premier, et c'est
+ * le bloc que l'étudiant relit en dernier. Une fin de fiche en « paragraphe, tableau, graphe,
+ * essentiel » le placerait troisième de la file : le garde-fou l'écarterait, et emporterait
+ * avec lui la seule chose qu'on avait exigée.
+ */
+function isKeystone(block: SheetBlock): boolean {
+  return block.type === "callout" && block.tone === "essentiel";
+}
+
+/**
  * Nettoie un texte de bloc.
  *
  * On garde le balisage en ligne, qui met la fiche en page, et on retire ce qui trahit un
@@ -141,7 +153,7 @@ export function normalizeSheet(raw: unknown): SheetBlock[] {
     // Le rythme de la page, tenu par le code. Un titre remet le compteur à zéro comme un
     // paragraphe : il ouvre une partie, donc il rompt la file d'objets.
     if (isObject(block)) {
-      if (objectRun >= SHEET_LIMITS.objectRun) continue;
+      if (objectRun >= SHEET_LIMITS.objectRun && !isKeystone(block)) continue;
       objectRun += 1;
     } else {
       objectRun = 0;

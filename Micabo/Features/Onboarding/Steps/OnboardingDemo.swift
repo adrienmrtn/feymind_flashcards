@@ -309,7 +309,9 @@ struct DemoSheetPage: View {
     /// plus serait une promesse à tenir deux fois.
     private var highlight: some View {
         Text(OnboardingDemo.sheetHighlight)
-            .font(MicaboFont.hanken(7.5, weight: .semibold))
+            // Un demi-point au-dessus du paragraphe, et le demi-gras : à cette échelle, la
+            // couleur seule ne suffisait pas à distinguer cette ligne de celle du dessus.
+            .font(MicaboFont.hanken(8, weight: .semibold))
             .foregroundStyle(MicaboColor.sheetEmphasis)
     }
 }

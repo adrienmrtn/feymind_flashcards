@@ -193,7 +193,7 @@ d'enregistré : la démonstration tourne en avion.
 | Écran | Geste | Ce qui se passe |
 | --- | --- | --- |
 | Dépôt | glisser la page dans la zone en pointillés | La page est **volontairement brute** : un mur de texte sans hiérarchie, titre noyé au milieu, tel qu'on reçoit un polycopié. Sans un vrai avant, l'écran suivant ne transforme rien. Elle passe **au-dessus** de la zone de dépôt, jamais dessous : un document qu'on fait glisser sous sa cible se lit comme un document qu'on perd. Une **flèche coule entre les deux** — trois chevrons qui descendent en cascade — parce que la page qui respirait sur place disait qu'il fallait la toucher, pas où l'emmener ; elle s'efface dès que le doigt prend le relais. La zone fait la moitié de la hauteur de la page : une bande de la hauteur d'un bouton se lit comme un bouton, pas comme un endroit où poser un document. Après deux secondes sans geste la page respire, et un simple appui fait la même chose. |
-| Fiche | aucun | Le balayage de lecture passe sur la page brute, puis la fiche **s'écrit par-dessus, bloc par bloc** : le filet de titre, le paragraphe, la définition, le passage surligné, le schéma. Les deux états occupent la même place, ce qui fait lire une transformation et non deux illustrations. Le bouton dit « S'entraîner », et c'est le seul du parcours qui brille et respire. |
+| Fiche | aucun | Le balayage de lecture passe sur la page brute, puis la fiche **s'écrit par-dessus, bloc par bloc** : le filet de titre, le paragraphe, la définition, le passage en couleur, le schéma. Les deux états occupent la même place, ce qui fait lire une transformation et non deux illustrations. Le bouton dit « S'entraîner », et c'est le seul du parcours qui brille et respire. |
 | Révisions | aucun | La fiche se **découpe en quatre vignettes** — schéma, recto verso, QCM, texte à trou — qui sortent une à une, puis se remplissent toutes seules. Le bouton s'ouvre dès que les quatre sont là. |
 
 Deux écrans ont été retirés d'ici, pour la même raison. La génération simulée cochait des
@@ -829,9 +829,13 @@ graphe seulement quand la comparaison chiffrée est ce qu'il faut retenir.
 
 Et comme une consigne se respecte à peu près là où un plafond se respecte toujours,
 `normalizeSheet` écarte le troisième objet d'une file (`SHEET_LIMITS.objectRun`). Un titre ou
-un paragraphe remet le compteur à zéro. Le garde-fou est côté serveur, donc à la création : les
-fiches déjà en base gardent leur forme jusqu'à ce qu'on demande « Refaire la fiche », parce que
-jeter un tableau d'une fiche enregistrée serait perdre du contenu que l'étudiant a payé.
+un paragraphe remet le compteur à zéro. L'encadré « essentiel » en est **exempté** : le prompt
+lui demande de fermer la fiche, donc il arrive volontiers après deux objets, et un garde-fou qui
+emporterait la seule chose qu'on avait exigée serait pire que le défaut qu'il corrige.
+
+Le garde-fou est côté serveur, donc à la création : les fiches déjà en base gardent leur forme
+jusqu'à ce qu'on demande « Refaire la fiche », parce que jeter un tableau d'une fiche
+enregistrée serait perdre du contenu que l'étudiant a payé.
 
 ### Le réglage typographique
 

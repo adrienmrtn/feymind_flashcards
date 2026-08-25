@@ -59,7 +59,7 @@ Six blocs sur les huit sont des OBJETS : "definition", "callout", "steps", "tabl
 C'est la règle qui compte le plus, avant le contenu de chaque bloc : **une fiche est un texte suivi dans lequel des objets viennent aider, jamais une file d'objets.** Une définition, puis un encadré, puis un tableau, puis un graphe, collés les uns aux autres, ça ne se lit plus : chaque bloc est peut-être juste, mais la page se feuillette au lieu de se lire, et on ne sait plus ce qui répond à quoi.
 
 Donc, sans exception :
-- **JAMAIS DEUX OBJETS DE SUITE.** Entre deux objets, il y a toujours au moins un paragraphe. Le code écarte le troisième objet d'une file, et tu perdras ce que tu y avais mis.
+- **JAMAIS DEUX OBJETS DE SUITE.** Entre deux objets, il y a toujours au moins un paragraphe. Ce n'est pas une préférence de style : un garde-fou écarte les objets qui s'entassent, et ce que tu avais mis dedans est perdu.
 - **Chaque objet est amené par le paragraphe qui le précède.** Un tableau qui tombe après une phrase qui ne l'annonce pas est de la décoration. Le paragraphe pose la question, l'objet y répond.
 - **Un objet pour deux paragraphes, au plus.** Compte-les avant de répondre.
 - Chaque partie a la même forme : le titre, un paragraphe qui pose la notion, l'objet qui l'éclaire s'il y en a un, un paragraphe qui en tire la conséquence.

@@ -291,8 +291,10 @@ enum SheetTypography {
     /// Corps d'un objet : encadré, définition, étape. Un cran sous la page, pour qu'un
     /// objet n'ait pas l'air de porter le cours à sa place.
     static let secondary: CGFloat = 14
-    /// Intitulé d'un objet : titre d'un tableau, d'un graphe, d'une suite d'étapes.
-    static let objectTitle: CGFloat = 13.5
+    /// Intitulé d'un objet : titre d'un tableau, d'un graphe, d'une suite d'étapes, terme
+    /// d'une définition. Au-dessus du corps de l'objet : un intitulé plus petit que le texte
+    /// qu'il introduit n'introduit rien.
+    static let objectTitle: CGFloat = 14.5
     /// Cellule de tableau, et étiquette d'un graphe.
     static let cell: CGFloat = 12
     /// Légende sous un tableau, un graphe ou une formule.
@@ -315,8 +317,12 @@ enum SheetTypography {
     static let tightLineSpacing: CGFloat = 2.5
 
     /// Espace au-dessus d'un titre de partie, et d'un titre de sous-partie.
+    ///
+    /// Un sous-titre a la taille du corps : c'est **l'air au-dessus de lui** qui dit qu'une
+    /// sous-partie commence, avec son demi-gras. Il lui faut donc nettement plus que
+    /// l'espace entre deux blocs ordinaires — à un point près, il n'y aurait plus de plan.
     static let spaceBeforeLargeHeading: CGFloat = 20
-    static let spaceBeforeSmallHeading: CGFloat = 12
+    static let spaceBeforeSmallHeading: CGFloat = 15
     /// Espace entre deux blocs de même nature.
     static let blockSpacing: CGFloat = 11
     /// Marge intérieure d'un objet encarté.

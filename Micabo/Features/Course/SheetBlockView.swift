@@ -123,14 +123,20 @@ struct SheetBlockView: View {
         )
     }
 
-    /// L'accent n'apparaît pas ici : il ne sert qu'à ce qui est actif. Un encadré porte
-    /// donc les couleurs de retour d'information de l'app, volontairement désaturées.
+    /// Un encadré porte les couleurs de retour d'information de l'app, volontairement
+    /// désaturées, et **quatre teintes qui se distinguent** : le menthe de ce que la fiche
+    /// met en avant, l'ambre de ce qui coûte des points, le gris d'un exemple, le bleu d'un
+    /// moyen de retenir.
+    ///
+    /// L'astuce était sur le vert de `positive`, à trois points de canal du menthe de
+    /// l'essentiel : sur un écran, les deux encadrés étaient le même. Or l'essentiel est
+    /// justement celui qu'on doit trouver sans le chercher.
     private func calloutForeground(_ tone: SheetCalloutTone) -> Color {
         switch tone {
         case .essentiel: MicaboColor.ink
         case .attention: MicaboColor.caution
         case .exemple: MicaboColor.inkSecondary
-        case .astuce: MicaboColor.positive
+        case .astuce: MicaboColor.info
         }
     }
 
@@ -142,7 +148,7 @@ struct SheetBlockView: View {
         case .essentiel: MicaboColor.accentSoft
         case .attention: MicaboColor.cautionSoft
         case .exemple: MicaboColor.surfaceMuted
-        case .astuce: MicaboColor.positiveSoft
+        case .astuce: MicaboColor.infoSoft
         }
     }
 

@@ -188,6 +188,38 @@ describe("normalizeSheet", () => {
     ]);
   });
 
+  // Le prompt demande à l'encadré « essentiel » de fermer la fiche : le garde-fou ne doit pas
+  // emporter la seule chose qu'on avait exigée parce qu'elle arrive après deux objets.
+  it("garde l'encadré essentiel même au bout d'une file", () => {
+    const blocks = normalizeSheet([
+      paragraph("Le cycle de l'eau ne perd rien, et c'est ce que la suite va détailler ici."),
+      {
+        type: "table",
+        headers: ["Phase", "Lieu"],
+        rows: [["Photochimique", "Thylakoïdes"], ["Non photochimique", "Stroma"]],
+      },
+      { type: "formula", latex: "H_2O" },
+      { type: "callout", tone: "essentiel", text: "Le cycle est fermé : la quantité ne varie pas." },
+    ]);
+
+    assert.deepEqual(blocks.map((block) => block.type), [
+      "paragraph",
+      "table",
+      "formula",
+      "callout",
+    ]);
+  });
+
+  it("n'épargne que l'essentiel, pas les autres encadrés", () => {
+    const blocks = normalizeSheet([
+      { type: "definition", term: "Un", text: "Ce que le premier terme désigne exactement." },
+      { type: "definition", term: "Deux", text: "Ce que le deuxième terme désigne exactement." },
+      { type: "callout", tone: "astuce", text: "Un moyen de retenir la chose, en une phrase." },
+    ]);
+
+    assert.equal(blocks.length, SHEET_LIMITS.objectRun);
+  });
+
   it("compte les objets d'affilée quel que soit leur type", () => {
     const blocks = normalizeSheet([
       { type: "definition", term: "Un", text: "Ce que le premier terme désigne exactement." },

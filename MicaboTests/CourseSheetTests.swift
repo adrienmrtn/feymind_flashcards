@@ -1,6 +1,5 @@
 import Foundation
 import SwiftData
-import SwiftUI
 import UIKit
 import XCTest
 @testable import Micabo
@@ -406,15 +405,21 @@ final class SheetRenderingTests: XCTestCase {
         XCTAssertEqual(SheetTypography.formula, 20 * 0.9, accuracy: 0.01)
     }
 
-    /// La hiérarchie tient après la réduction, et un sous-titre se distingue par son poids et
-    /// par l'air au-dessus de lui, pas en grossissant.
+    /// La hiérarchie tient après la réduction, et elle est monotone : du titre de partie à la
+    /// légende, chaque cran est plus petit que le précédent. Un intitulé d'objet plus petit
+    /// que le texte qu'il introduit n'introduirait rien.
     func testTheHierarchyStillHolds() {
-        XCTAssertGreaterThan(SheetTypography.headingLarge, SheetTypography.body)
+        let scale = [
+            SheetTypography.headingLarge,
+            SheetTypography.body,
+            SheetTypography.objectTitle,
+            SheetTypography.secondary,
+            SheetTypography.cell,
+            SheetTypography.caption
+        ]
+
+        XCTAssertEqual(scale, scale.sorted(by: >), "L'échelle doit descendre sans remonter")
         XCTAssertEqual(SheetTypography.headingSmall, SheetTypography.body)
-        XCTAssertGreaterThan(SheetTypography.body, SheetTypography.secondary)
-        XCTAssertGreaterThan(SheetTypography.secondary, SheetTypography.objectTitle)
-        XCTAssertGreaterThan(SheetTypography.objectTitle, SheetTypography.cell)
-        XCTAssertGreaterThan(SheetTypography.cell, SheetTypography.caption)
     }
 
     /// Les espaces ont baissé plus que les tailles : une fiche se relit la veille au soir, et
@@ -423,12 +428,19 @@ final class SheetRenderingTests: XCTestCase {
         XCTAssertLessThan(SheetTypography.lineSpacing, 7.5 * 0.9)
         XCTAssertLessThan(SheetTypography.blockSpacing, 15 * 0.9)
         XCTAssertLessThan(SheetTypography.spaceBeforeLargeHeading, 26 * 0.9)
-        XCTAssertLessThan(SheetTypography.spaceBeforeSmallHeading, 16 * 0.9)
+        XCTAssertLessThanOrEqual(SheetTypography.spaceBeforeSmallHeading, 16)
+    }
 
-        // Un titre de partie respire plus qu'un bloc ordinaire, et un sous-titre entre les
-        // deux : c'est cet écart, et non un filet, qui donne le plan.
+    /// Un sous-titre a la taille du corps : c'est l'air au-dessus de lui qui dit qu'une
+    /// sous-partie commence. Un point de plus qu'un bloc ordinaire ne se verrait pas, et il
+    /// n'y aurait plus de plan.
+    func testASubHeadingGetsRealAirAboveIt() {
         XCTAssertGreaterThan(SheetTypography.spaceBeforeLargeHeading, SheetTypography.spaceBeforeSmallHeading)
-        XCTAssertGreaterThan(SheetTypography.spaceBeforeSmallHeading, SheetTypography.blockSpacing)
+        XCTAssertGreaterThanOrEqual(
+            SheetTypography.spaceBeforeSmallHeading,
+            SheetTypography.blockSpacing + 3,
+            "À un point près, un sous-titre ne se distinguerait plus d'un paragraphe"
+        )
     }
 }
 
