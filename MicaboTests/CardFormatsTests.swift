@@ -366,6 +366,33 @@ final class ImportFailureTests: XCTestCase {
         XCTAssertNil(ImportReadiness.failure(text: "", hasImages: true, canEnableVision: false, kind: .pdf))
     }
 
+    /// Un paquet de cartes n'emprunte pas l'écran d'import : le compilateur doit quand
+    /// même connaître ce cas, et le garde ne doit rien inventer pour lui.
+    func testCardsKindIsNotADocumentImport() {
+        XCTAssertFalse(ImportKind.cards.producesSheet)
+        XCTAssertEqual(ImportKind.cards.courseSource, .deck)
+        XCTAssertFalse(CourseSource.deck.expectsSheet)
+        XCTAssertNil(
+            ImportReadiness.failure(
+                text: "",
+                hasImages: false,
+                canEnableVision: false,
+                kind: .cards
+            )
+        )
+    }
+
+    /// Chaque source a un libellé, une icône et une `CourseSource` : un cas oublié ici
+    /// est le même oubli qui faisait échouer le `switch` de `ImportView`.
+    func testEveryImportKindIsFullyDescribed() {
+        for kind in ImportKind.allCases {
+            XCTAssertFalse(kind.title.isEmpty, "\(kind.rawValue) sans titre")
+            XCTAssertFalse(kind.systemImage.isEmpty, "\(kind.rawValue) sans icône")
+            XCTAssertFalse(kind.courseSource.label.isEmpty, "\(kind.rawValue) sans source")
+        }
+        XCTAssertTrue(ImportKind.allCases.contains(.cards))
+    }
+
     // MARK: - Doublons
 
     func testSameChapterImportedTwiceIsDetected() throws {
