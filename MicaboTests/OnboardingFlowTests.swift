@@ -256,30 +256,65 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(OnboardingPreferences.contentLanguage, .en)
     }
 
-    /// Changer de pays ne perd pas la réponse déjà donnée quand le nouveau pays a un palier
-    /// du même registre : un étudiant en licence en France arrive en « Undergraduate » au
-    /// Royaume-Uni, parce que les deux demandent la même écriture.
-    func testChangingCountryCarriesTheStageOverWhenItCan() {
+    /// Changer de pays reporte la réponse sur le palier **équivalent**, pas sur le premier
+    /// de la liste qui écrit pareil.
+    ///
+    /// C'est tout l'intérêt de l'échelle : un lycéen et un collégien partagent le registre
+    /// « lycée », donc chercher par registre ramenait un lycéen français en « Middle
+    /// school » dès qu'il passait aux États-Unis.
+    func testChangingCountryCarriesTheStageOverToItsRealEquivalent() throws {
         let model = OnboardingModel()
-        model.stage = SchoolingCountry.fr.stages.first { $0.level == .licence }
-        XCTAssertEqual(model.stage?.id, "fr.licence")
+
+        model.stage = try XCTUnwrap(SchoolingCountry.fr.stages.first { $0.id == "fr.lycee" })
+        model.select(country: .us)
+        XCTAssertEqual(model.stage?.id, "us.high", "Un lycéen n'est pas un collégien")
+        XCTAssertEqual(model.language, .en)
 
         model.select(country: .uk)
+        XCTAssertEqual(model.stage?.id, "uk.alevels", "A-Levels, pas GCSE")
 
-        XCTAssertEqual(model.stage?.id, "uk.undergraduate")
-        XCTAssertEqual(model.level, .licence)
-        XCTAssertEqual(model.language, .en)
+        model.select(country: .fr)
+        XCTAssertEqual(model.stage?.id, "fr.lycee", "L'aller-retour revient au point de départ")
     }
 
-    /// Le palier abandonné plutôt que gardé de travers : la Suisse n'a pas de concours, donc
-    /// la réponse ne se reporte sur rien et l'écran redemande.
-    func testChangingCountryDropsAStageThatHasNoEquivalent() {
+    /// Une filière santé se retrouve dans l'autre pays, et elle ne se convertit jamais en
+    /// marche d'échelle : un étudiant en santé n'est pas un « undergraduate » parce que son
+    /// pays d'accueil n'a pas de filière nommée.
+    func testHealthAndCompetitiveTracksAreNotLadderRungs() throws {
         let model = OnboardingModel()
-        model.stage = SchoolingCountry.fr.stages.first { $0.level == .prepa }
+
+        model.stage = try XCTUnwrap(SchoolingCountry.fr.stages.first { $0.id == "fr.sante" })
+        model.select(country: .uk)
+        XCTAssertEqual(model.stage?.id, "uk.medicine")
+
+        model.stage = try XCTUnwrap(SchoolingCountry.fr.stages.first { $0.id == "fr.concours" })
+        model.select(country: .us)
+        XCTAssertNil(model.stage, "Les États-Unis n'ont pas de concours : l'écran redemande")
+    }
+
+    /// Sans équivalent exact, on prend la marche la plus proche, et on monte à égalité de
+    /// distance : la Suisse n'a pas de prépa, et « Bachelor » sert mieux un préparationnaire
+    /// qu'une fiche écrite pour le secondaire.
+    func testAStageWithoutAnEquivalentLandsOnTheNearestRungAbove() throws {
+        let model = OnboardingModel()
+        model.stage = try XCTUnwrap(SchoolingCountry.fr.stages.first { $0.id == "fr.prepa" })
 
         model.select(country: .ch)
 
-        XCTAssertNil(model.stage, "La Suisse ne propose pas de classe préparatoire")
+        XCTAssertEqual(model.stage?.id, "ch.bachelor")
+        XCTAssertEqual(model.level, .licence)
+    }
+
+    /// Le cégep québécois est un palier pré-universitaire : il retrouve la prépa française,
+    /// et pas le lycée, même si les deux partagent le registre du secondaire.
+    func testThePreUniversityRungTravels() throws {
+        let model = OnboardingModel()
+        model.select(country: .ca)
+        model.stage = try XCTUnwrap(SchoolingCountry.ca.stages.first { $0.id == "ca.cegep" })
+
+        model.select(country: .fr)
+
+        XCTAssertEqual(model.stage?.id, "fr.prepa")
     }
 
     func testEveryLevelHasALabel() {

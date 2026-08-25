@@ -14,15 +14,55 @@ import Foundation
 /// volontairement plus grossier que le palier : un cégep québécois et un lycée français ne
 /// portent pas le même nom mais demandent la même écriture. C'est ce qui permet d'ajouter un
 /// pays sans toucher aux consignes du modèle.
+///
+/// `tier` sert à une seule chose, et le registre ne pouvait pas s'en charger : **retrouver
+/// le palier équivalent quand on change de pays.** Un lycéen français et un high schooler
+/// américain écrivent pareil, donc partagent le même `level` ; mais un middle schooler aussi,
+/// et chercher par registre ramenait systématiquement le premier de la liste — un lycéen qui
+/// passait aux États-Unis se retrouvait en « Middle school ».
 struct EducationStage: Identifiable, Hashable {
     let id: String
     let title: String
     let emoji: String
     let level: StudyLevel
+    let tier: EducationTier
 }
 
-private func stage(_ id: String, _ title: String, _ emoji: String, _ level: StudyLevel) -> EducationStage {
-    EducationStage(id: id, title: title, emoji: emoji, level: level)
+/// Le palier ramené à une échelle comparable d'un pays à l'autre.
+///
+/// Les cinq premiers cas forment une **échelle ordonnée** : c'est elle qui permet de trouver
+/// le voisin le plus proche quand le nouveau pays n'a pas l'équivalent exact. Les trois
+/// derniers n'en font pas partie, et c'est volontaire : la santé, les concours et « autre »
+/// sont des voies, pas des marches, et un étudiant en santé ne devient pas « undergraduate »
+/// parce que son pays d'accueil n'a pas de filière santé nommée.
+enum EducationTier: String, CaseIterable, Hashable {
+    case lowerSecondary
+    case upperSecondary
+    case preUniversity
+    case undergraduate
+    case graduate
+    case health
+    case competitive
+    case other
+
+    /// Les marches de l'échelle, de la plus basse à la plus haute.
+    static let ladder: [EducationTier] = [
+        .lowerSecondary, .upperSecondary, .preUniversity, .undergraduate, .graduate
+    ]
+
+    var ladderIndex: Int? {
+        Self.ladder.firstIndex(of: self)
+    }
+}
+
+private func stage(
+    _ id: String,
+    _ title: String,
+    _ emoji: String,
+    _ level: StudyLevel,
+    _ tier: EducationTier
+) -> EducationStage {
+    EducationStage(id: id, title: title, emoji: emoji, level: level, tier: tier)
 }
 
 /// La langue dans laquelle Micabo écrit.
@@ -55,121 +95,121 @@ extension SchoolingCountry {
         switch self {
         case .fr:
             [
-                stage("fr.lycee", "Lycée", "🎒", .lycee),
-                stage("fr.prepa", "Prépa", "📐", .prepa),
-                stage("fr.licence", "Licence", "🎓", .licence),
-                stage("fr.sante", "PASS, santé", "🩺", .sante),
-                stage("fr.master", "Master", "🔬", .master),
-                stage("fr.concours", "Concours", "🏁", .concours),
-                stage("fr.other", "Autre", "✨", .other)
+                stage("fr.lycee", "Lycée", "🎒", .lycee, .upperSecondary),
+                stage("fr.prepa", "Prépa", "📐", .prepa, .preUniversity),
+                stage("fr.licence", "Licence", "🎓", .licence, .undergraduate),
+                stage("fr.sante", "PASS, santé", "🩺", .sante, .health),
+                stage("fr.master", "Master", "🔬", .master, .graduate),
+                stage("fr.concours", "Concours", "🏁", .concours, .competitive),
+                stage("fr.other", "Autre", "✨", .other, .other)
             ]
 
         case .be:
             [
-                stage("be.secondaire", "Secondaire", "🎒", .lycee),
-                stage("be.bachelier", "Bachelier", "🎓", .licence),
-                stage("be.medecine", "Médecine, santé", "🩺", .sante),
-                stage("be.master", "Master", "🔬", .master),
-                stage("be.concours", "Examen d'entrée", "🏁", .concours),
-                stage("be.other", "Autre", "✨", .other)
+                stage("be.secondaire", "Secondaire", "🎒", .lycee, .upperSecondary),
+                stage("be.bachelier", "Bachelier", "🎓", .licence, .undergraduate),
+                stage("be.medecine", "Médecine, santé", "🩺", .sante, .health),
+                stage("be.master", "Master", "🔬", .master, .graduate),
+                stage("be.concours", "Examen d'entrée", "🏁", .concours, .competitive),
+                stage("be.other", "Autre", "✨", .other, .other)
             ]
 
         case .ch:
             [
-                stage("ch.gymnase", "Gymnase, maturité", "🎒", .lycee),
-                stage("ch.bachelor", "Bachelor", "🎓", .licence),
-                stage("ch.medecine", "Médecine, santé", "🩺", .sante),
-                stage("ch.master", "Master", "🔬", .master),
-                stage("ch.other", "Autre", "✨", .other)
+                stage("ch.gymnase", "Gymnase, maturité", "🎒", .lycee, .upperSecondary),
+                stage("ch.bachelor", "Bachelor", "🎓", .licence, .undergraduate),
+                stage("ch.medecine", "Médecine, santé", "🩺", .sante, .health),
+                stage("ch.master", "Master", "🔬", .master, .graduate),
+                stage("ch.other", "Autre", "✨", .other, .other)
             ]
 
         case .ca:
             // « Baccalauréat » désigne ici un diplôme universitaire, pas l'examen de fin de
             // secondaire : proposer les deux sens dans la même liste serait un piège.
             [
-                stage("ca.secondaire", "Secondaire", "🎒", .lycee),
-                stage("ca.cegep", "Cégep", "📐", .lycee),
-                stage("ca.bac", "Baccalauréat", "🎓", .licence),
-                stage("ca.medecine", "Médecine, santé", "🩺", .sante),
-                stage("ca.maitrise", "Maîtrise", "🔬", .master),
-                stage("ca.other", "Autre", "✨", .other)
+                stage("ca.secondaire", "Secondaire", "🎒", .lycee, .upperSecondary),
+                stage("ca.cegep", "Cégep", "📐", .lycee, .preUniversity),
+                stage("ca.bac", "Baccalauréat", "🎓", .licence, .undergraduate),
+                stage("ca.medecine", "Médecine, santé", "🩺", .sante, .health),
+                stage("ca.maitrise", "Maîtrise", "🔬", .master, .graduate),
+                stage("ca.other", "Autre", "✨", .other, .other)
             ]
 
         case .lu:
             [
-                stage("lu.secondaire", "Secondaire", "🎒", .lycee),
-                stage("lu.bachelor", "Bachelor", "🎓", .licence),
-                stage("lu.master", "Master", "🔬", .master),
-                stage("lu.other", "Autre", "✨", .other)
+                stage("lu.secondaire", "Secondaire", "🎒", .lycee, .upperSecondary),
+                stage("lu.bachelor", "Bachelor", "🎓", .licence, .undergraduate),
+                stage("lu.master", "Master", "🔬", .master, .graduate),
+                stage("lu.other", "Autre", "✨", .other, .other)
             ]
 
         case .ma:
             [
-                stage("ma.lycee", "Lycée, bac", "🎒", .lycee),
-                stage("ma.prepa", "Prépa", "📐", .prepa),
-                stage("ma.licence", "Licence", "🎓", .licence),
-                stage("ma.medecine", "Médecine, santé", "🩺", .sante),
-                stage("ma.master", "Master", "🔬", .master),
-                stage("ma.concours", "Concours", "🏁", .concours),
-                stage("ma.other", "Autre", "✨", .other)
+                stage("ma.lycee", "Lycée, bac", "🎒", .lycee, .upperSecondary),
+                stage("ma.prepa", "Prépa", "📐", .prepa, .preUniversity),
+                stage("ma.licence", "Licence", "🎓", .licence, .undergraduate),
+                stage("ma.medecine", "Médecine, santé", "🩺", .sante, .health),
+                stage("ma.master", "Master", "🔬", .master, .graduate),
+                stage("ma.concours", "Concours", "🏁", .concours, .competitive),
+                stage("ma.other", "Autre", "✨", .other, .other)
             ]
 
         case .dz:
             [
-                stage("dz.lycee", "Lycée, bac", "🎒", .lycee),
-                stage("dz.licence", "Licence", "🎓", .licence),
-                stage("dz.medecine", "Médecine, santé", "🩺", .sante),
-                stage("dz.master", "Master", "🔬", .master),
-                stage("dz.other", "Autre", "✨", .other)
+                stage("dz.lycee", "Lycée, bac", "🎒", .lycee, .upperSecondary),
+                stage("dz.licence", "Licence", "🎓", .licence, .undergraduate),
+                stage("dz.medecine", "Médecine, santé", "🩺", .sante, .health),
+                stage("dz.master", "Master", "🔬", .master, .graduate),
+                stage("dz.other", "Autre", "✨", .other, .other)
             ]
 
         case .tn:
             [
-                stage("tn.lycee", "Lycée, bac", "🎒", .lycee),
-                stage("tn.licence", "Licence", "🎓", .licence),
-                stage("tn.medecine", "Médecine, santé", "🩺", .sante),
-                stage("tn.mastere", "Mastère", "🔬", .master),
-                stage("tn.other", "Autre", "✨", .other)
+                stage("tn.lycee", "Lycée, bac", "🎒", .lycee, .upperSecondary),
+                stage("tn.licence", "Licence", "🎓", .licence, .undergraduate),
+                stage("tn.medecine", "Médecine, santé", "🩺", .sante, .health),
+                stage("tn.mastere", "Mastère", "🔬", .master, .graduate),
+                stage("tn.other", "Autre", "✨", .other, .other)
             ]
 
         case .sn:
             [
-                stage("sn.lycee", "Lycée, bac", "🎒", .lycee),
-                stage("sn.licence", "Licence", "🎓", .licence),
-                stage("sn.medecine", "Médecine, santé", "🩺", .sante),
-                stage("sn.master", "Master", "🔬", .master),
-                stage("sn.concours", "Grandes écoles", "🏁", .concours),
-                stage("sn.other", "Autre", "✨", .other)
+                stage("sn.lycee", "Lycée, bac", "🎒", .lycee, .upperSecondary),
+                stage("sn.licence", "Licence", "🎓", .licence, .undergraduate),
+                stage("sn.medecine", "Médecine, santé", "🩺", .sante, .health),
+                stage("sn.master", "Master", "🔬", .master, .graduate),
+                stage("sn.concours", "Grandes écoles", "🏁", .concours, .competitive),
+                stage("sn.other", "Autre", "✨", .other, .other)
             ]
 
         case .ci:
             [
-                stage("ci.lycee", "Lycée, bac", "🎒", .lycee),
-                stage("ci.licence", "Licence", "🎓", .licence),
-                stage("ci.medecine", "Médecine, santé", "🩺", .sante),
-                stage("ci.master", "Master", "🔬", .master),
-                stage("ci.concours", "Grandes écoles", "🏁", .concours),
-                stage("ci.other", "Autre", "✨", .other)
+                stage("ci.lycee", "Lycée, bac", "🎒", .lycee, .upperSecondary),
+                stage("ci.licence", "Licence", "🎓", .licence, .undergraduate),
+                stage("ci.medecine", "Médecine, santé", "🩺", .sante, .health),
+                stage("ci.master", "Master", "🔬", .master, .graduate),
+                stage("ci.concours", "Grandes écoles", "🏁", .concours, .competitive),
+                stage("ci.other", "Autre", "✨", .other, .other)
             ]
 
         case .uk:
             [
-                stage("uk.gcse", "GCSE", "🎒", .lycee),
-                stage("uk.alevels", "A-Levels", "📐", .lycee),
-                stage("uk.undergraduate", "Undergraduate", "🎓", .licence),
-                stage("uk.medicine", "Medicine", "🩺", .sante),
-                stage("uk.postgraduate", "Postgraduate", "🔬", .master),
-                stage("uk.other", "Other", "✨", .other)
+                stage("uk.gcse", "GCSE", "🎒", .lycee, .lowerSecondary),
+                stage("uk.alevels", "A-Levels", "📐", .lycee, .upperSecondary),
+                stage("uk.undergraduate", "Undergraduate", "🎓", .licence, .undergraduate),
+                stage("uk.medicine", "Medicine", "🩺", .sante, .health),
+                stage("uk.postgraduate", "Postgraduate", "🔬", .master, .graduate),
+                stage("uk.other", "Other", "✨", .other, .other)
             ]
 
         case .us:
             [
-                stage("us.middle", "Middle school", "🎒", .lycee),
-                stage("us.high", "High school", "🏫", .lycee),
-                stage("us.college", "College", "🎓", .licence),
-                stage("us.premed", "Pre-med, MCAT", "🩺", .sante),
-                stage("us.graduate", "Graduate school", "🔬", .master),
-                stage("us.other", "Other", "✨", .other)
+                stage("us.middle", "Middle school", "🎒", .lycee, .lowerSecondary),
+                stage("us.high", "High school", "🏫", .lycee, .upperSecondary),
+                stage("us.college", "College", "🎓", .licence, .undergraduate),
+                stage("us.premed", "Pre-med, MCAT", "🩺", .sante, .health),
+                stage("us.graduate", "Graduate school", "🔬", .master, .graduate),
+                stage("us.other", "Other", "✨", .other, .other)
             ]
 
         case .other:
@@ -183,11 +223,11 @@ extension SchoolingCountry {
     /// paliers pour un pays qu'on ne connaît pas produirait des réponses fausses, et une
     /// réponse fausse est pire qu'une réponse large.
     static let genericStages: [EducationStage] = [
-        stage("generic.middle", "Middle school", "🎒", .lycee),
-        stage("generic.high", "High school", "🏫", .lycee),
-        stage("generic.college", "College", "🎓", .licence),
-        stage("generic.university", "University", "🔬", .master),
-        stage("generic.other", "Other", "✨", .other)
+        stage("generic.middle", "Middle school", "🎒", .lycee, .lowerSecondary),
+        stage("generic.high", "High school", "🏫", .lycee, .upperSecondary),
+        stage("generic.college", "College", "🎓", .licence, .undergraduate),
+        stage("generic.university", "University", "🔬", .master, .graduate),
+        stage("generic.other", "Other", "✨", .other, .other)
     ]
 
     /// La langue dans laquelle Micabo écrit pour cet étudiant.
@@ -198,14 +238,50 @@ extension SchoolingCountry {
         }
     }
 
-    /// Le palier correspondant à un identifiant, puis à défaut au registre enregistré.
+    /// Le palier de ce pays qui correspond à une réponse déjà donnée.
     ///
-    /// Le repli par registre est ce qui permet de changer de pays sans perdre sa réponse :
-    /// un étudiant en licence en France reste en « Undergraduate » s'il passe au
-    /// Royaume-Uni, parce que les deux paliers écrivent pareil.
-    func resolvedStage(id: String?, orLevel level: StudyLevel?) -> EducationStage? {
+    /// C'est ce qui permet de changer de pays sans redemander où l'on en est, et l'ordre des
+    /// tentatives est celui du plus précis au plus grossier :
+    ///
+    /// 1. **l'identifiant**, quand la réponse vient du même pays ;
+    /// 2. **le palier exact** : un lycéen français devient high schooler américain, un
+    ///    étudiant en santé retrouve la filière santé locale ;
+    /// 3. **la marche la plus proche sur l'échelle**, en montant à égalité de distance : un
+    ///    élève de prépa n'a pas d'équivalent britannique, et « Undergraduate » le sert mieux
+    ///    qu'une question reposée ;
+    /// 4. **le registre de rédaction**, seule chose que le cloud transporte.
+    ///
+    /// Rien ne correspond, on rend `nil` et l'écran redemande : la santé, les concours et
+    /// « autre » ne sont pas des marches d'échelle, et transformer un étudiant en santé en
+    /// « undergraduate » parce que son pays n'a pas de filière nommée serait une réponse
+    /// fausse écrite à sa place.
+    func resolvedStage(id: String?, tier: EducationTier?, level: StudyLevel?) -> EducationStage? {
         if let id, let match = stages.first(where: { $0.id == id }) { return match }
+
+        if let tier {
+            if let exact = stages.first(where: { $0.tier == tier }) { return exact }
+            if let neighbour = nearestOnLadder(to: tier) { return neighbour }
+        }
+
         guard let level else { return nil }
         return stages.first { $0.level == level }
+    }
+
+    /// La marche la plus proche de celle demandée. À distance égale, on monte : un palier
+    /// au-dessus se rattrape en lisant, un palier en dessous se paye en fiches trop simples.
+    private func nearestOnLadder(to tier: EducationTier) -> EducationStage? {
+        guard let target = tier.ladderIndex else { return nil }
+
+        return stages
+            .compactMap { candidate -> (stage: EducationStage, distance: Int, index: Int)? in
+                guard let index = candidate.tier.ladderIndex else { return nil }
+                return (candidate, abs(index - target), index)
+            }
+            .min { left, right in
+                left.distance == right.distance
+                    ? left.index > right.index
+                    : left.distance < right.distance
+            }?
+            .stage
     }
 }

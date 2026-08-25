@@ -308,7 +308,7 @@ enum OnboardingPreferences {
     /// que le cloud synchronise, et le garder à jour ici évite d'avoir deux réponses à la
     /// même question.
     static var educationStage: EducationStage? {
-        get { schoolingCountry.resolvedStage(id: educationStageId, orLevel: studyLevel) }
+        get { schoolingCountry.resolvedStage(id: educationStageId, tier: nil, level: studyLevel) }
         set {
             educationStageId = newValue?.id
             studyLevel = newValue?.level

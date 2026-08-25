@@ -101,6 +101,10 @@ struct PersonalizingStepView: View {
             MicaboBottomBar(background: surface.background) {
                 OnboardingContinueButton(
                     title: "Découvrir mon parcours",
+                    // Éteint pendant le travail, et pas seulement inerte : un bouton à
+                    // l'encre pleine qui avale les appuis pendant cinq secondes se lit
+                    // comme un bouton cassé.
+                    isEnabled: isDone,
                     isLoading: !isDone,
                     loadingTitle: "Micabo travaille…",
                     isShiny: isDone

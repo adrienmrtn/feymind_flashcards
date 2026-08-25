@@ -122,6 +122,10 @@ extension EnvironmentValues {
 /// l'app, et on ne le retrouve jamais.
 struct OnboardingSkip {
     var title: String = "Passer"
+    /// Ce que le lecteur d'écran annonce. « Passer cette question » ne convient pas partout :
+    /// sur l'écran de connexion, on ne passe pas une question, on passe la création d'un
+    /// compte.
+    var accessibilityLabel: String?
     var action: () -> Void
 }
 
@@ -290,7 +294,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
             )
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
-        .accessibilityLabel("\(skip.title) cette question")
+        .accessibilityLabel(skip.accessibilityLabel ?? "\(skip.title) cette question")
     }
 }
 

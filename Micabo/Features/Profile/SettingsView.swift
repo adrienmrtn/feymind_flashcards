@@ -240,7 +240,11 @@ struct SettingsView: View {
 
             MicaboSectionFootnote(text: "Micabo écrit les fiches pour ce niveau et ce système scolaire, et dans la langue du pays : le vocabulaire, la profondeur des explications et les examens auxquels la fiche renvoie en dépendent. La longueur se choisit aussi au moment d'un import.")
         }
+        // Le changement de pays écrit déjà le palier qu'il vient de reporter : sans ce
+        // garde, la réaction en chaîne l'écrirait deux fois et vibrerait deux fois pour un
+        // seul choix.
         .onChange(of: stage) { _, newValue in
+            guard newValue != OnboardingPreferences.educationStage else { return }
             OnboardingPreferences.educationStage = newValue
             Haptics.selection()
         }
@@ -249,7 +253,7 @@ struct SettingsView: View {
         // passage aux États-Unis laisserait affiché un palier absent du menu.
         .onChange(of: country) { _, newValue in
             OnboardingPreferences.schoolingCountry = newValue
-            stage = newValue.resolvedStage(id: nil, orLevel: stage?.level)
+            stage = newValue.resolvedStage(id: nil, tier: stage?.tier, level: stage?.level)
             OnboardingPreferences.educationStage = stage
             Haptics.selection()
         }

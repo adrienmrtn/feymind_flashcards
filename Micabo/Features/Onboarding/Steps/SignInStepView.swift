@@ -67,7 +67,11 @@ struct SignInStepView: View {
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,
-            skip: OnboardingSkip(title: "Skip", action: skip)
+            skip: OnboardingSkip(
+                title: "Skip",
+                accessibilityLabel: "Continuer sans compte",
+                action: skip
+            )
         ) {
             VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
                 VStack(spacing: 0) {

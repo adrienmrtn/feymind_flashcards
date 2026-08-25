@@ -27,7 +27,9 @@ struct CountryStepView: View {
             eyebrow: "Ton école",
             title: "Tu étudies où ?",
             titleSize: 32,
-            scrolls: false,
+            // Treize pays en pastilles tiennent sur cinq lignes, et un quatorzième les
+            // ferait déborder sans recours : l'écran défile plutôt que de rogner une réponse.
+            scrolls: true,
             animatesTitle: true
         ) {
             VStack(alignment: .leading, spacing: 14) {

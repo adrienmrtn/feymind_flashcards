@@ -43,7 +43,7 @@ final class OnboardingModel {
         guard newCountry != country else { return }
         let previous = stage
         country = newCountry
-        stage = newCountry.resolvedStage(id: nil, orLevel: previous?.level)
+        stage = newCountry.resolvedStage(id: nil, tier: previous?.tier, level: previous?.level)
     }
 
     /// Nombre de cartes que l'utilisateur peut espérer mémoriser en un an,
