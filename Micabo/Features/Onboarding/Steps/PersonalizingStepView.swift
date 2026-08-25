@@ -76,12 +76,12 @@ struct PersonalizingStepView: View {
         VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
             headline
 
-            Spacer(minLength: MicaboSpacing.md)
+            Spacer(minLength: 0)
 
             ring
                 .frame(maxWidth: .infinity)
 
-            Spacer(minLength: MicaboSpacing.md)
+            Spacer(minLength: 0)
 
             stepList
         }
@@ -123,7 +123,7 @@ struct PersonalizingStepView: View {
                 .contentTransition(.opacity)
                 .animation(.easeOut(duration: 0.28), value: current.detail)
         }
-        .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: 118, alignment: .topLeading)
     }
 
     // MARK: - Anneau
@@ -131,6 +131,9 @@ struct PersonalizingStepView: View {
     /// L'anneau fait son tour en même temps que le parcours se construit, et le
     /// pourcentage compte image par image : deux façons de dire la même chose, parce que
     /// c'est la seule chose que cet écran a à dire.
+    ///
+    /// Il est plafonné, pas fixé : sur un petit écran, il rend la place à l'accroche et aux
+    /// étapes, qui elles doivent rester lisibles en entier.
     private var ring: some View {
         ZStack {
             Circle()
@@ -147,13 +150,18 @@ struct PersonalizingStepView: View {
                     .foregroundStyle(MicaboColor.onInk)
                     .tracking(-1.4)
                     .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
 
                 Text(isDone ? "Terminé" : "Micabo travaille")
                     .font(MicaboFont.hanken(12, weight: .medium))
                     .foregroundStyle(MicaboColor.onInk.opacity(0.72))
+                    .lineLimit(1)
             }
+            .padding(.horizontal, 24)
         }
-        .frame(width: 184, height: 184)
+        .aspectRatio(1, contentMode: .fit)
+        .frame(maxWidth: 184, maxHeight: 184)
         .accessibilityElement()
         .accessibilityLabel("Génération de ton parcours")
         .accessibilityValue("\(Int(progress * 100)) %")
