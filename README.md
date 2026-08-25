@@ -86,7 +86,21 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli |
 | Démonstration | courbe de mémorisation, puis dépôt → fiche → révisions en trois écrans, puis le mode examen |
 | Personnalisation | matières, établissement (avec « Passer »), temps quotidien |
-| Sortie | projection annuelle, notifications, génération du parcours, preuve sociale, passage de relais, connexion, essai de 3 jours, paywall |
+| Sortie | projection annuelle, génération du parcours, preuve sociale, passage de relais, connexion, essai de 3 jours, paywall |
+
+**L'écran des rappels a été retiré.** « On te rappelle au bon moment » proposait d'activer les
+notifications sans rien demander au système : il notait une intention que personne ne lisait
+ensuite, et il la posait juste avant l'écran qui construit le parcours — donc au moment où l'on
+est le plus près d'entrer dans l'app. Une autorisation se demande quand elle sert, la première
+fois qu'il y a des cartes à rappeler. Sa clé de réglage reste listée dans
+`OnboardingPreferences.Key` pour que la remise à zéro sache encore l'effacer sur les appareils
+qui ont fait l'ancien parcours.
+
+**La note se demande sur la preuve sociale**, et nulle part ailleurs : l'écran montre des avis
+et cinq étoiles, donc la demande du système arrive dans son sujet plutôt qu'au milieu d'une
+révision. Elle part au premier changement d'avis — à l'ouverture, l'alerte couvrirait l'écran
+avant qu'on ait vu ce qu'il raconte — et un drapeau la garde unique : le système plafonne déjà à
+trois demandes par an, mais il les compte même quand il choisit de ne rien afficher.
 
 **Le pays passe avant le stade d'étude**, et l'ordre est le fond de l'affaire : ce sont les
 paliers du pays choisi qui deviennent les réponses de « tu en es où ? ». Dans l'autre sens, il
@@ -193,7 +207,7 @@ d'enregistré : la démonstration tourne en avion.
 | Écran | Geste | Ce qui se passe |
 | --- | --- | --- |
 | Dépôt | glisser la page dans la zone en pointillés | La page est **volontairement brute** : un mur de texte sans hiérarchie, titre noyé au milieu, tel qu'on reçoit un polycopié. Sans un vrai avant, l'écran suivant ne transforme rien. Elle passe **au-dessus** de la zone de dépôt, jamais dessous : un document qu'on fait glisser sous sa cible se lit comme un document qu'on perd. Une **flèche coule entre les deux** — trois chevrons qui descendent en cascade — parce que la page qui respirait sur place disait qu'il fallait la toucher, pas où l'emmener ; elle s'efface dès que le doigt prend le relais. La zone fait la moitié de la hauteur de la page : une bande de la hauteur d'un bouton se lit comme un bouton, pas comme un endroit où poser un document. Après deux secondes sans geste la page respire, et un simple appui fait la même chose. |
-| Fiche | aucun | Le balayage de lecture passe sur la page brute, puis la fiche **s'écrit par-dessus, bloc par bloc** : le filet de titre, le paragraphe, la définition, le passage en couleur, le schéma. Les deux états occupent la même place, ce qui fait lire une transformation et non deux illustrations. Le bouton dit « S'entraîner », et c'est le seul du parcours qui brille et respire. |
+| Fiche | aucun | Le balayage de lecture passe sur la page brute, puis la fiche **s'écrit par-dessus, bloc par bloc** : le filet de titre, le paragraphe, la définition, le passage en couleur, le schéma. Les deux états occupent la même place, ce qui fait lire une transformation et non deux illustrations. La page est **au milieu de l'écran** : calée sous le titre avec un tiers d'écran blanc sous elle, elle se lisait comme l'illustration d'un paragraphe plutôt que comme le sujet de l'écran. Le bouton dit « S'entraîner », et c'est le seul du parcours qui brille et respire. |
 | Révisions | aucun | La fiche se **découpe en quatre vignettes** — schéma, recto verso, QCM, texte à trou — qui sortent une à une, puis se remplissent toutes seules. Le bouton s'ouvre dès que les quatre sont là. |
 
 Deux écrans ont été retirés d'ici, pour la même raison. La génération simulée cochait des
@@ -242,11 +256,18 @@ Trois règles valent pour tout le tunnel :
   refuse les appuis suivants.
 - **deux écrans voisins ne se ressemblent pas** — les compositions alternent (paquet de cartes,
   pastilles, liste, graphe, calendrier, curseur, carrousel), et **trois écrans seulement**
-  quittent le crème : l'accroche et le passage de relais sur l'encre, la génération du parcours
-  sur le vert pastel. La variété d'un parcours ne vient pas de ses fonds mais de ce qu'il y a à
-  regarder, et l'encre est réservée aux deux moments où le parcours s'adresse à quelqu'un au
-  lieu de lui montrer quelque chose. Le texte reste **fer à gauche** partout et le bouton
-  **collé au bas de la zone sûre**.
+  quittent le crème : l'accroche sur la sauge, la génération du parcours sur le menthe, le
+  passage de relais sur l'encre. La variété d'un parcours ne vient pas de ses fonds mais de ce
+  qu'il y a à regarder. Le texte reste **fer à gauche** partout et le bouton **collé au bas de
+  la zone sûre**.
+- **le noir ne sert qu'une fois.** L'accroche était un aplat d'encre : c'est le contraste
+  maximal de l'app posé avant qu'on ait quoi que ce soit à lire, ça donne le ton d'un outil de
+  développeur là où Micabo est une app d'école, et ça oblige tout le reste du parcours à se
+  lire comme un repli dès le deuxième écran. Elle est sur la **sauge**
+  (`MicaboColor.canvasSage`), le crème de l'app teinté du vert du logo : assez discrète pour
+  que le passage à l'écran suivant ne se voie pas, assez teintée pour ne pas passer pour un
+  gris sale. Reste un seul écran d'encre, le passage de relais, le seul moment où le parcours
+  s'arrête de montrer pour s'adresser à quelqu'un.
 
 `OnboardingStep.surface` est la seule source de vérité sur ce point, et `OnboardingScaffold`
 porte la bascule : `surface:` change le fond, la couleur des textes, celle du bouton (clair sur
@@ -255,9 +276,9 @@ depuis leur étape et la reposent dans `\.onboardingSurface`.
 
 **Le haut de l'écran suit la couleur de l'écran.** Le fond de l'étape monte jusqu'en haut de la
 zone d'état : la jauge, l'heure et la batterie reposent sur l'encre quand l'écran est sombre, sur
-le menthe quand il est vert, jamais sur une bande crème rapportée. Le thème clair est donc posé
+le vert quand il est vert, jamais sur une bande crème rapportée. Le thème clair est donc posé
 par `RootView` sur l'app elle-même, pas au-dessus du parcours : celui-ci passe en sombre le temps
-de ses écrans d'encre pour que l'heure du téléphone reste lisible.
+de son écran d'encre pour que l'heure du téléphone reste lisible.
 
 ### La génération du parcours, et ce qui vient après
 
@@ -282,7 +303,7 @@ indicateur — pour que rien ne saute quand il s'active.
 **Le fond est passé du vert plein au vert pastel.** Un aplat saturé tenu cinq secondes derrière
 du texte blanc fatigue, et c'était précisément l'écran où l'on demande de patienter. Le pastel
 garde la rupture de couleur, rend l'encre lisible, et se traite donc comme un fond clair :
-`OnboardingSurface.isDark` ne vaut plus que pour l'encre.
+`OnboardingSurface.isDark` ne vaut que pour l'encre, ni pour le menthe ni pour la sauge.
 
 Les trois écrans qui suivent forment la fin du parcours, et leur ordre est délibéré :
 
@@ -378,9 +399,9 @@ dit « c'est acquis » dans la même langue que les boutons de notation. Deux ve
 distinction est fonctionnelle, pas décorative : `accent` (`#0B8A66`) est assez sombre pour
 porter du texte de onze points sur un fond pastel et pour qu'un filet de quatre points se
 détache de sa piste, `accentVivid` (`#16C08C`) est celui du logo et ne remplit que de **grandes**
-surfaces — le curseur du rythme quotidien, les colonnes de l'histogramme du profil. C'est la
-raison pour laquelle la jauge n'est pas au vert vif : sur le crème, on ne verrait pas où elle en
-est.
+surfaces posées sur du blanc — les colonnes de l'histogramme du profil. C'est la raison pour
+laquelle ni la jauge ni le curseur du rythme quotidien ne sont au vert vif : sur le crème, on ne
+verrait pas où ils en sont.
 `positive` reste un vert plus forestier : deux verts qui veulent dire deux choses ne peuvent
 pas être le même vert. Les pastels des tuiles et les teintes de couverture des cours sont
 remontés d'un cran, parce que six gris teintés ne donnaient pas de couleur à un écran, ils lui
@@ -448,15 +469,52 @@ l'une écrit les mots, l'autre les nombres.
   coins. C'est un vert plus dense que l'accent, parce qu'un mot en couleur au milieu d'un
   paragraphe doit se voir sans qu'on le cherche. Les encadrés, eux, gardent les couleurs de
   retour d'information de l'app, volontairement désaturées
-- Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose pas
+- Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose
+  pas (`CourseEmoji`). **Une matière, un emoji** : la table servait le même dessin à six
+  matières voisines — quatre matières de santé pour un stéthoscope, dix langues pour une
+  bouche qui parle — et six matières ne trouvaient rien du tout. Sur l'écran des matières, où
+  quarante-neuf pastilles s'enroulent en sept familles, un emoji répété fait relire les
+  libellés un par un, ce qui est exactement le travail qu'il devait éviter. Chaque langue
+  vivante porte son drapeau, et les entrées les plus générales ferment la table derrière les
+  matières qu'elles englobent : « Code de la route » contient « code », et sortait un
+  ordinateur portable. Le catalogue des matières vit dans `SubjectCatalog`, hors de la vue qui
+  l'affiche, pour que la règle se vérifie
 - En session, une ampoule donne l'indice de la carte. Les cartes qui n'en ont pas n'affichent
   pas l'ampoule : un indice tiré de la forme de la réponse (initiale, nombre de mots) n'apprend
   rien et fait perdre confiance dans les vrais indices
-- Animations en cascade et retours haptiques centralisés dans `Haptics`
+- **Tout ce qui se touche vibre, une fois et une seule.** Le retour d'appui est porté par les
+  styles de bouton (`micaboPressEffect`), qui sont le seul passage obligé : il n'y a pas de
+  bouton sans style, donc il n'y a plus de bouton muet — et la vibration part à
+  l'enfoncement, quand le doigt attend une réponse, pas à l'action. Chaque style dit sa
+  texture (`Haptics.Press`) : l'encre du bas d'écran frappe moyen, une rangée frappe léger,
+  une réponse de question fait le cran d'un sélecteur, écarter une carte fait la double
+  vibration du système. Les appels écrits à la main ne restent que pour ce qui n'est pas un
+  appui — le résultat d'une opération, le rythme d'une animation, un glissement, une touche
+  de clavier — et les contrôles du système passent par une liaison qui vibre
+  (`Binding.buzzing()`), faute d'un style où l'accrocher
+- Animations en cascade, et tout le vocabulaire haptique dans `Haptics`
 
 Les composants vivent dans `Micabo/DesignSystem/Components/` : `MicaboRows.swift` (tuile,
 pastille, rangée, blocs, intitulés de section) et `MicaboHeaders.swift` (en-têtes d'écran,
 barre de retour, champ de recherche).
+
+### Remplacer l'icône de l'application
+
+L'icône actuelle est **dessinée par un script** (`scripts/generate_app_icon.py`) : une carte
+verte sur un papier menthe, avec un rond du vert du logo. C'est un tenant-lieu, pas une
+identité — le jour où le vrai logo existe, il la remplace.
+
+Le catalogue n'attend qu'**un seul fichier**, en 1024 × 1024, sans transparence et sans coins
+arrondis (iOS les arrondit lui-même) :
+
+```
+Micabo/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+```
+
+Déposer le fichier à ce chemin suffit : `Contents.json` ne déclare qu'une entrée universelle,
+il n'y a donc ni déclinaison de tailles à générer ni référence à ajouter dans le projet. Le
+script est à supprimer le jour où il ne dessine plus rien de vivant, pour qu'on ne le relance
+pas par erreur sur le vrai logo.
 
 ## Pile technique
 
@@ -1433,6 +1491,12 @@ l'app lui sert — sans ce lien, le curseur de l'onboarding ne serait qu'un déc
 
 - le curseur va de **5 min à 2 h**, par paliers de 5 minutes jusqu'à la demi-heure puis de
   15 minutes au-delà (il glisse sur les paliers, pas sur les minutes)
+- il est posé **à même le fond, sans bloc autour**. Il vivait dans une carte blanche, avec sa
+  conséquence dans un second encadré juste dessous : deux cadres empilés pour la seule commande
+  de l'écran, et un grand nombre enfermé dans une boîte se lit comme la valeur d'un formulaire
+  plutôt que comme une décision qu'on prend. Sa teinte suit du même coup la règle de la
+  palette : le menthe vif tenait sur le blanc du bloc, mais sur le crème un filet de quatre
+  points dans cette teinte ne se distingue plus de sa piste
 - il affiche le rythme correspondant (« le rythme de croisière », « le rythme intensif »…)
 - il en dérive un **plafond de cartes neuves par jour** : une carte neuve revient huit fois
   avant d'être acquise, donc `minutes × 4 ÷ 8`. Quinze minutes donnent 8 cartes neuves,
