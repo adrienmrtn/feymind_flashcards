@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum ImportKind: String, Identifiable {
+enum ImportKind: String, CaseIterable, Identifiable {
     case pdf
     case photo
     case youtube

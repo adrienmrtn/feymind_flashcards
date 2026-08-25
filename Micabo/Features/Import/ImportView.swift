@@ -17,6 +17,10 @@ import VisionKit
 /// Les cinq sources convergent vers un `ImportedDocument` avant que quoi que ce soit soit
 /// analysé. Une vidéo n'a donc pas de branche à elle dans la génération : une fois ses
 /// sous-titres transcrits, c'est un document dont le texte a été obtenu autrement.
+///
+/// `ImportKind.cards` n'ouvre pas cet écran (`CreateDeckView` s'en charge), mais le type
+/// le porte encore : chaque `switch kind` doit donc le connaître, sinon le compilateur
+/// refuse le fichier entier et invente une cascade de « cannot find in scope ».
 struct ImportView: View {
     let kind: ImportKind
     var onCreated: (Course) -> Void
@@ -63,6 +67,9 @@ struct ImportView: View {
             imported != nil || youtubeIsReady
         case .pdf, .photo, .docx:
             imported != nil
+        case .cards:
+            // Un paquet n'emprunte pas cet écran : `CreateDeckView` le crée.
+            false
         }
     }
 
@@ -91,6 +98,7 @@ struct ImportView: View {
                         case .pdf, .docx: fileInput
                         case .photo: photoInput
                         case .youtube: youtubeInput
+                        case .cards: EmptyView()
                         }
 
                         lengthSection
@@ -221,6 +229,7 @@ struct ImportView: View {
         case .text: "Lecture de tes notes"
         case .youtube: "Lecture des sous-titres"
         case .pdf, .docx: "Lecture du document"
+        case .cards: "Préparation du paquet"
         }
     }
 
@@ -265,6 +274,8 @@ struct ImportView: View {
             "Micabo extrait le texte du document Word sur l'appareil, puis en écrit la fiche."
         case .text:
             "Colle tes notes, même brutes. Micabo en fait une fiche qui se relit."
+        case .cards:
+            "Un paquet de cartes n'a pas de document à lire. Il se crée depuis son propre écran."
         }
     }
 
@@ -569,7 +580,7 @@ struct ImportView: View {
                 parsed = try await PDFImportService.extractWithOCR(from: url)
             case .docx:
                 parsed = try DocxImportService.extract(from: url)
-            case .text, .photo, .youtube:
+            case .text, .photo, .youtube, .cards:
                 return
             }
             applyImported(parsed)
@@ -720,7 +731,7 @@ struct ImportView: View {
     /// base avant que l'analyse ait réussi.
     @MainActor
     private func start(offline: Bool) async {
-        guard !isGenerating, !isReading else { return }
+        guard !isGenerating, !isReading, kind.producesSheet else { return }
 
         if kind == .youtube, imported == nil {
             guard await loadTranscript() else { return }
@@ -752,6 +763,8 @@ struct ImportView: View {
             fileName = imported.fileName
             cover = imported.coverImage
             source = imported.source
+        case .cards:
+            return
         }
 
         // Un texte illisible ne donnera rien de bon : on le dit avant de dépenser un appel.
@@ -927,6 +940,8 @@ enum ImportReadiness {
                 message: YouTubeImportError.transcriptTooShort.errorDescription ?? "",
                 recovery: .none
             )
+        case .cards:
+            return nil
         }
     }
 }
