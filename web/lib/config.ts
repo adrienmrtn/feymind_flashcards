@@ -28,6 +28,17 @@ export const SUPABASE_ANON_KEY =
 
 export const isProduction = process.env.VERCEL_ENV === "production";
 
+/**
+ * Le site, celui qui bouge à chaque fusion.
+ *
+ * Une adresse d'aperçu (`micabo-git-<branche>-…`) reste servie longtemps après
+ * la fusion de sa branche, et elle est figée : c'est vers celle-ci qu'on
+ * renvoie quand on s'y est perdu.
+ */
+export const PRODUCTION_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "https://micabo.vercel.app";
+
 /** Où le site se croit hébergé. Sert aux liens absolus et au retour OAuth. */
 export const SITE_URL = resolveSiteUrl();
 
