@@ -1,6 +1,12 @@
+import path from "node:path";
+
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
+  // À la racine du dépôt les dossiers de l'app sont des liens vers `web/`. Sans ça, le
+  // collecteur de pages de Next cherche `_not-found` à côté du lien et ne le trouve pas.
+  outputFileTracingRoot: path.join(process.cwd()),
+
   // `@micabo/core` est publié en TypeScript source, sans étape de compilation : c'est ce qui
   // permet à un test de vitest et au site de lire exactement le même fichier. Next doit donc
   // le transpiler avec le reste de l'application.

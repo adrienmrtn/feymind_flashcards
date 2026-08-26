@@ -1,5 +1,6 @@
 import { entitlement, pricing } from "@micabo/core";
 
+import { StartButton } from "./StartButton";
 import { WaitlistForm } from "./WaitlistForm";
 
 /**
@@ -85,12 +86,14 @@ export function Pricing() {
         </p>
       </div>
 
-      <div className="mx-auto mt-10 max-w-[440px]">
-        <p className="mb-3 text-center text-[14px] text-ink-secondary">
-          L&apos;abonnement n&apos;est pas encore ouvert. Laisse ton adresse et tu seras dans les
-          premiers.
+      <div className="mx-auto mt-10 flex flex-col items-center">
+        <StartButton />
+        <p className="mt-10 mb-3 text-center text-[13.5px] text-ink-tertiary">
+          L&apos;abonnement n&apos;est pas encore ouvert. On t&apos;écrit le jour J.
         </p>
-        <WaitlistForm source="pricing" size="compact" />
+        <div className="w-full max-w-[440px]">
+          <WaitlistForm source="pricing" size="compact" />
+        </div>
       </div>
     </div>
   );

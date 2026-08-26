@@ -69,7 +69,6 @@ export default function SchoolStep() {
     <Scaffold
       eyebrow="Ton parcours"
       title="Tu étudies dans quelle école ?"
-      subtitle="Pour te montrer ce que tes camarades partagent. Tu peux passer."
       skip={{ label: "Passer", href: "/commencer/offre" }}
       footer={
         <ContinueButton
