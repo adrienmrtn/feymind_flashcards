@@ -8,12 +8,12 @@ final class SM2SchedulerTests: XCTestCase {
 
     // MARK: - Apprentissage
 
-    func testNewCardGoodMovesToSecondLearningStep() {
+    func testNewCardGoodLeavesLearningAtOneDay() {
         let outcome = SM2Scheduler.schedule(snapshot: SM2CardSnapshot(), rating: .good, now: now, config: config)
 
-        XCTAssertEqual(outcome.state, .learning)
-        XCTAssertEqual(outcome.stepIndex, 1)
-        XCTAssertEqual(outcome.delay(from: now), 10 * 60, accuracy: 1)
+        XCTAssertEqual(outcome.state, .review)
+        XCTAssertEqual(outcome.intervalDays, 1)
+        XCTAssertEqual(outcome.repetitions, 1)
     }
 
     func testNewCardAgainStaysOnFirstStep() {
@@ -24,7 +24,17 @@ final class SM2SchedulerTests: XCTestCase {
         XCTAssertEqual(outcome.delay(from: now), 60, accuracy: 1)
     }
 
-    func testSecondLearningStepGraduatesToOneDay() {
+    /// Deux boutons voisins ne peuvent pas annoncer la même minute : « Difficile »
+    /// envoie au dernier palier, pas au premier.
+    func testNewCardHardGoesToTheLastStep() {
+        let outcome = SM2Scheduler.schedule(snapshot: SM2CardSnapshot(), rating: .hard, now: now, config: config)
+
+        XCTAssertEqual(outcome.state, .learning)
+        XCTAssertEqual(outcome.stepIndex, 1)
+        XCTAssertEqual(outcome.delay(from: now), 10 * 60, accuracy: 1)
+    }
+
+    func testGoodFromTheTenMinuteStepAlsoGraduatesToOneDay() {
         let snapshot = SM2CardSnapshot(state: .learning, stepIndex: 1)
         let outcome = SM2Scheduler.schedule(snapshot: snapshot, rating: .good, now: now, config: config)
 
@@ -82,7 +92,8 @@ final class SM2SchedulerTests: XCTestCase {
         XCTAssertEqual(outcome.state, .relearning)
         XCTAssertEqual(outcome.lapses, 2)
         XCTAssertEqual(outcome.easeFactor, 2.3, accuracy: 0.001)
-        XCTAssertEqual(outcome.delay(from: now), 10 * 60, accuracy: 1)
+        // Une carte oubliée repart du premier palier, comme une neuve.
+        XCTAssertEqual(outcome.delay(from: now), 60, accuracy: 1)
         XCTAssertEqual(outcome.intervalDays, 1, accuracy: 0.001)
     }
 
@@ -113,13 +124,14 @@ final class SM2SchedulerTests: XCTestCase {
 
     // MARK: - Libellés
 
-    func testPreviewLabelsMatchAnkiDefaultsForNewCard() {
+    func testPreviewLabelsForNewCardAreOneMinuteTenMinutesOneDayFourDays() {
         let labels = SM2Scheduler.previewLabels(for: SM2CardSnapshot(), now: now, config: config)
 
         XCTAssertEqual(labels[.again], "1 min")
-        XCTAssertEqual(labels[.hard], "1 min")
-        XCTAssertEqual(labels[.good], "10 min")
+        XCTAssertEqual(labels[.hard], "10 min")
+        XCTAssertEqual(labels[.good], "1 j")
         XCTAssertEqual(labels[.easy], "4 j")
+        XCTAssertEqual(Set(labels.values).count, 4, "Quatre boutons, quatre délais différents")
     }
 
     func testDelayFormatting() {

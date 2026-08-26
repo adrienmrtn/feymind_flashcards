@@ -26,12 +26,12 @@ function snapshot(overrides: Partial<CardSnapshot>): CardSnapshot {
 }
 
 describe("apprentissage", () => {
-  it("une carte neuve notée Correct passe au second palier", () => {
+  it("une carte neuve notée Correct sort en révision à un jour", () => {
     const outcome = schedule(newCardSnapshot(), ReviewRating.good, { now, config });
 
-    expect(outcome.state).toBe("learning");
-    expect(outcome.stepIndex).toBe(1);
-    expect(delaySeconds(outcome, now)).toBeCloseTo(10 * 60, 0);
+    expect(outcome.state).toBe("review");
+    expect(outcome.intervalDays).toBe(1);
+    expect(outcome.repetitions).toBe(1);
   });
 
   it("une carte neuve notée À revoir reste sur le premier palier", () => {
@@ -42,7 +42,15 @@ describe("apprentissage", () => {
     expect(delaySeconds(outcome, now)).toBeCloseTo(60, 0);
   });
 
-  it("le second palier fait sortir en révision à un jour", () => {
+  it("Difficile envoie au dernier palier, pas au premier", () => {
+    const outcome = schedule(newCardSnapshot(), ReviewRating.hard, { now, config });
+
+    expect(outcome.state).toBe("learning");
+    expect(outcome.stepIndex).toBe(1);
+    expect(delaySeconds(outcome, now)).toBeCloseTo(10 * 60, 0);
+  });
+
+  it("Correct depuis le palier de dix minutes sort aussi à un jour", () => {
     const outcome = schedule(snapshot({ state: "learning", stepIndex: 1 }), ReviewRating.good, {
       now,
       config,
@@ -118,7 +126,8 @@ describe("rechute", () => {
     expect(outcome.state).toBe("relearning");
     expect(outcome.lapses).toBe(2);
     expect(outcome.easeFactor).toBeCloseTo(2.3, 3);
-    expect(delaySeconds(outcome, now)).toBeCloseTo(10 * 60, 0);
+    // Une carte oubliée repart du premier palier, comme une neuve.
+    expect(delaySeconds(outcome, now)).toBeCloseTo(60, 0);
     expect(outcome.intervalDays).toBeCloseTo(1, 3);
   });
 
@@ -165,12 +174,12 @@ describe("rechute", () => {
 });
 
 describe("libellés", () => {
-  it("les aperçus d'une carte neuve reprennent les défauts d'Anki", () => {
+  it("les quatre boutons d'une carte neuve annoncent 1 min, 10 min, 1 j, 4 j", () => {
     const labels = previewLabels(newCardSnapshot(), { now, config });
 
     expect(labels[ReviewRating.again]).toBe("1 min");
-    expect(labels[ReviewRating.hard]).toBe("1 min");
-    expect(labels[ReviewRating.good]).toBe("10 min");
+    expect(labels[ReviewRating.hard]).toBe("10 min");
+    expect(labels[ReviewRating.good]).toBe("1 j");
     expect(labels[ReviewRating.easy]).toBe("4 j");
   });
 

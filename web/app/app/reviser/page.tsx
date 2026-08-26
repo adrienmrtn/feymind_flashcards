@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import {
   DEFAULT_DAILY_MINUTES,
+  LEARN_AHEAD_SECONDS,
   buildQueue,
   dailyLimits,
   entitlement,
@@ -61,6 +62,12 @@ export default async function ReviewPage({
 
   const cards = courseId ? allCards.filter((card) => card.course_id === courseId) : allCards;
 
+  // La file est construite avec la **fenêtre d'anticipation** d'Anki : une carte due dans
+  // dix minutes entre dans la session, parce que c'est là qu'elle sera servie. Sans ça, un
+  // rechargement au milieu d'une session — tout le paquet noté « à revoir », donc dû dans
+  // une minute — affichait « Tout est à jour » alors que rien n'était à jour.
+  const horizon = new Date(Date.now() + LEARN_AHEAD_SECONDS * 1000);
+
   const queue = buildQueue(
     cards.map((card) => ({
       id: card.id,
@@ -70,7 +77,7 @@ export default async function ReviewPage({
       createdAt: new Date(card.created_at),
       isSuspended: card.is_suspended,
     })),
-    { limits: dailyLimits(minutes) },
+    { now: horizon, limits: dailyLimits(minutes) },
   );
 
   const byId = new Map(cards.map((card) => [card.id, card]));
@@ -103,6 +110,12 @@ export default async function ReviewPage({
       },
     }));
 
+  // La session passe **avant** le constat de file vide : une session en cours ne doit pas
+  // pouvoir être remplacée par « Tout est à jour » à la faveur d'un re-rendu du serveur.
+  if (started && ordered.length > 0) {
+    return <Session cards={ordered} isPro={right.isPro} />;
+  }
+
   if (ordered.length === 0) {
     return (
       <div className="mx-auto max-w-[520px] py-16 text-center">
@@ -120,10 +133,6 @@ export default async function ReviewPage({
         </Link>
       </div>
     );
-  }
-
-  if (started) {
-    return <Session cards={ordered} isPro={right.isPro} />;
   }
 
   // Ce que la session contient, compté sur la file réelle et pas estimé.

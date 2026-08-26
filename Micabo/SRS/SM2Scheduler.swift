@@ -77,7 +77,10 @@ enum SM2Scheduler {
 
         static let `default` = Configuration(
             learningStepsMinutes: [1, 10],
-            relearningStepsMinutes: [10],
+            // Une carte ratée après une révision repart du premier palier, comme une neuve :
+            // c'est le même oubli, et le rattraper à dix minutes sans l'avoir revue à une
+            // minute laisse passer une carte qu'on ne sait pas encore.
+            relearningStepsMinutes: [1, 10],
             graduatingIntervalDays: 1,
             easyIntervalDays: 4,
             startingEase: 2.5,
@@ -123,50 +126,33 @@ enum SM2Scheduler {
 
     // MARK: - Apprentissage
 
+    /// Les quatre boutons d'une carte en apprentissage : **1 min, 10 min, 1 j, 4 j.**
+    ///
+    /// Anki rejoue le palier courant sur « Difficile », ce qui affiche « 1 min » sous deux
+    /// boutons voisins d'une carte neuve — deux fois la même promesse, dont une qui
+    /// n'apprend rien. Ici chaque note dit autre chose : on reprend au premier palier, on
+    /// saute au dernier, ou on sort de l'apprentissage.
+    ///
+    /// La conséquence assumée est que « Correct » **fait sortir** la carte au lieu de la
+    /// reposer dix minutes plus loin. Ce qui revient dans la session est donc ce qu'on n'a
+    /// pas su : c'est le sens des quatre boutons.
     private static func scheduleLearning(
         snapshot: SM2CardSnapshot,
         rating: ReviewRating,
         now: Date,
         config: Configuration
     ) -> SM2Outcome {
-        let steps = config.learningStepsMinutes.isEmpty ? [10] : config.learningStepsMinutes
-        var result = SM2Outcome(
-            rating: rating,
-            state: .learning,
-            dueDate: now,
-            intervalDays: snapshot.intervalDays,
-            easeFactor: snapshot.easeFactor,
-            repetitions: snapshot.repetitions,
-            lapses: snapshot.lapses,
-            stepIndex: snapshot.stepIndex
-        )
+        let steps = config.learningStepsMinutes.isEmpty ? [1, 10] : config.learningStepsMinutes
 
         switch rating {
-        case .again:
-            result.stepIndex = 0
-            result.dueDate = now.addingTimeInterval(steps[0] * minute)
-
-        case .hard:
-            let index = min(snapshot.stepIndex, steps.count - 1)
-            // Un seul palier : Anki attend 1,5x ce palier plutôt que de le rejouer à l'identique.
-            let delay = steps.count == 1 ? steps[index] * 1.5 : steps[index]
-            result.stepIndex = index
-            result.dueDate = now.addingTimeInterval(delay * minute)
-
         case .good:
-            let nextIndex = snapshot.stepIndex + 1
-            if nextIndex >= steps.count {
-                return graduate(
-                    snapshot: snapshot,
-                    rating: rating,
-                    intervalDays: config.graduatingIntervalDays,
-                    now: now,
-                    config: config
-                )
-            }
-            result.stepIndex = nextIndex
-            result.dueDate = now.addingTimeInterval(steps[nextIndex] * minute)
-
+            return graduate(
+                snapshot: snapshot,
+                rating: rating,
+                intervalDays: config.graduatingIntervalDays,
+                now: now,
+                config: config
+            )
         case .easy:
             return graduate(
                 snapshot: snapshot,
@@ -175,9 +161,19 @@ enum SM2Scheduler {
                 now: now,
                 config: config
             )
+        case .again, .hard:
+            let index = rating == .again ? 0 : steps.count - 1
+            return SM2Outcome(
+                rating: rating,
+                state: .learning,
+                dueDate: now.addingTimeInterval(steps[index] * minute),
+                intervalDays: snapshot.intervalDays,
+                easeFactor: snapshot.easeFactor,
+                repetitions: snapshot.repetitions,
+                lapses: snapshot.lapses,
+                stepIndex: index
+            )
         }
-
-        return result
     }
 
     private static func graduate(
@@ -211,7 +207,7 @@ enum SM2Scheduler {
         let previous = max(snapshot.intervalDays, config.minimumIntervalDays)
 
         if rating == .again {
-            let steps = config.relearningStepsMinutes.isEmpty ? [10] : config.relearningStepsMinutes
+            let steps = config.relearningStepsMinutes.isEmpty ? [1, 10] : config.relearningStepsMinutes
             let postLapse = clampInterval(
                 max(config.minimumIntervalDays, previous * config.lapseIntervalMultiplier),
                 config: config
@@ -262,61 +258,43 @@ enum SM2Scheduler {
 
     // MARK: - Réapprentissage
 
+    /// Mêmes quatre paliers qu'en apprentissage : un oubli se rattrape de la même façon.
     private static func scheduleRelearning(
         snapshot: SM2CardSnapshot,
         rating: ReviewRating,
         now: Date,
         config: Configuration
     ) -> SM2Outcome {
-        let steps = config.relearningStepsMinutes.isEmpty ? [10] : config.relearningStepsMinutes
+        let steps = config.relearningStepsMinutes.isEmpty ? [1, 10] : config.relearningStepsMinutes
         let postLapse = max(snapshot.intervalDays, config.minimumIntervalDays)
 
-        var result = SM2Outcome(
-            rating: rating,
-            state: .relearning,
-            dueDate: now,
-            intervalDays: postLapse,
-            easeFactor: clampEase(snapshot.easeFactor, config: config),
-            repetitions: snapshot.repetitions,
-            lapses: snapshot.lapses,
-            stepIndex: snapshot.stepIndex
-        )
-
         switch rating {
-        case .again:
-            result.stepIndex = 0
-            result.dueDate = now.addingTimeInterval(steps[0] * minute)
+        case .good, .easy:
+            let interval = clampInterval(rating == .easy ? postLapse + 1 : postLapse, config: config)
+            return SM2Outcome(
+                rating: rating,
+                state: .review,
+                dueDate: now.addingTimeInterval(fuzzed(interval, config: config) * day),
+                intervalDays: interval,
+                easeFactor: clampEase(snapshot.easeFactor, config: config),
+                repetitions: snapshot.repetitions + 1,
+                lapses: snapshot.lapses,
+                stepIndex: 0
+            )
 
-        case .hard:
-            let index = min(snapshot.stepIndex, steps.count - 1)
-            let delay = steps.count == 1 ? steps[index] * 1.5 : steps[index]
-            result.stepIndex = index
-            result.dueDate = now.addingTimeInterval(delay * minute)
-
-        case .good:
-            let nextIndex = snapshot.stepIndex + 1
-            if nextIndex >= steps.count {
-                let interval = clampInterval(postLapse, config: config)
-                result.state = .review
-                result.stepIndex = 0
-                result.intervalDays = interval
-                result.repetitions = snapshot.repetitions + 1
-                result.dueDate = now.addingTimeInterval(fuzzed(interval, config: config) * day)
-            } else {
-                result.stepIndex = nextIndex
-                result.dueDate = now.addingTimeInterval(steps[nextIndex] * minute)
-            }
-
-        case .easy:
-            let interval = clampInterval(postLapse + 1, config: config)
-            result.state = .review
-            result.stepIndex = 0
-            result.intervalDays = interval
-            result.repetitions = snapshot.repetitions + 1
-            result.dueDate = now.addingTimeInterval(fuzzed(interval, config: config) * day)
+        case .again, .hard:
+            let index = rating == .again ? 0 : steps.count - 1
+            return SM2Outcome(
+                rating: rating,
+                state: .relearning,
+                dueDate: now.addingTimeInterval(steps[index] * minute),
+                intervalDays: postLapse,
+                easeFactor: clampEase(snapshot.easeFactor, config: config),
+                repetitions: snapshot.repetitions,
+                lapses: snapshot.lapses,
+                stepIndex: index
+            )
         }
-
-        return result
     }
 
     // MARK: - Utilitaires

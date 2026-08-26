@@ -1,6 +1,7 @@
 /**
- * Finir une session = finir les cartes dues aujourd'hui, y compris celles qui
- * reviennent dans dix minutes. Ce n'est pas « parcourir le paquet une fois ».
+ * Finir une session = vider la file, y compris les cartes qui reviennent dans les
+ * dix minutes. Et **sans attendre** : quand il ne reste qu'elles, elles sont servies
+ * tout de suite.
  */
 
 import { describe, expect, it } from "vitest";
@@ -17,7 +18,7 @@ import {
 const now = new Date(2026, 7, 26, 15, 0, 0);
 
 describe("returnsInSession", () => {
-  it("garde une carte à dix minutes, comme le palier « Correct » d'une neuve", () => {
+  it("garde une carte à dix minutes, le palier « Difficile » d'une neuve", () => {
     const due = new Date(now.getTime() + 10 * 60 * 1000);
     expect(returnsInSession(due, now)).toBe(true);
   });
@@ -32,6 +33,11 @@ describe("returnsInSession", () => {
     expect(returnsInSession(due, now)).toBe(false);
   });
 
+  it("laisse sortir une carte diplômée à un jour", () => {
+    const due = new Date(now.getTime() + 24 * 3_600 * 1000);
+    expect(returnsInSession(due, now)).toBe(false);
+  });
+
   it("garde une carte déjà due", () => {
     const due = new Date(now.getTime() - 1000);
     expect(returnsInSession(due, now)).toBe(true);
@@ -39,58 +45,105 @@ describe("returnsInSession", () => {
 });
 
 describe("advanceSession", () => {
-  it("n'est pas finie tant qu'une carte d'apprentissage attend", () => {
+  it("sert tout de suite la carte qui attend, sans compte à rebours", () => {
     const pending = [{ card: "dix minutes", availableAt: new Date(now.getTime() + 10 * 60 * 1000) }];
 
-    const waiting = advanceSession(pending, now);
-    expect(waiting.done).toBe(false);
-    expect(waiting.current).toBeNull();
-    expect(waiting.nextAvailableAt?.getTime()).toBe(pending[0]!.availableAt.getTime());
-
-    const tooSoon = advanceSession(pending, new Date(now.getTime() + 9 * 60 * 1000 + 59 * 1000));
-    expect(tooSoon.current).toBeNull();
-    expect(tooSoon.done).toBe(false);
-
-    const ready = advanceSession(pending, new Date(now.getTime() + 10 * 60 * 1000));
-    expect(ready.current).toBe("dix minutes");
-    expect(ready.pending).toEqual([]);
-    expect(ready.done).toBe(false);
+    const served = advanceSession(pending, now);
+    expect(served.current).toBe("dix minutes");
+    expect(served.pending).toEqual([]);
+    expect(served.done).toBe(false);
   });
 
   it("n'est finie que lorsque la file est vide", () => {
     expect(advanceSession([], now).done).toBe(true);
   });
 
-  it("sert d'abord une carte déjà due, même si une autre revient plus tôt dans l'absolu", () => {
-    const laterReady = { card: "plus tard", availableAt: new Date(now.getTime() - 1000) };
-    const waiting = { card: "dans 10 min", availableAt: new Date(now.getTime() + 10 * 60 * 1000) };
+  it("sert d'abord la carte la plus ancienne, pas celle qui vient d'être ratée", () => {
+    const overdue = { card: "en retard", availableAt: new Date(now.getTime() - 1000) };
+    const justFailed = { card: "ratée à l'instant", availableAt: new Date(now.getTime() + 60 * 1000) };
 
-    const pulled = advanceSession([waiting, laterReady], now);
-    expect(pulled.current).toBe("plus tard");
-    expect(pulled.pending).toEqual([waiting]);
+    const pulled = advanceSession([justFailed, overdue], now);
+    expect(pulled.current).toBe("en retard");
+    expect(pulled.pending).toEqual([justFailed]);
+  });
+
+  it("garde l'ordre du paquet quand tout a été raté", () => {
+    const failed = ["a", "b", "c"].map((card, index) => ({
+      card,
+      availableAt: new Date(now.getTime() + 60 * 1000 + index * 1000),
+    }));
+
+    const first = advanceSession(failed, now);
+    expect(first.current).toBe("a");
+    const second = advanceSession(first.pending, now);
+    expect(second.current).toBe("b");
+    const third = advanceSession(second.pending, now);
+    expect(third.current).toBe("c");
+    expect(advanceSession(third.pending, now).done).toBe(true);
   });
 });
 
-describe("le palier Correct d'une carte neuve", () => {
-  it("revient à dix minutes et reste dans la session", () => {
-    const outcome = schedule(newCardSnapshot(), ReviewRating.good, {
+describe("les quatre paliers d'une carte neuve", () => {
+  const delays = (rating: ReviewRating) => {
+    const outcome = schedule(newCardSnapshot(), rating, { now, config: DETERMINISTIC_CONFIG });
+    return { outcome, minutes: (outcome.dueDate.getTime() - now.getTime()) / 60_000 };
+  };
+
+  it("« À revoir » revient à une minute et reste en apprentissage", () => {
+    const { outcome, minutes } = delays(ReviewRating.again);
+    expect(minutes).toBe(1);
+    expect(outcome.state).toBe("learning");
+  });
+
+  it("« Difficile » revient à dix minutes, pas à une minute", () => {
+    const { outcome, minutes } = delays(ReviewRating.hard);
+    expect(minutes).toBe(10);
+    expect(outcome.state).toBe("learning");
+  });
+
+  it("« Correct » sort de l'apprentissage à un jour", () => {
+    const { outcome, minutes } = delays(ReviewRating.good);
+    expect(minutes).toBe(24 * 60);
+    expect(outcome.state).toBe("review");
+    expect(outcome.intervalDays).toBe(1);
+  });
+
+  it("« Facile » sort à quatre jours", () => {
+    const { outcome } = delays(ReviewRating.easy);
+    expect(outcome.state).toBe("review");
+    expect(outcome.intervalDays).toBe(4);
+  });
+
+  it("les quatre boutons annoncent quatre délais différents", () => {
+    const minutes = [
+      ReviewRating.again,
+      ReviewRating.hard,
+      ReviewRating.good,
+      ReviewRating.easy,
+    ].map((rating) => delays(rating).minutes);
+
+    expect(minutes).toEqual([1, 10, 1_440, 4 * 1_440]);
+    expect(new Set(minutes).size).toBe(4);
+  });
+});
+
+describe("une carte ratée revient dans la session", () => {
+  it("est reservie immédiatement quand elle est seule", () => {
+    const outcome = schedule(newCardSnapshot(), ReviewRating.again, {
       now,
       config: DETERMINISTIC_CONFIG,
     });
 
-    expect(outcome.state).toBe("learning");
-    expect(outcome.dueDate.getTime() - now.getTime()).toBe(10 * 60 * 1000);
     expect(returnsInSession(outcome.dueDate, now)).toBe(true);
 
-    const pending = [{ card: "neuve", availableAt: outcome.dueDate }];
-    const afterPack = advanceSession(pending, now);
+    const afterPack = advanceSession([{ card: "ratée", availableAt: outcome.dueDate }], now);
+    expect(afterPack.current).toBe("ratée");
     expect(afterPack.done).toBe(false);
-    expect(afterPack.current).toBeNull();
   });
 });
 
 describe("enqueueInitial", () => {
-  it("rend toutes les cartes du paquet immédiatement disponibles", () => {
+  it("rend toutes les cartes du paquet immédiatement disponibles, dans l'ordre", () => {
     const pending = enqueueInitial(["a", "b", "c"], now);
     const first = advanceSession(pending, now);
     expect(first.current).toBe("a");

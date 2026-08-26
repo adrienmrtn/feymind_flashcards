@@ -11,7 +11,6 @@ import {
   advanceSession,
   enqueueInitial,
   entitlement,
-  formatDelay,
   previewLabels,
   returnsInSession,
   schedule,
@@ -39,9 +38,9 @@ import { gradeCard } from "@/lib/actions/review";
  * parcours, où elles se voient une fois. C'est la même animation, juste à un endroit et fausse à
  * l'autre — c'est la fréquence qui décide, pas le goût.
  *
- * La file est celle d'Anki : une carte notée « 10 min » revient dans **cette** session. Finir le
- * paquet avant ces dix minutes n'est pas finir la journée. « Tout est à jour » n'apparaît que
- * lorsqu'il ne reste plus aucune carte due.
+ * La file est celle d'Anki : une carte notée « 1 min » ou « 10 min » revient dans **cette**
+ * session, et sans compte à rebours — quand il ne reste qu'elle, on la sert tout de suite.
+ * « Tout est à jour » n'apparaît que lorsque la file est vide.
  *
  * L'écriture part au serveur **après** l'affichage de la carte suivante : le doigt n'attend pas le
  * réseau. Si une écriture échoue, on le dit sans défaire la session — la carte reviendra, ce qui
@@ -82,7 +81,6 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
   const [tally, setTally] = useState<Tally>({ answered: 0, again: 0, graduated: 0 });
   const [failure, setFailure] = useState<string | null>(null);
   const [startedAt] = useState(() => Date.now());
-  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const card = loop.current;
   const remaining = (card ? 1 : 0) + loop.pending.length;
@@ -130,25 +128,6 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
     [card, loop.pending],
   );
 
-  // Quand la prochaine carte n'est pas encore due, on reste dans la session et on
-  // la sert à l'instant où son palier s'achève — pas avant, et surtout pas en
-  // déclarant la journée finie.
-  useEffect(() => {
-    if (finished || !loop.nextAvailableAt) return;
-
-    const delay = loop.nextAvailableAt.getTime() - Date.now();
-    const timeout = window.setTimeout(() => {
-      setLoop((current) => advanceSession(current.pending, new Date()));
-    }, Math.max(0, delay));
-
-    const tick = window.setInterval(() => setNowMs(Date.now()), 1000);
-
-    return () => {
-      window.clearTimeout(timeout);
-      window.clearInterval(tick);
-    };
-  }, [finished, loop.nextAvailableAt]);
-
   // Le clavier, et **rien qui l'intercepte à moitié** : espace ne doit pas faire défiler la page,
   // et une touche pressée pendant qu'un champ a le focus appartient au champ.
   useEffect(() => {
@@ -188,36 +167,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
     );
   }
 
-  if (!card) {
-    const until = loop.nextAvailableAt;
-    const seconds = until ? Math.max(0, (until.getTime() - nowMs) / 1000) : 0;
-
-    return (
-      <div className="mx-auto flex min-h-[calc(100svh-8rem)] max-w-[620px] flex-col">
-        <div className="flex items-center gap-4">
-          <div className="h-1 flex-1 overflow-hidden rounded-pill bg-progress-track">
-            <div
-              className="h-full rounded-pill bg-progress"
-              style={{ width: `${progressWidth(tally.answered, remaining)}%` }}
-            />
-          </div>
-          <p className="numeral shrink-0 text-[13px] font-semibold text-ink-tertiary">{remaining}</p>
-        </div>
-
-        <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
-          <p className="text-[26px] font-bold text-ink">
-            Prochaine carte dans {formatDelay(seconds)}
-          </p>
-          <p className="mt-3 max-w-[40ch] text-[15px] leading-relaxed text-ink-secondary">
-            Elle revient dès que son palier est écoulé. Finir le paquet n&apos;est pas finir la
-            journée.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!labels) return null;
+  if (!card || !labels) return null;
 
   return (
     <div className="mx-auto flex min-h-[calc(100svh-8rem)] max-w-[620px] flex-col">
