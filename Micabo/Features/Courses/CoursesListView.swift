@@ -146,7 +146,7 @@ struct CoursesListView: View {
                     pendingImport = kind
                     showImportChoice = false
                 },
-                onLibrary: showsLibrary ? openLibrary : nil
+                onLibrary: libraryAction
             )
             .presentationDetents([.height(604)])
             .presentationDragIndicator(.visible)
@@ -320,6 +320,12 @@ struct CoursesListView: View {
 
     private var showsLibrary: Bool {
         LibraryAccess.isAvailable(signedIn: auth.isSignedIn)
+    }
+
+    /// Le type est écrit : dans un ternaire face à `nil`, une référence de méthode ne se
+    /// laisse pas toujours inférer.
+    private var libraryAction: (() -> Void)? {
+        showsLibrary ? openLibrary : nil
     }
 
     private func openLibrary() {

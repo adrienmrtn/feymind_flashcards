@@ -162,6 +162,13 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     /// occupent alors la page, et le regard tombe dessus au lieu de les chercher.
     var expandsContent: Bool = false
     var surface: OnboardingSurface = .canvas
+    /// Interdit jusqu'au défilement de secours.
+    ///
+    /// Réservé aux écrans qui portent un **geste de glissement** : un `ScrollView`, même
+    /// quand il n'a rien à faire défiler, prend le déplacement vertical du doigt avant que
+    /// le `DragGesture` de la carte le voie. Un écran de démonstration où l'on ne peut plus
+    /// glisser la carte n'a plus rien à démontrer.
+    var locksScrolling: Bool = false
     var skip: OnboardingSkip?
     var content: () -> Content
     var footer: () -> Footer
@@ -176,6 +183,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         animatesTitle: Bool = false,
         expandsContent: Bool = false,
         surface: OnboardingSurface = .canvas,
+        locksScrolling: Bool = false,
         skip: OnboardingSkip? = nil,
         @ViewBuilder content: @escaping () -> Content,
         @ViewBuilder footer: @escaping () -> Footer
@@ -189,6 +197,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.animatesTitle = animatesTitle
         self.expandsContent = expandsContent
         self.surface = surface
+        self.locksScrolling = locksScrolling
         self.skip = skip
         self.content = content
         self.footer = footer
@@ -201,7 +210,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     stack(inScrollView: true)
                 }
                 .scrollIndicators(.hidden)
-            } else if expandsContent {
+            } else if expandsContent || locksScrolling {
                 // Le contenu se partage la hauteur restante : il ne peut pas déborder,
                 // puisque c'est lui qui se comprime.
                 stack(inScrollView: false)
@@ -337,6 +346,7 @@ extension OnboardingScaffold where Footer == EmptyView {
         animatesTitle: Bool = false,
         expandsContent: Bool = false,
         surface: OnboardingSurface = .canvas,
+        locksScrolling: Bool = false,
         skip: OnboardingSkip? = nil,
         @ViewBuilder content: @escaping () -> Content
     ) {
@@ -350,6 +360,7 @@ extension OnboardingScaffold where Footer == EmptyView {
             animatesTitle: animatesTitle,
             expandsContent: expandsContent,
             surface: surface,
+            locksScrolling: locksScrolling,
             skip: skip,
             content: content,
             footer: { EmptyView() }

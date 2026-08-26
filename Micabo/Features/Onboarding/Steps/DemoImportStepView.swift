@@ -37,7 +37,9 @@ struct DemoImportStepView: View {
             title: "Glisse ton cours ici.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
-            scrolls: false
+            scrolls: false,
+            // La carte se glisse au doigt : un défilement, même inerte, lui volerait le geste.
+            locksScrolling: true
         ) {
             VStack(spacing: 12) {
                 // La page passe **au-dessus** de la zone de dépôt, pas dessous : un

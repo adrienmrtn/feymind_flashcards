@@ -154,7 +154,7 @@ struct TodayView: View {
                     pendingImport = kind
                     showImportChoice = false
                 },
-                onLibrary: LibraryAccess.isAvailable(signedIn: auth.isSignedIn) ? openLibrary : nil
+                onLibrary: libraryAction
             )
             .presentationDetents([.height(604)])
             .presentationDragIndicator(.visible)
@@ -564,6 +564,10 @@ struct TodayView: View {
             return
         }
         showImportChoice = true
+    }
+
+    private var libraryAction: (() -> Void)? {
+        LibraryAccess.isAvailable(signedIn: auth.isSignedIn) ? openLibrary : nil
     }
 
     private func openLibrary() {
