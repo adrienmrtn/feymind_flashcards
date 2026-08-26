@@ -58,7 +58,7 @@ export default function DemoStep() {
     const timer = window.setTimeout(() => {
       setStage(working);
       setWorking(null);
-    }, 1_900);
+    }, 2_400);
     return () => window.clearTimeout(timer);
   }, [working]);
 
@@ -98,7 +98,9 @@ export default function DemoStep() {
           </div>
         ) : null}
 
-        {stage === 2 ? <DemoCards /> : null}
+        {/* Deux colonnes ici, pas quatre : la colonne du parcours fait 640 points de large, et
+            quatre cartes côte à côte s'y écrasent jusqu'à tronquer leurs propositions. */}
+        {stage === 2 ? <DemoCards layout="compact" /> : null}
       </div>
     </Scaffold>
   );

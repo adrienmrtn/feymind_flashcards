@@ -19,9 +19,11 @@ import { DEMO_CARDS, DEMO_COURSE, type DemoCard } from "@/components/demo/demo-c
  * Le survol qui bouge est enfermé derrière `hover: hover` : sur un écran tactile, un appui déclenche
  * un faux survol et la carte resterait retournée après que le doigt est parti.
  */
-export function DemoCards() {
+export function DemoCards({ layout = "wide" }: { layout?: "wide" | "compact" }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div
+      className={`grid gap-3.5 sm:grid-cols-2 ${layout === "wide" ? "lg:grid-cols-4" : ""}`}
+    >
       {DEMO_CARDS.map((card) => (
         <FlipCard key={card.front} card={card} />
       ))}
@@ -37,20 +39,23 @@ function FlipCard({ card }: { card: DemoCard }) {
       type="button"
       onClick={() => setTapped((value) => !value)}
       aria-label={`${card.kindLabel} : ${card.front} — ${card.back}`}
-      className="group h-[230px] w-full text-left [perspective:1200px]"
+      /* Une hauteur fixe, et assez grande pour la carte la plus chargée — le QCM. Une hauteur qui
+         s'adapte au contenu donnerait quatre cartes de tailles différentes, et un dos plus court
+         que son recto laisse un trou au retournement. */
+      className="group h-[248px] w-full text-left [perspective:1200px]"
       data-flipped={tapped ? "true" : undefined}
     >
       <div className="relative h-full w-full transition-transform duration-[460ms] ease-out-strong [transform-style:preserve-3d] group-data-[flipped]:[transform:rotateY(180deg)] hover-flip">
         <Face>
           <Badge kind={card.kindLabel} />
-          <p className="mt-3 text-[15px] font-medium leading-snug text-ink">{card.front}</p>
+          <p className="mt-2.5 text-[14.5px] font-medium leading-snug text-ink">{card.front}</p>
 
           {card.choices ? (
-            <ul className="mt-3 space-y-1.5">
+            <ul className="mt-2.5 space-y-1">
               {card.choices.map((choice) => (
                 <li
                   key={choice}
-                  className="rounded-[10px] bg-surface-muted px-2.5 py-1.5 text-[12.5px] text-ink-secondary"
+                  className="truncate rounded-[8px] bg-surface-muted px-2.5 py-1.5 text-[12px] text-ink-secondary"
                 >
                   {choice}
                 </li>
@@ -60,21 +65,15 @@ function FlipCard({ card }: { card: DemoCard }) {
 
           {card.labels ? <Diagram labels={card.labels} revealed={false} /> : null}
 
-          {card.kind === "gap" ? (
-            <p className="mt-3 text-[12.5px] text-ink-tertiary">
-              Le mot manquant se retrouve de mémoire.
-            </p>
-          ) : null}
-
-          <p className="mt-auto pt-3 text-[11.5px] text-ink-tertiary">Passe la souris, ou touche</p>
+          <p className="mt-auto pt-3 text-[11px] text-ink-tertiary">Passe la souris, ou touche</p>
         </Face>
 
         <Face className="[transform:rotateY(180deg)]">
           <Badge kind="Réponse" tone="accent" />
-          <p className="mt-3 text-[15px] font-semibold leading-snug text-ink">{card.back}</p>
+          <p className="mt-2.5 text-[14.5px] font-semibold leading-snug text-ink">{card.back}</p>
 
           {card.choices ? (
-            <p className="mt-3 rounded-[10px] bg-positive-soft px-2.5 py-1.5 text-[12.5px] font-medium text-positive">
+            <p className="mt-2.5 rounded-[8px] bg-positive-soft px-2.5 py-1.5 text-[12px] font-medium text-positive">
               {card.choices[card.answerIndex ?? 0]}
             </p>
           ) : null}
@@ -82,10 +81,10 @@ function FlipCard({ card }: { card: DemoCard }) {
           {card.labels ? <Diagram labels={card.labels} revealed /> : null}
 
           {card.note ? (
-            <p className="mt-2.5 text-[12px] leading-relaxed text-ink-secondary">{card.note}</p>
+            <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-secondary">{card.note}</p>
           ) : null}
 
-          <p className="mt-auto pt-3 text-[11.5px] text-ink-tertiary">
+          <p className="mt-auto pt-3 text-[11px] text-ink-tertiary">
             En session, tu te notes de 1 à 4
           </p>
         </Face>
