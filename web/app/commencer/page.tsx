@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 
+import { resumePath } from "@/lib/auth/resume";
+
 /**
  * « Commencer » n'est pas une seconde landing : c'est la porte du parcours.
- * Le premier écran est le pays. Le compte n'arrive qu'à la fin.
+ * Le premier écran est le pays. Si on est déjà connecté, on ouvre l'app.
  */
-export default function CommencerEntry() {
-  redirect("/commencer/pays");
+export default async function CommencerEntry() {
+  redirect(await resumePath());
 }

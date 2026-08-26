@@ -41,7 +41,7 @@ export default async function LandingPage({
   const tokenHash = typeof params.token_hash === "string" ? params.token_hash : null;
   const type = typeof params.type === "string" ? params.type : null;
   if (code || tokenHash) {
-    const next = typeof params.next === "string" ? params.next : "/commencer/pays";
+    const next = typeof params.next === "string" ? params.next : "/app";
     const callback = new URL("/auth/callback", "http://local.invalid");
     if (code) callback.searchParams.set("code", code);
     if (tokenHash) callback.searchParams.set("token_hash", tokenHash);

@@ -43,8 +43,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const destination =
-    next === "/commencer/compte" || next === "/commencer" ? await resumePath() : next;
+  // Un retour de connexion qui retombe sur le parcours (compte, pays, ancien
+  // lien) n'a pas à le relancer : la session est ouverte, on entre dans l'app.
+  const destination = next.startsWith("/commencer") ? await resumePath() : next;
   return NextResponse.redirect(new URL(destination, url.origin));
 }
 
