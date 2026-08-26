@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import type { Route } from "next";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { OnboardingStore } from "@/lib/onboarding/store";
 import { previousPath, progressFor, stepIndex, STEPS } from "@/lib/onboarding/steps";
+import { createClient } from "@/lib/supabase/client";
 
 /**
  * L'habillage du parcours : la barre de progression, et le retour.
@@ -24,6 +26,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
 
   return (
     <OnboardingStore>
+      <LoggedInBounce />
       <div
         className="min-h-svh bg-canvas"
         style={{ ["--onboarding-chrome" as string]: showChrome ? "56px" : "16px" }}
@@ -74,4 +77,20 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
       </div>
     </OnboardingStore>
   );
+}
+
+/** Une session ouverte n'a plus rien à faire dans le tunnel — sauf créer le compte. */
+function LoggedInBounce() {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (pathname === "/commencer/compte") return;
+    const supabase = createClient();
+    void supabase.auth.getUser().then(({ data }) => {
+      if (data.user) router.replace("/app");
+    });
+  }, [pathname, router]);
+
+  return null;
 }
