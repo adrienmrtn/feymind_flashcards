@@ -1,5 +1,6 @@
 import { RawPage } from "@/components/demo/RawPage";
-import { WaitlistForm } from "./WaitlistForm";
+
+import { StartButton } from "./StartButton";
 
 /**
  * L'accroche : **une phrase, et le produit tout de suite.**
@@ -8,24 +9,16 @@ import { WaitlistForm } from "./WaitlistForm";
  * grand nombre avec sa petite étiquette, pas de dégradé, pas de bandeau sombre : c'est la réponse
  * que tout le monde donne, donc ce n'est pas une réponse.
  *
- * **Ce qui manque ici, et pourquoi.** Le plan prévoyait une zone de dépôt à la place du bouton :
- * on pose un PDF, la fiche s'écrit, et c'est le meilleur appel à l'action possible. Elle n'y est
- * pas, parce qu'elle ne peut pas encore mener quelque part — la génération demande le passage des
- * Edge Functions au jeton de l'utilisateur et le plafond d'usage, qui sont à l'étape 4. Une zone
- * de dépôt qui accepte un document et ne le lit pas serait précisément le genre de faux appel à
- * l'action que ce site s'interdit. Elle arrivera avec le parcours d'accueil, qui est ce qu'il y a
- * derrière.
- *
- * En attendant, l'appel à l'action est une liste d'attente, et elle **fonctionne pour de vrai**.
+ * **Le bouton mène au parcours**, pas à une liste d'attente. La landing montre ; « Commencer »
+ * ouvre le premier écran, et les suivants s'enchaînent un par un. La liste d'attente reste au
+ * prix, pour ceux qui veulent être prévenus sans s'engager.
  */
 export function Hero() {
   return (
-    <section className="mx-auto max-w-page px-screen pt-20 sm:pt-28">
+    <section className="mx-auto max-w-page px-screen pt-12 sm:pt-16">
       <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
         <div>
-          <p className="eyebrow text-ink-tertiary">Micabo</p>
-
-          <h1 className="mt-4 text-[40px] font-bold leading-[1.08] text-ink sm:text-[54px]">
+          <h1 className="text-[40px] font-bold leading-[1.08] tracking-display text-ink sm:text-[54px]">
             Ton cours devient une fiche. Puis des cartes. Puis ça reste.
           </h1>
 
@@ -35,8 +28,8 @@ export function Hero() {
             juste avant que tu l&apos;oublies.
           </p>
 
-          <div className="mt-9 max-w-[440px]">
-            <WaitlistForm source="hero" />
+          <div className="mt-9">
+            <StartButton />
           </div>
 
           <p className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-ink-tertiary">

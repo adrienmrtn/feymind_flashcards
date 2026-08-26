@@ -12,13 +12,14 @@ import { WaterCycleFigure } from "@/components/demo/WaterCycleFigure";
 export default function WelcomeStep() {
   return (
     <Scaffold
+      eyebrow="Le parcours"
       title={
         <>
           Bienvenue sur la première intelligence artificielle qui aide les élèves à travailler et à
           approcher les examens <span className="text-accent">sans stress</span>.
         </>
       }
-      footer={<ContinueButton label="Commencer" enabled href="/commencer/compte" />}
+      footer={<ContinueButton label="C'est parti" enabled href="/commencer/compte" />}
     >
       <div className="mx-auto w-full max-w-[300px]">
         <WaterCycleFigure />

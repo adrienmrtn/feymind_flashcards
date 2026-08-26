@@ -4,9 +4,11 @@ import { DemoCards } from "@/components/landing/DemoCards";
 import { ExamMode } from "@/components/landing/ExamMode";
 import { Footer } from "@/components/landing/Footer";
 import { Hero } from "@/components/landing/Hero";
+import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Pricing } from "@/components/landing/Pricing";
 import { Questions } from "@/components/landing/Questions";
 import { RetentionChart } from "@/components/landing/RetentionChart";
+import { StartButton } from "@/components/landing/StartButton";
 import { Transformation } from "@/components/landing/Transformation";
 
 /**
@@ -38,6 +40,7 @@ export const metadata: Metadata = {
 export default function LandingPage() {
   return (
     <>
+      <LandingHeader />
       <main>
         <Hero />
 
@@ -83,6 +86,18 @@ export default function LandingPage() {
         <Section eyebrow="Questions" title="Ce qu'on nous demande." note="">
           <Questions />
         </Section>
+
+        <section className="mx-auto mt-32 max-w-page px-screen pb-8 text-center">
+          <h2 className="text-3xl font-bold tracking-tight-title text-ink sm:text-4xl">
+            Ton cours. Une fiche. Des cartes.
+          </h2>
+          <p className="mx-auto mt-4 max-w-reading text-[16px] leading-relaxed text-ink-secondary">
+            Le parcours s&apos;ouvre. Un écran à la fois.
+          </p>
+          <div className="mt-8">
+            <StartButton />
+          </div>
+        </section>
       </main>
 
       <Footer />

@@ -26,6 +26,8 @@ export const SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtodXpvZHNyem5hbnpod2xiamJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NDg1MzIsImV4cCI6MjEwMTUyNDUzMn0.-PBadJI6rdYgoHisEfP54CN126IiT9DNIXR4J-vNYLw";
 
+export const isProduction = process.env.VERCEL_ENV === "production";
+
 /** Où le site se croit hébergé. Sert aux liens absolus et au retour OAuth. */
 export const SITE_URL = resolveSiteUrl();
 
@@ -42,8 +44,6 @@ function resolveSiteUrl(): string {
 function stripTrailingSlash(value: string): string {
   return value.endsWith("/") ? value.slice(0, -1) : value;
 }
-
-export const isProduction = process.env.VERCEL_ENV === "production";
 
 /**
  * Le site ne s'indexe pas encore.

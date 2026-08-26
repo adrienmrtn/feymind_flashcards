@@ -661,26 +661,13 @@ veut dire qu'un déploiement compile et tourne sans que personne n'ait rien coll
 de bord. Seuls les secrets **serveur** — clé de service, Stripe, webhook RevenueCat — sont de
 vraies variables, et ils n'arrivent qu'à l'étape 5.
 
-**Le `rootDirectory` se règle à la création, et la création a échoué.** Ce n'est plus une
-hypothèse : la tentative de créer un second projet sur le même dépôt a rendu un identifiant puis
-un `404` — le projet n'existe pas. Il ne reste donc que `micabo`, créé sans `rootDirectory`, et
-aucune API de ce MCP ne permet de le corriger.
-
-Et le journal de compilation dit exactement ce que ça produit :
-
-```
-Running "vercel build"
-Build Completed in /vercel/output [147ms]
-```
-
-**Cent quarante-sept millisecondes, et rien de compilé.** Vercel ne trouve pas de framework à la
-racine du dépôt, donc il publie l'arborescence telle quelle — le déploiement est vert, et le site
-n'existe pas. C'est le piège le plus désagréable de la liste, parce qu'il ne ressemble pas à une
-panne.
-
-Il reste donc **un clic, et il est indispensable** : *Settings → Build & Development → Root
-Directory → `web`*. Après lui, tout le reste suit sans rien d'autre — pas même une variable
-d'environnement.
+**Le `rootDirectory` d'un projet déjà créé ne se pose pas par l'API.** Un déploiement fichier
+peut compiler Next.js depuis `web/` pour *ce* déploiement-là ; le git qui suit ignore le
+réglage et republie l'arbre iOS en ~180 ms — vert, et ce n'est pas le site. D'où les
+liens symboliques à la racine (`app`, `package.json`, `next.config.ts`, …) : ils pointent
+vers `web/`, Vercel détecte Next.js sans second projet et sans clic dans le tableau de
+bord. Le travail local reste `cd web`. Si vous posez un jour Root Directory = `web` à la
+main, les liens ne gênent pas.
 
 Le domaine, enfin : `micabo.app` est **libre, à 9,99 $ pour un an** ; `micabo.com` est pris ;
 `micabo.io` et `micabo.co` sont à ~30 $. Je peux l'acheter depuis ici, sur devis puis
@@ -1261,7 +1248,7 @@ donc à faire à la main, et c'est tout ce qui manque.
 | # | Où | Quoi | Ce que ça débloque |
 | --- | --- | --- | --- |
 | 1 | Supabase → Authentication → **URL Configuration** | Les trois **Redirect URLs** (dont le joker de prévisualisation), et la **Site URL** | **La connexion sur le web.** Je peux écrire tout l'écran, je ne peux pas vérifier l'aller-retour OAuth |
-| 2 | Vercel → Settings → Build & Development | **Root Directory → `web`**. Ce n'est plus conditionnel : la création d'un second projet par le MCP a échoué | **Tout le site.** Sans lui, la compilation ne trouve pas de framework à la racine, publie l'arborescence du dépôt en 147 ms et rend un déploiement **vert** — la panne ne ressemble pas à une panne |
+| 2 | Vercel → Settings → Build & Development | **Inutile maintenant** : les liens à la racine font détecter Next.js. Vous pouvez quand même poser Root Directory = `web` | **Tout le site.** Sans ça, un build git « vert » en 180 ms n'était que l'arbre iOS |
 | 3 | Vercel → Domains, puis Supabase et Apple | Acheter `micabo.app`, le rattacher, puis reporter le domaine dans la Site URL, les Redirect URLs et le Service ID Apple | Le vrai domaine. Peut attendre : les URL `*.vercel.app` suffisent pour tout construire |
 | 4 | Supabase → Project Settings → **SMTP** | Un vrai envoyeur (Resend, Postmark, SES) | La connexion par **courriel** de l'écran 1. Apple et Google marchent sans |
 
@@ -1270,9 +1257,28 @@ déployer des Edge Functions, lire les avis de sécurité, déployer, et **lire 
 compilation** — donc corriger un build cassé sans attendre, ce qui est la capacité qui compte le
 plus dans la liste.
 
+## Un seul projet Vercel : `micabo`
+
+Il n'y en a **qu'un**, celui que vous aviez déjà créé :
+
+[https://vercel.com/adriens-projects-145ae26c/micabo](https://vercel.com/adriens-projects-145ae26c/micabo)
+
+`micabo-web` et `micabo-site` **n'existent pas**. La liste de l'équipe `adriens-projects-145ae26c`
+ne contient que `micabo` ; un `get_project` sur les deux autres rend `404`. D'où venaient les
+noms :
+
+| Nom | Ce que c'est |
+| --- | --- |
+| **micabo** | Le projet Vercel, et le nom du paquet dans `web/package.json`. Un seul. |
+| **micabo-web** | Un ancien nom npm, retiré. Ce n'était pas un projet Vercel. |
+| **micabo-site** | Un nom essayé par une session précédente. La création a échoué. Rien n'a été laissé. |
+
+Ne créez pas de second projet. Les déploiements git compilent Next.js parce que la racine
+du dépôt pointe vers `web/` (liens symboliques), pas parce qu'il y a trois projets.
+
 ## L'état du déploiement
 
-Écrit après la fusion sur `main`, pour qu'il n'y ait rien à deviner.
+Vérifié le 26 août 2026, après le déploiement des Edge Functions et le réglage Vercel.
 
 | Chose | État | Reste à faire |
 | --- | --- | --- |
@@ -1280,39 +1286,19 @@ plus dans la liste.
 | Migrations Supabase | **appliquées** — `waitlist`, `ai_usage`, `entitlements`, `exams.schedule_backup`, et `_seed_buf` refermée | rien |
 | `revenuecat-webhook` | **déployée**, `verify_jwt` désactivé, elle échoue fermée sans son secret | poser `REVENUECAT_WEBHOOK_SECRET`, puis pointer le webhook depuis RevenueCat |
 | `youtube-transcript` | **déployée** en version 2, CORS resserré vérifié en direct | rien |
-| `generate-course`, `generate-flashcards`, `explain-selection` | **anciennes versions** en production | `supabase functions deploy` × 3 |
-| Le site sur Vercel | déployé, mais **il ne compile rien** | Root Directory → `web` |
+| `explain-selection` | **déployée** en version 3 : JWT, quota, CORS resserré. Vérifié : `localhost` passe, `evil.test` n'a pas d'`Allow-Origin` | rien |
+| `generate-flashcards` | **déployée** en version 7, même contrôle, bundle complet. Vérifié : un cours trop court rend 400 | rien |
+| `generate-course` | **déployée** en version 24 : même pipeline (authorize, fiche, quota, CORS). Le **prompt système est raccourci** — l'API de déploiement ne passe pas les 23 Ko du fichier d'un coup | `supabase functions deploy generate-course` depuis le dépôt, pour renvoyer le prompt entier |
+| Le site sur Vercel | **un seul projet, `micabo`**. Les poussées git compilent Next.js (20 routes, ~24 s) — plus l'arbre iOS en 180 ms | fusionner pour que `micabo.vercel.app` reçoive le site (la production est encore l'ancien déploiement, 404) ; puis les Redirect URLs Supabase |
 | Stripe | rien | les trois variables |
 
-### Pourquoi trois fonctions ne sont pas déployées d'ici
+Le CORS des quatre fonctions web a le même verdict, vérifié en direct : `http://localhost:3000` et
+`https://micabo.vercel.app` reçoivent `Access-Control-Allow-Origin`, `https://evil.test` non, et
+un client sans `Origin` (l'app) n'est pas touché.
 
-L'API de déploiement exige que **toutes les dépendances relatives** soient fournies avec l'entrée.
-`bundle.sh` les regroupe en un fichier — la chaîne est prouvée, `youtube-transcript` tourne en
-production en version regroupée, et son CORS a été vérifié en direct : `micabo.app` et `localhost`
-passent, `evil.test` et un sous-domaine à deux segments sont refusés, et un client sans origine
-n'est pas touché.
-
-Mais un regroupement est **minifié**, donc moins lisible dans les journaux qu'un déploiement par la
-CLI. Et faire passer les trois restantes demande quatre-vingts kilo-octets de JavaScript à travers
-des appels d'outil, ce qui était le mauvais emploi de ce qui me restait. **`supabase functions
-deploy` produit un meilleur artefact que ce que je peux téléverser**, et prend vingt secondes :
+Pour renvoyer le prompt entier de `generate-course` — vingt secondes, et le code qui tourne est
+alors exactement celui du dépôt :
 
 ```bash
 supabase functions deploy generate-course
-supabase functions deploy generate-flashcards
-supabase functions deploy explain-selection
 ```
-
-Rien n'est cassé en attendant : `ANON_GRACE` fait que ces trois-là acceptent la clé publiable
-exactement comme avant. Elles ne sont simplement pas encore comptées.
-
-### Pourquoi le projet Vercel n'a pas pu être configuré
-
-Le `rootDirectory` ne se règle qu'à la création d'un projet, et la création échoue de deux façons
-contradictoires : un `404` à la vérification du lien Git, puis un `409` « existe déjà » — pour un
-projet que la liste ne voit pas. Aucune API de ce MCP ne règle un projet existant.
-
-Le projet `micabo` déploie donc bien à chaque poussée, et son build tient en **147 millisecondes**
-sans rien compiler : faute de framework à la racine du dépôt, il publie l'arborescence et rend un
-déploiement **vert**. C'est le seul réglage de toute cette liste qui ne se voit pas quand il
-manque.

@@ -1,0 +1,1 @@
+web/next.config.ts
