@@ -1,7 +1,6 @@
 import type { Metadata, Route } from "next";
 import { redirect } from "next/navigation";
 
-import { AuthReturnCatcher } from "@/components/landing/AuthReturnCatcher";
 import { DemoCards } from "@/components/landing/DemoCards";
 import { ExamMode } from "@/components/landing/ExamMode";
 import { Footer } from "@/components/landing/Footer";
@@ -13,7 +12,6 @@ import { RetentionChart } from "@/components/landing/RetentionChart";
 import { Reveal } from "@/components/landing/Reveal";
 import { SourceMarquee } from "@/components/landing/SourceMarquee";
 import { StartButton } from "@/components/landing/StartButton";
-import { resumePath } from "@/lib/auth/resume";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -54,11 +52,10 @@ export default async function LandingPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) redirect(await resumePath());
+  if (user) redirect("/app");
 
   return (
     <>
-      <AuthReturnCatcher />
       <LandingHeader />
       <main>
         <Hero />

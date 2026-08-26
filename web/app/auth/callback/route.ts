@@ -1,23 +1,46 @@
+import { createServerClient } from "@supabase/ssr";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { resumePath } from "@/lib/auth/resume";
-import { createClient } from "@/lib/supabase/server";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 
 /**
  * Le retour d'un fournisseur ou d'un lien de courriel.
  *
- * C'est ici que le code PKCE (ou le jeton du mail) s'échange contre une session.
- * Après ça, on reprend le parcours — jamais la landing.
+ * Les cookies de session sont écrits **sur la redirection**, pas via `cookies()`
+ * de Next : un `NextResponse.redirect` tout neuf les perdait, `getUser()`
+ * suivant voyait personne, et on renvoyait au pays.
+ *
+ * Après un échange réussi on entre dans l'app. Jamais dans le parcours.
  */
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const tokenHash = url.searchParams.get("token_hash");
   const type = url.searchParams.get("type");
-  const next = safeNext(url.searchParams.get("next"));
+  const next = appNext(url.searchParams.get("next"));
 
-  const supabase = await createClient();
+  if (!code && !(tokenHash && type)) {
+    const error = url.searchParams.get("error_description") ?? url.searchParams.get("error");
+    return NextResponse.redirect(
+      new URL(`/commencer/compte?erreur=${encodeURIComponent(error ?? "manquant")}`, url.origin),
+    );
+  }
+
+  const redirectTo = NextResponse.redirect(new URL(next, url.origin));
+
+  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(items) {
+        for (const { name, value, options } of items) {
+          redirectTo.cookies.set(name, value, options);
+        }
+      },
+    },
+  });
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -26,32 +49,22 @@ export async function GET(request: NextRequest) {
         new URL(`/commencer/compte?erreur=${encodeURIComponent(error.message)}`, url.origin),
       );
     }
-  } else if (tokenHash && type) {
+  } else {
     const { error } = await supabase.auth.verifyOtp({
       type: type as EmailOtpType,
-      token_hash: tokenHash,
+      token_hash: tokenHash!,
     });
     if (error) {
       return NextResponse.redirect(
         new URL(`/commencer/compte?erreur=${encodeURIComponent(error.message)}`, url.origin),
       );
     }
-  } else {
-    const error = url.searchParams.get("error_description") ?? url.searchParams.get("error");
-    return NextResponse.redirect(
-      new URL(`/commencer/compte?erreur=${encodeURIComponent(error ?? "manquant")}`, url.origin),
-    );
   }
 
-  // Un retour de connexion qui retombe sur le parcours (compte, pays, ancien
-  // lien) n'a pas à le relancer : la session est ouverte, on entre dans l'app.
-  const destination = next.startsWith("/commencer") ? await resumePath() : next;
-  return NextResponse.redirect(new URL(destination, url.origin));
+  return redirectTo;
 }
 
-function safeNext(value: string | null): string {
-  if (!value || value === "/" || !value.startsWith("/") || value.startsWith("//")) {
-    return "/app?bienvenue=1";
-  }
-  return value;
+function appNext(value: string | null): string {
+  if (value && value.startsWith("/app") && !value.startsWith("//")) return value;
+  return "/app";
 }

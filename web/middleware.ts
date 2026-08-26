@@ -1,23 +1,35 @@
-import { type NextRequest, NextResponse } from "next/server";
-
 import { createServerClient } from "@supabase/ssr";
+import { type NextRequest, NextResponse } from "next/server";
 
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 
 /**
- * Le rafraîchissement de la session, au passage.
+ * Trois choses, dans cet ordre :
  *
- * Un composant serveur ne peut pas écrire de cookie : seules une route et une action le peuvent.
- * Sans ce passage, un jeton expiré resterait expiré et l'étudiant serait déconnecté au bout d'une
- * heure sans avoir rien fait. C'est le seul endroit du site qui rafraîchit, et c'est exactement le
- * pendant de `AuthController.validAccessToken()` côté iOS — personne d'autre n'a à savoir qu'un
- * jeton expire.
- *
- * `getUser()` et non `getSession()` : le second lit le cookie et le croit, le premier le fait
- * vérifier par le serveur. Sur une page rendue côté serveur, c'est la différence entre une session
- * et une session **prouvée**.
+ * 1. Un `?code=` (ou un jeton de mail) tombé sur n'importe quelle page — la
+ *    Site URL de Supabase, un ancien `/commencer/pays` — est renvoyé au
+ *    callback. Sinon le code expire sur le premier écran du parcours.
+ * 2. La session se rafraîchit, et les cookies voyagent avec la réponse.
+ * 3. Une session ouverte n'a plus rien à faire sur le parcours ni sur la
+ *    landing : on ouvre l'app.
  */
 export async function middleware(request: NextRequest) {
+  const url = request.nextUrl;
+
+  if (url.pathname !== "/auth/callback") {
+    const code = url.searchParams.get("code");
+    const tokenHash = url.searchParams.get("token_hash");
+    if (code || tokenHash) {
+      const callback = url.clone();
+      callback.pathname = "/auth/callback";
+      const next = callback.searchParams.get("next");
+      if (!next || next.startsWith("/commencer") || next === "/") {
+        callback.searchParams.set("next", "/app");
+      }
+      return NextResponse.redirect(callback);
+    }
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -37,15 +49,27 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const path = url.pathname;
+  if (
+    user &&
+    (path === "/" || (path.startsWith("/commencer") && path !== "/commencer/compte"))
+  ) {
+    const redirect = NextResponse.redirect(new URL("/app", request.url));
+    for (const cookie of response.cookies.getAll()) {
+      redirect.cookies.set(cookie);
+    }
+    return redirect;
+  }
 
   return response;
 }
 
 export const config = {
   matcher: [
-    // Tout sauf les fichiers statiques et les images : rafraîchir une session pour servir une
-    // police est une requête de plus pour rien.
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2?)$).*)",
   ],
 };
