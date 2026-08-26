@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Hanken_Grotesk, Nunito } from "next/font/google";
 
 import { AuthReturnCatcher } from "@/components/landing/AuthReturnCatcher";
+import { PreviewBanner } from "@/components/PreviewBanner";
 import { IS_INDEXABLE, SITE_URL } from "@/lib/config";
 
 import "./globals.css";
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={`${hanken.variable} ${nunito.variable}`}>
       <body>
+        <PreviewBanner />
         <AuthReturnCatcher />
         {children}
       </body>
