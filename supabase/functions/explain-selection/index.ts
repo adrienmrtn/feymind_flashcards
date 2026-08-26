@@ -1,3 +1,4 @@
+import { authorize, withCors } from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
   callModel,
@@ -71,60 +72,62 @@ function optionalText(value: unknown): string | undefined {
   return result.length > 0 ? result : undefined;
 }
 
-Deno.serve(async (request: Request) => {
-  if (request.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS_HEADERS });
-  }
+Deno.serve((request: Request) =>
+  withCors(request, async () => {
+    try {
+      // Qui appelle, et lui reste-t-il du quota. En première ligne : tout ce qui suit coûte de
+      // l'argent.
+      await authorize(request, "explain-selection");
 
-  try {
-    const body = (await request.json()) as RequestBody;
-    const selection = (body.selection ?? "").trim().slice(0, MAX_SELECTION);
-    const context = (body.context ?? "").trim().slice(0, MAX_CONTEXT);
+      const body = (await request.json()) as RequestBody;
+      const selection = (body.selection ?? "").trim().slice(0, MAX_SELECTION);
+      const context = (body.context ?? "").trim().slice(0, MAX_CONTEXT);
 
-    if (selection.length < 2) {
-      throw new FalError("Il n'y a pas de passage à expliquer.", 400);
+      if (selection.length < 2) {
+        throw new FalError("Il n'y a pas de passage à expliquer.", 400);
+      }
+
+      const sections = [
+        languageBrief(body.language),
+        `Cours : ${body.title || "Sans titre"}`,
+        body.subject ? `Matière : ${body.subject}` : "",
+        `PASSAGE SÉLECTIONNÉ :\n${selection}`,
+        context.length > 0 ? `SA FICHE DE COURS :\n${context}` : "",
+        "Explique-lui ce passage.",
+      ].filter(Boolean);
+
+      const output = await callModel({
+        prompt: sections.join("\n\n"),
+        systemPrompt: SYSTEM_PROMPT,
+        model: body.model,
+        temperature: 0.35,
+        maxTokens: 1_200,
+      });
+
+      const parsed = deepStripEmDashes(extractJSON<Record<string, unknown>>(output));
+
+      const headline = text(parsed.headline);
+      if (headline.length === 0) {
+        throw new FalError("Le modèle n'a pas produit d'explication exploitable.", 502);
+      }
+
+      const rawCard = parsed.card && typeof parsed.card === "object"
+        ? parsed.card as Record<string, unknown>
+        : undefined;
+      const front = text(rawCard?.front);
+      const back = text(rawCard?.back);
+
+      const explanation: Explanation = {
+        headline,
+        body: text(parsed.body),
+        example: optionalText(parsed.example),
+        watchOut: optionalText(parsed.watchOut),
+        card: front.length > 0 && back.length > 0 ? { front, back } : undefined,
+      };
+
+      return jsonResponse({ explanation });
+    } catch (error) {
+      return errorResponse(error);
     }
-
-    const sections = [
-      languageBrief(body.language),
-      `Cours : ${body.title || "Sans titre"}`,
-      body.subject ? `Matière : ${body.subject}` : "",
-      `PASSAGE SÉLECTIONNÉ :\n${selection}`,
-      context.length > 0 ? `SA FICHE DE COURS :\n${context}` : "",
-      "Explique-lui ce passage.",
-    ].filter(Boolean);
-
-    const output = await callModel({
-      prompt: sections.join("\n\n"),
-      systemPrompt: SYSTEM_PROMPT,
-      model: body.model,
-      temperature: 0.35,
-      maxTokens: 1_200,
-    });
-
-    const parsed = deepStripEmDashes(extractJSON<Record<string, unknown>>(output));
-
-    const headline = text(parsed.headline);
-    if (headline.length === 0) {
-      throw new FalError("Le modèle n'a pas produit d'explication exploitable.", 502);
-    }
-
-    const rawCard = parsed.card && typeof parsed.card === "object"
-      ? parsed.card as Record<string, unknown>
-      : undefined;
-    const front = text(rawCard?.front);
-    const back = text(rawCard?.back);
-
-    const explanation: Explanation = {
-      headline,
-      body: text(parsed.body),
-      example: optionalText(parsed.example),
-      watchOut: optionalText(parsed.watchOut),
-      card: front.length > 0 && back.length > 0 ? { front, back } : undefined,
-    };
-
-    return jsonResponse({ explanation });
-  } catch (error) {
-    return errorResponse(error);
-  }
-});
+  })
+);

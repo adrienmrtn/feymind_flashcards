@@ -1,3 +1,4 @@
+import { authorize, withCors } from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
   callModel,
@@ -188,9 +189,7 @@ function balance(quota: Record<Format, number>): Record<Format, number> {
   let total = result.basic + result.cloze + result.choice;
 
   while (total > TOTAL_MAXIMUM) {
-    const largest = FORMATS.reduce((best, format) =>
-      result[format] > result[best] ? format : best
-    );
+    const largest = FORMATS.reduce((best, format) => result[format] > result[best] ? format : best);
     result[largest] -= 1;
     total -= 1;
   }
@@ -236,71 +235,75 @@ function selectByQuota(cards: OutputCard[], quota: Record<Format, number>): Outp
   return kept.concat(leftovers.slice(0, Math.max(0, total - kept.length)));
 }
 
-Deno.serve(async (request: Request) => {
-  if (request.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS_HEADERS });
-  }
+Deno.serve((request: Request) =>
+  withCors(request, async () => {
+    try {
+      // Qui appelle, et lui reste-t-il du quota. En première ligne : tout ce qui suit coûte de
+      // l'argent.
+      await authorize(request, "generate-flashcards");
 
-  try {
-    const body = (await request.json()) as RequestBody;
-    const context = (body.context ?? "").trim().slice(0, 40_000);
+      const body = (await request.json()) as RequestBody;
+      const context = (body.context ?? "").trim().slice(0, 40_000);
 
-    if (context.length < 40) {
-      throw new FalError("Le cours est trop court pour générer des flashcards.", 400);
+      if (context.length < 40) {
+        throw new FalError("Le cours est trop court pour générer des flashcards.", 400);
+      }
+
+      const quota = resolveQuota(body);
+      const count = quota.basic + quota.cloze + quota.choice;
+      const allowedKinds = new Set<string>(FORMATS.filter((format) => quota[format] > 0));
+
+      const existing = (body.existing ?? []).slice(0, 60);
+
+      const breakdown = FORMATS
+        .map((format) => `${quota[format]} ${FORMAT_LABELS[format]}`)
+        .join(", ");
+
+      // La matière change ce qu'une carte doit demander : une date en histoire, une condition
+      // d'application en droit, un mot dans sa langue en langue vivante.
+      const subjectBrief = disciplineBrief(detectDiscipline(context, body.title, body.subject));
+
+      const sections = [
+        languageBrief(body.language),
+        `Cours : ${body.title ?? "Sans titre"}`,
+        subjectBrief,
+        `Génère exactement ${count} flashcards, réparties ainsi : ${breakdown}. Ces nombres ne se négocient pas.`,
+        allowedKinds.size > 1
+          ? `Écris-les dans l'ordre : d'abord les "basic", puis les "cloze", puis les "choice".`
+          : `Un seul format est demandé. N'écris rien d'autre.`,
+        existing.length > 0
+          ? `Ces questions existent déjà, ne les répète pas et ne les reformule pas :\n${
+            existing.map((item) => `- ${item}`).join("\n")
+          }`
+          : "",
+        `CONTENU DU COURS :\n${context}`,
+      ].filter(Boolean);
+
+      const output = await callModel({
+        prompt: sections.join("\n\n"),
+        systemPrompt: SYSTEM_PROMPT,
+        model: body.model,
+        temperature: 0.5,
+        maxTokens: 8_192,
+      });
+
+      const parsed = extractJSON<GeneratedCard[] | { cards?: GeneratedCard[] }>(output);
+      const rawCards = Array.isArray(parsed) ? parsed : parsed.cards ?? [];
+
+      const normalized = deepStripEmDashes(rawCards)
+        .filter((card) => typeof card?.front === "string" && typeof card?.back === "string")
+        .map((card) => normalizeCard(card, allowedKinds))
+        .filter((card) => card.front.length > 0 && card.back.length > 0);
+
+      const cards = selectByQuota(normalized, quota);
+
+      if (cards.length === 0) {
+        throw new FalError("Le modèle n'a produit aucune carte exploitable.", 502);
+      }
+
+      return jsonResponse({ cards });
+    } catch (error) {
+      return errorResponse(error);
     }
-
-    const quota = resolveQuota(body);
-    const count = quota.basic + quota.cloze + quota.choice;
-    const allowedKinds = new Set<string>(FORMATS.filter((format) => quota[format] > 0));
-
-    const existing = (body.existing ?? []).slice(0, 60);
-
-    const breakdown = FORMATS
-      .map((format) => `${quota[format]} ${FORMAT_LABELS[format]}`)
-      .join(", ");
-
-    // La matière change ce qu'une carte doit demander : une date en histoire, une condition
-    // d'application en droit, un mot dans sa langue en langue vivante.
-    const subjectBrief = disciplineBrief(detectDiscipline(context, body.title, body.subject));
-
-    const sections = [
-      languageBrief(body.language),
-      `Cours : ${body.title ?? "Sans titre"}`,
-      subjectBrief,
-      `Génère exactement ${count} flashcards, réparties ainsi : ${breakdown}. Ces nombres ne se négocient pas.`,
-      allowedKinds.size > 1
-        ? `Écris-les dans l'ordre : d'abord les "basic", puis les "cloze", puis les "choice".`
-        : `Un seul format est demandé. N'écris rien d'autre.`,
-      existing.length > 0
-        ? `Ces questions existent déjà, ne les répète pas et ne les reformule pas :\n${existing.map((item) => `- ${item}`).join("\n")}`
-        : "",
-      `CONTENU DU COURS :\n${context}`,
-    ].filter(Boolean);
-
-    const output = await callModel({
-      prompt: sections.join("\n\n"),
-      systemPrompt: SYSTEM_PROMPT,
-      model: body.model,
-      temperature: 0.5,
-      maxTokens: 8_192,
-    });
-
-    const parsed = extractJSON<GeneratedCard[] | { cards?: GeneratedCard[] }>(output);
-    const rawCards = Array.isArray(parsed) ? parsed : parsed.cards ?? [];
-
-    const normalized = deepStripEmDashes(rawCards)
-      .filter((card) => typeof card?.front === "string" && typeof card?.back === "string")
-      .map((card) => normalizeCard(card, allowedKinds))
-      .filter((card) => card.front.length > 0 && card.back.length > 0);
-
-    const cards = selectByQuota(normalized, quota);
-
-    if (cards.length === 0) {
-      throw new FalError("Le modèle n'a produit aucune carte exploitable.", 502);
-    }
-
-    return jsonResponse({ cards });
-  } catch (error) {
-    return errorResponse(error);
-  }
-});
+  })
+);
