@@ -7,10 +7,8 @@ import { persistStoredAnswers } from "@/lib/onboarding/persist";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * Si le mail de confirmation a déposé les jetons sur `/` (la Site URL),
- * on les ramasse et on ouvre l'app. La landing ne sait pas le faire.
- *
- * Les réponses du parcours, si elles sont encore sur l'appareil, traversent ici.
+ * Si le mail a déposé les jetons dans le hash (n'importe quelle page, plus
+ * seulement la landing), on les ramasse et on ouvre l'app.
  */
 export function AuthReturnCatcher() {
   const router = useRouter();
@@ -20,11 +18,19 @@ export function AuthReturnCatcher() {
     if (!hash.includes("access_token") && !hash.includes("refresh_token")) return;
 
     const supabase = createClient();
-    void supabase.auth.getSession().then(async ({ data }) => {
+
+    const enter = async () => {
+      const { data } = await supabase.auth.getSession();
       if (!data.session) return;
       await persistStoredAnswers();
-      router.replace("/app?bienvenue=1");
+      router.replace("/app");
+    };
+
+    void enter();
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) void enter();
     });
+    return () => data.subscription.unsubscribe();
   }, [router]);
 
   return null;

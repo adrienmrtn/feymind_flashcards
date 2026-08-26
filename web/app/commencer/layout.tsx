@@ -87,9 +87,14 @@ function LoggedInBounce() {
   useEffect(() => {
     if (pathname === "/commencer/compte") return;
     const supabase = createClient();
+    const go = () => router.replace("/app");
     void supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace("/app");
+      if (data.user) go();
     });
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) go();
+    });
+    return () => data.subscription.unsubscribe();
   }, [pathname, router]);
 
   return null;
