@@ -39,7 +39,7 @@ export default function SubjectsStep() {
         />
       }
     >
-      <div className="max-h-[54svh] space-y-7 overflow-y-auto pr-1 sm:max-h-[58svh]">
+      <div className="max-h-[44svh] space-y-7 overflow-y-auto pr-1 sm:max-h-[50svh]">
         {SUBJECT_FAMILIES.map((family) => (
           <div key={family.name}>
             <p className="eyebrow mb-2.5 text-ink-tertiary">{family.name}</p>
