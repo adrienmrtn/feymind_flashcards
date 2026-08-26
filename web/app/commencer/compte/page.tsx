@@ -1,11 +1,10 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ThinkingOrb } from "thinking-orbs";
 
 import { Scaffold } from "@/components/onboarding/Scaffold";
-import { SITE_URL } from "@/lib/config";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -32,12 +31,24 @@ type Pending = "apple" | "google" | "email" | null;
 
 function AccountStepBody() {
   const params = useSearchParams();
+  const router = useRouter();
   const [pending, setPending] = useState<Pending>(null);
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [failure, setFailure] = useState<string | null>(params.get("erreur"));
 
   const next = "/commencer/pays";
+
+  useEffect(() => {
+    const supabase = createClient();
+    void supabase.auth.getUser().then(({ data }) => {
+      if (data.user) router.replace(next);
+    });
+  }, [router]);
+
+  function callbackUrl() {
+    return `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  }
 
   async function signInWith(provider: "apple" | "google") {
     setFailure(null);
@@ -47,7 +58,7 @@ function AccountStepBody() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(next)}`,
+        redirectTo: callbackUrl(),
       },
     });
 
@@ -67,7 +78,7 @@ function AccountStepBody() {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(next)}` },
+      options: { emailRedirectTo: callbackUrl() },
     });
 
     setPending(null);

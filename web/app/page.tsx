@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Route } from "next";
+import { redirect } from "next/navigation";
 
+import { AuthReturnCatcher } from "@/components/landing/AuthReturnCatcher";
 import { DemoCards } from "@/components/landing/DemoCards";
 import { ExamMode } from "@/components/landing/ExamMode";
 import { Footer } from "@/components/landing/Footer";
@@ -10,6 +12,8 @@ import { Questions } from "@/components/landing/Questions";
 import { RetentionChart } from "@/components/landing/RetentionChart";
 import { StartButton } from "@/components/landing/StartButton";
 import { Transformation } from "@/components/landing/Transformation";
+import { resumePath } from "@/lib/auth/resume";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Micabo — ton cours devient une fiche",
@@ -20,10 +24,38 @@ export const metadata: Metadata = {
 /**
  * La vitrine. Elle montre le produit. Elle ne pose aucune question.
  * « Commencer » ouvre le parcours, un écran à la fois.
+ *
+ * Un lien de confirmation qui retombe ici (Site URL) n'y reste pas :
+ * s'il y a un code ou une session, on reprend le parcours.
  */
-export default function LandingPage() {
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const code = typeof params.code === "string" ? params.code : null;
+  const tokenHash = typeof params.token_hash === "string" ? params.token_hash : null;
+  const type = typeof params.type === "string" ? params.type : null;
+  if (code || tokenHash) {
+    const next = typeof params.next === "string" ? params.next : "/commencer/pays";
+    const callback = new URL("/auth/callback", "http://local.invalid");
+    if (code) callback.searchParams.set("code", code);
+    if (tokenHash) callback.searchParams.set("token_hash", tokenHash);
+    if (type) callback.searchParams.set("type", type);
+    callback.searchParams.set("next", next);
+    redirect(`${callback.pathname}${callback.search}` as Route);
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) redirect(await resumePath());
+
   return (
     <>
+      <AuthReturnCatcher />
       <LandingHeader />
       <main>
         <Hero />
