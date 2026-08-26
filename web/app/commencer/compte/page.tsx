@@ -1,23 +1,25 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ThinkingOrb } from "thinking-orbs";
 
-import { Scaffold } from "@/components/onboarding/Scaffold";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * La création du compte, au deuxième écran.
+ * La création du compte : **une vraie page**, pas un écran de parcours.
  *
- * **Trois voies, dans cet ordre, et l'ordre est un choix.** Apple et Google d'abord : elles se
- * font en un appui et sans mot de passe à inventer. Le courriel en dernier, parce qu'il demande
- * d'aller lire une boîte — et parce qu'il ne marchera pas avant qu'un vrai envoyeur soit branché
- * sur le projet. Son échec ne bloque donc personne, ce qui est la seule raison de le laisser là.
+ * Elle a donc sa propre mise en page et non le gabarit des écrans à question — une page
+ * d'inscription n'a rien à demander d'autre, et lui imposer la charpente du tunnel laissait un
+ * trou au milieu de l'écran, le titre en haut et les boutons perdus loin en dessous.
  *
- * Le compte est ici et pas à la fin : le tunnel iOS a dix-sept écrans pour donner une raison d'en
- * créer un, le web n'en a pas un. Et la règle de l'abonnement veut qu'on ne vende jamais avant la
- * connexion — le paywall est le dernier écran.
+ * Sur grand écran, deux colonnes : les trois voies à gauche, ce que Micabo fait à droite. C'est
+ * la seule page du parcours où l'espace d'un ordinateur sert à quelque chose — partout ailleurs,
+ * une question se répond dans une colonne.
+ *
+ * Apple et Google d'abord : un appui, aucun mot de passe à inventer. Le courriel en dernier,
+ * parce qu'il demande d'aller lire une boîte.
  */
 export default function AccountStep() {
   return (
@@ -57,9 +59,7 @@ function AccountStepBody() {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: {
-        redirectTo: callbackUrl(),
-      },
+      options: { redirectTo: callbackUrl() },
     });
 
     // Un fournisseur éteint côté serveur le dit dans son message d'erreur, ce qui est plus utile
@@ -87,70 +87,83 @@ function AccountStepBody() {
   }
 
   return (
-    <Scaffold
-      eyebrow="Le parcours"
-      title="Crée ton compte"
-      subtitle="Un appui, et on enchaîne. Un écran à la fois."
-      footer={
-        <p className="text-center text-[12.5px] leading-relaxed text-ink-tertiary">
-          En continuant, tu acceptes les conditions d&apos;utilisation et la politique de
-          confidentialité.
-        </p>
-      }
-    >
-      <div className="space-y-2.5">
-        <ProviderButton
-          label="Continuer avec Apple"
-          dark
-          pending={pending === "apple"}
-          onPress={() => signInWith("apple")}
-          icon={
-            <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-              <path d="M16.5 12.6c0-2 1.6-3 1.7-3.1-.9-1.4-2.4-1.5-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.3 2-1.4 2.4-.4 6 1 7.9.7.9 1.5 2 2.5 2 1 0 1.3-.6 2.5-.6s1.5.6 2.5.6 1.7-.9 2.4-1.9c.5-.7.7-1.1.9-1.6-2.3-.9-2.2-3.6-2.2-3.7zM14.6 5.9c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.3 1.2-.5.6-.9 1.5-.8 2.3.9.1 1.8-.4 2.3-1.1z" />
-            </svg>
-          }
-        />
+    <div className="mx-auto grid min-h-svh w-full max-w-page items-center gap-16 px-screen py-10 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:gap-24">
+      <div className="rise mx-auto w-full max-w-[420px]">
+        <Link href="/" className="text-[15px] font-bold text-ink">
+          Micabo
+        </Link>
 
-        <ProviderButton
-          label="Continuer avec Google"
-          pending={pending === "google"}
-          onPress={() => signInWith("google")}
-          icon={
-            <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5">
-              <path
-                fill="#4285F4"
-                d="M23 12.2c0-.8-.1-1.6-.2-2.3H12v4.4h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.5z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23.5c3 0 5.5-1 7.3-2.7l-3.6-2.8a6.9 6.9 0 0 1-10.3-3.6H1.6v3A11.5 11.5 0 0 0 12 23.5z"
-              />
-              <path fill="#FBBC05" d="M5.4 14.4a6.9 6.9 0 0 1 0-4.4v-3H1.6a11.5 11.5 0 0 0 0 10.4z" />
-              <path
-                fill="#EA4335"
-                d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11.5 11.5 0 0 0 1.6 7l3.8 3a6.9 6.9 0 0 1 6.6-4.6z"
-              />
-            </svg>
-          }
-        />
+        <h1 className="mt-9 text-[32px] font-bold leading-[1.08] tracking-display text-ink sm:text-[38px]">
+          Crée ton compte
+        </h1>
 
-        <div className="flex items-center gap-3 py-3">
+        <div className="mt-8 space-y-2.5">
+          <ProviderButton
+            label="Continuer avec Apple"
+            dark
+            pending={pending === "apple"}
+            onPress={() => signInWith("apple")}
+            icon={
+              <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+                <path d="M16.5 12.6c0-2 1.6-3 1.7-3.1-.9-1.4-2.4-1.5-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.3 2-1.4 2.4-.4 6 1 7.9.7.9 1.5 2 2.5 2 1 0 1.3-.6 2.5-.6s1.5.6 2.5.6 1.7-.9 2.4-1.9c.5-.7.7-1.1.9-1.6-2.3-.9-2.2-3.6-2.2-3.7zM14.6 5.9c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.3 1.2-.5.6-.9 1.5-.8 2.3.9.1 1.8-.4 2.3-1.1z" />
+              </svg>
+            }
+          />
+
+          <ProviderButton
+            label="Continuer avec Google"
+            pending={pending === "google"}
+            onPress={() => signInWith("google")}
+            icon={
+              <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5">
+                <path
+                  fill="#4285F4"
+                  d="M23 12.2c0-.8-.1-1.6-.2-2.3H12v4.4h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.5z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23.5c3 0 5.5-1 7.3-2.7l-3.6-2.8a6.9 6.9 0 0 1-10.3-3.6H1.6v3A11.5 11.5 0 0 0 12 23.5z"
+                />
+                <path fill="#FBBC05" d="M5.4 14.4a6.9 6.9 0 0 1 0-4.4v-3H1.6a11.5 11.5 0 0 0 0 10.4z" />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11.5 11.5 0 0 0 1.6 7l3.8 3a6.9 6.9 0 0 1 6.6-4.6z"
+                />
+              </svg>
+            }
+          />
+        </div>
+
+        <div className="my-6 flex items-center gap-3">
           <span className="h-px flex-1 bg-hairline-on-canvas" />
           <span className="text-[12px] text-ink-tertiary">ou</span>
           <span className="h-px flex-1 bg-hairline-on-canvas" />
         </div>
 
         {sent ? (
-          <p className="rounded-button bg-accent-soft px-4 py-3.5 text-[14px] font-medium text-accent">
-            Ouvre le lien envoyé à {email.trim()}.
+          <p
+            className="rise flex items-center gap-2.5 rounded-button bg-accent-soft px-4 py-4 text-[14.5px] font-medium text-accent"
+            role="status"
+          >
+            <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5 shrink-0">
+              <path
+                d="M4 10.5l4 4 8-9"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Ouvre le lien envoyé à {email.trim()}
           </p>
         ) : (
-          <form onSubmit={sendLink} className="paper flex items-center gap-2 rounded-button bg-surface p-1.5">
-            <label htmlFor="onboarding-email" className="sr-only">
+          <form onSubmit={sendLink} className="space-y-2.5">
+            <label htmlFor="signup-email" className="sr-only">
               Ton adresse électronique
             </label>
             <input
-              id="onboarding-email"
+              id="signup-email"
               type="email"
               inputMode="email"
               autoComplete="email"
@@ -158,27 +171,83 @@ function AccountStepBody() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="ton@adresse.fr"
-              className="min-w-0 flex-1 bg-transparent px-3 text-[16px] text-ink outline-none placeholder:text-ink-tertiary"
+              /* 16 px au minimum : en dessous, Safari zoome sur le champ au focus et ne dézoome
+                 jamais. */
+              className="paper h-14 w-full rounded-button bg-surface px-4 text-[16px] text-ink outline-none transition-shadow duration-hover placeholder:text-ink-tertiary"
             />
             <button
               type="submit"
-              disabled={pending === "email"}
-              className="pressable h-10 shrink-0 rounded-[12px] bg-surface-muted px-4 text-[14px] font-semibold text-ink disabled:opacity-70"
+              disabled={pending === "email" || email.trim().length === 0}
+              className="pressable flex h-14 w-full items-center justify-center gap-2.5 rounded-button bg-ink text-[16px] font-semibold text-on-ink transition-colors duration-hover disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-ink-tertiary"
             >
-              {pending === "email" ? <ThinkingOrb state="connecting" size={20} /> : "Recevoir un lien"}
+              {pending === "email" ? (
+                <>
+                  <ThinkingOrb state="connecting" size={20} theme="dark" />
+                  Un instant
+                </>
+              ) : (
+                "Recevoir un lien"
+              )}
             </button>
           </form>
         )}
 
         {failure ? (
-          <p className="rounded-button bg-negative-soft px-4 py-3 text-[13.5px] text-negative" role="alert">
+          <p
+            className="mt-3 rounded-button bg-negative-soft px-4 py-3 text-[13.5px] text-negative"
+            role="alert"
+          >
             {failure}
           </p>
         ) : null}
+
+        <p className="mt-8 text-[12.5px] leading-relaxed text-ink-tertiary">
+          En continuant, tu acceptes les conditions d&apos;utilisation et la politique de
+          confidentialité.
+        </p>
       </div>
-    </Scaffold>
+
+      {/* La colonne de droite ne demande rien et ne s'affiche pas sur téléphone : sur un petit
+          écran, elle repousserait les boutons sous la ligne de flottaison. */}
+      <div className="hidden lg:block">
+        <div
+          className="rise space-y-3"
+          style={{ animationDelay: "120ms" }}
+        >
+          {ARGUMENTS.map((item) => (
+            <div key={item.title} className="paper flex gap-4 rounded-group bg-surface p-5">
+              <span aria-hidden className="emoji text-[22px]">
+                {item.emoji}
+              </span>
+              <div>
+                <p className="text-[15.5px] font-semibold text-ink">{item.title}</p>
+                <p className="mt-1 text-[14px] leading-relaxed text-ink-secondary">{item.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
+
+const ARGUMENTS = [
+  {
+    emoji: "📄",
+    title: "Un cours gratuit",
+    text: "Assez pour voir Micabo tourner sur tes propres notes.",
+  },
+  {
+    emoji: "🧠",
+    title: "Les cartes reviennent au bon moment",
+    text: "La même répétition espacée qu'Anki, écrite pour toi.",
+  },
+  {
+    emoji: "📅",
+    title: "Mode examen",
+    text: "Tu donnes la date, tout le paquet se réorganise.",
+  },
+] as const;
 
 function ProviderButton({
   label,

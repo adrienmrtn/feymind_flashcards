@@ -31,7 +31,6 @@ export default function SubjectsStep() {
     <Scaffold
       eyebrow="Ton parcours"
       title="Qu'est-ce que tu étudies ?"
-      subtitle="Plusieurs réponses possibles. Tu pourras en ajouter plus tard."
       footer={
         <ContinueButton
           label={chosen.length > 0 ? `Continuer avec ${chosen.length} matière${chosen.length > 1 ? "s" : ""}` : "Continuer"}
@@ -40,7 +39,7 @@ export default function SubjectsStep() {
         />
       }
     >
-      <div className="max-h-[52svh] space-y-6 overflow-y-auto pr-1">
+      <div className="max-h-[54svh] space-y-7 overflow-y-auto pr-1 sm:max-h-[58svh]">
         {SUBJECT_FAMILIES.map((family) => (
           <div key={family.name}>
             <p className="eyebrow mb-2.5 text-ink-tertiary">{family.name}</p>
@@ -59,7 +58,9 @@ export default function SubjectsStep() {
                         : "bg-surface text-ink paper"
                     }`}
                   >
-                    <span aria-hidden>{subjectEmoji(subject)}</span>
+                    <span aria-hidden className="emoji">
+                      {subjectEmoji(subject)}
+                    </span>
                     {subject}
                   </button>
                 );

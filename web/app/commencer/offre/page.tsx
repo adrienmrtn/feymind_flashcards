@@ -54,7 +54,7 @@ export default function OfferStep() {
   const saving = pricing.savingsPercent();
 
   return (
-    <div className="mx-auto w-full max-w-[560px] px-screen pb-10">
+    <div className="mx-auto w-full max-w-[640px] px-screen pb-10">
       <div className="flex h-14 items-center justify-end">
         <button
           type="button"
@@ -74,12 +74,14 @@ export default function OfferStep() {
         </button>
       </div>
 
-      <h1 className="text-[27px] font-bold leading-[1.15] text-ink sm:text-[31px]">
+      <h1 className="rise text-[28px] font-bold leading-[1.1] tracking-tight-title text-ink sm:text-[34px]">
         Ne rate pas l&apos;occasion de devenir le meilleur de ta classe.
       </h1>
-      <p className="mt-3 text-[15px] text-ink-secondary">Débloque tout Micabo et arrive préparé.</p>
 
-      <ul className="paper mt-7 divide-y divide-hairline overflow-hidden rounded-group bg-surface">
+      <ul
+        className="paper rise mt-8 divide-y divide-hairline overflow-hidden rounded-group bg-surface"
+        style={{ animationDelay: "90ms" }}
+      >
         {[
           "Quiz et cartes illimités",
           "Fiches générées et adaptées à ton niveau",
@@ -104,7 +106,7 @@ export default function OfferStep() {
         ))}
       </ul>
 
-      <div className="mt-5 space-y-2.5">
+      <div className="rise mt-6 space-y-2.5" style={{ animationDelay: "150ms" }}>
         {pricing.PLANS.map((plan) => {
           const recommended = plan.kind === pricing.RECOMMENDED_PLAN.kind;
           return (

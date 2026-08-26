@@ -10,23 +10,26 @@ import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Pricing } from "@/components/landing/Pricing";
 import { Questions } from "@/components/landing/Questions";
 import { RetentionChart } from "@/components/landing/RetentionChart";
+import { Reveal } from "@/components/landing/Reveal";
+import { SourceMarquee } from "@/components/landing/SourceMarquee";
 import { StartButton } from "@/components/landing/StartButton";
-import { Transformation } from "@/components/landing/Transformation";
 import { resumePath } from "@/lib/auth/resume";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Micabo — ton cours devient une fiche",
+  title: "Micabo — apprends tout, plus vite",
   description:
     "Dépose un polycopié, une photo de tes notes ou une vidéo de cours. Micabo en écrit la fiche que tu relis, en tire les cartes qui te la font retenir, et les fait revenir juste avant que tu l'oublies.",
 };
 
 /**
  * La vitrine. Elle montre le produit. Elle ne pose aucune question.
- * « Commencer » ouvre le parcours, un écran à la fois.
  *
- * Un lien de confirmation qui retombe ici (Site URL) n'y reste pas :
- * s'il y a un code ou une session, on reprend le parcours.
+ * Elle se lit d'un seul défilement : les sections s'enchaînent en apparaissant, et aucune ne
+ * dépend du défilement pour se dessiner — c'était la cause de la fiche coupée en deux.
+ *
+ * Un lien de confirmation qui retombe ici (Site URL) n'y reste pas : s'il y a un code ou une
+ * session, on reprend le parcours.
  */
 export default async function LandingPage({
   searchParams,
@@ -60,46 +63,30 @@ export default async function LandingPage({
       <main>
         <Hero />
 
-        <section className="mx-auto mt-28 max-w-page px-screen">
-          <p className="eyebrow text-ink-tertiary">Comment ça marche</p>
-          <h2 className="mt-2.5 max-w-[20ch] text-3xl font-bold text-ink sm:text-4xl">
-            Trois gestes. C&apos;est tout.
-          </h2>
-          <ol className="mt-9 grid gap-4 sm:grid-cols-3">
-            {[
-              {
-                n: "1",
-                title: "Tu déposes un cours",
-                text: "PDF, photo, Word ou une vidéo YouTube.",
-              },
-              {
-                n: "2",
-                title: "Micabo écrit la fiche",
-                text: "Le plan, les définitions, ce qui compte.",
-              },
-              {
-                n: "3",
-                title: "Les cartes reviennent",
-                text: "Juste avant que tu oublies. Jusqu'au jour J.",
-              },
-            ].map((step) => (
-              <li key={step.n} className="paper rounded-group bg-surface p-6">
-                <p className="numeral text-[22px] font-bold text-accent">{step.n}</p>
+        <SourceMarquee />
+
+        <Section
+          eyebrow="Comment ça marche"
+          title="Trois gestes, et c'est appris."
+          note="Rien à paramétrer, rien à découper à la main. Tu déposes, tu relis, tu révises."
+        >
+          <div className="grid gap-4 sm:grid-cols-3">
+            {STEPS.map((step, index) => (
+              <Reveal as="div" key={step.n} delay={index} className="paper lift rounded-group bg-surface p-6">
+                <p className="numeral text-[20px] font-bold text-accent">{step.n}</p>
                 <p className="mt-3 text-[17px] font-semibold text-ink">{step.title}</p>
                 <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-secondary">
                   {step.text}
                 </p>
-              </li>
+              </Reveal>
             ))}
-          </ol>
-        </section>
-
-        <Transformation />
+          </div>
+        </Section>
 
         <Section
           eyebrow="De la fiche aux cartes"
-          title="Ce que la fiche devient, quand tu veux la retenir."
-          note="Recto verso, QCM, texte à trou, schéma. Quatre formats, parce qu'un cours ne se révise pas d'une seule façon."
+          title="Quatre formats, parce qu'un cours ne se révise pas d'une seule façon."
+          note="Recto verso pour une définition, QCM pour un choix qui se piège, texte à trou pour une formulation exacte, schéma pour ce qui se dessine."
         >
           <DemoCards />
         </Section>
@@ -132,23 +119,26 @@ export default async function LandingPage({
           <Questions />
         </Section>
 
-        <section className="mx-auto mt-28 max-w-page px-screen pb-10 text-center">
-          <h2 className="text-3xl font-bold tracking-tight-title text-ink sm:text-4xl">
-            Ton cours. Une fiche. Des cartes.
+        <Reveal as="section" className="mx-auto mt-28 max-w-page px-screen pb-12 text-center">
+          <h2 className="mx-auto max-w-[22ch] text-[34px] font-bold leading-[1.06] tracking-display text-ink sm:text-[46px]">
+            Ton prochain contrôle commence maintenant.
           </h2>
-          <p className="mx-auto mt-4 max-w-reading text-[16px] leading-relaxed text-ink-secondary">
-            Clique sur Commencer. Le parcours s&apos;ouvre, un écran à la fois.
-          </p>
-          <div className="mt-8">
+          <div className="mt-9">
             <StartButton />
           </div>
-        </section>
+        </Reveal>
       </main>
 
       <Footer />
     </>
   );
 }
+
+const STEPS = [
+  { n: "1", title: "Tu déposes un cours", text: "PDF, photo, Word ou une vidéo YouTube." },
+  { n: "2", title: "Micabo écrit la fiche", text: "Le plan, les définitions, ce qui compte." },
+  { n: "3", title: "Les cartes reviennent", text: "Juste avant que tu oublies. Jusqu'au jour J." },
+] as const;
 
 function Section({
   eyebrow,
@@ -162,13 +152,19 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mx-auto mt-28 max-w-page px-screen">
-      <p className="eyebrow text-ink-tertiary">{eyebrow}</p>
-      <h2 className="mt-2.5 max-w-[24ch] text-3xl font-bold text-ink sm:text-4xl">{title}</h2>
-      {note ? (
-        <p className="mt-4 max-w-reading text-[16px] leading-relaxed text-ink-secondary">{note}</p>
-      ) : null}
-      <div className="mt-9">{children}</div>
+    <section className="mx-auto mt-28 max-w-page px-screen sm:mt-36">
+      <Reveal>
+        <p className="eyebrow text-ink-tertiary">{eyebrow}</p>
+        <h2 className="mt-2.5 max-w-[26ch] text-[30px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[40px]">
+          {title}
+        </h2>
+        {note ? (
+          <p className="mt-4 max-w-reading text-[16px] leading-relaxed text-ink-secondary">{note}</p>
+        ) : null}
+      </Reveal>
+      <Reveal delay={1} className="mt-9">
+        {children}
+      </Reveal>
     </section>
   );
 }

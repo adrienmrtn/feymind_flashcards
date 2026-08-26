@@ -8,33 +8,31 @@ import type { OnboardingPath } from "@/lib/onboarding/steps";
 /**
  * La charpente d'un écran de parcours.
  *
- * **Un écran, une chose** : un titre court, une ligne de sous-titre au plus, et une seule chose à
- * regarder. C'est la règle du tunnel iOS, et c'est celle qui a été la plus mal tenue là-bas — un
- * écran d'inscription se lit en deux secondes ou ne se lit pas.
+ * **Un écran, une question, aucun sous-titre.** Les lignes d'explication sous le titre ont été
+ * retirées : sur un écran qui ne pose qu'une question, elles répètent le titre ou expliquent une
+ * mécanique que la réponse suivante rend évidente. Ce qui reste tient debout tout seul.
  *
- * Les réponses **occupent la page** plutôt que d'être tassées sous le titre. Sur un écran de
- * question, les réponses *sont* le contenu : les serrer en haut laisse les deux tiers de l'écran
- * vides en dessous et fait lire un formulaire.
+ * La colonne s'élargit sur un ordinateur (`640px` contre `560px`) et le titre grandit avec elle :
+ * un tunnel dessiné pour un téléphone, servi tel quel au milieu d'un écran de portable, se lit
+ * comme un site mobile encadré de vide.
  */
 export function Scaffold({
   eyebrow,
   title,
-  subtitle,
   skip,
   children,
   footer,
 }: {
   eyebrow?: string;
   title: React.ReactNode;
-  subtitle?: React.ReactNode;
   /** L'échappatoire, posée en haut à droite sur la ligne du sur-titre. */
   skip?: { label: string; href: OnboardingPath };
   children: React.ReactNode;
   footer: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto flex min-h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[560px] flex-col px-screen pb-8">
-      <div className="flex items-baseline justify-between gap-4 pt-2">
+    <div className="mx-auto flex min-h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[640px] flex-col px-screen pb-10">
+      <div className="flex items-baseline justify-between gap-4 pt-3">
         {eyebrow ? <p className="eyebrow text-ink-tertiary">{eyebrow}</p> : <span />}
         {skip ? (
           <Link
@@ -46,15 +44,21 @@ export function Scaffold({
         ) : null}
       </div>
 
-      <h1 className="mt-3 text-[26px] font-bold leading-[1.15] text-ink sm:text-[30px]">{title}</h1>
-      {subtitle ? (
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">{subtitle}</p>
-      ) : null}
+      <h1 className="rise mt-4 text-[28px] font-bold leading-[1.12] tracking-tight-title text-ink sm:text-[34px]">
+        {title}
+      </h1>
 
-      {/* Le contenu prend toute la place qui reste. */}
-      <div className="flex min-h-0 flex-1 flex-col justify-center py-7">{children}</div>
+      {/* Le contenu prend toute la place qui reste, et son entrée suit celle du titre. */}
+      <div
+        className="rise flex min-h-0 flex-1 flex-col justify-center py-9"
+        style={{ animationDelay: "90ms" }}
+      >
+        {children}
+      </div>
 
-      <div className="shrink-0">{footer}</div>
+      <div className="rise shrink-0" style={{ animationDelay: "150ms" }}>
+        {footer}
+      </div>
     </div>
   );
 }
@@ -90,13 +94,29 @@ export function ContinueButton({
         onPress?.();
         if (href) router.push(href);
       }}
-      className={`pressable h-14 w-full rounded-button text-[16px] font-semibold transition-colors duration-hover ${
+      className={`pressable group flex h-14 w-full items-center justify-center gap-2 rounded-button text-[16px] font-semibold transition-colors duration-hover ${
         enabled
           ? `bg-ink text-on-ink ${shiny ? "shiny" : ""}`
           : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
       }`}
     >
       {label}
+      {/* La flèche avance de deux points au survol : le seul mouvement du bouton, et il dit le
+          sens de la marche. */}
+      <svg
+        aria-hidden
+        viewBox="0 0 20 20"
+        className="h-4 w-4 transition-transform duration-hover ease-out-strong group-hover:translate-x-0.5"
+      >
+        <path
+          d="M4 10h11M11 5l5 5-5 5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </button>
   );
 }
@@ -104,8 +124,9 @@ export function ContinueButton({
 /**
  * Une réponse.
  *
- * Un emoji posé **à même la ligne**, sans fond ni cadre : une pastille colorée par ligne fait lire
- * des pictogrammes au lieu des réponses. C'est un point d'accroche, pas une tuile.
+ * L'emoji est posé **à même la ligne**, sans fond ni cadre : une pastille colorée par ligne fait
+ * lire des pictogrammes au lieu des réponses. Il porte la classe `emoji`, sans quoi un drapeau se
+ * dessine « FR » sur les systèmes dont la police de texte n'a pas les glyphes régionaux.
  */
 export function ChoiceRow({
   emoji,
@@ -125,17 +146,15 @@ export function ChoiceRow({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`pressable flex w-full items-center gap-3.5 rounded-button px-4 py-3.5 text-left transition-colors duration-hover ${
+      className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-4 text-left transition-colors duration-hover ${
         selected ? "bg-accent-soft" : "bg-surface paper"
       }`}
     >
-      <span aria-hidden className="text-[22px] leading-none">
+      <span aria-hidden className="emoji text-[24px]">
         {emoji}
       </span>
       <span className="min-w-0 flex-1">
-        <span
-          className={`block text-[16px] font-medium ${selected ? "text-accent" : "text-ink"}`}
-        >
+        <span className={`block text-[16px] font-medium ${selected ? "text-accent" : "text-ink"}`}>
           {title}
         </span>
         {detail ? (
@@ -144,7 +163,7 @@ export function ChoiceRow({
       </span>
       <span
         aria-hidden
-        className={`h-5 w-5 shrink-0 rounded-full border-2 ${
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-hover ${
           selected ? "border-accent bg-accent" : "border-stroke-strong"
         }`}
       >

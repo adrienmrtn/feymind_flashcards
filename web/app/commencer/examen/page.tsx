@@ -65,7 +65,6 @@ export default function ExamStep() {
     <Scaffold
       eyebrow="Ton examen"
       title="C'est quand, ton prochain examen ?"
-      subtitle="Micabo te créera un parcours adapté à ton examen, pour que tu arrives plus prêt que jamais."
       footer={
         <ContinueButton
           label="Réussir cet examen"

@@ -42,7 +42,6 @@ export default function CountryStep() {
     <Scaffold
       eyebrow="Ton parcours"
       title="Tu étudies dans quel pays ?"
-      subtitle="Pour te proposer le bon système scolaire."
       footer={
         <ContinueButton
           enabled={Boolean(selected) && ready}
@@ -50,7 +49,7 @@ export default function CountryStep() {
         />
       }
     >
-      <div className="space-y-2">
+      <div className="max-h-[56svh] space-y-2 overflow-y-auto pr-1 sm:max-h-[60svh]">
         {ordered.map((item, index) => (
           <ChoiceRow
             key={item.code}

@@ -287,6 +287,112 @@ video {
   }
 }
 
+/* Les drapeaux.
+ *
+ * Un drapeau est une paire de lettres régionales, et une police de texte n'en a pas le glyphe :
+ * `🇫🇷` se dessine alors « FR ». La pile ci-dessous force la police à emoji du système avant la
+ * police du site, ce qui est le seul moyen fiable de voir un drapeau sur Windows comme sur Mac. */
+@utility emoji {
+  font-family:
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla",
+    "Segoe UI Symbol", sans-serif;
+  font-variant-emoji: emoji;
+  line-height: 1;
+}
+
+/* --------------------------------------------------------------------------
+   L'apparition au défilement
+
+   Une section qui monte de douze points en arrivant à l'écran donne le rythme d'une page qui se
+   déroule, au lieu d'une pile de blocs déjà tous là. Le déplacement est court : au-delà, on
+   attend le contenu au lieu de le lire.
+   -------------------------------------------------------------------------- */
+@utility reveal {
+  opacity: 0;
+  translate: 0 14px;
+  transition-property: opacity, translate;
+  transition-duration: 620ms;
+  transition-timing-function: var(--ease-out-strong);
+}
+
+.reveal[data-shown="true"] {
+  opacity: 1;
+  translate: 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    translate: none;
+  }
+}
+
+/* Le compteur d'une entrée en cascade : chaque enfant part un cran après le précédent. */
+@utility stagger {
+  transition-delay: calc(var(--index, 0) * 70ms);
+}
+
+@keyframes micabo-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -6px;
+  }
+}
+
+@utility float {
+  animation: micabo-float 5.5s var(--ease-in-out-strong) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float {
+    animation: none;
+  }
+}
+
+@keyframes micabo-marquee {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: -50% 0;
+  }
+}
+
+@utility marquee-track {
+  animation: micabo-marquee 34s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+@keyframes micabo-rise {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* L'entrée d'un écran de parcours : il se pose, il ne surgit pas. */
+@utility rise {
+  animation: micabo-rise 480ms var(--ease-out-strong) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation-duration: 200ms;
+    translate: none;
+  }
+}
+
 /* Les nombres qui se lisent comme un résultat, et eux seuls. */
 @utility numeral {
   font-family: var(--font-number);
