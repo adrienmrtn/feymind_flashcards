@@ -153,6 +153,46 @@ export interface ExamRow {
   is_planned: boolean;
 }
 
+export interface FriendRequestRow {
+  requesterId: string;
+  username: string | null;
+  createdAt: string;
+}
+
+/** Demandes d'amis reçues et encore en attente. L'UI les affichera quand l'ajout d'amis existera. */
+export async function listPendingFriendRequests(): Promise<FriendRequestRow[]> {
+  const supabase = await createClient();
+  const userId = await currentUserId();
+  if (!userId) return [];
+
+  const { data, error } = await supabase
+    .from("friendships")
+    .select("requester_id, created_at")
+    .eq("addressee_id", userId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) return [];
+
+  const rows = (data as { requester_id: string; created_at: string }[] | null) ?? [];
+  if (rows.length === 0) return [];
+
+  const ids = rows.map((row) => row.requester_id);
+  const { data: people } = await supabase.from("directory").select("id, username").in("id", ids);
+  const names = new Map(
+    ((people as { id: string; username: string }[] | null) ?? []).map((person) => [
+      person.id,
+      person.username,
+    ]),
+  );
+
+  return rows.map((row) => ({
+    requesterId: row.requester_id,
+    username: names.get(row.requester_id) ?? null,
+    createdAt: row.created_at,
+  }));
+}
+
 export async function listExams(): Promise<ExamRow[]> {
   const supabase = await createClient();
   const userId = await currentUserId();

@@ -98,6 +98,34 @@ export function dayDifference(from: Date, to: Date): number {
   return Math.round((b.getTime() - a.getTime()) / 86_400_000);
 }
 
+/**
+ * « aujourd'hui », « demain », « J-5 », « passé » — le libellé d'iOS,
+ * `Exam.countdownLabel()`.
+ */
+export function examCountdownLabel(daysRemaining: number): string {
+  if (daysRemaining < 0) return "passé";
+  if (daysRemaining === 0) return "aujourd'hui";
+  if (daysRemaining === 1) return "demain";
+  return `J-${daysRemaining}`;
+}
+
+/**
+ * L'urgence d'un examen, pour colorer la carte du tableau de bord.
+ *
+ * Aujourd'hui et demain sont rouges : c'est trop tard pour improviser.
+ * La semaine qui vient est ocre. Au-delà de trois semaines, on est encore
+ * dans le vert — le plan a le temps de travailler.
+ */
+export type ExamUrgency = "critical" | "soon" | "upcoming" | "later" | "past";
+
+export function examUrgency(daysRemaining: number): ExamUrgency {
+  if (daysRemaining < 0) return "past";
+  if (daysRemaining <= 1) return "critical";
+  if (daysRemaining <= 7) return "soon";
+  if (daysRemaining <= 21) return "upcoming";
+  return "later";
+}
+
 // MARK: - Plan
 
 export function planExam(

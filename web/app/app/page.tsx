@@ -2,26 +2,64 @@ import Link from "next/link";
 
 import {
   DEFAULT_DAILY_MINUTES,
+  EXAM_INTENSITY_LABELS,
   courseAccent,
   dailyLimits,
+  dayDifference,
+  examCountdownLabel,
+  examUrgency,
   resolveEmoji,
+  startOfDay,
+  stripInlineMarkup,
   studyCounts,
+  type ExamIntensity,
+  type ExamUrgency,
 } from "@micabo/core";
 
-import { listAllCards, listCourses } from "@/lib/data/courses";
+import {
+  listAllCards,
+  listCourses,
+  listExams,
+  listPendingFriendRequests,
+  type CardRow,
+  type CourseRow,
+  type ExamRow,
+  type FriendRequestRow,
+} from "@/lib/data/courses";
+import { createClient } from "@/lib/supabase/server";
 
 /**
- * **Cours : l'écran d'ouverture du web.**
+ * **Le tableau de bord : l'écran d'ouverture du web.**
  *
- * L'iPhone ouvre sur Réviser, et c'est juste là-bas — on sort son téléphone dans une file
- * d'attente, et le bouton de session doit être sous le pouce. On s'assied devant un écran pour
- * travailler, et ce qu'on veut alors est l'étagère : ce qu'on a importé, ce qu'on a produit.
- *
- * Le compte de cartes dues est quand même là, en haut, mais comme **une ligne et pas comme une
- * page** : c'est un rappel, pas la destination.
+ * Après la connexion on arrive ici, pas sur l'étagère. Cinq choses, dans cet ordre : le
+ * prochain examen (coloré selon l'urgence), les cartes dues aujourd'hui, les derniers cours
+ * ajoutés, les cartes qui coincent, et les demandes d'amis — ces dernières n'existent pas
+ * encore, la case est déjà là pour qu'elles aient un endroit.
  */
-export default async function CoursesPage() {
-  const [courses, cards] = await Promise.all([listCourses(), listAllCards()]);
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [courses, cards, exams, friends, profile] = await Promise.all([
+    listCourses(),
+    listAllCards(),
+    listExams(),
+    listPendingFriendRequests(),
+    user
+      ? supabase
+          .from("profiles")
+          .select("daily_minutes, display_name")
+          .eq("id", user.id)
+          .maybeSingle()
+          .then((result) => result.data)
+      : null,
+  ]);
+
+  const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
+  const today = startOfDay(new Date());
+  const titles = new Map(courses.map((course) => [course.id, course]));
 
   const counts = studyCounts(
     cards.map((card) => ({
@@ -32,123 +70,378 @@ export default async function CoursesPage() {
       createdAt: new Date(card.created_at),
       isSuspended: card.is_suspended,
     })),
-    { limits: dailyLimits(DEFAULT_DAILY_MINUTES) },
+    { limits: dailyLimits(minutes) },
   );
 
-  const mine = courses.filter((course) => !course.is_from_library);
+  const nextExam = exams
+    .map((exam) => ({
+      ...exam,
+      days: dayDifference(today, startOfDay(new Date(`${exam.exam_date}T12:00:00`))),
+    }))
+    .filter((exam) => exam.days >= 0)
+    .sort((left, right) => left.days - right.days)[0];
+
+  const recent = [...courses]
+    .filter((course) => !course.is_from_library)
+    .sort((left, right) => right.created_at.localeCompare(left.created_at))
+    .slice(0, 4);
+
+  const hard = [...cards]
+    .filter((card) => !card.is_suspended && (card.lapses > 0 || card.ease_factor < 2.3))
+    .sort((left, right) => right.lapses - left.lapses || left.ease_factor - right.ease_factor)
+    .slice(0, 5);
+
+  const greeting = greetingFor(new Date());
+  const name = profile?.display_name?.trim().split(/\s+/)[0];
 
   return (
     <>
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow text-ink-tertiary">Ton étagère</p>
-          <h1 className="mt-2 text-[32px] font-bold leading-tight text-ink">Cours</h1>
-        </div>
-
-        {counts.total > 0 ? (
-          <Link
-            href="/app/reviser"
-            className="pressable flex items-center gap-2.5 rounded-button bg-ink px-5 py-3 text-[15px] font-semibold text-on-ink"
-          >
-            Réviser <span className="numeral">{counts.total}</span> carte
-            {counts.total > 1 ? "s" : ""}
-          </Link>
-        ) : null}
+      <header>
+        <p className="eyebrow text-ink-tertiary">{greeting}</p>
+        <h1 className="mt-2 text-[32px] font-bold leading-tight text-ink">
+          {name ? `${name}.` : "Tableau de bord"}
+        </h1>
       </header>
 
-      {counts.total === 0 && cards.length > 0 ? (
-        <p className="mt-6 text-[14px] text-ink-tertiary">
-          Tout est à jour. Rien ne revient aujourd&apos;hui.
-        </p>
-      ) : null}
+      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        <ExamCard exam={nextExam} courses={titles} />
+        <ReviewCard counts={counts} />
+      </div>
 
-      {mine.length === 0 ? (
-        <EmptyShelf />
-      ) : (
-        <div className="mt-9 overflow-hidden rounded-group bg-surface paper">
-          {mine.map((course, index) => (
-            <Link
-              key={course.id}
-              href={`/app/c/${course.id}` as never}
-              className={`flex items-center gap-4 px-5 py-4 transition-colors duration-hover hover:bg-surface-muted/60 ${
-                index > 0 ? "border-t border-hairline" : ""
-              }`}
-            >
-              <span
-                aria-hidden
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-tile text-[20px]"
-                style={{ backgroundColor: `${course.accent_hex ?? courseAccent(course.id)}1f` }}
-              >
-                {resolveEmoji(course.emoji, course.subject, course.title)}
-              </span>
+      <section className="mt-8">
+        <SectionHead title="Derniers cours ajoutés" href="/app/cours" action="Tous les cours" />
+        {recent.length === 0 ? (
+          <EmptyBlock
+            title="Rien sur l'étagère."
+            body="Importe un polycopié : la fiche s'écrit, et tu décides ensuite s'il en faut des cartes."
+            href="/app/importer"
+            action="Importer un cours"
+          />
+        ) : (
+          <ul className="paper divide-y divide-hairline overflow-hidden rounded-group bg-surface">
+            {recent.map((course) => (
+              <li key={course.id}>
+                <Link
+                  href={`/app/c/${course.id}` as never}
+                  className="flex items-center gap-4 px-5 py-4 transition-colors duration-hover hover:bg-surface-muted/60"
+                >
+                  <span
+                    aria-hidden
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-tile text-[20px]"
+                    style={{
+                      backgroundColor: `${course.accent_hex ?? courseAccent(course.id)}1f`,
+                    }}
+                  >
+                    {resolveEmoji(course.emoji, course.subject, course.title)}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[16px] font-semibold text-ink">
+                      {course.title || "Sans titre"}
+                    </span>
+                    <span className="mt-0.5 block truncate text-[13px] text-ink-tertiary">
+                      {[course.subject, addedLabel(course.created_at)].filter(Boolean).join(" · ")}
+                    </span>
+                  </span>
+                  <Chevron />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[16px] font-semibold text-ink">
-                  {course.title || "Sans titre"}
-                </span>
-                <span className="mt-0.5 block truncate text-[13px] text-ink-tertiary">
-                  {[course.subject, sourceLabel(course.source)].filter(Boolean).join(" · ")}
-                </span>
-              </span>
-
-              <svg
-                aria-hidden
-                viewBox="0 0 20 20"
-                className="h-4 w-4 shrink-0 text-ink-tertiary"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M8 4l6 6-6 6" />
-              </svg>
-            </Link>
-          ))}
-        </div>
-      )}
+      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        <HardCards cards={hard} courses={titles} />
+        <FriendsCard requests={friends} />
+      </div>
     </>
   );
 }
 
-/**
- * L'étagère vide.
- *
- * C'est l'écran que voit un étudiant qui vient de finir le parcours, donc le premier écran réel du
- * produit — et l'état qu'on oublie toujours de dessiner. Il porte son propre appel à importer :
- * une page vide avec une navigation à gauche laisse chercher où commencer.
- */
-function EmptyShelf() {
-  return (
-    <div className="mt-10 rounded-group bg-canvas-sage p-8 text-center">
-      <p className="text-[17px] font-semibold text-ink">Ton étagère est vide.</p>
-      <p className="mx-auto mt-2.5 max-w-[42ch] text-[14.5px] leading-relaxed text-ink-reading">
-        Dépose un polycopié, colle tes notes ou donne un lien de vidéo de cours. Micabo en écrit la
-        fiche, et tu décides ensuite s&apos;il en faut des cartes.
-      </p>
+function ExamCard({
+  exam,
+  courses,
+}: {
+  exam: (ExamRow & { days: number }) | undefined;
+  courses: Map<string, CourseRow>;
+}) {
+  if (!exam) {
+    return (
       <Link
-        href="/app/importer"
-        className="pressable mt-7 inline-flex items-center gap-2 rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
+        href={"/app/examens" as never}
+        className="paper group rounded-group bg-surface p-6 transition-transform duration-hover hover:-translate-y-0.5"
       >
-        Importer un cours
+        <p className="eyebrow text-ink-tertiary">Prochain examen</p>
+        <p className="mt-3 text-[18px] font-semibold text-ink">Aucun examen prévu.</p>
+        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-secondary">
+          Une date remet les cartes dans le bon ordre. Sans elle, la répétition espacée ignore le
+          jour J.
+        </p>
+        <p className="mt-5 text-[13px] font-semibold text-accent">Ajouter un examen</p>
+      </Link>
+    );
+  }
+
+  const urgency = examUrgency(exam.days);
+  const tone = urgencyTone(urgency);
+  const attached = (exam.course_ids ?? [])
+    .map((id) => courses.get(id)?.title)
+    .filter(Boolean)
+    .slice(0, 3);
+  const intensity = asIntensity(exam.intensity);
+
+  return (
+    <Link
+      href={"/app/examens" as never}
+      className={`group rounded-group p-6 transition-transform duration-hover hover:-translate-y-0.5 ${tone.surface}`}
+    >
+      <p className={`eyebrow ${tone.muted}`}>Prochain examen</p>
+      <div className="mt-3 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className={`text-[18px] font-semibold leading-snug ${tone.ink}`}>{exam.name}</p>
+          <p className={`mt-1 text-[13.5px] ${tone.muted}`}>{frenchDate(exam.exam_date)}</p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className={`numeral text-[28px] font-bold leading-none ${tone.ink}`}>
+            {examCountdownLabel(exam.days)}
+          </p>
+        </div>
+      </div>
+      <p className={`mt-4 text-[13px] ${tone.muted}`}>
+        {EXAM_INTENSITY_LABELS[intensity]}
+        {attached.length > 0 ? ` · ${attached.join(", ")}` : " · aucun cours rattaché"}
+      </p>
+    </Link>
+  );
+}
+
+function ReviewCard({
+  counts,
+}: {
+  counts: { total: number; newCards: number; learning: number; review: number };
+}) {
+  if (counts.total === 0) {
+    return (
+      <Link
+        href="/app/reviser"
+        className="paper group rounded-group bg-positive-soft p-6 transition-transform duration-hover hover:-translate-y-0.5"
+      >
+        <p className="eyebrow text-positive">Aujourd&apos;hui</p>
+        <p className="mt-3 text-[18px] font-semibold text-ink">Tout est à jour.</p>
+        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-secondary">
+          Rien ne revient aujourd&apos;hui. C&apos;est le principe : une carte qu&apos;on revoit trop
+          tôt est une carte pour rien.
+        </p>
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      href="/app/reviser"
+      className="paper group rounded-group bg-surface p-6 transition-transform duration-hover hover:-translate-y-0.5"
+    >
+      <p className="eyebrow text-ink-tertiary">À réviser aujourd&apos;hui</p>
+      <p className="mt-3 numeral text-[40px] font-bold leading-none text-ink">{counts.total}</p>
+      <p className="mt-1 text-[13.5px] text-ink-secondary">
+        carte{counts.total > 1 ? "s" : ""} due{counts.total > 1 ? "s" : ""}
+      </p>
+      <p className="mt-4 text-[13px] text-ink-tertiary">
+        {[
+          counts.review ? `${counts.review} révision${counts.review > 1 ? "s" : ""}` : null,
+          counts.learning ? `${counts.learning} en apprentissage` : null,
+          counts.newCards ? `${counts.newCards} neuve${counts.newCards > 1 ? "s" : ""}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
+      <p className="mt-5 text-[13px] font-semibold text-accent">Commencer la session</p>
+    </Link>
+  );
+}
+
+function HardCards({
+  cards,
+  courses,
+}: {
+  cards: CardRow[];
+  courses: Map<string, CourseRow>;
+}) {
+  return (
+    <section className="paper rounded-group bg-surface p-6">
+      <p className="eyebrow text-ink-tertiary">Cartes les plus difficiles</p>
+      {cards.length === 0 ? (
+        <p className="mt-3 text-[14.5px] leading-relaxed text-ink-secondary">
+          Aucune carte n&apos;a encore coincé. Ça viendra — et c&apos;est pour ça qu&apos;on les
+          note.
+        </p>
+      ) : (
+        <ul className="mt-4 divide-y divide-hairline">
+          {cards.map((card) => {
+            const course = card.course_id ? courses.get(card.course_id) : undefined;
+            const href = card.course_id
+              ? (`/app/c/${card.course_id}/cartes` as never)
+              : ("/app/cours" as never);
+            return (
+              <li key={card.id}>
+                <Link
+                  href={href}
+                  className="-mx-2 flex items-start gap-3 rounded-button px-2 py-3 transition-colors duration-hover hover:bg-surface-muted/60"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14.5px] font-medium leading-snug text-ink">
+                      {previewFront(card.front)}
+                    </span>
+                    <span className="mt-0.5 block truncate text-[12.5px] text-ink-tertiary">
+                      {course?.title ?? "Sans cours"}
+                    </span>
+                  </span>
+                  <span className="numeral shrink-0 text-[13px] font-semibold text-negative">
+                    {card.lapses} oubli{card.lapses > 1 ? "s" : ""}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function FriendsCard({ requests }: { requests: FriendRequestRow[] }) {
+  return (
+    <section className="paper rounded-group bg-surface p-6">
+      <p className="eyebrow text-ink-tertiary">Demandes d&apos;amis</p>
+      {requests.length === 0 ? (
+        <>
+          <p className="mt-3 text-[18px] font-semibold text-ink">Rien pour l&apos;instant.</p>
+          <p className="mt-2 text-[13.5px] leading-relaxed text-ink-secondary">
+            Les demandes d&apos;amis arriveront ici. On pourra alors partager un cours sans
+            l&apos;ouvrir à tout le monde.
+          </p>
+        </>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {requests.map((request) => (
+            <li
+              key={request.requesterId}
+              className="flex items-center justify-between gap-3 rounded-button bg-surface-muted px-3 py-2.5"
+            >
+              <span className="truncate text-[14.5px] font-medium text-ink">
+                {request.username ? `@${request.username}` : "Quelqu'un"}
+              </span>
+              <span className="shrink-0 text-[12px] text-ink-tertiary">Bientôt</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function SectionHead({
+  title,
+  href,
+  action,
+}: {
+  title: string;
+  href: string;
+  action: string;
+}) {
+  return (
+    <div className="mb-3 flex items-baseline justify-between gap-4">
+      <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
+      <Link href={href as never} className="text-[13px] font-medium text-accent hover:underline">
+        {action}
       </Link>
     </div>
   );
 }
 
-function sourceLabel(source: string): string {
-  switch (source) {
-    case "pdf":
-      return "PDF";
-    case "photo":
-      return "Photos";
-    case "youtube":
-      return "Vidéo";
-    case "docx":
-      return "Word";
-    case "deck":
-      return "Paquet";
-    default:
-      return "Texte";
+function EmptyBlock({
+  title,
+  body,
+  href,
+  action,
+}: {
+  title: string;
+  body: string;
+  href: string;
+  action: string;
+}) {
+  return (
+    <div className="rounded-group bg-canvas-sage p-7">
+      <p className="text-[16px] font-semibold text-ink">{title}</p>
+      <p className="mt-2 max-w-[46ch] text-[14px] leading-relaxed text-ink-reading">{body}</p>
+      <Link
+        href={href as never}
+        className="pressable mt-5 inline-flex rounded-button bg-ink px-5 py-2.5 text-[14px] font-semibold text-on-ink"
+      >
+        {action}
+      </Link>
+    </div>
+  );
+}
+
+function Chevron() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 20 20"
+      className="h-4 w-4 shrink-0 text-ink-tertiary"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M8 4l6 6-6 6" />
+    </svg>
+  );
+}
+
+function urgencyTone(urgency: ExamUrgency): { surface: string; ink: string; muted: string } {
+  switch (urgency) {
+    case "critical":
+      return { surface: "bg-negative-soft", ink: "text-negative", muted: "text-negative/70" };
+    case "soon":
+      return { surface: "bg-caution-soft", ink: "text-caution", muted: "text-caution/75" };
+    case "upcoming":
+      return { surface: "bg-info-soft", ink: "text-info", muted: "text-info/70" };
+    case "later":
+      return { surface: "bg-accent-soft", ink: "text-accent", muted: "text-accent/75" };
+    case "past":
+      return { surface: "bg-surface-muted", ink: "text-ink-secondary", muted: "text-ink-tertiary" };
   }
+}
+
+function asIntensity(value: string): ExamIntensity {
+  return value === "light" || value === "intense" || value === "standard" ? value : "standard";
+}
+
+function frenchDate(value: string): string {
+  return new Date(`${value}T12:00:00`).toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
+function addedLabel(iso: string): string {
+  const date = new Date(iso);
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+function previewFront(front: string): string {
+  const plain = stripInlineMarkup(front).replace(/\s+/g, " ").trim();
+  return plain.length > 90 ? `${plain.slice(0, 87)}…` : plain || "Carte sans question";
+}
+
+function greetingFor(now: Date): string {
+  const hour = now.getHours();
+  if (hour < 6) return "Bonne nuit";
+  if (hour < 12) return "Bonjour";
+  if (hour < 18) return "Bon après-midi";
+  return "Bonsoir";
 }

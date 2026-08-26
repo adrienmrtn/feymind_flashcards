@@ -17,6 +17,8 @@ import {
   averageDailyLoad,
   busiestDay,
   dayDifference,
+  examCountdownLabel,
+  examUrgency,
   ladder,
   orderedCards,
   passesFor,
@@ -238,5 +240,23 @@ describe("le plafond d'intervalle", () => {
     const clamped = clampedToDeadline(outcome, addDays(now, 90), now);
 
     expect(clamped).toEqual(outcome);
+  });
+});
+
+describe("l'urgence d'un examen", () => {
+  it("annonce aujourd'hui, demain, J-N et passé comme l'iPhone", () => {
+    expect(examCountdownLabel(0)).toBe("aujourd'hui");
+    expect(examCountdownLabel(1)).toBe("demain");
+    expect(examCountdownLabel(5)).toBe("J-5");
+    expect(examCountdownLabel(-2)).toBe("passé");
+  });
+
+  it("classe aujourd'hui et demain en critique, la semaine en ocre", () => {
+    expect(examUrgency(0)).toBe("critical");
+    expect(examUrgency(1)).toBe("critical");
+    expect(examUrgency(7)).toBe("soon");
+    expect(examUrgency(14)).toBe("upcoming");
+    expect(examUrgency(40)).toBe("later");
+    expect(examUrgency(-1)).toBe("past");
   });
 });

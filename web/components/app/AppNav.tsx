@@ -22,7 +22,8 @@ import { usePathname } from "next/navigation";
  */
 
 const LINKS = [
-  { href: "/app", label: "Cours", icon: "shelf" },
+  { href: "/app", label: "Accueil", icon: "home" },
+  { href: "/app/cours", label: "Cours", icon: "shelf" },
   { href: "/app/reviser", label: "Réviser", icon: "cards" },
   { href: "/app/examens", label: "Examens", icon: "calendar" },
   { href: "/app/profil", label: "Profil", icon: "person" },
@@ -68,8 +69,11 @@ export function AppNav() {
     }
   }
 
-  const isCurrent = (href: string) =>
-    href === "/app" ? pathname === "/app" : pathname.startsWith(href);
+  const isCurrent = (href: string) => {
+    if (href === "/app") return pathname === "/app";
+    if (href === "/app/cours") return pathname === "/app/cours" || pathname.startsWith("/app/c/");
+    return pathname.startsWith(href);
+  };
 
   const onOpenCourse = Boolean(open && pathname.startsWith(`/app/c/${open.id}`));
 
@@ -250,6 +254,12 @@ function Icon({ name, filled }: { name: string; filled: boolean }) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
+      {name === "home" ? (
+        <>
+          <path d="M3.5 9.2L10 3.6l6.5 5.6" />
+          <path d="M5.2 8.4V16h9.6V8.4" fill={filled ? "currentColor" : "none"} />
+        </>
+      ) : null}
       {name === "shelf" ? (
         <>
           <rect x="3" y="3.5" width="4.5" height="13" rx="1.2" fill={filled ? "currentColor" : "none"} />

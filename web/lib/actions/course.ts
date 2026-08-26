@@ -146,6 +146,7 @@ export async function importFromText(input: {
   if (insertError) return { status: "error", message: insertError.message };
 
   revalidatePath("/app");
+  revalidatePath("/app/cours");
   return { status: "ok", courseId: id };
 }
 
@@ -269,6 +270,7 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
 
   revalidatePath(`/app/c/${courseId}/cartes`);
   revalidatePath("/app");
+  revalidatePath("/app/cours");
   return { status: "ok" as const, count: cards.length };
 }
 

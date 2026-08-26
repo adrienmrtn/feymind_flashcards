@@ -137,6 +137,7 @@ export async function createCard(input: {
 
   revalidatePath(`/app/c/${input.courseId}/cartes`);
   revalidatePath("/app");
+  revalidatePath("/app/cours");
   return { status: "ok", cardId: id };
 }
 
@@ -157,6 +158,7 @@ export async function deleteCard(cardId: string, courseId: string): Promise<Card
 
   revalidatePath(`/app/c/${courseId}/cartes`);
   revalidatePath("/app");
+  revalidatePath("/app/cours");
   return { status: "ok" };
 }
 
