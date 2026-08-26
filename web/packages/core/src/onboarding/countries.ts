@@ -4,53 +4,132 @@
  * C'est la **première** question du parcours, et pas par politesse géographique : c'est elle qui
  * commande les réponses de « qu'est-ce qui te décrit le mieux ? », et elle décide aussi de la
  * langue dans laquelle Micabo écrit. Dans l'autre sens, il faudrait servir les mêmes sept réponses
- * françaises à tout le monde — ce qui ne laisse aucune réponse juste à un Américain, un
- * Britannique ou un Québécois.
+ * françaises à tout le monde — ce qui ne laisse aucune réponse juste à un Polonais ou à un Turc.
  *
- * « Ailleurs » n'est pas un aveu d'échec : la liste ne peut pas couvrir le monde, et une échelle
- * générique vaut mieux que des paliers inventés.
+ * **L'ordre de la liste est l'ordre d'affichage**, et il n'est pas alphabétique : ce sont les
+ * marchés visés en premier qui se lisent en premier. Les pays francophones historiques suivent,
+ * parce qu'ils restent servis mais ne sont plus ce qu'on cherche d'abord.
+ *
+ * « Autre pays » n'a plus d'échelle inventée : l'écran ouvre un champ où l'on **écrit** son pays,
+ * et le nom choisi est gardé à côté. Un menu déroulant de deux cents entrées se parcourt moins vite
+ * qu'un mot tapé.
  */
 
 export type CountryCode =
   | "fr"
+  | "uk"
+  | "de"
+  | "it"
+  | "es"
+  | "pt"
+  | "cz"
+  | "nl"
+  | "gr"
+  | "hu"
+  | "pl"
+  | "ro"
+  | "se"
+  | "tr"
   | "be"
   | "ch"
   | "ca"
+  | "lu"
   | "ma"
   | "dz"
   | "tn"
   | "sn"
   | "ci"
-  | "lu"
-  | "uk"
   | "us"
   | "other";
 
-export type ContentLanguage = "fr" | "en";
+/**
+ * La langue de sortie du modèle.
+ *
+ * Les codes sont ceux d'ISO 639-1 et ne suivent pas toujours le pays : la Tchéquie écrit `cs`, la
+ * Grèce `el`, la Suède `sv`. C'est cette table qui fait la traduction, et c'est la même liste que
+ * `supabase/functions/_shared/language.ts`.
+ */
+export type ContentLanguage =
+  | "fr"
+  | "en"
+  | "de"
+  | "it"
+  | "es"
+  | "pt"
+  | "cs"
+  | "nl"
+  | "el"
+  | "hu"
+  | "pl"
+  | "ro"
+  | "sv"
+  | "tr";
+
+/** Le nom de la langue, écrit dans cette langue : c'est ainsi qu'on choisit une langue. */
+export const LANGUAGE_LABELS: Record<ContentLanguage, string> = {
+  fr: "Français",
+  en: "English",
+  de: "Deutsch",
+  it: "Italiano",
+  es: "Español",
+  pt: "Português",
+  cs: "Čeština",
+  nl: "Nederlands",
+  el: "Ελληνικά",
+  hu: "Magyar",
+  pl: "Polski",
+  ro: "Română",
+  sv: "Svenska",
+  tr: "Türkçe",
+};
 
 export interface Country {
   code: CountryCode;
   name: string;
   flag: string;
-  /** Le système scolaire, dit en trois mots. C'est ce qui justifie la question. */
-  systemHint: string;
+  /** Le code ISO 3166-1 alpha-2, pour dessiner le drapeau autrement qu'en emoji. */
+  iso: string;
   language: ContentLanguage;
 }
 
+function country(
+  code: CountryCode,
+  name: string,
+  iso: string,
+  flag: string,
+  language: ContentLanguage,
+): Country {
+  return { code, name, iso, flag, language };
+}
+
 export const COUNTRIES: readonly Country[] = [
-  { code: "fr", name: "France", flag: "🇫🇷", systemHint: "Brevet, bac, prépa, PASS", language: "fr" },
-  { code: "be", name: "Belgique", flag: "🇧🇪", systemHint: "CESS, bachelier, master", language: "fr" },
-  { code: "ch", name: "Suisse", flag: "🇨🇭", systemHint: "Maturité, bachelor, master", language: "fr" },
-  { code: "ca", name: "Canada", flag: "🇨🇦", systemHint: "Secondaire, cégep, université", language: "fr" },
-  { code: "ma", name: "Maroc", flag: "🇲🇦", systemHint: "Bac marocain, prépa, concours", language: "fr" },
-  { code: "dz", name: "Algérie", flag: "🇩🇿", systemHint: "Bac algérien, licence, master", language: "fr" },
-  { code: "tn", name: "Tunisie", flag: "🇹🇳", systemHint: "Bac tunisien, licence, mastère", language: "fr" },
-  { code: "sn", name: "Sénégal", flag: "🇸🇳", systemHint: "Bac, licence, grandes écoles", language: "fr" },
-  { code: "ci", name: "Côte d'Ivoire", flag: "🇨🇮", systemHint: "Bac, licence, grandes écoles", language: "fr" },
-  { code: "lu", name: "Luxembourg", flag: "🇱🇺", systemHint: "Diplôme de fin d'études, bachelor", language: "fr" },
-  { code: "uk", name: "Royaume-Uni", flag: "🇬🇧", systemHint: "GCSE, A-Levels, university", language: "en" },
-  { code: "us", name: "États-Unis", flag: "🇺🇸", systemHint: "High school, college, grad school", language: "en" },
-  { code: "other", name: "Ailleurs", flag: "🌍", systemHint: "Middle school, high school, college", language: "en" },
+  country("fr", "France", "fr", "🇫🇷", "fr"),
+  country("uk", "Royaume-Uni", "gb", "🇬🇧", "en"),
+  country("de", "Allemagne", "de", "🇩🇪", "de"),
+  country("it", "Italie", "it", "🇮🇹", "it"),
+  country("es", "Espagne", "es", "🇪🇸", "es"),
+  country("pt", "Portugal", "pt", "🇵🇹", "pt"),
+  country("cz", "Tchéquie", "cz", "🇨🇿", "cs"),
+  country("nl", "Pays-Bas", "nl", "🇳🇱", "nl"),
+  country("gr", "Grèce", "gr", "🇬🇷", "el"),
+  country("hu", "Hongrie", "hu", "🇭🇺", "hu"),
+  country("pl", "Pologne", "pl", "🇵🇱", "pl"),
+  country("ro", "Roumanie", "ro", "🇷🇴", "ro"),
+  country("se", "Suède", "se", "🇸🇪", "sv"),
+  country("tr", "Turquie", "tr", "🇹🇷", "tr"),
+
+  country("be", "Belgique", "be", "🇧🇪", "fr"),
+  country("ch", "Suisse", "ch", "🇨🇭", "fr"),
+  country("ca", "Canada", "ca", "🇨🇦", "fr"),
+  country("lu", "Luxembourg", "lu", "🇱🇺", "fr"),
+  country("ma", "Maroc", "ma", "🇲🇦", "fr"),
+  country("dz", "Algérie", "dz", "🇩🇿", "fr"),
+  country("tn", "Tunisie", "tn", "🇹🇳", "fr"),
+  country("sn", "Sénégal", "sn", "🇸🇳", "fr"),
+  country("ci", "Côte d'Ivoire", "ci", "🇨🇮", "fr"),
+  country("us", "États-Unis", "us", "🇺🇸", "en"),
+
+  country("other", "Autre pays", "", "🌍", "en"),
 ];
 
 /**
@@ -60,16 +139,39 @@ export const COUNTRIES: readonly Country[] = [
 export const FALLBACK_COUNTRY: CountryCode = "fr";
 
 export function countryFor(code: string | null | undefined): Country {
-  return COUNTRIES.find((country) => country.code === code) ?? countryFor(FALLBACK_COUNTRY)!;
+  return COUNTRIES.find((item) => item.code === code) ?? COUNTRIES[0]!;
 }
 
 export function languageFor(code: string | null | undefined): ContentLanguage {
   return countryFor(code).language;
 }
 
+export function languageLabel(code: string | null | undefined): string {
+  return LANGUAGE_LABELS[languageFor(code)];
+}
+
 /**
- * Le pays deviné depuis la locale du navigateur, pour le poser **en premier et déjà en
- * évidence**.
+ * Le drapeau déduit d'un code ISO : deux lettres devenues indicateurs régionaux.
+ *
+ * Les emojis de drapeaux n'ont pas de nom propre en Unicode — c'est la seule façon de les obtenir
+ * sans écrire deux cents caractères à la main, et c'est ce que fait `WorldCountry.flag` côté iOS.
+ */
+export function flagFor(iso: string): string {
+  const letters = iso.trim().toUpperCase();
+  if (letters.length !== 2) return "🌍";
+
+  const base = 0x1f1e6;
+  const points = [...letters].map((letter) => {
+    const value = letter.charCodeAt(0);
+    return value >= 65 && value <= 90 ? base + value - 65 : null;
+  });
+
+  if (points.some((point) => point === null)) return "🌍";
+  return String.fromCodePoint(...(points as number[]));
+}
+
+/**
+ * Le pays deviné depuis la locale du navigateur, pour le poser **en évidence**.
  *
  * C'est une suggestion, jamais une réponse : la question reste posée et se répond d'un appui. Une
  * locale dit la langue du navigateur, pas le pays où l'on étudie — un Belge en français et un
@@ -79,10 +181,10 @@ export function guessCountry(locales: readonly string[]): CountryCode {
   for (const locale of locales) {
     const region = regionOf(locale);
     if (!region) continue;
-    const match = COUNTRIES.find((country) => country.code === region);
-    if (match) return match.code;
     // Le Royaume-Uni s'écrit `GB` dans une locale et `uk` dans notre table.
     if (region === "gb") return "uk";
+    const match = COUNTRIES.find((item) => item.code === region);
+    if (match) return match.code;
   }
   return FALLBACK_COUNTRY;
 }

@@ -68,15 +68,17 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
     setOver(false);
   }
 
+  const active = over || Boolean(offset);
+
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="flex flex-col items-center gap-4">
       <div
         ref={zone}
-        className={`flex h-[220px] w-full max-w-[420px] flex-col items-center justify-center rounded-group border-2 border-dashed transition-colors duration-hover ${
+        className={`relative flex h-[220px] w-full max-w-[420px] flex-col items-center justify-center rounded-group border-2 border-dashed transition-all duration-menu ease-out-strong ${
           dropped
             ? "border-accent bg-accent-soft"
             : over
-              ? "border-accent bg-accent-soft"
+              ? "scale-[1.02] border-accent bg-accent-soft"
               : "border-stroke-strong bg-surface-muted"
         }`}
         aria-live="polite"
@@ -93,7 +95,22 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
           </>
         ) : (
           <>
-            <svg aria-hidden viewBox="0 0 24 24" className="h-7 w-7 text-ink-tertiary">
+            {/* Le halo qui respire, et la flèche qui monte : ce sont les deux choses qui disent
+                « c'est ici que ça se lâche » sans l'écrire une seconde fois. */}
+            <span
+              aria-hidden
+              className={`absolute inset-3 rounded-[20px] transition-opacity duration-menu ${
+                active ? "opacity-100" : "opacity-0"
+              }`}
+              style={{ background: "var(--color-accent-vivid)", opacity: active ? 0.08 : 0 }}
+            />
+            <svg
+              aria-hidden
+              viewBox="0 0 24 24"
+              className={`h-8 w-8 transition-colors duration-hover ${
+                active ? "text-accent" : "float text-ink-tertiary"
+              }`}
+            >
               <path
                 d="M12 16V4M7 9l5-5 5 5M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"
                 fill="none"
@@ -103,41 +120,77 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
                 strokeLinejoin="round"
               />
             </svg>
-            <p className="mt-2.5 text-[14.5px] font-medium text-ink-secondary">
-              Dépose ton cours ici
+            <p className="mt-3 text-[15.5px] font-semibold text-ink">
+              {active ? "Lâche-le ici" : "Glisse le PDF ici"}
+            </p>
+            <p className="mt-1 text-[12.5px] text-ink-tertiary">
+              {active ? "\u00a0" : "Attrape-le juste en dessous"}
             </p>
           </>
         )}
       </div>
 
       {dropped ? null : (
-        <button
-          type="button"
-          onPointerDown={begin}
-          onPointerMove={move}
-          onPointerUp={end}
-          onPointerCancel={end}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter" && event.key !== " ") return;
-            event.preventDefault();
-            setDropped(true);
-            onDropped();
-          }}
-          aria-label={`Déposer ${DEMO_COURSE.fileName}`}
-          className={`flex touch-none items-center gap-2.5 rounded-button bg-surface px-4 py-3 paper ${
-            offset ? "cursor-grabbing" : "cursor-grab"
-          }`}
-          style={{
-            translate: offset ? `${offset.x}px ${offset.y}px` : undefined,
-            transition: offset ? "none" : "translate 320ms var(--ease-out-strong)",
-            scale: offset ? 1.04 : 1,
-          }}
-        >
-          <span className="rounded-[4px] bg-[#B5573C] px-1.5 py-0.5 text-[9px] font-bold tracking-[0.6px] text-on-ink">
-            PDF
-          </span>
-          <span className="text-[13.5px] font-medium text-ink">{DEMO_COURSE.fileName}</span>
-        </button>
+        <>
+          {/* La flèche qui relie la vignette à la zone : sans elle, il faut deviner le geste. */}
+          <svg
+            aria-hidden
+            viewBox="0 0 24 40"
+            className={`h-8 w-5 text-ink-tertiary transition-opacity duration-hover ${
+              offset ? "opacity-0" : "opacity-100"
+            }`}
+          >
+            <path
+              d="M12 36V6M5 13l7-7 7 7"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="3 4"
+            />
+          </svg>
+
+          <button
+            type="button"
+            onPointerDown={begin}
+            onPointerMove={move}
+            onPointerUp={end}
+            onPointerCancel={end}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              setDropped(true);
+              onDropped();
+            }}
+            aria-label={`Déposer ${DEMO_COURSE.fileName}`}
+            className={`flex touch-none items-center gap-2.5 rounded-button bg-surface px-4 py-3 paper ${
+              offset ? "cursor-grabbing" : "shiny cursor-grab"
+            }`}
+            style={{
+              translate: offset ? `${offset.x}px ${offset.y}px` : undefined,
+              transition: offset ? "none" : "translate 320ms var(--ease-out-strong)",
+              scale: offset ? 1.06 : 1,
+              rotate: offset ? "-2deg" : "0deg",
+              boxShadow: offset ? "var(--shadow-floating)" : undefined,
+            }}
+          >
+            <span aria-hidden className="text-ink-tertiary">
+              <svg viewBox="0 0 20 20" className="h-4 w-4">
+                <circle cx="6" cy="5" r="1.4" fill="currentColor" />
+                <circle cx="6" cy="10" r="1.4" fill="currentColor" />
+                <circle cx="6" cy="15" r="1.4" fill="currentColor" />
+                <circle cx="12" cy="5" r="1.4" fill="currentColor" />
+                <circle cx="12" cy="10" r="1.4" fill="currentColor" />
+                <circle cx="12" cy="15" r="1.4" fill="currentColor" />
+              </svg>
+            </span>
+            <span className="rounded-[4px] bg-[#B5573C] px-1.5 py-0.5 text-[9px] font-bold tracking-[0.6px] text-on-ink">
+              PDF
+            </span>
+            <span className="text-[13.5px] font-medium text-ink">{DEMO_COURSE.fileName}</span>
+          </button>
+        </>
       )}
     </div>
   );

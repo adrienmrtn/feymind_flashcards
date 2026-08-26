@@ -102,7 +102,7 @@ export const CYCLE_STAGES = [
  * Trois formats, parce qu'une démonstration qui ne montre que du recto verso laisse croire que
  * Micabo ne fait que du recto verso.
  */
-export type DemoCardKind = "basic" | "choice" | "gap";
+export type DemoCardKind = "basic" | "choice" | "gap" | "diagram";
 
 export interface DemoCard {
   kind: DemoCardKind;
@@ -111,6 +111,13 @@ export interface DemoCard {
   back: string;
   choices?: string[];
   answerIndex?: number;
+  /** Ce que le verso ajoute quand la réponse mérite une raison, pas seulement un mot. */
+  note?: string;
+  /**
+   * Les étiquettes d'un schéma à compléter, dans l'ordre du cycle. La carte à schéma est le
+   * quatrième format de l'app, et c'est celui qu'une démonstration oublie toujours d'annoncer.
+   */
+  labels?: readonly { text: string; hidden?: boolean }[];
 }
 
 export const DEMO_CARDS: readonly DemoCard[] = [
@@ -119,6 +126,7 @@ export const DEMO_CARDS: readonly DemoCard[] = [
     kindLabel: "Recto verso",
     front: "Que fait le soleil à l'eau des océans ?",
     back: "Il la fait s'évaporer.",
+    note: "71 % de l'évaporation mondiale vient des océans.",
   },
   {
     kind: "choice",
@@ -133,5 +141,17 @@ export const DEMO_CARDS: readonly DemoCard[] = [
     kindLabel: "Texte à trou",
     front: "Les gouttelettes trop lourdes retombent en …",
     back: "précipitations",
+    note: "Pluie ou neige, selon la température rencontrée pendant la chute.",
+  },
+  {
+    kind: "diagram",
+    kindLabel: "Schéma",
+    front: "Nomme les trois temps du cycle.",
+    back: "Évaporation, condensation, précipitations.",
+    labels: [
+      { text: "Évaporation", hidden: true },
+      { text: "Condensation", hidden: true },
+      { text: "Précipitations", hidden: true },
+    ],
   },
 ];

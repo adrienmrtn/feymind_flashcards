@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 
 import { courseAccent, entitlement, resolveEmoji } from "@micabo/core";
 
-import { SheetBlocks } from "@/components/sheet/SheetBlocks";
+import { GenerateCards } from "@/components/app/GenerateCards";
+import { SheetReader } from "@/components/app/SheetReader";
 import { VisibilityPicker } from "@/components/app/VisibilityPicker";
 import { getCourse, listCards } from "@/lib/data/courses";
 import { readEntitlement } from "@/lib/data/entitlement";
@@ -60,21 +61,27 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
       {/* L'action du cours, et **la première tant qu'il n'y a pas de cartes** : c'est la règle de
           l'app, et elle vaut ici. Les cartes ne sont pas produites au passage de l'import ; elles
           se demandent depuis la fiche, quand on l'a lue. */}
-      <div className="mt-7 flex flex-wrap gap-2.5" data-print="hide">
+      {/* **Le bouton produit les cartes ici**, il ne mène pas à une page qui reposera la même
+          question. C'était le défaut : « Créer des cartes » ouvrait un écran « Pas encore de
+          cartes » avec un second « Créer des cartes ». */}
+      <div className="mt-7 flex flex-wrap items-start gap-2.5" data-print="hide">
         {cards.length === 0 ? (
-          <Link
-            href={`/app/c/${course.id}/cartes` as never}
-            className="pressable rounded-button bg-ink px-5 py-3 text-[15px] font-semibold text-on-ink"
-          >
-            Créer des cartes
-          </Link>
+          <GenerateCards courseId={course.id} existing={0} />
         ) : (
-          <Link
-            href={`/app/c/${course.id}/cartes` as never}
-            className="pressable rounded-button bg-surface px-5 py-3 text-[15px] font-semibold text-ink paper"
-          >
-            {cards.length} carte{cards.length > 1 ? "s" : ""}
-          </Link>
+          <>
+            <Link
+              href={`/app/reviser?cours=${course.id}` as never}
+              className="pressable rounded-button bg-ink px-5 py-3 text-[15px] font-semibold text-on-ink"
+            >
+              Réviser ce cours
+            </Link>
+            <Link
+              href={`/app/c/${course.id}/cartes` as never}
+              className="pressable rounded-button bg-surface px-5 py-3 text-[15px] font-semibold text-ink paper"
+            >
+              {cards.length} carte{cards.length > 1 ? "s" : ""}
+            </Link>
+          </>
         )}
       </div>
 
@@ -83,8 +90,8 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
         <VisibilityPicker courseId={course.id} initial={course.visibility} />
       </div>
 
-      <div className="mt-10 max-w-reading">
-        <SheetBlocks blocks={readable} tint={tint} />
+      <div className="mt-10">
+        <SheetReader courseId={course.id} blocks={readable} tint={tint} />
 
         {locked.length > 0 ? <LockedTail count={locked.length} /> : null}
       </div>

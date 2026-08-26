@@ -84,7 +84,108 @@ const GENERIC_STAGES: EducationStage[] = [
  * se résume jamais à cinq lignes, et un écran de question sans réponse possible se quitte en
  * quittant le site.
  */
+/**
+ * Les paliers des pays européens sont écrits **dans leur langue**, et pas traduits : un lycéen
+ * polonais cherche « Liceum », pas « Lycée ». C'est la même règle que pour « A-Levels » ou
+ * « Cégep », qui n'ont jamais eu de traduction non plus. Portés depuis `EducationStage.swift`.
+ */
 const STAGES: Record<CountryCode, EducationStage[]> = {
+  de: [
+    stage("de.mittelstufe", "Mittelstufe", "🎒", "lycee", "lowerSecondary"),
+    stage("de.abitur", "Gymnasium, Abitur", "🏫", "lycee", "upperSecondary"),
+    stage("de.bachelor", "Bachelor", "🎓", "licence", "undergraduate"),
+    stage("de.medizin", "Medizin", "🩺", "sante", "health"),
+    stage("de.master", "Master", "🔬", "master", "graduate"),
+    stage("de.other", "Sonstiges", "✨", "other", "other"),
+  ],
+  it: [
+    stage("it.medie", "Scuola media", "🎒", "lycee", "lowerSecondary"),
+    stage("it.liceo", "Liceo, maturità", "🏫", "lycee", "upperSecondary"),
+    stage("it.triennale", "Laurea triennale", "🎓", "licence", "undergraduate"),
+    stage("it.medicina", "Medicina", "🩺", "sante", "health"),
+    stage("it.magistrale", "Laurea magistrale", "🔬", "master", "graduate"),
+    stage("it.other", "Altro", "✨", "other", "other"),
+  ],
+  es: [
+    stage("es.eso", "ESO", "🎒", "lycee", "lowerSecondary"),
+    stage("es.bachillerato", "Bachillerato", "🏫", "lycee", "upperSecondary"),
+    stage("es.grado", "Grado", "🎓", "licence", "undergraduate"),
+    stage("es.medicina", "Medicina", "🩺", "sante", "health"),
+    stage("es.master", "Máster", "🔬", "master", "graduate"),
+    stage("es.other", "Otro", "✨", "other", "other"),
+  ],
+  pt: [
+    stage("pt.basico", "Ensino básico", "🎒", "lycee", "lowerSecondary"),
+    stage("pt.secundario", "Ensino secundário", "🏫", "lycee", "upperSecondary"),
+    stage("pt.licenciatura", "Licenciatura", "🎓", "licence", "undergraduate"),
+    stage("pt.medicina", "Medicina", "🩺", "sante", "health"),
+    stage("pt.mestrado", "Mestrado", "🔬", "master", "graduate"),
+    stage("pt.other", "Outro", "✨", "other", "other"),
+  ],
+  cz: [
+    stage("cz.zakladni", "Základní škola", "🎒", "lycee", "lowerSecondary"),
+    stage("cz.maturita", "Gymnázium, maturita", "🏫", "lycee", "upperSecondary"),
+    stage("cz.bakalar", "Bakalářské studium", "🎓", "licence", "undergraduate"),
+    stage("cz.medicina", "Medicína", "🩺", "sante", "health"),
+    stage("cz.magistr", "Magisterské studium", "🔬", "master", "graduate"),
+    stage("cz.other", "Jiné", "✨", "other", "other"),
+  ],
+  nl: [
+    stage("nl.onderbouw", "Onderbouw", "🎒", "lycee", "lowerSecondary"),
+    stage("nl.eindexamen", "Havo, vwo", "🏫", "lycee", "upperSecondary"),
+    stage("nl.bachelor", "Bachelor", "🎓", "licence", "undergraduate"),
+    stage("nl.geneeskunde", "Geneeskunde", "🩺", "sante", "health"),
+    stage("nl.master", "Master", "🔬", "master", "graduate"),
+    stage("nl.other", "Anders", "✨", "other", "other"),
+  ],
+  gr: [
+    stage("gr.gymnasio", "Γυμνάσιο", "🎒", "lycee", "lowerSecondary"),
+    stage("gr.lykeio", "Λύκειο, Πανελλήνιες", "🏫", "lycee", "upperSecondary"),
+    stage("gr.ptychio", "Πτυχίο", "🎓", "licence", "undergraduate"),
+    stage("gr.iatriki", "Ιατρική", "🩺", "sante", "health"),
+    stage("gr.metaptychiako", "Μεταπτυχιακό", "🔬", "master", "graduate"),
+    stage("gr.other", "Άλλο", "✨", "other", "other"),
+  ],
+  hu: [
+    stage("hu.altalanos", "Általános iskola", "🎒", "lycee", "lowerSecondary"),
+    stage("hu.erettsegi", "Gimnázium, érettségi", "🏫", "lycee", "upperSecondary"),
+    stage("hu.alapkepzes", "Alapképzés", "🎓", "licence", "undergraduate"),
+    stage("hu.orvosi", "Orvostudomány", "🩺", "sante", "health"),
+    stage("hu.mesterkepzes", "Mesterképzés", "🔬", "master", "graduate"),
+    stage("hu.other", "Egyéb", "✨", "other", "other"),
+  ],
+  pl: [
+    stage("pl.podstawowa", "Szkoła podstawowa", "🎒", "lycee", "lowerSecondary"),
+    stage("pl.matura", "Liceum, matura", "🏫", "lycee", "upperSecondary"),
+    stage("pl.licencjat", "Licencjat", "🎓", "licence", "undergraduate"),
+    stage("pl.medycyna", "Medycyna", "🩺", "sante", "health"),
+    stage("pl.magister", "Studia magisterskie", "🔬", "master", "graduate"),
+    stage("pl.other", "Inne", "✨", "other", "other"),
+  ],
+  ro: [
+    stage("ro.gimnaziu", "Gimnaziu", "🎒", "lycee", "lowerSecondary"),
+    stage("ro.bacalaureat", "Liceu, bacalaureat", "🏫", "lycee", "upperSecondary"),
+    stage("ro.licenta", "Licență", "🎓", "licence", "undergraduate"),
+    stage("ro.medicina", "Medicină", "🩺", "sante", "health"),
+    stage("ro.master", "Master", "🔬", "master", "graduate"),
+    stage("ro.other", "Altele", "✨", "other", "other"),
+  ],
+  se: [
+    stage("se.grundskola", "Grundskola", "🎒", "lycee", "lowerSecondary"),
+    stage("se.gymnasium", "Gymnasium", "🏫", "lycee", "upperSecondary"),
+    stage("se.kandidat", "Kandidatexamen", "🎓", "licence", "undergraduate"),
+    stage("se.lakarprogrammet", "Läkarprogrammet", "🩺", "sante", "health"),
+    stage("se.master", "Masterexamen", "🔬", "master", "graduate"),
+    stage("se.other", "Annat", "✨", "other", "other"),
+  ],
+  tr: [
+    stage("tr.ortaokul", "Ortaokul", "🎒", "lycee", "lowerSecondary"),
+    stage("tr.lise", "Lise, YKS", "🏫", "lycee", "upperSecondary"),
+    stage("tr.lisans", "Lisans", "🎓", "licence", "undergraduate"),
+    stage("tr.tip", "Tıp", "🩺", "sante", "health"),
+    stage("tr.yukseklisans", "Yüksek lisans", "🔬", "master", "graduate"),
+    stage("tr.other", "Diğer", "✨", "other", "other"),
+  ],
   fr: [
     stage("fr.lycee", "Lycée", "🎒", "lycee", "upperSecondary"),
     stage("fr.prepa", "Prépa", "📐", "prepa", "preUniversity"),
