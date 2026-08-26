@@ -169,17 +169,15 @@ function SocialStep() {
         espacée, mesurée depuis plus d&apos;un siècle.
       </p>
 
-      <div className="mt-6 overflow-hidden">
-        <div className="marquee-track flex w-max gap-8 pr-8">
-          {[...SCHOOLS, ...SCHOOLS].map((school, index) => (
-            <span
-              key={`${school.name}-${index}`}
-              className="text-[15px] font-semibold tracking-[0.14em] text-ink-tertiary uppercase"
-            >
-              {school.mark}
-            </span>
-          ))}
-        </div>
+      <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+        {SCHOOLS.map((school) => (
+          <span
+            key={school.name}
+            className="text-[13px] font-semibold tracking-[0.08em] text-ink-tertiary uppercase"
+          >
+            {school.mark}
+          </span>
+        ))}
       </div>
 
       <ul className="mt-6 space-y-2.5">
