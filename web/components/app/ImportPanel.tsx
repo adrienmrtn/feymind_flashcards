@@ -18,6 +18,7 @@ import {
 } from "@micabo/core";
 
 import { importFromText, importFromYouTube } from "@/lib/actions/course";
+import { DocxError, extractDocxText } from "@/lib/import/docx";
 
 /**
  * **L'import est une zone de dépôt.** C'est ce qu'on fait devant un clavier : on prend le fichier
@@ -107,7 +108,11 @@ export function ImportPanel({
             text: extracted,
             hintTitle: file.name.replace(/\.[^.]+$/, ""),
             sourceName: file.name,
-            source: file.name.toLowerCase().endsWith(".pdf") ? "pdf" : "text",
+            source: file.name.toLowerCase().endsWith(".pdf")
+              ? "pdf"
+              : file.name.toLowerCase().endsWith(".docx")
+                ? "docx"
+                : "text",
             blocks,
             length,
             visibility,
@@ -116,11 +121,7 @@ export function ImportPanel({
       );
     } catch (error) {
       setPhase("repos");
-      setFailure(
-        error instanceof Error && error.message === "docx"
-          ? "Les fichiers Word ne sont pas encore lus dans le navigateur. Ouvre le document, copie le texte, et colle-le ici."
-          : "Ce fichier n'a pas pu être lu.",
-      );
+      setFailure(docxFailure(error));
     }
   }
 
@@ -147,7 +148,7 @@ export function ImportPanel({
         <input
           ref={fileInput}
           type="file"
-          accept=".pdf,.txt,.md,.markdown,.docx,.rtf"
+          accept=".pdf,.txt,.md,.markdown,.docx"
           className="sr-only"
           onChange={(event) => {
             const file = event.target.files?.[0];
@@ -439,11 +440,23 @@ async function extractText(file: File): Promise<string> {
   }
 
   if (name.endsWith(".docx")) {
-    // Un `.docx` est un ZIP dont `word/document.xml` porte le texte. L'app le lit à la main, sans
-    // dépendance ; ici la même idée demanderait un décompresseur, donc c'est dit franchement
-    // plutôt que fait à moitié — et le collage prend le relais.
-    throw new Error("docx");
+    return extractDocxText(new Uint8Array(await file.arrayBuffer()));
+  }
+
+  if (name.endsWith(".doc")) {
+    throw new DocxError("notDocx");
   }
 
   return file.text();
+}
+
+function docxFailure(error: unknown): string {
+  if (error instanceof DocxError) {
+    if (error.code === "empty") return "Ce Word n'a presque pas de texte. Colle le contenu ici.";
+    if (error.code === "missingDocument") return "Ce fichier Word n'a pas pu être lu.";
+    if (error.code === "notDocx") {
+      return "Enregistre le document en .docx — l'ancien format Word n'est pas lisible ici.";
+    }
+  }
+  return "Ce fichier n'a pas pu être lu.";
 }

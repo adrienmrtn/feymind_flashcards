@@ -56,13 +56,19 @@ export interface CardRow {
   lapses: number;
   step_index: number;
   created_at: string;
+  mask_x: number;
+  mask_y: number;
+  mask_width: number;
+  mask_height: number;
+  group_id: string | null;
+  image_path: string | null;
 }
 
 const COURSE_COLUMNS =
   "id, title, subject, summary, emoji, accent_hex, source, visibility, is_from_library, created_at, updated_at";
 
 const CARD_COLUMNS =
-  "id, course_id, front, back, hint, position, kind, choices, correct_choice_index, is_suspended, state, due_date, interval_days, ease_factor, repetitions, lapses, step_index, created_at";
+  "id, course_id, front, back, hint, position, kind, choices, correct_choice_index, is_suspended, state, due_date, interval_days, ease_factor, repetitions, lapses, step_index, created_at, mask_x, mask_y, mask_width, mask_height, group_id, image_path";
 
 export async function currentUserId(): Promise<string | null> {
   const supabase = await createClient();

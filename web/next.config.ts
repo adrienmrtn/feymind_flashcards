@@ -14,6 +14,14 @@ const config: NextConfig = {
 
   typedRoutes: true,
 
+  // Une carte à occlusion envoie le schéma en data URL JPEG. Un schéma à 1200 px
+  // tient largement sous 2 Mo ; le plafond par défaut (1 Mo) recassait l'enregistrement.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "2mb",
+    },
+  },
+
   async headers() {
     return [
       {

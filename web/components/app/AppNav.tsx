@@ -139,15 +139,6 @@ export function AppNav() {
                 ✕
               </button>
             </div>
-
-            <div className="mt-1 space-y-0.5 pl-3">
-              <SubLink href={`/app/c/${open.id}/cartes`} current={pathname} label="Ses cartes" />
-              <SubLink
-                href={`/app/reviser?cours=${open.id}`}
-                current={pathname}
-                label="Le réviser"
-              />
-            </div>
           </div>
         ) : null}
 
@@ -214,29 +205,6 @@ export function AppNav() {
         </div>
       </nav>
     </>
-  );
-}
-
-function SubLink({
-  href,
-  current,
-  label,
-}: {
-  href: string;
-  current: string;
-  label: string;
-}) {
-  const active = current === href.split("?")[0];
-
-  return (
-    <Link
-      href={href as never}
-      className={`block rounded-button px-3 py-1.5 text-[13px] transition-colors duration-hover ${
-        active ? "font-semibold text-accent" : "text-ink-tertiary hover:text-ink-secondary"
-      }`}
-    >
-      {label}
-    </Link>
   );
 }
 

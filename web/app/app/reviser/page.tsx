@@ -88,6 +88,11 @@ export default async function ReviewPage({
       choices: card.choices ?? [],
       answerIndex: card.correct_choice_index,
       courseTitle: card.course_id ? (titles.get(card.course_id) ?? null) : null,
+      imagePath: card.image_path,
+      maskX: card.mask_x ?? 0,
+      maskY: card.mask_y ?? 0,
+      maskWidth: card.mask_width ?? 0,
+      maskHeight: card.mask_height ?? 0,
       snapshot: {
         state: card.state,
         intervalDays: card.interval_days,
