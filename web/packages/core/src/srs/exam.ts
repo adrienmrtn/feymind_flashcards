@@ -36,6 +36,15 @@ export const EXAM_INTENSITY_LABELS: Record<ExamIntensity, string> = {
   intense: "Intensive",
 };
 
+export const EXAM_INTENSITIES: readonly ExamIntensity[] = ["light", "standard", "intense"];
+
+/** Les visages du curseur d'intensité, dans le même ordre que les paliers. */
+export const EXAM_INTENSITY_EMOJIS: Record<ExamIntensity, string> = {
+  light: "😌",
+  standard: "📘",
+  intense: "🔥",
+};
+
 /**
  * Sur combien de jours de fin les derniers passages s'étalent.
  *
@@ -96,6 +105,34 @@ export function dayDifference(from: Date, to: Date): number {
   const a = startOfDay(from);
   const b = startOfDay(to);
   return Math.round((b.getTime() - a.getTime()) / 86_400_000);
+}
+
+/**
+ * « aujourd'hui », « demain », « J-5 », « passé » — le libellé d'iOS,
+ * `Exam.countdownLabel()`.
+ */
+export function examCountdownLabel(daysRemaining: number): string {
+  if (daysRemaining < 0) return "passé";
+  if (daysRemaining === 0) return "aujourd'hui";
+  if (daysRemaining === 1) return "demain";
+  return `J-${daysRemaining}`;
+}
+
+/**
+ * L'urgence d'un examen, pour colorer la carte du tableau de bord.
+ *
+ * Aujourd'hui et demain sont rouges : c'est trop tard pour improviser.
+ * La semaine qui vient est ocre. Au-delà de trois semaines, on est encore
+ * dans le vert — le plan a le temps de travailler.
+ */
+export type ExamUrgency = "critical" | "soon" | "upcoming" | "later" | "past";
+
+export function examUrgency(daysRemaining: number): ExamUrgency {
+  if (daysRemaining < 0) return "past";
+  if (daysRemaining <= 1) return "critical";
+  if (daysRemaining <= 7) return "soon";
+  if (daysRemaining <= 21) return "upcoming";
+  return "later";
 }
 
 // MARK: - Plan

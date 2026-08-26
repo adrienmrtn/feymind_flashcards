@@ -137,7 +137,77 @@ export async function createCard(input: {
 
   revalidatePath(`/app/c/${input.courseId}/cartes`);
   revalidatePath("/app");
+  revalidatePath("/app/cours");
   return { status: "ok", cardId: id };
+}
+
+export async function createOcclusionCards(input: {
+  courseId: string;
+  image: string;
+  zones: { x: number; y: number; width: number; height: number; label: string }[];
+}): Promise<CardResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "error", message: "Connecte-toi." };
+
+  if (!input.image.startsWith("data:image/")) {
+    return { status: "error", message: "L'image n'a pas pu être lue." };
+  }
+  if (input.image.length > 1_800_000) {
+    return { status: "error", message: "Cette image est trop lourde. Choisis-en une plus petite." };
+  }
+
+  const zones = input.zones.filter(
+    (zone) =>
+      zone.label.trim().length > 0 && zone.width > 0.02 && zone.height > 0.02,
+  );
+  if (zones.length === 0) {
+    return { status: "error", message: "Trace au moins une zone et nomme-la." };
+  }
+
+  const { data: last } = await supabase
+    .from("flashcards")
+    .select("position")
+    .eq("user_id", user.id)
+    .eq("course_id", input.courseId)
+    .is("deleted_at", null)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const group = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const rows = zones.map((zone, index) => ({
+    id: crypto.randomUUID(),
+    user_id: user.id,
+    course_id: input.courseId,
+    front: "Quelle zone est masquée ?",
+    back: zone.label.trim().slice(0, MAX_SIDE),
+    hint: null,
+    position: (last?.position ?? -1) + 1 + index,
+    kind: "occlusion",
+    choices: [],
+    correct_choice_index: 0,
+    mask_x: zone.x,
+    mask_y: zone.y,
+    mask_width: zone.width,
+    mask_height: zone.height,
+    group_id: group,
+    image_path: input.image,
+    state: "new",
+    due_date: now,
+  }));
+
+  const { error } = await supabase.from("flashcards").insert(rows);
+  if (error) return { status: "error", message: error.message };
+
+  revalidatePath(`/app/c/${input.courseId}/cartes`);
+  revalidatePath("/app");
+  revalidatePath("/app/cours");
+  revalidatePath("/app/reviser");
+  return { status: "ok", cardId: rows[0]?.id };
 }
 
 export async function deleteCard(cardId: string, courseId: string): Promise<CardResult> {
@@ -157,6 +227,7 @@ export async function deleteCard(cardId: string, courseId: string): Promise<Card
 
   revalidatePath(`/app/c/${courseId}/cartes`);
   revalidatePath("/app");
+  revalidatePath("/app/cours");
   return { status: "ok" };
 }
 

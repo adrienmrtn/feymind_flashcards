@@ -22,7 +22,8 @@ import { usePathname } from "next/navigation";
  */
 
 const LINKS = [
-  { href: "/app", label: "Cours", icon: "shelf" },
+  { href: "/app", label: "Accueil", icon: "home" },
+  { href: "/app/cours", label: "Cours", icon: "shelf" },
   { href: "/app/reviser", label: "Réviser", icon: "cards" },
   { href: "/app/examens", label: "Examens", icon: "calendar" },
   { href: "/app/profil", label: "Profil", icon: "person" },
@@ -68,8 +69,11 @@ export function AppNav() {
     }
   }
 
-  const isCurrent = (href: string) =>
-    href === "/app" ? pathname === "/app" : pathname.startsWith(href);
+  const isCurrent = (href: string) => {
+    if (href === "/app") return pathname === "/app";
+    if (href === "/app/cours") return pathname === "/app/cours" || pathname.startsWith("/app/c/");
+    return pathname.startsWith(href);
+  };
 
   const onOpenCourse = Boolean(open && pathname.startsWith(`/app/c/${open.id}`));
 
@@ -91,7 +95,7 @@ export function AppNav() {
               key={link.href}
               href={link.href as never}
               aria-current={isCurrent(link.href) ? "page" : undefined}
-              className={`flex items-center gap-3 rounded-button px-3 py-2.5 text-[15px] transition-colors duration-hover ${
+              className={`nav-link flex items-center gap-3 rounded-button px-3 py-2.5 text-[15px] transition-colors duration-hover ${
                 isCurrent(link.href)
                   ? "bg-accent-soft font-semibold text-accent"
                   : "text-ink-secondary hover:bg-surface"
@@ -134,15 +138,6 @@ export function AppNav() {
               >
                 ✕
               </button>
-            </div>
-
-            <div className="mt-1 space-y-0.5 pl-3">
-              <SubLink href={`/app/c/${open.id}/cartes`} current={pathname} label="Ses cartes" />
-              <SubLink
-                href={`/app/reviser?cours=${open.id}`}
-                current={pathname}
-                label="Le réviser"
-              />
             </div>
           </div>
         ) : null}
@@ -192,8 +187,8 @@ export function AppNav() {
               key={link.href}
               href={link.href as never}
               aria-current={isCurrent(link.href) ? "page" : undefined}
-              className={`flex flex-1 flex-col items-center gap-1 rounded-button py-2 text-[10.5px] font-medium ${
-                isCurrent(link.href) ? "text-accent" : "text-ink-tertiary"
+              className={`nav-link flex flex-1 flex-col items-center gap-1 rounded-button py-2 text-[10.5px] font-medium transition-colors duration-hover ${
+                isCurrent(link.href) ? "text-accent" : "text-ink-tertiary hover:text-ink-secondary"
               }`}
             >
               <Icon name={link.icon} filled={isCurrent(link.href)} />
@@ -213,29 +208,6 @@ export function AppNav() {
   );
 }
 
-function SubLink({
-  href,
-  current,
-  label,
-}: {
-  href: string;
-  current: string;
-  label: string;
-}) {
-  const active = current === href.split("?")[0];
-
-  return (
-    <Link
-      href={href as never}
-      className={`block rounded-button px-3 py-1.5 text-[13px] transition-colors duration-hover ${
-        active ? "font-semibold text-accent" : "text-ink-tertiary hover:text-ink-secondary"
-      }`}
-    >
-      {label}
-    </Link>
-  );
-}
-
 function Icon({ name, filled }: { name: string; filled: boolean }) {
   const stroke = filled ? 2 : 1.6;
 
@@ -250,6 +222,12 @@ function Icon({ name, filled }: { name: string; filled: boolean }) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
+      {name === "home" ? (
+        <>
+          <path d="M3.5 9.2L10 3.6l6.5 5.6" />
+          <path d="M5.2 8.4V16h9.6V8.4" fill={filled ? "currentColor" : "none"} />
+        </>
+      ) : null}
       {name === "shelf" ? (
         <>
           <rect x="3" y="3.5" width="4.5" height="13" rx="1.2" fill={filled ? "currentColor" : "none"} />

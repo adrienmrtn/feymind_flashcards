@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { formatDelay, previewLabels } from "@micabo/core";
 
+import { OcclusionEditor } from "@/components/app/OcclusionEditor";
+import { OcclusionFigure } from "@/components/app/OcclusionFigure";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { createCard, deleteCard, updateCard } from "@/lib/actions/cards";
 import type { CardRow } from "@/lib/data/courses";
@@ -12,61 +14,71 @@ import type { CardRow } from "@/lib/data/courses";
  * Les cartes d'un cours, **en table et modifiables.**
  *
  * C'est l'écran où le web bat le téléphone sans discussion : on corrige vingt cartes à la suite au
- * clavier, on voit d'un coup d'œil ce qui est neuf et ce qui revient bientôt. L'app les montre une
- * par une, ce qui est le bon choix sous le pouce et le mauvais devant un clavier.
+ * clavier, on voit d'un coup d'œil ce qui est neuf et ce qui revient bientôt.
  *
- * **Une carte écrite par un modèle doit pouvoir être corrigée**, et c'est ce qui manquait : une
- * carte fausse révisée vingt fois installe l'erreur au lieu du cours. L'édition se fait sur place —
- * pas dans une feuille par-dessus, parce qu'on corrige en regardant les voisines.
+ * **Une carte écrite par un modèle doit pouvoir être corrigée.** L'édition s'ouvre dans une
+ * feuille par-dessus la liste — pas en dessous de la rangée, et pas en plein écran : on garde
+ * les voisines en vue, et on ferme d'une touche.
  */
 export function CardList({ courseId, cards }: { courseId: string; cards: CardRow[] }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [occluding, setOccluding] = useState(false);
+
+  const selected = cards.find((card) => card.id === editing);
 
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13px] text-ink-tertiary">
-          Clique une carte pour la corriger.
-        </p>
-        <button
-          type="button"
-          onClick={() => setAdding((value) => !value)}
-          className="pressable rounded-button bg-surface px-4 py-2.5 text-[14px] font-semibold text-ink paper"
-        >
-          {adding ? "Annuler" : "Écrire une carte"}
-        </button>
+        <p className="text-[13px] text-ink-tertiary">Clique une carte pour la corriger.</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setAdding(false);
+              setEditing(null);
+              setOccluding(true);
+            }}
+            className="pressable rounded-button bg-surface px-4 py-2.5 text-[14px] font-semibold text-ink paper"
+          >
+            Masquer un schéma
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOccluding(false);
+              setEditing(null);
+              setAdding(true);
+            }}
+            className="pressable rounded-button bg-surface px-4 py-2.5 text-[14px] font-semibold text-ink paper"
+          >
+            Écrire une carte
+          </button>
+        </div>
       </div>
 
-      {adding ? (
-        <Editor
-          key="nouvelle"
+      {cards.length > 0 ? (
+        <div className="paper mt-4 overflow-hidden rounded-group bg-surface">
+          {cards.map((card, index) => (
+            <Row key={card.id} card={card} index={index} onEdit={() => setEditing(card.id)} />
+          ))}
+        </div>
+      ) : null}
+
+      {adding || selected ? (
+        <CardEditor
           courseId={courseId}
-          onDone={() => setAdding(false)}
-          className="mt-3"
+          card={selected}
+          onDone={() => {
+            setAdding(false);
+            setEditing(null);
+          }}
         />
       ) : null}
 
-      <div className="paper mt-4 overflow-hidden rounded-group bg-surface">
-        {cards.map((card, index) =>
-          editing === card.id ? (
-            <Editor
-              key={card.id}
-              courseId={courseId}
-              card={card}
-              onDone={() => setEditing(null)}
-              className={index > 0 ? "border-t border-hairline" : ""}
-            />
-          ) : (
-            <Row
-              key={card.id}
-              card={card}
-              index={index}
-              onEdit={() => setEditing(card.id)}
-            />
-          ),
-        )}
-      </div>
+      {occluding ? (
+        <OcclusionEditor courseId={courseId} onDone={() => setOccluding(false)} />
+      ) : null}
     </div>
   );
 }
@@ -88,12 +100,14 @@ function Row({
     lapses: card.lapses,
     stepIndex: card.step_index,
   });
+  const occlusion = isOcclusion(card);
+  const choices = card.choices ?? [];
 
   return (
     <button
       type="button"
       onClick={onEdit}
-      className={`flex w-full items-start gap-4 px-5 py-4 text-left transition-colors duration-hover hover:bg-surface-muted/60 ${
+      className={`hover-row flex w-full items-start gap-4 px-5 py-4 text-left ${
         index > 0 ? "border-t border-hairline" : ""
       }`}
     >
@@ -106,14 +120,20 @@ function Row({
 
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-medium leading-snug text-ink">
-          <InlineMarkup text={card.front} />
+          <InlineMarkup text={occlusion ? card.back : card.front} />
         </span>
-        <span className="mt-1 block text-[14px] leading-snug text-ink-secondary">
-          <InlineMarkup text={card.back} />
-        </span>
-        {card.choices.length > 0 ? (
+        {occlusion ? (
+          <span className="mt-1.5 inline-flex rounded-pill bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
+            Schéma
+          </span>
+        ) : (
+          <span className="mt-1 block text-[14px] leading-snug text-ink-secondary">
+            <InlineMarkup text={card.back} />
+          </span>
+        )}
+        {choices.length > 0 ? (
           <span className="mt-1.5 block text-[12.5px] text-ink-tertiary">
-            {card.choices.length} propositions · bonne réponse n°
+            {choices.length} propositions · bonne réponse n°
             {(card.correct_choice_index ?? 0) + 1}
           </span>
         ) : null}
@@ -133,23 +153,16 @@ function Row({
   );
 }
 
-/**
- * L'édition d'une carte, ou l'écriture d'une neuve.
- *
- * Le même composant sert les deux : ce sont les mêmes champs, et deux formulaires côte à côte
- * finiraient par différer sur une validation.
- */
-function Editor({
+function CardEditor({
   courseId,
   card,
   onDone,
-  className = "",
 }: {
   courseId: string;
   card?: CardRow;
   onDone: () => void;
-  className?: string;
 }) {
+  const occlusion = card ? isOcclusion(card) : false;
   const [front, setFront] = useState(card?.front ?? "");
   const [back, setBack] = useState(card?.back ?? "");
   const [choices, setChoices] = useState<string[]>(card?.choices ?? []);
@@ -158,6 +171,14 @@ function Editor({
   const [pending, startTransition] = useTransition();
 
   const complete = front.trim().length > 0 && back.trim().length > 0;
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onDone();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onDone]);
 
   function save() {
     setFailure(null);
@@ -169,7 +190,7 @@ function Editor({
             front,
             back,
             hint: card.hint,
-            choices: choices.length > 0 ? choices : undefined,
+            choices: occlusion || choices.length === 0 ? undefined : choices,
             correctChoiceIndex: correct,
           })
         : await createCard({
@@ -196,119 +217,163 @@ function Editor({
   }
 
   return (
-    <div className={`bg-surface-muted/40 px-5 py-4 ${className}`}>
-      <label className="eyebrow block text-ink-tertiary" htmlFor={`front-${card?.id ?? "new"}`}>
-        Question
-      </label>
-      <textarea
-        id={`front-${card?.id ?? "new"}`}
-        value={front}
-        onChange={(event) => setFront(event.target.value)}
-        rows={2}
-        autoFocus
-        className="mt-1.5 w-full resize-y rounded-button bg-surface px-3.5 py-2.5 text-[15px] text-ink outline-none paper"
-      />
-
-      <label className="eyebrow mt-4 block text-ink-tertiary" htmlFor={`back-${card?.id ?? "new"}`}>
-        Réponse
-      </label>
-      <textarea
-        id={`back-${card?.id ?? "new"}`}
-        value={back}
-        onChange={(event) => setBack(event.target.value)}
-        rows={2}
-        className="mt-1.5 w-full resize-y rounded-button bg-surface px-3.5 py-2.5 text-[15px] text-ink outline-none paper"
-      />
-
-      {choices.length > 0 ? (
-        <div className="mt-4">
-          <p className="eyebrow text-ink-tertiary">Propositions</p>
-          <div className="mt-1.5 space-y-1.5">
-            {choices.map((choice, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <button
-                  type="button"
-                  aria-label={`Bonne réponse : proposition ${index + 1}`}
-                  aria-pressed={correct === index}
-                  onClick={() => setCorrect(index)}
-                  className={`h-5 w-5 shrink-0 rounded-full border-2 ${
-                    correct === index ? "border-accent bg-accent" : "border-stroke-strong"
-                  }`}
-                />
-                <input
-                  value={choice}
-                  onChange={(event) => {
-                    const next = [...choices];
-                    next[index] = event.target.value;
-                    setChoices(next);
-                  }}
-                  className="h-10 min-w-0 flex-1 rounded-button bg-surface px-3 text-[14px] text-ink outline-none paper"
-                />
-                <button
-                  type="button"
-                  aria-label={`Retirer la proposition ${index + 1}`}
-                  onClick={() => setChoices(choices.filter((_, at) => at !== index))}
-                  className="pressable px-1.5 text-[13px] text-ink-tertiary"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/35 p-4 sm:items-center">
+      <button type="button" className="absolute inset-0" aria-label="Fermer" onClick={onDone} />
+      <div className="relative max-h-[92svh] w-full max-w-[520px] overflow-y-auto rounded-sheet bg-canvas p-6 shadow-floating">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="eyebrow text-ink-tertiary">{card ? "Modifier" : "Nouvelle"}</p>
+            <h2 className="mt-1 text-[22px] font-bold text-ink">
+              {card ? (occlusion ? "Corriger le schéma" : "Corriger la carte") : "Écrire une carte"}
+            </h2>
           </div>
-        </div>
-      ) : null}
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          disabled={!complete || pending}
-          onClick={save}
-          className={`pressable rounded-button px-4 py-2.5 text-[14px] font-semibold ${
-            complete && !pending
-              ? "bg-ink text-on-ink"
-              : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
-          }`}
-        >
-          {pending ? "…" : card ? "Enregistrer" : "Ajouter la carte"}
-        </button>
-
-        <button
-          type="button"
-          onClick={onDone}
-          className="pressable rounded-button px-3 py-2.5 text-[14px] text-ink-secondary"
-        >
-          Annuler
-        </button>
-
-        {choices.length < 6 ? (
           <button
             type="button"
-            onClick={() => setChoices([...choices, ""])}
-            className="pressable rounded-button px-3 py-2.5 text-[13.5px] text-ink-secondary underline-draw"
+            onClick={onDone}
+            className="pressable text-[18px] text-ink-tertiary"
+            aria-label="Fermer"
           >
-            {choices.length === 0 ? "En faire un QCM" : "Ajouter une proposition"}
+            ✕
           </button>
+        </div>
+
+        {occlusion && card?.image_path ? (
+          <div className="mt-5">
+            <OcclusionFigure
+              image={card.image_path}
+              mask={{
+                x: card.mask_x,
+                y: card.mask_y,
+                width: card.mask_width,
+                height: card.mask_height,
+              }}
+              revealed
+            />
+          </div>
         ) : null}
 
-        {card ? (
+        {occlusion ? null : (
+          <>
+            <label className="eyebrow mt-5 block text-ink-tertiary" htmlFor={`front-${card?.id ?? "new"}`}>
+              Question
+            </label>
+            <textarea
+              id={`front-${card?.id ?? "new"}`}
+              value={front}
+              onChange={(event) => setFront(event.target.value)}
+              rows={2}
+              autoFocus
+              className="mt-1.5 w-full resize-y rounded-button bg-surface px-3.5 py-2.5 text-[15px] text-ink outline-none paper"
+            />
+          </>
+        )}
+
+        <label className="eyebrow mt-4 block text-ink-tertiary" htmlFor={`back-${card?.id ?? "new"}`}>
+          {occlusion ? "Nom de la zone" : "Réponse"}
+        </label>
+        <textarea
+          id={`back-${card?.id ?? "new"}`}
+          value={back}
+          onChange={(event) => setBack(event.target.value)}
+          rows={2}
+          autoFocus={occlusion}
+          className="mt-1.5 w-full resize-y rounded-button bg-surface px-3.5 py-2.5 text-[15px] text-ink outline-none paper"
+        />
+
+        {!occlusion && choices.length > 0 ? (
+          <div className="mt-4">
+            <p className="eyebrow text-ink-tertiary">Propositions</p>
+            <div className="mt-1.5 space-y-1.5">
+              {choices.map((choice, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label={`Bonne réponse : proposition ${index + 1}`}
+                    aria-pressed={correct === index}
+                    onClick={() => setCorrect(index)}
+                    className={`h-5 w-5 shrink-0 rounded-full border-2 ${
+                      correct === index ? "border-accent bg-accent" : "border-stroke-strong"
+                    }`}
+                  />
+                  <input
+                    value={choice}
+                    onChange={(event) => {
+                      const next = [...choices];
+                      next[index] = event.target.value;
+                      setChoices(next);
+                    }}
+                    className="h-10 min-w-0 flex-1 rounded-button bg-surface px-3 text-[14px] text-ink outline-none paper"
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Retirer la proposition ${index + 1}`}
+                    onClick={() => setChoices(choices.filter((_, at) => at !== index))}
+                    className="pressable px-1.5 text-[13px] text-ink-tertiary"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-5 flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={remove}
-            disabled={pending}
-            className="pressable ml-auto rounded-button px-3 py-2.5 text-[13.5px] text-negative"
+            disabled={!complete || pending}
+            onClick={save}
+            className={`pressable rounded-button px-4 py-2.5 text-[14px] font-semibold ${
+              complete && !pending
+                ? "bg-ink text-on-ink"
+                : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
+            }`}
           >
-            Supprimer
+            {pending ? "…" : card ? "Enregistrer" : "Ajouter la carte"}
           </button>
+
+          <button
+            type="button"
+            onClick={onDone}
+            className="pressable rounded-button px-3 py-2.5 text-[14px] text-ink-secondary"
+          >
+            Annuler
+          </button>
+
+          {!occlusion && choices.length < 6 ? (
+            <button
+              type="button"
+              onClick={() => setChoices([...choices, ""])}
+              className="pressable rounded-button px-3 py-2.5 text-[13.5px] text-ink-secondary underline-draw"
+            >
+              {choices.length === 0 ? "En faire un QCM" : "Ajouter une proposition"}
+            </button>
+          ) : null}
+
+          {card ? (
+            <button
+              type="button"
+              onClick={remove}
+              disabled={pending}
+              className="pressable ml-auto rounded-button px-3 py-2.5 text-[13.5px] text-negative"
+            >
+              Supprimer
+            </button>
+          ) : null}
+        </div>
+
+        {failure ? (
+          <p className="mt-3 text-[13px] text-negative" role="alert">
+            {failure}
+          </p>
         ) : null}
       </div>
-
-      {failure ? (
-        <p className="mt-3 text-[13px] text-negative" role="alert">
-          {failure}
-        </p>
-      ) : null}
     </div>
   );
+}
+
+function isOcclusion(card: CardRow): boolean {
+  return card.kind === "occlusion" && Boolean(card.image_path) && card.mask_width > 0 && card.mask_height > 0;
 }
 
 function stateLabel(state: string): string {

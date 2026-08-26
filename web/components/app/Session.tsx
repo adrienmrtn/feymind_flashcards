@@ -21,6 +21,7 @@ import {
   type SessionEntry,
 } from "@micabo/core";
 
+import { OcclusionFigure } from "@/components/app/OcclusionFigure";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { gradeCard } from "@/lib/actions/review";
 
@@ -56,6 +57,11 @@ export interface SessionCard {
   choices: string[];
   answerIndex: number;
   courseTitle: string | null;
+  imagePath: string | null;
+  maskX: number;
+  maskY: number;
+  maskWidth: number;
+  maskHeight: number;
   snapshot: CardSnapshot;
 }
 
@@ -229,6 +235,21 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
         <div className="paper rounded-group bg-surface p-7">
           {card.courseTitle ? (
             <p className="eyebrow text-ink-tertiary">{card.courseTitle}</p>
+          ) : null}
+
+          {isOcclusion(card) ? (
+            <div className="mt-3">
+              <OcclusionFigure
+                image={card.imagePath!}
+                mask={{
+                  x: card.maskX,
+                  y: card.maskY,
+                  width: card.maskWidth,
+                  height: card.maskHeight,
+                }}
+                revealed={revealed}
+              />
+            </div>
           ) : null}
 
           <p className="mt-3 text-[21px] font-semibold leading-snug text-ink">
@@ -431,4 +452,13 @@ function progressWidth(answered: number, remaining: number): number {
   const total = answered + remaining;
   if (total <= 0) return 0;
   return (answered / total) * 100;
+}
+
+function isOcclusion(card: SessionCard): boolean {
+  return (
+    card.kind === "occlusion" &&
+    Boolean(card.imagePath) &&
+    card.maskWidth > 0 &&
+    card.maskHeight > 0
+  );
 }

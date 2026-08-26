@@ -63,11 +63,9 @@ export default async function CourseCardsPage({ params }: { params: Promise<{ id
         <GenerateCards courseId={course.id} existing={cards.length} />
       </div>
 
-      {cards.length > 0 ? (
-        <div className="mt-8">
-          <CardList courseId={course.id} cards={cards} />
-        </div>
-      ) : null}
+      <div className="mt-8">
+        <CardList courseId={course.id} cards={cards} />
+      </div>
 
       {cards.length > entitlement.FREE_TIER.cardsPerSession ? (
         <p className="mt-4 text-[12.5px] leading-relaxed text-ink-tertiary">

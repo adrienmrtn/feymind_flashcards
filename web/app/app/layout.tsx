@@ -13,8 +13,8 @@ import { readEntitlement } from "@/lib/data/entitlement";
  *
  * L'iPhone a trois onglets avec Réviser au milieu, parce que c'est là que le pouce tombe et qu'on
  * sort son téléphone dans une file d'attente. On s'assied devant un écran pour **travailler** : la
- * navigation part donc sur le côté, elle est toujours visible, et **Cours est l'écran d'ouverture**.
- * Un bureau s'ouvre sur ce qu'on a posé dessus.
+ * navigation part donc sur le côté, elle est toujours visible, et **Accueil est l'écran
+ * d'ouverture** — examen, cartes du jour, derniers cours. L'étagère vit sous Cours.
  *
  * La porte est fermée ici et pas dans chaque page : une redirection oubliée sur un seul écran est
  * une fuite, et le cloisonnement de Postgres rattraperait les données mais pas la page vide qu'on
