@@ -1,9 +1,12 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 
 import { AppNav } from "@/components/app/AppNav";
+import { PaywallHost } from "@/components/app/PaywallFlow";
+import { readEntitlement } from "@/lib/data/entitlement";
 
 /**
  * La charpente de l'app web : **une barre latérale, pas trois onglets.**
@@ -25,6 +28,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   if (!user) redirect("/commencer/compte?suite=%2Fapp");
 
+  const right = await readEntitlement();
+
   return (
     <div className="min-h-svh bg-canvas lg:flex">
       <AppNav />
@@ -32,6 +37,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main className="min-w-0 flex-1 pb-24 lg:pb-0">
         <div className="mx-auto max-w-[860px] px-screen py-8 lg:py-12">{children}</div>
       </main>
+
+      <Suspense fallback={null}>
+        <PaywallHost isPro={right.isPro} />
+      </Suspense>
     </div>
   );
 }

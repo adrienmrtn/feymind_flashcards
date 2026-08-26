@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,8 +10,9 @@ import { previousPath, progressFor, stepIndex, STEPS } from "@/lib/onboarding/st
 /**
  * L'habillage du parcours : la barre de progression, et le retour.
  *
- * La jauge et le retour sont là dès le premier écran. Le retour du compte ramène
- * à la landing : le parcours n'est pas la vitrine.
+ * La jauge et le retour sont là dès le premier écran. Le retour du pays ramène
+ * à la landing : le parcours n'est pas la vitrine. Le compte n'a plus de jauge :
+ * c'est une page, et elle arrive à la fin.
  */
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -30,7 +32,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
           <header className="flex h-14 items-center gap-4 px-screen">
             {back ? (
               <Link
-                href={back}
+                href={back as Route}
                 aria-label={back === "/" ? "Retour à l'accueil" : "Revenir à l'écran précédent"}
                 className="pressable -ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-secondary"
               >

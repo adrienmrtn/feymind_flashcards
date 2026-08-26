@@ -43,13 +43,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const destination = next === "/commencer/compte" || next === "/commencer" ? await resumePath() : next;
+  const destination =
+    next === "/commencer/compte" || next === "/commencer" ? await resumePath() : next;
   return NextResponse.redirect(new URL(destination, url.origin));
 }
 
 function safeNext(value: string | null): string {
   if (!value || value === "/" || !value.startsWith("/") || value.startsWith("//")) {
-    return "/commencer/pays";
+    return "/app?bienvenue=1";
   }
   return value;
 }

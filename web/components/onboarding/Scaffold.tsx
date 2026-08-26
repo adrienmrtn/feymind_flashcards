@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -39,7 +40,7 @@ export function Scaffold({
         {eyebrow ? <p className="eyebrow text-ink-tertiary">{eyebrow}</p> : <span />}
         {skip ? (
           <Link
-            href={skip.href}
+            href={skip.href as Route}
             className="underline-draw text-[13px] font-medium text-ink-tertiary"
           >
             {skip.label}
@@ -95,7 +96,7 @@ export function ContinueButton({
       onClick={() => {
         if (!enabled) return;
         onPress?.();
-        if (href) router.push(href);
+        if (href) router.push(href as Route);
       }}
       className={`pressable group flex h-14 w-full items-center justify-center gap-2 rounded-button text-[16px] font-semibold transition-colors duration-hover ${
         enabled

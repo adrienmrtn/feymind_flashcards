@@ -25,8 +25,13 @@ export function Footer() {
               <p className="eyebrow mb-3 text-ink-tertiary">Le site</p>
               <ul className="space-y-1.5 text-ink-secondary">
                 <li>
-                  <Link href="/commencer/compte" className="underline-draw" data-print="bare">
+                  <Link href="/commencer/pays" className="underline-draw" data-print="bare">
                     Commencer
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/commencer/compte?suite=%2Fapp" className="underline-draw" data-print="bare">
+                    Se connecter
                   </Link>
                 </li>
               </ul>

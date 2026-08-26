@@ -17,6 +17,8 @@ import {
   type CardSnapshot,
 } from "@micabo/core";
 
+import { PaywallPreview } from "@/components/app/PaywallPreview";
+
 /**
  * **La référence des fondations, et pas la page d'accueil.**
  *
@@ -138,9 +140,10 @@ function FreeTierSection() {
             L&apos;annuel économise{" "}
             <span className="numeral font-bold text-accent">{pricing.savingsPercent()} %</span> — un
             nombre <strong className="font-semibold text-ink-secondary">calculé</strong> depuis les
-            deux prix, jamais écrit. La spec du parcours annonçait 60 % ; c&apos;est le calcul qui a
-            raison, et il suivra le jour où un prix bougera.
+            deux prix, jamais écrit. L&apos;étudiant paie{" "}
+            {pricing.priceText(pricing.STUDENT_YEARLY.price)}, sans essai.
           </p>
+          <PaywallPreview />
         </Card>
       </div>
     </Section>

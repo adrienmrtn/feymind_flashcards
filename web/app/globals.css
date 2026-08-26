@@ -446,6 +446,53 @@ video {
   animation: micabo-rise 480ms var(--ease-out-strong) both;
 }
 
+/* Le paywall se pose **par-dessus** le tableau de bord, il ne le remplace pas. */
+@keyframes micabo-paywall-in {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+    scale: 0.985;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@utility paywall-card {
+  animation: micabo-paywall-in 520ms var(--ease-out-strong) both;
+}
+
+@keyframes micabo-sway {
+  from {
+    rotate: -11deg;
+  }
+  to {
+    rotate: 11deg;
+  }
+}
+
+@utility bell-sway {
+  transform-origin: 50% 12%;
+  animation: micabo-sway 1.15s var(--ease-in-out-strong) infinite alternate;
+}
+
+@keyframes micabo-count {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@utility count-in {
+  animation: micabo-count 700ms var(--ease-out-strong) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise {
     animation-duration: 200ms;
