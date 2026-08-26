@@ -692,18 +692,14 @@ celles dont la table n'a qu'une seule politique.
 
 ## Le parcours d'accueil du web
 
-**Ce n'est pas la page d'accueil, et ce n'est pas celui de l'iPhone.** Neuf écrans contre
-vingt-deux, et surtout un ordre inversé sur le point qui compte : **le compte se crée au deuxième
-écran**, avant toute question. C'est juste ici et faux là-bas — quelqu'un qui a installé une app
-s'est engagé, et le tunnel iOS a dix-sept écrans pour donner une raison ; sur le web, où la
-question suivante est « dans quel pays », un compte demandé tôt est un compte demandé avant qu'on
-ait rien à perdre. Et ça tombe bien : la règle de l'abonnement veut qu'**on ne vende jamais avant
-la connexion**, et le paywall est le dernier écran.
+**Ce n'est pas la page d'accueil, et ce n'est pas celui de l'iPhone.** La landing (`/`) est la
+vitrine : elle montre, elle ne pose aucune question. « Commencer » ouvre le parcours, **un écran à
+la fois**. Huit écrans contre vingt-deux, et le compte est le premier : sur le web on n'a pas
+dix-sept écrans pour donner une raison d'en créer un, et on ne vend jamais avant la connexion.
 
 | # | Écran | Contenu |
 | --- | --- | --- |
-| 0 | **Accueil** | « Bienvenue sur la première intelligence artificielle qui aide les élèves à travailler et à approcher les examens sans stress. » |
-| 1 | **Le compte** | Titre « L'application que les meilleurs élèves ne veulent pas que tu connaisses. », sous-titre « Crée ton compte en 10 secondes. » Apple, Google, courriel. Mention des CGU et de la politique de confidentialité |
+| 1 | **Le compte** | « Crée ton compte. » Apple, Google, courriel. Mention des CGU et de la politique de confidentialité. `/commencer` redirige ici. |
 | 2 | **Le pays** | « Tu étudies dans quel pays ? » / « Pour te proposer le bon système scolaire. » Le pays détecté **en premier et déjà en évidence**, drapeau compris, puis les plus fréquents |
 | 3 | **Le niveau** | « Qu'est-ce qui te décrit le mieux ? » Les réponses sont **celles du pays choisi** (`EducationStage`) |
 | 4 | **Les matières** | L'écran du mobile, adapté au web : les sept familles de `SubjectCatalog`, un emoji par matière, sans tuile |
@@ -712,8 +708,8 @@ la connexion**, et le paywall est le dernier écran.
 | 7 | **L'école** | « Tu étudies dans quelle école ? », le même autocomplete hybride qu'iOS — catalogue embarqué puis la RPC `search_institutions` — et le même « Passer » |
 | 8 | **Le paywall** | « Ne rate pas l'occasion de devenir le meilleur de ta classe » / « Débloque tout Micabo et arrive préparé. » Les avantages en tableau, une ligne par point. Deux formules, l'annuelle en avant avec son économie et son prix ramené au mois. **Une croix pour fermer, visible tout de suite.** En bas, les liens légaux. **Vide pour l'instant** — il se remplit à l'étape 5 |
 
-L'habillage, commun aux écrans 2 à 8 : une barre de progression en haut, un bouton retour, et le
-bouton principal en bas **gris tant qu'on n'a pas répondu**.
+L'habillage, dès le premier écran : une barre de progression, un bouton retour (vers la landing
+depuis le compte), et le bouton principal en bas **gris tant qu'on n'a pas répondu**.
 
 Le bouton retour est une **divergence assumée** avec l'iPhone, où le parcours est « strictement
 linéaire, ni retour arrière ni balayage ». Un navigateur a une flèche retour de toute façon : ne
@@ -915,9 +911,9 @@ inaccessible — et la page tient à 400 px de large sans débordement horizonta
 
 ### Où en est l'étape 3
 
-Faite. Les neuf écrans existent sous `/commencer`, chacun à sa propre URL — donc le retour du
-navigateur marche sans qu'on ait rien à écrire, et la barre de progression avec son bouton retour
-n'apparaît qu'à partir du troisième, parce qu'avant il n'y a rien derrière soi.
+Faite. Les écrans existent sous `/commencer/…`, chacun à sa propre URL — donc le retour du
+navigateur marche sans qu'on ait rien à écrire. « Commencer » depuis la landing ouvre le compte,
+puis les questions s'enchaînent un écran à la fois.
 
 **Les données du parcours sont dans le noyau**, pas dans les écrans : les treize pays, leurs
 paliers, les sept familles de matières et la table d'emojis, avec leurs invariants portés depuis

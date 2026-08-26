@@ -9,10 +9,8 @@ import { previousPath, progressFor, stepIndex, STEPS } from "@/lib/onboarding/st
 /**
  * L'habillage du parcours : la barre de progression, et le retour.
  *
- * Les deux n'apparaissent qu'**à partir de l'écran 2**, parce qu'avant il n'y a rien derrière soi.
- * Et la jauge est unique du premier écran au paywall, sans jamais disparaître : c'est une règle du
- * tunnel iOS, et elle vaut ici pour la même raison — une barre qui s'absente sur un écran fait
- * croire qu'on a quitté le parcours.
+ * La jauge et le retour sont là dès le premier écran. Le retour du compte ramène
+ * à la landing : le parcours n'est pas la vitrine.
  */
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -33,7 +31,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
             {back ? (
               <Link
                 href={back}
-                aria-label="Revenir à l'écran précédent"
+                aria-label={back === "/" ? "Retour à l'accueil" : "Revenir à l'écran précédent"}
                 className="pressable -ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-secondary"
               >
                 <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5">

@@ -11,32 +11,16 @@ import { RetentionChart } from "@/components/landing/RetentionChart";
 import { StartButton } from "@/components/landing/StartButton";
 import { Transformation } from "@/components/landing/Transformation";
 
-/**
- * La page d'accueil.
- *
- * **Une seule règle la gouverne, et c'est celle du parcours d'accueil de l'app : la démonstration
- * est le seul argument.** Une page qui montre une chose est plus crédible qu'une page qui en
- * promet six, et c'est aussi ce qui la distingue — le site de chaque outil d'IA scolaire est une
- * liste de fonctionnalités empilées en sections, et c'est précisément la tête d'un site fait à la
- * chaîne.
- *
- * Ce qui n'y est pas, et c'est délibéré : pas de mur de logos « ils nous font confiance », parce
- * qu'une app d'étudiants n'a pas de clients d'entreprise ; pas de carrousel de témoignages à
- * photos d'avatars ; pas de chiffre d'utilisateurs, parce qu'il n'y en a pas encore et qu'un
- * nombre sur un site indexé est une affirmation commerciale ; pas de bulle de chat ; aucun
- * dégradé, aucun bandeau sombre, aucune étoile scintillante.
- *
- * Et pas de display serif ni d'accent terracotta, nommément : l'ivoire de Micabo est à quelques
- * points du crème que les pages produites à la chaîne ont adopté, et ce sont les deux autres
- * marqueurs de ce cliché qu'il ne faut surtout pas lui associer.
- */
-
 export const metadata: Metadata = {
   title: "Micabo — ton cours devient une fiche",
   description:
     "Dépose un polycopié, une photo de tes notes ou une vidéo de cours. Micabo en écrit la fiche que tu relis, en tire les cartes qui te la font retenir, et les fait revenir juste avant que tu l'oublies.",
 };
 
+/**
+ * La vitrine. Elle montre le produit. Elle ne pose aucune question.
+ * « Commencer » ouvre le parcours, un écran à la fois.
+ */
 export default function LandingPage() {
   return (
     <>
@@ -44,25 +28,54 @@ export default function LandingPage() {
       <main>
         <Hero />
 
-        {/* La signature : une page, deux états, la même empreinte. */}
+        <section className="mx-auto mt-28 max-w-page px-screen">
+          <p className="eyebrow text-ink-tertiary">Comment ça marche</p>
+          <h2 className="mt-2.5 max-w-[20ch] text-3xl font-bold text-ink sm:text-4xl">
+            Trois gestes. C&apos;est tout.
+          </h2>
+          <ol className="mt-9 grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                n: "1",
+                title: "Tu déposes un cours",
+                text: "PDF, photo, Word ou une vidéo YouTube.",
+              },
+              {
+                n: "2",
+                title: "Micabo écrit la fiche",
+                text: "Le plan, les définitions, ce qui compte.",
+              },
+              {
+                n: "3",
+                title: "Les cartes reviennent",
+                text: "Juste avant que tu oublies. Jusqu'au jour J.",
+              },
+            ].map((step) => (
+              <li key={step.n} className="paper rounded-group bg-surface p-6">
+                <p className="numeral text-[22px] font-bold text-accent">{step.n}</p>
+                <p className="mt-3 text-[17px] font-semibold text-ink">{step.title}</p>
+                <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink-secondary">
+                  {step.text}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
         <Transformation />
 
         <Section
           eyebrow="De la fiche aux cartes"
           title="Ce que la fiche devient, quand tu veux la retenir."
-          note="Quatre formats, parce qu'un cours ne se révise pas d'une seule façon : recto verso pour une définition, QCM pour un choix qui se piège, texte à trou pour une formulation exacte, et le schéma pour ce qui se dessine."
+          note="Recto verso, QCM, texte à trou, schéma. Quatre formats, parce qu'un cours ne se révise pas d'une seule façon."
         >
           <DemoCards />
-          <p className="mt-6 max-w-reading text-[13.5px] leading-relaxed text-ink-tertiary">
-            Les cartes ne sont pas produites au passage : elles se demandent depuis la fiche, quand
-            tu l&apos;as lue et que tu sais ce que tu veux retenir.
-          </p>
         </Section>
 
         <Section
           eyebrow="Pourquoi ça tient"
           title="Relire ne suffit pas. Se souvenir, oui."
-          note="Ce qu'on relit s'oublie presque aussi vite que ce qu'on n'a pas relu. Ce qu'on a dû retrouver de mémoire tient — et il suffit de le retrouver au bon moment, de moins en moins souvent."
+          note="Ce qu'on a dû retrouver de mémoire tient — surtout si ça revient au bon moment, de moins en moins souvent."
         >
           <RetentionChart />
         </Section>
@@ -70,7 +83,7 @@ export default function LandingPage() {
         <Section
           eyebrow="Mode examen"
           title="Tu donnes la date. Micabo réorganise tout."
-          note="La répétition espacée optimise la mémoire à long terme, et se fiche de la date de ton contrôle : une carte revue hier avec un intervalle de vingt jours retomberait trois semaines après l'épreuve. Le mode examen lui donne une date butoir."
+          note="La répétition espacée ignore le jour J. Le mode examen lui donne une date butoir, et resserre les cartes à l'approche de l'épreuve."
         >
           <ExamMode />
         </Section>
@@ -78,7 +91,7 @@ export default function LandingPage() {
         <Section
           eyebrow="Le prix"
           title="Un cours gratuit, pour de vrai."
-          note="Assez pour voir Micabo tourner sur ton propre cours avant de décider quoi que ce soit — ce qui est le seul essai qui veuille dire quelque chose."
+          note="Assez pour voir Micabo tourner sur ton propre cours avant de décider quoi que ce soit."
         >
           <Pricing />
         </Section>
@@ -87,12 +100,12 @@ export default function LandingPage() {
           <Questions />
         </Section>
 
-        <section className="mx-auto mt-32 max-w-page px-screen pb-8 text-center">
+        <section className="mx-auto mt-28 max-w-page px-screen pb-10 text-center">
           <h2 className="text-3xl font-bold tracking-tight-title text-ink sm:text-4xl">
             Ton cours. Une fiche. Des cartes.
           </h2>
           <p className="mx-auto mt-4 max-w-reading text-[16px] leading-relaxed text-ink-secondary">
-            Le parcours s&apos;ouvre. Un écran à la fois.
+            Clique sur Commencer. Le parcours s&apos;ouvre, un écran à la fois.
           </p>
           <div className="mt-8">
             <StartButton />
@@ -117,7 +130,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mx-auto mt-32 max-w-page px-screen">
+    <section className="mx-auto mt-28 max-w-page px-screen">
       <p className="eyebrow text-ink-tertiary">{eyebrow}</p>
       <h2 className="mt-2.5 max-w-[24ch] text-3xl font-bold text-ink sm:text-4xl">{title}</h2>
       {note ? (

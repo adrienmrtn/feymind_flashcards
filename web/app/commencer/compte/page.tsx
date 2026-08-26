@@ -77,12 +77,9 @@ function AccountStepBody() {
 
   return (
     <Scaffold
-      title={
-        <>
-          L&apos;application que les meilleurs élèves ne veulent pas que tu connaisses.
-        </>
-      }
-      subtitle="Crée ton compte en 10 secondes."
+      eyebrow="Le parcours"
+      title="Crée ton compte"
+      subtitle="Un appui, et on enchaîne. Un écran à la fois."
       footer={
         <p className="text-center text-[12.5px] leading-relaxed text-ink-tertiary">
           En continuant, tu acceptes les conditions d&apos;utilisation et la politique de

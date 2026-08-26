@@ -88,8 +88,8 @@ export function Pricing() {
 
       <div className="mx-auto mt-10 flex flex-col items-center">
         <StartButton />
-        <p className="mt-8 mb-3 text-center text-[14px] text-ink-secondary">
-          L&apos;abonnement n&apos;est pas encore ouvert. Laisse ton adresse, on t&apos;écrit.
+        <p className="mt-10 mb-3 text-center text-[13.5px] text-ink-tertiary">
+          L&apos;abonnement n&apos;est pas encore ouvert. On t&apos;écrit le jour J.
         </p>
         <div className="w-full max-w-[440px]">
           <WaitlistForm source="pricing" size="compact" />
