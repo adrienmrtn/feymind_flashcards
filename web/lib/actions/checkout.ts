@@ -41,13 +41,19 @@ function stripeKey(): string | null {
 }
 
 /** L'identifiant de prix Stripe d'une offre. Il n'y en a pas encore : ils viendront du tableau de bord. */
-function priceId(kind: pricing.PlanKind): string | null {
-  return kind === "yearly"
-    ? (process.env.STRIPE_PRICE_YEARLY ?? null)
-    : (process.env.STRIPE_PRICE_WEEKLY ?? null);
+function priceId(kind: pricing.PlanKind, student: boolean): string | null {
+  if (kind === "yearly") {
+    return student
+      ? (process.env.STRIPE_PRICE_YEARLY_STUDENT ?? process.env.STRIPE_PRICE_YEARLY ?? null)
+      : (process.env.STRIPE_PRICE_YEARLY ?? null);
+  }
+  return process.env.STRIPE_PRICE_WEEKLY ?? null;
 }
 
-export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutResult> {
+export async function startCheckout(
+  kind: pricing.PlanKind,
+  options: { student?: boolean } = {},
+): Promise<CheckoutResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -63,8 +69,9 @@ export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutRes
   const already = await readEntitlement();
   if (already.isPro) return { status: "already" };
 
+  const student = Boolean(options.student);
   const key = stripeKey();
-  const price = priceId(kind);
+  const price = priceId(kind, student);
 
   if (!key || !price) {
     return {
@@ -73,7 +80,7 @@ export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutRes
     };
   }
 
-  const plan = pricing.planFor(kind);
+  const plan = kind === "yearly" ? pricing.yearlyFor(student) : pricing.planFor(kind);
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
@@ -89,9 +96,11 @@ export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutRes
       // RevenueCat, qui le pose en `app_user_id`, qui devient la clé de `entitlements`.
       client_reference_id: user.id,
       customer_email: user.email ?? "",
-      "subscription_data[trial_period_days]": String(pricing.FREE_TRIAL_DAYS),
+      ...(pricing.hasTrial(plan)
+        ? { "subscription_data[trial_period_days]": String(plan.trialDays) }
+        : {}),
       success_url: `${SITE_URL}/app?abonnement=ok`,
-      cancel_url: `${SITE_URL}/commencer/offre`,
+      cancel_url: `${SITE_URL}/app`,
       locale: "fr",
       // Une clé d'idempotence par offre et par personne : un double clic ne crée pas deux
       // abonnements.

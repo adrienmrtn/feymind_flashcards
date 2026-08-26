@@ -67,8 +67,10 @@ export function Pricing() {
                     : "border-hairline text-ink-secondary"
                 }`}
               >
-                Cours et cartes sans limite, mode examen, et la fiche entière.{" "}
-                {pricing.FREE_TRIAL_DAYS} jours offerts.
+                Cours et cartes sans limite, mode examen, et la fiche entière.
+                {recommended
+                  ? ` ${pricing.FREE_TRIAL_DAYS} jours offerts.`
+                  : " Sans essai."}
               </p>
             </div>
           );

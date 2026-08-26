@@ -1,25 +1,23 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ThinkingOrb } from "thinking-orbs";
 
+import { hasStoredAnswers, persistStoredAnswers } from "@/lib/onboarding/persist";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * La création du compte : **une vraie page**, pas un écran de parcours.
+ * La création du compte : **une vraie page**, posée à la **fin** du parcours.
  *
- * Elle a donc sa propre mise en page et non le gabarit des écrans à question — une page
- * d'inscription n'a rien à demander d'autre, et lui imposer la charpente du tunnel laissait un
- * trou au milieu de l'écran, le titre en haut et les boutons perdus loin en dessous.
+ * Les réponses sont déjà sur l'appareil. Ici on ouvre la session, on les déverse,
+ * et on entre dans l'app. Le paywall n'est pas ici : il se posera sur le tableau
+ * de bord, une fois qu'on a vu l'étagère.
  *
- * Sur grand écran, deux colonnes : les trois voies à gauche, ce que Micabo fait à droite. C'est
- * la seule page du parcours où l'espace d'un ordinateur sert à quelque chose — partout ailleurs,
- * une question se répond dans une colonne.
- *
- * Apple et Google d'abord : un appui, aucun mot de passe à inventer. Le courriel en dernier,
- * parce qu'il demande d'aller lire une boîte.
+ * Apple et Google d'abord : un appui, aucun mot de passe à inventer. Le courriel
+ * en dernier, parce qu'il demande d'aller lire une boîte.
  */
 export default function AccountStep() {
   return (
@@ -31,6 +29,10 @@ export default function AccountStep() {
 
 type Pending = "apple" | "google" | "email" | null;
 
+function destination(): string {
+  return hasStoredAnswers() ? "/app?bienvenue=1" : "/app";
+}
+
 function AccountStepBody() {
   const params = useSearchParams();
   const router = useRouter();
@@ -39,16 +41,22 @@ function AccountStepBody() {
   const [sent, setSent] = useState(false);
   const [failure, setFailure] = useState<string | null>(params.get("erreur"));
 
-  const next = "/commencer/pays";
-
   useEffect(() => {
     const supabase = createClient();
-    void supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace(next);
+    void supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return;
+      await persistStoredAnswers();
+      const suite = params.get("suite");
+      const next =
+        suite && suite.startsWith("/") && !suite.startsWith("//")
+          ? suite
+          : destination();
+      router.replace(next as Route);
     });
-  }, [router]);
+  }, [params, router]);
 
   function callbackUrl() {
+    const next = destination();
     return `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
   }
 
@@ -62,8 +70,6 @@ function AccountStepBody() {
       options: { redirectTo: callbackUrl() },
     });
 
-    // Un fournisseur éteint côté serveur le dit dans son message d'erreur, ce qui est plus utile
-    // qu'un bouton absent dont personne ne peut deviner la cause.
     if (error) {
       setPending(null);
       setFailure(error.message);
@@ -88,18 +94,16 @@ function AccountStepBody() {
 
   return (
     <div className="mx-auto grid min-h-svh w-full max-w-[980px] items-center gap-14 px-screen py-12 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] lg:gap-20">
-      {/* `lg:mx-0` : sans lui, la colonne se centre dans sa piste et le titre part flotter au
-          milieu de la page au lieu de s'aligner sur le bord du contenu. */}
       <div className="rise mx-auto w-full max-w-[400px] lg:mx-0">
         <Link href="/" className="text-[15px] font-bold text-ink">
           Micabo
         </Link>
 
         <h1 className="mt-8 text-[32px] font-bold leading-[1.08] tracking-display text-ink sm:text-[38px]">
-          Crée ton compte
+          Garde ta progression
         </h1>
         <p className="mt-3 text-[15px] text-ink-secondary">
-          Ton premier cours est gratuit.
+          Ton parcours est prêt. Un compte, et il te suit partout.
         </p>
 
         <div className="mt-8 space-y-2.5">
@@ -176,8 +180,6 @@ function AccountStepBody() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="ton@adresse.fr"
-              /* 16 px au minimum : en dessous, Safari zoome sur le champ au focus et ne dézoome
-                 jamais. */
               className="paper h-14 w-full rounded-button bg-surface px-4 text-[16px] text-ink outline-none transition-shadow duration-hover placeholder:text-ink-tertiary"
             />
             <button
@@ -212,8 +214,6 @@ function AccountStepBody() {
         </p>
       </div>
 
-      {/* La colonne de droite ne demande rien et ne s'affiche pas sur téléphone : sur un petit
-          écran, elle repousserait les boutons sous la ligne de flottaison. */}
       <div className="hidden lg:block">
         <div className="rise space-y-2.5" style={{ animationDelay: "120ms" }}>
           {ARGUMENTS.map((item, index) => (
@@ -239,9 +239,9 @@ function AccountStepBody() {
 
 const ARGUMENTS = [
   {
-    emoji: "📄",
-    title: "Un cours gratuit",
-    text: "Assez pour voir Micabo tourner sur tes propres notes.",
+    emoji: "🔒",
+    title: "Tes réponses sont déjà là",
+    text: "Pays, matières, examen : elles rejoignent ton compte à la connexion.",
   },
   {
     emoji: "🧠",

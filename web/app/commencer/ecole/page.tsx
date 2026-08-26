@@ -69,11 +69,11 @@ export default function SchoolStep() {
     <Scaffold
       eyebrow="Ton parcours"
       title="Tu étudies dans quelle école ?"
-      skip={{ label: "Passer", href: "/commencer/offre" }}
+      skip={{ label: "Passer", href: "/commencer/parcours" }}
       footer={
         <ContinueButton
           enabled={query.trim().length > 0 && ready}
-          href="/commencer/offre"
+          href="/commencer/parcours"
           onPress={() => {
             // Le nom libre est gardé, mais sans identifiant : c'est l'identifiant qui décide de
             // qui voit quoi, et on ne l'invente pas.

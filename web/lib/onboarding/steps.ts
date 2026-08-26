@@ -2,21 +2,25 @@
  * Les écrans du parcours, dans l'ordre.
  *
  * La landing (`/`) reste la vitrine. « Commencer » ouvre le premier écran, et les
- * suivants s'enchaînent un par un. Le compte est en premier : sur le web on n'a pas
- * dix-sept écrans pour donner une raison d'en créer un, et on ne vend jamais avant
- * la connexion.
+ * suivants s'enchaînent un par un. Le compte arrive **à la fin** : demander une
+ * adresse avant d'avoir rien montré, c'est demander un compte pour une app qu'on
+ * n'a pas encore vue. Les réponses s'accumulent sur l'appareil, et se déversent
+ * en base dès que la session existe.
+ *
+ * Le paywall n'est plus une étape : l'étudiant ouvre d'abord l'app, et l'offre
+ * se pose ensuite par-dessus le tableau de bord.
  */
 
 export type OnboardingPath =
   | "/commencer"
-  | "/commencer/compte"
   | "/commencer/pays"
   | "/commencer/niveau"
   | "/commencer/matieres"
   | "/commencer/examen"
   | "/commencer/demo"
   | "/commencer/ecole"
-  | "/commencer/offre"
+  | "/commencer/parcours"
+  | "/commencer/compte"
   | "/app";
 
 export interface Step {
@@ -26,16 +30,16 @@ export interface Step {
 }
 
 export const STEPS: readonly Step[] = [
-  // La création du compte est une **page** et non un écran de parcours : elle porte sa propre
-  // mise en page, donc ni jauge ni flèche par-dessus.
-  { path: "/commencer/compte", label: "Ton compte", chrome: false },
   { path: "/commencer/pays", label: "Ton pays", chrome: true },
   { path: "/commencer/niveau", label: "Ton niveau", chrome: true },
   { path: "/commencer/matieres", label: "Tes matières", chrome: true },
   { path: "/commencer/examen", label: "Ton examen", chrome: true },
   { path: "/commencer/demo", label: "Comment ça marche", chrome: true },
   { path: "/commencer/ecole", label: "Ton école", chrome: true },
-  { path: "/commencer/offre", label: "Micabo Pro", chrome: true },
+  { path: "/commencer/parcours", label: "Ton parcours", chrome: true },
+  // La création du compte est une **page** et non un écran de parcours : elle porte sa propre
+  // mise en page, donc ni jauge ni flèche par-dessus.
+  { path: "/commencer/compte", label: "Ton compte", chrome: false },
 ];
 
 export function stepIndex(path: string): number {
