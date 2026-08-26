@@ -77,8 +77,17 @@ struct StudyView: View {
                 }
             } else {
                 headerBar
-                cardArea
-                controls
+                if session.current != nil {
+                    cardArea
+                    controls
+                } else if let availableAt = session.nextAvailableAt {
+                    WaitingNextCardView(availableAt: availableAt) {
+                        session.advance(now: Date())
+                    }
+                } else {
+                    Color.clear
+                        .onAppear { session.advance(now: Date()) }
+                }
             }
         }
         .micaboScreenBackground()
@@ -877,6 +886,53 @@ private struct ResumePromptView: View {
     }
 }
 
+// MARK: - Attente d'un palier
+
+/// Une carte notée « 1 min » ou « 10 min » n'a pas quitté la session. On reste
+/// ici jusqu'à ce qu'elle soit due — finir le paquet n'est pas finir la journée.
+private struct WaitingNextCardView: View {
+    let availableAt: Date
+    var onReady: () -> Void
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let remaining = max(0, availableAt.timeIntervalSince(context.date))
+
+            VStack(spacing: 14) {
+                Spacer(minLength: MicaboSpacing.lg)
+
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(MicaboColor.accent)
+                    .frame(width: 68, height: 68)
+                    .background(MicaboColor.accentSoft, in: Circle())
+
+                Text("Prochaine carte dans \(SM2Scheduler.format(delay: remaining))")
+                    .font(MicaboFont.hanken(26, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .tracking(-0.6)
+                    .multilineTextAlignment(.center)
+                    .monospacedDigit()
+
+                Text("Elle revient dès que son palier est écoulé. Finir le paquet n'est pas finir la journée.")
+                    .font(MicaboFont.body)
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: MicaboSpacing.lg)
+            }
+            .padding(.horizontal, MicaboSpacing.screen)
+            .onChange(of: remaining <= 0) { _, isReady in
+                if isReady { onReady() }
+            }
+            .onAppear {
+                if remaining <= 0 { onReady() }
+            }
+        }
+    }
+}
+
 // MARK: - Rien à réviser
 
 /// Ce qui manquait : quand la file du jour est vide, on le dit, on félicite sobrement et
@@ -1247,7 +1303,7 @@ private struct CompletionView: View {
     private var title: String {
         guard session.answeredCount > 0 else { return "Rien à réviser" }
         if isPractice { return "Entraînement terminé" }
-        return session.againCount == 0 ? "Sans faute." : "Session terminée"
+        return "Tout est à jour."
     }
 
     private var detail: String {

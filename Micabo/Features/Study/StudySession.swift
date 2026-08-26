@@ -53,7 +53,8 @@ final class StudySession {
     }
 
     /// Une carte replanifiée à moins de 20 minutes revient dans la même session, comme dans Anki.
-    private let learnAheadWindow: TimeInterval = 20 * 60
+    /// Aligné sur `LEARN_AHEAD_SECONDS` de `@micabo/core`.
+    static let learnAheadWindow: TimeInterval = 20 * 60
 
     private(set) var pending: [Entry] = []
     private(set) var current: Flashcard?
@@ -71,6 +72,9 @@ final class StudySession {
     private(set) var graduatedCount = 0
     private(set) var startedAt = Date()
     private(set) var isFinished = false
+    /// Instant de la prochaine carte d'apprentissage, si la file n'est pas vide
+    /// mais que rien n'est encore dû. La session n'est alors **pas** finie.
+    private(set) var nextAvailableAt: Date?
     private(set) var mode: StudyMode = .scheduled
     private(set) var didStart = false
 
@@ -202,7 +206,7 @@ final class StudySession {
 
         pending = queue(from: usable, now: now)
         initialCount = pending.count
-        advance()
+        advance(now: now)
         writeSnapshot()
     }
 
@@ -228,13 +232,21 @@ final class StudySession {
             .compactMap { byID[$0] }
             .filter { !$0.isSuspended }
 
-        pending = queue(from: restored, now: now)
+        pending = restored.enumerated().map { index, card in
+            let availableAt: Date
+            if let saved = snapshot.remainingAvailableAts, index < saved.count {
+                availableAt = saved[index]
+            } else {
+                availableAt = now.addingTimeInterval(Double(index) - Double(restored.count))
+            }
+            return Entry(card: card, availableAt: availableAt)
+        }
         initialCount = max(snapshot.initialCount, snapshot.answeredCount + pending.count)
         answeredCount = snapshot.answeredCount
         ratingCounts = snapshot.ratingCounts
         graduatedCount = snapshot.graduatedCount ?? 0
 
-        advance()
+        advance(now: now)
         writeSnapshot()
     }
 
@@ -284,12 +296,13 @@ final class StudySession {
                 graduatedCount += 1
             }
 
-            if outcome.dueDate.timeIntervalSince(now) <= learnAheadWindow {
+            if outcome.dueDate.timeIntervalSince(now) <= Self.learnAheadWindow {
                 pending.append(Entry(card: card, availableAt: outcome.dueDate))
             }
         } else if rating == .again {
-            // En entraînement libre, une carte ratée revient à la fin du tour.
-            pending.append(Entry(card: card, availableAt: now.addingTimeInterval(30)))
+            // En entraînement libre, une carte ratée revient à la fin du tour,
+            // tout de suite : on n'attend pas un palier d'apprentissage.
+            pending.append(Entry(card: card, availableAt: now))
         }
 
         undoStack.append(step)
@@ -304,7 +317,7 @@ final class StudySession {
 
         current = nil
         isRevealed = false
-        advance()
+        advance(now: now)
         write()
     }
 
@@ -323,6 +336,7 @@ final class StudySession {
         ratingCounts = step.ratingCounts
         graduatedCount = step.graduatedCount
         isFinished = false
+        nextAvailableAt = nil
         current = step.card
         // La réponse était sous les yeux au moment de la note : on la laisse visible.
         isRevealed = true
@@ -332,10 +346,10 @@ final class StudySession {
     /// Repousse la carte courante à la fin de la file sans la noter.
     func skip(now: Date = Date()) {
         guard let card = current else { return }
-        pending.append(Entry(card: card, availableAt: now.addingTimeInterval(60)))
+        pending.append(Entry(card: card, availableAt: now))
         current = nil
         isRevealed = false
-        advance()
+        advance(now: now)
         write()
     }
 
@@ -374,9 +388,19 @@ final class StudySession {
         flush()
     }
 
-    private func advance() {
+    /// Sert une carte seulement si elle est due **maintenant**. S'il reste des
+    /// cartes plus tard dans la fenêtre (1 min, 10 min), la session n'est pas
+    /// finie : elle attend, comme Anki. « Tout est à jour » n'arrive que lorsque
+    /// la file est vraiment vide.
+    func advance(now: Date = Date()) {
+        // Déjà une carte sous les yeux : un second appel (timer + TimelineView)
+        // ne doit pas l'écarter de la file.
+        guard current == nil else { return }
+
+        nextAvailableAt = nil
+        isRevealed = false
+
         guard !pending.isEmpty else {
-            current = nil
             isFinished = true
             // La file est vide : plus personne n'attend une carte, donc c'est le moment
             // d'écrire ce qui restait en mémoire.
@@ -385,9 +409,14 @@ final class StudySession {
         }
 
         pending.sort { $0.availableAt < $1.availableAt }
-        let entry = pending.removeFirst()
-        current = entry.card
-        isRevealed = false
+        if let index = pending.firstIndex(where: { $0.availableAt <= now }) {
+            current = pending.remove(at: index).card
+            isFinished = false
+            return
+        }
+
+        isFinished = false
+        nextAvailableAt = pending.first?.availableAt
     }
 
     /// Cartes affichées en arrière-plan de la pile.
@@ -453,7 +482,9 @@ final class StudySession {
     private func writeSnapshot() {
         guard mode.affectsSchedule, let sourceKey else { return }
 
-        let remaining = ([current].compactMap { $0 } + pending.map(\.card)).map(\.id)
+        let remainingEntries: [Entry] =
+            (current.map { [Entry(card: $0, availableAt: Date())] } ?? []) + pending
+        let remaining = remainingEntries.map(\.card.id)
         guard !isFinished, !remaining.isEmpty else {
             StudySessionStore.clear()
             return
@@ -463,6 +494,7 @@ final class StudySession {
             StudySessionSnapshot(
                 sourceKey: sourceKey,
                 remainingCardIDs: remaining,
+                remainingAvailableAts: remainingEntries.map(\.availableAt),
                 initialCount: initialCount,
                 answeredCount: answeredCount,
                 againCount: againCount,

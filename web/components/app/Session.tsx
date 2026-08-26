@@ -4,12 +4,21 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import {
+  DETERMINISTIC_CONFIG,
   REVIEW_RATINGS,
   REVIEW_RATING_LABELS,
   ReviewRating,
+  advanceSession,
+  enqueueInitial,
   entitlement,
+  formatDelay,
   previewLabels,
+  returnsInSession,
+  schedule,
   type CardSnapshot,
+  type ScheduleOutcome,
+  type SessionAdvance,
+  type SessionEntry,
 } from "@micabo/core";
 
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
@@ -28,6 +37,10 @@ import { gradeCard } from "@/lib/actions/review";
  * Les mêmes cartes se retournent au survol sur la page d'accueil et dans la démonstration du
  * parcours, où elles se voient une fois. C'est la même animation, juste à un endroit et fausse à
  * l'autre — c'est la fréquence qui décide, pas le goût.
+ *
+ * La file est celle d'Anki : une carte notée « 10 min » revient dans **cette** session. Finir le
+ * paquet avant ces dix minutes n'est pas finir la journée. « Tout est à jour » n'apparaît que
+ * lorsqu'il ne reste plus aucune carte due.
  *
  * L'écriture part au serveur **après** l'affichage de la carte suivante : le doigt n'attend pas le
  * réseau. Si une écriture échoue, on le dit sans défaire la session — la carte reviendra, ce qui
@@ -52,74 +65,89 @@ interface Tally {
   graduated: number;
 }
 
+type Loop = SessionAdvance<SessionCard>;
+
 export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean }) {
-  const [index, setIndex] = useState(0);
+  const [loop, setLoop] = useState<Loop>(() =>
+    advanceSession(enqueueInitial(cards, new Date()), new Date()),
+  );
   const [revealed, setRevealed] = useState(false);
   const [picked, setPicked] = useState<number | null>(null);
   const [tally, setTally] = useState<Tally>({ answered: 0, again: 0, graduated: 0 });
   const [failure, setFailure] = useState<string | null>(null);
   const [startedAt] = useState(() => Date.now());
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
-  const card = cards[index];
+  const card = loop.current;
+  const remaining = (card ? 1 : 0) + loop.pending.length;
 
   // Le plafond du gratuit s'applique **à la session**, pas au jeu : les cartes restent toutes
   // visibles dans la liste du cours, et c'est le passage qui s'arrête. Le droit est lu par la
   // fonction du noyau, qui rend « ouvert » pour tout le monde tant que l'encaissement n'existe
   // pas — le chemin est donc écrit et ne se déclenche pas encore.
   const capped = entitlement.hasReachedSessionLimit({ isPro }, tally.answered);
-  const finished = index >= cards.length || capped;
+  const finished = loop.done || capped;
 
-  const labels = useMemo(
-    () => (card ? previewLabels(card.snapshot) : null),
-    [card],
-  );
+  const labels = useMemo(() => (card ? previewLabels(card.snapshot) : null), [card]);
 
   const grade = useCallback(
     (rating: number) => {
       if (!card) return;
+      const typed = rating as ReviewRating;
+      const now = new Date();
+      const outcome = schedule(card.snapshot, typed, { now, config: DETERMINISTIC_CONFIG });
 
       setTally((current) => ({
         ...current,
         answered: current.answered + 1,
-        again: current.again + (rating === ReviewRating.again ? 1 : 0),
+        again: current.again + (typed === ReviewRating.again ? 1 : 0),
+        graduated:
+          current.graduated +
+          (card.snapshot.state !== "review" && outcome.state === "review" ? 1 : 0),
       }));
 
-      // On avance **d'abord**. L'écriture suit, et son échec se dit sans rien défaire.
-      setIndex((current) => current + 1);
+      const updated: SessionCard = { ...card, snapshot: snapshotFrom(outcome) };
+      const nextPending: SessionEntry<SessionCard>[] = returnsInSession(outcome.dueDate, now)
+        ? [...loop.pending, { card: updated, availableAt: outcome.dueDate }]
+        : loop.pending;
+
+      setLoop(advanceSession(nextPending, now));
       setRevealed(false);
       setPicked(null);
 
-      const wasLearning = card.snapshot.state !== "review";
-
-      void gradeCard({ cardId: card.id, rating, snapshot: card.snapshot }).then((result) => {
+      void gradeCard({ cardId: card.id, rating: typed, snapshot: card.snapshot }).then((result) => {
         if (result.status === "error") {
           setFailure(result.message ?? "Une note n'a pas été écrite.");
-          return;
-        }
-
-        // **« Apprises » compte les cartes qui sont passées en révision**, et c'est le serveur
-        // qui le dit — pas la note qu'on vient de donner.
-        //
-        // La première version le déduisait du bouton : « Correct » sur une carte neuve comptait
-        // pour une carte apprise. C'est faux, et le test de bout en bout l'a montré — huit notes
-        // annonçaient six cartes apprises quand la base n'en avait fait passer que deux. Une
-        // carte neuve notée « Correct » avance d'un palier d'apprentissage et revient dans dix
-        // minutes ; seule la sortie du dernier palier, ou un « Facile », la fait passer en
-        // révision. Annoncer six cartes acquises pour deux, c'est promettre un progrès qui n'a
-        // pas eu lieu.
-        if (wasLearning && result.state === "review") {
-          setTally((current) => ({ ...current, graduated: current.graduated + 1 }));
         }
       });
     },
-    [card],
+    [card, loop.pending],
   );
+
+  // Quand la prochaine carte n'est pas encore due, on reste dans la session et on
+  // la sert à l'instant où son palier s'achève — pas avant, et surtout pas en
+  // déclarant la journée finie.
+  useEffect(() => {
+    if (finished || !loop.nextAvailableAt) return;
+
+    const delay = loop.nextAvailableAt.getTime() - Date.now();
+    const timeout = window.setTimeout(() => {
+      setLoop((current) => advanceSession(current.pending, new Date()));
+    }, Math.max(0, delay));
+
+    const tick = window.setInterval(() => setNowMs(Date.now()), 1000);
+
+    return () => {
+      window.clearTimeout(timeout);
+      window.clearInterval(tick);
+    };
+  }, [finished, loop.nextAvailableAt]);
 
   // Le clavier, et **rien qui l'intercepte à moitié** : espace ne doit pas faire défiler la page,
   // et une touche pressée pendant qu'un champ a le focus appartient au champ.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (finished) return;
+      if (finished || !card) return;
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
 
@@ -141,7 +169,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [finished, revealed, grade]);
+  }, [finished, revealed, grade, card]);
 
   if (finished) {
     return (
@@ -149,13 +177,41 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
         tally={tally}
         minutes={elapsedMinutes(startedAt)}
         capped={capped}
-        remaining={cards.length - index}
+        remaining={remaining}
       />
     );
   }
-  if (!card || !labels) return null;
 
-  const progress = cards.length > 0 ? index / cards.length : 0;
+  if (!card) {
+    const until = loop.nextAvailableAt;
+    const seconds = until ? Math.max(0, (until.getTime() - nowMs) / 1000) : 0;
+
+    return (
+      <div className="mx-auto flex min-h-[calc(100svh-8rem)] max-w-[620px] flex-col">
+        <div className="flex items-center gap-4">
+          <div className="h-1 flex-1 overflow-hidden rounded-pill bg-progress-track">
+            <div
+              className="h-full rounded-pill bg-progress"
+              style={{ width: `${progressWidth(tally.answered, remaining)}%` }}
+            />
+          </div>
+          <p className="numeral shrink-0 text-[13px] font-semibold text-ink-tertiary">{remaining}</p>
+        </div>
+
+        <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
+          <p className="text-[26px] font-bold text-ink">
+            Prochaine carte dans {formatDelay(seconds)}
+          </p>
+          <p className="mt-3 max-w-[40ch] text-[15px] leading-relaxed text-ink-secondary">
+            Elle revient dès que son palier est écoulé. Finir le paquet n&apos;est pas finir la
+            journée.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!labels) return null;
 
   return (
     <div className="mx-auto flex min-h-[calc(100svh-8rem)] max-w-[620px] flex-col">
@@ -163,12 +219,10 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
         <div className="h-1 flex-1 overflow-hidden rounded-pill bg-progress-track">
           <div
             className="h-full rounded-pill bg-progress"
-            style={{ width: `${progress * 100}%` }}
+            style={{ width: `${progressWidth(tally.answered, remaining)}%` }}
           />
         </div>
-        <p className="numeral shrink-0 text-[13px] font-semibold text-ink-tertiary">
-          {cards.length - index}
-        </p>
+        <p className="numeral shrink-0 text-[13px] font-semibold text-ink-tertiary">{remaining}</p>
       </div>
 
       <div className="flex flex-1 flex-col justify-center py-8">
@@ -286,7 +340,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
   );
 }
 
-/** Le bilan : ce qui vient de se passer, et quand la prochaine revient. */
+/** Le bilan : ce qui vient de se passer. La session s'arrête ici, et pas avant. */
 function Completion({
   tally,
   minutes,
@@ -304,7 +358,7 @@ function Completion({
   return (
     <div className="mx-auto max-w-[520px] py-16 text-center">
       <p className="text-[28px] font-bold text-ink">
-        {capped ? "C'est tout pour aujourd'hui." : tally.again === 0 ? "Sans faute." : "Session terminée"}
+        {capped ? "C'est tout pour aujourd'hui." : "Tout est à jour."}
       </p>
 
       {capped ? (
@@ -360,4 +414,21 @@ function ratingTone(rating: number): string {
 
 function elapsedMinutes(startedAt: number): number {
   return Math.max(1, Math.round((Date.now() - startedAt) / 60_000));
+}
+
+function snapshotFrom(outcome: ScheduleOutcome): CardSnapshot {
+  return {
+    state: outcome.state,
+    intervalDays: outcome.intervalDays,
+    easeFactor: outcome.easeFactor,
+    repetitions: outcome.repetitions,
+    lapses: outcome.lapses,
+    stepIndex: outcome.stepIndex,
+  };
+}
+
+function progressWidth(answered: number, remaining: number): number {
+  const total = answered + remaining;
+  if (total <= 0) return 0;
+  return (answered / total) * 100;
 }
