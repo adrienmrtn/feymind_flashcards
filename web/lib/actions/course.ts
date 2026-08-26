@@ -3,11 +3,20 @@
 import { revalidatePath } from "next/cache";
 
 import {
+  DEFAULT_QUOTA,
+  clampBlocks,
+  clampQuota,
   countryFor,
+  isSheetLength,
+  isVisibility,
+  lengthContaining,
   normalizeSheet,
   resolveEmoji,
   sheetToPlainText,
+  type CourseVisibility,
+  type QuestionQuota,
   type SheetBlock,
+  type SheetLength,
 } from "@micabo/core";
 
 import { createClient } from "@/lib/supabase/server";
@@ -51,7 +60,10 @@ export async function importFromText(input: {
   hintTitle?: string;
   sourceName?: string;
   source?: "text" | "pdf" | "docx" | "youtube";
-  visibility?: "public" | "friends" | "private";
+  visibility?: CourseVisibility;
+  /** Le volume demandé, en blocs. C'est la source de vérité ; le format n'en est que le nom. */
+  blocks?: number;
+  length?: SheetLength;
 }): Promise<ImportResult> {
   const supabase = await createClient();
   const {
@@ -75,6 +87,13 @@ export async function importFromText(input: {
 
   const country = countryFor(profile?.country_code);
 
+  // Le réglage de l'écran gagne sur celui du profil, et le profil sert de défaut : c'est ce que
+  // fait l'app, où le curseur de l'import part de la préférence enregistrée. `blocks` commande, et
+  // `length` reste envoyé parce que la fonction Edge le comprend depuis toujours.
+  const stored = isSheetLength(profile?.sheet_length) ? profile.sheet_length : "standard";
+  const wantedBlocks = input.blocks ? clampBlocks(input.blocks) : undefined;
+  const length = wantedBlocks ? lengthContaining(wantedBlocks) : (input.length ?? stored);
+
   const { data, error } = await supabase.functions.invoke("generate-course", {
     body: {
       text,
@@ -83,7 +102,8 @@ export async function importFromText(input: {
       level: profile?.study_level ?? undefined,
       country: country.code,
       language: country.language,
-      length: profile?.sheet_length ?? "standard",
+      length,
+      blocks: wantedBlocks,
       source: input.source ?? "text",
     },
   });
@@ -120,7 +140,7 @@ export async function importFromText(input: {
     context_text: course.contextText ?? sheetToPlainText(blocks),
     // Le choix se fait à l'import et pas après : un cours qui part public le temps qu'on y pense
     // est un cours qui a été visible, et le refermer ensuite ne rattrape pas la minute passée.
-    visibility: input.visibility ?? "public",
+    visibility: isVisibility(input.visibility) ? input.visibility : "public",
   });
 
   if (insertError) return { status: "error", message: insertError.message };
@@ -141,7 +161,10 @@ export async function youtubePreview(url: string) {
 }
 
 /** Les sous-titres, puis la fiche — en deux temps, parce que le premier est gratuit. */
-export async function importFromYouTube(url: string): Promise<ImportResult> {
+export async function importFromYouTube(
+  url: string,
+  options?: { blocks?: number; length?: SheetLength; visibility?: CourseVisibility },
+): Promise<ImportResult> {
   const supabase = await createClient();
   const { data, error } = await supabase.functions.invoke("youtube-transcript", { body: { url } });
 
@@ -161,6 +184,9 @@ export async function importFromYouTube(url: string): Promise<ImportResult> {
     hintTitle: payload?.video?.title,
     sourceName: payload?.video?.title,
     source: "youtube",
+    blocks: options?.blocks,
+    length: options?.length,
+    visibility: options?.visibility,
   });
 }
 
@@ -171,7 +197,11 @@ export async function importFromYouTube(url: string): Promise<ImportResult> {
  * de la fiche. Le recalculer ici donnerait une seconde version du même texte, et deux rédactions du
  * même contenu finissent par se contredire.
  */
-export async function generateCards(courseId: string, quota = { basic: 8, cloze: 3, choice: 3 }) {
+export async function generateCards(courseId: string, requested?: QuestionQuota) {
+  // Le quota est borné **ici** et pas seulement dans l'écran : une action serveur est un point
+  // d'entrée public, et un quota de mille cartes envoyé à la main coûterait mille cartes.
+  const quota = clampQuota(requested ?? DEFAULT_QUOTA);
+
   const supabase = await createClient();
   const {
     data: { user },

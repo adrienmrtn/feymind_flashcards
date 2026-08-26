@@ -4,66 +4,208 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ThinkingOrb } from "thinking-orbs";
 
+import {
+  CARD_KINDS,
+  DEFAULT_QUOTA,
+  PER_FORMAT_RANGE,
+  TOTAL_RANGE,
+  isAtCap,
+  quotaTotal,
+  type CardKind,
+  type QuestionQuota,
+} from "@micabo/core";
+
 import { generateCards } from "@/lib/actions/course";
 
 /**
- * Demander des cartes, et choisir leur forme.
+ * Demander des cartes, **et combien de chaque format**.
  *
- * Le quota par format est passé explicitement plutôt que laissé au modèle : sans lui, il rend
- * quatorze cartes recto verso et croit avoir bien fait. Trois formats servent trois choses — une
- * définition se demande à l'endroit, un choix qui se piège demande un QCM, une formulation exacte
- * demande un texte à trou.
+ * C'est le panneau de l'app, porté : un compteur par format, le total lu dessous. Ce qui vivait ici
+ * était un bouton seul, et le quota était écrit en dur dans l'action — on demandait des cartes et
+ * on recevait ce que le code avait décidé. **Un nombre par format est une commande, pas une
+ * autorisation** : celui qui veut cinq QCM et cinq textes à trou pour son contrôle de la semaine
+ * peut le demander.
+ *
+ * Les bornes viennent du noyau partagé, donc ce sont celles de l'iPhone au chiffre près : c'est la
+ * même fonction Edge qui reçoit le quota.
  */
 export function GenerateCards({ courseId, existing }: { courseId: string; existing: number }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [failure, setFailure] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [quota, setQuota] = useState<QuestionQuota>(DEFAULT_QUOTA);
+
+  const total = quotaTotal(quota);
+  const capped = isAtCap(quota);
+
+  function step(kind: CardKind, delta: number) {
+    setQuota((current) => {
+      const next = Math.min(
+        PER_FORMAT_RANGE.max,
+        Math.max(PER_FORMAT_RANGE.min, current[kind] + delta),
+      );
+      return { ...current, [kind]: next };
+    });
+  }
 
   function ask() {
     setFailure(null);
     startTransition(async () => {
-      const result = await generateCards(courseId);
+      const result = await generateCards(courseId, quota);
       if (result.status === "error") setFailure(result.message ?? "Ça n'a pas marché.");
-      else router.refresh();
+      else {
+        setOpen(false);
+        router.refresh();
+      }
     });
   }
 
+  if (pending) {
+    return (
+      <div className="paper flex items-center gap-4 rounded-group bg-surface p-5">
+        <ThinkingOrb state="composing" size={64} />
+        <div>
+          <p className="text-[15.5px] font-semibold text-ink">Micabo écrit les cartes…</p>
+          <p className="numeral mt-0.5 text-[13px] text-ink-tertiary">
+            {total} carte{total > 1 ? "s" : ""} demandée{total > 1 ? "s" : ""}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="pressable rounded-button bg-ink px-5 py-3.5 text-[15px] font-semibold text-on-ink"
+        >
+          {existing === 0 ? "Créer des cartes" : "En ajouter"}
+        </button>
+
+        {existing === 0 ? (
+          <p className="mt-2.5 text-[13px] text-ink-tertiary">
+            Recto verso, texte à trou, QCM — tu choisis combien de chaque.
+          </p>
+        ) : null}
+
+        {failure ? <Failure message={failure} /> : null}
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div className="paper rise rounded-group bg-surface p-5">
+      <div className="flex items-baseline justify-between gap-4">
+        <p className="eyebrow text-ink-tertiary">Combien de cartes, par format</p>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="text-[13px] text-ink-tertiary underline-draw"
+        >
+          Annuler
+        </button>
+      </div>
+
+      <div className="mt-4 divide-y divide-hairline">
+        {CARD_KINDS.map((format) => (
+          <div key={format.kind} className="flex items-center gap-4 py-3.5">
+            <span aria-hidden className="emoji text-[22px]">
+              {format.emoji}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-medium text-ink">{format.title}</p>
+              <p className="mt-0.5 text-[12.5px] text-ink-tertiary">{format.detail}</p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1 rounded-pill bg-surface-muted p-1">
+              <Step
+                label={`Moins de ${format.title}`}
+                sign="minus"
+                enabled={quota[format.kind] > PER_FORMAT_RANGE.min}
+                onPress={() => step(format.kind, -1)}
+              />
+              <span className="numeral min-w-7 text-center text-[15px] font-semibold text-ink">
+                {quota[format.kind]}
+              </span>
+              <Step
+                label={`Plus de ${format.title}`}
+                sign="plus"
+                /* Le plafond éteint le bouton plutôt que de rogner après validation : un chiffre
+                   corrigé dans le dos fait sauter le compteur sous le doigt. */
+                enabled={!capped && quota[format.kind] < PER_FORMAT_RANGE.max}
+                onPress={() => step(format.kind, 1)}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p className="numeral mt-4 text-[13px] text-ink-tertiary">
+        {total} carte{total > 1 ? "s" : ""} au total
+        {capped ? ` · le maximum est ${TOTAL_RANGE.max}` : ""}
+      </p>
+
       <button
         type="button"
         onClick={ask}
-        disabled={pending}
-        className={`pressable flex items-center gap-3 rounded-button px-5 py-3.5 text-[15px] font-semibold ${
-          pending ? "bg-surface-sunken text-ink-tertiary" : "bg-ink text-on-ink"
+        disabled={total === 0}
+        className={`pressable mt-4 h-13 w-full rounded-button py-3.5 text-[15px] font-semibold transition-colors duration-hover ${
+          total === 0 ? "cursor-not-allowed bg-surface-sunken text-ink-tertiary" : "bg-ink text-on-ink"
         }`}
       >
-        {pending ? (
-          <>
-            <ThinkingOrb state="composing" size={20} />
-            Micabo écrit les cartes…
-          </>
-        ) : existing === 0 ? (
-          "Créer des cartes"
-        ) : (
-          "En ajouter"
-        )}
+        {existing === 0 ? "Créer les cartes" : "Ajouter ces cartes"}
       </button>
 
-      {existing === 0 && !pending ? (
-        <p className="mt-2.5 text-[13px] text-ink-tertiary">
-          Recto verso, QCM et textes à trou — une quinzaine, tirées de la fiche.
-        </p>
-      ) : null}
-
-      {failure ? (
-        <p
-          className="mt-4 rounded-button bg-negative-soft px-4 py-3 text-[13.5px] text-negative"
-          role="alert"
-        >
-          {failure}
-        </p>
-      ) : null}
+      {failure ? <Failure message={failure} /> : null}
     </div>
+  );
+}
+
+function Step({
+  label,
+  sign,
+  enabled,
+  onPress,
+}: {
+  label: string;
+  sign: "plus" | "minus";
+  enabled: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={!enabled}
+      onClick={onPress}
+      className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors duration-hover ${
+        enabled ? "bg-surface text-ink paper" : "text-ink-tertiary/40"
+      }`}
+    >
+      <svg aria-hidden viewBox="0 0 20 20" className="h-3.5 w-3.5">
+        <path
+          d={sign === "plus" ? "M10 4.5v11M4.5 10h11" : "M4.5 10h11"}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+      </svg>
+    </button>
+  );
+}
+
+function Failure({ message }: { message: string }) {
+  return (
+    <p
+      className="mt-4 rounded-button bg-negative-soft px-4 py-3 text-[13.5px] text-negative"
+      role="alert"
+    >
+      {message}
+    </p>
   );
 }

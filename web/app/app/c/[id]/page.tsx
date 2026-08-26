@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { courseAccent, entitlement, resolveEmoji } from "@micabo/core";
 
 import { SheetBlocks } from "@/components/sheet/SheetBlocks";
+import { VisibilityPicker } from "@/components/app/VisibilityPicker";
 import { getCourse, listCards } from "@/lib/data/courses";
 import { readEntitlement } from "@/lib/data/entitlement";
 
@@ -75,6 +76,11 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
             {cards.length} carte{cards.length > 1 ? "s" : ""}
           </Link>
         )}
+      </div>
+
+      <div className="mt-7 border-t border-hairline-on-canvas pt-6" data-print="hide">
+        <p className="eyebrow mb-3 text-ink-tertiary">Qui peut la retrouver</p>
+        <VisibilityPicker courseId={course.id} initial={course.visibility} />
       </div>
 
       <div className="mt-10 max-w-reading">

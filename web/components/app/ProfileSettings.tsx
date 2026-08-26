@@ -1,0 +1,130 @@
+"use client";
+
+import { useState, useTransition } from "react";
+
+import {
+  BLOCK_BOUNDS,
+  DAILY_MINUTES_STEPS,
+  clampBlocks,
+  dailyMinutesLabel,
+  defaultBlocks,
+  lengthContaining,
+  newCardsPerDay,
+  readingHint,
+  sheetLengthTitle,
+  type SheetLength,
+} from "@micabo/core";
+
+import { updateSettings } from "@/lib/actions/profile";
+
+/**
+ * Les réglages du compte, **écrits en base à chaque changement**.
+ *
+ * Pas de bouton « Enregistrer » : un réglage à un cran se règle en le poussant, et un formulaire
+ * qu'on oublie de valider est un réglage perdu. L'écriture est optimiste à l'écran et confirmée
+ * derrière — c'est la table `profiles` qui tranche, et c'est elle que l'iPhone relit.
+ */
+export function ProfileSettings({
+  initialName,
+  initialMinutes,
+  initialLength,
+}: {
+  initialName: string;
+  initialMinutes: number;
+  initialLength: SheetLength;
+}) {
+  const [name, setName] = useState(initialName);
+  const [minutes, setMinutes] = useState(initialMinutes);
+  const [blocks, setBlocks] = useState(() => defaultBlocks(initialLength));
+  const [saved, setSaved] = useState<"repos" | "ok" | "erreur">("repos");
+  const [, startTransition] = useTransition();
+
+  const length = lengthContaining(blocks);
+
+  function save(patch: Parameters<typeof updateSettings>[0]) {
+    startTransition(async () => {
+      const result = await updateSettings(patch);
+      setSaved(result.status === "ok" ? "ok" : "erreur");
+    });
+  }
+
+  return (
+    <div className="paper rounded-group bg-surface p-6">
+      <div className="flex items-baseline justify-between gap-4">
+        <p className="eyebrow text-ink-tertiary">Réglages</p>
+        <p
+          className={`text-[12.5px] ${saved === "erreur" ? "text-negative" : "text-accent"}`}
+          role="status"
+        >
+          {saved === "ok" ? "Enregistré" : saved === "erreur" ? "Non enregistré" : ""}
+        </p>
+      </div>
+
+      <label htmlFor="profile-name" className="mt-5 block text-[13px] text-ink-tertiary">
+        Ton nom
+      </label>
+      <input
+        id="profile-name"
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        onBlur={() => save({ displayName: name })}
+        placeholder="Comment on t'appelle"
+        className="mt-2 h-12 w-full rounded-button bg-surface-muted px-4 text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
+      />
+
+      <div className="mt-7">
+        <div className="flex items-baseline justify-between gap-3">
+          <label htmlFor="profile-minutes" className="text-[13px] text-ink-tertiary">
+            Rythme quotidien
+          </label>
+          <p className="text-[13px] font-medium text-ink">
+            {dailyMinutesLabel(minutes)}{" "}
+            <span className="text-ink-tertiary">· {newCardsPerDay(minutes)} cartes neuves</span>
+          </p>
+        </div>
+        <input
+          id="profile-minutes"
+          type="range"
+          min={0}
+          max={DAILY_MINUTES_STEPS.length - 1}
+          value={Math.max(0, DAILY_MINUTES_STEPS.indexOf(minutes))}
+          onChange={(event) => {
+            const next = DAILY_MINUTES_STEPS[Number(event.target.value)] ?? minutes;
+            setMinutes(next);
+          }}
+          onPointerUp={() => save({ dailyMinutes: minutes })}
+          onKeyUp={() => save({ dailyMinutes: minutes })}
+          className="mt-4 w-full accent-[var(--color-accent)]"
+        />
+      </div>
+
+      <div className="mt-7">
+        <div className="flex items-baseline justify-between gap-3">
+          <label htmlFor="profile-blocks" className="text-[13px] text-ink-tertiary">
+            Longueur des fiches
+          </label>
+          <p className="text-[13px] font-medium text-ink">
+            {sheetLengthTitle(length)}{" "}
+            <span className="text-ink-tertiary">· {readingHint(blocks)}</span>
+          </p>
+        </div>
+        <input
+          id="profile-blocks"
+          type="range"
+          min={BLOCK_BOUNDS.min}
+          max={BLOCK_BOUNDS.max}
+          value={blocks}
+          onChange={(event) => setBlocks(clampBlocks(Number(event.target.value)))}
+          onPointerUp={() => save({ sheetBlocks: blocks })}
+          onKeyUp={() => save({ sheetBlocks: blocks })}
+          className="mt-4 w-full accent-[var(--color-accent)]"
+        />
+      </div>
+
+      <p className="mt-6 text-[12.5px] leading-relaxed text-ink-tertiary">
+        Ces réglages vivent dans <strong className="font-medium text-ink-secondary">Supabase</strong>,
+        pas dans ce navigateur : ton iPhone lit les mêmes colonnes, et écrit dedans aussi.
+      </p>
+    </div>
+  );
+}
