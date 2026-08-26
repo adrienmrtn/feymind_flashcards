@@ -85,8 +85,8 @@ arrière ni balayage. Les étapes sont décrites par `OnboardingStep` et rendues
 | Accroche | bienvenue, pays de scolarisation, stade d'étude, annonce des questions |
 | Questions | objectifs (plusieurs réponses), rapport à l'oubli |
 | Démonstration | courbe de mémorisation, puis dépôt → fiche → révisions en trois écrans, puis le mode examen |
-| Personnalisation | matières, établissement (avec « Passer »), temps quotidien |
-| Sortie | projection annuelle, génération du parcours, preuve sociale, passage de relais, connexion, chronologie de l'essai, promesse du rappel, paywall |
+| Personnalisation | matières, établissement (avec « Passer ») |
+| Sortie | génération du parcours, preuve sociale, passage de relais, connexion, chronologie de l'essai, promesse du rappel, paywall |
 
 **L'écran des rappels a été retiré.** « On te rappelle au bon moment » proposait d'activer les
 notifications sans rien demander au système : il notait une intention que personne ne lisait
@@ -119,16 +119,23 @@ par registre ramenait un lycéen français en « Middle school » dès qu'il pas
 États-Unis. Sans équivalent exact, on prend la marche la plus proche en montant ; la santé et
 les concours ne sont pas des marches et ne se convertissent jamais.
 
-Deux écrans offrent une échappatoire, posée en haut à droite sur la ligne du sur-titre
+**Aucun écran ne porte de sur-titre.** « Question 1 sur 3 », « Pour commencer », « Comment ça
+marche · 2 sur 3 » : ils comptaient des écrans que personne n'a demandé à compter, et posaient
+une ligne de plus à lire au-dessus d'une question qui se lit déjà en deux secondes. Les
+sous-titres qui énuméraient sans rien apprendre sont partis avec — « Schémas, cartes, QCM,
+textes à trou » listait ce que l'écran montre juste en dessous. Restent ceux qui disent quelque
+chose qu'on ne peut pas deviner : « Plusieurs réponses possibles », par exemple.
+
+Deux écrans offrent une échappatoire, posée en haut à droite là où vivait le sur-titre
 (`OnboardingSkip`) : l'établissement, parce que le demander à quelqu'un qui n'en a pas, qui est
 entre deux écoles ou qui n'a pas envie de le dire ne doit pas fermer le parcours — passer laisse
 le champ vide **et l'écrit** ; et la connexion, par un « Skip » temporaire qui referme aussi la
 porte du compte pour que l'app ne repose pas la question à l'écran suivant.
 
-Les réponses sont gardées en local (`OnboardingPreferences`), et trois d'entre elles pèsent sur
-le reste de l'app : le temps quotidien commande le plafond de cartes neuves, le **stade
-d'étude** commande la rédaction des fiches, et le **pays** commande à la fois le système
-scolaire de référence et la **langue** dans laquelle Micabo écrit. Toutes se corrigent dans les
+Les réponses sont gardées en local (`OnboardingPreferences`), et deux d'entre elles pèsent sur
+le reste de l'app : le **stade d'étude** commande la rédaction des fiches, et le **pays**
+commande à la fois le système scolaire de référence et la **langue** dans laquelle Micabo écrit.
+Le rythme quotidien, lui, ne se demande plus — voir plus bas. Toutes se corrigent dans les
 réglages, où le pays est posé au-dessus du stade pour la même raison que dans le parcours.
 
 ### Un écran, une chose
@@ -254,6 +261,14 @@ Trois règles valent pour tout le tunnel :
 - **aucun bouton ne reste muet** — l'enfoncement (échelle 0,975) part en 80 ms, et un bouton
   derrière lequel tourne une opération passe en état chargement, annonce ce qu'il fait et
   refuse les appuis suivants.
+- **le bouton d'action est un quart plus grand** que dans le reste de l'app
+  (`MicaboPrimaryButtonStyle(isProminent:)`, 64 points contre 51) : ces écrans ne font qu'une
+  chose, et le bouton y est la seule cible. La hauteur et le corps montent ensemble — grossir
+  le seul rembourrage donnerait un bouton haut au texte perdu au milieu. Rien n'est masqué pour
+  autant : la barre du bas prend sa place dans la pile, elle ne se pose pas par-dessus. Et les
+  écrans qui ne défilaient pas **défilent désormais s'ils ne tiennent pas**
+  (`scrollBounceBehavior(.basedOnSize)`) : la composition ne bouge pas quand elle tient, et
+  « ça ne rentre pas » ne veut plus dire « c'est coupé ».
 - **deux écrans voisins ne se ressemblent pas** — les compositions alternent (paquet de cartes,
   pastilles, liste, graphe, calendrier, curseur, carrousel), et **trois écrans seulement**
   quittent le crème : l'accroche sur la sauge, la génération du parcours sur le menthe, le
@@ -334,10 +349,26 @@ et survivent donc à une fermeture en cours de route. `Réglages` propose **Refa
 qui efface ces clés et relance le parcours sans toucher aux cours.
 
 La toute première question est **Tu étudies où ?**, en pastilles à drapeau. Elle passe devant
-« tu en es où ? » parce qu'elle commande ses réponses, et elle décide aussi de la langue : les
-deux conséquences se lisent sous les pastilles, à côté du système scolaire retenu. « Ailleurs »
-n'est pas un aveu d'échec — la liste ne peut pas couvrir le monde, et une échelle générique vaut
-mieux que des paliers inventés.
+« tu en es où ? » parce qu'elle commande ses réponses, et elle décide aussi de la langue.
+
+**L'ordre des pastilles est commercial, pas alphabétique** : France, Royaume-Uni, Allemagne,
+Italie, Espagne, Portugal, Tchéquie, Pays-Bas, Grèce, Hongrie, Pologne, Roumanie, Suède,
+Turquie, puis les pays francophones historiques. Rien dans le code ne rappelle cet ordre, donc
+un test le verrouille. Chaque pays ajouté porte ses **vrais paliers, écrits dans sa langue** —
+Liceum et matura en Pologne, Gymnasium et Abitur en Allemagne, Λύκειο en Grèce : c'est la même
+règle que « A-Levels » ou « Cégep », qui n'ont jamais eu de traduction non plus. La langue de
+rédaction suit (`ContentLanguage`), et la fonction Edge engendre sa consigne de sortie depuis le
+nom de la langue au lieu de la recopier quatorze fois.
+
+**« Autre pays » n'est plus une impasse.** La pastille rendait un « ailleurs » qui ne disait
+rien de plus que le silence : on ne savait ni où était l'étudiant, ni combien venaient du même
+endroit. Elle ouvre maintenant un champ de recherche sur **tous les pays du monde**
+(`WorldCountry`), et le bouton attend qu'un pays ait été choisi. Le catalogue est construit
+depuis les régions ISO du système, pas recopié : une liste de deux cents pays écrite à la main
+serait fausse dans l'année et intraduisible. Le drapeau se déduit du code à deux lettres, et le
+pays retenu remplace le libellé de la pastille — elle cesse d'être une catégorie pour devenir
+une réponse. Les paliers, eux, restent l'échelle générique : inventer un système scolaire pour
+un pays qu'on ne connaît pas produirait des réponses fausses.
 
 Vient ensuite **Tu en es où ?**, dont les réponses sont celles du pays : lycée, prépa, licence,
 PASS-santé, master, concours en France ; middle school, high school, college, pre-med, graduate
@@ -356,14 +387,14 @@ ce qui ne renseigne personne. Les deux réponses du milieu sont les plus utiles 
 que le problème est la méthode. La clé historique `micabo.onboarding.forgetsOften` reste tenue
 à jour, les quatre réponses s'y ramenant en oui ou non.
 
-Le **temps quotidien** annonce ce qu'il sert à décider (« Ça nous aide à créer un parcours
-parfaitement personnalisé à tes besoins »), et la **projection annuelle** qui le suit met son
-chiffre dans le titre : « À ce rythme, dans un an, tu auras appris 5 480 cartes sur le bout des
-doigts ». Le nombre vivait avant en corps 64 sous un titre qui annonçait sa venue et un
-sous-titre qui répétait le rythme choisi à l'écran précédent — trois éléments pour une seule
-information. Le titre dit maintenant la chose entière, en une phrase qu'on peut répéter à
-quelqu'un, et ce qui reste sous lui est la preuve : douze mois qui montent, puis le calcul posé
-ligne à ligne.
+**Le temps quotidien et sa projection ont été retirés.** Le premier demandait combien de minutes
+par jour on comptait réviser, le second annonçait le nombre de cartes que ça ferait au bout d'un
+an. Deux écrans pour une seule idée, et une idée qu'on ne peut pas tenir : personne ne connaît
+son rythme avant d'avoir essayé, et la promesse chiffrée qui suivait — « dans un an, 5 480
+cartes sur le bout des doigts » — reposait entièrement sur une réponse donnée au hasard en
+trente secondes. Le plafond de cartes neuves existe toujours (`DailyLoad`), sur sa valeur par
+défaut, et se règle dans **Réglages → Réviser**, là où l'on va quand on sait vraiment ce qu'on
+veut.
 
 Après le choix des matières, **Tu étudies où ?** propose un autocomplete hybride : un catalogue
 embarqué (`LocalInstitutions.json`, ~600 établissements FR/EU prioritaires) pour l'instantané,
@@ -482,6 +513,13 @@ l'on ouvre le choix du type de document, et non une fois le PDF choisi et l'anal
 paywall qui tombe après le travail est un paywall qui fait désinstaller. De même, les boutons
 « Entraînement libre » portent leur cadenas avant l'appui plutôt que de faire surgir un paywall à
 la place d'une session.
+
+**Le « + » de Cours, lui, ne porte pas de cadenas**, et c'est l'exception qui confirme la règle.
+Un bouton verrouillé annonce un refus avant qu'on ait demandé quoi que ce soit : il transforme
+le seul geste de l'écran en porte fermée, et on cesse de le regarder. Il garde son signe, et
+c'est l'appui qui ouvre le paywall — on demande, on obtient une réponse, et la réponse dit ce
+qu'elle coûte. Un cadenas sur un bouton d'action n'a de sens que là où le bouton en côtoie
+d'autres qui, eux, marchent.
 
 Les cours **repris dans la bibliothèque** ne comptent pas dans le quota d'import : ils n'ont rien
 coûté à produire, et faire payer un import qu'on n'a pas fait serait incompréhensible.
@@ -1089,11 +1127,20 @@ Le stade se corrige dans **Profil → Réglages → Tes études**, parce qu'on c
 qu'une réponse donnée en trente secondes le premier jour ne doit pas se payer pendant deux ans.
 
 La **longueur** se choisit au même endroit, et aussi sur l'écran d'import, juste avant le bouton
-qui l'utilise : la réponse dépend du document qu'on vient de déposer. Elle s'y règle au
-**curseur** — trois pastilles côte à côte se pèsent l'une contre l'autre, alors que le geste
-réel est de vouloir plus court ou plus long que la dernière fois — et le format retenu s'écrit
-au bout de la ligne du titre avec sa durée de lecture. Trois crans, et pas un curseur de blocs,
-parce que ce qu'on choisit est un usage :
+qui l'utilise : la réponse dépend du document qu'on vient de déposer.
+
+Elle s'y règle au **curseur, et il est continu** : de huit à trente-quatre blocs, sans pas
+déclaré. Il n'en avait que trois, et trois crans ne font pas un curseur — ils se comptent, se
+visent, et ne se distinguent en rien de trois boutons sauf qu'ils sont plus durs à atteindre.
+Le volume exact part maintenant dans la requête (`blocks`), et la fonction Edge le fait primer
+sur les bornes du format : pousser le curseur de dix-huit à vingt-deux donne bien quatre blocs
+de plus, et pas la même fiche « équilibrée » que la fois d'avant.
+
+Le nom du format devient une **conséquence** — il dit dans quelle famille on vient de tomber —
+et la durée de lecture affichée à côté bouge d'un cran à l'autre, y compris à l'intérieur d'une
+famille. C'est ce qui fait qu'on sent le curseur travailler au lieu de le voir sauter. Les trois
+familles restent la seule chose que la fonction Edge nomme, et la seule que le profil
+synchronise :
 
 | Format | Blocs demandés | Pour quoi |
 | --- | --- | --- |
