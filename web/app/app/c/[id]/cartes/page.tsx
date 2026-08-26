@@ -6,6 +6,7 @@ import { entitlement, formatDelay, previewLabels } from "@micabo/core";
 import { GenerateCards } from "@/components/app/GenerateCards";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { getCourse, listCards } from "@/lib/data/courses";
+import { readEntitlement } from "@/lib/data/entitlement";
 
 /**
  * Les cartes d'un cours, **en table**.

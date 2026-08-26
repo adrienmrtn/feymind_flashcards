@@ -12,7 +12,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  ARMED,
+  ASSUME_PRO_WITHOUT_ROW,
   ENTITLEMENT_ID,
   FREE,
   FREE_TIER,
@@ -38,13 +38,29 @@ import {
   savingsPercent,
 } from "../src/pricing";
 
-describe("le verrou n'est pas armé", () => {
-  it("laisse tout ouvert tant que le droit ne se lit nulle part", () => {
-    // Sur l'iPhone, `ProAccess` lit un drapeau local ; il n'y a pas encore de table
-    // `entitlements`. Armer maintenant enfermerait dehors qui vient de payer sur son téléphone.
-    expect(ARMED).toBe(false);
-    expect(resolve(FREE).isPro).toBe(true);
-    expect(resolve(null, undefined).isPro).toBe(true);
+describe("le droit", () => {
+  it("respecte la ligne quand il y en a une", () => {
+    // C'est le changement de l'étape 5 : le droit ne se devine plus, il se lit. Un achat fait sur
+    // l'iPhone referme donc le gratuit sur le web.
+    expect(resolve({ isPro: true }).isPro).toBe(true);
+    expect(resolve({ isPro: false }).isPro).toBe(false);
+  });
+
+  it("suit le réglage quand il n'y a aucune ligne", () => {
+    // Le seul endroit du code où une décision de produit se cache : ce qu'on fait de quelqu'un
+    // dont on ne sait rien. Aujourd'hui `true`, parce qu'il n'existe aucune façon de payer sur le
+    // web — fermer enfermerait dehors sans porte de sortie.
+    expect(resolve().isPro).toBe(ASSUME_PRO_WITHOUT_ROW);
+    expect(resolve(null, undefined).isPro).toBe(ASSUME_PRO_WITHOUT_ROW);
+  });
+
+  it("garde la trace du magasin, qui décide où « gérer mon abonnement » mène", () => {
+    // Un bouton qui ouvre le mauvais magasin donne un écran vide et un message au support.
+    const right = resolve({ isPro: true, store: "stripe" });
+    expect(right.isPro).toBe(true);
+
+    const fromPhone = resolve({ isPro: true, store: "app_store" });
+    expect(fromPhone.store).toBe("app_store");
   });
 
   it("connaît le nom de l'entitlement fixé par docs/revenuecat.md", () => {
@@ -142,8 +158,14 @@ describe("les portes", () => {
 
 describe("l'arbitrage entre deux sources", () => {
   it("prend la plus généreuse", () => {
+    // Le SDK et la table doivent s'accorder ; quand ils divergent, enfermer dehors un étudiant qui
+    // paye est pire qu'une minute offerte.
     expect(resolve(FREE, PRO).isPro).toBe(true);
     expect(resolve(PRO, FREE).isPro).toBe(true);
+  });
+
+  it("ne rend pas Pro quand les deux sources disent non", () => {
+    expect(resolve(FREE, FREE).isPro).toBe(false);
   });
 });
 

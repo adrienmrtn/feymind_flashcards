@@ -52,7 +52,7 @@ interface Tally {
   graduated: number;
 }
 
-export function Session({ cards }: { cards: SessionCard[] }) {
+export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean }) {
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [picked, setPicked] = useState<number | null>(null);
@@ -66,7 +66,7 @@ export function Session({ cards }: { cards: SessionCard[] }) {
   // visibles dans la liste du cours, et c'est le passage qui s'arrête. Le droit est lu par la
   // fonction du noyau, qui rend « ouvert » pour tout le monde tant que l'encaissement n'existe
   // pas — le chemin est donc écrit et ne se déclenche pas encore.
-  const capped = entitlement.hasReachedSessionLimit(entitlement.resolve(), tally.answered);
+  const capped = entitlement.hasReachedSessionLimit({ isPro }, tally.answered);
   const finished = index >= cards.length || capped;
 
   const labels = useMemo(

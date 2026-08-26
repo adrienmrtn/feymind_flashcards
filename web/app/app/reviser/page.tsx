@@ -4,6 +4,7 @@ import { DEFAULT_DAILY_MINUTES, buildQueue, dailyLimits } from "@micabo/core";
 
 import { Session } from "@/components/app/Session";
 import { listAllCards, listCourses } from "@/lib/data/courses";
+import { readEntitlement } from "@/lib/data/entitlement";
 
 /**
  * La session.
@@ -14,7 +15,11 @@ import { listAllCards, listCourses } from "@/lib/data/courses";
  * serviraient deux ordres différents pour le même jeu.
  */
 export default async function ReviewPage() {
-  const [cards, courses] = await Promise.all([listAllCards(), listCourses()]);
+  const [cards, courses, right] = await Promise.all([
+    listAllCards(),
+    listCourses(),
+    readEntitlement(),
+  ]);
 
   const queue = buildQueue(
     cards.map((card) => ({
@@ -72,5 +77,5 @@ export default async function ReviewPage() {
     );
   }
 
-  return <Session cards={ordered} />;
+  return <Session cards={ordered} isPro={right.isPro} />;
 }

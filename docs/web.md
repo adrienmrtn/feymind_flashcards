@@ -1067,6 +1067,99 @@ contournement** : elle appelle `signInWithPassword`, donc elle exige le mot de p
 inerte en production et n'accepte que les adresses en `@micabo.test`. Elle disparaît le jour où
 l'aller-retour OAuth aura été essayé une fois.
 
+### Où en est l'étape 5
+
+**Le droit existe, il est écrit par un webhook déployé, et le verrou le lit.** C'est la partie qui
+compte, et elle est vérifiée de bout en bout.
+
+#### Ce qui est en place et vérifié
+
+`entitlements` porte une ligne par personne : `is_pro`, le produit, **le magasin**, le type de
+période, l'échéance, et l'événement qui l'a écrite. L'utilisateur la lit, **personne ne l'écrit** —
+c'est la façon dont `directory` est déjà traitée dans ce schéma. Une politique d'écriture, même
+restreinte au propriétaire, laisserait n'importe qui se déclarer abonné depuis une console.
+
+`apply_entitlement` est la seule plume, et elle **refuse un événement plus ancien que celui déjà
+appliqué**. Ce n'est pas une précaution théorique : les webhooks n'arrivent pas dans l'ordre, et
+une « annulation » de mardi appliquée après le « renouvellement » de mercredi ferme la porte à
+quelqu'un qui paye. Vérifié — quatre événements joués dans le désordre, et le retardataire est
+refusé sans toucher au droit.
+
+La fonction `revenuecat-webhook` est **déployée**, sans `verify_jwt` puisqu'elle s'authentifie
+elle-même par secret partagé, comparé en temps constant. Elle **échoue fermée** : sans secret
+configuré elle refuse en 503 plutôt que d'accepter des abonnements offerts par n'importe qui.
+Vérifié sur le vrai projet.
+
+Deux décisions d'état qui méritent d'être écrites, parce qu'elles se trompent facilement :
+
+- **une résiliation n'est pas une perte d'accès.** `CANCELLATION` veut dire « ne se renouvellera
+  pas » ; l'étudiant a payé jusqu'à son échéance. Fermer à l'annonce serait lui retirer ce qu'il a
+  acheté. C'est `EXPIRATION` qui ferme ;
+- **un incident de paiement ne ferme pas non plus.** RevenueCat gère une période de grâce, et
+  couper l'accès pendant qu'une banque réessaie punit quelqu'un qui n'a rien fait.
+
+Et un `app_user_id` qui n'est pas un UUID est **refusé bruyamment**, en 422. C'est le symptôme d'un
+SDK configuré sans `appUserID`, c'est-à-dire du bug qui ne se voit pas — tout marche pour celui qui
+vient d'acheter, et rien pour lui le lendemain sur l'autre appareil.
+
+#### Le verrou, vérifié dans les deux sens
+
+Il ne se devine plus, il se lit. Sur la même fiche de neuf blocs, avec le même compte :
+
+| Ligne dans `entitlements` | Blocs lisibles | Cadenas |
+| --- | --- | --- |
+| `is_pro = false` | **6 sur 9** — les sept dixièmes | oui |
+| `is_pro = true` | **9 sur 9** | non |
+
+Un achat fait sur l'iPhone referme donc le gratuit sur le web dans la seconde, et réciproquement.
+C'était toute la promesse de l'étape.
+
+Reste **le cas de l'absence de ligne**, et c'est le seul endroit du code où une décision de produit
+se cache. `ASSUME_PRO_WITHOUT_ROW` est à `true` : quelqu'un dont on ne sait rien est traité comme
+abonné. Ce n'est pas de la complaisance — **il n'existe aucune façon de payer sur le web**, donc
+fermer enfermerait dehors tout le monde sans porte de sortie. Le jour où l'encaissement existe,
+c'est cette ligne-là qui bascule, et rien d'autre.
+
+#### Ce qui n'est pas branché, et pourquoi je ne l'ai pas fait semblant
+
+**Stripe n'a pas de clés.** `lib/actions/checkout.ts` porte le point de raccordement : il crée une
+session d'abonnement, pose l'`auth.users.id` en `client_reference_id` — c'est **la** ligne qui fait
+tenir le droit multiplateforme — et il **échoue proprement** tant que `STRIPE_SECRET_KEY` et les
+deux identifiants de prix manquent. Écrire du code de paiement que je ne peux pas essayer, c'est
+exactement ce que ce document déconseille depuis le début : son mode de panne est « l'argent
+n'arrive pas », et il ne se voit pas.
+
+Le principe est en revanche tranché et ne bougera pas : **Stripe encaisse, RevenueCat détient le
+droit.** Le paiement ne met jamais `entitlements` à jour lui-même — il crée un abonnement, RevenueCat
+le voit, et c'est son webhook qui écrit. Une seule plume sur cette table.
+
+**« Gérer mon abonnement » lit le magasin**, et c'est le piège classique du multiplateforme : un
+abonnement pris sur l'iPhone se gère chez Apple, un abonnement pris sur le web chez Stripe. Un
+bouton qui ouvre le mauvais donne un écran vide et un message au support.
+
+#### Ce qui reste, et à qui
+
+Rien de ce qui suit n'est du code que je pouvais écrire et vérifier.
+
+| Quoi | Où | Pourquoi pas moi |
+| --- | --- | --- |
+| `REVENUECAT_WEBHOOK_SECRET` | Supabase → Edge Functions → Secrets | Aucun MCP n'expose les secrets de fonction. La fonction refuse en 503 tant qu'il manque |
+| Le webhook côté RevenueCat | Tableau de bord RevenueCat | Il pointe sur `…/functions/v1/revenuecat-webhook`, avec le même secret en en-tête `Authorization` |
+| `STRIPE_SECRET_KEY`, `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY` | Vercel → Environment Variables | Pas de compte Stripe, et pas de variables d'environnement par MCP |
+| Le SDK RevenueCat dans Xcode | `docs/revenuecat.md`, déjà écrit | Je ne peux pas compiler du Swift : ajouter une dépendance de paquet sans pouvoir bâtir, sur le chemin du paiement, serait irresponsable |
+| Le jeton utilisateur dans `SupabaseFunctions` | iOS | Même raison. `ANON_GRACE` couvre l'app en attendant, sans quota |
+| Les descentes d'`exams` et de `review_logs` | `CloudSync` | Même raison. La colonne `schedule_backup` qu'elles demandent, elle, est posée |
+
+**`exams.schedule_backup` est ajoutée**, et ce n'était pas optionnel : la sauvegarde des échéances
+d'avant vivait dans SwiftData et nulle part ailleurs, donc le web ne pouvait pas dé-planifier un
+examen planifié sur l'iPhone. « Réversible, toujours » est une promesse de l'app, et une promesse
+qui ne vaut que sur un appareil n'est pas une promesse.
+
+L'**écran des examens** reste non fait, pour la raison déjà donnée : le planificateur écrit dans
+les échéances de tout un jeu de cartes, c'est le code qui peut faire le plus de dégâts en silence,
+et un plan à moitié essayé déplace des révisions que personne ne remarquera avant le jour J. Le
+port est fait et testé ; l'écran attend d'avoir le temps d'être essayé pour de bon.
+
 ## Les décisions prises
 
 | # | Question | Réponse |

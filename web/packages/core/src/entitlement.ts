@@ -1,20 +1,39 @@
 /**
  * Le verrou du gratuit, **aligné sur celui de l'app**.
  *
- * Il existe maintenant côté iOS — `Micabo/Services/ProAccess.swift`, arrivé après que ce plan a
- * été écrit — et c'est lui qui fait foi. Les trois nombres et la coupure de la fiche sont donc
- * portés depuis `FreeTier` et `SheetGate`, pas décidés ici : un cours flouté aux sept dixièmes
- * sur le téléphone et à la moitié sur le web serait le même produit qui dit deux choses.
- * `test/entitlement.test.ts` reprend les valeurs de `MicaboTests/FreemiumTests.swift`.
+ * Il existe côté iOS — `Micabo/Services/ProAccess.swift` — et c'est lui qui fait foi. Les trois
+ * nombres et la coupure de la fiche sont donc portés depuis `FreeTier` et `SheetGate`, pas décidés
+ * ici : un cours flouté aux sept dixièmes sur le téléphone et à la moitié sur le web serait le même
+ * produit qui dit deux choses. `test/entitlement.test.ts` reprend les valeurs de
+ * `MicaboTests/FreemiumTests.swift`.
  *
- * **`ARMED` reste à `false`, et pas par paresse.** Sur l'iPhone, `ProAccess` lit un drapeau
- * local ; il n'y a pas encore de table `entitlements`, donc le site n'a **rien à lire**. Armer
- * le verrou maintenant reviendrait à enfermer dehors un étudiant qui vient de payer sur son
- * téléphone. L'interrupteur bascule à l'étape 5, quand le webhook RevenueCat écrira le droit en
- * base — c'est-à-dire quand la question aura une réponse.
+ * ## Ce qui a changé à l'étape 5
+ *
+ * Le droit ne se devine plus : il se **lit dans `entitlements`**, écrite par le webhook RevenueCat.
+ * Le verrou est donc vivant pour quiconque a une ligne — un achat fait sur l'iPhone ferme la porte
+ * du gratuit sur le web dans la seconde, et c'est exactement ce qu'on voulait.
+ *
+ * Reste le cas de **l'absence de ligne**, et c'est le seul endroit où une décision de produit se
+ * cache dans du code. `ASSUME_PRO_WITHOUT_ROW` dit ce qu'on fait de quelqu'un dont on ne sait
+ * rien :
+ *
+ * - à `true`, il est traité comme abonné. C'est le réglage d'aujourd'hui, et il n'est pas de la
+ *   complaisance : **il n'y a aucune façon de payer sur le web** — Stripe attend ses clés — donc
+ *   fermer maintenant enfermerait dehors tout le monde sans porte de sortie ;
+ * - à `false`, le gratuit s'applique pour de bon : un cours, sept dixièmes de sa fiche, cinq cartes
+ *   par session.
+ *
+ * Le jour où l'encaissement existe, c'est cette ligne-là qui bascule, et rien d'autre.
  */
 
-export const ARMED = false;
+/**
+ * Ce qu'on fait de quelqu'un qui n'a pas de ligne dans `entitlements`.
+ *
+ * À `true` : on le traite comme abonné, parce qu'il n'existe pas encore de façon de payer sur le
+ * web. À `false` : le gratuit s'applique. **Une seule ligne à changer**, et c'est tout ce que
+ * l'ouverture de l'encaissement demandera côté verrou.
+ */
+export const ASSUME_PRO_WITHOUT_ROW = true;
 
 /** Le nom de l'entitlement chez RevenueCat. Il est déjà fixé par `docs/revenuecat.md`. */
 export const ENTITLEMENT_ID = "pro";
@@ -53,8 +72,15 @@ export const FREE_TIER = {
 export interface Entitlement {
   isPro: boolean;
   productId?: string | null;
-  /** D'où vient l'achat. C'est lui qui décide quel magasin ouvre « Gérer mon abonnement ». */
-  store?: "app_store" | "stripe" | "promotional" | null;
+  /**
+   * D'où vient l'achat. C'est lui qui décide quel magasin ouvre « Gérer mon abonnement » — un
+   * bouton qui ouvre le mauvais donne un écran vide et un message au support.
+   *
+   * `play_store` est là bien qu'il n'y ait pas d'app Android : le webhook normalise déjà cette
+   * valeur, la contrainte de la table l'accepte, et un type plus étroit que la base est un type
+   * qui mentira le jour où la donnée arrivera.
+   */
+  store?: "app_store" | "play_store" | "stripe" | "promotional" | null;
   periodType?: "trial" | "intro" | "normal" | null;
   expiresAt?: Date | null;
   willRenew?: boolean;
@@ -71,10 +97,14 @@ export const PRO: Entitlement = { isPro: true };
  * enfermer dehors un étudiant qui paye est pire qu'une minute offerte.
  */
 export function resolve(...sources: (Entitlement | null | undefined)[]): Entitlement {
-  if (!ARMED) return PRO;
   const known = sources.filter((source): source is Entitlement => Boolean(source));
-  if (known.length === 0) return FREE;
-  return known.find((source) => source.isPro) ?? FREE;
+
+  // Personne ne sait rien de cette personne : c'est le réglage ci-dessus qui décide.
+  if (known.length === 0) return ASSUME_PRO_WITHOUT_ROW ? PRO : FREE;
+
+  // Le plus généreux gagne. Le SDK et la table doivent s'accorder ; quand ils divergent, enfermer
+  // dehors un étudiant qui paye est pire qu'une minute offerte.
+  return known.find((source) => source.isPro) ?? known[0] ?? FREE;
 }
 
 // MARK: - Les portes

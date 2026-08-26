@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { entitlement, pricing } from "@micabo/core";
 
 import { useOnboarding } from "@/lib/onboarding/store";
+import { startCheckout } from "@/lib/actions/checkout";
 import { saveOnboarding, type SaveResult } from "@/lib/actions/onboarding";
 
 /**
@@ -33,6 +34,7 @@ export default function OfferStep() {
   const { answers, ready } = useOnboarding();
   const router = useRouter();
   const [saved, setSaved] = useState<SaveResult | null>(null);
+  const [checkout, setCheckout] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ready || saved) return;
@@ -106,9 +108,19 @@ export default function OfferStep() {
         {pricing.PLANS.map((plan) => {
           const recommended = plan.kind === pricing.RECOMMENDED_PLAN.kind;
           return (
-            <div
+            <button
               key={plan.kind}
-              className={`flex items-center justify-between gap-4 rounded-group px-5 py-4 ${
+              type="button"
+              onClick={() => {
+                void startCheckout(plan.kind).then((result) => {
+                  if (result.status === "redirect" && result.url) {
+                    window.location.href = result.url;
+                    return;
+                  }
+                  setCheckout(result.message ?? "L'abonnement n'est pas encore ouvert.");
+                });
+              }}
+              className={`pressable flex w-full items-center justify-between gap-4 rounded-group px-5 py-4 text-left ${
                 recommended ? "bg-ink text-on-ink" : "paper bg-surface"
               }`}
             >
@@ -140,10 +152,19 @@ export default function OfferStep() {
               >
                 {pricing.priceText(plan.price)}
               </p>
-            </div>
+            </button>
           );
         })}
       </div>
+
+      {checkout ? (
+        <p
+          className="mt-4 rounded-button bg-surface-muted px-4 py-3 text-[13.5px] text-ink-secondary"
+          role="status"
+        >
+          {checkout}
+        </p>
+      ) : null}
 
       <p className="mt-6 rounded-button bg-surface-muted px-4 py-3.5 text-[13.5px] leading-relaxed text-ink-secondary">
         L&apos;abonnement n&apos;est pas encore ouvert : il n&apos;y a rien à payer aujourd&apos;hui.

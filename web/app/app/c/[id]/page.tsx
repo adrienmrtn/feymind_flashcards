@@ -5,6 +5,7 @@ import { courseAccent, entitlement, resolveEmoji } from "@micabo/core";
 
 import { SheetBlocks } from "@/components/sheet/SheetBlocks";
 import { getCourse, listCards } from "@/lib/data/courses";
+import { readEntitlement } from "@/lib/data/entitlement";
 
 /**
  * **La fiche : l'écran du cours.**
@@ -25,9 +26,9 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
   const cards = await listCards(id);
   const tint = course.accent_hex ?? courseAccent(course.id);
 
-  // Le droit est lu par la fonction du noyau, jamais par un `if` écrit ici. Elle rend « ouvert »
-  // pour tout le monde tant que l'encaissement n'existe pas — voir `entitlement.ARMED`.
-  const right = entitlement.resolve();
+  // Le droit est **lu en base**, par la seule fonction qui le lit. Un achat fait sur l'iPhone
+  // referme donc le gratuit ici dans la seconde.
+  const right = await readEntitlement();
   const { readable, locked } = entitlement.splitSheet(course.blocks, right);
 
   return (
