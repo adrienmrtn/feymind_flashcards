@@ -1,20 +1,33 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
+import { PRODUCTION_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 
 /**
- * Trois choses, dans cet ordre :
+ * Quatre choses, dans cet ordre :
  *
- * 1. Un `?code=` (ou un jeton de mail) tombé sur n'importe quelle page — la
+ * 1. Un aperçu renvoie au site. Une adresse `micabo-git-<branche>-…` reste
+ *    servie longtemps après la fusion de sa branche **et reste figée sur son
+ *    commit** : un onglet gardé dessus montre le produit d'avant, refus de
+ *    rechargement forcé compris. On a perdu une soirée à croire que des
+ *    correctifs ne passaient pas alors qu'ils étaient en ligne depuis des
+ *    heures. Un aperçu n'est donc plus consultable : il redirige.
+ * 2. Un `?code=` (ou un jeton de mail) tombé sur n'importe quelle page — la
  *    Site URL de Supabase, un ancien `/commencer/pays` — est renvoyé au
  *    callback. Sinon le code expire sur le premier écran du parcours.
- * 2. La session se rafraîchit, et les cookies voyagent avec la réponse.
- * 3. Une session ouverte n'a plus rien à faire sur le parcours ni sur la
+ * 3. La session se rafraîchit, et les cookies voyagent avec la réponse.
+ * 4. Une session ouverte n'a plus rien à faire sur le parcours ni sur la
  *    landing : on ouvre l'app.
  */
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
+
+  if (process.env.VERCEL_ENV === "preview") {
+    const site = new URL(PRODUCTION_URL);
+    site.pathname = url.pathname;
+    site.search = url.search;
+    return NextResponse.redirect(site);
+  }
 
   if (url.pathname !== "/auth/callback") {
     const code = url.searchParams.get("code");
