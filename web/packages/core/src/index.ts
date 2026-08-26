@@ -79,6 +79,16 @@ export {
   type QueueLimits,
   type StudyCounts,
 } from "./srs/queue";
+export {
+  LEARN_AHEAD_SECONDS,
+  advanceSession,
+  earliestAvailableAt,
+  enqueueInitial,
+  nextReadyIndex,
+  returnsInSession,
+  type SessionAdvance,
+  type SessionEntry,
+} from "./srs/session";
 
 // Le mode examen.
 export {

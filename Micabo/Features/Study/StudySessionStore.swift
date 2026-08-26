@@ -8,6 +8,9 @@ struct StudySessionSnapshot: Codable, Equatable {
     var sourceKey: String
     /// La carte en cours d'abord, puis la file, dans l'ordre.
     var remainingCardIDs: [UUID]
+    /// Échéance de chaque carte de `remainingCardIDs`. Une sauvegarde ancienne
+    /// ne les porte pas : on les traite alors comme déjà dues.
+    var remainingAvailableAts: [Date]? = nil
     var initialCount: Int
     var answeredCount: Int
     var againCount: Int

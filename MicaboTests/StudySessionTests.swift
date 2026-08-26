@@ -259,6 +259,69 @@ final class StudySessionTests: XCTestCase {
         XCTAssertEqual(card.state, .learning)
     }
 
+    /// Finir le paquet n'est pas finir la journée : « Correct » sur une neuve
+    /// programme dix minutes, et cette carte doit encore revenir.
+    func testATenMinuteLearningCardKeepsTheSessionOpen() {
+        let card = makeCard("neuve", state: .new, due: -60, interval: 0)
+
+        let session = StudySession()
+        session.start(with: [card], context: context, sourceKey: nil, now: now)
+        session.answer(.good, now: now)
+
+        XCTAssertFalse(session.isFinished, "La session attend le palier de dix minutes")
+        XCTAssertNil(session.current, "On ne la ressert pas tout de suite")
+        XCTAssertEqual(
+            session.nextAvailableAt?.timeIntervalSince(now) ?? -1,
+            10 * 60,
+            accuracy: 0.5
+        )
+
+        session.advance(now: now.addingTimeInterval(9 * 60 + 59))
+        XCTAssertNil(session.current)
+        XCTAssertFalse(session.isFinished)
+
+        session.advance(now: now.addingTimeInterval(10 * 60))
+        XCTAssertEqual(session.current?.id, card.id)
+        XCTAssertFalse(session.isFinished)
+    }
+
+    func testTheSessionFinishesOnlyAfterEveryLearningStep() {
+        let card = makeCard("neuve", state: .new, due: -60, interval: 0)
+
+        let session = StudySession()
+        session.start(with: [card], context: context, sourceKey: nil, now: now)
+        session.answer(.good, now: now)
+
+        let later = now.addingTimeInterval(10 * 60)
+        session.advance(now: later)
+        session.answer(.good, now: later)
+
+        XCTAssertTrue(session.isFinished)
+        XCTAssertEqual(card.state, .review)
+        XCTAssertNil(session.nextAvailableAt)
+    }
+
+    func testALearningCardStillReturnsAfterTheRestOfThePack() {
+        let neuve = makeCard("neuve", state: .new, due: -60, interval: 0, position: 0)
+        let revue = makeCard("revue", state: .review, due: -60, interval: 10, position: 1)
+
+        let session = StudySession()
+        session.start(with: [neuve, revue], context: context, sourceKey: nil, now: now)
+
+        // L'ordre de la file : apprentissage / révisions / neuves. La revue passe
+        // d'abord, puis la neuve ; « Correct » sur la neuve ouvre le palier de 10 min.
+        XCTAssertEqual(session.current?.id, revue.id)
+        session.answer(.easy, now: now)
+        XCTAssertEqual(session.current?.id, neuve.id)
+        session.answer(.good, now: now)
+
+        XCTAssertFalse(session.isFinished)
+        XCTAssertNil(session.current)
+
+        session.advance(now: now.addingTimeInterval(10 * 60))
+        XCTAssertEqual(session.current?.id, neuve.id)
+    }
+
     /// « Session terminée » ne veut pas dire la même chose selon que trois cartes repassent
     /// dans dix minutes ou que tout repart à quatre jours.
     func testTheSessionAnnouncesWhenItsCardsComeBack() {
