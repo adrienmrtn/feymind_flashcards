@@ -36,6 +36,15 @@ export const EXAM_INTENSITY_LABELS: Record<ExamIntensity, string> = {
   intense: "Intensive",
 };
 
+export const EXAM_INTENSITIES: readonly ExamIntensity[] = ["light", "standard", "intense"];
+
+/** Les visages du curseur d'intensité, dans le même ordre que les paliers. */
+export const EXAM_INTENSITY_EMOJIS: Record<ExamIntensity, string> = {
+  light: "😌",
+  standard: "📘",
+  intense: "🔥",
+};
+
 /**
  * Sur combien de jours de fin les derniers passages s'étalent.
  *

@@ -247,6 +247,65 @@ video {
   scale: 0.97;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .pressable:hover {
+    filter: brightness(1.04);
+  }
+}
+
+/* Une rangée qui avance d'un rien, et une tuile qui se soulève : le survol doit se sentir
+   sans déplacer le texte assez pour le flouter. */
+@utility hover-row {
+  transition-property: background-color, translate;
+  transition-duration: var(--duration-hover);
+  transition-timing-function: var(--ease-out-strong);
+}
+
+@utility hover-tile {
+  transition-property: box-shadow, translate;
+  transition-duration: var(--duration-hover);
+  transition-timing-function: var(--ease-out-strong);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hover-row:hover {
+    background-color: color-mix(in srgb, var(--color-surface-muted) 70%, transparent);
+    translate: 3px 0;
+  }
+
+  .hover-tile:hover {
+    box-shadow: var(--shadow-paper-hover);
+    translate: 0 -3px;
+  }
+
+  .nav-link:hover svg {
+    scale: 1.08;
+  }
+
+  .nav-link svg {
+    transition: scale var(--duration-hover) var(--ease-out-strong);
+  }
+}
+
+@keyframes micabo-pop {
+  0% {
+    scale: 0.72;
+    rotate: -8deg;
+  }
+  55% {
+    scale: 1.16;
+    rotate: 4deg;
+  }
+  100% {
+    scale: 1;
+    rotate: 0deg;
+  }
+}
+
+@utility emoji-pop {
+  animation: micabo-pop 320ms var(--ease-out-strong);
+}
+
 /* **La seule fioriture du site.** Un filet de 1 px qui se trace depuis la gauche : c'est le
    survol qui a le plus l'air fait à la main, et il ne coûte qu'une transition de
    `background-size`. */

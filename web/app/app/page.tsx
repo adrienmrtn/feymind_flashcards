@@ -123,7 +123,7 @@ export default async function DashboardPage() {
               <li key={course.id}>
                 <Link
                   href={`/app/c/${course.id}` as never}
-                  className="flex items-center gap-4 px-5 py-4 transition-colors duration-hover hover:bg-surface-muted/60"
+                  className="hover-row flex items-center gap-4 px-5 py-4"
                 >
                   <span
                     aria-hidden
@@ -169,7 +169,7 @@ function ExamCard({
     return (
       <Link
         href={"/app/examens" as never}
-        className="paper group rounded-group bg-surface p-6 transition-transform duration-hover hover:-translate-y-0.5"
+        className="paper hover-tile group rounded-group bg-surface p-6"
       >
         <p className="eyebrow text-ink-tertiary">Prochain examen</p>
         <p className="mt-3 text-[18px] font-semibold text-ink">Aucun examen prévu.</p>
@@ -193,7 +193,7 @@ function ExamCard({
   return (
     <Link
       href={"/app/examens" as never}
-      className={`group rounded-group p-6 transition-transform duration-hover hover:-translate-y-0.5 ${tone.surface}`}
+      className={`hover-tile group rounded-group p-6 ${tone.surface}`}
     >
       <p className={`eyebrow ${tone.muted}`}>Prochain examen</p>
       <div className="mt-3 flex items-start justify-between gap-4">
@@ -224,7 +224,7 @@ function ReviewCard({
     return (
       <Link
         href="/app/reviser"
-        className="paper group rounded-group bg-positive-soft p-6 transition-transform duration-hover hover:-translate-y-0.5"
+        className="paper hover-tile group rounded-group bg-positive-soft p-6"
       >
         <p className="eyebrow text-positive">Aujourd&apos;hui</p>
         <p className="mt-3 text-[18px] font-semibold text-ink">Tout est à jour.</p>
@@ -239,7 +239,7 @@ function ReviewCard({
   return (
     <Link
       href="/app/reviser"
-      className="paper group rounded-group bg-surface p-6 transition-transform duration-hover hover:-translate-y-0.5"
+        className="paper hover-tile group rounded-group bg-surface p-6"
     >
       <p className="eyebrow text-ink-tertiary">À réviser aujourd&apos;hui</p>
       <p className="mt-3 numeral text-[40px] font-bold leading-none text-ink">{counts.total}</p>
@@ -286,7 +286,7 @@ function HardCards({
               <li key={card.id}>
                 <Link
                   href={href}
-                  className="-mx-2 flex items-start gap-3 rounded-button px-2 py-3 transition-colors duration-hover hover:bg-surface-muted/60"
+                  className="hover-row -mx-2 flex items-start gap-3 rounded-button px-2 py-3"
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block text-[14.5px] font-medium leading-snug text-ink">

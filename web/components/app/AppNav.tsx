@@ -95,7 +95,7 @@ export function AppNav() {
               key={link.href}
               href={link.href as never}
               aria-current={isCurrent(link.href) ? "page" : undefined}
-              className={`flex items-center gap-3 rounded-button px-3 py-2.5 text-[15px] transition-colors duration-hover ${
+              className={`nav-link flex items-center gap-3 rounded-button px-3 py-2.5 text-[15px] transition-colors duration-hover ${
                 isCurrent(link.href)
                   ? "bg-accent-soft font-semibold text-accent"
                   : "text-ink-secondary hover:bg-surface"
@@ -196,8 +196,8 @@ export function AppNav() {
               key={link.href}
               href={link.href as never}
               aria-current={isCurrent(link.href) ? "page" : undefined}
-              className={`flex flex-1 flex-col items-center gap-1 rounded-button py-2 text-[10.5px] font-medium ${
-                isCurrent(link.href) ? "text-accent" : "text-ink-tertiary"
+              className={`nav-link flex flex-1 flex-col items-center gap-1 rounded-button py-2 text-[10.5px] font-medium transition-colors duration-hover ${
+                isCurrent(link.href) ? "text-accent" : "text-ink-tertiary hover:text-ink-secondary"
               }`}
             >
               <Icon name={link.icon} filled={isCurrent(link.href)} />

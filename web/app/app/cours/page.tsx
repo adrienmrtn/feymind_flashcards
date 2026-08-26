@@ -66,7 +66,7 @@ export default async function CoursesPage() {
             <Link
               key={course.id}
               href={`/app/c/${course.id}` as never}
-              className={`flex items-center gap-4 px-5 py-4 transition-colors duration-hover hover:bg-surface-muted/60 ${
+              className={`hover-row flex items-center gap-4 px-5 py-4 ${
                 index > 0 ? "border-t border-hairline" : ""
               }`}
             >

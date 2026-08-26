@@ -17,6 +17,7 @@ import {
   averageDailyLoad,
   busiestDay,
   dayDifference,
+  EXAM_INTENSITY_EMOJIS,
   examCountdownLabel,
   examUrgency,
   ladder,
@@ -249,6 +250,11 @@ describe("l'urgence d'un examen", () => {
     expect(examCountdownLabel(1)).toBe("demain");
     expect(examCountdownLabel(5)).toBe("J-5");
     expect(examCountdownLabel(-2)).toBe("passé");
+  });
+
+  it("porte un emoji par palier, pour le curseur du calendrier", () => {
+    expect(EXAM_INTENSITY_EMOJIS.light).toBe("😌");
+    expect(EXAM_INTENSITY_EMOJIS.intense).toBe("🔥");
   });
 
   it("classe aujourd'hui et demain en critique, la semaine en ocre", () => {

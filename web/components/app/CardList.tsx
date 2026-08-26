@@ -93,7 +93,7 @@ function Row({
     <button
       type="button"
       onClick={onEdit}
-      className={`flex w-full items-start gap-4 px-5 py-4 text-left transition-colors duration-hover hover:bg-surface-muted/60 ${
+      className={`hover-row flex w-full items-start gap-4 px-5 py-4 text-left ${
         index > 0 ? "border-t border-hairline" : ""
       }`}
     >
