@@ -15,6 +15,14 @@ import Foundation
 /// monde. La langue se déduit du même écran, et l'écran qui annonçait « Micabo parle
 /// français » a disparu avec : il demandait une réponse qu'on ne pouvait pas donner.
 ///
+/// **Le rythme quotidien et sa projection ont disparu.** Le premier demandait combien de
+/// minutes par jour on comptait réviser, le second annonçait le nombre de cartes que ça
+/// ferait au bout d'un an. Deux écrans, une seule idée, et une idée qu'on ne peut pas tenir :
+/// personne ne connaît son rythme avant d'avoir essayé, et la promesse chiffrée qui suivait
+/// reposait entièrement sur une réponse donnée au hasard. Le plafond de cartes neuves existe
+/// toujours (`DailyLoad`), sur sa valeur par défaut, et se règle dans les Réglages — là où
+/// l'on va quand on sait vraiment ce qu'on veut.
+///
 /// **L'écran des rappels a disparu.** Il demandait « on te rappelle au bon moment ? » sans
 /// rien demander au système : il notait une intention que rien ne lisait, et il la
 /// demandait juste avant l'écran qui construit le parcours, c'est-à-dire au moment où l'on
@@ -41,8 +49,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case examPromise
     case subjects
     case school
-    case dailyTime
-    case projection
     case personalizing
     case socialProof
     case yourTurn

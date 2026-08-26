@@ -21,7 +21,9 @@ struct SettingsView: View {
 
     @State private var stage = OnboardingPreferences.educationStage
     @State private var country = OnboardingPreferences.schoolingCountry
-    @AppStorage(SheetPreferences.lengthKey) private var sheetLength = SheetLength.default
+    /// Le format, et pas le nombre de blocs : un menu ne fait pas un curseur. L'écrire
+    /// replace le curseur de l'import au milieu de la plage choisie.
+    @State private var sheetLength = SheetPreferences.length
     @State private var showResetConfirmation = false
     @State private var showSignOutConfirmation = false
     @State private var showAuth = false
@@ -293,7 +295,7 @@ struct SettingsView: View {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji(country.flag), background: MicaboColor.tilePastels[2]),
                         title: "Pays",
-                        subtitle: "\(country.systemHint) · \(country.language.label)",
+                        subtitle: "Micabo écrit en \(country.language.label)",
                         accessory: .value(country.name)
                     )
                 }
@@ -321,14 +323,14 @@ struct SettingsView: View {
                 Menu {
                     Picker("Longueur des fiches", selection: $sheetLength) {
                         ForEach(SheetLength.allCases) { length in
-                            Text("\(length.title) · \(length.readingHint)").tag(length)
+                            Text("\(length.title) · \(readingHint(for: length))").tag(length)
                         }
                     }
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("📄"), background: MicaboColor.tilePastels[3]),
                         title: "Longueur des fiches",
-                        subtitle: sheetLength.readingHint + " de lecture",
+                        subtitle: readingHint(for: sheetLength) + " de lecture",
                         accessory: .value(sheetLength.title)
                     )
                 }
@@ -352,9 +354,14 @@ struct SettingsView: View {
             OnboardingPreferences.educationStage = stage
             Haptics.selection()
         }
-        .onChange(of: sheetLength) { _, _ in
+        .onChange(of: sheetLength) { _, newValue in
+            SheetPreferences.length = newValue
             Haptics.selection()
         }
+    }
+
+    private func readingHint(for length: SheetLength) -> String {
+        SheetPreferences.readingHint(forBlocks: length.defaultBlocks)
     }
 
     /// Le rythme quotidien commande le plafond de cartes neuves : les deux rangées se

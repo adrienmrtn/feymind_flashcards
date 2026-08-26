@@ -66,7 +66,9 @@ struct PaywallCallToAction: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .buttonStyle(MicaboPrimaryButtonStyle())
+        // Aussi grand que le bouton du parcours d'accueil : le paywall en est la dernière
+        // page, et un bouton qui rapetisse à l'écran de l'offre se lit comme une hésitation.
+        .buttonStyle(MicaboPrimaryButtonStyle(isProminent: true))
         .disabled(isPurchasing)
         .animation(.easeOut(duration: 0.2), value: isPurchasing)
     }

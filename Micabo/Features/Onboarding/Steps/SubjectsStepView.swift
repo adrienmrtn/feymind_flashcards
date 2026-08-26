@@ -9,7 +9,6 @@ struct SubjectsStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Question 3 sur 3",
             title: "Tu révises quoi ?",
             titleSize: 28,
             animatesTitle: true

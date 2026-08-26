@@ -12,7 +12,6 @@ struct GoalStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Question 1 sur 3",
             title: "Quels sont tes objectifs ?",
             subtitle: "Plusieurs réponses possibles.",
             animatesTitle: true

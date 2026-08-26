@@ -39,10 +39,8 @@ struct DemoReviewStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Comment ça marche · 3 sur 3",
-            title: "Ta fiche devient\ntes révisions.",
-            subtitle: "Schémas, cartes, QCM, textes à trou. Rien à saisir, rien à répondre.",
-            titleSize: 30,
+            title: "Tes cours sont transformés\nen contenus interactifs.",
+            titleSize: 26,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false
         ) {

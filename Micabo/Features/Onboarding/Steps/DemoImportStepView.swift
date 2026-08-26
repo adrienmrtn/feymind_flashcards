@@ -34,12 +34,12 @@ struct DemoImportStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Comment ça marche · 1 sur 3",
             title: "Glisse ton cours ici.",
-            subtitle: "PDF, diapos, vidéo YouTube ou simple texte.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
-            scrolls: false
+            scrolls: false,
+            // La carte se glisse au doigt : un défilement, même inerte, lui volerait le geste.
+            locksScrolling: true
         ) {
             VStack(spacing: 12) {
                 // La page passe **au-dessus** de la zone de dépôt, pas dessous : un

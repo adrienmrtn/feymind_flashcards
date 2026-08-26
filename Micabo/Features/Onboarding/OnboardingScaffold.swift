@@ -162,6 +162,13 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     /// occupent alors la page, et le regard tombe dessus au lieu de les chercher.
     var expandsContent: Bool = false
     var surface: OnboardingSurface = .canvas
+    /// Interdit jusqu'au défilement de secours.
+    ///
+    /// Réservé aux écrans qui portent un **geste de glissement** : un `ScrollView`, même
+    /// quand il n'a rien à faire défiler, prend le déplacement vertical du doigt avant que
+    /// le `DragGesture` de la carte le voie. Un écran de démonstration où l'on ne peut plus
+    /// glisser la carte n'a plus rien à démontrer.
+    var locksScrolling: Bool = false
     var skip: OnboardingSkip?
     var content: () -> Content
     var footer: () -> Footer
@@ -176,6 +183,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         animatesTitle: Bool = false,
         expandsContent: Bool = false,
         surface: OnboardingSurface = .canvas,
+        locksScrolling: Bool = false,
         skip: OnboardingSkip? = nil,
         @ViewBuilder content: @escaping () -> Content,
         @ViewBuilder footer: @escaping () -> Footer
@@ -189,6 +197,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         self.animatesTitle = animatesTitle
         self.expandsContent = expandsContent
         self.surface = surface
+        self.locksScrolling = locksScrolling
         self.skip = skip
         self.content = content
         self.footer = footer
@@ -201,8 +210,12 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     stack(inScrollView: true)
                 }
                 .scrollIndicators(.hidden)
-            } else {
+            } else if expandsContent || locksScrolling {
+                // Le contenu se partage la hauteur restante : il ne peut pas déborder,
+                // puisque c'est lui qui se comprime.
                 stack(inScrollView: false)
+            } else {
+                fittedStack
             }
 
             MicaboBottomBar(background: surface.background) {
@@ -214,7 +227,25 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         .environment(\.onboardingSurface, surface)
     }
 
-    private func stack(inScrollView: Bool) -> some View {
+    /// Une composition figée **qui défile quand même si elle ne tient pas.**
+    ///
+    /// Ces écrans-là portent une illustration de taille fixe et sont écrits pour tenir d'un
+    /// bloc : les laisser défiler par défaut ferait bouger une scène qu'on regarde. Mais sur
+    /// un petit téléphone, ou dès qu'un élément grandit — le bouton d'action a pris un quart
+    /// —, « ça ne tient pas » ne doit pas vouloir dire « c'est coupé et on ne peut rien y
+    /// faire ». Le défilement n'apparaît donc que quand il sert, et la page se lit
+    /// exactement comme avant partout ailleurs.
+    private var fittedStack: some View {
+        GeometryReader { proxy in
+            ScrollView {
+                stack(inScrollView: false, minHeight: proxy.size.height)
+            }
+            .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize)
+        }
+    }
+
+    private func stack(inScrollView: Bool, minHeight: CGFloat? = nil) -> some View {
         VStack(alignment: .leading, spacing: contentSpacing) {
             VStack(alignment: .leading, spacing: 9) {
                 // Le sur-titre et l'échappatoire partagent la même ligne : « Passer » se
@@ -272,7 +303,12 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, MicaboSpacing.lg)
         .padding(.bottom, inScrollView ? MicaboSpacing.lg : 0)
-        .frame(maxWidth: .infinity, maxHeight: inScrollView ? nil : .infinity, alignment: .topLeading)
+        .frame(
+            maxWidth: .infinity,
+            minHeight: minHeight,
+            maxHeight: (inScrollView || minHeight != nil) ? nil : .infinity,
+            alignment: .topLeading
+        )
     }
 
     /// Volontairement discret : c'est une sortie, pas une proposition. Un « Passer » aussi
@@ -310,6 +346,7 @@ extension OnboardingScaffold where Footer == EmptyView {
         animatesTitle: Bool = false,
         expandsContent: Bool = false,
         surface: OnboardingSurface = .canvas,
+        locksScrolling: Bool = false,
         skip: OnboardingSkip? = nil,
         @ViewBuilder content: @escaping () -> Content
     ) {
@@ -323,6 +360,7 @@ extension OnboardingScaffold where Footer == EmptyView {
             animatesTitle: animatesTitle,
             expandsContent: expandsContent,
             surface: surface,
+            locksScrolling: locksScrolling,
             skip: skip,
             content: content,
             footer: { EmptyView() }
@@ -522,7 +560,8 @@ struct OnboardingContinueButton: View {
         .buttonStyle(
             MicaboPrimaryButtonStyle(
                 tint: isEnabled ? surface.buttonTint : surface.disabledButtonTint,
-                foreground: surface.buttonForeground
+                foreground: surface.buttonForeground,
+                isProminent: true
             )
         )
         .disabled(!isEnabled || isLoading)
@@ -559,7 +598,9 @@ struct OnboardingContinueButton: View {
             .rotationEffect(.degrees(16))
             .offset(x: shinePhase * (width + band * 2) - band, y: -proxy.size.height / 2)
         }
-        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+        // Le reflet suit la forme du bouton, qui est plus arrondie depuis qu'il a grandi :
+        // découpé sur l'ancien rayon, il bavait dans les coins.
+        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
         .allowsHitTesting(false)
     }
 

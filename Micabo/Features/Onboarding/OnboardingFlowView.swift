@@ -54,8 +54,6 @@ struct OnboardingFlowView: View {
         case .examPromise: ExamPromiseStepView()
         case .subjects: SubjectsStepView()
         case .school: SchoolStepView()
-        case .dailyTime: DailyTimeStepView()
-        case .projection: ProjectionStepView()
         case .personalizing: PersonalizingStepView()
         case .socialProof: SocialProofStepView()
         case .yourTurn: YourTurnStepView()

@@ -117,19 +117,38 @@ enum StudyLevel: String, CaseIterable, Identifiable {
 /// ailleurs sur une échelle générique. Le drapeau tient lieu d'icône, parce qu'il se
 /// reconnaît plus vite que son nom.
 enum SchoolingCountry: String, CaseIterable, Identifiable {
+    // **L'ordre de déclaration est l'ordre des pastilles**, et il n'est pas alphabétique :
+    // ce sont les marchés visés en premier qui se lisent en premier. Les pays francophones
+    // historiques suivent, parce qu'ils restent servis mais ne sont plus ce qu'on cherche
+    // d'abord.
     case fr
+    case uk
+    case de
+    case it
+    case es
+    case pt
+    case cz
+    case nl
+    case gr
+    case hu
+    case pl
+    case ro
+    case se
+    case tr
+
     case be
     case ch
     case ca
+    case lu
     case ma
     case dz
     case tn
     case sn
     case ci
-    case lu
-    case uk
     case us
-    /// Un pays dont on ne connaît pas le système scolaire : les paliers y sont génériques.
+
+    /// Un pays hors liste. Il n'a plus d'échelle inventée : l'écran ouvre un champ de
+    /// recherche sur tous les pays du monde, et le nom choisi est conservé à côté.
     case other
 
     var id: String { rawValue }
@@ -137,55 +156,60 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
     var name: String {
         switch self {
         case .fr: "France"
+        case .uk: "Royaume-Uni"
+        case .de: "Allemagne"
+        case .it: "Italie"
+        case .es: "Espagne"
+        case .pt: "Portugal"
+        case .cz: "Tchéquie"
+        case .nl: "Pays-Bas"
+        case .gr: "Grèce"
+        case .hu: "Hongrie"
+        case .pl: "Pologne"
+        case .ro: "Roumanie"
+        case .se: "Suède"
+        case .tr: "Turquie"
         case .be: "Belgique"
         case .ch: "Suisse"
         case .ca: "Canada"
+        case .lu: "Luxembourg"
         case .ma: "Maroc"
         case .dz: "Algérie"
         case .tn: "Tunisie"
         case .sn: "Sénégal"
         case .ci: "Côte d'Ivoire"
-        case .lu: "Luxembourg"
-        case .uk: "Royaume-Uni"
         case .us: "États-Unis"
-        case .other: "Ailleurs"
+        case .other: "Autre pays"
         }
     }
 
     var flag: String {
         switch self {
         case .fr: "🇫🇷"
+        case .uk: "🇬🇧"
+        case .de: "🇩🇪"
+        case .it: "🇮🇹"
+        case .es: "🇪🇸"
+        case .pt: "🇵🇹"
+        case .cz: "🇨🇿"
+        case .nl: "🇳🇱"
+        case .gr: "🇬🇷"
+        case .hu: "🇭🇺"
+        case .pl: "🇵🇱"
+        case .ro: "🇷🇴"
+        case .se: "🇸🇪"
+        case .tr: "🇹🇷"
         case .be: "🇧🇪"
         case .ch: "🇨🇭"
         case .ca: "🇨🇦"
+        case .lu: "🇱🇺"
         case .ma: "🇲🇦"
         case .dz: "🇩🇿"
         case .tn: "🇹🇳"
         case .sn: "🇸🇳"
         case .ci: "🇨🇮"
-        case .lu: "🇱🇺"
-        case .uk: "🇬🇧"
         case .us: "🇺🇸"
         case .other: "🌍"
-        }
-    }
-
-    /// Le système scolaire, dit en trois mots. C'est ce qui justifie la question.
-    var systemHint: String {
-        switch self {
-        case .fr: "Brevet, bac, prépa, PASS"
-        case .be: "CESS, bachelier, master"
-        case .ch: "Maturité, bachelor, master"
-        case .ca: "Secondaire, cégep, université"
-        case .ma: "Bac marocain, prépa, concours"
-        case .dz: "Bac algérien, licence, master"
-        case .tn: "Bac tunisien, licence, mastère"
-        case .sn: "Bac, licence, grandes écoles"
-        case .ci: "Bac, licence, grandes écoles"
-        case .lu: "Diplôme de fin d'études, bachelor"
-        case .uk: "GCSE, A-Levels, university"
-        case .us: "High school, college, grad school"
-        case .other: "Middle school, high school, college"
         }
     }
 
@@ -249,6 +273,10 @@ enum OnboardingPreferences {
         /// relecture retombe sur le registre, qui ne distingue pas un collégien d'un lycéen.
         static let tier = "micabo.onboarding.tier"
         static let country = "micabo.onboarding.country"
+        /// Le pays choisi dans la recherche, quand la réponse est « Autre pays ». On garde
+        /// son code ISO plutôt que son nom : le nom dépend de la langue du téléphone, et
+        /// celui d'un pays change plus souvent que ses deux lettres.
+        static let customCountryCode = "micabo.onboarding.customCountryCode"
         static let goal = "micabo.onboarding.goal"
         static let goals = "micabo.onboarding.goals"
         static let forgetting = "micabo.onboarding.forgetting"
@@ -266,7 +294,8 @@ enum OnboardingPreferences {
         static let completedAt = "micabo.onboarding.completedAt"
 
         static let all = [
-            completed, level, stage, tier, country, goal, goals, forgetting, forgetsOften, subjects,
+            completed, level, stage, tier, country, customCountryCode,
+            goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
             dailyMinutes, ratingAsked, retiredNotificationsOptIn, completedAt
         ]
@@ -366,6 +395,22 @@ enum OnboardingPreferences {
     /// défaut.
     static var hasChosenCountry: Bool {
         defaults.string(forKey: Key.country) != nil
+    }
+
+    /// Le pays nommé à la main, quand la réponse est « Autre pays ».
+    ///
+    /// Il n'a pas de système scolaire connu et ne change donc ni les paliers ni la langue :
+    /// il sert à savoir **qui utilise Micabo**, ce qui est la seule question à laquelle une
+    /// liste de pays ouverte puisse répondre honnêtement.
+    static var customCountry: WorldCountry? {
+        get { WorldCountries.country(code: defaults.string(forKey: Key.customCountryCode)) }
+        set {
+            if let newValue {
+                defaults.set(newValue.code, forKey: Key.customCountryCode)
+            } else {
+                defaults.removeObject(forKey: Key.customCountryCode)
+            }
+        }
     }
 
     /// Objectifs déclarés. Une seule réponse était possible auparavant : la clé

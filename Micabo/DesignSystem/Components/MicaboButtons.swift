@@ -67,15 +67,37 @@ struct MicaboPrimaryButtonStyle: ButtonStyle {
     var foreground: Color = MicaboColor.onInk
     var fullWidth: Bool = true
     var feedback: Haptics.Press = .medium
+    /// **Un quart plus grand**, pour le seul bouton d'un écran qui n'en a qu'un.
+    ///
+    /// Réservé au parcours d'accueil et aux paywalls : ce sont des écrans où l'on ne fait
+    /// qu'une chose, et où le bouton est la seule cible. Ailleurs dans l'app, un bouton de
+    /// cette taille écraserait les rangées et les actions secondaires autour de lui.
+    ///
+    /// La hauteur passe de 51 à 64 points, marges et corps compris — c'est un rapport, pas
+    /// deux réglages indépendants : grossir le seul rembourrage donnerait un bouton haut au
+    /// texte perdu au milieu.
+    var isProminent: Bool = false
+
+    private var font: Font {
+        isProminent ? MicaboFont.hanken(19, weight: .semibold) : MicaboFont.cardTitle
+    }
+
+    private var verticalPadding: CGFloat {
+        isProminent ? 20 : 16
+    }
+
+    private var radius: CGFloat {
+        isProminent ? MicaboRadius.lg : MicaboRadius.button
+    }
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(MicaboFont.cardTitle)
+            .font(font)
             .foregroundStyle(foreground)
             .frame(maxWidth: fullWidth ? .infinity : nil)
-            .padding(.vertical, 16)
+            .padding(.vertical, verticalPadding)
             .padding(.horizontal, fullWidth ? 0 : 24)
-            .background(tint, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+            .background(tint, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
     }
 }

@@ -30,7 +30,6 @@ struct SignInStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Ton compte",
             title: "Garde ta progression\nen sécurité.",
             subtitle: "Ton parcours est prêt. Un compte, et il te suit partout.",
             titleSize: 30,

@@ -234,12 +234,46 @@ function spec(length: string | undefined): LengthSpec {
   return LENGTH_SPECS[(length ?? "").trim().toLowerCase()] ?? LENGTH_SPECS.standard;
 }
 
-export function lengthBrief(length: string | undefined, isLongDocument: boolean): string {
+/**
+ * La consigne de longueur.
+ *
+ * `blocks` est le **volume exact** demandé par le curseur de l'application, et il l'emporte
+ * sur les bornes du format : le curseur est continu depuis qu'il a plus de trois positions,
+ * et un étudiant qui le pousse de dix-huit à vingt-deux blocs doit obtenir quatre blocs de
+ * plus, pas la même fiche « équilibrée » que la fois d'avant. Le format reste là pour dire
+ * *quel genre* de fiche on veut ; le nombre dit *combien*.
+ *
+ * Une version de l'application qui ne l'envoie pas retombe sur les bornes du format, comme
+ * avant.
+ */
+export function lengthBrief(
+  length: string | undefined,
+  isLongDocument: boolean,
+  blocks?: number,
+): string {
   const chosen = spec(length);
-  const note = isLongDocument
-    ? ` Le document est long : reste à la borne basse, ${chosen.blocks[0]} blocs.`
-    : "";
-  return `LONGUEUR DEMANDÉE\n${chosen.brief}${note}`;
+  const target = targetBlocks(blocks);
+
+  if (target === undefined) {
+    const note = isLongDocument
+      ? ` Le document est long : reste à la borne basse, ${chosen.blocks[0]} blocs.`
+      : "";
+    return `LONGUEUR DEMANDÉE\n${chosen.brief}${note}`;
+  }
+
+  // Sur un document long, viser la borne haute produit du remplissage : on redescend d'un
+  // cinquième plutôt que d'ignorer la demande.
+  const aimed = isLongDocument ? Math.max(MIN_BLOCKS, Math.round(target * 0.8)) : target;
+  return `LONGUEUR DEMANDÉE\n${chosen.brief}\nVolume visé : ${aimed} blocs, à deux près. C'est le réglage explicite de l'étudiant, et il prime sur les bornes ci-dessus.`;
+}
+
+const MIN_BLOCKS = 8;
+const MAX_BLOCKS = 34;
+
+/** Le volume demandé, ramené dans les bornes, ou rien s'il n'a pas été envoyé. */
+function targetBlocks(blocks: number | undefined): number | undefined {
+  if (typeof blocks !== "number" || !Number.isFinite(blocks)) return undefined;
+  return Math.min(MAX_BLOCKS, Math.max(MIN_BLOCKS, Math.round(blocks)));
 }
 
 /** Consigne du second essai : plus court, et le volume est nommé. */

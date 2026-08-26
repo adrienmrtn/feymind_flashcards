@@ -24,9 +24,7 @@ struct SchoolStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Ton établissement",
             title: "Tu étudies où ?",
-            subtitle: "Commence à taper, on cherche pour toi.",
             titleSize: 28,
             skip: OnboardingSkip(action: skipAndAdvance)
         ) {

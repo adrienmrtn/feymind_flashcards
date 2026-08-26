@@ -151,12 +151,17 @@ final class OnboardingFlowTests: XCTestCase {
         // « On te rappelle au bon moment » ne demandait rien au système : il notait une
         // intention que personne ne lisait, juste avant l'écran qui construit le parcours.
         XCTAssertFalse(names.contains("notifications"))
+        // Le rythme quotidien et la projection sur un an : deux écrans pour une seule idée,
+        // et une idée bâtie sur une réponse que personne ne peut donner avant d'avoir
+        // essayé. Le plafond de cartes neuves garde sa valeur par défaut.
+        XCTAssertFalse(names.contains("dailyTime"))
+        XCTAssertFalse(names.contains("projection"))
     }
 
-    /// La question des rappels partie, la projection mène directement à la construction du
-    /// parcours : c'est la suite qu'elle promettait déjà.
-    func testTheProjectionLeadsStraightToTheBuild() {
-        let model = self.model(advancingTo: .projection)
+    /// Le rythme et la projection partis, l'établissement mène directement à la
+    /// construction du parcours : c'est la dernière question, et la suite est le résultat.
+    func testTheLastQuestionLeadsStraightToTheBuild() {
+        let model = self.model(advancingTo: .school)
 
         model.advance()
         XCTAssertEqual(model.step, .personalizing)
@@ -587,13 +592,88 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(OnboardingPreferences.schoolingCountry, .fr)
     }
 
-    func testEveryCountryDescribesItsSchoolSystem() {
+    func testEveryCountryHasANameAndAFlag() {
         for country in SchoolingCountry.allCases {
             XCTAssertFalse(country.name.isEmpty, "\(country) doit avoir un nom")
-            XCTAssertFalse(country.systemHint.isEmpty, "\(country) doit dire son système scolaire")
+            XCTAssertFalse(country.flag.isEmpty, "\(country) doit porter un drapeau")
         }
         // Le brut est envoyé à la fonction : le renommer changerait la consigne de rédaction.
         XCTAssertEqual(SchoolingCountry.fr.rawValue, "fr")
+    }
+
+    /// **L'ordre des pastilles est celui des marchés visés**, et il est verrouillé : c'est un
+    /// ordre commercial, pas alphabétique, donc rien dans le code ne le rappelle.
+    func testTheTargetedCountriesComeFirstAndInOrder() {
+        let expected: [SchoolingCountry] = [
+            .fr, .uk, .de, .it, .es, .pt, .cz, .nl, .gr, .hu, .pl, .ro, .se, .tr
+        ]
+        XCTAssertEqual(Array(SchoolingCountry.allCases.prefix(expected.count)), expected)
+        XCTAssertEqual(SchoolingCountry.allCases.last, .other, "La sortie de secours ferme la liste")
+    }
+
+    // MARK: - « Autre pays »
+
+    /// La sortie de secours n'est plus une impasse : elle rendait un « ailleurs » qui ne
+    /// disait rien de plus que le silence. Le parcours attend maintenant qu'un pays ait été
+    /// nommé, faute de quoi la question n'a pas de réponse.
+    func testElsewhereIsOnlyAnAnswerOnceACountryIsNamed() throws {
+        let model = OnboardingModel()
+        XCTAssertTrue(model.hasAnsweredCountry, "La France est cochée d'avance")
+
+        model.select(country: .other)
+        XCTAssertFalse(model.hasAnsweredCountry, "« Autre pays » seul ne dit rien")
+
+        model.customCountry = try XCTUnwrap(WorldCountries.country(code: "BR"))
+        XCTAssertTrue(model.hasAnsweredCountry)
+    }
+
+    /// Repartir sur une pastille efface le pays tapé à la main : le garder ferait dire à
+    /// l'écran « France » et « Brésil » en même temps.
+    func testGoingBackToAChipForgetsTheTypedCountry() throws {
+        let model = OnboardingModel()
+        model.select(country: .other)
+        model.customCountry = try XCTUnwrap(WorldCountries.country(code: "JP"))
+
+        model.select(country: .de)
+
+        XCTAssertNil(model.customCountry)
+        XCTAssertEqual(model.country, .de)
+    }
+
+    /// Le catalogue vient des régions du système, pas d'une liste recopiée : il doit couvrir
+    /// le monde, et chaque entrée doit porter son drapeau.
+    func testTheWorldCatalogueIsBuiltFromTheSystem() throws {
+        XCTAssertGreaterThan(WorldCountries.all.count, 150, "Le catalogue doit couvrir le monde")
+
+        let france = try XCTUnwrap(WorldCountries.country(code: "fr"))
+        XCTAssertEqual(france.flag, "🇫🇷", "Le drapeau se déduit du code, il ne s'écrit pas")
+
+        for country in WorldCountries.all.prefix(20) {
+            XCTAssertEqual(country.code.count, 2, "\(country.code) n'est pas un code ISO à deux lettres")
+            XCTAssertFalse(country.name.isEmpty)
+        }
+    }
+
+    /// Un pays dont le nom **commence** par la recherche passe devant un pays qui la contient
+    /// au milieu, et les accents ne comptent pas : personne ne tape « Émirats » accentué.
+    ///
+    /// Les noms viennent de la langue de l'appareil : le test les prend donc **dans le
+    /// catalogue lui-même** plutôt que de les écrire, sans quoi il tomberait le jour où on
+    /// le lance sur un simulateur en anglais.
+    func testTheSearchPutsThePrefixMatchFirstAndIgnoresAccents() throws {
+        let brazil = try XCTUnwrap(WorldCountries.country(code: "BR"))
+        XCTAssertEqual(WorldCountries.matches(brazil.name).first?.code, "BR")
+
+        let accented = WorldCountries.all.first { $0.name != $0.name.unaccented }
+        if let accented {
+            XCTAssertTrue(
+                WorldCountries.matches(accented.name.unaccented).contains { $0.code == accented.code },
+                "\(accented.name) doit se retrouver sans son accent"
+            )
+        }
+
+        XCTAssertTrue(WorldCountries.matches("   ").isEmpty, "Une recherche vide ne propose rien")
+        XCTAssertLessThanOrEqual(WorldCountries.matches("a").count, 6, "La liste reste courte")
     }
 
     // MARK: - Intervalles
@@ -669,5 +749,12 @@ final class OnboardingFlowTests: XCTestCase {
         }
 
         XCTAssertEqual(OnboardingStep.paywall.progress, 1, accuracy: 0.0001)
+    }
+}
+
+
+private extension String {
+    var unaccented: String {
+        folding(options: .diacriticInsensitive, locale: .current)
     }
 }

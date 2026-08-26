@@ -72,4 +72,15 @@ final class TabRouter {
         homeRequests += 1
         selection = .today
     }
+
+    /// Compteur de demandes d'ouverture de la bibliothèque, sur le même principe.
+    private(set) var libraryRequests = 0
+
+    /// **Ouvre le rayon « Découvrir ».** La bibliothèque vit dans l'onglet Cours, mais elle
+    /// se propose ailleurs — dans la feuille d'import, par exemple. C'est le routeur qui
+    /// porte la demande, plutôt que chaque écran d'où l'on peut la faire.
+    func showLibrary() {
+        libraryRequests += 1
+        selection = .courses
+    }
 }

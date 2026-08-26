@@ -28,7 +28,6 @@ struct DemoSheetStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Comment ça marche · 2 sur 3",
             title: "Micabo le met au propre.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
