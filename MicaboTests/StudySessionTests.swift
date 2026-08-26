@@ -259,67 +259,63 @@ final class StudySessionTests: XCTestCase {
         XCTAssertEqual(card.state, .learning)
     }
 
-    /// Finir le paquet n'est pas finir la journée : « Correct » sur une neuve
-    /// programme dix minutes, et cette carte doit encore revenir.
-    func testATenMinuteLearningCardKeepsTheSessionOpen() {
+    /// **Personne n'attend devant un compte à rebours.** Une carte ratée revient à une
+    /// minute, et si c'est la seule qui reste elle est servie tout de suite.
+    func testAFailedCardIsServedAgainImmediately() {
         let card = makeCard("neuve", state: .new, due: -60, interval: 0)
 
         let session = StudySession()
         session.start(with: [card], context: context, sourceKey: nil, now: now)
-        session.answer(.good, now: now)
+        session.answer(.again, now: now)
 
-        XCTAssertFalse(session.isFinished, "La session attend le palier de dix minutes")
-        XCTAssertNil(session.current, "On ne la ressert pas tout de suite")
-        XCTAssertEqual(
-            session.nextAvailableAt?.timeIntervalSince(now) ?? -1,
-            10 * 60,
-            accuracy: 0.5
-        )
-
-        session.advance(now: now.addingTimeInterval(9 * 60 + 59))
-        XCTAssertNil(session.current)
-        XCTAssertFalse(session.isFinished)
-
-        session.advance(now: now.addingTimeInterval(10 * 60))
-        XCTAssertEqual(session.current?.id, card.id)
-        XCTAssertFalse(session.isFinished)
+        XCTAssertFalse(session.isFinished, "La carte ratée n'a pas quitté la session")
+        XCTAssertEqual(session.current?.id, card.id, "Elle revient sans attendre son palier")
+        XCTAssertEqual(card.state, .learning)
     }
 
-    func testTheSessionFinishesOnlyAfterEveryLearningStep() {
+    func testHardAlsoKeepsTheCardInTheSessionWithoutWaiting() {
+        let card = makeCard("neuve", state: .new, due: -60, interval: 0)
+
+        let session = StudySession()
+        session.start(with: [card], context: context, sourceKey: nil, now: now)
+        session.answer(.hard, now: now)
+
+        XCTAssertFalse(session.isFinished)
+        XCTAssertEqual(session.current?.id, card.id)
+        XCTAssertEqual(card.dueDate.timeIntervalSince(now), 10 * 60, accuracy: 1)
+    }
+
+    /// « Correct » sort la carte de l'apprentissage : elle ne revient pas dans la session,
+    /// et la journée est finie s'il ne restait qu'elle.
+    func testGoodEndsTheSessionForThatCard() {
         let card = makeCard("neuve", state: .new, due: -60, interval: 0)
 
         let session = StudySession()
         session.start(with: [card], context: context, sourceKey: nil, now: now)
         session.answer(.good, now: now)
-
-        let later = now.addingTimeInterval(10 * 60)
-        session.advance(now: later)
-        session.answer(.good, now: later)
 
         XCTAssertTrue(session.isFinished)
         XCTAssertEqual(card.state, .review)
-        XCTAssertNil(session.nextAvailableAt)
+        XCTAssertEqual(card.intervalDays, 1, accuracy: 0.001)
     }
 
-    func testALearningCardStillReturnsAfterTheRestOfThePack() {
+    /// Le paquet tourne dans l'ordre : une carte ratée repasse **après** les autres, pas
+    /// juste devant elle-même.
+    func testAFailedCardComesBackBehindTheRestOfThePack() {
         let neuve = makeCard("neuve", state: .new, due: -60, interval: 0, position: 0)
         let revue = makeCard("revue", state: .review, due: -60, interval: 10, position: 1)
 
         let session = StudySession()
         session.start(with: [neuve, revue], context: context, sourceKey: nil, now: now)
 
-        // L'ordre de la file : apprentissage / révisions / neuves. La revue passe
-        // d'abord, puis la neuve ; « Correct » sur la neuve ouvre le palier de 10 min.
+        // L'ordre de la file : apprentissage / révisions / neuves. La revue passe d'abord.
         XCTAssertEqual(session.current?.id, revue.id)
-        session.answer(.easy, now: now)
-        XCTAssertEqual(session.current?.id, neuve.id)
+        session.answer(.again, now: now)
+        XCTAssertEqual(session.current?.id, neuve.id, "La neuve garde son tour")
+
         session.answer(.good, now: now)
-
+        XCTAssertEqual(session.current?.id, revue.id, "La ratée revient ensuite")
         XCTAssertFalse(session.isFinished)
-        XCTAssertNil(session.current)
-
-        session.advance(now: now.addingTimeInterval(10 * 60))
-        XCTAssertEqual(session.current?.id, neuve.id)
     }
 
     /// « Session terminée » ne veut pas dire la même chose selon que trois cartes repassent

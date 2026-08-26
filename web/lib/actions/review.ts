@@ -90,8 +90,14 @@ export async function gradeCard(input: {
     ease_after: outcome.easeFactor,
   });
 
-  revalidatePath("/app");
-  revalidatePath("/app/reviser");
+  // **Aucune revalidation ici, et c'est le correctif.** `revalidatePath("/app/reviser")`
+  // faisait re-rendre la page pendant la session : le serveur reconstruisait la file avec
+  // les cartes dues **à cet instant**, n'en trouvait aucune — elles venaient toutes d'être
+  // repoussées d'une minute — et remplaçait la session par « Tout est à jour », file en
+  // mémoire comprise. La session s'évaporait au milieu d'un paquet.
+  //
+  // Rien n'est perdu : ces écrans lisent le cookie de session, donc ils sont rendus à
+  // chaque requête et n'ont aucun cache à invalider.
 
   return {
     status: "ok",

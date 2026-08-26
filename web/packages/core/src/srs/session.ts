@@ -1,15 +1,21 @@
 /**
  * La file **pendant** une session — pas la file du jour.
  *
- * `buildQueue` décide quelles cartes entrent. Celle-ci décide quand la session s'arrête.
- * Une carte notée « 10 min » n'est pas une carte terminée : si le reste du paquet est
- * épuisé avant ces dix minutes, la session attend, comme Anki. « Tout est à jour »
- * n'apparaît que lorsque plus aucune carte de la session n'est due dans la fenêtre
- * d'anticipation.
+ * `buildQueue` décide quelles cartes entrent. Celle-ci décide dans quel ordre elles
+ * repassent, et quand la session s'arrête.
+ *
+ * **Personne n'attend devant un compte à rebours.** Une carte notée « 1 min » ou
+ * « 10 min » n'est pas terminée, mais faire patienter devant un chronomètre est un écran
+ * qui ne sert à rien : le palier existe pour espacer deux passages quand il y a autre
+ * chose à faire, pas pour immobiliser quelqu'un qui a fini son paquet. Quand il ne reste
+ * que des cartes d'apprentissage, on les sert **tout de suite** — c'est la « limite
+ * d'anticipation » d'Anki, appliquée sans écran intermédiaire.
+ *
+ * « Tout est à jour » n'apparaît donc que lorsque la file est vraiment vide.
  */
 
-/** Une carte replanifiée à moins de 20 minutes revient dans la même session. */
-export const LEARN_AHEAD_SECONDS = 20 * 60;
+/** Une carte replanifiée à moins de dix minutes revient dans la même session. */
+export const LEARN_AHEAD_SECONDS = 10 * 60;
 
 export function returnsInSession(
   dueDate: Date,
@@ -27,7 +33,6 @@ export interface SessionEntry<T> {
 export interface SessionAdvance<T> {
   current: T | null;
   pending: SessionEntry<T>[];
-  nextAvailableAt: Date | null;
   done: boolean;
 }
 
@@ -42,15 +47,14 @@ export function enqueueInitial<T>(cards: readonly T[], now: Date): SessionEntry<
   }));
 }
 
-/** La première carte dont l'échéance est déjà passée, ou `-1`. */
-export function nextReadyIndex<T>(pending: readonly SessionEntry<T>[], now: Date): number {
-  const nowMs = now.getTime();
+/** L'entrée qui revient le plus tôt, ou `-1` si la file est vide. */
+export function earliestIndex<T>(pending: readonly SessionEntry<T>[]): number {
   let best = -1;
   let bestAt = Number.POSITIVE_INFINITY;
 
   for (let index = 0; index < pending.length; index += 1) {
     const at = pending[index]!.availableAt.getTime();
-    if (at <= nowMs && at < bestAt) {
+    if (at < bestAt) {
       best = index;
       bestAt = at;
     }
@@ -60,39 +64,36 @@ export function nextReadyIndex<T>(pending: readonly SessionEntry<T>[], now: Date
 }
 
 export function earliestAvailableAt<T>(pending: readonly SessionEntry<T>[]): Date | null {
-  if (pending.length === 0) return null;
-  return pending.reduce(
-    (min, entry) => (entry.availableAt < min ? entry.availableAt : min),
-    pending[0]!.availableAt,
-  );
+  const index = earliestIndex(pending);
+  return index < 0 ? null : pending[index]!.availableAt;
 }
 
 /**
- * Sert une carte seulement si elle est due **maintenant**. S'il reste des cartes plus
- * tard dans la fenêtre, la session n'est pas finie : elle attend.
+ * Sert la carte qui revient le plus tôt, **même si son palier n'est pas écoulé**, tant
+ * qu'elle rentre dans la fenêtre d'anticipation. Les cartes déjà dues passent d'abord,
+ * puisqu'elles sont les plus anciennes ; une carte d'apprentissage seule au monde est
+ * servie sans attendre.
  */
 export function advanceSession<T>(
   pending: readonly SessionEntry<T>[],
   now: Date,
+  windowSeconds: number = LEARN_AHEAD_SECONDS,
 ): SessionAdvance<T> {
-  const ready = nextReadyIndex(pending, now);
-  if (ready >= 0) {
-    return {
-      current: pending[ready]!.card,
-      pending: pending.filter((_, index) => index !== ready),
-      nextAvailableAt: null,
-      done: false,
-    };
+  const index = earliestIndex(pending);
+  if (index < 0) {
+    return { current: null, pending: [], done: true };
   }
 
-  if (pending.length === 0) {
-    return { current: null, pending: [], nextAvailableAt: null, done: true };
+  const entry = pending[index]!;
+  if ((entry.availableAt.getTime() - now.getTime()) / 1000 > windowSeconds) {
+    // Hors fenêtre : plus rien à faire aujourd'hui. Ne peut arriver que si une carte a
+    // été mise en file par un chemin qui n'a pas filtré, et vaut mieux qu'une attente.
+    return { current: null, pending: [], done: true };
   }
 
   return {
-    current: null,
-    pending: [...pending],
-    nextAvailableAt: earliestAvailableAt(pending),
+    current: entry.card,
+    pending: pending.filter((_, at) => at !== index),
     done: false,
   };
 }

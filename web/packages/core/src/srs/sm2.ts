@@ -40,7 +40,10 @@ export interface SchedulerConfig {
 
 export const DEFAULT_CONFIG: SchedulerConfig = {
   learningStepsMinutes: [1, 10],
-  relearningStepsMinutes: [10],
+  // Une carte ratée après une révision repart du premier palier, comme une neuve : c'est
+  // le même oubli, et le rattraper à dix minutes sans l'avoir revue à une minute laisse
+  // passer une carte qu'on ne sait pas encore.
+  relearningStepsMinutes: [1, 10],
   graduatingIntervalDays: 1,
   easyIntervalDays: 4,
   startingEase: 2.5,
@@ -107,6 +110,18 @@ export function schedule(
 
 // MARK: - Apprentissage
 
+/**
+ * Les quatre boutons d'une carte en apprentissage : **1 min, 10 min, 1 j, 4 j.**
+ *
+ * Anki rejoue le palier courant sur « Difficile », ce qui affiche « 1 min » sous deux
+ * boutons voisins d'une carte neuve — deux fois la même promesse, dont une qui n'apprend
+ * rien. Ici chaque note dit autre chose : on reprend au premier palier, on saute au
+ * dernier, ou on sort de l'apprentissage.
+ *
+ * La conséquence assumée est que « Correct » **fait sortir** la carte de l'apprentissage
+ * au lieu de la reposer dix minutes plus loin. Ce qui revient dans la session est donc ce
+ * qu'on n'a pas su : c'est le sens des quatre boutons.
+ */
 function scheduleLearning(
   snapshot: CardSnapshot,
   rating: ReviewRating,
@@ -114,47 +129,26 @@ function scheduleLearning(
   config: SchedulerConfig,
   random: () => number,
 ): ScheduleOutcome {
-  const steps = config.learningStepsMinutes.length > 0 ? config.learningStepsMinutes : [10];
+  const steps = stepsOf(config.learningStepsMinutes);
 
-  const result: ScheduleOutcome = {
+  if (rating === ReviewRating.good) {
+    return graduate(snapshot, rating, config.graduatingIntervalDays, now, config, random);
+  }
+  if (rating === ReviewRating.easy) {
+    return graduate(snapshot, rating, config.easyIntervalDays, now, config, random);
+  }
+
+  const index = rating === ReviewRating.again ? 0 : steps.length - 1;
+  return {
     rating,
     state: "learning",
-    dueDate: now,
+    dueDate: advanced(now, stepAt(steps, index) * MINUTE_SECONDS),
     intervalDays: snapshot.intervalDays,
     easeFactor: snapshot.easeFactor,
     repetitions: snapshot.repetitions,
     lapses: snapshot.lapses,
-    stepIndex: snapshot.stepIndex,
+    stepIndex: index,
   };
-
-  switch (rating) {
-    case ReviewRating.again:
-      result.stepIndex = 0;
-      result.dueDate = advanced(now, stepAt(steps, 0) * MINUTE_SECONDS);
-      return result;
-
-    case ReviewRating.hard: {
-      const index = Math.min(snapshot.stepIndex, steps.length - 1);
-      // Un seul palier : Anki attend 1,5x ce palier plutôt que de le rejouer à l'identique.
-      const delay = steps.length === 1 ? stepAt(steps, index) * 1.5 : stepAt(steps, index);
-      result.stepIndex = index;
-      result.dueDate = advanced(now, delay * MINUTE_SECONDS);
-      return result;
-    }
-
-    case ReviewRating.good: {
-      const nextIndex = snapshot.stepIndex + 1;
-      if (nextIndex >= steps.length) {
-        return graduate(snapshot, rating, config.graduatingIntervalDays, now, config, random);
-      }
-      result.stepIndex = nextIndex;
-      result.dueDate = advanced(now, stepAt(steps, nextIndex) * MINUTE_SECONDS);
-      return result;
-    }
-
-    case ReviewRating.easy:
-      return graduate(snapshot, rating, config.easyIntervalDays, now, config, random);
-  }
 }
 
 function graduate(
@@ -190,8 +184,7 @@ function scheduleReview(
   const previous = Math.max(snapshot.intervalDays, config.minimumIntervalDays);
 
   if (rating === ReviewRating.again) {
-    const steps =
-      config.relearningStepsMinutes.length > 0 ? config.relearningStepsMinutes : [10];
+    const steps = stepsOf(config.relearningStepsMinutes);
     const postLapse = clampInterval(
       Math.max(config.minimumIntervalDays, previous * config.lapseIntervalMultiplier),
       config,
@@ -243,6 +236,7 @@ function scheduleReview(
 
 // MARK: - Réapprentissage
 
+/** Mêmes quatre paliers qu'en apprentissage : un oubli se rattrape de la même façon. */
 function scheduleRelearning(
   snapshot: CardSnapshot,
   rating: ReviewRating,
@@ -250,66 +244,47 @@ function scheduleRelearning(
   config: SchedulerConfig,
   random: () => number,
 ): ScheduleOutcome {
-  const steps = config.relearningStepsMinutes.length > 0 ? config.relearningStepsMinutes : [10];
+  const steps = stepsOf(config.relearningStepsMinutes);
   const postLapse = Math.max(snapshot.intervalDays, config.minimumIntervalDays);
 
-  const result: ScheduleOutcome = {
+  if (rating === ReviewRating.good || rating === ReviewRating.easy) {
+    const interval = clampInterval(
+      rating === ReviewRating.easy ? postLapse + 1 : postLapse,
+      config,
+    );
+    return {
+      rating,
+      state: "review",
+      dueDate: advanced(now, fuzzed(interval, config, random) * DAY_SECONDS),
+      intervalDays: interval,
+      easeFactor: clampEase(snapshot.easeFactor, config),
+      repetitions: snapshot.repetitions + 1,
+      lapses: snapshot.lapses,
+      stepIndex: 0,
+    };
+  }
+
+  const index = rating === ReviewRating.again ? 0 : steps.length - 1;
+  return {
     rating,
     state: "relearning",
-    dueDate: now,
+    dueDate: advanced(now, stepAt(steps, index) * MINUTE_SECONDS),
     intervalDays: postLapse,
     easeFactor: clampEase(snapshot.easeFactor, config),
     repetitions: snapshot.repetitions,
     lapses: snapshot.lapses,
-    stepIndex: snapshot.stepIndex,
+    stepIndex: index,
   };
-
-  switch (rating) {
-    case ReviewRating.again:
-      result.stepIndex = 0;
-      result.dueDate = advanced(now, stepAt(steps, 0) * MINUTE_SECONDS);
-      return result;
-
-    case ReviewRating.hard: {
-      const index = Math.min(snapshot.stepIndex, steps.length - 1);
-      const delay = steps.length === 1 ? stepAt(steps, index) * 1.5 : stepAt(steps, index);
-      result.stepIndex = index;
-      result.dueDate = advanced(now, delay * MINUTE_SECONDS);
-      return result;
-    }
-
-    case ReviewRating.good: {
-      const nextIndex = snapshot.stepIndex + 1;
-      if (nextIndex >= steps.length) {
-        const interval = clampInterval(postLapse, config);
-        result.state = "review";
-        result.stepIndex = 0;
-        result.intervalDays = interval;
-        result.repetitions = snapshot.repetitions + 1;
-        result.dueDate = advanced(now, fuzzed(interval, config, random) * DAY_SECONDS);
-      } else {
-        result.stepIndex = nextIndex;
-        result.dueDate = advanced(now, stepAt(steps, nextIndex) * MINUTE_SECONDS);
-      }
-      return result;
-    }
-
-    case ReviewRating.easy: {
-      const interval = clampInterval(postLapse + 1, config);
-      result.state = "review";
-      result.stepIndex = 0;
-      result.intervalDays = interval;
-      result.repetitions = snapshot.repetitions + 1;
-      result.dueDate = advanced(now, fuzzed(interval, config, random) * DAY_SECONDS);
-      return result;
-    }
-  }
 }
 
 // MARK: - Utilitaires
 
 export function isLeech(lapses: number, config: SchedulerConfig = DEFAULT_CONFIG): boolean {
   return lapses >= config.leechThreshold;
+}
+
+function stepsOf(configured: number[]): number[] {
+  return configured.length > 0 ? configured : [1, 10];
 }
 
 function stepAt(steps: number[], index: number): number {

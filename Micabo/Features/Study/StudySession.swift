@@ -52,9 +52,9 @@ final class StudySession {
         let graduatedCount: Int
     }
 
-    /// Une carte replanifiée à moins de 20 minutes revient dans la même session, comme dans Anki.
+    /// Une carte replanifiée à moins de dix minutes revient dans la même session.
     /// Aligné sur `LEARN_AHEAD_SECONDS` de `@micabo/core`.
-    static let learnAheadWindow: TimeInterval = 20 * 60
+    static let learnAheadWindow: TimeInterval = 10 * 60
 
     private(set) var pending: [Entry] = []
     private(set) var current: Flashcard?
@@ -72,9 +72,6 @@ final class StudySession {
     private(set) var graduatedCount = 0
     private(set) var startedAt = Date()
     private(set) var isFinished = false
-    /// Instant de la prochaine carte d'apprentissage, si la file n'est pas vide
-    /// mais que rien n'est encore dû. La session n'est alors **pas** finie.
-    private(set) var nextAvailableAt: Date?
     private(set) var mode: StudyMode = .scheduled
     private(set) var didStart = false
 
@@ -336,7 +333,6 @@ final class StudySession {
         ratingCounts = step.ratingCounts
         graduatedCount = step.graduatedCount
         isFinished = false
-        nextAvailableAt = nil
         current = step.card
         // La réponse était sous les yeux au moment de la note : on la laisse visible.
         isRevealed = true
@@ -388,16 +384,19 @@ final class StudySession {
         flush()
     }
 
-    /// Sert une carte seulement si elle est due **maintenant**. S'il reste des
-    /// cartes plus tard dans la fenêtre (1 min, 10 min), la session n'est pas
-    /// finie : elle attend, comme Anki. « Tout est à jour » n'arrive que lorsque
-    /// la file est vraiment vide.
+    /// Sert la carte qui revient le plus tôt, **même si son palier n'est pas écoulé**.
+    ///
+    /// **Personne n'attend devant un compte à rebours.** Le palier existe pour espacer deux
+    /// passages quand il y a autre chose à faire, pas pour immobiliser quelqu'un qui a fini
+    /// son paquet. Les cartes déjà dues passent d'abord, puisqu'elles sont les plus
+    /// anciennes ; une carte d'apprentissage seule au monde est servie sans délai. C'est la
+    /// limite d'anticipation d'Anki, sans l'écran d'attente.
+    ///
+    /// « Tout est à jour » n'arrive donc que lorsque la file est vide.
     func advance(now: Date = Date()) {
-        // Déjà une carte sous les yeux : un second appel (timer + TimelineView)
-        // ne doit pas l'écarter de la file.
+        // Déjà une carte sous les yeux : un second appel ne doit pas l'écarter de la file.
         guard current == nil else { return }
 
-        nextAvailableAt = nil
         isRevealed = false
 
         guard !pending.isEmpty else {
@@ -409,14 +408,8 @@ final class StudySession {
         }
 
         pending.sort { $0.availableAt < $1.availableAt }
-        if let index = pending.firstIndex(where: { $0.availableAt <= now }) {
-            current = pending.remove(at: index).card
-            isFinished = false
-            return
-        }
-
+        current = pending.removeFirst().card
         isFinished = false
-        nextAvailableAt = pending.first?.availableAt
     }
 
     /// Cartes affichées en arrière-plan de la pile.
