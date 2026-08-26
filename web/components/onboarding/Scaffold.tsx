@@ -34,7 +34,7 @@ export function Scaffold({
     // Sur téléphone la colonne remplit l'écran et le bouton reste sous le pouce. Sur un
     // ordinateur, le bloc reprend sa hauteur naturelle et se centre : étiré sur mille pixels de
     // haut, un écran à une question laisse deux cents points de vide entre le titre et la réponse.
-    <div className="mx-auto flex min-h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[640px] flex-col px-screen pb-10 sm:justify-center sm:pb-16">
+    <div className="center-safe mx-auto flex min-h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[640px] flex-col px-screen pb-10 sm:pb-16">
       <div className="flex items-baseline justify-between gap-4 pt-3 sm:pt-0">
         {eyebrow ? <p className="eyebrow text-ink-tertiary">{eyebrow}</p> : <span />}
         {skip ? (

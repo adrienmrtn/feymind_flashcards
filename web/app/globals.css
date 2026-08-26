@@ -300,6 +300,18 @@ video {
   line-height: 1;
 }
 
+/* Un centrage qui ne coupe pas ce qui dépasse.
+ *
+ * `justify-content: center` sur un conteneur trop petit fait déborder des **deux** côtés, et le
+ * haut devient inatteignable : la barre de défilement ne remonte pas au-dessus du point de départ.
+ * C'est ce qui coupait le titre d'un écran de parcours sur une fenêtre basse. `safe center` centre
+ * quand ça tient et s'aligne au début quand ça ne tient pas ; la déclaration au-dessus reste comme
+ * repli pour les moteurs qui ne connaissent pas le mot-clé. */
+@utility center-safe {
+  justify-content: center;
+  justify-content: safe center;
+}
+
 /* --------------------------------------------------------------------------
    L'apparition au défilement
 

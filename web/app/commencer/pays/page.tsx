@@ -49,7 +49,7 @@ export default function CountryStep() {
         />
       }
     >
-      <div className="max-h-[56svh] space-y-2 overflow-y-auto pr-1 sm:max-h-[60svh]">
+      <div className="max-h-[46svh] space-y-2 overflow-y-auto pr-1 sm:max-h-[52svh]">
         {ordered.map((item, index) => (
           <ChoiceRow
             key={item.code}
