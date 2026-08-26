@@ -20,6 +20,8 @@ import type { CountryCode, EducationTier, StudyLevel } from "@micabo/core";
 
 export interface Answers {
   country?: CountryCode;
+  /** Le pays écrit à la main, quand la liste ne le contient pas. */
+  customCountry?: string;
   stageId?: string;
   studyLevel?: StudyLevel;
   tier?: EducationTier;

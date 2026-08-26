@@ -2,27 +2,26 @@
 
 import { useState } from "react";
 
-import { DEMO_CARDS, type DemoCard } from "@/components/demo/demo-course";
+import { DEMO_CARDS, DEMO_COURSE, type DemoCard } from "@/components/demo/demo-course";
 
 /**
- * Les cartes que Micabo tire d'une fiche — **et elles se retournent au survol.**
+ * Les cartes que Micabo tire d'une fiche — **et elles se retournent.**
+ *
+ * Quatre formats, parce qu'un cours ne se révise pas d'une seule façon, et parce qu'une
+ * démonstration qui ne montre que du recto verso laisse croire que Micabo ne fait que ça. Le
+ * quatrième est celui qu'on oublie toujours d'annoncer : **le schéma**, dont on nomme les parties.
  *
  * C'est le seul endroit du produit où une carte a le droit de pivoter, et la raison est la table
- * des fréquences : cet écran-là se voit **une fois**, sur une page d'accueil qu'on visite une
- * fois. C'est exactement là que le budget d'enchantement se dépense.
+ * des fréquences : cet écran-là se voit **une fois**. La session réelle, elle, ne s'animera pas —
+ * espace retourne et 1 à 4 notent, des centaines de fois par soirée, et une carte qui pivote
+ * joliment devient au bout de vingt cartes la chose qui ralentit le travail.
  *
- * La session réelle, elle, ne s'animera pas : espace retourne la carte et 1 à 4 la notent, des
- * centaines de fois par soirée de révision, et une carte qui pivote joliment devient au bout de
- * vingt cartes la chose qui ralentit le travail. La même animation, aux deux endroits, serait
- * juste ici et fausse là-bas.
- *
- * Le survol qui bouge est enfermé derrière `hover: hover` : sur un écran tactile, un appui
- * déclenche un faux survol et la carte resterait retournée après que le doigt est parti. Sur
- * mobile, c'est donc l'appui qui retourne, ce qui est le geste juste de toute façon.
+ * Le survol qui bouge est enfermé derrière `hover: hover` : sur un écran tactile, un appui déclenche
+ * un faux survol et la carte resterait retournée après que le doigt est parti.
  */
 export function DemoCards() {
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {DEMO_CARDS.map((card) => (
         <FlipCard key={card.front} card={card} />
       ))}
@@ -38,13 +37,12 @@ function FlipCard({ card }: { card: DemoCard }) {
       type="button"
       onClick={() => setTapped((value) => !value)}
       aria-label={`${card.kindLabel} : ${card.front} — ${card.back}`}
-      className="group h-[190px] w-full text-left [perspective:1000px]"
+      className="group h-[230px] w-full text-left [perspective:1200px]"
       data-flipped={tapped ? "true" : undefined}
     >
-      <div className="relative h-full w-full transition-transform duration-[420ms] ease-out-strong [transform-style:preserve-3d] group-data-[flipped]:[transform:rotateY(180deg)] hover-flip">
-        {/* Recto */}
+      <div className="relative h-full w-full transition-transform duration-[460ms] ease-out-strong [transform-style:preserve-3d] group-data-[flipped]:[transform:rotateY(180deg)] hover-flip">
         <Face>
-          <p className="eyebrow text-ink-tertiary">{card.kindLabel}</p>
+          <Badge kind={card.kindLabel} />
           <p className="mt-3 text-[15px] font-medium leading-snug text-ink">{card.front}</p>
 
           {card.choices ? (
@@ -60,14 +58,19 @@ function FlipCard({ card }: { card: DemoCard }) {
             </ul>
           ) : null}
 
-          <p className="mt-auto pt-3 text-[12px] text-ink-tertiary">
-            Passe la souris, ou touche
-          </p>
+          {card.labels ? <Diagram labels={card.labels} revealed={false} /> : null}
+
+          {card.kind === "gap" ? (
+            <p className="mt-3 text-[12.5px] text-ink-tertiary">
+              Le mot manquant se retrouve de mémoire.
+            </p>
+          ) : null}
+
+          <p className="mt-auto pt-3 text-[11.5px] text-ink-tertiary">Passe la souris, ou touche</p>
         </Face>
 
-        {/* Verso */}
         <Face className="[transform:rotateY(180deg)]">
-          <p className="eyebrow text-accent">Réponse</p>
+          <Badge kind="Réponse" tone="accent" />
           <p className="mt-3 text-[15px] font-semibold leading-snug text-ink">{card.back}</p>
 
           {card.choices ? (
@@ -76,12 +79,90 @@ function FlipCard({ card }: { card: DemoCard }) {
             </p>
           ) : null}
 
-          <p className="mt-auto pt-3 text-[12px] text-ink-tertiary">
+          {card.labels ? <Diagram labels={card.labels} revealed /> : null}
+
+          {card.note ? (
+            <p className="mt-2.5 text-[12px] leading-relaxed text-ink-secondary">{card.note}</p>
+          ) : null}
+
+          <p className="mt-auto pt-3 text-[11.5px] text-ink-tertiary">
             En session, tu te notes de 1 à 4
           </p>
         </Face>
       </div>
     </button>
+  );
+}
+
+/**
+ * Le schéma d'une carte, **au recto avec ses trous et au verso rempli.**
+ *
+ * Trois pastilles reliées par des flèches : c'est le cycle, et c'est la même figure que la fiche
+ * porte. Au recto les étiquettes sont des tirets — un schéma dont tout est déjà écrit ne demande
+ * rien.
+ */
+function Diagram({
+  labels,
+  revealed,
+}: {
+  labels: readonly { text: string; hidden?: boolean }[];
+  revealed: boolean;
+}) {
+  return (
+    <div
+      className="mt-3 rounded-[10px] p-2.5"
+      style={{ backgroundColor: `${DEMO_COURSE.accent}14` }}
+    >
+      <div className="flex items-center justify-between gap-1">
+        {labels.map((label, index) => (
+          <div key={label.text} className="flex flex-1 items-center gap-1">
+            <div className="flex-1 text-center">
+              <span
+                aria-hidden
+                className="mx-auto block h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: DEMO_COURSE.accent, opacity: revealed ? 1 : 0.35 }}
+              />
+              <p
+                className={`mt-1.5 text-[9.5px] font-semibold leading-tight ${
+                  revealed ? "text-ink" : "text-ink-tertiary"
+                }`}
+              >
+                {revealed || !label.hidden ? label.text : "?"}
+              </p>
+            </div>
+            {index < labels.length - 1 ? (
+              <svg
+                aria-hidden
+                viewBox="0 0 12 12"
+                className="mt-[-10px] h-2.5 w-2.5 shrink-0"
+                style={{ color: DEMO_COURSE.accent, opacity: 0.5 }}
+              >
+                <path
+                  d="M2 6h7M6.5 3l3 3-3 3"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Badge({ kind, tone = "neutral" }: { kind: string; tone?: "neutral" | "accent" }) {
+  return (
+    <span
+      className={`inline-flex rounded-pill px-2 py-0.5 text-[10px] font-bold uppercase tracking-caps ${
+        tone === "accent" ? "bg-accent-soft text-accent" : "bg-surface-muted text-ink-tertiary"
+      }`}
+    >
+      {kind}
+    </span>
   );
 }
 

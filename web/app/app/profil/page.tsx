@@ -134,19 +134,20 @@ export default async function ProfilePage() {
             <Row label="Langue des fiches" value={country.language === "fr" ? "Français" : "English"} />
           </dl>
 
+          {/* Les examens ont leur propre onglet : le mode examen est la fonctionnalité que
+              personne d'autre n'a, et une fonctionnalité rangée dans les réglages ne se trouve
+              pas. Il n'en reste ici que le compte, et le lien. */}
           {exams.length > 0 ? (
-            <>
-              <p className="eyebrow mb-3 mt-8 text-ink-tertiary">Examens</p>
-              <dl className="paper divide-y divide-hairline overflow-hidden rounded-group bg-surface">
-                {exams.map((exam) => (
-                  <Row
-                    key={exam.id}
-                    label={exam.name}
-                    value={`${frenchDate(exam.exam_date)}${exam.is_planned ? " · planifié" : ""}`}
-                  />
-                ))}
-              </dl>
-            </>
+            <Link
+              href={"/app/examens" as never}
+              className="pressable lift mt-3 flex items-center justify-between gap-4 rounded-group bg-surface px-5 py-4 paper"
+            >
+              <span className="text-[14.5px] text-ink">
+                <span className="numeral font-semibold">{exams.length}</span> examen
+                {exams.length > 1 ? "s" : ""} posé{exams.length > 1 ? "s" : ""}
+              </span>
+              <span className="text-[13px] text-ink-tertiary">Voir</span>
+            </Link>
           ) : null}
         </section>
 

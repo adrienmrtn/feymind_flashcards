@@ -136,9 +136,12 @@ export {
 export {
   COUNTRIES,
   FALLBACK_COUNTRY,
+  LANGUAGE_LABELS,
   countryFor,
+  flagFor,
   guessCountry,
   languageFor,
+  languageLabel,
   type ContentLanguage,
   type Country,
   type CountryCode,

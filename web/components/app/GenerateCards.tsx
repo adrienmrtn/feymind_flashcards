@@ -86,12 +86,6 @@ export function GenerateCards({ courseId, existing }: { courseId: string; existi
           {existing === 0 ? "Créer des cartes" : "En ajouter"}
         </button>
 
-        {existing === 0 ? (
-          <p className="mt-2.5 text-[13px] text-ink-tertiary">
-            Recto verso, texte à trou, QCM — tu choisis combien de chaque.
-          </p>
-        ) : null}
-
         {failure ? <Failure message={failure} /> : null}
       </div>
     );

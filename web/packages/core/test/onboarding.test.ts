@@ -10,7 +10,14 @@
 import { describe, expect, it } from "vitest";
 
 import { FALLBACK_EMOJI, deriveEmoji, resolveEmoji } from "../src/emoji";
-import { COUNTRIES, FALLBACK_COUNTRY, countryFor, guessCountry, languageFor } from "../src/onboarding/countries";
+import {
+  COUNTRIES,
+  FALLBACK_COUNTRY,
+  countryFor,
+  flagFor,
+  guessCountry,
+  languageFor,
+} from "../src/onboarding/countries";
 import {
   TIER_LADDER,
   resolveStage,
@@ -115,6 +122,56 @@ describe("les pays", () => {
   it("retombent sur la France quand on ne sait pas", () => {
     expect(countryFor(null).code).toBe(FALLBACK_COUNTRY);
     expect(countryFor("zz").code).toBe(FALLBACK_COUNTRY);
+  });
+
+  it("commencent par les marchés visés, dans l'ordre voulu", () => {
+    // L'ordre de la table **est** l'ordre d'affichage, donc il se verrouille ici : le remonter au
+    // hasard casserait une intention, et une liste de pays réordonnée par erreur ne se voit pas.
+    expect(COUNTRIES.slice(0, 14).map((item) => item.name)).toEqual([
+      "France",
+      "Royaume-Uni",
+      "Allemagne",
+      "Italie",
+      "Espagne",
+      "Portugal",
+      "Tchéquie",
+      "Pays-Bas",
+      "Grèce",
+      "Hongrie",
+      "Pologne",
+      "Roumanie",
+      "Suède",
+      "Turquie",
+    ]);
+  });
+
+  it("mettent « Autre pays » en dernier, et lui seul sans code ISO", () => {
+    const last = COUNTRIES[COUNTRIES.length - 1]!;
+    expect(last.code).toBe("other");
+    expect(COUNTRIES.filter((item) => item.iso === "")).toHaveLength(1);
+  });
+
+  it("écrivent dans la langue du pays, pas en anglais par défaut", () => {
+    // C'est ce que la fonction Edge sait servir : quatorze langues, et le polonais n'est pas
+    // « de l'anglais pour un Polonais ».
+    expect(languageFor("de")).toBe("de");
+    expect(languageFor("cz")).toBe("cs");
+    expect(languageFor("gr")).toBe("el");
+    expect(languageFor("se")).toBe("sv");
+    expect(languageFor("pl")).toBe("pl");
+  });
+
+  it("portent chacun un drapeau qui se déduit de leur code ISO", () => {
+    for (const item of COUNTRIES) {
+      if (!item.iso) continue;
+      expect(flagFor(item.iso), item.name).toBe(item.flag);
+    }
+  });
+
+  it("rendent le globe pour un code qui n'est pas un pays", () => {
+    expect(flagFor("")).toBe("🌍");
+    expect(flagFor("zzz")).toBe("🌍");
+    expect(flagFor("1f")).toBe("🌍");
   });
 });
 
