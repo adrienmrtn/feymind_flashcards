@@ -1269,3 +1269,50 @@ Ce que je peux faire moi-même, en revanche, et qui couvre le reste : appliquer 
 déployer des Edge Functions, lire les avis de sécurité, déployer, et **lire les journaux de
 compilation** — donc corriger un build cassé sans attendre, ce qui est la capacité qui compte le
 plus dans la liste.
+
+## L'état du déploiement
+
+Écrit après la fusion sur `main`, pour qu'il n'y ait rien à deviner.
+
+| Chose | État | Reste à faire |
+| --- | --- | --- |
+| Le code | **fusionné sur `main`** | rien |
+| Migrations Supabase | **appliquées** — `waitlist`, `ai_usage`, `entitlements`, `exams.schedule_backup`, et `_seed_buf` refermée | rien |
+| `revenuecat-webhook` | **déployée**, `verify_jwt` désactivé, elle échoue fermée sans son secret | poser `REVENUECAT_WEBHOOK_SECRET`, puis pointer le webhook depuis RevenueCat |
+| `youtube-transcript` | **déployée** en version 2, CORS resserré vérifié en direct | rien |
+| `generate-course`, `generate-flashcards`, `explain-selection` | **anciennes versions** en production | `supabase functions deploy` × 3 |
+| Le site sur Vercel | déployé, mais **il ne compile rien** | Root Directory → `web` |
+| Stripe | rien | les trois variables |
+
+### Pourquoi trois fonctions ne sont pas déployées d'ici
+
+L'API de déploiement exige que **toutes les dépendances relatives** soient fournies avec l'entrée.
+`bundle.sh` les regroupe en un fichier — la chaîne est prouvée, `youtube-transcript` tourne en
+production en version regroupée, et son CORS a été vérifié en direct : `micabo.app` et `localhost`
+passent, `evil.test` et un sous-domaine à deux segments sont refusés, et un client sans origine
+n'est pas touché.
+
+Mais un regroupement est **minifié**, donc moins lisible dans les journaux qu'un déploiement par la
+CLI. Et faire passer les trois restantes demande quatre-vingts kilo-octets de JavaScript à travers
+des appels d'outil, ce qui était le mauvais emploi de ce qui me restait. **`supabase functions
+deploy` produit un meilleur artefact que ce que je peux téléverser**, et prend vingt secondes :
+
+```bash
+supabase functions deploy generate-course
+supabase functions deploy generate-flashcards
+supabase functions deploy explain-selection
+```
+
+Rien n'est cassé en attendant : `ANON_GRACE` fait que ces trois-là acceptent la clé publiable
+exactement comme avant. Elles ne sont simplement pas encore comptées.
+
+### Pourquoi le projet Vercel n'a pas pu être configuré
+
+Le `rootDirectory` ne se règle qu'à la création d'un projet, et la création échoue de deux façons
+contradictoires : un `404` à la vérification du lien Git, puis un `409` « existe déjà » — pour un
+projet que la liste ne voit pas. Aucune API de ce MCP ne règle un projet existant.
+
+Le projet `micabo` déploie donc bien à chaque poussée, et son build tient en **147 millisecondes**
+sans rien compiler : faute de framework à la racine du dépôt, il publie l'arborescence et rend un
+déploiement **vert**. C'est le seul réglage de toute cette liste qui ne se voit pas quand il
+manque.
