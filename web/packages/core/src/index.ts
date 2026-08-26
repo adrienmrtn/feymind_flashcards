@@ -158,3 +158,41 @@ export {
   type SubjectFamily,
 } from "./onboarding/subjects";
 export { FALLBACK_EMOJI, deriveEmoji, resolveEmoji } from "./emoji";
+
+// Les réglages de génération, portés depuis l'app : ce sont les mêmes bornes des deux côtés,
+// parce que c'est la même fonction Edge qui les reçoit.
+export {
+  CARD_KINDS,
+  DEFAULT_QUOTA,
+  PER_FORMAT_RANGE,
+  TOTAL_RANGE,
+  clampQuota,
+  countOf,
+  formatBounded,
+  isAtCap,
+  quotaTotal,
+  type CardKind,
+  type QuestionQuota,
+} from "./generation/quota";
+export {
+  BLOCK_BOUNDS,
+  DEFAULT_SHEET_LENGTH,
+  SHEET_LENGTHS,
+  blockRange,
+  clampBlocks,
+  defaultBlocks,
+  isSheetLength,
+  lengthContaining,
+  readingHint,
+  sheetLengthTitle,
+  type SheetLength,
+} from "./generation/sheet-length";
+export {
+  DEFAULT_VISIBILITY,
+  VISIBILITIES,
+  isShared,
+  isVisibility,
+  visibilityDetail,
+  visibilityTitle,
+  type CourseVisibility,
+} from "./generation/visibility";
