@@ -72,7 +72,7 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
     <div className="flex flex-col items-center gap-6">
       <div
         ref={zone}
-        className={`flex h-[168px] w-full max-w-[380px] flex-col items-center justify-center rounded-group border-2 border-dashed transition-colors duration-hover ${
+        className={`flex h-[220px] w-full max-w-[420px] flex-col items-center justify-center rounded-group border-2 border-dashed transition-colors duration-hover ${
           dropped
             ? "border-accent bg-accent-soft"
             : over

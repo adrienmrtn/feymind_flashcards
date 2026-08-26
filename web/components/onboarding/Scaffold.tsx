@@ -31,8 +31,11 @@ export function Scaffold({
   footer: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto flex min-h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[640px] flex-col px-screen pb-10">
-      <div className="flex items-baseline justify-between gap-4 pt-3">
+    // Sur téléphone la colonne remplit l'écran et le bouton reste sous le pouce. Sur un
+    // ordinateur, le bloc reprend sa hauteur naturelle et se centre : étiré sur mille pixels de
+    // haut, un écran à une question laisse deux cents points de vide entre le titre et la réponse.
+    <div className="mx-auto flex min-h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[640px] flex-col px-screen pb-10 sm:justify-center sm:pb-16">
+      <div className="flex items-baseline justify-between gap-4 pt-3 sm:pt-0">
         {eyebrow ? <p className="eyebrow text-ink-tertiary">{eyebrow}</p> : <span />}
         {skip ? (
           <Link
@@ -48,9 +51,9 @@ export function Scaffold({
         {title}
       </h1>
 
-      {/* Le contenu prend toute la place qui reste, et son entrée suit celle du titre. */}
+      {/* Le contenu prend la place qui reste sur téléphone, sa hauteur propre ailleurs. */}
       <div
-        className="rise flex min-h-0 flex-1 flex-col justify-center py-9"
+        className="rise flex min-h-0 flex-1 flex-col justify-center py-9 sm:flex-none sm:py-10"
         style={{ animationDelay: "90ms" }}
       >
         {children}

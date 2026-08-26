@@ -87,15 +87,20 @@ function AccountStepBody() {
   }
 
   return (
-    <div className="mx-auto grid min-h-svh w-full max-w-page items-center gap-16 px-screen py-10 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:gap-24">
-      <div className="rise mx-auto w-full max-w-[420px]">
+    <div className="mx-auto grid min-h-svh w-full max-w-[980px] items-center gap-14 px-screen py-12 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] lg:gap-20">
+      {/* `lg:mx-0` : sans lui, la colonne se centre dans sa piste et le titre part flotter au
+          milieu de la page au lieu de s'aligner sur le bord du contenu. */}
+      <div className="rise mx-auto w-full max-w-[400px] lg:mx-0">
         <Link href="/" className="text-[15px] font-bold text-ink">
           Micabo
         </Link>
 
-        <h1 className="mt-9 text-[32px] font-bold leading-[1.08] tracking-display text-ink sm:text-[38px]">
+        <h1 className="mt-8 text-[32px] font-bold leading-[1.08] tracking-display text-ink sm:text-[38px]">
           Crée ton compte
         </h1>
+        <p className="mt-3 text-[15px] text-ink-secondary">
+          Ton premier cours est gratuit.
+        </p>
 
         <div className="mt-8 space-y-2.5">
           <ProviderButton
@@ -210,18 +215,19 @@ function AccountStepBody() {
       {/* La colonne de droite ne demande rien et ne s'affiche pas sur téléphone : sur un petit
           écran, elle repousserait les boutons sous la ligne de flottaison. */}
       <div className="hidden lg:block">
-        <div
-          className="rise space-y-3"
-          style={{ animationDelay: "120ms" }}
-        >
-          {ARGUMENTS.map((item) => (
-            <div key={item.title} className="paper flex gap-4 rounded-group bg-surface p-5">
-              <span aria-hidden className="emoji text-[22px]">
+        <div className="rise space-y-2.5" style={{ animationDelay: "120ms" }}>
+          {ARGUMENTS.map((item, index) => (
+            <div
+              key={item.title}
+              className="paper lift flex items-start gap-4 rounded-group bg-surface p-5"
+              style={{ animationDelay: `${140 + index * 70}ms` }}
+            >
+              <span aria-hidden className="emoji mt-0.5 text-[20px]">
                 {item.emoji}
               </span>
               <div>
-                <p className="text-[15.5px] font-semibold text-ink">{item.title}</p>
-                <p className="mt-1 text-[14px] leading-relaxed text-ink-secondary">{item.text}</p>
+                <p className="text-[15px] font-semibold text-ink">{item.title}</p>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-ink-secondary">{item.text}</p>
               </div>
             </div>
           ))}
