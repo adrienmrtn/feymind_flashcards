@@ -14,6 +14,9 @@ struct CourseGenerationRequest {
     /// part : l'écran qui la demandait n'offrait qu'une réponse.
     var language: ContentLanguage = .fr
     var sheetLength: SheetLength = .default
+    /// Le volume exact demandé, en blocs. Le format ci-dessus reste envoyé : une
+    /// fonction déployée avant le curseur continu le comprend encore.
+    var sheetBlocks: Int = SheetLength.default.defaultBlocks
     /// Matière, quand elle est déjà connue. À l'import elle ne l'est pas : c'est le modèle
     /// qui la trouve, et la fonction la devine sur le texte pour choisir ses consignes.
     var subject: String? = nil
@@ -70,11 +73,16 @@ struct SelectionExplanation: Codable, Equatable {
     }
 }
 
-/// Longueur de la fiche demandée au modèle.
+/// Format de fiche demandé au modèle.
 ///
-/// Trois formats, et pas un curseur de blocs : ce que l'étudiant choisit n'est pas un
-/// nombre, c'est un usage. « L'essentiel » se relit dans le couloir avant l'épreuve,
-/// « Approfondie » remplace le cours quand on a manqué l'amphi.
+/// **Ce sont des usages, pas des tailles** : « L'essentiel » se relit dans le couloir avant
+/// l'épreuve, « Approfondie » remplace le cours quand on a manqué l'amphi. Les trois noms
+/// restent la seule chose que la fonction Edge connaisse, et la seule que le profil
+/// synchronise.
+///
+/// Le réglage fin, lui, est un **nombre de blocs** (`SheetPreferences.blocks`) : le curseur
+/// n'avait que trois positions, et pousser un curseur de trois crans ne se distingue pas de
+/// trois boutons. Le format se déduit du nombre.
 enum SheetLength: String, CaseIterable, Identifiable {
     case brief
     case standard
@@ -92,43 +100,83 @@ enum SheetLength: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Durée de lecture annoncée à côté du format. Elle vient du nombre de blocs demandé
-    /// au modèle, pas d'une estimation d'ambiance.
-    var readingHint: String {
+    /// Les bornes de blocs du format, celles-là mêmes que la fonction demande au modèle.
+    var blockRange: ClosedRange<Int> {
         switch self {
-        case .brief: "≈ 2 min"
-        case .standard: "≈ 4 min"
-        case .deep: "≈ 8 min"
+        case .brief: 8...12
+        case .standard: 14...22
+        case .deep: 24...34
         }
     }
 
-    // MARK: - Le curseur
-
-    /// Le réglage se fait au **curseur**, et les trois valeurs sont donc une échelle : de la
-    /// plus courte à la plus longue, dans l'ordre de déclaration. Trois pastilles côte à côte
-    /// donnaient trois options à peser ; un curseur donne un cran à pousser, ce qui est ce
-    /// qu'on fait vraiment — on veut plus court ou plus long que la dernière fois.
-    var step: Int {
-        Self.allCases.firstIndex(of: self) ?? 1
+    /// Le nombre de blocs à retenir quand on choisit le format sans toucher au curseur :
+    /// le milieu de sa plage, qui est ce que le format décrit le mieux.
+    var defaultBlocks: Int {
+        (blockRange.lowerBound + blockRange.upperBound) / 2
     }
 
-    static func at(step: Int) -> SheetLength {
-        allCases[min(max(step, 0), allCases.count - 1)]
+    /// Le format auquel appartient un nombre de blocs.
+    ///
+    /// Les plages ont des trous — treize et vingt-trois blocs ne tombent dans aucune —, et
+    /// c'est voulu côté modèle : ce sont des consignes, pas une partition. Le curseur, lui,
+    /// est continu, donc il faut décider où bascule le nom. Il bascule au milieu du trou.
+    static func containing(blocks: Int) -> SheetLength {
+        if blocks <= 13 { return .brief }
+        if blocks <= 23 { return .standard }
+        return .deep
     }
 
-    static var lastStep: Int { allCases.count - 1 }
+    /// Ce que le curseur couvre, d'un bout à l'autre.
+    static let blockBounds = 8...34
 }
 
 /// La longueur de fiche retenue, réglée à l'import comme dans les réglages.
 enum SheetPreferences {
     static let lengthKey = "micabo.sheet.length"
+    /// Le nombre de blocs visé, et **la source de vérité** depuis que le curseur est continu.
+    static let blocksKey = "micabo.sheet.blocks"
 
-    static var length: SheetLength {
+    static var defaultBlocks: Int { SheetLength.default.defaultBlocks }
+
+    /// Le nombre de blocs demandé, entre 8 et 34.
+    ///
+    /// À la première lecture sur un appareil qui n'a connu que les trois formats, il se
+    /// déduit du format enregistré : personne ne doit voir son réglage sauter parce que la
+    /// façon de le stocker a changé.
+    static var blocks: Int {
         get {
-            UserDefaults.standard.string(forKey: lengthKey)
-                .flatMap(SheetLength.init(rawValue:)) ?? .default
+            let stored = UserDefaults.standard.integer(forKey: blocksKey)
+            guard stored > 0 else { return storedLength?.defaultBlocks ?? defaultBlocks }
+            return min(max(stored, SheetLength.blockBounds.lowerBound), SheetLength.blockBounds.upperBound)
         }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: lengthKey) }
+        set {
+            let clamped = min(max(newValue, SheetLength.blockBounds.lowerBound), SheetLength.blockBounds.upperBound)
+            UserDefaults.standard.set(clamped, forKey: blocksKey)
+            // Le format reste écrit à côté : c'est lui que le profil synchronise, et lui que
+            // la fonction Edge comprend depuis toujours.
+            UserDefaults.standard.set(SheetLength.containing(blocks: clamped).rawValue, forKey: lengthKey)
+        }
+    }
+
+    /// Le format, déduit du nombre de blocs. L'écrire replace le curseur au milieu de sa
+    /// plage, sauf s'il y est déjà : choisir « Équilibrée » quand on est à 20 blocs ne doit
+    /// pas ramener à 18.
+    static var length: SheetLength {
+        get { SheetLength.containing(blocks: blocks) }
+        set {
+            guard newValue != SheetLength.containing(blocks: blocks) else { return }
+            blocks = newValue.defaultBlocks
+        }
+    }
+
+    /// La durée de lecture annoncée à côté du format, tirée du volume demandé et non d'une
+    /// estimation d'ambiance.
+    static func readingHint(forBlocks blocks: Int) -> String {
+        "≈ \(max(1, Int((Double(blocks) / 4.5).rounded()))) min"
+    }
+
+    private static var storedLength: SheetLength? {
+        UserDefaults.standard.string(forKey: lengthKey).flatMap(SheetLength.init(rawValue:))
     }
 }
 

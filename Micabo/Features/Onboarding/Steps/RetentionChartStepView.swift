@@ -11,7 +11,6 @@ struct RetentionChartStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Rappel actif",
             title: "Relire ne suffit pas.\nSe souvenir, oui.",
             titleSize: 28
         ) {

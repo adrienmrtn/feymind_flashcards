@@ -68,9 +68,7 @@ struct SocialProofStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Ils sont passés par là",
             title: "Nous avons aidé\n500 000 étudiants.",
-            subtitle: "Voici ce qu'ils en disent.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,

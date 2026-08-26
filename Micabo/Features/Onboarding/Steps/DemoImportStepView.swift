@@ -34,9 +34,7 @@ struct DemoImportStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Comment ça marche · 1 sur 3",
             title: "Glisse ton cours ici.",
-            subtitle: "PDF, diapos, vidéo YouTube ou simple texte.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false

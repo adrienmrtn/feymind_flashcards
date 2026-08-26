@@ -13,9 +13,8 @@ struct ExamPromiseStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Mode examen",
-            title: "Un parcours pour\nchaque examen.",
-            titleSize: 30
+            title: "On t'aide même à préparer\nparfaitement ton examen.",
+            titleSize: 26
         ) {
             ExamCountdownCalendar()
         } footer: {

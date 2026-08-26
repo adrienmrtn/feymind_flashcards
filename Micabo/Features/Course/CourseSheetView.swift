@@ -153,7 +153,7 @@ struct CourseSheetView: View {
             Menu {
                 ForEach(SheetLength.allCases) { length in
                     Button { Task { await writeSheet(length: length) } } label: {
-                        Text("\(length.title) · \(length.readingHint)")
+                        Text("\(length.title) · \(SheetPreferences.readingHint(forBlocks: length.defaultBlocks))")
                     }
                 }
             } label: {
@@ -432,6 +432,7 @@ struct CourseSheetView: View {
             country: OnboardingPreferences.schoolingCountry,
             language: OnboardingPreferences.contentLanguage,
             sheetLength: length,
+            sheetBlocks: SheetPreferences.blocks,
             // Ici la matière est connue, trouvée au premier passage ou corrigée à la main :
             // elle vaut mieux que des mots comptés sur le texte.
             subject: course.subject,

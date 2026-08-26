@@ -60,6 +60,8 @@ interface RequestBody {
   language?: string;
   /** Longueur de fiche demandée : « brief », « standard » ou « deep ». */
   length?: string;
+  /** Volume exact demandé par le curseur, en blocs. */
+  blocks?: number;
   /** Matière, quand l'application la connaît déjà. Sinon elle est devinée. */
   subject?: string;
   /** Comment le texte a été obtenu : « photo », « pdf », « youtube », « text », « docx ». */
@@ -121,7 +123,7 @@ Deno.serve((request: Request) =>
       const subjectBrief = disciplineBrief(discipline);
       if (subjectBrief) sections.push(subjectBrief);
 
-      sections.push(lengthBrief(body.length, text.length > LONG_DOCUMENT_LENGTH));
+      sections.push(lengthBrief(body.length, text.length > LONG_DOCUMENT_LENGTH, body.blocks));
 
       const reading = readingBrief(body.source, text.length);
       if (reading) sections.push(reading);

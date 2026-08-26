@@ -14,7 +14,6 @@ struct LevelStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Pour commencer",
             title: "Tu en es où ?",
             titleSize: 32,
             contentSpacing: MicaboSpacing.lg,

@@ -48,11 +48,6 @@ struct GenerateCardsSheet: View {
                     )
                     .padding(.top, MicaboSpacing.xs)
 
-                    Text(intro)
-                        .font(MicaboFont.body)
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
                     formatSection
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
@@ -81,12 +76,6 @@ struct GenerateCardsSheet: View {
         .onChange(of: quota) { _, newValue in
             QuestionQuotaPreferences.save(newValue)
         }
-    }
-
-    private var intro: String {
-        existingCount > 0
-            ? "Micabo relit la fiche et écrit des cartes qui ne répètent pas les \(MicaboCopy.cards(existingCount)) déjà là."
-            : "Micabo relit la fiche et en tire des cartes à réviser. Tu pourras les modifier, en ajouter et en supprimer."
     }
 
     /// Un compteur par format, dans l'ordre où ils se comprennent. Le recto verso reste en

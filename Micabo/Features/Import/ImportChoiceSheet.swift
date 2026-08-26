@@ -117,13 +117,17 @@ enum ImportKind: String, CaseIterable, Identifiable {
 /// il n'y a pas de cours à ficher, il y a des choses à retenir.
 struct ImportChoiceSheet: View {
     var onSelect: (ImportKind) -> Void
+    /// Ouvre la bibliothèque. Absent quand elle n'est pas accessible — sans compte, la
+    /// rangée mènerait à un rayon qui retombe sur « Tes cours », ce qui ressemble à une
+    /// panne.
+    var onLibrary: (() -> Void)?
 
     private let kinds: [ImportKind] = [.pdf, .photo, .youtube, .docx, .text]
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                MicaboScreenHeader(title: "D'où part-on ?", eyebrow: "Nouveau")
+                MicaboScreenHeader(title: "D'où part-on ?")
                     .padding(.top, 24)
 
                 MicaboRowGroup(rows: kinds.map(row(for:)))
@@ -133,7 +137,9 @@ struct ImportChoiceSheet: View {
                     MicaboRowGroup(rows: [row(for: .cards)])
                 }
 
-                comingSoonRow
+                if let onLibrary {
+                    libraryRow(onLibrary)
+                }
             }
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.bottom, MicaboSpacing.md)
@@ -154,16 +160,20 @@ struct ImportChoiceSheet: View {
         }
     }
 
-    private var comingSoonRow: some View {
+    /// **La bibliothèque n'est plus une promesse.** Elle était grisée avec une pastille
+    /// « bientôt » ; le rayon « Découvrir » existe, il rend les cours qu'on a le droit de
+    /// lire, et on peut les reprendre. Une option vraie affichée comme une option morte est
+    /// une fonctionnalité qu'on a écrite pour personne.
+    private func libraryRow(_ action: @escaping () -> Void) -> some View {
         MicaboRow(
-            tile: MicaboTile(glyph: .emoji("🌍"), background: MicaboColor.surfaceMuted),
+            tile: MicaboTile(glyph: .emoji("🌍"), background: MicaboColor.tilePastels[3]),
             title: "Depuis la bibliothèque",
             subtitle: "Les cours de la communauté",
-            accessory: .badge("bientôt", .neutral)
+            accessory: .chevron,
+            action: action
         )
         .padding(.vertical, 2)
         .micaboGroup()
-        .opacity(0.75)
     }
 }
 

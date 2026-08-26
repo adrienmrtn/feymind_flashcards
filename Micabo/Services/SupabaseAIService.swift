@@ -25,6 +25,7 @@ struct SupabaseAIService: AIService {
             "country": request.country?.rawValue ?? "",
             "language": request.language.rawValue,
             "length": request.sheetLength.rawValue,
+            "blocks": request.sheetBlocks,
             "subject": request.subject ?? "",
             "source": request.sourceKind?.rawValue ?? "",
             "model": AppConfig.aiModel

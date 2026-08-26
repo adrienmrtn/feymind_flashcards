@@ -16,7 +16,6 @@ struct ForgettingStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            eyebrow: "Question 2 sur 3",
             title: "En général, oublies-tu\nce que tu apprends ?",
             titleSize: 28,
             contentSpacing: MicaboSpacing.lg,

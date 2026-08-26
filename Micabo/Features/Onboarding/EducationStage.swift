@@ -103,9 +103,25 @@ extension StudyLevel {
 /// Elle n'est plus demandée : un écran entier disait « Micabo parle français » pour une
 /// réponse qu'on ne pouvait pas changer. Elle se déduit du pays de scolarisation, qui est la
 /// seule question dont la réponse la détermine vraiment.
+///
+/// Les codes sont ceux d'ISO 639-1, et ils ne suivent pas toujours le code du pays :
+/// la Tchéquie (`cz`) écrit en `cs`, la Grèce (`gr`) en `el`, la Suède (`se`) en `sv`. Le
+/// serveur reçoit ces deux lettres et en tire sa consigne de sortie.
 enum ContentLanguage: String, CaseIterable, Identifiable {
     case fr
     case en
+    case de
+    case it
+    case es
+    case pt
+    case cs
+    case nl
+    case el
+    case hu
+    case pl
+    case ro
+    case sv
+    case tr
 
     var id: String { rawValue }
 
@@ -114,6 +130,18 @@ enum ContentLanguage: String, CaseIterable, Identifiable {
         switch self {
         case .fr: "Français"
         case .en: "English"
+        case .de: "Deutsch"
+        case .it: "Italiano"
+        case .es: "Español"
+        case .pt: "Português"
+        case .cs: "Čeština"
+        case .nl: "Nederlands"
+        case .el: "Ελληνικά"
+        case .hu: "Magyar"
+        case .pl: "Polski"
+        case .ro: "Română"
+        case .sv: "Svenska"
+        case .tr: "Türkçe"
         }
     }
 }
@@ -225,6 +253,129 @@ extension SchoolingCountry {
                 stage("ci.other", "Autre", "✨", .other, .other)
             ]
 
+        // Les paliers des pays européens sont écrits **dans leur langue**, et pas traduits :
+        // un lycéen polonais cherche « Liceum », pas « Lycée ». C'est la même règle que pour
+        // « A-Levels » ou « Cégep », qui n'ont jamais eu de traduction non plus.
+        case .de:
+            [
+                stage("de.mittelstufe", "Mittelstufe", "🎒", .lycee, .lowerSecondary),
+                stage("de.abitur", "Gymnasium, Abitur", "🏫", .lycee, .upperSecondary),
+                stage("de.bachelor", "Bachelor", "🎓", .licence, .undergraduate),
+                stage("de.medizin", "Medizin", "🩺", .sante, .health),
+                stage("de.master", "Master", "🔬", .master, .graduate),
+                stage("de.other", "Sonstiges", "✨", .other, .other)
+            ]
+
+        case .it:
+            [
+                stage("it.medie", "Scuola media", "🎒", .lycee, .lowerSecondary),
+                stage("it.liceo", "Liceo, maturità", "🏫", .lycee, .upperSecondary),
+                stage("it.triennale", "Laurea triennale", "🎓", .licence, .undergraduate),
+                stage("it.medicina", "Medicina", "🩺", .sante, .health),
+                stage("it.magistrale", "Laurea magistrale", "🔬", .master, .graduate),
+                stage("it.other", "Altro", "✨", .other, .other)
+            ]
+
+        case .es:
+            [
+                stage("es.eso", "ESO", "🎒", .lycee, .lowerSecondary),
+                stage("es.bachillerato", "Bachillerato", "🏫", .lycee, .upperSecondary),
+                stage("es.grado", "Grado", "🎓", .licence, .undergraduate),
+                stage("es.medicina", "Medicina", "🩺", .sante, .health),
+                stage("es.master", "Máster", "🔬", .master, .graduate),
+                stage("es.other", "Otro", "✨", .other, .other)
+            ]
+
+        case .pt:
+            [
+                stage("pt.basico", "Ensino básico", "🎒", .lycee, .lowerSecondary),
+                stage("pt.secundario", "Ensino secundário", "🏫", .lycee, .upperSecondary),
+                stage("pt.licenciatura", "Licenciatura", "🎓", .licence, .undergraduate),
+                stage("pt.medicina", "Medicina", "🩺", .sante, .health),
+                stage("pt.mestrado", "Mestrado", "🔬", .master, .graduate),
+                stage("pt.other", "Outro", "✨", .other, .other)
+            ]
+
+        case .cz:
+            [
+                stage("cz.zakladni", "Základní škola", "🎒", .lycee, .lowerSecondary),
+                stage("cz.maturita", "Gymnázium, maturita", "🏫", .lycee, .upperSecondary),
+                stage("cz.bakalar", "Bakalářské studium", "🎓", .licence, .undergraduate),
+                stage("cz.medicina", "Medicína", "🩺", .sante, .health),
+                stage("cz.magistr", "Magisterské studium", "🔬", .master, .graduate),
+                stage("cz.other", "Jiné", "✨", .other, .other)
+            ]
+
+        case .nl:
+            [
+                stage("nl.onderbouw", "Onderbouw", "🎒", .lycee, .lowerSecondary),
+                stage("nl.eindexamen", "Havo, vwo", "🏫", .lycee, .upperSecondary),
+                stage("nl.bachelor", "Bachelor", "🎓", .licence, .undergraduate),
+                stage("nl.geneeskunde", "Geneeskunde", "🩺", .sante, .health),
+                stage("nl.master", "Master", "🔬", .master, .graduate),
+                stage("nl.other", "Anders", "✨", .other, .other)
+            ]
+
+        case .gr:
+            [
+                stage("gr.gymnasio", "Γυμνάσιο", "🎒", .lycee, .lowerSecondary),
+                stage("gr.lykeio", "Λύκειο, Πανελλήνιες", "🏫", .lycee, .upperSecondary),
+                stage("gr.ptychio", "Πτυχίο", "🎓", .licence, .undergraduate),
+                stage("gr.iatriki", "Ιατρική", "🩺", .sante, .health),
+                stage("gr.metaptychiako", "Μεταπτυχιακό", "🔬", .master, .graduate),
+                stage("gr.other", "Άλλο", "✨", .other, .other)
+            ]
+
+        case .hu:
+            [
+                stage("hu.altalanos", "Általános iskola", "🎒", .lycee, .lowerSecondary),
+                stage("hu.erettsegi", "Gimnázium, érettségi", "🏫", .lycee, .upperSecondary),
+                stage("hu.alapkepzes", "Alapképzés", "🎓", .licence, .undergraduate),
+                stage("hu.orvosi", "Orvostudomány", "🩺", .sante, .health),
+                stage("hu.mesterkepzes", "Mesterképzés", "🔬", .master, .graduate),
+                stage("hu.other", "Egyéb", "✨", .other, .other)
+            ]
+
+        case .pl:
+            [
+                stage("pl.podstawowa", "Szkoła podstawowa", "🎒", .lycee, .lowerSecondary),
+                stage("pl.matura", "Liceum, matura", "🏫", .lycee, .upperSecondary),
+                stage("pl.licencjat", "Licencjat", "🎓", .licence, .undergraduate),
+                stage("pl.medycyna", "Medycyna", "🩺", .sante, .health),
+                stage("pl.magister", "Studia magisterskie", "🔬", .master, .graduate),
+                stage("pl.other", "Inne", "✨", .other, .other)
+            ]
+
+        case .ro:
+            [
+                stage("ro.gimnaziu", "Gimnaziu", "🎒", .lycee, .lowerSecondary),
+                stage("ro.bacalaureat", "Liceu, bacalaureat", "🏫", .lycee, .upperSecondary),
+                stage("ro.licenta", "Licență", "🎓", .licence, .undergraduate),
+                stage("ro.medicina", "Medicină", "🩺", .sante, .health),
+                stage("ro.master", "Master", "🔬", .master, .graduate),
+                stage("ro.other", "Altele", "✨", .other, .other)
+            ]
+
+        case .se:
+            [
+                stage("se.grundskola", "Grundskola", "🎒", .lycee, .lowerSecondary),
+                stage("se.gymnasium", "Gymnasium", "🏫", .lycee, .upperSecondary),
+                stage("se.kandidat", "Kandidatexamen", "🎓", .licence, .undergraduate),
+                stage("se.lakarprogrammet", "Läkarprogrammet", "🩺", .sante, .health),
+                stage("se.master", "Masterexamen", "🔬", .master, .graduate),
+                stage("se.other", "Annat", "✨", .other, .other)
+            ]
+
+        case .tr:
+            [
+                stage("tr.ortaokul", "Ortaokul", "🎒", .lycee, .lowerSecondary),
+                stage("tr.lise", "Lise, YKS", "🏫", .lycee, .upperSecondary),
+                stage("tr.lisans", "Lisans", "🎓", .licence, .undergraduate),
+                stage("tr.tip", "Tıp", "🩺", .sante, .health),
+                stage("tr.yukseklisans", "Yüksek lisans", "🔬", .master, .graduate),
+                stage("tr.other", "Diğer", "✨", .other, .other)
+            ]
+
         case .uk:
             [
                 stage("uk.gcse", "GCSE", "🎒", .lycee, .lowerSecondary),
@@ -264,10 +415,26 @@ extension SchoolingCountry {
     ]
 
     /// La langue dans laquelle Micabo écrit pour cet étudiant.
+    ///
+    /// Un pays hors liste retombe sur l'anglais : c'est la langue dans laquelle on a le plus
+    /// de chances de tomber juste quand on ne sait rien du système scolaire, et la seule
+    /// alternative honnête serait de reposer la question.
     var language: ContentLanguage {
         switch self {
         case .fr, .be, .ch, .ca, .lu, .ma, .dz, .tn, .sn, .ci: .fr
         case .uk, .us, .other: .en
+        case .de: .de
+        case .it: .it
+        case .es: .es
+        case .pt: .pt
+        case .cz: .cs
+        case .nl: .nl
+        case .gr: .el
+        case .hu: .hu
+        case .pl: .pl
+        case .ro: .ro
+        case .se: .sv
+        case .tr: .tr
         }
     }
 

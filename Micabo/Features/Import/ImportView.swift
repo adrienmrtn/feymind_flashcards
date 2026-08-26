@@ -39,7 +39,9 @@ struct ImportView: View {
     @State private var analyzeVisuals = false
     /// Longueur de la fiche à écrire. Le choix se garde d'un import à l'autre, et se
     /// retrouve dans les réglages : c'est le même réglage, réglé là où il sert.
-    @AppStorage(SheetPreferences.lengthKey) private var sheetLength = SheetLength.default
+    /// Le volume de fiche demandé, en blocs. Écrit dans les réglages à chaque cran, pour
+    /// que le prochain import reparte de là où on avait laissé le curseur.
+    @State private var sheetBlocks = SheetPreferences.blocks
     /// Qui pourra retrouver le cours. Gardé d'un import à l'autre pour la même raison.
     @AppStorage(CourseVisibility.importKey) private var visibility = CourseVisibility.standard
     @State private var showFileImporter = false
@@ -474,11 +476,15 @@ struct ImportView: View {
 
     /// **Combien de fiche on veut, au curseur.**
     ///
-    /// C'étaient trois pastilles, et une note en dessous qui décrivait celle qu'on venait de
-    /// choisir. Trois options côte à côte se pèsent l'une contre l'autre ; un curseur se
-    /// pousse, ce qui est le geste réel — on veut plus court ou plus long que la dernière
-    /// fois, pas « L'essentiel » dans l'absolu. Le format choisi s'écrit au bout de la ligne
-    /// du titre, et sa durée de lecture avec : c'est tout ce que la note disait d'utile.
+    /// Le curseur n'avait que **trois positions**, ce qui n'est pas un curseur : trois crans
+    /// se comptent, se visent, et ne se distinguent en rien de trois boutons — sauf qu'ils
+    /// sont plus durs à atteindre. Il court maintenant sur le volume réel de la fiche, de
+    /// huit à trente-quatre blocs, et le doigt le suit sans à-coups.
+    ///
+    /// Le nom du format reste affiché, mais il devient une **conséquence** : il dit dans
+    /// quelle famille on vient de tomber, et la durée de lecture à côté bouge d'un cran à
+    /// l'autre, y compris à l'intérieur d'une famille. C'est ce qui fait qu'on sent le
+    /// curseur travailler au lieu de le voir sauter.
     private var lengthSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
@@ -486,35 +492,44 @@ struct ImportView: View {
 
                 Spacer(minLength: MicaboSpacing.xs)
 
-                Text("\(sheetLength.title) · \(sheetLength.readingHint)")
+                Text("\(sheetFormat.title) · \(SheetPreferences.readingHint(forBlocks: sheetBlocks))")
                     .font(MicaboFont.captionEmphasis)
                     .foregroundStyle(MicaboColor.ink)
                     .contentTransition(.opacity)
-                    .animation(.easeOut(duration: 0.2), value: sheetLength)
+                    .animation(.easeOut(duration: 0.2), value: sheetBlocks)
             }
 
-            // Le curseur glisse sur les trois formats, pas sur des nombres : c'est la même
-            // règle que le rythme quotidien du parcours d'accueil, qui glisse sur ses paliers.
+            // Pas de `step:` : un pas déclaré fait crocheter le curseur d'une valeur à
+            // l'autre, et sur vingt-sept crans le geste se met à vibrer. Le doigt glisse en
+            // continu, et c'est l'arrondi de la liaison qui décide du nombre de blocs.
             Slider(
-                value: lengthStep,
-                in: 0...Double(SheetLength.lastStep),
-                step: 1
+                value: blocksSlider,
+                in: Double(SheetLength.blockBounds.lowerBound)...Double(SheetLength.blockBounds.upperBound)
             )
             .tint(MicaboColor.progress)
         }
+        .onChange(of: sheetBlocks) { _, newValue in
+            SheetPreferences.blocks = newValue
+        }
     }
 
-    /// Le curseur écrit dans le même réglage que les pastilles écrivaient, en passant par le
-    /// numéro de cran. Le pont est ici et non dans une variable d'état de plus : deux sources
-    /// pour la même valeur finiraient par se contredire au retour sur l'écran.
-    private var lengthStep: Binding<Double> {
+    private var sheetFormat: SheetLength {
+        SheetLength.containing(blocks: sheetBlocks)
+    }
+
+    /// Le pont entre le geste, qui est continu, et le réglage, qui est un entier.
+    ///
+    /// La vibration ne part qu'au **changement de blocs**, jamais à chaque image : un
+    /// curseur qui vibre soixante fois par seconde ne donne pas une sensation de précision,
+    /// il donne l'impression que le téléphone bourdonne.
+    private var blocksSlider: Binding<Double> {
         Binding(
-            get: { Double(sheetLength.step) },
+            get: { Double(sheetBlocks) },
             set: { newValue in
-                let value = SheetLength.at(step: Int(newValue.rounded()))
-                guard value != sheetLength else { return }
+                let rounded = Int(newValue.rounded())
+                guard rounded != sheetBlocks else { return }
                 Haptics.selection()
-                sheetLength = value
+                sheetBlocks = rounded
             }
         )
     }
@@ -789,7 +804,8 @@ struct ImportView: View {
             studyLevel: OnboardingPreferences.studyLevel,
             country: OnboardingPreferences.schoolingCountry,
             language: OnboardingPreferences.contentLanguage,
-            sheetLength: sheetLength,
+            sheetLength: sheetFormat,
+            sheetBlocks: sheetBlocks,
             // La matière n'est pas encore connue : c'est le modèle qui la trouve, et la
             // fonction la devine sur le texte pour choisir ses consignes de rédaction.
             sourceKind: source

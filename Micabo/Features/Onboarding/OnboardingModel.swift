@@ -11,12 +11,14 @@ final class OnboardingModel {
     /// pays, faute de quoi il n'y aurait rien de juste à proposer.
     var stage: EducationStage?
     private(set) var country: SchoolingCountry = .fallback
+    /// Le pays nommé à la main, quand la réponse est « Autre pays ». Il n'a de sens que dans
+    /// ce cas-là, et il est effacé dès qu'on revient sur une pastille.
+    var customCountry: WorldCountry?
     var goals: Set<LearningGoal> = []
     var forgetting: ForgettingHabit?
     var subjects: Set<String> = []
     var institutionId: String?
     var institutionName: String?
-    var dailyMinutes = 15
 
     /// Le registre de rédaction, seule forme sous laquelle le niveau sort du parcours.
     var level: StudyLevel? {
@@ -44,18 +46,22 @@ final class OnboardingModel {
         let previous = stage
         country = newCountry
         stage = newCountry.resolvedStage(id: nil, tier: previous?.tier, level: previous?.level)
+        // Repartir sur une pastille efface le pays tapé à la main : le garder ferait dire à
+        // l'écran « France » et « Brésil » en même temps.
+        if newCountry != .other { customCountry = nil }
     }
 
-    /// Nombre de cartes que l'utilisateur peut espérer mémoriser en un an,
-    /// au rythme qu'il vient de choisir.
-    var projectedCardsPerYear: Int {
-        LearningProjection.cardsPerYear(dailyMinutes: dailyMinutes)
+    /// Vrai quand la question du pays a une réponse complète. « Autre pays » n'en est une
+    /// qu'une fois le pays choisi dans la liste : sans ça, on avance sur un « ailleurs » qui
+    /// ne dit rien de plus que le silence.
+    var hasAnsweredCountry: Bool {
+        country != .other || customCountry != nil
     }
 
-    /// Plafond de cartes neuves par jour qui découle du rythme choisi.
-    var newCardsPerDay: Int {
-        DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes)
-    }
+    /// **Le rythme quotidien ne se demande plus ici.** L'écran qui le posait, et celui qui
+    /// en tirait une projection sur un an, ont été retirés : personne ne connaît son rythme
+    /// avant d'avoir essayé, et la promesse chiffrée reposait sur une réponse au hasard. Le
+    /// plafond garde sa valeur par défaut et se règle dans les Réglages.
 
     /// Vrai seulement si l'établissement a été choisi dans la liste de résultats.
     /// Un nom tapé à la main n'a pas d'`id` : on ne connaît alors personne là-bas,
@@ -76,6 +82,7 @@ final class OnboardingModel {
     /// une sortie en cours de route ne perd que la question en cours.
     private func persist() {
         OnboardingPreferences.schoolingCountry = country
+        OnboardingPreferences.customCountry = customCountry
         OnboardingPreferences.educationStage = stage
         OnboardingPreferences.goals = goals.map(\.rawValue).sorted()
         OnboardingPreferences.forgetting = forgetting
@@ -83,7 +90,6 @@ final class OnboardingModel {
         OnboardingPreferences.subjects = subjects.sorted()
         OnboardingPreferences.institutionId = institutionId
         OnboardingPreferences.institutionName = institutionName
-        OnboardingPreferences.dailyMinutes = dailyMinutes
     }
 }
 

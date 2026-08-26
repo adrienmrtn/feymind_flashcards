@@ -10,6 +10,7 @@ struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AuthController.self) private var auth
     @Environment(ProAccess.self) private var pro: ProAccess?
+    @Environment(TabRouter.self) private var router: TabRouter?
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
@@ -116,6 +117,13 @@ struct CoursesListView: View {
             .toolbar(.hidden, for: .navigationBar)
             .reportsNavigationDepth(for: .courses, depth: path.count)
             .returnsHome(path: $path)
+            // La bibliothèque se demande depuis d'autres écrans que celui-ci : c'est le
+            // routeur qui porte l'intention, et ce rayon qui l'exécute.
+            .onChange(of: router?.libraryRequests ?? 0) { _, _ in
+                guard showsLibrary else { return }
+                path = NavigationPath()
+                withAnimation(.easeOut(duration: 0.2)) { shelf = .discover }
+            }
             .navigationDestination(for: Course.self) { course in
                 CourseSheetView(course: course)
             }
@@ -133,10 +141,13 @@ struct CoursesListView: View {
             }
         }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
-            ImportChoiceSheet { kind in
-                pendingImport = kind
-                showImportChoice = false
-            }
+            ImportChoiceSheet(
+                onSelect: { kind in
+                    pendingImport = kind
+                    showImportChoice = false
+                },
+                onLibrary: showsLibrary ? openLibrary : nil
+            )
             .presentationDetents([.height(604)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
@@ -167,14 +178,20 @@ struct CoursesListView: View {
     /// Le seul bouton flottant de l'app : en bas à droite, là où le pouce tombe, et posé
     /// au-dessus de la barre du bas. Quand la liste est vide, l'écran d'accueil porte déjà
     /// son propre appel à importer : deux boutons pour la même action feraient hésiter.
+    /// **Le « + » ne porte pas de cadenas**, même quand le cours suivant se paie.
+    ///
+    /// Un bouton verrouillé annonce un refus avant qu'on ait demandé quoi que ce soit : il
+    /// transforme le seul geste de l'écran en porte fermée, et on cesse de le regarder. Il
+    /// garde donc son signe, et c'est l'appui qui ouvre le paywall — on demande, on obtient
+    /// une réponse, et la réponse dit ce qu'elle coûte.
     @ViewBuilder
     private var importButton: some View {
         if !courses.isEmpty {
             MicaboCircleButton(
-                systemImage: canImport ? "plus" : "lock.fill",
+                systemImage: "plus",
                 style: .dark,
                 size: 56,
-                accessibilityTitle: canImport ? "Importer un cours" : "Importer un cours, réservé à Micabo Pro"
+                accessibilityTitle: "Importer un cours"
             ) {
                 requestImport()
             }
@@ -299,6 +316,15 @@ struct CoursesListView: View {
             }
             .padding(.horizontal, MicaboSpacing.xxs)
         }
+    }
+
+    private var showsLibrary: Bool {
+        LibraryAccess.isAvailable(signedIn: auth.isSignedIn)
+    }
+
+    private func openLibrary() {
+        showImportChoice = false
+        router?.showLibrary()
     }
 
     private var canImport: Bool {
