@@ -172,6 +172,12 @@ final class StudySession {
         return deadlines.covers(current)
     }
 
+    /// Le nom de l'examen qui comprime la carte affichée. Nil hors mode examen.
+    var currentExamName: String? {
+        guard let current else { return nil }
+        return deadlines.examName(for: current)
+    }
+
     // MARK: - Cycle de vie
 
     func start(

@@ -8,6 +8,7 @@ import {
 import { ReviewSetup } from "@/components/app/ReviewSetup";
 import { Session } from "@/components/app/Session";
 import { listAllCards, listCourses, listExams } from "@/lib/data/courses";
+import { examMarksFor } from "@/lib/data/exam-marks";
 import { readEntitlement } from "@/lib/data/entitlement";
 import { loadNewCardBudget } from "@/lib/data/reviews";
 
@@ -117,6 +118,7 @@ export default async function ReviewPage({
 
   const byId = new Map(cards.map((card) => [card.id, card]));
   const titles = new Map(courses.map((course) => [course.id, course.title]));
+  const marks = examMarksFor(exams, cards);
 
   const ordered = queue
     .map((item) => byId.get(item.id))
@@ -130,6 +132,7 @@ export default async function ReviewPage({
       choices: card.choices ?? [],
       answerIndex: card.correct_choice_index,
       courseTitle: card.course_id ? (titles.get(card.course_id) ?? null) : null,
+      exam: marks.get(card.id) ?? null,
       imagePath: card.image_path,
       maskX: card.mask_x ?? 0,
       maskY: card.mask_y ?? 0,

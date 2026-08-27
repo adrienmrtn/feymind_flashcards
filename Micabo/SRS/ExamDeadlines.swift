@@ -13,12 +13,15 @@ import SwiftData
 struct ExamDeadlines {
     /// Par carte, le jour de l'examen le plus proche qui la concerne.
     private let byCard: [UUID: Date]
+    /// Le nom de cet examen, pour la pastille posée sur la carte.
+    private let names: [UUID: String]
 
     /// Aucun examen en cours : c'est le cas ordinaire, et le défaut partout.
-    static let empty = ExamDeadlines(byCard: [:])
+    static let empty = ExamDeadlines(byCard: [:], names: [:])
 
-    init(byCard: [UUID: Date]) {
+    init(byCard: [UUID: Date], names: [UUID: String] = [:]) {
         self.byCard = byCard
+        self.names = names
     }
 
     var isEmpty: Bool {
@@ -27,6 +30,10 @@ struct ExamDeadlines {
 
     func deadline(for card: Flashcard) -> Date? {
         byCard[card.id]
+    }
+
+    func examName(for card: Flashcard) -> String? {
+        names[card.id]
     }
 
     func covers(_ card: Flashcard) -> Bool {
@@ -46,21 +53,25 @@ struct ExamDeadlines {
     ) -> ExamDeadlines {
         let coursesByID = Dictionary(courses.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         var byCard: [UUID: Date] = [:]
+        var names: [UUID: String] = [:]
 
         for exam in exams where exam.isPlanned {
             let examDay = calendar.startOfDay(for: exam.date)
             guard examDay >= calendar.startOfDay(for: now) else { continue }
+            let label = exam.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            let name = label.isEmpty ? "Examen" : label
 
             for courseID in exam.courseIDs {
                 guard let course = coursesByID[courseID] else { continue }
                 for card in course.cards where !card.isSuspended {
                     if let existing = byCard[card.id], existing <= examDay { continue }
                     byCard[card.id] = examDay
+                    names[card.id] = name
                 }
             }
         }
 
-        return ExamDeadlines(byCard: byCard)
+        return ExamDeadlines(byCard: byCard, names: names)
     }
 
     /// Même chose, lue directement depuis la base : c'est la forme dont une session a besoin.

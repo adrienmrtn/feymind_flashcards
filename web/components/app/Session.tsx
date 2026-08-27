@@ -20,6 +20,7 @@ import {
   type SessionEntry,
 } from "@micabo/core";
 
+import { ExamMark, type ExamMarkInfo } from "@/components/app/ExamMark";
 import { OcclusionFigure } from "@/components/app/OcclusionFigure";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { gradeCard } from "@/lib/actions/review";
@@ -56,6 +57,7 @@ export interface SessionCard {
   choices: string[];
   answerIndex: number;
   courseTitle: string | null;
+  exam: ExamMarkInfo | null;
   imagePath: string | null;
   maskX: number;
   maskY: number;
@@ -183,8 +185,15 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
 
       <div className="flex flex-1 flex-col justify-center py-8">
         <div className="paper rounded-group bg-surface p-7">
-          {card.courseTitle ? (
-            <p className="eyebrow text-ink-tertiary">{card.courseTitle}</p>
+          {card.courseTitle || card.exam ? (
+            <div className="flex items-start justify-between gap-3">
+              {card.courseTitle ? (
+                <p className="eyebrow min-w-0 truncate text-ink-tertiary">{card.courseTitle}</p>
+              ) : (
+                <span />
+              )}
+              {card.exam ? <ExamMark name={card.exam.name} daysRemaining={card.exam.daysRemaining} /> : null}
+            </div>
           ) : null}
 
           {isOcclusion(card) ? (

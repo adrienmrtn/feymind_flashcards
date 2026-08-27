@@ -14,6 +14,7 @@ import {
   type ExamUrgency,
 } from "@micabo/core";
 
+import { ExamMark } from "@/components/app/ExamMark";
 import { FriendActions } from "@/components/app/FriendActions";
 import {
   listCardSnapshots,
@@ -25,6 +26,7 @@ import {
   type ExamRow,
   type FriendRequestRow,
 } from "@/lib/data/courses";
+import { examMarksFor } from "@/lib/data/exam-marks";
 import { loadNewCardBudget } from "@/lib/data/reviews";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
@@ -154,7 +156,7 @@ export default async function DashboardPage() {
       </section>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-2">
-        <HardCards cards={hard} courses={titles} />
+        <HardCards cards={hard} courses={titles} exams={examMarksFor(exams, hard)} />
         <FriendsCard requests={friends} />
       </div>
     </>
@@ -266,9 +268,11 @@ function ReviewCard({
 function HardCards({
   cards,
   courses,
+  exams,
 }: {
   cards: CardSnapshotRow[];
   courses: Map<string, CourseRow>;
+  exams: ReadonlyMap<string, { name: string; daysRemaining: number }>;
 }) {
   return (
     <section className="paper rounded-group bg-surface p-6">
@@ -282,6 +286,7 @@ function HardCards({
         <ul className="mt-4 divide-y divide-hairline">
           {cards.map((card) => {
             const course = card.course_id ? courses.get(card.course_id) : undefined;
+            const exam = exams.get(card.id);
             const href = card.course_id
               ? (`/app/c/${card.course_id}/cartes` as never)
               : ("/app/cours" as never);
@@ -295,8 +300,13 @@ function HardCards({
                     <span className="block text-[14.5px] font-medium leading-snug text-ink">
                       {previewFront(card.front)}
                     </span>
-                    <span className="mt-0.5 block truncate text-[12.5px] text-ink-tertiary">
-                      {course?.title ?? "Sans cours"}
+                    <span className="mt-0.5 flex items-center gap-1.5">
+                      <span className="min-w-0 truncate text-[12.5px] text-ink-tertiary">
+                        {course?.title ?? "Sans cours"}
+                      </span>
+                      {exam ? (
+                        <ExamMark name={exam.name} daysRemaining={exam.daysRemaining} />
+                      ) : null}
                     </span>
                   </span>
                   <span className="numeral shrink-0 text-[13px] font-semibold text-negative">

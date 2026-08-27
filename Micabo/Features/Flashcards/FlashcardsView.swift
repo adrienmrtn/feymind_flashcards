@@ -45,6 +45,24 @@ struct FlashcardsView: View {
     }
     private var canPractice: Bool { pro?.canPractice ?? true }
 
+    /// L'examen planifié le plus proche qui porte sur ce cours. C'est lui qui
+    /// comprime les cartes, donc c'est lui que la pastille nomme.
+    private var courseExamName: String? {
+        let today = MicaboCalendar.shared.startOfDay(for: Date())
+        return exams
+            .filter { exam in
+                exam.isPlanned
+                    && exam.courseIDs.contains(course.id)
+                    && MicaboCalendar.shared.startOfDay(for: exam.date) >= today
+            }
+            .sorted { $0.date < $1.date }
+            .first
+            .map { exam in
+                let name = exam.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                return name.isEmpty ? "Examen" : name
+            }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
@@ -251,6 +269,16 @@ struct FlashcardsView: View {
                                     .multilineTextAlignment(.leading)
                                     .lineLimit(2)
                                     .frame(maxWidth: .infinity, alignment: .leading)
+
+                                if let courseExamName {
+                                    Text(courseExamName)
+                                        .font(MicaboFont.hanken(10, weight: .medium))
+                                        .foregroundStyle(MicaboColor.caution)
+                                        .lineLimit(1)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(MicaboColor.cautionSoft, in: Capsule())
+                                }
 
                                 ForEach(badges(for: card), id: \.self) { badge in
                                     Image(systemName: badge)

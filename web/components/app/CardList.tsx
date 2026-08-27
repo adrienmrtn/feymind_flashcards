@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 
 import { formatDelay, previewLabels } from "@micabo/core";
 
+import { ExamMark, type ExamMarkInfo } from "@/components/app/ExamMark";
 import { OcclusionEditor } from "@/components/app/OcclusionEditor";
 import { OcclusionFigure } from "@/components/app/OcclusionFigure";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
@@ -20,7 +21,15 @@ import type { CardRow } from "@/lib/data/courses";
  * feuille par-dessus la liste — pas en dessous de la rangée, et pas en plein écran : on garde
  * les voisines en vue, et on ferme d'une touche.
  */
-export function CardList({ courseId, cards }: { courseId: string; cards: CardRow[] }) {
+export function CardList({
+  courseId,
+  cards,
+  exam,
+}: {
+  courseId: string;
+  cards: CardRow[];
+  exam?: ExamMarkInfo | null;
+}) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [occluding, setOccluding] = useState(false);
@@ -60,7 +69,13 @@ export function CardList({ courseId, cards }: { courseId: string; cards: CardRow
       {cards.length > 0 ? (
         <div className="paper mt-4 overflow-hidden rounded-group bg-surface">
           {cards.map((card, index) => (
-            <Row key={card.id} card={card} index={index} onEdit={() => setEditing(card.id)} />
+            <Row
+              key={card.id}
+              card={card}
+              index={index}
+              exam={exam}
+              onEdit={() => setEditing(card.id)}
+            />
           ))}
         </div>
       ) : null}
@@ -86,10 +101,12 @@ export function CardList({ courseId, cards }: { courseId: string; cards: CardRow
 function Row({
   card,
   index,
+  exam,
   onEdit,
 }: {
   card: CardRow;
   index: number;
+  exam?: ExamMarkInfo | null;
   onEdit: () => void;
 }) {
   const labels = previewLabels({
@@ -131,6 +148,11 @@ function Row({
             <InlineMarkup text={card.back} />
           </span>
         )}
+        {exam ? (
+          <span className="mt-1.5 block">
+            <ExamMark name={exam.name} daysRemaining={exam.daysRemaining} />
+          </span>
+        ) : null}
         {choices.length > 0 ? (
           <span className="mt-1.5 block text-[12.5px] text-ink-tertiary">
             {choices.length} propositions · bonne réponse n°

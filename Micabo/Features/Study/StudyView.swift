@@ -221,7 +221,8 @@ struct StudyView: View {
                     isHintVisible: showHint,
                     onToggleHint: toggleHint,
                     selectedChoice: selectedChoice,
-                    onSelectChoice: selectChoice
+                    onSelectChoice: selectChoice,
+                    examName: session.currentExamName
                 )
                 .id(card.id)
                 // La sortante s'efface en reculant, l'entrante arrive du bas : sans
@@ -522,6 +523,7 @@ struct StudyCardFace: View {
     var onToggleHint: (() -> Void)?
     var selectedChoice: Int?
     var onSelectChoice: ((Int) -> Void)?
+    var examName: String? = nil
 
     var body: some View {
         VStack(alignment: showAnswer ? .leading : .center, spacing: 14) {
@@ -606,7 +608,23 @@ struct StudyCardFace: View {
         .padding(showAnswer ? 26 : 30)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: showAnswer ? .topLeading : .center)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
+        .overlay(alignment: .topTrailing) { examPill }
         .shadow(color: Color.black.opacity(0.05), radius: 18, x: 0, y: 8)
+    }
+
+    /// Pastille discrète : le nom de l'examen qui comprime cette carte, et rien d'autre.
+    @ViewBuilder
+    private var examPill: some View {
+        if let examName, !examName.isEmpty {
+            Text(examName)
+                .font(MicaboFont.hanken(10, weight: .medium))
+                .foregroundStyle(MicaboColor.caution)
+                .lineLimit(1)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 2)
+                .background(MicaboColor.cautionSoft, in: Capsule())
+                .padding(12)
+        }
     }
 
     /// Le sens de révision compte en langues, et le format compte partout : on annonce

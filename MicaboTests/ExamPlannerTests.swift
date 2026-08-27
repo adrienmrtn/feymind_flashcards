@@ -543,6 +543,7 @@ final class ExamDeadlinesTests: XCTestCase {
         let deadline = ExamDeadlines.active(in: context).deadline(for: card)
 
         XCTAssertEqual(deadline, calendar.date(byAdding: .day, value: 6, to: calendar.startOfDay(for: Date())))
+        XCTAssertEqual(ExamDeadlines.active(in: context).examName(for: card), "Proche")
     }
 
     /// Les cartes d'examen passent devant, mais elles restent dans le plafond du jour.
