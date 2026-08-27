@@ -30,9 +30,9 @@ export function ReplayOnboarding() {
           void replayOnboarding();
         });
       }}
-      className="pressable hover-tile mt-3 w-full rounded-group bg-surface px-5 py-4 text-left paper"
+      className="pressable w-full px-7 py-5 text-left"
     >
-      <p className="text-[15px] font-semibold text-ink">🔁 Refaire l&apos;accueil</p>
+      <p className="text-[15px] font-semibold text-ink">Refaire l&apos;accueil</p>
       <p className="mt-1 text-[13px] leading-relaxed text-ink-tertiary">
         {pending ? "Ouverture du parcours…" : "Pour déboguer. Tes cours restent."}
       </p>

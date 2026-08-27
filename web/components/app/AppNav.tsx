@@ -12,20 +12,16 @@ import {
 } from "@/lib/open-courses";
 
 /**
- * La navigation de l'app.
+ * La navigation, **en pastilles**.
  *
- * Sur un grand écran c'est une colonne à gauche, toujours visible : sur un bureau, cacher la
- * navigation derrière un bouton fait cliquer deux fois pour changer d'écran. Sous `lg`, elle
- * redevient une barre en bas — là, la largeur est le bien rare, et le pouce est en bas.
+ * Sur un téléphone, cinq cercles flottent dans une capsule — l'actif est plein,
+ * et un triangle le relie à la page. C'est le même geste que la barre d'icônes
+ * d'un produit posé, pas une rangée de libellés serrés.
  *
- * **Les cours ouverts restent dans la barre jusqu'à ce qu'on les ferme.** C'est ce qui
- * manquait : on ouvrait une fiche, on allait voir ses cartes ou sa session, et il
- * fallait repasser par la liste pour la retrouver. Chaque fiche a son onglet, avec sa
- * croix — comme un navigateur. On peut en tenir plusieurs à la fois.
+ * Sur un bureau, la colonne garde les mots, mais chaque destination a encore
+ * son cercle : on reconnaît l'écran avant de lire.
  *
- * Ils vivent dans `sessionStorage` et non dans l'URL : ils survivent à un changement
- * d'écran, pas à la fermeture de l'onglet. Un cours épinglé retrouvé trois jours plus
- * tard serait un souvenir dont personne n'a besoin.
+ * Les cours ouverts restent dans la barre jusqu'à ce qu'on les ferme.
  */
 
 const LINKS = [
@@ -40,9 +36,6 @@ export function AppNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState<OpenCourseTab[]>([]);
 
-  // Les cours viennent du stockage au montage, et de l'événement quand on en ouvre un :
-  // la mise en page de l'app n'a pas à savoir lesquels sont ouverts pour les faire
-  // descendre en props.
   useEffect(() => {
     setOpen(readOpenCourses());
 
@@ -75,41 +68,48 @@ export function AppNav() {
   };
 
   const isOpenCourse = (id: string) => pathname.startsWith(`/app/c/${id}`);
+  const importing = pathname.startsWith("/app/importer");
 
   return (
     <>
-      {/* Grand écran : la colonne. */}
       <nav
         aria-label="Navigation"
-        className="sticky top-0 hidden h-svh w-[232px] shrink-0 flex-col border-r border-hairline-on-canvas px-4 py-8 lg:flex"
+        className="sticky top-0 hidden h-svh w-[248px] shrink-0 flex-col px-6 py-10 lg:flex"
         data-print="hide"
       >
-        <Link href="/" className="mb-9 px-3 text-[17px] font-bold text-ink">
+        <Link href="/" className="mb-10 px-1 text-[18px] font-bold tracking-tight-title text-ink">
           Micabo
         </Link>
 
-        <div className="space-y-1">
-          {LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href as never}
-              prefetch={link.prefetch}
-              aria-current={isCurrent(link.href) ? "page" : undefined}
-              className={`nav-link flex items-center gap-3 rounded-button px-3 py-2.5 text-[15px] transition-colors duration-hover ${
-                isCurrent(link.href)
-                  ? "bg-accent-soft font-semibold text-accent"
-                  : "text-ink-secondary hover:bg-surface"
-              }`}
-            >
-              <Icon name={link.icon} filled={isCurrent(link.href)} />
-              {link.label}
-            </Link>
-          ))}
+        <div className="space-y-1.5">
+          {LINKS.map((link) => {
+            const current = isCurrent(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href as never}
+                prefetch={link.prefetch}
+                aria-current={current ? "page" : undefined}
+                className="group flex items-center gap-3 rounded-pill py-1 pr-3"
+              >
+                <Dot filled={current}>
+                  <Icon name={link.icon} filled={current} />
+                </Dot>
+                <span
+                  className={`text-[15px] ${
+                    current ? "font-semibold text-ink" : "text-ink-secondary group-hover:text-ink"
+                  }`}
+                >
+                  {link.label}
+                </span>
+              </Link>
+            );
+          })}
         </div>
 
         {open.length > 0 ? (
-          <div className="mt-6">
-            <p className="eyebrow mb-2 px-3 text-ink-tertiary">
+          <div className="mt-8">
+            <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-caps text-ink-tertiary">
               {open.length === 1 ? "Ouvert" : "Ouverts"}
             </p>
             <div className="max-h-56 space-y-0.5 overflow-y-auto">
@@ -118,20 +118,18 @@ export function AppNav() {
                 return (
                   <div
                     key={course.id}
-                    className={`group flex items-center gap-2 rounded-button pr-1 transition-colors duration-hover ${
-                      current ? "bg-accent-soft" : "hover:bg-surface"
-                    }`}
+                    className="group flex items-center gap-1 rounded-pill pr-1"
                   >
                     <Link
                       href={`/app/c/${course.id}` as never}
-                      className="flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2.5"
+                      className="flex min-w-0 flex-1 items-center gap-2.5 px-1 py-2"
                     >
                       <span aria-hidden className="emoji text-[15px]">
                         {course.emoji}
                       </span>
                       <span
-                        className={`min-w-0 flex-1 truncate text-[14px] ${
-                          current ? "font-semibold text-accent" : "text-ink-secondary"
+                        className={`min-w-0 flex-1 truncate text-[13.5px] ${
+                          current ? "font-semibold text-ink" : "text-ink-secondary"
                         }`}
                       >
                         {course.title}
@@ -154,30 +152,26 @@ export function AppNav() {
 
         <Link
           href="/app/importer"
-          className="pressable shiny mt-auto flex items-center justify-center gap-2 rounded-button bg-ink py-3.5 text-[15px] font-semibold text-on-ink shadow-floating"
+          className={`pressable mt-auto flex items-center justify-center gap-2 rounded-pill py-3.5 text-[15px] font-semibold ${
+            importing ? "bg-ink text-on-ink" : "bg-ink text-on-ink"
+          }`}
         >
-          <span aria-hidden className="emoji text-[16px]">
-            ➕
-          </span>
-          Importer un cours
+          Importer
         </Link>
       </nav>
 
-      {/* Petit écran : la barre en bas, en verre, posée à distance des bords. */}
       <nav
         aria-label="Navigation"
-        className="fixed inset-x-0 bottom-0 z-20 px-4 pb-4 lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-20 px-4 pb-5 lg:hidden"
         data-print="hide"
       >
         {open.length > 0 ? (
-          <div className="mx-auto mb-2 flex max-w-[420px] gap-2 overflow-x-auto pb-0.5">
+          <div className="mx-auto mb-2 flex max-w-[440px] gap-2 overflow-x-auto pb-0.5">
             {open.map((course) => (
               <div
                 key={course.id}
-                className={`flex shrink-0 items-center gap-1.5 rounded-pill border px-3 py-2 shadow-floating backdrop-blur-xl ${
-                  isOpenCourse(course.id)
-                    ? "border-accent/40 bg-accent-soft"
-                    : "border-stroke bg-surface/90"
+                className={`flex shrink-0 items-center gap-1.5 rounded-pill bg-surface px-3 py-2 shadow-floating ${
+                  isOpenCourse(course.id) ? "text-ink" : "text-ink-secondary"
                 }`}
               >
                 <Link
@@ -187,7 +181,7 @@ export function AppNav() {
                   <span aria-hidden className="emoji text-[14px]">
                     {course.emoji}
                   </span>
-                  <span className="truncate text-[13px] font-medium text-ink">{course.title}</span>
+                  <span className="truncate text-[13px] font-medium">{course.title}</span>
                 </Link>
                 <button
                   type="button"
@@ -202,29 +196,42 @@ export function AppNav() {
           </div>
         ) : null}
 
-        <div className="mx-auto flex max-w-[420px] items-center justify-around rounded-sheet border border-stroke bg-surface/80 p-1.5 shadow-floating backdrop-blur-xl">
-          {LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href as never}
-              prefetch={link.prefetch}
-              aria-current={isCurrent(link.href) ? "page" : undefined}
-              className={`nav-link flex flex-1 flex-col items-center gap-1 rounded-button py-2 text-[10.5px] font-medium transition-colors duration-hover ${
-                isCurrent(link.href) ? "text-accent" : "text-ink-tertiary hover:text-ink-secondary"
-              }`}
-            >
-              <Icon name={link.icon} filled={isCurrent(link.href)} />
-              {link.label}
-            </Link>
-          ))}
+        <div className="mx-auto flex max-w-[440px] items-end justify-between rounded-[28px] bg-surface px-3 pb-2.5 pt-3 shadow-floating">
+          {LINKS.map((link) => {
+            const current = isCurrent(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href as never}
+                prefetch={link.prefetch}
+                aria-current={current ? "page" : undefined}
+                aria-label={link.label}
+                className="relative flex flex-1 flex-col items-center gap-1"
+              >
+                {current ? <Caret /> : null}
+                <Dot filled={current} size="lg">
+                  <Icon name={link.icon} filled={current} />
+                </Dot>
+                <span
+                  className={`text-[10px] ${current ? "font-semibold text-ink" : "text-ink-tertiary"}`}
+                >
+                  {link.label}
+                </span>
+              </Link>
+            );
+          })}
           <Link
             href="/app/importer"
-            className="pressable shiny flex flex-1 flex-col items-center gap-1 rounded-button bg-ink py-2 text-[10.5px] font-semibold text-on-ink"
+            aria-label="Importer un cours"
+            className="relative flex flex-1 flex-col items-center gap-1"
           >
-            <span aria-hidden className="emoji text-[15px]">
-              ➕
+            {importing ? <Caret /> : null}
+            <Dot filled>
+              <Icon name="plus" filled />
+            </Dot>
+            <span className={`text-[10px] ${importing ? "font-semibold text-ink" : "text-ink-tertiary"}`}>
+              Importer
             </span>
-            Importer
           </Link>
         </div>
       </nav>
@@ -232,9 +239,39 @@ export function AppNav() {
   );
 }
 
-function Icon({ name, filled }: { name: string; filled: boolean }) {
-  const stroke = filled ? 2 : 1.6;
+function Dot({
+  filled,
+  size = "md",
+  children,
+}: {
+  filled?: boolean;
+  size?: "md" | "lg";
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      aria-hidden
+      className={`flex shrink-0 items-center justify-center rounded-full transition-colors duration-hover ${
+        size === "lg" ? "h-11 w-11" : "h-10 w-10"
+      } ${filled ? "bg-ink text-on-ink" : "bg-surface-muted text-ink-secondary"}`}
+    >
+      {children}
+    </span>
+  );
+}
 
+/** Le triangle qui ancre l'onglet actif à la page, au-dessus de la capsule. */
+function Caret() {
+  return (
+    <span aria-hidden className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-ink">
+      <svg width="12" height="6" viewBox="0 0 12 6">
+        <path d="M0 6L6 0l6 6" fill="currentColor" />
+      </svg>
+    </span>
+  );
+}
+
+function Icon({ name, filled }: { name: string; filled: boolean }) {
   return (
     <svg
       aria-hidden
@@ -242,38 +279,38 @@ function Icon({ name, filled }: { name: string; filled: boolean }) {
       className="h-[18px] w-[18px] shrink-0"
       fill="none"
       stroke="currentColor"
-      strokeWidth={stroke}
+      strokeWidth={filled ? 1.9 : 1.6}
       strokeLinecap="round"
       strokeLinejoin="round"
     >
       {name === "home" ? (
         <>
           <path d="M3.5 9.2L10 3.6l6.5 5.6" />
-          <path d="M5.2 8.4V16h9.6V8.4" fill={filled ? "currentColor" : "none"} />
+          <path d="M5.2 8.4V16h9.6V8.4" />
         </>
       ) : null}
       {name === "shelf" ? (
         <>
-          <rect x="3" y="3.5" width="4.5" height="13" rx="1.2" fill={filled ? "currentColor" : "none"} />
+          <rect x="3" y="3.5" width="4.5" height="13" rx="1.2" />
           <rect x="9" y="3.5" width="4.5" height="13" rx="1.2" />
           <path d="M15.5 5.2l2.2 11.1" />
         </>
       ) : null}
       {name === "cards" ? (
         <>
-          <rect x="2.8" y="5.5" width="11" height="11" rx="2" fill={filled ? "currentColor" : "none"} />
+          <rect x="2.8" y="5.5" width="11" height="11" rx="2" />
           <path d="M6.5 3.5h8.2a2 2 0 0 1 2 2v8" />
         </>
       ) : null}
       {name === "calendar" ? (
         <>
-          <rect x="3" y="4.5" width="14" height="12.5" rx="2" fill={filled ? "currentColor" : "none"} />
+          <rect x="3" y="4.5" width="14" height="12.5" rx="2" />
           <path d="M3 8.5h14M7 3v3M13 3v3" />
         </>
       ) : null}
       {name === "person" ? (
         <>
-          <circle cx="10" cy="7" r="3" fill={filled ? "currentColor" : "none"} />
+          <circle cx="10" cy="7" r="3" />
           <path d="M4.5 16.5a5.5 5.5 0 0 1 11 0" />
         </>
       ) : null}

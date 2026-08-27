@@ -62,9 +62,9 @@ export function ProfileSettings({
   }
 
   return (
-    <div className="paper hover-tile rounded-group bg-surface p-6">
+    <div className="saas-card p-7">
       <div className="flex items-baseline justify-between gap-4">
-        <p className="eyebrow text-ink-tertiary">Réglages</p>
+        <p className="text-[13px] text-ink-tertiary">Réglages</p>
         <p
           className={`text-[12.5px] ${saved === "erreur" ? "text-negative" : "text-accent"}`}
           role="status"
@@ -87,7 +87,7 @@ export function ProfileSettings({
 
       <UsernameField initial={initialUsername} />
 
-      <p className="mt-7 text-[13px] text-ink-tertiary">📚 Matières</p>
+      <p className="mt-7 text-[13px] text-ink-tertiary">Matières</p>
       <div className="mt-2.5 max-h-[220px] space-y-4 overflow-y-auto pr-1">
         {SUBJECT_FAMILIES.map((family) => (
           <div key={family.name}>
@@ -127,7 +127,7 @@ export function ProfileSettings({
         ))}
       </div>
 
-      <p className="mt-7 text-[13px] text-ink-tertiary">🏫 École</p>
+      <p className="mt-7 text-[13px] text-ink-tertiary">École</p>
       <div className="mt-2">
         <SchoolField
           initialName={initialSchool}
@@ -144,7 +144,7 @@ export function ProfileSettings({
       <div className="mt-7">
         <div className="flex items-baseline justify-between gap-3">
           <label htmlFor="profile-minutes" className="text-[13px] text-ink-tertiary">
-            ⏱️ Rythme quotidien
+            Rythme quotidien
           </label>
           <p className="text-[13px] font-medium text-ink">
             {dailyMinutesLabel(minutes)}{" "}

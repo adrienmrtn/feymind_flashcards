@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-svh bg-canvas lg:flex">
       <AppNav />
 
-      <main className="min-w-0 flex-1 pb-24 lg:pb-0">
+      <main className="min-w-0 flex-1 pb-32 lg:pb-0">
         <div className="mx-auto max-w-[860px] px-screen py-8 lg:py-12">
           <PageEnter>{children}</PageEnter>
         </div>

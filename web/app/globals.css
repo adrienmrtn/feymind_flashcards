@@ -762,6 +762,30 @@ video {
   animation: page-enter 420ms var(--ease-out-strong) both;
 }
 
+/* Le profil et la barre : le vocabulaire du screenshot — grandes cartes,
+   halo doux, pastilles. Ces classes ne sont posées que dans l'app, pas
+   sur la vitrine ni le parcours. */
+.profile-page {
+  position: relative;
+}
+
+.profile-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: -100px -48px auto;
+  height: 320px;
+  background:
+    radial-gradient(ellipse at 18% 40%, oklch(0.88 0.07 160 / 0.42), transparent 58%),
+    radial-gradient(ellipse at 82% 15%, oklch(0.9 0.06 85 / 0.32), transparent 52%);
+  filter: blur(2px);
+}
+
+.saas-card {
+  background: var(--color-surface);
+  border-radius: 28px;
+  box-shadow: var(--shadow-paper);
+}
+
 /* Le paywall se pose **par-dessus** le tableau de bord, il ne le remplace pas. */
 @keyframes micabo-paywall-in {
   from {

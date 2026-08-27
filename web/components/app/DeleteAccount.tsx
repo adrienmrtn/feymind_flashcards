@@ -38,9 +38,8 @@ export function DeleteAccount({ email }: { email: string }) {
   }
 
   return (
-    <section className="mt-10">
-      <p className="eyebrow mb-3 text-ink-tertiary">Compte</p>
-      <div className="rounded-group border border-negative/15 bg-surface px-5 py-5">
+    <section className="saas-card relative mt-4 px-7 py-7">
+      <div>
         <p className="text-[15px] font-semibold text-ink">Supprimer le compte</p>
         <p className="mt-1.5 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-secondary">
           Tes cours, tes cartes et ton historique seront effacés. La même adresse
