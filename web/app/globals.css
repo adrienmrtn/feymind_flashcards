@@ -256,7 +256,7 @@ video {
 /* Une rangée qui avance d'un rien, et une tuile qui se soulève : le survol doit se sentir
    sans déplacer le texte assez pour le flouter. */
 @utility hover-row {
-  transition-property: background-color, translate, scale;
+  transition-property: background-color, scale;
   transition-duration: var(--duration-hover);
   transition-timing-function: var(--ease-out-strong);
 }
@@ -282,7 +282,6 @@ video {
 @media (hover: hover) and (pointer: fine) {
   .hover-row:hover {
     background-color: color-mix(in srgb, var(--color-surface-muted) 70%, transparent);
-    translate: 3px 0;
   }
 
   .hover-tile:hover {
@@ -642,6 +641,95 @@ video {
   .shiny::after {
     animation: none;
     opacity: 0;
+  }
+}
+
+/* Le PDF de la démo : le reflet du bouton y était trop discret, on le prenait pour un
+   fond. Plus large, plus clair, plus souvent — c'est le seul objet qu'on doit attraper. */
+@utility shiny-loud {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.shiny-loud::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 46%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    oklch(1 0 0 / 0.08) 30%,
+    oklch(1 0 0 / 0.72) 48%,
+    oklch(1 0 0 / 0.78) 52%,
+    oklch(1 0 0 / 0.08) 70%,
+    transparent
+  );
+  animation: micabo-sheen 2.2s var(--ease-in-out-strong) infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shiny-loud::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+@keyframes exam-beat {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.exam-beat {
+  animation: exam-beat 520ms var(--ease-out-strong) both;
+}
+
+@keyframes exam-stamp {
+  from {
+    opacity: 0;
+    scale: 1.18;
+    rotate: -8deg;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    rotate: -2deg;
+  }
+}
+
+.exam-stamp {
+  animation: exam-stamp 560ms var(--ease-out-strong) both;
+}
+
+@keyframes exam-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.exam-fill {
+  width: 100%;
+  animation: exam-fill 720ms var(--ease-out-strong) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exam-beat,
+  .exam-stamp,
+  .exam-fill {
+    animation: none;
   }
 }
 

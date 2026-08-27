@@ -19,10 +19,9 @@ import { createClient } from "@/lib/supabase/server";
  *
  * Deux choses qu'il n'écrit pas, et il faut le dire :
  *
- * - **`daily_minutes` reste à son défaut.** Le parcours ne pose pas la question — la date d'examen
- *   est une bien meilleure question que « combien de minutes par jour », et l'ajouter casserait le
- *   rythme du tunnel. Quinze minutes valent huit cartes neuves par jour, et ça se corrige dans les
- *   réglages.
+ * - **`daily_minutes` reste à son défaut.** Le parcours ne pose plus cette question — ni celle
+ *   de la date d'examen : il montre ce que Micabo change, et le rythme se corrige dans les
+ *   réglages. Quinze minutes valent huit cartes neuves par jour.
  * - **`learning_goals` reste vide.** Le parcours web ne reprend ni les objectifs ni le rapport à
  *   l'oubli, et c'est sans conséquence : rien ne s'en sert dans la rédaction d'une fiche.
  */
@@ -76,9 +75,9 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
   const jar = await cookies();
   jar.delete(ONBOARDING_REPLAY_COOKIE);
 
-  // L'écran de la date d'examen crée une vraie ligne dans `exams`. C'est la seule chose que le
-  // parcours écrit hors de `profiles`, et c'est ce qui rend la promesse tenable : « Micabo te
-  // créera un parcours adapté à ton examen ».
+  // Une date encore présente dans les réponses (un ancien parcours) crée une vraie ligne
+  // dans `exams`. Le parcours actuel n'en pose plus : il montre l'exemple, et l'examen
+  // se crée plus tard, dans l'app.
   //
   // `is_planned` reste **faux**. Planifier veut dire déplacer les échéances de tout un jeu de
   // cartes, et il n'y a pas encore une seule carte : un plan posé sur rien n'est pas un plan.

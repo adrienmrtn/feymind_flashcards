@@ -32,6 +32,7 @@ function fold(value: string): string {
 const TABLE: readonly [string, readonly string[]][] = [
   // Langues vivantes : un drapeau se reconnaît sans lire, et c'est justement à ça que sert un
   // emoji sur une pastille.
+  ["🇫🇷", ["francais"]],
   ["🇬🇧", ["anglais", "english"]],
   ["🇪🇸", ["espagnol"]],
   ["🇩🇪", ["allemand"]],
@@ -102,7 +103,7 @@ const TABLE: readonly [string, readonly string[]][] = [
   ["🌾", ["agronomie", "agriculture"]],
   ["✈️", ["aeronautique", "aviation"]],
   ["🎨", ["arts", "dessin", "design", "peinture"]],
-  ["📖", ["litterature", "francais", "poesie", "roman"]],
+  ["📖", ["litterature", "poesie", "roman"]],
   ["💡", ["culture generale", "actualite"]],
   // Le filet de sécurité des langues : il attrape « LV2 », « vocabulaire », « thème
   // grammatical » — tout ce qui parle de langue sans nommer laquelle.

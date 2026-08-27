@@ -191,6 +191,23 @@ export function flagFor(iso: string): string {
 }
 
 /**
+ * L'inverse de `flagFor` : deux indicateurs régionaux redeviennent un code ISO.
+ *
+ * Ça sert l'écran des matières. Un drapeau-emoji s'y dessinait « ES » dès que la police
+ * n'avait pas les glyphes ; l'image, elle, a besoin du code à deux lettres.
+ */
+export function isoFromFlagEmoji(emoji: string): string | null {
+  const regional = Array.from(emoji)
+    .map((char) => char.codePointAt(0) ?? 0)
+    .filter((point) => point >= 0x1f1e6 && point <= 0x1f1ff);
+  if (regional.length < 2) return null;
+
+  const first = regional[0]!;
+  const second = regional[1]!;
+  return String.fromCharCode(65 + (first - 0x1f1e6), 65 + (second - 0x1f1e6)).toLowerCase();
+}
+
+/**
  * Le pays deviné depuis la locale du navigateur, pour le poser **en évidence**.
  *
  * C'est une suggestion, jamais une réponse : la question reste posée et se répond d'un appui. Une

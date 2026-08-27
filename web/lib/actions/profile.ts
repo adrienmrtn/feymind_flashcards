@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import {
   clampBlocks,
@@ -163,4 +164,11 @@ export async function deleteAccount(): Promise<SavedSettings> {
 
   await supabase.auth.signOut();
   return { status: "ok" };
+}
+
+/** Ferme la session. Le compte et les cours restent. */
+export async function signOut(): Promise<void> {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/");
 }

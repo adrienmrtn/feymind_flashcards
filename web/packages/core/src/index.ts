@@ -186,6 +186,7 @@ export {
   CONTENT_LANGUAGES,
   countryFor,
   flagFor,
+  isoFromFlagEmoji,
   guessCountry,
   isContentLanguage,
   languageFor,
@@ -209,6 +210,7 @@ export {
   subjectEmoji,
   type SubjectFamily,
 } from "./onboarding/subjects";
+export { examStoryFor, type ExamGrade, type ExamStory } from "./onboarding/exam-story";
 export { FALLBACK_EMOJI, deriveEmoji, resolveEmoji } from "./emoji";
 
 // Les réglages de génération, portés depuis l'app : ce sont les mêmes bornes des deux côtés,

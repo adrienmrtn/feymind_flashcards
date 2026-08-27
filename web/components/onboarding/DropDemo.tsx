@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { DEMO_COURSE } from "@/components/demo/demo-course";
 
@@ -19,23 +19,47 @@ import { DEMO_COURSE } from "@/components/demo/demo-course";
  *
  * Le clavier a sa propre voie : la vignette est un `<button>`, et Entrée dépose. Une interaction
  * qui n'existe qu'au geste est une interaction inaccessible.
+ *
+ * **S'il ne se passe rien**, on n'attend pas indéfiniment. Deux secondes sans mouvement : on dit
+ * exactement quoi faire. Cinq secondes : le PDF fait le geste tout seul.
  */
 export function DropDemo({ onDropped }: { onDropped: () => void }) {
   const zone = useRef<HTMLDivElement>(null);
+  const thumb = useRef<HTMLButtonElement>(null);
+  const lastMove = useRef(typeof performance === "undefined" ? 0 : performance.now());
+  const dragging = useRef(false);
+  const finished = useRef(false);
+  const autoPlayed = useRef(false);
+
   const [offset, setOffset] = useState<{ x: number; y: number } | null>(null);
   const [over, setOver] = useState(false);
   const [dropped, setDropped] = useState(false);
+  const [hint, setHint] = useState(false);
+  const [auto, setAuto] = useState(false);
   const origin = useRef({ x: 0, y: 0 });
 
+  function finish() {
+    if (finished.current) return;
+    finished.current = true;
+    setDropped(true);
+    setOffset(null);
+    setOver(false);
+    setHint(false);
+    setAuto(false);
+    onDropped();
+  }
+
   function begin(event: React.PointerEvent<HTMLButtonElement>) {
-    if (dropped) return;
+    if (dropped || auto) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     origin.current = { x: event.clientX, y: event.clientY };
+    dragging.current = true;
+    setHint(false);
     setOffset({ x: 0, y: 0 });
   }
 
   function move(event: React.PointerEvent<HTMLButtonElement>) {
-    if (!offset || dropped) return;
+    if (!offset || dropped || auto) return;
     const next = {
       x: event.clientX - origin.current.x,
       y: event.clientY - origin.current.y,
@@ -55,18 +79,71 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
   }
 
   function end() {
-    if (dropped) return;
+    if (dropped || auto) return;
+    dragging.current = false;
     if (over) {
-      setDropped(true);
-      setOffset(null);
-      setOver(false);
-      onDropped();
+      finish();
       return;
     }
     // Manqué : la vignette revient à sa place plutôt que de rester là où on l'a lâchée.
     setOffset(null);
     setOver(false);
   }
+
+  function playAuto() {
+    if (finished.current || autoPlayed.current) return;
+    autoPlayed.current = true;
+    setHint(false);
+    setAuto(true);
+
+    const zoneBox = zone.current?.getBoundingClientRect();
+    const thumbBox = thumb.current?.getBoundingClientRect();
+    if (!zoneBox || !thumbBox) {
+      finish();
+      return;
+    }
+
+    const dx = zoneBox.left + zoneBox.width / 2 - (thumbBox.left + thumbBox.width / 2);
+    const dy = zoneBox.top + zoneBox.height / 2 - (thumbBox.top + thumbBox.height / 2);
+    setOffset({ x: 0, y: 0 });
+    setOver(true);
+    requestAnimationFrame(() => {
+      setOffset({ x: dx, y: dy });
+    });
+    window.setTimeout(() => {
+      finish();
+    }, 720);
+  }
+
+  useEffect(() => {
+    lastMove.current = performance.now();
+
+    function mark() {
+      if (finished.current || dragging.current || autoPlayed.current) return;
+      lastMove.current = performance.now();
+      setHint(false);
+    }
+
+    const watching: Array<keyof WindowEventMap> = ["pointermove", "pointerdown", "keydown"];
+    for (const name of watching) {
+      window.addEventListener(name, mark, { passive: true });
+    }
+
+    const tick = window.setInterval(() => {
+      if (finished.current || dragging.current || autoPlayed.current) return;
+      const idle = performance.now() - lastMove.current;
+      if (idle >= 5_000) playAuto();
+      else if (idle >= 2_000) setHint(true);
+    }, 200);
+
+    return () => {
+      for (const name of watching) window.removeEventListener(name, mark);
+      window.clearInterval(tick);
+    };
+    // Le minuteur vit pour toute la vie du geste : le relancer à chaque pixel
+    // remettrait le compte à zéro plus souvent que le mouvement lui-même.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const active = over || Boolean(offset);
 
@@ -88,15 +165,11 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
             <span aria-hidden className="emoji text-[28px]">
               ✅
             </span>
-            <p className="mt-2.5 text-[15px] font-semibold text-accent">
-              {DEMO_COURSE.fileName}
-            </p>
+            <p className="mt-2.5 text-[15px] font-semibold text-accent">{DEMO_COURSE.fileName}</p>
             <p className="mt-1 text-[13px] text-ink-secondary">Micabo le lit…</p>
           </>
         ) : (
           <>
-            {/* Le halo qui respire, et la flèche qui monte : ce sont les deux choses qui disent
-                « c'est ici que ça se lâche » sans l'écrire une seconde fois. */}
             <span
               aria-hidden
               className={`absolute inset-3 rounded-[20px] transition-opacity duration-menu ${
@@ -132,7 +205,6 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
 
       {dropped ? null : (
         <>
-          {/* La flèche qui relie la vignette à la zone : sans elle, il faut deviner le geste. */}
           <svg
             aria-hidden
             viewBox="0 0 24 40"
@@ -152,6 +224,7 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
           </svg>
 
           <button
+            ref={thumb}
             type="button"
             onPointerDown={begin}
             onPointerMove={move}
@@ -160,19 +233,23 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
             onKeyDown={(event) => {
               if (event.key !== "Enter" && event.key !== " ") return;
               event.preventDefault();
-              setDropped(true);
-              onDropped();
+              finish();
             }}
             aria-label={`Déposer ${DEMO_COURSE.fileName}`}
-            className={`flex touch-none items-center gap-2.5 rounded-button bg-surface px-4 py-3 paper ${
-              offset ? "cursor-grabbing" : "shiny cursor-grab"
+            className={`flex touch-none items-center gap-3 rounded-button bg-surface px-4 py-3.5 paper ${
+              offset ? "cursor-grabbing" : "shiny-loud cursor-grab"
             }`}
             style={{
               translate: offset ? `${offset.x}px ${offset.y}px` : undefined,
-              transition: offset ? "none" : "translate 320ms var(--ease-out-strong)",
+              transition: auto
+                ? "translate 680ms var(--ease-out-strong), scale 680ms var(--ease-out-strong)"
+                : offset
+                  ? "none"
+                  : "translate 320ms var(--ease-out-strong)",
               scale: offset ? 1.06 : 1,
               rotate: offset ? "-2deg" : "0deg",
               boxShadow: offset ? "var(--shadow-floating)" : undefined,
+              zIndex: offset ? 2 : undefined,
             }}
           >
             <span aria-hidden className="text-ink-tertiary">
@@ -185,11 +262,23 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
                 <circle cx="12" cy="15" r="1.4" fill="currentColor" />
               </svg>
             </span>
-            <span className="rounded-[4px] bg-[#B5573C] px-1.5 py-0.5 text-[9px] font-bold tracking-[0.6px] text-on-ink">
+            <span className="flex h-10 w-8 items-center justify-center rounded-[5px] bg-[#B5573C] text-[10px] font-bold tracking-[0.8px] text-on-ink">
               PDF
             </span>
-            <span className="text-[13.5px] font-medium text-ink">{DEMO_COURSE.fileName}</span>
+            <span className="text-[14px] font-medium text-ink">{DEMO_COURSE.fileName}</span>
           </button>
+
+          {hint && !offset ? (
+            <p
+              role="status"
+              className="rise paper max-w-[40ch] rounded-group bg-caution-soft px-4 py-3 text-center text-[13.5px] leading-relaxed text-ink"
+            >
+              Prends le PDF <span className="font-semibold">en bas</span>,
+              glisse-le jusqu&apos;à la zone en pointillés{" "}
+              <span className="font-semibold">juste au-dessus</span>, puis
+              lâche-le.
+            </p>
+          ) : null}
         </>
       )}
     </div>
