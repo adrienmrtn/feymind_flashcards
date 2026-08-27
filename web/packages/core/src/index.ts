@@ -70,11 +70,17 @@ export {
 } from "./srs/daily-load";
 export {
   DEFAULT_LIMITS,
+  SESSION_NEW_SLIDER_CAP,
   UNLIMITED,
   buildQueue,
+  countNewIntroducedToday,
   dailyLimits,
   isDue,
+  remainingNewCards,
+  sessionNewLimit,
+  sessionNewSliderMax,
   studyCounts,
+  type NewIntroductionEvent,
   type QueueCard,
   type QueueLimits,
   type StudyCounts,
@@ -214,3 +220,13 @@ export {
   visibilityTitle,
   type CourseVisibility,
 } from "./generation/visibility";
+export {
+  USERNAME_MAX,
+  USERNAME_MESSAGES,
+  USERNAME_MIN,
+  USERNAME_SHAPE,
+  displayUsername,
+  normalizeUsername,
+  validateUsername,
+  type UsernameProblem,
+} from "./username";

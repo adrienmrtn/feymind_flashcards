@@ -42,6 +42,10 @@ export function profileTag(userId: string): string {
   return `u:${userId}:profile`;
 }
 
+export function socialTag(userId: string): string {
+  return `u:${userId}:social`;
+}
+
 /** Client JWT, sans cookie : c'est lui que le cache a le droit d'appeler. */
 export function dataClient(token: string) {
   return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -60,7 +64,7 @@ export function cachedRead<T>(
   return unstable_cache(load, [key, userId], { tags, revalidate })();
 }
 
-export type UserDataKind = "courses" | "cards" | "exams" | "entitlement" | "profile" | "all";
+export type UserDataKind = "courses" | "cards" | "exams" | "entitlement" | "profile" | "social" | "all";
 
 /** Invalide le cache serveur de l'étudiant, sans toucher à la session en cours. */
 export function revalidateUserData(userId: string, kind: UserDataKind = "all"): void {
@@ -77,6 +81,8 @@ export function revalidateUserData(userId: string, kind: UserDataKind = "all"): 
           ? examsTag(userId)
           : kind === "entitlement"
             ? entitlementTag(userId)
-            : profileTag(userId);
+            : kind === "social"
+              ? socialTag(userId)
+              : profileTag(userId);
   revalidateTag(tag, "max");
 }

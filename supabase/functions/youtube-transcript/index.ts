@@ -1,11 +1,9 @@
 import { authorize, withCors } from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { CORS_HEADERS, stripEmDashes } from "../_shared/fal.ts";
 import {
   extractVideoId,
-  fetchTranscript,
+  fetchBestTranscript,
   fetchVideoMetadata,
-  selectCaptionTrack,
   YOUTUBE_LIMITS,
   YouTubeError,
 } from "../_shared/youtube.ts";
@@ -93,22 +91,8 @@ Deno.serve((request: Request) =>
         );
       }
 
-      const track = selectCaptionTrack(metadata.captions, languages);
-      if (!track) {
-        throw new YouTubeError("no_captions", "Aucune piste de sous-titres exploitable.");
-      }
-
-      const transcript = await fetchTranscript(track);
+      const transcript = await fetchBestTranscript(metadata.captions, languages);
       const text = stripEmDashes(transcript.text);
-
-      if (text.length < YOUTUBE_LIMITS.minTranscriptCharacters) {
-        throw new YouTubeError(
-          "too_short",
-          `La transcription ne fait que ${text.length} caractères.`,
-          422,
-          { characters: text.length, minimumCharacters: YOUTUBE_LIMITS.minTranscriptCharacters },
-        );
-      }
 
       return json({
         video,
@@ -132,9 +116,13 @@ Deno.serve((request: Request) =>
   })
 );
 
+function stripEmDashes(value: string): string {
+  return value.replace(/\s+[—–―]\s+/g, ", ").replace(/[—–―]/g, "-");
+}
+
 function json(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
   });
 }

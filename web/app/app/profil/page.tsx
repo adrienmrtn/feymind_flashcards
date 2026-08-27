@@ -60,6 +60,7 @@ export default async function ProfilePage() {
   const due = cards.filter((card) => new Date(card.due_date).getTime() <= Date.now()).length;
   const share = cards.length > 0 ? Math.round((mature / cards.length) * 100) : 0;
   const name = profile?.display_name ?? profile?.username ?? "Ton compte";
+  const handle = profile?.username ?? "";
 
   return (
     <>
@@ -75,6 +76,8 @@ export default async function ProfilePage() {
         <div className="min-w-0">
           <h1 className="truncate text-[28px] font-bold leading-tight text-ink">{name}</h1>
           <p className="mt-1 text-[13.5px] text-ink-tertiary">
+            {handle ? <span className="font-medium text-ink">@{handle}</span> : null}
+            {handle ? " · " : null}
             <span className="emoji">{country.flag}</span> {country.name}
             {stage ? ` · ${stage.title}` : ""}
           </p>
@@ -124,6 +127,16 @@ export default async function ProfilePage() {
       <div className="mt-10 grid gap-3 lg:grid-cols-2">
         <section>
           <p className="eyebrow mb-3 text-ink-tertiary">Ce que Micabo sait de toi</p>
+          <Link
+            href={"/app/amis" as never}
+            className="pressable lift mb-3 flex items-center justify-between gap-4 rounded-group bg-surface px-5 py-4 paper"
+          >
+            <span className="text-[14.5px] text-ink">Amis</span>
+            <span className="text-[13px] text-ink-tertiary">
+              {handle ? `@${handle}` : "Ajouter quelqu'un"}
+            </span>
+          </Link>
+
           <dl className="paper divide-y divide-hairline overflow-hidden rounded-group bg-surface">
             <Row label="Matières" value={subjectsLabel(profile?.subjects)} />
             <Row label="École" value={profile?.institution_name ?? "non renseignée"} />
@@ -153,6 +166,7 @@ export default async function ProfilePage() {
 
         <ProfileSettings
           initialName={profile?.display_name ?? ""}
+          initialUsername={handle}
           initialMinutes={minutes}
           initialLength={
             isSheetLength(profile?.sheet_length) ? profile.sheet_length : DEFAULT_SHEET_LENGTH
@@ -161,12 +175,6 @@ export default async function ProfilePage() {
       </div>
 
       <DeleteAccount email={user?.email ?? ""} />
-
-      <p className="mt-12 text-[12.5px] text-ink-tertiary">
-        <Link href="/" className="underline-draw">
-          Le site
-        </Link>
-      </p>
     </>
   );
 }
@@ -195,10 +203,3 @@ function subjectsLabel(subjects: string[] | null | undefined): string {
   return subjects.length > 4 ? `${shown}, +${subjects.length - 4}` : shown;
 }
 
-function frenchDate(value: string): string {
-  return new Date(`${value}T12:00:00`).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}

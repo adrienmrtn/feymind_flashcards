@@ -1,15 +1,24 @@
 /**
  * L'ordre d'une session.
  *
- * Le cas qui compte est l'exception d'examen : une carte neuve sous échéance passe **outre** le
- * plafond du rythme quotidien. Sans elle, le plan annoncé à la confirmation serait un
- * mensonge — il promet quarante cartes aujourd'hui, et le rythme n'en laisserait passer que
- * huit.
+ * Les cartes d'examen passent **devant** les autres neuves, mais elles restent dans le
+ * plafond du jour. Une session depuis un cours et la session globale partagent ce budget :
+ * les faits `state_before === "new"` d'aujourd'hui en déduisent le reste.
  */
 
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_LIMITS, buildQueue, dailyLimits, isDue, studyCounts } from "../src/srs/queue";
+import {
+  DEFAULT_LIMITS,
+  buildQueue,
+  countNewIntroducedToday,
+  dailyLimits,
+  isDue,
+  remainingNewCards,
+  sessionNewLimit,
+  sessionNewSliderMax,
+  studyCounts,
+} from "../src/srs/queue";
 import type { QueueCard } from "../src/srs/queue";
 import { addDays, startOfDay } from "../src/srs/exam";
 import type { CardState } from "../src/srs/types";
@@ -114,10 +123,54 @@ describe("les plafonds", () => {
   });
 });
 
-describe("l'exception d'examen", () => {
+describe("le budget du jour", () => {
+  it("compte les introductions d'aujourd'hui, pas celles de la veille", () => {
+    const count = countNewIntroducedToday(
+      [
+        { stateBefore: "new", reviewedAt: now },
+        { stateBefore: "new", reviewedAt: addDays(now, -1) },
+        { stateBefore: "review", reviewedAt: now },
+      ],
+      now,
+    );
+
+    expect(count).toBe(1);
+  });
+
+  it("retire du rythme ce qui a déjà été introduit", () => {
+    // 15 minutes → 8 neuves. Huit déjà vues depuis un cours : plus rien à servir.
+    expect(remainingNewCards(8, 15)).toBe(0);
+    expect(remainingNewCards(3, 15)).toBe(5);
+  });
+
+  it("laisse le curseur outrepasser le reste du jour", () => {
+    expect(sessionNewLimit({ dailyMinutes: 15, introducedToday: 8 })).toBe(0);
+    expect(sessionNewLimit({ dailyMinutes: 15, introducedToday: 8, override: 5 })).toBe(5);
+  });
+
+  it("sert le reste, pas un second plafond, quand on reconstruit la file", () => {
+    const cards = Array.from({ length: 20 }, (_, index) =>
+      card(`n${index}`, "new", { position: index }),
+    );
+
+    const leftover = buildQueue(cards, {
+      now,
+      limits: { newPerSession: remainingNewCards(8, 15), reviewsPerSession: Number.MAX_SAFE_INTEGER },
+    });
+
+    expect(leftover).toHaveLength(0);
+  });
+
+  it("borne le curseur au-dessus du rythme, sans monter dans les centaines", () => {
+    expect(sessionNewSliderMax(8)).toBe(20);
+    expect(sessionNewSliderMax(30)).toBe(60);
+  });
+});
+
+describe("l'examen dans la file", () => {
   const examDay = startOfDay(addDays(now, 5));
 
-  it("fait passer les cartes neuves sous échéance outre le plafond", () => {
+  it("sert d'abord les cartes neuves sous échéance, sans casser le plafond", () => {
     const cards = Array.from({ length: 30 }, (_, index) =>
       card(`n${index}`, "new", { position: index }),
     );
@@ -126,8 +179,11 @@ describe("l'exception d'examen", () => {
 
     const queue = buildQueue(cards, { now, limits: dailyLimits(15), deadlines });
 
-    // Les vingt de l'examen, plus les huit du rythme quotidien parmi les dix restantes.
-    expect(queue).toHaveLength(28);
+    expect(queue).toHaveLength(8);
+    expect(queue.every((item) => deadlines.has(item.id))).toBe(true);
+    expect(queue.map((item) => item.id)).toEqual(
+      cards.slice(0, 8).map((item) => item.id),
+    );
   });
 
   it("fait passer l'échéance la plus proche devant, en révision", () => {

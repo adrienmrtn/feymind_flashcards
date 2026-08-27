@@ -71,7 +71,16 @@ export function AppNav() {
 
   const isCurrent = (href: string) => {
     if (href === "/app") return pathname === "/app";
-    if (href === "/app/cours") return pathname === "/app/cours" || pathname.startsWith("/app/c/");
+    if (href === "/app/cours") {
+      return (
+        pathname === "/app/cours" ||
+        pathname.startsWith("/app/c/") ||
+        pathname.startsWith("/app/b/")
+      );
+    }
+    if (href === "/app/profil") {
+      return pathname.startsWith("/app/profil") || pathname.startsWith("/app/amis") || pathname.startsWith("/app/u/");
+    }
     return pathname.startsWith(href);
   };
 

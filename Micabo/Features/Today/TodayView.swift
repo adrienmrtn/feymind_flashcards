@@ -37,18 +37,28 @@ struct TodayView: View {
     @State private var isCreatingDeck = false
     @State private var paywall: PaywallTrigger?
 
-    /// Les échéances d'examen en cours. L'écran doit les connaître : ce sont elles qui
-    /// lèvent le plafond de cartes neuves, donc qui décident du chiffre annoncé.
+    /// Les échéances d'examen en cours. Elles ordonnent les neuves, sans lever le plafond.
     private var deadlines: ExamDeadlines {
         ExamDeadlines.active(exams: exams, courses: courses)
     }
 
-    /// La file telle que la session va la servir : le plafond de cartes neuves du jour,
-    /// hérité du rythme choisi à l'inscription, est déjà appliqué, exception faite des
-    /// cartes sous échéance d'examen. Le chiffre affiché est donc exactement celui qu'on va
-    /// réviser.
+    /// Ce qui a déjà été introduit aujourd'hui, y compris depuis un cours.
+    private var introducedToday: Int {
+        DailyNewQuota.introducedToday(from: reviewLogs)
+    }
+
+    private var newRemaining: Int {
+        DailyNewQuota.remaining(introduced: introducedToday)
+    }
+
+    /// La file telle que la session va la servir : le plafond de cartes neuves du **jour**,
+    /// pas d'un écran. Une session depuis un cours a déjà consommé ce budget.
     private var dueCards: [Flashcard] {
-        StudyQueueBuilder.build(from: allCards, limits: .daily(), deadlines: deadlines)
+        StudyQueueBuilder.build(
+            from: allCards,
+            limits: .daily(newRemaining: newRemaining),
+            deadlines: deadlines
+        )
     }
 
     private var nextExam: Exam? {
@@ -91,8 +101,11 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                     header
 
-                    if dueCards.isEmpty {
+                    if dueCards.isEmpty && heldBackNewCards == 0 {
                         restState
+                    } else if dueCards.isEmpty {
+                        rhythmReachedCard
+                        dueCoursesSection
                     } else {
                         dueCard
                         dueCoursesSection
@@ -173,9 +186,12 @@ struct TodayView: View {
             }
         }
         .fullScreenCover(isPresented: $showStudy) {
-            // Rien à réviser : on ouvre franchement un entraînement libre plutôt que de
-            // faire passer des cartes en avance pour une vraie session.
-            StudyView(source: .allDue, mode: dueCards.isEmpty ? .practice : .scheduled)
+            // Le rythme du jour est atteint mais il reste des neuves : on ouvre quand
+            // même une session réglable, pas un entraînement libre.
+            StudyView(
+                source: .allDue,
+                mode: dueCards.isEmpty && heldBackNewCards == 0 ? .practice : .scheduled
+            )
         }
         .micaboPaywall($paywall)
     }
@@ -493,6 +509,28 @@ struct TodayView: View {
         }
     }
 
+    /// Le rythme est tenu, mais des cartes neuves attendent encore. On le dit,
+    /// plutôt que d'afficher « Tout est à jour » alors qu'il reste à apprendre.
+    private var rhythmReachedCard: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Rythme du jour atteint")
+                    .font(MicaboFont.hanken(19, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+
+                Text("Tu as déjà appris tes \(DailyLoad.newCardsPerDay(dailyMinutes: OnboardingPreferences.dailyMinutes)) cartes neuves. Il en reste \(heldBackNewCards) pour plus tard — ou pour maintenant, si tu montes le curseur.")
+                    .font(MicaboFont.hanken(13.5, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            heldBackNote
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .micaboGroup()
+    }
+
     private var doneState: some View {
         VStack(spacing: MicaboSpacing.sm) {
             Image(systemName: "checkmark")
@@ -536,7 +574,9 @@ struct TodayView: View {
     }
 
     private var sessionButtonTitle: String {
-        dueCards.isEmpty ? "Entraînement libre" : MicaboCopy.reviewButton(count: dueCards.count)
+        if !dueCards.isEmpty { return MicaboCopy.reviewButton(count: dueCards.count) }
+        if heldBackNewCards > 0 { return "Réviser" }
+        return "Entraînement libre"
     }
 
     private var canPractice: Bool { pro?.canPractice ?? true }
@@ -544,7 +584,7 @@ struct TodayView: View {
     /// Réviser ce qui est dû reste gratuit. Prendre de l'avance sur tout un paquet, non :
     /// c'est ce qu'on fait la veille d'un partiel, et c'est ce que Pro ouvre.
     private func startSession() {
-        guard !dueCards.isEmpty || canPractice else {
+        guard !dueCards.isEmpty || heldBackNewCards > 0 || canPractice else {
             paywall = .practice
             return
         }

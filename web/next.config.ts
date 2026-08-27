@@ -10,7 +10,7 @@ const config: NextConfig = {
   // `@micabo/core` est publié en TypeScript source, sans étape de compilation : c'est ce qui
   // permet à un test de vitest et au site de lire exactement le même fichier. Next doit donc
   // le transpiler avec le reste de l'application.
-  transpilePackages: ["@micabo/core"],
+  transpilePackages: ["@micabo/core", "@paper-design/shaders-react", "@paper-design/shaders"],
 
   typedRoutes: true,
 

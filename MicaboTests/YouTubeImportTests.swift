@@ -344,3 +344,24 @@ final class YouTubeSourceTests: XCTestCase {
         XCTAssertEqual(failure?.message, "Cette vidéo est trop courte pour générer des cartes.")
     }
 }
+
+final class YouTubeCaptionTextTests: XCTestCase {
+    func testJSON3JoinsSegmentsAndSkipsAppends() {
+        let raw = """
+        {"events":[{"segs":[{"utf8":"Bonjour "},{"utf8":"le monde"}]},{"aAppend":1,"segs":[{"utf8":"e"}]}]}
+        """
+        XCTAssertEqual(YouTubeCaptionText.fromJSON3(raw), "Bonjour le monde")
+    }
+
+    func testHTMLErrorPageIsNotATranscript() {
+        let html = """
+        <html><body><h1>We're sorry...</h1><p>... but your computer or network may be sending automated queries.</p></body></html>
+        """
+        XCTAssertNil(YouTubeCaptionText.fromXML(html))
+    }
+
+    func testHistoricalXMLIsRead() {
+        let xml = "<transcript><text start=\"0\">Bonjour</text><text start=\"1\">le monde</text></transcript>"
+        XCTAssertEqual(YouTubeCaptionText.fromXML(xml), "Bonjour le monde")
+    }
+}

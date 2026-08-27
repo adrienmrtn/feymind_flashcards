@@ -7,7 +7,6 @@ import { ThinkingOrb } from "thinking-orbs";
 import {
   BLOCK_BOUNDS,
   DEFAULT_SHEET_LENGTH,
-  VISIBILITIES,
   clampBlocks,
   defaultBlocks,
   lengthContaining,
@@ -17,8 +16,10 @@ import {
   type SheetLength,
 } from "@micabo/core";
 
+import { VisibilityChoices } from "@/components/app/VisibilityChoices";
 import { importFromText, importFromYouTube } from "@/lib/actions/course";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
+import { readYouTubeInBrowser } from "@/lib/import/youtube";
 
 /**
  * **L'import est une zone de dépôt.** C'est ce qu'on fait devant un clavier : on prend le fichier
@@ -85,6 +86,34 @@ export function ImportPanel({
     startTransition(async () =>
       finish(await importFromText({ ...payload, blocks, length, visibility })),
     );
+  }
+
+  /**
+   * L'onglet d'abord : YouTube bloque les IP de datacenter, pas celle
+   * de l'utilisateur. Le serveur ne sert que de repli.
+   */
+  async function importVideo() {
+    const link = url.trim();
+    const local = await readYouTubeInBrowser(link);
+    if (local.status === "ok") {
+      setPhase("ecriture");
+      return importFromText({
+        text: local.text,
+        hintTitle: local.title,
+        sourceName: local.title,
+        source: "youtube",
+        blocks,
+        length,
+        visibility,
+      });
+    }
+
+    const remote = await importFromYouTube(link, { blocks, length, visibility });
+    if (remote.status === "ok") return remote;
+    return {
+      status: "error" as const,
+      message: remote.message ?? local.message,
+    };
   }
 
   async function handleFile(file: File) {
@@ -283,9 +312,7 @@ export function ImportPanel({
               onPress={() => {
                 setFailure(null);
                 setPhase("lecture");
-                startTransition(async () =>
-                  finish(await importFromYouTube(url.trim(), { blocks, length, visibility })),
-                );
+                startTransition(async () => finish(await importVideo()));
               }}
             />
           </div>
@@ -318,27 +345,9 @@ export function ImportPanel({
 
         <div className="paper rounded-group bg-surface p-5">
           <p className="eyebrow text-ink-tertiary">Qui peut la retrouver</p>
-          <div className="mt-3.5 flex flex-wrap gap-2">
-            {VISIBILITIES.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                disabled={busy}
-                onClick={() => setVisibility(item.value)}
-                aria-pressed={visibility === item.value}
-                className={`pressable rounded-pill px-3.5 py-2 text-[13.5px] font-medium transition-colors duration-hover ${
-                  visibility === item.value
-                    ? "bg-accent-soft text-accent"
-                    : "bg-surface-muted text-ink-secondary"
-                }`}
-              >
-                {item.title}
-              </button>
-            ))}
+          <div className="mt-3.5">
+            <VisibilityChoices value={visibility} onChange={setVisibility} disabled={busy} />
           </div>
-          <p className="mt-3 text-[12.5px] leading-relaxed text-ink-tertiary">
-            {VISIBILITIES.find((item) => item.value === visibility)?.detail}
-          </p>
         </div>
       </div>
 
