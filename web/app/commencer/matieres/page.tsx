@@ -1,7 +1,8 @@
 "use client";
 
-import { SUBJECT_FAMILIES, subjectEmoji } from "@micabo/core";
+import { SUBJECT_FAMILIES, isoFromFlagEmoji, subjectEmoji } from "@micabo/core";
 
+import { Flag } from "@/components/onboarding/Flag";
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
 import { useOnboarding } from "@/lib/onboarding/store";
 
@@ -58,9 +59,7 @@ export default function SubjectsStep() {
                         : "bg-surface text-ink paper"
                     }`}
                   >
-                    <span aria-hidden className="emoji">
-                      {subjectEmoji(subject)}
-                    </span>
+                    <SubjectMark subject={subject} />
                     {subject}
                   </button>
                 );
@@ -70,5 +69,22 @@ export default function SubjectsStep() {
         ))}
       </div>
     </Scaffold>
+  );
+}
+
+/**
+ * Un drapeau **dessiné** pour une langue vivante. L'emoji seul s'y lisait « ES » sur
+ * les machines sans glyphes régionaux — c'est exactement ce qui manquait sur cet écran.
+ */
+function SubjectMark({ subject }: { subject: string }) {
+  const emoji = subjectEmoji(subject);
+  const iso = isoFromFlagEmoji(emoji);
+  if (iso) {
+    return <Flag iso={iso} emoji={emoji} label={subject} className="h-[15px] w-[20px]" />;
+  }
+  return (
+    <span aria-hidden className="emoji">
+      {emoji}
+    </span>
   );
 }

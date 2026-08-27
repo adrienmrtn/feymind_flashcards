@@ -21,9 +21,8 @@ import { DropDemo } from "@/components/onboarding/DropDemo";
  * ne s'allume qu'après.
  *
  * **Entre deux temps, Micabo travaille sous les yeux.** Ce n'est pas un faux chargement décoratif :
- * c'est le vrai temps du produit — une dizaine de secondes pour écrire une fiche — montré en deux
- * secondes ici. Un écran qui remplacerait instantanément le document par sa fiche laisserait croire
- * que la fiche était déjà là.
+ * c'est le temps du produit, montré ici. Un écran qui remplacerait instantanément le document par
+ * sa fiche laisserait croire que la fiche était déjà là.
  *
  * Le troisième temps porte le seul enchantement du parcours : **les cartes se retournent**. Cet
  * écran se voit une fois dans une vie ; c'est exactement là que ce budget se dépense, et c'est pour
@@ -88,7 +87,7 @@ export default function DemoStep() {
         {stage === 0 ? <DropDemo onDropped={() => setDropped(true)} /> : null}
 
         {stage === 1 ? (
-          <div className="mx-auto w-full max-w-[380px]">
+          <div className="mx-auto w-full max-w-[560px]">
             <div className="paper rounded-group bg-surface p-5">
               <SheetBlocks blocks={TRANSFORMATION_SHEET} tint={DEMO_COURSE.accent} />
               <div className="mt-4">
@@ -122,7 +121,6 @@ function Working({ step }: { step: number }) {
         <p className="mt-6 text-[17px] font-semibold text-ink" role="status">
           {work.label}
         </p>
-        <p className="mt-1.5 text-[13px] text-ink-tertiary">Une dizaine de secondes, en vrai.</p>
       </div>
     </div>
   );

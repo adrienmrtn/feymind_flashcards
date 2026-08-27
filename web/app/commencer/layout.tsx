@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
+import { SignOutButton } from "@/components/app/SignOutButton";
 import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
 import { OnboardingStore } from "@/lib/onboarding/store";
 import { previousPath, progressFor, stepIndex, STEPS } from "@/lib/onboarding/steps";
@@ -69,8 +70,9 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
               />
             </div>
 
-            {/* La place du retour, rendue à droite : sans elle, la jauge n'est pas centrée. */}
-            <span className="h-9 w-9 shrink-0" />
+            {/* La place du retour, rendue à droite : sans elle, la jauge n'est pas centrée.
+                S'il y a une session (on rejoue le parcours), c'est aussi là qu'on la ferme. */}
+            <OnboardingLogout />
           </header>
         ) : null}
 
@@ -78,6 +80,20 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
       </div>
     </OnboardingStore>
   );
+}
+
+function OnboardingLogout() {
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    void supabase.auth.getUser().then(({ data }) => {
+      setSignedIn(Boolean(data.user));
+    });
+  }, []);
+
+  if (!signedIn) return <span className="h-9 w-9 shrink-0" />;
+  return <SignOutButton compact />;
 }
 
 /** Une session ouverte n'a plus rien à faire dans le tunnel — sauf créer le compte. */

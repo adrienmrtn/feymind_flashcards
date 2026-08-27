@@ -15,10 +15,12 @@ import {
   FALLBACK_COUNTRY,
   countryFor,
   flagFor,
+  isoFromFlagEmoji,
   guessCountry,
   languageFor,
   sheetLanguage,
 } from "../src/onboarding/countries";
+import { examStoryFor } from "../src/onboarding/exam-story";
 import {
   TIER_LADDER,
   resolveStage,
@@ -53,6 +55,7 @@ describe("les matières", () => {
     // Un drapeau se reconnaît sans lire, et c'est tout ce qu'on demande à un emoji sur une
     // pastille. Les langues anciennes n'en ont pas : le drapeau d'un pays qui n'existait pas ne
     // dirait rien.
+    expect(subjectEmoji("Français")).toBe("🇫🇷");
     expect(subjectEmoji("Espagnol")).toBe("🇪🇸");
     expect(subjectEmoji("Anglais")).toBe("🇬🇧");
     expect(subjectEmoji("Allemand")).toBe("🇩🇪");
@@ -68,7 +71,7 @@ describe("les matières", () => {
     expect(subjectEmoji("Génie civil")).toBe("🏗️");
     expect(subjectEmoji("Théâtre")).toBe("🎭");
     expect(subjectEmoji("Photographie")).toBe("📷");
-    expect(subjectEmoji("Français")).toBe("📖");
+    expect(subjectEmoji("Français")).toBe("🇫🇷");
   });
 });
 
@@ -182,6 +185,28 @@ describe("les pays", () => {
     expect(flagFor("")).toBe("🌍");
     expect(flagFor("zzz")).toBe("🌍");
     expect(flagFor("1f")).toBe("🌍");
+  });
+
+  it("retrouvent le code ISO d'un drapeau-emoji", () => {
+    expect(isoFromFlagEmoji("🇫🇷")).toBe("fr");
+    expect(isoFromFlagEmoji("🇬🇧")).toBe("gb");
+    expect(isoFromFlagEmoji("🏺")).toBeNull();
+  });
+});
+
+describe("l'exemple d'examen du parcours", () => {
+  it("donne 17/20 en France, et l'équivalent ailleurs", () => {
+    expect(examStoryFor("fr").grade.score).toBe("17/20");
+    expect(examStoryFor("de").grade.score).toBe("1,3");
+    expect(examStoryFor("uk").grade.score).toBe("A");
+    expect(examStoryFor("us").grade.score).toBe("A");
+    expect(examStoryFor("it").grade.score).toBe("8,5/10");
+    expect(examStoryFor("pl").grade.score).toBe("5");
+  });
+
+  it("prend une langue vivante déjà choisie pour titrer l'examen", () => {
+    expect(examStoryFor("fr", ["Mathématiques", "Espagnol"]).examName).toMatch(/espagnol/i);
+    expect(examStoryFor("fr", ["Mathématiques", "Espagnol"]).courses).toContain("Espagnol");
   });
 });
 

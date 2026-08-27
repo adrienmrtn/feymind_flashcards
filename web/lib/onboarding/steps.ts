@@ -17,6 +17,7 @@ export type OnboardingPath =
   | "/commencer/niveau"
   | "/commencer/matieres"
   | "/commencer/examen"
+  | "/commencer/comment"
   | "/commencer/demo"
   | "/commencer/ecole"
   | "/commencer/parcours"
@@ -34,6 +35,7 @@ export const STEPS: readonly Step[] = [
   { path: "/commencer/niveau", label: "Ton niveau", chrome: true },
   { path: "/commencer/matieres", label: "Tes matières", chrome: true },
   { path: "/commencer/examen", label: "Ton examen", chrome: true },
+  { path: "/commencer/comment", label: "Voici comment ça marche", chrome: true },
   { path: "/commencer/demo", label: "Comment ça marche", chrome: true },
   { path: "/commencer/ecole", label: "Ton école", chrome: true },
   { path: "/commencer/parcours", label: "Ton parcours", chrome: true },

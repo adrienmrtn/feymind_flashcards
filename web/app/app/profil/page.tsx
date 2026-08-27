@@ -17,6 +17,7 @@ import {
 import { DeleteAccount } from "@/components/app/DeleteAccount";
 import { ProfileSettings } from "@/components/app/ProfileSettings";
 import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
+import { SignOutButton } from "@/components/app/SignOutButton";
 import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { loadNewCardBudget } from "@/lib/data/reviews";
@@ -258,6 +259,11 @@ export default async function ProfilePage() {
           initialSchoolId={profile?.institution_id ?? null}
         />
       </div>
+
+      <section className="mt-10">
+        <p className="eyebrow mb-3 text-ink-tertiary">Session</p>
+        <SignOutButton />
+      </section>
 
       <section className="mt-10">
         <p className="eyebrow mb-3 text-ink-tertiary">Débogage</p>
