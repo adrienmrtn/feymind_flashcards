@@ -1,0 +1,53 @@
+"use client";
+
+import { useState, useTransition } from "react";
+
+import {
+  CONTENT_LANGUAGES,
+  LANGUAGE_LABELS,
+  type ContentLanguage,
+} from "@micabo/core";
+
+import { updateSettings } from "@/lib/actions/profile";
+
+/**
+ * La langue des **prochaines** fiches.
+ *
+ * Celles déjà écrites restent dans la leur. On ne réécrit pas un cours
+ * parce qu'on a changé d'avis sur l'anglais.
+ */
+export function SheetLanguageCard({ initial }: { initial: ContentLanguage }) {
+  const [language, setLanguage] = useState(initial);
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <section className="paper hover-tile rounded-group bg-surface p-6">
+      <p className="eyebrow text-ink-tertiary">🌐 Langue des fiches</p>
+      <label htmlFor="sheet-language" className="sr-only">
+        Langue des prochaines fiches
+      </label>
+      <select
+        id="sheet-language"
+        value={language}
+        disabled={pending}
+        onChange={(event) => {
+          const next = event.target.value as ContentLanguage;
+          setLanguage(next);
+          startTransition(async () => {
+            await updateSettings({ sheetLanguage: next });
+          });
+        }}
+        className="mt-3 h-12 w-full rounded-button bg-surface-muted px-4 text-[15px] font-medium text-ink outline-none"
+      >
+        {CONTENT_LANGUAGES.map((code) => (
+          <option key={code} value={code}>
+            {LANGUAGE_LABELS[code]}
+          </option>
+        ))}
+      </select>
+      <p className="mt-3 text-[13px] leading-relaxed text-ink-tertiary">
+        Les prochaines fiches s&apos;écriront dans cette langue. Celles déjà là restent.
+      </p>
+    </section>
+  );
+}

@@ -736,13 +736,80 @@ video {
   animation: micabo-count 700ms var(--ease-out-strong) both;
 }
 
+/* Un téléphone qui sort de la carte, puis respire. */
+.phone-stage {
+  pointer-events: none;
+  position: absolute;
+  right: 1.25rem;
+  bottom: -2.4rem;
+  height: 11.5rem;
+  width: 6.4rem;
+}
+
+.phone-shell {
+  height: 100%;
+  width: 100%;
+  border-radius: 1.35rem;
+  background: #1a1a1a;
+  box-shadow: 0 18px 36px rgb(0 0 0 / 0.28);
+  padding: 0.42rem;
+  transform-origin: 50% 110%;
+  animation:
+    phone-pop 780ms var(--ease-out-strong) both,
+    phone-float 4.6s 780ms var(--ease-in-out-strong) infinite alternate;
+}
+
+.phone-notch {
+  position: absolute;
+  left: 50%;
+  top: 0.55rem;
+  z-index: 1;
+  height: 0.42rem;
+  width: 1.7rem;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: #111;
+}
+
+.phone-screen {
+  height: 100%;
+  overflow: hidden;
+  border-radius: 1.05rem;
+  background: var(--color-canvas);
+  padding: 0.85rem 0.55rem 0.5rem;
+}
+
+@keyframes phone-pop {
+  from {
+    opacity: 0;
+    translate: 12px 42px;
+    rotate: 16deg;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    rotate: -8deg;
+  }
+}
+
+@keyframes phone-float {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -8px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise,
   .paywall-card,
   .paywall-stagger,
-  .paywall-veil {
+  .paywall-veil,
+  .phone-shell {
     animation-duration: 200ms;
     translate: none;
+    rotate: -8deg;
   }
 }
 

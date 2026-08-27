@@ -14,12 +14,15 @@ import {
   studyCounts,
   weekStrip,
   WEEK_STRIP_RADIUS,
+  sheetLanguage,
   type ExamIntensity,
   type ExamUrgency,
 } from "@micabo/core";
 
 import { ExamMark } from "@/components/app/ExamMark";
 import { FriendActions } from "@/components/app/FriendActions";
+import { MobileAppCard } from "@/components/app/MobileAppCard";
+import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
 import { WeekRanking } from "@/components/app/WeekRanking";
 import { WeekStrip } from "@/components/app/WeekStrip";
 import {
@@ -61,7 +64,7 @@ export default async function DashboardPage() {
       user
         ? supabase
             .from("profiles")
-            .select("display_name")
+            .select("display_name, country_code, sheet_language")
             .eq("id", user.id)
             .maybeSingle()
             .then((result) => result.data)
@@ -135,6 +138,13 @@ export default async function DashboardPage() {
       </div>
 
       <WeekStrip days={week} />
+
+      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        <SheetLanguageCard
+          initial={sheetLanguage(profile?.sheet_language, profile?.country_code)}
+        />
+        <MobileAppCard />
+      </div>
 
       <WeekRanking rows={ranking} />
 

@@ -17,6 +17,7 @@ import {
   flagFor,
   guessCountry,
   languageFor,
+  sheetLanguage,
 } from "../src/onboarding/countries";
 import {
   TIER_LADDER,
@@ -120,6 +121,12 @@ describe("les pays", () => {
     expect(languageFor("ca")).toBe("fr");
     expect(languageFor("us")).toBe("en");
     expect(languageFor("other")).toBe("en");
+  });
+
+  it("laisse un réglage de fiche gagner sur le pays", () => {
+    expect(sheetLanguage("pl", "fr")).toBe("pl");
+    expect(sheetLanguage(null, "us")).toBe("en");
+    expect(sheetLanguage("zz", "fr")).toBe("fr");
   });
 
   it("retombent sur la France quand on ne sait pas", () => {
