@@ -765,25 +765,26 @@ video {
 /* Le profil et la barre : le vocabulaire du screenshot — grandes cartes,
    halo doux, pastilles. Ces classes ne sont posées que dans l'app, pas
    sur la vitrine ni le parcours. */
+/* Le profil se pose sur un gris froid, comme le modal « Sign up » : blanc
+   pur, filet discret, ombre douce. Le reste de l'app garde l'ivoire. */
 .profile-page {
+  --color-ink: #191c20;
+  --color-ink-secondary: #6b7280;
+  --color-ink-tertiary: #9ca3af;
+  --color-hairline: #eef0f3;
+  --color-surface-muted: #eef0f3;
+  --color-surface-sunken: #e5e7eb;
+  --color-stroke: #e8eaee;
+  --color-accent-soft: #eceff3;
+  --color-accent: #191c20;
   position: relative;
 }
 
-.profile-glow {
-  pointer-events: none;
-  position: absolute;
-  inset: -100px -48px auto;
-  height: 320px;
-  background:
-    radial-gradient(ellipse at 18% 40%, oklch(0.88 0.07 160 / 0.42), transparent 58%),
-    radial-gradient(ellipse at 82% 15%, oklch(0.9 0.06 85 / 0.32), transparent 52%);
-  filter: blur(2px);
-}
-
 .saas-card {
-  background: var(--color-surface);
-  border-radius: 28px;
-  box-shadow: var(--shadow-paper);
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 1px 0 rgba(15, 23, 32, 0.04), 0 10px 32px rgba(15, 23, 32, 0.07);
+  outline: 1px solid rgba(15, 23, 32, 0.06);
 }
 
 /* Le paywall se pose **par-dessus** le tableau de bord, il ne le remplace pas. */
