@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { ThinkingOrb } from "thinking-orbs";
 
+import { SoftMesh } from "@/components/atmosphere/SoftAtmosphere";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -66,8 +67,10 @@ function ConnexionBody() {
   }
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-[440px] flex-col justify-center px-screen py-12">
-      <Link href="/" className="text-[15px] font-bold text-ink">
+    <div className="relative mx-auto flex min-h-svh w-full max-w-[440px] flex-col justify-center px-screen py-12">
+      <SoftMesh />
+      <div className="relative">
+        <Link href="/" className="text-[15px] font-bold text-ink">
         Micabo
       </Link>
 
@@ -173,6 +176,7 @@ function ConnexionBody() {
           Créons-le
         </Link>
       </p>
+      </div>
     </div>
   );
 }

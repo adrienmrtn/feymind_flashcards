@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ThinkingOrb } from "thinking-orbs";
 
+import { SoftMesh } from "@/components/atmosphere/SoftAtmosphere";
 import { markPaywallPending, persistStoredAnswers } from "@/lib/onboarding/persist";
 import { createClient } from "@/lib/supabase/client";
 
@@ -94,8 +95,9 @@ function AccountStepBody() {
   }
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-[440px] flex-col justify-center px-screen py-12">
-      <div className="rise w-full">
+    <div className="relative mx-auto flex min-h-svh w-full max-w-[440px] flex-col justify-center px-screen py-12">
+      <SoftMesh />
+      <div className="rise relative w-full">
         <Link href="/" className="text-[15px] font-bold text-ink">
           Micabo
         </Link>
