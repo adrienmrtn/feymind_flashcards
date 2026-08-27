@@ -29,6 +29,8 @@ export interface SharedCourse {
   visibility: string;
   updatedAt: string;
   cardCount: number;
+  viewCount: number;
+  adoptCount: number;
 }
 
 export interface SharedCard {
@@ -55,7 +57,7 @@ export interface SharedCourseDetail extends SharedCourse {
 }
 
 const SHARED_COLUMNS =
-  "id, user_id, title, subject, summary, emoji, accent_hex, visibility, updated_at";
+  "id, user_id, title, subject, summary, emoji, accent_hex, visibility, updated_at, view_count, adopt_count";
 
 const SHARED_DETAIL_COLUMNS = `${SHARED_COLUMNS}, raw_text, sheet, context_text`;
 
@@ -287,7 +289,13 @@ export const getSharedCourse = cache(async (id: string): Promise<SharedCourseDet
   const auth = await reader();
   if (!auth) return null;
 
-  const { data } = await dataClient(auth.token)
+  const client = dataClient(auth.token);
+  await client.rpc("record_course_view", { p_course_id: id }).then(
+    () => undefined,
+    () => undefined,
+  );
+
+  const { data } = await client
     .from("courses")
     .select(SHARED_DETAIL_COLUMNS)
     .eq("id", id)
@@ -380,6 +388,8 @@ interface SharedCourseRow {
   accent_hex: string | null;
   visibility: string;
   updated_at: string;
+  view_count?: number | null;
+  adopt_count?: number | null;
 }
 
 function asShared(row: SharedCourseRow): SharedCourse {
@@ -394,6 +404,8 @@ function asShared(row: SharedCourseRow): SharedCourse {
     visibility: row.visibility,
     updatedAt: row.updated_at,
     cardCount: 0,
+    viewCount: Number(row.view_count ?? 0),
+    adoptCount: Number(row.adopt_count ?? 0),
   };
 }
 

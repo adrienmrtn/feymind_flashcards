@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { courseAccent, displayUsername, resolveEmoji } from "@micabo/core";
+import { courseAccent, courseAudienceLabel, displayUsername, resolveEmoji } from "@micabo/core";
 
 import { FriendActions } from "@/components/app/FriendActions";
 import { getDirectoryPerson, listCoursesOf } from "@/lib/data/social";
@@ -65,6 +65,7 @@ export default async function UserPage({ params }: { params: Promise<{ username:
                       course.cardCount > 0
                         ? `${course.cardCount} carte${course.cardCount > 1 ? "s" : ""}`
                         : null,
+                      courseAudienceLabel(course.viewCount, course.adoptCount),
                     ]
                       .filter(Boolean)
                       .join(" · ") || "Cours partagé"}

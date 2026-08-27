@@ -46,6 +46,8 @@ export interface CourseRow {
   source: string;
   visibility: string;
   is_from_library: boolean;
+  view_count: number;
+  adopt_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -100,7 +102,7 @@ export type CardSnapshotRow = Pick<
 >;
 
 const COURSE_COLUMNS =
-  "id, title, subject, summary, emoji, accent_hex, source, visibility, is_from_library, created_at, updated_at";
+  "id, title, subject, summary, emoji, accent_hex, source, visibility, is_from_library, view_count, adopt_count, created_at, updated_at";
 
 const CARD_COLUMNS =
   "id, course_id, front, back, hint, position, kind, choices, correct_choice_index, is_suspended, state, due_date, interval_days, ease_factor, repetitions, lapses, step_index, created_at, mask_x, mask_y, mask_width, mask_height, group_id, image_path";

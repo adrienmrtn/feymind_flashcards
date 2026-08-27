@@ -305,6 +305,12 @@ final class LibrarySearchTests: XCTestCase {
     }
 
     /// Un guillemet dans la recherche fermerait la valeur : il part.
+    func testAudienceAgreesOnTheSingular() {
+        XCTAssertEqual(MicaboCopy.audience(views: 0, adopts: 0), "0 vue · 0 ajout")
+        XCTAssertEqual(MicaboCopy.audience(views: 1, adopts: 1), "1 vue · 1 ajout")
+        XCTAssertEqual(MicaboCopy.audience(views: 12, adopts: 3), "12 vues · 3 ajouts")
+    }
+
     func testAQuoteCannotCloseTheValueEarly() throws {
         let pattern = try XCTUnwrap(SocialService.searchPattern("le \"cycle\" de l'eau"))
         let inner = pattern.dropFirst().dropLast()

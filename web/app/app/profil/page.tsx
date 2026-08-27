@@ -5,7 +5,11 @@ import {
   DEFAULT_SHEET_LENGTH,
   countryFor,
   isSheetLength,
+  knowledgeDistribution,
+  mostReviewedCards,
   resolveStage,
+  streak as currentStreak,
+  bestStreak,
 } from "@micabo/core";
 
 import { DeleteAccount } from "@/components/app/DeleteAccount";
@@ -15,21 +19,18 @@ import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Le profil : **un tableau de bord**, pas une pile de blocs gris.
+ * Le profil : **un tableau de bord**.
  *
- * Trois chiffres en tête, l'acquis mis en avant parce que c'est le seul qui dise si le travail
- * paye, puis ce que Micabo sait de l'étudiant, puis les réglages. Ce qui était là avant alignait
- * six rangées d'égale importance dans une liste : tout y avait le même poids, donc rien ne se
- * lisait.
- *
- * Tout vient de **Supabase**, y compris les réglages qu'on modifie ici : c'est la même table que
- * l'iPhone lit et écrit.
+ * La série d'abord, le volume de cartes ensuite, puis ce que le travail a
+ * vraiment produit : les cartes les plus passées, et la répartition par
+ * niveau de connaissance. Les compteurs de révisions et d'acquis n'y sont
+ * plus — ils ne disaient rien qu'on ne lise déjà dans ces deux blocs.
  */
 export default async function ProfilePage() {
   const supabase = await createClient();
   const user = await currentUser();
 
-  const [profile, courses, cards, exams, reviews] = await Promise.all([
+  const [profile, courses, cards, exams, logs] = await Promise.all([
     user
       ? supabase
           .from("profiles")
@@ -46,26 +47,37 @@ export default async function ProfilePage() {
     user
       ? supabase
           .from("review_logs")
-          .select("id", { count: "exact", head: true })
+          .select("card_id, reviewed_at")
           .eq("user_id", user.id)
-          .then((result) => result.count)
-      : Promise.resolve(0),
+          .limit(20000)
+          .then((result) => result.data ?? [])
+      : Promise.resolve([]),
   ]);
 
   const country = countryFor(profile?.country_code);
   const stage = resolveStage(country.code, { level: profile?.study_level ?? null });
   const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
-  const mature = cards.filter((card) => card.interval_days >= 21).length;
   const due = cards.filter((card) => new Date(card.due_date).getTime() <= Date.now()).length;
-  const share = cards.length > 0 ? Math.round((mature / cards.length) * 100) : 0;
   const name = profile?.display_name ?? profile?.username ?? "Ton compte";
   const handle = profile?.username ?? "";
+
+  const reviewDates = (
+    logs as { card_id: string | null; reviewed_at: string }[]
+  ).map((log) => new Date(log.reviewed_at));
+  const series = currentStreak(reviewDates);
+  const record = bestStreak(reviewDates);
+  const levels = knowledgeDistribution(
+    cards.map((card) => ({ state: card.state, intervalDays: card.interval_days })),
+  );
+  const topCards = mostReviewedCards(
+    (logs as { card_id: string | null }[]).map((log) => ({ cardId: log.card_id })),
+    cards.map((card) => ({ id: card.id, front: card.front })),
+  );
+  const peak = Math.max(1, ...levels.map((level) => level.count));
 
   return (
     <>
       <header className="flex flex-wrap items-center gap-4">
-        {/* Une initiale sur un aplat de la palette : un avatar générique en niveaux de gris est le
-            détail qui fait « écran de réglages ». */}
         <span
           aria-hidden
           className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[22px] font-bold text-accent"
@@ -83,21 +95,25 @@ export default async function ProfilePage() {
         </div>
       </header>
 
-      {/* La ligne qui dit si le travail paye. L'acquis passe devant le total : trois compteurs de
-          même taille laissent chercher lequel compte. */}
-      <section className="mt-9 grid gap-3 sm:grid-cols-[1.4fr_1fr_1fr]">
+      <section className="mt-9 grid gap-3 sm:grid-cols-[1.4fr_1fr]">
         <div className="rounded-group bg-ink p-6 text-on-ink">
-          <p className="eyebrow text-on-ink-muted">🏆 Cartes acquises</p>
-          <p className="numeral mt-3 text-[42px] font-bold leading-none">{mature}</p>
+          <p className="eyebrow text-on-ink-muted">🔥 Série</p>
+          <p className="numeral mt-3 text-[42px] font-bold leading-none">{series}</p>
           <p className="mt-2 text-[13px] text-on-ink-muted">
-            {cards.length === 0
-              ? "Aucune carte pour l'instant."
-              : `${share} % de tes ${cards.length} cartes ont dépassé trois semaines d'intervalle.`}
+            {series === 0
+              ? "Ta première carte notée lance la série."
+              : series === 1
+                ? "1 jour de série"
+                : `${series} jours de série`}
+            {record > series ? ` · record ${record}` : ""}
           </p>
         </div>
 
-        <Tile value={courses.length} label={courses.length === 1 ? "📚 cours" : "📚 cours"} />
-        <Tile value={reviews ?? 0} label={reviews === 1 ? "🔁 révision" : "🔁 révisions"} />
+        <Tile
+          value={cards.length}
+          label={cards.length === 1 ? "🃏 carte" : "🃏 cartes"}
+          hint={courses.length === 1 ? "1 cours" : `${courses.length} cours`}
+        />
       </section>
 
       {due > 0 ? (
@@ -123,6 +139,61 @@ export default async function ProfilePage() {
         </Link>
       ) : null}
 
+      <section className="mt-8">
+        <p className="eyebrow mb-3 text-ink-tertiary">Niveau de connaissance</p>
+        {cards.length === 0 ? (
+          <p className="paper rounded-group bg-surface px-5 py-4 text-[14.5px] text-ink-secondary">
+            Tes cartes se rangeront ici : nouvelles, en cours, en révision, parfaitement
+            maîtrisées.
+          </p>
+        ) : (
+          <div className="paper rounded-group bg-surface px-5 py-5">
+            <div className="flex h-36 items-end gap-3">
+              {levels.map((level) => (
+                <div key={level.id} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                  <span className="numeral text-[13px] font-semibold text-ink">{level.count}</span>
+                  <div className="flex h-24 w-full items-end">
+                    <div
+                      className={`w-full rounded-t-md ${barTone(level.id)}`}
+                      style={{
+                        height: `${Math.max(level.count > 0 ? 8 : 4, Math.round((level.count / peak) * 100))}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="text-center text-[11px] leading-tight text-ink-tertiary">
+                    {level.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-8">
+        <p className="eyebrow mb-3 text-ink-tertiary">Cartes les plus passées</p>
+        {topCards.length === 0 ? (
+          <p className="paper rounded-group bg-surface px-5 py-4 text-[14.5px] text-ink-secondary">
+            Note tes premières cartes pour voir celles que tu revois le plus.
+          </p>
+        ) : (
+          <ol className="paper divide-y divide-hairline overflow-hidden rounded-group bg-surface">
+            {topCards.map((card, index) => (
+              <li key={card.id} className="flex items-baseline gap-3.5 px-5 py-3.5">
+                <span className="numeral w-5 shrink-0 text-[13px] text-ink-tertiary">
+                  {index + 1}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[14.5px] text-ink">{card.front}</span>
+                <span className="shrink-0 text-[13px] text-ink-tertiary">
+                  <span className="numeral font-medium text-ink">{card.passes}</span>{" "}
+                  passage{card.passes > 1 ? "s" : ""}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+
       <div className="mt-10 grid gap-3 lg:grid-cols-2">
         <section>
           <p className="eyebrow mb-3 text-ink-tertiary">Ce que Micabo sait de toi</p>
@@ -143,9 +214,6 @@ export default async function ProfilePage() {
             />
           </dl>
 
-          {/* Les examens ont leur propre onglet : le mode examen est la fonctionnalité que
-              personne d'autre n'a, et une fonctionnalité rangée dans les réglages ne se trouve
-              pas. Il n'en reste ici que le compte, et le lien. */}
           {exams.length > 0 ? (
             <Link
               href={"/app/examens" as never}
@@ -178,11 +246,25 @@ export default async function ProfilePage() {
   );
 }
 
-function Tile({ value, label }: { value: number; label: string }) {
+function barTone(level: string): string {
+  switch (level) {
+    case "new":
+      return "bg-ink-tertiary/35";
+    case "learning":
+      return "bg-accent";
+    case "review":
+      return "bg-caution";
+    default:
+      return "bg-ink";
+  }
+}
+
+function Tile({ value, label, hint }: { value: number; label: string; hint?: string }) {
   return (
     <div className="paper flex flex-col justify-center rounded-group bg-surface p-6">
       <p className="numeral text-[32px] font-bold leading-none text-ink">{value}</p>
       <p className="mt-1.5 text-[13px] text-ink-tertiary">{label}</p>
+      {hint ? <p className="mt-1 text-[12px] text-ink-tertiary">{hint}</p> : null}
     </div>
   );
 }
@@ -195,5 +277,3 @@ function Row({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
-

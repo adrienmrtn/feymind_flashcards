@@ -33,11 +33,6 @@ struct ProfileView: View {
 
     private var reviewDates: [Date] { logs.map(\.reviewedAt) }
 
-    /// Quinze jours et non quatorze : deux semaines pleines, plus aujourd'hui. Une fenêtre
-    /// paire fait commencer la courbe un jour de semaine différent de celui où elle finit, et
-    /// on ne compare alors pas des semaines entre elles.
-    private static let activityDays = 15
-
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView {
@@ -45,6 +40,8 @@ struct ProfileView: View {
                     header
                     streakPanel
                     totalsStrip
+                    knowledgeChart
+                    mostReviewed
                     friendsRow
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
@@ -140,9 +137,6 @@ struct ProfileView: View {
             } else {
                 streakReadout
             }
-
-            activityChart
-                .padding(.top, 4)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -203,70 +197,133 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - La courbe
+    // MARK: - Le volume
 
-    private var activityChart: some View {
-        let counts = StudyStats.dailyCounts(reviewDates: reviewDates, days: Self.activityDays)
-        let maximum = max(counts.max() ?? 1, 1)
-        let total = counts.reduce(0, +)
-
-        return VStack(alignment: .leading, spacing: 9) {
-            HStack(alignment: .bottom, spacing: 5) {
-                ForEach(Array(counts.enumerated()), id: \.offset) { index, count in
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(barColor(count: count, isToday: index == counts.count - 1))
-                        .frame(height: max(4, CGFloat(count) / CGFloat(maximum) * 58))
-                        .frame(maxWidth: .infinity)
-                }
-            }
-            .frame(height: 58, alignment: .bottom)
-            .accessibilityElement()
-            .accessibilityLabel("\(total) révisions sur les \(Self.activityDays) derniers jours")
-
-            HStack(spacing: 0) {
-                // Ce que la courbe compte, ce sont des **révisions** et non des cartes : la
-                // même carte revue trois fois compte trois fois, et le lexique de l'app
-                // distingue les deux.
-                Text(total == 0 ? "Quinze derniers jours" : "\(total) révision\(total > 1 ? "s" : "") sur quinze jours")
-                    .font(MicaboFont.hanken(12, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-
-                Spacer(minLength: MicaboSpacing.xs)
-
-                Text("aujourd'hui")
-                    .font(MicaboFont.hanken(12, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkTertiary.opacity(0.7))
-            }
-        }
-    }
-
-    private func barColor(count: Int, isToday: Bool) -> Color {
-        if count == 0 { return MicaboColor.surfaceMuted }
-        // Une colonne d'histogramme est une surface, pas un filet : c'est le vert du logo
-        // qui la remplit, et celui du jour est le plus franc de la rangée.
-        if isToday { return MicaboColor.accentVivid }
-        return MicaboColor.accentVivid.opacity(0.4)
-    }
-
-    // MARK: - La bande de chiffres
-
-    /// **Trois totaux dans une seule surface**, séparés par des filets, et non trois cartes.
-    ///
-    /// Quatre tuiles blanches en grille donnaient quatre objets à peser, alors qu'il n'y a
-    /// qu'une information : où en est la collection. Une bande se lit d'un seul balayage, et
-    /// la série n'y figure plus — elle est le sujet du panneau du dessus, elle n'a pas à être
-    /// aussi une case de tableau.
+    /// Le nombre de cartes, et le nombre de cours. Les révisions n'y figurent plus :
+    /// elles se lisent déjà dans la série, et dans les cartes les plus passées.
     private var totalsStrip: some View {
         HStack(spacing: 0) {
-            total(formattedCount(logs.count), logs.count == 1 ? "révision" : "révisions")
+            total("\(cards.count)", cards.count == 1 ? "carte" : "cartes")
             columnDivider
             total("\(courses.count)", courses.count == 1 ? "cours" : "cours")
-            columnDivider
-            total("\(cards.count)", cards.count == 1 ? "carte" : "cartes")
         }
         .padding(.vertical, 15)
         .frame(maxWidth: .infinity)
         .micaboGroup(radius: MicaboRadius.md)
+    }
+
+    // MARK: - La maîtrise
+
+    private var knowledgeChart: some View {
+        let buckets = StudyStats.knowledgeDistribution(cards: cards)
+        let peak = max(buckets.map(\.count).max() ?? 1, 1)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            Text("Niveau de connaissance")
+                .font(MicaboFont.hanken(12, weight: .semibold))
+                .foregroundStyle(MicaboColor.inkTertiary)
+                .textCase(.uppercase)
+                .tracking(0.6)
+
+            if cards.isEmpty {
+                Text("Tes cartes se rangeront ici : nouvelles, en cours, en révision, parfaitement maîtrisées.")
+                    .font(MicaboFont.hanken(13.5, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                HStack(alignment: .bottom, spacing: 10) {
+                    ForEach(buckets, id: \.level) { bucket in
+                        VStack(spacing: 6) {
+                            Text("\(bucket.count)")
+                                .font(MicaboFont.number(13, weight: .semibold))
+                                .foregroundStyle(MicaboColor.ink)
+                                .monospacedDigit()
+
+                            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                .fill(knowledgeColor(bucket.level, empty: bucket.count == 0))
+                                .frame(height: max(bucket.count > 0 ? 8 : 4, CGFloat(bucket.count) / CGFloat(peak) * 88))
+
+                            Text(bucket.level.label)
+                                .font(MicaboFont.hanken(10.5, weight: .medium))
+                                .foregroundStyle(MicaboColor.inkTertiary)
+                                .multilineTextAlignment(.center)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.8)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+                .frame(height: 132, alignment: .bottom)
+                .accessibilityElement()
+                .accessibilityLabel(buckets.map { "\($0.count) \($0.level.label)" }.joined(separator: ", "))
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .micaboGroup()
+    }
+
+    private func knowledgeColor(_ level: StudyStats.KnowledgeLevel, empty: Bool) -> Color {
+        if empty { return MicaboColor.surfaceMuted }
+        switch level {
+        case .new: return MicaboColor.inkTertiary.opacity(0.45)
+        case .learning: return MicaboColor.accent
+        case .review: return MicaboColor.caution
+        case .mastered: return MicaboColor.ink
+        }
+    }
+
+    // MARK: - Les plus passées
+
+    private var mostReviewed: some View {
+        let top = StudyStats.mostReviewed(from: logs)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            Text("Cartes les plus passées")
+                .font(MicaboFont.hanken(12, weight: .semibold))
+                .foregroundStyle(MicaboColor.inkTertiary)
+                .textCase(.uppercase)
+                .tracking(0.6)
+
+            if top.isEmpty {
+                Text("Note tes premières cartes pour voir celles que tu revois le plus.")
+                    .font(MicaboFont.hanken(13.5, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(top.enumerated()), id: \.offset) { index, entry in
+                        HStack(alignment: .firstTextBaseline, spacing: 12) {
+                            Text("\(index + 1)")
+                                .font(MicaboFont.number(13, weight: .medium))
+                                .foregroundStyle(MicaboColor.inkTertiary)
+                                .monospacedDigit()
+                                .frame(width: 18, alignment: .leading)
+
+                            Text(FormulaRenderer.stripped(entry.front))
+                                .font(MicaboFont.hanken(14.5, weight: .medium))
+                                .foregroundStyle(MicaboColor.ink)
+                                .lineLimit(2)
+
+                            Spacer(minLength: 8)
+
+                            Text("\(entry.passes) passage\(entry.passes > 1 ? "s" : "")")
+                                .font(MicaboFont.hanken(12.5, weight: .medium))
+                                .foregroundStyle(MicaboColor.inkTertiary)
+                                .monospacedDigit()
+                        }
+                        .padding(.vertical, 12)
+
+                        if index < top.count - 1 {
+                            MicaboHairline()
+                        }
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .micaboGroup()
     }
 
     private func total(_ value: String, _ label: String) -> some View {
@@ -289,13 +346,6 @@ struct ProfileView: View {
         Rectangle()
             .fill(MicaboColor.hairline)
             .frame(width: 1, height: 30)
-    }
-
-    private func formattedCount(_ value: Int) -> String {
-        let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.numberStyle = .decimal
-        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 
     // MARK: - Amis

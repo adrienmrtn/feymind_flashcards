@@ -58,4 +58,12 @@ final class StudyStatsTests: XCTestCase {
         )
         XCTAssertEqual(counts, [1, 0, 2])
     }
+
+    func testKnowledgeLevelSplitsNewLearningReviewAndMastered() {
+        XCTAssertEqual(StudyStats.knowledgeLevel(state: .new, intervalDays: 0), .new)
+        XCTAssertEqual(StudyStats.knowledgeLevel(state: .learning, intervalDays: 0), .learning)
+        XCTAssertEqual(StudyStats.knowledgeLevel(state: .relearning, intervalDays: 2), .learning)
+        XCTAssertEqual(StudyStats.knowledgeLevel(state: .review, intervalDays: 6), .review)
+        XCTAssertEqual(StudyStats.knowledgeLevel(state: .review, intervalDays: 21), .mastered)
+    }
 }

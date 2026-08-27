@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { courseAccent, entitlement, resolveEmoji } from "@micabo/core";
+import { courseAccent, courseAudienceLabel, entitlement, resolveEmoji } from "@micabo/core";
 
 import { GenerateCards } from "@/components/app/GenerateCards";
 import { ReviewCta } from "@/components/app/ReviewCta";
@@ -49,7 +49,13 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
 
         <div className="min-w-0 flex-1">
           <p className="eyebrow text-ink-tertiary">
-            {[course.subject, readingTime(course.context_text)].filter(Boolean).join(" · ")}
+            {[
+              course.subject,
+              readingTime(course.context_text),
+              courseAudienceLabel(course.view_count ?? 0, course.adopt_count ?? 0),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
           <h1 className="mt-1.5 text-[30px] font-bold leading-tight text-ink">{course.title}</h1>
         </div>

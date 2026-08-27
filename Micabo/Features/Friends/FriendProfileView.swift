@@ -117,6 +117,7 @@ struct FriendProfileView: View {
         if let count = cardCounts[course.id], count > 0 {
             parts.append(MicaboCopy.cards(count))
         }
+        parts.append(MicaboCopy.audience(of: course))
         return parts.isEmpty ? "Cours partagé" : parts.joined(separator: " · ")
     }
 

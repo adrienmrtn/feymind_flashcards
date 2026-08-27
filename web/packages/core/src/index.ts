@@ -132,6 +132,22 @@ export {
   type ExamProjection,
 } from "./srs/exam";
 
+// Les séries, les niveaux de connaissance, et l'audience d'un cours.
+export {
+  KNOWLEDGE_LEVELS,
+  KNOWLEDGE_LEVEL_LABELS,
+  bestStreak,
+  courseAudienceLabel,
+  knowledgeDistribution,
+  knowledgeLevel,
+  mostReviewedCards,
+  streak,
+  type KnowledgeBucket,
+  type KnowledgeCard,
+  type KnowledgeLevel,
+  type ReviewedCard,
+} from "./stats";
+
 // La courbe de l'oubli, pour la page d'accueil.
 export {
   HORIZON_DAYS,

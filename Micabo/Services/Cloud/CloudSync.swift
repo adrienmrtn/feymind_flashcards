@@ -260,6 +260,8 @@ final class CloudSync {
         }
         course.createdAt = remote.created_at
         course.updatedAt = remote.updated_at
+        if let views = remote.view_count { course.viewCount = views }
+        if let adopts = remote.adopt_count { course.adoptCount = adopts }
     }
 
     private func record(for card: Flashcard, userID: UUID) -> FlashcardRecord {

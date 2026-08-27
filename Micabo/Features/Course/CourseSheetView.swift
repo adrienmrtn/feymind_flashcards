@@ -154,6 +154,7 @@ struct CourseSheetView: View {
         var parts: [String] = []
         if let subject = course.subject?.nilIfBlank { parts.append(subject) }
         if let sheet { parts.append("\(sheet.readingMinutes) min de lecture") }
+        parts.append(MicaboCopy.audience(of: course))
         return parts.isEmpty ? MicaboCopy.cards(cards.count) : parts.joined(separator: " · ")
     }
 

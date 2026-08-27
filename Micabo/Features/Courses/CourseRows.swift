@@ -27,9 +27,11 @@ extension MicaboRow {
 /// Ce qu'une rangée de cours raconte : la matière, le volume, et l'état de la file.
 enum CourseRowLabels {
     static func meta(for course: Course) -> String {
-        let cards = MicaboCopy.cards(course.cards.count)
-        guard let subject = course.subject?.nilIfBlank else { return cards }
-        return "\(subject) · \(cards)"
+        var parts: [String] = []
+        if let subject = course.subject?.nilIfBlank { parts.append(subject) }
+        parts.append(MicaboCopy.cards(course.cards.count))
+        parts.append(MicaboCopy.audience(of: course))
+        return parts.joined(separator: " · ")
     }
 
     static func accessory(for course: Course) -> MicaboRowAccessory {

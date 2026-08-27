@@ -8,7 +8,6 @@ import {
   buildQueue,
   entitlement,
   resolveEmoji,
-  sessionNewSliderMax,
   type CardState,
 } from "@micabo/core";
 
@@ -61,9 +60,12 @@ export function ReviewSetup({
   remaining: number;
   isPro: boolean;
 }) {
-  const [freshCap, setFreshCap] = useState(remaining);
-  const sliderMax = sessionNewSliderMax(rhythmNew);
   const now = useMemo(() => new Date(), []);
+  const dueNew = cards.filter(
+    (card) => !card.isSuspended && card.state === "new" && new Date(card.dueDate) <= now,
+  ).length;
+  const sliderMax = dueNew;
+  const [freshCap, setFreshCap] = useState(() => Math.min(remaining, dueNew));
 
   const deadlines = useMemo(
     () =>
@@ -107,9 +109,6 @@ export function ReviewSetup({
   const again = queue.length - fresh;
   const cap = isPro ? queue.length : entitlement.FREE_TIER.cardsPerSession;
   const served = Math.min(queue.length, cap);
-  const dueNew = cards.filter(
-    (card) => !card.isSuspended && card.state === "new" && new Date(card.dueDate) <= now,
-  ).length;
   const heldBack = Math.max(0, dueNew - fresh);
 
   const involved = courses.filter((course) =>
@@ -165,34 +164,40 @@ export function ReviewSetup({
         <Tile value={fresh} label={fresh === 1 ? "nouvelle" : "nouvelles"} accent />
       </dl>
 
-      <section className="rise mt-8" style={{ animationDelay: "140ms" }}>
-        <div className="flex items-baseline justify-between gap-3">
-          <label htmlFor="session-new-cards" className="text-[13px] text-ink-tertiary">
-            Cartes neuves de cette session
-          </label>
-          <p className="text-[13px] font-medium text-ink">
-            <span className="numeral">{freshCap}</span>
-            <span className="text-ink-tertiary"> · {rhythmNew} prévues par ton rythme</span>
+      {sliderMax > 0 ? (
+        <section className="rise mt-8" style={{ animationDelay: "140ms" }}>
+          <div className="flex items-baseline justify-between gap-3">
+            <label htmlFor="session-new-cards" className="text-[13px] text-ink-tertiary">
+              Cartes neuves de cette session
+            </label>
+            <p className="text-[13px] font-medium text-ink">
+              <span className="numeral">{Math.min(freshCap, sliderMax)}</span>
+              <span className="text-ink-tertiary">
+                {" "}
+                · {sliderMax} disponible{sliderMax > 1 ? "s" : ""}
+                {rhythmNew > 0 ? ` · ${rhythmNew} prévues par ton rythme` : ""}
+              </span>
+            </p>
+          </div>
+          <input
+            id="session-new-cards"
+            type="range"
+            min={0}
+            max={sliderMax}
+            value={Math.min(freshCap, sliderMax)}
+            onChange={(event) => setFreshCap(Number(event.target.value))}
+            className="mt-4 w-full accent-[var(--color-accent)]"
+          />
+          <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-tertiary">
+            {introducedToday > 0
+              ? `${introducedToday} déjà apprise${introducedToday > 1 ? "s" : ""} aujourd'hui. Le curseur ne change que cette session.`
+              : "Le maximum, c'est le nombre de cartes neuves encore disponibles."}
+            {heldBack > 0 && freshCap < dueNew
+              ? ` ${heldBack} neuve${heldBack > 1 ? "s" : ""} restent pour plus tard.`
+              : ""}
           </p>
-        </div>
-        <input
-          id="session-new-cards"
-          type="range"
-          min={0}
-          max={sliderMax}
-          value={Math.min(freshCap, sliderMax)}
-          onChange={(event) => setFreshCap(Number(event.target.value))}
-          className="mt-4 w-full accent-[var(--color-accent)]"
-        />
-        <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-tertiary">
-          {introducedToday > 0
-            ? `${introducedToday} déjà apprise${introducedToday > 1 ? "s" : ""} aujourd'hui. Le curseur ne change que cette session.`
-            : "Le nombre de base est celui de ton rythme. Tu peux en prendre plus, ou moins."}
-          {heldBack > 0 && freshCap < dueNew
-            ? ` ${heldBack} neuve${heldBack > 1 ? "s" : ""} restent pour plus tard.`
-            : ""}
-        </p>
-      </section>
+        </section>
+      ) : null}
 
       {involved.length > 0 ? (
         <section className="rise mt-8" style={{ animationDelay: "180ms" }}>

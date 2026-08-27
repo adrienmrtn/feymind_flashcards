@@ -203,6 +203,11 @@ export async function adoptSharedCourse(courseId: string): Promise<SocialResult>
 
   if (error) return { status: "error", message: error.message };
 
+  await supabase.rpc("record_course_adopt", { p_course_id: courseId }).then(
+    () => undefined,
+    () => undefined,
+  );
+
   await copySharedCards(supabase, {
     sourceCourseId: courseId,
     targetCourseId: id,
