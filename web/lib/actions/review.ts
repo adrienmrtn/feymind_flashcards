@@ -10,6 +10,7 @@ import {
   type ReviewRating as Rating,
 } from "@micabo/core";
 
+import { revalidateUserData } from "@/lib/data/cache";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -75,6 +76,8 @@ export async function gradeCard(input: {
     .eq("id", input.cardId);
 
   if (error) return { status: "error", message: error.message };
+
+  revalidateUserData(user.id, "cards");
 
   // L'historique est en ajout seul, et son échec ne doit pas défaire la révision : perdre une
   // ligne de statistiques est moins grave que faire repasser une carte qu'on vient de noter.

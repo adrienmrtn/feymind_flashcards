@@ -1,7 +1,7 @@
 import { resolveEmoji } from "@micabo/core";
 
 import { ExamWorkspace } from "@/components/app/exams/ExamWorkspace";
-import { listAllCards, listCourses, listExams } from "@/lib/data/courses";
+import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 
 /**
  * Les examens, **sur un calendrier.**
@@ -11,7 +11,11 @@ import { listAllCards, listCourses, listExams } from "@/lib/data/courses";
  * avec un emoji qui change, parce que trois pastilles se lisent moins bien à la souris.
  */
 export default async function ExamsPage() {
-  const [exams, courses, cards] = await Promise.all([listExams(), listCourses(), listAllCards()]);
+  const [exams, courses, cards] = await Promise.all([
+    listExams(),
+    listCourses(),
+    listCardSnapshots(),
+  ]);
 
   const mine = courses.filter((course) => !course.is_from_library);
   const counts = new Map<string, number>();

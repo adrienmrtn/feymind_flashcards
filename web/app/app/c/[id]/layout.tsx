@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { resolveEmoji } from "@micabo/core";
 
 import { OpenCourse } from "@/components/app/OpenCourse";
-import { getCourse } from "@/lib/data/courses";
+import { getCourseMeta } from "@/lib/data/courses";
 
 /**
  * Ce qui épingle un cours dans la barre.
@@ -19,7 +19,7 @@ export default async function CourseLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const course = await getCourse(id);
+  const course = await getCourseMeta(id);
   if (!course) notFound();
 
   return (

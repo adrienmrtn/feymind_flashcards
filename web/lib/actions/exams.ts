@@ -9,6 +9,7 @@ import {
   type ExamIntensity,
 } from "@micabo/core";
 
+import { revalidateUserData } from "@/lib/data/cache";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -164,7 +165,7 @@ export async function saveExam(input: {
 
   if (error) return { status: "error", message: error.message };
 
-  revalidateExams();
+  revalidateExams(user.id);
   return { status: "ok", examId };
 }
 
@@ -206,7 +207,7 @@ export async function deleteExam(examId: string): Promise<ExamWriteResult> {
 
   if (error) return { status: "error", message: error.message };
 
-  revalidateExams();
+  revalidateExams(user.id);
   return { status: "ok", examId };
 }
 
@@ -232,7 +233,9 @@ function asIntensity(value: string): ExamIntensity {
   return value === "light" || value === "intense" || value === "standard" ? value : "standard";
 }
 
-function revalidateExams() {
+function revalidateExams(userId: string) {
+  revalidateUserData(userId, "exams");
+  revalidateUserData(userId, "cards");
   revalidatePath("/app");
   revalidatePath("/app/examens");
   revalidatePath("/app/reviser");

@@ -20,6 +20,13 @@ const config: NextConfig = {
     serverActions: {
       bodySizeLimit: "2mb",
     },
+    // Next 15+ a mis ce délai à 0 : chaque clic attendait le serveur, même pour une
+    // page visitée il y a dix secondes. Trente secondes suffisent à rendre la barre
+    // instantanée, sans garder une session périmée.
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
   },
 
   async headers() {

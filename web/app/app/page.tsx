@@ -17,15 +17,16 @@ import {
 } from "@micabo/core";
 
 import {
-  listAllCards,
+  listCardSnapshots,
   listCourses,
   listExams,
   listPendingFriendRequests,
-  type CardRow,
+  type CardSnapshotRow,
   type CourseRow,
   type ExamRow,
   type FriendRequestRow,
 } from "@/lib/data/courses";
+import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -38,13 +39,11 @@ import { createClient } from "@/lib/supabase/server";
  */
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await currentUser();
 
   const [courses, cards, exams, friends, profile] = await Promise.all([
     listCourses(),
-    listAllCards(),
+    listCardSnapshots(),
     listExams(),
     listPendingFriendRequests(),
     user
@@ -264,7 +263,7 @@ function HardCards({
   cards,
   courses,
 }: {
-  cards: CardRow[];
+  cards: CardSnapshotRow[];
   courses: Map<string, CourseRow>;
 }) {
   return (

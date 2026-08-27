@@ -12,6 +12,7 @@ import {
   type SheetLength,
 } from "@micabo/core";
 
+import { revalidateUserData } from "@/lib/data/cache";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -72,6 +73,7 @@ export async function updateSettings(input: {
 
   if (error) return { status: "error", message: error.message };
 
+  revalidateUserData(user.id, "profile");
   revalidatePath("/app/profil");
   revalidatePath("/app/importer");
   return { status: "ok" };
@@ -107,6 +109,7 @@ export async function setCourseVisibility(
 
   if (error) return { status: "error", message: error.message };
 
+  revalidateUserData(user.id, "courses");
   revalidatePath(`/app/c/${courseId}`);
   revalidatePath("/app");
   return { status: "ok" };
