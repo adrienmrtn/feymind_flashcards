@@ -25,21 +25,22 @@ struct SharedCourseRoute: Hashable {
 /// le même surlignage. Un cours repris ne doit pas se lire différemment de ses cours, sinon on
 /// hésite à le reprendre.
 ///
-/// Deux choses manquent, et les deux volontairement. On ne sélectionne pas un passage pour le
-/// faire expliquer : c'est une action qui dépense un appel au modèle, et elle a sa place sur un
-/// cours qu'on a décidé de réviser. Et il n'y a pas de cartes : celles de l'auteur ne sont pas
-/// transportées, parce que son état de répétition espacée dit exactement ce qu'il sait mal.
+/// On ne sélectionne pas un passage pour le faire expliquer : c'est une action qui
+/// dépense un appel au modèle, et elle a sa place sur un cours qu'on a décidé de réviser.
+/// Les cartes, elles, se voient et se reprennent — neuves, sans l'état de l'auteur.
 struct SharedCourseView: View {
     let route: SharedCourseRoute
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(SocialService.self) private var social
 
     /// Appelé avec le cours créé localement, pour que l'appelant l'ouvre.
     var onAdopted: (Course) -> Void
 
     @State private var sheet: CourseSheet?
     @State private var existing: Course?
+    @State private var cards: [SharedCardRecord] = []
     @State private var failure: String?
 
     private var course: SharedCourseRecord { route.course }
@@ -55,6 +56,7 @@ struct SharedCourseView: View {
                 header
                 lead
                 content
+                cardsSection
             }
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.top, MicaboSpacing.xs)
@@ -74,6 +76,7 @@ struct SharedCourseView: View {
             // ne pas faire.
             sheet = CourseSheet.decode(from: course.sheet?.data)?.highlighted()
             existing = CourseRepository.adopted(course, in: modelContext)
+            cards = await social.cards(of: course.id)
         }
         .alert("Oups", isPresented: .constant(failure != nil)) {
             Button("Fermer", role: .cancel) { failure = nil }
@@ -106,6 +109,7 @@ struct SharedCourseView: View {
         if let author = route.author { parts.append(author.handle) }
         if let subject = course.subject?.nilIfBlank { parts.append(subject) }
         if let sheet { parts.append("\(sheet.readingMinutes) min de lecture") }
+        if !cards.isEmpty { parts.append(MicaboCopy.cards(cards.count)) }
         return parts.isEmpty ? "Cours partagé" : parts.joined(separator: " · ")
     }
 
@@ -151,13 +155,46 @@ struct SharedCourseView: View {
         .padding(.top, MicaboSpacing.lg)
     }
 
+    @ViewBuilder
+    private var cardsSection: some View {
+        if !cards.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                MicaboSectionCaption(text: "Cartes · \(cards.count)")
+
+                VStack(spacing: 0) {
+                    ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(FormulaRenderer.stripped(card.front))
+                                .font(MicaboFont.hanken(14, weight: .medium))
+                                .foregroundStyle(MicaboColor.ink)
+                                .multilineTextAlignment(.leading)
+                            Text(FormulaRenderer.stripped(card.back))
+                                .font(MicaboFont.hanken(13, weight: .regular))
+                                .foregroundStyle(MicaboColor.inkSecondary)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 14)
+                        .padding(.horizontal, MicaboSpacing.md)
+
+                        if index < cards.count - 1 {
+                            MicaboHairline(inset: MicaboSpacing.md)
+                        }
+                    }
+                }
+                .micaboGroup()
+            }
+            .padding(.top, MicaboSpacing.xl)
+        }
+    }
+
     // MARK: - Reprendre
 
     private var bottomBar: some View {
         MicaboBottomBar {
-            if let existing {
+            if existing != nil {
                 Button {
-                    onAdopted(existing)
+                    adopt()
                 } label: {
                     HStack(spacing: MicaboSpacing.xs) {
                         Image(systemName: "checkmark")
@@ -173,7 +210,7 @@ struct SharedCourseView: View {
                     HStack(spacing: MicaboSpacing.xs) {
                         Image(systemName: "square.and.arrow.down")
                             .font(.system(size: 13, weight: .semibold))
-                        Text("Ajouter à mes cours")
+                        Text("Ajouter le cours et les cartes")
                     }
                 }
                 .buttonStyle(MicaboPrimaryButtonStyle())
@@ -183,9 +220,20 @@ struct SharedCourseView: View {
 
     private func adopt() {
         do {
+            if let existing {
+                if existing.cards.isEmpty {
+                    _ = CourseRepository.attach(cards, to: existing, in: modelContext)
+                    try modelContext.save()
+                }
+                Haptics.success()
+                onAdopted(existing)
+                return
+            }
+
             let adopted = try CourseRepository.adopt(
                 course,
                 from: route.author?.username,
+                cards: cards,
                 in: modelContext
             )
             Haptics.success()

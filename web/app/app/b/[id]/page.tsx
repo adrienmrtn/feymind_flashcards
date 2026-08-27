@@ -4,23 +4,30 @@ import { notFound } from "next/navigation";
 import { courseAccent, displayUsername, resolveEmoji } from "@micabo/core";
 
 import { AdoptCourse } from "@/components/app/AdoptCourse";
+import { SharedCardsPreview } from "@/components/app/SharedCardsPreview";
 import { SheetBlocks } from "@/components/sheet/SheetBlocks";
-import { findAdoptedCourse, getDirectoryById, getSharedCourse } from "@/lib/data/social";
+import {
+  findAdoptedCourse,
+  getDirectoryById,
+  getSharedCourse,
+  listSharedCards,
+} from "@/lib/data/social";
 
 /**
  * La fiche de quelqu'un d'autre, en lecture, avec un bouton pour la reprendre.
  *
- * Pas d'explication de passage, pas de cartes : celles de l'auteur disent ce
- * qu'il sait mal. On reprend la fiche, on écrit les siennes.
+ * On voit la fiche **et** les cartes. Les reprendre les copie neuves : le contenu
+ * devient le sien, pas l'état de répétition de l'auteur.
  */
 export default async function SharedCoursePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const course = await getSharedCourse(id);
   if (!course) notFound();
 
-  const [author, alreadyId] = await Promise.all([
+  const [author, alreadyId, cards] = await Promise.all([
     getDirectoryById(course.userId),
     findAdoptedCourse(course.title),
+    listSharedCards(course.id),
   ]);
 
   const tint = course.accentHex ?? courseAccent(course.id);
@@ -37,7 +44,11 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
         </span>
         <div className="min-w-0 flex-1">
           <p className="eyebrow text-ink-tertiary">
-            {[course.subject, author ? displayUsername(author.username) : null]
+            {[
+              course.subject,
+              author ? displayUsername(author.username) : null,
+              cards.length > 0 ? `${cards.length} carte${cards.length > 1 ? "s" : ""}` : null,
+            ]
               .filter(Boolean)
               .join(" · ")}
           </p>
@@ -54,7 +65,9 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
       <div className="mt-7" data-print="hide">
         <AdoptCourse courseId={course.id} alreadyId={alreadyId} />
         <p className="mt-3 text-center text-[12.5px] text-ink-tertiary">
-          La fiche devient la tienne. Les cartes, tu les écris ensuite.
+          {cards.length > 0
+            ? "La fiche et les cartes deviennent les tiennes. Tu les révises à zéro."
+            : "La fiche devient la tienne."}
         </p>
       </div>
 
@@ -66,6 +79,10 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
             Cette fiche n&apos;est plus lisible.
           </p>
         )}
+      </div>
+
+      <div className="mt-10" data-print="hide">
+        <SharedCardsPreview cards={cards} />
       </div>
 
       <p className="mt-12 text-[13px] text-ink-tertiary" data-print="hide">

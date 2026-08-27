@@ -19,6 +19,7 @@ struct FriendProfileView: View {
     var onOpen: (SharedCourseRecord, SocialService.Person) -> Void
 
     @State private var courses: [SharedCourseRecord] = []
+    @State private var cardCounts: [UUID: Int] = [:]
     @State private var isLoading = true
 
     var body: some View {
@@ -46,7 +47,9 @@ struct FriendProfileView: View {
         .toolbar(.hidden, for: .tabBar)
         .enablesSwipeBack()
         .task {
-            courses = await social.courses(of: person)
+            let found = await social.courses(of: person)
+            courses = found
+            cardCounts = await social.cardCounts(of: found.map(\.id))
             isLoading = false
         }
     }
@@ -99,13 +102,22 @@ struct FriendProfileView: View {
                         tint: tint(for: course).darkened(by: 0.25)
                     ),
                     title: course.title,
-                    subtitle: course.subject?.nilIfBlank ?? "Cours partagé",
+                    subtitle: friendSubtitle(for: course),
                     accessory: .chevron
                 ) {
                     onOpen(course, person)
                 }
             })
         }
+    }
+
+    private func friendSubtitle(for course: SharedCourseRecord) -> String {
+        var parts: [String] = []
+        if let subject = course.subject?.nilIfBlank { parts.append(subject) }
+        if let count = cardCounts[course.id], count > 0 {
+            parts.append(MicaboCopy.cards(count))
+        }
+        return parts.isEmpty ? "Cours partagé" : parts.joined(separator: " · ")
     }
 
     private func tint(for course: SharedCourseRecord) -> Color {

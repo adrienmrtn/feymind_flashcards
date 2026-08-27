@@ -59,11 +59,16 @@ export default async function UserPage({ params }: { params: Promise<{ username:
                   <span className="block truncate text-[16px] font-semibold text-ink">
                     {course.title || "Sans titre"}
                   </span>
-                  {course.subject ? (
-                    <span className="mt-0.5 block truncate text-[13px] text-ink-tertiary">
-                      {course.subject}
-                    </span>
-                  ) : null}
+                  <span className="mt-0.5 block truncate text-[13px] text-ink-tertiary">
+                    {[
+                      course.subject,
+                      course.cardCount > 0
+                        ? `${course.cardCount} carte${course.cardCount > 1 ? "s" : ""}`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "Cours partagé"}
+                  </span>
                 </span>
               </Link>
             </li>

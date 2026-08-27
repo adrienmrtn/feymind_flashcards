@@ -99,13 +99,14 @@ enum CourseRepository {
     /// - **Privé par défaut.** Reprendre un cours ne donne pas le droit de le rediffuser sous
     ///   son propre nom. Il reste dans l'app de celui qui l'a repris, et c'est à lui de décider
     ///   ensuite s'il le repartage.
-    /// - **Sans les cartes.** Elles ne sont pas transportées, et ce n'est pas un manque :
-    ///   l'état de répétition espacée de quelqu'un d'autre dit exactement ce qu'il sait mal.
-    ///   Celui qui reprend le cours écrit les siennes depuis la fiche, ce qui lui sert mieux.
+    /// - **Les cartes viennent avec**, mais **neuves**. On copie le contenu — question,
+    ///   réponse, format — et on remet l'état de répétition à zéro. Ce que l'auteur savait
+    ///   mal reste chez lui.
     @discardableResult
     static func adopt(
         _ shared: SharedCourseRecord,
         from author: String?,
+        cards: [SharedCardRecord] = [],
         in context: ModelContext
     ) throws -> Course {
         let title = TextSanitizer.clean(shared.title).nilIfBlank ?? "Cours repris"
@@ -134,9 +135,62 @@ enum CourseRepository {
         course.visibility = .private
         course.fingerprint = CourseFingerprint.make(from: shared.raw_text)
         context.insert(course)
+        attach(cards, to: course, in: context)
 
         try context.save()
         return course
+    }
+
+    /// Recopie le contenu des cartes partagées, en laissant l'apprentissage à zéro.
+    /// Les cartes déjà présentes (même recto) ne sont pas doublées.
+    @discardableResult
+    static func attach(
+        _ cards: [SharedCardRecord],
+        to course: Course,
+        in context: ModelContext
+    ) -> [Flashcard] {
+        guard !cards.isEmpty else { return [] }
+
+        let existingFronts = Set(course.cards.map(\.front))
+        var groups: [UUID: UUID] = [:]
+        var position = (course.cards.map(\.position).max() ?? -1) + 1
+        var inserted: [Flashcard] = []
+
+        for remote in cards.sorted(by: { $0.position < $1.position }) {
+            let front = TextSanitizer.clean(remote.front)
+            let back = TextSanitizer.clean(remote.back)
+            guard !front.isEmpty, !back.isEmpty else { continue }
+            guard !existingFronts.contains(front) else { continue }
+
+            let card = Flashcard(
+                front: front,
+                back: back,
+                hint: remote.hint.map(TextSanitizer.clean)?.nilIfBlank,
+                position: position,
+                course: course
+            )
+            card.kind = CardKind(rawValue: remote.kind) ?? .basic
+            card.choices = remote.choices.map(TextSanitizer.clean).filter { !$0.isEmpty }
+            card.correctChoiceIndex = remote.correct_choice_index
+            card.maskX = remote.mask_x
+            card.maskY = remote.mask_y
+            card.maskWidth = remote.mask_width
+            card.maskHeight = remote.mask_height
+            card.isReversed = remote.is_reversed
+            if let oldGroup = remote.group_id {
+                if groups[oldGroup] == nil { groups[oldGroup] = UUID() }
+                card.groupID = groups[oldGroup]
+            }
+
+            context.insert(card)
+            inserted.append(card)
+            position += 1
+        }
+
+        if !inserted.isEmpty {
+            course.updatedAt = Date()
+        }
+        return inserted
     }
 
     /// Le cours repris est-il déjà là ?

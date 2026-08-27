@@ -28,6 +28,24 @@ export interface SharedCourse {
   accentHex: string | null;
   visibility: string;
   updatedAt: string;
+  cardCount: number;
+}
+
+export interface SharedCard {
+  id: string;
+  front: string;
+  back: string;
+  hint: string | null;
+  position: number;
+  kind: string;
+  choices: string[];
+  correct_choice_index: number;
+  mask_x: number;
+  mask_y: number;
+  mask_width: number;
+  mask_height: number;
+  group_id: string | null;
+  image_path: string | null;
 }
 
 export interface SharedCourseDetail extends SharedCourse {
@@ -247,7 +265,10 @@ export async function listLibraryCourses(options: {
   }
 
   const { data } = await query;
-  const courses = ((data as SharedCourseRow[] | null) ?? []).map(asShared);
+  const courses = await withCardCounts(
+    auth.token,
+    ((data as SharedCourseRow[] | null) ?? []).map(asShared),
+  );
   const authors = await directoryByIds(
     auth.token,
     [...new Set(courses.map((course) => course.userId))],
@@ -299,8 +320,32 @@ export async function listCoursesOf(userId: string): Promise<SharedCourse[]> {
     .order("updated_at", { ascending: false })
     .limit(60);
 
-  return ((data as SharedCourseRow[] | null) ?? []).map(asShared);
+  return withCardCounts(auth.token, ((data as SharedCourseRow[] | null) ?? []).map(asShared));
 }
+
+const SHARED_CARD_COLUMNS =
+  "id, front, back, hint, position, kind, choices, correct_choice_index, mask_x, mask_y, mask_width, mask_height, group_id, image_path";
+
+export const listSharedCards = cache(async (courseId: string): Promise<SharedCard[]> => {
+  const auth = await reader();
+  if (!auth) return [];
+
+  const { data } = await dataClient(auth.token)
+    .from("flashcards")
+    .select(SHARED_CARD_COLUMNS)
+    .eq("course_id", courseId)
+    .is("deleted_at", null)
+    .order("position", { ascending: true })
+    .limit(400);
+
+  return ((data as SharedCard[] | null) ?? []).map((card) => ({
+    ...card,
+    choices: card.choices ?? [],
+    hint: card.hint ?? null,
+    group_id: card.group_id ?? null,
+    image_path: card.image_path ?? null,
+  }));
+});
 
 export async function findAdoptedCourse(title: string): Promise<string | null> {
   const auth = await reader();
@@ -348,7 +393,32 @@ function asShared(row: SharedCourseRow): SharedCourse {
     accentHex: row.accent_hex,
     visibility: row.visibility,
     updatedAt: row.updated_at,
+    cardCount: 0,
   };
+}
+
+async function withCardCounts(token: string, courses: SharedCourse[]): Promise<SharedCourse[]> {
+  if (courses.length === 0) return courses;
+
+  const { data } = await dataClient(token)
+    .from("flashcards")
+    .select("course_id")
+    .in(
+      "course_id",
+      courses.map((course) => course.id),
+    )
+    .is("deleted_at", null);
+
+  const counts = new Map<string, number>();
+  for (const row of (data as { course_id: string | null }[] | null) ?? []) {
+    if (!row.course_id) continue;
+    counts.set(row.course_id, (counts.get(row.course_id) ?? 0) + 1);
+  }
+
+  return courses.map((course) => ({
+    ...course,
+    cardCount: counts.get(course.id) ?? 0,
+  }));
 }
 
 async function directoryByIds(token: string, ids: string[]): Promise<Map<string, DirectoryPerson>> {

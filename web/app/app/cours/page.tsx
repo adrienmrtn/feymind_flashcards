@@ -227,7 +227,13 @@ function LibraryPane({
                     {course.title || "Sans titre"}
                   </span>
                   <span className="mt-0.5 block truncate text-[13px] text-ink-tertiary">
-                    {[author ? displayUsername(author.username) : null, course.subject]
+                    {[
+                      author ? displayUsername(author.username) : null,
+                      course.subject,
+                      course.cardCount > 0
+                        ? `${course.cardCount} carte${course.cardCount > 1 ? "s" : ""}`
+                        : null,
+                    ]
                       .filter(Boolean)
                       .join(" · ")}
                   </span>

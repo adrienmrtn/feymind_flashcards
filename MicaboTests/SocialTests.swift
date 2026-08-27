@@ -239,6 +239,39 @@ final class SharedCourseAdoptionTests: XCTestCase {
         XCTAssertEqual(CourseRepository.adopted(first, in: context)?.id, one.id)
         XCTAssertEqual(CourseRepository.adopted(second, in: context)?.id, two.id)
     }
+
+    /// Reprendre un cours emporte ses cartes, mais les remet à neuf : on copie le
+    /// contenu, pas ce que l'auteur savait.
+    func testAdoptedCourseTakesTheAuthorsCardsAsNew() throws {
+        let remote = shared()
+        let sourceId = UUID()
+        let cards = [
+            SharedCardRecord(
+                id: sourceId,
+                front: "1914 → 1918",
+                back: "Première Guerre mondiale",
+                hint: nil,
+                position: 0,
+                kind: "basic",
+                choices: [],
+                correct_choice_index: 0,
+                mask_x: 0,
+                mask_y: 0,
+                mask_width: 0,
+                mask_height: 0,
+                group_id: nil,
+                is_reversed: false
+            )
+        ]
+
+        let adopted = try CourseRepository.adopt(remote, from: "camille", cards: cards, in: context)
+
+        XCTAssertEqual(adopted.cards.count, 1)
+        XCTAssertEqual(adopted.cards[0].front, "1914 → 1918")
+        XCTAssertEqual(adopted.cards[0].state, .new)
+        XCTAssertEqual(adopted.cards[0].repetitions, 0)
+        XCTAssertNotEqual(adopted.cards[0].id, sourceId)
+    }
 }
 
 /// Ce qui part dans un filtre PostgREST.

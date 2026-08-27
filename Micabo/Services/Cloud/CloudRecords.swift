@@ -121,12 +121,8 @@ struct CourseRecord: Codable {
 /// Un cours de quelqu'un d'autre, tel qu'on peut le lire.
 ///
 /// C'est volontairement moins qu'un `CourseRecord` : ni empreinte, ni couverture, ni
-/// horodatage de suppression. Ce qu'on reprend d'un cours partagé, c'est **sa fiche** — le
-/// reste appartient à celui qui l'a importé.
-///
-/// Les cartes n'y sont pas non plus, et ce n'est pas un oubli : l'état de répétition espacée
-/// de quelqu'un d'autre dit exactement ce qu'il sait mal, et il n'a rien à faire ici. Celui
-/// qui reprend le cours écrit ses propres cartes, ce qui lui sert mieux de toute façon.
+/// horodatage de suppression. Ce qu'on reprend d'un cours partagé, c'est **sa fiche**
+/// et le contenu de ses cartes — pas l'état de répétition de l'auteur.
 struct SharedCourseRecord: Codable, Identifiable, Equatable {
     var id: UUID
     var user_id: UUID
@@ -151,6 +147,34 @@ struct SharedCourseRecord: Codable, Identifiable, Equatable {
     static func == (lhs: SharedCourseRecord, rhs: SharedCourseRecord) -> Bool {
         lhs.id == rhs.id && lhs.updated_at == rhs.updated_at
     }
+}
+
+/// Le contenu d'une carte partagée, sans l'état de répétition de l'auteur.
+struct SharedCardRecord: Codable, Identifiable, Equatable {
+    var id: UUID
+    var front: String
+    var back: String
+    var hint: String?
+    var position: Int
+    var kind: String
+    var choices: [String]
+    var correct_choice_index: Int
+    var mask_x: Double
+    var mask_y: Double
+    var mask_width: Double
+    var mask_height: Double
+    var group_id: UUID?
+    var is_reversed: Bool
+
+    static let columns = [
+        "id", "front", "back", "hint", "position", "kind", "choices",
+        "correct_choice_index", "mask_x", "mask_y", "mask_width", "mask_height",
+        "group_id", "is_reversed"
+    ].joined(separator: ",")
+}
+
+struct SharedCardCountRow: Codable {
+    var course_id: UUID?
 }
 
 /// Une entrée de l'annuaire : de quoi désigner quelqu'un et le reconnaître.

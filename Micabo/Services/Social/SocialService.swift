@@ -345,6 +345,54 @@ final class SocialService {
         return "\"*\(cleaned)*\""
     }
 
+    /// Les cartes d'un cours partagé : le contenu, pas ce que l'auteur savait.
+    func cards(of courseId: UUID) async -> [SharedCardRecord] {
+        guard isReady else { return [] }
+
+        do {
+            return try await database.rows(
+                SharedCardRecord.self,
+                from: CloudTable.flashcards,
+                select: SharedCardRecord.columns,
+                filters: [
+                    URLQueryItem(name: "course_id", value: "eq.\(courseId.uuidString.lowercased())"),
+                    URLQueryItem(name: "deleted_at", value: "is.null")
+                ],
+                order: "position.asc",
+                limit: 400
+            )
+        } catch {
+            return []
+        }
+    }
+
+    /// Combien de cartes chaque cours partagé emporte, en une requête.
+    func cardCounts(of courseIds: [UUID]) async -> [UUID: Int] {
+        guard isReady, !courseIds.isEmpty else { return [:] }
+
+        let list = Array(Set(courseIds)).map { $0.uuidString.lowercased() }.joined(separator: ",")
+        do {
+            let rows = try await database.rows(
+                SharedCardCountRow.self,
+                from: CloudTable.flashcards,
+                select: "course_id",
+                filters: [
+                    URLQueryItem(name: "course_id", value: "in.(\(list))"),
+                    URLQueryItem(name: "deleted_at", value: "is.null")
+                ],
+                limit: max(courseIds.count * 80, 1)
+            )
+            var counts: [UUID: Int] = [:]
+            for row in rows {
+                guard let id = row.course_id else { continue }
+                counts[id, default: 0] += 1
+            }
+            return counts
+        } catch {
+            return [:]
+        }
+    }
+
     /// Les cours d'une personne, tels qu'elle nous les laisse voir. C'est la base qui trie :
     /// demander les cours de quelqu'un dont on n'est pas ami rend une liste vide.
     func courses(of person: Person, limit: Int = 60) async -> [SharedCourseRecord] {
