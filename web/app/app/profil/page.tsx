@@ -102,7 +102,7 @@ export default async function ProfilePage() {
       <header className="relative pt-4 text-center">
         <span
           aria-hidden
-          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white text-[22px] font-semibold text-ink shadow-[0_6px_18px_rgba(15,23,32,0.08)] ring-1 ring-black/[0.06]"
+          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white text-[22px] font-semibold text-ink shadow-paper"
         >
           {name.trim().charAt(0).toUpperCase() || "?"}
         </span>

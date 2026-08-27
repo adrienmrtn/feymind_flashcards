@@ -3,7 +3,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppNav } from "@/components/app/AppNav";
-import { AppShell } from "@/components/app/AppShell";
 import { PageEnter } from "@/components/app/PageEnter";
 import { PaywallHost } from "@/components/app/PaywallFlow";
 import { entitlement } from "@micabo/core";
@@ -28,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect("/commencer/compte?suite=%2Fapp");
 
   return (
-    <AppShell>
+    <div className="min-h-svh bg-canvas lg:flex">
       <AppNav />
 
       <main className="min-w-0 flex-1 pb-32 lg:pb-0">
@@ -40,7 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Suspense fallback={null}>
         <PaywallGate />
       </Suspense>
-    </AppShell>
+    </div>
   );
 }
 

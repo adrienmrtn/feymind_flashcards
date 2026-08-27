@@ -7,43 +7,40 @@
    endroit où une couleur, un rayon, une durée ou une courbe est écrite : une couleur déclarée
    deux fois finit par différer, et c'est comme ça qu'une interface se met à « sonner faux ».
 
-   Direction : du papier, pas des cartes empilées. Le fond ivoire est assez marqué pour que le
-   blanc se détache seul — les surfaces n'ont donc ni bordure ni ombre appuyée.
+   Direction : du papier, pas des cartes empilées. Le fond est un gris froid, assez marqué
+   pour que le blanc se détache seul — les surfaces n'ont donc ni bordure ni ombre appuyée.
 
-   Une mise au point qui vaut d'être écrite ici : ce crème est aussi, à quelques points près,
-   celui que les pages d'accueil produites à la chaîne ont adopté. Il ne se change pas pour
-   autant — c'est l'identité livrée de l'app — mais il ne peut plus servir d'argument, et deux
-   règles en découlent : **aucun display serif**, et **aucun accent terracotta**. La distinction
-   vient d'ailleurs : une page, deux états, la même empreinte.
+   Deux règles restent : **aucun display serif**, et **aucun accent terracotta**. La
+   distinction vient d'ailleurs : une page, deux états, la même empreinte.
    ========================================================================== */
 
 @theme {
   /* ---- Fonds ---- */
-  --color-canvas: #f6f4ed;
+  --color-canvas: #f6f7f9;
   --color-surface: #ffffff;
-  --color-surface-muted: #efebe1;
-  --color-surface-sunken: #e2ddd0;
-  --color-stroke: #e9e4d7;
-  --color-stroke-strong: #dad4c5;
+  --color-surface-muted: #eef0f3;
+  --color-surface-sunken: #e5e7eb;
+  --color-stroke: #e8eaee;
+  --color-stroke-strong: #d4d7dd;
 
   /* Filet de séparation d'une rangée à l'autre. Il reste une bordure : une ombre porte la
      profondeur, une bordure porte la structure, et un séparateur est de la structure. */
-  --color-hairline: #edeae2;
-  --color-hairline-on-canvas: #e6e1d4;
+  --color-hairline: #eef0f3;
+  --color-hairline-on-canvas: #e5e7eb;
 
   /* ---- Encre ---- */
-  --color-ink: #191714;
-  --color-ink-secondary: #6f6a60;
-  --color-ink-tertiary: #a6a199;
+  --color-ink: #191c20;
+  --color-ink-secondary: #6b7280;
+  --color-ink-tertiary: #9ca3af;
   /* Encre des longs paragraphes d'une fiche. Un noir de titre tenu sur trente lignes fatigue :
-     celui-ci est à peine remonté vers le brun du papier. */
-  --color-ink-reading: #2b2822;
+     celui-ci est à peine remonté. */
+  --color-ink-reading: #25282d;
 
-  --color-on-ink: #f8f6f0;
-  --color-on-ink-muted: #9a958a;
+  --color-on-ink: #f7f8fa;
+  --color-on-ink-muted: #9ca3af;
 
-  /* Le crème teinté de vert, pour les écrans qui ne sont ni une liste ni une lecture. */
-  --color-canvas-sage: #e8efe6;
+  /* Le gris teinté de vert, pour les écrans qui ne sont ni une liste ni une lecture. */
+  --color-canvas-sage: #e8eee9;
 
   /* ---- Accent ----
      Deux verts, et la distinction est fonctionnelle. `accent` est assez sombre pour porter du
@@ -56,7 +53,7 @@
   /* Toute progression porte cette couleur, sans exception. Une seule couleur pour « ça
      avance », sinon on cherche un sens derrière chaque nuance. */
   --color-progress: #0b8a66;
-  --color-progress-track: #e4dfd2;
+  --color-progress-track: #e5e7eb;
 
   /* La couleur des passages que la fiche met en avant. C'est l'encre qui change, pas le fond :
      un surligneur posé derrière le texte déborde sous les jambages et se bat avec
@@ -129,18 +126,16 @@
    filet de 1 px, les deux autres donnent la levée puis l'ambiance. Elles sont transparentes,
    donc elles s'adaptent au fond, ce qu'une bordure de couleur fixe ne fait pas.
 
-   Les valeurs sont plus discrètes que la recette d'origine : sur l'ivoire de Micabo, le blanc
-   se détache déjà seul.
+   Les blocs se tiennent par un filet, pas par une ombre. Ce qui flotte vraiment
+   (un menu, une feuille) garde une levée un peu plus nette.
    -------------------------------------------------------------------------- */
 @theme {
   --shadow-paper:
-    0 0 0 1px oklch(0 0 0 / 0.04), 0 1px 2px -1px oklch(0 0 0 / 0.05),
-    0 2px 4px 0 oklch(0 0 0 / 0.03);
+    0 0 0 1px oklch(0 0 0 / 0.05), 0 1px 2px 0 oklch(0 0 0 / 0.025);
   --shadow-paper-hover:
-    0 0 0 1px oklch(0 0 0 / 0.06), 0 1px 3px -1px oklch(0 0 0 / 0.07),
-    0 4px 10px 0 oklch(0 0 0 / 0.05);
+    0 0 0 1px oklch(0 0 0 / 0.06), 0 2px 6px 0 oklch(0 0 0 / 0.04);
   /* Ce qui flotte vraiment : un menu, une feuille. */
-  --shadow-floating: 0 0 0 1px oklch(0 0 0 / 0.05), 0 12px 32px -8px oklch(0 0 0 / 0.14);
+  --shadow-floating: 0 0 0 1px oklch(0 0 0 / 0.05), 0 10px 28px -8px oklch(0 0 0 / 0.10);
 }
 
 /* --------------------------------------------------------------------------
@@ -182,7 +177,7 @@ p {
 
 /* Un contour d'image est **du noir pur à faible opacité**, jamais une teinte de la palette :
    un contour teinté attrape la couleur du fond et se lit comme de la saleté sur le bord de
-   l'image. Sur un ivoire, c'est le piège qu'on tendrait en prenant `--color-stroke`. */
+   l'image. Sur un fond teinté, c'est le piège qu'on tendrait en prenant `--color-stroke`. */
 img,
 video {
   outline: 1px solid oklch(0 0 0 / 0.1);
@@ -762,29 +757,14 @@ video {
   animation: page-enter 420ms var(--ease-out-strong) both;
 }
 
-/* Le profil et la barre : le vocabulaire du screenshot — grandes cartes,
-   halo doux, pastilles. Ces classes ne sont posées que dans l'app, pas
-   sur la vitrine ni le parcours. */
-/* Le profil se pose sur un gris froid, comme le modal « Sign up » : blanc
-   pur, filet discret, ombre douce. Le reste de l'app garde l'ivoire. */
 .profile-page {
-  --color-ink: #191c20;
-  --color-ink-secondary: #6b7280;
-  --color-ink-tertiary: #9ca3af;
-  --color-hairline: #eef0f3;
-  --color-surface-muted: #eef0f3;
-  --color-surface-sunken: #e5e7eb;
-  --color-stroke: #e8eaee;
-  --color-accent-soft: #eceff3;
-  --color-accent: #191c20;
   position: relative;
 }
 
 .saas-card {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 24px;
-  box-shadow: 0 1px 0 rgba(15, 23, 32, 0.04), 0 10px 32px rgba(15, 23, 32, 0.07);
-  outline: 1px solid rgba(15, 23, 32, 0.06);
+  box-shadow: var(--shadow-paper);
 }
 
 /* Le paywall se pose **par-dessus** le tableau de bord, il ne le remplace pas. */
