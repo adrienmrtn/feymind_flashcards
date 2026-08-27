@@ -1,18 +1,36 @@
 import Link from "next/link";
 
 /**
- * Le bouton de révision : pas un simple bloc d'encre « Réviser ce cours ».
- * Une vraie amorce de session — ce qu'on va faire, et pourquoi maintenant.
+ * Le bouton de révision.
+ *
+ * Dans la fiche, il flotte en bas à droite et brille : c'est le geste du cours
+ * une fois le paquet écrit. Ailleurs, il reste une amorce de session posée dans
+ * le flux — ce qu'on va faire, et pourquoi maintenant.
  */
 export function ReviewCta({
   href,
   title = "Réviser ce cours",
   detail,
+  floating = false,
 }: {
   href: string;
   title?: string;
   detail?: string;
+  floating?: boolean;
 }) {
+  if (floating) {
+    return (
+      <Link
+        href={href as never}
+        data-print="hide"
+        className="pressable shiny fixed right-4 bottom-24 z-30 flex h-14 items-center gap-2.5 rounded-button bg-ink px-5 text-[15px] font-semibold text-on-ink shadow-floating lg:right-8 lg:bottom-8"
+      >
+        <span aria-hidden>⚡</span>
+        {title}
+      </Link>
+    );
+  }
+
   return (
     <Link
       href={href as never}

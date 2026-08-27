@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { pinOpenCourse } from "@/lib/open-courses";
+
 /**
  * Déclare le cours ouvert, pour que la barre le garde.
  *
@@ -9,9 +11,9 @@ import { useEffect } from "react";
  * arbres différents, et remonter l'information par les props aurait demandé de faire passer le
  * cours par la mise en page de l'app, qui n'a rien à savoir de lui.
  *
- * `sessionStorage` et non l'URL : l'onglet doit survivre à un changement d'écran, pas à la
- * fermeture du navigateur. Un cours épinglé retrouvé trois jours plus tard serait un souvenir dont
- * personne n'a besoin.
+ * **On ajoute**, on ne remplace pas : plusieurs fiches peuvent rester ouvertes en même temps,
+ * comme des onglets. `sessionStorage` et non l'URL : ils survivent à un changement d'écran,
+ * pas à la fermeture du navigateur.
  */
 export function OpenCourse({
   id,
@@ -23,13 +25,7 @@ export function OpenCourse({
   emoji: string;
 }) {
   useEffect(() => {
-    const course = { id, title, emoji };
-    try {
-      window.sessionStorage.setItem("micabo.app.openCourse", JSON.stringify(course));
-    } catch {
-      // Un stockage refusé fait perdre l'onglet, pas la navigation.
-    }
-    window.dispatchEvent(new CustomEvent("micabo:course-open", { detail: course }));
+    pinOpenCourse({ id, title, emoji });
   }, [id, title, emoji]);
 
   return null;

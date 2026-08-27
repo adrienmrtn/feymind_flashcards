@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import {
+  OPEN_COURSES_EVENT,
+  readOpenCourses,
+  unpinOpenCourse,
+  type OpenCourseTab,
+} from "@/lib/open-courses";
+
 /**
  * La navigation de l'app.
  *
@@ -11,14 +18,14 @@ import { usePathname } from "next/navigation";
  * navigation derrière un bouton fait cliquer deux fois pour changer d'écran. Sous `lg`, elle
  * redevient une barre en bas — là, la largeur est le bien rare, et le pouce est en bas.
  *
- * **Le cours ouvert reste dans la barre jusqu'à ce qu'on le ferme.** C'est ce qui manquait : on
- * ouvrait une fiche, on allait voir ses cartes ou sa session, et il fallait repasser par la liste
- * pour la retrouver. L'onglet garde donc le dernier cours ouvert, avec sa croix — c'est le motif
- * d'un onglet de navigateur, et c'est le bon ici parce qu'on travaille sur **un** cours à la fois.
+ * **Les cours ouverts restent dans la barre jusqu'à ce qu'on les ferme.** C'est ce qui
+ * manquait : on ouvrait une fiche, on allait voir ses cartes ou sa session, et il
+ * fallait repasser par la liste pour la retrouver. Chaque fiche a son onglet, avec sa
+ * croix — comme un navigateur. On peut en tenir plusieurs à la fois.
  *
- * Il vit dans `sessionStorage` et non dans l'URL : il doit survivre à un changement d'écran, pas à
- * la fermeture de l'onglet. Un cours épinglé retrouvé trois jours plus tard serait un souvenir dont
- * personne n'a besoin.
+ * Ils vivent dans `sessionStorage` et non dans l'URL : ils survivent à un changement
+ * d'écran, pas à la fermeture de l'onglet. Un cours épinglé retrouvé trois jours plus
+ * tard serait un souvenir dont personne n'a besoin.
  */
 
 const LINKS = [
@@ -29,44 +36,27 @@ const LINKS = [
   { href: "/app/profil", label: "Profil", icon: "person", prefetch: true },
 ] as const;
 
-const KEY = "micabo.app.openCourse";
-
-interface OpenCourse {
-  id: string;
-  title: string;
-  emoji: string;
-}
-
 export function AppNav() {
   const pathname = usePathname();
-  const [open, setOpen] = useState<OpenCourse | null>(null);
+  const [open, setOpen] = useState<OpenCourseTab[]>([]);
 
-  // Le cours vient du stockage au montage, et de l'événement quand on en ouvre un : la mise en page
-  // de l'app n'a pas à savoir quel cours est ouvert pour le faire descendre en props.
+  // Les cours viennent du stockage au montage, et de l'événement quand on en ouvre un :
+  // la mise en page de l'app n'a pas à savoir lesquels sont ouverts pour les faire
+  // descendre en props.
   useEffect(() => {
-    try {
-      const stored = window.sessionStorage.getItem(KEY);
-      if (stored) setOpen(JSON.parse(stored) as OpenCourse);
-    } catch {
-      setOpen(null);
-    }
+    setOpen(readOpenCourses());
 
     function adopt(event: Event) {
-      const detail = (event as CustomEvent<OpenCourse>).detail;
-      if (detail?.id) setOpen(detail);
+      const detail = (event as CustomEvent<OpenCourseTab[]>).detail;
+      if (Array.isArray(detail)) setOpen(detail);
     }
 
-    window.addEventListener("micabo:course-open", adopt);
-    return () => window.removeEventListener("micabo:course-open", adopt);
+    window.addEventListener(OPEN_COURSES_EVENT, adopt);
+    return () => window.removeEventListener(OPEN_COURSES_EVENT, adopt);
   }, []);
 
-  function close() {
-    setOpen(null);
-    try {
-      window.sessionStorage.removeItem(KEY);
-    } catch {
-      // Voir plus haut.
-    }
+  function close(id: string) {
+    setOpen(unpinOpenCourse(id));
   }
 
   const isCurrent = (href: string) => {
@@ -84,7 +74,7 @@ export function AppNav() {
     return pathname.startsWith(href);
   };
 
-  const onOpenCourse = Boolean(open && pathname.startsWith(`/app/c/${open.id}`));
+  const isOpenCourse = (id: string) => pathname.startsWith(`/app/c/${id}`);
 
   return (
     <>
@@ -117,37 +107,47 @@ export function AppNav() {
           ))}
         </div>
 
-        {open ? (
+        {open.length > 0 ? (
           <div className="mt-6">
-            <p className="eyebrow mb-2 px-3 text-ink-tertiary">Ouvert</p>
-            <div
-              className={`group flex items-center gap-2 rounded-button pr-1 transition-colors duration-hover ${
-                onOpenCourse ? "bg-accent-soft" : "hover:bg-surface"
-              }`}
-            >
-              <Link
-                href={`/app/c/${open.id}` as never}
-                className="flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2.5"
-              >
-                <span aria-hidden className="emoji text-[15px]">
-                  {open.emoji}
-                </span>
-                <span
-                  className={`min-w-0 flex-1 truncate text-[14px] ${
-                    onOpenCourse ? "font-semibold text-accent" : "text-ink-secondary"
-                  }`}
-                >
-                  {open.title}
-                </span>
-              </Link>
-              <button
-                type="button"
-                onClick={close}
-                aria-label={`Fermer ${open.title}`}
-                className="pressable shrink-0 rounded-full px-2 py-1 text-[13px] text-ink-tertiary opacity-0 transition-opacity duration-hover group-hover:opacity-100 focus-visible:opacity-100"
-              >
-                ✕
-              </button>
+            <p className="eyebrow mb-2 px-3 text-ink-tertiary">
+              {open.length === 1 ? "Ouvert" : "Ouverts"}
+            </p>
+            <div className="max-h-56 space-y-0.5 overflow-y-auto">
+              {open.map((course) => {
+                const current = isOpenCourse(course.id);
+                return (
+                  <div
+                    key={course.id}
+                    className={`group flex items-center gap-2 rounded-button pr-1 transition-colors duration-hover ${
+                      current ? "bg-accent-soft" : "hover:bg-surface"
+                    }`}
+                  >
+                    <Link
+                      href={`/app/c/${course.id}` as never}
+                      className="flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2.5"
+                    >
+                      <span aria-hidden className="emoji text-[15px]">
+                        {course.emoji}
+                      </span>
+                      <span
+                        className={`min-w-0 flex-1 truncate text-[14px] ${
+                          current ? "font-semibold text-accent" : "text-ink-secondary"
+                        }`}
+                      >
+                        {course.title}
+                      </span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => close(course.id)}
+                      aria-label={`Fermer ${course.title}`}
+                      className="pressable shrink-0 rounded-full px-2 py-1 text-[13px] text-ink-tertiary opacity-0 transition-opacity duration-hover group-hover:opacity-100 focus-visible:opacity-100"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : null}
@@ -167,27 +167,36 @@ export function AppNav() {
         className="fixed inset-x-0 bottom-0 z-20 px-4 pb-4 lg:hidden"
         data-print="hide"
       >
-        {open ? (
-          <div className="mx-auto mb-2 flex max-w-[420px] items-center gap-2 rounded-pill border border-stroke bg-surface/90 px-3 py-2 shadow-floating backdrop-blur-xl">
-            <Link
-              href={`/app/c/${open.id}` as never}
-              className="flex min-w-0 flex-1 items-center gap-2"
-            >
-              <span aria-hidden className="emoji text-[14px]">
-                {open.emoji}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">
-                {open.title}
-              </span>
-            </Link>
-            <button
-              type="button"
-              onClick={close}
-              aria-label={`Fermer ${open.title}`}
-              className="pressable shrink-0 px-1.5 text-[13px] text-ink-tertiary"
-            >
-              ✕
-            </button>
+        {open.length > 0 ? (
+          <div className="mx-auto mb-2 flex max-w-[420px] gap-2 overflow-x-auto pb-0.5">
+            {open.map((course) => (
+              <div
+                key={course.id}
+                className={`flex shrink-0 items-center gap-1.5 rounded-pill border px-3 py-2 shadow-floating backdrop-blur-xl ${
+                  isOpenCourse(course.id)
+                    ? "border-accent/40 bg-accent-soft"
+                    : "border-stroke bg-surface/90"
+                }`}
+              >
+                <Link
+                  href={`/app/c/${course.id}` as never}
+                  className="flex max-w-[10rem] items-center gap-1.5"
+                >
+                  <span aria-hidden className="emoji text-[14px]">
+                    {course.emoji}
+                  </span>
+                  <span className="truncate text-[13px] font-medium text-ink">{course.title}</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => close(course.id)}
+                  aria-label={`Fermer ${course.title}`}
+                  className="pressable shrink-0 px-1 text-[13px] text-ink-tertiary"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
           </div>
         ) : null}
 
