@@ -111,3 +111,23 @@ export async function setCourseVisibility(
   revalidatePath("/app");
   return { status: "ok" };
 }
+
+/**
+ * Efface le compte Auth. Le reste suit par cascade : cours, cartes, examens, droit.
+ *
+ * Après ça, la même adresse peut s'inscrire à nouveau. C'est un autre `id`, un
+ * profil vide, et le parcours recommence.
+ */
+export async function deleteAccount(): Promise<SavedSettings> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "error", message: "Connecte-toi." };
+
+  const { error } = await supabase.rpc("delete_own_account");
+  if (error) return { status: "error", message: error.message };
+
+  await supabase.auth.signOut();
+  return { status: "ok" };
+}

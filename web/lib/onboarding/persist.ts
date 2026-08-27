@@ -46,6 +46,23 @@ export function clearStoredAnswers(): void {
   }
 }
 
+/**
+ * Oublie ce que cet appareil savait du compte.
+ *
+ * Sans ça, recréer un compte avec la même adresse reposerait le parcours d'avant
+ * (pays, matières, examen) et ce ne serait plus un compte neuf.
+ */
+export function forgetLocalAccount(): void {
+  clearStoredAnswers();
+  try {
+    window.localStorage.removeItem(PAYWALL_PENDING_KEY);
+    window.localStorage.removeItem(PAYWALL_DISMISSED_KEY);
+    window.sessionStorage.removeItem("micabo.app.openCourse");
+  } catch {
+    // Voir plus haut.
+  }
+}
+
 export function markPaywallPending(): void {
   try {
     window.localStorage.setItem(PAYWALL_PENDING_KEY, "1");
