@@ -38,7 +38,9 @@ export function extractVideoId(raw: string): string | null {
   const segments = url.pathname.split("/").filter(Boolean);
   if (host === "youtu.be") return valid(segments[0]);
   if (segments[0] === "watch") return valid(url.searchParams.get("v"));
-  if (segments.length >= 2 && PATH_PREFIXES.has(segments[0])) return valid(segments[1]);
+  if (segments.length >= 2 && PATH_PREFIXES.has(segments[0] ?? "")) {
+    return valid(segments[1] ?? null);
+  }
   return valid(url.searchParams.get("v"));
 }
 
@@ -122,7 +124,9 @@ async function listCaptionLanguages(videoId: string): Promise<string[]> {
     if (!response.ok) return [];
     const xml = await response.text();
     if (looksLikeHtml(xml)) return [];
-    return [...xml.matchAll(/lang_code="([^"]+)"/g)].map((match) => match[1]);
+    return [...xml.matchAll(/lang_code="([^"]+)"/g)]
+      .map((match) => match[1])
+      .filter((code): code is string => typeof code === "string" && code.length > 0);
   } catch {
     return [];
   }
@@ -148,7 +152,7 @@ async function fetchTimedText(
         : format === "vtt"
           ? cleanTranscript(parseVtt(raw))
           : cleanTranscript(parseCaptionXml(raw));
-      if (text.length > 0) return text;
+      if (text && text.length > 0) return text;
     } catch {
       continue;
     }
@@ -188,7 +192,10 @@ export function parseJson3(raw: string): string | null {
 export function parseCaptionXml(xml: string): string[] {
   if (!/<(?:timedtext|transcript|text)\b/i.test(xml)) return [];
   return [...xml.matchAll(/<(?:text|p)\b[^>]*>([\s\S]*?)<\/(?:text|p)>/g)]
-    .map((match) => decodeEntities(match[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim())
+    .map((match) => {
+      const inner = match[1] ?? "";
+      return decodeEntities(inner.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    })
     .filter(Boolean);
 }
 
