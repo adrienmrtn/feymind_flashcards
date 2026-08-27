@@ -154,9 +154,11 @@ export function AppNav() {
 
         <Link
           href="/app/importer"
-          className="pressable mt-6 flex items-center justify-center gap-2 rounded-button bg-ink py-3 text-[14.5px] font-semibold text-on-ink"
+          className="pressable shiny mt-auto flex items-center justify-center gap-2 rounded-button bg-ink py-3.5 text-[15px] font-semibold text-on-ink shadow-floating"
         >
-          <Icon name="plus" filled />
+          <span aria-hidden className="emoji text-[16px]">
+            ➕
+          </span>
           Importer un cours
         </Link>
       </nav>
@@ -217,9 +219,11 @@ export function AppNav() {
           ))}
           <Link
             href="/app/importer"
-            className="flex flex-1 flex-col items-center gap-1 rounded-button py-2 text-[10.5px] font-medium text-ink"
+            className="pressable shiny flex flex-1 flex-col items-center gap-1 rounded-button bg-ink py-2 text-[10.5px] font-semibold text-on-ink"
           >
-            <Icon name="plus" filled />
+            <span aria-hidden className="emoji text-[15px]">
+              ➕
+            </span>
             Importer
           </Link>
         </div>

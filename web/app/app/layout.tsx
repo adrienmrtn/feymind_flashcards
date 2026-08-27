@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppNav } from "@/components/app/AppNav";
+import { PageEnter } from "@/components/app/PageEnter";
 import { PaywallHost } from "@/components/app/PaywallFlow";
 import { entitlement } from "@micabo/core";
 
@@ -30,7 +31,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <AppNav />
 
       <main className="min-w-0 flex-1 pb-24 lg:pb-0">
-        <div className="mx-auto max-w-[860px] px-screen py-8 lg:py-12">{children}</div>
+        <div className="mx-auto max-w-[860px] px-screen py-8 lg:py-12">
+          <PageEnter>{children}</PageEnter>
+        </div>
       </main>
 
       <Suspense fallback={null}>
