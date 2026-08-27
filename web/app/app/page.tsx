@@ -301,7 +301,7 @@ function ReviewCard({
           .filter(Boolean)
           .join(" · ")}
       </p>
-      <span className="mt-5 flex h-12 w-full items-center justify-center rounded-button bg-white/12 text-[15px] font-semibold">
+      <span className="mt-5 flex h-12 w-full items-center justify-center rounded-button bg-on-ink text-[15px] font-semibold text-ink">
         ⚡ Commencer la session
       </span>
     </Link>
