@@ -15,6 +15,7 @@ import { revalidateUserData } from "@/lib/data/cache";
 import { searchDirectory } from "@/lib/data/social";
 import type { DirectoryPerson } from "@/lib/social";
 import { createClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface SocialResult {
   status: "ok" | "error";
@@ -161,7 +162,18 @@ export async function adoptSharedCourse(courseId: string): Promise<SocialResult>
     .is("deleted_at", null)
     .maybeSingle();
 
-  if (existing) return { status: "ok", courseId: existing.id };
+  if (existing) {
+    await copySharedCards(supabase, {
+      sourceCourseId: courseId,
+      targetCourseId: existing.id,
+      userId: user.id,
+    }).catch(() => undefined);
+    revalidateUserData(user.id, "courses");
+    revalidateUserData(user.id, "cards");
+    revalidatePath(`/app/c/${existing.id}`);
+    revalidatePath("/app/cours");
+    return { status: "ok", courseId: existing.id };
+  }
 
   const { data: author } = await supabase
     .from("directory")
@@ -191,10 +203,112 @@ export async function adoptSharedCourse(courseId: string): Promise<SocialResult>
 
   if (error) return { status: "error", message: error.message };
 
+  await copySharedCards(supabase, {
+    sourceCourseId: courseId,
+    targetCourseId: id,
+    userId: user.id,
+  }).catch(() => undefined);
+
   revalidateUserData(user.id, "courses");
+  revalidateUserData(user.id, "cards");
+  revalidatePath(`/app/c/${id}`);
   revalidatePath("/app/cours");
   revalidatePath("/app");
   return { status: "ok", courseId: id };
+}
+
+const SHARED_CARD_COPY =
+  "id, front, back, hint, position, kind, choices, correct_choice_index, mask_x, mask_y, mask_width, mask_height, group_id, image_path";
+
+async function copySharedCards(
+  supabase: SupabaseClient,
+  input: { sourceCourseId: string; targetCourseId: string; userId: string },
+) {
+  const { data: existing } = await supabase
+    .from("flashcards")
+    .select("id, front")
+    .eq("user_id", input.userId)
+    .eq("course_id", input.targetCourseId)
+    .is("deleted_at", null);
+
+  const already = new Set(
+    ((existing as { front: string }[] | null) ?? []).map((card) => card.front),
+  );
+
+  const { data: source } = await supabase
+    .from("flashcards")
+    .select(SHARED_CARD_COPY)
+    .eq("course_id", input.sourceCourseId)
+    .is("deleted_at", null)
+    .order("position", { ascending: true });
+
+  const rows = ((source as SharedCopyRow[] | null) ?? []).filter(
+    (card) => card.front.trim().length > 0 && !already.has(card.front),
+  );
+  if (rows.length === 0) return;
+
+  const groups = new Map<string, string>();
+  const now = new Date().toISOString();
+
+  const { error } = await supabase.from("flashcards").insert(
+    rows.map((card, index) => {
+      const groupId = card.group_id
+        ? groups.get(card.group_id) ??
+          (() => {
+            const next = crypto.randomUUID();
+            groups.set(card.group_id!, next);
+            return next;
+          })()
+        : null;
+
+      return {
+        id: crypto.randomUUID(),
+        user_id: input.userId,
+        course_id: input.targetCourseId,
+        front: card.front,
+        back: card.back,
+        hint: card.hint ?? null,
+        position: already.size + index,
+        kind: card.kind ?? "basic",
+        choices: card.choices ?? [],
+        correct_choice_index: card.correct_choice_index ?? 0,
+        mask_x: card.mask_x ?? 0,
+        mask_y: card.mask_y ?? 0,
+        mask_width: card.mask_width ?? 0,
+        mask_height: card.mask_height ?? 0,
+        group_id: groupId,
+        image_path: card.image_path ?? null,
+        state: "new",
+        due_date: now,
+        interval_days: 0,
+        ease_factor: 2.5,
+        repetitions: 0,
+        lapses: 0,
+        step_index: 0,
+        last_reviewed_at: null,
+        is_suspended: false,
+      };
+    }),
+  );
+
+  if (error) throw new Error(error.message);
+}
+
+interface SharedCopyRow {
+  id: string;
+  front: string;
+  back: string;
+  hint: string | null;
+  position: number;
+  kind: string;
+  choices: string[] | null;
+  correct_choice_index: number;
+  mask_x: number;
+  mask_y: number;
+  mask_width: number;
+  mask_height: number;
+  group_id: string | null;
+  image_path: string | null;
 }
 
 function touchSocial(userId: string) {

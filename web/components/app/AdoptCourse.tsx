@@ -45,7 +45,7 @@ export function AdoptCourse({
         }
         className="pressable h-14 w-full rounded-button bg-ink text-[16px] font-semibold text-on-ink"
       >
-        {pending ? "Ajout…" : "Ajouter à mes cours"}
+        {pending ? "Ajout…" : "Ajouter le cours et les cartes"}
       </button>
       {error ? (
         <p className="mt-2 text-center text-[13px] text-negative" role="alert">

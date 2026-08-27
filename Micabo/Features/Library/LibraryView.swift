@@ -32,6 +32,7 @@ struct LibraryView: View {
 
     @State private var courses: [SharedCourseRecord] = []
     @State private var authors: [UUID: SocialService.Person] = [:]
+    @State private var cardCounts: [UUID: Int] = [:]
     @State private var search = ""
     @State private var subject: String?
     @State private var isLoading = false
@@ -153,6 +154,9 @@ struct LibraryView: View {
             parts.append(author.relation == .friends ? "\(author.handle) · ami" : author.handle)
         }
         if let subject = course.subject?.nilIfBlank { parts.append(subject) }
+        if let count = cardCounts[course.id], count > 0 {
+            parts.append(MicaboCopy.cards(count))
+        }
         return parts.isEmpty ? "Cours partagé" : parts.joined(separator: " · ")
     }
 
@@ -218,6 +222,9 @@ struct LibraryView: View {
 
         let found = await social.library(search: search)
         courses = found
-        authors = await social.authors(of: found)
+        async let people = social.authors(of: found)
+        async let counts = social.cardCounts(of: found.map(\.id))
+        authors = await people
+        cardCounts = await counts
     }
 }
