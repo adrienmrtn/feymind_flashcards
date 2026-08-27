@@ -125,39 +125,35 @@ function Shelf({
       {courses.length === 0 ? (
         <EmptyShelf />
       ) : (
-        <div className="mt-7 overflow-hidden rounded-group bg-surface paper">
-          {courses.map((course, index) => (
+        <div className="mt-7 grid gap-3 sm:grid-cols-2">
+          {courses.map((course) => (
             <Link
               key={course.id}
               href={`/app/c/${course.id}` as never}
-              className={`hover-row flex items-center gap-4 px-5 py-4 ${
-                index > 0 ? "border-t border-hairline" : ""
-              }`}
+              className="hover-tile paper flex flex-col gap-4 rounded-group bg-surface p-5"
             >
               <span
                 aria-hidden
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-tile text-[20px]"
+                className="flex h-12 w-12 items-center justify-center rounded-tile text-[22px]"
                 style={{ backgroundColor: `${course.accent_hex ?? courseAccent(course.id)}1f` }}
               >
                 {resolveEmoji(course.emoji, course.subject, course.title)}
               </span>
 
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[16px] font-semibold text-ink">
+              <span className="min-w-0">
+                <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
                   {course.title || "Sans titre"}
                 </span>
-                <span className="mt-0.5 block truncate text-[13px] text-ink-tertiary">
-                    {[
-                      course.subject,
-                      course.is_from_library ? "Repris" : sourceLabel(course.source),
-                      courseAudienceLabel(course.view_count ?? 0, course.adopt_count ?? 0),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
+                <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
+                  {[
+                    course.subject,
+                    course.is_from_library ? "Repris" : sourceLabel(course.source),
+                    courseAudienceLabel(course.view_count ?? 0, course.adopt_count ?? 0),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </span>
               </span>
-
-              <Chevron />
             </Link>
           ))}
         </div>
@@ -205,29 +201,27 @@ function LibraryPane({
           amis, arriveront ici — le même graphe que sur l&apos;iPhone.
         </p>
       ) : (
-        <div className="mt-6 overflow-hidden rounded-group bg-surface paper">
-          {courses.map((course, index) => {
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          {courses.map((course) => {
             const author = authors.get(course.userId);
             return (
               <Link
                 key={course.id}
                 href={`/app/b/${course.id}` as never}
-                className={`hover-row flex items-center gap-4 px-5 py-4 ${
-                  index > 0 ? "border-t border-hairline" : ""
-                }`}
+                className="hover-tile paper flex flex-col gap-4 rounded-group bg-surface p-5"
               >
                 <span
                   aria-hidden
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-tile text-[20px]"
+                  className="flex h-12 w-12 items-center justify-center rounded-tile text-[22px]"
                   style={{ backgroundColor: `${course.accentHex ?? courseAccent(course.id)}1f` }}
                 >
                   {resolveEmoji(course.emoji, course.subject, course.title)}
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[16px] font-semibold text-ink">
+                <span className="min-w-0">
+                  <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
                     {course.title || "Sans titre"}
                   </span>
-                  <span className="mt-0.5 block truncate text-[13px] text-ink-tertiary">
+                  <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
                     {[
                       author ? displayUsername(author.username) : null,
                       course.subject,
@@ -240,7 +234,6 @@ function LibraryPane({
                       .join(" · ")}
                   </span>
                 </span>
-                <Chevron />
               </Link>
             );
           })}
@@ -305,21 +298,4 @@ function sourceLabel(source: string): string {
     default:
       return "Texte";
   }
-}
-
-function Chevron() {
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 20 20"
-      className="h-4 w-4 shrink-0 text-ink-tertiary"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M8 4l6 6-6 6" />
-    </svg>
-  );
 }

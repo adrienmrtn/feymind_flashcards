@@ -37,7 +37,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
   const { readable, locked } = entitlement.splitSheet(course.blocks, right);
 
   return (
-    <article>
+    <article className="pb-24">
       <header className="flex items-start gap-4" data-print="keep">
         <span
           aria-hidden
@@ -67,40 +67,50 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
         </p>
       ) : null}
 
-      {/* L'action du cours, et **la première tant qu'il n'y a pas de cartes** : c'est la règle de
-          l'app, et elle vaut ici. Les cartes ne sont pas produites au passage de l'import ; elles
-          se demandent depuis la fiche, quand on l'a lue. */}
-      {/* **Le bouton produit les cartes ici**, il ne mène pas à une page qui reposera la même
-          question. C'était le défaut : « Créer des cartes » ouvrait un écran « Pas encore de
-          cartes » avec un second « Créer des cartes ». */}
-      <div className="mt-7 flex flex-wrap items-start gap-2.5" data-print="hide">
-        {cards.length === 0 ? (
-          <GenerateCards courseId={course.id} existing={0} />
-        ) : (
-          <>
-            <ReviewCta href={`/app/reviser?cours=${course.id}`} />
-            <Link
-              href={`/app/c/${course.id}/cartes` as never}
-              className="pressable hover-tile paper flex min-w-[220px] items-center gap-3.5 rounded-group bg-surface px-5 py-4"
-            >
-              <span
-                aria-hidden
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-tile bg-accent-soft text-[22px]"
-              >
-                🃏
-              </span>
-              <span>
-                <span className="block text-[16px] font-bold leading-tight text-ink">
-                  Espace des cartes
-                </span>
-                <span className="mt-0.5 block text-[13px] text-ink-tertiary">
-                  Ouvrir le paquet, le corriger
-                </span>
-              </span>
-            </Link>
-          </>
-        )}
-      </div>
+      {/* L'espace des cartes reste en tête, bien visible. Générer et réviser
+          flottent en bas à droite : ce sont les gestes du cours, pas des
+          rangées de plus dans la fiche. */}
+      {cards.length > 0 ? (
+        <Link
+          href={`/app/c/${course.id}/cartes` as never}
+          className="pressable hover-tile mt-7 flex w-full items-center gap-4 rounded-group bg-accent-soft px-6 py-5"
+          data-print="hide"
+        >
+          <span
+            aria-hidden
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-tile bg-surface text-[28px]"
+          >
+            🃏
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[18px] font-bold leading-tight text-ink">
+              Espace des cartes
+            </span>
+            <span className="mt-1 block text-[14px] text-accent">
+              Ouvrir le paquet, le corriger · {cards.length} carte
+              {cards.length > 1 ? "s" : ""}
+            </span>
+          </span>
+          <svg
+            aria-hidden
+            viewBox="0 0 20 20"
+            className="h-5 w-5 shrink-0 text-accent"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M8 4l6 6-6 6" />
+          </svg>
+        </Link>
+      ) : null}
+
+      {cards.length === 0 ? (
+        <GenerateCards courseId={course.id} existing={0} floating />
+      ) : (
+        <ReviewCta href={`/app/reviser?cours=${course.id}`} floating />
+      )}
 
       <div className="mt-7 border-t border-hairline-on-canvas pt-6" data-print="hide">
         <p className="eyebrow mb-3 text-ink-tertiary">Qui peut la retrouver</p>

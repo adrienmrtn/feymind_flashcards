@@ -29,7 +29,15 @@ import { generateCards } from "@/lib/actions/course";
  * Les bornes viennent du noyau partagé, donc ce sont celles de l'iPhone au chiffre près : c'est la
  * même fonction Edge qui reçoit le quota.
  */
-export function GenerateCards({ courseId, existing }: { courseId: string; existing: number }) {
+export function GenerateCards({
+  courseId,
+  existing,
+  floating = false,
+}: {
+  courseId: string;
+  existing: number;
+  floating?: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [failure, setFailure] = useState<string | null>(null);
@@ -63,7 +71,14 @@ export function GenerateCards({ courseId, existing }: { courseId: string; existi
 
   if (pending) {
     return (
-      <div className="paper flex items-center gap-4 rounded-group bg-surface p-5">
+      <div
+        className={
+          floating
+            ? "fixed right-4 bottom-24 z-30 w-[min(100%-2rem,22rem)] paper flex items-center gap-4 rounded-group bg-surface p-5 shadow-floating lg:right-8 lg:bottom-8"
+            : "paper flex items-center gap-4 rounded-group bg-surface p-5"
+        }
+        data-print="hide"
+      >
         <ThinkingOrb state="composing" size={64} />
         <div>
           <p className="text-[15.5px] font-semibold text-ink">Micabo écrit les cartes…</p>
@@ -76,6 +91,20 @@ export function GenerateCards({ courseId, existing }: { courseId: string; existi
   }
 
   if (!open) {
+    if (floating) {
+      return (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          data-print="hide"
+          className="pressable shiny fixed right-4 bottom-24 z-30 flex h-14 items-center gap-2.5 rounded-button bg-ink px-5 text-[15px] font-semibold text-on-ink shadow-floating lg:right-8 lg:bottom-8"
+        >
+          <span aria-hidden>✨</span>
+          Générer les cartes
+        </button>
+      );
+    }
+
     return (
       <div>
         {existing === 0 ? (
@@ -91,7 +120,7 @@ export function GenerateCards({ courseId, existing }: { courseId: string; existi
               ✨
             </span>
             <span className="min-w-0">
-              <span className="block text-[16.5px] font-bold text-ink">Composer le paquet</span>
+              <span className="block text-[16.5px] font-bold text-ink">Générer les cartes</span>
               <span className="mt-1 block text-[13.5px] leading-relaxed text-ink-secondary">
                 Choisis tes formats — questions, trous, QCM — et Micabo écrit les cartes à
                 partir de la fiche.
@@ -122,7 +151,14 @@ export function GenerateCards({ courseId, existing }: { courseId: string; existi
   }
 
   return (
-    <div className="paper rise rounded-group bg-surface p-5">
+    <div
+      className={
+        floating
+          ? "fixed right-4 bottom-24 z-30 w-[min(100%-2rem,22rem)] paper rise rounded-group bg-surface p-5 shadow-floating lg:right-8 lg:bottom-8"
+          : "paper rise rounded-group bg-surface p-5"
+      }
+      data-print="hide"
+    >
       <div className="flex items-baseline justify-between gap-4">
         <p className="eyebrow text-ink-tertiary">Combien de cartes, par format</p>
         <button
@@ -181,7 +217,7 @@ export function GenerateCards({ courseId, existing }: { courseId: string; existi
           total === 0 ? "cursor-not-allowed bg-surface-sunken text-ink-tertiary" : "bg-ink text-on-ink"
         }`}
       >
-        {existing === 0 ? "Composer ces cartes" : "Ajouter au paquet"}
+        {existing === 0 ? "Générer ces cartes" : "Ajouter au paquet"}
       </button>
 
       {failure ? <Failure message={failure} /> : null}

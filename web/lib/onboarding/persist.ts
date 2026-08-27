@@ -1,4 +1,5 @@
 import { saveOnboarding, type SaveResult } from "@/lib/actions/onboarding";
+import { clearOpenCourses } from "@/lib/open-courses";
 
 import type { Answers } from "./store";
 
@@ -58,7 +59,7 @@ export function forgetLocalAccount(): void {
   try {
     window.localStorage.removeItem(PAYWALL_PENDING_KEY);
     window.localStorage.removeItem(PAYWALL_DISMISSED_KEY);
-    window.sessionStorage.removeItem("micabo.app.openCourse");
+    clearOpenCourses();
   } catch {
     // Voir plus haut.
   }
