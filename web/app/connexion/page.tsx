@@ -10,9 +10,8 @@ import { createClient } from "@/lib/supabase/client";
 /**
  * La porte de ceux qui ont déjà un compte.
  *
- * Apple, Google, ou un lien. Après l'échange, le callback tranche : un vrai
- * compte Micabo ouvre l'app ; une session toute neuve renvoie au parcours
- * avec le message « ce compte n'existe pas, créons-le ».
+ * Apple, Google, ou un lien. Après l'échange, on ouvre l'app : la session
+ * Supabase *est* le compte. On ne recréera plus un parcours par-dessus.
  */
 export default function ConnexionPage() {
   return (
@@ -31,7 +30,7 @@ function ConnexionBody() {
   const [failure, setFailure] = useState<string | null>(null);
 
   function callbackUrl() {
-    return `${window.location.origin}/auth/callback?intent=login&next=${encodeURIComponent("/app")}`;
+    return `${window.location.origin}/auth/callback?next=${encodeURIComponent("/app")}`;
   }
 
   async function signInWith(provider: "apple" | "google") {

@@ -39,13 +39,6 @@ struct CountryStepView: View {
             animatesTitle: true
         ) {
             VStack(alignment: .leading, spacing: 14) {
-                if model.unknownAccount {
-                    Text("Ce compte n'existe pas, créons-le.")
-                        .font(MicaboFont.hanken(14.5, weight: .medium))
-                        .foregroundStyle(MicaboColor.accent)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
                 MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
                     ForEach(SchoolingCountry.allCases) { country in
                         OnboardingChoiceChip(

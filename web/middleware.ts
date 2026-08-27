@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { ONBOARDING_CREATE_COOKIE } from "@/lib/auth/onboarding-create";
 import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
 import { PRODUCTION_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 
@@ -71,14 +70,7 @@ export async function middleware(request: NextRequest) {
 
   const path = url.pathname;
   const replaying = request.cookies.get(ONBOARDING_REPLAY_COOKIE)?.value === "1";
-  const creating = request.cookies.get(ONBOARDING_CREATE_COOKIE)?.value === "1";
-  if (
-    user &&
-    !replaying &&
-    !creating &&
-    path.startsWith("/commencer") &&
-    path !== "/commencer/compte"
-  ) {
+  if (user && !replaying && path.startsWith("/commencer")) {
     const redirect = NextResponse.redirect(new URL("/app", request.url));
     for (const cookie of response.cookies.getAll()) {
       redirect.cookies.set(cookie);

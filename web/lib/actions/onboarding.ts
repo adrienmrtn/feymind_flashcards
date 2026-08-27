@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { countryFor, newCardsPerDay, DEFAULT_DAILY_MINUTES } from "@micabo/core";
 
+import { shouldPreserveRemoteProfile } from "@/lib/auth/existing-account";
 import { ONBOARDING_CREATE_COOKIE } from "@/lib/auth/onboarding-create";
 import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
 import { createClient } from "@/lib/supabase/server";
@@ -54,6 +55,13 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
   // parcours doit rester traversable sans compte, sinon un fournisseur en panne le ferme.
   if (!user) return { status: "anonymous" };
 
+  const jar = await cookies();
+  const replaying = jar.get(ONBOARDING_REPLAY_COOKIE)?.value === "1";
+  if (!replaying && (await shouldPreserveRemoteProfile(supabase, user.id))) {
+    jar.delete(ONBOARDING_CREATE_COOKIE);
+    return { status: "saved" };
+  }
+
   const profile: Record<string, unknown> = {
     id: user.id,
     onboarding_completed_at: new Date().toISOString(),
@@ -73,7 +81,6 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
     return { status: "error", message: profileError.message };
   }
 
-  const jar = await cookies();
   jar.delete(ONBOARDING_REPLAY_COOKIE);
   jar.delete(ONBOARDING_CREATE_COOKIE);
 

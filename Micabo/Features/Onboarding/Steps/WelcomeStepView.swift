@@ -8,8 +8,8 @@ import SwiftUI
 /// cartes disent déjà ce que fait Micabo, et **elles montrent les trois formats** — recto
 /// verso, QCM, texte à trou — ce qu'aucune phrase ne faisait.
 ///
-/// « J'ai déjà un compte » ouvre Apple ou Google. S'il y a un vrai compte Micabo,
-/// on entre dans l'app. S'il n'y en a pas, on le dit et on commence le parcours.
+/// « J'ai déjà un compte » ouvre Apple ou Google. Une session Supabase
+/// *est* le compte : on entre dans l'app, on ne recommence pas l'accueil.
 ///
 /// Le paquet vit dans `WelcomeDeck.swift`. Le laisser ici faisait abandonner le
 /// compilateur : trop d'expressions, et une `Face` privée que la carte ne pouvait pas lire.
@@ -132,16 +132,10 @@ struct WelcomeStepView: View {
     @MainActor
     private func resolveLogin() async {
         checkingAccount = true
-        let exists = await sync.recognizeExistingAccount()
+        _ = await sync.recognizeExistingAccount()
+        OnboardingPreferences.markCompleted()
         checkingAccount = false
         showLogin = false
-
-        if exists {
-            await sync.sync(context: modelContext)
-            return
-        }
-
-        model.unknownAccount = true
-        model.advance()
+        await sync.sync(context: modelContext)
     }
 }
