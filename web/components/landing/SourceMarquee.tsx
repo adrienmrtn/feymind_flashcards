@@ -10,20 +10,20 @@
  */
 
 const SOURCES = [
-  "Polycopié PDF",
-  "Photo de tes notes",
-  "Document Word",
-  "Vidéo YouTube",
-  "Diapositives de cours",
-  "Manuel scanné",
-  "Notes manuscrites",
+  { emoji: "📄", label: "Polycopié PDF" },
+  { emoji: "📸", label: "Photo de tes notes" },
+  { emoji: "📝", label: "Document Word" },
+  { emoji: "▶️", label: "Vidéo YouTube" },
+  { emoji: "🖥️", label: "Diapositives de cours" },
+  { emoji: "📚", label: "Manuel scanné" },
+  { emoji: "✍️", label: "Notes manuscrites" },
 ];
 
 export function SourceMarquee() {
   return (
     <section className="mt-20 border-y border-hairline-on-canvas py-5" data-print="hide">
       <p className="mb-4 text-center text-[12.5px] text-ink-tertiary">
-        Tout ce que Micabo sait lire
+        Micabo transforme tes documents
       </p>
 
       <div
@@ -39,9 +39,12 @@ export function SourceMarquee() {
           {[...SOURCES, ...SOURCES].map((source, index) => (
             <span
               key={index}
-              className="whitespace-nowrap rounded-pill bg-surface px-4 py-2 text-[13.5px] font-medium text-ink-secondary paper"
+              className="inline-flex items-center gap-2 whitespace-nowrap rounded-pill bg-surface px-5 py-3 text-[13.5px] font-medium text-ink-secondary paper"
             >
-              {source}
+              <span aria-hidden className="emoji text-[16px]">
+                {source.emoji}
+              </span>
+              {source.label}
             </span>
           ))}
         </div>

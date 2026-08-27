@@ -1,15 +1,8 @@
-import { RawPage } from "@/components/demo/RawPage";
-import { SheetBlocks } from "@/components/sheet/SheetBlocks";
-import { DEMO_COURSE, TRANSFORMATION_SHEET } from "@/components/demo/demo-course";
-
+import { CourseTransformation } from "./CourseTransformation";
 import { StartButton } from "./StartButton";
 
 /**
- * L'accroche : une phrase, et la transformation posée à côté d'elle.
- *
- * Les deux états — le polycopié brut, la fiche — sont **côte à côte et entiers**. La version
- * précédente les empilait dans un rectangle piloté au défilement, et ce rectangle se coupait au
- * milieu de l'écran : une fiche tronquée ne montre pas une transformation, elle montre un bug.
+ * L'accroche : une phrase, puis le trajet entier du document.
  */
 export function Hero() {
   return (
@@ -70,46 +63,7 @@ export function Hero() {
         </div>
       </div>
 
-      {/* La transformation, en entier et sans défilement piloté : à gauche ce qu'on dépose, à
-          droite ce qu'on relit. Deux objets complets valent mieux qu'un seul qu'on rogne. */}
-      <div className="relative mx-auto mt-16 max-w-page px-screen">
-        <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr] sm:gap-6">
-          <div className="mx-auto w-full max-w-[340px]">
-            <p className="eyebrow mb-3 text-center text-ink-tertiary">Ton cours</p>
-            <RawPage className="rotate-[-1.2deg]" />
-          </div>
-
-          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-ink text-on-ink">
-            <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5 sm:hidden">
-              <path
-                d="M10 4v12M5 11l5 5 5-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <svg aria-hidden viewBox="0 0 20 20" className="hidden h-5 w-5 sm:block">
-              <path
-                d="M4 10h12M11 5l5 5-5 5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-
-          <div className="mx-auto w-full max-w-[340px]">
-            <p className="eyebrow mb-3 text-center text-accent">Ta fiche</p>
-            <div className="float paper max-h-[420px] overflow-hidden rounded-group bg-surface p-5">
-              <SheetBlocks blocks={TRANSFORMATION_SHEET} tint={DEMO_COURSE.accent} />
-            </div>
-          </div>
-        </div>
-      </div>
+      <CourseTransformation />
     </section>
   );
 }

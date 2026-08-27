@@ -65,7 +65,6 @@ function FlipCard({ card }: { card: DemoCard }) {
 
           {card.labels ? <Diagram labels={card.labels} revealed={false} /> : null}
 
-          <p className="mt-auto pt-3 text-[11px] text-ink-tertiary">Passe la souris, ou touche</p>
         </Face>
 
         <Face className="[transform:rotateY(180deg)]">
