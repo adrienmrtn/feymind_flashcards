@@ -471,3 +471,22 @@ function relationMap(graph: {
 function escapeLike(value: string): string {
   return value.replace(/[%_,]/g, " ").replace(/\s+/g, " ").trim();
 }
+
+/** Cartes passées cette semaine, soi-même et ses amis. */
+export async function listWeekReviewRanking(): Promise<
+  { userId: string; username: string | null; passes: number; isMe: boolean }[]
+> {
+  const auth = await reader();
+  if (!auth) return [];
+
+  const { data, error } = await dataClient(auth.token).rpc("week_review_ranking");
+  if (error || !data) return [];
+  return (
+    data as { user_id: string; username: string | null; passes: number | string }[]
+  ).map((row) => ({
+    userId: row.user_id,
+    username: row.username,
+    passes: Number(row.passes) || 0,
+    isMe: row.user_id === auth.userId,
+  }));
+}

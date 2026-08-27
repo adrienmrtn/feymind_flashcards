@@ -20,6 +20,7 @@ import {
 
 import { ExamMark } from "@/components/app/ExamMark";
 import { FriendActions } from "@/components/app/FriendActions";
+import { WeekRanking } from "@/components/app/WeekRanking";
 import { WeekStrip } from "@/components/app/WeekStrip";
 import {
   listCardSnapshots,
@@ -33,6 +34,7 @@ import {
 } from "@/lib/data/courses";
 import { examMarksFor } from "@/lib/data/exam-marks";
 import { loadNewCardBudget, loadReviewDatesSince } from "@/lib/data/reviews";
+import { listWeekReviewRanking } from "@/lib/data/social";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
@@ -50,22 +52,24 @@ export default async function DashboardPage() {
   const now = new Date();
   const today = startOfDay(now);
 
-  const [courses, cards, exams, friends, profile, budget, reviewDates] = await Promise.all([
-    listCourses(),
-    listCardSnapshots(),
-    listExams(),
-    listPendingFriendRequests(),
-    user
-      ? supabase
-          .from("profiles")
-          .select("display_name")
-          .eq("id", user.id)
-          .maybeSingle()
-          .then((result) => result.data)
-      : null,
-    loadNewCardBudget(),
-    loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
-  ]);
+  const [courses, cards, exams, friends, profile, budget, reviewDates, ranking] =
+    await Promise.all([
+      listCourses(),
+      listCardSnapshots(),
+      listExams(),
+      listPendingFriendRequests(),
+      user
+        ? supabase
+            .from("profiles")
+            .select("display_name")
+            .eq("id", user.id)
+            .maybeSingle()
+            .then((result) => result.data)
+        : null,
+      loadNewCardBudget(),
+      loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
+      listWeekReviewRanking(),
+    ]);
   const titles = new Map(courses.map((course) => [course.id, course]));
 
   const counts = studyCounts(
@@ -109,9 +113,11 @@ export default async function DashboardPage() {
     cards.map((card) => ({
       dueDate: new Date(card.due_date),
       isSuspended: card.is_suspended,
+      state: card.state,
     })),
     reviewDates,
     now,
+    { newRemaining: budget.remaining },
   );
 
   return (
@@ -129,6 +135,8 @@ export default async function DashboardPage() {
       </div>
 
       <WeekStrip days={week} />
+
+      <WeekRanking rows={ranking} />
 
       <section className="mt-8">
         <SectionHead title="Derniers cours ajoutés" href="/app/cours" action="Tous les cours" />

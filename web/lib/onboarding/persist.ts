@@ -1,4 +1,5 @@
 import { saveOnboarding, type SaveResult } from "@/lib/actions/onboarding";
+import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
 import { clearOpenCourses } from "@/lib/open-courses";
 
 import type { Answers } from "./store";
@@ -133,6 +134,11 @@ export async function persistStoredAnswers(): Promise<SaveResult> {
 
   if (result.status === "saved") {
     clearStoredAnswers();
+    try {
+      sessionStorage.removeItem(ONBOARDING_REPLAY_STORAGE);
+    } catch {
+      // Voir plus haut.
+    }
     markPaywallPending();
   }
 

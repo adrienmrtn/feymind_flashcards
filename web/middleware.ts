@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
 import { PRODUCTION_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 
 /**
@@ -17,7 +18,8 @@ import { PRODUCTION_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
  *    callback. Sinon le code expire sur le premier écran du parcours.
  * 3. La session se rafraîchit, et les cookies voyagent avec la réponse.
  * 4. Une session ouverte n'a plus rien à faire sur le parcours : on ouvre
- *    l'app. La landing reste visible — le bouton dit alors Dashboard.
+ *    l'app. Sauf si on rejoue l'accueil exprès (cookie posé depuis le profil).
+ *    La landing reste visible — le bouton dit alors Dashboard.
  */
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
@@ -67,7 +69,13 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = url.pathname;
-  if (user && path.startsWith("/commencer") && path !== "/commencer/compte") {
+  const replaying = request.cookies.get(ONBOARDING_REPLAY_COOKIE)?.value === "1";
+  if (
+    user &&
+    !replaying &&
+    path.startsWith("/commencer") &&
+    path !== "/commencer/compte"
+  ) {
     const redirect = NextResponse.redirect(new URL("/app", request.url));
     for (const cookie of response.cookies.getAll()) {
       redirect.cookies.set(cookie);

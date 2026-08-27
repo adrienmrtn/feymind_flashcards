@@ -5,6 +5,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
+import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
 import { OnboardingStore } from "@/lib/onboarding/store";
 import { previousPath, progressFor, stepIndex, STEPS } from "@/lib/onboarding/steps";
 import { createClient } from "@/lib/supabase/client";
@@ -86,6 +87,11 @@ function LoggedInBounce() {
 
   useEffect(() => {
     if (pathname === "/commencer/compte") return;
+    try {
+      if (sessionStorage.getItem(ONBOARDING_REPLAY_STORAGE) === "1") return;
+    } catch {
+      // Stockage refusé : le cookie du middleware décide encore.
+    }
     const supabase = createClient();
     const go = () => router.replace("/app");
     void supabase.auth.getUser().then(({ data }) => {

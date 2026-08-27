@@ -62,7 +62,7 @@ export function ProfileSettings({
   }
 
   return (
-    <div className="paper rounded-group bg-surface p-6">
+    <div className="paper hover-tile rounded-group bg-surface p-6">
       <div className="flex items-baseline justify-between gap-4">
         <p className="eyebrow text-ink-tertiary">Réglages</p>
         <p
