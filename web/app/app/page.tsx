@@ -8,6 +8,7 @@ import {
   examUrgency,
   resolveEmoji,
   startOfDay,
+  latexCommandsToUnicode,
   stripInlineMarkup,
   studyCounts,
   type ExamIntensity,
@@ -176,7 +177,7 @@ function ExamCard({
         href={"/app/examens" as never}
         className="paper hover-tile group rounded-group bg-surface p-6"
       >
-        <p className="eyebrow text-ink-tertiary">Prochain examen</p>
+        <p className="eyebrow text-ink-tertiary">📅 Prochain examen</p>
         <p className="mt-3 text-[18px] font-semibold text-ink">Aucun examen prévu.</p>
         <p className="mt-2 text-[13.5px] leading-relaxed text-ink-secondary">
           Une date remet les cartes dans le bon ordre. Sans elle, la répétition espacée ignore le
@@ -200,7 +201,7 @@ function ExamCard({
       href={"/app/examens" as never}
       className={`hover-tile group rounded-group p-6 ${tone.surface}`}
     >
-      <p className={`eyebrow ${tone.muted}`}>Prochain examen</p>
+      <p className={`eyebrow ${tone.muted}`}>📅 Prochain examen</p>
       <div className="mt-3 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className={`text-[18px] font-semibold leading-snug ${tone.ink}`}>{exam.name}</p>
@@ -231,7 +232,7 @@ function ReviewCard({
         href="/app/reviser"
         className="paper hover-tile group rounded-group bg-positive-soft p-6"
       >
-        <p className="eyebrow text-positive">Aujourd&apos;hui</p>
+        <p className="eyebrow text-positive">✨ Aujourd&apos;hui</p>
         <p className="mt-3 text-[18px] font-semibold text-ink">Tout est à jour.</p>
         <p className="mt-2 text-[13.5px] leading-relaxed text-ink-secondary">
           Rien ne revient aujourd&apos;hui. C&apos;est le principe : une carte qu&apos;on revoit trop
@@ -246,7 +247,7 @@ function ReviewCard({
       href="/app/reviser"
         className="paper hover-tile group rounded-group bg-surface p-6"
     >
-      <p className="eyebrow text-ink-tertiary">À réviser aujourd&apos;hui</p>
+      <p className="eyebrow text-ink-tertiary">⚡ À réviser aujourd&apos;hui</p>
       <p className="mt-3 numeral text-[40px] font-bold leading-none text-ink">{counts.total}</p>
       <p className="mt-1 text-[13.5px] text-ink-secondary">
         carte{counts.total > 1 ? "s" : ""} due{counts.total > 1 ? "s" : ""}
@@ -260,7 +261,7 @@ function ReviewCard({
           .filter(Boolean)
           .join(" · ")}
       </p>
-      <p className="mt-5 text-[13px] font-semibold text-accent">Commencer la session</p>
+      <p className="mt-5 text-[13px] font-semibold text-accent">⚡ Commencer la session</p>
     </Link>
   );
 }
@@ -276,7 +277,7 @@ function HardCards({
 }) {
   return (
     <section className="paper rounded-group bg-surface p-6">
-      <p className="eyebrow text-ink-tertiary">Cartes les plus difficiles</p>
+      <p className="eyebrow text-ink-tertiary">💪 Cartes les plus difficiles</p>
       {cards.length === 0 ? (
         <p className="mt-3 text-[14.5px] leading-relaxed text-ink-secondary">
           Aucune carte n&apos;a encore coincé. Ça viendra — et c&apos;est pour ça qu&apos;on les
@@ -461,7 +462,7 @@ function addedLabel(iso: string): string {
 }
 
 function previewFront(front: string): string {
-  const plain = stripInlineMarkup(front).replace(/\s+/g, " ").trim();
+  const plain = latexCommandsToUnicode(stripInlineMarkup(front).replace(/\s+/g, " ").trim());
   return plain.length > 90 ? `${plain.slice(0, 87)}…` : plain || "Carte sans question";
 }
 

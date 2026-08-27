@@ -56,7 +56,9 @@ export default async function CoursesPage({
     <>
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="eyebrow text-ink-tertiary">{discover ? "Bibliothèque" : "Ton étagère"}</p>
+          <p className="eyebrow text-ink-tertiary">
+            {discover ? "📖 Bibliothèque" : "📚 Ton étagère"}
+          </p>
           <h1 className="mt-2 text-[32px] font-bold leading-tight text-ink">Cours</h1>
         </div>
 
@@ -65,7 +67,7 @@ export default async function CoursesPage({
             href="/app/reviser"
             className="pressable flex items-center gap-2.5 rounded-button bg-ink px-5 py-3 text-[15px] font-semibold text-on-ink"
           >
-            Réviser <span className="numeral">{counts.total}</span> carte
+            ⚡ Réviser <span className="numeral">{counts.total}</span> carte
             {counts.total > 1 ? "s" : ""}
           </Link>
         ) : null}

@@ -27,6 +27,10 @@ struct SettingsView: View {
     @State private var showResetConfirmation = false
     @State private var showSignOutConfirmation = false
     @State private var showAuth = false
+    @State private var showSubjects = false
+    @State private var showSchool = false
+    @State private var subjects = OnboardingPreferences.subjects
+    @State private var schoolName = OnboardingPreferences.institutionName
 
     private let models = [
         "google/gemini-flash-1.5",
@@ -320,6 +324,26 @@ struct SettingsView: View {
 
                 MicaboHairline(inset: 71)
 
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("📚"), background: MicaboColor.tilePastels[4]),
+                    title: "Matières",
+                    subtitle: subjectsSubtitle,
+                    accessory: .chevron,
+                    action: { showSubjects = true }
+                )
+
+                MicaboHairline(inset: 71)
+
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("🏫"), background: MicaboColor.tilePastels[5]),
+                    title: "École",
+                    subtitle: schoolName?.nilIfBlank ?? "Non renseignée",
+                    accessory: .chevron,
+                    action: { showSchool = true }
+                )
+
+                MicaboHairline(inset: 71)
+
                 Menu {
                     Picker("Longueur des fiches", selection: $sheetLength) {
                         ForEach(SheetLength.allCases) { length in
@@ -358,6 +382,24 @@ struct SettingsView: View {
             SheetPreferences.length = newValue
             Haptics.selection()
         }
+        .sheet(isPresented: $showSubjects, onDismiss: { subjects = OnboardingPreferences.subjects }) {
+            SettingsSubjectsSheet()
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(MicaboRadius.sheet)
+        }
+        .sheet(isPresented: $showSchool, onDismiss: { schoolName = OnboardingPreferences.institutionName }) {
+            SettingsSchoolSheet()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(MicaboRadius.sheet)
+        }
+    }
+
+    private var subjectsSubtitle: String {
+        if subjects.isEmpty { return "Aucune matière" }
+        if subjects.count <= 3 { return subjects.joined(separator: ", ") }
+        return "\(subjects.prefix(3).joined(separator: ", ")) +\(subjects.count - 3)"
     }
 
     private func readingHint(for length: SheetLength) -> String {

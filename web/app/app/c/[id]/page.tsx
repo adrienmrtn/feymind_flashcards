@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { courseAccent, entitlement, resolveEmoji } from "@micabo/core";
 
 import { GenerateCards } from "@/components/app/GenerateCards";
+import { ReviewCta } from "@/components/app/ReviewCta";
 import { SheetReader } from "@/components/app/SheetReader";
 import { VisibilityPicker } from "@/components/app/VisibilityPicker";
 import { getCourse, listCards } from "@/lib/data/courses";
@@ -71,17 +72,25 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
           <GenerateCards courseId={course.id} existing={0} />
         ) : (
           <>
-            <Link
-              href={`/app/reviser?cours=${course.id}` as never}
-              className="pressable rounded-button bg-ink px-5 py-3 text-[15px] font-semibold text-on-ink"
-            >
-              Réviser ce cours
-            </Link>
+            <ReviewCta href={`/app/reviser?cours=${course.id}`} />
             <Link
               href={`/app/c/${course.id}/cartes` as never}
-              className="pressable rounded-button bg-surface px-5 py-3 text-[15px] font-semibold text-ink paper"
+              className="pressable hover-tile paper flex min-w-[220px] items-center gap-3.5 rounded-group bg-surface px-5 py-4"
             >
-              {cards.length} carte{cards.length > 1 ? "s" : ""}
+              <span
+                aria-hidden
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-tile bg-accent-soft text-[22px]"
+              >
+                🃏
+              </span>
+              <span>
+                <span className="block text-[16px] font-bold leading-tight text-ink">
+                  Espace des cartes
+                </span>
+                <span className="mt-0.5 block text-[13px] text-ink-tertiary">
+                  Ouvrir le paquet, le corriger
+                </span>
+              </span>
             </Link>
           </>
         )}

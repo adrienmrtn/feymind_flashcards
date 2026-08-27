@@ -54,6 +54,7 @@ RÈGLES
 - Couvre l'ensemble du cours, pas seulement le début. Varie définitions, mécanismes, comparaisons, applications.
 - Pas de question dont la réponse est « oui » ou « non ».
 - INTERDIT : les tirets cadratins et demi-cadratins. Pas de markdown, pas de numérotation.
+- INTERDIT : les commandes LaTeX nues. Une flèche s'écrit →, pas \\rightarrow. Une lettre grecque s'écrit α, pas \\alpha. Une vraie formule, et seulement une vraie formule, va entre $...$.
 
 INDICE
 - Le champ "hint" est facultatif : ne le mets que s'il aide vraiment à retrouver la réponse.

@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import {
   BLOCK_BOUNDS,
   DAILY_MINUTES_STEPS,
+  SUBJECT_FAMILIES,
   clampBlocks,
   dailyMinutesLabel,
   defaultBlocks,
@@ -12,9 +13,11 @@ import {
   newCardsPerDay,
   readingHint,
   sheetLengthTitle,
+  subjectEmoji,
   type SheetLength,
 } from "@micabo/core";
 
+import { SchoolField } from "@/components/app/SchoolField";
 import { UsernameField } from "@/components/app/UsernameField";
 import { updateSettings } from "@/lib/actions/profile";
 
@@ -30,15 +33,22 @@ export function ProfileSettings({
   initialUsername,
   initialMinutes,
   initialLength,
+  initialSubjects,
+  initialSchool,
+  initialSchoolId,
 }: {
   initialName: string;
   initialUsername: string;
   initialMinutes: number;
   initialLength: SheetLength;
+  initialSubjects: string[];
+  initialSchool: string;
+  initialSchoolId: string | null;
 }) {
   const [name, setName] = useState(initialName);
   const [minutes, setMinutes] = useState(initialMinutes);
   const [blocks, setBlocks] = useState(() => defaultBlocks(initialLength));
+  const [subjects, setSubjects] = useState(initialSubjects);
   const [saved, setSaved] = useState<"repos" | "ok" | "erreur">("repos");
   const [, startTransition] = useTransition();
 
@@ -77,10 +87,64 @@ export function ProfileSettings({
 
       <UsernameField initial={initialUsername} />
 
+      <p className="mt-7 text-[13px] text-ink-tertiary">📚 Matières</p>
+      <div className="mt-2.5 max-h-[220px] space-y-4 overflow-y-auto pr-1">
+        {SUBJECT_FAMILIES.map((family) => (
+          <div key={family.name}>
+            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-caps text-ink-tertiary">
+              {family.name}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {family.subjects.map((subject) => {
+                const selected = subjects.includes(subject);
+                return (
+                  <button
+                    key={subject}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => {
+                      const next = selected
+                        ? subjects.filter((item) => item !== subject)
+                        : [...subjects, subject];
+                      setSubjects(next);
+                      save({ subjects: next });
+                    }}
+                    className={`pressable flex items-center gap-1 rounded-pill px-2.5 py-1.5 text-[13px] ${
+                      selected
+                        ? "bg-accent-soft font-medium text-accent"
+                        : "bg-surface-muted text-ink"
+                    }`}
+                  >
+                    <span aria-hidden className="emoji text-[13px]">
+                      {subjectEmoji(subject)}
+                    </span>
+                    {subject}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-7 text-[13px] text-ink-tertiary">🏫 École</p>
+      <div className="mt-2">
+        <SchoolField
+          initialName={initialSchool}
+          initialId={initialSchoolId}
+          onChange={(next) =>
+            save({
+              institutionName: next.name || null,
+              institutionId: next.id,
+            })
+          }
+        />
+      </div>
+
       <div className="mt-7">
         <div className="flex items-baseline justify-between gap-3">
           <label htmlFor="profile-minutes" className="text-[13px] text-ink-tertiary">
-            Rythme quotidien
+            ⏱️ Rythme quotidien
           </label>
           <p className="text-[13px] font-medium text-ink">
             {dailyMinutesLabel(minutes)}{" "}

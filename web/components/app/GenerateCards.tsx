@@ -78,13 +78,43 @@ export function GenerateCards({ courseId, existing }: { courseId: string; existi
   if (!open) {
     return (
       <div>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="pressable rounded-button bg-ink px-5 py-3.5 text-[15px] font-semibold text-on-ink"
-        >
-          {existing === 0 ? "Créer des cartes" : "En ajouter"}
-        </button>
+        {existing === 0 ? (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="pressable hover-tile paper flex w-full items-start gap-4 rounded-group bg-surface p-5 text-left"
+          >
+            <span
+              aria-hidden
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-tile bg-accent-soft text-[24px]"
+            >
+              ✨
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[16.5px] font-bold text-ink">Composer le paquet</span>
+              <span className="mt-1 block text-[13.5px] leading-relaxed text-ink-secondary">
+                Choisis tes formats — questions, trous, QCM — et Micabo écrit les cartes à
+                partir de la fiche.
+              </span>
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="pressable hover-tile paper flex w-full items-center gap-3.5 rounded-group bg-surface px-5 py-4 text-left"
+          >
+            <span aria-hidden className="emoji text-[22px]">
+              ➕
+            </span>
+            <span>
+              <span className="block text-[15.5px] font-semibold text-ink">Ajouter au paquet</span>
+              <span className="mt-0.5 block text-[13px] text-ink-tertiary">
+                D&apos;autres questions, dans les formats que tu veux.
+              </span>
+            </span>
+          </button>
+        )}
 
         {failure ? <Failure message={failure} /> : null}
       </div>
@@ -151,7 +181,7 @@ export function GenerateCards({ courseId, existing }: { courseId: string; existi
           total === 0 ? "cursor-not-allowed bg-surface-sunken text-ink-tertiary" : "bg-ink text-on-ink"
         }`}
       >
-        {existing === 0 ? "Créer les cartes" : "Ajouter ces cartes"}
+        {existing === 0 ? "Composer ces cartes" : "Ajouter au paquet"}
       </button>
 
       {failure ? <Failure message={failure} /> : null}

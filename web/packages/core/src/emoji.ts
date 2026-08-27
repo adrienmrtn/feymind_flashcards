@@ -94,8 +94,15 @@ const TABLE: readonly [string, readonly string[]][] = [
   ["🏃", ["sport", "staps", "athletisme", "entrainement physique"]],
   ["🎬", ["cinema", "audiovisuel", "montage"]],
   ["🎵", ["musique", "solfege", "harmonie"]],
+  ["🎭", ["theatre"]],
+  ["💃", ["danse"]],
+  ["📷", ["photographie", "photo"]],
+  ["📰", ["journalisme"]],
+  ["🎒", ["pedagogie", "education"]],
+  ["🌾", ["agronomie", "agriculture"]],
+  ["✈️", ["aeronautique", "aviation"]],
   ["🎨", ["arts", "dessin", "design", "peinture"]],
-  ["📖", ["litterature", "francais", "poesie", "roman", "theatre"]],
+  ["📖", ["litterature", "francais", "poesie", "roman"]],
   ["💡", ["culture generale", "actualite"]],
   // Le filet de sécurité des langues : il attrape « LV2 », « vocabulaire », « thème
   // grammatical » — tout ce qui parle de langue sans nommer laquelle.

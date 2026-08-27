@@ -24,6 +24,7 @@ export {
   type MarkupSpan,
 } from "./sheet/markup";
 export { stripEmDashes } from "./sheet/em-dashes";
+export { latexCommandsToUnicode, latexToUnicode } from "./formula";
 
 // La répétition espacée.
 export {

@@ -1,0 +1,119 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { ThinkingOrb } from "thinking-orbs";
+
+import { createClient } from "@/lib/supabase/client";
+
+interface Suggestion {
+  id: string;
+  name: string;
+  country_code: string;
+  kind: string;
+}
+
+/**
+ * Le champ école du profil, le même que le parcours d'accueil : on cherche, on choisit
+ * dans la liste pour poser un identifiant, ou on garde le nom libre.
+ */
+export function SchoolField({
+  initialName,
+  initialId,
+  onChange,
+}: {
+  initialName: string;
+  initialId: string | null;
+  onChange: (next: { name: string; id: string | null }) => void;
+}) {
+  const [query, setQuery] = useState(initialName);
+  const [chosenId, setChosenId] = useState<string | null>(initialId);
+  const [results, setResults] = useState<Suggestion[]>([]);
+  const [searching, setSearching] = useState(false);
+  const latest = useRef(0);
+
+  useEffect(() => {
+    const needle = query.trim();
+    if (needle.length < 2) {
+      setResults([]);
+      return;
+    }
+
+    const token = ++latest.current;
+    setSearching(true);
+
+    const timer = window.setTimeout(async () => {
+      const supabase = createClient();
+      const { data } = await supabase.rpc("search_institutions", {
+        query: needle,
+        result_limit: 8,
+      });
+
+      if (token !== latest.current) return;
+      setResults((data as Suggestion[] | null) ?? []);
+      setSearching(false);
+    }, 220);
+
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 rounded-button bg-surface-muted px-4">
+        <span aria-hidden className="emoji text-[16px]">
+          🏫
+        </span>
+        <label htmlFor="profile-school" className="sr-only">
+          Ton école
+        </label>
+        <input
+          id="profile-school"
+          type="text"
+          autoComplete="off"
+          value={query}
+          onChange={(event) => {
+            const next = event.target.value;
+            setQuery(next);
+            if (chosenId) {
+              setChosenId(null);
+              onChange({ name: next, id: null });
+            }
+          }}
+          onBlur={() => onChange({ name: query.trim(), id: chosenId })}
+          placeholder="Lycée, université, école…"
+          className="h-12 min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
+        />
+        {searching ? <ThinkingOrb state="searching" size={20} /> : null}
+      </div>
+
+      {results.length > 0 ? (
+        <div className="mt-2 space-y-1">
+          {results.map((item) => {
+            const selected = chosenId === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setChosenId(item.id);
+                  setQuery(item.name);
+                  setResults([]);
+                  onChange({ name: item.name, id: item.id });
+                }}
+                className={`pressable flex w-full items-center gap-2 rounded-button px-3 py-2.5 text-left ${
+                  selected ? "bg-accent-soft" : "bg-surface-muted"
+                }`}
+              >
+                <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-ink">
+                  {item.name}
+                </span>
+                <span className="text-[11px] uppercase tracking-caps text-ink-tertiary">
+                  {item.kind}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}

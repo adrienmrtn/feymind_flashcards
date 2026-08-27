@@ -79,6 +79,11 @@ final class CardFormatsTests: XCTestCase {
         XCTAssertEqual(FormulaRenderer.stripped("Calcule $x^2$ ici"), "Calcule x² ici")
     }
 
+    func testBareLatexCommandsInPlainTextBecomeSymbols() {
+        XCTAssertEqual(FormulaRenderer.stripped("1914 \\rightarrow 1918"), "1914 → 1918")
+        XCTAssertEqual(FormulaRenderer.symbolsOnly("A \\to B"), "A → B")
+    }
+
     // MARK: - Occlusion
 
     func testOneCardPerNamedZone() throws {

@@ -47,7 +47,12 @@ enum SheetMarkup {
         func flush() {
             guard !buffer.isEmpty else { return }
             spans.append(
-                Span(text: buffer, isBold: bold, isItalic: italic, isHighlighted: highlighted)
+                Span(
+                    text: FormulaRenderer.symbolsOnly(buffer),
+                    isBold: bold,
+                    isItalic: italic,
+                    isHighlighted: highlighted
+                )
             )
             buffer = ""
         }
