@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ThinkingOrb } from "thinking-orbs";
 
-import { hasStoredAnswers, persistStoredAnswers } from "@/lib/onboarding/persist";
+import { markPaywallPending, persistStoredAnswers } from "@/lib/onboarding/persist";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -30,7 +30,8 @@ export default function AccountStep() {
 type Pending = "apple" | "google" | "email" | null;
 
 function destination(): string {
-  return hasStoredAnswers() ? "/app?bienvenue=1" : "/app";
+  markPaywallPending();
+  return "/app";
 }
 
 function AccountStepBody() {

@@ -523,6 +523,34 @@ video {
   animation: micabo-paywall-in 520ms var(--ease-out-strong) both;
 }
 
+@keyframes micabo-veil {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@utility paywall-veil {
+  animation: micabo-veil 420ms var(--ease-out-strong) both;
+}
+
+@keyframes micabo-stagger {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@utility paywall-stagger {
+  animation: micabo-stagger 520ms var(--ease-out-strong) both;
+}
+
 @keyframes micabo-sway {
   from {
     rotate: -11deg;
@@ -553,7 +581,10 @@ video {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rise {
+  .rise,
+  .paywall-card,
+  .paywall-stagger,
+  .paywall-veil {
     animation-duration: 200ms;
     translate: none;
   }

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 
 import { AppNav } from "@/components/app/AppNav";
 import { PaywallHost } from "@/components/app/PaywallFlow";
+import { entitlement } from "@micabo/core";
+
 import { readEntitlement } from "@/lib/data/entitlement";
 import { currentUser } from "@/lib/data/user";
 
@@ -40,7 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
 async function PaywallGate() {
   const right = await readEntitlement();
-  return <PaywallHost isPro={right.isPro} />;
+  return <PaywallHost isPaid={entitlement.isPaid(right)} />;
 }
 
 /** Le pied de page de l'app, pour les liens qui n'ont pas leur place dans la navigation. */
