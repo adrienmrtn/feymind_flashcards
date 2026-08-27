@@ -47,7 +47,7 @@ export function ExamCalendar({
     <div className="paper rounded-group bg-surface p-4 sm:p-5">
       <CalendarHeader label={label} month={month} onMonth={onMonth} />
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1 overflow-hidden">
         {WEEKDAYS.map((day, index) => (
           <p
             key={`${day}-${index}`}
@@ -71,7 +71,7 @@ export function ExamCalendar({
               key={key}
               type="button"
               onClick={() => onSelect(day)}
-              className={`flex min-h-[3.75rem] flex-col items-center rounded-button px-0.5 transition-colors duration-hover sm:min-h-[4.5rem] sm:px-1 ${
+              className={`flex min-h-[3.75rem] min-w-0 w-full flex-col items-center overflow-hidden rounded-button px-0.5 transition-colors duration-hover sm:min-h-[4.5rem] sm:px-1 ${
                 first ? "pb-1 pt-1" : "justify-center"
               } ${
                 isSelected
@@ -82,21 +82,21 @@ export function ExamCalendar({
               } ${outside && !isSelected ? "opacity-40" : ""}`}
             >
               <span
-                className={`numeral flex h-6 w-full items-center justify-center tracking-normal text-[12.5px] leading-none sm:text-[13.5px] ${
+                className={`numeral flex h-6 w-full shrink-0 items-center justify-center tracking-normal text-[12.5px] leading-none sm:text-[13.5px] ${
                   isToday || isSelected ? "font-semibold" : ""
                 }`}
               >
                 {day.getDate()}
               </span>
               {first ? (
-                <span className="flex min-h-0 flex-1 flex-col items-stretch gap-0.5 overflow-hidden">
+                <span className="flex min-h-0 min-w-0 w-full flex-1 flex-col items-stretch gap-0.5 overflow-hidden">
                   <span
                     title={
                       extras > 0
                         ? `${first.name.trim() || "Examen"} · +${extras}`
                         : first.name.trim() || "Examen"
                     }
-                    className={`w-full truncate rounded-pill px-1 py-0.5 text-center text-[9px] font-semibold leading-tight sm:text-[11px] ${
+                    className={`block min-w-0 max-w-full truncate rounded-pill px-1 py-0.5 text-center text-[9px] font-semibold leading-tight sm:text-[11px] ${
                       isSelected
                         ? "bg-on-ink/18 text-on-ink"
                         : first.isPast
@@ -108,7 +108,7 @@ export function ExamCalendar({
                   </span>
                   {extras > 0 ? (
                     <span
-                      className={`px-1 text-[8px] font-semibold sm:text-[10px] ${
+                      className={`px-1 text-center text-[8px] font-semibold sm:text-[10px] ${
                         isSelected ? "text-on-ink/80" : "text-ink-tertiary"
                       }`}
                     >
