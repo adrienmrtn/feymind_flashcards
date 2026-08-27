@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import Link from "next/link";
 
 import { courseAccent, courseAudienceLabel, displayUsername, resolveEmoji, studyCounts } from "@micabo/core";
 
 import { CourseExamBadge } from "@/components/app/CourseExamBadge";
+import { CoursesExplore, DiscoverLink, DiscoverPending } from "@/components/app/CoursesExplore";
 import { LibrarySearch } from "@/components/app/LibrarySearch";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
@@ -14,7 +16,8 @@ import { listLibraryCourses } from "@/lib/data/social";
  *
  * Deux onglets, comme sur l'iPhone : **Tes cours** et **Découvrir**. Découvrir
  * ne montre que ce que le cloisonnement de Supabase laisse lire - les cours
- * publics de l'école, et ceux des amis.
+ * publics de l'école, et ceux des amis. L'ouverture pose un orbe tout de suite :
+ * la bibliothèque arrive derrière, on ne reste pas sur l'étagère figée.
  */
 export default async function CoursesPage({
   searchParams,
@@ -26,12 +29,21 @@ export default async function CoursesPage({
   const query = typeof params.q === "string" ? params.q : "";
   const subject = typeof params.matiere === "string" ? params.matiere : null;
 
-  const [courses, cards, budget, library, exams] = await Promise.all([
+  if (discover) {
+    return (
+      <CoursesExplore discover={true} revise={null}>
+        <Suspense fallback={<DiscoverPending />}>
+          <LibraryPaneLoader query={query} subject={subject} />
+        </Suspense>
+      </CoursesExplore>
+    );
+  }
+
+  const [courses, cards, budget, exams] = await Promise.all([
     listCourses(),
     listCardSnapshots(),
     loadNewCardBudget(),
-    discover ? listLibraryCourses({ search: query, subject }) : Promise.resolve(null),
-    discover ? Promise.resolve([]) : listExams(),
+    listExams(),
   ]);
 
   const counts = studyCounts(
@@ -51,21 +63,11 @@ export default async function CoursesPage({
     },
   );
 
-  const subjects = library
-    ? [...new Set(library.courses.map((course) => course.subject).filter(Boolean))]
-    : [];
-
   return (
-    <>
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow text-ink-tertiary">
-            {discover ? "📖 Bibliothèque" : "📚 Ton étagère"}
-          </p>
-          <h1 className="mt-2 text-[32px] font-bold leading-tight text-ink">Cours</h1>
-        </div>
-
-        {!discover && counts.total > 0 ? (
+    <CoursesExplore
+      discover={false}
+      revise={
+        counts.total > 0 ? (
           <Link
             href="/app/reviser"
             className="pressable flex items-center gap-2.5 rounded-button bg-ink px-5 py-3 text-[15px] font-semibold text-on-ink"
@@ -73,44 +75,30 @@ export default async function CoursesPage({
             ⚡ Réviser <span className="numeral">{counts.total}</span> carte
             {counts.total > 1 ? "s" : ""}
           </Link>
-        ) : null}
-      </header>
-
-      <nav className="mt-6 flex gap-1 rounded-button bg-surface-muted p-1">
-        <Tab href="/app/cours" current={!discover} label="Tes cours" />
-        <Tab href="/app/cours?vue=decouvrir" current={discover} label="Découvrir" />
-      </nav>
-
-      {discover ? (
-        <LibraryPane
-          query={query}
-          subject={subject}
-          subjects={subjects as string[]}
-          courses={library?.courses ?? []}
-          authors={library?.authors ?? new Map()}
-        />
-      ) : (
-        <Shelf
-          courses={courses}
-          emptyReviews={counts.total === 0 && cards.length > 0}
-          exams={exams}
-        />
-      )}
-    </>
+        ) : null
+      }
+    >
+      <Shelf
+        courses={courses}
+        emptyReviews={counts.total === 0 && cards.length > 0}
+        exams={exams}
+      />
+    </CoursesExplore>
   );
 }
 
-function Tab({ href, current, label }: { href: string; current: boolean; label: string }) {
+async function LibraryPaneLoader({ query, subject }: { query: string; subject: string | null }) {
+  const library = await listLibraryCourses({ search: query, subject });
+  const subjects = [...new Set(library.courses.map((course) => course.subject).filter(Boolean))];
+
   return (
-    <Link
-      href={href as never}
-      aria-current={current ? "page" : undefined}
-      className={`flex-1 rounded-button px-4 py-2.5 text-center text-[14px] font-semibold ${
-        current ? "bg-surface text-ink shadow-sm" : "text-ink-tertiary"
-      }`}
-    >
-      {label}
-    </Link>
+    <LibraryPane
+      query={query}
+      subject={subject}
+      subjects={subjects as string[]}
+      courses={library.courses}
+      authors={library.authors}
+    />
   );
 }
 
@@ -291,12 +279,9 @@ function EmptyShelf() {
           </span>
           Importer un cours
         </Link>
-        <Link
-          href={"/app/cours?vue=decouvrir" as never}
-          className="pressable hover-tile inline-flex items-center rounded-button bg-surface px-6 py-3.5 text-[15px] font-semibold text-ink paper"
-        >
+        <DiscoverLink className="pressable hover-tile inline-flex items-center rounded-button bg-surface px-6 py-3.5 text-[15px] font-semibold text-ink paper">
           Découvrir
-        </Link>
+        </DiscoverLink>
       </div>
     </div>
   );
