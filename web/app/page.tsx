@@ -6,7 +6,6 @@ import { ExamMode } from "@/components/landing/ExamMode";
 import { Footer } from "@/components/landing/Footer";
 import { Hero } from "@/components/landing/Hero";
 import { LandingHeader } from "@/components/landing/LandingHeader";
-import { PaperGround } from "@/components/landing/PaperGround";
 import { Questions } from "@/components/landing/Questions";
 import { RetentionChart } from "@/components/landing/RetentionChart";
 import { Reveal } from "@/components/landing/Reveal";
@@ -54,39 +53,36 @@ export default async function LandingPage({
 
   return (
     <>
-      <PaperGround />
-      <div className="relative z-[1]">
-        <LandingHeader />
-        <main>
-          <Hero />
+      <LandingHeader />
+      <main>
+        <Hero />
 
-          <SourceMarquee />
+        <SourceMarquee />
 
-          <Section
-            eyebrow="Pourquoi ça tient"
-            title="Relire ne suffit pas. Se souvenir, oui."
-            note="Ce qu'on a dû retrouver de mémoire tient — surtout si ça revient au bon moment, de moins en moins souvent."
-          >
-            <RetentionChart />
-          </Section>
+        <Section
+          eyebrow="Pourquoi ça tient"
+          title="Relire ne suffit pas. Se souvenir, oui."
+          note="Ce qu'on a dû retrouver de mémoire tient — surtout si ça revient au bon moment, de moins en moins souvent."
+        >
+          <RetentionChart />
+        </Section>
 
-          <Section
-            eyebrow="Mode examen"
-            title="Tu donnes la date. Micabo réorganise tout."
-            note="La répétition espacée ignore le jour J. Le mode examen lui donne une date butoir, et resserre les cartes à l'approche de l'épreuve."
-          >
-            <ExamMode />
-          </Section>
+        <Section
+          eyebrow="Mode examen"
+          title="Tu donnes la date. Micabo réorganise tout."
+          note="La répétition espacée ignore le jour J. Le mode examen lui donne une date butoir, et resserre les cartes à l'approche de l'épreuve."
+        >
+          <ExamMode />
+        </Section>
 
-          <Section eyebrow="Questions" title="Ce qu'on nous demande." note="">
-            <Questions />
-          </Section>
+        <Section eyebrow="Questions" title="Ce qu'on nous demande." note="">
+          <Questions />
+        </Section>
 
-          <ClosingWash />
-        </main>
+        <ClosingWash />
+      </main>
 
-        <Footer />
-      </div>
+      <Footer />
     </>
   );
 }

@@ -14,8 +14,7 @@ const WASH_COLORS = ["#d7e6d8", "#f6f4ed", "#16c08c"];
 /**
  * Le dernier appel : un lavage grainé, en tache, derrière le titre.
  *
- * Un radial CSS reste dessous. Pas de second PulsingBorder — le hero a
- * déjà le halo.
+ * Un radial CSS reste dessous.
  */
 export function ClosingWash() {
   const reduced = usePrefersReducedMotion();
