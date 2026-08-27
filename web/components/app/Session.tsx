@@ -26,7 +26,7 @@ import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { gradeCard } from "@/lib/actions/review";
 
 /**
- * **La session, au clavier — et sans une seule animation.**
+ * **La session, au clavier - et sans une seule animation.**
  *
  * C'est la décision la plus contre-intuitive du site, et la mieux fondée. Espace retourne la carte,
  * 1 à 4 la notent, et ces deux gestes se font des centaines de fois par soirée de révision. Au-delà
@@ -37,14 +37,14 @@ import { gradeCard } from "@/lib/actions/review";
  *
  * Les mêmes cartes se retournent au survol sur la page d'accueil et dans la démonstration du
  * parcours, où elles se voient une fois. C'est la même animation, juste à un endroit et fausse à
- * l'autre — c'est la fréquence qui décide, pas le goût.
+ * l'autre - c'est la fréquence qui décide, pas le goût.
  *
  * La file est celle d'Anki : une carte notée « 1 min » ou « 10 min » revient dans **cette**
- * session, et sans compte à rebours — quand il ne reste qu'elle, on la sert tout de suite.
+ * session, et sans compte à rebours - quand il ne reste qu'elle, on la sert tout de suite.
  * « Tout est à jour » n'apparaît que lorsque la file est vide.
  *
  * L'écriture part au serveur **après** l'affichage de la carte suivante : le doigt n'attend pas le
- * réseau. Si une écriture échoue, on le dit sans défaire la session — la carte reviendra, ce qui
+ * réseau. Si une écriture échoue, on le dit sans défaire la session - la carte reviendra, ce qui
  * est exactement ce que fait une carte mal notée.
  */
 
@@ -91,7 +91,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
   // Le plafond du gratuit s'applique **à la session**, pas au jeu : les cartes restent toutes
   // visibles dans la liste du cours, et c'est le passage qui s'arrête. Le droit est lu par la
   // fonction du noyau, qui rend « ouvert » pour tout le monde tant que l'encaissement n'existe
-  // pas — le chemin est donc écrit et ne se déclenche pas encore.
+  // pas - le chemin est donc écrit et ne se déclenche pas encore.
   const capped = entitlement.hasReachedSessionLimit({ isPro }, tally.answered);
   const finished = loop.done || capped;
 

@@ -11,7 +11,7 @@ import { InlineMarkup } from "./InlineMarkup";
  * sont des objets et prennent une surface. C'est ce qui donne le rythme d'une fiche écrite à la
  * main plutôt qu'une pile de cartes.
  *
- * Et **l'espace qui précède un titre est ce qui donne le plan** — pas un filet, pas une
+ * Et **l'espace qui précède un titre est ce qui donne le plan** - pas un filet, pas une
  * couleur. Un titre de sous-partie a la taille du corps ; c'est l'air au-dessus de lui qui dit
  * qu'une sous-partie commence.
  */

@@ -12,7 +12,7 @@ import { examMarkForCourse } from "@/lib/data/exam-marks";
 /**
  * L'espace des cartes d'un cours.
  *
- * Ce n'est plus un compteur et un bouton générique : c'est l'atelier du paquet —
+ * Ce n'est plus un compteur et un bouton générique : c'est l'atelier du paquet  - 
  * l'état de la file, la session, puis les cartes qu'on corrige.
  */
 export default async function CourseCardsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -115,7 +115,7 @@ function packSummary(
   counts: { review: number; newCards: number; learning: number },
 ): string {
   if (counts.review + counts.newCards + counts.learning === 0) {
-    return `${total} carte${total > 1 ? "s" : ""} dans le paquet. Tout est à jour — rien à revoir aujourd'hui.`;
+    return `${total} carte${total > 1 ? "s" : ""} dans le paquet. Tout est à jour - rien à revoir aujourd'hui.`;
   }
   return `${total} carte${total > 1 ? "s" : ""} dans le paquet. Voici ce qui t'attend.`;
 }

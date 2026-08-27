@@ -16,7 +16,7 @@ import { explainSelection, type Explanation } from "@/lib/actions/cards";
  * On sélectionne trois mots, le bouton apparaît **à côté du passage**, pas en bas de page.
  * L'explication aussi : une carte flottante, fermable, ancrée sur le texte qu'on vient de
  * pointer. La coller en fin de fiche obligeait à quitter le paragraphe, donc à perdre le
- * fil — c'est précisément ce qu'une explication ne doit pas faire.
+ * fil - c'est précisément ce qu'une explication ne doit pas faire.
  */
 export function SheetReader({
   courseId,

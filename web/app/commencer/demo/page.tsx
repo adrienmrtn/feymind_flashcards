@@ -109,7 +109,7 @@ export default function DemoStep() {
  * L'entre-deux : l'orbe, et ce qu'elle attend, écrit.
  *
  * On ne dit pas « chargement » : on dit ce qui se passe. Et le retour n'est jamais porté par la
- * seule animation — le texte est là, et il est annoncé aux lecteurs d'écran.
+ * seule animation - le texte est là, et il est annoncé aux lecteurs d'écran.
  */
 function Working({ step }: { step: number }) {
   const work = WORK[step] ?? WORK[WORK.length - 1]!;

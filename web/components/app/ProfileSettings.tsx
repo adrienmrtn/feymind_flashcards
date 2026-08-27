@@ -26,7 +26,7 @@ import { updateSettings } from "@/lib/actions/profile";
  *
  * Pas de bouton « Enregistrer » : un réglage à un cran se règle en le poussant, et un formulaire
  * qu'on oublie de valider est un réglage perdu. L'écriture est optimiste à l'écran et confirmée
- * derrière — c'est la table `profiles` qui tranche, et c'est elle que l'iPhone relit.
+ * derrière - c'est la table `profiles` qui tranche, et c'est elle que l'iPhone relit.
  */
 export function ProfileSettings({
   initialName,

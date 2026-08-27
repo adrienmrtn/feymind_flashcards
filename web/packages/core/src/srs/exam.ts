@@ -108,7 +108,7 @@ export function dayDifference(from: Date, to: Date): number {
 }
 
 /**
- * « aujourd'hui », « demain », « J-5 », « passé » — le libellé d'iOS,
+ * « aujourd'hui », « demain », « J-5 », « passé » - le libellé d'iOS,
  * `Exam.countdownLabel()`.
  */
 export function examCountdownLabel(daysRemaining: number): string {
@@ -123,7 +123,7 @@ export function examCountdownLabel(daysRemaining: number): string {
  *
  * Aujourd'hui et demain sont rouges : c'est trop tard pour improviser.
  * La semaine qui vient est ocre. Au-delà de trois semaines, on est encore
- * dans le vert — le plan a le temps de travailler.
+ * dans le vert - le plan a le temps de travailler.
  */
 export type ExamUrgency = "critical" | "soon" | "upcoming" | "later" | "past";
 

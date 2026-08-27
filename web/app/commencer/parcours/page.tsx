@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase/client";
  * seconde n'a rien construit. Quatre phases, cinq secondes, un anneau qui fait son tour,
  * et c'est l'étudiant qui appuie pour continuer.
  *
- * S'il a déjà une session, le bouton ouvre l'app — le compte est derrière lui.
+ * S'il a déjà une session, le bouton ouvre l'app - le compte est derrière lui.
  */
 
 const DURATION_MS = 5000;

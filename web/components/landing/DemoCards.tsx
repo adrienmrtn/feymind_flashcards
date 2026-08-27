@@ -5,14 +5,14 @@ import { useState } from "react";
 import { DEMO_CARDS, DEMO_COURSE, type DemoCard } from "@/components/demo/demo-course";
 
 /**
- * Les cartes que Micabo tire d'une fiche — **et elles se retournent.**
+ * Les cartes que Micabo tire d'une fiche - **et elles se retournent.**
  *
  * Quatre formats, parce qu'un cours ne se révise pas d'une seule façon, et parce qu'une
  * démonstration qui ne montre que du recto verso laisse croire que Micabo ne fait que ça. Le
  * quatrième est celui qu'on oublie toujours d'annoncer : **le schéma**, dont on nomme les parties.
  *
  * C'est le seul endroit du produit où une carte a le droit de pivoter, et la raison est la table
- * des fréquences : cet écran-là se voit **une fois**. La session réelle, elle, ne s'animera pas —
+ * des fréquences : cet écran-là se voit **une fois**. La session réelle, elle, ne s'animera pas  - 
  * espace retourne et 1 à 4 notent, des centaines de fois par soirée, et une carte qui pivote
  * joliment devient au bout de vingt cartes la chose qui ralentit le travail.
  *
@@ -38,8 +38,8 @@ function FlipCard({ card }: { card: DemoCard }) {
     <button
       type="button"
       onClick={() => setTapped((value) => !value)}
-      aria-label={`${card.kindLabel} : ${card.front} — ${card.back}`}
-      /* Une hauteur fixe, et assez grande pour la carte la plus chargée — le QCM. Une hauteur qui
+      aria-label={`${card.kindLabel} : ${card.front} - ${card.back}`}
+      /* Une hauteur fixe, et assez grande pour la carte la plus chargée - le QCM. Une hauteur qui
          s'adapte au contenu donnerait quatre cartes de tailles différentes, et un dos plus court
          que son recto laisse un trou au retournement. */
       className="group h-[248px] w-full text-left [perspective:1200px]"
@@ -96,7 +96,7 @@ function FlipCard({ card }: { card: DemoCard }) {
  * Le schéma d'une carte, **au recto avec ses trous et au verso rempli.**
  *
  * Trois pastilles reliées par des flèches : c'est le cycle, et c'est la même figure que la fiche
- * porte. Au recto les étiquettes sont des tirets — un schéma dont tout est déjà écrit ne demande
+ * porte. Au recto les étiquettes sont des tirets - un schéma dont tout est déjà écrit ne demande
  * rien.
  */
 function Diagram({

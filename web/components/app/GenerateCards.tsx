@@ -22,7 +22,7 @@ import { generateCards } from "@/lib/actions/course";
  * Demander des cartes, **et combien de chaque format**.
  *
  * C'est le panneau de l'app, porté : un compteur par format, le total lu dessous. Ce qui vivait ici
- * était un bouton seul, et le quota était écrit en dur dans l'action — on demandait des cartes et
+ * était un bouton seul, et le quota était écrit en dur dans l'action - on demandait des cartes et
  * on recevait ce que le code avait décidé. **Un nombre par format est une commande, pas une
  * autorisation** : celui qui veut cinq QCM et cinq textes à trou pour son contrôle de la semaine
  * peut le demander.
@@ -126,7 +126,7 @@ export function GenerateCards({
             <span className="min-w-0">
               <span className="block text-[16.5px] font-bold text-ink">Générer les cartes</span>
               <span className="mt-1 block text-[13.5px] leading-relaxed text-ink-secondary">
-                Choisis tes formats — questions, trous, QCM — et Micabo écrit les cartes à
+                Choisis tes formats - questions, trous, QCM - et Micabo écrit les cartes à
                 partir de la fiche.
               </span>
             </span>

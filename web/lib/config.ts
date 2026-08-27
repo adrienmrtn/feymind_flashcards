@@ -3,15 +3,15 @@
  *
  * **Les valeurs par défaut sont écrites ici, en clair, et c'est délibéré.** C'est déjà ce que
  * fait `Micabo/Services/AppConfig.swift` pour l'app : l'URL du projet et la clé publiable sont
- * publiques par nature — la clé est un jeton de rôle `anon`, et tout ce qu'elle peut lire est
+ * publiques par nature - la clé est un jeton de rôle `anon`, et tout ce qu'elle peut lire est
  * ce que le cloisonnement de Postgres autorise à un visiteur anonyme, c'est-à-dire rien.
  *
  * Le bénéfice est concret : un déploiement compile et tourne **sans qu'une seule variable ait
  * été collée dans un tableau de bord**. Ça compte ici, parce que l'accès Vercel dont je dispose
  * ne sait pas poser de variable d'environnement.
  *
- * `process.env` reste prioritaire, pour qu'un autre projet Supabase — une branche, un bac à
- * sable — se branche sans toucher au code.
+ * `process.env` reste prioritaire, pour qu'un autre projet Supabase - une branche, un bac à
+ * sable - se branche sans toucher au code.
  *
  * Ce qui n'a **jamais** sa place dans ce fichier : la clé de service, les clés Stripe, le
  * secret du webhook RevenueCat. Ceux-là sont des variables d'environnement serveur, ils
@@ -60,7 +60,7 @@ function stripTrailingSlash(value: string): string {
  * Le site ne s'indexe pas encore.
  *
  * Deux raisons, et la seconde est la vraie : une prévisualisation indexée se présente à la
- * place du site, et **il n'y a pour l'instant aucune page d'accueil** — seulement la référence
+ * place du site, et **il n'y a pour l'instant aucune page d'accueil** - seulement la référence
  * des fondations. Cette porte s'ouvre à l'étape 2, quand il y aura quelque chose à trouver.
  */
 export const IS_INDEXABLE = false;

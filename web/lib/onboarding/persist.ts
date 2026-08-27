@@ -1,4 +1,5 @@
 import { saveOnboarding, type SaveResult } from "@/lib/actions/onboarding";
+import { ONBOARDING_CREATE_STORAGE } from "@/lib/auth/onboarding-create";
 import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
 import { clearOpenCourses } from "@/lib/open-courses";
 
@@ -8,7 +9,7 @@ import type { Answers } from "./store";
  * Le pont entre les réponses gardées sur l'appareil et la ligne `profiles`.
  *
  * Le parcours n'écrit plus en base à chaque écran : il n'y a pas encore de session. Ce module
- * est le seul endroit qui **déverse** — à la connexion, au retour d'un fournisseur, et à
+ * est le seul endroit qui **déverse** - à la connexion, au retour d'un fournisseur, et à
  * l'ouverture de l'app si les réponses n'avaient pas encore traversé.
  */
 
@@ -136,6 +137,7 @@ export async function persistStoredAnswers(): Promise<SaveResult> {
     clearStoredAnswers();
     try {
       sessionStorage.removeItem(ONBOARDING_REPLAY_STORAGE);
+      sessionStorage.removeItem(ONBOARDING_CREATE_STORAGE);
     } catch {
       // Voir plus haut.
     }

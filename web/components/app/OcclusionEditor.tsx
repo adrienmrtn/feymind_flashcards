@@ -9,7 +9,7 @@ import { createOcclusionCards } from "@/lib/actions/cards";
  *
  * On choisit un schéma, on trace les zones au pointeur, on nomme chacune, et
  * Micabo en fait une carte par zone. C'est le format des matières qui
- * s'apprennent sur une image — anatomie, géographie, géologie.
+ * s'apprennent sur une image - anatomie, géographie, géologie.
  */
 
 interface Zone {

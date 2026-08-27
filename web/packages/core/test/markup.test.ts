@@ -61,8 +61,8 @@ describe("les délimiteurs seuls", () => {
 
   it("avale un gras non fermé, comme l'iPhone", () => {
     // **Ce cas n'est pas celui qu'on attendrait, et c'est voulu.** Un `**` non fermé n'est pas
-    // laissé littéral : la première astérisque ouvre une italique — sa fermeture est la
-    // seconde astérisque, qui n'est pas suivie d'une autre et compte donc pour elle-même — et
+    // laissé littéral : la première astérisque ouvre une italique - sa fermeture est la
+    // seconde astérisque, qui n'est pas suivie d'une autre et compte donc pour elle-même - et
     // les deux marques disparaissent en laissant un fragment vide.
     //
     // C'est exactement ce que fait `SheetMarkup.spans` côté iOS, et c'est la seule raison de

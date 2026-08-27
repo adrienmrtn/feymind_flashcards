@@ -38,7 +38,7 @@ export interface ReviewSetupExam {
  * L'écran qui précède la session : le compte, et le curseur des cartes neuves.
  *
  * Le nombre de base est celui du rythme, moins ce qui a déjà été introduit
- * aujourd'hui — y compris depuis un cours. Le curseur ne change que **cette**
+ * aujourd'hui - y compris depuis un cours. Le curseur ne change que **cette**
  * session.
  */
 export function ReviewSetup({

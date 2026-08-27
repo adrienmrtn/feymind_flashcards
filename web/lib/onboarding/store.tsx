@@ -14,7 +14,7 @@ import type { CountryCode, EducationTier, StudyLevel } from "@micabo/core";
  * La seconde est propre au web. Écrire dans `profiles` à chaque réponse voudrait dire une requête
  * réseau par appui, et surtout **une session à chaque écran** : un jeton qui expire au cinquième
  * écran perdrait les quatre premiers. Les réponses s'accumulent donc ici, et se déversent en base
- * dès qu'une session existe — au retour du fournisseur, puis à la fin. Le parcours reste
+ * dès qu'une session existe - au retour du fournisseur, puis à la fin. Le parcours reste
  * traversable même si la connexion a échoué, ce qui est aussi ce qui le rend vérifiable.
  */
 
@@ -58,7 +58,7 @@ export function OnboardingStore({ children }: { children: React.ReactNode }) {
       const stored = window.localStorage.getItem(KEY);
       if (stored) setAnswers(JSON.parse(stored) as Answers);
     } catch {
-      // Un stockage refusé — navigation privée, réglage de confidentialité — ne doit pas
+      // Un stockage refusé - navigation privée, réglage de confidentialité - ne doit pas
       // empêcher de répondre. On perd la reprise, pas le parcours.
     }
     setReady(true);

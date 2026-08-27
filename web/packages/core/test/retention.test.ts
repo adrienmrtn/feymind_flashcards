@@ -46,7 +46,7 @@ describe("la courbe avec Micabo", () => {
     // La première stabilité est celle de la courbe sans révision : avant le premier rappel,
     // les deux tracés suivent la même loi. On les compare donc **à la même abscisse**, en
     // évaluant la loi, et non en cherchant le point le plus proche d'une autre grille
-    // d'échantillonnage — deux courbes tracées à des pas différents ne se comparent pas point
+    // d'échantillonnage - deux courbes tracées à des pas différents ne se comparent pas point
     // à point.
     const firstReview = REVIEW_DAYS[0]! / HORIZON_DAYS;
     const early = curveWithMicabo(30).filter((point) => point.x < firstReview);

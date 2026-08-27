@@ -138,7 +138,7 @@ export function mostReviewedCards(
  * La semaine glissante du tableau de bord : trois jours avant, aujourd'hui,
  * trois jours après.
  *
- * Les cartes en retard se posent **aujourd'hui** — c'est là qu'on les fait.
+ * Les cartes en retard se posent **aujourd'hui** - c'est là qu'on les fait.
  * Un jour à venir ne porte que ce qui tombe vraiment ce jour-là. La flamme
  * dit qu'on a déjà révisé ce jour, pas le volume.
  */
@@ -211,7 +211,7 @@ export function weekStrip(
   });
 }
 
-/** « 12 vues · 3 ajouts » — les deux compteurs publics d'un cours. */
+/** « 12 vues · 3 ajouts » - les deux compteurs publics d'un cours. */
 export function courseAudienceLabel(viewCount: number, adoptCount: number): string {
   const views = viewCount <= 1 ? `${viewCount} vue` : `${viewCount} vues`;
   const adopts = adoptCount <= 1 ? `${adoptCount} ajout` : `${adoptCount} ajouts`;

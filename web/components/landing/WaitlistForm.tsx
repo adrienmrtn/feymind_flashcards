@@ -10,7 +10,7 @@ import { joinWaitlist, type WaitlistResult, type WaitlistSource } from "@/lib/ac
  *
  * `thinking-orbs` fait ici exactement ce pour quoi elle est faite : une attente **courte**, en
  * 20 px, à même la ligne. Elle est monochrome, donc elle ne se bat pas avec le vert de Micabo,
- * et son `state="connecting"` dit la bonne chose — on parle au serveur.
+ * et son `state="connecting"` dit la bonne chose - on parle au serveur.
  *
  * Le retour d'information n'est **jamais** porté par la seule animation : le message est écrit,
  * et il est annoncé aux lecteurs d'écran. Une interface où le mouvement est le seul canal de

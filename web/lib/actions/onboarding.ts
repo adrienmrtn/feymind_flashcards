@@ -5,21 +5,22 @@ import { redirect } from "next/navigation";
 
 import { countryFor, newCardsPerDay, DEFAULT_DAILY_MINUTES } from "@micabo/core";
 
+import { ONBOARDING_CREATE_COOKIE } from "@/lib/auth/onboarding-create";
 import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
 import { createClient } from "@/lib/supabase/server";
 
 /**
  * Le déversement des réponses du parcours en base.
  *
- * Il écrit dans **les mêmes colonnes que l'iPhone** — `country_code`, `study_level`, `subjects`,
- * `institution_id`, `institution_name`, `onboarding_completed_at` — parce que c'est ce qui fait
+ * Il écrit dans **les mêmes colonnes que l'iPhone** - `country_code`, `study_level`, `subjects`,
+ * `institution_id`, `institution_name`, `onboarding_completed_at` - parce que c'est ce qui fait
  * qu'un étudiant qui commence sur le web arrive **déjà configuré** sur son téléphone. La ligne
  * existe déjà : c'est le déclencheur `handle_new_user` qui l'a créée à l'inscription, ici comme
  * là-bas.
  *
  * Deux choses qu'il n'écrit pas, et il faut le dire :
  *
- * - **`daily_minutes` reste à son défaut.** Le parcours ne pose plus cette question — ni celle
+ * - **`daily_minutes` reste à son défaut.** Le parcours ne pose plus cette question - ni celle
  *   de la date d'examen : il montre ce que Micabo change, et le rythme se corrige dans les
  *   réglages. Quinze minutes valent huit cartes neuves par jour.
  * - **`learning_goals` reste vide.** Le parcours web ne reprend ni les objectifs ni le rapport à
@@ -74,6 +75,7 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
 
   const jar = await cookies();
   jar.delete(ONBOARDING_REPLAY_COOKIE);
+  jar.delete(ONBOARDING_CREATE_COOKIE);
 
   // Une date encore présente dans les réponses (un ancien parcours) crée une vraie ligne
   // dans `exams`. Le parcours actuel n'en pose plus : il montre l'exemple, et l'examen
@@ -103,7 +105,7 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
  * Ce que le rythme par défaut donne, pour l'annoncer sans mentir.
  *
  * Le parcours ne demande pas les minutes, donc il ne peut pas promettre un chiffre choisi par
- * l'étudiant — mais il peut dire ce que le défaut produit.
+ * l'étudiant - mais il peut dire ce que le défaut produit.
  */
 export async function defaultPace(): Promise<{ minutes: number; newCards: number }> {
   return {

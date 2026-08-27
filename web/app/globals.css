@@ -8,7 +8,7 @@
    deux fois finit par différer, et c'est comme ça qu'une interface se met à « sonner faux ».
 
    Direction : du papier, pas des cartes empilées. Le fond est un gris froid, assez marqué
-   pour que le blanc se détache seul — les surfaces n'ont donc ni bordure ni ombre appuyée.
+   pour que le blanc se détache seul - les surfaces n'ont donc ni bordure ni ombre appuyée.
 
    Deux règles restent : **aucun display serif**, et **aucun accent terracotta**. La
    distinction vient d'ailleurs : une page, deux états, la même empreinte.
@@ -122,7 +122,7 @@
    Ombres
 
    « Les ombres portent la profondeur, les bordures portent la structure. » Une bordure posée
-   pour décoller une carte devient donc une ombre en trois couches — la première tient lieu de
+   pour décoller une carte devient donc une ombre en trois couches - la première tient lieu de
    filet de 1 px, les deux autres donnent la levée puis l'ambiance. Elles sont transparentes,
    donc elles s'adaptent au fond, ce qu'une bordure de couleur fixe ne fait pas.
 
@@ -195,7 +195,7 @@ video {
    Les deux régimes de mouvement
 
    La vitrine explique, une seule visite : elle peut durer et échelonner. Le produit sert, tous
-   les jours : il reste court, et il ne déplace rien au survol. C'est la table des fréquences —
+   les jours : il reste court, et il ne déplace rien au survol. C'est la table des fréquences  - 
    ce qui décide d'animer n'est pas le goût, c'est le nombre de fois par jour qu'on le voit.
    -------------------------------------------------------------------------- */
 
@@ -206,7 +206,7 @@ video {
   transition-timing-function: var(--ease-out-strong);
 }
 
-/* L'ombre de `paper` **ne change pas au survol.** Sur une liste — derniers cours, cartes —
+/* L'ombre de `paper` **ne change pas au survol.** Sur une liste - derniers cours, cartes  - 
    le `:hover` du parent se déclenche dès qu'on touche une rangée, et l'ombre du bloc entier
    saute d'un ou deux points : c'est le décalage qu'on voyait. La tuile qui doit se soulever
    le fait via `hover-tile` ou `lift`, pas via le papier. */
@@ -337,7 +337,7 @@ video {
  * Trois façons de le déclencher, et ce n'est pas de la générosité : **le survol ne peut pas être
  * la seule**. Il est enfermé derrière `hover: hover` et `pointer: fine`, parce que sur un écran
  * tactile un appui déclenche un faux survol et la carte resterait retournée après que le doigt
- * est parti. Restent donc l'appui, qui est le geste juste là-bas, et le clavier — la carte est un
+ * est parti. Restent donc l'appui, qui est le geste juste là-bas, et le clavier - la carte est un
  * `<button>`, et une réponse qu'on ne peut atteindre qu'à la souris est une réponse inaccessible.
  *
  * C'est aussi ce qui rend la démonstration vérifiable : un navigateur piloté n'annonce pas
@@ -641,7 +641,7 @@ video {
 }
 
 /* Le PDF de la démo : le reflet du bouton y était trop discret, on le prenait pour un
-   fond. Plus large, plus clair, plus souvent — c'est le seul objet qu'on doit attraper. */
+   fond. Plus large, plus clair, plus souvent - c'est le seul objet qu'on doit attraper. */
 @utility shiny-loud {
   position: relative;
   overflow: hidden;
@@ -943,7 +943,7 @@ video {
 /* Sur-titre en capitales, au-dessus d'un grand titre.
  *
  * **Il ne pose pas de couleur, et c'est délibéré.** Il en posait une, et elle écrasait
- * silencieusement le `text-accent` d'un appel précis — deux utilitaires qui déclarent la même
+ * silencieusement le `text-accent` d'un appel précis - deux utilitaires qui déclarent la même
  * propriété se départagent sur l'ordre du fichier, pas sur l'intention de celui qui écrit la
  * classe. Un sur-titre est une forme typographique : un corps, une graisse, un écartement, des
  * capitales. Sa couleur se dit à l'endroit où on l'emploie. */
@@ -957,7 +957,7 @@ video {
 /* --------------------------------------------------------------------------
    Mouvement réduit
 
-   Réduire, pas annuler : on garde ce qui aide à comprendre — les opacités, les couleurs — et
+   Réduire, pas annuler : on garde ce qui aide à comprendre - les opacités, les couleurs - et
    on retire les déplacements. Une interface sans aucun retour est moins accessible, pas plus.
    -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
@@ -982,7 +982,7 @@ video {
 /* --------------------------------------------------------------------------
    L'impression
 
-   Une fiche **est** une page — c'est ce que le produit dit depuis le début. Les fiches se
+   Une fiche **est** une page - c'est ce que le produit dit depuis le début. Les fiches se
    relisent sur papier la veille au soir, et une feuille de style d'impression coûte presque
    rien. C'est aussi la seconde signature du site : personne ne soigne son `@media print` sur
    une page d'accueil produite à la chaîne.

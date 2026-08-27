@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import type { Route } from "next";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { SignOutButton } from "@/components/app/SignOutButton";
+import { ONBOARDING_CREATE_STORAGE } from "@/lib/auth/onboarding-create";
 import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
 import { OnboardingStore } from "@/lib/onboarding/store";
 import { previousPath, progressFor, stepIndex, STEPS } from "@/lib/onboarding/steps";
@@ -28,7 +29,9 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
 
   return (
     <OnboardingStore>
-      <LoggedInBounce />
+      <Suspense fallback={null}>
+        <LoggedInBounce />
+      </Suspense>
       <div
         className="min-h-svh bg-canvas"
         style={{ ["--onboarding-chrome" as string]: showChrome ? "56px" : "16px" }}
@@ -96,15 +99,18 @@ function OnboardingLogout() {
   return <SignOutButton compact />;
 }
 
-/** Une session ouverte n'a plus rien à faire dans le tunnel — sauf créer le compte. */
+/** Une session ouverte n'a plus rien à faire dans le tunnel - sauf créer le compte. */
 function LoggedInBounce() {
   const pathname = usePathname();
+  const params = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
     if (pathname === "/commencer/compte") return;
+    if (params.get("inconnu") === "1") return;
     try {
       if (sessionStorage.getItem(ONBOARDING_REPLAY_STORAGE) === "1") return;
+      if (sessionStorage.getItem(ONBOARDING_CREATE_STORAGE) === "1") return;
     } catch {
       // Stockage refusé : le cookie du middleware décide encore.
     }
@@ -117,7 +123,7 @@ function LoggedInBounce() {
       if (session) go();
     });
     return () => data.subscription.unsubscribe();
-  }, [pathname, router]);
+  }, [params, pathname, router]);
 
   return null;
 }

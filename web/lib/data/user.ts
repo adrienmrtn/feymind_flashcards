@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
  * `getUser()` parle à GoTrue. Sans mémo, chaque lecture (cours, cartes, examens, droit)
  * le rappelait : une page d'accueil faisait huit allers-retours d'auth avant d'afficher
  * quoi que ce soit. Le layout, la page et les helpers partagent maintenant le même
- * résultat — le cloisonnement ne change pas, seul le bruit disparaît.
+ * résultat - le cloisonnement ne change pas, seul le bruit disparaît.
  */
 export const currentUser = cache(async () => {
   const supabase = await createClient();

@@ -5,7 +5,7 @@
  * compter sur le web, et réciproquement : deux copies de cette formule qui divergent d'un
  * dixième donnent une carte revue deux fois, ou pas du tout. Le port est donc littéral, et
  * `test/sm2.test.ts` reprend les valeurs attendues de `MicaboTests/SM2SchedulerTests.swift`
- * — les mêmes nombres, vérifiés des deux côtés.
+ * - les mêmes nombres, vérifiés des deux côtés.
  *
  * Les seules libertés prises par rapport au Swift sont de forme : le tirage aléatoire de la
  * dispersion est injectable, pour qu'un test puisse le fixer sans passer par un drapeau.
@@ -114,7 +114,7 @@ export function schedule(
  * Les quatre boutons d'une carte en apprentissage : **1 min, 10 min, 1 j, 4 j.**
  *
  * Anki rejoue le palier courant sur « Difficile », ce qui affiche « 1 min » sous deux
- * boutons voisins d'une carte neuve — deux fois la même promesse, dont une qui n'apprend
+ * boutons voisins d'une carte neuve - deux fois la même promesse, dont une qui n'apprend
  * rien. Ici chaque note dit autre chose : on reprend au premier palier, on saute au
  * dernier, ou on sort de l'apprentissage.
  *

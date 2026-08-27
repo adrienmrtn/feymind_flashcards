@@ -13,7 +13,7 @@ import { SourceMarquee } from "@/components/landing/SourceMarquee";
 import { currentUser } from "@/lib/data/user";
 
 export const metadata: Metadata = {
-  title: "Micabo — apprends tout, plus vite",
+  title: "Micabo - apprends tout, plus vite",
   description:
     "Dépose un polycopié, une photo de tes notes ou une vidéo de cours. Micabo en écrit la fiche que tu relis, en tire les cartes qui te la font retenir, et les fait revenir juste avant que tu l'oublies.",
 };
@@ -60,7 +60,7 @@ export default async function LandingPage({
         <Section
           eyebrow="Pourquoi ça tient"
           title="Relire ne suffit pas. Se souvenir, oui."
-          note="Ce qu'on a dû retrouver de mémoire tient — surtout si ça revient au bon moment, de moins en moins souvent."
+          note="Ce qu'on a dû retrouver de mémoire tient - surtout si ça revient au bon moment, de moins en moins souvent."
         >
           <RetentionChart />
         </Section>

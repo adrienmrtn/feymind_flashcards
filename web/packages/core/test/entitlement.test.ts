@@ -54,7 +54,7 @@ describe("le droit", () => {
   it("suit le réglage quand il n'y a aucune ligne", () => {
     // Le seul endroit du code où une décision de produit se cache : ce qu'on fait de quelqu'un
     // dont on ne sait rien. Aujourd'hui `true`, parce qu'il n'existe aucune façon de payer sur le
-    // web — fermer enfermerait dehors sans porte de sortie.
+    // web - fermer enfermerait dehors sans porte de sortie.
     expect(resolve().isPro).toBe(ASSUME_PRO_WITHOUT_ROW);
     expect(resolve(null, undefined).isPro).toBe(ASSUME_PRO_WITHOUT_ROW);
   });
@@ -204,7 +204,7 @@ describe("les offres", () => {
 
   it("**calculent** leur pourcentage d'économie, et il vaut 80 au tarif plein", () => {
     // 83,88 contre 415,48. Le chiffre sort des deux prix, et il suivra le jour où l'un des deux
-    // bouge. L'étudiant, lui, économise davantage — 86 — parce que son annuel est plus bas.
+    // bouge. L'étudiant, lui, économise davantage - 86 - parce que son annuel est plus bas.
     expect(savingsPercent()).toBe(80);
     expect(savingsPercent(STUDENT_YEARLY)).toBe(86);
   });
@@ -213,7 +213,7 @@ describe("les offres", () => {
     // L'espace avant l'euro est **insécable**, comme la typographie française l'exige : un prix
     // ne se coupe pas en fin de ligne entre le nombre et son symbole. Elle est normalisée à
     // U+00A0 par `priceText`, parce que `Intl` rend tantôt U+00A0 tantôt U+202F selon la version
-    // d'ICU — et un prix qui ne s'espace pas pareil selon la machine est une différence qu'on
+    // d'ICU - et un prix qui ne s'espace pas pareil selon la machine est une différence qu'on
     // finit par chercher longtemps.
     const sixPerMonth = "6,99\u00a0€";
     const fourPerMonth = "4,99\u00a0€";

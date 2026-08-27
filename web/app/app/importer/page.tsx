@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/server";
  * Pas de scanner ici : un `<input capture>` sur un portable ouvre une webcam, ce qui donne une
  * photo de polycopié inexploitable. Mieux vaut ne pas proposer que proposer mal.
  *
- * La longueur de fiche part de **ce que le profil a retenu** — la colonne que l'iPhone écrit aussi.
+ * La longueur de fiche part de **ce que le profil a retenu** - la colonne que l'iPhone écrit aussi.
  */
 export default async function ImportPage() {
   const supabase = await createClient();

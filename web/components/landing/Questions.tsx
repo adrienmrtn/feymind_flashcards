@@ -20,7 +20,7 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
         Oui, et par construction : le cloisonnement est dans la base, pas dans l&apos;application.
         Chaque requête est évaluée avec ton identité lue dans ton jeton, donc il n&apos;existe pas
         de requête qui puisse demander les cours de quelqu&apos;un d&apos;autre. Tu peux choisir de
-        partager un cours — camarades de ton établissement, amis, ou personne — et le réglage se
+        partager un cours - camarades de ton établissement, amis, ou personne - et le réglage se
         décide <strong className="font-semibold text-ink">au moment de l&apos;import</strong>, pas
         après coup.
       </>
@@ -42,9 +42,9 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
     question: "Ça marche en anglais ? Dans d'autres systèmes scolaires ?",
     answer: (
       <>
-        Oui. Le pays de scolarisation décide à la fois du système de référence — un cégep
+        Oui. Le pays de scolarisation décide à la fois du système de référence - un cégep
         québécois, un A-Level britannique et une prépa française ne demandent pas la même
-        rédaction — et de la langue dans laquelle la fiche est écrite. Le site, lui, est en
+        rédaction - et de la langue dans laquelle la fiche est écrite. Le site, lui, est en
         français pour l&apos;instant.
       </>
     ),
@@ -75,7 +75,7 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
     question: "Et si j'utilise déjà Anki ?",
     answer: (
       <>
-        La répétition espacée de Micabo <em>est</em> celle d&apos;Anki — SM-2, avec ses réglages
+        La répétition espacée de Micabo <em>est</em> celle d&apos;Anki - SM-2, avec ses réglages
         par défaut, ses quatre boutons et ses paliers d&apos;apprentissage. Ce que Micabo ajoute
         est ce qu&apos;Anki ne fait pas : écrire la fiche et les cartes à partir de ton cours, et
         replanifier tout un paquet quand tu déclares la date d&apos;un examen.

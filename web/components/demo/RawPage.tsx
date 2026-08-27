@@ -14,7 +14,7 @@ export function RawPage({
    * Remplit la hauteur qu'on lui donne au lieu de faire la sienne.
    *
    * La section de transformation tient les deux états dans un seul rectangle, et c'est la fiche
-   * qui le dimensionne — elle est la plus haute. La page brute doit donc s'étendre : les lignes
+   * qui le dimensionne - elle est la plus haute. La page brute doit donc s'étendre : les lignes
    * s'écartent au lieu de laisser un blanc en bas, ce qui la rend d'ailleurs **plus** crédible
    * comme polycopié qu'un bloc de cinq lignes serrées en haut d'un cadre.
    */

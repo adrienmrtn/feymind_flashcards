@@ -13,7 +13,7 @@ const AURA_COLORS = ["#dce8dc", "#f6f7f9", "#16c08c", "#0b8a66"];
  * La lueur du hero : un mesh sage et gris, masqué en ellipse.
  *
  * Un radial CSS reste dessous : si WebGL manque, on retrouve une lueur.
- * Avec WebGL, le mesh la remplace — taches lentes, pas le dégradé violet
+ * Avec WebGL, le mesh la remplace - taches lentes, pas le dégradé violet
  * que tout le monde pose.
  */
 export function HeroAura() {

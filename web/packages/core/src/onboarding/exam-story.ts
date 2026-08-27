@@ -1,8 +1,8 @@
 /**
  * L'exemple d'examen du parcours : un cas **déjà décidé**, pas un calendrier à remplir.
  *
- * L'écran ne demande plus la date. Il montre ce que Micabo change — un examen posé, des
- * cours accrochés, la révision, la note — dans le **système de notation du pays** choisi
+ * L'écran ne demande plus la date. Il montre ce que Micabo change - un examen posé, des
+ * cours accrochés, la révision, la note - dans le **système de notation du pays** choisi
  * deux écrans plus tôt. En France c'est 17/20 ; ailleurs, l'équivalent « très bien » de
  * ce pays-là. Inventer 17/20 à un Allemand ou un A à un Français, c'est parler une langue
  * de notes qu'ils n'ont jamais eue.

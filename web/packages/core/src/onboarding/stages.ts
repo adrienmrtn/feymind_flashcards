@@ -10,7 +10,7 @@
  * Chaque palier porte deux clés qui ne servent pas à la même chose. Son `level` est le **registre
  * de rédaction** envoyé à l'Edge Function, volontairement grossier parce qu'un cégep québécois et
  * un lycée français demandent la même écriture. Son `tier` est la **marche sur une échelle
- * comparable d'un pays à l'autre**, qui sert à retrouver l'équivalent quand on change de pays — le
+ * comparable d'un pays à l'autre**, qui sert à retrouver l'équivalent quand on change de pays - le
  * registre ne pouvait pas s'en charger, un lycéen et un collégien le partageant.
  */
 

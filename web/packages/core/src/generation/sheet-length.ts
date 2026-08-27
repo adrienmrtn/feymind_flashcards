@@ -48,8 +48,8 @@ export function defaultBlocks(length: SheetLength): number {
 /**
  * Le format auquel appartient un nombre de blocs.
  *
- * Les plages laissent des trous — c'est voulu côté modèle, ce sont des consignes et pas une
- * partition — donc il faut décider où bascule le nom. Il bascule au milieu du trou, comme là-bas.
+ * Les plages laissent des trous - c'est voulu côté modèle, ce sont des consignes et pas une
+ * partition - donc il faut décider où bascule le nom. Il bascule au milieu du trou, comme là-bas.
  */
 export function lengthContaining(blocks: number): SheetLength {
   if (blocks <= 13) return "brief";

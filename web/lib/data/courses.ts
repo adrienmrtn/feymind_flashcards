@@ -23,7 +23,7 @@ import { createClient } from "@/lib/supabase/server";
  * **Chaque requête porte son filtre `user_id`**, alors que le cloisonnement suffirait. C'est la
  * leçon déjà payée côté iOS, et elle est recopiée ici mot pour mot : une requête qui compte sur le
  * cloisonnement pour ne pas ramasser les lignes des autres est une requête qu'une politique ajoutée
- * un jour recasse. `courses` en a déjà deux — la sienne et celle de la bibliothèque — et c'est
+ * un jour recasse. `courses` en a déjà deux - la sienne et celle de la bibliothèque - et c'est
  * exactement ce cumul qui avait fait entrer les cours des camarades dans « Mes cours ».
  *
  * Et `deleted_at is null` partout : rien ne se supprime vraiment, un appareil hors ligne depuis
@@ -137,7 +137,7 @@ export async function listCourses(): Promise<CourseRow[]> {
   );
 }
 
-/** Titre, matière, tuile — pas la fiche. C'est ce dont la barre et la liste ont besoin. */
+/** Titre, matière, tuile - pas la fiche. C'est ce dont la barre et la liste ont besoin. */
 export const getCourseMeta = cache(async (id: string): Promise<CourseRow | null> => {
   const auth = await reader();
   if (!auth) return null;

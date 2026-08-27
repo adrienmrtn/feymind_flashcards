@@ -13,12 +13,12 @@ import { createClient } from "@/lib/supabase/server";
  * **Une carte écrite par un modèle doit pouvoir être corrigée.** C'est ce qui manquait le plus :
  * on lisait quatorze cartes sans pouvoir toucher celle dont la réponse était fausse, et une carte
  * fausse révisée vingt fois installe l'erreur au lieu du cours. C'est aussi l'écran où le web bat
- * le téléphone — on corrige vingt cartes à la suite au clavier.
+ * le téléphone - on corrige vingt cartes à la suite au clavier.
  *
  * La suppression est **douce** (`deleted_at`), comme partout ailleurs : un appareil hors ligne
  * depuis trois jours doit apprendre qu'une carte a disparu, et une ligne effacée ne se raconte pas.
  *
- * Chaque écriture porte son filtre `user_id`, alors que le cloisonnement suffirait — c'est la leçon
+ * Chaque écriture porte son filtre `user_id`, alors que le cloisonnement suffirait - c'est la leçon
  * déjà payée côté iOS, et une requête qui s'en remet à la politique est une requête qu'une
  * politique ajoutée un jour recasse.
  */

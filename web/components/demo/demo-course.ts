@@ -25,7 +25,7 @@ export const DEMO_COURSE = {
  * Ce que contient le PDF déposé : un mur de texte sans hiérarchie.
  *
  * C'est **volontairement mal écrit** et volontairement dense. Sans un vrai avant, l'après ne
- * transforme rien — et le titre est perdu au milieu du texte, à la même taille que le reste,
+ * transforme rien - et le titre est perdu au milieu du texte, à la même taille que le reste,
  * ce qui est exactement ce qui rend un polycopié pénible à réviser.
  */
 export const RAW_LINES: readonly string[] = [
@@ -37,7 +37,7 @@ export const RAW_LINES: readonly string[] = [
 ];
 
 /**
- * La fiche, en **vrais blocs** — pas une maquette.
+ * La fiche, en **vrais blocs** - pas une maquette.
  *
  * C'est le même type `SheetBlock` que celui que le serveur écrit et que la base enregistre, et
  * elle est rendue par le même composant que la fiche d'un vrai cours. C'est ce qui fait que la

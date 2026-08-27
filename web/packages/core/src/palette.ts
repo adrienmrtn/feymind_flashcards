@@ -3,7 +3,7 @@
  *
  * Le reste des jetons vit dans `app/globals.css`, où Tailwind en fait des utilitaires : une
  * couleur déclarée deux fois finit par différer. Ces deux tableaux-là sont ici parce qu'on
- * choisit dedans **par index** — la teinte d'un cours se déduit de son identifiant, ce qui est
+ * choisit dedans **par index** - la teinte d'un cours se déduit de son identifiant, ce qui est
  * de la logique, pas de la présentation. Et la même logique doit donner la même couleur au
  * même cours sur le téléphone et sur le web, sinon l'étagère change de couleur en changeant
  * d'appareil.

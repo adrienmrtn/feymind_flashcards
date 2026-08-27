@@ -7,14 +7,14 @@ import { useState } from "react";
  *
  * L'emoji ne suffit pas, et ça a été vérifié deux fois : un drapeau Unicode est une paire de
  * lettres régionales, et une police qui n'a pas ces glyphes affiche « FR ». Forcer une pile de
- * polices à emoji marche sur les machines qui en ont une — pas sur les autres, et pas sur les
+ * polices à emoji marche sur les machines qui en ont une - pas sur les autres, et pas sur les
  * navigateurs qui refusent la substitution dans un bloc de texte.
  *
  * L'image, elle, ne dépend d'aucune police. Flagcdn d'abord ; Twemoji si le réseau refuse
  * la première. L'emoji reste derrière en dernier repli.
  *
- * Le ratio 4:3 est celui de la source. La bordure très légère détache un drapeau à fond blanc —
- * la Suisse, la Pologne — du papier ivoire, sans quoi il n'a plus de contour.
+ * Le ratio 4:3 est celui de la source. La bordure très légère détache un drapeau à fond blanc  - 
+ * la Suisse, la Pologne - du papier ivoire, sans quoi il n'a plus de contour.
  */
 export function Flag({
   iso,

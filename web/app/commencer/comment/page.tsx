@@ -18,7 +18,7 @@ const BEATS = [
   {
     emoji: "✍️",
     title: "Micabo en écrit la fiche.",
-    detail: "Les idées, les définitions, les schémas — plus le mur de texte.",
+    detail: "Les idées, les définitions, les schémas - plus le mur de texte.",
   },
   {
     emoji: "🃏",

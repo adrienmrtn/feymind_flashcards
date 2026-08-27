@@ -39,7 +39,7 @@ export default function FoundationsPage() {
           Les jetons, et les règles qu&apos;ils portent.
         </h1>
         <p className="mt-5 text-[15px] leading-relaxed text-ink-secondary">
-          Ce n&apos;est pas la page d&apos;accueil du site — elle arrive à l&apos;étape suivante.
+          Ce n&apos;est pas la page d&apos;accueil du site - elle arrive à l&apos;étape suivante.
           C&apos;est la référence des fondations, portées valeur par valeur depuis{" "}
           <code className="rounded-[6px] bg-surface-muted px-1.5 py-0.5 text-[13px]">
             MicaboTheme.swift
@@ -73,7 +73,7 @@ function FreeTierSection() {
       title="Un cours, sept dixièmes de la fiche, cinq cartes."
       note="Les nombres viennent de ProAccess.swift : c'est l'app qui fait foi, et un cours flouté
       aux sept dixièmes sur le téléphone et à la moitié sur le web serait le même produit qui dit
-      deux choses. Le verrou est construit ici, mais il n'est pas armé — il n'y a pas encore de
+      deux choses. Le verrou est construit ici, mais il n'est pas armé - il n'y a pas encore de
       table à lire, et le fermer maintenant enfermerait dehors qui vient de payer sur son
       téléphone."
     >
@@ -138,7 +138,7 @@ function FreeTierSection() {
           </div>
           <p className="mt-4 text-[13px] text-ink-tertiary">
             L&apos;annuel économise{" "}
-            <span className="numeral font-bold text-accent">{pricing.savingsPercent()} %</span> — un
+            <span className="numeral font-bold text-accent">{pricing.savingsPercent()} %</span> - un
             nombre <strong className="font-semibold text-ink-secondary">calculé</strong> depuis les
             deux prix, jamais écrit. L&apos;étudiant paie{" "}
             {pricing.priceText(pricing.STUDENT_YEARLY.price)}, sans essai.
@@ -221,7 +221,7 @@ function RetentionSection() {
         </figcaption>
       </figure>
       <p className="mt-4 text-[13px] text-ink-tertiary">
-        Révisions à {REVIEW_DAYS.map((day) => `${day} j`).join(", ")} — les intervalles réels, pas
+        Révisions à {REVIEW_DAYS.map((day) => `${day} j`).join(", ")} - les intervalles réels, pas
         des repères choisis pour la figure.
       </p>
     </Section>
@@ -346,7 +346,7 @@ function DailyLoadSection() {
       </div>
       <p className="mt-4 max-w-reading text-[13px] text-ink-tertiary">
         Le défaut est 15 minutes, soit huit cartes neuves par jour. Le parcours d&apos;accueil du
-        web ne pose pas la question — la date d&apos;examen est une meilleure question — donc un
+        web ne pose pas la question - la date d&apos;examen est une meilleure question - donc un
         compte né sur le web arrive avec ce défaut.
       </p>
     </Section>

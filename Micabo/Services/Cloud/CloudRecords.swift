@@ -83,6 +83,9 @@ struct ProfileRecord: Codable {
         if let institution_name { OnboardingPreferences.institutionName = institution_name }
         OnboardingPreferences.dailyMinutes = daily_minutes
         if let length = SheetLength(rawValue: sheet_length) { SheetPreferences.length = length }
+        if onboarding_completed_at != nil {
+            OnboardingPreferences.markCompleted()
+        }
     }
 }
 

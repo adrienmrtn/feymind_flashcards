@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// L'accroche. Un paquet de cartes se rebat tout seul, et rien d'autre.
@@ -7,10 +8,19 @@ import SwiftUI
 /// cartes disent déjà ce que fait Micabo, et **elles montrent les trois formats** — recto
 /// verso, QCM, texte à trou — ce qu'aucune phrase ne faisait.
 ///
+/// « J'ai déjà un compte » ouvre Apple ou Google. S'il y a un vrai compte Micabo,
+/// on entre dans l'app. S'il n'y en a pas, on le dit et on commence le parcours.
+///
 /// Le paquet vit dans `WelcomeDeck.swift`. Le laisser ici faisait abandonner le
 /// compilateur : trop d'expressions, et une `Face` privée que la carte ne pouvait pas lire.
 struct WelcomeStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(AuthController.self) private var auth
+    @Environment(CloudSync.self) private var sync
+    @Environment(\.modelContext) private var modelContext
+
+    @State private var showLogin = false
+    @State private var checkingAccount = false
 
     private let surface = OnboardingStep.welcome.surface
 
@@ -18,6 +28,13 @@ struct WelcomeStepView: View {
         layout
             .background(surface.background.ignoresSafeArea(edges: .bottom))
             .environment(\.onboardingSurface, surface)
+            .sheet(isPresented: $showLogin) {
+                loginSheet
+            }
+            .onChange(of: auth.isSignedIn) { _, signedIn in
+                guard signedIn, showLogin else { return }
+                Task { await resolveLogin() }
+            }
     }
 
     private var layout: some View {
@@ -59,10 +76,72 @@ struct WelcomeStepView: View {
 
     private var continueBar: some View {
         MicaboBottomBar(background: surface.background) {
-            OnboardingContinueButton(title: "Commencer") {
-                model.advance()
+            VStack(spacing: 12) {
+                OnboardingContinueButton(title: "Commencer") {
+                    model.advance()
+                }
+                Button {
+                    showLogin = true
+                } label: {
+                    Text("J'ai déjà un compte")
+                        .font(MicaboFont.hanken(14.5, weight: .medium))
+                        .foregroundStyle(surface.prose)
+                        .underline()
+                }
+                .buttonStyle(.plain)
+                .disabled(auth.isWorking || checkingAccount)
             }
             .onboardingAppear(index: 2, stagger: 0.1)
         }
+    }
+
+    private var loginSheet: some View {
+        VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+            Text("Content de te revoir.")
+                .font(MicaboFont.hanken(28, weight: .bold))
+                .foregroundStyle(MicaboColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("Connecte-toi pour retrouver tes cours, tes cartes et ta série.")
+                .font(MicaboFont.hanken(15))
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            SignInFailureNote()
+
+            if checkingAccount {
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text("On cherche ton compte…")
+                        .font(MicaboFont.hanken(14.5, weight: .medium))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            SignInProviderButtons()
+        }
+        .padding(MicaboSpacing.screen)
+        .padding(.top, MicaboSpacing.xl)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .interactiveDismissDisabled(auth.isWorking || checkingAccount)
+    }
+
+    @MainActor
+    private func resolveLogin() async {
+        checkingAccount = true
+        let exists = await sync.recognizeExistingAccount()
+        checkingAccount = false
+        showLogin = false
+
+        if exists {
+            await sync.sync(context: modelContext)
+            return
+        }
+
+        model.unknownAccount = true
+        model.advance()
     }
 }

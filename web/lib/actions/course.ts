@@ -166,7 +166,7 @@ export async function youtubePreview(url: string) {
   return { status: "ok" as const, video: (data as { video?: unknown })?.video };
 }
 
-/** Les sous-titres, puis la fiche — en deux temps, parce que le premier est gratuit. */
+/** Les sous-titres, puis la fiche - en deux temps, parce que le premier est gratuit. */
 export async function importFromYouTube(
   url: string,
   options?: { blocks?: number; length?: SheetLength; visibility?: CourseVisibility },
@@ -296,8 +296,8 @@ interface RawCard {
  * Le message du serveur, et pas celui du transport.
  *
  * `functions.invoke` rend « Edge Function returned a non-2xx status code », qui ne dit rien à
- * personne. Le refus utile — « le document ne contient pas assez de contenu », « tu as atteint la
- * limite de vingt générations » — est dans le corps de la réponse, et c'est celui-là qu'on montre.
+ * personne. Le refus utile - « le document ne contient pas assez de contenu », « tu as atteint la
+ * limite de vingt générations » - est dans le corps de la réponse, et c'est celui-là qu'on montre.
  */
 async function readableError(error: unknown): Promise<string> {
   const context = (error as { context?: Response }).context;

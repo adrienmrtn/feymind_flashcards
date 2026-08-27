@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/server";
  * L'insertion passe par la clé anonyme, ce qui est correct ici et nulle part ailleurs : la
  * politique de la table n'autorise que l'`insert`, jamais le `select`. Une politique de lecture
  * même restreinte exposerait la liste des adresses de tous les inscrits à n'importe quel
- * visiteur, et la forme de l'adresse est vérifiée **dans la politique** — une validation côté
+ * visiteur, et la forme de l'adresse est vérifiée **dans la politique** - une validation côté
  * client se contourne avec une console.
  */
 
@@ -43,7 +43,7 @@ export async function joinWaitlist(
   }
 
   // 23505 : violation d'unicité. Une adresse déjà inscrite n'est pas une erreur pour la
-  // personne qui la retape — elle est déjà sur la liste, et c'est ce qu'elle voulait.
+  // personne qui la retape - elle est déjà sur la liste, et c'est ce qu'elle voulait.
   if (error.code === "23505") {
     return { status: "already", message: "Tu y es déjà. On te prévient à l'ouverture." };
   }

@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+import { ONBOARDING_CREATE_COOKIE } from "@/lib/auth/onboarding-create";
 import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
 import { PRODUCTION_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 
@@ -13,13 +14,13 @@ import { PRODUCTION_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
  *    rechargement forcé compris. On a perdu une soirée à croire que des
  *    correctifs ne passaient pas alors qu'ils étaient en ligne depuis des
  *    heures. Un aperçu n'est donc plus consultable : il redirige.
- * 2. Un `?code=` (ou un jeton de mail) tombé sur n'importe quelle page — la
- *    Site URL de Supabase, un ancien `/commencer/pays` — est renvoyé au
+ * 2. Un `?code=` (ou un jeton de mail) tombé sur n'importe quelle page - la
+ *    Site URL de Supabase, un ancien `/commencer/pays` - est renvoyé au
  *    callback. Sinon le code expire sur le premier écran du parcours.
  * 3. La session se rafraîchit, et les cookies voyagent avec la réponse.
  * 4. Une session ouverte n'a plus rien à faire sur le parcours : on ouvre
  *    l'app. Sauf si on rejoue l'accueil exprès (cookie posé depuis le profil).
- *    La landing reste visible — le bouton dit alors Dashboard.
+ *    La landing reste visible - le bouton dit alors Dashboard.
  */
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
@@ -70,9 +71,11 @@ export async function middleware(request: NextRequest) {
 
   const path = url.pathname;
   const replaying = request.cookies.get(ONBOARDING_REPLAY_COOKIE)?.value === "1";
+  const creating = request.cookies.get(ONBOARDING_CREATE_COOKIE)?.value === "1";
   if (
     user &&
     !replaying &&
+    !creating &&
     path.startsWith("/commencer") &&
     path !== "/commencer/compte"
   ) {

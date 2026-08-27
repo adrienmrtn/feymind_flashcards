@@ -1,7 +1,7 @@
 /**
  * Le verrou du gratuit, **aligné sur celui de l'app**.
  *
- * Il existe côté iOS — `Micabo/Services/ProAccess.swift` — et c'est lui qui fait foi. Les trois
+ * Il existe côté iOS - `Micabo/Services/ProAccess.swift` - et c'est lui qui fait foi. Les trois
  * nombres et la coupure de la fiche sont donc portés depuis `FreeTier` et `SheetGate`, pas décidés
  * ici : un cours flouté aux sept dixièmes sur le téléphone et à la moitié sur le web serait le même
  * produit qui dit deux choses. `test/entitlement.test.ts` reprend les valeurs de
@@ -10,7 +10,7 @@
  * ## Ce qui a changé à l'étape 5
  *
  * Le droit ne se devine plus : il se **lit dans `entitlements`**, écrite par le webhook RevenueCat.
- * Le verrou est donc vivant pour quiconque a une ligne — un achat fait sur l'iPhone ferme la porte
+ * Le verrou est donc vivant pour quiconque a une ligne - un achat fait sur l'iPhone ferme la porte
  * du gratuit sur le web dans la seconde, et c'est exactement ce qu'on voulait.
  *
  * Reste le cas de **l'absence de ligne**, et c'est le seul endroit où une décision de produit se
@@ -18,7 +18,7 @@
  * rien :
  *
  * - à `true`, il est traité comme abonné. C'est le réglage d'aujourd'hui, et il n'est pas de la
- *   complaisance : **il n'y a aucune façon de payer sur le web** — Stripe attend ses clés — donc
+ *   complaisance : **il n'y a aucune façon de payer sur le web** - Stripe attend ses clés - donc
  *   fermer maintenant enfermerait dehors tout le monde sans porte de sortie ;
  * - à `false`, le gratuit s'applique pour de bon : un cours, sept dixièmes de sa fiche, cinq cartes
  *   par session.
@@ -54,7 +54,7 @@ export const FREE_TIER = {
   /**
    * La part de la fiche qui se lit sans payer. Sept dixièmes, pas la moitié : il faut que la
    * fiche ait le temps d'être utile avant de s'arrêter. Une coupure au milieu se lit comme une
-   * démonstration, une coupure à la fin se lit comme un manque — et c'est le manque qui fait
+   * démonstration, une coupure à la fin se lit comme un manque - et c'est le manque qui fait
    * payer.
    */
   readableSheetRatio: 0.7,
@@ -79,7 +79,7 @@ export interface Entitlement {
   assumed?: boolean;
   productId?: string | null;
   /**
-   * D'où vient l'achat. C'est lui qui décide quel magasin ouvre « Gérer mon abonnement » — un
+   * D'où vient l'achat. C'est lui qui décide quel magasin ouvre « Gérer mon abonnement » - un
    * bouton qui ouvre le mauvais donne un écran vide et un message au support.
    *
    * `play_store` est là bien qu'il n'y ait pas d'app Android : le webhook normalise déjà cette
@@ -98,7 +98,7 @@ export const PRO: Entitlement = { isPro: true };
 /**
  * Le droit **deviné** : pas de ligne, donc pas d'achat, mais le verrou reste ouvert.
  *
- * C'est ce qui permet de poser le paywall — l'étudiant n'a pas payé — sans lui fermer
+ * C'est ce qui permet de poser le paywall - l'étudiant n'a pas payé - sans lui fermer
  * les cours tant que Stripe n'est pas branché.
  */
 export const ASSUMED_PRO: Entitlement = { isPro: true, assumed: true };
@@ -117,7 +117,7 @@ export function isPaid(right: Entitlement): boolean {
  * Le droit effectif.
  *
  * Tant que le verrou n'est pas armé, tout le monde est Pro. Et quand il le sera : en cas de
- * désaccord entre le SDK et la table, **le plus généreux gagne** le temps d'une session —
+ * désaccord entre le SDK et la table, **le plus généreux gagne** le temps d'une session  - 
  * enfermer dehors un étudiant qui paye est pire qu'une minute offerte.
  */
 export function resolve(...sources: (Entitlement | null | undefined)[]): Entitlement {
@@ -190,7 +190,7 @@ export function splitSheet<Block>(
 /**
  * La part de la fiche qui reste à lire, en pourcentage entier.
  *
- * C'est le nombre de la phrase du cadenas — « il te reste 30 % de ce cours à lire ». Il est
+ * C'est le nombre de la phrase du cadenas - « il te reste 30 % de ce cours à lire ». Il est
  * calculé et non écrit, pour la même raison que le pourcentage d'économie du paywall : une
  * valeur écrite à la main à côté d'un ratio qui la contredit est le genre de détail qu'on ne
  * remarque qu'en production.

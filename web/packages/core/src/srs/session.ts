@@ -1,5 +1,5 @@
 /**
- * La file **pendant** une session — pas la file du jour.
+ * La file **pendant** une session - pas la file du jour.
  *
  * `buildQueue` décide quelles cartes entrent. Celle-ci décide dans quel ordre elles
  * repassent, et quand la session s'arrête.
@@ -8,7 +8,7 @@
  * « 10 min » n'est pas terminée, mais faire patienter devant un chronomètre est un écran
  * qui ne sert à rien : le palier existe pour espacer deux passages quand il y a autre
  * chose à faire, pas pour immobiliser quelqu'un qui a fini son paquet. Quand il ne reste
- * que des cartes d'apprentissage, on les sert **tout de suite** — c'est la « limite
+ * que des cartes d'apprentissage, on les sert **tout de suite** - c'est la « limite
  * d'anticipation » d'Anki, appliquée sans écran intermédiaire.
  *
  * « Tout est à jour » n'apparaît donc que lorsque la file est vraiment vide.

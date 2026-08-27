@@ -20,13 +20,13 @@ import {
  * Le paywall, **posé sur le tableau de bord**.
  *
  * Quatre étapes, jamais plein écran : l'étagère reste visible autour. L'étudiant
- * débarque d'abord, puis l'offre se pose — pas l'inverse. La croix est là dès la
+ * débarque d'abord, puis l'offre se pose - pas l'inverse. La croix est là dès la
  * première image.
  *
  * Les prix viennent du même catalogue que la landing. La case « je suis étudiant »
  * permute l'annuel : 83,88 € avec essai, ou 59,99 € barré de l'ancien, sans essai.
  *
- * `isPaid` — pas `isPro`. Sans ça, tout le monde sans ligne d'abonnement est
+ * `isPaid` - pas `isPro`. Sans ça, tout le monde sans ligne d'abonnement est
  * traité comme Pro, et cette carte ne s'ouvre jamais.
  */
 
@@ -200,7 +200,7 @@ function SocialStep() {
         </span>
       </h2>
       <p className="mt-2 text-[15px] leading-relaxed text-ink-secondary">
-        Ils révisent avec Micabo. Les mêmes écoles, la même méthode — la
+        Ils révisent avec Micabo. Les mêmes écoles, la même méthode - la
         répétition espacée, mesurée depuis plus d&apos;un siècle.
       </p>
 
@@ -515,7 +515,7 @@ const SCHOOLS = [
 
 /**
  * Trois papiers, et rien d'inventé. Ce sont les références que retiennent les apps
- * de révision — l'effet d'espacement, le rappel actif, la courbe d'Ebbinghaus
+ * de révision - l'effet d'espacement, le rappel actif, la courbe d'Ebbinghaus
  * répliquée. Les liens mènent aux versions ouvertes.
  */
 const STUDIES = [

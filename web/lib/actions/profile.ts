@@ -23,7 +23,7 @@ import { createClient } from "@/lib/supabase/server";
  *
  * C'est le point de l'affaire : la source de vérité est la table `profiles`, pas un stockage local
  * du navigateur. Ce que le web écrit ici, `CloudSync` le redescend sur l'iPhone, dans les mêmes
- * colonnes — `daily_minutes`, `sheet_length` — et l'app fait l'inverse. Un réglage gardé dans
+ * colonnes - `daily_minutes`, `sheet_length` - et l'app fait l'inverse. Un réglage gardé dans
  * `localStorage` aurait donné deux vérités qui divergent au premier changement d'appareil.
  *
  * Rien n'est accepté sur parole : une action serveur est un point d'entrée public, donc chaque

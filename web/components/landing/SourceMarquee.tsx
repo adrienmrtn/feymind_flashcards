@@ -1,7 +1,7 @@
 /**
  * Ce qui entre dans Micabo, en une ligne qui défile.
  *
- * Ce n'est pas un mur de logos « ils nous font confiance » — il n'y a pas de clients
+ * Ce n'est pas un mur de logos « ils nous font confiance » - il n'y a pas de clients
  * d'entreprise, et un mur de logos inventés se repère en une seconde. Ce sont les **formats
  * acceptés**, ce qui est une information et non une allégation.
  *

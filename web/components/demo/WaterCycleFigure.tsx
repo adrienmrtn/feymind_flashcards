@@ -6,7 +6,7 @@ import { CYCLE_STAGES, DEMO_COURSE } from "./demo-course";
  * Elle est **cernée d'un filet et tenue à sa hauteur** : dans la première version de l'écran
  * iOS dont elle vient, elle se tassait jusqu'à disparaître quand la fiche manquait de place, et
  * un trou blanc à la place d'un schéma ne prouve rien. Or le schéma compte autant que les
- * cartes — c'est le format qu'on oublie toujours d'annoncer.
+ * cartes - c'est le format qu'on oublie toujours d'annoncer.
  */
 export function WaterCycleFigure() {
   return (

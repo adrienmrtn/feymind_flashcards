@@ -5,12 +5,12 @@
  * **Une matière, un emoji.** La table servait autrefois le même dessin à six matières
  * voisines : quatre matières de santé pour un stéthoscope, dix langues pour une bouche qui
  * parle. Sur l'écran des matières, où une quarantaine de pastilles s'enroulent en sept familles,
- * un emoji répété n'accroche plus rien — il fait relire les libellés un par un, ce qui est
+ * un emoji répété n'accroche plus rien - il fait relire les libellés un par un, ce qui est
  * exactement le travail qu'il devait éviter.
  *
  * **L'ordre de la table est sa règle** : la première correspondance gagne, donc une entrée large
  * ne passe jamais avant une entrée précise. « Code de la route » contient « code », et sortait un
- * ordinateur portable. Les mots les plus généraux — « langue », « genie », « arts » — ferment donc
+ * ordinateur portable. Les mots les plus généraux - « langue », « genie », « arts » - ferment donc
  * la liste, derrière les matières qu'ils englobent.
  *
  * Il vit dans le noyau partagé parce que le web en a besoin **deux fois** : sur l'écran des
@@ -106,7 +106,7 @@ const TABLE: readonly [string, readonly string[]][] = [
   ["📖", ["litterature", "poesie", "roman"]],
   ["💡", ["culture generale", "actualite"]],
   // Le filet de sécurité des langues : il attrape « LV2 », « vocabulaire », « thème
-  // grammatical » — tout ce qui parle de langue sans nommer laquelle.
+  // grammatical » - tout ce qui parle de langue sans nommer laquelle.
   //
   // Le radical est `grammat` et non `grammaire` : c'est le port de cette table qui a montré que
   // l'exemple donné par le commentaire d'origine ne passait pas, et que le test iOS qui le

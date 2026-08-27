@@ -314,7 +314,7 @@ function HardCards({
       <p className="eyebrow text-ink-tertiary">💪 Cartes les plus difficiles</p>
       {cards.length === 0 ? (
         <p className="mt-3 text-[14.5px] leading-relaxed text-ink-secondary">
-          Aucune carte n&apos;a encore coincé. Ça viendra — et c&apos;est pour ça qu&apos;on les
+          Aucune carte n&apos;a encore coincé. Ça viendra - et c&apos;est pour ça qu&apos;on les
           note.
         </p>
       ) : (

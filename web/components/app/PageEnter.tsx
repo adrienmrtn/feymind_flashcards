@@ -11,7 +11,7 @@ import { usePathname } from "next/navigation";
  *
  * **La classe part dès que l'animation est finie.** `page-enter` pose un
  * `translate` et un `filter`, et un ancêtre transformé fait de `position:
- * fixed` un `absolute` — le bouton « Réviser ce cours » restait collé au
+ * fixed` un `absolute` - le bouton « Réviser ce cours » restait collé au
  * bas de la page au lieu de flotter.
  */
 export function PageEnter({ children }: { children: React.ReactNode }) {
