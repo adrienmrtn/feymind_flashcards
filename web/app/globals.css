@@ -211,15 +211,10 @@ video {
   transition-timing-function: var(--ease-out-strong);
 }
 
-/* Dans le produit, **seule l'ombre change**. Rien ne monte, rien ne grossit : un texte qui
-   grossit se rend flou pendant sa propre transition. Et le survol est enfermé derrière
-   `hover: hover` — sur un écran tactile, un appui déclenche un faux survol et l'élément reste
-   dans son état après que le doigt est parti. */
-@media (hover: hover) and (pointer: fine) {
-  .paper:hover {
-    box-shadow: var(--shadow-paper-hover);
-  }
-}
+/* L'ombre de `paper` **ne change pas au survol.** Sur une liste — derniers cours, cartes —
+   le `:hover` du parent se déclenche dès qu'on touche une rangée, et l'ombre du bloc entier
+   saute d'un ou deux points : c'est le décalage qu'on voyait. La tuile qui doit se soulever
+   le fait via `hover-tile` ou `lift`, pas via le papier. */
 
 /* Sur la vitrine, et là seulement, une carte a le droit de se soulever de deux points. */
 @utility lift {

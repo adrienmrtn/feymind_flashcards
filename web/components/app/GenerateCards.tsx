@@ -15,6 +15,7 @@ import {
   type QuestionQuota,
 } from "@micabo/core";
 
+import { Float } from "@/components/app/Float";
 import { generateCards } from "@/lib/actions/course";
 
 /**
@@ -70,7 +71,7 @@ export function GenerateCards({
   }
 
   if (pending) {
-    return (
+    const pendingUi = (
       <div
         className={
           floating
@@ -88,20 +89,23 @@ export function GenerateCards({
         </div>
       </div>
     );
+    return floating ? <Float>{pendingUi}</Float> : pendingUi;
   }
 
   if (!open) {
     if (floating) {
       return (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          data-print="hide"
-          className="pressable shiny fixed right-4 bottom-24 z-30 flex h-14 items-center gap-2.5 rounded-button bg-ink px-5 text-[15px] font-semibold text-on-ink shadow-floating lg:right-8 lg:bottom-8"
-        >
-          <span aria-hidden>✨</span>
-          Générer les cartes
-        </button>
+        <Float>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            data-print="hide"
+            className="pressable shiny fixed right-4 bottom-24 z-30 flex h-14 items-center gap-2.5 rounded-button bg-ink px-5 text-[15px] font-semibold text-on-ink shadow-floating lg:right-8 lg:bottom-8"
+          >
+            <span aria-hidden>✨</span>
+            Générer les cartes
+          </button>
+        </Float>
       );
     }
 
@@ -150,7 +154,7 @@ export function GenerateCards({
     );
   }
 
-  return (
+  const panel = (
     <div
       className={
         floating
@@ -223,6 +227,8 @@ export function GenerateCards({
       {failure ? <Failure message={failure} /> : null}
     </div>
   );
+
+  return floating ? <Float>{panel}</Float> : panel;
 }
 
 function Step({
