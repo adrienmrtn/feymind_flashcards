@@ -11,6 +11,7 @@ import {
   knowledgeLevel,
   mostReviewedCards,
   streak,
+  weekStrip,
 } from "../src/stats";
 
 const now = new Date(1_700_000_000 * 1000);
@@ -97,6 +98,48 @@ describe("les cartes les plus passées", () => {
       { id: "a", front: "1914", passes: 2 },
       { id: "b", front: "1789", passes: 1 },
     ]);
+  });
+});
+
+describe("la semaine glissante", () => {
+  it("étale trois jours avant, aujourd'hui, trois jours après", () => {
+    const days = weekStrip([], [], now);
+    expect(days.map((day) => day.offset)).toEqual([-3, -2, -1, 0, 1, 2, 3]);
+    expect(days[3]?.date.getTime()).toBe(day(0).getTime());
+  });
+
+  it("pose les cartes en retard aujourd'hui, et garde les jours à venir", () => {
+    const days = weekStrip(
+      [
+        { dueDate: day(-2) },
+        { dueDate: day(0) },
+        { dueDate: day(1) },
+        { dueDate: day(1) },
+        { dueDate: day(3) },
+        { dueDate: day(8) },
+        { dueDate: day(2), isSuspended: true },
+      ],
+      [],
+      now,
+    );
+
+    expect(days.map((day) => day.planned)).toEqual([0, 0, 0, 2, 2, 0, 1]);
+  });
+
+  it("marque d'une flamme les jours déjà révisés", () => {
+    const days = weekStrip([], [day(-3), day(-3), day(0), day(4)], now);
+
+    expect(days.map((day) => day.reviewed)).toEqual([
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+    ]);
+    expect(days[0]?.reviewCount).toBe(2);
+    expect(days[3]?.reviewCount).toBe(1);
   });
 });
 

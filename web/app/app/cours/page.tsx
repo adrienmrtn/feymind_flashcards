@@ -2,8 +2,10 @@ import Link from "next/link";
 
 import { courseAccent, courseAudienceLabel, displayUsername, resolveEmoji, studyCounts } from "@micabo/core";
 
+import { CourseExamBadge } from "@/components/app/CourseExamBadge";
 import { LibrarySearch } from "@/components/app/LibrarySearch";
-import { listCardSnapshots, listCourses } from "@/lib/data/courses";
+import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
+import { examMarkForCourse } from "@/lib/data/exam-marks";
 import { loadNewCardBudget } from "@/lib/data/reviews";
 import { listLibraryCourses } from "@/lib/data/social";
 
@@ -24,11 +26,12 @@ export default async function CoursesPage({
   const query = typeof params.q === "string" ? params.q : "";
   const subject = typeof params.matiere === "string" ? params.matiere : null;
 
-  const [courses, cards, budget, library] = await Promise.all([
+  const [courses, cards, budget, library, exams] = await Promise.all([
     listCourses(),
     listCardSnapshots(),
     loadNewCardBudget(),
     discover ? listLibraryCourses({ search: query, subject }) : Promise.resolve(null),
+    discover ? Promise.resolve([]) : listExams(),
   ]);
 
   const counts = studyCounts(
@@ -87,7 +90,11 @@ export default async function CoursesPage({
           authors={library?.authors ?? new Map()}
         />
       ) : (
-        <Shelf courses={courses} emptyReviews={counts.total === 0 && cards.length > 0} />
+        <Shelf
+          courses={courses}
+          emptyReviews={counts.total === 0 && cards.length > 0}
+          exams={exams}
+        />
       )}
     </>
   );
@@ -110,9 +117,11 @@ function Tab({ href, current, label }: { href: string; current: boolean; label: 
 function Shelf({
   courses,
   emptyReviews,
+  exams,
 }: {
   courses: Awaited<ReturnType<typeof listCourses>>;
   emptyReviews: boolean;
+  exams: Awaited<ReturnType<typeof listExams>>;
 }) {
   return (
     <>
@@ -126,36 +135,45 @@ function Shelf({
         <EmptyShelf />
       ) : (
         <div className="mt-7 grid gap-3 sm:grid-cols-2">
-          {courses.map((course) => (
-            <Link
-              key={course.id}
-              href={`/app/c/${course.id}` as never}
-              className="hover-tile paper flex flex-col gap-4 rounded-group bg-surface p-5"
-            >
-              <span
-                aria-hidden
-                className="flex h-12 w-12 items-center justify-center rounded-tile text-[22px]"
-                style={{ backgroundColor: `${course.accent_hex ?? courseAccent(course.id)}1f` }}
+          {courses.map((course) => {
+            const exam = examMarkForCourse(exams, course.id);
+            return (
+              <Link
+                key={course.id}
+                href={`/app/c/${course.id}` as never}
+                className="hover-tile paper relative flex flex-col gap-4 rounded-group bg-surface p-5"
               >
-                {resolveEmoji(course.emoji, course.subject, course.title)}
-              </span>
+                {exam ? (
+                  <span className="absolute right-3 top-3">
+                    <CourseExamBadge name={exam.name} daysRemaining={exam.daysRemaining} />
+                  </span>
+                ) : null}
 
-              <span className="min-w-0">
-                <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
-                  {course.title || "Sans titre"}
+                <span
+                  aria-hidden
+                  className="flex h-12 w-12 items-center justify-center rounded-tile text-[22px]"
+                  style={{ backgroundColor: `${course.accent_hex ?? courseAccent(course.id)}1f` }}
+                >
+                  {resolveEmoji(course.emoji, course.subject, course.title)}
                 </span>
-                <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
-                  {[
-                    course.subject,
-                    course.is_from_library ? "Repris" : sourceLabel(course.source),
-                    courseAudienceLabel(course.view_count ?? 0, course.adopt_count ?? 0),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
+
+                <span className="min-w-0">
+                  <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
+                    {course.title || "Sans titre"}
+                  </span>
+                  <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
+                    {[
+                      course.subject,
+                      course.is_from_library ? "Repris" : sourceLabel(course.source),
+                      courseAudienceLabel(course.view_count ?? 0, course.adopt_count ?? 0),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
                 </span>
-              </span>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </>
