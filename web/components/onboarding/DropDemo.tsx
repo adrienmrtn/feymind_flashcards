@@ -271,9 +271,11 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
           {hint && !offset ? (
             <p
               role="status"
-              className="rise max-w-[36ch] text-center text-[13.5px] leading-relaxed text-ink-secondary"
+              className="rise paper max-w-[40ch] rounded-group bg-caution-soft px-4 py-3 text-center text-[13.5px] leading-relaxed text-ink"
             >
-              Prends le PDF en bas, glisse-le jusqu&apos;à la zone en pointillés, puis
+              Prends le PDF <span className="font-semibold">en bas</span>,
+              glisse-le jusqu&apos;à la zone en pointillés{" "}
+              <span className="font-semibold">juste au-dessus</span>, puis
               lâche-le.
             </p>
           ) : null}
