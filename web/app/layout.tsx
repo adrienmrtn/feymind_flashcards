@@ -51,10 +51,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${hanken.variable} ${nunito.variable}`}>
-      <body>
-        <PreviewBanner />
-        <AuthReturnCatcher />
-        {children}
+      <body className="relative antialiased">
+        <div className="relative isolate flex min-h-svh flex-col">
+          <PreviewBanner />
+          <AuthReturnCatcher />
+          {children}
+        </div>
       </body>
     </html>
   );

@@ -1,5 +1,8 @@
 import { entitlement, pricing } from "@micabo/core";
 
+import { Badge } from "@/components/ui/badge";
+import { Card, CardPanel } from "@/components/ui/card";
+
 import { StartButton } from "./StartButton";
 import { WaitlistForm } from "./WaitlistForm";
 
@@ -24,12 +27,11 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
         {pricing.PLANS.map((plan) => {
           const recommended = plan.kind === pricing.RECOMMENDED_PLAN.kind;
           return (
-            <div
+            <Card
               key={plan.kind}
-              className={`lift rounded-group p-6 ${
-                recommended ? "bg-ink text-on-ink" : "paper bg-surface"
-              }`}
+              className={`lift ${recommended ? "border-ink bg-ink text-on-ink" : ""}`}
             >
+              <CardPanel className="p-6">
               <div className="flex items-baseline justify-between gap-3">
                 <p
                   className={`text-[15px] font-semibold ${
@@ -39,9 +41,9 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
                   {plan.title}
                 </p>
                 {recommended ? (
-                  <p className="rounded-pill bg-accent-vivid px-2.5 py-1 text-[11px] font-bold text-ink">
+                  <Badge className="rounded-pill bg-accent-vivid text-[11px] font-bold text-ink hover:bg-accent-vivid">
                     Économise {saving} %
-                  </p>
+                  </Badge>
                 ) : null}
               </div>
 
@@ -72,12 +74,14 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
                   ? ` ${pricing.FREE_TRIAL_DAYS} jours offerts.`
                   : " Sans essai."}
               </p>
-            </div>
+              </CardPanel>
+            </Card>
           );
         })}
       </div>
 
-      <div className="paper mt-4 rounded-group bg-surface p-6">
+      <Card className="mt-4">
+      <CardPanel className="p-6">
         <p className="eyebrow text-ink-tertiary">Sans payer</p>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
           <strong className="font-semibold text-ink">Un cours entier à importer</strong>, dont tu
@@ -86,7 +90,8 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
           sur ton propre cours avant de décider quoi que ce soit - ce qui est le seul essai qui
           veuille dire quelque chose.
         </p>
-      </div>
+      </CardPanel>
+      </Card>
 
       <div className="mx-auto mt-10 flex flex-col items-center">
         <StartButton signedIn={signedIn} />

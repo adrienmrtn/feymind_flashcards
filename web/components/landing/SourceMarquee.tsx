@@ -1,3 +1,5 @@
+import { Badge } from "@/components/ui/badge";
+
 /**
  * Ce qui entre dans Micabo, en une ligne qui défile.
  *
@@ -37,15 +39,16 @@ export function SourceMarquee() {
       >
         <div className="marquee-track flex w-max shrink-0 items-center gap-3">
           {[...SOURCES, ...SOURCES].map((source, index) => (
-            <span
+            <Badge
               key={index}
-              className="inline-flex items-center gap-2 whitespace-nowrap rounded-pill bg-surface px-5 py-3 text-[13.5px] font-medium text-ink-secondary paper"
+              variant="secondary"
+              className="h-auto gap-2 whitespace-nowrap rounded-pill px-5 py-3 text-[13.5px] font-medium text-ink-secondary"
             >
               <span aria-hidden className="emoji text-[16px]">
                 {source.emoji}
               </span>
               {source.label}
-            </span>
+            </Badge>
           ))}
         </div>
       </div>

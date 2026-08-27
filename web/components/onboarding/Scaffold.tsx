@@ -4,6 +4,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { Button } from "@/components/ui/button";
 import type { OnboardingPath } from "@/lib/onboarding/steps";
 
 /**
@@ -90,18 +91,17 @@ export function ContinueButton({
   const router = useRouter();
 
   return (
-    <button
+    <Button
       type="button"
+      size="xl"
       disabled={!enabled}
       onClick={() => {
         if (!enabled) return;
         onPress?.();
         if (href) router.push(href as Route);
       }}
-      className={`pressable group flex h-14 w-full items-center justify-center gap-2 rounded-button text-[16px] font-semibold transition-colors duration-hover ${
-        enabled
-          ? `bg-ink text-on-ink ${shiny ? "shiny" : ""}`
-          : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
+      className={`group h-14 w-full text-[16px] sm:h-14 sm:text-[16px] ${
+        enabled ? (shiny ? "shiny" : "") : ""
       }`}
     >
       {label}
@@ -121,7 +121,7 @@ export function ContinueButton({
           strokeLinejoin="round"
         />
       </svg>
-    </button>
+    </Button>
   );
 }
 

@@ -1,3 +1,5 @@
+import { Badge } from "@/components/ui/badge";
+
 import { CourseTransformation } from "./CourseTransformation";
 import { HeroAura } from "./HeroAura";
 import { StartButton } from "./StartButton";
@@ -11,10 +13,13 @@ export function Hero({ signedIn = false }: { signedIn?: boolean }) {
       <HeroAura />
 
       <div className="relative mx-auto max-w-page px-screen pt-16 text-center sm:pt-24">
-        <p className="rise inline-flex items-center gap-2 rounded-pill bg-surface px-3.5 py-1.5 text-[12.5px] font-medium text-ink-secondary paper">
+        <Badge
+          variant="secondary"
+          className="rise h-auto gap-2 rounded-pill px-3.5 py-1.5 text-[12.5px] font-medium text-ink-secondary"
+        >
           <span className="h-1.5 w-1.5 rounded-full bg-accent-vivid" />
           Fiches et flashcards, à partir de tes cours
-        </p>
+        </Badge>
 
         <h1
           className="rise mx-auto mt-7 max-w-[19ch] text-[44px] font-bold leading-[1.03] tracking-display text-ink sm:text-[76px]"

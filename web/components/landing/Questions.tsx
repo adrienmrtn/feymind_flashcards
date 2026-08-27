@@ -1,5 +1,13 @@
 import { entitlement, pricing } from "@micabo/core";
 
+import {
+  Accordion,
+  AccordionItem,
+  AccordionPanel,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Card, CardPanel } from "@/components/ui/card";
+
 /**
  * Les questions, et de vraies questions.
  *
@@ -7,9 +15,6 @@ import { entitlement, pricing } from "@micabo/core";
  * bloc de texte pour le référencement, et ça se lit. Celles-ci sont celles qu'on se pose
  * réellement devant un outil qui lit ses cours : est-ce que c'est privé, est-ce que ça marche
  * dans ma langue, est-ce que ça invente.
- *
- * Le `<details>` du système plutôt qu'un accordéon fait main : il est accessible au clavier, il
- * se cherche avec la fonction de recherche du navigateur, et il fonctionne sans JavaScript.
  */
 
 const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
@@ -86,33 +91,21 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
 
 export function Questions() {
   return (
-    <div className="paper mt-9 overflow-hidden rounded-group bg-surface">
-      {QUESTIONS.map((item, index) => (
-        <details
-          key={item.question}
-          className={`group px-6 py-1 ${index > 0 ? "border-t border-hairline" : ""}`}
-        >
-          <summary className="hover-row flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
-            {item.question}
-            <svg
-              aria-hidden
-              viewBox="0 0 16 16"
-              className="h-4 w-4 shrink-0 text-ink-tertiary transition-transform duration-hover ease-out-strong group-open:rotate-45"
-            >
-              <path
-                d="M8 3v10M3 8h10"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
-          </summary>
-          <p className="max-w-reading pb-5 text-[14.5px] leading-relaxed text-ink-secondary">
-            {item.answer}
-          </p>
-        </details>
-      ))}
-    </div>
+    <Card className="mt-9 overflow-hidden">
+      <CardPanel className="p-0 sm:p-0">
+        <Accordion className="px-6">
+          {QUESTIONS.map((item) => (
+            <AccordionItem key={item.question} value={item.question}>
+              <AccordionTrigger className="text-[15px] font-medium text-ink">
+                {item.question}
+              </AccordionTrigger>
+              <AccordionPanel className="max-w-reading text-[14.5px] leading-relaxed text-ink-secondary">
+                {item.answer}
+              </AccordionPanel>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </CardPanel>
+    </Card>
   );
 }

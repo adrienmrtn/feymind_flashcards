@@ -6,6 +6,8 @@ import {
   intervalLabel,
 } from "@micabo/core";
 
+import { Card, CardPanel } from "@/components/ui/card";
+
 /**
  * La courbe de l'oubli, prise à contre-pied.
  *
@@ -28,7 +30,8 @@ export function RetentionChart() {
   const withMicabo = curveWithMicabo();
 
   return (
-    <figure className="paper lift rounded-group bg-surface p-6 sm:p-8" data-print="keep">
+    <Card render={<figure />} className="lift" data-print="keep">
+    <CardPanel className="p-6 sm:p-8">
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="h-auto w-full"
@@ -96,7 +99,8 @@ export function RetentionChart() {
           label="Sans révision, il ne reste presque rien au bout d'un mois."
         />
       </figcaption>
-    </figure>
+    </CardPanel>
+    </Card>
   );
 }
 

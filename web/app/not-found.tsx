@@ -1,3 +1,7 @@
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
+
 export default function NotFound() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-[680px] flex-col justify-center px-6">
@@ -8,12 +12,13 @@ export default function NotFound() {
       <p className="mt-3 text-[16px] leading-relaxed text-ink-secondary">
         Le lien est mort, ou la page a bougé.
       </p>
-      <a
-        href="/"
-        className="mt-8 w-fit text-[15px] font-medium text-accent underline-offset-4 hover:underline"
+      <Button
+        variant="link"
+        className="mt-8 h-auto w-fit px-0 text-[15px] text-accent"
+        render={<Link href="/" />}
       >
         Retour à l&apos;accueil
-      </a>
+      </Button>
     </main>
   );
 }

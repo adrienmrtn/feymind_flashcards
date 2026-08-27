@@ -1,5 +1,7 @@
 import { planExam, type ExamCard } from "@micabo/core";
 
+import { Card, CardPanel } from "@/components/ui/card";
+
 /**
  * Le mode examen, montré par son calendrier.
  *
@@ -32,7 +34,8 @@ export function ExamMode() {
   const peak = Math.max(...load, 1);
 
   return (
-    <div className="paper lift rounded-group bg-surface p-6 sm:p-8" data-print="keep">
+    <Card className="lift" data-print="keep">
+    <CardPanel className="p-6 sm:p-8">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <p className="text-[15px] font-semibold text-ink">Maths · DS sur table</p>
         <p className="text-[13px] text-ink-tertiary">
@@ -82,7 +85,8 @@ export function ExamMode() {
         aucune carte ne repart au-delà du jour J</strong> - sans ce plafond, la première bonne
         réponse renverrait la carte à trois semaines et le plan serait défait au premier passage.
       </p>
-    </div>
+    </CardPanel>
+    </Card>
   );
 }
 

@@ -4,9 +4,13 @@ import { Suspense, useEffect, useState } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ThinkingOrb } from "thinking-orbs";
 
 import { SoftMesh } from "@/components/atmosphere/SoftAtmosphere";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { markPaywallPending, persistStoredAnswers } from "@/lib/onboarding/persist";
 import { createClient } from "@/lib/supabase/client";
 
@@ -147,68 +151,49 @@ function AccountStepBody() {
         </div>
 
         <div className="my-6 flex items-center gap-3">
-          <span className="h-px flex-1 bg-hairline-on-canvas" />
+          <Separator className="flex-1" />
           <span className="text-[12px] text-ink-tertiary">ou</span>
-          <span className="h-px flex-1 bg-hairline-on-canvas" />
+          <Separator className="flex-1" />
         </div>
 
         {sent ? (
-          <p
-            className="rise flex items-center gap-2.5 rounded-button bg-accent-soft px-4 py-4 text-[14.5px] font-medium text-accent"
-            role="status"
-          >
-            <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5 shrink-0">
-              <path
-                d="M4 10.5l4 4 8-9"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Ouvre le lien envoyé à {email.trim()}
-          </p>
+          <Alert variant="success" className="rise" role="status">
+            <AlertDescription className="text-[14.5px] font-medium text-accent">
+              Ouvre le lien envoyé à {email.trim()}
+            </AlertDescription>
+          </Alert>
         ) : (
           <form onSubmit={sendLink} className="space-y-2.5">
-            <label htmlFor="signup-email" className="sr-only">
-              Ton adresse électronique
-            </label>
-            <input
-              id="signup-email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="ton@adresse.fr"
-              className="paper h-14 w-full rounded-button bg-surface px-4 text-[16px] text-ink outline-none transition-shadow duration-hover placeholder:text-ink-tertiary"
-            />
-            <button
+            <Field>
+              <FieldLabel className="sr-only">Ton adresse électronique</FieldLabel>
+              <Input
+                id="signup-email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="ton@adresse.fr"
+                className="h-14 rounded-button text-[16px] sm:text-[16px] [&_[data-slot=input]]:h-14 [&_[data-slot=input]]:text-[16px] [&_[data-slot=input]]:leading-[3.5rem]"
+              />
+            </Field>
+            <Button
               type="submit"
-              disabled={pending === "email" || email.trim().length === 0}
-              className="pressable shiny hover-tile flex h-14 w-full items-center justify-center gap-2.5 rounded-button bg-ink text-[16px] font-semibold text-on-ink transition-colors duration-hover disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-ink-tertiary"
+              size="xl"
+              loading={pending === "email"}
+              disabled={email.trim().length === 0}
+              className="shiny h-14 w-full text-[16px] sm:h-14 sm:text-[16px]"
             >
-              {pending === "email" ? (
-                <>
-                  <ThinkingOrb state="connecting" size={20} theme="dark" />
-                  Un instant
-                </>
-              ) : (
-                "Recevoir un lien"
-              )}
-            </button>
+              Recevoir un lien
+            </Button>
           </form>
         )}
 
         {failure ? (
-          <p
-            className="mt-3 rounded-button bg-negative-soft px-4 py-3 text-[13.5px] text-negative"
-            role="alert"
-          >
-            {failure}
-          </p>
+          <Alert variant="error" className="mt-3">
+            <AlertDescription className="text-[13.5px] text-negative">{failure}</AlertDescription>
+          </Alert>
         ) : null}
 
         <p className="mt-8 text-[12.5px] leading-relaxed text-ink-tertiary">
@@ -234,16 +219,16 @@ function ProviderButton({
   onPress: () => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      size="xl"
+      variant={dark ? "default" : "outline"}
+      loading={pending}
       onClick={onPress}
-      disabled={pending}
-      className={`pressable hover-tile flex h-14 w-full items-center justify-center gap-3 rounded-button text-[16px] font-semibold disabled:opacity-70 ${
-        dark ? "shiny bg-ink text-on-ink" : "paper bg-surface text-ink"
-      }`}
+      className={`h-14 w-full text-[16px] sm:h-14 sm:text-[16px] ${dark ? "shiny" : ""}`}
     >
-      {pending ? <ThinkingOrb state="connecting" size={20} theme={dark ? "dark" : "light"} /> : icon}
+      {icon}
       {label}
-    </button>
+    </Button>
   );
 }

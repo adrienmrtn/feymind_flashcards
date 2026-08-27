@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Separator } from "@/components/ui/separator";
+
 /**
  * Le pied de page de la vitrine.
  *
@@ -9,7 +11,8 @@ import Link from "next/link";
  */
 export function Footer({ signedIn = false }: { signedIn?: boolean }) {
   return (
-    <footer className="mt-24 border-t border-hairline-on-canvas" data-print="hide">
+    <footer className="mt-24" data-print="hide">
+      <Separator />
       <div className="mx-auto max-w-page px-screen py-14">
         <div className="flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-[34ch]">

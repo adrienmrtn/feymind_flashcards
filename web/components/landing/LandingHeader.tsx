@@ -10,9 +10,9 @@ import { StartButton } from "./StartButton";
  */
 export function LandingHeader({ signedIn = false }: { signedIn?: boolean }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-hairline-on-canvas/80 bg-canvas/70 backdrop-blur-md">
+    <header className="sticky top-0 z-20 border-b border-border/80 bg-background/70 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-page items-center justify-between px-screen">
-        <Link href="/" className="text-[15px] font-bold tracking-tight text-ink">
+        <Link href="/" className="text-[15px] font-bold tracking-tight text-foreground">
           Micabo
         </Link>
         <StartButton signedIn={signedIn} size="compact" />
