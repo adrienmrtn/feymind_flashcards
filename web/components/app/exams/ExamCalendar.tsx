@@ -71,7 +71,9 @@ export function ExamCalendar({
               key={key}
               type="button"
               onClick={() => onSelect(day)}
-              className={`flex min-h-[3.75rem] flex-col items-center rounded-button px-0.5 pb-1 pt-1 transition-colors duration-hover sm:min-h-[4.5rem] sm:px-1 ${
+              className={`flex min-h-[3.75rem] flex-col items-center rounded-button px-0.5 transition-colors duration-hover sm:min-h-[4.5rem] sm:px-1 ${
+                first ? "pb-1 pt-1" : "justify-center"
+              } ${
                 isSelected
                   ? "bg-accent text-on-ink"
                   : isToday
