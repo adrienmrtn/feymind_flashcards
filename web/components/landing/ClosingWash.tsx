@@ -7,14 +7,15 @@ import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 import { Reveal } from "./Reveal";
 import { SHADER_BUDGET } from "./shader-budget";
 import { StartButton } from "./StartButton";
+import { WhenWebGL } from "./WhenWebGL";
 
-const WASH_COLORS = ["#e8efe6", "#f6f4ed", "#16c08c"];
+const WASH_COLORS = ["#d7e6d8", "#f6f4ed", "#16c08c"];
 
 /**
  * Le dernier appel : un lavage grainé, en tache, derrière le titre.
  *
- * Pas de second PulsingBorder ici — une toile WebGL de trop, et le hero a
- * déjà le halo. Le bouton reste le même **Commencer**, sans ornement.
+ * Un radial CSS reste dessous. Pas de second PulsingBorder — le hero a
+ * déjà le halo.
  */
 export function ClosingWash() {
   const reduced = usePrefersReducedMotion();
@@ -24,25 +25,36 @@ export function ClosingWash() {
       <div
         aria-hidden
         data-print="hide"
-        className="pointer-events-none absolute inset-x-[-12%] -top-20 bottom-0 opacity-80"
+        className="pointer-events-none absolute inset-x-[-12%] -top-20 bottom-0"
         style={{
           maskImage: "radial-gradient(ellipse 78% 68% at 50% 62%, black 12%, transparent 76%)",
           WebkitMaskImage:
             "radial-gradient(ellipse 78% 68% at 50% 62%, black 12%, transparent 76%)",
         }}
       >
-        <GrainGradient
-          className="h-full w-full"
-          colorBack="#f6f4ed"
-          colors={WASH_COLORS}
-          shape="blob"
-          softness={0.82}
-          intensity={0.2}
-          noise={0.3}
-          scale={1.15}
-          speed={reduced ? 0 : 0.16}
-          {...SHADER_BUDGET}
+        <div
+          className="absolute inset-0 opacity-35"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 60%, color-mix(in oklch, var(--color-accent-vivid) 45%, var(--color-canvas)), transparent 70%)",
+          }}
         />
+        <WhenWebGL>
+          <GrainGradient
+            className="absolute inset-0 opacity-90"
+            width="100%"
+            height="100%"
+            colorBack="#f6f4ed"
+            colors={WASH_COLORS}
+            shape="blob"
+            softness={0.78}
+            intensity={0.3}
+            noise={0.36}
+            scale={1.15}
+            speed={reduced ? 0 : 0.18}
+            {...SHADER_BUDGET}
+          />
+        </WhenWebGL>
       </div>
 
       <Reveal as="div" className="relative">

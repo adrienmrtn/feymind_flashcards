@@ -7,11 +7,7 @@ import { useEffect, useState } from "react";
  * plutôt que de continuer à peindre soixante images par seconde pour rien.
  */
 export function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(() =>
-    typeof window !== "undefined"
-      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      : false,
-  );
+  const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");

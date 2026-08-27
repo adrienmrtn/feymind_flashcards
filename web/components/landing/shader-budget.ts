@@ -8,4 +8,5 @@
 export const SHADER_BUDGET = {
   minPixelRatio: 1,
   maxPixelCount: 1280 * 720,
+  webGlContextAttributes: { failIfMajorPerformanceCaveat: false },
 } as const;
