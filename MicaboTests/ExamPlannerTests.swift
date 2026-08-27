@@ -545,10 +545,9 @@ final class ExamDeadlinesTests: XCTestCase {
         XCTAssertEqual(deadline, calendar.date(byAdding: .day, value: 6, to: calendar.startOfDay(for: Date())))
     }
 
-    /// Le plafond de cartes neuves est levé pour les cartes sous échéance : sinon la
-    /// projection promettrait quarante cartes et le rythme quotidien n'en laisserait
-    /// passer que huit.
-    func testExamCardsEscapeTheDailyNewCardCap() throws {
+    /// Les cartes d'examen passent devant, mais elles restent dans le plafond du jour.
+    /// Sans ça, un cours rattaché à deux examens vidait tout le paquet d'un coup.
+    func testExamCardsStayWithinTheDailyNewCardCap() throws {
         let course = try CourseRepository.save(
             GeneratedCourse(title: "Cours", summary: "S", contextText: "C"),
             source: .text,
@@ -575,10 +574,28 @@ final class ExamDeadlinesTests: XCTestCase {
             limits: smallLimits,
             deadlines: ExamDeadlines.active(in: context)
         )
-        XCTAssertEqual(withExam.count, 30)
+        XCTAssertEqual(withExam.count, 3)
+        XCTAssertTrue(withExam.allSatisfy { ExamDeadlines.active(in: context).covers($0) })
     }
 
-    /// Trois cartes neuves par session : de quoi voir le plafond agir, et le voir sauter.
+    /// Un second examen ne ramène pas une carte déjà notée aujourd'hui.
+    func testASecondExamDoesNotYankCardsReviewedToday() throws {
+        let course = try makeCourse(cards: 4, dueInDays: 30)
+        let reviewed = try XCTUnwrap(course.orderedCards.first)
+        reviewed.lastReviewedAt = Date()
+        let originalDue = reviewed.dueDate
+        try context.save()
+
+        let first = try exam(name: "Partiel", inDays: 12, courses: [course], planned: true)
+        try ExamRepository.plan(first, in: context)
+
+        let second = try exam(name: "Bac", inDays: 6, courses: [course], planned: true)
+        try ExamRepository.plan(second, in: context)
+
+        XCTAssertEqual(reviewed.dueDate, originalDue)
+    }
+
+    /// Trois cartes neuves par session : de quoi voir le plafond agir.
     private var smallLimits: StudyQueueBuilder.Limits {
         StudyQueueBuilder.Limits(newPerSession: 3, reviewsPerSession: .max)
     }

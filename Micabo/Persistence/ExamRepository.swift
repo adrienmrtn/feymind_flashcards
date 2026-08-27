@@ -179,6 +179,7 @@ enum ExamRepository {
         }
 
         for card in cards {
+            guard shouldMoveForExam(card, now: now, calendar: calendar) else { continue }
             guard let offset = plan.firstOffset(for: card.id) else { continue }
             card.dueDate = plan.date(atOffset: offset, calendar: calendar)
             // L'intervalle ne se touche que sur une carte en révision. Une carte neuve ou
@@ -213,6 +214,18 @@ enum ExamRepository {
     /// la photographie, pas sur les cours actuels de l'examen, qui ont pu changer.
     private static func allCards(in context: ModelContext) -> [Flashcard] {
         (try? context.fetch(FetchDescriptor<Flashcard>())) ?? []
+    }
+
+    /// Un second examen sur le même cours ne doit pas ramener dans la file du jour
+    /// une carte qu'on vient de noter, ni interrompre un palier d'apprentissage.
+    static func shouldMoveForExam(
+        _ card: Flashcard,
+        now: Date,
+        calendar: Calendar = MicaboCalendar.shared
+    ) -> Bool {
+        if card.state == .learning || card.state == .relearning { return false }
+        if let last = card.lastReviewedAt, calendar.isDate(last, inSameDayAs: now) { return false }
+        return true
     }
 }
 

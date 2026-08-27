@@ -1,10 +1,8 @@
 import Link from "next/link";
 
 import {
-  DEFAULT_DAILY_MINUTES,
   EXAM_INTENSITY_LABELS,
   courseAccent,
-  dailyLimits,
   dayDifference,
   examCountdownLabel,
   examUrgency,
@@ -26,6 +24,7 @@ import {
   type ExamRow,
   type FriendRequestRow,
 } from "@/lib/data/courses";
+import { loadNewCardBudget } from "@/lib/data/reviews";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,7 +40,7 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const user = await currentUser();
 
-  const [courses, cards, exams, friends, profile] = await Promise.all([
+  const [courses, cards, exams, friends, profile, budget] = await Promise.all([
     listCourses(),
     listCardSnapshots(),
     listExams(),
@@ -49,14 +48,14 @@ export default async function DashboardPage() {
     user
       ? supabase
           .from("profiles")
-          .select("daily_minutes, display_name")
+          .select("display_name")
           .eq("id", user.id)
           .maybeSingle()
           .then((result) => result.data)
       : null,
+    loadNewCardBudget(),
   ]);
 
-  const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
   const today = startOfDay(new Date());
   const titles = new Map(courses.map((course) => [course.id, course]));
 
@@ -69,7 +68,12 @@ export default async function DashboardPage() {
       createdAt: new Date(card.created_at),
       isSuspended: card.is_suspended,
     })),
-    { limits: dailyLimits(minutes) },
+    {
+      limits: {
+        newPerSession: budget.remaining,
+        reviewsPerSession: Number.MAX_SAFE_INTEGER,
+      },
+    },
   );
 
   const nextExam = exams

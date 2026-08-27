@@ -1,14 +1,9 @@
 import Link from "next/link";
 
-import {
-  DEFAULT_DAILY_MINUTES,
-  courseAccent,
-  dailyLimits,
-  resolveEmoji,
-  studyCounts,
-} from "@micabo/core";
+import { courseAccent, resolveEmoji, studyCounts } from "@micabo/core";
 
 import { listCardSnapshots, listCourses } from "@/lib/data/courses";
+import { loadNewCardBudget } from "@/lib/data/reviews";
 
 /**
  * L'étagère : ce qu'on a importé, ce qu'on a produit.
@@ -17,7 +12,11 @@ import { listCardSnapshots, listCourses } from "@/lib/data/courses";
  * ici on vient ranger, rouvrir, importer.
  */
 export default async function CoursesPage() {
-  const [courses, cards] = await Promise.all([listCourses(), listCardSnapshots()]);
+  const [courses, cards, budget] = await Promise.all([
+    listCourses(),
+    listCardSnapshots(),
+    loadNewCardBudget(),
+  ]);
 
   const counts = studyCounts(
     cards.map((card) => ({
@@ -28,7 +27,12 @@ export default async function CoursesPage() {
       createdAt: new Date(card.created_at),
       isSuspended: card.is_suspended,
     })),
-    { limits: dailyLimits(DEFAULT_DAILY_MINUTES) },
+    {
+      limits: {
+        newPerSession: budget.remaining,
+        reviewsPerSession: Number.MAX_SAFE_INTEGER,
+      },
+    },
   );
 
   const mine = courses.filter((course) => !course.is_from_library);
