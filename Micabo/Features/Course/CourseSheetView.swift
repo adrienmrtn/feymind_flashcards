@@ -24,6 +24,10 @@ struct CourseSheetView: View {
     @Environment(CloudSync.self) private var sync
     @Environment(ProAccess.self) private var pro: ProAccess?
 
+    @Query private var reviewLogs: [ReviewLog]
+    @Query private var exams: [Exam]
+    @Query(sort: \Course.updatedAt, order: .reverse) private var allCourses: [Course]
+
     /// La fiche décodée une fois, pas à chaque passage dans le corps de la vue.
     @State private var sheet: CourseSheet?
     @State private var explaining: ExplainedPassage?
@@ -48,7 +52,17 @@ struct CourseSheetView: View {
     }
 
     private var cards: [Flashcard] { course.orderedCards }
-    private var dueCount: Int { course.dueCards.count }
+    private var dueCards: [Flashcard] {
+        StudyQueueBuilder.build(
+            from: cards,
+            limits: .daily(newRemaining: DailyNewQuota.remaining(logs: reviewLogs)),
+            deadlines: ExamDeadlines.active(exams: exams, courses: allCourses)
+        )
+    }
+    private var dueCount: Int { dueCards.count }
+    private var heldBackNewCards: Int {
+        max(0, cards.filter { $0.isDue() && $0.state == .new }.count - dueCards.filter { $0.state == .new }.count)
+    }
     private var tint: Color { Color(hexString: course.accentHex) }
     private var isPro: Bool { pro?.isPro ?? true }
 
@@ -366,9 +380,9 @@ struct CourseSheetView: View {
             } else {
                 Button(action: startSession) {
                     HStack(spacing: MicaboSpacing.xs) {
-                        Text(dueCount > 0 ? MicaboCopy.reviewButton(count: dueCount) : "Entraînement libre")
+                        Text(sessionButtonTitle)
 
-                        if dueCount == 0, !(pro?.canPractice ?? true) {
+                        if dueCount == 0, heldBackNewCards == 0, !(pro?.canPractice ?? true) {
                             Image(systemName: "lock.fill")
                                 .font(.system(size: 11, weight: .bold))
                         }
@@ -382,12 +396,19 @@ struct CourseSheetView: View {
     /// Réviser ce qui est dû reste gratuit. **L'entraînement libre, non** : c'est ce qu'on
     /// fait la veille d'un partiel, et le cadenas sur le bouton le dit avant l'appui plutôt
     /// que de faire surgir un paywall à la place d'une session.
+    private var sessionButtonTitle: String {
+        if dueCount > 0 { return MicaboCopy.reviewButton(count: dueCount) }
+        if heldBackNewCards > 0 { return "Réviser" }
+        return "Entraînement libre"
+    }
+
     private func startSession() {
-        guard dueCount > 0 || (pro?.canPractice ?? true) else {
+        let canSchedule = dueCount > 0 || heldBackNewCards > 0
+        guard canSchedule || (pro?.canPractice ?? true) else {
             paywall = .practice
             return
         }
-        studyMode = dueCount > 0 ? .scheduled : .practice
+        studyMode = canSchedule ? .scheduled : .practice
         showStudy = true
     }
 

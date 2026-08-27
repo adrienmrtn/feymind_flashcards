@@ -70,11 +70,17 @@ export {
 } from "./srs/daily-load";
 export {
   DEFAULT_LIMITS,
+  SESSION_NEW_SLIDER_CAP,
   UNLIMITED,
   buildQueue,
+  countNewIntroducedToday,
   dailyLimits,
   isDue,
+  remainingNewCards,
+  sessionNewLimit,
+  sessionNewSliderMax,
   studyCounts,
+  type NewIntroductionEvent,
   type QueueCard,
   type QueueLimits,
   type StudyCounts,

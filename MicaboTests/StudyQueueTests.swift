@@ -61,6 +61,37 @@ final class StudyQueueTests: XCTestCase {
         XCTAssertEqual(StudyQueueBuilder.build(from: cards, now: now, limits: limits).count, 5)
     }
 
+    func testRemainingNewCardsAfterACourseSessionIsZero() {
+        XCTAssertEqual(DailyNewQuota.remaining(introduced: 8, dailyMinutes: 15), 0)
+        XCTAssertEqual(DailyNewQuota.remaining(introduced: 3, dailyMinutes: 15), 5)
+    }
+
+    func testIntroducedTodayCountsOnlyNewCardsFromToday() {
+        let today = makeCard("neuve", state: .new, due: -60, position: 0)
+        today.apply(
+            SM2Scheduler.schedule(
+                snapshot: SM2CardSnapshot(card: today),
+                rating: .good,
+                now: now,
+                config: .deterministic
+            ),
+            at: now
+        )
+
+        let yesterday = ReviewLog(
+            reviewedAt: now.addingTimeInterval(-86_400),
+            rating: .good,
+            stateBefore: .new,
+            previousIntervalDays: 0,
+            newIntervalDays: 0,
+            easeAfter: 2.5
+        )
+        context.insert(yesterday)
+
+        let logs = (try? context.fetch(FetchDescriptor<ReviewLog>())) ?? []
+        XCTAssertEqual(DailyNewQuota.introducedToday(from: logs, now: now), 1)
+    }
+
     func testCountsSplitByState() {
         let cards = [
             makeCard("a", state: .new, due: -10, position: 0),
