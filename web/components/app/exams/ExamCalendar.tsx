@@ -6,6 +6,7 @@ const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
 
 export interface CalendarExam {
   id: string;
+  name: string;
   examDate: string;
   isPast: boolean;
 }
@@ -43,32 +44,15 @@ export function ExamCalendar({
   const label = month.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 
   return (
-    <div className="paper rounded-group bg-surface p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-[16px] font-semibold capitalize text-ink">📅 {label}</p>
-        <div className="flex gap-1">
-          <button
-            type="button"
-            onClick={() => onMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-            className="pressable flex h-8 w-8 items-center justify-center rounded-full bg-surface-muted text-ink-secondary"
-            aria-label="Mois précédent"
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            onClick={() => onMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-            className="pressable flex h-8 w-8 items-center justify-center rounded-full bg-surface-muted text-ink-secondary"
-            aria-label="Mois suivant"
-          >
-            ›
-          </button>
-        </div>
-      </div>
+    <div className="paper rounded-group bg-surface p-4 sm:p-5">
+      <CalendarHeader label={label} month={month} onMonth={onMonth} />
 
       <div className="grid grid-cols-7 gap-1">
         {WEEKDAYS.map((day, index) => (
-          <p key={`${day}-${index}`} className="pb-1 text-center text-[11px] font-semibold text-ink-tertiary">
+          <p
+            key={`${day}-${index}`}
+            className="pb-1 text-center text-[11px] font-semibold text-ink-tertiary"
+          >
             {day}
           </p>
         ))}
@@ -79,13 +63,15 @@ export function ExamCalendar({
           const isSelected = selected ? sameDay(selected, day) : false;
           const isToday = sameDay(today, day);
           const outside = day.getMonth() !== month.getMonth();
+          const extras = Math.max(0, marks.length - 1);
+          const first = marks[0];
 
           return (
             <button
               key={key}
               type="button"
               onClick={() => onSelect(day)}
-              className={`flex h-11 flex-col items-center justify-center rounded-button text-[13.5px] transition-colors duration-hover ${
+              className={`flex min-h-[3.75rem] flex-col items-stretch rounded-button px-0.5 pb-1 pt-1 text-left transition-colors duration-hover sm:min-h-[4.5rem] sm:px-1 ${
                 isSelected
                   ? "bg-accent text-on-ink"
                   : isToday
@@ -93,22 +79,145 @@ export function ExamCalendar({
                     : "text-ink hover:bg-surface-muted"
               } ${outside && !isSelected ? "opacity-40" : ""}`}
             >
-              <span className={`numeral ${isToday || isSelected ? "font-semibold" : ""}`}>
+              <span
+                className={`numeral mb-0.5 text-center text-[12.5px] sm:text-[13.5px] ${
+                  isToday || isSelected ? "font-semibold" : ""
+                }`}
+              >
                 {day.getDate()}
               </span>
-              <span className="mt-0.5 flex h-1.5 gap-0.5">
-                {marks.slice(0, 3).map((exam) => (
+              {first ? (
+                <span className="flex min-h-0 flex-1 flex-col items-stretch gap-0.5 overflow-hidden">
                   <span
-                    key={exam.id}
-                    className={`h-1 w-1 rounded-full ${
-                      isSelected ? "bg-on-ink" : exam.isPast ? "bg-ink-tertiary" : "bg-caution"
+                    title={
+                      extras > 0
+                        ? `${first.name.trim() || "Examen"} · +${extras}`
+                        : first.name.trim() || "Examen"
+                    }
+                    className={`truncate rounded-pill px-1 py-0.5 text-[9px] font-semibold leading-tight sm:text-[11px] ${
+                      isSelected
+                        ? "bg-on-ink/18 text-on-ink"
+                        : first.isPast
+                          ? "bg-surface-muted text-ink-tertiary"
+                          : "bg-caution-soft text-caution"
                     }`}
-                  />
-                ))}
-              </span>
+                  >
+                    {first.name.trim() || "Examen"}
+                  </span>
+                  {extras > 0 ? (
+                    <span
+                      className={`px-1 text-[8px] font-semibold sm:text-[10px] ${
+                        isSelected ? "text-on-ink/80" : "text-ink-tertiary"
+                      }`}
+                    >
+                      +{extras}
+                    </span>
+                  ) : null}
+                </span>
+              ) : null}
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Le calendrier du premier écran : un jour proposé, qu'on peut changer.
+ * Plus compact que la grille des examens, parce qu'il vit dans la carte.
+ */
+export function ExamDayPicker({
+  month,
+  selected,
+  minDate,
+  onMonth,
+  onSelect,
+}: {
+  month: Date;
+  selected: Date;
+  minDate?: Date;
+  onMonth: (next: Date) => void;
+  onSelect: (day: Date) => void;
+}) {
+  const today = startOfDay(new Date());
+  const floor = minDate ? startOfDay(minDate) : undefined;
+  const days = monthGrid(month);
+  const label = month.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+
+  return (
+    <div>
+      <CalendarHeader label={label} month={month} onMonth={onMonth} />
+      <div className="grid grid-cols-7 gap-1">
+        {WEEKDAYS.map((day, index) => (
+          <p
+            key={`${day}-${index}`}
+            className="pb-1 text-center text-[11px] font-semibold text-ink-tertiary"
+          >
+            {day}
+          </p>
+        ))}
+        {days.map((day) => {
+          const key = isoDay(day);
+          const isSelected = sameDay(selected, day);
+          const isToday = sameDay(today, day);
+          const outside = day.getMonth() !== month.getMonth();
+          const blocked = floor ? day.getTime() < floor.getTime() : false;
+
+          return (
+            <button
+              key={key}
+              type="button"
+              disabled={blocked}
+              onClick={() => onSelect(day)}
+              className={`flex h-10 items-center justify-center rounded-button text-[13.5px] transition-colors duration-hover ${
+                isSelected
+                  ? "bg-accent font-semibold text-on-ink"
+                  : blocked
+                    ? "cursor-not-allowed text-ink-tertiary/50"
+                    : isToday
+                      ? "bg-accent-soft font-semibold text-accent"
+                      : "text-ink hover:bg-surface-muted"
+              } ${outside && !isSelected && !blocked ? "opacity-40" : ""}`}
+            >
+              <span className="numeral">{day.getDate()}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CalendarHeader({
+  label,
+  month,
+  onMonth,
+}: {
+  label: string;
+  month: Date;
+  onMonth: (next: Date) => void;
+}) {
+  return (
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <p className="text-[16px] font-semibold capitalize text-ink">📅 {label}</p>
+      <div className="flex gap-1">
+        <button
+          type="button"
+          onClick={() => onMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+          className="pressable flex h-8 w-8 items-center justify-center rounded-full bg-surface-muted text-ink-secondary"
+          aria-label="Mois précédent"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          onClick={() => onMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+          className="pressable flex h-8 w-8 items-center justify-center rounded-full bg-surface-muted text-ink-secondary"
+          aria-label="Mois suivant"
+        >
+          ›
+        </button>
       </div>
     </div>
   );

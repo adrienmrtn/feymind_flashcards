@@ -6,9 +6,9 @@ import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 /**
  * Les examens, **sur un calendrier.**
  *
- * Cliquer un jour ouvre la feuille : nom, cours, curseur d'intensité. C'est le même geste
- * qu'iOS - une date, les cours de l'épreuve, un palier - sauf que le palier est un curseur
- * avec un emoji qui change, parce que trois pastilles se lisent moins bien à la souris.
+ * Cliquer un jour ou « Ajouter un examen » ouvre trois questions, jamais plein
+ * écran : le jour (celui du clic, qu'on peut changer), les cours, l'intensité.
+ * Les examens déjà posés s'écrivent en pastille sur le jour, pas en point.
  */
 export default async function ExamsPage() {
   const [exams, courses, cards] = await Promise.all([
