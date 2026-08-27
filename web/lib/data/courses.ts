@@ -11,6 +11,7 @@ import {
   coursesTag,
   dataClient,
   examsTag,
+  socialTag,
   userTag,
 } from "@/lib/data/cache";
 import { currentAccessToken, currentUserId } from "@/lib/data/user";
@@ -265,12 +266,12 @@ export interface FriendRequestRow {
   createdAt: string;
 }
 
-/** Demandes d'amis reçues et encore en attente. L'UI les affichera quand l'ajout d'amis existera. */
+/** Demandes d'amis reçues et encore en attente. */
 export async function listPendingFriendRequests(): Promise<FriendRequestRow[]> {
   const auth = await reader();
   if (!auth) return [];
 
-  return cachedRead(auth.userId, "friends", [userTag(auth.userId)], async () => {
+  return cachedRead(auth.userId, "friends", [userTag(auth.userId), socialTag(auth.userId)], async () => {
     const supabase = dataClient(auth.token);
     const { data, error } = await supabase
       .from("friendships")
