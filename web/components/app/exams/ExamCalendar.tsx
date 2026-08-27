@@ -96,7 +96,7 @@ export function ExamCalendar({
                         ? `${first.name.trim() || "Examen"} · +${extras}`
                         : first.name.trim() || "Examen"
                     }
-                    className={`block min-w-0 max-w-full truncate rounded-pill px-1 py-0.5 text-center text-[9px] font-semibold leading-tight sm:text-[11px] ${
+                    className={`block min-w-0 w-full max-w-full truncate rounded-pill px-1 py-0.5 text-center text-[9px] font-semibold leading-tight sm:text-[11px] ${
                       isSelected
                         ? "bg-on-ink/18 text-on-ink"
                         : first.isPast

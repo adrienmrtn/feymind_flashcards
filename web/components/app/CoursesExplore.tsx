@@ -130,7 +130,7 @@ function TabButton({
         current ? "bg-surface text-ink shadow-sm" : "text-ink-tertiary"
       }`}
     >
-      {pending ? <ThinkingOrb state="searching" size={18} /> : null}
+      {pending ? <ThinkingOrb state="searching" size={20} /> : null}
       {label}
     </button>
   );
