@@ -214,3 +214,13 @@ export {
   visibilityTitle,
   type CourseVisibility,
 } from "./generation/visibility";
+export {
+  USERNAME_MAX,
+  USERNAME_MESSAGES,
+  USERNAME_MIN,
+  USERNAME_SHAPE,
+  displayUsername,
+  normalizeUsername,
+  validateUsername,
+  type UsernameProblem,
+} from "./username";
