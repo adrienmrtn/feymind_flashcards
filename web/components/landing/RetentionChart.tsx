@@ -28,7 +28,7 @@ export function RetentionChart() {
   const withMicabo = curveWithMicabo();
 
   return (
-    <figure className="paper rounded-group bg-surface p-6 sm:p-8" data-print="keep">
+    <figure className="paper lift rounded-group bg-surface p-6 sm:p-8" data-print="keep">
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="h-auto w-full"

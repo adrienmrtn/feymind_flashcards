@@ -310,7 +310,7 @@ function HardCards({
   exams: ReadonlyMap<string, { name: string; daysRemaining: number }>;
 }) {
   return (
-    <section className="paper rounded-group bg-surface p-6">
+    <section className="paper hover-tile rounded-group bg-surface p-6">
       <p className="eyebrow text-ink-tertiary">💪 Cartes les plus difficiles</p>
       {cards.length === 0 ? (
         <p className="mt-3 text-[14.5px] leading-relaxed text-ink-secondary">
@@ -359,7 +359,7 @@ function HardCards({
 
 function FriendsCard({ requests }: { requests: FriendRequestRow[] }) {
   return (
-    <section className="paper rounded-group bg-surface p-6">
+    <section className="paper hover-tile rounded-group bg-surface p-6">
       <div className="flex items-baseline justify-between gap-3">
         <p className="eyebrow text-ink-tertiary">Amis</p>
         <Link href={"/app/amis" as never} className="text-[13px] font-medium text-accent">
@@ -438,8 +438,13 @@ function EmptyBlock({
       <p className="mt-2 max-w-[46ch] text-[14px] leading-relaxed text-ink-reading">{body}</p>
       <Link
         href={href as never}
-        className="pressable mt-5 inline-flex rounded-button bg-ink px-5 py-2.5 text-[14px] font-semibold text-on-ink"
+        className="pressable shiny hover-tile mt-5 inline-flex items-center gap-2 rounded-button bg-ink px-5 py-2.5 text-[14px] font-semibold text-on-ink"
       >
+        {action.startsWith("Importer") ? (
+          <span aria-hidden className="emoji">
+            📥
+          </span>
+        ) : null}
         {action}
       </Link>
     </div>

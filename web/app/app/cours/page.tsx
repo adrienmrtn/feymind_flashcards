@@ -265,7 +265,7 @@ function SubjectChip({ href, current, label }: { href: string; current: boolean;
   return (
     <Link
       href={href as never}
-      className={`rounded-pill px-3.5 py-1.5 text-[13px] font-medium ${
+      className={`pressable hover-tile rounded-pill px-3.5 py-1.5 text-[13px] font-medium ${
         current ? "bg-ink text-on-ink" : "bg-surface-muted text-ink-secondary"
       }`}
     >
@@ -284,13 +284,16 @@ function EmptyShelf() {
       <div className="mt-7 flex flex-wrap justify-center gap-3">
         <Link
           href="/app/importer"
-          className="pressable inline-flex items-center gap-2 rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
+          className="pressable shiny hover-tile inline-flex items-center gap-2 rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
         >
+          <span aria-hidden className="emoji">
+            📥
+          </span>
           Importer un cours
         </Link>
         <Link
           href={"/app/cours?vue=decouvrir" as never}
-          className="pressable inline-flex items-center rounded-button bg-surface px-6 py-3.5 text-[15px] font-semibold text-ink paper"
+          className="pressable hover-tile inline-flex items-center rounded-button bg-surface px-6 py-3.5 text-[15px] font-semibold text-ink paper"
         >
           Découvrir
         </Link>

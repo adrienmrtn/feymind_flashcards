@@ -28,9 +28,8 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * Le profil, **en une page posée**.
  *
- * Une tête, deux chiffres, puis de grandes cartes blanches. Les emojis de
- * section et les tuiles qui sautent au survol sont restés dehors : c'est
- * ce qui faisait lire une pile de gadgets au lieu d'un compte.
+ * Une tête, deux chiffres, puis de grandes cartes blanches. Les tuiles
+ * se soulèvent au survol, les rangées aussi.
  */
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -154,7 +153,7 @@ export default async function ProfilePage() {
       {due > 0 ? (
         <Link
           href="/app/reviser"
-          className="saas-card pressable relative mt-4 flex items-center justify-between gap-4 px-7 py-5"
+          className="saas-card pressable hover-tile relative mt-4 flex items-center justify-between gap-4 px-7 py-5"
         >
           <span className="text-[15px] font-semibold text-ink">
             <span className="numeral">{due}</span> carte{due > 1 ? "s" : ""} à revoir
@@ -201,7 +200,7 @@ export default async function ProfilePage() {
         ) : (
           <ol className="mt-3 divide-y divide-hairline pb-2">
             {topCards.map((card, index) => (
-              <li key={card.id} className="flex items-baseline gap-3.5 px-7 py-3.5">
+              <li key={card.id} className="hover-row flex items-baseline gap-3.5 px-7 py-3.5">
                 <span className="numeral w-5 shrink-0 text-[13px] text-ink-tertiary">
                   {index + 1}
                 </span>
@@ -220,7 +219,7 @@ export default async function ProfilePage() {
           <p className="px-7 pt-7 text-[13px] text-ink-tertiary">Autour de toi</p>
           <Link
             href={"/app/amis" as never}
-            className="mt-3 flex items-center justify-between gap-4 px-7 py-4"
+            className="hover-row mt-3 flex items-center justify-between gap-4 px-7 py-4"
           >
             <span className="text-[15px] text-ink">Amis</span>
             <span className="text-[13px] text-ink-tertiary">
@@ -230,7 +229,7 @@ export default async function ProfilePage() {
           {exams.length > 0 ? (
             <Link
               href={"/app/examens" as never}
-              className="flex items-center justify-between gap-4 border-t border-hairline px-7 py-4"
+              className="hover-row flex items-center justify-between gap-4 border-t border-hairline px-7 py-4"
             >
               <span className="text-[15px] text-ink">Examens</span>
               <span className="numeral text-[13px] text-ink-tertiary">{exams.length}</span>

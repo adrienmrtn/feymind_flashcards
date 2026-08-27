@@ -40,7 +40,7 @@ export function SignOutButton({ compact = false }: { compact?: boolean }) {
       type="button"
       onClick={leave}
       disabled={pending}
-      className="pressable w-full px-7 py-5 text-left"
+      className="pressable hover-row w-full px-7 py-5 text-left"
     >
       <p className="text-[15px] font-semibold text-ink">
         {pending ? "Déconnexion…" : "Se déconnecter"}

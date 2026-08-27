@@ -11,7 +11,7 @@ export function WeekStrip({ days }: { days: readonly WeekDayLoad[] }) {
   const peak = Math.max(1, ...days.map((day) => day.planned));
 
   return (
-    <section className="paper mt-8 rounded-group bg-surface px-4 py-5 sm:px-5">
+    <section className="paper hover-tile mt-8 rounded-group bg-surface px-4 py-5 sm:px-5">
       <p className="eyebrow text-ink-tertiary">📅 Semaine</p>
       <div className="mt-4 grid grid-cols-7 gap-1 sm:gap-2">
         {days.map((day) => (

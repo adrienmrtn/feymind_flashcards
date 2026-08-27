@@ -3,7 +3,7 @@
  */
 export function MobileAppCard() {
   return (
-    <section className="relative min-h-[232px] overflow-hidden rounded-group bg-ink px-6 pb-6 pt-5 pr-28 text-on-ink sm:pr-32">
+    <section className="hover-tile relative min-h-[232px] overflow-hidden rounded-group bg-ink px-6 pb-6 pt-5 pr-28 text-on-ink sm:pr-32">
       <p className="eyebrow text-on-ink-muted">📱 Sur ton téléphone</p>
       <p className="mt-2 max-w-[22ch] text-[18px] font-semibold leading-snug">
         Micabo aussi disponible sur mobile
