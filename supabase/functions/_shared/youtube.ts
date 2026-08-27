@@ -168,6 +168,17 @@ const ANDROID_CLIENT: InnerTubeClient = {
   },
 };
 
+/** Rend encore le titre et la durée quand iOS / Android exigent une connexion. */
+const TV_CLIENT: InnerTubeClient = {
+  headers: {
+    "User-Agent": "Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version",
+  },
+  context: {
+    clientName: "TVHTML5_SIMPLY",
+    clientVersion: "1.0",
+  },
+};
+
 const BROWSER_HEADERS: Record<string, string> = {
   "User-Agent":
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
@@ -184,20 +195,32 @@ const BROWSER_HEADERS: Record<string, string> = {
  * **toutes** les vidéos alors que iOS les ouvrait.
  */
 export async function fetchVideoMetadata(videoId: string, language: string): Promise<VideoMetadata> {
-  const player = await fetchPlayer(videoId, language);
-  const details = asRecord(player.videoDetails);
-  if (!details) {
-    throw new YouTubeError("unavailable", "La page de la vidéo n'a pas pu être lue.");
-  }
+  try {
+    const player = await fetchPlayer(videoId, language);
+    const details = asRecord(player.videoDetails);
+    if (!details) {
+      throw new YouTubeError("unavailable", "La page de la vidéo n'a pas pu être lue.");
+    }
 
-  return {
-    id: videoId,
-    title: typeof details.title === "string" ? details.title : "Vidéo YouTube",
-    author: typeof details.author === "string" ? details.author : "",
-    durationSeconds: Number.parseInt(String(details.lengthSeconds ?? "0"), 10) || 0,
-    thumbnailUrl: bestThumbnail(details, videoId),
-    captions: captionTracks(player),
-  };
+    return {
+      id: videoId,
+      title: typeof details.title === "string" ? details.title : "Vidéo YouTube",
+      author: typeof details.author === "string" ? details.author : "",
+      durationSeconds: Number.parseInt(String(details.lengthSeconds ?? "0"), 10) || 0,
+      thumbnailUrl: bestThumbnail(details, videoId),
+      captions: captionTracks(player),
+    };
+  } catch (error) {
+    // YouTube bloque souvent les IP de datacenter. On reconstitue alors
+    // l'aperçu : oEmbed pour le titre, la télé pour la durée, Invidious
+    // pour la liste des pistes. Le texte des sous-titres, lui, est lu
+    // ailleurs — l'appareil de l'utilisateur n'est pas un datacenter.
+    if (error instanceof YouTubeError && error.code === "unavailable") {
+      const fallback = await fallbackMetadata(videoId, language);
+      if (fallback) return fallback;
+    }
+    throw error;
+  }
 }
 
 async function fetchPlayer(videoId: string, language: string): Promise<Record<string, unknown>> {
@@ -449,7 +472,7 @@ export interface Transcript {
  */
 export async function fetchTranscript(track: CaptionTrack): Promise<Transcript> {
   const json = await fetchJson3(track.baseUrl);
-  const text = json ?? (await fetchXml(track.baseUrl));
+  const text = json ?? (await fetchXml(track.baseUrl)) ?? (await fetchVtt(track.baseUrl));
 
   if (!text || text.length === 0) {
     throw new YouTubeError("no_captions", "La piste de sous-titres est vide.");
@@ -461,6 +484,53 @@ export async function fetchTranscript(track: CaptionTrack): Promise<Transcript> 
     languageName: track.languageName,
     isAutomatic: track.isAutomatic,
   };
+}
+
+/**
+ * La première piste qui a assez de texte, dans l'ordre de `selectCaptionTrack`.
+ *
+ * Une piste trop courte ou un HTML « Sorry » n'est pas un arrêt : on passe
+ * à la suivante. C'est ce qui évitait de prendre trois phrases d'une page
+ * d'erreur pour une transcription.
+ */
+export async function fetchBestTranscript(
+  tracks: CaptionTrack[],
+  languages: string[],
+): Promise<Transcript> {
+  const preferred = selectCaptionTrack(tracks, languages);
+  const ordered = preferred
+    ? [preferred, ...tracks.filter((track) => track.baseUrl !== preferred.baseUrl)]
+    : tracks;
+
+  let longest: Transcript | null = null;
+
+  for (const track of ordered) {
+    try {
+      const transcript = await fetchTranscript(track);
+      if (transcript.text.length >= YOUTUBE_LIMITS.minTranscriptCharacters) {
+        return transcript;
+      }
+      if (!longest || transcript.text.length > longest.text.length) {
+        longest = transcript;
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  if (longest) {
+    throw new YouTubeError(
+      "too_short",
+      `La transcription ne fait que ${longest.text.length} caractères.`,
+      422,
+      {
+        characters: longest.text.length,
+        minimumCharacters: YOUTUBE_LIMITS.minTranscriptCharacters,
+      },
+    );
+  }
+
+  throw new YouTubeError("no_captions", "Aucune piste de sous-titres exploitable.");
 }
 
 /**
@@ -492,7 +562,7 @@ async function fetchJson3(baseUrl: string): Promise<string | null> {
     if (!response.ok) return null;
 
     const raw = await response.text();
-    if (!raw.trim().startsWith("{")) return null;
+    if (looksLikeHtml(raw) || !raw.trim().startsWith("{")) return null;
 
     const parsed = asRecord(JSON.parse(raw));
     const events = Array.isArray(parsed?.events) ? parsed.events : [];
@@ -530,6 +600,7 @@ async function fetchXml(baseUrl: string): Promise<string | null> {
       const response = await fetch(url, { headers: CAPTION_HEADERS });
       if (!response.ok) continue;
       const xml = await response.text();
+      if (looksLikeHtml(xml)) continue;
       const lines = parseCaptionXml(xml);
       if (lines.length > 0) return cleanTranscript(lines);
     }
@@ -543,12 +614,192 @@ async function fetchXml(baseUrl: string): Promise<string | null> {
  * Les deux XML que YouTube sert encore : `<text>` (srv1) et `<p>` (srv3).
  * Les `<s>` imbriqués du défilement automatique sont aplatis.
  */
+async function fetchVtt(baseUrl: string): Promise<string | null> {
+  try {
+    const response = await fetch(baseUrl, {
+      headers: { ...CAPTION_HEADERS, Accept: "text/vtt, text/plain, */*" },
+    });
+    if (!response.ok) return null;
+    const raw = await response.text();
+    if (looksLikeHtml(raw) || !/WEBVTT/i.test(raw.slice(0, 80))) return null;
+    const lines = parseVtt(raw);
+    return lines.length > 0 ? cleanTranscript(lines) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** WEBVTT : on jette les horodatages, on garde les phrases. */
+export function parseVtt(vtt: string): string[] {
+  const lines: string[] = [];
+
+  for (const block of vtt.replace(/^\uFEFF?WEBVTT[^\n]*/i, "").split(/\n\n+/)) {
+    const spoken = block
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) =>
+        line.length > 0 &&
+        !line.includes("-->") &&
+        !/^\d+$/.test(line) &&
+        !/^kind:/i.test(line) &&
+        !/^language:/i.test(line)
+      )
+      .join(" ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (spoken.length > 0) lines.push(spoken);
+  }
+
+  return lines;
+}
+
+const INVIDIOUS_HOSTS = [
+  "https://invidious.flokinet.to",
+  "https://inv.nadeko.net",
+  "https://invidious.privacyredirect.com",
+];
+
+async function fetchFromInvidious(
+  videoId: string,
+  language: string,
+): Promise<VideoMetadata | null> {
+  for (const host of INVIDIOUS_HOSTS) {
+    try {
+      const response = await fetch(`${host}/api/v1/videos/${videoId}`, {
+        headers: { Accept: "application/json", "User-Agent": "Micabo/1.0" },
+      });
+      if (!response.ok) continue;
+
+      const parsed = asRecord(await response.json());
+      if (!parsed || typeof parsed.title !== "string") continue;
+
+      const rawCaptions = Array.isArray(parsed.captions) ? parsed.captions : [];
+      const captions: CaptionTrack[] = [];
+
+      for (const [index, entry] of rawCaptions.entries()) {
+        const track = asRecord(entry);
+        if (!track) continue;
+        const code = typeof track.languageCode === "string"
+          ? track.languageCode
+          : typeof track.language_code === "string"
+            ? track.language_code
+            : "";
+        if (code.length === 0) continue;
+        const label = typeof track.label === "string" ? track.label : code;
+        captions.push({
+          languageCode: code,
+          languageName: label,
+          isAutomatic: /auto/i.test(label),
+          isDefault: sameLanguage(code, language) || index === 0,
+          // `label=` se fait bloquer par Google. `lang=` rend le VTT.
+          baseUrl: `${host}/api/v1/captions/${videoId}?lang=${encodeURIComponent(code)}`,
+        });
+      }
+
+      if (captions.length === 0) continue;
+
+      return {
+        id: videoId,
+        title: parsed.title,
+        author: typeof parsed.author === "string" ? parsed.author : "",
+        durationSeconds: Number.parseInt(String(parsed.lengthSeconds ?? "0"), 10) || 0,
+        thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+        captions,
+      };
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
 export function parseCaptionXml(xml: string): string[] {
+  // Un HTML d'erreur (« Sorry… ») a des `<p>` : sans ce garde, on les
+  // prenait pour des sous-titres et on rendait 129 caractères.
+  if (!/<(?:timedtext|transcript|text)\b/i.test(xml)) return [];
+
   return [...xml.matchAll(/<(?:text|p)\b[^>]*>([\s\S]*?)<\/(?:text|p)>/g)]
     .map((match) =>
       decodeEntities(match[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim()
     )
     .filter((line) => line.length > 0);
+}
+
+function looksLikeHtml(raw: string): boolean {
+  const start = raw.slice(0, 240).trimStart().toLowerCase();
+  return (
+    start.startsWith("<!doctype") ||
+    start.startsWith("<html") ||
+    start.includes("sorry for the interruption") ||
+    start.includes("we're sorry")
+  );
+}
+
+async function fetchOEmbed(
+  videoId: string,
+): Promise<{ title: string; author: string; thumbnailUrl: string } | null> {
+  try {
+    const response = await fetch(
+      `https://www.youtube.com/oembed?url=${
+        encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)
+      }&format=json`,
+      { headers: { Accept: "application/json" } },
+    );
+    if (!response.ok) return null;
+    const parsed = asRecord(await response.json());
+    if (!parsed || typeof parsed.title !== "string") return null;
+    return {
+      title: parsed.title,
+      author: typeof parsed.author_name === "string" ? parsed.author_name : "",
+      thumbnailUrl: typeof parsed.thumbnail_url === "string"
+        ? parsed.thumbnail_url
+        : `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fallbackMetadata(
+  videoId: string,
+  language: string,
+): Promise<VideoMetadata | null> {
+  const [oembed, invidious, television] = await Promise.all([
+    fetchOEmbed(videoId),
+    fetchFromInvidious(videoId, language),
+    fetchFromInnerTube(videoId, language, TV_CLIENT),
+  ]);
+
+  const details = asRecord(television?.videoDetails);
+  const duration = invidious?.durationSeconds
+    || Number.parseInt(String(details?.lengthSeconds ?? "0"), 10)
+    || 0;
+
+  if (invidious) {
+    return {
+      ...invidious,
+      title: oembed?.title ?? invidious.title,
+      author: oembed?.author || invidious.author,
+      durationSeconds: duration || invidious.durationSeconds,
+      thumbnailUrl: oembed?.thumbnailUrl || invidious.thumbnailUrl,
+    };
+  }
+
+  if (!oembed && !details) return null;
+
+  return {
+    id: videoId,
+    title: oembed?.title
+      ?? (typeof details?.title === "string" ? details.title : "Vidéo YouTube"),
+    author: oembed?.author
+      ?? (typeof details?.author === "string" ? details.author : ""),
+    durationSeconds: duration,
+    thumbnailUrl: oembed?.thumbnailUrl ?? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+    captions: [],
+  };
 }
 
 /**

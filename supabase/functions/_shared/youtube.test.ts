@@ -5,6 +5,7 @@ import {
   cleanTranscript,
   extractVideoId,
   parseCaptionXml,
+  parseVtt,
   selectCaptionTrack,
   withCaptionFormat,
   type CaptionTrack,
@@ -51,6 +52,13 @@ describe("parseCaptionXml", () => {
     );
     assert.deepEqual(lines, ["Nous", "sommes là"]);
   });
+
+  it("ignore le HTML d'erreur de Google, qui a aussi des p", () => {
+    const lines = parseCaptionXml(
+      `<html><body><h1>We're sorry...</h1><p>... but your computer or network may be sending automated queries.</p></body></html>`,
+    );
+    assert.deepEqual(lines, []);
+  });
 });
 
 describe("selectCaptionTrack", () => {
@@ -73,6 +81,22 @@ describe("selectCaptionTrack", () => {
 
   it("préfère la langue demandée, même automatique", () => {
     assert.equal(selectCaptionTrack(tracks, ["fr"])?.languageCode, "fr");
+  });
+});
+
+describe("parseVtt", () => {
+  it("garde les phrases, jette les horodatages", () => {
+    const lines = parseVtt(`WEBVTT
+Kind: captions
+Language: en
+
+00:00:04.220 --> 00:00:05.400
+This is a 3.
+
+00:00:06.000 --> 00:00:08.000
+A neural network.
+`);
+    assert.deepEqual(lines, ["This is a 3.", "A neural network."]);
   });
 });
 
