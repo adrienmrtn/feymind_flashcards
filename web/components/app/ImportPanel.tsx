@@ -7,7 +7,6 @@ import { ThinkingOrb } from "thinking-orbs";
 import {
   BLOCK_BOUNDS,
   DEFAULT_SHEET_LENGTH,
-  VISIBILITIES,
   clampBlocks,
   defaultBlocks,
   lengthContaining,
@@ -17,6 +16,7 @@ import {
   type SheetLength,
 } from "@micabo/core";
 
+import { VisibilityChoices } from "@/components/app/VisibilityChoices";
 import { importFromText, importFromYouTube } from "@/lib/actions/course";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
 import { readYouTubeInBrowser } from "@/lib/import/youtube";
@@ -345,27 +345,9 @@ export function ImportPanel({
 
         <div className="paper rounded-group bg-surface p-5">
           <p className="eyebrow text-ink-tertiary">Qui peut la retrouver</p>
-          <div className="mt-3.5 flex flex-wrap gap-2">
-            {VISIBILITIES.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                disabled={busy}
-                onClick={() => setVisibility(item.value)}
-                aria-pressed={visibility === item.value}
-                className={`pressable rounded-pill px-3.5 py-2 text-[13.5px] font-medium transition-colors duration-hover ${
-                  visibility === item.value
-                    ? "bg-accent-soft text-accent"
-                    : "bg-surface-muted text-ink-secondary"
-                }`}
-              >
-                {item.title}
-              </button>
-            ))}
+          <div className="mt-3.5">
+            <VisibilityChoices value={visibility} onChange={setVisibility} disabled={busy} />
           </div>
-          <p className="mt-3 text-[12.5px] leading-relaxed text-ink-tertiary">
-            {VISIBILITIES.find((item) => item.value === visibility)?.detail}
-          </p>
         </div>
       </div>
 

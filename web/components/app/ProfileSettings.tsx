@@ -120,11 +120,6 @@ export function ProfileSettings({
           className="mt-4 w-full accent-[var(--color-accent)]"
         />
       </div>
-
-      <p className="mt-6 text-[12.5px] leading-relaxed text-ink-tertiary">
-        Ces réglages vivent dans <strong className="font-medium text-ink-secondary">Supabase</strong>,
-        pas dans ce navigateur : ton iPhone lit les mêmes colonnes, et écrit dedans aussi.
-      </p>
     </div>
   );
 }

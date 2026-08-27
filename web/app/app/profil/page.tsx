@@ -161,12 +161,6 @@ export default async function ProfilePage() {
       </div>
 
       <DeleteAccount email={user?.email ?? ""} />
-
-      <p className="mt-12 text-[12.5px] text-ink-tertiary">
-        <Link href="/" className="underline-draw">
-          Le site
-        </Link>
-      </p>
     </>
   );
 }
