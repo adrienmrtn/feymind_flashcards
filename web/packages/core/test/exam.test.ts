@@ -13,6 +13,7 @@ import {
   BASE_PASSES,
   CLOSING_DAYS,
   activeDeadlines,
+  activeExamMarks,
   addDays,
   averageDailyLoad,
   busiestDay,
@@ -194,6 +195,25 @@ describe("les échéances actives", () => {
       now,
     );
     expect(deadlines.get("a")).toEqual(startOfDay(addDays(now, 6)));
+  });
+
+  it("nomme l'examen qui commande la carte", () => {
+    const marks = activeExamMarks(
+      [
+        { date: addDays(now, 20), isPlanned: true, courseIds: ["maths"], name: "Final" },
+        { date: addDays(now, 6), isPlanned: true, courseIds: ["maths"], name: "Partiel" },
+      ],
+      cards,
+      now,
+    );
+
+    expect(marks.get("a")).toEqual({
+      name: "Partiel",
+      date: startOfDay(addDays(now, 6)),
+      daysRemaining: 6,
+    });
+    expect(marks.has("b")).toBe(false);
+    expect(marks.has("c")).toBe(false);
   });
 });
 

@@ -281,6 +281,8 @@ export interface DeadlineExam {
   date: Date;
   isPlanned: boolean;
   courseIds: string[];
+  /** Le nom affiché sur la carte. Absent seulement dans les tests d'échéance. */
+  name?: string;
 }
 
 export interface DeadlineCard {
@@ -289,11 +291,27 @@ export interface DeadlineCard {
   isSuspended: boolean;
 }
 
-export function activeDeadlines(
+/**
+ * L'examen qui commande une carte : son nom, et combien de jours il reste.
+ *
+ * C'est ce que la pastille de la carte affiche. La date est la même que celle de
+ * `activeDeadlines` : le plus proche des examens planifiés qui portent sur le cours.
+ */
+export interface ExamMark {
+  name: string;
+  date: Date;
+  daysRemaining: number;
+}
+
+export type ExamMarks = ReadonlyMap<string, ExamMark>;
+
+export const NO_EXAM_MARKS: ExamMarks = new Map();
+
+export function activeExamMarks(
   exams: DeadlineExam[],
   cards: DeadlineCard[],
   now: Date = new Date(),
-): ExamDeadlines {
+): ExamMarks {
   const today = startOfDay(now);
   const cardsByCourse = new Map<string, DeadlineCard[]>();
   for (const card of cards) {
@@ -303,21 +321,39 @@ export function activeDeadlines(
     else cardsByCourse.set(card.courseId, [card]);
   }
 
-  const byCard = new Map<string, Date>();
+  const byCard = new Map<string, ExamMark>();
 
   for (const exam of exams) {
     if (!exam.isPlanned) continue;
     const examDay = startOfDay(exam.date);
     if (examDay.getTime() < today.getTime()) continue;
 
+    const mark: ExamMark = {
+      name: exam.name?.trim() || "Examen",
+      date: examDay,
+      daysRemaining: dayDifference(today, examDay),
+    };
+
     for (const courseId of exam.courseIds) {
       for (const card of cardsByCourse.get(courseId) ?? []) {
         const existing = byCard.get(card.id);
-        if (existing && existing.getTime() <= examDay.getTime()) continue;
-        byCard.set(card.id, examDay);
+        if (existing && existing.date.getTime() <= examDay.getTime()) continue;
+        byCard.set(card.id, mark);
       }
     }
   }
 
+  return byCard;
+}
+
+export function activeDeadlines(
+  exams: DeadlineExam[],
+  cards: DeadlineCard[],
+  now: Date = new Date(),
+): ExamDeadlines {
+  const byCard = new Map<string, Date>();
+  for (const [id, mark] of activeExamMarks(exams, cards, now)) {
+    byCard.set(id, mark.date);
+  }
   return byCard;
 }

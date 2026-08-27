@@ -5,7 +5,8 @@ import { entitlement } from "@micabo/core";
 
 import { CardList } from "@/components/app/CardList";
 import { GenerateCards } from "@/components/app/GenerateCards";
-import { getCourse, listCards } from "@/lib/data/courses";
+import { getCourse, listCards, listExams } from "@/lib/data/courses";
+import { examMarkForCourse } from "@/lib/data/exam-marks";
 
 /**
  * Les cartes d'un cours.
@@ -16,8 +17,9 @@ import { getCourse, listCards } from "@/lib/data/courses";
  */
 export default async function CourseCardsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [course, cards] = await Promise.all([getCourse(id), listCards(id)]);
+  const [course, cards, exams] = await Promise.all([getCourse(id), listCards(id), listExams()]);
   if (!course) notFound();
+  const exam = examMarkForCourse(exams, course.id);
 
   return (
     <>
@@ -64,7 +66,7 @@ export default async function CourseCardsPage({ params }: { params: Promise<{ id
       </div>
 
       <div className="mt-8">
-        <CardList courseId={course.id} cards={cards} />
+        <CardList courseId={course.id} cards={cards} exam={exam} />
       </div>
 
       {cards.length > entitlement.FREE_TIER.cardsPerSession ? (

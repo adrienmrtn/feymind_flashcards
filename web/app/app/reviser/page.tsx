@@ -11,7 +11,8 @@ import {
 } from "@micabo/core";
 
 import { Session } from "@/components/app/Session";
-import { listAllCards, listCourses } from "@/lib/data/courses";
+import { listAllCards, listCourses, listExams } from "@/lib/data/courses";
+import { examMarksFor } from "@/lib/data/exam-marks";
 import { readEntitlement } from "@/lib/data/entitlement";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,9 +42,10 @@ export default async function ReviewPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [allCards, courses, right, profile] = await Promise.all([
+  const [allCards, courses, exams, right, profile] = await Promise.all([
     listAllCards(),
     listCourses(),
+    listExams(),
     readEntitlement(),
     user
       ? supabase
@@ -82,6 +84,7 @@ export default async function ReviewPage({
 
   const byId = new Map(cards.map((card) => [card.id, card]));
   const titles = new Map(courses.map((course) => [course.id, course.title]));
+  const marks = examMarksFor(exams, cards);
 
   const ordered = queue
     .map((item) => byId.get(item.id))
@@ -95,6 +98,7 @@ export default async function ReviewPage({
       choices: card.choices ?? [],
       answerIndex: card.correct_choice_index,
       courseTitle: card.course_id ? (titles.get(card.course_id) ?? null) : null,
+      exam: marks.get(card.id) ?? null,
       imagePath: card.image_path,
       maskX: card.mask_x ?? 0,
       maskY: card.mask_y ?? 0,
