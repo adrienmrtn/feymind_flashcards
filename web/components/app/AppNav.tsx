@@ -12,14 +12,11 @@ import {
 } from "@/lib/open-courses";
 
 /**
- * La navigation, **en pastilles**.
+ * La navigation, **en icônes posées**.
  *
- * Sur un téléphone, cinq cercles flottent dans une capsule — l'actif est plein,
- * et un triangle le relie à la page. C'est le même geste que la barre d'icônes
- * d'un produit posé, pas une rangée de libellés serrés.
- *
- * Sur un bureau, la colonne garde les mots, mais chaque destination a encore
- * son cercle : on reconnaît l'écran avant de lire.
+ * Plus de pastilles noires ni de triangle : une capsule blanche, un filet gris,
+ * une ombre douce. L'actif s'écrit plus foncé ; le reste reste gris. Importer
+ * est le même bouton clair que « Continuer avec Google » — pas une pilule noire.
  *
  * Les cours ouverts restent dans la barre jusqu'à ce qu'on les ferme.
  */
@@ -81,7 +78,7 @@ export function AppNav() {
           Micabo
         </Link>
 
-        <div className="space-y-1.5">
+        <div className="space-y-0.5">
           {LINKS.map((link) => {
             const current = isCurrent(link.href);
             return (
@@ -90,11 +87,11 @@ export function AppNav() {
                 href={link.href as never}
                 prefetch={link.prefetch}
                 aria-current={current ? "page" : undefined}
-                className="group flex items-center gap-3 rounded-pill py-1 pr-3"
+                className={`group flex items-center gap-3 rounded-[14px] px-3 py-2.5 ${
+                  current ? "bg-white shadow-[0_4px_14px_rgba(15,23,32,0.06)] ring-1 ring-black/[0.06]" : ""
+                }`}
               >
-                <Dot filled={current}>
-                  <Icon name={link.icon} filled={current} />
-                </Dot>
+                <Icon name={link.icon} filled={current} />
                 <span
                   className={`text-[15px] ${
                     current ? "font-semibold text-ink" : "text-ink-secondary group-hover:text-ink"
@@ -118,11 +115,11 @@ export function AppNav() {
                 return (
                   <div
                     key={course.id}
-                    className="group flex items-center gap-1 rounded-pill pr-1"
+                    className="group flex items-center gap-1 rounded-[14px] pr-1"
                   >
                     <Link
                       href={`/app/c/${course.id}` as never}
-                      className="flex min-w-0 flex-1 items-center gap-2.5 px-1 py-2"
+                      className="flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2"
                     >
                       <span aria-hidden className="emoji text-[15px]">
                         {course.emoji}
@@ -152,9 +149,7 @@ export function AppNav() {
 
         <Link
           href="/app/importer"
-          className={`pressable mt-auto flex items-center justify-center gap-2 rounded-pill py-3.5 text-[15px] font-semibold ${
-            importing ? "bg-ink text-on-ink" : "bg-ink text-on-ink"
-          }`}
+          className="pressable mt-auto flex items-center justify-center gap-2 rounded-[16px] bg-white py-3.5 text-[15px] font-semibold text-ink shadow-[0_4px_14px_rgba(15,23,32,0.06)] ring-1 ring-black/[0.08]"
         >
           Importer
         </Link>
@@ -170,7 +165,7 @@ export function AppNav() {
             {open.map((course) => (
               <div
                 key={course.id}
-                className={`flex shrink-0 items-center gap-1.5 rounded-pill bg-surface px-3 py-2 shadow-floating ${
+                className={`flex shrink-0 items-center gap-1.5 rounded-[16px] bg-white px-3 py-2 shadow-[0_6px_18px_rgba(15,23,32,0.08)] ring-1 ring-black/[0.06] ${
                   isOpenCourse(course.id) ? "text-ink" : "text-ink-secondary"
                 }`}
               >
@@ -196,7 +191,7 @@ export function AppNav() {
           </div>
         ) : null}
 
-        <div className="mx-auto flex max-w-[440px] items-end justify-between rounded-[28px] bg-surface px-3 pb-2.5 pt-3 shadow-floating">
+        <div className="mx-auto flex max-w-[440px] items-center justify-between rounded-[22px] bg-white px-1.5 py-2 shadow-[0_8px_28px_rgba(15,23,32,0.10)] ring-1 ring-black/[0.06]">
           {LINKS.map((link) => {
             const current = isCurrent(link.href);
             return (
@@ -206,12 +201,11 @@ export function AppNav() {
                 prefetch={link.prefetch}
                 aria-current={current ? "page" : undefined}
                 aria-label={link.label}
-                className="relative flex flex-1 flex-col items-center gap-1"
+                className="flex flex-1 flex-col items-center gap-1 py-1"
               >
-                {current ? <Caret /> : null}
-                <Dot filled={current} size="lg">
+                <span className={current ? "text-ink" : "text-ink-tertiary"}>
                   <Icon name={link.icon} filled={current} />
-                </Dot>
+                </span>
                 <span
                   className={`text-[10px] ${current ? "font-semibold text-ink" : "text-ink-tertiary"}`}
                 >
@@ -223,12 +217,15 @@ export function AppNav() {
           <Link
             href="/app/importer"
             aria-label="Importer un cours"
-            className="relative flex flex-1 flex-col items-center gap-1"
+            className="flex flex-1 flex-col items-center gap-1 py-1"
           >
-            {importing ? <Caret /> : null}
-            <Dot filled>
-              <Icon name="plus" filled />
-            </Dot>
+            <span
+              className={`flex h-8 w-8 items-center justify-center rounded-[10px] bg-white shadow-[0_2px_8px_rgba(15,23,32,0.06)] ring-1 ring-black/[0.08] ${
+                importing ? "text-ink" : "text-ink-secondary"
+              }`}
+            >
+              <Icon name="plus" filled={importing} />
+            </span>
             <span className={`text-[10px] ${importing ? "font-semibold text-ink" : "text-ink-tertiary"}`}>
               Importer
             </span>
@@ -236,38 +233,6 @@ export function AppNav() {
         </div>
       </nav>
     </>
-  );
-}
-
-function Dot({
-  filled,
-  size = "md",
-  children,
-}: {
-  filled?: boolean;
-  size?: "md" | "lg";
-  children: React.ReactNode;
-}) {
-  return (
-    <span
-      aria-hidden
-      className={`flex shrink-0 items-center justify-center rounded-full transition-colors duration-hover ${
-        size === "lg" ? "h-11 w-11" : "h-10 w-10"
-      } ${filled ? "bg-ink text-on-ink" : "bg-surface-muted text-ink-secondary"}`}
-    >
-      {children}
-    </span>
-  );
-}
-
-/** Le triangle qui ancre l'onglet actif à la page, au-dessus de la capsule. */
-function Caret() {
-  return (
-    <span aria-hidden className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-ink">
-      <svg width="12" height="6" viewBox="0 0 12 6">
-        <path d="M0 6L6 0l6 6" fill="currentColor" />
-      </svg>
-    </span>
   );
 }
 
@@ -279,7 +244,7 @@ function Icon({ name, filled }: { name: string; filled: boolean }) {
       className="h-[18px] w-[18px] shrink-0"
       fill="none"
       stroke="currentColor"
-      strokeWidth={filled ? 1.9 : 1.6}
+      strokeWidth={filled ? 1.9 : 1.55}
       strokeLinecap="round"
       strokeLinejoin="round"
     >

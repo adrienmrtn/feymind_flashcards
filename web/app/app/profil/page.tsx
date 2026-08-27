@@ -99,12 +99,10 @@ export default async function ProfilePage() {
 
   return (
     <div className="profile-page">
-      <div className="profile-glow" aria-hidden />
-
       <header className="relative pt-4 text-center">
         <span
           aria-hidden
-          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-ink text-[24px] font-bold text-on-ink"
+          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white text-[22px] font-semibold text-ink shadow-[0_6px_18px_rgba(15,23,32,0.08)] ring-1 ring-black/[0.06]"
         >
           {name.trim().charAt(0).toUpperCase() || "?"}
         </span>
@@ -161,7 +159,7 @@ export default async function ProfilePage() {
           <span className="text-[15px] font-semibold text-ink">
             <span className="numeral">{due}</span> carte{due > 1 ? "s" : ""} à revoir
           </span>
-          <span className="text-[14px] font-medium text-accent">Réviser</span>
+          <span className="text-[14px] font-medium text-ink">Réviser</span>
         </Link>
       ) : null}
 
@@ -274,11 +272,11 @@ export default async function ProfilePage() {
 function barTone(level: string): string {
   switch (level) {
     case "new":
-      return "bg-ink-tertiary/35";
+      return "bg-ink-tertiary/30";
     case "learning":
-      return "bg-accent";
+      return "bg-ink-tertiary/55";
     case "review":
-      return "bg-caution";
+      return "bg-ink-secondary/70";
     default:
       return "bg-ink";
   }
