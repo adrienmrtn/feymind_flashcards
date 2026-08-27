@@ -5,7 +5,7 @@ import { entitlement } from "@micabo/core";
 
 import { CardList } from "@/components/app/CardList";
 import { GenerateCards } from "@/components/app/GenerateCards";
-import { getCourse, listCards } from "@/lib/data/courses";
+import { getCourseMeta, listCards } from "@/lib/data/courses";
 
 /**
  * Les cartes d'un cours.
@@ -16,7 +16,7 @@ import { getCourse, listCards } from "@/lib/data/courses";
  */
 export default async function CourseCardsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [course, cards] = await Promise.all([getCourse(id), listCards(id)]);
+  const [course, cards] = await Promise.all([getCourseMeta(id), listCards(id)]);
   if (!course) notFound();
 
   return (

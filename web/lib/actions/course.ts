@@ -19,6 +19,7 @@ import {
   type SheetLength,
 } from "@micabo/core";
 
+import { revalidateUserData } from "@/lib/data/cache";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -145,6 +146,7 @@ export async function importFromText(input: {
 
   if (insertError) return { status: "error", message: insertError.message };
 
+  revalidateUserData(user.id, "courses");
   revalidatePath("/app");
   revalidatePath("/app/cours");
   return { status: "ok", courseId: id };
@@ -268,6 +270,7 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
 
   if (insertError) return { status: "error" as const, message: insertError.message };
 
+  revalidateUserData(user.id, "cards");
   revalidatePath(`/app/c/${courseId}/cartes`);
   revalidatePath("/app");
   revalidatePath("/app/cours");

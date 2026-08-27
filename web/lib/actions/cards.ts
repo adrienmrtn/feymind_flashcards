@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { languageFor } from "@micabo/core";
 
+import { revalidateUserData } from "@/lib/data/cache";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -77,6 +78,7 @@ export async function updateCard(input: {
 
   if (error) return { status: "error", message: error.message };
 
+  revalidateUserData(user.id, "cards");
   revalidatePath(`/app/c/${input.courseId}/cartes`);
   return { status: "ok" };
 }
@@ -135,6 +137,7 @@ export async function createCard(input: {
 
   if (error) return { status: "error", message: error.message };
 
+  revalidateUserData(user.id, "cards");
   revalidatePath(`/app/c/${input.courseId}/cartes`);
   revalidatePath("/app");
   revalidatePath("/app/cours");
@@ -203,6 +206,7 @@ export async function createOcclusionCards(input: {
   const { error } = await supabase.from("flashcards").insert(rows);
   if (error) return { status: "error", message: error.message };
 
+  revalidateUserData(user.id, "cards");
   revalidatePath(`/app/c/${input.courseId}/cartes`);
   revalidatePath("/app");
   revalidatePath("/app/cours");
@@ -225,6 +229,7 @@ export async function deleteCard(cardId: string, courseId: string): Promise<Card
 
   if (error) return { status: "error", message: error.message };
 
+  revalidateUserData(user.id, "cards");
   revalidatePath(`/app/c/${courseId}/cartes`);
   revalidatePath("/app");
   revalidatePath("/app/cours");

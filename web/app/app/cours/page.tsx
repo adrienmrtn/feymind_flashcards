@@ -8,7 +8,7 @@ import {
   studyCounts,
 } from "@micabo/core";
 
-import { listAllCards, listCourses } from "@/lib/data/courses";
+import { listCardSnapshots, listCourses } from "@/lib/data/courses";
 
 /**
  * L'étagère : ce qu'on a importé, ce qu'on a produit.
@@ -17,7 +17,7 @@ import { listAllCards, listCourses } from "@/lib/data/courses";
  * ici on vient ranger, rouvrir, importer.
  */
 export default async function CoursesPage() {
-  const [courses, cards] = await Promise.all([listCourses(), listAllCards()]);
+  const [courses, cards] = await Promise.all([listCourses(), listCardSnapshots()]);
 
   const counts = studyCounts(
     cards.map((card) => ({

@@ -13,6 +13,7 @@ import {
 import { Session } from "@/components/app/Session";
 import { listAllCards, listCourses } from "@/lib/data/courses";
 import { readEntitlement } from "@/lib/data/entitlement";
+import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -37,9 +38,7 @@ export default async function ReviewPage({
   const started = params.go === "1";
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await currentUser();
 
   const [allCards, courses, right, profile] = await Promise.all([
     listAllCards(),

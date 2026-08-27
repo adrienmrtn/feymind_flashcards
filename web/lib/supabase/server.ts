@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 
 import { createServerClient } from "@supabase/ssr";
@@ -15,7 +16,7 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
  * ajoutée un jour recasse** : chaque lecture porte son filtre `user_id`, y compris sur une
  * table qui n'a qu'une seule politique.
  */
-export async function createClient() {
+export const createClient = cache(async () => {
   const store = await cookies();
 
   return createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -36,4 +37,4 @@ export async function createClient() {
       },
     },
   });
-}
+});

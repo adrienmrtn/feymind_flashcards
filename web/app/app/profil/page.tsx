@@ -10,7 +10,8 @@ import {
 } from "@micabo/core";
 
 import { ProfileSettings } from "@/components/app/ProfileSettings";
-import { listAllCards, listCourses, listExams } from "@/lib/data/courses";
+import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
+import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -26,11 +27,9 @@ import { createClient } from "@/lib/supabase/server";
  */
 export default async function ProfilePage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await currentUser();
 
-  const [profile, courses, cards, exams] = await Promise.all([
+  const [profile, courses, cards, exams, reviews] = await Promise.all([
     user
       ? supabase
           .from("profiles")
@@ -42,16 +41,16 @@ export default async function ProfilePage() {
           .then((result) => result.data)
       : null,
     listCourses(),
-    listAllCards(),
+    listCardSnapshots(),
     listExams(),
+    user
+      ? supabase
+          .from("review_logs")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .then((result) => result.count)
+      : Promise.resolve(0),
   ]);
-
-  const { count: reviews } = user
-    ? await supabase
-        .from("review_logs")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
-    : { count: 0 };
 
   const country = countryFor(profile?.country_code);
   const stage = resolveStage(country.code, { level: profile?.study_level ?? null });

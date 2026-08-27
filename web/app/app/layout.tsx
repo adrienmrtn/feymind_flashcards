@@ -2,11 +2,10 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
-
 import { AppNav } from "@/components/app/AppNav";
 import { PaywallHost } from "@/components/app/PaywallFlow";
 import { readEntitlement } from "@/lib/data/entitlement";
+import { currentUser } from "@/lib/data/user";
 
 /**
  * La charpente de l'app web : **une barre latérale, pas trois onglets.**
@@ -21,14 +20,8 @@ import { readEntitlement } from "@/lib/data/entitlement";
  * aurait montrée.
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await currentUser();
   if (!user) redirect("/commencer/compte?suite=%2Fapp");
-
-  const right = await readEntitlement();
 
   return (
     <div className="min-h-svh bg-canvas lg:flex">
@@ -39,10 +32,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </main>
 
       <Suspense fallback={null}>
-        <PaywallHost isPro={right.isPro} />
+        <PaywallGate />
       </Suspense>
     </div>
   );
+}
+
+async function PaywallGate() {
+  const right = await readEntitlement();
+  return <PaywallHost isPro={right.isPro} />;
 }
 
 /** Le pied de page de l'app, pour les liens qui n'ont pas leur place dans la navigation. */

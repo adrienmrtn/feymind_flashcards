@@ -22,15 +22,17 @@ import { readEntitlement } from "@/lib/data/entitlement";
  */
 export default async function CourseSheetPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const course = await getCourse(id);
+  const [course, cards, right] = await Promise.all([
+    getCourse(id),
+    listCards(id),
+    readEntitlement(),
+  ]);
   if (!course) notFound();
 
-  const cards = await listCards(id);
   const tint = course.accent_hex ?? courseAccent(course.id);
 
   // Le droit est **lu en base**, par la seule fonction qui le lit. Un achat fait sur l'iPhone
   // referme donc le gratuit ici dans la seconde.
-  const right = await readEntitlement();
   const { readable, locked } = entitlement.splitSheet(course.blocks, right);
 
   return (
