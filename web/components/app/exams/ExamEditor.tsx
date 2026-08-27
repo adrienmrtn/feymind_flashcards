@@ -15,6 +15,8 @@ import {
   type ExamIntensity,
 } from "@micabo/core";
 
+import { ThinkingOrb } from "thinking-orbs";
+
 import { ChoiceRow } from "@/components/onboarding/Scaffold";
 import { deleteExam, saveExam } from "@/lib/actions/exams";
 
@@ -181,9 +183,9 @@ export function ExamEditor({
         role="dialog"
         aria-modal="true"
         aria-labelledby="exam-onboarding-title"
-        className="relative flex max-h-[min(760px,92svh)] w-full max-w-[440px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-floating"
+        className="relative flex max-h-[min(760px,92svh)] w-full max-w-[560px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-floating"
       >
-        <div className="flex items-center justify-between px-5 pt-4">
+        <div className="flex items-center justify-between px-6 pt-4 sm:px-7">
           <div className="flex items-center gap-1.5" aria-hidden>
             {STEPS.map((item, position) => (
               <span
@@ -216,7 +218,7 @@ export function ExamEditor({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 pt-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 pt-4 sm:px-7">
           <div key={step} className="rise">
             {step === "jour" ? (
               <DayStep
@@ -250,22 +252,33 @@ export function ExamEditor({
           ) : null}
         </div>
 
-        <div className="px-6 pb-6 pt-3">
+        <div className="px-6 pb-6 pt-3 sm:px-7">
           <button
             type="button"
             onClick={goNext}
             disabled={busy || !canContinue}
             className={`pressable flex h-14 w-full items-center justify-center gap-2 rounded-button text-[16px] font-semibold transition-colors duration-hover ${
-              canContinue && !busy
-                ? "shiny bg-ink text-on-ink"
-                : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
+              busy
+                ? "bg-ink text-on-ink"
+                : canContinue
+                  ? "shiny bg-ink text-on-ink"
+                  : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
             }`}
           >
-            {step === "intensite"
-              ? exam
-                ? "Replanifier"
-                : "Planifier l'examen"
-              : "Continuer"}
+            {busy && step === "intensite" ? (
+              <>
+                <ThinkingOrb state="connecting" size={20} theme="dark" />
+                Un instant
+              </>
+            ) : step === "intensite" ? (
+              exam ? (
+                "Replanifier"
+              ) : (
+                "Planifier l'examen"
+              )
+            ) : (
+              "Continuer"
+            )}
           </button>
           {index > 0 ? (
             <button
