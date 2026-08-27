@@ -1,6 +1,6 @@
 import { CourseTransformation } from "./CourseTransformation";
 import { HeroAura } from "./HeroAura";
-import { StartGlow } from "./StartGlow";
+import { StartButton } from "./StartButton";
 
 /**
  * L'accroche : une phrase, puis le trajet entier du document.
@@ -53,7 +53,7 @@ export function Hero() {
           className="rise mt-9 flex flex-col items-center gap-3"
           style={{ animationDelay: "180ms" }}
         >
-          <StartGlow />
+          <StartButton />
           <p className="text-[13px] text-ink-tertiary">Un cours gratuit. Sans carte bancaire.</p>
         </div>
       </div>
