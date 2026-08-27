@@ -129,7 +129,44 @@ export interface VideoMetadata {
 
 /** Clé publique du client web, celle qu'utilise la page youtube.com elle-même. */
 const INNERTUBE_KEY = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
-const CLIENT_VERSION = "2.20240726.00.00";
+
+/**
+ * Le client WEB exige désormais un jeton d'origine (PO / BotGuard). Depuis un
+ * serveur, la réponse est `UNPLAYABLE` et **sans pistes**. iOS et Android, eux,
+ * rendent encore les sous-titres. On les essaie dans cet ordre, puis la page.
+ */
+interface InnerTubeClient {
+  headers: Record<string, string>;
+  context: Record<string, unknown>;
+}
+
+const IOS_CLIENT: InnerTubeClient = {
+  headers: {
+    "User-Agent":
+      "com.google.ios.youtube/20.10.38 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)",
+    "X-YouTube-Client-Name": "5",
+    "X-YouTube-Client-Version": "20.10.38",
+  },
+  context: {
+    clientName: "IOS",
+    clientVersion: "20.10.38",
+    deviceMake: "Apple",
+    deviceModel: "iPhone16,2",
+    osName: "iPhone",
+    osVersion: "18.3.2.22D82",
+  },
+};
+
+const ANDROID_CLIENT: InnerTubeClient = {
+  headers: {
+    "User-Agent": "com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip",
+  },
+  context: {
+    clientName: "ANDROID",
+    clientVersion: "20.10.38",
+    androidSdkVersion: 34,
+  },
+};
 
 const BROWSER_HEADERS: Record<string, string> = {
   "User-Agent":
@@ -141,28 +178,16 @@ const BROWSER_HEADERS: Record<string, string> = {
 /**
  * Les métadonnées et les pistes de sous-titres d'une vidéo.
  *
- * Deux chemins, dans cet ordre : l'API interne du lecteur, qui rend directement du JSON,
- * puis la page HTML, dont on extrait le même objet. Le second sert quand le premier change
- * de forme, ce qui arrive.
+ * iOS d'abord, Android ensuite, la page HTML en dernier. Un client qui répond
+ * `UNPLAYABLE` ou `LOGIN_REQUIRED` n'est pas une réponse : on passe au suivant.
+ * Sans ce garde, le client WEB — encore le premier jusqu'ici — faisait échouer
+ * **toutes** les vidéos alors que iOS les ouvrait.
  */
 export async function fetchVideoMetadata(videoId: string, language: string): Promise<VideoMetadata> {
-  // Un premier chemin qui répond sans rien dire de la vidéo n'est pas une réponse : on
-  // passe au second. Sans ce garde, un changement de forme de l'API interne ferait échouer
-  // toutes les vidéos alors que la page HTML, elle, répond encore.
-  const player = usable(await fetchFromInnerTube(videoId, language)) ??
-    usable(await fetchFromWatchPage(videoId, language));
-
-  if (!player) {
-    throw new YouTubeError("unavailable", "La page de la vidéo n'a pas pu être lue.");
-  }
-
-  const status = asRecord(player.playabilityStatus);
-  const state = typeof status?.status === "string" ? status.status : "OK";
+  const player = await fetchPlayer(videoId, language);
   const details = asRecord(player.videoDetails);
-
-  if (state !== "OK" || !details) {
-    const reason = typeof status?.reason === "string" ? status.reason : state;
-    throw new YouTubeError("unavailable", `Vidéo inaccessible (${reason}).`);
+  if (!details) {
+    throw new YouTubeError("unavailable", "La page de la vidéo n'a pas pu être lue.");
   }
 
   return {
@@ -175,29 +200,66 @@ export async function fetchVideoMetadata(videoId: string, language: string): Pro
   };
 }
 
-/** Une réponse du lecteur n'est exploitable que si elle décrit la vidéo. */
+async function fetchPlayer(videoId: string, language: string): Promise<Record<string, unknown>> {
+  const attempts = [
+    () => fetchFromInnerTube(videoId, language, IOS_CLIENT),
+    () => fetchFromInnerTube(videoId, language, ANDROID_CLIENT),
+    () => fetchFromWatchPage(videoId, language),
+  ];
+
+  let blocked = false;
+
+  for (const attempt of attempts) {
+    const player = await attempt();
+    if (!player) continue;
+
+    const state = playability(player);
+    if (state === "LOGIN_REQUIRED") {
+      blocked = true;
+      continue;
+    }
+    if (usable(player)) return player;
+  }
+
+  if (blocked) {
+    throw new YouTubeError(
+      "unavailable",
+      "YouTube a refusé la lecture (contrôle anti-robot). Réessaie dans un instant.",
+    );
+  }
+
+  throw new YouTubeError("unavailable", "La page de la vidéo n'a pas pu être lue.");
+}
+
+function playability(player: Record<string, unknown>): string {
+  const status = asRecord(player.playabilityStatus);
+  return typeof status?.status === "string" ? status.status : "OK";
+}
+
+/** Une réponse n'est exploitable que si le lecteur **joue** et décrit la vidéo. */
 function usable(player: Record<string, unknown> | null): Record<string, unknown> | null {
-  return asRecord(player?.videoDetails) ? player : null;
+  if (!player || !asRecord(player.videoDetails)) return null;
+  return playability(player) === "OK" ? player : null;
 }
 
 async function fetchFromInnerTube(
   videoId: string,
   language: string,
+  client: InnerTubeClient,
 ): Promise<Record<string, unknown> | null> {
   try {
     const response = await fetch(
       `https://www.youtube.com/youtubei/v1/player?key=${INNERTUBE_KEY}&prettyPrint=false`,
       {
         method: "POST",
-        headers: { ...BROWSER_HEADERS, "Content-Type": "application/json" },
+        headers: { ...client.headers, "Content-Type": "application/json" },
         body: JSON.stringify({
           videoId,
           contentCheckOk: true,
           racyCheckOk: true,
           context: {
             client: {
-              clientName: "WEB",
-              clientVersion: CLIENT_VERSION,
+              ...client.context,
               hl: language,
               gl: "FR",
             },
@@ -401,17 +463,38 @@ export async function fetchTranscript(track: CaptionTrack): Promise<Transcript> 
   };
 }
 
-function withFormat(baseUrl: string, format: string): string {
-  const separator = baseUrl.includes("?") ? "&" : "?";
-  return `${baseUrl}${separator}fmt=${format}`;
+/**
+ * Ajoute `fmt` **à la place** de celui déjà présent.
+ *
+ * Les URL iOS / Android portent déjà `fmt=srv3`. En ajouter un second laisse
+ * YouTube lire le premier : on reçoit du XML alors qu'on a demandé du JSON.
+ */
+export function withCaptionFormat(baseUrl: string, format: string): string {
+  try {
+    const url = new URL(baseUrl);
+    url.searchParams.delete("fmt");
+    url.searchParams.set("fmt", format);
+    return url.toString();
+  } catch {
+    const stripped = baseUrl.replace(/([?&])fmt=[^&]*/g, "$1").replace(/[?&]$/, "");
+    const separator = stripped.includes("?") ? "&" : "?";
+    return `${stripped}${separator}fmt=${format}`;
+  }
 }
+
+const CAPTION_HEADERS: Record<string, string> = {
+  "User-Agent": IOS_CLIENT.headers["User-Agent"],
+};
 
 async function fetchJson3(baseUrl: string): Promise<string | null> {
   try {
-    const response = await fetch(withFormat(baseUrl, "json3"), { headers: BROWSER_HEADERS });
+    const response = await fetch(withCaptionFormat(baseUrl, "json3"), { headers: CAPTION_HEADERS });
     if (!response.ok) return null;
 
-    const parsed = asRecord(await response.json());
+    const raw = await response.text();
+    if (!raw.trim().startsWith("{")) return null;
+
+    const parsed = asRecord(JSON.parse(raw));
     const events = Array.isArray(parsed?.events) ? parsed.events : [];
     const lines: string[] = [];
 
@@ -442,18 +525,30 @@ async function fetchJson3(baseUrl: string): Promise<string | null> {
 
 async function fetchXml(baseUrl: string): Promise<string | null> {
   try {
-    const response = await fetch(baseUrl, { headers: BROWSER_HEADERS });
-    if (!response.ok) return null;
-
-    const xml = await response.text();
-    const lines = [...xml.matchAll(/<text[^>]*>([\s\S]*?)<\/text>/g)]
-      .map((match) => decodeEntities(match[1]).replace(/\s+/g, " ").trim())
-      .filter((line) => line.length > 0);
-
-    return cleanTranscript(lines);
+    // Sans `fmt` : le XML historique (`<text>`). Avec `srv3` : le format actuel (`<p>`).
+    for (const url of [baseUrl, withCaptionFormat(baseUrl, "srv3")]) {
+      const response = await fetch(url, { headers: CAPTION_HEADERS });
+      if (!response.ok) continue;
+      const xml = await response.text();
+      const lines = parseCaptionXml(xml);
+      if (lines.length > 0) return cleanTranscript(lines);
+    }
+    return null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Les deux XML que YouTube sert encore : `<text>` (srv1) et `<p>` (srv3).
+ * Les `<s>` imbriqués du défilement automatique sont aplatis.
+ */
+export function parseCaptionXml(xml: string): string[] {
+  return [...xml.matchAll(/<(?:text|p)\b[^>]*>([\s\S]*?)<\/(?:text|p)>/g)]
+    .map((match) =>
+      decodeEntities(match[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim()
+    )
+    .filter((line) => line.length > 0);
 }
 
 /**
