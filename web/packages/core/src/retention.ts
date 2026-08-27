@@ -2,8 +2,8 @@
  * Les deux courbes de mémorisation, portées depuis `RetentionChartStepView.swift`.
  *
  * La rétention décroît de façon exponentielle et remonte à 100 % à chaque révision, avec une
- * stabilité qui augmente à chaque passage. Les deux tracés **partent confondus** — la première
- * stabilité est identique à celle de la courbe sans révision — puis divergent à la première
+ * stabilité qui augmente à chaque passage. Les deux tracés **partent confondus** - la première
+ * stabilité est identique à celle de la courbe sans révision - puis divergent à la première
  * révision. C'est ce qui rend le graphe lisible en trois secondes : on ne compare pas deux
  * courbes, on regarde l'endroit où elles se séparent.
  *

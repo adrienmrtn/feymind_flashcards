@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
  *
  * `IntersectionObserver` et pas un calcul de défilement : le navigateur sait déjà répondre à
  * « est-ce visible », et le lui redemander soixante fois par seconde coûte une mise en page à
- * chaque image. L'observation s'arrête au premier passage — une section qui rejoue son entrée
+ * chaque image. L'observation s'arrête au premier passage - une section qui rejoue son entrée
  * chaque fois qu'on remonte donne une page qui clignote.
  */
 export function Reveal({

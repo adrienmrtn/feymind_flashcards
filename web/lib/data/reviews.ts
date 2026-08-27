@@ -66,7 +66,7 @@ export async function loadNewCardBudget(): Promise<{
 }
 
 /**
- * Les dates de révision depuis un jour donné — pour la flamme du calendrier.
+ * Les dates de révision depuis un jour donné - pour la flamme du calendrier.
  *
  * Pas de cache : une session qui vient de se terminer doit allumer le jour
  * tout de suite, pas au prochain rechargement froid.

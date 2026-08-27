@@ -7,7 +7,7 @@ import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
  * Les examens, **sur un calendrier.**
  *
  * Cliquer un jour ouvre la feuille : nom, cours, curseur d'intensité. C'est le même geste
- * qu'iOS — une date, les cours de l'épreuve, un palier — sauf que le palier est un curseur
+ * qu'iOS - une date, les cours de l'épreuve, un palier - sauf que le palier est un curseur
  * avec un emoji qui change, parce que trois pastilles se lisent moins bien à la souris.
  */
 export default async function ExamsPage() {

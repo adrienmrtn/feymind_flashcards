@@ -7,7 +7,7 @@
  *
  * L'annuel a **deux tarifs**, et un seul est affiché à la fois : le plein (83,88 €, ramené à
  * 6,99 € / mois, avec essai) et l'étudiant (59,99 €, ramené à 4,99 € / mois, sans essai). La case
- * « je suis étudiant » permute l'un pour l'autre — ce n'est pas une troisième colonne.
+ * « je suis étudiant » permute l'un pour l'autre - ce n'est pas une troisième colonne.
  *
  * Le point qui compte pour le site : **le pourcentage d'économie est calculé, jamais écrit.**
  * Une remise annoncée à côté de deux prix qui la contredisent est une allégation commerciale
@@ -121,7 +121,7 @@ export function savingsPercent(
  *
  * L'espace avant l'euro est **insécable**, parce que la typographie française l'exige : un prix
  * ne se coupe pas en fin de ligne entre le nombre et son symbole. Elle est ramenée à U+00A0 de
- * force, et ce n'est pas de la coquetterie — selon la version d'ICU, `Intl` rend tantôt U+00A0
+ * force, et ce n'est pas de la coquetterie - selon la version d'ICU, `Intl` rend tantôt U+00A0
  * tantôt U+202F, et un prix qui ne s'espace pas pareil en développement et en production est
  * une différence qu'on finit par chercher longtemps.
  */

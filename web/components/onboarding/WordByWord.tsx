@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from "react";
  * La première version sortait tout de suite quand `prefers-reduced-motion` était demandé, en
  * posant tous les mots d'un coup. C'était mal raisonné : ce réglage protège du **mouvement**, et
  * un mot qui change de couleur et de graisse ne se déplace pas d'un pixel. La règle est de réduire,
- * pas d'annuler — on garde ce qui aide à comprendre, on retire les déplacements. Le dévoilement
+ * pas d'annuler - on garde ce qui aide à comprendre, on retire les déplacements. Le dévoilement
  * reste donc, et il se contente d'aller plus vite.
  *
  * La seconde : cette branche-là était **invisible depuis l'extérieur**. Trois vidéos image par
@@ -39,7 +39,7 @@ export function WordByWord({
 
   useEffect(() => {
     const parts = text.split(" ");
-    // Sous mouvement réduit, la phrase se pose vite — mais elle se pose quand même.
+    // Sous mouvement réduit, la phrase se pose vite - mais elle se pose quand même.
     const quick = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const lead = quick ? 60 : 300;
     const pace = (word: string) =>

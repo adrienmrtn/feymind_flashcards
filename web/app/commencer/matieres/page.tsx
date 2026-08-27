@@ -11,7 +11,7 @@ import { useOnboarding } from "@/lib/onboarding/store";
  *
  * L'emoji vient de la **même table que les cours importés** : une seconde liste tenue en parallèle
  * finirait par donner à une matière un emoji que ses cours n'ont pas. Et aucune matière ne partage
- * l'emoji d'une autre — un test du noyau le verrouille, parce que sur une cinquantaine de pastilles
+ * l'emoji d'une autre - un test du noyau le verrouille, parce que sur une cinquantaine de pastilles
  * un emoji répété fait relire les libellés un par un, ce qui est le travail qu'il devait éviter.
  *
  * Plusieurs réponses, et au moins une : on ne construit rien avec zéro matière, et personne n'en
@@ -74,7 +74,7 @@ export default function SubjectsStep() {
 
 /**
  * Un drapeau **dessiné** pour une langue vivante. L'emoji seul s'y lisait « ES » sur
- * les machines sans glyphes régionaux — c'est exactement ce qui manquait sur cet écran.
+ * les machines sans glyphes régionaux - c'est exactement ce qui manquait sur cet écran.
  */
 function SubjectMark({ subject }: { subject: string }) {
   const emoji = subjectEmoji(subject);

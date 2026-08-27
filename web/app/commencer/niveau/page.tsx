@@ -13,7 +13,7 @@ import { useOnboarding } from "@/lib/onboarding/store";
  *
  * Et si l'étudiant revient en arrière pour changer de pays, **la réponse est retrouvée plutôt que
  * redemandée** : un lycéen français devient high schooler américain. Quand aucun équivalent
- * n'existe — la santé, les concours — la question se repose, parce qu'inventer une réponse à sa
+ * n'existe - la santé, les concours - la question se repose, parce qu'inventer une réponse à sa
  * place serait pire.
  */
 export default function LevelStep() {

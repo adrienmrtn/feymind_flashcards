@@ -6,8 +6,8 @@
  * avant d'être acquise. Le plafond de nouvelles cartes par jour est donc le nombre de cartes
  * qu'on peut *introduire* sans faire déborder les sessions des jours suivants.
  *
- * Le parcours d'accueil du web ne demande pas ce réglage — la date d'examen est une meilleure
- * question que « combien de minutes par jour » — donc un compte né sur le web arrive avec le
+ * Le parcours d'accueil du web ne demande pas ce réglage - la date d'examen est une meilleure
+ * question que « combien de minutes par jour » - donc un compte né sur le web arrive avec le
  * défaut de 15 minutes, corrigeable dans les réglages. C'est déjà le défaut de l'app.
  */
 

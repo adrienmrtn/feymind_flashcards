@@ -6,7 +6,7 @@
  * garde ses notes de psychanalyse pour lui. Un réglage global l'obligerait à choisir entre tout
  * ouvrir et tout fermer, c'est-à-dire à tout fermer.
  *
- * Le défaut est `public`, comme dans l'app et comme dans la base — mais le choix se fait **à
+ * Le défaut est `public`, comme dans l'app et comme dans la base - mais le choix se fait **à
  * l'import**, jamais après : un cours qui part public le temps qu'on y pense est un cours qui a
  * été visible.
  */

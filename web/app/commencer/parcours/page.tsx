@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ThinkingOrb } from "thinking-orbs";
 
 import { persistStoredAnswers } from "@/lib/onboarding/persist";
 import { useOnboarding } from "@/lib/onboarding/store";
@@ -16,7 +15,7 @@ import { createClient } from "@/lib/supabase/client";
  * seconde n'a rien construit. Quatre phases, cinq secondes, un anneau qui fait son tour,
  * et c'est l'étudiant qui appuie pour continuer.
  *
- * S'il a déjà une session, le bouton ouvre l'app — le compte est derrière lui.
+ * S'il a déjà une session, le bouton ouvre l'app - le compte est derrière lui.
  */
 
 const DURATION_MS = 5000;
@@ -59,15 +58,13 @@ export default function PersonalizingStep() {
   }, []);
 
   useEffect(() => {
-    const started = performance.now();
-    let frame = 0;
-    const tick = (now: number) => {
-      const next = Math.min(DURATION_MS, now - started);
+    const started = Date.now();
+    const id = window.setInterval(() => {
+      const next = Math.min(DURATION_MS, Date.now() - started);
       setElapsed(next);
-      if (next < DURATION_MS) frame = window.requestAnimationFrame(tick);
-    };
-    frame = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(frame);
+      if (next >= DURATION_MS) window.clearInterval(id);
+    }, 40);
+    return () => window.clearInterval(id);
   }, []);
 
   const progress = elapsed / DURATION_MS;
@@ -112,38 +109,38 @@ export default function PersonalizingStep() {
 
       <div className="flex flex-1 flex-col items-center justify-center py-8">
         <div className="relative flex h-[184px] w-[184px] items-center justify-center">
-          <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full -rotate-90">
+          <svg
+            viewBox="0 0 120 120"
+            className="absolute inset-0 h-full w-full -rotate-90"
+            aria-hidden
+          >
             <circle
               cx="60"
               cy="60"
               r="52"
               fill="none"
-              stroke="currentColor"
+              stroke="var(--color-accent)"
               strokeWidth="8"
-              className="text-accent/15"
+              opacity={0.16}
             />
             <circle
               cx="60"
               cy="60"
               r="52"
               fill="none"
-              stroke="currentColor"
+              stroke="var(--color-accent)"
               strokeWidth="8"
               strokeLinecap="round"
-              className="text-accent transition-[stroke-dashoffset] duration-100"
-              strokeDasharray={2 * Math.PI * 52}
-              strokeDashoffset={2 * Math.PI * 52 * (1 - Math.max(0.008, progress))}
+              pathLength={100}
+              strokeDasharray={100}
+              strokeDashoffset={100 - Math.max(0.8, progress * 100)}
             />
           </svg>
           <div className="relative flex flex-col items-center">
-            {isDone ? (
-              <p className="numeral text-[44px] font-bold leading-none tracking-display text-ink">
-                100
-                <span className="text-[22px]"> %</span>
-              </p>
-            ) : (
-              <ThinkingOrb state="composing" size={64} />
-            )}
+            <p className="numeral text-[44px] font-bold leading-none tracking-display text-ink">
+              {Math.round(progress * 100)}
+              <span className="text-[22px]"> %</span>
+            </p>
             <p className="mt-2 text-[12px] font-medium text-ink-secondary">
               {isDone ? "Terminé" : "Micabo travaille"}
             </p>

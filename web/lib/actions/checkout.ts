@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * L'encaissement, **et il n'est pas branché.**
  *
- * Ce fichier existe pour que le point de raccordement soit écrit, nommé et **fermé par défaut** —
+ * Ce fichier existe pour que le point de raccordement soit écrit, nommé et **fermé par défaut**  - 
  * pas pour prétendre que le paiement marche. Il n'y a pas de clé Stripe, donc il n'y a pas de
  * paiement, et tout ce qui suit le dit franchement plutôt que d'échouer à mi-chemin.
  *
@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/server";
  * **Stripe encaisse, RevenueCat détient le droit.** Le paiement ne met jamais à jour
  * `entitlements` directement : il crée un abonnement Stripe, RevenueCat le voit, et c'est **son
  * webhook** qui écrit. Une seule plume sur cette table, sinon deux sources finissent par ne pas
- * être d'accord sur qui paye — et c'est la panne dont personne ne se remet.
+ * être d'accord sur qui paye - et c'est la panne dont personne ne se remet.
  *
  * Corollaire : `client_reference_id` porte l'`auth.users.id`, comme `app_user_id` chez RevenueCat.
  * C'est la même règle que partout, et c'est elle qui fait qu'un achat sur le web s'ouvre sur
@@ -147,7 +147,7 @@ export async function manageSubscription(): Promise<CheckoutResult> {
   if (!key) return { status: "unavailable", message: "Le portail n'est pas encore branché." };
 
   // Le portail de facturation de Stripe demande l'identifiant du client, que RevenueCat garde.
-  // Il se lira dans `entitlements` le jour où le webhook le transportera — il n'y a rien à
+  // Il se lira dans `entitlements` le jour où le webhook le transportera - il n'y a rien à
   // inventer ici en attendant.
   return { status: "unavailable", message: "Le portail arrive avec le branchement de Stripe." };
 }

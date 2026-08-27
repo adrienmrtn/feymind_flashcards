@@ -8,7 +8,7 @@ import { signOut } from "@/lib/actions/profile";
  * Quitter la session, sans toucher au compte.
  *
  * La suppression est plus bas, et elle demande d'écrire un mot. Se déconnecter, c'est
- * l'inverse : un appui, et c'est un autre appareil — le même compte, plus cette session.
+ * l'inverse : un appui, et c'est un autre appareil - le même compte, plus cette session.
  */
 export function SignOutButton({ compact = false }: { compact?: boolean }) {
   const [pending, startTransition] = useTransition();

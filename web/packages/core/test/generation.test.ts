@@ -42,7 +42,7 @@ describe("le quota par format", () => {
 
   it("borne chaque format avant de regarder le total", () => {
     // L'ordre compte, et c'est celui de l'app : 40 recto verso deviennent 20, ce qui ramène le
-    // total à 24 — sous le plafond. Rien de plus n'est rogné.
+    // total à 24 - sous le plafond. Rien de plus n'est rogné.
     expect(clampQuota({ basic: 40, cloze: 2, choice: 2 })).toEqual({
       basic: PER_FORMAT_RANGE.max,
       cloze: 2,

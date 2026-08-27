@@ -13,7 +13,7 @@ import { readEntitlement } from "@/lib/data/entitlement";
 /**
  * **La fiche : l'écran du cours.**
  *
- * Le seul endroit du produit où l'on lit vraiment — les autres écrans sont des listes. Elle a donc
+ * Le seul endroit du produit où l'on lit vraiment - les autres écrans sont des listes. Elle a donc
  * droit à sa colonne de lecture et à rien d'autre : le texte posé à même le papier, les objets dans
  * des blocs, et l'en-tête qui porte la couleur du cours dans sa tuile plutôt que dans un bandeau.
  *
@@ -126,7 +126,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
       {course.blocks.length === 0 ? (
         <p className="mt-8 rounded-group bg-caution-soft px-5 py-4 text-[14px] text-ink-reading">
           Ce cours n&apos;a pas de fiche lisible. Il a peut-être été importé avant qu&apos;elle
-          puisse être écrite — le texte d&apos;origine est conservé, donc elle peut être refaite.
+          puisse être écrite - le texte d&apos;origine est conservé, donc elle peut être refaite.
         </p>
       ) : null}
     </article>
@@ -156,7 +156,7 @@ function LockedTail({ count }: { count: number }) {
       </span>
       <p className="mt-3.5 text-[16.5px] font-bold text-ink">La suite de la fiche est dans Pro</p>
       <p className="mx-auto mt-1.5 max-w-[38ch] text-[13px] leading-relaxed text-ink-secondary">
-        Il te reste {percent} % de ce cours à lire — {count} bloc{count > 1 ? "s" : ""} — et tous
+        Il te reste {percent} % de ce cours à lire - {count} bloc{count > 1 ? "s" : ""} - et tous
         les suivants à importer.
       </p>
     </div>

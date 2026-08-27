@@ -83,7 +83,7 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
           <strong className="font-semibold text-ink">Un cours entier à importer</strong>, dont tu
           lis les {Math.round(entitlement.FREE_TIER.readableSheetRatio * 100)} % de la fiche, et{" "}
           {entitlement.FREE_TIER.cardsPerSession} cartes par session. De quoi voir Micabo tourner
-          sur ton propre cours avant de décider quoi que ce soit — ce qui est le seul essai qui
+          sur ton propre cours avant de décider quoi que ce soit - ce qui est le seul essai qui
           veuille dire quelque chose.
         </p>
       </div>

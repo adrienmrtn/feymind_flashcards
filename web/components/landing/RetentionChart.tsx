@@ -11,7 +11,7 @@ import {
  *
  * **C'est la seule section de pédagogie du site**, et c'est déjà la règle de l'app : l'écran qui
  * reprenait ensuite les mêmes intervalles en liste disait une deuxième fois ce que le graphe
- * montre. Elle doit se lire en trois secondes — un titre qui annonce ce qu'on regarde, les
+ * montre. Elle doit se lire en trois secondes - un titre qui annonce ce qu'on regarde, les
  * intervalles réels étiquetés, et deux lignes de légende. Aucun paragraphe.
  *
  * Les deux tracés **partent confondus** et se séparent à la première révision : c'est l'endroit
@@ -33,7 +33,7 @@ export function RetentionChart() {
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="h-auto w-full"
         role="img"
-        aria-label={`Deux courbes de mémorisation sur ${HORIZON_DAYS} jours. Sans révision, ce qu'on retient tombe à presque rien en un mois. Avec Micabo, chaque révision — à ${REVIEW_DAYS.join(", ")} jours — la ramène à cent pour cent, et elle redescend de plus en plus lentement.`}
+        aria-label={`Deux courbes de mémorisation sur ${HORIZON_DAYS} jours. Sans révision, ce qu'on retient tombe à presque rien en un mois. Avec Micabo, chaque révision - à ${REVIEW_DAYS.join(", ")} jours - la ramène à cent pour cent, et elle redescend de plus en plus lentement.`}
       >
         {/* Les repères de révision, posés avant les courbes pour passer dessous. */}
         {REVIEW_DAYS.map((day) => (
@@ -88,7 +88,7 @@ export function RetentionChart() {
       <figcaption className="mt-6 space-y-2 text-[13.5px]">
         <Legend
           color="var(--color-accent)"
-          label="Avec Micabo, chaque rappel remet à zéro — et la descente est plus lente à chaque fois."
+          label="Avec Micabo, chaque rappel remet à zéro - et la descente est plus lente à chaque fois."
         />
         <Legend
           color="var(--color-ink-tertiary)"

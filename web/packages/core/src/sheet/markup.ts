@@ -13,7 +13,7 @@
  * **Ce module sert au rendu, et à rien d'autre.** Pour obtenir le texte sans ses marques,
  * c'est `stripInlineMarkup` du module canonique qu'il faut appeler : c'est lui qui a produit
  * le `context_text` enregistré en base, et deux façons de mettre une fiche à plat finiraient
- * par se contredire. Ici, un fragment de formule garde donc son LaTeX **brut** — c'est le
+ * par se contredire. Ici, un fragment de formule garde donc son LaTeX **brut** - c'est le
  * moteur de rendu qui s'en occupe, pas le parseur.
  *
  * Un délimiteur seul ne casse rien : sans fermeture, il reste un caractère comme un autre, ce

@@ -14,7 +14,7 @@ import {
  * Le bilan d'une session : des graphes, des chiffres qui montent, des emojis.
  *
  * Pas un paragraphe de félicitations. On vient de noter des cartes : on relit
- * le geste — la courbe des notes, la part de chacune, ce que ça a produit.
+ * le geste - la courbe des notes, la part de chacune, ce que ça a produit.
  */
 
 export interface SessionTally {

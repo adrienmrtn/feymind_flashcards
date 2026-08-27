@@ -34,7 +34,7 @@ export default async function FriendsPage() {
         schoolmates.length === 0 ? (
           <p className="text-[14.5px] leading-relaxed text-ink-secondary">
             Personne pour l&apos;instant. Cherche un nom d&apos;utilisateur pour ajouter
-            quelqu&apos;un — c&apos;est le même @ que sur l&apos;iPhone.
+            quelqu&apos;un - c&apos;est le même @ que sur l&apos;iPhone.
           </p>
         ) : null}
 

@@ -1,7 +1,7 @@
 /**
  * La pastille d'examen, **sur la carte**.
  *
- * Elle ne dit qu'une chose : cet examen-là comprime le planning de la carte. Rien de plus —
+ * Elle ne dit qu'une chose : cet examen-là comprime le planning de la carte. Rien de plus  - 
  * pas d'icône, pas de compte à rebours en grand, pas de bandeau. Le nom suffit, et le fond
  * ocre reste assez pâle pour qu'on le lise sans qu'il prenne la carte.
  */

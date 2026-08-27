@@ -8,7 +8,7 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
  *
  * Une navigation interne est un nouveau lambda : sans cache, chaque clic refait auth +
  * Postgres. Les écritures posent un tag, donc une carte notée ou un cours importé
- * n'attendent pas l'expiration. La file de révision, elle, n'entre pas ici — ses
+ * n'attendent pas l'expiration. La file de révision, elle, n'entre pas ici - ses
  * échéances bougent à chaque note.
  */
 

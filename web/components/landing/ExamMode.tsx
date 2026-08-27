@@ -79,7 +79,7 @@ export function ExamMode() {
 
       <p className="mt-6 text-[13px] leading-relaxed text-ink-tertiary">
         Et pendant que l&apos;examen approche, <strong className="font-semibold text-ink-secondary">
-        aucune carte ne repart au-delà du jour J</strong> — sans ce plafond, la première bonne
+        aucune carte ne repart au-delà du jour J</strong> - sans ce plafond, la première bonne
         réponse renverrait la carte à trois semaines et le plan serait défait au premier passage.
       </p>
     </div>

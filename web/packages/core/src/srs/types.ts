@@ -14,7 +14,7 @@ export type CardState = "new" | "learning" | "review" | "relearning";
  *
  * La valeur numérique n'est pas décorative : c'est elle qui part dans `review_logs.rating`,
  * où une contrainte de la base la borne entre 1 et 4. Elle sert aussi de raccourci clavier
- * dans la session du web — 1 à 4 sous les doigts, dans cet ordre.
+ * dans la session du web - 1 à 4 sous les doigts, dans cet ordre.
  */
 export const ReviewRating = {
   again: 1,

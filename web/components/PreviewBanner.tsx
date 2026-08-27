@@ -6,7 +6,7 @@ import { PRODUCTION_URL } from "@/lib/config";
  * Un déploiement d'aperçu est **figé sur son commit** : l'adresse
  * `micabo-git-<branche>-…vercel.app` reste servie des heures après que la
  * branche a été fusionnée, et un onglet laissé ouvert dessus montre encore
- * l'ancien produit — même après un rechargement forcé. C'est un piège qui
+ * l'ancien produit - même après un rechargement forcé. C'est un piège qui
  * coûte cher : on croit qu'un correctif n'est pas passé alors qu'on regarde
  * un site d'avant.
  *
@@ -23,7 +23,7 @@ export function PreviewBanner() {
       data-print="hide"
     >
       <span>
-        Aperçu figé{branch ? ` de ${branch}` : ""} — ce n&apos;est pas le site.
+        Aperçu figé{branch ? ` de ${branch}` : ""} - ce n&apos;est pas le site.
       </span>
       <a href={PRODUCTION_URL} className="font-semibold underline">
         Ouvrir Micabo

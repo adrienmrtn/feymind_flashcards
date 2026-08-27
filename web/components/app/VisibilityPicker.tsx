@@ -11,7 +11,7 @@ import { setCourseVisibility } from "@/lib/actions/profile";
  * Qui peut retrouver ce cours, changé depuis la fiche.
  *
  * Il en faut un ici, et pas seulement à l'import : c'est ce qui rend le défaut public acceptable.
- * On ne demande pas à quelqu'un d'ouvrir ses cours sans lui donner le moyen d'en refermer un — et
+ * On ne demande pas à quelqu'un d'ouvrir ses cours sans lui donner le moyen d'en refermer un - et
  * la décision se prend en lisant la fiche, quand on voit ce qu'on est en train de partager.
  *
  * L'affichage change **avant** la réponse du serveur : l'app ne fait jamais attendre quelqu'un qui

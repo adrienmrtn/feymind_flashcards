@@ -1,5 +1,5 @@
 /**
- * `@micabo/core` — les règles que l'iPhone et le web doivent partager.
+ * `@micabo/core` - les règles que l'iPhone et le web doivent partager.
  *
  * Tout ce qui est ici est **pur** : pas de réseau, pas de base de données, pas de React. C'est
  * la condition pour que ce soit vérifiable, et c'est ce qui permet aux tests de reprendre les
@@ -163,7 +163,7 @@ export {
   type CurvePoint,
 } from "./retention";
 
-// Le verrou du gratuit — aligné sur `ProAccess.swift`, construit mais pas armé.
+// Le verrou du gratuit - aligné sur `ProAccess.swift`, construit mais pas armé.
 export * as entitlement from "./entitlement";
 
 // Les offres, dont le pourcentage d'économie est calculé et jamais écrit.

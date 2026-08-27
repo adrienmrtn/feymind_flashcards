@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
  *
  * Un compte déjà ouvert entre dans l'app. Relancer le parcours parce que
  * `onboarding_completed_at` est vide renvoyait les comptes iOS et les anciens
- * comptes web au premier écran — le pays — alors qu'ils venaient seulement
+ * comptes web au premier écran - le pays - alors qu'ils venaient seulement
  * de se connecter.
  */
 export type ResumePath = "/commencer/pays" | "/app";

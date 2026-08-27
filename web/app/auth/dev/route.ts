@@ -7,8 +7,8 @@ import { createClient } from "@/lib/supabase/server";
  *
  * Elle existe parce que l'app authentifiée est autrement invérifiable : Apple et Google demandent
  * un vrai compte et un vrai navigateur, et le lien par courriel demande un envoyeur qui n'est pas
- * encore branché. Sans elle, tout ce qui vit derrière la porte — les cours, la fiche, les cartes,
- * la session — ne pourrait être ni essayé ni montré.
+ * encore branché. Sans elle, tout ce qui vit derrière la porte - les cours, la fiche, les cartes,
+ * la session - ne pourrait être ni essayé ni montré.
  *
  * **Ce n'est pas un contournement**, et c'est ce qui la rend acceptable : elle appelle
  * `signInWithPassword`, donc elle exige le mot de passe. Elle n'accorde rien que GoTrue

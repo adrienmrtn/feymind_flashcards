@@ -29,7 +29,7 @@ export function examMarksFor(
   );
 }
 
-/** L'examen qui commande tout un cours — le même pour chacune de ses cartes. */
+/** L'examen qui commande tout un cours - le même pour chacune de ses cartes. */
 export function examMarkForCourse(
   exams: ExamRow[],
   courseId: string,

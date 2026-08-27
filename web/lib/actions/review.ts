@@ -17,7 +17,7 @@ import { createClient } from "@/lib/supabase/server";
  * Ce qu'une note écrit.
  *
  * **Le calcul est refait ici, côté serveur, et pas confié au navigateur.** Le client sait déjà
- * afficher les intervalles sous les quatre boutons — c'est le même code — mais l'état qui part en
+ * afficher les intervalles sous les quatre boutons - c'est le même code - mais l'état qui part en
  * base est calculé là où personne ne peut le réécrire. Un onglet ouvert dans une console pourrait
  * sinon s'attribuer des intervalles de dix ans, et la répétition espacée ne veut plus rien dire.
  *
@@ -95,8 +95,8 @@ export async function gradeCard(input: {
 
   // **Aucune revalidation ici, et c'est le correctif.** `revalidatePath("/app/reviser")`
   // faisait re-rendre la page pendant la session : le serveur reconstruisait la file avec
-  // les cartes dues **à cet instant**, n'en trouvait aucune — elles venaient toutes d'être
-  // repoussées d'une minute — et remplaçait la session par « Tout est à jour », file en
+  // les cartes dues **à cet instant**, n'en trouvait aucune - elles venaient toutes d'être
+  // repoussées d'une minute - et remplaçait la session par « Tout est à jour », file en
   // mémoire comprise. La session s'évaporait au milieu d'un paquet.
   //
   // Rien n'est perdu : ces écrans lisent le cookie de session, donc ils sont rendus à

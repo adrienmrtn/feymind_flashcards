@@ -3,7 +3,7 @@
  *
  * Il déplace les échéances de tout un jeu de cartes : c'est le code du produit qui peut faire
  * le plus de dégâts en silence. Les propriétés vérifiées ici sont celles qui, si elles
- * cassent, donnent un plan que l'étudiant ne peut pas tenir — deux passages le même jour, un
+ * cassent, donnent un plan que l'étudiant ne peut pas tenir - deux passages le même jour, un
  * dernier passage après l'examen, ou une charge empilée sur la veille.
  */
 

@@ -4,7 +4,7 @@ import type { WeekDayLoad } from "@micabo/core";
  * La semaine glissante du tableau de bord.
  *
  * Sept colonnes, trois jours derrière et trois devant. Le chiffre est le
- * nombre de cartes encore dues ce jour-là — en direct, pas une moyenne.
+ * nombre de cartes encore dues ce jour-là - en direct, pas une moyenne.
  * La flamme dit qu'on a déjà ouvert une session ce jour.
  */
 export function WeekStrip({ days }: { days: readonly WeekDayLoad[] }) {

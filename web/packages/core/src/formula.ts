@@ -2,7 +2,7 @@
  * Transposition LaTeX → Unicode, portée depuis `FormulaRenderer` iOS.
  *
  * Micabo n'embarque pas de moteur mathématique. Les commandes qui fuient dans une
- * carte — `1914 \rightarrow 1918` — doivent quand même se lire. Les fragments `$…$`
+ * carte - `1914 \rightarrow 1918` - doivent quand même se lire. Les fragments `$…$`
  * passent par le mode formule (fractions, indices, grec) ; le texte nu ne convertit
  * que les commandes, pour ne pas transformer un `_` de phrase en indice.
  */

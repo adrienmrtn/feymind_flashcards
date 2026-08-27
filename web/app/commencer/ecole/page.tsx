@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/client";
  *
  * Elle a son échappatoire, posée en haut à droite, et ce n'est pas une politesse : le demander à
  * quelqu'un qui n'en a pas, qui est entre deux écoles ou qui n'a pas envie de le dire ne doit pas
- * fermer le parcours. **Passer laisse le champ vide et l'écrit** — sans ça, l'écran se reposerait
+ * fermer le parcours. **Passer laisse le champ vide et l'écrit** - sans ça, l'écran se reposerait
  * plus tard comme s'il n'avait jamais été vu.
  *
  * Le texte libre reste accepté, mais il ne donne pas d'identifiant : **seul un résultat choisi dans

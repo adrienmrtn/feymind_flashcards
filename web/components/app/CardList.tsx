@@ -18,7 +18,7 @@ import type { CardRow } from "@/lib/data/courses";
  * clavier, on voit d'un coup d'œil ce qui est neuf et ce qui revient bientôt.
  *
  * **Une carte écrite par un modèle doit pouvoir être corrigée.** L'édition s'ouvre dans une
- * feuille par-dessus la liste — pas en dessous de la rangée, et pas en plein écran : on garde
+ * feuille par-dessus la liste - pas en dessous de la rangée, et pas en plein écran : on garde
  * les voisines en vue, et on ferme d'une touche.
  */
 export function CardList({

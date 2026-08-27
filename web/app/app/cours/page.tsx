@@ -13,7 +13,7 @@ import { listLibraryCourses } from "@/lib/data/social";
  * L'étagère, et la bibliothèque.
  *
  * Deux onglets, comme sur l'iPhone : **Tes cours** et **Découvrir**. Découvrir
- * ne montre que ce que le cloisonnement de Supabase laisse lire — les cours
+ * ne montre que ce que le cloisonnement de Supabase laisse lire - les cours
  * publics de l'école, et ceux des amis.
  */
 export default async function CoursesPage({
@@ -216,7 +216,7 @@ function LibraryPane({
       {courses.length === 0 ? (
         <p className="mt-8 text-[14.5px] leading-relaxed text-ink-secondary">
           Rien à découvrir pour l&apos;instant. Les cours publics de ton école, et ceux de tes
-          amis, arriveront ici — le même graphe que sur l&apos;iPhone.
+          amis, arriveront ici - le même graphe que sur l&apos;iPhone.
         </p>
       ) : (
         <div className="mt-6 grid gap-3 sm:grid-cols-2">

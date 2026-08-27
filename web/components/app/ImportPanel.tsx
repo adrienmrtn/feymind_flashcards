@@ -24,18 +24,18 @@ import { readYouTubeInBrowser } from "@/lib/import/youtube";
 /**
  * **L'import est une zone de dépôt.** C'est ce qu'on fait devant un clavier : on prend le fichier
  * et on le lâche. Trois onglets de même poids obligeaient à choisir une source avant d'avoir rien
- * fait, et le premier était un formulaire de texte — le geste le plus rare, mis en premier.
+ * fait, et le premier était un formulaire de texte - le geste le plus rare, mis en premier.
  *
  * Coller du texte et donner une vidéo restent, en **second rang** : ce sont des cas, pas la voie
  * normale. Ils s'ouvrent sous la zone quand on les demande.
  *
  * Le fichier est lu **dans l'onglet** et non envoyé quelque part : c'est la règle de l'app, où le
  * texte n'est jamais confié à un OCR distant. Seul le texte extrait part au modèle, ce qui rend
- * aussi la facture prévisible — un PDF de trente pages pèse des mégaoctets, son texte quelques
+ * aussi la facture prévisible - un PDF de trente pages pèse des mégaoctets, son texte quelques
  * dizaines de kilo-octets.
  *
  * Les deux réglages du cours sont ceux de l'app, et ils sortent du **noyau partagé** : la longueur
- * en blocs et la visibilité. Le choix de visibilité se fait ici et pas après — un cours qui part
+ * en blocs et la visibilité. Le choix de visibilité se fait ici et pas après - un cours qui part
  * public le temps qu'on y pense est un cours qui a été visible.
  */
 
@@ -126,7 +126,7 @@ export function ImportPanel({
       if (extracted.trim().length < 40) {
         setPhase("repos");
         setFailure(
-          "Ce fichier ne contient pas de texte lisible. Un PDF fait de pages scannées n'a pas de texte à extraire — pour ceux-là, l'app iPhone les lit avec l'appareil photo.",
+          "Ce fichier ne contient pas de texte lisible. Un PDF fait de pages scannées n'a pas de texte à extraire - pour ceux-là, l'app iPhone les lit avec l'appareil photo.",
         );
         return;
       }
@@ -392,7 +392,7 @@ function Action({
  * L'attente, nommée.
  *
  * On ne dit pas « chargement » : on dit ce qui se passe. `searching` pendant qu'on extrait le
- * texte, `composing` pendant que la fiche s'écrit — ce sont les deux vraies phases du travail, et
+ * texte, `composing` pendant que la fiche s'écrit - ce sont les deux vraies phases du travail, et
  * les nommer vaut mieux qu'un tourniquet unique.
  */
 function Waiting({ phase, name }: { phase: Phase; name: string | null }) {
@@ -417,7 +417,7 @@ function Waiting({ phase, name }: { phase: Phase; name: string | null }) {
  * Le texte brut et le markdown sont immédiats. Le **PDF** passe par `pdfjs-dist`, chargé
  * paresseusement : la bibliothèque pèse plus lourd que le reste de la page, et la plupart des
  * imports ne sont pas des PDF. Un PDF fait de pages scannées n'a pas de texte à extraire, et on le
- * dit — c'est le cas où l'iPhone, avec son appareil photo et sa reconnaissance de texte, fait mieux
+ * dit - c'est le cas où l'iPhone, avec son appareil photo et sa reconnaissance de texte, fait mieux
  * que le web.
  */
 async function extractText(file: File): Promise<string> {
@@ -464,7 +464,7 @@ function docxFailure(error: unknown): string {
     if (error.code === "empty") return "Ce Word n'a presque pas de texte. Colle le contenu ici.";
     if (error.code === "missingDocument") return "Ce fichier Word n'a pas pu être lu.";
     if (error.code === "notDocx") {
-      return "Enregistre le document en .docx — l'ancien format Word n'est pas lisible ici.";
+      return "Enregistre le document en .docx - l'ancien format Word n'est pas lisible ici.";
     }
   }
   return "Ce fichier n'a pas pu être lu.";

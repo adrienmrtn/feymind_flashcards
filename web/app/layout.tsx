@@ -25,7 +25,7 @@ const hanken = Hanken_Grotesk({
  * SF Rounded n'existe pas sur le web, et « un grand nombre en arrondi ressemble à un score »
  * est un choix d'intention de l'app, pas un détail de goût. Nunito est la plus proche des
  * arrondies libres. Le reproche qu'on peut lui faire est d'être partout : il ne porte pas ici,
- * parce qu'elle ne compose jamais un mot — une police qu'on ne voit que sur des chiffres ne se
+ * parce qu'elle ne compose jamais un mot - une police qu'on ne voit que sur des chiffres ne se
  * reconnaît pas.
  */
 const nunito = Nunito({

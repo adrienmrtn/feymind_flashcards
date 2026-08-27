@@ -4,7 +4,7 @@
  * C'est la **première** question du parcours, et pas par politesse géographique : c'est elle qui
  * commande les réponses de « qu'est-ce qui te décrit le mieux ? », et elle décide aussi de la
  * langue dans laquelle Micabo écrit. Dans l'autre sens, il faudrait servir les mêmes sept réponses
- * françaises à tout le monde — ce qui ne laisse aucune réponse juste à un Polonais ou à un Turc.
+ * françaises à tout le monde - ce qui ne laisse aucune réponse juste à un Polonais ou à un Turc.
  *
  * **L'ordre de la liste est l'ordre d'affichage**, et il n'est pas alphabétique : ce sont les
  * marchés visés en premier qui se lisent en premier. Les pays francophones historiques suivent,
@@ -173,7 +173,7 @@ export function sheetLanguage(
 /**
  * Le drapeau déduit d'un code ISO : deux lettres devenues indicateurs régionaux.
  *
- * Les emojis de drapeaux n'ont pas de nom propre en Unicode — c'est la seule façon de les obtenir
+ * Les emojis de drapeaux n'ont pas de nom propre en Unicode - c'est la seule façon de les obtenir
  * sans écrire deux cents caractères à la main, et c'est ce que fait `WorldCountry.flag` côté iOS.
  */
 export function flagFor(iso: string): string {
@@ -211,7 +211,7 @@ export function isoFromFlagEmoji(emoji: string): string | null {
  * Le pays deviné depuis la locale du navigateur, pour le poser **en évidence**.
  *
  * C'est une suggestion, jamais une réponse : la question reste posée et se répond d'un appui. Une
- * locale dit la langue du navigateur, pas le pays où l'on étudie — un Belge en français et un
+ * locale dit la langue du navigateur, pas le pays où l'on étudie - un Belge en français et un
  * Français ont la même, et c'est justement pour ça que la région compte plus que la langue.
  */
 export function guessCountry(locales: readonly string[]): CountryCode {

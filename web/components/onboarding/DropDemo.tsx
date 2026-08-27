@@ -8,8 +8,8 @@ import { DEMO_COURSE } from "@/components/demo/demo-course";
  * **Le geste de l'import, fait à la main.**
  *
  * L'écran disait « tu déposes ton cours » en montrant une page immobile. Ici on dépose : on prend
- * la vignette du PDF et on la lâche dans la zone. C'est le même geste que l'import réel du web —
- * le glisser-déposer y remplace le scanner — donc la démonstration apprend quelque chose au lieu
+ * la vignette du PDF et on la lâche dans la zone. C'est le même geste que l'import réel du web  - 
+ * le glisser-déposer y remplace le scanner - donc la démonstration apprend quelque chose au lieu
  * de l'illustrer.
  *
  * Le pointeur plutôt que l'API de glisser-déposer HTML : `dragstart` n'existe pas sur un écran

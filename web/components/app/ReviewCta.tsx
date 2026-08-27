@@ -7,7 +7,7 @@ import { Float } from "@/components/app/Float";
  *
  * Dans la fiche, il flotte en bas à droite et brille : c'est le geste du cours
  * une fois le paquet écrit. Ailleurs, il reste une amorce de session posée dans
- * le flux — ce qu'on va faire, et pourquoi maintenant.
+ * le flux - ce qu'on va faire, et pourquoi maintenant.
  */
 export function ReviewCta({
   href,
