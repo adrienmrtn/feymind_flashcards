@@ -255,6 +255,12 @@ function ExamCard({
   );
 }
 
+/**
+ * Le geste du jour, pas une tuile d'info.
+ *
+ * À côté de l'examen elle se lisait comme un bloc neutre : même papier, même
+ * survol. Encre, brillance, bouton : on voit qu'on peut commencer.
+ */
 function ReviewCard({
   counts,
 }: {
@@ -279,14 +285,14 @@ function ReviewCard({
   return (
     <Link
       href="/app/reviser"
-        className="paper hover-tile group rounded-group bg-surface p-6"
+      className="pressable shiny hover-tile group flex flex-col rounded-group bg-ink p-6 text-on-ink"
     >
-      <p className="eyebrow text-ink-tertiary">⚡ À réviser aujourd&apos;hui</p>
-      <p className="mt-3 numeral text-[40px] font-bold leading-none text-ink">{counts.total}</p>
-      <p className="mt-1 text-[13.5px] text-ink-secondary">
+      <p className="eyebrow text-on-ink-muted">⚡ À réviser aujourd&apos;hui</p>
+      <p className="mt-3 numeral text-[40px] font-bold leading-none">{counts.total}</p>
+      <p className="mt-1 text-[13.5px] text-on-ink-muted">
         carte{counts.total > 1 ? "s" : ""} due{counts.total > 1 ? "s" : ""}
       </p>
-      <p className="mt-4 text-[13px] text-ink-tertiary">
+      <p className="mt-4 text-[13px] text-on-ink-muted">
         {[
           counts.review ? `${counts.review} révision${counts.review > 1 ? "s" : ""}` : null,
           counts.learning ? `${counts.learning} en apprentissage` : null,
@@ -295,7 +301,9 @@ function ReviewCard({
           .filter(Boolean)
           .join(" · ")}
       </p>
-      <p className="mt-5 text-[13px] font-semibold text-accent">⚡ Commencer la session</p>
+      <span className="mt-5 flex h-12 w-full items-center justify-center rounded-button bg-white/12 text-[15px] font-semibold">
+        ⚡ Commencer la session
+      </span>
     </Link>
   );
 }
