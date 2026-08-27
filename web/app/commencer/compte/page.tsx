@@ -94,8 +94,8 @@ function AccountStepBody() {
   }
 
   return (
-    <div className="mx-auto grid min-h-svh w-full max-w-[980px] items-center gap-14 px-screen py-12 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] lg:gap-20">
-      <div className="rise mx-auto w-full max-w-[400px] lg:mx-0">
+    <div className="mx-auto flex min-h-svh w-full max-w-[440px] flex-col justify-center px-screen py-12">
+      <div className="rise w-full">
         <Link href="/" className="text-[15px] font-bold text-ink">
           Micabo
         </Link>
@@ -214,47 +214,9 @@ function AccountStepBody() {
           confidentialité.
         </p>
       </div>
-
-      <div className="hidden lg:block">
-        <div className="rise space-y-2.5" style={{ animationDelay: "120ms" }}>
-          {ARGUMENTS.map((item, index) => (
-            <div
-              key={item.title}
-              className="paper lift flex items-start gap-4 rounded-group bg-surface p-5"
-              style={{ animationDelay: `${140 + index * 70}ms` }}
-            >
-              <span aria-hidden className="emoji mt-0.5 text-[20px]">
-                {item.emoji}
-              </span>
-              <div>
-                <p className="text-[15px] font-semibold text-ink">{item.title}</p>
-                <p className="mt-1 text-[13.5px] leading-relaxed text-ink-secondary">{item.text}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
-
-const ARGUMENTS = [
-  {
-    emoji: "🔒",
-    title: "Tes réponses sont déjà là",
-    text: "Pays, matières, examen : elles rejoignent ton compte à la connexion.",
-  },
-  {
-    emoji: "🧠",
-    title: "Les cartes reviennent au bon moment",
-    text: "La même répétition espacée qu'Anki, écrite pour toi.",
-  },
-  {
-    emoji: "📅",
-    title: "Mode examen",
-    text: "Tu donnes la date, tout le paquet se réorganise.",
-  },
-] as const;
 
 function ProviderButton({
   label,

@@ -66,7 +66,8 @@ struct PersonalizingStepView: View {
     @State private var completed = 0
     @State private var didRing = false
 
-    private let ticker = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
+    /// Statique : recréé à chaque `body`, le publisher s'annulait et l'anneau restait à zéro.
+    private static let ticker = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
 
     private var progress: Double {
         min(1, elapsed / Self.duration)
@@ -115,7 +116,7 @@ struct PersonalizingStepView: View {
         }
         .background(surface.background.ignoresSafeArea(edges: .bottom))
         .environment(\.onboardingSurface, surface)
-        .onReceive(ticker) { _ in
+        .onReceive(Self.ticker) { _ in
             tick()
         }
     }
