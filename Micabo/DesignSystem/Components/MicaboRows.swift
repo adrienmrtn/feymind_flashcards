@@ -200,6 +200,7 @@ struct MicaboRowButtonStyle: ButtonStyle {
             .background(configuration.isPressed ? MicaboColor.surfaceMuted.opacity(0.7) : Color.clear)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
             .micaboPressFeedback(isPressed: configuration.isPressed, feedback: feedback)
+            .hoverEffect(.highlight)
     }
 }
 

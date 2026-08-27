@@ -99,6 +99,7 @@ struct MicaboPrimaryButtonStyle: ButtonStyle {
             .padding(.horizontal, fullWidth ? 0 : 24)
             .background(tint, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
+            .hoverEffect(.highlight)
     }
 }
 
@@ -117,6 +118,7 @@ struct MicaboSecondaryButtonStyle: ButtonStyle {
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
             .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
             .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
+            .hoverEffect(.highlight)
     }
 }
 
@@ -131,6 +133,7 @@ struct MicaboPressableButtonStyle: ButtonStyle {
         configuration.label
             .contentShape(Rectangle())
             .micaboPressEffect(isPressed: configuration.isPressed, dimming: dimming, feedback: feedback)
+            .hoverEffect(.highlight)
     }
 }
 

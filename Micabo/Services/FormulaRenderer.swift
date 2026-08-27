@@ -38,7 +38,9 @@ enum FormulaRenderer {
             let isLast = index == pieces.count - 1
             let isMath = index % 2 == 1 && !(isLast && hasOpenFragment)
             guard !piece.isEmpty else { continue }
-            segments.append(Segment(text: isMath ? plain(piece) : piece, isMath: isMath))
+            // Hors `$…$`, on transpose quand même les commandes : une carte générée écrit
+            // souvent `1914 \rightarrow 1918` sans délimiteurs.
+            segments.append(Segment(text: isMath ? plain(piece) : symbolsOnly(piece), isMath: isMath))
         }
         return segments.isEmpty ? [Segment(text: "", isMath: false)] : segments
     }
@@ -50,6 +52,11 @@ enum FormulaRenderer {
     }
 
     // MARK: - Transposition
+
+    /// Les commandes seules, sans toucher aux `_` et `^` d'une phrase.
+    static func symbolsOnly(_ source: String) -> String {
+        replacingCommands(in: source)
+    }
 
     /// Transpose un fragment LaTeX en Unicode lisible.
     static func plain(_ latex: String) -> String {

@@ -555,6 +555,9 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(SubjectCatalog.emoji(for: "Algorithmique"), "🧩")
         XCTAssertEqual(SubjectCatalog.emoji(for: "Génie civil"), "🏗️")
         XCTAssertEqual(SubjectCatalog.emoji(for: "Kinésithérapie"), "🦴")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Théâtre"), "🎭")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Photographie"), "📷")
+        XCTAssertEqual(SubjectCatalog.emoji(for: "Français"), "📖")
     }
 
     /// L'emoji d'une matière et celui d'un cours de cette matière viennent de la même table :

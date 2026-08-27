@@ -65,6 +65,9 @@ describe("les matières", () => {
     expect(subjectEmoji("Statistiques")).toBe("📊");
     expect(subjectEmoji("Mécanique")).toBe("⚙️");
     expect(subjectEmoji("Génie civil")).toBe("🏗️");
+    expect(subjectEmoji("Théâtre")).toBe("🎭");
+    expect(subjectEmoji("Photographie")).toBe("📷");
+    expect(subjectEmoji("Français")).toBe("📖");
   });
 });
 

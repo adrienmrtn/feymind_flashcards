@@ -37,6 +37,9 @@ export async function updateSettings(input: {
   dailyMinutes?: number;
   sheetLength?: SheetLength;
   sheetBlocks?: number;
+  subjects?: string[];
+  institutionName?: string | null;
+  institutionId?: string | null;
 }): Promise<SavedSettings> {
   const supabase = await createClient();
   const {
@@ -63,6 +66,22 @@ export async function updateSettings(input: {
     patch.sheet_length = lengthContaining(clampBlocks(input.sheetBlocks));
   } else if (isSheetLength(input.sheetLength)) {
     patch.sheet_length = input.sheetLength;
+  }
+
+  if (input.subjects !== undefined) {
+    patch.subjects = Array.from(
+      new Set(input.subjects.map((item) => item.trim()).filter(Boolean)),
+    ).slice(0, 40);
+  }
+
+  if (input.institutionName !== undefined) {
+    const name = input.institutionName?.trim() ?? "";
+    patch.institution_name = name.length > 0 ? name : null;
+  }
+
+  if (input.institutionId !== undefined) {
+    const id = input.institutionId?.trim() ?? "";
+    patch.institution_id = id.length > 0 ? id : null;
   }
 
   if (Object.keys(patch).length === 0) return { status: "ok" };

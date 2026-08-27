@@ -50,7 +50,7 @@ export function CardList({
             }}
             className="pressable rounded-button bg-surface px-4 py-2.5 text-[14px] font-semibold text-ink paper"
           >
-            Masquer un schéma
+            🖼️ Masquer un schéma
           </button>
           <button
             type="button"
@@ -61,7 +61,7 @@ export function CardList({
             }}
             className="pressable rounded-button bg-surface px-4 py-2.5 text-[14px] font-semibold text-ink paper"
           >
-            Écrire une carte
+            ✍️ Écrire une carte
           </button>
         </div>
       </div>

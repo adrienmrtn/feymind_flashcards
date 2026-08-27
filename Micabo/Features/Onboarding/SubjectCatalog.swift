@@ -43,7 +43,8 @@ enum SubjectCatalog {
             "Génie civil", "Architecture"
         ]),
         Family(name: "Et aussi", subjects: [
-            "Arts", "Musique", "Cinéma", "Sport & STAPS", "Code de la route", "Culture générale"
+            "Arts", "Musique", "Cinéma", "Théâtre", "Danse", "Photographie",
+            "Journalisme", "Pédagogie", "Sport & STAPS", "Code de la route", "Culture générale"
         ])
     ]
 

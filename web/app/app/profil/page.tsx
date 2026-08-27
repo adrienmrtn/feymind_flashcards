@@ -5,7 +5,6 @@ import {
   DEFAULT_SHEET_LENGTH,
   countryFor,
   isSheetLength,
-  newCardsPerDay,
   resolveStage,
 } from "@micabo/core";
 
@@ -35,7 +34,7 @@ export default async function ProfilePage() {
       ? supabase
           .from("profiles")
           .select(
-            "display_name, username, country_code, study_level, subjects, institution_name, daily_minutes, sheet_length",
+            "display_name, username, country_code, study_level, subjects, institution_name, institution_id, daily_minutes, sheet_length",
           )
           .eq("id", user.id)
           .maybeSingle()
@@ -88,7 +87,7 @@ export default async function ProfilePage() {
           même taille laissent chercher lequel compte. */}
       <section className="mt-9 grid gap-3 sm:grid-cols-[1.4fr_1fr_1fr]">
         <div className="rounded-group bg-ink p-6 text-on-ink">
-          <p className="eyebrow text-on-ink-muted">Cartes acquises</p>
+          <p className="eyebrow text-on-ink-muted">🏆 Cartes acquises</p>
           <p className="numeral mt-3 text-[42px] font-bold leading-none">{mature}</p>
           <p className="mt-2 text-[13px] text-on-ink-muted">
             {cards.length === 0
@@ -97,8 +96,8 @@ export default async function ProfilePage() {
           </p>
         </div>
 
-        <Tile value={courses.length} label={courses.length === 1 ? "cours" : "cours"} />
-        <Tile value={reviews ?? 0} label={reviews === 1 ? "révision" : "révisions"} />
+        <Tile value={courses.length} label={courses.length === 1 ? "📚 cours" : "📚 cours"} />
+        <Tile value={reviews ?? 0} label={reviews === 1 ? "🔁 révision" : "🔁 révisions"} />
       </section>
 
       {due > 0 ? (
@@ -107,7 +106,7 @@ export default async function ProfilePage() {
           className="pressable lift mt-3 flex items-center justify-between gap-4 rounded-group bg-accent-soft px-6 py-4"
         >
           <span className="text-[15px] font-semibold text-accent">
-            <span className="numeral">{due}</span> carte{due > 1 ? "s" : ""} à revoir maintenant
+            ⚡ <span className="numeral">{due}</span> carte{due > 1 ? "s" : ""} à revoir maintenant
           </span>
           <svg
             aria-hidden
@@ -131,20 +130,17 @@ export default async function ProfilePage() {
             href={"/app/amis" as never}
             className="pressable lift mb-3 flex items-center justify-between gap-4 rounded-group bg-surface px-5 py-4 paper"
           >
-            <span className="text-[14.5px] text-ink">Amis</span>
+            <span className="text-[14.5px] text-ink">👋 Amis</span>
             <span className="text-[13px] text-ink-tertiary">
               {handle ? `@${handle}` : "Ajouter quelqu'un"}
             </span>
           </Link>
 
           <dl className="paper divide-y divide-hairline overflow-hidden rounded-group bg-surface">
-            <Row label="Matières" value={subjectsLabel(profile?.subjects)} />
-            <Row label="École" value={profile?.institution_name ?? "non renseignée"} />
             <Row
-              label="Rythme"
-              value={`${minutes} min · ${newCardsPerDay(minutes)} cartes neuves par jour`}
+              label="🌐 Langue des fiches"
+              value={country.language === "fr" ? "Français" : "English"}
             />
-            <Row label="Langue des fiches" value={country.language === "fr" ? "Français" : "English"} />
           </dl>
 
           {/* Les examens ont leur propre onglet : le mode examen est la fonctionnalité que
@@ -156,7 +152,7 @@ export default async function ProfilePage() {
               className="pressable lift mt-3 flex items-center justify-between gap-4 rounded-group bg-surface px-5 py-4 paper"
             >
               <span className="text-[14.5px] text-ink">
-                <span className="numeral font-semibold">{exams.length}</span> examen
+                📅 <span className="numeral font-semibold">{exams.length}</span> examen
                 {exams.length > 1 ? "s" : ""} posé{exams.length > 1 ? "s" : ""}
               </span>
               <span className="text-[13px] text-ink-tertiary">Voir</span>
@@ -171,6 +167,9 @@ export default async function ProfilePage() {
           initialLength={
             isSheetLength(profile?.sheet_length) ? profile.sheet_length : DEFAULT_SHEET_LENGTH
           }
+          initialSubjects={Array.isArray(profile?.subjects) ? profile.subjects : []}
+          initialSchool={profile?.institution_name ?? ""}
+          initialSchoolId={profile?.institution_id ?? null}
         />
       </div>
 
@@ -197,9 +196,4 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function subjectsLabel(subjects: string[] | null | undefined): string {
-  if (!subjects?.length) return "aucune";
-  const shown = subjects.slice(0, 4).join(", ");
-  return subjects.length > 4 ? `${shown}, +${subjects.length - 4}` : shown;
-}
 

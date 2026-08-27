@@ -1,4 +1,4 @@
-import type { SheetBlock } from "@micabo/core";
+import { latexToUnicode, type SheetBlock } from "@micabo/core";
 
 import { InlineMarkup } from "./InlineMarkup";
 
@@ -245,7 +245,7 @@ function Block({ block, tint }: { block: SheetBlock; tint: string }) {
     case "formula":
       return (
         <div className="rounded-[18px] bg-surface-muted px-[13px] py-4 text-center">
-          <p className="font-mono text-[18px] text-ink">{block.latex}</p>
+          <p className="font-serif text-[18px] italic text-ink">{latexToUnicode(block.latex)}</p>
           {block.caption ? (
             <p className="mt-1.5 text-[11.5px] text-ink-tertiary">
               <InlineMarkup text={block.caption} />

@@ -147,7 +147,7 @@ export function ReviewSetup({
     <div className="mx-auto max-w-[560px] py-6">
       <header className="rise">
         <p className="eyebrow text-ink-tertiary">
-          {courseId ? "Réviser ce cours" : "Ta session du jour"}
+          {courseId ? "⚡ Réviser ce cours" : "⚡ Ta session du jour"}
         </p>
         <h1 className="mt-2.5 text-[32px] font-bold leading-tight text-ink">
           {served > 0 ? (
@@ -227,7 +227,7 @@ export function ReviewSetup({
             href={href as never}
             className="pressable shiny flex h-14 w-full items-center justify-center rounded-button bg-ink text-[16px] font-semibold text-on-ink"
           >
-            Commencer la session
+            ⚡ Commencer la session
           </Link>
         ) : (
           <p className="text-center text-[14.5px] leading-relaxed text-ink-secondary">

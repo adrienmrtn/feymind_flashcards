@@ -82,7 +82,19 @@ export const SUBJECT_FAMILIES: readonly SubjectFamily[] = [
   },
   {
     name: "Et aussi",
-    subjects: ["Arts", "Musique", "Cinéma", "Sport & STAPS", "Code de la route", "Culture générale"],
+    subjects: [
+      "Arts",
+      "Musique",
+      "Cinéma",
+      "Théâtre",
+      "Danse",
+      "Photographie",
+      "Journalisme",
+      "Pédagogie",
+      "Sport & STAPS",
+      "Code de la route",
+      "Culture générale",
+    ],
   },
 ];
 

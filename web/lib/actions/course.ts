@@ -9,6 +9,7 @@ import {
   countryFor,
   isSheetLength,
   isVisibility,
+  latexCommandsToUnicode,
   lengthContaining,
   normalizeSheet,
   resolveEmoji,
@@ -254,12 +255,15 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
       id: crypto.randomUUID(),
       user_id: user.id,
       course_id: courseId,
-      front: card.front ?? "",
-      back: card.back ?? "",
-      hint: card.hint ?? null,
+      front: latexCommandsToUnicode(card.front ?? ""),
+      back: latexCommandsToUnicode(card.back ?? ""),
+      hint: card.hint ? latexCommandsToUnicode(card.hint) : null,
       position: start + index,
       kind: card.kind ?? "basic",
-      choices: card.kind === "choice" ? (card.choices ?? []) : [],
+      choices:
+        card.kind === "choice"
+          ? (card.choices ?? []).map((choice) => latexCommandsToUnicode(choice))
+          : [],
       correct_choice_index: card.answerIndex ?? 0,
       // Une carte neuve part due tout de suite : c'est la file d'étude qui décide combien on en
       // introduit par jour, pas la date d'échéance.

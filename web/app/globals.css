@@ -256,15 +256,27 @@ video {
 /* Une rangée qui avance d'un rien, et une tuile qui se soulève : le survol doit se sentir
    sans déplacer le texte assez pour le flouter. */
 @utility hover-row {
-  transition-property: background-color, translate;
+  transition-property: background-color, translate, scale;
   transition-duration: var(--duration-hover);
   transition-timing-function: var(--ease-out-strong);
 }
 
 @utility hover-tile {
-  transition-property: box-shadow, translate;
+  transition-property: box-shadow, translate, scale;
   transition-duration: var(--duration-hover);
   transition-timing-function: var(--ease-out-strong);
+}
+
+/* Sur mobile, le media `hover: hover` ne s'applique pas : sans :active,
+   certaines cartes restaient muettes au doigt. */
+.hover-row:active {
+  background-color: color-mix(in srgb, var(--color-surface-muted) 70%, transparent);
+  scale: 0.99;
+}
+
+.hover-tile:active {
+  box-shadow: var(--shadow-paper-hover);
+  scale: 0.99;
 }
 
 @media (hover: hover) and (pointer: fine) {

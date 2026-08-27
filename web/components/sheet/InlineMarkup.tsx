@@ -1,4 +1,4 @@
-import { parseInlineMarkup } from "@micabo/core";
+import { latexCommandsToUnicode, latexToUnicode, parseInlineMarkup } from "@micabo/core";
 
 /**
  * Le balisage en ligne d'une fiche, rendu.
@@ -8,18 +8,20 @@ import { parseInlineMarkup } from "@micabo/core";
  * posé derrière le texte débordait sous les jambages, changeait d'épaisseur d'une ligne à
  * l'autre, et se battait avec l'interligne au lieu de servir la lecture.
  *
- * Une formule garde son LaTeX brut. Ici elle est composée en famille monospace, faute de
- * mieux : le vrai rendu mathématique arrive avec la fiche complète, à l'étape 4. Écrire
- * « bientôt » dans la page serait pire que de montrer l'expression telle qu'elle est.
+ * Une formule est transposée en Unicode, comme sur l'iPhone : pas de moteur LaTeX,
+ * mais `\rightarrow` ne reste plus écrit en clair. Le texte hors `$…$` ne convertit
+ * que les commandes, pour ne pas transformer un `_` de phrase en indice.
  */
 export function InlineMarkup({ text }: { text: string }) {
   return (
     <>
       {parseInlineMarkup(text).map((span, index) => {
+        const rendered = span.math ? latexToUnicode(span.text) : latexCommandsToUnicode(span.text);
+
         if (span.math) {
           return (
-            <span key={index} className="font-mono text-[0.95em] text-ink">
-              {span.text}
+            <span key={index} className="font-serif text-[0.95em] italic text-ink">
+              {rendered}
             </span>
           );
         }
@@ -32,11 +34,11 @@ export function InlineMarkup({ text }: { text: string }) {
           .filter(Boolean)
           .join(" ");
 
-        if (!className) return <span key={index}>{span.text}</span>;
+        if (!className) return <span key={index}>{rendered}</span>;
 
         return (
           <span key={index} className={className}>
-            {span.text}
+            {rendered}
           </span>
         );
       })}

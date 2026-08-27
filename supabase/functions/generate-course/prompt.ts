@@ -19,7 +19,7 @@ Une fiche sans marques est une fiche que personne ne relit : c'est le gras et la
 - **terme** met en gras. Le vocabulaire exact que l'examen attend. UN À DEUX termes par paragraphe, et jamais zéro dans un paragraphe qui introduit une notion.
 - *nuance* met en italique. Pour un mot étranger, un titre d'œuvre, une réserve.
 - ==passage== met le passage EN COULEUR. C'est la marque la plus forte de la fiche : le texte lui-même change d'encre, ça se voit de l'autre bout de la page, et c'est pour ça qu'elle est rare. TROIS à CINQ passages sur toute la fiche, pas un de plus. Un passage en couleur est une phrase courte ou un fragment de phrase : pas trois mots isolés, pas un paragraphe entier.
-- $E = mc^2$ compose une formule dans une phrase. Syntaxe LaTeX simple : exposants, indices, fractions, lettres grecques.
+- $E = mc^2$ compose une formule dans une phrase. Syntaxe LaTeX simple : exposants, indices, fractions, lettres grecques. Hors de $…$ et hors d'un bloc formula, jamais de commande nue : une flèche s'écrit →, pas \\rightarrow.
 Pas de markdown en dehors de ça : ni #, ni -, ni tableaux en pipes.
 
 OÙ METTRE UN PASSAGE EN COULEUR
