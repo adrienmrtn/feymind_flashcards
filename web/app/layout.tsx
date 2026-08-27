@@ -44,8 +44,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   // La couleur de la barre du navigateur suit le papier : une bande blanche au-dessus d'un fond
-  // ivoire fait lire une bordure là où il n'y en a pas.
-  themeColor: "#f6f4ed",
+  // teinté fait lire une bordure là où il n'y en a pas.
+  themeColor: "#f6f7f9",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -9,7 +9,7 @@ import { SHADER_BUDGET } from "./shader-budget";
 import { StartButton } from "./StartButton";
 import { WhenWebGL } from "./WhenWebGL";
 
-const WASH_COLORS = ["#d7e6d8", "#f6f4ed", "#16c08c"];
+const WASH_COLORS = ["#d7e6d8", "#f6f7f9", "#16c08c"];
 
 /**
  * Le dernier appel : un lavage grainé, en tache, derrière le titre.
@@ -43,7 +43,7 @@ export function ClosingWash({ signedIn = false }: { signedIn?: boolean }) {
             className="absolute inset-0 opacity-90"
             width="100%"
             height="100%"
-            colorBack="#f6f4ed"
+            colorBack="#f6f7f9"
             colors={WASH_COLORS}
             shape="blob"
             softness={0.78}

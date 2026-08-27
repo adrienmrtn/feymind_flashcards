@@ -88,7 +88,7 @@ export function AppNav() {
                 prefetch={link.prefetch}
                 aria-current={current ? "page" : undefined}
                 className={`group flex items-center gap-3 rounded-[14px] px-3 py-2.5 ${
-                  current ? "bg-white shadow-[0_4px_14px_rgba(15,23,32,0.06)] ring-1 ring-black/[0.06]" : ""
+                  current ? "bg-white shadow-paper" : ""
                 }`}
               >
                 <Icon name={link.icon} filled={current} />
@@ -149,7 +149,7 @@ export function AppNav() {
 
         <Link
           href="/app/importer"
-          className="pressable mt-auto flex items-center justify-center gap-2 rounded-[16px] bg-white py-3.5 text-[15px] font-semibold text-ink shadow-[0_4px_14px_rgba(15,23,32,0.06)] ring-1 ring-black/[0.08]"
+          className="pressable mt-auto flex items-center justify-center gap-2 rounded-[16px] bg-white py-3.5 text-[15px] font-semibold text-ink shadow-paper"
         >
           Importer
         </Link>
@@ -165,7 +165,7 @@ export function AppNav() {
             {open.map((course) => (
               <div
                 key={course.id}
-                className={`flex shrink-0 items-center gap-1.5 rounded-[16px] bg-white px-3 py-2 shadow-[0_6px_18px_rgba(15,23,32,0.08)] ring-1 ring-black/[0.06] ${
+                className={`flex shrink-0 items-center gap-1.5 rounded-[16px] bg-white px-3 py-2 shadow-paper ${
                   isOpenCourse(course.id) ? "text-ink" : "text-ink-secondary"
                 }`}
               >
@@ -191,7 +191,7 @@ export function AppNav() {
           </div>
         ) : null}
 
-        <div className="mx-auto flex max-w-[440px] items-center justify-between rounded-[22px] bg-white px-1.5 py-2 shadow-[0_8px_28px_rgba(15,23,32,0.10)] ring-1 ring-black/[0.06]">
+        <div className="mx-auto flex max-w-[440px] items-center justify-between rounded-[22px] bg-white px-1.5 py-2 shadow-paper">
           {LINKS.map((link) => {
             const current = isCurrent(link.href);
             return (
@@ -220,7 +220,7 @@ export function AppNav() {
             className="flex flex-1 flex-col items-center gap-1 py-1"
           >
             <span
-              className={`flex h-8 w-8 items-center justify-center rounded-[10px] bg-white shadow-[0_2px_8px_rgba(15,23,32,0.06)] ring-1 ring-black/[0.08] ${
+              className={`flex h-8 w-8 items-center justify-center rounded-[10px] bg-white shadow-paper ${
                 importing ? "text-ink" : "text-ink-secondary"
               }`}
             >
