@@ -19,6 +19,7 @@ import {
 
 import { importFromText, importFromYouTube } from "@/lib/actions/course";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
+import { readYouTubeInBrowser } from "@/lib/import/youtube";
 
 /**
  * **L'import est une zone de dépôt.** C'est ce qu'on fait devant un clavier : on prend le fichier
@@ -85,6 +86,34 @@ export function ImportPanel({
     startTransition(async () =>
       finish(await importFromText({ ...payload, blocks, length, visibility })),
     );
+  }
+
+  /**
+   * L'onglet d'abord : YouTube bloque les IP de datacenter, pas celle
+   * de l'utilisateur. Le serveur ne sert que de repli.
+   */
+  async function importVideo() {
+    const link = url.trim();
+    const local = await readYouTubeInBrowser(link);
+    if (local.status === "ok") {
+      setPhase("ecriture");
+      return importFromText({
+        text: local.text,
+        hintTitle: local.title,
+        sourceName: local.title,
+        source: "youtube",
+        blocks,
+        length,
+        visibility,
+      });
+    }
+
+    const remote = await importFromYouTube(link, { blocks, length, visibility });
+    if (remote.status === "ok") return remote;
+    return {
+      status: "error" as const,
+      message: remote.message ?? local.message,
+    };
   }
 
   async function handleFile(file: File) {
@@ -283,9 +312,7 @@ export function ImportPanel({
               onPress={() => {
                 setFailure(null);
                 setPhase("lecture");
-                startTransition(async () =>
-                  finish(await importFromYouTube(url.trim(), { blocks, length, visibility })),
-                );
+                startTransition(async () => finish(await importVideo()));
               }}
             />
           </div>

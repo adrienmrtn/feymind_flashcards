@@ -314,8 +314,15 @@ struct YouTubeImportService {
     /// L'aperçu ne refuse ni l'absence de sous-titres ni une durée hors limite : il les
     /// rapporte, et c'est `YouTubeVideo.blockingReason` qui les nomme. L'écran montre alors
     /// la vidéo et la raison, ce qui vaut mieux qu'une alerte sur un écran vide.
+    ///
+    /// L'appareil d'abord : YouTube bloque les IP de datacenter, pas celle du
+    /// téléphone. Le serveur ne sert que de repli.
     func preview(link: String) async throws -> YouTubeVideo {
-        guard YouTubeLink.isValid(link) else { throw YouTubeImportError.invalidLink }
+        guard let id = YouTubeLink.videoID(from: link) else { throw YouTubeImportError.invalidLink }
+
+        if let local = try? await YouTubeOnDevice.preview(videoID: id) {
+            return local
+        }
 
         return try await call(payload: [
             "url": link,
@@ -327,7 +334,14 @@ struct YouTubeImportService {
     /// La transcription, après confirmation. Elle n'est demandée que sur un aperçu sans
     /// `blockingReason` : le serveur revérifie de son côté, il est seul à voir le texte.
     func transcript(link: String) async throws -> YouTubeTranscript {
-        guard YouTubeLink.isValid(link) else { throw YouTubeImportError.invalidLink }
+        guard let id = YouTubeLink.videoID(from: link) else { throw YouTubeImportError.invalidLink }
+
+        if let local = try? await YouTubeOnDevice.transcript(
+            videoID: id,
+            languages: Self.preferredLanguages
+        ) {
+            return local
+        }
 
         return try await call(payload: [
             "url": link,
@@ -391,5 +405,295 @@ extension YouTubeImportService {
         if let duration = video.durationLabel { parts.append(duration) }
         parts.append("\(transcript.text.count) caractères lus")
         return parts.joined(separator: " · ")
+    }
+}
+
+// MARK: - Lecture sur l'appareil
+
+/// Le client Innertube iOS, exécuté **sur le téléphone**.
+///
+/// Même requête que l'Edge Function, mais l'IP n'est pas celle d'un
+/// datacenter : YouTube rend les pistes, et `timedtext` suit.
+enum YouTubeOnDevice {
+    private static let playerURL = URL(
+        string: "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8&prettyPrint=false"
+    )!
+    private static let userAgent =
+        "com.google.ios.youtube/20.10.38 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)"
+    private static let minimumCharacters = 400
+
+    static func preview(videoID: String) async throws -> YouTubeVideo {
+        let player = try await fetchPlayer(videoID: videoID, language: YouTubeImportService.preferredLanguages.first ?? "fr")
+        return try video(from: player, videoID: videoID)
+    }
+
+    static func transcript(videoID: String, languages: [String]) async throws -> YouTubeTranscript {
+        let player = try await fetchPlayer(videoID: videoID, language: languages.first ?? "fr")
+        let tracks = captionTracks(from: player)
+        guard !tracks.isEmpty else { throw YouTubeImportError.noCaptions }
+
+        let ordered = orderedTracks(tracks, languages: languages)
+        var longest: YouTubeTranscript?
+
+        for track in ordered {
+            guard let text = await captionText(from: track.baseURL), !text.isEmpty else { continue }
+            let result = YouTubeTranscript(
+                text: text,
+                languageCode: track.code,
+                languageName: track.name,
+                isAutomatic: track.isAutomatic
+            )
+            if text.count >= minimumCharacters { return result }
+            if longest == nil || text.count > (longest?.text.count ?? 0) {
+                longest = result
+            }
+        }
+
+        if let longest { return longest }
+        throw YouTubeImportError.noCaptions
+    }
+
+    private static func fetchPlayer(videoID: String, language: String) async throws -> [String: Any] {
+        var request = URLRequest(url: playerURL)
+        request.httpMethod = "POST"
+        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("5", forHTTPHeaderField: "X-YouTube-Client-Name")
+        request.setValue("20.10.38", forHTTPHeaderField: "X-YouTube-Client-Version")
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "videoId": videoID,
+            "contentCheckOk": true,
+            "racyCheckOk": true,
+            "context": [
+                "client": [
+                    "clientName": "IOS",
+                    "clientVersion": "20.10.38",
+                    "deviceMake": "Apple",
+                    "deviceModel": "iPhone16,2",
+                    "osName": "iPhone",
+                    "osVersion": "18.3.2.22D82",
+                    "hl": language,
+                    "gl": "FR"
+                ]
+            ]
+        ])
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            throw YouTubeImportError.unavailable
+        }
+        guard let parsed = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw YouTubeImportError.unavailable
+        }
+        let status = ((parsed["playabilityStatus"] as? [String: Any])?["status"] as? String) ?? "OK"
+        guard status == "OK", parsed["videoDetails"] is [String: Any] else {
+            throw YouTubeImportError.unavailable
+        }
+        return parsed
+    }
+
+    private static func video(from player: [String: Any], videoID: String) throws -> YouTubeVideo {
+        guard let details = player["videoDetails"] as? [String: Any] else {
+            throw YouTubeImportError.unavailable
+        }
+        let tracks = captionTracks(from: player)
+        let seconds = Int(details["lengthSeconds"] as? String ?? "") ?? 0
+        return YouTubeVideo(
+            id: videoID,
+            title: (details["title"] as? String).flatMap { $0.nilIfBlank } ?? "Vidéo YouTube",
+            author: details["author"] as? String ?? "",
+            durationSeconds: seconds,
+            thumbnailUrl: "https://i.ytimg.com/vi/\(videoID)/hqdefault.jpg",
+            limitSeconds: Int(YouTubeLimits.maximumDuration),
+            captionLanguages: tracks.map {
+                YouTubeCaptionLanguage(code: $0.code, name: $0.name, isAutomatic: $0.isAutomatic)
+            }
+        )
+    }
+
+    private struct Track {
+        var code: String
+        var name: String
+        var isAutomatic: Bool
+        var isDefault: Bool
+        var baseURL: String
+    }
+
+    private static func captionTracks(from player: [String: Any]) -> [Track] {
+        let renderer = ((player["captions"] as? [String: Any])?
+            ["playerCaptionsTracklistRenderer"] as? [String: Any])
+        let raw = renderer?["captionTracks"] as? [[String: Any]] ?? []
+        let defaultIndex = renderer?["defaultCaptionTrackIndex"] as? Int ?? 0
+
+        return raw.enumerated().compactMap { index, track in
+            guard let baseURL = track["baseUrl"] as? String, !baseURL.isEmpty,
+                  let code = track["languageCode"] as? String, !code.isEmpty else { return nil }
+            let name = ((track["name"] as? [String: Any])?["simpleText"] as? String) ?? code
+            return Track(
+                code: code,
+                name: name,
+                isAutomatic: (track["kind"] as? String) == "asr",
+                isDefault: index == defaultIndex,
+                baseURL: baseURL
+            )
+        }
+    }
+
+    private static func orderedTracks(_ tracks: [Track], languages: [String]) -> [Track] {
+        var seen = Set<String>()
+        var result: [Track] = []
+        for language in languages {
+            if let manual = tracks.first(where: { !$0.isAutomatic && sameLanguage($0.code, language) }) {
+                if seen.insert(manual.baseURL).inserted { result.append(manual) }
+            }
+            if let automatic = tracks.first(where: { $0.isAutomatic && sameLanguage($0.code, language) }) {
+                if seen.insert(automatic.baseURL).inserted { result.append(automatic) }
+            }
+        }
+        for track in tracks where seen.insert(track.baseURL).inserted {
+            result.append(track)
+        }
+        return result
+    }
+
+    private static func sameLanguage(_ a: String, _ b: String) -> Bool {
+        a.split(whereSeparator: { $0 == "-" || $0 == "_" }).first?.lowercased()
+            == b.split(whereSeparator: { $0 == "-" || $0 == "_" }).first?.lowercased()
+    }
+
+    private static func captionText(from baseURL: String) async -> String? {
+        if let json = await fetch(baseURL, format: "json3"),
+           let text = YouTubeCaptionText.fromJSON3(json), !text.isEmpty {
+            return text
+        }
+        if let xml = await fetch(baseURL, format: nil),
+           let text = YouTubeCaptionText.fromXML(xml), !text.isEmpty {
+            return text
+        }
+        if let vtt = await fetch(baseURL, format: "vtt"),
+           let text = YouTubeCaptionText.fromVTT(vtt), !text.isEmpty {
+            return text
+        }
+        return nil
+    }
+
+    private static func fetch(_ baseURL: String, format: String?) async -> String? {
+        guard var components = URLComponents(string: baseURL) else { return nil }
+        var items = components.queryItems ?? []
+        items.removeAll { $0.name == "fmt" }
+        if let format {
+            items.append(URLQueryItem(name: "fmt", value: format))
+        }
+        components.queryItems = items
+        guard let url = components.url else { return nil }
+
+        var request = URLRequest(url: url)
+        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                return nil
+            }
+            return String(data: data, encoding: .utf8)
+        } catch {
+            return nil
+        }
+    }
+}
+
+/// Les trois formats de sous-titres, pour les tests autant que pour le réseau.
+enum YouTubeCaptionText {
+    static func fromJSON3(_ raw: String) -> String? {
+        guard raw.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{"),
+              let data = raw.data(using: .utf8),
+              let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let events = parsed["events"] as? [[String: Any]] else { return nil }
+
+        var lines: [String] = []
+        for event in events {
+            if event["aAppend"] as? Int == 1 { continue }
+            let segments = event["segs"] as? [[String: Any]] ?? []
+            let line = segments
+                .compactMap { $0["utf8"] as? String }
+                .joined()
+                .replacingOccurrences(of: "\n", with: " ")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !line.isEmpty { lines.append(line) }
+        }
+        return clean(lines)
+    }
+
+    static func fromXML(_ xml: String) -> String? {
+        guard xml.range(of: "<(?:timedtext|transcript|text)\\b", options: .regularExpression) != nil else {
+            return nil
+        }
+        let regex = try? NSRegularExpression(pattern: "<(?:text|p)\\b[^>]*>([\\s\\S]*?)</(?:text|p)>")
+        let full = NSRange(xml.startIndex..<xml.endIndex, in: xml)
+        let lines = regex?.matches(in: xml, range: full).compactMap { match -> String? in
+            guard let range = Range(match.range(at: 1), in: xml) else { return nil }
+            let stripped = xml[range].replacingOccurrences(
+                of: "<[^>]+>",
+                with: " ",
+                options: .regularExpression
+            )
+            let line = decode(stripped).replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return line.isEmpty ? nil : line
+        } ?? []
+        return clean(lines)
+    }
+
+    static func fromVTT(_ vtt: String) -> String? {
+        var body = vtt
+        if let prefix = body.range(of: "^\\u{FEFF}?WEBVTT[^\\n]*", options: .regularExpression) {
+            body.removeSubrange(prefix)
+        }
+        let lines = body.components(separatedBy: "\n\n").compactMap { block -> String? in
+            let spoken = block
+                .components(separatedBy: "\n")
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { line in
+                    !line.isEmpty
+                        && !line.contains("-->")
+                        && line.range(of: "^\\d+$", options: .regularExpression) == nil
+                        && line.range(of: "^kind:", options: [.regularExpression, .caseInsensitive]) == nil
+                        && line.range(of: "^language:", options: [.regularExpression, .caseInsensitive]) == nil
+                }
+                .joined(separator: " ")
+                .replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
+                .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return spoken.isEmpty ? nil : spoken
+        }
+        return clean(lines)
+    }
+
+    private static func clean(_ lines: [String]) -> String {
+        var kept: [String] = []
+        for raw in lines {
+            let line = decode(raw)
+                .replacingOccurrences(of: "\\[[^\\]\\n]{1,25}\\]", with: " ", options: .regularExpression)
+                .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if line.isEmpty { continue }
+            if kept.last == line { continue }
+            kept.append(line)
+        }
+        return kept.joined(separator: " ")
+            .replacingOccurrences(of: "\\s+([,.;:!?])", with: "$1", options: .regularExpression)
+            .replacingOccurrences(of: "\\s{2,}", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func decode(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+            .replacingOccurrences(of: "&quot;", with: "\"")
+            .replacingOccurrences(of: "&#39;", with: "'")
+            .replacingOccurrences(of: "&#039;", with: "'")
+            .replacingOccurrences(of: "&apos;", with: "'")
+            .replacingOccurrences(of: "&nbsp;", with: " ")
     }
 }
