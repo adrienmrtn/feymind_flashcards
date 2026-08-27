@@ -71,7 +71,7 @@ export function ExamCalendar({
               key={key}
               type="button"
               onClick={() => onSelect(day)}
-              className={`flex min-h-[3.75rem] flex-col items-stretch rounded-button px-0.5 pb-1 pt-1 text-left transition-colors duration-hover sm:min-h-[4.5rem] sm:px-1 ${
+              className={`flex min-h-[3.75rem] flex-col items-center rounded-button px-0.5 pb-1 pt-1 transition-colors duration-hover sm:min-h-[4.5rem] sm:px-1 ${
                 isSelected
                   ? "bg-accent text-on-ink"
                   : isToday
@@ -80,7 +80,7 @@ export function ExamCalendar({
               } ${outside && !isSelected ? "opacity-40" : ""}`}
             >
               <span
-                className={`numeral mb-0.5 text-center text-[12.5px] sm:text-[13.5px] ${
+                className={`numeral flex h-6 w-full items-center justify-center tracking-normal text-[12.5px] leading-none sm:text-[13.5px] ${
                   isToday || isSelected ? "font-semibold" : ""
                 }`}
               >
@@ -94,7 +94,7 @@ export function ExamCalendar({
                         ? `${first.name.trim() || "Examen"} · +${extras}`
                         : first.name.trim() || "Examen"
                     }
-                    className={`truncate rounded-pill px-1 py-0.5 text-[9px] font-semibold leading-tight sm:text-[11px] ${
+                    className={`w-full truncate rounded-pill px-1 py-0.5 text-center text-[9px] font-semibold leading-tight sm:text-[11px] ${
                       isSelected
                         ? "bg-on-ink/18 text-on-ink"
                         : first.isPast
@@ -170,7 +170,7 @@ export function ExamDayPicker({
               type="button"
               disabled={blocked}
               onClick={() => onSelect(day)}
-              className={`flex h-10 items-center justify-center rounded-button text-[13.5px] transition-colors duration-hover ${
+              className={`flex h-10 w-full items-center justify-center rounded-button text-[13.5px] leading-none transition-colors duration-hover ${
                 isSelected
                   ? "bg-accent font-semibold text-on-ink"
                   : blocked
@@ -180,7 +180,7 @@ export function ExamDayPicker({
                       : "text-ink hover:bg-surface-muted"
               } ${outside && !isSelected && !blocked ? "opacity-40" : ""}`}
             >
-              <span className="numeral">{day.getDate()}</span>
+              <span className="numeral tracking-normal">{day.getDate()}</span>
             </button>
           );
         })}
