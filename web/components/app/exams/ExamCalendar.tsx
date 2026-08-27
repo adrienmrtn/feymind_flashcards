@@ -63,14 +63,15 @@ export function ExamCalendar({
           const isSelected = selected ? sameDay(selected, day) : false;
           const isToday = sameDay(today, day);
           const outside = day.getMonth() !== month.getMonth();
-          const extras = Math.max(0, marks.length - 2);
+          const extras = Math.max(0, marks.length - 1);
+          const first = marks[0];
 
           return (
             <button
               key={key}
               type="button"
               onClick={() => onSelect(day)}
-              className={`flex min-h-[4.75rem] flex-col items-stretch rounded-button px-0.5 pb-1 pt-1 text-left transition-colors duration-hover sm:min-h-[5.5rem] sm:px-1 ${
+              className={`flex min-h-[3.75rem] flex-col items-stretch rounded-button px-0.5 pb-1 pt-1 text-left transition-colors duration-hover sm:min-h-[4.5rem] sm:px-1 ${
                 isSelected
                   ? "bg-accent text-on-ink"
                   : isToday
@@ -85,32 +86,35 @@ export function ExamCalendar({
               >
                 {day.getDate()}
               </span>
-              <span className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
-                {marks.slice(0, 2).map((exam) => (
+              {first ? (
+                <span className="flex min-h-0 flex-1 flex-col items-stretch gap-0.5 overflow-hidden">
                   <span
-                    key={exam.id}
-                    title={exam.name.trim() || "Examen"}
-                    className={`truncate rounded-pill px-1 py-px text-[8px] font-semibold leading-4 sm:text-[10px] ${
+                    title={
+                      extras > 0
+                        ? `${first.name.trim() || "Examen"} · +${extras}`
+                        : first.name.trim() || "Examen"
+                    }
+                    className={`truncate rounded-pill px-1 py-0.5 text-[9px] font-semibold leading-tight sm:text-[11px] ${
                       isSelected
                         ? "bg-on-ink/18 text-on-ink"
-                        : exam.isPast
+                        : first.isPast
                           ? "bg-surface-muted text-ink-tertiary"
                           : "bg-caution-soft text-caution"
                     }`}
                   >
-                    {exam.name.trim() || "Examen"}
+                    {first.name.trim() || "Examen"}
                   </span>
-                ))}
-                {extras > 0 ? (
-                  <span
-                    className={`truncate px-1 text-[8px] font-semibold sm:text-[10px] ${
-                      isSelected ? "text-on-ink/80" : "text-ink-tertiary"
-                    }`}
-                  >
-                    +{extras}
-                  </span>
-                ) : null}
-              </span>
+                  {extras > 0 ? (
+                    <span
+                      className={`px-1 text-[8px] font-semibold sm:text-[10px] ${
+                        isSelected ? "text-on-ink/80" : "text-ink-tertiary"
+                      }`}
+                    >
+                      +{extras}
+                    </span>
+                  ) : null}
+                </span>
+              ) : null}
             </button>
           );
         })}
