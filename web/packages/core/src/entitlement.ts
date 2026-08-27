@@ -71,6 +71,12 @@ export const FREE_TIER = {
 /** Ce que le webhook RevenueCat écrira dans `entitlements`, à l'étape 5. */
 export interface Entitlement {
   isPro: boolean;
+  /**
+   * Vrai quand `isPro` vient du réglage d'absence de ligne, pas d'un achat.
+   * Le paywall s'appuie là-dessus : on peut être « Pro » pour les portes
+   * et encore « à convertir » pour l'offre.
+   */
+  assumed?: boolean;
   productId?: string | null;
   /**
    * D'où vient l'achat. C'est lui qui décide quel magasin ouvre « Gérer mon abonnement » — un
@@ -90,6 +96,24 @@ export const FREE: Entitlement = { isPro: false };
 export const PRO: Entitlement = { isPro: true };
 
 /**
+ * Le droit **deviné** : pas de ligne, donc pas d'achat, mais le verrou reste ouvert.
+ *
+ * C'est ce qui permet de poser le paywall — l'étudiant n'a pas payé — sans lui fermer
+ * les cours tant que Stripe n'est pas branché.
+ */
+export const ASSUMED_PRO: Entitlement = { isPro: true, assumed: true };
+
+/**
+ * Vrai seulement s'il y a **vraiment** un abonnement.
+ *
+ * `isPro` peut être vrai par complaisance (`ASSUME_PRO_WITHOUT_ROW`) : le paywall
+ * ne doit pas se fier à ça, sinon il ne s'ouvre jamais.
+ */
+export function isPaid(right: Entitlement): boolean {
+  return right.isPro && !right.assumed;
+}
+
+/**
  * Le droit effectif.
  *
  * Tant que le verrou n'est pas armé, tout le monde est Pro. Et quand il le sera : en cas de
@@ -100,7 +124,7 @@ export function resolve(...sources: (Entitlement | null | undefined)[]): Entitle
   const known = sources.filter((source): source is Entitlement => Boolean(source));
 
   // Personne ne sait rien de cette personne : c'est le réglage ci-dessus qui décide.
-  if (known.length === 0) return ASSUME_PRO_WITHOUT_ROW ? PRO : FREE;
+  if (known.length === 0) return ASSUME_PRO_WITHOUT_ROW ? ASSUMED_PRO : FREE;
 
   // Le plus généreux gagne. Le SDK et la table doivent s'accorder ; quand ils divergent, enfermer
   // dehors un étudiant qui paye est pire qu'une minute offerte.

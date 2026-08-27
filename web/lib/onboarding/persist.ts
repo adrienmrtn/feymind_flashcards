@@ -12,7 +12,8 @@ import type { Answers } from "./store";
 
 export const ANSWERS_KEY = "micabo.onboarding.answers";
 export const PAYWALL_PENDING_KEY = "micabo.paywall.pending";
-export const PAYWALL_DISMISSED_KEY = "micabo.paywall.dismissed";
+/** v2 : l'offre à quatre étapes n'avait jamais pu s'ouvrir (tout le monde était « Pro »). */
+export const PAYWALL_DISMISSED_KEY = "micabo.paywall.v2.dismissed";
 
 export function readStoredAnswers(): Answers | null {
   if (typeof window === "undefined") return null;
@@ -105,6 +106,8 @@ export function markPaywallDismissed(): void {
     // Voir plus haut.
   }
 }
+
+export { shouldOpenPaywall } from "./paywall";
 
 /**
  * Écrit les réponses en base si une session existe, et prépare le paywall.
