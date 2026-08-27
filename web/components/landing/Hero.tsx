@@ -6,7 +6,7 @@ import { StartButton } from "./StartButton";
  */
 export function Hero() {
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-clip">
       {/* Une seule lueur verte, très basse en opacité : elle donne de la profondeur au papier
           sans devenir le dégradé de bandeau que tout le monde pose. */}
       <div
