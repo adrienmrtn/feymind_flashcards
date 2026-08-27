@@ -451,6 +451,24 @@ final class SocialService {
         }
     }
 
+    /// Compte une vue sur un cours partagé. Le serveur déduplique par jour.
+    func recordView(of courseId: UUID) async {
+        guard isReady else { return }
+        try? await database.rpc(
+            "record_course_view",
+            arguments: ["p_course_id": courseId.uuidString.lowercased()]
+        )
+    }
+
+    /// Compte un ajout à la bibliothèque. Une seule fois par personne.
+    func recordAdopt(of courseId: UUID) async {
+        guard isReady else { return }
+        try? await database.rpc(
+            "record_course_adopt",
+            arguments: ["p_course_id": courseId.uuidString.lowercased()]
+        )
+    }
+
     // MARK: - Rouages
 
     private func directory(for identifiers: [UUID]) async throws -> [UUID: DirectoryRecord] {

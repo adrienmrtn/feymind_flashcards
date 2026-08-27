@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { courseAccent, displayUsername, resolveEmoji } from "@micabo/core";
+import { courseAccent, courseAudienceLabel, displayUsername, resolveEmoji } from "@micabo/core";
 
 import { AdoptCourse } from "@/components/app/AdoptCourse";
 import { SharedCardsPreview } from "@/components/app/SharedCardsPreview";
@@ -48,6 +48,7 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
               course.subject,
               author ? displayUsername(author.username) : null,
               cards.length > 0 ? `${cards.length} carte${cards.length > 1 ? "s" : ""}` : null,
+              courseAudienceLabel(course.viewCount, course.adoptCount),
             ]
               .filter(Boolean)
               .join(" · ")}

@@ -77,6 +77,7 @@ struct SharedCourseView: View {
             sheet = CourseSheet.decode(from: course.sheet?.data)?.highlighted()
             existing = CourseRepository.adopted(course, in: modelContext)
             cards = await social.cards(of: course.id)
+            await social.recordView(of: course.id)
         }
         .alert("Oups", isPresented: .constant(failure != nil)) {
             Button("Fermer", role: .cancel) { failure = nil }
@@ -110,6 +111,7 @@ struct SharedCourseView: View {
         if let subject = course.subject?.nilIfBlank { parts.append(subject) }
         if let sheet { parts.append("\(sheet.readingMinutes) min de lecture") }
         if !cards.isEmpty { parts.append(MicaboCopy.cards(cards.count)) }
+        parts.append(MicaboCopy.audience(of: course))
         return parts.isEmpty ? "Cours partagé" : parts.joined(separator: " · ")
     }
 
@@ -236,6 +238,7 @@ struct SharedCourseView: View {
                 cards: cards,
                 in: modelContext
             )
+            Task { await social.recordAdopt(of: course.id) }
             Haptics.success()
             onAdopted(adopted)
         } catch {

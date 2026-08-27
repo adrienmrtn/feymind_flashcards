@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { courseAccent, displayUsername, resolveEmoji, studyCounts } from "@micabo/core";
+import { courseAccent, courseAudienceLabel, displayUsername, resolveEmoji, studyCounts } from "@micabo/core";
 
 import { LibrarySearch } from "@/components/app/LibrarySearch";
 import { listCardSnapshots, listCourses } from "@/lib/data/courses";
@@ -147,12 +147,13 @@ function Shelf({
                   {course.title || "Sans titre"}
                 </span>
                 <span className="mt-0.5 block truncate text-[13px] text-ink-tertiary">
-                  {[
-                    course.subject,
-                    course.is_from_library ? "Repris" : sourceLabel(course.source),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
+                    {[
+                      course.subject,
+                      course.is_from_library ? "Repris" : sourceLabel(course.source),
+                      courseAudienceLabel(course.view_count ?? 0, course.adopt_count ?? 0),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                 </span>
               </span>
 
@@ -233,6 +234,7 @@ function LibraryPane({
                       course.cardCount > 0
                         ? `${course.cardCount} carte${course.cardCount > 1 ? "s" : ""}`
                         : null,
+                      courseAudienceLabel(course.viewCount, course.adoptCount),
                     ]
                       .filter(Boolean)
                       .join(" · ")}

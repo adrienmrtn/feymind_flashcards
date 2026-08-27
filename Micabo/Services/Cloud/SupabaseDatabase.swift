@@ -154,6 +154,19 @@ struct SupabaseDatabase {
         }
     }
 
+    /// Appelle une fonction PostgREST (`/rpc/…`). Le corps porte les arguments
+    /// sous leurs noms SQL.
+    func rpc(_ name: String, arguments: [String: String] = [:]) async throws {
+        let body = try JSONSerialization.data(withJSONObject: arguments)
+        _ = try await send(
+            method: "POST",
+            path: "rpc/\(name)",
+            query: [],
+            body: body,
+            prefer: "return=minimal"
+        )
+    }
+
     // MARK: - Transport
 
     private func send(

@@ -74,6 +74,9 @@ final class Course {
     var visibilityRaw: String = CourseVisibility.standard.rawValue
     /// Empreinte du contenu importé, pour reconnaître un chapitre déjà présent.
     var fingerprint: String = ""
+    /// Compteurs publics, lus depuis le cloud. Ils ne se poussent pas.
+    var viewCount: Int = 0
+    var adoptCount: Int = 0
 
     @Relationship(deleteRule: .cascade, inverse: \Flashcard.course)
     var flashcards: [Flashcard]? = []

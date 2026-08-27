@@ -32,4 +32,19 @@ enum MicaboCopy {
 
     /// Le libellé du bouton qui lance l'écriture des cartes, où qu'il se trouve.
     static let cardsButton = "Générer les cartes"
+
+    /// « 12 vues · 3 ajouts » — les deux compteurs publics d'un cours.
+    static func audience(views: Int, adopts: Int) -> String {
+        let viewLabel = views <= 1 ? "\(views) vue" : "\(views) vues"
+        let adoptLabel = adopts <= 1 ? "\(adopts) ajout" : "\(adopts) ajouts"
+        return "\(viewLabel) · \(adoptLabel)"
+    }
+
+    static func audience(of course: SharedCourseRecord) -> String {
+        audience(views: course.view_count ?? 0, adopts: course.adopt_count ?? 0)
+    }
+
+    static func audience(of course: Course) -> String {
+        audience(views: course.viewCount, adopts: course.adoptCount)
+    }
 }

@@ -76,7 +76,7 @@ struct StudyView: View {
                     rhythmNew: rhythmNew,
                     introducedToday: introducedToday,
                     newPerSession: $newPerSession,
-                    sliderMax: DailyNewQuota.sliderMax(rhythm: rhythmNew),
+                    sliderMax: availableDueNew,
                     canClose: !isEmbedded,
                     onClose: { dismiss() },
                     onStart: confirmStart
@@ -372,6 +372,16 @@ struct StudyView: View {
         )
     }
 
+    /// Cartes neuves réellement dues dans ce paquet. C'est le plafond du curseur :
+    /// on ne peut pas en demander plus qu'il n'y en a.
+    private var availableDueNew: Int {
+        resolveCards().filter { $0.isDue() && $0.state == .new }.count
+    }
+
+    private func clampNewPerSession() {
+        newPerSession = min(DailyNewQuota.remaining(introduced: introducedToday), availableDueNew)
+    }
+
     /// Au premier affichage : soit on propose de reprendre, soit on règle le curseur.
     private func prepare() {
         guard !didStart, resumable == nil else { return }
@@ -384,7 +394,7 @@ struct StudyView: View {
         }
 
         if mode.affectsSchedule {
-            newPerSession = DailyNewQuota.remaining(introduced: introducedToday)
+            clampNewPerSession()
             awaitingStart = true
             return
         }
@@ -422,7 +432,7 @@ struct StudyView: View {
         StudySessionStore.clear()
         resumable = nil
         if mode.affectsSchedule {
-            newPerSession = DailyNewQuota.remaining(introduced: introducedToday)
+            clampNewPerSession()
             awaitingStart = true
             return
         }
@@ -970,19 +980,21 @@ private struct SessionSetupView: View {
                                 .font(MicaboFont.number(13, weight: .semibold))
                                 .foregroundStyle(MicaboColor.ink)
                                 .monospacedDigit()
-                            + Text(" · \(rhythmNew) prévues par ton rythme")
+                            + Text(sliderValueCaption)
                                 .font(MicaboFont.hanken(13, weight: .medium))
                                 .foregroundStyle(MicaboColor.inkTertiary)
                         }
 
-                        Slider(
-                            value: Binding(
-                                get: { Double(newPerSession) },
-                                set: { newPerSession = Int($0.rounded()) }
-                            ),
-                            in: 0...Double(max(sliderMax, 1))
-                        )
-                        .tint(MicaboColor.progress)
+                        if sliderMax > 0 {
+                            Slider(
+                                value: Binding(
+                                    get: { Double(min(newPerSession, sliderMax)) },
+                                    set: { newPerSession = Int($0.rounded()) }
+                                ),
+                                in: 0...Double(sliderMax)
+                            )
+                            .tint(MicaboColor.progress)
+                        }
 
                         Text(sliderCaption)
                             .font(MicaboFont.hanken(12.5, weight: .regular))
@@ -1020,12 +1032,26 @@ private struct SessionSetupView: View {
         return "Rythme du jour atteint"
     }
 
+    private var sliderValueCaption: String {
+        var parts: [String] = []
+        if sliderMax > 0 {
+            parts.append(" · \(sliderMax) disponible\(sliderMax > 1 ? "s" : "")")
+        }
+        if rhythmNew > 0 {
+            parts.append(" · \(rhythmNew) prévues par ton rythme")
+        }
+        return parts.joined()
+    }
+
     private var sliderCaption: String {
+        if sliderMax == 0 {
+            return "Plus de cartes neuves dans ce paquet."
+        }
         if introducedToday > 0 {
             let seen = "\(introducedToday) déjà apprise\(introducedToday > 1 ? "s" : "") aujourd'hui."
             return "\(seen) Le curseur ne change que cette session."
         }
-        return "Le nombre de base est celui de ton rythme. Tu peux en prendre plus, ou moins."
+        return "Le maximum, c'est le nombre de cartes neuves encore disponibles."
     }
 
     private func setupTile(value: Int, label: String, accent: Bool) -> some View {

@@ -74,6 +74,57 @@ enum StudyStats {
         }
     }
 
+    /// Les quatre niveaux affichés sur le Profil, dans l'ordre des barres.
+    enum KnowledgeLevel: String, CaseIterable, Identifiable {
+        case new
+        case learning
+        case review
+        case mastered
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .new: "Nouvelles"
+            case .learning: "En cours"
+            case .review: "En révision"
+            case .mastered: "Parfaitement maîtrisées"
+            }
+        }
+    }
+
+    static func knowledgeLevel(state: CardState, intervalDays: Double) -> KnowledgeLevel {
+        if intervalDays >= 21 { return .mastered }
+        switch state {
+        case .new: return .new
+        case .learning, .relearning: return .learning
+        case .review: return .review
+        }
+    }
+
+    static func knowledgeDistribution(cards: [Flashcard]) -> [(level: KnowledgeLevel, count: Int)] {
+        let grouped = Dictionary(grouping: cards) {
+            knowledgeLevel(state: $0.state, intervalDays: $0.intervalDays)
+        }
+        return KnowledgeLevel.allCases.map { level in
+            (level, grouped[level]?.count ?? 0)
+        }
+    }
+
+    static func mostReviewed(from logs: [ReviewLog], limit: Int = 5) -> [(front: String, passes: Int)] {
+        var counts: [UUID: (front: String, passes: Int)] = [:]
+        for log in logs {
+            guard let card = log.card else { continue }
+            var entry = counts[card.id] ?? (front: card.front, passes: 0)
+            entry.passes += 1
+            counts[card.id] = entry
+        }
+        return counts.values
+            .sorted { $0.passes == $1.passes ? $0.front < $1.front : $0.passes > $1.passes }
+            .prefix(limit)
+            .map { $0 }
+    }
+
 }
 
 extension String {
