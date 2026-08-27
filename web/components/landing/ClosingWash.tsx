@@ -16,7 +16,7 @@ const WASH_COLORS = ["#d7e6d8", "#f6f4ed", "#16c08c"];
  *
  * Un radial CSS reste dessous.
  */
-export function ClosingWash() {
+export function ClosingWash({ signedIn = false }: { signedIn?: boolean }) {
   const reduced = usePrefersReducedMotion();
 
   return (
@@ -61,7 +61,7 @@ export function ClosingWash() {
           Ton prochain contrôle commence maintenant.
         </h2>
         <div className="mt-9">
-          <StartButton />
+          <StartButton signedIn={signedIn} />
         </div>
       </Reveal>
     </section>

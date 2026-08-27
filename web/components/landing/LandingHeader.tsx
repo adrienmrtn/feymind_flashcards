@@ -8,14 +8,14 @@ import { StartButton } from "./StartButton";
  * Un mot, un bouton. Le parcours a sa propre jauge ; ici on n'emprunte rien
  * de ça, pour que la landing ne se lise pas comme un tunnel.
  */
-export function LandingHeader() {
+export function LandingHeader({ signedIn = false }: { signedIn?: boolean }) {
   return (
     <header className="sticky top-0 z-20 border-b border-hairline-on-canvas/80 bg-canvas/70 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-page items-center justify-between px-screen">
         <Link href="/" className="text-[15px] font-bold tracking-tight text-ink">
           Micabo
         </Link>
-        <StartButton size="compact" />
+        <StartButton signedIn={signedIn} size="compact" />
       </div>
     </header>
   );

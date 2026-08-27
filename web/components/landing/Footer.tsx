@@ -4,10 +4,10 @@ import Link from "next/link";
  * Le pied de page de la vitrine.
  *
  * L'app iOS n'est pas publiée : pas de badge App Store. Les pages légales n'existent pas
- * encore : on ne pose pas de liens morts. Le parcours s'ouvre par **Commencer**, le même
- * libellé que partout ailleurs.
+ * encore : on ne pose pas de liens morts. Le parcours s'ouvre par **Commencer**.
+ * Une session déjà ouverte remplace ça par Dashboard.
  */
-export function Footer() {
+export function Footer({ signedIn = false }: { signedIn?: boolean }) {
   return (
     <footer className="mt-24 border-t border-hairline-on-canvas" data-print="hide">
       <div className="mx-auto max-w-page px-screen py-14">
@@ -24,16 +24,30 @@ export function Footer() {
             <div>
               <p className="eyebrow mb-3 text-ink-tertiary">Le site</p>
               <ul className="space-y-1.5 text-ink-secondary">
-                <li>
-                  <Link href="/commencer/pays" className="underline-draw" data-print="bare">
-                    Commencer
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/commencer/compte?suite=%2Fapp" className="underline-draw" data-print="bare">
-                    Se connecter
-                  </Link>
-                </li>
+                {signedIn ? (
+                  <li>
+                    <Link href="/app" className="underline-draw" data-print="bare">
+                      Dashboard
+                    </Link>
+                  </li>
+                ) : (
+                  <>
+                    <li>
+                      <Link href="/commencer/pays" className="underline-draw" data-print="bare">
+                        Commencer
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/commencer/compte?suite=%2Fapp"
+                        className="underline-draw"
+                        data-print="bare"
+                      >
+                        Se connecter
+                      </Link>
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
 

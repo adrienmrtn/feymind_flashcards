@@ -10,7 +10,7 @@ import { Questions } from "@/components/landing/Questions";
 import { RetentionChart } from "@/components/landing/RetentionChart";
 import { Reveal } from "@/components/landing/Reveal";
 import { SourceMarquee } from "@/components/landing/SourceMarquee";
-import { createClient } from "@/lib/supabase/server";
+import { currentUser } from "@/lib/data/user";
 
 export const metadata: Metadata = {
   title: "Micabo — apprends tout, plus vite",
@@ -23,8 +23,9 @@ export const metadata: Metadata = {
  *
  * Elle se lit d'un seul défilement : le document devient une fiche, puis des cartes.
  *
- * Un lien de confirmation qui retombe ici (Site URL) n'y reste pas : s'il y a un code ou une
- * session, on reprend le parcours.
+ * Un lien de confirmation qui retombe ici (Site URL) n'y reste pas : s'il y a un code,
+ * on reprend le callback. Une session déjà ouverte laisse la vitrine : le bouton
+ * dit Dashboard, et mène à l'app.
  */
 export default async function LandingPage({
   searchParams,
@@ -45,17 +46,14 @@ export default async function LandingPage({
     redirect(`${callback.pathname}${callback.search}` as Route);
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (user) redirect("/app");
+  const user = await currentUser();
+  const signedIn = Boolean(user);
 
   return (
     <>
-      <LandingHeader />
+      <LandingHeader signedIn={signedIn} />
       <main>
-        <Hero />
+        <Hero signedIn={signedIn} />
 
         <SourceMarquee />
 
@@ -79,10 +77,10 @@ export default async function LandingPage({
           <Questions />
         </Section>
 
-        <ClosingWash />
+        <ClosingWash signedIn={signedIn} />
       </main>
 
-      <Footer />
+      <Footer signedIn={signedIn} />
     </>
   );
 }
