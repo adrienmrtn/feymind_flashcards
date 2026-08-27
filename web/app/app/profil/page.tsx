@@ -9,6 +9,7 @@ import {
   resolveStage,
 } from "@micabo/core";
 
+import { DeleteAccount } from "@/components/app/DeleteAccount";
 import { ProfileSettings } from "@/components/app/ProfileSettings";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { currentUser } from "@/lib/data/user";
@@ -158,6 +159,8 @@ export default async function ProfilePage() {
           }
         />
       </div>
+
+      <DeleteAccount email={user?.email ?? ""} />
 
       <p className="mt-12 text-[12.5px] text-ink-tertiary">
         <Link href="/" className="underline-draw">
