@@ -64,3 +64,25 @@ export async function loadNewCardBudget(): Promise<{
     remaining: remainingNewCards(introducedToday, minutes),
   };
 }
+
+/**
+ * Les dates de révision depuis un jour donné — pour la flamme du calendrier.
+ *
+ * Pas de cache : une session qui vient de se terminer doit allumer le jour
+ * tout de suite, pas au prochain rechargement froid.
+ */
+export async function loadReviewDatesSince(from: Date): Promise<Date[]> {
+  const user = await currentUser();
+  if (!user) return [];
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("review_logs")
+    .select("reviewed_at")
+    .eq("user_id", user.id)
+    .gte("reviewed_at", from.toISOString());
+
+  return ((data as { reviewed_at: string }[] | null) ?? []).map(
+    (row) => new Date(row.reviewed_at),
+  );
+}

@@ -6,7 +6,7 @@
  * calcule sur tout l'historique, pas sur une fenêtre.
  */
 
-import { addDays, startOfDay } from "./srs/exam";
+import { addDays, dayDifference, startOfDay } from "./srs/exam";
 import { isMature, type CardState } from "./srs/types";
 
 export type KnowledgeLevel = "new" | "learning" | "review" | "mastered";
@@ -132,6 +132,70 @@ export function mostReviewedCards(
       front: fronts.get(id) ?? "",
       passes,
     }));
+}
+
+/**
+ * La semaine glissante du tableau de bord : trois jours avant, aujourd'hui,
+ * trois jours après.
+ *
+ * Les cartes en retard se posent **aujourd'hui** — c'est là qu'on les fait.
+ * Un jour à venir ne porte que ce qui tombe vraiment ce jour-là. La flamme
+ * dit qu'on a déjà révisé ce jour, pas le volume.
+ */
+export const WEEK_STRIP_RADIUS = 3;
+
+export interface WeekCard {
+  dueDate: Date;
+  isSuspended?: boolean;
+}
+
+export interface WeekDayLoad {
+  date: Date;
+  offset: number;
+  planned: number;
+  reviewed: boolean;
+  reviewCount: number;
+}
+
+export function weekStrip(
+  cards: readonly WeekCard[],
+  reviewDates: readonly Date[],
+  now: Date = new Date(),
+): WeekDayLoad[] {
+  const today = startOfDay(now);
+  const planned = new Map<number, number>();
+  const reviews = new Map<number, number>();
+
+  for (let offset = -WEEK_STRIP_RADIUS; offset <= WEEK_STRIP_RADIUS; offset += 1) {
+    planned.set(offset, 0);
+    reviews.set(offset, 0);
+  }
+
+  for (const card of cards) {
+    if (card.isSuspended) continue;
+    const offset = dayDifference(today, startOfDay(card.dueDate));
+    const bucket = offset < 0 ? 0 : offset;
+    if (bucket > WEEK_STRIP_RADIUS) continue;
+    planned.set(bucket, (planned.get(bucket) ?? 0) + 1);
+  }
+
+  for (const reviewedAt of reviewDates) {
+    const offset = dayDifference(today, startOfDay(reviewedAt));
+    if (offset < -WEEK_STRIP_RADIUS || offset > WEEK_STRIP_RADIUS) continue;
+    reviews.set(offset, (reviews.get(offset) ?? 0) + 1);
+  }
+
+  return Array.from({ length: WEEK_STRIP_RADIUS * 2 + 1 }, (_, index) => {
+    const offset = index - WEEK_STRIP_RADIUS;
+    const reviewCount = reviews.get(offset) ?? 0;
+    return {
+      date: addDays(today, offset),
+      offset,
+      planned: planned.get(offset) ?? 0,
+      reviewed: reviewCount > 0,
+      reviewCount,
+    };
+  });
 }
 
 /** « 12 vues · 3 ajouts » — les deux compteurs publics d'un cours. */

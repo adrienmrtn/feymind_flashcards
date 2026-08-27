@@ -142,10 +142,14 @@ export {
   knowledgeLevel,
   mostReviewedCards,
   streak,
+  weekStrip,
+  WEEK_STRIP_RADIUS,
   type KnowledgeBucket,
   type KnowledgeCard,
   type KnowledgeLevel,
   type ReviewedCard,
+  type WeekCard,
+  type WeekDayLoad,
 } from "./stats";
 
 // La courbe de l'oubli, pour la page d'accueil.
