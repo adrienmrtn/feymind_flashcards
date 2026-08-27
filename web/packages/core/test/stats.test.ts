@@ -126,6 +126,23 @@ describe("la semaine glissante", () => {
     expect(days.map((day) => day.planned)).toEqual([0, 0, 0, 2, 2, 0, 1]);
   });
 
+  it("ne compte les neuves que dans le budget du jour", () => {
+    const days = weekStrip(
+      [
+        { dueDate: day(0), state: "new" },
+        { dueDate: day(0), state: "new" },
+        { dueDate: day(0), state: "new" },
+        { dueDate: day(-1), state: "review" },
+        { dueDate: day(2), state: "review" },
+      ],
+      [],
+      now,
+      { newRemaining: 1 },
+    );
+
+    expect(days.map((day) => day.planned)).toEqual([0, 0, 0, 2, 0, 1, 0]);
+  });
+
   it("marque d'une flamme les jours déjà révisés", () => {
     const days = weekStrip([], [day(-3), day(-3), day(0), day(4)], now);
 

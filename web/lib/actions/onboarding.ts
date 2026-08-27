@@ -1,7 +1,11 @@
 "use server";
 
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
 import { countryFor, newCardsPerDay, DEFAULT_DAILY_MINUTES } from "@micabo/core";
 
+import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -69,6 +73,9 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
     return { status: "error", message: profileError.message };
   }
 
+  const jar = await cookies();
+  jar.delete(ONBOARDING_REPLAY_COOKIE);
+
   // L'écran de la date d'examen crée une vraie ligne dans `exams`. C'est la seule chose que le
   // parcours écrit hors de `profiles`, et c'est ce qui rend la promesse tenable : « Micabo te
   // créera un parcours adapté à ton examen ».
@@ -109,4 +116,16 @@ export async function defaultPace(): Promise<{ minutes: number; newCards: number
 /** Le nom du pays, pour l'afficher côté serveur si besoin. */
 export async function countryName(code: string): Promise<string> {
   return countryFor(code).name;
+}
+
+/** Rouvre le parcours, même avec une session. Pour déboguer depuis le profil. */
+export async function replayOnboarding(): Promise<never> {
+  const jar = await cookies();
+  jar.set(ONBOARDING_REPLAY_COOKIE, "1", {
+    path: "/",
+    maxAge: 60 * 60 * 12,
+    sameSite: "lax",
+    httpOnly: true,
+  });
+  redirect("/commencer/pays");
 }

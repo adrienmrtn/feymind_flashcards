@@ -1,3 +1,6 @@
+import { cookies } from "next/headers";
+
+import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -11,6 +14,9 @@ import { createClient } from "@/lib/supabase/server";
 export type ResumePath = "/commencer/pays" | "/app";
 
 export async function resumePath(): Promise<ResumePath> {
+  const jar = await cookies();
+  if (jar.get(ONBOARDING_REPLAY_COOKIE)?.value === "1") return "/commencer/pays";
+
   const supabase = await createClient();
   const {
     data: { user },

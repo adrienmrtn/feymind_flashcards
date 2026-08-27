@@ -147,6 +147,7 @@ export const WEEK_STRIP_RADIUS = 3;
 export interface WeekCard {
   dueDate: Date;
   isSuspended?: boolean;
+  state?: CardState;
 }
 
 export interface WeekDayLoad {
@@ -161,10 +162,12 @@ export function weekStrip(
   cards: readonly WeekCard[],
   reviewDates: readonly Date[],
   now: Date = new Date(),
+  options: { newRemaining?: number } = {},
 ): WeekDayLoad[] {
   const today = startOfDay(now);
   const planned = new Map<number, number>();
   const reviews = new Map<number, number>();
+  let newDue = 0;
 
   for (let offset = -WEEK_STRIP_RADIUS; offset <= WEEK_STRIP_RADIUS; offset += 1) {
     planned.set(offset, 0);
@@ -173,10 +176,20 @@ export function weekStrip(
 
   for (const card of cards) {
     if (card.isSuspended) continue;
+    // Une neuve n'est pas « prévue » : elle entre dans le budget du jour,
+    // pas dans la file entière. Sans ça, le graphe affiche tout le paquet.
+    if (card.state === "new") {
+      if (startOfDay(card.dueDate).getTime() <= today.getTime()) newDue += 1;
+      continue;
+    }
     const offset = dayDifference(today, startOfDay(card.dueDate));
     const bucket = offset < 0 ? 0 : offset;
     if (bucket > WEEK_STRIP_RADIUS) continue;
     planned.set(bucket, (planned.get(bucket) ?? 0) + 1);
+  }
+
+  if (options.newRemaining != null) {
+    planned.set(0, (planned.get(0) ?? 0) + Math.min(newDue, Math.max(0, options.newRemaining)));
   }
 
   for (const reviewedAt of reviewDates) {

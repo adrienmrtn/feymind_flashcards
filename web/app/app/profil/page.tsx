@@ -10,11 +10,14 @@ import {
   resolveStage,
   streak as currentStreak,
   bestStreak,
+  studyCounts,
 } from "@micabo/core";
 
 import { DeleteAccount } from "@/components/app/DeleteAccount";
 import { ProfileSettings } from "@/components/app/ProfileSettings";
+import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
+import { loadNewCardBudget } from "@/lib/data/reviews";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
@@ -30,7 +33,7 @@ export default async function ProfilePage() {
   const supabase = await createClient();
   const user = await currentUser();
 
-  const [profile, courses, cards, exams, logs] = await Promise.all([
+  const [profile, courses, cards, exams, logs, budget] = await Promise.all([
     user
       ? supabase
           .from("profiles")
@@ -52,12 +55,28 @@ export default async function ProfilePage() {
           .limit(20000)
           .then((result) => result.data ?? [])
       : Promise.resolve([]),
+    loadNewCardBudget(),
   ]);
 
   const country = countryFor(profile?.country_code);
   const stage = resolveStage(country.code, { level: profile?.study_level ?? null });
   const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
-  const due = cards.filter((card) => new Date(card.due_date).getTime() <= Date.now()).length;
+  const due = studyCounts(
+    cards.map((card) => ({
+      id: card.id,
+      state: card.state,
+      dueDate: new Date(card.due_date),
+      position: card.position,
+      createdAt: new Date(card.created_at),
+      isSuspended: card.is_suspended,
+    })),
+    {
+      limits: {
+        newPerSession: budget.remaining,
+        reviewsPerSession: Number.MAX_SAFE_INTEGER,
+      },
+    },
+  ).total;
   const name = profile?.display_name ?? profile?.username ?? "Ton compte";
   const handle = profile?.username ?? "";
 
@@ -96,7 +115,7 @@ export default async function ProfilePage() {
       </header>
 
       <section className="mt-9 grid gap-3 sm:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-group bg-ink p-6 text-on-ink">
+        <div className="hover-tile rounded-group bg-ink p-6 text-on-ink">
           <p className="eyebrow text-on-ink-muted">🔥 Série</p>
           <p className="numeral mt-3 text-[42px] font-bold leading-none">{series}</p>
           <p className="mt-2 text-[13px] text-on-ink-muted">
@@ -147,14 +166,14 @@ export default async function ProfilePage() {
             maîtrisées.
           </p>
         ) : (
-          <div className="paper rounded-group bg-surface px-5 py-5">
+            <div className="paper hover-tile rounded-group bg-surface px-5 py-5">
             <div className="flex h-36 items-end gap-3">
               {levels.map((level) => (
-                <div key={level.id} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                <div key={level.id} className="group flex min-w-0 flex-1 flex-col items-center gap-2">
                   <span className="numeral text-[13px] font-semibold text-ink">{level.count}</span>
                   <div className="flex h-24 w-full items-end">
                     <div
-                      className={`w-full rounded-t-md ${barTone(level.id)}`}
+                      className={`w-full origin-bottom rounded-t-md transition-transform duration-hover ease-out-strong group-hover:scale-y-110 ${barTone(level.id)}`}
                       style={{
                         height: `${Math.max(level.count > 0 ? 8 : 4, Math.round((level.count / peak) * 100))}%`,
                       }}
@@ -179,7 +198,7 @@ export default async function ProfilePage() {
         ) : (
           <ol className="paper divide-y divide-hairline overflow-hidden rounded-group bg-surface">
             {topCards.map((card, index) => (
-              <li key={card.id} className="flex items-baseline gap-3.5 px-5 py-3.5">
+              <li key={card.id} className="hover-row flex items-baseline gap-3.5 px-5 py-3.5">
                 <span className="numeral w-5 shrink-0 text-[13px] text-ink-tertiary">
                   {index + 1}
                 </span>
@@ -241,6 +260,11 @@ export default async function ProfilePage() {
         />
       </div>
 
+      <section className="mt-10">
+        <p className="eyebrow mb-3 text-ink-tertiary">Débogage</p>
+        <ReplayOnboarding />
+      </section>
+
       <DeleteAccount email={user?.email ?? ""} />
     </>
   );
@@ -261,7 +285,7 @@ function barTone(level: string): string {
 
 function Tile({ value, label, hint }: { value: number; label: string; hint?: string }) {
   return (
-    <div className="paper flex flex-col justify-center rounded-group bg-surface p-6">
+    <div className="paper hover-tile flex flex-col justify-center rounded-group bg-surface p-6">
       <p className="numeral text-[32px] font-bold leading-none text-ink">{value}</p>
       <p className="mt-1.5 text-[13px] text-ink-tertiary">{label}</p>
       {hint ? <p className="mt-1 text-[12px] text-ink-tertiary">{hint}</p> : null}
@@ -271,7 +295,7 @@ function Tile({ value, label, hint }: { value: number; label: string; hint?: str
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 px-5 py-3.5">
+    <div className="hover-row flex items-baseline justify-between gap-4 px-5 py-3.5">
       <dt className="shrink-0 text-[13px] text-ink-tertiary">{label}</dt>
       <dd className="text-right text-[14.5px] font-medium text-ink">{value}</dd>
     </div>

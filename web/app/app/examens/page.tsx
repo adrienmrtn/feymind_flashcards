@@ -27,8 +27,7 @@ export default async function ExamsPage() {
   return (
     <>
       <header>
-        <p className="eyebrow text-ink-tertiary">🗓️ Mode examen</p>
-        <h1 className="mt-2 text-[32px] font-bold leading-tight text-ink">📅 Examens</h1>
+        <h1 className="text-[32px] font-bold leading-tight text-ink">📅 Examens</h1>
       </header>
 
       <div className="mt-8">
