@@ -422,6 +422,150 @@ video {
   }
 }
 
+/* --------------------------------------------------------------------------
+   La transformation du cours
+
+   Deux places, trois objets : au départ le document et la fiche, à l'arrivée la
+   fiche et les cartes. Le défilement ne pilote que transform + opacity. Sur mobile
+   le trajet se fait verticalement ; à partir de `sm`, horizontalement.
+   -------------------------------------------------------------------------- */
+
+.transformation-scroll {
+  height: 190svh;
+}
+
+.transformation-sticky {
+  position: sticky;
+  top: 4rem;
+  display: flex;
+  height: calc(100svh - 5rem);
+  min-height: 610px;
+  max-height: 780px;
+  align-items: center;
+}
+
+.transformation-stage {
+  position: relative;
+  width: 100%;
+  height: min(610px, calc(100svh - 6rem));
+  min-height: 560px;
+}
+
+.transformation-course,
+.transformation-sheet,
+.transformation-cards {
+  position: absolute;
+  left: 50%;
+  width: min(100%, 340px);
+  height: 252px;
+  translate: -50% 0;
+  will-change: transform, opacity;
+}
+
+.transformation-course {
+  top: 0;
+  opacity: var(--transformation-inverse);
+  transform: translateY(calc(var(--transformation-progress) * -54px));
+}
+
+.transformation-sheet {
+  top: 308px;
+  z-index: 2;
+  transform: translateY(calc(var(--transformation-progress) * -308px));
+}
+
+.transformation-cards {
+  top: 308px;
+  opacity: var(--transformation-progress);
+  transform: translateY(calc(var(--transformation-inverse) * 58px));
+}
+
+.transformation-arrow {
+  position: absolute;
+  top: 270px;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  translate: -50% -50%;
+  rotate: 90deg;
+}
+
+@media (min-width: 640px) {
+  .transformation-scroll {
+    height: 205svh;
+  }
+
+  .transformation-sticky {
+    top: 5rem;
+    height: calc(100svh - 6rem);
+    min-height: 520px;
+    max-height: 760px;
+  }
+
+  .transformation-stage {
+    height: 470px;
+    min-height: 0;
+  }
+
+  .transformation-course,
+  .transformation-sheet,
+  .transformation-cards {
+    top: 0;
+    left: auto;
+    width: 42%;
+    max-width: none;
+    height: 420px;
+    translate: none;
+  }
+
+  .transformation-course {
+    left: 0;
+    transform: translateX(calc(var(--transformation-progress) * -18%));
+  }
+
+  .transformation-sheet {
+    left: 58%;
+    transform: translateX(calc(var(--transformation-progress) * -138.095%));
+  }
+
+  .transformation-cards {
+    left: 58%;
+    transform: translateX(calc(var(--transformation-inverse) * 18%));
+  }
+
+  .transformation-arrow {
+    top: 50%;
+    left: 50%;
+    rotate: 0deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transformation-course,
+  .transformation-sheet,
+  .transformation-cards {
+    transform: none;
+  }
+
+  .transformation-sheet {
+    top: calc(308px * var(--transformation-inverse));
+  }
+
+  @media (min-width: 640px) {
+    .transformation-sheet {
+      top: 0;
+      left: calc(58% * var(--transformation-inverse));
+    }
+  }
+}
+
 @keyframes micabo-marquee {
   from {
     translate: 0 0;
