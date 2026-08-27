@@ -1,6 +1,5 @@
 import { authorize, withCors } from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { CORS_HEADERS, stripEmDashes } from "../_shared/fal.ts";
 import {
   extractVideoId,
   fetchTranscript,
@@ -132,9 +131,13 @@ Deno.serve((request: Request) =>
   })
 );
 
+function stripEmDashes(value: string): string {
+  return value.replace(/\s+[—–―]\s+/g, ", ").replace(/[—–―]/g, "-");
+}
+
 function json(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
   });
 }
