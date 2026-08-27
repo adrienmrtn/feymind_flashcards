@@ -1,5 +1,6 @@
 import { CourseTransformation } from "./CourseTransformation";
-import { StartButton } from "./StartButton";
+import { HeroAura } from "./HeroAura";
+import { StartGlow } from "./StartGlow";
 
 /**
  * L'accroche : une phrase, puis le trajet entier du document.
@@ -7,13 +8,7 @@ import { StartButton } from "./StartButton";
 export function Hero() {
   return (
     <section className="relative overflow-clip">
-      {/* Une seule lueur verte, très basse en opacité : elle donne de la profondeur au papier
-          sans devenir le dégradé de bandeau que tout le monde pose. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full opacity-[0.18] blur-3xl"
-        style={{ background: "radial-gradient(circle, var(--color-accent-vivid), transparent 65%)" }}
-      />
+      <HeroAura />
 
       <div className="relative mx-auto max-w-page px-screen pt-16 text-center sm:pt-24">
         <p className="rise inline-flex items-center gap-2 rounded-pill bg-surface px-3.5 py-1.5 text-[12.5px] font-medium text-ink-secondary paper">
@@ -58,7 +53,7 @@ export function Hero() {
           className="rise mt-9 flex flex-col items-center gap-3"
           style={{ animationDelay: "180ms" }}
         >
-          <StartButton />
+          <StartGlow />
           <p className="text-[13px] text-ink-tertiary">Un cours gratuit. Sans carte bancaire.</p>
         </div>
       </div>
