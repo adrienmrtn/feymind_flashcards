@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Float } from "@/components/app/Float";
+
 /**
  * Le bouton de révision.
  *
@@ -20,14 +22,16 @@ export function ReviewCta({
 }) {
   if (floating) {
     return (
-      <Link
-        href={href as never}
-        data-print="hide"
-        className="pressable shiny fixed right-4 bottom-24 z-30 flex h-14 items-center gap-2.5 rounded-button bg-ink px-5 text-[15px] font-semibold text-on-ink shadow-floating lg:right-8 lg:bottom-8"
-      >
-        <span aria-hidden>⚡</span>
-        {title}
-      </Link>
+      <Float>
+        <Link
+          href={href as never}
+          data-print="hide"
+          className="pressable shiny fixed right-4 bottom-24 z-30 flex h-14 items-center gap-2.5 rounded-button bg-ink px-5 text-[15px] font-semibold text-on-ink shadow-floating lg:right-8 lg:bottom-8"
+        >
+          <span aria-hidden>⚡</span>
+          {title}
+        </Link>
+      </Float>
     );
   }
 
