@@ -1,0 +1,66 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  cleanTranscript,
+  extractVideoId,
+  parseCaptionXml,
+  parseJson3,
+  parseVtt,
+} from "./youtube";
+
+describe("extractVideoId", () => {
+  it("reconnaît les formes courantes", () => {
+    expect(extractVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ");
+    expect(extractVideoId("https://youtu.be/dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ");
+    expect(extractVideoId("youtube.com/watch?v=dQw4w9WgXcQ&t=12s")).toBe("dQw4w9WgXcQ");
+  });
+
+  it("refuse ce qui n'est pas une vidéo", () => {
+    expect(extractVideoId("https://www.youtube.com/@unechaine")).toBeNull();
+    expect(extractVideoId("dQw4w9WgXcQ")).toBeNull();
+  });
+});
+
+describe("parseCaptionXml", () => {
+  it("ignore le HTML d'erreur de Google", () => {
+    expect(
+      parseCaptionXml(
+        `<html><body><p>... but your computer or network may be sending automated queries.</p></body></html>`,
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("parseJson3", () => {
+  it("assemble les segments et saute les aAppend", () => {
+    const text = parseJson3(
+      JSON.stringify({
+        events: [
+          { segs: [{ utf8: "Bonjour " }, { utf8: "le monde" }] },
+          { aAppend: 1, segs: [{ utf8: "e" }] },
+        ],
+      }),
+    );
+    expect(text).toBe("Bonjour le monde");
+  });
+});
+
+describe("parseVtt", () => {
+  it("garde les phrases", () => {
+    expect(
+      parseVtt(`WEBVTT
+
+00:00:01.000 --> 00:00:02.000
+Une phrase.
+`),
+    ).toEqual(["Une phrase."]);
+  });
+});
+
+describe("cleanTranscript", () => {
+  it("ôte les annotations et les doublons", () => {
+    expect(cleanTranscript(["[Musique]", "Bonjour", "Bonjour", "le cours."])).toBe(
+      "Bonjour le cours.",
+    );
+  });
+});

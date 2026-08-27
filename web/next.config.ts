@@ -10,7 +10,7 @@ const config: NextConfig = {
   // `@micabo/core` est publié en TypeScript source, sans étape de compilation : c'est ce qui
   // permet à un test de vitest et au site de lire exactement le même fichier. Next doit donc
   // le transpiler avec le reste de l'application.
-  transpilePackages: ["@micabo/core"],
+  transpilePackages: ["@micabo/core", "@paper-design/shaders-react", "@paper-design/shaders"],
 
   typedRoutes: true,
 
@@ -19,6 +19,13 @@ const config: NextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: "2mb",
+    },
+    // Next 15+ a mis ce délai à 0 : chaque clic attendait le serveur, même pour une
+    // page visitée il y a dix secondes. Trente secondes suffisent à rendre la barre
+    // instantanée, sans garder une session périmée.
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
     },
   },
 

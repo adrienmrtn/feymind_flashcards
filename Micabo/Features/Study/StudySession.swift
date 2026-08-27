@@ -185,7 +185,8 @@ final class StudySession {
         context: ModelContext,
         mode: StudyMode = .scheduled,
         sourceKey: String? = nil,
-        now: Date = Date()
+        now: Date = Date(),
+        limits: StudyQueueBuilder.Limits? = nil
     ) {
         guard !didStart else { return }
         didStart = true
@@ -199,7 +200,12 @@ final class StudySession {
         let usable: [Flashcard]
         switch mode {
         case .scheduled:
-            usable = StudyQueueBuilder.build(from: cards, now: now, limits: .daily(), deadlines: deadlines)
+            usable = StudyQueueBuilder.build(
+                from: cards,
+                now: now,
+                limits: limits ?? .daily(),
+                deadlines: deadlines
+            )
         case .practice:
             // Tout le cours, dans l'ordre des cartes : on s'entraîne, on ne rattrape rien.
             usable = cards

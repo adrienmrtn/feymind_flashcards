@@ -22,11 +22,11 @@ import { usePathname } from "next/navigation";
  */
 
 const LINKS = [
-  { href: "/app", label: "Accueil", icon: "home" },
-  { href: "/app/cours", label: "Cours", icon: "shelf" },
-  { href: "/app/reviser", label: "Réviser", icon: "cards" },
-  { href: "/app/examens", label: "Examens", icon: "calendar" },
-  { href: "/app/profil", label: "Profil", icon: "person" },
+  { href: "/app", label: "Accueil", icon: "home", prefetch: true },
+  { href: "/app/cours", label: "Cours", icon: "shelf", prefetch: true },
+  { href: "/app/reviser", label: "Réviser", icon: "cards", prefetch: false },
+  { href: "/app/examens", label: "Examens", icon: "calendar", prefetch: true },
+  { href: "/app/profil", label: "Profil", icon: "person", prefetch: true },
 ] as const;
 
 const KEY = "micabo.app.openCourse";
@@ -71,7 +71,16 @@ export function AppNav() {
 
   const isCurrent = (href: string) => {
     if (href === "/app") return pathname === "/app";
-    if (href === "/app/cours") return pathname === "/app/cours" || pathname.startsWith("/app/c/");
+    if (href === "/app/cours") {
+      return (
+        pathname === "/app/cours" ||
+        pathname.startsWith("/app/c/") ||
+        pathname.startsWith("/app/b/")
+      );
+    }
+    if (href === "/app/profil") {
+      return pathname.startsWith("/app/profil") || pathname.startsWith("/app/amis") || pathname.startsWith("/app/u/");
+    }
     return pathname.startsWith(href);
   };
 
@@ -94,6 +103,7 @@ export function AppNav() {
             <Link
               key={link.href}
               href={link.href as never}
+              prefetch={link.prefetch}
               aria-current={isCurrent(link.href) ? "page" : undefined}
               className={`nav-link flex items-center gap-3 rounded-button px-3 py-2.5 text-[15px] transition-colors duration-hover ${
                 isCurrent(link.href)
@@ -186,6 +196,7 @@ export function AppNav() {
             <Link
               key={link.href}
               href={link.href as never}
+              prefetch={link.prefetch}
               aria-current={isCurrent(link.href) ? "page" : undefined}
               className={`nav-link flex flex-1 flex-col items-center gap-1 rounded-button py-2 text-[10.5px] font-medium transition-colors duration-hover ${
                 isCurrent(link.href) ? "text-accent" : "text-ink-tertiary hover:text-ink-secondary"

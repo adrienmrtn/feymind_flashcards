@@ -15,6 +15,7 @@ import {
   type SheetLength,
 } from "@micabo/core";
 
+import { UsernameField } from "@/components/app/UsernameField";
 import { updateSettings } from "@/lib/actions/profile";
 
 /**
@@ -26,10 +27,12 @@ import { updateSettings } from "@/lib/actions/profile";
  */
 export function ProfileSettings({
   initialName,
+  initialUsername,
   initialMinutes,
   initialLength,
 }: {
   initialName: string;
+  initialUsername: string;
   initialMinutes: number;
   initialLength: SheetLength;
 }) {
@@ -71,6 +74,8 @@ export function ProfileSettings({
         placeholder="Comment on t'appelle"
         className="mt-2 h-12 w-full rounded-button bg-surface-muted px-4 text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
       />
+
+      <UsernameField initial={initialUsername} />
 
       <div className="mt-7">
         <div className="flex items-baseline justify-between gap-3">
@@ -120,11 +125,6 @@ export function ProfileSettings({
           className="mt-4 w-full accent-[var(--color-accent)]"
         />
       </div>
-
-      <p className="mt-6 text-[12.5px] leading-relaxed text-ink-tertiary">
-        Ces réglages vivent dans <strong className="font-medium text-ink-secondary">Supabase</strong>,
-        pas dans ce navigateur : ton iPhone lit les mêmes colonnes, et écrit dedans aussi.
-      </p>
     </div>
   );
 }

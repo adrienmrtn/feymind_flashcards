@@ -17,7 +17,9 @@ struct FlashcardsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(ProAccess.self) private var pro: ProAccess?
 
+    @Query private var reviewLogs: [ReviewLog]
     @Query private var exams: [Exam]
+    @Query(sort: \Course.updatedAt, order: .reverse) private var allCourses: [Course]
 
     @State private var editingCard: Flashcard?
     @State private var isCreating = false
@@ -30,7 +32,17 @@ struct FlashcardsView: View {
     @State private var paywall: PaywallTrigger?
 
     private var cards: [Flashcard] { course.orderedCards }
-    private var dueCount: Int { course.dueCards.count }
+    private var dueCards: [Flashcard] {
+        StudyQueueBuilder.build(
+            from: cards,
+            limits: .daily(newRemaining: DailyNewQuota.remaining(logs: reviewLogs)),
+            deadlines: ExamDeadlines.active(exams: exams, courses: allCourses)
+        )
+    }
+    private var dueCount: Int { dueCards.count }
+    private var heldBackNewCards: Int {
+        max(0, cards.filter { $0.isDue() && $0.state == .new }.count - dueCards.filter { $0.state == .new }.count)
+    }
     private var canPractice: Bool { pro?.canPractice ?? true }
 
     /// L'examen planifié le plus proche qui porte sur ce cours. C'est lui qui
@@ -72,9 +84,9 @@ struct FlashcardsView: View {
                 MicaboBottomBar {
                     Button(action: startSession) {
                         HStack(spacing: MicaboSpacing.xs) {
-                            Text(dueCount > 0 ? MicaboCopy.reviewButton(count: dueCount) : "Entraînement libre")
+                            Text(sessionButtonTitle)
 
-                            if dueCount == 0, !canPractice {
+                            if dueCount == 0, heldBackNewCards == 0, !canPractice {
                                 Image(systemName: "lock.fill")
                                     .font(.system(size: 11, weight: .bold))
                             }
@@ -187,8 +199,14 @@ struct FlashcardsView: View {
     ///
     /// Sans carte due, une vraie session serait vide : le bouton annonce l'entraînement
     /// libre au lieu de promettre une révision, et il porte son cadenas.
+    private var sessionButtonTitle: String {
+        if dueCount > 0 { return MicaboCopy.reviewButton(count: dueCount) }
+        if heldBackNewCards > 0 { return "Réviser" }
+        return "Entraînement libre"
+    }
+
     private func startSession() {
-        guard dueCount > 0 else {
+        guard dueCount > 0 || heldBackNewCards > 0 else {
             startPractice()
             return
         }

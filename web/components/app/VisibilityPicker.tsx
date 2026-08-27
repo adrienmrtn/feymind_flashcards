@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 
-import { VISIBILITIES, isVisibility, type CourseVisibility } from "@micabo/core";
+import { isVisibility, type CourseVisibility } from "@micabo/core";
 
+import { VisibilityChoices } from "@/components/app/VisibilityChoices";
 import { setCourseVisibility } from "@/lib/actions/profile";
 
 /**
@@ -45,28 +46,10 @@ export function VisibilityPicker({
 
   return (
     <div data-print="hide">
-      <div className="flex flex-wrap items-center gap-2">
-        {VISIBILITIES.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            onClick={() => choose(item.value)}
-            aria-pressed={value === item.value}
-            className={`pressable rounded-pill px-3.5 py-2 text-[13px] font-medium transition-colors duration-hover ${
-              value === item.value
-                ? "bg-accent-soft text-accent"
-                : "bg-surface-muted text-ink-secondary"
-            }`}
-          >
-            {item.title}
-          </button>
-        ))}
-      </div>
-      <p className={`mt-2 text-[12.5px] ${failed ? "text-negative" : "text-ink-tertiary"}`}>
-        {failed
-          ? "Le réglage n'a pas pu être enregistré."
-          : VISIBILITIES.find((item) => item.value === value)?.detail}
-      </p>
+      <VisibilityChoices value={value} onChange={choose} />
+      {failed ? (
+        <p className="mt-2 text-[12.5px] text-negative">Le réglage n&apos;a pas pu être enregistré.</p>
+      ) : null}
     </div>
   );
 }

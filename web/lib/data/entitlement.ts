@@ -1,7 +1,10 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { entitlement } from "@micabo/core";
 
+import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -19,15 +22,15 @@ import { createClient } from "@/lib/supabase/server";
  * événement peut se perdre, et un abonnement fini qui reste ouvert parce qu'un webhook n'est jamais
  * arrivé est une fuite qui ne se voit pas. Deux gardes valent mieux qu'un pour la seule donnée du
  * produit qui décide de qui paye.
+ *
+ * Mémoïsée **par requête** seulement : le droit porte une Date, et le cache inter-requêtes
+ * la sérialiserait en chaîne.
  */
-export async function readEntitlement(): Promise<entitlement.Entitlement> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+export const readEntitlement = cache(async (): Promise<entitlement.Entitlement> => {
+  const user = await currentUser();
   if (!user) return entitlement.resolve();
 
+  const supabase = await createClient();
   const { data } = await supabase
     .from("entitlements")
     .select("is_pro, product_id, store, period_type, expires_at, will_renew")
@@ -47,4 +50,4 @@ export async function readEntitlement(): Promise<entitlement.Entitlement> {
     expiresAt,
     willRenew: Boolean(data.will_renew),
   });
-}
+});

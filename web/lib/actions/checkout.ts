@@ -1,6 +1,6 @@
 "use server";
 
-import { pricing } from "@micabo/core";
+import { entitlement, pricing } from "@micabo/core";
 
 import { SITE_URL } from "@/lib/config";
 import { readEntitlement } from "@/lib/data/entitlement";
@@ -67,7 +67,7 @@ export async function startCheckout(
   }
 
   const already = await readEntitlement();
-  if (already.isPro) return { status: "already" };
+  if (entitlement.isPaid(already)) return { status: "already" };
 
   const student = Boolean(options.student);
   const key = stripeKey();
@@ -128,7 +128,9 @@ export async function startCheckout(
 export async function manageSubscription(): Promise<CheckoutResult> {
   const right = await readEntitlement();
 
-  if (!right.isPro) return { status: "error", message: "Tu n'as pas d'abonnement en cours." };
+  if (!entitlement.isPaid(right)) {
+    return { status: "error", message: "Tu n'as pas d'abonnement en cours." };
+  }
 
   if (right.store === "app_store") {
     return {

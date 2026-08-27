@@ -5,10 +5,12 @@ import { revalidatePath } from "next/cache";
 import {
   addDays,
   planExam,
+  startOfDay,
   type CardState,
   type ExamIntensity,
 } from "@micabo/core";
 
+import { revalidateUserData } from "@/lib/data/cache";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -39,6 +41,7 @@ interface PlanCard {
   interval_days: number;
   due_date: string;
   is_suspended: boolean;
+  last_reviewed_at: string | null;
 }
 
 export async function saveExam(input: {
@@ -96,7 +99,7 @@ export async function saveExam(input: {
   const examId = input.id ?? crypto.randomUUID();
   const { data: cards } = await supabase
     .from("flashcards")
-    .select("id, course_id, state, interval_days, due_date, is_suspended")
+    .select("id, course_id, state, interval_days, due_date, is_suspended, last_reviewed_at")
     .eq("user_id", user.id)
     .in("course_id", input.courseIds)
     .is("deleted_at", null);
@@ -128,6 +131,7 @@ export async function saveExam(input: {
     );
 
     for (const card of usable) {
+      if (!shouldMoveForExam(card, now)) continue;
       const offset = plan.days.get(card.id)?.[0];
       if (offset === undefined) continue;
       const due = addDays(plan.firstDay, offset);
@@ -164,7 +168,7 @@ export async function saveExam(input: {
 
   if (error) return { status: "error", message: error.message };
 
-  revalidateExams();
+  revalidateExams(user.id);
   return { status: "ok", examId };
 }
 
@@ -206,7 +210,7 @@ export async function deleteExam(examId: string): Promise<ExamWriteResult> {
 
   if (error) return { status: "error", message: error.message };
 
-  revalidateExams();
+  revalidateExams(user.id);
   return { status: "ok", examId };
 }
 
@@ -228,11 +232,24 @@ async function restoreBackup(
   }
 }
 
+/**
+ * Un second examen sur le même cours ne doit pas ramener dans la file du jour
+ * une carte qu'on vient de noter, ni interrompre un palier d'apprentissage.
+ * Les cartes en révision lointaine, elles, restent le cas d'usage du plan.
+ */
+function shouldMoveForExam(card: PlanCard, now: Date): boolean {
+  if (card.state === "learning" || card.state === "relearning") return false;
+  if (!card.last_reviewed_at) return true;
+  return startOfDay(new Date(card.last_reviewed_at)).getTime() !== startOfDay(now).getTime();
+}
+
 function asIntensity(value: string): ExamIntensity {
   return value === "light" || value === "intense" || value === "standard" ? value : "standard";
 }
 
-function revalidateExams() {
+function revalidateExams(userId: string) {
+  revalidateUserData(userId, "exams");
+  revalidateUserData(userId, "cards");
   revalidatePath("/app");
   revalidatePath("/app/examens");
   revalidatePath("/app/reviser");

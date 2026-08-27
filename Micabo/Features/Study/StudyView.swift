@@ -33,8 +33,14 @@ struct StudyView: View {
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(TabRouter.self) private var router: TabRouter?
 
+    @Query private var reviewLogs: [ReviewLog]
+    @Query private var exams: [Exam]
+    @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
+
     @State private var session = StudySession()
     @State private var didStart = false
+    @State private var awaitingStart = false
+    @State private var newPerSession = 0
     @State private var showHint = false
     /// Proposition choisie sur un QCM, remise à zéro à chaque carte.
     @State private var selectedChoice: Int?
@@ -62,6 +68,18 @@ struct StudyView: View {
                     onResume: { resume(resumable) },
                     onRestart: restart,
                     onClose: { dismiss() }
+                )
+            } else if awaitingStart {
+                SessionSetupView(
+                    courseTitle: setupCourseTitle,
+                    preview: setupPreview,
+                    rhythmNew: rhythmNew,
+                    introducedToday: introducedToday,
+                    newPerSession: $newPerSession,
+                    sliderMax: DailyNewQuota.sliderMax(rhythm: rhythmNew),
+                    canClose: !isEmbedded,
+                    onClose: { dismiss() },
+                    onStart: confirmStart
                 )
             } else if session.isEmpty {
                 NothingDueView(
@@ -333,7 +351,28 @@ struct StudyView: View {
 
     // MARK: - Démarrage, reprise, sortie
 
-    /// Au premier affichage : soit on propose de reprendre, soit on démarre.
+    private var rhythmNew: Int {
+        DailyLoad.newCardsPerDay(dailyMinutes: OnboardingPreferences.dailyMinutes)
+    }
+
+    private var introducedToday: Int {
+        DailyNewQuota.introducedToday(from: reviewLogs)
+    }
+
+    private var setupCourseTitle: String? {
+        if case .course(let course) = source { return course.title }
+        return nil
+    }
+
+    private var setupPreview: StudyCounts {
+        StudyQueueBuilder.counts(
+            for: resolveCards(),
+            limits: .daily(newRemaining: newPerSession),
+            deadlines: ExamDeadlines.active(exams: exams, courses: courses)
+        )
+    }
+
+    /// Au premier affichage : soit on propose de reprendre, soit on règle le curseur.
     private func prepare() {
         guard !didStart, resumable == nil else { return }
 
@@ -344,6 +383,17 @@ struct StudyView: View {
             return
         }
 
+        if mode.affectsSchedule {
+            newPerSession = DailyNewQuota.remaining(introduced: introducedToday)
+            awaitingStart = true
+            return
+        }
+
+        start()
+    }
+
+    private func confirmStart() {
+        awaitingStart = false
         start()
     }
 
@@ -354,7 +404,8 @@ struct StudyView: View {
             with: resolveCards(),
             context: modelContext,
             mode: mode,
-            sourceKey: source.persistenceKey
+            sourceKey: source.persistenceKey,
+            limits: mode.affectsSchedule ? .daily(newRemaining: newPerSession) : nil
         )
     }
 
@@ -370,6 +421,11 @@ struct StudyView: View {
     private func restart() {
         StudySessionStore.clear()
         resumable = nil
+        if mode.affectsSchedule {
+            newPerSession = DailyNewQuota.remaining(introduced: introducedToday)
+            awaitingStart = true
+            return
+        }
         start()
     }
 
@@ -849,6 +905,147 @@ struct GradeButtons: View {
 
     private func softTint(for rating: ReviewRating) -> Color {
         Self.softTint(for: rating)
+    }
+}
+
+// MARK: - Réglage avant de commencer
+
+/// Le pendant de l'écran web : le compte, et le curseur des cartes neuves.
+///
+/// Le nombre de base est celui du rythme, moins ce qui a déjà été introduit
+/// aujourd'hui — y compris depuis un cours.
+private struct SessionSetupView: View {
+    var courseTitle: String?
+    var preview: StudyCounts
+    var rhythmNew: Int
+    var introducedToday: Int
+    @Binding var newPerSession: Int
+    var sliderMax: Int
+    var canClose: Bool
+    var onClose: () -> Void
+    var onStart: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if canClose {
+                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: "Fermer", action: onClose)
+                    .padding(.horizontal, MicaboSpacing.screen)
+                    .padding(.top, 8)
+            }
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        MicaboEyebrow(text: courseTitle == nil ? "Ta session du jour" : "Réviser ce cours")
+
+                        Text(title)
+                            .font(MicaboFont.hanken(28, weight: .bold))
+                            .foregroundStyle(MicaboColor.ink)
+                            .tracking(-0.6)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    HStack(spacing: MicaboSpacing.sm) {
+                        setupTile(
+                            value: preview.learning + preview.review,
+                            label: "à revoir",
+                            accent: false
+                        )
+                        setupTile(
+                            value: preview.newCards,
+                            label: preview.newCards == 1 ? "nouvelle" : "nouvelles",
+                            accent: true
+                        )
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text("Cartes neuves de cette session")
+                                .font(MicaboFont.hanken(13, weight: .medium))
+                                .foregroundStyle(MicaboColor.inkTertiary)
+
+                            Spacer(minLength: MicaboSpacing.xs)
+
+                            Text("\(newPerSession)")
+                                .font(MicaboFont.number(13, weight: .semibold))
+                                .foregroundStyle(MicaboColor.ink)
+                                .monospacedDigit()
+                            + Text(" · \(rhythmNew) prévues par ton rythme")
+                                .font(MicaboFont.hanken(13, weight: .medium))
+                                .foregroundStyle(MicaboColor.inkTertiary)
+                        }
+
+                        Slider(
+                            value: Binding(
+                                get: { Double(newPerSession) },
+                                set: { newPerSession = Int($0.rounded()) }
+                            ),
+                            in: 0...Double(max(sliderMax, 1))
+                        )
+                        .tint(MicaboColor.progress)
+
+                        Text(sliderCaption)
+                            .font(MicaboFont.hanken(12.5, weight: .regular))
+                            .foregroundStyle(MicaboColor.inkTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, MicaboSpacing.md)
+                .padding(.bottom, MicaboLayout.bottomBarClearance)
+            }
+            .scrollIndicators(.hidden)
+
+            MicaboBottomBar {
+                if preview.total > 0 {
+                    Button("Commencer la session", action: onStart)
+                        .buttonStyle(MicaboPrimaryButtonStyle())
+                } else {
+                    Text("Monte le curseur pour apprendre d'autres cartes neuves, ou reviens demain.")
+                        .font(MicaboFont.hanken(14, weight: .medium))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+        }
+    }
+
+    private var title: String {
+        if preview.total > 0 {
+            return preview.total > 1
+                ? "\(preview.total) cartes à revoir"
+                : "1 carte à revoir"
+        }
+        return "Rythme du jour atteint"
+    }
+
+    private var sliderCaption: String {
+        if introducedToday > 0 {
+            let seen = "\(introducedToday) déjà apprise\(introducedToday > 1 ? "s" : "") aujourd'hui."
+            return "\(seen) Le curseur ne change que cette session."
+        }
+        return "Le nombre de base est celui de ton rythme. Tu peux en prendre plus, ou moins."
+    }
+
+    private func setupTile(value: Int, label: String, accent: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("\(value)")
+                .font(MicaboFont.number(30, weight: .bold))
+                .foregroundStyle(accent ? MicaboColor.accent : MicaboColor.ink)
+                .monospacedDigit()
+            Text(label)
+                .font(MicaboFont.hanken(13, weight: .medium))
+                .foregroundStyle(accent ? MicaboColor.accent : MicaboColor.inkTertiary)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            accent ? MicaboColor.accentSoft : MicaboColor.surface,
+            in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
+        .shadow(color: Color.black.opacity(accent ? 0 : 0.03), radius: 10, x: 0, y: 4)
     }
 }
 

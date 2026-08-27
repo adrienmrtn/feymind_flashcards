@@ -1,10 +1,8 @@
 import Link from "next/link";
 
 import {
-  DEFAULT_DAILY_MINUTES,
   EXAM_INTENSITY_LABELS,
   courseAccent,
-  dailyLimits,
   dayDifference,
   examCountdownLabel,
   examUrgency,
@@ -17,17 +15,20 @@ import {
 } from "@micabo/core";
 
 import { ExamMark } from "@/components/app/ExamMark";
+import { FriendActions } from "@/components/app/FriendActions";
 import {
-  listAllCards,
+  listCardSnapshots,
   listCourses,
   listExams,
   listPendingFriendRequests,
-  type CardRow,
+  type CardSnapshotRow,
   type CourseRow,
   type ExamRow,
   type FriendRequestRow,
 } from "@/lib/data/courses";
 import { examMarksFor } from "@/lib/data/exam-marks";
+import { loadNewCardBudget } from "@/lib/data/reviews";
+import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -35,31 +36,28 @@ import { createClient } from "@/lib/supabase/server";
  *
  * Après la connexion on arrive ici, pas sur l'étagère. Cinq choses, dans cet ordre : le
  * prochain examen (coloré selon l'urgence), les cartes dues aujourd'hui, les derniers cours
- * ajoutés, les cartes qui coincent, et les demandes d'amis — ces dernières n'existent pas
- * encore, la case est déjà là pour qu'elles aient un endroit.
+ * ajoutés, les cartes qui coincent, et les demandes d'amis — le même graphe que sur l'iPhone.
  */
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await currentUser();
 
-  const [courses, cards, exams, friends, profile] = await Promise.all([
+  const [courses, cards, exams, friends, profile, budget] = await Promise.all([
     listCourses(),
-    listAllCards(),
+    listCardSnapshots(),
     listExams(),
     listPendingFriendRequests(),
     user
       ? supabase
           .from("profiles")
-          .select("daily_minutes, display_name")
+          .select("display_name")
           .eq("id", user.id)
           .maybeSingle()
           .then((result) => result.data)
       : null,
+    loadNewCardBudget(),
   ]);
 
-  const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
   const today = startOfDay(new Date());
   const titles = new Map(courses.map((course) => [course.id, course]));
 
@@ -72,7 +70,12 @@ export default async function DashboardPage() {
       createdAt: new Date(card.created_at),
       isSuspended: card.is_suspended,
     })),
-    { limits: dailyLimits(minutes) },
+    {
+      limits: {
+        newPerSession: budget.remaining,
+        reviewsPerSession: Number.MAX_SAFE_INTEGER,
+      },
+    },
   );
 
   const nextExam = exams
@@ -267,7 +270,7 @@ function HardCards({
   courses,
   exams,
 }: {
-  cards: CardRow[];
+  cards: CardSnapshotRow[];
   courses: Map<string, CourseRow>;
   exams: ReadonlyMap<string, { name: string; daysRemaining: number }>;
 }) {
@@ -322,14 +325,25 @@ function HardCards({
 function FriendsCard({ requests }: { requests: FriendRequestRow[] }) {
   return (
     <section className="paper rounded-group bg-surface p-6">
-      <p className="eyebrow text-ink-tertiary">Demandes d&apos;amis</p>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="eyebrow text-ink-tertiary">Amis</p>
+        <Link href={"/app/amis" as never} className="text-[13px] font-medium text-accent">
+          Voir
+        </Link>
+      </div>
       {requests.length === 0 ? (
         <>
-          <p className="mt-3 text-[18px] font-semibold text-ink">Rien pour l&apos;instant.</p>
+          <p className="mt-3 text-[18px] font-semibold text-ink">Personne en attente.</p>
           <p className="mt-2 text-[13.5px] leading-relaxed text-ink-secondary">
-            Les demandes d&apos;amis arriveront ici. On pourra alors partager un cours sans
-            l&apos;ouvrir à tout le monde.
+            Cherche un @ pour ajouter quelqu&apos;un. C&apos;est le même annuaire que sur
+            l&apos;iPhone.
           </p>
+          <Link
+            href={"/app/amis" as never}
+            className="mt-5 inline-block text-[13px] font-semibold text-accent"
+          >
+            Ajouter un ami
+          </Link>
         </>
       ) : (
         <ul className="mt-4 space-y-2">
@@ -338,10 +352,13 @@ function FriendsCard({ requests }: { requests: FriendRequestRow[] }) {
               key={request.requesterId}
               className="flex items-center justify-between gap-3 rounded-button bg-surface-muted px-3 py-2.5"
             >
-              <span className="truncate text-[14.5px] font-medium text-ink">
+              <Link
+                href={`/app/u/${request.username ?? ""}` as never}
+                className="truncate text-[14.5px] font-medium text-ink"
+              >
                 {request.username ? `@${request.username}` : "Quelqu'un"}
-              </span>
-              <span className="shrink-0 text-[12px] text-ink-tertiary">Bientôt</span>
+              </Link>
+              <FriendActions personId={request.requesterId} relation="awaitingMe" />
             </li>
           ))}
         </ul>

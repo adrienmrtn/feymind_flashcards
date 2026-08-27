@@ -13,6 +13,7 @@ import {
   isPaywallPending,
   markPaywallDismissed,
   persistStoredAnswers,
+  shouldOpenPaywall,
 } from "@/lib/onboarding/persist";
 
 /**
@@ -24,36 +25,65 @@ import {
  *
  * Les prix viennent du même catalogue que la landing. La case « je suis étudiant »
  * permute l'annuel : 83,88 € avec essai, ou 59,99 € barré de l'ancien, sans essai.
+ *
+ * `isPaid` — pas `isPro`. Sans ça, tout le monde sans ligne d'abonnement est
+ * traité comme Pro, et cette carte ne s'ouvre jamais.
  */
 
 type Stage = "social" | "trial" | "reminder" | "plans";
 
 const STAGES: Stage[] = ["social", "trial", "reminder", "plans"];
 
-export function PaywallHost({ isPro }: { isPro: boolean }) {
+export function PaywallHost({ isPaid }: { isPaid: boolean }) {
   const params = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    void persistStoredAnswers();
-  }, []);
+    if (isPaid) {
+      setOpen(false);
+      return;
+    }
 
-  useEffect(() => {
-    if (isPro) return;
+    let cancelled = false;
+    let timer = 0;
 
-    const force = params.get("offre") === "1";
-    const welcome = params.get("bienvenue") === "1";
-    const pending = isPaywallPending();
-    const dismissed = isPaywallDismissed();
+    async function decide() {
+      await persistStoredAnswers();
+      if (cancelled) return;
 
-    if (!force && !welcome && !pending) return;
-    if (!force && dismissed && !welcome && !pending) return;
+      const force = params.get("offre") === "1";
+      const welcome = params.get("bienvenue") === "1";
+      const pending = isPaywallPending();
+      const dismissed = isPaywallDismissed();
+      const onHome = pathname === "/app";
 
-    const timer = window.setTimeout(() => setOpen(true), 720);
-    return () => window.clearTimeout(timer);
-  }, [isPro, params]);
+      if (
+        !shouldOpenPaywall({
+          isPaid,
+          force,
+          welcome,
+          pending,
+          dismissed,
+          onHome,
+        })
+      ) {
+        return;
+      }
+
+      // Le dashboard se pose d'abord. L'offre arrive ensuite, pas à la place.
+      timer = window.setTimeout(() => {
+        if (!cancelled) setOpen(true);
+      }, 980);
+    }
+
+    void decide();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [isPaid, params, pathname]);
 
   function close() {
     markPaywallDismissed();
@@ -83,14 +113,14 @@ export function PaywallCard({ onClose }: { onClose: () => void }) {
         type="button"
         aria-label="Fermer l'offre"
         onClick={onClose}
-        className="absolute inset-0 bg-ink/40 backdrop-blur-[6px]"
+        className="paywall-veil absolute inset-0 bg-ink/45 backdrop-blur-[8px]"
       />
 
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="paywall-title"
-        className="paywall-card relative flex max-h-[min(720px,92svh)] w-full max-w-[480px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-[0_24px_80px_-24px_rgba(25,23,20,0.45)]"
+        className="paywall-card relative flex max-h-[min(760px,92svh)] w-full max-w-[440px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-[0_28px_90px_-20px_rgba(25,23,20,0.5)]"
       >
         <div className="flex items-center justify-between px-5 pt-4">
           <div className="flex items-center gap-1.5" aria-hidden>
@@ -99,9 +129,9 @@ export function PaywallCard({ onClose }: { onClose: () => void }) {
                 key={item}
                 className={`h-1.5 rounded-pill transition-all duration-menu ${
                   position === index
-                    ? "w-5 bg-ink"
+                    ? "w-6 bg-ink"
                     : position < index
-                      ? "w-1.5 bg-accent"
+                      ? "w-1.5 bg-accent-vivid"
                       : "w-1.5 bg-stroke-strong"
                 }`}
               />
@@ -111,7 +141,7 @@ export function PaywallCard({ onClose }: { onClose: () => void }) {
             type="button"
             aria-label="Fermer"
             onClick={onClose}
-            className="pressable -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-tertiary"
+            className="pressable -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
           >
             <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5">
               <path
@@ -157,54 +187,58 @@ export function PaywallCard({ onClose }: { onClose: () => void }) {
 function SocialStep() {
   return (
     <div>
-      <p className="eyebrow text-accent">La preuve</p>
+      <p className="eyebrow text-accent">Preuve sociale</p>
       <h2
         id="paywall-title"
-        className="count-in mt-2 text-[30px] font-bold leading-[1.08] tracking-tight-title text-ink"
+        className="mt-2 text-[30px] font-bold leading-[1.08] tracking-tight-title text-ink"
       >
-        100&nbsp;000+ étudiants
+        <span className="count-in numeral inline-block">
+          <CountUp to={100000} />+
+        </span>
+        <span className="mt-1 block text-[22px] font-semibold tracking-tight-title">
+          utilisateurs
+        </span>
       </h2>
       <p className="mt-2 text-[15px] leading-relaxed text-ink-secondary">
-        Ils révisent avec Micabo. Les mêmes écoles, la même méthode — la répétition
-        espacée, mesurée depuis plus d&apos;un siècle.
+        Ils révisent avec Micabo. Les mêmes écoles, la même méthode — la
+        répétition espacée, mesurée depuis plus d&apos;un siècle.
       </p>
 
-      <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
-        {SCHOOLS.map((school) => (
-          <span
+      <div className="mt-6 grid grid-cols-2 gap-2">
+        {SCHOOLS.map((school, index) => (
+          <div
             key={school.name}
-            className="text-[13px] font-semibold tracking-[0.08em] text-ink-tertiary uppercase"
+            className="paywall-stagger flex h-[58px] items-center justify-center rounded-tile bg-canvas"
+            style={{ animationDelay: `${80 + index * 70}ms` }}
           >
-            {school.mark}
-          </span>
+            <span className="text-[13px] font-bold tracking-[0.06em] text-ink uppercase">
+              {school.mark}
+            </span>
+          </div>
         ))}
       </div>
 
-      <ul className="mt-6 space-y-2.5">
-        {REVIEWS.map((review) => (
-          <li key={review.name} className="rounded-group bg-canvas px-4 py-3.5">
-            <p className="text-[13.5px] leading-relaxed text-ink">{review.quote}</p>
-            <p className="mt-2 text-[12px] text-ink-tertiary">
-              {review.name} · {review.level}
-            </p>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-5 space-y-2">
-        <p className="eyebrow text-ink-tertiary">Ce que dit la recherche</p>
-        {STUDIES.map((study) => (
-          <a
-            key={study.doi}
-            href={study.href}
-            target="_blank"
-            rel="noreferrer"
-            className="block rounded-button bg-canvas px-4 py-3 transition-colors duration-hover hover:bg-accent-soft"
-          >
-            <p className="text-[13.5px] font-medium text-ink">{study.title}</p>
-            <p className="mt-0.5 text-[12px] text-ink-tertiary">{study.source}</p>
-          </a>
-        ))}
+      <div className="mt-6">
+        <p className="eyebrow text-ink-tertiary">Preuve scientifique</p>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-ink-secondary">
+          La rétention tient à l&apos;espacement, pas au volume. Voici les
+          études.
+        </p>
+        <div className="mt-3 space-y-2">
+          {STUDIES.map((study, index) => (
+            <a
+              key={study.doi}
+              href={study.href}
+              target="_blank"
+              rel="noreferrer"
+              className="paywall-stagger block rounded-button bg-canvas px-4 py-3 transition-colors duration-hover hover:bg-accent-soft"
+              style={{ animationDelay: `${360 + index * 80}ms` }}
+            >
+              <p className="text-[13.5px] font-medium text-ink">{study.title}</p>
+              <p className="mt-0.5 text-[12px] text-ink-tertiary">{study.source}</p>
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -212,17 +246,18 @@ function SocialStep() {
 
 function TrialStep() {
   return (
-    <div className="flex min-h-[360px] flex-col justify-center py-4">
+    <div className="flex min-h-[340px] flex-col justify-center py-4">
       <p className="eyebrow text-accent">L&apos;essai</p>
       <h2
         id="paywall-title"
-        className="mt-2 text-[28px] font-bold leading-[1.12] tracking-tight-title text-ink"
+        className="mt-2 text-[26px] font-bold leading-[1.15] tracking-tight-title text-ink"
       >
-        On veut te laisser tout essayer, gratuitement.
+        On veut vous permettre de tester toutes les fonctionnalités
+        gratuitement.
       </h2>
       <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
-        Cours illimités, fiches entières, cartes, mode examen. Rien n&apos;est fermé
-        pendant l&apos;essai.
+        Cours illimités, fiches entières, cartes, mode examen. Rien n&apos;est
+        fermé pendant l&apos;essai.
       </p>
 
       <ul className="mt-7 space-y-3">
@@ -231,8 +266,12 @@ function TrialStep() {
           "La fiche entière, pas les sept dixièmes",
           "Révisions espacées, au bon moment",
           "Le planning se réorganise autour de l'examen",
-        ].map((line) => (
-          <li key={line} className="flex items-center gap-3">
+        ].map((line, index) => (
+          <li
+            key={line}
+            className="paywall-stagger flex items-center gap-3"
+            style={{ animationDelay: `${120 + index * 80}ms` }}
+          >
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
               <svg aria-hidden viewBox="0 0 20 20" className="h-3.5 w-3.5">
                 <path
@@ -256,19 +295,16 @@ function TrialStep() {
 function ReminderStep() {
   return (
     <div className="flex min-h-[360px] flex-col items-center justify-center py-6 text-center">
-      <span
-        aria-hidden
-        className="bell-sway mb-8 text-[92px] leading-none text-caution-vivid"
-      >
-        🔔
+      <span aria-hidden className="bell-sway mb-7 text-caution-vivid">
+        <Bell />
       </span>
       <h2
         id="paywall-title"
-        className="text-[26px] font-bold leading-[1.15] tracking-tight-title text-ink"
+        className="text-[24px] font-bold leading-[1.15] tracking-tight-title text-ink"
       >
-        On t&apos;envoie un e-mail avant la fin de l&apos;essai.
+        On vous envoie un e-mail avant la fin de l&apos;essai gratuit.
       </h2>
-      <p className="mt-4 text-[16px] font-medium text-ink">
+      <p className="mt-5 text-[17px] font-semibold text-ink">
         Aucun paiement n&apos;est dû aujourd&apos;hui.
       </p>
       <p className="mt-2 max-w-[34ch] text-[14px] leading-relaxed text-ink-secondary">
@@ -299,7 +335,7 @@ function PlansStep() {
       return;
     }
     if (result.status === "already") {
-      setCheckout("Tu es déjà abonné.");
+      setCheckout("Vous êtes déjà abonné.");
       return;
     }
     setCheckout(result.message ?? "L'abonnement n'est pas encore ouvert.");
@@ -312,10 +348,10 @@ function PlansStep() {
         id="paywall-title"
         className="mt-2 text-[26px] font-bold leading-[1.12] tracking-tight-title text-ink"
       >
-        Choisis comment tu révises.
+        Choisissez comment vous révisez.
       </h2>
 
-      <label className="mt-5 flex cursor-pointer items-center gap-3 rounded-button bg-canvas px-4 py-3">
+      <label className="mt-5 flex cursor-pointer items-center gap-3 rounded-button bg-canvas px-4 py-3.5">
         <input
           type="checkbox"
           checked={student}
@@ -328,7 +364,8 @@ function PlansStep() {
       <div className="mt-4 space-y-2.5">
         {plans.map((plan) => {
           const selected = chosen === plan.kind;
-          const recommended = plan.kind === "yearly";
+          const monthly = pricing.monthlyEquivalent(plan);
+          const isYearly = plan.kind === "yearly";
           return (
             <button
               key={`${plan.productId}-${student}`}
@@ -341,12 +378,12 @@ function PlansStep() {
               <div>
                 <p className="flex flex-wrap items-center gap-2 text-[15px] font-semibold">
                   {plan.title}
-                  {recommended && !student ? (
+                  {isYearly && !student ? (
                     <span className="rounded-pill bg-accent-vivid px-2 py-0.5 text-[10.5px] font-bold text-ink">
                       {pricing.FREE_TRIAL_DAYS} jours offerts
                     </span>
                   ) : null}
-                  {recommended && student ? (
+                  {isYearly && student ? (
                     <span className="rounded-pill bg-accent-vivid px-2 py-0.5 text-[10.5px] font-bold text-ink">
                       Tarif étudiant
                     </span>
@@ -357,22 +394,39 @@ function PlansStep() {
                     selected ? "text-on-ink-muted" : "text-ink-tertiary"
                   }`}
                 >
-                  {pricing.planCaption(plan)}
-                  {plan.kind === "weekly" ? " · sans essai" : null}
-                  {student && plan.kind === "yearly" ? " · sans essai" : null}
+                  {isYearly ? (
+                    <>
+                      {student ? (
+                        <>
+                          <span className="line-through">
+                            {pricing.priceText(pricing.YEARLY.price)}
+                          </span>
+                          {" · "}
+                          {pricing.priceText(plan.price)} / an · sans essai
+                        </>
+                      ) : (
+                        <>
+                          {pricing.priceText(plan.price)} / an · essai de{" "}
+                          {pricing.FREE_TRIAL_DAYS} jours
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>sans essai gratuit</>
+                  )}
                 </p>
               </div>
               <div className="shrink-0 text-right">
-                {student && plan.kind === "yearly" ? (
-                  <p
-                    className={`numeral text-[12px] line-through ${
-                      selected ? "text-on-ink-muted" : "text-ink-tertiary"
-                    }`}
-                  >
-                    {pricing.priceText(pricing.YEARLY.price)}
-                  </p>
-                ) : null}
-                <p className="numeral text-xl font-bold">{pricing.priceText(plan.price)}</p>
+                <p className="numeral text-[22px] font-bold leading-none">
+                  {monthly ?? pricing.priceText(plan.price)}
+                </p>
+                <p
+                  className={`mt-1 text-[11.5px] ${
+                    selected ? "text-on-ink-muted" : "text-ink-tertiary"
+                  }`}
+                >
+                  {monthly ? "/ mois" : "/ semaine"}
+                </p>
               </div>
             </button>
           );
@@ -411,24 +465,52 @@ function PlansStep() {
   );
 }
 
+function CountUp({ to }: { to: number }) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    const start = performance.now();
+    const duration = 980;
+    let frame = 0;
+
+    function tick(now: number) {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - (1 - t) ** 3;
+      setValue(Math.round(to * eased));
+      if (t < 1) frame = requestAnimationFrame(tick);
+    }
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [to]);
+
+  return <>{value.toLocaleString("fr-FR")}</>;
+}
+
+function Bell() {
+  return (
+    <svg aria-hidden viewBox="0 0 88 88" className="h-[88px] w-[88px]">
+      <path
+        d="M44 12c-11 0-20 9-20 22v10c0 6-3 11-8 14h56c-5-3-8-8-8-14V34c0-13-9-22-20-22z"
+        fill="currentColor"
+      />
+      <path
+        d="M34 70c2.6 6 7.2 10 10 10s7.4-4 10-10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      />
+      <circle cx="62" cy="22" r="8" fill="#c93b2b" />
+    </svg>
+  );
+}
+
 const SCHOOLS = [
   { name: "Harvard", mark: "Harvard" },
   { name: "HEC", mark: "HEC Paris" },
   { name: "EPFL", mark: "EPFL" },
-  { name: "X", mark: "École Polytechnique" },
-] as const;
-
-const REVIEWS = [
-  {
-    quote: "J'ai arrêté de tout relire la veille. Micabo me dit quoi réviser, et ça reste.",
-    name: "Léa",
-    level: "PASS, 1re année",
-  },
-  {
-    quote: "Trois semaines avant les partiels, j'étais à jour pour la première fois.",
-    name: "Thomas",
-    level: "Licence de droit",
-  },
+  { name: "X", mark: "X · Polytechnique" },
 ] as const;
 
 /**

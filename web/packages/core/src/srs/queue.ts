@@ -2,15 +2,14 @@
  * L'ordre d'une session, porté depuis `Micabo/SRS/StudyQueue.swift`.
  *
  * L'ordre d'Anki : l'apprentissage en retard d'abord, puis les révisions, puis les cartes
- * neuves. Les cartes sous échéance d'examen font exception au plafond de cartes neuves — sans
- * cette exception, le plan annoncé à la confirmation serait un mensonge : il promet quarante
- * cartes aujourd'hui, et le rythme quotidien n'en laisserait passer que huit. Le plafond garde
- * tout son sens hors examen, où il n'y a pas de date à tenir.
+ * neuves. Les cartes sous échéance d'examen passent **devant** les autres neuves, mais elles
+ * restent dans le plafond du jour : une session depuis un cours et la session globale
+ * partagent le même budget. Sans ça, réviser huit cartes neuves depuis un cours laisserait
+ * la page Réviser en promettre encore cinq.
  */
 
 import { newCardsPerDay, DEFAULT_DAILY_MINUTES } from "./daily-load";
-import type { ExamDeadlines } from "./exam";
-import { NO_DEADLINES } from "./exam";
+import { addDays, NO_DEADLINES, startOfDay, type ExamDeadlines } from "./exam";
 import type { CardState } from "./types";
 
 /** Ce dont la file a besoin pour ordonner une carte, et rien de plus. */
@@ -34,6 +33,9 @@ export const UNLIMITED: QueueLimits = {
   reviewsPerSession: Number.MAX_SAFE_INTEGER,
 };
 
+/** Plus haut cran du curseur de cartes neuves, au-delà du rythme quotidien. */
+export const SESSION_NEW_SLIDER_CAP = 60;
+
 /**
  * Plafond issu du rythme quotidien : c'est ce qui rend le réglage utile. Les révisions dues ne
  * sont pas rationnées, seule l'introduction de cartes neuves l'est.
@@ -43,6 +45,58 @@ export function dailyLimits(dailyMinutes: number = DEFAULT_DAILY_MINUTES): Queue
     newPerSession: newCardsPerDay(dailyMinutes),
     reviewsPerSession: Number.MAX_SAFE_INTEGER,
   };
+}
+
+/** Combien de cartes neuves on peut encore introduire aujourd'hui, rythme moins déjà vues. */
+export function remainingNewCards(
+  introducedToday: number,
+  dailyMinutes: number = DEFAULT_DAILY_MINUTES,
+): number {
+  return Math.max(0, newCardsPerDay(dailyMinutes) - Math.max(0, introducedToday));
+}
+
+/**
+ * Plafond de **cette** session. Un override vient du curseur ; sinon on sert le reste
+ * du rythme, pour qu'une session depuis un cours compte comme une session normale.
+ */
+export function sessionNewLimit(options: {
+  dailyMinutes?: number;
+  introducedToday: number;
+  override?: number | null;
+}): number {
+  if (options.override != null && Number.isFinite(options.override)) {
+    return Math.max(0, Math.round(options.override));
+  }
+  return remainingNewCards(options.introducedToday, options.dailyMinutes);
+}
+
+/** Le curseur commence au rythme, et peut monter un peu au-dessus. */
+export function sessionNewSliderMax(rhythmNew: number): number {
+  return Math.max(20, Math.min(SESSION_NEW_SLIDER_CAP, Math.max(rhythmNew * 2, rhythmNew)));
+}
+
+export interface NewIntroductionEvent {
+  stateBefore: string;
+  reviewedAt: Date;
+}
+
+/**
+ * Cartes passées de « neuve » à autre chose aujourd'hui. On compte les faits, pas l'état
+ * actuel : une carte déjà notée n'est plus `new`, mais elle a bien consommé le budget.
+ */
+export function countNewIntroducedToday(
+  events: readonly NewIntroductionEvent[],
+  now: Date = new Date(),
+): number {
+  const start = startOfDay(now).getTime();
+  const end = addDays(startOfDay(now), 1).getTime();
+  let count = 0;
+  for (const event of events) {
+    if (event.stateBefore !== "new") continue;
+    const at = event.reviewedAt.getTime();
+    if (at >= start && at < end) count += 1;
+  }
+  return count;
 }
 
 /** Répartition des cartes à réviser, affichée en haut des sessions. */
@@ -86,12 +140,11 @@ export function buildQueue(
 
   const newCards = due.filter((card) => card.state === "new");
   const examNewCards = newCards.filter((card) => deadlines.has(card.id)).sort(byPosition);
-  const otherNewCards = newCards
-    .filter((card) => !deadlines.has(card.id))
-    .sort(byPosition)
-    .slice(0, limits.newPerSession);
+  const otherNewCards = newCards.filter((card) => !deadlines.has(card.id)).sort(byPosition);
+  // L'examen choisit l'ordre, pas le volume : le budget du jour s'applique à toutes.
+  const introduced = [...examNewCards, ...otherNewCards].slice(0, limits.newPerSession);
 
-  return [...learning, ...reviews, ...examNewCards, ...otherNewCards];
+  return [...learning, ...reviews, ...introduced];
 }
 
 export function studyCounts(

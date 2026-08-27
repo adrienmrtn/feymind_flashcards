@@ -20,6 +20,7 @@ import {
   canImportCourse,
   canPractice,
   hasReachedSessionLimit,
+  isPaid,
   lockedSheetPercent,
   resolve,
   sheetLockIndex,
@@ -56,6 +57,15 @@ describe("le droit", () => {
     // web — fermer enfermerait dehors sans porte de sortie.
     expect(resolve().isPro).toBe(ASSUME_PRO_WITHOUT_ROW);
     expect(resolve(null, undefined).isPro).toBe(ASSUME_PRO_WITHOUT_ROW);
+  });
+
+  it("ne confond pas un Pro deviné avec un abonnement payé", () => {
+    // Sans cette distinction, le paywall croit que tout le monde a déjà payé
+    // et ne s'ouvre jamais.
+    expect(isPaid(resolve())).toBe(false);
+    expect(isPaid(resolve({ isPro: true }))).toBe(true);
+    expect(isPaid(resolve({ isPro: false }))).toBe(false);
+    expect(isPaid(PRO)).toBe(true);
   });
 
   it("garde la trace du magasin, qui décide où « gérer mon abonnement » mène", () => {

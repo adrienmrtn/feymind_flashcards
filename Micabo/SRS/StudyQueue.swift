@@ -11,6 +11,55 @@ struct StudyCounts: Equatable {
     static let empty = StudyCounts()
 }
 
+/// Le budget de cartes neuves **du jour**, partagé par toutes les sessions.
+///
+/// Une révision depuis un cours et l'onglet Réviser lisent les mêmes faits
+/// (`ReviewLog.stateBefore == .new` aujourd'hui). Sans ça, chaque écran se
+/// servirait un plafond neuf.
+enum DailyNewQuota {
+    static let sliderCap = 60
+
+    static func introducedToday(
+        from logs: [ReviewLog],
+        now: Date = Date(),
+        calendar: Calendar = MicaboCalendar.shared
+    ) -> Int {
+        let start = calendar.startOfDay(for: now)
+        guard let end = calendar.date(byAdding: .day, value: 1, to: start) else { return 0 }
+        return logs.filter { log in
+            log.stateBeforeRaw == CardState.new.rawValue
+                && log.reviewedAt >= start
+                && log.reviewedAt < end
+        }.count
+    }
+
+    static func remaining(
+        introduced: Int,
+        dailyMinutes: Int = OnboardingPreferences.dailyMinutes
+    ) -> Int {
+        max(0, DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes) - max(0, introduced))
+    }
+
+    static func remaining(
+        logs: [ReviewLog],
+        now: Date = Date(),
+        calendar: Calendar = MicaboCalendar.shared,
+        dailyMinutes: Int = OnboardingPreferences.dailyMinutes
+    ) -> Int {
+        remaining(introduced: introducedToday(from: logs, now: now, calendar: calendar), dailyMinutes: dailyMinutes)
+    }
+
+    static func sliderMax(rhythm: Int) -> Int {
+        max(20, min(sliderCap, max(rhythm * 2, rhythm)))
+    }
+
+    /// Un override vient du curseur ; sinon on sert le reste du rythme.
+    static func sessionLimit(introduced: Int, override: Int? = nil, dailyMinutes: Int = OnboardingPreferences.dailyMinutes) -> Int {
+        if let override { return max(0, override) }
+        return remaining(introduced: introduced, dailyMinutes: dailyMinutes)
+    }
+}
+
 enum StudyQueueBuilder {
     struct Limits {
         var newPerSession: Int
@@ -19,12 +68,14 @@ enum StudyQueueBuilder {
         static let `default` = Limits(newPerSession: 20, reviewsPerSession: 200)
         static let unlimited = Limits(newPerSession: .max, reviewsPerSession: .max)
 
-        /// Plafond issu du rythme quotidien choisi à l'inscription : c'est ce qui rend le
-        /// curseur de l'onboarding utile. Les révisions dues ne sont pas rationnées, seule
-        /// l'introduction de cartes neuves l'est.
-        static func daily(minutes: Int = OnboardingPreferences.dailyMinutes) -> Limits {
+        /// Plafond issu du rythme quotidien choisi à l'inscription. Les révisions
+        /// dues ne sont pas rationnées, seule l'introduction de cartes neuves l'est.
+        static func daily(
+            minutes: Int = OnboardingPreferences.dailyMinutes,
+            newRemaining: Int? = nil
+        ) -> Limits {
             Limits(
-                newPerSession: DailyLoad.newCardsPerDay(dailyMinutes: minutes),
+                newPerSession: newRemaining ?? DailyLoad.newCardsPerDay(dailyMinutes: minutes),
                 reviewsPerSession: .max
             )
         }
@@ -32,10 +83,9 @@ enum StudyQueueBuilder {
 
     /// Ordonne les cartes comme Anki : apprentissage en retard, puis révisions, puis nouvelles.
     ///
-    /// Les cartes sous échéance d'examen font exception au plafond de cartes neuves. Sans
-    /// cette exception, le plan annoncé à la confirmation serait un mensonge : il promet
-    /// quarante cartes aujourd'hui, et le rythme quotidien n'en laisserait passer que huit.
-    /// Le plafond garde tout son sens hors examen, où il n'y a pas de date à tenir.
+    /// Les cartes sous échéance d'examen passent **devant** les autres neuves, mais elles
+    /// restent dans le plafond du jour. Sans ça, un cours rattaché à deux examens vidait
+    /// tout le paquet d'un coup, puis la session suivante ressortait les mêmes cartes.
     static func build(
         from cards: [Flashcard],
         now: Date = Date(),
@@ -58,12 +108,10 @@ enum StudyQueueBuilder {
         }
         let newCards = due.filter { $0.state == .new }
         let examNewCards = newCards.filter { deadlines.covers($0) }.sorted(by: byPosition)
-        let otherNewCards = newCards
-            .filter { !deadlines.covers($0) }
-            .sorted(by: byPosition)
-            .prefix(limits.newPerSession)
+        let otherNewCards = newCards.filter { !deadlines.covers($0) }.sorted(by: byPosition)
+        let introduced = Array((examNewCards + otherNewCards).prefix(limits.newPerSession))
 
-        return learning + Array(reviews) + examNewCards + Array(otherNewCards)
+        return learning + Array(reviews) + introduced
     }
 
     /// Une carte sous échéance passe devant, et l'échéance la plus proche devant les autres.

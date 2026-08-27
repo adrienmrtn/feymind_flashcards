@@ -12,7 +12,8 @@ import type { Answers } from "./store";
 
 export const ANSWERS_KEY = "micabo.onboarding.answers";
 export const PAYWALL_PENDING_KEY = "micabo.paywall.pending";
-export const PAYWALL_DISMISSED_KEY = "micabo.paywall.dismissed";
+/** v2 : l'offre à quatre étapes n'avait jamais pu s'ouvrir (tout le monde était « Pro »). */
+export const PAYWALL_DISMISSED_KEY = "micabo.paywall.v2.dismissed";
 
 export function readStoredAnswers(): Answers | null {
   if (typeof window === "undefined") return null;
@@ -43,6 +44,23 @@ export function clearStoredAnswers(): void {
     window.localStorage.removeItem(ANSWERS_KEY);
   } catch {
     // Un stockage refusé ne doit pas empêcher d'entrer dans l'app.
+  }
+}
+
+/**
+ * Oublie ce que cet appareil savait du compte.
+ *
+ * Sans ça, recréer un compte avec la même adresse reposerait le parcours d'avant
+ * (pays, matières, examen) et ce ne serait plus un compte neuf.
+ */
+export function forgetLocalAccount(): void {
+  clearStoredAnswers();
+  try {
+    window.localStorage.removeItem(PAYWALL_PENDING_KEY);
+    window.localStorage.removeItem(PAYWALL_DISMISSED_KEY);
+    window.sessionStorage.removeItem("micabo.app.openCourse");
+  } catch {
+    // Voir plus haut.
   }
 }
 
@@ -88,6 +106,8 @@ export function markPaywallDismissed(): void {
     // Voir plus haut.
   }
 }
+
+export { shouldOpenPaywall } from "./paywall";
 
 /**
  * Écrit les réponses en base si une session existe, et prépare le paywall.
