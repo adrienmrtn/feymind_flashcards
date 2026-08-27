@@ -186,7 +186,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
       </div>
 
       <div className="flex flex-1 flex-col justify-center py-8">
-        <div className="paper rounded-group bg-surface p-7">
+        <div className="paper hover-tile rounded-group bg-surface p-7">
           {card.courseTitle || card.exam ? (
             <div className="flex items-start justify-between gap-3">
               {card.courseTitle ? (
@@ -238,7 +238,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
                         setPicked(choiceIndex);
                         setRevealed(true);
                       }}
-                      className={`w-full rounded-button px-4 py-3 text-left text-[15px] ${tone}`}
+                      className={`pressable hover-row w-full rounded-button px-4 py-3 text-left text-[15px] ${tone}`}
                     >
                       {choice}
                     </button>
@@ -287,7 +287,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
                 key={rating}
                 type="button"
                 onClick={() => grade(rating)}
-                className={`rounded-button px-2 py-3.5 text-center ${ratingTone(rating)}`}
+                className={`pressable hover-tile rounded-button px-2 py-3.5 text-center ${ratingTone(rating)}`}
               >
                 <span className="block text-[14px] font-semibold">
                   {REVIEW_RATING_LABELS[rating]}
@@ -305,7 +305,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
           <button
             type="button"
             onClick={() => setRevealed(true)}
-            className="h-14 w-full rounded-button bg-ink text-[16px] font-semibold text-on-ink"
+            className="pressable shiny hover-tile h-14 w-full rounded-button bg-ink text-[16px] font-semibold text-on-ink"
           >
             Voir la réponse
             <kbd className="ml-2.5 rounded-[5px] bg-white/15 px-2 py-0.5 text-[11px] font-medium">
@@ -326,7 +326,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
  * Les couleurs des quatre boutons.
  *
  * Ce sont celles des retours d'information de l'app, et elles disent « juste » et « faux » sans
- * qu'on plisse les yeux. Aucune transition dessus : c'est le geste le plus répété du produit.
+ * qu'on plisse les yeux. Le survol est le même geste que partout ailleurs : la tuile se soulève.
  */
 function ratingTone(rating: number): string {
   switch (rating) {

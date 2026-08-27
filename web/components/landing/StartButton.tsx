@@ -24,7 +24,7 @@ export function StartButton({
     >
       <Link
         href={signedIn ? "/app" : "/commencer/pays"}
-        className={`pressable inline-flex items-center justify-center rounded-button bg-ink font-semibold text-on-ink ${
+        className={`pressable shiny hover-tile inline-flex items-center justify-center rounded-button bg-ink font-semibold text-on-ink ${
           large ? "h-14 px-8 text-[16px]" : "h-11 px-5 text-[14px]"
         } ${className}`}
       >

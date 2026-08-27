@@ -220,7 +220,7 @@ export function ReviewSetup({
                 return row?.courseId === course.id;
               }).length;
               return (
-                <li key={course.id} className="flex items-center gap-3.5 px-5 py-3.5">
+                <li key={course.id} className="hover-row flex items-center gap-3.5 px-5 py-3.5">
                   <span aria-hidden className="emoji text-[18px]">
                     {resolveEmoji(course.emoji, course.subject, course.title)}
                   </span>
@@ -239,7 +239,7 @@ export function ReviewSetup({
         {served > 0 ? (
           <Link
             href={href as never}
-            className="pressable shiny flex h-14 w-full items-center justify-center rounded-button bg-ink text-[16px] font-semibold text-on-ink"
+            className="pressable shiny hover-tile flex h-14 w-full items-center justify-center rounded-button bg-ink text-[16px] font-semibold text-on-ink"
           >
             ⚡ Commencer la session
           </Link>
@@ -260,7 +260,7 @@ export function ReviewSetup({
 
 function Tile({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
   return (
-    <div className={`rounded-group p-5 ${accent ? "bg-accent-soft" : "paper bg-surface"}`}>
+    <div className={`hover-tile rounded-group p-5 ${accent ? "bg-accent-soft" : "paper bg-surface"}`}>
       <dd className={`numeral text-[30px] font-bold leading-none ${accent ? "text-accent" : "text-ink"}`}>
         {value}
       </dd>

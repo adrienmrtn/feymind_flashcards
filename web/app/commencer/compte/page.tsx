@@ -186,7 +186,7 @@ function AccountStepBody() {
             <button
               type="submit"
               disabled={pending === "email" || email.trim().length === 0}
-              className="pressable flex h-14 w-full items-center justify-center gap-2.5 rounded-button bg-ink text-[16px] font-semibold text-on-ink transition-colors duration-hover disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-ink-tertiary"
+              className="pressable shiny hover-tile flex h-14 w-full items-center justify-center gap-2.5 rounded-button bg-ink text-[16px] font-semibold text-on-ink transition-colors duration-hover disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:text-ink-tertiary"
             >
               {pending === "email" ? (
                 <>
@@ -236,8 +236,8 @@ function ProviderButton({
       type="button"
       onClick={onPress}
       disabled={pending}
-      className={`pressable flex h-14 w-full items-center justify-center gap-3 rounded-button text-[16px] font-semibold disabled:opacity-70 ${
-        dark ? "bg-ink text-on-ink" : "paper bg-surface text-ink"
+      className={`pressable hover-tile flex h-14 w-full items-center justify-center gap-3 rounded-button text-[16px] font-semibold disabled:opacity-70 ${
+        dark ? "shiny bg-ink text-on-ink" : "paper bg-surface text-ink"
       }`}
     >
       {pending ? <ThinkingOrb state="connecting" size={20} theme={dark ? "dark" : "light"} /> : icon}

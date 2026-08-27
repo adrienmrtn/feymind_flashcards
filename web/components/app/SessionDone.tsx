@@ -171,7 +171,7 @@ export function SessionDone({
 
       <Link
         href="/app"
-        className="pressable shiny rise mt-10 inline-flex rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
+        className="pressable shiny hover-tile rise mt-10 inline-flex rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
         style={{ animationDelay: "420ms" }}
       >
         🏠 Retour aux cours
@@ -182,7 +182,7 @@ export function SessionDone({
 
 function Tile({ emoji, value, label }: { emoji: string; value: string | number; label: string }) {
   return (
-    <div className="paper rounded-group bg-surface py-5">
+    <div className="paper hover-tile rounded-group bg-surface py-5">
       <p className="text-[18px]" aria-hidden>
         {emoji}
       </p>
