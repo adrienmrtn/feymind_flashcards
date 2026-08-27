@@ -1,20 +1,26 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Un compte Micabo, pas seulement une session GoTrue.
+ * Ce que Supabase a déjà pour cette session.
  *
- * Le déclencheur `handle_new_user` crée une ligne `profiles` à la première
- * connexion Apple ou Google. Sans ça, « le compte existe » voudrait dire
- * « on vient de l'inventer ». On ne compte donc que ceux qui ont déjà fini
- * le parcours, ou qui ont déjà un cours.
+ * Une ligne `auth.users`, c'est le compte. On n'invente pas un second
+ * « compte Micabo » par-dessus : c'est ce second compte qui renvoyait
+ * une connexion Google dans l'accueil, puis réécrivait le profil.
+ *
+ * On s'en sert seulement pour **ne pas écraser** un profil déjà rempli
+ * avec les réponses d'un parcours restées sur l'appareil.
  */
-export async function hasExistingMicaboAccount(
+export async function shouldPreserveRemoteProfile(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<boolean> {
   const [{ data: profile }, { count }] = await Promise.all([
     supabase.from("profiles").select("onboarding_completed_at").eq("id", userId).maybeSingle(),
-    supabase.from("courses").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    supabase
+      .from("courses")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .is("deleted_at", null),
   ]);
 
   if (profile?.onboarding_completed_at) return true;

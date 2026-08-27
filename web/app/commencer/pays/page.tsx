@@ -1,13 +1,11 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 import { COUNTRIES, countryFor, guessCountry, type CountryCode } from "@micabo/core";
 
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
 import { Flag } from "@/components/onboarding/Flag";
-import { ONBOARDING_CREATE_STORAGE } from "@/lib/auth/onboarding-create";
 import { useOnboarding } from "@/lib/onboarding/store";
 
 /**
@@ -34,23 +32,11 @@ export default function CountryStep() {
 
 function CountryStepBody() {
   const { answers, set, ready } = useOnboarding();
-  const params = useSearchParams();
   const [guessed, setGuessed] = useState<CountryCode | null>(null);
-  const [unknownAccount, setUnknownAccount] = useState(false);
 
   useEffect(() => {
     setGuessed(guessCountry(navigator.languages ?? [navigator.language]));
   }, []);
-
-  useEffect(() => {
-    if (params.get("inconnu") !== "1") return;
-    try {
-      sessionStorage.setItem(ONBOARDING_CREATE_STORAGE, "1");
-    } catch {
-      // Le cookie du callback suffit encore au middleware.
-    }
-    setUnknownAccount(true);
-  }, [params]);
 
   const selected = answers.country ?? null;
   const [typed, setTyped] = useState(answers.customCountry ?? "");
@@ -66,14 +52,6 @@ function CountryStepBody() {
       title="Tu étudies dans quel pays ?"
       footer={<ContinueButton enabled={answered && ready} href="/commencer/niveau" />}
     >
-      {unknownAccount ? (
-        <p
-          className="mb-5 rounded-button bg-accent-soft px-4 py-3 text-[14.5px] font-medium text-accent"
-          role="status"
-        >
-          Ce compte n&apos;existe pas, créons-le.
-        </p>
-      ) : null}
       <div className="max-h-[46svh] space-y-2 overflow-y-auto pr-1 sm:max-h-[52svh]">
         {listed.map((item) => (
           <Row

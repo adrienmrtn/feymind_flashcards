@@ -52,31 +52,19 @@ final class CloudSync {
         state = .idle
     }
 
-    /// Un compte Micabo, pas seulement une session GoTrue.
+    /// Une session Supabase, c'est le compte.
     ///
-    /// Le déclencheur crée une ligne `profiles` à la première connexion. On ne
-    /// compte donc que ceux qui ont fini le parcours, ou qui ont déjà un cours.
-    /// S'il y en a un, on recopie le profil et on marque le parcours comme fait
-    /// pour ouvrir l'app tout de suite.
+    /// On recopie le profil s'il y en a un, et on ouvre l'app. On ne décide
+    /// plus qu'un utilisateur authentifié « n'existe pas » faute d'avoir fini
+    /// l'accueil : c'est ce tri qui recréait un parcours.
     func recognizeExistingAccount() async -> Bool {
         guard auth.isSignedIn, AppConfig.isConfigured else { return false }
-        guard let userID = auth.user?.id else { return false }
+        guard auth.user?.id != nil else { return false }
 
         let profile = try? await database.fetch(ProfileRecord.self, from: CloudTable.profiles).first
-        let mine = URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")
-        let courses = (try? await database.fetch(
-            CourseRecord.self,
-            from: CloudTable.courses,
-            filters: [mine],
-            limit: 1
-        )) ?? []
-
-        let exists = profile?.onboarding_completed_at != nil || !courses.isEmpty
-        if exists {
-            profile?.applyToLocalPreferences()
-            OnboardingPreferences.markCompleted()
-        }
-        return exists
+        profile?.applyToLocalPreferences()
+        OnboardingPreferences.markCompleted()
+        return true
     }
 
     /// Un aller-retour complet : on descend ce qui a changé, on remonte ce qu'on a.

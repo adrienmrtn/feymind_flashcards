@@ -19,10 +19,6 @@ final class OnboardingModel {
     var subjects: Set<String> = []
     var institutionId: String?
     var institutionName: String?
-    /// Posé quand une connexion n'a trouvé aucun compte Micabo : le pays
-    /// affiche alors « ce compte n'existe pas, créons-le ».
-    var unknownAccount = false
-
     /// Le registre de rédaction, seule forme sous laquelle le niveau sort du parcours.
     var level: StudyLevel? {
         stage?.level
