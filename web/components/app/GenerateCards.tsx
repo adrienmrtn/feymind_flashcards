@@ -75,7 +75,7 @@ export function GenerateCards({
       <div
         className={
           floating
-            ? "fixed right-4 bottom-24 z-30 w-[min(100%-2rem,22rem)] paper flex items-center gap-4 rounded-group bg-surface p-5 shadow-floating lg:right-8 lg:bottom-8"
+            ? "fixed right-4 bottom-32 z-30 w-[min(100%-2rem,22rem)] paper flex items-center gap-4 rounded-group bg-surface p-5 shadow-floating lg:right-8 lg:bottom-8"
             : "paper flex items-center gap-4 rounded-group bg-surface p-5"
         }
         data-print="hide"
@@ -100,7 +100,7 @@ export function GenerateCards({
             type="button"
             onClick={() => setOpen(true)}
             data-print="hide"
-            className="pressable shiny fixed right-4 bottom-24 z-30 flex h-14 items-center gap-2.5 rounded-button bg-ink px-5 text-[15px] font-semibold text-on-ink shadow-floating lg:right-8 lg:bottom-8"
+            className="pressable shiny fixed right-4 bottom-32 z-30 flex h-14 items-center gap-2.5 rounded-button bg-ink px-5 text-[15px] font-semibold text-on-ink shadow-floating lg:right-8 lg:bottom-8"
           >
             <span aria-hidden>✨</span>
             Générer les cartes
@@ -158,7 +158,7 @@ export function GenerateCards({
     <div
       className={
         floating
-          ? "fixed right-4 bottom-24 z-30 w-[min(100%-2rem,22rem)] paper rise rounded-group bg-surface p-5 shadow-floating lg:right-8 lg:bottom-8"
+          ? "fixed right-4 bottom-32 z-30 w-[min(100%-2rem,22rem)] paper rise rounded-group bg-surface p-5 shadow-floating lg:right-8 lg:bottom-8"
           : "paper rise rounded-group bg-surface p-5"
       }
       data-print="hide"

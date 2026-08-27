@@ -16,13 +16,20 @@ import { updateSettings } from "@/lib/actions/profile";
  * Celles déjà écrites restent dans la leur. On ne réécrit pas un cours
  * parce qu'on a changé d'avis sur l'anglais.
  */
-export function SheetLanguageCard({ initial }: { initial: ContentLanguage }) {
+export function SheetLanguageCard({
+  initial,
+  embedded = false,
+}: {
+  initial: ContentLanguage;
+  /** Sans carte autour : le profil l'embarque déjà. */
+  embedded?: boolean;
+}) {
   const [language, setLanguage] = useState(initial);
   const [pending, startTransition] = useTransition();
 
   return (
-    <section className="paper hover-tile rounded-group bg-surface p-6">
-      <p className="eyebrow text-ink-tertiary">🌐 Langue des fiches</p>
+    <section className={embedded ? "" : "paper hover-tile rounded-group bg-surface p-6"}>
+      <p className="text-[13px] text-ink-tertiary">Langue des fiches</p>
       <label htmlFor="sheet-language" className="sr-only">
         Langue des prochaines fiches
       </label>
