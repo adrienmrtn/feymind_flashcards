@@ -129,7 +129,7 @@ export function ExamEditor({
       <div className="relative max-h-[92svh] w-full max-w-[520px] overflow-y-auto rounded-sheet bg-canvas p-6 shadow-floating">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="eyebrow text-ink-tertiary">{exam ? "Modifier" : "Nouveau"}</p>
+            <p className="eyebrow text-ink-tertiary">{exam ? "✏️ Modifier" : "✨ Nouveau"}</p>
             <h2 className="mt-1 text-[22px] font-bold text-ink">
               {exam ? "Replanifier l'examen" : "Ajouter un examen"}
             </h2>
@@ -145,7 +145,7 @@ export function ExamEditor({
         </div>
 
         <label className="mt-6 block">
-          <span className="eyebrow text-ink-tertiary">Nom</span>
+          <span className="eyebrow text-ink-tertiary">📝 Nom</span>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -155,7 +155,7 @@ export function ExamEditor({
         </label>
 
         <label className="mt-4 block">
-          <span className="eyebrow text-ink-tertiary">Date</span>
+          <span className="eyebrow text-ink-tertiary">📆 Date</span>
           <input
             type="date"
             value={examDate}
@@ -165,7 +165,7 @@ export function ExamEditor({
         </label>
 
         <fieldset className="mt-5">
-          <legend className="eyebrow text-ink-tertiary">Cours de cet examen</legend>
+          <legend className="eyebrow text-ink-tertiary">📚 Cours de cet examen</legend>
           <ul className="mt-2 overflow-hidden rounded-group bg-surface">
             {courses.map((course) => {
               const on = selected.includes(course.id);
@@ -202,7 +202,7 @@ export function ExamEditor({
         </fieldset>
 
         <div className="mt-6">
-          <p className="eyebrow text-ink-tertiary">Intensité</p>
+          <p className="eyebrow text-ink-tertiary">💪 Intensité</p>
           <div className="mt-3 flex flex-col items-center rounded-group bg-surface px-5 py-5">
             <span key={intensity} className="emoji-pop text-[42px]" aria-hidden>
               {EXAM_INTENSITY_EMOJIS[intensity]}

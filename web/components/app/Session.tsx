@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 
 import {
   DETERMINISTIC_CONFIG,
@@ -22,6 +21,7 @@ import {
 
 import { ExamMark, type ExamMarkInfo } from "@/components/app/ExamMark";
 import { OcclusionFigure } from "@/components/app/OcclusionFigure";
+import { SessionDone } from "@/components/app/SessionDone";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { gradeCard } from "@/lib/actions/review";
 
@@ -70,6 +70,7 @@ interface Tally {
   answered: number;
   again: number;
   graduated: number;
+  ratings: ReviewRating[];
 }
 
 type Loop = SessionAdvance<SessionCard>;
@@ -80,7 +81,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
   );
   const [revealed, setRevealed] = useState(false);
   const [picked, setPicked] = useState<number | null>(null);
-  const [tally, setTally] = useState<Tally>({ answered: 0, again: 0, graduated: 0 });
+  const [tally, setTally] = useState<Tally>({ answered: 0, again: 0, graduated: 0, ratings: [] });
   const [failure, setFailure] = useState<string | null>(null);
   const [startedAt] = useState(() => Date.now());
 
@@ -110,6 +111,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
         graduated:
           current.graduated +
           (card.snapshot.state !== "review" && outcome.state === "review" ? 1 : 0),
+        ratings: [...current.ratings, typed],
       }));
 
       const updated: SessionCard = { ...card, snapshot: snapshotFrom(outcome) };
@@ -160,7 +162,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
 
   if (finished) {
     return (
-      <Completion
+      <SessionDone
         tally={tally}
         minutes={elapsedMinutes(startedAt)}
         capped={capped}
@@ -316,59 +318,6 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
           Espace retourne la carte, 1 à 4 la notent.
         </p>
       </div>
-    </div>
-  );
-}
-
-/** Le bilan : ce qui vient de se passer. La session s'arrête ici, et pas avant. */
-function Completion({
-  tally,
-  minutes,
-  capped,
-  remaining,
-}: {
-  tally: Tally;
-  minutes: number;
-  capped: boolean;
-  remaining: number;
-}) {
-  const accuracy =
-    tally.answered > 0 ? Math.round(((tally.answered - tally.again) / tally.answered) * 100) : 100;
-
-  return (
-    <div className="mx-auto max-w-[520px] py-16 text-center">
-      <p className="text-[28px] font-bold text-ink">
-        {capped ? "C'est tout pour aujourd'hui." : "Tout est à jour."}
-      </p>
-
-      {capped ? (
-        <p className="mx-auto mt-3 max-w-[40ch] text-[14.5px] leading-relaxed text-ink-secondary">
-          Le gratuit sert {entitlement.FREE_TIER.cardsPerSession} cartes par session. Il t&apos;en
-          reste <span className="numeral font-semibold text-ink">{remaining}</span> qui attendent.
-        </p>
-      ) : null}
-
-      <dl className="mt-10 grid grid-cols-3 gap-4">
-        <Stat value={tally.graduated} label="apprises" />
-        <Stat value={`${accuracy} %`} label="de réussite" />
-        <Stat value={minutes} label="min de révision" />
-      </dl>
-
-      <Link
-        href="/app"
-        className="pressable mt-12 inline-flex rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
-      >
-        Retour aux cours
-      </Link>
-    </div>
-  );
-}
-
-function Stat({ value, label }: { value: string | number; label: string }) {
-  return (
-    <div className="paper rounded-group bg-surface py-5">
-      <dd className="numeral text-[26px] font-bold text-ink">{value}</dd>
-      <dt className="mt-1 text-[12px] text-ink-tertiary">{label}</dt>
     </div>
   );
 }

@@ -45,7 +45,7 @@ export function ExamCalendar({
   return (
     <div className="paper rounded-group bg-surface p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-[16px] font-semibold capitalize text-ink">{label}</p>
+        <p className="text-[16px] font-semibold capitalize text-ink">📅 {label}</p>
         <div className="flex gap-1">
           <button
             type="button"
