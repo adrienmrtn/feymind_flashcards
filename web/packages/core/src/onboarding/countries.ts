@@ -150,6 +150,26 @@ export function languageLabel(code: string | null | undefined): string {
   return LANGUAGE_LABELS[languageFor(code)];
 }
 
+export const CONTENT_LANGUAGES = Object.keys(LANGUAGE_LABELS) as ContentLanguage[];
+
+export function isContentLanguage(value: string | null | undefined): value is ContentLanguage {
+  return Boolean(value && value in LANGUAGE_LABELS);
+}
+
+/**
+ * La langue des **prochaines** fiches.
+ *
+ * Un réglage explicite gagne. Sinon on retombe sur celle du pays. Les fiches
+ * déjà écrites ne passent pas par ici.
+ */
+export function sheetLanguage(
+  preferred: string | null | undefined,
+  countryCode?: string | null,
+): ContentLanguage {
+  if (isContentLanguage(preferred)) return preferred;
+  return languageFor(countryCode);
+}
+
 /**
  * Le drapeau déduit d'un code ISO : deux lettres devenues indicateurs régionaux.
  *

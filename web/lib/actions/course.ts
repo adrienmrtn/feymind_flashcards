@@ -8,6 +8,7 @@ import {
   clampQuota,
   countryFor,
   isSheetLength,
+  sheetLanguage,
   isVisibility,
   latexCommandsToUnicode,
   lengthContaining,
@@ -83,11 +84,12 @@ export async function importFromText(input: {
   // n'est pas une option, c'est ce qui distingue une fiche de lycée d'une fiche de master.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("study_level, country_code, sheet_length")
+    .select("study_level, country_code, sheet_length, sheet_language")
     .eq("id", user.id)
     .maybeSingle();
 
   const country = countryFor(profile?.country_code);
+  const language = sheetLanguage(profile?.sheet_language, profile?.country_code);
 
   // Le réglage de l'écran gagne sur celui du profil, et le profil sert de défaut : c'est ce que
   // fait l'app, où le curseur de l'import part de la préférence enregistrée. `blocks` commande, et
@@ -103,7 +105,7 @@ export async function importFromText(input: {
       sourceName: input.sourceName,
       level: profile?.study_level ?? undefined,
       country: country.code,
-      language: country.language,
+      language,
       length,
       blocks: wantedBlocks,
       source: input.source ?? "text",

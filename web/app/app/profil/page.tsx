@@ -11,11 +11,13 @@ import {
   streak as currentStreak,
   bestStreak,
   studyCounts,
+  sheetLanguage,
 } from "@micabo/core";
 
 import { DeleteAccount } from "@/components/app/DeleteAccount";
 import { ProfileSettings } from "@/components/app/ProfileSettings";
 import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
+import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { loadNewCardBudget } from "@/lib/data/reviews";
 import { currentUser } from "@/lib/data/user";
@@ -38,7 +40,7 @@ export default async function ProfilePage() {
       ? supabase
           .from("profiles")
           .select(
-            "display_name, username, country_code, study_level, subjects, institution_name, institution_id, daily_minutes, sheet_length",
+            "display_name, username, country_code, study_level, subjects, institution_name, institution_id, daily_minutes, sheet_length, sheet_language",
           )
           .eq("id", user.id)
           .maybeSingle()
@@ -226,12 +228,9 @@ export default async function ProfilePage() {
             </span>
           </Link>
 
-          <dl className="paper divide-y divide-hairline overflow-hidden rounded-group bg-surface">
-            <Row
-              label="🌐 Langue des fiches"
-              value={country.language === "fr" ? "Français" : "English"}
-            />
-          </dl>
+          <SheetLanguageCard
+            initial={sheetLanguage(profile?.sheet_language, profile?.country_code)}
+          />
 
           {exams.length > 0 ? (
             <Link
@@ -293,11 +292,3 @@ function Tile({ value, label, hint }: { value: number; label: string; hint?: str
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="hover-row flex items-baseline justify-between gap-4 px-5 py-3.5">
-      <dt className="shrink-0 text-[13px] text-ink-tertiary">{label}</dt>
-      <dd className="text-right text-[14.5px] font-medium text-ink">{value}</dd>
-    </div>
-  );
-}

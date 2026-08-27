@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 
 import {
   clampBlocks,
+  isContentLanguage,
   isSheetLength,
   isVisibility,
   lengthContaining,
   nearestStep,
+  type ContentLanguage,
   type CourseVisibility,
   type SheetLength,
 } from "@micabo/core";
@@ -40,6 +42,7 @@ export async function updateSettings(input: {
   subjects?: string[];
   institutionName?: string | null;
   institutionId?: string | null;
+  sheetLanguage?: ContentLanguage;
 }): Promise<SavedSettings> {
   const supabase = await createClient();
   const {
@@ -84,6 +87,13 @@ export async function updateSettings(input: {
     patch.institution_id = id.length > 0 ? id : null;
   }
 
+  if (input.sheetLanguage !== undefined) {
+    if (!isContentLanguage(input.sheetLanguage)) {
+      return { status: "error", message: "Langue inconnue." };
+    }
+    patch.sheet_language = input.sheetLanguage;
+  }
+
   if (Object.keys(patch).length === 0) return { status: "ok" };
 
   const { error } = await supabase
@@ -93,6 +103,7 @@ export async function updateSettings(input: {
   if (error) return { status: "error", message: error.message };
 
   revalidateUserData(user.id, "profile");
+  revalidatePath("/app");
   revalidatePath("/app/profil");
   revalidatePath("/app/importer");
   return { status: "ok" };
