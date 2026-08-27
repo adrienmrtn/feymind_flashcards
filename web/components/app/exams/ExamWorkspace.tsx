@@ -38,6 +38,7 @@ export function ExamWorkspace({
 
   const calendarExams: CalendarExam[] = exams.map((exam) => ({
     id: exam.id,
+    name: exam.name,
     examDate: exam.examDate,
     isPast: dayDifference(today, startOfDay(new Date(`${exam.examDate}T12:00:00`))) < 0,
   }));

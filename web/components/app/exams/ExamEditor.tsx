@@ -10,13 +10,15 @@ import {
   busiestDay,
   isProjectionEmpty,
   planExam,
+  startOfDay,
   type CardState,
   type ExamIntensity,
 } from "@micabo/core";
 
+import { ChoiceRow } from "@/components/onboarding/Scaffold";
 import { deleteExam, saveExam } from "@/lib/actions/exams";
 
-import { isoDay } from "./ExamCalendar";
+import { ExamDayPicker, isoDay } from "./ExamCalendar";
 
 export interface EditorCourse {
   id: string;
@@ -42,6 +44,23 @@ export interface EditorExam {
   courseIds: string[];
 }
 
+type Step = "jour" | "cours" | "intensite";
+
+const STEPS: Step[] = ["jour", "cours", "intensite"];
+
+const INTENSITY_DETAIL: Record<ExamIntensity, string> = {
+  light: "Deux passages, pour un chapitre déjà su.",
+  standard: "Trois passages, le rythme d'un contrôle.",
+  intense: "Quatre passages, quand ça compte vraiment.",
+};
+
+/**
+ * Ajouter un examen : **trois questions, jamais plein écran.**
+ *
+ * Un seul bloc avec nom, date, cours et curseur faisait lire un formulaire. Ici
+ * c'est le même geste que le parcours : un écran, une question, un bouton.
+ * La date du clic est déjà choisie. On peut la changer.
+ */
 export function ExamEditor({
   exam,
   date,
@@ -55,16 +74,21 @@ export function ExamEditor({
   cards: EditorCard[];
   onClose: () => void;
 }) {
-  const [name, setName] = useState(exam?.name ?? "");
+  const today = startOfDay(new Date());
+  const [step, setStep] = useState<Step>("jour");
   const [examDate, setExamDate] = useState(exam?.examDate ?? isoDay(date));
   const [intensity, setIntensity] = useState<ExamIntensity>(exam?.intensity ?? "standard");
   const [selected, setSelected] = useState<string[]>(exam?.courseIds ?? []);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  const [pickerMonth, setPickerMonth] = useState(() => monthFrom(exam?.examDate ?? isoDay(date)));
 
   const chosen = cards.filter(
     (card) => !card.isSuspended && card.courseId && selected.includes(card.courseId),
   );
+  const picked = startOfDay(new Date(`${examDate}T12:00:00`));
+  const dateOk = picked.getTime() >= today.getTime();
+  const index = STEPS.indexOf(step);
 
   const plan = useMemo(
     () =>
@@ -81,16 +105,46 @@ export function ExamEditor({
     [chosen, examDate, intensity],
   );
 
-  const canConfirm = selected.length > 0;
+  const canContinue =
+    step === "jour" ? dateOk : step === "cours" ? selected.length > 0 : selected.length > 0 && dateOk;
   const missingCards = selected.length > 0 && chosen.length === 0;
   const peak = busiestDay(plan.projection);
+
+  function pickDay(day: Date) {
+    const start = startOfDay(day);
+    if (start.getTime() < today.getTime()) return;
+    setExamDate(isoDay(start));
+    setPickerMonth(new Date(start.getFullYear(), start.getMonth(), 1));
+  }
+
+  function toggle(id: string) {
+    setSelected((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
+  }
+
+  function goNext() {
+    if (!canContinue) return;
+    const following = STEPS[index + 1];
+    if (following) {
+      setFailure(null);
+      setStep(following);
+      return;
+    }
+    void confirm();
+  }
+
+  function goBack() {
+    const previous = STEPS[index - 1];
+    if (previous) setStep(previous);
+  }
 
   async function confirm() {
     setBusy(true);
     setFailure(null);
     const result = await saveExam({
       id: exam?.id,
-      name,
+      name: examName(exam, selected, courses),
       examDate,
       intensity,
       courseIds: selected,
@@ -115,182 +169,294 @@ export function ExamEditor({
     onClose();
   }
 
-  function toggle(id: string) {
-    setSelected((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
-    );
-  }
-
-  const intensityIndex = EXAM_INTENSITIES.indexOf(intensity);
-
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/35 p-4 sm:items-center">
-      <button type="button" className="absolute inset-0" aria-label="Fermer" onClick={onClose} />
-      <div className="relative max-h-[92svh] w-full max-w-[520px] overflow-y-auto rounded-sheet bg-canvas p-6 shadow-floating">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="eyebrow text-ink-tertiary">{exam ? "✏️ Modifier" : "✨ Nouveau"}</p>
-            <h2 className="mt-1 text-[22px] font-bold text-ink">
-              {exam ? "Replanifier l'examen" : "Ajouter un examen"}
-            </h2>
+    <div className="fixed inset-0 z-40 flex items-end justify-center p-3 sm:items-center sm:p-6">
+      <button
+        type="button"
+        className="absolute inset-0 bg-ink/35 backdrop-blur-[6px]"
+        aria-label="Fermer"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="exam-onboarding-title"
+        className="relative flex max-h-[min(760px,92svh)] w-full max-w-[440px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-floating"
+      >
+        <div className="flex items-center justify-between px-5 pt-4">
+          <div className="flex items-center gap-1.5" aria-hidden>
+            {STEPS.map((item, position) => (
+              <span
+                key={item}
+                className={`h-1.5 rounded-pill transition-all duration-menu ${
+                  position === index
+                    ? "w-6 bg-ink"
+                    : position < index
+                      ? "w-1.5 bg-accent-vivid"
+                      : "w-1.5 bg-stroke-strong"
+                }`}
+              />
+            ))}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="pressable text-[18px] text-ink-tertiary"
+            className="pressable -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
             aria-label="Fermer"
           >
-            ✕
+            <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5">
+              <path
+                d="M5 5l10 10M15 5L5 15"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
           </button>
         </div>
 
-        <label className="mt-6 block">
-          <span className="eyebrow text-ink-tertiary">📝 Nom</span>
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Partiel de maths"
-            className="mt-2 h-12 w-full rounded-button bg-surface px-4 text-[15px] text-ink outline-none"
-          />
-        </label>
-
-        <label className="mt-4 block">
-          <span className="eyebrow text-ink-tertiary">📆 Date</span>
-          <input
-            type="date"
-            value={examDate}
-            onChange={(event) => setExamDate(event.target.value)}
-            className="mt-2 h-12 w-full rounded-button bg-surface px-4 text-[15px] text-ink outline-none"
-          />
-        </label>
-
-        <fieldset className="mt-5">
-          <legend className="eyebrow text-ink-tertiary">📚 Cours de cet examen</legend>
-          <ul className="mt-2 overflow-hidden rounded-group bg-surface">
-            {courses.map((course) => {
-              const on = selected.includes(course.id);
-              return (
-                <li key={course.id} className="border-t border-hairline first:border-t-0">
-                  <button
-                    type="button"
-                    onClick={() => toggle(course.id)}
-                    className={`hover-row flex w-full items-center gap-3 px-4 py-3 text-left ${
-                      on ? "bg-accent-soft" : ""
-                    }`}
-                  >
-                    <span aria-hidden className="text-[18px]">
-                      {course.emoji}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14.5px] font-medium text-ink">
-                        {course.title || "Sans titre"}
-                      </span>
-                      <span className="text-[12.5px] text-ink-tertiary">
-                        {course.cardCount} carte{course.cardCount > 1 ? "s" : ""}
-                      </span>
-                    </span>
-                    <span
-                      className={`h-5 w-5 rounded-full border ${
-                        on ? "border-accent bg-accent" : "border-stroke"
-                      }`}
-                    />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </fieldset>
-
-        <div className="mt-6">
-          <p className="eyebrow text-ink-tertiary">💪 Intensité</p>
-          <div className="mt-3 flex flex-col items-center rounded-group bg-surface px-5 py-5">
-            <span key={intensity} className="emoji-pop text-[42px]" aria-hidden>
-              {EXAM_INTENSITY_EMOJIS[intensity]}
-            </span>
-            <p className="mt-2 text-[16px] font-semibold text-ink">
-              {EXAM_INTENSITY_LABELS[intensity]}
-            </p>
-            <input
-              type="range"
-              min={0}
-              max={2}
-              step={1}
-              value={intensityIndex}
-              onChange={(event) => setIntensity(EXAM_INTENSITIES[Number(event.target.value)]!)}
-              className="mt-4 w-full accent-[var(--color-accent)]"
-              aria-label="Intensité de l'examen"
-            />
-            <div className="mt-1 flex w-full justify-between text-[11px] text-ink-tertiary">
-              {EXAM_INTENSITIES.map((value) => (
-                <span key={value}>{EXAM_INTENSITY_LABELS[value]}</span>
-              ))}
-            </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 pt-4">
+          <div key={step} className="rise">
+            {step === "jour" ? (
+              <DayStep
+                picked={picked}
+                month={pickerMonth}
+                onMonth={setPickerMonth}
+                onSelect={pickDay}
+              />
+            ) : null}
+            {step === "cours" ? (
+              <CoursesStep courses={courses} selected={selected} onToggle={toggle} />
+            ) : null}
+            {step === "intensite" ? (
+              <IntensityStep
+                intensity={intensity}
+                onPick={setIntensity}
+                missingCards={missingCards}
+                canPreview={selected.length > 0 && !isProjectionEmpty(plan.projection)}
+                cardCount={plan.projection.cardCount}
+                daily={averageDailyLoad(plan.projection)}
+                peak={peak}
+                load={plan.projection.load}
+              />
+            ) : null}
           </div>
+
+          {failure ? (
+            <p className="mt-4 text-[13.5px] text-negative" role="alert">
+              {failure}
+            </p>
+          ) : null}
         </div>
 
-        {missingCards ? (
-          <p className="mt-4 text-[13.5px] leading-relaxed text-caution">
-            Ces cours n&apos;ont pas encore de cartes. Le plan se posera au premier paquet.
-          </p>
-        ) : null}
-
-        {canConfirm && !isProjectionEmpty(plan.projection) ? (
-          <div className="mt-5 rounded-group bg-surface p-4">
-            <p className="text-[13.5px] text-ink-secondary">
-              <span className="numeral font-semibold text-ink">{plan.projection.cardCount}</span>{" "}
-              cartes ·{" "}
-              <span className="numeral font-semibold text-ink">{averageDailyLoad(plan.projection)}</span>{" "}
-              révisions / jour
-              {peak ? (
-                <>
-                  {" "}
-                  · pic de <span className="numeral font-semibold text-ink">{peak.count}</span>
-                </>
-              ) : null}
-            </p>
-            <div className="mt-3 flex h-10 items-end gap-0.5">
-              {plan.projection.load.map((count, index) => {
-                const max = Math.max(1, ...plan.projection.load);
-                return (
-                  <span
-                    key={index}
-                    className={`min-w-0 flex-1 rounded-t-sm ${
-                      peak && index === peak.offset ? "bg-caution" : "bg-accent/70"
-                    }`}
-                    style={{ height: `${Math.max(8, (count / max) * 100)}%` }}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
-
-        {failure ? (
-          <p className="mt-4 text-[13.5px] text-negative" role="alert">
-            {failure}
-          </p>
-        ) : null}
-
-        <button
-          type="button"
-          onClick={confirm}
-          disabled={busy || !canConfirm}
-          className="pressable mt-6 h-12 w-full rounded-button bg-ink text-[15px] font-semibold text-on-ink disabled:opacity-40"
-        >
-          {exam ? "Replanifier" : "Planifier l'examen"}
-        </button>
-
-        {exam ? (
+        <div className="px-6 pb-6 pt-3">
           <button
             type="button"
-            onClick={remove}
-            disabled={busy}
-            className="pressable mt-2 h-11 w-full rounded-button text-[14px] font-medium text-negative"
+            onClick={goNext}
+            disabled={busy || !canContinue}
+            className={`pressable flex h-14 w-full items-center justify-center gap-2 rounded-button text-[16px] font-semibold transition-colors duration-hover ${
+              canContinue && !busy
+                ? "shiny bg-ink text-on-ink"
+                : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
+            }`}
           >
-            Supprimer
+            {step === "intensite"
+              ? exam
+                ? "Replanifier"
+                : "Planifier l'examen"
+              : "Continuer"}
           </button>
-        ) : null}
+          {index > 0 ? (
+            <button
+              type="button"
+              onClick={goBack}
+              disabled={busy}
+              className="pressable mt-2 h-11 w-full rounded-button text-[14px] font-medium text-ink-secondary"
+            >
+              Retour
+            </button>
+          ) : null}
+          {exam && step === "intensite" ? (
+            <button
+              type="button"
+              onClick={() => void remove()}
+              disabled={busy}
+              className="pressable mt-1 h-11 w-full rounded-button text-[14px] font-medium text-negative"
+            >
+              Supprimer
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );
+}
+
+function DayStep({
+  picked,
+  month,
+  onMonth,
+  onSelect,
+}: {
+  picked: Date;
+  month: Date;
+  onMonth: (next: Date) => void;
+  onSelect: (day: Date) => void;
+}) {
+  const today = startOfDay(new Date());
+  const label = picked.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  return (
+    <div>
+      <p className="eyebrow text-ink-tertiary">📅 Examen</p>
+      <h2 id="exam-onboarding-title" className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
+        Quel jour ?
+      </h2>
+      <p className="mt-3 text-[18px] font-semibold capitalize text-ink">{label}</p>
+      <div className="mt-5">
+        <ExamDayPicker
+          month={month}
+          selected={picked}
+          minDate={today}
+          onMonth={onMonth}
+          onSelect={onSelect}
+        />
+      </div>
+    </div>
+  );
+}
+
+function CoursesStep({
+  courses,
+  selected,
+  onToggle,
+}: {
+  courses: EditorCourse[];
+  selected: string[];
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <div>
+      <p className="eyebrow text-ink-tertiary">📚 Cours</p>
+      <h2 id="exam-onboarding-title" className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
+        Quels cours intégrés ?
+      </h2>
+      {courses.length === 0 ? (
+        <p className="mt-6 text-[14.5px] leading-relaxed text-ink-secondary">
+          Importe d&apos;abord un cours. Sans cartes, il n&apos;y a rien à replanifier.
+        </p>
+      ) : (
+        <ul className="mt-6 space-y-2">
+          {courses.map((course) => (
+            <li key={course.id}>
+              <ChoiceRow
+                emoji={course.emoji}
+                title={course.title || "Sans titre"}
+                detail={`${course.cardCount} carte${course.cardCount > 1 ? "s" : ""}`}
+                selected={selected.includes(course.id)}
+                onSelect={() => onToggle(course.id)}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function IntensityStep({
+  intensity,
+  onPick,
+  missingCards,
+  canPreview,
+  cardCount,
+  daily,
+  peak,
+  load,
+}: {
+  intensity: ExamIntensity;
+  onPick: (value: ExamIntensity) => void;
+  missingCards: boolean;
+  canPreview: boolean;
+  cardCount: number;
+  daily: number;
+  peak: { offset: number; count: number } | null;
+  load: number[];
+}) {
+  return (
+    <div>
+      <p className="eyebrow text-ink-tertiary">💪 Rythme</p>
+      <h2 id="exam-onboarding-title" className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
+        Intensité souhaitée ?
+      </h2>
+      <ul className="mt-6 space-y-2">
+        {EXAM_INTENSITIES.map((value) => (
+          <li key={value}>
+            <ChoiceRow
+              emoji={EXAM_INTENSITY_EMOJIS[value]}
+              title={EXAM_INTENSITY_LABELS[value]}
+              detail={INTENSITY_DETAIL[value]}
+              selected={intensity === value}
+              onSelect={() => onPick(value)}
+            />
+          </li>
+        ))}
+      </ul>
+
+      {missingCards ? (
+        <p className="mt-4 text-[13.5px] leading-relaxed text-caution">
+          Ces cours n&apos;ont pas encore de cartes. Le plan se posera au premier paquet.
+        </p>
+      ) : null}
+
+      {canPreview ? (
+        <div className="mt-5 rounded-group bg-canvas p-4">
+          <p className="text-[13.5px] text-ink-secondary">
+            <span className="numeral font-semibold text-ink">{cardCount}</span> cartes ·{" "}
+            <span className="numeral font-semibold text-ink">{daily}</span> révisions / jour
+            {peak ? (
+              <>
+                {" "}
+                · pic de <span className="numeral font-semibold text-ink">{peak.count}</span>
+              </>
+            ) : null}
+          </p>
+          <div className="mt-3 flex h-10 items-end gap-0.5">
+            {load.map((count, position) => {
+              const max = Math.max(1, ...load);
+              return (
+                <span
+                  key={position}
+                  className={`min-w-0 flex-1 rounded-t-sm ${
+                    peak && position === peak.offset ? "bg-caution" : "bg-accent/70"
+                  }`}
+                  style={{ height: `${Math.max(8, (count / max) * 100)}%` }}
+                />
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function examName(exam: EditorExam | null, courseIds: string[], courses: EditorCourse[]): string {
+  const existing = exam?.name.trim();
+  if (existing) return existing;
+  const titles = courseIds
+    .map((id) => courses.find((course) => course.id === id)?.title.trim())
+    .filter((title): title is string => Boolean(title));
+  if (titles.length === 0) return "Examen";
+  return titles.slice(0, 2).join(" · ");
+}
+
+function monthFrom(iso: string): Date {
+  const day = startOfDay(new Date(`${iso}T12:00:00`));
+  return new Date(day.getFullYear(), day.getMonth(), 1);
 }
