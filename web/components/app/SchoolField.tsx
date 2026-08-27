@@ -13,8 +13,10 @@ interface Suggestion {
 }
 
 /**
- * Le champ école du profil, le même que le parcours d'accueil : on cherche, on choisit
- * dans la liste pour poser un identifiant, ou on garde le nom libre.
+ * Le champ école du profil.
+ *
+ * On ne sort aucune liste tant que l'étudiant n'a pas tapé. Un nom déjà
+ * enregistré n'est pas une recherche : c'est juste ce qui est écrit.
  */
 export function SchoolField({
   initialName,
@@ -29,12 +31,20 @@ export function SchoolField({
   const [chosenId, setChosenId] = useState<string | null>(initialId);
   const [results, setResults] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
+  const [typing, setTyping] = useState(false);
   const latest = useRef(0);
 
   useEffect(() => {
+    if (!typing) {
+      setResults([]);
+      setSearching(false);
+      return;
+    }
+
     const needle = query.trim();
     if (needle.length < 2) {
       setResults([]);
+      setSearching(false);
       return;
     }
 
@@ -54,7 +64,7 @@ export function SchoolField({
     }, 220);
 
     return () => window.clearTimeout(timer);
-  }, [query]);
+  }, [query, typing]);
 
   return (
     <div>
@@ -72,6 +82,7 @@ export function SchoolField({
           value={query}
           onChange={(event) => {
             const next = event.target.value;
+            setTyping(true);
             setQuery(next);
             if (chosenId) {
               setChosenId(null);
@@ -79,7 +90,7 @@ export function SchoolField({
             }
           }}
           onBlur={() => onChange({ name: query.trim(), id: chosenId })}
-          placeholder="Lycée, université, école…"
+          placeholder="Tape le nom de ton école…"
           className="h-12 min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
         />
         {searching ? <ThinkingOrb state="searching" size={20} /> : null}
@@ -96,6 +107,7 @@ export function SchoolField({
                 onClick={() => {
                   setChosenId(item.id);
                   setQuery(item.name);
+                  setTyping(false);
                   setResults([]);
                   onChange({ name: item.name, id: item.id });
                 }}
@@ -113,6 +125,14 @@ export function SchoolField({
             );
           })}
         </div>
+      ) : typing && query.trim().length < 2 ? (
+        <p className="mt-2 text-[12.5px] text-ink-tertiary">
+          Encore une lettre ou deux pour voir les établissements.
+        </p>
+      ) : !typing ? (
+        <p className="mt-2 text-[12.5px] text-ink-tertiary">
+          Tape pour chercher ton établissement.
+        </p>
       ) : null}
     </div>
   );

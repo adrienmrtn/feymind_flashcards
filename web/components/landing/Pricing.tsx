@@ -15,7 +15,7 @@ import { WaitlistForm } from "./WaitlistForm";
  * Un bouton « S'abonner » qui mène à une page vide coûte plus cher en confiance que l'absence de
  * bouton.
  */
-export function Pricing() {
+export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
   const saving = pricing.savingsPercent();
 
   return (
@@ -89,7 +89,7 @@ export function Pricing() {
       </div>
 
       <div className="mx-auto mt-10 flex flex-col items-center">
-        <StartButton />
+        <StartButton signedIn={signedIn} />
         <p className="mt-10 mb-3 text-center text-[13.5px] text-ink-tertiary">
           L&apos;abonnement n&apos;est pas encore ouvert. On t&apos;écrit le jour J.
         </p>
