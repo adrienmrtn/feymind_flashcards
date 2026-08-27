@@ -27,7 +27,7 @@ export default async function CourseCardsPage({ params }: { params: Promise<{ id
   const counts = studyCounts(cards.map(toQueueCard), { limits: UNLIMITED });
 
   return (
-    <>
+    <div className="pb-24">
       <header>
         <Link
           href={`/app/c/${course.id}` as never}
@@ -48,25 +48,16 @@ export default async function CourseCardsPage({ params }: { params: Promise<{ id
           {course.title}
         </Link>
 
-        <div className="mt-3 flex flex-wrap items-end justify-between gap-5">
-          <div>
-            <p className="eyebrow text-ink-tertiary">🃏 Espace des cartes</p>
-            <h1 className="mt-1.5 text-[30px] font-bold leading-tight text-ink">
-              {cards.length === 0 ? "Ton paquet est vide" : "Ton paquet"}
-            </h1>
-            <p className="mt-2 max-w-[42ch] text-[14.5px] leading-relaxed text-ink-secondary">
-              {cards.length === 0
-                ? "Micabo écrit les questions à partir de la fiche. Tu choisis les formats."
-                : packSummary(cards.length, counts)}
-            </p>
-          </div>
-
-          {cards.length > 0 ? (
-            <ReviewCta
-              href={`/app/reviser?cours=${course.id}`}
-              detail={reviewDetail(counts)}
-            />
-          ) : null}
+        <div className="mt-3">
+          <p className="eyebrow text-ink-tertiary">🃏 Espace des cartes</p>
+          <h1 className="mt-1.5 text-[30px] font-bold leading-tight text-ink">
+            {cards.length === 0 ? "Ton paquet est vide" : "Ton paquet"}
+          </h1>
+          <p className="mt-2 max-w-[42ch] text-[14.5px] leading-relaxed text-ink-secondary">
+            {cards.length === 0
+              ? "Micabo écrit les questions à partir de la fiche. Tu choisis les formats."
+              : packSummary(cards.length, counts)}
+          </p>
         </div>
       </header>
 
@@ -97,7 +88,11 @@ export default async function CourseCardsPage({ params }: { params: Promise<{ id
           {entitlement.FREE_TIER.cardsPerSession} cartes à la fois.
         </p>
       ) : null}
-    </>
+
+      {cards.length > 0 ? (
+        <ReviewCta href={`/app/reviser?cours=${course.id}`} floating />
+      ) : null}
+    </div>
   );
 }
 
@@ -123,14 +118,6 @@ function packSummary(
     return `${total} carte${total > 1 ? "s" : ""} dans le paquet. Tout est à jour — rien à revoir aujourd'hui.`;
   }
   return `${total} carte${total > 1 ? "s" : ""} dans le paquet. Voici ce qui t'attend.`;
-}
-
-function reviewDetail(counts: { review: number; newCards: number; learning: number }): string {
-  const waiting = counts.review + counts.newCards + counts.learning;
-  if (waiting === 0) return "Une session libre, pour ancrer.";
-  if (counts.review > 0) return `${counts.review} à revoir aujourd'hui.`;
-  if (counts.newCards > 0) return `${counts.newCards} jamais vue${counts.newCards > 1 ? "s" : ""} à découvrir.`;
-  return `${counts.learning} encore en cours.`;
 }
 
 function toQueueCard(card: {
