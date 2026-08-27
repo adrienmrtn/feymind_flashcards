@@ -109,7 +109,7 @@ export function ProfileSettings({
                       setSubjects(next);
                       save({ subjects: next });
                     }}
-                    className={`pressable flex items-center gap-1 rounded-pill px-2.5 py-1.5 text-[13px] ${
+                    className={`pressable hover-tile flex items-center gap-1 rounded-pill px-2.5 py-1.5 text-[13px] ${
                       selected
                         ? "bg-accent-soft font-medium text-accent"
                         : "bg-surface-muted text-ink"

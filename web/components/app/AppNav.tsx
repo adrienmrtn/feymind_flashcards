@@ -16,7 +16,7 @@ import {
  *
  * Plus de pastilles noires ni de triangle : une capsule blanche, un filet gris,
  * une ombre douce. L'actif s'écrit plus foncé ; le reste reste gris. Importer
- * est le même bouton clair que « Continuer avec Google » — pas une pilule noire.
+ * porte l'emoji et le reflet : c'est le seul bouton qui brille dans la barre.
  *
  * Les cours ouverts restent dans la barre jusqu'à ce qu'on les ferme.
  */
@@ -87,7 +87,7 @@ export function AppNav() {
                 href={link.href as never}
                 prefetch={link.prefetch}
                 aria-current={current ? "page" : undefined}
-                className={`group flex items-center gap-3 rounded-[14px] px-3 py-2.5 ${
+                className={`group hover-tile flex items-center gap-3 rounded-[14px] px-3 py-2.5 ${
                   current ? "bg-white shadow-paper" : ""
                 }`}
               >
@@ -149,8 +149,11 @@ export function AppNav() {
 
         <Link
           href="/app/importer"
-          className="pressable mt-auto flex items-center justify-center gap-2 rounded-[16px] bg-white py-3.5 text-[15px] font-semibold text-ink shadow-paper"
+          className="pressable shiny hover-tile mt-auto flex items-center justify-center gap-2 rounded-[16px] bg-ink py-3.5 text-[15px] font-semibold text-on-ink"
         >
+          <span aria-hidden className="emoji text-[16px]">
+            📥
+          </span>
           Importer
         </Link>
       </nav>
@@ -165,7 +168,7 @@ export function AppNav() {
             {open.map((course) => (
               <div
                 key={course.id}
-                className={`flex shrink-0 items-center gap-1.5 rounded-[16px] bg-white px-3 py-2 shadow-paper ${
+                className={`hover-tile flex shrink-0 items-center gap-1.5 rounded-[16px] bg-white px-3 py-2 shadow-paper ${
                   isOpenCourse(course.id) ? "text-ink" : "text-ink-secondary"
                 }`}
               >
@@ -201,7 +204,7 @@ export function AppNav() {
                 prefetch={link.prefetch}
                 aria-current={current ? "page" : undefined}
                 aria-label={link.label}
-                className="flex flex-1 flex-col items-center gap-1 py-1"
+                className="hover-tile flex flex-1 flex-col items-center gap-1 py-1"
               >
                 <span className={current ? "text-ink" : "text-ink-tertiary"}>
                   <Icon name={link.icon} filled={current} />
@@ -217,14 +220,12 @@ export function AppNav() {
           <Link
             href="/app/importer"
             aria-label="Importer un cours"
-            className="flex flex-1 flex-col items-center gap-1 py-1"
+            className="hover-tile flex flex-1 flex-col items-center gap-1 py-1"
           >
-            <span
-              className={`flex h-8 w-8 items-center justify-center rounded-[10px] bg-white shadow-paper ${
-                importing ? "text-ink" : "text-ink-secondary"
-              }`}
-            >
-              <Icon name="plus" filled={importing} />
+            <span className="shiny flex h-8 w-8 items-center justify-center rounded-[10px] bg-ink text-on-ink">
+              <span aria-hidden className="emoji text-[15px]">
+                📥
+              </span>
             </span>
             <span className={`text-[10px] ${importing ? "font-semibold text-ink" : "text-ink-tertiary"}`}>
               Importer

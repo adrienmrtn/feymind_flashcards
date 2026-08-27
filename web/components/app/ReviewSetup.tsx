@@ -134,9 +134,18 @@ export function ReviewSetup({
         </p>
         <Link
           href={(cards.length === 0 ? "/app/importer" : "/app/cours") as never}
-          className="pressable mt-8 inline-flex rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
+          className="pressable shiny hover-tile mt-8 inline-flex items-center gap-2 rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
         >
-          {cards.length === 0 ? "Importer un cours" : "Retour aux cours"}
+          {cards.length === 0 ? (
+            <>
+              <span aria-hidden className="emoji">
+                📥
+              </span>
+              Importer un cours
+            </>
+          ) : (
+            "Retour aux cours"
+          )}
         </Link>
       </div>
     );

@@ -92,7 +92,7 @@ export function Questions() {
           key={item.question}
           className={`group px-6 py-1 ${index > 0 ? "border-t border-hairline" : ""}`}
         >
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
+          <summary className="hover-row flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-[15px] font-medium text-ink [&::-webkit-details-marker]:hidden">
             {item.question}
             <svg
               aria-hidden
