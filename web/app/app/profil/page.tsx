@@ -18,7 +18,6 @@ import { DeleteAccount } from "@/components/app/DeleteAccount";
 import { ProfileSettings } from "@/components/app/ProfileSettings";
 import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
 import { ReplayPaywallOnboarding } from "@/components/app/ReplayPaywallOnboarding";
-import { isDebugToolsEnabled } from "@/lib/debug";
 import { SignOutButton } from "@/components/app/SignOutButton";
 import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
 import { Flag } from "@/components/onboarding/Flag";
@@ -263,11 +262,9 @@ export default async function ProfilePage() {
         <div className="border-t border-hairline">
           <ReplayOnboarding />
         </div>
-        {isDebugToolsEnabled() ? (
-          <div className="border-t border-hairline">
-            <ReplayPaywallOnboarding />
-          </div>
-        ) : null}
+        <div className="border-t border-hairline">
+          <ReplayPaywallOnboarding />
+        </div>
       </section>
 
       <DeleteAccount email={user?.email ?? ""} />

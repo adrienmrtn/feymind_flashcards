@@ -8,7 +8,6 @@ import { ThinkingOrb } from "thinking-orbs";
 import { pricing } from "@micabo/core";
 
 import { startCheckout } from "@/lib/actions/checkout";
-import { isDebugToolsEnabled } from "@/lib/debug";
 import {
   isPaywallDismissed,
   isPaywallPending,
@@ -40,7 +39,7 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const debugReplay = isDebugToolsEnabled() && params.get("debug") === "paywall";
+  const debugReplay = params.get("debug") === "paywall";
 
   useEffect(() => {
     if (isPaid && !debugReplay) {
