@@ -711,7 +711,7 @@ video {
   color: var(--color-on-ink);
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (any-hover: hover) {
   .btn-rise:hover:not(:disabled):not([aria-disabled="true"]) {
     background-color: transparent;
     background-position: 0 0;
@@ -740,7 +740,7 @@ video {
   color: var(--color-on-ink);
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (any-hover: hover) {
   .btn-fill:hover:not(:disabled):not([aria-disabled="true"]) {
     background-color: transparent;
     background-position: 0 0;
@@ -757,8 +757,13 @@ video {
   transition-timing-function: var(--ease-out-strong);
 }
 
-@media (hover: hover) and (pointer: fine) {
-  :is(.btn-rise, .btn-fill, .group):hover:not(:disabled) .btn-arrow {
+.btn-rise:active:not(:disabled) .btn-arrow,
+.btn-fill:active:not(:disabled) .btn-arrow {
+  translate: 5px 0;
+}
+
+@media (any-hover: hover) {
+  :is(.btn-rise, .btn-fill):hover:not(:disabled) .btn-arrow {
     translate: 5px 0;
   }
 }
@@ -793,7 +798,7 @@ video {
   transition-timing-function: var(--ease-out-strong);
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (any-hover: hover) {
   .shiny:hover:not(:disabled):not([aria-disabled="true"])::after {
     translate: 420% 0;
   }
@@ -836,7 +841,7 @@ video {
   transition-timing-function: var(--ease-out-strong);
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (any-hover: hover) {
   .shiny-loud:hover:not(:disabled)::after {
     translate: 380% 0;
   }
