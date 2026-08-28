@@ -945,13 +945,13 @@ private struct SessionSetupView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        MicaboEyebrow(text: courseTitle == nil ? "Ta session du jour" : "Réviser ce cours")
+                    VStack(alignment: .leading, spacing: 6) {
+                        MicaboEyebrow(text: courseTitle == nil ? "Aujourd'hui" : "Ce cours")
 
                         Text(title)
-                            .font(MicaboFont.hanken(28, weight: .bold))
+                            .font(MicaboFont.hanken(22, weight: .bold))
                             .foregroundStyle(MicaboColor.ink)
-                            .tracking(-0.6)
+                            .tracking(-0.4)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
@@ -968,9 +968,9 @@ private struct SessionSetupView: View {
                         )
                     }
 
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 8) {
                         HStack(alignment: .firstTextBaseline) {
-                            Text("Cartes neuves de cette session")
+                            Text("Neuves")
                                 .font(MicaboFont.hanken(13, weight: .medium))
                                 .foregroundStyle(MicaboColor.inkTertiary)
 
@@ -980,9 +980,6 @@ private struct SessionSetupView: View {
                                 .font(MicaboFont.number(13, weight: .semibold))
                                 .foregroundStyle(MicaboColor.ink)
                                 .monospacedDigit()
-                            + Text(sliderValueCaption)
-                                .font(MicaboFont.hanken(13, weight: .medium))
-                                .foregroundStyle(MicaboColor.inkTertiary)
                         }
 
                         if sliderMax > 0 {
@@ -996,10 +993,15 @@ private struct SessionSetupView: View {
                             .tint(MicaboColor.progress)
                         }
 
-                        Text(sliderCaption)
+                        if introducedToday > 0 || rhythmNew > 0 {
+                            Text(
+                                introducedToday > 0
+                                    ? "\(introducedToday) déjà aujourd'hui"
+                                    : "\(rhythmNew) prévues"
+                            )
                             .font(MicaboFont.hanken(12.5, weight: .regular))
                             .foregroundStyle(MicaboColor.inkTertiary)
-                            .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
@@ -1010,10 +1012,10 @@ private struct SessionSetupView: View {
 
             MicaboBottomBar {
                 if preview.total > 0 {
-                    Button("Commencer la session", action: onStart)
+                    Button("Commencer", action: onStart)
                         .buttonStyle(MicaboPrimaryButtonStyle())
                 } else {
-                    Text("Monte le curseur pour apprendre d'autres cartes neuves, ou reviens demain.")
+                    Text("Ajoute des neuves, ou reviens demain.")
                         .font(MicaboFont.hanken(14, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .multilineTextAlignment(.center)
@@ -1026,32 +1028,10 @@ private struct SessionSetupView: View {
     private var title: String {
         if preview.total > 0 {
             return preview.total > 1
-                ? "\(preview.total) cartes à revoir"
-                : "1 carte à revoir"
+                ? "\(preview.total) cartes"
+                : "1 carte"
         }
-        return "Rythme du jour atteint"
-    }
-
-    private var sliderValueCaption: String {
-        var parts: [String] = []
-        if sliderMax > 0 {
-            parts.append(" · \(sliderMax) disponible\(sliderMax > 1 ? "s" : "")")
-        }
-        if rhythmNew > 0 {
-            parts.append(" · \(rhythmNew) prévues par ton rythme")
-        }
-        return parts.joined()
-    }
-
-    private var sliderCaption: String {
-        if sliderMax == 0 {
-            return "Plus de cartes neuves dans ce paquet."
-        }
-        if introducedToday > 0 {
-            let seen = "\(introducedToday) déjà apprise\(introducedToday > 1 ? "s" : "") aujourd'hui."
-            return "\(seen) Le curseur ne change que cette session."
-        }
-        return "Le maximum, c'est le nombre de cartes neuves encore disponibles."
+        return "C'est fait"
     }
 
     private func setupTile(value: Int, label: String, accent: Bool) -> some View {
@@ -1147,22 +1127,15 @@ private struct NothingDueView: View {
 
             Spacer(minLength: MicaboSpacing.lg)
 
-            VStack(alignment: .leading, spacing: 14) {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(MicaboColor.positive)
-                    .frame(width: 68, height: 68)
-                    .background(MicaboColor.positiveSoft, in: Circle())
-
-                Text("Tout est à jour.")
-                    .font(MicaboFont.hanken(28, weight: .bold))
+            VStack(alignment: .leading, spacing: 8) {
+                Text("C'est fait")
+                    .font(MicaboFont.hanken(22, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
-                    .tracking(-0.6)
+                    .tracking(-0.4)
 
                 Text(detail)
                     .font(MicaboFont.body)
                     .foregroundStyle(MicaboColor.inkSecondary)
-                    .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -1194,10 +1167,8 @@ private struct NothingDueView: View {
     }
 
     private var detail: String {
-        guard let nextDueLabel else {
-            return "Aucune carte ne t'attend. Importe un cours pour en créer de nouvelles."
-        }
-        return "Aucune carte à réviser pour l'instant. La prochaine revient dans \(nextDueLabel)."
+        guard let nextDueLabel else { return "Reviens demain." }
+        return "Prochaine dans \(nextDueLabel)."
     }
 }
 
@@ -1480,9 +1451,9 @@ private struct CompletionView: View {
     }
 
     private func comebackText(delay: TimeInterval, today: Int) -> String {
-        let next = "La prochaine carte revient dans \(SM2Scheduler.format(delay: delay))."
-        guard today > 0 else { return next + " Rien d'autre avant demain." }
-        return next + " \(MicaboCopy.cards(today)) repassent aujourd'hui."
+        let next = "Prochaine dans \(SM2Scheduler.format(delay: delay))."
+        guard today > 0 else { return next }
+        return next + " \(MicaboCopy.cards(today)) aujourd'hui."
     }
 
     private var comeback: TimeInterval? {
@@ -1492,16 +1463,13 @@ private struct CompletionView: View {
 
     private var title: String {
         guard session.answeredCount > 0 else { return "Rien à réviser" }
-        if isPractice { return "Entraînement terminé" }
-        return "Tout est à jour."
+        return "Terminé"
     }
 
     private var detail: String {
-        guard session.answeredCount > 0 else {
-            return "Reviens plus tard, ou prends de l'avance depuis un cours."
-        }
-        let volume = "\(MicaboCopy.cards(session.answeredCount)) revues"
-        return isPractice ? "\(volume). Ton planning n'a pas bougé." : "\(volume)."
+        guard session.answeredCount > 0 else { return "Reviens demain." }
+        let volume = "\(MicaboCopy.cards(session.answeredCount)) · \(durationLabel)"
+        return isPractice ? "\(volume) · entraînement" : volume
     }
 
     private var durationLabel: String {

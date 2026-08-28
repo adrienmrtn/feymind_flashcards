@@ -332,15 +332,15 @@ struct ExamsView: View {
         if canPlan {
             MicaboEmptyState(
                 systemImage: "calendar",
-                title: "Aucun examen prévu",
-                message: "Déclare une date et les cours au programme : Micabo replanifie tes révisions pour que chaque carte soit au sommet de sa rétention le jour J, et pas trois semaines après."
+                title: "Aucune date",
+                message: "Ajoute un examen pour ranger tes cartes."
             )
         } else if courses.isEmpty {
             MicaboEmptyState(
                 systemImage: "calendar.badge.plus",
                 title: "Un cours d'abord",
-                message: "Un examen replanifie les révisions de tes cartes : il en faut donc. Importe un cours, et cette page saura quoi faire de ta date.",
-                actionTitle: onImport == nil ? nil : "Importer un cours"
+                message: "Importe un cours, puis pose ta date.",
+                actionTitle: onImport == nil ? nil : "Importer"
             ) {
                 onImport?()
             }
@@ -351,7 +351,7 @@ struct ExamsView: View {
             MicaboEmptyState(
                 systemImage: "calendar.badge.plus",
                 title: "Des cartes d'abord",
-                message: "Un examen agit sur des cartes, et tes cours n'en ont pas encore. Ouvre un cours, génère ses cartes, puis reviens poser ta date."
+                message: "Génère des cartes dans un cours, puis reviens."
             )
         }
     }

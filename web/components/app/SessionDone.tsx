@@ -10,12 +10,7 @@ import {
   entitlement,
 } from "@micabo/core";
 
-/**
- * Le bilan d'une session : des graphes, des chiffres qui montent, des emojis.
- *
- * Pas un paragraphe de félicitations. On vient de noter des cartes : on relit
- * le geste - la courbe des notes, la part de chacune, ce que ça a produit.
- */
+import { Button } from "@/components/ui/button";
 
 export interface SessionTally {
   answered: number;
@@ -23,13 +18,6 @@ export interface SessionTally {
   graduated: number;
   ratings: ReviewRating[];
 }
-
-const RATING_EMOJI: Record<ReviewRating, string> = {
-  [ReviewRating.again]: "🔁",
-  [ReviewRating.hard]: "😅",
-  [ReviewRating.good]: "👍",
-  [ReviewRating.easy]: "⚡",
-};
 
 const RATING_BAR: Record<ReviewRating, string> = {
   [ReviewRating.again]: "bg-negative",
@@ -66,140 +54,69 @@ export function SessionDone({
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  return (
-    <div className="relative mx-auto w-full max-w-page py-6 text-left">
-      <h1 className="text-lg font-semibold tracking-tight text-foreground">
-        {capped
-          ? "C'est tout pour aujourd'hui."
-          : leftoverNew > 0
-            ? "Session terminée."
-            : "Session du jour terminée."}
-      </h1>
+  const summary =
+    tally.answered === 0
+      ? "Rien de noté."
+      : `${tally.answered} carte${tally.answered > 1 ? "s" : ""} · ${minutes} min · ${accuracy} %`;
 
-      {capped ? (
-        <p className="rise mx-auto mt-3 max-w-[40ch] text-[14.5px] leading-relaxed text-ink-secondary">
-          Le gratuit sert {entitlement.FREE_TIER.cardsPerSession} cartes par session. Il t&apos;en
-          reste <span className="numeral font-semibold text-ink">{remaining}</span> qui attendent.
+  return (
+    <div className="space-y-5">
+      <header>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Terminé</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {capped
+            ? `Le gratuit s'arrête à ${entitlement.FREE_TIER.cardsPerSession}. ${remaining} en attente.`
+            : leftoverNew > 0
+              ? `${summary} · ${leftoverNew} neuve${leftoverNew > 1 ? "s" : ""} hors rythme`
+              : summary}
         </p>
-      ) : leftoverNew > 0 ? (
-        <p
-          className="rise mx-auto mt-3 max-w-[42ch] text-[14.5px] leading-relaxed text-ink-secondary"
-          style={{ animationDelay: "140ms" }}
-        >
-          {tally.answered > 0
-            ? `${tally.answered} carte${tally.answered > 1 ? "s" : ""} notée${tally.answered > 1 ? "s" : ""} · ${minutes} min. `
-            : ""}
-          Il reste <span className="numeral font-semibold text-ink">{leftoverNew}</span> carte
-          {leftoverNew > 1 ? "s" : ""} neuve{leftoverNew > 1 ? "s" : ""} hors rythme — un cours
-          ajouté, par exemple.
-        </p>
-      ) : (
-        <p
-          className="rise mt-2 text-[14.5px] text-ink-secondary"
-          style={{ animationDelay: "140ms" }}
-        >
-          {tally.answered === 0
-            ? "Rien ne revient aujourd'hui."
-            : `${tally.answered} carte${tally.answered > 1 ? "s" : ""} notée${tally.answered > 1 ? "s" : ""} · ${minutes} min`}
-        </p>
-      )}
+      </header>
 
       {tally.ratings.length > 0 ? (
-        <>
-          <section className="rise mt-10 text-left" style={{ animationDelay: "180ms" }}>
-            <p className="mb-3 text-[13px] font-medium text-muted-foreground">La session</p>
-            <div className="flex h-28 items-end gap-1 rounded-2xl border border-border bg-card px-4 pb-3 pt-4">
-              {tally.ratings.map((rating, index) => (
-                <div
-                  key={`${rating}-${index}`}
-                  className={`min-w-0 flex-1 rounded-t-md ${RATING_BAR[rating]}`}
-                  title={REVIEW_RATING_LABELS[rating]}
-                  style={{
-                    height: ready ? `${(rating / ReviewRating.easy) * 100}%` : "0%",
-                    transition: `height 520ms var(--ease-out-strong) ${index * 28}ms`,
-                  }}
-                />
-              ))}
-            </div>
-            <p className="mt-2 text-center text-[12px] text-ink-tertiary">
-              🔁 À revoir · 😅 Difficile · 👍 Correct · ⚡ Facile
-            </p>
-          </section>
-
-          <section className="rise mt-8 text-left" style={{ animationDelay: "260ms" }}>
-            <p className="mb-3 text-[13px] font-medium text-muted-foreground">Tes notes</p>
-            <div className="rounded-2xl border border-border bg-card px-5 py-5">
-              <div className="flex h-36 items-end gap-3">
-                {counts.map((item, index) => (
-                  <div key={item.rating} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                    <span className="numeral text-[13px] font-semibold text-ink">
-                      {item.count}
-                    </span>
-                    <div className="flex h-24 w-full items-end">
-                      <div
-                        className={`w-full rounded-t-md ${RATING_BAR[item.rating]}`}
-                        style={{
-                          height: ready
-                            ? `${Math.max(item.count > 0 ? 10 : 4, Math.round((item.count / peak) * 100))}%`
-                            : "4%",
-                          transition: `height 560ms var(--ease-out-strong) ${120 + index * 80}ms`,
-                        }}
-                      />
-                    </div>
-                    <span className="emoji text-[16px]" aria-hidden>
-                      {RATING_EMOJI[item.rating]}
-                    </span>
-                  </div>
-                ))}
+        <div className="rounded-2xl border border-border bg-card px-4 py-4">
+          <div className="flex h-28 items-end gap-2">
+            {counts.map((item, index) => (
+              <div key={item.rating} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                <span className="numeral text-[12px] font-semibold text-foreground">{item.count}</span>
+                <div className="flex h-20 w-full items-end">
+                  <div
+                    className={`w-full rounded-t-md ${RATING_BAR[item.rating]}`}
+                    style={{
+                      height: ready
+                        ? `${Math.max(item.count > 0 ? 10 : 4, Math.round((item.count / peak) * 100))}%`
+                        : "4%",
+                      transition: `height 480ms var(--ease-out-strong) ${index * 60}ms`,
+                    }}
+                  />
+                </div>
+                <span className="text-[11px] text-muted-foreground">{REVIEW_RATING_LABELS[item.rating]}</span>
               </div>
-            </div>
-          </section>
-        </>
+            ))}
+          </div>
+        </div>
       ) : null}
 
-      <dl className="rise mt-8 grid grid-cols-3 gap-3" style={{ animationDelay: "340ms" }}>
-        <Tile value={tally.graduated} label="apprises" />
-        <Tile value={`${accuracy} %`} label="de réussite" />
-        <Tile value={minutes} label="min" />
-      </dl>
-
-      <div className="rise mt-10 flex flex-col items-center gap-3" style={{ animationDelay: "420ms" }}>
+      <div className="flex flex-wrap items-center gap-2">
         {leftoverNew > 0 && !capped ? (
-          <button
-            type="button"
+          <Button
             onClick={() => {
               router.push("/app/reviser");
               router.refresh();
             }}
-            className="inline-flex h-9 items-center rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground"
           >
-            Réviser quand même
-          </button>
+            Réviser encore
+          </Button>
         ) : null}
-        <button
-          type="button"
+        <Button
+          variant={leftoverNew > 0 && !capped ? "outline" : "default"}
           onClick={() => {
             router.push("/app");
             router.refresh();
           }}
-          className={
-            leftoverNew > 0 && !capped
-              ? "text-[14px] font-medium text-ink-tertiary underline-draw"
-              : "inline-flex h-9 items-center rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground"
-          }
         >
-          Retour à l&apos;accueil
-        </button>
+          Accueil
+        </Button>
       </div>
-    </div>
-  );
-}
-
-function Tile({ value, label }: { value: string | number; label: string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card px-3 py-5 text-center">
-      <dd className="numeral text-[26px] font-semibold text-ink">{value}</dd>
-      <dt className="mt-1 text-[12px] text-ink-tertiary">{label}</dt>
     </div>
   );
 }

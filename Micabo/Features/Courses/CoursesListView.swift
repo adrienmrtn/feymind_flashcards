@@ -218,9 +218,9 @@ struct CoursesListView: View {
         if courses.isEmpty {
             MicaboEmptyState(
                 systemImage: "books.vertical",
-                title: "Aucun cours pour l'instant",
-                message: "Importe un PDF, des photos, un Word ou colle du texte : Micabo en tire tes premières cartes.",
-                actionTitle: "Importer un cours"
+                title: "Aucun cours",
+                message: "Importe un polycopié pour commencer.",
+                actionTitle: "Importer"
             ) {
                 requestImport()
             }
@@ -229,7 +229,7 @@ struct CoursesListView: View {
             MicaboEmptyState(
                 systemImage: "magnifyingglass",
                 title: "Aucun résultat",
-                message: "Essaie un autre mot-clé, ou retire le filtre de matière."
+                message: "Essaie un autre mot."
             )
             .padding(.horizontal, MicaboSpacing.screen)
         } else {

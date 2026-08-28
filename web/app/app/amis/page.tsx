@@ -24,7 +24,7 @@ export default async function FriendsPage() {
         </p>
       </header>
 
-      <div className="mt-8 space-y-8">
+      <div className="mt-5 space-y-5">
         <PeopleList caption="Demandes reçues" people={graph.incoming} />
 
         <FriendSearch />
@@ -32,10 +32,7 @@ export default async function FriendsPage() {
         {graph.incoming.length === 0 &&
         graph.friends.length === 0 &&
         schoolmates.length === 0 ? (
-          <p className="text-[14.5px] leading-relaxed text-ink-secondary">
-            Personne pour l&apos;instant. Cherche un nom d&apos;utilisateur pour ajouter
-            quelqu&apos;un - c&apos;est le même @ que sur l&apos;iPhone.
-          </p>
+          <p className="text-sm text-muted-foreground">Personne pour l&apos;instant. Cherche un @.</p>
         ) : null}
 
         {schoolmates.length > 0 && graph.me?.institutionName ? (
@@ -46,7 +43,7 @@ export default async function FriendsPage() {
         <PeopleList caption="Demandes envoyées" people={graph.outgoing} />
       </div>
 
-      <p className="mt-10 text-[13px] text-ink-tertiary">
+      <p className="mt-6 text-[13px] text-ink-tertiary">
         <Link href={"/app/profil" as never} className="underline-draw">
           Retour au profil
         </Link>

@@ -39,7 +39,7 @@ import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Le tableau de bord : la semaine, les tâches du jour, les examens, le téléphone.
+ * Le tableau de bord : les tâches d'abord, puis la semaine et les examens.
  *
  * Les tâches suivent **le rythme choisi**, pas toutes les cartes dues. Une
  * session qui vient de se terminer doit les actualiser tout de suite.
@@ -92,29 +92,31 @@ export default async function DashboardPage() {
   return (
     <>
       <RefreshOnVisit />
-      <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">
-          {name ? name : "Tableau de bord"}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{greeting}</p>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight text-foreground">
+            {name ? name : "Tableau de bord"}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{greeting}</p>
+        </div>
       </header>
 
-      <WeekStrip days={week} />
+      <TodayTasks
+        tasks={tasks}
+        cardCount={cards.length}
+        heldBack={Math.max(0, dueOutsideRhythm)}
+      />
 
       <div className="grid items-stretch gap-4 lg:grid-cols-2">
-        <TodayTasks
-          tasks={tasks}
-          cardCount={cards.length}
-          heldBack={Math.max(0, dueOutsideRhythm)}
-        />
-        <MobileAppCard />
+        <WeekStrip days={week} />
+        <UpcomingExams next={upcoming[0] ?? null} others={Math.max(0, upcoming.length - 1)} />
       </div>
-
-      <UpcomingExams next={upcoming[0] ?? null} others={Math.max(0, upcoming.length - 1)} />
 
       <WeekRanking rows={ranking} />
 
       <FriendsCard requests={friends} />
+
+      <MobileAppCard />
     </>
   );
 }
@@ -176,18 +178,13 @@ function TodayTasks({
 function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: number }) {
   if (cardCount === 0) {
     return (
-      <div>
-        <p className="text-[16px] font-semibold text-ink">Pas encore de cartes</p>
-        <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-secondary">
-          Importe un cours : Micabo en tire tes premières cartes et te les repose au bon moment.
-        </p>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-4"
-          render={<Link href={"/app/importer" as never} />}
-        >
-          Importer un cours
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[15px] font-semibold text-ink">Pas encore de cartes</p>
+          <p className="mt-0.5 text-[13px] text-ink-tertiary">Importe un cours pour commencer.</p>
+        </div>
+        <Button size="sm" render={<Link href={"/app/importer" as never} />}>
+          Importer
         </Button>
       </div>
     );
@@ -195,47 +192,28 @@ function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: numb
 
   if (heldBack > 0) {
     return (
-      <div className="flex items-start gap-3.5">
-        <span
-          aria-hidden
-          className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-[18px] font-semibold text-on-ink"
-        >
-          ✓
-        </span>
-        <div className="min-w-0">
-          <p className="text-[16px] font-semibold text-ink">Session du jour terminée</p>
-          <p className="mt-1 text-[13.5px] leading-relaxed text-ink-secondary">
-            Révisions et rythme sont faits. Il reste {heldBack} carte
-            {heldBack > 1 ? "s" : ""} neuve{heldBack > 1 ? "s" : ""} hors rythme — un
-            cours ajouté, par exemple.
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-[15px] font-semibold text-ink">C&apos;est fait</p>
+          <p className="mt-0.5 text-[13px] text-ink-tertiary">
+            {heldBack} neuve{heldBack > 1 ? "s" : ""} hors rythme
           </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            render={<Link href={"/app/reviser" as never} />}
-          >
-            Réviser quand même
-          </Button>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          render={<Link href={"/app/reviser" as never} />}
+        >
+          Réviser encore
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="flex items-start gap-3.5">
-      <span
-        aria-hidden
-        className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-[18px] font-semibold text-on-ink"
-      >
-        ✓
-      </span>
-      <div className="min-w-0">
-        <p className="text-[16px] font-semibold text-ink">Session du jour terminée</p>
-        <p className="mt-1 text-[13.5px] leading-relaxed text-ink-secondary">
-          Aucune carte n&apos;est due aujourd&apos;hui. Le rythme a fait son travail — profite-en.
-        </p>
-      </div>
+    <div>
+      <p className="text-[15px] font-semibold text-ink">C&apos;est fait</p>
+      <p className="mt-0.5 text-[13px] text-ink-tertiary">Reviens demain.</p>
     </div>
   );
 }
@@ -248,9 +226,9 @@ function UpcomingExams({
   others: number;
 }) {
   return (
-    <section>
+    <section className="flex h-full min-h-0 flex-col">
       <div className="mb-3 flex items-end justify-between gap-3">
-        <h2 className="text-[15px] font-semibold text-ink">Prochains examens</h2>
+        <h2 className="text-[15px] font-semibold text-ink">Examens</h2>
         <Button
           variant="link"
           size="sm"
@@ -261,7 +239,7 @@ function UpcomingExams({
         </Button>
       </div>
       {next ? (
-        <>
+        <div className="min-h-0 flex-1">
           <ExamInsightCard insight={next} href={"/app/examens" as never} />
           {others > 0 ? (
             <p className="mt-3 text-[13px] text-ink-tertiary">
@@ -270,15 +248,14 @@ function UpcomingExams({
               </Link>
             </p>
           ) : null}
-        </>
+        </div>
       ) : (
-        <Card>
-          <CardPanel>
-            <p className="text-[15px] font-medium text-ink">Aucun examen à venir</p>
-            <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-secondary">
-              Une date remet les cartes dans le bon ordre. Sans elle, la répétition
-              espacée ignore le jour J.
-            </p>
+        <Card className="flex-1">
+          <CardPanel className="flex h-full items-center justify-between gap-3">
+            <p className="text-[15px] font-medium text-ink">Aucune date</p>
+            <Button size="sm" render={<Link href={"/app/examens" as never} />}>
+              Ajouter
+            </Button>
           </CardPanel>
         </Card>
       )}
@@ -299,21 +276,12 @@ function FriendsCard({ requests }: { requests: FriendRequestRow[] }) {
       </CardHeader>
       <CardPanel className="pt-0">
         {requests.length === 0 ? (
-          <>
-            <p className="text-[15px] font-medium text-ink">Personne en attente.</p>
-            <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-secondary">
-              Cherche un @ pour ajouter quelqu&apos;un. C&apos;est le même annuaire que sur
-              l&apos;iPhone.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4"
-              render={<Link href={"/app/amis" as never} />}
-            >
-              Ajouter un ami
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[15px] font-medium text-ink">Personne en attente</p>
+            <Button size="sm" variant="outline" render={<Link href={"/app/amis" as never} />}>
+              Ajouter
             </Button>
-          </>
+          </div>
         ) : (
           <ul className="space-y-2">
             {requests.map((request) => (
