@@ -91,7 +91,7 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
 
 export function Questions() {
   return (
-    <Card className="mt-9 overflow-hidden">
+    <Card className="lift mt-9 overflow-hidden">
       <CardPanel className="p-0 sm:p-0">
         <Accordion className="px-6">
           {QUESTIONS.map((item) => (
