@@ -309,7 +309,7 @@ export function Session({
                 key={rating}
                 type="button"
                 onClick={() => grade(rating)}
-                className={`pressable hover-tile rounded-button px-2 py-3.5 text-center ${ratingTone(rating)}`}
+                className={`pressable rounded-button px-2 py-3.5 text-center shadow-[inset_0_0_0_1px_color-mix(in_srgb,currentColor_16%,transparent)] ${ratingTone(rating)}`}
               >
                 <span className="block text-[14px] font-semibold">
                   {REVIEW_RATING_LABELS[rating]}

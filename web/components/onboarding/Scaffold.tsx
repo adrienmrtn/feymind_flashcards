@@ -100,17 +100,15 @@ export function ContinueButton({
         onPress?.();
         if (href) router.push(href as Route);
       }}
-      className={`group h-14 w-full text-[16px] sm:h-14 sm:text-[16px] ${
-        enabled ? (shiny ? "shiny" : "") : ""
+      className={`h-14 w-full text-[16px] sm:h-14 sm:text-[16px] ${
+        enabled ? `btn-rise hover:bg-ink${shiny ? " shiny" : ""}` : ""
       }`}
     >
       {label}
-      {/* La flèche avance de deux points au survol : le seul mouvement du bouton, et il dit le
-          sens de la marche. */}
       <svg
         aria-hidden
         viewBox="0 0 20 20"
-        className="h-4 w-4 transition-transform duration-hover ease-out-strong group-hover:translate-x-0.5"
+        className="btn-arrow h-4 w-4"
       >
         <path
           d="M4 10h11M11 5l5 5-5 5"

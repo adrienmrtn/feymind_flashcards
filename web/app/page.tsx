@@ -52,7 +52,7 @@ export default async function LandingPage({
   return (
     <>
       <LandingHeader signedIn={signedIn} />
-      <main>
+      <main id="contenu">
         <Hero signedIn={signedIn} />
 
         <SourceMarquee />
