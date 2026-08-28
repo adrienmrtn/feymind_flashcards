@@ -45,7 +45,7 @@ export function ExamPrepStory() {
           </p>
         </div>
         <span className="rounded-pill bg-info-soft px-2 py-0.5 text-[11.5px] font-bold tracking-caps text-info">
-          J−{DAYS_BEFORE}
+          J-{DAYS_BEFORE}
         </span>
       </div>
 

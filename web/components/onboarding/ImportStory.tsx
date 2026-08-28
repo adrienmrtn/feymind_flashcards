@@ -109,8 +109,8 @@ function DocTile({
   const converge = clamp01((progress - 0.28) / 0.22);
   const absorb = clamp01((progress - 0.5) / 0.08);
 
-  const startX = -128;
-  const startY = -108 + index * 70;
+  const startX = -150;
+  const startY = -118 + index * 78;
   const x = startX * (1 - converge);
   const y = startY * (1 - converge);
   const scale = (0.92 + appear * 0.08) * (1 - absorb * 0.55);
@@ -134,9 +134,9 @@ function DocTile({
 function DocumentFace({ kind }: { kind: (typeof DOCS)[number]["kind"] }) {
   if (kind === "pdf") {
     return (
-      <div className="relative h-[88px] w-[68px] overflow-hidden rounded-[10px] bg-surface paper">
+      <div className="relative h-[102px] w-[78px] overflow-hidden rounded-[10px] bg-surface paper">
         <span className="absolute right-0 top-0 h-4 w-4 bg-negative-soft" />
-        <div className="px-2 pt-5">
+        <div className="px-2.5 pt-6">
           <div className="h-[3px] w-7 rounded-pill bg-ink" />
           <div className="mt-2 space-y-1">
             <div className="h-[2px] w-full rounded-pill bg-stroke-strong" />
@@ -154,8 +154,8 @@ function DocumentFace({ kind }: { kind: (typeof DOCS)[number]["kind"] }) {
 
   if (kind === "photo") {
     return (
-      <div className="h-[88px] w-[68px] rotate-[-4deg] rounded-[10px] bg-surface px-1.5 pb-2.5 pt-1.5 paper">
-        <div className="flex h-[58px] items-end justify-center overflow-hidden rounded-[6px] bg-canvas-sage">
+      <div className="h-[102px] w-[78px] rotate-[-4deg] rounded-[10px] bg-surface px-1.5 pb-2.5 pt-1.5 paper">
+        <div className="flex h-[70px] items-end justify-center overflow-hidden rounded-[6px] bg-canvas-sage">
           <span className="mb-1.5 h-8 w-8 rounded-full bg-accent-soft" />
         </div>
       </div>
@@ -164,8 +164,8 @@ function DocumentFace({ kind }: { kind: (typeof DOCS)[number]["kind"] }) {
 
   if (kind === "word") {
     return (
-      <div className="relative h-[88px] w-[68px] overflow-hidden rounded-[10px] bg-surface paper">
-        <div className="h-4 bg-info-soft" />
+      <div className="relative h-[102px] w-[78px] overflow-hidden rounded-[10px] bg-surface paper">
+        <div className="h-5 bg-info-soft" />
         <div className="px-2 pt-2.5">
           <div className="h-[3px] w-8 rounded-pill bg-info" />
           <div className="mt-2 space-y-1">
@@ -182,7 +182,7 @@ function DocumentFace({ kind }: { kind: (typeof DOCS)[number]["kind"] }) {
   }
 
   return (
-    <div className="relative h-[88px] w-[72px] overflow-hidden rounded-[10px] bg-ink paper">
+    <div className="relative h-[102px] w-[82px] overflow-hidden rounded-[10px] bg-ink paper">
       <div className="absolute inset-x-2 top-2 h-8 rounded-[4px] bg-on-ink/10" />
       <span className="absolute left-1/2 top-[38px] flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full bg-on-ink/15">
         <svg viewBox="0 0 12 12" className="ml-0.5 h-3 w-3 text-on-ink" aria-hidden>
