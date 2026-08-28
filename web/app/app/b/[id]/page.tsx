@@ -87,8 +87,11 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
       </div>
 
       <p className="mt-12 text-[13px] text-ink-tertiary" data-print="hide">
-        <Link href={"/app/cours?vue=decouvrir" as never} className="underline-draw">
-          Retour à la bibliothèque
+        <Link
+          href={(author?.username ? `/app/u/${author.username}` : "/app/amis") as never}
+          className="underline-draw"
+        >
+          {author?.username ? `Retour à @${author.username}` : "Retour aux amis"}
         </Link>
       </p>
     </article>

@@ -96,6 +96,13 @@ export {
   type SessionAdvance,
   type SessionEntry,
 } from "./srs/session";
+export {
+  desiredGradeLabel,
+  desiredGradeScale,
+  gradeIndexFor,
+  intensityFromGradeIndex,
+  type DesiredGradeScale,
+} from "./srs/grade-scale";
 
 // Le mode examen.
 export {

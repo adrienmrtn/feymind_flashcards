@@ -206,16 +206,32 @@ struct ExamEditorSheet: View {
     }
 
     private var intensitySection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Intensité")
+        let scale = DesiredGradeScale.for(OnboardingPreferences.schoolingCountry)
 
-            HStack(spacing: MicaboSpacing.xs) {
-                ForEach(ExamIntensity.allCases) { value in
-                    MicaboSelectChip(title: value.label, isSelected: value == intensity) {
-                        withAnimation(.easeOut(duration: 0.2)) { intensity = value }
-                    }
-                }
+        return VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: "Note souhaitée")
+
+            HStack {
+                Text(scale.min)
+                    .font(MicaboFont.caption)
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                Slider(
+                    value: Binding(
+                        get: { intensity.gradeIndex },
+                        set: { intensity = ExamIntensity.from(gradeIndex: $0) }
+                    ),
+                    in: 0...2,
+                    step: 1
+                )
+                .tint(MicaboColor.ink)
+                Text(scale.max)
+                    .font(MicaboFont.caption)
+                    .foregroundStyle(MicaboColor.inkTertiary)
             }
+
+            Text(scale.label(for: intensity))
+                .font(MicaboFont.rowTitle)
+                .foregroundStyle(MicaboColor.ink)
         }
     }
 

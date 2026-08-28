@@ -3,11 +3,12 @@
 import { useMemo, useState } from "react";
 
 import {
-  EXAM_INTENSITIES,
-  EXAM_INTENSITY_EMOJIS,
-  EXAM_INTENSITY_LABELS,
   averageDailyLoad,
   busiestDay,
+  desiredGradeLabel,
+  desiredGradeScale,
+  gradeIndexFor,
+  intensityFromGradeIndex,
   isProjectionEmpty,
   planExam,
   startOfDay,
@@ -18,6 +19,7 @@ import {
 import { ThinkingOrb } from "thinking-orbs";
 
 import { ChoiceRow } from "@/components/onboarding/Scaffold";
+import { Slider } from "@/components/ui/slider";
 import { deleteExam, saveExam } from "@/lib/actions/exams";
 
 import { ExamDayPicker, isoDay } from "./ExamCalendar";
@@ -68,12 +70,14 @@ export function ExamEditor({
   date,
   courses,
   cards,
+  countryCode,
   onClose,
 }: {
   exam: EditorExam | null;
   date: Date;
   courses: EditorCourse[];
   cards: EditorCard[];
+  countryCode?: string | null;
   onClose: () => void;
 }) {
   const today = startOfDay(new Date());
@@ -194,7 +198,7 @@ export function ExamEditor({
                   position === index
                     ? "w-6 bg-ink"
                     : position < index
-                      ? "w-1.5 bg-accent-vivid"
+                      ? "w-1.5 bg-ink"
                       : "w-1.5 bg-stroke-strong"
                 }`}
               />
@@ -234,6 +238,7 @@ export function ExamEditor({
             {step === "intensite" ? (
               <IntensityStep
                 intensity={intensity}
+                countryCode={countryCode}
                 onPick={setIntensity}
                 missingCards={missingCards}
                 canPreview={selected.length > 0 && !isProjectionEmpty(plan.projection)}
@@ -384,6 +389,7 @@ function CoursesStep({
 
 function IntensityStep({
   intensity,
+  countryCode,
   onPick,
   missingCards,
   canPreview,
@@ -393,6 +399,7 @@ function IntensityStep({
   load,
 }: {
   intensity: ExamIntensity;
+  countryCode?: string | null;
   onPick: (value: ExamIntensity) => void;
   missingCards: boolean;
   canPreview: boolean;
@@ -401,25 +408,34 @@ function IntensityStep({
   peak: { offset: number; count: number } | null;
   load: number[];
 }) {
+  const scale = desiredGradeScale(countryCode);
+
   return (
     <div>
-      <p className="eyebrow text-ink-tertiary">💪 Rythme</p>
+      <p className="eyebrow text-ink-tertiary">Note</p>
       <h2 id="exam-onboarding-title" className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
-        Intensité souhaitée ?
+        Note souhaitée
       </h2>
-      <ul className="mt-6 space-y-2">
-        {EXAM_INTENSITIES.map((value) => (
-          <li key={value}>
-            <ChoiceRow
-              emoji={EXAM_INTENSITY_EMOJIS[value]}
-              title={EXAM_INTENSITY_LABELS[value]}
-              detail={INTENSITY_DETAIL[value]}
-              selected={intensity === value}
-              onSelect={() => onPick(value)}
-            />
-          </li>
-        ))}
-      </ul>
+      <p className="mt-6 text-center text-[32px] font-bold leading-none text-ink">
+        {desiredGradeLabel(intensity, countryCode)}
+      </p>
+      <p className="mt-2 text-center text-[13.5px] text-ink-secondary">
+        {INTENSITY_DETAIL[intensity]}
+      </p>
+      <div className="mt-6 px-1">
+        <Slider
+          min={0}
+          max={2}
+          step={1}
+          value={gradeIndexFor(intensity)}
+          onValueChange={(value) => onPick(intensityFromGradeIndex(Number(value)))}
+          aria-label="Note souhaitée"
+        />
+        <div className="mt-2 flex justify-between text-[12.5px] text-ink-tertiary">
+          <span>{scale.min}</span>
+          <span>{scale.max}</span>
+        </div>
+      </div>
 
       {missingCards ? (
         <p className="mt-4 text-[13.5px] leading-relaxed text-caution">
@@ -446,7 +462,7 @@ function IntensityStep({
                 <span
                   key={position}
                   className={`min-w-0 flex-1 rounded-t-sm ${
-                    peak && position === peak.offset ? "bg-caution" : "bg-accent/70"
+                    peak && position === peak.offset ? "bg-caution" : "bg-ink/40"
                   }`}
                   style={{ height: `${Math.max(8, (count / max) * 100)}%` }}
                 />

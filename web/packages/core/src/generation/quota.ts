@@ -18,14 +18,14 @@ export interface QuestionQuota {
   choice: number;
 }
 
-/** Douze cartes, en trois parts : de quoi couvrir un chapitre sans épreuve d'endurance. */
-export const DEFAULT_QUOTA: QuestionQuota = { basic: 6, cloze: 3, choice: 3 };
+/** Vingt-quatre cartes, en trois parts : de quoi tenir une vraie session dès le premier paquet. */
+export const DEFAULT_QUOTA: QuestionQuota = { basic: 10, cloze: 7, choice: 7 };
 
 /** Ce qu'un format accepte. Zéro veut dire « pas de ce format », et c'est légitime. */
-export const PER_FORMAT_RANGE = { min: 0, max: 20 } as const;
+export const PER_FORMAT_RANGE = { min: 0, max: 24 } as const;
 
-/** Une carte ne fait pas une session, trente sont déjà trop pour une seule. */
-export const TOTAL_RANGE = { min: 3, max: 30 } as const;
+/** Une carte ne fait pas une session ; au-delà de là, c'est trop pour une seule génération. */
+export const TOTAL_RANGE = { min: 3, max: 48 } as const;
 
 export const CARD_KINDS: readonly {
   kind: CardKind;

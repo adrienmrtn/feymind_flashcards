@@ -11,7 +11,7 @@ export function WeekStrip({ days }: { days: readonly WeekDayLoad[] }) {
   const peak = Math.max(1, ...days.map((day) => day.planned));
 
   return (
-    <section className="paper hover-tile mt-8 rounded-group bg-surface px-4 py-5 sm:px-5">
+    <section className="paper mt-8 rounded-group bg-surface px-4 py-5 sm:px-5">
       <p className="eyebrow text-ink-tertiary">📅 Semaine</p>
       <div className="mt-4 grid grid-cols-7 gap-1 sm:gap-2">
         {days.map((day) => (
@@ -32,20 +32,18 @@ function DayCell({ day, peak }: { day: WeekDayLoad; peak: number }) {
   return (
     <div
       className={`flex flex-col items-center rounded-tile px-0.5 py-2 sm:px-1 ${
-        today ? "bg-accent-soft" : ""
+        today ? "bg-surface-muted" : ""
       }`}
     >
       <p
         className={`text-[10px] font-semibold uppercase tracking-wide sm:text-[11px] ${
-          today ? "text-accent" : "text-ink-tertiary"
+          today ? "text-ink" : "text-ink-tertiary"
         }`}
       >
         {today ? "auj." : weekday(day.date)}
       </p>
       <p
-        className={`numeral mt-0.5 text-[13px] font-semibold sm:text-[14px] ${
-          today ? "text-accent" : "text-ink"
-        }`}
+        className={`numeral mt-0.5 text-[13px] font-semibold sm:text-[14px] text-ink`}
       >
         {day.date.getDate()}
       </p>
@@ -54,15 +52,13 @@ function DayCell({ day, peak }: { day: WeekDayLoad; peak: number }) {
       </p>
       <div className="mt-1 flex h-11 w-full items-end justify-center">
         <div
-          className={`w-4 rounded-t-md sm:w-5 ${today ? "bg-accent" : "bg-ink/25"}`}
+          className={`w-4 rounded-t-md sm:w-5 ${today ? "bg-ink" : "bg-ink/25"}`}
           style={{ height: `${height}px` }}
           title={`${day.planned} carte${day.planned > 1 ? "s" : ""}`}
         />
       </div>
       <p
-        className={`numeral mt-1 text-[13px] font-bold sm:text-[15px] ${
-          today ? "text-accent" : "text-ink"
-        }`}
+        className={`numeral mt-1 text-[13px] font-bold sm:text-[15px] text-ink`}
       >
         {day.planned}
       </p>

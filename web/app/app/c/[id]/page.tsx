@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import { courseAccent, courseAudienceLabel, entitlement, resolveEmoji } from "@micabo/core";
 
-import { GenerateCards } from "@/components/app/GenerateCards";
 import { ReviewCta } from "@/components/app/ReviewCta";
 import { SheetReader } from "@/components/app/SheetReader";
 import { VisibilityPicker } from "@/components/app/VisibilityPicker";
@@ -73,12 +72,12 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
       {cards.length > 0 ? (
         <Link
           href={`/app/c/${course.id}/cartes` as never}
-          className="pressable hover-tile mt-7 flex w-full items-center gap-4 rounded-group bg-accent-soft px-6 py-5"
+          className="pressable mt-7 flex w-full items-center gap-4 rounded-group bg-surface px-6 py-5 paper"
           data-print="hide"
         >
           <span
             aria-hidden
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-tile bg-surface text-[28px]"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-tile bg-surface-muted text-[28px]"
           >
             🃏
           </span>
@@ -86,7 +85,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
             <span className="block text-[18px] font-bold leading-tight text-ink">
               Espace des cartes
             </span>
-            <span className="mt-1 block text-[14px] text-accent">
+            <span className="mt-1 block text-[14px] text-ink-secondary">
               Ouvrir le paquet, le corriger · {cards.length} carte
               {cards.length > 1 ? "s" : ""}
             </span>
@@ -94,7 +93,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
           <svg
             aria-hidden
             viewBox="0 0 20 20"
-            className="h-5 w-5 shrink-0 text-accent"
+            className="h-5 w-5 shrink-0 text-ink-tertiary"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
@@ -107,7 +106,26 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
       ) : null}
 
       {cards.length === 0 ? (
-        <GenerateCards courseId={course.id} existing={0} floating />
+        <Link
+          href={`/app/c/${course.id}/cartes?generer=1` as never}
+          className="pressable paper mt-7 flex w-full items-center gap-4 rounded-group bg-surface px-6 py-5"
+          data-print="hide"
+        >
+          <span
+            aria-hidden
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-tile bg-surface-muted text-[28px]"
+          >
+            ✨
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[18px] font-bold leading-tight text-ink">
+              Générer des cartes
+            </span>
+            <span className="mt-1 block text-[14px] text-ink-secondary">
+              Ouvre l&apos;espace des cartes : Micabo écrit le paquet à partir de la fiche.
+            </span>
+          </span>
+        </Link>
       ) : (
         <ReviewCta href={`/app/reviser?cours=${course.id}`} floating />
       )}

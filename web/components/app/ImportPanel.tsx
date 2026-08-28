@@ -171,7 +171,7 @@ export function ImportPanel({
           if (file) void handleFile(file);
         }}
         className={`flex min-h-[280px] flex-col items-center justify-center rounded-sheet border-2 border-dashed px-6 py-12 text-center transition-colors duration-hover ${
-          dragging ? "border-accent bg-accent-soft" : "border-stroke-strong bg-surface"
+          dragging ? "border-ink bg-surface-muted" : "border-stroke-strong bg-surface"
         }`}
       >
         <input
@@ -190,7 +190,7 @@ export function ImportPanel({
             <svg
               aria-hidden
               viewBox="0 0 24 24"
-              className={`h-9 w-9 ${dragging ? "text-accent" : "text-ink-tertiary"}`}
+              className={`h-9 w-9 ${dragging ? "text-ink" : "text-ink-tertiary"}`}
             >
               <path
                 d="M12 16V4M7 9l5-5 5 5M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"

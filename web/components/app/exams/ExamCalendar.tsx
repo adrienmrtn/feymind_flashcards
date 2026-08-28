@@ -75,9 +75,9 @@ export function ExamCalendar({
                 first ? "pb-1 pt-1" : "justify-center"
               } ${
                 isSelected
-                  ? "bg-accent text-on-ink"
+                  ? "bg-ink text-on-ink"
                   : isToday
-                    ? "bg-accent-soft text-accent"
+                    ? "bg-surface-muted text-ink"
                     : "text-ink hover:bg-surface-muted"
               } ${outside && !isSelected ? "opacity-40" : ""}`}
             >
@@ -174,11 +174,11 @@ export function ExamDayPicker({
               onClick={() => onSelect(day)}
               className={`flex h-10 w-full items-center justify-center rounded-button text-[13.5px] leading-none transition-colors duration-hover ${
                 isSelected
-                  ? "bg-accent font-semibold text-on-ink"
+                  ? "bg-ink font-semibold text-on-ink"
                   : blocked
                     ? "cursor-not-allowed text-ink-tertiary/50"
                     : isToday
-                      ? "bg-accent-soft font-semibold text-accent"
+                      ? "bg-surface-muted font-semibold text-ink"
                       : "text-ink hover:bg-surface-muted"
               } ${outside && !isSelected && !blocked ? "opacity-40" : ""}`}
             >

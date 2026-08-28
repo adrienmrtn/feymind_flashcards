@@ -139,9 +139,9 @@ function normalizeCard(card: GeneratedCard, allowed: Set<string>): OutputCard {
 const FORMATS = ["basic", "cloze", "choice"] as const;
 type Format = typeof FORMATS[number];
 
-const PER_FORMAT_MAXIMUM = 20;
+const PER_FORMAT_MAXIMUM = 24;
 const TOTAL_MINIMUM = 3;
-const TOTAL_MAXIMUM = 30;
+const TOTAL_MAXIMUM = 48;
 
 const FORMAT_LABELS: Record<Format, string> = {
   basic: "recto verso",
@@ -167,7 +167,7 @@ function resolveQuota(body: RequestBody): Record<Format, number> {
     return balance(quota);
   }
 
-  const total = Math.min(Math.max(body.count ?? 12, TOTAL_MINIMUM), TOTAL_MAXIMUM);
+  const total = Math.min(Math.max(body.count ?? 24, TOTAL_MINIMUM), TOTAL_MAXIMUM);
   const allowed = FORMATS.filter((format) =>
     format === "basic" || (body.kinds ?? FORMATS).includes(format)
   );

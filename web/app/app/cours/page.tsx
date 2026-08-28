@@ -1,23 +1,17 @@
-import { Suspense } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-import { courseAccent, courseAudienceLabel, displayUsername, resolveEmoji, studyCounts } from "@micabo/core";
+import { courseAccent, courseAudienceLabel, resolveEmoji, studyCounts } from "@micabo/core";
 
 import { CourseExamBadge } from "@/components/app/CourseExamBadge";
-import { CoursesExplore, DiscoverLink, DiscoverPending } from "@/components/app/CoursesExplore";
-import { LibrarySearch } from "@/components/app/LibrarySearch";
+import { CoursesExplore } from "@/components/app/CoursesExplore";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
 import { loadNewCardBudget } from "@/lib/data/reviews";
-import { listLibraryCourses } from "@/lib/data/social";
 
 /**
- * L'étagère, et la bibliothèque.
- *
- * Deux onglets, comme sur l'iPhone : **Tes cours** et **Découvrir**. Découvrir
- * ne montre que ce que le cloisonnement de Supabase laisse lire - les cours
- * publics de l'école, et ceux des amis. L'ouverture pose un orbe tout de suite :
- * la bibliothèque arrive derrière, on ne reste pas sur l'étagère figée.
+ * L'étagère. Les cours des amis se lisent encore sur leur profil, selon
+ * la visibilité qu'ils ont choisie.
  */
 export default async function CoursesPage({
   searchParams,
@@ -25,19 +19,7 @@ export default async function CoursesPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const discover = params.vue === "decouvrir";
-  const query = typeof params.q === "string" ? params.q : "";
-  const subject = typeof params.matiere === "string" ? params.matiere : null;
-
-  if (discover) {
-    return (
-      <CoursesExplore discover={true} revise={null}>
-        <Suspense fallback={<DiscoverPending />}>
-          <LibraryPaneLoader query={query} subject={subject} />
-        </Suspense>
-      </CoursesExplore>
-    );
-  }
+  if (params.vue === "decouvrir") redirect("/app/cours");
 
   const [courses, cards, budget, exams] = await Promise.all([
     listCourses(),
@@ -65,14 +47,13 @@ export default async function CoursesPage({
 
   return (
     <CoursesExplore
-      discover={false}
       revise={
         counts.total > 0 ? (
           <Link
             href="/app/reviser"
             className="pressable flex items-center gap-2.5 rounded-button bg-ink px-5 py-3 text-[15px] font-semibold text-on-ink"
           >
-            ⚡ Réviser <span className="numeral">{counts.total}</span> carte
+            Réviser <span className="numeral">{counts.total}</span> carte
             {counts.total > 1 ? "s" : ""}
           </Link>
         ) : null
@@ -84,21 +65,6 @@ export default async function CoursesPage({
         exams={exams}
       />
     </CoursesExplore>
-  );
-}
-
-async function LibraryPaneLoader({ query, subject }: { query: string; subject: string | null }) {
-  const library = await listLibraryCourses({ search: query, subject });
-  const subjects = [...new Set(library.courses.map((course) => course.subject).filter(Boolean))];
-
-  return (
-    <LibraryPane
-      query={query}
-      subject={subject}
-      subjects={subjects as string[]}
-      courses={library.courses}
-      authors={library.authors}
-    />
   );
 }
 
@@ -122,14 +88,14 @@ function Shelf({
       {courses.length === 0 ? (
         <EmptyShelf />
       ) : (
-        <div className="mt-7 grid gap-3 sm:grid-cols-2">
+        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => {
             const exam = examMarkForCourse(exams, course.id);
             return (
               <Link
                 key={course.id}
                 href={`/app/c/${course.id}` as never}
-                className="hover-tile paper relative flex flex-col gap-4 rounded-group bg-surface p-5"
+                className="paper relative flex flex-col gap-4 rounded-group bg-surface p-5"
               >
                 {exam ? (
                   <span className="absolute right-3 top-3">
@@ -168,120 +134,20 @@ function Shelf({
   );
 }
 
-function LibraryPane({
-  query,
-  subject,
-  subjects,
-  courses,
-  authors,
-}: {
-  query: string;
-  subject: string | null;
-  subjects: string[];
-  courses: Awaited<ReturnType<typeof listLibraryCourses>>["courses"];
-  authors: Awaited<ReturnType<typeof listLibraryCourses>>["authors"];
-}) {
-  return (
-    <div className="mt-7">
-      <LibrarySearch initial={query} subject={subject} />
-
-      {subjects.length > 0 ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <SubjectChip href="/app/cours?vue=decouvrir" current={!subject} label="Toutes" />
-          {subjects.map((name) => (
-            <SubjectChip
-              key={name}
-              href={`/app/cours?vue=decouvrir&matiere=${encodeURIComponent(name)}${
-                query ? `&q=${encodeURIComponent(query)}` : ""
-              }`}
-              current={subject === name}
-              label={name}
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {courses.length === 0 ? (
-        <p className="mt-8 text-[14.5px] leading-relaxed text-ink-secondary">
-          Rien à découvrir pour l&apos;instant. Les cours publics de ton école, et ceux de tes
-          amis, arriveront ici - le même graphe que sur l&apos;iPhone.
-        </p>
-      ) : (
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          {courses.map((course) => {
-            const author = authors.get(course.userId);
-            return (
-              <Link
-                key={course.id}
-                href={`/app/b/${course.id}` as never}
-                className="hover-tile paper flex flex-col gap-4 rounded-group bg-surface p-5"
-              >
-                <span
-                  aria-hidden
-                  className="flex h-12 w-12 items-center justify-center rounded-tile text-[22px]"
-                  style={{ backgroundColor: `${course.accentHex ?? courseAccent(course.id)}1f` }}
-                >
-                  {resolveEmoji(course.emoji, course.subject, course.title)}
-                </span>
-                <span className="min-w-0">
-                  <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
-                    {course.title || "Sans titre"}
-                  </span>
-                  <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
-                    {[
-                      author ? displayUsername(author.username) : null,
-                      course.subject,
-                      course.cardCount > 0
-                        ? `${course.cardCount} carte${course.cardCount > 1 ? "s" : ""}`
-                        : null,
-                      courseAudienceLabel(course.viewCount, course.adoptCount),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </span>
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SubjectChip({ href, current, label }: { href: string; current: boolean; label: string }) {
-  return (
-    <Link
-      href={href as never}
-      className={`pressable hover-tile rounded-pill px-3.5 py-1.5 text-[13px] font-medium ${
-        current ? "bg-ink text-on-ink" : "bg-surface-muted text-ink-secondary"
-      }`}
-    >
-      {label}
-    </Link>
-  );
-}
-
 function EmptyShelf() {
   return (
-    <div className="mt-10 rounded-group bg-canvas-sage p-8 text-center">
+    <div className="paper mt-10 rounded-group bg-surface p-8 text-center">
       <p className="text-[17px] font-semibold text-ink">Ton étagère est vide.</p>
       <p className="mx-auto mt-2.5 max-w-[42ch] text-[14.5px] leading-relaxed text-ink-reading">
-        Dépose un polycopié, ou reprends un cours déjà fiché dans Découvrir.
+        Dépose un polycopié : Micabo en tire la fiche, puis les cartes.
       </p>
       <div className="mt-7 flex flex-wrap justify-center gap-3">
         <Link
           href="/app/importer"
-          className="pressable shiny hover-tile inline-flex items-center gap-2 rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
+          className="pressable inline-flex items-center gap-2 rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
         >
-          <span aria-hidden className="emoji">
-            📥
-          </span>
           Importer un cours
         </Link>
-        <DiscoverLink className="pressable hover-tile inline-flex items-center rounded-button bg-surface px-6 py-3.5 text-[15px] font-semibold text-ink paper">
-          Découvrir
-        </DiscoverLink>
       </div>
     </div>
   );

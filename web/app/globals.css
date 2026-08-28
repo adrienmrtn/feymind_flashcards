@@ -1005,6 +1005,30 @@ video {
   text-transform: uppercase;
 }
 
+/* L'app connectée : un CRM, pas une vitrine. Les tuiles ne se soulèvent
+   plus, les boutons ne brillent plus, le grain et le vert restent à la porte. */
+.app-shell .hover-tile:hover,
+.app-shell .hover-tile:active,
+.app-shell .lift:hover {
+  translate: none;
+  box-shadow: var(--shadow-paper);
+  scale: none;
+}
+
+.app-shell .hover-row:hover {
+  translate: none;
+}
+
+.app-shell .shiny::after,
+.app-shell .shiny-loud::after {
+  content: none;
+  display: none;
+}
+
+.app-shell .pressable:hover {
+  filter: none;
+}
+
 /* --------------------------------------------------------------------------
    Mouvement réduit
 

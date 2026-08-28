@@ -250,7 +250,7 @@ final class CardFormatsTests: XCTestCase {
 
     /// Le plafond rogne le format le plus nombreux : une petite commande passe entière.
     func testTheCapTrimsTheLargestFormatFirst() {
-        let quota = QuestionQuota(basic: 20, cloze: 20, choice: 3).clamped()
+        let quota = QuestionQuota(basic: 24, cloze: 24, choice: 3).clamped()
 
         XCTAssertEqual(quota.total, QuestionQuota.totalRange.upperBound)
         XCTAssertEqual(quota.choice, 3)

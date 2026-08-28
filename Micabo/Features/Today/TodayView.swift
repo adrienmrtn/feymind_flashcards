@@ -25,8 +25,6 @@ struct TodayView: View {
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
 
     @Environment(ProAccess.self) private var pro: ProAccess?
-    @Environment(AuthController.self) private var auth
-    @Environment(TabRouter.self) private var router: TabRouter?
 
     @State private var showStudy = false
     @State private var path = NavigationPath()
@@ -166,8 +164,7 @@ struct TodayView: View {
                 onSelect: { kind in
                     pendingImport = kind
                     showImportChoice = false
-                },
-                onLibrary: libraryAction
+                }
             )
             .presentationDetents([.height(604)])
             .presentationDragIndicator(.visible)
@@ -604,15 +601,6 @@ struct TodayView: View {
             return
         }
         showImportChoice = true
-    }
-
-    private var libraryAction: (() -> Void)? {
-        LibraryAccess.isAvailable(signedIn: auth.isSignedIn) ? openLibrary : nil
-    }
-
-    private func openLibrary() {
-        showImportChoice = false
-        router?.showLibrary()
     }
 
     private func launchPendingImport() {

@@ -19,7 +19,7 @@ export function WeekRanking({ rows }: { rows: readonly RankingRow[] }) {
   if (rows.length < 2) return null;
 
   return (
-    <section className="paper hover-tile mt-8 rounded-group bg-surface p-6">
+    <section className="paper mt-8 rounded-group bg-surface p-6">
       <p className="eyebrow text-ink-tertiary">🏆 Classement de la semaine</p>
       <ol className="mt-4 divide-y divide-hairline">
         {rows.map((row, index) => {

@@ -260,11 +260,11 @@ export function ReviewSetup({
 
 function Tile({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
   return (
-    <div className={`hover-tile rounded-group p-5 ${accent ? "bg-accent-soft" : "paper bg-surface"}`}>
-      <dd className={`numeral text-[30px] font-bold leading-none ${accent ? "text-accent" : "text-ink"}`}>
+    <div className={`rounded-group p-5 ${accent ? "bg-ink text-on-ink" : "paper bg-surface"}`}>
+      <dd className={`numeral text-[30px] font-bold leading-none ${accent ? "text-on-ink" : "text-ink"}`}>
         {value}
       </dd>
-      <dt className={`mt-1.5 text-[13px] ${accent ? "text-accent" : "text-ink-tertiary"}`}>{label}</dt>
+      <dt className={`mt-1.5 text-[13px] ${accent ? "text-on-ink-muted" : "text-ink-tertiary"}`}>{label}</dt>
     </div>
   );
 }

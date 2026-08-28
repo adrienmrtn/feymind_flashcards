@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ThinkingOrb } from "thinking-orbs";
 
@@ -34,16 +34,20 @@ export function GenerateCards({
   courseId,
   existing,
   floating = false,
+  autoStart = false,
 }: {
   courseId: string;
   existing: number;
   floating?: boolean;
+  autoStart?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [failure, setFailure] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [quota, setQuota] = useState<QuestionQuota>(DEFAULT_QUOTA);
+  const [booting, setBooting] = useState(autoStart);
+  const started = useRef(false);
 
   const total = quotaTotal(quota);
   const capped = isAtCap(quota);
@@ -62,15 +66,25 @@ export function GenerateCards({
     setFailure(null);
     startTransition(async () => {
       const result = await generateCards(courseId, quota);
+      setBooting(false);
       if (result.status === "error") setFailure(result.message ?? "Ça n'a pas marché.");
       else {
         setOpen(false);
+        router.replace(`/app/c/${courseId}/cartes` as never);
         router.refresh();
       }
     });
   }
 
-  if (pending) {
+  useEffect(() => {
+    if (!autoStart || started.current) return;
+    started.current = true;
+    ask();
+    // Une seule fois, à l'arrivée depuis « Générer des cartes ».
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
+
+  if (pending || (booting && !failure)) {
     const pendingUi = (
       <div
         className={
@@ -119,7 +133,7 @@ export function GenerateCards({
           >
             <span
               aria-hidden
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-tile bg-accent-soft text-[24px]"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-tile bg-surface-muted text-[24px]"
             >
               ✨
             </span>

@@ -3,9 +3,8 @@ import SwiftUI
 /// Les trois destinations de la barre d'onglets, dans l'ordre où elles s'y présentent.
 ///
 /// **Réviser** est au milieu, et c'est là que l'app ouvre : c'est l'écran du quotidien, donc
-/// celui qui doit être sous le pouce. **Cours** regroupe tout ce qui est importé, et
-/// accueillera la bibliothèque en sous-onglet « Découvrir » quand elle sera réellement
-/// active.
+/// celui qui doit être sous le pouce. **Cours** regroupe tout ce qui est importé. Les
+/// cours des amis se voient encore sur leur profil, si leur visibilité le permet.
 enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     case courses
     case today
@@ -73,14 +72,4 @@ final class TabRouter {
         selection = .today
     }
 
-    /// Compteur de demandes d'ouverture de la bibliothèque, sur le même principe.
-    private(set) var libraryRequests = 0
-
-    /// **Ouvre le rayon « Découvrir ».** La bibliothèque vit dans l'onglet Cours, mais elle
-    /// se propose ailleurs — dans la feuille d'import, par exemple. C'est le routeur qui
-    /// porte la demande, plutôt que chaque écran d'où l'on peut la faire.
-    func showLibrary() {
-        libraryRequests += 1
-        selection = .courses
-    }
 }

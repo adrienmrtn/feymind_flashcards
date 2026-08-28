@@ -3,21 +3,17 @@ import SwiftUI
 
 /// Onglet **Cours** : tout ce qui a été importé, avec recherche et filtres.
 ///
-/// Il accueillera la bibliothèque en second rayon, « Découvrir », dès que
-/// `LibraryAccess.isAvailable` passera à vrai. Tant qu'elle dort, le sélecteur de
-/// rayon n'apparaît pas : un onglet qui ne mène à rien est un appui perdu.
+/// Les cours des amis se voient encore sur leur profil, si leur visibilité le
+/// permet. Il n'y a plus de rayon « Découvrir ».
 struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(AuthController.self) private var auth
     @Environment(ProAccess.self) private var pro: ProAccess?
-    @Environment(TabRouter.self) private var router: TabRouter?
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
     @State private var searchText = ""
     @State private var sortOrder: SortOrder = .recent
     @State private var subjectFilter: String?
-    @State private var shelf: Shelf = .mine
     /// Un cours mène à sa fiche, un `CourseCardsRoute` à ses cartes : deux destinations
     /// pour le même cours, donc un chemin hétérogène.
     @State private var path = NavigationPath()
@@ -27,21 +23,6 @@ struct CoursesListView: View {
     /// Un paquet de cartes ne passe pas par l'écran d'import : il n'y a rien à lire.
     @State private var isCreatingDeck = false
     @State private var paywall: PaywallTrigger?
-
-    /// Les deux rayons de l'onglet.
-    enum Shelf: String, CaseIterable, Identifiable {
-        case mine
-        case discover
-
-        var id: String { rawValue }
-
-        var label: String {
-            switch self {
-            case .mine: "Tes cours"
-            case .discover: "Découvrir"
-            }
-        }
-    }
 
     enum SortOrder: String, CaseIterable, Identifiable {
         case due
@@ -97,12 +78,7 @@ struct CoursesListView: View {
                     header
                         .padding(.horizontal, MicaboSpacing.screen)
 
-                    if LibraryAccess.isAvailable(signedIn: auth.isSignedIn) {
-                        shelfPicker
-                            .padding(.horizontal, MicaboSpacing.screen)
-                    }
-
-                    shelfContent
+                    myCourses
                 }
                 .padding(.top, MicaboSpacing.xs)
                 .padding(.bottom, MicaboSpacing.md)
@@ -117,13 +93,6 @@ struct CoursesListView: View {
             .toolbar(.hidden, for: .navigationBar)
             .reportsNavigationDepth(for: .courses, depth: path.count)
             .returnsHome(path: $path)
-            // La bibliothèque se demande depuis d'autres écrans que celui-ci : c'est le
-            // routeur qui porte l'intention, et ce rayon qui l'exécute.
-            .onChange(of: router?.libraryRequests ?? 0) { _, _ in
-                guard showsLibrary else { return }
-                path = NavigationPath()
-                withAnimation(.easeOut(duration: 0.2)) { shelf = .discover }
-            }
             .navigationDestination(for: Course.self) { course in
                 CourseSheetView(course: course)
             }
@@ -135,7 +104,6 @@ struct CoursesListView: View {
             // bibliothèque. Un cours qu'on vient de s'approprier n'est plus un cours partagé.
             .navigationDestination(for: SharedCourseRoute.self) { route in
                 SharedCourseView(route: route) { adopted in
-                    shelf = .mine
                     path = NavigationPath([adopted])
                 }
             }
@@ -145,8 +113,7 @@ struct CoursesListView: View {
                 onSelect: { kind in
                     pendingImport = kind
                     showImportChoice = false
-                },
-                onLibrary: libraryAction
+                }
             )
             .presentationDetents([.height(604)])
             .presentationDragIndicator(.visible)
@@ -204,32 +171,6 @@ struct CoursesListView: View {
     private var countLabel: String {
         guard !courses.isEmpty else { return "Aucun cours" }
         return "\(MicaboCopy.courses(courses.count)) · \(MicaboCopy.cards(cardCount))"
-    }
-
-    private var shelfPicker: some View {
-        HStack(spacing: MicaboSpacing.xs) {
-            ForEach(Shelf.allCases) { value in
-                MicaboSelectChip(title: value.label, isSelected: value == shelf) {
-                    withAnimation(.easeOut(duration: 0.2)) { shelf = value }
-                }
-            }
-        }
-    }
-
-    /// Le rayon affiché, en retombant sur ses cours dès que la bibliothèque n'est plus
-    /// accessible : le sélecteur disparaît à la déconnexion, et sans ce repli on restait
-    /// bloqué sur « Découvrir » sans aucun moyen d'en sortir.
-    @ViewBuilder
-    private var shelfContent: some View {
-        switch LibraryAccess.isAvailable(signedIn: auth.isSignedIn) ? shelf : .mine {
-        case .mine:
-            myCourses
-        case .discover:
-            LibraryView { course, author in
-                path.append(SharedCourseRoute(course: course, author: author))
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-        }
     }
 
     @ViewBuilder
@@ -316,21 +257,6 @@ struct CoursesListView: View {
             }
             .padding(.horizontal, MicaboSpacing.xxs)
         }
-    }
-
-    private var showsLibrary: Bool {
-        LibraryAccess.isAvailable(signedIn: auth.isSignedIn)
-    }
-
-    /// Le type est écrit : dans un ternaire face à `nil`, une référence de méthode ne se
-    /// laisse pas toujours inférer.
-    private var libraryAction: (() -> Void)? {
-        showsLibrary ? openLibrary : nil
-    }
-
-    private func openLibrary() {
-        showImportChoice = false
-        router?.showLibrary()
     }
 
     private var canImport: Bool {

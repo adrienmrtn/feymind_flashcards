@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { AppNav } from "@/components/app/AppNav";
 import { PageEnter } from "@/components/app/PageEnter";
 import { PaywallHost } from "@/components/app/PaywallFlow";
-import { SoftGrain } from "@/components/atmosphere/SoftAtmosphere";
 import { entitlement } from "@micabo/core";
 
 import { readEntitlement } from "@/lib/data/entitlement";
@@ -28,12 +27,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect("/commencer/compte?suite=%2Fapp");
 
   return (
-    <div className="relative min-h-svh bg-canvas lg:flex">
-      <SoftGrain />
+    <div className="app-shell relative min-h-svh bg-canvas lg:flex">
       <AppNav />
 
       <main className="relative min-w-0 flex-1 pb-32 lg:pb-0">
-        <div className="mx-auto max-w-[860px] px-screen py-8 lg:py-12">
+        <div className="mx-auto w-full max-w-[1400px] px-5 py-8 lg:px-10 lg:py-10">
           <PageEnter>{children}</PageEnter>
         </div>
       </main>

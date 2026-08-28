@@ -191,15 +191,15 @@ struct QuestionQuota: Equatable {
     var cloze: Int
     var choice: Int
 
-    /// Douze cartes, en trois parts : de quoi couvrir un chapitre sans transformer la
-    /// première session en épreuve d'endurance.
-    static let `default` = QuestionQuota(basic: 6, cloze: 3, choice: 3)
+    /// Vingt-quatre cartes, en trois parts : de quoi tenir une vraie session dès le
+    /// premier paquet.
+    static let `default` = QuestionQuota(basic: 10, cloze: 7, choice: 7)
 
     /// Ce qu'un format accepte. Zéro veut dire « pas de ce format », et c'est un choix
     /// légitime : le plafond, lui, protège la session qui suivra.
-    static let perFormatRange = 0...20
-    /// Une carte ne suffit pas à faire une session, trente sont déjà trop pour une seule.
-    static let totalRange = 3...30
+    static let perFormatRange = 0...24
+    /// Une carte ne suffit pas à faire une session ; au-delà, c'est trop pour une génération.
+    static let totalRange = 3...48
 
     var total: Int { basic + cloze + choice }
 

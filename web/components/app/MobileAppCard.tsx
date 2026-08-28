@@ -20,10 +20,10 @@ export function MobileAppCard() {
             <p className="mt-2 text-[16px] font-bold leading-none text-ink">8</p>
             <p className="mt-0.5 text-[7px] text-ink-tertiary">cartes dues</p>
             <div className="mt-2 h-1.5 overflow-hidden rounded-pill bg-surface-muted">
-              <div className="h-full w-2/3 rounded-pill bg-accent" />
+              <div className="h-full w-2/3 rounded-pill bg-ink" />
             </div>
             <div className="mt-2 space-y-1">
-              <div className="h-5 rounded-md bg-accent-soft" />
+              <div className="h-5 rounded-md bg-surface-sunken" />
               <div className="h-5 rounded-md bg-surface-muted" />
               <div className="h-5 rounded-md bg-surface-muted" />
             </div>

@@ -38,7 +38,7 @@ function tone(urgency: ExamUrgency): string {
     case "upcoming":
       return "bg-info-soft text-info";
     case "later":
-      return "bg-accent-soft text-accent";
+      return "bg-surface-muted text-ink-secondary";
     case "past":
       return "bg-surface-muted text-ink-tertiary";
   }

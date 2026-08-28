@@ -2,6 +2,8 @@ import { resolveEmoji } from "@micabo/core";
 
 import { ExamWorkspace } from "@/components/app/exams/ExamWorkspace";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
+import { currentUser } from "@/lib/data/user";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * Les examens, **sur un calendrier.**
@@ -11,10 +13,20 @@ import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
  * Les examens déjà posés s'écrivent en pastille sur le jour, pas en point.
  */
 export default async function ExamsPage() {
-  const [exams, courses, cards] = await Promise.all([
+  const supabase = await createClient();
+  const user = await currentUser();
+  const [exams, courses, cards, profile] = await Promise.all([
     listExams(),
     listCourses(),
     listCardSnapshots(),
+    user
+      ? supabase
+          .from("profiles")
+          .select("country_code")
+          .eq("id", user.id)
+          .maybeSingle()
+          .then((result) => result.data)
+      : null,
   ]);
 
   const mine = courses.filter((course) => !course.is_from_library);
@@ -32,6 +44,7 @@ export default async function ExamsPage() {
 
       <div className="mt-8">
         <ExamWorkspace
+          countryCode={profile?.country_code}
           exams={exams.map((exam) => ({
             id: exam.id,
             name: exam.name,

@@ -15,8 +15,15 @@ import { examMarkForCourse } from "@/lib/data/exam-marks";
  * Ce n'est plus un compteur et un bouton générique : c'est l'atelier du paquet  - 
  * l'état de la file, la session, puis les cartes qu'on corrige.
  */
-export default async function CourseCardsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CourseCardsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ generer?: string }>;
+}) {
   const { id } = await params;
+  const { generer } = await searchParams;
   const [course, cards, exams] = await Promise.all([
     getCourseMeta(id),
     listCards(id),
@@ -74,7 +81,7 @@ export default async function CourseCardsPage({ params }: { params: Promise<{ id
       ) : null}
 
       <div className="mt-7">
-        <GenerateCards courseId={course.id} existing={cards.length} />
+        <GenerateCards courseId={course.id} existing={cards.length} autoStart={generer === "1"} />
       </div>
 
       <div className="mt-8">

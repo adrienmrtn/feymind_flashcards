@@ -26,10 +26,12 @@ export function ExamWorkspace({
   exams,
   courses,
   cards,
+  countryCode,
 }: {
   exams: WorkspaceExam[];
   courses: EditorCourse[];
   cards: EditorCard[];
+  countryCode?: string | null;
 }) {
   const today = startOfDay(new Date());
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
@@ -188,6 +190,7 @@ export function ExamWorkspace({
           date={editing.date}
           courses={courses}
           cards={cards}
+          countryCode={countryCode}
           onClose={() => setEditing(null)}
         />
       ) : null}
@@ -214,7 +217,7 @@ function ExamRow({
         ? "bg-caution-soft text-caution"
         : urgency === "upcoming"
           ? "bg-info-soft text-info"
-          : "bg-accent-soft text-accent";
+          : "bg-surface-muted text-ink-secondary";
 
   return (
     <li>
