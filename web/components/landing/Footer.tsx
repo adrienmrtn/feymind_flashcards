@@ -5,9 +5,9 @@ import { Separator } from "@/components/ui/separator";
 /**
  * Le pied de page de la vitrine.
  *
- * L'app iOS n'est pas publiée : pas de badge App Store. Les pages légales n'existent pas
- * encore : on ne pose pas de liens morts. Le parcours s'ouvre par **Commencer**.
- * Une session déjà ouverte remplace ça par Dashboard.
+ * Pas de badge App Store tant que le lien n'est pas public : un badge mort se voit.
+ * Les pages légales n'existent pas encore : on ne pose pas de liens morts. Le parcours
+ * s'ouvre par **Commencer**. Une session déjà ouverte remplace ça par Dashboard.
  */
 export function Footer({ signedIn = false }: { signedIn?: boolean }) {
   return (
@@ -57,9 +57,9 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
             <div>
               <p className="eyebrow mb-3 text-ink-tertiary">Sur ton téléphone</p>
               <p className="text-ink-secondary">
-                L&apos;app iOS arrive.
+                Aussi sur iPhone.
                 <br />
-                <span className="text-ink-tertiary">Le site et le téléphone partageront tes cours.</span>
+                <span className="text-ink-tertiary">Le site et l&apos;app partagent tes cours.</span>
               </p>
             </div>
           </div>
