@@ -110,6 +110,16 @@ export function markPaywallDismissed(): void {
   }
 }
 
+/** Oublie la croix, pour rejouer le court accueil depuis le profil. */
+export function clearPaywallDismissal(): void {
+  try {
+    window.localStorage.removeItem(PAYWALL_DISMISSED_KEY);
+    window.localStorage.setItem(PAYWALL_PENDING_KEY, "1");
+  } catch {
+    // Voir plus haut.
+  }
+}
+
 export { shouldOpenPaywall } from "./paywall";
 
 /**

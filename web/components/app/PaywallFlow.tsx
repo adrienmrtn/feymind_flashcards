@@ -8,6 +8,7 @@ import { ThinkingOrb } from "thinking-orbs";
 import { pricing } from "@micabo/core";
 
 import { startCheckout } from "@/lib/actions/checkout";
+import { isDebugToolsEnabled } from "@/lib/debug";
 import {
   isPaywallDismissed,
   isPaywallPending,
@@ -39,9 +40,10 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const debugReplay = isDebugToolsEnabled() && params.get("debug") === "paywall";
 
   useEffect(() => {
-    if (isPaid) {
+    if (isPaid && !debugReplay) {
       setOpen(false);
       return;
     }
@@ -67,6 +69,7 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
           pending,
           dismissed,
           onHome,
+          debug: debugReplay,
         })
       ) {
         return;
@@ -83,18 +86,18 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [isPaid, params, pathname]);
+  }, [debugReplay, isPaid, params, pathname]);
 
   function close() {
     markPaywallDismissed();
     setOpen(false);
-    if (params.get("bienvenue") || params.get("offre")) {
+    if (params.get("bienvenue") || params.get("offre") || params.get("debug")) {
       router.replace(pathname as Route);
     }
   }
 
   if (!open) return null;
-  return <PaywallCard onClose={close} />;
+  return <PaywallCard key={debugReplay ? "debug-paywall" : "paywall"} onClose={close} />;
 }
 
 export function PaywallCard({ onClose }: { onClose: () => void }) {

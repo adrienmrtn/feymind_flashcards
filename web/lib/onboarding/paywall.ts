@@ -11,7 +11,10 @@ export function shouldOpenPaywall(input: {
   pending: boolean;
   dismissed: boolean;
   onHome: boolean;
+  /** Hors production : rejouer le court accueil, même pour un abonné. */
+  debug?: boolean;
 }): boolean {
+  if (input.debug) return true;
   if (input.isPaid) return false;
   if (input.force) return true;
   if (input.dismissed) return false;
