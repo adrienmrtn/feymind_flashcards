@@ -695,8 +695,8 @@ video {
   background-color: transparent;
   background-image: linear-gradient(
     to top,
-    var(--color-ink) 0 50%,
-    transparent 50% 100%
+    transparent 0 50%,
+    var(--color-ink) 50% 100%
   );
   background-size: 100% 200%;
   background-position: 0 100%;
