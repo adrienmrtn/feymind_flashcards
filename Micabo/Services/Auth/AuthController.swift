@@ -24,12 +24,11 @@ final class AuthController {
 
     /// Ce que l'écran de connexion a à dire.
     ///
-    /// Il n'y a plus qu'un cas, et c'est le signe que le mot de passe est bien parti : les
-    /// trois autres annonçaient qu'un courriel venait d'être envoyé — confirmation, lien de
-    /// connexion, réinitialisation. Apple et Google ne renvoient rien à lire, ils
-    /// réussissent ou ils expliquent pourquoi.
+    /// Apple et Google réussissent ou expliquent. Le courriel, lui, a un succès qui n'ouvre
+    /// pas encore la session : le lien est parti, il faut l'ouvrir.
     enum AuthMessage: Equatable {
         case error(String)
+        case sent(String)
     }
 
     private let client: SupabaseAuthClient
@@ -128,6 +127,21 @@ final class AuthController {
         }
     }
 
+    /// Envoie le lien, et n'ouvre pas la session. C'est le courriel qui la ferme.
+    func sendMagicLink(to email: String) async {
+        let address = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        await perform {
+            let pkce = PKCEPair()
+            self.pendingVerifier = pkce.verifier
+            try await self.client.sendMagicLink(
+                email: address,
+                redirectTo: AuthRedirect.url,
+                challenge: pkce.challenge
+            )
+            self.message = .sent(address)
+        }
+    }
+
     /// Le retour d'un lien reçu par courriel, ouvert depuis l'app.
     ///
     /// Un lien de confirmation ou de connexion revient sur le schéma de Micabo avec un code
@@ -153,9 +167,18 @@ final class AuthController {
             return
         }
 
+        if let tokenHash = value("token_hash") {
+            let type = value("type") ?? "magiclink"
+            await perform {
+                self.adopt(try await self.client.verify(tokenHash: tokenHash, type: type))
+            }
+            return
+        }
+
         if let code = value("code"), let verifier = pendingVerifier {
             await perform {
                 self.adopt(try await self.client.exchange(code: code, verifier: verifier))
+                self.pendingVerifier = nil
             }
         }
     }
@@ -166,9 +189,17 @@ final class AuthController {
     /// fonction. Un lien reçu par courriel, lui, peut être ouvert deux jours plus tard : son
     /// vérificateur doit survivre au lancement suivant.
     private var pendingVerifier: String? {
-        get { UserDefaults.standard.string(forKey: "micabo.auth.pkceVerifier") }
-        set { UserDefaults.standard.set(newValue, forKey: "micabo.auth.pkceVerifier") }
+        get { UserDefaults.standard.string(forKey: Self.verifierKey) }
+        set {
+            if let newValue {
+                UserDefaults.standard.set(newValue, forKey: Self.verifierKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: Self.verifierKey)
+            }
+        }
     }
+
+    private static let verifierKey = "micabo.auth.pkceVerifier"
 
     // MARK: - Sortie
 

@@ -81,9 +81,9 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(PersonalizingStepView.duration, 5)
     }
 
-    /// Les deux fournisseurs sont proposés, et ils disent tous les deux ce qu'ils font. Il n'y
-    /// en a que deux : le mot de passe n'existe plus, ni le lien envoyé par courriel.
-    func testSignInOffersBothProvidersAndNothingElse() {
+    /// Apple et Google restent les deux fournisseurs OAuth. Le courriel n'est pas un
+    /// quatrième bouton : c'est le formulaire sous le séparateur.
+    func testSignInOffersBothProviders() {
         XCTAssertEqual(SignInProvider.allCases, [.apple, .google])
 
         for provider in SignInProvider.allCases {

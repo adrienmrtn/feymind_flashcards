@@ -143,11 +143,42 @@ casse le plus souvent.** Le jeton d'identité rendu par le bouton natif porte co
 Service ID. Si un seul des deux est déclaré, l'un des deux chemins échoue avec « Unacceptable
 audience in id_token », un message qui ne dit pas lequel.
 
-### 2.5 Pour le web
+### 2.5 Pour que Apple marche **sur le web**
 
-Rien à ajouter côté Apple : le Service ID de l'étape 2.2 est exactement celui du web. Il faut
-seulement, quand le site aura son domaine, ajouter ce domaine dans **Domains and Subdomains**
-et son URL de retour dans **Return URLs**.
+Le site est en ligne. Sans les URL ci-dessous, le bouton web ouvre Apple puis revient en
+erreur — c'est presque toujours ça, pas le code.
+
+**Chez Apple**, Service ID `com.micabo.app.service` → Sign in with Apple → Configure :
+
+| Champ | Valeur |
+| --- | --- |
+| Primary App ID | `com.micabo.app` |
+| Domains and Subdomains | `khuzodsrznanzhwlbjbx.supabase.co` |
+| Return URLs | `https://khuzodsrznanzhwlbjbx.supabase.co/auth/v1/callback` |
+
+Ne pas mettre `micabo.vercel.app` dans les Return URLs Apple : Apple parle à Supabase, pas
+au site. Le site est le `redirect_to` de Supabase.
+
+**Chez Supabase**, Authentication → URL Configuration → Redirect URLs, les quatre lignes :
+
+```
+micabo://auth-callback
+http://localhost:3000/auth/callback
+https://micabo.vercel.app/auth/callback
+https://micabo.app/auth/callback
+```
+
+Et le fournisseur Apple (étape 2.4) doit lister **les deux** Client IDs :
+
+```
+com.micabo.app.service, com.micabo.app
+```
+
+Le premier est le jeton du **web**. S'il manque, iOS marche et le site affiche
+« Unacceptable audience in id_token ».
+
+Apple n'accepte pas `http://localhost` comme domaine de Service ID. En local, tester
+Google ou le courriel ; Apple se vérifie sur `https://micabo.vercel.app/connexion`.
 
 ---
 

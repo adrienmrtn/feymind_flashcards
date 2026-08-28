@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/client";
 
@@ -35,7 +36,7 @@ function ConnexionBody() {
   const [failure, setFailure] = useState<string | null>(null);
 
   function callbackUrl() {
-    return `${window.location.origin}/auth/callback?next=${encodeURIComponent("/app")}`;
+    return oauthCallbackUrl("/app");
   }
 
   async function signInWith(provider: "apple" | "google") {
@@ -50,7 +51,7 @@ function ConnexionBody() {
 
     if (error) {
       setPending(null);
-      setFailure(error.message);
+      setFailure(oauthFailureMessage(provider, error.message));
     }
   }
 

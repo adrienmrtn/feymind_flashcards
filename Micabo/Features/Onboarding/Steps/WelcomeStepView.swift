@@ -8,7 +8,7 @@ import SwiftUI
 /// cartes disent déjà ce que fait Micabo, et **elles montrent les trois formats** — recto
 /// verso, QCM, texte à trou — ce qu'aucune phrase ne faisait.
 ///
-/// « J'ai déjà un compte » ouvre Apple ou Google. Une session Supabase
+/// « J'ai déjà un compte » ouvre Apple, Google ou le courriel. Une session Supabase
 /// *est* le compte : on entre dans l'app, on ne recommence pas l'accueil.
 ///
 /// Le paquet vit dans `WelcomeDeck.swift`. Le laisser ici faisait abandonner le
@@ -124,7 +124,7 @@ struct WelcomeStepView: View {
         }
         .padding(MicaboSpacing.screen)
         .padding(.top, MicaboSpacing.xl)
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
         .presentationDragIndicator(.visible)
         .interactiveDismissDisabled(auth.isWorking || checkingAccount)
     }
