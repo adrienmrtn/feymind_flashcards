@@ -7,13 +7,17 @@ import { DEMO_COURSE, TRANSFORMATION_SHEET } from "@/components/demo/demo-course
 import { SheetBlocks } from "@/components/sheet/SheetBlocks";
 
 const PANEL_COUNT = 4;
+/** Après « Ton examen », on reste encore un peu — autrement le reste de la page arrive tout de suite. */
+const HOLD_VIEWPORTS = 0.7;
 
 /**
  * Le trajet complet du document, lié au défilement :
  *
  * cours → fiche, puis fiche → cartes, puis cartes → examen. Deux places, quatre
- * objets. Le mouvement ne change que des transforms et l'opacité, donc le
- * navigateur peut le composer sans recalculer la page.
+ * objets. Le dernier couple (cartes | examen) tient encore un peu après la
+ * course, pour qu'on le lise avant que la page continue. Le mouvement ne
+ * change que des transforms et l'opacité, donc le navigateur peut le composer
+ * sans recalculer la page.
  */
 export function CourseTransformation() {
   const section = useRef<HTMLElement>(null);
@@ -29,8 +33,9 @@ export function CourseTransformation() {
       if (!element) return;
 
       const rect = element.getBoundingClientRect();
-      const distance = Math.max(1, rect.height - window.innerHeight);
-      const next = Math.min(1, Math.max(0, -rect.top / distance));
+      const extra = Math.max(1, rect.height - window.innerHeight);
+      const animated = Math.max(1, extra - window.innerHeight * HOLD_VIEWPORTS);
+      const next = Math.min(1, Math.max(0, -rect.top / animated));
 
       if (reduced.matches) {
         setProgress(next < 1 / 3 ? 0 : next < 2 / 3 ? 0.5 : 1);
