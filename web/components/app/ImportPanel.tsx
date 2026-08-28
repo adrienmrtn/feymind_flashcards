@@ -155,7 +155,7 @@ export function ImportPanel({
   }
 
   return (
-    <div className="mt-8">
+    <div>
       {/* La zone, et rien d'autre au premier rang. */}
       <div
         onDragOver={(event) => {
@@ -170,8 +170,8 @@ export function ImportPanel({
           const file = event.dataTransfer.files[0];
           if (file) void handleFile(file);
         }}
-        className={`flex min-h-[280px] flex-col items-center justify-center rounded-sheet border-2 border-dashed px-6 py-12 text-center transition-colors duration-hover ${
-          dragging ? "border-ink bg-surface-muted" : "border-stroke-strong bg-surface"
+        className={`flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center transition-colors ${
+          dragging ? "border-foreground bg-surface-muted" : "border-border bg-card"
         }`}
       >
         <input
@@ -202,7 +202,7 @@ export function ImportPanel({
               />
             </svg>
 
-            <p className="mt-5 text-[19px] font-semibold text-ink">
+            <p className="mt-5 text-base font-semibold text-foreground">
               {dragging ? "Lâche-le ici." : "Dépose ton cours"}
             </p>
             <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-tertiary">
@@ -214,7 +214,7 @@ export function ImportPanel({
             <button
               type="button"
               onClick={() => fileInput.current?.click()}
-              className="pressable mt-7 rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
+              className="mt-6 inline-flex h-9 items-center rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground"
             >
               Choisir un fichier
             </button>
@@ -246,7 +246,7 @@ export function ImportPanel({
       </div>
 
       {extra === "coller" && phase === "repos" ? (
-        <div className="paper rise mt-4 rounded-group bg-surface p-5">
+        <div className="mt-4 rounded-2xl border border-border bg-card p-5">
           <label htmlFor="import-title" className="eyebrow block text-ink-tertiary">
             Titre, si tu veux
           </label>
@@ -288,7 +288,7 @@ export function ImportPanel({
       ) : null}
 
       {extra === "video" && phase === "repos" ? (
-        <div className="paper rise mt-4 rounded-group bg-surface p-5">
+        <div className="mt-4 rounded-2xl border border-border bg-card p-5">
           <label htmlFor="import-url" className="eyebrow block text-ink-tertiary">
             Lien de la vidéo
           </label>
@@ -321,7 +321,7 @@ export function ImportPanel({
 
       {/* Les réglages du cours, sous la zone : ils valent pour la voie qu'on prendra. */}
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <div className="paper rounded-group bg-surface p-5">
+        <div className="rounded-2xl border border-border bg-card p-5">
           <div className="flex items-baseline justify-between gap-3">
             <p className="eyebrow text-ink-tertiary">Longueur de la fiche</p>
             <p className="text-[13px] font-medium text-ink">
@@ -343,7 +343,7 @@ export function ImportPanel({
           <p className="numeral mt-2 text-[12.5px] text-ink-tertiary">{blocks} blocs</p>
         </div>
 
-        <div className="paper rounded-group bg-surface p-5">
+        <div className="rounded-2xl border border-border bg-card p-5">
           <p className="eyebrow text-ink-tertiary">Qui peut la retrouver</p>
           <div className="mt-3.5">
             <VisibilityChoices value={visibility} onChange={setVisibility} disabled={busy} />
@@ -377,10 +377,10 @@ function Action({
       type="button"
       disabled={busy || !enabled}
       onClick={onPress}
-      className={`pressable rounded-button px-5 py-3 text-[15px] font-semibold transition-colors duration-hover ${
+      className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium ${
         busy || !enabled
-          ? "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
-          : "bg-ink text-on-ink"
+          ? "cursor-not-allowed border-transparent bg-surface-sunken text-ink-tertiary"
+          : "border-primary bg-primary text-primary-foreground"
       }`}
     >
       {busy ? "Micabo travaille" : "Écrire la fiche"}

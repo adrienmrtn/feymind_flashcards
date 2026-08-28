@@ -175,15 +175,15 @@ export function ExamWorkspace({
           </div>
         </section>
       ) : (
-        <p className="mt-10 text-[14.5px] leading-relaxed text-ink-secondary">
-          🗓️ La répétition espacée ignore le jour J. Une date remet les cartes dans le bon ordre.
+        <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
+          La répétition espacée ignore le jour J. Une date remet les cartes dans le bon ordre.
         </p>
       )}
 
       {past.length > 0 ? (
         <section className="mt-10">
-          <p className="eyebrow mb-3 text-ink-tertiary">📦 Passés</p>
-          <ul className="paper divide-y divide-hairline overflow-hidden rounded-group bg-surface">
+          <p className="mb-3 text-[13px] font-medium text-muted-foreground">Passés</p>
+          <ul className="divide-y divide-hairline overflow-hidden rounded-2xl border border-border bg-card">
             {past.map((exam) => (
               <li key={exam.id}>
                 <button
@@ -191,7 +191,7 @@ export function ExamWorkspace({
                   onClick={() => openExisting(exam)}
                   className="hover-row flex w-full items-baseline justify-between gap-4 px-5 py-3.5 text-left"
                 >
-                  <span className="text-[14.5px] text-ink-secondary">📦 {exam.name}</span>
+                  <span className="text-[14.5px] text-ink-secondary">{exam.name}</span>
                   <span className="shrink-0 text-[13px] text-ink-tertiary">{exam.examDate}</span>
                 </button>
               </li>
@@ -240,7 +240,7 @@ function ExamRow({
       <button
         type="button"
         onClick={onClick}
-        className="hover-tile paper flex w-full items-center justify-between gap-4 rounded-group bg-surface px-5 py-4 text-left"
+        className="flex w-full items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4 text-left"
       >
         <span className="min-w-0">
           <span className="block truncate text-[15.5px] font-semibold text-ink">

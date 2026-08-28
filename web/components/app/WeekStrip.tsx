@@ -1,27 +1,32 @@
 import type { WeekDayLoad } from "@micabo/core";
 
+import { Card, CardHeader, CardPanel, CardTitle } from "@/components/ui/card";
+
 /**
  * La semaine glissante du tableau de bord.
  *
  * Sept colonnes, trois jours derrière et trois devant. Le chiffre est le
  * nombre de cartes encore dues ce jour-là - en direct, pas une moyenne.
- * La flamme dit qu'on a déjà ouvert une session ce jour.
  */
 export function WeekStrip({ days }: { days: readonly WeekDayLoad[] }) {
   const peak = Math.max(1, ...days.map((day) => day.planned));
 
   return (
-    <section className="paper mt-8 rounded-group bg-surface px-4 py-5 sm:px-5">
-      <p className="eyebrow text-ink-tertiary">📅 Semaine</p>
-      <div className="mt-4 grid grid-cols-7 gap-1 sm:gap-2">
-        {days.map((day) => (
-          <DayCell key={day.offset} day={day} peak={peak} />
-        ))}
-      </div>
-      <p className="mt-3 text-center text-[12px] text-ink-tertiary">
-        cartes prévues · 🔥 jour révisé
-      </p>
-    </section>
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-[15px] font-semibold text-ink">Semaine</CardTitle>
+      </CardHeader>
+      <CardPanel className="pt-0">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
+          {days.map((day) => (
+            <DayCell key={day.offset} day={day} peak={peak} />
+          ))}
+        </div>
+        <p className="mt-3 text-[12px] text-ink-tertiary">
+          cartes prévues · point = jour révisé
+        </p>
+      </CardPanel>
+    </Card>
   );
 }
 
@@ -31,7 +36,7 @@ function DayCell({ day, peak }: { day: WeekDayLoad; peak: number }) {
 
   return (
     <div
-      className={`flex flex-col items-center rounded-tile px-0.5 py-2 sm:px-1 ${
+      className={`flex flex-col items-center rounded-lg px-0.5 py-2 sm:px-1 ${
         today ? "bg-surface-muted" : ""
       }`}
     >
@@ -42,13 +47,11 @@ function DayCell({ day, peak }: { day: WeekDayLoad; peak: number }) {
       >
         {today ? "auj." : weekday(day.date)}
       </p>
-      <p
-        className={`numeral mt-0.5 text-[13px] font-semibold sm:text-[14px] text-ink`}
-      >
+      <p className="numeral mt-0.5 text-[13px] font-semibold text-ink sm:text-[14px]">
         {day.date.getDate()}
       </p>
-      <p className="emoji mt-1 h-5 text-[14px]" aria-hidden>
-        {day.reviewed ? "🔥" : ""}
+      <p className="mt-1 h-5 text-center text-[11px] text-ink-tertiary" aria-hidden>
+        {day.reviewed ? "●" : ""}
       </p>
       <div className="mt-1 flex h-11 w-full items-end justify-center">
         <div
@@ -57,11 +60,7 @@ function DayCell({ day, peak }: { day: WeekDayLoad; peak: number }) {
           title={`${day.planned} carte${day.planned > 1 ? "s" : ""}`}
         />
       </div>
-      <p
-        className={`numeral mt-1 text-[13px] font-bold sm:text-[15px] text-ink`}
-      >
-        {day.planned}
-      </p>
+      <p className="numeral mt-1 text-[13px] font-bold text-ink sm:text-[15px]">{day.planned}</p>
     </div>
   );
 }

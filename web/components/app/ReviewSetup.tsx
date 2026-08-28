@@ -12,6 +12,8 @@ import {
 } from "@micabo/core";
 
 import { CountStepper } from "@/components/app/CountStepper";
+import { Button } from "@/components/ui/button";
+import { Card, CardPanel } from "@/components/ui/card";
 
 export interface ReviewSetupCard {
   id: string;
@@ -128,28 +130,18 @@ export function ReviewSetup({
 
   if (queue.length === 0 && dueNew === 0) {
     return (
-      <div className="mx-auto w-full max-w-page py-16 text-center">
-        <p className="text-[26px] font-bold text-ink">Session du jour terminée.</p>
-        <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
+      <div className="mx-auto w-full max-w-page py-10">
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          Session du jour terminée.
+        </h1>
+        <p className="mt-2 max-w-[46ch] text-sm leading-relaxed text-muted-foreground">
           {cards.length === 0
             ? "Tu n'as pas encore de cartes ici. Elles se demandent depuis la fiche d'un cours, quand tu l'as lue."
             : "Rien ne revient aujourd'hui. C'est le principe : une carte qu'on revoit trop tôt est une carte pour rien."}
         </p>
-        <Link
-          href={(cards.length === 0 ? "/app/importer" : "/app/cours") as never}
-          className="pressable shiny hover-tile mt-8 inline-flex items-center gap-2 rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
-        >
-          {cards.length === 0 ? (
-            <>
-              <span aria-hidden className="emoji">
-                📥
-              </span>
-              Importer un cours
-            </>
-          ) : (
-            "Retour aux cours"
-          )}
-        </Link>
+        <Button className="mt-6" render={<Link href={(cards.length === 0 ? "/app/importer" : "/app/cours") as never} />}>
+          {cards.length === 0 ? "Importer un cours" : "Retour aux cours"}
+        </Button>
       </div>
     );
   }
@@ -158,15 +150,15 @@ export function ReviewSetup({
 
   return (
     <div className="mx-auto w-full max-w-page py-6">
-      <header className="rise">
-        <p className="eyebrow text-ink-tertiary">
+      <header>
+        <p className="text-sm text-muted-foreground">
           {dayDoneNoReviews
             ? "Session du jour terminée"
             : courseId
-              ? "⚡ Réviser ce cours"
-              : "⚡ Ta session du jour"}
+              ? "Réviser ce cours"
+              : "Ta session du jour"}
         </p>
-        <h1 className="mt-2.5 text-[32px] font-bold leading-tight text-ink">
+        <h1 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
           {served > 0 ? (
             <>
               <span className="numeral">{served}</span> carte{served > 1 ? "s" : ""} à revoir
@@ -226,10 +218,10 @@ export function ReviewSetup({
 
       {involved.length > 0 ? (
         <section className="rise mt-8" style={{ animationDelay: "180ms" }}>
-          <p className="eyebrow mb-3 text-ink-tertiary">
+          <p className="mb-3 text-[13px] font-medium text-muted-foreground">
             {involved.length === 1 ? "Le cours" : "Les cours"}
           </p>
-          <ul className="paper divide-y divide-hairline overflow-hidden rounded-group bg-surface">
+          <ul className="divide-y divide-hairline overflow-hidden rounded-2xl border border-border bg-card">
             {involved.map((course) => {
               const count = queue.filter((item) => {
                 const row = cards.find((card) => card.id === item.id);
@@ -253,14 +245,11 @@ export function ReviewSetup({
 
       <div className="rise mt-9" style={{ animationDelay: "200ms" }}>
         {served > 0 ? (
-          <Link
-            href={href as never}
-            className="pressable shiny hover-tile flex h-14 w-full items-center justify-center rounded-button bg-ink text-[16px] font-semibold text-on-ink"
-          >
+          <Button className="w-full" size="lg" render={<Link href={href as never} />}>
             {dayDoneNoReviews || (rhythmDone && again === 0)
               ? `Réviser ${fresh} carte${fresh > 1 ? "s" : ""} neuve${fresh > 1 ? "s" : ""}`
-              : "⚡ Commencer la session"}
-          </Link>
+              : "Commencer la session"}
+          </Button>
         ) : (
           <p className="text-center text-[14.5px] leading-relaxed text-ink-secondary">
             Ajoute des cartes neuves avec + si tu veux en faire maintenant, ou reviens demain.
@@ -278,11 +267,13 @@ export function ReviewSetup({
 
 function Tile({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
   return (
-    <div className={`rounded-group p-5 ${accent ? "bg-ink text-on-ink" : "paper bg-surface"}`}>
-      <dd className={`numeral text-[30px] font-bold leading-none ${accent ? "text-on-ink" : "text-ink"}`}>
-        {value}
-      </dd>
-      <dt className={`mt-1.5 text-[13px] ${accent ? "text-on-ink-muted" : "text-ink-tertiary"}`}>{label}</dt>
-    </div>
+    <Card className={accent ? "bg-primary text-primary-foreground" : undefined}>
+      <CardPanel>
+        <dd className="numeral text-[28px] font-semibold leading-none">{value}</dd>
+        <dt className={`mt-1.5 text-[13px] ${accent ? "text-primary-foreground/70" : "text-ink-tertiary"}`}>
+          {label}
+        </dt>
+      </CardPanel>
+    </Card>
   );
 }

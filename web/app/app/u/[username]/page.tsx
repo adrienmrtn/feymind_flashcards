@@ -25,7 +25,7 @@ export default async function UserPage({ params }: { params: Promise<{ username:
       <header>
         <p className="eyebrow text-ink-tertiary">{person.institutionName ?? "Camarade"}</p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
-          <h1 className="text-[32px] font-bold leading-tight text-ink">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground">
             {displayUsername(person.username)}
           </h1>
           <FriendActions personId={person.id} relation={person.relation} />

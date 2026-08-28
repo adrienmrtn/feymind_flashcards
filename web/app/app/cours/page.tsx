@@ -5,6 +5,8 @@ import { courseAccent, courseAudienceLabel, resolveEmoji, studyCounts } from "@m
 
 import { CourseExamBadge } from "@/components/app/CourseExamBadge";
 import { CoursesExplore } from "@/components/app/CoursesExplore";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/card";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
 import { loadNewCardBudget } from "@/lib/data/reviews";
@@ -56,7 +58,7 @@ export default async function CoursesPage({
         counts.total > 0 ? (
           <Link
             href="/app/reviser"
-            className="pressable flex items-center gap-2.5 rounded-button bg-ink px-5 py-3 text-[15px] font-semibold text-on-ink"
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground"
           >
             Réviser <span className="numeral">{counts.total}</span> carte
             {counts.total > 1 ? "s" : ""}
@@ -64,7 +66,7 @@ export default async function CoursesPage({
         ) : heldBack > 0 ? (
           <Link
             href="/app/reviser"
-            className="pressable flex items-center gap-2.5 rounded-button bg-surface px-5 py-3 text-[15px] font-semibold text-ink paper"
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm font-medium text-foreground"
           >
             Réviser quand même
           </Link>
@@ -95,7 +97,7 @@ function Shelf({
   return (
     <>
       {emptyReviews ? (
-        <p className="mt-6 text-[14px] text-ink-tertiary">
+        <p className="text-[14px] text-ink-tertiary">
           {heldBack > 0
             ? `Session du jour terminée. Il reste ${heldBack} carte${heldBack > 1 ? "s" : ""} neuve${heldBack > 1 ? "s" : ""} hors rythme — un cours ajouté, par exemple.`
             : "Session du jour terminée. Rien ne revient aujourd'hui."}
@@ -105,14 +107,14 @@ function Shelf({
       {courses.length === 0 ? (
         <EmptyShelf />
       ) : (
-        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => {
             const exam = examMarkForCourse(exams, course.id);
             return (
               <Link
                 key={course.id}
                 href={`/app/c/${course.id}` as never}
-                className="paper relative flex flex-col gap-4 rounded-group bg-surface p-5"
+                className="relative flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs/5"
               >
                 {exam ? (
                   <span className="absolute right-3 top-3">
@@ -153,20 +155,13 @@ function Shelf({
 
 function EmptyShelf() {
   return (
-    <div className="paper mt-10 rounded-group bg-surface p-8 text-center">
-      <p className="text-[17px] font-semibold text-ink">Ton étagère est vide.</p>
-      <p className="mx-auto mt-2.5 max-w-[42ch] text-[14.5px] leading-relaxed text-ink-reading">
-        Dépose un polycopié : Micabo en tire la fiche, puis les cartes.
-      </p>
-      <div className="mt-7 flex flex-wrap justify-center gap-3">
-        <Link
-          href="/app/importer"
-          className="pressable inline-flex items-center gap-2 rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
-        >
-          Importer un cours
-        </Link>
-      </div>
-    </div>
+    <EmptyState
+      title="Ton étagère est vide."
+      description="Dépose un polycopié : Micabo en tire la fiche, puis les cartes."
+      action={
+        <Button render={<Link href="/app/importer" />}>Importer un cours</Button>
+      }
+    />
   );
 }
 

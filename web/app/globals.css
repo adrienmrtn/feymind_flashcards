@@ -76,6 +76,13 @@
   --color-negative-soft: #fae6e1;
   --color-info-soft: #e2ecf9;
 
+  /* Chrome de micabo OS, pour l'app connectée. */
+  --color-sidebar: #fafafa;
+  --color-sidebar-foreground: #727272;
+  --color-sidebar-accent: rgba(0, 0, 0, 0.04);
+  --color-sidebar-accent-foreground: #262626;
+  --color-sidebar-border: rgba(0, 0, 0, 0.06);
+
   /* ---- Typographie ----
      Hanken Grotesk écrit les mots. Nunito écrit **les nombres**, et rien d'autre : un grand
      nombre en grotesque serré ressemble à un indicateur de tableau de bord, le même en arrondi
@@ -1131,8 +1138,68 @@ video {
   text-transform: uppercase;
 }
 
-/* L'app connectée : un CRM, pas une vitrine. Les tuiles ne se soulèvent
-   plus, les boutons ne brillent plus, le grain et le vert restent à la porte. */
+/* L'app connectée : le chrome de micabo OS. Inter, gris, filets, pas de vert
+   de vitrine. Les tuiles ne se soulèvent plus, les boutons ne brillent plus. */
+.app-shell {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-canvas: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-muted: rgba(0, 0, 0, 0.04);
+  --color-surface-sunken: #f5f5f5;
+  --color-stroke: rgba(0, 0, 0, 0.08);
+  --color-stroke-strong: rgba(0, 0, 0, 0.1);
+  --color-hairline: rgba(0, 0, 0, 0.08);
+  --color-hairline-on-canvas: rgba(0, 0, 0, 0.06);
+  --color-ink: #262626;
+  --color-ink-secondary: #686868;
+  --color-ink-tertiary: #a3a3a3;
+  --color-ink-reading: #262626;
+  --color-on-ink: #fafafa;
+  --background: #ffffff;
+  --foreground: #262626;
+  --card: #ffffff;
+  --card-foreground: #262626;
+  --popover: #ffffff;
+  --primary: #262626;
+  --primary-foreground: #fafafa;
+  --secondary: rgba(0, 0, 0, 0.04);
+  --muted: rgba(0, 0, 0, 0.04);
+  --muted-foreground: #686868;
+  --accent: rgba(0, 0, 0, 0.04);
+  --accent-foreground: #262626;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.1);
+  --ring: #a3a3a3;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #727272;
+  --sidebar-accent: rgba(0, 0, 0, 0.04);
+  --sidebar-accent-foreground: #262626;
+  --sidebar-border: rgba(0, 0, 0, 0.06);
+  --radius: 0.625rem;
+  --radius-tile: 10px;
+  --radius-button: 10px;
+  --radius-group: 18px;
+  --radius-sheet: 18px;
+  --shadow-paper: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-paper-hover: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-floating: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 28px rgba(0, 0, 0, 0.06);
+  background: #ffffff;
+  color: #262626;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+.app-shell .saas-card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.app-shell .paper {
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
 .app-shell .hover-tile:hover,
 .app-shell .hover-tile:active,
 .app-shell .lift:hover {
@@ -1172,6 +1239,27 @@ video {
 
 .app-shell .btn-arrow {
   translate: none;
+}
+
+@keyframes os-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.app-shell main {
+  animation: os-fade-in 0.35s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell main {
+    animation: none;
+  }
 }
 
 /* --------------------------------------------------------------------------

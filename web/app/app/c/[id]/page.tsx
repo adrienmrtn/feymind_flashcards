@@ -56,7 +56,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
               .filter(Boolean)
               .join(" · ")}
           </p>
-          <h1 className="mt-1.5 text-[30px] font-bold leading-tight text-ink">{course.title}</h1>
+          <h1 className="mt-1.5 text-lg font-semibold tracking-tight text-foreground">{course.title}</h1>
         </div>
       </header>
 
@@ -72,7 +72,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
       {cards.length > 0 ? (
         <Link
           href={`/app/c/${course.id}/cartes` as never}
-          className="pressable mt-7 flex w-full items-center gap-4 rounded-group bg-surface px-6 py-5 paper"
+          className="mt-7 flex w-full items-center gap-4 rounded-2xl border border-border bg-card px-6 py-5"
           data-print="hide"
         >
           <span
@@ -108,7 +108,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
       {cards.length === 0 ? (
         <Link
           href={`/app/c/${course.id}/cartes?generer=1` as never}
-          className="pressable paper mt-7 flex w-full items-center gap-4 rounded-group bg-surface px-6 py-5"
+          className="mt-7 flex w-full items-center gap-4 rounded-2xl border border-border bg-card px-6 py-5"
           data-print="hide"
         >
           <span

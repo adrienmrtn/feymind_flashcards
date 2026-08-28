@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Hanken_Grotesk, Nunito } from "next/font/google";
+import { Hanken_Grotesk, Inter, Nunito } from "next/font/google";
 
 import { AuthReturnCatcher } from "@/components/landing/AuthReturnCatcher";
 import { PreviewBanner } from "@/components/PreviewBanner";
@@ -35,6 +35,13 @@ const nunito = Nunito({
   display: "swap",
 });
 
+/** Inter porte l'app connectée — le même corps que micabo OS. */
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "Micabo",
@@ -50,7 +57,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${hanken.variable} ${nunito.variable}`}>
+    <html lang="fr" className={`${hanken.variable} ${inter.variable} ${nunito.variable}`}>
       <body className="relative antialiased">
         <div className="relative isolate flex min-h-svh flex-col">
           <PreviewBanner />
