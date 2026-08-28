@@ -3,15 +3,18 @@
 import { useMemo, useState } from "react";
 
 import {
+  TARGET_SCORE_MAX,
+  TARGET_SCORE_MIN,
   averageDailyLoad,
   busiestDay,
+  clampTargetScore,
   desiredGradeLabel,
   desiredGradeScale,
-  gradeIndexFor,
-  intensityFromGradeIndex,
+  intensityFromTargetScore,
   isProjectionEmpty,
   planExam,
   startOfDay,
+  targetScoreFromIntensity,
   type CardState,
   type ExamIntensity,
 } from "@micabo/core";
@@ -45,6 +48,7 @@ export interface EditorExam {
   name: string;
   examDate: string;
   intensity: ExamIntensity;
+  targetScore: number;
   courseIds: string[];
 }
 
@@ -83,7 +87,10 @@ export function ExamEditor({
   const today = startOfDay(new Date());
   const [step, setStep] = useState<Step>("jour");
   const [examDate, setExamDate] = useState(exam?.examDate ?? isoDay(date));
-  const [intensity, setIntensity] = useState<ExamIntensity>(exam?.intensity ?? "standard");
+  const [targetScore, setTargetScore] = useState(() =>
+    clampTargetScore(exam?.targetScore ?? targetScoreFromIntensity(exam?.intensity ?? "standard")),
+  );
+  const intensity = intensityFromTargetScore(targetScore);
   const [selected, setSelected] = useState<string[]>(exam?.courseIds ?? []);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -153,6 +160,7 @@ export function ExamEditor({
       name: examName(exam, selected, courses),
       examDate,
       intensity,
+      targetScore,
       courseIds: selected,
     });
     setBusy(false);
@@ -237,9 +245,9 @@ export function ExamEditor({
             ) : null}
             {step === "intensite" ? (
               <IntensityStep
-                intensity={intensity}
+                targetScore={targetScore}
                 countryCode={countryCode}
-                onPick={setIntensity}
+                onPick={setTargetScore}
                 missingCards={missingCards}
                 canPreview={selected.length > 0 && !isProjectionEmpty(plan.projection)}
                 cardCount={plan.projection.cardCount}
@@ -388,7 +396,7 @@ function CoursesStep({
 }
 
 function IntensityStep({
-  intensity,
+  targetScore,
   countryCode,
   onPick,
   missingCards,
@@ -398,9 +406,9 @@ function IntensityStep({
   peak,
   load,
 }: {
-  intensity: ExamIntensity;
+  targetScore: number;
   countryCode?: string | null;
-  onPick: (value: ExamIntensity) => void;
+  onPick: (value: number) => void;
   missingCards: boolean;
   canPreview: boolean;
   cardCount: number;
@@ -409,6 +417,7 @@ function IntensityStep({
   load: number[];
 }) {
   const scale = desiredGradeScale(countryCode);
+  const intensity = intensityFromTargetScore(targetScore);
 
   return (
     <div>
@@ -417,18 +426,18 @@ function IntensityStep({
         Note souhaitée
       </h2>
       <p className="mt-6 text-center text-[32px] font-bold leading-none text-ink">
-        {desiredGradeLabel(intensity, countryCode)}
+        {desiredGradeLabel(targetScore, countryCode)}
       </p>
       <p className="mt-2 text-center text-[13.5px] text-ink-secondary">
         {INTENSITY_DETAIL[intensity]}
       </p>
       <div className="mt-6 px-1">
         <Slider
-          min={0}
-          max={2}
+          min={TARGET_SCORE_MIN}
+          max={TARGET_SCORE_MAX}
           step={1}
-          value={gradeIndexFor(intensity)}
-          onValueChange={(value) => onPick(intensityFromGradeIndex(Number(value)))}
+          value={targetScore}
+          onValueChange={(value) => onPick(clampTargetScore(Number(value)))}
           aria-label="Note souhaitée"
         />
         <div className="mt-2 flex justify-between text-[12.5px] text-ink-tertiary">

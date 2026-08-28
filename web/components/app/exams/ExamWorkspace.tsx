@@ -18,6 +18,7 @@ export interface WorkspaceExam {
   name: string;
   examDate: string;
   intensity: string;
+  targetScore: number;
   courseIds: string[];
   isPlanned: boolean;
 }
@@ -91,6 +92,7 @@ export function ExamWorkspace({
         name: exam.name,
         examDate: exam.examDate,
         intensity: asIntensity(exam.intensity),
+        targetScore: exam.targetScore,
         courseIds: exam.courseIds,
       },
       date: startOfDay(new Date(`${exam.examDate}T12:00:00`)),

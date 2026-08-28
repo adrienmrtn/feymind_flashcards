@@ -125,7 +125,7 @@ export function ReviewSetup({
 
   if (queue.length === 0 && dueNew === 0) {
     return (
-      <div className="mx-auto max-w-[520px] py-16 text-center">
+      <div className="mx-auto w-full max-w-page py-16 text-center">
         <p className="text-[26px] font-bold text-ink">Tout est à jour.</p>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
           {cards.length === 0
@@ -152,7 +152,7 @@ export function ReviewSetup({
   }
 
   return (
-    <div className="mx-auto max-w-[560px] py-6">
+    <div className="mx-auto w-full max-w-page py-6">
       <header className="rise">
         <p className="eyebrow text-ink-tertiary">
           {courseId ? "⚡ Réviser ce cours" : "⚡ Ta session du jour"}

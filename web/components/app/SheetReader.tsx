@@ -112,7 +112,7 @@ export function SheetReader({
 
   return (
     <div>
-      <div ref={container} className="max-w-reading">
+      <div ref={container} className="w-full max-w-page">
         <SheetBlocks blocks={blocks} tint={tint} />
       </div>
 

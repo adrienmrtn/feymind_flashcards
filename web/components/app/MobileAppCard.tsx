@@ -1,16 +1,23 @@
 /**
  * L'app dans la poche : un téléphone qui sort, et la promesse qu'il porte.
+ *
+ * La carte remplit sa colonne. Le téléphone grandit avec elle, il n'est plus
+ * collé en bas à droite à une taille fixe.
  */
 export function MobileAppCard() {
   return (
-    <section className="hover-tile relative min-h-[232px] overflow-hidden rounded-group bg-ink px-6 pb-6 pt-5 pr-28 text-on-ink sm:pr-32">
-      <p className="eyebrow text-on-ink-muted">📱 Sur ton téléphone</p>
-      <p className="mt-2 max-w-[22ch] text-[18px] font-semibold leading-snug">
-        Micabo aussi disponible sur mobile
-      </p>
-      <p className="mt-2 max-w-[36ch] text-[13.5px] leading-relaxed text-on-ink-muted">
-        L&apos;app iOS arrive. Tes cours, tes cartes et tes séries t&apos;y suivront.
-      </p>
+    <section className="relative flex h-full min-h-[232px] overflow-hidden rounded-group bg-ink p-5 text-on-ink">
+      <div className="flex min-w-0 flex-1 flex-col justify-between pr-3 sm:pr-4">
+        <div>
+          <p className="eyebrow text-on-ink-muted">📱 Sur ton téléphone</p>
+          <p className="mt-2 max-w-[22ch] text-[18px] font-semibold leading-snug">
+            Micabo aussi disponible sur mobile
+          </p>
+          <p className="mt-2 max-w-[36ch] text-[13.5px] leading-relaxed text-on-ink-muted">
+            L&apos;app iOS arrive. Tes cours, tes cartes et tes séries t&apos;y suivront.
+          </p>
+        </div>
+      </div>
 
       <div aria-hidden className="phone-stage">
         <div className="phone-shell">

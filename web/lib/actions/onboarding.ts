@@ -99,6 +99,7 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
       name: payload.examName?.trim() || "Mon prochain examen",
       exam_date: payload.examDate,
       intensity: "standard",
+      target_score: 15,
       course_ids: [],
       is_planned: false,
     });

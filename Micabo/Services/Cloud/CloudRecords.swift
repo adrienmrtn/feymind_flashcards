@@ -307,6 +307,7 @@ struct ExamRecord: Codable {
     var name: String
     var exam_date: Date
     var intensity: String
+    var target_score: Int?
     var course_ids: [UUID]
     var is_planned: Bool
     var planned_at: Date?

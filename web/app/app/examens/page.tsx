@@ -1,4 +1,4 @@
-import { resolveEmoji } from "@micabo/core";
+import { resolveEmoji, targetScoreFromIntensity } from "@micabo/core";
 
 import { ExamWorkspace } from "@/components/app/exams/ExamWorkspace";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
@@ -50,6 +50,13 @@ export default async function ExamsPage() {
             name: exam.name,
             examDate: exam.exam_date,
             intensity: exam.intensity,
+            targetScore:
+              exam.target_score ??
+              targetScoreFromIntensity(
+                exam.intensity === "light" || exam.intensity === "intense"
+                  ? exam.intensity
+                  : "standard",
+              ),
             courseIds: exam.course_ids ?? [],
             isPlanned: exam.is_planned,
           }))}

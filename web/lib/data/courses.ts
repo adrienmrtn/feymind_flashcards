@@ -258,6 +258,7 @@ export interface ExamRow {
   name: string;
   exam_date: string;
   intensity: string;
+  target_score: number | null;
   course_ids: string[];
   is_planned: boolean;
 }
@@ -311,7 +312,7 @@ export async function listExams(): Promise<ExamRow[]> {
   return cachedRead(auth.userId, "exams", [userTag(auth.userId), examsTag(auth.userId)], async () => {
     const { data } = await dataClient(auth.token)
       .from("exams")
-      .select("id, name, exam_date, intensity, course_ids, is_planned")
+      .select("id, name, exam_date, intensity, target_score, course_ids, is_planned")
       .eq("user_id", auth.userId)
       .is("deleted_at", null)
       .order("exam_date", { ascending: true });

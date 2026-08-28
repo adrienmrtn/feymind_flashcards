@@ -1,69 +1,110 @@
 import Foundation
 
-/// La note qu'on vise, à la place d'une intensité abstraite.
+/// La note qu'on vise, sur une droite 10–20.
 ///
-/// Sous le curseur, ce sont toujours les trois paliers `light` / `standard` / `intense` :
-/// deux, trois ou quatre passages. Ce qui change, c'est **ce qu'on lit** : 10/20 ou C-,
-/// selon le système du pays de scolarisation.
-struct DesiredGradeScale: Equatable {
-    var min: String
-    var mid: String
-    var max: String
+/// Le curseur est fluide : chaque cran compte. L'intensité (deux, trois ou
+/// quatre passages) se déduit ensuite : 10–13 léger, 14–17 standard, au-delà
+/// intensif. Les autres systèmes se ramènent à la même droite : onze crans
+/// partout, c'est le libellé qui change.
+enum TargetScore {
+    static let min = 10
+    static let max = 20
+    static let `default` = 15
 
-    static func `for`(_ country: SchoolingCountry) -> DesiredGradeScale {
-        switch country {
-        case .fr, .be, .ma, .dz, .tn, .sn, .ci, .pt, .gr:
-            DesiredGradeScale(min: "10/20", mid: "15/20", max: "20/20")
-        case .us, .other:
-            DesiredGradeScale(min: "C-", mid: "B", max: "A+")
-        case .uk:
-            DesiredGradeScale(min: "C", mid: "B", max: "A*")
-        case .se:
-            DesiredGradeScale(min: "E", mid: "C", max: "A")
-        case .ca, .tr:
-            DesiredGradeScale(min: "60 %", mid: "80 %", max: "100 %")
-        case .de:
-            DesiredGradeScale(min: "4,0", mid: "2,3", max: "1,0")
-        case .ch:
-            DesiredGradeScale(min: "4", mid: "5", max: "6")
-        case .it, .es:
-            DesiredGradeScale(min: "6/10", mid: "8/10", max: "10/10")
-        case .lu:
-            DesiredGradeScale(min: "30/60", mid: "45/60", max: "60/60")
-        case .cz:
-            DesiredGradeScale(min: "4", mid: "2", max: "1")
-        case .nl:
-            DesiredGradeScale(min: "6", mid: "8", max: "10")
-        case .hu, .pl:
-            DesiredGradeScale(min: "3", mid: "4", max: "5")
-        case .ro:
-            DesiredGradeScale(min: "5", mid: "8", max: "10")
+    static func clamp(_ score: Int) -> Int {
+        Swift.min(max, Swift.max(min, score))
+    }
+
+    static func intensity(from score: Int) -> ExamIntensity {
+        switch clamp(score) {
+        case ...13: .light
+        case ...17: .standard
+        default: .intense
         }
     }
 
-    func label(for intensity: ExamIntensity) -> String {
+    /// Quand on n'a que l'ancien palier, on reprend le milieu de sa bande.
+    static func score(from intensity: ExamIntensity) -> Int {
         switch intensity {
-        case .light: min
-        case .standard: mid
-        case .intense: max
+        case .light: 12
+        case .standard: 15
+        case .intense: 19
+        }
+    }
+}
+
+struct GradeTick: Equatable {
+    var score: Int
+    var label: String
+}
+
+/// La note qu'on vise, à la place d'une intensité abstraite.
+struct DesiredGradeScale: Equatable {
+    var ticks: [GradeTick]
+
+    var min: String { ticks.first?.label ?? "" }
+    var mid: String { ticks.count > 5 ? ticks[5].label : ticks.last?.label ?? "" }
+    var max: String { ticks.last?.label ?? "" }
+
+    static func `for`(_ country: SchoolingCountry) -> DesiredGradeScale {
+        DesiredGradeScale(
+            ticks: labels(for: country).enumerated().map { index, label in
+                GradeTick(score: TargetScore.min + index, label: label)
+            }
+        )
+    }
+
+    func label(for score: Int) -> String {
+        let clamped = TargetScore.clamp(score)
+        return ticks[clamped - TargetScore.min].label
+    }
+
+    func label(for intensity: ExamIntensity) -> String {
+        label(for: TargetScore.score(from: intensity))
+    }
+
+    private static func labels(for country: SchoolingCountry) -> [String] {
+        switch country {
+        case .fr, .be, .ma, .dz, .tn, .sn, .ci, .pt, .gr:
+            (10...20).map { "\($0)/20" }
+        case .us, .other:
+            ["C-", "C-", "C", "C+", "B-", "B", "B+", "A-", "A", "A", "A+"]
+        case .uk:
+            ["C", "C", "C", "B", "B", "B", "A", "A", "A", "A*", "A*"]
+        case .se:
+            ["E", "E", "D", "D", "C", "C", "B", "B", "A", "A", "A"]
+        case .ca, .tr:
+            (10...20).map { "\(60 + ($0 - 10) * 4) %" }
+        case .de:
+            ["4,0", "3,7", "3,3", "3,0", "2,7", "2,3", "2,0", "1,7", "1,3", "1,0", "1,0"]
+        case .ch:
+            ["4", "4", "4,5", "4,5", "5", "5", "5,5", "5,5", "6", "6", "6"]
+        case .it, .es:
+            ["6/10", "6/10", "7/10", "7/10", "8/10", "8/10", "9/10", "9/10", "10/10", "10/10", "10/10"]
+        case .lu:
+            (10...20).map { "\(30 + ($0 - 10) * 3)/60" }
+        case .cz:
+            ["4", "4", "3", "3", "3", "2", "2", "2", "1", "1", "1"]
+        case .nl:
+            ["6", "6", "7", "7", "8", "8", "9", "9", "10", "10", "10"]
+        case .hu, .pl:
+            ["3", "3", "3", "3", "4", "4", "4", "4", "5", "5", "5"]
+        case .ro:
+            ["5", "5", "6", "6", "7", "8", "8", "9", "9", "10", "10"]
         }
     }
 }
 
 extension ExamIntensity {
     var gradeIndex: Double {
-        switch self {
-        case .light: 0
-        case .standard: 1
-        case .intense: 2
-        }
+        Double(TargetScore.score(from: self))
+    }
+
+    static func from(targetScore: Int) -> ExamIntensity {
+        TargetScore.intensity(from: targetScore)
     }
 
     static func from(gradeIndex: Double) -> ExamIntensity {
-        switch Int(gradeIndex.rounded()) {
-        case ...0: .light
-        case 2...: .intense
-        default: .standard
-        }
+        TargetScore.intensity(from: Int(gradeIndex.rounded()))
     }
 }

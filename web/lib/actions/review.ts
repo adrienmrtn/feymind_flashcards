@@ -78,6 +78,9 @@ export async function gradeCard(input: {
   if (error) return { status: "error", message: error.message };
 
   revalidateUserData(user.id, "cards");
+  // L'accueil doit se recaler sans rechargement dur. On ne touche pas à
+  // `/app/reviser` : ça reconstruirait la file en pleine session.
+  revalidatePath("/app");
 
   // L'historique est en ajout seul, et son échec ne doit pas défaire la révision : perdre une
   // ligne de statistiques est moins grave que faire repasser une carte qu'on vient de noter.

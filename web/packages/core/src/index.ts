@@ -97,11 +97,19 @@ export {
   type SessionEntry,
 } from "./srs/session";
 export {
+  DEFAULT_TARGET_SCORE,
+  TARGET_SCORE_MAX,
+  TARGET_SCORE_MIN,
+  clampTargetScore,
   desiredGradeLabel,
   desiredGradeScale,
   gradeIndexFor,
+  gradeTicks,
   intensityFromGradeIndex,
+  intensityFromTargetScore,
+  targetScoreFromIntensity,
   type DesiredGradeScale,
+  type GradeTick,
 } from "./srs/grade-scale";
 
 // Le mode examen.

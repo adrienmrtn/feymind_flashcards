@@ -58,7 +58,7 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
       </header>
 
       {course.summary ? (
-        <p className="mt-6 max-w-reading text-[15.75px] leading-relaxed text-ink-secondary">
+        <p className="mt-6 w-full max-w-page text-[15.75px] leading-relaxed text-ink-secondary">
           {course.summary}
         </p>
       ) : null}

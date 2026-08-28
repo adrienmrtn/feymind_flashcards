@@ -360,6 +360,7 @@ final class CloudSync {
             name: exam.name,
             exam_date: exam.date,
             intensity: exam.intensityRaw,
+            target_score: exam.targetScore,
             course_ids: exam.courseIDs,
             is_planned: exam.isPlanned,
             planned_at: exam.plannedAt,

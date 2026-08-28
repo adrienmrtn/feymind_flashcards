@@ -42,6 +42,7 @@ enum ExamRepository {
         date: Date,
         courseIDs: [UUID],
         intensity: ExamIntensity,
+        targetScore: Int? = nil,
         in context: ModelContext,
         calendar: Calendar = MicaboCalendar.shared
     ) throws -> Exam {
@@ -49,7 +50,8 @@ enum ExamRepository {
             name: TextSanitizer.clean(name).nilIfBlank ?? "Examen",
             date: calendar.startOfDay(for: date),
             courseIDs: courseIDs,
-            intensity: intensity
+            intensity: intensity,
+            targetScore: targetScore
         )
         context.insert(exam)
         try context.save()
@@ -65,6 +67,7 @@ enum ExamRepository {
         date: Date,
         courseIDs: [UUID],
         intensity: ExamIntensity,
+        targetScore: Int? = nil,
         in context: ModelContext,
         now: Date = Date(),
         calendar: Calendar = MicaboCalendar.shared
@@ -77,7 +80,12 @@ enum ExamRepository {
         exam.name = TextSanitizer.clean(name).nilIfBlank ?? "Examen"
         exam.date = calendar.startOfDay(for: date)
         exam.courseIDs = courseIDs
-        exam.intensity = intensity
+        if let targetScore {
+            exam.targetScore = TargetScore.clamp(targetScore)
+            exam.intensity = TargetScore.intensity(from: exam.targetScore)
+        } else {
+            exam.intensity = intensity
+        }
         exam.updatedAt = Date()
         try context.save()
 

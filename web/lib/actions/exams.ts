@@ -4,8 +4,11 @@ import { revalidatePath } from "next/cache";
 
 import {
   addDays,
+  clampTargetScore,
+  intensityFromTargetScore,
   planExam,
   startOfDay,
+  targetScoreFromIntensity,
   type CardState,
   type ExamIntensity,
 } from "@micabo/core";
@@ -48,7 +51,8 @@ export async function saveExam(input: {
   id?: string;
   name: string;
   examDate: string;
-  intensity: ExamIntensity;
+  intensity?: ExamIntensity;
+  targetScore?: number;
   courseIds: string[];
 }): Promise<ExamWriteResult> {
   const supabase = await createClient();
@@ -65,7 +69,10 @@ export async function saveExam(input: {
   if (input.courseIds.length === 0) {
     return { status: "error", message: "Choisis au moins un cours." };
   }
-  const intensity = asIntensity(input.intensity);
+  const targetScore = clampTargetScore(
+    input.targetScore ?? targetScoreFromIntensity(asIntensity(input.intensity ?? "standard")),
+  );
+  const intensity = intensityFromTargetScore(targetScore);
 
   const now = new Date();
   const today = new Date(now);
@@ -154,6 +161,7 @@ export async function saveExam(input: {
     name,
     exam_date: examDate,
     intensity,
+    target_score: targetScore,
     course_ids: input.courseIds,
     is_planned: planned,
     planned_at: planned ? now.toISOString() : null,

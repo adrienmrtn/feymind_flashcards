@@ -22,6 +22,7 @@ struct ExamEditorSheet: View {
     @State private var date = Date()
     @State private var selection: Set<UUID> = []
     @State private var intensity: ExamIntensity = .standard
+    @State private var targetScore: Double = Double(TargetScore.default)
     @State private var errorMessage: String?
     @State private var didLoad = false
     @State private var showDeleteConfirmation = false
@@ -207,31 +208,46 @@ struct ExamEditorSheet: View {
 
     private var intensitySection: some View {
         let scale = DesiredGradeScale.for(OnboardingPreferences.schoolingCountry)
+        let score = Int(targetScore.rounded())
 
         return VStack(alignment: .leading, spacing: 8) {
             MicaboSectionCaption(text: "Note souhaitée")
+
+            Text(scale.label(for: score))
+                .font(MicaboFont.hanken(28, weight: .bold))
+                .foregroundStyle(MicaboColor.ink)
+                .frame(maxWidth: .infinity)
+
+            Text(intensityDetail)
+                .font(MicaboFont.caption)
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .frame(maxWidth: .infinity)
 
             HStack {
                 Text(scale.min)
                     .font(MicaboFont.caption)
                     .foregroundStyle(MicaboColor.inkTertiary)
                 Slider(
-                    value: Binding(
-                        get: { intensity.gradeIndex },
-                        set: { intensity = ExamIntensity.from(gradeIndex: $0) }
-                    ),
-                    in: 0...2,
+                    value: $targetScore,
+                    in: Double(TargetScore.min)...Double(TargetScore.max),
                     step: 1
                 )
                 .tint(MicaboColor.ink)
+                .onChange(of: targetScore) { _, next in
+                    intensity = TargetScore.intensity(from: Int(next.rounded()))
+                }
                 Text(scale.max)
                     .font(MicaboFont.caption)
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
+        }
+    }
 
-            Text(scale.label(for: intensity))
-                .font(MicaboFont.rowTitle)
-                .foregroundStyle(MicaboColor.ink)
+    private var intensityDetail: String {
+        switch intensity {
+        case .light: "Deux passages, pour un chapitre déjà su."
+        case .standard: "Trois passages, le rythme d'un contrôle."
+        case .intense: "Quatre passages, quand ça compte vraiment."
         }
     }
 
@@ -301,6 +317,7 @@ struct ExamEditorSheet: View {
         date = exam.date
         selection = Set(exam.courseIDs)
         intensity = exam.intensity
+        targetScore = Double(exam.targetScore)
     }
 
     private func confirm() {
@@ -314,6 +331,7 @@ struct ExamEditorSheet: View {
                     date: date,
                     courseIDs: Array(selection),
                     intensity: intensity,
+                    targetScore: Int(targetScore.rounded()),
                     in: modelContext
                 )
                 if !exam.isPlanned {
@@ -325,6 +343,7 @@ struct ExamEditorSheet: View {
                     date: date,
                     courseIDs: Array(selection),
                     intensity: intensity,
+                    targetScore: Int(targetScore.rounded()),
                     in: modelContext
                 )
                 try ExamRepository.plan(created, in: modelContext)

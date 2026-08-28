@@ -174,7 +174,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
   if (!card || !labels) return null;
 
   return (
-    <div className="mx-auto flex min-h-[calc(100svh-8rem)] max-w-[620px] flex-col">
+    <div className="mx-auto flex min-h-[calc(100svh-8rem)] w-full max-w-page flex-col">
       <div className="flex items-center gap-4">
         <div className="h-1 flex-1 overflow-hidden rounded-pill bg-progress-track">
           <div

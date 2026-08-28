@@ -60,7 +60,11 @@ struct TodayView: View {
     }
 
     private var nextExam: Exam? {
-        exams.first { !$0.isPast() }
+        upcomingExams.first
+    }
+
+    private var upcomingExams: [Exam] {
+        Array(exams.filter { !$0.isPast() }.prefix(5))
     }
 
     /// Cartes neuves dues mais gardées pour les jours suivants, à cause du plafond.
@@ -343,43 +347,75 @@ struct TodayView: View {
     /// présenter à vide.
     private var examSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Examens")
+            MicaboSectionCaption(text: "Prochains examens")
 
-            Button {
-                path.append(ExamsRoute())
-            } label: {
-                MicaboRow(
-                    tile: MicaboTile(
-                        glyph: .symbol("calendar"),
-                        background: nextExam == nil ? MicaboColor.surfaceMuted : MicaboColor.cautionSoft,
-                        tint: nextExam == nil ? MicaboColor.inkSecondary : MicaboColor.caution
-                    ),
-                    title: nextExam?.name ?? "Planifier un examen",
-                    subtitle: examSubtitle,
-                    accessory: examAccessory
-                )
+            if upcomingExams.isEmpty {
+                Button {
+                    path.append(ExamsRoute())
+                } label: {
+                    MicaboRow(
+                        tile: MicaboTile(
+                            glyph: .symbol("calendar"),
+                            background: MicaboColor.surfaceMuted,
+                            tint: MicaboColor.inkSecondary
+                        ),
+                        title: "Planifier un examen",
+                        subtitle: examEmptySubtitle,
+                        accessory: .chevron
+                    )
+                }
+                .buttonStyle(MicaboRowButtonStyle())
+                .micaboGroup()
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(upcomingExams.enumerated()), id: \.element.id) { index, exam in
+                        Button {
+                            path.append(ExamsRoute())
+                        } label: {
+                            MicaboRow(
+                                tile: MicaboTile(
+                                    glyph: .symbol("calendar"),
+                                    background: MicaboColor.cautionSoft,
+                                    tint: MicaboColor.caution
+                                ),
+                                title: exam.name,
+                                subtitle: examLine(exam),
+                                accessory: .badge(exam.countdownLabel(), .warm)
+                            )
+                        }
+                        .buttonStyle(MicaboRowButtonStyle())
+
+                        if index < upcomingExams.count - 1 {
+                            MicaboHairline(inset: 71)
+                        }
+                    }
+                }
+                .micaboGroup()
             }
-            .buttonStyle(MicaboRowButtonStyle())
-            .micaboGroup()
         }
     }
 
-    private var examAccessory: MicaboRowAccessory {
-        guard let nextExam else { return .chevron }
-        return .badge(nextExam.countdownLabel(), .warm)
-    }
-
-    private var examSubtitle: String {
-        if let nextExam {
-            return MicaboCalendar.dayLabel(nextExam.date)
-                + (nextExam.isPlanned ? " · révisions replanifiées" : " · planning normal")
-        }
-        // La rangée dit ce qu'il manque plutôt que de promettre ce qu'elle ne peut pas
-        // encore faire : un examen agit sur des cartes.
+    private var examEmptySubtitle: String {
         guard !allCards.isEmpty else {
             return "Dès que tu auras des cartes à replanifier"
         }
         return "Micabo replanifie tes révisions pour le jour J"
+    }
+
+    private func examLine(_ exam: Exam) -> String {
+        let grade = DesiredGradeScale.for(OnboardingPreferences.schoolingCountry).label(for: exam.targetScore)
+        return "\(grade) souhaitée · \(examProgress(exam)) % d'avancée"
+    }
+
+    /// Cartes déjà introduites parmi celles des cours de l'examen.
+    private func examProgress(_ exam: Exam) -> Int {
+        let relevant = courses
+            .filter { exam.courseIDs.contains($0.id) }
+            .flatMap(\.cards)
+            .filter { !$0.isSuspended }
+        guard !relevant.isEmpty else { return 0 }
+        let started = relevant.filter { $0.state != .new }.count
+        return Int((Double(started) / Double(relevant.count) * 100).rounded())
     }
 
     /// Compté sur la file du jour, plafond compris : « au programme » doit dire la vérité.

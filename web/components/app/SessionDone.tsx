@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import {
   REVIEW_RATING_LABELS,
@@ -51,6 +51,7 @@ export function SessionDone({
   capped: boolean;
   remaining: number;
 }) {
+  const router = useRouter();
   const [ready, setReady] = useState(false);
   const accuracy =
     tally.answered > 0 ? Math.round(((tally.answered - tally.again) / tally.answered) * 100) : 100;
@@ -66,7 +67,7 @@ export function SessionDone({
   }, []);
 
   return (
-    <div className="relative mx-auto max-w-[560px] overflow-hidden py-10 text-center">
+    <div className="relative mx-auto w-full max-w-page overflow-hidden py-10 text-center">
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-28">
         {BURST.map((emoji, index) => (
           <span
@@ -169,13 +170,17 @@ export function SessionDone({
         <Tile emoji="⏱️" value={minutes} label="min" />
       </dl>
 
-      <Link
-        href="/app"
+      <button
+        type="button"
+        onClick={() => {
+          router.push("/app");
+          router.refresh();
+        }}
         className="pressable shiny hover-tile rise mt-10 inline-flex rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
         style={{ animationDelay: "420ms" }}
       >
-        🏠 Retour aux cours
-      </Link>
+        🏠 Retour à l&apos;accueil
+      </button>
     </div>
   );
 }

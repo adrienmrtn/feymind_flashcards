@@ -51,6 +51,8 @@ final class Exam {
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
     var intensityRaw: String = ExamIntensity.standard.rawValue
+    /// Note visée, sur la droite 10–20. L'intensité s'en déduit.
+    var targetScore: Int = 15
     /// Identifiants des cours au programme.
     var courseIDs: [UUID] = []
     /// Vrai quand la replanification a été appliquée aux cartes.
@@ -68,14 +70,17 @@ final class Exam {
         name: String,
         date: Date,
         courseIDs: [UUID] = [],
-        intensity: ExamIntensity = .standard
+        intensity: ExamIntensity = .standard,
+        targetScore: Int? = nil
     ) {
         self.id = id
         self.name = name
         self.date = date
         self.createdAt = Date()
         self.updatedAt = Date()
-        self.intensityRaw = intensity.rawValue
+        let score = TargetScore.clamp(targetScore ?? TargetScore.score(from: intensity))
+        self.targetScore = score
+        self.intensityRaw = TargetScore.intensity(from: score).rawValue
         self.courseIDs = courseIDs
         self.isPlanned = false
     }
