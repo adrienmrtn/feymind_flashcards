@@ -147,6 +147,21 @@ export {
   type ExamPlan,
   type ExamProjection,
 } from "./srs/exam";
+export {
+  EXAM_CHART_PAST_DAYS,
+  buildExamInsight,
+  cardKindLabel,
+  chartOffsets,
+  learnedPercent,
+  weakNote,
+  type ExamChart,
+  type ExamInsight,
+  type ExamInsightInput,
+  type ExamWeakPoint,
+  type InsightCard,
+  type InsightReview,
+  type WeakKind,
+} from "./srs/exam-insight";
 
 // Les séries, les niveaux de connaissance, et l'audience d'un cours.
 export {

@@ -7,11 +7,13 @@ import {
   examCountdownLabel,
   examUrgency,
   startOfDay,
+  type ExamInsight,
   type ExamIntensity,
 } from "@micabo/core";
 
 import { ExamCalendar, isoDay, sameDay, type CalendarExam } from "./ExamCalendar";
 import { ExamEditor, type EditorCard, type EditorCourse, type EditorExam } from "./ExamEditor";
+import { ExamInsightCard } from "./ExamInsightCard";
 
 export interface WorkspaceExam {
   id: string;
@@ -27,11 +29,13 @@ export function ExamWorkspace({
   exams,
   courses,
   cards,
+  insights,
   countryCode,
 }: {
   exams: WorkspaceExam[];
   courses: EditorCourse[];
   cards: EditorCard[];
+  insights: ExamInsight[];
   countryCode?: string | null;
 }) {
   const today = startOfDay(new Date());
@@ -60,6 +64,7 @@ export function ExamWorkspace({
   const upcoming = dated.filter((exam) => exam.days >= 0);
   const past = dated.filter((exam) => exam.days < 0);
   const titles = new Map(courses.map((course) => [course.id, course.title]));
+  const insightById = new Map(insights.map((insight) => [insight.id, insight]));
 
   const onDay = selected
     ? dated.filter((exam) => exam.examDate === isoDay(selected))
@@ -148,17 +153,26 @@ export function ExamWorkspace({
       {upcoming.length > 0 ? (
         <section className="mt-10">
           <p className="eyebrow mb-3 text-ink-tertiary">📌 À venir</p>
-          <ul className="space-y-2">
-            {upcoming.map((exam) => (
-              <ExamRow
-                key={exam.id}
-                name={exam.name}
-                days={exam.days}
-                courses={courseLine(exam.courseIds, titles)}
-                onClick={() => openExisting(exam)}
-              />
-            ))}
-          </ul>
+          <div className={`grid gap-4 ${upcoming.length > 1 ? "md:grid-cols-2" : ""}`}>
+            {upcoming.map((exam) => {
+              const insight = insightById.get(exam.id);
+              return insight ? (
+                <ExamInsightCard
+                  key={exam.id}
+                  insight={insight}
+                  onClick={() => openExisting(exam)}
+                />
+              ) : (
+                <ExamRow
+                  key={exam.id}
+                  name={exam.name}
+                  days={exam.days}
+                  courses={courseLine(exam.courseIds, titles)}
+                  onClick={() => openExisting(exam)}
+                />
+              );
+            })}
+          </div>
         </section>
       ) : (
         <p className="mt-10 text-[14.5px] leading-relaxed text-ink-secondary">
