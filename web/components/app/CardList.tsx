@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 
 import { formatDelay, previewLabels } from "@micabo/core";
 
-import { ExamMark, type ExamMarkInfo } from "@/components/app/ExamMark";
+import { ExamMark, examDeadline, type ExamMarkInfo } from "@/components/app/ExamMark";
 import { OcclusionEditor } from "@/components/app/OcclusionEditor";
 import { OcclusionFigure } from "@/components/app/OcclusionFigure";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
@@ -109,14 +109,17 @@ function Row({
   exam?: ExamMarkInfo | null;
   onEdit: () => void;
 }) {
-  const labels = previewLabels({
-    state: card.state,
-    intervalDays: card.interval_days,
-    easeFactor: card.ease_factor,
-    repetitions: card.repetitions,
-    lapses: card.lapses,
-    stepIndex: card.step_index,
-  });
+  const labels = previewLabels(
+    {
+      state: card.state,
+      intervalDays: card.interval_days,
+      easeFactor: card.ease_factor,
+      repetitions: card.repetitions,
+      lapses: card.lapses,
+      stepIndex: card.step_index,
+    },
+    { deadline: examDeadline(exam) },
+  );
   const occlusion = isOcclusion(card);
   const choices = card.choices ?? [];
 

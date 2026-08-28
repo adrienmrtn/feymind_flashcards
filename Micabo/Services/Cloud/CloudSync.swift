@@ -49,6 +49,7 @@ final class CloudSync {
     /// hériter du repère du précédent, sinon il ne recevrait que les cours modifiés depuis.
     func forget() {
         UserDefaults.standard.removeObject(forKey: Self.watermarkKey)
+        CloudTombstones.removeAll()
         state = .idle
     }
 
@@ -99,10 +100,14 @@ final class CloudSync {
             into: CloudTable.profiles
         )
 
-        let courses = (try? context.fetch(FetchDescriptor<Course>())) ?? []
+        await flushTombstones()
+
+        let courses = ((try? context.fetch(FetchDescriptor<Course>())) ?? [])
+            .filter { !CloudTombstones.contains(CloudTable.courses, id: $0.id) }
         try await database.upsert(courses.map { record(for: $0, userID: userID) }, into: CloudTable.courses)
 
         let cards = courses.flatMap(\.cards)
+            .filter { !CloudTombstones.contains(CloudTable.flashcards, id: $0.id) }
         try await database.upsert(cards.map { record(for: $0, userID: userID) }, into: CloudTable.flashcards)
 
         // L'historique est en ajout seul : on renvoie tout, et la base ignore ce qu'elle a
@@ -111,8 +116,25 @@ final class CloudSync {
         let logs = cards.flatMap { $0.logs ?? [] }
         try await database.upsert(logs.map { record(for: $0, userID: userID) }, into: CloudTable.reviewLogs)
 
-        let exams = (try? context.fetch(FetchDescriptor<Exam>())) ?? []
+        let exams = ((try? context.fetch(FetchDescriptor<Exam>())) ?? [])
+            .filter { !CloudTombstones.contains(CloudTable.exams, id: $0.id) }
         try await database.upsert(exams.map { record(for: $0, userID: userID) }, into: CloudTable.exams)
+    }
+
+    /// Pose `deleted_at` sur ce qu'on a effacé ici. L'échec n'arrête pas la synchro : on
+    /// réessaiera au prochain passage, et le tombstone local empêche déjà la résurrection.
+    private func flushTombstones() async {
+        let now = Date()
+        let patch = TombstonePatch(deleted_at: now, updated_at: now)
+        for (table, ids) in CloudTombstones.all() {
+            for id in ids {
+                try? await database.patch(
+                    patch,
+                    in: table,
+                    matching: [URLQueryItem(name: "id", value: "eq.\(id.uuidString.lowercased())")]
+                )
+            }
+        }
     }
 
     // MARK: - Descente
@@ -151,11 +173,19 @@ final class CloudSync {
         )
 
         for remote in remoteCourses {
+            if CloudTombstones.contains(CloudTable.courses, id: remote.id) {
+                if let local = localCourses[remote.id] { context.delete(local) }
+                continue
+            }
             guard let local = localCourses[remote.id] else {
                 if remote.deleted_at == nil { context.insert(make(from: remote)) }
                 continue
             }
             if let deleted = remote.deleted_at, deleted > local.updatedAt {
+                CloudTombstones.mark(CloudTable.courses, id: remote.id)
+                for card in local.cards {
+                    CloudTombstones.mark(CloudTable.flashcards, id: card.id)
+                }
                 context.delete(local)
             } else if remote.updated_at > local.updatedAt {
                 apply(remote, to: local)
@@ -181,6 +211,10 @@ final class CloudSync {
         )
 
         for remote in remoteCards {
+            if CloudTombstones.contains(CloudTable.flashcards, id: remote.id) {
+                if let local = localCards[remote.id] { context.delete(local) }
+                continue
+            }
             guard let local = localCards[remote.id] else {
                 guard remote.deleted_at == nil else { continue }
                 let card = Flashcard(front: remote.front, back: remote.back, hint: remote.hint)
@@ -191,10 +225,71 @@ final class CloudSync {
                 continue
             }
             if let deleted = remote.deleted_at, deleted > local.updatedAt {
+                CloudTombstones.mark(CloudTable.flashcards, id: remote.id)
                 context.delete(local)
             } else if remote.updated_at > local.updatedAt {
                 apply(remote, to: local)
             }
+        }
+
+        let remoteExams = try await database.fetch(
+            ExamRecord.self,
+            from: CloudTable.exams,
+            updatedSince: since,
+            filters: [mine]
+        )
+        let localExams = Dictionary(
+            ((try? context.fetch(FetchDescriptor<Exam>())) ?? []).map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
+        for remote in remoteExams {
+            if CloudTombstones.contains(CloudTable.exams, id: remote.id) {
+                if let local = localExams[remote.id] { context.delete(local) }
+                continue
+            }
+            guard let local = localExams[remote.id] else {
+                if remote.deleted_at == nil { context.insert(make(from: remote)) }
+                continue
+            }
+            if let deleted = remote.deleted_at, deleted > local.updatedAt {
+                CloudTombstones.mark(CloudTable.exams, id: remote.id)
+                context.delete(local)
+            } else if remote.updated_at > local.updatedAt {
+                apply(remote, to: local)
+            }
+        }
+
+        // Pas d'`updated_at` : on filtre sur le fait daté. Un journal déjà présent
+        // (même identifiant) n'est pas réécrit — c'est un ajout seul.
+        let cardsForLogs = Dictionary(
+            ((try? context.fetch(FetchDescriptor<Flashcard>())) ?? []).map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        let remoteLogs = try await database.fetch(
+            ReviewLogRecord.self,
+            from: CloudTable.reviewLogs,
+            updatedSince: since,
+            sinceColumn: "reviewed_at",
+            filters: [mine]
+        )
+        let knownLogIDs = Set(cardsForLogs.values.flatMap { $0.logs ?? [] }.map(\.id))
+        for remote in remoteLogs {
+            guard !knownLogIDs.contains(remote.id),
+                  let cardID = remote.card_id,
+                  let card = cardsForLogs[cardID]
+            else { continue }
+            let log = ReviewLog(
+                reviewedAt: remote.reviewed_at,
+                rating: ReviewRating(rawValue: remote.rating) ?? .good,
+                stateBefore: CardState(rawValue: remote.state_before) ?? .new,
+                previousIntervalDays: remote.previous_interval_days,
+                newIntervalDays: remote.new_interval_days,
+                easeAfter: remote.ease_after
+            )
+            log.id = remote.id
+            log.card = card
+            context.insert(log)
         }
 
         try? context.save()
@@ -308,7 +403,8 @@ final class CloudSync {
             last_reviewed_at: card.lastReviewedAt,
             created_at: card.createdAt,
             updated_at: card.updatedAt,
-            deleted_at: nil
+            deleted_at: nil,
+            image_path: CloudImage.dataURL(from: card.imageData)
         )
     }
 
@@ -337,6 +433,12 @@ final class CloudSync {
         card.lastReviewedAt = remote.last_reviewed_at
         card.createdAt = remote.created_at
         card.updatedAt = remote.updated_at
+        // Une ligne sans image ne doit pas effacer le schéma encore local : le web
+        // n'écrit `image_path` que pour les occlusions, et une carte revue ici
+        // avant la synchro garderait sinon une zone masquée sans dessin.
+        if let image = CloudImage.data(from: remote.image_path) {
+            card.imageData = image
+        }
     }
 
     private func record(for log: ReviewLog, userID: UUID) -> ReviewLogRecord {
@@ -366,7 +468,40 @@ final class CloudSync {
             planned_at: exam.plannedAt,
             created_at: exam.createdAt,
             updated_at: exam.updatedAt,
-            deleted_at: nil
+            deleted_at: nil,
+            schedule_backup: JSONCodable(data: exam.scheduleBackup)
         )
+    }
+
+    private func make(from remote: ExamRecord) -> Exam {
+        let exam = Exam(
+            id: remote.id,
+            name: remote.name,
+            date: remote.exam_date,
+            courseIDs: remote.course_ids,
+            intensity: ExamIntensity(rawValue: remote.intensity) ?? .standard,
+            targetScore: remote.target_score
+        )
+        apply(remote, to: exam)
+        return exam
+    }
+
+    private func apply(_ remote: ExamRecord, to exam: Exam) {
+        exam.name = remote.name
+        exam.date = remote.exam_date
+        exam.intensityRaw = remote.intensity
+        if let score = remote.target_score { exam.targetScore = score }
+        exam.courseIDs = remote.course_ids
+        exam.isPlanned = remote.is_planned
+        exam.plannedAt = remote.planned_at
+        exam.createdAt = remote.created_at
+        exam.updatedAt = remote.updated_at
+        // Le web peut mettre à jour un examen sans renvoyer la photographie : on
+        // ne l'efface que lorsqu'elle arrive vraiment, ou qu'elle est nulle après
+        // un déplanification écrite (`schedule_backup: null` n'est pas encodé ici
+        // — une absence de colonne laisse la copie locale).
+        if let backup = remote.schedule_backup?.data {
+            exam.scheduleBackup = backup
+        }
     }
 }

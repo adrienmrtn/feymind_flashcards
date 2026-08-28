@@ -53,12 +53,25 @@ final class ProAccess {
 
     private(set) var isPro: Bool
 
-    init(defaults: UserDefaults = .standard) {
+    /// Même règle que le web (`ASSUME_PRO_WITHOUT_ROW`) : sans ligne, on ouvre.
+    /// Il n'y a pas encore de boutique branchée ; fermer maintenant enfermerait
+    /// tout le monde sans porte de sortie.
+    static let assumeProWithoutRow = true
+
+    init(
+        defaults: UserDefaults = .standard,
+        accessToken: (() async -> String?)? = nil,
+        userID: (() -> UUID?)? = nil
+    ) {
         self.defaults = defaults
+        self.accessToken = accessToken
+        self.userID = userID
         self.isPro = defaults.bool(forKey: Key.isPro)
     }
 
     private let defaults: UserDefaults
+    private let accessToken: (() async -> String?)?
+    private let userID: (() -> UUID?)?
 
     /// Ouvre tout. Appelé après un achat, et après une restauration réussie.
     func unlock() {
@@ -81,11 +94,34 @@ final class ProAccess {
 
     /// Relit l'état de l'abonnement au lancement.
     ///
-    /// Aujourd'hui elle ne fait que confirmer ce qui est écrit sur l'appareil. Avec
-    /// RevenueCat, elle lira `customerInfo().entitlements["pro"]` : c'est le serveur qui
-    /// tranchera, et un abonnement résilié se refermera tout seul.
+    /// La table `entitlements` fait foi, comme sur le web. Une échéance passée
+    /// l'emporte sur le drapeau. Sans ligne, on ouvre — tant qu'on ne peut pas
+    /// payer depuis l'app, fermer serait une porte sans poignée.
     func refresh() async {
-        isPro = defaults.bool(forKey: Key.isPro)
+        guard let token = await accessToken?(), let userID = userID?() else {
+            isPro = defaults.bool(forKey: Key.isPro)
+            return
+        }
+
+        do {
+            let database = SupabaseDatabase(accessToken: { token })
+            let rows = try await database.rows(
+                EntitlementRecord.self,
+                from: CloudTable.entitlements,
+                filters: [URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")],
+                limit: 1
+            )
+            if let row = rows.first {
+                let expired = row.expires_at.map { $0 < Date() } ?? false
+                setPro(row.is_pro && !expired)
+            } else if Self.assumeProWithoutRow {
+                setPro(true)
+            } else {
+                setPro(false)
+            }
+        } catch {
+            isPro = defaults.bool(forKey: Key.isPro)
+        }
     }
 
     // MARK: - Les portes

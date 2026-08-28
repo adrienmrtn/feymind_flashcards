@@ -292,12 +292,14 @@ enum OnboardingPreferences {
         /// veut encore dire quelque chose.
         static let retiredNotificationsOptIn = "micabo.onboarding.notificationsOptIn"
         static let completedAt = "micabo.onboarding.completedAt"
+        static let sheetLanguage = "micabo.onboarding.sheetLanguage"
 
         static let all = [
             completed, level, stage, tier, country, customCountryCode,
             goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
-            dailyMinutes, ratingAsked, retiredNotificationsOptIn, completedAt
+            dailyMinutes, ratingAsked, retiredNotificationsOptIn, completedAt,
+            sheetLanguage
         ]
     }
 
@@ -373,12 +375,24 @@ enum OnboardingPreferences {
         }
     }
 
-    /// La langue dans laquelle Micabo écrit, déduite du pays de scolarisation.
+    /// La langue choisie pour les fiches, quand elle n'est plus celle du pays.
+    static var sheetLanguage: ContentLanguage? {
+        get { defaults.string(forKey: Key.sheetLanguage).flatMap(ContentLanguage.init(rawValue:)) }
+        set {
+            if let newValue {
+                defaults.set(newValue.rawValue, forKey: Key.sheetLanguage)
+            } else {
+                defaults.removeObject(forKey: Key.sheetLanguage)
+            }
+        }
+    }
+
+    /// La langue dans laquelle Micabo écrit.
     ///
-    /// Elle n'est pas stockée : une copie du pays finirait par le contredire, et l'écran qui
-    /// la demandait n'offrait de toute façon qu'une réponse.
+    /// Un réglage explicite (web ou iOS) gagne. Sinon on retombe sur celle du pays
+    /// de scolarisation, comme avant qu'on puisse la changer.
     static var contentLanguage: ContentLanguage {
-        schoolingCountry.language
+        sheetLanguage ?? schoolingCountry.language
     }
 
     /// Le pays de scolarisation. Absent, on suppose la France : c'est ce que l'app faisait

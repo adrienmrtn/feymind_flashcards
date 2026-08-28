@@ -473,6 +473,7 @@ final class OnboardingFlowTests: XCTestCase {
             institution_name: nil,
             daily_minutes: 15,
             sheet_length: SheetLength.standard.rawValue,
+            sheet_language: nil,
             onboarding_completed_at: nil
         )
         remote.applyToLocalPreferences()

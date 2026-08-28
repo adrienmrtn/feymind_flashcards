@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { languageFor } from "@micabo/core";
+import { sheetLanguage } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -274,7 +274,7 @@ export async function explainSelection(input: {
       .eq("user_id", user.id)
       .eq("id", input.courseId)
       .maybeSingle(),
-    supabase.from("profiles").select("country_code").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("country_code, sheet_language").eq("id", user.id).maybeSingle(),
   ]);
 
   if (!course) return { status: "error", message: "Cours introuvable." };
@@ -289,7 +289,7 @@ export async function explainSelection(input: {
       subject: course.subject ?? undefined,
       // L'explication se lit dans la langue de la fiche : un cours écrit en polonais expliqué en
       // français fait deux langues sur le même écran.
-      language: languageFor(profile?.country_code),
+      language: sheetLanguage(profile?.sheet_language, profile?.country_code),
     },
   });
 

@@ -174,5 +174,116 @@ final class CloudRecordTests: XCTestCase {
         XCTAssertEqual(sent.study_level, "sante")
         XCTAssertEqual(sent.country_code, "be")
         XCTAssertEqual(sent.sheet_length, "deep")
+        XCTAssertEqual(sent.sheet_language, "fr")
+    }
+
+    /// Une langue de fiche posée sur le web doit revenir sur le téléphone, même si
+    /// le pays dirait autre chose.
+    func testTheSheetLanguageComesBackWithTheProfile() throws {
+        OnboardingPreferences.reset()
+        defer { OnboardingPreferences.reset() }
+
+        let payload = """
+        {
+          "id": "7F9C2B41-3D5E-4A6F-8B12-9C0D1E2F3A4B",
+          "country_code": "fr",
+          "learning_goals": [],
+          "subjects": [],
+          "daily_minutes": 20,
+          "sheet_length": "standard",
+          "sheet_language": "pl"
+        }
+        """
+
+        let profile = try JSONDecoder().decode(ProfileRecord.self, from: Data(payload.utf8))
+        profile.applyToLocalPreferences()
+
+        XCTAssertEqual(OnboardingPreferences.sheetLanguage, .pl)
+        XCTAssertEqual(OnboardingPreferences.contentLanguage, .pl)
+    }
+
+    /// `deleted_at: null` ressusciterait une carte tombstonée sur le web. On l'omet.
+    func testALiveCardDoesNotSendDeletedAt() throws {
+        let record = try decodeCard("""
+        {
+          "id": "7F9C2B41-3D5E-4A6F-8B12-9C0D1E2F3A4B",
+          "user_id": "7F9C2B41-3D5E-4A6F-8B12-9C0D1E2F3A4B",
+          "front": "Q",
+          "back": "A",
+          "position": 0,
+          "kind": "basic",
+          "choices": [],
+          "correct_choice_index": 0,
+          "mask_x": 0, "mask_y": 0, "mask_width": 0, "mask_height": 0,
+          "is_reversed": false,
+          "is_suspended": false,
+          "state": "new",
+          "due_date": "2026-08-28T10:00:00Z",
+          "interval_days": 0,
+          "ease_factor": 2.5,
+          "repetitions": 0,
+          "lapses": 0,
+          "step_index": 0,
+          "created_at": "2026-08-28T10:00:00Z",
+          "updated_at": "2026-08-28T10:00:00Z"
+        }
+        """)
+
+        let json = String(data: try JSONEncoder().encode(record), encoding: .utf8) ?? ""
+        XCTAssertFalse(json.contains("deleted_at"), "Un null ressuscite la ligne côté Postgres")
+        XCTAssertFalse(json.contains("image_path"))
+    }
+
+    func testAnOcclusionImageTravelsAsADataURL() {
+        let bytes = Data([0xFF, 0xD8, 0xFF, 0x01, 0x02])
+        XCTAssertEqual(CloudImage.data(from: CloudImage.dataURL(from: bytes)), bytes)
+        XCTAssertNil(CloudImage.dataURL(from: Data()))
+        XCTAssertNil(CloudImage.data(from: "/storage/occlusions/a.jpg"))
+    }
+
+    func testATombstoneBlocksResurrection() {
+        let suite = "micabo.tests.tombstones.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        CloudTombstones.defaults = defaults
+        defer {
+            CloudTombstones.defaults = .standard
+            defaults.removePersistentDomain(forName: suite)
+        }
+
+        let id = UUID()
+        XCTAssertFalse(CloudTombstones.contains(CloudTable.flashcards, id: id))
+        CloudTombstones.mark(CloudTable.flashcards, id: id)
+        XCTAssertTrue(CloudTombstones.contains(CloudTable.flashcards, id: id))
+        XCTAssertEqual(CloudTombstones.all()[CloudTable.flashcards], [id])
+    }
+
+    func testALiveExamOmitsDeletedAtAndCarriesTheBackup() throws {
+        let backup = try XCTUnwrap(JSONCodable(data: Data(#"{"entries":[]}"#.utf8)))
+        let record = ExamRecord(
+            id: UUID(),
+            user_id: UUID(),
+            name: "Partiel",
+            exam_date: Date(timeIntervalSince1970: 1_787_649_000),
+            intensity: "standard",
+            target_score: 15,
+            course_ids: [],
+            is_planned: true,
+            planned_at: nil,
+            created_at: Date(timeIntervalSince1970: 1_787_649_000),
+            updated_at: Date(timeIntervalSince1970: 1_787_649_000),
+            deleted_at: nil,
+            schedule_backup: backup
+        )
+
+        let json = String(data: try JSONEncoder().encode(record), encoding: .utf8) ?? ""
+        XCTAssertFalse(json.contains("deleted_at"))
+        XCTAssertTrue(json.contains("schedule_backup"))
+    }
+
+    private func decodeCard(_ payload: String) throws -> FlashcardRecord {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode(FlashcardRecord.self, from: Data(payload.utf8))
     }
 }

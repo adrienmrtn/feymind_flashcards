@@ -21,6 +21,13 @@ enum SupabaseFunctionError: Error {
 struct SupabaseFunctions {
     static let shared = SupabaseFunctions()
 
+    /// Jeton de l'utilisateur, posé au lancement. Sans lui, l'appel part en anonyme :
+    /// les fonctions qui regardent `auth.uid()` refusent, et c'est voulu.
+    ///
+    /// Statique : `SupabaseAIService` recopie `shared` à la construction, et une
+    /// fermeture posée après coup sur l'instance copiée n'arriverait jamais.
+    static var accessToken: (() async -> String?)?
+
     /// Les délais sont longs à dessein : une transcription puis une génération se comptent
     /// en dizaines de secondes, et couper à trente ferait échouer les appels qui allaient
     /// aboutir.
@@ -40,9 +47,10 @@ struct SupabaseFunctions {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        let token = await Self.accessToken?() ?? AppConfig.supabaseAnonKey
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
-        request.setValue("Bearer \(AppConfig.supabaseAnonKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
 
         let data: Data

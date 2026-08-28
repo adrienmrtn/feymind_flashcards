@@ -465,11 +465,16 @@ enum CourseRepository {
     }
 
     static func delete(_ course: Course, in context: ModelContext) throws {
+        CloudTombstones.mark(CloudTable.courses, id: course.id)
+        for card in course.cards {
+            CloudTombstones.mark(CloudTable.flashcards, id: card.id)
+        }
         context.delete(course)
         try context.save()
     }
 
     static func delete(_ card: Flashcard, in context: ModelContext) throws {
+        CloudTombstones.mark(CloudTable.flashcards, id: card.id)
         context.delete(card)
         try context.save()
     }
