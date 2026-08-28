@@ -40,8 +40,9 @@ import { gradeCard } from "@/lib/actions/review";
  * parcours, où elles se voient une fois. C'est la même animation, juste à un endroit et fausse à
  * l'autre - c'est la fréquence qui décide, pas le goût.
  *
- * La file est celle d'Anki : une carte notée « 1 min » ou « 10 min » revient dans **cette**
- * session, et sans compte à rebours - quand il ne reste qu'elle, on la sert tout de suite.
+ * La file est celle d'Anki SM-2 : une carte notée « 1 min », « 6 min » ou « 10 min »
+ * revient dans **cette** session, et sans compte à rebours - quand il ne reste qu'elle,
+ * on la sert tout de suite.
  * « Tout est à jour » n'apparaît que lorsque la file est vide.
  *
  * L'écriture part au serveur **après** l'affichage de la carte suivante : le doigt n'attend pas le
@@ -115,7 +116,11 @@ export function Session({
       const typed = rating as ReviewRating;
       const now = new Date();
       const outcome = clampedToDeadline(
-        schedule(card.snapshot, typed, { now, config: DETERMINISTIC_CONFIG }),
+        schedule(card.snapshot, typed, {
+          now,
+          config: DETERMINISTIC_CONFIG,
+          dueDate: card.snapshot.dueDate,
+        }),
         examDeadline(card.exam),
         now,
       );
@@ -370,6 +375,7 @@ function snapshotFrom(outcome: ScheduleOutcome): CardSnapshot {
     repetitions: outcome.repetitions,
     lapses: outcome.lapses,
     stepIndex: outcome.stepIndex,
+    dueDate: outcome.dueDate,
   };
 }
 

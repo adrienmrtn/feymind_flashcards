@@ -8,6 +8,7 @@ struct SM2CardSnapshot: Equatable {
     var repetitions: Int
     var lapses: Int
     var stepIndex: Int
+    var dueDate: Date?
 
     init(
         state: CardState = .new,
@@ -15,7 +16,8 @@ struct SM2CardSnapshot: Equatable {
         easeFactor: Double = SM2Scheduler.Configuration.default.startingEase,
         repetitions: Int = 0,
         lapses: Int = 0,
-        stepIndex: Int = 0
+        stepIndex: Int = 0,
+        dueDate: Date? = nil
     ) {
         self.state = state
         self.intervalDays = intervalDays
@@ -23,6 +25,7 @@ struct SM2CardSnapshot: Equatable {
         self.repetitions = repetitions
         self.lapses = lapses
         self.stepIndex = stepIndex
+        self.dueDate = dueDate
     }
 
     init(card: Flashcard) {
@@ -32,7 +35,8 @@ struct SM2CardSnapshot: Equatable {
             easeFactor: card.easeFactor,
             repetitions: card.repetitions,
             lapses: card.lapses,
-            stepIndex: card.stepIndex
+            stepIndex: card.stepIndex,
+            dueDate: card.dueDate
         )
     }
 }
@@ -77,10 +81,8 @@ enum SM2Scheduler {
 
         static let `default` = Configuration(
             learningStepsMinutes: [1, 10],
-            // Une carte ratée après une révision repart du premier palier, comme une neuve :
-            // c'est le même oubli, et le rattraper à dix minutes sans l'avoir revue à une
-            // minute laisse passer une carte qu'on ne sait pas encore.
-            relearningStepsMinutes: [1, 10],
+            // Anki SM-2 legacy : un seul palier de dix minutes après une rechute.
+            relearningStepsMinutes: [10],
             graduatingIntervalDays: 1,
             easyIntervalDays: 4,
             startingEase: 2.5,
@@ -126,33 +128,21 @@ enum SM2Scheduler {
 
     // MARK: - Apprentissage
 
-    /// Les quatre boutons d'une carte en apprentissage : **1 min, 10 min, 1 j, 4 j.**
+    /// Les quatre boutons d'Anki sur une carte neuve : **1 min, 6 min, 10 min, 4 j.**
     ///
-    /// Anki rejoue le palier courant sur « Difficile », ce qui affiche « 1 min » sous deux
-    /// boutons voisins d'une carte neuve — deux fois la même promesse, dont une qui
-    /// n'apprend rien. Ici chaque note dit autre chose : on reprend au premier palier, on
-    /// saute au dernier, ou on sort de l'apprentissage.
-    ///
-    /// La conséquence assumée est que « Correct » **fait sortir** la carte au lieu de la
-    /// reposer dix minutes plus loin. Ce qui revient dans la session est donc ce qu'on n'a
-    /// pas su : c'est le sens des quatre boutons.
+    /// Again revient au premier palier. Hard, au premier palier, est la moyenne des
+    /// deux premiers ; ensuite il rejoue le palier courant. Good avance d'un palier
+    /// et ne diplôme qu'après le dernier. Easy diplôme tout de suite.
     private static func scheduleLearning(
         snapshot: SM2CardSnapshot,
         rating: ReviewRating,
         now: Date,
         config: Configuration
     ) -> SM2Outcome {
-        let steps = config.learningStepsMinutes.isEmpty ? [1, 10] : config.learningStepsMinutes
+        let steps = config.learningStepsMinutes.isEmpty ? [1.0, 10.0] : config.learningStepsMinutes
+        let step = clampedStep(snapshot.stepIndex, steps: steps)
 
         switch rating {
-        case .good:
-            return graduate(
-                snapshot: snapshot,
-                rating: rating,
-                intervalDays: config.graduatingIntervalDays,
-                now: now,
-                config: config
-            )
         case .easy:
             return graduate(
                 snapshot: snapshot,
@@ -161,17 +151,41 @@ enum SM2Scheduler {
                 now: now,
                 config: config
             )
-        case .again, .hard:
-            let index = rating == .again ? 0 : steps.count - 1
-            return SM2Outcome(
+        case .good where step >= steps.count - 1:
+            return graduate(
+                snapshot: snapshot,
+                rating: rating,
+                intervalDays: config.graduatingIntervalDays,
+                now: now,
+                config: config
+            )
+        case .good:
+            let next = step + 1
+            return stayInSteps(
+                snapshot: snapshot,
                 rating: rating,
                 state: .learning,
-                dueDate: now.addingTimeInterval(steps[index] * minute),
-                intervalDays: snapshot.intervalDays,
-                easeFactor: snapshot.easeFactor,
-                repetitions: snapshot.repetitions,
-                lapses: snapshot.lapses,
-                stepIndex: index
+                stepIndex: next,
+                minutes: steps[next],
+                now: now
+            )
+        case .again:
+            return stayInSteps(
+                snapshot: snapshot,
+                rating: rating,
+                state: .learning,
+                stepIndex: 0,
+                minutes: steps[0],
+                now: now
+            )
+        case .hard:
+            return stayInSteps(
+                snapshot: snapshot,
+                rating: rating,
+                state: .learning,
+                stepIndex: step,
+                minutes: hardStepMinutes(steps, stepIndex: step),
+                now: now
             )
         }
     }
@@ -183,16 +197,13 @@ enum SM2Scheduler {
         now: Date,
         config: Configuration
     ) -> SM2Outcome {
-        let interval = clampInterval(intervalDays, config: config)
-        return SM2Outcome(
+        reviewOutcome(
+            snapshot: snapshot,
             rating: rating,
-            state: .review,
-            dueDate: now.addingTimeInterval(fuzzed(interval, config: config) * day),
-            intervalDays: interval,
-            easeFactor: clampEase(snapshot.easeFactor, config: config),
-            repetitions: snapshot.repetitions + 1,
-            lapses: snapshot.lapses,
-            stepIndex: 0
+            intervalDays: clampInterval(intervalDays, config: config),
+            easeFactor: snapshot.easeFactor,
+            now: now,
+            config: config
         )
     }
 
@@ -207,9 +218,10 @@ enum SM2Scheduler {
         let previous = max(snapshot.intervalDays, config.minimumIntervalDays)
 
         if rating == .again {
-            let steps = config.relearningStepsMinutes.isEmpty ? [1, 10] : config.relearningStepsMinutes
-            let postLapse = clampInterval(
+            let steps = config.relearningStepsMinutes.isEmpty ? [10.0] : config.relearningStepsMinutes
+            let postLapse = constrainedIvl(
                 max(config.minimumIntervalDays, previous * config.lapseIntervalMultiplier),
+                previous: 0,
                 config: config
             )
             return SM2Outcome(
@@ -224,32 +236,51 @@ enum SM2Scheduler {
             )
         }
 
-        var ease = snapshot.easeFactor
-        var interval: Double
+        let late = daysLate(now: now, due: snapshot.dueDate)
+        let ease = snapshot.easeFactor
+        let hardIvl = constrainedIvl(previous * config.hardMultiplier, previous: previous, config: config)
+        let goodIvl = constrainedIvl((previous + late / 2) * ease, previous: hardIvl, config: config)
+        let easyIvl = constrainedIvl((previous + late) * ease * config.easyBonus, previous: goodIvl, config: config)
 
+        var nextEase = ease
+        var interval = goodIvl
         switch rating {
         case .hard:
-            ease = clampEase(ease - 0.15, config: config)
-            interval = previous * config.hardMultiplier * config.intervalModifier
-        case .good:
-            ease = clampEase(ease, config: config)
-            interval = previous * ease * config.intervalModifier
+            nextEase = clampEase(ease - 0.15, config: config)
+            interval = hardIvl
         case .easy:
-            ease = clampEase(ease + 0.15, config: config)
-            interval = previous * ease * config.easyBonus * config.intervalModifier
-        case .again:
-            interval = previous
+            nextEase = clampEase(ease + 0.15, config: config)
+            interval = easyIvl
+        case .good, .again:
+            break
         }
 
-        // Anki garantit qu'une réponse positive fait toujours grandir l'intervalle d'au moins un jour.
-        interval = clampInterval(max(interval, previous + 1), config: config)
+        return reviewOutcome(
+            snapshot: snapshot,
+            rating: rating,
+            intervalDays: interval,
+            easeFactor: nextEase,
+            now: now,
+            config: config
+        )
+    }
 
+    /// Échéance de révision : Anki stocke l'intervalle déjà dispersé.
+    private static func reviewOutcome(
+        snapshot: SM2CardSnapshot,
+        rating: ReviewRating,
+        intervalDays: Double,
+        easeFactor: Double,
+        now: Date,
+        config: Configuration
+    ) -> SM2Outcome {
+        let shown = fuzzed(intervalDays, config: config)
         return SM2Outcome(
             rating: rating,
             state: .review,
-            dueDate: now.addingTimeInterval(fuzzed(interval, config: config) * day),
-            intervalDays: interval,
-            easeFactor: ease,
+            dueDate: now.addingTimeInterval(shown * day),
+            intervalDays: shown,
+            easeFactor: clampEase(easeFactor, config: config),
             repetitions: snapshot.repetitions + 1,
             lapses: snapshot.lapses,
             stepIndex: 0
@@ -258,43 +289,83 @@ enum SM2Scheduler {
 
     // MARK: - Réapprentissage
 
-    /// Mêmes quatre paliers qu'en apprentissage : un oubli se rattrape de la même façon.
+    /// Un seul palier de dix minutes, comme Anki. Good diplôme. Easy ajoute un jour.
     private static func scheduleRelearning(
         snapshot: SM2CardSnapshot,
         rating: ReviewRating,
         now: Date,
         config: Configuration
     ) -> SM2Outcome {
-        let steps = config.relearningStepsMinutes.isEmpty ? [1, 10] : config.relearningStepsMinutes
+        let steps = config.relearningStepsMinutes.isEmpty ? [10.0] : config.relearningStepsMinutes
+        let step = clampedStep(snapshot.stepIndex, steps: steps)
         let postLapse = max(snapshot.intervalDays, config.minimumIntervalDays)
 
         switch rating {
-        case .good, .easy:
-            let interval = clampInterval(rating == .easy ? postLapse + 1 : postLapse, config: config)
-            return SM2Outcome(
+        case .easy:
+            return graduate(
+                snapshot: snapshot,
                 rating: rating,
-                state: .review,
-                dueDate: now.addingTimeInterval(fuzzed(interval, config: config) * day),
-                intervalDays: interval,
-                easeFactor: clampEase(snapshot.easeFactor, config: config),
-                repetitions: snapshot.repetitions + 1,
-                lapses: snapshot.lapses,
-                stepIndex: 0
+                intervalDays: postLapse + 1,
+                now: now,
+                config: config
             )
-
-        case .again, .hard:
-            let index = rating == .again ? 0 : steps.count - 1
-            return SM2Outcome(
+        case .good where step >= steps.count - 1:
+            return graduate(
+                snapshot: snapshot,
+                rating: rating,
+                intervalDays: postLapse,
+                now: now,
+                config: config
+            )
+        case .good:
+            let next = step + 1
+            return stayInSteps(
+                snapshot: snapshot,
                 rating: rating,
                 state: .relearning,
-                dueDate: now.addingTimeInterval(steps[index] * minute),
-                intervalDays: postLapse,
-                easeFactor: clampEase(snapshot.easeFactor, config: config),
-                repetitions: snapshot.repetitions,
-                lapses: snapshot.lapses,
-                stepIndex: index
+                stepIndex: next,
+                minutes: steps[next],
+                now: now
+            )
+        case .again:
+            return stayInSteps(
+                snapshot: snapshot,
+                rating: rating,
+                state: .relearning,
+                stepIndex: 0,
+                minutes: steps[0],
+                now: now
+            )
+        case .hard:
+            return stayInSteps(
+                snapshot: snapshot,
+                rating: rating,
+                state: .relearning,
+                stepIndex: step,
+                minutes: hardStepMinutes(steps, stepIndex: step),
+                now: now
             )
         }
+    }
+
+    private static func stayInSteps(
+        snapshot: SM2CardSnapshot,
+        rating: ReviewRating,
+        state: CardState,
+        stepIndex: Int,
+        minutes: Double,
+        now: Date
+    ) -> SM2Outcome {
+        SM2Outcome(
+            rating: rating,
+            state: state,
+            dueDate: now.addingTimeInterval(minutes * minute),
+            intervalDays: snapshot.intervalDays,
+            easeFactor: snapshot.easeFactor,
+            repetitions: snapshot.repetitions,
+            lapses: snapshot.lapses,
+            stepIndex: stepIndex
+        )
     }
 
     // MARK: - Utilitaires
@@ -308,26 +379,58 @@ enum SM2Scheduler {
     }
 
     private static func clampInterval(_ interval: Double, config: Configuration) -> Double {
-        let rounded = (interval * 100).rounded() / 100
-        return min(config.maximumIntervalDays, max(config.minimumIntervalDays, rounded))
+        min(config.maximumIntervalDays, max(config.minimumIntervalDays, interval))
     }
 
-    /// Dispersion d'Anki : évite que des paquets entiers retombent le même jour.
-    private static func fuzzed(_ intervalDays: Double, config: Configuration) -> Double {
-        guard config.fuzzEnabled, intervalDays >= 2.5 else { return intervalDays }
-        let spread: Double
-        switch intervalDays {
-        case ..<7: spread = max(1, intervalDays * 0.15)
-        case ..<30: spread = max(2, intervalDays * 0.10)
-        default: spread = max(4, intervalDays * 0.05)
+    /// Intervalle de révision d'Anki : entier, toujours plus grand que le précédent.
+    private static func constrainedIvl(_ raw: Double, previous: Double, config: Configuration) -> Double {
+        let ivl = (raw * config.intervalModifier).rounded(.towardZero)
+        return clampInterval(max(ivl, previous + 1, 1), config: config)
+    }
+
+    /// Hard en apprentissage, tel qu'Anki le documente.
+    static func hardStepMinutes(_ steps: [Double], stepIndex: Int) -> Double {
+        let step = clampedStep(stepIndex, steps: steps)
+        if steps.count <= 1 {
+            let only = steps.first ?? 10
+            return min(only * 1.5, only + 1_440)
         }
-        let offset = Double.random(in: -spread...spread)
-        return max(config.minimumIntervalDays, intervalDays + offset)
+        if step <= 0 { return (steps[0] + steps[1]) / 2 }
+        return steps[step]
+    }
+
+    private static func clampedStep(_ index: Int, steps: [Double]) -> Int {
+        guard !steps.isEmpty else { return 0 }
+        return min(max(0, index), steps.count - 1)
+    }
+
+    private static func daysLate(now: Date, due: Date?) -> Double {
+        guard let due else { return 0 }
+        return max(0, (now.timeIntervalSince(due) / day).rounded(.towardZero))
+    }
+
+    /// Dispersion d'Anki (`_fuzzIvlRange`) : entier, et c'est cet entier qui est stocké.
+    private static func fuzzIvlRange(_ intervalDays: Double) -> (min: Int, max: Int) {
+        let ivl = Int(intervalDays.rounded(.towardZero))
+        if ivl < 2 { return (1, 1) }
+        if ivl == 2 { return (2, 3) }
+        var fuzz: Int
+        if ivl < 7 { fuzz = Int((Double(ivl) * 0.25).rounded(.towardZero)) }
+        else if ivl < 30 { fuzz = max(2, Int((Double(ivl) * 0.15).rounded(.towardZero))) }
+        else { fuzz = max(4, Int((Double(ivl) * 0.05).rounded(.towardZero))) }
+        fuzz = max(fuzz, 1)
+        return (ivl - fuzz, ivl + fuzz)
+    }
+
+    private static func fuzzed(_ intervalDays: Double, config: Configuration) -> Double {
+        guard config.fuzzEnabled else { return intervalDays }
+        let range = fuzzIvlRange(intervalDays)
+        return clampInterval(Double(Int.random(in: range.min...range.max)), config: config)
     }
 
     // MARK: - Aperçu des boutons
 
-    /// Libellés « 1 min / 10 min / 1 j / 4 j » affichés sous les boutons de maîtrise.
+    /// Libellés sous les boutons de maîtrise. Sur une neuve : 1 min / 6 min / 10 min / 4 j.
     ///
     /// La date butoir d'un examen, quand il y en a une, est appliquée avant l'affichage : un
     /// bouton qui annonce trois semaines alors que la carte reviendra dans quatre jours ment

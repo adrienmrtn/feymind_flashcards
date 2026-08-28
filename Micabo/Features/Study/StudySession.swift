@@ -53,8 +53,8 @@ final class StudySession {
     }
 
     /// Une carte replanifiée à moins de dix minutes revient dans la même session.
-    /// Aligné sur `LEARN_AHEAD_SECONDS` de `@micabo/core`.
-    static let learnAheadWindow: TimeInterval = 10 * 60
+    /// Aligné sur `LEARN_AHEAD_SECONDS` de `@micabo/core` : 20 min, comme Anki.
+    static let learnAheadWindow: TimeInterval = 20 * 60
 
     private(set) var pending: [Entry] = []
     private(set) var current: Flashcard?
@@ -156,7 +156,7 @@ final class StudySession {
         return answered.filter { !$0.isSuspended && $0.dueDate > now && $0.dueDate < endOfDay }.count
     }
 
-    /// Aperçus « 1 min / 10 min / 1 j / 4 j » sous les boutons. En entraînement libre,
+    /// Aperçus Anki SM-2 sous les boutons (1 min / 6 min / 10 min / 4 j sur une neuve). En entraînement libre,
     /// aucune échéance ne bouge : les aperçus n'auraient rien à annoncer.
     var previewLabels: [ReviewRating: String] {
         guard mode.affectsSchedule, let current else { return [:] }

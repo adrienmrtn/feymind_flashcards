@@ -18,8 +18,13 @@ import {
 const now = new Date(2026, 7, 26, 15, 0, 0);
 
 describe("returnsInSession", () => {
-  it("garde une carte à dix minutes, le palier « Difficile » d'une neuve", () => {
+  it("garde une carte à dix minutes, le palier « Correct » d'une neuve", () => {
     const due = new Date(now.getTime() + 10 * 60 * 1000);
+    expect(returnsInSession(due, now)).toBe(true);
+  });
+
+  it("garde une carte à quinze minutes, Hard d'une rechute", () => {
+    const due = new Date(now.getTime() + 15 * 60 * 1000);
     expect(returnsInSession(due, now)).toBe(true);
   });
 
@@ -95,17 +100,17 @@ describe("les quatre paliers d'une carte neuve", () => {
     expect(outcome.state).toBe("learning");
   });
 
-  it("« Difficile » revient à dix minutes, pas à une minute", () => {
+  it("« Difficile » revient à 5,5 minutes, moyenne des deux paliers", () => {
     const { outcome, minutes } = delays(ReviewRating.hard);
-    expect(minutes).toBe(10);
+    expect(minutes).toBe(5.5);
     expect(outcome.state).toBe("learning");
   });
 
-  it("« Correct » sort de l'apprentissage à un jour", () => {
+  it("« Correct » avance à dix minutes, encore en apprentissage", () => {
     const { outcome, minutes } = delays(ReviewRating.good);
-    expect(minutes).toBe(24 * 60);
-    expect(outcome.state).toBe("review");
-    expect(outcome.intervalDays).toBe(1);
+    expect(minutes).toBe(10);
+    expect(outcome.state).toBe("learning");
+    expect(outcome.stepIndex).toBe(1);
   });
 
   it("« Facile » sort à quatre jours", () => {
@@ -122,7 +127,7 @@ describe("les quatre paliers d'une carte neuve", () => {
       ReviewRating.easy,
     ].map((rating) => delays(rating).minutes);
 
-    expect(minutes).toEqual([1, 10, 1_440, 4 * 1_440]);
+    expect(minutes).toEqual([1, 5.5, 10, 4 * 1_440]);
     expect(new Set(minutes).size).toBe(4);
   });
 });

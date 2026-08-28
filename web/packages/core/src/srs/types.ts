@@ -49,6 +49,8 @@ export interface CardSnapshot {
   repetitions: number;
   lapses: number;
   stepIndex: number;
+  /** Échéance actuelle, pour le bonus de retard d'Anki. */
+  dueDate?: Date | string | null;
 }
 
 /** Résultat d'une réponse : nouvel état, échéance et intervalle. */

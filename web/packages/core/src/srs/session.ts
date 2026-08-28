@@ -4,18 +4,18 @@
  * `buildQueue` décide quelles cartes entrent. Celle-ci décide dans quel ordre elles
  * repassent, et quand la session s'arrête.
  *
- * **Personne n'attend devant un compte à rebours.** Une carte notée « 1 min » ou
- * « 10 min » n'est pas terminée, mais faire patienter devant un chronomètre est un écran
+ * **Personne n'attend devant un compte à rebours.** Une carte notée « 1 min »,
+ * « 6 min » ou « 10 min » n'est pas terminée, mais faire patienter devant un chronomètre est un écran
  * qui ne sert à rien : le palier existe pour espacer deux passages quand il y a autre
  * chose à faire, pas pour immobiliser quelqu'un qui a fini son paquet. Quand il ne reste
- * que des cartes d'apprentissage, on les sert **tout de suite** - c'est la « limite
- * d'anticipation » d'Anki, appliquée sans écran intermédiaire.
+ * que des cartes d'apprentissage, on les sert **tout de suite** - c'est la fenêtre
+ * d'anticipation d'Anki (20 min), appliquée sans écran intermédiaire.
  *
  * « Tout est à jour » n'apparaît donc que lorsque la file est vraiment vide.
  */
 
-/** Une carte replanifiée à moins de dix minutes revient dans la même session. */
-export const LEARN_AHEAD_SECONDS = 10 * 60;
+/** Une carte replanifiée dans la fenêtre d'Anki (20 min) revient dans la même session. */
+export const LEARN_AHEAD_SECONDS = 20 * 60;
 
 export function returnsInSession(
   dueDate: Date,

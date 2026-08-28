@@ -282,21 +282,25 @@ final class StudySessionTests: XCTestCase {
 
         XCTAssertFalse(session.isFinished)
         XCTAssertEqual(session.current?.id, card.id)
-        XCTAssertEqual(card.dueDate.timeIntervalSince(now), 10 * 60, accuracy: 1)
+        XCTAssertEqual(card.state, .learning)
+        XCTAssertEqual(card.stepIndex, 0)
+        XCTAssertEqual(card.dueDate.timeIntervalSince(now), 5.5 * 60, accuracy: 1)
     }
 
-    /// « Correct » sort la carte de l'apprentissage : elle ne revient pas dans la session,
-    /// et la journée est finie s'il ne restait qu'elle.
-    func testGoodEndsTheSessionForThatCard() {
+    /// « Correct » sur une neuve avance à dix minutes, toujours en apprentissage.
+    /// La carte reste dans la session (fenêtre d'anticipation 20 min).
+    func testGoodKeepsTheCardInTheSessionAtSecondStep() {
         let card = makeCard("neuve", state: .new, due: -60, interval: 0)
 
         let session = StudySession()
         session.start(with: [card], context: context, sourceKey: nil, now: now)
         session.answer(.good, now: now)
 
-        XCTAssertTrue(session.isFinished)
-        XCTAssertEqual(card.state, .review)
-        XCTAssertEqual(card.intervalDays, 1, accuracy: 0.001)
+        XCTAssertFalse(session.isFinished)
+        XCTAssertEqual(session.current?.id, card.id)
+        XCTAssertEqual(card.state, .learning)
+        XCTAssertEqual(card.stepIndex, 1)
+        XCTAssertEqual(card.dueDate.timeIntervalSince(now), 10 * 60, accuracy: 1)
     }
 
     /// Le paquet tourne dans l'ordre : une carte ratée repasse **après** les autres, pas
@@ -314,7 +318,8 @@ final class StudySessionTests: XCTestCase {
         XCTAssertEqual(session.current?.id, neuve.id, "La neuve garde son tour")
 
         session.answer(.good, now: now)
-        XCTAssertEqual(session.current?.id, revue.id, "La ratée revient ensuite")
+        XCTAssertEqual(session.current?.id, revue.id, "La ratée, déjà en file à dix minutes, revient avant la neuve")
+        XCTAssertEqual(neuve.state, .learning, "Correct sur une neuve n'a pas diplômé")
         XCTAssertFalse(session.isFinished)
     }
 
