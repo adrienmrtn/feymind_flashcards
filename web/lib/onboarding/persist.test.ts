@@ -31,4 +31,15 @@ describe("shouldOpenPaywall", () => {
     expect(shouldOpenPaywall({ ...base, welcome: true })).toBe(true);
     expect(shouldOpenPaywall({ ...base, pending: true })).toBe(true);
   });
+
+  it("s'ouvre en débogage, même pour un abonné qui a fermé l'offre", () => {
+    expect(
+      shouldOpenPaywall({
+        ...base,
+        isPaid: true,
+        dismissed: true,
+        debug: true,
+      }),
+    ).toBe(true);
+  });
 });
