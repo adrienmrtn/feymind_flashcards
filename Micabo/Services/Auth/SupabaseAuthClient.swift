@@ -40,6 +40,31 @@ struct SupabaseAuthClient {
         return try decodeSession(payload)
     }
 
+    /// Envoie un lien de connexion. Le retour ouvre `micabo://auth-callback` : sans
+    /// `redirect_to` dans la liste du tableau de bord, le courriel part et le lien refuse.
+    func sendMagicLink(email: String, redirectTo: URL, challenge: String) async throws {
+        _ = try await post(
+            "otp",
+            query: ["redirect_to": redirectTo.absoluteString],
+            body: [
+                "email": email,
+                "create_user": true,
+                "code_challenge": challenge,
+                "code_challenge_method": "s256",
+            ]
+        )
+    }
+
+    /// Échange le `token_hash` d'un lien de courriel contre une session. C'est l'autre
+    /// forme que GoTrue sait renvoyer, quand le flux n'est pas PKCE.
+    func verify(tokenHash: String, type: String) async throws -> AuthSession {
+        let payload = try await post("verify", body: [
+            "token_hash": tokenHash,
+            "type": type,
+        ])
+        return try decodeSession(payload)
+    }
+
     /// L'URL de la page d'autorisation d'un fournisseur, telle que Supabase l'attend.
     func authorizeURL(provider: String, redirectTo: URL, challenge: String) -> URL? {
         guard var components = base().flatMap({ URLComponents(url: $0.appending(path: "authorize"), resolvingAgainstBaseURL: false) }) else {

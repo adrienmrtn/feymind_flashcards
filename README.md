@@ -799,8 +799,8 @@ c'est-à-dire après une déconnexion depuis les réglages — et il ne propose 
 sans compte : après une déconnexion volontaire, proposer de rester dehors revient à proposer
 d'abandonner ce qu'on vient de mettre en sécurité.
 
-**C'est le même écran que celui du parcours, et pas une copie.** Les deux boutons, les trois
-avantages qu'ils annoncent et le message d'échec vivent dans `SignInPanel`, que les deux
+**C'est le même écran que celui du parcours, et pas une copie.** Apple, Google, le courriel,
+les trois avantages et le message d'échec vivent dans `SignInPanel`, que les deux
 écrans montent. La reconnexion était le plus mal tenu de l'app — adresse, mot de passe, lien
 de connexion, mot de passe oublié, bascule connexion/inscription, et une sortie sans compte —
 ce qui n'est pas un hasard : on ne la voit presque jamais.
@@ -960,11 +960,10 @@ ouvrir une depuis un code OAuth, la rafraîchir, la fermer — qu'on relit en un
 dépendance externe coûterait un gestionnaire de paquets, une surface de mise à jour et un
 binaire.
 
-**Il n'y a plus de mot de passe.** Micabo se connecte par Apple ou par Google, et rien
-d'autre : les quatre appels du courriel (inscription, connexion, lien de connexion,
-réinitialisation) sont partis avec l'écran qui les portait. C'est aussi ce qui a fait tomber
-trois des quatre messages du contrôleur : ils annonçaient qu'un courriel venait d'être envoyé,
-et un fournisseur ne renvoie rien à lire — il réussit, ou il explique pourquoi.
+**Il n'y a plus de mot de passe.** Micabo se connecte par Apple, Google, ou un lien envoyé
+par courriel — le même trio que sur le web. Le mot de passe et la réinitialisation restent
+partis. Le lien ouvre `micabo://auth-callback` : PKCE si le courriel rend un `code`,
+`token_hash` sinon.
 
 La session vit dans le **trousseau**, et pas dans les réglages : un jeton de rafraîchissement
 donne accès au compte sans mot de passe, et dans `UserDefaults` il se lirait en clair dans une
@@ -973,7 +972,7 @@ backup sur un autre téléphone ne connecte personne. Le jeton d'accès est rafr
 endroit, `AuthController.validAccessToken()`, une minute avant son échéance : personne d'autre
 n'a à savoir qu'un jeton expire.
 
-**L'écran de connexion affiche les deux boutons, toujours.** Il interrogeait le projet au
+**L'écran de connexion affiche les fournisseurs, toujours.** Il interrogeait le projet au
 lancement (`GET /auth/v1/settings`) pour ne montrer que les fournisseurs activés — un appel
 réseau de plus au démarrage, et un écran qui pouvait n'avoir plus rien à proposer du tout. Un
 fournisseur éteint côté Supabase le dit clairement dans son message d'erreur, ce qui est plus

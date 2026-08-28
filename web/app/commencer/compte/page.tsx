@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { markPaywallPending, persistStoredAnswers } from "@/lib/onboarding/persist";
 import { createClient } from "@/lib/supabase/client";
@@ -63,8 +64,7 @@ function AccountStepBody() {
   }, [params, router]);
 
   function callbackUrl() {
-    const next = destination();
-    return `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+    return oauthCallbackUrl(destination());
   }
 
   async function signInWith(provider: "apple" | "google") {
@@ -79,7 +79,7 @@ function AccountStepBody() {
 
     if (error) {
       setPending(null);
-      setFailure(error.message);
+      setFailure(oauthFailureMessage(provider, error.message));
     }
   }
 

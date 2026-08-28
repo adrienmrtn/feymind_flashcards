@@ -136,3 +136,17 @@ enum AuthError: LocalizedError, Equatable {
         }
     }
 }
+
+/// Une adresse assez crédible pour envoyer un lien, pas une RFC.
+enum EmailAddress {
+    static func isPlausible(_ raw: String) -> Bool {
+        let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let at = value.firstIndex(of: "@") else { return false }
+        let local = value[..<at]
+        let domain = value[value.index(after: at)...]
+        return !local.isEmpty
+            && domain.contains(".")
+            && !domain.hasPrefix(".")
+            && !domain.hasSuffix(".")
+    }
+}

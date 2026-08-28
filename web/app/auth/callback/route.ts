@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { oauthFailureMessage } from "@/lib/auth/oauth";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 
 /**
@@ -24,8 +25,9 @@ export async function GET(request: NextRequest) {
 
   if (!code && !(tokenHash && type)) {
     const error = url.searchParams.get("error_description") ?? url.searchParams.get("error");
+    const detail = oauthFailureMessage("apple", error ?? "manquant");
     return NextResponse.redirect(
-      new URL(`/commencer/compte?erreur=${encodeURIComponent(error ?? "manquant")}`, url.origin),
+      new URL(`/commencer/compte?erreur=${encodeURIComponent(detail)}`, url.origin),
     );
   }
 

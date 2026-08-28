@@ -92,6 +92,16 @@ final class AuthDecodingTests: XCTestCase {
 
     /// Le schéma de retour est écrit à deux endroits, l'`Info.plist` et le code. S'ils
     /// divergent, la connexion Google échoue à son retour et rien ne le dit.
+    func testAPlausibleEmailHasALocalPartAndADottedDomain() {
+        XCTAssertTrue(EmailAddress.isPlausible("eleve@lycee.fr"))
+        XCTAssertTrue(EmailAddress.isPlausible("  eleve@lycee.fr  "))
+        XCTAssertFalse(EmailAddress.isPlausible(""))
+        XCTAssertFalse(EmailAddress.isPlausible("eleve"))
+        XCTAssertFalse(EmailAddress.isPlausible("@lycee.fr"))
+        XCTAssertFalse(EmailAddress.isPlausible("eleve@lycee"))
+        XCTAssertFalse(EmailAddress.isPlausible("eleve@.fr"))
+    }
+
     func testTheCallbackSchemeMatchesTheBundle() {
         XCTAssertEqual(AuthRedirect.url.absoluteString, "micabo://auth-callback")
 

@@ -8,15 +8,15 @@ import SwiftUI
 /// mot de passe oublié, une bascule « créer un compte / j'ai déjà un compte », et un
 /// « continuer sans compte » en bas. Cinq chemins pour une porte qui n'en a plus qu'un.
 ///
-/// **Le mot de passe est parti.** Micabo se connecte par Apple ou par Google, et rien
-/// d'autre : ce sont les deux boutons du parcours d'accueil, portés par le même code
+/// **Le mot de passe est parti.** Micabo se connecte par Apple, Google, ou un lien
+/// envoyé par courriel : ce sont les mêmes contrôles que le parcours d'accueil
 /// (`SignInProviderButtons`). Deux écrans qui demandent la même chose ne peuvent pas
 /// demander différemment, et les faire vivre sur le même code est la seule façon de
 /// garantir qu'ils ne divergeront pas.
 ///
 /// **« Continuer sans compte » est parti aussi.** Ce n'est plus une porte de sortie : une
 /// fois qu'on s'est déconnecté, on se reconnecte. L'écran ne propose donc rien d'autre que
-/// les deux fournisseurs, et il n'a pas de bouton de renvoi.
+/// les fournisseurs et le courriel, et il n'a pas de bouton de renvoi.
 ///
 /// La mise en page vient d'`OnboardingScaffold`, et c'est voulu : dupliquer la composition
 /// de l'écran de connexion du parcours serait s'engager à la maintenir deux fois.
@@ -30,7 +30,7 @@ struct AuthView: View {
             subtitle: "Connecte-toi pour retrouver tes cours, tes cartes et ta série là où tu les as laissés.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
-            scrolls: false
+            scrolls: true
         ) {
             VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
                 SignInBenefits()

@@ -7,7 +7,7 @@ import SwiftUI
 /// fonctionner. Ici, la démonstration est passée, le parcours est construit, et le compte
 /// sert à ne pas le perdre.
 ///
-/// **Les deux flux sont branchés pour de vrai.** L'écran se contentait d'appeler
+/// **Les trois flux sont branchés pour de vrai.** L'écran se contentait d'appeler
 /// `model.advance()` sur les deux boutons : on croyait s'être connecté, rien n'était créé, et
 /// l'app redemandait un compte juste après le parcours. Apple passe par son bouton natif —
 /// ses règles d'interface l'imposent — et Google par une page web isolée. Une connexion
@@ -34,7 +34,7 @@ struct SignInStepView: View {
             subtitle: "Ton parcours est prêt. Un compte, et il te suit partout.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
-            scrolls: false,
+            scrolls: true,
             skip: OnboardingSkip(
                 title: "Skip",
                 accessibilityLabel: "Continuer sans compte",
