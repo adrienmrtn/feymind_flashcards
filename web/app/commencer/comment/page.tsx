@@ -3,10 +3,10 @@
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
 
 /**
- * Le mode d'emploi, **avant** de le faire.
+ * Le mode d'emploi, après l'avoir vu tourner.
  *
- * L'écran suivant demande de glisser un PDF. Sans celui-ci, on arrive sur un geste sans
- * savoir pourquoi. Trois phrases, dans l'ordre du produit, et un seul bouton.
+ * Trois phrases, dans l'ordre du produit, et un seul bouton. L'écran suivant
+ * pose l'école : la démo en trois temps a quitté le tunnel.
  */
 
 const BEATS = [
@@ -32,7 +32,7 @@ export default function HowItWorksStep() {
     <Scaffold
       eyebrow="Comment ça marche"
       title="Voici comment ça marche."
-      footer={<ContinueButton label="Continuer" enabled href="/commencer/demo" shiny />}
+      footer={<ContinueButton label="Continuer" enabled href="/commencer/ecole" />}
     >
       <ol className="space-y-3">
         {BEATS.map((beat, index) => (

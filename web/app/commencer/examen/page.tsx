@@ -24,7 +24,6 @@ export default function ExamStep() {
         <ContinueButton
           label="Voir comment ça marche"
           enabled={ready}
-          shiny
           href="/commencer/comment"
         />
       }

@@ -1,5 +1,6 @@
 "use server";
 
+import type { Route } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -136,5 +137,5 @@ export async function replayOnboarding(): Promise<never> {
     sameSite: "lax",
     httpOnly: true,
   });
-  redirect("/commencer/pays");
+  redirect("/commencer/bienvenue" as Route);
 }

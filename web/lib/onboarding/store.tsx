@@ -9,7 +9,7 @@ import type { CountryCode, EducationTier, StudyLevel } from "@micabo/core";
  *
  * C'est le motif de `OnboardingPreferences` côté iOS, et il vaut ici pour deux raisons. La
  * première est la même que là-bas : une réponse écrite au fil de l'eau survit à une fermeture en
- * cours de route, et personne ne recommence un parcours de neuf écrans.
+ * cours de route, et personne ne recommence un parcours de douze écrans.
  *
  * La seconde est propre au web. Écrire dans `profiles` à chaque réponse voudrait dire une requête
  * réseau par appui, et surtout **une session à chaque écran** : un jeton qui expire au cinquième

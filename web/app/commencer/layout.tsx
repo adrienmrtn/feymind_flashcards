@@ -14,9 +14,9 @@ import { createClient } from "@/lib/supabase/client";
 /**
  * L'habillage du parcours : la barre de progression, et le retour.
  *
- * La jauge et le retour sont là dès le premier écran. Le retour du pays ramène
- * à la landing : le parcours n'est pas la vitrine. Le compte n'a plus de jauge :
- * c'est une page, et elle arrive à la fin.
+ * La jauge et le retour sont là dès le premier écran. Le retour de l'accueil
+ * ramène à la landing : le parcours n'est pas la vitrine. Le compte n'a plus de
+ * jauge : c'est une page, et elle arrive à la fin.
  */
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

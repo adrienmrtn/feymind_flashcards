@@ -13,12 +13,15 @@
 
 export type OnboardingPath =
   | "/commencer"
+  | "/commencer/bienvenue"
+  | "/commencer/importer"
+  | "/commencer/cartes"
+  | "/commencer/reussir"
   | "/commencer/pays"
   | "/commencer/niveau"
   | "/commencer/matieres"
   | "/commencer/examen"
   | "/commencer/comment"
-  | "/commencer/demo"
   | "/commencer/ecole"
   | "/commencer/parcours"
   | "/commencer/compte"
@@ -31,12 +34,15 @@ export interface Step {
 }
 
 export const STEPS: readonly Step[] = [
+  { path: "/commencer/bienvenue", label: "Bienvenue", chrome: true },
+  { path: "/commencer/importer", label: "Importe tes cours", chrome: true },
+  { path: "/commencer/cartes", label: "Tes flashcards", chrome: true },
+  { path: "/commencer/reussir", label: "Tes examens", chrome: true },
   { path: "/commencer/pays", label: "Ton pays", chrome: true },
   { path: "/commencer/niveau", label: "Ton niveau", chrome: true },
   { path: "/commencer/matieres", label: "Tes matières", chrome: true },
   { path: "/commencer/examen", label: "Ton examen", chrome: true },
   { path: "/commencer/comment", label: "Voici comment ça marche", chrome: true },
-  { path: "/commencer/demo", label: "Comment ça marche", chrome: true },
   { path: "/commencer/ecole", label: "Ton école", chrome: true },
   { path: "/commencer/parcours", label: "Ton parcours", chrome: true },
   // La création du compte est une **page** et non un écran de parcours : elle porte sa propre

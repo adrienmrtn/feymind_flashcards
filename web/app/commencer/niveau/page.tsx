@@ -36,7 +36,7 @@ export default function LevelStep() {
       title="Qu'est-ce qui te décrit le mieux ?"
       footer={<ContinueButton enabled={Boolean(selectedId) && ready} href="/commencer/matieres" />}
     >
-      <div className="max-h-[46svh] space-y-2 overflow-y-auto pr-1 sm:max-h-[52svh]">
+      <div className="space-y-2 pr-1">
         {stages.map((stage) => (
           <ChoiceRow
             key={stage.id}

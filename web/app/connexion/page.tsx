@@ -183,7 +183,7 @@ function ConnexionBody() {
 
         <p className="mt-6 text-[13.5px] text-ink-tertiary">
           Pas encore de compte ?{" "}
-          <Link href="/commencer/pays" className="underline-draw font-medium text-ink">
+          <Link href="/commencer" className="underline-draw font-medium text-ink">
             Créons-le
           </Link>
         </p>
