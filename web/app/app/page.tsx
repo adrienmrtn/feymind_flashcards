@@ -206,11 +206,20 @@ function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: numb
           ✓
         </span>
         <div className="min-w-0">
-          <p className="text-[16px] font-semibold text-ink">Rythme tenu</p>
+          <p className="text-[16px] font-semibold text-ink">Session du jour terminée</p>
           <p className="mt-1 text-[13.5px] leading-relaxed text-ink-secondary">
-            Tes cartes du jour sont faites. Il en reste {heldBack} hors rythme — elles
-            attendent demain, c&apos;est le rythme que tu as choisi.
+            Révisions et rythme sont faits. Il reste {heldBack} carte
+            {heldBack > 1 ? "s" : ""} neuve{heldBack > 1 ? "s" : ""} hors rythme — un
+            cours ajouté, par exemple.
           </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            render={<Link href={"/app/reviser" as never} />}
+          >
+            Réviser quand même
+          </Button>
         </div>
       </div>
     );
@@ -225,7 +234,7 @@ function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: numb
         ✓
       </span>
       <div className="min-w-0">
-        <p className="text-[16px] font-semibold text-ink">Tout est à jour</p>
+        <p className="text-[16px] font-semibold text-ink">Session du jour terminée</p>
         <p className="mt-1 text-[13.5px] leading-relaxed text-ink-secondary">
           Aucune carte n&apos;est due aujourd&apos;hui. Le rythme a fait son travail — profite-en.
         </p>

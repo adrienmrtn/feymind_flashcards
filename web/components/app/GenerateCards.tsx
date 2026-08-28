@@ -15,6 +15,7 @@ import {
   type QuestionQuota,
 } from "@micabo/core";
 
+import { CountStepper } from "@/components/app/CountStepper";
 import { Float } from "@/components/app/Float";
 import { generateCards } from "@/lib/actions/course";
 
@@ -46,8 +47,7 @@ export function GenerateCards({
   const [failure, setFailure] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [quota, setQuota] = useState<QuestionQuota>(DEFAULT_QUOTA);
-  const [booting, setBooting] = useState(autoStart);
-  const started = useRef(false);
+  const opened = useRef(false);
 
   const total = quotaTotal(quota);
   const capped = isAtCap(quota);
@@ -66,7 +66,6 @@ export function GenerateCards({
     setFailure(null);
     startTransition(async () => {
       const result = await generateCards(courseId, quota);
-      setBooting(false);
       if (result.status === "error") setFailure(result.message ?? "Ça n'a pas marché.");
       else {
         setOpen(false);
@@ -77,14 +76,12 @@ export function GenerateCards({
   }
 
   useEffect(() => {
-    if (!autoStart || started.current) return;
-    started.current = true;
-    ask();
-    // Une seule fois, à l'arrivée depuis « Générer des cartes ».
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!autoStart || opened.current) return;
+    opened.current = true;
+    setOpen(true);
   }, [autoStart]);
 
-  if (pending || (booting && !failure)) {
+  if (pending) {
     const pendingUi = (
       <div
         className={
@@ -199,25 +196,15 @@ export function GenerateCards({
               <p className="mt-0.5 text-[12.5px] text-ink-tertiary">{format.detail}</p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1 rounded-pill bg-surface-muted p-1">
-              <Step
-                label={`Moins de ${format.title}`}
-                sign="minus"
-                enabled={quota[format.kind] > PER_FORMAT_RANGE.min}
-                onPress={() => step(format.kind, -1)}
-              />
-              <span className="numeral min-w-7 text-center text-[15px] font-semibold text-ink">
-                {quota[format.kind]}
-              </span>
-              <Step
-                label={`Plus de ${format.title}`}
-                sign="plus"
-                /* Le plafond éteint le bouton plutôt que de rogner après validation : un chiffre
-                   corrigé dans le dos fait sauter le compteur sous le doigt. */
-                enabled={!capped && quota[format.kind] < PER_FORMAT_RANGE.max}
-                onPress={() => step(format.kind, 1)}
-              />
-            </div>
+            <CountStepper
+              size="sm"
+              value={quota[format.kind]}
+              min={PER_FORMAT_RANGE.min}
+              max={capped ? quota[format.kind] : PER_FORMAT_RANGE.max}
+              onChange={(next) => step(format.kind, next - quota[format.kind])}
+              minusLabel={`Moins de ${format.title}`}
+              plusLabel={`Plus de ${format.title}`}
+            />
           </div>
         ))}
       </div>
@@ -243,40 +230,6 @@ export function GenerateCards({
   );
 
   return floating ? <Float>{panel}</Float> : panel;
-}
-
-function Step({
-  label,
-  sign,
-  enabled,
-  onPress,
-}: {
-  label: string;
-  sign: "plus" | "minus";
-  enabled: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      disabled={!enabled}
-      onClick={onPress}
-      className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors duration-hover ${
-        enabled ? "bg-surface text-ink paper" : "text-ink-tertiary/40"
-      }`}
-    >
-      <svg aria-hidden viewBox="0 0 20 20" className="h-3.5 w-3.5">
-        <path
-          d={sign === "plus" ? "M10 4.5v11M4.5 10h11" : "M4.5 10h11"}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-        />
-      </svg>
-    </button>
-  );
 }
 
 function Failure({ message }: { message: string }) {

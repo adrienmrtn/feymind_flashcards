@@ -11,6 +11,8 @@ import {
   type CardState,
 } from "@micabo/core";
 
+import { CountStepper } from "@/components/app/CountStepper";
+
 export interface ReviewSetupCard {
   id: string;
   courseId: string | null;
@@ -35,11 +37,12 @@ export interface ReviewSetupExam {
 }
 
 /**
- * L'écran qui précède la session : le compte, et le curseur des cartes neuves.
+ * L'écran qui précède la session : ce qui est dû, et un bonus de cartes neuves.
  *
- * Le nombre de base est celui du rythme, moins ce qui a déjà été introduit
- * aujourd'hui - y compris depuis un cours. Le curseur ne change que **cette**
- * session.
+ * **Deux phrases, et elles ne veulent pas dire la même chose.** « Session du jour
+ * terminée » : plus aucune carte due, y compris hors rythme. S'il reste des
+ * neuves — un cours qu'on vient d'ajouter, par exemple — on le dit, et on propose
+ * « Réviser quand même ». Pas un curseur : un + / −.
  */
 export function ReviewSetup({
   courseId,
@@ -64,7 +67,7 @@ export function ReviewSetup({
   const dueNew = cards.filter(
     (card) => !card.isSuspended && card.state === "new" && new Date(card.dueDate) <= now,
   ).length;
-  const sliderMax = dueNew;
+  const rhythmDone = remaining <= 0;
   const [freshCap, setFreshCap] = useState(() => Math.min(remaining, dueNew));
 
   const deadlines = useMemo(
@@ -109,7 +112,7 @@ export function ReviewSetup({
   const again = queue.length - fresh;
   const cap = isPro ? queue.length : entitlement.FREE_TIER.cardsPerSession;
   const served = Math.min(queue.length, cap);
-  const heldBack = Math.max(0, dueNew - fresh);
+  const leftoverNew = Math.max(0, dueNew - fresh);
 
   const involved = courses.filter((course) =>
     queue.some((item) => {
@@ -126,7 +129,7 @@ export function ReviewSetup({
   if (queue.length === 0 && dueNew === 0) {
     return (
       <div className="mx-auto w-full max-w-page py-16 text-center">
-        <p className="text-[26px] font-bold text-ink">Tout est à jour.</p>
+        <p className="text-[26px] font-bold text-ink">Session du jour terminée.</p>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
           {cards.length === 0
             ? "Tu n'as pas encore de cartes ici. Elles se demandent depuis la fiche d'un cours, quand tu l'as lue."
@@ -151,11 +154,17 @@ export function ReviewSetup({
     );
   }
 
+  const dayDoneNoReviews = served === 0 && dueNew > 0;
+
   return (
     <div className="mx-auto w-full max-w-page py-6">
       <header className="rise">
         <p className="eyebrow text-ink-tertiary">
-          {courseId ? "⚡ Réviser ce cours" : "⚡ Ta session du jour"}
+          {dayDoneNoReviews
+            ? "Session du jour terminée"
+            : courseId
+              ? "⚡ Réviser ce cours"
+              : "⚡ Ta session du jour"}
         </p>
         <h1 className="mt-2.5 text-[32px] font-bold leading-tight text-ink">
           {served > 0 ? (
@@ -163,48 +172,55 @@ export function ReviewSetup({
               <span className="numeral">{served}</span> carte{served > 1 ? "s" : ""} à revoir
             </>
           ) : (
-            "Rythme du jour atteint"
+            <>
+              Il reste <span className="numeral">{dueNew}</span> carte
+              {dueNew > 1 ? "s" : ""} neuve{dueNew > 1 ? "s" : ""}
+            </>
           )}
         </h1>
+        {dayDoneNoReviews ? (
+          <p className="mt-3 max-w-[42ch] text-[15px] leading-relaxed text-ink-secondary">
+            Révisions et rythme d&apos;aujourd&apos;hui sont faits. Ces cartes neuves n&apos;y
+            rentrent pas — un cours qu&apos;on vient d&apos;ajouter, par exemple.
+          </p>
+        ) : null}
       </header>
 
-      <dl className="rise mt-8 grid grid-cols-2 gap-3" style={{ animationDelay: "80ms" }}>
-        <Tile value={again} label="à revoir" />
-        <Tile value={fresh} label={fresh === 1 ? "nouvelle" : "nouvelles"} accent />
-      </dl>
+      {served > 0 ? (
+        <dl className="rise mt-8 grid grid-cols-2 gap-3" style={{ animationDelay: "80ms" }}>
+          <Tile value={again} label="à revoir" />
+          <Tile value={fresh} label={fresh === 1 ? "nouvelle" : "nouvelles"} accent />
+        </dl>
+      ) : null}
 
-      {sliderMax > 0 ? (
+      {dueNew > 0 ? (
         <section className="rise mt-8" style={{ animationDelay: "140ms" }}>
-          <div className="flex items-baseline justify-between gap-3">
-            <label htmlFor="session-new-cards" className="text-[13px] text-ink-tertiary">
-              Cartes neuves de cette session
-            </label>
-            <p className="text-[13px] font-medium text-ink">
-              <span className="numeral">{Math.min(freshCap, sliderMax)}</span>
-              <span className="text-ink-tertiary">
-                {" "}
-                · {sliderMax} disponible{sliderMax > 1 ? "s" : ""}
-                {rhythmNew > 0 ? ` · ${rhythmNew} prévues par ton rythme` : ""}
-              </span>
-            </p>
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[14px] font-medium text-ink">
+                {rhythmDone ? "Réviser quand même" : "Cartes neuves, en plus"}
+              </p>
+              <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-tertiary">
+                {rhythmDone
+                  ? `${dueNew} disponible${dueNew > 1 ? "s" : ""} hors rythme.`
+                  : `${Math.min(remaining, dueNew)} prévue${Math.min(remaining, dueNew) > 1 ? "s" : ""} sur ${rhythmNew} du rythme · ${dueNew} disponible${dueNew > 1 ? "s" : ""}.`}
+                {introducedToday > 0
+                  ? ` ${introducedToday} déjà apprise${introducedToday > 1 ? "s" : ""} aujourd'hui.`
+                  : ""}
+                {leftoverNew > 0 && freshCap > 0
+                  ? ` ${leftoverNew} restent pour plus tard.`
+                  : ""}
+              </p>
+            </div>
+            <CountStepper
+              value={Math.min(freshCap, dueNew)}
+              min={0}
+              max={dueNew}
+              onChange={setFreshCap}
+              minusLabel="Une carte neuve de moins"
+              plusLabel="Une carte neuve de plus"
+            />
           </div>
-          <input
-            id="session-new-cards"
-            type="range"
-            min={0}
-            max={sliderMax}
-            value={Math.min(freshCap, sliderMax)}
-            onChange={(event) => setFreshCap(Number(event.target.value))}
-            className="mt-4 w-full accent-[var(--color-accent)]"
-          />
-          <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-tertiary">
-            {introducedToday > 0
-              ? `${introducedToday} déjà apprise${introducedToday > 1 ? "s" : ""} aujourd'hui. Le curseur ne change que cette session.`
-              : "Le maximum, c'est le nombre de cartes neuves encore disponibles."}
-            {heldBack > 0 && freshCap < dueNew
-              ? ` ${heldBack} neuve${heldBack > 1 ? "s" : ""} restent pour plus tard.`
-              : ""}
-          </p>
         </section>
       ) : null}
 
@@ -241,11 +257,13 @@ export function ReviewSetup({
             href={href as never}
             className="pressable shiny hover-tile flex h-14 w-full items-center justify-center rounded-button bg-ink text-[16px] font-semibold text-on-ink"
           >
-            ⚡ Commencer la session
+            {dayDoneNoReviews || (rhythmDone && again === 0)
+              ? `Réviser ${fresh} carte${fresh > 1 ? "s" : ""} neuve${fresh > 1 ? "s" : ""}`
+              : "⚡ Commencer la session"}
           </Link>
         ) : (
           <p className="text-center text-[14.5px] leading-relaxed text-ink-secondary">
-            Monte le curseur pour apprendre d&apos;autres cartes neuves, ou reviens demain.
+            Ajoute des cartes neuves avec + si tu veux en faire maintenant, ou reviens demain.
           </p>
         )}
 

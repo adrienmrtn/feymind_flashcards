@@ -122,7 +122,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
               Générer des cartes
             </span>
             <span className="mt-1 block text-[14px] text-ink-secondary">
-              Ouvre l&apos;espace des cartes : Micabo écrit le paquet à partir de la fiche.
+              Tu choisis le nombre et les formats — questions, trous, QCM.
             </span>
           </span>
         </Link>
