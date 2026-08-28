@@ -11,7 +11,7 @@ export function shouldOpenPaywall(input: {
   pending: boolean;
   dismissed: boolean;
   onHome: boolean;
-  /** Hors production : rejouer le court accueil, même pour un abonné. */
+  /** Rejouer le court accueil, même pour un abonné. */
   debug?: boolean;
 }): boolean {
   if (input.debug) return true;
