@@ -86,3 +86,25 @@ export async function loadReviewDatesSince(from: Date): Promise<Date[]> {
     (row) => new Date(row.reviewed_at),
   );
 }
+
+/**
+ * Les révisions d'une fenêtre, **carte par carte** — pour les barres de la carte d'examen.
+ */
+export async function loadReviewActivitySince(
+  from: Date,
+): Promise<{ cardId: string; at: Date }[]> {
+  const user = await currentUser();
+  if (!user) return [];
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("review_logs")
+    .select("card_id, reviewed_at")
+    .eq("user_id", user.id)
+    .gte("reviewed_at", from.toISOString())
+    .not("card_id", "is", null);
+
+  return ((data as { card_id: string | null; reviewed_at: string }[] | null) ?? [])
+    .filter((row) => row.card_id)
+    .map((row) => ({ cardId: row.card_id as string, at: new Date(row.reviewed_at) }));
+}

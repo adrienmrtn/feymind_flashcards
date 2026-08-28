@@ -92,6 +92,7 @@ export type CardSnapshotRow = Pick<
   | "id"
   | "course_id"
   | "front"
+  | "kind"
   | "is_suspended"
   | "state"
   | "due_date"
@@ -109,7 +110,7 @@ const CARD_COLUMNS =
   "id, course_id, front, back, hint, position, kind, choices, correct_choice_index, is_suspended, state, due_date, interval_days, ease_factor, repetitions, lapses, step_index, created_at, mask_x, mask_y, mask_width, mask_height, group_id, image_path, is_reversed";
 
 const CARD_SNAPSHOT_COLUMNS =
-  "id, course_id, front, is_suspended, state, due_date, position, created_at, interval_days, ease_factor, lapses";
+  "id, course_id, front, kind, is_suspended, state, due_date, position, created_at, interval_days, ease_factor, lapses";
 
 async function reader(): Promise<{ userId: string; token: string } | null> {
   const userId = await currentUserId();

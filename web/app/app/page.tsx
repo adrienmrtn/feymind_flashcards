@@ -2,23 +2,19 @@ import Link from "next/link";
 
 import {
   activeDeadlines,
+  addDays,
   buildQueue,
-  clampTargetScore,
   courseAccent,
-  dayDifference,
-  desiredGradeLabel,
-  examCountdownLabel,
-  examUrgency,
+  EXAM_CHART_PAST_DAYS,
   isDue,
   resolveEmoji,
   startOfDay,
-  addDays,
-  targetScoreFromIntensity,
   weekStrip,
   WEEK_STRIP_RADIUS,
-  type ExamIntensity,
+  type ExamInsight,
 } from "@micabo/core";
 
+import { ExamInsightCard } from "@/components/app/exams/ExamInsightCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardHeader, CardPanel, CardTitle } from "@/components/ui/card";
 import { FriendActions } from "@/components/app/FriendActions";
@@ -26,6 +22,7 @@ import { MobileAppCard } from "@/components/app/MobileAppCard";
 import { RefreshOnVisit } from "@/components/app/RefreshOnVisit";
 import { WeekRanking } from "@/components/app/WeekRanking";
 import { WeekStrip } from "@/components/app/WeekStrip";
+import { examInsightFromRow, insightCardsFromSnapshots } from "@/lib/exams/from-rows";
 import {
   listCardSnapshots,
   listCourses,
@@ -36,7 +33,7 @@ import {
   type ExamRow,
   type FriendRequestRow,
 } from "@/lib/data/courses";
-import { loadNewCardBudget, loadReviewDatesSince } from "@/lib/data/reviews";
+import { loadNewCardBudget, loadReviewActivitySince, loadReviewDatesSince } from "@/lib/data/reviews";
 import { listWeekReviewRanking } from "@/lib/data/social";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
@@ -54,23 +51,25 @@ export default async function DashboardPage() {
   const now = new Date();
   const today = startOfDay(now);
 
-  const [courses, cards, exams, friends, profile, budget, reviewDates, ranking] = await Promise.all([
-    listCourses(),
-    listCardSnapshots(),
-    listExams(),
-    listPendingFriendRequests(),
-    user
-      ? supabase
-          .from("profiles")
-          .select("display_name, country_code")
-          .eq("id", user.id)
-          .maybeSingle()
-          .then((result) => result.data)
-      : null,
-    loadNewCardBudget(),
-    loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
-    listWeekReviewRanking(),
-  ]);
+  const [courses, cards, exams, friends, profile, budget, reviewDates, reviews, ranking] =
+    await Promise.all([
+      listCourses(),
+      listCardSnapshots(),
+      listExams(),
+      listPendingFriendRequests(),
+      user
+        ? supabase
+            .from("profiles")
+            .select("display_name, country_code")
+            .eq("id", user.id)
+            .maybeSingle()
+            .then((result) => result.data)
+        : null,
+      loadNewCardBudget(),
+      loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
+      loadReviewActivitySince(addDays(today, -EXAM_CHART_PAST_DAYS)),
+      listWeekReviewRanking(),
+    ]);
 
   const week = weekStrip(
     cards.map((card) => ({
@@ -86,7 +85,7 @@ export default async function DashboardPage() {
   const queue = todayQueue(cards, exams, now, budget.remaining);
   const tasks = tasksFromQueue(queue, cards, courses);
   const dueOutsideRhythm = countDue(cards, now) - queue.length;
-  const upcoming = upcomingExams(exams, cards, today, profile?.country_code);
+  const upcoming = upcomingExamInsights(exams, cards, reviews, now, profile?.country_code);
   const greeting = greetingFor(now);
   const name = profile?.display_name?.trim().split(/\s+/)[0];
 
@@ -111,7 +110,7 @@ export default async function DashboardPage() {
         <MobileAppCard />
       </div>
 
-      <UpcomingExams exams={upcoming} />
+      <UpcomingExams next={upcoming[0] ?? null} others={Math.max(0, upcoming.length - 1)} />
 
       <WeekRanking rows={ranking} />
 
@@ -244,96 +243,48 @@ function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: numb
 }
 
 function UpcomingExams({
-  exams,
+  next,
+  others,
 }: {
-  exams: {
-    id: string;
-    name: string;
-    days: number;
-    grade: string;
-    progress: number;
-  }[];
+  next: ExamInsight | null;
+  others: number;
 }) {
   return (
-    <Card className="mt-8 rounded-group shadow-none">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-[15px] font-semibold text-ink">Prochains examens</CardTitle>
-        <CardAction>
-          <Button
-            variant="link"
-            size="sm"
-            className="h-auto px-0"
-            render={<Link href={"/app/examens" as never} />}
-          >
-            {exams.length > 0 ? "Voir" : "Ajouter"}
-          </Button>
-        </CardAction>
-      </CardHeader>
-      <CardPanel className="pt-0">
-        {exams.length === 0 ? (
-          <>
+    <section className="mt-8">
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <h2 className="text-[15px] font-semibold text-ink">Prochains examens</h2>
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto px-0"
+          render={<Link href={"/app/examens" as never} />}
+        >
+          {next ? "Voir" : "Ajouter"}
+        </Button>
+      </div>
+      {next ? (
+        <>
+          <ExamInsightCard insight={next} href={"/app/examens" as never} />
+          {others > 0 ? (
+            <p className="mt-3 text-[13px] text-ink-tertiary">
+              <Link href={"/app/examens" as never} className="underline-draw">
+                {others === 1 ? "1 autre examen" : `${others} autres examens`}
+              </Link>
+            </p>
+          ) : null}
+        </>
+      ) : (
+        <Card className="rounded-group shadow-none">
+          <CardPanel>
             <p className="text-[15px] font-medium text-ink">Aucun examen à venir</p>
             <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-secondary">
               Une date remet les cartes dans le bon ordre. Sans elle, la répétition
               espacée ignore le jour J.
             </p>
-          </>
-        ) : (
-          <ul className="divide-y divide-hairline">
-            {exams.map((exam) => {
-              const urgency = examUrgency(exam.days);
-              const tone =
-                urgency === "critical"
-                  ? "bg-negative-soft text-negative"
-                  : urgency === "soon"
-                    ? "bg-caution-soft text-caution"
-                    : urgency === "upcoming"
-                      ? "bg-info-soft text-info"
-                      : "bg-surface-muted text-ink-secondary";
-
-              return (
-                <li key={exam.id}>
-                  <Link
-                    href={"/app/examens" as never}
-                    className="flex items-center gap-4 py-3.5 first:pt-1 last:pb-0"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center gap-2">
-                        <span className="truncate text-[15px] font-medium text-ink">{exam.name}</span>
-                        <span
-                          className={`shrink-0 rounded-pill px-2 py-0.5 text-[11.5px] font-semibold ${tone}`}
-                        >
-                          {examCountdownLabel(exam.days)}
-                        </span>
-                      </span>
-                      <span className="mt-1.5 flex items-center gap-3 text-[13px] text-ink-tertiary">
-                        <span>
-                          Note souhaitée{" "}
-                          <span className="font-medium text-ink">{exam.grade}</span>
-                        </span>
-                        <span className="numeral">
-                          <span className="font-medium text-ink">{exam.progress} %</span>{" "}
-                          d&apos;avancée
-                        </span>
-                      </span>
-                      <span
-                        aria-hidden
-                        className="mt-2 block h-1.5 overflow-hidden rounded-pill bg-surface-muted"
-                      >
-                        <span
-                          className="block h-full rounded-pill bg-ink"
-                          style={{ width: `${exam.progress}%` }}
-                        />
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </CardPanel>
-    </Card>
+          </CardPanel>
+        </Card>
+      )}
+    </section>
   );
 }
 
@@ -460,45 +411,18 @@ function countDue(cards: CardSnapshotRow[], now: Date): number {
   ).length;
 }
 
-function upcomingExams(
+function upcomingExamInsights(
   exams: ExamRow[],
   cards: CardSnapshotRow[],
-  today: Date,
+  reviews: { cardId: string; at: Date }[],
+  now: Date,
   country?: string | null,
-) {
+): ExamInsight[] {
+  const snapshots = insightCardsFromSnapshots(cards);
   return exams
-    .map((exam) => {
-      const day = startOfDay(new Date(`${exam.exam_date}T12:00:00`));
-      return {
-        id: exam.id,
-        name: exam.name,
-        days: dayDifference(today, day),
-        grade: desiredGradeLabel(examTargetScore(exam), country),
-        progress: examProgressPct(exam, cards),
-      };
-    })
-    .filter((exam) => exam.days >= 0)
-    .sort((left, right) => left.days - right.days)
-    .slice(0, 5);
-}
-
-function examTargetScore(exam: ExamRow): number {
-  if (typeof exam.target_score === "number") return clampTargetScore(exam.target_score);
-  return targetScoreFromIntensity(asIntensity(exam.intensity));
-}
-
-function examProgressPct(exam: ExamRow, cards: CardSnapshotRow[]): number {
-  const ids = new Set(exam.course_ids ?? []);
-  const relevant = cards.filter(
-    (card) => card.course_id && ids.has(card.course_id) && !card.is_suspended,
-  );
-  if (relevant.length === 0) return 0;
-  const started = relevant.filter((card) => card.state !== "new").length;
-  return Math.round((started / relevant.length) * 100);
-}
-
-function asIntensity(value: string): ExamIntensity {
-  return value === "light" || value === "intense" || value === "standard" ? value : "standard";
+    .map((exam) => examInsightFromRow(exam, snapshots, reviews, { now, country }))
+    .filter((exam) => exam.daysRemaining >= 0)
+    .sort((left, right) => left.daysRemaining - right.daysRemaining);
 }
 
 function greetingFor(now: Date): string {
