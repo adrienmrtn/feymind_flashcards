@@ -49,9 +49,7 @@ export default async function ExamsPage() {
     <>
       <header>
         <h1 className="text-lg font-semibold tracking-tight text-foreground">Examens</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Une date remet les cartes dans le bon ordre.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Tes dates, tes cartes.</p>
       </header>
 
       <div>

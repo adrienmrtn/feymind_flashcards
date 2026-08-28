@@ -17,7 +17,7 @@ export function CoursesExplore({
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-lg font-semibold tracking-tight text-foreground">Cours</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Tes fiches, sur une étagère.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Tes fiches.</p>
         </div>
         {revise}
       </header>

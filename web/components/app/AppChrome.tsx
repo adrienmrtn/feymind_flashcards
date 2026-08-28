@@ -148,8 +148,8 @@ export function AppChrome({
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
-          <div className="mx-auto w-full max-w-6xl space-y-6">{children}</div>
+        <main className="flex-1 px-4 py-5 lg:px-8 lg:py-6">
+          <div className="mx-auto w-full max-w-6xl space-y-5">{children}</div>
         </main>
       </div>
     </div>
@@ -357,7 +357,7 @@ function ImportLink() {
   return (
     <Link
       href={"/app/importer" as never}
-      className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-sm font-medium transition-colors ${
+      className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-sm font-medium transition-[scale,background-color,border-color,color] duration-press ease-out-strong active:scale-[0.96] ${
         current
           ? "border-transparent bg-sidebar-accent text-sidebar-accent-foreground"
           : "border-input bg-background text-foreground hover:bg-sidebar-accent/70"

@@ -56,20 +56,13 @@ export default async function CoursesPage({
     <CoursesExplore
       revise={
         counts.total > 0 ? (
-          <Link
-            href="/app/reviser"
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground"
-          >
-            Réviser <span className="numeral">{counts.total}</span> carte
-            {counts.total > 1 ? "s" : ""}
-          </Link>
+          <Button render={<Link href={"/app/reviser" as never} />}>
+            Réviser <span className="numeral">{counts.total}</span>
+          </Button>
         ) : heldBack > 0 ? (
-          <Link
-            href="/app/reviser"
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm font-medium text-foreground"
-          >
-            Réviser quand même
-          </Link>
+          <Button variant="outline" render={<Link href={"/app/reviser" as never} />}>
+            Réviser encore
+          </Button>
         ) : null
       }
     >
@@ -97,10 +90,10 @@ function Shelf({
   return (
     <>
       {emptyReviews ? (
-        <p className="text-[14px] text-ink-tertiary">
+        <p className="text-[13px] text-muted-foreground">
           {heldBack > 0
-            ? `Session du jour terminée. Il reste ${heldBack} carte${heldBack > 1 ? "s" : ""} neuve${heldBack > 1 ? "s" : ""} hors rythme — un cours ajouté, par exemple.`
-            : "Session du jour terminée. Rien ne revient aujourd'hui."}
+            ? `C'est fait. ${heldBack} neuve${heldBack > 1 ? "s" : ""} hors rythme.`
+            : "C'est fait. Reviens demain."}
         </p>
       ) : null}
 
@@ -114,7 +107,7 @@ function Shelf({
               <Link
                 key={course.id}
                 href={`/app/c/${course.id}` as never}
-                className="relative flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs/5"
+                className="relative flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs/5 transition-[scale] duration-press ease-out-strong active:scale-[0.96]"
               >
                 {exam ? (
                   <span className="absolute right-3 top-3">
@@ -156,8 +149,8 @@ function Shelf({
 function EmptyShelf() {
   return (
     <EmptyState
-      title="Ton étagère est vide."
-      description="Dépose un polycopié : Micabo en tire la fiche, puis les cartes."
+      title="Aucun cours"
+      description="Importe un polycopié pour commencer."
       action={
         <Button render={<Link href="/app/importer" />}>Importer un cours</Button>
       }

@@ -289,10 +289,10 @@ struct CourseSheetView: View {
         if course.source.expectsSheet {
             MicaboEmptyState(
                 systemImage: "text.book.closed",
-                title: "Ce cours n'est pas encore fiché",
+                title: "Pas encore de fiche",
                 message: course.rawText.nilIfBlank == nil
-                    ? "Le texte d'origine n'a pas été conservé : réimporte le document pour en obtenir une fiche."
-                    : "Micabo a gardé le document. Il peut en écrire la fiche : le plan, les définitions et ce qu'il faut retenir.",
+                    ? "Réimporte le document."
+                    : "Micabo peut écrire la fiche.",
                 actionTitle: course.rawText.nilIfBlank == nil ? nil : "Ficher ce cours"
             ) {
                 Task { await writeSheet() }
@@ -301,8 +301,8 @@ struct CourseSheetView: View {
         } else {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
-                title: "Un paquet de cartes",
-                message: "Celui-ci n'a pas de fiche : il n'y avait pas de document derrière, seulement des choses à retenir.",
+                title: "Un paquet",
+                message: "Pas de fiche — seulement des cartes.",
                 actionTitle: "Voir les cartes"
             ) {
                 generatedCards = CourseCardsRoute(course: course)

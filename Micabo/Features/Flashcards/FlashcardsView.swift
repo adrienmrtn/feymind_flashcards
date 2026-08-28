@@ -315,12 +315,8 @@ struct FlashcardsView: View {
     }
 
     private var emptyMessage: String {
-        guard canGenerate else {
-            return "Ce paquet est nu. Écris ta première carte : un recto, un verso, et elle entre dans ta file du jour."
-        }
-        return course.source == .deck
-            ? "Micabo peut en écrire à partir du texte du paquet, et tu peux aussi en créer une à la main."
-            : "Micabo peut en écrire à partir de la fiche du cours, et tu peux aussi en créer une à la main."
+        guard canGenerate else { return "Écris ta première carte." }
+        return "Génère-les, ou écris-en une."
     }
 
     /// Ce que la rangée signale d'un coup d'œil : format, son, sens inverse.

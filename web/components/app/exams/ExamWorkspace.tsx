@@ -175,9 +175,7 @@ export function ExamWorkspace({
           </div>
         </section>
       ) : (
-        <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
-          La répétition espacée ignore le jour J. Une date remet les cartes dans le bon ordre.
-        </p>
+        <p className="mt-4 text-sm text-muted-foreground">Aucune date pour l&apos;instant.</p>
       )}
 
       {past.length > 0 ? (

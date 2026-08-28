@@ -17,6 +17,7 @@ import {
 } from "@micabo/core";
 
 import { VisibilityChoices } from "@/components/app/VisibilityChoices";
+import { Button } from "@/components/ui/button";
 import { importFromText, importFromYouTube } from "@/lib/actions/course";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
 import { readYouTubeInBrowser } from "@/lib/import/youtube";
@@ -170,7 +171,7 @@ export function ImportPanel({
           const file = event.dataTransfer.files[0];
           if (file) void handleFile(file);
         }}
-        className={`flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center transition-colors ${
+        className={`flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-10 text-center transition-colors ${
           dragging ? "border-foreground bg-surface-muted" : "border-border bg-card"
         }`}
       >
@@ -202,22 +203,18 @@ export function ImportPanel({
               />
             </svg>
 
-            <p className="mt-5 text-base font-semibold text-foreground">
+            <p className="mt-4 text-base font-semibold text-foreground">
               {dragging ? "Lâche-le ici." : "Dépose ton cours"}
             </p>
-            <p className="mx-auto mt-2 max-w-[46ch] text-[13.5px] leading-relaxed text-ink-tertiary">
-              PDF, Word, texte. Le fichier est lu{" "}
-              <strong className="font-semibold text-ink-secondary">dans cet onglet</strong> : seul
-              le texte qu&apos;on en extrait part au modèle.
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">PDF, Word ou texte.</p>
 
-            <button
+            <Button
               type="button"
+              className="mt-5"
               onClick={() => fileInput.current?.click()}
-              className="mt-6 inline-flex h-9 items-center rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground"
             >
               Choisir un fichier
-            </button>
+            </Button>
 
             {/* Les deux autres voies, au second rang : ce sont des cas. */}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[13.5px]">
@@ -300,10 +297,7 @@ export function ImportPanel({
             disabled={busy}
             className="mt-2 h-12 w-full rounded-button bg-surface-muted px-4 text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
           />
-          <p className="mt-3 text-[13px] leading-relaxed text-ink-tertiary">
-            Micabo lit les sous-titres, pas l&apos;image. Une vidéo sans sous-titres n&apos;a rien à
-            donner, et une vidéo de plus d&apos;une heure et demie est refusée.
-          </p>
+          <p className="mt-2 text-[13px] text-ink-tertiary">Sous-titres requis · 90 min max.</p>
 
           <div className="mt-5 flex justify-end">
             <Action
@@ -373,18 +367,9 @@ function Action({
   onPress: () => void;
 }) {
   return (
-    <button
-      type="button"
-      disabled={busy || !enabled}
-      onClick={onPress}
-      className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-medium ${
-        busy || !enabled
-          ? "cursor-not-allowed border-transparent bg-surface-sunken text-ink-tertiary"
-          : "border-primary bg-primary text-primary-foreground"
-      }`}
-    >
+    <Button type="button" disabled={busy || !enabled} onClick={onPress}>
       {busy ? "Micabo travaille" : "Écrire la fiche"}
-    </button>
+    </Button>
   );
 }
 

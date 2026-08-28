@@ -303,7 +303,7 @@ struct TodayView: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
 
-            Text("\(MicaboCopy.cards(heldBackNewCards)) neuves gardées pour les jours suivants, pour tenir ton rythme de \(DailyLoad.label(forMinutes: OnboardingPreferences.dailyMinutes)) par jour.")
+            Text("\(MicaboCopy.cards(heldBackNewCards)) neuves hors rythme.")
                 .font(MicaboFont.hanken(12, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .lineSpacing(1.5)
@@ -396,10 +396,7 @@ struct TodayView: View {
     }
 
     private var examEmptySubtitle: String {
-        guard !allCards.isEmpty else {
-            return "Dès que tu auras des cartes à replanifier"
-        }
-        return "Micabo replanifie tes révisions pour le jour J"
+        allCards.isEmpty ? "Quand tu auras des cartes" : "Ajouter une date"
     }
 
     private func examLine(_ exam: Exam) -> String {
@@ -513,8 +510,8 @@ struct TodayView: View {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
                 title: "Pas encore de cartes",
-                message: "Importe un cours : Micabo en tire tes premières cartes et te les repose au bon moment.",
-                actionTitle: "Importer un cours"
+                message: "Importe un cours pour commencer.",
+                actionTitle: "Importer"
             ) {
                 requestImport()
             }
@@ -545,47 +542,33 @@ struct TodayView: View {
     /// Le rythme est tenu, mais des cartes neuves attendent encore. On le dit,
     /// plutôt que d'afficher « Tout est à jour » alors qu'il reste à apprendre.
     private var rhythmReachedCard: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Rythme du jour atteint")
-                    .font(MicaboFont.hanken(19, weight: .bold))
-                    .foregroundStyle(MicaboColor.ink)
+        VStack(alignment: .leading, spacing: 10) {
+            Text("C'est fait")
+                .font(MicaboFont.hanken(19, weight: .bold))
+                .foregroundStyle(MicaboColor.ink)
 
-                Text("Tu as déjà appris tes \(DailyLoad.newCardsPerDay(dailyMinutes: OnboardingPreferences.dailyMinutes)) cartes neuves. Il en reste \(heldBackNewCards) pour plus tard — ou pour maintenant, si tu montes le curseur.")
-                    .font(MicaboFont.hanken(13.5, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            heldBackNote
+            Text("\(MicaboCopy.cards(heldBackNewCards)) neuves hors rythme.")
+                .font(MicaboFont.hanken(13.5, weight: .regular))
+                .foregroundStyle(MicaboColor.inkSecondary)
         }
-        .padding(18)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .micaboGroup()
     }
 
     private var doneState: some View {
-        VStack(spacing: MicaboSpacing.sm) {
-            Image(systemName: "checkmark")
-                .font(.system(size: 26, weight: .semibold))
-                .foregroundStyle(MicaboColor.positive)
-                .frame(width: 76, height: 76)
-                .background(MicaboColor.positiveSoft, in: Circle())
-
-            Text("Tout est à jour")
+        VStack(alignment: .leading, spacing: 6) {
+            Text("C'est fait")
                 .font(MicaboFont.hanken(19, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
-                .tracking(-0.3)
-                .padding(.top, MicaboSpacing.xxs)
 
-            Text("Aucune carte à réviser aujourd'hui. Reviens demain, ou prends de l'avance.")
+            Text("Reviens demain.")
                 .font(MicaboFont.body)
                 .foregroundStyle(MicaboColor.inkSecondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 300)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, MicaboSpacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .micaboGroup()
     }
 
     private var nextDueSummary: [(course: Course, label: String)] {

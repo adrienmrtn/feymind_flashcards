@@ -97,37 +97,34 @@ struct MicaboEmptyState: View {
     var action: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: MicaboSpacing.sm) {
+        VStack(spacing: 8) {
             Image(systemName: systemImage)
-                .font(.system(size: 26, weight: .regular))
-                .foregroundStyle(MicaboColor.accent.opacity(0.75))
-                .frame(width: 76, height: 76)
-                .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(MicaboColor.inkTertiary)
+                .frame(width: 48, height: 48)
+                .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
             Text(title)
-                .font(MicaboFont.hanken(19, weight: .bold))
+                .font(MicaboFont.hanken(17, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
-                .tracking(-0.3)
                 .multilineTextAlignment(.center)
-                .padding(.top, MicaboSpacing.xxs)
 
             Text(message)
-                .font(MicaboFont.body)
+                .font(MicaboFont.hanken(13.5, weight: .regular))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .multilineTextAlignment(.center)
-                .lineSpacing(2)
-                .frame(maxWidth: 300)
+                .frame(maxWidth: 280)
 
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
                     .buttonStyle(MicaboPrimaryButtonStyle())
-                    .padding(.top, MicaboSpacing.sm)
-                    .frame(maxWidth: 260)
+                    .padding(.top, 6)
+                    .frame(maxWidth: 240)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, MicaboSpacing.xl)
-        .padding(.horizontal, MicaboSpacing.lg)
+        .padding(.vertical, MicaboSpacing.md)
+        .padding(.horizontal, MicaboSpacing.md)
     }
 }
 
