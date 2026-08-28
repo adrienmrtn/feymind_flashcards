@@ -11,16 +11,16 @@ import { createClient } from "@/lib/supabase/server";
  * comptes web au premier écran - le pays - alors qu'ils venaient seulement
  * de se connecter.
  */
-export type ResumePath = "/commencer/pays" | "/app";
+export type ResumePath = "/commencer/bienvenue" | "/app";
 
 export async function resumePath(): Promise<ResumePath> {
   const jar = await cookies();
-  if (jar.get(ONBOARDING_REPLAY_COOKIE)?.value === "1") return "/commencer/pays";
+  if (jar.get(ONBOARDING_REPLAY_COOKIE)?.value === "1") return "/commencer/bienvenue";
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return user ? "/app" : "/commencer/pays";
+  return user ? "/app" : "/commencer/bienvenue";
 }

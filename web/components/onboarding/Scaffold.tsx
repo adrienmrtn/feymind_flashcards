@@ -10,13 +10,9 @@ import type { OnboardingPath } from "@/lib/onboarding/steps";
 /**
  * La charpente d'un écran de parcours.
  *
- * **Un écran, une question, aucun sous-titre.** Les lignes d'explication sous le titre ont été
- * retirées : sur un écran qui ne pose qu'une question, elles répètent le titre ou expliquent une
- * mécanique que la réponse suivante rend évidente. Ce qui reste tient debout tout seul.
- *
- * La colonne s'élargit sur un ordinateur (`640px` contre `560px`) et le titre grandit avec elle :
- * un tunnel dessiné pour un téléphone, servi tel quel au milieu d'un écran de portable, se lit
- * comme un site mobile encadré de vide.
+ * **Un écran, une question, aucun sous-titre.** La colonne tient dans la
+ * fenêtre : le contenu peut défiler **à l'intérieur**, le bouton reste visible
+ * sans qu'on ait à chercher le bas de page.
  */
 export function Scaffold({
   eyebrow,
@@ -33,11 +29,8 @@ export function Scaffold({
   footer: React.ReactNode;
 }) {
   return (
-    // Sur téléphone la colonne remplit l'écran et le bouton reste sous le pouce. Sur un
-    // ordinateur, le bloc reprend sa hauteur naturelle et se centre : étiré sur mille pixels de
-    // haut, un écran à une question laisse deux cents points de vide entre le titre et la réponse.
-    <div className="center-safe mx-auto flex min-h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[640px] flex-col px-screen pb-10 sm:pb-16">
-      <div className="flex items-baseline justify-between gap-4 pt-3 sm:pt-0">
+    <div className="mx-auto flex h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[640px] flex-col overflow-hidden px-screen pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="flex shrink-0 items-baseline justify-between gap-4 pt-2">
         {eyebrow ? <p className="eyebrow text-ink-tertiary">{eyebrow}</p> : <span />}
         {skip ? (
           <Link
@@ -49,21 +42,15 @@ export function Scaffold({
         ) : null}
       </div>
 
-      <h1 className="rise mt-4 text-[28px] font-bold leading-[1.12] tracking-tight-title text-ink sm:text-[34px]">
+      <h1 className="rise mt-2.5 shrink-0 text-[24px] font-bold leading-[1.12] tracking-tight-title text-ink sm:text-[30px]">
         {title}
       </h1>
 
-      {/* Le contenu prend la place qui reste sur téléphone, sa hauteur propre ailleurs. */}
-      <div
-        className="rise flex min-h-0 flex-1 flex-col justify-center py-9 sm:flex-none sm:py-10"
-        style={{ animationDelay: "90ms" }}
-      >
+      <div className="rise mt-4 min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {children}
       </div>
 
-      <div className="rise shrink-0" style={{ animationDelay: "150ms" }}>
-        {footer}
-      </div>
+      <div className="rise shrink-0 pt-3">{footer}</div>
     </div>
   );
 }
@@ -72,21 +59,19 @@ export function Scaffold({
  * Le bouton principal, **gris tant qu'on n'a pas répondu.**
  *
  * Il occupe sa place depuis le début, éteint : un bouton qui apparaît quand la réponse arrive fait
- * sauter la page au moment où le doigt s'approche.
+ * sauter la page au moment où le doigt s'approche. Pas de remplissage au survol : dans le tunnel,
+ * le geste est d'appuyer, pas de caresser.
  */
 export function ContinueButton({
   label = "Continuer",
   enabled,
   href,
   onPress,
-  shiny = false,
 }: {
   label?: string;
   enabled: boolean;
   href?: OnboardingPath;
   onPress?: () => void;
-  /** Le seul bouton du parcours qui brille : celui qui suit une animation qu'on a regardée sans rien toucher. */
-  shiny?: boolean;
 }) {
   const router = useRouter();
 
@@ -102,15 +87,13 @@ export function ContinueButton({
         if (href) router.push(href as Route);
       }}
       className={`h-14 w-full text-[16px] sm:h-14 sm:text-[16px] ${
-        enabled ? `btn-rise hover:bg-transparent${shiny ? " shiny" : ""}` : ""
+        enabled
+          ? "border-ink bg-ink text-on-ink hover:bg-ink hover:text-on-ink"
+          : ""
       }`}
     >
       {label}
-      <svg
-        aria-hidden
-        viewBox="0 0 20 20"
-        className="btn-arrow h-4 w-4"
-      >
+      <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4">
         <path
           d="M4 10h11M11 5l5 5-5 5"
           fill="none"
@@ -149,7 +132,7 @@ export function ChoiceRow({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-4 text-left transition-colors duration-hover ${
+      className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-3.5 text-left transition-colors duration-hover ${
         selected ? "bg-accent-soft" : "bg-surface paper"
       }`}
     >

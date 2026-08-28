@@ -12,33 +12,29 @@ import { createClient } from "@/lib/supabase/client";
  *
  * Porté depuis `PersonalizingStepView` : les réponses sont déjà là, rien ne se calcule
  * vraiment, mais un écran qui annonce qu'il construit un parcours puis disparaît en une
- * seconde n'a rien construit. Quatre phases, cinq secondes, un anneau qui fait son tour,
+ * seconde n'a rien construit. Quatre phases, onze secondes, un anneau qui fait son tour,
  * et c'est l'étudiant qui appuie pour continuer.
  *
  * S'il a déjà une session, le bouton ouvre l'app - le compte est derrière lui.
  */
 
-const DURATION_MS = 5000;
+const DURATION_MS = 11_000;
 
 const PHASES = [
   {
     headline: "On lit tes réponses.",
-    detail: "Ton objectif, tes matières, ton rythme : tout est déjà là.",
     step: "Lecture de tes réponses",
   },
   {
     headline: "On calibre tes intervalles.",
-    detail: "Les rappels s'ajustent au temps que tu t'accordes chaque jour.",
     step: "Calibrage de la répétition",
   },
   {
     headline: "On trace ton parcours.",
-    detail: "Matière par matière, du premier jour jusqu'à tes examens.",
     step: "Tracé de ton parcours",
   },
   {
     headline: "On prépare ta première session.",
-    detail: "Elle t'attendra dès l'ouverture de l'app.",
     step: "Préparation de ta session",
   },
 ] as const;
@@ -93,22 +89,19 @@ export default function PersonalizingStep() {
   }
 
   return (
-    <div className="center-safe mx-auto flex min-h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[560px] flex-col px-screen pb-10">
-      <div className="pt-3 sm:pt-0">
+    <div className="mx-auto flex h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[560px] flex-col overflow-hidden px-screen pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="shrink-0 pt-2">
         <p className="eyebrow text-accent">Personnalisation</p>
-        <h1 className="rise mt-3 min-h-[2.4em] text-[28px] font-bold leading-[1.12] tracking-tight-title text-ink sm:text-[34px]">
+        <h1 className="rise mt-2.5 text-[24px] font-bold leading-[1.12] tracking-tight-title text-ink sm:text-[30px]">
           {isDone ? "Ton parcours est prêt." : current.headline}
         </h1>
-        <p className="mt-2 min-h-[3em] text-[15px] leading-relaxed text-ink-secondary">
-          {isDone ? "Quand tu veux." : current.detail}
-        </p>
         {summary ? (
           <p className="mt-1 text-[13px] text-ink-tertiary">{summary}</p>
         ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center py-8">
-        <div className="relative flex h-[184px] w-[184px] items-center justify-center">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center py-4">
+        <div className="relative flex h-[148px] w-[148px] items-center justify-center">
           <svg
             viewBox="0 0 120 120"
             className="absolute inset-0 h-full w-full -rotate-90"
@@ -148,7 +141,7 @@ export default function PersonalizingStep() {
         </div>
       </div>
 
-      <div className="paper mb-6 divide-y divide-hairline overflow-hidden rounded-group bg-surface">
+      <div className="paper mb-4 shrink-0 divide-y divide-hairline overflow-hidden rounded-group bg-surface">
         {PHASES.map((phase, index) => {
           const done = index < completed || isDone;
           const active = !isDone && index === completed;
@@ -193,9 +186,9 @@ export default function PersonalizingStep() {
         type="button"
         disabled={!isDone || leaving}
         onClick={() => void continueOn()}
-        className={`pressable flex h-14 w-full items-center justify-center gap-2 rounded-button text-[16px] font-semibold transition-colors duration-hover ${
+        className={`flex h-14 w-full shrink-0 items-center justify-center gap-2 rounded-button text-[16px] font-semibold ${
           isDone
-            ? "shiny bg-ink text-on-ink"
+            ? "bg-ink text-on-ink"
             : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
         }`}
       >

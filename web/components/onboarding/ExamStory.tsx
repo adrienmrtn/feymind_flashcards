@@ -59,7 +59,7 @@ export function ExamStory({ onReady }: { onReady: () => void }) {
         ))}
       </ol>
 
-      <div className="relative min-h-[340px]">
+      <div className="relative min-h-[240px] sm:min-h-[300px]">
         {beat >= 1 ? <ExamCard story={story} /> : null}
 
         {beat >= 2 ? (

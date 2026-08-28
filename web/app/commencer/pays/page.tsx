@@ -52,7 +52,7 @@ function CountryStepBody() {
       title="Tu étudies dans quel pays ?"
       footer={<ContinueButton enabled={answered && ready} href="/commencer/niveau" />}
     >
-      <div className="max-h-[46svh] space-y-2 overflow-y-auto pr-1 sm:max-h-[52svh]">
+      <div className="space-y-2 pr-1">
         {listed.map((item) => (
           <Row
             key={item.code}

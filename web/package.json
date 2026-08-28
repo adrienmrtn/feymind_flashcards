@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit && pnpm --filter @micabo/core typecheck",
-    "test": "pnpm --filter @micabo/core test && vitest run lib/import/docx.test.ts lib/import/youtube.test.ts lib/onboarding/persist.test.ts lib/open-courses.test.ts",
+    "test": "pnpm --filter @micabo/core test && vitest run lib/import/docx.test.ts lib/import/youtube.test.ts lib/onboarding/persist.test.ts lib/onboarding/steps.test.ts lib/open-courses.test.ts",
     "verify": "pnpm test && pnpm typecheck && pnpm build"
   },
   "dependencies": {

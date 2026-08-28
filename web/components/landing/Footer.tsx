@@ -36,7 +36,7 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
                 ) : (
                   <>
                     <li>
-                      <Link href="/commencer/pays" className="underline-draw" data-print="bare">
+                      <Link href="/commencer" className="underline-draw" data-print="bare">
                         Commencer
                       </Link>
                     </li>
