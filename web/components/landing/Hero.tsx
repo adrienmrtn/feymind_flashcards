@@ -54,12 +54,8 @@ export function Hero({ signedIn = false }: { signedIn?: boolean }) {
           fiche, en tire les cartes, et les fait revenir juste avant que tu oublies.
         </p>
 
-        <div
-          className="rise mt-9 flex flex-col items-center gap-3"
-          style={{ animationDelay: "180ms" }}
-        >
+        <div className="rise mt-9" style={{ animationDelay: "180ms" }}>
           <StartButton signedIn={signedIn} />
-          <p className="text-[13px] text-ink-tertiary">Un cours gratuit. Sans carte bancaire.</p>
         </div>
       </div>
 

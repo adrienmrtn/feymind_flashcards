@@ -1,4 +1,6 @@
-import { entitlement, pricing } from "@micabo/core";
+import type { ReactNode } from "react";
+
+import { pricing } from "@micabo/core";
 
 import {
   Accordion,
@@ -11,23 +13,24 @@ import { Card, CardPanel } from "@/components/ui/card";
 /**
  * Les questions, et de vraies questions.
  *
- * Six, pas quinze. Une foire aux questions qui répond à des questions que personne ne pose est un
+ * Cinq, pas quinze. Une foire aux questions qui répond à des questions que personne ne pose est un
  * bloc de texte pour le référencement, et ça se lit. Celles-ci sont celles qu'on se pose
  * réellement devant un outil qui lit ses cours : est-ce que c'est privé, est-ce que ça marche
  * dans ma langue, est-ce que ça invente.
  */
 
-const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
+const QUESTIONS: { question: string; answer: ReactNode }[] = [
   {
     question: "Est-ce que mes cours sont privés ?",
     answer: (
       <>
-        Oui, et par construction : le cloisonnement est dans la base, pas dans l&apos;application.
-        Chaque requête est évaluée avec ton identité lue dans ton jeton, donc il n&apos;existe pas
-        de requête qui puisse demander les cours de quelqu&apos;un d&apos;autre. Tu peux choisir de
-        partager un cours - camarades de ton établissement, amis, ou personne - et le réglage se
-        décide <strong className="font-semibold text-ink">au moment de l&apos;import</strong>, pas
-        après coup.
+        Oui. Tes cours ne sont pas exposés dans un catalogue. Il n&apos;y a plus de « Découvrir »
+        où un inconnu tomberait sur tes fiches : c&apos;est entre toi et tes amis. Par défaut tu
+        les vois seul. Tu peux en partager un au moment de l&apos;import - avec tes amis, ou avec
+        personne - et le réglage se décide{" "}
+        <strong className="font-semibold text-ink">à cet instant</strong>, pas après coup. Le
+        cloisonnement est dans la base : chaque requête est évaluée avec ton identité, donc il
+        n&apos;existe pas de requête qui puisse demander les cours de quelqu&apos;un d&apos;autre.
       </>
     ),
   },
@@ -50,19 +53,7 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
         Oui. Le pays de scolarisation décide à la fois du système de référence - un cégep
         québécois, un A-Level britannique et une prépa française ne demandent pas la même
         rédaction - et de la langue dans laquelle la fiche est écrite. Le site, lui, est en
-        français pour l&apos;instant.
-      </>
-    ),
-  },
-  {
-    question: "Qu'est-ce qui est gratuit ?",
-    answer: (
-      <>
-        Un cours entier à importer, dont tu lis les{" "}
-        {Math.round(entitlement.FREE_TIER.readableSheetRatio * 100)} % de la fiche, et{" "}
-        {entitlement.FREE_TIER.cardsPerSession} cartes par session. Ce n&apos;est pas zéro
-        volontairement : un paywall posé avant le premier import demande de payer pour un produit
-        qu&apos;on n&apos;a pas vu tourner sur ses propres cours.
+        français pour l&apos;instant. iPhone et navigateur partagent ce réglage.
       </>
     ),
   },
@@ -71,8 +62,8 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
     answer: (
       <>
         Les {pricing.FREE_TRIAL_DAYS} jours d&apos;essai s&apos;arrêtent, et rien ne se prélève
-        sans que tu l&apos;aies décidé. Tes cours et tes cartes restent : ce qui se referme,
-        c&apos;est ce que Pro ouvrait, pas ce que tu as déjà écrit.
+        sans que tu l&apos;aies décidé. Tes cours et tes cartes restent, sur le site comme sur
+        iPhone : ce qui se referme, c&apos;est ce que Pro ouvrait, pas ce que tu as déjà écrit.
       </>
     ),
   },
@@ -83,7 +74,9 @@ const QUESTIONS: { question: string; answer: React.ReactNode }[] = [
         La répétition espacée de Micabo <em>est</em> celle d&apos;Anki - SM-2, avec ses réglages
         par défaut, ses quatre boutons et ses paliers d&apos;apprentissage. Ce que Micabo ajoute
         est ce qu&apos;Anki ne fait pas : écrire la fiche et les cartes à partir de ton cours, et
-        replanifier tout un paquet quand tu déclares la date d&apos;un examen.
+        replanifier tout un paquet quand tu déclares la date d&apos;un examen. iPhone et
+        navigateur tournent sur le même SM-2 : une carte révisée d&apos;un côté ne revient pas de
+        l&apos;autre le lendemain.
       </>
     ),
   },

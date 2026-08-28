@@ -5,6 +5,7 @@ import { ClosingWash } from "@/components/landing/ClosingWash";
 import { ExamMode } from "@/components/landing/ExamMode";
 import { Footer } from "@/components/landing/Footer";
 import { Hero } from "@/components/landing/Hero";
+import { IosAlso } from "@/components/landing/IosAlso";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Questions } from "@/components/landing/Questions";
 import { RetentionChart } from "@/components/landing/RetentionChart";
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
 /**
  * La vitrine. Elle montre le produit. Elle ne pose aucune question.
  *
- * Elle se lit d'un seul défilement : le document devient une fiche, puis des cartes.
+ * Elle se lit d'un seul défilement : le document devient une fiche, des cartes, puis un examen.
  *
  * Un lien de confirmation qui retombe ici (Site URL) n'y reste pas : s'il y a un code,
  * on reprend le callback. Une session déjà ouverte laisse la vitrine : le bouton
@@ -64,6 +65,12 @@ export default async function LandingPage({
         >
           <RetentionChart />
         </Section>
+
+        <section className="mx-auto mt-28 max-w-page px-screen sm:mt-36">
+          <Reveal>
+            <IosAlso />
+          </Reveal>
+        </section>
 
         <Section
           eyebrow="Mode examen"

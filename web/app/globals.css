@@ -519,13 +519,13 @@ video {
 /* --------------------------------------------------------------------------
    La transformation du cours
 
-   Deux places, trois objets : au départ le document et la fiche, à l'arrivée la
-   fiche et les cartes. Le défilement ne pilote que transform + opacity. Sur mobile
-   le trajet se fait verticalement ; à partir de `sm`, horizontalement.
+   Deux places, quatre objets : cours | fiche, puis fiche | cartes, puis
+   cartes | examen. `--slot` est la place de chaque objet (0 à gauche / en haut,
+   1 à droite / en bas). Le défilement ne pilote que transform + opacity.
    -------------------------------------------------------------------------- */
 
 .transformation-scroll {
-  height: 190svh;
+  height: 280svh;
 }
 
 .transformation-sticky {
@@ -545,33 +545,15 @@ video {
   min-height: 560px;
 }
 
-.transformation-course,
-.transformation-sheet,
-.transformation-cards {
+.transformation-panel {
   position: absolute;
+  top: 0;
   left: 50%;
   width: min(100%, 340px);
   height: 252px;
   translate: -50% 0;
+  transform: translateY(calc(var(--slot) * 308px));
   will-change: transform, opacity;
-}
-
-.transformation-course {
-  top: 0;
-  opacity: var(--transformation-inverse);
-  transform: translateY(calc(var(--transformation-progress) * -54px));
-}
-
-.transformation-sheet {
-  top: 308px;
-  z-index: 2;
-  transform: translateY(calc(var(--transformation-progress) * -308px));
-}
-
-.transformation-cards {
-  top: 308px;
-  opacity: var(--transformation-progress);
-  transform: translateY(calc(var(--transformation-inverse) * 58px));
 }
 
 .transformation-arrow {
@@ -593,7 +575,7 @@ video {
 
 @media (min-width: 640px) {
   .transformation-scroll {
-    height: 205svh;
+    height: 300svh;
   }
 
   .transformation-sticky {
@@ -608,30 +590,14 @@ video {
     min-height: 0;
   }
 
-  .transformation-course,
-  .transformation-sheet,
-  .transformation-cards {
-    top: 0;
-    left: auto;
+  .transformation-panel {
+    left: 0;
     width: 42%;
     max-width: none;
     height: 420px;
     translate: none;
-  }
-
-  .transformation-course {
-    left: 0;
-    transform: translateX(calc(var(--transformation-progress) * -18%));
-  }
-
-  .transformation-sheet {
-    left: 58%;
-    transform: translateX(calc(var(--transformation-progress) * -138.095%));
-  }
-
-  .transformation-cards {
-    left: 58%;
-    transform: translateX(calc(var(--transformation-inverse) * 18%));
+    /* 58% de scène / 42% de panneau = un cran de 138.095% de l'objet. */
+    transform: translateX(calc(var(--slot) * 138.095%));
   }
 
   .transformation-arrow {
@@ -641,23 +607,50 @@ video {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .transformation-course,
-  .transformation-sheet,
-  .transformation-cards {
-    transform: none;
-  }
+/* --------------------------------------------------------------------------
+   Les formats acceptés, en cases assez larges pour un vrai exemple.
+   -------------------------------------------------------------------------- */
 
-  .transformation-sheet {
-    top: calc(308px * var(--transformation-inverse));
-  }
+.source-tile {
+  width: 26.5rem;
+  flex-shrink: 0;
+}
 
-  @media (min-width: 640px) {
-    .transformation-sheet {
-      top: 0;
-      left: calc(58% * var(--transformation-inverse));
-    }
-  }
+.source-tile-frame {
+  position: relative;
+  height: 15.5rem;
+  overflow: hidden;
+  border-radius: var(--radius-group);
+  background: var(--color-surface);
+  box-shadow: 0 0 0 1px oklch(0 0 0 / 0.1);
+}
+
+.source-tile-image {
+  display: block;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.source-tile-placeholder {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-surface-muted);
+  background-image: repeating-linear-gradient(
+    -12deg,
+    transparent,
+    transparent 10px,
+    color-mix(in oklch, var(--color-ink) 3.5%, transparent) 10px,
+    color-mix(in oklch, var(--color-ink) 3.5%, transparent) 11px
+  );
+}
+
+.ios-also-stage {
+  width: min(42%, 13.5rem);
+  min-height: 14rem;
 }
 
 @keyframes micabo-marquee {
@@ -670,7 +663,7 @@ video {
 }
 
 @utility marquee-track {
-  animation: micabo-marquee 34s linear infinite;
+  animation: micabo-marquee 56s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
