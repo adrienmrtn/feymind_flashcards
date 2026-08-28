@@ -266,13 +266,20 @@ final class CloudSync {
             ((try? context.fetch(FetchDescriptor<Flashcard>())) ?? []).map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
-        let remoteLogs = try await database.fetch(
-            ReviewLogRecord.self,
-            from: CloudTable.reviewLogs,
-            updatedSince: since,
-            sinceColumn: "reviewed_at",
-            filters: [mine]
-        )
+        var logCursor = since
+        var remoteLogs: [ReviewLogRecord] = []
+        while true {
+            let batch = try await database.fetch(
+                ReviewLogRecord.self,
+                from: CloudTable.reviewLogs,
+                updatedSince: logCursor,
+                sinceColumn: "reviewed_at",
+                filters: [mine]
+            )
+            remoteLogs.append(contentsOf: batch)
+            guard let last = batch.last, batch.count == 1_000, remoteLogs.count < 10_000 else { break }
+            logCursor = last.reviewed_at
+        }
         let knownLogIDs = Set(cardsForLogs.values.flatMap { $0.logs ?? [] }.map(\.id))
         for remote in remoteLogs {
             guard !knownLogIDs.contains(remote.id),
