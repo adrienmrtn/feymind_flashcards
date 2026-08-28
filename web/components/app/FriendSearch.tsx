@@ -55,7 +55,7 @@ export function FriendSearch() {
       </div>
 
       {results.length > 0 ? (
-        <ul className="paper mt-3 divide-y divide-hairline overflow-hidden rounded-group bg-surface">
+        <ul className="mt-3 divide-y divide-hairline overflow-hidden rounded-2xl border border-border bg-card">
           {results.map((person) => (
             <li key={person.id} className="hover-row flex items-center gap-3 px-5 py-3.5">
               <Link href={`/app/u/${person.username}` as never} className="min-w-0 flex-1">

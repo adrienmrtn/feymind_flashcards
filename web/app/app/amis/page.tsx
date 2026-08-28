@@ -18,10 +18,10 @@ export default async function FriendsPage() {
   return (
     <div className="mx-auto max-w-[560px]">
       <header>
-        <p className="eyebrow text-ink-tertiary">
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Amis</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           {graph.me ? displayUsername(graph.me.username) : "Ton compte"}
         </p>
-        <h1 className="mt-2 text-[32px] font-bold leading-tight text-ink">Amis</h1>
       </header>
 
       <div className="mt-8 space-y-8">

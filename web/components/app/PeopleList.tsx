@@ -17,7 +17,7 @@ export function PeopleList({
   return (
     <section>
       <p className="eyebrow mb-3 text-ink-tertiary">{caption}</p>
-      <ul className="paper divide-y divide-hairline overflow-hidden rounded-group bg-surface">
+      <ul className="divide-y divide-hairline overflow-hidden rounded-2xl border border-border bg-card">
         {people.map((person) => (
           <li key={person.id} className="hover-row flex items-center gap-3 px-5 py-3.5">
             <Link href={`/app/u/${person.username}` as never} className="min-w-0 flex-1">

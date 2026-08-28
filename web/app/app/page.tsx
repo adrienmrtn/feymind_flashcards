@@ -93,15 +93,15 @@ export default async function DashboardPage() {
     <>
       <RefreshOnVisit />
       <header>
-        <p className="eyebrow text-ink-tertiary">{greeting}</p>
-        <h1 className="mt-2 text-[32px] font-bold leading-tight text-ink">
-          {name ? `${name}.` : "Tableau de bord"}
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          {name ? name : "Tableau de bord"}
         </h1>
+        <p className="mt-1 text-sm text-muted-foreground">{greeting}</p>
       </header>
 
       <WeekStrip days={week} />
 
-      <div className="mt-8 grid items-stretch gap-4 lg:grid-cols-2">
+      <div className="grid items-stretch gap-4 lg:grid-cols-2">
         <TodayTasks
           tasks={tasks}
           cardCount={cards.length}
@@ -114,9 +114,7 @@ export default async function DashboardPage() {
 
       <WeekRanking rows={ranking} />
 
-      <div className="mt-8">
-        <FriendsCard requests={friends} />
-      </div>
+      <FriendsCard requests={friends} />
     </>
   );
 }
@@ -131,7 +129,7 @@ function TodayTasks({
   heldBack: number;
 }) {
   return (
-    <Card className="h-full rounded-group shadow-none">
+    <Card className="h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-[15px] font-semibold text-ink">Tâches du jour</CardTitle>
       </CardHeader>
@@ -250,7 +248,7 @@ function UpcomingExams({
   others: number;
 }) {
   return (
-    <section className="mt-8">
+    <section>
       <div className="mb-3 flex items-end justify-between gap-3">
         <h2 className="text-[15px] font-semibold text-ink">Prochains examens</h2>
         <Button
@@ -274,7 +272,7 @@ function UpcomingExams({
           ) : null}
         </>
       ) : (
-        <Card className="rounded-group shadow-none">
+        <Card>
           <CardPanel>
             <p className="text-[15px] font-medium text-ink">Aucun examen à venir</p>
             <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-secondary">
@@ -290,7 +288,7 @@ function UpcomingExams({
 
 function FriendsCard({ requests }: { requests: FriendRequestRow[] }) {
   return (
-    <Card className="rounded-group shadow-none">
+    <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-[15px] font-semibold text-ink">Amis</CardTitle>
         <CardAction>

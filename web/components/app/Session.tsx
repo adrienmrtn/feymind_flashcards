@@ -208,7 +208,7 @@ export function Session({
       </div>
 
       <div className="flex flex-1 flex-col justify-center py-8">
-        <div className="paper hover-tile rounded-group bg-surface p-7">
+        <div className="rounded-2xl border border-border bg-card p-7">
           {card.courseTitle || card.exam ? (
             <div className="flex items-start justify-between gap-3">
               {card.courseTitle ? (
@@ -327,7 +327,7 @@ export function Session({
           <button
             type="button"
             onClick={() => setRevealed(true)}
-            className="pressable shiny hover-tile h-14 w-full rounded-button bg-ink text-[16px] font-semibold text-on-ink"
+            className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-primary bg-primary text-sm font-medium text-primary-foreground"
           >
             Voir la réponse
             <kbd className="ml-2.5 rounded-[5px] bg-white/15 px-2 py-0.5 text-[11px] font-medium">

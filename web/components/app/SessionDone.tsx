@@ -38,8 +38,6 @@ const RATING_BAR: Record<ReviewRating, string> = {
   [ReviewRating.easy]: "bg-accent",
 };
 
-const BURST = ["🎉", "✨", "📈", "🧠", "⚡", "🎯"];
-
 export function SessionDone({
   tally,
   minutes,
@@ -69,31 +67,8 @@ export function SessionDone({
   }, []);
 
   return (
-    <div className="relative mx-auto w-full max-w-page overflow-hidden py-10 text-center">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-28">
-        {BURST.map((emoji, index) => (
-          <span
-            key={emoji}
-            className="emoji-pop emoji absolute text-[22px]"
-            style={{
-              left: `${8 + index * 16}%`,
-              top: index % 2 === 0 ? "8px" : "28px",
-              animationDelay: `${80 + index * 70}ms`,
-            }}
-          >
-            {emoji}
-          </span>
-        ))}
-      </div>
-
-      <p
-        className="emoji-pop emoji mt-8 text-[42px]"
-        aria-hidden
-        style={{ animationDelay: "40ms" }}
-      >
-        {capped ? "⏸️" : "🎉"}
-      </p>
-      <h1 className="rise mt-3 text-[28px] font-bold text-ink" style={{ animationDelay: "80ms" }}>
+    <div className="relative mx-auto w-full max-w-page py-6 text-left">
+      <h1 className="text-lg font-semibold tracking-tight text-foreground">
         {capped
           ? "C'est tout pour aujourd'hui."
           : leftoverNew > 0
@@ -132,8 +107,8 @@ export function SessionDone({
       {tally.ratings.length > 0 ? (
         <>
           <section className="rise mt-10 text-left" style={{ animationDelay: "180ms" }}>
-            <p className="eyebrow mb-3 text-ink-tertiary">📈 La session</p>
-            <div className="paper flex h-28 items-end gap-1 rounded-group bg-surface px-4 pb-3 pt-4">
+            <p className="mb-3 text-[13px] font-medium text-muted-foreground">La session</p>
+            <div className="flex h-28 items-end gap-1 rounded-2xl border border-border bg-card px-4 pb-3 pt-4">
               {tally.ratings.map((rating, index) => (
                 <div
                   key={`${rating}-${index}`}
@@ -152,8 +127,8 @@ export function SessionDone({
           </section>
 
           <section className="rise mt-8 text-left" style={{ animationDelay: "260ms" }}>
-            <p className="eyebrow mb-3 text-ink-tertiary">🎯 Tes notes</p>
-            <div className="paper rounded-group bg-surface px-5 py-5">
+            <p className="mb-3 text-[13px] font-medium text-muted-foreground">Tes notes</p>
+            <div className="rounded-2xl border border-border bg-card px-5 py-5">
               <div className="flex h-36 items-end gap-3">
                 {counts.map((item, index) => (
                   <div key={item.rating} className="flex min-w-0 flex-1 flex-col items-center gap-2">
@@ -183,9 +158,9 @@ export function SessionDone({
       ) : null}
 
       <dl className="rise mt-8 grid grid-cols-3 gap-3" style={{ animationDelay: "340ms" }}>
-        <Tile emoji="🌱" value={tally.graduated} label="apprises" />
-        <Tile emoji="🎯" value={`${accuracy} %`} label="de réussite" />
-        <Tile emoji="⏱️" value={minutes} label="min" />
+        <Tile value={tally.graduated} label="apprises" />
+        <Tile value={`${accuracy} %`} label="de réussite" />
+        <Tile value={minutes} label="min" />
       </dl>
 
       <div className="rise mt-10 flex flex-col items-center gap-3" style={{ animationDelay: "420ms" }}>
@@ -196,7 +171,7 @@ export function SessionDone({
               router.push("/app/reviser");
               router.refresh();
             }}
-            className="pressable shiny hover-tile inline-flex rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
+            className="inline-flex h-9 items-center rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground"
           >
             Réviser quand même
           </button>
@@ -210,23 +185,20 @@ export function SessionDone({
           className={
             leftoverNew > 0 && !capped
               ? "text-[14px] font-medium text-ink-tertiary underline-draw"
-              : "pressable shiny hover-tile inline-flex rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
+              : "inline-flex h-9 items-center rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground"
           }
         >
-          🏠 Retour à l&apos;accueil
+          Retour à l&apos;accueil
         </button>
       </div>
     </div>
   );
 }
 
-function Tile({ emoji, value, label }: { emoji: string; value: string | number; label: string }) {
+function Tile({ value, label }: { value: string | number; label: string }) {
   return (
-    <div className="paper hover-tile rounded-group bg-surface py-5">
-      <p className="text-[18px]" aria-hidden>
-        {emoji}
-      </p>
-      <dd className="numeral mt-1 text-[26px] font-bold text-ink">{value}</dd>
+    <div className="rounded-2xl border border-border bg-card px-3 py-5 text-center">
+      <dd className="numeral text-[26px] font-semibold text-ink">{value}</dd>
       <dt className="mt-1 text-[12px] text-ink-tertiary">{label}</dt>
     </div>
   );

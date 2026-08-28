@@ -26,9 +26,8 @@ export function ReviewCta({
         <Link
           href={href as never}
           data-print="hide"
-          className="pressable shiny fixed right-4 bottom-32 z-30 flex h-14 items-center gap-2.5 rounded-button bg-ink px-5 text-[15px] font-semibold text-on-ink shadow-floating lg:right-8 lg:bottom-8"
+          className="fixed right-4 bottom-6 z-30 inline-flex h-9 items-center gap-2 rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground shadow-xs lg:right-8"
         >
-          <span aria-hidden>⚡</span>
           {title}
         </Link>
       </Float>
@@ -38,17 +37,11 @@ export function ReviewCta({
   return (
     <Link
       href={href as never}
-      className="pressable flex min-w-[240px] items-center gap-3.5 rounded-group bg-ink px-5 py-4 text-on-ink"
+      className="flex min-w-[240px] items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4"
     >
-      <span
-        aria-hidden
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-tile bg-white/10 text-[22px]"
-      >
-        ⚡
-      </span>
       <span className="min-w-0">
-        <span className="block text-[16px] font-bold leading-tight">{title}</span>
-        <span className="mt-0.5 block text-[13px] text-on-ink-muted">
+        <span className="block text-[15px] font-semibold leading-tight text-foreground">{title}</span>
+        <span className="mt-0.5 block text-[13px] text-muted-foreground">
           {detail ?? "Les cartes dues, maintenant."}
         </span>
       </span>

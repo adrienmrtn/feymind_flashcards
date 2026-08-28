@@ -48,10 +48,13 @@ export default async function ExamsPage() {
   return (
     <>
       <header>
-        <h1 className="text-[32px] font-bold leading-tight text-ink">📅 Examens</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Examens</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Une date remet les cartes dans le bon ordre.
+        </p>
       </header>
 
-      <div className="mt-8">
+      <div>
         <ExamWorkspace
           countryCode={profile?.country_code}
           insights={insights}

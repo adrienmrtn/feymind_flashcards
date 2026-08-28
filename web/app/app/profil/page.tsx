@@ -99,17 +99,18 @@ export default async function ProfilePage() {
 
   return (
     <div className="profile-page">
-      <header className="relative pt-4 text-center">
+      <header className="flex items-center gap-4">
         <span
           aria-hidden
-          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white text-[22px] font-semibold text-ink shadow-paper"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-[15px] font-semibold text-sidebar-accent-foreground"
         >
           {name.trim().charAt(0).toUpperCase() || "?"}
         </span>
-        <h1 className="mt-5 truncate text-[32px] font-bold leading-tight tracking-tight-title text-ink">
+        <div className="min-w-0">
+        <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">
           {name}
         </h1>
-        <p className="mt-2 flex flex-wrap items-center justify-center gap-2 text-[14px] text-ink-secondary">
+        <p className="mt-2 flex flex-wrap items-center justify-start gap-2 text-[14px] text-ink-secondary">
           {handle ? <span className="font-medium text-ink">@{handle}</span> : null}
           {handle ? <span className="text-ink-tertiary">·</span> : null}
           <span className="inline-flex items-center gap-1.5">
@@ -123,9 +124,10 @@ export default async function ProfilePage() {
             </>
           ) : null}
         </p>
+        </div>
       </header>
 
-      <section className="saas-card relative mt-10 grid overflow-hidden sm:grid-cols-2">
+      <section className="saas-card relative mt-6 grid overflow-hidden sm:grid-cols-2">
         <div className="px-7 py-7">
           <p className="text-[13px] text-ink-tertiary">Série</p>
           <p className="numeral mt-3 text-[44px] font-bold leading-none tracking-display text-ink">

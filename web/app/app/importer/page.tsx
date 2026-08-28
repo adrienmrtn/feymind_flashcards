@@ -32,10 +32,8 @@ export default async function ImportPage() {
   return (
     <>
       <header>
-        <p className="eyebrow text-ink-tertiary">Nouveau cours</p>
-        <h1 className="mt-2 text-[32px] font-bold leading-tight text-ink">
-          Qu&apos;est-ce qu&apos;on fiche ?
-        </h1>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">Importer</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Un fichier, une fiche.</p>
       </header>
 
       <ImportPanel initialLength={initialLength} />

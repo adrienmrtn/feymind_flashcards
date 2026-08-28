@@ -44,7 +44,7 @@ export function ExamCalendar({
   const label = month.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 
   return (
-    <div className="paper rounded-group bg-surface p-4 sm:p-5">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs/5 sm:p-5">
       <CalendarHeader label={label} month={month} onMonth={onMonth} />
 
       <div className="grid grid-cols-7 gap-1 overflow-hidden">

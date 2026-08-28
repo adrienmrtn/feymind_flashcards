@@ -29,7 +29,7 @@ export function ExamInsightCard({
       <Link
         href={href}
         aria-label={label}
-        className="hover-tile paper block rounded-group bg-surface p-5 text-left"
+        className="block rounded-2xl border border-border bg-card p-5 text-left shadow-xs/5"
       >
         {inner}
       </Link>
@@ -42,14 +42,14 @@ export function ExamInsightCard({
         type="button"
         onClick={onClick}
         aria-label={label}
-        className="hover-tile paper w-full rounded-group bg-surface p-5 text-left"
+        className="w-full rounded-2xl border border-border bg-card p-5 text-left shadow-xs/5"
       >
         {inner}
       </button>
     );
   }
 
-  return <article className="paper rounded-group bg-surface p-5">{inner}</article>;
+  return <article className="rounded-2xl border border-border bg-card p-5 shadow-xs/5">{inner}</article>;
 }
 
 function InsightBody({ insight }: { insight: ExamInsight }) {

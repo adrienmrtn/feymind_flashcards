@@ -1,60 +1,46 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AppNav } from "@/components/app/AppNav";
-import { PageEnter } from "@/components/app/PageEnter";
+import { AppChrome } from "@/components/app/AppChrome";
 import { PaywallHost } from "@/components/app/PaywallFlow";
 import { entitlement } from "@micabo/core";
 
 import { readEntitlement } from "@/lib/data/entitlement";
 import { currentUser } from "@/lib/data/user";
+import { createClient } from "@/lib/supabase/server";
 
 /**
- * La charpente de l'app web : **une barre latérale, pas trois onglets.**
+ * La charpente de l'app : le chrome de micabo OS.
  *
- * L'iPhone a trois onglets avec Réviser au milieu, parce que c'est là que le pouce tombe et qu'on
- * sort son téléphone dans une file d'attente. On s'assied devant un écran pour **travailler** : la
- * navigation part donc sur le côté, elle est toujours visible, et **Accueil est l'écran
- * d'ouverture** - examen, cartes du jour, derniers cours. L'étagère vit sous Cours.
- *
- * La porte est fermée ici et pas dans chaque page : une redirection oubliée sur un seul écran est
- * une fuite, et le cloisonnement de Postgres rattraperait les données mais pas la page vide qu'on
- * aurait montrée.
+ * Sidebar, en-tête, page. Le compte se reconnaît en bas à gauche.
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser();
   if (!user) redirect("/commencer/compte?suite=%2Fapp");
 
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name, username")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const userName =
+    profile?.display_name?.trim() ||
+    (profile?.username ? `@${profile.username}` : user.email?.split("@")[0] || "Compte");
+  const userInitial = userName.replace(/^@/, "").charAt(0).toUpperCase() || "M";
+
   return (
-    <div className="app-shell relative min-h-svh bg-canvas lg:flex">
-      <AppNav />
-
-      <main className="relative min-w-0 flex-1 pb-32 lg:pb-0">
-        <div className="mx-auto w-full max-w-[1400px] px-5 py-8 lg:px-10 lg:py-10">
-          <PageEnter>{children}</PageEnter>
-        </div>
-      </main>
-
+    <AppChrome userName={userName} userInitial={userInitial}>
+      {children}
       <Suspense fallback={null}>
         <PaywallGate />
       </Suspense>
-    </div>
+    </AppChrome>
   );
 }
 
 async function PaywallGate() {
   const right = await readEntitlement();
   return <PaywallHost isPaid={entitlement.isPaid(right)} />;
-}
-
-/** Le pied de page de l'app, pour les liens qui n'ont pas leur place dans la navigation. */
-export function AppFooter() {
-  return (
-    <p className="mt-16 text-[12.5px] text-ink-tertiary" data-print="hide">
-      <Link href="/" className="underline-draw">
-        Le site
-      </Link>
-    </p>
-  );
 }

@@ -251,3 +251,24 @@ export function CardFooter({
 }
 
 export { CardPanel as CardContent };
+
+/** Bloc d'état vide : le même gabarit que micabo OS. */
+export function EmptyState({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center md:py-20">
+      <p className="text-base font-semibold text-foreground">{title}</p>
+      {description ? (
+        <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
+      ) : null}
+      {action ? <div className="mt-5">{action}</div> : null}
+    </div>
+  );
+}

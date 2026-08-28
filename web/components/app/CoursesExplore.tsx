@@ -14,10 +14,10 @@ export function CoursesExplore({
 }) {
   return (
     <>
-      <header className="flex flex-wrap items-end justify-between gap-4">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="eyebrow text-ink-tertiary">📚 Ton étagère</p>
-          <h1 className="mt-2 text-[32px] font-bold leading-tight text-ink">Cours</h1>
+          <h1 className="text-lg font-semibold tracking-tight text-foreground">Cours</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Tes fiches, sur une étagère.</p>
         </div>
         {revise}
       </header>

@@ -86,8 +86,8 @@ export function GenerateCards({
       <div
         className={
           floating
-            ? "fixed right-4 bottom-32 z-30 w-[min(100%-2rem,22rem)] paper flex items-center gap-4 rounded-group bg-surface p-5 shadow-floating lg:right-8 lg:bottom-8"
-            : "paper flex items-center gap-4 rounded-group bg-surface p-5"
+            ? "fixed right-4 bottom-6 z-30 w-[min(100%-2rem,22rem)] flex items-center gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs lg:right-8"
+            : "flex items-center gap-4 rounded-2xl border border-border bg-card p-5"
         }
         data-print="hide"
       >
@@ -111,7 +111,7 @@ export function GenerateCards({
             type="button"
             onClick={() => setOpen(true)}
             data-print="hide"
-            className="pressable shiny fixed right-4 bottom-32 z-30 flex h-14 items-center gap-2.5 rounded-button bg-ink px-5 text-[15px] font-semibold text-on-ink shadow-floating lg:right-8 lg:bottom-8"
+            className="fixed right-4 bottom-6 z-30 inline-flex h-9 items-center gap-2 rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground shadow-xs lg:right-8"
           >
             <span aria-hidden>✨</span>
             Générer les cartes
@@ -126,7 +126,7 @@ export function GenerateCards({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="pressable hover-tile paper flex w-full items-start gap-4 rounded-group bg-surface p-5 text-left"
+            className="flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-5 text-left"
           >
             <span
               aria-hidden
@@ -146,7 +146,7 @@ export function GenerateCards({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="pressable hover-tile paper flex w-full items-center gap-3.5 rounded-group bg-surface px-5 py-4 text-left"
+            className="flex w-full items-center gap-3.5 rounded-2xl border border-border bg-card px-5 py-4 text-left"
           >
             <span aria-hidden className="emoji text-[22px]">
               ➕
@@ -169,8 +169,8 @@ export function GenerateCards({
     <div
       className={
         floating
-          ? "fixed right-4 bottom-32 z-30 w-[min(100%-2rem,22rem)] paper rise rounded-group bg-surface p-5 shadow-floating lg:right-8 lg:bottom-8"
-          : "paper rise rounded-group bg-surface p-5"
+          ? "fixed right-4 bottom-6 z-30 w-[min(100%-2rem,22rem)] rounded-2xl border border-border bg-card p-5 shadow-xs lg:right-8"
+          : "rounded-2xl border border-border bg-card p-5"
       }
       data-print="hide"
     >
@@ -218,8 +218,10 @@ export function GenerateCards({
         type="button"
         onClick={ask}
         disabled={total === 0}
-        className={`pressable mt-4 h-13 w-full rounded-button py-3.5 text-[15px] font-semibold transition-colors duration-hover ${
-          total === 0 ? "cursor-not-allowed bg-surface-sunken text-ink-tertiary" : "bg-ink text-on-ink"
+        className={`mt-4 inline-flex h-9 w-full items-center justify-center rounded-lg border text-sm font-medium ${
+          total === 0
+            ? "cursor-not-allowed border-transparent bg-surface-sunken text-ink-tertiary"
+            : "border-primary bg-primary text-primary-foreground"
         }`}
       >
         {existing === 0 ? "Générer ces cartes" : "Ajouter au paquet"}
