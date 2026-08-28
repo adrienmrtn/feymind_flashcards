@@ -75,12 +75,13 @@ export function WaitlistForm({
           />
           <Button
             type="submit"
+            variant="outline"
             size="lg"
             loading={pending}
             className={
               size === "large"
-                ? "btn-rise shiny h-12 shrink-0 px-5 hover:bg-ink"
-                : "btn-rise shiny h-12 shrink-0 hover:bg-ink"
+                ? "btn-rise shiny h-12 shrink-0 px-5 hover:bg-transparent"
+                : "btn-rise shiny h-12 shrink-0 hover:bg-transparent"
             }
           >
             Être prévenu

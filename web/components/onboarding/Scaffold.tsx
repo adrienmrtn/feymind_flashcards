@@ -93,6 +93,7 @@ export function ContinueButton({
   return (
     <Button
       type="button"
+      variant={enabled ? "outline" : "default"}
       size="xl"
       disabled={!enabled}
       onClick={() => {
@@ -101,7 +102,7 @@ export function ContinueButton({
         if (href) router.push(href as Route);
       }}
       className={`h-14 w-full text-[16px] sm:h-14 sm:text-[16px] ${
-        enabled ? `btn-rise hover:bg-ink${shiny ? " shiny" : ""}` : ""
+        enabled ? `btn-rise hover:bg-transparent${shiny ? " shiny" : ""}` : ""
       }`}
     >
       {label}

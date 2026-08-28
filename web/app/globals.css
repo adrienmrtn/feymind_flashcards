@@ -691,43 +691,58 @@ video {
    -------------------------------------------------------------------------- */
 
 @utility btn-rise {
-  background-color: var(--color-ink);
+  border-color: var(--color-ink);
+  background-color: transparent;
   background-image: linear-gradient(
     to top,
-    var(--color-accent) 0 50%,
-    var(--color-ink) 50% 100%
+    var(--color-ink) 0 50%,
+    transparent 50% 100%
   );
   background-size: 100% 200%;
   background-position: 0 100%;
+  color: var(--color-ink);
   transition-property: background-position, scale, box-shadow, color, border-color;
   transition-duration: var(--duration-fill);
   transition-timing-function: var(--ease-out-strong);
 }
 
+.btn-rise:active:not(:disabled):not([aria-disabled="true"]) {
+  background-position: 0 0;
+  color: var(--color-on-ink);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .btn-rise:hover:not(:disabled):not([aria-disabled="true"]) {
-    background-color: var(--color-ink);
+    background-color: transparent;
     background-position: 0 0;
+    color: var(--color-on-ink);
   }
 }
 
 @utility btn-fill {
-  background-color: var(--color-surface);
+  border-color: var(--color-ink);
+  background-color: transparent;
   background-image: linear-gradient(
     to right,
     var(--color-ink) 0 50%,
-    var(--color-surface) 50% 100%
+    transparent 50% 100%
   );
   background-size: 200% 100%;
   background-position: 100% 0;
+  color: var(--color-ink);
   transition-property: background-position, color, scale, box-shadow, border-color;
   transition-duration: var(--duration-fill);
   transition-timing-function: var(--ease-out-strong);
 }
 
+.btn-fill:active:not(:disabled):not([aria-disabled="true"]) {
+  background-position: 0 0;
+  color: var(--color-on-ink);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .btn-fill:hover:not(:disabled):not([aria-disabled="true"]) {
-    background-color: var(--color-surface);
+    background-color: transparent;
     background-position: 0 0;
     color: var(--color-on-ink);
     border-color: var(--color-ink);
@@ -1142,13 +1157,15 @@ video {
 }
 
 .app-shell .btn-rise,
-.app-shell .btn-rise:hover {
+.app-shell .btn-rise:hover,
+.app-shell .btn-rise:active {
   background-image: none;
   background-position: 0 100%;
 }
 
 .app-shell .btn-fill,
-.app-shell .btn-fill:hover {
+.app-shell .btn-fill:hover,
+.app-shell .btn-fill:active {
   background-image: none;
   background-position: 100% 0;
   color: inherit;
