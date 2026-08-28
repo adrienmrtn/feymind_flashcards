@@ -381,31 +381,31 @@ function RetentionBars() {
         <circle cx={xAt(exam)} cy={yAt(withMicabo[exam]!)} r="2.4" fill="var(--color-accent)" />
         <text
           x={xAt(0)}
-          y={height - 2}
+          y={height - 1}
           textAnchor="start"
           fill="var(--color-ink-tertiary)"
-          fontSize="7.5"
+          fontSize="8"
         >
-          J-12
+          il y a 12 j
         </text>
         <text
           x={xAt(today)}
-          y={height - 2}
+          y={height - 1}
           textAnchor="middle"
           fill="var(--color-ink-secondary)"
-          fontSize="7.5"
+          fontSize="8"
         >
-          J-3
+          aujourd&apos;hui
         </text>
         <text
           x={xAt(exam)}
-          y={height - 2}
+          y={height - 1}
           textAnchor="end"
           fill="var(--color-negative)"
-          fontSize="7.5"
+          fontSize="8"
           fontWeight="700"
         >
-          J0
+          examen
         </text>
       </svg>
     </figure>

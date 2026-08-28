@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Ce qui entre dans Micabo, en une ligne qui défile.
@@ -70,24 +70,30 @@ function SourceExample({
   label: string;
   emoji: string;
 }) {
-  const [missing, setMissing] = useState(false);
+  const [ready, setReady] = useState(false);
+  const src = `/landing/sources/${id}.webp`;
+
+  useEffect(() => {
+    const probe = new window.Image();
+    probe.onload = () => setReady(true);
+    probe.src = src;
+    return () => {
+      probe.onload = null;
+    };
+  }, [src]);
 
   return (
     <div className="source-tile-frame">
-      <div className="source-tile-placeholder">
-        <span aria-hidden className="emoji text-[22px]">
-          {emoji}
-        </span>
-        <span className="mt-2 text-[12px] font-medium text-ink-secondary">{label}</span>
-        <span className="mt-0.5 text-[11px] text-ink-tertiary">Exemple à venir</span>
-      </div>
-      {missing ? null : (
-        <img
-          src={`/landing/sources/${id}.webp`}
-          alt=""
-          className="source-tile-image absolute inset-0"
-          onError={() => setMissing(true)}
-        />
+      {ready ? (
+        <img src={src} alt="" className="source-tile-image" />
+      ) : (
+        <div className="source-tile-placeholder">
+          <span aria-hidden className="emoji text-[28px]">
+            {emoji}
+          </span>
+          <span className="mt-2.5 text-[13px] font-medium text-ink-secondary">{label}</span>
+          <span className="mt-0.5 text-[12px] text-ink-tertiary">Exemple à venir</span>
+        </div>
       )}
     </div>
   );

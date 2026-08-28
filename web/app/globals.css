@@ -612,13 +612,13 @@ video {
    -------------------------------------------------------------------------- */
 
 .source-tile {
-  width: 20.5rem;
+  width: 26.5rem;
   flex-shrink: 0;
 }
 
 .source-tile-frame {
   position: relative;
-  height: 12rem;
+  height: 15.5rem;
   overflow: hidden;
   border-radius: var(--radius-group);
   background: var(--color-surface);
