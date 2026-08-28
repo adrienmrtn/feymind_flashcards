@@ -549,7 +549,7 @@ verrait pas où ils en sont.
 `positive` reste un vert plus forestier : deux verts qui veulent dire deux choses ne peuvent
 pas être le même vert. Les pastels des tuiles et les teintes de couverture des cours sont
 remontés d'un cran, parce que six gris teintés ne donnaient pas de couleur à un écran, ils lui
-donnaient une brume. L'icône de l'app suit (`scripts/generate_app_icon.py`).
+donnaient une brume.
 
 **Les nombres qui se lisent comme un résultat sont en SF Rounded** (`MicaboFont.number`) : le
 compte de cartes du jour, la série, les statistiques d'une session, les minutes d'un objectif.
@@ -661,21 +661,15 @@ barre de retour, champ de recherche).
 
 ### Remplacer l'icône de l'application
 
-L'icône actuelle est **dessinée par un script** (`scripts/generate_app_icon.py`) : une carte
-verte sur un papier menthe, avec un rond du vert du logo. C'est un tenant-lieu, pas une
-identité — le jour où le vrai logo existe, il la remplace.
-
-Le catalogue n'attend qu'**un seul fichier**, en 1024 × 1024, sans transparence et sans coins
-arrondis (iOS les arrondit lui-même) :
+Le catalogue n'attend qu'**un seul fichier**, en 1024 × 1024, RGB, sans transparence et sans
+coins arrondis (iOS les arrondit lui-même) :
 
 ```
 Micabo/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
 ```
 
 Déposer le fichier à ce chemin suffit : `Contents.json` ne déclare qu'une entrée universelle,
-il n'y a donc ni déclinaison de tailles à générer ni référence à ajouter dans le projet. Le
-script est à supprimer le jour où il ne dessine plus rien de vivant, pour qu'on ne le relance
-pas par erreur sur le vrai logo.
+il n'y a donc ni déclinaison de tailles à générer ni référence à ajouter dans le projet.
 
 ## Pile technique
 
@@ -1770,7 +1764,6 @@ Micabo/
 supabase/functions/  Edge Functions Deno
 supabase/migrations/ schéma Postgres, règles de cloisonnement comprises
 docs/                configuration OAuth, note sur la donnée
-scripts/             génération de l'icône
 ```
 
 ## Tests
