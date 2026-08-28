@@ -12,7 +12,9 @@ export default function ExamPrepStep() {
       title="On te prépare à réussir tes examens."
       footer={<ContinueButton enabled href="/commencer/pays" />}
     >
-      <ExamPrepStory />
+      <div className="flex h-full items-center justify-center">
+        <ExamPrepStory />
+      </div>
     </Scaffold>
   );
 }

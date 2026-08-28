@@ -43,7 +43,7 @@ export function ImportStory() {
   const logoGone = progress >= 0.52;
 
   return (
-    <div className="relative mx-auto h-[min(50svh,380px)] w-full max-w-[440px]" aria-hidden>
+    <div className="relative mx-auto h-[min(52svh,400px)] w-full max-w-[440px]" aria-hidden>
       {DOCS.map((doc, index) => (
         <DocTile key={doc.id} doc={doc} index={index} progress={progress} />
       ))}
@@ -69,7 +69,7 @@ export function ImportStory() {
             "opacity 280ms var(--ease-out-strong), transform 280ms var(--ease-out-strong)",
         }}
       >
-        <ThinkingOrb state={sheetsOut ? "composing" : "searching"} size={80} />
+        <ThinkingOrb state={sheetsOut ? "composing" : "searching"} size={64} />
       </div>
 
       {SHEETS.map((sheet, index) => {

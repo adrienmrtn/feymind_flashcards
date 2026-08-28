@@ -12,7 +12,9 @@ export default function WelcomeStep() {
       title="Bienvenue sur Micabo."
       footer={<ContinueButton enabled href="/commencer/importer" />}
     >
-      <WelcomeStory />
+      <div className="flex h-full items-center justify-center">
+        <WelcomeStory />
+      </div>
     </Scaffold>
   );
 }

@@ -6,34 +6,42 @@
 export function WelcomeStory() {
   return (
     <div
-      className="relative mx-auto flex h-[min(46svh,360px)] w-full max-w-[280px] items-center justify-center"
+      className="relative mx-auto flex h-full min-h-[280px] w-full max-w-[300px] items-center justify-center"
       aria-hidden
     >
-      <Sheet angle={-10} delay={0} depth={0} />
-      <Sheet angle={8} delay={90} depth={1} />
-      <Sheet angle={-1.5} delay={180} depth={2} front />
+      <Sheet offsetX={-22} offsetY={10} angle={-12} delay={0} depth={0} muted />
+      <Sheet offsetX={24} offsetY={8} angle={11} delay={90} depth={1} muted />
+      <Sheet offsetX={0} offsetY={0} angle={-1.5} delay={180} depth={2} front />
     </div>
   );
 }
 
 function Sheet({
+  offsetX,
+  offsetY,
   angle,
   delay,
   depth,
   front = false,
+  muted = false,
 }: {
+  offsetX: number;
+  offsetY: number;
   angle: number;
   delay: number;
   depth: number;
   front?: boolean;
+  muted?: boolean;
 }) {
   return (
     <div
-      className="paper rise absolute h-[228px] w-[176px] rounded-sheet bg-surface"
+      className={`absolute h-[236px] w-[180px] rounded-sheet paper ${
+        muted ? "bg-surface-muted" : "bg-surface"
+      }`}
       style={{
         zIndex: depth,
-        rotate: `${angle}deg`,
-        animationDelay: `${delay}ms`,
+        transform: `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`,
+        animation: `micabo-rise 480ms var(--ease-out-strong) ${delay}ms both`,
       }}
     >
       <div className="flex h-full flex-col justify-between px-5 py-6">

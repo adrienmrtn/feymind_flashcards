@@ -42,7 +42,7 @@ export function FlashcardStory() {
         return (
           <div
             key={card.front}
-            className="relative h-[104px]"
+            className="relative h-[112px]"
             style={{
               opacity: shown ? 1 : 0,
               transform: shown ? "translateY(0)" : "translateY(16px)",
