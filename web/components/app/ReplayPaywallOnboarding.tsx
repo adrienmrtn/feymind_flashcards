@@ -9,7 +9,7 @@ import { clearPaywallDismissal } from "@/lib/onboarding/persist";
  *
  * Ce n'est pas le parcours `/commencer`. Celui-là pose le pays et les matières.
  * Ici on rouvre seulement l'offre à quatre étapes, posée sur le tableau de bord.
- * Le bouton n'existe qu'hors production.
+ * Le bouton n'existe qu'en local et sur une preview.
  */
 export function ReplayPaywallOnboarding() {
   const router = useRouter();
