@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { markPaywallPending, persistStoredAnswers } from "@/lib/onboarding/persist";
 import { createClient } from "@/lib/supabase/client";
 
@@ -198,8 +199,15 @@ function AccountStepBody() {
         ) : null}
 
         <p className="mt-8 text-[12.5px] leading-relaxed text-ink-tertiary">
-          En continuant, tu acceptes les conditions d&apos;utilisation et la politique de
-          confidentialité.
+          En continuant, tu acceptes les{" "}
+          <Link href={TERMS_PATH} className="underline-draw text-ink-secondary">
+            conditions d&apos;utilisation
+          </Link>{" "}
+          et la{" "}
+          <Link href={PRIVACY_PATH} className="underline-draw text-ink-secondary">
+            politique de confidentialité
+          </Link>
+          .
         </p>
       </div>
     </div>
