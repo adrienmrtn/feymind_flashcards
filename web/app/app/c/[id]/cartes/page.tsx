@@ -122,7 +122,7 @@ function packSummary(
   counts: { review: number; newCards: number; learning: number },
 ): string {
   if (counts.review + counts.newCards + counts.learning === 0) {
-    return `${total} carte${total > 1 ? "s" : ""} dans le paquet. Tout est à jour - rien à revoir aujourd'hui.`;
+    return `${total} carte${total > 1 ? "s" : ""} dans le paquet. Session du jour terminée — rien à revoir aujourd'hui.`;
   }
   return `${total} carte${total > 1 ? "s" : ""} dans le paquet. Voici ce qui t'attend.`;
 }

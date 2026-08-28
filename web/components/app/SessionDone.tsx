@@ -45,11 +45,13 @@ export function SessionDone({
   minutes,
   capped,
   remaining,
+  leftoverNew = 0,
 }: {
   tally: SessionTally;
   minutes: number;
   capped: boolean;
   remaining: number;
+  leftoverNew?: number;
 }) {
   const router = useRouter();
   const [ready, setReady] = useState(false);
@@ -92,7 +94,11 @@ export function SessionDone({
         {capped ? "⏸️" : "🎉"}
       </p>
       <h1 className="rise mt-3 text-[28px] font-bold text-ink" style={{ animationDelay: "80ms" }}>
-        {capped ? "C'est tout pour aujourd'hui." : "Tout est à jour."}
+        {capped
+          ? "C'est tout pour aujourd'hui."
+          : leftoverNew > 0
+            ? "Session terminée."
+            : "Session du jour terminée."}
       </h1>
 
       {capped ? (
@@ -100,13 +106,25 @@ export function SessionDone({
           Le gratuit sert {entitlement.FREE_TIER.cardsPerSession} cartes par session. Il t&apos;en
           reste <span className="numeral font-semibold text-ink">{remaining}</span> qui attendent.
         </p>
+      ) : leftoverNew > 0 ? (
+        <p
+          className="rise mx-auto mt-3 max-w-[42ch] text-[14.5px] leading-relaxed text-ink-secondary"
+          style={{ animationDelay: "140ms" }}
+        >
+          {tally.answered > 0
+            ? `${tally.answered} carte${tally.answered > 1 ? "s" : ""} notée${tally.answered > 1 ? "s" : ""} · ${minutes} min. `
+            : ""}
+          Il reste <span className="numeral font-semibold text-ink">{leftoverNew}</span> carte
+          {leftoverNew > 1 ? "s" : ""} neuve{leftoverNew > 1 ? "s" : ""} hors rythme — un cours
+          ajouté, par exemple.
+        </p>
       ) : (
         <p
           className="rise mt-2 text-[14.5px] text-ink-secondary"
           style={{ animationDelay: "140ms" }}
         >
           {tally.answered === 0
-            ? "Rien à revoir. Reviens demain."
+            ? "Rien ne revient aujourd'hui."
             : `${tally.answered} carte${tally.answered > 1 ? "s" : ""} notée${tally.answered > 1 ? "s" : ""} · ${minutes} min`}
         </p>
       )}
@@ -170,17 +188,34 @@ export function SessionDone({
         <Tile emoji="⏱️" value={minutes} label="min" />
       </dl>
 
-      <button
-        type="button"
-        onClick={() => {
-          router.push("/app");
-          router.refresh();
-        }}
-        className="pressable shiny hover-tile rise mt-10 inline-flex rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
-        style={{ animationDelay: "420ms" }}
-      >
-        🏠 Retour à l&apos;accueil
-      </button>
+      <div className="rise mt-10 flex flex-col items-center gap-3" style={{ animationDelay: "420ms" }}>
+        {leftoverNew > 0 && !capped ? (
+          <button
+            type="button"
+            onClick={() => {
+              router.push("/app/reviser");
+              router.refresh();
+            }}
+            className="pressable shiny hover-tile inline-flex rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
+          >
+            Réviser quand même
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => {
+            router.push("/app");
+            router.refresh();
+          }}
+          className={
+            leftoverNew > 0 && !capped
+              ? "text-[14px] font-medium text-ink-tertiary underline-draw"
+              : "pressable shiny hover-tile inline-flex rounded-button bg-ink px-6 py-3.5 text-[15px] font-semibold text-on-ink"
+          }
+        >
+          🏠 Retour à l&apos;accueil
+        </button>
+      </div>
     </div>
   );
 }

@@ -28,6 +28,7 @@ export default async function CoursesPage({
     listExams(),
   ]);
 
+  const now = new Date();
   const counts = studyCounts(
     cards.map((card) => ({
       id: card.id,
@@ -44,6 +45,10 @@ export default async function CoursesPage({
       },
     },
   );
+  const dueNow = cards.filter(
+    (card) => !card.is_suspended && new Date(card.due_date) <= now,
+  ).length;
+  const heldBack = Math.max(0, dueNow - counts.total);
 
   return (
     <CoursesExplore
@@ -56,12 +61,20 @@ export default async function CoursesPage({
             Réviser <span className="numeral">{counts.total}</span> carte
             {counts.total > 1 ? "s" : ""}
           </Link>
+        ) : heldBack > 0 ? (
+          <Link
+            href="/app/reviser"
+            className="pressable flex items-center gap-2.5 rounded-button bg-surface px-5 py-3 text-[15px] font-semibold text-ink paper"
+          >
+            Réviser quand même
+          </Link>
         ) : null
       }
     >
       <Shelf
         courses={courses}
         emptyReviews={counts.total === 0 && cards.length > 0}
+        heldBack={heldBack}
         exams={exams}
       />
     </CoursesExplore>
@@ -71,17 +84,21 @@ export default async function CoursesPage({
 function Shelf({
   courses,
   emptyReviews,
+  heldBack,
   exams,
 }: {
   courses: Awaited<ReturnType<typeof listCourses>>;
   emptyReviews: boolean;
+  heldBack: number;
   exams: Awaited<ReturnType<typeof listExams>>;
 }) {
   return (
     <>
       {emptyReviews ? (
         <p className="mt-6 text-[14px] text-ink-tertiary">
-          Tout est à jour. Rien ne revient aujourd&apos;hui.
+          {heldBack > 0
+            ? `Session du jour terminée. Il reste ${heldBack} carte${heldBack > 1 ? "s" : ""} neuve${heldBack > 1 ? "s" : ""} hors rythme — un cours ajouté, par exemple.`
+            : "Session du jour terminée. Rien ne revient aujourd'hui."}
         </p>
       ) : null}
 

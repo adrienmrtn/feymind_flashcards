@@ -75,7 +75,15 @@ interface Tally {
 
 type Loop = SessionAdvance<SessionCard>;
 
-export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean }) {
+export function Session({
+  cards,
+  isPro,
+  leftoverNew = 0,
+}: {
+  cards: SessionCard[];
+  isPro: boolean;
+  leftoverNew?: number;
+}) {
   const [loop, setLoop] = useState<Loop>(() =>
     advanceSession(enqueueInitial(cards, new Date()), new Date()),
   );
@@ -167,6 +175,7 @@ export function Session({ cards, isPro }: { cards: SessionCard[]; isPro: boolean
         minutes={elapsedMinutes(startedAt)}
         capped={capped}
         remaining={remaining}
+        leftoverNew={leftoverNew}
       />
     );
   }

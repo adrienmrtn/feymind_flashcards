@@ -180,7 +180,17 @@ export default async function ReviewPage({
     );
   }
 
-  return <Session cards={ordered} isPro={right.isPro} />;
+  const dueNew = cards.filter(
+    (card) => !card.is_suspended && card.state === "new" && new Date(card.due_date) <= now,
+  ).length;
+
+  return (
+    <Session
+      cards={ordered}
+      isPro={right.isPro}
+      leftoverNew={Math.max(0, dueNew - newPerSession)}
+    />
+  );
 }
 
 function parseNewOverride(raw: string | string[] | undefined): number | null {
