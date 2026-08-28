@@ -214,12 +214,19 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
   } = await supabase.auth.getUser();
   if (!user) return { status: "error" as const, message: "Connecte-toi." };
 
-  const { data: course } = await supabase
-    .from("courses")
-    .select("id, title, subject, context_text")
-    .eq("user_id", user.id)
-    .eq("id", courseId)
-    .maybeSingle();
+  const [{ data: course }, { data: profile }] = await Promise.all([
+    supabase
+      .from("courses")
+      .select("id, title, subject, context_text")
+      .eq("user_id", user.id)
+      .eq("id", courseId)
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("country_code, sheet_language")
+      .eq("id", user.id)
+      .maybeSingle(),
+  ]);
 
   if (!course) return { status: "error" as const, message: "Cours introuvable." };
 
@@ -240,6 +247,7 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
       context: course.context_text,
       existing: (existing ?? []).slice(0, 60).map((row) => row.front),
       quota,
+      language: sheetLanguage(profile?.sheet_language, profile?.country_code),
     },
   });
 

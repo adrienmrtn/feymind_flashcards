@@ -13,13 +13,14 @@ import {
   previewLabels,
   returnsInSession,
   schedule,
+  clampedToDeadline,
   type CardSnapshot,
   type ScheduleOutcome,
   type SessionAdvance,
   type SessionEntry,
 } from "@micabo/core";
 
-import { ExamMark, type ExamMarkInfo } from "@/components/app/ExamMark";
+import { ExamMark, examDeadline, type ExamMarkInfo } from "@/components/app/ExamMark";
 import { OcclusionFigure } from "@/components/app/OcclusionFigure";
 import { SessionDone } from "@/components/app/SessionDone";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
@@ -103,14 +104,21 @@ export function Session({
   const capped = entitlement.hasReachedSessionLimit({ isPro }, tally.answered);
   const finished = loop.done || capped;
 
-  const labels = useMemo(() => (card ? previewLabels(card.snapshot) : null), [card]);
+  const labels = useMemo(
+    () => (card ? previewLabels(card.snapshot, { deadline: examDeadline(card.exam) }) : null),
+    [card],
+  );
 
   const grade = useCallback(
     (rating: number) => {
       if (!card) return;
       const typed = rating as ReviewRating;
       const now = new Date();
-      const outcome = schedule(card.snapshot, typed, { now, config: DETERMINISTIC_CONFIG });
+      const outcome = clampedToDeadline(
+        schedule(card.snapshot, typed, { now, config: DETERMINISTIC_CONFIG }),
+        examDeadline(card.exam),
+        now,
+      );
 
       setTally((current) => ({
         ...current,

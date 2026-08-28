@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import {
-  DETERMINISTIC_CONFIG,
+  DEFAULT_CONFIG,
   ReviewRating,
+  activeDeadlines,
+  clampedToDeadline,
   schedule,
   type CardSnapshot,
   type ReviewRating as Rating,
@@ -54,11 +56,46 @@ export async function gradeCard(input: {
 
   const now = new Date();
 
-  // La configuration déterministe : la dispersion d'Anki évite que des paquets entiers retombent
-  // le même jour, mais elle n'a pas sa place dans une écriture dont le client connaît déjà
-  // l'aperçu. Un bouton qui annonce « 25 j » et une base qui écrit 22 se contredisent à l'écran
-  // suivant.
-  const outcome = schedule(input.snapshot, rating, { now, config: DETERMINISTIC_CONFIG });
+  const [{ data: card }, { data: exams }] = await Promise.all([
+    supabase
+      .from("flashcards")
+      .select("id, course_id, is_suspended")
+      .eq("user_id", user.id)
+      .eq("id", input.cardId)
+      .maybeSingle(),
+    supabase
+      .from("exams")
+      .select("exam_date, is_planned, course_ids")
+      .eq("user_id", user.id)
+      .is("deleted_at", null),
+  ]);
+
+  const deadline = card
+    ? activeDeadlines(
+        (exams ?? []).map((exam) => ({
+          date: new Date(`${exam.exam_date}T12:00:00`),
+          isPlanned: exam.is_planned,
+          courseIds: exam.course_ids ?? [],
+        })),
+        [
+          {
+            id: card.id,
+            courseId: card.course_id,
+            isSuspended: card.is_suspended,
+          },
+        ],
+        now,
+      ).get(card.id)
+    : undefined;
+
+  // Même écriture que l'iPhone : dispersion activée, puis plafond d'examen.
+  // L'aperçu des boutons reste déterministe — un écart d'un jour sur une
+  // échéance lointaine est le prix de ne pas empiler tout un paquet.
+  const outcome = clampedToDeadline(
+    schedule(input.snapshot, rating, { now, config: DEFAULT_CONFIG }),
+    deadline,
+    now,
+  );
 
   const { error } = await supabase
     .from("flashcards")

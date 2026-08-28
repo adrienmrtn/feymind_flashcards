@@ -12,7 +12,7 @@ struct MicaboApp: App {
     @State private var social: SocialService
     /// L'abonnement, créé une fois pour toute l'app : tout ce qui se ferme lui pose la
     /// même question, et personne n'y répond de son côté.
-    @State private var pro = ProAccess()
+    @State private var pro: ProAccess
 
     private static let schema = Schema([Course.self, Flashcard.self, ReviewLog.self, Exam.self])
 
@@ -26,6 +26,11 @@ struct MicaboApp: App {
         _auth = State(initialValue: auth)
         _sync = State(initialValue: CloudSync(auth: auth))
         _social = State(initialValue: SocialService(auth: auth))
+        _pro = State(initialValue: ProAccess(
+            accessToken: { await auth.validAccessToken() },
+            userID: { auth.user?.id }
+        ))
+        SupabaseFunctions.accessToken = { await auth.validAccessToken() }
     }
 
     var body: some Scene {
@@ -40,8 +45,8 @@ struct MicaboApp: App {
                 .environment(social)
                 .environment(pro)
                 .task {
-                    await pro.refresh()
                     await auth.restore()
+                    await pro.refresh()
                     await sync.sync(context: container.mainContext)
                     // L'annuaire et les amitiés viennent après la synchro : ils n'ont de sens
                     // qu'avec un compte, et la synchro est ce qui confirme qu'il y en a un.
@@ -52,6 +57,7 @@ struct MicaboApp: App {
                 .onOpenURL { url in
                     Task {
                         await auth.handle(callback: url)
+                        await pro.refresh()
                         await sync.sync(context: container.mainContext)
                         await social.refresh()
                     }

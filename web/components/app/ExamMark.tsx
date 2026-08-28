@@ -9,6 +9,14 @@
 export interface ExamMarkInfo {
   name: string;
   daysRemaining: number;
+  /** Jour de l'examen, pour rabattre l'intervalle SM-2. */
+  date?: string | Date;
+}
+
+export function examDeadline(exam: ExamMarkInfo | null | undefined): Date | null {
+  if (!exam?.date) return null;
+  const date = exam.date instanceof Date ? exam.date : new Date(exam.date);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 export function ExamMark({

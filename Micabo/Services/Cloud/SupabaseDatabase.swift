@@ -133,17 +133,18 @@ struct SupabaseDatabase {
         from table: String,
         select: String = "*",
         updatedSince: Date? = nil,
+        sinceColumn: String = "updated_at",
         filters: [URLQueryItem] = [],
         limit: Int = 1_000
     ) async throws -> [T] {
         var query = [
             URLQueryItem(name: "select", value: select),
             URLQueryItem(name: "limit", value: String(limit)),
-            URLQueryItem(name: "order", value: "updated_at.asc")
+            URLQueryItem(name: "order", value: "\(sinceColumn).asc")
         ]
         query.append(contentsOf: filters)
         if let updatedSince {
-            query.append(URLQueryItem(name: "updated_at", value: "gt." + isoFormatter.string(from: updatedSince)))
+            query.append(URLQueryItem(name: sinceColumn, value: "gt." + isoFormatter.string(from: updatedSince)))
         }
 
         let data = try await send(method: "GET", path: table, query: query, body: nil, prefer: nil)

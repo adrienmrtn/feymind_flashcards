@@ -7,11 +7,10 @@ import Foundation
 /// sens sur le fil. Les traduire ici a un coût, et un bénéfice — le jour où une colonne change
 /// de nom côté serveur, un seul fichier bouge.
 ///
-/// **Ce qui ne monte pas, et pourquoi.** Les images d'occlusion, les couvertures et les
-/// enregistrements audio restent sur l'appareil : ce sont des mégaoctets par cours, et une
-/// colonne `bytea` transforme une base Postgres en disque dur. Leur place est le stockage
-/// objet de Supabase, et c'est la première chose à ajouter après cette synchro (voir la note
-/// « flywheel » dans le README).
+/// **Ce qui ne monte pas, et pourquoi.** Les couvertures et les enregistrements audio
+/// restent sur l'appareil : ce sont des mégaoctets par cours. Les schémas d'occlusion
+/// voyagent en data URL dans `image_path`, comme sur le web — assez petit pour une
+/// zone masquée, trop lourd pour une couverture.
 enum CloudTable {
     static let profiles = "profiles"
     static let courses = "courses"
@@ -27,6 +26,73 @@ enum CloudTable {
     /// certitude qu'une préférence ne peut pas fuir.
     static let directory = "directory"
     static let friendships = "friendships"
+    static let entitlements = "entitlements"
+}
+
+/// Les identifiants qu'on a effacés ici, et qu'il ne faut plus faire revivre.
+///
+/// La suppression locale est immédiate : SwiftData oublie la ligne. Sans cette liste, la
+/// prochaine descente recréerait l'objet depuis le cloud — ou la prochaine montée
+/// réécrirait `deleted_at: null` et ressusciterait ce que le web a déjà tombstoné.
+enum CloudTombstones {
+    private static let key = "micabo.cloud.tombstones"
+
+    static var defaults: UserDefaults = .standard
+
+    static func mark(_ table: String, id: UUID) {
+        var store = load()
+        var ids = Set(store[table] ?? [])
+        ids.insert(id.uuidString.lowercased())
+        store[table] = Array(ids)
+        save(store)
+    }
+
+    static func contains(_ table: String, id: UUID) -> Bool {
+        load()[table]?.contains(id.uuidString.lowercased()) == true
+    }
+
+    static func all() -> [String: [UUID]] {
+        load().mapValues { raw in
+            raw.compactMap(UUID.init(uuidString:))
+        }
+    }
+
+    static func removeAll() {
+        defaults.removeObject(forKey: key)
+    }
+
+    private static func load() -> [String: [String]] {
+        (defaults.dictionary(forKey: key) as? [String: [String]]) ?? [:]
+    }
+
+    private static func save(_ store: [String: [String]]) {
+        defaults.set(store, forKey: key)
+    }
+}
+
+/// Ce que la montée envoie pour marquer une ligne disparue, sans toucher au reste.
+struct TombstonePatch: Encodable {
+    var deleted_at: Date
+    var updated_at: Date
+}
+
+/// Une image d'occlusion, telle qu'elle voyage dans `flashcards.image_path`.
+///
+/// Le web y pose déjà une data URL. On fait la même chose : pas de bucket Storage, et une
+/// carte à schéma revue sur le téléphone reste lisible dans le navigateur.
+enum CloudImage {
+    static func dataURL(from data: Data?) -> String? {
+        guard let data, !data.isEmpty else { return nil }
+        return "data:image/jpeg;base64,\(data.base64EncodedString())"
+    }
+
+    static func data(from path: String?) -> Data? {
+        guard let path, path.hasPrefix("data:"),
+              let comma = path.firstIndex(of: ","),
+              let data = Data(base64Encoded: String(path[path.index(after: comma)...]))
+        else { return nil }
+        return data
+    }
 }
 
 struct ProfileRecord: Codable {
@@ -40,6 +106,8 @@ struct ProfileRecord: Codable {
     var institution_name: String?
     var daily_minutes: Int
     var sheet_length: String
+    /// Langue des prochaines fiches, quand elle n'est plus celle du pays.
+    var sheet_language: String?
     var onboarding_completed_at: Date?
 
     /// Le profil tel que les réglages locaux le décrivent.
@@ -55,6 +123,7 @@ struct ProfileRecord: Codable {
             institution_name: OnboardingPreferences.institutionName,
             daily_minutes: OnboardingPreferences.dailyMinutes,
             sheet_length: SheetPreferences.length.rawValue,
+            sheet_language: OnboardingPreferences.contentLanguage.rawValue,
             onboarding_completed_at: OnboardingPreferences.isCompleted ? Date() : nil
         )
     }
@@ -83,6 +152,9 @@ struct ProfileRecord: Codable {
         if let institution_name { OnboardingPreferences.institutionName = institution_name }
         OnboardingPreferences.dailyMinutes = daily_minutes
         if let length = SheetLength(rawValue: sheet_length) { SheetPreferences.length = length }
+        if let sheet_language, let language = ContentLanguage(rawValue: sheet_language) {
+            OnboardingPreferences.sheetLanguage = language
+        }
         if onboarding_completed_at != nil {
             OnboardingPreferences.markCompleted()
         }
@@ -287,6 +359,55 @@ struct FlashcardRecord: Codable {
     var created_at: Date
     var updated_at: Date
     var deleted_at: Date?
+    /// Data URL du schéma. Absente des cartes sans image.
+    var image_path: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, user_id, course_id, front, back, hint, position, kind, choices
+        case correct_choice_index, mask_x, mask_y, mask_width, mask_height, group_id
+        case is_reversed, is_suspended, state, due_date, interval_days, ease_factor
+        case repetitions, lapses, step_index, last_reviewed_at, created_at, updated_at
+        case deleted_at, image_path
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(user_id, forKey: .user_id)
+        try container.encodeIfPresent(course_id, forKey: .course_id)
+        try container.encode(front, forKey: .front)
+        try container.encode(back, forKey: .back)
+        try container.encodeIfPresent(hint, forKey: .hint)
+        try container.encode(position, forKey: .position)
+        try container.encode(kind, forKey: .kind)
+        try container.encode(choices, forKey: .choices)
+        try container.encode(correct_choice_index, forKey: .correct_choice_index)
+        try container.encode(mask_x, forKey: .mask_x)
+        try container.encode(mask_y, forKey: .mask_y)
+        try container.encode(mask_width, forKey: .mask_width)
+        try container.encode(mask_height, forKey: .mask_height)
+        try container.encodeIfPresent(group_id, forKey: .group_id)
+        try container.encode(is_reversed, forKey: .is_reversed)
+        try container.encode(is_suspended, forKey: .is_suspended)
+        try container.encode(state, forKey: .state)
+        try container.encode(due_date, forKey: .due_date)
+        try container.encode(interval_days, forKey: .interval_days)
+        try container.encode(ease_factor, forKey: .ease_factor)
+        try container.encode(repetitions, forKey: .repetitions)
+        try container.encode(lapses, forKey: .lapses)
+        try container.encode(step_index, forKey: .step_index)
+        try container.encodeIfPresent(last_reviewed_at, forKey: .last_reviewed_at)
+        try container.encode(created_at, forKey: .created_at)
+        try container.encode(updated_at, forKey: .updated_at)
+        try container.encodeIfPresent(deleted_at, forKey: .deleted_at)
+        try container.encodeIfPresent(image_path, forKey: .image_path)
+    }
+}
+
+/// La ligne `entitlements`, lue seulement. Personne ne l'écrit depuis l'app.
+struct EntitlementRecord: Decodable {
+    var is_pro: Bool
+    var expires_at: Date?
 }
 
 struct ReviewLogRecord: Codable {
@@ -314,6 +435,30 @@ struct ExamRecord: Codable {
     var created_at: Date
     var updated_at: Date
     var deleted_at: Date?
+    /// Photographie des échéances d'avant le plan, pour pouvoir le défaire.
+    var schedule_backup: JSONCodable?
+
+    enum CodingKeys: String, CodingKey {
+        case id, user_id, name, exam_date, intensity, target_score, course_ids
+        case is_planned, planned_at, created_at, updated_at, deleted_at, schedule_backup
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(user_id, forKey: .user_id)
+        try container.encode(name, forKey: .name)
+        try container.encode(exam_date, forKey: .exam_date)
+        try container.encode(intensity, forKey: .intensity)
+        try container.encodeIfPresent(target_score, forKey: .target_score)
+        try container.encode(course_ids, forKey: .course_ids)
+        try container.encode(is_planned, forKey: .is_planned)
+        try container.encodeIfPresent(planned_at, forKey: .planned_at)
+        try container.encode(created_at, forKey: .created_at)
+        try container.encode(updated_at, forKey: .updated_at)
+        try container.encodeIfPresent(deleted_at, forKey: .deleted_at)
+        try container.encodeIfPresent(schedule_backup, forKey: .schedule_backup)
+    }
 }
 
 /// Un morceau de JSON transporté sans être interprété.

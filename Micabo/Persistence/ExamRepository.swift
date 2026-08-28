@@ -119,6 +119,7 @@ enum ExamRepository {
         if exam.isPlanned {
             try unplan(exam, in: context)
         }
+        CloudTombstones.mark(CloudTable.exams, id: exam.id)
         context.delete(exam)
         try context.save()
     }
