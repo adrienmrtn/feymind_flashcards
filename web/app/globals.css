@@ -663,7 +663,7 @@ video {
 }
 
 @utility marquee-track {
-  animation: micabo-marquee 48s linear infinite;
+  animation: micabo-marquee 56s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
