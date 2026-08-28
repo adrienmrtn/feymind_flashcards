@@ -525,7 +525,8 @@ video {
    -------------------------------------------------------------------------- */
 
 .transformation-scroll {
-  height: 280svh;
+  /* La course + une pause sur « Ton examen », sinon le bloc suivant arrive tout de suite. */
+  height: 350svh;
 }
 
 .transformation-sticky {
@@ -575,7 +576,7 @@ video {
 
 @media (min-width: 640px) {
   .transformation-scroll {
-    height: 300svh;
+    height: 370svh;
   }
 
   .transformation-sticky {
