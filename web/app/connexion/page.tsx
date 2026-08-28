@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -168,7 +169,19 @@ function ConnexionBody() {
           </Alert>
         ) : null}
 
-        <p className="mt-10 text-[13.5px] text-ink-tertiary">
+        <p className="mt-8 text-[12.5px] leading-relaxed text-ink-tertiary">
+          En continuant, tu acceptes les{" "}
+          <Link href={TERMS_PATH} className="underline-draw text-ink-secondary">
+            conditions d&apos;utilisation
+          </Link>{" "}
+          et la{" "}
+          <Link href={PRIVACY_PATH} className="underline-draw text-ink-secondary">
+            politique de confidentialité
+          </Link>
+          .
+        </p>
+
+        <p className="mt-6 text-[13.5px] text-ink-tertiary">
           Pas encore de compte ?{" "}
           <Link href="/commencer/pays" className="underline-draw font-medium text-ink">
             Créons-le
