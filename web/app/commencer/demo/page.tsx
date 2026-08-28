@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 
 /**
- * L'ancienne démo en trois temps a quitté le parcours.
- * Un ancien lien ne doit pas ouvrir un cul-de-sac.
+ * L'ancienne démo — dépose, fiche, cartes — a quitté le parcours.
  */
 export default function RetiredDemoStep() {
   redirect("/commencer/ecole");
