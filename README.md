@@ -1622,12 +1622,13 @@ réversibilité et le plafond d'intervalle.
 
 ## Répétition espacée
 
-`Micabo/SRS/SM2Scheduler.swift` implémente SM-2 avec les réglages par défaut d'Anki :
+`Micabo/SRS/SM2Scheduler.swift` implémente le SM-2 **legacy** d'Anki, réglages par défaut :
 
-- paliers d'apprentissage 1 min puis 10 min, réapprentissage 10 min
-- sortie d'apprentissage à 1 jour, bouton « Facile » à 4 jours
+- paliers d'apprentissage `1 10`, réapprentissage `10`
+- Again / Hard / Good / Easy sur une neuve : 1 min, 6 min, 10 min, 4 j
+- Good n'est diplômé qu'après le dernier palier (1 jour)
 - facilité de départ 2,5, plancher 1,3, bonus « Facile » 1,3, multiplicateur « Difficile » 1,2
-- une rechute coûte 0,20 de facilité et renvoie la carte en réapprentissage
+- une rechute coûte 0,20 de facilité et renvoie la carte en réapprentissage à 10 min
 - dispersion aléatoire des échéances au-delà de 2,5 jours
 
 Les quatre boutons `À revoir`, `Difficile`, `Correct`, `Facile` affichent l'intervalle réel qu'ils
@@ -1656,7 +1657,7 @@ de cartes.
   appui pour la même chose. La bonne proposition passe au vert, celle qui a été choisie à tort
   au rouge, et la notation reste à l'utilisateur : c'est lui qui sait s'il a deviné.
 - **Chaque note annonce quand la carte revient** — sous « À revoir », « Difficile », « Correct »
-  et « Facile », le délai que la note programme : `1 min`, `10 min`, `1 j`, `4 j`. Il manquait, et
+  et « Facile », le délai que la note programme : `1 min`, `6 min`, `10 min`, `4 j` sur une neuve. Il manquait, et
   c'était le principal reproche fait à la session : on notait sans savoir si la carte revenait
   dans dix minutes ou le mois prochain, donc sans pouvoir arbitrer entre « difficile » et
   « correct ». Anki l'affiche depuis toujours, pour la même raison. Les libellés viennent du

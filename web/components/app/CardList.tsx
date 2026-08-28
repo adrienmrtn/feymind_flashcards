@@ -117,6 +117,7 @@ function Row({
       repetitions: card.repetitions,
       lapses: card.lapses,
       stepIndex: card.step_index,
+      dueDate: card.due_date,
     },
     { deadline: examDeadline(exam) },
   );

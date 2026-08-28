@@ -276,8 +276,8 @@ function SchedulerSection() {
     <Section
       eyebrow="SM-2"
       title="Ce que chaque bouton promet."
-      note="Les mêmes valeurs que MicaboTests/SM2SchedulerTests.swift, vérifiées en TypeScript. Deux
-      copies de cette formule qui divergent d'un dixième donnent une carte révisée deux fois."
+      note="SM-2 d'Anki, réglages legacy par défaut — les mêmes nombres des deux
+      côtés. Deux copies de cette formule qui divergent d'un dixième donnent une carte révisée deux fois."
     >
       <div className="paper overflow-hidden rounded-group bg-surface">
         {rows.map((row, index) => (

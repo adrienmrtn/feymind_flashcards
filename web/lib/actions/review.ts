@@ -88,11 +88,14 @@ export async function gradeCard(input: {
       ).get(card.id)
     : undefined;
 
-  // Même écriture que l'iPhone : dispersion activée, puis plafond d'examen.
-  // L'aperçu des boutons reste déterministe — un écart d'un jour sur une
-  // échéance lointaine est le prix de ne pas empiler tout un paquet.
+  // SM-2 d'Anki (dispersion comprise), puis le plafond d'examen. L'aperçu
+  // sous les boutons reste déterministe.
   const outcome = clampedToDeadline(
-    schedule(input.snapshot, rating, { now, config: DEFAULT_CONFIG }),
+    schedule(input.snapshot, rating, {
+      now,
+      config: DEFAULT_CONFIG,
+      dueDate: input.snapshot.dueDate,
+    }),
     deadline,
     now,
   );
