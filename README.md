@@ -671,6 +671,12 @@ Micabo/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
 Déposer le fichier à ce chemin suffit : `Contents.json` ne déclare qu'une entrée universelle,
 il n'y a donc ni déclinaison de tailles à générer ni référence à ajouter dans le projet.
 
+## Feuille de route
+
+`docs/plan-amelioration.md` réunit l'audit du produit (parcours d'accueil, écrans, textes, design
+system), la comparaison avec Anki, Quizlet, Knowt, RemNote, Brainscape et Duolingo, et le plan de
+travail qui en découle, en quatre lots.
+
 ## Pile technique
 
 - SwiftUI, iOS 17 minimum, projet Xcode natif (`Micabo.xcodeproj`)
