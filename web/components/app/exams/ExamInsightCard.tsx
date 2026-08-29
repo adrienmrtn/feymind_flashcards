@@ -22,7 +22,7 @@ export function ExamInsightCard({
   onClick?: () => void;
 }) {
   const inner = <InsightBody insight={insight} />;
-  const label = `${insight.name}, ${examCountdownLabel(insight.daysRemaining)}`;
+  const label = `${insight.name}, note visée ${insight.gradeLabel}, ${examCountdownLabel(insight.daysRemaining)}`;
 
   if (href) {
     return (
