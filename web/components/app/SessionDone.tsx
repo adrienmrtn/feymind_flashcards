@@ -43,11 +43,10 @@ export function SessionDone({
   const [ready, setReady] = useState(false);
   const accuracy =
     tally.answered > 0 ? Math.round(((tally.answered - tally.again) / tally.answered) * 100) : 100;
-  const counts = REVIEW_RATINGS.map((rating) => ({
+  const given = REVIEW_RATINGS.map((rating) => ({
     rating,
     count: tally.ratings.filter((item) => item === rating).length,
-  }));
-  const peak = Math.max(1, ...counts.map((item) => item.count));
+  })).filter((item) => item.count > 0);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => setReady(true));
@@ -72,27 +71,39 @@ export function SessionDone({
         </p>
       </header>
 
-      {tally.ratings.length > 0 ? (
-        <div className="rounded-2xl border border-border bg-card px-4 py-4">
-          <div className="flex h-28 items-end gap-2">
-            {counts.map((item, index) => (
-              <div key={item.rating} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                <span className="numeral text-[12px] font-semibold text-foreground">{item.count}</span>
-                <div className="flex h-20 w-full items-end">
-                  <div
-                    className={`w-full rounded-t-md ${RATING_BAR[item.rating]}`}
-                    style={{
-                      height: ready
-                        ? `${Math.max(item.count > 0 ? 10 : 4, Math.round((item.count / peak) * 100))}%`
-                        : "4%",
-                      transition: `height 480ms var(--ease-out-strong) ${index * 60}ms`,
-                    }}
-                  />
-                </div>
-                <span className="text-[11px] text-muted-foreground">{REVIEW_RATING_LABELS[item.rating]}</span>
-              </div>
-            ))}
-          </div>
+      {given.length > 0 ? (
+        // Des colonnes pleines largeur, surtout à zéro, faisaient un graphe plat
+        // et trop large. Une note jamais donnée n'a pas de ligne.
+        <div className="max-w-md rounded-2xl border border-border bg-card px-4 py-4">
+          <ul className="space-y-3">
+            {given.map((item, index) => {
+              const share = item.count / Math.max(tally.answered, 1);
+              return (
+                <li
+                  key={item.rating}
+                  aria-label={`${REVIEW_RATING_LABELS[item.rating]} : ${item.count} sur ${tally.answered}`}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-[13px] font-medium text-foreground">
+                      {REVIEW_RATING_LABELS[item.rating]}
+                    </span>
+                    <span className="numeral text-[13px] font-semibold text-foreground">
+                      {item.count}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-progress-track">
+                    <div
+                      className={`h-full rounded-pill ${RATING_BAR[item.rating]}`}
+                      style={{
+                        width: ready ? `${Math.max(8, Math.round(share * 100))}%` : "0%",
+                        transition: `width 480ms var(--ease-out-strong) ${index * 60}ms`,
+                      }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ) : null}
 
