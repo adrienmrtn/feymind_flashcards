@@ -2,17 +2,17 @@
 
 import type { Route } from "next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import type { OnboardingPath } from "@/lib/onboarding/steps";
+import { previousPath, type OnboardingPath } from "@/lib/onboarding/steps";
 
 /**
- * La charpente d'un écran de parcours.
+ * La charpente d'un écran de parcours, **dans la carte**.
  *
- * **Un écran, une question, aucun sous-titre.** La colonne tient dans la
- * fenêtre : le contenu peut défiler **à l'intérieur**, le bouton reste visible
- * sans qu'on ait à chercher le bas de page.
+ * Un écran, une question. Le contenu défile à l'intérieur. Le retour et le
+ * bouton restent en bas de la carte : à gauche, à droite — le même geste que
+ * sur un formulaire posé au milieu de la page.
  */
 export function Scaffold({
   eyebrow,
@@ -28,9 +28,12 @@ export function Scaffold({
   children: React.ReactNode;
   footer: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const back = previousPath(pathname);
+
   return (
-    <div className="mx-auto flex h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[640px] flex-col overflow-hidden px-screen pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <div className="flex shrink-0 items-baseline justify-between gap-4 pt-2">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6 pb-5 pt-3 sm:px-8 sm:pb-6">
+      <div className="flex shrink-0 items-baseline justify-between gap-4">
         {eyebrow ? <p className="eyebrow text-ink-tertiary">{eyebrow}</p> : <span />}
         {skip ? (
           <Link
@@ -50,7 +53,29 @@ export function Scaffold({
         {children}
       </div>
 
-      <div className="rise shrink-0 pt-3">{footer}</div>
+      <div className="rise flex shrink-0 items-center justify-between gap-4 pt-4">
+        {back ? (
+          <Link
+            href={back as Route}
+            className="pressable inline-flex min-h-11 items-center gap-1.5 text-[14.5px] font-medium text-ink-tertiary"
+          >
+            <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4">
+              <path
+                d="M12 4l-6 6 6 6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Retour
+          </Link>
+        ) : (
+          <span />
+        )}
+        <div className="shrink-0">{footer}</div>
+      </div>
     </div>
   );
 }
@@ -58,9 +83,9 @@ export function Scaffold({
 /**
  * Le bouton principal, **gris tant qu'on n'a pas répondu.**
  *
- * Il occupe sa place depuis le début, éteint : un bouton qui apparaît quand la réponse arrive fait
- * sauter la page au moment où le doigt s'approche. Pas de remplissage au survol : dans le tunnel,
- * le geste est d'appuyer, pas de caresser.
+ * Il occupe sa place depuis le début, éteint : un bouton qui apparaît quand la
+ * réponse arrive fait sauter la page au moment où le doigt s'approche. Il
+ * reste en bas à droite de la carte, jamais collé aux bords de l'écran.
  */
 export function ContinueButton({
   label = "Continuer",
@@ -86,7 +111,7 @@ export function ContinueButton({
         onPress?.();
         if (href) router.push(href as Route);
       }}
-      className={`h-14 w-full text-[16px] sm:h-14 sm:text-[16px] ${
+      className={`h-12 rounded-pill px-5 text-[15px] sm:h-12 sm:text-[15px] ${
         enabled
           ? "border-ink bg-ink text-on-ink hover:bg-ink hover:text-on-ink"
           : ""
