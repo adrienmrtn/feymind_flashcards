@@ -87,7 +87,7 @@ extension View {
     /// Vide la pile de cette page quand quelqu'un demande à revenir à l'accueil.
     ///
     /// À appliquer sur la racine de chaque onglet, à côté de `reportsNavigationDepth`. Sans
-    /// elle, `TabRouter.goHome()` changerait d'onglet en laissant les trois piles ouvertes
+    /// elle, `TabRouter.goHome()` changerait d'onglet en laissant les piles ouvertes
     /// derrière lui.
     func returnsHome(path: Binding<NavigationPath>) -> some View {
         modifier(HomeReturnListener(path: path))
@@ -119,7 +119,7 @@ extension View {
 
                 // La hauteur de la barre, en creux. Elle ne prend pas les appuis : elle
                 // recouvre la barre, et une surface transparente qui les avale rendrait les
-                // trois onglets inertes.
+                // onglets inertes.
                 Color.clear
                     .frame(height: MicaboLayout.tabBarSpace)
                     .allowsHitTesting(false)

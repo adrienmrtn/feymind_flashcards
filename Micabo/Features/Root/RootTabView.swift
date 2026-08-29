@@ -1,11 +1,11 @@
 import SwiftUI
 import UIKit
 
-/// Les trois pages de l'app, avec **Réviser** au milieu, et la barre du bas qui les
+/// Les pages de l'app, avec **Réviser** à côté de **Examens**, et la barre du bas qui les
 /// commande.
 ///
 /// **On ne balaye plus d'une page à l'autre.** Le carrousel qui vivait ici était un
-/// `TabView` en style page : trois écrans montés côte à côte, qui suivaient le doigt. Ça
+/// `TabView` en style page : les écrans montés côte à côte, qui suivaient le doigt. Ça
 /// coûtait cher pour ce que ça donnait. Un défilement horizontal qui traîne sur un tiers de
 /// geste rend chaque écran mou ; il entrait en conflit avec tout ce qui se balaye à
 /// l'intérieur d'une page ; et il fallait un bricolage qui parcourait toute la hiérarchie
@@ -13,7 +13,7 @@ import UIKit
 /// poussé. Les onglets s'atteignent maintenant par la barre du bas, et le changement de page
 /// est un fondu court.
 ///
-/// Les trois pages restent **montées en même temps**, simplement masquées : c'est ce qui
+/// Les pages restent **montées en même temps**, simplement masquées : c'est ce qui
 /// permet à chacune de garder son défilement, sa recherche et sa pile de navigation quand on
 /// la quitte et qu'on y revient.
 struct RootTabView: View {
@@ -31,6 +31,7 @@ struct RootTabView: View {
 
             page(.courses) { CoursesListView() }
             page(.today) { TodayView() }
+            page(.exams) { ExamsView() }
             page(.profile) { ProfileView() }
         }
         // La barre du bas est posée à l'extérieur des pages : elles passent dessous, elle ne

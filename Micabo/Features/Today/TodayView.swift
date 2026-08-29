@@ -25,6 +25,7 @@ struct TodayView: View {
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
 
     @Environment(ProAccess.self) private var pro: ProAccess?
+    @Environment(TabRouter.self) private var router: TabRouter?
 
     @State private var showStudy = false
     @State private var path = NavigationPath()
@@ -150,17 +151,6 @@ struct TodayView: View {
             }
             .navigationDestination(for: CourseCardsRoute.self) { route in
                 FlashcardsView(course: route.course)
-            }
-            .navigationDestination(for: ExamsRoute.self) { _ in
-                // L'état vide des examens renvoie à l'import, et c'est cet écran-ci qui sait
-                // l'ouvrir : la feuille d'import vit ici. Elle attend la fin du retour —
-                // une feuille présentée pendant une transition de pile ne s'ouvre pas.
-                ExamsView {
-                    path.removeLast()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                        requestImport()
-                    }
-                }
             }
         }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
@@ -332,26 +322,18 @@ struct TodayView: View {
 
     // MARK: - Examens
 
-    /// L'entrée vers la page Examens, et le compte à rebours du prochain.
+    /// L'entrée vers l'onglet Examens, et le compte à rebours du prochain.
     ///
-    /// Elle vit ici parce qu'un examen est une affaire de planning, et que le planning est
-    /// le sujet de cet onglet. Elle reste visible même sans examen déclaré : c'est une
-    /// fonctionnalité qu'on ne cherche pas si on ne sait pas qu'elle existe.
+    /// Elle reste ici parce qu'un examen oriente la file du jour. Un appui ouvre l'onglet,
+    /// plus un écran poussé : le calendrier a sa propre place dans la barre.
     /// **La rangée des examens est toujours là**, même sans un seul cours.
-    ///
-    /// Elle n'apparaissait qu'une fois qu'il y avait des cartes, au motif que planifier ne
-    /// mène à rien sans elles. C'était confondre deux choses : une fonctionnalité qui ne
-    /// s'applique pas encore n'est pas une fonctionnalité qui n'existe pas. Un écran d'accueil
-    /// dont une entrée entière n'apparaît qu'après un import ne s'apprend pas — on ne
-    /// découvre pas ce qu'on n'a jamais vu — et la page qu'elle ouvre sait maintenant se
-    /// présenter à vide.
     private var examSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             MicaboSectionCaption(text: "Prochains examens")
 
             if upcomingExams.isEmpty {
                 Button {
-                    path.append(ExamsRoute())
+                    openExams()
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(
@@ -370,7 +352,7 @@ struct TodayView: View {
                 VStack(spacing: 0) {
                     ForEach(Array(upcomingExams.enumerated()), id: \.element.id) { index, exam in
                         Button {
-                            path.append(ExamsRoute())
+                            openExams()
                         } label: {
                             MicaboRow(
                                 tile: MicaboTile(
@@ -392,6 +374,12 @@ struct TodayView: View {
                 }
                 .micaboGroup()
             }
+        }
+    }
+
+    private func openExams() {
+        withAnimation(.easeOut(duration: 0.28)) {
+            router?.selection = .exams
         }
     }
 
