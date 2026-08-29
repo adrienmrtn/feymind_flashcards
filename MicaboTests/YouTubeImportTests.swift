@@ -364,4 +364,21 @@ final class YouTubeCaptionTextTests: XCTestCase {
         let xml = "<transcript><text start=\"0\">Bonjour</text><text start=\"1\">le monde</text></transcript>"
         XCTAssertEqual(YouTubeCaptionText.fromXML(xml), "Bonjour le monde")
     }
+
+    /// Les horodatages et l'en-tête WEBVTT sont jetés : ne restent que les phrases,
+    /// comme `parseVtt` côté serveur.
+    func testVTTKeepsSpokenLinesAndDropsTimestamps() {
+        let vtt = """
+        WEBVTT
+        Kind: captions
+        Language: en
+
+        00:00:04.220 --> 00:00:05.400
+        This is a 3.
+
+        00:00:06.000 --> 00:00:08.000
+        A neural network.
+        """
+        XCTAssertEqual(YouTubeCaptionText.fromVTT(vtt), "This is a 3. A neural network.")
+    }
 }
