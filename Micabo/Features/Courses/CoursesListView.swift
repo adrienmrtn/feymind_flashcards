@@ -138,7 +138,11 @@ struct CoursesListView: View {
         .micaboPaywall($paywall)
         .onChange(of: router?.courseImportRequests ?? 0) { oldValue, newValue in
             guard newValue > oldValue else { return }
-            requestImport()
+            // La feuille attend le fondu vers Cours : la présenter pendant le
+            // changement d'onglet ne s'ouvre pas toujours.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                requestImport()
+            }
         }
     }
 
