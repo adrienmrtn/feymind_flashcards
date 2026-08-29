@@ -1,8 +1,7 @@
-import { addDays, EXAM_CHART_PAST_DAYS, resolveEmoji, startOfDay, targetScoreFromIntensity } from "@micabo/core";
+import { resolveEmoji, targetScoreFromIntensity } from "@micabo/core";
 
 import { ExamWorkspace } from "@/components/app/exams/ExamWorkspace";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
-import { loadReviewActivitySince } from "@/lib/data/reviews";
 import { examInsightFromRow, insightCardsFromSnapshots } from "@/lib/exams/from-rows";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
@@ -17,12 +16,10 @@ import { createClient } from "@/lib/supabase/server";
 export default async function ExamsPage() {
   const supabase = await createClient();
   const user = await currentUser();
-  const today = startOfDay(new Date());
-  const [exams, courses, cards, reviews, profile] = await Promise.all([
+  const [exams, courses, cards, profile] = await Promise.all([
     listExams(),
     listCourses(),
     listCardSnapshots(),
-    loadReviewActivitySince(addDays(today, -EXAM_CHART_PAST_DAYS)),
     user
       ? supabase
           .from("profiles")
@@ -35,7 +32,7 @@ export default async function ExamsPage() {
 
   const snapshots = insightCardsFromSnapshots(cards);
   const insights = exams.map((exam) =>
-    examInsightFromRow(exam, snapshots, reviews, { country: profile?.country_code }),
+    examInsightFromRow(exam, snapshots, [], { country: profile?.country_code }),
   );
 
   const mine = courses.filter((course) => !course.is_from_library);

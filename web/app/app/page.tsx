@@ -5,7 +5,6 @@ import {
   addDays,
   buildQueue,
   courseAccent,
-  EXAM_CHART_PAST_DAYS,
   isDue,
   resolveEmoji,
   startOfDay,
@@ -33,7 +32,7 @@ import {
   type ExamRow,
   type FriendRequestRow,
 } from "@/lib/data/courses";
-import { loadNewCardBudget, loadReviewActivitySince, loadReviewDatesSince } from "@/lib/data/reviews";
+import { loadNewCardBudget, loadReviewDatesSince } from "@/lib/data/reviews";
 import { listWeekReviewRanking } from "@/lib/data/social";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
@@ -51,7 +50,7 @@ export default async function DashboardPage() {
   const now = new Date();
   const today = startOfDay(now);
 
-  const [courses, cards, exams, friends, profile, budget, reviewDates, reviews, ranking] =
+  const [courses, cards, exams, friends, profile, budget, reviewDates, ranking] =
     await Promise.all([
       listCourses(),
       listCardSnapshots(),
@@ -67,7 +66,6 @@ export default async function DashboardPage() {
         : null,
       loadNewCardBudget(),
       loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
-      loadReviewActivitySince(addDays(today, -EXAM_CHART_PAST_DAYS)),
       listWeekReviewRanking(),
     ]);
 
@@ -85,7 +83,7 @@ export default async function DashboardPage() {
   const queue = todayQueue(cards, exams, now, budget.remaining);
   const tasks = tasksFromQueue(queue, cards, courses);
   const dueOutsideRhythm = countDue(cards, now) - queue.length;
-  const upcoming = upcomingExamInsights(exams, cards, reviews, now, profile?.country_code);
+  const upcoming = upcomingExamInsights(exams, cards, now, profile?.country_code);
   const greeting = greetingFor(now);
   const name = profile?.display_name?.trim().split(/\s+/)[0];
 
@@ -387,13 +385,12 @@ function countDue(cards: CardSnapshotRow[], now: Date): number {
 function upcomingExamInsights(
   exams: ExamRow[],
   cards: CardSnapshotRow[],
-  reviews: { cardId: string; at: Date }[],
   now: Date,
   country?: string | null,
 ): ExamInsight[] {
   const snapshots = insightCardsFromSnapshots(cards);
   return exams
-    .map((exam) => examInsightFromRow(exam, snapshots, reviews, { now, country }))
+    .map((exam) => examInsightFromRow(exam, snapshots, [], { now, country }))
     .filter((exam) => exam.daysRemaining >= 0)
     .sort((left, right) => left.daysRemaining - right.daysRemaining);
 }
