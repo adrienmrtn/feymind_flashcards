@@ -43,13 +43,27 @@ final class StudySession {
     private struct UndoStep {
         let card: Flashcard
         let scheduling: CardScheduling
-        /// Le journal écrit par la note, à supprimer si on l'annule.
+        /// Le journal déjà posé sur le disque, à supprimer si on l'annule après un `flush`.
         var log: ReviewLog?
+        /// Le journal encore en mémoire, à retirer si on l'annule avant le `flush`.
+        var pendingLogID: UUID?
         let pending: [Entry]
         let answered: [Flashcard]
         let answeredCount: Int
         let ratingCounts: [ReviewRating: Int]
         let graduatedCount: Int
+    }
+
+    /// Une note qui n'a pas encore touché SwiftData. Elle vit ici jusqu'au `flush`.
+    private struct PendingLog {
+        let id = UUID()
+        let card: Flashcard
+        let reviewedAt: Date
+        let rating: ReviewRating
+        let stateBefore: CardState
+        let previousIntervalDays: Double
+        let newIntervalDays: Double
+        let easeAfter: Double
     }
 
     /// Une carte replanifiée à moins de dix minutes revient dans la même session.
@@ -77,9 +91,11 @@ final class StudySession {
 
     private var context: ModelContext?
     private var sourceKey: String?
-    /// Actions faites depuis la dernière écriture sur le disque : notes, annulations, cartes
-    /// mises de côté. Le compte sert de seuil, pas de statistique.
-    private var unwritten = 0
+    /// `autosave` du contexte, remis comme on l'a trouvé en quittant la session.
+    private var previousAutosave: Bool?
+    /// Planning tenu en mémoire : une note ne touche SwiftData qu'au `flush`.
+    private var live: [UUID: CardScheduling] = [:]
+    private var pendingLogs: [PendingLog] = []
     private var undoStack: [UndoStep] = []
     /// Les cartes notées, dans l'ordre. Servent au bilan de fin de session, qui lit leur
     /// échéance pour dire quand le travail de la session revient.
@@ -100,9 +116,12 @@ final class StudySession {
 
     var counts: StudyCounts {
         StudyCounts(
-            newCards: pending.filter { $0.card.state == .new }.count,
-            learning: pending.filter { $0.card.state == .learning || $0.card.state == .relearning }.count,
-            review: pending.filter { $0.card.state == .review }.count
+            newCards: pending.filter { scheduling(of: $0.card).state == .new }.count,
+            learning: pending.filter {
+                let state = scheduling(of: $0.card).state
+                return state == .learning || state == .relearning
+            }.count,
+            review: pending.filter { scheduling(of: $0.card).state == .review }.count
         )
     }
 
@@ -141,9 +160,9 @@ final class StudySession {
     func nextReturn(from now: Date = Date()) -> TimeInterval? {
         guard mode.affectsSchedule else { return nil }
         let upcoming = answered
-            .filter { !$0.isSuspended }
+            .map { scheduling(of: $0) }
+            .filter { !$0.isSuspended && $0.dueDate > now }
             .map(\.dueDate)
-            .filter { $0 > now }
             .min()
         return upcoming.map { $0.timeIntervalSince(now) }
     }
@@ -153,7 +172,10 @@ final class StudySession {
     func returningToday(from now: Date = Date(), calendar: Calendar = MicaboCalendar.shared) -> Int {
         guard mode.affectsSchedule else { return 0 }
         let endOfDay = calendar.startOfDay(for: now).addingTimeInterval(24 * 3_600)
-        return answered.filter { !$0.isSuspended && $0.dueDate > now && $0.dueDate < endOfDay }.count
+        return answered.filter {
+            let plan = scheduling(of: $0)
+            return !plan.isSuspended && plan.dueDate > now && plan.dueDate < endOfDay
+        }.count
     }
 
     /// Aperçus Anki SM-2 sous les boutons (1 min / 6 min / 10 min / 4 j sur une neuve). En entraînement libre,
@@ -161,7 +183,7 @@ final class StudySession {
     var previewLabels: [ReviewRating: String] {
         guard mode.affectsSchedule, let current else { return [:] }
         return SM2Scheduler.previewLabels(
-            for: SM2CardSnapshot(card: current),
+            for: scheduling(of: current).snapshot,
             deadline: deadlines.deadline(for: current)
         )
     }
@@ -194,6 +216,7 @@ final class StudySession {
         self.context = context
         self.mode = mode
         self.sourceKey = mode.affectsSchedule ? sourceKey : nil
+        beginQuietWrites()
         self.deadlines = mode.affectsSchedule ? ExamDeadlines.active(in: context, now: now) : .empty
         startedAt = now
 
@@ -232,6 +255,7 @@ final class StudySession {
         self.context = context
         mode = .scheduled
         sourceKey = snapshot.sourceKey
+        beginQuietWrites()
         deadlines = ExamDeadlines.active(in: context, now: now)
         // La durée affichée en fin de session reste celle du temps réellement passé.
         startedAt = now.addingTimeInterval(-snapshot.elapsed)
@@ -277,8 +301,9 @@ final class StudySession {
 
         var step = UndoStep(
             card: card,
-            scheduling: CardScheduling(card: card),
+            scheduling: scheduling(of: card),
             log: nil,
+            pendingLogID: nil,
             pending: pending,
             answered: answered,
             answeredCount: answeredCount,
@@ -287,19 +312,31 @@ final class StudySession {
         )
 
         if mode.affectsSchedule {
-            let logsBefore = Set((card.logs ?? []).map(\.id))
-            let stateBefore = card.state
+            let before = scheduling(of: card)
+            let stateBefore = before.state
             // La note est calculée par SM-2, puis rabattue sur la date de l'examen quand la
             // carte en dépend : c'est ce qui l'empêche de repartir au delà du jour J.
+            // Rien n'est écrit sur la carte SwiftData : un `apply` notifie toutes les
+            // `@Query` encore montées derrière la session, et c'est ce qui faisait
+            // ramer chaque carte.
             let outcome = SM2Scheduler
-                .schedule(snapshot: SM2CardSnapshot(card: card), rating: rating, now: now)
+                .schedule(snapshot: before.snapshot, rating: rating, now: now)
                 .clamped(to: deadlines.deadline(for: card), now: now)
-            card.apply(outcome, at: now)
+            var after = before
+            after.apply(outcome, at: now)
+            live[card.id] = after
 
-            // Pas de `save()` ici : c'est ce qui rendait l'appui pâteux. Voir `write(force:)`.
-            // Le journal que la note vient d'écrire est dans la relation, en mémoire, donc on
-            // le retrouve sans passer par le disque.
-            step.log = (card.logs ?? []).first { !logsBefore.contains($0.id) }
+            let pendingLog = PendingLog(
+                card: card,
+                reviewedAt: now,
+                rating: rating,
+                stateBefore: stateBefore,
+                previousIntervalDays: before.intervalDays,
+                newIntervalDays: outcome.intervalDays,
+                easeAfter: outcome.easeFactor
+            )
+            pendingLogs.append(pendingLog)
+            step.pendingLogID = pendingLog.id
 
             if outcome.state == .review, stateBefore != .review {
                 graduatedCount += 1
@@ -336,8 +373,12 @@ final class StudySession {
 
         if let log = step.log {
             context?.delete(log)
+            step.scheduling.restore(on: step.card)
         }
-        step.scheduling.restore(on: step.card)
+        if let pendingLogID = step.pendingLogID {
+            pendingLogs.removeAll { $0.id == pendingLogID }
+        }
+        live[step.card.id] = step.scheduling
 
         pending = step.pending
         answered = step.answered
@@ -368,8 +409,9 @@ final class StudySession {
 
         let step = UndoStep(
             card: card,
-            scheduling: CardScheduling(card: card),
+            scheduling: scheduling(of: card),
             log: nil,
+            pendingLogID: nil,
             pending: pending,
             answered: answered,
             answeredCount: answeredCount,
@@ -378,7 +420,9 @@ final class StudySession {
         )
 
         if mode.affectsSchedule {
-            card.isSuspended = true
+            var plan = scheduling(of: card)
+            plan.isSuspended = true
+            live[card.id] = plan
         }
 
         undoStack.append(step)
@@ -413,8 +457,7 @@ final class StudySession {
 
         guard !pending.isEmpty else {
             isFinished = true
-            // La file est vide : plus personne n'attend une carte, donc c'est le moment
-            // d'écrire ce qui restait en mémoire.
+            // La file est vide : le bilan a besoin des échéances déjà posées.
             flush()
             return
         }
@@ -434,47 +477,83 @@ final class StudySession {
 
     // MARK: - Écriture
 
-    /// Nombre d'actions gardées en mémoire avant de toucher le disque.
-    private static let writeEvery = 5
-
     /// **Ce qui se passe après une note, et surtout ce qui ne se passe plus.**
     ///
-    /// Chaque note enregistrait sur le disque : un `save()` SwiftData, donc une transaction
-    /// SQLite, sur le fil principal, à l'intérieur du bloc d'animation qui faisait entrer la
-    /// carte suivante. L'animation ne pouvait pas démarrer avant que l'écriture soit finie, et
-    /// c'est exactement le poil de latence qu'on sentait entre l'appui et la carte d'après.
+    /// Une note écrivait la carte et son journal dans SwiftData tout de suite. Même sans
+    /// `save()`, le contexte notifie les `@Query` : les quatre onglets restent montés
+    /// derrière la session, et chacun recomptait ses files et ses historiques. L'appui
+    /// attendait cette vague, carte après carte.
     ///
-    /// Le `save()` était même deux fois coûteux, et la seconde est la plus lourde : il publie
-    /// les changements au contexte, donc **les pages d'onglets rafraîchissent leurs
-    /// requêtes** — elles restent montées toutes ensemble — et chacune recompte ses séries,
-    /// ses files et ses histogrammes sur tout l'historique. Quatre notes par seconde
-    /// déclenchaient un recalcul par page montée.
-    ///
-    /// Les actions s'accumulent donc en mémoire et partent par paquets. Ce qu'on risque est
-    /// borné et se répare tout seul : une app tuée avant l'écriture perd les notes du paquet
-    /// en cours, et les cartes concernées se retrouvent simplement dues à la prochaine
-    /// session. En échange, l'appui est instantané. La sortie de session et le passage en
-    /// arrière-plan forcent l'écriture, ce qui couvre tous les cas où l'on quitte pour de bon.
+    /// Le planning vit donc en mémoire. SwiftData n'est touché qu'au `flush` : sortie de
+    /// session, arrière-plan, ou file vide. Une app tuée avant ça reprend la file depuis
+    /// les réglages ; les notes non posées restent dues, et se reverront.
     private func write() {
         writeSnapshot()
-
-        guard mode.affectsSchedule else { return }
-        unwritten += 1
-        guard unwritten >= Self.writeEvery else { return }
-
-        // Après l'image, pas dedans : l'animation de la carte suivante a le temps de partir
-        // avant que le disque soit touché.
-        DispatchQueue.main.async { [weak self] in
-            self?.flush()
-        }
     }
 
     /// Écrit maintenant. À appeler quand on quitte la session, ou quand l'app passe en
     /// arrière-plan : à ces deux instants, personne n'attend l'image suivante.
     func flush() {
-        guard unwritten > 0 || context?.hasChanges == true else { return }
-        unwritten = 0
+        guard mode.affectsSchedule else { return }
+        applyPendingWrites()
+        guard context?.hasChanges == true else { return }
         try? context?.save()
+    }
+
+    /// Remet l'écriture automatique et pose ce qui restait. À appeler en quittant.
+    func end() {
+        flush()
+        restoreAutosave()
+    }
+
+    private func scheduling(of card: Flashcard) -> CardScheduling {
+        live[card.id] ?? CardScheduling(card: card)
+    }
+
+    private func beginQuietWrites() {
+        guard let context, previousAutosave == nil else { return }
+        previousAutosave = context.autosaveEnabled
+        context.autosaveEnabled = false
+    }
+
+    private func restoreAutosave() {
+        guard let context, let previousAutosave else { return }
+        context.autosaveEnabled = previousAutosave
+        self.previousAutosave = nil
+    }
+
+    /// Pose sur les cartes ce qui a été décidé en mémoire, puis les journaux.
+    private func applyPendingWrites() {
+        for (id, plan) in live {
+            guard let card = card(id: id) else { continue }
+            plan.restore(on: card)
+        }
+
+        for item in pendingLogs {
+            let log = ReviewLog(
+                reviewedAt: item.reviewedAt,
+                rating: item.rating,
+                stateBefore: item.stateBefore,
+                previousIntervalDays: item.previousIntervalDays,
+                newIntervalDays: item.newIntervalDays,
+                easeAfter: item.easeAfter
+            )
+            item.card.logs = (item.card.logs ?? []) + [log]
+            if let index = undoStack.firstIndex(where: { $0.pendingLogID == item.id }) {
+                undoStack[index].log = log
+                undoStack[index].pendingLogID = nil
+            }
+        }
+
+        live.removeAll()
+        pendingLogs.removeAll()
+    }
+
+    private func card(id: UUID) -> Flashcard? {
+        if current?.id == id { return current }
+        if let found = answered.first(where: { $0.id == id }) { return found }
+        if let found = pending.first(where: { $0.card.id == id }) { return found }
+        return undoStack.last(where: { $0.card.id == id })?.card
     }
 
     // MARK: - Reprise
