@@ -12,7 +12,9 @@ export default function CardsIntroStep() {
       title="On transforme tes fiches en flashcards."
       footer={<ContinueButton enabled href="/commencer/reussir" />}
     >
-      <FlashcardStory />
+      <div className="flex h-full items-center justify-center">
+        <FlashcardStory />
+      </div>
     </Scaffold>
   );
 }

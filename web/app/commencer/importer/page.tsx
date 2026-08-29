@@ -12,7 +12,9 @@ export default function ImportStep() {
       title="Importe tes cours."
       footer={<ContinueButton enabled href="/commencer/cartes" />}
     >
-      <ImportStory />
+      <div className="flex h-full items-center justify-center">
+        <ImportStory />
+      </div>
     </Scaffold>
   );
 }

@@ -42,7 +42,7 @@ export function Scaffold({
         ) : null}
       </div>
 
-      <h1 className="rise mt-2.5 shrink-0 text-[24px] font-bold leading-[1.12] tracking-tight-title text-ink sm:text-[30px]">
+      <h1 className="rise mt-2.5 shrink-0 text-balance text-[24px] font-bold leading-[1.12] tracking-tight-title text-ink sm:text-[30px]">
         {title}
       </h1>
 
