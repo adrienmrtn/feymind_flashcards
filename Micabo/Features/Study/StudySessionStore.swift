@@ -2,8 +2,9 @@ import Foundation
 
 /// Ce qu'on garde d'une session interrompue : de quoi la reprendre à la carte près.
 ///
-/// On n'enregistre que des identifiants de cartes : les cartes elles-mêmes vivent dans
-/// SwiftData, et leur état de répétition espacée a déjà été écrit à chaque note.
+/// On n'enregistre que des identifiants de cartes. Le planning de la session vit
+/// en mémoire et n'est posé sur SwiftData qu'en quittant : une app tuée reprend
+/// la file, et les notes non posées restent dues.
 struct StudySessionSnapshot: Codable, Equatable {
     var sourceKey: String
     /// La carte en cours d'abord, puis la file, dans l'ordre.

@@ -33,9 +33,11 @@ struct StudyView: View {
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(TabRouter.self) private var router: TabRouter?
 
-    @Query private var reviewLogs: [ReviewLog]
-    @Query private var exams: [Exam]
-    @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
+    /// Faits figés à l'ouverture. Un `@Query` sur les journaux se réveillerait à
+    /// chaque note et ferait ramer la carte suivante.
+    @State private var introducedToday = 0
+    @State private var setupExams: [Exam] = []
+    @State private var setupCourses: [Course] = []
 
     @State private var session = StudySession()
     @State private var didStart = false
@@ -106,8 +108,8 @@ struct StudyView: View {
         }
         .micaboScreenBackground()
         .onAppear(perform: prepare)
-        // Les notes s'écrivent par paquets pour que l'appui reste instantané : quitter l'app
-        // au milieu d'un paquet doit donc le poser sur le disque avant de partir.
+        // Les notes restent en mémoire pendant la session : quitter l'app doit les
+        // poser sur le disque avant de partir.
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { session.flush() }
         }
@@ -355,10 +357,6 @@ struct StudyView: View {
         DailyLoad.newCardsPerDay(dailyMinutes: OnboardingPreferences.dailyMinutes)
     }
 
-    private var introducedToday: Int {
-        DailyNewQuota.introducedToday(from: reviewLogs)
-    }
-
     private var setupCourseTitle: String? {
         if case .course(let course) = source { return course.title }
         return nil
@@ -368,7 +366,7 @@ struct StudyView: View {
         StudyQueueBuilder.counts(
             for: resolveCards(),
             limits: .daily(newRemaining: newPerSession),
-            deadlines: ExamDeadlines.active(exams: exams, courses: courses)
+            deadlines: ExamDeadlines.active(exams: setupExams, courses: setupCourses)
         )
     }
 
@@ -382,9 +380,24 @@ struct StudyView: View {
         newPerSession = min(DailyNewQuota.remaining(introduced: introducedToday), availableDueNew)
     }
 
+    private func snapshotSetupFacts() {
+        let start = Calendar.current.startOfDay(for: Date())
+        var logs = FetchDescriptor<ReviewLog>(
+            predicate: #Predicate<ReviewLog> { $0.reviewedAt >= start }
+        )
+        logs.fetchLimit = 400
+        let todayLogs = (try? modelContext.fetch(logs)) ?? []
+        introducedToday = DailyNewQuota.introducedToday(from: todayLogs)
+        setupExams = (try? modelContext.fetch(FetchDescriptor<Exam>())) ?? []
+        setupCourses = (try? modelContext.fetch(
+            FetchDescriptor<Course>(sortBy: [SortDescriptor(\.updatedAt, order: .reverse)])
+        )) ?? []
+    }
+
     /// Au premier affichage : soit on propose de reprendre, soit on règle le curseur.
     private func prepare() {
         guard !didStart, resumable == nil else { return }
+        snapshotSetupFacts()
 
         if mode.affectsSchedule,
            let key = source.persistenceKey,
@@ -499,7 +512,7 @@ struct StudyView: View {
     /// la carte suivante, c'est-à-dire exactement là où il ne peut plus rien faire.
     private func leaveForHome() {
         isGated = false
-        session.flush()
+        session.end()
         router?.goHome()
 
         // On laisse la couverture du paywall se refermer avant celle de la session : deux
@@ -509,10 +522,10 @@ struct StudyView: View {
         }
     }
 
-    /// Fermer en cours de route ne perd rien : la file est écrite après chaque note, et le
-    /// planning est écrit ici, à l'instant où plus personne n'attend une carte.
+    /// Fermer en cours de route ne perd rien : le planning encore en mémoire est
+    /// posé ici, à l'instant où plus personne n'attend une carte.
     private func finish() {
-        session.flush()
+        session.end()
 
         if isEmbedded {
             session = StudySession()

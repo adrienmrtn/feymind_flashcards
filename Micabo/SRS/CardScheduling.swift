@@ -43,4 +43,31 @@ struct CardScheduling: Equatable {
         card.updatedAt = updatedAt
         card.isSuspended = isSuspended
     }
+
+    /// L'état que le planificateur lit, sans passer par SwiftData.
+    var snapshot: SM2CardSnapshot {
+        SM2CardSnapshot(
+            state: state,
+            intervalDays: intervalDays,
+            easeFactor: easeFactor,
+            repetitions: repetitions,
+            lapses: lapses,
+            stepIndex: stepIndex,
+            dueDate: dueDate
+        )
+    }
+
+    /// Applique une note en mémoire. La carte SwiftData n'est pas touchée : c'est
+    /// `restore` qui l'écrit, au moment où la session pose le paquet.
+    mutating func apply(_ outcome: SM2Outcome, at date: Date) {
+        state = outcome.state
+        dueDate = outcome.dueDate
+        intervalDays = outcome.intervalDays
+        easeFactor = outcome.easeFactor
+        repetitions = outcome.repetitions
+        lapses = outcome.lapses
+        stepIndex = outcome.stepIndex
+        lastReviewedAt = date
+        updatedAt = date
+    }
 }
