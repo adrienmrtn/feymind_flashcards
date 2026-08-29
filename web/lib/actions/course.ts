@@ -9,7 +9,8 @@ import {
   countryFor,
   isSheetLength,
   sheetLanguage,
-  isVisibility,
+  DEFAULT_VISIBILITY,
+  isChoosableVisibility,
   latexCommandsToUnicode,
   lengthContaining,
   normalizeSheet,
@@ -142,9 +143,8 @@ export async function importFromText(input: {
     raw_text: text,
     sheet: { blocks },
     context_text: course.contextText ?? sheetToPlainText(blocks),
-    // Le choix se fait à l'import et pas après : un cours qui part public le temps qu'on y pense
-    // est un cours qui a été visible, et le refermer ensuite ne rattrape pas la minute passée.
-    visibility: isVisibility(input.visibility) ? input.visibility : "public",
+    // Plus de dépôt public : sans choix, le cours reste entre soi.
+    visibility: isChoosableVisibility(input.visibility) ? input.visibility : DEFAULT_VISIBILITY,
   });
 
   if (insertError) return { status: "error", message: insertError.message };

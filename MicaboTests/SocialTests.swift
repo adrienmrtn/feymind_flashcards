@@ -96,11 +96,17 @@ final class CourseVisibilityTests: XCTestCase {
         XCTAssertEqual(CourseVisibility.allCases.count, 3)
     }
 
-    /// Le défaut est public, et c'est celui de la base : un cours importé hors ligne, puis
-    /// synchronisé, ne doit pas changer de visibilité en route.
-    func testTheDefaultIsPublicOnBothSides() {
-        XCTAssertEqual(CourseVisibility.standard, .public)
-        XCTAssertEqual(Course(title: "Photosynthèse").visibility, .public)
+    /// Le défaut est privé : on ne dépose plus un cours dans le catalogue public.
+    func testTheDefaultIsPrivate() {
+        XCTAssertEqual(CourseVisibility.standard, .private)
+        XCTAssertEqual(Course(title: "Photosynthèse").visibility, .private)
+    }
+
+    func testPublicIsNoLongerAChoice() {
+        XCTAssertEqual(CourseVisibility.choosable, [.friends, .private])
+        XCTAssertEqual(CourseVisibility.public.asChoice, .private)
+        XCTAssertEqual(CourseVisibility.friends.asChoice, .friends)
+        XCTAssertEqual(CourseVisibility.private.asChoice, .private)
     }
 
     func testOnlyPrivateStaysOnTheDevice() {
@@ -117,9 +123,8 @@ final class CourseVisibilityTests: XCTestCase {
         }
     }
 
-    /// Une valeur inconnue vient d'un serveur plus récent que l'app. Elle ne doit pas faire
-    /// retomber le cours sur « public » : ce serait le pire repli possible pour un réglage de
-    /// partage.
+    /// Une valeur inconnue vient d'un serveur plus récent que l'app. Elle retombe sur le
+    /// défaut, qui est privé : le pire repli serait d'ouvrir le cours.
     func testAnUnknownRawValueDoesNotOpenTheCourse() {
         let course = Course(title: "Psychanalyse")
         course.visibility = .private

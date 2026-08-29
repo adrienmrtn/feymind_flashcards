@@ -134,6 +134,13 @@ function TodayTasks({
     <Card className="h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-[15px] font-semibold text-ink">Tâches du jour</CardTitle>
+        {tasks.length > 0 ? (
+          <CardAction>
+            <Button size="sm" render={<Link href={"/app/reviser?go=1" as never} />}>
+              Apprendre tout
+            </Button>
+          </CardAction>
+        ) : null}
       </CardHeader>
       <CardPanel className="pt-0">
         {tasks.length > 0 ? (

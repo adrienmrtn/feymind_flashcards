@@ -1,11 +1,14 @@
 "use client";
 
-import { VISIBILITIES, type CourseVisibility } from "@micabo/core";
+import { choosableVisibilities, type CourseVisibility } from "@micabo/core";
 
 /**
- * Les trois visibilités, en icônes.
+ * Les visibilités encore proposées, en icônes.
  *
- * Le libellé tenait trop de place pour trois choix qui se comprennent d'un
+ * Plus de dépôt public : uniquement les amis, ou soi seul. Un cours déjà
+ * public garde son pictogramme jusqu'à ce qu'on le referme.
+ *
+ * Le libellé tenait trop de place pour des choix qui se comprennent d'un
  * pictogramme. Le détail reste au survol (et à la lecture d'écran).
  */
 export function VisibilityChoices({
@@ -19,7 +22,7 @@ export function VisibilityChoices({
 }) {
   return (
     <div className="flex items-center gap-1.5" role="group" aria-label="Qui peut retrouver ce cours">
-      {VISIBILITIES.map((item) => {
+      {choosableVisibilities(value).map((item) => {
         const selected = value === item.value;
         return (
           <span key={item.value} className="relative">

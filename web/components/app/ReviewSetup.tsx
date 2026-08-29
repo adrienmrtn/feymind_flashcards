@@ -141,38 +141,32 @@ export function ReviewSetup({
 
   return (
     <div className="space-y-5">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight text-foreground">
-            {leftoverOnly ? "C'est fait" : `${served} carte${served > 1 ? "s" : ""}`}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {leftoverOnly
-              ? `${dueNew} neuve${dueNew > 1 ? "s" : ""} hors rythme`
-              : courseId
-                ? "Ce cours"
-                : "Aujourd'hui"}
-          </p>
-        </div>
-        {dueNew > 0 ? (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Neuves</span>
-            <CountStepper
-              value={Math.min(freshCap, dueNew)}
-              min={0}
-              max={dueNew}
-              onChange={setFreshCap}
-              minusLabel="Une carte neuve de moins"
-              plusLabel="Une carte neuve de plus"
-            />
-          </div>
-        ) : null}
+      <header>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          {leftoverOnly ? "C'est fait" : `${served} carte${served > 1 ? "s" : ""}`}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {leftoverOnly
+            ? `${dueNew} neuve${dueNew > 1 ? "s" : ""} hors rythme`
+            : courseId
+              ? "Ce cours"
+              : "Aujourd'hui"}
+        </p>
       </header>
 
-      {served > 0 ? (
+      {served > 0 || dueNew > 0 ? (
         <dl className="grid grid-cols-2 gap-3">
           <Stat value={again} label="à revoir" />
-          <Stat value={fresh} label={fresh === 1 ? "nouvelle" : "nouvelles"} />
+          {dueNew > 0 ? (
+            <NewCardsControl
+              value={Math.min(freshCap, dueNew)}
+              max={dueNew}
+              planned={remaining}
+              onChange={setFreshCap}
+            />
+          ) : (
+            <Stat value={fresh} label={fresh === 1 ? "nouvelle" : "nouvelles"} />
+          )}
         </dl>
       ) : null}
 
@@ -203,6 +197,47 @@ export function ReviewSetup({
       ) : (
         <p className="text-sm text-muted-foreground">Ajoute des neuves.</p>
       )}
+    </div>
+  );
+}
+
+function NewCardsControl({
+  value,
+  max,
+  planned,
+  onChange,
+}: {
+  value: number;
+  max: number;
+  planned: number;
+  onChange: (next: number) => void;
+}) {
+  const relation = value === planned ? "at" : value > planned ? "above" : "below";
+  const info =
+    relation === "at"
+      ? "Nombre de nouvelles cartes prévues en fonction de votre rythme."
+      : relation === "above"
+        ? "Au-dessus de votre rythme."
+        : "En dessous de votre rythme.";
+  const tone = relation === "at" ? "info" : relation === "above" ? "caution" : "ink";
+
+  return (
+    <div className="rounded-2xl border border-border bg-card px-4 py-4">
+      <dd>
+        <CountStepper
+          value={value}
+          min={0}
+          max={max}
+          onChange={onChange}
+          minusLabel="Une carte neuve de moins"
+          plusLabel="Une carte neuve de plus"
+          tone={tone}
+          info={info}
+        />
+      </dd>
+      <dt className="mt-2 text-[13px] text-muted-foreground">
+        {value === 1 ? "nouvelle" : "nouvelles"}
+      </dt>
     </div>
   );
 }

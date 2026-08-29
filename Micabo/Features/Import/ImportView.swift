@@ -536,20 +536,16 @@ struct ImportView: View {
 
     /// **Qui pourra la retrouver, décidé à l'import.**
     ///
-    /// La visibilité ne se réglait qu'après coup, depuis la fiche. C'est trop tard pour le
-    /// seul cas qui compte : celui où l'on sait, en déposant le document, qu'on ne veut pas le
-    /// partager. Un cours part alors public le temps qu'on y pense, et le refermer ensuite ne
-    /// rattrape pas la minute où il était visible.
-    ///
-    /// Le choix se garde d'un import à l'autre, comme la longueur : quelqu'un qui travaille en
-    /// privé n'a pas à le redire à chaque document.
+    /// Plus de dépôt public : uniquement les amis, ou soi seul. Le choix se garde d'un
+    /// import à l'autre, comme la longueur : quelqu'un qui travaille en privé n'a pas à le
+    /// redire à chaque document.
     private var visibilitySection: some View {
         VStack(alignment: .leading, spacing: 10) {
             MicaboSectionCaption(text: "Qui peut la retrouver")
 
             HStack(spacing: MicaboSpacing.xs) {
-                ForEach(CourseVisibility.allCases) { value in
-                    MicaboSelectChip(title: value.title, isSelected: value == visibility) {
+                ForEach(CourseVisibility.choosable) { value in
+                    MicaboSelectChip(title: value.title, isSelected: value == visibility.asChoice) {
                         withAnimation(.easeOut(duration: 0.2)) { visibility = value }
                     }
                 }
@@ -841,7 +837,7 @@ struct ImportView: View {
                 rawText: rawText,
                 fileName: fileName,
                 coverImageData: cover,
-                visibility: visibility,
+                visibility: visibility.asChoice,
                 in: modelContext
             )
             onCreated(course)

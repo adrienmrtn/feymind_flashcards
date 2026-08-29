@@ -207,8 +207,8 @@ export function Session({
         <p className="numeral shrink-0 text-[13px] font-semibold text-ink-tertiary">{remaining}</p>
       </div>
 
-      <div className="flex flex-1 flex-col justify-center py-8">
-        <div className="rounded-2xl border border-border bg-card p-7">
+      <div className="flex flex-1 flex-col items-center justify-center py-8">
+        <div className="paper flex min-h-[min(22rem,58svh)] w-full max-w-[26rem] flex-col rounded-[22px] bg-card p-6 sm:p-7">
           {card.courseTitle || card.exam ? (
             <div className="flex items-start justify-between gap-3">
               {card.courseTitle ? (
@@ -235,7 +235,7 @@ export function Session({
             </div>
           ) : null}
 
-          <p className="mt-3 text-[21px] font-semibold leading-snug text-ink">
+          <p className="mt-3 flex flex-1 items-center text-[21px] font-semibold leading-snug text-ink">
             <InlineMarkup text={card.front} />
           </p>
 
@@ -301,7 +301,7 @@ export function Session({
         ) : null}
       </div>
 
-      <div>
+      <div className="mx-auto w-full max-w-[26rem]">
         {revealed ? (
           <div className="grid grid-cols-4 gap-2">
             {REVIEW_RATINGS.map((rating) => (

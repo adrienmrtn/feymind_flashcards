@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import {
   dayDifference,
@@ -10,6 +10,8 @@ import {
   type ExamInsight,
   type ExamIntensity,
 } from "@micabo/core";
+
+import { Toast } from "@/components/app/Toast";
 
 import { ExamCalendar, isoDay, sameDay, type CalendarExam } from "./ExamCalendar";
 import { ExamEditor, type EditorCard, type EditorCourse, type EditorExam } from "./ExamEditor";
@@ -42,6 +44,8 @@ export function ExamWorkspace({
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selected, setSelected] = useState<Date | null>(null);
   const [editing, setEditing] = useState<{ exam: EditorExam | null; date: Date } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const dismissNotice = useCallback(() => setNotice(null), []);
 
   const calendarExams: CalendarExam[] = exams.map((exam) => ({
     id: exam.id,
@@ -205,9 +209,14 @@ export function ExamWorkspace({
           courses={courses}
           cards={cards}
           countryCode={countryCode}
-          onClose={() => setEditing(null)}
+          onClose={(outcome) => {
+            setEditing(null);
+            if (outcome === "created") setNotice("Examen rajouté");
+          }}
         />
       ) : null}
+
+      {notice ? <Toast message={notice} onGone={dismissNotice} /> : null}
     </>
   );
 }

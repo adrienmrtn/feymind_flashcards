@@ -7,7 +7,7 @@ import {
   clampBlocks,
   isContentLanguage,
   isSheetLength,
-  isVisibility,
+  isChoosableVisibility,
   lengthContaining,
   nearestStep,
   type ContentLanguage,
@@ -113,15 +113,14 @@ export async function updateSettings(input: {
 /**
  * La visibilité d'un cours, changée après coup.
  *
- * Elle se décide à l'import, et elle doit pouvoir se refermer : c'est ce qui rend le défaut public
- * acceptable. On ne demande pas à quelqu'un d'ouvrir ses cours sans lui donner le moyen d'en
- * refermer un.
+ * Elle se décide à l'import, et elle doit pouvoir se refermer. On ne propose plus
+ * le dépôt public : uniquement les amis, ou soi seul.
  */
 export async function setCourseVisibility(
   courseId: string,
   visibility: CourseVisibility,
 ): Promise<SavedSettings> {
-  if (!isVisibility(visibility)) return { status: "error", message: "Réglage inconnu." };
+  if (!isChoosableVisibility(visibility)) return { status: "error", message: "Réglage inconnu." };
 
   const supabase = await createClient();
   const {
