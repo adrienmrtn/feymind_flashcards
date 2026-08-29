@@ -520,15 +520,19 @@ enum YouTubeOnDevice {
     }
 
     private static func captionTracks(from player: [String: Any]) -> [Track] {
-        let renderer = ((player["captions"] as? [String: Any])?
-            ["playerCaptionsTracklistRenderer"] as? [String: Any])
+        // Un lookup enchaîné sur deux lignes (`(dict as? …)?` puis `["clé"]`)
+        // est lu comme un tuple : le compilateur refuse le build. Une
+        // variable par niveau, comme côté Edge Function.
+        let captions = player["captions"] as? [String: Any]
+        let renderer = captions?["playerCaptionsTracklistRenderer"] as? [String: Any]
         let raw = renderer?["captionTracks"] as? [[String: Any]] ?? []
         let defaultIndex = renderer?["defaultCaptionTrackIndex"] as? Int ?? 0
 
-        return raw.enumerated().compactMap { index, track in
+        return raw.enumerated().compactMap { index, track -> Track? in
             guard let baseURL = track["baseUrl"] as? String, !baseURL.isEmpty,
                   let code = track["languageCode"] as? String, !code.isEmpty else { return nil }
-            let name = ((track["name"] as? [String: Any])?["simpleText"] as? String) ?? code
+            let nameObject = track["name"] as? [String: Any]
+            let name = nameObject?["simpleText"] as? String ?? code
             return Track(
                 code: code,
                 name: name,
