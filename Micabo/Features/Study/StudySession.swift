@@ -552,7 +552,7 @@ final class StudySession {
     private func card(id: UUID) -> Flashcard? {
         if current?.id == id { return current }
         if let found = answered.first(where: { $0.id == id }) { return found }
-        if let found = pending.first(where: { $0.card.id == id }) { return found }
+        if let found = pending.first(where: { $0.card.id == id }) { return found.card }
         return undoStack.last(where: { $0.card.id == id })?.card
     }
 
