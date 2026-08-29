@@ -82,7 +82,7 @@ export function ExamEditor({
   courses: EditorCourse[];
   cards: EditorCard[];
   countryCode?: string | null;
-  onClose: () => void;
+  onClose: (outcome?: "created" | "updated" | "deleted") => void;
 }) {
   const today = startOfDay(new Date());
   const [step, setStep] = useState<Step>("jour");
@@ -168,7 +168,7 @@ export function ExamEditor({
       setFailure(result.message ?? "L'examen n'a pas pu être enregistré.");
       return;
     }
-    onClose();
+    onClose(exam ? "updated" : "created");
   }
 
   async function remove() {
@@ -180,7 +180,7 @@ export function ExamEditor({
       setFailure(result.message ?? "Impossible de supprimer.");
       return;
     }
-    onClose();
+    onClose("deleted");
   }
 
   return (
@@ -189,7 +189,7 @@ export function ExamEditor({
         type="button"
         className="absolute inset-0 bg-ink/35 backdrop-blur-[6px]"
         aria-label="Fermer"
-        onClick={onClose}
+        onClick={() => onClose()}
       />
       <div
         role="dialog"
@@ -214,7 +214,7 @@ export function ExamEditor({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => onClose()}
             className="pressable -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
             aria-label="Fermer"
           >

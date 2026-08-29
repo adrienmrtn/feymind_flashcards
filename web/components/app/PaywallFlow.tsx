@@ -189,19 +189,17 @@ export function PaywallCard({ onClose }: { onClose: () => void }) {
 function SocialStep() {
   return (
     <div>
-      <p className="eyebrow text-accent">Preuve sociale</p>
       <h2
         id="paywall-title"
-        className="mt-2 text-[30px] font-bold leading-[1.08] tracking-tight-title text-ink"
+        className="flex flex-col items-center text-center"
       >
-        <span className="count-in numeral inline-block">
-          <CountUp to={100000} />+
-        </span>
-        <span className="mt-1 block text-[22px] font-semibold tracking-tight-title">
-          utilisateurs
+        <Stars rating={4.8} />
+        <span className="numeral mt-3 text-[40px] font-bold leading-none tracking-display text-ink">
+          4,8
+          <span className="text-[20px] font-semibold text-ink-tertiary"> / 5</span>
         </span>
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-ink-secondary">
+      <p className="mt-4 text-[15px] leading-relaxed text-ink-secondary">
         Ils révisent avec Micabo. Les mêmes écoles, la même méthode - la
         répétition espacée, mesurée depuis plus d&apos;un siècle.
       </p>
@@ -221,10 +219,9 @@ function SocialStep() {
       </div>
 
       <div className="mt-6">
-        <p className="eyebrow text-ink-tertiary">Preuve scientifique</p>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-ink-secondary">
-          La rétention tient à l&apos;espacement, pas au volume. Voici les
-          études.
+        <p className="text-[14px] leading-relaxed text-ink-secondary">
+          Micabo se base sur la science et la répétition espacée pour
+          optimiser la rétention.
         </p>
         <div className="mt-3 space-y-2">
           {STUDIES.map((study, index) => (
@@ -233,11 +230,19 @@ function SocialStep() {
               href={study.href}
               target="_blank"
               rel="noreferrer"
-              className="paywall-stagger block rounded-button bg-canvas px-4 py-3 transition-colors duration-hover hover:bg-accent-soft"
+              className="paywall-stagger flex items-start gap-3 rounded-button bg-canvas px-4 py-3 transition-colors duration-hover hover:bg-accent-soft"
               style={{ animationDelay: `${360 + index * 80}ms` }}
             >
-              <p className="text-[13.5px] font-medium text-ink">{study.title}</p>
-              <p className="mt-0.5 text-[12px] text-ink-tertiary">{study.source}</p>
+              <span
+                aria-hidden
+                className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-tile bg-accent-soft text-accent"
+              >
+                <ResearchIcon />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[13.5px] font-medium text-ink">{study.title}</span>
+                <span className="mt-0.5 block text-[12px] text-ink-tertiary">{study.source}</span>
+              </span>
             </a>
           ))}
         </div>
@@ -248,48 +253,18 @@ function SocialStep() {
 
 function TrialStep() {
   return (
-    <div className="flex min-h-[340px] flex-col justify-center py-4">
+    <div className="flex min-h-[340px] flex-col items-center justify-center py-6 text-center">
       <p className="eyebrow text-accent">L&apos;essai</p>
+      <span aria-hidden className="mt-6 text-accent">
+        <Gift />
+      </span>
       <h2
         id="paywall-title"
-        className="mt-2 text-[26px] font-bold leading-[1.15] tracking-tight-title text-ink"
+        className="mt-6 text-[26px] font-bold leading-[1.15] tracking-tight-title text-ink"
       >
         On veut vous permettre de tester toutes les fonctionnalités
         gratuitement.
       </h2>
-      <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
-        Cours illimités, fiches entières, cartes, mode examen. Rien n&apos;est
-        fermé pendant l&apos;essai.
-      </p>
-
-      <ul className="mt-7 space-y-3">
-        {[
-          "Quiz et cartes sans plafond",
-          "La fiche entière, pas les sept dixièmes",
-          "Révisions espacées, au bon moment",
-          "Le planning se réorganise autour de l'examen",
-        ].map((line, index) => (
-          <li
-            key={line}
-            className="paywall-stagger flex items-center gap-3"
-            style={{ animationDelay: `${120 + index * 80}ms` }}
-          >
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-              <svg aria-hidden viewBox="0 0 20 20" className="h-3.5 w-3.5">
-                <path
-                  d="M4 10.5l4 4 8-9"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            <span className="text-[14.5px] text-ink">{line}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
@@ -308,10 +283,6 @@ function ReminderStep() {
       </h2>
       <p className="mt-5 text-[17px] font-semibold text-ink">
         Aucun paiement n&apos;est dû aujourd&apos;hui.
-      </p>
-      <p className="mt-2 max-w-[34ch] text-[14px] leading-relaxed text-ink-secondary">
-        Un rappel la veille. Résiliable en quinze secondes, avant le premier
-        prélèvement.
       </p>
     </div>
   );
@@ -467,26 +438,82 @@ function PlansStep() {
   );
 }
 
-function CountUp({ to }: { to: number }) {
-  const [value, setValue] = useState(0);
+function Stars({ rating }: { rating: number }) {
+  return (
+    <span className="flex items-center gap-1" aria-hidden>
+      {Array.from({ length: 5 }, (_, index) => {
+        const fill = Math.min(1, Math.max(0, rating - index));
+        return <Star key={index} fill={fill} clipId={`paywall-star-${index}`} />;
+      })}
+    </span>
+  );
+}
 
-  useEffect(() => {
-    const start = performance.now();
-    const duration = 980;
-    let frame = 0;
+function Star({ fill, clipId }: { fill: number; clipId: string }) {
+  const id = clipId;
+  return (
+    <svg viewBox="0 0 20 20" className="h-7 w-7 text-caution-vivid">
+      <defs>
+        <clipPath id={id}>
+          <rect x="0" y="0" width={20 * fill} height="20" />
+        </clipPath>
+      </defs>
+      <path
+        d="M10 2.4l2.2 4.6 5 .7-3.6 3.5.9 5.1L10 13.9 5.5 16.3l.9-5.1L2.8 7.7l5-.7z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 2.4l2.2 4.6 5 .7-3.6 3.5.9 5.1L10 13.9 5.5 16.3l.9-5.1L2.8 7.7l5-.7z"
+        fill="currentColor"
+        clipPath={`url(#${id})`}
+      />
+    </svg>
+  );
+}
 
-    function tick(now: number) {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - (1 - t) ** 3;
-      setValue(Math.round(to * eased));
-      if (t < 1) frame = requestAnimationFrame(tick);
-    }
+function ResearchIcon() {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4">
+      <path
+        d="M5.5 3.5h6.2L15 6.8v9.7H5.5z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M11.6 3.5v3.4H15"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 10.2h4.4M8 12.8h3.2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [to]);
-
-  return <>{value.toLocaleString("fr-FR")}</>;
+function Gift() {
+  return (
+    <svg aria-hidden viewBox="0 0 96 96" className="h-[96px] w-[96px]">
+      <rect x="16" y="38" width="64" height="44" rx="8" fill="currentColor" />
+      <rect x="16" y="28" width="64" height="16" rx="6" fill="currentColor" opacity="0.85" />
+      <rect x="44" y="28" width="8" height="54" fill="#dff4ec" />
+      <path
+        d="M48 28c-8-12-20-12-20-2 0 8 12 10 20 10 8 0 20-2 20-10 0-10-12-10-20 2z"
+        fill="#16c08c"
+      />
+    </svg>
+  );
 }
 
 function Bell() {

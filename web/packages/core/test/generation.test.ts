@@ -8,10 +8,13 @@ import {
   PER_FORMAT_RANGE,
   SHEET_LENGTHS,
   TOTAL_RANGE,
+  asChoosableVisibility,
+  choosableVisibilities,
   clampBlocks,
   clampQuota,
   defaultBlocks,
   isAtCap,
+  isChoosableVisibility,
   isShared,
   lengthContaining,
   quotaTotal,
@@ -115,8 +118,21 @@ describe("la longueur de fiche", () => {
 });
 
 describe("la visibilité d'un cours", () => {
-  it("part publique, comme l'app et comme la base", () => {
-    expect(DEFAULT_VISIBILITY).toBe("public");
+  it("part privée : on ne dépose plus un cours dans le catalogue public", () => {
+    expect(DEFAULT_VISIBILITY).toBe("private");
+  });
+
+  it("ne propose plus le dépôt public", () => {
+    expect(isChoosableVisibility("public")).toBe(false);
+    expect(isChoosableVisibility("friends")).toBe(true);
+    expect(isChoosableVisibility("private")).toBe(true);
+    expect(asChoosableVisibility("public")).toBe("private");
+    expect(choosableVisibilities().map((item) => item.value)).toEqual(["friends", "private"]);
+    expect(choosableVisibilities("public").map((item) => item.value)).toEqual([
+      "public",
+      "friends",
+      "private",
+    ]);
   });
 
   it("ne partage que ce qui n'est pas privé", () => {

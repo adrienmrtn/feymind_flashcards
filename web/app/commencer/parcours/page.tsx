@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
 import { persistStoredAnswers } from "@/lib/onboarding/persist";
 import { useOnboarding } from "@/lib/onboarding/store";
 import { createClient } from "@/lib/supabase/client";
@@ -89,18 +90,22 @@ export default function PersonalizingStep() {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100svh-var(--onboarding-chrome))] w-full max-w-[560px] flex-col overflow-hidden px-screen pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <div className="shrink-0 pt-2">
-        <p className="eyebrow text-accent">Personnalisation</p>
-        <h1 className="rise mt-2.5 text-[24px] font-bold leading-[1.12] tracking-tight-title text-ink sm:text-[30px]">
-          {isDone ? "Ton parcours est prêt." : current.headline}
-        </h1>
-        {summary ? (
-          <p className="mt-1 text-[13px] text-ink-tertiary">{summary}</p>
-        ) : null}
-      </div>
+    <Scaffold
+      eyebrow="Personnalisation"
+      title={isDone ? "Ton parcours est prêt." : current.headline}
+      footer={
+        <ContinueButton
+          label={
+            isDone ? (signedIn ? "Ouvrir Micabo" : "Créer mon compte") : "Micabo travaille…"
+          }
+          enabled={isDone && !leaving}
+          onPress={() => void continueOn()}
+        />
+      }
+    >
+      {summary ? <p className="mb-4 text-[13px] text-ink-tertiary">{summary}</p> : null}
 
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center py-4">
+      <div className="flex flex-col items-center justify-center py-4">
         <div className="relative flex h-[148px] w-[148px] items-center justify-center">
           <svg
             viewBox="0 0 120 120"
@@ -182,22 +187,6 @@ export default function PersonalizingStep() {
         })}
       </div>
 
-      <button
-        type="button"
-        disabled={!isDone || leaving}
-        onClick={() => void continueOn()}
-        className={`flex h-14 w-full shrink-0 items-center justify-center gap-2 rounded-button text-[16px] font-semibold ${
-          isDone
-            ? "bg-ink text-on-ink"
-            : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
-        }`}
-      >
-        {isDone
-          ? signedIn
-            ? "Ouvrir Micabo"
-            : "Créer mon compte"
-          : "Micabo travaille…"}
-      </button>
-    </div>
+    </Scaffold>
   );
 }

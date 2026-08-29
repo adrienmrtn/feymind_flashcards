@@ -273,8 +273,12 @@ export {
   type SheetLength,
 } from "./generation/sheet-length";
 export {
+  CHOOSABLE_VISIBILITIES,
   DEFAULT_VISIBILITY,
   VISIBILITIES,
+  asChoosableVisibility,
+  choosableVisibilities,
+  isChoosableVisibility,
   isShared,
   isVisibility,
   visibilityDetail,

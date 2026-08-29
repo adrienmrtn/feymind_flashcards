@@ -1,29 +1,26 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import type { Route } from "next";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { SignOutButton } from "@/components/app/SignOutButton";
 import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
 import { OnboardingStore } from "@/lib/onboarding/store";
-import { previousPath, progressFor, stepIndex, STEPS } from "@/lib/onboarding/steps";
+import { progressFor, stepIndex, STEPS } from "@/lib/onboarding/steps";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * L'habillage du parcours : la barre de progression, et le retour.
+ * L'habillage du parcours : une carte blanche sur le fond, pas tout l'écran.
  *
- * La jauge et le retour sont là dès le premier écran. Le retour de l'accueil
- * ramène à la landing : le parcours n'est pas la vitrine. Le compte n'a plus de
- * jauge : c'est une page, et elle arrive à la fin.
+ * La jauge est en haut à gauche de la carte. Le retour et le bouton vivent
+ * en bas, dans l'écran. Le compte n'a plus de jauge : c'est une page, et
+ * elle arrive à la fin.
  */
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const index = stepIndex(pathname);
   const step = index >= 0 ? STEPS[index] : undefined;
   const showChrome = step?.chrome ?? false;
-  const back = previousPath(pathname);
   const progress = progressFor(pathname);
 
   return (
@@ -31,54 +28,30 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
       <Suspense fallback={null}>
         <LoggedInBounce />
       </Suspense>
-      <div
-        className="min-h-svh bg-canvas"
-        style={{ ["--onboarding-chrome" as string]: showChrome ? "56px" : "16px" }}
-      >
-        {showChrome ? (
-          <header className="flex h-14 items-center gap-4 px-screen">
-            {back ? (
-              <Link
-                href={back as Route}
-                aria-label={back === "/" ? "Retour à l'accueil" : "Revenir à l'écran précédent"}
-                className="pressable -ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-secondary"
-              >
-                <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5">
-                  <path
-                    d="M12 4l-6 6 6 6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </Link>
-            ) : (
-              <span className="h-9 w-9 shrink-0" />
-            )}
-
-            <div
-              className="h-1 flex-1 overflow-hidden rounded-pill bg-progress-track"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={Math.round(progress * 100)}
-              aria-label={`Étape ${step?.label ?? ""}`}
-            >
+      <div className="flex min-h-svh items-center justify-center bg-canvas-sage px-3 py-3 sm:px-6 sm:py-6">
+        <div className="flex h-[min(760px,calc(100svh-1.5rem))] w-full max-w-[720px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-floating sm:h-[min(760px,calc(100svh-3rem))]">
+          {showChrome ? (
+            <header className="flex shrink-0 items-center gap-3 px-6 pt-5 sm:px-8">
               <div
-                className="h-full rounded-pill bg-progress transition-[width] duration-menu ease-out-strong"
-                style={{ width: `${progress * 100}%` }}
-              />
-            </div>
+                className="h-1 w-[72px] overflow-hidden rounded-pill bg-progress-track"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(progress * 100)}
+                aria-label={`Étape ${step?.label ?? ""}`}
+              >
+                <div
+                  className="h-full rounded-pill bg-ink transition-[width] duration-menu ease-out-strong"
+                  style={{ width: `${progress * 100}%` }}
+                />
+              </div>
+              <span className="flex-1" />
+              <OnboardingLogout />
+            </header>
+          ) : null}
 
-            {/* La place du retour, rendue à droite : sans elle, la jauge n'est pas centrée.
-                S'il y a une session (on rejoue le parcours), c'est aussi là qu'on la ferme. */}
-            <OnboardingLogout />
-          </header>
-        ) : null}
-
-        {children}
+          {children}
+        </div>
       </div>
     </OnboardingStore>
   );

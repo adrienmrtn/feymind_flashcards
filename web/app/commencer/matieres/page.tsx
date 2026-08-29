@@ -36,7 +36,7 @@ export default function SubjectsStep() {
         <ContinueButton
           label={chosen.length > 0 ? `Continuer avec ${chosen.length} matière${chosen.length > 1 ? "s" : ""}` : "Continuer"}
           enabled={chosen.length > 0 && ready}
-          href="/commencer/examen"
+          href="/commencer/ecole"
         />
       }
     >

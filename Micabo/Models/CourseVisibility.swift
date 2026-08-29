@@ -7,12 +7,10 @@ import Foundation
 /// psychanalyse pour lui. Un réglage global l'aurait forcé à choisir entre tout ouvrir et tout
 /// fermer, c'est-à-dire à tout fermer.
 ///
-/// Le défaut est `public`, et c'est un choix assumé : une bibliothèque où personne ne dépose
-/// rien n'intéresse personne, et c'est ce que l'app annonce à l'inscription. Les deux autres
-/// valeurs existent pour que ce défaut soit acceptable — on ne demande pas à quelqu'un
-/// d'ouvrir ses cours sans lui donner le moyen d'en refermer un.
+/// On ne propose plus `public` : uniquement les amis, ou soi seul. `public` reste une valeur
+/// lue pour les cours déjà déposés. Le défaut est `private`.
 enum CourseVisibility: String, Codable, CaseIterable, Identifiable {
-    /// Les camarades du même établissement, et les amis.
+    /// Les camarades du même établissement, et les amis. Plus proposé à l'import.
     case `public`
     /// Les amis seulement, quel que soit leur établissement.
     case friends
@@ -21,8 +19,11 @@ enum CourseVisibility: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// Ce que l'app suppose quand rien n'a été choisi, et ce que la base met par défaut.
-    static let standard = CourseVisibility.public
+    /// Ce que l'app suppose quand rien n'a été choisi.
+    static let standard = CourseVisibility.private
+
+    /// Les visibilités encore proposées : plus de dépôt public.
+    static let choosable: [CourseVisibility] = [.friends, .private]
 
     /// Le choix retenu à l'import, gardé d'un document à l'autre.
     ///
@@ -60,5 +61,10 @@ enum CourseVisibility: String, Codable, CaseIterable, Identifiable {
     /// Vrai quand le cours sort de l'appareil pour être trouvable par quelqu'un d'autre.
     var isShared: Bool {
         self != .private
+    }
+
+    /// Recolle une ancienne valeur `public` sur un choix encore proposé.
+    var asChoice: CourseVisibility {
+        Self.choosable.contains(self) ? self : .private
     }
 }

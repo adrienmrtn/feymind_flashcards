@@ -179,7 +179,7 @@ struct CourseSheetView: View {
             // Le partage se règle là où le cours se lit, et pas dans les réglages : c'est en
             // ayant sa fiche sous les yeux qu'on sait si on veut la laisser voir.
             Menu {
-                ForEach(CourseVisibility.allCases) { value in
+                ForEach(CourseVisibility.choosable) { value in
                     Button {
                         setVisibility(value)
                     } label: {

@@ -12,17 +12,15 @@ describe("le parcours", () => {
       "/commencer/pays",
       "/commencer/niveau",
       "/commencer/matieres",
-      "/commencer/examen",
-      "/commencer/comment",
       "/commencer/ecole",
       "/commencer/parcours",
       "/commencer/compte",
     ]);
   });
 
-  it("saute la démo en trois temps : après le mode d'emploi, l'école", () => {
-    expect(nextPath("/commencer/comment")).toBe("/commencer/ecole");
-    expect(previousPath("/commencer/ecole")).toBe("/commencer/comment");
+  it("enchaîne les matières sur l'école", () => {
+    expect(nextPath("/commencer/matieres")).toBe("/commencer/ecole");
+    expect(previousPath("/commencer/ecole")).toBe("/commencer/matieres");
   });
 
   it("ramène le premier écran à la vitrine", () => {

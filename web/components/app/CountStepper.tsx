@@ -14,6 +14,8 @@ export function CountStepper({
   minusLabel,
   plusLabel,
   size = "md",
+  tone = "ink",
+  info,
 }: {
   value: number;
   min: number;
@@ -22,11 +24,15 @@ export function CountStepper({
   minusLabel: string;
   plusLabel: string;
   size?: "sm" | "md";
+  tone?: "ink" | "info" | "caution";
+  info?: string;
 }) {
   const large = size === "md";
   const box = large ? "h-10 w-10" : "h-7 w-7";
   const icon = large ? "h-4 w-4" : "h-3.5 w-3.5";
   const numeral = large ? "min-w-8 text-[18px]" : "min-w-7 text-[15px]";
+  const toneClass =
+    tone === "info" ? "text-info" : tone === "caution" ? "text-caution" : "text-ink";
 
   return (
     <div
@@ -41,8 +47,14 @@ export function CountStepper({
         icon={icon}
         onPress={() => onChange(value - 1)}
       />
-      <span className={`numeral text-center font-semibold text-ink ${numeral}`} aria-live="polite">
-        {value}
+      <span className="flex min-w-0 items-center justify-center gap-0.5">
+        <span
+          className={`numeral text-center font-semibold ${numeral} ${toneClass}`}
+          aria-live="polite"
+        >
+          {value}
+        </span>
+        {info ? <InfoHint text={info} /> : null}
       </span>
       <StepButton
         label={plusLabel}
@@ -53,6 +65,35 @@ export function CountStepper({
         onPress={() => onChange(value + 1)}
       />
     </div>
+  );
+}
+
+function InfoHint({ text }: { text: string }) {
+  return (
+    <span className="relative">
+      <button
+        type="button"
+        aria-label={text}
+        className="peer pressable flex h-6 w-6 items-center justify-center rounded-full text-current"
+      >
+        <svg aria-hidden viewBox="0 0 16 16" className="h-3.5 w-3.5">
+          <circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <path
+            d="M8 7.2v4.1M8 5.15v.1"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-10 w-max max-w-[220px] -translate-x-1/2 rounded-tile bg-ink px-3 py-2 text-left text-[12.5px] leading-snug text-on-ink opacity-0 shadow-floating transition-opacity duration-[var(--duration-tooltip)] peer-hover:opacity-100 peer-focus-visible:opacity-100"
+      >
+        {text}
+      </span>
+    </span>
   );
 }
 

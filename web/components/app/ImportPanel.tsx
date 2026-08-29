@@ -7,6 +7,7 @@ import { ThinkingOrb } from "thinking-orbs";
 import {
   BLOCK_BOUNDS,
   DEFAULT_SHEET_LENGTH,
+  DEFAULT_VISIBILITY,
   clampBlocks,
   defaultBlocks,
   lengthContaining,
@@ -55,7 +56,7 @@ export function ImportPanel({
   const [pending, startTransition] = useTransition();
 
   const [blocks, setBlocks] = useState(() => defaultBlocks(initialLength));
-  const [visibility, setVisibility] = useState<CourseVisibility>("public");
+  const [visibility, setVisibility] = useState<CourseVisibility>(DEFAULT_VISIBILITY);
 
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");

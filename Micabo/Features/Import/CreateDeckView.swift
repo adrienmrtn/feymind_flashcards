@@ -177,8 +177,8 @@ struct CreateDeckView: View {
             MicaboSectionCaption(text: "Qui peut le retrouver")
 
             HStack(spacing: MicaboSpacing.xs) {
-                ForEach(CourseVisibility.allCases) { value in
-                    MicaboSelectChip(title: value.title, isSelected: value == visibility) {
+                ForEach(CourseVisibility.choosable) { value in
+                    MicaboSelectChip(title: value.title, isSelected: value == visibility.asChoice) {
                         withAnimation(.easeOut(duration: 0.2)) { visibility = value }
                     }
                 }
@@ -223,7 +223,7 @@ struct CreateDeckView: View {
                 title: name,
                 subject: subject.nilIfBlank,
                 rawText: pastedText,
-                visibility: visibility,
+                visibility: visibility.asChoice,
                 in: modelContext
             )
         } catch {
