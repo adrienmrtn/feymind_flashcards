@@ -36,7 +36,7 @@ export function CountStepper({
 
   return (
     <div
-      className={`flex shrink-0 items-center gap-1 rounded-pill bg-surface-muted ${large ? "p-1.5" : "p-1"}`}
+      className={`inline-flex w-fit items-center gap-1 rounded-pill bg-surface-muted ${large ? "p-1.5" : "p-1"}`}
       role="group"
     >
       <StepButton
@@ -47,14 +47,11 @@ export function CountStepper({
         icon={icon}
         onPress={() => onChange(value - 1)}
       />
-      <span className="flex min-w-0 items-center justify-center gap-0.5">
-        <span
-          className={`numeral text-center font-semibold ${numeral} ${toneClass}`}
-          aria-live="polite"
-        >
-          {value}
-        </span>
-        {info ? <InfoHint text={info} /> : null}
+      <span
+        className={`numeral text-center font-semibold ${numeral} ${toneClass}`}
+        aria-live="polite"
+      >
+        {value}
       </span>
       <StepButton
         label={plusLabel}
@@ -64,6 +61,11 @@ export function CountStepper({
         icon={icon}
         onPress={() => onChange(value + 1)}
       />
+      {info ? (
+        <span className={toneClass}>
+          <InfoHint text={info} />
+        </span>
+      ) : null}
     </div>
   );
 }
