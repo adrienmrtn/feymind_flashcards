@@ -1,12 +1,12 @@
 import SwiftData
 import SwiftUI
 
-/// Déclarer ou modifier un examen : un nom, un jour, des cours, une intensité.
+/// Déclarer ou modifier un examen.
 ///
-/// Les quatre champs se remplissent dans cet ordre, et **la projection apparaît dès que la
-/// date et un cours sont là**. Elle n'est pas au bout d'un bouton « Calculer » : c'est en
-/// voyant la charge bouger qu'on comprend ce que l'intensité veut dire, et qu'on recule d'un
-/// cran si le jour le plus chargé fait peur.
+/// **La création tient en deux questions.** D'abord le nom, le jour et les cours : ce
+/// qu'on passe. Ensuite la note seule, puis « Planifier l'examen ». Mélanger les quatre
+/// champs sur un seul écran faisait lire un formulaire avant d'avoir compris la question.
+/// La modification reste sur une page : on y retouche une valeur, pas un parcours.
 struct ExamEditorSheet: View {
     /// Nul pour un nouvel examen.
     let exam: Exam?
@@ -18,14 +18,21 @@ struct ExamEditorSheet: View {
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
+    private enum CreationStep: Equatable {
+        case details
+        case grade
+    }
+
     @State private var name = ""
     @State private var date = Date()
     @State private var selection: Set<UUID> = []
     @State private var intensity: ExamIntensity = .standard
     @State private var targetScore: Double = Double(TargetScore.default)
+    @State private var creationStep: CreationStep = .details
     @State private var errorMessage: String?
     @State private var didLoad = false
     @State private var showDeleteConfirmation = false
+    @FocusState private var nameFocused: Bool
 
     private let calendar = MicaboCalendar.shared
 
@@ -51,40 +58,59 @@ struct ExamEditorSheet: View {
         calendar.startOfDay(for: date) < calendar.startOfDay(for: Date())
     }
 
+    /// L'étape des détails : toujours en modification, et d'abord à la création.
+    private var showsDetails: Bool {
+        isEditing || creationStep == .details
+    }
+
+    /// L'étape de la note : toujours en modification, et ensuite à la création.
+    private var showsGrade: Bool {
+        isEditing || creationStep == .grade
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             ScrollView {
                 VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                     header
-                    nameField
-                    dateField
-                    coursesSection
-                    intensitySection
 
-                    if canConfirm {
-                        ExamProjectionView(plan: plan)
-                    } else {
-                        emptyProjection
+                    if showsDetails {
+                        nameField
+                        dateField
+                        coursesSection
                     }
 
-                    if exam != nil {
+                    if showsGrade {
+                        intensitySection
+
+                        // La projection reste à la modification, où l'on retouche tout
+                        // d'un coup. À la création, la deuxième étape n'est que la note.
+                        if isEditing, canConfirm {
+                            ExamProjectionView(plan: plan)
+                        }
+                    }
+
+                    if isEditing {
                         dangerZone
                     }
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, MicaboSpacing.xs)
                 .padding(.bottom, MicaboLayout.bottomBarClearance)
+                .animation(.easeOut(duration: 0.22), value: creationStep)
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
             .micaboScreenBackground()
 
             MicaboBottomBar {
-                Button(action: confirm) {
+                Button(action: primaryAction) {
                     HStack(spacing: MicaboSpacing.xs) {
-                        Image(systemName: "calendar.badge.clock")
-                            .font(.system(size: 13, weight: .semibold))
-                        Text(isEditing ? "Replanifier" : "Planifier l'examen")
+                        if showsPrimaryIcon {
+                            Image(systemName: "calendar.badge.clock")
+                                .font(.system(size: 13, weight: .semibold))
+                        }
+                        Text(primaryTitle)
                     }
                 }
                 .buttonStyle(MicaboPrimaryButtonStyle(tint: canConfirm ? MicaboColor.ink : MicaboColor.strokeStrong))
@@ -103,11 +129,52 @@ struct ExamEditorSheet: View {
 
     private var header: some View {
         MicaboScreenHeader(
-            title: isEditing ? "Modifier l'examen" : "Nouvel examen",
-            eyebrow: "Mode examen",
-            back: MicaboHeaderBack.close { dismiss() }
-        )
+            title: headerTitle,
+            eyebrow: headerEyebrow,
+            back: headerBack
+        ) {
+            if !isEditing {
+                stepPips
+            }
+        }
         .padding(.top, MicaboSpacing.xs)
+    }
+
+    private var headerTitle: String {
+        if isEditing { return "Modifier l'examen" }
+        return creationStep == .grade ? "Note souhaitée" : "Nouvel examen"
+    }
+
+    private var headerEyebrow: String {
+        if isEditing { return "Mode examen" }
+        if creationStep == .grade {
+            let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? "Nouvel examen" : trimmed
+        }
+        return "Mode examen"
+    }
+
+    private var headerBack: MicaboHeaderBack {
+        if !isEditing, creationStep == .grade {
+            return .back(goBackToDetails)
+        }
+        return .close { dismiss() }
+    }
+
+    /// Deux pastilles, comme le parcours web : on sait où l'on est sans lire « 1 / 2 ».
+    private var stepPips: some View {
+        HStack(spacing: 5) {
+            pip(isCurrent: creationStep == .details, isDone: creationStep == .grade)
+            pip(isCurrent: creationStep == .grade, isDone: false)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(creationStep == .details ? "Étape 1 sur 2" : "Étape 2 sur 2")
+    }
+
+    private func pip(isCurrent: Bool, isDone: Bool) -> some View {
+        Capsule(style: .continuous)
+            .fill(isCurrent || isDone ? MicaboColor.ink : MicaboColor.strokeStrong)
+            .frame(width: isCurrent ? 18 : 6, height: 6)
     }
 
     private var nameField: some View {
@@ -118,6 +185,7 @@ struct ExamEditorSheet: View {
 
             TextField("Bac blanc, partiel de SVT…", text: $name)
                 .font(MicaboFont.body)
+                .focused($nameFocused)
                 .padding(MicaboSpacing.sm)
                 .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
         }
@@ -211,7 +279,10 @@ struct ExamEditorSheet: View {
         let score = Int(targetScore.rounded())
 
         return VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Note souhaitée")
+            // À la création, le titre d'écran dit déjà « Note souhaitée ».
+            if isEditing {
+                MicaboSectionCaption(text: "Note souhaitée")
+            }
 
             Text(scale.label(for: score))
                 .font(MicaboFont.hanken(28, weight: .bold))
@@ -233,6 +304,8 @@ struct ExamEditorSheet: View {
                     step: 1
                 )
                 .tint(MicaboColor.ink)
+                .accessibilityLabel("Note souhaitée")
+                .accessibilityValue(scale.label(for: score))
                 .onChange(of: targetScore) { _, next in
                     intensity = TargetScore.intensity(from: Int(next.rounded()))
                 }
@@ -249,12 +322,6 @@ struct ExamEditorSheet: View {
         case .standard: "Trois passages, le rythme d'un contrôle."
         case .intense: "Quatre passages, quand ça compte vraiment."
         }
-    }
-
-    /// Sans cours choisi, il n'y a rien à projeter — et une phrase pour le dire serait une
-    /// phrase de plus à lire avant de cocher la première case.
-    private var emptyProjection: some View {
-        EmptyView()
     }
 
     /// Les deux actions qui défont quelque chose.
@@ -304,6 +371,40 @@ struct ExamEditorSheet: View {
     }
 
     // MARK: - Actions
+
+    private var primaryTitle: String {
+        if !isEditing, creationStep == .details {
+            return "Continuer"
+        }
+        return isEditing ? "Replanifier" : "Planifier l'examen"
+    }
+
+    private var showsPrimaryIcon: Bool {
+        isEditing || creationStep == .grade
+    }
+
+    private func primaryAction() {
+        if !isEditing, creationStep == .details {
+            goToGrade()
+            return
+        }
+        confirm()
+    }
+
+    private func goToGrade() {
+        guard canConfirm else { return }
+        nameFocused = false
+        withAnimation(.easeOut(duration: 0.22)) {
+            creationStep = .grade
+        }
+    }
+
+    private func goBackToDetails() {
+        nameFocused = false
+        withAnimation(.easeOut(duration: 0.22)) {
+            creationStep = .details
+        }
+    }
 
     private func load() {
         guard !didLoad else { return }
