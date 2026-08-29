@@ -206,7 +206,7 @@ enum MicaboLayout {
     /// sûre : c'est la hauteur qu'une page racine doit se réserver.
     ///
     /// Elle est déclarée ici parce qu'il faut la réserver **à la main**, et ce n'est pas un
-    /// choix. La barre est posée par la racine, à l'extérieur des trois pages, et chaque
+    /// choix. La barre est posée par la racine, à l'extérieur des pages, et chaque
     /// page est un `NavigationStack` : or un `safeAreaInset` **ne franchit pas** la frontière
     /// d'un `NavigationStack`, qui rétablit sa zone sûre depuis la fenêtre. L'inset de la
     /// racine dessine donc la barre sans jamais rien réserver à l'intérieur des pages, et

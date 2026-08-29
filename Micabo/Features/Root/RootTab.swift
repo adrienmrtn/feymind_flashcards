@@ -1,13 +1,15 @@
 import SwiftUI
 
-/// Les trois destinations de la barre d'onglets, dans l'ordre où elles s'y présentent.
+/// Les destinations de la barre d'onglets, dans l'ordre où elles s'y présentent.
 ///
-/// **Réviser** est au milieu, et c'est là que l'app ouvre : c'est l'écran du quotidien, donc
-/// celui qui doit être sous le pouce. **Cours** regroupe tout ce qui est importé. Les
-/// cours des amis se voient encore sur leur profil, si leur visibilité le permet.
+/// **Réviser** reste l'écran d'ouverture : c'est le quotidien, donc celui qui doit être
+/// sous le pouce. **Cours** regroupe tout ce qui est importé. **Examens** ouvre le
+/// calendrier directement, sans passer par Réviser. Les cours des amis se voient encore
+/// sur leur profil, si leur visibilité le permet.
 enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     case courses
     case today
+    case exams
     case profile
 
     var id: Int { rawValue }
@@ -16,6 +18,7 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         switch self {
         case .courses: "Cours"
         case .today: "Réviser"
+        case .exams: "Examens"
         case .profile: "Profil"
         }
     }
@@ -24,6 +27,7 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         switch self {
         case .courses: "books.vertical"
         case .today: "arrow.triangle.2.circlepath"
+        case .exams: "calendar"
         case .profile: "person"
         }
     }
@@ -33,6 +37,7 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
         switch self {
         case .courses: "books.vertical.fill"
         case .today: "arrow.triangle.2.circlepath"
+        case .exams: "calendar.fill"
         case .profile: "person.fill"
         }
     }
@@ -62,6 +67,11 @@ final class TabRouter {
     /// drapeau qu'il faut remettre à faux se fait forcément oublier une fois.
     private(set) var homeRequests = 0
 
+    /// Compteur de demandes d'import depuis un autre onglet. Cours l'observe et ouvre sa
+    /// feuille : l'état vide des examens a besoin de cette porte, et la feuille d'import
+    /// vit déjà là.
+    private(set) var courseImportRequests = 0
+
     /// **Ramène l'app à son écran d'accueil**, quelle que soit la profondeur d'où l'on part.
     ///
     /// Une session lancée depuis la fiche d'un cours est deux écrans plus loin que
@@ -70,6 +80,15 @@ final class TabRouter {
     func goHome() {
         homeRequests += 1
         selection = .today
+    }
+
+    /// Ouvre Cours et demande l'import. L'état vide des examens n'a pas sa propre feuille :
+    /// dupliquer l'import ici ferait deux chemins pour le même geste.
+    func requestCourseImport() {
+        courseImportRequests += 1
+        withAnimation(.easeOut(duration: 0.28)) {
+            selection = .courses
+        }
     }
 
 }

@@ -445,10 +445,10 @@ final class StudySession {
     /// c'est exactement le poil de latence qu'on sentait entre l'appui et la carte d'après.
     ///
     /// Le `save()` était même deux fois coûteux, et la seconde est la plus lourde : il publie
-    /// les changements au contexte, donc **les trois pages d'onglets rafraîchissent leurs
-    /// requêtes** — elles restent montées toutes les trois — et chacune recompte ses séries,
+    /// les changements au contexte, donc **les pages d'onglets rafraîchissent leurs
+    /// requêtes** — elles restent montées toutes ensemble — et chacune recompte ses séries,
     /// ses files et ses histogrammes sur tout l'historique. Quatre notes par seconde
-    /// déclenchaient douze recalculs.
+    /// déclenchaient un recalcul par page montée.
     ///
     /// Les actions s'accumulent donc en mémoire et partent par paquets. Ce qu'on risque est
     /// borné et se répare tout seul : une app tuée avant l'écriture perd les notes du paquet

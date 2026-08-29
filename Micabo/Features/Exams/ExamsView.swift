@@ -1,28 +1,20 @@
 import SwiftData
 import SwiftUI
 
-/// **La page Examens.**
-///
-/// Elle n'est pas un quatrième onglet, et ce n'est pas un compromis : Micabo tient à trois
-/// onglets avec Réviser au milieu, et un quatrième ferait disparaître ce milieu. Un examen
-/// est de toute façon une affaire de planning, donc sa place est derrière Réviser, qui est
-/// l'écran du planning.
+/// **La page Examens**, quatrième onglet : le calendrier s'ouvre d'un appui, sans passer
+/// par Réviser.
 ///
 /// L'écran fait deux choses. Le **calendrier** montre les échéances et sert de cible pour
 /// les déplacer. La **liste** en dessous montre ce qu'un calendrier ne peut pas dire : le
 /// nom, les cours, le volume de cartes, et si la replanification est active.
 struct ExamsView: View {
-    /// Appelé par l'état vide quand il n'y a pas encore de quoi planifier : l'écran se
-    /// referme et l'import s'ouvre. Sans ce chemin, l'écran expliquait ce qu'il fallait faire
-    /// sans donner le moyen de le faire, et il fallait ressortir à la main.
-    var onImport: (() -> Void)?
-
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
+    @Environment(TabRouter.self) private var router: TabRouter?
 
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
+    @State private var path = NavigationPath()
     @State private var month = Date()
     @State private var selectedDay: Date?
     @State private var editing: ExamEdition?
@@ -75,62 +67,63 @@ struct ExamsView: View {
     private var canPlan: Bool { !plannableCourses.isEmpty }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                header
+        NavigationStack(path: $path) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                    header
 
-                ExamCalendarView(
-                    month: month,
-                    selectedDay: selectedDay,
-                    examsByDay: examsByDay,
-                    onSelect: select,
-                    onStep: step,
-                    onDrop: drop
-                )
+                    ExamCalendarView(
+                        month: month,
+                        selectedDay: selectedDay,
+                        examsByDay: examsByDay,
+                        onSelect: select,
+                        onStep: step,
+                        onDrop: drop
+                    )
 
-                if selectedDay != nil {
-                    selectedDaySection
-                }
-
-                if !upcoming.isEmpty {
-                    section(title: "À venir", exams: upcoming)
-                }
-
-                if !past.isEmpty {
-                    section(title: "Passés", exams: past)
-                }
-
-                if exams.isEmpty {
-                    emptyState
-                }
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.xs)
-            .padding(.bottom, MicaboLayout.bottomBarClearance)
-        }
-        .scrollIndicators(.hidden)
-        .micaboScreenBackground()
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
-        .toolbar(.hidden, for: .tabBar)
-        .enablesSwipeBack()
-        // Sans une carte à replanifier, le bouton mènerait à une feuille qu'on ne peut pas
-        // confirmer : c'est l'état vide qui parle, et il porte alors sa propre sortie.
-        .overlay(alignment: .bottom) {
-            if canPlan {
-                MicaboBottomBar {
-                    Button {
-                        editing = ExamEdition(exam: nil, date: selectedDay ?? today)
-                    } label: {
-                        HStack(spacing: MicaboSpacing.xs) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 13, weight: .semibold))
-                            Text("Ajouter un examen")
-                        }
+                    if selectedDay != nil {
+                        selectedDaySection
                     }
-                    .buttonStyle(MicaboPrimaryButtonStyle())
+
+                    if !upcoming.isEmpty {
+                        section(title: "À venir", exams: upcoming)
+                    }
+
+                    if !past.isEmpty {
+                        section(title: "Passés", exams: past)
+                    }
+
+                    if exams.isEmpty {
+                        emptyState
+                    }
+                }
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, MicaboSpacing.xs)
+                .padding(.bottom, MicaboSpacing.md)
+            }
+            .scrollIndicators(.hidden)
+            .micaboScreenBackground()
+            // Le bouton d'ajout se pose au-dessus de la barre d'onglets, et la page
+            // réserve la hauteur des deux — voir `tabBarClearance`.
+            .tabBarClearance {
+                if canPlan {
+                    MicaboBottomBar {
+                        Button {
+                            editing = ExamEdition(exam: nil, date: selectedDay ?? today)
+                        } label: {
+                            HStack(spacing: MicaboSpacing.xs) {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 13, weight: .semibold))
+                                Text("Ajouter un examen")
+                            }
+                        }
+                        .buttonStyle(MicaboPrimaryButtonStyle())
+                    }
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)
+            .reportsNavigationDepth(for: .exams, depth: path.count)
+            .returnsHome(path: $path)
         }
         .sheet(item: $editing) { edition in
             ExamEditorSheet(exam: edition.exam, suggestedDate: edition.date)
@@ -158,12 +151,8 @@ struct ExamsView: View {
     // MARK: - En-tête
 
     private var header: some View {
-        MicaboScreenHeader(
-            title: "Examens",
-            eyebrow: headerEyebrow,
-            back: MicaboHeaderBack.back { dismiss() }
-        )
-        .padding(.top, MicaboSpacing.xs)
+        MicaboScreenHeader(title: "Examens", eyebrow: headerEyebrow)
+            .padding(.top, MicaboSpacing.xs)
     }
 
     private var headerEyebrow: String {
@@ -340,9 +329,9 @@ struct ExamsView: View {
                 systemImage: "calendar.badge.plus",
                 title: "Un cours d'abord",
                 message: "Importe un cours, puis pose ta date.",
-                actionTitle: onImport == nil ? nil : "Importer"
+                actionTitle: "Importer"
             ) {
-                onImport?()
+                router?.requestCourseImport()
             }
         } else {
             // Des cours, mais pas une carte : la sortie n'est pas l'import, c'est la
@@ -434,5 +423,3 @@ struct ExamsView: View {
     }
 }
 
-/// Destination de navigation de la page Examens.
-struct ExamsRoute: Hashable {}

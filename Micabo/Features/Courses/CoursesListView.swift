@@ -8,6 +8,7 @@ import SwiftUI
 struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(ProAccess.self) private var pro: ProAccess?
+    @Environment(TabRouter.self) private var router: TabRouter?
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
@@ -135,6 +136,10 @@ struct CoursesListView: View {
             }
         }
         .micaboPaywall($paywall)
+        .onChange(of: router?.courseImportRequests ?? 0) { oldValue, newValue in
+            guard newValue > oldValue else { return }
+            requestImport()
+        }
     }
 
     private var header: some View {
