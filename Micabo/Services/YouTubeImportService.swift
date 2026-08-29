@@ -652,24 +652,41 @@ enum YouTubeCaptionText {
         if let prefix = body.range(of: "^\\u{FEFF}?WEBVTT[^\\n]*", options: .regularExpression) {
             body.removeSubrange(prefix)
         }
-        let lines = body.components(separatedBy: "\n\n").compactMap { block -> String? in
-            let spoken = block
-                .components(separatedBy: "\n")
-                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                .filter { line in
-                    !line.isEmpty
-                        && !line.contains("-->")
-                        && line.range(of: "^\\d+$", options: .regularExpression) == nil
-                        && line.range(of: "^kind:", options: [.regularExpression, .caseInsensitive]) == nil
-                        && line.range(of: "^language:", options: [.regularExpression, .caseInsensitive]) == nil
-                }
-                .joined(separator: " ")
-                .replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
-                .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            return spoken.isEmpty ? nil : spoken
+
+        // Une chaîne map/filter/regex trop longue fait échouer le type-check
+        // Swift. Une boucle, et un test par ligne, comme parseVtt côté serveur.
+        var lines: [String] = []
+        for block in body.components(separatedBy: "\n\n") {
+            if let spoken = spokenLine(fromVTTBlock: block) {
+                lines.append(spoken)
+            }
         }
         return clean(lines)
+    }
+
+    private static func spokenLine(fromVTTBlock block: String) -> String? {
+        var parts: [String] = []
+        for raw in block.components(separatedBy: "\n") {
+            let line = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard isSpokenVTTLine(line) else { continue }
+            parts.append(line)
+        }
+
+        var spoken = parts.joined(separator: " ")
+        spoken = spoken.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
+        spoken = spoken.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        spoken = spoken.trimmingCharacters(in: .whitespacesAndNewlines)
+        return spoken.isEmpty ? nil : spoken
+    }
+
+    private static func isSpokenVTTLine(_ line: String) -> Bool {
+        if line.isEmpty { return false }
+        if line.contains("-->") { return false }
+        if line.range(of: "^\\d+$", options: .regularExpression) != nil { return false }
+        let header: NSString.CompareOptions = [.regularExpression, .caseInsensitive]
+        if line.range(of: "^kind:", options: header) != nil { return false }
+        if line.range(of: "^language:", options: header) != nil { return false }
+        return true
     }
 
     private static func clean(_ lines: [String]) -> String {
