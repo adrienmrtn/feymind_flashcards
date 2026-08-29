@@ -199,24 +199,6 @@ function SocialStep() {
           <span className="text-[20px] font-semibold text-ink-tertiary"> / 5</span>
         </span>
       </h2>
-      <p className="mt-4 text-[15px] leading-relaxed text-ink-secondary">
-        Ils révisent avec Micabo. Les mêmes écoles, la même méthode - la
-        répétition espacée, mesurée depuis plus d&apos;un siècle.
-      </p>
-
-      <div className="mt-6 grid grid-cols-2 gap-2">
-        {SCHOOLS.map((school, index) => (
-          <div
-            key={school.name}
-            className="paywall-stagger flex h-[58px] items-center justify-center rounded-tile bg-canvas"
-            style={{ animationDelay: `${80 + index * 70}ms` }}
-          >
-            <span className="text-[13px] font-bold tracking-[0.06em] text-ink uppercase">
-              {school.mark}
-            </span>
-          </div>
-        ))}
-      </div>
 
       <div className="mt-6">
         <p className="text-[14px] leading-relaxed text-ink-secondary">
@@ -231,7 +213,7 @@ function SocialStep() {
               target="_blank"
               rel="noreferrer"
               className="paywall-stagger flex items-start gap-3 rounded-button bg-canvas px-4 py-3 transition-colors duration-hover hover:bg-accent-soft"
-              style={{ animationDelay: `${360 + index * 80}ms` }}
+              style={{ animationDelay: `${80 + index * 80}ms` }}
             >
               <span
                 aria-hidden
@@ -534,13 +516,6 @@ function Bell() {
     </svg>
   );
 }
-
-const SCHOOLS = [
-  { name: "Harvard", mark: "Harvard" },
-  { name: "HEC", mark: "HEC Paris" },
-  { name: "EPFL", mark: "EPFL" },
-  { name: "X", mark: "X · Polytechnique" },
-] as const;
 
 /**
  * Trois papiers, et rien d'inventé. Ce sont les références que retiennent les apps
