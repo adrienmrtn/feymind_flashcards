@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import { planExam, type ExamCard } from "@micabo/core";
 
 /**
@@ -5,6 +9,11 @@ import { planExam, type ExamCard } from "@micabo/core";
  *
  * Même argument que la vitrine : Micabo resserre les cartes vers le jour J.
  * Ici c'est plus court, pour tenir sous le bouton sans faire défiler la page.
+ *
+ * **Les barres poussent à l'ouverture**, de gauche à droite : c'est le
+ * resserrement vers le jour J qu'on veut voir, et une barre déjà en place ne
+ * le montre pas. Le bloc est centré dans la carte, verticalement comme
+ * horizontalement.
  */
 
 const CARD_COUNT = 28;
@@ -22,9 +31,11 @@ export function ExamPrepStory() {
   const plan = planExam(cards, new Date(2026, 4, 1 + DAYS_BEFORE), { now, intensity: "standard" });
   const load = plan.projection.load;
   const peak = Math.max(...load, 1);
+  const grown = useGrown();
 
   return (
-    <div className="paper mx-auto w-full max-w-[420px] rounded-group bg-surface p-4">
+    <div className="flex h-full min-h-full items-center justify-center py-2">
+    <div className="paper w-full max-w-[420px] rounded-group bg-surface p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[15px] font-semibold text-ink">Devoir de SVT</p>
@@ -42,18 +53,26 @@ export function ExamPrepStory() {
         {load.map((count, offset) => (
           <div key={offset} className="flex-1">
             <div
-              className="rounded-t-[3px]"
+              className="origin-bottom rounded-t-[3px]"
               style={{
                 height: `${Math.max(4, (count / peak) * 84)}px`,
                 backgroundColor:
                   offset >= load.length - 3
                     ? "var(--color-accent)"
                     : "color-mix(in oklch, var(--color-accent) 42%, var(--color-surface-sunken))",
+                transform: `scaleY(${grown ? 1 : 0.04})`,
+                transition: `transform 620ms var(--ease-out-strong) ${offset * 45}ms`,
               }}
             />
           </div>
         ))}
-        <div className="ml-1 w-[3px] self-stretch rounded-pill bg-negative" />
+        <div
+          className="ml-1 w-[3px] self-stretch origin-bottom rounded-pill bg-negative"
+          style={{
+            transform: `scaleY(${grown ? 1 : 0})`,
+            transition: `transform 520ms var(--ease-out-strong) ${load.length * 45}ms`,
+          }}
+        />
       </div>
 
       <div className="mt-1.5 flex items-baseline justify-between text-[11px] text-ink-tertiary">
@@ -65,5 +84,22 @@ export function ExamPrepStory() {
         Histogramme de {load.length} jours : les flashcards se resserrent avant le devoir de SVT.
       </p>
     </div>
+    </div>
   );
+}
+
+/** Vrai à la première image qui suit le montage : c'est ce qui déclenche la pousse. */
+function useGrown(): boolean {
+  const [grown, setGrown] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setGrown(true);
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => setGrown(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  return grown;
 }
