@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 
 import {
@@ -43,22 +44,26 @@ import { listWeekReviewRanking } from "@/lib/data/social";
  * `SessionDone` qui s'en charge en revenant ici, et non un rafraîchissement
  * posé sur la page. Monté sur la page, il refaisait **tout** le rendu serveur
  * à chaque arrivée - deux fois les données pour un seul écran.
+ *
+ * **Le classement attend derrière la page, pas devant.** C'est la lecture la plus lourde de
+ * l'écran - un RPC qui remonte le cercle d'amis puis compte leurs passages - et c'est la
+ * moins urgente : elle est sous la ligne de flottaison d'un téléphone, et la plupart du
+ * temps elle ne rend rien. Dans le `Promise.all`, elle décidait à elle seule du moment où
+ * les tâches du jour s'affichaient.
  */
 export default async function DashboardPage() {
   const now = new Date();
   const today = startOfDay(now);
 
-  const [courses, cards, exams, friends, profile, budget, reviewDates, ranking] =
-    await Promise.all([
-      listCourses(),
-      listCardSnapshots(),
-      listExams(),
-      listPendingFriendRequests(),
-      readProfile(),
-      loadNewCardBudget(),
-      loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
-      listWeekReviewRanking(),
-    ]);
+  const [courses, cards, exams, friends, profile, budget, reviewDates] = await Promise.all([
+    listCourses(),
+    listCardSnapshots(),
+    listExams(),
+    listPendingFriendRequests(),
+    readProfile(),
+    loadNewCardBudget(),
+    loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
+  ]);
 
   const week = weekStrip(
     cards.map((card) => ({
@@ -100,13 +105,24 @@ export default async function DashboardPage() {
         <UpcomingExams next={upcoming[0] ?? null} others={Math.max(0, upcoming.length - 1)} />
       </div>
 
-      <WeekRanking rows={ranking} />
+      <Suspense fallback={null}>
+        <WeekRankingSection />
+      </Suspense>
 
       <FriendsCard requests={friends} />
 
       <MobileAppCard />
     </>
   );
+}
+
+/**
+ * Rien en attendant, et c'est le bon squelette : le classement ne s'affiche qu'à partir de
+ * deux personnes, donc un cadre vide se dresserait pour se retirer aussitôt chez la plupart.
+ */
+async function WeekRankingSection() {
+  const ranking = await listWeekReviewRanking();
+  return <WeekRanking rows={ranking} />;
 }
 
 function TodayTasks({

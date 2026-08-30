@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import {
   DEFAULT_DAILY_MINUTES,
   newCardsPerDay,
@@ -151,7 +153,7 @@ export interface ProfileStats {
   topCards: { cardId: string; passes: number }[];
 }
 
-export async function loadProfileStats(): Promise<ProfileStats> {
+export const loadProfileStats = cache(async (): Promise<ProfileStats> => {
   const auth = await reader();
   if (!auth) return { reviewDays: [], topCards: [] };
 
@@ -186,4 +188,4 @@ export async function loadProfileStats(): Promise<ProfileStats> {
       return { reviewDays: [...days.values()], topCards };
     },
   );
-}
+});

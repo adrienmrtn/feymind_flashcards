@@ -35,12 +35,16 @@ import {
  * en bas d'écran : on travaille, on ne balaye pas cinq onglets.
  */
 
+// Le tiroir ne monte ses liens qu'à l'ouverture : le préchargement part donc au moment où on
+// vient chercher où aller, et pas avant. Réviser en était exclu parce que sa page relisait
+// toutes les cartes en entier ; elle n'en lit plus que l'instantané mis en cache, et c'est
+// justement le lien qu'on veut instantané.
 const GROUPS = [
   {
     title: "Étudier",
     items: [
       { href: "/app", label: "Accueil", icon: House, prefetch: true },
-      { href: "/app/reviser", label: "Réviser", icon: Layers, prefetch: false },
+      { href: "/app/reviser", label: "Réviser", icon: Layers, prefetch: true },
     ],
   },
   {
@@ -135,7 +139,12 @@ export function AppChrome({
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-border/80 bg-background/85 backdrop-blur-md">
+        {/* En-tête collant, donc repeint à chaque image du défilement. `backdrop-blur` y met
+            un filtre plein écran : le navigateur doit rasteriser ce qui passe dessous, puis le
+            flouter, soixante fois par seconde, et sur téléphone ça se voit. Le fond de l'app
+            est blanc et ses cartes sont blanches - le flou n'y montrait rien. Il reste à partir
+            de `lg`, où il porte le verre du chrome sans coûter le défilement. */}
+        <header className="sticky top-0 z-30 border-b border-border/80 bg-background lg:bg-background/85 lg:backdrop-blur-md">
           <div className="flex h-14 items-center justify-between gap-3 px-4 lg:px-8">
             <div className="flex min-w-0 items-center gap-2">
               <Button

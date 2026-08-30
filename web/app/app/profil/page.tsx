@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 
 import {
@@ -12,27 +13,28 @@ import {
 } from "@micabo/core";
 
 import { KnowledgePie } from "@/components/app/KnowledgePie";
+import { Bar } from "@/components/app/Skeleton";
 import { Flag } from "@/components/onboarding/Flag";
-import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
+import { listCardSnapshots, listCourses, listExams, type CardSnapshotRow } from "@/lib/data/courses";
 import { readProfile } from "@/lib/data/profile";
 import { loadNewCardBudget, loadProfileStats } from "@/lib/data/reviews";
-import { currentUser } from "@/lib/data/user";
 
 /**
  * Le profil, **en une page posée**.
  *
  * Une tête, deux chiffres, le camembert de la maîtrise, les cartes les
  * plus passées. Les réglages ont leur propre page.
+ *
+ * **L'historique arrive après la page.** La série et le palmarès sont les deux seules choses
+ * ici qui dépendent de `review_logs`, et c'est de loin la lecture la plus lourde de l'app.
+ * Le reste - qui l'on est, combien de cartes, la maîtrise - n'a pas à l'attendre.
  */
 export default async function ProfilePage() {
-  const user = await currentUser();
-
-  const [profile, courses, cards, exams, stats, budget] = await Promise.all([
+  const [profile, courses, cards, exams, budget] = await Promise.all([
     readProfile(),
     listCourses(),
     listCardSnapshots(),
     listExams(),
-    loadProfileStats(),
     loadNewCardBudget(),
   ]);
 
@@ -59,15 +61,8 @@ export default async function ProfilePage() {
   const name = profile?.display_name ?? profile?.username ?? "Ton compte";
   const handle = profile?.username ?? "";
 
-  const reviewDates = stats.reviewDays.map((day) => new Date(day));
-  const series = currentStreak(reviewDates);
-  const record = bestStreak(reviewDates);
   const levels = knowledgeDistribution(
     cards.map((card) => ({ state: card.state, intervalDays: card.interval_days })),
-  );
-  const topCards = rankReviewedCards(
-    stats.topCards,
-    cards.map((card) => ({ id: card.id, front: card.front })),
   );
   return (
     <div className="profile-page">
@@ -109,17 +104,9 @@ export default async function ProfilePage() {
       <section className="saas-card relative mt-6 grid overflow-hidden sm:grid-cols-2">
         <div className="px-7 py-7">
           <p className="text-[13px] text-ink-tertiary">Série</p>
-          <p className="numeral mt-3 text-[44px] font-bold leading-none tracking-display text-ink">
-            {series}
-          </p>
-          <p className="mt-2 text-[13px] text-ink-tertiary">
-            {series === 0
-              ? "Ta première carte notée lance la série."
-              : series === 1
-                ? "1 jour"
-                : `${series} jours`}
-            {record > series ? ` · record ${record}` : ""}
-          </p>
+          <Suspense fallback={<StreakPending />}>
+            <Streak />
+          </Suspense>
         </div>
         <div className="border-t border-hairline px-7 py-7 sm:border-t-0 sm:border-l">
           <p className="text-[13px] text-ink-tertiary">Cartes</p>
@@ -158,25 +145,9 @@ export default async function ProfilePage() {
 
       <section className="saas-card relative mt-4 overflow-hidden">
         <p className="px-7 pt-7 text-[13px] text-ink-tertiary">Cartes les plus passées</p>
-        {topCards.length === 0 ? (
-          <p className="px-7 pb-7 pt-4 text-[14.5px] leading-relaxed text-ink-secondary">
-            Note tes premières cartes pour voir celles que tu revois le plus.
-          </p>
-        ) : (
-          <ol className="mt-3 divide-y divide-hairline pb-2">
-            {topCards.map((card, index) => (
-              <li key={card.id} className="hover-row flex items-baseline gap-3.5 px-7 py-3.5">
-                <span className="numeral w-5 shrink-0 text-[13px] text-ink-tertiary">
-                  {index + 1}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-[14.5px] text-ink">{card.front}</span>
-                <span className="shrink-0 text-[13px] text-ink-tertiary">
-                  <span className="numeral font-medium text-ink">{card.passes}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-        )}
+        <Suspense fallback={<TopCardsPending />}>
+          <TopCards cards={cards} />
+        </Suspense>
       </section>
 
       <section className="saas-card relative mt-4 overflow-hidden">
@@ -207,6 +178,84 @@ export default async function ProfilePage() {
           <span className="text-[13px] text-ink-tertiary">Compte, rythme, fiches</span>
         </Link>
       </section>
+    </div>
+  );
+}
+
+/**
+ * La série, et le record s'il est meilleur.
+ *
+ * Les jours révisés sont une liste de dates, pas l'historique complet : c'est tout ce qu'une
+ * série demande, et c'est ce qui a fait passer cette lecture du mégaoctet au kilooctet.
+ */
+async function Streak() {
+  const { reviewDays } = await loadProfileStats();
+  const dates = reviewDays.map((day) => new Date(day));
+  const series = currentStreak(dates);
+  const record = bestStreak(dates);
+
+  return (
+    <>
+      <p className="numeral mt-3 text-[44px] font-bold leading-none tracking-display text-ink">
+        {series}
+      </p>
+      <p className="mt-2 text-[13px] text-ink-tertiary">
+        {series === 0
+          ? "Ta première carte notée lance la série."
+          : series === 1
+            ? "1 jour"
+            : `${series} jours`}
+        {record > series ? ` · record ${record}` : ""}
+      </p>
+    </>
+  );
+}
+
+function StreakPending() {
+  return (
+    <>
+      <Bar className="mt-3 h-[44px] w-16" />
+      <Bar className="mt-3 h-3 w-40" />
+    </>
+  );
+}
+
+async function TopCards({ cards }: { cards: CardSnapshotRow[] }) {
+  const { topCards } = await loadProfileStats();
+  const ranked = rankReviewedCards(
+    topCards,
+    cards.map((card) => ({ id: card.id, front: card.front })),
+  );
+
+  if (ranked.length === 0) {
+    return (
+      <p className="px-7 pb-7 pt-4 text-[14.5px] leading-relaxed text-ink-secondary">
+        Note tes premières cartes pour voir celles que tu revois le plus.
+      </p>
+    );
+  }
+
+  return (
+    <ol className="mt-3 divide-y divide-hairline pb-2">
+      {ranked.map((card, index) => (
+        <li key={card.id} className="hover-row flex items-baseline gap-3.5 px-7 py-3.5">
+          <span className="numeral w-5 shrink-0 text-[13px] text-ink-tertiary">{index + 1}</span>
+          <span className="min-w-0 flex-1 truncate text-[14.5px] text-ink">{card.front}</span>
+          <span className="shrink-0 text-[13px] text-ink-tertiary">
+            <span className="numeral font-medium text-ink">{card.passes}</span>
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function TopCardsPending() {
+  return (
+    <div className="px-7 pb-7 pt-4 space-y-3.5">
+      {Array.from({ length: 3 }, (_, index) => (
+        <Bar key={index} className="h-4 w-[62%]" />
+      ))}
     </div>
   );
 }
