@@ -21,7 +21,7 @@ export function SheetLanguageCard({
   embedded = false,
 }: {
   initial: ContentLanguage;
-  /** Sans carte autour : le profil l'embarque déjà. */
+  /** Sans carte autour : la page réglages l'embarque déjà. */
   embedded?: boolean;
 }) {
   const [language, setLanguage] = useState(initial);

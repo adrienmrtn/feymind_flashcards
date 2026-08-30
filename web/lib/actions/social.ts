@@ -55,6 +55,7 @@ export async function setUsername(raw: string): Promise<SocialResult> {
   revalidateUserData(user.id, "profile");
   revalidateUserData(user.id, "social");
   revalidatePath("/app/profil");
+  revalidatePath("/app/reglages");
   revalidatePath("/app/amis");
   return { status: "ok", username: parsed.value };
 }

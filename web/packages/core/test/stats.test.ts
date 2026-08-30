@@ -9,6 +9,7 @@ import {
   courseAudienceLabel,
   knowledgeDistribution,
   knowledgeLevel,
+  knowledgePie,
   mostReviewedCards,
   streak,
   weekStrip,
@@ -59,7 +60,7 @@ describe("le niveau de connaissance", () => {
     expect(knowledgeLevel({ state: "new", intervalDays: 30 })).toBe("mastered");
   });
 
-  it("distribue le paquet dans l'ordre des barres", () => {
+  it("distribue le paquet dans l'ordre des parts", () => {
     const buckets = knowledgeDistribution([
       { state: "new", intervalDays: 0 },
       { state: "new", intervalDays: 0 },
@@ -74,6 +75,20 @@ describe("le niveau de connaissance", () => {
       ["review", 1],
       ["mastered", 1],
     ]);
+  });
+
+  it("découpe le camembert en parts qui font le tour", () => {
+    const slices = knowledgePie([
+      { id: "new", label: "Nouvelles", count: 2 },
+      { id: "learning", label: "En cours", count: 1 },
+      { id: "review", label: "En révision", count: 1 },
+      { id: "mastered", label: "Parfaitement maîtrisées", count: 0 },
+    ]);
+
+    expect(slices.map((slice) => slice.sweep)).toEqual([0.5, 0.25, 0.25, 0]);
+    expect(slices[0]?.start).toBe(0);
+    expect(slices[2]?.start).toBeCloseTo(0.75);
+    expect(slices.reduce((sum, slice) => sum + slice.sweep, 0)).toBeCloseTo(1);
   });
 });
 

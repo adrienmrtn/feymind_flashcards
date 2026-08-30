@@ -29,6 +29,7 @@ import { updateSettings } from "@/lib/actions/profile";
  * derrière - c'est la table `profiles` qui tranche, et c'est elle que l'iPhone relit.
  */
 export function ProfileSettings({
+  heading = "Réglages",
   initialName,
   initialUsername,
   initialMinutes,
@@ -37,6 +38,7 @@ export function ProfileSettings({
   initialSchool,
   initialSchoolId,
 }: {
+  heading?: string;
   initialName: string;
   initialUsername: string;
   initialMinutes: number;
@@ -64,7 +66,7 @@ export function ProfileSettings({
   return (
     <div className="saas-card p-7">
       <div className="flex items-baseline justify-between gap-4">
-        <p className="text-[13px] text-ink-tertiary">Réglages</p>
+        <p className="text-[13px] text-ink-tertiary">{heading}</p>
         <p
           className={`text-[12.5px] ${saved === "erreur" ? "text-negative" : "text-accent"}`}
           role="status"
