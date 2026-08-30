@@ -8,6 +8,7 @@ import {
   clampBlocks,
   clampQuota,
   countryFor,
+  entitlement,
   isGenerationLanguage,
   isSheetLength,
   sheetLanguage,
@@ -26,6 +27,8 @@ import {
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
+import { listCourses } from "@/lib/data/courses";
+import { readEntitlement } from "@/lib/data/entitlement";
 import { previewYouTubeOnServer, readYouTubeOnServer } from "@/lib/import/youtube-server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -45,7 +48,7 @@ import { createClient } from "@/lib/supabase/server";
  */
 
 export interface ImportResult {
-  status: "ok" | "error";
+  status: "ok" | "error" | "paywall";
   courseId?: string;
   message?: string;
 }
@@ -83,6 +86,9 @@ export async function importFromText(input: {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: "Connecte-toi pour importer un cours." };
+
+  const blocked = await refuseSecondCourse();
+  if (blocked) return blocked;
 
   const text = input.text.trim().slice(0, MAXIMUM_TEXT);
   if (text.length < MINIMUM_TEXT) {
@@ -362,6 +368,20 @@ async function readableError(error: unknown): Promise<string> {
 
 function fallbackMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Micabo n'a pas pu écrire cette fiche.";
+}
+
+/** Le premier cours est offert. Le deuxième s'achète — avant d'appeler le modèle. */
+async function refuseSecondCourse(): Promise<ImportResult | null> {
+  const [right, courses] = await Promise.all([readEntitlement(), listCourses()]);
+  if (
+    entitlement.canImportCourse(
+      right,
+      courses.map((course) => ({ isFromLibrary: course.is_from_library })),
+    )
+  ) {
+    return null;
+  }
+  return { status: "paywall", message: "Ton deuxième cours est dans Pro." };
 }
 
 /** Empreinte du contenu, pour reconnaître un chapitre déjà importé. */

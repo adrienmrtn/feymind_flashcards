@@ -1097,11 +1097,9 @@ Il ne se devine plus, il se lit. Sur la même fiche de neuf blocs, avec le même
 Un achat fait sur l'iPhone referme donc le gratuit sur le web dans la seconde, et réciproquement.
 C'était toute la promesse de l'étape.
 
-Reste **le cas de l'absence de ligne**, et c'est le seul endroit du code où une décision de produit
-se cache. `ASSUME_PRO_WITHOUT_ROW` est à `true` : quelqu'un dont on ne sait rien est traité comme
-abonné. Ce n'est pas de la complaisance — **il n'existe aucune façon de payer sur le web**, donc
-fermer enfermerait dehors tout le monde sans porte de sortie. Le jour où l'encaissement existe,
-c'est cette ligne-là qui bascule, et rien d'autre.
+Reste **le cas de l'absence de ligne**. `ASSUME_PRO_WITHOUT_ROW` est à `false` : pas de ligne,
+pas d'abonnement, le gratuit s'applique — un cours, sept dixièmes de sa fiche, cinq cartes par
+session. C'est le même verrou que l'iPhone.
 
 #### Ce qui n'est pas branché, et pourquoi je ne l'ai pas fait semblant
 

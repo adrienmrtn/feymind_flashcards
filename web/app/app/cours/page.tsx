@@ -5,8 +5,10 @@ import { courseAccent, courseAudienceLabel, resolveEmoji, studyCounts } from "@m
 
 import { CourseExamBadge } from "@/components/app/CourseExamBadge";
 import { CoursesExplore } from "@/components/app/CoursesExplore";
+import { LockedAddCourseCard } from "@/components/app/SecondCourseCard";
 import { Button } from "@/components/ui/button";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
+import { canImportNow } from "@/lib/data/entitlement";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
 import { loadNewCardBudget } from "@/lib/data/reviews";
 
@@ -22,11 +24,12 @@ export default async function CoursesPage({
   const params = await searchParams;
   if (params.vue === "decouvrir") redirect("/app/cours");
 
-  const [courses, cards, budget, exams] = await Promise.all([
+  const [courses, cards, budget, exams, canImport] = await Promise.all([
     listCourses(),
     listCardSnapshots(),
     loadNewCardBudget(),
     listExams(),
+    canImportNow(),
   ]);
 
   const now = new Date();
@@ -70,6 +73,7 @@ export default async function CoursesPage({
         emptyReviews={counts.total === 0 && cards.length > 0}
         heldBack={heldBack}
         exams={exams}
+        canImport={canImport}
       />
     </CoursesExplore>
   );
@@ -80,11 +84,13 @@ function Shelf({
   emptyReviews,
   heldBack,
   exams,
+  canImport,
 }: {
   courses: Awaited<ReturnType<typeof listCourses>>;
   emptyReviews: boolean;
   heldBack: number;
   exams: Awaited<ReturnType<typeof listExams>>;
+  canImport: boolean;
 }) {
   return (
     <>
@@ -136,7 +142,7 @@ function Shelf({
             </Link>
           );
         })}
-        <AddCourseCard />
+        {canImport ? <AddCourseCard /> : <LockedAddCourseCard />}
       </div>
     </>
   );

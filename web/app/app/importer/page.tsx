@@ -1,6 +1,8 @@
 import { DEFAULT_SHEET_LENGTH, isSheetLength } from "@micabo/core";
 
 import { ImportPanel } from "@/components/app/ImportPanel";
+import { SecondCourseCard } from "@/components/app/SecondCourseCard";
+import { canImportNow } from "@/lib/data/entitlement";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -29,16 +31,18 @@ export default async function ImportPage() {
     ? profile.sheet_length
     : DEFAULT_SHEET_LENGTH;
 
+  const canImport = await canImportNow();
+
   return (
     <>
       <header>
         <h1 className="text-lg font-semibold tracking-tight text-foreground">Importer</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Relis d&apos;abord, puis écris la fiche.
+          {canImport ? "Relis d'abord, puis écris la fiche." : "Le premier cours est offert."}
         </p>
       </header>
 
-      <ImportPanel initialLength={initialLength} />
+      {canImport ? <ImportPanel initialLength={initialLength} /> : <SecondCourseCard />}
     </>
   );
 }

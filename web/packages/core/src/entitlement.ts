@@ -13,27 +13,19 @@
  * Le verrou est donc vivant pour quiconque a une ligne - un achat fait sur l'iPhone ferme la porte
  * du gratuit sur le web dans la seconde, et c'est exactement ce qu'on voulait.
  *
- * Reste le cas de **l'absence de ligne**, et c'est le seul endroit où une décision de produit se
- * cache dans du code. `ASSUME_PRO_WITHOUT_ROW` dit ce qu'on fait de quelqu'un dont on ne sait
- * rien :
- *
- * - à `true`, il est traité comme abonné. C'est le réglage d'aujourd'hui, et il n'est pas de la
- *   complaisance : **il n'y a aucune façon de payer sur le web** - Stripe attend ses clés - donc
- *   fermer maintenant enfermerait dehors tout le monde sans porte de sortie ;
- * - à `false`, le gratuit s'applique pour de bon : un cours, sept dixièmes de sa fiche, cinq cartes
- *   par session.
- *
- * Le jour où l'encaissement existe, c'est cette ligne-là qui bascule, et rien d'autre.
+ * Reste le cas de **l'absence de ligne**. `ASSUME_PRO_WITHOUT_ROW` dit ce qu'on
+ * fait de quelqu'un dont on ne sait rien. Il est à `false` : pas de ligne, pas
+ * d'abonnement, le gratuit s'applique — un cours, sept dixièmes de sa fiche,
+ * cinq cartes par session. C'est le même verrou que l'iPhone.
  */
 
 /**
  * Ce qu'on fait de quelqu'un qui n'a pas de ligne dans `entitlements`.
  *
- * À `true` : on le traite comme abonné, parce qu'il n'existe pas encore de façon de payer sur le
- * web. À `false` : le gratuit s'applique. **Une seule ligne à changer**, et c'est tout ce que
- * l'ouverture de l'encaissement demandera côté verrou.
+ * À `false` : le gratuit s'applique. À `true` : on le traiterait comme abonné
+ * — ce n'est plus le cas, le paywall ouvre une porte.
  */
-export const ASSUME_PRO_WITHOUT_ROW = true;
+export const ASSUME_PRO_WITHOUT_ROW = false;
 
 /** Le nom de l'entitlement chez RevenueCat. Il est déjà fixé par `docs/revenuecat.md`. */
 export const ENTITLEMENT_ID = "pro";
@@ -96,10 +88,10 @@ export const FREE: Entitlement = { isPro: false };
 export const PRO: Entitlement = { isPro: true };
 
 /**
- * Le droit **deviné** : pas de ligne, donc pas d'achat, mais le verrou reste ouvert.
+ * Le droit **deviné** : pas de ligne, donc pas d'achat, mais le verrou resterait ouvert.
  *
- * C'est ce qui permet de poser le paywall - l'étudiant n'a pas payé - sans lui fermer
- * les cours tant que Stripe n'est pas branché.
+ * Il ne s'applique plus (`ASSUME_PRO_WITHOUT_ROW` est à `false`). On le garde pour
+ * les tests, et si un jour on rouvre le gratuit le temps d'un incident de paiement.
  */
 export const ASSUMED_PRO: Entitlement = { isPro: true, assumed: true };
 
@@ -116,9 +108,9 @@ export function isPaid(right: Entitlement): boolean {
 /**
  * Le droit effectif.
  *
- * Tant que le verrou n'est pas armé, tout le monde est Pro. Et quand il le sera : en cas de
- * désaccord entre le SDK et la table, **le plus généreux gagne** le temps d'une session  - 
- * enfermer dehors un étudiant qui paye est pire qu'une minute offerte.
+ * En cas de désaccord entre le SDK et la table, **le plus généreux gagne** le
+ * temps d'une session — enfermer dehors un étudiant qui paye est pire qu'une
+ * minute offerte.
  */
 export function resolve(...sources: (Entitlement | null | undefined)[]): Entitlement {
   const known = sources.filter((source): source is Entitlement => Boolean(source));

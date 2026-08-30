@@ -14,6 +14,7 @@ import {
 import { CountStepper } from "@/components/app/CountStepper";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/card";
+import { requestPaywall } from "@/lib/paywall";
 
 export interface ReviewSetupCard {
   id: string;
@@ -127,11 +128,21 @@ export function ReviewSetup({
     return (
       <EmptyState
         title="Rien à réviser"
-        description={empty ? "Importe un cours pour commencer." : "Reviens demain."}
+        description={
+          empty
+            ? "Importe un cours pour commencer."
+            : isPro
+              ? "Reviens demain."
+              : "L'entraînement libre est dans Pro."
+        }
         action={
-          <Button render={<Link href={(empty ? "/app/importer" : "/app/cours") as never} />}>
-            {empty ? "Importer un cours" : "Voir les cours"}
-          </Button>
+          empty ? (
+            <Button render={<Link href={"/app/importer" as never} />}>Importer un cours</Button>
+          ) : isPro ? (
+            <Button render={<Link href={"/app/cours" as never} />}>Voir les cours</Button>
+          ) : (
+            <Button onClick={requestPaywall}>Entraînement libre</Button>
+          )
         }
       />
     );

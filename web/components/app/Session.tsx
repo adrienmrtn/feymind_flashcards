@@ -99,9 +99,7 @@ export function Session({
   const remaining = (card ? 1 : 0) + loop.pending.length;
 
   // Le plafond du gratuit s'applique **à la session**, pas au jeu : les cartes restent toutes
-  // visibles dans la liste du cours, et c'est le passage qui s'arrête. Le droit est lu par la
-  // fonction du noyau, qui rend « ouvert » pour tout le monde tant que l'encaissement n'existe
-  // pas - le chemin est donc écrit et ne se déclenche pas encore.
+  // visibles dans la liste du cours, et c'est le passage qui s'arrête.
   const capped = entitlement.hasReachedSessionLimit({ isPro }, tally.answered);
   const finished = loop.done || capped;
 

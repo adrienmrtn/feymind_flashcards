@@ -5,7 +5,7 @@ import { AppChrome } from "@/components/app/AppChrome";
 import { PaywallHost } from "@/components/app/PaywallFlow";
 import { entitlement } from "@micabo/core";
 
-import { readEntitlement } from "@/lib/data/entitlement";
+import { canImportNow, readEntitlement } from "@/lib/data/entitlement";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,9 +29,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     profile?.display_name?.trim() ||
     (profile?.username ? `@${profile.username}` : user.email?.split("@")[0] || "Compte");
   const userInitial = userName.replace(/^@/, "").charAt(0).toUpperCase() || "M";
+  const canImport = await canImportNow();
 
   return (
-    <AppChrome userName={userName} userInitial={userInitial}>
+    <AppChrome userName={userName} userInitial={userInitial} canImport={canImport}>
       {children}
       <Suspense fallback={null}>
         <PaywallGate />

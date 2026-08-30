@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { entitlement } from "@micabo/core";
 
+import { listCourses } from "@/lib/data/courses";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
@@ -50,4 +51,13 @@ export const readEntitlement = cache(async (): Promise<entitlement.Entitlement> 
     expiresAt,
     willRenew: Boolean(data.will_renew),
   });
+});
+
+/** Le premier cours est offert. Le suivant ouvre le paywall, comme sur l'iPhone. */
+export const canImportNow = cache(async (): Promise<boolean> => {
+  const [right, courses] = await Promise.all([readEntitlement(), listCourses()]);
+  return entitlement.canImportCourse(
+    right,
+    courses.map((course) => ({ isFromLibrary: course.is_from_library })),
+  );
 });
