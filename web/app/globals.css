@@ -76,6 +76,21 @@
   --color-negative-soft: #fae6e1;
   --color-info-soft: #e2ecf9;
 
+  /* ---- L'offre cadeau ----
+     Les seules couleurs du produit qui ne sont ni le vert de Micabo ni son papier, et c'est
+     assumé : l'offre est un **événement**, pas un écran de plus. Un tarif réduit peint dans
+     la palette de l'app se lit comme une fonctionnalité, donc comme quelque chose qui sera
+     encore là demain - ce qui est exactement ce qu'il ne faut pas dire d'une remise qui
+     expire.
+
+     Le violet de la minuterie ne sert qu'à elle. C'est la seule chose de la carte qui
+     compte à rebours, et elle ne doit pas se confondre avec le bleu qui vend. */
+  --color-offer-sky: #12a3f2;
+  --color-offer-sky-deep: #0b8fdc;
+  --color-offer-wash: #c4e7fa;
+  --color-offer-wash-soft: #eaf7fe;
+  --color-offer-urgency: #5b46e5;
+
   /* Chrome de micabo OS, pour l'app connectée. */
   --color-sidebar: #fafafa;
   --color-sidebar-foreground: #727272;

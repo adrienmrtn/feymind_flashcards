@@ -116,6 +116,24 @@ enum MicaboColor {
     static let negativeSoft = Color(hex: 0xFAE6E1)
     static let infoSoft = Color(hex: 0xE2ECF9)
 
+    /// **Les couleurs de l'offre cadeau**, et d'elle seule.
+    ///
+    /// Les seules couleurs de l'app qui ne sont ni le vert de Micabo ni son papier, et c'est
+    /// assumé : l'offre est un **événement**, pas un écran de plus. Un tarif réduit peint
+    /// dans la palette de l'app se lit comme une fonctionnalité, donc comme quelque chose
+    /// qui sera encore là demain — ce qui est exactement ce qu'il ne faut pas dire d'une
+    /// remise qui expire.
+    ///
+    /// Les mêmes valeurs sont dans `web/app/globals.css` : c'est la même offre, et la voir
+    /// bleu ciel sur le téléphone puis indigo sur le site ferait douter du prix.
+    static let offerSky = Color(hex: 0x12A3F2)
+    static let offerSkyDeep = Color(hex: 0x0B8FDC)
+    static let offerWash = Color(hex: 0xC4E7FA)
+    static let offerWashSoft = Color(hex: 0xEAF7FE)
+    /// Le violet de la minuterie, et rien d'autre : c'est la seule chose de la carte qui
+    /// compte à rebours, et elle ne doit pas se confondre avec le bleu qui vend.
+    static let offerUrgency = Color(hex: 0x5B46E5)
+
     /// Teintes de couverture attribuées aux cours, lisibles avec du texte blanc.
     ///
     /// Remontées en saturation, et le violet indigo a laissé la place au vert de Micabo :
