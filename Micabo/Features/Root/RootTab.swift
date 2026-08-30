@@ -86,9 +86,7 @@ final class TabRouter {
     /// dupliquer l'import ici ferait deux chemins pour le même geste.
     func requestCourseImport() {
         courseImportRequests += 1
-        withAnimation(.easeOut(duration: 0.28)) {
-            selection = .courses
-        }
+        selection = .courses
     }
 
 }

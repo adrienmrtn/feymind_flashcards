@@ -24,6 +24,7 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AuthController.self) private var auth
     @Environment(SocialService.self) private var social
+    @Environment(TabRouter.self) private var router: TabRouter?
 
     @Query private var courses: [Course]
     @Query private var cards: [Flashcard]
@@ -55,7 +56,10 @@ struct ProfileView: View {
             // Le Profil n'ancre rien en bas, mais sa dernière rangée se lisait à travers le
             // verre de la barre : la réserve n'est pas réservée aux pages qui ont un bouton.
             .tabBarClearance()
-            .task {
+            .task(id: router?.selection) {
+                // Les quatre onglets restent montés : sans ce garde, le classement partait
+                // au lancement, en concurrence avec le premier écran.
+                guard router?.selection == .profile else { return }
                 await social.refreshWeekRanking()
             }
             .toolbar(.hidden, for: .navigationBar)

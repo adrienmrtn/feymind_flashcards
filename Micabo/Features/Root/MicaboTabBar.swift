@@ -27,15 +27,14 @@ struct MicaboTabBar: View {
         HStack(spacing: 0) {
             ForEach(RootTab.allCases) { tab in
                 Button {
-                    withAnimation(.easeOut(duration: 0.28)) {
-                        router.selection = tab
-                    }
+                    // Sans `withAnimation` : animer `selection` faisait fondre les quatre
+                    // pages, et l'onglet touché n'était lisible qu'après 280 ms.
+                    router.selection = tab
                 } label: {
                     let isSelected = tab == router.selection
                     VStack(spacing: 5) {
                         Image(systemName: isSelected ? tab.selectedSystemImage : tab.systemImage)
                             .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
-                            .contentTransition(.symbolEffect(.replace))
                         Text(tab.label)
                             .font(MicaboFont.hanken(10, weight: isSelected ? .semibold : .medium))
                     }

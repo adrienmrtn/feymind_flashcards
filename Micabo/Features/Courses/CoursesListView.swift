@@ -138,9 +138,9 @@ struct CoursesListView: View {
         .micaboPaywall($paywall)
         .onChange(of: router?.courseImportRequests ?? 0) { oldValue, newValue in
             guard newValue > oldValue else { return }
-            // La feuille attend le fondu vers Cours : la présenter pendant le
-            // changement d'onglet ne s'ouvre pas toujours.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // Le prochain tour de boucle : la feuille doit s'ouvrir après que Cours
+            // soit déjà l'onglet visible, pas pendant le même rendu.
+            Task { @MainActor in
                 requestImport()
             }
         }
@@ -243,7 +243,7 @@ struct CoursesListView: View {
             .padding(.horizontal, MicaboSpacing.screen)
         } else {
             let items = filtered
-            VStack(spacing: 0) {
+            LazyVStack(spacing: 0) {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, course in
                     MicaboRow.course(course) {
                         path.append(course)

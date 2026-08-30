@@ -36,28 +36,45 @@ struct TodayView: View {
     @State private var isCreatingDeck = false
     @State private var paywall: PaywallTrigger?
 
-    /// Les échéances d'examen en cours. Elles ordonnent les neuves, sans lever le plafond.
-    private var deadlines: ExamDeadlines {
-        ExamDeadlines.active(exams: exams, courses: courses)
-    }
+    /// File du jour, calculée **une fois** par rendu. Sans ça, `StudyQueueBuilder.build`
+    /// tournait à chaque lecture de `dueCards` — une dizaine de fois par frame, y compris
+    /// quand l'onglet n'est pas celui qu'on regarde.
+    private struct DayLoad {
+        let dueCards: [Flashcard]
+        let heldBackNewCards: Int
+        let newCount: Int
+        let learningCount: Int
+        let reviewCount: Int
+        let coursesWithDue: Int
+        let estimatedMinutes: Int
+        let dueByCourse: [(course: Course, count: Int)]
 
-    /// Ce qui a déjà été introduit aujourd'hui, y compris depuis un cours.
-    private var introducedToday: Int {
-        DailyNewQuota.introducedToday(from: reviewLogs)
-    }
+        init(allCards: [Flashcard], courses: [Course], exams: [Exam], logs: [ReviewLog]) {
+            let due = StudyQueueBuilder.build(
+                from: allCards,
+                limits: .daily(newRemaining: DailyNewQuota.remaining(logs: logs)),
+                deadlines: ExamDeadlines.active(exams: exams, courses: courses)
+            )
+            dueCards = due
+            newCount = due.filter { $0.state == .new }.count
+            learningCount = due.filter { $0.state == .learning || $0.state == .relearning }.count
+            reviewCount = due.filter { $0.state == .review }.count
+            let dueNew = allCards.filter { $0.isDue() && $0.state == .new }.count
+            heldBackNewCards = max(0, dueNew - newCount)
+            coursesWithDue = Set(due.compactMap { $0.course?.id }).count
+            estimatedMinutes = max(1, Int((Double(due.count) * 30 / 60).rounded(.up)))
 
-    private var newRemaining: Int {
-        DailyNewQuota.remaining(introduced: introducedToday)
-    }
-
-    /// La file telle que la session va la servir : le plafond de cartes neuves du **jour**,
-    /// pas d'un écran. Une session depuis un cours a déjà consommé ce budget.
-    private var dueCards: [Flashcard] {
-        StudyQueueBuilder.build(
-            from: allCards,
-            limits: .daily(newRemaining: newRemaining),
-            deadlines: deadlines
-        )
+            var counts: [UUID: Int] = [:]
+            for card in due {
+                guard let id = card.course?.id else { continue }
+                counts[id, default: 0] += 1
+            }
+            dueByCourse = courses.compactMap { course in
+                guard let count = counts[course.id], count > 0 else { return nil }
+                return (course: course, count: count)
+            }
+            .sorted { $0.count > $1.count }
+        }
     }
 
     private var nextExam: Exam? {
@@ -68,50 +85,30 @@ struct TodayView: View {
         Array(exams.filter { !$0.isPast() }.prefix(5))
     }
 
-    /// Cartes neuves dues mais gardées pour les jours suivants, à cause du plafond.
-    private var heldBackNewCards: Int {
-        let dueNew = allCards.filter { $0.isDue() && $0.state == .new }.count
-        return max(0, dueNew - newCount)
-    }
-
-    private var newCount: Int {
-        dueCards.filter { $0.state == .new }.count
-    }
-
-    private var learningCount: Int {
-        dueCards.filter { $0.state == .learning || $0.state == .relearning }.count
-    }
-
-    private var reviewCount: Int {
-        dueCards.filter { $0.state == .review }.count
-    }
-
-    private var coursesWithDue: Int {
-        Set(dueCards.compactMap { $0.course?.id }).count
-    }
-
-    private var estimatedMinutes: Int {
-        max(1, Int((Double(dueCards.count) * 30 / 60).rounded(.up)))
-    }
-
     private var streak: Int {
         StudyStats.streak(reviewDates: reviewLogs.map(\.reviewedAt))
     }
 
     var body: some View {
+        let load = DayLoad(allCards: allCards, courses: courses, exams: exams, logs: reviewLogs)
+        today(load)
+    }
+
+    @ViewBuilder
+    private func today(_ load: DayLoad) -> some View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                     header
 
-                    if dueCards.isEmpty && heldBackNewCards == 0 {
+                    if load.dueCards.isEmpty && load.heldBackNewCards == 0 {
                         restState
-                    } else if dueCards.isEmpty {
-                        rhythmReachedCard
-                        dueCoursesSection
+                    } else if load.dueCards.isEmpty {
+                        rhythmReachedCard(held: load.heldBackNewCards)
+                        dueCoursesSection(load.dueByCourse)
                     } else {
-                        dueCard
-                        dueCoursesSection
+                        dueCard(load)
+                        dueCoursesSection(load.dueByCourse)
                     }
 
                     examSection
@@ -131,9 +128,9 @@ struct TodayView: View {
                     MicaboBottomBar {
                         Button(action: startSession) {
                             HStack(spacing: MicaboSpacing.xs) {
-                                Text(sessionButtonTitle)
+                                Text(sessionButtonTitle(load))
 
-                                if dueCards.isEmpty, !canPractice {
+                                if load.dueCards.isEmpty, !canPractice {
                                     Image(systemName: "lock.fill")
                                         .font(.system(size: 11, weight: .bold))
                                 }
@@ -181,7 +178,7 @@ struct TodayView: View {
             // même une session réglable, pas un entraînement libre.
             StudyView(
                 source: .allDue,
-                mode: dueCards.isEmpty && heldBackNewCards == 0 ? .practice : .scheduled
+                mode: load.dueCards.isEmpty && load.heldBackNewCards == 0 ? .practice : .scheduled
             )
         }
         .micaboPaywall($paywall)
@@ -224,26 +221,26 @@ struct TodayView: View {
     /// **Une seule carte pour tout ce qui décrit la file du jour** : le chiffre, ce qu'il
     /// coûte en temps, et de quoi il est fait. Les quatre blocs qui se succédaient à même le
     /// fond donnaient trois gris à lire de haut en bas ; là, il y a un objet à regarder.
-    private var dueCard: some View {
+    private func dueCard(_ load: DayLoad) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .center, spacing: 14) {
-                Text("\(dueCards.count)")
+                Text("\(load.dueCards.count)")
                     .font(MicaboFont.number(58))
                     .tracking(-1.5)
                     .foregroundStyle(MicaboColor.ink)
                     .monospacedDigit()
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
-                    .contentTransition(.numericText(value: Double(dueCards.count)))
-                    .animation(.easeOut(duration: 0.3), value: dueCards.count)
+                    .contentTransition(.numericText(value: Double(load.dueCards.count)))
+                    .animation(.easeOut(duration: 0.3), value: load.dueCards.count)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(dueCards.count > 1 ? "cartes à réviser" : "carte à réviser")
+                    Text(load.dueCards.count > 1 ? "cartes à réviser" : "carte à réviser")
                         .font(MicaboFont.hanken(16, weight: .semibold))
                         .foregroundStyle(MicaboColor.ink)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("≈ \(estimatedMinutes) min · \(coursesWithDue > 1 ? "\(coursesWithDue) cours" : "1 cours")")
+                    Text("≈ \(load.estimatedMinutes) min · \(load.coursesWithDue > 1 ? "\(load.coursesWithDue) cours" : "1 cours")")
                         .font(MicaboFont.hanken(13, weight: .medium))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
@@ -252,12 +249,12 @@ struct TodayView: View {
             }
 
             VStack(alignment: .leading, spacing: 11) {
-                progressSegments
-                legend
+                progressSegments(load)
+                legend(load)
             }
 
-            if heldBackNewCards > 0 {
-                heldBackNote
+            if load.heldBackNewCards > 0 {
+                heldBackNote(load.heldBackNewCards)
             }
         }
         .padding(18)
@@ -267,9 +264,9 @@ struct TodayView: View {
 
     /// Ce que la barre veut dire. Sans elle, trois couleurs empilées ne sont qu'un
     /// dégradé — et c'est pour la remplacer qu'un bloc « Répartition » existait plus bas.
-    private var legend: some View {
+    private func legend(_ load: DayLoad) -> some View {
         MicaboFlowLayout(spacing: 14, lineSpacing: 7) {
-            ForEach(visibleSegments) { segment in
+            ForEach(visibleSegments(load)) { segment in
                 HStack(spacing: 6) {
                     Circle()
                         .fill(segment.color)
@@ -287,7 +284,7 @@ struct TodayView: View {
 
     /// Dit pourquoi le chiffre du haut est plus petit que le nombre de cartes réellement
     /// dues : sans cette ligne, le plafond de rythme passerait pour un bug.
-    private var heldBackNote: some View {
+    private func heldBackNote(_ heldBackNewCards: Int) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "tray.and.arrow.down")
                 .font(.system(size: 11, weight: .semibold))
@@ -303,8 +300,7 @@ struct TodayView: View {
     }
 
     @ViewBuilder
-    private var dueCoursesSection: some View {
-        let entries = dueByCourse
+    private func dueCoursesSection(_ entries: [(course: Course, count: Int)]) -> some View {
         if !entries.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 MicaboSectionCaption(text: "Au programme")
@@ -378,9 +374,7 @@ struct TodayView: View {
     }
 
     private func openExams() {
-        withAnimation(.easeOut(duration: 0.28)) {
-            router?.selection = .exams
-        }
+        router?.selection = .exams
     }
 
     private var examEmptySubtitle: String {
@@ -403,21 +397,6 @@ struct TodayView: View {
         return Int((Double(started) / Double(relevant.count) * 100).rounded())
     }
 
-    /// Compté sur la file du jour, plafond compris : « au programme » doit dire la vérité.
-    private var dueByCourse: [(course: Course, count: Int)] {
-        var counts: [UUID: Int] = [:]
-        for card in dueCards {
-            guard let id = card.course?.id else { continue }
-            counts[id, default: 0] += 1
-        }
-
-        let entries: [(course: Course, count: Int)] = courses.compactMap { course in
-            guard let count = counts[course.id], count > 0 else { return nil }
-            return (course: course, count: count)
-        }
-        return entries.sorted { $0.count > $1.count }
-    }
-
     // MARK: - La barre et sa légende
 
     /// Les trois natures de cartes de la file, dans l'ordre où elles se lisent. Une seule
@@ -438,16 +417,16 @@ struct TodayView: View {
         let width: CGFloat
     }
 
-    private var visibleSegments: [Segment] {
+    private func visibleSegments(_ load: DayLoad) -> [Segment] {
         [
-            Segment(label: "en révision", color: MicaboColor.caution, count: reviewCount),
-            Segment(label: "en apprentissage", color: MicaboColor.accent, count: learningCount),
-            Segment(label: "nouvelles", color: MicaboColor.inkTertiary, count: newCount)
+            Segment(label: "en révision", color: MicaboColor.caution, count: load.reviewCount),
+            Segment(label: "en apprentissage", color: MicaboColor.accent, count: load.learningCount),
+            Segment(label: "nouvelles", color: MicaboColor.inkTertiary, count: load.newCount)
         ]
         .filter { $0.count > 0 }
     }
 
-    private var progressSegments: some View {
+    private func progressSegments(_ load: DayLoad) -> some View {
         GeometryReader { proxy in
             let spacing: CGFloat = 3
 
@@ -456,7 +435,7 @@ struct TodayView: View {
                     .fill(MicaboColor.surfaceMuted)
 
                 HStack(spacing: spacing) {
-                    ForEach(segmentWidths(in: proxy.size.width, spacing: spacing)) { entry in
+                    ForEach(segmentWidths(load, in: proxy.size.width, spacing: spacing)) { entry in
                         Capsule()
                             .fill(entry.color)
                             .frame(width: entry.width)
@@ -467,19 +446,19 @@ struct TodayView: View {
             }
         }
         .frame(height: 8)
-        .animation(.easeOut(duration: 0.3), value: dueCards.count)
+        .animation(.easeOut(duration: 0.3), value: load.dueCards.count)
     }
 
     /// Les largeurs sont calculées puis **renormalisées**. Chaque part reçoit un plancher de
     /// six points, sans quoi une seule carte neuve dans une file de cinquante ne se voit
     /// pas ; ces planchers mis bout à bout peuvent dépasser la largeur disponible, et une
     /// rangée qui dépasse déborde de la carte.
-    private func segmentWidths(in width: CGFloat, spacing: CGFloat) -> [SizedSegment] {
-        let segments = visibleSegments
+    private func segmentWidths(_ load: DayLoad, in width: CGFloat, spacing: CGFloat) -> [SizedSegment] {
+        let segments = visibleSegments(load)
         let usable = width - spacing * CGFloat(max(0, segments.count - 1))
         guard !segments.isEmpty, usable > 0 else { return [] }
 
-        let total = CGFloat(max(1, dueCards.count))
+        let total = CGFloat(max(1, load.dueCards.count))
         var widths = segments.map { max(6, usable * CGFloat($0.count) / total) }
 
         let sum = widths.reduce(0, +)
@@ -529,7 +508,7 @@ struct TodayView: View {
 
     /// Le rythme est tenu, mais des cartes neuves attendent encore. On le dit,
     /// plutôt que d'afficher « Tout est à jour » alors qu'il reste à apprendre.
-    private var rhythmReachedCard: some View {
+    private func rhythmReachedCard(held heldBackNewCards: Int) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("C'est fait")
                 .font(MicaboFont.hanken(19, weight: .bold))
@@ -577,9 +556,9 @@ struct TodayView: View {
         !allCards.isEmpty
     }
 
-    private var sessionButtonTitle: String {
-        if !dueCards.isEmpty { return MicaboCopy.reviewButton(count: dueCards.count) }
-        if heldBackNewCards > 0 { return "Réviser" }
+    private func sessionButtonTitle(_ load: DayLoad) -> String {
+        if !load.dueCards.isEmpty { return MicaboCopy.reviewButton(count: load.dueCards.count) }
+        if load.heldBackNewCards > 0 { return "Réviser" }
         return "Entraînement libre"
     }
 
@@ -588,7 +567,8 @@ struct TodayView: View {
     /// Réviser ce qui est dû reste gratuit. Prendre de l'avance sur tout un paquet, non :
     /// c'est ce qu'on fait la veille d'un partiel, et c'est ce que Pro ouvre.
     private func startSession() {
-        guard !dueCards.isEmpty || heldBackNewCards > 0 || canPractice else {
+        let load = DayLoad(allCards: allCards, courses: courses, exams: exams, logs: reviewLogs)
+        guard !load.dueCards.isEmpty || load.heldBackNewCards > 0 || canPractice else {
             paywall = .practice
             return
         }

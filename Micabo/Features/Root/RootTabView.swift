@@ -10,9 +10,10 @@ import UIKit
 /// geste rend chaque écran mou ; il entrait en conflit avec tout ce qui se balaye à
 /// l'intérieur d'une page ; et il fallait un bricolage qui parcourait toute la hiérarchie
 /// UIKit à chaque passe de mise en page pour le couper dès qu'un écran de détail était
-/// poussé. Les onglets s'atteignent maintenant par la barre du bas, et le changement de page
-/// est un fondu court.
+/// poussé. Les onglets s'atteignent maintenant par la barre du bas.
 ///
+/// **Le changement de page est immédiat.** Un fondu de 220 ms sur quatre `NavigationStack`
+/// animait tout l'arbre — listes, calendrier, fiche — et chaque onglet arrivait en retard.
 /// Les pages restent **montées en même temps**, simplement masquées : c'est ce qui
 /// permet à chacune de garder son défilement, sa recherche et sa pile de navigation quand on
 /// la quitte et qu'on y revient.
@@ -20,7 +21,6 @@ struct RootTabView: View {
     @State private var router = TabRouter()
 
     init() {
-        FontLoader.registerFonts()
         Self.configureAppearance()
     }
 
@@ -72,10 +72,14 @@ struct RootTabView: View {
             .allowsHitTesting(isActive)
             .accessibilityHidden(!isActive)
             .zIndex(isActive ? 1 : 0)
-            .animation(.easeOut(duration: 0.22), value: isActive)
     }
 
+    private static var didConfigureAppearance = false
+
     private static func configureAppearance() {
+        guard !didConfigureAppearance else { return }
+        didConfigureAppearance = true
+
         let navigationBar = UINavigationBarAppearance()
         navigationBar.configureWithOpaqueBackground()
         navigationBar.backgroundColor = UIColor(MicaboColor.canvas)
