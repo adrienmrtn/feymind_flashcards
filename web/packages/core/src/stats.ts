@@ -139,8 +139,9 @@ export function mostReviewedCards(
  * trois jours après.
  *
  * Les cartes en retard se posent **aujourd'hui** - c'est là qu'on les fait.
- * Un jour à venir ne porte que ce qui tombe vraiment ce jour-là. La flamme
- * dit qu'on a déjà révisé ce jour, pas le volume.
+ * Un jour à venir ne porte que ce qui tombe vraiment ce jour-là. Les barres
+ * empilent **révisées** (ce qui a déjà été fait ce jour-là) et **à réviser**
+ * (ce qui reste dû). Sans les révisées, les trois jours derrière restent plats.
  */
 export const WEEK_STRIP_RADIUS = 3;
 
