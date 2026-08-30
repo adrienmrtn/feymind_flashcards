@@ -12,8 +12,9 @@ import SwiftUI
 /// L'écran a maintenant **un sujet et deux compléments**. Le panneau du haut porte la série
 /// et la courbe des quinze derniers jours : c'est ce qu'on vient regarder, et les deux
 /// disent la même chose à deux échelles, donc ils vont ensemble. La bande de chiffres en
-/// dessous donne les totaux d'un coup d'œil, en une seule surface au lieu de quatre. Reste
-/// une rangée, celle des amis, qui n'est pas un chiffre mais une porte.
+/// dessous donne les totaux d'un coup d'œil, en une seule surface au lieu de quatre. Le
+/// classement de la semaine pose le volume contre les amis. Reste une rangée, celle des
+/// amis, qui n'est pas un chiffre mais une porte.
 ///
 /// **Il n'y a plus de pastille d'initiale.** Un rond coloré avec une lettre dedans est une
 /// photo de profil qui n'existe pas : ça occupe la place d'une identité sans en porter une,
@@ -42,6 +43,7 @@ struct ProfileView: View {
                     totalsStrip
                     knowledgeChart
                     mostReviewed
+                    weekRanking
                     friendsRow
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
@@ -53,6 +55,9 @@ struct ProfileView: View {
             // Le Profil n'ancre rien en bas, mais sa dernière rangée se lisait à travers le
             // verre de la barre : la réserve n'est pas réservée aux pages qui ont un bouton.
             .tabBarClearance()
+            .task {
+                await social.refreshWeekRanking()
+            }
             .toolbar(.hidden, for: .navigationBar)
             .reportsNavigationDepth(for: .profile, depth: path.count)
             .returnsHome(path: $path)
@@ -346,6 +351,107 @@ struct ProfileView: View {
         Rectangle()
             .fill(MicaboColor.hairline)
             .frame(width: 1, height: 30)
+    }
+
+    // MARK: - Classement
+
+    /// Cartes passées depuis lundi, soi et le cercle. Absent s'il n'y a personne
+    /// à comparer : un podium d'une seule personne n'est pas un classement.
+    @ViewBuilder
+    private var weekRanking: some View {
+        let rows = social.weekRanking
+        if WeekReviewRanking.isVisible(rows) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Classement de la semaine")
+                    .font(MicaboFont.hanken(12, weight: .semibold))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .textCase(.uppercase)
+                    .tracking(0.6)
+
+                VStack(spacing: 0) {
+                    ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                        rankingLine(row, rank: index + 1)
+
+                        if index < rows.count - 1 {
+                            MicaboHairline()
+                        }
+                    }
+                }
+
+                Text("cartes passées depuis lundi")
+                    .font(MicaboFont.hanken(12, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .micaboGroup()
+        }
+    }
+
+    @ViewBuilder
+    private func rankingLine(_ row: WeekReviewRanking.Row, rank: Int) -> some View {
+        if row.isMe {
+            rankingContent(row, rank: rank)
+        } else {
+            Button {
+                path.append(person(for: row))
+            } label: {
+                rankingContent(row, rank: rank)
+            }
+            .buttonStyle(MicaboPressableButtonStyle(dimming: true))
+        }
+    }
+
+    private func rankingContent(_ row: WeekReviewRanking.Row, rank: Int) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text("\(rank)")
+                .font(MicaboFont.number(13, weight: .medium))
+                .foregroundStyle(MicaboColor.inkTertiary)
+                .monospacedDigit()
+                .frame(width: 18, alignment: .leading)
+
+            HStack(spacing: 6) {
+                Text(row.handle)
+                    .font(MicaboFont.hanken(14.5, weight: .medium))
+                    .foregroundStyle(MicaboColor.ink)
+                    .lineLimit(1)
+
+                if row.isMe {
+                    Text("toi")
+                        .font(MicaboFont.hanken(12, weight: .regular))
+                        .foregroundStyle(MicaboColor.inkTertiary)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            Text("\(row.passes)")
+                .font(MicaboFont.number(14, weight: .semibold))
+                .foregroundStyle(MicaboColor.ink)
+                .monospacedDigit()
+        }
+        .padding(.vertical, 12)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(rankingLabel(row, rank: rank))
+        .accessibilityAddTraits(row.isMe ? [] : .isButton)
+    }
+
+    private func rankingLabel(_ row: WeekReviewRanking.Row, rank: Int) -> String {
+        let who = row.isMe ? "toi" : row.handle
+        let cards = row.passes == 1 ? "1 carte" : "\(row.passes) cartes"
+        return "\(rank). \(who), \(cards)"
+    }
+
+    private func person(for row: WeekReviewRanking.Row) -> SocialService.Person {
+        if let known = social.friends.first(where: { $0.id == row.id }) {
+            return known
+        }
+        return SocialService.Person(
+            id: row.id,
+            username: row.username ?? "",
+            institutionName: nil,
+            relation: .friends
+        )
     }
 
     // MARK: - Amis
