@@ -11,6 +11,7 @@ import {
   knowledgeLevel,
   knowledgePie,
   mostReviewedCards,
+  rankReviewedCards,
   streak,
   weekStrip,
 } from "../src/stats";
@@ -113,6 +114,31 @@ describe("les cartes les plus passées", () => {
       { id: "a", front: "1914", passes: 2 },
       { id: "b", front: "1789", passes: 1 },
     ]);
+  });
+
+  it("donne le même classement à partir de passages déjà comptés", () => {
+    const cards = [
+      { id: "a", front: "1914" },
+      { id: "b", front: "1789" },
+    ];
+
+    expect(
+      rankReviewedCards(
+        [
+          { cardId: "b", passes: 1 },
+          { cardId: "a", passes: 2 },
+          { cardId: "ghost", passes: 9 },
+        ],
+        cards,
+        2,
+      ),
+    ).toEqual(
+      mostReviewedCards(
+        [{ cardId: "a" }, { cardId: "a" }, { cardId: "b" }, { cardId: "ghost" }],
+        cards,
+        2,
+      ),
+    );
   });
 });
 

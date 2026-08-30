@@ -173,6 +173,7 @@ export {
   knowledgeLevel,
   knowledgePie,
   mostReviewedCards,
+  rankReviewedCards,
   streak,
   weekStrip,
   WEEK_STRIP_RADIUS,
@@ -241,6 +242,7 @@ export {
 } from "./generation/language";
 export {
   TIER_LADDER,
+  isStudyLevel,
   resolveStage,
   stagesFor,
   type EducationStage,

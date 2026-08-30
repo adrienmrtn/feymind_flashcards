@@ -9,6 +9,7 @@ import { countryFor, newCardsPerDay, DEFAULT_DAILY_MINUTES } from "@micabo/core"
 import { shouldPreserveRemoteProfile } from "@/lib/auth/existing-account";
 import { ONBOARDING_CREATE_COOKIE } from "@/lib/auth/onboarding-create";
 import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
+import { revalidateUserData } from "@/lib/data/cache";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -106,6 +107,11 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
     });
     examCreated = !examError;
   }
+
+  // Le parcours écrit le pays, le niveau, l'école : les mêmes colonnes que l'app relit ensuite
+  // depuis son cache. Sans ce mot, l'accueil pourrait s'ouvrir sur le profil d'avant.
+  revalidateUserData(user.id, "profile");
+  if (examCreated) revalidateUserData(user.id, "exams");
 
   return { status: "saved", examCreated };
 }

@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardHeader, CardPanel, CardTitle } from "@/components/ui/card";
 import { FriendActions } from "@/components/app/FriendActions";
 import { MobileAppCard } from "@/components/app/MobileAppCard";
-import { RefreshOnVisit } from "@/components/app/RefreshOnVisit";
 import { WeekRanking } from "@/components/app/WeekRanking";
 import { WeekStrip } from "@/components/app/WeekStrip";
 import { examInsightFromRow, insightCardsFromSnapshots } from "@/lib/exams/from-rows";
@@ -32,21 +31,20 @@ import {
   type ExamRow,
   type FriendRequestRow,
 } from "@/lib/data/courses";
+import { readProfile } from "@/lib/data/profile";
 import { loadNewCardBudget, loadReviewDatesSince } from "@/lib/data/reviews";
 import { listWeekReviewRanking } from "@/lib/data/social";
-import { currentUser } from "@/lib/data/user";
-import { createClient } from "@/lib/supabase/server";
 
 /**
  * Le tableau de bord : les tâches d'abord, puis la semaine et les examens.
  *
  * Les tâches suivent **le rythme choisi**, pas toutes les cartes dues. Une
- * session qui vient de se terminer doit les actualiser tout de suite.
+ * session qui vient de se terminer doit les actualiser tout de suite : c'est
+ * `SessionDone` qui s'en charge en revenant ici, et non un rafraîchissement
+ * posé sur la page. Monté sur la page, il refaisait **tout** le rendu serveur
+ * à chaque arrivée - deux fois les données pour un seul écran.
  */
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const user = await currentUser();
-
   const now = new Date();
   const today = startOfDay(now);
 
@@ -56,14 +54,7 @@ export default async function DashboardPage() {
       listCardSnapshots(),
       listExams(),
       listPendingFriendRequests(),
-      user
-        ? supabase
-            .from("profiles")
-            .select("display_name, country_code")
-            .eq("id", user.id)
-            .maybeSingle()
-            .then((result) => result.data)
-        : null,
+      readProfile(),
       loadNewCardBudget(),
       loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
       listWeekReviewRanking(),
@@ -89,7 +80,6 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <RefreshOnVisit />
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold tracking-tight text-foreground">

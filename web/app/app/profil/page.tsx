@@ -2,8 +2,9 @@ import Link from "next/link";
 
 import {
   countryFor,
+  isStudyLevel,
   knowledgeDistribution,
-  mostReviewedCards,
+  rankReviewedCards,
   resolveStage,
   streak as currentStreak,
   bestStreak,
@@ -13,9 +14,9 @@ import {
 import { KnowledgePie } from "@/components/app/KnowledgePie";
 import { Flag } from "@/components/onboarding/Flag";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
-import { loadNewCardBudget } from "@/lib/data/reviews";
+import { readProfile } from "@/lib/data/profile";
+import { loadNewCardBudget, loadProfileStats } from "@/lib/data/reviews";
 import { currentUser } from "@/lib/data/user";
-import { createClient } from "@/lib/supabase/server";
 
 /**
  * Le profil, **en une page posée**.
@@ -24,36 +25,21 @@ import { createClient } from "@/lib/supabase/server";
  * plus passées. Les réglages ont leur propre page.
  */
 export default async function ProfilePage() {
-  const supabase = await createClient();
   const user = await currentUser();
 
-  const [profile, courses, cards, exams, logs, budget] = await Promise.all([
-    user
-      ? supabase
-          .from("profiles")
-          .select(
-            "display_name, username, country_code, study_level",
-          )
-          .eq("id", user.id)
-          .maybeSingle()
-          .then((result) => result.data)
-      : null,
+  const [profile, courses, cards, exams, stats, budget] = await Promise.all([
+    readProfile(),
     listCourses(),
     listCardSnapshots(),
     listExams(),
-    user
-      ? supabase
-          .from("review_logs")
-          .select("card_id, reviewed_at")
-          .eq("user_id", user.id)
-          .limit(20000)
-          .then((result) => result.data ?? [])
-      : Promise.resolve([]),
+    loadProfileStats(),
     loadNewCardBudget(),
   ]);
 
   const country = countryFor(profile?.country_code);
-  const stage = resolveStage(country.code, { level: profile?.study_level ?? null });
+  const stage = resolveStage(country.code, {
+    level: isStudyLevel(profile?.study_level) ? profile.study_level : null,
+  });
   const due = studyCounts(
     cards.map((card) => ({
       id: card.id,
@@ -73,16 +59,14 @@ export default async function ProfilePage() {
   const name = profile?.display_name ?? profile?.username ?? "Ton compte";
   const handle = profile?.username ?? "";
 
-  const reviewDates = (
-    logs as { card_id: string | null; reviewed_at: string }[]
-  ).map((log) => new Date(log.reviewed_at));
+  const reviewDates = stats.reviewDays.map((day) => new Date(day));
   const series = currentStreak(reviewDates);
   const record = bestStreak(reviewDates);
   const levels = knowledgeDistribution(
     cards.map((card) => ({ state: card.state, intervalDays: card.interval_days })),
   );
-  const topCards = mostReviewedCards(
-    (logs as { card_id: string | null }[]).map((log) => ({ cardId: log.card_id })),
+  const topCards = rankReviewedCards(
+    stats.topCards,
     cards.map((card) => ({ id: card.id, front: card.front })),
   );
   return (

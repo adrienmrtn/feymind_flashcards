@@ -3,8 +3,7 @@ import { resolveEmoji, targetScoreFromIntensity } from "@micabo/core";
 import { ExamWorkspace } from "@/components/app/exams/ExamWorkspace";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { examInsightFromRow, insightCardsFromSnapshots } from "@/lib/exams/from-rows";
-import { currentUser } from "@/lib/data/user";
-import { createClient } from "@/lib/supabase/server";
+import { readProfile } from "@/lib/data/profile";
 
 /**
  * Les examens, **sur un calendrier.**
@@ -14,20 +13,11 @@ import { createClient } from "@/lib/supabase/server";
  * Les examens déjà posés s'écrivent en pastille sur le jour, pas en point.
  */
 export default async function ExamsPage() {
-  const supabase = await createClient();
-  const user = await currentUser();
   const [exams, courses, cards, profile] = await Promise.all([
     listExams(),
     listCourses(),
     listCardSnapshots(),
-    user
-      ? supabase
-          .from("profiles")
-          .select("country_code")
-          .eq("id", user.id)
-          .maybeSingle()
-          .then((result) => result.data)
-      : null,
+    readProfile(),
   ]);
 
   const snapshots = insightCardsFromSnapshots(cards);
