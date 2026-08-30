@@ -17,10 +17,7 @@ struct FlashcardsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(ProAccess.self) private var pro: ProAccess?
 
-    @Query private var reviewLogs: [ReviewLog]
-    @Query private var exams: [Exam]
-    @Query(sort: \Course.updatedAt, order: .reverse) private var allCourses: [Course]
-
+    @State private var duePreview: CourseDuePreview
     @State private var editingCard: Flashcard?
     @State private var isCreating = false
     @State private var isMasking = false
@@ -31,37 +28,16 @@ struct FlashcardsView: View {
     @State private var errorMessage: String?
     @State private var paywall: PaywallTrigger?
 
-    private var cards: [Flashcard] { course.orderedCards }
-    private var dueCards: [Flashcard] {
-        StudyQueueBuilder.build(
-            from: cards,
-            limits: .daily(newRemaining: DailyNewQuota.remaining(logs: reviewLogs)),
-            deadlines: ExamDeadlines.active(exams: exams, courses: allCourses)
-        )
+    init(course: Course) {
+        self.course = course
+        _duePreview = State(initialValue: CourseDuePreview.immediate(from: course.cards))
     }
-    private var dueCount: Int { dueCards.count }
-    private var heldBackNewCards: Int {
-        max(0, cards.filter { $0.isDue() && $0.state == .new }.count - dueCards.filter { $0.state == .new }.count)
-    }
-    private var canPractice: Bool { pro?.canPractice ?? true }
 
-    /// L'examen planifié le plus proche qui porte sur ce cours. C'est lui qui
-    /// comprime les cartes, donc c'est lui que la pastille nomme.
-    private var courseExamName: String? {
-        let today = MicaboCalendar.shared.startOfDay(for: Date())
-        return exams
-            .filter { exam in
-                exam.isPlanned
-                    && exam.courseIDs.contains(course.id)
-                    && MicaboCalendar.shared.startOfDay(for: exam.date) >= today
-            }
-            .sorted { $0.date < $1.date }
-            .first
-            .map { exam in
-                let name = exam.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                return name.isEmpty ? "Examen" : name
-            }
-    }
+    private var cards: [Flashcard] { course.orderedCards }
+    private var dueCount: Int { duePreview.dueCount }
+    private var heldBackNewCards: Int { duePreview.heldBackNewCards }
+    private var canPractice: Bool { pro?.canPractice ?? true }
+    private var courseExamName: String? { duePreview.examName }
 
     var body: some View {
         ScrollView {
@@ -116,6 +92,13 @@ struct FlashcardsView: View {
             StudyView(source: .course(course), mode: studyMode)
         }
         .micaboPaywall($paywall)
+        .task {
+            duePreview = CourseDuePreview.scheduled(
+                from: cards,
+                courseID: course.id,
+                in: modelContext
+            )
+        }
         .overlay {
             if isGenerating {
                 GenerationOverlay(
@@ -251,7 +234,7 @@ struct FlashcardsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 MicaboSectionCaption(text: "Cartes · \(cards.count)")
 
-                VStack(spacing: 0) {
+                LazyVStack(spacing: 0) {
                     ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
                         Button {
                             editingCard = card

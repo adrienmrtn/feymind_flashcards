@@ -24,11 +24,8 @@ struct CourseSheetView: View {
     @Environment(CloudSync.self) private var sync
     @Environment(ProAccess.self) private var pro: ProAccess?
 
-    @Query private var reviewLogs: [ReviewLog]
-    @Query private var exams: [Exam]
-    @Query(sort: \Course.updatedAt, order: .reverse) private var allCourses: [Course]
-
-    /// La fiche décodée une fois, pas à chaque passage dans le corps de la vue.
+    /// La fiche décodée **avant** le premier cadre : un `.task` la posait trop tard, et
+    /// la page s'ouvrait vide le temps du décodage.
     @State private var sheet: CourseSheet?
     @State private var explaining: ExplainedPassage?
     @State private var showCardOptions = false
@@ -44,10 +41,18 @@ struct CourseSheetView: View {
     /// Le cadeau du premier cours. Il se présente ici, sur la fiche qu'on vient d'obtenir :
     /// une offre posée avant qu'on ait vu le produit tourner n'a rien à récompenser.
     @State private var giftOffer: DiscountPresentation?
+    /// Compteurs de session : instantanés au premier cadre, affinés ensuite.
+    @State private var duePreview: CourseDuePreview
 
     /// L'invitation à sélectionner un passage disparaît une fois le geste découvert : une
     /// consigne qu'on a suivie n'a plus rien à dire.
     @AppStorage("micabo.sheet.didExplainOnce") private var didExplainOnce = false
+
+    init(course: Course) {
+        self.course = course
+        _sheet = State(initialValue: course.decodedSheet())
+        _duePreview = State(initialValue: CourseDuePreview.immediate(from: course.cards))
+    }
 
     private enum Work: Equatable {
         case sheet
@@ -55,23 +60,14 @@ struct CourseSheetView: View {
     }
 
     private var cards: [Flashcard] { course.orderedCards }
-    private var dueCards: [Flashcard] {
-        StudyQueueBuilder.build(
-            from: cards,
-            limits: .daily(newRemaining: DailyNewQuota.remaining(logs: reviewLogs)),
-            deadlines: ExamDeadlines.active(exams: exams, courses: allCourses)
-        )
-    }
-    private var dueCount: Int { dueCards.count }
-    private var heldBackNewCards: Int {
-        max(0, cards.filter { $0.isDue() && $0.state == .new }.count - dueCards.filter { $0.state == .new }.count)
-    }
+    private var dueCount: Int { duePreview.dueCount }
+    private var heldBackNewCards: Int { duePreview.heldBackNewCards }
     private var tint: Color { Color(hexString: course.accentHex) }
     private var isPro: Bool { pro?.isPro ?? true }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
+            LazyVStack(alignment: .leading, spacing: 0) {
                 header
                 lead
                 content
@@ -89,8 +85,14 @@ struct CourseSheetView: View {
         .enablesSwipeBack()
         .overlay(alignment: .bottom) { bottomBar }
         .overlay { workOverlay }
-        .task { sheet = course.decodedSheet() }
-        .task { await presentGiftIfEarned() }
+        .task {
+            duePreview = CourseDuePreview.scheduled(
+                from: cards,
+                courseID: course.id,
+                in: modelContext
+            )
+            await presentGiftIfEarned()
+        }
         .onChange(of: course.sheetData) { _, _ in
             sheet = course.decodedSheet()
         }
@@ -145,7 +147,8 @@ struct CourseSheetView: View {
         guard
             DiscountOffer.shouldPresentGift(
                 isPro: isPro,
-                courseCount: allCourses.filter({ !$0.isFromLibrary }).count,
+                courseCount: CourseRepository.allCourses(in: modelContext)
+                    .filter { !$0.isFromLibrary }.count,
                 seen: DiscountOffer.isSeen(),
                 startedAt: DiscountOffer.start()
             )
@@ -289,19 +292,18 @@ struct CourseSheetView: View {
         if let sheet {
             let parts = SheetGate.split(sheet.blocks, isPro: isPro)
 
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(Array(parts.readable.enumerated()), id: \.offset) { index, block in
-                    SheetBlockView(block: block, tint: tint, onExplain: explain)
-                        .padding(.top, index == 0 ? MicaboSpacing.md : SheetBlockView.spacing(before: block))
-                }
+            // Pas de `VStack` ici : les blocs sont des enfants du `LazyVStack` parent, pour
+            // que seuls ceux à l'écran deviennent des `UITextView`.
+            ForEach(Array(parts.readable.enumerated()), id: \.offset) { index, block in
+                SheetBlockView(block: block, tint: tint, onExplain: explain)
+                    .padding(.top, index == 0 ? MicaboSpacing.md : SheetBlockView.spacing(before: block))
+            }
 
-                if !parts.locked.isEmpty {
-                    LockedSheetTail(blocks: parts.locked, tint: tint) {
-                        paywall = .lockedSheet
-                    }
+            if !parts.locked.isEmpty {
+                LockedSheetTail(blocks: parts.locked, tint: tint) {
+                    paywall = .lockedSheet
                 }
             }
-            .padding(.bottom, MicaboSpacing.xs)
         } else {
             missingSheet
         }

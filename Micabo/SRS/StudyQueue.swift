@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 /// Répartition des cartes à réviser, affichée en haut des sessions.
 struct StudyCounts: Equatable {
@@ -146,5 +147,73 @@ enum StudyQueueBuilder {
             learning: queue.filter { $0.state == .learning || $0.state == .relearning }.count,
             review: queue.filter { $0.state == .review }.count
         )
+    }
+}
+
+/// Ce qu'un écran de cours affiche **avant** d'avoir lu les journaux et les examens.
+///
+/// Le premier cadre d'une fiche ne peut pas attendre trois `@Query` : c'est ce délai, plus
+/// le fondu des onglets, qui rendait chaque ouverture tardive. On compte donc les cartes
+/// dues du cours tout de suite, et on affine ensuite avec le plafond du jour.
+struct CourseDuePreview: Equatable {
+    var dueCount: Int
+    var heldBackNewCards: Int
+    var examName: String?
+
+    /// Assez juste pour le premier cadre : les cartes dues, sans rationnement.
+    static func immediate(from cards: [Flashcard], now: Date = Date()) -> CourseDuePreview {
+        CourseDuePreview(
+            dueCount: cards.filter { $0.isDue(at: now) }.count,
+            heldBackNewCards: 0,
+            examName: nil
+        )
+    }
+
+    /// La file réelle, une fois la page déjà à l'écran.
+    static func scheduled(
+        from cards: [Flashcard],
+        courseID: UUID,
+        in context: ModelContext,
+        now: Date = Date()
+    ) -> CourseDuePreview {
+        let logs = (try? context.fetch(FetchDescriptor<ReviewLog>())) ?? []
+        let exams = (try? context.fetch(FetchDescriptor<Exam>())) ?? []
+        let courses = CourseRepository.allCourses(in: context)
+        let due = StudyQueueBuilder.build(
+            from: cards,
+            now: now,
+            limits: .daily(newRemaining: DailyNewQuota.remaining(logs: logs, now: now)),
+            deadlines: ExamDeadlines.active(exams: exams, courses: courses, now: now)
+        )
+        let dueNew = due.filter { $0.state == .new }.count
+        let allDueNew = cards.filter { $0.isDue(at: now) && $0.state == .new }.count
+
+        return CourseDuePreview(
+            dueCount: due.count,
+            heldBackNewCards: max(0, allDueNew - dueNew),
+            examName: nearestExamName(exams: exams, courseID: courseID, now: now)
+        )
+    }
+
+    /// L'examen planifié le plus proche qui porte sur ce cours.
+    static func nearestExamName(
+        exams: [Exam],
+        courseID: UUID,
+        now: Date = Date(),
+        calendar: Calendar = MicaboCalendar.shared
+    ) -> String? {
+        let today = calendar.startOfDay(for: now)
+        return exams
+            .filter { exam in
+                exam.isPlanned
+                    && exam.courseIDs.contains(courseID)
+                    && calendar.startOfDay(for: exam.date) >= today
+            }
+            .sorted { $0.date < $1.date }
+            .first
+            .map { exam in
+                let name = exam.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                return name.isEmpty ? "Examen" : name
+            }
     }
 }

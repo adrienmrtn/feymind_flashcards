@@ -12,6 +12,7 @@ final class StudyQueueTests: XCTestCase {
             for: Course.self,
             Flashcard.self,
             ReviewLog.self,
+            Exam.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         context = ModelContext(container)
@@ -90,6 +91,50 @@ final class StudyQueueTests: XCTestCase {
 
         let logs = (try? context.fetch(FetchDescriptor<ReviewLog>())) ?? []
         XCTAssertEqual(DailyNewQuota.introducedToday(from: logs, now: now), 1)
+    }
+
+    func testImmediateDuePreviewSkipsQuotaAndExams() {
+        let due = makeCard("due", state: .review, due: -60, position: 0)
+        let later = makeCard("plus tard", state: .review, due: 86_400, position: 1)
+
+        let preview = CourseDuePreview.immediate(from: [due, later], now: now)
+
+        XCTAssertEqual(preview.dueCount, 1)
+        XCTAssertEqual(preview.heldBackNewCards, 0)
+        XCTAssertNil(preview.examName)
+    }
+
+    func testScheduledDuePreviewAppliesTheDailyNewCap() {
+        let cards = (0..<30).map { makeCard("carte \($0)", state: .new, due: -60, position: $0) }
+        let preview = CourseDuePreview.scheduled(
+            from: cards,
+            courseID: UUID(),
+            in: context,
+            now: now
+        )
+        let remaining = DailyNewQuota.remaining(introduced: 0)
+
+        XCTAssertEqual(preview.dueCount, min(30, remaining))
+        XCTAssertEqual(preview.heldBackNewCards, max(0, 30 - remaining))
+        XCTAssertNil(preview.examName)
+    }
+
+    func testNearestExamNamePicksTheSoonestPlannedExam() {
+        let courseID = UUID()
+        let later = Exam(name: "Partiel", date: now.addingTimeInterval(14 * 86_400))
+        later.courseIDs = [courseID]
+        later.isPlanned = true
+        let sooner = Exam(name: "Bac blanc", date: now.addingTimeInterval(3 * 86_400))
+        sooner.courseIDs = [courseID]
+        sooner.isPlanned = true
+        let past = Exam(name: "Ancien", date: now.addingTimeInterval(-86_400))
+        past.courseIDs = [courseID]
+        past.isPlanned = true
+
+        XCTAssertEqual(
+            CourseDuePreview.nearestExamName(exams: [later, sooner, past], courseID: courseID, now: now),
+            "Bac blanc"
+        )
     }
 
     func testCountsSplitByState() {
