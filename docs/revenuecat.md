@@ -299,7 +299,10 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
    - Produit `Micabo Pro annuel` — lookup / metadata `product_id` =
      `com.micabo.app.pro.yearly`
      - Prix récurrent : **69,99 €**, facturation **annuelle**, devise EUR
-     - Dans le prix : *Free trial* = **3 days** (pas 3 months)
+     - **Pas d'essai sur le prix Stripe.** `startCheckout` envoie déjà
+       `subscription_data[trial_period_days]=3` depuis le catalogue. Le poser
+       aussi sur le prix ferait 3 + 3, ou un conflit. Apple, lui, porte l'essai
+       sur le produit App Store — ce n'est pas le même tuyau.
    - Produit `Micabo Pro hebdomadaire` — `com.micabo.app.pro.weekly`
      - Prix : **7,99 €**, facturation **hebdomadaire**
      - **Pas d'essai**
