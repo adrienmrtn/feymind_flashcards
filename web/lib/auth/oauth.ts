@@ -10,7 +10,7 @@ export function oauthCallbackUrl(next = "/app"): string {
   return `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
 }
 
-/** Apple web casse souvent sur l'audience du Service ID, pas sur le bouton. */
+/** Apple web casse souvent sur le secret OAuth ou l'audience du Service ID. */
 export function oauthFailureMessage(provider: "apple" | "google", raw: string): string {
   const text = raw.toLowerCase();
   if (
@@ -18,6 +18,8 @@ export function oauthFailureMessage(provider: "apple" | "google", raw: string): 
     (text.includes("audience") ||
       text.includes("invalid_client") ||
       text.includes("provider is not enabled") ||
+      text.includes("missing oauth secret") ||
+      text.includes("unsupported provider") ||
       text.includes("redirect"))
   ) {
     return "Apple n'est pas encore branché pour le site. Utilise Google ou le lien par courriel.";

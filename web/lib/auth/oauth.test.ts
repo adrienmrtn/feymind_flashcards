@@ -12,4 +12,13 @@ describe("oauthFailureMessage", () => {
       /lien par courriel/,
     );
   });
+
+  it("traduit un secret OAuth Apple manquant", () => {
+    expect(
+      oauthFailureMessage(
+        "apple",
+        '{"code":400,"error_code":"validation_failed","msg":"Unsupported provider: missing OAuth secret"}',
+      ),
+    ).toMatch(/lien par courriel/);
+  });
 });
