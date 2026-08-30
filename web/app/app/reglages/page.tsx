@@ -6,6 +6,7 @@ import {
 } from "@micabo/core";
 
 import { DeleteAccount } from "@/components/app/DeleteAccount";
+import { FeedbackCard } from "@/components/app/FeedbackCard";
 import { ProfileSettings } from "@/components/app/ProfileSettings";
 import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
 import { ReplayPaywallOnboarding } from "@/components/app/ReplayPaywallOnboarding";
@@ -68,6 +69,8 @@ export default async function SettingsPage() {
             embedded
           />
         </section>
+
+        <FeedbackCard />
 
         <section className="saas-card overflow-hidden">
           <SignOutButton />

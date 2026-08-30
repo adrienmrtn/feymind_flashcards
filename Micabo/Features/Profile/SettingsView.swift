@@ -29,6 +29,7 @@ struct SettingsView: View {
     @State private var showAuth = false
     @State private var showSubjects = false
     @State private var showSchool = false
+    @State private var showFeedback = false
     @State private var subjects = OnboardingPreferences.subjects
     @State private var schoolName = OnboardingPreferences.institutionName
 
@@ -52,6 +53,7 @@ struct SettingsView: View {
                 connectionSection
                 dataSection
                 testSection
+                feedbackSection
                 aboutSection
             }
             .padding(.horizontal, MicaboSpacing.screen)
@@ -88,6 +90,10 @@ struct SettingsView: View {
             Button("Annuler", role: .cancel) {}
         } message: {
             Text("Tes cours restent sur cet appareil et sur ton compte. Tu les retrouveras à la prochaine connexion.")
+        }
+        .sheet(isPresented: $showFeedback) {
+            FeedbackView()
+                .presentationCornerRadius(MicaboRadius.sheet)
         }
         .sheet(isPresented: $showAuth) {
             // Plus de « continuer sans compte » : `AuthView` n'a plus de sortie, et la
@@ -584,6 +590,22 @@ struct SettingsView: View {
     }
 
     private var isPro: Bool { pro?.isPro ?? false }
+
+    private var feedbackSection: some View {
+        MicaboSettingsSection(
+            caption: "Retour",
+            rows: [
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("✉️"), background: MicaboColor.infoSoft),
+                    title: "Faire un retour",
+                    subtitle: "Un bug, une idée",
+                    accessory: .chevron,
+                    action: { showFeedback = true }
+                )
+            ],
+            footnote: "Ça arrive chez \(MicaboMail.team)."
+        )
+    }
 
     private var aboutSection: some View {
         MicaboSettingsSection(

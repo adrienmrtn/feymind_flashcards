@@ -22,7 +22,7 @@ export function oauthFailureMessage(provider: "apple" | "google", raw: string): 
       text.includes("unsupported provider") ||
       text.includes("redirect"))
   ) {
-    return "Apple n'est pas encore branché pour le site. Utilise Google ou le lien par courriel.";
+    return "Apple n'est pas encore branché pour le site (secret OAuth manquant dans Supabase). Utilise Google ou le lien par courriel.";
   }
   return raw;
 }
