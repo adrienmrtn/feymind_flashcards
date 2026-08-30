@@ -26,8 +26,10 @@ import { createClient } from "@/lib/supabase/server";
  *
  * ## Ce qu'il manque, précisément
  *
- * `STRIPE_SECRET_KEY`, les deux identifiants de prix Stripe, et le branchement de Stripe dans
- * RevenueCat. Rien d'autre : la table est là, le webhook est déployé, et le verrou lit déjà.
+ * `STRIPE_SECRET_KEY`, les identifiants de prix Stripe (`STRIPE_PRICE_YEARLY`,
+ * `STRIPE_PRICE_WEEKLY` — et plus tard `STRIPE_PRICE_YEARLY_DISCOUNT`), et le branchement
+ * de Stripe dans RevenueCat. Rien d'autre : la table est là, le webhook est déployé, et le
+ * verrou lit déjà.
  */
 
 export interface CheckoutResult {
@@ -41,19 +43,12 @@ function stripeKey(): string | null {
 }
 
 /** L'identifiant de prix Stripe d'une offre. Il n'y en a pas encore : ils viendront du tableau de bord. */
-function priceId(kind: pricing.PlanKind, student: boolean): string | null {
-  if (kind === "yearly") {
-    return student
-      ? (process.env.STRIPE_PRICE_YEARLY_STUDENT ?? process.env.STRIPE_PRICE_YEARLY ?? null)
-      : (process.env.STRIPE_PRICE_YEARLY ?? null);
-  }
+function priceId(kind: pricing.PlanKind): string | null {
+  if (kind === "yearly") return process.env.STRIPE_PRICE_YEARLY ?? null;
   return process.env.STRIPE_PRICE_WEEKLY ?? null;
 }
 
-export async function startCheckout(
-  kind: pricing.PlanKind,
-  options: { student?: boolean } = {},
-): Promise<CheckoutResult> {
+export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -69,9 +64,8 @@ export async function startCheckout(
   const already = await readEntitlement();
   if (entitlement.isPaid(already)) return { status: "already" };
 
-  const student = Boolean(options.student);
   const key = stripeKey();
-  const price = priceId(kind, student);
+  const price = priceId(kind);
 
   if (!key || !price) {
     return {
@@ -80,7 +74,7 @@ export async function startCheckout(
     };
   }
 
-  const plan = kind === "yearly" ? pricing.yearlyFor(student) : pricing.planFor(kind);
+  const plan = pricing.planFor(kind);
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",

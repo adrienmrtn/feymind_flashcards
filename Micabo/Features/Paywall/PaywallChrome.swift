@@ -48,7 +48,11 @@ struct PaywallHeader: View {
 /// Le bouton d'abonnement, identique partout où il apparaît.
 struct PaywallCallToAction: View {
     var isPurchasing: Bool
+    /// Absent : l'écran ne vend que l'annuel, donc l'essai. Présent : le libellé suit l'offre.
+    var plan: PaywallPlan? = nil
     var action: () -> Void
+
+    private var hasTrial: Bool { plan?.hasTrial ?? true }
 
     var body: some View {
         Button {
@@ -62,7 +66,11 @@ struct PaywallCallToAction: View {
                         .tint(MicaboColor.onInk)
                 }
 
-                Text("Démarrer mes \(PaywallCatalog.freeTrialDays) jours gratuits")
+                Text(
+                    hasTrial
+                        ? "Démarrer mes \(PaywallCatalog.freeTrialDays) jours gratuits"
+                        : "S'abonner"
+                )
             }
             .frame(maxWidth: .infinity)
         }
@@ -116,7 +124,7 @@ struct PaywallLegalFooter: View {
 
 /// La phrase qui dit le prix, et la seule de l'app qui le dise.
 enum PaywallPitch {
-    /// « Essaie 3 jours gratuitement, puis 5,00 € / mois (facturé 59,99 € par an). »
+    /// « Essaie 3 jours gratuitement, puis 5,83 € / mois (facturé 69,99 € par an). »
     ///
     /// Le vert ne porte que la partie gratuite. Colorer la phrase entière n'aurait mis en
     /// avant que le prix, colorer le prix aurait mis en avant ce qu'on demande.

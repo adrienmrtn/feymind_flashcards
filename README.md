@@ -441,16 +441,17 @@ rien du tout tant qu'App Store Connect n'a pas répondu.
 
 | Écran | Ce qu'il montre | Ce que fait la croix |
 | --- | --- | --- |
-| Premier paywall (`PaywallOfferView`) | Une seule offre, une seule phrase : « Essaie 3 jours gratuitement, puis 5,00 € / mois (facturé 59,99 € par an) », et un lien « Voir toutes les offres » | Ouvre le second |
+| Premier paywall (`PaywallOfferView`) | Une seule offre, une seule phrase : « Essaie 3 jours gratuitement, puis 5,83 € / mois (facturé 69,99 € par an) », et un lien « Voir toutes les offres » | Ouvre le second |
 | Second paywall (`PaywallPlansView`) | La grille Gratuit / Pro en six lignes, puis les deux offres à choisir, l'annuelle cochée d'avance avec sa remise | Entre dans l'app |
 
 **Une croix ne ment jamais** : elle est présente dès la première image, elle réagit au premier
 appui, et le second appui sort pour de bon. Un paywall dont la sortie se dérobe se ferme en
 fermant l'app, ce qui ne fait pas un abonné de plus mais un utilisateur de moins.
 
-Les deux offres, leurs prix et la remise vivent dans `PaywallCatalog` : **annuel à 59,99 €** et
-**hebdomadaire à 7,99 €**, trois jours offerts sur les deux. Le prix mensuel équivalent et la
-remise sont **calculés**, jamais écrits à la main — un pourcentage qui contredit les deux prix
+Les deux offres, leurs prix et la remise vivent dans `PaywallCatalog` : **annuel à 69,99 €**
+(trois jours offerts) et **hebdomadaire à 7,99 €** (sans essai). Un annuel discount à
+**39,99 €** existe dans le catalogue, hors paywall. Le prix mensuel équivalent et la remise
+sont **calculés**, jamais écrits à la main — un pourcentage qui contredit les deux prix
 affichés juste en dessous ne se remarque qu'en production. `MicaboTests/PaywallTests.swift`
 verrouille les prix, la remise et la date de premier prélèvement.
 

@@ -139,7 +139,7 @@ struct PaywallPlansView: View {
 
             MicaboBottomBar {
                 VStack(spacing: 12) {
-                    PaywallCallToAction(isPurchasing: isPurchasing) {
+                    PaywallCallToAction(isPurchasing: isPurchasing, plan: selectedPlan) {
                         onSubscribe(selectedPlan)
                     }
 
@@ -251,9 +251,9 @@ private struct PaywallPlanCard: View {
                         .font(MicaboFont.hanken(17, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
 
-                    Text("\(PaywallCatalog.freeTrialDays) jours offerts")
+                    Text(plan.hasTrial ? "\(plan.trialDays) jours offerts" : "sans essai")
                         .font(MicaboFont.hanken(13, weight: .medium))
-                        .foregroundStyle(MicaboColor.accent)
+                        .foregroundStyle(plan.hasTrial ? MicaboColor.accent : MicaboColor.inkTertiary)
                 }
             }
             .padding(.vertical, 15)

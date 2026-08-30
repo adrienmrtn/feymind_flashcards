@@ -27,20 +27,19 @@ import {
   splitSheet,
 } from "../src/entitlement";
 import {
+  DISCOUNT_YEARLY,
   FREE_TRIAL_DAYS,
   PLANS,
   RECOMMENDED_PLAN,
-  STUDENT_YEARLY,
   WEEKLY,
   YEARLY,
   annualCost,
   hasTrial,
   monthlyEquivalent,
-  offersFor,
+  offers,
   planCaption,
   planFor,
   savingsPercent,
-  yearlyFor,
 } from "../src/pricing";
 
 describe("le droit", () => {
@@ -196,17 +195,17 @@ describe("les offres", () => {
   });
 
   it("se comparent sur douze mois", () => {
-    expect(annualCost(YEARLY)).toBeCloseTo(83.88, 2);
-    expect(annualCost(STUDENT_YEARLY)).toBeCloseTo(59.99, 2);
+    expect(annualCost(YEARLY)).toBeCloseTo(69.99, 2);
+    expect(annualCost(DISCOUNT_YEARLY)).toBeCloseTo(39.99, 2);
     // 7,99 € par semaine sur cinquante-deux semaines.
     expect(annualCost(WEEKLY)).toBeCloseTo(415.48, 2);
   });
 
-  it("**calculent** leur pourcentage d'économie, et il vaut 80 au tarif plein", () => {
-    // 83,88 contre 415,48. Le chiffre sort des deux prix, et il suivra le jour où l'un des deux
-    // bouge. L'étudiant, lui, économise davantage - 86 - parce que son annuel est plus bas.
-    expect(savingsPercent()).toBe(80);
-    expect(savingsPercent(STUDENT_YEARLY)).toBe(86);
+  it("**calculent** leur pourcentage d'économie, et il vaut 83 au tarif plein", () => {
+    // 69,99 contre 415,48. Le chiffre sort des deux prix, et il suivra le jour où l'un des deux
+    // bouge. Le discount, lui, économise davantage — 90 — parce que son annuel est plus bas.
+    expect(savingsPercent()).toBe(83);
+    expect(savingsPercent(DISCOUNT_YEARLY)).toBe(90);
   });
 
   it("ramènent l'annuel au mois, et rien d'autre", () => {
@@ -215,27 +214,27 @@ describe("les offres", () => {
     // U+00A0 par `priceText`, parce que `Intl` rend tantôt U+00A0 tantôt U+202F selon la version
     // d'ICU - et un prix qui ne s'espace pas pareil selon la machine est une différence qu'on
     // finit par chercher longtemps.
-    const sixPerMonth = "6,99\u00a0€";
-    const fourPerMonth = "4,99\u00a0€";
+    const yearlyPerMonth = "5,83\u00a0€";
+    const discountPerMonth = "3,33\u00a0€";
 
-    expect(monthlyEquivalent(YEARLY)).toBe(sixPerMonth);
-    expect(monthlyEquivalent(STUDENT_YEARLY)).toBe(fourPerMonth);
+    expect(monthlyEquivalent(YEARLY)).toBe(yearlyPerMonth);
+    expect(monthlyEquivalent(DISCOUNT_YEARLY)).toBe(discountPerMonth);
     expect(monthlyEquivalent(WEEKLY)).toBeNull();
     expect(planCaption(WEEKLY)).toBe("facturé chaque semaine");
-    expect(planCaption(YEARLY)).toBe(`${sixPerMonth} / mois`);
+    expect(planCaption(YEARLY)).toBe(`${yearlyPerMonth} / mois`);
   });
 
-  it("offrent trois jours d'essai au tarif plein, et rien à l'étudiant", () => {
+  it("offrent trois jours d'essai à l'annuel, et rien aux autres", () => {
     expect(FREE_TRIAL_DAYS).toBe(3);
     expect(hasTrial(YEARLY)).toBe(true);
-    expect(hasTrial(STUDENT_YEARLY)).toBe(false);
+    expect(hasTrial(DISCOUNT_YEARLY)).toBe(false);
     expect(hasTrial(WEEKLY)).toBe(false);
   });
 
-  it("permutent l'annuel quand on se déclare étudiant, sans inventer une troisième offre", () => {
-    expect(yearlyFor(false)).toEqual(YEARLY);
-    expect(yearlyFor(true)).toEqual(STUDENT_YEARLY);
-    expect(offersFor(true).map((plan) => plan.price)).toEqual([59.99, 7.99]);
-    expect(offersFor(false).map((plan) => plan.kind)).toEqual(["yearly", "weekly"]);
+  it("gardent le discount hors du paywall", () => {
+    expect(offers().map((plan) => plan.kind)).toEqual(["yearly", "weekly"]);
+    expect(offers().map((plan) => plan.price)).toEqual([69.99, 7.99]);
+    expect(PLANS).not.toContainEqual(DISCOUNT_YEARLY);
+    expect(DISCOUNT_YEARLY.productId).toBe("com.micabo.app.pro.yearly.discount");
   });
 });

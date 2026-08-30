@@ -1,13 +1,13 @@
 /**
  * Les offres de Micabo Pro, portées depuis `Micabo/Features/Paywall/PaywallCatalog.swift`.
  *
- * **Deux offres, pas trois.** Un paywall à trois colonnes fait comparer des colonnes au lieu de
- * faire choisir : l'annuel est celui qu'on recommande, l'hebdomadaire existe pour celui qui a un
- * partiel dans dix jours et ne veut pas s'engager plus loin que ça.
+ * **Deux offres sur le paywall, pas trois.** Un écran à trois colonnes fait comparer des
+ * colonnes au lieu de faire choisir : l'annuel est celui qu'on recommande, l'hebdomadaire
+ * existe pour celui qui a un partiel dans dix jours et ne veut pas s'engager plus loin que ça.
  *
- * L'annuel a **deux tarifs**, et un seul est affiché à la fois : le plein (83,88 €, ramené à
- * 6,99 € / mois, avec essai) et l'étudiant (59,99 €, ramené à 4,99 € / mois, sans essai). La case
- * « je suis étudiant » permute l'un pour l'autre - ce n'est pas une troisième colonne.
+ * Un troisième produit existe déjà dans ce fichier — l'annuel discount, 39,99 €, sans essai —
+ * mais il n'est pas affiché. Le chemin pour l'ouvrir (lien, code, éligibilité) n'est pas encore
+ * décidé : le garder ici évite de l'inventer le jour où on l'allumera.
  *
  * Le point qui compte pour le site : **le pourcentage d'économie est calculé, jamais écrit.**
  * Une remise annoncée à côté de deux prix qui la contredisent est une allégation commerciale
@@ -21,7 +21,7 @@ export type PlanKind = "yearly" | "weekly";
 export type BillingPeriod = "year" | "week";
 
 /** Combien de fois par an la somme est prélevée. Sans ce ramené à l'année, « 7,99 € » a
- * l'air moins cher que « 83,88 € ». */
+ * l'air moins cher que « 69,99 € ». */
 const OCCURRENCES_PER_YEAR: Record<BillingPeriod, number> = { year: 1, week: 52 };
 
 /** Le mot qui suit la barre oblique : « 7,99 € / semaine ». */
@@ -29,16 +29,14 @@ const PERIOD_UNIT: Record<BillingPeriod, string> = { year: "an", week: "semaine"
 
 export interface Plan {
   kind: PlanKind;
-  /** Identifiant App Store Connect, et identifiant du produit côté RevenueCat. */
+  /** Identifiant App Store Connect, Stripe, et identifiant du produit côté RevenueCat. */
   productId: string;
   title: string;
   price: number;
   period: BillingPeriod;
   /**
-   * Le prix ramené au mois, **écrit** quand le calcul arrondirait autrement.
-   *
-   * 59,99 ÷ 12 fait 4,999… que `Intl` rend « 5,00 € ». L'offre étudiante s'annonce à 4,99 €
-   * par mois : ce champ est la seule façon de ne pas mentir d'un centime à l'affichage.
+   * Le prix ramené au mois, **écrit** seulement si le calcul arrondirait autrement que
+   * ce qu'on annonce. 69,99 ÷ 12 fait 5,8325, que `Intl` rend « 5,83 € » : rien à forcer.
    */
   monthlyPrice?: number;
   /** Jours d'essai. Zéro : rien n'est offert, et le bouton ne doit pas le dire. */
@@ -49,19 +47,18 @@ export const YEARLY: Plan = {
   kind: "yearly",
   productId: "com.micabo.app.pro.yearly",
   title: "Annuel",
-  price: 83.88,
+  price: 69.99,
   period: "year",
-  monthlyPrice: 6.99,
   trialDays: 3,
 };
 
-export const STUDENT_YEARLY: Plan = {
+/** Tarif réduit, hors paywall. Le chemin pour y accéder n'est pas encore ouvert. */
+export const DISCOUNT_YEARLY: Plan = {
   kind: "yearly",
-  productId: "com.micabo.app.pro.yearly.student",
+  productId: "com.micabo.app.pro.yearly.discount",
   title: "Annuel",
-  price: 59.99,
+  price: 39.99,
   period: "year",
-  monthlyPrice: 4.99,
   trialDays: 0,
 };
 
@@ -80,21 +77,16 @@ export const PLANS: readonly Plan[] = [YEARLY, WEEKLY];
 /** Celle qui est cochée d'avance, et la seule que le premier paywall met en avant. */
 export const RECOMMENDED_PLAN = YEARLY;
 
-/** La durée de l'essai du tarif plein. L'offre étudiante n'en a pas. */
+/** La durée de l'essai de l'annuel. L'hebdomadaire et le discount n'en ont pas. */
 export const FREE_TRIAL_DAYS = YEARLY.trialDays;
 
 export function planFor(kind: PlanKind): Plan {
   return PLANS.find((plan) => plan.kind === kind) ?? RECOMMENDED_PLAN;
 }
 
-/** L'annuel qui s'affiche, selon la case « je suis étudiant ». */
-export function yearlyFor(student: boolean): Plan {
-  return student ? STUDENT_YEARLY : YEARLY;
-}
-
-/** Les deux cartes du paywall, dans l'ordre, pour un tarif donné. */
-export function offersFor(student: boolean): readonly [Plan, Plan] {
-  return [yearlyFor(student), WEEKLY];
+/** Les deux cartes du paywall, dans l'ordre. Le discount n'y figure pas. */
+export function offers(): readonly [Plan, Plan] {
+  return [YEARLY, WEEKLY];
 }
 
 export function hasTrial(plan: Plan): boolean {
@@ -117,7 +109,7 @@ export function savingsPercent(
 }
 
 /**
- * « 59,99 € », dans la seule forme qu'on affiche.
+ * « 69,99 € », dans la seule forme qu'on affiche.
  *
  * L'espace avant l'euro est **insécable**, parce que la typographie française l'exige : un prix
  * ne se coupe pas en fin de ligne entre le nombre et son symbole. Elle est ramenée à U+00A0 de
@@ -139,7 +131,7 @@ export function priceText(amount: number): string {
 /**
  * Le prix ramené au mois, pour les offres qui se paient d'un bloc.
  *
- * C'est **le seul chiffre qu'un étudiant sait comparer** : personne ne divise mentalement 83,88
+ * C'est **le seul chiffre qu'on sait comparer** : personne ne divise mentalement 69,99
  * par douze devant un paywall, et personne ne multiplie 7,99 par cinquante-deux. Le mois est
  * l'unité dans laquelle un budget se pense.
  */

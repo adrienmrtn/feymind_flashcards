@@ -804,14 +804,15 @@ L'interrupteur bascule à l'étape 5, quand le webhook écrira le droit en base.
 Les prix ont bougé avec la PR #37, et la forme de l'offre aussi : ce n'est plus un mensuel mais
 un **hebdomadaire**.
 
-| Offre | Prix | Sur douze mois |
-| --- | --- | --- |
-| Annuel — recommandé | **59,99 €** | 59,99 € |
-| Hebdomadaire | **7,99 €** | 415,48 € |
+| Offre | Prix | Sur douze mois | Essai |
+| --- | --- | --- | --- |
+| Annuel — recommandé | **69,99 €** | 69,99 € | 3 jours |
+| Hebdomadaire | **7,99 €** | 415,48 € | aucun |
+| Annuel discount — hors paywall | **39,99 €** | 39,99 € | aucun |
 
 Ce qui règle le trou n° 2 de la spec, mais pas dans le sens prévu : **l'app calcule son
 pourcentage d'économie au lieu de l'écrire**, et aux prix du catalogue l'annuel économise
-**86 %**, pas 60. Le commentaire de `PaywallCatalog.savingsPercent` dit exactement pourquoi :
+**83 %**, pas 60. Le commentaire de `PaywallCatalog.savingsPercent` dit exactement pourquoi :
 « une remise annoncée à côté de deux prix qui la contredisent est le genre de détail qu'on ne
 remarque qu'une fois en production ».
 
@@ -820,8 +821,8 @@ paywall du parcours d'accueil n'écrira aucun pourcentage à la main**, et « É
 spec devient « Économise {calcul} % ».
 
 Deux conséquences de forme sur l'écran 8 : le « prix ramené au mois » ne vaut que pour l'annuel
-— 5,00 € / mois — et l'hebdomadaire porte « facturé chaque semaine », parce qu'il n'y a pas de
-mois à ramener. L'essai reste de **trois jours**.
+— 5,83 € / mois — et l'hebdomadaire porte « facturé chaque semaine », parce qu'il n'y a pas de
+mois à ramener. L'essai de **trois jours** ne porte que sur l'annuel.
 
 ## Le plan, en cinq étapes
 
@@ -1128,7 +1129,7 @@ Rien de ce qui suit n'est du code que je pouvais écrire et vérifier.
 | --- | --- | --- |
 | `REVENUECAT_WEBHOOK_SECRET` | Supabase → Edge Functions → Secrets | Aucun MCP n'expose les secrets de fonction. La fonction refuse en 503 tant qu'il manque |
 | Le webhook côté RevenueCat | Tableau de bord RevenueCat | Il pointe sur `…/functions/v1/revenuecat-webhook`, avec le même secret en en-tête `Authorization` |
-| `STRIPE_SECRET_KEY`, `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY` | Vercel → Environment Variables | Pas de compte Stripe, et pas de variables d'environnement par MCP |
+| `STRIPE_SECRET_KEY`, `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY` (`STRIPE_PRICE_YEARLY_DISCOUNT` plus tard) | Vercel → Environment Variables | Pas de compte Stripe, et pas de variables d'environnement par MCP |
 | Le SDK RevenueCat dans Xcode | `docs/revenuecat.md`, déjà écrit | Je ne peux pas compiler du Swift : ajouter une dépendance de paquet sans pouvoir bâtir, sur le chemin du paiement, serait irresponsable |
 | Le jeton utilisateur dans `SupabaseFunctions` | iOS | Même raison. `ANON_GRACE` couvre l'app en attendant, sans quota |
 | Les descentes d'`exams` et de `review_logs` | `CloudSync` | Même raison. La colonne `schedule_backup` qu'elles demandent, elle, est posée |
@@ -1214,8 +1215,8 @@ silence ne coûte rien.
 | Les **« 500 000 étudiants »** de l'écran de preuve sociale | **rien** : le chiffre n'apparaît pas sur le site | Sur un site indexé c'est une allégation commerciale. Mieux vaut pas de chiffre qu'un chiffre indéfendable. La section se remplit en une constante le jour où il y a un vrai nombre |
 | La **langue** du site | **français seul**, mais toute la copie dans un seul module, à la manière de `MicaboCopy.swift` | Ajouter `/en` devient alors un dictionnaire de plus, pas une refonte du routage |
 | Le **partage de fiche** | rien avant l'étape 5 | `courses.visibility` a déjà trois valeurs ; un lien web public est un quatrième état et je préfère le modéliser franchement plus tard que surcharger `public` maintenant |
-| Le **prix du web** | identique à iOS : 59,99 €/an, 7,99 €/semaine | Simple et honnête ; l'écart de marge est invisible pour l'étudiant, et les deux offres vivent déjà dans une seule constante partagée |
-| L'**économie annoncée** sur l'annuel | **calculée**, donc 86 % aujourd'hui | Elle sort des deux prix et les suivra. Rien à décider |
+| Le **prix du web** | identique à iOS : 69,99 €/an (essai 3 jours), 7,99 €/semaine, discount 39,99 € hors paywall | Simple et honnête ; les deux offres visibles vivent déjà dans une seule constante partagée |
+| L'**économie annoncée** sur l'annuel | **calculée**, donc 83 % aujourd'hui | Elle sort des deux prix et les suivra. Rien à décider |
 
 ### Une idée qui règle une tension
 

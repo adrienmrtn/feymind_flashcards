@@ -10,12 +10,18 @@ pas dans App Store Connect, RevenueCat n'a rien à importer et le SDK ne renvoie
 
 Rappel de ce qu'on vend :
 
-| Offre | Identifiant produit | Prix | Essai |
-| --- | --- | --- | --- |
-| Annuel | `com.micabo.app.pro.yearly` | 59,99 € / an | 3 jours offerts |
-| Hebdomadaire | `com.micabo.app.pro.weekly` | 7,99 € / semaine | 3 jours offerts |
+| Offre | Identifiant produit | Prix | Essai | Sur le paywall |
+| --- | --- | --- | --- | --- |
+| Annuel | `com.micabo.app.pro.yearly` | 69,99 € / an | 3 jours offerts | oui |
+| Hebdomadaire | `com.micabo.app.pro.weekly` | 7,99 € / semaine | aucun | oui |
+| Annuel discount | `com.micabo.app.pro.yearly.discount` | 39,99 € / an | aucun | **non** — produit créé, offering à part, pas encore de chemin d'achat |
 
 Identifiant de l'app : `com.micabo.app`.
+
+**Stripe encaisse sur le web, Apple encaisse sur iOS, RevenueCat détient le droit.** Les trois
+produits existent des deux côtés, avec **les mêmes identifiants**. L'`app_user_id` RevenueCat
+est toujours l'`auth.users.id` de Supabase. Sans ça, un achat iPhone n'ouvre pas le web, et
+inversement.
 
 ---
 
@@ -30,19 +36,19 @@ sable renvoie des erreurs sans rapport avec le code.
 3. **La fiche de l'app existe** — une app `com.micabo.app` créée dans Apps, même sans build
    envoyé.
 
-## 2. App Store Connect — créer les deux abonnements
+## 2. App Store Connect — créer les trois abonnements
 
 1. Ouvrir l'app → **Monetization → Subscriptions**.
 2. **Créer un groupe d'abonnements** : `Micabo Pro`. Un seul groupe, et c'est important :
-   deux offres dans le même groupe sont mutuellement exclusives, et le passage de
-   l'hebdomadaire à l'annuel se fait tout seul, sans double facturation.
+   les offres du même groupe sont mutuellement exclusives, et le passage de l'hebdomadaire
+   à l'annuel se fait tout seul, sans double facturation.
    - Localisation du groupe (fr) : nom affiché `Micabo Pro`.
 3. **Premier abonnement — annuel**
    - Reference Name : `Micabo Pro annuel`
    - Product ID : `com.micabo.app.pro.yearly` — **exactement** cette chaîne, c'est celle
      qu'attend `PaywallCatalog.yearly.productID`.
    - Subscription Duration : `1 Year`
-   - Subscription Prices : France 59,99 € (laisser Apple générer les autres pays, puis
+   - Subscription Prices : France **69,99 €** (laisser Apple générer les autres pays, puis
      vérifier)
    - Localizations (fr-FR) : Display Name `Annuel`, Description
      `Cours et flashcards illimités, toute l'année.`
@@ -50,17 +56,25 @@ sable renvoie des erreurs sans rapport avec le code.
    - Reference Name : `Micabo Pro hebdomadaire`
    - Product ID : `com.micabo.app.pro.weekly`
    - Subscription Duration : `1 Week`
-   - Prices : France 7,99 €
+   - Prices : France **7,99 €**
    - Localizations (fr-FR) : Display Name `Hebdomadaire`, Description
      `Cours et flashcards illimités, sans engagement.`
-5. **Les trois jours offerts, sur les deux offres** : onglet *Subscription Prices* →
-   **Introductory Offers** → Create → Territoire : tous → Type : `Free`, Durée : `3 Days` →
-   Éligibilité : *New subscribers*.
-   - À faire **deux fois**, une par produit. Un essai posé sur l'annuel seulement ferait
-     mentir le second paywall, qui affiche « 3 jours offerts » sur les deux lignes.
-6. **Review information** : capture d'écran du paywall + note de relecture. Apple refuse un
+5. **Troisième abonnement — annuel discount, sans l'afficher**
+   - Reference Name : `Micabo Pro annuel discount`
+   - Product ID : `com.micabo.app.pro.yearly.discount`
+   - Subscription Duration : `1 Year`
+   - Prices : France **39,99 €**
+   - Localizations (fr-FR) : Display Name `Annuel`, Description
+     `Cours et flashcards illimités, toute l'année.`
+   - **Pas d'essai.** Ne pas l'ajouter à l'offering `default` chez RevenueCat.
+6. **Les trois jours offerts, sur l'annuel seulement** : onglet *Subscription Prices* du
+   produit `com.micabo.app.pro.yearly` → **Introductory Offers** → Create → Territoire :
+   tous → Type : `Free`, Durée : `3 Days` → Éligibilité : *New subscribers*.
+   - **Ne pas** poser d'essai sur l'hebdomadaire ni sur le discount. Le paywall dit « sans
+     essai » sur ces deux lignes.
+7. **Review information** : capture d'écran du paywall + note de relecture. Apple refuse un
    abonnement sans capture.
-7. Statut attendu à la fin : *Ready to Submit*. Les produits ne passent *Approved* qu'avec un
+8. Statut attendu à la fin : *Ready to Submit*. Les produits ne passent *Approved* qu'avec un
    build ; le bac à sable, lui, fonctionne dès *Ready to Submit*.
 
 ## 3. App Store Connect — la clé que RevenueCat utilisera
@@ -85,14 +99,19 @@ sur l'appareil.
      clé secrète.
 3. Copier l'URL de notifications serveur affichée sur la même page et la coller dans App Store
    Connect (étape 3.3).
-4. **Products** → `Import` : les deux produits remontent tout seuls une fois créés côté Apple.
-   Sinon les ajouter à la main avec les deux identifiants exacts.
-5. **Entitlements** → créer `pro` → y attacher les **deux** produits. C'est le seul nom que
-   l'app lira ; il ne doit plus changer.
-6. **Offerings** → créer l'offering `default` et le marquer *Current*, puis y ajouter deux
-   packages :
+4. **Products** → `Import` : les trois produits remontent tout seuls une fois créés côté
+   Apple. Sinon les ajouter à la main avec les trois identifiants exacts.
+5. **Entitlements** → créer `pro` → y attacher les **trois** produits. C'est le seul nom que
+   l'app lira ; il ne doit plus changer. Le discount donne le même droit : on ne crée pas un
+   second entitlement.
+6. **Offerings** → créer l'offering `default` et le marquer *Current*, puis y ajouter **deux**
+   packages seulement :
    - `$rc_annual` → `com.micabo.app.pro.yearly`
    - `$rc_weekly` → `com.micabo.app.pro.weekly`
+
+   Créer un second offering `discount` (pas *Current*) avec un package
+   `com.micabo.app.pro.yearly.discount`. Personne ne le voit tant qu'on n'appelle pas
+   `offerings.offering(identifier: "discount")`. C'est volontaire.
 
    L'ordre des packages dans l'offering n'est pas celui de l'affichage : `PaywallCatalog` garde
    l'annuel en premier, parce que c'est l'offre recommandée.
@@ -127,8 +146,10 @@ init() {
 La clé publique iOS n'est pas un secret : elle est lisible dans n'importe quel binaire d'App
 Store. La clé **secrète** de RevenueCat, elle, ne doit jamais entrer dans le dépôt.
 
-Si l'utilisateur est connecté (Apple ou Google, via `AuthController`), lier son identifiant pour
-que l'abonnement le suive d'un appareil à l'autre :
+Si l'utilisateur est connecté (Apple ou Google, via `AuthController`), lier son identifiant
+**avant le premier achat**. `userId` est l'`auth.users.id` de Supabase, pas l'identifiant
+Apple, pas un UUID inventé par l'app. C'est la même chaîne que `client_reference_id` côté
+Stripe. Sans ça, RevenueCat crée un `$RCAnonymousID` et le webhook refuse d'écrire (422).
 
 ```swift
 Purchases.shared.logIn(userId)
@@ -197,7 +218,8 @@ extension PaywallPlan {
             productID: package.storeProduct.productIdentifier,
             title: kind == .yearly ? "Annuel" : "Hebdomadaire",
             price: price,
-            period: kind == .yearly ? .year : .week
+            period: kind == .yearly ? .year : .week,
+            trialDays: kind == .yearly ? PaywallCatalog.freeTrialDays : 0
         )
     }
 }
@@ -249,14 +271,77 @@ Trois choses disparaissent le même jour :
 
 ## 10. Tester
 
-1. **En local, sans réseau Apple** : `Micabo/Resources/Micabo.storekit` décrit les deux mêmes
+1. **En local, sans réseau Apple** : `Micabo/Resources/Micabo.storekit` décrit les trois mêmes
    produits, et le scheme le référence déjà. Il ne fait pas passer par RevenueCat, mais il
-   valide les prix, les durées et les trois jours d'essai.
+   valide les prix, les durées, et les trois jours d'essai **sur l'annuel seulement**.
 2. **Bac à sable** : App Store Connect → Users and Access → Sandbox → créer un testeur, puis se
    connecter avec sur l'appareil dans Réglages → App Store → Compte de test. Les durées y sont
    accélérées — trois jours d'essai valent quelques minutes.
 3. **Vérifier côté RevenueCat** : l'achat de test apparaît dans Customer History en quelques
    secondes. S'il n'apparaît pas, c'est la clé `.p8` ou l'URL de notifications qui manque, pas
-   le code.
+   le code. L'`app_user_id` affiché doit être un UUID Supabase, jamais un `$RCAnonymousID`.
 4. **TestFlight** : les achats y passent par le bac à sable, avec le compte App Store réel du
    testeur. C'est le seul environnement qui reproduit le parcours complet.
+
+---
+
+## 11. Stripe — les trois produits web
+
+Stripe n'écrit jamais dans `entitlements`. Il encaisse. RevenueCat voit l'abonnement Stripe
+via l'intégration officielle, et **son** webhook (`supabase/functions/revenuecat-webhook`)
+écrit la ligne. Une seule plume.
+
+1. **Créer le compte Stripe** (mode test d'abord) et activer les paiements en euros.
+2. **Product → Add product**, trois fois, avec les **mêmes identifiants** qu'Apple. Dans
+   Stripe, le *Product ID* se pose ensuite (Dashboard → Product → trois points → *Copy ID*
+   puis le recoller n'est pas suffisant) : le plus simple est de créer le produit, puis de
+   noter le `prod_…` et de mapper dans RevenueCat par identifiant **lookup key** :
+   - Produit `Micabo Pro annuel` — lookup / metadata `product_id` =
+     `com.micabo.app.pro.yearly`
+     - Prix récurrent : **69,99 €**, facturation **annuelle**, devise EUR
+     - Dans le prix : *Free trial* = **3 days** (pas 3 months)
+   - Produit `Micabo Pro hebdomadaire` — `com.micabo.app.pro.weekly`
+     - Prix : **7,99 €**, facturation **hebdomadaire**
+     - **Pas d'essai**
+   - Produit `Micabo Pro annuel discount` — `com.micabo.app.pro.yearly.discount`
+     - Prix : **39,99 €**, facturation **annuelle**
+     - **Pas d'essai**. Ne pas l'utiliser dans `startCheckout` pour l'instant.
+3. Copier les identifiants de **prix** (`price_…`, pas `prod_…`) :
+   - `STRIPE_PRICE_YEARLY`
+   - `STRIPE_PRICE_WEEKLY`
+   - `STRIPE_PRICE_YEARLY_DISCOUNT` (gardé pour plus tard)
+4. Les coller dans **Vercel → Environment Variables** (Production + Preview), avec
+   `STRIPE_SECRET_KEY` (`sk_test_…` d'abord, `sk_live_…` le jour J).
+5. **Customer Portal** : Settings → Billing → Customer portal → l'activer. C'est ce que
+   `manageSubscription()` ouvrira pour un achat `store = stripe`. Un achat App Store ne
+   doit **jamais** ouvrir ce portail.
+
+## 12. Lier Stripe à RevenueCat (le droit multiplateforme)
+
+1. RevenueCat → Project Settings → Integrations → **Stripe**.
+2. Coller la *restricted key* Stripe (permissions : lire les customers, les subscriptions,
+   les invoices, les checkout sessions — rien d'écrire côté charges).
+3. **Webhook Stripe → RevenueCat** : Stripe Dashboard → Developers → Webhooks → Add
+   endpoint, URL fournie par RevenueCat (page Stripe de RC), événements au minimum :
+   `checkout.session.completed`, `customer.subscription.created`,
+   `customer.subscription.updated`, `customer.subscription.deleted`,
+   `invoice.paid`, `invoice.payment_failed`.
+4. Dans RevenueCat, **Products** : ajouter les trois produits Stripe (ou les mapper sur
+   les produits déjà importés d'Apple s'ils portent le même identifiant). Les rattacher
+   à l'entitlement `pro`.
+5. **Le pont d'identité**, et c'est la seule ligne qui compte : dans
+   `web/lib/actions/checkout.ts`, `client_reference_id` porte déjà `user.id` (Supabase).
+   RevenueCat lit ce champ et pose le customer Stripe sous **ce** `app_user_id`. Si on
+   oublie ce champ, RC crée un client orphelin et le webhook refuse d'écrire.
+6. Côté iOS, `Purchases.logIn(supabaseUserId)` **avant** `purchase`. Un achat fait sous
+   `$RCAnonymousID` puis `logIn` plus tard peut transférer, mais le webhook a déjà pu
+   refuser l'événement anonyme. On ne s'y fie pas.
+7. RevenueCat → Project Settings → Integrations → **Webhooks** : URL
+   `https://<projet>.supabase.co/functions/v1/revenuecat-webhook`, Authorization =
+   le secret `REVENUECAT_WEBHOOK_SECRET` déjà attendu par la fonction. Événements :
+   tous les changements d'entitlement.
+8. Vérifier la table `entitlements` après un achat test : une ligne, `user_id` = UUID
+   Supabase, `is_pro` vrai, `store` = `app_store` ou `stripe` selon l'appareil.
+
+Le discount : produit créé des deux côtés, entitlement `pro` attaché, offering `discount`
+prêt. Le bouton, le lien, le critère d'éligibilité — plus tard, comme convenu.

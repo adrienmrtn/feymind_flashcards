@@ -18,8 +18,8 @@ final class PaywallTests: XCTestCase {
         XCTAssertEqual(PaywallCatalog.weekly.period, .week)
 
         XCTAssertTrue(
-            PaywallCatalog.yearly.displayPrice.hasPrefix("59,99"),
-            "L'annuel est à 59,99 €, pas \(PaywallCatalog.yearly.displayPrice)"
+            PaywallCatalog.yearly.displayPrice.hasPrefix("69,99"),
+            "L'annuel est à 69,99 €, pas \(PaywallCatalog.yearly.displayPrice)"
         )
         XCTAssertTrue(
             PaywallCatalog.weekly.displayPrice.hasPrefix("7,99"),
@@ -27,11 +27,11 @@ final class PaywallTests: XCTestCase {
         )
     }
 
-    /// Le mois est la seule unité qu'un étudiant compare de tête. L'annuel doit donc dire
+    /// Le mois est la seule unité qu'on compare de tête. L'annuel doit donc dire
     /// son prix mensuel, et l'hebdomadaire ne doit pas en inventer un.
     func testOnlyTheYearlyIsRestatedPerMonth() throws {
         let monthly = try XCTUnwrap(PaywallCatalog.yearly.monthlyEquivalent)
-        XCTAssertTrue(monthly.hasPrefix("5,00"), "59,99 € par an font 5,00 € par mois, pas \(monthly)")
+        XCTAssertTrue(monthly.hasPrefix("5,83"), "69,99 € par an font 5,83 € par mois, pas \(monthly)")
         XCTAssertNil(PaywallCatalog.weekly.monthlyEquivalent)
 
         XCTAssertEqual(PaywallCatalog.weekly.caption, "facturé chaque semaine")
@@ -43,7 +43,18 @@ final class PaywallTests: XCTestCase {
         let weeklyOverAYear = NSDecimalNumber(decimal: PaywallCatalog.weekly.annualCost).doubleValue
         XCTAssertEqual(weeklyOverAYear, 415.48, accuracy: 0.01, "7,99 € par semaine sur cinquante-deux semaines")
 
-        XCTAssertEqual(PaywallCatalog.savingsPercent, 86)
+        XCTAssertEqual(PaywallCatalog.savingsPercent, 83)
+    }
+
+    /// Le discount existe pour plus tard, et il n'apparaît pas à côté des deux offres.
+    func testTheDiscountExistsButIsNotOnThePaywall() {
+        XCTAssertTrue(
+            PaywallCatalog.discount.displayPrice.hasPrefix("39,99"),
+            "Le discount est à 39,99 €, pas \(PaywallCatalog.discount.displayPrice)"
+        )
+        XCTAssertEqual(PaywallCatalog.discount.productID, "com.micabo.app.pro.yearly.discount")
+        XCTAssertFalse(PaywallCatalog.discount.hasTrial)
+        XCTAssertFalse(PaywallCatalog.all.contains(PaywallCatalog.discount))
     }
 
     func testEveryOfferCarriesItsOwnProductIdentifier() {
@@ -75,6 +86,8 @@ final class PaywallTests: XCTestCase {
     func testTheTrialLengthIsSharedWithTheTimeline() {
         XCTAssertEqual(TrialTimeline.freeDays, 3)
         XCTAssertEqual(PaywallCatalog.freeTrialDays, TrialTimeline.freeDays)
+        XCTAssertEqual(PaywallCatalog.yearly.trialDays, TrialTimeline.freeDays)
+        XCTAssertFalse(PaywallCatalog.weekly.hasTrial)
     }
 
     /// Quatre étapes, et une seule est « aujourd'hui » : une chronologie qui aurait deux
