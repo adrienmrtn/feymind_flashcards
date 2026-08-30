@@ -1,0 +1,23 @@
+# Session en cours, réponse affichée, quatre notes prêtes.
+steps:
+  - launch: com.micabo.app
+  - await:
+      visible:
+        text: Réviser 12 cartes
+  - tap:
+      text: Réviser 12 cartes
+  - await:
+      visible:
+        text: Commencer
+  - tap:
+      text: Commencer
+  - await:
+      visible:
+        text: Afficher la réponse
+  - tap:
+      text: Afficher la réponse
+  - await:
+      visible:
+        text: Comment as-tu répondu ?
+  - await:
+      idle: true

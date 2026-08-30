@@ -1,0 +1,11 @@
+# Écran d'ouverture : le chiffre du jour, les cours au programme, le prochain examen.
+steps:
+  - launch: com.micabo.app
+  - await:
+      visible:
+        text: Réviser
+  - await:
+      visible:
+        text: cartes à réviser
+  - await:
+      idle: true

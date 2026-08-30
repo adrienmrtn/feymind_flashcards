@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Micabo — cadre App Store</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,500&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1320px; height: 2868px; overflow: hidden; }
+  body {
+    font-family: "DM Sans", -apple-system, system-ui, sans-serif;
+    background: linear-gradient(168deg, #DCE8DC 0%, #E8EFE6 38%, #F6F4ED 72%, #FFFDF6 100%);
+    color: #191714;
+  }
+  .tile {
+    width: 1320px; height: 2868px;
+    position: relative;
+    overflow: hidden;
+  }
+  .copy {
+    position: absolute; left: 96px; right: 96px; top: 168px;
+    z-index: 2;
+  }
+  .copy.left { right: 280px; }
+  .copy.low { top: auto; bottom: 160px; text-align: center; }
+  h1 {
+    font-size: 92px; font-weight: 700; letter-spacing: -2.4px; line-height: 1.02;
+  }
+  p.sub {
+    margin-top: 28px; font-size: 36px; font-weight: 500; color: #6F6A60; line-height: 1.28;
+    max-width: 18ch;
+  }
+  .copy.low p.sub { margin-left: auto; margin-right: auto; }
+  .device {
+    position: absolute;
+    width: 980px;
+    left: 50%;
+    bottom: -80px;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 48px 80px rgba(25, 23, 20, 0.22));
+  }
+  .device.hero { width: 1080px; bottom: -220px; }
+  .device.offset { left: auto; right: -80px; transform: none; bottom: -160px; width: 920px; }
+  .device.tilt { transform: translateX(-46%) rotate(-8deg); bottom: -180px; width: 1000px; }
+  .device.minimal { width: 1100px; bottom: auto; top: 50%; transform: translate(-50%, -50%); }
+  .bezel {
+    background: linear-gradient(160deg, #e8e6e1 0%, #c9c6bf 42%, #9b9890 100%);
+    border-radius: 92px;
+    padding: 14px;
+  }
+  .bezel-inner {
+    background: #1a1916;
+    border-radius: 80px;
+    padding: 10px;
+    position: relative;
+  }
+  .screen {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 70px;
+    background: #f6f4ed;
+  }
+  .island {
+    position: absolute; left: 50%; top: 22px;
+    transform: translateX(-50%);
+    width: 210px; height: 58px;
+    background: #0b0b0b;
+    border-radius: 32px;
+    z-index: 2;
+  }
+</style>
+</head>
+<body>
+<div class="tile">
+  <div class="copy" id="copy">
+    <h1 id="headline"></h1>
+    <p class="sub" id="subhead"></p>
+  </div>
+  <div class="device" id="device">
+    <div class="bezel">
+      <div class="bezel-inner">
+        <div class="island"></div>
+        <img class="screen" id="screen" alt="" />
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const scenes = {
+    today: {
+      headline: "Juste avant l'oubli",
+      subhead: "Tes cartes reviennent le jour où tu commences à les perdre.",
+      layout: "hero",
+    },
+    sheet: {
+      headline: "Le cours, déjà fiché",
+      subhead: "Dépose tes notes. Micabo écrit la fiche que tu relis.",
+      layout: "offset",
+    },
+    study: {
+      headline: "Tu te souviens, ou pas",
+      subhead: "Quatre notes. Le plan suit. Rien d'autre à décider.",
+      layout: "tilt",
+    },
+    exam: {
+      headline: "Le jour J commande",
+      subhead: "Tu donnes la date. Micabo resserre les cartes à l'approche.",
+      layout: "classic",
+    },
+    courses: {
+      headline: "PDF, photo ou vidéo",
+      subhead: "Tes cours deviennent des fiches, puis des cartes.",
+      layout: "minimal",
+    },
+  };
+  const id = new URLSearchParams(location.search).get("scene") || "today";
+  const scene = scenes[id];
+  document.getElementById("headline").textContent = scene.headline;
+  document.getElementById("subhead").textContent = scene.subhead;
+  document.getElementById("screen").src = `../out/raw/iphone-6.9/${id}.png`;
+  const copy = document.getElementById("copy");
+  const device = document.getElementById("device");
+  device.classList.add(scene.layout === "classic" ? "hero" : scene.layout);
+  if (scene.layout === "offset") copy.classList.add("left");
+  if (scene.layout === "minimal") copy.style.display = "none";
+  if (scene.layout === "classic") {
+    device.className = "device";
+  }
+</script>
+</body>
+</html>
