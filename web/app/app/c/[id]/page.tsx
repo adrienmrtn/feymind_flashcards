@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { courseAccent, courseAudienceLabel, entitlement, resolveEmoji } from "@micabo/core";
 
 import { GenerateCardsCta } from "@/components/app/GenerateCardsCta";
+import { LockedSheetTail } from "@/components/app/LockedSheetTail";
 import { ReviewCta } from "@/components/app/ReviewCta";
 import { SheetReader } from "@/components/app/SheetReader";
 import { VisibilityPicker } from "@/components/app/VisibilityPicker";
@@ -121,7 +122,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
       <div className="mt-10">
         <SheetReader courseId={course.id} blocks={readable} tint={tint} />
 
-        {locked.length > 0 ? <LockedTail count={locked.length} /> : null}
+        {locked.length > 0 ? <LockedSheetTail blocks={locked} tint={tint} /> : null}
       </div>
 
       {course.blocks.length === 0 ? (
@@ -131,36 +132,6 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
         </p>
       ) : null}
     </article>
-  );
-}
-
-/**
- * La fin d'une fiche, pour qui n'est pas abonné.
- *
- * Les blocs restants ne sont **pas** rendus ici, à la différence de l'app : sur le web, un texte
- * flouté reste dans le document, donc il se lit dans le code source et se copie. Le flou de l'app
- * est acceptable parce qu'un IPA ne se lit pas avec le clic droit ; ici, il faudrait envoyer au
- * navigateur ce qu'on prétend cacher. On annonce donc ce qui reste, sans l'envoyer.
- */
-function LockedTail({ count }: { count: number }) {
-  const percent = entitlement.lockedSheetPercent();
-
-  return (
-    <div className="mt-8 rounded-group bg-surface-muted p-7 text-center" data-print="hide">
-      <span
-        aria-hidden
-        className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-ink text-on-ink"
-      >
-        <svg viewBox="0 0 20 20" className="h-5 w-5" fill="currentColor">
-          <path d="M10 1.5a3.5 3.5 0 0 0-3.5 3.5v2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5A3.5 3.5 0 0 0 10 1.5zm-2 3.5a2 2 0 1 1 4 0v2H8V5z" />
-        </svg>
-      </span>
-      <p className="mt-3.5 text-[16.5px] font-bold text-ink">La suite de la fiche est dans Pro</p>
-      <p className="mx-auto mt-1.5 max-w-[38ch] text-[13px] leading-relaxed text-ink-secondary">
-        Il te reste {percent} % de ce cours à lire - {count} bloc{count > 1 ? "s" : ""} - et tous
-        les suivants à importer.
-      </p>
-    </div>
   );
 }
 

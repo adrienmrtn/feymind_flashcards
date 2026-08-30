@@ -15,6 +15,7 @@ import {
   persistStoredAnswers,
   shouldOpenPaywall,
 } from "@/lib/onboarding/persist";
+import { PAYWALL_EVENT } from "@/lib/paywall";
 
 /**
  * Le paywall, **posé sur le tableau de bord**.
@@ -40,6 +41,15 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const debugReplay = params.get("debug") === "paywall";
+
+  useEffect(() => {
+    function onRequest() {
+      if (isPaid && !debugReplay) return;
+      setOpen(true);
+    }
+    window.addEventListener(PAYWALL_EVENT, onRequest);
+    return () => window.removeEventListener(PAYWALL_EVENT, onRequest);
+  }, [debugReplay, isPaid]);
 
   useEffect(() => {
     if (isPaid && !debugReplay) {
@@ -74,10 +84,12 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
         return;
       }
 
-      // Le dashboard se pose d'abord. L'offre arrive ensuite, pas à la place.
+      // Une porte (deuxième cours, fiche, session) ouvre tout de suite.
+      // L'accueil, lui, laisse le tableau de bord se poser d'abord.
+      const delay = force || debugReplay ? 0 : 980;
       timer = window.setTimeout(() => {
         if (!cancelled) setOpen(true);
-      }, 980);
+      }, delay);
     }
 
     void decide();

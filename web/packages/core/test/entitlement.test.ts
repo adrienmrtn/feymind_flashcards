@@ -51,11 +51,10 @@ describe("le droit", () => {
   });
 
   it("suit le réglage quand il n'y a aucune ligne", () => {
-    // Le seul endroit du code où une décision de produit se cache : ce qu'on fait de quelqu'un
-    // dont on ne sait rien. Aujourd'hui `true`, parce qu'il n'existe aucune façon de payer sur le
-    // web - fermer enfermerait dehors sans porte de sortie.
-    expect(resolve().isPro).toBe(ASSUME_PRO_WITHOUT_ROW);
-    expect(resolve(null, undefined).isPro).toBe(ASSUME_PRO_WITHOUT_ROW);
+    // Pas de ligne, pas d'abonnement : le gratuit s'applique, comme sur l'iPhone.
+    expect(ASSUME_PRO_WITHOUT_ROW).toBe(false);
+    expect(resolve().isPro).toBe(false);
+    expect(resolve(null, undefined).isPro).toBe(false);
   });
 
   it("ne confond pas un Pro deviné avec un abonnement payé", () => {

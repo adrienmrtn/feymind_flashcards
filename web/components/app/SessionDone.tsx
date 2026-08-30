@@ -11,6 +11,7 @@ import {
 } from "@micabo/core";
 
 import { Button } from "@/components/ui/button";
+import { requestPaywall } from "@/lib/paywall";
 
 export interface SessionTally {
   answered: number;
@@ -108,7 +109,9 @@ export function SessionDone({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        {leftoverNew > 0 && !capped ? (
+        {capped ? (
+          <Button onClick={requestPaywall}>Continuer avec Pro</Button>
+        ) : leftoverNew > 0 ? (
           <Button
             onClick={() => {
               router.push("/app/reviser");
@@ -119,7 +122,7 @@ export function SessionDone({
           </Button>
         ) : null}
         <Button
-          variant={leftoverNew > 0 && !capped ? "outline" : "default"}
+          variant={capped || leftoverNew > 0 ? "outline" : "default"}
           onClick={() => {
             router.push("/app");
             router.refresh();

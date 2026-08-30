@@ -23,6 +23,7 @@ import { LanguageChoices } from "@/components/app/LanguageChoices";
 import { VisibilityChoices } from "@/components/app/VisibilityChoices";
 import { Button } from "@/components/ui/button";
 import { importFromText, youtubePreview, youtubeTranscript } from "@/lib/actions/course";
+import { requestPaywall } from "@/lib/paywall";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
 import {
   isYouTubeUrl,
@@ -94,6 +95,10 @@ export function ImportPanel({
     setPhase(draft ? "apercu" : "repos");
     if (result.status === "ok" && result.courseId) {
       router.push(`/app/c/${result.courseId}` as never);
+      return;
+    }
+    if (result.status === "paywall") {
+      requestPaywall();
       return;
     }
     setFailure(result.message ?? "Ça n'a pas marché.");

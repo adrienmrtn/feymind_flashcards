@@ -19,6 +19,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/profile";
+import { requestPaywall } from "@/lib/paywall";
 import {
   OPEN_COURSES_EVENT,
   readOpenCourses,
@@ -95,10 +96,12 @@ export function AppChrome({
   children,
   userName,
   userInitial,
+  canImport = true,
 }: {
   children: React.ReactNode;
   userName: string;
   userInitial: string;
+  canImport?: boolean;
 }) {
   const [drawer, setDrawer] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -120,11 +123,12 @@ export function AppChrome({
 
   return (
     <div className="app-shell flex min-h-svh bg-background">
-      <Sidebar userName={userName} userInitial={userInitial} />
+      <Sidebar userName={userName} userInitial={userInitial} canImport={canImport} />
       {drawer ? (
         <MobileDrawer
           userName={userName}
           userInitial={userInitial}
+          canImport={canImport}
           onClose={() => setDrawer(false)}
         />
       ) : null}
@@ -166,7 +170,15 @@ function HeaderTitle() {
   );
 }
 
-function Sidebar({ userName, userInitial }: { userName: string; userInitial: string }) {
+function Sidebar({
+  userName,
+  userInitial,
+  canImport,
+}: {
+  userName: string;
+  userInitial: string;
+  canImport: boolean;
+}) {
   return (
     <aside
       aria-label="Navigation"
@@ -180,7 +192,7 @@ function Sidebar({ userName, userInitial }: { userName: string; userInitial: str
         <OpenCourses />
       </div>
       <div className="space-y-3 border-t border-sidebar-border p-3">
-        <ImportLink />
+        <ImportLink canImport={canImport} />
         <UserBlock name={userName} initial={userInitial} />
       </div>
     </aside>
@@ -190,10 +202,12 @@ function Sidebar({ userName, userInitial }: { userName: string; userInitial: str
 function MobileDrawer({
   userName,
   userInitial,
+  canImport,
   onClose,
 }: {
   userName: string;
   userInitial: string;
+  canImport: boolean;
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -226,7 +240,7 @@ function MobileDrawer({
         </div>
         <div className="space-y-3 border-t border-sidebar-border p-3">
           <div onClick={onClose}>
-            <ImportLink />
+            <ImportLink canImport={canImport} />
           </div>
           <UserBlock name={userName} initial={userInitial} />
         </div>
@@ -353,19 +367,26 @@ function OpenCourses() {
   );
 }
 
-function ImportLink() {
+function ImportLink({ canImport }: { canImport: boolean }) {
   const pathname = usePathname();
   const current = pathname.startsWith("/app/importer");
+  const className = `flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-sm font-medium transition-[scale,background-color,border-color,color] duration-press ease-out-strong active:scale-[0.96] ${
+    current
+      ? "border-transparent bg-sidebar-accent text-sidebar-accent-foreground"
+      : "border-input bg-background text-foreground hover:bg-sidebar-accent/70"
+  }`;
+
+  if (!canImport) {
+    return (
+      <button type="button" onClick={requestPaywall} className={`${className} w-full`}>
+        <Upload className="size-4 shrink-0 opacity-80" />
+        Importer
+      </button>
+    );
+  }
 
   return (
-    <Link
-      href={"/app/importer" as never}
-      className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-sm font-medium transition-[scale,background-color,border-color,color] duration-press ease-out-strong active:scale-[0.96] ${
-        current
-          ? "border-transparent bg-sidebar-accent text-sidebar-accent-foreground"
-          : "border-input bg-background text-foreground hover:bg-sidebar-accent/70"
-      }`}
-    >
+    <Link href={"/app/importer" as never} className={className}>
       <Upload className="size-4 shrink-0 opacity-80" />
       Importer
     </Link>
