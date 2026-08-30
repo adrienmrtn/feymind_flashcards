@@ -23,8 +23,8 @@ import {
  * débarque d'abord, puis l'offre se pose - pas l'inverse. La croix est là dès la
  * première image.
  *
- * Les prix viennent du même catalogue que la landing. La case « je suis étudiant »
- * permute l'annuel : 83,88 € avec essai, ou 59,99 € barré de l'ancien, sans essai.
+ * Les prix viennent du même catalogue que la landing : 69,99 € / an avec trois jours
+ * d'essai, ou 7,99 € / semaine sans essai. Le tarif discount n'est pas sur cet écran.
  *
  * `isPaid` - pas `isPro`. Sans ça, tout le monde sans ligne d'abonnement est
  * traité comme Pro, et cette carte ne s'ouvre jamais.
@@ -271,19 +271,19 @@ function ReminderStep() {
 }
 
 function PlansStep() {
-  const [student, setStudent] = useState(false);
   const [chosen, setChosen] = useState<pricing.PlanKind>("yearly");
   const [checkout, setCheckout] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  const yearly = pricing.yearlyFor(student);
+  const yearly = pricing.YEARLY;
   const weekly = pricing.WEEKLY;
-  const plans = [yearly, weekly];
+  const plans = pricing.offers();
+  const selected = pricing.planFor(chosen);
 
   async function subscribe() {
     setPending(true);
     setCheckout(null);
-    const result = await startCheckout(chosen, { student });
+    const result = await startCheckout(chosen);
     setPending(false);
     if (result.status === "redirect" && result.url) {
       window.location.href = result.url;
@@ -306,65 +306,38 @@ function PlansStep() {
         Choisissez comment vous révisez.
       </h2>
 
-      <label className="mt-5 flex cursor-pointer items-center gap-3 rounded-button bg-canvas px-4 py-3.5">
-        <input
-          type="checkbox"
-          checked={student}
-          onChange={(event) => setStudent(event.target.checked)}
-          className="h-4 w-4 accent-accent"
-        />
-        <span className="text-[14.5px] font-medium text-ink">Je suis étudiant</span>
-      </label>
-
-      <div className="mt-4 space-y-2.5">
+      <div className="mt-5 space-y-2.5">
         {plans.map((plan) => {
-          const selected = chosen === plan.kind;
+          const isSelected = chosen === plan.kind;
           const monthly = pricing.monthlyEquivalent(plan);
-          const isYearly = plan.kind === "yearly";
+          const trial = pricing.hasTrial(plan);
           return (
             <button
-              key={`${plan.productId}-${student}`}
+              key={plan.productId}
               type="button"
               onClick={() => setChosen(plan.kind)}
               className={`pressable flex w-full items-center justify-between gap-4 rounded-group px-5 py-4 text-left transition-colors duration-hover ${
-                selected ? "bg-ink text-on-ink" : "bg-canvas"
+                isSelected ? "bg-ink text-on-ink" : "bg-canvas"
               }`}
             >
               <div>
                 <p className="flex flex-wrap items-center gap-2 text-[15px] font-semibold">
                   {plan.title}
-                  {isYearly && !student ? (
+                  {trial ? (
                     <span className="rounded-pill bg-accent-vivid px-2 py-0.5 text-[10.5px] font-bold text-ink">
-                      {pricing.FREE_TRIAL_DAYS} jours offerts
-                    </span>
-                  ) : null}
-                  {isYearly && student ? (
-                    <span className="rounded-pill bg-accent-vivid px-2 py-0.5 text-[10.5px] font-bold text-ink">
-                      Tarif étudiant
+                      {plan.trialDays} jours offerts
                     </span>
                   ) : null}
                 </p>
                 <p
                   className={`mt-0.5 text-[13px] ${
-                    selected ? "text-on-ink-muted" : "text-ink-tertiary"
+                    isSelected ? "text-on-ink-muted" : "text-ink-tertiary"
                   }`}
                 >
-                  {isYearly ? (
+                  {plan.kind === "yearly" ? (
                     <>
-                      {student ? (
-                        <>
-                          <span className="line-through">
-                            {pricing.priceText(pricing.YEARLY.price)}
-                          </span>
-                          {" · "}
-                          {pricing.priceText(plan.price)} / an · sans essai
-                        </>
-                      ) : (
-                        <>
-                          {pricing.priceText(plan.price)} / an · essai de{" "}
-                          {pricing.FREE_TRIAL_DAYS} jours
-                        </>
-                      )}
+                      {pricing.priceText(plan.price)} / an · essai de {plan.trialDays}{" "}
+                      jours
                     </>
                   ) : (
                     <>sans essai gratuit</>
@@ -377,7 +350,7 @@ function PlansStep() {
                 </p>
                 <p
                   className={`mt-1 text-[11.5px] ${
-                    selected ? "text-on-ink-muted" : "text-ink-tertiary"
+                    isSelected ? "text-on-ink-muted" : "text-ink-tertiary"
                   }`}
                 >
                   {monthly ? "/ mois" : "/ semaine"}
@@ -395,8 +368,8 @@ function PlansStep() {
         className="pressable shiny mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-button bg-ink text-[16px] font-semibold text-on-ink disabled:opacity-70"
       >
         {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
-        {chosen === "yearly" && !student
-          ? `Essayer ${pricing.FREE_TRIAL_DAYS} jours`
+        {pricing.hasTrial(selected)
+          ? `Essayer ${selected.trialDays} jours`
           : "S'abonner"}
       </button>
 
@@ -409,11 +382,9 @@ function PlansStep() {
         </p>
       ) : (
         <p className="mt-3 text-center text-[12.5px] text-ink-tertiary">
-          {chosen === "yearly" && !student
+          {pricing.hasTrial(selected)
             ? `Aucun paiement aujourd'hui. Puis ${pricing.priceText(yearly.price)} / an.`
-            : chosen === "yearly"
-              ? `${pricing.priceText(yearly.price)} / an, dès maintenant.`
-              : `${pricing.priceText(weekly.price)} / semaine, dès maintenant.`}
+            : `${pricing.priceText(weekly.price)} / semaine, dès maintenant.`}
         </p>
       )}
     </div>

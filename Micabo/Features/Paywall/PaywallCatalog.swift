@@ -15,7 +15,7 @@ enum PaywallPeriod {
 
     /// Combien de fois par an la somme est prélevée. Sert à comparer deux offres qui ne
     /// se paient pas au même rythme : sans ce ramené à l'année, « 7,99 € » a l'air moins
-    /// cher que « 59,99 € ».
+    /// cher que « 69,99 € ».
     var occurrencesPerYear: Decimal {
         switch self {
         case .week: 52
@@ -42,10 +42,14 @@ struct PaywallPlan: Identifiable, Equatable {
     let title: String
     let price: Decimal
     let period: PaywallPeriod
+    /// Jours d'essai. Zéro : rien n'est offert, et le bouton ne doit pas le dire.
+    let trialDays: Int
 
     var id: Kind { kind }
 
-    /// « 59,99 € »
+    var hasTrial: Bool { trialDays > 0 }
+
+    /// « 69,99 € »
     var displayPrice: String {
         PaywallPrice.text(price)
     }
@@ -58,7 +62,7 @@ struct PaywallPlan: Identifiable, Equatable {
     /// Le prix ramené au mois, pour les offres qui se paient d'un bloc.
     ///
     /// C'est **le seul chiffre qu'un étudiant sait comparer**. Personne ne divise
-    /// mentalement 59,99 par douze devant un paywall, et personne ne multiplie 7,99 par
+    /// mentalement 69,99 par douze devant un paywall, et personne ne multiplie 7,99 par
     /// cinquante-deux : le mois est l'unité dans laquelle un budget se pense.
     var monthlyEquivalent: String? {
         guard period == .year else { return nil }
@@ -88,8 +92,9 @@ enum PaywallCatalog {
         kind: .yearly,
         productID: "com.micabo.app.pro.yearly",
         title: "Annuel",
-        price: 59.99,
-        period: .year
+        price: 69.99,
+        period: .year,
+        trialDays: 3
     )
 
     static let weekly = PaywallPlan(
@@ -97,7 +102,18 @@ enum PaywallCatalog {
         productID: "com.micabo.app.pro.weekly",
         title: "Hebdomadaire",
         price: 7.99,
-        period: .week
+        period: .week,
+        trialDays: 0
+    )
+
+    /// Tarif réduit, hors paywall. Le chemin pour y accéder n'est pas encore ouvert.
+    static let discount = PaywallPlan(
+        kind: .yearly,
+        productID: "com.micabo.app.pro.yearly.discount",
+        title: "Annuel",
+        price: 39.99,
+        period: .year,
+        trialDays: 0
     )
 
     /// L'ordre de la liste est l'ordre d'affichage : l'offre recommandée d'abord.
@@ -122,7 +138,7 @@ enum PaywallCatalog {
     }
 }
 
-/// Écriture des sommes, dans la seule forme qu'on affiche : « 59,99 € ».
+/// Écriture des sommes, dans la seule forme qu'on affiche : « 69,99 € ».
 enum PaywallPrice {
     private static let formatter: NumberFormatter = {
         let formatter = NumberFormatter()

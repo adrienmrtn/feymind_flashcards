@@ -140,8 +140,9 @@ function FreeTierSection() {
             L&apos;annuel économise{" "}
             <span className="numeral font-bold text-accent">{pricing.savingsPercent()} %</span> - un
             nombre <strong className="font-semibold text-ink-secondary">calculé</strong> depuis les
-            deux prix, jamais écrit. L&apos;étudiant paie{" "}
-            {pricing.priceText(pricing.STUDENT_YEARLY.price)}, sans essai.
+            deux prix, jamais écrit. Un tarif discount à{" "}
+            {pricing.priceText(pricing.DISCOUNT_YEARLY.price)} existe dans le catalogue,
+            sans essai : il n&apos;est pas sur le paywall.
           </p>
           <PaywallPreview />
         </Card>
