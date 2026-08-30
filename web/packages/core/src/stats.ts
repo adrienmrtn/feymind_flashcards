@@ -94,6 +94,33 @@ export function knowledgeLevel(card: KnowledgeCard): KnowledgeLevel {
   return "review";
 }
 
+/** Une part du camembert. `start` et `sweep` sont des fractions de tour, 0 en haut. */
+export interface KnowledgeSlice {
+  id: KnowledgeLevel;
+  label: string;
+  count: number;
+  start: number;
+  sweep: number;
+}
+
+/** Répartit les niveaux en parts de camembert. Une part à zéro ne balaie rien. */
+export function knowledgePie(buckets: readonly KnowledgeBucket[]): KnowledgeSlice[] {
+  const total = buckets.reduce((sum, bucket) => sum + bucket.count, 0);
+  let cursor = 0;
+  return buckets.map((bucket) => {
+    const sweep = total > 0 ? bucket.count / total : 0;
+    const slice = {
+      id: bucket.id,
+      label: bucket.label,
+      count: bucket.count,
+      start: cursor,
+      sweep,
+    };
+    cursor += sweep;
+    return slice;
+  });
+}
+
 export function knowledgeDistribution(cards: readonly KnowledgeCard[]): KnowledgeBucket[] {
   const counts: Record<KnowledgeLevel, number> = {
     new: 0,

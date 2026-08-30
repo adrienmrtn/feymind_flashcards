@@ -106,6 +106,7 @@ export async function updateSettings(input: {
   revalidateUserData(user.id, "profile");
   revalidatePath("/app");
   revalidatePath("/app/profil");
+  revalidatePath("/app/reglages");
   revalidatePath("/app/importer");
   return { status: "ok" };
 }

@@ -10,6 +10,7 @@ import {
   Layers,
   LogOut,
   Menu,
+  Settings,
   Upload,
   UserRound,
   Users,
@@ -52,6 +53,7 @@ const GROUPS = [
     items: [
       { href: "/app/amis", label: "Amis", icon: Users, prefetch: true },
       { href: "/app/profil", label: "Profil", icon: UserRound, prefetch: true },
+      { href: "/app/reglages", label: "Réglages", icon: Settings, prefetch: true },
     ],
   },
 ] as const;
@@ -62,6 +64,7 @@ function sectionLabel(pathname: string): string {
   if (pathname.startsWith("/app/examens")) return "Examens";
   if (pathname.startsWith("/app/amis") || pathname.startsWith("/app/u/")) return "Amis";
   if (pathname.startsWith("/app/profil")) return "Profil";
+  if (pathname.startsWith("/app/reglages")) return "Réglages";
   if (
     pathname.startsWith("/app/cours") ||
     pathname.startsWith("/app/c/") ||

@@ -1,25 +1,16 @@
 import Link from "next/link";
 
 import {
-  DEFAULT_DAILY_MINUTES,
-  DEFAULT_SHEET_LENGTH,
   countryFor,
-  isSheetLength,
   knowledgeDistribution,
   mostReviewedCards,
   resolveStage,
   streak as currentStreak,
   bestStreak,
   studyCounts,
-  sheetLanguage,
 } from "@micabo/core";
 
-import { DeleteAccount } from "@/components/app/DeleteAccount";
-import { ProfileSettings } from "@/components/app/ProfileSettings";
-import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
-import { ReplayPaywallOnboarding } from "@/components/app/ReplayPaywallOnboarding";
-import { SignOutButton } from "@/components/app/SignOutButton";
-import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
+import { KnowledgePie } from "@/components/app/KnowledgePie";
 import { Flag } from "@/components/onboarding/Flag";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { loadNewCardBudget } from "@/lib/data/reviews";
@@ -29,8 +20,8 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * Le profil, **en une page posée**.
  *
- * Une tête, deux chiffres, puis de grandes cartes blanches. Les tuiles
- * se soulèvent au survol, les rangées aussi.
+ * Une tête, deux chiffres, le camembert de la maîtrise, les cartes les
+ * plus passées. Les réglages ont leur propre page.
  */
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -41,7 +32,7 @@ export default async function ProfilePage() {
       ? supabase
           .from("profiles")
           .select(
-            "display_name, username, country_code, study_level, subjects, institution_name, institution_id, daily_minutes, sheet_length, sheet_language",
+            "display_name, username, country_code, study_level",
           )
           .eq("id", user.id)
           .maybeSingle()
@@ -63,7 +54,6 @@ export default async function ProfilePage() {
 
   const country = countryFor(profile?.country_code);
   const stage = resolveStage(country.code, { level: profile?.study_level ?? null });
-  const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
   const due = studyCounts(
     cards.map((card) => ({
       id: card.id,
@@ -95,8 +85,6 @@ export default async function ProfilePage() {
     (logs as { card_id: string | null }[]).map((log) => ({ cardId: log.card_id })),
     cards.map((card) => ({ id: card.id, front: card.front })),
   );
-  const peak = Math.max(1, ...levels.map((level) => level.count));
-
   return (
     <div className="profile-page">
       <header className="flex items-center gap-4">
@@ -106,7 +94,7 @@ export default async function ProfilePage() {
         >
           {name.trim().charAt(0).toUpperCase() || "?"}
         </span>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
         <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">
           {name}
         </h1>
@@ -125,6 +113,13 @@ export default async function ProfilePage() {
           ) : null}
         </p>
         </div>
+        <Link
+          href={"/app/reglages" as never}
+          aria-label="Réglages"
+          className="pressable ml-auto flex size-11 shrink-0 items-center justify-center rounded-full text-ink-secondary hover:bg-surface-muted"
+        >
+          <SettingsGlyph />
+        </Link>
       </header>
 
       <section className="saas-card relative mt-6 grid overflow-hidden sm:grid-cols-2">
@@ -173,24 +168,7 @@ export default async function ProfilePage() {
             maîtrisées.
           </p>
         ) : (
-          <div className="mt-6 flex h-36 items-end gap-3">
-            {levels.map((level) => (
-              <div key={level.id} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                <span className="numeral text-[13px] font-semibold text-ink">{level.count}</span>
-                <div className="flex h-24 w-full items-end">
-                  <div
-                    className={`w-full rounded-t-md ${barTone(level.id)}`}
-                    style={{
-                      height: `${Math.max(level.count > 0 ? 8 : 4, Math.round((level.count / peak) * 100))}%`,
-                    }}
-                  />
-                </div>
-                <span className="text-center text-[11px] leading-tight text-ink-tertiary">
-                  {level.label}
-                </span>
-              </div>
-            ))}
-          </div>
+          <KnowledgePie buckets={levels} />
         )}
       </section>
 
@@ -217,72 +195,49 @@ export default async function ProfilePage() {
         )}
       </section>
 
-      <div className="relative mt-4 grid gap-4 lg:grid-cols-2">
-        <section className="saas-card overflow-hidden">
-          <p className="px-7 pt-7 text-[13px] text-ink-tertiary">Autour de toi</p>
-          <Link
-            href={"/app/amis" as never}
-            className="hover-row mt-3 flex items-center justify-between gap-4 px-7 py-4"
-          >
-            <span className="text-[15px] text-ink">Amis</span>
-            <span className="text-[13px] text-ink-tertiary">
-              {handle ? `@${handle}` : "Ajouter"}
-            </span>
-          </Link>
-          {exams.length > 0 ? (
-            <Link
-              href={"/app/examens" as never}
-              className="hover-row flex items-center justify-between gap-4 border-t border-hairline px-7 py-4"
-            >
-              <span className="text-[15px] text-ink">Examens</span>
-              <span className="numeral text-[13px] text-ink-tertiary">{exams.length}</span>
-            </Link>
-          ) : null}
-          <div className="border-t border-hairline px-7 py-6">
-            <SheetLanguageCard
-              initial={sheetLanguage(profile?.sheet_language, profile?.country_code)}
-              embedded
-            />
-          </div>
-        </section>
-
-        <ProfileSettings
-          initialName={profile?.display_name ?? ""}
-          initialUsername={handle}
-          initialMinutes={minutes}
-          initialLength={
-            isSheetLength(profile?.sheet_length) ? profile.sheet_length : DEFAULT_SHEET_LENGTH
-          }
-          initialSubjects={Array.isArray(profile?.subjects) ? profile.subjects : []}
-          initialSchool={profile?.institution_name ?? ""}
-          initialSchoolId={profile?.institution_id ?? null}
-        />
-      </div>
-
       <section className="saas-card relative mt-4 overflow-hidden">
-        <SignOutButton />
-        <div className="border-t border-hairline">
-          <ReplayOnboarding />
-        </div>
-        <div className="border-t border-hairline">
-          <ReplayPaywallOnboarding />
-        </div>
+        <p className="px-7 pt-7 text-[13px] text-ink-tertiary">Autour de toi</p>
+        <Link
+          href={"/app/amis" as never}
+          className="hover-row mt-3 flex items-center justify-between gap-4 px-7 py-4"
+        >
+          <span className="text-[15px] text-ink">Amis</span>
+          <span className="text-[13px] text-ink-tertiary">
+            {handle ? `@${handle}` : "Ajouter"}
+          </span>
+        </Link>
+        {exams.length > 0 ? (
+          <Link
+            href={"/app/examens" as never}
+            className="hover-row flex items-center justify-between gap-4 border-t border-hairline px-7 py-4"
+          >
+            <span className="text-[15px] text-ink">Examens</span>
+            <span className="numeral text-[13px] text-ink-tertiary">{exams.length}</span>
+          </Link>
+        ) : null}
+        <Link
+          href={"/app/reglages" as never}
+          className="hover-row flex items-center justify-between gap-4 border-t border-hairline px-7 py-4"
+        >
+          <span className="text-[15px] text-ink">Réglages</span>
+          <span className="text-[13px] text-ink-tertiary">Compte, rythme, fiches</span>
+        </Link>
       </section>
-
-      <DeleteAccount email={user?.email ?? ""} />
     </div>
   );
 }
 
-function barTone(level: string): string {
-  switch (level) {
-    case "new":
-      return "bg-ink-tertiary/30";
-    case "learning":
-      return "bg-ink-tertiary/55";
-    case "review":
-      return "bg-ink-secondary/70";
-    default:
-      return "bg-ink";
-  }
+function SettingsGlyph() {
+  return (
+    <svg aria-hidden viewBox="0 0 20 20" className="size-5">
+      <path
+        d="M8.2 2.8h3.6l.4 1.7a5.4 5.4 0 0 1 1.5.9l1.6-.6 1.8 3.1-1.3 1.2c.1.4.1.8.1 1.2s0 .8-.1 1.2l1.3 1.2-1.8 3.1-1.6-.6a5.4 5.4 0 0 1-1.5.9l-.4 1.7H8.2l-.4-1.7a5.4 5.4 0 0 1-1.5-.9l-1.6.6L2.9 12.7l1.3-1.2A5.6 5.6 0 0 1 4.1 10c0-.4 0-.8.1-1.2L2.9 7.6 4.7 4.5l1.6.6a5.4 5.4 0 0 1 1.5-.9l.4-1.4z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <circle cx="10" cy="10" r="2.1" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
 }
