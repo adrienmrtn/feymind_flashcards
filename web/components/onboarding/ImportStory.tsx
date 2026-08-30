@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { BrandMark } from "@/components/BrandMark";
+
 /**
  * Les formats qu'on dépose, absorbés par Micabo. **Un seul temps.**
  *
@@ -59,8 +61,8 @@ export function ImportStory() {
           <DocTile key={doc.id} doc={doc} index={index} progress={progress} />
         ))}
 
-        <div className="absolute left-0 top-0 z-10 flex h-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-pill bg-ink px-5 text-[15px] font-bold tracking-tight text-on-ink">
-          Micabo
+        <div className="absolute left-0 top-0 z-10 -translate-x-1/2 -translate-y-1/2">
+          <BrandMark size={52} />
         </div>
       </div>
     </div>

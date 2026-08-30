@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandMark } from "@/components/BrandMark";
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
 
 /**
@@ -12,9 +13,7 @@ export default function WelcomeStep() {
       footer={<ContinueButton enabled href="/commencer/importer" />}
     >
       <div className="flex h-full flex-col items-center justify-center">
-        <div className="flex h-12 items-center justify-center rounded-pill bg-ink px-5 text-[16px] font-bold tracking-tight text-on-ink">
-          Micabo
-        </div>
+        <BrandMark size={72} />
       </div>
     </Scaffold>
   );

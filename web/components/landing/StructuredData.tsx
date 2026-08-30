@@ -30,7 +30,7 @@ export function SiteStructuredData() {
         "@id": `${CANONICAL_URL}/#organization`,
         name: "Micabo",
         url: `${CANONICAL_URL}/`,
-        logo: `${CANONICAL_URL}/icon.svg`,
+        logo: `${CANONICAL_URL}/icon-512.png`,
         email: "bonjour@micabo.app",
         description:
           "Micabo transforme un cours en fiche et en flashcards, et les fait revenir par répétition espacée.",

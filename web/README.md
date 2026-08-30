@@ -79,5 +79,5 @@ qui meurt au déploiement suivant. L'app connectée, le parcours et les retours
 d'authentification restent hors index par en-tête `X-Robots-Tag` (`next.config.ts`), parce
 qu'une charpente marquée « use client » ne peut pas exporter de `metadata`.
 
-Le reste — hôte canonique, sitemap, données structurées, et les formats de favicon à
-déposer — est dans **[`docs/seo.md`](../docs/seo.md)**.
+Le reste — hôte canonique, sitemap, données structurées, favicon et logo — est dans
+**[`docs/seo.md`](../docs/seo.md)**.

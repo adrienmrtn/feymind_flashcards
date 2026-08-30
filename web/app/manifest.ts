@@ -8,11 +8,8 @@ import type { MetadataRoute } from "next";
  *
  * Les icônes vivent dans `public/`, à des adresses fixes : `icon.svg` sert d'abord, et les
  * PNG prennent le relais là où le SVG n'est pas lu (Android, Windows). `purpose: "maskable"`
- * autorise Android à rogner l'icône en cercle sans manger la lettre — c'est le seul cas où
+ * autorise Android à rogner l'icône en cercle sans manger le stylo — c'est le seul cas où
  * une icône a besoin d'une version à part, avec de la marge autour du dessin.
- *
- * Les PNG ne sont pas encore dans le dépôt. Un manifeste qui déclare une icône absente ne
- * casse rien : le navigateur retombe sur le SVG. `docs/seo.md` dit quoi déposer.
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {

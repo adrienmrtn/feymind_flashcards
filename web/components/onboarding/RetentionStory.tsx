@@ -9,6 +9,8 @@ import {
   curveWithoutReview,
 } from "@micabo/core";
 
+import { BrandMark } from "@/components/BrandMark";
+
 /**
  * **Deux courbes qui se tracent.** Sans méthode, on oublie ; avec Micabo, non.
  *
@@ -37,11 +39,9 @@ export function RetentionStory() {
       <div className="paper w-full rounded-group bg-surface p-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[14.5px] font-semibold text-ink">Ce qu&apos;il te reste, un mois après</p>
-          <span
-            aria-hidden
-            className="flex h-7 shrink-0 items-center rounded-pill bg-ink px-2.5 text-[11px] font-bold tracking-tight text-on-ink"
-          >
-            Micabo
+          <span aria-hidden className="flex h-7 shrink-0 items-center gap-1.5">
+            <BrandMark size={20} />
+            <span className="text-[11px] font-bold tracking-tight text-ink">Micabo</span>
           </span>
         </div>
 

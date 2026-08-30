@@ -1,3 +1,5 @@
+import { BrandMark } from "@/components/BrandMark";
+
 /**
  * Le téléphone, entre la mémoire et l'examen.
  *
@@ -30,7 +32,10 @@ export function IosAlso() {
         <div className="phone-shell">
           <div className="phone-notch" />
           <div className="phone-screen">
-            <p className="text-[8px] font-bold tracking-tight text-ink">Micabo</p>
+            <p className="flex items-center gap-1 text-[8px] font-bold tracking-tight text-ink">
+              <BrandMark size={10} />
+              Micabo
+            </p>
             <div className="mt-2 flex items-baseline justify-between gap-2">
               <p className="text-[9px] font-semibold text-ink">Devoir de SVT</p>
               <p className="rounded-pill bg-negative-soft px-1 py-px text-[7px] font-bold text-negative">

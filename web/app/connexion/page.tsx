@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 
+import { BrandLockup } from "@/components/BrandMark";
 import { SoftMesh } from "@/components/atmosphere/SoftAtmosphere";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -75,9 +76,12 @@ function ConnexionBody() {
     <div className="relative mx-auto flex min-h-svh w-full max-w-[440px] flex-col justify-center px-screen py-12">
       <SoftMesh />
       <div className="relative">
-        <Link href="/" className="text-[15px] font-bold text-ink">
-          Micabo
-        </Link>
+        <BrandLockup
+          href="/"
+          size={28}
+          className="text-ink"
+          wordClassName="text-[15px] font-bold text-ink"
+        />
 
         <h1 className="mt-8 text-[32px] font-bold leading-[1.08] tracking-display text-ink sm:text-[38px]">
           Content de te revoir.

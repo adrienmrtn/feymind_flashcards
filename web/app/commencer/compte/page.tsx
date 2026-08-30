@@ -5,6 +5,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { BrandLockup } from "@/components/BrandMark";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -101,9 +102,12 @@ function AccountStepBody() {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-6 sm:px-10 sm:py-8">
       <div className="rise mx-auto w-full max-w-[400px]">
-        <Link href="/commencer/parcours" className="text-[15px] font-bold text-ink">
-          Micabo
-        </Link>
+        <BrandLockup
+          href="/commencer/parcours"
+          size={28}
+          className="text-ink"
+          wordClassName="text-[15px] font-bold text-ink"
+        />
 
         <h1 className="mt-8 text-[32px] font-bold leading-[1.08] tracking-display text-ink sm:text-[38px]">
           Garde ta progression

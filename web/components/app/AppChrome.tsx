@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 
+import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/profile";
 import { requestPaywall } from "@/lib/paywall";
@@ -252,12 +253,7 @@ function MobileDrawer({
 function Brand() {
   return (
     <Link href="/app" className="flex items-center gap-3 px-4 py-5" aria-label="Micabo">
-      <span
-        aria-hidden
-        className="flex size-9 shrink-0 items-center justify-center rounded-[22%] bg-ink text-[17px] font-semibold text-on-ink"
-      >
-        m
-      </span>
+      <BrandMark size={36} />
       <span className="min-w-0">
         <span className="block truncate text-base font-semibold tracking-tight text-sidebar-accent-foreground">
           micabo

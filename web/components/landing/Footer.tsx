@@ -1,6 +1,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 
+import { BrandLockup } from "@/components/BrandMark";
 import { Separator } from "@/components/ui/separator";
 import { LANDING_NAV } from "@/lib/landing-sections";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
@@ -19,7 +20,12 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
       <div className="mx-auto max-w-page px-screen py-14">
         <div className="flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-[34ch]">
-            <p className="text-[15px] font-bold text-ink">Micabo</p>
+            <BrandLockup
+              href="/"
+              size={32}
+              className="text-ink"
+              wordClassName="text-[15px] font-bold text-ink"
+            />
             <p className="mt-2.5 text-[13.5px] leading-relaxed text-ink-secondary">
               Tes cours deviennent une fiche qu&apos;on relit, et des cartes qui reviennent au bon
               moment.

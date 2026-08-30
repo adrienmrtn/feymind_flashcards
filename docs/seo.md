@@ -35,7 +35,7 @@ explorables : sans exploration, la consigne n'arriverait jamais.
 | Titres, descriptions, Open Graph, canoniques | `web/app/layout.tsx` + chaque `page.tsx` |
 | `Organization`, `WebSite`, `SoftwareApplication` | `web/components/landing/StructuredData.tsx` |
 | `noindex` des écrans privés | `web/next.config.ts`, `X-Robots-Tag` |
-| Manifeste et icônes | `web/app/manifest.ts`, `web/public/icon.svg` |
+| Manifeste et icônes | `web/app/manifest.ts`, `web/public/icon.svg`, `BrandMark` |
 | Ancres de la vitrine | `web/lib/landing-sections.ts` |
 
 L'hôte canonique est écrit en clair : `https://www.micabo.app`. Il ne suit pas
@@ -47,88 +47,48 @@ même requête.
 Si la redirection est un jour inversée (`www` → nu), c'est cette constante qu'il faut
 changer, et elle seule.
 
-## Le favicon : quoi déposer, exactement
+## Le favicon : le stylo, coins arrondis
 
-Le SVG est déjà là (`web/public/icon.svg`) et suffit aux navigateurs de bureau modernes. Les
-fichiers ci-dessous complètent les plateformes qui ne lisent pas le SVG. Ils vont tous dans
-**`web/public/`**, avec **ces noms exacts** — le code les cherche là.
+Le rendu 3D (stylo blanc sur bleu) est la marque. Le fichier source est un **carré aux
+coins droits** : on lui pose un masque arrondi (~22 %) partout où l'icône s'affiche
+dans un onglet, une barre ou à côté du mot « Micabo ». iOS applique son propre masque :
+`apple-touch-icon.png` reste donc un carré plein.
+
+Tous les fichiers vivent dans `web/public/`. On les régénère depuis le PNG source :
+
+```bash
+node web/scripts/build-icons.mjs chemin/vers/stylo.png
+```
 
 | Fichier | Format | Taille | À quoi il sert |
 | --- | --- | --- | --- |
-| `icon.svg` | SVG | vectoriel | Onglets de bureau. **Déjà en place.** |
+| `icon.svg` | SVG + PNG embarqué, coins arrondis | — | Onglets de bureau |
+| `icon.png` | PNG, coins arrondis | 256 × 256 | Logo dans les pages |
+| `icon-32.png` / `icon-64.png` | PNG, coins arrondis | 32 / 64 | Relais PNG |
+| `icon-192.png` | PNG, coins arrondis | 192 × 192 | Android, onglets anciens |
+| `icon-512.png` | PNG, coins arrondis | 512 × 512 | Splash, `Organization.logo` |
 | `apple-touch-icon.png` | PNG 24 bits, **sans transparence** | 180 × 180 | Écran d'accueil iOS |
-| `icon-192.png` | PNG | 192 × 192 | Android, onglets anciens |
-| `icon-512.png` | PNG | 512 × 512 | Splash Android, installation |
 | `icon-maskable-512.png` | PNG | 512 × 512 | Android qui rogne en cercle |
-| `favicon.ico` | ICO, `16 + 32` en un seul fichier | — | Vieux Windows, agrégateurs |
+| `favicon.ico` | ICO, `16 + 32` | — | Vieux Windows, agrégateurs |
 
-### Le format le plus optimisé, si on n'en fait qu'un
-
-**SVG.** Un seul fichier, net à toutes les tailles, et de l'ordre de 300 octets contre
-plusieurs kilo-octets pour un PNG 512. C'est celui qui est déjà là.
-
-Le reste n'est pas du zèle : iOS ignore le SVG et affiche une capture grise de la page si
-`apple-touch-icon.png` manque, et Android a besoin d'un PNG pour l'installation.
-
-### Les trois règles qui décident du résultat
-
-**Dessiner pour 16 px, pas pour 512.** C'est la taille à laquelle un favicon est vu 99 % du
-temps. Un logotype complet y devient une tache. Une forme pleine et une seule lettre, oui —
-c'est ce que fait `icon.svg` : tuile verte, un `M` blanc tracé.
+### Les trois règles qui restent
 
 **Pas de transparence sur `apple-touch-icon.png`.** iOS pose le PNG sur un fond noir quand la
 couche alpha est vide. Fond plein, coins carrés : iOS arrondit lui-même.
 
 **De la marge sur la version maskable, et seulement sur elle.** Android rogne jusqu'à 20 % de
-chaque bord. Le dessin doit tenir dans le cercle central de 409 px sur les 512, sinon la
-lettre est coupée. C'est le seul fichier qui a besoin d'une composition à part.
+chaque bord. Le stylo doit tenir dans le cercle central, sinon la pointe est coupée.
 
-### Si l'on retouche `icon.svg`
-
-Le fichier est en ASCII pur et sans commentaire, et il doit le rester. Un SVG est du XML,
-avec deux règles qui ne pardonnent pas :
-
-- un commentaire ne peut pas contenir `--`, donc pas de nom de jeton comme `--color-accent` ;
-- un accent mal encodé fait échouer le parseur sur la ligne entière.
-
-Dans les deux cas le fichier est refusé en bloc et l'onglet retombe sur l'icône par défaut,
-sans rien afficher dans la console. Un commentaire dans un favicon est de toute façon du
-poids envoyé à chaque requête : l'explication va ici, pas dans le fichier.
-
-À vérifier après toute retouche :
+**`icon.svg` reste sans commentaire.** Un SVG est du XML : un `--` dans un commentaire, ou un
+accent mal encodé, fait échouer le parseur en silence et l'onglet retombe sur l'icône par
+défaut.
 
 ```bash
 xmllint --noout web/public/icon.svg && echo OK
 ```
 
-### Générer les PNG depuis le SVG
-
-```bash
-cd web/public
-
-# Les tailles courantes
-for s in 192 512; do
-  npx --yes sharp-cli -i icon.svg -o "icon-$s.png" resize $s $s
-done
-
-# iOS : fond plein, aucune transparence
-npx --yes sharp-cli -i icon.svg -o apple-touch-icon.png \
-  resize 180 180 -- flatten --background '#0b8a66'
-
-# Android maskable : le dessin à 64 %, centré, le reste en fond
-npx --yes sharp-cli -i icon.svg -o icon-maskable-512.png \
-  resize 328 328 -- extend --top 92 --bottom 92 --left 92 --right 92 \
-  --background '#0b8a66'
-```
-
-Pour le `.ico`, `png-to-ico` accepte plusieurs tailles et les empile dans un seul fichier :
-
-```bash
-npx --yes png-to-ico icon-192.png > favicon.ico
-```
-
-Rien à déclarer après coup : `web/app/layout.tsx` et `web/app/manifest.ts` pointent déjà vers
-ces noms.
+Rien à déclarer après une régénération : `web/app/layout.tsx` et `web/app/manifest.ts`
+pointent déjà vers ces noms. Le composant `BrandMark` lit `icon.png`.
 
 ## Les sitelinks : ce qui se fait et ce qui ne se fait pas
 

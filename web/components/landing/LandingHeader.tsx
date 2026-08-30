@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { BrandLockup } from "@/components/BrandMark";
 import { LANDING_NAV } from "@/lib/landing-sections";
 
 import { StartButton } from "./StartButton";
@@ -25,9 +24,12 @@ export function LandingHeader({ signedIn = false }: { signedIn?: boolean }) {
         Aller au contenu
       </a>
       <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-6 px-screen">
-        <Link href="/" className="shrink-0 text-[15px] font-bold tracking-tight text-foreground">
-          Micabo
-        </Link>
+        <BrandLockup
+          href="/"
+          size={28}
+          className="shrink-0 text-foreground"
+          wordClassName="text-[15px] font-bold tracking-tight text-foreground"
+        />
 
         {/* Les sections, nommées. Elles sont masquées sur mobile — quatre liens en
             plus d'un bouton ne tiennent pas sur 360 px, et le pied de page les

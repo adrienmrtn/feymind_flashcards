@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BrandLockup } from "@/components/BrandMark";
 import { Footer } from "@/components/landing/Footer";
 import { LEGAL_UPDATED } from "@/lib/legal";
 
@@ -20,9 +21,12 @@ export function LegalShell({
     <>
       <header className="border-b border-hairline-on-canvas">
         <div className="mx-auto flex h-14 max-w-page items-center justify-between px-screen">
-          <Link href="/" className="text-[15px] font-bold tracking-tight text-ink">
-            Micabo
-          </Link>
+          <BrandLockup
+            href="/"
+            size={28}
+            className="text-ink"
+            wordClassName="text-[15px] font-bold tracking-tight text-ink"
+          />
           <Link href="/" className="underline-draw text-[13.5px] text-ink-secondary">
             Retour à l&apos;accueil
           </Link>
