@@ -56,7 +56,7 @@ export default function SubjectsStep() {
                     className={`pressable flex items-center gap-1.5 rounded-pill px-3.5 py-2 text-[14px] transition-colors duration-hover ${
                       selected
                         ? "bg-accent-soft font-medium text-accent"
-                        : "bg-surface text-ink paper"
+                        : "bg-surface-muted text-ink shadow-[inset_0_0_0_1px_var(--color-stroke-strong)]"
                     }`}
                   >
                     <SubjectMark subject={subject} />

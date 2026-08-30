@@ -127,7 +127,9 @@ function Row({
       onClick={onSelect}
       aria-pressed={selected}
       className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-3.5 text-left transition-colors duration-hover ${
-        selected ? "bg-accent-soft" : "bg-surface paper"
+        selected
+          ? "bg-accent-soft"
+          : "bg-surface-muted shadow-[inset_0_0_0_1px_var(--color-stroke-strong)]"
       }`}
     >
       <Flag iso={iso} emoji={emoji} label="" className="h-[22px] w-[30px]" />
