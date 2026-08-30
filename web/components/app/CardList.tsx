@@ -12,14 +12,11 @@ import { createCard, deleteCard, updateCard } from "@/lib/actions/cards";
 import type { CardRow } from "@/lib/data/courses";
 
 /**
- * Les cartes d'un cours, **en table et modifiables.**
+ * Les cartes d'un cours, **en grille et modifiables.**
  *
- * C'est l'écran où le web bat le téléphone sans discussion : on corrige vingt cartes à la suite au
- * clavier, on voit d'un coup d'œil ce qui est neuf et ce qui revient bientôt.
- *
- * **Une carte écrite par un modèle doit pouvoir être corrigée.** L'édition s'ouvre dans une
- * feuille par-dessus la liste - pas en dessous de la rangée, et pas en plein écran : on garde
- * les voisines en vue, et on ferme d'une touche.
+ * Plus une pile de rangées : chaque carte a son propre bloc, comme sur l'étagère.
+ * On corrige toujours au clavier, dans une feuille par-dessus — les voisines restent
+ * en vue, et on ferme d'une touche.
  */
 export function CardList({
   courseId,
@@ -67,9 +64,9 @@ export function CardList({
       </div>
 
       {cards.length > 0 ? (
-        <div className="paper mt-4 overflow-hidden rounded-group bg-surface">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((card, index) => (
-            <Row
+            <Tile
               key={card.id}
               card={card}
               index={index}
@@ -98,7 +95,7 @@ export function CardList({
   );
 }
 
-function Row({
+function Tile({
   card,
   index,
   exam,
@@ -128,52 +125,46 @@ function Row({
     <button
       type="button"
       onClick={onEdit}
-      className={`hover-row flex w-full items-start gap-4 px-5 py-4 text-left ${
-        index > 0 ? "border-t border-hairline" : ""
-      }`}
+      className="flex h-full min-h-[11.5rem] flex-col rounded-2xl border border-border bg-card p-5 text-left shadow-xs/5 transition-[scale] duration-press ease-out-strong active:scale-[0.96]"
     >
-      <span
-        aria-hidden
-        className="numeral mt-0.5 w-6 shrink-0 text-[12px] font-semibold text-ink-tertiary"
-      >
-        {index + 1}
-      </span>
-
-      <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-medium leading-snug text-ink">
-          <InlineMarkup text={occlusion ? card.back : card.front} />
-        </span>
-        {occlusion ? (
-          <span className="mt-1.5 inline-flex rounded-pill bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
-            Schéma
-          </span>
-        ) : (
-          <span className="mt-1 block text-[14px] leading-snug text-ink-secondary">
-            <InlineMarkup text={card.back} />
-          </span>
-        )}
-        {exam ? (
-          <span className="mt-1.5 block">
-            <ExamMark name={exam.name} daysRemaining={exam.daysRemaining} />
-          </span>
-        ) : null}
-        {choices.length > 0 ? (
-          <span className="mt-1.5 block text-[12.5px] text-ink-tertiary">
-            {choices.length} propositions · bonne réponse n°
-            {(card.correct_choice_index ?? 0) + 1}
-          </span>
-        ) : null}
-      </span>
-
-      <span className="shrink-0 text-right">
-        <span className={`block text-[11px] font-medium ${stateTone(card.state)}`}>
+      <span className="flex items-start justify-between gap-3">
+        <span className="numeral text-[12px] font-semibold text-ink-tertiary">{index + 1}</span>
+        <span className={`text-[11px] font-medium ${stateTone(card.state)}`}>
           {stateLabel(card.state)}
         </span>
-        <span className="numeral mt-0.5 block text-[12px] text-ink-tertiary">
-          {card.state === "new"
-            ? labels[3]
-            : formatDelay((new Date(card.due_date).getTime() - Date.now()) / 1000)}
+      </span>
+
+      <span className="mt-3 line-clamp-4 text-[15px] font-medium leading-snug text-ink">
+        <InlineMarkup text={occlusion ? card.back : card.front} />
+      </span>
+
+      {occlusion ? (
+        <span className="mt-2 inline-flex w-fit rounded-pill bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
+          Schéma
         </span>
+      ) : (
+        <span className="mt-2 line-clamp-3 text-[14px] leading-snug text-ink-secondary">
+          <InlineMarkup text={card.back} />
+        </span>
+      )}
+
+      {choices.length > 0 ? (
+        <span className="mt-2 text-[12.5px] text-ink-tertiary">
+          {choices.length} propositions · bonne réponse n°
+          {(card.correct_choice_index ?? 0) + 1}
+        </span>
+      ) : null}
+
+      {exam ? (
+        <span className="mt-2">
+          <ExamMark name={exam.name} daysRemaining={exam.daysRemaining} />
+        </span>
+      ) : null}
+
+      <span className="numeral mt-auto pt-4 text-[12px] text-ink-tertiary">
+        {card.state === "new"
+          ? labels[3]
+          : formatDelay((new Date(card.due_date).getTime() - Date.now()) / 1000)}
       </span>
     </button>
   );
