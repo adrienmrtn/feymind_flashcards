@@ -10,7 +10,7 @@ export default function ExamPrepStep() {
   return (
     <Scaffold
       title="On te prépare à réussir tes examens."
-      footer={<ContinueButton enabled href="/commencer/pays" />}
+      footer={<ContinueButton enabled href="/commencer/retention" />}
     >
       <ExamPrepStory />
     </Scaffold>

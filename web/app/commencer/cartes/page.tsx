@@ -4,12 +4,12 @@ import { FlashcardStory } from "@/components/onboarding/FlashcardStory";
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
 
 /**
- * La fiche se découpe. Les cartes se retournent.
+ * Une session, en petit : on répond, on se note, la carte revient.
  */
 export default function CardsIntroStep() {
   return (
     <Scaffold
-      title="On transforme tes fiches en flashcards."
+      title="On t'aide à comprendre ton cours."
       footer={<ContinueButton enabled href="/commencer/reussir" />}
     >
       <FlashcardStory />

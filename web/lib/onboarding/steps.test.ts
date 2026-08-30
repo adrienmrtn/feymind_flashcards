@@ -7,8 +7,11 @@ describe("le parcours", () => {
     expect(STEPS.map((step) => step.path)).toEqual([
       "/commencer/bienvenue",
       "/commencer/importer",
+      "/commencer/fiches",
       "/commencer/cartes",
       "/commencer/reussir",
+      "/commencer/retention",
+      "/commencer/personnaliser",
       "/commencer/pays",
       "/commencer/niveau",
       "/commencer/matieres",

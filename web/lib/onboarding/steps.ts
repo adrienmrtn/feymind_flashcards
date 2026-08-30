@@ -15,8 +15,11 @@ export type OnboardingPath =
   | "/commencer"
   | "/commencer/bienvenue"
   | "/commencer/importer"
+  | "/commencer/fiches"
   | "/commencer/cartes"
   | "/commencer/reussir"
+  | "/commencer/retention"
+  | "/commencer/personnaliser"
   | "/commencer/pays"
   | "/commencer/niveau"
   | "/commencer/matieres"
@@ -34,8 +37,12 @@ export interface Step {
 export const STEPS: readonly Step[] = [
   { path: "/commencer/bienvenue", label: "Bienvenue", chrome: true },
   { path: "/commencer/importer", label: "Importe tes cours", chrome: true },
-  { path: "/commencer/cartes", label: "Tes flashcards", chrome: true },
+  { path: "/commencer/fiches", label: "Tes fiches", chrome: true },
+  { path: "/commencer/cartes", label: "Comprendre ton cours", chrome: true },
   { path: "/commencer/reussir", label: "Tes examens", chrome: true },
+  { path: "/commencer/retention", label: "La méthode", chrome: true },
+  // La charnière : ce qui précède montre le produit, ce qui suit pose les questions.
+  { path: "/commencer/personnaliser", label: "Personnalisation", chrome: true },
   { path: "/commencer/pays", label: "Ton pays", chrome: true },
   { path: "/commencer/niveau", label: "Ton niveau", chrome: true },
   { path: "/commencer/matieres", label: "Tes matières", chrome: true },

@@ -1,73 +1,171 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 
-import { DEMO_CARDS } from "@/components/demo/demo-course";
+import {
+  DETERMINISTIC_CONFIG,
+  REVIEW_RATINGS,
+  REVIEW_RATING_LABELS,
+  ReviewRating,
+  previewLabels,
+} from "@micabo/core";
+
+import { InlineMarkup } from "@/components/sheet/InlineMarkup";
+import { STORY_CARDS } from "@/components/onboarding/onboarding-cards";
 
 /**
- * Une fiche qui se découpe en cartes, et les cartes se retournent.
+ * **Une vraie session, en petit.**
  *
- * Trois seulement : dans la fenêtre du parcours, quatre s'écrasent. Le retournement
- * est le seul enchantement du tunnel - la vraie session, elle, ne pivote pas.
+ * On lit le recto, on ouvre l'indice si on cale, on voit la réponse, puis on se
+ * note de 1 à 4 — et les délais sous les boutons sont ceux que l'ordonnanceur
+ * calcule, pas des étiquettes écrites à la main. Une démonstration qui montre
+ * « 1 min » sans que ce soit vrai promet une app qui n'existe pas.
+ *
+ * Aucun pivot : la vraie session ne pivote pas non plus, et c'est elle qu'on
+ * montre ici.
  */
-
-const CARDS = DEMO_CARDS.slice(0, 3);
-
 export function FlashcardStory() {
-  const [beat, setBeat] = useState(0);
+  const [index, setIndex] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+  const [picked, setPicked] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setBeat(CARDS.length + 1);
-      return;
-    }
+  const card = STORY_CARDS[Math.min(index, STORY_CARDS.length - 1)]!;
 
-    const timers = [
-      window.setTimeout(() => setBeat(1), 180),
-      window.setTimeout(() => setBeat(2), 720),
-      window.setTimeout(() => setBeat(3), 1_240),
-      window.setTimeout(() => setBeat(4), 2_100),
-    ];
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, []);
+  // La carte est neuve : ses délais sont donc ceux d'un premier passage, avec
+  // les paliers d'apprentissage de l'app.
+  const labels = useMemo(
+    () =>
+      previewLabels(
+        {
+          state: "new",
+          intervalDays: 0,
+          easeFactor: DETERMINISTIC_CONFIG.startingEase,
+          repetitions: 0,
+          lapses: 0,
+          stepIndex: 0,
+          dueDate: new Date(),
+        },
+        { config: DETERMINISTIC_CONFIG },
+      ),
+    [],
+  );
+
+  function next() {
+    setRevealed(false);
+    setPicked(null);
+    setIndex((current) => (current + 1) % STORY_CARDS.length);
+  }
 
   return (
-    <div className="mx-auto grid w-full max-w-[420px] gap-2.5">
-      {CARDS.map((card, index) => {
-        const shown = beat > index;
-        const flipped = beat >= 4;
-        return (
-          <article
-            key={card.front}
-            className="overflow-hidden rounded-button border border-stroke bg-surface px-3.5 py-3"
-            style={{
-              opacity: shown ? 1 : 0,
-              transform: shown ? "translateY(0)" : "translateY(18px)",
-              transition:
-                "opacity 420ms var(--ease-out-strong), transform 420ms var(--ease-out-strong)",
-            }}
-          >
-            <span className="rounded-pill bg-accent-soft px-2 py-0.5 text-[9px] font-bold uppercase tracking-caps text-accent">
-              {card.kindLabel}
-            </span>
-            <p className="mt-1.5 text-[13.5px] font-semibold leading-snug text-ink">
-              {flipped ? card.back : card.front}
-            </p>
-            {!flipped && card.choices ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {card.choices.map((choice) => (
-                  <span
-                    key={choice}
-                    className="rounded-[8px] bg-surface-muted px-2 py-1 text-[10px] text-ink-secondary"
+    <div className="mx-auto w-full max-w-[420px]">
+      <div className="paper flex min-h-[15rem] flex-col rounded-group bg-surface p-4">
+        <div className="flex items-center justify-between gap-3">
+          <span className="rounded-pill bg-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-caps text-ink-tertiary">
+            {card.kindLabel}
+          </span>
+          <span className="numeral text-[11.5px] text-ink-tertiary">
+            {index + 1} / {STORY_CARDS.length}
+          </span>
+        </div>
+
+        <p className="mt-3 flex flex-1 items-center text-[16.5px] font-semibold leading-snug text-ink">
+          <InlineMarkup text={card.front} />
+        </p>
+
+        {card.choices ? (
+          <ul className="mt-3 space-y-1.5">
+            {card.choices.map((choice, choiceIndex) => {
+              const correct = choiceIndex === (card.answerIndex ?? 0);
+              const chosen = picked === choiceIndex;
+              const tone =
+                revealed && correct
+                  ? "bg-positive-soft font-medium text-positive"
+                  : revealed && chosen
+                    ? "bg-negative-soft text-negative"
+                    : "bg-surface-muted text-ink";
+              return (
+                <li key={choice}>
+                  <button
+                    type="button"
+                    disabled={revealed}
+                    onClick={() => {
+                      setPicked(choiceIndex);
+                      setRevealed(true);
+                    }}
+                    className={`pressable w-full rounded-button px-3 py-2 text-left text-[13.5px] ${tone}`}
                   >
                     {choice}
-                  </span>
-                ))}
-              </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
+
+        {revealed ? (
+          <div className="mt-3.5 border-t border-hairline pt-3.5">
+            <p className="text-[15px] leading-relaxed text-ink-reading">
+              <InlineMarkup text={card.back} />
+            </p>
+            {card.note ? (
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-tertiary">{card.note}</p>
             ) : null}
-          </article>
-        );
-      })}
+          </div>
+        ) : card.hint ? (
+          <details className="mt-3.5">
+            <summary className="cursor-pointer text-[12.5px] text-ink-tertiary">Un indice</summary>
+            <p className="mt-1.5 text-[13px] text-ink-secondary">{card.hint}</p>
+          </details>
+        ) : null}
+      </div>
+
+      <div className="mt-3">
+        {revealed ? (
+          <div className="grid grid-cols-4 gap-1.5">
+            {REVIEW_RATINGS.map((rating) => (
+              <button
+                key={rating}
+                type="button"
+                onClick={next}
+                className={`pressable rounded-button px-1 py-2.5 text-center shadow-[inset_0_0_0_1px_color-mix(in_srgb,currentColor_16%,transparent)] ${ratingTone(rating)}`}
+              >
+                <span className="block text-[12px] font-semibold leading-tight">
+                  {REVIEW_RATING_LABELS[rating]}
+                </span>
+                <span className="numeral mt-0.5 block text-[11px] opacity-70">
+                  {labels[rating]}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setRevealed(true)}
+            className="pressable inline-flex h-11 w-full items-center justify-center rounded-button bg-ink text-[14.5px] font-semibold text-on-ink"
+          >
+            Voir la réponse
+          </button>
+        )}
+
+        <p className="mt-2.5 text-center text-[11.5px] text-ink-tertiary">
+          {revealed ? "Tu te notes, Micabo choisit quand la carte revient." : "Essaie de répondre avant de retourner."}
+        </p>
+      </div>
     </div>
   );
+}
+
+/** Les couleurs des quatre boutons, celles de la vraie session. */
+function ratingTone(rating: number): string {
+  switch (rating) {
+    case ReviewRating.again:
+      return "bg-negative-soft text-negative";
+    case ReviewRating.hard:
+      return "bg-caution-soft text-caution";
+    case ReviewRating.good:
+      return "bg-positive-soft text-positive";
+    default:
+      return "bg-accent-soft text-accent";
+  }
 }

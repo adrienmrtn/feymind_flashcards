@@ -920,9 +920,11 @@ video {
   }
 }
 
-/* L'entrée d'un écran de parcours : il se pose, il ne surgit pas. */
+/* L'entrée d'un écran de parcours : il se pose, il ne surgit pas.
+   Court, parce qu'on enchaîne douze écrans : au-delà de 300 ms, chaque
+   « Continuer » se ressent comme une attente et non comme une entrée. */
 @utility rise {
-  animation: micabo-rise 480ms var(--ease-out-strong) both;
+  animation: micabo-rise 260ms var(--ease-out-strong) both;
 }
 
 /* L'ouverture d'une page de l'app, à chaque changement d'écran. */
