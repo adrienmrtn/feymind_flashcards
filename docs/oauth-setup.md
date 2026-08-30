@@ -132,16 +132,22 @@ Tableau de bord → **Authentication → Sign In / Providers → Apple** :
 
 | Champ | Valeur |
 | --- | --- |
-| Client IDs | `com.micabo.app.service`, `com.micabo.app` |
-| Secret Key (for OAuth) | contenu du fichier `.p8` |
+| Client IDs | `com.micabo.app.service, com.micabo.app` |
+| Secret Key (for OAuth) | le secret **généré** depuis le `.p8` (outil sur la page Apple de Supabase), pas le fichier brut |
 | Key ID | le Key ID de l'étape 2.3 |
 | Team ID | le Team ID du compte |
 
-**Les deux identifiants dans « Client IDs », séparés par une virgule, et c'est le point qui
-casse le plus souvent.** Le jeton d'identité rendu par le bouton natif porte comme audience le
-**bundle de l'app** (`com.micabo.app`), pas le Service ID ; celui d'un retour web porte le
-Service ID. Si un seul des deux est déclaré, l'un des deux chemins échoue avec « Unacceptable
-audience in id_token », un message qui ne dit pas lequel.
+**Le Service ID en premier.** Supabase présente le premier Client ID à Apple pour le flux
+web (`signInWithOAuth`). Si `com.micabo.app` est devant, iOS marche et le site échoue.
+
+**Les deux identifiants**, séparés par une virgule. Le jeton du bouton natif porte le
+**bundle de l'app** (`com.micabo.app`) ; celui d'un retour web porte le Service ID. Si un
+seul des deux est déclaré, l'un des deux chemins échoue avec « Unacceptable audience in
+id_token », un message qui ne dit pas lequel.
+
+Le secret généré expire **tous les six mois**. Sans lui, le bouton web répond
+`Unsupported provider: missing OAuth secret` — le fournisseur est allumé, la clé n'est
+pas posée. iOS n'a pas besoin de ce secret (il envoie un `id_token` natif).
 
 ### 2.5 Pour que Apple marche **sur le web**
 
@@ -228,7 +234,8 @@ toujours une **Redirect URL** manquante dans le tableau de bord.
 | Symptôme | Cause |
 | --- | --- |
 | Les boutons n'apparaissent pas dans l'app | Le fournisseur n'est pas activé côté Supabase. C'est voulu : l'écran ne montre que ce qui marche. |
-| « Unacceptable audience in id_token » | Le bundle de l'app manque dans « Client IDs » du fournisseur Apple (étape 2.4). |
+| `Unsupported provider: missing OAuth secret` | Apple est allumé, le champ Secret Key est vide. Coller le secret généré depuis le `.p8` (étape 2.4). |
+| « Unacceptable audience in id_token » | Le bundle de l'app manque dans « Client IDs », ou le Service ID n'est pas en premier. |
 | Le Safari s'ouvre puis revient sans rien | `micabo://auth-callback` manque dans les Redirect URLs. |
 | « provider is not enabled » | Le fournisseur est configuré mais l'interrupteur est resté sur off. |
 | La connexion Apple échoue en simulateur | Un compte iCloud est nécessaire dans les réglages du simulateur. |
