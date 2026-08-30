@@ -1,6 +1,8 @@
+import type { Route } from "next";
 import Link from "next/link";
 
 import { Separator } from "@/components/ui/separator";
+import { LANDING_NAV } from "@/lib/landing-sections";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 
 /**
@@ -25,6 +27,21 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
           </div>
 
           <div className="flex flex-wrap gap-x-14 gap-y-8 text-[13.5px]">
+            {/* La même structure qu'en haut, en clair. C'est le pied de page qui porte les
+                sections sur mobile, où la barre n'a pas la place de les montrer. */}
+            <div>
+              <p className="eyebrow mb-3 text-ink-tertiary">Le produit</p>
+              <ul className="space-y-1.5 text-ink-secondary">
+                {LANDING_NAV.map((item) => (
+                  <li key={item.href}>
+                    <Link href={item.href as Route} className="underline-draw" data-print="bare">
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             <div>
               <p className="eyebrow mb-3 text-ink-tertiary">Le site</p>
               <ul className="space-y-1.5 text-ink-secondary">

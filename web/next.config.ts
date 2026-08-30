@@ -40,6 +40,27 @@ const config: NextConfig = {
           // trop tôt, elle se relâche à chaque ajout et finit par tout autoriser.
         ],
       },
+      // **Les écrans privés sortent de l'index par en-tête, pas par `metadata`.**
+      //
+      // Le parcours et l'app ont des charpentes marquées « use client », et une charpente
+      // client ne peut pas exporter de `metadata` : il n'y a donc pas d'endroit unique où
+      // poser un `noindex` en React pour ces branches. L'en-tête, lui, couvre le segment
+      // entier, y compris les pages qu'on ajoutera demain sans y penser.
+      //
+      // `follow` reste autorisé : ces pages renvoient vers la vitrine et les pages de cadre,
+      // et couper le suivi ferait perdre ces liens.
+      ...[
+        "/app",
+        "/app/:path*",
+        "/commencer",
+        "/commencer/:path*",
+        "/auth/:path*",
+        "/connexion",
+        "/fondations",
+      ].map((source) => ({
+        source,
+        headers: [{ key: "X-Robots-Tag", value: "noindex, follow" }],
+      })),
     ];
   },
 };

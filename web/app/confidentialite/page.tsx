@@ -5,9 +5,10 @@ import { LegalSection, LegalShell } from "@/components/legal/LegalShell";
 import { LEGAL_CONTACT, LEGAL_EDITOR, LEGAL_IOS_BUNDLE, LEGAL_SITE, TERMS_PATH } from "@/lib/legal";
 
 export const metadata: Metadata = {
-  title: "Confidentialité - Micabo",
+  title: "Confidentialité",
   description:
     "Ce que Micabo retient de vous, sur iPhone et sur le site, et ce que vous pouvez en faire.",
+  alternates: { canonical: "/confidentialite" },
 };
 
 /**

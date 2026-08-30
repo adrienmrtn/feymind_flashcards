@@ -12,11 +12,17 @@ import { RetentionChart } from "@/components/landing/RetentionChart";
 import { Reveal } from "@/components/landing/Reveal";
 import { SourceMarquee } from "@/components/landing/SourceMarquee";
 import { currentUser } from "@/lib/data/user";
+import { LANDING_SECTIONS } from "@/lib/landing-sections";
 
+/**
+ * `absolute` court-circuite le gabarit `%s - Micabo` de la charpente : sans ça, la marque
+ * serait écrite deux fois dans le titre de la page qui la porte.
+ */
 export const metadata: Metadata = {
-  title: "Micabo - apprends tout, plus vite",
+  title: { absolute: "Micabo - apprends tout, plus vite" },
   description:
     "Dépose un polycopié, une photo de tes notes ou une vidéo de cours. Micabo en écrit la fiche que tu relis, en tire les cartes qui te la font retenir, et les fait revenir juste avant que tu l'oublies.",
+  alternates: { canonical: "/" },
 };
 
 /**
@@ -59,6 +65,7 @@ export default async function LandingPage({
         <SourceMarquee />
 
         <Section
+          id={LANDING_SECTIONS.method}
           eyebrow="Pourquoi ça tient"
           title="Relire ne suffit pas. Se souvenir, oui."
           note="Ce qu'on a dû retrouver de mémoire tient - surtout si ça revient au bon moment, de moins en moins souvent."
@@ -66,13 +73,17 @@ export default async function LandingPage({
           <RetentionChart />
         </Section>
 
-        <section className="mx-auto mt-28 max-w-page px-screen sm:mt-36">
+        <section
+          id={LANDING_SECTIONS.iphone}
+          className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36"
+        >
           <Reveal>
             <IosAlso />
           </Reveal>
         </section>
 
         <Section
+          id={LANDING_SECTIONS.exam}
           eyebrow="Mode examen"
           title="Tu donnes la date. Micabo réorganise tout."
           note="La répétition espacée ignore le jour J. Le mode examen lui donne une date butoir, et resserre les cartes à l'approche de l'épreuve."
@@ -80,7 +91,12 @@ export default async function LandingPage({
           <ExamMode />
         </Section>
 
-        <Section eyebrow="Questions" title="Ce qu'on nous demande." note="">
+        <Section
+          id={LANDING_SECTIONS.questions}
+          eyebrow="Questions"
+          title="Ce qu'on nous demande."
+          note=""
+        >
           <Questions />
         </Section>
 
@@ -93,18 +109,22 @@ export default async function LandingPage({
 }
 
 function Section({
+  id,
   eyebrow,
   title,
   note,
   children,
 }: {
+  id?: string;
   eyebrow: string;
   title: string;
   note: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mx-auto mt-28 max-w-page px-screen sm:mt-36">
+    // `scroll-mt` : la barre de la vitrine est collante, et une ancre sans marge
+    // dépose le titre derrière elle.
+    <section id={id} className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36">
       <Reveal>
         <p className="eyebrow text-ink-tertiary">{eyebrow}</p>
         <h2 className="mt-2.5 max-w-[26ch] text-[30px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[40px]">
