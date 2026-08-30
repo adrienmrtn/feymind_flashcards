@@ -61,3 +61,15 @@ export const canImportNow = cache(async (): Promise<boolean> => {
     courses.map((course) => ({ isFromLibrary: course.is_from_library })),
   );
 });
+
+/**
+ * Combien de cours l'étudiant a écrits lui-même.
+ *
+ * Les cours repris de la bibliothèque n'y sont pas, exactement comme dans
+ * `canImportCourse` : c'est l'import qui déclenche l'offre cadeau, et reprendre
+ * la fiche de quelqu'un n'est pas un import.
+ */
+export const ownedCourseCount = cache(async (): Promise<number> => {
+  const courses = await listCourses();
+  return courses.filter((course) => !course.is_from_library).length;
+});

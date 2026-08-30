@@ -35,7 +35,8 @@ import { createClient } from "@/lib/supabase/server";
  * ## Ce qu'il manque, précisément
  *
  * `STRIPE_SECRET_KEY`. Les trois `price_…` sont dans `pricing.STORE_PRODUCTS` ;
- * une variable d'environnement les remplace (test / live) si elle est posée.
+ * `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY` et `STRIPE_PRICE_YEARLY_DISCOUNT`
+ * les remplacent (test / live) si elles sont posées.
  */
 
 export interface CheckoutResult {
@@ -49,18 +50,19 @@ function stripeKey(): string | null {
 }
 
 /** L'identifiant de prix Stripe. L'env gagne s'il n'est pas vide ; sinon le catalogue. */
-function priceId(kind: pricing.PlanKind): string {
+function priceId(plan: pricing.CatalogPlan): string {
   return priceIdFor(
-    kind,
+    plan,
     {
       yearly: process.env.STRIPE_PRICE_YEARLY,
       weekly: process.env.STRIPE_PRICE_WEEKLY,
+      yearlyDiscount: process.env.STRIPE_PRICE_YEARLY_DISCOUNT,
     },
     pricing.stripePriceId,
   );
 }
 
-export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutResult> {
+export async function startCheckout(kind: pricing.CatalogPlan): Promise<CheckoutResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -78,7 +80,7 @@ export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutRes
 
   const key = stripeKey();
   const price = priceId(kind);
-  const plan = pricing.planFor(kind);
+  const plan = pricing.catalogPlanFor(kind);
 
   if (!key) {
     return {

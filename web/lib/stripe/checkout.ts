@@ -18,11 +18,14 @@ export function envOrCatalogPrice(
 }
 
 export function priceIdFor(
-  kind: pricing.PlanKind,
-  env: { yearly?: string; weekly?: string },
-  catalog: (plan: "yearly" | "weekly") => string,
+  plan: pricing.CatalogPlan,
+  env: { yearly?: string; weekly?: string; yearlyDiscount?: string },
+  catalog: (plan: pricing.CatalogPlan) => string,
 ): string {
-  if (kind === "yearly") return envOrCatalogPrice(env.yearly, catalog("yearly"));
+  if (plan === "yearly") return envOrCatalogPrice(env.yearly, catalog("yearly"));
+  if (plan === "yearly_discount") {
+    return envOrCatalogPrice(env.yearlyDiscount, catalog("yearly_discount"));
+  }
   return envOrCatalogPrice(env.weekly, catalog("weekly"));
 }
 

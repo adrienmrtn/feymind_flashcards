@@ -52,13 +52,22 @@ export const YEARLY: Plan = {
   trialDays: 3,
 };
 
-/** Tarif réduit, hors paywall. Le chemin pour y accéder n'est pas encore ouvert. */
+/**
+ * Le tarif réduit, celui de l'offre cadeau.
+ *
+ * Il n'est **pas** sur le paywall ordinaire : on y entre par le cadeau posé
+ * après le premier cours, et par lui seul. `monthlyPrice` est écrit et non
+ * calculé — 39,99 ÷ 12 fait 3,3325, qu'`Intl` rendrait « 3,33 € ». Le paywall
+ * affiche donc 3,30 € / mois **et** la somme réellement prélevée juste à côté :
+ * un prix mensuel sans son annuel serait une allégation qu'on ne facture pas.
+ */
 export const DISCOUNT_YEARLY: Plan = {
   kind: "yearly",
   productId: "com.micabo.app.pro.yearly.discount",
   title: "Annuel",
   price: 39.99,
   period: "year",
+  monthlyPrice: 3.3,
   trialDays: 0,
 };
 
@@ -116,9 +125,29 @@ export function planFor(kind: PlanKind): Plan {
   return PLANS.find((plan) => plan.kind === kind) ?? RECOMMENDED_PLAN;
 }
 
+/** L'offre derrière un identifiant de catalogue, discount compris. */
+export function catalogPlanFor(plan: CatalogPlan): Plan {
+  if (plan === "yearly_discount") return DISCOUNT_YEARLY;
+  return planFor(plan);
+}
+
 /** Les deux cartes du paywall, dans l'ordre. Le discount n'y figure pas. */
 export function offers(): readonly [Plan, Plan] {
   return [YEARLY, WEEKLY];
+}
+
+/**
+ * Le prix barré à côté du tarif réduit : l'annuel plein.
+ *
+ * On barre **l'annuel**, pas la somme de cinquante-deux semaines. Comparer une
+ * remise à l'offre la plus chère du catalogue gonfle le pourcentage et se lit
+ * comme une remise inventée.
+ */
+export const DISCOUNT_REFERENCE = YEARLY;
+
+/** Ce que le tarif réduit fait économiser sur l'annuel plein, en pourcentage entier. */
+export function discountSavingsPercent(): number {
+  return savingsPercent(DISCOUNT_YEARLY, DISCOUNT_REFERENCE);
 }
 
 export function hasTrial(plan: Plan): boolean {
