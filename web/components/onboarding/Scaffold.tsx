@@ -1,11 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { previousPath, type OnboardingPath } from "@/lib/onboarding/steps";
+import { nextPath, previousPath, type OnboardingPath } from "@/lib/onboarding/steps";
 
 /**
  * La charpente d'un écran de parcours, **dans la carte**.
@@ -29,7 +30,17 @@ export function Scaffold({
   footer: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const back = previousPath(pathname);
+
+  // **L'écran suivant est chargé pendant qu'on lit celui-ci.** Sans ça, chaque
+  // « Continuer » attendait le réseau, et c'est ce qui donnait la latence entre
+  // deux écrans. Le retour est préchargé aussi : on y revient souvent.
+  useEffect(() => {
+    const ahead = nextPath(pathname);
+    router.prefetch(ahead as Route);
+    if (back) router.prefetch(back as Route);
+  }, [back, pathname, router]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6 pb-5 pt-3 sm:px-8 sm:pb-6">
@@ -100,6 +111,10 @@ export function ContinueButton({
 }) {
   const router = useRouter();
 
+  useEffect(() => {
+    if (href) router.prefetch(href as Route);
+  }, [href, router]);
+
   return (
     <Button
       type="button"
@@ -157,8 +172,12 @@ export function ChoiceRow({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
+      /* Le fond de la carte est blanc : une réponse blanche dessus ne se voyait
+         qu'à son ombre. Le gris la détache, et le filet tient sa forme. */
       className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-3.5 text-left transition-colors duration-hover ${
-        selected ? "bg-accent-soft" : "bg-surface paper"
+        selected
+          ? "bg-accent-soft"
+          : "bg-surface-muted shadow-[inset_0_0_0_1px_var(--color-stroke-strong)]"
       }`}
     >
       <span aria-hidden className="emoji text-[24px]">
