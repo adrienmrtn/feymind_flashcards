@@ -19,6 +19,6 @@ describe("oauthFailureMessage", () => {
         "apple",
         '{"code":400,"error_code":"validation_failed","msg":"Unsupported provider: missing OAuth secret"}',
       ),
-    ).toMatch(/lien par courriel/);
+    ).toMatch(/secret OAuth manquant/);
   });
 });

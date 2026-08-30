@@ -128,6 +128,30 @@ C'est l'identifiant que Supabase présente à Apple. Il est distinct de l'App ID
 
 ### 2.4 Brancher dans Supabase
 
+**C'est ici que le web casse aujourd'hui.** Le fournisseur Apple est allumé
+(`apple: true` sur `/auth/v1/settings`), mais le champ **Secret Key** est vide.
+Le bouton répond alors :
+
+```
+Unsupported provider: missing OAuth secret
+```
+
+iOS n'a pas besoin de ce secret (il envoie un `id_token` natif). Le site, si.
+
+À coller, dans cet ordre, sur Authentication → Sign In / Providers → Apple :
+
+1. Ouvrir le fournisseur Apple.
+2. **Generate Secret** (l'outil est sur cette même page) à partir du `.p8`,
+   du Key ID et du Team ID.
+3. Coller le JWT généré dans **Secret Key (for OAuth)** — pas le fichier `.p8`.
+4. Client IDs, **Service ID en premier** :
+   ```
+   com.micabo.app.service, com.micabo.app
+   ```
+5. Enregistrer. Réessayer le bouton Apple sur le site. Aucun redéploiement.
+
+Le secret expire **tous les six mois**. Le régénérer au même endroit.
+
 Tableau de bord → **Authentication → Sign In / Providers → Apple** :
 
 | Champ | Valeur |
