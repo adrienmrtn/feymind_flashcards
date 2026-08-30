@@ -143,7 +143,7 @@ describe("la semaine glissante", () => {
     expect(days.map((day) => day.planned)).toEqual([0, 0, 0, 2, 0, 1, 0]);
   });
 
-  it("marque d'une flamme les jours déjà révisés", () => {
+  it("compte les cartes révisées sur les jours passés, pas seulement aujourd'hui", () => {
     const days = weekStrip([], [day(-3), day(-3), day(0), day(4)], now);
 
     expect(days.map((day) => day.reviewed)).toEqual([
@@ -155,8 +155,26 @@ describe("la semaine glissante", () => {
       false,
       false,
     ]);
-    expect(days[0]?.reviewCount).toBe(2);
+    expect(days.map((day) => day.reviewCount)).toEqual([2, 0, 0, 1, 0, 0, 0]);
+  });
+
+  it("empile révisées et à réviser sur le même jour", () => {
+    const days = weekStrip(
+      [
+        { dueDate: day(0), state: "review" },
+        { dueDate: day(0), state: "review" },
+        { dueDate: day(1), state: "review" },
+      ],
+      [day(-1), day(-1), day(-1), day(0)],
+      now,
+    );
+
+    expect(days[2]?.reviewCount).toBe(3);
+    expect(days[2]?.planned).toBe(0);
     expect(days[3]?.reviewCount).toBe(1);
+    expect(days[3]?.planned).toBe(2);
+    expect(days[4]?.planned).toBe(1);
+    expect(days[4]?.reviewCount).toBe(0);
   });
 });
 

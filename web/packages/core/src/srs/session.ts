@@ -9,13 +9,15 @@
  * qui ne sert à rien : le palier existe pour espacer deux passages quand il y a autre
  * chose à faire, pas pour immobiliser quelqu'un qui a fini son paquet. Quand il ne reste
  * que des cartes d'apprentissage, on les sert **tout de suite** - c'est la fenêtre
- * d'anticipation d'Anki (20 min), appliquée sans écran intermédiaire.
+ * d'anticipation, calée sur le palier « Correct » d'une neuve (10 min), appliquée
+ * sans écran intermédiaire.
  *
- * « Tout est à jour » n'apparaît donc que lorsque la file est vraiment vide.
+ * « Tout est à jour » n'apparaît donc que lorsqu'il ne reste plus aucune carte
+ * à ≤ 10 minutes.
  */
 
-/** Une carte replanifiée dans la fenêtre d'Anki (20 min) revient dans la même session. */
-export const LEARN_AHEAD_SECONDS = 20 * 60;
+/** Une carte replanifiée à dix minutes ou moins revient dans la même session. */
+export const LEARN_AHEAD_SECONDS = 10 * 60;
 
 export function returnsInSession(
   dueDate: Date,

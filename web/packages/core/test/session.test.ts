@@ -23,9 +23,14 @@ describe("returnsInSession", () => {
     expect(returnsInSession(due, now)).toBe(true);
   });
 
-  it("garde une carte à quinze minutes, Hard d'une rechute", () => {
+  it("laisse sortir une carte à quinze minutes, Hard d'une rechute", () => {
     const due = new Date(now.getTime() + 15 * 60 * 1000);
-    expect(returnsInSession(due, now)).toBe(true);
+    expect(returnsInSession(due, now)).toBe(false);
+  });
+
+  it("garde une carte pile à dix minutes, et rien au-delà", () => {
+    expect(returnsInSession(new Date(now.getTime() + 10 * 60 * 1000), now)).toBe(true);
+    expect(returnsInSession(new Date(now.getTime() + 10 * 60 * 1000 + 1), now)).toBe(false);
   });
 
   it("garde une carte à une minute", () => {
@@ -61,6 +66,25 @@ describe("advanceSession", () => {
 
   it("n'est finie que lorsque la file est vide", () => {
     expect(advanceSession([], now).done).toBe(true);
+  });
+
+  it("ajoute la carte à dix minutes à la fin du paquet, et ne termine pas avant", () => {
+    const pack = enqueueInitial(["a", "b"], now);
+    const first = advanceSession(pack, now);
+    expect(first.current).toBe("a");
+
+    const afterA = [
+      ...first.pending,
+      { card: "a", availableAt: new Date(now.getTime() + 10 * 60 * 1000) },
+    ];
+    const second = advanceSession(afterA, now);
+    expect(second.current).toBe("b");
+    expect(second.done).toBe(false);
+
+    const third = advanceSession(second.pending, now);
+    expect(third.current).toBe("a");
+    expect(third.done).toBe(false);
+    expect(advanceSession(third.pending, now).done).toBe(true);
   });
 
   it("sert d'abord la carte la plus ancienne, pas celle qui vient d'être ratée", () => {

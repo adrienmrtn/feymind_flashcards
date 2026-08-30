@@ -41,9 +41,9 @@ import { gradeCard } from "@/lib/actions/review";
  * l'autre - c'est la fréquence qui décide, pas le goût.
  *
  * La file est celle d'Anki SM-2 : une carte notée « 1 min », « 6 min » ou « 10 min »
- * revient dans **cette** session, et sans compte à rebours - quand il ne reste qu'elle,
- * on la sert tout de suite.
- * « Tout est à jour » n'apparaît que lorsque la file est vide.
+ * revient **à la fin du paquet**. Tant qu'il en reste une à ≤ 10 minutes, la
+ * session n'est pas finie — et quand le paquet est vide, on la sert tout de suite,
+ * sans compte à rebours.
  *
  * L'écriture part au serveur **après** l'affichage de la carte suivante : le doigt n'attend pas le
  * réseau. Si une écriture échoue, on le dit sans défaire la session - la carte reviendra, ce qui

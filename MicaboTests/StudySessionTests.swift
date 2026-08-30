@@ -288,7 +288,7 @@ final class StudySessionTests: XCTestCase {
     }
 
     /// « Correct » sur une neuve avance à dix minutes, toujours en apprentissage.
-    /// La carte reste dans la session (fenêtre d'anticipation 20 min).
+    /// La carte reste dans la session (fenêtre d'anticipation 10 min).
     func testGoodKeepsTheCardInTheSessionAtSecondStep() {
         let card = makeCard("neuve", state: .new, due: -60, interval: 0)
 

@@ -66,9 +66,9 @@ final class StudySession {
         let easeAfter: Double
     }
 
-    /// Une carte replanifiée à moins de dix minutes revient dans la même session.
-    /// Aligné sur `LEARN_AHEAD_SECONDS` de `@micabo/core` : 20 min, comme Anki.
-    static let learnAheadWindow: TimeInterval = 20 * 60
+    /// Une carte replanifiée à dix minutes ou moins revient dans la même session.
+    /// Aligné sur `LEARN_AHEAD_SECONDS` de `@micabo/core`.
+    static let learnAheadWindow: TimeInterval = 10 * 60
 
     private(set) var pending: [Entry] = []
     private(set) var current: Flashcard?
