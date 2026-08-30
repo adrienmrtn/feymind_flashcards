@@ -5,13 +5,11 @@ import SwiftUI
 /// les écrans poussés. Depuis que le balayage entre onglets a disparu, c'est **le seul
 /// moyen de changer de page** : elle ne peut donc pas se permettre d'être discrète.
 ///
-/// **Elle est en verre, et elle flotte.** C'était une bande pleine largeur collée au bas de
-/// l'écran, avec un flou noyé sous un aplat crème à 72 % : autant dire un bandeau opaque, et
-/// un bandeau opaque qui touche ce qu'une page ancre au-dessus de lui donne un bouton qu'on
-/// croit coupé. La barre est maintenant une pastille posée à distance des bords, sur un flou
-/// franc et un filet clair, avec sa propre ombre : on voit passer le contenu dessous, donc on
-/// voit qu'elle est au-dessus, et l'air qu'elle laisse est déclaré (`MicaboLayout.tabBarGap`)
-/// plutôt que deviné.
+/// **Elle est opaque, et elle est collée au bas.** Plus de verre, plus de pastille qui
+/// flotte : c'est un `UITabBar` classique — une bande pleine largeur, un filet du dessus,
+/// le fond de la page qui continue sous l'indicateur d'accueil. L'air qu'elle laisse
+/// au-dessus d'elle (`MicaboLayout.tabBarGap`) sert aux boutons de page, pas à la faire
+/// léviter.
 ///
 /// Sa hauteur est fixée par `MicaboLayout.tabBarHeight` et non mesurée sur ses libellés :
 /// c'est cette hauteur que les pages réservent, et une réserve qui varie est une réserve
@@ -51,30 +49,13 @@ struct MicaboTabBar: View {
             }
         }
         .frame(height: MicaboLayout.tabBarHeight)
-        .background {
-            // Le verre, en trois couches et pas une : le flou du système, une teinte crème
-            // très diluée pour que la barre reste dans la palette du papier, et un filet
-            // clair qui lui donne son bord. Un flou seul prend la couleur de ce qui passe
-            // dessous et disparaît sur un fond clair.
-            Capsule(style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay {
-                    Capsule(style: .continuous)
-                        .fill(MicaboColor.canvas.opacity(0.3))
-                }
-                .overlay {
-                    Capsule(style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.55), lineWidth: 0.8)
-                }
-                .shadow(color: Color.black.opacity(0.1), radius: 18, x: 0, y: 8)
+        .background(MicaboColor.canvas)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(MicaboColor.stroke)
+                .frame(height: 1 / 3)
         }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, MicaboLayout.tabBarGap)
-        // Sur un téléphone à bouton, la zone sûre du bas est nulle : sans ces quatre points,
-        // la pastille vient buter contre le bord de l'écran, ce qui est tout le contraire de
-        // flotter. L'ombre, elle, va plus loin que ça et se fait couper : c'est ce qu'on
-        // veut, quatre points de plus se paieraient sur la hauteur réservée aux pages.
-        .padding(.bottom, MicaboSpacing.xxs)
+        .background(MicaboColor.canvas.ignoresSafeArea(edges: .bottom))
     }
 }
 
@@ -128,7 +109,7 @@ extension View {
     }
 
     /// La même réserve, pour une page qui n'ancre rien en bas : sans elle, sa dernière
-    /// rangée se lit à travers le verre de la barre.
+    /// rangée passe sous la barre.
     func tabBarClearance() -> some View {
         tabBarClearance { EmptyView() }
     }

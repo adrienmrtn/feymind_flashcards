@@ -96,26 +96,11 @@ struct WelcomeStepView: View {
     }
 
     private var loginSheet: some View {
-        VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-            Text("Content de te revoir.")
-                .font(MicaboFont.hanken(28, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Text("Connecte-toi pour retrouver tes cours, tes cartes et ta série.")
-                .font(MicaboFont.hanken(15))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-
+        VStack(spacing: MicaboSpacing.md) {
             SignInFailureNote()
 
             if checkingAccount {
-                HStack(spacing: 10) {
-                    ProgressView()
-                    Text("On cherche ton compte…")
-                        .font(MicaboFont.hanken(14.5, weight: .medium))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                }
+                ProgressView()
             }
 
             Spacer(minLength: 0)

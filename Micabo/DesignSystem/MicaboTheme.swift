@@ -193,17 +193,18 @@ enum MicaboLayout {
     /// Elle est déclarée ici et pas déduite du contenu : c'est cette hauteur que
     /// `safeAreaInset` réserve aux pages, et une barre qui se mesure elle-même donne une
     /// réserve qui change avec la longueur des libellés.
-    static let tabBarHeight: CGFloat = 60
+    static let tabBarHeight: CGFloat = 49
 
     /// Air laissé entre la barre d'onglets et ce qu'une page ancre juste au-dessus d'elle :
     /// le « + » de Cours, le bouton de session de Réviser.
     ///
-    /// Sans cet air, les deux se touchent, et un bouton collé sous une barre translucide se
-    /// lit comme un bouton à moitié caché — c'est exactement ce qu'on nous a signalé.
-    static let tabBarGap: CGFloat = 12
+    /// La barre n'est plus en verre : elle est opaque, collée au bas, comme un `UITabBar`.
+    /// Un bouton collé dessus se lit encore comme un bouton à moitié caché, d'où ces
+    /// huit points — pas les douze du flottement d'avant.
+    static let tabBarGap: CGFloat = 8
 
-    /// **Tout ce que la barre d'onglets occupe**, de son air du dessus au bord de la zone
-    /// sûre : c'est la hauteur qu'une page racine doit se réserver.
+    /// **Tout ce que la barre d'onglets occupe**, hors zone sûre : c'est la hauteur
+    /// qu'une page racine doit se réserver.
     ///
     /// Elle est déclarée ici parce qu'il faut la réserver **à la main**, et ce n'est pas un
     /// choix. La barre est posée par la racine, à l'extérieur des pages, et chaque
@@ -212,10 +213,9 @@ enum MicaboLayout {
     /// racine dessine donc la barre sans jamais rien réserver à l'intérieur des pages, et
     /// tout ce qu'une page ancrait en bas se retrouvait sous la barre.
     ///
-    /// La somme suit exactement ce que `MicaboTabBar` dessine : son air du dessus, sa
-    /// hauteur, et les quatre points qui l'empêchent de buter sur le bord d'un téléphone
-    /// sans zone sûre.
-    static var tabBarSpace: CGFloat { tabBarGap + tabBarHeight + MicaboSpacing.xxs }
+    /// La somme suit exactement ce que `MicaboTabBar` dessine : le filet, la rangée
+    /// d'onglets, et l'air au-dessus pour les boutons de page.
+    static var tabBarSpace: CGFloat { tabBarGap + tabBarHeight }
 }
 
 /// Typographie de l'app : Hanken Grotesk, embarquée et enregistrée par `FontLoader`.
