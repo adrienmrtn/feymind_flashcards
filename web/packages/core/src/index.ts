@@ -202,6 +202,9 @@ export * as entitlement from "./entitlement";
 // Les offres, dont le pourcentage d'économie est calculé et jamais écrit.
 export * as pricing from "./pricing";
 
+// L'offre cadeau : une heure sur le paywall, vingt-quatre heures sur la pastille.
+export * as discount from "./discount";
+
 // Les deux palettes qui sont des données.
 export {
   COURSE_ACCENTS,

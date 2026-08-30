@@ -167,7 +167,10 @@ export async function importFromText(input: {
   if (insertError) return { status: "error", message: insertError.message };
 
   revalidateUserData(user.id, "courses");
-  revalidatePath("/app");
+  // **La charpente aussi**, et pas seulement les pages : c'est elle qui compte les cours,
+  // et c'est ce compte qui décide du bouton d'import et de l'offre cadeau. Sans ça, on
+  // arrive sur sa première fiche avec un « zéro cours » vieux d'une seconde.
+  revalidatePath("/app", "layout");
   revalidatePath("/app/cours");
   return { status: "ok", courseId: id };
 }

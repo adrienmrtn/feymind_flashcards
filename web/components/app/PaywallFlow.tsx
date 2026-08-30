@@ -8,6 +8,7 @@ import { ThinkingOrb } from "thinking-orbs";
 import { pricing } from "@micabo/core";
 
 import { startCheckout } from "@/lib/actions/checkout";
+import { isOfferClaimed } from "@/lib/discount";
 import {
   isPaywallDismissed,
   isPaywallPending,
@@ -88,7 +89,10 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
       // L'accueil, lui, laisse le tableau de bord se poser d'abord.
       const delay = force || debugReplay ? 0 : 980;
       timer = window.setTimeout(() => {
-        if (!cancelled) setOpen(true);
+        // Le cadeau a pu se présenter pendant ces 980 ms. Deux cartes empilées
+        // ne se lisent pas, et celle qui porte le tarif réduit passe devant.
+        if (cancelled || isOfferClaimed()) return;
+        setOpen(true);
       }, delay);
     }
 

@@ -21,7 +21,8 @@ describe("envOrCatalogPrice", () => {
 });
 
 describe("priceIdFor", () => {
-  const catalog = (plan: "yearly" | "weekly") => (plan === "yearly" ? "price_year" : "price_week");
+  const catalog = (plan: "yearly" | "weekly" | "yearly_discount") =>
+    plan === "yearly" ? "price_year" : plan === "weekly" ? "price_week" : "price_discount";
 
   it("prend le weekly d'env, pas le catalogue, dès qu'il est posé", () => {
     expect(
@@ -31,6 +32,11 @@ describe("priceIdFor", () => {
 
   it("ne laisse pas un STRIPE_PRICE_WEEKLY vide masquer le catalogue", () => {
     expect(priceIdFor("weekly", { weekly: "" }, catalog)).toBe("price_week");
+  });
+
+  it("sert le tarif réduit, par env puis par catalogue", () => {
+    expect(priceIdFor("yearly_discount", { yearlyDiscount: "price_d" }, catalog)).toBe("price_d");
+    expect(priceIdFor("yearly_discount", {}, catalog)).toBe("price_discount");
   });
 });
 

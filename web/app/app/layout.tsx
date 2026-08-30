@@ -2,10 +2,11 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { AppChrome } from "@/components/app/AppChrome";
+import { DiscountHost } from "@/components/app/DiscountOffer";
 import { PaywallHost } from "@/components/app/PaywallFlow";
 import { entitlement } from "@micabo/core";
 
-import { canImportNow, readEntitlement } from "@/lib/data/entitlement";
+import { canImportNow, ownedCourseCount, readEntitlement } from "@/lib/data/entitlement";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,7 +42,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   );
 }
 
+/**
+ * Les deux offres, montées une fois pour toute l'app.
+ *
+ * Le cadeau passe **avant** le paywall ordinaire quand il a quelque chose à
+ * dire : deux cartes qui s'ouvrent l'une sur l'autre ne se lisent pas, et celle
+ * qui porte un prix réduit est celle qu'on veut voir lue.
+ */
 async function PaywallGate() {
-  const right = await readEntitlement();
-  return <PaywallHost isPaid={entitlement.isPaid(right)} />;
+  const [right, courses] = await Promise.all([readEntitlement(), ownedCourseCount()]);
+  const isPaid = entitlement.isPaid(right);
+  return (
+    <>
+      <PaywallHost isPaid={isPaid} />
+      <DiscountHost isPaid={isPaid} courseCount={courses} />
+    </>
+  );
 }

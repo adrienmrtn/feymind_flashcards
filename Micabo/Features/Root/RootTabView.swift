@@ -46,6 +46,17 @@ struct RootTabView: View {
                 MicaboTabBar()
             }
         }
+        // La pastille du cadeau est posée ici, hors des pages, pour la même raison que la
+        // barre : son décompte ne doit pas repartir de zéro à chaque changement d'onglet.
+        // Elle monte au-dessus de la barre quand la barre est là, et se rabat au-dessus
+        // d'un bouton d'écran poussé sinon.
+        .overlay(alignment: .bottomTrailing) {
+            DiscountBadgeHost(
+                bottomInset: router.isAtRoot
+                    ? MicaboLayout.tabBarSpace + MicaboSpacing.sm
+                    : MicaboLayout.bottomBarClearance
+            )
+        }
         .tint(MicaboColor.accent)
         .environment(router)
     }
