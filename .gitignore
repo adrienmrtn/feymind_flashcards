@@ -8,3 +8,9 @@ __pycache__/
 node_modules/
 .next/
 .vercel/
+
+# Écrits par `next dev` à chaque lancement (`generate-agent-files.js`). Ce sont des notes
+# pour les agents, régénérées depuis la version de Next installée : suivies, elles
+# apparaissent dans des diffs qui ne parlent pas d'elles.
+AGENTS.md
+CLAUDE.md
