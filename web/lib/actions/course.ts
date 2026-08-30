@@ -26,6 +26,7 @@ import {
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
+import { previewYouTubeOnServer, readYouTubeOnServer } from "@/lib/import/youtube-server";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -167,6 +168,9 @@ export async function importFromText(input: {
 
 /** L'aperçu d'une vidéo, avant de dépenser quoi que ce soit. */
 export async function youtubePreview(url: string, languages?: string[]) {
+  const local = await previewYouTubeOnServer(url, languages?.[0] ?? "fr");
+  if (local.status === "ok") return local;
+
   const supabase = await createClient();
   const { data, error } = await supabase.functions.invoke("youtube-transcript", {
     body: { url, metadataOnly: true, languages: languages?.slice(0, 6) },
@@ -178,6 +182,9 @@ export async function youtubePreview(url: string, languages?: string[]) {
 
 /** Les sous-titres seuls, sans écrire la fiche : le repli quand l'onglet n'a pas pu lire. */
 export async function youtubeTranscript(url: string, languages?: string[]) {
+  const local = await readYouTubeOnServer(url, languages ?? ["fr", "en"]);
+  if (local.status === "ok") return local;
+
   const supabase = await createClient();
   const { data, error } = await supabase.functions.invoke("youtube-transcript", {
     body: { url, languages: languages?.slice(0, 6) },

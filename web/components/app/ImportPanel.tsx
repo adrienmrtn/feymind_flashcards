@@ -143,20 +143,17 @@ export function ImportPanel({
     if (phase === "lecture" || phase === "ecriture") return;
     setFailure(null);
     setPhase("lecture");
-    const local = await previewYouTubeInBrowser(link);
-    if (local.status === "ok") {
-      showDraft({
-        text: "",
-        title: local.video.title,
-        sourceName: local.video.title,
-        source: "youtube",
-        video: local.video,
-      });
-      return;
-    }
+    const [local, remote] = await Promise.all([
+      previewYouTubeInBrowser(link),
+      youtubePreview(link, preferredLanguages()),
+    ]);
+    const fromServer = remoteVideo(remote);
+    const video = fromServer?.captionsKnown
+      ? fromServer
+      : local.status === "ok"
+        ? local.video
+        : fromServer;
 
-    const remote = await youtubePreview(link, preferredLanguages());
-    const video = remoteVideo(remote);
     if (video) {
       showDraft({
         text: "",
@@ -169,7 +166,13 @@ export function ImportPanel({
     }
 
     setPhase("repos");
-    setFailure(remote.status === "error" ? remote.message : local.message);
+    setFailure(
+      remote.status === "error"
+        ? remote.message
+        : local.status === "error"
+          ? local.message
+          : "La page de la vidéo n'a pas pu être lue.",
+    );
   }
 
   async function generateVideo() {
@@ -661,21 +664,26 @@ function remoteVideo(
     author?: unknown;
     thumbnailUrl?: unknown;
     durationSeconds?: unknown;
+    captions?: unknown;
     captionLanguages?: unknown;
+    captionsKnown?: unknown;
   };
   if (typeof raw.id !== "string" || raw.id.length === 0) return null;
-  const captions = Array.isArray(raw.captionLanguages)
-    ? raw.captionLanguages.flatMap((entry) => {
-      if (!entry || typeof entry !== "object") return [];
-      const item = entry as { code?: unknown; name?: unknown; isAutomatic?: unknown };
-      if (typeof item.code !== "string" || item.code.length === 0) return [];
-      return [{
-        code: item.code,
-        name: typeof item.name === "string" ? item.name : item.code,
-        isAutomatic: item.isAutomatic === true,
-      }];
-    })
-    : [];
+  const rawCaptions = Array.isArray(raw.captions)
+    ? raw.captions
+    : Array.isArray(raw.captionLanguages)
+      ? raw.captionLanguages
+      : [];
+  const captions = rawCaptions.flatMap((entry) => {
+    if (!entry || typeof entry !== "object") return [];
+    const item = entry as { code?: unknown; name?: unknown; isAutomatic?: unknown };
+    if (typeof item.code !== "string" || item.code.length === 0) return [];
+    return [{
+      code: item.code,
+      name: typeof item.name === "string" ? item.name : item.code,
+      isAutomatic: item.isAutomatic === true,
+    }];
+  });
   return {
     id: raw.id,
     title: typeof raw.title === "string" && raw.title.length > 0 ? raw.title : "Vidéo YouTube",
@@ -685,6 +693,7 @@ function remoteVideo(
       : `https://i.ytimg.com/vi/${raw.id}/hqdefault.jpg`,
     durationSeconds: typeof raw.durationSeconds === "number" ? raw.durationSeconds : 0,
     captions,
+    captionsKnown: raw.captionsKnown === true || captions.length > 0,
   };
 }
 

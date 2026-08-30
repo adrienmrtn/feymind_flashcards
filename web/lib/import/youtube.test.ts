@@ -7,6 +7,7 @@ import {
   parseCaptionXml,
   parseJson3,
   parseVtt,
+  youtubeBlockingReason,
   youtubeDurationLabel,
 } from "./youtube";
 
@@ -22,6 +23,27 @@ describe("extractVideoId", () => {
     expect(extractVideoId("dQw4w9WgXcQ")).toBeNull();
     expect(isYouTubeUrl("https://vimeo.com/123")).toBe(false);
     expect(isYouTubeUrl("https://youtu.be/dQw4w9WgXcQ")).toBe(true);
+  });
+});
+
+describe("youtubeBlockingReason", () => {
+  const base = {
+    id: "dQw4w9WgXcQ",
+    title: "Test",
+    author: "",
+    thumbnailUrl: "",
+    durationSeconds: 60,
+    captions: [] as { code: string; name: string; isAutomatic: boolean }[],
+  };
+
+  it("n'interdit pas une vidéo dont on n'a pas encore lu les pistes", () => {
+    expect(youtubeBlockingReason(base)).toBeNull();
+  });
+
+  it("interdit seulement quand les pistes ont été lues et sont vides", () => {
+    expect(youtubeBlockingReason({ ...base, captionsKnown: true })).toBe(
+      "Cette vidéo n'a pas de piste de sous-titres.",
+    );
   });
 });
 

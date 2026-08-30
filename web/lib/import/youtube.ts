@@ -43,6 +43,11 @@ export interface YouTubePreview {
   thumbnailUrl: string;
   durationSeconds: number;
   captions: YouTubeCaption[];
+  /**
+   * Vrai quand on a vraiment interrogé les pistes. Un aperçu oEmbed
+   * sans liste ne veut pas dire « pas de sous-titres ».
+   */
+  captionsKnown?: boolean;
 }
 
 export function extractVideoId(raw: string): string | null {
@@ -98,7 +103,7 @@ export function youtubeDurationLabel(seconds: number): string | null {
 }
 
 export function youtubeBlockingReason(video: YouTubePreview): string | null {
-  if (video.captions.length === 0) {
+  if (video.captionsKnown && video.captions.length === 0) {
     return "Cette vidéo n'a pas de piste de sous-titres.";
   }
   if (video.durationSeconds > 0 && video.durationSeconds > MAX_DURATION_SECONDS) {
@@ -117,11 +122,11 @@ export async function previewYouTubeInBrowser(
   }
 
   const language = preferredLanguages()[0] ?? "fr";
-  const fromPlayer = await previewFromInnerTube(id, language);
-  if (fromPlayer) return { status: "ok", video: fromPlayer };
+  const fromPlayer = await withTimeout(previewFromInnerTube(id, language), 2_500);
+  if (fromPlayer) return { status: "ok", video: { ...fromPlayer, captionsKnown: true } };
 
-  const fromInvidious = await previewFromInvidious(id, language);
-  if (fromInvidious) return { status: "ok", video: fromInvidious };
+  const fromInvidious = await withTimeout(previewFromInvidious(id, language), 2_500);
+  if (fromInvidious) return { status: "ok", video: { ...fromInvidious, captionsKnown: true } };
 
   const oembed = await fetchOEmbed(id);
   if (oembed) {
@@ -135,6 +140,7 @@ export async function previewYouTubeInBrowser(
         thumbnailUrl: oembed.thumbnailUrl,
         durationSeconds: 0,
         captions: listed.map((code) => ({ code, name: code, isAutomatic: false })),
+        captionsKnown: listed.length > 0,
       },
     };
   }
@@ -377,6 +383,15 @@ function withCaptionFormat(baseUrl: string, format: string): string {
     const separator = stripped.includes("?") ? "&" : "?";
     return `${stripped}${separator}fmt=${format}`;
   }
+}
+
+function withTimeout<T>(promise: Promise<T | null>, ms: number): Promise<T | null> {
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) => {
+      setTimeout(() => resolve(null), ms);
+    }),
+  ]);
 }
 
 async function previewFromInvidious(
