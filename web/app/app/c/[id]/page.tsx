@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { courseAccent, courseAudienceLabel, entitlement, resolveEmoji } from "@micabo/core";
 
+import { GenerateCardsCta } from "@/components/app/GenerateCardsCta";
 import { ReviewCta } from "@/components/app/ReviewCta";
 import { SheetReader } from "@/components/app/SheetReader";
 import { VisibilityPicker } from "@/components/app/VisibilityPicker";
@@ -66,9 +67,8 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
         </p>
       ) : null}
 
-      {/* L'espace des cartes reste en tête, bien visible. Générer et réviser
-          flottent en bas à droite : ce sont les gestes du cours, pas des
-          rangées de plus dans la fiche. */}
+      {/* Sans paquet, le CTA d'écriture tient la place. Avec un paquet,
+          on ouvre l'atelier, et la révision flotte. */}
       {cards.length > 0 ? (
         <Link
           href={`/app/c/${course.id}/cartes` as never}
@@ -106,26 +106,9 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
       ) : null}
 
       {cards.length === 0 ? (
-        <Link
-          href={`/app/c/${course.id}/cartes?generer=1` as never}
-          className="mt-7 flex w-full items-center gap-4 rounded-2xl border border-border bg-card px-6 py-5"
-          data-print="hide"
-        >
-          <span
-            aria-hidden
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-tile bg-surface-muted text-[28px]"
-          >
-            ✨
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[18px] font-bold leading-tight text-ink">
-              Générer des cartes
-            </span>
-            <span className="mt-1 block text-[14px] text-ink-secondary">
-              Tu choisis le nombre et les formats — questions, trous, QCM.
-            </span>
-          </span>
-        </Link>
+        <div className="mt-7" data-print="hide">
+          <GenerateCardsCta href={`/app/c/${course.id}/cartes?generer=1`} />
+        </div>
       ) : (
         <ReviewCta href={`/app/reviser?cours=${course.id}`} floating />
       )}

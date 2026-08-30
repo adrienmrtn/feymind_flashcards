@@ -17,6 +17,7 @@ import {
 
 import { CountStepper } from "@/components/app/CountStepper";
 import { Float } from "@/components/app/Float";
+import { GenerateCardsCta } from "@/components/app/GenerateCardsCta";
 import { generateCards } from "@/lib/actions/course";
 
 /**
@@ -123,25 +124,7 @@ export function GenerateCards({
     return (
       <div>
         {existing === 0 ? (
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-5 text-left"
-          >
-            <span
-              aria-hidden
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-tile bg-surface-muted text-[24px]"
-            >
-              ✨
-            </span>
-            <span className="min-w-0">
-              <span className="block text-[16.5px] font-bold text-ink">Générer les cartes</span>
-              <span className="mt-1 block text-[13.5px] leading-relaxed text-ink-secondary">
-                Choisis tes formats - questions, trous, QCM - et Micabo écrit les cartes à
-                partir de la fiche.
-              </span>
-            </span>
-          </button>
+          <GenerateCardsCta onClick={() => setOpen(true)} />
         ) : (
           <button
             type="button"
