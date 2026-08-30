@@ -13,13 +13,14 @@ import { createClient } from "@/lib/supabase/client";
  *
  * Porté depuis `PersonalizingStepView` : les réponses sont déjà là, rien ne se calcule
  * vraiment, mais un écran qui annonce qu'il construit un parcours puis disparaît en une
- * seconde n'a rien construit. Quatre phases, onze secondes, un anneau qui fait son tour,
- * et c'est l'étudiant qui appuie pour continuer.
+ * seconde n'a rien construit. Quatre phases, un anneau qui fait son tour, et c'est
+ * l'étudiant qui appuie pour continuer.
  *
  * S'il a déjà une session, le bouton ouvre l'app - le compte est derrière lui.
  */
 
-const DURATION_MS = 11_000;
+/** Onze secondes au départ, un tiers de moins depuis : l'attente se sentait. */
+const DURATION_MS = 7_700;
 
 const PHASES = [
   {
