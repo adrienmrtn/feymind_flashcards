@@ -158,13 +158,36 @@ struct SupabaseDatabase {
     /// Appelle une fonction PostgREST (`/rpc/…`). Le corps porte les arguments
     /// sous leurs noms SQL.
     func rpc(_ name: String, arguments: [String: String] = [:]) async throws {
+        _ = try await invokeRPC(name, arguments: arguments, prefer: "return=minimal")
+    }
+
+    /// Même appel, en lisant la réponse. C'est ce dont a besoin un RPC qui rend
+    /// des lignes (`week_review_ranking`), et pas seulement un accusé de réception.
+    func rpc<T: Decodable>(
+        _ type: T.Type,
+        _ name: String,
+        arguments: [String: String] = [:]
+    ) async throws -> T {
+        let data = try await invokeRPC(name, arguments: arguments, prefer: nil)
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw Failure.server(status: 200, message: "Réponse illisible pour \(name).")
+        }
+    }
+
+    private func invokeRPC(
+        _ name: String,
+        arguments: [String: String],
+        prefer: String?
+    ) async throws -> Data {
         let body = try JSONSerialization.data(withJSONObject: arguments)
-        _ = try await send(
+        return try await send(
             method: "POST",
             path: "rpc/\(name)",
             query: [],
             body: body,
-            prefer: "return=minimal"
+            prefer: prefer
         )
     }
 

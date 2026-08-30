@@ -41,6 +41,9 @@ final class SocialService {
     private(set) var friends: [Person] = []
     private(set) var incoming: [Person] = []
     private(set) var outgoing: [Person] = []
+    /// Cartes passées depuis lundi, soi-même et le cercle. Vide tant qu'on n'a
+    /// pas d'amis, ou pas de compte.
+    private(set) var weekRanking: [WeekReviewRanking.Row] = []
     private(set) var isLoading = false
     private(set) var failure: String?
 
@@ -94,9 +97,33 @@ final class SocialService {
             outgoing = links.filter { !$0.isAccepted && $0.requester_id == me }.compactMap { link in
                 person(people[link.addressee_id], relation: .requested)
             }
+            weekRanking = await loadWeekRanking(me: me)
             failure = nil
         } catch {
             failure = describe(error)
+        }
+    }
+
+    /// Relit le classement sans toucher au graphe des amitiés. L'écran Profil
+    /// le rappelle en s'ouvrant : une session qui vient de se terminer doit
+    /// bouger le chiffre tout de suite.
+    func refreshWeekRanking() async {
+        guard isReady, let me = auth.user?.id else {
+            weekRanking = []
+            return
+        }
+        weekRanking = await loadWeekRanking(me: me)
+    }
+
+    private func loadWeekRanking(me: UUID) async -> [WeekReviewRanking.Row] {
+        do {
+            let records = try await database.rpc(
+                [WeekReviewRanking.Record].self,
+                "week_review_ranking"
+            )
+            return WeekReviewRanking.rows(from: records, me: me)
+        } catch {
+            return []
         }
     }
 
@@ -105,6 +132,7 @@ final class SocialService {
         friends = []
         incoming = []
         outgoing = []
+        weekRanking = []
         failure = nil
     }
 
