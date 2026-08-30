@@ -167,6 +167,9 @@ export async function suspendCard(cardId: string): Promise<{ status: "ok" | "err
     .eq("user_id", user.id)
     .eq("id", cardId);
 
+  // Une carte mise de côté sort des compteurs, et ces compteurs sont maintenant lus depuis le
+  // cache des cartes : sans ce mot, l'écran d'avant continuerait à l'annoncer comme due.
+  revalidateUserData(user.id, "cards");
   revalidatePath("/app/reviser");
   return { status: error ? "error" : "ok" };
 }
