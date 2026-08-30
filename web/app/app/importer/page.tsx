@@ -3,7 +3,7 @@ import { DEFAULT_SHEET_LENGTH, isSheetLength } from "@micabo/core";
 import { ImportPanel } from "@/components/app/ImportPanel";
 import { SecondCourseCard } from "@/components/app/SecondCourseCard";
 import { canImportNow } from "@/lib/data/entitlement";
-import { createClient } from "@/lib/supabase/server";
+import { readProfile } from "@/lib/data/profile";
 
 /**
  * L'import : **une zone de dépôt**, et deux échappatoires.
@@ -18,20 +18,11 @@ import { createClient } from "@/lib/supabase/server";
  * La longueur de fiche part de **ce que le profil a retenu** - la colonne que l'iPhone écrit aussi.
  */
 export default async function ImportPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: profile } = user
-    ? await supabase.from("profiles").select("sheet_length").eq("id", user.id).maybeSingle()
-    : { data: null };
+  const [profile, canImport] = await Promise.all([readProfile(), canImportNow()]);
 
   const initialLength = isSheetLength(profile?.sheet_length)
     ? profile.sheet_length
     : DEFAULT_SHEET_LENGTH;
-
-  const canImport = await canImportNow();
 
   return (
     <>

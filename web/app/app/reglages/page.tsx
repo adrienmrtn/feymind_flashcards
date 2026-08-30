@@ -12,8 +12,8 @@ import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
 import { ReplayPaywallOnboarding } from "@/components/app/ReplayPaywallOnboarding";
 import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
 import { SignOutButton } from "@/components/app/SignOutButton";
+import { readProfile } from "@/lib/data/profile";
 import { currentUser } from "@/lib/data/user";
-import { createClient } from "@/lib/supabase/server";
 
 /**
  * Les réglages, **à part du profil**.
@@ -23,19 +23,7 @@ import { createClient } from "@/lib/supabase/server";
  * s'écrivait en bas du profil n'a plus à se cacher sous les statistiques.
  */
 export default async function SettingsPage() {
-  const supabase = await createClient();
-  const user = await currentUser();
-
-  const profile = user
-    ? await supabase
-        .from("profiles")
-        .select(
-          "display_name, username, country_code, subjects, institution_name, institution_id, daily_minutes, sheet_length, sheet_language",
-        )
-        .eq("id", user.id)
-        .maybeSingle()
-        .then((result) => result.data)
-    : null;
+  const [user, profile] = await Promise.all([currentUser(), readProfile()]);
 
   const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
   const handle = profile?.username ?? "";

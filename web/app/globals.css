@@ -942,23 +942,11 @@ video {
   animation: micabo-rise 260ms var(--ease-out-strong) both;
 }
 
-/* L'ouverture d'une page de l'app, à chaque changement d'écran. */
-@keyframes page-enter {
-  from {
-    opacity: 0;
-    translate: 0 14px;
-    filter: blur(4px);
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-    filter: blur(0);
-  }
-}
-
-.page-enter {
-  animation: page-enter 420ms var(--ease-out-strong) both;
-}
+/* Il y avait ici une entrée de page qui floutait l'écran entier - `filter: blur(4px)` sur
+   tout le contenu, 420 ms, à chaque changement d'écran. Plus personne ne la posait, et c'est
+   mieux ainsi : un `filter` animé oblige le navigateur à rasteriser tout le sous-arbre dans
+   une texture et à la reflouter image par image, exactement au moment où la page a autre
+   chose à faire. Une entrée d'écran, si elle revient, se fera sur `opacity` et `translate`. */
 
 .profile-page {
   position: relative;
@@ -1119,7 +1107,6 @@ video {
 
 @media (prefers-reduced-motion: reduce) {
   .rise,
-  .page-enter,
   .paywall-card,
   .paywall-stagger,
   .paywall-veil,
@@ -1127,10 +1114,6 @@ video {
     animation-duration: 200ms;
     translate: none;
     rotate: -8deg;
-  }
-
-  .page-enter {
-    filter: none;
   }
 }
 

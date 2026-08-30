@@ -143,21 +143,45 @@ export function mostReviewedCards(
   cards: readonly { id: string; front: string }[],
   limit = 5,
 ): ReviewedCard[] {
-  const fronts = new Map(cards.map((card) => [card.id, card.front]));
   const counts = new Map<string, number>();
-
   for (const log of logs) {
-    if (!log.cardId || !fronts.has(log.cardId)) continue;
+    if (!log.cardId) continue;
     counts.set(log.cardId, (counts.get(log.cardId) ?? 0) + 1);
   }
 
-  return [...counts.entries()]
-    .sort((first, second) => second[1] - first[1] || first[0].localeCompare(second[0]))
+  return rankReviewedCards(
+    [...counts.entries()].map(([cardId, passes]) => ({ cardId, passes })),
+    cards,
+    limit,
+  );
+}
+
+/**
+ * Le même classement, **à partir de passages déjà comptés**.
+ *
+ * Le web ne rapatrie plus l'historique ligne à ligne pour le regrouper en mémoire : le compte
+ * par carte arrive de la base, et il ne reste qu'à retrouver les recto et à trancher les
+ * égalités. Une carte supprimée depuis n'a plus de recto : elle sort du classement, comme
+ * avant.
+ */
+export function rankReviewedCards(
+  counts: readonly { cardId: string; passes: number }[],
+  cards: readonly { id: string; front: string }[],
+  limit = 5,
+): ReviewedCard[] {
+  const fronts = new Map(cards.map((card) => [card.id, card.front]));
+
+  return counts
+    .filter((entry) => fronts.has(entry.cardId))
+    .sort(
+      (first, second) =>
+        second.passes - first.passes || first.cardId.localeCompare(second.cardId),
+    )
     .slice(0, limit)
-    .map(([id, passes]) => ({
-      id,
-      front: fronts.get(id) ?? "",
-      passes,
+    .map((entry) => ({
+      id: entry.cardId,
+      front: fronts.get(entry.cardId) ?? "",
+      passes: entry.passes,
     }));
 }
 

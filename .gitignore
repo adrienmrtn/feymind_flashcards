@@ -8,6 +8,7 @@ __pycache__/
 node_modules/
 .next/
 .vercel/
+*.tsbuildinfo
 
 # Écrits par `next dev` à chaque lancement (`generate-agent-files.js`). Ce sont des notes
 # pour les agents, régénérées depuis la version de Next installée : suivies, elles

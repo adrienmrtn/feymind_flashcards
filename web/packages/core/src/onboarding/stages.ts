@@ -19,6 +19,21 @@ import type { CountryCode } from "./countries";
 /** Le registre de rédaction, et c'est la colonne `profiles.study_level`. */
 export type StudyLevel = "lycee" | "prepa" | "licence" | "sante" | "master" | "concours" | "other";
 
+const STUDY_LEVELS: readonly StudyLevel[] = [
+  "lycee",
+  "prepa",
+  "licence",
+  "sante",
+  "master",
+  "concours",
+  "other",
+];
+
+/** Une colonne texte relue : elle peut porter un registre qu'on ne connaît plus. */
+export function isStudyLevel(value: unknown): value is StudyLevel {
+  return typeof value === "string" && STUDY_LEVELS.includes(value as StudyLevel);
+}
+
 /**
  * Le palier ramené à une échelle comparable d'un pays à l'autre.
  *

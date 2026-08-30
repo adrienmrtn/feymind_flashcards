@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 
 import {
@@ -18,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardHeader, CardPanel, CardTitle } from "@/components/ui/card";
 import { FriendActions } from "@/components/app/FriendActions";
 import { MobileAppCard } from "@/components/app/MobileAppCard";
-import { RefreshOnVisit } from "@/components/app/RefreshOnVisit";
 import { WeekRanking } from "@/components/app/WeekRanking";
 import { WeekStrip } from "@/components/app/WeekStrip";
 import { examInsightFromRow, insightCardsFromSnapshots } from "@/lib/exams/from-rows";
@@ -32,42 +32,38 @@ import {
   type ExamRow,
   type FriendRequestRow,
 } from "@/lib/data/courses";
+import { readProfile } from "@/lib/data/profile";
 import { loadNewCardBudget, loadReviewDatesSince } from "@/lib/data/reviews";
 import { listWeekReviewRanking } from "@/lib/data/social";
-import { currentUser } from "@/lib/data/user";
-import { createClient } from "@/lib/supabase/server";
 
 /**
  * Le tableau de bord : les tâches d'abord, puis la semaine et les examens.
  *
  * Les tâches suivent **le rythme choisi**, pas toutes les cartes dues. Une
- * session qui vient de se terminer doit les actualiser tout de suite.
+ * session qui vient de se terminer doit les actualiser tout de suite : c'est
+ * `SessionDone` qui s'en charge en revenant ici, et non un rafraîchissement
+ * posé sur la page. Monté sur la page, il refaisait **tout** le rendu serveur
+ * à chaque arrivée - deux fois les données pour un seul écran.
+ *
+ * **Le classement attend derrière la page, pas devant.** C'est la lecture la plus lourde de
+ * l'écran - un RPC qui remonte le cercle d'amis puis compte leurs passages - et c'est la
+ * moins urgente : elle est sous la ligne de flottaison d'un téléphone, et la plupart du
+ * temps elle ne rend rien. Dans le `Promise.all`, elle décidait à elle seule du moment où
+ * les tâches du jour s'affichaient.
  */
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const user = await currentUser();
-
   const now = new Date();
   const today = startOfDay(now);
 
-  const [courses, cards, exams, friends, profile, budget, reviewDates, ranking] =
-    await Promise.all([
-      listCourses(),
-      listCardSnapshots(),
-      listExams(),
-      listPendingFriendRequests(),
-      user
-        ? supabase
-            .from("profiles")
-            .select("display_name, country_code")
-            .eq("id", user.id)
-            .maybeSingle()
-            .then((result) => result.data)
-        : null,
-      loadNewCardBudget(),
-      loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
-      listWeekReviewRanking(),
-    ]);
+  const [courses, cards, exams, friends, profile, budget, reviewDates] = await Promise.all([
+    listCourses(),
+    listCardSnapshots(),
+    listExams(),
+    listPendingFriendRequests(),
+    readProfile(),
+    loadNewCardBudget(),
+    loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
+  ]);
 
   const week = weekStrip(
     cards.map((card) => ({
@@ -89,7 +85,6 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <RefreshOnVisit />
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold tracking-tight text-foreground">
@@ -110,13 +105,24 @@ export default async function DashboardPage() {
         <UpcomingExams next={upcoming[0] ?? null} others={Math.max(0, upcoming.length - 1)} />
       </div>
 
-      <WeekRanking rows={ranking} />
+      <Suspense fallback={null}>
+        <WeekRankingSection />
+      </Suspense>
 
       <FriendsCard requests={friends} />
 
       <MobileAppCard />
     </>
   );
+}
+
+/**
+ * Rien en attendant, et c'est le bon squelette : le classement ne s'affiche qu'à partir de
+ * deux personnes, donc un cadre vide se dresserait pour se retirer aussitôt chez la plupart.
+ */
+async function WeekRankingSection() {
+  const ranking = await listWeekReviewRanking();
+  return <WeekRanking rows={ranking} />;
 }
 
 function TodayTasks({

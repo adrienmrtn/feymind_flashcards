@@ -20,6 +20,21 @@ import { PRODUCTION_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
  * 4. Une session ouverte n'a plus rien à faire sur le parcours : on ouvre
  *    l'app. Sauf si on rejoue l'accueil exprès (cookie posé depuis le profil).
  *    La landing reste visible - le bouton dit alors Dashboard.
+ *
+ * **Le point 3 se lisait `getUser()`, et c'était le péage de chaque clic.**
+ * `getUser()` interroge GoTrue par le réseau, *à chaque fois*, et ce middleware
+ * tourne sur chaque navigation - y compris les requêtes RSC d'un simple
+ * changement d'onglet. Le rendu de la page n'attendait donc pas la base : il
+ * attendait d'abord un aller-retour d'auth qui ne rapportait rien de neuf.
+ * `getSession()` lit le cookie sur place et ne part sur le réseau que dans les
+ * quatre-vingt-dix dernières secondes du jeton, c'est-à-dire une fois par
+ * heure au lieu d'une fois par écran.
+ *
+ * Ce qu'on perd est nommable : le jeton n'est plus *vérifié* ici. C'est sans
+ * effet, parce que rien de ce que fait ce fichier n'expose de donnée - il
+ * redirige, et il repose des cookies. L'identité, elle, est établie une fois
+ * par requête dans `currentUser()`, signature comprise, et chaque lecture
+ * repasse ensuite par le cloisonnement de Postgres.
  */
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
@@ -65,12 +80,12 @@ export async function middleware(request: NextRequest) {
   });
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
   const path = url.pathname;
   const replaying = request.cookies.get(ONBOARDING_REPLAY_COOKIE)?.value === "1";
-  if (user && !replaying && path.startsWith("/commencer")) {
+  if (session && !replaying && path.startsWith("/commencer")) {
     const redirect = NextResponse.redirect(new URL("/app", request.url));
     for (const cookie of response.cookies.getAll()) {
       redirect.cookies.set(cookie);
