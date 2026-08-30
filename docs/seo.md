@@ -83,6 +83,24 @@ couche alpha est vide. Fond plein, coins carrés : iOS arrondit lui-même.
 chaque bord. Le dessin doit tenir dans le cercle central de 409 px sur les 512, sinon la
 lettre est coupée. C'est le seul fichier qui a besoin d'une composition à part.
 
+### Si l'on retouche `icon.svg`
+
+Le fichier est en ASCII pur et sans commentaire, et il doit le rester. Un SVG est du XML,
+avec deux règles qui ne pardonnent pas :
+
+- un commentaire ne peut pas contenir `--`, donc pas de nom de jeton comme `--color-accent` ;
+- un accent mal encodé fait échouer le parseur sur la ligne entière.
+
+Dans les deux cas le fichier est refusé en bloc et l'onglet retombe sur l'icône par défaut,
+sans rien afficher dans la console. Un commentaire dans un favicon est de toute façon du
+poids envoyé à chaque requête : l'explication va ici, pas dans le fichier.
+
+À vérifier après toute retouche :
+
+```bash
+xmllint --noout web/public/icon.svg && echo OK
+```
+
 ### Générer les PNG depuis le SVG
 
 ```bash
