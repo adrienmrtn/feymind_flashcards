@@ -431,8 +431,12 @@ function IntensityStep({
       <p className="mt-2 text-center text-[13.5px] text-ink-secondary">
         {INTENSITY_DETAIL[intensity]}
       </p>
-      <div className="mt-6 px-1">
+      <div className="mt-6 flex items-center gap-3">
+        <span className="numeral w-12 shrink-0 text-[12.5px] text-ink-tertiary">
+          {scale.min}
+        </span>
         <Slider
+          className="min-w-0 flex-1"
           min={TARGET_SCORE_MIN}
           max={TARGET_SCORE_MAX}
           step={1}
@@ -440,10 +444,9 @@ function IntensityStep({
           onValueChange={(value) => onPick(clampTargetScore(Number(value)))}
           aria-label="Note souhaitée"
         />
-        <div className="mt-2 flex justify-between text-[12.5px] text-ink-tertiary">
-          <span>{scale.min}</span>
-          <span>{scale.max}</span>
-        </div>
+        <span className="numeral w-12 shrink-0 text-right text-[12.5px] text-ink-tertiary">
+          {scale.max}
+        </span>
       </div>
 
       {missingCards ? (

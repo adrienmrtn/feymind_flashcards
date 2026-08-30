@@ -23,6 +23,7 @@ import {
 import { ExamMark, examDeadline, type ExamMarkInfo } from "@/components/app/ExamMark";
 import { OcclusionFigure } from "@/components/app/OcclusionFigure";
 import { SessionDone } from "@/components/app/SessionDone";
+import { SessionPaywall } from "@/components/app/SessionPaywall";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { gradeCard } from "@/lib/actions/review";
 
@@ -98,10 +99,11 @@ export function Session({
   const card = loop.current;
   const remaining = (card ? 1 : 0) + loop.pending.length;
 
-  // Le plafond du gratuit s'applique **à la session**, pas au jeu : les cartes restent toutes
-  // visibles dans la liste du cours, et c'est le passage qui s'arrête.
-  const capped = entitlement.hasReachedSessionLimit({ isPro }, tally.answered);
-  const finished = loop.done || capped;
+  // Le plafond coupe **pendant** la session : la carte suivante reste
+  // dessous, le paywall s'ouvre dessus. Une file qui se termine pile à
+  // cinq cartes a été révisée en entier — pas de paywall sur l'écran de fin.
+  const gated = entitlement.shouldInterruptSession({ isPro }, tally.answered, loop.done);
+  const finished = loop.done;
 
   const labels = useMemo(
     () => (card ? previewLabels(card.snapshot, { deadline: examDeadline(card.exam) }) : null),
@@ -111,6 +113,7 @@ export function Session({
   const grade = useCallback(
     (rating: number) => {
       if (!card) return;
+      if (entitlement.hasReachedSessionLimit({ isPro }, tally.answered)) return;
       const typed = rating as ReviewRating;
       const now = new Date();
       const outcome = clampedToDeadline(
@@ -148,14 +151,14 @@ export function Session({
         }
       });
     },
-    [card, loop.pending],
+    [card, isPro, loop.pending, tally.answered],
   );
 
   // Le clavier, et **rien qui l'intercepte à moitié** : espace ne doit pas faire défiler la page,
   // et une touche pressée pendant qu'un champ a le focus appartient au champ.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (finished || !card) return;
+      if (finished || gated || !card) return;
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
 
@@ -177,14 +180,14 @@ export function Session({
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [finished, revealed, grade, card]);
+  }, [finished, gated, revealed, grade, card]);
 
   if (finished) {
     return (
       <SessionDone
         tally={tally}
         minutes={elapsedMinutes(startedAt)}
-        capped={capped}
+        capped={false}
         remaining={remaining}
         leftoverNew={leftoverNew}
       />
@@ -194,7 +197,13 @@ export function Session({
   if (!card || !labels) return null;
 
   return (
-    <div className="mx-auto flex min-h-[calc(100svh-8rem)] w-full max-w-page flex-col">
+    <div className="relative mx-auto flex min-h-[calc(100svh-8rem)] w-full max-w-page flex-col">
+      {gated ? <SessionPaywall reviewedCount={tally.answered} /> : null}
+      <div
+        className={`flex min-h-0 flex-1 flex-col ${gated ? "pointer-events-none" : ""}`}
+        inert={gated || undefined}
+        aria-hidden={gated || undefined}
+      >
       <div className="flex items-center gap-4">
         <div className="h-1 flex-1 overflow-hidden rounded-pill bg-progress-track">
           <div
@@ -337,6 +346,7 @@ export function Session({
         <p className="mt-3.5 text-center text-[12px] text-ink-tertiary">
           Espace retourne la carte, 1 à 4 la notent.
         </p>
+      </div>
       </div>
     </div>
   );

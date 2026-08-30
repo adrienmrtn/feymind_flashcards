@@ -21,6 +21,7 @@ import {
   canPractice,
   hasReachedSessionLimit,
   isPaid,
+  shouldInterruptSession,
   lockedSheetPercent,
   resolve,
   sheetLockIndex,
@@ -153,6 +154,13 @@ describe("les portes", () => {
     expect(hasReachedSessionLimit(FREE, 5)).toBe(true);
     expect(hasReachedSessionLimit(FREE, 12)).toBe(true);
     expect(hasReachedSessionLimit(PRO, 999)).toBe(false);
+  });
+
+  it("le paywall coupe la session en cours, pas l'écran de fin", () => {
+    expect(shouldInterruptSession(FREE, 5, false)).toBe(true);
+    expect(shouldInterruptSession(FREE, 5, true)).toBe(false);
+    expect(shouldInterruptSession(FREE, 4, false)).toBe(false);
+    expect(shouldInterruptSession(PRO, 5, false)).toBe(false);
   });
 
   it("le deuxième import est refusé, le premier non", () => {
