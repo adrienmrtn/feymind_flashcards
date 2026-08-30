@@ -17,7 +17,9 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import * as discount from "../src/discount";
 import { ASSUME_PRO_WITHOUT_ROW, ENTITLEMENT_ID, FREE_TIER } from "../src/entitlement";
+import { DISCOUNT_YEARLY } from "../src/pricing";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../../..");
@@ -27,10 +29,14 @@ const purchases = readFileSync(
   resolve(repoRoot, "Micabo/Features/Paywall/PaywallPurchases.swift"),
   "utf8",
 );
+const discountOffer = readFileSync(
+  resolve(repoRoot, "Micabo/Features/Paywall/DiscountOffer.swift"),
+  "utf8",
+);
 
 /** La valeur d'un `static let` Swift, telle qu'elle est écrite. */
 function swiftConstant(source: string, name: string): string {
-  const found = source.match(new RegExp(`static let ${name}\\s*=\\s*([^\\n]+)`));
+  const found = source.match(new RegExp(`static let ${name}[^=\\n]*=\\s*([^\\n]+)`));
   if (!found?.[1]) throw new Error(`\`${name}\` introuvable dans le Swift`);
   return found[1].trim().replace(/\s*\/\/.*$/, "");
 }
@@ -80,5 +86,34 @@ describe("le branchement RevenueCat de l'app", () => {
     // `$RCAnonymousID` se fait refuser par le webhook (422).
     expect(purchases).toContain("Purchases.shared.logIn(wanted)");
     expect(purchases).toContain("uuidString.lowercased()");
+  });
+});
+
+describe("l'offre cadeau, des deux côtés", () => {
+  it("compte les mêmes appuis et les mêmes deux durées", () => {
+    // Une pastille qui dirait 12 h sur le site et 24 h sur le téléphone ferait douter du
+    // prix lui-même : ce sont les nombres d'une promesse, pas d'un réglage.
+    expect(swiftConstant(discountOffer, "taps")).toBe(String(discount.taps));
+    expect(swiftConstant(discountOffer, "urgencySeconds")).toBe(String(discount.urgencySeconds));
+    expect(swiftConstant(discountOffer, "windowSeconds")).toBe(String(discount.windowSeconds));
+  });
+
+  it("annonce le même prix mensuel, écrit et non calculé", () => {
+    // 39,99 ÷ 12 fait 3,3325. Les deux clients écrivent 3,30, et affichent l'annuel à côté.
+    expect(swiftConstant(discountOffer, "monthlyPrice")).toBe("3.30");
+    expect(DISCOUNT_YEARLY.monthlyPrice).toBe(3.3);
+  });
+
+  it("vend le même produit, sur le même entitlement", () => {
+    expect(discountOffer).toContain("PaywallCatalog.discount");
+    expect(DISCOUNT_YEARLY.productId).toBe("com.micabo.app.pro.yearly.discount");
+  });
+
+  it("n'ouvre Pro que sur un achat confirmé, comme les autres paywalls", () => {
+    const flow = readFileSync(
+      resolve(repoRoot, "Micabo/Features/Paywall/DiscountFlowView.swift"),
+      "utf8",
+    );
+    expect(flow).not.toContain("case .purchased, .unavailable:");
   });
 });

@@ -41,6 +41,9 @@ struct CourseSheetView: View {
     /// parcours qui aboutit, plutôt qu'une opération dont il faut aller chercher le résultat.
     @State private var generatedCards: CourseCardsRoute?
     @State private var paywall: PaywallTrigger?
+    /// Le cadeau du premier cours. Il se présente ici, sur la fiche qu'on vient d'obtenir :
+    /// une offre posée avant qu'on ait vu le produit tourner n'a rien à récompenser.
+    @State private var giftOffer: DiscountPresentation?
 
     /// L'invitation à sélectionner un passage disparaît une fois le geste découvert : une
     /// consigne qu'on a suivie n'a plus rien à dire.
@@ -87,6 +90,7 @@ struct CourseSheetView: View {
         .overlay(alignment: .bottom) { bottomBar }
         .overlay { workOverlay }
         .task { sheet = course.decodedSheet() }
+        .task { await presentGiftIfEarned() }
         .onChange(of: course.sheetData) { _, _ in
             sheet = course.decodedSheet()
         }
@@ -112,6 +116,7 @@ struct CourseSheetView: View {
             StudyView(source: .course(course), mode: studyMode)
         }
         .micaboPaywall($paywall)
+        .micaboDiscountOffer($giftOffer)
         .alert("Oups", isPresented: .constant(errorMessage != nil)) {
             Button("Fermer", role: .cancel) { errorMessage = nil }
         } message: {
@@ -126,6 +131,29 @@ struct CourseSheetView: View {
         } message: {
             Text(deleteWarning)
         }
+    }
+
+    // MARK: - Le cadeau du premier cours
+
+    /// Pose le cadeau, une fois, sur la fiche du premier cours.
+    ///
+    /// L'attente n'est pas décorative : on arrive ici par une poussée de navigation, et un
+    /// plein écran ouvert pendant que la fiche glisse encore donne deux animations
+    /// concurrentes. Le temps que la page se pose, on a aussi eu le temps de voir son cours.
+    @MainActor
+    private func presentGiftIfEarned() async {
+        guard
+            DiscountOffer.shouldPresentGift(
+                isPro: isPro,
+                courseCount: allCourses.filter({ !$0.isFromLibrary }).count,
+                seen: DiscountOffer.isSeen(),
+                startedAt: DiscountOffer.start()
+            )
+        else { return }
+
+        try? await Task.sleep(for: .milliseconds(900))
+        guard !Task.isCancelled, giftOffer == nil, paywall == nil else { return }
+        giftOffer = .gift
     }
 
     // MARK: - En-tête

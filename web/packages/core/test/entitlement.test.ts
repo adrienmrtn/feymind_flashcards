@@ -27,6 +27,7 @@ import {
   splitSheet,
 } from "../src/entitlement";
 import {
+  DISCOUNT_REFERENCE,
   DISCOUNT_YEARLY,
   FREE_TRIAL_DAYS,
   PLANS,
@@ -35,6 +36,7 @@ import {
   WEEKLY,
   YEARLY,
   annualCost,
+  discountSavingsPercent,
   hasTrial,
   monthlyEquivalent,
   offers,
@@ -209,6 +211,14 @@ describe("les offres", () => {
     expect(savingsPercent(DISCOUNT_YEARLY)).toBe(90);
   });
 
+  it("comparent le cadeau à l'annuel plein, pas aux cinquante-deux semaines", () => {
+    // 43 %, et non 90 : le paywall du cadeau barre 69,99 € juste au-dessus. Comparer la
+    // remise à l'offre la plus chère du catalogue gonflerait le chiffre à côté du prix
+    // qu'on montre, ce qui se lit comme une remise inventée.
+    expect(discountSavingsPercent()).toBe(43);
+    expect(DISCOUNT_REFERENCE).toBe(YEARLY);
+  });
+
   it("ramènent l'annuel au mois, et rien d'autre", () => {
     // L'espace avant l'euro est **insécable**, comme la typographie française l'exige : un prix
     // ne se coupe pas en fin de ligne entre le nombre et son symbole. Elle est normalisée à
@@ -216,7 +226,10 @@ describe("les offres", () => {
     // d'ICU - et un prix qui ne s'espace pas pareil selon la machine est une différence qu'on
     // finit par chercher longtemps.
     const yearlyPerMonth = "5,83\u00a0€";
-    const discountPerMonth = "3,33\u00a0€";
+    // Le discount **écrit** son mensuel au lieu de le diviser : 39,99 ÷ 12 fait 3,3325, que
+    // le calcul rendrait « 3,33 € ». C'est 3,30 € qu'annonce l'offre cadeau, et le paywall
+    // affiche l'annuel prélevé juste à côté pour que rien ne soit sous-entendu.
+    const discountPerMonth = "3,30\u00a0€";
 
     expect(monthlyEquivalent(YEARLY)).toBe(yearlyPerMonth);
     expect(monthlyEquivalent(DISCOUNT_YEARLY)).toBe(discountPerMonth);

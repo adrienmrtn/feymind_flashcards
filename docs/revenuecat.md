@@ -14,7 +14,7 @@ Rappel de ce qu'on vend :
 | --- | --- | --- | --- | --- |
 | Annuel | `com.micabo.app.pro.yearly` | 69,99 € / an | 3 jours offerts | oui |
 | Hebdomadaire | `com.micabo.app.pro.weekly` | 7,99 € / semaine | aucun | oui |
-| Annuel discount | `com.micabo.app.pro.yearly.discount` | 39,99 € / an | aucun | **non** — produit créé, offering à part, pas encore de chemin d'achat |
+| Annuel discount | `com.micabo.app.pro.yearly.discount` | 39,99 € / an — annoncé 3,30 € / mois | aucun | **non** sur le paywall ordinaire — il a son propre écran, l'offre cadeau (§13) |
 
 Identifiant de l'app : `com.micabo.app`.
 
@@ -326,5 +326,60 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
 8. Vérifier la table `entitlements` après un achat test : une ligne, `user_id` = UUID
    Supabase, `is_pro` vrai, `store` = `app_store` ou `stripe` selon l'appareil.
 
-Le discount : un produit Apple **et** un prix Stripe, les deux attachés à `pro`, offering
-`discount` prêt. Le bouton, le lien, le critère d'éligibilité — plus tard, comme convenu.
+---
+
+## 13. L'offre cadeau — le chemin d'achat du discount
+
+Le tarif réduit a maintenant **son** écran, et un seul : personne n'y arrive depuis le
+paywall ordinaire. Le critère d'éligibilité est le premier cours importé.
+
+| | iOS | Web |
+| --- | --- | --- |
+| Déclencheur | La fiche du premier cours | La première page d'app chargée après l'import |
+| Ce qui s'ouvre | Un cadeau plein écran, **trois appuis** pour le déballer | Une grande carte bleue, directement |
+| Le paywall | Fond bleu, languette blanche en bas | Carte bleue de 620 px |
+| Minuterie affichée | 1 heure | 1 heure |
+| Après fermeture | Pastille avec décompte 24 h, un appui rouvre | Pastille en bas à droite, idem |
+
+**Deux durées, un seul instant d'origine.** L'heure pousse à décider, les vingt-quatre
+heures sont la durée réelle du tarif. Les deux se calculent depuis l'instant où le cadeau a
+été ouvert — pas depuis l'import.
+
+Les nombres vivent à deux endroits qui ne peuvent pas diverger :
+
+- `web/packages/core/src/discount.ts`
+- `Micabo/Features/Paywall/DiscountOffer.swift`
+
+`web/packages/core/test/freemium-parity.test.ts` relit le Swift et compare. Trois appuis,
+3600 s, 86 400 s, 3,30 €.
+
+**Le prix mensuel est écrit, pas calculé.** 39,99 ÷ 12 fait 3,3325, que les formateurs
+rendraient « 3,33 € ». Les deux clients écrivent 3,30 € / mois **et** affichent
+« 39,99 € facturés une fois par an » juste à côté : un mensuel sans son annuel serait une
+allégation qu'on ne facture pas. Le 69,99 € barré est l'annuel plein, pas la somme de
+cinquante-deux semaines — d'où 43 % et non 90 %.
+
+**Ce que l'appareil retient**, et rien de plus : `micabo.discount.startedAt` et
+`micabo.discount.seen`, en `localStorage` sur le web, en `UserDefaults` sur l'app. Aucune
+colonne en base : la table `entitlements` n'a qu'une plume, le webhook RevenueCat, et une
+colonne que personne d'autre n'écrit finit par mentir. Conséquence assumée : l'offre repart
+sur un second appareil.
+
+### Ce qu'il reste à faire dans les tableaux de bord
+
+1. **RevenueCat** — l'offering `discount` doit contenir un package qui porte
+   `com.micabo.app.pro.yearly.discount`. `PaywallPurchases.buy(_:)` cherche le produit dans
+   `offerings.current` **puis dans tous les offerings**, donc un offering non *Current*
+   suffit. Rien à coder.
+2. **Vercel** — `STRIPE_PRICE_YEARLY_DISCOUNT` = le `price_…` des 39,99 €, Production +
+   Preview. À défaut, le catalogue sert de repli (`price_1UA59vQMgx8zg170euqLCM3N`), qui ne
+   vaut que si c'est bien ton compte et ton mode.
+3. **Apple** — le produit doit être au moins *Ready to Submit*, sinon le bac à sable rend
+   `unavailable` et le bouton le dit.
+
+### Revoir l'offre pendant les tests
+
+Elle ne se présente qu'une fois par appareil.
+
+- Web : `?debug=cadeau` sur n'importe quelle page de `/app`.
+- iOS : Réglages → Test → **Rejouer le cadeau** (DEBUG seulement), puis ouvrir une fiche.

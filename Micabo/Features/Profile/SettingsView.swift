@@ -549,6 +549,18 @@ struct SettingsView: View {
                 )
             )
         )
+
+        // L'offre cadeau ne se présente qu'une fois par appareil : sans ce bouton, la
+        // revoir demanderait de désinstaller l'app.
+        rows.append(
+            MicaboRow(
+                tile: MicaboTile(glyph: .emoji("🎁"), background: MicaboColor.infoSoft),
+                title: "Rejouer le cadeau",
+                subtitle: "Ouvre la boîte sur la prochaine fiche",
+                accessory: .chevron,
+                action: { DiscountOffer.forget() }
+            )
+        )
         #endif
 
         rows.append(
@@ -565,7 +577,7 @@ struct SettingsView: View {
 
     private var testFootnote: String {
         #if DEBUG
-        return "L'interrupteur Pro n'existe qu'en développement : il permet de revoir les écrans de blocage. Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
+        return "L'interrupteur Pro et le cadeau n'existent qu'en développement : ils permettent de revoir les écrans de blocage et l'offre. Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
         #else
         return "Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
         #endif
