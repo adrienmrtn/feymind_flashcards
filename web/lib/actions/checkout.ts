@@ -26,10 +26,8 @@ import { createClient } from "@/lib/supabase/server";
  *
  * ## Ce qu'il manque, précisément
  *
- * `STRIPE_SECRET_KEY`, les identifiants de prix Stripe (`STRIPE_PRICE_YEARLY`,
- * `STRIPE_PRICE_WEEKLY` — et plus tard `STRIPE_PRICE_YEARLY_DISCOUNT`), et le branchement
- * de Stripe dans RevenueCat. Rien d'autre : la table est là, le webhook est déployé, et le
- * verrou lit déjà.
+ * `STRIPE_SECRET_KEY`. Les trois `price_…` sont dans `pricing.STORE_PRODUCTS` ;
+ * une variable d'environnement les remplace (test / live) si elle est posée.
  */
 
 export interface CheckoutResult {
@@ -42,10 +40,12 @@ function stripeKey(): string | null {
   return process.env.STRIPE_SECRET_KEY ?? null;
 }
 
-/** L'identifiant de prix Stripe d'une offre. Il n'y en a pas encore : ils viendront du tableau de bord. */
-function priceId(kind: pricing.PlanKind): string | null {
-  if (kind === "yearly") return process.env.STRIPE_PRICE_YEARLY ?? null;
-  return process.env.STRIPE_PRICE_WEEKLY ?? null;
+/** L'identifiant de prix Stripe. L'env gagne, le catalogue sert de repli. */
+function priceId(kind: pricing.PlanKind): string {
+  if (kind === "yearly") {
+    return process.env.STRIPE_PRICE_YEARLY ?? pricing.stripePriceId("yearly");
+  }
+  return process.env.STRIPE_PRICE_WEEKLY ?? pricing.stripePriceId("weekly");
 }
 
 export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutResult> {
@@ -67,7 +67,7 @@ export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutRes
   const key = stripeKey();
   const price = priceId(kind);
 
-  if (!key || !price) {
+  if (!key) {
     return {
       status: "unavailable",
       message: "L'abonnement n'est pas encore ouvert.",

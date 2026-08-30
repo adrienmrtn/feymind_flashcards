@@ -18,10 +18,22 @@ Rappel de ce qu'on vend :
 
 Identifiant de l'app : `com.micabo.app`.
 
-**Stripe encaisse sur le web, Apple encaisse sur iOS, RevenueCat détient le droit.** Les trois
-produits existent des deux côtés, avec **les mêmes identifiants**. L'`app_user_id` RevenueCat
-est toujours l'`auth.users.id` de Supabase. Sans ça, un achat iPhone n'ouvre pas le web, et
-inversement.
+**Stripe encaisse sur le web, Apple encaisse sur iOS, RevenueCat détient le droit.** Chez
+RevenueCat ce n'est pas trois produits : c'est **six**. Trois offres × deux magasins, chacun
+avec **son** identifiant (Apple : `com.micabo…`, Stripe : `price_…`). Les six s'attachent à
+l'entitlement `pro`. Le discount ouvre le même droit — on ne crée pas un second entitlement.
+
+L'`app_user_id` RevenueCat est toujours l'`auth.users.id` de Supabase. Sans ça, un achat
+iPhone n'ouvre pas le web, et inversement.
+
+| Magasin | Offre | Identifiant chez RevenueCat |
+| --- | --- | --- |
+| App Store | Annuel | `com.micabo.app.pro.yearly` |
+| App Store | Hebdomadaire | `com.micabo.app.pro.weekly` |
+| App Store | Annuel discount | `com.micabo.app.pro.yearly.discount` |
+| Stripe | Annuel | `price_1UA57iQMgx8zg1707oLVaVD8` |
+| Stripe | Hebdomadaire | `price_1UA59JQMgx8zg1703xvj1Cgk` |
+| Stripe | Annuel discount | `price_1UA59vQMgx8zg170euqLCM3N` |
 
 ---
 
@@ -99,11 +111,12 @@ sur l'appareil.
      clé secrète.
 3. Copier l'URL de notifications serveur affichée sur la même page et la coller dans App Store
    Connect (étape 3.3).
-4. **Products** → `Import` : les trois produits remontent tout seuls une fois créés côté
-   Apple. Sinon les ajouter à la main avec les trois identifiants exacts.
-5. **Entitlements** → créer `pro` → y attacher les **trois** produits. C'est le seul nom que
-   l'app lira ; il ne doit plus changer. Le discount donne le même droit : on ne crée pas un
-   second entitlement.
+4. **Products** → `Import` : les trois produits App Store remontent une fois créés côté
+   Apple. Les trois prix Stripe s'ajoutent avec l'intégration Stripe (étape 12) — ce sont
+   des `price_…`, pas les identifiants Apple. À la fin : **six** lignes, pas trois.
+5. **Entitlements** → créer `pro` → y attacher les **six** produits (3 App Store + 3 Stripe).
+   C'est le seul nom que l'app lira ; il ne doit plus changer. Le discount, des deux
+   magasins, donne le même droit : on ne crée pas un second entitlement.
 6. **Offerings** → créer l'offering `default` et le marquer *Current*, puis y ajouter **deux**
    packages seulement :
    - `$rc_annual` → `com.micabo.app.pro.yearly`
@@ -285,17 +298,16 @@ Trois choses disparaissent le même jour :
 
 ---
 
-## 11. Stripe — les trois produits web
+## 11. Stripe — les trois offres web (trois `price_…`)
 
 Stripe n'écrit jamais dans `entitlements`. Il encaisse. RevenueCat voit l'abonnement Stripe
 via l'intégration officielle, et **son** webhook (`supabase/functions/revenuecat-webhook`)
 écrit la ligne. Une seule plume.
 
 1. **Créer le compte Stripe** (mode test d'abord) et activer les paiements en euros.
-2. **Product → Add product**, trois fois, avec les **mêmes identifiants** qu'Apple. Dans
-   Stripe, le *Product ID* se pose ensuite (Dashboard → Product → trois points → *Copy ID*
-   puis le recoller n'est pas suffisant) : le plus simple est de créer le produit, puis de
-   noter le `prod_…` et de mapper dans RevenueCat par identifiant **lookup key** :
+2. **Product → Add product**, trois fois. Chez Stripe le produit a un `prod_…` et un
+   `price_…` : c'est le **prix** que RevenueCat affiche, pas l'identifiant Apple. Une
+   lookup key / metadata `product_id` relie les deux magasins :
    - Produit `Micabo Pro annuel` — lookup / metadata `product_id` =
      `com.micabo.app.pro.yearly`
      - Prix récurrent : **69,99 €**, facturation **annuelle**, devise EUR
@@ -309,12 +321,13 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
    - Produit `Micabo Pro annuel discount` — `com.micabo.app.pro.yearly.discount`
      - Prix : **39,99 €**, facturation **annuelle**
      - **Pas d'essai**. Ne pas l'utiliser dans `startCheckout` pour l'instant.
-3. Copier les identifiants de **prix** (`price_…`, pas `prod_…`) :
-   - `STRIPE_PRICE_YEARLY`
-   - `STRIPE_PRICE_WEEKLY`
-   - `STRIPE_PRICE_YEARLY_DISCOUNT` (gardé pour plus tard)
-4. Les coller dans **Vercel → Environment Variables** (Production + Preview), avec
-   `STRIPE_SECRET_KEY` (`sk_test_…` d'abord, `sk_live_…` le jour J).
+3. Les identifiants de **prix** (`price_…`, pas `prod_…`) sont ceux du tableau
+   ci-dessus, déjà dans `pricing.STORE_PRODUCTS`. Une variable d'environnement
+   (`STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY`, plus tard
+   `STRIPE_PRICE_YEARLY_DISCOUNT`) les remplace si le mode test n'est pas le
+   même compte.
+4. Coller `STRIPE_SECRET_KEY` dans **Vercel → Environment Variables**
+   (Production + Preview) : `sk_test_…` d'abord, `sk_live_…` le jour J.
 5. **Customer Portal** : Settings → Billing → Customer portal → l'activer. C'est ce que
    `manageSubscription()` ouvrira pour un achat `store = stripe`. Un achat App Store ne
    doit **jamais** ouvrir ce portail.
@@ -329,9 +342,9 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
    `checkout.session.completed`, `customer.subscription.created`,
    `customer.subscription.updated`, `customer.subscription.deleted`,
    `invoice.paid`, `invoice.payment_failed`.
-4. Dans RevenueCat, **Products** : ajouter les trois produits Stripe (ou les mapper sur
-   les produits déjà importés d'Apple s'ils portent le même identifiant). Les rattacher
-   à l'entitlement `pro`.
+4. Dans RevenueCat, **Products** : les trois prix Stripe apparaissent avec leur
+   `price_…` (pas l'identifiant Apple). Les six lignes — App Store + Stripe — se
+   rattachent à l'entitlement `pro`. Le discount Stripe aussi.
 5. **Le pont d'identité**, et c'est la seule ligne qui compte : dans
    `web/lib/actions/checkout.ts`, `client_reference_id` porte déjà `user.id` (Supabase).
    RevenueCat lit ce champ et pose le customer Stripe sous **ce** `app_user_id`. Si on
@@ -346,5 +359,5 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
 8. Vérifier la table `entitlements` après un achat test : une ligne, `user_id` = UUID
    Supabase, `is_pro` vrai, `store` = `app_store` ou `stripe` selon l'appareil.
 
-Le discount : produit créé des deux côtés, entitlement `pro` attaché, offering `discount`
-prêt. Le bouton, le lien, le critère d'éligibilité — plus tard, comme convenu.
+Le discount : un produit Apple **et** un prix Stripe, les deux attachés à `pro`, offering
+`discount` prêt. Le bouton, le lien, le critère d'éligibilité — plus tard, comme convenu.

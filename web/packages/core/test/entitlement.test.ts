@@ -31,6 +31,7 @@ import {
   FREE_TRIAL_DAYS,
   PLANS,
   RECOMMENDED_PLAN,
+  STORE_PRODUCTS,
   WEEKLY,
   YEARLY,
   annualCost,
@@ -40,6 +41,7 @@ import {
   planCaption,
   planFor,
   savingsPercent,
+  stripePriceId,
 } from "../src/pricing";
 
 describe("le droit", () => {
@@ -235,5 +237,15 @@ describe("les offres", () => {
     expect(offers().map((plan) => plan.price)).toEqual([69.99, 7.99]);
     expect(PLANS).not.toContainEqual(DISCOUNT_YEARLY);
     expect(DISCOUNT_YEARLY.productId).toBe("com.micabo.app.pro.yearly.discount");
+  });
+
+  it("sont six chez RevenueCat, tous sur pro — pas trois", () => {
+    expect(STORE_PRODUCTS).toHaveLength(6);
+    expect(STORE_PRODUCTS.filter((product) => product.store === "app_store")).toHaveLength(3);
+    expect(STORE_PRODUCTS.filter((product) => product.store === "stripe")).toHaveLength(3);
+    expect(new Set(STORE_PRODUCTS.map((product) => product.id)).size).toBe(6);
+    expect(stripePriceId("yearly")).toBe("price_1UA57iQMgx8zg1707oLVaVD8");
+    expect(stripePriceId("weekly")).toBe("price_1UA59JQMgx8zg1703xvj1Cgk");
+    expect(stripePriceId("yearly_discount")).toBe("price_1UA59vQMgx8zg170euqLCM3N");
   });
 });

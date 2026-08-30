@@ -71,6 +71,38 @@ export const WEEKLY: Plan = {
   trialDays: 0,
 };
 
+/**
+ * Les **six** produits chez RevenueCat, tous attachés à l'entitlement `pro`.
+ *
+ * Trois offres × deux magasins. Ce n'est pas trois produits : Apple et Stripe
+ * ont chacun leur identifiant. Le discount ouvre le même droit — on ne crée
+ * pas un second entitlement.
+ */
+export type StoreKind = "app_store" | "stripe";
+export type CatalogPlan = "yearly" | "weekly" | "yearly_discount";
+
+export interface StoreProduct {
+  store: StoreKind;
+  /** Tel que RevenueCat le montre. Apple : `com.micabo…`. Stripe : `price_…`. */
+  id: string;
+  plan: CatalogPlan;
+}
+
+export const STORE_PRODUCTS: readonly StoreProduct[] = [
+  { store: "app_store", id: "com.micabo.app.pro.yearly", plan: "yearly" },
+  { store: "app_store", id: "com.micabo.app.pro.weekly", plan: "weekly" },
+  { store: "app_store", id: "com.micabo.app.pro.yearly.discount", plan: "yearly_discount" },
+  { store: "stripe", id: "price_1UA57iQMgx8zg1707oLVaVD8", plan: "yearly" },
+  { store: "stripe", id: "price_1UA59JQMgx8zg1703xvj1Cgk", plan: "weekly" },
+  { store: "stripe", id: "price_1UA59vQMgx8zg170euqLCM3N", plan: "yearly_discount" },
+];
+
+export function stripePriceId(plan: CatalogPlan): string {
+  const found = STORE_PRODUCTS.find((product) => product.store === "stripe" && product.plan === plan);
+  if (!found) throw new Error(`Prix Stripe manquant pour ${plan}`);
+  return found.id;
+}
+
 /** L'ordre de la liste est l'ordre d'affichage : l'offre recommandée d'abord. */
 export const PLANS: readonly Plan[] = [YEARLY, WEEKLY];
 
