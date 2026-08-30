@@ -136,6 +136,14 @@ final class Course {
         cards.filter { $0.isDue() }
     }
 
+    /// Compte sans allouer le tableau. Une liste de cours appelait `dueCards.count`
+    /// sur chaque rangée, à chaque rendu.
+    var dueCount: Int {
+        var total = 0
+        for card in cards where card.isDue() { total += 1 }
+        return total
+    }
+
     var newCards: [Flashcard] {
         cards.filter { $0.state == .new }
     }

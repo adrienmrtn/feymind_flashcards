@@ -152,13 +152,12 @@ extension AnyTransition {
 }
 
 extension View {
-    /// **Ouvre le paywall par-dessus l'écran courant.**
+    /// **Ouvre le paywall en feuille native**, balayable vers le bas.
     ///
-    /// En plein écran, et pas en feuille : une feuille se balaye vers le bas, et un paywall
-    /// qu'on écarte du pouce sans l'avoir lu ne dit rien à personne. La croix reste la seule
-    /// sortie, et elle est immédiate.
+    /// C'est une vraie feuille iOS — coin arrondi, poignée, geste de fermeture — plus un
+    /// plein écran qui imitait une languette. La croix reste, et elle est immédiate.
     func micaboPaywall(_ trigger: Binding<PaywallTrigger?>, onSubscribed: (() -> Void)? = nil) -> some View {
-        fullScreenCover(item: trigger) { value in
+        sheet(item: trigger) { value in
             PaywallFlowView(
                 trigger: value,
                 onDismiss: { trigger.wrappedValue = nil },
@@ -167,6 +166,9 @@ extension View {
                     onSubscribed?()
                 }
             )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(MicaboRadius.sheet)
         }
     }
 }

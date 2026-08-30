@@ -64,7 +64,7 @@ struct CoursesListView: View {
         case .alphabetical:
             return base.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
         case .due:
-            return base.sorted { $0.dueCards.count > $1.dueCards.count }
+            return base.sorted { $0.dueCount > $1.dueCount }
         }
     }
 

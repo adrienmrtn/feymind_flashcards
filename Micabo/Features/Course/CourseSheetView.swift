@@ -140,8 +140,8 @@ struct CourseSheetView: View {
     /// Pose le cadeau, une fois, sur la fiche du premier cours.
     ///
     /// L'attente n'est pas décorative : on arrive ici par une poussée de navigation, et un
-    /// plein écran ouvert pendant que la fiche glisse encore donne deux animations
-    /// concurrentes. Le temps que la page se pose, on a aussi eu le temps de voir son cours.
+    /// pop-up ouvert pendant que la fiche glisse encore donne deux animations concurrentes.
+    /// Le temps que la page se pose, on a aussi eu le temps de voir son cours.
     @MainActor
     private func presentGiftIfEarned() async {
         guard

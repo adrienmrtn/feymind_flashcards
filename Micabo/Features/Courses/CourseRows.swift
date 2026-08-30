@@ -35,7 +35,7 @@ enum CourseRowLabels {
     }
 
     static func accessory(for course: Course) -> MicaboRowAccessory {
-        let due = course.dueCards.count
+        let due = course.dueCount
         if due > 0 {
             return .badge("\(due) à réviser", .accent)
         }
