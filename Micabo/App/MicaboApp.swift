@@ -18,6 +18,9 @@ struct MicaboApp: App {
 
     init() {
         FontLoader.registerFonts()
+        // Avant tout le reste : le SDK doit être configuré avant qu'un écran ne puisse
+        // demander une offre, et avant le premier `logIn`.
+        PurchasesBridge.configureIfPossible()
         container = Self.makeContainer()
         SampleContentPurge.purgeIfNeeded(in: container.mainContext)
         SubjectCasePass.runIfNeeded(in: container.mainContext)
@@ -46,17 +49,31 @@ struct MicaboApp: App {
                 .environment(pro)
                 .task {
                     await auth.restore()
+                    // L'identité RevenueCat **avant** de lire le droit, et avant tout achat :
+                    // `app_user_id` doit être l'`auth.users.id`, sinon le webhook refuse.
+                    await PurchasesBridge.identify(auth.user?.id)
                     await pro.refresh()
+                    pro.observePurchases()
                     await sync.sync(context: container.mainContext)
                     // L'annuaire et les amitiés viennent après la synchro : ils n'ont de sens
                     // qu'avec un compte, et la synchro est ce qui confirme qu'il y en a un.
                     await social.refresh()
+                }
+                // Une connexion, une déconnexion, un changement de compte : l'identifiant
+                // RevenueCat suit, et le droit se relit. Sans ça, un achat partirait sous
+                // l'identifiant de la personne précédente.
+                .onChange(of: auth.user?.id) { _, userID in
+                    Task {
+                        await PurchasesBridge.identify(userID)
+                        await pro.refresh()
+                    }
                 }
                 // Les liens de confirmation et de connexion reviennent sur le schéma de
                 // Micabo : c'est ici qu'ils ouvrent la session, quel que soit l'écran affiché.
                 .onOpenURL { url in
                     Task {
                         await auth.handle(callback: url)
+                        await PurchasesBridge.identify(auth.user?.id)
                         await pro.refresh()
                         await sync.sync(context: container.mainContext)
                         await social.refresh()

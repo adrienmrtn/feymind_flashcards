@@ -32,5 +32,20 @@
 			</array>
 		</dict>
 	</array>
+	<!--
+	La clé publique iOS de RevenueCat, celle qui commence par `appl_`.
+
+	Ce n'est pas un secret : elle est lisible dans n'importe quel binaire téléchargé depuis
+	l'App Store. La clé **secrète** de RevenueCat, elle, n'entre jamais dans le dépôt.
+
+	Tant que cette valeur reste vide, `PurchasesBridge` ne configure pas le SDK et les deux
+	paywalls disent « L'abonnement n'est pas encore ouvert ». C'est voulu : un SDK configuré
+	avec une chaîne vide journalise à chaque appel sans jamais rien vendre.
+
+	Elle se trouve dans RevenueCat → Project Settings → Apps → Micabo (App Store) → Public
+	SDK key.
+	-->
+	<key>RevenueCatPublicKey</key>
+	<string>appl_QPZdMsnXFsagHVwBpuvWMFjxKFm</string>
 </dict>
 </plist>

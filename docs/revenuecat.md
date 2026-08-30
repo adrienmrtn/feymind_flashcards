@@ -18,10 +18,22 @@ Rappel de ce qu'on vend :
 
 Identifiant de l'app : `com.micabo.app`.
 
-**Stripe encaisse sur le web, Apple encaisse sur iOS, RevenueCat détient le droit.** Les trois
-produits existent des deux côtés, avec **les mêmes identifiants**. L'`app_user_id` RevenueCat
-est toujours l'`auth.users.id` de Supabase. Sans ça, un achat iPhone n'ouvre pas le web, et
-inversement.
+**Stripe encaisse sur le web, Apple encaisse sur iOS, RevenueCat détient le droit.** Chez
+RevenueCat ce n'est pas trois produits : c'est **six**. Trois offres × deux magasins, chacun
+avec **son** identifiant (Apple : `com.micabo…`, Stripe : `price_…`). Les six s'attachent à
+l'entitlement `pro`. Le discount ouvre le même droit — on ne crée pas un second entitlement.
+
+L'`app_user_id` RevenueCat est toujours l'`auth.users.id` de Supabase. Sans ça, un achat
+iPhone n'ouvre pas le web, et inversement.
+
+| Magasin | Offre | Identifiant chez RevenueCat |
+| --- | --- | --- |
+| App Store | Annuel | `com.micabo.app.pro.yearly` |
+| App Store | Hebdomadaire | `com.micabo.app.pro.weekly` |
+| App Store | Annuel discount | `com.micabo.app.pro.yearly.discount` |
+| Stripe | Annuel | `price_1UA57iQMgx8zg1707oLVaVD8` |
+| Stripe | Hebdomadaire | `price_1UA59JQMgx8zg1703xvj1Cgk` |
+| Stripe | Annuel discount | `price_1UA59vQMgx8zg170euqLCM3N` |
 
 ---
 
@@ -99,11 +111,12 @@ sur l'appareil.
      clé secrète.
 3. Copier l'URL de notifications serveur affichée sur la même page et la coller dans App Store
    Connect (étape 3.3).
-4. **Products** → `Import` : les trois produits remontent tout seuls une fois créés côté
-   Apple. Sinon les ajouter à la main avec les trois identifiants exacts.
-5. **Entitlements** → créer `pro` → y attacher les **trois** produits. C'est le seul nom que
-   l'app lira ; il ne doit plus changer. Le discount donne le même droit : on ne crée pas un
-   second entitlement.
+4. **Products** → `Import` : les trois produits App Store remontent une fois créés côté
+   Apple. Les trois prix Stripe s'ajoutent avec l'intégration Stripe (étape 12) — ce sont
+   des `price_…`, pas les identifiants Apple. À la fin : **six** lignes, pas trois.
+5. **Entitlements** → créer `pro` → y attacher les **six** produits (3 App Store + 3 Stripe).
+   C'est le seul nom que l'app lira ; il ne doit plus changer. Le discount, des deux
+   magasins, donne le même droit : on ne crée pas un second entitlement.
 6. **Offerings** → créer l'offering `default` et le marquer *Current*, puis y ajouter **deux**
    packages seulement :
    - `$rc_annual` → `com.micabo.app.pro.yearly`
@@ -116,93 +129,69 @@ sur l'appareil.
    L'ordre des packages dans l'offering n'est pas celui de l'affichage : `PaywallCatalog` garde
    l'annuel en premier, parce que c'est l'offre recommandée.
 
-## 5. Xcode — ajouter le SDK
+## 5. Xcode — le SDK est déjà déclaré
 
-1. File → Add Package Dependencies → `https://github.com/RevenueCat/purchases-ios`
-2. Dependency Rule : *Up to Next Major Version*, à partir de `5.0.0`.
-3. Ajouter le produit **`RevenueCat`** à la cible `Micabo`. Ne pas ajouter `RevenueCatUI` : le
-   paywall est écrit à la main, et le module d'interface tire une centaine de fichiers dont
-   aucun ne sert ici.
-4. Le projet utilise un `PBXFileSystemSynchronizedRootGroup` : les fichiers Swift n'ont pas
-   besoin d'être déclarés, mais **un paquet SPM, si**. C'est la seule modification du
-   `project.pbxproj` de tout le branchement.
+**Rien à faire, sauf ouvrir Xcode.** Le paquet est dans `project.pbxproj` :
+`https://github.com/RevenueCat/purchases-ios`, *Up to Next Major* depuis `5.0.0`, produit
+`RevenueCat` sur la cible `Micabo`. Xcode le résout au premier ouvrage du projet.
 
-## 6. Xcode — configurer le SDK au lancement
+`RevenueCatUI` n'y est pas, et n'y sera pas : le paywall est écrit à la main, et le module
+d'interface tire une centaine de fichiers dont aucun ne sert ici.
 
-Dans `Micabo/App/MicaboApp.swift`, à la fin de `init()` :
+Le projet utilise un `PBXFileSystemSynchronizedRootGroup` : les fichiers Swift n'ont pas
+besoin d'être déclarés, mais un paquet SPM, si. C'est la seule modification du
+`project.pbxproj` de tout le branchement, et elle est faite.
 
-```swift
-import RevenueCat
+Tout le code d'achat est écrit derrière `#if canImport(RevenueCat)`. Conséquence utile : le
+dépôt **compile dans les deux états**, avec ou sans le paquet résolu. Sans lui, les paywalls
+disent « L'abonnement n'est pas encore ouvert » ; avec lui, ils vendent.
 
-// …
-init() {
-    FontLoader.registerFonts()
-    // …
-    Purchases.logLevel = .warn
-    Purchases.configure(withAPIKey: "appl_LA_CLÉ_PUBLIQUE_IOS")
-}
+## 6. La seule chose qui reste à coller : la clé publique
+
+**Une valeur, un fichier.** `Micabo/Info.plist`, clé `RevenueCatPublicKey` :
+
+```xml
+<key>RevenueCatPublicKey</key>
+<string>appl_LA_CLÉ_PUBLIQUE_IOS</string>
 ```
 
-La clé publique iOS n'est pas un secret : elle est lisible dans n'importe quel binaire d'App
-Store. La clé **secrète** de RevenueCat, elle, ne doit jamais entrer dans le dépôt.
+Elle se trouve dans RevenueCat → Project Settings → Apps → Micabo (App Store) → *Public SDK
+key*. Elle commence par `appl_`.
 
-Si l'utilisateur est connecté (Apple ou Google, via `AuthController`), lier son identifiant
-**avant le premier achat**. `userId` est l'`auth.users.id` de Supabase, pas l'identifiant
-Apple, pas un UUID inventé par l'app. C'est la même chaîne que `client_reference_id` côté
-Stripe. Sans ça, RevenueCat crée un `$RCAnonymousID` et le webhook refuse d'écrire (422).
+Ce n'est pas un secret : elle est lisible dans n'importe quel binaire téléchargé depuis l'App
+Store. La clé **secrète** de RevenueCat, elle, n'entre jamais dans le dépôt.
 
-```swift
-Purchases.shared.logIn(userId)
-```
+Tant que la chaîne est vide, `PurchasesBridge.configureIfPossible()` ne configure pas le SDK
+et les deux paywalls disent « L'abonnement n'est pas encore ouvert ». C'est voulu : un SDK
+configuré avec une chaîne vide journalise à chaque appel sans jamais rien vendre.
 
-à appeler au passage à l'état connecté, et `Purchases.shared.logOut()` à la déconnexion.
+## 7. Ce qui est déjà écrit côté app
 
-## 7. Xcode — remplacer le corps de `PaywallPurchases`
+Rien à recoder. Pour relecture, voici où c'est :
 
-C'est **le seul fichier de l'app à modifier** :
-`Micabo/Features/Onboarding/Steps/PaywallCatalog.swift`.
+| Quoi | Où |
+| --- | --- |
+| Achat, restauration, offerings | `Micabo/Features/Paywall/PaywallPurchases.swift` |
+| Configuration au lancement | `MicaboApp.init()` → `PurchasesBridge.configureIfPossible()` |
+| `logIn` / `logOut` | `MicaboApp`, sur `.onChange(of: auth.user?.id)` |
+| Lecture du droit | `ProAccess.refresh()` — SDK puis table |
+| Fermeture sans redémarrage | `ProAccess.observePurchases()` → `customerInfoStream` |
 
-```swift
-import RevenueCat
+Trois décisions qui portent ce code :
 
-enum PaywallPurchases {
-    static func buy(_ plan: PaywallPlan) async -> PaywallOutcome {
-        do {
-            let offerings = try await Purchases.shared.offerings()
-            guard
-                let offering = offerings.current,
-                let package = offering.availablePackages.first(where: {
-                    $0.storeProduct.productIdentifier == plan.productID
-                })
-            else { return .unavailable }
+**Le discount s'achète sans code particulier.** `buy(_:)` cherche le produit dans l'offering
+courant **puis dans tous les autres**. Le jour où tu ouvres un chemin vers l'offering
+`discount`, il n'y a rien à changer ici.
 
-            let result = try await Purchases.shared.purchase(package: package)
-            if result.userCancelled { return .cancelled }
-            return result.customerInfo.entitlements["pro"]?.isActive == true ? .purchased : .unavailable
-        } catch {
-            return .unavailable
-        }
-    }
+**`unavailable` n'ouvre plus rien.** C'était le cas avant, faute de boutique : sans ça le
+bouton du paywall aurait été inerte et le parcours intestable. Maintenant un échec dit
+qu'il a échoué. Sinon chaque panne de réseau serait un abonnement offert —
+`web/packages/core/test/freemium-parity.test.ts` échoue si quelqu'un le remet.
 
-    static func restore() async -> PaywallOutcome {
-        do {
-            let info = try await Purchases.shared.restorePurchases()
-            return info.entitlements["pro"]?.isActive == true ? .purchased : .unavailable
-        } catch {
-            return .unavailable
-        }
-    }
-}
-```
-
-Le reste du paywall n'a pas à changer : `PaywallStepView` sait déjà distinguer un achat, une
-annulation et une boutique muette.
-
-**Attention à un point du comportement actuel** : tant que rien n'est branché,
-`PaywallStepView` traite `unavailable` comme une entrée dans l'app, faute de quoi le dernier
-écran du parcours n'aurait pas de sortie. Une fois RevenueCat en place, ce cas doit **cesser**
-de faire entrer et afficher une erreur — sinon un échec réseau offrirait l'abonnement. C'est un
-`switch` de trois lignes dans `PaywallStepView.buy(_:)`.
+**Le SDK et la table s'arbitrent, le plus généreux gagne.** RevenueCat répond depuis son cache
+local, donc il sait hors ligne et il sait avant le webhook ; la table vaut pour un achat fait
+sur le web. Aucune des deux ne répond ? On ne devine pas : `assumeProWithoutRow` est à `false`,
+comme `ASSUME_PRO_WITHOUT_ROW` sur le web, et le test de parité relit les deux.
 
 ## 8. Xcode — afficher les prix de la boutique et non ceux du code
 
@@ -232,42 +221,24 @@ fonctionner : il ne lit que `annualCost`, donc les prix réels.
 Tant que l'offering n'a pas répondu, l'écran garde les valeurs écrites en dur : c'est ce qui
 évite un paywall vide pendant la seconde d'attente du réseau.
 
-## 9. Fermer les portes de l'app
+## 9. Les portes sont fermées
 
-**Les portes existent déjà**, et elles lisent toutes le même objet : `ProAccess`
-(`Micabo/Services/ProAccess.swift`), créé au lancement dans `MicaboApp` à côté de
-`AuthController`. Ce qu'il ferme est décrit dans le README, section « Le gratuit et le payant » :
-un cours importé, 70 % de chaque fiche, cinq cartes par session, pas d'entraînement libre.
+Elles lisent toutes le même objet, `ProAccess` (`Micabo/Services/ProAccess.swift`), et ce qu'il
+ferme est décrit dans le README : un cours importé, 70 % de chaque fiche, cinq cartes par
+session, pas d'entraînement libre.
 
-Il n'y a donc que **deux endroits** à changer dans ce fichier :
+Ce qui a changé avec le branchement :
 
-```swift
-// 1. refresh() lit l'entitlement au lieu des réglages de l'appareil
-func refresh() async {
-    let info = try? await Purchases.shared.customerInfo()
-    isPro = info?.entitlements["pro"]?.isActive == true
-}
+- `refresh()` lit le SDK puis la table, et ne devine plus ;
+- `observePurchases()` suit `customerInfoStream`, donc un abonnement résilié se referme sans
+  redémarrage ;
+- `unavailable` n'appelle plus `unlock()` dans les deux paywalls ;
+- l'interrupteur « Micabo Pro » de `Réglages → Test` n'existe qu'en `DEBUG`. Dans une version
+  livrée, un interrupteur qui mentirait sur l'état réel d'un abonnement payé est pire que pas
+  d'interrupteur du tout.
 
-// 2. et l'app se tient au courant sans qu'on le lui demande
-private func observe() {
-    Task {
-        for await info in Purchases.shared.customerInfoStream {
-            isPro = info.entitlements["pro"]?.isActive == true
-        }
-    }
-}
-```
-
-Le flux est ce qui fait qu'un abonnement résilié se referme tout seul, sans redémarrage.
-
-Trois choses disparaissent le même jour :
-
-1. **`ProAccess.unlock()` appelé sur `unavailable`** — dans `PaywallFlowView.buy(_:)` et
-   `SessionPaywallView.buy()`. Aujourd'hui c'est ce qui rend le bouton d'abonnement testable
-   sans boutique ; demain, un échec réseau offrirait l'abonnement.
-2. **`ProAccess.lock()` et `setPro(_:)`** — ils n'existent que pour l'interrupteur de relecture.
-3. **La rangée « Micabo Pro » de `Réglages → Test`** — un interrupteur qui ment sur l'état réel
-   d'un abonnement payé est pire que pas d'interrupteur du tout.
+`lock()` et `setPro(_:)` restent : la réponse du serveur passe par là, et l'interrupteur de
+relecture en `DEBUG` aussi.
 
 ## 10. Tester
 
@@ -285,17 +256,16 @@ Trois choses disparaissent le même jour :
 
 ---
 
-## 11. Stripe — les trois produits web
+## 11. Stripe — les trois offres web (trois `price_…`)
 
 Stripe n'écrit jamais dans `entitlements`. Il encaisse. RevenueCat voit l'abonnement Stripe
 via l'intégration officielle, et **son** webhook (`supabase/functions/revenuecat-webhook`)
 écrit la ligne. Une seule plume.
 
 1. **Créer le compte Stripe** (mode test d'abord) et activer les paiements en euros.
-2. **Product → Add product**, trois fois, avec les **mêmes identifiants** qu'Apple. Dans
-   Stripe, le *Product ID* se pose ensuite (Dashboard → Product → trois points → *Copy ID*
-   puis le recoller n'est pas suffisant) : le plus simple est de créer le produit, puis de
-   noter le `prod_…` et de mapper dans RevenueCat par identifiant **lookup key** :
+2. **Product → Add product**, trois fois. Chez Stripe le produit a un `prod_…` et un
+   `price_…` : c'est le **prix** que RevenueCat affiche, pas l'identifiant Apple. Une
+   lookup key / metadata `product_id` relie les deux magasins :
    - Produit `Micabo Pro annuel` — lookup / metadata `product_id` =
      `com.micabo.app.pro.yearly`
      - Prix récurrent : **69,99 €**, facturation **annuelle**, devise EUR
@@ -309,15 +279,25 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
    - Produit `Micabo Pro annuel discount` — `com.micabo.app.pro.yearly.discount`
      - Prix : **39,99 €**, facturation **annuelle**
      - **Pas d'essai**. Ne pas l'utiliser dans `startCheckout` pour l'instant.
-3. Copier les identifiants de **prix** (`price_…`, pas `prod_…`) :
-   - `STRIPE_PRICE_YEARLY`
-   - `STRIPE_PRICE_WEEKLY`
-   - `STRIPE_PRICE_YEARLY_DISCOUNT` (gardé pour plus tard)
-4. Les coller dans **Vercel → Environment Variables** (Production + Preview), avec
-   `STRIPE_SECRET_KEY` (`sk_test_…` d'abord, `sk_live_…` le jour J).
-5. **Customer Portal** : Settings → Billing → Customer portal → l'activer. C'est ce que
-   `manageSubscription()` ouvrira pour un achat `store = stripe`. Un achat App Store ne
-   doit **jamais** ouvrir ce portail.
+3. Les identifiants de **prix** (`price_…`, pas `prod_…`) sont ceux du tableau
+   ci-dessus, déjà dans `pricing.STORE_PRODUCTS`. Une variable d'environnement
+   (`STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY`, plus tard
+   `STRIPE_PRICE_YEARLY_DISCOUNT`) les remplace si le mode test n'est pas le
+   même compte.
+4. Coller `STRIPE_SECRET_KEY` dans **Vercel → Environment Variables**
+   (Production + Preview) : `sk_test_…` d'abord, `sk_live_…` le jour J.
+5. **Customer Portal** : Settings → Billing → Customer portal → **l'activer**. Sans ça
+   `manageSubscription()` reçoit un 400 de Stripe et le dit à l'écran.
+
+   Il est déjà écrit : pour un droit `store = stripe`, il retrouve le client par son
+   adresse (`GET /v1/customers?email=…`) puis ouvre une session de portail. Un achat
+   App Store part chez Apple, un achat Play Store chez Google, un accès offert n'a pas de
+   portail — c'est `entitlements.store` qui décide, et un bouton qui ouvre le mauvais
+   magasin donne un écran vide et un message au support.
+
+   Pourquoi par l'adresse et pas par un `cus_…` gardé en base : la table `entitlements` n'a
+   qu'une plume, le webhook RevenueCat, et il ne transporte pas ce champ. Une colonne que
+   personne n'écrit est une colonne qui mentira.
 
 ## 12. Lier Stripe à RevenueCat (le droit multiplateforme)
 
@@ -329,9 +309,9 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
    `checkout.session.completed`, `customer.subscription.created`,
    `customer.subscription.updated`, `customer.subscription.deleted`,
    `invoice.paid`, `invoice.payment_failed`.
-4. Dans RevenueCat, **Products** : ajouter les trois produits Stripe (ou les mapper sur
-   les produits déjà importés d'Apple s'ils portent le même identifiant). Les rattacher
-   à l'entitlement `pro`.
+4. Dans RevenueCat, **Products** : les trois prix Stripe apparaissent avec leur
+   `price_…` (pas l'identifiant Apple). Les six lignes — App Store + Stripe — se
+   rattachent à l'entitlement `pro`. Le discount Stripe aussi.
 5. **Le pont d'identité**, et c'est la seule ligne qui compte : dans
    `web/lib/actions/checkout.ts`, `client_reference_id` porte déjà `user.id` (Supabase).
    RevenueCat lit ce champ et pose le customer Stripe sous **ce** `app_user_id`. Si on
@@ -346,5 +326,5 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
 8. Vérifier la table `entitlements` après un achat test : une ligne, `user_id` = UUID
    Supabase, `is_pro` vrai, `store` = `app_store` ou `stripe` selon l'appareil.
 
-Le discount : produit créé des deux côtés, entitlement `pro` attaché, offering `discount`
-prêt. Le bouton, le lien, le critère d'éligibilité — plus tard, comme convenu.
+Le discount : un produit Apple **et** un prix Stripe, les deux attachés à `pro`, offering
+`discount` prêt. Le bouton, le lien, le critère d'éligibilité — plus tard, comme convenu.

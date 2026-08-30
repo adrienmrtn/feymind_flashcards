@@ -516,37 +516,59 @@ struct SettingsView: View {
         )
     }
 
-    /// L'interrupteur Pro n'est pas une fonctionnalité, c'est un outil de relecture.
+    /// **L'interrupteur Pro n'existe qu'en `DEBUG`.**
     ///
-    /// Sans lui, les écrans de blocage ne se voient **qu'une fois** : le bouton du paywall
-    /// ouvre tout, et il faudrait réinstaller l'app pour revoir la fiche coupée ou la
-    /// cinquième carte. Il disparaîtra le jour où RevenueCat décidera à sa place.
+    /// C'est un outil de relecture : sans lui, les écrans de blocage ne se voient qu'une fois
+    /// et il faudrait réinstaller l'app pour revoir la fiche coupée. Mais dans une version
+    /// livrée, un interrupteur qui mentirait sur l'état réel d'un abonnement payé est pire
+    /// que pas d'interrupteur du tout — c'est RevenueCat qui décide, et lui seul.
     private var testSection: some View {
         MicaboSettingsSection(
             caption: "Test",
-            rows: [
-                MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("🔓"), background: MicaboColor.accentSoft),
-                    title: "Micabo Pro",
-                    subtitle: isPro ? "Tout est ouvert" : "Version gratuite : 1 cours, 70 % de la fiche, 5 cartes",
-                    // La rangée fait vibrer la liaison elle-même : pas de `buzzing()` ici,
-                    // sinon l'interrupteur répondrait deux fois au même appui.
-                    accessory: .toggle(
-                        Binding(
-                            get: { isPro },
-                            set: { pro?.setPro($0) }
-                        )
-                    )
-                ),
-                MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("🔁"), background: MicaboColor.tilePastels[2]),
-                    title: "Refaire l'onboarding",
-                    accessory: .chevron,
-                    action: replayOnboarding
-                )
-            ],
-            footnote: "L'abonnement n'est branché sur aucune boutique : cet interrupteur tient lieu d'achat, et permet de revoir les écrans de blocage. Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
+            rows: testRows,
+            footnote: testFootnote
         )
+    }
+
+    private var testRows: [MicaboRow] {
+        var rows: [MicaboRow] = []
+
+        #if DEBUG
+        rows.append(
+            MicaboRow(
+                tile: MicaboTile(glyph: .emoji("🔓"), background: MicaboColor.accentSoft),
+                title: "Micabo Pro",
+                subtitle: isPro ? "Tout est ouvert" : "Version gratuite : 1 cours, 70 % de la fiche, 5 cartes",
+                // La rangée fait vibrer la liaison elle-même : pas de `buzzing()` ici,
+                // sinon l'interrupteur répondrait deux fois au même appui.
+                accessory: .toggle(
+                    Binding(
+                        get: { isPro },
+                        set: { pro?.setPro($0) }
+                    )
+                )
+            )
+        )
+        #endif
+
+        rows.append(
+            MicaboRow(
+                tile: MicaboTile(glyph: .emoji("🔁"), background: MicaboColor.tilePastels[2]),
+                title: "Refaire l'onboarding",
+                accessory: .chevron,
+                action: replayOnboarding
+            )
+        )
+
+        return rows
+    }
+
+    private var testFootnote: String {
+        #if DEBUG
+        return "L'interrupteur Pro n'existe qu'en développement : il permet de revoir les écrans de blocage. Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
+        #else
+        return "Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
+        #endif
     }
 
     private var isPro: Bool { pro?.isPro ?? false }
