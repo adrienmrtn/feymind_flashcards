@@ -46,6 +46,21 @@ enum DiscountOffer {
         remaining(startedAt: startedAt, now: now, span: urgencySeconds)
     }
 
+    /// La même durée, **au millième**, pour la minuterie qui affiche des centièmes.
+    ///
+    /// `remaining` arrondit à la seconde, ce qui suffit à une pastille mais fait bégayer un
+    /// affichage qui montre deux chiffres après la virgule : deux images de suite tombent
+    /// dans la même seconde, et le décompte a l'air arrêté.
+    static func remainingMillis(startedAt: Date, now: Date = Date(), span: Int) -> Int {
+        let total = span * 1000
+        let left = total - Int((now.timeIntervalSince(startedAt) * 1000).rounded(.down))
+        return min(total, max(0, left))
+    }
+
+    static func urgencyMillisRemaining(startedAt: Date, now: Date = Date()) -> Int {
+        remainingMillis(startedAt: startedAt, now: now, span: urgencySeconds)
+    }
+
     static func windowRemaining(startedAt: Date, now: Date = Date()) -> Int {
         remaining(startedAt: startedAt, now: now, span: windowSeconds)
     }
@@ -68,6 +83,24 @@ enum DiscountOffer {
             return String(format: "%02d:%02d:%02d", hours, minutes, rest)
         }
         return String(format: "%02d:%02d", minutes, rest)
+    }
+
+    /// **Le décompte du paywall : « 00 : 29 : 48 . 69 ».**
+    ///
+    /// Les centièmes sont là pour une raison, et ce n'est pas la précision : une minuterie
+    /// qui bouge à chaque image se regarde, une minuterie qui saute d'une seconde à l'autre
+    /// se lit une fois puis s'oublie. C'est le seul endroit du produit où l'on demande de
+    /// décider maintenant.
+    ///
+    /// Les séparateurs sont espacés — « 00 : 29 » et non « 00:29 » — parce qu'à cette taille
+    /// deux-points collés entre deux chiffres se lisent comme une faute de frappe.
+    static func preciseCountdown(_ millis: Int) -> String {
+        let total = max(0, millis)
+        let hours = total / 3_600_000
+        let minutes = (total % 3_600_000) / 60_000
+        let seconds = (total % 60_000) / 1000
+        let hundredths = (total % 1000) / 10
+        return String(format: "%02d : %02d : %02d . %02d", hours, minutes, seconds, hundredths)
     }
 
     /// Ce que lit VoiceOver, où « 23:14:07 » ne veut rien dire.

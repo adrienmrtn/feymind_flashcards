@@ -51,6 +51,37 @@ final class DiscountOfferTests: XCTestCase {
         XCTAssertEqual(DiscountOffer.countdown(-40), "00:00")
     }
 
+    /// Le décompte du paywall descend **au centième**, et garde sa ponctuation.
+    ///
+    /// Compter en secondes ferait bégayer un affichage à deux décimales : deux images de
+    /// suite tomberaient dans la même seconde, et la minuterie aurait l'air arrêtée.
+    func testThePaywallCountdownRunsToTheHundredth() {
+        let start = Date(timeIntervalSince1970: 0)
+
+        XCTAssertEqual(
+            DiscountOffer.urgencyMillisRemaining(startedAt: start, now: start),
+            3_600_000
+        )
+        XCTAssertEqual(
+            DiscountOffer.urgencyMillisRemaining(startedAt: start, now: Date(timeIntervalSince1970: 0.31)),
+            3_599_690
+        )
+        // Jamais plus que l'heure, même si l'horloge locale est en avance.
+        XCTAssertEqual(
+            DiscountOffer.urgencyMillisRemaining(startedAt: Date(timeIntervalSince1970: 5), now: start),
+            3_600_000
+        )
+        XCTAssertEqual(
+            DiscountOffer.urgencyMillisRemaining(startedAt: start, now: Date(timeIntervalSince1970: 7200)),
+            0
+        )
+
+        XCTAssertEqual(DiscountOffer.preciseCountdown(3_600_000), "01 : 00 : 00 . 00")
+        XCTAssertEqual(DiscountOffer.preciseCountdown(1_788_690), "00 : 29 : 48 . 69")
+        XCTAssertEqual(DiscountOffer.preciseCountdown(0), "00 : 00 : 00 . 00")
+        XCTAssertEqual(DiscountOffer.preciseCountdown(-500), "00 : 00 : 00 . 00")
+    }
+
     /// « 1 heure restantes » se lirait comme une faute : la phrase commence donc par
     /// « il reste ».
     func testVoiceOverReadsAFrenchSentence() {

@@ -114,11 +114,46 @@ function useCountdown(startedAt: number, span: number): number {
 }
 
 /**
- * La grande pop-up : le cadeau, le décompte, le prix, un bouton.
+ * **Le même décompte, au centième.**
  *
- * Elle est plus large que le paywall ordinaire — c'est une offre, pas un
- * parcours en quatre étapes — et elle tient en une page : ce qu'on doit lire
- * pour décider est au-dessus du bouton, jamais sous un défilement.
+ * Soixante millisecondes entre deux images : assez pour que les centièmes
+ * défilent, pas assez pour que ça coûte quelque chose. Le battement s'arrête à
+ * zéro — une minuterie terminée qui continue de réveiller le navigateur est du
+ * travail que personne ne regarde.
+ */
+function usePreciseCountdown(startedAt: number, span: number): number {
+  const [left, setLeft] = useState(() =>
+    discount.remainingMillis(startedAt, Date.now(), span),
+  );
+
+  useEffect(() => {
+    let tick = 0;
+
+    function beat() {
+      const value = discount.remainingMillis(startedAt, Date.now(), span);
+      setLeft(value);
+      if (value <= 0) window.clearInterval(tick);
+    }
+
+    beat();
+    tick = window.setInterval(beat, 60);
+    return () => window.clearInterval(tick);
+  }, [span, startedAt]);
+
+  return left;
+}
+
+/**
+ * **La carte de l'offre.** Une minuterie, un pourcentage, un prix, un bouton.
+ *
+ * Ce qu'elle ne fait pas est ce qui la fait marcher. Pas de liste d'avantages,
+ * pas d'illustration, pas de sur-titre : l'offre a déjà été annoncée, et ce
+ * qu'on doit lire pour décider tient en quatre lignes. Une carte d'offre qui
+ * argumente encore est une carte qui n'a pas confiance en son prix.
+ *
+ * Le fond va du bleu ciel au blanc, du haut vers le bas : la minuterie et le
+ * pourcentage sont dans la couleur, le prix et le bouton sont sur le blanc, là
+ * où on les lit sans effort.
  */
 export function DiscountCard({
   startedAt,
@@ -127,7 +162,6 @@ export function DiscountCard({
   startedAt: number;
   onClose: () => void;
 }) {
-  const left = useCountdown(startedAt, discount.urgencySeconds);
   const plan = pricing.DISCOUNT_YEARLY;
   const full = pricing.DISCOUNT_REFERENCE;
   const monthly = pricing.monthlyEquivalent(plan);
@@ -147,7 +181,7 @@ export function DiscountCard({
       return;
     }
     if (result.status === "already") {
-      setFailure("Vous êtes déjà abonné.");
+      setFailure("Tu es déjà abonné.");
       return;
     }
     setFailure(result.message ?? "L'abonnement n'est pas encore ouvert.");
@@ -159,102 +193,86 @@ export function DiscountCard({
         type="button"
         aria-label="Fermer l'offre"
         onClick={onClose}
-        className="paywall-veil absolute inset-0 bg-ink/55 backdrop-blur-[10px]"
+        className="paywall-veil absolute inset-0 bg-ink/45 backdrop-blur-[10px]"
       />
 
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="cadeau-title"
-        className="paywall-card relative flex max-h-[min(820px,94svh)] w-full max-w-[620px] flex-col overflow-hidden rounded-[28px] bg-info text-on-ink shadow-[0_34px_110px_-24px_rgba(25,23,20,0.65)]"
+        className="paywall-card relative max-h-[94svh] w-full max-w-[500px] overflow-y-auto rounded-[28px] bg-gradient-to-b from-offer-wash via-offer-wash-soft to-surface px-5 pb-6 pt-11 shadow-[0_34px_110px_-24px_rgba(11,143,220,0.55)] sm:px-7"
       >
         <button
           type="button"
           aria-label="Fermer"
           onClick={onClose}
-          className="pressable absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-on-ink/15 text-on-ink"
+          className="pressable absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-offer-sky"
         >
-          <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5">
+          <svg aria-hidden viewBox="0 0 20 20" className="h-[22px] w-[22px]">
             <path
               d="M5 5l10 10M15 5L5 15"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.8"
+              strokeWidth="2.2"
               strokeLinecap="round"
             />
           </svg>
         </button>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 pt-9 sm:px-10 sm:pt-11">
-          <div className="flex flex-col items-center text-center">
-            <span aria-hidden className="text-on-ink">
-              <GiftBox />
-            </span>
+        <div className="flex flex-col items-center text-center">
+          <UrgencyPill startedAt={startedAt} />
 
-            <p className="eyebrow mt-5 text-on-ink/75">Cadeau de bienvenue</p>
-            <h2
-              id="cadeau-title"
-              className="mt-2 text-[28px] font-bold leading-[1.12] tracking-tight-title sm:text-[32px]"
-            >
-              Votre premier cours vous ouvre&nbsp;Pro à&nbsp;{saved}&nbsp;% de moins.
-            </h2>
+          <h2
+            id="cadeau-title"
+            className="mt-5 text-[28px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[36px]"
+          >
+            <span className="text-offer-sky">{saved}&nbsp;%</span> de moins
+            <br />
+            Révise plus vite avec Pro
+          </h2>
 
-            <Countdown seconds={left} />
+          <div className="mt-6 flex w-full items-center gap-4 rounded-[22px] bg-surface px-4 py-4 text-left shadow-[0_14px_34px_-18px_rgba(11,143,220,0.55)] sm:px-5">
+            <SaleSeal percent={saved} />
 
-            <div className="mt-7 flex flex-wrap items-end justify-center gap-x-4 gap-y-1">
-              <span className="numeral text-[52px] font-bold leading-none tracking-display sm:text-[60px]">
-                {monthly}
-              </span>
-              <span className="pb-2 text-[17px] font-semibold text-on-ink/80">/ mois</span>
+            <div className="min-w-0">
+              <p className="text-[14.5px] font-semibold text-offer-sky">{plan.title}</p>
+
+              <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
+                <span className="numeral text-[26px] font-bold leading-none text-ink">
+                  {monthly}
+                </span>
+                <span className="text-[15px] font-medium text-ink-secondary">par mois</span>
+              </p>
+
+              <s className="mt-1 block text-[15.5px] font-medium text-ink-tertiary">
+                {pricing.priceText(full.price)}
+              </s>
             </div>
-            <p className="mt-3 text-[14.5px] text-on-ink/80">
-              <s className="text-on-ink/60">{pricing.priceText(full.price)} / an</s>
-              <span className="mx-2" aria-hidden>
-                →
-              </span>
-              <strong className="font-semibold text-on-ink">
-                {pricing.priceText(plan.price)} / an
-              </strong>
-            </p>
-
-            <ul className="mt-7 w-full space-y-2.5 text-left">
-              {PERKS.map((perk) => (
-                <li
-                  key={perk}
-                  className="flex items-start gap-3 rounded-button bg-on-ink/10 px-4 py-3 text-[14.5px] font-medium"
-                >
-                  <span aria-hidden className="mt-0.5 shrink-0 text-on-ink">
-                    <Check />
-                  </span>
-                  {perk}
-                </li>
-              ))}
-            </ul>
           </div>
-        </div>
 
-        <div className="px-6 pb-6 pt-4 sm:px-10">
           <button
             type="button"
             onClick={() => void subscribe()}
             disabled={pending}
-            className="pressable shiny flex h-14 w-full items-center justify-center gap-2 rounded-button bg-on-ink text-[16px] font-semibold text-ink disabled:opacity-70"
+            className="pressable shiny mt-5 flex h-[58px] w-full items-center justify-center gap-2 rounded-[16px] bg-offer-sky text-[17px] font-semibold text-white disabled:opacity-70"
           >
-            {pending ? <ThinkingOrb state="connecting" size={20} theme="light" /> : null}
-            Profiter du cadeau
+            {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
+            Commencer avec {saved}&nbsp;% de moins
           </button>
 
           {failure ? (
             <p
               role="status"
-              className="mt-3 rounded-button bg-on-ink/10 px-4 py-3 text-[13.5px] text-on-ink"
+              className="mt-3 w-full rounded-button bg-negative-soft px-4 py-3 text-[13.5px] text-negative"
             >
               {failure}
             </p>
           ) : (
-            <p className="mt-3 text-center text-[12.5px] text-on-ink/70">
-              {pricing.priceText(plan.price)} facturés une fois par an. Sans essai, résiliable
-              à tout moment.
+            // Le mensuel vend, l'annuel engage : le montant réellement prélevé est écrit
+            // sous le bouton, jamais ailleurs qu'à côté de lui.
+            <p className="mt-3 text-[12.5px] text-ink-tertiary">
+              {pricing.priceText(plan.price)} facturés une fois par an, résiliable à tout
+              moment.
             </p>
           )}
         </div>
@@ -263,36 +281,111 @@ export function DiscountCard({
   );
 }
 
-/** Le décompte de l'heure, en gros, au-dessus du prix. */
-function Countdown({ seconds }: { seconds: number }) {
-  const over = seconds <= 0;
+/**
+ * La minuterie de l'heure, en pastille violette.
+ *
+ * Elle vit dans son propre composant : elle se redessine dix-sept fois par
+ * seconde, et le reste de la carte n'a aucune raison de la suivre.
+ */
+function UrgencyPill({ startedAt }: { startedAt: number }) {
+  const left = usePreciseCountdown(startedAt, discount.urgencySeconds);
+  const over = left <= 0;
+
   return (
     <p
-      className="mt-6 inline-flex items-center gap-2 rounded-pill bg-on-ink/15 px-4 py-2"
+      className="inline-flex items-baseline gap-2 rounded-pill bg-offer-urgency px-4 py-2 text-white"
       role="timer"
-      aria-label={
-        over ? "offre terminée" : `Offre réservée, ${discount.countdownLabel(seconds)}`
-      }
+      aria-label={over ? "offre terminée" : `Offre réservée, ${discount.countdownLabel(Math.floor(left / 1000))}`}
     >
-      <span aria-hidden className="text-on-ink/80">
-        <Clock />
+      {/* La police des nombres, comme partout dans Micabo, et des chiffres de largeur fixe :
+          un décompte qui change de largeur à chaque centième ferait trembler la pastille. */}
+      <span className="font-number text-[15px] font-semibold tabular-nums" aria-hidden>
+        {discount.preciseCountdown(left)}
       </span>
-      <span className="numeral text-[19px] font-bold" aria-hidden>
-        {discount.countdown(seconds)}
-      </span>
-      <span className="text-[13px] font-medium text-on-ink/80">
-        {over ? "dernier appel" : "réservé pour vous"}
+      <span className="text-[13px] font-medium text-white/85">
+        {over ? "terminé" : "restant"}
       </span>
     </p>
   );
 }
 
 /**
- * La pastille, quand la pop-up s'est refermée.
+ * Le sceau de la remise : un disque à douze festons.
+ *
+ * Festonné et non rond, parce qu'un rond bleu avec un nombre dedans est une
+ * pastille d'état — la même forme que « 4 à réviser ». Les festons disent
+ * « étiquette collée sur un prix », ce qui est exactement ce que c'est.
+ */
+function SaleSeal({ percent }: { percent: number }) {
+  return (
+    <span
+      aria-hidden
+      className="relative grid h-[68px] w-[68px] shrink-0 place-items-center"
+    >
+      <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
+        <defs>
+          <linearGradient id="offer-seal" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-offer-sky)" />
+            <stop offset="100%" stopColor="var(--color-offer-sky-deep)" />
+          </linearGradient>
+        </defs>
+        <path d={SEAL_PATH} fill="url(#offer-seal)" />
+      </svg>
+
+      <span className="relative flex flex-col items-center leading-none text-white">
+        <span className="text-[9.5px] font-semibold">Remise</span>
+        <span className="mt-0.5 text-[20px] font-bold">
+          {percent}
+          <span className="align-top text-[10px]">%</span>
+        </span>
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Le contour du sceau, calculé une fois pour toutes.
+ *
+ * Le sommet d'une quadratique est en `(p0 + 2c + p1) / 4` : le point de contrôle
+ * se déduit donc de la crête voulue, et non l'inverse. Sans ce calcul, poser les
+ * contrôles « à vue » donne des festons d'amplitudes différentes.
+ */
+const SEAL_PATH = scallopedDisc(12, 41, 7);
+
+function scallopedDisc(scallops: number, radius: number, bump: number): string {
+  const center = 50;
+  const step = (Math.PI * 2) / scallops;
+  const round = (value: number) => Math.round(value * 100) / 100;
+  const point = (angle: number, distance: number) =>
+    [center + distance * Math.cos(angle), center + distance * Math.sin(angle)] as const;
+
+  let path = "";
+
+  for (let index = 0; index < scallops; index += 1) {
+    const from = point(index * step, radius);
+    const to = point((index + 1) * step, radius);
+    const crest = point((index + 0.5) * step, radius + bump);
+    const control = [
+      2 * crest[0] - (from[0] + to[0]) / 2,
+      2 * crest[1] - (from[1] + to[1]) / 2,
+    ] as const;
+
+    if (index === 0) path += `M${round(from[0])} ${round(from[1])}`;
+    path += `Q${round(control[0])} ${round(control[1])} ${round(to[0])} ${round(to[1])}`;
+  }
+
+  return `${path}Z`;
+}
+
+/**
+ * La pastille, quand la carte s'est refermée.
  *
  * Elle porte le décompte des vingt-quatre heures et rien d'autre : un clic
  * rouvre l'offre. En bas à droite, au-dessus de la page, hors du flux — elle ne
  * doit pas pousser l'étagère vers le bas à chaque chargement.
+ *
+ * Elle compte en secondes, pas en centièmes : sur vingt-quatre heures, des
+ * centièmes qui défilent dans un coin de l'écran sont un clignotant.
  */
 export function DiscountBadge({
   startedAt,
@@ -308,42 +401,21 @@ export function DiscountBadge({
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`Rouvrir le cadeau, ${discount.countdownLabel(left)}`}
-      className="pressable fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-pill bg-info px-4 py-3 text-on-ink shadow-[0_16px_40px_-12px_rgba(25,23,20,0.55)]"
+      aria-label={`Rouvrir l'offre, ${discount.countdownLabel(left)}`}
+      className="pressable fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-pill bg-offer-sky px-4 py-3 text-white shadow-[0_16px_40px_-12px_rgba(11,143,220,0.6)]"
     >
-      <span aria-hidden className="text-on-ink">
+      <span aria-hidden className="text-white">
         <GiftGlyph />
       </span>
       <span className="text-left">
-        <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-on-ink/75">
-          Votre cadeau
+        <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80">
+          Ton offre
         </span>
-        <span className="numeral block text-[15px] font-bold" aria-hidden>
+        <span className="block font-number text-[15px] font-bold tabular-nums" aria-hidden>
           {discount.countdown(left)}
         </span>
       </span>
     </button>
-  );
-}
-
-const PERKS = [
-  "Cours illimités, et la fiche entière",
-  "Sessions sans coupure à la cinquième carte",
-  "Entraînement libre, quand l'examen approche",
-] as const;
-
-function GiftBox() {
-  return (
-    <svg aria-hidden viewBox="0 0 96 96" className="h-[76px] w-[76px]">
-      <rect x="16" y="38" width="64" height="44" rx="8" fill="currentColor" />
-      <rect x="16" y="28" width="64" height="16" rx="6" fill="currentColor" opacity="0.85" />
-      <rect x="44" y="28" width="8" height="54" fill="currentColor" opacity="0.45" />
-      <path
-        d="M48 28c-8-12-20-12-20-2 0 8 12 10 20 10 8 0 20-2 20-10 0-10-12-10-20 2z"
-        fill="currentColor"
-        opacity="0.7"
-      />
-    </svg>
   );
 }
 
@@ -357,36 +429,6 @@ function GiftGlyph() {
         d="M12 7c-2-3.2-5.2-3.2-5.2-.6 0 2.1 3.2 2.6 5.2 2.6s5.2-.5 5.2-2.6C17.2 3.8 14 3.8 12 7z"
         fill="currentColor"
         opacity="0.7"
-      />
-    </svg>
-  );
-}
-
-function Clock() {
-  return (
-    <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4">
-      <circle cx="10" cy="10" r="7.2" fill="none" stroke="currentColor" strokeWidth="1.7" />
-      <path
-        d="M10 6v4.3l2.8 1.7"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function Check() {
-  return (
-    <svg aria-hidden viewBox="0 0 20 20" className="h-[18px] w-[18px]">
-      <path
-        d="M4.5 10.5l3.4 3.4 7.6-8"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
       />
     </svg>
   );

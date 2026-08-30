@@ -336,14 +336,31 @@ paywall ordinaire. Le critère d'éligibilité est le premier cours importé.
 | | iOS | Web |
 | --- | --- | --- |
 | Déclencheur | La fiche du premier cours | La première page d'app chargée après l'import |
-| Ce qui s'ouvre | Un cadeau plein écran, **trois appuis** pour le déballer | Une grande carte bleue, directement |
-| Le paywall | Fond bleu, languette blanche en bas | Carte bleue de 620 px |
-| Minuterie affichée | 1 heure | 1 heure |
+| Ce qui s'ouvre | Un cadeau plein écran, **trois appuis** pour le déballer | La carte de l'offre, directement |
+| Le paywall | Une languette posée en bas, l'écran d'où l'on vient reste visible dessous | Une carte de 500 px, posée sur le tableau de bord |
+| Minuterie affichée | 1 heure, **au centième** | 1 heure, **au centième** |
 | Après fermeture | Pastille avec décompte 24 h, un appui rouvre | Pastille en bas à droite, idem |
+
+**Une seule mise en page, des deux côtés** : minuterie violette, le pourcentage en bleu
+ciel, « Révise plus vite avec Pro », la carte de prix avec son sceau festonné, le bouton
+bleu pleine largeur, et la somme réellement prélevée juste dessous. Pas de liste
+d'avantages : le cadeau a déjà annoncé l'offre, et un écran qui argumente encore au moment
+du prix est un écran qui n'a pas confiance en son prix.
+
+**Le bleu ciel n'existe nulle part ailleurs dans le produit**, et c'est le point. L'offre
+est un événement, pas un écran de plus : peinte dans le vert de Micabo, elle se lirait comme
+une fonctionnalité — donc comme quelque chose qui sera encore là demain. Les valeurs sont
+dans `web/app/globals.css` et `MicaboColor` (`offerSky`, `offerWash`, `offerUrgency`).
 
 **Deux durées, un seul instant d'origine.** L'heure pousse à décider, les vingt-quatre
 heures sont la durée réelle du tarif. Les deux se calculent depuis l'instant où le cadeau a
 été ouvert — pas depuis l'import.
+
+**La minuterie descend au centième**, et ce n'est pas de la précision : une minuterie qui
+bouge à chaque image se regarde, une minuterie qui saute d'une seconde à l'autre se lit une
+fois puis s'oublie. Le web bat toutes les 60 ms, l'app passe par un `TimelineView` à 20
+images par seconde. La pastille des vingt-quatre heures, elle, reste à la seconde : des
+centièmes qui défilent dans un coin de l'écran sont un clignotant.
 
 Les nombres vivent à deux endroits qui ne peuvent pas diverger :
 
@@ -351,7 +368,7 @@ Les nombres vivent à deux endroits qui ne peuvent pas diverger :
 - `Micabo/Features/Paywall/DiscountOffer.swift`
 
 `web/packages/core/test/freemium-parity.test.ts` relit le Swift et compare. Trois appuis,
-3600 s, 86 400 s, 3,30 €.
+3600 s, 86 400 s, 3,30 €, et la même écriture du décompte — « 00 : 29 : 48 . 69 ».
 
 **Le prix mensuel est écrit, pas calculé.** 39,99 ÷ 12 fait 3,3325, que les formateurs
 rendraient « 3,33 € ». Les deux clients écrivent 3,30 € / mois **et** affichent

@@ -113,6 +113,24 @@ struct DiscountFlowView: View {
     }
 }
 
+// MARK: - La couleur de l'offre
+
+/// **Le dégradé de l'offre** : bleu ciel en haut, blanc en bas.
+///
+/// Le même sur le cadeau et sur le paywall. Deux bleus à une seconde d'intervalle feraient
+/// deux offres, et le paywall aurait l'air d'arriver d'ailleurs que du cadeau qu'on vient
+/// d'ouvrir.
+///
+/// Un `LinearGradient` et non une vue : il sert de fond plein écran au cadeau **et** de
+/// remplissage à la languette, et seul un `ShapeStyle` peut faire les deux.
+private enum DiscountWash {
+    static let gradient = LinearGradient(
+        colors: [MicaboColor.offerWash, MicaboColor.offerWashSoft, MicaboColor.surface],
+        startPoint: .top,
+        endPoint: .bottom
+    )
+}
+
 // MARK: - Premier temps : le cadeau
 
 /// Le cadeau, plein écran, et les trois appuis qui l'ouvrent.
@@ -134,27 +152,26 @@ private struct DiscountGiftStage: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                DiscountCloseButton(action: onDismiss)
                 Spacer(minLength: 0)
+                DiscountCloseButton(action: onDismiss)
             }
-            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.horizontal, MicaboSpacing.sm)
             .padding(.top, MicaboSpacing.xs)
 
             Spacer(minLength: MicaboSpacing.lg)
 
-            VStack(spacing: MicaboSpacing.lg) {
-                Text("Nous avons un cadeau pour vous")
-                    .font(MicaboFont.hanken(28, weight: .bold))
-                    .foregroundStyle(MicaboColor.onInk)
+            VStack(spacing: MicaboSpacing.sm) {
+                Text("On a un cadeau pour toi")
+                    .font(MicaboFont.hanken(30, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
                     .tracking(MicaboTracking.tight)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(1)
                     .fixedSize(horizontal: false, vertical: true)
                     .onboardingAppear(index: 0)
 
-                Text("Votre premier cours est écrit. Ouvrez-le.")
+                Text("Ton premier cours est écrit. Ouvre-le.")
                     .font(MicaboFont.hanken(15, weight: .regular))
-                    .foregroundStyle(MicaboColor.onInk.opacity(0.8))
+                    .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.center)
                     .onboardingAppear(index: 1)
             }
@@ -170,7 +187,7 @@ private struct DiscountGiftStage: View {
             }
             .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: Haptics.Press.none))
             .accessibilityLabel("Ouvrir le cadeau")
-            .accessibilityHint("Appuyez \(DiscountOffer.taps) fois")
+            .accessibilityHint("Appuie \(DiscountOffer.taps) fois")
             .onboardingAppear(index: 2)
 
             Spacer(minLength: MicaboSpacing.md)
@@ -179,7 +196,7 @@ private struct DiscountGiftStage: View {
                 HStack(spacing: 8) {
                     ForEach(0 ..< DiscountOffer.taps, id: \.self) { index in
                         Capsule()
-                            .fill(MicaboColor.onInk.opacity(index < taps ? 1 : 0.3))
+                            .fill(index < taps ? MicaboColor.offerSky : MicaboColor.offerSky.opacity(0.25))
                             .frame(width: index < taps ? 26 : 9, height: 9)
                     }
                 }
@@ -187,14 +204,14 @@ private struct DiscountGiftStage: View {
 
                 Text(remainingTaps == 0 ? "Ça s'ouvre…" : "Encore \(remainingTaps)")
                     .font(MicaboFont.hanken(14, weight: .semibold))
-                    .foregroundStyle(MicaboColor.onInk.opacity(0.85))
+                    .foregroundStyle(MicaboColor.inkSecondary)
                     .contentTransition(.numericText())
             }
             .padding(.bottom, MicaboSpacing.xxl)
             .onboardingAppear(index: 3)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(MicaboColor.info.ignoresSafeArea())
+        .background(DiscountWash.gradient.ignoresSafeArea())
     }
 
     /// L'inclinaison alterne d'un appui à l'autre : une boîte qui penche toujours du même
@@ -251,22 +268,22 @@ private struct DiscountGiftBox: View {
 
             // Corps
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(MicaboColor.onInk)
+                .fill(MicaboColor.offerSky)
                 .frame(width: 132, height: 96)
                 .overlay {
                     Rectangle()
-                        .fill(MicaboColor.info.opacity(0.35))
+                        .fill(Color.white.opacity(0.45))
                         .frame(width: 18)
                 }
                 .offset(y: 30)
 
             // Couvercle
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(MicaboColor.onInk)
+                .fill(MicaboColor.offerSkyDeep)
                 .frame(width: 150, height: 34)
                 .overlay {
                     Rectangle()
-                        .fill(MicaboColor.info.opacity(0.35))
+                        .fill(Color.white.opacity(0.45))
                         .frame(width: 18)
                 }
                 .offset(y: -24 + lidOffset)
@@ -274,7 +291,7 @@ private struct DiscountGiftBox: View {
 
             // Nœud
             DiscountBow()
-                .fill(MicaboColor.onInk)
+                .fill(MicaboColor.offerSkyDeep)
                 .frame(width: 78, height: 34)
                 .offset(y: -50 + lidOffset)
                 .opacity(isBursting ? 0 : 1)
@@ -328,7 +345,7 @@ private struct DiscountRibbons: View {
         ZStack {
             ForEach(0 ..< 8, id: \.self) { index in
                 Capsule()
-                    .fill(MicaboColor.onInk.opacity(0.9))
+                    .fill(MicaboColor.offerSky.opacity(0.9))
                     .frame(width: 6, height: 22)
                     .offset(y: out ? -104 : -34)
                     .rotationEffect(.degrees(Double(index) / 8 * 360))
@@ -343,12 +360,17 @@ private struct DiscountRibbons: View {
 
 // MARK: - Second temps : le tarif réduit
 
-/// Le paywall du cadeau : fond bleu, et une languette blanche en bas.
+/// **Le paywall du cadeau** : une languette posée sur l'écran d'où l'on vient.
 ///
-/// La languette n'est pas un ornement. Ce paywall ne vend **qu'une** offre : tout ce qui
-/// engage — le prix barré, la somme prélevée, le bouton, les mentions — tient dans un
-/// panneau posé sur le bas de l'écran, à portée de pouce, et le bleu au-dessus ne porte que
-/// l'argument. Un écran d'offre unique n'a pas de liste à faire défiler.
+/// Elle ne prend que le bas de l'écran, et c'est le sujet de sa mise en page. Un plein écran
+/// coupe le lien avec le cours qu'on vient de lire ; la languette le laisse visible derrière,
+/// et l'offre se lit comme ce qu'elle est — une proposition posée sur ce qu'on faisait, pas
+/// un mur.
+///
+/// Ce qu'elle ne fait pas est ce qui la fait marcher : pas de liste d'avantages, pas
+/// d'illustration, pas de sur-titre. Le cadeau a déjà annoncé l'offre, et ce qu'on doit lire
+/// pour décider tient en quatre lignes. Un écran d'offre qui argumente encore est un écran
+/// qui n'a pas confiance en son prix.
 private struct DiscountPaywallStage: View {
     let startedAt: Date
     var isPurchasing: Bool
@@ -356,119 +378,62 @@ private struct DiscountPaywallStage: View {
     var onSubscribe: () -> Void
     var onRestore: () -> Void
 
+    /// Le voile s'allume en fondu. Le plein écran qui porte cette vue glisse depuis le bas :
+    /// sans le fondu, on verrait un rectangle noir monter avec la languette.
+    @State private var veiled = false
+
     private var plan: PaywallPlan { DiscountOffer.plan }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                DiscountCloseButton(action: onClose)
-                Spacer(minLength: 0)
+        ZStack(alignment: .bottom) {
+            Button(action: onClose) {
+                Rectangle()
+                    .fill(Color.black.opacity(veiled ? 0.32 : 0))
             }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.xs)
+            .buttonStyle(.plain)
+            .ignoresSafeArea()
+            .accessibilityLabel("Fermer l'offre")
 
-            Spacer(minLength: MicaboSpacing.md)
-
-            VStack(spacing: MicaboSpacing.md) {
-                DiscountCountdownPill(startedAt: startedAt)
-                    .onboardingAppear(index: 0)
-
-                Text("Votre cadeau : Pro à \(DiscountOffer.savingsPercent) % de moins")
-                    .font(MicaboFont.hanken(27, weight: .bold))
-                    .foregroundStyle(MicaboColor.onInk)
-                    .tracking(MicaboTracking.tight)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .onboardingAppear(index: 1)
-
-                HStack(alignment: .lastTextBaseline, spacing: 8) {
-                    Text(DiscountOffer.monthlyText)
-                        .font(MicaboFont.number(56, weight: .bold))
-                        .foregroundStyle(MicaboColor.onInk)
-                        .tracking(MicaboTracking.display)
-
-                    Text("/ mois")
-                        .font(MicaboFont.hanken(17, weight: .semibold))
-                        .foregroundStyle(MicaboColor.onInk.opacity(0.8))
-                }
-                .onboardingAppear(index: 2)
-
-                VStack(alignment: .leading, spacing: 9) {
-                    ForEach(Self.perks, id: \.self) { perk in
-                        HStack(spacing: 10) {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(MicaboColor.onInk)
-
-                            Text(perk)
-                                .font(MicaboFont.hanken(14.5, weight: .medium))
-                                .foregroundStyle(MicaboColor.onInk.opacity(0.92))
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                }
-                .padding(.top, MicaboSpacing.xs)
-                .onboardingAppear(index: 3)
-            }
-            .padding(.horizontal, MicaboSpacing.xl)
-
-            Spacer(minLength: MicaboSpacing.lg)
-
-            // La languette se mesure elle-même : sa hauteur dépend de la longueur des
-            // mentions, et une réserve écrite à la main se serait décalée au premier mot
-            // ajouté.
-            languette
+            panel
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(MicaboColor.info.ignoresSafeArea())
+        .animation(.easeOut(duration: 0.3), value: veiled)
+        .onAppear { veiled = true }
     }
 
-    /// La languette : le prix qu'on paie vraiment, le bouton, les mentions.
-    private var languette: some View {
-        VStack(spacing: 14) {
-            Capsule()
-                .fill(MicaboColor.strokeStrong)
-                .frame(width: 40, height: 4)
-
-            HStack(spacing: 10) {
-                Text(DiscountOffer.reference.displayPrice)
-                    .font(MicaboFont.hanken(16, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .strikethrough(true, color: MicaboColor.inkTertiary)
-
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-
-                Text("\(plan.displayPrice) / an")
-                    .font(MicaboFont.hanken(17, weight: .bold))
-                    .foregroundStyle(MicaboColor.ink)
+    private var panel: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Spacer(minLength: 0)
+                DiscountCloseButton(action: onClose)
             }
 
-            Button {
-                guard !isPurchasing else { return }
-                onSubscribe()
-            } label: {
-                HStack(spacing: 9) {
-                    if isPurchasing {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(MicaboColor.onInk)
-                    }
-                    Text("Profiter du cadeau")
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(MicaboPrimaryButtonStyle(isProminent: true))
-            .disabled(isPurchasing)
+            DiscountCountdownPill(startedAt: startedAt)
+                .padding(.top, MicaboSpacing.xxs)
+                .onboardingAppear(index: 0)
 
-            Text("\(plan.displayPrice) facturés une fois par an. Sans essai, résiliable à tout moment.")
+            headline
+                .padding(.top, MicaboSpacing.md)
+                .onboardingAppear(index: 1)
+
+            priceCard
+                .padding(.top, MicaboSpacing.lg)
+                .onboardingAppear(index: 2)
+
+            callToAction
+                .padding(.top, MicaboSpacing.md)
+                .onboardingAppear(index: 3)
+
+            // Le mensuel vend, l'annuel engage : la somme réellement prélevée est écrite
+            // sous le bouton, jamais ailleurs qu'à côté de lui.
+            Text("\(plan.displayPrice) facturés une fois par an, résiliable sur l'App Store.")
                 .font(MicaboFont.hanken(11.5, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, MicaboSpacing.sm)
 
             PaywallLegalFooter(onRestore: onRestore)
+                .padding(.top, MicaboSpacing.xs)
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, MicaboSpacing.sm)
@@ -482,74 +447,225 @@ private struct DiscountPaywallStage: View {
                 topTrailingRadius: MicaboRadius.sheet,
                 style: .continuous
             )
-            .fill(MicaboColor.canvas)
+            .fill(DiscountWash.gradient)
             .ignoresSafeArea(edges: .bottom)
         )
-        .onboardingAppear(index: 4)
     }
 
-    private static let perks = [
-        "Cours illimités, et la fiche entière",
-        "Sessions sans coupure à la cinquième carte",
-        "Entraînement libre, quand l'examen approche"
-    ]
+    /// Le pourcentage porte la couleur, la promesse porte l'encre : ce qu'on retient d'un
+    /// coup d'œil est le nombre, et le colorer entièrement le noierait dans une ligne bleue.
+    private var headline: some View {
+        (
+            Text("\(DiscountOffer.savingsPercent)\u{00a0}%")
+                .foregroundStyle(MicaboColor.offerSky)
+                + Text(" de moins\nRévise plus vite avec Pro")
+                .foregroundStyle(MicaboColor.ink)
+        )
+        .font(MicaboFont.hanken(29, weight: .bold))
+        .tracking(MicaboTracking.tight)
+        .multilineTextAlignment(.center)
+        .lineSpacing(1)
+        // « Révise plus vite avec Pro » tient sur une ligne sur un iPhone standard et se
+        // resserre d'un cheveu sur les plus petits, plutôt que de passer à trois lignes.
+        .minimumScaleFactor(0.85)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var priceCard: some View {
+        HStack(spacing: 14) {
+            DiscountSeal(percent: DiscountOffer.savingsPercent)
+                .frame(width: 68, height: 68)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(plan.title)
+                    .font(MicaboFont.hanken(14.5, weight: .semibold))
+                    .foregroundStyle(MicaboColor.offerSky)
+
+                HStack(alignment: .lastTextBaseline, spacing: 6) {
+                    Text(DiscountOffer.monthlyText)
+                        .font(MicaboFont.number(26, weight: .bold))
+                        .foregroundStyle(MicaboColor.ink)
+
+                    Text("par mois")
+                        .font(MicaboFont.hanken(15, weight: .medium))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                }
+
+                Text(DiscountOffer.reference.displayPrice)
+                    .font(MicaboFont.hanken(15.5, weight: .medium))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .strikethrough(true, color: MicaboColor.inkTertiary)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xl, style: .continuous))
+        .micaboSoftShadow(strength: 0.08)
+    }
+
+    private var callToAction: some View {
+        Button {
+            guard !isPurchasing else { return }
+            onSubscribe()
+        } label: {
+            HStack(spacing: 9) {
+                if isPurchasing {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(.white)
+                }
+                Text("Commencer avec \(DiscountOffer.savingsPercent)\u{00a0}% de moins")
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(
+            MicaboPrimaryButtonStyle(
+                tint: MicaboColor.offerSky,
+                foreground: .white,
+                isProminent: true
+            )
+        )
+        .disabled(isPurchasing)
+    }
 }
 
-/// La minuterie de l'heure, en pastille.
+/// **La minuterie de l'heure**, en pastille violette.
+///
+/// Les centièmes défilent, et ce n'est pas de la précision : une minuterie qui bouge à chaque
+/// image se regarde, une minuterie qui saute d'une seconde à l'autre se lit une fois puis
+/// s'oublie. C'est le seul endroit du produit où l'on demande de décider maintenant.
 private struct DiscountCountdownPill: View {
     let startedAt: Date
 
-    @State private var left: Int = DiscountOffer.urgencySeconds
-
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "clock.fill")
-                .font(.system(size: 13, weight: .semibold))
-
-            Text(DiscountOffer.countdown(left))
-                .font(MicaboFont.number(18, weight: .bold))
-                .monospacedDigit()
-
-            Text(left > 0 ? "réservé pour vous" : "dernier appel")
-                .font(MicaboFont.hanken(13, weight: .medium))
-        }
-        .foregroundStyle(MicaboColor.onInk)
-        .padding(.vertical, 9)
-        .padding(.horizontal, 15)
-        .background(MicaboColor.onInk.opacity(0.16), in: Capsule())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            left > 0 ? "Offre réservée, \(DiscountOffer.countdownLabel(left))" : "Offre terminée"
-        )
-        .onAppear { refresh() }
-        .task {
-            // Une seconde qui tombe, tant que l'écran est là. Un `Timer` retenu par la vue
-            // continuerait de battre après sa disparition.
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
-                refresh()
-            }
+        // Vingt images par seconde, cadencées par `TimelineView` : un `Timer` retenu par la
+        // vue continuerait de battre après sa disparition.
+        TimelineView(.periodic(from: .now, by: 0.05)) { context in
+            pill(DiscountOffer.urgencyMillisRemaining(startedAt: startedAt, now: context.date))
         }
     }
 
-    private func refresh() {
-        left = DiscountOffer.urgencyRemaining(startedAt: startedAt)
+    private func pill(_ left: Int) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 7) {
+            // La police des nombres, comme partout dans Micabo, et des chiffres de largeur
+            // fixe : un décompte qui change de largeur à chaque centième ferait trembler la
+            // pastille qui le porte.
+            Text(DiscountOffer.preciseCountdown(left))
+                .font(MicaboFont.number(15, weight: .semibold))
+                .monospacedDigit()
+
+            Text(left > 0 ? "restant" : "terminé")
+                .font(MicaboFont.hanken(13, weight: .medium))
+                .foregroundStyle(Color.white.opacity(0.85))
+        }
+        .foregroundStyle(Color.white)
+        .padding(.vertical, 9)
+        .padding(.horizontal, 15)
+        .background(MicaboColor.offerUrgency, in: Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            left > 0
+                ? "Offre réservée, \(DiscountOffer.countdownLabel(left / 1000))"
+                : "Offre terminée"
+        )
     }
 }
 
-/// La croix du cadeau. Celle du paywall ordinaire est en encre : sur le bleu, elle
-/// disparaîtrait, et une sortie qu'on ne voit pas n'est pas une sortie.
+/// **Le sceau de la remise** : un disque à douze festons.
+///
+/// Festonné et non rond, parce qu'un rond bleu avec un nombre dedans est une pastille d'état
+/// — la même forme que « 4 à réviser » dans toute l'app. Les festons disent « étiquette
+/// collée sur un prix », ce qui est exactement ce que c'est.
+private struct DiscountSeal: View {
+    let percent: Int
+
+    var body: some View {
+        ZStack {
+            ScallopedDisc()
+                .fill(
+                    LinearGradient(
+                        colors: [MicaboColor.offerSky, MicaboColor.offerSkyDeep],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+
+            VStack(spacing: 1) {
+                Text("Remise")
+                    .font(MicaboFont.hanken(9.5, weight: .semibold))
+
+                HStack(alignment: .top, spacing: 0) {
+                    Text("\(percent)")
+                        .font(MicaboFont.number(20, weight: .bold))
+
+                    Text("%")
+                        .font(MicaboFont.hanken(10, weight: .bold))
+                        .padding(.top, 2)
+                }
+            }
+            .foregroundStyle(Color.white)
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+/// Le contour du sceau.
+///
+/// Le sommet d'une quadratique est en `(p0 + 2c + p1) / 4` : le point de contrôle se déduit
+/// donc de la crête voulue, et non l'inverse. Sans ce calcul, poser les contrôles « à vue »
+/// donne des festons d'amplitudes différentes.
+private struct ScallopedDisc: Shape {
+    var scallops = 12
+    /// Amplitude des festons, en fraction du rayon.
+    var bump: CGFloat = 0.17
+
+    func path(in rect: CGRect) -> Path {
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = min(rect.width, rect.height) / 2 / (1 + bump)
+        let step = CGFloat.pi * 2 / CGFloat(scallops)
+
+        func point(_ angle: CGFloat, _ distance: CGFloat) -> CGPoint {
+            CGPoint(
+                x: center.x + distance * cos(angle),
+                y: center.y + distance * sin(angle)
+            )
+        }
+
+        var path = Path()
+
+        for index in 0 ..< scallops {
+            let from = point(CGFloat(index) * step, radius)
+            let to = point(CGFloat(index + 1) * step, radius)
+            let crest = point((CGFloat(index) + 0.5) * step, radius * (1 + bump))
+            let control = CGPoint(
+                x: 2 * crest.x - (from.x + to.x) / 2,
+                y: 2 * crest.y - (from.y + to.y) / 2
+            )
+
+            if index == 0 { path.move(to: from) }
+            path.addQuadCurve(to: to, control: control)
+        }
+
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// La croix de l'offre, en haut à droite.
+///
+/// À droite et non à gauche comme les autres paywalls : cette carte est une languette, et sur
+/// une languette la croix se pose du côté où le pouce ne couvre pas le prix.
 private struct DiscountCloseButton: View {
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Image(systemName: "xmark")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(MicaboColor.onInk)
-                .frame(width: 34, height: 34)
-                .background(MicaboColor.onInk.opacity(0.18), in: Circle())
-                .frame(width: 44, height: 44, alignment: .leading)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(MicaboColor.offerSky)
+                .frame(width: 44, height: 44, alignment: .trailing)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
         .accessibilityLabel("Fermer")
@@ -574,6 +690,9 @@ extension View {
     /// En plein écran, comme le paywall ordinaire : une feuille se balaye vers le bas, et
     /// un cadeau qu'on écarte du pouce sans l'avoir ouvert n'a rien dit.
     ///
+    /// Le fond du plein écran est **transparent**, et c'est ce qui permet au paywall de
+    /// n'être qu'une languette : sans ça, son voile serait du noir posé sur du noir.
+    ///
     /// La croix marque l'offre comme vue — c'est ce qui fait apparaître la pastille. Sans
     /// ça, la grande carte reviendrait à chaque fiche et le décompte n'aurait pas de sens.
     func micaboDiscountOffer(_ presentation: Binding<DiscountPresentation?>) -> some View {
@@ -586,6 +705,7 @@ extension View {
                 },
                 onSubscribed: { presentation.wrappedValue = nil }
             )
+            .presentationBackground(Color.clear)
         }
     }
 }
@@ -597,6 +717,9 @@ extension View {
 /// C'est la différence entre une offre refusée et une offre remise à plus tard, et seule la
 /// seconde se vend. Un appui rouvre le paywall — pas le cadeau : on ne fait pas déballer
 /// deux fois.
+///
+/// Elle compte en secondes, pas en centièmes : sur vingt-quatre heures, des centièmes qui
+/// défilent dans un coin de l'écran sont un clignotant.
 struct DiscountBadge: View {
     let startedAt: Date
     var onOpen: () -> Void
@@ -610,24 +733,24 @@ struct DiscountBadge: View {
                     .font(.system(size: 16, weight: .semibold))
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("VOTRE CADEAU")
+                    Text("TON OFFRE")
                         .font(MicaboFont.hanken(10, weight: .bold))
                         .tracking(MicaboTracking.caps)
-                        .foregroundStyle(MicaboColor.onInk.opacity(0.75))
+                        .foregroundStyle(Color.white.opacity(0.8))
 
                     Text(DiscountOffer.countdown(left))
                         .font(MicaboFont.number(15, weight: .bold))
                         .monospacedDigit()
                 }
             }
-            .foregroundStyle(MicaboColor.onInk)
+            .foregroundStyle(Color.white)
             .padding(.vertical, 10)
             .padding(.horizontal, 15)
-            .background(MicaboColor.info, in: Capsule())
+            .background(MicaboColor.offerSky, in: Capsule())
             .micaboSoftShadow(strength: 0.18)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .soft))
-        .accessibilityLabel("Rouvrir le cadeau, \(DiscountOffer.countdownLabel(left))")
+        .accessibilityLabel("Rouvrir l'offre, \(DiscountOffer.countdownLabel(left))")
         .opacity(left > 0 ? 1 : 0)
         .allowsHitTesting(left > 0)
         .onAppear { refresh() }
