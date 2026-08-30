@@ -11,6 +11,7 @@ export default function ExamPrepStep() {
     <Scaffold
       title="On te prépare à réussir tes examens."
       footer={<ContinueButton enabled href="/commencer/retention" />}
+      center
     >
       <ExamPrepStory />
     </Scaffold>

@@ -11,6 +11,7 @@ export default function CardsIntroStep() {
     <Scaffold
       title="On t'aide à comprendre ton cours."
       footer={<ContinueButton enabled href="/commencer/reussir" />}
+      center
     >
       <FlashcardStory />
     </Scaffold>

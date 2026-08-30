@@ -21,6 +21,7 @@ export function Scaffold({
   skip,
   children,
   footer,
+  center = false,
 }: {
   eyebrow?: string;
   title: React.ReactNode;
@@ -28,6 +29,9 @@ export function Scaffold({
   skip?: { label: string; href: OnboardingPath };
   children: React.ReactNode;
   footer: React.ReactNode;
+  /** Centre le contenu dans la carte. `h-full` sur l'enfant ne suffit
+   *  pas : la zone défile, et le pourcentage n'a plus de parent mesuré. */
+  center?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -60,7 +64,11 @@ export function Scaffold({
         {title}
       </h1>
 
-      <div className="rise mt-4 min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div
+        className={`rise mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain ${
+          center ? "justify-center" : ""
+        }`}
+      >
         {children}
       </div>
 
