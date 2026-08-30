@@ -1,0 +1,13 @@
+# Fiche de la photosynthèse, ouverte depuis Réviser.
+steps:
+  - launch: com.micabo.app
+  - await:
+      visible:
+        text: Réviser
+  - tap:
+      text: La photosynthèse
+  - await:
+      visible:
+        text: Où tout se passe
+  - await:
+      idle: true

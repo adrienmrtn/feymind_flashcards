@@ -1,0 +1,11 @@
+executionPrerequisite: >-
+  Session ouverte, recto de la première carte, bouton « Afficher la réponse ».
+steps:
+  - tap:
+      text: Afficher la réponse
+  - await:
+      visible:
+        text: Comment as-tu répondu ?
+  - wait: 1400
+  - await:
+      idle: true

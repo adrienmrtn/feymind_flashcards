@@ -1,0 +1,17 @@
+executionPrerequisite: >-
+  Écran Réviser, bouton « Réviser 12 cartes » visible.
+steps:
+  - tap:
+      text: Réviser 12 cartes
+  - await:
+      visible:
+        text: Commencer
+  - wait: 700
+  - tap:
+      text: Commencer
+  - await:
+      visible:
+        text: Afficher la réponse
+  - wait: 800
+  - await:
+      idle: true

@@ -8,3 +8,7 @@ __pycache__/
 node_modules/
 .next/
 .vercel/
+goldie/out/
+goldie/mock/node_modules/
+goldie/mock/package-lock.json
+goldie/mock/package.json

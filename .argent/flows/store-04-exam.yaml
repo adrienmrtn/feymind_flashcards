@@ -1,0 +1,14 @@
+# Calendrier des examens, devoir de SVT dans trois jours.
+steps:
+  - launch: com.micabo.app
+  - await:
+      visible:
+        text: Réviser
+  - echo: Onglet Examens, deuxième à droite, barre du bas.
+  - tap:
+      text: Examens
+  - await:
+      visible:
+        text: Devoir de SVT
+  - await:
+      idle: true

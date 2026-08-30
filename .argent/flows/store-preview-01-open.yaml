@@ -1,0 +1,10 @@
+# Premier clip : l'app déjà lancée par goldie, posée sur Réviser.
+executionPrerequisite: >-
+  App ouverte sur Réviser, file du jour visible, après le warm-up goldie.
+steps:
+  - await:
+      visible:
+        text: cartes à réviser
+  - wait: 1200
+  - await:
+      idle: true

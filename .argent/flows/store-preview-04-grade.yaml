@@ -1,0 +1,11 @@
+executionPrerequisite: >-
+  Verso visible, grille des quatre notes affichée.
+steps:
+  - tap:
+      text: Correct
+  - await:
+      hidden:
+        text: Comment as-tu répondu ?
+  - wait: 1500
+  - await:
+      idle: true

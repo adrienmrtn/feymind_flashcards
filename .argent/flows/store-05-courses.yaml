@@ -1,0 +1,14 @@
+# Liste des cours, recherche et bouton d'import.
+steps:
+  - launch: com.micabo.app
+  - await:
+      visible:
+        text: Réviser
+  - echo: Onglet Cours, tout à gauche de la barre.
+  - tap:
+      text: Cours
+  - await:
+      visible:
+        text: Rechercher un cours ou une carte
+  - await:
+      idle: true
