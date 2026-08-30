@@ -5,9 +5,10 @@ import { LegalSection, LegalShell } from "@/components/legal/LegalShell";
 import { LEGAL_CONTACT, LEGAL_EDITOR, LEGAL_IOS_BUNDLE, LEGAL_SITE, PRIVACY_PATH } from "@/lib/legal";
 
 export const metadata: Metadata = {
-  title: "Conditions d'utilisation - Micabo",
+  title: "Conditions d'utilisation",
   description:
     "Les règles du service Micabo, pour l'iPhone et le site : compte, cours, abonnement, responsabilités.",
+  alternates: { canonical: "/conditions" },
 };
 
 /**

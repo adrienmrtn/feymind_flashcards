@@ -29,6 +29,20 @@ export const SUPABASE_ANON_KEY =
 export const isProduction = process.env.VERCEL_ENV === "production";
 
 /**
+ * **L'adresse unique du site, celle que Google doit retenir.**
+ *
+ * Elle est écrite en clair et ne suit pas `VERCEL_PROJECT_PRODUCTION_URL` : cette variable
+ * rend le domaine le plus court, donc `micabo.app`, qui redirige (307) vers `www`. Une
+ * balise canonique qui pointe vers une redirection fait dépenser à Google un aller-retour
+ * par page, et deux hôtes qui servent le même texte se font concurrence sur la même requête.
+ *
+ * C'est aussi pour ça que ce n'est plus `micabo.vercel.app` : ce domaine ne répond plus.
+ */
+export const CANONICAL_URL = process.env.NEXT_PUBLIC_SITE_URL
+  ? stripTrailingSlash(process.env.NEXT_PUBLIC_SITE_URL)
+  : "https://www.micabo.app";
+
+/**
  * Le site, celui qui bouge à chaque fusion.
  *
  * Une adresse d'aperçu (`micabo-git-<branche>-…`) reste servie longtemps après
@@ -37,7 +51,7 @@ export const isProduction = process.env.VERCEL_ENV === "production";
  */
 export const PRODUCTION_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
   ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  : "https://micabo.vercel.app";
+  : CANONICAL_URL;
 
 /** Où le site se croit hébergé. Sert aux liens absolus et au retour OAuth. */
 export const SITE_URL = resolveSiteUrl();
@@ -57,10 +71,17 @@ function stripTrailingSlash(value: string): string {
 }
 
 /**
- * Le site ne s'indexe pas encore.
+ * Le site s'indexe, **et seulement en production**.
  *
- * Deux raisons, et la seconde est la vraie : une prévisualisation indexée se présente à la
- * place du site, et **il n'y a pour l'instant aucune page d'accueil** - seulement la référence
- * des fondations. Cette porte s'ouvre à l'étape 2, quand il y aura quelque chose à trouver.
+ * Il a été fermé tant qu'il n'y avait rien à trouver. Il y a maintenant une vitrine, deux
+ * pages de cadre et une adresse propre, donc la porte s'ouvre. Une prévisualisation reste
+ * fermée sans condition : son URL meurt au déploiement suivant, et indexée elle se présente
+ * dans les résultats à la place du site.
+ *
+ * Ce qui reste hors index, quelle que soit la valeur ici : l'app connectée, le parcours et
+ * les retours d'authentification. Ce sont des écrans qui n'ont pas de sens sans session, et
+ * un résultat de recherche qui mène à une redirection vers la connexion est un mauvais
+ * résultat. C'est `next.config.ts` qui les ferme, par en-tête `X-Robots-Tag`, parce qu'une
+ * charpente marquée « use client » ne peut pas exporter de `metadata`.
  */
-export const IS_INDEXABLE = false;
+export const IS_INDEXABLE = isProduction;

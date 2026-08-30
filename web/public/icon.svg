@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Micabo">
+  <!--
+    L'icône du site, dessinée pour 16 px avant tout.
+
+    Une tuile pleine et une seule lettre : à la taille d'un onglet, un logotype
+    entier devient une tache grise, et un dessin fin disparaît. Le vert est celui
+    de l'accent du produit (`--color-accent`), le seul élément que l'Sil retient
+    d'un favicon.
+
+    Le M est tracé, pas composé : une police n'est pas garantie dans le rendu
+    d'un favicon, et un `<text>` non résolu laisse un carré vide.
+  -->
+  <rect width="32" height="32" rx="7" fill="#0b8a66" />
+  <path
+    d="M9 22.5V10.2l7 8.1 7-8.1V22.5"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="3.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

@@ -73,5 +73,11 @@ est **la référence des fondations, pas la page d'accueil** — elle affiche le
 tous ses nombres avec `@micabo/core`, ce qui en fait aussi une vérification de bout en bout. La
 vraie page d'accueil arrive à l'étape 2, et celle-ci passera sous `/fondations`.
 
-Le site n'est pas indexable (`lib/config.ts`, `IS_INDEXABLE`) : il n'y a rien à trouver encore,
-et une prévisualisation indexée se présenterait à la place du site.
+Le site s'indexe **en production seulement** (`lib/config.ts`, `IS_INDEXABLE`) : une
+prévisualisation indexée se présenterait dans les résultats à la place du site, avec une URL
+qui meurt au déploiement suivant. L'app connectée, le parcours et les retours
+d'authentification restent hors index par en-tête `X-Robots-Tag` (`next.config.ts`), parce
+qu'une charpente marquée « use client » ne peut pas exporter de `metadata`.
+
+Le reste — hôte canonique, sitemap, données structurées, et les formats de favicon à
+déposer — est dans **[`docs/seo.md`](../docs/seo.md)**.
