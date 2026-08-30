@@ -33,11 +33,15 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     }
 
     /// Variante pleine, affichée quand l'onglet est actif.
+    ///
+    /// **Examens garde `calendar`.** `calendar.fill` disparaît sur la barre : le glyphe
+    /// plein n'a plus de traits assez denses, à vingt points et en semibold, pour se
+    /// dessiner. L'onglet actif se lit déjà par la couleur.
     var selectedSystemImage: String {
         switch self {
         case .courses: "books.vertical.fill"
         case .today: "arrow.triangle.2.circlepath"
-        case .exams: "calendar.fill"
+        case .exams: "calendar"
         case .profile: "person.fill"
         }
     }

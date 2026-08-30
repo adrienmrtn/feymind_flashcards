@@ -88,7 +88,7 @@ enum StudyStats {
             case .new: "Nouvelles"
             case .learning: "En cours"
             case .review: "En révision"
-            case .mastered: "Parfaitement maîtrisées"
+            case .mastered: "Maîtrisées"
             }
         }
     }

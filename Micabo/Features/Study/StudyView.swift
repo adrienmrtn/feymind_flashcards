@@ -52,6 +52,9 @@ struct StudyView: View {
     /// La session gratuite a servi ses cinq cartes : plus rien ne passe tant que l'écran
     /// d'abonnement n'a pas été tranché.
     @State private var isGated = false
+    /// Vrai quand le paywall de session a déjà tranché (achat ou abandon). Sans ça,
+    /// balayer la feuille appellerait `leaveForHome` une deuxième fois.
+    @State private var sessionPaywallSettled = false
     @State private var paywall: PaywallTrigger?
 
     private var totalLabel: String {
@@ -117,14 +120,26 @@ struct StudyView: View {
             FlashcardEditorSheet(card: card)
                 .onDisappear { session.cardWasEdited() }
         }
-        // Bloquant, et sans échappatoire discrète : les deux issues sont écrites sur
-        // l'écran, et la croix demande confirmation avant d'abandonner la session.
-        .fullScreenCover(isPresented: $isGated) {
+        // Feuille native : on la balaye pour abandonner. La croix, elle, demande
+        // encore confirmation — c'est un geste plus ambigu qu'un balayage.
+        .sheet(isPresented: $isGated, onDismiss: {
+            guard !sessionPaywallSettled else { return }
+            leaveForHome()
+        }) {
             SessionPaywallView(
                 reviewedCount: session.answeredCount,
-                onGoHome: leaveForHome,
-                onSubscribed: { isGated = false }
+                onGoHome: {
+                    sessionPaywallSettled = true
+                    leaveForHome()
+                },
+                onSubscribed: {
+                    sessionPaywallSettled = true
+                    isGated = false
+                }
             )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(MicaboRadius.sheet)
         }
         .micaboPaywall($paywall)
     }
@@ -223,8 +238,7 @@ struct StudyView: View {
                     isHintVisible: showHint,
                     onToggleHint: toggleHint,
                     selectedChoice: selectedChoice,
-                    onSelectChoice: selectChoice,
-                    examName: session.currentExamName
+                    onSelectChoice: selectChoice
                 )
                 .id(card.id)
                 // La sortante s'efface en reculant, l'entrante arrive du bas : sans
@@ -504,6 +518,7 @@ struct StudyView: View {
         guard !isGated, !session.isFinished else { return }
         guard pro?.hasReachedSessionLimit(answered: session.answeredCount) == true else { return }
         session.flush()
+        sessionPaywallSettled = false
         isGated = true
     }
 
@@ -546,7 +561,6 @@ struct StudyCardFace: View {
     var onToggleHint: (() -> Void)?
     var selectedChoice: Int?
     var onSelectChoice: ((Int) -> Void)?
-    var examName: String? = nil
 
     var body: some View {
         VStack(alignment: showAnswer ? .leading : .center, spacing: 14) {
@@ -631,23 +645,7 @@ struct StudyCardFace: View {
         .padding(showAnswer ? 26 : 30)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: showAnswer ? .topLeading : .center)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
-        .overlay(alignment: .topTrailing) { examPill }
         .shadow(color: Color.black.opacity(0.05), radius: 18, x: 0, y: 8)
-    }
-
-    /// Pastille discrète : le nom de l'examen qui comprime cette carte, et rien d'autre.
-    @ViewBuilder
-    private var examPill: some View {
-        if let examName, !examName.isEmpty {
-            Text(examName)
-                .font(MicaboFont.hanken(10, weight: .medium))
-                .foregroundStyle(MicaboColor.caution)
-                .lineLimit(1)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 2)
-                .background(MicaboColor.cautionSoft, in: Capsule())
-                .padding(12)
-        }
     }
 
     /// Le sens de révision compte en langues, et le format compte partout : on annonce

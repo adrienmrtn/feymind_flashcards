@@ -26,6 +26,7 @@ struct TodayView: View {
 
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(TabRouter.self) private var router: TabRouter?
+    @Environment(CloudSync.self) private var sync: CloudSync?
 
     @State private var showStudy = false
     @State private var path = NavigationPath()
@@ -35,6 +36,11 @@ struct TodayView: View {
     /// Un paquet de cartes ne passe pas par l'écran d'import : il n'y a rien à lire.
     @State private var isCreatingDeck = false
     @State private var paywall: PaywallTrigger?
+
+    /// Dernière file calculée. Les quatre pages peuvent rester montées : sans ce cache,
+    /// chaque écriture SwiftData (synchro, note) reconstruisait la file derrière l'onglet
+    /// qu'on regardait vraiment.
+    @State private var loadBox = DayLoadBox()
 
     /// File du jour, calculée **une fois** par rendu. Sans ça, `StudyQueueBuilder.build`
     /// tournait à chaque lecture de `dueCards` — une dizaine de fois par frame, y compris
@@ -77,6 +83,22 @@ struct TodayView: View {
         }
     }
 
+    private final class DayLoadBox {
+        var value: DayLoad?
+    }
+
+    private func resolvedLoad() -> DayLoad {
+        if let cached = loadBox.value {
+            // L'onglet n'est pas visible, ou la synchro écrit encore : on ne
+            // reconstruisait sinon la file à chaque carte descendue.
+            if router?.selection != .today { return cached }
+            if sync?.state == .syncing { return cached }
+        }
+        let built = DayLoad(allCards: allCards, courses: courses, exams: exams, logs: reviewLogs)
+        loadBox.value = built
+        return built
+    }
+
     private var nextExam: Exam? {
         upcomingExams.first
     }
@@ -90,8 +112,7 @@ struct TodayView: View {
     }
 
     var body: some View {
-        let load = DayLoad(allCards: allCards, courses: courses, exams: exams, logs: reviewLogs)
-        today(load)
+        today(resolvedLoad())
     }
 
     @ViewBuilder
@@ -509,33 +530,39 @@ struct TodayView: View {
     /// Le rythme est tenu, mais des cartes neuves attendent encore. On le dit,
     /// plutôt que d'afficher « Tout est à jour » alors qu'il reste à apprendre.
     private func rhythmReachedCard(held heldBackNewCards: Int) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("C'est fait")
-                .font(MicaboFont.hanken(19, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-
-            Text("\(MicaboCopy.cards(heldBackNewCards)) neuves hors rythme.")
-                .font(MicaboFont.hanken(13.5, weight: .regular))
-                .foregroundStyle(MicaboColor.inkSecondary)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .micaboGroup()
+        reviewDoneCard(subtitle: "\(MicaboCopy.cards(heldBackNewCards)) neuves hors rythme.")
     }
 
     private var doneState: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("C'est fait")
-                .font(MicaboFont.hanken(19, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
+        reviewDoneCard(subtitle: "Ta révision du jour est terminée.")
+    }
 
-            Text("Reviens demain.")
-                .font(MicaboFont.body)
-                .foregroundStyle(MicaboColor.inkSecondary)
+    /// Le tick vert est le sujet : sans lui, « C'est fait » se lisait comme une légende.
+    private func reviewDoneCard(subtitle: String) -> some View {
+        VStack(spacing: 14) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 64, weight: .medium))
+                .foregroundStyle(MicaboColor.accentVivid)
+                .accessibilityHidden(true)
+
+            VStack(spacing: 6) {
+                Text("C'est fait")
+                    .font(MicaboFont.hanken(22, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+
+                Text(subtitle)
+                    .font(MicaboFont.hanken(14.5, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 26)
+        .padding(.horizontal, 18)
         .micaboGroup()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("C'est fait. \(subtitle)")
     }
 
     private var nextDueSummary: [(course: Course, label: String)] {
@@ -567,7 +594,7 @@ struct TodayView: View {
     /// Réviser ce qui est dû reste gratuit. Prendre de l'avance sur tout un paquet, non :
     /// c'est ce qu'on fait la veille d'un partiel, et c'est ce que Pro ouvre.
     private func startSession() {
-        let load = DayLoad(allCards: allCards, courses: courses, exams: exams, logs: reviewLogs)
+        let load = resolvedLoad()
         guard !load.dueCards.isEmpty || load.heldBackNewCards > 0 || canPractice else {
             paywall = .practice
             return

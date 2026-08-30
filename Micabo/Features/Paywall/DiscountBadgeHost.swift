@@ -1,17 +1,21 @@
 import SwiftData
 import SwiftUI
 
-/// **La pastille de l'offre, posée une fois pour toute l'app.**
+/// **La languette de l'offre, posée une fois pour toute l'app.**
 ///
 /// Elle vit ici et pas dans chaque écran : le décompte des vingt-quatre heures ne doit pas
 /// se remettre à zéro parce qu'on a changé d'onglet, et une pastille recopiée dans quatre
 /// pages finirait par n'être à jour que dans trois.
 ///
-/// Elle ne se montre qu'une fois la grande carte refermée — c'est `DiscountOffer.Key.seen`
-/// qui bascule, et `@AppStorage` la fait apparaître sans qu'on la prévienne. Le cadeau,
-/// lui, se présente sur la fiche du cours : c'est là qu'il a un sens.
+/// Elle se colle au **bord droit**, à mi-hauteur, au-dessus de la barre et des boutons du
+/// bas : une pastille dans le coin bas-droit recouvrait le bouton de session, et c'est
+/// précisément ce qu'on ne veut plus. Le cadeau, lui, se présente en pop-up sur la fiche
+/// du cours : c'est là qu'il a un sens.
+///
+/// Le `ZStack` ne prend **aucun appui** hors de la languette : une surface pleine qui
+/// avale les doigts rendrait l'app inerte.
 struct DiscountBadgeHost: View {
-    /// Air à laisser sous la pastille. La barre d'onglets n'est pas toujours là.
+    /// Air à laisser sous la languette. La barre d'onglets n'est pas toujours là.
     var bottomInset: CGFloat
 
     @AppStorage(DiscountOffer.Key.startedAt) private var startedAtStamp: Double = 0
@@ -40,11 +44,7 @@ struct DiscountBadgeHost: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            // Une surface transparente qui **ne prend pas les appuis**. Elle est là pour
-            // que le plein écran de l'offre reste attaché à quelque chose quand la pastille
-            // n'est pas affichée : un `fullScreenCover` posé sur une vue qui disparaît ne
-            // s'ouvre plus.
+        ZStack(alignment: .trailing) {
             Color.clear
                 .allowsHitTesting(false)
 
@@ -52,9 +52,9 @@ struct DiscountBadgeHost: View {
                 DiscountBadge(startedAt: startedAt) {
                     presentation = .paywall
                 }
-                .padding(.trailing, MicaboSpacing.screen)
-                .padding(.bottom, bottomInset)
-                .transition(.opacity.combined(with: .offset(y: 10)))
+                // Remonte la languette au-dessus de la barre et du bouton de session.
+                .padding(.bottom, bottomInset + 72)
+                .transition(.opacity.combined(with: .offset(x: 12)))
             }
         }
         .animation(OnboardingMotion.enter, value: shows)

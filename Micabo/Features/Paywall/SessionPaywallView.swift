@@ -46,7 +46,6 @@ struct SessionPaywallView: View {
             }
         }
         .micaboScreenBackground()
-        .interactiveDismissDisabled()
         .alert("Oups", isPresented: .constant(failure != nil)) {
             Button("Fermer", role: .cancel) { failure = nil }
         } message: {

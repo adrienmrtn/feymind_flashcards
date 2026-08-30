@@ -25,11 +25,23 @@ struct DiscountFlowView: View {
         case paywall
     }
 
-    @State private var stage: Stage = .gift
+    @State private var stage: Stage
     /// L'instant d'origine des deux minuteries. Posé à l'ouverture du cadeau.
     @State private var startedAt: Date?
     @State private var isPurchasing = false
     @State private var failure: String?
+
+    init(
+        startsAtPaywall: Bool = false,
+        onDismiss: @escaping () -> Void,
+        onSubscribed: @escaping () -> Void
+    ) {
+        self.startsAtPaywall = startsAtPaywall
+        self.onDismiss = onDismiss
+        self.onSubscribed = onSubscribed
+        _stage = State(initialValue: startsAtPaywall ? .paywall : .gift)
+        _startedAt = State(initialValue: startsAtPaywall ? DiscountOffer.begin() : nil)
+    }
 
     var body: some View {
         ZStack {
@@ -50,11 +62,6 @@ struct DiscountFlowView: View {
             }
         }
         .animation(OnboardingMotion.page, value: stage)
-        .onAppear {
-            guard startsAtPaywall else { return }
-            startedAt = DiscountOffer.begin()
-            stage = .paywall
-        }
         .alert("Oups", isPresented: .constant(failure != nil)) {
             Button("Fermer", role: .cancel) { failure = nil }
         } message: {
@@ -121,8 +128,8 @@ struct DiscountFlowView: View {
 /// deux offres, et le paywall aurait l'air d'arriver d'ailleurs que du cadeau qu'on vient
 /// d'ouvrir.
 ///
-/// Un `LinearGradient` et non une vue : il sert de fond plein écran au cadeau **et** de
-/// remplissage à la languette, et seul un `ShapeStyle` peut faire les deux.
+/// Un `LinearGradient` et non une vue : il sert de fond au pop-up du cadeau **et** à
+/// la feuille du tarif, et seul un `ShapeStyle` peut faire les deux.
 private enum DiscountWash {
     static let gradient = LinearGradient(
         colors: [MicaboColor.offerWash, MicaboColor.offerWashSoft, MicaboColor.surface],
@@ -133,7 +140,7 @@ private enum DiscountWash {
 
 // MARK: - Premier temps : le cadeau
 
-/// Le cadeau, plein écran, et les trois appuis qui l'ouvrent.
+/// Le cadeau, en **pop-up** : la carte, pas l'écran.
 ///
 /// Chaque appui fait trois choses : la boîte encaisse le coup (elle s'écrase puis rebondit),
 /// le couvercle remonte d'un cran, une vibration confirme. Au troisième, les rubans partent
@@ -155,14 +162,10 @@ private struct DiscountGiftStage: View {
                 Spacer(minLength: 0)
                 DiscountCloseButton(action: onDismiss)
             }
-            .padding(.horizontal, MicaboSpacing.sm)
-            .padding(.top, MicaboSpacing.xs)
-
-            Spacer(minLength: MicaboSpacing.lg)
 
             VStack(spacing: MicaboSpacing.sm) {
                 Text("On a un cadeau pour toi")
-                    .font(MicaboFont.hanken(30, weight: .bold))
+                    .font(MicaboFont.hanken(26, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(MicaboTracking.tight)
                     .multilineTextAlignment(.center)
@@ -175,22 +178,19 @@ private struct DiscountGiftStage: View {
                     .multilineTextAlignment(.center)
                     .onboardingAppear(index: 1)
             }
-            .padding(.horizontal, MicaboSpacing.xl)
-
-            Spacer(minLength: MicaboSpacing.md)
+            .padding(.horizontal, MicaboSpacing.md)
 
             Button(action: tap) {
                 DiscountGiftBox(lidLift: CGFloat(taps), isBursting: bursting)
-                    .frame(width: 190, height: 190)
+                    .frame(width: 176, height: 176)
                     .scaleEffect(squash ? 0.9 : 1)
                     .rotationEffect(.degrees(wobble))
             }
             .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: Haptics.Press.none))
             .accessibilityLabel("Ouvrir le cadeau")
             .accessibilityHint("Appuie \(DiscountOffer.taps) fois")
+            .padding(.top, MicaboSpacing.md)
             .onboardingAppear(index: 2)
-
-            Spacer(minLength: MicaboSpacing.md)
 
             VStack(spacing: 12) {
                 HStack(spacing: 8) {
@@ -207,11 +207,10 @@ private struct DiscountGiftStage: View {
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .contentTransition(.numericText())
             }
-            .padding(.bottom, MicaboSpacing.xxl)
+            .padding(.top, MicaboSpacing.md)
             .onboardingAppear(index: 3)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(DiscountWash.gradient.ignoresSafeArea())
+        .frame(maxWidth: .infinity)
     }
 
     /// L'inclinaison alterne d'un appui à l'autre : une boîte qui penche toujours du même
@@ -360,12 +359,10 @@ private struct DiscountRibbons: View {
 
 // MARK: - Second temps : le tarif réduit
 
-/// **Le paywall du cadeau** : une languette posée sur l'écran d'où l'on vient.
+/// **Le paywall du cadeau**, dans la feuille native.
 ///
-/// Elle ne prend que le bas de l'écran, et c'est le sujet de sa mise en page. Un plein écran
-/// coupe le lien avec le cours qu'on vient de lire ; la languette le laisse visible derrière,
-/// et l'offre se lit comme ce qu'elle est — une proposition posée sur ce qu'on faisait, pas
-/// un mur.
+/// La feuille **est** la languette : plus de voile dessiné par-dessus un plein écran. On
+/// la balaye vers le bas pour la refermer, comme n'importe quelle feuille iOS.
 ///
 /// Ce qu'elle ne fait pas est ce qui la fait marcher : pas de liste d'avantages, pas
 /// d'illustration, pas de sur-titre. Le cadeau a déjà annoncé l'offre, et ce qu'on doit lire
@@ -378,29 +375,9 @@ private struct DiscountPaywallStage: View {
     var onSubscribe: () -> Void
     var onRestore: () -> Void
 
-    /// Le voile s'allume en fondu. Le plein écran qui porte cette vue glisse depuis le bas :
-    /// sans le fondu, on verrait un rectangle noir monter avec la languette.
-    @State private var veiled = false
-
     private var plan: PaywallPlan { DiscountOffer.plan }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Button(action: onClose) {
-                Rectangle()
-                    .fill(Color.black.opacity(veiled ? 0.32 : 0))
-            }
-            .buttonStyle(.plain)
-            .ignoresSafeArea()
-            .accessibilityLabel("Fermer l'offre")
-
-            panel
-        }
-        .animation(.easeOut(duration: 0.3), value: veiled)
-        .onAppear { veiled = true }
-    }
-
-    private var panel: some View {
         VStack(spacing: 0) {
             HStack {
                 Spacer(minLength: 0)
@@ -438,18 +415,7 @@ private struct DiscountPaywallStage: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, MicaboSpacing.sm)
         .padding(.bottom, MicaboSpacing.md)
-        .frame(maxWidth: .infinity)
-        .background(
-            UnevenRoundedRectangle(
-                topLeadingRadius: MicaboRadius.sheet,
-                bottomLeadingRadius: 0,
-                bottomTrailingRadius: 0,
-                topTrailingRadius: MicaboRadius.sheet,
-                style: .continuous
-            )
-            .fill(DiscountWash.gradient)
-            .ignoresSafeArea(edges: .bottom)
-        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     /// Le pourcentage porte la couleur, la promesse porte l'encre : ce qu'on retient d'un
@@ -684,39 +650,89 @@ enum DiscountPresentation: String, Identifiable {
     var id: String { rawValue }
 }
 
+/// Le cadeau, centré, par-dessus ce qu'on lisait. Ce n'est plus un écran : c'est une carte.
+private struct DiscountGiftOverlay: View {
+    var onOpened: () -> Void
+    var onDismiss: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.36)
+                .ignoresSafeArea()
+                .accessibilityHidden(true)
+
+            DiscountGiftStage(onOpened: onOpened, onDismiss: onDismiss)
+                .padding(.horizontal, 18)
+                .padding(.top, 8)
+                .padding(.bottom, 22)
+                .frame(maxWidth: 400)
+                .background(
+                    RoundedRectangle(cornerRadius: MicaboRadius.sheet, style: .continuous)
+                        .fill(DiscountWash.gradient)
+                )
+                .micaboSoftShadow(strength: 0.22)
+                .padding(.horizontal, 28)
+        }
+        .accessibilityAddTraits(.isModal)
+    }
+}
+
 extension View {
     /// **Ouvre l'offre cadeau par-dessus l'écran courant.**
     ///
-    /// En plein écran, comme le paywall ordinaire : une feuille se balaye vers le bas, et
-    /// un cadeau qu'on écarte du pouce sans l'avoir ouvert n'a rien dit.
+    /// Deux présentations, et l'ordre compte. Le cadeau est un **pop-up** : une carte
+    /// centrée, pas un écran. Le tarif qui suit est une **feuille native**, balayable
+    /// vers le bas — plus de languette dessinée à la main sur un plein écran.
     ///
-    /// Le fond du plein écran est **transparent**, et c'est ce qui permet au paywall de
-    /// n'être qu'une languette : sans ça, son voile serait du noir posé sur du noir.
-    ///
-    /// La croix marque l'offre comme vue — c'est ce qui fait apparaître la pastille. Sans
-    /// ça, la grande carte reviendrait à chaque fiche et le décompte n'aurait pas de sens.
+    /// La croix marque l'offre comme vue — c'est ce qui fait apparaître la languette.
+    /// Sans ça, la grande carte reviendrait à chaque fiche et le décompte n'aurait
+    /// pas de sens.
     func micaboDiscountOffer(_ presentation: Binding<DiscountPresentation?>) -> some View {
-        fullScreenCover(item: presentation) { value in
+        overlay {
+            if presentation.wrappedValue == .gift {
+                DiscountGiftOverlay(
+                    onOpened: { presentation.wrappedValue = .paywall },
+                    onDismiss: {
+                        DiscountOffer.markSeen()
+                        presentation.wrappedValue = nil
+                    }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+            }
+        }
+        .animation(OnboardingMotion.enter, value: presentation.wrappedValue == .gift)
+        .sheet(
+            isPresented: Binding(
+                get: { presentation.wrappedValue == .paywall },
+                set: { isPresented in
+                    guard !isPresented else { return }
+                    DiscountOffer.markSeen()
+                    presentation.wrappedValue = nil
+                }
+            )
+        ) {
             DiscountFlowView(
-                startsAtPaywall: value == .paywall,
+                startsAtPaywall: true,
                 onDismiss: {
                     DiscountOffer.markSeen()
                     presentation.wrappedValue = nil
                 },
                 onSubscribed: { presentation.wrappedValue = nil }
             )
-            .presentationBackground(Color.clear)
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(MicaboRadius.sheet)
+            .presentationBackground(DiscountWash.gradient)
         }
     }
 }
 
 // MARK: - La pastille, quand le paywall s'est refermé
 
-/// **Le décompte des vingt-quatre heures**, posé au-dessus de la page.
+/// **Le décompte des vingt-quatre heures**, collé au bord droit.
 ///
-/// C'est la différence entre une offre refusée et une offre remise à plus tard, et seule la
-/// seconde se vend. Un appui rouvre le paywall — pas le cadeau : on ne fait pas déballer
-/// deux fois.
+/// Une languette, pas une pastille dans le coin : elle ne recouvre plus le bouton de
+/// session. Un appui rouvre le paywall — pas le cadeau : on ne fait pas déballer deux fois.
 ///
 /// Elle compte en secondes, pas en centièmes : sur vingt-quatre heures, des centièmes qui
 /// défilent dans un coin de l'écran sont un clignotant.
@@ -728,25 +744,37 @@ struct DiscountBadge: View {
 
     var body: some View {
         Button(action: onOpen) {
-            HStack(spacing: 10) {
+            VStack(spacing: 8) {
                 Image(systemName: "gift.fill")
                     .font(.system(size: 16, weight: .semibold))
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("TON OFFRE")
-                        .font(MicaboFont.hanken(10, weight: .bold))
-                        .tracking(MicaboTracking.caps)
-                        .foregroundStyle(Color.white.opacity(0.8))
+                Text("OFFRE")
+                    .font(MicaboFont.hanken(9, weight: .bold))
+                    .tracking(MicaboTracking.caps)
+                    .foregroundStyle(Color.white.opacity(0.82))
 
-                    Text(DiscountOffer.countdown(left))
-                        .font(MicaboFont.number(15, weight: .bold))
-                        .monospacedDigit()
-                }
+                Text(DiscountOffer.countdown(left))
+                    .font(MicaboFont.number(11, weight: .bold))
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
             }
             .foregroundStyle(Color.white)
-            .padding(.vertical, 10)
-            .padding(.horizontal, 15)
-            .background(MicaboColor.offerSky, in: Capsule())
+            .padding(.top, 14)
+            .padding(.bottom, 13)
+            .padding(.leading, 10)
+            .padding(.trailing, 8)
+            .frame(minWidth: 56)
+            .background(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 16,
+                    bottomLeadingRadius: 16,
+                    bottomTrailingRadius: 0,
+                    topTrailingRadius: 0,
+                    style: .continuous
+                )
+                .fill(MicaboColor.offerSky)
+            )
             .micaboSoftShadow(strength: 0.18)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .soft))

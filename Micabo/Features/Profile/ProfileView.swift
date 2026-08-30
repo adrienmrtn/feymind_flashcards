@@ -37,7 +37,7 @@ struct ProfileView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            ScrollView {
+            ScrollView(.vertical) {
                 VStack(alignment: .leading, spacing: MicaboSpacing.md) {
                     header
                     streakPanel
@@ -50,8 +50,10 @@ struct ProfileView: View {
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, MicaboSpacing.xs)
                 .padding(.bottom, MicaboSpacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
             .micaboScreenBackground()
             // Le Profil n'ancre rien en bas, mais sa dernière rangée se lisait à travers le
             // verre de la barre : la réserve n'est pas réservée aux pages qui ont un bouton.
@@ -140,6 +142,7 @@ struct ProfileView: View {
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .lineLimit(1)
                 .truncationMode(.middle)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             if logs.isEmpty {
                 firstReviewInvitation
@@ -177,9 +180,10 @@ struct ProfileView: View {
             Text(streakCaption)
                 .font(MicaboFont.hanken(14, weight: .medium))
                 .foregroundStyle(MicaboColor.inkSecondary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                 .padding(.bottom, 3)
-
-            Spacer(minLength: 0)
         }
     }
 
@@ -257,9 +261,10 @@ struct ProfileView: View {
                                 .foregroundStyle(MicaboColor.inkTertiary)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(2)
-                                .minimumScaleFactor(0.8)
+                                .minimumScaleFactor(0.75)
+                                .frame(maxWidth: .infinity)
                         }
-                        .frame(maxWidth: .infinity)
+                        .frame(minWidth: 0, maxWidth: .infinity)
                     }
                 }
                 .frame(height: 132, alignment: .bottom)
@@ -313,6 +318,7 @@ struct ProfileView: View {
                                 .font(MicaboFont.hanken(14.5, weight: .medium))
                                 .foregroundStyle(MicaboColor.ink)
                                 .lineLimit(2)
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
 
                             Spacer(minLength: 8)
 
@@ -419,6 +425,7 @@ struct ProfileView: View {
                     .font(MicaboFont.hanken(14.5, weight: .medium))
                     .foregroundStyle(MicaboColor.ink)
                     .lineLimit(1)
+                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
 
                 if row.isMe {
                     Text("toi")
@@ -426,6 +433,7 @@ struct ProfileView: View {
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
             }
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
 
             Spacer(minLength: 8)
 

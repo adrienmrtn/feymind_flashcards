@@ -14,14 +14,23 @@ import UIKit
 ///
 /// **Le changement de page est immédiat.** Un fondu de 220 ms sur quatre `NavigationStack`
 /// animait tout l'arbre — listes, calendrier, fiche — et chaque onglet arrivait en retard.
-/// Les pages restent **montées en même temps**, simplement masquées : c'est ce qui
-/// permet à chacune de garder son défilement, sa recherche et sa pile de navigation quand on
-/// la quitte et qu'on y revient.
+/// Une page déjà ouverte reste **montée**, simplement masquée : c'est ce qui lui garde son
+/// défilement et sa pile. Les autres n'existent pas encore.
 struct RootTabView: View {
     @State private var router = TabRouter()
+    /// Les pages déjà ouvertes restent montées, pour garder défilement et pile. Les
+    /// autres n'existent pas encore : monter les quatre dès le lancement recalculait
+    /// quatre `@Query` et la file du jour pendant qu'on ne regardait que Réviser.
+    @State private var mounted: Set<RootTab> = [.today]
 
     init() {
         Self.configureAppearance()
+    }
+
+    /// L'onglet visible est toujours attaché, même avant que `onChange` l'enregistre :
+    /// sans ça, le premier appui sur Examens montrait un cadre vide.
+    private var attachedTabs: Set<RootTab> {
+        mounted.union([router.selection])
     }
 
     var body: some View {
@@ -29,10 +38,13 @@ struct RootTabView: View {
             MicaboColor.canvas
                 .ignoresSafeArea()
 
-            page(.courses) { CoursesListView() }
-            page(.today) { TodayView() }
-            page(.exams) { ExamsView() }
-            page(.profile) { ProfileView() }
+            if attachedTabs.contains(.courses) { page(.courses) { CoursesListView() } }
+            if attachedTabs.contains(.today) { page(.today) { TodayView() } }
+            if attachedTabs.contains(.exams) { page(.exams) { ExamsView() } }
+            if attachedTabs.contains(.profile) { page(.profile) { ProfileView() } }
+        }
+        .onChange(of: router.selection) { _, tab in
+            mounted.insert(tab)
         }
         // La barre du bas est posée à l'extérieur des pages : elles passent dessous, elle ne
         // bouge pas d'un pixel. Elle s'efface dès qu'un écran de détail est poussé.
@@ -46,11 +58,10 @@ struct RootTabView: View {
                 MicaboTabBar()
             }
         }
-        // La pastille du cadeau est posée ici, hors des pages, pour la même raison que la
-        // barre : son décompte ne doit pas repartir de zéro à chaque changement d'onglet.
-        // Elle monte au-dessus de la barre quand la barre est là, et se rabat au-dessus
-        // d'un bouton d'écran poussé sinon.
-        .overlay(alignment: .bottomTrailing) {
+        // La languette du cadeau est posée ici, hors des pages, pour la même raison que
+        // la barre : son décompte ne doit pas repartir de zéro à chaque changement
+        // d'onglet. Elle se colle au bord droit, au-dessus de la barre et des boutons.
+        .overlay {
             DiscountBadgeHost(
                 bottomInset: router.isAtRoot
                     ? MicaboLayout.tabBarSpace + MicaboSpacing.sm
