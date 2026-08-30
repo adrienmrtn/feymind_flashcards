@@ -4,14 +4,22 @@ import { entitlement, pricing } from "@micabo/core";
 
 import { SITE_URL } from "@/lib/config";
 import { readEntitlement } from "@/lib/data/entitlement";
+import {
+  checkoutReturnUrl,
+  checkoutSessionFields,
+  extractStripeMessage,
+  priceIdFor,
+  priceIdProblem,
+  stripeRefusalMessage,
+} from "@/lib/stripe/checkout";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * L'encaissement, **et il n'est pas branché.**
+ * L'encaissement web : Stripe Checkout, puis RevenueCat écrit le droit.
  *
- * Ce fichier existe pour que le point de raccordement soit écrit, nommé et **fermé par défaut**  - 
- * pas pour prétendre que le paiement marche. Il n'y a pas de clé Stripe, donc il n'y a pas de
- * paiement, et tout ce qui suit le dit franchement plutôt que d'échouer à mi-chemin.
+ * Tant que `STRIPE_SECRET_KEY` manque, le bouton dit que l'abonnement n'est
+ * pas ouvert. Un 400 de Stripe affiche désormais le motif réel — un `price_…`
+ * inconnu, un tarif one-time, un e-mail vide — et plus seulement un statut nu.
  *
  * ## Ce qui est déjà décidé, et qui ne bougera pas
  *
@@ -40,12 +48,16 @@ function stripeKey(): string | null {
   return process.env.STRIPE_SECRET_KEY ?? null;
 }
 
-/** L'identifiant de prix Stripe. L'env gagne, le catalogue sert de repli. */
+/** L'identifiant de prix Stripe. L'env gagne s'il n'est pas vide ; sinon le catalogue. */
 function priceId(kind: pricing.PlanKind): string {
-  if (kind === "yearly") {
-    return process.env.STRIPE_PRICE_YEARLY ?? pricing.stripePriceId("yearly");
-  }
-  return process.env.STRIPE_PRICE_WEEKLY ?? pricing.stripePriceId("weekly");
+  return priceIdFor(
+    kind,
+    {
+      yearly: process.env.STRIPE_PRICE_YEARLY,
+      weekly: process.env.STRIPE_PRICE_WEEKLY,
+    },
+    pricing.stripePriceId,
+  );
 }
 
 export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutResult> {
@@ -66,6 +78,7 @@ export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutRes
 
   const key = stripeKey();
   const price = priceId(kind);
+  const plan = pricing.planFor(kind);
 
   if (!key) {
     return {
@@ -74,7 +87,10 @@ export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutRes
     };
   }
 
-  const plan = pricing.planFor(kind);
+  const badPrice = priceIdProblem(price);
+  if (badPrice) {
+    return { status: "error", message: `${badPrice} Offre : ${plan.title}.` };
+  }
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
@@ -82,28 +98,25 @@ export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutRes
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({
-      mode: "subscription",
-      "line_items[0][price]": price,
-      "line_items[0][quantity]": "1",
-      // C'est **la** ligne qui fait tenir le droit multiplateforme : Stripe rend cet identifiant à
-      // RevenueCat, qui le pose en `app_user_id`, qui devient la clé de `entitlements`.
-      client_reference_id: user.id,
-      customer_email: user.email ?? "",
-      ...(pricing.hasTrial(plan)
-        ? { "subscription_data[trial_period_days]": String(plan.trialDays) }
-        : {}),
-      success_url: `${SITE_URL}/app?abonnement=ok`,
-      cancel_url: `${SITE_URL}/app`,
-      locale: "fr",
-      // Une clé d'idempotence par offre et par personne : un double clic ne crée pas deux
-      // abonnements.
-      // (Stripe la lit dans l'en-tête, posée ci-dessous.)
-    }),
+    body: new URLSearchParams(
+      checkoutSessionFields({
+        price,
+        userId: user.id,
+        email: user.email,
+        trialDays: pricing.hasTrial(plan) ? plan.trialDays : 0,
+        successUrl: checkoutReturnUrl(SITE_URL, "/app?abonnement=ok"),
+        cancelUrl: checkoutReturnUrl(SITE_URL, "/app"),
+      }),
+    ),
   });
 
   if (!response.ok) {
-    return { status: "error", message: `Stripe a refusé (${response.status}). Offre : ${plan.title}.` };
+    const payload: unknown = await response.json().catch(() => null);
+    console.error("stripe.checkout", response.status, extractStripeMessage(payload));
+    return {
+      status: "error",
+      message: stripeRefusalMessage(response.status, payload, plan.title),
+    };
   }
 
   const session = (await response.json()) as { url?: string };
@@ -175,15 +188,18 @@ export async function manageSubscription(): Promise<CheckoutResult> {
     },
     body: new URLSearchParams({
       customer: customerId,
-      return_url: `${SITE_URL}/app/reglages`,
+      return_url: checkoutReturnUrl(SITE_URL, "/app/reglages"),
       locale: "fr",
     }),
   });
 
   if (!response.ok) {
-    // Le portail non activé rend un 400 très reconnaissable, et le message de Stripe est
-    // plus utile que le nôtre : il dit d'aller l'activer.
-    return { status: "error", message: `Le portail Stripe a refusé (${response.status}).` };
+    const payload: unknown = await response.json().catch(() => null);
+    console.error("stripe.portal", response.status, extractStripeMessage(payload));
+    return {
+      status: "error",
+      message: stripeRefusalMessage(response.status, payload, "Portail"),
+    };
   }
 
   const session = (await response.json()) as { url?: string };
