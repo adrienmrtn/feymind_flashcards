@@ -1,4 +1,5 @@
 import type { Metadata, Route } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ClosingWash } from "@/components/landing/ClosingWash";
@@ -13,6 +14,7 @@ import { Reveal } from "@/components/landing/Reveal";
 import { SourceMarquee } from "@/components/landing/SourceMarquee";
 import { currentUser } from "@/lib/data/user";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
+import { ANKI_PAGE, EXAM_PAGE, METHOD_PAGE } from "@/lib/site-pages";
 
 /**
  * `absolute` court-circuite le gabarit `%s - Micabo` de la charpente : sans ça, la marque
@@ -69,6 +71,7 @@ export default async function LandingPage({
           eyebrow="Pourquoi ça tient"
           title="Relire ne suffit pas. Se souvenir, oui."
           note="Ce qu'on a dû retrouver de mémoire tient - surtout si ça revient au bon moment, de moins en moins souvent."
+          more={{ href: METHOD_PAGE.path, label: "Lire la méthode en détail" }}
         >
           <RetentionChart />
         </Section>
@@ -87,6 +90,7 @@ export default async function LandingPage({
           eyebrow="Mode examen"
           title="Tu donnes la date. Micabo réorganise tout."
           note="La répétition espacée ignore le jour J. Le mode examen lui donne une date butoir, et resserre les cartes à l'approche de l'épreuve."
+          more={{ href: EXAM_PAGE.path, label: "Comment le plan se resserre" }}
         >
           <ExamMode />
         </Section>
@@ -96,6 +100,7 @@ export default async function LandingPage({
           eyebrow="Questions"
           title="Ce qu'on nous demande."
           note=""
+          more={{ href: ANKI_PAGE.path, label: "Micabo ou Anki : la comparaison" }}
         >
           <Questions />
         </Section>
@@ -113,12 +118,20 @@ function Section({
   eyebrow,
   title,
   note,
+  more,
   children,
 }: {
   id?: string;
   eyebrow: string;
   title: string;
   note: string;
+  /**
+   * La page qui développe la section.
+   *
+   * Ces liens ne sont pas décoratifs : une page que rien ne cite depuis l'accueil est une page
+   * que Google explore en dernier, et qu'il ne proposera jamais sous le résultat de la marque.
+   */
+  more?: { href: Route; label: string };
   children: React.ReactNode;
 }) {
   return (
@@ -132,6 +145,16 @@ function Section({
         </h2>
         {note ? (
           <p className="mt-4 max-w-reading text-[16px] leading-relaxed text-ink-secondary">{note}</p>
+        ) : null}
+        {more ? (
+          <p className="mt-4">
+            <Link
+              href={more.href}
+              className="underline-draw text-[14.5px] font-medium text-ink"
+            >
+              {more.label}
+            </Link>
+          </p>
         ) : null}
       </Reveal>
       <Reveal delay={1} className="mt-9">

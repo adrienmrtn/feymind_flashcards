@@ -5,6 +5,7 @@ import { BrandLockup } from "@/components/BrandMark";
 import { Separator } from "@/components/ui/separator";
 import { LANDING_NAV } from "@/lib/landing-sections";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
+import { SITE_PAGES } from "@/lib/site-pages";
 
 /**
  * Le pied de page de la vitrine.
@@ -75,6 +76,22 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
                     </li>
                   </>
                 )}
+              </ul>
+            </div>
+
+            {/* Les pages de fond, liées depuis **chaque** page du site. C'est ce qui les rend
+                explorables sans dépendre d'un lien dans un paragraphe, et ce qui donne à
+                Google des pages à proposer sous le résultat de la marque. */}
+            <div>
+              <p className="eyebrow mb-3 text-ink-tertiary">À lire</p>
+              <ul className="space-y-1.5 text-ink-secondary">
+                {SITE_PAGES.map((page) => (
+                  <li key={page.path}>
+                    <Link href={page.path} className="underline-draw" data-print="bare">
+                      {page.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
 
