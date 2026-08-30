@@ -52,6 +52,8 @@ struct PaywallFlowView: View {
 
     @State private var stage: Stage = .offer
     @State private var isPurchasing = false
+    /// Ce que la boutique n'a pas pu faire. Un bouton qui ne répond rien passe pour cassé.
+    @State private var failure: String?
 
     var body: some View {
         ZStack {
@@ -80,6 +82,11 @@ struct PaywallFlowView: View {
         }
         .animation(OnboardingMotion.page, value: stage)
         .micaboScreenBackground()
+        .alert("Oups", isPresented: .constant(failure != nil)) {
+            Button("Fermer", role: .cancel) { failure = nil }
+        } message: {
+            Text(failure ?? "")
+        }
     }
 
     private func showPlans() {
@@ -87,40 +94,48 @@ struct PaywallFlowView: View {
         stage = .plans
     }
 
-    /// L'achat ouvre l'app **aussi quand la boutique est muette**. Tant qu'aucun produit
-    /// n'est publié, `unavailable` est la réponse normale : la traiter comme un échec
-    /// rendrait le bouton inerte et tout le parcours d'abonnement intestable.
+    /// **Seul un achat confirmé ouvre l'app.** `unavailable` veut dire « je n'ai pas pu
+    /// vendre » — boutique muette, SDK absent, réseau tombé — et l'offrir ferait de chaque
+    /// panne un abonnement gratuit.
     ///
-    /// À retirer le jour où RevenueCat répond : un échec réseau offrirait l'abonnement.
+    /// Le message le dit, plutôt que de laisser le bouton avoir l'air cassé.
     @MainActor
     private func buy(_ plan: PaywallPlan) async {
         guard !isPurchasing else { return }
         isPurchasing = true
+        failure = nil
 
         let outcome = await PaywallPurchases.buy(plan)
         isPurchasing = false
 
         switch outcome {
-        case .purchased, .unavailable:
+        case .purchased:
             pro?.unlock()
             Haptics.success()
             onSubscribed()
+        case .unavailable:
+            failure = PaywallPurchases.isReady
+                ? "L'achat n'a pas abouti. Réessaie dans un instant."
+                : "L'abonnement n'est pas encore ouvert."
         case .cancelled:
             break
         }
     }
 
-    /// La restauration, elle, reste stricte : une restauration qui ouvrirait tout parce que
-    /// la boutique ne répond pas serait un contournement d'un seul appui.
+    /// La restauration : rien à restaurer se dit, sinon le bouton a l'air inerte.
     @MainActor
     private func restore() async {
         guard !isPurchasing else { return }
         isPurchasing = true
+        failure = nil
 
         let outcome = await PaywallPurchases.restore()
         isPurchasing = false
 
-        guard outcome == .purchased else { return }
+        guard outcome == .purchased else {
+            failure = "Aucun abonnement à restaurer sur ce compte."
+            return
+        }
         pro?.unlock()
         Haptics.success()
         onSubscribed()

@@ -154,40 +154,12 @@ enum PaywallPrice {
 }
 
 /// Issue d'un achat ou d'une restauration.
-enum PaywallOutcome {
+enum PaywallOutcome: Equatable {
     case purchased
     case cancelled
-    /// La boutique n'a rien à vendre : aucun produit publié, ou aucun SDK branché.
+    /// **La boutique n'a pas pu vendre** : aucun produit publié, aucun SDK branché, ou le
+    /// réseau est tombé. Ce n'est jamais un achat, et les paywalls ne l'ouvrent pas.
     case unavailable
-}
-
-/// **Le seul endroit par lequel un achat passe**, et le point de branchement de RevenueCat.
-///
-/// Il ne fait rien aujourd'hui, et c'est délibéré : aucun produit n'est publié sur App Store
-/// Connect, donc un achat lancé maintenant échouerait sans que personne puisse distinguer
-/// « le SDK n'est pas là » de « l'utilisateur a annulé ». Le paywall traite `unavailable`
-/// comme une entrée dans l'app, faute de quoi le parcours n'aurait plus de sortie.
-///
-/// **Pour brancher RevenueCat**, il n'y a que ce fichier à toucher côté app :
-///
-/// 1. ajouter le paquet `purchases-ios` et configurer le SDK au lancement
-///    (`Purchases.configure(withAPIKey:)` dans `MicaboApp`) ;
-/// 2. remplacer le corps de `buy(_:)` par la récupération de l'offering courant, la
-///    recherche du `Package` dont le `storeProduct.productIdentifier` vaut
-///    `plan.productID`, puis `Purchases.shared.purchase(package:)` ;
-/// 3. remplacer le corps de `restore()` par `Purchases.shared.restorePurchases()` ;
-/// 4. rendre `PaywallCatalog` capable de se construire depuis l'offering, pour que les prix
-///    affichés soient ceux de la boutique de l'utilisateur et non ceux écrits ici ;
-/// 5. lire l'entitlement `pro` là où l'app devra fermer une porte.
-enum PaywallPurchases {
-    static func buy(_ plan: PaywallPlan) async -> PaywallOutcome {
-        _ = plan
-        return .unavailable
-    }
-
-    static func restore() async -> PaywallOutcome {
-        .unavailable
-    }
 }
 
 /// Les deux liens qu'Apple exige sur un écran d'abonnement.

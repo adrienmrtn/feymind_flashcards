@@ -129,93 +129,69 @@ sur l'appareil.
    L'ordre des packages dans l'offering n'est pas celui de l'affichage : `PaywallCatalog` garde
    l'annuel en premier, parce que c'est l'offre recommandée.
 
-## 5. Xcode — ajouter le SDK
+## 5. Xcode — le SDK est déjà déclaré
 
-1. File → Add Package Dependencies → `https://github.com/RevenueCat/purchases-ios`
-2. Dependency Rule : *Up to Next Major Version*, à partir de `5.0.0`.
-3. Ajouter le produit **`RevenueCat`** à la cible `Micabo`. Ne pas ajouter `RevenueCatUI` : le
-   paywall est écrit à la main, et le module d'interface tire une centaine de fichiers dont
-   aucun ne sert ici.
-4. Le projet utilise un `PBXFileSystemSynchronizedRootGroup` : les fichiers Swift n'ont pas
-   besoin d'être déclarés, mais **un paquet SPM, si**. C'est la seule modification du
-   `project.pbxproj` de tout le branchement.
+**Rien à faire, sauf ouvrir Xcode.** Le paquet est dans `project.pbxproj` :
+`https://github.com/RevenueCat/purchases-ios`, *Up to Next Major* depuis `5.0.0`, produit
+`RevenueCat` sur la cible `Micabo`. Xcode le résout au premier ouvrage du projet.
 
-## 6. Xcode — configurer le SDK au lancement
+`RevenueCatUI` n'y est pas, et n'y sera pas : le paywall est écrit à la main, et le module
+d'interface tire une centaine de fichiers dont aucun ne sert ici.
 
-Dans `Micabo/App/MicaboApp.swift`, à la fin de `init()` :
+Le projet utilise un `PBXFileSystemSynchronizedRootGroup` : les fichiers Swift n'ont pas
+besoin d'être déclarés, mais un paquet SPM, si. C'est la seule modification du
+`project.pbxproj` de tout le branchement, et elle est faite.
 
-```swift
-import RevenueCat
+Tout le code d'achat est écrit derrière `#if canImport(RevenueCat)`. Conséquence utile : le
+dépôt **compile dans les deux états**, avec ou sans le paquet résolu. Sans lui, les paywalls
+disent « L'abonnement n'est pas encore ouvert » ; avec lui, ils vendent.
 
-// …
-init() {
-    FontLoader.registerFonts()
-    // …
-    Purchases.logLevel = .warn
-    Purchases.configure(withAPIKey: "appl_LA_CLÉ_PUBLIQUE_IOS")
-}
+## 6. La seule chose qui reste à coller : la clé publique
+
+**Une valeur, un fichier.** `Micabo/Info.plist`, clé `RevenueCatPublicKey` :
+
+```xml
+<key>RevenueCatPublicKey</key>
+<string>appl_LA_CLÉ_PUBLIQUE_IOS</string>
 ```
 
-La clé publique iOS n'est pas un secret : elle est lisible dans n'importe quel binaire d'App
-Store. La clé **secrète** de RevenueCat, elle, ne doit jamais entrer dans le dépôt.
+Elle se trouve dans RevenueCat → Project Settings → Apps → Micabo (App Store) → *Public SDK
+key*. Elle commence par `appl_`.
 
-Si l'utilisateur est connecté (Apple ou Google, via `AuthController`), lier son identifiant
-**avant le premier achat**. `userId` est l'`auth.users.id` de Supabase, pas l'identifiant
-Apple, pas un UUID inventé par l'app. C'est la même chaîne que `client_reference_id` côté
-Stripe. Sans ça, RevenueCat crée un `$RCAnonymousID` et le webhook refuse d'écrire (422).
+Ce n'est pas un secret : elle est lisible dans n'importe quel binaire téléchargé depuis l'App
+Store. La clé **secrète** de RevenueCat, elle, n'entre jamais dans le dépôt.
 
-```swift
-Purchases.shared.logIn(userId)
-```
+Tant que la chaîne est vide, `PurchasesBridge.configureIfPossible()` ne configure pas le SDK
+et les deux paywalls disent « L'abonnement n'est pas encore ouvert ». C'est voulu : un SDK
+configuré avec une chaîne vide journalise à chaque appel sans jamais rien vendre.
 
-à appeler au passage à l'état connecté, et `Purchases.shared.logOut()` à la déconnexion.
+## 7. Ce qui est déjà écrit côté app
 
-## 7. Xcode — remplacer le corps de `PaywallPurchases`
+Rien à recoder. Pour relecture, voici où c'est :
 
-C'est **le seul fichier de l'app à modifier** :
-`Micabo/Features/Onboarding/Steps/PaywallCatalog.swift`.
+| Quoi | Où |
+| --- | --- |
+| Achat, restauration, offerings | `Micabo/Features/Paywall/PaywallPurchases.swift` |
+| Configuration au lancement | `MicaboApp.init()` → `PurchasesBridge.configureIfPossible()` |
+| `logIn` / `logOut` | `MicaboApp`, sur `.onChange(of: auth.user?.id)` |
+| Lecture du droit | `ProAccess.refresh()` — SDK puis table |
+| Fermeture sans redémarrage | `ProAccess.observePurchases()` → `customerInfoStream` |
 
-```swift
-import RevenueCat
+Trois décisions qui portent ce code :
 
-enum PaywallPurchases {
-    static func buy(_ plan: PaywallPlan) async -> PaywallOutcome {
-        do {
-            let offerings = try await Purchases.shared.offerings()
-            guard
-                let offering = offerings.current,
-                let package = offering.availablePackages.first(where: {
-                    $0.storeProduct.productIdentifier == plan.productID
-                })
-            else { return .unavailable }
+**Le discount s'achète sans code particulier.** `buy(_:)` cherche le produit dans l'offering
+courant **puis dans tous les autres**. Le jour où tu ouvres un chemin vers l'offering
+`discount`, il n'y a rien à changer ici.
 
-            let result = try await Purchases.shared.purchase(package: package)
-            if result.userCancelled { return .cancelled }
-            return result.customerInfo.entitlements["pro"]?.isActive == true ? .purchased : .unavailable
-        } catch {
-            return .unavailable
-        }
-    }
+**`unavailable` n'ouvre plus rien.** C'était le cas avant, faute de boutique : sans ça le
+bouton du paywall aurait été inerte et le parcours intestable. Maintenant un échec dit
+qu'il a échoué. Sinon chaque panne de réseau serait un abonnement offert —
+`web/packages/core/test/freemium-parity.test.ts` échoue si quelqu'un le remet.
 
-    static func restore() async -> PaywallOutcome {
-        do {
-            let info = try await Purchases.shared.restorePurchases()
-            return info.entitlements["pro"]?.isActive == true ? .purchased : .unavailable
-        } catch {
-            return .unavailable
-        }
-    }
-}
-```
-
-Le reste du paywall n'a pas à changer : `PaywallStepView` sait déjà distinguer un achat, une
-annulation et une boutique muette.
-
-**Attention à un point du comportement actuel** : tant que rien n'est branché,
-`PaywallStepView` traite `unavailable` comme une entrée dans l'app, faute de quoi le dernier
-écran du parcours n'aurait pas de sortie. Une fois RevenueCat en place, ce cas doit **cesser**
-de faire entrer et afficher une erreur — sinon un échec réseau offrirait l'abonnement. C'est un
-`switch` de trois lignes dans `PaywallStepView.buy(_:)`.
+**Le SDK et la table s'arbitrent, le plus généreux gagne.** RevenueCat répond depuis son cache
+local, donc il sait hors ligne et il sait avant le webhook ; la table vaut pour un achat fait
+sur le web. Aucune des deux ne répond ? On ne devine pas : `assumeProWithoutRow` est à `false`,
+comme `ASSUME_PRO_WITHOUT_ROW` sur le web, et le test de parité relit les deux.
 
 ## 8. Xcode — afficher les prix de la boutique et non ceux du code
 
@@ -245,42 +221,24 @@ fonctionner : il ne lit que `annualCost`, donc les prix réels.
 Tant que l'offering n'a pas répondu, l'écran garde les valeurs écrites en dur : c'est ce qui
 évite un paywall vide pendant la seconde d'attente du réseau.
 
-## 9. Fermer les portes de l'app
+## 9. Les portes sont fermées
 
-**Les portes existent déjà**, et elles lisent toutes le même objet : `ProAccess`
-(`Micabo/Services/ProAccess.swift`), créé au lancement dans `MicaboApp` à côté de
-`AuthController`. Ce qu'il ferme est décrit dans le README, section « Le gratuit et le payant » :
-un cours importé, 70 % de chaque fiche, cinq cartes par session, pas d'entraînement libre.
+Elles lisent toutes le même objet, `ProAccess` (`Micabo/Services/ProAccess.swift`), et ce qu'il
+ferme est décrit dans le README : un cours importé, 70 % de chaque fiche, cinq cartes par
+session, pas d'entraînement libre.
 
-Il n'y a donc que **deux endroits** à changer dans ce fichier :
+Ce qui a changé avec le branchement :
 
-```swift
-// 1. refresh() lit l'entitlement au lieu des réglages de l'appareil
-func refresh() async {
-    let info = try? await Purchases.shared.customerInfo()
-    isPro = info?.entitlements["pro"]?.isActive == true
-}
+- `refresh()` lit le SDK puis la table, et ne devine plus ;
+- `observePurchases()` suit `customerInfoStream`, donc un abonnement résilié se referme sans
+  redémarrage ;
+- `unavailable` n'appelle plus `unlock()` dans les deux paywalls ;
+- l'interrupteur « Micabo Pro » de `Réglages → Test` n'existe qu'en `DEBUG`. Dans une version
+  livrée, un interrupteur qui mentirait sur l'état réel d'un abonnement payé est pire que pas
+  d'interrupteur du tout.
 
-// 2. et l'app se tient au courant sans qu'on le lui demande
-private func observe() {
-    Task {
-        for await info in Purchases.shared.customerInfoStream {
-            isPro = info.entitlements["pro"]?.isActive == true
-        }
-    }
-}
-```
-
-Le flux est ce qui fait qu'un abonnement résilié se referme tout seul, sans redémarrage.
-
-Trois choses disparaissent le même jour :
-
-1. **`ProAccess.unlock()` appelé sur `unavailable`** — dans `PaywallFlowView.buy(_:)` et
-   `SessionPaywallView.buy()`. Aujourd'hui c'est ce qui rend le bouton d'abonnement testable
-   sans boutique ; demain, un échec réseau offrirait l'abonnement.
-2. **`ProAccess.lock()` et `setPro(_:)`** — ils n'existent que pour l'interrupteur de relecture.
-3. **La rangée « Micabo Pro » de `Réglages → Test`** — un interrupteur qui ment sur l'état réel
-   d'un abonnement payé est pire que pas d'interrupteur du tout.
+`lock()` et `setPro(_:)` restent : la réponse du serveur passe par là, et l'interrupteur de
+relecture en `DEBUG` aussi.
 
 ## 10. Tester
 
@@ -328,9 +286,18 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
    même compte.
 4. Coller `STRIPE_SECRET_KEY` dans **Vercel → Environment Variables**
    (Production + Preview) : `sk_test_…` d'abord, `sk_live_…` le jour J.
-5. **Customer Portal** : Settings → Billing → Customer portal → l'activer. C'est ce que
-   `manageSubscription()` ouvrira pour un achat `store = stripe`. Un achat App Store ne
-   doit **jamais** ouvrir ce portail.
+5. **Customer Portal** : Settings → Billing → Customer portal → **l'activer**. Sans ça
+   `manageSubscription()` reçoit un 400 de Stripe et le dit à l'écran.
+
+   Il est déjà écrit : pour un droit `store = stripe`, il retrouve le client par son
+   adresse (`GET /v1/customers?email=…`) puis ouvre une session de portail. Un achat
+   App Store part chez Apple, un achat Play Store chez Google, un accès offert n'a pas de
+   portail — c'est `entitlements.store` qui décide, et un bouton qui ouvre le mauvais
+   magasin donne un écran vide et un message au support.
+
+   Pourquoi par l'adresse et pas par un `cus_…` gardé en base : la table `entitlements` n'a
+   qu'une plume, le webhook RevenueCat, et il ne transporte pas ce champ. Une colonne que
+   personne n'écrit est une colonne qui mentira.
 
 ## 12. Lier Stripe à RevenueCat (le droit multiplateforme)
 

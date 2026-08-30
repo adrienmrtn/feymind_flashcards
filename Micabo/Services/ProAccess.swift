@@ -39,11 +39,13 @@ enum FreeTier {
 /// finiraient par ne pas être d'accord, et un utilisateur qui vient de payer verrait encore
 /// un cadenas quelque part.
 ///
-/// **Rien n'est branché sur une boutique pour l'instant.** `PaywallPurchases` répond
-/// `unavailable`, et `unlock()` est appelé quand même : sans ça, le bouton du paywall ne
-/// ferait rien du tout et le parcours ne serait pas testable. Le jour où RevenueCat est en
-/// place, `refresh()` lit l'entitlement `pro` et `unlock()` disparaît au profit de la
-/// réponse du serveur — voir `docs/revenuecat.md`.
+/// **Deux sources, dans cet ordre : le SDK, puis la table.** RevenueCat répond depuis son
+/// cache local, donc il sait même hors ligne, et il sait *avant* le webhook. La table
+/// `entitlements` est le repli : elle vaut pour un achat fait sur le web, et pour un appareil
+/// où le SDK n'est pas configuré.
+///
+/// Aucune des deux ne répond ? On ne devine pas : `assumeProWithoutRow` tranche, et il dit
+/// non — comme le web.
 @Observable
 @MainActor
 final class ProAccess {
@@ -53,10 +55,10 @@ final class ProAccess {
 
     private(set) var isPro: Bool
 
-    /// Même règle que le web (`ASSUME_PRO_WITHOUT_ROW`) : sans ligne, on ouvre.
-    /// Il n'y a pas encore de boutique branchée ; fermer maintenant enfermerait
-    /// tout le monde sans porte de sortie.
-    static let assumeProWithoutRow = true
+    /// Même règle que le web (`ASSUME_PRO_WITHOUT_ROW`, à `false`) : pas de ligne, pas
+    /// d'abonnement. Les deux clients doivent dire la même chose — un cours flouté sur le
+    /// web et ouvert sur le téléphone, c'est le même produit qui dit deux choses.
+    static let assumeProWithoutRow = false
 
     init(
         defaults: UserDefaults = .standard,
@@ -72,16 +74,19 @@ final class ProAccess {
     private let defaults: UserDefaults
     private let accessToken: (() async -> String?)?
     private let userID: (() -> UUID?)?
+    /// Une seule veille sur le flux du SDK : deux boucles se répondraient.
+    private var purchaseWatch: Task<Void, Never>?
 
-    /// Ouvre tout. Appelé après un achat, et après une restauration réussie.
+    /// Ouvre tout. Appelé quand le serveur confirme un achat ou une restauration — jamais
+    /// sur un `unavailable`, qui veut dire « je n'ai pas pu vendre ».
     func unlock() {
         guard !isPro else { return }
         isPro = true
         defaults.set(true, forKey: Key.isPro)
     }
 
-    /// Referme tout. N'existe que pour les réglages de test : c'est le seul moyen de
-    /// revoir les écrans de blocage une fois qu'on les a franchis une fois.
+    /// Referme tout. La réponse du serveur passe par ici, et l'interrupteur de relecture
+    /// des réglages aussi — il n'existe qu'en `DEBUG`.
     func lock() {
         guard isPro else { return }
         isPro = false
@@ -92,16 +97,48 @@ final class ProAccess {
         value ? unlock() : lock()
     }
 
-    /// Relit l'état de l'abonnement au lancement.
+    /// Relit l'état de l'abonnement.
     ///
-    /// La table `entitlements` fait foi, comme sur le web. Une échéance passée
-    /// l'emporte sur le drapeau. Sans ligne, on ouvre — tant qu'on ne peut pas
-    /// payer depuis l'app, fermer serait une porte sans poignée.
+    /// **Le plus généreux des deux gagne.** Le SDK et la table doivent s'accorder ; quand ils
+    /// divergent — le webhook a une seconde de retard, ou l'achat vient d'être fait sur le
+    /// web — enfermer dehors quelqu'un qui paye est pire qu'une minute offerte.
+    ///
+    /// Une échéance passée l'emporte sur le drapeau de la table : un webhook peut se perdre,
+    /// et un abonnement fini qui reste ouvert est une fuite qui ne se voit pas.
     func refresh() async {
-        guard let token = await accessToken?(), let userID = userID?() else {
-            isPro = defaults.bool(forKey: Key.isPro)
+        let fromSDK = await PurchasesBridge.isPro()
+        let fromTable = await readEntitlementRow()
+
+        // Personne ne sait rien : le réglage tranche, et il dit non.
+        guard fromSDK != nil || fromTable != nil else {
+            setPro(Self.assumeProWithoutRow)
             return
         }
+
+        setPro(fromSDK == true || fromTable == true)
+    }
+
+    /// S'abonne au flux du SDK : un abonnement résilié se referme **sans redémarrage**.
+    ///
+    /// Le flux ne parle que d'Apple. Il ouvre tout seul ; il ne referme pas ce qu'un achat
+    /// web a ouvert, et repasse donc par `refresh()` pour arbitrer les deux sources.
+    func observePurchases() {
+        guard purchaseWatch == nil else { return }
+        purchaseWatch = Task { [weak self] in
+            for await active in PurchasesBridge.proUpdates() {
+                guard let self else { return }
+                if active {
+                    self.setPro(true)
+                } else {
+                    await self.refresh()
+                }
+            }
+        }
+    }
+
+    /// La ligne `entitlements`, ou `nil` quand on n'a pas pu la lire. `nil` n'est pas « non ».
+    private func readEntitlementRow() async -> Bool? {
+        guard let token = await accessToken?(), let userID = userID?() else { return nil }
 
         do {
             let database = SupabaseDatabase(accessToken: { token })
@@ -111,16 +148,11 @@ final class ProAccess {
                 filters: [URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")],
                 limit: 1
             )
-            if let row = rows.first {
-                let expired = row.expires_at.map { $0 < Date() } ?? false
-                setPro(row.is_pro && !expired)
-            } else if Self.assumeProWithoutRow {
-                setPro(true)
-            } else {
-                setPro(false)
-            }
+            guard let row = rows.first else { return false }
+            let expired = row.expires_at.map { $0 < Date() } ?? false
+            return row.is_pro && !expired
         } catch {
-            isPro = defaults.bool(forKey: Key.isPro)
+            return nil
         }
     }
 

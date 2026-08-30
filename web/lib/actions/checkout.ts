@@ -120,6 +120,11 @@ export async function startCheckout(kind: pricing.PlanKind): Promise<CheckoutRes
  * Stripe. Un bouton qui ouvre le mauvais donne un écran vide et un message au support.
  */
 export async function manageSubscription(): Promise<CheckoutResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const right = await readEntitlement();
 
   if (!entitlement.isPaid(right)) {
@@ -137,11 +142,65 @@ export async function manageSubscription(): Promise<CheckoutResult> {
     return { status: "redirect", url: "https://play.google.com/store/account/subscriptions" };
   }
 
+  // Un abonnement offert n'a pas de portail : il n'y a rien à résilier, et ouvrir un portail
+  // vide se lit comme une panne.
+  if (right.store === "promotional") {
+    return { status: "error", message: "Cet accès a été offert : il n'y a rien à gérer." };
+  }
+
   const key = stripeKey();
   if (!key) return { status: "unavailable", message: "Le portail n'est pas encore branché." };
 
-  // Le portail de facturation de Stripe demande l'identifiant du client, que RevenueCat garde.
-  // Il se lira dans `entitlements` le jour où le webhook le transportera - il n'y a rien à
-  // inventer ici en attendant.
-  return { status: "unavailable", message: "Le portail arrive avec le branchement de Stripe." };
+  const email = user?.email;
+  if (!email) {
+    return { status: "error", message: "Aucune adresse rattachée à ce compte." };
+  }
+
+  // **Le client Stripe se retrouve par son adresse.** On ne garde pas son `cus_…` : la table
+  // `entitlements` n'a qu'une plume, le webhook RevenueCat, et il ne transporte pas ce champ.
+  // Ajouter une colonne que personne n'écrit serait une colonne qui mentira.
+  const customerId = await findStripeCustomer(key, email);
+  if (!customerId) {
+    return {
+      status: "error",
+      message: "Cet abonnement n'a pas été pris sur le web. Gère-le depuis l'appareil d'achat.",
+    };
+  }
+
+  const response = await fetch("https://api.stripe.com/v1/billing_portal/sessions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      customer: customerId,
+      return_url: `${SITE_URL}/app/reglages`,
+      locale: "fr",
+    }),
+  });
+
+  if (!response.ok) {
+    // Le portail non activé rend un 400 très reconnaissable, et le message de Stripe est
+    // plus utile que le nôtre : il dit d'aller l'activer.
+    return { status: "error", message: `Le portail Stripe a refusé (${response.status}).` };
+  }
+
+  const session = (await response.json()) as { url?: string };
+  if (!session.url) return { status: "error", message: "Stripe n'a pas rendu de portail." };
+
+  return { status: "redirect", url: session.url };
+}
+
+/** Le `cus_…` d'une adresse, ou `null` si Stripe ne connaît personne sous ce courriel. */
+async function findStripeCustomer(key: string, email: string): Promise<string | null> {
+  const query = new URLSearchParams({ email, limit: "1" });
+  const response = await fetch(`https://api.stripe.com/v1/customers?${query}`, {
+    headers: { Authorization: `Bearer ${key}` },
+  });
+
+  if (!response.ok) return null;
+
+  const payload = (await response.json()) as { data?: { id?: string }[] };
+  return payload.data?.[0]?.id ?? null;
 }

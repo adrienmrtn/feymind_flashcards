@@ -26,6 +26,8 @@ struct SessionPaywallView: View {
 
     @State private var isPurchasing = false
     @State private var isAbandoning = false
+    /// Ce que la boutique n'a pas pu faire. Un bouton muet passe pour cassé.
+    @State private var failure: String?
 
     private var plan: PaywallPlan { PaywallCatalog.recommended }
 
@@ -45,6 +47,11 @@ struct SessionPaywallView: View {
         }
         .micaboScreenBackground()
         .interactiveDismissDisabled()
+        .alert("Oups", isPresented: .constant(failure != nil)) {
+            Button("Fermer", role: .cancel) { failure = nil }
+        } message: {
+            Text(failure ?? "")
+        }
     }
 
     // MARK: - Le paywall
@@ -126,19 +133,26 @@ struct SessionPaywallView: View {
 
     // MARK: - Achat
 
+    /// **Seul un achat confirmé reprend la session.** Offrir sur `unavailable` ferait de
+    /// chaque panne de réseau un abonnement gratuit.
     @MainActor
     private func buy() async {
         guard !isPurchasing else { return }
         isPurchasing = true
+        failure = nil
 
         let outcome = await PaywallPurchases.buy(plan)
         isPurchasing = false
 
         switch outcome {
-        case .purchased, .unavailable:
+        case .purchased:
             pro?.unlock()
             Haptics.success()
             onSubscribed()
+        case .unavailable:
+            failure = PaywallPurchases.isReady
+                ? "L'achat n'a pas abouti. Réessaie dans un instant."
+                : "L'abonnement n'est pas encore ouvert."
         case .cancelled:
             break
         }
@@ -148,11 +162,15 @@ struct SessionPaywallView: View {
     private func restore() async {
         guard !isPurchasing else { return }
         isPurchasing = true
+        failure = nil
 
         let outcome = await PaywallPurchases.restore()
         isPurchasing = false
 
-        guard outcome == .purchased else { return }
+        guard outcome == .purchased else {
+            failure = "Aucun abonnement à restaurer sur ce compte."
+            return
+        }
         pro?.unlock()
         Haptics.success()
         onSubscribed()

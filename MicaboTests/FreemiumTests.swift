@@ -23,6 +23,39 @@ final class FreemiumTests: XCTestCase {
         XCTAssertGreaterThan(FreeTier.courses, 0)
     }
 
+    /// **Sans ligne, pas d'abonnement.** La même règle que le web
+    /// (`ASSUME_PRO_WITHOUT_ROW`), et c'est la divergence la plus coûteuse du produit :
+    /// à `true` d'un côté et `false` de l'autre, le site fait payer et le téléphone offre.
+    /// `web/packages/core/test/freemium-parity.test.ts` relit cette constante.
+    @MainActor
+    func testSomeoneWithoutARowIsNotTreatedAsSubscribed() {
+        XCTAssertFalse(ProAccess.assumeProWithoutRow)
+    }
+
+    /// Le nom de l'entitlement est écrit à trois endroits — ici, le noyau du web, et le
+    /// webhook. Un nom qui diverge donne un abonné que personne ne reconnaît.
+    func testTheEntitlementIsNamedPro() {
+        XCTAssertEqual(ProEntitlement.id, "pro")
+    }
+
+    /// Sans clé publique dans `Info.plist`, le SDK n'est pas configuré et les paywalls le
+    /// disent. Un SDK configuré avec une chaîne vide journalise sans jamais rien vendre.
+    func testThePurchaseBridgeStaysClosedWithoutAKey() {
+        if PurchasesBridge.publicKey == nil {
+            XCTAssertFalse(PaywallPurchases.isReady)
+        }
+    }
+
+    /// La boutique muette ne vend pas, et **n'offre pas**. C'est le cas qui compte : un
+    /// échec réseau traité comme un achat serait un abonnement gratuit à chaque panne.
+    func testAMutedStoreRefusesInsteadOfGivingAway() async {
+        let outcome = await PaywallPurchases.buy(PaywallCatalog.recommended)
+        if !PaywallPurchases.isReady {
+            XCTAssertEqual(outcome, .unavailable)
+        }
+        XCTAssertNotEqual(outcome, .purchased, "Aucun achat ne se conclut sans boutique")
+    }
+
     // MARK: - La coupure de la fiche
 
     func testTheSheetIsCutAtSevenTenthsOfItsBlocks() {
