@@ -11,6 +11,7 @@ import { chromium } from "playwright";
 const root = dirname(fileURLToPath(import.meta.url));
 const goldie = resolve(root, "..");
 const scenes = ["today", "sheet", "study", "exam", "courses"];
+const origin = process.env.MOCK_ORIGIN ?? "http://127.0.0.1:8766";
 
 const rawDir = resolve(goldie, "out/raw/iphone-6.9");
 const shotDir = resolve(goldie, "screenshots/fr-FR");
@@ -19,10 +20,12 @@ await mkdir(rawDir, { recursive: true });
 await mkdir(shotDir, { recursive: true });
 
 const browser = await chromium.launch();
-const fontsReady = `
-  await document.fonts.ready;
-  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-`;
+async function waitForPaint(page) {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
+}
 
 const phone = await browser.newContext({
   viewport: { width: 440, height: 956 },
@@ -35,9 +38,9 @@ const frame = await browser.newContext({
 
 for (const id of scenes) {
   const page = await phone.newPage();
-  await page.goto(`file://${root}/screens.html?screen=${id}`, { waitUntil: "networkidle" });
-  await page.evaluate(fontsReady);
-  await page.waitForTimeout(200);
+  await page.goto(`${origin}/mock/screens.html?screen=${id}`, { waitUntil: "networkidle" });
+  await waitForPaint(page);
+  await page.waitForTimeout(250);
   const raw = resolve(rawDir, `${id}.png`);
   await page.screenshot({ path: raw, type: "png" });
   await page.close();
@@ -46,9 +49,13 @@ for (const id of scenes) {
 
 for (const id of scenes) {
   const page = await frame.newPage();
-  await page.goto(`file://${root}/frame.html?scene=${id}`, { waitUntil: "networkidle" });
-  await page.evaluate(fontsReady);
-  await page.waitForTimeout(250);
+  await page.goto(`${origin}/mock/frame.html?scene=${id}`, { waitUntil: "networkidle" });
+  await page.waitForFunction(() => {
+    const img = document.getElementById("screen");
+    return img && img.complete && img.naturalWidth > 100;
+  });
+  await waitForPaint(page);
+  await page.waitForTimeout(300);
   const out = resolve(shotDir, `${id}.png`);
   await page.screenshot({ path: out, type: "png" });
   await page.close();

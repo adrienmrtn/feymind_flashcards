@@ -5,7 +5,7 @@
 <title>Micabo — cadre App Store</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 1320px; height: 2868px; overflow: hidden; }
@@ -14,63 +14,40 @@
     background: linear-gradient(168deg, #DCE8DC 0%, #E8EFE6 38%, #F6F4ED 72%, #FFFDF6 100%);
     color: #191714;
   }
-  .tile {
-    width: 1320px; height: 2868px;
-    position: relative;
-    overflow: hidden;
-  }
+  .tile { width: 1320px; height: 2868px; position: relative; overflow: hidden; }
   .copy {
-    position: absolute; left: 96px; right: 96px; top: 168px;
-    z-index: 2;
+    position: absolute; left: 100px; right: 100px; top: 150px; z-index: 2;
   }
-  .copy.left { right: 280px; }
-  .copy.low { top: auto; bottom: 160px; text-align: center; }
-  h1 {
-    font-size: 92px; font-weight: 700; letter-spacing: -2.4px; line-height: 1.02;
-  }
+  .copy.left { right: 360px; }
+  h1 { font-size: 88px; font-weight: 700; letter-spacing: -2.2px; line-height: 1.02; }
   p.sub {
-    margin-top: 28px; font-size: 36px; font-weight: 500; color: #6F6A60; line-height: 1.28;
-    max-width: 18ch;
+    margin-top: 26px; font-size: 34px; font-weight: 500; color: #6F6A60;
+    line-height: 1.28; max-width: 18ch;
   }
-  .copy.low p.sub { margin-left: auto; margin-right: auto; }
   .device {
     position: absolute;
     width: 980px;
     left: 50%;
-    bottom: -80px;
+    top: 720px;
     transform: translateX(-50%);
-    filter: drop-shadow(0 48px 80px rgba(25, 23, 20, 0.22));
+    filter: drop-shadow(0 42px 70px rgba(25, 23, 20, 0.20));
   }
-  .device.hero { width: 1080px; bottom: -220px; }
-  .device.offset { left: auto; right: -80px; transform: none; bottom: -160px; width: 920px; }
-  .device.tilt { transform: translateX(-46%) rotate(-8deg); bottom: -180px; width: 1000px; }
-  .device.minimal { width: 1100px; bottom: auto; top: 50%; transform: translate(-50%, -50%); }
+  .device.hero { width: 1100px; top: 640px; }
+  .device.offset { left: auto; right: -40px; transform: none; top: 780px; width: 900px; }
+  .device.tilt { transform: translateX(-48%) rotate(-7deg); top: 700px; width: 1020px; }
+  .device.minimal { width: 1080px; top: 50%; transform: translate(-50%, -46%); }
   .bezel {
-    background: linear-gradient(160deg, #e8e6e1 0%, #c9c6bf 42%, #9b9890 100%);
-    border-radius: 92px;
-    padding: 14px;
+    background: linear-gradient(160deg, #f2f0ea 0%, #cfc9be 45%, #8f8a82 100%);
+    border-radius: 86px;
+    padding: 12px;
   }
   .bezel-inner {
-    background: #1a1916;
-    border-radius: 80px;
-    padding: 10px;
-    position: relative;
+    background: #11110f;
+    border-radius: 76px;
+    overflow: hidden;
+    line-height: 0;
   }
-  .screen {
-    display: block;
-    width: 100%;
-    height: auto;
-    border-radius: 70px;
-    background: #f6f4ed;
-  }
-  .island {
-    position: absolute; left: 50%; top: 22px;
-    transform: translateX(-50%);
-    width: 210px; height: 58px;
-    background: #0b0b0b;
-    border-radius: 32px;
-    z-index: 2;
-  }
+  .screen { display: block; width: 100%; height: auto; }
 </style>
 </head>
 <body>
@@ -82,7 +59,6 @@
   <div class="device" id="device">
     <div class="bezel">
       <div class="bezel-inner">
-        <div class="island"></div>
         <img class="screen" id="screen" alt="" />
       </div>
     </div>
@@ -113,22 +89,21 @@
     courses: {
       headline: "PDF, photo ou vidéo",
       subhead: "Tes cours deviennent des fiches, puis des cartes.",
-      layout: "minimal",
+      layout: "classic",
     },
   };
   const id = new URLSearchParams(location.search).get("scene") || "today";
   const scene = scenes[id];
   document.getElementById("headline").textContent = scene.headline;
   document.getElementById("subhead").textContent = scene.subhead;
-  document.getElementById("screen").src = `../out/raw/iphone-6.9/${id}.png`;
+  const img = document.getElementById("screen");
+  img.src = `../out/raw/iphone-6.9/${id}.png`;
   const copy = document.getElementById("copy");
   const device = document.getElementById("device");
-  device.classList.add(scene.layout === "classic" ? "hero" : scene.layout);
+  if (scene.layout === "classic") device.classList.add("hero");
+  else device.classList.add(scene.layout);
   if (scene.layout === "offset") copy.classList.add("left");
   if (scene.layout === "minimal") copy.style.display = "none";
-  if (scene.layout === "classic") {
-    device.className = "device";
-  }
 </script>
 </body>
 </html>

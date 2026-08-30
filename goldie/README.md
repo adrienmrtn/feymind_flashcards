@@ -34,6 +34,14 @@ npx -y goldie@0 studio --no-open   # http://localhost:4321
 Sans simulateur, `goldie/mock/` recrée les cinq écrans et les cadre aux
 mêmes dimensions. Les PNG prêts à envoyer sont dans `goldie/screenshots/`.
 
+```bash
+# depuis goldie/
+python3 -m http.server 8766
+# autre terminal
+cd mock && npm i playwright && npx playwright install chromium
+MOCK_ORIGIN=http://127.0.0.1:8766 node capture.mjs
+```
+
 ## Scènes
 
 | Id | Écran | Accroche |

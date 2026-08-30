@@ -90,7 +90,7 @@
     padding: 8px var(--screen) 0;
   }
   .page.full { bottom: var(--home); }
-  .page.cta { bottom: calc(var(--tab) + var(--home) + 72px); }
+  .page.has-dock { bottom: calc(var(--tab) + var(--home) + 72px); }
 
   h1.title {
     font-size: 32px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.05;
@@ -323,7 +323,7 @@
   </div>
 
   <!-- TODAY -->
-  <div class="page cta" data-screen="today">
+  <div class="page has-dock" data-screen="today">
     <div class="header">
       <h1 class="title">Réviser</h1>
       <span class="pill streak">
@@ -447,7 +447,7 @@
   </div>
 
   <!-- EXAM -->
-  <div class="page cta hidden" data-screen="exam">
+  <div class="page has-dock hidden" data-screen="exam">
     <div class="header"><h1 class="title">Examens</h1></div>
     <div class="group cal" style="margin-bottom:20px">
       <div class="cal-h">
@@ -467,7 +467,7 @@
         <div class="tile" style="background:var(--caut-soft);color:var(--caut)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
         </div>
-        <div class="grow"><h3>Devoir de SVT</h3><p>SVT · 12 cartes · intensive</p></div>
+        <div class="grow"><h3>Devoir de SVT</h3><p>SVT · 7 cartes · intensive</p></div>
         <span class="badge warm">J-3</span>
       </div>
       <div class="hair"></div>
@@ -475,7 +475,7 @@
         <div class="tile" style="background:var(--math-soft);color:var(--math)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
         </div>
-        <div class="grow"><h3>Contrôle de maths</h3><p>Maths · 3 cartes · normale</p></div>
+        <div class="grow"><h3>Contrôle de maths</h3><p>Maths · 4 cartes · normale</p></div>
         <span class="badge warm">J-12</span>
       </div>
     </div>
