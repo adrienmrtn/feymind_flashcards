@@ -98,6 +98,14 @@ describe("l'offre cadeau, des deux côtés", () => {
     expect(swiftConstant(discountOffer, "windowSeconds")).toBe(String(discount.windowSeconds));
   });
 
+  it("écrit la minuterie de la même façon, centièmes comprises", () => {
+    // La minuterie est ce que l'œil suit pendant qu'on décide : « 00 : 29 : 48 . 69 » sur le
+    // téléphone et « 00:29:48 » sur le site, ce sont deux offres qui n'ont pas la même
+    // urgence.
+    expect(discount.preciseCountdown(1_788_690)).toBe("00 : 29 : 48 . 69");
+    expect(discountOffer).toContain('"%02d : %02d : %02d . %02d"');
+  });
+
   it("annonce le même prix mensuel, écrit et non calculé", () => {
     // 39,99 ÷ 12 fait 3,3325. Les deux clients écrivent 3,30, et affichent l'annuel à côté.
     expect(swiftConstant(discountOffer, "monthlyPrice")).toBe("3.30");

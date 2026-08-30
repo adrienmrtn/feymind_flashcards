@@ -74,6 +74,20 @@ describe("les deux minuteries", () => {
     expect(discount.countdown(-40)).toBe("00:00");
   });
 
+  it("descendent au centième sur le paywall, et gardent leur ponctuation", () => {
+    // Compter en secondes ferait bégayer un affichage à deux décimales : deux images de
+    // suite tomberaient dans la même seconde, et la minuterie aurait l'air arrêtée.
+    expect(discount.urgencyMillisRemaining(0, 0)).toBe(3_600_000);
+    expect(discount.urgencyMillisRemaining(0, 310)).toBe(3_599_690);
+    expect(discount.urgencyMillisRemaining(5000, 0)).toBe(3_600_000);
+    expect(discount.urgencyMillisRemaining(0, 2 * HOUR)).toBe(0);
+
+    expect(discount.preciseCountdown(3_600_000)).toBe("01 : 00 : 00 . 00");
+    expect(discount.preciseCountdown(1_788_690)).toBe("00 : 29 : 48 . 69");
+    expect(discount.preciseCountdown(0)).toBe("00 : 00 : 00 . 00");
+    expect(discount.preciseCountdown(-500)).toBe("00 : 00 : 00 . 00");
+  });
+
   it("se lisent à voix haute, sans faute d'accord", () => {
     expect(discount.countdownLabel(0)).toBe("offre terminée");
     expect(discount.countdownLabel(30)).toBe("il reste moins d'une minute");
