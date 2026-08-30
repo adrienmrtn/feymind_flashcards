@@ -17,54 +17,6 @@ enum SignInProvider: String, CaseIterable, Identifiable {
     }
 }
 
-/// **Ce qu'un compte apporte, en trois lignes.** Partagé par les deux écrans qui demandent
-/// à se connecter — celui du parcours d'accueil et celui de la reconnexion — parce que ce
-/// sont le même écran et qu'ils doivent le rester.
-struct SignInBenefits: View {
-    private struct Benefit: Identifiable {
-        let id = UUID()
-        let systemImage: String
-        let text: String
-    }
-
-    private let benefits: [Benefit] = [
-        Benefit(systemImage: "icloud", text: "Tes cours et tes cartes sont sauvegardés."),
-        Benefit(systemImage: "iphone.and.arrow.forward", text: "Tu retrouves ton avance sur n'importe quel appareil."),
-        Benefit(systemImage: "flame", text: "Ta série de révisions ne repart pas de zéro.")
-    ]
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(benefits.enumerated()), id: \.element.id) { index, benefit in
-                row(benefit)
-
-                if index < benefits.count - 1 {
-                    MicaboHairline(inset: 46)
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .micaboGroup()
-    }
-
-    private func row(_ benefit: Benefit) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: benefit.systemImage)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(MicaboColor.accent)
-                .frame(width: 34)
-
-            Text(benefit.text)
-                .font(MicaboFont.hanken(14.5, weight: .medium))
-                .foregroundStyle(MicaboColor.ink)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Spacer(minLength: 0)
-        }
-        .padding(.vertical, 15)
-    }
-}
-
 /// Ce que l'écran a à dire quand ça n'a pas marché.
 ///
 /// Une annulation ne dit rien : elle n'est pas un échec, et `AuthController` la laisse déjà
@@ -170,17 +122,6 @@ struct SignInProviderButtons: View {
 
     private var emailForm: some View {
         VStack(spacing: 10) {
-            HStack(spacing: 12) {
-                MicaboHairline()
-                    .frame(maxWidth: .infinity)
-                Text("ou")
-                    .font(MicaboFont.hanken(12, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                MicaboHairline()
-                    .frame(maxWidth: .infinity)
-            }
-            .padding(.vertical, 4)
-
             TextField("ton@adresse.fr", text: $email)
                 .font(MicaboFont.hanken(16, weight: .medium))
                 .foregroundStyle(MicaboColor.ink)

@@ -18,27 +18,18 @@ import SwiftUI
 /// fois qu'on s'est déconnecté, on se reconnecte. L'écran ne propose donc rien d'autre que
 /// les fournisseurs et le courriel, et il n'a pas de bouton de renvoi.
 ///
-/// La mise en page vient d'`OnboardingScaffold`, et c'est voulu : dupliquer la composition
-/// de l'écran de connexion du parcours serait s'engager à la maintenir deux fois.
+/// Plus de titre, plus d'avantages : Apple, Google, un lien. C'est tout.
 struct AuthView: View {
     @Environment(AuthController.self) private var auth
 
     var body: some View {
-        OnboardingScaffold(
-            eyebrow: "Ton compte",
-            title: "Content de te revoir.",
-            subtitle: "Connecte-toi pour retrouver tes cours, tes cartes et ta série là où tu les as laissés.",
-            titleSize: 30,
-            contentSpacing: MicaboSpacing.lg,
-            scrolls: true
-        ) {
-            VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-                SignInBenefits()
-                SignInFailureNote()
-            }
-        } footer: {
+        VStack(spacing: MicaboSpacing.md) {
+            Spacer(minLength: 0)
+            SignInFailureNote()
             SignInProviderButtons()
         }
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.bottom, MicaboSpacing.xl)
         .background(MicaboColor.canvas.ignoresSafeArea())
         // Une session ouverte depuis un lien reçu par courriel ferme l'écran d'elle-même :
         // c'est `RootView` qui décide de l'afficher, et il relit l'état du compte.
