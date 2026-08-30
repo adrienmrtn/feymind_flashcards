@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   cleanTranscript,
   extractVideoId,
+  isYouTubeUrl,
   parseCaptionXml,
   parseJson3,
   parseVtt,
+  youtubeDurationLabel,
 } from "./youtube";
 
 describe("extractVideoId", () => {
@@ -18,6 +20,16 @@ describe("extractVideoId", () => {
   it("refuse ce qui n'est pas une vidéo", () => {
     expect(extractVideoId("https://www.youtube.com/@unechaine")).toBeNull();
     expect(extractVideoId("dQw4w9WgXcQ")).toBeNull();
+    expect(isYouTubeUrl("https://vimeo.com/123")).toBe(false);
+    expect(isYouTubeUrl("https://youtu.be/dQw4w9WgXcQ")).toBe(true);
+  });
+});
+
+describe("youtubeDurationLabel", () => {
+  it("écrit les minutes, puis les heures", () => {
+    expect(youtubeDurationLabel(0)).toBeNull();
+    expect(youtubeDurationLabel(90)).toBe("1 min");
+    expect(youtubeDurationLabel(3720)).toBe("1 h 02");
   });
 });
 

@@ -44,6 +44,8 @@ struct ImportView: View {
     @State private var sheetBlocks = SheetPreferences.blocks
     /// Qui pourra retrouver le cours. Gardé d'un import à l'autre pour la même raison.
     @AppStorage(CourseVisibility.importKey) private var visibility = CourseVisibility.standard
+    /// `nil` = langue du document. Une valeur force la fiche dans cette langue.
+    @State private var generationLanguage: ContentLanguage?
     @State private var showFileImporter = false
     @State private var showPhotoPicker = false
     @State private var showScanner = false
@@ -110,6 +112,7 @@ struct ImportView: View {
                         }
 
                         lengthSection
+                        languageSection
                         visibilitySection
                     }
                     .padding(.horizontal, MicaboSpacing.screen)
@@ -534,6 +537,43 @@ struct ImportView: View {
         )
     }
 
+    /// **Dans quelle langue écrire la fiche.**
+    ///
+    /// Par défaut on reste dans celle du document. Forcer l'anglais sur un
+    /// polycopié français est un choix, pas un défaut caché derrière le pays.
+    private var languageSection: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            MicaboSectionCaption(text: "Langue de la fiche")
+
+            Menu {
+                Button("Celle du document") { generationLanguage = nil }
+                Divider()
+                ForEach(ContentLanguage.allCases) { value in
+                    Button(value.label) { generationLanguage = value }
+                }
+            } label: {
+                HStack {
+                    Text(generationLanguage?.label ?? "Celle du document")
+                        .font(MicaboFont.body)
+                        .foregroundStyle(MicaboColor.ink)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(MicaboColor.inkTertiary)
+                }
+                .padding(MicaboSpacing.sm)
+                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+            }
+            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
+
+            Text(generationLanguage == nil
+                 ? "Micabo écrit dans la langue du cours."
+                 : "La fiche sera traduite dans cette langue.")
+                .font(MicaboFont.caption)
+                .foregroundStyle(MicaboColor.inkTertiary)
+        }
+    }
+
     /// **Qui pourra la retrouver, décidé à l'import.**
     ///
     /// Plus de dépôt public : uniquement les amis, ou soi seul. Le choix se garde d'un
@@ -799,7 +839,7 @@ struct ImportView: View {
             sourceName: fileName,
             studyLevel: OnboardingPreferences.studyLevel,
             country: OnboardingPreferences.schoolingCountry,
-            language: OnboardingPreferences.contentLanguage,
+            language: generationLanguage,
             sheetLength: sheetFormat,
             sheetBlocks: sheetBlocks,
             // La matière n'est pas encore connue : c'est le modèle qui la trouve, et la

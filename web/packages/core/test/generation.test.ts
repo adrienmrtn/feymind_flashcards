@@ -2,19 +2,25 @@ import { describe, expect, it } from "vitest";
 
 import {
   BLOCK_BOUNDS,
+  CONTENT_LANGUAGES,
   DEFAULT_QUOTA,
   DEFAULT_SHEET_LENGTH,
   DEFAULT_VISIBILITY,
+  GENERATION_LANGUAGES,
+  LANGUAGE_LABELS,
   PER_FORMAT_RANGE,
   SHEET_LENGTHS,
+  SOURCE_LANGUAGE,
   TOTAL_RANGE,
   asChoosableVisibility,
   choosableVisibilities,
   clampBlocks,
   clampQuota,
   defaultBlocks,
+  generationLanguageLabel,
   isAtCap,
   isChoosableVisibility,
+  isGenerationLanguage,
   isShared,
   lengthContaining,
   quotaTotal,
@@ -114,6 +120,22 @@ describe("la longueur de fiche", () => {
 
   it("part sur la fiche équilibrée", () => {
     expect(DEFAULT_SHEET_LENGTH).toBe("standard");
+  });
+});
+
+describe("la langue d'une génération", () => {
+  it("part sur la langue du document, pas une langue forcée", () => {
+    expect(GENERATION_LANGUAGES[0]).toBe(SOURCE_LANGUAGE);
+    expect(generationLanguageLabel(SOURCE_LANGUAGE)).toBe("Langue du document");
+    expect(isGenerationLanguage(SOURCE_LANGUAGE)).toBe(true);
+  });
+
+  it("connaît les mêmes langues que le profil", () => {
+    for (const language of CONTENT_LANGUAGES) {
+      expect(isGenerationLanguage(language)).toBe(true);
+      expect(generationLanguageLabel(language)).toBe(LANGUAGE_LABELS[language]);
+    }
+    expect(isGenerationLanguage("zz")).toBe(false);
   });
 });
 

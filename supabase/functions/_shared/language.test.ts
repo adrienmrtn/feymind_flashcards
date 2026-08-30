@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { languageBrief, languageName, resolveLanguage } from "./language.ts";
+import { isSourceLanguage, languageBrief, languageName, resolveLanguage } from "./language.ts";
 
 describe("resolveLanguage", () => {
   it("lit les deux langues connues", () => {
@@ -22,7 +22,13 @@ describe("resolveLanguage", () => {
   it("retombe sur le français quand rien n'est demandé", () => {
     assert.equal(resolveLanguage(undefined), "fr");
     assert.equal(resolveLanguage(""), "fr");
-    assert.equal(resolveLanguage("de"), "fr");
+    assert.equal(resolveLanguage("zz"), "fr");
+  });
+
+  it("reconnaît la demande de rester dans la langue du document", () => {
+    assert.equal(isSourceLanguage("source"), true);
+    assert.equal(isSourceLanguage("auto"), true);
+    assert.equal(isSourceLanguage("fr"), false);
   });
 });
 
@@ -41,5 +47,11 @@ describe("languageBrief", () => {
   it("nomme la langue pour les consignes", () => {
     assert.equal(languageName("en"), "anglais");
     assert.equal(languageName(undefined), "français");
+  });
+
+  it("reste dans la langue du document quand on le demande", () => {
+    assert.ok(languageBrief("source").includes("CELLE DU DOCUMENT"));
+    assert.ok(languageBrief("source").includes("l'emporte"));
+    assert.ok(!languageBrief("source").includes("FRANÇAIS."));
   });
 });
