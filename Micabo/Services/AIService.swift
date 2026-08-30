@@ -10,9 +10,9 @@ struct CourseGenerationRequest {
     var studyLevel: StudyLevel? = nil
     /// Où l'étudiant est scolarisé : « attendus du bac » ne veut rien dire en Belgique.
     var country: SchoolingCountry? = nil
-    /// La langue de la fiche. Elle vient du pays de scolarisation, et non d'une question à
-    /// part : l'écran qui la demandait n'offrait qu'une réponse.
-    var language: ContentLanguage = .fr
+    /// La langue de **cette** fiche. `nil` reste dans la langue du document ;
+    /// une valeur force une autre langue.
+    var language: ContentLanguage? = nil
     var sheetLength: SheetLength = .default
     /// Le volume exact demandé, en blocs. Le format ci-dessus reste envoyé : une
     /// fonction déployée avant le curseur continu le comprend encore.

@@ -228,6 +228,13 @@ export {
   type CountryCode,
 } from "./onboarding/countries";
 export {
+  GENERATION_LANGUAGES,
+  SOURCE_LANGUAGE,
+  generationLanguageLabel,
+  isGenerationLanguage,
+  type GenerationLanguage,
+} from "./generation/language";
+export {
   TIER_LADDER,
   resolveStage,
   stagesFor,

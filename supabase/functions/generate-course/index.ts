@@ -56,7 +56,7 @@ interface RequestBody {
   level?: string;
   /** Pays de scolarisation, en deux lettres : « fr », « be », « ca »… */
   country?: string;
-  /** Langue de la fiche, déduite du pays côté application : « fr » ou « en ». */
+  /** Langue de la fiche : code ISO, ou « source » pour rester dans celle du document. */
   language?: string;
   /** Longueur de fiche demandée : « brief », « standard » ou « deep ». */
   length?: string;

@@ -4,9 +4,11 @@ import { revalidatePath } from "next/cache";
 
 import {
   DEFAULT_QUOTA,
+  SOURCE_LANGUAGE,
   clampBlocks,
   clampQuota,
   countryFor,
+  isGenerationLanguage,
   isSheetLength,
   sheetLanguage,
   DEFAULT_VISIBILITY,
@@ -17,12 +19,14 @@ import {
   resolveEmoji,
   sheetToPlainText,
   type CourseVisibility,
+  type GenerationLanguage,
   type QuestionQuota,
   type SheetBlock,
   type SheetLength,
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
+import { previewYouTubeOnServer, readYouTubeOnServer } from "@/lib/import/youtube-server";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -68,6 +72,11 @@ export async function importFromText(input: {
   /** Le volume demandé, en blocs. C'est la source de vérité ; le format n'en est que le nom. */
   blocks?: number;
   length?: SheetLength;
+  /**
+   * Langue de **cette** fiche. `source` reste dans la langue du document.
+   * Absent, on fait comme l'écran : on ne force rien.
+   */
+  language?: GenerationLanguage;
 }): Promise<ImportResult> {
   const supabase = await createClient();
   const {
@@ -90,7 +99,9 @@ export async function importFromText(input: {
     .maybeSingle();
 
   const country = countryFor(profile?.country_code);
-  const language = sheetLanguage(profile?.sheet_language, profile?.country_code);
+  const language = isGenerationLanguage(input.language)
+    ? input.language
+    : SOURCE_LANGUAGE;
 
   // Le réglage de l'écran gagne sur celui du profil, et le profil sert de défaut : c'est ce que
   // fait l'app, où le curseur de l'import part de la préférence enregistrée. `blocks` commande, et
@@ -156,25 +167,30 @@ export async function importFromText(input: {
 }
 
 /** L'aperçu d'une vidéo, avant de dépenser quoi que ce soit. */
-export async function youtubePreview(url: string) {
+export async function youtubePreview(url: string, languages?: string[]) {
+  const local = await previewYouTubeOnServer(url, languages?.[0] ?? "fr");
+  if (local.status === "ok") return local;
+
   const supabase = await createClient();
   const { data, error } = await supabase.functions.invoke("youtube-transcript", {
-    body: { url, metadataOnly: true },
+    body: { url, metadataOnly: true, languages: languages?.slice(0, 6) },
   });
 
   if (error) return { status: "error" as const, message: await readableError(error) };
   return { status: "ok" as const, video: (data as { video?: unknown })?.video };
 }
 
-/** Les sous-titres, puis la fiche - en deux temps, parce que le premier est gratuit. */
-export async function importFromYouTube(
-  url: string,
-  options?: { blocks?: number; length?: SheetLength; visibility?: CourseVisibility },
-): Promise<ImportResult> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.functions.invoke("youtube-transcript", { body: { url } });
+/** Les sous-titres seuls, sans écrire la fiche : le repli quand l'onglet n'a pas pu lire. */
+export async function youtubeTranscript(url: string, languages?: string[]) {
+  const local = await readYouTubeOnServer(url, languages ?? ["fr", "en"]);
+  if (local.status === "ok") return local;
 
-  if (error) return { status: "error", message: await readableError(error) };
+  const supabase = await createClient();
+  const { data, error } = await supabase.functions.invoke("youtube-transcript", {
+    body: { url, languages: languages?.slice(0, 6) },
+  });
+
+  if (error) return { status: "error" as const, message: await readableError(error) };
 
   const payload = data as
     | { transcript?: { text?: string }; video?: { title?: string } }
@@ -182,17 +198,41 @@ export async function importFromYouTube(
   const text = payload?.transcript?.text ?? "";
 
   if (text.length < MINIMUM_TEXT) {
-    return { status: "error", message: "Cette vidéo n'a pas assez de sous-titres exploitables." };
+    return {
+      status: "error" as const,
+      message: "Cette vidéo n'a pas assez de sous-titres exploitables.",
+    };
   }
 
-  return importFromText({
+  return {
+    status: "ok" as const,
     text,
-    hintTitle: payload?.video?.title,
-    sourceName: payload?.video?.title,
+    title: payload?.video?.title ?? "Vidéo YouTube",
+  };
+}
+
+/** Les sous-titres, puis la fiche - en deux temps, parce que le premier est gratuit. */
+export async function importFromYouTube(
+  url: string,
+  options?: {
+    blocks?: number;
+    length?: SheetLength;
+    visibility?: CourseVisibility;
+    language?: GenerationLanguage;
+  },
+): Promise<ImportResult> {
+  const remote = await youtubeTranscript(url);
+  if (remote.status !== "ok") return remote;
+
+  return importFromText({
+    text: remote.text,
+    hintTitle: remote.title,
+    sourceName: remote.title,
     source: "youtube",
     blocks: options?.blocks,
     length: options?.length,
     visibility: options?.visibility,
+    language: options?.language,
   });
 }
 

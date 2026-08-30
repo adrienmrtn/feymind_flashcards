@@ -23,7 +23,7 @@ struct SupabaseAIService: AIService {
             "sourceName": request.sourceName ?? "",
             "level": request.studyLevel?.rawValue ?? "",
             "country": request.country?.rawValue ?? "",
-            "language": request.language.rawValue,
+            "language": request.language?.rawValue ?? "source",
             "length": request.sheetLength.rawValue,
             "blocks": request.sheetBlocks,
             "subject": request.subject ?? "",

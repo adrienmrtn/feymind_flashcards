@@ -73,8 +73,22 @@ function foreignBrief(code: ContentLanguage): string {
 const FRENCH_BRIEF =
   `LANGUE DE SORTIE : FRANÇAIS. Tout ce que tu écris est en français, y compris les titres, les légendes et les intitulés.`;
 
+/**
+ * On reste dans la langue du document. C'est le défaut de l'import : un cours
+ * anglais produit une fiche anglaise, sans qu'on ait à le dire.
+ */
+const SOURCE_BRIEF =
+  `LANGUE DE SORTIE : CELLE DU DOCUMENT. Cette consigne est la plus forte de toutes et elle l'emporte sur toute mention du français ailleurs dans les instructions. Tout ce que tu produis est rédigé dans la langue du texte fourni : titres, paragraphes, définitions, intitulés de colonnes, légendes, questions et réponses. Tu n'écris pas une traduction. Tu n'imposes pas le français. Si le document mélange des langues, tu suis la langue principale du cours.`;
+
+/** Vrai quand on demande de rester dans la langue du document. */
+export function isSourceLanguage(code: string | undefined): boolean {
+  const cleaned = (code ?? "").trim().toLowerCase();
+  return cleaned === "source" || cleaned === "auto" || cleaned === "document";
+}
+
 /** La langue demandée, ou le français quand la demande est absente ou inconnue. */
 export function resolveLanguage(code: string | undefined): ContentLanguage {
+  if (isSourceLanguage(code)) return DEFAULT_LANGUAGE;
   const cleaned = (code ?? "").trim().toLowerCase().slice(0, 2);
   return cleaned in NAMES ? cleaned as ContentLanguage : DEFAULT_LANGUAGE;
 }
@@ -89,6 +103,7 @@ export function languageName(code: string | undefined): string {
  * En dernier, elle passe après le document et le modèle l'oublie sur les textes longs.
  */
 export function languageBrief(code: string | undefined): string {
+  if (isSourceLanguage(code)) return SOURCE_BRIEF;
   const language = resolveLanguage(code);
   return language === "fr" ? FRENCH_BRIEF : foreignBrief(language);
 }
