@@ -57,8 +57,8 @@ export function FlashcardStory() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[420px]">
-      <div className="paper flex min-h-[15rem] flex-col rounded-group bg-surface p-4">
+    <div className="mx-auto flex h-full min-h-full w-full max-w-[420px] flex-col items-center justify-center py-2">
+      <div className="paper flex min-h-[15rem] w-full flex-col rounded-group bg-surface p-4">
         <div className="flex items-center justify-between gap-3">
           <span className="rounded-pill bg-surface-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-caps text-ink-tertiary">
             {card.kindLabel}

@@ -148,6 +148,19 @@ export function hasReachedSessionLimit(entitlement: Entitlement, answered: numbe
   return !entitlement.isPro && answered >= FREE_TIER.cardsPerSession;
 }
 
+/**
+ * Le paywall de session s'ouvre **sur** la carte suivante, pas à la place
+ * de la session. Une file qui se termine pile à la limite a été révisée
+ * en entier : on ne facture pas ce qu'on vient d'offrir.
+ */
+export function shouldInterruptSession(
+  right: Entitlement,
+  answered: number,
+  sessionDone: boolean,
+): boolean {
+  return !sessionDone && hasReachedSessionLimit(right, answered);
+}
+
 // MARK: - La coupure de la fiche
 
 /**

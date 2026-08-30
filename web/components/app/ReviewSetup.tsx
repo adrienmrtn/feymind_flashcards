@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   activeDeadlines,
   buildQueue,
-  entitlement,
   resolveEmoji,
   type CardState,
 } from "@micabo/core";
@@ -108,8 +107,10 @@ export function ReviewSetup({
 
   const fresh = queue.filter((card) => card.state === "new").length;
   const again = queue.length - fresh;
-  const cap = isPro ? queue.length : entitlement.FREE_TIER.cardsPerSession;
-  const served = Math.min(queue.length, cap);
+  // Le plafond se joue **pendant** la session, pas ici : on annonce la
+  // vraie file. Sinon on ouvre cinq cartes, on les finit, et on rentre
+  // — le paywall n'a plus rien à couper.
+  const served = queue.length;
 
   const involved = courses.filter((course) =>
     queue.some((item) => {
