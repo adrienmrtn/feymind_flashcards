@@ -10,7 +10,7 @@ import SwiftUI
 /// tout seul se referme tout seul. Trois appuis, c'est une seconde et demie où la main
 /// participe — et une offre qu'on a déballée se lit avant de se fermer.
 ///
-/// Les nombres — trois appuis, une heure, vingt-quatre heures, 3,30 € — sont tous dans
+/// Les nombres — trois appuis, vingt-quatre heures, 3,30 € — sont tous dans
 /// `DiscountOffer`, qui est le miroir du module partagé avec le web.
 struct DiscountFlowView: View {
     /// Vrai quand on rouvre depuis la pastille : le cadeau ne se déballe qu'une fois.
@@ -26,7 +26,7 @@ struct DiscountFlowView: View {
     }
 
     @State private var stage: Stage
-    /// L'instant d'origine des deux minuteries. Posé à l'ouverture du cadeau.
+    /// L'instant d'origine de la minuterie. Posé à l'ouverture du cadeau.
     @State private var startedAt: Date?
     @State private var isPurchasing = false
     @State private var failure: String?
@@ -497,11 +497,12 @@ private struct DiscountPaywallStage: View {
     }
 }
 
-/// **La minuterie de l'heure**, en pastille violette.
+/// **La minuterie de l'offre**, en pastille violette.
 ///
 /// Les centièmes défilent, et ce n'est pas de la précision : une minuterie qui bouge à chaque
 /// image se regarde, une minuterie qui saute d'une seconde à l'autre se lit une fois puis
-/// s'oublie. C'est le seul endroit du produit où l'on demande de décider maintenant.
+/// s'oublie. Elle compte la même fenêtre que la languette — vingt-quatre heures — pour que
+/// refermer puis rouvrir ne change pas le temps affiché.
 private struct DiscountCountdownPill: View {
     let startedAt: Date
 
@@ -509,7 +510,7 @@ private struct DiscountCountdownPill: View {
         // Vingt images par seconde, cadencées par `TimelineView` : un `Timer` retenu par la
         // vue continuerait de battre après sa disparition.
         TimelineView(.periodic(from: .now, by: 0.05)) { context in
-            pill(DiscountOffer.urgencyMillisRemaining(startedAt: startedAt, now: context.date))
+            pill(DiscountOffer.windowMillisRemaining(startedAt: startedAt, now: context.date))
         }
     }
 

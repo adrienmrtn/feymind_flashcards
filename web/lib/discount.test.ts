@@ -48,21 +48,28 @@ describe("shouldShowDiscountBadge", () => {
 });
 
 describe("les deux minuteries", () => {
-  it("comptent depuis le même instant : une heure sur le paywall, un jour sur la pastille", () => {
-    expect(discount.urgencyRemaining(0, 0)).toBe(3600);
+  it("montrent le même temps restant : vingt-quatre heures, pop-up et pastille", () => {
+    expect(discount.urgencySeconds).toBe(discount.windowSeconds);
+    expect(discount.urgencyRemaining(0, 0)).toBe(86_400);
     expect(discount.windowRemaining(0, 0)).toBe(86_400);
 
-    // Au bout de dix minutes, le paywall en a perdu dix et la pastille aussi.
-    expect(discount.urgencyRemaining(0, 600_000)).toBe(3000);
+    // Au bout de dix minutes, les deux ont perdu dix minutes.
+    expect(discount.urgencyRemaining(0, 600_000)).toBe(85_800);
     expect(discount.windowRemaining(0, 600_000)).toBe(85_800);
 
-    // La minuterie du paywall s'arrête à zéro ; l'offre, elle, court encore.
-    expect(discount.urgencyRemaining(0, 2 * HOUR)).toBe(0);
+    // Deux heures plus tard, l'offre court encore : les deux horloges le disent.
+    expect(discount.urgencyRemaining(0, 2 * HOUR)).toBe(79_200);
+    expect(discount.windowRemaining(0, 2 * HOUR)).toBe(79_200);
     expect(discount.isLive(0, 2 * HOUR)).toBe(true);
+
+    // Elles s'éteignent ensemble, à la fin des vingt-quatre heures.
+    expect(discount.urgencyRemaining(0, 24 * HOUR)).toBe(0);
+    expect(discount.windowRemaining(0, 24 * HOUR)).toBe(0);
+    expect(discount.isLive(0, 24 * HOUR)).toBe(false);
   });
 
   it("n'inventent jamais du temps quand l'horloge locale est en avance", () => {
-    expect(discount.urgencyRemaining(1000, 0)).toBe(3600);
+    expect(discount.urgencyRemaining(1000, 0)).toBe(86_400);
     expect(discount.windowRemaining(1000, 0)).toBe(86_400);
   });
 
@@ -77,11 +84,14 @@ describe("les deux minuteries", () => {
   it("descendent au centième sur le paywall, et gardent leur ponctuation", () => {
     // Compter en secondes ferait bégayer un affichage à deux décimales : deux images de
     // suite tomberaient dans la même seconde, et la minuterie aurait l'air arrêtée.
-    expect(discount.urgencyMillisRemaining(0, 0)).toBe(3_600_000);
-    expect(discount.urgencyMillisRemaining(0, 310)).toBe(3_599_690);
-    expect(discount.urgencyMillisRemaining(5000, 0)).toBe(3_600_000);
-    expect(discount.urgencyMillisRemaining(0, 2 * HOUR)).toBe(0);
+    expect(discount.urgencyMillisRemaining(0, 0)).toBe(86_400_000);
+    expect(discount.windowMillisRemaining(0, 0)).toBe(86_400_000);
+    expect(discount.urgencyMillisRemaining(0, 310)).toBe(86_399_690);
+    expect(discount.urgencyMillisRemaining(5000, 0)).toBe(86_400_000);
+    expect(discount.urgencyMillisRemaining(0, 2 * HOUR)).toBe(79_200_000);
+    expect(discount.urgencyMillisRemaining(0, 24 * HOUR)).toBe(0);
 
+    expect(discount.preciseCountdown(86_400_000)).toBe("24 : 00 : 00 . 00");
     expect(discount.preciseCountdown(3_600_000)).toBe("01 : 00 : 00 . 00");
     expect(discount.preciseCountdown(1_788_690)).toBe("00 : 29 : 48 . 69");
     expect(discount.preciseCountdown(0)).toBe("00 : 00 : 00 . 00");

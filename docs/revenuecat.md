@@ -338,8 +338,8 @@ paywall ordinaire. Le critère d'éligibilité est le premier cours importé.
 | Déclencheur | La fiche du premier cours | La première page d'app chargée après l'import |
 | Ce qui s'ouvre | Un cadeau plein écran, **trois appuis** pour le déballer | La carte de l'offre, directement |
 | Le paywall | Une languette posée en bas, l'écran d'où l'on vient reste visible dessous | Une carte de 500 px, posée sur le tableau de bord |
-| Minuterie affichée | 1 heure, **au centième** | 1 heure, **au centième** |
-| Après fermeture | Pastille avec décompte 24 h, un appui rouvre | Pastille en bas à droite, idem |
+| Minuterie affichée | 24 heures, **au centième** | 24 heures, **au centième** |
+| Après fermeture | Languette avec le même décompte 24 h, un appui rouvre | Pastille en bas à droite, idem |
 
 **Une seule mise en page, des deux côtés** : minuterie violette, le pourcentage en bleu
 ciel, « Révise plus vite avec Pro », la carte de prix avec son sceau festonné, le bouton
@@ -352,9 +352,10 @@ est un événement, pas un écran de plus : peinte dans le vert de Micabo, elle 
 une fonctionnalité — donc comme quelque chose qui sera encore là demain. Les valeurs sont
 dans `web/app/globals.css` et `MicaboColor` (`offerSky`, `offerWash`, `offerUrgency`).
 
-**Deux durées, un seul instant d'origine.** L'heure pousse à décider, les vingt-quatre
-heures sont la durée réelle du tarif. Les deux se calculent depuis l'instant où le cadeau a
-été ouvert — pas depuis l'import.
+**Une seule durée, un seul instant d'origine.** Pop-up et pastille montrent les mêmes
+vingt-quatre heures, calculées depuis l'instant où le cadeau a été ouvert — pas depuis
+l'import. Deux horloges se contrediraient : le pop-up dirait « terminé » alors que
+l'offre courrait encore.
 
 **La minuterie descend au centième**, et ce n'est pas de la précision : une minuterie qui
 bouge à chaque image se regarde, une minuterie qui saute d'une seconde à l'autre se lit une

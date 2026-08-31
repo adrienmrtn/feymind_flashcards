@@ -26,8 +26,8 @@ import {
  * heures et la rouvre d'un clic. C'est la différence entre une offre qu'on
  * refuse et une offre qu'on remet à plus tard, et seule la seconde se vend.
  *
- * Deux minuteries, un seul instant d'origine — voir `@micabo/core/discount`.
- * Le paywall en montre une heure, la pastille vingt-quatre.
+ * Une minuterie, un seul instant d'origine — voir `@micabo/core/discount`.
+ * Le pop-up et la pastille montrent les mêmes vingt-quatre heures.
  *
  * `isPaid`, pas `isPro` : sans ligne d'abonnement, tout le monde serait traité
  * comme abonné et ce cadeau ne s'ouvrirait jamais.
@@ -282,13 +282,15 @@ export function DiscountCard({
 }
 
 /**
- * La minuterie de l'heure, en pastille violette.
+ * La minuterie de l'offre, en pastille violette.
  *
  * Elle vit dans son propre composant : elle se redessine dix-sept fois par
- * seconde, et le reste de la carte n'a aucune raison de la suivre.
+ * seconde, et le reste de la carte n'a aucune raison de la suivre. Elle compte
+ * la même fenêtre que la pastille — vingt-quatre heures — pour que refermer
+ * puis rouvrir ne change pas le temps affiché.
  */
 function UrgencyPill({ startedAt }: { startedAt: number }) {
-  const left = usePreciseCountdown(startedAt, discount.urgencySeconds);
+  const left = usePreciseCountdown(startedAt, discount.windowSeconds);
   const over = left <= 0;
 
   return (
