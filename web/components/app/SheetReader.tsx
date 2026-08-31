@@ -57,7 +57,7 @@ export function SheetReader({
         return;
       }
       const rect = active.getRangeAt(0).getBoundingClientRect();
-      setSelection(text.slice(0, 1_200));
+      setSelection(text.slice(0, 600));
       setAnchor(place(rect));
     }
 

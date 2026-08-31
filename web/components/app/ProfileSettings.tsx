@@ -70,6 +70,7 @@ export function ProfileSettings({
         <p
           className={`text-[12.5px] ${saved === "erreur" ? "text-negative" : "text-accent"}`}
           role="status"
+          aria-live="polite"
         >
           {saved === "ok" ? "Enregistré" : saved === "erreur" ? "Non enregistré" : ""}
         </p>

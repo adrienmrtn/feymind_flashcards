@@ -13,6 +13,8 @@ export const YOUTUBE_LIMITS = {
   maxDurationSeconds: 90 * 60,
   /** En dessous, il n'y a pas de quoi écrire une fiche ni des cartes. */
   minTranscriptCharacters: 400,
+  /** Au delà, on coupe : une heure de sous-titres n'a pas à saturer le prompt. */
+  maxTranscriptCharacters: 120_000,
 } as const;
 
 export type YouTubeErrorCode =

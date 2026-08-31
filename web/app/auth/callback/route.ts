@@ -69,6 +69,14 @@ export async function GET(request: NextRequest) {
 }
 
 function appNext(value: string | null): string {
-  if (value && value.startsWith("/app") && !value.startsWith("//")) return value;
+  if (
+    value &&
+    value.startsWith("/app") &&
+    !value.startsWith("//") &&
+    !value.includes("\\") &&
+    !value.includes("@")
+  ) {
+    return value;
+  }
   return "/app";
 }

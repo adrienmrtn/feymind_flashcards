@@ -256,7 +256,7 @@ export async function explainSelection(input: {
   selection: string;
   courseId: string;
 }): Promise<{ status: "ok" | "error"; explanation?: Explanation; message?: string }> {
-  const selection = input.selection.trim().slice(0, 1_200);
+  const selection = input.selection.trim().slice(0, 600);
   if (selection.length < 2) {
     return { status: "error", message: "Sélectionne un passage à expliquer." };
   }

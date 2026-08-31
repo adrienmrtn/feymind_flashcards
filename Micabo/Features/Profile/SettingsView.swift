@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import UIKit
 
 /// Réglages du backend IA et des données locales.
 /// Mise en page en blocs blancs : un intitulé en capitales, des rangées à tuile
@@ -25,6 +26,7 @@ struct SettingsView: View {
     /// replace le curseur de l'import au milieu de la plage choisie.
     @State private var sheetLength = SheetPreferences.length
     @State private var showResetConfirmation = false
+    @State private var showDeleteAccountConfirmation = false
     @State private var showSignOutConfirmation = false
     @State private var showAuth = false
     @State private var showSubjects = false
@@ -49,8 +51,10 @@ struct SettingsView: View {
                 identitySection
                 studiesSection
                 reviewSection
+                #if DEBUG
                 intelligenceSection
                 connectionSection
+                #endif
                 dataSection
                 testSection
                 feedbackSection
@@ -63,6 +67,18 @@ struct SettingsView: View {
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
         .micaboScreenBackground()
+        .confirmationDialog(
+            "Supprimer le compte ?",
+            isPresented: $showDeleteAccountConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Supprimer le compte", role: .destructive) {
+                Task { await auth.deleteAccount() }
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("Tes cours, tes cartes et ton historique seront effacés. L'abonnement déjà encaissé se gère chez Apple ou Stripe.")
+        }
         .confirmationDialog(
             "Effacer toutes les données ?",
             isPresented: $showResetConfirmation,
@@ -501,24 +517,36 @@ struct SettingsView: View {
     }
 
     private var dataSection: some View {
-        MicaboSettingsSection(
-            caption: "Données",
-            rows: [
+        var rows = [
+            MicaboRow(
+                tile: MicaboTile(glyph: .emoji("♻️"), background: MicaboColor.tilePastels[1]),
+                title: "Rétablir les valeurs par défaut",
+                accessory: .none,
+                action: restoreDefaults
+            ),
+            MicaboRow(
+                tile: MicaboTile(glyph: .emoji("🗑️"), background: MicaboColor.negativeSoft),
+                title: "Effacer tous mes cours",
+                accessory: .none,
+                titleColor: MicaboColor.negative,
+                action: { showResetConfirmation = true }
+            )
+        ]
+        if case .signedIn = auth.state {
+            rows.append(
                 MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("♻️"), background: MicaboColor.tilePastels[1]),
-                    title: "Rétablir les valeurs par défaut",
-                    accessory: .none,
-                    action: restoreDefaults
-                ),
-                MicaboRow(
-                    tile: MicaboTile(glyph: .emoji("🗑️"), background: MicaboColor.negativeSoft),
-                    title: "Effacer tous mes cours",
+                    tile: MicaboTile(glyph: .emoji("🚪"), background: MicaboColor.negativeSoft),
+                    title: "Supprimer mon compte",
                     accessory: .none,
                     titleColor: MicaboColor.negative,
-                    action: { showResetConfirmation = true }
+                    action: { showDeleteAccountConfirmation = true }
                 )
-            ],
-            footnote: "Effacer tes cours les efface aussi de ton compte à la prochaine synchronisation."
+            )
+        }
+        return MicaboSettingsSection(
+            caption: "Données",
+            rows: rows,
+            footnote: "Effacer tes cours les efface aussi de ton compte à la prochaine synchronisation. Supprimer le compte les efface partout."
         )
     }
 
@@ -620,6 +648,18 @@ struct SettingsView: View {
                     tile: MicaboTile(glyph: .emoji("📈"), background: MicaboColor.tilePastels[0]),
                     title: "Répétition espacée",
                     accessory: .value("SM-2")
+                ),
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("🔒"), background: MicaboColor.tilePastels[3]),
+                    title: "Confidentialité",
+                    accessory: .chevron,
+                    action: { openLegal(PaywallCatalog.privacy) }
+                ),
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("📜"), background: MicaboColor.tilePastels[5]),
+                    title: "Conditions",
+                    accessory: .chevron,
+                    action: { openLegal(PaywallCatalog.terms) }
                 )
             ]
         )
@@ -686,6 +726,11 @@ struct SettingsView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             OnboardingPreferences.reset()
         }
+    }
+
+    private func openLegal(_ address: String) {
+        guard let url = URL(string: address) else { return }
+        UIApplication.shared.open(url)
     }
 
     private func eraseEverything() {

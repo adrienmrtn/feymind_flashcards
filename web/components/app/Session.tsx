@@ -94,6 +94,7 @@ export function Session({
   const [picked, setPicked] = useState<number | null>(null);
   const [tally, setTally] = useState<Tally>({ answered: 0, again: 0, graduated: 0, ratings: [] });
   const [failure, setFailure] = useState<string | null>(null);
+  const [serverPaywall, setServerPaywall] = useState(false);
   const [startedAt] = useState(() => Date.now());
 
   const card = loop.current;
@@ -102,7 +103,8 @@ export function Session({
   // Le plafond coupe **pendant** la session : la carte suivante reste
   // dessous, le paywall s'ouvre dessus. Une file qui se termine pile à
   // cinq cartes a été révisée en entier — pas de paywall sur l'écran de fin.
-  const gated = entitlement.shouldInterruptSession({ isPro }, tally.answered, loop.done);
+  const gated =
+    serverPaywall || entitlement.shouldInterruptSession({ isPro }, tally.answered, loop.done);
   const finished = loop.done;
 
   const labels = useMemo(
@@ -146,6 +148,10 @@ export function Session({
       setPicked(null);
 
       void gradeCard({ cardId: card.id, rating: typed, snapshot: card.snapshot }).then((result) => {
+        if (result.status === "paywall") {
+          setServerPaywall(true);
+          return;
+        }
         if (result.status === "error") {
           setFailure(result.message ?? "Une note n'a pas été écrite.");
         }
@@ -310,12 +316,13 @@ export function Session({
 
       <div className="mx-auto w-full max-w-[40rem]">
         {revealed ? (
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-2" role="group" aria-label="Notation">
             {REVIEW_RATINGS.map((rating) => (
               <button
                 key={rating}
                 type="button"
                 onClick={() => grade(rating)}
+                aria-label={`${REVIEW_RATING_LABELS[rating]}, prochaine révision ${labels?.[rating] ?? ""}`}
                 className={`pressable rounded-button px-2 py-3.5 text-center shadow-[inset_0_0_0_1px_color-mix(in_srgb,currentColor_16%,transparent)] ${ratingTone(rating)}`}
               >
                 <span className="block text-[14px] font-semibold">

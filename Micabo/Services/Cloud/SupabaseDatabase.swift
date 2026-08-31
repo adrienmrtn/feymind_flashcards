@@ -137,22 +137,36 @@ struct SupabaseDatabase {
         filters: [URLQueryItem] = [],
         limit: Int = 1_000
     ) async throws -> [T] {
-        var query = [
-            URLQueryItem(name: "select", value: select),
-            URLQueryItem(name: "limit", value: String(limit)),
-            URLQueryItem(name: "order", value: "\(sinceColumn).asc")
-        ]
-        query.append(contentsOf: filters)
-        if let updatedSince {
-            query.append(URLQueryItem(name: sinceColumn, value: "gt." + isoFormatter.string(from: updatedSince)))
+        var collected: [T] = []
+        var offset = 0
+        let page = max(1, limit)
+
+        while true {
+            var query = [
+                URLQueryItem(name: "select", value: select),
+                URLQueryItem(name: "limit", value: String(page)),
+                URLQueryItem(name: "offset", value: String(offset)),
+                URLQueryItem(name: "order", value: "\(sinceColumn).asc")
+            ]
+            query.append(contentsOf: filters)
+            if let updatedSince {
+                query.append(URLQueryItem(name: sinceColumn, value: "gt." + isoFormatter.string(from: updatedSince)))
+            }
+
+            let data = try await send(method: "GET", path: table, query: query, body: nil, prefer: nil)
+            let batch: [T]
+            do {
+                batch = try decoder.decode([T].self, from: data)
+            } catch {
+                throw Failure.server(status: 200, message: "Réponse illisible pour \(table).")
+            }
+
+            collected.append(contentsOf: batch)
+            if batch.count < page || collected.count >= 80_000 { break }
+            offset += batch.count
         }
 
-        let data = try await send(method: "GET", path: table, query: query, body: nil, prefer: nil)
-        do {
-            return try decoder.decode([T].self, from: data)
-        } catch {
-            throw Failure.server(status: 200, message: "Réponse illisible pour \(table).")
-        }
+        return collected
     }
 
     /// Appelle une fonction PostgREST (`/rpc/…`). Le corps porte les arguments

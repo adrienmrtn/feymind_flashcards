@@ -128,6 +128,12 @@ export function AppChrome({
 
   return (
     <div className="app-shell flex min-h-svh bg-background">
+      <a
+        href="#main-content"
+        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-4 focus-visible:top-3 focus-visible:z-50 focus-visible:rounded-button focus-visible:bg-ink focus-visible:px-3 focus-visible:py-2 focus-visible:text-[13px] focus-visible:font-medium focus-visible:text-on-ink"
+      >
+        Aller au contenu
+      </a>
       <Sidebar userName={userName} userInitial={userInitial} canImport={canImport} />
       {drawer ? (
         <MobileDrawer
@@ -165,7 +171,7 @@ export function AppChrome({
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-5 lg:px-8 lg:py-6">
+        <main id="main-content" className="flex-1 px-4 py-5 lg:px-8 lg:py-6">
           <div className="mx-auto w-full max-w-6xl space-y-5">{children}</div>
         </main>
       </div>
@@ -236,7 +242,12 @@ function MobileDrawer({
         className="absolute inset-0 bg-ink/20"
         onClick={onClose}
       />
-      <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[calc(100vw-2rem)] flex-col border-r border-sidebar-border bg-sidebar">
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu"
+        className="absolute inset-y-0 left-0 flex w-72 max-w-[calc(100vw-2rem)] flex-col border-r border-sidebar-border bg-sidebar"
+      >
         <div className="flex items-center justify-between pr-2">
           <Brand />
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fermer">

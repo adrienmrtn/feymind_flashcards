@@ -37,6 +37,8 @@ interface RevenueCatEvent {
   type?: string;
   app_user_id?: string;
   original_app_user_id?: string;
+  transferred_from?: string[];
+  transferred_to?: string[];
   product_id?: string;
   period_type?: string;
   store?: string;
@@ -61,6 +63,13 @@ function sameSecret(given: string, expected: string): boolean {
   return difference === 0;
 }
 
+/** Le tableau de bord envoie parfois `Bearer <secret>`, parfois le secret nu. */
+function authorizationMatches(header: string, expected: string): boolean {
+  const trimmed = header.trim();
+  const bearer = trimmed.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+  return sameSecret(bearer ?? trimmed, expected);
+}
+
 /**
  * Ce que l'événement dit de l'accès.
  *
@@ -79,13 +88,22 @@ function resolveAccess(event: RevenueCatEvent): { isPro: boolean; willRenew: boo
     case "RENEWAL":
     case "UNCANCELLATION":
     case "PRODUCT_CHANGE":
-    case "NON_RENEWING_PURCHASE":
     case "TRANSFER":
+    case "SUBSCRIPTION_EXTENDED":
+    case "TEMPORARY_ENTITLEMENT_GRANT":
       return { isPro: true, willRenew: true };
+
+    // Achat sans renouvellement : l'accès reste jusqu'à l'échéance, rien après.
+    case "NON_RENEWING_PURCHASE":
+      return { isPro: true, willRenew: false };
 
     // Résilié, mais payé jusqu'au bout : l'accès reste, le renouvellement non.
     case "CANCELLATION":
       return { isPro: true, willRenew: false };
+
+    case "REFUND":
+    case "REVOKED":
+      return { isPro: false, willRenew: false };
 
     // Incident de paiement : RevenueCat gère une période de grâce, on ne ferme pas.
     case "BILLING_ISSUE":
@@ -149,7 +167,7 @@ Deno.serve(async (request: Request) => {
   }
 
   const given = request.headers.get("Authorization") ?? "";
-  if (!sameSecret(given, secret)) return reply({ error: "Refusé." }, 401);
+  if (!authorizationMatches(given, secret)) return reply({ error: "Refusé." }, 401);
 
   let event: RevenueCatEvent;
   try {
@@ -177,6 +195,13 @@ Deno.serve(async (request: Request) => {
     );
   }
 
+  if (!event.event_timestamp_ms) {
+    // Sans horodatage, `apply_entitlement` ne peut pas ordonner. On rend 502 pour que
+    // RevenueCat réessaie : un événement sans date appliqué à la place d'un plus récent
+    // ferme (ou ouvre) au hasard.
+    return reply({ error: "Événement sans horodatage." }, 502);
+  }
+
   const access = resolveAccess(event);
   if (!access) return reply({ ok: true, note: `Événement ${type} ignoré.` });
 
@@ -188,7 +213,67 @@ Deno.serve(async (request: Request) => {
   // retard ne doit pas rouvrir un abonnement fini.
   const expiresAt = event.expiration_at_ms ? new Date(event.expiration_at_ms) : null;
   const expired = expiresAt !== null && expiresAt.getTime() < Date.now();
+  const eventAt = new Date(event.event_timestamp_ms).toISOString();
 
+  const applied = await applyEntitlement(url, serviceKey, {
+    userId,
+    isPro: access.isPro && !expired,
+    productId: event.product_id ?? null,
+    store: normalizeStore(event.store),
+    periodType: normalizePeriod(event.period_type),
+    expiresAt: expiresAt?.toISOString() ?? null,
+    willRenew: access.willRenew,
+    eventAt,
+    eventId: event.id ?? null,
+  });
+
+  if (!applied.ok) {
+    return reply({ error: "Écriture refusée.", detail: applied.detail }, 502);
+  }
+
+  // Un transfert déplace le droit : l'ancien identifiant ne doit plus rester abonné.
+  if (type === "TRANSFER") {
+    const sources = [
+      ...(event.transferred_from ?? []),
+      event.original_app_user_id ?? "",
+    ].filter((id) => UUID_SHAPE.test(id) && id !== userId);
+
+    for (const source of [...new Set(sources)]) {
+      const revoked = await applyEntitlement(url, serviceKey, {
+        userId: source,
+        isPro: false,
+        productId: event.product_id ?? null,
+        store: normalizeStore(event.store),
+        periodType: normalizePeriod(event.period_type),
+        expiresAt: eventAt,
+        willRenew: false,
+        eventAt,
+        eventId: event.id ? `${event.id}-revoke-${source}` : null,
+      });
+      if (!revoked.ok) {
+        return reply({ error: "Révocation du compte source refusée.", detail: revoked.detail }, 502);
+      }
+    }
+  }
+
+  return reply({ ok: true, ...applied.row });
+});
+
+async function applyEntitlement(
+  url: string,
+  serviceKey: string,
+  input: {
+    userId: string;
+    isPro: boolean;
+    productId: string | null;
+    store: string | null;
+    periodType: string | null;
+    expiresAt: string | null;
+    willRenew: boolean;
+    eventAt: string;
+    eventId: string | null;
+  },
+): Promise<{ ok: true; row: Record<string, unknown> } | { ok: false; detail: string }> {
   const response = await fetch(`${url}/rest/v1/rpc/apply_entitlement`, {
     method: "POST",
     headers: {
@@ -197,26 +282,22 @@ Deno.serve(async (request: Request) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      p_user: userId,
-      p_is_pro: access.isPro && !expired,
-      p_product_id: event.product_id ?? null,
-      p_store: normalizeStore(event.store),
-      p_period_type: normalizePeriod(event.period_type),
-      p_expires_at: expiresAt?.toISOString() ?? null,
-      p_will_renew: access.willRenew,
-      p_event_at: event.event_timestamp_ms
-        ? new Date(event.event_timestamp_ms).toISOString()
-        : null,
-      p_event_id: event.id ?? null,
+      p_user: input.userId,
+      p_is_pro: input.isPro,
+      p_product_id: input.productId,
+      p_store: input.store,
+      p_period_type: input.periodType,
+      p_expires_at: input.expiresAt,
+      p_will_renew: input.willRenew,
+      p_event_at: input.eventAt,
+      p_event_id: input.eventId,
     }),
   });
 
   if (!response.ok) {
-    // On rend une erreur pour que RevenueCat **réessaie**. Avaler l'échec en 200 perdrait
-    // l'événement, et un abonnement perdu ne se rattrape pas tout seul.
-    return reply({ error: "Écriture refusée.", detail: await response.text() }, 502);
+    return { ok: false, detail: await response.text() };
   }
 
-  const rows = (await response.json()) as { applied: boolean; is_pro: boolean }[];
-  return reply({ ok: true, ...(rows?.[0] ?? {}) });
-});
+  const rows = (await response.json()) as Record<string, unknown>[];
+  return { ok: true, row: rows?.[0] ?? {} };
+}

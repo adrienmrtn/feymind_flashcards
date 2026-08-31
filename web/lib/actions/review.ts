@@ -7,12 +7,14 @@ import {
   ReviewRating,
   activeDeadlines,
   clampedToDeadline,
+  entitlement,
   schedule,
   type CardSnapshot,
   type ReviewRating as Rating,
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
+import { readEntitlement } from "@/lib/data/entitlement";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -32,7 +34,7 @@ import { createClient } from "@/lib/supabase/server";
  */
 
 export interface GradeResult {
-  status: "ok" | "error";
+  status: "ok" | "error" | "paywall";
   message?: string;
   /** L'état écrit, pour que le client puisse suivre sans recharger. */
   dueDate?: string;
@@ -53,6 +55,19 @@ export async function gradeCard(input: {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: "Session expirée." };
+
+  const right = await readEntitlement();
+  if (!right.isPro) {
+    const windowStart = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const { count } = await supabase
+      .from("review_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("reviewed_at", windowStart);
+    if (entitlement.hasReachedSessionLimit(right, count ?? 0)) {
+      return { status: "paywall" };
+    }
+  }
 
   const now = new Date();
 

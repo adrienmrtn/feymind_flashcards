@@ -36,6 +36,11 @@ const config: NextConfig = {
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), payment=(self)",
+          },
           // La `Content-Security-Policy` arrive quand la liste des tiers sera arrêtée : posée
           // trop tôt, elle se relâche à chaque ajout et finit par tout autoriser.
         ],

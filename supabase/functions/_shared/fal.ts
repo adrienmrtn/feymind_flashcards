@@ -3,15 +3,17 @@
  * La clé reste côté serveur, dans le secret `FAL_KEY` du projet Supabase.
  */
 
+import { checkCircuit, recordFailure, recordSuccess } from "./circuit.ts";
 import { parseModelJSON } from "./json.ts";
+import { DEFAULT_MODEL, resolveModel } from "./models.ts";
 
 const TEXT_ENDPOINT = "https://fal.run/fal-ai/any-llm";
 const VISION_ENDPOINT = "https://fal.run/fal-ai/any-llm/vision";
+const FAL_TIMEOUT_MS = 120_000;
 
-export const DEFAULT_MODEL = "google/gemini-flash-1.5";
+export { DEFAULT_MODEL };
 
 export const CORS_HEADERS: Record<string, string> = {
-  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
@@ -37,15 +39,14 @@ export interface CallOptions {
 export async function callModel(options: CallOptions): Promise<string> {
   const key = Deno.env.get("FAL_KEY");
   if (!key) {
-    throw new FalError(
-      "Le secret FAL_KEY est absent du projet Supabase. Ajoutez-le dans Edge Functions, Secrets.",
-      500,
-    );
+    throw new FalError("Configuration serveur incomplète.", 500);
   }
+
+  checkCircuit();
 
   const useVision = Array.isArray(options.imageUrls) && options.imageUrls.length > 0;
   const body: Record<string, unknown> = {
-    model: options.model || DEFAULT_MODEL,
+    model: resolveModel(options.model),
     prompt: options.prompt,
     priority: "throughput",
     reasoning: false,
@@ -56,20 +57,33 @@ export async function callModel(options: CallOptions): Promise<string> {
   if (typeof options.maxTokens === "number") body.max_tokens = options.maxTokens;
   if (useVision) body.image_urls = options.imageUrls;
 
-  const response = await fetch(useVision ? VISION_ENDPOINT : TEXT_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Authorization": `Key ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(useVision ? VISION_ENDPOINT : TEXT_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Authorization": `Key ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(FAL_TIMEOUT_MS),
+    });
+  } catch (error) {
+    recordFailure();
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      throw new FalError("Le modèle a mis trop longtemps à répondre.", 504);
+    }
+    throw new FalError("Le modèle est injoignable.", 502);
+  }
 
   const raw = await response.text();
 
   if (!response.ok) {
-    throw new FalError(`fal.ai a répondu ${response.status} : ${raw.slice(0, 400)}`, 502);
+    recordFailure();
+    throw new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502);
   }
+
+  recordSuccess();
 
   let parsed: { output?: string; error?: string };
   try {
@@ -78,8 +92,10 @@ export async function callModel(options: CallOptions): Promise<string> {
     throw new FalError("Réponse illisible de fal.ai.", 502);
   }
 
-  if (parsed.error) throw new FalError(parsed.error, 502);
-  if (!parsed.output) throw new FalError("fal.ai n'a renvoyé aucun contenu.", 502);
+  if (parsed.error) {
+    throw new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502);
+  }
+  if (!parsed.output) throw new FalError("Le modèle n'a renvoyé aucun contenu.", 502);
 
   return parsed.output;
 }

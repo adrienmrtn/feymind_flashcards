@@ -2,7 +2,6 @@ import { authorize, withCors } from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
   callModel,
-  CORS_HEADERS,
   deepStripEmDashes,
   errorResponse,
   FalError,
@@ -17,10 +16,12 @@ import {
 } from "../_shared/sheet.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
 import { languageBrief } from "../_shared/language.ts";
+import { sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
 import {
   audienceBrief,
   COURSE_SYSTEM_PROMPT,
   lengthBrief,
+  PROMPT_VERSION,
   readingBrief,
   retryBrief,
   VISION_SYSTEM_PROMPT,
@@ -66,11 +67,27 @@ interface RequestBody {
   subject?: string;
   /** Comment le texte a été obtenu : « photo », « pdf », « youtube », « text », « docx ». */
   source?: string;
-  model?: string;
 }
 
 const MAX_TEXT_LENGTH = 60_000;
 const MAX_IMAGES = 6;
+const MAX_IMAGE_CHARS = 4_000_000;
+
+function acceptedImages(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  let total = 0;
+  for (const item of raw) {
+    if (typeof item !== "string") continue;
+    const url = item.trim();
+    if (!url.startsWith("https://") && !url.startsWith("data:image/")) continue;
+    total += url.length;
+    if (total > MAX_IMAGE_CHARS) break;
+    out.push(url);
+    if (out.length >= MAX_IMAGES) break;
+  }
+  return out;
+}
 /** Au delà, on reste à la borne basse du format demandé : la fiche resterait illisible. */
 const LONG_DOCUMENT_LENGTH = 12_000;
 
@@ -83,7 +100,7 @@ Deno.serve((request: Request) =>
 
       const body = (await request.json()) as RequestBody;
       const text = (body.text ?? "").trim().slice(0, MAX_TEXT_LENGTH);
-      const images = (body.images ?? []).slice(0, MAX_IMAGES);
+      const images = acceptedImages(body.images);
 
       if (text.length < 40 && images.length === 0) {
         throw new FalError("Le document ne contient pas assez de contenu à analyser.", 400);
@@ -98,7 +115,6 @@ Deno.serve((request: Request) =>
             prompt:
               "Voici les pages d'un document de cours. Décris précisément les éléments visuels utiles à la compréhension.",
             systemPrompt: VISION_SYSTEM_PROMPT,
-            model: body.model,
             imageUrls: images,
             temperature: 0.2,
             maxTokens: 1600,
@@ -112,14 +128,17 @@ Deno.serve((request: Request) =>
       // La langue passe en tête, avant même le titre : en queue de message, derrière un
       // document de soixante mille caractères, le modèle la perd et retombe sur le français
       // du prompt système.
+      const hintTitle = sanitizeMeta(body.hintTitle, 200);
+      const sourceName = sanitizeMeta(body.sourceName, 200);
+
       const sections: string[] = [languageBrief(body.language)];
-      if (body.hintTitle) sections.push(`Titre souhaité par l'étudiant : ${body.hintTitle}`);
-      if (body.sourceName) sections.push(`Nom du fichier source : ${body.sourceName}`);
+      if (hintTitle) sections.push(`Titre souhaité par l'étudiant : ${hintTitle}`);
+      if (sourceName) sections.push(`Nom du fichier source : ${sourceName}`);
       // Le destinataire, la matière et le volume passent avant le document : ce sont les
       // consignes qui décident de la façon de lire tout ce qui suit.
       sections.push(audienceBrief(body.level, body.country));
 
-      const discipline = detectDiscipline(text, body.hintTitle, body.subject);
+      const discipline = detectDiscipline(text, hintTitle, body.subject);
       const subjectBrief = disciplineBrief(discipline);
       if (subjectBrief) sections.push(subjectBrief);
 
@@ -128,19 +147,21 @@ Deno.serve((request: Request) =>
       const reading = readingBrief(body.source, text.length);
       if (reading) sections.push(reading);
 
-      if (text.length > 0) sections.push(`TEXTE EXTRAIT DU DOCUMENT :\n${text}`);
-      if (visualNotes) sections.push(`DESCRIPTION DES VISUELS DU DOCUMENT :\n${visualNotes}`);
+      if (text.length > 0) sections.push(wrapUntrusted("TEXTE EXTRAIT DU DOCUMENT", text));
+      if (visualNotes) {
+        sections.push(wrapUntrusted("DESCRIPTION DES VISUELS DU DOCUMENT", visualNotes));
+      }
       sections.push("JSON compact, une seule ligne, sans indentation.");
       sections.push("Écris maintenant le JSON de la fiche.");
 
       const prompt = sections.join("\n\n");
-      let parsed = await writeSheet(prompt, body.model, 0.3);
+      let parsed = await writeSheet(prompt, undefined, 0.3);
 
       // Une fiche coupée ou illisible : on redemande plus court plutôt que d'abandonner.
       if (!parsed || normalizeSheet(parsed.sheet ?? parsed.blocks).length < 3) {
         parsed = await writeSheet(
           `${prompt}\n\n${retryBrief(body.length)}`,
-          body.model,
+          undefined,
           0.15,
         );
       }
@@ -177,7 +198,11 @@ Deno.serve((request: Request) =>
         contextText,
       };
 
-      return jsonResponse({ course, usedVision: images.length > 0 && visualNotes.length > 0 });
+      return jsonResponse({
+        course,
+        usedVision: images.length > 0 && visualNotes.length > 0,
+        meta: { promptVersion: PROMPT_VERSION },
+      });
     } catch (error) {
       return errorResponse(error);
     }
