@@ -183,11 +183,10 @@ function AccountStepBody() {
             </Field>
             <Button
               type="submit"
-              variant="outline"
               size="xl"
               loading={pending === "email"}
               disabled={email.trim().length === 0}
-              className="btn-rise shiny h-14 w-full text-[16px] hover:bg-transparent sm:h-14 sm:text-[16px]"
+              className="h-14 w-full text-[16px] sm:h-14 sm:text-[16px]"
             >
               Recevoir un lien
             </Button>
