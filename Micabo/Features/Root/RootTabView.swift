@@ -14,37 +14,37 @@ import UIKit
 ///
 /// **Le changement de page est immédiat.** Un fondu de 220 ms sur quatre `NavigationStack`
 /// animait tout l'arbre — listes, calendrier, fiche — et chaque onglet arrivait en retard.
-/// Une page déjà ouverte reste **montée**, simplement masquée : c'est ce qui lui garde son
-/// défilement et sa pile. Les autres n'existent pas encore.
+/// Le `TabView` système garde les piles déjà ouvertes sans dessiner quatre pages superposées.
+/// L'ancien `ZStack` à opacité zéro laissait chaque `@Query`, chaque calendrier et chaque
+/// statistique vivre derrière l'écran actif ; une écriture SwiftData réveillait tout.
 struct RootTabView: View {
     @State private var router = TabRouter()
-    /// Les pages déjà ouvertes restent montées, pour garder défilement et pile. Les
-    /// autres n'existent pas encore : monter les quatre dès le lancement recalculait
-    /// quatre `@Query` et la file du jour pendant qu'on ne regardait que Réviser.
-    @State private var mounted: Set<RootTab> = [.today]
 
     init() {
         Self.configureAppearance()
     }
 
-    /// L'onglet visible est toujours attaché, même avant que `onChange` l'enregistre :
-    /// sans ça, le premier appui sur Examens montrait un cadre vide.
-    private var attachedTabs: Set<RootTab> {
-        mounted.union([router.selection])
-    }
-
     var body: some View {
-        ZStack {
+        @Bindable var router = router
+
+        return ZStack {
             MicaboColor.canvas
                 .ignoresSafeArea()
 
-            if attachedTabs.contains(.courses) { page(.courses) { CoursesListView() } }
-            if attachedTabs.contains(.today) { page(.today) { TodayView() } }
-            if attachedTabs.contains(.exams) { page(.exams) { ExamsView() } }
-            if attachedTabs.contains(.profile) { page(.profile) { ProfileView() } }
-        }
-        .onChange(of: router.selection) { _, tab in
-            mounted.insert(tab)
+            TabView(selection: $router.selection) {
+                CoursesListView()
+                    .tag(RootTab.courses)
+                TodayView()
+                    .tag(RootTab.today)
+                ExamsView()
+                    .tag(RootTab.exams)
+                ProfileView()
+                    .tag(RootTab.profile)
+            }
+            // La barre UIKit ne se montre jamais : Micabo garde sa barre, posée juste
+            // dessous. Le style standard ne permet pas le balayage horizontal qui faisait
+            // auparavant traîner les pages sous le doigt.
+            .toolbar(.hidden, for: .tabBar)
         }
         // La barre du bas est posée à l'extérieur des pages : elles passent dessous, elle ne
         // bouge pas d'un pixel. Elle s'efface dès qu'un écran de détail est poussé.
@@ -70,19 +70,6 @@ struct RootTabView: View {
         }
         .tint(MicaboColor.accent)
         .environment(router)
-    }
-
-    /// Une page masquée reste montée, mais ne prend ni les appuis ni le lecteur d'écran :
-    /// sans ça, on toucherait un bouton invisible en visant celui d'à côté.
-    @ViewBuilder
-    private func page<Content: View>(_ tab: RootTab, @ViewBuilder content: () -> Content) -> some View {
-        let isActive = router.selection == tab
-
-        content()
-            .opacity(isActive ? 1 : 0)
-            .allowsHitTesting(isActive)
-            .accessibilityHidden(!isActive)
-            .zIndex(isActive ? 1 : 0)
     }
 
     private static var didConfigureAppearance = false

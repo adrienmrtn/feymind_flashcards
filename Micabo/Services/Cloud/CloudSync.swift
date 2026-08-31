@@ -30,10 +30,12 @@ final class CloudSync {
 
     private let database: SupabaseDatabase
     private let auth: AuthController
-    /// Date du dernier aller-retour réussi. Sert à ne redemander au serveur que ce qui a
-    /// changé depuis : une bibliothèque de deux cents cours ne se retélécharge pas à chaque
-    /// lancement.
-    private var lastPulledAt: Date? {
+    /// Date du dernier aller-retour réussi. Sert dans les deux sens : on ne redescend **et**
+    /// on ne remonte que ce qui a changé depuis. Avant ce second usage, chaque lancement
+    /// réencodait puis renvoyait tous les cours, toutes les cartes et tout l'historique sur
+    /// l'acteur principal. Le réseau n'était pas ce qui figeait l'interface : préparer son
+    /// énorme charge utile locale l'était.
+    private var lastSyncedAt: Date? {
         get { UserDefaults.standard.object(forKey: Self.watermarkKey) as? Date }
         set { UserDefaults.standard.set(newValue, forKey: Self.watermarkKey) }
     }
@@ -77,10 +79,20 @@ final class CloudSync {
         guard state != .syncing else { return }
 
         state = .syncing
+        let since = lastSyncedAt
+        // Le nouveau repère est pris **avant** les requêtes. Si une carte est notée pendant
+        // qu'un envoi réseau est suspendu, sa date sera postérieure à ce repère et le passage
+        // suivant la reprendra. Prendre `Date()` à la fin pourrait sauter définitivement cette
+        // écriture concurrente.
+        let checkpoint = Date()
+        // La date Postgres et celle du téléphone ne sont pas exactement la même horloge.
+        // Relire cinq minutes de recouvrement rend un léger décalage inoffensif ; les
+        // identifiants et `updated_at` rendent cette relecture idempotente.
+        let pullSince = since?.addingTimeInterval(-5 * 60)
         do {
-            try await pull(context: context)
-            try await push(context: context)
-            lastPulledAt = Date()
+            try await pull(context: context, since: pullSince)
+            try await push(context: context, since: since)
+            lastSyncedAt = checkpoint
             state = .done(Date())
         } catch {
             // Une panne de synchro ne casse rien : les données locales sont intactes et le
@@ -92,7 +104,7 @@ final class CloudSync {
 
     // MARK: - Montée
 
-    private func push(context: ModelContext) async throws {
+    private func push(context: ModelContext, since: Date?) async throws {
         guard let userID = auth.user?.id else { throw SupabaseDatabase.Failure.notSignedIn }
 
         try await database.upsert(
@@ -102,23 +114,59 @@ final class CloudSync {
 
         await flushTombstones()
 
-        let courses = ((try? context.fetch(FetchDescriptor<Course>())) ?? [])
-            .filter { !CloudTombstones.contains(CloudTable.courses, id: $0.id) }
+        let courses = try fetchChangedCourses(in: context, since: since)
+            .filter {
+                !CloudTombstones.contains(CloudTable.courses, id: $0.id)
+            }
         try await database.upsert(courses.map { record(for: $0, userID: userID) }, into: CloudTable.courses)
 
-        let cards = courses.flatMap(\.cards)
-            .filter { !CloudTombstones.contains(CloudTable.flashcards, id: $0.id) }
+        // Les cartes changent indépendamment de leur cours : noter une carte ne touche pas
+        // `Course.updatedAt`. Il faut donc les lire directement, pas seulement sous les cours
+        // retenus ci-dessus.
+        let cards = try fetchChangedCards(in: context, since: since)
+            .filter {
+                !CloudTombstones.contains(CloudTable.flashcards, id: $0.id)
+            }
         try await database.upsert(cards.map { record(for: $0, userID: userID) }, into: CloudTable.flashcards)
 
-        // L'historique est en ajout seul : on renvoie tout, et la base ignore ce qu'elle a
-        // déjà. Renvoyer un journal deux fois ne peut pas le dupliquer, son identifiant est
-        // sa clé.
-        let logs = cards.flatMap { $0.logs ?? [] }
+        // L'historique est en ajout seul. Renvoyer les milliers d'anciennes lignes à chaque
+        // ouverture ne les dupliquait pas, mais faisait encoder et transférer tout le passé
+        // pour rien.
+        let logs = try fetchChangedLogs(in: context, since: since)
         try await database.upsert(logs.map { record(for: $0, userID: userID) }, into: CloudTable.reviewLogs)
 
-        let exams = ((try? context.fetch(FetchDescriptor<Exam>())) ?? [])
-            .filter { !CloudTombstones.contains(CloudTable.exams, id: $0.id) }
+        let exams = try fetchChangedExams(in: context, since: since)
+            .filter {
+                !CloudTombstones.contains(CloudTable.exams, id: $0.id)
+            }
         try await database.upsert(exams.map { record(for: $0, userID: userID) }, into: CloudTable.exams)
+    }
+
+    /// Les prédicats sont posés **dans SQLite**, pas après un `fetch` complet. C'est ce qui
+    /// évite de matérialiser des milliers de modèles sur l'acteur principal juste pour les
+    /// jeter aussitôt.
+    private func fetchChangedCourses(in context: ModelContext, since: Date?) throws -> [Course] {
+        guard let since else { return try context.fetch(FetchDescriptor<Course>()) }
+        let descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.updatedAt > since })
+        return try context.fetch(descriptor)
+    }
+
+    private func fetchChangedCards(in context: ModelContext, since: Date?) throws -> [Flashcard] {
+        guard let since else { return try context.fetch(FetchDescriptor<Flashcard>()) }
+        let descriptor = FetchDescriptor<Flashcard>(predicate: #Predicate { $0.updatedAt > since })
+        return try context.fetch(descriptor)
+    }
+
+    private func fetchChangedLogs(in context: ModelContext, since: Date?) throws -> [ReviewLog] {
+        guard let since else { return try context.fetch(FetchDescriptor<ReviewLog>()) }
+        let descriptor = FetchDescriptor<ReviewLog>(predicate: #Predicate { $0.reviewedAt > since })
+        return try context.fetch(descriptor)
+    }
+
+    private func fetchChangedExams(in context: ModelContext, since: Date?) throws -> [Exam] {
+        guard let since else { return try context.fetch(FetchDescriptor<Exam>()) }
+        let descriptor = FetchDescriptor<Exam>(predicate: #Predicate { $0.updatedAt > since })
+        return try context.fetch(descriptor)
     }
 
     /// Pose `deleted_at` sur ce qu'on a effacé ici. L'échec n'arrête pas la synchro : on
@@ -145,8 +193,7 @@ final class CloudSync {
     /// Un `deleted_at` renseigné supprime en local : c'est la seule façon qu'un appareil a
     /// d'apprendre qu'un cours a disparu ailleurs, puisqu'une ligne effacée ne lui apprendrait
     /// rien.
-    private func pull(context: ModelContext) async throws {
-        let since = lastPulledAt
+    private func pull(context: ModelContext, since: Date?) async throws {
         guard let userID = auth.user?.id else { throw SupabaseDatabase.Failure.notSignedIn }
         let mine = URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")
 
@@ -168,7 +215,7 @@ final class CloudSync {
             filters: [mine]
         )
         let localCourses = Dictionary(
-            ((try? context.fetch(FetchDescriptor<Course>())) ?? []).map { ($0.id, $0) },
+            try context.fetch(FetchDescriptor<Course>()).map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
 
@@ -202,11 +249,11 @@ final class CloudSync {
             filters: [mine]
         )
         let coursesByID = Dictionary(
-            ((try? context.fetch(FetchDescriptor<Course>())) ?? []).map { ($0.id, $0) },
+            try context.fetch(FetchDescriptor<Course>()).map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
         let localCards = Dictionary(
-            ((try? context.fetch(FetchDescriptor<Flashcard>())) ?? []).map { ($0.id, $0) },
+            try context.fetch(FetchDescriptor<Flashcard>()).map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
 
@@ -239,7 +286,7 @@ final class CloudSync {
             filters: [mine]
         )
         let localExams = Dictionary(
-            ((try? context.fetch(FetchDescriptor<Exam>())) ?? []).map { ($0.id, $0) },
+            try context.fetch(FetchDescriptor<Exam>()).map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
 
@@ -263,7 +310,7 @@ final class CloudSync {
         // Pas d'`updated_at` : on filtre sur le fait daté. Un journal déjà présent
         // (même identifiant) n'est pas réécrit — c'est un ajout seul.
         let cardsForLogs = Dictionary(
-            ((try? context.fetch(FetchDescriptor<Flashcard>())) ?? []).map { ($0.id, $0) },
+            try context.fetch(FetchDescriptor<Flashcard>()).map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first }
         )
         var logCursor = since
@@ -299,7 +346,10 @@ final class CloudSync {
             context.insert(log)
         }
 
-        try? context.save()
+        // Une écriture locale ratée doit faire échouer le passage. Avancer le repère après
+        // un `try?` aurait fait croire que les lignes téléchargées étaient persistées et le
+        // passage suivant ne les aurait plus demandées.
+        try context.save()
 
         // Le profil descend en dernier : il touche les réglages, pas la base, et il n'a pas à
         // faire échouer la synchro des cours s'il manque.
