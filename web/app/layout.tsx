@@ -62,21 +62,23 @@ export const metadata: Metadata = {
   },
   description:
     "Dépose un polycopié, une photo de tes notes ou une vidéo de cours. Micabo en écrit la fiche que tu relis, en tire les cartes qui te la font retenir, et les fait revenir juste avant que tu l'oublies.",
-  applicationName: "Micabo",
+  applicationName: "micabo",
   alternates: { canonical: "/" },
   robots: IS_INDEXABLE ? undefined : { index: false, follow: false },
   icons: {
     icon: [
+      { url: "/icon-48.png", type: "image/png", sizes: "48x48" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
       { url: "/icon.svg", type: "image/svg+xml" },
       { url: "/icon-32.png", type: "image/png", sizes: "32x32" },
-      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/favicon.ico", sizes: "32x32" },
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
-    siteName: "Micabo",
+    siteName: "micabo",
     locale: "fr_FR",
     url: "/",
     title: "Micabo - fiches et flashcards à partir de tes cours",
