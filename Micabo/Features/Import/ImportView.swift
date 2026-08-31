@@ -132,7 +132,7 @@ struct ImportView: View {
                             Text(MicaboCopy.sheetButton)
                         }
                     }
-                    .buttonStyle(MicaboPrimaryButtonStyle(tint: canGenerate ? MicaboColor.ink : MicaboColor.strokeStrong))
+                    .buttonStyle(MicaboPrimaryButtonStyle(tint: canGenerate ? MicaboColor.accent : MicaboColor.strokeStrong))
                     .disabled(!canGenerate || isGenerating || isReading)
                 }
             }

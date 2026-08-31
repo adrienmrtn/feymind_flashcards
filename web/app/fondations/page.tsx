@@ -469,7 +469,7 @@ function MotionSection() {
           </p>
           <button
             type="button"
-            className="pressable h-20 w-full rounded-tile bg-ink text-[13px] font-medium text-on-ink"
+            className="pressable h-20 w-full rounded-tile bg-accent text-[13px] font-medium text-on-ink"
           >
             Appuie
           </button>

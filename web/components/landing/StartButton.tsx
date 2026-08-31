@@ -22,12 +22,11 @@ export function StartButton({
   return (
     <div className={large ? "flex flex-col items-center gap-3" : "flex items-center gap-3.5"}>
       <Button
-        variant="outline"
         size={large ? "xl" : "lg"}
         className={
           large
-            ? `btn-rise shiny h-14 border-ink px-8 pe-7 text-[16px] hover:bg-transparent sm:h-14 sm:text-[16px] ${className}`
-            : `btn-rise shiny h-11 border-ink px-5 pe-4 hover:bg-transparent sm:h-11 ${className}`
+            ? `h-14 px-8 pe-7 text-[16px] sm:h-14 sm:text-[16px] ${className}`
+            : `h-11 px-5 pe-4 sm:h-11 ${className}`
         }
         render={<Link href={signedIn ? "/app" : "/commencer"} />}
       >

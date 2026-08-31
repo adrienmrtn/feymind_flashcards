@@ -79,7 +79,7 @@ struct CreateDeckView: View {
                                 Text(hasMaterial ? "Écrire les cartes" : "Créer le paquet")
                             }
                         }
-                        .buttonStyle(MicaboPrimaryButtonStyle(tint: canCreate ? MicaboColor.ink : MicaboColor.strokeStrong))
+                        .buttonStyle(MicaboPrimaryButtonStyle(tint: canCreate ? MicaboColor.accent : MicaboColor.strokeStrong))
                         .disabled(!canCreate || isWorking)
 
                         // Coller du texte n'oblige pas à laisser le modèle écrire : on peut

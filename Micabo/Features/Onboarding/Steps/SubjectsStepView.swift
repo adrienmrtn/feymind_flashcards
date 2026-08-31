@@ -81,7 +81,7 @@ private struct SubjectChip: View {
             .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.ink)
             .padding(.vertical, 9)
             .padding(.horizontal, 13)
-            .background(isSelected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
+            .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())
             .overlay {
                 Capsule()
                     .strokeBorder(isSelected ? Color.clear : MicaboColor.strokeStrong, lineWidth: 1)

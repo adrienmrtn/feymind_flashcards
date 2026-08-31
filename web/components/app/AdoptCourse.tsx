@@ -21,7 +21,7 @@ export function AdoptCourse({
       <button
         type="button"
         onClick={() => router.push(`/app/c/${alreadyId}` as never)}
-        className="pressable h-14 w-full rounded-button bg-ink text-[16px] font-semibold text-on-ink"
+        className="pressable h-14 w-full rounded-button bg-accent text-[16px] font-semibold text-on-ink"
       >
         Déjà dans tes cours
       </button>
@@ -43,7 +43,7 @@ export function AdoptCourse({
             setError(result.message ?? "Le cours n'a pas pu être repris.");
           })
         }
-        className="pressable h-14 w-full rounded-button bg-ink text-[16px] font-semibold text-on-ink"
+        className="pressable h-14 w-full rounded-button bg-accent text-[16px] font-semibold text-on-ink"
       >
         {pending ? "Ajout…" : "Ajouter le cours et les cartes"}
       </button>

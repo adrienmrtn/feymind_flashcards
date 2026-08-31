@@ -30,7 +30,7 @@ export function LockedSheetTail({
       >
         <span
           aria-hidden
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-ink text-on-ink"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-on-ink"
         >
           <svg viewBox="0 0 20 20" className="h-5 w-5" fill="currentColor">
             <path d="M10 1.5a3.5 3.5 0 0 0-3.5 3.5v2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5A3.5 3.5 0 0 0 10 1.5zm-2 3.5a2 2 0 1 1 4 0v2H8V5z" />
@@ -40,7 +40,7 @@ export function LockedSheetTail({
         <p className="mx-auto mt-1.5 max-w-[38ch] text-[13px] leading-relaxed text-ink-secondary">
           Il te reste {percent} % de ce cours à lire, et tous les suivants à importer.
         </p>
-        <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-ink px-5 py-3 text-[14.5px] font-semibold text-on-ink">
+        <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-3 text-[14.5px] font-semibold text-on-ink">
           Débloquer la fiche
           <svg aria-hidden viewBox="0 0 20 20" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.2">
             <path d="M7 4l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />

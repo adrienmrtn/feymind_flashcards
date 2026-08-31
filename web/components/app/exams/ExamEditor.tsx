@@ -272,9 +272,9 @@ export function ExamEditor({
             disabled={busy || !canContinue}
             className={`pressable flex h-14 w-full items-center justify-center gap-2 rounded-button text-[16px] font-semibold transition-colors duration-hover ${
               busy
-                ? "bg-ink text-on-ink"
+                ? "bg-accent text-on-ink"
                 : canContinue
-                  ? "shiny bg-ink text-on-ink"
+                  ? "shiny bg-accent text-on-ink"
                   : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
             }`}
           >

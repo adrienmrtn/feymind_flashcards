@@ -7,7 +7,7 @@ import Link from "next/link";
  * du cours tant qu'il n'y a pas de paquet. Encre, un verbe, un bouton.
  */
 const shell =
-  "flex w-full flex-col gap-4 rounded-2xl bg-ink px-6 py-5 text-left text-on-ink transition-[scale,background-color] duration-press ease-out-strong hover:bg-ink/90 active:scale-[0.96] sm:flex-row sm:items-center sm:gap-5";
+  "flex w-full flex-col gap-4 rounded-2xl bg-accent px-6 py-5 text-left text-on-ink transition-[scale,background-color] duration-press ease-out-strong hover:bg-accent/90 active:scale-[0.96] sm:flex-row sm:items-center sm:gap-5";
 
 export function GenerateCardsCta({
   href,

@@ -113,7 +113,7 @@ struct ExamEditorSheet: View {
                         Text(primaryTitle)
                     }
                 }
-                .buttonStyle(MicaboPrimaryButtonStyle(tint: canConfirm ? MicaboColor.ink : MicaboColor.strokeStrong))
+                .buttonStyle(MicaboPrimaryButtonStyle(tint: canConfirm ? MicaboColor.accent : MicaboColor.strokeStrong))
                 .disabled(!canConfirm)
             }
         }

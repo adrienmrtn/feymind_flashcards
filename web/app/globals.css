@@ -45,22 +45,22 @@
   --color-canvas-sage: #e8eee9;
 
   /* ---- Accent ----
-     Deux verts, et la distinction est fonctionnelle. `accent` est assez sombre pour porter du
-     texte de onze points sur un fond pastel ; `accent-vivid` est le vert du logo et ne remplit
-     que de grandes surfaces posées sur du blanc. */
-  --color-accent: #0b8a66;
-  --color-accent-soft: #dff4ec;
-  --color-accent-vivid: #16c08c;
+     Deux bleus, et la distinction est fonctionnelle. `accent` est assez sombre pour porter du
+     texte de onze points sur un fond pastel ; `accent-vivid` ne remplit que de grandes
+     surfaces posées sur du blanc. */
+  --color-accent: #2563eb;
+  --color-accent-soft: #dbeafe;
+  --color-accent-vivid: #3b82f6;
 
   /* Toute progression porte cette couleur, sans exception. Une seule couleur pour « ça
      avance », sinon on cherche un sens derrière chaque nuance. */
-  --color-progress: #0b8a66;
+  --color-progress: #2563eb;
   --color-progress-track: #e5e7eb;
 
   /* La couleur des passages que la fiche met en avant. C'est l'encre qui change, pas le fond :
      un surligneur posé derrière le texte déborde sous les jambages et se bat avec
      l'interligne. */
-  --color-sheet-emphasis: #0a6e52;
+  --color-sheet-emphasis: #1d4ed8;
 
   /* ---- Retours d'information ---- */
   --color-positive: #3f7d53;
@@ -143,14 +143,14 @@
   --duration-sheet: 320ms;
 
   /* Coss / Cal.com primitives map onto Micabo's paper tokens. `--color-accent`
-     stays the green of the product — Coss's wash hover uses `surface-muted`. */
+     is the blue of the product — Coss's wash hover uses `surface-muted`. */
   --color-background: var(--color-canvas);
   --color-foreground: var(--color-ink);
   --color-card: var(--color-surface);
   --color-card-foreground: var(--color-ink);
   --color-popover: var(--color-surface);
   --color-popover-foreground: var(--color-ink);
-  --color-primary: var(--color-ink);
+  --color-primary: var(--color-accent);
   --color-primary-foreground: var(--color-on-ink);
   --color-secondary: var(--color-surface-muted);
   --color-secondary-foreground: var(--color-ink);
@@ -160,7 +160,7 @@
   --color-destructive: var(--color-negative);
   --color-border: var(--color-stroke);
   --color-input: var(--color-stroke-strong);
-  --color-ring: #0b8a66;
+  --color-ring: #2563eb;
   --font-heading: var(--font-sans);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --radius-md: 12px;
@@ -201,7 +201,7 @@
   --card-foreground: var(--color-ink);
   --popover: var(--color-surface);
   --popover-foreground: var(--color-ink);
-  --primary: var(--color-ink);
+  --primary: var(--color-accent);
   --primary-foreground: var(--color-on-ink);
   --secondary: var(--color-surface-muted);
   --secondary-foreground: var(--color-ink);
@@ -594,7 +594,7 @@ video {
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: var(--color-ink);
+  background: var(--color-accent);
   color: var(--color-on-ink);
   translate: -50% -50%;
   rotate: 90deg;
@@ -711,12 +711,12 @@ video {
    -------------------------------------------------------------------------- */
 
 @utility btn-rise {
-  border-color: var(--color-ink);
+  border-color: var(--color-accent);
   background-color: transparent;
   background-image: linear-gradient(
     to top,
     transparent 0 50%,
-    var(--color-ink) 50% 100%
+    var(--color-accent) 50% 100%
   );
   background-size: 100% 200%;
   background-position: 0 100%;
@@ -740,11 +740,11 @@ video {
 }
 
 @utility btn-fill {
-  border-color: var(--color-ink);
+  border-color: var(--color-accent);
   background-color: transparent;
   background-image: linear-gradient(
     to right,
-    var(--color-ink) 0 50%,
+    var(--color-accent) 0 50%,
     transparent 50% 100%
   );
   background-size: 200% 100%;
@@ -765,7 +765,7 @@ video {
     background-color: transparent;
     background-position: 0 0;
     color: var(--color-on-ink);
-    border-color: var(--color-ink);
+    border-color: var(--color-accent);
   }
 }
 

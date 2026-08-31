@@ -67,7 +67,7 @@ enum OnboardingSurface {
 
     /// Surface du bouton d'action, inversée sur fond sombre.
     var buttonTint: Color {
-        isDark ? MicaboColor.onInk : MicaboColor.ink
+        isDark ? MicaboColor.onInk : MicaboColor.accent
     }
 
     var buttonForeground: Color {
@@ -798,7 +798,7 @@ struct OnboardingChoiceChip: View {
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 18)
-            .background(isSelected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
+            .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         .animation(OnboardingMotion.tap, value: isSelected)

@@ -128,7 +128,7 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
                     type="button"
                     onClick={() => setChosen(plan.kind)}
                     className={`pressable flex w-full items-center justify-between gap-4 rounded-group px-5 py-4 text-left transition-colors duration-hover ${
-                      isSelected ? "bg-ink text-on-ink" : "bg-canvas"
+                      isSelected ? "bg-accent text-on-ink" : "bg-canvas"
                     }`}
                   >
                     <div>
@@ -173,7 +173,7 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
               type="button"
               onClick={() => void subscribe()}
               disabled={pending}
-              className="pressable shiny flex h-14 w-full items-center justify-center gap-2 rounded-button bg-ink text-[16px] font-semibold text-on-ink disabled:opacity-70"
+              className="pressable shiny flex h-14 w-full items-center justify-center gap-2 rounded-button bg-accent text-[16px] font-semibold text-on-ink disabled:opacity-70"
             >
               {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
               {pricing.hasTrial(selected)
@@ -247,7 +247,7 @@ function AbandonCard({
       <button
         type="button"
         onClick={onReturn}
-        className="pressable shiny mt-6 flex h-12 w-full items-center justify-center rounded-button bg-ink text-[15px] font-semibold text-on-ink"
+        className="pressable shiny mt-6 flex h-12 w-full items-center justify-center rounded-button bg-accent text-[15px] font-semibold text-on-ink"
       >
         Revenir
       </button>

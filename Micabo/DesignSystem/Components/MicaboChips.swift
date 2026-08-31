@@ -50,7 +50,7 @@ struct MicaboSelectChip: View {
                 .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkSecondary)
                 .padding(.vertical, 9)
                 .padding(.horizontal, 16)
-                .background(isSelected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
+                .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())
                 .overlay {
                     Capsule().strokeBorder(isSelected ? Color.clear : MicaboColor.stroke, lineWidth: 1)
                 }

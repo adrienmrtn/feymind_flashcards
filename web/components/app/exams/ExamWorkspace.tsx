@@ -125,7 +125,7 @@ export function ExamWorkspace({
       <button
         type="button"
         onClick={openNew}
-        className="pressable hover-tile mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-button bg-ink text-[15px] font-semibold text-on-ink"
+        className="pressable hover-tile mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-button bg-accent text-[15px] font-semibold text-on-ink"
       >
         Ajouter un examen
       </button>

@@ -266,7 +266,7 @@ export function OcclusionEditor({
             onClick={save}
             className={`pressable rounded-button px-4 py-2.5 text-[14px] font-semibold ${
               canSave && !pending
-                ? "bg-ink text-on-ink"
+                ? "bg-accent text-on-ink"
                 : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
             }`}
           >
