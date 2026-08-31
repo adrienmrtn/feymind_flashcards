@@ -107,13 +107,56 @@ Ce qui rend leur apparition possible, et qui est fait :
 - des données structurées `Organization` qui rattachent le mot « Micabo » à une entité, au
   lieu de laisser le moteur proposer une correction orthographique
 
-Ce qui reste à faire, et qui pèse plus que tout le code ci-dessus :
+## Ce que tu as à faire de ton côté
 
-1. **Déclarer le site dans la Search Console** sur `https://www.micabo.app`, puis demander
-   l'indexation de `/`. Sans ça, la sortie du blocage peut prendre des semaines.
-2. **Y déposer le sitemap** : `https://www.micabo.app/sitemap.xml`.
-3. **Des liens entrants.** Pour une marque inventée, c'est ce qui décide du premier rang. Une
-   page App Store qui pointe vers le site, un compte social, un dépôt public : trois liens
-   cohérents valent plus que n'importe quelle balise.
-4. **Écrire de vraies pages** quand il y aura de quoi. Trois adresses, dont deux légales, est
-   une surface mince : les sitelinks pointent vers des pages, et il en faut à montrer.
+Le code ouvre la porte. Google n'entre pas tout seul. Voici l'ordre, et rien d'autre n'est
+obligatoire.
+
+### 1. Faire explorer le site
+
+1. Ouvre [Google Search Console](https://search.google.com/search-console) et ajoute la
+   propriété **`https://www.micabo.app`** (préfixe d'URL, avec le `www`). Si tu as aussi
+   `https://micabo.app` sans www, ajoute-la séparément : ce n'est pas le même hôte.
+2. Vérifie la propriété. Le plus simple : l'enregistrement DNS que Vercel t'a déjà fait
+   poser, ou le fichier HTML que Search Console propose de mettre dans `web/public/`.
+3. Dans **Sitemaps**, dépose exactement : `https://www.micabo.app/sitemap.xml`.
+4. Ouvre **Inspection d'URL**, colle `https://www.micabo.app/`, demande un test en direct,
+   puis **Demander l'indexation**. Sans cette demande, la sortie de l'ancien `Disallow: /`
+   peut prendre des semaines.
+5. Contrôle `https://www.micabo.app/robots.txt` : en production il doit **autoriser** `/`
+   et citer le sitemap. S'il dit encore `Disallow: /`, le déploiement n'est pas celui de
+   production (`IS_INDEXABLE` ne s'allume que si `VERCEL_ENV=production`).
+
+Répète l'inspection pour `/methode`, `/mode-examen` et `/micabo-ou-anki` : ce sont les
+pages que Google peut proposer sous le résultat principal.
+
+### 2. Les sitelinks (les sous-liens sous le résultat)
+
+**Tu ne peux pas les demander.** Il n'existe ni case Search Console, ni balise, ni
+`schema.org` pour ça. Google les choisit quand il connaît assez le site : pages distinctes,
+titres différents, liens internes clairs. C'est déjà en place (vitrine, trois pages de
+contenu, pied de page, sitemap).
+
+Ce qui les fait apparaître, de ton côté :
+
+1. L'exploration ci-dessus, jusqu'à ce que ces pages soient **indexées** (pas seulement
+   « découvertes »).
+2. Des recherches sur le mot « Micabo » qui aboutissent. Les sitelinks viennent après que
+   le résultat principal est stable, souvent plusieurs semaines.
+3. **Des liens depuis l'extérieur** vers `https://www.micabo.app` : fiche App Store, compte
+   Instagram / TikTok / LinkedIn, dépôt GitHub public. Pour une marque inventée, trois
+   liens cohérents pèsent plus qu'une balise de plus.
+4. Ne pas pointer ces liens vers `micabo.app` sans www, ni vers une URL `*.vercel.app` :
+   Google verrait deux sites.
+
+On ne choisit pas les sitelinks, et on ne les retire plus : l'outil de Search Console
+qui les « démotait » n'existe plus. Un mauvais lien disparaît seulement si la page
+elle-même est moins mise en avant, ou retirée de l'index.
+
+### 3. Ensuite seulement
+
+- Bing Webmaster Tools, même sitemap, si tu veux aussi Bing.
+- Apple Search (App Store) est un autre index : le site n'y change rien, la fiche App
+  Store si.
+- Écrire d'autres pages publiques quand il y aura un sujet. Les sitelinks pointent vers
+  des pages, pas vers des ancres `#methode`.
