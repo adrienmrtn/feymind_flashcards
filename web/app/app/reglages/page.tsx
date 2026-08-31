@@ -6,6 +6,7 @@ import {
 } from "@micabo/core";
 
 import { DeleteAccount } from "@/components/app/DeleteAccount";
+import { ExportData } from "@/components/app/ExportData";
 import { FeedbackCard } from "@/components/app/FeedbackCard";
 import { ProfileSettings } from "@/components/app/ProfileSettings";
 import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
@@ -69,6 +70,8 @@ export default async function SettingsPage() {
             <ReplayPaywallOnboarding />
           </div>
         </section>
+
+        <ExportData />
 
         <DeleteAccount email={user?.email ?? ""} />
       </div>

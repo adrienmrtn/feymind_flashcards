@@ -412,19 +412,14 @@ function asShared(row: SharedCourseRow): SharedCourse {
 async function withCardCounts(token: string, courses: SharedCourse[]): Promise<SharedCourse[]> {
   if (courses.length === 0) return courses;
 
-  const { data } = await dataClient(token)
-    .from("flashcards")
-    .select("course_id")
-    .in(
-      "course_id",
-      courses.map((course) => course.id),
-    )
-    .is("deleted_at", null);
+  const { data } = await dataClient(token).rpc("count_flashcards_by_course", {
+    p_courses: courses.map((course) => course.id),
+  });
 
   const counts = new Map<string, number>();
-  for (const row of (data as { course_id: string | null }[] | null) ?? []) {
+  for (const row of (data as { course_id: string | null; card_count: number }[] | null) ?? []) {
     if (!row.course_id) continue;
-    counts.set(row.course_id, (counts.get(row.course_id) ?? 0) + 1);
+    counts.set(row.course_id, Number(row.card_count) || 0);
   }
 
   return courses.map((course) => ({

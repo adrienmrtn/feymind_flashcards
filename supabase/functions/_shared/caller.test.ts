@@ -52,18 +52,18 @@ Deno.test("l'appelant", async (t) => {
     assertEquals(caller.legacy, true);
   });
 
-  await t.step("ne prend pas un rôle de service pour un utilisateur", () => {
-    const caller = readCaller(
-      request({ Authorization: `Bearer ${token({ role: "service_role" })}` }),
+  await t.step("refuse un rôle de service", () => {
+    assertThrows(
+      () => readCaller(request({ Authorization: `Bearer ${token({ role: "service_role" })}` })),
+      CallerError,
     );
-    assertEquals(caller.userId, null);
   });
 
   await t.step("exige un sujet, pas seulement le bon rôle", () => {
-    const caller = readCaller(
-      request({ Authorization: `Bearer ${token({ role: "authenticated" })}` }),
+    assertThrows(
+      () => readCaller(request({ Authorization: `Bearer ${token({ role: "authenticated" })}` })),
+      CallerError,
     );
-    assertEquals(caller.userId, null);
   });
 });
 
@@ -92,6 +92,8 @@ Deno.test("les origines", async (t) => {
     // Un sous-domaine de vercel.app à plusieurs segments n'est pas une prévisualisation du
     // projet : le joker est borné à un segment exprès.
     assertEquals(await ok("https://a.b.vercel.app"), null);
+    // Un autre projet Vercel n'est pas le nôtre, même sur un seul segment.
+    assertEquals(await ok("https://attaquant.vercel.app"), null);
     assertEquals(await ok("http://micabo.app"), null);
   });
 

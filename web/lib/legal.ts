@@ -4,7 +4,7 @@ import type { Route } from "next";
 
 export const LEGAL_EDITOR = "Adrien Martinot";
 export const LEGAL_CONTACT = "team@micabo.app";
-export const LEGAL_UPDATED = "30 août 2026";
+export const LEGAL_UPDATED = "31 août 2026";
 export const LEGAL_SITE = "https://micabo.app";
 export const LEGAL_IOS_BUNDLE = "com.micabo.app";
 

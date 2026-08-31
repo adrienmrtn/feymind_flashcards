@@ -5,6 +5,7 @@ import { entitlement, pricing } from "@micabo/core";
 import { SITE_URL } from "@/lib/config";
 import { readEntitlement } from "@/lib/data/entitlement";
 import {
+  checkoutIdempotencyKey,
   checkoutReturnUrl,
   checkoutSessionFields,
   extractStripeMessage,
@@ -99,6 +100,7 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Idempotency-Key": checkoutIdempotencyKey(user.id, kind),
     },
     body: new URLSearchParams(
       checkoutSessionFields({
@@ -167,14 +169,13 @@ export async function manageSubscription(): Promise<CheckoutResult> {
   if (!key) return { status: "unavailable", message: "Le portail n'est pas encore branché." };
 
   const email = user?.email;
-  if (!email) {
+  if (!user?.id || !email) {
     return { status: "error", message: "Aucune adresse rattachée à ce compte." };
   }
 
-  // **Le client Stripe se retrouve par son adresse.** On ne garde pas son `cus_…` : la table
-  // `entitlements` n'a qu'une plume, le webhook RevenueCat, et il ne transporte pas ce champ.
-  // Ajouter une colonne que personne n'écrit serait une colonne qui mentira.
-  const customerId = await findStripeCustomer(key, email);
+  // D'abord l'identifiant Supabase posé à l'encaissement, puis l'adresse.
+  // L'e-mail seul prenait le premier `cus_…` homonyme.
+  const customerId = await findStripeCustomer(key, { userId: user.id, email });
   if (!customerId) {
     return {
       status: "error",
@@ -210,9 +211,25 @@ export async function manageSubscription(): Promise<CheckoutResult> {
   return { status: "redirect", url: session.url };
 }
 
-/** Le `cus_…` d'une adresse, ou `null` si Stripe ne connaît personne sous ce courriel. */
-async function findStripeCustomer(key: string, email: string): Promise<string | null> {
-  const query = new URLSearchParams({ email, limit: "1" });
+/** Le `cus_…` rattaché à ce compte, ou `null` si Stripe ne le connaît pas. */
+async function findStripeCustomer(
+  key: string,
+  input: { userId: string; email: string },
+): Promise<string | null> {
+  const search = new URLSearchParams({
+    query: `metadata['supabase_user_id']:'${input.userId}'`,
+    limit: "1",
+  });
+  const byMeta = await fetch(`https://api.stripe.com/v1/customers/search?${search}`, {
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  if (byMeta.ok) {
+    const payload = (await byMeta.json()) as { data?: { id?: string }[] };
+    const id = payload.data?.[0]?.id;
+    if (id) return id;
+  }
+
+  const query = new URLSearchParams({ email: input.email, limit: "1" });
   const response = await fetch(`https://api.stripe.com/v1/customers?${query}`, {
     headers: { Authorization: `Bearer ${key}` },
   });

@@ -27,8 +27,7 @@ struct SupabaseAIService: AIService {
             "length": request.sheetLength.rawValue,
             "blocks": request.sheetBlocks,
             "subject": request.subject ?? "",
-            "source": request.sourceKind?.rawValue ?? "",
-            "model": AppConfig.aiModel
+            "source": request.sourceKind?.rawValue ?? ""
         ]
 
         let envelope = try await post("generate-course", payload: payload)
@@ -48,8 +47,7 @@ struct SupabaseAIService: AIService {
             "existing": request.existingFronts,
             "kinds": request.quota.wireKinds,
             "subject": request.subject ?? "",
-            "language": request.language.rawValue,
-            "model": AppConfig.aiModel
+            "language": request.language.rawValue
         ]
 
         let envelope = try await post("generate-flashcards", payload: payload)
@@ -69,8 +67,7 @@ struct SupabaseAIService: AIService {
             "title": request.courseTitle,
             "subject": request.subject ?? "",
             "context": String(request.courseContext.prefix(16_000)),
-            "language": request.language.rawValue,
-            "model": AppConfig.aiModel
+            "language": request.language.rawValue
         ]
 
         let envelope = try await post("explain-selection", payload: payload)

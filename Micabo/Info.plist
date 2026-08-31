@@ -4,6 +4,8 @@
 <dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Micabo utilise l'appareil photo pour scanner vos pages de cours.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Micabo accède à vos photos pour importer un cours ou un schéma.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>HankenGrotesk-Regular.ttf</string>

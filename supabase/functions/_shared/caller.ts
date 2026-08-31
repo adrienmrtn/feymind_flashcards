@@ -27,8 +27,20 @@
 
 export const ANON_GRACE = true;
 
+/**
+ * Date à laquelle la transition doit être close.
+ *
+ * Les versions déjà installées envoient encore la clé publiable. Tant que ce drapeau
+ * est vrai, elles passent. Passé cette date, `ANON_GRACE` doit passer à `false` :
+ * une grâce sans échéance n'est plus une transition, c'est une porte ouverte.
+ */
+export const ANON_GRACE_UNTIL = "2026-12-01";
+
 /** Plafond d'appels au modèle, par utilisateur, par jour et par fonction. */
 export const DAILY_CEILING = 20;
+
+/** Même compteur, pour un abonné : assez haut pour travailler, assez bas pour une boucle. */
+export const PRO_DAILY_CEILING = 200;
 
 export class CallerError extends Error {
   readonly status: number;
@@ -83,11 +95,15 @@ export function readCaller(request: Request): Caller {
     throw new CallerError("Jeton illisible.", 401);
   }
 
+  if (claims.role === "service_role") {
+    throw new CallerError("Connecte-toi pour utiliser Micabo.", 401);
+  }
+
   if (claims.role === "authenticated" && claims.sub) {
     return { userId: claims.sub, legacy: false };
   }
 
-  if (ANON_GRACE) {
+  if (ANON_GRACE && claims.role === "anon") {
     return { userId: null, legacy: true };
   }
 
@@ -107,15 +123,22 @@ export function readCaller(request: Request): Caller {
  * Un fusible qui grille en fermant la porte transforme une panne de comptage en panne de produit,
  * et le produit n'a rien fait de mal.
  */
-export async function consumeQuota(caller: Caller, fn: string): Promise<void> {
+export async function consumeQuota(
+  caller: Caller,
+  fn: string,
+  units = 1,
+): Promise<void> {
   if (!caller.userId) return;
 
   const url = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  // Sans secret, on est en local : bloquer ici casserait tout essai. En production
+  // les deux sont posés ; s'ils le sont et que le RPC tombe, on ferme.
   if (!url || !serviceKey) return;
 
   let allowed = true;
   let used = 0;
+  let ceiling = DAILY_CEILING;
 
   try {
     const response = await fetch(`${url}/rest/v1/rpc/consume_ai_quota`, {
@@ -125,33 +148,52 @@ export async function consumeQuota(caller: Caller, fn: string): Promise<void> {
         Authorization: `Bearer ${serviceKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ p_user: caller.userId, p_fn: fn, p_ceiling: DAILY_CEILING }),
+      body: JSON.stringify({
+        p_user: caller.userId,
+        p_fn: fn,
+        p_ceiling: DAILY_CEILING,
+        p_units: Math.max(1, Math.round(units)),
+      }),
     });
 
-    if (!response.ok) return;
+    if (!response.ok) {
+      throw new CallerError("Le quota est temporairement indisponible.", 503);
+    }
 
-    const rows = (await response.json()) as { allowed: boolean; used: number }[];
+    const rows = (await response.json()) as {
+      allowed: boolean;
+      used: number;
+      ceiling?: number;
+    }[];
     const row = Array.isArray(rows) ? rows[0] : undefined;
-    if (!row) return;
+    if (!row) {
+      throw new CallerError("Le quota est temporairement indisponible.", 503);
+    }
 
     allowed = row.allowed;
     used = row.used;
-  } catch {
-    return;
+    if (typeof row.ceiling === "number") ceiling = row.ceiling;
+  } catch (error) {
+    if (error instanceof CallerError) throw error;
+    throw new CallerError("Le quota est temporairement indisponible.", 503);
   }
 
   if (!allowed) {
     throw new CallerError(
-      `Tu as atteint la limite de ${DAILY_CEILING} générations pour aujourd'hui (${used} utilisées). Reviens demain.`,
+      `Tu as atteint la limite de ${ceiling} générations pour aujourd'hui (${used} utilisées). Reviens demain.`,
       429,
     );
   }
 }
 
 /** Les deux en une fois : c'est ce que chaque fonction appelle en première ligne. */
-export async function authorize(request: Request, fn: string): Promise<Caller> {
+export async function authorize(
+  request: Request,
+  fn: string,
+  options: { meter?: boolean } = {},
+): Promise<Caller> {
   const caller = readCaller(request);
-  await consumeQuota(caller, fn);
+  if (options.meter !== false) await consumeQuota(caller, fn);
   return caller;
 }
 
@@ -171,7 +213,8 @@ export async function authorize(request: Request, fn: string): Promise<Caller> {
 const ALLOWED_ORIGINS = [
   /^http:\/\/localhost:\d+$/,
   /^https:\/\/(www\.)?micabo\.app$/,
-  /^https:\/\/[a-z0-9-]+\.vercel\.app$/,
+  // Uniquement les prévisualisations de ce projet, pas n'importe quel déploiement Vercel.
+  /^https:\/\/micabo[a-z0-9-]*\.vercel\.app$/,
 ];
 
 function allowedOrigin(origin: string | null): string | null {

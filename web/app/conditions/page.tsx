@@ -58,9 +58,9 @@ export default function TermsPage() {
           tiers. Un seul compte par personne.
         </p>
         <p>
-          Vous pouvez supprimer le compte depuis le profil du site. Cela efface vos
-          cours, vos cartes et votre historique. Les achats déjà encaissés par Apple ou
-          Stripe restent soumis à leurs règles de remboursement.
+          Vous pouvez supprimer le compte depuis Réglages, sur le site ou dans l&apos;app
+          iPhone. Cela efface vos cours, vos cartes et votre historique. Les achats déjà
+          encaissés par Apple ou Stripe restent soumis à leurs règles de remboursement.
         </p>
       </LegalSection>
 

@@ -82,6 +82,22 @@ export default function PrivacyPage() {
           tient le droit, pour que l&apos;iPhone et le navigateur soient d&apos;accord.
         </p>
         <p>
+          <strong className="font-semibold text-ink">La liste d&apos;attente.</strong> Si
+          vous laissez votre adresse avant d&apos;avoir un compte, nous la gardons pour
+          vous prévenir de l&apos;ouverture, avec la page d&apos;où vous venez. Elle n&apos;est
+          pas liée à un compte et n&apos;est pas visible via l&apos;application.
+        </p>
+        <p>
+          <strong className="font-semibold text-ink">L&apos;usage des générations.</strong>{" "}
+          Un compteur par jour et par fonction (fiche, cartes, explication), sans le
+          contenu du cours. Il sert à limiter les abus, pas à vous profiler.
+        </p>
+        <p>
+          <strong className="font-semibold text-ink">L&apos;annuaire.</strong> Votre nom
+          d&apos;utilisateur et, si vous l&apos;avez indiqué, votre établissement. C&apos;est
+          ce que voient un ami ou un camarade, pas votre e-mail ni vos préférences.
+        </p>
+        <p>
           <strong className="font-semibold text-ink">Ce qui reste sur l&apos;appareil.</strong>{" "}
           Sur iPhone, certaines pièces (images d&apos;occlusion, audio d&apos;une carte)
           peuvent ne jamais quitter le téléphone. Les réponses du parcours d&apos;accueil
@@ -136,7 +152,9 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong className="font-semibold text-ink">Vercel</strong> — hébergement du
-            site.
+            site et journaux techniques (adresse IP, URL). Le traitement peut avoir
+            lieu hors de l&apos;Union européenne, sous les clauses contractuelles types
+            du prestataire.
           </li>
           <li>
             <strong className="font-semibold text-ink">Apple et Google</strong> — si vous
@@ -186,23 +204,33 @@ export default function PrivacyPage() {
 
       <LegalSection title="Combien de temps nous les gardons">
         <p>
-          Tant que le compte existe. Si vous le supprimez, depuis le profil du site ou en
-          nous écrivant, nous effaçons les cours, les cartes, l&apos;historique et le
-          profil. Les pièces de facturation que la loi nous impose de garder restent le
-          temps prescrit, détachées de votre espace.
+          Tant que le compte existe. Si vous le supprimez, depuis Réglages sur le site
+          ou dans l&apos;app iPhone, ou en nous écrivant, nous effaçons le profil, les
+          cours (y compris le texte extrait), les fiches, les cartes, l&apos;historique,
+          les examens, les amitiés, les compteurs d&apos;usage et l&apos;adresse éventuellement
+          laissée sur la liste d&apos;attente.
         </p>
         <p>
           Un cours que vous avez partagé disparaît pour vos amis quand vous le
           supprimez. Un ami qui a déjà révisé vos cartes conserve son propre historique,
           pas votre document.
         </p>
+        <p>
+          Après suppression, il reste chez des prestataires ce que la loi ou leur
+          contrat impose : factures Stripe ou Apple, identifiant d&apos;abonnement
+          RevenueCat, journaux techniques (Vercel, Supabase) quelques semaines. fal.ai
+          reçoit le texte le temps d&apos;écrire la fiche ; nous ne lui demandons pas de
+          le conserver.
+        </p>
       </LegalSection>
 
       <LegalSection title="Vos droits">
         <p>
           Vous pouvez accéder à vos données, les corriger, les exporter, vous opposer à
-          un traitement, ou demander l&apos;effacement. Le plus simple : le profil, puis
-          « Supprimer le compte », ou un message à{" "}
+          un traitement, ou demander l&apos;effacement. Pour télécharger une copie :
+          Réglages → « Télécharger mes données ». Pour effacer le compte : Réglages →
+          « Supprimer le compte », sur le site ou dans l&apos;app iPhone. Vous pouvez
+          aussi écrire à{" "}
           <a href={`mailto:${LEGAL_CONTACT}`} className="underline-draw text-ink">
             {LEGAL_CONTACT}
           </a>

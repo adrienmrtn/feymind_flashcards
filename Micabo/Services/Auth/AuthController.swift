@@ -213,6 +213,19 @@ final class AuthController {
         message = nil
     }
 
+    /// Efface le compte Auth. Le reste suit par cascade côté serveur.
+    func deleteAccount() async {
+        guard await validAccessToken() != nil else { return }
+        let database = SupabaseDatabase(accessToken: { await self.validAccessToken() })
+        do {
+            try await database.rpc("delete_own_account")
+        } catch {
+            message = .error("Le compte n'a pas pu être supprimé.")
+            return
+        }
+        await signOut()
+    }
+
     func clearMessage() {
         message = nil
     }

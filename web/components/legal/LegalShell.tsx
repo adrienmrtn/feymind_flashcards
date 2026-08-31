@@ -19,6 +19,12 @@ export function LegalShell({
 }) {
   return (
     <>
+      <a
+        href="#contenu"
+        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-screen focus-visible:top-3 focus-visible:z-30 focus-visible:rounded-button focus-visible:bg-ink focus-visible:px-3 focus-visible:py-2 focus-visible:text-[13px] focus-visible:font-medium focus-visible:text-on-ink"
+      >
+        Aller au contenu
+      </a>
       <header className="border-b border-hairline-on-canvas">
         <div className="mx-auto flex h-14 max-w-page items-center justify-between px-screen">
           <BrandLockup

@@ -2,7 +2,15 @@
 
 import { addDays, startOfDay } from "@micabo/core";
 
-const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"];
+const WEEKDAYS = [
+  { short: "L", label: "Lundi" },
+  { short: "M", label: "Mardi" },
+  { short: "M", label: "Mercredi" },
+  { short: "J", label: "Jeudi" },
+  { short: "V", label: "Vendredi" },
+  { short: "S", label: "Samedi" },
+  { short: "D", label: "Dimanche" },
+] as const;
 
 export interface CalendarExam {
   id: string;
@@ -50,10 +58,11 @@ export function ExamCalendar({
       <div className="grid grid-cols-7 gap-1 overflow-hidden">
         {WEEKDAYS.map((day, index) => (
           <p
-            key={`${day}-${index}`}
+            key={`${day.label}-${index}`}
+            aria-label={day.label}
             className="pb-1 text-center text-[11px] font-semibold text-ink-tertiary"
           >
-            {day}
+            {day.short}
           </p>
         ))}
 
@@ -71,6 +80,7 @@ export function ExamCalendar({
               key={key}
               type="button"
               onClick={() => onSelect(day)}
+              aria-label={calendarDayLabel(day, marks)}
               className={`flex min-h-[3.75rem] min-w-0 w-full flex-col items-center overflow-hidden rounded-button px-0.5 transition-colors duration-hover sm:min-h-[4.5rem] sm:px-1 ${
                 first ? "pb-1 pt-1" : "justify-center"
               } ${
@@ -153,10 +163,11 @@ export function ExamDayPicker({
       <div className="grid grid-cols-7 gap-1">
         {WEEKDAYS.map((day, index) => (
           <p
-            key={`${day}-${index}`}
+            key={`${day.label}-${index}`}
+            aria-label={day.label}
             className="pb-1 text-center text-[11px] font-semibold text-ink-tertiary"
           >
-            {day}
+            {day.short}
           </p>
         ))}
         {days.map((day) => {
@@ -172,6 +183,11 @@ export function ExamDayPicker({
               type="button"
               disabled={blocked}
               onClick={() => onSelect(day)}
+              aria-label={day.toLocaleDateString("fr-FR", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              })}
               className={`flex h-10 w-full items-center justify-center rounded-button text-[13.5px] leading-none transition-colors duration-hover ${
                 isSelected
                   ? "bg-ink font-semibold text-on-ink"
@@ -223,6 +239,17 @@ function CalendarHeader({
       </div>
     </div>
   );
+}
+
+function calendarDayLabel(day: Date, marks: CalendarExam[]): string {
+  const date = day.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  if (marks.length === 0) return date;
+  const names = marks.map((exam) => exam.name.trim() || "Examen").join(", ");
+  return `${date}, ${names}`;
 }
 
 export function isoDay(date: Date): string {

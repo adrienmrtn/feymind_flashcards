@@ -88,7 +88,14 @@ export function WaitlistForm({
           </Button>
         </div>
         <FieldDescription>
-          {result?.message ?? "Une adresse, rien d'autre. Pas de lettre d'information."}
+          {result?.message ?? (
+            <>
+              Une adresse, rien d&apos;autre. Pas de lettre d&apos;information.{" "}
+              <a href="/confidentialite" className="underline-draw text-ink">
+                Confidentialité
+              </a>
+            </>
+          )}
         </FieldDescription>
       </Field>
     </form>

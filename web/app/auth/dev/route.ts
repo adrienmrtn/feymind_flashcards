@@ -22,7 +22,7 @@ import { createClient } from "@/lib/supabase/server";
  *     /auth/dev?email=essai.web@micabo.test&password=…
  */
 export async function GET(request: NextRequest) {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") {
     return new NextResponse("Introuvable.", { status: 404 });
   }
 

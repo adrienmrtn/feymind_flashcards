@@ -76,7 +76,22 @@ export function checkoutSessionFields(input: {
     fields["subscription_data[trial_period_days]"] = String(input.trialDays);
   }
 
+  // Le même identifiant que `client_reference_id`, aussi en métadonnée : si
+  // RevenueCat perd la référence, on retrouve encore le client Stripe.
+  fields["metadata[supabase_user_id]"] = input.userId;
+  fields["subscription_data[metadata][supabase_user_id]"] = input.userId;
+
   return fields;
+}
+
+/** Une clé stable sur l'heure : un double-clic ne crée pas deux sessions. */
+export function checkoutIdempotencyKey(
+  userId: string,
+  plan: string,
+  now = Date.now(),
+): string {
+  const hour = Math.floor(now / (60 * 60 * 1000));
+  return `checkout-${userId}-${plan}-${hour}`;
 }
 
 export function extractStripeMessage(payload: unknown): string {

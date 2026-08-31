@@ -166,6 +166,74 @@ export async function deleteAccount(): Promise<SavedSettings> {
   return { status: "ok" };
 }
 
+export interface AccountExport {
+  status: "ok" | "error";
+  message?: string;
+  payload?: Record<string, unknown>;
+}
+
+/**
+ * Une copie des données du compte, lue sous RLS.
+ *
+ * Rien n'est écrit, rien n'est gardé : le fichier n'existe que le temps du
+ * téléchargement. L'historique est borné pour rester ouvrable.
+ */
+export async function exportAccountData(): Promise<AccountExport> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "error", message: "Connecte-toi." };
+
+  const [
+    profile,
+    courses,
+    cards,
+    logs,
+    exams,
+    right,
+    usage,
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+    supabase.from("courses").select("*").eq("user_id", user.id).is("deleted_at", null),
+    supabase
+      .from("flashcards")
+      .select(
+        "id, course_id, front, back, hint, position, kind, state, due_date, created_at, updated_at",
+      )
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .limit(20_000),
+    supabase
+      .from("review_logs")
+      .select("id, card_id, reviewed_at, rating, state_before, new_interval_days")
+      .eq("user_id", user.id)
+      .order("reviewed_at", { ascending: false })
+      .limit(10_000),
+    supabase.from("exams").select("*").eq("user_id", user.id).is("deleted_at", null),
+    supabase.from("entitlements").select("is_pro, store, period_type, expires_at, will_renew").eq(
+      "user_id",
+      user.id,
+    ).maybeSingle(),
+    supabase.from("ai_usage").select("day, fn, count").eq("user_id", user.id),
+  ]);
+
+  return {
+    status: "ok",
+    payload: {
+      exportedAt: new Date().toISOString(),
+      user: { id: user.id, email: user.email ?? null },
+      profile: profile.data,
+      courses: courses.data ?? [],
+      flashcards: cards.data ?? [],
+      reviewLogs: logs.data ?? [],
+      exams: exams.data ?? [],
+      entitlement: right.data,
+      aiUsage: usage.data ?? [],
+    },
+  };
+}
+
 /** Ferme la session. Le compte et les cours restent. */
 export async function signOut(): Promise<void> {
   const supabase = await createClient();

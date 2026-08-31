@@ -35,7 +35,7 @@ enum MicaboColor {
     // Encre
     static let ink = Color(hex: 0x191714)
     static let inkSecondary = Color(hex: 0x6F6A60)
-    static let inkTertiary = Color(hex: 0xA6A199)
+    static let inkTertiary = Color(hex: 0x6F6A60)
 
     /// Encre des longs paragraphes d'une fiche. Un noir de titre tenu sur trente lignes
     /// fatigue : celui-ci est à peine remonté vers le brun du papier.

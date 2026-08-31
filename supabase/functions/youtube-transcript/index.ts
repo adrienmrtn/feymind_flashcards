@@ -36,7 +36,9 @@ Deno.serve((request: Request) =>
     try {
       // Cette fonction n'appelle aucun modèle, mais elle va chercher n'importe quelle URL :
       // laissée ouverte, c'est un relais anonyme. Elle passe donc le même contrôle, sans quota.
-      await authorize(request, "youtube-transcript");
+      // Pas de quota modèle : cette fonction ne parle pas à fal.ai. Le contrôle
+      // d'identité reste, pour que ça ne serve pas de relais anonyme.
+      await authorize(request, "youtube-transcript", { meter: false });
       const body = (await request.json()) as RequestBody;
 
       const videoId = extractVideoId(body.url);
@@ -92,7 +94,7 @@ Deno.serve((request: Request) =>
       }
 
       const transcript = await fetchBestTranscript(metadata.captions, languages);
-      const text = stripEmDashes(transcript.text);
+      const text = stripEmDashes(transcript.text).slice(0, YOUTUBE_LIMITS.maxTranscriptCharacters);
 
       return json({
         video,

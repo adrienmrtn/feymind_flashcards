@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  checkoutIdempotencyKey,
   checkoutReturnUrl,
   checkoutSessionFields,
   envOrCatalogPrice,
@@ -66,6 +67,18 @@ describe("checkoutSessionFields", () => {
     expect(fields.customer_email).toBeUndefined();
     expect(fields["subscription_data[trial_period_days]"]).toBeUndefined();
     expect(fields["line_items[0][price]"]).toBe("price_week");
+    expect(fields["metadata[supabase_user_id]"]).toBe("user-1");
+    expect(fields["subscription_data[metadata][supabase_user_id]"]).toBe("user-1");
+  });
+
+  it("pose une clé d'idempotence stable sur l'heure", () => {
+    const now = Date.parse("2026-08-31T16:10:00Z");
+    expect(checkoutIdempotencyKey("user-1", "weekly", now)).toBe(
+      checkoutIdempotencyKey("user-1", "weekly", now + 60_000),
+    );
+    expect(checkoutIdempotencyKey("user-1", "weekly", now)).not.toBe(
+      checkoutIdempotencyKey("user-1", "yearly", now),
+    );
   });
 
   it("pose l'essai seulement quand il y en a un", () => {

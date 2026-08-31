@@ -1,4 +1,4 @@
-# Agency agents (Design + implémentation)
+# Agency agents
 
 Source : https://github.com/msitarzewski/agency-agents
 Commit : `3c9588880b7cafaec325a104899fd8bbe27e7d72`
@@ -6,27 +6,29 @@ Licence : MIT (voir `LICENSE`)
 
 Installés via le script officiel :
 `scripts/convert.sh --tool cursor`
-`scripts/install.sh --tool cursor --division design --agent frontend-developer,mobile-app-builder`
+`scripts/install.sh --tool cursor --agent <slugs>`
 
-## Ce qui est là
+## Design + implémentation (PR UI)
 
-Design Division (les UI/UX qui travaillent main dans la main) :
+- `ui-designer`, `ux-researcher`, `ux-architect`, `brand-guardian`
+- `ui-finish-gate-reviewer`, `persona-walkthrough-specialist`, `whimsy-injector`
+- `visual-storyteller`, `image-prompt-engineer`, `inclusive-visuals-specialist`
+- `frontend-developer`, `mobile-app-builder`
 
-- `ui-designer`
-- `ux-researcher`
-- `ux-architect`
-- `brand-guardian`
-- `ui-finish-gate-reviewer`
-- `persona-walkthrough-specialist`
-- `whimsy-injector`
-- `visual-storyteller`
-- `image-prompt-engineer`
-- `inclusive-visuals-specialist`
+## Backend, sécurité, paiements, légal, SEO (cette vague)
 
-Implémentation (site + iOS) :
-
-- `frontend-developer`
-- `mobile-app-builder`
+- `backend-architect`
+- `database-optimizer`
+- `payments-billing-engineer`
+- `prompt-engineer`
+- `identity-access-engineer`
+- `privacy-engineer`
+- `ai-generated-code-security-auditor`
+- `accessibility-auditor`
+- `legal-compliance-checker`
+- `data-privacy-officer`
+- `seo-specialist`
+- `autonomous-optimization-architect`
 
 Règles Cursor : `.cursor/rules/*.mdc` (`alwaysApply: false`)
 Skills : `.agents/skills/<slug>/SKILL.md`
