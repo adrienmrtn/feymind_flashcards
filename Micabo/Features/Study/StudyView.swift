@@ -56,6 +56,7 @@ struct StudyView: View {
     /// balayer la feuille appellerait `leaveForHome` une deuxième fois.
     @State private var sessionPaywallSettled = false
     @State private var paywall: PaywallTrigger?
+    @State private var confirmLeave = false
 
     private var totalLabel: String {
         let answered = session.answeredCount
@@ -142,6 +143,16 @@ struct StudyView: View {
             .presentationCornerRadius(MicaboRadius.sheet)
         }
         .micaboPaywall($paywall)
+        .confirmationDialog(
+            "Quitter la session ?",
+            isPresented: $confirmLeave,
+            titleVisibility: .visible
+        ) {
+            Button("Reprendre plus tard") { finish() }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("Tes notes sont enregistrées. Tu pourras reprendre où tu t'es arrêté.")
+        }
     }
 
     // MARK: - En-tête (X · barre · 4/12 · annuler)
@@ -151,7 +162,11 @@ struct StudyView: View {
             HStack(spacing: 14) {
                 if !isEmbedded {
                     MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: "Fermer") {
-                        finish()
+                        if session.answeredCount > 0, !session.isFinished {
+                            confirmLeave = true
+                        } else {
+                            finish()
+                        }
                     }
                 }
 
@@ -196,7 +211,7 @@ struct StudyView: View {
     private var practiceBanner: some View {
         banner(
             systemImage: "dumbbell",
-            text: "Entraînement libre · ton planning n'est pas modifié",
+            text: MicaboCopy.practiceReviewHint,
             tint: MicaboColor.accent,
             background: MicaboColor.accentSoft
         )
@@ -255,6 +270,9 @@ struct StudyView: View {
                         session.reveal()
                     }
                 }
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint(session.isRevealed ? "Réponse visible" : "Affiche la réponse")
+                .accessibilityLabel(session.isRevealed ? "Carte, réponse" : "Carte, question")
             }
         }
         .padding(.horizontal, MicaboSpacing.screen)
@@ -588,7 +606,7 @@ struct StudyCardFace: View {
                         FormulaText(
                             source: card.back,
                             size: 15,
-                            color: Color(hex: 0x4A463F)
+                            color: MicaboColor.inkBody
                         )
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .fixedSize(horizontal: false, vertical: true)
@@ -684,7 +702,7 @@ struct StudyCardFace: View {
 
                 Text(hint)
                     .font(MicaboFont.hanken(13, weight: .medium))
-                    .foregroundStyle(Color(hex: 0x4A463F))
+                    .foregroundStyle(MicaboColor.inkBody)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -878,7 +896,7 @@ struct GradeButtons: View {
                             Text(interval)
                                 .font(MicaboFont.number(11, weight: .semibold))
                                 .monospacedDigit()
-                                .opacity(0.7)
+                                .opacity(1)
                         }
                     }
                     .foregroundStyle(tint(for: rating))
@@ -904,7 +922,7 @@ struct GradeButtons: View {
     /// quatre notes finiraient par ne plus se répondre.
     static func tint(for rating: ReviewRating) -> Color {
         switch rating {
-        case .again: Color(hex: 0xB5573C)
+        case .again: MicaboColor.ratingAgain
         case .hard: MicaboColor.caution
         case .good: MicaboColor.positive
         case .easy: MicaboColor.info
@@ -1159,7 +1177,7 @@ private struct NothingDueView: View {
                     if canPractice {
                         Button(action: onPractice) {
                             HStack(spacing: MicaboSpacing.xs) {
-                                Text("Entraînement libre")
+                                Text(MicaboCopy.practiceReview)
 
                                 if isPracticeLocked {
                                     Image(systemName: "lock.fill")

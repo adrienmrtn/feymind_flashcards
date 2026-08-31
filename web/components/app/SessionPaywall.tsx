@@ -58,7 +58,7 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
       return;
     }
     if (result.status === "already") {
-      setCheckout("Vous êtes déjà abonné.");
+      setCheckout("Tu es déjà abonné.");
       router.refresh();
       return;
     }

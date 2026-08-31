@@ -42,6 +42,78 @@
       "sourceType": "github",
       "skillPath": "skills/improve-animations/SKILL.md",
       "computedHash": "eeb219a407e325b687af88db25771cc3018e3148245604112f5ac6990b6fd79c"
+    },
+    "ui-designer": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/ui-designer/SKILL.md",
+      "computedHash": "dce9363c433474f8c838483e4c9c4cc6728d539767ce84fa906760807829c99d"
+    },
+    "ux-researcher": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/ux-researcher/SKILL.md",
+      "computedHash": "3b3fb562cc741f4d933300d086c744f7029b731d5f645416e3a287eceef5ff65"
+    },
+    "ux-architect": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/ux-architect/SKILL.md",
+      "computedHash": "041cb61a7abd962a257564c8029fd43dd6db359fcb4b1eea13c274bbce65e07c"
+    },
+    "brand-guardian": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/brand-guardian/SKILL.md",
+      "computedHash": "8f712fdccd8475bc0a1d761e64ee1c358cadc0b53de2f884c3ada43abd1ed128"
+    },
+    "ui-finish-gate-reviewer": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/ui-finish-gate-reviewer/SKILL.md",
+      "computedHash": "df06bb3d8d4dddef7d4a10c31341d0fa9408bcd32d1767f42dfd153323197ae0"
+    },
+    "persona-walkthrough-specialist": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/persona-walkthrough-specialist/SKILL.md",
+      "computedHash": "bc2820e3e77e780cd01c747290654b275fb1715b49d1bb2ef6bf5ac94eca8039"
+    },
+    "whimsy-injector": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/whimsy-injector/SKILL.md",
+      "computedHash": "d63b0b7ebe7644c47aaddaa4194652994873c43d82851409082aea3265b2f9f3"
+    },
+    "visual-storyteller": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/visual-storyteller/SKILL.md",
+      "computedHash": "a575ba2d7d75bce0295cdbd062ea586b0744fcc9d849a8e7a1678a5b7e21c0b8"
+    },
+    "image-prompt-engineer": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/image-prompt-engineer/SKILL.md",
+      "computedHash": "8424d7ec451be80f8f60d3ba5f435e11c9f1f9675f49bdb0a3da723806b0aa11"
+    },
+    "inclusive-visuals-specialist": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/inclusive-visuals-specialist/SKILL.md",
+      "computedHash": "0aa1a498fddbf41e625e4397a5c8841854fe4644f9f812a99c74516454388190"
+    },
+    "frontend-developer": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-developer/SKILL.md",
+      "computedHash": "c83862cc0cb5df8abb2b2ebaa5c9b87342b98198a1bbc4ab6b3f76ea5417b89c"
+    },
+    "mobile-app-builder": {
+      "source": "msitarzewski/agency-agents",
+      "sourceType": "github",
+      "skillPath": "skills/mobile-app-builder/SKILL.md",
+      "computedHash": "4f643715e8a9e645a167e5cfe530e8ab963ecf65399cb9480bb89d61d259d7d2"
     }
   }
 }

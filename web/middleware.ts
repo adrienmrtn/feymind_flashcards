@@ -19,7 +19,7 @@ import { PRODUCTION_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
  * 3. La session se rafraîchit, et les cookies voyagent avec la réponse.
  * 4. Une session ouverte n'a plus rien à faire sur le parcours : on ouvre
  *    l'app. Sauf si on rejoue l'accueil exprès (cookie posé depuis le profil).
- *    La landing reste visible - le bouton dit alors Dashboard.
+ *    La landing reste visible - le bouton dit alors Ouvrir l'app.
  *
  * **Le point 3 se lisait `getUser()`, et c'était le péage de chaque clic.**
  * `getUser()` interroge GoTrue par le réseau, *à chaque fois*, et ce middleware

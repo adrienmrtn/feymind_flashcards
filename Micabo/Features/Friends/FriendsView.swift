@@ -171,19 +171,11 @@ struct FriendsView: View {
     }
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-            Text("Personne pour l'instant")
-                .font(MicaboFont.cardTitle)
-                .foregroundStyle(MicaboColor.ink)
-
-            Text("Cherche un nom d'utilisateur pour ajouter quelqu'un.")
-                .font(MicaboFont.body)
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(MicaboSpacing.md)
-        .micaboGroup()
+        MicaboEmptyState(
+            systemImage: "person.2",
+            title: "Personne pour l'instant",
+            message: "Cherche un nom d'utilisateur pour ajouter quelqu'un."
+        )
     }
 
     private func refreshed(_ person: SocialService.Person) -> SocialService.Person {
@@ -296,6 +288,7 @@ private struct FriendRow: View {
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
         .disabled(social.isLoading)
+        .accessibilityLabel(title)
     }
 
     private func open() {

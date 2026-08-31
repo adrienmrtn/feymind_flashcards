@@ -11,6 +11,7 @@ import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { canImportNow } from "@/lib/data/entitlement";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
 import { loadNewCardBudget } from "@/lib/data/reviews";
+import { heldBackNew } from "@/lib/micabo-copy";
 
 /**
  * L'étagère. Les cours des amis se lisent encore sur leur profil, selon
@@ -96,9 +97,13 @@ function Shelf({
     <>
       {emptyReviews ? (
         <p className="text-[13px] text-muted-foreground">
-          {heldBack > 0
-            ? `C'est fait. ${heldBack} neuve${heldBack > 1 ? "s" : ""} hors rythme.`
-            : "C'est fait. Reviens demain."}
+          {heldBack > 0 ? `C'est fait. ${heldBackNew(heldBack)}` : "C'est fait. Reviens demain."}
+        </p>
+      ) : null}
+
+      {courses.length === 0 ? (
+        <p className="text-[15px] text-ink-secondary">
+          Ton premier cours t&apos;attend. PDF, photo, Word ou notes collées.
         </p>
       ) : null}
 

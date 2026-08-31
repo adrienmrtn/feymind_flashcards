@@ -14,6 +14,7 @@ import { CountStepper } from "@/components/app/CountStepper";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/card";
 import { requestPaywall } from "@/lib/paywall";
+import { heldBackNew, practiceReview } from "@/lib/micabo-copy";
 
 export interface ReviewSetupCard {
   id: string;
@@ -133,8 +134,8 @@ export function ReviewSetup({
           empty
             ? "Importe un cours pour commencer."
             : isPro
-              ? "Reviens demain."
-              : "L'entraînement libre est dans Pro."
+              ? "Rien à réviser aujourd'hui. Tu peux prendre de l'avance sur un cours."
+              : "Réviser sans compter est dans Pro."
         }
         action={
           empty ? (
@@ -142,7 +143,7 @@ export function ReviewSetup({
           ) : isPro ? (
             <Button render={<Link href={"/app/cours" as never} />}>Voir les cours</Button>
           ) : (
-            <Button onClick={requestPaywall}>Entraînement libre</Button>
+            <Button onClick={requestPaywall}>{practiceReview}</Button>
           )
         }
       />
@@ -159,7 +160,7 @@ export function ReviewSetup({
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {leftoverOnly
-            ? `${dueNew} neuve${dueNew > 1 ? "s" : ""} hors rythme`
+            ? heldBackNew(dueNew)
             : courseId
               ? "Ce cours"
               : "Aujourd'hui"}
@@ -207,7 +208,12 @@ export function ReviewSetup({
           {leftoverOnly ? `Réviser ${fresh} neuve${fresh > 1 ? "s" : ""}` : "Commencer"}
         </Button>
       ) : (
-        <p className="text-sm text-muted-foreground">Ajoute des neuves.</p>
+        <p className="text-sm text-muted-foreground">
+          Ton rythme du jour est atteint.{" "}
+          <Link href={"/app/reglages" as never} className="underline-draw font-medium text-ink">
+            Changer le rythme
+          </Link>
+        </p>
       )}
     </div>
   );
@@ -227,10 +233,10 @@ function NewCardsControl({
   const relation = value === planned ? "at" : value > planned ? "above" : "below";
   const info =
     relation === "at"
-      ? "Nombre de nouvelles cartes prévues en fonction de votre rythme."
+      ? "Nombre de nouvelles cartes prévues selon ton rythme."
       : relation === "above"
-        ? "Au-dessus de votre rythme."
-        : "En dessous de votre rythme.";
+        ? "Au-dessus de ton rythme."
+        : "En dessous de ton rythme.";
   const tone = relation === "at" ? "info" : relation === "above" ? "caution" : "ink";
 
   return (

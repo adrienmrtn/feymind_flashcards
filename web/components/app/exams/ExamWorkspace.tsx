@@ -118,8 +118,8 @@ export function ExamWorkspace({
         onSelect={pickDay}
       />
 
-      <p className="mt-3 text-center text-[12.5px] text-ink-tertiary">
-        👆 Clique un jour pour y poser un examen.
+      <p className="mt-3 text-center text-[12.5px] text-ink-secondary">
+        Choisis un jour pour y poser un examen.
       </p>
 
       <button
@@ -127,13 +127,12 @@ export function ExamWorkspace({
         onClick={openNew}
         className="pressable hover-tile mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-button bg-ink text-[15px] font-semibold text-on-ink"
       >
-        📅 Ajouter un examen
+        Ajouter un examen
       </button>
 
       {selected && onDay.length > 0 ? (
         <section className="mt-8">
           <p className="eyebrow mb-3 text-ink-tertiary">
-            📍{" "}
             {selected.toLocaleDateString("fr-FR", {
               weekday: "long",
               day: "numeric",
@@ -156,7 +155,7 @@ export function ExamWorkspace({
 
       {upcoming.length > 0 ? (
         <section className="mt-10">
-          <p className="eyebrow mb-3 text-ink-tertiary">📌 À venir</p>
+          <p className="eyebrow mb-3 text-ink-tertiary">À venir</p>
           <div className={`grid gap-4 ${upcoming.length > 1 ? "md:grid-cols-2" : ""}`}>
             {upcoming.map((exam) => {
               const insight = insightById.get(exam.id);
@@ -179,7 +178,11 @@ export function ExamWorkspace({
           </div>
         </section>
       ) : (
-        <p className="mt-4 text-sm text-muted-foreground">Aucune date pour l&apos;instant.</p>
+        <p className="mt-4 text-sm text-ink-secondary">
+          {courses.length === 0
+            ? "Importe un cours avant de poser une date."
+            : "Aucune date pour l'instant. Choisis un jour dans le calendrier."}
+        </p>
       )}
 
       {past.length > 0 ? (
@@ -251,13 +254,10 @@ function ExamRow({
       >
         <span className="min-w-0">
           <span className="block truncate text-[15.5px] font-semibold text-ink">
-            <span aria-hidden className="emoji mr-1.5">
-              {urgencyEmoji(urgency)}
-            </span>
             {name}
           </span>
-          <span className="mt-0.5 block truncate text-[12.5px] text-ink-tertiary">
-            📚 {courses}
+          <span className="mt-0.5 block truncate text-[12.5px] text-ink-secondary">
+            {courses}
           </span>
         </span>
         <span className={`shrink-0 rounded-pill px-2.5 py-1 text-[12px] font-semibold ${tone}`}>
@@ -266,21 +266,6 @@ function ExamRow({
       </button>
     </li>
   );
-}
-
-function urgencyEmoji(urgency: ReturnType<typeof examUrgency>): string {
-  switch (urgency) {
-    case "critical":
-      return "🔥";
-    case "soon":
-      return "⏰";
-    case "upcoming":
-      return "📌";
-    case "past":
-      return "📦";
-    default:
-      return "📗";
-  }
 }
 
 function courseLine(ids: string[], titles: Map<string, string>): string {
