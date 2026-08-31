@@ -64,12 +64,12 @@ enum ImportKind: String, CaseIterable, Identifiable {
     /// Pastel de la tuile dans la feuille d'import.
     var tilePastel: Color {
         switch self {
-        case .pdf: Color(hex: 0xE7EFE9)
-        case .photo: Color(hex: 0xF5ECE3)
-        case .youtube: Color(hex: 0xF4E5E2)
+        case .pdf: Color(hex: 0xE8ECF1)
+        case .photo: Color(hex: 0xF1F5F9)
+        case .youtube: Color(hex: 0xDBEAFE)
         case .docx: Color(hex: 0xE8EDF3)
-        case .text: Color(hex: 0xEDEAF7)
-        case .cards: Color(hex: 0xE3F1EA)
+        case .text: Color(hex: 0xE0E7FF)
+        case .cards: Color(hex: 0xE0F2FE)
         }
     }
 
@@ -77,23 +77,23 @@ enum ImportKind: String, CaseIterable, Identifiable {
     /// brique désaturée, comme les autres sources portent un vert ou un bleu éteints.
     var swatchTint: Color {
         switch self {
-        case .pdf: Color(hex: 0x47665A)
-        case .photo: Color(hex: 0x8A5A3A)
-        case .youtube: Color(hex: 0x8C4038)
+        case .pdf: Color(hex: 0x1E3A8A)
+        case .photo: Color(hex: 0x2563EB)
+        case .youtube: Color(hex: 0x1D4ED8)
         case .docx: Color(hex: 0x3D5A80)
-        case .text: Color(hex: 0x4F5A72)
-        case .cards: Color(hex: 0x2F6B57)
+        case .text: Color(hex: 0x4F46E5)
+        case .cards: Color(hex: 0x0369A1)
         }
     }
 
     var swatchBackground: Color {
         switch self {
-        case .pdf: Color(hex: 0xE4ECE6)
-        case .photo: Color(hex: 0xF3E6DC)
-        case .youtube: Color(hex: 0xF1E0DD)
+        case .pdf: Color(hex: 0xE8ECF1)
+        case .photo: Color(hex: 0xF1F5F9)
+        case .youtube: Color(hex: 0xDBEAFE)
         case .docx: Color(hex: 0xE3EAF3)
-        case .text: Color(hex: 0xE6E9F0)
-        case .cards: Color(hex: 0xDFEEE7)
+        case .text: Color(hex: 0xE0E7FF)
+        case .cards: Color(hex: 0xE0F2FE)
         }
     }
 
