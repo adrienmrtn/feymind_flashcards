@@ -653,13 +653,13 @@ struct SettingsView: View {
                     tile: MicaboTile(glyph: .emoji("🔒"), background: MicaboColor.tilePastels[3]),
                     title: "Confidentialité",
                     accessory: .chevron,
-                    action: { openLegal(PaywallCatalog.privacy) }
+                    action: { openLegal(PaywallLinks.privacy) }
                 ),
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("📜"), background: MicaboColor.tilePastels[5]),
                     title: "Conditions",
                     accessory: .chevron,
-                    action: { openLegal(PaywallCatalog.terms) }
+                    action: { openLegal(PaywallLinks.terms) }
                 )
             ]
         )
