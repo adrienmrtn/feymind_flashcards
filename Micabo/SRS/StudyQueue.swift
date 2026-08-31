@@ -176,14 +176,28 @@ struct CourseDuePreview: Equatable {
         in context: ModelContext,
         now: Date = Date()
     ) -> CourseDuePreview {
-        let logs = (try? context.fetch(FetchDescriptor<ReviewLog>())) ?? []
+        // Le plafond ne dépend que des cartes introduites aujourd'hui. Lire tout
+        // l'historique à chaque ouverture de fiche faisait croître la latence avec les mois
+        // d'utilisation.
+        let start = MicaboCalendar.shared.startOfDay(for: now)
+        let logs = (try? context.fetch(FetchDescriptor<ReviewLog>(
+            predicate: #Predicate { $0.reviewedAt >= start }
+        ))) ?? []
+
+        // Les examens sont peu nombreux, et `courseIDs.contains` n'est pas un prédicat
+        // SwiftData portable. On les lit, mais on ne relit plus **tous les cours et toutes
+        // leurs cartes** pour construire la date butoir de celui qui est déjà sous nos yeux.
         let exams = (try? context.fetch(FetchDescriptor<Exam>())) ?? []
-        let courses = CourseRepository.allCourses(in: context)
         let due = StudyQueueBuilder.build(
             from: cards,
             now: now,
             limits: .daily(newRemaining: DailyNewQuota.remaining(logs: logs, now: now)),
-            deadlines: ExamDeadlines.active(exams: exams, courses: courses, now: now)
+            deadlines: ExamDeadlines.active(
+                exams: exams,
+                cards: cards,
+                courseID: courseID,
+                now: now
+            )
         )
         let dueNew = due.filter { $0.state == .new }.count
         let allDueNew = cards.filter { $0.isDue(at: now) && $0.state == .new }.count

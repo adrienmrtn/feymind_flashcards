@@ -74,6 +74,39 @@ struct ExamDeadlines {
         return ExamDeadlines(byCard: byCard, names: names)
     }
 
+    /// La date butoir d'un **seul cours**, sans relire tous les cours et toutes leurs cartes.
+    ///
+    /// Les écrans Fiche et Cartes connaissent déjà leur cours et ses cartes. L'ancienne
+    /// forme reconstruisait pourtant le dictionnaire de toute la bibliothèque à chaque
+    /// poussée de navigation, uniquement pour revenir à ce même sous-ensemble.
+    static func active(
+        exams: [Exam],
+        cards: [Flashcard],
+        courseID: UUID,
+        now: Date = Date(),
+        calendar: Calendar = MicaboCalendar.shared
+    ) -> ExamDeadlines {
+        var byCard: [UUID: Date] = [:]
+        var names: [UUID: String] = [:]
+        let activeCards = cards.filter { !$0.isSuspended }
+        let today = calendar.startOfDay(for: now)
+
+        for exam in exams where exam.isPlanned && exam.courseIDs.contains(courseID) {
+            let examDay = calendar.startOfDay(for: exam.date)
+            guard examDay >= today else { continue }
+            let label = exam.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            let name = label.isEmpty ? "Examen" : label
+
+            for card in activeCards {
+                if let existing = byCard[card.id], existing <= examDay { continue }
+                byCard[card.id] = examDay
+                names[card.id] = name
+            }
+        }
+
+        return ExamDeadlines(byCard: byCard, names: names)
+    }
+
     /// Même chose, lue directement depuis la base : c'est la forme dont une session a besoin.
     static func active(in context: ModelContext, now: Date = Date()) -> ExamDeadlines {
         let exams = (try? context.fetch(FetchDescriptor<Exam>())) ?? []

@@ -37,9 +37,8 @@ struct TodayView: View {
     @State private var isCreatingDeck = false
     @State private var paywall: PaywallTrigger?
 
-    /// Dernière file calculée. Les quatre pages peuvent rester montées : sans ce cache,
-    /// chaque écriture SwiftData (synchro, note) reconstruisait la file derrière l'onglet
-    /// qu'on regardait vraiment.
+    /// Dernière file calculée. Une bascule de feuille, de paywall ou de navigation ne change
+    /// aucune échéance : elle ne doit pas reconstruire toutes les cartes du jour.
     @State private var loadBox = DayLoadBox()
 
     /// File du jour, calculée **une fois** par rendu. Sans ça, `StudyQueueBuilder.build`
@@ -84,17 +83,46 @@ struct TodayView: View {
     }
 
     private final class DayLoadBox {
+        var key: DayLoadKey?
         var value: DayLoad?
     }
 
+    private struct ModelVersion: Equatable {
+        let id: UUID
+        let changedAt: Date
+    }
+
+    private struct DayLoadKey: Equatable {
+        let day: Date
+        let minute: Int
+        let cards: [ModelVersion]
+        let courses: [ModelVersion]
+        let logs: [ModelVersion]
+        let exams: [ModelVersion]
+    }
+
+    private func dayLoadKey(now: Date = Date()) -> DayLoadKey {
+        DayLoadKey(
+            day: MicaboCalendar.shared.startOfDay(for: now),
+            minute: Int(now.timeIntervalSince1970 / 60),
+            cards: allCards.map { ModelVersion(id: $0.id, changedAt: $0.updatedAt) },
+            courses: courses.map { ModelVersion(id: $0.id, changedAt: $0.updatedAt) },
+            logs: reviewLogs.map { ModelVersion(id: $0.id, changedAt: $0.reviewedAt) },
+            exams: exams.map { ModelVersion(id: $0.id, changedAt: $0.updatedAt) }
+        )
+    }
+
     private func resolvedLoad() -> DayLoad {
+        let key = dayLoadKey()
         if let cached = loadBox.value {
-            // L'onglet n'est pas visible, ou la synchro écrit encore : on ne
-            // reconstruisait sinon la file à chaque carte descendue.
+            if loadBox.key == key { return cached }
+            // L'onglet n'est pas visible, ou la synchro écrit encore : on attend la fin du
+            // lot au lieu de reconstruire après chaque ligne descendue.
             if router?.selection != .today { return cached }
             if sync?.state == .syncing { return cached }
         }
         let built = DayLoad(allCards: allCards, courses: courses, exams: exams, logs: reviewLogs)
+        loadBox.key = key
         loadBox.value = built
         return built
     }

@@ -24,9 +24,11 @@ struct CourseSheetView: View {
     @Environment(CloudSync.self) private var sync
     @Environment(ProAccess.self) private var pro: ProAccess?
 
-    /// La fiche décodée **avant** le premier cadre : un `.task` la posait trop tard, et
-    /// la page s'ouvrait vide le temps du décodage.
+    /// La fiche se décode hors de l'acteur principal. La décoder dans `init` retenait la
+    /// poussée de navigation jusqu'à la fin du JSON et du surlignage ; l'en-tête n'avait
+    /// donc même pas le droit d'apparaître.
     @State private var sheet: CourseSheet?
+    @State private var isLoadingSheet: Bool
     @State private var explaining: ExplainedPassage?
     @State private var showCardOptions = false
     @State private var isWorking: Work?
@@ -50,7 +52,8 @@ struct CourseSheetView: View {
 
     init(course: Course) {
         self.course = course
-        _sheet = State(initialValue: course.decodedSheet())
+        _sheet = State(initialValue: nil)
+        _isLoadingSheet = State(initialValue: course.hasSheet)
         _duePreview = State(initialValue: CourseDuePreview.immediate(from: course.cards))
     }
 
@@ -85,6 +88,9 @@ struct CourseSheetView: View {
         .enablesSwipeBack()
         .overlay(alignment: .bottom) { bottomBar }
         .overlay { workOverlay }
+        .task(id: course.updatedAt) {
+            await loadSheet()
+        }
         .task {
             duePreview = CourseDuePreview.scheduled(
                 from: cards,
@@ -92,9 +98,6 @@ struct CourseSheetView: View {
                 in: modelContext
             )
             await presentGiftIfEarned()
-        }
-        .onChange(of: course.sheetData) { _, _ in
-            sheet = course.decodedSheet()
         }
         .sheet(item: $explaining) { passage in
             ExplainSelectionSheet(course: course, selection: passage.text)
@@ -282,6 +285,22 @@ struct CourseSheetView: View {
 
     // MARK: - La fiche
 
+    private func loadSheet() async {
+        guard let data = course.sheetData, !data.isEmpty else {
+            sheet = nil
+            isLoadingSheet = false
+            return
+        }
+
+        isLoadingSheet = true
+        let decoded = await Task.detached(priority: .userInitiated) {
+            CourseSheet.decode(from: data)?.highlighted()
+        }.value
+        guard !Task.isCancelled, course.sheetData == data else { return }
+        sheet = decoded
+        isLoadingSheet = false
+    }
+
     /// La fiche, coupée aux sept dixièmes tant qu'on n'est pas abonné.
     ///
     /// La coupure se compte en blocs (`SheetGate`) et non en caractères : couper un
@@ -304,6 +323,18 @@ struct CourseSheetView: View {
                     paywall = .lockedSheet
                 }
             }
+        } else if isLoadingSheet {
+            HStack(spacing: MicaboSpacing.sm) {
+                ProgressView()
+                    .tint(MicaboColor.accent)
+                Text("Ouverture de la fiche…")
+                    .font(MicaboFont.hanken(13.5, weight: .medium))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, MicaboSpacing.lg)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Ouverture de la fiche")
         } else {
             missingSheet
         }
