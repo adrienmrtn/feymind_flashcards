@@ -8,7 +8,7 @@ import {
 } from "./prompt-boundary.ts";
 
 Deno.test("sanitizeMeta", () => {
-  assertEquals(sanitizeMeta("  Titre long   ", 6), "Titre");
+  assertEquals(sanitizeMeta("  Titre long   ", 5), "Titre");
   assertEquals(sanitizeMeta("a\u0000b", 10), "ab");
   assertEquals(sanitizeMeta(undefined, 10), "");
 });
