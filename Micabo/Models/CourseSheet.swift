@@ -11,7 +11,7 @@ import Foundation
 /// Les huit blocs ci-dessous sont volontairement peu nombreux. Chacun a un rendu dessiné
 /// pour lui, ce qui est la seule façon de tenir une belle page : un format ouvert, où le
 /// modèle inventerait ses propres structures, donnerait une page différente à chaque cours.
-struct CourseSheet: Codable, Equatable {
+struct CourseSheet: Codable, Equatable, Sendable {
     var blocks: [SheetBlock]
 
     init(blocks: [SheetBlock]) {
@@ -86,7 +86,7 @@ struct CourseSheet: Codable, Equatable {
 
 /// Un bloc de la fiche. Le décodage est tolérant : un bloc d'un type inconnu, ou vidé de
 /// son texte, est ignoré au lieu de faire échouer toute la fiche.
-enum SheetBlock: Codable, Equatable {
+enum SheetBlock: Codable, Equatable, Sendable {
     /// Titre de partie (niveau 1) ou de sous-partie (niveau 2).
     case heading(level: Int, text: String)
     /// Paragraphe rédigé. C'est le bloc majoritaire d'une fiche : on lit des phrases,
@@ -308,7 +308,7 @@ enum SheetBlock: Codable, Equatable {
 
 /// Ce qu'un encadré vient dire. Quatre intentions, pas plus : au delà, la page devient un
 /// nuancier et l'étudiant ne sait plus ce qui compte.
-enum SheetCalloutTone: String, Codable, Equatable, CaseIterable {
+enum SheetCalloutTone: String, Codable, Equatable, CaseIterable, Sendable {
     /// Ce qu'il faut retenir du passage.
     case essentiel
     /// Le piège classique, la confusion fréquente.
@@ -356,7 +356,7 @@ enum SheetCalloutTone: String, Codable, Equatable, CaseIterable {
 // MARK: - Tableau
 
 /// Tableau de la fiche. Deux à quatre colonnes : au delà, rien ne se lit sur un téléphone.
-struct SheetTable: Equatable {
+struct SheetTable: Equatable, Sendable {
     var title: String?
     var headers: [String]
     var rows: [[String]]
@@ -426,8 +426,8 @@ struct SheetTable: Equatable {
 /// Micabo n'essaie pas de reproduire les figures du document, ce serait toujours moins bon
 /// que l'original. Il ne dessine que ce qui se compare : des valeurs nommées, dans la même
 /// unité, mises côte à côte.
-struct SheetChart: Equatable {
-    struct Bar: Codable, Equatable {
+struct SheetChart: Equatable, Sendable {
+    struct Bar: Codable, Equatable, Sendable {
         var label: String
         var value: Double
 

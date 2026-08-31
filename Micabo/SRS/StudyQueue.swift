@@ -59,6 +59,18 @@ enum DailyNewQuota {
         if let override { return max(0, override) }
         return remaining(introduced: introduced, dailyMinutes: dailyMinutes)
     }
+
+    /// Ce que l'écran d'avant affiche pendant qu'on glisse le curseur.
+    ///
+    /// Les révisions ne bougent pas : seules les neuves suivent le cran. Reconstruire
+    /// la file à chaque image faisait ramer le geste — ici on ne fait qu'un `min`.
+    static func setupCounts(due: StudyCounts, newPerSession: Int) -> StudyCounts {
+        StudyCounts(
+            newCards: min(max(0, newPerSession), max(0, due.newCards)),
+            learning: due.learning,
+            review: due.review
+        )
+    }
 }
 
 enum StudyQueueBuilder {
@@ -148,6 +160,22 @@ enum StudyQueueBuilder {
             review: queue.filter { $0.state == .review }.count
         )
     }
+
+    /// Cartes dues, sans tri ni plafond. L'écran du curseur n'a besoin que de ça.
+    static func dueBreakdown(from cards: [Flashcard], now: Date = Date()) -> StudyCounts {
+        var counts = StudyCounts()
+        for card in cards where card.isDue(at: now) {
+            switch card.state {
+            case .new:
+                counts.newCards += 1
+            case .learning, .relearning:
+                counts.learning += 1
+            case .review:
+                counts.review += 1
+            }
+        }
+        return counts
+    }
 }
 
 /// Ce qu'un écran de cours affiche **avant** d'avoir lu les journaux et les examens.
@@ -176,14 +204,28 @@ struct CourseDuePreview: Equatable {
         in context: ModelContext,
         now: Date = Date()
     ) -> CourseDuePreview {
-        let logs = (try? context.fetch(FetchDescriptor<ReviewLog>())) ?? []
+        // Le plafond ne dépend que des cartes introduites aujourd'hui. Lire tout
+        // l'historique à chaque ouverture de fiche faisait croître la latence avec les mois
+        // d'utilisation.
+        let start = MicaboCalendar.shared.startOfDay(for: now)
+        let logs = (try? context.fetch(FetchDescriptor<ReviewLog>(
+            predicate: #Predicate { $0.reviewedAt >= start }
+        ))) ?? []
+
+        // Les examens sont peu nombreux, et `courseIDs.contains` n'est pas un prédicat
+        // SwiftData portable. On les lit, mais on ne relit plus **tous les cours et toutes
+        // leurs cartes** pour construire la date butoir de celui qui est déjà sous nos yeux.
         let exams = (try? context.fetch(FetchDescriptor<Exam>())) ?? []
-        let courses = CourseRepository.allCourses(in: context)
         let due = StudyQueueBuilder.build(
             from: cards,
             now: now,
             limits: .daily(newRemaining: DailyNewQuota.remaining(logs: logs, now: now)),
-            deadlines: ExamDeadlines.active(exams: exams, courses: courses, now: now)
+            deadlines: ExamDeadlines.active(
+                exams: exams,
+                cards: cards,
+                courseID: courseID,
+                now: now
+            )
         )
         let dueNew = due.filter { $0.state == .new }.count
         let allDueNew = cards.filter { $0.isDue(at: now) && $0.state == .new }.count

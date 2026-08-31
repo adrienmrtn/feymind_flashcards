@@ -153,6 +153,46 @@ final class StudyQueueTests: XCTestCase {
         XCTAssertEqual(counts.total, 4)
     }
 
+    /// Glisser le curseur ne doit changer que le nombre de neuves. Les révisions
+    /// restent celles déjà dues : c'est ce qui évite de reconstruire la file à
+    /// chaque cran.
+    func testSetupPreviewTracksTheSliderWithoutRebuildingTheQueue() {
+        let cards = [
+            makeCard("apprentissage", state: .learning, due: -10, position: 0),
+            makeCard("révision", state: .review, due: -10, position: 1)
+        ] + (0..<12).map { makeCard("neuve \($0)", state: .new, due: -10, position: $0 + 2) }
+
+        let due = StudyQueueBuilder.dueBreakdown(from: cards, now: now)
+        XCTAssertEqual(due.learning, 1)
+        XCTAssertEqual(due.review, 1)
+        XCTAssertEqual(due.newCards, 12)
+
+        let atThree = DailyNewQuota.setupCounts(due: due, newPerSession: 3)
+        let builtThree = StudyQueueBuilder.counts(
+            for: cards,
+            now: now,
+            limits: .daily(newRemaining: 3)
+        )
+        XCTAssertEqual(atThree, builtThree)
+        XCTAssertEqual(atThree.total, 5)
+
+        let atTen = DailyNewQuota.setupCounts(due: due, newPerSession: 10)
+        let builtTen = StudyQueueBuilder.counts(
+            for: cards,
+            now: now,
+            limits: .daily(newRemaining: 10)
+        )
+        XCTAssertEqual(atTen, builtTen)
+        XCTAssertEqual(atTen.learning, atThree.learning)
+        XCTAssertEqual(atTen.review, atThree.review)
+        XCTAssertEqual(atTen.newCards, 10)
+
+        let capped = DailyNewQuota.setupCounts(due: due, newPerSession: 80)
+        XCTAssertEqual(capped.newCards, 12)
+        XCTAssertEqual(capped.learning, 1)
+        XCTAssertEqual(capped.review, 1)
+    }
+
     // MARK: - Application d'une réponse
 
     func testAnsweringWritesTheOutcomeAndLogsIt() {

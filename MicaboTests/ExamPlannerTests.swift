@@ -546,6 +546,27 @@ final class ExamDeadlinesTests: XCTestCase {
         XCTAssertEqual(ExamDeadlines.active(in: context).examName(for: card), "Proche")
     }
 
+    /// L'écran d'un cours utilise la forme ciblée : elle doit rendre exactement la même
+    /// butoir sans relire toute la bibliothèque.
+    func testSingleCourseDeadlinesMatchTheFullLibrary() throws {
+        let course = try makeCourse()
+        let other = try makeCourse()
+        _ = try exam(name: "Le bon", inDays: 5, courses: [course], planned: true)
+        _ = try exam(name: "Autre cours", inDays: 2, courses: [other], planned: true)
+
+        let exams = try context.fetch(FetchDescriptor<Exam>())
+        let card = try XCTUnwrap(course.cards.first)
+        let targeted = ExamDeadlines.active(
+            exams: exams,
+            cards: course.cards,
+            courseID: course.id
+        )
+        let complete = ExamDeadlines.active(in: context)
+
+        XCTAssertEqual(targeted.deadline(for: card), complete.deadline(for: card))
+        XCTAssertEqual(targeted.examName(for: card), "Le bon")
+    }
+
     /// Les cartes d'examen passent devant, mais elles restent dans le plafond du jour.
     /// Sans ça, un cours rattaché à deux examens vidait tout le paquet d'un coup.
     func testExamCardsStayWithinTheDailyNewCardCap() throws {

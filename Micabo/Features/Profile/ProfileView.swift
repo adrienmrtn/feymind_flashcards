@@ -33,17 +33,43 @@ struct ProfileView: View {
     @State private var showSettings = false
     @State private var path = NavigationPath()
 
-    private var reviewDates: [Date] { logs.map(\.reviewedAt) }
+    /// Les statistiques sont calculées une seule fois par rendu. Avant, `streak`,
+    /// `bestStreak`, la répartition et les cartes les plus passées reparcouraient le même
+    /// historique depuis plusieurs sous-vues pendant l'ouverture du Profil.
+    private struct Metrics {
+        let courseCount: Int
+        let cardCount: Int
+        let hasReviews: Bool
+        let streak: Int
+        let bestStreak: Int
+        let knowledge: [(level: StudyStats.KnowledgeLevel, count: Int)]
+        let mostReviewed: [(front: String, passes: Int)]
+
+        init(courses: [Course], cards: [Flashcard], logs: [ReviewLog]) {
+            let dates = logs.map(\.reviewedAt)
+            courseCount = courses.count
+            cardCount = cards.count
+            hasReviews = !logs.isEmpty
+            streak = StudyStats.streak(reviewDates: dates)
+            bestStreak = StudyStats.bestStreak(reviewDates: dates)
+            knowledge = StudyStats.knowledgeDistribution(cards: cards)
+            mostReviewed = StudyStats.mostReviewed(from: logs)
+        }
+    }
 
     var body: some View {
+        profile(Metrics(courses: courses, cards: cards, logs: logs))
+    }
+
+    private func profile(_ metrics: Metrics) -> some View {
         NavigationStack(path: $path) {
             ScrollView(.vertical) {
                 VStack(alignment: .leading, spacing: MicaboSpacing.md) {
                     header
-                    streakPanel
-                    totalsStrip
-                    knowledgeChart
-                    mostReviewed
+                    streakPanel(metrics)
+                    totalsStrip(metrics)
+                    knowledgeChart(metrics)
+                    mostReviewed(metrics)
                     weekRanking
                     friendsRow
                 }
@@ -59,8 +85,8 @@ struct ProfileView: View {
             // verre de la barre : la réserve n'est pas réservée aux pages qui ont un bouton.
             .tabBarClearance()
             .task(id: router?.selection) {
-                // Les quatre onglets restent montés : sans ce garde, le classement partait
-                // au lancement, en concurrence avec le premier écran.
+                // Le `TabView` peut garder un onglet visité : le classement ne repart que
+                // lorsque Profil devient réellement actif.
                 guard router?.selection == .profile else { return }
                 await social.refreshWeekRanking()
             }
@@ -135,7 +161,7 @@ struct ProfileView: View {
     /// La série, et la courbe qui la porte. Les deux disent la même chose à deux échelles :
     /// séparées en deux blocs, elles se répétaient ; ensemble, la seconde explique la
     /// première.
-    private var streakPanel: some View {
+    private func streakPanel(_ metrics: Metrics) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(identityLabel)
                 .font(MicaboFont.hanken(13, weight: .semibold))
@@ -144,10 +170,10 @@ struct ProfileView: View {
                 .truncationMode(.middle)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            if logs.isEmpty {
+            if !metrics.hasReviews {
                 firstReviewInvitation
             } else {
-                streakReadout
+                streakReadout(metrics)
             }
         }
         .padding(18)
@@ -155,29 +181,21 @@ struct ProfileView: View {
         .micaboGroup()
     }
 
-    private var streak: Int {
-        StudyStats.streak(reviewDates: reviewDates)
-    }
-
-    private var bestStreak: Int {
-        StudyStats.bestStreak(reviewDates: reviewDates)
-    }
-
-    private var streakReadout: some View {
+    private func streakReadout(_ metrics: Metrics) -> some View {
         HStack(alignment: .lastTextBaseline, spacing: 9) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(streak > 0 ? MicaboColor.caution : MicaboColor.inkTertiary)
+                .foregroundStyle(metrics.streak > 0 ? MicaboColor.caution : MicaboColor.inkTertiary)
 
-            Text("\(streak)")
+            Text("\(metrics.streak)")
                 .font(MicaboFont.number(46))
                 .foregroundStyle(MicaboColor.ink)
                 .tracking(MicaboTracking.display)
                 .monospacedDigit()
-                .contentTransition(.numericText(value: Double(streak)))
-                .animation(.easeOut(duration: 0.3), value: streak)
+                .contentTransition(.numericText(value: Double(metrics.streak)))
+                .animation(.easeOut(duration: 0.3), value: metrics.streak)
 
-            Text(streakCaption)
+            Text(streakCaption(metrics))
                 .font(MicaboFont.hanken(14, weight: .medium))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .lineLimit(2)
@@ -190,10 +208,10 @@ struct ProfileView: View {
     /// Le record ne s'affiche que s'il dépasse la série en cours : le répéter à l'identique
     /// juste à côté n'apprendrait rien, et une série qui *est* le record se lit déjà comme
     /// telle.
-    private var streakCaption: String {
-        let unit = streak == 1 ? "jour de série" : "jours de série"
-        guard bestStreak > streak else { return unit }
-        return "\(unit) · record \(bestStreak)"
+    private func streakCaption(_ metrics: Metrics) -> String {
+        let unit = metrics.streak == 1 ? "jour de série" : "jours de série"
+        guard metrics.bestStreak > metrics.streak else { return unit }
+        return "\(unit) · record \(metrics.bestStreak)"
     }
 
     private var firstReviewInvitation: some View {
@@ -214,11 +232,11 @@ struct ProfileView: View {
 
     /// Le nombre de cartes, et le nombre de cours. Les révisions n'y figurent plus :
     /// elles se lisent déjà dans la série, et dans les cartes les plus passées.
-    private var totalsStrip: some View {
+    private func totalsStrip(_ metrics: Metrics) -> some View {
         HStack(spacing: 0) {
-            total("\(cards.count)", cards.count == 1 ? "carte" : "cartes")
+            total("\(metrics.cardCount)", metrics.cardCount == 1 ? "carte" : "cartes")
             columnDivider
-            total("\(courses.count)", courses.count == 1 ? "cours" : "cours")
+            total("\(metrics.courseCount)", "cours")
         }
         .padding(.vertical, 15)
         .frame(maxWidth: .infinity)
@@ -227,8 +245,8 @@ struct ProfileView: View {
 
     // MARK: - La maîtrise
 
-    private var knowledgeChart: some View {
-        let buckets = StudyStats.knowledgeDistribution(cards: cards)
+    private func knowledgeChart(_ metrics: Metrics) -> some View {
+        let buckets = metrics.knowledge
         let peak = max(buckets.map(\.count).max() ?? 1, 1)
 
         return VStack(alignment: .leading, spacing: 12) {
@@ -238,7 +256,7 @@ struct ProfileView: View {
                 .textCase(.uppercase)
                 .tracking(0.6)
 
-            if cards.isEmpty {
+            if metrics.cardCount == 0 {
                 Text("Tes cartes se rangeront ici : nouvelles, en cours, en révision, parfaitement maîtrisées.")
                     .font(MicaboFont.hanken(13.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
@@ -289,8 +307,8 @@ struct ProfileView: View {
 
     // MARK: - Les plus passées
 
-    private var mostReviewed: some View {
-        let top = StudyStats.mostReviewed(from: logs)
+    private func mostReviewed(_ metrics: Metrics) -> some View {
+        let top = metrics.mostReviewed
 
         return VStack(alignment: .leading, spacing: 12) {
             Text("Cartes les plus passées")

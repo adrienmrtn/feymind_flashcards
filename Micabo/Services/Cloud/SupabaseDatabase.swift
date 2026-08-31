@@ -162,7 +162,11 @@ struct SupabaseDatabase {
             }
 
             collected.append(contentsOf: batch)
-            if batch.count < page || collected.count >= 80_000 { break }
+            // Ne jamais prendre une limite de sécurité pour une fin de table. La synchro
+            // avancerait ensuite son repère et les lignes après la coupure seraient perdues
+            // pour toujours. Les appels d'écran utilisent `rows(limit:)`; `fetch` est réservé
+            // à la copie complète/incrémentale du compte.
+            if batch.count < page { break }
             offset += batch.count
         }
 
