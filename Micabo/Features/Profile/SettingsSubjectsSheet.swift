@@ -70,7 +70,7 @@ struct SettingsSubjectsSheet: View {
                 Text(subject)
                     .font(MicaboFont.hanken(13, weight: .medium))
             }
-            .foregroundStyle(isSelected ? MicaboColor.onInk : Color(hex: 0x4A463F))
+            .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkBody)
             .padding(.vertical, 9)
             .padding(.horizontal, 13)
             .background(isSelected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())

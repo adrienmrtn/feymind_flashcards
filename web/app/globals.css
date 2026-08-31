@@ -511,6 +511,10 @@ video {
   .reveal {
     translate: none;
   }
+
+  .hover-flip {
+    transition: none;
+  }
 }
 
 /* Le compteur d'une entrée en cascade : chaque enfant part un cran après le précédent. */

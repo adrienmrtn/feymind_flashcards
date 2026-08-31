@@ -260,8 +260,7 @@ function TrialStep() {
         id="paywall-title"
         className="mt-6 text-[26px] font-bold leading-[1.15] tracking-tight-title text-ink"
       >
-        On veut vous permettre de tester toutes les fonctionnalités
-        gratuitement.
+        On veut te laisser tout essayer, sans rien payer.
       </h2>
     </div>
   );
@@ -277,7 +276,7 @@ function ReminderStep() {
         id="paywall-title"
         className="text-[24px] font-bold leading-[1.15] tracking-tight-title text-ink"
       >
-        On vous envoie un e-mail avant la fin de l&apos;essai gratuit.
+        On t&apos;envoie un e-mail avant la fin de l&apos;essai.
       </h2>
       <p className="mt-5 text-[17px] font-semibold text-ink">
         Aucun paiement n&apos;est dû aujourd&apos;hui.
@@ -306,7 +305,7 @@ function PlansStep() {
       return;
     }
     if (result.status === "already") {
-      setCheckout("Vous êtes déjà abonné.");
+      setCheckout("Tu es déjà abonné.");
       return;
     }
     setCheckout(result.message ?? "L'abonnement n'est pas encore ouvert.");
@@ -319,7 +318,7 @@ function PlansStep() {
         id="paywall-title"
         className="mt-2 text-[26px] font-bold leading-[1.12] tracking-tight-title text-ink"
       >
-        Choisissez comment vous révisez.
+        Choisis comment tu révises.
       </h2>
 
       <div className="mt-5 space-y-2.5">

@@ -263,7 +263,7 @@ struct TodayView: View {
 
                     Text("≈ \(load.estimatedMinutes) min · \(load.coursesWithDue > 1 ? "\(load.coursesWithDue) cours" : "1 cours")")
                         .font(MicaboFont.hanken(13, weight: .medium))
-                        .foregroundStyle(MicaboColor.inkTertiary)
+                        .foregroundStyle(MicaboColor.inkSecondary)
                 }
 
                 Spacer(minLength: 0)
@@ -281,6 +281,16 @@ struct TodayView: View {
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .micaboGroup()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(dueCardAccessibility(load))
+    }
+
+    private func dueCardAccessibility(_ load: DayLoad) -> String {
+        let parts = visibleSegments(load).map { "\($0.count) \($0.label)" }
+        var label = "\(MicaboCopy.cards(load.dueCards.count)) à réviser"
+        if !parts.isEmpty { label += ". " + parts.joined(separator: ", ") }
+        if load.heldBackNewCards > 0 { label += ". " + MicaboCopy.heldBackNew(load.heldBackNewCards) }
+        return label
     }
 
     /// Ce que la barre veut dire. Sans elle, trois couleurs empilées ne sont qu'un
@@ -311,9 +321,9 @@ struct TodayView: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
 
-            Text("\(MicaboCopy.cards(heldBackNewCards)) neuves hors rythme.")
+            Text(MicaboCopy.heldBackNew(heldBackNewCards))
                 .font(MicaboFont.hanken(12, weight: .regular))
-                .foregroundStyle(MicaboColor.inkTertiary)
+                .foregroundStyle(MicaboColor.inkSecondary)
                 .lineSpacing(1.5)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -530,7 +540,7 @@ struct TodayView: View {
     /// Le rythme est tenu, mais des cartes neuves attendent encore. On le dit,
     /// plutôt que d'afficher « Tout est à jour » alors qu'il reste à apprendre.
     private func rhythmReachedCard(held heldBackNewCards: Int) -> some View {
-        reviewDoneCard(subtitle: "\(MicaboCopy.cards(heldBackNewCards)) neuves hors rythme.")
+        reviewDoneCard(subtitle: MicaboCopy.heldBackNew(heldBackNewCards))
     }
 
     private var doneState: some View {
@@ -586,7 +596,7 @@ struct TodayView: View {
     private func sessionButtonTitle(_ load: DayLoad) -> String {
         if !load.dueCards.isEmpty { return MicaboCopy.reviewButton(count: load.dueCards.count) }
         if load.heldBackNewCards > 0 { return "Réviser" }
-        return "Entraînement libre"
+        return MicaboCopy.practiceReview
     }
 
     private var canPractice: Bool { pro?.canPractice ?? true }

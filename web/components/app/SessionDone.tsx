@@ -12,6 +12,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { requestPaywall } from "@/lib/paywall";
+import { heldBackNew } from "@/lib/micabo-copy";
 
 export interface SessionTally {
   answered: number;
@@ -67,7 +68,7 @@ export function SessionDone({
           {capped
             ? `Le gratuit s'arrête à ${entitlement.FREE_TIER.cardsPerSession}. ${remaining} en attente.`
             : leftoverNew > 0
-              ? `${summary} · ${leftoverNew} neuve${leftoverNew > 1 ? "s" : ""} hors rythme`
+              ? `${summary} · ${heldBackNew(leftoverNew)}`
               : summary}
         </p>
       </header>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ClosingWash } from "@/components/landing/ClosingWash";
+import { DemoCards } from "@/components/landing/DemoCards";
 import { ExamMode } from "@/components/landing/ExamMode";
 import { Footer } from "@/components/landing/Footer";
 import { Hero } from "@/components/landing/Hero";
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
  *
  * Un lien de confirmation qui retombe ici (Site URL) n'y reste pas : s'il y a un code,
  * on reprend le callback. Une session déjà ouverte laisse la vitrine : le bouton
- * dit Dashboard, et mène à l'app.
+ * dit Ouvrir l'app, et mène au tableau de bord.
  */
 export default async function LandingPage({
   searchParams,
@@ -65,6 +66,15 @@ export default async function LandingPage({
         <Hero signedIn={signedIn} />
 
         <SourceMarquee />
+
+        <Section
+          id={LANDING_SECTIONS.cards}
+          eyebrow="Les cartes"
+          title="Retourne-en une."
+          note="Quatre façons de réviser le même cours. Appuie : le verso est déjà là."
+        >
+          <DemoCards />
+        </Section>
 
         <Section
           id={LANDING_SECTIONS.method}

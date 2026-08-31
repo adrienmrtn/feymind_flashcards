@@ -10,6 +10,7 @@
  * répond à une question — d'où des noms qui disent le sujet, pas la position.
  */
 export const LANDING_SECTIONS = {
+  cards: "cartes",
   method: "methode",
   iphone: "iphone",
   exam: "mode-examen",

@@ -41,6 +41,10 @@ enum MicaboColor {
     /// fatigue : celui-ci est à peine remonté vers le brun du papier.
     static let inkReading = Color(hex: 0x2B2822)
 
+    /// Encre des versos de carte et des puces non sélectionnées. Un cran plus
+    /// chaude que `inkReading`, assez dense pour rester lisible à 13 pt.
+    static let inkBody = Color(hex: 0x4A463F)
+
     /// La couleur des passages que la fiche met en avant.
     ///
     /// **Le surligneur jaune a été retiré.** Un fond posé derrière le texte se battait avec
@@ -108,6 +112,9 @@ enum MicaboColor {
     /// il ne porte jamais rien d'écrit.
     static let cautionVivid = Color(hex: 0xE8B23C)
     static let negative = Color(hex: 0xC93B2B)
+    /// Le rouge du bouton « À revoir » : plus terre que `negative`, pour
+    /// rester dans le papier plutôt que dans l'alerte système.
+    static let ratingAgain = Color(hex: 0xB5573C)
     static let info = Color(hex: 0x3A6FC4)
 
     // Fonds doux assortis : notation en session, pastilles d'état.

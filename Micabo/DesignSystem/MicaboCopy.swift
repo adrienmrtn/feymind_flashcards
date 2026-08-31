@@ -47,4 +47,15 @@ enum MicaboCopy {
     static func audience(of course: Course) -> String {
         audience(views: course.viewCount, adopts: course.adoptCount)
     }
+
+    /// Réviser un cours hors file du jour, sans toucher aux échéances.
+    static let practiceReview = "Réviser sans compter"
+
+    static let practiceReviewHint = "Réviser sans compter · tes échéances ne bougent pas"
+
+    /// Cartes neuves reportées parce que le rythme du jour est atteint.
+    static func heldBackNew(_ count: Int) -> String {
+        let noun = count > 1 ? "nouvelles cartes" : "nouvelle carte"
+        return "\(count) \(noun) pour plus tard — ton rythme du jour est atteint."
+    }
 }

@@ -31,7 +31,7 @@ export function StartButton({
         }
         render={<Link href={signedIn ? "/app" : "/commencer"} />}
       >
-        {signedIn ? "Dashboard" : "Commencer"}
+        {signedIn ? "Ouvrir l'app" : "Commencer"}
         <ArrowIcon />
       </Button>
       {signedIn ? null : (

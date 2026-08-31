@@ -11,7 +11,7 @@ export function IosAlso() {
     <section className="relative flex min-h-[268px] overflow-hidden rounded-group bg-ink p-6 text-on-ink sm:min-h-[320px] sm:p-8">
       <div className="flex min-w-0 flex-1 flex-col justify-between pr-3 sm:pr-10">
         <div>
-          <p className="eyebrow text-on-ink-muted">📱 Sur iPhone</p>
+          <p className="eyebrow text-on-ink-muted">Sur iPhone</p>
           <h2 className="mt-3 max-w-[18ch] text-[26px] font-bold leading-[1.08] tracking-tight-title sm:text-[32px]">
             Disponible sur iOS aussi.
           </h2>
@@ -47,7 +47,7 @@ export function IosAlso() {
             <div className="mt-2 h-1.5 overflow-hidden rounded-pill bg-surface-muted">
               <div className="h-full w-[78%] rounded-pill bg-accent" />
             </div>
-            <p className="mt-1 text-[7px] text-ink-tertiary">Cours appris à 78%</p>
+            <p className="mt-1 text-[7px] text-ink-secondary">4 révisées · 2 encore aujourd&apos;hui</p>
             <div className="mt-2 space-y-1">
               <div className="rounded-md bg-caution-soft px-1.5 py-1 text-[7px] font-medium text-caution">
                 Condensation

@@ -35,6 +35,7 @@ import {
 import { readProfile } from "@/lib/data/profile";
 import { loadNewCardBudget, loadReviewDatesSince } from "@/lib/data/reviews";
 import { listWeekReviewRanking } from "@/lib/data/social";
+import { heldBackNew } from "@/lib/micabo-copy";
 
 /**
  * Le tableau de bord : les tâches d'abord, puis la semaine et les examens.
@@ -141,7 +142,7 @@ function TodayTasks({
         {tasks.length > 0 ? (
           <CardAction>
             <Button size="sm" render={<Link href={"/app/reviser?go=1" as never} />}>
-              Apprendre tout
+              Tout réviser
             </Button>
           </CardAction>
         ) : null}
@@ -206,17 +207,25 @@ function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: numb
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-[15px] font-semibold text-ink">C&apos;est fait</p>
-          <p className="mt-0.5 text-[13px] text-ink-tertiary">
-            {heldBack} neuve{heldBack > 1 ? "s" : ""} hors rythme
-          </p>
+          <p className="mt-0.5 text-[13px] text-ink-secondary">{heldBackNew(heldBack)}</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          render={<Link href={"/app/reviser" as never} />}
-        >
-          Réviser encore
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link href={"/app/reviser" as never} />}
+          >
+            Réviser encore
+          </Button>
+          <Button
+            variant="link"
+            size="sm"
+            className="h-auto px-0"
+            render={<Link href={"/app/reglages" as never} />}
+          >
+            Changer le rythme
+          </Button>
+        </div>
       </div>
     );
   }
@@ -263,7 +272,7 @@ function UpcomingExams({
       ) : (
         <Card className="flex-1">
           <CardPanel className="flex h-full items-center justify-between gap-3">
-            <p className="text-[15px] font-medium text-ink">Aucune date</p>
+            <p className="text-[15px] font-medium text-ink">Aucune date d&apos;examen</p>
             <Button size="sm" render={<Link href={"/app/examens" as never} />}>
               Ajouter
             </Button>

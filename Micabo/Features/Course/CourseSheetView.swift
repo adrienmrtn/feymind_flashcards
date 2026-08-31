@@ -430,7 +430,7 @@ struct CourseSheetView: View {
     private var sessionButtonTitle: String {
         if dueCount > 0 { return MicaboCopy.reviewButton(count: dueCount) }
         if heldBackNewCards > 0 { return "Réviser" }
-        return "Entraînement libre"
+        return MicaboCopy.practiceReview
     }
 
     private func startSession() {

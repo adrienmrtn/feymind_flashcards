@@ -12,7 +12,7 @@ import { SITE_PAGES } from "@/lib/site-pages";
  *
  * Pas de badge App Store tant que le lien n'est pas public : un badge mort se voit.
  * Confidentialité et conditions sont les adresses que l'iPhone ouvre déjà. Le parcours
- * s'ouvre par **Commencer**. Une session déjà ouverte remplace ça par Dashboard.
+ * s'ouvre par **Commencer**. Une session déjà ouverte remplace ça par Ouvrir l'app.
  */
 export function Footer({ signedIn = false }: { signedIn?: boolean }) {
   return (
@@ -55,7 +55,7 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
                 {signedIn ? (
                   <li>
                     <Link href="/app" className="underline-draw" data-print="bare">
-                      Dashboard
+                      Ouvrir l&apos;app
                     </Link>
                   </li>
                 ) : (

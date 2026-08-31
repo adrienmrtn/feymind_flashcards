@@ -27,6 +27,8 @@ struct FlashcardsView: View {
     @State private var studyMode: StudyMode = .scheduled
     @State private var errorMessage: String?
     @State private var paywall: PaywallTrigger?
+    @State private var cardPendingDelete: Flashcard?
+    @State private var confirmReset = false
 
     init(course: Course) {
         self.course = course
@@ -112,6 +114,32 @@ struct FlashcardsView: View {
         } message: {
             Text(errorMessage ?? "")
         }
+        .confirmationDialog(
+            "Supprimer cette carte ?",
+            isPresented: Binding(
+                get: { cardPendingDelete != nil },
+                set: { if !$0 { cardPendingDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Supprimer la carte", role: .destructive) {
+                if let card = cardPendingDelete { delete(card) }
+                cardPendingDelete = nil
+            }
+            Button("Annuler", role: .cancel) { cardPendingDelete = nil }
+        } message: {
+            Text("Elle disparaît de ce cours. Tu ne pourras pas la récupérer.")
+        }
+        .confirmationDialog(
+            "Réinitialiser la progression ?",
+            isPresented: $confirmReset,
+            titleVisibility: .visible
+        ) {
+            Button("Tout recommencer", role: .destructive) { resetProgress() }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("L'historique de révision de ces cartes est effacé. Les cartes restent.")
+        }
     }
 
     // MARK: - En-tête
@@ -146,7 +174,7 @@ struct FlashcardsView: View {
         Menu {
             if !cards.isEmpty {
                 Button(action: startPractice) {
-                    Label("Entraînement libre", systemImage: canPractice ? "dumbbell" : "lock.fill")
+                    Label(MicaboCopy.practiceReview, systemImage: canPractice ? "dumbbell" : "lock.fill")
                 }
             }
             Button { isCreating = true } label: {
@@ -166,7 +194,7 @@ struct FlashcardsView: View {
                 }
             }
             if !cards.isEmpty {
-                Button { resetProgress() } label: {
+                Button { confirmReset = true } label: {
                     Label("Réinitialiser la progression", systemImage: "arrow.counterclockwise")
                 }
             }
@@ -185,7 +213,7 @@ struct FlashcardsView: View {
     private var sessionButtonTitle: String {
         if dueCount > 0 { return MicaboCopy.reviewButton(count: dueCount) }
         if heldBackNewCards > 0 { return "Réviser" }
-        return "Entraînement libre"
+        return MicaboCopy.practiceReview
     }
 
     private func startSession() {
@@ -282,7 +310,7 @@ struct FlashcardsView: View {
                             Button { editingCard = card } label: {
                                 Label("Modifier", systemImage: "pencil")
                             }
-                            Button(role: .destructive) { delete(card) } label: {
+                            Button(role: .destructive) { cardPendingDelete = card } label: {
                                 Label("Supprimer", systemImage: "trash")
                             }
                         }

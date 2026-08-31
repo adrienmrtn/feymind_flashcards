@@ -71,12 +71,11 @@ const QUESTIONS: { question: string; answer: ReactNode }[] = [
     question: "Et si j'utilise déjà Anki ?",
     answer: (
       <>
-        La répétition espacée de Micabo <em>est</em> celle d&apos;Anki - SM-2, avec ses réglages
-        par défaut, ses quatre boutons et ses paliers d&apos;apprentissage. Ce que Micabo ajoute
-        est ce qu&apos;Anki ne fait pas : écrire la fiche et les cartes à partir de ton cours, et
-        replanifier tout un paquet quand tu déclares la date d&apos;un examen. iPhone et
-        navigateur tournent sur le même SM-2 : une carte révisée d&apos;un côté ne revient pas de
-        l&apos;autre le lendemain.
+        La répétition espacée de Micabo est celle d&apos;Anki : quatre boutons, les mêmes
+        intervalles, les mêmes paliers. Ce que Micabo ajoute, Anki ne le fait pas : écrire
+        la fiche et les cartes à partir de ton cours, et resserrer le plan quand tu poses
+        la date d&apos;un examen. iPhone et navigateur partagent le même planning : une carte
+        révisée d&apos;un côté ne revient pas de l&apos;autre le lendemain.
       </>
     ),
   },

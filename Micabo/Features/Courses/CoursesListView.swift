@@ -24,6 +24,7 @@ struct CoursesListView: View {
     /// Un paquet de cartes ne passe pas par l'écran d'import : il n'y a rien à lire.
     @State private var isCreatingDeck = false
     @State private var paywall: PaywallTrigger?
+    @State private var coursePendingDelete: Course?
 
     enum SortOrder: String, CaseIterable, Identifiable {
         case due
@@ -136,6 +137,28 @@ struct CoursesListView: View {
             }
         }
         .micaboPaywall($paywall)
+        .confirmationDialog(
+            "Supprimer ce cours ?",
+            isPresented: Binding(
+                get: { coursePendingDelete != nil },
+                set: { if !$0 { coursePendingDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Supprimer le cours", role: .destructive) {
+                if let course = coursePendingDelete {
+                    withAnimation {
+                        try? CourseRepository.delete(course, in: modelContext)
+                    }
+                }
+                coursePendingDelete = nil
+            }
+            Button("Annuler", role: .cancel) { coursePendingDelete = nil }
+        } message: {
+            if let course = coursePendingDelete {
+                Text("\(course.title) et \(MicaboCopy.cards(course.cards.count)) disparaissent.")
+            }
+        }
         .onChange(of: router?.courseImportRequests ?? 0) { oldValue, newValue in
             guard newValue > oldValue else { return }
             // Le prochain tour de boucle : la feuille doit s'ouvrir après que Cours
@@ -250,9 +273,7 @@ struct CoursesListView: View {
                     }
                     .contextMenu {
                         Button(role: .destructive) {
-                            withAnimation {
-                                try? CourseRepository.delete(course, in: modelContext)
-                            }
+                            coursePendingDelete = course
                         } label: {
                             Label("Supprimer", systemImage: "trash")
                         }
