@@ -63,7 +63,7 @@ export function SessionDone({
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">Terminé</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">C&apos;est fait</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {capped
             ? `Le gratuit s'arrête à ${entitlement.FREE_TIER.cardsPerSession}. ${remaining} en attente.`
