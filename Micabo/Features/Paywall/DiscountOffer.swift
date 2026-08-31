@@ -4,13 +4,14 @@ import Foundation
 ///
 /// Après le premier cours importé, Micabo offre l'annuel à tarif réduit. Le cadeau se
 /// présente sur la fiche : trois appuis l'ouvrent, et le paywall qui suit affiche une
-/// minuterie d'une heure. Refermé, il laisse une pastille qui garde le décompte des
-/// vingt-quatre heures et le rouvre d'un appui.
+/// minuterie de vingt-quatre heures. Refermé, il laisse une pastille qui garde le même
+/// décompte et le rouvre d'un appui.
 ///
-/// Deux durées, **un seul instant d'origine** : celui où le cadeau a été ouvert. L'heure
-/// pousse à décider maintenant, le jour est la durée réelle du tarif. Deux horloges
-/// indépendantes finiraient par se contredire, et un prix qui revient après avoir affiché
-/// « terminé » ne se croit plus.
+/// Une seule durée, **un seul instant d'origine** : celui où le cadeau a été ouvert.
+/// Le pop-up et la languette montrent le même temps restant. Deux horloges différentes
+/// finiraient par se contredire — le pop-up disait « terminé » alors que la pastille
+/// comptait encore — et un prix qui revient après avoir affiché « terminé » ne se
+/// croit plus.
 ///
 /// `web/packages/core/src/discount.ts` porte les mêmes constantes, et
 /// `freemium-parity.test.ts` relit ce fichier pour qu'elles ne divergent pas.
@@ -18,11 +19,11 @@ enum DiscountOffer {
     /// Appuis sur le cadeau avant qu'il s'ouvre. Trois : un geste, pas un accident.
     static let taps = 3
 
-    /// La minuterie affichée sur le paywall. Une heure.
-    static let urgencySeconds = 3600
-
-    /// La durée réelle de l'offre, celle de la pastille. Vingt-quatre heures.
+    /// La durée de l'offre, sur le pop-up comme sur la pastille. Vingt-quatre heures.
     static let windowSeconds = 86400
+
+    /// Même nombre que `windowSeconds` : le pop-up ne peut pas dire autre chose que la pastille.
+    static let urgencySeconds = 86400
 
     enum Key {
         /// L'instant d'ouverture, en secondes depuis 1970. Zéro : jamais ouvert ici.
@@ -42,8 +43,12 @@ enum DiscountOffer {
         return min(span, max(0, span - elapsed))
     }
 
+    static func windowRemaining(startedAt: Date, now: Date = Date()) -> Int {
+        remaining(startedAt: startedAt, now: now, span: windowSeconds)
+    }
+
     static func urgencyRemaining(startedAt: Date, now: Date = Date()) -> Int {
-        remaining(startedAt: startedAt, now: now, span: urgencySeconds)
+        windowRemaining(startedAt: startedAt, now: now)
     }
 
     /// La même durée, **au millième**, pour la minuterie qui affiche des centièmes.
@@ -57,12 +62,12 @@ enum DiscountOffer {
         return min(total, max(0, left))
     }
 
-    static func urgencyMillisRemaining(startedAt: Date, now: Date = Date()) -> Int {
-        remainingMillis(startedAt: startedAt, now: now, span: urgencySeconds)
+    static func windowMillisRemaining(startedAt: Date, now: Date = Date()) -> Int {
+        remainingMillis(startedAt: startedAt, now: now, span: windowSeconds)
     }
 
-    static func windowRemaining(startedAt: Date, now: Date = Date()) -> Int {
-        remaining(startedAt: startedAt, now: now, span: windowSeconds)
+    static func urgencyMillisRemaining(startedAt: Date, now: Date = Date()) -> Int {
+        windowMillisRemaining(startedAt: startedAt, now: now)
     }
 
     /// L'offre est encore achetable. Passé vingt-quatre heures, la pastille disparaît.

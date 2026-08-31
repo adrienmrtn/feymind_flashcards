@@ -9,26 +9,29 @@ import XCTest
 final class DiscountOfferTests: XCTestCase {
     // MARK: - Le temps
 
-    /// Une heure sur le paywall, vingt-quatre sur la pastille, **depuis le même instant**.
-    /// Deux horloges indépendantes finiraient par se contredire.
+    /// Vingt-quatre heures sur le pop-up et sur la pastille, **depuis le même instant**.
+    /// Deux horloges différentes finiraient par se contredire.
     func testBothClocksRunFromTheSameMoment() {
         let start = Date(timeIntervalSince1970: 1_000_000)
 
-        XCTAssertEqual(DiscountOffer.urgencyRemaining(startedAt: start, now: start), 3600)
+        XCTAssertEqual(DiscountOffer.urgencySeconds, DiscountOffer.windowSeconds)
+        XCTAssertEqual(DiscountOffer.urgencyRemaining(startedAt: start, now: start), 86_400)
         XCTAssertEqual(DiscountOffer.windowRemaining(startedAt: start, now: start), 86_400)
 
         let tenMinutesLater = start.addingTimeInterval(600)
-        XCTAssertEqual(DiscountOffer.urgencyRemaining(startedAt: start, now: tenMinutesLater), 3000)
+        XCTAssertEqual(DiscountOffer.urgencyRemaining(startedAt: start, now: tenMinutesLater), 85_800)
         XCTAssertEqual(DiscountOffer.windowRemaining(startedAt: start, now: tenMinutesLater), 85_800)
     }
 
-    /// La minuterie du paywall s'arrête à zéro ; l'offre, elle, court encore.
-    func testTheHourEndsBeforeTheOfferDoes() {
+    /// Les deux horloges s'éteignent ensemble, à la fin des vingt-quatre heures.
+    func testBothClocksExpireTogether() {
         let start = Date(timeIntervalSince1970: 0)
 
-        XCTAssertEqual(DiscountOffer.urgencyRemaining(startedAt: start, now: Date(timeIntervalSince1970: 7200)), 0)
+        XCTAssertEqual(DiscountOffer.urgencyRemaining(startedAt: start, now: Date(timeIntervalSince1970: 7200)), 79_200)
         XCTAssertTrue(DiscountOffer.isLive(startedAt: start, now: Date(timeIntervalSince1970: 7200)))
 
+        XCTAssertEqual(DiscountOffer.urgencyRemaining(startedAt: start, now: Date(timeIntervalSince1970: 86_400)), 0)
+        XCTAssertEqual(DiscountOffer.windowRemaining(startedAt: start, now: Date(timeIntervalSince1970: 86_400)), 0)
         XCTAssertFalse(DiscountOffer.isLive(startedAt: start, now: Date(timeIntervalSince1970: 86_400)))
     }
 
@@ -37,7 +40,7 @@ final class DiscountOfferTests: XCTestCase {
         let start = Date(timeIntervalSince1970: 1000)
         let before = Date(timeIntervalSince1970: 0)
 
-        XCTAssertEqual(DiscountOffer.urgencyRemaining(startedAt: start, now: before), 3600)
+        XCTAssertEqual(DiscountOffer.urgencyRemaining(startedAt: start, now: before), 86_400)
         XCTAssertEqual(DiscountOffer.windowRemaining(startedAt: start, now: before), 86_400)
     }
 
@@ -60,22 +63,31 @@ final class DiscountOfferTests: XCTestCase {
 
         XCTAssertEqual(
             DiscountOffer.urgencyMillisRemaining(startedAt: start, now: start),
-            3_600_000
+            86_400_000
+        )
+        XCTAssertEqual(
+            DiscountOffer.windowMillisRemaining(startedAt: start, now: start),
+            86_400_000
         )
         XCTAssertEqual(
             DiscountOffer.urgencyMillisRemaining(startedAt: start, now: Date(timeIntervalSince1970: 0.31)),
-            3_599_690
+            86_399_690
         )
-        // Jamais plus que l'heure, même si l'horloge locale est en avance.
+        // Jamais plus que les vingt-quatre heures, même si l'horloge locale est en avance.
         XCTAssertEqual(
             DiscountOffer.urgencyMillisRemaining(startedAt: Date(timeIntervalSince1970: 5), now: start),
-            3_600_000
+            86_400_000
         )
         XCTAssertEqual(
             DiscountOffer.urgencyMillisRemaining(startedAt: start, now: Date(timeIntervalSince1970: 7200)),
+            79_200_000
+        )
+        XCTAssertEqual(
+            DiscountOffer.urgencyMillisRemaining(startedAt: start, now: Date(timeIntervalSince1970: 86_400)),
             0
         )
 
+        XCTAssertEqual(DiscountOffer.preciseCountdown(86_400_000), "24 : 00 : 00 . 00")
         XCTAssertEqual(DiscountOffer.preciseCountdown(3_600_000), "01 : 00 : 00 . 00")
         XCTAssertEqual(DiscountOffer.preciseCountdown(1_788_690), "00 : 29 : 48 . 69")
         XCTAssertEqual(DiscountOffer.preciseCountdown(0), "00 : 00 : 00 . 00")

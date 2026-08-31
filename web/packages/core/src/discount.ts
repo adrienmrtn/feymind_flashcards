@@ -4,12 +4,11 @@
  * Après le premier cours importé, Micabo offre l'annuel à tarif réduit. L'offre
  * se présente une fois, puis se replie sur une pastille qui garde le décompte.
  *
- * Deux durées, une seule origine. Le paywall affiche **une heure** : c'est la
- * minuterie qui pousse à décider maintenant. La pastille affiche **vingt-quatre
- * heures** : c'est la durée réelle pendant laquelle le tarif reste ouvert. Les
- * deux se calculent depuis le même instant — celui où le cadeau a été ouvert —
- * parce que deux horloges indépendantes finissent par se contredire, et un prix
- * qui revient après avoir dit « terminé » ne se croit plus.
+ * Une seule durée, une seule origine. Le pop-up et la pastille montrent le même
+ * temps restant : vingt-quatre heures depuis l'instant où le cadeau a été
+ * ouvert. Deux horloges différentes finissent par se contredire — le pop-up
+ * disait « terminé » alors que la pastille comptait encore — et un prix qui
+ * revient après avoir dit « terminé » ne se croit plus.
  *
  * Le montant, lui, vient de `pricing.DISCOUNT_YEARLY`. Ce module ne décide pas
  * des prix : il décide du temps.
@@ -18,11 +17,11 @@
 /** Appuis sur le cadeau avant qu'il s'ouvre. Trois : un geste, pas un accident. */
 export const taps = 3;
 
-/** La minuterie affichée sur le paywall. Une heure. */
-export const urgencySeconds = 3600;
-
-/** La durée réelle de l'offre, celle de la pastille. Vingt-quatre heures. */
+/** La durée de l'offre, sur le pop-up comme sur la pastille. Vingt-quatre heures. */
 export const windowSeconds = 86400;
+
+/** Même nombre que `windowSeconds` : le pop-up ne peut pas dire autre chose que la pastille. */
+export const urgencySeconds = 86400;
 
 /**
  * Combien de secondes restent sur `span`, depuis `startedAt`.
@@ -50,14 +49,19 @@ export function remainingMillis(startedAt: number, now: number, span: number): n
   return Math.min(total, Math.max(0, left));
 }
 
-/** Ce que la minuterie du paywall décompte, au millième. */
-export function urgencyMillisRemaining(startedAt: number, now: number): number {
-  return remainingMillis(startedAt, now, urgencySeconds);
+/** Ce que le pop-up et la pastille décomptent, au millième. */
+export function windowMillisRemaining(startedAt: number, now: number): number {
+  return remainingMillis(startedAt, now, windowSeconds);
 }
 
-/** Ce que la minuterie du paywall affiche. */
+/** Ce que la minuterie du paywall décompte, au millième — la même fenêtre. */
+export function urgencyMillisRemaining(startedAt: number, now: number): number {
+  return windowMillisRemaining(startedAt, now);
+}
+
+/** Ce que la minuterie du paywall affiche — la même fenêtre que la pastille. */
 export function urgencyRemaining(startedAt: number, now: number): number {
-  return remaining(startedAt, now, urgencySeconds);
+  return windowRemaining(startedAt, now);
 }
 
 /** Ce que la pastille affiche. */

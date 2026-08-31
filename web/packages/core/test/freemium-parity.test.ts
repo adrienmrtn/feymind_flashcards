@@ -90,12 +90,14 @@ describe("le branchement RevenueCat de l'app", () => {
 });
 
 describe("l'offre cadeau, des deux côtés", () => {
-  it("compte les mêmes appuis et les mêmes deux durées", () => {
+  it("compte les mêmes appuis et la même durée d'offre", () => {
     // Une pastille qui dirait 12 h sur le site et 24 h sur le téléphone ferait douter du
     // prix lui-même : ce sont les nombres d'une promesse, pas d'un réglage.
+    // Pop-up et pastille partagent cette durée : deux horloges se contrediraient.
     expect(swiftConstant(discountOffer, "taps")).toBe(String(discount.taps));
     expect(swiftConstant(discountOffer, "urgencySeconds")).toBe(String(discount.urgencySeconds));
     expect(swiftConstant(discountOffer, "windowSeconds")).toBe(String(discount.windowSeconds));
+    expect(discount.urgencySeconds).toBe(discount.windowSeconds);
   });
 
   it("écrit la minuterie de la même façon, centièmes comprises", () => {
