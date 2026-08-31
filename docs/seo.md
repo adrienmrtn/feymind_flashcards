@@ -117,8 +117,10 @@ obligatoire.
 1. Ouvre [Google Search Console](https://search.google.com/search-console) et ajoute la
    propriété **`https://www.micabo.app`** (préfixe d'URL, avec le `www`). Si tu as aussi
    `https://micabo.app` sans www, ajoute-la séparément : ce n'est pas le même hôte.
-2. Vérifie la propriété. Le plus simple : l'enregistrement DNS que Vercel t'a déjà fait
-   poser, ou le fichier HTML que Search Console propose de mettre dans `web/public/`.
+2. Vérifie la propriété. Le fichier HTML de Search Console est déjà en ligne :
+   `https://www.micabo.app/google9efda28a96fb06c8.html`
+   (`web/public/google9efda28a96fb06c8.html`). Ne pas le supprimer, même après
+   validation : Google le relit.
 3. Dans **Sitemaps**, dépose exactement : `https://www.micabo.app/sitemap.xml`.
 4. Ouvre **Inspection d'URL**, colle `https://www.micabo.app/`, demande un test en direct,
    puis **Demander l'indexation**. Sans cette demande, la sortie de l'ancien `Disallow: /`
