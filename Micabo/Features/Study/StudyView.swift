@@ -36,8 +36,10 @@ struct StudyView: View {
     /// Faits figés à l'ouverture. Un `@Query` sur les journaux se réveillerait à
     /// chaque note et ferait ramer la carte suivante.
     @State private var introducedToday = 0
-    @State private var setupExams: [Exam] = []
-    @State private var setupCourses: [Course] = []
+    /// Cartes et comptes lus une fois. Le curseur des neuves ne relit plus
+    /// la bibliothèque, ni les examens, à chaque cran.
+    @State private var setupCards: [Flashcard] = []
+    @State private var setupDue = StudyCounts.empty
 
     @State private var session = StudySession()
     @State private var didStart = false
@@ -78,11 +80,10 @@ struct StudyView: View {
             } else if awaitingStart {
                 SessionSetupView(
                     courseTitle: setupCourseTitle,
-                    preview: setupPreview,
+                    due: setupDue,
                     rhythmNew: rhythmNew,
                     introducedToday: introducedToday,
-                    newPerSession: $newPerSession,
-                    sliderMax: availableDueNew,
+                    initialNewPerSession: newPerSession,
                     canClose: !isEmbedded,
                     onClose: { dismiss() },
                     onStart: confirmStart
@@ -394,22 +395,8 @@ struct StudyView: View {
         return nil
     }
 
-    private var setupPreview: StudyCounts {
-        StudyQueueBuilder.counts(
-            for: resolveCards(),
-            limits: .daily(newRemaining: newPerSession),
-            deadlines: ExamDeadlines.active(exams: setupExams, courses: setupCourses)
-        )
-    }
-
-    /// Cartes neuves réellement dues dans ce paquet. C'est le plafond du curseur :
-    /// on ne peut pas en demander plus qu'il n'y en a.
-    private var availableDueNew: Int {
-        resolveCards().filter { $0.isDue() && $0.state == .new }.count
-    }
-
     private func clampNewPerSession() {
-        newPerSession = min(DailyNewQuota.remaining(introduced: introducedToday), availableDueNew)
+        newPerSession = min(DailyNewQuota.remaining(introduced: introducedToday), setupDue.newCards)
     }
 
     private func snapshotSetupFacts() {
@@ -420,10 +407,8 @@ struct StudyView: View {
         logs.fetchLimit = 400
         let todayLogs = (try? modelContext.fetch(logs)) ?? []
         introducedToday = DailyNewQuota.introducedToday(from: todayLogs)
-        setupExams = (try? modelContext.fetch(FetchDescriptor<Exam>())) ?? []
-        setupCourses = (try? modelContext.fetch(
-            FetchDescriptor<Course>(sortBy: [SortDescriptor(\.updatedAt, order: .reverse)])
-        )) ?? []
+        setupCards = loadCards()
+        setupDue = StudyQueueBuilder.dueBreakdown(from: setupCards)
     }
 
     /// Au premier affichage : soit on propose de reprendre, soit on règle le curseur.
@@ -447,7 +432,8 @@ struct StudyView: View {
         start()
     }
 
-    private func confirmStart() {
+    private func confirmStart(_ chosen: Int) {
+        newPerSession = chosen
         awaitingStart = false
         start()
     }
@@ -501,6 +487,10 @@ struct StudyView: View {
     }
 
     private func resolveCards() -> [Flashcard] {
+        setupCards.isEmpty ? loadCards() : setupCards
+    }
+
+    private func loadCards() -> [Flashcard] {
         switch source {
         case .course(let course): course.cards
         case .allDue: CourseRepository.allCards(in: modelContext)
@@ -953,16 +943,46 @@ struct GradeButtons: View {
 ///
 /// Le nombre de base est celui du rythme, moins ce qui a déjà été introduit
 /// aujourd'hui — y compris depuis un cours.
+///
+/// Le cran vit **ici**, pas dans `StudyView`. Remonter `newPerSession` à chaque
+/// image reconstruisait la file, relisait toutes les cartes et recalculait les
+/// échéances d'examen : le curseur suivait le doigt avec un cran de retard.
 private struct SessionSetupView: View {
     var courseTitle: String?
-    var preview: StudyCounts
+    var due: StudyCounts
     var rhythmNew: Int
     var introducedToday: Int
-    @Binding var newPerSession: Int
-    var sliderMax: Int
     var canClose: Bool
     var onClose: () -> Void
-    var onStart: () -> Void
+    var onStart: (Int) -> Void
+
+    @State private var newPerSession: Int
+
+    init(
+        courseTitle: String?,
+        due: StudyCounts,
+        rhythmNew: Int,
+        introducedToday: Int,
+        initialNewPerSession: Int,
+        canClose: Bool,
+        onClose: @escaping () -> Void,
+        onStart: @escaping (Int) -> Void
+    ) {
+        self.courseTitle = courseTitle
+        self.due = due
+        self.rhythmNew = rhythmNew
+        self.introducedToday = introducedToday
+        self.canClose = canClose
+        self.onClose = onClose
+        self.onStart = onStart
+        _newPerSession = State(initialValue: initialNewPerSession)
+    }
+
+    private var sliderMax: Int { due.newCards }
+
+    private var preview: StudyCounts {
+        DailyNewQuota.setupCounts(due: due, newPerSession: newPerSession)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -1005,7 +1025,7 @@ private struct SessionSetupView: View {
 
                             Spacer(minLength: MicaboSpacing.xs)
 
-                            Text("\(newPerSession)")
+                            Text("\(preview.newCards)")
                                 .font(MicaboFont.number(13, weight: .semibold))
                                 .foregroundStyle(MicaboColor.ink)
                                 .monospacedDigit()
@@ -1015,7 +1035,11 @@ private struct SessionSetupView: View {
                             Slider(
                                 value: Binding(
                                     get: { Double(min(newPerSession, sliderMax)) },
-                                    set: { newPerSession = Int($0.rounded()) }
+                                    set: { next in
+                                        let rounded = Int(next.rounded())
+                                        guard rounded != newPerSession else { return }
+                                        newPerSession = rounded
+                                    }
                                 ),
                                 in: 0...Double(sliderMax)
                             )
@@ -1041,7 +1065,7 @@ private struct SessionSetupView: View {
 
             MicaboBottomBar {
                 if preview.total > 0 {
-                    Button("Commencer", action: onStart)
+                    Button("Commencer") { onStart(newPerSession) }
                         .buttonStyle(MicaboPrimaryButtonStyle())
                 } else {
                     Text("Ajoute des neuves, ou reviens demain.")

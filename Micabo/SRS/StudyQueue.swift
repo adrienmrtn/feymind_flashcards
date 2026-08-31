@@ -59,6 +59,18 @@ enum DailyNewQuota {
         if let override { return max(0, override) }
         return remaining(introduced: introduced, dailyMinutes: dailyMinutes)
     }
+
+    /// Ce que l'écran d'avant affiche pendant qu'on glisse le curseur.
+    ///
+    /// Les révisions ne bougent pas : seules les neuves suivent le cran. Reconstruire
+    /// la file à chaque image faisait ramer le geste — ici on ne fait qu'un `min`.
+    static func setupCounts(due: StudyCounts, newPerSession: Int) -> StudyCounts {
+        StudyCounts(
+            newCards: min(max(0, newPerSession), max(0, due.newCards)),
+            learning: due.learning,
+            review: due.review
+        )
+    }
 }
 
 enum StudyQueueBuilder {
@@ -147,6 +159,22 @@ enum StudyQueueBuilder {
             learning: queue.filter { $0.state == .learning || $0.state == .relearning }.count,
             review: queue.filter { $0.state == .review }.count
         )
+    }
+
+    /// Cartes dues, sans tri ni plafond. L'écran du curseur n'a besoin que de ça.
+    static func dueBreakdown(from cards: [Flashcard], now: Date = Date()) -> StudyCounts {
+        var counts = StudyCounts()
+        for card in cards where card.isDue(at: now) {
+            switch card.state {
+            case .new:
+                counts.newCards += 1
+            case .learning, .relearning:
+                counts.learning += 1
+            case .review:
+                counts.review += 1
+            }
+        }
+        return counts
     }
 }
 
