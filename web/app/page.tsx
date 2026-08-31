@@ -14,6 +14,7 @@ import { RetentionChart } from "@/components/landing/RetentionChart";
 import { Reveal } from "@/components/landing/Reveal";
 import { SourceMarquee } from "@/components/landing/SourceMarquee";
 import { currentUser } from "@/lib/data/user";
+import { listedLandingSourceImages } from "@/lib/landing-source-images";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
 import { ANKI_PAGE, EXAM_PAGE, METHOD_PAGE } from "@/lib/site-pages";
 
@@ -65,7 +66,7 @@ export default async function LandingPage({
       <main id="contenu">
         <Hero signedIn={signedIn} />
 
-        <SourceMarquee />
+        <SourceMarquee availableIds={listedLandingSourceImages()} />
 
         <Section
           id={LANDING_SECTIONS.cards}

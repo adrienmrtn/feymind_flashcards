@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 /**
  * Ce qui entre dans Micabo, en une ligne qui défile.
  *
@@ -12,6 +10,8 @@ import { useEffect, useState } from "react";
  * Chaque case est assez large pour un vrai exemple (scan, capture, extrait). Les fichiers
  * se déposent dans `web/public/landing/sources/` sous le `id` de la source
  * (`notes-manuscrites.webp`, etc.). Tant qu'ils manquent, un cadre d'attente reste.
+ * On ne sonde pas le réseau pour le savoir : un `.webp` absent est une 404 que
+ * Google compte comme une ressource de page manquante.
  *
  * La bande est dupliquée et translatée de la moitié de sa largeur : c'est ce qui rend la boucle
  * invisible, sans JavaScript ni mesure.
@@ -27,7 +27,13 @@ const SOURCES = [
   { id: "notes-manuscrites", emoji: "✍️", label: "Notes manuscrites" },
 ] as const;
 
-export function SourceMarquee() {
+export function SourceMarquee({
+  availableIds = [],
+}: {
+  availableIds?: readonly string[];
+}) {
+  const present = new Set(availableIds);
+
   return (
     <section className="mt-20 border-y border-hairline-on-canvas py-7" data-print="hide">
       <p className="mb-5 text-center text-[12.5px] text-ink-tertiary">
@@ -44,7 +50,11 @@ export function SourceMarquee() {
       >
         <div className="marquee-track flex w-max shrink-0 items-stretch gap-4 pr-4">
           {[...SOURCES, ...SOURCES].map((source, index) => (
-            <SourceTile key={`${source.id}-${index}`} source={source} />
+            <SourceTile
+              key={`${source.id}-${index}`}
+              source={source}
+              src={present.has(source.id) ? `/landing/sources/${source.id}.webp` : null}
+            />
           ))}
         </div>
       </div>
@@ -52,39 +62,33 @@ export function SourceMarquee() {
   );
 }
 
-function SourceTile({ source }: { source: (typeof SOURCES)[number] }) {
+function SourceTile({
+  source,
+  src,
+}: {
+  source: (typeof SOURCES)[number];
+  src: string | null;
+}) {
   return (
     <article className="source-tile">
-      <SourceExample id={source.id} label={source.label} emoji={source.emoji} />
+      <SourceExample src={src} label={source.label} emoji={source.emoji} />
       <p className="mt-2.5 truncate text-[13.5px] font-medium text-ink">{source.label}</p>
     </article>
   );
 }
 
 function SourceExample({
-  id,
+  src,
   label,
   emoji,
 }: {
-  id: string;
+  src: string | null;
   label: string;
   emoji: string;
 }) {
-  const [ready, setReady] = useState(false);
-  const src = `/landing/sources/${id}.webp`;
-
-  useEffect(() => {
-    const probe = new window.Image();
-    probe.onload = () => setReady(true);
-    probe.src = src;
-    return () => {
-      probe.onload = null;
-    };
-  }, [src]);
-
   return (
     <div className="source-tile-frame">
-      {ready ? (
+      {src ? (
         <img src={src} alt="" className="source-tile-image" />
       ) : (
         <div className="source-tile-placeholder">
