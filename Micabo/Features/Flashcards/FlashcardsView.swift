@@ -18,6 +18,7 @@ struct FlashcardsView: View {
     @Environment(ProAccess.self) private var pro: ProAccess?
 
     @State private var duePreview: CourseDuePreview
+    @State private var loadedCards: [Flashcard]?
     @State private var editingCard: Flashcard?
     @State private var isCreating = false
     @State private var isMasking = false
@@ -32,10 +33,12 @@ struct FlashcardsView: View {
 
     init(course: Course) {
         self.course = course
-        _duePreview = State(initialValue: CourseDuePreview.immediate(from: course.cards))
+        _duePreview = State(initialValue: .empty)
+        _loadedCards = State(initialValue: nil)
     }
 
-    private var cards: [Flashcard] { course.orderedCards }
+    private var cards: [Flashcard] { loadedCards ?? [] }
+    private var didLoadCards: Bool { loadedCards != nil }
     private var dueCount: Int { duePreview.dueCount }
     private var heldBackNewCards: Int { duePreview.heldBackNewCards }
     private var canPractice: Bool { pro?.canPractice ?? true }
@@ -49,7 +52,7 @@ struct FlashcardsView: View {
             }
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.top, MicaboSpacing.xs)
-            .padding(.bottom, cards.isEmpty ? MicaboSpacing.xxl : MicaboLayout.bottomBarClearance)
+            .padding(.bottom, !didLoadCards || cards.isEmpty ? MicaboSpacing.xxl : MicaboLayout.bottomBarClearance)
         }
         .scrollIndicators(.hidden)
         .micaboScreenBackground()
@@ -58,7 +61,7 @@ struct FlashcardsView: View {
         .toolbar(.hidden, for: .tabBar)
         .enablesSwipeBack()
         .overlay(alignment: .bottom) {
-            if !cards.isEmpty {
+            if didLoadCards, !cards.isEmpty {
                 MicaboBottomBar {
                     Button(action: startSession) {
                         HStack(spacing: MicaboSpacing.xs) {
@@ -94,9 +97,12 @@ struct FlashcardsView: View {
             StudyView(source: .course(course), mode: studyMode)
         }
         .micaboPaywall($paywall)
-        .task {
+        .task(id: course.id) {
+            let ordered = course.orderedCards
+            loadedCards = ordered
+            duePreview = CourseDuePreview.immediate(from: ordered)
             duePreview = CourseDuePreview.scheduled(
-                from: cards,
+                from: ordered,
                 courseID: course.id,
                 in: modelContext
             )
@@ -245,7 +251,12 @@ struct FlashcardsView: View {
 
     @ViewBuilder
     private var listContent: some View {
-        if cards.isEmpty {
+        if !didLoadCards {
+            ProgressView()
+                .tint(MicaboColor.progress)
+                .frame(maxWidth: .infinity)
+                .padding(.top, MicaboSpacing.xl)
+        } else if cards.isEmpty {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
                 title: "Aucune carte",

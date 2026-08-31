@@ -27,11 +27,11 @@ struct ProfileView: View {
     @Environment(TabRouter.self) private var router: TabRouter?
 
     @Query private var courses: [Course]
-    @Query private var cards: [Flashcard]
-    @Query private var logs: [ReviewLog]
+    @Environment(CloudSync.self) private var sync: CloudSync?
 
     @State private var showSettings = false
     @State private var path = NavigationPath()
+    @State private var metrics = Metrics.empty
 
     /// Les statistiques sont calculées une seule fois par rendu. Avant, `streak`,
     /// `bestStreak`, la répartition et les cartes les plus passées reparcouraient le même
@@ -55,10 +55,38 @@ struct ProfileView: View {
             knowledge = StudyStats.knowledgeDistribution(cards: cards)
             mostReviewed = StudyStats.mostReviewed(from: logs)
         }
+
+        static let empty = Metrics(
+            courseCount: 0,
+            cardCount: 0,
+            hasReviews: false,
+            streak: 0,
+            bestStreak: 0,
+            knowledge: [],
+            mostReviewed: []
+        )
+
+        private init(
+            courseCount: Int,
+            cardCount: Int,
+            hasReviews: Bool,
+            streak: Int,
+            bestStreak: Int,
+            knowledge: [(level: StudyStats.KnowledgeLevel, count: Int)],
+            mostReviewed: [(front: String, passes: Int)]
+        ) {
+            self.courseCount = courseCount
+            self.cardCount = cardCount
+            self.hasReviews = hasReviews
+            self.streak = streak
+            self.bestStreak = bestStreak
+            self.knowledge = knowledge
+            self.mostReviewed = mostReviewed
+        }
     }
 
     var body: some View {
-        profile(Metrics(courses: courses, cards: cards, logs: logs))
+        profile(metrics)
     }
 
     private func profile(_ metrics: Metrics) -> some View {
@@ -84,10 +112,13 @@ struct ProfileView: View {
             // Le Profil n'ancre rien en bas, mais sa dernière rangée se lisait à travers le
             // verre de la barre : la réserve n'est pas réservée aux pages qui ont un bouton.
             .tabBarClearance()
-            .task(id: router?.selection) {
-                // Le `TabView` peut garder un onglet visité : le classement ne repart que
-                // lorsque Profil devient réellement actif.
+            .task(id: "\(router?.selection == .profile)-\(sync?.epoch ?? 0)-\(courses.count)") {
+                // Le `TabView` peut garder un onglet visité : le classement et les
+                // totaux ne se relisent que lorsque Profil est réellement actif.
                 guard router?.selection == .profile else { return }
+                let cards = (try? modelContext.fetch(FetchDescriptor<Flashcard>())) ?? []
+                let logs = (try? modelContext.fetch(FetchDescriptor<ReviewLog>())) ?? []
+                metrics = Metrics(courses: courses, cards: cards, logs: logs)
                 await social.refreshWeekRanking()
             }
             .toolbar(.hidden, for: .navigationBar)

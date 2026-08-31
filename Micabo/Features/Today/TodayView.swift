@@ -21,9 +21,9 @@ import SwiftUI
 struct TodayView: View {
     @Query private var allCards: [Flashcard]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
-    @Query private var reviewLogs: [ReviewLog]
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
 
+    @Environment(\.modelContext) private var modelContext
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(TabRouter.self) private var router: TabRouter?
     @Environment(CloudSync.self) private var sync: CloudSync?
@@ -54,11 +54,14 @@ struct TodayView: View {
         let estimatedMinutes: Int
         let dueByCourse: [(course: Course, count: Int)]
 
-        init(allCards: [Flashcard], courses: [Course], exams: [Exam], logs: [ReviewLog]) {
+        let streak: Int
+
+        init(allCards: [Flashcard], courses: [Course], exams: [Exam], todayLogs: [ReviewLog], streak: Int) {
+            self.streak = streak
             let due = StudyQueueBuilder.build(
                 from: allCards,
-                limits: .daily(newRemaining: DailyNewQuota.remaining(logs: logs)),
-                deadlines: ExamDeadlines.active(exams: exams, courses: courses)
+                limits: .daily(newRemaining: DailyNewQuota.remaining(logs: todayLogs)),
+                deadlines: ExamDeadlines.active(exams: exams, cards: allCards)
             )
             dueCards = due
             newCount = due.filter { $0.state == .new }.count
@@ -87,28 +90,29 @@ struct TodayView: View {
         var value: DayLoad?
     }
 
-    private struct ModelVersion: Equatable {
-        let id: UUID
-        let changedAt: Date
-    }
-
     private struct DayLoadKey: Equatable {
         let day: Date
         let minute: Int
-        let cards: [ModelVersion]
-        let courses: [ModelVersion]
-        let logs: [ModelVersion]
-        let exams: [ModelVersion]
+        let cardCount: Int
+        let cardStamp: Date?
+        let courseCount: Int
+        let courseStamp: Date?
+        let examCount: Int
+        let examStamp: Date?
+        let syncEpoch: Int
     }
 
     private func dayLoadKey(now: Date = Date()) -> DayLoadKey {
         DayLoadKey(
             day: MicaboCalendar.shared.startOfDay(for: now),
             minute: Int(now.timeIntervalSince1970 / 60),
-            cards: allCards.map { ModelVersion(id: $0.id, changedAt: $0.updatedAt) },
-            courses: courses.map { ModelVersion(id: $0.id, changedAt: $0.updatedAt) },
-            logs: reviewLogs.map { ModelVersion(id: $0.id, changedAt: $0.reviewedAt) },
-            exams: exams.map { ModelVersion(id: $0.id, changedAt: $0.updatedAt) }
+            cardCount: allCards.count,
+            cardStamp: allCards.map(\.updatedAt).max(),
+            courseCount: courses.count,
+            courseStamp: courses.map(\.updatedAt).max(),
+            examCount: exams.count,
+            examStamp: exams.map(\.updatedAt).max(),
+            syncEpoch: sync?.epoch ?? 0
         )
     }
 
@@ -121,7 +125,13 @@ struct TodayView: View {
             if router?.selection != .today { return cached }
             if sync?.state == .syncing { return cached }
         }
-        let built = DayLoad(allCards: allCards, courses: courses, exams: exams, logs: reviewLogs)
+        let built = DayLoad(
+            allCards: allCards,
+            courses: courses,
+            exams: exams,
+            todayLogs: todayLogs(),
+            streak: currentStreak()
+        )
         loadBox.key = key
         loadBox.value = built
         return built
@@ -135,8 +145,19 @@ struct TodayView: View {
         Array(exams.filter { !$0.isPast() }.prefix(5))
     }
 
-    private var streak: Int {
-        StudyStats.streak(reviewDates: reviewLogs.map(\.reviewedAt))
+    /// Journaux **du jour** seulement : le quota n'a pas besoin de tout l'historique.
+    /// Relire chaque note jamais donnée à chaque rendu de Réviser était le coût caché
+    /// de cet écran.
+    private func todayLogs(now: Date = Date()) -> [ReviewLog] {
+        let start = MicaboCalendar.shared.startOfDay(for: now)
+        return (try? modelContext.fetch(FetchDescriptor<ReviewLog>(
+            predicate: #Predicate { $0.reviewedAt >= start }
+        ))) ?? []
+    }
+
+    private func currentStreak() -> Int {
+        let dates = (try? modelContext.fetch(FetchDescriptor<ReviewLog>()))?.map(\.reviewedAt) ?? []
+        return StudyStats.streak(reviewDates: dates)
     }
 
     var body: some View {
@@ -148,7 +169,7 @@ struct TodayView: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                    header
+                    header(streak: load.streak)
 
                     if load.dueCards.isEmpty && load.heldBackNewCards == 0 {
                         restState
@@ -238,10 +259,10 @@ struct TodayView: View {
     /// Le titre de l'écran, et la série à sa droite. Pas de salutation : c'est le seul
     /// endroit de l'app où l'on ouvre, et ce qu'on vient y chercher est le chiffre juste
     /// dessous.
-    private var header: some View {
+    private func header(streak: Int) -> some View {
         MicaboScreenHeader(title: "Réviser") {
             if streak > 0 {
-                streakPill
+                streakPill(streak)
             }
         }
         .padding(.top, MicaboSpacing.xs)
@@ -249,7 +270,7 @@ struct TodayView: View {
 
     /// La série est la seule chose que l'utilisateur risque de perdre : elle mérite d'être
     /// visible, pas d'être un sur-titre gris au-dessus du titre.
-    private var streakPill: some View {
+    private func streakPill(_ streak: Int) -> some View {
         HStack(spacing: 5) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 12, weight: .semibold))
@@ -447,10 +468,10 @@ struct TodayView: View {
 
     /// Cartes déjà introduites parmi celles des cours de l'examen.
     private func examProgress(_ exam: Exam) -> Int {
-        let relevant = courses
-            .filter { exam.courseIDs.contains($0.id) }
-            .flatMap(\.cards)
-            .filter { !$0.isSuspended }
+        let relevant = allCards.filter { card in
+            guard !card.isSuspended, let courseID = card.course?.id else { return false }
+            return exam.courseIDs.contains(courseID)
+        }
         guard !relevant.isEmpty else { return 0 }
         let started = relevant.filter { $0.state != .new }.count
         return Int((Double(started) / Double(relevant.count) * 100).rounded())
@@ -604,8 +625,17 @@ struct TodayView: View {
     }
 
     private var nextDueSummary: [(course: Course, label: String)] {
-        courses.compactMap { course in
-            guard let next = course.cards.filter({ !$0.isSuspended }).map(\.dueDate).min() else { return nil }
+        var earliest: [UUID: Date] = [:]
+        for card in allCards where !card.isSuspended {
+            guard let courseID = card.course?.id else { continue }
+            if let existing = earliest[courseID] {
+                if card.dueDate < existing { earliest[courseID] = card.dueDate }
+            } else {
+                earliest[courseID] = card.dueDate
+            }
+        }
+        return courses.compactMap { course in
+            guard let next = earliest[course.id] else { return nil }
             let delay = next.timeIntervalSinceNow
             guard delay > 0 else { return nil }
             return (course, "Dans " + SM2Scheduler.format(delay: delay))

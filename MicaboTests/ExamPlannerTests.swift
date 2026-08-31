@@ -567,6 +567,22 @@ final class ExamDeadlinesTests: XCTestCase {
         XCTAssertEqual(targeted.examName(for: card), "Le bon")
     }
 
+    /// La forme qui part des cartes déjà lues doit coller à celle qui part des cours,
+    /// sans refaire `course.cards` pour chaque examen.
+    func testDeadlinesFromCardsMatchDeadlinesFromCourses() throws {
+        let course = try makeCourse()
+        _ = try exam(name: "Partiel", inDays: 4, courses: [course], planned: true)
+        let exams = try context.fetch(FetchDescriptor<Exam>())
+        let cards = try context.fetch(FetchDescriptor<Flashcard>())
+        let card = try XCTUnwrap(course.cards.first)
+
+        let fromCards = ExamDeadlines.active(exams: exams, cards: cards)
+        let fromCourses = ExamDeadlines.active(exams: exams, courses: [course])
+
+        XCTAssertEqual(fromCards.deadline(for: card), fromCourses.deadline(for: card))
+        XCTAssertEqual(fromCards.examName(for: card), "Partiel")
+    }
+
     /// Les cartes d'examen passent devant, mais elles restent dans le plafond du jour.
     /// Sans ça, un cours rattaché à deux examens vidait tout le paquet d'un coup.
     func testExamCardsStayWithinTheDailyNewCardCap() throws {

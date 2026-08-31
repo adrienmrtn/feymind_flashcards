@@ -27,6 +27,9 @@ final class CloudSync {
     }
 
     private(set) var state: State = .idle
+    /// Incrémenté à chaque aller-retour réussi. Les écrans s'en servent pour
+    /// savoir qu'il faut relire leurs totaux, sans s'abonner à chaque ligne écrite.
+    private(set) var epoch = 0
 
     private let database: SupabaseDatabase
     private let auth: AuthController
@@ -93,6 +96,7 @@ final class CloudSync {
             try await pull(context: context, since: pullSince)
             try await push(context: context, since: since)
             lastSyncedAt = checkpoint
+            epoch += 1
             state = .done(Date())
         } catch {
             // Une panne de synchro ne casse rien : les données locales sont intactes et le
@@ -214,9 +218,10 @@ final class CloudSync {
             updatedSince: since,
             filters: [mine]
         )
-        let localCourses = Dictionary(
-            try context.fetch(FetchDescriptor<Course>()).map { ($0.id, $0) },
-            uniquingKeysWith: { first, _ in first }
+        let localCourses = try keyedCourses(
+            in: context,
+            matching: remoteCourses.map(\.id),
+            loadAll: since == nil
         )
 
         for remote in remoteCourses {
@@ -248,13 +253,15 @@ final class CloudSync {
             updatedSince: since,
             filters: [mine]
         )
-        let coursesByID = Dictionary(
-            try context.fetch(FetchDescriptor<Course>()).map { ($0.id, $0) },
-            uniquingKeysWith: { first, _ in first }
+        let coursesByID = try keyedCourses(
+            in: context,
+            matching: remoteCards.compactMap(\.course_id),
+            loadAll: since == nil
         )
-        let localCards = Dictionary(
-            try context.fetch(FetchDescriptor<Flashcard>()).map { ($0.id, $0) },
-            uniquingKeysWith: { first, _ in first }
+        let localCards = try keyedCards(
+            in: context,
+            matching: remoteCards.map(\.id),
+            loadAll: since == nil
         )
 
         for remote in remoteCards {
@@ -285,9 +292,10 @@ final class CloudSync {
             updatedSince: since,
             filters: [mine]
         )
-        let localExams = Dictionary(
-            try context.fetch(FetchDescriptor<Exam>()).map { ($0.id, $0) },
-            uniquingKeysWith: { first, _ in first }
+        let localExams = try keyedExams(
+            in: context,
+            matching: remoteExams.map(\.id),
+            loadAll: since == nil
         )
 
         for remote in remoteExams {
@@ -309,10 +317,6 @@ final class CloudSync {
 
         // Pas d'`updated_at` : on filtre sur le fait daté. Un journal déjà présent
         // (même identifiant) n'est pas réécrit — c'est un ajout seul.
-        let cardsForLogs = Dictionary(
-            try context.fetch(FetchDescriptor<Flashcard>()).map { ($0.id, $0) },
-            uniquingKeysWith: { first, _ in first }
-        )
         var logCursor = since
         var remoteLogs: [ReviewLogRecord] = []
         while true {
@@ -327,7 +331,18 @@ final class CloudSync {
             guard let last = batch.last, batch.count == 1_000, remoteLogs.count < 10_000 else { break }
             logCursor = last.reviewed_at
         }
-        let knownLogIDs = Set(cardsForLogs.values.flatMap { $0.logs ?? [] }.map(\.id))
+        let cardsForLogs = try keyedCards(
+            in: context,
+            matching: remoteLogs.compactMap(\.card_id),
+            loadAll: since == nil
+        )
+        // Une lecture de la table des journaux, pas `card.logs` sur chaque carte :
+        // cette relation rouvrait tout l'historique, une carte après l'autre.
+        let knownLogIDs = try existingLogIDs(
+            in: context,
+            among: remoteLogs.map(\.id),
+            loadAll: since == nil
+        )
         for remote in remoteLogs {
             guard !knownLogIDs.contains(remote.id),
                   let cardID = remote.card_id,
@@ -358,6 +373,72 @@ final class CloudSync {
            profile.id == userID {
             profile.applyToLocalPreferences()
         }
+    }
+
+    private func keyedCourses(in context: ModelContext, matching ids: [UUID], loadAll: Bool) throws -> [UUID: Course] {
+        if loadAll || ids.count > 80 {
+            return Dictionary(
+                try context.fetch(FetchDescriptor<Course>()).map { ($0.id, $0) },
+                uniquingKeysWith: { first, _ in first }
+            )
+        }
+        var result: [UUID: Course] = [:]
+        for id in Set(ids) {
+            let target = id
+            var descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.id == target })
+            descriptor.fetchLimit = 1
+            if let row = try context.fetch(descriptor).first { result[id] = row }
+        }
+        return result
+    }
+
+    private func keyedCards(in context: ModelContext, matching ids: [UUID], loadAll: Bool) throws -> [UUID: Flashcard] {
+        if loadAll || ids.count > 80 {
+            return Dictionary(
+                try context.fetch(FetchDescriptor<Flashcard>()).map { ($0.id, $0) },
+                uniquingKeysWith: { first, _ in first }
+            )
+        }
+        var result: [UUID: Flashcard] = [:]
+        for id in Set(ids) {
+            let target = id
+            var descriptor = FetchDescriptor<Flashcard>(predicate: #Predicate { $0.id == target })
+            descriptor.fetchLimit = 1
+            if let row = try context.fetch(descriptor).first { result[id] = row }
+        }
+        return result
+    }
+
+    private func keyedExams(in context: ModelContext, matching ids: [UUID], loadAll: Bool) throws -> [UUID: Exam] {
+        if loadAll || ids.count > 80 {
+            return Dictionary(
+                try context.fetch(FetchDescriptor<Exam>()).map { ($0.id, $0) },
+                uniquingKeysWith: { first, _ in first }
+            )
+        }
+        var result: [UUID: Exam] = [:]
+        for id in Set(ids) {
+            let target = id
+            var descriptor = FetchDescriptor<Exam>(predicate: #Predicate { $0.id == target })
+            descriptor.fetchLimit = 1
+            if let row = try context.fetch(descriptor).first { result[id] = row }
+        }
+        return result
+    }
+
+    private func existingLogIDs(in context: ModelContext, among ids: [UUID], loadAll: Bool) throws -> Set<UUID> {
+        if ids.isEmpty { return [] }
+        if loadAll {
+            return Set(try context.fetch(FetchDescriptor<ReviewLog>()).map(\.id))
+        }
+        var known: Set<UUID> = []
+        for id in Set(ids) {
+            let target = id
+            var descriptor = FetchDescriptor<ReviewLog>(predicate: #Predicate { $0.id == target })
+            descriptor.fetchLimit = 1
+            if try context.fetch(descriptor).first != nil { known.insert(id) }
+        }
+        return known
     }
 
     // MARK: - Traductions

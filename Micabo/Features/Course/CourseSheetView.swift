@@ -45,6 +45,9 @@ struct CourseSheetView: View {
     @State private var giftOffer: DiscountPresentation?
     /// Compteurs de session : instantanés au premier cadre, affinés ensuite.
     @State private var duePreview: CourseDuePreview
+    /// Les cartes ne sont lues qu'après le premier cadre. Les faulter dans `init`
+    /// retenait la poussée de navigation le temps de charger tout le paquet.
+    @State private var loadedCards: [Flashcard]?
 
     /// L'invitation à sélectionner un passage disparaît une fois le geste découvert : une
     /// consigne qu'on a suivie n'a plus rien à dire.
@@ -54,7 +57,8 @@ struct CourseSheetView: View {
         self.course = course
         _sheet = State(initialValue: nil)
         _isLoadingSheet = State(initialValue: course.hasSheet)
-        _duePreview = State(initialValue: CourseDuePreview.immediate(from: course.cards))
+        _duePreview = State(initialValue: .empty)
+        _loadedCards = State(initialValue: nil)
     }
 
     private enum Work: Equatable {
@@ -62,7 +66,8 @@ struct CourseSheetView: View {
         case cards
     }
 
-    private var cards: [Flashcard] { course.orderedCards }
+    private var cards: [Flashcard] { loadedCards ?? [] }
+    private var didLoadCards: Bool { loadedCards != nil }
     private var dueCount: Int { duePreview.dueCount }
     private var heldBackNewCards: Int { duePreview.heldBackNewCards }
     private var tint: Color { Color(hexString: course.accentHex) }
@@ -91,9 +96,12 @@ struct CourseSheetView: View {
         .task(id: course.updatedAt) {
             await loadSheet()
         }
-        .task {
+        .task(id: course.id) {
+            let ordered = course.orderedCards
+            loadedCards = ordered
+            duePreview = CourseDuePreview.immediate(from: ordered)
             duePreview = CourseDuePreview.scheduled(
-                from: cards,
+                from: ordered,
                 courseID: course.id,
                 in: modelContext
             )
@@ -381,7 +389,9 @@ struct CourseSheetView: View {
         VStack(alignment: .leading, spacing: 8) {
             MicaboSectionCaption(text: "Cartes")
 
-            if cards.isEmpty {
+            if !didLoadCards {
+                EmptyView()
+            } else if cards.isEmpty {
                 // Un bouton, et rien au-dessus de lui. La phrase qui l'introduisait disait
                 // que la fiche se lit très bien sans cartes, ce dont personne n'a besoin
                 // d'être convaincu à l'endroit exact où l'on vient d'en lire une.
@@ -417,7 +427,7 @@ struct CourseSheetView: View {
 
     private var cardsSubtitle: String {
         if dueCount > 0 { return "\(dueCount) à réviser aujourd'hui" }
-        let newCount = course.newCards.count
+        let newCount = cards.filter { $0.state == .new }.count
         return newCount > 0 ? "\(newCount) jamais vues" : "À jour"
     }
 
@@ -428,7 +438,9 @@ struct CourseSheetView: View {
     @ViewBuilder
     private var bottomBar: some View {
         MicaboBottomBar {
-            if cards.isEmpty {
+            if !didLoadCards {
+                EmptyView()
+            } else if cards.isEmpty {
                 Button {
                     showCardOptions = true
                 } label: {
