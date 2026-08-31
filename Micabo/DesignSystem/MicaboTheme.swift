@@ -3,47 +3,38 @@ import UIKit
 
 /// Jetons de style de Micabo.
 ///
-/// Direction : du papier, pas des cartes empilées. Le fond est un ivoire chaud assez
-/// marqué pour que les surfaces blanches se détachent seules, sans bordure ni ombre
-/// portée. Les listes sont soit posées à même le fond et séparées par un filet, soit
-/// regroupées dans un bloc blanc à grands coins. Chaque rangée porte une tuile pastel
-/// (emoji ou symbole) qui donne la couleur de l'écran ; l'accent reste réservé à ce
-/// qui est actif ou sélectionné.
+/// Direction : blanc sur gris, avec du bleu pour ce qui est actif. Le fond est le
+/// gris groupé d'iOS ; les surfaces sont blanches. Les listes sont soit posées à
+/// même le fond et séparées par un filet, soit regroupées dans un bloc blanc.
+/// L'accent bleu est réservé à ce qui est actif ou sélectionné.
 ///
-/// **L'accent est passé de l'indigo au vert de Micabo.** L'indigo était le violet d'une app
-/// de productivité : sérieux, un peu froid, et sans rapport avec le logo, qui porte un rond
-/// vert menthe depuis le premier jour. Une app qu'on ouvre pour réviser gagne à être vive :
-/// le vert est celui du logo, il dit « c'est acquis » dans la même langue que les boutons de
-/// notation, et il rend le crème du papier plus chaud au lieu de le refroidir.
-///
-/// Deux verts, et la distinction compte : `accent` est assez sombre pour porter du texte de
-/// onze points sur un fond pastel, `accentVivid` est le vert du logo et ne sert qu'aux
-/// surfaces sur lesquelles rien n'est écrit — jauges, barres, remplissages.
+/// Deux bleus, et la distinction compte : `accent` est assez sombre pour porter du
+/// texte de onze points sur un fond pastel, `accentVivid` ne sert qu'aux surfaces
+/// sur lesquelles rien n'est écrit — jauges, barres, remplissages.
 enum MicaboColor {
     // Fonds
-    static let canvas = Color(hex: 0xF6F4ED)
+    static let canvas = Color(hex: 0xF2F4F7)
     static let surface = Color.white
-    static let surfaceMuted = Color(hex: 0xEFEBE1)
-    static let surfaceSunken = Color(hex: 0xE2DDD0)
-    static let stroke = Color(hex: 0xE9E4D7)
-    static let strokeStrong = Color(hex: 0xDAD4C5)
+    static let surfaceMuted = Color(hex: 0xE8ECF1)
+    static let surfaceSunken = Color(hex: 0xDEE3EA)
+    static let stroke = Color(hex: 0xE5E7EB)
+    static let strokeStrong = Color(hex: 0xD1D5DB)
 
     /// Filet de séparation entre deux rangées, dans un bloc blanc ou sur le fond.
-    static let hairline = Color(hex: 0xEDEAE2)
-    static let hairlineOnCanvas = Color(hex: 0xE6E1D4)
+    static let hairline = Color(hex: 0xE5E7EB)
+    static let hairlineOnCanvas = Color(hex: 0xD8DCE3)
 
     // Encre
-    static let ink = Color(hex: 0x191714)
-    static let inkSecondary = Color(hex: 0x6F6A60)
-    static let inkTertiary = Color(hex: 0x6F6A60)
+    static let ink = Color(hex: 0x111827)
+    static let inkSecondary = Color(hex: 0x6B7280)
+    static let inkTertiary = Color(hex: 0x6B7280)
 
     /// Encre des longs paragraphes d'une fiche. Un noir de titre tenu sur trente lignes
-    /// fatigue : celui-ci est à peine remonté vers le brun du papier.
-    static let inkReading = Color(hex: 0x2B2822)
+    /// fatigue : celui-ci est un cran plus doux, sans retomber dans le brun.
+    static let inkReading = Color(hex: 0x1F2937)
 
-    /// Encre des versos de carte et des puces non sélectionnées. Un cran plus
-    /// chaude que `inkReading`, assez dense pour rester lisible à 13 pt.
-    static let inkBody = Color(hex: 0x4A463F)
+    /// Encre des versos de carte et des puces non sélectionnées.
+    static let inkBody = Color(hex: 0x4B5563)
 
     /// La couleur des passages que la fiche met en avant.
     ///
@@ -52,51 +43,35 @@ enum MicaboColor {
     /// l'autre, et sur un paragraphe à interligne serré elle écrasait ce qu'elle voulait
     /// mettre en valeur. Un `NSLayoutManager` entier ne servait qu'à en arrondir les coins.
     ///
-    /// C'est maintenant la couleur du texte lui-même. Un vert plus dense que l'accent,
+    /// C'est maintenant la couleur du texte lui-même. Un bleu plus dense que l'accent,
     /// parce qu'un mot en couleur au milieu d'un paragraphe doit se voir sans qu'on le
-    /// cherche, et rester lisible à quatorze points sur l'ivoire.
-    static let sheetEmphasis = Color(hex: 0x0A6E52)
+    /// cherche, et rester lisible à quatorze points sur le gris.
+    static let sheetEmphasis = Color(hex: 0x1D4ED8)
 
     // Sur fond sombre
-    static let onInk = Color(hex: 0xF8F6F0)
-    static let onInkMuted = Color(hex: 0x9A958A)
+    static let onInk = Color.white
+    static let onInkMuted = Color(hex: 0x9CA3AF)
 
-    /// Le crème, teinté de vert : le fond des écrans qui ne sont ni une liste ni une lecture.
-    ///
-    /// **C'est ce qui a remplacé l'encre sur l'accroche.** Un premier écran entièrement noir
-    /// annonce une app d'outillage, pas une app d'école : il pose un contraste maximal avant
-    /// qu'on ait rien à lire, il oblige tout le parcours à s'inverser dès le deuxième écran,
-    /// et il fait du blanc des cartes la seule chose qu'on voie. Ce vert-là est un papier
-    /// dans la palette de Micabo — assez proche du crème pour que le passage à l'écran
-    /// suivant ne se voie pas comme une rupture, assez teinté pour ne pas passer pour du
-    /// gris sale.
-    ///
-    /// Il se distingue de `accentSoft`, qui est plus franc et sert l'attente : le menthe
-    /// veut qu'on remarque qu'il se passe quelque chose, la sauge veut se faire oublier.
-    static let canvasSage = Color(hex: 0xE8EFE6)
+    /// Fond des écrans qui ne sont ni une liste ni une lecture. Même gris que `canvas` :
+    /// plus de papier teinté.
+    static let canvasSage = canvas
 
     /// Accent unique de l'app : sélection, onglet actif, éléments interactifs.
     ///
-    /// Assez sombre pour qu'une pastille de onze points reste lisible sur `accentSoft` :
-    /// c'est cette contrainte, et non le goût, qui l'empêche d'être le menthe du logo.
-    static let accent = Color(hex: 0x0B8A66)
-    static let accentSoft = Color(hex: 0xDFF4EC)
+    /// Assez sombre pour qu'une pastille de onze points reste lisible sur `accentSoft`.
+    static let accent = Color(hex: 0x2563EB)
+    static let accentSoft = Color(hex: 0xDBEAFE)
 
-    /// Le vert du logo, celui de son rond.
-    ///
-    /// Il ne porte jamais de texte, et il ne sert qu'aux **grandes** surfaces : un curseur,
-    /// un histogramme, un remplissage. Sur un filet de quatre points posé sur le crème, il
-    /// n'a pas assez de contraste avec sa piste pour qu'on voie où en est la barre — c'est
-    /// `accent` qui prend le relais dans ce cas, et cette règle vaut mieux qu'un vert vif
-    /// qu'on ne distingue pas.
-    static let accentVivid = Color(hex: 0x16C08C)
+    /// Le bleu des **grandes** surfaces, et d'elles seules : un curseur, un histogramme,
+    /// un remplissage. Il ne porte jamais de texte.
+    static let accentVivid = Color(hex: 0x3B82F6)
 
     /// Toute progression porte cette couleur, sans exception : jauge du parcours
     /// d'accueil, barre de session, anneaux, curseurs, indicateurs d'attente.
     /// Une seule couleur pour « ça avance », sinon l'utilisateur cherche un sens
     /// derrière chaque nuance.
     static let progress = accent
-    static let progressTrack = Color(hex: 0xE4DFD2)
+    static let progressTrack = Color(hex: 0xE5E7EB)
 
     /// Retours d'information. Ils étaient désaturés au point de se ressembler tous ; ils
     /// sont remontés d'un cran, parce qu'un écran de révision doit dire « juste » et
@@ -118,10 +93,10 @@ enum MicaboColor {
     static let info = Color(hex: 0x3A6FC4)
 
     // Fonds doux assortis : notation en session, pastilles d'état.
-    static let positiveSoft = Color(hex: 0xE3F1E2)
-    static let cautionSoft = Color(hex: 0xFAF0D8)
-    static let negativeSoft = Color(hex: 0xFAE6E1)
-    static let infoSoft = Color(hex: 0xE2ECF9)
+    static let positiveSoft = Color(hex: 0xDCFCE7)
+    static let cautionSoft = Color(hex: 0xFEF3C7)
+    static let negativeSoft = Color(hex: 0xFEE2E2)
+    static let infoSoft = Color(hex: 0xDBEAFE)
 
     /// **Les couleurs de l'offre cadeau**, et d'elle seule.
     ///
@@ -147,26 +122,24 @@ enum MicaboColor {
     /// une étagère de cours doit ressembler à une étagère de manuels, pas à un camaïeu de
     /// gris colorés.
     static let courseAccents: [Color] = [
-        Color(hex: 0x2E7D63),
-        Color(hex: 0x9A5B36),
-        Color(hex: 0x3F5F8A),
-        Color(hex: 0x8A4A6B),
-        Color(hex: 0x0B8A66),
-        Color(hex: 0xB07A2E),
-        Color(hex: 0x4C7A3A),
-        Color(hex: 0x6B4E8A)
+        Color(hex: 0x2563EB),
+        Color(hex: 0x1D4ED8),
+        Color(hex: 0x3B82F6),
+        Color(hex: 0x1E3A8A),
+        Color(hex: 0x0F766E),
+        Color(hex: 0x7C3AED),
+        Color(hex: 0x0369A1),
+        Color(hex: 0x4F46E5)
     ]
 
     /// Pastels des tuiles d'icône, quand aucune teinte de cours n'est disponible.
-    /// Un cran plus francs qu'avant : six gris teintés ne donnaient pas de couleur à l'écran,
-    /// ils lui donnaient une brume.
     static let tilePastels: [Color] = [
-        Color(hex: 0xDFF2E8),
-        Color(hex: 0xE4F0DC),
-        Color(hex: 0xFBEBDA),
-        Color(hex: 0xDFEAF8),
-        Color(hex: 0xF8E4EC),
-        Color(hex: 0xF6F0D6)
+        Color(hex: 0xDBEAFE),
+        Color(hex: 0xE0E7FF),
+        Color(hex: 0xE5E7EB),
+        Color(hex: 0xE0F2FE),
+        Color(hex: 0xF3E8FF),
+        Color(hex: 0xF1F5F9)
     ]
 }
 
@@ -243,33 +216,22 @@ enum MicaboLayout {
     static var tabBarSpace: CGFloat { tabBarGap + tabBarHeight }
 }
 
-/// Typographie de l'app : Hanken Grotesk, embarquée et enregistrée par `FontLoader`.
+/// Typographie de l'app : San Francisco, la police native d'iOS.
 enum MicaboFont {
-    /// Retombe sur la police système si Hanken Grotesk n'a pas pu être enregistrée
-    /// (aperçus SwiftUI notamment, où le bundle de test n'est pas toujours celui de l'app).
     static func hanken(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .custom(postscriptName(for: weight), size: size)
+        .system(size: size, weight: weight)
     }
 
     /// La même police, côté UIKit : la fiche compose ses paragraphes dans un `UITextView`
     /// pour que la sélection d'un passage soit celle du système, et il lui faut donc des
-    /// `UIFont`. Hanken Grotesk n'embarque pas d'italique : elle est penchée à la main,
-    /// ce qui reste préférable à un changement de famille en plein paragraphe.
+    /// `UIFont`.
     static func uiFont(_ size: CGFloat, weight: Font.Weight = .regular, italic: Bool = false) -> UIFont {
-        let name = postscriptName(for: weight)
-        let fallback = UIFont.systemFont(ofSize: size, weight: uiWeight(for: weight))
-
-        guard italic else {
-            return UIFont(name: name, size: size) ?? fallback
-        }
-
-        guard UIFont(name: name, size: size) != nil else {
-            return UIFont(descriptor: fallback.fontDescriptor.withSymbolicTraits(.traitItalic) ?? fallback.fontDescriptor, size: size)
-        }
-
-        let descriptor = UIFontDescriptor(fontAttributes: [.name: name, .size: size])
-            .withMatrix(CGAffineTransform(a: 1, b: 0, c: SheetTypography.obliqueSlant, d: 1, tx: 0, ty: 0))
-        return UIFont(descriptor: descriptor, size: 0)
+        let base = UIFont.systemFont(ofSize: size, weight: uiWeight(for: weight))
+        guard italic else { return base }
+        return UIFont(
+            descriptor: base.fontDescriptor.withSymbolicTraits(.traitItalic) ?? base.fontDescriptor,
+            size: size
+        )
     }
 
     private static func uiWeight(for weight: Font.Weight) -> UIFont.Weight {
@@ -281,15 +243,15 @@ enum MicaboFont {
 
     static func postscriptName(for weight: Font.Weight) -> String {
         if weight == .bold || weight == .heavy || weight == .black {
-            return "HankenGrotesk-Bold"
+            return UIFont.systemFont(ofSize: 17, weight: .bold).fontName
         }
         if weight == .semibold {
-            return "HankenGrotesk-SemiBold"
+            return UIFont.systemFont(ofSize: 17, weight: .semibold).fontName
         }
         if weight == .medium {
-            return "HankenGrotesk-Medium"
+            return UIFont.systemFont(ofSize: 17, weight: .medium).fontName
         }
-        return "HankenGrotesk-Regular"
+        return UIFont.systemFont(ofSize: 17, weight: .regular).fontName
     }
 
     static func display(_ size: CGFloat) -> Font {
@@ -298,16 +260,8 @@ enum MicaboFont {
 
     /// **Les chiffres qu'on lit comme un résultat**, et eux seuls : le compte de cartes du
     /// jour, la série, les statistiques d'une session, les minutes d'un objectif.
-    ///
-    /// C'est du SF Rounded, la seule fonte arrondie du système, et c'est un choix
-    /// d'intention : un grand nombre en grotesque serré ressemble à un indicateur de tableau
-    /// de bord, le même nombre en arrondi ressemble à un score. Micabo est une app d'école,
-    /// et un élève doit avoir envie de faire monter ce chiffre.
-    ///
-    /// Le texte, lui, reste en Hanken Grotesk. Deux familles sur une même page ne tiennent
-    /// que si chacune a un domaine net : ici, l'une écrit les mots, l'autre les nombres.
     static func number(_ size: CGFloat, weight: Font.Weight = .bold) -> Font {
-        .system(size: size, weight: weight, design: .rounded)
+        .system(size: size, weight: weight)
     }
 
     /// Grand titre d'écran, posé à même le fond sous son sur-titre.
@@ -464,7 +418,7 @@ extension Color {
 
 // MARK: - Modificateurs partagés
 
-/// Surface blanche posée sur le fond ivoire. Le contraste des deux fonds suffit :
+/// Surface blanche posée sur le fond gris. Le contraste des deux fonds suffit :
 /// pas de bordure, et une ombre presque invisible juste pour décoller le bloc.
 struct MicaboCardStyle: ViewModifier {
     var padding: CGFloat = MicaboSpacing.md

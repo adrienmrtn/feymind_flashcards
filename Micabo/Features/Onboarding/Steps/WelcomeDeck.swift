@@ -109,12 +109,12 @@ struct WelcomeDeck: View {
         [
             Item(
                 subject: "Histoire",
-                tint: Color(hex: 0x8C6A3F),
+                tint: Color(hex: 0x1E3A8A),
                 face: .question("Quelle année marque la chute du mur de Berlin ?")
             ),
             Item(
                 subject: "Biologie",
-                tint: Color(hex: 0x47665A),
+                tint: Color(hex: 0x0F766E),
                 face: .choice(
                     question: "Où se déroule le cycle de Calvin ?",
                     options: ["Dans le stroma", "Dans les thylakoïdes", "Dans le noyau"],
@@ -128,7 +128,7 @@ struct WelcomeDeck: View {
             ),
             Item(
                 subject: "Espagnol",
-                tint: Color(hex: 0x8A4A6B),
+                tint: Color(hex: 0x7C3AED),
                 face: .question("Comment dit-on « apprendre par cœur » ?")
             )
         ]

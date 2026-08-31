@@ -179,7 +179,7 @@ struct DemoRawPage: View {
             ForEach(Array(OnboardingDemo.rawLines.enumerated()), id: \.offset) { index, line in
                 Text(line)
                     .font(MicaboFont.hanken(6.5, weight: index == 0 ? .semibold : .regular))
-                    .foregroundStyle(Color(hex: 0x55504A))
+                    .foregroundStyle(MicaboColor.inkReading)
                     .lineSpacing(1.5)
                     .fixedSize(horizontal: false, vertical: true)
             }
