@@ -38,7 +38,10 @@ export function SiteStructuredData() {
       {
         "@type": "WebSite",
         "@id": `${CANONICAL_URL}/#website`,
-        name: "Micabo",
+        // Sitename Google (la ligne au-dessus de l'URL). Le domaine n'est
+        // qu'un repli si Google n'est pas sûr du nom.
+        name: "micabo",
+        alternateName: ["Micabo", "micabo.app"],
         url: `${CANONICAL_URL}/`,
         inLanguage: "fr-FR",
         publisher: { "@id": `${CANONICAL_URL}/#organization` },

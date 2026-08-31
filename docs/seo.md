@@ -69,6 +69,7 @@ node web/scripts/build-icons.mjs chemin/vers/stylo.png
 | `icon-512.png` | PNG, coins arrondis | 512 × 512 | Splash, `Organization.logo` |
 | `apple-touch-icon.png` | PNG 24 bits, **sans transparence** | 180 × 180 | Écran d'accueil iOS |
 | `icon-maskable-512.png` | PNG | 512 × 512 | Android qui rogne en cercle |
+| `icon-48.png` | PNG, coins arrondis | 48 × 48 | Favicon Google Search (minimum recommandé) |
 | `favicon.ico` | ICO, `16 + 32` | — | Vieux Windows, agrégateurs |
 
 ### Les trois règles qui restent
@@ -89,6 +90,16 @@ xmllint --noout web/public/icon.svg && echo OK
 
 Rien à déclarer après une régénération : `web/app/layout.tsx` et `web/app/manifest.ts`
 pointent déjà vers ces noms. Le composant `BrandMark` lit `icon.png`.
+
+Google Search n'affiche pas le globe tant qu'il n'a pas une icône **raster ≥ 48 px**
+déclarée en `rel=icon` sur la page d'accueil. Le SVG et le PNG 32 px ne suffisent pas.
+Le premier `rel=icon` est donc `icon-48.png`, puis `icon-192.png`. `favicon.ico` reste
+en 16+32 et ne doit plus prétendre faire 48 × 48.
+
+Le nom au-dessus de l'URL (`micabo`, pas `micabo.app`) vient de `WebSite.name`,
+`og:site_name` et `application-name`. Google le choisit tout seul : on ne peut que
+lui donner le signal, puis redemander l'indexation. Une marque inventée peut rester
+affichée comme le domaine pendant des jours ou des semaines.
 
 ## Les sitelinks : ce qui se fait et ce qui ne se fait pas
 

@@ -102,6 +102,7 @@ function pngsToIco(entries) {
 }
 
 const icon32 = await roundedPng(32);
+const icon48 = await roundedPng(48);
 const icon64 = await roundedPng(64);
 const icon256 = await roundedPng(256);
 const icon192 = await roundedPng(192);
@@ -124,10 +125,12 @@ const icon16 = await roundedPng(16);
 const ico = pngsToIco([
   { size: 16, png: icon16 },
   { size: 32, png: icon32 },
+  { size: 48, png: icon48 },
 ]);
 
 writeFileSync(resolve(OUT, "icon.png"), icon256);
 writeFileSync(resolve(OUT, "icon-32.png"), icon32);
+writeFileSync(resolve(OUT, "icon-48.png"), icon48);
 writeFileSync(resolve(OUT, "icon-64.png"), icon64);
 writeFileSync(resolve(OUT, "icon-192.png"), icon192);
 writeFileSync(resolve(OUT, "icon-512.png"), icon512);
@@ -149,6 +152,7 @@ writeFileSync(resolve(OUT, "icon.svg"), svg);
 for (const name of [
   "icon.png",
   "icon-32.png",
+  "icon-48.png",
   "icon-64.png",
   "icon-192.png",
   "icon-512.png",
