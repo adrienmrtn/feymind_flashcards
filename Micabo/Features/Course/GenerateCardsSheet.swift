@@ -68,7 +68,7 @@ struct GenerateCardsSheet: View {
                         Text(MicaboCopy.cardsButton)
                     }
                 }
-                .buttonStyle(MicaboPrimaryButtonStyle(tint: quota.total > 0 ? MicaboColor.ink : MicaboColor.strokeStrong))
+                .buttonStyle(MicaboPrimaryButtonStyle(tint: quota.total > 0 ? MicaboColor.accent : MicaboColor.strokeStrong))
                 .disabled(quota.total == 0)
             }
         }

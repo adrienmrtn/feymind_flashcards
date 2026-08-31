@@ -85,7 +85,7 @@ export function ExamCalendar({
                 first ? "pb-1 pt-1" : "justify-center"
               } ${
                 isSelected
-                  ? "bg-ink text-on-ink"
+                  ? "bg-accent text-on-ink"
                   : isToday
                     ? "bg-surface-muted text-ink"
                     : "text-ink hover:bg-surface-muted"
@@ -190,7 +190,7 @@ export function ExamDayPicker({
               })}
               className={`flex h-10 w-full items-center justify-center rounded-button text-[13.5px] leading-none transition-colors duration-hover ${
                 isSelected
-                  ? "bg-ink font-semibold text-on-ink"
+                  ? "bg-accent font-semibold text-on-ink"
                   : blocked
                     ? "cursor-not-allowed text-ink-tertiary/50"
                     : isToday

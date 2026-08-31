@@ -136,7 +136,7 @@ export function ContinueButton({
       }}
       className={`h-12 rounded-pill px-5 text-[15px] sm:h-12 sm:text-[15px] ${
         enabled
-          ? "border-ink bg-ink text-on-ink hover:bg-ink hover:text-on-ink"
+          ? "border-accent bg-accent text-on-ink hover:bg-accent hover:text-on-ink"
           : ""
       }`}
     >

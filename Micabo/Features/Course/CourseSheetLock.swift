@@ -67,7 +67,7 @@ struct LockedSheetTail: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(MicaboColor.onInk)
                     .frame(width: 48, height: 48)
-                    .background(MicaboColor.ink, in: Circle())
+                    .background(MicaboColor.accent, in: Circle())
 
                 VStack(spacing: 5) {
                     Text("La suite de la fiche est dans Pro")
@@ -93,7 +93,7 @@ struct LockedSheetTail: View {
                 .foregroundStyle(MicaboColor.onInk)
                 .padding(.vertical, 12)
                 .padding(.horizontal, 20)
-                .background(MicaboColor.ink, in: Capsule())
+                .background(MicaboColor.accent, in: Capsule())
                 .padding(.top, 3)
             }
             .padding(.horizontal, MicaboSpacing.md)

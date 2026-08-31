@@ -187,7 +187,7 @@ export function PaywallCard({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={next}
-              className="pressable shiny flex h-14 w-full items-center justify-center rounded-button bg-ink text-[16px] font-semibold text-on-ink"
+              className="pressable shiny flex h-14 w-full items-center justify-center rounded-button bg-accent text-[16px] font-semibold text-on-ink"
             >
               {stage === "social"
                 ? "Continuer"
@@ -332,7 +332,7 @@ function PlansStep() {
               type="button"
               onClick={() => setChosen(plan.kind)}
               className={`pressable flex w-full items-center justify-between gap-4 rounded-group px-5 py-4 text-left transition-colors duration-hover ${
-                isSelected ? "bg-ink text-on-ink" : "bg-canvas"
+                isSelected ? "bg-accent text-on-ink" : "bg-canvas"
               }`}
             >
               <div>
@@ -380,7 +380,7 @@ function PlansStep() {
         type="button"
         onClick={() => void subscribe()}
         disabled={pending}
-        className="pressable shiny mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-button bg-ink text-[16px] font-semibold text-on-ink disabled:opacity-70"
+        className="pressable shiny mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-button bg-accent text-[16px] font-semibold text-on-ink disabled:opacity-70"
       >
         {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
         {pricing.hasTrial(selected)

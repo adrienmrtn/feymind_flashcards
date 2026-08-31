@@ -26,8 +26,8 @@ export function StartButton({
         size={large ? "xl" : "lg"}
         className={
           large
-            ? `btn-rise shiny h-14 border-ink px-8 pe-7 text-[16px] hover:bg-transparent sm:h-14 sm:text-[16px] ${className}`
-            : `btn-rise shiny h-11 border-ink px-5 pe-4 hover:bg-transparent sm:h-11 ${className}`
+            ? `btn-rise shiny h-14 border-accent px-8 pe-7 text-[16px] hover:bg-transparent sm:h-14 sm:text-[16px] ${className}`
+            : `btn-rise shiny h-11 border-accent px-5 pe-4 hover:bg-transparent sm:h-11 ${className}`
         }
         render={<Link href={signedIn ? "/app" : "/commencer"} />}
       >

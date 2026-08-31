@@ -13,7 +13,7 @@ export function PaywallPreview() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="pressable mt-5 h-11 rounded-button bg-ink px-5 text-[14px] font-semibold text-on-ink"
+        className="pressable mt-5 h-11 rounded-button bg-accent px-5 text-[14px] font-semibold text-on-ink"
       >
         Voir les quatre étapes
       </button>

@@ -210,7 +210,7 @@ export function SheetReader({
                     onClick={keepCard}
                     disabled={saved}
                     className={`pressable mt-3 rounded-button px-4 py-2 text-[13.5px] font-semibold ${
-                      saved ? "bg-accent-soft text-accent" : "bg-ink text-on-ink"
+                      saved ? "bg-accent-soft text-accent" : "bg-accent text-on-ink"
                     }`}
                   >
                     {saved ? "Carte ajoutée" : "Garder cette carte"}

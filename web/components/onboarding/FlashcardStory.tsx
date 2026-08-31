@@ -142,7 +142,7 @@ export function FlashcardStory() {
           <button
             type="button"
             onClick={() => setRevealed(true)}
-            className="pressable inline-flex h-11 w-full items-center justify-center rounded-button bg-ink text-[14.5px] font-semibold text-on-ink"
+            className="pressable inline-flex h-11 w-full items-center justify-center rounded-button bg-accent text-[14.5px] font-semibold text-on-ink"
           >
             Voir la réponse
           </button>

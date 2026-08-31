@@ -60,10 +60,10 @@ extension Binding {
     }
 }
 
-/// Bouton d'action principal : bloc d'encre à coins 16 pt, qui s'enfonce à l'appui.
+/// Bouton d'action principal : bloc bleu à coins 16 pt, qui s'enfonce à l'appui.
 /// Sur un écran sombre, on inverse : surface claire, texte encre.
 struct MicaboPrimaryButtonStyle: ButtonStyle {
-    var tint: Color = MicaboColor.ink
+    var tint: Color = MicaboColor.accent
     var foreground: Color = MicaboColor.onInk
     var fullWidth: Bool = true
     var feedback: Haptics.Press = .medium
@@ -172,7 +172,7 @@ enum MicaboCircleStyle: Equatable {
     var background: Color {
         switch self {
         case .light: MicaboColor.surface
-        case .dark: MicaboColor.ink
+        case .dark: MicaboColor.accent
         case .glass: Color.black.opacity(0.32)
         case .tinted: Color.white.opacity(0.75)
         }

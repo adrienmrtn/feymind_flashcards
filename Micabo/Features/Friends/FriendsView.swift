@@ -282,7 +282,7 @@ private struct FriendRow: View {
                 .padding(.vertical, 7)
                 .padding(.horizontal, 12)
                 .background(
-                    isProminent ? MicaboColor.ink : MicaboColor.surfaceMuted,
+                    isProminent ? MicaboColor.accent : MicaboColor.surfaceMuted,
                     in: Capsule()
                 )
         }

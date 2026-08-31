@@ -73,7 +73,7 @@ struct SettingsSubjectsSheet: View {
             .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkBody)
             .padding(.vertical, 9)
             .padding(.horizontal, 13)
-            .background(isSelected ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
+            .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
     }

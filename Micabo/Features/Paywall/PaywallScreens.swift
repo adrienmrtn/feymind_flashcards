@@ -195,7 +195,7 @@ private struct PaywallComparisonTable: View {
                 .tracking(1)
                 .foregroundStyle(MicaboColor.onInk)
                 .frame(width: columnWidth, height: 26)
-                .background(MicaboColor.ink, in: Capsule())
+                .background(MicaboColor.accent, in: Capsule())
         }
     }
 
@@ -266,7 +266,7 @@ private struct PaywallPlanCard: View {
             .overlay {
                 RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                     .strokeBorder(
-                        isSelected ? MicaboColor.ink : MicaboColor.stroke,
+                        isSelected ? MicaboColor.accent : MicaboColor.stroke,
                         lineWidth: isSelected ? 1.8 : 1
                     )
             }
@@ -277,7 +277,7 @@ private struct PaywallPlanCard: View {
                         .foregroundStyle(MicaboColor.onInk)
                         .padding(.vertical, 4)
                         .padding(.horizontal, 9)
-                        .background(MicaboColor.ink, in: Capsule())
+                        .background(MicaboColor.accent, in: Capsule())
                         .offset(x: -12, y: -9)
                 }
             }
