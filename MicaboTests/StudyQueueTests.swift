@@ -137,6 +137,35 @@ final class StudyQueueTests: XCTestCase {
         )
     }
 
+    func testCensusCountsCardsOncePerCourseWithoutRepeatingRelationships() {
+        let first = Course(title: "Histoire", subject: "Histoire", summary: "", contextText: "")
+        let second = Course(title: "Maths", subject: "Maths", summary: "", contextText: "")
+        context.insert(first)
+        context.insert(second)
+
+        for index in 0..<4 {
+            let card = makeCard("h \(index)", state: .new, due: -10, position: index)
+            card.course = first
+        }
+        let review = makeCard("m 0", state: .review, due: -10, position: 0)
+        review.course = second
+        let later = makeCard("m 1", state: .review, due: 86_400, position: 1)
+        later.course = second
+
+        let census = LibraryCensus.summarize(
+            (try? context.fetch(FetchDescriptor<Flashcard>())) ?? [],
+            now: now
+        )
+
+        XCTAssertEqual(census[first.id]?.cardCount, 4)
+        XCTAssertEqual(census[first.id]?.dueCount, 4)
+        XCTAssertEqual(census[first.id]?.newCount, 4)
+        XCTAssertEqual(census[second.id]?.cardCount, 2)
+        XCTAssertEqual(census[second.id]?.dueCount, 1)
+        XCTAssertTrue(census[second.id]?.hasUnsuspended == true)
+        XCTAssertEqual(LibraryCensus.totalCards(in: census), 6)
+    }
+
     func testCountsSplitByState() {
         let cards = [
             makeCard("a", state: .new, due: -10, position: 0),

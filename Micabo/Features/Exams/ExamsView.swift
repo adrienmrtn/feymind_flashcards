@@ -14,6 +14,7 @@ struct ExamsView: View {
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
+    @State private var census: [UUID: CourseStats] = [:]
     @State private var path = NavigationPath()
     @State private var month = Date()
     @State private var selectedDay: Date?
@@ -59,9 +60,7 @@ struct ExamsView: View {
     /// cours plutôt que les cartes laissait proposer un examen qu'on ne pouvait pas
     /// confirmer.
     private var plannableCourses: [Course] {
-        courses.filter { course in
-            course.cards.contains { !$0.isSuspended }
-        }
+        courses.filter { census[$0.id]?.hasUnsuspended == true }
     }
 
     private var canPlan: Bool { !plannableCourses.isEmpty }
@@ -124,6 +123,9 @@ struct ExamsView: View {
             .toolbar(.hidden, for: .navigationBar)
             .reportsNavigationDepth(for: .exams, depth: path.count)
             .returnsHome(path: $path)
+        }
+        .task(id: courses.count) {
+            census = LibraryCensus.load(in: modelContext)
         }
         .sheet(item: $editing) { edition in
             ExamEditorSheet(exam: edition.exam, suggestedDate: edition.date)

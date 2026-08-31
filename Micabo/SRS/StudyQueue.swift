@@ -188,6 +188,8 @@ struct CourseDuePreview: Equatable {
     var heldBackNewCards: Int
     var examName: String?
 
+    static let empty = CourseDuePreview(dueCount: 0, heldBackNewCards: 0, examName: nil)
+
     /// Assez juste pour le premier cadre : les cartes dues, sans rationnement.
     static func immediate(from cards: [Flashcard], now: Date = Date()) -> CourseDuePreview {
         CourseDuePreview(

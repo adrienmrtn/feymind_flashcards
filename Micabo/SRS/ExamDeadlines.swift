@@ -45,25 +45,36 @@ struct ExamDeadlines {
     /// Un examen passé ne contraint plus rien, et un examen déclaré mais non planifié
     /// n'a encore rien demandé. Quand deux examens portent sur la même carte, c'est le plus
     /// proche qui commande : c'est lui qu'on rate en premier.
+    ///
+    /// Les cartes doivent déjà être là : relire `course.cards` pour chaque cours de
+    /// chaque examen refaisait une requête par relation, sur le fil principal.
     static func active(
         exams: [Exam],
-        courses: [Course],
+        cards: [Flashcard],
         now: Date = Date(),
         calendar: Calendar = MicaboCalendar.shared
     ) -> ExamDeadlines {
-        let coursesByID = Dictionary(courses.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let planned = exams.filter { exam in
+            exam.isPlanned && calendar.startOfDay(for: exam.date) >= calendar.startOfDay(for: now)
+        }
+        guard !planned.isEmpty else { return .empty }
+
+        var byCourse: [UUID: [Flashcard]] = [:]
+        for card in cards where !card.isSuspended {
+            guard let courseID = card.course?.id else { continue }
+            byCourse[courseID, default: []].append(card)
+        }
+
         var byCard: [UUID: Date] = [:]
         var names: [UUID: String] = [:]
 
-        for exam in exams where exam.isPlanned {
+        for exam in planned {
             let examDay = calendar.startOfDay(for: exam.date)
-            guard examDay >= calendar.startOfDay(for: now) else { continue }
             let label = exam.name.trimmingCharacters(in: .whitespacesAndNewlines)
             let name = label.isEmpty ? "Examen" : label
 
             for courseID in exam.courseIDs {
-                guard let course = coursesByID[courseID] else { continue }
-                for card in course.cards where !card.isSuspended {
+                for card in byCourse[courseID] ?? [] {
                     if let existing = byCard[card.id], existing <= examDay { continue }
                     byCard[card.id] = examDay
                     names[card.id] = name
@@ -72,6 +83,17 @@ struct ExamDeadlines {
         }
 
         return ExamDeadlines(byCard: byCard, names: names)
+    }
+
+    /// Variante quand on n'a que les cours : on rassemble leurs cartes **une fois**,
+    /// puis on rejoint la forme ci-dessus.
+    static func active(
+        exams: [Exam],
+        courses: [Course],
+        now: Date = Date(),
+        calendar: Calendar = MicaboCalendar.shared
+    ) -> ExamDeadlines {
+        active(exams: exams, cards: courses.flatMap(\.cards), now: now, calendar: calendar)
     }
 
     /// La date butoir d'un **seul cours**, sans relire tous les cours et toutes leurs cartes.
@@ -111,7 +133,8 @@ struct ExamDeadlines {
     static func active(in context: ModelContext, now: Date = Date()) -> ExamDeadlines {
         let exams = (try? context.fetch(FetchDescriptor<Exam>())) ?? []
         guard !exams.isEmpty else { return .empty }
-        return active(exams: exams, courses: CourseRepository.allCourses(in: context), now: now)
+        let cards = (try? context.fetch(FetchDescriptor<Flashcard>())) ?? []
+        return active(exams: exams, cards: cards, now: now)
     }
 }
 

@@ -9,6 +9,7 @@ struct CoursesListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(TabRouter.self) private var router: TabRouter?
+    @Environment(CloudSync.self) private var sync: CloudSync?
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
@@ -25,6 +26,8 @@ struct CoursesListView: View {
     @State private var isCreatingDeck = false
     @State private var paywall: PaywallTrigger?
     @State private var coursePendingDelete: Course?
+    /// Totaux par cours, lus **une fois**. Le corps ne touche plus `course.cards`.
+    @State private var census: [UUID: CourseStats] = [:]
 
     enum SortOrder: String, CaseIterable, Identifiable {
         case due
@@ -65,12 +68,12 @@ struct CoursesListView: View {
         case .alphabetical:
             return base.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
         case .due:
-            return base.sorted { $0.dueCount > $1.dueCount }
+            return base.sorted { (census[$0.id]?.dueCount ?? 0) > (census[$1.id]?.dueCount ?? 0) }
         }
     }
 
-    private var cardCount: Int {
-        courses.reduce(0) { $0 + $1.cards.count }
+    private var cardCount: Int? {
+        census.isEmpty ? nil : LibraryCensus.totalCards(in: census)
     }
 
     var body: some View {
@@ -159,6 +162,12 @@ struct CoursesListView: View {
                 Text("\(course.title) et \(MicaboCopy.cards(course.cards.count)) disparaissent.")
             }
         }
+        .task(id: censusKey) {
+            census = LibraryCensus.load(in: modelContext)
+        }
+        .onChange(of: path.count) { _, depth in
+            if depth == 0 { census = LibraryCensus.load(in: modelContext) }
+        }
         .onChange(of: router?.courseImportRequests ?? 0) { oldValue, newValue in
             guard newValue > oldValue else { return }
             // Le prochain tour de boucle : la feuille doit s'ouvrir après que Cours
@@ -202,7 +211,10 @@ struct CoursesListView: View {
 
     private var countLabel: String {
         guard !courses.isEmpty else { return "Aucun cours" }
-        return "\(MicaboCopy.courses(courses.count)) · \(MicaboCopy.cards(cardCount))"
+        if let cardCount {
+            return "\(MicaboCopy.courses(courses.count)) · \(MicaboCopy.cards(cardCount))"
+        }
+        return MicaboCopy.courses(courses.count)
     }
 
     @ViewBuilder
@@ -268,7 +280,7 @@ struct CoursesListView: View {
             let items = filtered
             LazyVStack(spacing: 0) {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, course in
-                    MicaboRow.course(course) {
+                    MicaboRow.course(course, stats: census[course.id]) {
                         path.append(course)
                     }
                     .contextMenu {
@@ -287,6 +299,14 @@ struct CoursesListView: View {
             }
             .padding(.horizontal, MicaboSpacing.xxs)
         }
+    }
+
+    /// Change quand la liste des cours, le jour ou une synchro bougent. Les notes
+    /// d'une session, elles, se voient au retour sur la liste (`path.count == 0`).
+    private var censusKey: String {
+        let stamp = courses.map(\.updatedAt).max()?.timeIntervalSince1970 ?? 0
+        let day = MicaboCalendar.shared.startOfDay(for: Date()).timeIntervalSince1970
+        return "\(courses.count)-\(stamp)-\(day)-\(sync?.epoch ?? 0)"
     }
 
     private var canImport: Bool {
