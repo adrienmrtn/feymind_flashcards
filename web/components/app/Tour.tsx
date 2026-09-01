@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
+import { Float } from "@/components/app/Float";
 import { markTourSeen, skipTour } from "@/lib/actions/tour";
 import { isOfferClaimed } from "@/lib/discount";
 import {
@@ -165,11 +166,13 @@ function TourRun({
   const current = guided ? step : hintStep;
 
   const anchor = useAnchor(current?.anchor ?? null, guided);
-  const bubble = useRef<HTMLDivElement | null>(null);
-  const [size, setSize] = useState({ width: 320, height: 160 });
+  const frame = useVisibleFrame();
+  const [node, setNode] = useState<HTMLDivElement | null>(null);
+  // Plus haute que le contenu réel : une première pose trop basse coupe
+  // « Suivant » le temps que le ResizeObserver rattrape.
+  const [size, setSize] = useState({ width: 320, height: 240 });
 
   useEffect(() => {
-    const node = bubble.current;
     if (!node) return;
     const measure = () => {
       const rect = node.getBoundingClientRect();
@@ -179,7 +182,7 @@ function TourRun({
     const observer = new ResizeObserver(measure);
     observer.observe(node);
     return () => observer.disconnect();
-  }, [current?.anchor]);
+  }, [current?.anchor, node]);
 
   const next = useCallback(() => {
     if (index + 1 >= steps.length) {
@@ -229,14 +232,12 @@ function TourRun({
   if (guided && !anchor) return null;
   if (!anchor) return null;
 
-  const place = bubblePlacement(anchor, size, {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  });
+  const place = bubblePlacement(anchor, size, frame);
   const hole = holeAround(anchor);
 
   return (
-    <>
+    <Float>
+      <>
       {guided ? (
         <>
           {/* Le bloqueur est sous le trou : c'est lui qui avale les clics, y
@@ -268,12 +269,12 @@ function TourRun({
       )}
 
       <div
-        ref={bubble}
+        ref={setNode}
         role="dialog"
         aria-modal={guided || undefined}
         aria-labelledby="tour-title"
         aria-describedby="tour-body"
-        className="tour-bubble fixed z-[52] w-[min(21rem,calc(100vw-1.5rem))] rounded-[20px] bg-surface p-5 shadow-[0_24px_70px_-18px_rgba(25,28,32,0.45)]"
+        className="tour-bubble fixed z-[52] max-h-[calc(100dvh-1.5rem)] w-[min(21rem,calc(100vw-1.5rem))] overflow-y-auto rounded-[20px] bg-surface p-5 shadow-[0_24px_70px_-18px_rgba(25,28,32,0.45)]"
         style={{ top: place.top, left: place.left }}
       >
         {guided ? (
@@ -330,8 +331,45 @@ function TourRun({
           </button>
         </div>
       </div>
-    </>
+      </>
+    </Float>
   );
+}
+
+/**
+ * La fenêtre vraiment visible : barre d'adresse, clavier, zoom.
+ *
+ * `innerHeight` compte ce qui est caché derrière le chrome du navigateur.
+ * Une bulle calée dessus a son bouton hors de portée.
+ */
+function useVisibleFrame(): { width: number; height: number } {
+  const [frame, setFrame] = useState(() => readVisibleFrame());
+
+  useEffect(() => {
+    function sync() {
+      setFrame(readVisibleFrame());
+    }
+    sync();
+    window.addEventListener("resize", sync);
+    window.visualViewport?.addEventListener("resize", sync);
+    window.visualViewport?.addEventListener("scroll", sync);
+    return () => {
+      window.removeEventListener("resize", sync);
+      window.visualViewport?.removeEventListener("resize", sync);
+      window.visualViewport?.removeEventListener("scroll", sync);
+    };
+  }, []);
+
+  return frame;
+}
+
+function readVisibleFrame(): { width: number; height: number } {
+  if (typeof window === "undefined") return { width: 1280, height: 800 };
+  const view = window.visualViewport;
+  return {
+    width: view?.width ?? window.innerWidth,
+    height: view?.height ?? window.innerHeight,
+  };
 }
 
 /** Les bulles qui ont un sens sur cette largeur, recalculées si elle change. */

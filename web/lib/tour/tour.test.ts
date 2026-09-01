@@ -212,7 +212,17 @@ describe("bubblePlacement", () => {
     const placed = bubblePlacement(anchor, tall, { width: 390, height: 760 });
 
     expect(placed.top).toBeGreaterThanOrEqual(EDGE_MARGIN);
-    expect(placed.top + tall.height).toBeLessThanOrEqual(760);
+    expect(placed.top + tall.height).toBeLessThanOrEqual(760 - EDGE_MARGIN);
     expect(placed.left).toBeGreaterThanOrEqual(EDGE_MARGIN);
+  });
+
+  it("garde le bouton à l'écran quand la zone remplit la page", () => {
+    const card = { width: 336, height: 220 };
+    const viewport = { width: 1280, height: 800 };
+    const panel = { top: 72, left: 280, width: 720, height: 980 };
+    const placed = bubblePlacement(panel, card, viewport);
+
+    expect(placed.top).toBeGreaterThanOrEqual(EDGE_MARGIN);
+    expect(placed.top + card.height).toBeLessThanOrEqual(viewport.height - EDGE_MARGIN);
   });
 });
