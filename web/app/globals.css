@@ -1018,6 +1018,34 @@ video {
   animation: micabo-stagger 260ms var(--ease-out-strong) both;
 }
 
+/* Les formules composées par KaTeX, recalées sur la typographie de Micabo.
+   KaTeX se donne 1,21 em pour compenser la petite hauteur d'x de ses fontes.
+   Nos textes de fiche sont déjà généreux : à 1,21 em, une formule dans une
+   phrase dépassait de l'interligne et faisait bouger la ligne de base. */
+.math-inline .katex {
+  font-size: 1.08em;
+}
+
+/* Une formule en display peut être plus large que la colonne : une matrice, une
+   somme à bornes. Elle défile alors sur elle-même au lieu de pousser la page,
+   parce qu'une fiche qui gagne une barre horizontale entière se relit mal. */
+.math-block {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 2px;
+}
+
+.math-block .katex-display {
+  margin: 0;
+}
+
+/* Une fiche s'imprime, et la couleur d'encre du papier n'est pas celle de
+   l'écran. KaTeX pose la sienne sur ses `span` : on la lui reprend. */
+.math-inline .katex,
+.math-block .katex {
+  color: inherit;
+}
+
 @keyframes micabo-sway {
   from {
     rotate: -11deg;

@@ -1,6 +1,7 @@
-import { latexToUnicode, type SheetBlock } from "@micabo/core";
+import { type SheetBlock } from "@micabo/core";
 
 import { InlineMarkup } from "./InlineMarkup";
+import { MathBlock } from "./Math";
 
 /**
  * Le rendu d'une fiche, porté depuis `Micabo/Features/Course/SheetBlockView.swift`.
@@ -245,7 +246,7 @@ function Block({ block, tint }: { block: SheetBlock; tint: string }) {
     case "formula":
       return (
         <div className="rounded-[18px] bg-surface-muted px-[13px] py-4 text-center">
-          <p className="font-serif text-[18px] italic text-ink">{latexToUnicode(block.latex)}</p>
+          <MathBlock latex={block.latex} />
           {block.caption ? (
             <p className="mt-1.5 text-[11.5px] text-ink-tertiary">
               <InlineMarkup text={block.caption} />
