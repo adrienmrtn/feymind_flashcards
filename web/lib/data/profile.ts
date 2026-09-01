@@ -27,10 +27,14 @@ export interface ProfileRow {
   daily_minutes: number | null;
   sheet_length: string | null;
   sheet_language: string | null;
+  /** Les pages dont la visite guidée s'est déjà présentée. */
+  tour_seen: string[] | null;
+  /** « Passer la visite » a été cliqué : plus aucune page ne se présente. */
+  tour_skipped: boolean | null;
 }
 
 const PROFILE_COLUMNS =
-  "display_name, username, country_code, study_level, subjects, institution_name, institution_id, daily_minutes, sheet_length, sheet_language";
+  "display_name, username, country_code, study_level, subjects, institution_name, institution_id, daily_minutes, sheet_length, sheet_language, tour_seen, tour_skipped";
 
 export async function readProfile(): Promise<ProfileRow | null> {
   const userId = await currentUserId();

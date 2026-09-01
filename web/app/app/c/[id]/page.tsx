@@ -75,6 +75,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
           href={`/app/c/${course.id}/cartes` as never}
           className="mt-7 flex w-full items-center gap-4 rounded-2xl border border-border bg-card px-6 py-5"
           data-print="hide"
+          data-tour="fiche-cartes"
         >
           <span
             aria-hidden
@@ -107,19 +108,23 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
       ) : null}
 
       {cards.length === 0 ? (
-        <div className="mt-7" data-print="hide">
+        <div className="mt-7" data-print="hide" data-tour="fiche-cartes">
           <GenerateCardsCta href={`/app/c/${course.id}/cartes?generer=1`} />
         </div>
       ) : (
         <ReviewCta href={`/app/reviser?cours=${course.id}`} floating />
       )}
 
-      <div className="mt-7 border-t border-hairline-on-canvas pt-6" data-print="hide">
+      <div
+        className="mt-7 border-t border-hairline-on-canvas pt-6"
+        data-print="hide"
+        data-tour="fiche-visibilite"
+      >
         <p className="eyebrow mb-3 text-ink-tertiary">Qui peut la retrouver</p>
         <VisibilityPicker courseId={course.id} initial={course.visibility} />
       </div>
 
-      <div className="mt-10">
+      <div className="mt-10" data-tour="fiche-texte">
         <SheetReader courseId={course.id} blocks={readable} tint={tint} />
 
         {locked.length > 0 ? <LockedSheetTail blocks={locked} tint={tint} /> : null}

@@ -101,7 +101,10 @@ export default async function ProfilePage() {
         </Link>
       </header>
 
-      <section className="saas-card relative mt-6 grid overflow-hidden sm:grid-cols-2">
+      <section
+        className="saas-card relative mt-6 grid overflow-hidden sm:grid-cols-2"
+        data-tour="profil-chiffres"
+      >
         <div className="px-7 py-7">
           <p className="text-[13px] text-ink-tertiary">Série</p>
           <Suspense fallback={<StreakPending />}>
@@ -131,7 +134,7 @@ export default async function ProfilePage() {
         </Link>
       ) : null}
 
-      <section className="saas-card relative mt-4 px-7 py-7">
+      <section className="saas-card relative mt-4 px-7 py-7" data-tour="profil-maitrise">
         <p className="text-[13px] text-ink-tertiary">Niveau de connaissance</p>
         {cards.length === 0 ? (
           <p className="mt-4 text-[14.5px] leading-relaxed text-ink-secondary">
@@ -143,7 +146,7 @@ export default async function ProfilePage() {
         )}
       </section>
 
-      <section className="saas-card relative mt-4 overflow-hidden">
+      <section className="saas-card relative mt-4 overflow-hidden" data-tour="profil-passees">
         <p className="px-7 pt-7 text-[13px] text-ink-tertiary">Cartes les plus passées</p>
         <Suspense fallback={<TopCardsPending />}>
           <TopCards cards={cards} />
