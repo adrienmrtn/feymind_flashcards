@@ -194,32 +194,37 @@ export function PaywallCard({
           </button>
         </div>
 
-        {stage === "plans" ? (
-          <PaywallOffer headingId={titleId} />
-        ) : (
-          <>
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 pt-3">
-              <div key={stage} className="rise">
+        {/*
+          Les quatre pages du court accueil partagent la même entrée : `rise`,
+          comme un écran de parcours. L'offre se montait à part, sans
+          animation, et ça cassait la suite preuve → essai → rappel → Pro.
+        */}
+        <div key={stage} className="rise flex min-h-0 flex-1 flex-col">
+          {stage === "plans" ? (
+            <PaywallOffer headingId={titleId} />
+          ) : (
+            <>
+              <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 pt-3">
                 {stage === "social" ? <SocialStep headingId={titleId} /> : null}
                 {stage === "trial" ? <TrialStep headingId={titleId} /> : null}
                 {stage === "reminder" ? <ReminderStep headingId={titleId} /> : null}
               </div>
-            </div>
-            <div className="px-6 pb-6 pt-3">
-              <button
-                type="button"
-                onClick={next}
-                className="pressable shiny flex h-14 w-full items-center justify-center rounded-button bg-accent text-[16px] font-semibold text-on-ink"
-              >
-                {stage === "social"
-                  ? "Continuer"
-                  : stage === "trial"
-                    ? `Continuer pour ${pricing.priceText(0)}`
-                    : "Continuer gratuitement"}
-              </button>
-            </div>
-          </>
-        )}
+              <div className="px-6 pb-6 pt-3">
+                <button
+                  type="button"
+                  onClick={next}
+                  className="pressable shiny flex h-14 w-full items-center justify-center rounded-button bg-accent text-[16px] font-semibold text-on-ink"
+                >
+                  {stage === "social"
+                    ? "Continuer"
+                    : stage === "trial"
+                      ? `Continuer pour ${pricing.priceText(0)}`
+                      : "Continuer gratuitement"}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

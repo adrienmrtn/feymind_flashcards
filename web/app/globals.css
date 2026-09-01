@@ -971,22 +971,23 @@ video {
   transition-timing-function: var(--ease-out-strong);
 }
 
-/* Le paywall se pose **par-dessus** le tableau de bord, il ne le remplace pas. */
+/* Le paywall se pose **par-dessus** le tableau de bord, il ne le remplace pas.
+   Même entrée qu'un écran de parcours (`rise`) : 10 px, 260 ms, sans échelle.
+   L'ancienne montée à 520 ms + scale faisait de l'offre un modal, pas la
+   page suivante du court accueil. */
 @keyframes micabo-paywall-in {
   from {
     opacity: 0;
-    translate: 0 18px;
-    scale: 0.985;
+    translate: 0 10px;
   }
   to {
     opacity: 1;
     translate: 0 0;
-    scale: 1;
   }
 }
 
 @utility paywall-card {
-  animation: micabo-paywall-in 520ms var(--ease-out-strong) both;
+  animation: micabo-paywall-in 260ms var(--ease-out-strong) both;
 }
 
 @keyframes micabo-veil {
@@ -999,7 +1000,7 @@ video {
 }
 
 @utility paywall-veil {
-  animation: micabo-veil 420ms var(--ease-out-strong) both;
+  animation: micabo-veil 260ms var(--ease-out-strong) both;
 }
 
 @keyframes micabo-stagger {
@@ -1014,7 +1015,7 @@ video {
 }
 
 @utility paywall-stagger {
-  animation: micabo-stagger 520ms var(--ease-out-strong) both;
+  animation: micabo-stagger 260ms var(--ease-out-strong) both;
 }
 
 @keyframes micabo-sway {

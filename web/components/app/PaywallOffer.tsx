@@ -89,12 +89,8 @@ export function PaywallOffer({
         </div>
 
         <ul className="mt-6 space-y-3.5">
-          {PAYWALL_FEATURES.map((feature, index) => (
-            <li
-              key={feature.title}
-              className="paywall-stagger flex items-start gap-3"
-              style={{ animationDelay: `${80 + index * 70}ms` }}
-            >
+          {PAYWALL_FEATURES.map((feature) => (
+            <li key={feature.title} className="flex items-start gap-3">
               <span
                 aria-hidden
                 className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent"
