@@ -9,7 +9,7 @@ import { StartButton } from "./StartButton";
  * Le parcours a sa propre jauge ; ici on n'emprunte rien de ça, pour que la
  * landing ne se lise pas comme un tunnel.
  *
- * Les quatre ancres ne sont pas là pour la décoration : une page sans structure
+ * Les ancres ne sont pas là pour la décoration : une page sans structure
  * nommée ne donne à un moteur aucun intitulé à proposer sous le résultat, et un
  * lecteur qui arrive de la recherche n'a aucun moyen de sauter à ce qu'il
  * cherchait.
@@ -31,9 +31,9 @@ export function LandingHeader({ signedIn = false }: { signedIn?: boolean }) {
           wordClassName="text-[15px] font-bold tracking-tight text-foreground"
         />
 
-        {/* Les sections, nommées. Elles sont masquées sur mobile — quatre liens en
+        {/* Les sections, nommées. Elles sont masquées sur mobile — trois liens en
             plus d'un bouton ne tiennent pas sur 360 px, et le pied de page les
-            reprend. Un menu déroulant pour quatre ancres coûterait plus qu'il
+            reprend. Un menu déroulant pour trois ancres coûterait plus qu'il
             n'apporte. */}
         <nav aria-label="Sections" className="hidden items-center gap-7 md:flex">
           {LANDING_NAV.map((item) => (

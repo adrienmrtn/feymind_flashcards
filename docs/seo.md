@@ -113,7 +113,7 @@ Ce qui rend leur apparition possible, et qui est fait :
 
 - des pages distinctes et explorables, avec des titres différents (le sitemap en liste trois)
 - une navigation en dur, en haut et dans le pied, avec des intitulés qui disent un sujet
-- des sections nommées (`#methode`, `#mode-examen`, `#iphone`, `#questions`) : Google en tire
+- des sections nommées (`#methode`, `#mode-examen`, `#questions`) : Google en tire
   parfois des liens vers une partie de la page, sur les pages longues
 - des données structurées `Organization` qui rattachent le mot « Micabo » à une entité, au
   lieu de laisser le moteur proposer une correction orthographique

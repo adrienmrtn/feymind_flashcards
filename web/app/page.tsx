@@ -7,7 +7,6 @@ import { DemoCards } from "@/components/landing/DemoCards";
 import { ExamMode } from "@/components/landing/ExamMode";
 import { Footer } from "@/components/landing/Footer";
 import { Hero } from "@/components/landing/Hero";
-import { IosAlso } from "@/components/landing/IosAlso";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Questions } from "@/components/landing/Questions";
 import { RetentionChart } from "@/components/landing/RetentionChart";
@@ -86,15 +85,6 @@ export default async function LandingPage({
         >
           <RetentionChart />
         </Section>
-
-        <section
-          id={LANDING_SECTIONS.iphone}
-          className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36"
-        >
-          <Reveal>
-            <IosAlso />
-          </Reveal>
-        </section>
 
         <Section
           id={LANDING_SECTIONS.exam}

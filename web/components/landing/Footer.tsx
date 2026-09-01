@@ -96,15 +96,6 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
             </div>
 
             <div>
-              <p className="eyebrow mb-3 text-ink-tertiary">Sur ton téléphone</p>
-              <p className="text-ink-secondary">
-                Aussi sur iPhone.
-                <br />
-                <span className="text-ink-tertiary">Le site et l&apos;app partagent tes cours.</span>
-              </p>
-            </div>
-
-            <div>
               <p className="eyebrow mb-3 text-ink-tertiary">Le cadre</p>
               <ul className="space-y-1.5 text-ink-secondary">
                 <li>

@@ -15,11 +15,13 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const REPO = resolve(ROOT, "..");
 const OUT = resolve(ROOT, "public");
 const require = createRequire(import.meta.url);
 const sharpCandidates = [
   "sharp",
   resolve(ROOT, "node_modules/.pnpm/sharp@0.35.3_@types+node@26.3.0/node_modules/sharp"),
+  resolve(REPO, "node_modules/.pnpm/sharp@0.35.3_@types+node@26.3.0/node_modules/sharp"),
 ];
 const sharpPath = sharpCandidates.find((candidate) => {
   try {
@@ -36,6 +38,8 @@ if (!sharpPath) {
 const sharp = require(sharpPath);
 const RADIUS = 0.22;
 const BLUE = { r: 34, g: 136, b: 250 };
+/** Recule le masque d'un filet pour ne pas garder le halo sombre du squircle. */
+const MASK_INSET_RATIO = 0.018;
 
 const source = process.argv[2];
 if (!source) {
@@ -46,21 +50,47 @@ if (!source) {
 mkdirSync(OUT, { recursive: true });
 
 function roundedMask(size) {
-  const r = Math.round(size * RADIUS);
+  const inset = Math.max(1, Math.round(size * MASK_INSET_RATIO));
+  const inner = size - inset * 2;
+  const r = Math.max(1, Math.round(inner * RADIUS));
   return Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><rect width="${size}" height="${size}" rx="${r}" ry="${r}" fill="#fff"/></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><rect x="${inset}" y="${inset}" width="${inner}" height="${inner}" rx="${r}" ry="${r}" fill="#fff"/></svg>`,
   );
 }
 
+async function hardenAlpha(buffer) {
+  const { data, info } = await sharp(buffer).ensureAlpha().raw().toBuffer({
+    resolveWithObject: true,
+  });
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 160) {
+      data[i] = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = 0;
+    } else {
+      data[i + 3] = 255;
+    }
+  }
+  return sharp(data, {
+    raw: { width: info.width, height: info.height, channels: 4 },
+  })
+    .png({ compressionLevel: 9 })
+    .toBuffer();
+}
+
 async function roundedPng(size) {
-  const pipeline = sharp(source)
+  const masked = await sharp(source)
     .resize(size, size, { fit: "cover" })
-    .composite([{ input: roundedMask(size), blend: "dest-in" }]);
+    .composite([{ input: roundedMask(size), blend: "dest-in" }])
+    .png()
+    .toBuffer();
+  const hardened = await hardenAlpha(masked);
   // Sous 48 px le dégradé 3D se perd de toute façon : une palette tient
   // dans un favicon. Au-dessus, on garde les ombres du stylo.
   return size < 48
-    ? pipeline.png({ compressionLevel: 9, palette: true, colours: 48 }).toBuffer()
-    : pipeline.png({ compressionLevel: 9 }).toBuffer();
+    ? sharp(hardened).png({ compressionLevel: 9, palette: true, colours: 48 }).toBuffer()
+    : hardened;
 }
 
 async function squarePng(size) {
@@ -142,8 +172,7 @@ const embed = icon64.toString("base64");
 const svg = [
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">',
   "<title>Micabo</title>",
-  '<defs><clipPath id="r"><rect width="64" height="64" rx="14" ry="14"/></clipPath></defs>',
-  `<image href="data:image/png;base64,${embed}" width="64" height="64" clip-path="url(#r)" />`,
+  `<image href="data:image/png;base64,${embed}" width="64" height="64" />`,
   "</svg>",
   "",
 ].join("");

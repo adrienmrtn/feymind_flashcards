@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-import { BrandMark } from "@/components/BrandMark";
+import { BrandWordmark } from "@/components/BrandMark";
 
 /**
  * Les formats qu'on dépose, absorbés par Micabo. **Un seul temps.**
  *
- * Les cases convergent vers le logo, passent dessous, et c'est fini. Rien
- * après : la fiche qui en sort a son propre écran, et la raconter deux fois
- * faisait deux animations dans une seule.
+ * Les cases convergent vers le logo Micabo, passent **derrière**, et c'est
+ * fini. Rien après : la fiche qui en sort a son propre écran, et la raconter
+ * deux fois faisait deux animations dans une seule.
  *
  * Les cases cherchent le même fichier que la vitrine
  * (`/landing/sources/{id}.webp`). Tant qu'il manque, l'emoji tient la place.
@@ -52,7 +52,7 @@ export function ImportStory() {
 
   return (
     <div
-      className="relative mx-auto flex h-[min(46svh,360px)] w-full max-w-[420px] items-center justify-center"
+      className="relative mx-auto flex h-[min(50svh,400px)] w-full max-w-[420px] items-center justify-center"
       aria-hidden
     >
       {/* Le centre de la scène, et le seul : tout part de lui et y revient. */}
@@ -62,7 +62,7 @@ export function ImportStory() {
         ))}
 
         <div className="absolute left-0 top-0 z-10 -translate-x-1/2 -translate-y-1/2">
-          <BrandMark size={52} />
+          <BrandWordmark mark={92} />
         </div>
       </div>
     </div>
@@ -88,7 +88,7 @@ function DocTile({
   const converge = ease(clamp((progress - 0.24 - index * 0.045) / 0.5));
 
   const angle = (index / DOCS.length) * Math.PI * 2 - Math.PI / 2;
-  const radius = 152;
+  const radius = 168;
   const startX = Math.cos(angle) * radius;
   const startY = Math.sin(angle) * radius * 0.78;
 
@@ -100,7 +100,7 @@ function DocTile({
 
   return (
     <div
-      className="absolute left-0 top-0"
+      className="absolute left-0 top-0 z-0"
       style={{
         opacity: appear * (1 - shrink),
         transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(${scale})`,

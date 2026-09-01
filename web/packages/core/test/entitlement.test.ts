@@ -42,9 +42,14 @@ import {
   monthlyEquivalent,
   offers,
   planCaption,
+  planDisplayedPrice,
+  planDisplayedUnit,
   planFor,
+  planRenewalCopy,
+  priceText,
   savingsPercent,
   stripePriceId,
+  trialBadge,
 } from "../src/pricing";
 
 describe("le droit", () => {
@@ -244,6 +249,16 @@ describe("les offres", () => {
     expect(monthlyEquivalent(WEEKLY)).toBeNull();
     expect(planCaption(WEEKLY)).toBe("facturé chaque semaine");
     expect(planCaption(YEARLY)).toBe(`${yearlyPerMonth} / mois`);
+    expect(planDisplayedPrice(YEARLY)).toBe(yearlyPerMonth);
+    expect(planDisplayedPrice(WEEKLY)).toBe(priceText(WEEKLY.price));
+    expect(planDisplayedUnit(YEARLY)).toBe("/ mois");
+    expect(planDisplayedUnit(WEEKLY)).toBe("/ semaine");
+    expect(planRenewalCopy(YEARLY)).toBe(
+      `Puis ${priceText(YEARLY.price)} par an, résiliable à tout moment`,
+    );
+    expect(planRenewalCopy(WEEKLY)).toBe("Résiliable à tout moment");
+    expect(trialBadge(YEARLY)).toBe("3 jours gratuits");
+    expect(trialBadge(WEEKLY)).toBeNull();
   });
 
   it("offrent trois jours d'essai à l'annuel, et rien aux autres", () => {
