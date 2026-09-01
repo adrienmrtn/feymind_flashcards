@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   BookOpen,
   CalendarDays,
+  CreditCard,
   House,
   Layers,
   LogOut,
@@ -59,6 +60,7 @@ const GROUPS = [
     items: [
       { href: "/app/amis", label: "Amis", icon: Users, prefetch: true },
       { href: "/app/profil", label: "Profil", icon: UserRound, prefetch: true },
+      { href: "/app/reglages#abonnement", label: "Abonnement", icon: CreditCard, prefetch: true },
       { href: "/app/reglages", label: "Réglages", icon: Settings, prefetch: true },
     ],
   },
@@ -81,20 +83,34 @@ function sectionLabel(pathname: string): string {
   return "Accueil";
 }
 
-function isCurrent(pathname: string, href: string): boolean {
-  if (href === "/app") return pathname === "/app";
-  if (href === "/app/cours") {
+function navPath(href: string): string {
+  return href.split("#")[0] ?? href;
+}
+
+function isCurrent(pathname: string, href: string, hash = ""): boolean {
+  const path = navPath(href);
+  if (path === "/app") return pathname === "/app";
+  if (path === "/app/cours") {
     return (
       pathname === "/app/cours" ||
       pathname.startsWith("/app/c/") ||
       pathname.startsWith("/app/b/")
     );
   }
-  if (href === "/app/profil") return pathname.startsWith("/app/profil");
-  if (href === "/app/amis") {
+  if (path === "/app/profil") return pathname.startsWith("/app/profil");
+  if (path === "/app/amis") {
     return pathname.startsWith("/app/amis") || pathname.startsWith("/app/u/");
   }
-  return pathname.startsWith(href);
+  // Un seul lien « actif » sur les réglages : celui qu'on a vraiment
+  // visé. Les deux mènent à la même page, le hash tranche.
+  if (path === "/app/reglages") {
+    if (pathname !== "/app/reglages" && !pathname.startsWith("/app/reglages/")) {
+      return false;
+    }
+    const wantsHash = href.includes("#");
+    return wantsHash ? hash === "abonnement" : hash !== "abonnement";
+  }
+  return pathname.startsWith(path);
 }
 
 export function AppChrome({
@@ -179,11 +195,30 @@ export function AppChrome({
   );
 }
 
+function usePageHash() {
+  const pathname = usePathname();
+  const [hash, setHash] = useState("");
+
+  useEffect(() => {
+    function sync() {
+      setHash(window.location.hash.replace(/^#/, ""));
+    }
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, [pathname]);
+
+  return hash;
+}
+
 function HeaderTitle() {
   const pathname = usePathname();
-  return (
-    <span className="truncate text-sm font-semibold tracking-tight">{sectionLabel(pathname)}</span>
-  );
+  const hash = usePageHash();
+  const label =
+    pathname.startsWith("/app/reglages") && hash === "abonnement"
+      ? "Abonnement"
+      : sectionLabel(pathname);
+  return <span className="truncate text-sm font-semibold tracking-tight">{label}</span>;
 }
 
 function Sidebar({
@@ -288,6 +323,7 @@ function Brand() {
 
 function NavList() {
   const pathname = usePathname();
+  const hash = usePageHash();
 
   return (
     <nav className="flex flex-col gap-5 px-3 py-2">
@@ -297,7 +333,7 @@ function NavList() {
             {group.title}
           </p>
           {group.items.map((item) => {
-            const current = isCurrent(pathname, item.href);
+            const current = isCurrent(pathname, item.href, hash);
             const Icon = item.icon;
             return (
               <Link

@@ -47,12 +47,14 @@ export function SubscriptionCard(view: SubscriptionView) {
 
   return (
     <section id="abonnement" className="saas-card scroll-mt-6 px-7 py-7">
-      <p className="text-[13px] text-ink-tertiary">Abonnement</p>
-      <p className="mt-2 text-[22px] font-semibold tracking-tight text-ink">{headline}</p>
-      {plan && view.paid ? (
-        <p className="mt-1 text-[13.5px] font-medium text-ink-secondary">{plan}</p>
-      ) : null}
-      <p className="mt-2 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-secondary">
+      <p className="text-[15px] font-semibold text-ink">Abonnement</p>
+      <p className="mt-1.5 text-[13.5px] font-medium text-ink">
+        {headline}
+        {plan && view.paid ? (
+          <span className="font-normal text-ink-tertiary"> · {plan}</span>
+        ) : null}
+      </p>
+      <p className="mt-1.5 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-secondary">
         {subscriptionDetail(view)}
       </p>
 
