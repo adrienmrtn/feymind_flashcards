@@ -43,7 +43,7 @@ describe("priceIdFor", () => {
 
 describe("priceIdProblem", () => {
   it("accepte un price_…", () => {
-    expect(priceIdProblem("price_1UA59JQMgx8zg1703xvj1Cgk")).toBeNull();
+    expect(priceIdProblem("price_1UAoiCQMgx8zg1703G0YpWUM")).toBeNull();
   });
 
   it("refuse un identifiant Apple, un prod_…, ou le vide", () => {

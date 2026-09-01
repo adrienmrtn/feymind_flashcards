@@ -266,7 +266,7 @@ describe("les offres", () => {
     expect(STORE_PRODUCTS.filter((product) => product.store === "stripe")).toHaveLength(3);
     expect(new Set(STORE_PRODUCTS.map((product) => product.id)).size).toBe(6);
     expect(stripePriceId("yearly")).toBe("price_1UA57iQMgx8zg1707oLVaVD8");
-    expect(stripePriceId("weekly")).toBe("price_1UA59JQMgx8zg1703xvj1Cgk");
-    expect(stripePriceId("yearly_discount")).toBe("price_1UA59vQMgx8zg170euqLCM3N");
+    expect(stripePriceId("weekly")).toBe("price_1UAoiCQMgx8zg1703G0YpWUM");
+    expect(stripePriceId("yearly_discount")).toBe("price_1UAoiJQMgx8zg170uoMBliRN");
   });
 });

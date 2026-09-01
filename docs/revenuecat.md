@@ -32,8 +32,8 @@ iPhone n'ouvre pas le web, et inversement.
 | App Store | Hebdomadaire | `com.micabo.app.pro.weekly` |
 | App Store | Annuel discount | `com.micabo.app.pro.yearly.discount` |
 | Stripe | Annuel | `price_1UA57iQMgx8zg1707oLVaVD8` |
-| Stripe | Hebdomadaire | `price_1UA59JQMgx8zg1703xvj1Cgk` |
-| Stripe | Annuel discount | `price_1UA59vQMgx8zg170euqLCM3N` |
+| Stripe | Hebdomadaire | `price_1UAoiCQMgx8zg1703G0YpWUM` |
+| Stripe | Annuel discount | `price_1UAoiJQMgx8zg170uoMBliRN` |
 
 ---
 
@@ -280,10 +280,11 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
      - Prix : **39,99 €**, facturation **annuelle**
      - **Pas d'essai**. Ne pas l'utiliser dans `startCheckout` pour l'instant.
 3. Les identifiants de **prix** (`price_…`, pas `prod_…`) sont ceux du tableau
-   ci-dessus, déjà dans `pricing.STORE_PRODUCTS`. Une variable d'environnement
-   (`STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY`, plus tard
-   `STRIPE_PRICE_YEARLY_DISCOUNT`) les remplace si le mode test n'est pas le
-   même compte.
+   ci-dessus, déjà dans `pricing.STORE_PRODUCTS`. Ce sont les prix **TVA
+   incluse** du compte sandbox Micabo. Une variable d'environnement
+   (`STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY`,
+   `STRIPE_PRICE_YEARLY_DISCOUNT`) les remplace si le mode live n'est pas le
+   même compte — le catalogue live est encore vide.
 4. Coller `STRIPE_SECRET_KEY` dans **Vercel → Environment Variables**
    (Production + Preview) : `sk_test_…` d'abord, `sk_live_…` le jour J.
 5. **Customer Portal** : Settings → Billing → Customer portal → **l'activer**. Sans ça
@@ -390,7 +391,7 @@ sur un second appareil.
    `offerings.current` **puis dans tous les offerings**, donc un offering non *Current*
    suffit. Rien à coder.
 2. **Vercel** — `STRIPE_PRICE_YEARLY_DISCOUNT` = le `price_…` des 39,99 €, Production +
-   Preview. À défaut, le catalogue sert de repli (`price_1UA59vQMgx8zg170euqLCM3N`), qui ne
+   Preview. À défaut, le catalogue sert de repli (`price_1UAoiJQMgx8zg170uoMBliRN`), qui ne
    vaut que si c'est bien ton compte et ton mode.
 3. **Apple** — le produit doit être au moins *Ready to Submit*, sinon le bac à sable rend
    `unavailable` et le bouton le dit.
