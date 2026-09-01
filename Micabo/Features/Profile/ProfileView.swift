@@ -118,7 +118,7 @@ struct ProfileView: View {
                 guard router?.selection == .profile else { return }
                 let cards = (try? modelContext.fetch(FetchDescriptor<Flashcard>())) ?? []
                 let logs = (try? modelContext.fetch(FetchDescriptor<ReviewLog>())) ?? []
-                metrics = Metrics(courses: courses, cards: cards, logs: logs)
+                self.metrics = Metrics(courses: courses, cards: cards, logs: logs)
                 await social.refreshWeekRanking()
             }
             .toolbar(.hidden, for: .navigationBar)
