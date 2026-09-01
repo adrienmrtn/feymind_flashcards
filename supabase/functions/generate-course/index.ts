@@ -16,11 +16,13 @@ import {
 } from "../_shared/sheet.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
 import { languageBrief } from "../_shared/language.ts";
-import { sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
+import { sanitizeInstructions, sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
 import {
   audienceBrief,
   COURSE_SYSTEM_PROMPT,
+  instructionsBrief,
   lengthBrief,
+  MAX_INSTRUCTIONS,
   PROMPT_VERSION,
   readingBrief,
   retryBrief,
@@ -67,6 +69,8 @@ interface RequestBody {
   subject?: string;
   /** Comment le texte a été obtenu : « photo », « pdf », « youtube », « text », « docx ». */
   source?: string;
+  /** Prompt libre de l'étudiant, pris en compte à l'écriture de la fiche. */
+  instructions?: string;
 }
 
 const MAX_TEXT_LENGTH = 60_000;
@@ -146,6 +150,9 @@ Deno.serve((request: Request) =>
 
       const reading = readingBrief(body.source, text.length);
       if (reading) sections.push(reading);
+
+      const extra = instructionsBrief(sanitizeInstructions(body.instructions, MAX_INSTRUCTIONS));
+      if (extra) sections.push(extra);
 
       if (text.length > 0) sections.push(wrapUntrusted("TEXTE EXTRAIT DU DOCUMENT", text));
       if (visualNotes) {

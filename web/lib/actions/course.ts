@@ -65,6 +65,8 @@ interface GeneratedCourse {
 /** Le texte le plus court qui mérite qu'on dépense un appel. La fonction refuse en dessous. */
 const MINIMUM_TEXT = 40;
 const MAXIMUM_TEXT = 60_000;
+/** Même plafond que `generate-course` : un prompt, pas un second document. */
+const MAXIMUM_INSTRUCTIONS = 2_000;
 
 export async function importFromText(input: {
   text: string;
@@ -80,6 +82,8 @@ export async function importFromText(input: {
    * Absent, on fait comme l'écran : on ne force rien.
    */
   language?: GenerationLanguage;
+  /** Prompt libre, pris en compte à l'écriture de la fiche. */
+  instructions?: string;
 }): Promise<ImportResult> {
   const supabase = await createClient();
   const {
@@ -127,6 +131,7 @@ export async function importFromText(input: {
       length,
       blocks: wantedBlocks,
       source: input.source ?? "text",
+      instructions: (input.instructions ?? "").trim().slice(0, MAXIMUM_INSTRUCTIONS) || undefined,
     },
   });
 
@@ -228,6 +233,7 @@ export async function importFromYouTube(
     length?: SheetLength;
     visibility?: CourseVisibility;
     language?: GenerationLanguage;
+    instructions?: string;
   },
 ): Promise<ImportResult> {
   const remote = await youtubeTranscript(url);
@@ -242,6 +248,7 @@ export async function importFromYouTube(
     length: options?.length,
     visibility: options?.visibility,
     language: options?.language,
+    instructions: options?.instructions,
   });
 }
 
