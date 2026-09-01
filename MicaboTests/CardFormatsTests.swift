@@ -84,6 +84,41 @@ final class CardFormatsTests: XCTestCase {
         XCTAssertEqual(FormulaRenderer.symbolsOnly("A \\to B"), "A → B")
     }
 
+    // MARK: - Ce qui part au moteur de composition
+
+    /// Une carte qui **est** une formule part au moteur ; une formule prise dans une phrase
+    /// reste transposée. C'est cette frontière que le test garde, parce que c'est elle qui
+    /// décide du rendu de toutes les cartes de sciences.
+    func testACardThatIsOnlyAFormulaGoesToTheTypesetter() {
+        XCTAssertEqual(MathTypesetter.soleFormula(in: "$E = mc^2$"), "E = mc^2")
+        XCTAssertEqual(MathTypesetter.soleFormula(in: "  $H_2O$  "), "H_2O")
+        XCTAssertEqual(
+            MathTypesetter.soleFormula(in: "$$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$"),
+            "\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}"
+        )
+    }
+
+    func testAFormulaInsideASentenceStaysTransposed() {
+        XCTAssertNil(MathTypesetter.soleFormula(in: "L'énergie vaut $E = mc^2$ toujours."))
+        XCTAssertNil(MathTypesetter.soleFormula(in: "$a$ puis $b$"))
+        XCTAssertNil(MathTypesetter.soleFormula(in: "Une phrase nue."))
+        XCTAssertNil(MathTypesetter.soleFormula(in: "$E = mc^2$ ."))
+    }
+
+    func testAnEmptyOrUnbalancedFragmentGoesNowhere() {
+        XCTAssertNil(MathTypesetter.soleFormula(in: "$$"))
+        XCTAssertNil(MathTypesetter.soleFormula(in: "$ $"))
+        XCTAssertNil(MathTypesetter.soleFormula(in: "Le prix est de 12 $ environ"))
+        XCTAssertNil(MathTypesetter.soleFormula(in: ""))
+    }
+
+    /// Sans le paquet résolu, le moteur ne prétend rien savoir faire : le produit garde le
+    /// rendu d'avant, et rien dans l'interface ne se met à disparaître.
+    func testWithoutTheEngineNothingClaimsToBeTypeset() {
+        guard !MathTypesetter.isAvailable else { return }
+        XCTAssertFalse(MathTypesetter.canTypeset("E = mc^2"))
+    }
+
     // MARK: - Occlusion
 
     func testOneCardPerNamedZone() throws {

@@ -184,18 +184,11 @@ struct SheetBlockView: View {
 
     private func formula(latex: String, caption: String?) -> some View {
         VStack(spacing: 7) {
-            // Le balisage mathématique de l'app est celui des cartes : entre `$…$`, c'est
-            // `FormulaRenderer` qui transpose, et la fiche n'a pas sa propre convention.
-            SheetInlineText(
-                markup: "$\(latex)$",
-                style: SheetTextStyle(
-                    size: SheetTypography.formula,
-                    weight: .regular,
-                    color: MicaboColor.ink,
-                    lineSpacing: SheetTypography.tightLineSpacing,
-                    isCentered: true
-                )
-            )
+            // Une formule posée seule est **composée**, en mode display : c'est ici que la
+            // typographie change tout, parce qu'une somme y met ses bornes au-dessus et en
+            // dessous de son signe. Sans le paquet de composition, `MathFormula` retombe
+            // sur la transposition Unicode d'avant, et la fiche reste lisible.
+            MathFormula(latex: latex)
 
             if let caption = caption?.nilIfBlank {
                 SheetInlineText(markup: caption, style: .caption.with(centered: true))

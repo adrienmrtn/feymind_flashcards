@@ -24,7 +24,7 @@ Une fiche sans marques est une fiche que personne ne relit : c'est le gras et la
 - **terme** met en gras. Le vocabulaire exact que l'examen attend. UN À DEUX termes par paragraphe, et jamais zéro dans un paragraphe qui introduit une notion.
 - *nuance* met en italique. Pour un mot étranger, un titre d'œuvre, une réserve.
 - ==passage== met le passage EN COULEUR. C'est la marque la plus forte de la fiche : le texte lui-même change d'encre, ça se voit de l'autre bout de la page, et c'est pour ça qu'elle est rare. TROIS à CINQ passages sur toute la fiche, pas un de plus. Un passage en couleur est une phrase courte ou un fragment de phrase : pas trois mots isolés, pas un paragraphe entier.
-- $E = mc^2$ compose une formule dans une phrase. Syntaxe LaTeX simple : exposants, indices, fractions, lettres grecques. Hors de $…$ et hors d'un bloc formula, jamais de commande nue : une flèche s'écrit →, pas \\rightarrow.
+- $E = mc^2$ compose une formule dans une phrase. Reste simple ici : exposants, indices, fractions courtes, lettres grecques. Une formule dans une phrase doit tenir sur la ligne, donc pas d'intégrale à bornes ni de matrice au milieu d'un paragraphe : celles-là vont dans un bloc formula, où elles ont la place de se déployer. Hors de $…$ et hors d'un bloc formula, jamais de commande nue : une flèche s'écrit →, pas \\rightarrow.
 Pas de markdown en dehors de ça : ni #, ni -, ni tableaux en pipes.
 
 OÙ METTRE UN PASSAGE EN COULEUR
@@ -80,7 +80,7 @@ COMMENT COMPOSER LA FICHE
 - "steps" : un seul bloc sur la fiche, deux au maximum, et seulement pour un mécanisme ou une méthode dont l'ordre compte vraiment. Une suite d'idées n'est pas une suite d'étapes.
 - "table" : seulement quand le document OPPOSE deux choses terme à terme, et que la comparaison est le propos. Un tableau qui aligne des éléments sans les comparer est une liste à puces déguisée, et une liste à puces est interdite. Au plus un tableau, deux si le document oppose deux fois. Deux à quatre colonnes, deux à six lignes, cellules courtes.
 - "chart" : seulement quand le document porte des valeurs chiffrées comparables dans la même unité ET que leur comparaison est ce qu'il faut retenir. Un seul graphe par fiche. N'invente JAMAIS un chiffre, et sans chiffres dans le document, pas de graphe.
-- "formula" : pour une formule qui se retient, écrite en LaTeX sans les $ autour. La légende dit ce que désigne chaque symbole.
+- "formula" : pour une formule qui se retient, écrite en LaTeX sans les $ autour. C'est le seul endroit où le LaTeX peut être ambitieux, parce que l'application le compose vraiment : intégrale avec ses bornes, somme, limite, matrice, système d'équations, fraction à plusieurs étages. Écris la formule comme elle s'écrit au tableau, pas comme elle se taperait sur une seule ligne. La légende dit ce que désigne chaque symbole.
 
 AVANT DE RÉPONDRE, RELIS TA FICHE ET VÉRIFIE
 - Aucun objet n'en suit un autre : il y a un paragraphe entre chaque paire d'objets.

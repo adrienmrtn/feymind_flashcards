@@ -140,7 +140,9 @@ d'interface tire une centaine de fichiers dont aucun ne sert ici.
 
 Le projet utilise un `PBXFileSystemSynchronizedRootGroup` : les fichiers Swift n'ont pas
 besoin d'être déclarés, mais un paquet SPM, si. C'est la seule modification du
-`project.pbxproj` de tout le branchement, et elle est faite.
+`project.pbxproj` de tout le branchement, et elle est faite. Le dépôt déclare un second
+paquet, `SwiftMath`, pour la composition des formules : même mécanique, même garde
+`canImport`, et les deux se résolvent ensemble à l'ouverture du projet.
 
 Tout le code d'achat est écrit derrière `#if canImport(RevenueCat)`. Conséquence utile : le
 dépôt **compile dans les deux états**, avec ou sans le paquet résolu. Sans lui, les paywalls

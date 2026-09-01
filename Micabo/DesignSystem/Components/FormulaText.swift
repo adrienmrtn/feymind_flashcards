@@ -1,8 +1,17 @@
 import SwiftUI
 
-/// Texte d'une carte, formules comprises. Les fragments entre `$…$` sont transposés par
-/// `FormulaRenderer` et composés dans une italique à empattements, pour qu'une formule se
-/// distingue de la phrase qui l'entoure.
+/// Texte d'une carte, formules comprises.
+///
+/// Deux rendus, et c'est la carte qui décide :
+///
+/// - une carte qui **est** une formule (`$\frac{-b \pm \sqrt{b^2-4ac}}{2a}$`, et rien
+///   d'autre) est composée par le moteur, avec ses vraies barres de fraction et ses vrais
+///   radicaux. C'est le cas des cartes de sciences, et c'est là que ça compte ;
+/// - un texte où une formule est prise dans une phrase reste transposé en Unicode, en
+///   italique à empattements. La raison est technique et assumée : un `Text` SwiftUI ne
+///   sait pas contenir de vue, donc composer la formule voudrait dire sortir le paragraphe
+///   du fil du texte pour l'empiler ligne par ligne. Une phrase hachée en trois morceaux
+///   se lit moins bien qu'un `x²`.
 struct FormulaText: View {
     let source: String
     var size: CGFloat = 15
@@ -11,9 +20,19 @@ struct FormulaText: View {
     var alignment: TextAlignment = .leading
 
     var body: some View {
-        composed
-            .foregroundStyle(color)
-            .multilineTextAlignment(alignment)
+        if let formula = MathTypesetter.soleFormula(in: source), MathTypesetter.canTypeset(formula) {
+            MathFormula(
+                latex: formula,
+                fontSize: size + 2,
+                color: color,
+                isCentered: alignment == .center,
+                isDisplayMode: false
+            )
+        } else {
+            composed
+                .foregroundStyle(color)
+                .multilineTextAlignment(alignment)
+        }
     }
 
     private var composed: Text {
