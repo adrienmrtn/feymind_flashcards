@@ -12,6 +12,7 @@ import { FeedbackCard } from "@/components/app/FeedbackCard";
 import { ProfileSettings } from "@/components/app/ProfileSettings";
 import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
 import { ReplayPaywallOnboarding } from "@/components/app/ReplayPaywallOnboarding";
+import { ReplayTour } from "@/components/app/ReplayTour";
 import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
 import { SignOutButton } from "@/components/app/SignOutButton";
 import { SubscriptionCard } from "@/components/app/SubscriptionCard";
@@ -56,20 +57,22 @@ export default async function SettingsPage() {
           productId={right.productId ?? null}
         />
 
-        <ProfileSettings
-          heading="Toi"
-          initialName={profile?.display_name ?? ""}
-          initialUsername={handle}
-          initialMinutes={minutes}
-          initialLength={
-            isSheetLength(profile?.sheet_length) ? profile.sheet_length : DEFAULT_SHEET_LENGTH
-          }
-          initialSubjects={Array.isArray(profile?.subjects) ? profile.subjects : []}
-          initialSchool={profile?.institution_name ?? ""}
-          initialSchoolId={profile?.institution_id ?? null}
-        />
+        <div data-tour="reglages-toi">
+          <ProfileSettings
+            heading="Toi"
+            initialName={profile?.display_name ?? ""}
+            initialUsername={handle}
+            initialMinutes={minutes}
+            initialLength={
+              isSheetLength(profile?.sheet_length) ? profile.sheet_length : DEFAULT_SHEET_LENGTH
+            }
+            initialSubjects={Array.isArray(profile?.subjects) ? profile.subjects : []}
+            initialSchool={profile?.institution_name ?? ""}
+            initialSchoolId={profile?.institution_id ?? null}
+          />
+        </div>
 
-        <section className="saas-card p-7">
+        <section className="saas-card p-7" data-tour="reglages-langue">
           <SheetLanguageCard
             initial={sheetLanguage(profile?.sheet_language, profile?.country_code)}
             embedded
@@ -80,6 +83,9 @@ export default async function SettingsPage() {
 
         <section className="saas-card overflow-hidden">
           <SignOutButton />
+          <div className="border-t border-hairline">
+            <ReplayTour />
+          </div>
           <div className="border-t border-hairline">
             <ReplayOnboarding />
           </div>

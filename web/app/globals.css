@@ -1018,6 +1018,55 @@ video {
   animation: micabo-stagger 260ms var(--ease-out-strong) both;
 }
 
+/* La visite guidée : un voile percé sur une zone, et une bulle à côté.
+   Le trou n'est **pas** un masque : c'est une ombre portée de 9999 px sur un
+   rectangle transparent. Le navigateur peint alors le voile autour de la zone
+   sans avoir à rasteriser un masque plein écran, et il n'y a rien à recalculer
+   quand la page défile sous le trou.
+   Conséquence : le voile lui-même ne porte aucune couleur. Il n'est là que
+   pour avaler les clics, y compris ceux qui tombent dans le trou : la zone est
+   montrée, pas rendue cliquable. Deux fonds superposés donneraient deux
+   assombrissements. */
+@utility tour-veil {
+  background: transparent;
+}
+
+@utility tour-hole {
+  border-radius: 18px;
+  box-shadow: 0 0 0 9999px color-mix(in srgb, var(--color-ink) 48%, transparent);
+  outline: 2px solid var(--color-accent);
+}
+
+/* Pendant une session, la zone est cerclée et rien n'est assombri : la carte
+   reste lisible et cliquable, ce qui est tout l'objet de ce second mode. */
+@utility tour-ring {
+  border-radius: 18px;
+  outline: 2px solid var(--color-accent);
+}
+
+@keyframes micabo-tour-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+    scale: 0.985;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@utility tour-bubble {
+  animation: micabo-tour-in 220ms var(--ease-out-strong) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-bubble {
+    animation: none;
+  }
+}
+
 @keyframes micabo-sway {
   from {
     rotate: -11deg;

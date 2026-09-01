@@ -16,6 +16,7 @@ import {
   shouldOpenPaywall,
 } from "@/lib/onboarding/persist";
 import { PAYWALL_EVENT } from "@/lib/paywall";
+import { requestTourRecheck } from "@/lib/tour/signal";
 
 /**
  * Le paywall, **posé sur le tableau de bord**.
@@ -100,6 +101,8 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
   function close() {
     markPaywallDismissed();
     setOpen(false);
+    // L'écran vient de se libérer : la visite guidée attendait exactement ça.
+    requestTourRecheck();
     if (params.get("bienvenue") || params.get("offre") || params.get("debug")) {
       router.replace(pathname as Route);
     }

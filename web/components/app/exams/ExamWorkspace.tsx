@@ -110,13 +110,15 @@ export function ExamWorkspace({
 
   return (
     <>
-      <ExamCalendar
-        month={month}
-        selected={selected}
-        exams={calendarExams}
-        onMonth={setMonth}
-        onSelect={pickDay}
-      />
+      <div data-tour="examens-calendrier">
+        <ExamCalendar
+          month={month}
+          selected={selected}
+          exams={calendarExams}
+          onMonth={setMonth}
+          onSelect={pickDay}
+        />
+      </div>
 
       <p className="mt-3 text-center text-[12.5px] text-ink-secondary">
         Choisis un jour pour y poser un examen.
@@ -125,6 +127,7 @@ export function ExamWorkspace({
       <button
         type="button"
         onClick={openNew}
+        data-tour="examens-ajouter"
         className="pressable hover-tile mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-button bg-accent text-[15px] font-semibold text-on-ink"
       >
         Ajouter un examen

@@ -33,7 +33,13 @@ export default async function ImportPage() {
         </p>
       </header>
 
-      {canImport ? <ImportPanel initialLength={initialLength} /> : <SecondCourseCard />}
+      {canImport ? (
+        <div data-tour="importer-panneau">
+          <ImportPanel initialLength={initialLength} />
+        </div>
+      ) : (
+        <SecondCourseCard />
+      )}
     </>
   );
 }

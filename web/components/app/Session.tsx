@@ -316,7 +316,12 @@ export function Session({
 
       <div className="mx-auto w-full max-w-[40rem]">
         {revealed ? (
-          <div className="grid grid-cols-4 gap-2" role="group" aria-label="Notation">
+          <div
+            className="grid grid-cols-4 gap-2"
+            role="group"
+            aria-label="Notation"
+            data-tour="session-notes"
+          >
             {REVIEW_RATINGS.map((rating) => (
               <button
                 key={rating}
@@ -341,6 +346,7 @@ export function Session({
           <button
             type="button"
             onClick={() => setRevealed(true)}
+            data-tour="session-reponse"
             className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-primary bg-primary text-sm font-medium text-primary-foreground"
           >
             Voir la réponse
