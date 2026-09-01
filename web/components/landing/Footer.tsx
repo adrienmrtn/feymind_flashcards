@@ -4,7 +4,7 @@ import Link from "next/link";
 import { BrandLockup } from "@/components/BrandMark";
 import { Separator } from "@/components/ui/separator";
 import { LANDING_NAV } from "@/lib/landing-sections";
-import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
+import { PRIVACY_PATH, SUPPORT_PATH, TERMS_PATH } from "@/lib/legal";
 import { SITE_PAGES } from "@/lib/site-pages";
 
 /**
@@ -108,6 +108,11 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
               <p className="eyebrow mb-3 text-ink-tertiary">Le cadre</p>
               <ul className="space-y-1.5 text-ink-secondary">
                 <li>
+                  <Link href={SUPPORT_PATH} className="underline-draw" data-print="bare">
+                    Support
+                  </Link>
+                </li>
+                <li>
                   <Link href={PRIVACY_PATH} className="underline-draw" data-print="bare">
                     Confidentialité
                   </Link>
@@ -124,6 +129,10 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
 
         <p className="mt-12 text-[12px] text-ink-tertiary">
           © {new Date().getFullYear()} Micabo
+          <span aria-hidden> · </span>
+          <Link href={SUPPORT_PATH} className="underline-draw">
+            Support
+          </Link>
           <span aria-hidden> · </span>
           <Link href={PRIVACY_PATH} className="underline-draw">
             Confidentialité
