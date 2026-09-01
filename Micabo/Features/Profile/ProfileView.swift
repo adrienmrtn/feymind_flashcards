@@ -109,8 +109,8 @@ struct ProfileView: View {
             .scrollIndicators(.hidden)
             .scrollBounceBehavior(.basedOnSize, axes: .vertical)
             .micaboScreenBackground()
-            // Le Profil n'ancre rien en bas, mais sa dernière rangée se lisait à travers le
-            // verre de la barre : la réserve n'est pas réservée aux pages qui ont un bouton.
+            // Le Profil n'ancre rien en bas : sans `tabBarClearance`, sa dernière
+            // rangée se colle à la barre.
             .tabBarClearance()
             .task(id: "\(router?.selection == .profile)-\(sync?.epoch ?? 0)-\(courses.count)") {
                 // Le `TabView` peut garder un onglet visité : le classement et les

@@ -73,42 +73,37 @@ extension View {
         modifier(HomeReturnListener(path: path))
     }
 
-    /// **Réserve la place de la barre d'onglets, et pose au-dessus d'elle ce que la page
-    /// ancre en bas.** À appliquer au contenu défilant d'une page racine, à l'intérieur de
-    /// son `NavigationStack`.
+    /// Pose ce que la page ancre en bas, juste au-dessus de la barre d'onglets.
+    /// À appliquer au contenu défilant d'une page racine, à l'intérieur de son
+    /// `NavigationStack`.
     ///
-    /// Ce n'est pas une commodité, c'est le seul endroit où cette place peut être réservée.
-    /// La barre est dessinée par la racine, à l'extérieur des pages, par un `safeAreaInset` —
-    /// et **un `safeAreaInset` ne franchit pas la frontière d'un `NavigationStack`**, qui
-    /// rétablit sa zone sûre depuis la fenêtre. L'inset de la racine ne réservait donc rien
-    /// du tout à l'intérieur des pages : le « + » de Cours et le bouton de session de
-    /// Réviser se posaient au bas de leur zone sûre, c'est-à-dire exactement là où la barre
-    /// est peinte, et passaient dessous. Le premier appui de l'app était à moitié cliquable.
+    /// La barre est hors des pages : l'inset de la racine raccourcit le `TabView`,
+    /// donc le bas géométrique d'une page **est** le haut de la barre. Il ne faut
+    /// plus réserver `tabBarHeight` ici — c'est ce creux en trop qui laissait le
+    /// « + », « Réviser N cartes » et « Ajouter un examen » trop hauts.
     ///
-    /// On a longtemps cru que passer de l'`overlay` au `safeAreaInset` côté racine réglait
-    /// la question. Les deux tombent au même endroit, et c'est pour cette raison que le
-    /// symptôme n'avait pas bougé : ce qui manquait n'était pas le bon modificateur, c'était
-    /// la réservation, **de l'autre côté de la frontière**.
+    /// Le `NavigationStack` rétablit quand même la zone sûre de la fenêtre, y
+    /// compris l'indicateur d'accueil, qui vit sous la barre, hors du `TabView`.
+    /// Sans l'ignorer, ce repos-doigt fantôme remonte encore les boutons. On
+    /// n'étend pas sous la barre : le `TabView` s'arrête déjà au-dessus d'elle.
     ///
-    /// L'accessoire décide de sa propre largeur : le bouton de session prend toute la
-    /// laisse, le « + » se cale à droite.
+    /// L'accessoire décide de sa propre largeur : le bouton de session prend
+    /// toute la laisse, le « + » se cale à droite.
     func tabBarClearance<Accessory: View>(@ViewBuilder accessory: () -> Accessory) -> some View {
         safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 0) {
                 accessory()
 
-                // La hauteur de la barre, en creux. Elle ne prend pas les appuis : elle
-                // recouvre la barre, et une surface transparente qui les avale rendrait les
-                // onglets inertes.
                 Color.clear
-                    .frame(height: MicaboLayout.tabBarSpace)
+                    .frame(height: MicaboLayout.tabBarGap)
                     .allowsHitTesting(false)
             }
         }
+        .ignoresSafeArea(edges: .bottom)
     }
 
-    /// La même réserve, pour une page qui n'ancre rien en bas : sans elle, sa dernière
-    /// rangée passe sous la barre.
+    /// La même pose, pour une page qui n'ancre rien en bas : sans elle, sa
+    /// dernière rangée se colle à la barre.
     func tabBarClearance() -> some View {
         tabBarClearance { EmptyView() }
     }

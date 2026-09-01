@@ -90,10 +90,8 @@ struct CoursesListView: View {
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
-            // Le « + » se pose au-dessus de la barre d'onglets, et la liste réserve la
-            // hauteur des deux. C'est la page qui doit le faire : l'inset de la racine ne
-            // franchit pas la frontière du `NavigationStack`, et le bouton se retrouvait
-            // sous la barre — voir `tabBarClearance`.
+            // Le « + » se pose juste au-dessus de la barre d'onglets —
+            // voir `tabBarClearance`.
             .tabBarClearance { importButton }
             .toolbar(.hidden, for: .navigationBar)
             .reportsNavigationDepth(for: .courses, depth: path.count)
