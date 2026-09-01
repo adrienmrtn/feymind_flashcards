@@ -101,9 +101,9 @@ export const STORE_PRODUCTS: readonly StoreProduct[] = [
   { store: "app_store", id: "com.micabo.app.pro.yearly", plan: "yearly" },
   { store: "app_store", id: "com.micabo.app.pro.weekly", plan: "weekly" },
   { store: "app_store", id: "com.micabo.app.pro.yearly.discount", plan: "yearly_discount" },
-  { store: "stripe", id: "price_1UA57iQMgx8zg1707oLVaVD8", plan: "yearly" },
-  { store: "stripe", id: "price_1UAoiCQMgx8zg1703G0YpWUM", plan: "weekly" },
-  { store: "stripe", id: "price_1UAoiJQMgx8zg170uoMBliRN", plan: "yearly_discount" },
+  { store: "stripe", id: "price_1UAqB547TFrcO0lvSacZ91Pp", plan: "yearly" },
+  { store: "stripe", id: "price_1UAqBI47TFrcO0lvTLjtkffx", plan: "weekly" },
+  { store: "stripe", id: "price_1UAqBJ47TFrcO0lvb1vDYAPj", plan: "yearly_discount" },
 ];
 
 export function stripePriceId(plan: CatalogPlan): string {
