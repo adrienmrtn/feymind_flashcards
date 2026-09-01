@@ -53,18 +53,22 @@ export function ImportStory() {
 
   return (
     <div
-      className="relative mx-auto flex h-[min(50svh,400px)] w-full max-w-[420px] items-center justify-center"
+      className="relative mx-auto flex h-full min-h-[240px] w-full max-w-[420px] flex-1 items-center justify-center"
       aria-hidden
     >
-      {/* Le centre de la scène, et le seul : tout part de lui et y revient. */}
-      <div className="relative h-0 w-0">
-        {DOCS.map((doc, index) => (
-          <DocTile key={doc.id} doc={doc} index={index} progress={progress} />
-        ))}
-
-        <div className="absolute left-0 top-0 z-10 -translate-x-1/2 -translate-y-1/2">
-          <BrandMark size={104} />
+      {/*
+        Le logo est dans le flux, dans une vraie boîte 104px. Une ancre
+        `h-0 w-0` le posait au centre géométrique d'une scène trop haute
+        pour la carte : les documents se voyaient, l'icône passait sous le
+        pli (ou se faisait clipper par le défilement du Scaffold).
+      */}
+      <div className="relative z-10 size-[104px] shrink-0">
+        <div className="absolute left-1/2 top-1/2">
+          {DOCS.map((doc, index) => (
+            <DocTile key={doc.id} doc={doc} index={index} progress={progress} />
+          ))}
         </div>
+        <BrandMark size={104} />
       </div>
     </div>
   );

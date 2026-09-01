@@ -11,6 +11,7 @@ export default function ImportStep() {
     <Scaffold
       title="Importe tes cours."
       footer={<ContinueButton enabled href="/commencer/fiches" />}
+      center
     >
       <ImportStory />
     </Scaffold>
