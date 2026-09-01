@@ -18,7 +18,6 @@ import { ExamInsightCard } from "@/components/app/exams/ExamInsightCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardHeader, CardPanel, CardTitle } from "@/components/ui/card";
 import { FriendActions } from "@/components/app/FriendActions";
-import { MobileAppCard } from "@/components/app/MobileAppCard";
 import { WeekRanking } from "@/components/app/WeekRanking";
 import { WeekStrip } from "@/components/app/WeekStrip";
 import { examInsightFromRow, insightCardsFromSnapshots } from "@/lib/exams/from-rows";
@@ -111,8 +110,6 @@ export default async function DashboardPage() {
       </Suspense>
 
       <FriendsCard requests={friends} />
-
-      <MobileAppCard />
     </>
   );
 }

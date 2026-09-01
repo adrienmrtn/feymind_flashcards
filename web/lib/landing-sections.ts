@@ -12,7 +12,6 @@
 export const LANDING_SECTIONS = {
   cards: "cartes",
   method: "methode",
-  iphone: "iphone",
   exam: "mode-examen",
   questions: "questions",
 } as const;
@@ -20,6 +19,5 @@ export const LANDING_SECTIONS = {
 export const LANDING_NAV = [
   { href: `#${LANDING_SECTIONS.method}`, label: "La méthode" },
   { href: `#${LANDING_SECTIONS.exam}`, label: "Mode examen" },
-  { href: `#${LANDING_SECTIONS.iphone}`, label: "Sur iPhone" },
   { href: `#${LANDING_SECTIONS.questions}`, label: "Questions" },
 ] as const;

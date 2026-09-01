@@ -18,6 +18,7 @@ import { nextPath, previousPath, type OnboardingPath } from "@/lib/onboarding/st
 export function Scaffold({
   eyebrow,
   title,
+  titleClassName = "",
   skip,
   children,
   footer,
@@ -25,6 +26,8 @@ export function Scaffold({
 }: {
   eyebrow?: string;
   title: React.ReactNode;
+  /** Pour un titre d'accueil plus grand que les questions qui suivent. */
+  titleClassName?: string;
   /** L'échappatoire, posée en haut à droite sur la ligne du sur-titre. */
   skip?: { label: string; href: OnboardingPath };
   children: React.ReactNode;
@@ -60,7 +63,11 @@ export function Scaffold({
         ) : null}
       </div>
 
-      <h1 className="rise mt-2.5 shrink-0 text-[24px] font-bold leading-[1.12] tracking-tight-title text-ink sm:text-[30px]">
+      <h1
+        className={`rise mt-2.5 shrink-0 font-bold leading-[1.12] tracking-tight-title text-ink ${
+          titleClassName || "text-[24px] sm:text-[30px]"
+        }`}
+      >
         {title}
       </h1>
 

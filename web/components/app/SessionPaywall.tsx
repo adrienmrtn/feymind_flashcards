@@ -2,11 +2,10 @@
 
 import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
-import { ThinkingOrb } from "thinking-orbs";
 
-import { entitlement, pricing } from "@micabo/core";
+import { entitlement } from "@micabo/core";
 
-import { startCheckout } from "@/lib/actions/checkout";
+import { PaywallOffer } from "@/components/app/PaywallOffer";
 
 /**
  * Le paywall qui **coupe une session au bout de cinq cartes**.
@@ -20,13 +19,7 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
   const router = useRouter();
   const titleId = useId();
   const [abandoning, setAbandoning] = useState(false);
-  const [chosen, setChosen] = useState<pricing.PlanKind>("yearly");
-  const [pending, setPending] = useState(false);
-  const [checkout, setCheckout] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
-
-  const plans = pricing.offers();
-  const selected = pricing.planFor(chosen);
 
   useEffect(() => {
     dialogRef.current?.focus();
@@ -46,23 +39,6 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
   function leave() {
     router.push("/app");
     router.refresh();
-  }
-
-  async function subscribe() {
-    setPending(true);
-    setCheckout(null);
-    const result = await startCheckout(chosen);
-    setPending(false);
-    if (result.status === "redirect" && result.url) {
-      window.location.href = result.url;
-      return;
-    }
-    if (result.status === "already") {
-      setCheckout("Tu es déjà abonné.");
-      router.refresh();
-      return;
-    }
-    setCheckout(result.message ?? "L'abonnement n'est pas encore ouvert.");
   }
 
   return (
@@ -96,7 +72,7 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
             </button>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2">
+          <div className="px-6 pb-1">
             <div className="flex flex-col items-center text-center">
               <p className="inline-flex items-center gap-2 rounded-pill bg-accent-soft px-3.5 py-1.5 text-[13px] font-semibold text-accent">
                 <CheckIcon />
@@ -107,101 +83,26 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
               </p>
               <h2
                 id={titleId}
-                className="mt-5 text-[26px] font-bold leading-[1.15] tracking-tight-title text-ink"
+                className="mt-4 text-[22px] font-bold leading-[1.15] tracking-tight-title text-ink"
               >
                 Tes {reviewedCount} cartes gratuites sont faites.
               </h2>
-              <p className="mt-3 text-[14.5px] leading-relaxed text-ink-secondary">
-                La session s&apos;arrête là. Micabo Pro la laisse aller jusqu&apos;au
-                bout, tous les jours, sur tous tes cours.
-              </p>
-            </div>
-
-            <div className="mt-6 space-y-2.5">
-              {plans.map((plan) => {
-                const isSelected = chosen === plan.kind;
-                const monthly = pricing.monthlyEquivalent(plan);
-                const trial = pricing.hasTrial(plan);
-                return (
-                  <button
-                    key={plan.productId}
-                    type="button"
-                    onClick={() => setChosen(plan.kind)}
-                    className={`pressable flex w-full items-center justify-between gap-4 rounded-group px-5 py-4 text-left transition-colors duration-hover ${
-                      isSelected ? "bg-accent text-on-ink" : "bg-canvas"
-                    }`}
-                  >
-                    <div>
-                      <p className="flex flex-wrap items-center gap-2 text-[15px] font-semibold">
-                        {plan.title}
-                        {trial ? (
-                          <span className="rounded-pill bg-accent-vivid px-2 py-0.5 text-[10.5px] font-bold text-ink">
-                            {plan.trialDays} jours offerts
-                          </span>
-                        ) : null}
-                      </p>
-                      <p
-                        className={`mt-0.5 text-[13px] ${
-                          isSelected ? "text-on-ink-muted" : "text-ink-tertiary"
-                        }`}
-                      >
-                        {plan.kind === "yearly"
-                          ? `${pricing.priceText(plan.price)} / an · essai de ${plan.trialDays} jours`
-                          : "sans essai gratuit"}
-                      </p>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <p className="numeral text-[22px] font-bold leading-none">
-                        {monthly ?? pricing.priceText(plan.price)}
-                      </p>
-                      <p
-                        className={`mt-1 text-[11.5px] ${
-                          isSelected ? "text-on-ink-muted" : "text-ink-tertiary"
-                        }`}
-                      >
-                        {monthly ? "/ mois" : "/ semaine"}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
             </div>
           </div>
 
-          <div className="px-6 pb-6 pt-3">
-            <button
-              type="button"
-              onClick={() => void subscribe()}
-              disabled={pending}
-              className="pressable shiny flex h-14 w-full items-center justify-center gap-2 rounded-button bg-accent text-[16px] font-semibold text-on-ink disabled:opacity-70"
-            >
-              {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
-              {pricing.hasTrial(selected)
-                ? `Essayer ${selected.trialDays} jours`
-                : "S'abonner"}
-            </button>
-            <button
-              type="button"
-              onClick={leave}
-              className="pressable mt-2.5 flex h-12 w-full items-center justify-center rounded-button text-[15px] font-semibold text-ink-secondary hover:bg-canvas"
-            >
-              Revenir à l&apos;accueil
-            </button>
-            {checkout ? (
-              <p
-                className="mt-3 rounded-button bg-canvas px-4 py-3 text-[13.5px] text-ink-secondary"
-                role="status"
+          <PaywallOffer
+            headingId={`${titleId}-offer`}
+            onSubscribed={() => router.refresh()}
+            extraAction={
+              <button
+                type="button"
+                onClick={leave}
+                className="pressable mt-2.5 flex h-12 w-full items-center justify-center rounded-button text-[15px] font-semibold text-ink-secondary hover:bg-canvas"
               >
-                {checkout}
-              </p>
-            ) : (
-              <p className="mt-3 text-center text-[12.5px] text-ink-tertiary">
-                {pricing.hasTrial(selected)
-                  ? `Aucun paiement aujourd'hui. Puis ${pricing.priceText(pricing.YEARLY.price)} / an.`
-                  : `${pricing.priceText(pricing.WEEKLY.price)} / semaine, dès maintenant.`}
-              </p>
-            )}
-          </div>
+                Revenir à l&apos;accueil
+              </button>
+            }
+          />
         </div>
       )}
     </div>

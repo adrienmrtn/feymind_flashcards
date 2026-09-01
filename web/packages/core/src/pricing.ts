@@ -207,6 +207,35 @@ export function planCaption(plan: Plan): string {
   return monthly ? `${monthly} / mois` : `facturé chaque ${PERIOD_UNIT[plan.period]}`;
 }
 
+/**
+ * Le prix affiché à droite de la carte : le mois pour l'annuel, la semaine
+ * pour l'hebdomadaire. C'est l'unité dans laquelle on compare.
+ */
+export function planDisplayedPrice(plan: Plan): string {
+  return monthlyEquivalent(plan) ?? priceText(plan.price);
+}
+
+/** L'unité collée sous ce prix : « / mois » ou « / semaine ». */
+export function planDisplayedUnit(plan: Plan): string {
+  return monthlyEquivalent(plan) ? "/ mois" : `/ ${PERIOD_UNIT[plan.period]}`;
+}
+
+/**
+ * La ligne sous le nom, sur le paywall. L'annuel dit ce qui sera prélevé
+ * après l'essai ; l'hebdomadaire dit seulement qu'on peut partir.
+ */
+export function planRenewalCopy(plan: Plan): string {
+  if (plan.period === "year") {
+    return `Puis ${priceText(plan.price)} par an, résiliable à tout moment`;
+  }
+  return "Résiliable à tout moment";
+}
+
+/** Le pastille de l'essai, ou rien. */
+export function trialBadge(plan: Plan): string | null {
+  return hasTrial(plan) ? `${plan.trialDays} jours gratuits` : null;
+}
+
 export function periodUnit(period: BillingPeriod): string {
   return PERIOD_UNIT[period];
 }

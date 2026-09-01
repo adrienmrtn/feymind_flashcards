@@ -336,6 +336,12 @@ video {
 
 /* Le retour d'appui : `0.96`, et la même valeur partout. En dessous de `0.95` le geste devient
    théâtral ; au-dessus, on ne le sent plus. */
+/* Coupe le filet du squircle : le PNG a déjà son masque, ce clip ne
+   reprend que le halo d'un pixel qui restait visible sur fond clair. */
+.brand-mark {
+  clip-path: inset(4% round 26%);
+}
+
 @utility pressable {
   transition-property: scale, background-color, color;
   transition-duration: var(--duration-press);

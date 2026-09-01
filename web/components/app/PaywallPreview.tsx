@@ -15,7 +15,7 @@ export function PaywallPreview() {
         onClick={() => setOpen(true)}
         className="pressable mt-5 h-11 rounded-button bg-accent px-5 text-[14px] font-semibold text-on-ink"
       >
-        Voir les quatre étapes
+        Voir le paywall
       </button>
       {open ? <PaywallCard onClose={() => setOpen(false)} /> : null}
     </>
