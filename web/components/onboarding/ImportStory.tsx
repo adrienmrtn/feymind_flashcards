@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 
-import { BrandWordmark } from "@/components/BrandMark";
+import { BrandMark } from "@/components/BrandMark";
 
 /**
  * Les formats qu'on dépose, absorbés par Micabo. **Un seul temps.**
  *
- * Les cases convergent vers le logo Micabo, passent **derrière**, et c'est
+ * Les cases convergent vers l'icône Micabo, passent **derrière**, et c'est
  * fini. Rien après : la fiche qui en sort a son propre écran, et la raconter
- * deux fois faisait deux animations dans une seule.
+ * deux fois faisait deux animations dans une seule. Le mot et le sous-titre
+ * restent sur l'accueil : ici, seule l'image tient le centre.
  *
  * Les cases cherchent le même fichier que la vitrine
  * (`/landing/sources/{id}.webp`). Tant qu'il manque, l'emoji tient la place.
@@ -62,7 +63,7 @@ export function ImportStory() {
         ))}
 
         <div className="absolute left-0 top-0 z-10 -translate-x-1/2 -translate-y-1/2">
-          <BrandWordmark mark={92} />
+          <BrandMark size={104} />
         </div>
       </div>
     </div>

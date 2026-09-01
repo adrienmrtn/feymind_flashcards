@@ -50,7 +50,7 @@ export function DeleteAccount({ email }: { email: string }) {
             </>
           ) : null}{" "}
           pourra servir à un compte neuf, comme si tu commençais aujourd&apos;hui.
-          L&apos;abonnement déjà encaissé se gère chez Apple ou Stripe.
+          L&apos;abonnement déjà encaissé se gère plus haut, chez Apple ou Stripe.
         </p>
 
         {open ? (

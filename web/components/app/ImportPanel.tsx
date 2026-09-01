@@ -72,6 +72,7 @@ export function ImportPanel({
   const [blocks, setBlocks] = useState(() => defaultBlocks(initialLength));
   const [visibility, setVisibility] = useState<CourseVisibility>(DEFAULT_VISIBILITY);
   const [language, setLanguage] = useState<GenerationLanguage>(SOURCE_LANGUAGE);
+  const [instructions, setInstructions] = useState("");
 
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");
@@ -139,6 +140,7 @@ export function ImportPanel({
           length,
           visibility,
           language,
+          instructions: instructions.trim() || undefined,
         }),
       ),
     );
@@ -467,6 +469,32 @@ export function ImportPanel({
           <div className="mt-3.5">
             <VisibilityChoices value={visibility} onChange={setVisibility} disabled={busy} />
           </div>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-border bg-card p-5">
+        <label htmlFor="import-instructions" className="eyebrow block text-ink-tertiary">
+          Instructions particulières
+        </label>
+        <textarea
+          id="import-instructions"
+          value={instructions}
+          onChange={(event) => setInstructions(event.target.value.slice(0, 2_000))}
+          placeholder="Insiste sur les formules. Ignore les anecdotes. Garde le vocabulaire du prof."
+          rows={4}
+          maxLength={2_000}
+          disabled={busy}
+          className="mt-3 w-full resize-y rounded-button bg-surface-muted p-4 text-[15px] leading-relaxed text-ink outline-none placeholder:text-ink-tertiary disabled:opacity-60"
+        />
+        <div className="mt-2 flex items-baseline justify-between gap-3">
+          <p className="text-[12.5px] leading-relaxed text-ink-tertiary">
+            Un prompt libre : Micabo le suit en écrivant la fiche.
+          </p>
+          {instructions.trim().length > 0 ? (
+            <p className="numeral shrink-0 text-[12.5px] text-ink-tertiary">
+              {instructions.trim().length} / 2000
+            </p>
+          ) : null}
         </div>
       </div>
 

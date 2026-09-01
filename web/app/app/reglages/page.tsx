@@ -1,6 +1,7 @@
 import {
   DEFAULT_DAILY_MINUTES,
   DEFAULT_SHEET_LENGTH,
+  entitlement,
   isSheetLength,
   sheetLanguage,
 } from "@micabo/core";
@@ -13,6 +14,8 @@ import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
 import { ReplayPaywallOnboarding } from "@/components/app/ReplayPaywallOnboarding";
 import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
 import { SignOutButton } from "@/components/app/SignOutButton";
+import { SubscriptionCard } from "@/components/app/SubscriptionCard";
+import { readEntitlement } from "@/lib/data/entitlement";
 import { readProfile } from "@/lib/data/profile";
 import { currentUser } from "@/lib/data/user";
 
@@ -20,11 +23,16 @@ import { currentUser } from "@/lib/data/user";
  * Les réglages, **à part du profil**.
  *
  * Le profil raconte qui l'on est et ce qu'on a révisé. Ici on change le
- * compte : nom, rythme, fiches, langue, session, suppression. Ce qui
- * s'écrivait en bas du profil n'a plus à se cacher sous les statistiques.
+ * compte : abonnement, nom, rythme, fiches, langue, session, suppression.
+ * L'abonnement est en tête : c'est ce qu'on vient chercher, et ça ne doit
+ * plus se cacher sous le rythme quotidien.
  */
 export default async function SettingsPage() {
-  const [user, profile] = await Promise.all([currentUser(), readProfile()]);
+  const [user, profile, right] = await Promise.all([
+    currentUser(),
+    readProfile(),
+    readEntitlement(),
+  ]);
 
   const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
   const handle = profile?.username ?? "";
@@ -34,11 +42,20 @@ export default async function SettingsPage() {
       <header>
         <h1 className="text-lg font-semibold tracking-tight text-foreground">Réglages</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Ce que tu changes ici suit sur l&apos;iPhone.
+          Abonnement, rythme, fiches. Ce que tu changes ici suit sur l&apos;iPhone.
         </p>
       </header>
 
       <div className="mt-5 space-y-4">
+        <SubscriptionCard
+          paid={entitlement.isPaid(right)}
+          store={right.store ?? null}
+          periodType={right.periodType ?? null}
+          expiresAt={right.expiresAt ? right.expiresAt.toISOString() : null}
+          willRenew={Boolean(right.willRenew)}
+          productId={right.productId ?? null}
+        />
+
         <ProfileSettings
           heading="Toi"
           initialName={profile?.display_name ?? ""}

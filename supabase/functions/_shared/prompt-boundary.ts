@@ -19,6 +19,19 @@ export function sanitizeMeta(value: string | undefined, maxLen: number): string 
 }
 
 /**
+ * Une consigne volontaire de l'étudiant.
+ *
+ * Ce n'est pas le document : on la lit comme un ordre. Elle reste toutefois
+ * du texte libre, donc on coupe, on retire les contrôles, et on neutralise
+ * les marqueurs qui fermeraient le bloc du cours trop tôt.
+ */
+export function sanitizeInstructions(value: string | undefined, maxLen: number): string {
+  return sanitizeMeta(value, maxLen)
+    .replaceAll(UNTRUSTED_BEGIN, "[document]")
+    .replaceAll(UNTRUSTED_END, "[/document]");
+}
+
+/**
  * Enveloppe un contenu non fiable.
  *
  * Si le document porte déjà les marqueurs, on les neutralise : sinon un texte malin
