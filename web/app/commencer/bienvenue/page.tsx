@@ -20,7 +20,7 @@ export default function WelcomeStep() {
           <ContinueButton enabled href="/commencer/importer" />
           <Link
             href={"/connexion" as Route}
-            className="underline-draw text-[14.5px] font-medium text-ink-secondary"
+            className="underline-draw text-[15px] font-semibold text-ink-secondary"
           >
             J&apos;ai déjà un compte
           </Link>

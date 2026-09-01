@@ -40,9 +40,9 @@ export function ImportStory() {
     let frame = 0;
 
     function tick() {
-      const next = Math.min(1, (Date.now() - started) / DURATION_MS);
+      const elapsed = (Date.now() - started) % (DURATION_MS + 900);
+      const next = Math.min(1, elapsed / DURATION_MS);
       setProgress(next);
-      if (next >= 1) return;
       frame = window.requestAnimationFrame(tick);
     }
 

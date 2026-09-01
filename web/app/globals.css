@@ -339,7 +339,7 @@ video {
 /* Coupe le filet du squircle : le PNG a déjà son masque, ce clip ne
    reprend que le halo d'un pixel qui restait visible sur fond clair. */
 .brand-mark {
-  clip-path: inset(2.5% round 23%);
+  clip-path: inset(4% round 26%);
 }
 
 @utility pressable {
