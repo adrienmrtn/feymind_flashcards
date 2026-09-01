@@ -171,6 +171,13 @@ export default async function ProfilePage() {
           </Link>
         ) : null}
         <Link
+          href={"/app/reglages#abonnement" as never}
+          className="hover-row flex items-center justify-between gap-4 border-t border-hairline px-7 py-4"
+        >
+          <span className="text-[15px] text-ink">Abonnement</span>
+          <span className="text-[13px] text-ink-tertiary">Gérer, factures, résilier</span>
+        </Link>
+        <Link
           href={"/app/reglages" as never}
           className="hover-row flex items-center justify-between gap-4 border-t border-hairline px-7 py-4"
         >
