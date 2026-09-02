@@ -1,3 +1,9 @@
+/**
+ * Déployer depuis ces sources : `supabase functions deploy generate-course`.
+ * L'API MCP tronque un envoi trop gros. Un bundle coupé démarre le worker
+ * sans `Deno.serve`, et chaque appel pend jusqu'au 504 — l'écran reste alors
+ * sur « Micabo écrit la fiche… ».
+ */
 import { authorize, withCors } from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {

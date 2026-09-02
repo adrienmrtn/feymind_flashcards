@@ -66,7 +66,19 @@ export function GenerateCards({
   function ask() {
     setFailure(null);
     startTransition(async () => {
-      const result = await generateCards(courseId, quota);
+      const result = await Promise.race([
+        generateCards(courseId, quota),
+        new Promise<{ status: "error"; message: string }>((resolve) => {
+          setTimeout(
+            () =>
+              resolve({
+                status: "error",
+                message: "L'écriture a pris trop longtemps. Réessaie.",
+              }),
+            90_000,
+          );
+        }),
+      ]);
       if (result.status === "error") setFailure(result.message ?? "Ça n'a pas marché.");
       else {
         setOpen(false);
