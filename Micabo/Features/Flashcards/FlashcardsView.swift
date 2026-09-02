@@ -42,7 +42,6 @@ struct FlashcardsView: View {
     private var dueCount: Int { duePreview.dueCount }
     private var heldBackNewCards: Int { duePreview.heldBackNewCards }
     private var canPractice: Bool { pro?.canPractice ?? true }
-    private var courseExamName: String? { duePreview.examName }
 
     var body: some View {
         ScrollView {
@@ -279,10 +278,6 @@ struct FlashcardsView: View {
                             editingCard = card
                         } label: {
                             HStack(alignment: .center, spacing: 12) {
-                                Circle()
-                                    .fill(statusColor(for: card))
-                                    .frame(width: 8, height: 8)
-
                                 // Le recto d'une occlusion est toujours le même : dans une
                                 // liste, c'est le nom de la zone qui distingue les cartes.
                                 Text(FormulaRenderer.stripped(card.isOcclusion ? card.back : card.front))
@@ -291,16 +286,6 @@ struct FlashcardsView: View {
                                     .multilineTextAlignment(.leading)
                                     .lineLimit(2)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-
-                                if let courseExamName {
-                                    Text(courseExamName)
-                                        .font(MicaboFont.hanken(10, weight: .medium))
-                                        .foregroundStyle(MicaboColor.caution)
-                                        .lineLimit(1)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(MicaboColor.cautionSoft, in: Capsule())
-                                }
 
                                 ForEach(badges(for: card), id: \.self) { badge in
                                     Image(systemName: badge)
@@ -327,7 +312,7 @@ struct FlashcardsView: View {
                         }
 
                         if index < cards.count - 1 {
-                            MicaboHairline(inset: 36)
+                            MicaboHairline(inset: MicaboSpacing.md)
                         }
                     }
                 }
@@ -365,16 +350,6 @@ struct FlashcardsView: View {
             _ = try? CourseRepository.addReverseCards(for: course, in: modelContext)
         }
         Haptics.success()
-    }
-
-    private func statusColor(for card: Flashcard) -> Color {
-        if card.isDue() {
-            MicaboColor.caution
-        } else if card.state == .new {
-            MicaboColor.inkTertiary.opacity(0.5)
-        } else {
-            MicaboColor.positive
-        }
     }
 
     // MARK: - Actions

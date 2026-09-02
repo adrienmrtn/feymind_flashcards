@@ -720,7 +720,9 @@ extension View {
                 },
                 onSubscribed: { presentation.wrappedValue = nil }
             )
-            .presentationDetents([.large])
+            // Même hauteur que les autres feuilles courtes : en `.large` le bloc
+            // tenait en haut et laissait un vide trop grand en bas.
+            .presentationDetents([.height(604)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
             .presentationBackground(DiscountWash.gradient)
