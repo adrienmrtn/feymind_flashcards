@@ -100,8 +100,8 @@ export default async function DashboardPage() {
         heldBack={Math.max(0, dueOutsideRhythm)}
       />
 
-      <div className="grid items-stretch gap-4 lg:grid-cols-2">
-        <div className="h-full" data-tour="semaine">
+      <div className="grid min-w-0 items-stretch gap-4 lg:grid-cols-2">
+        <div className="h-full min-w-0" data-tour="semaine">
           <WeekStrip days={week} />
         </div>
         <UpcomingExams next={upcoming[0] ?? null} others={Math.max(0, upcoming.length - 1)} />
@@ -245,20 +245,20 @@ function UpcomingExams({
   others: number;
 }) {
   return (
-    <section className="flex h-full min-h-0 flex-col" data-tour="examens">
-      <div className="mb-3 flex items-end justify-between gap-3">
-        <h2 className="text-[15px] font-semibold text-ink">Examens</h2>
+    <section className="flex h-full min-h-0 min-w-0 flex-col" data-tour="examens">
+      <div className="mb-3 flex min-w-0 items-end justify-between gap-3">
+        <h2 className="min-w-0 text-[15px] font-semibold text-ink">Examens</h2>
         <Button
           variant="link"
           size="sm"
-          className="h-auto px-0"
+          className="h-auto shrink-0 px-0"
           render={<Link href={"/app/examens" as never} />}
         >
           {next ? "Voir" : "Ajouter"}
         </Button>
       </div>
       {next ? (
-        <div className="min-h-0 flex-1">
+        <div className="min-h-0 min-w-0 flex-1">
           <ExamInsightCard insight={next} href={"/app/examens" as never} />
           {others > 0 ? (
             <p className="mt-3 text-[13px] text-ink-tertiary">
@@ -269,10 +269,10 @@ function UpcomingExams({
           ) : null}
         </div>
       ) : (
-        <Card className="flex-1">
-          <CardPanel className="flex h-full items-center justify-between gap-3">
-            <p className="text-[15px] font-medium text-ink">Aucune date d&apos;examen</p>
-            <Button size="sm" render={<Link href={"/app/examens" as never} />}>
+        <Card className="min-w-0 flex-1 overflow-hidden">
+          <CardPanel className="flex h-full min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="min-w-0 text-[15px] font-medium text-ink">Aucune date d&apos;examen</p>
+            <Button size="sm" className="shrink-0 self-start sm:self-auto" render={<Link href={"/app/examens" as never} />}>
               Ajouter
             </Button>
           </CardPanel>

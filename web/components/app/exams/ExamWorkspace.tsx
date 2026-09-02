@@ -159,7 +159,7 @@ export function ExamWorkspace({
       {upcoming.length > 0 ? (
         <section className="mt-10">
           <p className="eyebrow mb-3 text-ink-tertiary">À venir</p>
-          <div className={`grid gap-4 ${upcoming.length > 1 ? "md:grid-cols-2" : ""}`}>
+          <div className={`grid min-w-0 gap-4 ${upcoming.length > 1 ? "lg:grid-cols-2" : ""}`}>
             {upcoming.map((exam) => {
               const insight = insightById.get(exam.id);
               return insight ? (
@@ -253,7 +253,7 @@ function ExamRow({
       <button
         type="button"
         onClick={onClick}
-        className="flex w-full items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4 text-left"
+        className="flex w-full min-w-0 items-center justify-between gap-3 overflow-hidden rounded-2xl border border-border bg-card px-4 py-4 text-left sm:gap-4 sm:px-5"
       >
         <span className="min-w-0">
           <span className="block truncate text-[15.5px] font-semibold text-ink">
