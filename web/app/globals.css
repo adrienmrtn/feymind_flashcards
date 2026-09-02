@@ -641,17 +641,18 @@ video {
 }
 
 /* --------------------------------------------------------------------------
-   Les formats acceptés, en cases assez larges pour un vrai exemple.
+   Les formats acceptés : une pastille, pas une affiche. Le libellé dit
+   le format ; l'extrait ne doit pas manger la vitrine.
    -------------------------------------------------------------------------- */
 
 .source-tile {
-  width: 26.5rem;
+  width: 13rem;
   flex-shrink: 0;
 }
 
 .source-tile-frame {
   position: relative;
-  height: 15.5rem;
+  height: 7.3rem;
   overflow: hidden;
   border-radius: var(--radius-group);
   background: var(--color-surface);
