@@ -15,17 +15,17 @@ export function WeekStrip({ days }: { days: readonly WeekDayLoad[] }) {
   const peak = Math.max(1, ...days.map(dayTotal));
 
   return (
-    <Card className="h-full">
+    <Card className="h-full min-w-0 overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="text-[15px] font-semibold text-ink">Semaine</CardTitle>
       </CardHeader>
-      <CardPanel className="flex flex-1 flex-col justify-center pt-0">
-        <div className="mx-auto grid w-full max-w-[22rem] grid-cols-7 gap-1 sm:gap-1.5">
+      <CardPanel className="flex min-w-0 flex-1 flex-col justify-center pt-0">
+        <div className="mx-auto grid w-full min-w-0 max-w-[22rem] grid-cols-7 gap-0.5 sm:gap-1.5">
           {days.map((day) => (
             <DayCell key={day.offset} day={day} peak={peak} />
           ))}
         </div>
-        <p className="mt-3 flex items-center justify-center gap-3 text-[12px] text-ink-tertiary">
+        <p className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] text-ink-tertiary">
           <LegendSwatch className="bg-ink" />
           révisées
           <LegendSwatch className="bg-ink/25" />
@@ -46,23 +46,24 @@ function DayCell({ day, peak }: { day: WeekDayLoad; peak: number }) {
 
   return (
     <div
-      className={`flex flex-col items-center rounded-lg px-0.5 py-2 sm:px-1 ${
+      className={`flex min-w-0 flex-col items-center overflow-hidden rounded-lg px-0 py-2 sm:px-1 ${
         today ? "bg-surface-muted" : ""
       }`}
       aria-label={`${labelFor(day, today)} : ${reviewed} révisée${reviewed > 1 ? "s" : ""}, ${due} à réviser`}
     >
       <p
-        className={`text-[10px] font-semibold uppercase tracking-wide sm:text-[11px] ${
+        className={`w-full truncate text-center text-[9px] font-semibold uppercase tracking-normal sm:text-[11px] sm:tracking-wide ${
           today ? "text-ink" : "text-ink-tertiary"
         }`}
       >
-        {today ? "auj." : weekday(day.date)}
+        <span className="sm:hidden">{today ? "·" : weekday(day.date).slice(0, 1)}</span>
+        <span className="hidden sm:inline">{today ? "auj." : weekday(day.date)}</span>
       </p>
-      <p className="numeral mt-0.5 text-[13px] font-semibold text-ink sm:text-[14px]">
+      <p className="numeral mt-0.5 text-[12px] font-semibold text-ink sm:text-[14px]">
         {day.date.getDate()}
       </p>
       <div className="mt-2 flex h-[52px] w-full items-end justify-center">
-        <div className="flex w-3.5 flex-col-reverse overflow-hidden rounded-t-[2px] sm:w-4">
+        <div className="flex w-2.5 flex-col-reverse overflow-hidden rounded-t-[2px] sm:w-4">
           {reviewed > 0 ? (
             <div className="bg-ink" style={{ height: `${reviewedHeight}px` }} />
           ) : null}
@@ -75,7 +76,9 @@ function DayCell({ day, peak }: { day: WeekDayLoad; peak: number }) {
           {total === 0 ? <div className="h-[3px] bg-stroke-strong" /> : null}
         </div>
       </div>
-      <p className="numeral mt-1 text-[13px] font-bold text-ink sm:text-[15px]">{total}</p>
+      <p className="numeral mt-1 max-w-full truncate text-[12px] font-bold text-ink sm:text-[15px]">
+        {total}
+      </p>
     </div>
   );
 }

@@ -29,7 +29,7 @@ export function ExamInsightCard({
       <Link
         href={href}
         aria-label={label}
-        className="block rounded-2xl border border-border bg-card p-5 text-left shadow-xs/5"
+        className="block min-w-0 max-w-full overflow-hidden rounded-2xl border border-border bg-card p-4 text-left shadow-xs/5 sm:p-5"
       >
         {inner}
       </Link>
@@ -42,14 +42,18 @@ export function ExamInsightCard({
         type="button"
         onClick={onClick}
         aria-label={label}
-        className="w-full rounded-2xl border border-border bg-card p-5 text-left shadow-xs/5"
+        className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-border bg-card p-4 text-left shadow-xs/5 sm:p-5"
       >
         {inner}
       </button>
     );
   }
 
-  return <article className="rounded-2xl border border-border bg-card p-5 shadow-xs/5">{inner}</article>;
+  return (
+    <article className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-xs/5 sm:p-5">
+      {inner}
+    </article>
+  );
 }
 
 function InsightBody({ insight }: { insight: ExamInsight }) {
@@ -64,17 +68,19 @@ function InsightBody({ insight }: { insight: ExamInsight }) {
           : "bg-surface-muted text-ink-secondary";
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-start justify-between gap-3">
+    <div className="flex h-full min-w-0 flex-col">
+      <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-3">
         <p className="min-w-0 truncate text-[17px] font-semibold leading-tight text-ink sm:text-[18px]">
           {insight.name}
         </p>
-        <span className={`shrink-0 rounded-pill px-2 py-0.5 text-[11.5px] font-bold tracking-caps ${tone}`}>
+        <span
+          className={`max-w-[48%] shrink-0 truncate rounded-pill px-2 py-0.5 text-[11.5px] font-bold tracking-caps ${tone}`}
+        >
           {examCountdownLabel(insight.daysRemaining)}
         </span>
       </div>
 
-      <p className="numeral mt-5 text-[40px] font-bold leading-none text-ink">
+      <p className="numeral mt-4 text-[32px] font-bold leading-none text-ink sm:mt-5 sm:text-[40px]">
         {insight.gradeLabel}
       </p>
       <p className="mt-1.5 text-[13px] text-ink-tertiary">Note visée</p>
@@ -100,16 +106,18 @@ function InsightBody({ insight }: { insight: ExamInsight }) {
             : "Rien à signaler pour l'instant."}
         </p>
       ) : (
-        <ul className="mt-2 divide-y divide-hairline">
+        <ul className="mt-2 min-w-0 divide-y divide-hairline">
           {insight.weak.map((card) => (
-            <li key={card.id} className="flex items-center gap-2 py-2 first:pt-0 last:pb-0">
+            <li key={card.id} className="flex min-w-0 items-center gap-2 py-2 first:pt-0 last:pb-0">
               <span className="shrink-0 rounded-pill bg-caution-soft px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-caps text-caution">
                 {card.kindLabel}
               </span>
               <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">
                 {card.prompt}
               </span>
-              <span className="shrink-0 text-[11.5px] text-ink-tertiary">{card.note}</span>
+              <span className="max-w-[40%] shrink-0 truncate text-[11.5px] text-ink-tertiary">
+                {card.note}
+              </span>
             </li>
           ))}
         </ul>
