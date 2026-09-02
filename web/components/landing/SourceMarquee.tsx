@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/lib/i18n/client";
+
 /**
  * Ce qui entre dans Micabo, en une ligne qui défile.
  *
@@ -18,13 +20,13 @@
  */
 
 const SOURCES = [
-  { id: "polycopie-pdf", emoji: "📄", label: "Polycopié PDF" },
-  { id: "photo-notes", emoji: "📸", label: "Photo de tes notes" },
-  { id: "document-word", emoji: "📝", label: "Document Word" },
-  { id: "video-youtube", emoji: "▶️", label: "Vidéo YouTube" },
-  { id: "diapositives", emoji: "🖥️", label: "Diapositives de cours" },
-  { id: "manuel-scanne", emoji: "📚", label: "Manuel scanné" },
-  { id: "notes-manuscrites", emoji: "✍️", label: "Notes manuscrites" },
+  { id: "polycopie-pdf", emoji: "📄", labelKey: "landing.sourcePdf" },
+  { id: "photo-notes", emoji: "📸", labelKey: "landing.sourcePhoto" },
+  { id: "document-word", emoji: "📝", labelKey: "landing.sourceWord" },
+  { id: "video-youtube", emoji: "▶️", labelKey: "landing.sourceYoutube" },
+  { id: "diapositives", emoji: "🖥️", labelKey: "landing.sourceSlides" },
+  { id: "manuel-scanne", emoji: "📚", labelKey: "landing.sourceScan" },
+  { id: "notes-manuscrites", emoji: "✍️", labelKey: "landing.sourceNotes" },
 ] as const;
 
 export function SourceMarquee({
@@ -33,11 +35,12 @@ export function SourceMarquee({
   availableIds?: readonly string[];
 }) {
   const present = new Set(availableIds);
+  const { t } = useI18n();
 
   return (
     <section className="mt-20 border-y border-hairline-on-canvas py-7" data-print="hide">
       <p className="mb-5 text-center text-[12.5px] text-ink-tertiary">
-        Micabo transforme tes documents
+        {t("landing.sourcesHeading")}
       </p>
 
       <div
@@ -53,6 +56,8 @@ export function SourceMarquee({
             <SourceTile
               key={`${source.id}-${index}`}
               source={source}
+              label={t(source.labelKey)}
+              soon={t("landing.sourceSoon")}
               src={present.has(source.id) ? `/landing/sources/${source.id}.webp` : null}
             />
           ))}
@@ -65,14 +70,18 @@ export function SourceMarquee({
 function SourceTile({
   source,
   src,
+  label,
+  soon,
 }: {
   source: (typeof SOURCES)[number];
   src: string | null;
+  label: string;
+  soon: string;
 }) {
   return (
     <article className="source-tile">
-      <SourceExample src={src} label={source.label} emoji={source.emoji} />
-      <p className="mt-2.5 truncate text-[13.5px] font-medium text-ink">{source.label}</p>
+      <SourceExample src={src} label={label} soon={soon} emoji={source.emoji} />
+      <p className="mt-2.5 truncate text-[13.5px] font-medium text-ink">{label}</p>
     </article>
   );
 }
@@ -80,10 +89,12 @@ function SourceTile({
 function SourceExample({
   src,
   label,
+  soon,
   emoji,
 }: {
   src: string | null;
   label: string;
+  soon: string;
   emoji: string;
 }) {
   return (
@@ -96,7 +107,7 @@ function SourceExample({
             {emoji}
           </span>
           <span className="mt-2.5 text-[13px] font-medium text-ink-secondary">{label}</span>
-          <span className="mt-0.5 text-[12px] text-ink-tertiary">Exemple à venir</span>
+          <span className="mt-0.5 text-[12px] text-ink-tertiary">{soon}</span>
         </div>
       )}
     </div>

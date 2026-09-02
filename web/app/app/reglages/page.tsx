@@ -13,12 +13,14 @@ import { ProfileSettings } from "@/components/app/ProfileSettings";
 import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
 import { ReplayPaywallOnboarding } from "@/components/app/ReplayPaywallOnboarding";
 import { ReplayTour } from "@/components/app/ReplayTour";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
 import { SignOutButton } from "@/components/app/SignOutButton";
 import { SubscriptionCard } from "@/components/app/SubscriptionCard";
 import { readEntitlement } from "@/lib/data/entitlement";
 import { readProfile } from "@/lib/data/profile";
 import { currentUser } from "@/lib/data/user";
+import { getTranslator } from "@/lib/i18n/server";
 
 /**
  * Les réglages, **à part du profil**.
@@ -29,10 +31,11 @@ import { currentUser } from "@/lib/data/user";
  * plus se cacher sous le rythme quotidien.
  */
 export default async function SettingsPage() {
-  const [user, profile, right] = await Promise.all([
+  const [user, profile, right, { t }] = await Promise.all([
     currentUser(),
     readProfile(),
     readEntitlement(),
+    getTranslator(),
   ]);
 
   const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
@@ -41,10 +44,8 @@ export default async function SettingsPage() {
   return (
     <div className="mx-auto max-w-[560px]">
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">Réglages</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Abonnement, rythme, fiches. Ce que tu changes ici suit sur l&apos;iPhone.
-        </p>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">{t("settings.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("settings.lead")}</p>
       </header>
 
       <div className="mt-5 space-y-4">
@@ -59,7 +60,7 @@ export default async function SettingsPage() {
 
         <div data-tour="reglages-toi">
           <ProfileSettings
-            heading="Toi"
+            heading={t("settings.you")}
             initialName={profile?.display_name ?? ""}
             initialUsername={handle}
             initialMinutes={minutes}
@@ -71,6 +72,8 @@ export default async function SettingsPage() {
             initialSchoolId={profile?.institution_id ?? null}
           />
         </div>
+
+        <LanguageSwitcher variant="card" />
 
         <section className="saas-card p-7" data-tour="reglages-langue">
           <SheetLanguageCard

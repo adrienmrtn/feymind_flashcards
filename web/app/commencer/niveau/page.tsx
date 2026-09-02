@@ -3,6 +3,7 @@
 import { resolveStage, stagesFor, type CountryCode } from "@micabo/core";
 
 import { ChoiceRow, ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
+import { useI18n } from "@/lib/i18n/client";
 import { useOnboarding } from "@/lib/onboarding/store";
 
 /**
@@ -18,6 +19,7 @@ import { useOnboarding } from "@/lib/onboarding/store";
  */
 export default function LevelStep() {
   const { answers, set, ready } = useOnboarding();
+  const { t } = useI18n();
   const country: CountryCode = answers.country ?? "fr";
   const stages = stagesFor(country);
 
@@ -32,8 +34,8 @@ export default function LevelStep() {
 
   return (
     <Scaffold
-      eyebrow="Ton parcours"
-      title="Qu'est-ce qui te décrit le mieux ?"
+      eyebrow={t("onboarding.eyebrowPath")}
+      title={t("onboarding.niveauTitle")}
       footer={<ContinueButton enabled={Boolean(selectedId) && ready} href="/commencer/matieres" />}
     >
       <div className="space-y-2 pr-1">

@@ -2,6 +2,7 @@
 
 import { GrainGradient } from "@paper-design/shaders-react";
 
+import { useI18n } from "@/lib/i18n/client";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 import { Reveal } from "./Reveal";
@@ -18,6 +19,7 @@ const WASH_COLORS = ["#d7e6d8", "#f6f7f9", "#16c08c"];
  */
 export function ClosingWash({ signedIn = false }: { signedIn?: boolean }) {
   const reduced = usePrefersReducedMotion();
+  const { t } = useI18n();
 
   return (
     <section className="relative mx-auto mt-28 max-w-page overflow-hidden px-screen pb-12 text-center">
@@ -57,8 +59,8 @@ export function ClosingWash({ signedIn = false }: { signedIn?: boolean }) {
       </div>
 
       <Reveal as="div" className="relative">
-        <h2 className="mx-auto max-w-[22ch] text-[34px] font-bold leading-[1.06] tracking-display text-ink sm:text-[46px]">
-          Ton prochain contrôle commence maintenant.
+        <h2 className="mx-auto max-w-[26ch] text-[34px] font-bold leading-[1.06] tracking-display text-ink sm:text-[46px]">
+          {t("landing.closingTitle")}
         </h2>
         <div className="mt-9">
           <StartButton signedIn={signedIn} />

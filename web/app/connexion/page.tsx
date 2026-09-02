@@ -4,6 +4,8 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 
 import { BrandLockup } from "@/components/BrandMark";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useI18n } from "@/lib/i18n/client";
 import { SoftMesh } from "@/components/atmosphere/SoftAtmosphere";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -31,6 +33,7 @@ export default function ConnexionPage() {
 type Pending = "apple" | "google" | "email" | null;
 
 function ConnexionBody() {
+  const { t } = useI18n();
   const [pending, setPending] = useState<Pending>(null);
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -76,23 +79,26 @@ function ConnexionBody() {
     <div className="relative mx-auto flex min-h-svh w-full max-w-[440px] flex-col justify-center px-screen py-12">
       <SoftMesh />
       <div className="relative">
-        <BrandLockup
-          href="/"
-          size={28}
-          className="text-ink"
-          wordClassName="text-[15px] font-bold text-ink"
-        />
+        <div className="flex items-center justify-between gap-3">
+          <BrandLockup
+            href="/"
+            size={28}
+            className="text-ink"
+            wordClassName="text-[15px] font-bold text-ink"
+          />
+          <LanguageSwitcher />
+        </div>
 
-        <h1 className="mt-8 text-[32px] font-bold leading-[1.08] tracking-display text-ink sm:text-[38px]">
-          Content de te revoir.
+        <h1 className="mt-8 text-[32px] font-bold leading-[1.08] tracking-display text-ink sm:text-[38px] text-balance">
+          {t("onboarding.connexionTitle")}
         </h1>
         <p className="mt-3 text-[15px] text-ink-secondary">
-          Connecte-toi pour retrouver tes cours, tes cartes et ta série.
+          {t("onboarding.connexionSubtitle")}
         </p>
 
         <div className="mt-8 space-y-2.5">
           <ProviderButton
-            label="Continuer avec Apple"
+            label={t("onboarding.continueApple")}
             dark
             pending={pending === "apple"}
             onPress={() => signInWith("apple")}
@@ -104,7 +110,7 @@ function ConnexionBody() {
           />
 
           <ProviderButton
-            label="Continuer avec Google"
+            label={t("onboarding.continueGoogle")}
             pending={pending === "google"}
             onPress={() => signInWith("google")}
             icon={
@@ -129,20 +135,20 @@ function ConnexionBody() {
 
         <div className="my-6 flex items-center gap-3">
           <Separator className="flex-1" />
-          <span className="text-[12px] text-ink-tertiary">ou</span>
+          <span className="text-[12px] text-ink-tertiary">{t("onboarding.or")}</span>
           <Separator className="flex-1" />
         </div>
 
         {sent ? (
           <Alert variant="success" className="rise" role="status">
             <AlertDescription className="text-[14.5px] font-medium text-accent">
-              Ouvre le lien envoyé à {email.trim()}
+              {t("onboarding.linkSent", { email: email.trim() })}
             </AlertDescription>
           </Alert>
         ) : (
           <form onSubmit={sendLink} className="space-y-2.5">
             <Field>
-              <FieldLabel className="sr-only">Ton adresse électronique</FieldLabel>
+              <FieldLabel className="sr-only">{t("onboarding.emailLabel")}</FieldLabel>
               <Input
                 id="login-email"
                 type="email"
@@ -151,7 +157,7 @@ function ConnexionBody() {
                 required
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="ton@adresse.fr"
+                placeholder={t("onboarding.emailPlaceholder")}
                 className="h-14 rounded-button text-[16px] sm:text-[16px] [&_[data-slot=input]]:h-14 [&_[data-slot=input]]:text-[16px] [&_[data-slot=input]]:leading-[3.5rem]"
               />
             </Field>
@@ -162,7 +168,7 @@ function ConnexionBody() {
               disabled={email.trim().length === 0}
               className="h-14 w-full text-[16px] sm:h-14 sm:text-[16px]"
             >
-              Recevoir un lien
+              {t("onboarding.sendLink")}
             </Button>
           </form>
         )}
@@ -174,21 +180,21 @@ function ConnexionBody() {
         ) : null}
 
         <p className="mt-8 text-[12.5px] leading-relaxed text-ink-tertiary">
-          En continuant, tu acceptes les{" "}
+          {t("onboarding.legalPrefix")}{" "}
           <Link href={TERMS_PATH} className="underline-draw text-ink-secondary">
-            conditions d&apos;utilisation
+            {t("onboarding.legalTerms")}
           </Link>{" "}
-          et la{" "}
+          {t("onboarding.legalAnd")}{" "}
           <Link href={PRIVACY_PATH} className="underline-draw text-ink-secondary">
-            politique de confidentialité
+            {t("onboarding.legalPrivacy")}
           </Link>
           .
         </p>
 
         <p className="mt-6 text-[13.5px] text-ink-tertiary">
-          Pas encore de compte ?{" "}
+          {t("onboarding.noAccount")}{" "}
           <Link href="/commencer" className="underline-draw font-medium text-ink">
-            Créons-le
+            {t("onboarding.createIt")}
           </Link>
         </p>
       </div>

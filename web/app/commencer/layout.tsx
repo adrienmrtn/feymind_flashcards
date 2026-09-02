@@ -4,7 +4,9 @@ import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { SignOutButton } from "@/components/app/SignOutButton";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
+import { useI18n } from "@/lib/i18n/client";
 import { OnboardingStore } from "@/lib/onboarding/store";
 import { progressFor, stepIndex, STEPS } from "@/lib/onboarding/steps";
 import { createClient } from "@/lib/supabase/client";
@@ -18,10 +20,27 @@ import { createClient } from "@/lib/supabase/client";
  */
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useI18n();
   const index = stepIndex(pathname);
   const step = index >= 0 ? STEPS[index] : undefined;
   const showChrome = step?.chrome ?? false;
   const progress = progressFor(pathname);
+  const stepLabels = [
+    t("onboarding.stepBienvenue"),
+    t("onboarding.stepImporter"),
+    t("onboarding.stepFiches"),
+    t("onboarding.stepCartes"),
+    t("onboarding.stepReussir"),
+    t("onboarding.stepRetention"),
+    t("onboarding.stepPersonnaliser"),
+    t("onboarding.stepPays"),
+    t("onboarding.stepNiveau"),
+    t("onboarding.stepMatieres"),
+    t("onboarding.stepEcole"),
+    t("onboarding.stepParcours"),
+    t("onboarding.stepCompte"),
+  ];
+  const stepLabel = index >= 0 ? stepLabels[index] : "";
 
   return (
     <OnboardingStore>
@@ -38,7 +57,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={Math.round(progress * 100)}
-                aria-label={`Étape ${step?.label ?? ""}`}
+                aria-label={t("onboarding.progressAria", { label: stepLabel })}
               >
                 <div
                   className="h-full rounded-pill bg-ink transition-[width] duration-menu ease-out-strong"
@@ -46,6 +65,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
                 />
               </div>
               <span className="flex-1" />
+              <LanguageSwitcher />
               <OnboardingLogout />
             </header>
           ) : null}

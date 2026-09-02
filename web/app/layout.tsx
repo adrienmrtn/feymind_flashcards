@@ -3,6 +3,11 @@ import { Hanken_Grotesk, Inter, Nunito } from "next/font/google";
 
 import { AuthReturnCatcher } from "@/components/landing/AuthReturnCatcher";
 import { PreviewBanner } from "@/components/PreviewBanner";
+import { I18nProvider } from "@/lib/i18n/client";
+import { catalogFor } from "@/lib/i18n/catalogs";
+import { UI_LOCALE_META } from "@/lib/i18n/locales";
+import { readUiLocale } from "@/lib/i18n/server";
+import type { MessageTree } from "@/lib/i18n/format";
 import { CANONICAL_URL, IS_INDEXABLE, SITE_URL } from "@/lib/config";
 import { SiteStructuredData } from "@/components/landing/StructuredData";
 
@@ -14,7 +19,7 @@ import "./globals.css";
  * l'héberge lui-même au moment de la compilation, donc aucun appel à un tiers à l'exécution.
  */
 const hanken = Hanken_Grotesk({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-hanken",
   display: "swap",
@@ -30,7 +35,7 @@ const hanken = Hanken_Grotesk({
  * reconnaît pas.
  */
 const nunito = Nunito({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: ["600", "700", "800"],
   variable: "--font-nunito",
   display: "swap",
@@ -38,7 +43,7 @@ const nunito = Nunito({
 
 /** Inter porte l'app connectée — le même corps que micabo OS. */
 const inter = Inter({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-inter",
   display: "swap",
 });
@@ -99,16 +104,19 @@ export const viewport: Viewport = {
   themeColor: "#f6f7f9",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await readUiLocale();
   return (
-    <html lang="fr" className={`${hanken.variable} ${inter.variable} ${nunito.variable}`}>
+    <html lang={UI_LOCALE_META[locale].html} className={`${hanken.variable} ${inter.variable} ${nunito.variable}`}>
       <body className="relative antialiased">
-        <SiteStructuredData />
-        <div className="relative isolate flex min-h-svh flex-col">
-          <PreviewBanner />
-          <AuthReturnCatcher />
-          {children}
-        </div>
+        <I18nProvider locale={locale} messages={catalogFor(locale) as unknown as MessageTree}>
+          <SiteStructuredData />
+          <div className="relative isolate flex min-h-svh flex-col">
+            <PreviewBanner />
+            <AuthReturnCatcher />
+            {children}
+          </div>
+        </I18nProvider>
       </body>
     </html>
   );

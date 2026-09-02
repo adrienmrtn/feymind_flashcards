@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
+import { useI18n } from "@/lib/i18n/client";
 import { persistStoredAnswers } from "@/lib/onboarding/persist";
 import { useOnboarding } from "@/lib/onboarding/store";
 import { createClient } from "@/lib/supabase/client";
@@ -23,26 +24,15 @@ import { createClient } from "@/lib/supabase/client";
 const DURATION_MS = 7_700;
 
 const PHASES = [
-  {
-    headline: "On lit tes réponses.",
-    step: "Lecture de tes réponses",
-  },
-  {
-    headline: "On calibre tes intervalles.",
-    step: "Calibrage de la répétition",
-  },
-  {
-    headline: "On trace ton parcours.",
-    step: "Tracé de ton parcours",
-  },
-  {
-    headline: "On prépare ta première session.",
-    step: "Préparation de ta session",
-  },
+  { headline: "onboarding.parcoursWorking1", step: "onboarding.parcoursStep1" },
+  { headline: "onboarding.parcoursWorking2", step: "onboarding.parcoursStep2" },
+  { headline: "onboarding.parcoursWorking3", step: "onboarding.parcoursStep3" },
+  { headline: "onboarding.parcoursWorking4", step: "onboarding.parcoursStep4" },
 ] as const;
 
 export default function PersonalizingStep() {
   const { answers } = useOnboarding();
+  const { t } = useI18n();
   const router = useRouter();
   const [elapsed, setElapsed] = useState(0);
   const [signedIn, setSignedIn] = useState(false);
@@ -92,12 +82,16 @@ export default function PersonalizingStep() {
 
   return (
     <Scaffold
-      eyebrow="Personnalisation"
-      title={isDone ? "Ton parcours est prêt." : current.headline}
+      eyebrow={t("onboarding.stepPersonnaliser")}
+      title={isDone ? t("onboarding.parcoursDone") : t(current.headline)}
       footer={
         <ContinueButton
           label={
-            isDone ? (signedIn ? "Ouvrir Micabo" : "Créer mon compte") : "Micabo travaille…"
+            isDone
+              ? signedIn
+                ? t("onboarding.openMicabo")
+                : t("onboarding.createAccount")
+              : t("onboarding.parcoursBusyBtn")
           }
           enabled={isDone && !leaving}
           onPress={() => void continueOn()}
@@ -141,7 +135,7 @@ export default function PersonalizingStep() {
               <span className="text-[22px]"> %</span>
             </p>
             <p className="mt-2 text-[12px] font-medium text-ink-secondary">
-              {isDone ? "Terminé" : "Micabo travaille"}
+              {isDone ? t("onboarding.parcoursFinished") : t("onboarding.parcoursBusy")}
             </p>
           </div>
         </div>
@@ -181,7 +175,7 @@ export default function PersonalizingStep() {
                   done || active ? "font-medium text-ink" : "text-ink-tertiary"
                 }`}
               >
-                {phase.step}
+                {t(phase.step)}
               </span>
             </div>
           );

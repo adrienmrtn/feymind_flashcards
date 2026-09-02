@@ -191,10 +191,12 @@ export default function PrivacyPage() {
       <LegalSection title="Cookies et traceurs">
         <p>
           Le site pose les cookies nécessaires à la session (vous reconnaître d&apos;une
-          page à l&apos;autre une fois connecté). Nous ne posons pas de cookie de mesure
-          d&apos;audience, ni de publicité, ni de pistage inter-sites. C&apos;est pour
-          cela qu&apos;il n&apos;y a pas de bandeau de consentement : il n&apos;y a rien à
-          refuser de ce côté-là.
+          page à l&apos;autre une fois connecté) et un cookie de préférence de langue
+          d&apos;interface (<code>micabo.ui_locale</code>), gardé un an, qui retient le
+          français, l&apos;allemand, l&apos;espagnol ou le turc. Nous ne posons pas de
+          cookie de mesure d&apos;audience, ni de publicité, ni de pistage inter-sites.
+          C&apos;est pour cela qu&apos;il n&apos;y a pas de bandeau de consentement : il
+          n&apos;y a rien à refuser de ce côté-là.
         </p>
         <p>
           L&apos;iPhone n&apos;utilise pas de cookies. Il garde un jeton de session dans le
