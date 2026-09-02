@@ -70,7 +70,7 @@ enum CardGeneration {
         // Les langues se révisent dans les deux sens : la carte inverse est créée d'office,
         // avec sa propre planification.
         if SubjectHeuristics.isLanguage(subject: course.subject, title: course.title) {
-            try? CourseRepository.addReverseCards(for: course, in: modelContext)
+            _ = try? CourseRepository.addReverseCards(for: course, in: modelContext)
         }
 
         return inserted

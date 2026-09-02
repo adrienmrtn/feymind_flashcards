@@ -33,7 +33,7 @@ struct FlashcardEditorSheet: View {
         }
         .confirmationDialog("Supprimer cette carte ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
             Button("Supprimer", role: .destructive) {
-                try? CourseRepository.delete(card, in: modelContext)
+                _ = try? CourseRepository.delete(card, in: modelContext)
                 dismiss()
             }
             Button("Annuler", role: .cancel) {}
@@ -118,7 +118,7 @@ struct FlashcardEditorSheet: View {
 
                         Button("Retirer") {
                             card.audioData = nil
-                            try? modelContext.save()
+                            _ = try? modelContext.save()
                         }
                         .font(MicaboFont.captionEmphasis)
                         .foregroundStyle(MicaboColor.negative)
@@ -165,7 +165,7 @@ struct FlashcardEditorSheet: View {
             HStack(spacing: MicaboSpacing.md) {
                 Button("Réinitialiser cette carte") {
                     card.resetScheduling()
-                    try? modelContext.save()
+                    _ = try? modelContext.save()
                 }
                 .buttonStyle(MicaboQuietButtonStyle())
 
@@ -199,7 +199,7 @@ struct FlashcardEditorSheet: View {
 
     private func save() {
         card.updatedAt = Date()
-        try? modelContext.save()
+        _ = try? modelContext.save()
         dismiss()
     }
 
@@ -213,7 +213,7 @@ struct FlashcardEditorSheet: View {
         guard let data = try? Data(contentsOf: url) else { return }
         card.audioData = data
         card.updatedAt = Date()
-        try? modelContext.save()
+        _ = try? modelContext.save()
         Haptics.success()
     }
 }
@@ -260,7 +260,7 @@ struct FlashcardCreatorSheet: View {
     private func save() {
         guard canSave else { return }
         let generated = GeneratedFlashcard(front: front, back: back, hint: hint.nilIfBlank)
-        try? CourseRepository.addFlashcards([generated], to: course, in: modelContext)
+        _ = try? CourseRepository.addFlashcards([generated], to: course, in: modelContext)
         dismiss()
     }
 }
