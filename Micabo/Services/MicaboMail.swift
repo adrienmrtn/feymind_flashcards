@@ -1,8 +1,9 @@
 import Foundation
 
-/// Le courriel de l'équipe, et rien d'autre.
+/// L'adresse de l'équipe, et les kinds du retour.
 ///
-/// C'est la même adresse que `LEGAL_CONTACT` sur le web. Un test relit les deux.
+/// C'est la même adresse que `LEGAL_CONTACT` sur le web. L'envoi s'écrit
+/// dans `feedback`, plus dans un courriel.
 enum MicaboMail {
     static let team = "team@micabo.app"
 

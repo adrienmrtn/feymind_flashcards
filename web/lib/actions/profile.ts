@@ -193,6 +193,7 @@ export async function exportAccountData(): Promise<AccountExport> {
     exams,
     right,
     usage,
+    feedback,
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
     supabase.from("courses").select("*").eq("user_id", user.id).is("deleted_at", null),
@@ -216,6 +217,7 @@ export async function exportAccountData(): Promise<AccountExport> {
       user.id,
     ).maybeSingle(),
     supabase.from("ai_usage").select("day, fn, count").eq("user_id", user.id),
+    supabase.from("feedback").select("id, kind, message, source, created_at").eq("user_id", user.id),
   ]);
 
   return {
@@ -230,6 +232,7 @@ export async function exportAccountData(): Promise<AccountExport> {
       exams: exams.data ?? [],
       entitlement: right.data,
       aiUsage: usage.data ?? [],
+      feedback: feedback.data ?? [],
     },
   };
 }

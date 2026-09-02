@@ -10,6 +10,7 @@ import { entitlement } from "@micabo/core";
 import { canImportNow, ownedCourseCount, readEntitlement } from "@/lib/data/entitlement";
 import { readProfile } from "@/lib/data/profile";
 import { currentUser } from "@/lib/data/user";
+import { canReadInbox } from "@/lib/feedback";
 
 /**
  * La charpente de l'app : le chrome de micabo OS.
@@ -31,7 +32,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const userInitial = userName.replace(/^@/, "").charAt(0).toUpperCase() || "M";
 
   return (
-    <AppChrome userName={userName} userInitial={userInitial} canImport={canImport}>
+    <AppChrome
+      userName={userName}
+      userInitial={userInitial}
+      canImport={canImport}
+      canReadInbox={canReadInbox(user.email)}
+    >
       {children}
       <Suspense fallback={null}>
         <PaywallGate
