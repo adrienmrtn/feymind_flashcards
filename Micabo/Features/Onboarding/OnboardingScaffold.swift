@@ -125,7 +125,7 @@ extension EnvironmentValues {
 /// de le dire, ne doit pas fermer le parcours : un écran sans issue se quitte en quittant
 /// l'app, et on ne le retrouve jamais.
 struct OnboardingSkip {
-    var title: String = "Passer"
+    var title: String?
     /// Ce que le lecteur d'écran annonce. « Passer cette question » ne convient pas partout :
     /// sur l'écran de connexion, on ne passe pas une question, on passe la création d'un
     /// compte.
@@ -313,10 +313,13 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
 
     /// Volontairement discret : c'est une sortie, pas une proposition. Un « Passer » aussi
     /// visible que le bouton du bas ferait douter de l'intérêt de la question.
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
     private func skipButton(_ skip: OnboardingSkip) -> some View {
-        Button(action: skip.action) {
+        let title = skip.title ?? i18n?.t("common.skip") ?? "Passer"
+        return Button(action: skip.action) {
             HStack(spacing: 3) {
-                Text(skip.title)
+                Text(title)
                     .font(MicaboFont.hanken(13.5, weight: .semibold))
 
                 Image(systemName: "chevron.right")
@@ -331,7 +334,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
             )
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
-        .accessibilityLabel(skip.accessibilityLabel ?? "\(skip.title) cette question")
+        .accessibilityLabel(skip.accessibilityLabel ?? title)
     }
 }
 
@@ -519,10 +522,10 @@ struct OnboardingWordByWordTitle: View {
 /// Quand `isLoading` est vrai, le bouton annonce ce qu'il fait et refuse les appuis :
 /// c'est ce qui évite les doubles taps quand une opération tourne derrière.
 struct OnboardingContinueButton: View {
-    var title: String = "Continuer"
+    var title: String?
     var isEnabled: Bool = true
     var isLoading: Bool = false
-    var loadingTitle: String = "Un instant…"
+    var loadingTitle: String?
     /// Reflet qui balaie le bouton, et respiration qui le fait rebondir sur place.
     ///
     /// Réservé au bouton qui clôt une animation qu'on vient de regarder sans rien faire :
@@ -533,6 +536,7 @@ struct OnboardingContinueButton: View {
     var action: () -> Void
 
     @Environment(\.onboardingSurface) private var surface
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var shinePhase: CGFloat = 0
     @State private var isBouncing = false
@@ -553,7 +557,10 @@ struct OnboardingContinueButton: View {
                         .tint(surface.buttonForeground)
                 }
 
-                Text(isLoading ? loadingTitle : title)
+                Text(isLoading ? (loadingTitle ?? i18n?.t("ios.instant") ?? "Un instant…") : (title ?? i18n?.t("common.continue") ?? "Continuer"))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.82)
             }
             .frame(maxWidth: .infinity)
         }
@@ -675,6 +682,7 @@ struct OnboardingChoiceRow: View {
                         .font(MicaboFont.hanken(16, weight: .medium))
                         .foregroundStyle(MicaboColor.ink)
                         .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
 
                     if let subtitle {
                         Text(subtitle)

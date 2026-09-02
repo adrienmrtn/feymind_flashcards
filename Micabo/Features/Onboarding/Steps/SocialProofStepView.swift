@@ -19,6 +19,7 @@ import SwiftUI
 /// couvrirait l'écran avant qu'on ait vu ce qu'il raconte.
 struct SocialProofStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.requestReview) private var requestReview
 
     private struct Review: Identifiable {
@@ -68,7 +69,7 @@ struct SocialProofStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "Nous avons aidé\n500 000 étudiants.",
+            title: i18n?.t("ios.socialProof") ?? "Nous avons aidé\n500 000 étudiants.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,

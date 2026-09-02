@@ -4,6 +4,8 @@ import { SUBJECT_FAMILIES, isoFromFlagEmoji, subjectEmoji } from "@micabo/core";
 
 import { Flag } from "@/components/onboarding/Flag";
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
+import { useI18n } from "@/lib/i18n/client";
+import { displayFamily, displaySubject } from "@/lib/i18n/subject-display";
 import { useOnboarding } from "@/lib/onboarding/store";
 
 /**
@@ -19,6 +21,7 @@ import { useOnboarding } from "@/lib/onboarding/store";
  */
 export default function SubjectsStep() {
   const { answers, set, ready } = useOnboarding();
+  const { t, locale } = useI18n();
   const chosen = answers.subjects ?? [];
 
   function toggle(subject: string) {
@@ -30,11 +33,17 @@ export default function SubjectsStep() {
 
   return (
     <Scaffold
-      eyebrow="Ton parcours"
-      title="Qu'est-ce que tu étudies ?"
+      eyebrow={t("onboarding.eyebrowPath")}
+      title={t("onboarding.matieresTitle")}
       footer={
         <ContinueButton
-          label={chosen.length > 0 ? `Continuer avec ${chosen.length} matière${chosen.length > 1 ? "s" : ""}` : "Continuer"}
+          label={
+            chosen.length === 1
+              ? t("onboarding.continueOne")
+              : chosen.length > 1
+                ? t("onboarding.continueMany", { n: chosen.length })
+                : undefined
+          }
           enabled={chosen.length > 0 && ready}
           href="/commencer/ecole"
         />
@@ -43,7 +52,7 @@ export default function SubjectsStep() {
       <div className="space-y-6 pr-1">
         {SUBJECT_FAMILIES.map((family) => (
           <div key={family.name}>
-            <p className="eyebrow mb-2.5 text-ink-tertiary">{family.name}</p>
+            <p className="eyebrow mb-2.5 text-ink-tertiary">{displayFamily(family.name, locale)}</p>
             <div className="flex flex-wrap gap-2">
               {family.subjects.map((subject) => {
                 const selected = chosen.includes(subject);
@@ -60,7 +69,7 @@ export default function SubjectsStep() {
                     }`}
                   >
                     <SubjectMark subject={subject} />
-                    {subject}
+                    {displaySubject(subject, locale)}
                   </button>
                 );
               })}

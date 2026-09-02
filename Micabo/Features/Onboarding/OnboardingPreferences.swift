@@ -17,15 +17,11 @@ enum LearningGoal: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     var title: String {
-        switch self {
-        case .language: "Apprendre une langue"
-        case .exam: "Réviser pour un examen"
-        case .competition: "Préparer un concours"
-        case .lectures: "Retenir mes cours"
-        case .profession: "Monter en compétences pour le travail"
-        case .curiosity: "Nourrir ma culture générale"
-        case .other: "Autre chose"
-        }
+        title(locale: .resolved())
+    }
+
+    func title(locale: UiLocale) -> String {
+        L10n.t("ios.goal.\(rawValue)", locale: locale)
     }
 
     /// Un emoji par réponse. Il ne remplace pas le libellé, il l'accroche : on retrouve sa
@@ -153,6 +149,12 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    func localizedName(locale: UiLocale) -> String {
+        let key = "country.\(rawValue)"
+        let translated = L10n.t(key, locale: locale)
+        return translated == key ? name : translated
+    }
+
     var name: String {
         switch self {
         case .fr: "France"
@@ -235,12 +237,11 @@ enum ForgettingHabit: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     var title: String {
-        switch self {
-        case .always: "Oui, tout le temps"
-        case .withMethod: "Oui, mais quand j'ai les bonnes méthodes je retiens bien"
-        case .sometimes: "Non, mais ça m'arrive d'oublier des notions"
-        case .never: "Non, jamais"
-        }
+        title(locale: .resolved())
+    }
+
+    func title(locale: UiLocale) -> String {
+        L10n.t("ios.forget.\(rawValue)", locale: locale)
     }
 
     /// Un emoji par réponse : on retrouve la sienne d'un regard, sans relire quatre

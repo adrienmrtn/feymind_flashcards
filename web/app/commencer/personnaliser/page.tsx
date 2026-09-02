@@ -1,6 +1,7 @@
 "use client";
 
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * La charnière du parcours.
@@ -9,26 +10,26 @@ import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
  * écran, la première question tombe sans qu'on sache pourquoi on y répond —
  * et une question dont on ignore l'usage se remplit au hasard.
  */
-const STEPS = [
-  { emoji: "🌍", title: "Ton pays", detail: "Le système scolaire, et la langue." },
-  { emoji: "🎓", title: "Ton niveau", detail: "Le registre des fiches." },
-  { emoji: "📚", title: "Tes matières", detail: "Ce qu'on te propose en premier." },
-  { emoji: "🏫", title: "Ton école", detail: "Pour retrouver tes camarades." },
-] as const;
-
 export default function PersonalizeIntroStep() {
+  const { t } = useI18n();
+  const steps = [
+    { emoji: "🌍", title: t("onboarding.previewCountry"), detail: t("onboarding.previewCountryDetail") },
+    { emoji: "🎓", title: t("onboarding.previewLevel"), detail: t("onboarding.previewLevelDetail") },
+    { emoji: "📚", title: t("onboarding.previewSubjects"), detail: t("onboarding.previewSubjectsDetail") },
+    { emoji: "🏫", title: t("onboarding.previewSchool"), detail: t("onboarding.previewSchoolDetail") },
+  ];
   return (
     <Scaffold
-      title="On va personnaliser ton compte."
-      footer={<ContinueButton label="C'est parti" enabled href="/commencer/pays" />}
+      title={t("onboarding.personnaliserTitle")}
+      footer={<ContinueButton label={t("onboarding.letsGo")} enabled href="/commencer/pays" />}
     >
       <div className="mx-auto w-full max-w-[420px]">
         <p className="text-[14.5px] leading-relaxed text-ink-secondary">
-          Quatre questions, une minute. Elles changent la façon dont Micabo écrit tes fiches.
+          {t("onboarding.personnaliserIntro")}
         </p>
 
         <div className="mt-4 space-y-2">
-          {STEPS.map((step, index) => (
+          {steps.map((step, index) => (
             <div
               key={step.title}
               className="flex items-center gap-3.5 rounded-button bg-surface px-4 py-3 paper"

@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * L'entrée. **Commencer** ouvre le parcours. **J'ai déjà un compte** ouvre
@@ -19,18 +22,19 @@ export function StartButton({
   className?: string;
 }) {
   const large = size === "large";
+  const { t } = useI18n();
   return (
-    <div className={large ? "flex flex-col items-center gap-3" : "flex items-center gap-3.5"}>
+    <div className={large ? "flex flex-col items-center gap-3" : "flex min-w-0 items-center gap-2.5 sm:gap-3.5"}>
       <Button
         size={large ? "xl" : "lg"}
         className={
           large
             ? `h-14 px-8 pe-7 text-[16px] sm:h-14 sm:text-[16px] ${className}`
-            : `h-11 px-5 pe-4 sm:h-11 ${className}`
+            : `h-11 max-w-full px-4 pe-3 sm:h-11 sm:px-5 sm:pe-4 ${className}`
         }
         render={<Link href={signedIn ? "/app" : "/commencer"} />}
       >
-        {signedIn ? "Ouvrir l'app" : "Commencer"}
+        {signedIn ? t("common.openApp") : t("common.start")}
         <ArrowIcon />
       </Button>
       {signedIn ? null : (
@@ -40,11 +44,11 @@ export function StartButton({
           className={
             large
               ? "underline-draw h-auto text-[14px] font-medium text-ink-secondary hover:no-underline"
-              : "underline-draw h-auto text-[13px] font-medium text-ink-secondary hover:no-underline"
+              : "underline-draw hidden h-auto text-[13px] font-medium text-ink-secondary hover:no-underline md:inline-flex"
           }
           render={<Link href={"/connexion" as never} />}
         >
-          J&apos;ai déjà un compte
+          {t("common.alreadyAccount")}
         </Button>
       )}
     </div>

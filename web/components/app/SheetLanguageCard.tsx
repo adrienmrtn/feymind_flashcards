@@ -9,6 +9,7 @@ import {
 } from "@micabo/core";
 
 import { updateSettings } from "@/lib/actions/profile";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * La langue des **prochaines** fiches.
@@ -26,12 +27,13 @@ export function SheetLanguageCard({
 }) {
   const [language, setLanguage] = useState(initial);
   const [pending, startTransition] = useTransition();
+  const { t } = useI18n();
 
   return (
     <section className={embedded ? "" : "paper hover-tile rounded-group bg-surface p-6"}>
-      <p className="text-[13px] text-ink-tertiary">Langue des fiches</p>
+      <p className="text-[13px] text-ink-tertiary">{t("settings.sheetLanguage")}</p>
       <label htmlFor="sheet-language" className="sr-only">
-        Langue des prochaines fiches
+        {t("settings.sheetLanguageSr")}
       </label>
       <select
         id="sheet-language"
@@ -53,7 +55,7 @@ export function SheetLanguageCard({
         ))}
       </select>
       <p className="mt-3 text-[13px] leading-relaxed text-ink-tertiary">
-        Les prochaines fiches s&apos;écriront dans cette langue. Celles déjà là restent.
+        {t("settings.sheetLanguageHelp")}
       </p>
     </section>
   );

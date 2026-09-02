@@ -7,19 +7,20 @@ import SwiftUI
 /// retient, ce sont des raisons d'apprendre. Elle demande donc ce qu'elle demande vraiment.
 struct GoalStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var selection: Set<LearningGoal> = []
 
     var body: some View {
         OnboardingScaffold(
-            title: "Quels sont tes objectifs ?",
-            subtitle: "Plusieurs réponses possibles.",
+            title: i18n?.t("ios.goalTitle") ?? "Quels sont tes objectifs ?",
+            subtitle: i18n?.t("ios.goalSubtitle") ?? "Plusieurs réponses possibles.",
             animatesTitle: true
         ) {
             VStack(spacing: 8) {
                 ForEach(LearningGoal.allCases) { goal in
                     OnboardingChoiceRow(
-                        title: goal.title,
+                        title: goal.title(locale: i18n?.locale ?? .resolved()),
                         emoji: goal.emoji,
                         isSelected: selection.contains(goal)
                     ) {

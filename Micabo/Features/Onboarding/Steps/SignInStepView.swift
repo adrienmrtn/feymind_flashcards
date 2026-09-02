@@ -21,6 +21,7 @@ import SwiftUI
 struct SignInStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(AuthController.self) private var auth
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     /// Le même drapeau que celui lu par `RootView` : passer ici vaut passer pour de bon.
     @AppStorage(AccountGate.skippedKey) private var didSkipAccount = false
@@ -31,10 +32,10 @@ struct SignInStepView: View {
         VStack(spacing: MicaboSpacing.md) {
             HStack {
                 Spacer(minLength: 0)
-                Button("Passer", action: skip)
+                Button(i18n?.t("common.skip") ?? "Passer", action: skip)
                     .font(MicaboFont.hanken(14.5, weight: .medium))
                     .foregroundStyle(MicaboColor.inkTertiary)
-                    .accessibilityLabel("Continuer sans compte")
+                    .accessibilityLabel(i18n?.t("ios.skipNoAccount") ?? "Continuer sans compte")
             }
 
             Spacer(minLength: 0)

@@ -1,9 +1,12 @@
+"use client";
+
 import type { Route } from "next";
 import Link from "next/link";
 
 import { BrandLockup } from "@/components/BrandMark";
 import { Separator } from "@/components/ui/separator";
-import { LANDING_NAV } from "@/lib/landing-sections";
+import { useI18n } from "@/lib/i18n/client";
+import { LANDING_SECTIONS } from "@/lib/landing-sections";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { SITE_PAGES } from "@/lib/site-pages";
 
@@ -15,6 +18,21 @@ import { SITE_PAGES } from "@/lib/site-pages";
  * s'ouvre par **Commencer**. Une session déjà ouverte remplace ça par Ouvrir l'app.
  */
 export function Footer({ signedIn = false }: { signedIn?: boolean }) {
+  const { t } = useI18n();
+  const product = [
+    { href: `#${LANDING_SECTIONS.method}`, label: t("site.method") },
+    { href: `#${LANDING_SECTIONS.exam}`, label: t("site.exam") },
+    { href: `#${LANDING_SECTIONS.questions}`, label: t("site.questions") },
+  ];
+  const pages = SITE_PAGES.map((page) => ({
+    path: page.path,
+    label:
+      page.path === "/methode"
+        ? t("site.method")
+        : page.path === "/mode-examen"
+          ? t("site.exam")
+          : t("site.anki"),
+  }));
   return (
     <footer className="mt-24" data-print="hide">
       <Separator />
@@ -28,8 +46,7 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
               wordClassName="text-[15px] font-bold text-ink"
             />
             <p className="mt-2.5 text-[13.5px] leading-relaxed text-ink-secondary">
-              Tes cours deviennent une fiche qu&apos;on relit, et des cartes qui reviennent au bon
-              moment.
+              {t("landing.footerTagline")}
             </p>
           </div>
 
@@ -37,9 +54,9 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
             {/* La même structure qu'en haut, en clair. C'est le pied de page qui porte les
                 sections sur mobile, où la barre n'a pas la place de les montrer. */}
             <div>
-              <p className="eyebrow mb-3 text-ink-tertiary">Le produit</p>
+              <p className="eyebrow mb-3 text-ink-tertiary">{t("landing.footerProduct")}</p>
               <ul className="space-y-1.5 text-ink-secondary">
-                {LANDING_NAV.map((item) => (
+                {product.map((item) => (
                   <li key={item.href}>
                     <Link href={item.href as Route} className="underline-draw" data-print="bare">
                       {item.label}
@@ -50,19 +67,19 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
             </div>
 
             <div>
-              <p className="eyebrow mb-3 text-ink-tertiary">Le site</p>
+              <p className="eyebrow mb-3 text-ink-tertiary">{t("landing.footerSite")}</p>
               <ul className="space-y-1.5 text-ink-secondary">
                 {signedIn ? (
                   <li>
                     <Link href="/app" className="underline-draw" data-print="bare">
-                      Ouvrir l&apos;app
+                      {t("common.openApp")}
                     </Link>
                   </li>
                 ) : (
                   <>
                     <li>
                       <Link href="/commencer" className="underline-draw" data-print="bare">
-                        Commencer
+                        {t("common.start")}
                       </Link>
                     </li>
                     <li>
@@ -71,7 +88,7 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
                         className="underline-draw"
                         data-print="bare"
                       >
-                        Se connecter
+                        {t("common.signIn")}
                       </Link>
                     </li>
                   </>
@@ -83,9 +100,9 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
                 explorables sans dépendre d'un lien dans un paragraphe, et ce qui donne à
                 Google des pages à proposer sous le résultat de la marque. */}
             <div>
-              <p className="eyebrow mb-3 text-ink-tertiary">À lire</p>
+              <p className="eyebrow mb-3 text-ink-tertiary">{t("landing.footerRead")}</p>
               <ul className="space-y-1.5 text-ink-secondary">
-                {SITE_PAGES.map((page) => (
+                {pages.map((page) => (
                   <li key={page.path}>
                     <Link href={page.path} className="underline-draw" data-print="bare">
                       {page.label}
@@ -96,16 +113,16 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
             </div>
 
             <div>
-              <p className="eyebrow mb-3 text-ink-tertiary">Le cadre</p>
+              <p className="eyebrow mb-3 text-ink-tertiary">{t("landing.footerLegal")}</p>
               <ul className="space-y-1.5 text-ink-secondary">
                 <li>
                   <Link href={PRIVACY_PATH} className="underline-draw" data-print="bare">
-                    Confidentialité
+                    {t("common.privacy")}
                   </Link>
                 </li>
                 <li>
                   <Link href={TERMS_PATH} className="underline-draw" data-print="bare">
-                    Conditions
+                    {t("common.terms")}
                   </Link>
                 </li>
               </ul>
@@ -117,11 +134,11 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
           © {new Date().getFullYear()} Micabo
           <span aria-hidden> · </span>
           <Link href={PRIVACY_PATH} className="underline-draw">
-            Confidentialité
+            {t("common.privacy")}
           </Link>
           <span aria-hidden> · </span>
           <Link href={TERMS_PATH} className="underline-draw">
-            Conditions
+            {t("common.terms")}
           </Link>
         </p>
       </div>

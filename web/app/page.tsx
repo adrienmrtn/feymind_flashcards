@@ -13,6 +13,7 @@ import { RetentionChart } from "@/components/landing/RetentionChart";
 import { Reveal } from "@/components/landing/Reveal";
 import { SourceMarquee } from "@/components/landing/SourceMarquee";
 import { currentUser } from "@/lib/data/user";
+import { getTranslator } from "@/lib/i18n/server";
 import { listedLandingSourceImages } from "@/lib/landing-source-images";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
 import { ANKI_PAGE, EXAM_PAGE, METHOD_PAGE } from "@/lib/site-pages";
@@ -58,6 +59,7 @@ export default async function LandingPage({
 
   const user = await currentUser();
   const signedIn = Boolean(user);
+  const { t } = await getTranslator();
 
   return (
     <>
@@ -69,39 +71,39 @@ export default async function LandingPage({
 
         <Section
           id={LANDING_SECTIONS.cards}
-          eyebrow="Les cartes"
-          title="Retourne-en une."
-          note="Quatre façons de réviser le même cours. Appuie : le verso est déjà là."
+          eyebrow={t("landing.cardsEyebrow")}
+          title={t("landing.cardsTitle")}
+          note={t("landing.cardsNote")}
         >
           <DemoCards />
         </Section>
 
         <Section
           id={LANDING_SECTIONS.method}
-          eyebrow="Pourquoi ça tient"
-          title="Relire ne suffit pas. Se souvenir, oui."
-          note="Ce qu'on a dû retrouver de mémoire tient - surtout si ça revient au bon moment, de moins en moins souvent."
-          more={{ href: METHOD_PAGE.path, label: "Lire la méthode en détail" }}
+          eyebrow={t("landing.methodEyebrow")}
+          title={t("landing.methodTitle")}
+          note={t("landing.methodNote")}
+          more={{ href: METHOD_PAGE.path, label: t("landing.methodMore") }}
         >
           <RetentionChart />
         </Section>
 
         <Section
           id={LANDING_SECTIONS.exam}
-          eyebrow="Mode examen"
-          title="Tu donnes la date. Micabo réorganise tout."
-          note="La répétition espacée ignore le jour J. Le mode examen lui donne une date butoir, et resserre les cartes à l'approche de l'épreuve."
-          more={{ href: EXAM_PAGE.path, label: "Comment le plan se resserre" }}
+          eyebrow={t("landing.examEyebrow")}
+          title={t("landing.examTitle")}
+          note={t("landing.examNote")}
+          more={{ href: EXAM_PAGE.path, label: t("landing.examMore") }}
         >
           <ExamMode />
         </Section>
 
         <Section
           id={LANDING_SECTIONS.questions}
-          eyebrow="Questions"
-          title="Ce qu'on nous demande."
+          eyebrow={t("landing.questionsEyebrow")}
+          title={t("landing.questionsTitle")}
           note=""
-          more={{ href: ANKI_PAGE.path, label: "Micabo ou Anki : la comparaison" }}
+          more={{ href: ANKI_PAGE.path, label: t("landing.questionsMore") }}
         >
           <Questions />
         </Section>

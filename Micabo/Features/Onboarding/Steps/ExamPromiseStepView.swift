@@ -10,10 +10,11 @@ import SwiftUI
 /// et le voir vaut mieux que le lire.
 struct ExamPromiseStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
         OnboardingScaffold(
-            title: "On t'aide même à préparer\nparfaitement ton examen.",
+            title: i18n?.t("ios.examTitle") ?? "On t'aide même à préparer\nparfaitement ton examen.",
             titleSize: 26
         ) {
             ExamCountdownCalendar()

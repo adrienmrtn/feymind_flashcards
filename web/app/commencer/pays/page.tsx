@@ -6,6 +6,7 @@ import { COUNTRIES, countryFor, guessCountry, type CountryCode } from "@micabo/c
 
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
 import { Flag } from "@/components/onboarding/Flag";
+import { useI18n } from "@/lib/i18n/client";
 import { useOnboarding } from "@/lib/onboarding/store";
 
 /**
@@ -32,7 +33,14 @@ export default function CountryStep() {
 
 function CountryStepBody() {
   const { answers, set, ready } = useOnboarding();
+  const { t } = useI18n();
   const [guessed, setGuessed] = useState<CountryCode | null>(null);
+
+  function countryName(code: CountryCode, fallback: string) {
+    const key = `country.${code}`;
+    const translated = t(key);
+    return translated === key ? fallback : translated;
+  }
 
   useEffect(() => {
     setGuessed(guessCountry(navigator.languages ?? [navigator.language]));
@@ -48,8 +56,8 @@ function CountryStepBody() {
 
   return (
     <Scaffold
-      eyebrow="Ton parcours"
-      title="Tu étudies dans quel pays ?"
+      eyebrow={t("onboarding.eyebrowPath")}
+      title={t("onboarding.paysTitle")}
       footer={<ContinueButton enabled={answered && ready} href="/commencer/niveau" />}
     >
       <div className="space-y-2 pr-1">
@@ -58,8 +66,8 @@ function CountryStepBody() {
             key={item.code}
             iso={item.iso}
             emoji={item.flag}
-            name={item.name}
-            detail={item.code === guessed ? "Détecté" : undefined}
+            name={countryName(item.code, item.name)}
+            detail={item.code === guessed ? t("common.detected") : undefined}
             selected={selected === item.code}
             onSelect={() =>
               // Changer de pays invalide le palier : c'est l'écran suivant qui le retrouvera, et le
@@ -72,7 +80,7 @@ function CountryStepBody() {
         <Row
           iso=""
           emoji={elsewhere.flag}
-          name={selected === "other" && typed.trim() ? typed.trim() : elsewhere.name}
+          name={selected === "other" && typed.trim() ? typed.trim() : countryName("other", elsewhere.name)}
           selected={selected === "other"}
           onSelect={() => set({ country: "other", stageId: undefined })}
         />
@@ -80,7 +88,7 @@ function CountryStepBody() {
         {selected === "other" ? (
           <div className="rise pl-1 pt-1">
             <label htmlFor="pays-libre" className="sr-only">
-              Le nom de ton pays
+              {t("onboarding.customCountry")}
             </label>
             <input
               id="pays-libre"
@@ -92,7 +100,7 @@ function CountryStepBody() {
                 setTyped(event.target.value);
                 set({ customCountry: event.target.value.trim() || undefined });
               }}
-              placeholder="Écris ton pays"
+              placeholder={t("onboarding.customPlaceholder")}
               className="paper h-13 w-full rounded-button bg-surface px-4 py-3.5 text-[16px] text-ink outline-none placeholder:text-ink-tertiary"
             />
           </div>

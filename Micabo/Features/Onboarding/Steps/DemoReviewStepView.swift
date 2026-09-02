@@ -15,6 +15,7 @@ import SwiftUI
 /// en bas.
 struct DemoReviewStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private enum Phase {
         /// La fiche, telle qu'on l'a laissée.
@@ -39,7 +40,7 @@ struct DemoReviewStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "Tes cours sont transformés\nen contenus interactifs.",
+            title: i18n?.t("ios.reviewTitle") ?? "Tes cours sont transformés\nen contenus interactifs.",
             titleSize: 26,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false

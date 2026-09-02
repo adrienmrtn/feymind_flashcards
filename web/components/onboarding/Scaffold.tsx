@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/client";
 import { nextPath, previousPath, type OnboardingPath } from "@/lib/onboarding/steps";
 
 /**
@@ -38,6 +39,7 @@ export function Scaffold({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useI18n();
   const back = previousPath(pathname);
 
   // **L'écran suivant est chargé pendant qu'on lit celui-ci.** Sans ça, chaque
@@ -65,7 +67,7 @@ export function Scaffold({
 
       <h1
         className={`rise mt-2.5 shrink-0 font-bold leading-[1.12] tracking-tight-title text-ink ${
-          titleClassName || "text-[24px] sm:text-[30px]"
+          titleClassName || "text-balance text-[24px] sm:text-[30px]"
         }`}
       >
         {title}
@@ -79,11 +81,11 @@ export function Scaffold({
         {children}
       </div>
 
-      <div className="rise flex shrink-0 items-center justify-between gap-4 pt-4">
+      <div className="rise flex shrink-0 items-center justify-between gap-3 pt-4">
         {back ? (
           <Link
             href={back as Route}
-            className="pressable inline-flex min-h-11 items-center gap-1.5 text-[14.5px] font-medium text-ink-tertiary"
+            className="pressable inline-flex min-h-11 shrink-0 items-center gap-1.5 text-[14.5px] font-medium text-ink-tertiary"
           >
             <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4">
               <path
@@ -95,12 +97,12 @@ export function Scaffold({
                 strokeLinejoin="round"
               />
             </svg>
-            Retour
+            {t("common.back")}
           </Link>
         ) : (
           <span />
         )}
-        <div className="shrink-0">{footer}</div>
+        <div className="min-w-0 max-w-[min(100%,18rem)] shrink">{footer}</div>
       </div>
     </div>
   );
@@ -114,7 +116,7 @@ export function Scaffold({
  * reste en bas à droite de la carte, jamais collé aux bords de l'écran.
  */
 export function ContinueButton({
-  label = "Continuer",
+  label,
   enabled,
   href,
   onPress,
@@ -125,6 +127,8 @@ export function ContinueButton({
   onPress?: () => void;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
+  const text = label ?? t("common.continue");
 
   useEffect(() => {
     if (href) router.prefetch(href as Route);
@@ -141,13 +145,13 @@ export function ContinueButton({
         onPress?.();
         if (href) router.push(href as Route);
       }}
-      className={`h-12 rounded-pill px-5 text-[15px] sm:h-12 sm:text-[15px] ${
+      className={`h-auto min-h-12 max-w-full whitespace-normal text-balance rounded-pill px-4 text-[14.5px] leading-tight sm:px-5 sm:text-[15px] ${
         enabled
           ? "border-accent bg-accent text-on-ink hover:bg-accent hover:text-on-ink"
           : ""
       }`}
     >
-      {label}
+      {text}
       <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4">
         <path
           d="M4 10h11M11 5l5 5-5 5"

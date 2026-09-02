@@ -18,6 +18,8 @@ import {
 } from "@micabo/core";
 
 import { SchoolField } from "@/components/app/SchoolField";
+import { useI18n } from "@/lib/i18n/client";
+import { displayFamily, displaySubject } from "@/lib/i18n/subject-display";
 import { UsernameField } from "@/components/app/UsernameField";
 import { updateSettings } from "@/lib/actions/profile";
 
@@ -47,6 +49,7 @@ export function ProfileSettings({
   initialSchool: string;
   initialSchoolId: string | null;
 }) {
+  const { locale } = useI18n();
   const [name, setName] = useState(initialName);
   const [minutes, setMinutes] = useState(initialMinutes);
   const [blocks, setBlocks] = useState(() => defaultBlocks(initialLength));
@@ -95,7 +98,7 @@ export function ProfileSettings({
         {SUBJECT_FAMILIES.map((family) => (
           <div key={family.name}>
             <p className="mb-1.5 text-[11px] font-medium uppercase tracking-caps text-ink-tertiary">
-              {family.name}
+              {displayFamily(family.name, locale)}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {family.subjects.map((subject) => {
@@ -121,7 +124,7 @@ export function ProfileSettings({
                     <span aria-hidden className="emoji text-[13px]">
                       {subjectEmoji(subject)}
                     </span>
-                    {subject}
+                    {displaySubject(subject, locale)}
                   </button>
                 );
               })}

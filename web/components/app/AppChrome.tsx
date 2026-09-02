@@ -21,6 +21,7 @@ import {
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/profile";
+import { useI18n } from "@/lib/i18n/client";
 import { requestPaywall } from "@/lib/paywall";
 import {
   OPEN_COURSES_EVENT,
@@ -42,45 +43,45 @@ import {
 // justement le lien qu'on veut instantané.
 const GROUPS = [
   {
-    title: "Étudier",
+    titleKey: "nav.study",
     items: [
-      { href: "/app", label: "Accueil", icon: House, prefetch: true },
-      { href: "/app/reviser", label: "Réviser", icon: Layers, prefetch: true },
+      { href: "/app", labelKey: "nav.home", icon: House, prefetch: true },
+      { href: "/app/reviser", labelKey: "nav.review", icon: Layers, prefetch: true },
     ],
   },
   {
-    title: "Bibliothèque",
+    titleKey: "nav.library",
     items: [
-      { href: "/app/cours", label: "Cours", icon: BookOpen, prefetch: true },
-      { href: "/app/examens", label: "Examens", icon: CalendarDays, prefetch: true },
+      { href: "/app/cours", labelKey: "nav.courses", icon: BookOpen, prefetch: true },
+      { href: "/app/examens", labelKey: "nav.exams", icon: CalendarDays, prefetch: true },
     ],
   },
   {
-    title: "Compte",
+    titleKey: "nav.account",
     items: [
-      { href: "/app/amis", label: "Amis", icon: Users, prefetch: true },
-      { href: "/app/profil", label: "Profil", icon: UserRound, prefetch: true },
-      { href: "/app/reglages", label: "Réglages", icon: Settings, prefetch: true },
+      { href: "/app/amis", labelKey: "nav.friends", icon: Users, prefetch: true },
+      { href: "/app/profil", labelKey: "nav.profile", icon: UserRound, prefetch: true },
+      { href: "/app/reglages", labelKey: "nav.settings", icon: Settings, prefetch: true },
     ],
   },
 ] as const;
 
-function sectionLabel(pathname: string): string {
-  if (pathname.startsWith("/app/importer")) return "Importer";
-  if (pathname.startsWith("/app/reviser")) return "Réviser";
-  if (pathname.startsWith("/app/examens")) return "Examens";
+function sectionLabel(pathname: string, t: (key: string) => string): string {
+  if (pathname.startsWith("/app/importer")) return t("nav.import");
+  if (pathname.startsWith("/app/reviser")) return t("nav.review");
+  if (pathname.startsWith("/app/examens")) return t("nav.exams");
   if (pathname.startsWith("/app/retours")) return "Retours";
-  if (pathname.startsWith("/app/amis") || pathname.startsWith("/app/u/")) return "Amis";
-  if (pathname.startsWith("/app/profil")) return "Profil";
-  if (pathname.startsWith("/app/reglages")) return "Réglages";
+  if (pathname.startsWith("/app/amis") || pathname.startsWith("/app/u/")) return t("nav.friends");
+  if (pathname.startsWith("/app/profil")) return t("nav.profile");
+  if (pathname.startsWith("/app/reglages")) return t("nav.settings");
   if (
     pathname.startsWith("/app/cours") ||
     pathname.startsWith("/app/c/") ||
     pathname.startsWith("/app/b/")
   ) {
-    return "Cours";
+    return t("nav.courses");
   }
-  return "Accueil";
+  return t("nav.home");
 }
 
 function isCurrent(pathname: string, href: string): boolean {
@@ -191,8 +192,9 @@ export function AppChrome({
 
 function HeaderTitle() {
   const pathname = usePathname();
+  const { t } = useI18n();
   return (
-    <span className="truncate text-sm font-semibold tracking-tight">{sectionLabel(pathname)}</span>
+    <span className="truncate text-sm font-semibold tracking-tight">{sectionLabel(pathname, t)}</span>
   );
 }
 
@@ -302,13 +304,14 @@ function Brand() {
 
 function NavList({ canReadInbox }: { canReadInbox: boolean }) {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
     <nav className="flex flex-col gap-5 px-3 py-2" data-tour="nav">
       {GROUPS.map((group) => (
-        <div key={group.title} className="flex flex-col gap-0.5">
+        <div key={group.titleKey} className="flex flex-col gap-0.5">
           <p className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/70">
-            {group.title}
+            {t(group.titleKey)}
           </p>
           {group.items.map((item) => {
             const current = isCurrent(pathname, item.href);
@@ -332,11 +335,11 @@ function NavList({ canReadInbox }: { canReadInbox: boolean }) {
                       : "text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground"
                   }`}
                 />
-                <span className="truncate">{item.label}</span>
+                <span className="truncate">{t(item.labelKey)}</span>
               </Link>
             );
           })}
-          {group.title === "Compte" && canReadInbox ? (
+          {group.titleKey === "nav.account" && canReadInbox ? (
             <Link
               href={"/app/retours" as never}
               aria-current={pathname.startsWith("/app/retours") ? "page" : undefined}

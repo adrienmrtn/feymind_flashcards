@@ -1,5 +1,9 @@
+"use client";
+
 import { BrandLockup } from "@/components/BrandMark";
-import { LANDING_NAV } from "@/lib/landing-sections";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { LANDING_SECTIONS } from "@/lib/landing-sections";
+import { useI18n } from "@/lib/i18n/client";
 
 import { StartButton } from "./StartButton";
 
@@ -15,15 +19,21 @@ import { StartButton } from "./StartButton";
  * cherchait.
  */
 export function LandingHeader({ signedIn = false }: { signedIn?: boolean }) {
+  const { t } = useI18n();
+  const nav = [
+    { href: `#${LANDING_SECTIONS.method}`, label: t("site.method") },
+    { href: `#${LANDING_SECTIONS.exam}`, label: t("site.exam") },
+    { href: `#${LANDING_SECTIONS.questions}`, label: t("site.questions") },
+  ];
   return (
     <header className="sticky top-0 z-20 border-b border-border/80 bg-background/70 backdrop-blur-md">
       <a
         href="#contenu"
         className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-screen focus-visible:top-3 focus-visible:z-30 focus-visible:rounded-button focus-visible:bg-accent focus-visible:px-3 focus-visible:py-2 focus-visible:text-[13px] focus-visible:font-medium focus-visible:text-on-ink"
       >
-        Aller au contenu
+        {t("common.skipToContent")}
       </a>
-      <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-6 px-screen">
+      <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-3 px-screen sm:gap-6">
         <BrandLockup
           href="/"
           size={28}
@@ -35,8 +45,8 @@ export function LandingHeader({ signedIn = false }: { signedIn?: boolean }) {
             plus d'un bouton ne tiennent pas sur 360 px, et le pied de page les
             reprend. Un menu déroulant pour trois ancres coûterait plus qu'il
             n'apporte. */}
-        <nav aria-label="Sections" className="hidden items-center gap-7 md:flex">
-          {LANDING_NAV.map((item) => (
+        <nav aria-label={t("landing.navAria")} className="hidden items-center gap-7 md:flex">
+          {nav.map((item) => (
             <a
               key={item.href}
               href={item.href}
@@ -47,7 +57,10 @@ export function LandingHeader({ signedIn = false }: { signedIn?: boolean }) {
           ))}
         </nav>
 
-        <StartButton signedIn={signedIn} size="compact" />
+        <div className="flex min-w-0 items-center justify-end gap-1 sm:gap-2">
+          <LanguageSwitcher />
+          <StartButton signedIn={signedIn} size="compact" />
+        </div>
       </div>
     </header>
   );

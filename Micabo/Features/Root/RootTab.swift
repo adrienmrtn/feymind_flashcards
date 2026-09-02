@@ -14,13 +14,17 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
 
     var id: Int { rawValue }
 
-    var label: String {
+    func label(t: (String) -> String) -> String {
         switch self {
-        case .courses: "Cours"
-        case .today: "Réviser"
-        case .exams: "Examens"
-        case .profile: "Profil"
+        case .courses: t("nav.courses")
+        case .today: t("nav.review")
+        case .exams: t("nav.exams")
+        case .profile: t("nav.profile")
         }
+    }
+
+    var label: String {
+        label(t: { L10n.t($0, locale: .resolved()) })
     }
 
     var systemImage: String {

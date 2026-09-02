@@ -5,16 +5,18 @@ import Link from "next/link";
 
 import { BrandWordmark } from "@/components/BrandMark";
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * La porte. Un mot large, le logo au centre, et la sortie pour ceux
  * qui ont déjà un compte.
  */
 export default function WelcomeStep() {
+  const { t } = useI18n();
   return (
     <Scaffold
-      title="Bienvenue sur Micabo."
-      titleClassName="text-[34px] tracking-display sm:text-[44px]"
+      title={t("onboarding.welcomeTitle")}
+      titleClassName="text-[34px] tracking-display sm:text-[40px]"
       footer={
         <div className="flex flex-col items-end gap-3">
           <ContinueButton enabled href="/commencer/importer" />
@@ -22,7 +24,7 @@ export default function WelcomeStep() {
             href={"/connexion" as Route}
             className="underline-draw text-[15px] font-semibold text-ink-secondary"
           >
-            J&apos;ai déjà un compte
+            {t("common.alreadyAccount")}
           </Link>
         </div>
       }

@@ -11,12 +11,13 @@ import SwiftUI
 /// occupent la page plutôt que de se serrer sous le titre.
 struct ForgettingStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var selection: ForgettingHabit?
 
     var body: some View {
         OnboardingScaffold(
-            title: "En général, oublies-tu\nce que tu apprends ?",
+            title: i18n?.t("ios.forgettingTitle") ?? "En général, oublies-tu\nce que tu apprends ?",
             titleSize: 28,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,
@@ -25,7 +26,7 @@ struct ForgettingStepView: View {
         ) {
             OnboardingAnswerList(ForgettingHabit.allCases, spacing: 8) { habit in
                 OnboardingChoiceRow(
-                    title: habit.title,
+                    title: habit.title(locale: i18n?.locale ?? .resolved()),
                     emoji: habit.emoji,
                     isSelected: selection == habit,
                     fillsHeight: true
@@ -34,7 +35,7 @@ struct ForgettingStepView: View {
                 }
             }
         } footer: {
-            OnboardingHint(text: "Appuie sur une réponse pour continuer")
+            OnboardingHint(text: i18n?.t("ios.tapToContinue") ?? "Appuie sur une réponse pour continuer")
         }
     }
 

@@ -18,6 +18,7 @@ import SwiftUI
 /// suivant, et sans un vrai avant, il n'y a pas d'après.
 struct DemoImportStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var drag: CGSize = .zero
     @State private var isDragging = false
@@ -34,7 +35,7 @@ struct DemoImportStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "Glisse ton cours ici.",
+            title: i18n?.t("ios.importTitle") ?? "Glisse ton cours ici.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,

@@ -87,7 +87,8 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(SignInProvider.allCases, [.apple, .google])
 
         for provider in SignInProvider.allCases {
-            XCTAssertTrue(provider.title.hasPrefix("Continuer avec"), "\(provider) doit dire ce qu'il fait")
+            let title = provider.title(t: { L10n.t($0, locale: .fr) })
+            XCTAssertTrue(title.hasPrefix("Continuer avec"), "\(provider) doit dire ce qu'il fait")
         }
     }
 

@@ -1,4 +1,7 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/lib/i18n/client";
 
 import { CourseTransformation } from "./CourseTransformation";
 import { HeroAura } from "./HeroAura";
@@ -8,6 +11,7 @@ import { StartButton } from "./StartButton";
  * L'accroche : une phrase, puis le trajet entier du document.
  */
 export function Hero({ signedIn = false }: { signedIn?: boolean }) {
+  const { t } = useI18n();
   return (
     <section className="relative overflow-clip">
       <HeroAura />
@@ -15,19 +19,19 @@ export function Hero({ signedIn = false }: { signedIn?: boolean }) {
       <div className="relative mx-auto max-w-page px-screen pt-16 text-center sm:pt-24">
         <Badge
           variant="secondary"
-          className="rise h-auto gap-2 rounded-pill px-3.5 py-1.5 text-[12.5px] font-medium text-ink-secondary"
+          className="rise h-auto max-w-[36ch] gap-2 rounded-pill px-3.5 py-1.5 text-balance text-[12.5px] font-medium text-ink-secondary"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-accent-vivid" />
-          Fiches et flashcards, à partir de tes cours
+          {t("landing.badge")}
         </Badge>
 
         <h1
-          className="rise mx-auto mt-7 max-w-[19ch] text-[44px] font-bold leading-[1.03] tracking-display text-ink sm:text-[76px]"
+          className="rise mx-auto mt-7 max-w-[22ch] text-[40px] font-bold leading-[1.03] tracking-display text-ink sm:max-w-[24ch] sm:text-[76px]"
           style={{ animationDelay: "60ms" }}
         >
-          Apprends tout,{" "}
+          {t("landing.titleBefore")}{" "}
           <span className="relative whitespace-nowrap text-accent">
-            plus vite
+            {t("landing.titleAccent")}
             <svg
               aria-hidden
               viewBox="0 0 200 12"
@@ -50,8 +54,7 @@ export function Hero({ signedIn = false }: { signedIn?: boolean }) {
           className="rise mx-auto mt-7 max-w-[52ch] text-[17px] leading-relaxed text-ink-secondary sm:text-[19px]"
           style={{ animationDelay: "120ms" }}
         >
-          Dépose un polycopié, une photo de tes notes ou une vidéo de cours. Micabo en écrit la
-          fiche, en tire les cartes, et les fait revenir juste avant que tu oublies.
+          {t("landing.subtitle")}
         </p>
 
         <div className="rise mt-9" style={{ animationDelay: "180ms" }}>

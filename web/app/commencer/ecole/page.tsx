@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ThinkingOrb } from "thinking-orbs";
 
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
+import { useI18n } from "@/lib/i18n/client";
 import { useOnboarding } from "@/lib/onboarding/store";
 import { createClient } from "@/lib/supabase/client";
 
@@ -32,6 +33,7 @@ interface Suggestion {
 
 export default function SchoolStep() {
   const { answers, set, ready } = useOnboarding();
+  const { t } = useI18n();
   const [query, setQuery] = useState(answers.institutionName ?? "");
   const [results, setResults] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
@@ -67,9 +69,9 @@ export default function SchoolStep() {
 
   return (
     <Scaffold
-      eyebrow="Ton parcours"
-      title="Tu étudies dans quelle école ?"
-      skip={{ label: "Passer", href: "/commencer/parcours" }}
+      eyebrow={t("onboarding.eyebrowPath")}
+      title={t("onboarding.ecoleTitle")}
+      skip={{ label: t("common.skip"), href: "/commencer/parcours" }}
       footer={
         <ContinueButton
           enabled={query.trim().length > 0 && ready}
@@ -89,7 +91,7 @@ export default function SchoolStep() {
             <path d="M13 13l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
           <label htmlFor="school" className="sr-only">
-            Le nom de ton école
+            {t("onboarding.schoolLabel")}
           </label>
           <input
             id="school"
@@ -102,7 +104,7 @@ export default function SchoolStep() {
               // correspondrait plus à ce qui est écrit.
               if (chosenId) set({ institutionId: undefined });
             }}
-            placeholder="Lycée, université, école…"
+            placeholder={t("onboarding.schoolPlaceholder")}
             className="h-14 min-w-0 flex-1 bg-transparent text-[16px] text-ink outline-none placeholder:text-ink-tertiary"
           />
           {searching ? <ThinkingOrb state="searching" size={20} /> : null}
@@ -139,11 +141,11 @@ export default function SchoolStep() {
 
         {chosenId ? (
           <p className="mt-4 text-[13px] text-accent">
-            Tu verras ce que tes camarades de {answers.institutionName} partagent.
+            {t("onboarding.schoolMatched", { school: answers.institutionName ?? "" })}
           </p>
         ) : query.trim().length > 0 ? (
           <p className="mt-4 text-[13px] text-ink-tertiary">
-            On garde ce nom. Choisis-le dans la liste si tu veux voir tes camarades.
+            {t("onboarding.schoolUnmatched")}
           </p>
         ) : null}
       </div>

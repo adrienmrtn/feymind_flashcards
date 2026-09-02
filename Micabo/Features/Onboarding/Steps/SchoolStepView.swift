@@ -3,6 +3,7 @@ import SwiftUI
 /// Écran « Tu étudies où ? » : saisie libre + suggestions locales puis Supabase.
 struct SchoolStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var query = ""
     @State private var suggestions: [Institution] = []
@@ -24,7 +25,7 @@ struct SchoolStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "Tu étudies où ?",
+            title: i18n?.t("ios.schoolTitle") ?? "Tu étudies où ?",
             titleSize: 28,
             skip: OnboardingSkip(action: skipAndAdvance)
         ) {
@@ -38,13 +39,13 @@ struct SchoolStepView: View {
                         ProgressView()
                             .controlSize(.small)
                             .tint(MicaboColor.progress)
-                        Text("Recherche…")
+                        Text(i18n?.t("ios.schoolSearching") ?? "Recherche…")
                             .font(MicaboFont.hanken(13, weight: .medium))
                             .foregroundStyle(MicaboColor.inkTertiary)
                     }
                     .padding(.top, 4)
                 } else if normalizedQuery.count >= 2, selected == nil {
-                    Text("Aucun résultat pour l'instant — tu peux quand même continuer avec ce nom.")
+                    Text(i18n?.t("ios.schoolNone") ?? "Aucun résultat pour l'instant — tu peux quand même continuer avec ce nom.")
                         .font(MicaboFont.hanken(12, weight: .regular))
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -82,12 +83,14 @@ struct SchoolStepView: View {
 
     private var continueTitle: String {
         if let selected {
-            return "Continuer avec \(shortName(selected.name))"
+            return i18n?.t("ios.continueWith", ["name": shortName(selected.name)])
+                ?? "Continuer avec \(shortName(selected.name))"
         }
         if normalizedQuery.isEmpty {
-            return "Indique ton établissement"
+            return i18n?.t("ios.schoolPrompt") ?? "Indique ton établissement"
         }
-        return "Continuer avec « \(shortName(normalizedQuery)) »"
+        return i18n?.t("ios.continueWith", ["name": shortName(normalizedQuery)])
+            ?? "Continuer avec « \(shortName(normalizedQuery)) »"
     }
 
     private var searchField: some View {
@@ -96,7 +99,7 @@ struct SchoolStepView: View {
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
 
-            TextField("Ex. École polytechnique, Louis-le-Grand…", text: $query)
+            TextField(i18n?.t("ios.schoolPlaceholder") ?? "Ex. École polytechnique, Louis-le-Grand…", text: $query)
                 .font(MicaboFont.hanken(16, weight: .medium))
                 .foregroundStyle(MicaboColor.ink)
                 .textInputAutocapitalization(.words)

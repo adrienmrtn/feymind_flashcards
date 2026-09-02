@@ -16,6 +16,7 @@ import SwiftUI
 struct WelcomeStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(AuthController.self) private var auth
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(CloudSync.self) private var sync
     @Environment(\.modelContext) private var modelContext
 
@@ -61,7 +62,7 @@ struct WelcomeStepView: View {
                 .foregroundStyle(surface.eyebrow)
                 .onboardingAppear(index: 0, stagger: 0.1)
 
-            Text("Apprends tout,\nplus vite.")
+            Text(i18n?.t("ios.welcomeTitle") ?? "Apprends tout,\nplus vite.")
                 .font(MicaboFont.hanken(40, weight: .bold))
                 .foregroundStyle(surface.title)
                 .tracking(-1.2)
@@ -77,13 +78,13 @@ struct WelcomeStepView: View {
     private var continueBar: some View {
         MicaboBottomBar(background: surface.background) {
             VStack(spacing: 12) {
-                OnboardingContinueButton(title: "Commencer") {
+                OnboardingContinueButton(title: i18n?.t("common.start") ?? "Commencer") {
                     model.advance()
                 }
                 Button {
                     showLogin = true
                 } label: {
-                    Text("J'ai déjà un compte")
+                    Text(i18n?.t("common.alreadyAccount") ?? "J'ai déjà un compte")
                         .font(MicaboFont.hanken(14.5, weight: .medium))
                         .foregroundStyle(surface.prose)
                         .underline()
