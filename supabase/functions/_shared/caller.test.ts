@@ -1,6 +1,11 @@
 import { assertEquals, assertThrows } from "jsr:@std/assert@1";
 
-import { CallerError, readCaller, withCors } from "./caller.ts";
+import {
+  CallerError,
+  QUOTA_EXHAUSTED_MESSAGE,
+  readCaller,
+  withCors,
+} from "./caller.ts";
 
 /**
  * Ce fichier verrouille la partie du contrôle qui **ne dépend pas du réseau** : qui a le droit
@@ -23,6 +28,10 @@ function token(claims: Record<string, unknown>): string {
 function request(headers: Record<string, string> = {}, method = "POST"): Request {
   return new Request("https://example.test/fn", { method, headers });
 }
+
+Deno.test("le refus de quota n'écrit pas le plafond", () => {
+  assertEquals(/\d/.test(QUOTA_EXHAUSTED_MESSAGE), false);
+});
 
 Deno.test("l'appelant", async (t) => {
   await t.step("est reconnu quand son jeton porte un rôle authentifié et un sujet", () => {
