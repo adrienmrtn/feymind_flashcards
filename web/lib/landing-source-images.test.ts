@@ -6,18 +6,18 @@ import { listedLandingSourceImages } from "./landing-source-images";
 
 describe("listedLandingSourceImages", () => {
   const dir = join(process.cwd(), "public/landing/sources");
-  const planted = join(dir, "notes-manuscrites.webp");
+  const planted = join(dir, "__probe__.webp");
 
   afterEach(() => {
     rmSync(planted, { force: true });
   });
 
   it("ne liste que les extraits réellement déposés", () => {
-    expect(listedLandingSourceImages()).not.toContain("notes-manuscrites");
+    expect(listedLandingSourceImages()).not.toContain("__probe__");
 
     mkdirSync(dir, { recursive: true });
     writeFileSync(planted, "webp");
 
-    expect(listedLandingSourceImages()).toEqual(["notes-manuscrites"]);
+    expect(listedLandingSourceImages()).toContain("__probe__");
   });
 });

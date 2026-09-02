@@ -13,10 +13,9 @@ par format. Le nom du fichier est l’`id` de la source, sans autre dossier.
 | `manuel-scanne.webp` | Manuel scanné |
 | `notes-manuscrites.webp` | Notes manuscrites |
 
-L’extension attendue est **`.webp`**. Dès que le fichier est là **et déployé**,
-il remplace le cadre « Exemple à venir ». Recadrer à peu près **16 / 9**, autour
-de **1640 × 960**. C’est un vrai extrait (scan de notes, première page d’un
-polycopié, capture d’une vidéo), pas une icône.
+L’extension attendue est **`.webp`**, **16 / 9**, autour de **1640 × 960**.
+Les sept extraits sont des natures mortes inventées (une matière par case),
+pas des icônes et pas des captures de documents réels.
 
 Tant que le fichier n’est pas dans ce dossier, la vitrine ne doit **pas**
 pointer son URL : un `.webp` absent répond 404, et Search Console le compte
