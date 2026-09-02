@@ -1221,7 +1221,7 @@ Quatre marques, et chacune a une raison d'exister sur une fiche de révision
 | `**terme**` | gras | le mot que l'examen attend, une à deux fois par paragraphe, jamais zéro dans un paragraphe qui introduit une notion |
 | `*nuance*` | italique | un mot étranger, un titre d'œuvre, une réserve |
 | `==l'essentiel==` | texte en couleur | ce qu'on relit en dernier, **trois à cinq passages sur la fiche**, jamais deux dans le même paragraphe |
-| `$E = mc^2$` | formule | transposée par `FormulaRenderer`, comme sur les cartes |
+| `$E = mc^2$` | formule | composée par le moteur mathématique, comme sur les cartes |
 
 **Le surligneur jaune a été retiré, et c'était son rendu.** Un fond posé derrière le texte
 débordait sous les jambages, changeait d'épaisseur d'une ligne à l'autre, et se battait avec
@@ -1473,11 +1473,36 @@ réponse, occlusion sans image. La question et la réponse restent bonnes, donc 
 jamais jetée. `Flashcard.format` porte cette règle, et c'est elle que l'interface consulte —
 `kind` dit ce qui était voulu, `format` ce qui est affichable.
 
-Les formules écrites en LaTeX entre `$…$` sont transposées en Unicode par `FormulaRenderer`
-(exposants, indices, lettres grecques, fractions, racines) et composées en italique à
-empattements par `FormulaText`. Micabo n'embarque pas de moteur LaTeX : `$E = mc^2$` devient
-« E = mc² », `$H_2O$` devient « H₂O », mais les matrices et les intégrales à bornes ne sont
-pas rendues. Mieux vaut une formule lisible qu'un `\frac{}{}` affiché tel quel.
+### Les écritures scientifiques
+
+Les formules s'écrivent en LaTeX entre `$…$`, et le bloc `formula` d'une fiche en porte une
+seule, sans délimiteurs. **Elles sont composées pour de vrai** : SwiftMath sur l'iPhone
+(`MathTypesetter`, `MathFormula`), KaTeX sur le web (`lib/math/typeset`). Une fraction a une
+barre et deux étages, une somme met ses bornes au-dessus et en dessous de son signe, une
+matrice a ses parenthèses à la bonne hauteur.
+
+**La transposition Unicode reste le plancher.** `FormulaRenderer` sur l'iPhone et
+`latexToUnicode` dans `@micabo/core` transforment `x^2` en « x² » et `\frac{a}{b}` en « a/b ».
+Ce n'est plus le rendu ordinaire, c'est le filet : une fiche est écrite par un modèle, donc du
+LaTeX incomplet arrivera, et le choix est alors entre un cadre vide et une formule un peu
+moins belle.
+
+| Où | iPhone | Web |
+| --- | --- | --- |
+| Bloc `formula` d'une fiche | composé, mode display | composé, mode display |
+| Une carte qui **est** une formule | composé | composé |
+| Une formule prise dans une phrase | transposée en Unicode | composée en ligne |
+
+La dernière ligne est la seule différence de rendu assumée entre les deux plateformes, et elle
+tient à une contrainte de SwiftUI : un paragraphe de fiche est composé en une seule suite de
+fragments dans un `UITextView`, ce qui donne la sélection du système et « Expliquer ». Une
+formule composée est une **vue**, pas un fragment de texte : l'insérer voudrait dire hacher le
+paragraphe en morceaux empilés et perdre la sélection continue. Une phrase en trois morceaux
+se lit moins bien qu'un `x²`.
+
+Côté iPhone, tout ce qui touche au moteur passe par `MathTypesetter`, derrière
+`#if canImport(SwiftMath)` : le dépôt compile avec ou sans le paquet résolu, comme pour
+RevenueCat. Sans lui, le produit garde exactement le rendu d'avant.
 
 ## Quand l'import échoue
 

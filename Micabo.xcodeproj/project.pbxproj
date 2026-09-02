@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		FE00000000000000000200 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = FE00000000000000000210 /* RevenueCat */; };
+		FE00000000000000000201 /* SwiftMath in Frameworks */ = {isa = PBXBuildFile; productRef = FE00000000000000000211 /* SwiftMath */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +45,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FE00000000000000000200 /* RevenueCat in Frameworks */,
+				FE00000000000000000201 /* SwiftMath in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -96,6 +98,7 @@
 			name = Micabo;
 			packageProductDependencies = (
 				FE00000000000000000210 /* RevenueCat */,
+				FE00000000000000000211 /* SwiftMath */,
 			);
 			productName = Micabo;
 			productReference = FE00000000000000000001 /* Micabo.app */;
@@ -155,6 +158,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				FE00000000000000000220 /* XCRemoteSwiftPackageReference "purchases-ios" */,
+				FE00000000000000000221 /* XCRemoteSwiftPackageReference "SwiftMath" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FE00000000000000000031 /* Products */;
@@ -484,6 +488,14 @@
 				minimumVersion = 5.0.0;
 			};
 		};
+		FE00000000000000000221 /* XCRemoteSwiftPackageReference "SwiftMath" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mgriebling/SwiftMath";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -491,6 +503,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FE00000000000000000220 /* XCRemoteSwiftPackageReference "purchases-ios" */;
 			productName = RevenueCat;
+		};
+		FE00000000000000000211 /* SwiftMath */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FE00000000000000000221 /* XCRemoteSwiftPackageReference "SwiftMath" */;
+			productName = SwiftMath;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

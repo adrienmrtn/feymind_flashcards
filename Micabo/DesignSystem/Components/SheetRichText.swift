@@ -283,6 +283,19 @@ enum SheetAttributedText {
 
     // MARK: Fontes
 
+    /// **Une formule prise dans un paragraphe reste transposée en Unicode**, et ce n'est pas
+    /// un oubli.
+    ///
+    /// Un paragraphe de fiche est composé en une seule suite de fragments, dans un
+    /// `UITextView` : c'est ce qui donne la sélection du système et « Expliquer », le geste
+    /// central de la fiche. Une formule composée par le moteur est une **vue**, pas un
+    /// fragment de texte : l'insérer voudrait dire hacher le paragraphe en morceaux empilés,
+    /// perdre la sélection continue, et casser l'interligne à chaque `$…$`.
+    ///
+    /// Les formules qui méritent une vraie composition sont de toute façon celles qu'on pose
+    /// seules, et celles-là ont leur bloc : `formula`, rendu par `MathFormula`. Le web n'a
+    /// pas cette contrainte, donc il compose aussi les formules en ligne. C'est la seule
+    /// différence de rendu assumée entre les deux plateformes.
     private static func font(for span: SheetMarkup.Span, style: SheetTextStyle) -> Font {
         if span.isMath {
             return .system(

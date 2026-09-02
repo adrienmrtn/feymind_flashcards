@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit && pnpm --filter @micabo/core typecheck",
-    "test": "pnpm --filter @micabo/core test && vitest run lib/import/docx.test.ts lib/import/youtube.test.ts lib/import/youtube-server.test.ts lib/onboarding/persist.test.ts lib/onboarding/steps.test.ts lib/open-courses.test.ts lib/auth/oauth.test.ts lib/auth/claims.test.ts lib/stripe/checkout.test.ts lib/discount.test.ts lib/feedback.test.ts lib/subscription-copy.test.ts lib/landing-source-images.test.ts lib/landing-sections.test.ts lib/tour/tour.test.ts",
+    "test": "pnpm --filter @micabo/core test && vitest run lib/import/docx.test.ts lib/import/youtube.test.ts lib/import/youtube-server.test.ts lib/onboarding/persist.test.ts lib/onboarding/steps.test.ts lib/open-courses.test.ts lib/auth/oauth.test.ts lib/auth/claims.test.ts lib/stripe/checkout.test.ts lib/discount.test.ts lib/feedback.test.ts lib/subscription-copy.test.ts lib/landing-source-images.test.ts lib/landing-sections.test.ts lib/math/typeset.test.ts lib/tour/tour.test.ts",
     "verify": "pnpm test && pnpm typecheck && pnpm build"
   },
   "dependencies": {
@@ -20,6 +20,7 @@
     "@supabase/supabase-js": "^2.112.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "katex": "^0.18.5",
     "lucide-react": "^1.34.0",
     "next": "^16.3.3",
     "pdfjs-dist": "^6.2.108",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
+    "@types/katex": "^0.16.8",
     "@types/node": "^26.3.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
