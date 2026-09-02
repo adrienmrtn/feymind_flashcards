@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 import { setUiLocale } from "@/lib/actions/locale";
 import { useI18n } from "@/lib/i18n/client";
@@ -18,15 +17,14 @@ export function LanguageSwitcher({
 }: {
   variant?: "compact" | "card";
 }) {
-  const { locale, t } = useI18n();
-  const router = useRouter();
+  const { locale, t, pick } = useI18n();
   const [pending, startTransition] = useTransition();
 
-  function pick(next: UiLocale) {
+  function choose(next: UiLocale) {
     if (next === locale || pending) return;
+    pick(next);
     startTransition(async () => {
       await setUiLocale(next);
-      router.refresh();
     });
   }
 
@@ -39,7 +37,7 @@ export function LanguageSwitcher({
             <button
               key={code}
               type="button"
-              onClick={() => pick(code)}
+              onClick={() => choose(code)}
               disabled={pending}
               aria-pressed={code === locale}
               className={`pressable min-h-11 rounded-button px-3 text-[14px] font-medium leading-tight ${
@@ -65,7 +63,7 @@ export function LanguageSwitcher({
       <select
         value={locale}
         disabled={pending}
-        onChange={(event) => pick(event.target.value as UiLocale)}
+        onChange={(event) => choose(event.target.value as UiLocale)}
         className="max-w-[7.5rem] truncate rounded-button bg-transparent py-1.5 pe-7 ps-2 text-[13px] font-medium text-ink-secondary outline-none sm:max-w-[11rem]"
         aria-label={t("locale.switcher")}
       >
