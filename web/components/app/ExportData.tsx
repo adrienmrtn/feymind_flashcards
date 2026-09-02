@@ -39,7 +39,8 @@ export function ExportData() {
     <section className="saas-card px-7 py-7">
       <p className="text-[15px] font-semibold text-ink">Télécharger mes données</p>
       <p className="mt-1.5 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-secondary">
-        Une copie de ton profil, tes cours, tes cartes, ton historique et tes examens.
+        Une copie de ton profil, tes cours, tes cartes, ton historique, tes examens et tes
+        retours.
         Le fichier n&apos;est pas gardé sur nos serveurs.
       </p>
       <button

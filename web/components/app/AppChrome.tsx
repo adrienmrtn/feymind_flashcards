@@ -7,6 +7,7 @@ import {
   BookOpen,
   CalendarDays,
   House,
+  Inbox,
   Layers,
   LogOut,
   Menu,
@@ -68,6 +69,7 @@ function sectionLabel(pathname: string): string {
   if (pathname.startsWith("/app/importer")) return "Importer";
   if (pathname.startsWith("/app/reviser")) return "Réviser";
   if (pathname.startsWith("/app/examens")) return "Examens";
+  if (pathname.startsWith("/app/retours")) return "Retours";
   if (pathname.startsWith("/app/amis") || pathname.startsWith("/app/u/")) return "Amis";
   if (pathname.startsWith("/app/profil")) return "Profil";
   if (pathname.startsWith("/app/reglages")) return "Réglages";
@@ -102,11 +104,13 @@ export function AppChrome({
   userName,
   userInitial,
   canImport = true,
+  canReadInbox = false,
 }: {
   children: React.ReactNode;
   userName: string;
   userInitial: string;
   canImport?: boolean;
+  canReadInbox?: boolean;
 }) {
   const [drawer, setDrawer] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -134,12 +138,18 @@ export function AppChrome({
       >
         Aller au contenu
       </a>
-      <Sidebar userName={userName} userInitial={userInitial} canImport={canImport} />
+      <Sidebar
+        userName={userName}
+        userInitial={userInitial}
+        canImport={canImport}
+        canReadInbox={canReadInbox}
+      />
       {drawer ? (
         <MobileDrawer
           userName={userName}
           userInitial={userInitial}
           canImport={canImport}
+          canReadInbox={canReadInbox}
           onClose={() => setDrawer(false)}
         />
       ) : null}
@@ -190,10 +200,12 @@ function Sidebar({
   userName,
   userInitial,
   canImport,
+  canReadInbox,
 }: {
   userName: string;
   userInitial: string;
   canImport: boolean;
+  canReadInbox: boolean;
 }) {
   return (
     <aside
@@ -204,7 +216,7 @@ function Sidebar({
       <Brand />
       <div className="mx-3 h-px bg-sidebar-border" />
       <div className="flex-1 overflow-y-auto">
-        <NavList />
+        <NavList canReadInbox={canReadInbox} />
         <OpenCourses />
       </div>
       <div className="space-y-3 border-t border-sidebar-border p-3">
@@ -219,11 +231,13 @@ function MobileDrawer({
   userName,
   userInitial,
   canImport,
+  canReadInbox,
   onClose,
 }: {
   userName: string;
   userInitial: string;
   canImport: boolean;
+  canReadInbox: boolean;
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -256,7 +270,7 @@ function MobileDrawer({
         </div>
         <div className="mx-3 h-px bg-sidebar-border" />
         <div className="flex-1 overflow-y-auto" onClick={onClose}>
-          <NavList />
+          <NavList canReadInbox={canReadInbox} />
           <OpenCourses />
         </div>
         <div className="space-y-3 border-t border-sidebar-border p-3">
@@ -286,7 +300,7 @@ function Brand() {
   );
 }
 
-function NavList() {
+function NavList({ canReadInbox }: { canReadInbox: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -322,6 +336,26 @@ function NavList() {
               </Link>
             );
           })}
+          {group.title === "Compte" && canReadInbox ? (
+            <Link
+              href={"/app/retours" as never}
+              aria-current={pathname.startsWith("/app/retours") ? "page" : undefined}
+              className={`group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors ${
+                pathname.startsWith("/app/retours")
+                  ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground"
+              }`}
+            >
+              <Inbox
+                className={`size-4 shrink-0 ${
+                  pathname.startsWith("/app/retours")
+                    ? "text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground"
+                }`}
+              />
+              <span className="truncate">Retours</span>
+            </Link>
+          ) : null}
         </div>
       ))}
     </nav>

@@ -1,17 +1,17 @@
 import SwiftUI
 
-/// Un bug ou une idée, envoyés à `team@micabo.app`.
-///
-/// Le bouton ouvre le courriel déjà adressé. On n'héberge pas de boîte.
+/// Un bug ou une idée, écrits en base. Plus de boîte mail à ouvrir.
 struct FeedbackView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
+    @Environment(AuthController.self) private var auth
 
     @State private var kind: MicaboMail.Kind = .bug
     @State private var message = ""
+    @State private var sending = false
+    @State private var notice: String?
 
     private var ready: Bool {
-        !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !sending
     }
 
     var body: some View {
@@ -59,9 +59,9 @@ struct FeedbackView: View {
                 .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             }
 
-            Text("Ça arrive chez \(MicaboMail.team).")
+            Text(notice ?? "Ça s'écrit ici, sans ouvrir ta boîte mail.")
                 .font(MicaboFont.micro)
-                .foregroundStyle(MicaboColor.inkTertiary)
+                .foregroundStyle(notice == nil ? MicaboColor.inkTertiary : MicaboColor.inkSecondary)
 
             Spacer(minLength: 0)
         }
@@ -72,8 +72,44 @@ struct FeedbackView: View {
     }
 
     private func send() {
-        guard ready, let url = MicaboMail.composeURL(kind: kind, message: message) else { return }
-        openURL(url)
-        dismiss()
+        let cleaned = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty, let userId = auth.user?.id else { return }
+        guard cleaned.count <= 4000 else {
+            notice = "Un peu trop long."
+            return
+        }
+        sending = true
+        notice = nil
+        Task {
+            do {
+                let database = SupabaseDatabase(accessToken: { await auth.validAccessToken() })
+                try await database.insert(
+                    [FeedbackDraft(user_id: userId, kind: kind.rawValue, message: cleaned, source: "ios")],
+                    into: "feedback"
+                )
+                await MainActor.run { dismiss() }
+            } catch {
+                await MainActor.run {
+                    sending = false
+                    notice = Self.notice(for: error)
+                }
+            }
+        }
     }
+
+    private static func notice(for error: Error) -> String {
+        if let failure = error as? SupabaseDatabase.Failure,
+           case .server(_, let message, let code) = failure,
+           code == "42501" || message.localizedCaseInsensitiveContains("row-level security") {
+            return "Trop de retours aujourd'hui. Réessaie demain."
+        }
+        return "Ça n'est pas passé. Réessaie dans un instant."
+    }
+}
+
+private struct FeedbackDraft: Encodable {
+    let user_id: UUID
+    let kind: String
+    let message: String
+    let source: String
 }

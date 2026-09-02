@@ -5,6 +5,7 @@ import {
   isSheetLength,
   sheetLanguage,
 } from "@micabo/core";
+import Link from "next/link";
 
 import { DeleteAccount } from "@/components/app/DeleteAccount";
 import { ExportData } from "@/components/app/ExportData";
@@ -19,6 +20,7 @@ import { SubscriptionCard } from "@/components/app/SubscriptionCard";
 import { readEntitlement } from "@/lib/data/entitlement";
 import { readProfile } from "@/lib/data/profile";
 import { currentUser } from "@/lib/data/user";
+import { canReadInbox } from "@/lib/feedback";
 
 /**
  * Les réglages, **à part du profil**.
@@ -80,6 +82,14 @@ export default async function SettingsPage() {
         </section>
 
         <FeedbackCard />
+
+        {canReadInbox(user?.email) ? (
+          <p className="px-1 text-[13.5px]">
+            <Link href={"/app/retours" as never} className="underline-draw font-medium text-ink">
+              Lire les retours
+            </Link>
+          </p>
+        ) : null}
 
         <section className="saas-card overflow-hidden">
           <SignOutButton />

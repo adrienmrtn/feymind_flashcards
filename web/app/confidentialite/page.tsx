@@ -88,6 +88,12 @@ export default function PrivacyPage() {
           pas liée à un compte et n&apos;est pas visible via l&apos;application.
         </p>
         <p>
+          <strong className="font-semibold text-ink">Les retours.</strong> Si vous
+          envoyez un bug ou une idée depuis l&apos;app, nous gardons le message, le type
+          (bug ou idée), et le lien avec votre compte, pour y répondre. Ils restent
+          24 mois, puis sont effacés. Ils ne servent pas à vous profiler.
+        </p>
+        <p>
           <strong className="font-semibold text-ink">L&apos;usage des générations.</strong>{" "}
           Un compteur par jour et par fonction (fiche, cartes, explication), sans le
           contenu du cours. Il sert à limiter les abus, pas à vous profiler.
@@ -121,7 +127,8 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong className="font-semibold text-ink">L&apos;intérêt légitime</strong> —
-            sécuriser le service, empêcher les abus, diagnostiquer une panne. Cet
+            sécuriser le service, empêcher les abus, diagnostiquer une panne, et
+            lire les retours que vous nous envoyez. Cet
             intérêt ne passe pas avant le vôtre : le cloisonnement est dans la base, pas
             seulement dans l&apos;application.
           </li>
@@ -142,7 +149,10 @@ export default function PrivacyPage() {
         <p>
           Vos cours ne sont lisibles que par vous, sauf si vous les avez partagés. Chaque
           requête à la base est évaluée avec votre identité : il n&apos;existe pas de
-          requête qui puisse demander les cours de quelqu&apos;un d&apos;autre.
+          requête qui puisse demander les cours de quelqu&apos;un d&apos;autre. Les
+          retours que vous envoyez sont lus par l&apos;équipe, à l&apos;adresse{" "}
+          {LEGAL_CONTACT}. Personne d&apos;autre n&apos;y a accès depuis
+          l&apos;application.
         </p>
         <p>Des prestataires voient une partie des données, uniquement pour fournir le service :</p>
         <ul className="list-disc space-y-2 pl-5">
@@ -204,10 +214,11 @@ export default function PrivacyPage() {
 
       <LegalSection title="Combien de temps nous les gardons">
         <p>
-          Tant que le compte existe. Si vous le supprimez, depuis Réglages sur le site
+          Tant que le compte existe. Les retours partent au plus tard au bout de
+          24 mois. Si vous le supprimez, depuis Réglages sur le site
           ou dans l&apos;app iPhone, ou en nous écrivant, nous effaçons le profil, les
           cours (y compris le texte extrait), les fiches, les cartes, l&apos;historique,
-          les examens, les amitiés, les compteurs d&apos;usage et l&apos;adresse éventuellement
+          les examens, les amitiés, les compteurs d&apos;usage, les retours et l&apos;adresse éventuellement
           laissée sur la liste d&apos;attente.
         </p>
         <p>
