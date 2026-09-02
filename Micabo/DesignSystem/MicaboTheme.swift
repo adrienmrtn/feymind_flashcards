@@ -199,12 +199,12 @@ enum MicaboLayout {
     /// huit points — pas les douze du flottement d'avant.
     static let tabBarGap: CGFloat = 8
 
-    /// **Tout ce que la barre d'onglets occupe**, hors zone sûre, mesuré depuis
-    /// le bas de l'écran : languette du cadeau, overlays posés sur la racine.
+    /// **Tout ce que la barre d'onglets occupe**, hors zone sûre : c'est la hauteur
+    /// qu'une page racine doit se réserver, et celle dont un overlay de la racine
+    /// doit s'écarter.
     ///
-    /// Les pages d'onglet ne s'en servent plus. L'inset de la racine raccourcit
-    /// déjà le `TabView` de `tabBarHeight` ; `tabBarClearance` ne laisse que
-    /// `tabBarGap` entre un bouton de page et la barre.
+    /// La somme suit exactement ce que `MicaboTabBar` dessine : la rangée d'onglets,
+    /// et l'air au-dessus pour les boutons de page.
     static var tabBarSpace: CGFloat { tabBarGap + tabBarHeight }
 }
 

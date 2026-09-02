@@ -185,6 +185,10 @@ struct TodayView: View {
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, MicaboSpacing.md)
+                // Un `ScrollView` vertical défile quand même en travers dès que son
+                // contenu dépasse en largeur. Borner la pile à la largeur proposée est
+                // ce qui l'en empêche.
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
