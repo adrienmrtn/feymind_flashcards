@@ -15,6 +15,7 @@ import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
 import { ReplayPaywallOnboarding } from "@/components/app/ReplayPaywallOnboarding";
 import { ReplayTour } from "@/components/app/ReplayTour";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { T } from "@/components/i18n/T";
 import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
 import { SignOutButton } from "@/components/app/SignOutButton";
 import { SubscriptionCard } from "@/components/app/SubscriptionCard";
@@ -22,7 +23,6 @@ import { readEntitlement } from "@/lib/data/entitlement";
 import { readProfile } from "@/lib/data/profile";
 import { currentUser } from "@/lib/data/user";
 import { canReadInbox } from "@/lib/feedback";
-import { getTranslator } from "@/lib/i18n/server";
 
 /**
  * Les réglages, **à part du profil**.
@@ -33,11 +33,10 @@ import { getTranslator } from "@/lib/i18n/server";
  * plus se cacher sous le rythme quotidien.
  */
 export default async function SettingsPage() {
-  const [user, profile, right, { t }] = await Promise.all([
+  const [user, profile, right] = await Promise.all([
     currentUser(),
     readProfile(),
     readEntitlement(),
-    getTranslator(),
   ]);
 
   const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
@@ -46,8 +45,12 @@ export default async function SettingsPage() {
   return (
     <div className="mx-auto max-w-[560px]">
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">{t("settings.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("settings.lead")}</p>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          <T k="settings.title" />
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          <T k="settings.lead" />
+        </p>
       </header>
 
       <div className="mt-5 space-y-4">
@@ -62,7 +65,6 @@ export default async function SettingsPage() {
 
         <div data-tour="reglages-toi">
           <ProfileSettings
-            heading={t("settings.you")}
             initialName={profile?.display_name ?? ""}
             initialUsername={handle}
             initialMinutes={minutes}
