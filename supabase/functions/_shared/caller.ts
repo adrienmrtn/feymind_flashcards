@@ -39,8 +39,16 @@ export const ANON_GRACE_UNTIL = "2026-12-01";
 /** Plafond d'appels au modèle, par utilisateur, par jour et par fonction. */
 export const DAILY_CEILING = 20;
 
-/** Même compteur, pour un abonné : assez haut pour travailler, assez bas pour une boucle. */
-export const PRO_DAILY_CEILING = 200;
+/**
+ * Même compteur, pour un abonné. Assez haut pour qu'un usage humain ne le
+ * voie jamais, assez bas pour qu'une boucle ne vide pas le compte. Ce n'est
+ * **pas** un palier commercial : le nombre ne s'écrit nulle part à l'écran.
+ */
+export const PRO_DAILY_CEILING = 2_000;
+
+/** Refus sans chiffre : le plafond n'est pas un argument de vente. */
+export const QUOTA_EXHAUSTED_MESSAGE =
+  "Trop de générations aujourd'hui. Réessaie demain.";
 
 export class CallerError extends Error {
   readonly status: number;
@@ -137,8 +145,6 @@ export async function consumeQuota(
   if (!url || !serviceKey) return;
 
   let allowed = true;
-  let used = 0;
-  let ceiling = DAILY_CEILING;
 
   try {
     const response = await fetch(`${url}/rest/v1/rpc/consume_ai_quota`, {
@@ -160,29 +166,20 @@ export async function consumeQuota(
       throw new CallerError("Le quota est temporairement indisponible.", 503);
     }
 
-    const rows = (await response.json()) as {
-      allowed: boolean;
-      used: number;
-      ceiling?: number;
-    }[];
+    const rows = (await response.json()) as { allowed: boolean }[];
     const row = Array.isArray(rows) ? rows[0] : undefined;
     if (!row) {
       throw new CallerError("Le quota est temporairement indisponible.", 503);
     }
 
     allowed = row.allowed;
-    used = row.used;
-    if (typeof row.ceiling === "number") ceiling = row.ceiling;
   } catch (error) {
     if (error instanceof CallerError) throw error;
     throw new CallerError("Le quota est temporairement indisponible.", 503);
   }
 
   if (!allowed) {
-    throw new CallerError(
-      `Tu as atteint la limite de ${ceiling} générations pour aujourd'hui (${used} utilisées). Reviens demain.`,
-      429,
-    );
+    throw new CallerError(QUOTA_EXHAUSTED_MESSAGE, 429);
   }
 }
 
