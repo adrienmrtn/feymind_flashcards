@@ -362,7 +362,7 @@ struct FlashcardsView: View {
 
     private func addReverseCards() {
         withAnimation {
-            try? CourseRepository.addReverseCards(for: course, in: modelContext)
+            _ = try? CourseRepository.addReverseCards(for: course, in: modelContext)
         }
         Haptics.success()
     }
@@ -381,14 +381,14 @@ struct FlashcardsView: View {
 
     private func delete(_ card: Flashcard) {
         withAnimation {
-            try? CourseRepository.delete(card, in: modelContext)
+            _ = try? CourseRepository.delete(card, in: modelContext)
         }
     }
 
     private func resetProgress() {
         withAnimation {
             course.cards.forEach { $0.resetScheduling() }
-            try? modelContext.save()
+            _ = try? modelContext.save()
         }
     }
 

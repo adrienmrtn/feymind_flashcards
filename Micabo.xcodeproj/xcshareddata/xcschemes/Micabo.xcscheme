@@ -61,7 +61,7 @@
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
-         identifier = "../../../Micabo/Resources/Micabo.storekit">
+         identifier = "../Micabo/Resources/Micabo.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction

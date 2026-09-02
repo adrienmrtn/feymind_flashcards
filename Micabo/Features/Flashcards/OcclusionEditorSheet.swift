@@ -274,7 +274,7 @@ struct OcclusionEditorSheet: View {
         let named = zones.filter { !$0.label.trimmingCharacters(in: .whitespaces).isEmpty }
         guard !named.isEmpty else { return }
 
-        try? CourseRepository.addOcclusionCards(named, image: imageData, to: course, in: modelContext)
+        _ = try? CourseRepository.addOcclusionCards(named, image: imageData, to: course, in: modelContext)
         Haptics.success()
         dismiss()
     }
