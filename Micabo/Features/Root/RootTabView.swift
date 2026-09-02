@@ -51,13 +51,13 @@ struct RootTabView: View {
             // chaque onglet : sur le `TabView` seul, iOS 18 réserve encore sa hauteur.
             .toolbar(.hidden, for: .tabBar)
         }
-        // La barre du bas est posée à l'extérieur des pages : l'inset raccourcit le
-        // `TabView`, elles ne passent pas dessous, elle ne bouge pas d'un pixel. Elle
-        // s'efface dès qu'un écran de détail est poussé.
+        // La barre du bas est posée à l'extérieur des pages : elles passent dessous, elle
+        // ne bouge pas d'un pixel. Elle s'efface dès qu'un écran de détail est poussé.
         //
-        // Les boutons de page (`+`, session, examen) se posent *dans* les pages, par
-        // `tabBarClearance` : seulement l'air au-dessus de la barre. Sa hauteur, le
-        // `TabView` l'a déjà perdue.
+        // Cet inset la **place**, il ne réserve rien : chaque page est un `NavigationStack`,
+        // et un `safeAreaInset` ne franchit pas cette frontière. La place est réservée page
+        // par page, par `tabBarClearance`, qui est aussi ce qui pose leurs boutons du bas
+        // au-dessus de la barre au lieu de dessous.
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if router.isAtRoot {
                 MicaboTabBar()
