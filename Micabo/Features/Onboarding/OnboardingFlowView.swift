@@ -94,14 +94,21 @@ private struct OnboardingProgressBar: View {
 
     private var surface: OnboardingSurface { step.surface }
 
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
     var body: some View {
-        MicaboProgressBar(progress: step.progress, tint: surface.progressTint, track: surface.progressTrack)
-            .frame(height: 4)
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.xs)
-            .padding(.bottom, MicaboSpacing.xs)
-            .animation(.easeInOut(duration: 0.38), value: step)
-            .accessibilityLabel("Progression du parcours")
-            .accessibilityValue("\(Int(step.progress * 100)) %")
+        HStack(spacing: MicaboSpacing.sm) {
+            MicaboProgressBar(progress: step.progress, tint: surface.progressTint, track: surface.progressTrack)
+                .frame(height: 4)
+            LanguageSwitcher()
+                .layoutPriority(1)
+        }
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.top, MicaboSpacing.xs)
+        .padding(.bottom, MicaboSpacing.xs)
+        .animation(.easeInOut(duration: 0.38), value: step)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(i18n?.t("ios.progress") ?? "Progression du parcours")
+        .accessibilityValue("\(Int(step.progress * 100)) %")
     }
 }

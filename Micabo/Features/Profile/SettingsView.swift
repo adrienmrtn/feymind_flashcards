@@ -8,6 +8,7 @@ import UIKit
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var supabaseURL = AppConfig.supabaseURL
     @State private var anonKey = AppConfig.supabaseAnonKey
@@ -50,6 +51,7 @@ struct SettingsView: View {
                 accountSection
                 identitySection
                 studiesSection
+                languageSection
                 reviewSection
                 #if DEBUG
                 intelligenceSection
@@ -68,33 +70,33 @@ struct SettingsView: View {
         .scrollDismissesKeyboard(.interactively)
         .micaboScreenBackground()
         .confirmationDialog(
-            "Supprimer le compte ?",
+            i18n?.t("ios.deleteAccountQ") ?? "Supprimer le compte ?",
             isPresented: $showDeleteAccountConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Supprimer le compte", role: .destructive) {
+            Button(i18n?.t("ios.deleteAccount") ?? "Supprimer le compte", role: .destructive) {
                 Task { await auth.deleteAccount() }
             }
-            Button("Annuler", role: .cancel) {}
+            Button(i18n?.t("ios.cancel") ?? "Annuler", role: .cancel) {}
         } message: {
-            Text("Tes cours, tes cartes et ton historique seront effacés. L'abonnement déjà encaissé se gère chez Apple ou Stripe.")
+            Text(i18n?.t("ios.deleteAccountMsg") ?? "Tes cours, tes cartes et ton historique seront effacés. L'abonnement déjà encaissé se gère chez Apple ou Stripe.")
         }
         .confirmationDialog(
-            "Effacer toutes les données ?",
+            i18n?.t("ios.eraseAllQ") ?? "Effacer toutes les données ?",
             isPresented: $showResetConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Tout effacer", role: .destructive, action: eraseEverything)
-            Button("Annuler", role: .cancel) {}
+            Button(i18n?.t("ios.eraseAll") ?? "Tout effacer", role: .destructive, action: eraseEverything)
+            Button(i18n?.t("ios.cancel") ?? "Annuler", role: .cancel) {}
         } message: {
-            Text("Tes cours, tes cartes et ton historique de révision seront supprimés.")
+            Text(i18n?.t("ios.eraseAllMsg") ?? "Tes cours, tes cartes et ton historique de révision seront supprimés.")
         }
         .confirmationDialog(
-            "Se déconnecter ?",
+            i18n?.t("ios.signOutQ") ?? "Se déconnecter ?",
             isPresented: $showSignOutConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Se déconnecter", role: .destructive) {
+            Button(i18n?.t("common.signOut") ?? "Se déconnecter", role: .destructive) {
                 Task {
                     // On remonte une dernière fois avant de partir : une révision faite dans
                     // la minute qui précède ne doit pas être le prix d'une déconnexion.
@@ -103,9 +105,9 @@ struct SettingsView: View {
                     sync.forget()
                 }
             }
-            Button("Annuler", role: .cancel) {}
+            Button(i18n?.t("ios.cancel") ?? "Annuler", role: .cancel) {}
         } message: {
-            Text("Tes cours restent sur cet appareil et sur ton compte. Tu les retrouveras à la prochaine connexion.")
+            Text(i18n?.t("ios.signOutMsg") ?? "Tes cours restent sur cet appareil et sur ton compte. Tu les retrouveras à la prochaine connexion.")
         }
         .sheet(isPresented: $showFeedback) {
             FeedbackView()
@@ -127,8 +129,8 @@ struct SettingsView: View {
     // MARK: - Sections
 
     private var header: some View {
-        MicaboScreenHeader(title: "Réglages", back: MicaboHeaderBack.back(saveAndClose)) {
-            Button("Terminé", action: saveAndClose)
+        MicaboScreenHeader(title: i18n?.t("settings.title") ?? "Réglages", back: MicaboHeaderBack.back(saveAndClose)) {
+            Button(i18n?.t("ios.done") ?? "Terminé", action: saveAndClose)
                 .font(MicaboFont.hanken(15, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
                 .buttonStyle(MicaboPressableButtonStyle())
@@ -144,14 +146,14 @@ struct SettingsView: View {
     @ViewBuilder
     private var accountSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Compte")
+            MicaboSectionCaption(text: i18n?.t("ios.account") ?? "Compte")
 
             VStack(spacing: 0) {
                 if let user = auth.user {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("👤"), background: MicaboColor.accentSoft),
                         title: user.label,
-                        subtitle: user.email ?? "Connecté",
+                        subtitle: user.email ?? i18n?.t("ios.connected") ?? "Connecté",
                         accessory: .none
                     )
 
@@ -159,7 +161,7 @@ struct SettingsView: View {
 
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("☁️"), background: MicaboColor.tilePastels[3]),
-                        title: "Sauvegarde",
+                        title: i18n?.t("ios.backup") ?? "Sauvegarde",
                         subtitle: syncSubtitle,
                         accessory: .none,
                         action: { Task { await sync.sync(context: modelContext) } }
@@ -169,7 +171,7 @@ struct SettingsView: View {
 
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("🚪"), background: MicaboColor.surfaceMuted),
-                        title: "Se déconnecter",
+                        title: i18n?.t("common.signOut") ?? "Se déconnecter",
                         accessory: .none,
                         titleColor: MicaboColor.negative,
                         action: { showSignOutConfirmation = true }
@@ -177,8 +179,8 @@ struct SettingsView: View {
                 } else {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("☁️"), background: MicaboColor.tilePastels[3]),
-                        title: "Créer un compte ou se connecter",
-                        subtitle: "Retrouver tes cours sur tes autres appareils",
+                        title: i18n?.t("ios.createOrSignIn") ?? "Créer un compte ou se connecter",
+                        subtitle: i18n?.t("ios.createOrSignInHelp") ?? "Retrouver tes cours sur tes autres appareils",
                         accessory: .chevron,
                         action: { showAuth = true }
                     )
@@ -190,9 +192,11 @@ struct SettingsView: View {
 
     private var syncSubtitle: String {
         switch sync.state {
-        case .idle: "Toucher pour synchroniser"
-        case .syncing: "Synchronisation…"
-        case .done(let date): "À jour · " + Self.timeFormatter.string(from: date)
+        case .idle: i18n?.t("ios.tapToSync") ?? "Toucher pour synchroniser"
+        case .syncing: i18n?.t("ios.syncing") ?? "Synchronisation…"
+        case .done(let date):
+            i18n?.t("ios.upToDate", ["time": Self.timeFormatter.string(from: date)])
+                ?? "À jour · \(Self.timeFormatter.string(from: date))"
         case .failed(let message): message
         }
     }
@@ -306,41 +310,41 @@ struct SettingsView: View {
     /// trente secondes le premier jour ne doit pas se payer pendant deux ans.
     private var studiesSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Tes études")
+            MicaboSectionCaption(text: i18n?.t("ios.yourStudies") ?? "Tes études")
 
             VStack(spacing: 0) {
                 // Le pays passe avant le stade, comme dans le parcours d'accueil : c'est lui
                 // qui décide des paliers proposés juste en dessous.
                 Menu {
-                    Picker("Pays", selection: $country) {
+                    Picker(i18n?.t("ios.country") ?? "Pays", selection: $country) {
                         ForEach(SchoolingCountry.allCases) { value in
-                            Text("\(value.flag) \(value.name)").tag(value)
+                            Text("\(value.flag) \(value.localizedName(locale: i18n?.locale ?? .resolved()))").tag(value)
                         }
                     }
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji(country.flag), background: MicaboColor.tilePastels[2]),
-                        title: "Pays",
-                        subtitle: "Micabo écrit en \(country.language.label)",
-                        accessory: .value(country.name)
+                        title: i18n?.t("ios.country") ?? "Pays",
+                        subtitle: i18n?.t("ios.writesIn", ["language": country.language.label]) ?? "Micabo écrit en \(country.language.label)",
+                        accessory: .value(country.localizedName(locale: i18n?.locale ?? .resolved()))
                     )
                 }
 
                 MicaboHairline(inset: 71)
 
                 Menu {
-                    Picker("Stade d'étude", selection: $stage) {
+                    Picker(i18n?.t("ios.stage") ?? "Stade d'étude", selection: $stage) {
                         ForEach(country.stages) { value in
                             Text("\(value.emoji) \(value.title)").tag(Optional(value))
                         }
-                        Text("Non précisé").tag(Optional<EducationStage>.none)
+                        Text(i18n?.t("ios.unspecified") ?? "Non précisé").tag(Optional<EducationStage>.none)
                     }
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji(stage?.emoji ?? "🎓"), background: MicaboColor.tilePastels[0]),
-                        title: "Stade d'étude",
-                        subtitle: stage?.level.detail ?? "Rédaction équilibrée, sans niveau supposé.",
-                        accessory: .value(stage?.title ?? "Non précisé")
+                        title: i18n?.t("ios.stage") ?? "Stade d'étude",
+                        subtitle: stage?.level.detail ?? i18n?.t("ios.balancedCopy") ?? "Rédaction équilibrée, sans niveau supposé.",
+                        accessory: .value(stage?.title ?? i18n?.t("ios.unspecified") ?? "Non précisé")
                     )
                 }
 
@@ -348,7 +352,7 @@ struct SettingsView: View {
 
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("📚"), background: MicaboColor.tilePastels[4]),
-                    title: "Matières",
+                    title: i18n?.t("ios.subjects") ?? "Matières",
                     subtitle: subjectsSubtitle,
                     accessory: .chevron,
                     action: { showSubjects = true }
@@ -358,8 +362,8 @@ struct SettingsView: View {
 
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("🏫"), background: MicaboColor.tilePastels[5]),
-                    title: "École",
-                    subtitle: schoolName?.nilIfBlank ?? "Non renseignée",
+                    title: i18n?.t("ios.school") ?? "École",
+                    subtitle: schoolName?.nilIfBlank ?? i18n?.t("ios.schoolEmpty") ?? "Non renseignée",
                     accessory: .chevron,
                     action: { showSchool = true }
                 )
@@ -375,7 +379,7 @@ struct SettingsView: View {
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("📄"), background: MicaboColor.tilePastels[3]),
-                        title: "Longueur des fiches",
+                        title: i18n?.t("ios.sheetLength") ?? "Longueur des fiches",
                         subtitle: readingHint(for: sheetLength) + " de lecture",
                         accessory: .value(sheetLength.title)
                     )
@@ -419,24 +423,30 @@ struct SettingsView: View {
     }
 
     private var subjectsSubtitle: String {
-        if subjects.isEmpty { return "Aucune matière" }
-        if subjects.count <= 3 { return subjects.joined(separator: ", ") }
-        return "\(subjects.prefix(3).joined(separator: ", ")) +\(subjects.count - 3)"
+        if subjects.isEmpty { return i18n?.t("ios.noSubjects") ?? "Aucune matière" }
+        let locale = i18n?.locale ?? .resolved()
+        let shown = subjects.map { SubjectDisplay.subject($0, locale: locale) }
+        if shown.count <= 3 { return shown.joined(separator: ", ") }
+        return "\(shown.prefix(3).joined(separator: ", ")) +\(shown.count - 3)"
     }
 
     private func readingHint(for length: SheetLength) -> String {
         SheetPreferences.readingHint(forBlocks: length.defaultBlocks)
     }
 
+    private var languageSection: some View {
+        LanguageSwitcher(variant: .card)
+    }
+
     /// Le rythme quotidien commande le plafond de cartes neuves : les deux rangées se
     /// lisent ensemble, et la seconde n'est qu'une conséquence de la première.
     private var reviewSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Révision")
+            MicaboSectionCaption(text: i18n?.t("ios.reviewSection") ?? "Révision")
 
             VStack(spacing: 0) {
                 Menu {
-                    Picker("Objectif quotidien", selection: $dailyMinutes) {
+                    Picker(i18n?.t("ios.dailyGoal") ?? "Objectif quotidien", selection: $dailyMinutes) {
                         ForEach(DailyLoad.steps, id: \.self) { minutes in
                             Text(DailyLoad.label(forMinutes: minutes)).tag(minutes)
                         }
@@ -444,7 +454,7 @@ struct SettingsView: View {
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("⏱️"), background: MicaboColor.tilePastels[1]),
-                        title: "Objectif quotidien",
+                        title: i18n?.t("ios.dailyGoal") ?? "Objectif quotidien",
                         accessory: .value(DailyLoad.label(forMinutes: dailyMinutes))
                     )
                 }
@@ -453,8 +463,8 @@ struct SettingsView: View {
 
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("🆕"), background: MicaboColor.accentSoft),
-                    title: "Nouvelles cartes / jour",
-                    accessory: .value("\(DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes)) max")
+                    title: i18n?.t("ios.newCards") ?? "Nouvelles cartes / jour",
+                    accessory: .value(i18n?.t("ios.newCardsMax", ["n": "\(DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes))"]) ?? "\(DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes)) max")
                 )
             }
             .micaboGroup()

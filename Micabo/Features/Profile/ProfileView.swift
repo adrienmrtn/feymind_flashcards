@@ -22,6 +22,7 @@ import SwiftUI
 /// à dire qui l'on est, et il se lit mieux sur une ligne que dans un rond.
 struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(AuthController.self) private var auth
     @Environment(SocialService.self) private var social
     @Environment(TabRouter.self) private var router: TabRouter?
@@ -162,14 +163,14 @@ struct ProfileView: View {
     /// tuile pastel de la rangée : une roue crantée grise en glyphe système était le seul
     /// endroit de l'app où une icône n'avait pas sa pastille.
     private var header: some View {
-        MicaboScreenHeader(title: "Profil") {
+        MicaboScreenHeader(title: i18n?.t("nav.profile") ?? "Profil") {
             Button {
                 showSettings = true
             } label: {
                 MicaboTile(glyph: .emoji("⚙️"), background: MicaboColor.tilePastels[0], size: 44)
             }
             .buttonStyle(MicaboPressableButtonStyle())
-            .accessibilityLabel("Réglages")
+            .accessibilityLabel(i18n?.t("nav.settings") ?? "Réglages")
         }
         .padding(.top, MicaboSpacing.xs)
     }

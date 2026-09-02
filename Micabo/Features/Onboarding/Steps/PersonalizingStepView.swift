@@ -25,6 +25,7 @@ import SwiftUI
 /// derrière du texte blanc fatigue, et c'est précisément l'écran où l'on demande de patienter.
 struct PersonalizingStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private let surface = OnboardingStep.personalizing.surface
 
@@ -34,28 +35,17 @@ struct PersonalizingStepView: View {
         let step: String
     }
 
-    private let phases: [Phase] = [
-        Phase(
-            headline: "On lit tes réponses.",
-            detail: "Ton objectif, tes matières, ton rythme : tout est déjà là.",
-            step: "Lecture de tes réponses"
-        ),
-        Phase(
-            headline: "On calibre tes intervalles.",
-            detail: "Les rappels s'ajustent au temps que tu t'accordes chaque jour.",
-            step: "Calibrage de la répétition"
-        ),
-        Phase(
-            headline: "On trace ton parcours.",
-            detail: "Matière par matière, du premier jour jusqu'à tes examens.",
-            step: "Tracé de ton parcours"
-        ),
-        Phase(
-            headline: "On prépare ta première session.",
-            detail: "Elle t'attendra dès l'ouverture de l'app.",
-            step: "Préparation de ta session"
-        )
-    ]
+    private var phases: [Phase] {
+        func t(_ key: String) -> String {
+            i18n?.t(key) ?? L10n.t(key, locale: .resolved())
+        }
+        return [
+            Phase(headline: t("onboarding.parcoursWorking1"), detail: "", step: t("onboarding.parcoursStep1")),
+            Phase(headline: t("onboarding.parcoursWorking2"), detail: "", step: t("onboarding.parcoursStep2")),
+            Phase(headline: t("onboarding.parcoursWorking3"), detail: "", step: t("onboarding.parcoursStep3")),
+            Phase(headline: t("onboarding.parcoursWorking4"), detail: "", step: t("onboarding.parcoursStep4")),
+        ]
+    }
 
     /// Durée du chargement, en secondes. Un plancher, et il est verrouillé par un test :
     /// un écran de génération qui passe en une seconde n'a rien généré aux yeux de
@@ -101,13 +91,13 @@ struct PersonalizingStepView: View {
 
             MicaboBottomBar(background: surface.background) {
                 OnboardingContinueButton(
-                    title: "Découvrir mon parcours",
+                    title: i18n?.t("ios.discoverPath") ?? "Découvrir mon parcours",
                     // Éteint pendant le travail, et pas seulement inerte : un bouton à
                     // l'encre pleine qui avale les appuis pendant cinq secondes se lit
                     // comme un bouton cassé.
                     isEnabled: isDone,
                     isLoading: !isDone,
-                    loadingTitle: "Micabo travaille…",
+                    loadingTitle: i18n?.t("onboarding.parcoursBusyBtn") ?? "Micabo travaille…",
                     isShiny: isDone
                 ) {
                     model.advance()
@@ -127,12 +117,12 @@ struct PersonalizingStepView: View {
     /// nombre de lignes, et un titre qui se recompose à chaque phase fait sauter l'anneau.
     private var headline: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("PERSONNALISATION")
+            Text((i18n?.t("ios.personalization") ?? "Personnalisation").uppercased())
                 .font(MicaboFont.eyebrow)
                 .tracking(MicaboTracking.caps)
                 .foregroundStyle(surface.eyebrow)
 
-            Text(isDone ? "Ton parcours est prêt." : current.headline)
+            Text(isDone ? (i18n?.t("onboarding.parcoursDone") ?? "Ton parcours est prêt.") : current.headline)
                 .font(MicaboFont.hanken(30, weight: .bold))
                 .foregroundStyle(surface.title)
                 .tracking(-0.7)
@@ -140,7 +130,7 @@ struct PersonalizingStepView: View {
                 .contentTransition(.opacity)
                 .animation(.easeOut(duration: 0.28), value: current.headline)
 
-            Text(isDone ? "Quand tu veux." : current.detail)
+            Text(isDone ? (i18n?.t("ios.whenYouWant") ?? "Quand tu veux.") : current.detail)
                 .font(MicaboFont.hanken(15, weight: .regular))
                 .foregroundStyle(surface.prose)
                 .lineSpacing(3)
@@ -178,7 +168,7 @@ struct PersonalizingStepView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
 
-                Text(isDone ? "Terminé" : "Micabo travaille")
+                Text(isDone ? (i18n?.t("onboarding.parcoursFinished") ?? "Terminé") : (i18n?.t("onboarding.parcoursBusy") ?? "Micabo travaille"))
                     .font(MicaboFont.hanken(12, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .lineLimit(1)
@@ -188,7 +178,7 @@ struct PersonalizingStepView: View {
         .aspectRatio(1, contentMode: .fit)
         .frame(maxWidth: 184, maxHeight: 184)
         .accessibilityElement()
-        .accessibilityLabel("Génération de ton parcours")
+        .accessibilityLabel(i18n?.t("ios.generatingPath") ?? "Génération de ton parcours")
         .accessibilityValue("\(Int(progress * 100)) %")
     }
 

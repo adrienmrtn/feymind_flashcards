@@ -11,10 +11,11 @@ import SwiftUI
 /// les fiches, et on ne la devine pas à la place de l'étudiant.
 struct LevelStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
         OnboardingScaffold(
-            title: "Tu en es où ?",
+            title: i18n?.t("ios.levelTitle") ?? "Tu en es où ?",
             titleSize: 32,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,

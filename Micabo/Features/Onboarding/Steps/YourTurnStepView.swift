@@ -14,6 +14,7 @@ import SwiftUI
 /// main sur une phrase de seize mots, c'est cadrer pour un seul modèle de téléphone.
 struct YourTurnStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private let surface = OnboardingStep.yourTurn.surface
 
@@ -24,7 +25,7 @@ struct YourTurnStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             OnboardingWordByWordTitle(
-                text: "C'est maintenant à ton tour de découvrir la méthode d'apprentissage que tous les meilleurs élèves utilisent.",
+                text: i18n?.t("ios.yourTurn") ?? "C'est maintenant à ton tour de découvrir la méthode d'apprentissage que tous les meilleurs élèves utilisent.",
                 size: 28,
                 wordDelay: 0.1
             ) {
@@ -37,7 +38,7 @@ struct YourTurnStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             MicaboBottomBar(background: surface.background) {
-                OnboardingContinueButton(title: "Je m'y mets") {
+                OnboardingContinueButton(title: i18n?.t("ios.letsWork") ?? "Je m'y mets") {
                     model.advance()
                 }
                 .opacity(isTitleWritten ? 1 : 0)

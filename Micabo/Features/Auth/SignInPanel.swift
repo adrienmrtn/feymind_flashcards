@@ -9,11 +9,15 @@ enum SignInProvider: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    func title(t: (String) -> String) -> String {
         switch self {
-        case .apple: "Continuer avec Apple"
-        case .google: "Continuer avec Google"
+        case .apple: t("onboarding.continueApple")
+        case .google: t("onboarding.continueGoogle")
         }
+    }
+
+    var title: String {
+        title(t: { L10n.t($0, locale: .resolved()) })
     }
 }
 
@@ -23,6 +27,7 @@ enum SignInProvider: String, CaseIterable, Identifiable {
 /// sans message.
 struct SignInFailureNote: View {
     @Environment(AuthController.self) private var auth
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
         if let message = auth.message {
@@ -34,7 +39,7 @@ struct SignInFailureNote: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .transition(.opacity)
             case .sent(let email):
-                Text("Ouvre le lien envoyé à \(email)")
+                Text(i18n?.t("onboarding.linkSent", ["email": email]) ?? "Ouvre le lien envoyé à \(email)")
                     .font(MicaboFont.hanken(13, weight: .medium))
                     .foregroundStyle(MicaboColor.accent)
                     .fixedSize(horizontal: false, vertical: true)
@@ -51,6 +56,7 @@ struct SignInFailureNote: View {
 /// qu'un bouton absent dont personne ne peut deviner la cause.
 struct SignInProviderButtons: View {
     @Environment(AuthController.self) private var auth
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     /// Un nonce ne sert qu'une fois : le suivant est prêt avant même que celui-ci soit
     /// vérifié.
@@ -85,7 +91,7 @@ struct SignInProviderButtons: View {
         .frame(height: 54)
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
         .disabled(auth.isWorking)
-        .accessibilityLabel(SignInProvider.apple.title)
+        .accessibilityLabel(i18n?.t("onboarding.continueApple") ?? SignInProvider.apple.title)
     }
 
     private var googleButton: some View {
@@ -99,7 +105,7 @@ struct SignInProviderButtons: View {
                     .font(MicaboFont.hanken(16, weight: .bold))
                     .foregroundStyle(Color(hex: 0x4285F4))
 
-                Text(SignInProvider.google.title)
+                Text(SignInProvider.google.title(t: { i18n?.t($0) ?? L10n.t($0, locale: .resolved()) }))
                     .font(MicaboFont.cardTitle)
                     .foregroundStyle(MicaboColor.ink)
             }
@@ -117,12 +123,12 @@ struct SignInProviderButtons: View {
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
         .disabled(auth.isWorking)
         .opacity(auth.isWorking ? 0.5 : 1)
-        .accessibilityLabel(SignInProvider.google.title)
+        .accessibilityLabel(i18n?.t("onboarding.continueGoogle") ?? SignInProvider.google.title)
     }
 
     private var emailForm: some View {
         VStack(spacing: 10) {
-            TextField("ton@adresse.fr", text: $email)
+            TextField(i18n?.t("onboarding.emailPlaceholder") ?? "ton@adresse.fr", text: $email)
                 .font(MicaboFont.hanken(16, weight: .medium))
                 .foregroundStyle(MicaboColor.ink)
                 .tint(MicaboColor.accent)
@@ -143,12 +149,12 @@ struct SignInProviderButtons: View {
                 }
                 .disabled(auth.isWorking)
                 .onSubmit { sendLink() }
-                .accessibilityLabel("Ton adresse électronique")
+                .accessibilityLabel(i18n?.t("onboarding.emailLabel") ?? "Ton adresse électronique")
 
             Button {
                 sendLink()
             } label: {
-                Text("Recevoir un lien")
+                Text(i18n?.t("onboarding.sendLink") ?? "Recevoir un lien")
                     .font(MicaboFont.cardTitle)
                     .foregroundStyle(MicaboColor.onInk)
                     .frame(maxWidth: .infinity)

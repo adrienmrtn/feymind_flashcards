@@ -8,10 +8,11 @@ import SwiftUI
 /// étiquetés, et deux lignes de légende. Aucun paragraphe.
 struct RetentionChartStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
         OnboardingScaffold(
-            title: "Relire ne suffit pas.\nSe souvenir, oui.",
+            title: i18n?.t("ios.retentionTitle") ?? "Relire ne suffit pas.\nSe souvenir, oui.",
             titleSize: 28
         ) {
             RetentionChart()

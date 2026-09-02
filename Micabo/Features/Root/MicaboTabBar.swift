@@ -16,6 +16,7 @@ import SwiftUI
 /// qu'on finit par manquer.
 struct MicaboTabBar: View {
     @Environment(TabRouter.self) private var router: TabRouter?
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
         if let router {
@@ -26,6 +27,7 @@ struct MicaboTabBar: View {
     private func bar(_ router: TabRouter) -> some View {
         HStack(spacing: 0) {
             ForEach(RootTab.allCases) { tab in
+                let label = tab.label(t: { i18n?.t($0) ?? L10n.t($0, locale: .resolved()) })
                 Button {
                     // Sans `withAnimation` : animer `selection` faisait fondre les quatre
                     // pages, et l'onglet touché n'était lisible qu'après 280 ms.
@@ -35,15 +37,17 @@ struct MicaboTabBar: View {
                     VStack(spacing: 5) {
                         Image(systemName: isSelected ? tab.selectedSystemImage : tab.systemImage)
                             .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
-                        Text(tab.label)
+                        Text(label)
                             .font(MicaboFont.hanken(10, weight: isSelected ? .semibold : .medium))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
                     }
                     .foregroundStyle(isSelected ? MicaboColor.accent : MicaboColor.inkTertiary)
                     .frame(maxWidth: .infinity)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-                .accessibilityLabel(tab.label)
+                .accessibilityLabel(label)
                 .accessibilityAddTraits(tab == router.selection ? .isSelected : [])
             }
         }

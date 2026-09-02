@@ -17,6 +17,7 @@ import SwiftUI
 /// blanc sous lui se lit comme une illustration de paragraphe.
 struct DemoSheetStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     /// Position du balayage de lecture sur la page brute.
     @State private var sweep = -1.0
@@ -28,7 +29,7 @@ struct DemoSheetStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: "Micabo le met au propre.",
+            title: i18n?.t("ios.sheetTitle") ?? "Micabo le met au propre.",
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,
@@ -42,7 +43,7 @@ struct DemoSheetStepView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } footer: {
-            OnboardingContinueButton(title: "S'entraîner", isEnabled: isFinished, isShiny: true) {
+            OnboardingContinueButton(title: i18n?.t("ios.train") ?? "S'entraîner", isEnabled: isFinished, isShiny: true) {
                 model.advance()
             }
         }

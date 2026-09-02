@@ -13,6 +13,7 @@ struct MicaboApp: App {
     /// L'abonnement, créé une fois pour toute l'app : tout ce qui se ferme lui pose la
     /// même question, et personne n'y répond de son côté.
     @State private var pro: ProAccess
+    @State private var uiLocale = UiLocaleStore()
 
     private static let schema = Schema([Course.self, Flashcard.self, ReviewLog.self, Exam.self])
 
@@ -47,6 +48,8 @@ struct MicaboApp: App {
                 .environment(sync)
                 .environment(social)
                 .environment(pro)
+                .environment(uiLocale)
+                .environment(\.locale, uiLocale.locale.foundation)
                 .task {
                     await auth.restore()
                     // L'identité RevenueCat **avant** de lire le droit, et avant tout achat :

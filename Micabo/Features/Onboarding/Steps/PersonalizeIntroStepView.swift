@@ -8,6 +8,7 @@ import SwiftUI
 /// seule chose à regarder, et elle donne au bouton une raison d'arriver après.
 struct PersonalizeIntroStepView: View {
     @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var isTitleWritten = false
 
@@ -16,7 +17,7 @@ struct PersonalizeIntroStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             OnboardingWordByWordTitle(
-                text: "Quelques questions\npour personnaliser\nton expérience.",
+                text: i18n?.t("ios.personalizeIntro") ?? "Quelques questions\npour personnaliser\nton expérience.",
                 size: 32
             ) {
                 withAnimation(OnboardingMotion.enter) {
@@ -28,7 +29,7 @@ struct PersonalizeIntroStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             MicaboBottomBar {
-                OnboardingContinueButton(title: "C'est parti") {
+                OnboardingContinueButton(title: i18n?.t("onboarding.letsGo") ?? "C'est parti") {
                     model.advance()
                 }
                 .opacity(isTitleWritten ? 1 : 0)

@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsSubjectsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(CloudSync.self) private var sync
 
     @State private var selected: Set<String>
@@ -18,7 +19,7 @@ struct SettingsSubjectsSheet: View {
                 VStack(alignment: .leading, spacing: 20) {
                     ForEach(SubjectCatalog.families) { family in
                         VStack(alignment: .leading, spacing: 10) {
-                            Text(family.name.uppercased())
+                            Text(SubjectDisplay.family(family.name, locale: i18n?.locale ?? .resolved()).uppercased())
                                 .font(MicaboFont.hanken(10, weight: .semibold))
                                 .tracking(1.4)
                                 .foregroundStyle(MicaboColor.inkTertiary)
@@ -37,7 +38,7 @@ struct SettingsSubjectsSheet: View {
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
-            .navigationTitle("Matières")
+            .navigationTitle(i18n?.t("ios.subjects") ?? "Matières")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -67,7 +68,7 @@ struct SettingsSubjectsSheet: View {
                     Text(SubjectCatalog.emoji(for: subject))
                         .font(.system(size: 13))
                 }
-                Text(subject)
+                Text(SubjectDisplay.subject(subject, locale: i18n?.locale ?? .resolved()))
                     .font(MicaboFont.hanken(13, weight: .medium))
             }
             .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkBody)
