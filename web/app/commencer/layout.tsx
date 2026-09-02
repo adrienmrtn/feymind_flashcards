@@ -40,7 +40,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
     t("onboarding.stepParcours"),
     t("onboarding.stepCompte"),
   ];
-  const stepLabel = index >= 0 ? stepLabels[index] : "";
+  const stepLabel = (index >= 0 ? stepLabels[index] : undefined) ?? "";
 
   return (
     <OnboardingStore>
