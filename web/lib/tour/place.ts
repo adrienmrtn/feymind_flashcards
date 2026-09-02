@@ -1,9 +1,9 @@
 /**
  * Où poser le trou et la bulle.
  *
- * Du calcul sur des rectangles, sans DOM : c'est la partie qui se casse
- * silencieusement (une bulle à moitié hors de l'écran reste cliquable, donc
- * personne ne remonte le bug), et c'est donc celle qui doit se tester.
+ * Du calcul sur des rectangles, sans DOM : une bulle trop basse coupe son
+ * bouton, et un clic qui n'atteint rien ne remonte pas le placement. C'est
+ * donc celle qui doit se tester.
  *
  * Les coordonnées sont celles de la fenêtre, comme `getBoundingClientRect`.
  */
@@ -66,13 +66,20 @@ export function bubblePlacement(anchor: Rect, bubble: Size, viewport: Size): Pla
 
   // Centrée sur la zone, puis ramenée dans la fenêtre. Une bulle centrée sur
   // un élément collé au bord sortirait de l'écran de la moitié de sa largeur.
+  // Le bas compte autant que les côtés : une carte trop basse rend « Suivant »
+  // invisible, donc incliquable.
   const centered = anchor.left + anchor.width / 2 - bubble.width / 2;
 
   return {
-    top: clamp(top, EDGE_MARGIN, Math.max(EDGE_MARGIN, viewport.height - bubble.height - EDGE_MARGIN)),
-    left: clamp(centered, EDGE_MARGIN, Math.max(EDGE_MARGIN, viewport.width - bubble.width - EDGE_MARGIN)),
+    top: clamp(top, EDGE_MARGIN, maxStart(viewport.height, bubble.height)),
+    left: clamp(centered, EDGE_MARGIN, maxStart(viewport.width, bubble.width)),
     side,
   };
+}
+
+/** Premier pixel où un bloc de `size` tient encore, marge comprise. */
+function maxStart(span: number, size: number): number {
+  return Math.max(EDGE_MARGIN, span - size - EDGE_MARGIN);
 }
 
 function clamp(value: number, low: number, high: number): number {
