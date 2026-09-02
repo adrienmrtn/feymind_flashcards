@@ -10,3 +10,4 @@ export const LEGAL_IOS_BUNDLE = "com.micabo.app";
 
 export const PRIVACY_PATH = "/confidentialite" as Route;
 export const TERMS_PATH = "/conditions" as Route;
+export const SUPPORT_PATH = "/support" as Route;
