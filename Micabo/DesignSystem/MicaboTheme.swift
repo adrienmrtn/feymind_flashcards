@@ -181,9 +181,7 @@ enum MicaboLayout {
     ///
     /// Ne vaut que pour les écrans qui masquent la barre d'onglets et posent la leur en
     /// `overlay` ou dans un `ZStack` : une feuille, un plein écran, un écran poussé. Les
-    /// deux pages d'onglet qui ancrent quelque chose en bas passent par `safeAreaInset`,
-    /// qui réserve la hauteur exacte de son contenu au lieu de la deviner, et surtout la
-    /// pose au-dessus de la barre d'onglets au lieu de dessous.
+    /// pages d'onglet qui ancrent quelque chose en bas passent par `tabBarClearance`.
     static let bottomBarClearance: CGFloat = 108
 
     /// Hauteur de la barre d'onglets, hors zone sûre.
@@ -201,18 +199,12 @@ enum MicaboLayout {
     /// huit points — pas les douze du flottement d'avant.
     static let tabBarGap: CGFloat = 8
 
-    /// **Tout ce que la barre d'onglets occupe**, hors zone sûre : c'est la hauteur
-    /// qu'une page racine doit se réserver.
+    /// **Tout ce que la barre d'onglets occupe**, hors zone sûre, mesuré depuis
+    /// le bas de l'écran : languette du cadeau, overlays posés sur la racine.
     ///
-    /// Elle est déclarée ici parce qu'il faut la réserver **à la main**, et ce n'est pas un
-    /// choix. La barre est posée par la racine, à l'extérieur des pages, et chaque
-    /// page est un `NavigationStack` : or un `safeAreaInset` **ne franchit pas** la frontière
-    /// d'un `NavigationStack`, qui rétablit sa zone sûre depuis la fenêtre. L'inset de la
-    /// racine dessine donc la barre sans jamais rien réserver à l'intérieur des pages, et
-    /// tout ce qu'une page ancrait en bas se retrouvait sous la barre.
-    ///
-    /// La somme suit exactement ce que `MicaboTabBar` dessine : le filet, la rangée
-    /// d'onglets, et l'air au-dessus pour les boutons de page.
+    /// Les pages d'onglet ne s'en servent plus. L'inset de la racine raccourcit
+    /// déjà le `TabView` de `tabBarHeight` ; `tabBarClearance` ne laisse que
+    /// `tabBarGap` entre un bouton de page et la barre.
     static var tabBarSpace: CGFloat { tabBarGap + tabBarHeight }
 }
 

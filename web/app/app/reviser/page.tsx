@@ -200,34 +200,38 @@ function Setup({
   budget: { rhythmNew: number; introducedToday: number; remaining: number };
   isPro: boolean;
 }) {
+  // L'enveloppe porte la zone que montre la visite guidée : elle tient aussi
+  // bien le panneau complet que l'écran vide, et c'est le même secteur.
   return (
-    <ReviewSetup
-      courseId={courseId}
-      cards={cards.map((card) => ({
-        id: card.id,
-        courseId: card.course_id,
-        state: card.state,
-        dueDate: card.due_date,
-        position: card.position,
-        createdAt: card.created_at,
-        isSuspended: card.is_suspended,
-      }))}
-      courses={courses.map((course) => ({
-        id: course.id,
-        title: course.title,
-        emoji: course.emoji,
-        subject: course.subject,
-      }))}
-      exams={exams.map((exam) => ({
-        date: exam.exam_date,
-        isPlanned: exam.is_planned,
-        courseIds: exam.course_ids ?? [],
-      }))}
-      rhythmNew={budget.rhythmNew}
-      introducedToday={budget.introducedToday}
-      remaining={budget.remaining}
-      isPro={isPro}
-    />
+    <div data-tour="reviser-panneau">
+      <ReviewSetup
+        courseId={courseId}
+        cards={cards.map((card) => ({
+          id: card.id,
+          courseId: card.course_id,
+          state: card.state,
+          dueDate: card.due_date,
+          position: card.position,
+          createdAt: card.created_at,
+          isSuspended: card.is_suspended,
+        }))}
+        courses={courses.map((course) => ({
+          id: course.id,
+          title: course.title,
+          emoji: course.emoji,
+          subject: course.subject,
+        }))}
+        exams={exams.map((exam) => ({
+          date: exam.exam_date,
+          isPlanned: exam.is_planned,
+          courseIds: exam.course_ids ?? [],
+        }))}
+        rhythmNew={budget.rhythmNew}
+        introducedToday={budget.introducedToday}
+        remaining={budget.remaining}
+        isPro={isPro}
+      />
+    </div>
   );
 }
 

@@ -27,7 +27,9 @@ export default async function FriendsPage() {
       <div className="mt-5 space-y-5">
         <PeopleList caption="Demandes reçues" people={graph.incoming} />
 
-        <FriendSearch />
+        <div data-tour="amis-recherche">
+          <FriendSearch />
+        </div>
 
         {graph.incoming.length === 0 &&
         graph.friends.length === 0 &&

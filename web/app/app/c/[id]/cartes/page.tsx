@@ -68,7 +68,7 @@ export default async function CourseCardsPage({
       </header>
 
       {cards.length > 0 ? (
-        <div className="mt-7 grid gap-2.5 sm:grid-cols-3">
+        <div className="mt-7 grid gap-2.5 sm:grid-cols-3" data-tour="cartes-etats">
           <Stat emoji="🔥" value={counts.review} label={counts.review === 1 ? "à revoir" : "à revoir"} />
           <Stat emoji="✨" value={counts.newCards} label={counts.newCards === 1 ? "jamais vue" : "jamais vues"} />
           <Stat
@@ -79,11 +79,11 @@ export default async function CourseCardsPage({
         </div>
       ) : null}
 
-      <div className="mt-7">
+      <div className="mt-7" data-tour="cartes-generer">
         <GenerateCards courseId={course.id} existing={cards.length} autoStart={generer === "1"} />
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8" data-tour="cartes-liste">
         <CardList courseId={course.id} cards={cards} exam={exam} />
       </div>
 

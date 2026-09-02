@@ -290,7 +290,7 @@ function NavList() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-col gap-5 px-3 py-2">
+    <nav className="flex flex-col gap-5 px-3 py-2" data-tour="nav">
       {GROUPS.map((group) => (
         <div key={group.title} className="flex flex-col gap-0.5">
           <p className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/70">
@@ -394,7 +394,12 @@ function ImportLink({ canImport }: { canImport: boolean }) {
 
   if (!canImport) {
     return (
-      <button type="button" onClick={requestPaywall} className={`${className} w-full`}>
+      <button
+        type="button"
+        onClick={requestPaywall}
+        className={`${className} w-full`}
+        data-tour="nav-importer"
+      >
         <Upload className="size-4 shrink-0 opacity-80" />
         Importer
       </button>
@@ -402,7 +407,7 @@ function ImportLink({ canImport }: { canImport: boolean }) {
   }
 
   return (
-    <Link href={"/app/importer" as never} className={className}>
+    <Link href={"/app/importer" as never} className={className} data-tour="nav-importer">
       <Upload className="size-4 shrink-0 opacity-80" />
       Importer
     </Link>

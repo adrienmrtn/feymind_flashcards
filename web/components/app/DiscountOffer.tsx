@@ -17,6 +17,7 @@ import {
   shouldShowDiscountBadge,
   startDiscount,
 } from "@/lib/discount";
+import { requestTourRecheck } from "@/lib/tour/signal";
 
 /**
  * **L'offre cadeau du web**, et sa pastille.
@@ -77,6 +78,7 @@ export function DiscountHost({
     releaseOffer();
     setSeen(true);
     setOpen(false);
+    requestTourRecheck();
   }, []);
 
   const reopen = useCallback(() => {

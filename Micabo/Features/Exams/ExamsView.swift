@@ -102,8 +102,8 @@ struct ExamsView: View {
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
-            // Le bouton d'ajout se pose au-dessus de la barre d'onglets, et la page
-            // réserve la hauteur des deux — voir `tabBarClearance`.
+            // Le bouton d'ajout se pose juste au-dessus de la barre d'onglets —
+            // voir `tabBarClearance`.
             .tabBarClearance {
                 if canPlan {
                     MicaboBottomBar {

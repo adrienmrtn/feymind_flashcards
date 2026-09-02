@@ -101,7 +101,9 @@ export default async function DashboardPage() {
       />
 
       <div className="grid items-stretch gap-4 lg:grid-cols-2">
-        <WeekStrip days={week} />
+        <div className="h-full" data-tour="semaine">
+          <WeekStrip days={week} />
+        </div>
         <UpcomingExams next={upcoming[0] ?? null} others={Math.max(0, upcoming.length - 1)} />
       </div>
 
@@ -133,7 +135,7 @@ function TodayTasks({
   heldBack: number;
 }) {
   return (
-    <Card className="h-full">
+    <Card className="h-full" data-tour="taches">
       <CardHeader className="pb-2">
         <CardTitle className="text-[15px] font-semibold text-ink">Tâches du jour</CardTitle>
         {tasks.length > 0 ? (
@@ -243,7 +245,7 @@ function UpcomingExams({
   others: number;
 }) {
   return (
-    <section className="flex h-full min-h-0 flex-col">
+    <section className="flex h-full min-h-0 flex-col" data-tour="examens">
       <div className="mb-3 flex items-end justify-between gap-3">
         <h2 className="text-[15px] font-semibold text-ink">Examens</h2>
         <Button
@@ -282,7 +284,7 @@ function UpcomingExams({
 
 function FriendsCard({ requests }: { requests: FriendRequestRow[] }) {
   return (
-    <Card>
+    <Card data-tour="amis">
       <CardHeader className="pb-2">
         <CardTitle className="text-[15px] font-semibold text-ink">Amis</CardTitle>
         <CardAction>

@@ -107,7 +107,7 @@ function Shelf({
         </p>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-tour="cours-etagere">
         {courses.map((course) => {
           const exam = examMarkForCourse(exams, course.id);
           return (
@@ -158,6 +158,7 @@ function AddCourseCard() {
   return (
     <Link
       href={"/app/importer" as never}
+      data-tour="cours-ajouter"
       className="relative flex flex-col gap-4 rounded-2xl border border-dashed border-border bg-card p-5 transition-[scale,background-color,border-color] duration-press ease-out-strong hover:border-stroke-strong hover:bg-surface-muted active:scale-[0.96]"
     >
       <span
