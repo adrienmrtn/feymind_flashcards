@@ -33,26 +33,31 @@ struct RootTabView: View {
 
             TabView(selection: $router.selection) {
                 CoursesListView()
+                    .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.courses)
                 TodayView()
+                    .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.today)
                 ExamsView()
+                    .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.exams)
                 ProfileView()
+                    .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.profile)
             }
             // La barre UIKit ne se montre jamais : Micabo garde sa barre, posée juste
             // dessous. Le style standard ne permet pas le balayage horizontal qui faisait
-            // auparavant traîner les pages sous le doigt.
+            // auparavant traîner les pages sous le doigt. L'attribut est aussi sur
+            // chaque onglet : sur le `TabView` seul, iOS 18 réserve encore sa hauteur.
             .toolbar(.hidden, for: .tabBar)
         }
-        // La barre du bas est posée à l'extérieur des pages : elles passent dessous, elle ne
-        // bouge pas d'un pixel. Elle s'efface dès qu'un écran de détail est poussé.
+        // La barre du bas est posée à l'extérieur des pages : l'inset raccourcit le
+        // `TabView`, elles ne passent pas dessous, elle ne bouge pas d'un pixel. Elle
+        // s'efface dès qu'un écran de détail est poussé.
         //
-        // Cet inset la **place**, il ne réserve rien : chaque page est un `NavigationStack`,
-        // et un `safeAreaInset` ne franchit pas cette frontière. La place est donc réservée
-        // page par page, par `tabBarClearance`, qui est aussi ce qui pose leurs boutons du
-        // bas au-dessus de la barre au lieu de dessous.
+        // Les boutons de page (`+`, session, examen) se posent *dans* les pages, par
+        // `tabBarClearance` : seulement l'air au-dessus de la barre. Sa hauteur, le
+        // `TabView` l'a déjà perdue.
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if router.isAtRoot {
                 MicaboTabBar()

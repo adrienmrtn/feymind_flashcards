@@ -188,11 +188,8 @@ struct TodayView: View {
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
-            // Le bouton de session se pose au-dessus de la barre d'onglets, et la page
-            // réserve la hauteur des deux. C'est la page qui doit le faire : l'inset de la
-            // racine ne franchit pas la frontière du `NavigationStack`, et le premier appui
-            // de l'app passait sous la barre dès qu'il apparaissait — voir
-            // `tabBarClearance`.
+            // Le bouton de session se pose juste au-dessus de la barre d'onglets —
+            // voir `tabBarClearance`.
             .tabBarClearance {
                 if hasSessionButton {
                     MicaboBottomBar {
