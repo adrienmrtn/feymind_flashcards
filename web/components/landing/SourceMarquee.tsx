@@ -7,7 +7,7 @@
  * d'entreprise, et un mur de logos inventés se repère en une seconde. Ce sont les **formats
  * acceptés**, ce qui est une information et non une allégation.
  *
- * Chaque case est assez large pour un vrai exemple (scan, capture, extrait). Les fichiers
+ * Chaque case reste petite : l'extrait se reconnaît, il ne s'étale pas. Les fichiers
  * se déposent dans `web/public/landing/sources/` sous le `id` de la source
  * (`notes-manuscrites.webp`, etc.). Tant qu'ils manquent, un cadre d'attente reste.
  * On ne sonde pas le réseau pour le savoir : un `.webp` absent est une 404 que
@@ -35,8 +35,8 @@ export function SourceMarquee({
   const present = new Set(availableIds);
 
   return (
-    <section className="mt-20 border-y border-hairline-on-canvas py-7" data-print="hide">
-      <p className="mb-5 text-center text-[12.5px] text-ink-tertiary">
+    <section className="mt-20 border-y border-hairline-on-canvas py-5" data-print="hide">
+      <p className="mb-3.5 text-center text-[12.5px] text-ink-tertiary">
         Micabo transforme tes documents
       </p>
 
@@ -48,7 +48,7 @@ export function SourceMarquee({
             "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
         }}
       >
-        <div className="marquee-track flex w-max shrink-0 items-stretch gap-4 pr-4">
+        <div className="marquee-track flex w-max shrink-0 items-stretch gap-3 pr-3">
           {[...SOURCES, ...SOURCES].map((source, index) => (
             <SourceTile
               key={`${source.id}-${index}`}
@@ -72,7 +72,7 @@ function SourceTile({
   return (
     <article className="source-tile">
       <SourceExample src={src} label={source.label} emoji={source.emoji} />
-      <p className="mt-2.5 truncate text-[13.5px] font-medium text-ink">{source.label}</p>
+      <p className="mt-1.5 truncate text-[12.5px] font-medium text-ink">{source.label}</p>
     </article>
   );
 }
