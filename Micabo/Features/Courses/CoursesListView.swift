@@ -87,6 +87,7 @@ struct CoursesListView: View {
                 }
                 .padding(.top, MicaboSpacing.xs)
                 .padding(.bottom, MicaboSpacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()

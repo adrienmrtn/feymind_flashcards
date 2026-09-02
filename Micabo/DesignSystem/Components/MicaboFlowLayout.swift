@@ -8,11 +8,13 @@ struct MicaboFlowLayout: Layout {
     var alignment: HorizontalAlignment = .leading
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
-        let maxWidth = proposal.width ?? .infinity
-        let rows = rows(maxWidth: maxWidth, subviews: subviews)
+        // Une largeur proposée non finie est une invitation, pas une contrainte : la
+        // rendre telle quelle donnerait une pile infiniment large, et un `ScrollView`
+        // vertical qui contient ça se met à défiler en travers.
+        let offered = proposal.width.flatMap { $0.isFinite ? $0 : nil }
+        let rows = rows(maxWidth: offered ?? .infinity, subviews: subviews)
         let height = rows.reduce(0) { $0 + $1.height } + CGFloat(max(0, rows.count - 1)) * lineSpacing
-        let width = proposal.width ?? rows.map(\.width).max() ?? 0
-        return CGSize(width: width, height: height)
+        return CGSize(width: offered ?? rows.map(\.width).max() ?? 0, height: height)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
