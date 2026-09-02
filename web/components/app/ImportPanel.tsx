@@ -131,17 +131,31 @@ export function ImportPanel({
     setPhase("ecriture");
     startTransition(async () =>
       finish(
-        await importFromText({
-          text: payload.text,
-          hintTitle: title.trim() || payload.title,
-          sourceName: payload.sourceName,
-          source: payload.source,
-          blocks,
-          length,
-          visibility,
-          language,
-          instructions: instructions.trim() || undefined,
-        }),
+        await Promise.race([
+          importFromText({
+            text: payload.text,
+            hintTitle: title.trim() || payload.title,
+            sourceName: payload.sourceName,
+            source: payload.source,
+            blocks,
+            length,
+            visibility,
+            language,
+            instructions: instructions.trim() || undefined,
+          }),
+          // Sans ça, une fonction qui ne répond plus laisse l'écran sur
+          // « Micabo écrit la fiche… » jusqu'à ce qu'on quitte la page.
+          new Promise<{ status: "error"; message: string }>((resolve) => {
+            setTimeout(
+              () =>
+                resolve({
+                  status: "error",
+                  message: "L'écriture a pris trop longtemps. Réessaie, le document n'a rien perdu.",
+                }),
+              90_000,
+            );
+          }),
+        ]),
       ),
     );
   }

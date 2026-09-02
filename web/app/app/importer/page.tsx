@@ -1,6 +1,9 @@
 import { DEFAULT_SHEET_LENGTH, isSheetLength } from "@micabo/core";
 
 import { ImportPanel } from "@/components/app/ImportPanel";
+
+/** L'écriture d'une fiche appelle le modèle : sans ça, Vercel coupe trop tôt. */
+export const maxDuration = 120;
 import { SecondCourseCard } from "@/components/app/SecondCourseCard";
 import { canImportNow } from "@/lib/data/entitlement";
 import { readProfile } from "@/lib/data/profile";
