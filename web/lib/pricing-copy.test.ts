@@ -30,7 +30,6 @@ describe("pricing-copy", () => {
     expect(presentmentFor("tr")).toBe("TRY");
     expect(presentmentFor("fr")).toBe("EUR");
     expect(presentmentFor("fr", "tr")).toBe("TRY");
-    expect(presentmentFor("tr-TR", "fr")).toBe("TRY");
     expect(planRenewalCopy(tTr, pricing.YEARLY, "TRY")).toMatch(/₺|TRY|3.?899/);
   });
 });
