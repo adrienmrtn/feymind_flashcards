@@ -1,4 +1,9 @@
-import { examCountdownLabel, examUrgency, type ExamUrgency } from "@micabo/core";
+"use client";
+
+import { examUrgency, type ExamUrgency } from "@micabo/core";
+
+import { useI18n } from "@/lib/i18n/client";
+import { copyExamCountdown, copyExamMarkTitle } from "@/lib/i18n/copy";
 
 /**
  * La pastille d'examen, **sur la carte du cours**.
@@ -13,18 +18,20 @@ export function CourseExamBadge({
   name: string;
   daysRemaining: number;
 }) {
+  const { t } = useI18n();
   const urgency = examUrgency(daysRemaining);
-  const label = name.trim() || "Examen";
+  const label = name.trim() || t("app.exams.defaultName");
+  const countdown = copyExamCountdown(t, daysRemaining);
 
   return (
     <span
       className={`inline-flex max-w-full items-center gap-1 rounded-pill px-2 py-0.5 text-[11px] font-semibold leading-4 ${tone(urgency)}`}
-      title={`${label} · ${examCountdownLabel(daysRemaining)}`}
+      title={copyExamMarkTitle(t, label, daysRemaining)}
     >
       <span aria-hidden className="emoji">
         📝
       </span>
-      {examCountdownLabel(daysRemaining)}
+      {countdown}
     </span>
   );
 }

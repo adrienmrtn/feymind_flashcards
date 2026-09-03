@@ -17,6 +17,7 @@ import {
   shouldShowDiscountBadge,
   startDiscount,
 } from "@/lib/discount";
+import { useI18n } from "@/lib/i18n/client";
 import { requestTourRecheck } from "@/lib/tour/signal";
 
 /**
@@ -169,6 +170,7 @@ export function DiscountCard({
   const monthly = pricing.monthlyEquivalent(plan);
   const saved = pricing.discountSavingsPercent();
 
+  const { t } = useI18n();
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -183,17 +185,17 @@ export function DiscountCard({
       return;
     }
     if (result.status === "already") {
-      setFailure("Tu es déjà abonné.");
+      setFailure(t("app.paywall.already"));
       return;
     }
-    setFailure(result.message ?? "L'abonnement n'est pas encore ouvert.");
+    setFailure(result.message ?? t("app.paywall.checkoutClosed"));
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-6">
       <button
         type="button"
-        aria-label="Fermer l'offre"
+        aria-label={t("app.paywall.closeOffer")}
         onClick={onClose}
         className="paywall-veil absolute inset-0 bg-ink/45 backdrop-blur-[10px]"
       />
@@ -206,7 +208,7 @@ export function DiscountCard({
       >
         <button
           type="button"
-          aria-label="Fermer"
+          aria-label={t("app.a11y.close")}
           onClick={onClose}
           className="pressable absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-offer-sky"
         >
@@ -228,9 +230,9 @@ export function DiscountCard({
             id="cadeau-title"
             className="mt-5 text-[28px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[36px]"
           >
-            <span className="text-offer-sky">{saved}&nbsp;%</span> de moins
+            {t("app.paywall.discountTitle", { pct: saved })}
             <br />
-            Révise plus vite avec Pro
+            {t("app.paywall.discountSubtitle")}
           </h2>
 
           <div className="mt-6 flex w-full items-center gap-4 rounded-[22px] bg-surface px-4 py-4 text-left shadow-[0_14px_34px_-18px_rgba(11,143,220,0.55)] sm:px-5">
@@ -243,7 +245,9 @@ export function DiscountCard({
                 <span className="numeral text-[26px] font-bold leading-none text-ink">
                   {monthly}
                 </span>
-                <span className="text-[15px] font-medium text-ink-secondary">par mois</span>
+                <span className="text-[15px] font-medium text-ink-secondary">
+                  {t("app.paywall.perMonth")}
+                </span>
               </p>
 
               <s className="mt-1 block text-[15.5px] font-medium text-ink-tertiary">
@@ -259,7 +263,7 @@ export function DiscountCard({
             className="pressable shiny mt-5 flex h-[58px] w-full items-center justify-center gap-2 rounded-[16px] bg-offer-sky text-[17px] font-semibold text-white disabled:opacity-70"
           >
             {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
-            Commencer avec {saved}&nbsp;% de moins
+            {t("app.paywall.discountCta", { pct: saved })}
           </button>
 
           {failure ? (
@@ -273,8 +277,7 @@ export function DiscountCard({
             // Le mensuel vend, l'annuel engage : le montant réellement prélevé est écrit
             // sous le bouton, jamais ailleurs qu'à côté de lui.
             <p className="mt-3 text-[12.5px] text-ink-tertiary">
-              {pricing.priceText(plan.price)} facturés une fois par an, résiliable à tout
-              moment.
+              {t("app.paywall.discountYearly", { price: pricing.priceText(plan.price) })}
             </p>
           )}
         </div>
@@ -292,6 +295,7 @@ export function DiscountCard({
  * puis rouvrir ne change pas le temps affiché.
  */
 function UrgencyPill({ startedAt }: { startedAt: number }) {
+  const { t } = useI18n();
   const left = usePreciseCountdown(startedAt, discount.windowSeconds);
   const over = left <= 0;
 
@@ -299,7 +303,13 @@ function UrgencyPill({ startedAt }: { startedAt: number }) {
     <p
       className="inline-flex items-baseline gap-2 rounded-pill bg-offer-urgency px-4 py-2 text-white"
       role="timer"
-      aria-label={over ? "offre terminée" : `Offre réservée, ${discount.countdownLabel(Math.floor(left / 1000))}`}
+      aria-label={
+        over
+          ? t("app.paywall.offerEnded")
+          : t("app.paywall.offerLeft", {
+              time: discount.countdownLabel(Math.floor(left / 1000)),
+            })
+      }
     >
       {/* La police des nombres, comme partout dans Micabo, et des chiffres de largeur fixe :
           un décompte qui change de largeur à chaque centième ferait trembler la pastille. */}
@@ -307,7 +317,7 @@ function UrgencyPill({ startedAt }: { startedAt: number }) {
         {discount.preciseCountdown(left)}
       </span>
       <span className="text-[13px] font-medium text-white/85">
-        {over ? "terminé" : "restant"}
+        {over ? t("app.paywall.ended") : t("app.paywall.remaining")}
       </span>
     </p>
   );
@@ -321,6 +331,7 @@ function UrgencyPill({ startedAt }: { startedAt: number }) {
  * « étiquette collée sur un prix », ce qui est exactement ce que c'est.
  */
 function SaleSeal({ percent }: { percent: number }) {
+  const { t } = useI18n();
   return (
     <span
       aria-hidden
@@ -337,7 +348,7 @@ function SaleSeal({ percent }: { percent: number }) {
       </svg>
 
       <span className="relative flex flex-col items-center leading-none text-white">
-        <span className="text-[9.5px] font-semibold">Remise</span>
+        <span className="text-[9.5px] font-semibold">{t("app.paywall.saleSeal")}</span>
         <span className="mt-0.5 text-[20px] font-bold">
           {percent}
           <span className="align-top text-[10px]">%</span>
@@ -398,6 +409,7 @@ export function DiscountBadge({
   startedAt: number;
   onOpen: () => void;
 }) {
+  const { t } = useI18n();
   const left = useCountdown(startedAt, discount.windowSeconds);
   if (left <= 0) return null;
 
@@ -405,7 +417,7 @@ export function DiscountBadge({
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`Rouvrir l'offre, ${discount.countdownLabel(left)}`}
+      aria-label={t("app.paywall.reopenOffer", { time: discount.countdownLabel(left) })}
       className="pressable fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-pill bg-offer-sky px-4 py-3 text-white shadow-[0_16px_40px_-12px_rgba(11,143,220,0.6)]"
     >
       <span aria-hidden className="text-white">
@@ -413,7 +425,7 @@ export function DiscountBadge({
       </span>
       <span className="text-left">
         <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80">
-          Ton offre
+          {t("app.paywall.yourOffer")}
         </span>
         <span className="block font-number text-[15px] font-bold tabular-nums" aria-hidden>
           {discount.countdown(left)}

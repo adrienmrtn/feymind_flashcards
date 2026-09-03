@@ -11,7 +11,7 @@ import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { canImportNow } from "@/lib/data/entitlement";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
 import { loadNewCardBudget } from "@/lib/data/reviews";
-import { copyHeldBackNew, copyReviewButton } from "@/lib/i18n/copy";
+import { copyCourseSource, copyHeldBackNew, copyReviewButton } from "@/lib/i18n/copy";
 import { getTranslator } from "@/lib/i18n/server";
 import type { Translator } from "@/lib/i18n/copy";
 
@@ -143,7 +143,9 @@ function Shelf({
                 <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
                   {[
                     course.subject,
-                    course.is_from_library ? t("app.course.source.adopted") : sourceLabel(t, course.source),
+                    course.is_from_library
+                      ? t("app.course.source.adopted")
+                      : copyCourseSource(t, course.source),
                     t("copy.audience", {
                       views: course.view_count ?? 0,
                       adopts: course.adopt_count ?? 0,
@@ -196,21 +198,3 @@ function AddCourseCard({ t }: { t: Translator }) {
   );
 }
 
-function sourceLabel(t: Translator, source: string): string {
-  switch (source) {
-    case "pdf":
-      return "PDF";
-    case "photo":
-      return t("app.course.source.photos");
-    case "youtube":
-      return t("app.course.source.video");
-    case "docx":
-      return t("app.course.source.word");
-    case "deck":
-      return t("app.course.source.deck");
-    case "library":
-      return t("app.course.source.adopted");
-    default:
-      return t("app.course.source.text");
-  }
-}

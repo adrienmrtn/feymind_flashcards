@@ -7,6 +7,8 @@ import {
   type GenerationLanguage,
 } from "@micabo/core";
 
+import { useI18n } from "@/lib/i18n/client";
+
 /**
  * La langue de **cette** fiche.
  *
@@ -22,10 +24,11 @@ export function LanguageChoices({
   onChange: (next: GenerationLanguage) => void;
   disabled?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <div>
       <label htmlFor="generation-language" className="sr-only">
-        Langue de la fiche
+        {t("app.import.sheetLanguage")}
       </label>
       <select
         id="generation-language"
@@ -41,9 +44,7 @@ export function LanguageChoices({
         ))}
       </select>
       <p className="mt-2 text-[12.5px] leading-relaxed text-ink-tertiary">
-        {value === SOURCE_LANGUAGE
-          ? "Micabo écrit dans la langue du cours."
-          : "La fiche sera traduite dans cette langue."}
+        {value === SOURCE_LANGUAGE ? t("app.import.sourceHint") : t("app.import.translateHint")}
       </p>
     </div>
   );

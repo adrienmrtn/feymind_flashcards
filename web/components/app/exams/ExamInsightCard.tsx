@@ -1,11 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import type { Route } from "next";
 
-import {
-  examCountdownLabel,
-  examUrgency,
-  type ExamInsight,
-} from "@micabo/core";
+import { examUrgency, type ExamInsight } from "@micabo/core";
+
+import { useI18n } from "@/lib/i18n/client";
+import { copyExamCountdown } from "@/lib/i18n/copy";
 
 /**
  * La carte d'un examen : la note visée d'abord, puis l'avancée et les points
@@ -21,8 +22,9 @@ export function ExamInsightCard({
   href?: Route;
   onClick?: () => void;
 }) {
+  const { t } = useI18n();
   const inner = <InsightBody insight={insight} />;
-  const label = `${insight.name}, note visée ${insight.gradeLabel}, ${examCountdownLabel(insight.daysRemaining)}`;
+  const label = `${insight.name}, ${t("app.exams.targetGrade")} ${insight.gradeLabel}, ${copyExamCountdown(t, insight.daysRemaining)}`;
 
   if (href) {
     return (
@@ -57,6 +59,7 @@ export function ExamInsightCard({
 }
 
 function InsightBody({ insight }: { insight: ExamInsight }) {
+  const { t } = useI18n();
   const urgency = examUrgency(insight.daysRemaining);
   const tone =
     urgency === "critical"
@@ -76,18 +79,17 @@ function InsightBody({ insight }: { insight: ExamInsight }) {
         <span
           className={`max-w-[48%] shrink-0 truncate rounded-pill px-2 py-0.5 text-[11.5px] font-bold tracking-caps ${tone}`}
         >
-          {examCountdownLabel(insight.daysRemaining)}
+          {copyExamCountdown(t, insight.daysRemaining)}
         </span>
       </div>
 
       <p className="numeral mt-4 text-[32px] font-bold leading-none text-ink sm:mt-5 sm:text-[40px]">
         {insight.gradeLabel}
       </p>
-      <p className="mt-1.5 text-[13px] text-ink-tertiary">Note visée</p>
+      <p className="mt-1.5 text-[13px] text-ink-tertiary">{t("app.exams.targetGrade")}</p>
 
       <p className="mt-5 text-[13px] font-medium text-ink">
-        Cours appris à{" "}
-        <span className="numeral font-bold text-accent">{insight.learnedPct}%</span>
+        {t("app.exams.learnedPct", { pct: insight.learnedPct })}
       </p>
       <div className="mt-1.5 h-1.5 overflow-hidden rounded-pill bg-progress-track">
         <div
@@ -97,13 +99,13 @@ function InsightBody({ insight }: { insight: ExamInsight }) {
       </div>
 
       <p className="mt-5 text-[10px] font-bold uppercase tracking-caps text-ink-tertiary">
-        Tes points faibles
+        {t("app.exams.weakPoints")}
       </p>
       {insight.weak.length === 0 ? (
         <p className="mt-2 text-[13px] leading-relaxed text-ink-secondary">
           {insight.cardCount === 0
-            ? "Relie un cours pour voir tes points faibles."
-            : "Rien à signaler pour l'instant."}
+            ? t("app.exams.weakEmpty.noCourse")
+            : t("app.exams.weakEmpty.clear")}
         </p>
       ) : (
         <ul className="mt-2 min-w-0 divide-y divide-hairline">

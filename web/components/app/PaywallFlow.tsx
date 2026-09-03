@@ -16,6 +16,7 @@ import {
   shouldOpenPaywall,
 } from "@/lib/onboarding/persist";
 import { PAYWALL_EVENT } from "@/lib/paywall";
+import { useI18n } from "@/lib/i18n/client";
 import { requestTourRecheck } from "@/lib/tour/signal";
 
 /**
@@ -125,6 +126,7 @@ export function PaywallCard({
   onClose: () => void;
   startAt?: Stage;
 }) {
+  const { t } = useI18n();
   const titleId = useId();
   const [stage, setStage] = useState<Stage>(startAt);
   const index = STAGES.indexOf(stage);
@@ -149,7 +151,7 @@ export function PaywallCard({
     <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-6">
       <button
         type="button"
-        aria-label="Fermer l'offre"
+        aria-label={t("app.paywall.closeOffer")}
         onClick={onClose}
         className="paywall-veil absolute inset-0 bg-ink/45 backdrop-blur-[8px]"
       />
@@ -181,7 +183,7 @@ export function PaywallCard({
           )}
           <button
             type="button"
-            aria-label="Fermer"
+            aria-label={t("app.a11y.close")}
             onClick={onClose}
             className="pressable -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
           >
@@ -219,10 +221,10 @@ export function PaywallCard({
                   className="pressable shiny flex h-14 w-full items-center justify-center rounded-button bg-accent text-[16px] font-semibold text-on-ink"
                 >
                   {stage === "social"
-                    ? "Continuer"
+                    ? t("app.common.continue")
                     : stage === "trial"
-                      ? `Continuer pour ${pricing.priceText(0)}`
-                      : "Continuer gratuitement"}
+                      ? t("app.paywall.continueFor", { price: pricing.priceText(0) })
+                      : t("app.paywall.continueFree")}
                 </button>
               </div>
             </>
@@ -234,6 +236,7 @@ export function PaywallCard({
 }
 
 function SocialStep({ headingId }: { headingId: string }) {
+  const { t } = useI18n();
   return (
     <div>
       <h2 id={headingId} className="flex flex-col items-center text-center">
@@ -246,8 +249,7 @@ function SocialStep({ headingId }: { headingId: string }) {
 
       <div className="mt-6">
         <p className="text-[14px] leading-relaxed text-ink-secondary">
-          Micabo se base sur la science et la répétition espacée pour optimiser la
-          rétention.
+          {t("app.paywall.scienceLead")}
         </p>
         <div className="mt-3 space-y-2">
           {STUDIES.map((study, index) => (
@@ -266,8 +268,8 @@ function SocialStep({ headingId }: { headingId: string }) {
                 <ResearchIcon />
               </span>
               <span className="min-w-0">
-                <span className="block text-[13.5px] font-medium text-ink">{study.title}</span>
-                <span className="mt-0.5 block text-[12px] text-ink-tertiary">{study.source}</span>
+                <span className="block text-[13.5px] font-medium text-ink">{t(study.titleKey)}</span>
+                <span className="mt-0.5 block text-[12px] text-ink-tertiary">{t(study.sourceKey)}</span>
               </span>
             </a>
           ))}
@@ -278,9 +280,10 @@ function SocialStep({ headingId }: { headingId: string }) {
 }
 
 function TrialStep({ headingId }: { headingId: string }) {
+  const { t } = useI18n();
   return (
     <div className="flex min-h-[340px] flex-col items-center justify-center py-6 text-center">
-      <p className="eyebrow text-accent">L&apos;essai</p>
+      <p className="eyebrow text-accent">{t("app.paywall.trialEyebrow")}</p>
       <span aria-hidden className="mt-6 text-accent">
         <Gift />
       </span>
@@ -288,13 +291,14 @@ function TrialStep({ headingId }: { headingId: string }) {
         id={headingId}
         className="mt-6 text-[26px] font-bold leading-[1.15] tracking-tight-title text-ink"
       >
-        On veut te laisser tout essayer, sans rien payer.
+        {t("app.paywall.trialTitle")}
       </h2>
     </div>
   );
 }
 
 function ReminderStep({ headingId }: { headingId: string }) {
+  const { t } = useI18n();
   return (
     <div className="flex min-h-[360px] flex-col items-center justify-center py-6 text-center">
       <span aria-hidden className="bell-sway mb-7 text-caution-vivid">
@@ -304,9 +308,9 @@ function ReminderStep({ headingId }: { headingId: string }) {
         id={headingId}
         className="text-[24px] font-bold leading-[1.15] tracking-tight-title text-ink"
       >
-        On t&apos;envoie un e-mail avant la fin de l&apos;essai.
+        {t("app.paywall.reminderTitle")}
       </h2>
-      <p className="mt-5 text-[17px] font-semibold text-ink">Aucun paiement n&apos;est dû aujourd&apos;hui.</p>
+      <p className="mt-5 text-[17px] font-semibold text-ink">{t("app.paywall.reminderBody")}</p>
     </div>
   );
 }
@@ -414,20 +418,20 @@ function Bell() {
  */
 const STUDIES = [
   {
-    title: "L'effet d'espacement, mesuré",
-    source: "Cepeda et al., Psychological Bulletin, 2006",
+    titleKey: "app.paywall.study1Title",
+    sourceKey: "app.paywall.study1Source",
     doi: "10.1037/0033-2909.132.3.354",
     href: "https://doi.org/10.1037/0033-2909.132.3.354",
   },
   {
-    title: "Le rappel actif bat la relecture",
-    source: "Karpicke & Roediger, Science, 2008",
+    titleKey: "app.paywall.study2Title",
+    sourceKey: "app.paywall.study2Source",
     doi: "10.1126/science.1152408",
     href: "https://doi.org/10.1126/science.1152408",
   },
   {
-    title: "La courbe d'Ebbinghaus, répliquée",
-    source: "Murre & Dros, PLOS ONE, 2015",
+    titleKey: "app.paywall.study3Title",
+    sourceKey: "app.paywall.study3Source",
     doi: "10.1371/journal.pone.0120644",
     href: "https://doi.org/10.1371/journal.pone.0120644",
   },

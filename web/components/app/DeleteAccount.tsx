@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { deleteAccount } from "@/lib/actions/profile";
+import { useI18n } from "@/lib/i18n/client";
 import { forgetLocalAccount } from "@/lib/onboarding/persist";
 
 /**
@@ -16,12 +17,14 @@ import { forgetLocalAccount } from "@/lib/onboarding/persist";
  * resteraient ici, et le prochain compte avec la même adresse les reprendrait.
  */
 export function DeleteAccount({ email }: { email: string }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
   const [failure, setFailure] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const ready = typed.trim().toLowerCase() === "supprimer";
+  const confirmWord = t("app.settings.delete.confirmWord");
+  const ready = typed.trim().toLowerCase() === confirmWord.toLowerCase();
 
   function confirm() {
     if (!ready || pending) return;
@@ -30,7 +33,7 @@ export function DeleteAccount({ email }: { email: string }) {
     startTransition(async () => {
       const result = await deleteAccount();
       if (result.status !== "ok") {
-        setFailure(result.message ?? "Le compte n'a pas pu être supprimé.");
+        setFailure(result.message ?? t("app.settings.delete.error"));
         return;
       }
       window.location.href = "/";
@@ -40,23 +43,21 @@ export function DeleteAccount({ email }: { email: string }) {
   return (
     <section className="saas-card relative mt-4 px-7 py-7">
       <div>
-        <p className="text-[15px] font-semibold text-ink">Supprimer le compte</p>
+        <p className="text-[15px] font-semibold text-ink">{t("app.settings.delete.title")}</p>
         <p className="mt-1.5 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-secondary">
-          Tes cours, tes cartes et ton historique seront effacés. La même adresse
+          {t("app.settings.delete.body")}
           {email ? (
             <>
               {" "}
               (<span className="text-ink">{email}</span>)
             </>
-          ) : null}{" "}
-          pourra servir à un compte neuf, comme si tu commençais aujourd&apos;hui.
-          L&apos;abonnement déjà encaissé se gère plus haut, chez Apple ou Stripe.
+          ) : null}
         </p>
 
         {open ? (
           <div className="mt-4">
             <label htmlFor="delete-account-confirm" className="block text-[13px] text-ink-tertiary">
-              Écris <span className="font-medium text-ink">supprimer</span> pour confirmer.
+              {t("app.settings.delete.confirmLabel")}
             </label>
             <input
               id="delete-account-confirm"
@@ -72,7 +73,7 @@ export function DeleteAccount({ email }: { email: string }) {
                 onClick={confirm}
                 className="pressable rounded-button bg-negative px-4 py-2.5 text-[14px] font-semibold text-white disabled:opacity-40"
               >
-                {pending ? "Suppression…" : "Supprimer définitivement"}
+                {pending ? t("app.settings.delete.pending") : t("app.settings.delete.confirm")}
               </button>
               <button
                 type="button"
@@ -84,7 +85,7 @@ export function DeleteAccount({ email }: { email: string }) {
                 }}
                 className="pressable rounded-button px-3 py-2.5 text-[14px] text-ink-secondary"
               >
-                Annuler
+                {t("app.common.cancel")}
               </button>
             </div>
             {failure ? (
@@ -99,7 +100,7 @@ export function DeleteAccount({ email }: { email: string }) {
             onClick={() => setOpen(true)}
             className="pressable mt-4 text-[13.5px] font-medium text-negative"
           >
-            Supprimer mon compte
+            {t("app.settings.delete.open")}
           </button>
         )}
       </div>
