@@ -9,6 +9,13 @@ import {
 } from "./place";
 import { shouldOpenTour } from "./state";
 import { TOURS, TOUR_IDS, isTourId, stepsForWidth, tourFor } from "./steps";
+import { fr } from "../i18n/catalogs/fr";
+import { lookup, type MessageTree } from "../i18n/format";
+
+function stepCopy(step: { title: string; body: string }): string {
+  const tree = fr as unknown as MessageTree;
+  return `${lookup(tree, step.title) ?? step.title} ${lookup(tree, step.body) ?? step.body}`;
+}
 
 const OPEN = {
   isPaid: false,
@@ -78,7 +85,7 @@ describe("le catalogue des visites", () => {
   it("n'écrit ni tiret cadratin ni demi-cadratin", () => {
     for (const tour of TOURS) {
       for (const step of tour.steps) {
-        expect(`${step.title} ${step.body}`).not.toMatch(/[—–]/);
+        expect(stepCopy(step)).not.toMatch(/[—–]/);
       }
     }
   });
@@ -86,7 +93,7 @@ describe("le catalogue des visites", () => {
   it("tutoie, comme tout le reste du produit", () => {
     for (const tour of TOURS) {
       for (const step of tour.steps) {
-        expect(step.body.toLowerCase()).not.toMatch(/\bvous\b|\bvotre\b|\bvos\b/);
+        expect(stepCopy(step).toLowerCase()).not.toMatch(/\bvous\b|\bvotre\b|\bvos\b/);
       }
     }
   });
@@ -94,7 +101,7 @@ describe("le catalogue des visites", () => {
   it("ne parle pas de ce que le gratuit ferme", () => {
     for (const tour of TOURS) {
       for (const step of tour.steps) {
-        expect(`${step.title} ${step.body}`.toLowerCase()).not.toMatch(
+        expect(stepCopy(step).toLowerCase()).not.toMatch(
           /\bpro\b|abonn|gratuit|payant|essai|limite/,
         );
       }

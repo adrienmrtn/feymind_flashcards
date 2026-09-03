@@ -45,34 +45,34 @@ const HOME: Tour = {
     {
       anchor: "nav",
       desktopOnly: true,
-      title: "Le menu",
-      body: "Réviser, tes cours, tes examens. Tu reviens ici quand tu veux.",
+      title: "app.tour.home.nav.title",
+      body: "app.tour.home.nav.body",
     },
     {
       anchor: "nav-importer",
       desktopOnly: true,
-      title: "Importer un cours",
-      body: "Un PDF, des photos, du Word ou du texte collé. Micabo en fait une fiche à relire.",
+      title: "app.tour.home.import.title",
+      body: "app.tour.home.import.body",
     },
     {
       anchor: "taches",
-      title: "Tâches du jour",
-      body: "Ce que tu as à réviser aujourd'hui, cours par cours. La liste se remplit dès que tu as des cartes.",
+      title: "app.tour.home.tasks.title",
+      body: "app.tour.home.tasks.body",
     },
     {
       anchor: "semaine",
-      title: "Ta semaine",
-      body: "Un jour, une colonne. Tu vois ce que tu as révisé et ce qui arrive.",
+      title: "app.tour.home.week.title",
+      body: "app.tour.home.week.body",
     },
     {
       anchor: "examens",
-      title: "Tes examens",
-      body: "Pose une date, et Micabo fait passer les cartes du cours avant le jour J.",
+      title: "app.tour.home.exams.title",
+      body: "app.tour.home.exams.body",
     },
     {
       anchor: "amis",
-      title: "Tes amis",
-      body: "Ajoute tes camarades pour voir qui révise cette semaine.",
+      title: "app.tour.home.friends.title",
+      body: "app.tour.home.friends.body",
     },
   ],
 };
@@ -83,8 +83,8 @@ const REVIEW: Tour = {
   steps: [
     {
       anchor: "reviser-panneau",
-      title: "Ta session",
-      body: "Micabo choisit les cartes à revoir aujourd'hui et leur ordre. Tu n'as qu'à commencer.",
+      title: "app.tour.review.panel.title",
+      body: "app.tour.review.panel.body",
     },
   ],
 };
@@ -103,13 +103,13 @@ const SESSION: Tour = {
   steps: [
     {
       anchor: "session-reponse",
-      title: "Réponds de tête",
-      body: "Cherche la réponse, puis retourne la carte. La barre espace marche aussi.",
+      title: "app.tour.session.reveal.title",
+      body: "app.tour.session.reveal.body",
     },
     {
       anchor: "session-notes",
-      title: "Dis si c'était dur",
-      body: "Ta note décide quand la carte revient. Facile la repousse loin, Difficile la ramène vite.",
+      title: "app.tour.session.grades.title",
+      body: "app.tour.session.grades.body",
     },
   ],
 };
@@ -120,13 +120,13 @@ const COURSES: Tour = {
   steps: [
     {
       anchor: "cours-etagere",
-      title: "Ton étagère",
-      body: "Chaque cours importé se pose ici, avec sa fiche et son paquet de cartes.",
+      title: "app.tour.courses.shelf.title",
+      body: "app.tour.courses.shelf.body",
     },
     {
       anchor: "cours-ajouter",
-      title: "Ajouter un cours",
-      body: "PDF, Word, texte collé ou vidéo YouTube. Micabo lit, puis écrit la fiche.",
+      title: "app.tour.courses.add.title",
+      body: "app.tour.courses.add.body",
     },
   ],
 };
@@ -137,18 +137,18 @@ const SHEET: Tour = {
   steps: [
     {
       anchor: "fiche-texte",
-      title: "La fiche",
-      body: "Ton cours réécrit pour se relire vite. Elle s'imprime aussi, si tu révises sur papier.",
+      title: "app.tour.sheet.text.title",
+      body: "app.tour.sheet.text.body",
     },
     {
       anchor: "fiche-cartes",
-      title: "Les cartes",
-      body: "Micabo écrit les questions depuis cette fiche. C'est ce que tu réviseras.",
+      title: "app.tour.sheet.cards.title",
+      body: "app.tour.sheet.cards.body",
     },
     {
       anchor: "fiche-visibilite",
-      title: "Qui peut la retrouver",
-      body: "Ta fiche est à toi. Tu peux l'ouvrir à tes amis si tu veux la partager.",
+      title: "app.tour.sheet.visibility.title",
+      body: "app.tour.sheet.visibility.body",
     },
   ],
 };
@@ -159,18 +159,18 @@ const CARDS: Tour = {
   steps: [
     {
       anchor: "cartes-etats",
-      title: "Où en est le paquet",
-      body: "À revoir, jamais vues, en cours. Les trois états de tes cartes.",
+      title: "app.tour.cards.states.title",
+      body: "app.tour.cards.states.body",
     },
     {
       anchor: "cartes-generer",
-      title: "Écrire des cartes",
-      body: "Micabo en propose depuis la fiche. Tu gardes celles qui te vont.",
+      title: "app.tour.cards.generate.title",
+      body: "app.tour.cards.generate.body",
     },
     {
       anchor: "cartes-liste",
-      title: "Tes cartes",
-      body: "Tu peux corriger une question, sa réponse, ou en ajouter une à la main.",
+      title: "app.tour.cards.list.title",
+      body: "app.tour.cards.list.body",
     },
   ],
 };
@@ -181,13 +181,13 @@ const EXAMS: Tour = {
   steps: [
     {
       anchor: "examens-calendrier",
-      title: "Ton calendrier",
-      body: "Les dates posées s'écrivent sur le jour. Clique un jour pour en ajouter une.",
+      title: "app.tour.exams.calendar.title",
+      body: "app.tour.exams.calendar.body",
     },
     {
       anchor: "examens-ajouter",
-      title: "Ajouter un examen",
-      body: "Une date, les cours concernés, l'intensité. Micabo remonte les cartes avant l'examen.",
+      title: "app.tour.exams.add.title",
+      body: "app.tour.exams.add.body",
     },
   ],
 };
@@ -206,8 +206,8 @@ const FRIENDS: Tour = {
   steps: [
     {
       anchor: "amis-recherche",
-      title: "Trouver tes amis",
-      body: "Cherche un @, ou prends dans la liste de ton établissement.",
+      title: "app.tour.friends.search.title",
+      body: "app.tour.friends.search.body",
     },
   ],
 };
@@ -218,18 +218,18 @@ const PROFILE: Tour = {
   steps: [
     {
       anchor: "profil-chiffres",
-      title: "Ta série",
-      body: "Un jour révisé fait monter la série. Le nombre de cartes est juste à côté.",
+      title: "app.tour.profile.streak.title",
+      body: "app.tour.profile.streak.body",
     },
     {
       anchor: "profil-maitrise",
-      title: "Ton niveau",
-      body: "Tes cartes se rangent par maîtrise, des nouvelles à celles que tu sais par cœur.",
+      title: "app.tour.profile.mastery.title",
+      body: "app.tour.profile.mastery.body",
     },
     {
       anchor: "profil-passees",
-      title: "Cartes les plus passées",
-      body: "Celles qui reviennent le plus souvent. Souvent celles à reformuler.",
+      title: "app.tour.profile.top.title",
+      body: "app.tour.profile.top.body",
     },
   ],
 };
@@ -240,13 +240,13 @@ const SETTINGS: Tour = {
   steps: [
     {
       anchor: "reglages-toi",
-      title: "Ton rythme",
-      body: "Le temps que tu veux y passer chaque jour, et la longueur de tes fiches.",
+      title: "app.tour.settings.pace.title",
+      body: "app.tour.settings.pace.body",
     },
     {
       anchor: "reglages-langue",
-      title: "La langue des fiches",
-      body: "Micabo écrit tes fiches dans cette langue, quel que soit ton pays.",
+      title: "app.tour.settings.language.title",
+      body: "app.tour.settings.language.body",
     },
   ],
 };
@@ -257,8 +257,8 @@ const IMPORT: Tour = {
   steps: [
     {
       anchor: "importer-panneau",
-      title: "Dépose ton cours",
-      body: "Lâche un fichier dans la page, colle du texte, ou donne un lien YouTube. Micabo lit, puis écrit la fiche.",
+      title: "app.tour.import.drop.title",
+      body: "app.tour.import.drop.body",
     },
   ],
 };

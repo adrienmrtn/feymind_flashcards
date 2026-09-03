@@ -12,16 +12,18 @@ enum CourseSource: String, Codable, CaseIterable {
     /// Un paquet créé pour ses cartes, sans document derrière et sans fiche à écrire.
     case deck
 
-    var label: String {
+    var label: String { label(locale: .resolved()) }
+
+    func label(locale: UiLocale) -> String {
         switch self {
-        case .text: "Texte"
-        case .pdf: "PDF"
-        case .photo: "Photos"
-        case .docx: "Word"
-        case .youtube: "YouTube"
-        case .library: "Bibliothèque"
-        case .sample: "Exemple"
-        case .deck: "Cartes"
+        case .text: L10n.t("app.course.source.text", locale: locale)
+        case .pdf: L10n.t("app.course.source.pdf", locale: locale)
+        case .photo: L10n.t("app.course.source.photos", locale: locale)
+        case .docx: L10n.t("app.course.source.word", locale: locale)
+        case .youtube: L10n.t("app.course.source.video", locale: locale)
+        case .library: L10n.t("app.course.source.library", locale: locale)
+        case .sample: L10n.t("app.course.source.sample", locale: locale)
+        case .deck: L10n.t("app.course.source.deck", locale: locale)
         }
     }
 

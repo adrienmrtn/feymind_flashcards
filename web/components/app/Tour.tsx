@@ -15,6 +15,7 @@ import { bubblePlacement, holeAround, type Rect } from "@/lib/tour/place";
 import { TOUR_RECHECK_EVENT } from "@/lib/tour/signal";
 import { stepsForWidth, tourFor, type Tour, type TourStep } from "@/lib/tour/steps";
 import { shouldOpenTour } from "@/lib/tour/state";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * **La visite guidée du web.**
@@ -153,6 +154,7 @@ function TourRun({
   onFinish: () => void;
   onSkipAll: () => void;
 }) {
+  const { t } = useI18n();
   const steps = useVisibleSteps(tour);
   const [index, setIndex] = useState(0);
   const [passed, setPassed] = useState<readonly string[]>([]);
@@ -285,7 +287,7 @@ function TourRun({
             <button
               type="button"
               onClick={onFinish}
-              aria-label="Passer la visite de cette page"
+              aria-label={t("app.tour.skipPage")}
               className="pressable -mr-1.5 -mt-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
             >
               <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4">
@@ -302,10 +304,10 @@ function TourRun({
         ) : null}
 
         <h2 id="tour-title" className="text-[16px] font-semibold leading-snug text-ink">
-          {current.title}
+          {t(current.title)}
         </h2>
         <p id="tour-body" className="mt-1.5 text-[14px] leading-relaxed text-ink-secondary">
-          {current.body}
+          {t(current.body)}
         </p>
 
         <div className="mt-4 flex items-center justify-between gap-3">
@@ -315,7 +317,7 @@ function TourRun({
               onClick={onSkipAll}
               className="pressable text-[13px] font-medium text-ink-tertiary underline-offset-2 hover:underline"
             >
-              Passer la visite
+              {t("app.tour.skipAll")}
             </button>
           ) : (
             <span />
@@ -327,7 +329,11 @@ function TourRun({
             onClick={guided ? next : dismissHint}
             className="pressable flex h-10 items-center justify-center rounded-button bg-accent px-4 text-[14px] font-semibold text-on-ink"
           >
-            {guided ? (index + 1 >= steps.length ? "Terminer" : "Suivant") : "Compris"}
+            {guided
+              ? index + 1 >= steps.length
+                ? t("app.tour.finish")
+                : t("app.tour.next")
+              : t("app.tour.gotIt")}
           </button>
         </div>
       </div>

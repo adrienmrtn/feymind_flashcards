@@ -102,13 +102,17 @@ final class Exam {
     }
 
     /// « demain », « J-5 », « aujourd'hui ». Le compte à rebours est ce qu'on lit en premier.
-    func countdownLabel(from now: Date = Date(), calendar: Calendar = MicaboCalendar.shared) -> String {
+    func countdownLabel(
+        from now: Date = Date(),
+        calendar: Calendar = MicaboCalendar.shared,
+        locale: UiLocale = .resolved()
+    ) -> String {
         let days = daysRemaining(from: now, calendar: calendar)
         switch days {
-        case ..<0: return "passé"
-        case 0: return "aujourd'hui"
-        case 1: return "demain"
-        default: return "J-\(days)"
+        case ..<0: return L10n.t("app.exams.countdown.past", locale: locale)
+        case 0: return L10n.t("app.exams.countdown.today", locale: locale)
+        case 1: return L10n.t("app.exams.countdown.tomorrow", locale: locale)
+        default: return L10n.t("app.exams.countdown.inDays", locale: locale, vars: ["days": "\(days)"])
         }
     }
 }
@@ -170,7 +174,7 @@ struct ExamScheduleBackup: Codable, Equatable {
 enum MicaboCalendar {
     static let shared: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.locale = Locale(identifier: "fr_FR")
+        calendar.locale = UiLocale.resolved().foundation
         calendar.firstWeekday = 2
         return calendar
     }()
@@ -181,7 +185,7 @@ enum MicaboCalendar {
     /// « mardi 8 septembre », sans l'année quand c'est cette année-ci.
     static func dayLabel(_ date: Date, from reference: Date = Date()) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = UiLocale.resolved().foundation
         formatter.calendar = shared
         let sameYear = shared.component(.year, from: date) == shared.component(.year, from: reference)
         formatter.setLocalizedDateFormatFromTemplate(sameYear ? "EEEE d MMMM" : "EEEE d MMMM yyyy")
@@ -191,7 +195,7 @@ enum MicaboCalendar {
     /// « 8 sept. », pour les endroits étroits.
     static func shortDayLabel(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = UiLocale.resolved().foundation
         formatter.calendar = shared
         formatter.setLocalizedDateFormatFromTemplate("d MMM")
         return formatter.string(from: date)
@@ -200,7 +204,7 @@ enum MicaboCalendar {
     /// « Septembre 2026 », en tête du calendrier.
     static func monthLabel(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = UiLocale.resolved().foundation
         formatter.calendar = shared
         formatter.setLocalizedDateFormatFromTemplate("MMMM yyyy")
         return formatter.string(from: date).capitalizedFirstLetter
