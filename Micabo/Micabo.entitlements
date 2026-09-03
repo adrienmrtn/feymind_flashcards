@@ -2,14 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!--
-	La connexion Apple.
-
-	Cette clé ne suffit pas à elle seule : la capacité « Sign in with Apple » doit aussi être
-	cochée sur l'identifiant d'app dans le portail développeur, sinon la signature échoue avec
-	un message qui ne parle pas d'Apple Sign In. Les étapes complètes sont dans le README,
-	section « Activer Apple et Google ».
-	-->
 	<key>com.apple.developer.applesignin</key>
 	<array>
 		<string>Default</string>
