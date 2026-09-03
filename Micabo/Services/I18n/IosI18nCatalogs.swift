@@ -175,7 +175,7 @@ enum IosI18nCatalogs {
         "ios.genStepPlan": "Repérage du plan",
         "ios.genStepLayout": "Mise en page",
         "ios.genStepCheckAnswers": "Vérification des réponses",
-    }
+    ]
 
     static let de: [String: String] = [
         "ios.welcomeTitle": "Lerne alles,\nschneller.",
@@ -352,7 +352,7 @@ enum IosI18nCatalogs {
         "ios.genStepPlan": "Gliederung finden",
         "ios.genStepLayout": "Layout",
         "ios.genStepCheckAnswers": "Antworten prüfen",
-    }
+    ]
 
     static let es: [String: String] = [
         "ios.welcomeTitle": "Aprende todo,\nmás rápido.",
@@ -529,7 +529,7 @@ enum IosI18nCatalogs {
         "ios.genStepPlan": "Localización del plan",
         "ios.genStepLayout": "Maquetación",
         "ios.genStepCheckAnswers": "Comprobación de las respuestas",
-    }
+    ]
 
     static let tr: [String: String] = [
         "ios.welcomeTitle": "Her şeyi öğren,\ndaha hızlı.",
@@ -706,7 +706,7 @@ enum IosI18nCatalogs {
         "ios.genStepPlan": "Plan bulunuyor",
         "ios.genStepLayout": "Sayfa düzeni",
         "ios.genStepCheckAnswers": "Yanıtların kontrolü",
-    }
+    ]
 
     static func table(for locale: String) -> [String: String] {
         switch locale {
