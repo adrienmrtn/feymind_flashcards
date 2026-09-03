@@ -14,6 +14,13 @@ enum StudyMotion {
     static let next = Animation.timingCurve(0.3, 0, 0.2, 1, duration: 0.22)
     /// Retournement de la carte. Un peu plus long : il y a quelque chose à lire au bout.
     static let reveal = Animation.timingCurve(0.25, 0.8, 0.25, 1, duration: 0.3)
+    /// La sortante s'efface en reculant, l'entrante arrive du bas : sans transition
+    /// déclarée, le changement d'identité ne donnait qu'un fondu, et un fondu ne dit
+    /// pas qu'on a avancé d'une carte.
+    static let cardChange: AnyTransition = .asymmetric(
+        insertion: .opacity.combined(with: .offset(y: 16)),
+        removal: .opacity.combined(with: .scale(scale: 0.97))
+    )
 }
 
 /// Une session de révision : la file du jour, carte après carte.
@@ -102,14 +109,7 @@ struct StudyView: View {
                     finish()
                 }
             } else {
-                headerBar
-                if session.current != nil {
-                    cardArea
-                    controls
-                } else {
-                    Color.clear
-                        .onAppear { session.advance(now: Date()) }
-                }
+                studySession
             }
         }
         .micaboScreenBackground()
@@ -244,49 +244,72 @@ struct StudyView: View {
         .background(background, in: Capsule())
     }
 
+    @ViewBuilder
+    private var studySession: some View {
+        headerBar
+        if session.current != nil {
+            cardArea
+            controls
+        } else {
+            Color.clear
+                .onAppear { session.advance(now: Date()) }
+        }
+    }
+
     // MARK: - Carte
 
     private var cardArea: some View {
-        Group {
-            if let card = session.current {
-                StudyCardFace(
-                    card: card,
-                    showAnswer: session.isRevealed,
-                    isHintVisible: showHint,
-                    onToggleHint: toggleHint,
-                    selectedChoice: selectedChoice,
-                    onSelectChoice: selectChoice
-                )
-                .id(card.id)
-                // La sortante s'efface en reculant, l'entrante arrive du bas : sans
-                // transition déclarée, le changement d'identité ne donnait qu'un fondu, et un
-                // fondu ne dit pas qu'on a avancé d'une carte.
-                .transition(
-                    .asymmetric(
-                        insertion: .opacity.combined(with: .offset(y: 16)),
-                        removal: .opacity.combined(with: .scale(scale: 0.97))
-                    )
-                )
-                .onTapGesture {
-                    withAnimation(StudyMotion.reveal) {
-                        session.reveal()
-                    }
-                }
-                .accessibilityAddTraits(.isButton)
-                .accessibilityHint(session.isRevealed
-                    ? (i18n?.t("app.session.answerVisible") ?? "Réponse visible")
-                    : (i18n?.t("app.session.showAnswerHint") ?? "Affiche la réponse"))
-                .accessibilityLabel(session.isRevealed
-                    ? (i18n?.t("app.session.cardAnswer") ?? "Carte, réponse")
-                    : (i18n?.t("app.session.cardQuestion") ?? "Carte, question"))
+        currentCard
+            .padding(.horizontal, MicaboSpacing.screen)
+            .frame(maxHeight: .infinity)
+            .onChange(of: session.current?.id) { _, _ in
+                showHint = false
+                selectedChoice = nil
             }
+    }
+
+    @ViewBuilder
+    private var currentCard: some View {
+        if let card = session.current {
+            studyCard(card)
         }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .frame(maxHeight: .infinity)
-        .onChange(of: session.current?.id) { _, _ in
-            showHint = false
-            selectedChoice = nil
+    }
+
+    private func studyCard(_ card: Flashcard) -> some View {
+        StudyCardFace(
+            card: card,
+            showAnswer: session.isRevealed,
+            isHintVisible: showHint,
+            onToggleHint: toggleHint,
+            selectedChoice: selectedChoice,
+            onSelectChoice: selectChoice
+        )
+        .id(card.id)
+        .transition(StudyMotion.cardChange)
+        .onTapGesture(perform: revealCurrent)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint(cardAccessibilityHint)
+        .accessibilityLabel(cardAccessibilityLabel)
+    }
+
+    private func revealCurrent() {
+        withAnimation(StudyMotion.reveal) {
+            session.reveal()
         }
+    }
+
+    private var cardAccessibilityHint: String {
+        if session.isRevealed {
+            return i18n?.t("app.session.answerVisible") ?? "Réponse visible"
+        }
+        return i18n?.t("app.session.showAnswerHint") ?? "Affiche la réponse"
+    }
+
+    private var cardAccessibilityLabel: String {
+        if session.isRevealed {
+            return i18n?.t("app.session.cardAnswer") ?? "Carte, réponse"
+        }
+        return i18n?.t("app.session.cardQuestion") ?? "Carte, question"
     }
 
     private func toggleHint() {
