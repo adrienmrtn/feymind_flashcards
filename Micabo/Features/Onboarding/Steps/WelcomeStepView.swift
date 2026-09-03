@@ -97,21 +97,19 @@ struct WelcomeStepView: View {
     }
 
     private var loginSheet: some View {
-        VStack(spacing: MicaboSpacing.md) {
-            SignInFailureNote()
-
-            if checkingAccount {
-                ProgressView()
-            }
-
-            Spacer(minLength: 0)
-
-            SignInProviderButtons()
-        }
-        .padding(MicaboSpacing.screen)
-        .padding(.top, MicaboSpacing.xl)
+        SignInScreen(
+            placement: .sheet,
+            onDismiss: { showLogin = false },
+            onCreateAccount: {
+                showLogin = false
+                model.advance()
+            },
+            isResolving: checkingAccount
+        )
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
+        .presentationCornerRadius(MicaboRadius.sheet)
+        .presentationBackground(MicaboColor.canvas)
         .interactiveDismissDisabled(auth.isWorking || checkingAccount)
     }
 

@@ -90,6 +90,12 @@ final class OnboardingFlowTests: XCTestCase {
             let title = provider.title(t: { L10n.t($0, locale: .fr) })
             XCTAssertTrue(title.hasPrefix("Continuer avec"), "\(provider) doit dire ce qu'il fait")
         }
+
+        XCTAssertEqual(L10n.t("onboarding.connexionTitle", locale: .fr), "Content de te revoir.")
+        XCTAssertEqual(L10n.t("onboarding.or", locale: .fr), "ou")
+        XCTAssertEqual(L10n.t("onboarding.sendLink", locale: .fr), "Recevoir un lien")
+        XCTAssertFalse(PaywallLinks.terms.isEmpty)
+        XCTAssertFalse(PaywallLinks.privacy.isEmpty)
     }
 
     /// Passer la connexion referme la porte du compte : sans la clé partagée, l'app
