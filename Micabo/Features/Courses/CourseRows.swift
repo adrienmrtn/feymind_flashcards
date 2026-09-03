@@ -25,7 +25,10 @@ extension MicaboRow {
             tile: MicaboTile.course(course),
             title: course.title,
             subtitle: course.subject?.nilIfBlank,
-            accessory: .badge("\(dueCount) à réviser", .accent),
+            accessory: .badge(
+                L10n.t("app.courses.dueBadge", locale: .resolved(), vars: ["count": "\(dueCount)"]),
+                .accent
+            ),
             action: action
         )
     }
@@ -44,11 +47,14 @@ enum CourseRowLabels {
     static func accessory(stats: CourseStats?) -> MicaboRowAccessory {
         guard let stats else { return .chevron }
         if stats.dueCount > 0 {
-            return .badge("\(stats.dueCount) à réviser", .accent)
+            return .badge(
+                L10n.t("app.courses.dueBadge", locale: .resolved(), vars: ["count": "\(stats.dueCount)"]),
+                .accent
+            )
         }
         if stats.cardCount == 0 {
-            return .badge("vide", .neutral)
+            return .badge(L10n.t("app.courses.emptyBadge", locale: .resolved()), .neutral)
         }
-        return .badge("à jour", .neutral)
+        return .badge(L10n.t("app.courses.upToDate", locale: .resolved()), .neutral)
     }
 }

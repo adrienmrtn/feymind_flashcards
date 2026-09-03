@@ -16,6 +16,7 @@ struct FlashcardsView: View {
     @Environment(\.aiService) private var aiService
     @Environment(\.dismiss) private var dismiss
     @Environment(ProAccess.self) private var pro: ProAccess?
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var duePreview: CourseDuePreview
     @State private var loadedCards: [Flashcard]?
@@ -109,41 +110,46 @@ struct FlashcardsView: View {
         .overlay {
             if isGenerating {
                 GenerationOverlay(
-                    title: "Nouvelles cartes",
-                    steps: ["Relecture de la fiche", "Choix des notions", "Rédaction", "Vérification"]
+                    title: i18n?.t("ios.newCardsTitle") ?? "Nouvelles cartes",
+                    steps: [
+                        i18n?.t("ios.genStepRead") ?? "Relecture de la fiche",
+                        i18n?.t("ios.genStepPick") ?? "Choix des notions",
+                        i18n?.t("ios.genStepWrite") ?? "Rédaction",
+                        i18n?.t("ios.genStepCheck") ?? "Vérification"
+                    ]
                 )
             }
         }
-        .alert("Oups", isPresented: .constant(errorMessage != nil)) {
-            Button("Fermer", role: .cancel) { errorMessage = nil }
+        .alert(i18n?.t("app.common.oops") ?? "Oups", isPresented: .constant(errorMessage != nil)) {
+            Button(i18n?.t("app.a11y.close") ?? "Fermer", role: .cancel) { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "")
         }
         .confirmationDialog(
-            "Supprimer cette carte ?",
+            i18n?.t("ios.deleteCardQ") ?? "Supprimer cette carte ?",
             isPresented: Binding(
                 get: { cardPendingDelete != nil },
                 set: { if !$0 { cardPendingDelete = nil } }
             ),
             titleVisibility: .visible
         ) {
-            Button("Supprimer la carte", role: .destructive) {
+            Button(i18n?.t("ios.deleteCard") ?? "Supprimer la carte", role: .destructive) {
                 if let card = cardPendingDelete { delete(card) }
                 cardPendingDelete = nil
             }
-            Button("Annuler", role: .cancel) { cardPendingDelete = nil }
+            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { cardPendingDelete = nil }
         } message: {
-            Text("Elle disparaît de ce cours. Tu ne pourras pas la récupérer.")
+            Text(i18n?.t("ios.deleteCardMsg") ?? "Elle disparaît de ce cours. Tu ne pourras pas la récupérer.")
         }
         .confirmationDialog(
-            "Réinitialiser la progression ?",
+            i18n?.t("ios.resetProgressQ") ?? "Réinitialiser la progression ?",
             isPresented: $confirmReset,
             titleVisibility: .visible
         ) {
-            Button("Tout recommencer", role: .destructive) { resetProgress() }
-            Button("Annuler", role: .cancel) {}
+            Button(i18n?.t("ios.resetProgress") ?? "Tout recommencer", role: .destructive) { resetProgress() }
+            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) {}
         } message: {
-            Text("L'historique de révision de ces cartes est effacé. Les cartes restent.")
+            Text(i18n?.t("ios.resetProgressMsg") ?? "L'historique de révision de ces cartes est effacé. Les cartes restent.")
         }
     }
 
@@ -161,7 +167,10 @@ struct FlashcardsView: View {
             }
 
             if dueCount > 0 {
-                MicaboBadge(text: "\(dueCount) à réviser", tone: .accent)
+                MicaboBadge(
+                    text: i18n?.t("app.courses.dueBadge", ["count": "\(dueCount)"]) ?? "\(dueCount) à réviser",
+                    tone: .accent
+                )
             }
         }
         .padding(.top, MicaboSpacing.xs)
@@ -183,30 +192,30 @@ struct FlashcardsView: View {
                 }
             }
             Button { isCreating = true } label: {
-                Label("Ajouter une carte", systemImage: "plus")
+                Label(i18n?.t("ios.addCard") ?? "Ajouter une carte", systemImage: "plus")
             }
             Button { isMasking = true } label: {
-                Label("Masquer un schéma", systemImage: "rectangle.dashed")
+                Label(i18n?.t("ios.maskFigure") ?? "Masquer un schéma", systemImage: "rectangle.dashed")
             }
             if canGenerate {
                 Button { showCardOptions = true } label: {
-                    Label("Générer avec l'IA", systemImage: "sparkles")
+                    Label(i18n?.t("ios.generateAI") ?? "Générer avec l'IA", systemImage: "sparkles")
                 }
             }
             if canAddReverseCards {
                 Button { addReverseCards() } label: {
-                    Label("Ajouter les cartes inverses", systemImage: "arrow.left.arrow.right")
+                    Label(i18n?.t("ios.addReverse") ?? "Ajouter les cartes inverses", systemImage: "arrow.left.arrow.right")
                 }
             }
             if !cards.isEmpty {
                 Button { confirmReset = true } label: {
-                    Label("Réinitialiser la progression", systemImage: "arrow.counterclockwise")
+                    Label(i18n?.t("ios.resetProgressAction") ?? "Réinitialiser la progression", systemImage: "arrow.counterclockwise")
                 }
             }
         } label: {
             MicaboCircleIcon(systemImage: "ellipsis", size: 38)
         }
-        .accessibilityLabel("Actions des cartes")
+        .accessibilityLabel(i18n?.t("ios.cardActions") ?? "Actions des cartes")
     }
 
     // MARK: - Session
@@ -217,7 +226,7 @@ struct FlashcardsView: View {
     /// libre au lieu de promettre une révision, et il porte son cadenas.
     private var sessionButtonTitle: String {
         if dueCount > 0 { return MicaboCopy.reviewButton(count: dueCount) }
-        if heldBackNewCards > 0 { return "Réviser" }
+        if heldBackNewCards > 0 { return i18n?.t("nav.review") ?? "Réviser" }
         return MicaboCopy.practiceReview()
     }
 
@@ -258,9 +267,9 @@ struct FlashcardsView: View {
         } else if cards.isEmpty {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
-                title: "Aucune carte",
+                title: i18n?.t("ios.cardsNone") ?? "Aucune carte",
                 message: emptyMessage,
-                actionTitle: canGenerate ? MicaboCopy.cardsButton() : "Écrire une carte"
+                actionTitle: canGenerate ? MicaboCopy.cardsButton() : (i18n?.t("ios.writeCard") ?? "Écrire une carte")
             ) {
                 if canGenerate {
                     showCardOptions = true
@@ -270,7 +279,7 @@ struct FlashcardsView: View {
             }
         } else {
             VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: "Cartes · \(cards.count)")
+                MicaboSectionCaption(text: i18n?.t("ios.cardsSection", ["count": "\(cards.count)"]) ?? "Cartes · \(cards.count)")
 
                 LazyVStack(spacing: 0) {
                     ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
@@ -304,10 +313,10 @@ struct FlashcardsView: View {
                         .buttonStyle(MicaboRowButtonStyle())
                         .contextMenu {
                             Button { editingCard = card } label: {
-                                Label("Modifier", systemImage: "pencil")
+                                Label(i18n?.t("ios.edit") ?? "Modifier", systemImage: "pencil")
                             }
                             Button(role: .destructive) { cardPendingDelete = card } label: {
-                                Label("Supprimer", systemImage: "trash")
+                                Label(i18n?.t("app.common.delete") ?? "Supprimer", systemImage: "trash")
                             }
                         }
 
@@ -322,8 +331,8 @@ struct FlashcardsView: View {
     }
 
     private var emptyMessage: String {
-        guard canGenerate else { return "Écris ta première carte." }
-        return "Génère-les, ou écris-en une."
+        guard canGenerate else { return i18n?.t("ios.writeFirstCard") ?? "Écris ta première carte." }
+        return i18n?.t("ios.generateOrWrite") ?? "Génère-les, ou écris-en une."
     }
 
     /// Ce que la rangée signale d'un coup d'œil : format, son, sens inverse.

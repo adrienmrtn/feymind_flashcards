@@ -10,6 +10,7 @@ import SwiftUI
 struct ExamsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(TabRouter.self) private var router: TabRouter?
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
@@ -85,11 +86,11 @@ struct ExamsView: View {
                     }
 
                     if !upcoming.isEmpty {
-                        section(title: "À venir", exams: upcoming)
+                        section(title: i18n?.t("app.exams.upcoming") ?? "À venir", exams: upcoming)
                     }
 
                     if !past.isEmpty {
-                        section(title: "Passés", exams: past)
+                        section(title: i18n?.t("app.exams.past") ?? "Passés", exams: past)
                     }
 
                     if exams.isEmpty {
@@ -114,7 +115,7 @@ struct ExamsView: View {
                             HStack(spacing: MicaboSpacing.xs) {
                                 Image(systemName: "plus")
                                     .font(.system(size: 13, weight: .semibold))
-                                Text("Ajouter un examen")
+                                Text(i18n?.t("app.exams.add") ?? "Ajouter un examen")
                             }
                         }
                         .buttonStyle(MicaboPrimaryButtonStyle())
@@ -133,19 +134,19 @@ struct ExamsView: View {
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(MicaboRadius.sheet)
         }
-        .alert("Oups", isPresented: .constant(errorMessage != nil)) {
-            Button("Fermer", role: .cancel) { errorMessage = nil }
+        .alert(i18n?.t("app.common.oops") ?? "Oups", isPresented: .constant(errorMessage != nil)) {
+            Button(i18n?.t("app.a11y.close") ?? "Fermer", role: .cancel) { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "")
         }
         .confirmationDialog(
-            "Supprimer cet examen ?",
+            i18n?.t("app.exams.deleteQ") ?? "Supprimer cet examen ?",
             isPresented: .constant(pendingDeletion != nil),
             titleVisibility: .visible,
             presenting: pendingDeletion
         ) { exam in
-            Button("Supprimer", role: .destructive) { delete(exam) }
-            Button("Annuler", role: .cancel) { pendingDeletion = nil }
+            Button(i18n?.t("app.common.delete") ?? "Supprimer", role: .destructive) { delete(exam) }
+            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { pendingDeletion = nil }
         } message: { exam in
             Text(deletionWarning(for: exam))
         }
@@ -154,13 +155,15 @@ struct ExamsView: View {
     // MARK: - En-tête
 
     private var header: some View {
-        MicaboScreenHeader(title: "Examens", eyebrow: headerEyebrow)
+        MicaboScreenHeader(title: i18n?.t("nav.exams") ?? "Examens", eyebrow: headerEyebrow)
             .padding(.top, MicaboSpacing.xs)
     }
 
     private var headerEyebrow: String {
         guard let next = upcoming.first else {
-            return exams.isEmpty ? "Aucun examen" : "Rien à venir"
+            return exams.isEmpty
+                ? (i18n?.t("app.exams.none") ?? "Aucun examen")
+                : (i18n?.t("app.exams.nothingUpcoming") ?? "Rien à venir")
         }
         return "\(next.name) · \(next.countdownLabel(from: today, calendar: calendar))"
     }
@@ -172,7 +175,7 @@ struct ExamsView: View {
             HStack(alignment: .firstTextBaseline) {
                 MicaboSectionCaption(text: MicaboCalendar.dayLabel(selectedDay ?? today))
                 Spacer(minLength: MicaboSpacing.xs)
-                Button("Fermer") {
+                Button(i18n?.t("app.a11y.close") ?? "Fermer") {
                     withAnimation(.easeOut(duration: 0.2)) { selectedDay = nil }
                 }
                 .font(MicaboFont.hanken(13, weight: .semibold))
@@ -184,7 +187,7 @@ struct ExamsView: View {
                 // Pas de bouton ici : celui du bas prend déjà le jour sélectionné comme
                 // date. Deux boutons pour la même action à trois centimètres d'écart font
                 // douter qu'ils fassent la même chose.
-                MicaboSectionFootnote(text: "Rien ce jour-là. « Ajouter un examen » le placera à cette date.")
+                MicaboSectionFootnote(text: i18n?.t("app.exams.emptyDay") ?? "Rien ce jour-là. « Ajouter un examen » le placera à cette date.")
             } else {
                 rows(selectedExams)
             }
@@ -270,20 +273,20 @@ struct ExamsView: View {
             Button {
                 editing = ExamEdition(exam: exam, date: exam.date)
             } label: {
-                Label("Modifier", systemImage: "pencil")
+                Label(i18n?.t("ios.edit") ?? "Modifier", systemImage: "pencil")
             }
             if exam.isPlanned {
                 Button { unplan(exam) } label: {
-                    Label("Rendre le planning normal", systemImage: "arrow.uturn.backward")
+                    Label(i18n?.t("app.exams.unplan") ?? "Rendre le planning normal", systemImage: "arrow.uturn.backward")
                 }
             } else if !isPast {
                 Button { replan(exam) } label: {
-                    Label("Replanifier les révisions", systemImage: "calendar.badge.clock")
+                    Label(i18n?.t("app.exams.replan") ?? "Replanifier les révisions", systemImage: "calendar.badge.clock")
                 }
             }
             Divider()
             Button(role: .destructive) { pendingDeletion = exam } label: {
-                Label("Supprimer", systemImage: "trash")
+                Label(i18n?.t("app.common.delete") ?? "Supprimer", systemImage: "trash")
             }
         }
     }
@@ -298,7 +301,7 @@ struct ExamsView: View {
             parts.append(MicaboCopy.courses(count))
         }
         if !exam.isPlanned, !exam.isPast(from: today, calendar: calendar) {
-            parts.append("planning normal")
+            parts.append(i18n?.t("app.exams.normalPlan") ?? "planning normal")
         }
         return parts.joined(separator: " · ")
     }
@@ -324,15 +327,15 @@ struct ExamsView: View {
         if canPlan {
             MicaboEmptyState(
                 systemImage: "calendar",
-                title: "Aucune date",
-                message: "Ajoute un examen pour ranger tes cartes."
+                title: i18n?.t("app.exams.emptyTitle") ?? "Aucune date",
+                message: i18n?.t("app.exams.emptyBody") ?? "Ajoute un examen pour ranger tes cartes."
             )
         } else if courses.isEmpty {
             MicaboEmptyState(
                 systemImage: "calendar.badge.plus",
-                title: "Un cours d'abord",
-                message: "Importe un cours, puis pose ta date.",
-                actionTitle: "Importer"
+                title: i18n?.t("app.exams.needCourseTitle") ?? "Un cours d'abord",
+                message: i18n?.t("app.exams.needCourseBody") ?? "Importe un cours, puis pose ta date.",
+                actionTitle: i18n?.t("ios.importAction") ?? "Importer"
             ) {
                 router?.requestCourseImport()
             }
@@ -342,8 +345,8 @@ struct ExamsView: View {
             // ici enverrait chercher un deuxième cours pour un problème qui n'en est pas un.
             MicaboEmptyState(
                 systemImage: "calendar.badge.plus",
-                title: "Des cartes d'abord",
-                message: "Génère des cartes dans un cours, puis reviens."
+                title: i18n?.t("app.exams.needCardsTitle") ?? "Des cartes d'abord",
+                message: i18n?.t("app.exams.needCardsBody") ?? "Génère des cartes dans un cours, puis reviens."
             )
         }
     }
@@ -421,8 +424,10 @@ struct ExamsView: View {
 
     private func deletionWarning(for exam: Exam) -> String {
         exam.isPlanned
-            ? "Les révisions replanifiées pour « \(exam.name) » retrouveront leurs échéances d'avant."
-            : "« \(exam.name) » sera retiré du calendrier."
+            ? (i18n?.t("app.exams.deletePlanned", ["name": exam.name])
+                ?? "Les révisions replanifiées pour « \(exam.name) » retrouveront leurs échéances d'avant.")
+            : (i18n?.t("app.exams.deletePlain", ["name": exam.name])
+                ?? "« \(exam.name) » sera retiré du calendrier.")
     }
 }
 
