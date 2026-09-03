@@ -1,5 +1,6 @@
 import type { Catalog } from "./fr";
 import { appEs, copyEs } from "./app-es";
+import { legalEs } from "./legal-es";
 
 export const es: Catalog = {
   locale: {
@@ -380,4 +381,5 @@ export const es: Catalog = {
   },
   app: appEs,
   copy: copyEs,
+  legal: legalEs,
 };

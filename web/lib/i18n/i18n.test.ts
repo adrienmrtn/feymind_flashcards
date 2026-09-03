@@ -97,6 +97,20 @@ describe("catalogues", () => {
     }
   });
 
+  it("traduit les pages de droit", () => {
+    const tTr = makeTranslator("tr", CATALOGS.tr as unknown as MessageTree, fr as unknown as MessageTree);
+    const tDe = makeTranslator("de", CATALOGS.de as unknown as MessageTree, fr as unknown as MessageTree);
+    const tEs = makeTranslator("es", CATALOGS.es as unknown as MessageTree, fr as unknown as MessageTree);
+    expect(tTr("legal.privacy.heading")).toBe("Gizlilik politikası");
+    expect(tTr("legal.terms.heading")).toBe("Kullanım koşulları");
+    expect(tDe("legal.privacy.heading")).toBe("Datenschutzrichtlinie");
+    expect(tEs("legal.terms.heading")).toBe("Condiciones de uso");
+    expect(tTr("legal.privacy.heading")).not.toMatch(/Politique|Confidentialité/);
+    expect(tDe("legal.terms.lawBody")).toMatch(/französischen|französischem/);
+    expect(lookup(CATALOGS.fr as unknown as MessageTree, "legal.privacy.intro1")).toContain("[[site]]");
+    expect(lookup(CATALOGS.tr as unknown as MessageTree, "legal.privacy.intro1")).toContain("[[site]]");
+  });
+
   it("traduit le paywall et le mode examen en turc", () => {
     const t = makeTranslator("tr", CATALOGS.tr as unknown as MessageTree, fr as unknown as MessageTree);
     expect(t("app.paywall.yearly")).toBe("Yıllık");

@@ -1,5 +1,6 @@
 import type { Catalog } from "./fr";
 import { appTr, copyTr } from "./app-tr";
+import { legalTr } from "./legal-tr";
 
 export const tr: Catalog = {
   locale: {
@@ -380,4 +381,5 @@ export const tr: Catalog = {
   },
   app: appTr,
   copy: copyTr,
+  legal: legalTr,
 };
