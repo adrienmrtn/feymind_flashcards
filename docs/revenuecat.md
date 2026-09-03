@@ -320,11 +320,20 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
    `checkout.session.completed`, `customer.subscription.created`,
    `customer.subscription.updated`, `customer.subscription.deleted`,
    `invoice.paid`, `invoice.payment_failed`.
-4. Dans RevenueCat, **Products** : les six prix Stripe apparaissent avec leur
-   `price_…` (pas l'identifiant Apple). Les neuf lignes — App Store + Stripe EUR
-   + Stripe TRY — se rattachent à l'entitlement `pro`. Le discount Stripe aussi,
-   dans les deux devises. **Sans les trois `price_…` TRY attachés à `pro`,
-   Checkout encaisse en ₺ et le webhook ne pose pas le droit.**
+4. Dans RevenueCat, **Products** : les prix Stripe se posent **à la main**,
+   pas par Import. Import interroge App Store Connect (ou, côté Stripe, les
+   `prod_…` déjà liés). Un second prix TRY sur un produit déjà importé n'est
+   **pas** un nouveau produit : le bouton rend « No new products were found ».
+   C'est le résultat attendu.
+
+   Pour chaque `price_…` TRY (et EUR s'ils manquent) : **+ New** → store
+   **Stripe** → identifier = le `price_…` **exact** → Save. Puis
+   Entitlements → `pro` → y attacher les neuf lignes. **Sans les trois
+   `price_…` TRY sur `pro`, Checkout encaisse en ₺ et le webhook ne pose
+   pas le droit** — sauf si RC identifie encore tes offres par `prod_…`
+   (ancien modèle) : dans ce cas le même produit Stripe ouvre déjà `pro`,
+   et les lignes `price_…` restent à poser pour que les graphiques et les
+   exports ne mélangent pas l'euro et la livre.
 5. **Le pont d'identité**, et c'est la seule ligne qui compte : dans
    `web/lib/actions/checkout.ts`, `client_reference_id` porte déjà `user.id` (Supabase).
    RevenueCat lit ce champ et pose le customer Stripe sous **ce** `app_user_id`. Si on
@@ -449,9 +458,16 @@ française voit des ₺ et paie des ₺.
 
 **Ce qu'il reste à faire**
 
-1. **RevenueCat** — importer les trois `price_…` TRY et les attacher à
-   l'entitlement `pro`. Sans ça, Stripe encaisse et le webhook ne pose
-   pas le droit. Pas de second entitlement.
+1. **RevenueCat** — **+ New**, pas Import. Trois fois, store Stripe,
+   identifier collé tel quel, puis attacher à `pro`. Import ne les
+   trouvera jamais : ce sont des prix, pas des produits App Store, et
+   ils vivent sur des `prod_…` déjà connus. Pas de second entitlement.
+
+   | Offre | Identifier à coller |
+   | --- | --- |
+   | Annuel TRY | `price_1UBgT347TFrcO0lvNrHwbsOw` |
+   | Hebdomadaire TRY | `price_1UBgTC47TFrcO0lv1uQcZggk` |
+   | Annuel discount TRY | `price_1UBgTD47TFrcO0lvrOl7Z892` |
 2. **iOS** — `storeProduct.localizedPriceString` (étape 8). Le catalogue
    TRY reste le repli jusqu'à ce que le SDK réponde. Pas de nouveau
    Product ID Apple : Turkey est un palier du même `com.micabo…`.
