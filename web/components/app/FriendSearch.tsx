@@ -7,6 +7,7 @@ import { displayUsername } from "@micabo/core";
 
 import { FriendActions } from "@/components/app/FriendActions";
 import { searchPeople } from "@/lib/actions/social";
+import { useI18n } from "@/lib/i18n/client";
 import type { DirectoryPerson } from "@/lib/social";
 
 /**
@@ -14,6 +15,7 @@ import type { DirectoryPerson } from "@/lib/social";
  * comme sur l'iPhone : une frappe ne doit pas faire dix allers-retours.
  */
 export function FriendSearch() {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryPerson[]>([]);
   const [busy, setBusy] = useState(false);
@@ -40,7 +42,7 @@ export function FriendSearch() {
 
   return (
     <section>
-      <p className="eyebrow mb-3 text-ink-tertiary">Ajouter quelqu&apos;un</p>
+      <p className="eyebrow mb-3 text-ink-tertiary">{t("app.friends.addSomeone")}</p>
       <div className="flex h-12 items-center rounded-button bg-surface-muted px-4">
         <span className="pr-1 text-[15px] font-semibold text-ink-tertiary">@</span>
         <input
@@ -48,7 +50,7 @@ export function FriendSearch() {
           onChange={(event) => setQuery(event.target.value)}
           spellCheck={false}
           autoCapitalize="none"
-          placeholder="nom d'utilisateur"
+          placeholder={t("app.friends.usernamePlaceholder")}
           className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
         />
         {busy ? <span className="text-[12px] text-ink-tertiary">…</span> : null}

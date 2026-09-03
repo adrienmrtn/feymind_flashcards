@@ -10,6 +10,8 @@ import { OcclusionFigure } from "@/components/app/OcclusionFigure";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { createCard, deleteCard, updateCard } from "@/lib/actions/cards";
 import type { CardRow } from "@/lib/data/courses";
+import { useI18n } from "@/lib/i18n/client";
+import type { Translator } from "@/lib/i18n/copy";
 
 /**
  * Les cartes d'un cours, **en grille et modifiables.**
@@ -27,6 +29,7 @@ export function CardList({
   cards: CardRow[];
   exam?: ExamMarkInfo | null;
 }) {
+  const { t } = useI18n();
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [occluding, setOccluding] = useState(false);
@@ -36,7 +39,7 @@ export function CardList({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13px] text-ink-tertiary">Clique une carte pour la corriger.</p>
+        <p className="text-[13px] text-ink-tertiary">{t("app.workshop.hint")}</p>
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -47,7 +50,7 @@ export function CardList({
             }}
             className="pressable rounded-button bg-surface px-4 py-2.5 text-[14px] font-semibold text-ink paper"
           >
-            🖼️ Masquer un schéma
+            {t("app.workshop.maskDiagram")}
           </button>
           <button
             type="button"
@@ -58,7 +61,7 @@ export function CardList({
             }}
             className="pressable rounded-button bg-surface px-4 py-2.5 text-[14px] font-semibold text-ink paper"
           >
-            ✍️ Écrire une carte
+            {t("app.workshop.writeCard")}
           </button>
         </div>
       </div>
@@ -106,6 +109,7 @@ function Tile({
   exam?: ExamMarkInfo | null;
   onEdit: () => void;
 }) {
+  const { t } = useI18n();
   const labels = previewLabels(
     {
       state: card.state,
@@ -130,7 +134,7 @@ function Tile({
       <span className="flex items-start justify-between gap-3">
         <span className="numeral text-[12px] font-semibold text-ink-tertiary">{index + 1}</span>
         <span className={`text-[11px] font-medium ${stateTone(card.state)}`}>
-          {stateLabel(card.state)}
+          {stateLabel(t, card.state)}
         </span>
       </span>
 
@@ -140,7 +144,7 @@ function Tile({
 
       {occlusion ? (
         <span className="mt-2 inline-flex w-fit rounded-pill bg-accent-soft px-2 py-0.5 text-[11px] font-medium text-accent">
-          Schéma
+          {t("app.cardKind.occlusion")}
         </span>
       ) : (
         <span className="mt-2 line-clamp-3 text-[14px] leading-snug text-ink-secondary">
@@ -150,8 +154,10 @@ function Tile({
 
       {choices.length > 0 ? (
         <span className="mt-2 text-[12.5px] text-ink-tertiary">
-          {choices.length} propositions · bonne réponse n°
-          {(card.correct_choice_index ?? 0) + 1}
+          {t("app.workshop.choiceCount", {
+            count: choices.length,
+            n: (card.correct_choice_index ?? 0) + 1,
+          })}
         </span>
       ) : null}
 
@@ -179,6 +185,7 @@ function CardEditor({
   card?: CardRow;
   onDone: () => void;
 }) {
+  const { t } = useI18n();
   const occlusion = card ? isOcclusion(card) : false;
   const [front, setFront] = useState(card?.front ?? "");
   const [back, setBack] = useState(card?.back ?? "");
@@ -218,7 +225,7 @@ function CardEditor({
             correctChoiceIndex: correct,
           });
 
-      if (result.status === "error") setFailure(result.message ?? "Ça n'a pas marché.");
+      if (result.status === "error") setFailure(result.message ?? t("app.common.errorGeneric"));
       else onDone();
     });
   }
@@ -228,27 +235,33 @@ function CardEditor({
     setFailure(null);
     startTransition(async () => {
       const result = await deleteCard(card.id, courseId);
-      if (result.status === "error") setFailure(result.message ?? "Ça n'a pas marché.");
+      if (result.status === "error") setFailure(result.message ?? t("app.common.errorGeneric"));
       else onDone();
     });
   }
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/35 p-4 sm:items-center">
-      <button type="button" className="absolute inset-0" aria-label="Fermer" onClick={onDone} />
+      <button type="button" className="absolute inset-0" aria-label={t("app.a11y.close")} onClick={onDone} />
       <div className="relative max-h-[92svh] w-full max-w-[520px] overflow-y-auto rounded-sheet bg-canvas p-6 shadow-floating">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="eyebrow text-ink-tertiary">{card ? "Modifier" : "Nouvelle"}</p>
+            <p className="eyebrow text-ink-tertiary">
+              {card ? t("app.workshop.edit") : t("app.workshop.fresh")}
+            </p>
             <h2 className="mt-1 text-[22px] font-bold text-ink">
-              {card ? (occlusion ? "Corriger le schéma" : "Corriger la carte") : "Écrire une carte"}
+              {card
+                ? occlusion
+                  ? t("app.workshop.fixDiagram")
+                  : t("app.workshop.fixCard")
+                : t("app.workshop.writeOne")}
             </h2>
           </div>
           <button
             type="button"
             onClick={onDone}
             className="pressable text-[18px] text-ink-tertiary"
-            aria-label="Fermer"
+            aria-label={t("app.a11y.close")}
           >
             ✕
           </button>
@@ -272,7 +285,7 @@ function CardEditor({
         {occlusion ? null : (
           <>
             <label className="eyebrow mt-5 block text-ink-tertiary" htmlFor={`front-${card?.id ?? "new"}`}>
-              Question
+              {t("app.workshop.question")}
             </label>
             <textarea
               id={`front-${card?.id ?? "new"}`}
@@ -286,7 +299,7 @@ function CardEditor({
         )}
 
         <label className="eyebrow mt-4 block text-ink-tertiary" htmlFor={`back-${card?.id ?? "new"}`}>
-          {occlusion ? "Nom de la zone" : "Réponse"}
+          {occlusion ? t("app.workshop.zoneName") : t("app.workshop.answer")}
         </label>
         <textarea
           id={`back-${card?.id ?? "new"}`}
@@ -299,13 +312,13 @@ function CardEditor({
 
         {!occlusion && choices.length > 0 ? (
           <div className="mt-4">
-            <p className="eyebrow text-ink-tertiary">Propositions</p>
+            <p className="eyebrow text-ink-tertiary">{t("app.workshop.choices")}</p>
             <div className="mt-1.5 space-y-1.5">
               {choices.map((choice, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <button
                     type="button"
-                    aria-label={`Bonne réponse : proposition ${index + 1}`}
+                    aria-label={t("app.workshop.correctAria", { n: index + 1 })}
                     aria-pressed={correct === index}
                     onClick={() => setCorrect(index)}
                     className={`h-5 w-5 shrink-0 rounded-full border-2 ${
@@ -323,7 +336,7 @@ function CardEditor({
                   />
                   <button
                     type="button"
-                    aria-label={`Retirer la proposition ${index + 1}`}
+                    aria-label={t("app.workshop.removeChoiceAria", { n: index + 1 })}
                     onClick={() => setChoices(choices.filter((_, at) => at !== index))}
                     className="pressable px-1.5 text-[13px] text-ink-tertiary"
                   >
@@ -346,7 +359,7 @@ function CardEditor({
                 : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
             }`}
           >
-            {pending ? "…" : card ? "Enregistrer" : "Ajouter la carte"}
+            {pending ? "…" : card ? t("app.common.save") : t("app.workshop.addCard")}
           </button>
 
           <button
@@ -354,7 +367,7 @@ function CardEditor({
             onClick={onDone}
             className="pressable rounded-button px-3 py-2.5 text-[14px] text-ink-secondary"
           >
-            Annuler
+            {t("app.common.cancel")}
           </button>
 
           {!occlusion && choices.length < 6 ? (
@@ -363,7 +376,7 @@ function CardEditor({
               onClick={() => setChoices([...choices, ""])}
               className="pressable rounded-button px-3 py-2.5 text-[13.5px] text-ink-secondary underline-draw"
             >
-              {choices.length === 0 ? "En faire un QCM" : "Ajouter une proposition"}
+              {choices.length === 0 ? t("app.workshop.makeChoice") : t("app.workshop.addChoice")}
             </button>
           ) : null}
 
@@ -374,7 +387,7 @@ function CardEditor({
               disabled={pending}
               className="pressable ml-auto rounded-button px-3 py-2.5 text-[13.5px] text-negative"
             >
-              Supprimer
+              {t("app.common.delete")}
             </button>
           ) : null}
         </div>
@@ -393,16 +406,16 @@ function isOcclusion(card: CardRow): boolean {
   return card.kind === "occlusion" && Boolean(card.image_path) && card.mask_width > 0 && card.mask_height > 0;
 }
 
-function stateLabel(state: string): string {
+function stateLabel(t: Translator, state: string): string {
   switch (state) {
     case "new":
-      return "Nouvelle";
+      return t("app.workshop.state.new");
     case "learning":
-      return "Apprentissage";
+      return t("app.workshop.state.learning");
     case "relearning":
-      return "Réapprentissage";
+      return t("app.workshop.state.relearning");
     default:
-      return "Révision";
+      return t("app.workshop.state.review");
   }
 }
 

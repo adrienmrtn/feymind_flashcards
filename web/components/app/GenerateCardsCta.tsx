@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Le geste d'écrire les cartes, depuis un cours.
@@ -34,6 +38,7 @@ export function GenerateCardsCta({
 }
 
 function CtaBody() {
+  const { t } = useI18n();
   return (
     <>
       <span className="flex min-w-0 flex-1 items-center gap-4">
@@ -52,14 +57,14 @@ function CtaBody() {
           </svg>
         </span>
         <span className="min-w-0">
-          <span className="block text-[18px] font-bold leading-tight">Générer les cartes</span>
+          <span className="block text-[18px] font-bold leading-tight">{t("copy.cardsButton")}</span>
           <span className="mt-1 block text-[14px] text-on-ink-muted">
-            Questions, trous, QCM — tu choisis le nombre.
+            {t("app.generate.ctaHint")}
           </span>
         </span>
       </span>
       <span className="inline-flex h-11 w-full shrink-0 items-center justify-center rounded-button bg-on-ink px-4 text-[15px] font-semibold text-ink sm:h-10 sm:w-auto">
-        Générer
+        {t("app.generate.ctaAction")}
       </span>
     </>
   );

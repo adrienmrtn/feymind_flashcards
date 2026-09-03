@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { resetTour } from "@/lib/actions/tour";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Refaire la visite guidée, depuis les réglages.
@@ -17,6 +18,7 @@ import { resetTour } from "@/lib/actions/tour";
  * les réglages ferait commencer la découverte par son écran le plus aride.
  */
 export function ReplayTour() {
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -32,11 +34,9 @@ export function ReplayTour() {
       }}
       className="pressable hover-row w-full px-7 py-5 text-left"
     >
-      <p className="text-[15px] font-semibold text-ink">Refaire la visite</p>
+      <p className="text-[15px] font-semibold text-ink">{t("app.settings.replayTour.title")}</p>
       <p className="mt-1 text-[13px] leading-relaxed text-ink-tertiary">
-        {pending
-          ? "Retour à l'accueil…"
-          : "Chaque page se présentera à nouveau, une fois."}
+        {pending ? t("app.settings.replayTour.pending") : t("app.settings.replayTour.body")}
       </p>
     </button>
   );

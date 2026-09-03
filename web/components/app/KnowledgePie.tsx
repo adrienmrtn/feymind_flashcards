@@ -1,4 +1,8 @@
+"use client";
+
 import { knowledgePie, type KnowledgeBucket, type KnowledgeLevel } from "@micabo/core";
+
+import { useI18n } from "@/lib/i18n/client";
 
 const CX = 50;
 const CY = 50;
@@ -19,8 +23,19 @@ const TONE: Record<KnowledgeLevel, string> = {
  * en révision, maîtrisées. Le trou du milieu porte le total — c'est le
  * seul chiffre qu'on compare d'un regard, le détail est dans la légende.
  */
+const BUCKET_KEY: Record<KnowledgeLevel, string> = {
+  new: "app.profile.mastery.bucket.new",
+  learning: "app.profile.mastery.bucket.learning",
+  review: "app.profile.mastery.bucket.review",
+  mastered: "app.profile.mastery.bucket.mastered",
+};
+
 export function KnowledgePie({ buckets }: { buckets: readonly KnowledgeBucket[] }) {
-  const slices = knowledgePie(buckets);
+  const { t } = useI18n();
+  const slices = knowledgePie(buckets).map((slice) => ({
+    ...slice,
+    label: t(BUCKET_KEY[slice.id]),
+  }));
   const total = buckets.reduce((sum, bucket) => sum + bucket.count, 0);
   const drawn = slices.filter((slice) => slice.sweep > 0);
 
@@ -32,7 +47,7 @@ export function KnowledgePie({ buckets }: { buckets: readonly KnowledgeBucket[] 
           className="size-full"
           role="img"
           aria-label={slices
-            .map((slice) => `${slice.count} ${slice.label}`)
+            .map((slice) => t("app.profile.mastery.sliceAria", { count: slice.count, label: slice.label }))
             .join(", ")}
         >
           {drawn.length === 0 ? (
@@ -53,7 +68,7 @@ export function KnowledgePie({ buckets }: { buckets: readonly KnowledgeBucket[] 
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <p className="numeral text-[22px] font-bold leading-none text-ink">{total}</p>
           <p className="mt-1 text-[11px] text-ink-tertiary">
-            {total === 1 ? "carte" : "cartes"}
+            {t("app.profile.mastery.centerLabel", { count: total })}
           </p>
         </div>
       </div>

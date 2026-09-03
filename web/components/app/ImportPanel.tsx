@@ -12,8 +12,6 @@ import {
   clampBlocks,
   defaultBlocks,
   lengthContaining,
-  readingHint,
-  sheetLengthTitle,
   type CourseVisibility,
   type GenerationLanguage,
   type SheetLength,
@@ -22,6 +20,8 @@ import {
 import { LanguageChoices } from "@/components/app/LanguageChoices";
 import { VisibilityChoices } from "@/components/app/VisibilityChoices";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/client";
+import { copySheetLengthTitle, type Translator } from "@/lib/i18n/copy";
 import { importFromText, youtubePreview, youtubeTranscript } from "@/lib/actions/course";
 import { requestPaywall } from "@/lib/paywall";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
@@ -63,6 +63,7 @@ export function ImportPanel({
 }: {
   initialLength?: SheetLength;
 }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [extra, setExtra] = useState<Extra>(null);
   const [phase, setPhase] = useState<Phase>("repos");
@@ -102,7 +103,7 @@ export function ImportPanel({
       requestPaywall();
       return;
     }
-    setFailure(result.message ?? "Ça n'a pas marché.");
+    setFailure(result.message ?? t("app.common.errorGeneric"));
   }
 
   function showDraft(next: Draft, name?: string) {
@@ -150,7 +151,7 @@ export function ImportPanel({
               () =>
                 resolve({
                   status: "error",
-                  message: "L'écriture a pris trop longtemps. Réessaie, le document n'a rien perdu.",
+                  message: t("app.import.timeout"),
                 }),
               90_000,
             );
@@ -168,7 +169,7 @@ export function ImportPanel({
       previewYouTubeInBrowser(link),
       youtubePreview(link, preferredLanguages()),
     ]);
-    const fromServer = remoteVideo(remote);
+    const fromServer = remoteVideo(remote, t);
     const video = fromServer?.captionsKnown
       ? fromServer
       : local.status === "ok"
@@ -192,7 +193,7 @@ export function ImportPanel({
         ? remote.message
         : local.status === "error"
           ? local.message
-          : "La page de la vidéo n'a pas pu être lue.",
+          : t("app.import.videoUnreadable"),
     );
   }
 
@@ -228,7 +229,7 @@ export function ImportPanel({
       if (extracted.trim().length < 40) {
         setPhase("repos");
         setFailure(
-          "Ce fichier ne contient pas de texte lisible. Un PDF fait de pages scannées n'a pas de texte à extraire - pour ceux-là, l'app iPhone les lit avec l'appareil photo.",
+          t("app.import.scannedPdf"),
         );
         return;
       }
@@ -249,7 +250,7 @@ export function ImportPanel({
       }, file.name);
     } catch (error) {
       setPhase("repos");
-      setFailure(docxFailure(error));
+      setFailure(docxFailure(error, t));
     }
   }
 
@@ -292,7 +293,7 @@ export function ImportPanel({
           />
 
           {phase === "lecture" ? (
-            <Waiting phase={phase} name={fileName} />
+            <Waiting t={t} phase={phase} name={fileName} />
           ) : (
             <>
               <svg
@@ -311,16 +312,16 @@ export function ImportPanel({
               </svg>
 
               <p className="mt-4 text-base font-semibold text-foreground">
-                {dragging ? "Lâche-le ici." : "Dépose ton cours"}
+                {dragging ? t("app.import.dropHere") : t("app.import.drop")}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">PDF, Word ou texte.</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("app.import.formatsHint")}</p>
 
               <Button
                 type="button"
                 className="mt-5"
                 onClick={() => fileInput.current?.click()}
               >
-                Choisir un fichier
+                {t("app.import.chooseFile")}
               </Button>
 
               <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[13.5px]">
@@ -329,7 +330,7 @@ export function ImportPanel({
                   onClick={() => setExtra(extra === "coller" ? null : "coller")}
                   className="underline-draw font-medium text-ink-secondary"
                 >
-                  Coller du texte
+                  {t("app.import.pasteAction")}
                 </button>
                 <span aria-hidden className="text-ink-tertiary">
                   ·
@@ -339,7 +340,7 @@ export function ImportPanel({
                   onClick={() => setExtra(extra === "video" ? null : "video")}
                   className="underline-draw font-medium text-ink-secondary"
                 >
-                  Une vidéo YouTube
+                  {t("app.import.youtubeAction")}
                 </button>
               </div>
             </>
@@ -349,6 +350,7 @@ export function ImportPanel({
 
       {previewing && draft ? (
         <Preview
+          t={t}
           draft={draft}
           title={title}
           blocked={videoBlocked}
@@ -366,25 +368,25 @@ export function ImportPanel({
       {extra === "coller" && !previewing && phase === "repos" ? (
         <div className="mt-4 rounded-2xl border border-border bg-card p-5">
           <label htmlFor="import-title" className="eyebrow block text-ink-tertiary">
-            Titre, si tu veux
+            {t("app.import.optionalTitle")}
           </label>
           <input
             id="import-title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="Micabo le devine sinon"
+            placeholder={t("app.import.titleGuess")}
             disabled={busy}
             className="mt-2 h-11 w-full rounded-button bg-surface-muted px-4 text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
           />
 
           <label htmlFor="import-text" className="eyebrow mt-5 block text-ink-tertiary">
-            Ton cours
+            {t("app.import.yourCourse")}
           </label>
           <textarea
             id="import-text"
             value={text}
             onChange={(event) => setText(event.target.value)}
-            placeholder="Colle ici tes notes, un chapitre, un polycopié…"
+            placeholder={t("app.import.pastePlaceholder")}
             rows={10}
             disabled={busy}
             className="mt-2 w-full resize-y rounded-button bg-surface-muted p-4 text-[15px] leading-relaxed text-ink outline-none placeholder:text-ink-tertiary"
@@ -392,7 +394,7 @@ export function ImportPanel({
 
           <div className="mt-4 flex items-center justify-between gap-4">
             <p className="numeral text-[13px] text-ink-tertiary">
-              {text.trim().length} caractère{text.trim().length > 1 ? "s" : ""}
+              {t("app.import.charCount", { count: text.trim().length })}
             </p>
             <Button
               type="button"
@@ -400,12 +402,12 @@ export function ImportPanel({
               onClick={() =>
                 showDraft({
                   text,
-                  title: title.trim() || "Notes collées",
+                  title: title.trim() || t("app.import.pasteTitle"),
                   source: "text",
                 })
               }
             >
-              Voir le texte
+              {t("app.import.seeText")}
             </Button>
           </div>
         </div>
@@ -414,7 +416,7 @@ export function ImportPanel({
       {extra === "video" && !previewing && phase !== "lecture" ? (
         <div className="mt-4 rounded-2xl border border-border bg-card p-5">
           <label htmlFor="import-url" className="eyebrow block text-ink-tertiary">
-            Lien de la vidéo
+            {t("app.import.videoLink")}
           </label>
           <input
             id="import-url"
@@ -434,7 +436,7 @@ export function ImportPanel({
               }
             }}
           />
-          <p className="mt-2 text-[13px] text-ink-tertiary">Sous-titres requis · 90 min max.</p>
+          <p className="mt-2 text-[13px] text-ink-tertiary">{t("app.import.subsRequired")}</p>
 
           <div className="mt-5 flex justify-end">
             <Button
@@ -442,7 +444,7 @@ export function ImportPanel({
               disabled={busy || !isYouTubeUrl(url)}
               onClick={() => void loadVideo(url.trim())}
             >
-              Voir la vidéo
+              {t("app.import.seeVideo")}
             </Button>
           </div>
         </div>
@@ -451,10 +453,12 @@ export function ImportPanel({
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-2xl border border-border bg-card p-5">
           <div className="flex items-baseline justify-between gap-3">
-            <p className="eyebrow text-ink-tertiary">Longueur de la fiche</p>
+            <p className="eyebrow text-ink-tertiary">{t("app.import.sheetLength")}</p>
             <p className="text-[13px] font-medium text-ink">
-              {sheetLengthTitle(length)}{" "}
-              <span className="text-ink-tertiary">· {readingHint(blocks)}</span>
+              {copySheetLengthTitle(t, length)}{" "}
+              <span className="text-ink-tertiary">
+                · {t("app.import.readingMins", { minutes: Math.max(1, Math.round(blocks / 4.5)) })}
+              </span>
             </p>
           </div>
 
@@ -464,22 +468,24 @@ export function ImportPanel({
             max={BLOCK_BOUNDS.max}
             value={blocks}
             disabled={busy}
-            aria-label="Longueur de la fiche, en blocs"
+            aria-label={t("app.import.blocksAria")}
             onChange={(event) => setBlocks(clampBlocks(Number(event.target.value)))}
             className="mt-4 w-full accent-[var(--color-accent)]"
           />
-          <p className="numeral mt-2 text-[12.5px] text-ink-tertiary">{blocks} blocs</p>
+          <p className="numeral mt-2 text-[12.5px] text-ink-tertiary">
+            {t("app.import.blockCount", { count: blocks })}
+          </p>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5">
-          <p className="eyebrow text-ink-tertiary">Langue de la fiche</p>
+          <p className="eyebrow text-ink-tertiary">{t("app.import.sheetLanguage")}</p>
           <div className="mt-3.5">
             <LanguageChoices value={language} onChange={setLanguage} disabled={busy} />
           </div>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-5 sm:col-span-2 lg:col-span-1">
-          <p className="eyebrow text-ink-tertiary">Qui peut la retrouver</p>
+          <p className="eyebrow text-ink-tertiary">{t("app.course.visibility.label")}</p>
           <div className="mt-3.5">
             <VisibilityChoices value={visibility} onChange={setVisibility} disabled={busy} />
           </div>
@@ -488,13 +494,13 @@ export function ImportPanel({
 
       <div className="mt-3 rounded-2xl border border-border bg-card p-5">
         <label htmlFor="import-instructions" className="eyebrow block text-ink-tertiary">
-          Instructions particulières
+          {t("app.import.instructionsLabel")}
         </label>
         <textarea
           id="import-instructions"
           value={instructions}
           onChange={(event) => setInstructions(event.target.value.slice(0, 2_000))}
-          placeholder="Insiste sur les formules. Ignore les anecdotes. Garde le vocabulaire du prof."
+          placeholder={t("app.import.instructionsPlaceholder")}
           rows={4}
           maxLength={2_000}
           disabled={busy}
@@ -502,7 +508,7 @@ export function ImportPanel({
         />
         <div className="mt-2 flex items-baseline justify-between gap-3">
           <p className="text-[12.5px] leading-relaxed text-ink-tertiary">
-            Un prompt libre : Micabo le suit en écrivant la fiche.
+            {t("app.import.instructionsHint")}
           </p>
           {instructions.trim().length > 0 ? (
             <p className="numeral shrink-0 text-[12.5px] text-ink-tertiary">
@@ -527,10 +533,10 @@ export function ImportPanel({
             }}
           >
             {phase === "ecriture"
-              ? "Micabo écrit la fiche…"
+              ? t("app.import.writing")
               : phase === "lecture"
-                ? "Lecture des sous-titres…"
-                : "Écrire la fiche"}
+                ? t("app.import.readingSubs")
+                : t("app.import.writeSheet")}
           </Button>
         </div>
       ) : null}
@@ -548,6 +554,7 @@ export function ImportPanel({
 }
 
 function Preview({
+  t,
   draft,
   title,
   blocked,
@@ -555,6 +562,7 @@ function Preview({
   writing,
   onChange,
 }: {
+  t: Translator;
   draft: Draft;
   title: string;
   blocked: string | null;
@@ -565,7 +573,7 @@ function Preview({
   if (reading || writing) {
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-border bg-card px-6 py-10">
-        <Waiting phase={writing ? "ecriture" : "lecture"} name={draft.sourceName ?? title} />
+        <Waiting t={t} phase={writing ? "ecriture" : "lecture"} name={draft.sourceName ?? title} />
       </div>
     );
   }
@@ -593,8 +601,8 @@ function Preview({
                 youtubeDurationLabel(draft.video.durationSeconds),
                 draft.video.captions[0]
                   ? draft.video.captions[0].isAutomatic
-                    ? `Sous-titres automatiques · ${draft.video.captions[0].name}`
-                    : `Sous-titres · ${draft.video.captions[0].name}`
+                    ? t("app.import.autoCaptions", { name: draft.video.captions[0].name })
+                    : t("app.import.captions", { name: draft.video.captions[0].name })
                   : null,
               ]
                 .filter(Boolean)
@@ -607,7 +615,7 @@ function Preview({
             ) : null}
           </div>
           <Button type="button" variant="ghost" onClick={onChange}>
-            Changer
+            {t("app.common.change")}
           </Button>
         </div>
       </div>
@@ -618,7 +626,7 @@ function Preview({
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
       {draft.fileUrl ? (
         <iframe
-          title={draft.sourceName ?? "Document importé"}
+          title={draft.sourceName ?? t("app.import.importedDoc")}
           src={draft.fileUrl}
           className="h-[min(70vh,640px)] w-full bg-surface-muted"
         />
@@ -633,29 +641,37 @@ function Preview({
             {title.trim() || draft.title}
           </p>
           <p className="mt-0.5 text-[13px] text-ink-tertiary">
-            {draft.sourceName ?? "Texte collé"}
+            {draft.sourceName ?? t("app.import.pastedText")}
             {" · "}
-            {draft.text.trim().length} caractères
+            {t("app.import.charCount", { count: draft.text.trim().length })}
           </p>
         </div>
         <Button type="button" variant="ghost" onClick={onChange}>
-          Changer
+          {t("app.common.change")}
         </Button>
       </div>
     </div>
   );
 }
 
-function Waiting({ phase, name }: { phase: Phase; name: string | null }) {
+function Waiting({
+  t,
+  phase,
+  name,
+}: {
+  t: Translator;
+  phase: Phase;
+  name: string | null;
+}) {
   return (
     <div className="flex flex-col items-center gap-4">
       <ThinkingOrb state={phase === "lecture" ? "searching" : "composing"} size={64} />
       <div className="min-w-0 text-center">
         <p className="text-[16px] font-semibold text-ink">
-          {phase === "lecture" ? "Micabo lit…" : "Micabo écrit la fiche…"}
+          {phase === "lecture" ? t("app.import.reading") : t("app.import.writing")}
         </p>
         <p className="mt-1 truncate text-[13px] text-ink-tertiary">
-          {name ?? "Une dizaine de secondes, en général."}
+          {name ?? t("app.import.waitHint")}
         </p>
       </div>
     </div>
@@ -703,6 +719,7 @@ async function extractText(file: File): Promise<string> {
 
 function remoteVideo(
   result: { status: string; video?: unknown; message?: string },
+  t: Translator,
 ): YouTubePreview | null {
   if (result.status !== "ok" || !result.video || typeof result.video !== "object") return null;
   const raw = result.video as {
@@ -733,7 +750,7 @@ function remoteVideo(
   });
   return {
     id: raw.id,
-    title: typeof raw.title === "string" && raw.title.length > 0 ? raw.title : "Vidéo YouTube",
+    title: typeof raw.title === "string" && raw.title.length > 0 ? raw.title : t("app.import.youtubeVideo"),
     author: typeof raw.author === "string" ? raw.author : "",
     thumbnailUrl: typeof raw.thumbnailUrl === "string"
       ? raw.thumbnailUrl
@@ -744,13 +761,13 @@ function remoteVideo(
   };
 }
 
-function docxFailure(error: unknown): string {
+function docxFailure(error: unknown, t: Translator): string {
   if (error instanceof DocxError) {
-    if (error.code === "empty") return "Ce Word n'a presque pas de texte. Colle le contenu ici.";
-    if (error.code === "missingDocument") return "Ce fichier Word n'a pas pu être lu.";
+    if (error.code === "empty") return t("app.import.docxEmpty");
+    if (error.code === "missingDocument") return t("app.import.docxUnreadable");
     if (error.code === "notDocx") {
-      return "Enregistre le document en .docx - l'ancien format Word n'est pas lisible ici.";
+      return t("app.import.docxLegacy");
     }
   }
-  return "Ce fichier n'a pas pu être lu.";
+  return t("app.import.fileUnreadable");
 }

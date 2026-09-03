@@ -5,11 +5,13 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { sendFeedback } from "@/lib/actions/feedback";
 import type { FeedbackKind } from "@/lib/feedback";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Un bug ou une idée, écrits en base. Plus de boîte mail à ouvrir.
  */
 export function FeedbackCard() {
+  const { t } = useI18n();
   const [kind, setKind] = useState<FeedbackKind>("bug");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -31,26 +33,26 @@ export function FeedbackCard() {
 
   return (
     <section className="saas-card p-7">
-      <p className="text-[13px] text-ink-tertiary">Faire un retour</p>
+      <p className="text-[13px] text-ink-tertiary">{t("app.feedback.title")}</p>
       <p className="mt-1 text-[13.5px] leading-relaxed text-ink-secondary">
-        Un bug, une idée. Ça s&apos;écrit ici, sans ouvrir ta boîte mail.
+        {t("app.feedback.lead")}
       </p>
 
       <div className="mt-5 grid grid-cols-2 gap-2">
         <KindButton
-          label="Un bug"
+          label={t("app.feedback.kind.bug")}
           selected={kind === "bug"}
           onSelect={() => setKind("bug")}
         />
         <KindButton
-          label="Une idée"
+          label={t("app.feedback.kind.idea")}
           selected={kind === "idea"}
           onSelect={() => setKind("idea")}
         />
       </div>
 
       <label htmlFor="feedback-message" className="mt-5 block text-[13px] text-ink-tertiary">
-        Ton message
+        {t("app.feedback.messageLabel")}
       </label>
       <textarea
         id="feedback-message"
@@ -58,7 +60,9 @@ export function FeedbackCard() {
         onChange={(event) => setMessage(event.target.value)}
         rows={5}
         maxLength={4000}
-        placeholder={kind === "bug" ? "Ce qui s'est passé, et où." : "Ce que tu aimerais pouvoir faire."}
+        placeholder={
+          kind === "bug" ? t("app.feedback.placeholder.bug") : t("app.feedback.placeholder.idea")
+        }
         className="mt-2 w-full resize-y rounded-button bg-surface-muted px-4 py-3 text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
       />
 
@@ -69,7 +73,7 @@ export function FeedbackCard() {
         onClick={send}
         className="mt-4 w-full"
       >
-        {pending ? "Envoi…" : "Envoyer"}
+        {pending ? t("app.feedback.pending") : t("app.feedback.send")}
       </Button>
 
       {status ? (

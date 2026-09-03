@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { acceptFriend, removeFriend, requestFriend } from "@/lib/actions/social";
 import type { SocialResult } from "@/lib/actions/social";
+import { useI18n } from "@/lib/i18n/client";
 import type { Relation } from "@/lib/social";
 
 export function FriendActions({
@@ -16,6 +17,7 @@ export function FriendActions({
   relation: Relation;
   onDone?: () => void;
 }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export function FriendActions({
     start(async () => {
       const result = await action();
       if (result.status === "error") {
-        setError(result.message ?? "Ça n'a pas marché.");
+        setError(result.message ?? t("app.common.errorGeneric"));
         return;
       }
       router.refresh();
@@ -35,7 +37,7 @@ export function FriendActions({
 
   const buttons =
     relation === "me" ? (
-      <span className="text-[12.5px] text-ink-tertiary">Toi</span>
+      <span className="text-[12.5px] text-ink-tertiary">{t("app.friends.you")}</span>
     ) : relation === "friends" ? (
       <button
         type="button"
@@ -43,7 +45,7 @@ export function FriendActions({
         onClick={() => run(() => removeFriend(personId))}
         className="pressable text-[12.5px] font-medium text-ink-tertiary"
       >
-        Retirer
+        {t("app.friends.remove")}
       </button>
     ) : relation === "requested" ? (
       <button
@@ -52,7 +54,7 @@ export function FriendActions({
         onClick={() => run(() => removeFriend(personId))}
         className="pressable text-[12.5px] font-medium text-ink-tertiary"
       >
-        Annuler
+        {t("app.common.cancel")}
       </button>
     ) : relation === "awaitingMe" ? (
       <span className="flex items-center gap-3">
@@ -62,7 +64,7 @@ export function FriendActions({
           onClick={() => run(() => acceptFriend(personId))}
           className="pressable text-[12.5px] font-semibold text-accent"
         >
-          Accepter
+          {t("app.friends.accept")}
         </button>
         <button
           type="button"
@@ -70,7 +72,7 @@ export function FriendActions({
           onClick={() => run(() => removeFriend(personId))}
           className="pressable text-[12.5px] font-medium text-ink-tertiary"
         >
-          Refuser
+          {t("app.friends.decline")}
         </button>
       </span>
     ) : (
@@ -80,7 +82,7 @@ export function FriendActions({
         onClick={() => run(() => requestFriend(personId))}
         className="pressable text-[12.5px] font-semibold text-accent"
       >
-        Ajouter
+        {t("app.common.add")}
       </button>
     );
 

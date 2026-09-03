@@ -24,6 +24,9 @@ import { ThinkingOrb } from "thinking-orbs";
 import { ChoiceRow } from "@/components/onboarding/Scaffold";
 import { Slider } from "@/components/ui/slider";
 import { deleteExam, saveExam } from "@/lib/actions/exams";
+import { useI18n } from "@/lib/i18n/client";
+import { localeBcp47, type Translator } from "@/lib/i18n/copy";
+import type { UiLocale } from "@/lib/i18n/locales";
 
 import { ExamDayPicker, isoDay } from "./ExamCalendar";
 
@@ -56,10 +59,10 @@ type Step = "jour" | "cours" | "intensite";
 
 const STEPS: Step[] = ["jour", "cours", "intensite"];
 
-const INTENSITY_DETAIL: Record<ExamIntensity, string> = {
-  light: "Deux passages, pour un chapitre déjà su.",
-  standard: "Trois passages, le rythme d'un contrôle.",
-  intense: "Quatre passages, quand ça compte vraiment.",
+const INTENSITY_KEY: Record<ExamIntensity, "light" | "standard" | "intense"> = {
+  light: "light",
+  standard: "standard",
+  intense: "intense",
 };
 
 /**
@@ -84,6 +87,7 @@ export function ExamEditor({
   countryCode?: string | null;
   onClose: (outcome?: "created" | "updated" | "deleted") => void;
 }) {
+  const { t, locale } = useI18n();
   const today = startOfDay(new Date());
   const [step, setStep] = useState<Step>("jour");
   const [examDate, setExamDate] = useState(exam?.examDate ?? isoDay(date));
@@ -157,7 +161,7 @@ export function ExamEditor({
     setFailure(null);
     const result = await saveExam({
       id: exam?.id,
-      name: examName(exam, selected, courses),
+      name: examName(t, exam, selected, courses),
       examDate,
       intensity,
       targetScore,
@@ -165,7 +169,7 @@ export function ExamEditor({
     });
     setBusy(false);
     if (result.status === "error") {
-      setFailure(result.message ?? "L'examen n'a pas pu être enregistré.");
+      setFailure(result.message ?? t("app.exams.saveError"));
       return;
     }
     onClose(exam ? "updated" : "created");
@@ -177,7 +181,7 @@ export function ExamEditor({
     const result = await deleteExam(exam.id);
     setBusy(false);
     if (result.status === "error") {
-      setFailure(result.message ?? "Impossible de supprimer.");
+      setFailure(result.message ?? t("app.exams.deleteError"));
       return;
     }
     onClose("deleted");
@@ -188,7 +192,7 @@ export function ExamEditor({
       <button
         type="button"
         className="absolute inset-0 bg-ink/35 backdrop-blur-[6px]"
-        aria-label="Fermer"
+        aria-label={t("app.a11y.close")}
         onClick={() => onClose()}
       />
       <div
@@ -216,7 +220,7 @@ export function ExamEditor({
             type="button"
             onClick={() => onClose()}
             className="pressable -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
-            aria-label="Fermer"
+            aria-label={t("app.a11y.close")}
           >
             <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5">
               <path
@@ -234,6 +238,8 @@ export function ExamEditor({
           <div key={step} className="rise">
             {step === "jour" ? (
               <DayStep
+                t={t}
+                locale={locale}
                 picked={picked}
                 month={pickerMonth}
                 onMonth={setPickerMonth}
@@ -241,10 +247,11 @@ export function ExamEditor({
               />
             ) : null}
             {step === "cours" ? (
-              <CoursesStep courses={courses} selected={selected} onToggle={toggle} />
+              <CoursesStep t={t} courses={courses} selected={selected} onToggle={toggle} />
             ) : null}
             {step === "intensite" ? (
               <IntensityStep
+                t={t}
                 targetScore={targetScore}
                 countryCode={countryCode}
                 onPick={setTargetScore}
@@ -281,16 +288,16 @@ export function ExamEditor({
             {busy && step === "intensite" ? (
               <>
                 <ThinkingOrb state="connecting" size={20} theme="dark" />
-                Un instant
+                {t("app.exams.wait")}
               </>
             ) : step === "intensite" ? (
               exam ? (
-                "Replanifier"
+                t("app.exams.reschedule")
               ) : (
-                "Planifier l'examen"
+                t("app.exams.schedule")
               )
             ) : (
-              "Continuer"
+              t("app.common.continue")
             )}
           </button>
           {index > 0 ? (
@@ -300,7 +307,7 @@ export function ExamEditor({
               disabled={busy}
               className="pressable mt-2 h-11 w-full rounded-button text-[14px] font-medium text-ink-secondary"
             >
-              Retour
+              {t("app.common.back")}
             </button>
           ) : null}
           {exam && step === "intensite" ? (
@@ -310,7 +317,7 @@ export function ExamEditor({
               disabled={busy}
               className="pressable mt-1 h-11 w-full rounded-button text-[14px] font-medium text-negative"
             >
-              Supprimer
+              {t("app.common.delete")}
             </button>
           ) : null}
         </div>
@@ -320,18 +327,22 @@ export function ExamEditor({
 }
 
 function DayStep({
+  t,
+  locale,
   picked,
   month,
   onMonth,
   onSelect,
 }: {
+  t: Translator;
+  locale: UiLocale;
   picked: Date;
   month: Date;
   onMonth: (next: Date) => void;
   onSelect: (day: Date) => void;
 }) {
   const today = startOfDay(new Date());
-  const label = picked.toLocaleDateString("fr-FR", {
+  const label = picked.toLocaleDateString(localeBcp47(locale), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -339,9 +350,9 @@ function DayStep({
 
   return (
     <div>
-      <p className="eyebrow text-ink-tertiary">📅 Examen</p>
+      <p className="eyebrow text-ink-tertiary">{t("app.exams.examEyebrow")}</p>
       <h2 id="exam-onboarding-title" className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
-        Quel jour ?
+        {t("app.exams.whichDay")}
       </h2>
       <p className="mt-3 text-[18px] font-semibold capitalize text-ink">{label}</p>
       <div className="mt-5">
@@ -358,23 +369,25 @@ function DayStep({
 }
 
 function CoursesStep({
+  t,
   courses,
   selected,
   onToggle,
 }: {
+  t: Translator;
   courses: EditorCourse[];
   selected: string[];
   onToggle: (id: string) => void;
 }) {
   return (
     <div>
-      <p className="eyebrow text-ink-tertiary">📚 Cours</p>
+      <p className="eyebrow text-ink-tertiary">{t("app.exams.coursesEyebrow")}</p>
       <h2 id="exam-onboarding-title" className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
-        Quels cours intégrés ?
+        {t("app.exams.whichCourses")}
       </h2>
       {courses.length === 0 ? (
         <p className="mt-6 text-[14.5px] leading-relaxed text-ink-secondary">
-          Importe d&apos;abord un cours. Sans cartes, il n&apos;y a rien à replanifier.
+          {t("app.exams.noCoursesYet")}
         </p>
       ) : (
         <ul className="mt-6 space-y-2">
@@ -382,8 +395,8 @@ function CoursesStep({
             <li key={course.id}>
               <ChoiceRow
                 emoji={course.emoji}
-                title={course.title || "Sans titre"}
-                detail={`${course.cardCount} carte${course.cardCount > 1 ? "s" : ""}`}
+                title={course.title || t("app.course.untitled")}
+                detail={t("app.course.cardCount", { count: course.cardCount })}
                 selected={selected.includes(course.id)}
                 onSelect={() => onToggle(course.id)}
               />
@@ -396,6 +409,7 @@ function CoursesStep({
 }
 
 function IntensityStep({
+  t,
   targetScore,
   countryCode,
   onPick,
@@ -406,6 +420,7 @@ function IntensityStep({
   peak,
   load,
 }: {
+  t: Translator;
   targetScore: number;
   countryCode?: string | null;
   onPick: (value: number) => void;
@@ -421,15 +436,15 @@ function IntensityStep({
 
   return (
     <div>
-      <p className="eyebrow text-ink-tertiary">Note</p>
+      <p className="eyebrow text-ink-tertiary">{t("app.exams.gradeEyebrow")}</p>
       <h2 id="exam-onboarding-title" className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
-        Note souhaitée
+        {t("app.exams.desiredGrade")}
       </h2>
       <p className="mt-6 text-center text-[32px] font-bold leading-none text-ink">
         {desiredGradeLabel(targetScore, countryCode)}
       </p>
       <p className="mt-2 text-center text-[13.5px] text-ink-secondary">
-        {INTENSITY_DETAIL[intensity]}
+        {t(`app.exams.${INTENSITY_KEY[intensity]}`)}
       </p>
       <div className="mt-6 flex items-center gap-3">
         <span className="numeral w-12 shrink-0 text-[12.5px] text-ink-tertiary">
@@ -442,7 +457,7 @@ function IntensityStep({
           step={1}
           value={targetScore}
           onValueChange={(value) => onPick(clampTargetScore(Number(value)))}
-          aria-label="Note souhaitée"
+          aria-label={t("app.exams.desiredGrade")}
         />
         <span className="numeral w-12 shrink-0 text-right text-[12.5px] text-ink-tertiary">
           {scale.max}
@@ -451,21 +466,23 @@ function IntensityStep({
 
       {missingCards ? (
         <p className="mt-4 text-[13.5px] leading-relaxed text-caution">
-          Ces cours n&apos;ont pas encore de cartes. Le plan se posera au premier paquet.
+          {t("app.exams.missingCards")}
         </p>
       ) : null}
 
       {canPreview ? (
         <div className="mt-5 rounded-group bg-canvas p-4">
           <p className="text-[13.5px] text-ink-secondary">
-            <span className="numeral font-semibold text-ink">{cardCount}</span> cartes ·{" "}
-            <span className="numeral font-semibold text-ink">{daily}</span> révisions / jour
-            {peak ? (
-              <>
-                {" "}
-                · pic de <span className="numeral font-semibold text-ink">{peak.count}</span>
-              </>
-            ) : null}
+            {peak
+              ? t("app.exams.planPeak", {
+                  cards: t("app.course.cardCount", { count: cardCount }),
+                  daily,
+                  peak: peak.count,
+                })
+              : t("app.exams.planPreview", {
+                  cards: t("app.course.cardCount", { count: cardCount }),
+                  daily,
+                })}
           </p>
           <div className="mt-3 flex h-10 items-end gap-0.5">
             {load.map((count, position) => {
@@ -487,13 +504,18 @@ function IntensityStep({
   );
 }
 
-function examName(exam: EditorExam | null, courseIds: string[], courses: EditorCourse[]): string {
+function examName(
+  t: Translator,
+  exam: EditorExam | null,
+  courseIds: string[],
+  courses: EditorCourse[],
+): string {
   const existing = exam?.name.trim();
   if (existing) return existing;
   const titles = courseIds
     .map((id) => courses.find((course) => course.id === id)?.title.trim())
     .filter((title): title is string => Boolean(title));
-  if (titles.length === 0) return "Examen";
+  if (titles.length === 0) return t("app.exams.defaultName");
   return titles.slice(0, 2).join(" · ");
 }
 
