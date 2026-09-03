@@ -66,10 +66,16 @@ struct MicaboApp: App {
                 // Une connexion, une déconnexion, un changement de compte : l'identifiant
                 // RevenueCat suit, et le droit se relit. Sans ça, un achat partirait sous
                 // l'identifiant de la personne précédente.
+                //
+                // La synchro suit pour la même raison qu'elle suit un lien de courriel :
+                // c'est ici qu'on apprend qu'il y a un compte. Sans elle, se connecter
+                // depuis le parcours n'apportait ses cours qu'au lancement suivant.
                 .onChange(of: auth.user?.id) { _, userID in
                     Task {
                         await PurchasesBridge.identify(userID)
                         await pro.refresh()
+                        await sync.sync(context: container.mainContext)
+                        await social.refresh()
                     }
                 }
                 // Les liens de confirmation et de connexion reviennent sur le schéma de

@@ -109,7 +109,10 @@ final class ProAccess {
     /// Une échéance passée l'emporte sur le drapeau de la table : un webhook peut se perdre,
     /// et un abonnement fini qui reste ouvert est une fuite qui ne se voit pas.
     func refresh() async {
-        if AppStoreReview.matches(email?()) {
+        // Le compte de relecture Apple est Pro sans rien acheter. Le droit est aussi en
+        // base, mais il est lu ici sur l'adresse : un relecteur ne doit pas rencontrer
+        // de cadenas parce qu'une requête a échoué.
+        if let readEmail = email, AppStoreReview.matches(readEmail()) {
             unlock()
             return
         }

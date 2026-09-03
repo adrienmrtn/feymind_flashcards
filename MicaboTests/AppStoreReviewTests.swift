@@ -11,11 +11,19 @@ final class AppStoreReviewTests: XCTestCase {
         XCTAssertFalse(AppStoreReview.matches(""))
     }
 
-    func testTheLocalSessionKeepsTheReviewIdentity() {
-        let session = AppStoreReview.localSession()
+    /// Le cadeau est refermé avant même la session : le droit Pro le couvre déjà, mais
+    /// il se présente pendant l'instant qui sépare la connexion du premier `refresh()`.
+    func testTheGiftIsAlreadySeenForTheReviewAccount() {
+        let name = "micabo.tests.review.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name) ?? .standard
+        addTeardownBlock { defaults.removePersistentDomain(forName: name) }
 
-        XCTAssertEqual(session.user.email, AppStoreReview.email)
-        XCTAssertEqual(session.user.id, AppStoreReview.userID)
-        XCTAssertFalse(session.isExpired)
+        XCTAssertFalse(DiscountOffer.isSeen(in: defaults))
+        DiscountOffer.markSeen(in: defaults)
+        XCTAssertTrue(DiscountOffer.isSeen(in: defaults))
+
+        XCTAssertFalse(
+            DiscountOffer.shouldPresentGift(isPro: true, courseCount: 1, seen: true, startedAt: nil)
+        )
     }
 }

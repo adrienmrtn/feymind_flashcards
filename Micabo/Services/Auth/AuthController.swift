@@ -149,19 +149,15 @@ final class AuthController {
         }
     }
 
-    /// Session du compte de relecture : le mot de passe d'abord, une session locale
-    /// si GoTrue ne répond pas. Dans les deux cas le cadeau est marqué vu.
+    /// Session du compte de relecture. Un refus remonte comme les autres : mieux vaut
+    /// une phrase d'erreur qu'une app qui se croit connectée sans pouvoir rien lire.
     private func openReviewSession() async {
         await perform {
             AppStoreReview.silenceDiscount()
-            if let session = try? await self.client.signInWithPassword(
+            self.adopt(try await self.client.signInWithPassword(
                 email: AppStoreReview.email,
                 password: AppStoreReview.password
-            ) {
-                self.adopt(session)
-                return
-            }
-            self.adopt(AppStoreReview.localSession())
+            ))
         }
     }
 
