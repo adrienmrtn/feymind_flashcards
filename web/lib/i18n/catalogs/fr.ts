@@ -1,4 +1,5 @@
 import { appFr, copyFr } from "./app-fr";
+import { legalFr } from "./legal-fr";
 
 export const fr = {
   locale: {
@@ -381,6 +382,7 @@ export const fr = {
   },
   app: appFr,
   copy: copyFr,
+  legal: legalFr,
 } as const;
 
 type DeepString<T> = {

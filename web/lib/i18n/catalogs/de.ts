@@ -1,5 +1,6 @@
 import type { Catalog } from "./fr";
 import { appDe, copyDe } from "./app-de";
+import { legalDe } from "./legal-de";
 
 export const de: Catalog = {
   locale: {
@@ -380,4 +381,5 @@ export const de: Catalog = {
   },
   app: appDe,
   copy: copyDe,
+  legal: legalDe,
 };
