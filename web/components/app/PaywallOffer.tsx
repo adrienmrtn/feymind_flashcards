@@ -9,6 +9,7 @@ import { pricing } from "@micabo/core";
 import { BrandMark } from "@/components/BrandMark";
 import { startCheckout } from "@/lib/actions/checkout";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * L'offre, en un écran : ce que Pro ouvre, puis les deux formules.
@@ -17,28 +18,7 @@ import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
  * espacée, mode examen. Pas de mock exam, pas de dictée vocale.
  */
 
-export const PAYWALL_FEATURES = [
-  {
-    title: "Cartes IA illimitées",
-    detail: "Importe PDF, photos, Word et YouTube",
-    icon: "cards" as const,
-  },
-  {
-    title: "Fiches de cours automatiques",
-    detail: "Ton document devient une fiche à relire",
-    icon: "sheet" as const,
-  },
-  {
-    title: "Répétition espacée",
-    detail: "Les cartes reviennent juste avant que tu oublies",
-    icon: "repeat" as const,
-  },
-  {
-    title: "Mode examen",
-    detail: "Tu donnes la date, Micabo resserre le plan",
-    icon: "exam" as const,
-  },
-] as const;
+export const PAYWALL_FEATURE_ICONS = ["cards", "sheet", "repeat", "exam"] as const;
 
 export function PaywallOffer({
   headingId,
@@ -49,6 +29,7 @@ export function PaywallOffer({
   onSubscribed?: () => void;
   extraAction?: ReactNode;
 }) {
+  const { t } = useI18n();
   const [chosen, setChosen] = useState<pricing.PlanKind>("yearly");
   const [checkout, setCheckout] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -65,11 +46,11 @@ export function PaywallOffer({
       return;
     }
     if (result.status === "already") {
-      setCheckout("Tu es déjà abonné.");
+      setCheckout(t("app.paywall.already"));
       onSubscribed?.();
       return;
     }
-    setCheckout(result.message ?? "L'abonnement n'est pas encore ouvert.");
+    setCheckout(result.message ?? t("app.paywall.checkoutClosed"));
   }
 
   return (
@@ -89,20 +70,20 @@ export function PaywallOffer({
         </div>
 
         <ul className="mt-6 space-y-3.5">
-          {PAYWALL_FEATURES.map((feature) => (
-            <li key={feature.title} className="flex items-start gap-3">
+          {PAYWALL_FEATURE_ICONS.map((icon) => (
+            <li key={icon} className="flex items-start gap-3">
               <span
                 aria-hidden
                 className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent"
               >
-                <FeatureIcon name={feature.icon} />
+                <FeatureIcon name={icon} />
               </span>
               <span className="min-w-0">
                 <span className="block text-[15px] font-semibold leading-tight text-ink">
-                  {feature.title}
+                  {t(`app.paywall.features.${icon}.title`)}
                 </span>
                 <span className="mt-0.5 block text-[13px] leading-snug text-ink-tertiary">
-                  {feature.detail}
+                  {t(`app.paywall.features.${icon}.detail`)}
                 </span>
               </span>
             </li>
@@ -130,8 +111,8 @@ export function PaywallOffer({
         >
           {pending ? <ThinkingOrb state="connecting" size={20} theme="dark" /> : null}
           {pricing.hasTrial(selected)
-            ? `Commencer mon essai de ${selected.trialDays} jours`
-            : "S'abonner"}
+            ? t("app.paywall.startTrial", { days: selected.trialDays })
+            : t("app.paywall.subscribe")}
         </button>
 
         {extraAction}
@@ -214,7 +195,7 @@ export function PlanChoice({
   );
 }
 
-function FeatureIcon({ name }: { name: (typeof PAYWALL_FEATURES)[number]["icon"] }) {
+function FeatureIcon({ name }: { name: (typeof PAYWALL_FEATURE_ICONS)[number] }) {
   const className = "h-4 w-4";
   if (name === "cards") {
     return (

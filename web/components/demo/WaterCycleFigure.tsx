@@ -1,4 +1,7 @@
-import { CYCLE_STAGES, DEMO_COURSE } from "./demo-course";
+"use client";
+
+import { DEMO_ACCENT, localizedCycleStages } from "./demo-course";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Les trois temps du cycle, avec la boucle du retour à la mer.
@@ -9,16 +12,19 @@ import { CYCLE_STAGES, DEMO_COURSE } from "./demo-course";
  * cartes - c'est le format qu'on oublie toujours d'annoncer.
  */
 export function WaterCycleFigure() {
+  const { t } = useI18n();
+  const stages = localizedCycleStages(t);
+
   return (
     <div
       className="rounded-[12px] border p-3"
       style={{
-        backgroundColor: `${DEMO_COURSE.accent}17`,
-        borderColor: `${DEMO_COURSE.accent}47`,
+        backgroundColor: `${DEMO_ACCENT}17`,
+        borderColor: `${DEMO_ACCENT}47`,
       }}
     >
       <div className="flex items-start justify-between gap-1">
-        {CYCLE_STAGES.map((stage, index) => (
+        {stages.map((stage, index) => (
           <div key={stage.label} className="flex flex-1 items-start gap-1">
             <div className="flex-1 text-center">
               <StageIcon index={index} tint={stage.tint} />
@@ -26,12 +32,12 @@ export function WaterCycleFigure() {
                 {stage.label}
               </p>
             </div>
-            {index < CYCLE_STAGES.length - 1 ? (
+            {index < stages.length - 1 ? (
               <svg
                 aria-hidden
                 viewBox="0 0 12 12"
                 className="mt-2 h-3 w-3 shrink-0"
-                style={{ color: DEMO_COURSE.accent, opacity: 0.55 }}
+                style={{ color: DEMO_ACCENT, opacity: 0.55 }}
               >
                 <path
                   d="M2 6h7M6.5 3l3 3-3 3"
@@ -49,7 +55,7 @@ export function WaterCycleFigure() {
 
       <p
         className="mt-3 flex items-center justify-center gap-1.5 rounded-pill py-1.5 text-center text-[10px] font-semibold"
-        style={{ backgroundColor: `${DEMO_COURSE.accent}24`, color: DEMO_COURSE.accent }}
+        style={{ backgroundColor: `${DEMO_ACCENT}24`, color: DEMO_ACCENT }}
       >
         <svg aria-hidden viewBox="0 0 12 12" className="h-3 w-3">
           <path
@@ -61,7 +67,7 @@ export function WaterCycleFigure() {
             strokeLinejoin="round"
           />
         </svg>
-        Les rivières ramènent l&apos;eau à la mer
+        {t("demo.rivers")}
       </p>
     </div>
   );

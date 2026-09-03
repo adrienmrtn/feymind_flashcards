@@ -1,6 +1,7 @@
 "use client";
 
 import { requestPaywall } from "@/lib/paywall";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Le deuxième cours, pour qui n'est pas abonné.
@@ -9,6 +10,7 @@ import { requestPaywall } from "@/lib/paywall";
  * un paywall qui fait fermer l'onglet.
  */
 export function SecondCourseCard() {
+  const { t } = useI18n();
   return (
     <section className="saas-card mx-auto max-w-[440px] px-7 py-10 text-center">
       <span
@@ -20,24 +22,24 @@ export function SecondCourseCard() {
         </svg>
       </span>
       <h2 className="mt-4 text-[18px] font-bold tracking-tight text-ink">
-        Ton deuxième cours t&apos;attend
+        {t("app.import.secondCourse.title")}
       </h2>
       <p className="mx-auto mt-2 max-w-[36ch] text-[14px] leading-relaxed text-ink-secondary">
-        Le premier est offert. Les suivants sont dans Pro — et la fin de ta
-        fiche aussi.
+        {t("app.import.secondCourse.body")}
       </p>
       <button
         type="button"
         onClick={requestPaywall}
         className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-5 py-3 text-[14.5px] font-semibold text-on-ink"
       >
-        Débloquer les cours
+        {t("app.import.secondCourse.cta")}
       </button>
     </section>
   );
 }
 
 export function LockedAddCourseCard() {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -54,10 +56,10 @@ export function LockedAddCourseCard() {
       </span>
       <span className="min-w-0">
         <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
-          Ajouter un cours
+          {t("app.courses.addTitle")}
         </span>
         <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
-          Dans Pro
+          {t("app.import.secondCourse.lockedHint")}
         </span>
       </span>
     </button>

@@ -34,7 +34,10 @@ import {
 import { readProfile } from "@/lib/data/profile";
 import { loadNewCardBudget, loadReviewDatesSince } from "@/lib/data/reviews";
 import { listWeekReviewRanking } from "@/lib/data/social";
-import { heldBackNew } from "@/lib/micabo-copy";
+import { copyHeldBackNew } from "@/lib/i18n/copy";
+import { getTranslator } from "@/lib/i18n/server";
+import type { UiLocale } from "@/lib/i18n/locales";
+import type { Translator } from "@/lib/i18n/copy";
 
 /**
  * Le tableau de bord : les tâches d'abord, puis la semaine et les examens.
@@ -54,6 +57,7 @@ import { heldBackNew } from "@/lib/micabo-copy";
 export default async function DashboardPage() {
   const now = new Date();
   const today = startOfDay(now);
+  const { t, locale } = await getTranslator();
 
   const [courses, cards, exams, friends, profile, budget, reviewDates] = await Promise.all([
     listCourses(),
@@ -80,7 +84,7 @@ export default async function DashboardPage() {
   const tasks = tasksFromQueue(queue, cards, courses);
   const dueOutsideRhythm = countDue(cards, now) - queue.length;
   const upcoming = upcomingExamInsights(exams, cards, now, profile?.country_code);
-  const greeting = greetingFor(now);
+  const greeting = greetingFor(now, t);
   const name = profile?.display_name?.trim().split(/\s+/)[0];
 
   return (
@@ -88,7 +92,7 @@ export default async function DashboardPage() {
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold tracking-tight text-foreground">
-            {name ? name : "Tableau de bord"}
+            {name ? name : t("app.home.titleFallback")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{greeting}</p>
         </div>
@@ -98,20 +102,21 @@ export default async function DashboardPage() {
         tasks={tasks}
         cardCount={cards.length}
         heldBack={Math.max(0, dueOutsideRhythm)}
+        t={t}
       />
 
       <div className="grid min-w-0 items-stretch gap-4 lg:grid-cols-2">
         <div className="h-full min-w-0" data-tour="semaine">
-          <WeekStrip days={week} />
+          <WeekStrip days={week} locale={locale} t={t} />
         </div>
-        <UpcomingExams next={upcoming[0] ?? null} others={Math.max(0, upcoming.length - 1)} />
+        <UpcomingExams next={upcoming[0] ?? null} others={Math.max(0, upcoming.length - 1)} t={t} />
       </div>
 
       <Suspense fallback={null}>
-        <WeekRankingSection />
+        <WeekRankingSection locale={locale} t={t} />
       </Suspense>
 
-      <FriendsCard requests={friends} />
+      <FriendsCard requests={friends} t={t} />
     </>
   );
 }
@@ -120,28 +125,36 @@ export default async function DashboardPage() {
  * Rien en attendant, et c'est le bon squelette : le classement ne s'affiche qu'à partir de
  * deux personnes, donc un cadre vide se dresserait pour se retirer aussitôt chez la plupart.
  */
-async function WeekRankingSection() {
+async function WeekRankingSection({
+  locale,
+  t,
+}: {
+  locale: UiLocale;
+  t: Translator;
+}) {
   const ranking = await listWeekReviewRanking();
-  return <WeekRanking rows={ranking} />;
+  return <WeekRanking rows={ranking} locale={locale} t={t} />;
 }
 
 function TodayTasks({
   tasks,
   cardCount,
   heldBack,
+  t,
 }: {
   tasks: { course: CourseRow; due: number }[];
   cardCount: number;
   heldBack: number;
+  t: Translator;
 }) {
   return (
     <Card className="h-full" data-tour="taches">
       <CardHeader className="pb-2">
-        <CardTitle className="text-[15px] font-semibold text-ink">Tâches du jour</CardTitle>
+        <CardTitle className="text-[15px] font-semibold text-ink">{t("app.home.tasks.title")}</CardTitle>
         {tasks.length > 0 ? (
           <CardAction>
             <Button size="sm" render={<Link href={"/app/reviser?go=1" as never} />}>
-              Tout réviser
+              {t("app.home.tasks.reviewAll")}
             </Button>
           </CardAction>
         ) : null}
@@ -162,10 +175,10 @@ function TodayTasks({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-medium text-ink">
-                    {course.title || "Sans titre"}
+                    {course.title || t("app.course.untitled")}
                   </span>
                   <span className="numeral mt-0.5 block text-[13px] text-ink-tertiary">
-                    {due} carte{due > 1 ? "s" : ""} à réviser
+                    {t("app.home.tasks.dueCards", { count: due })}
                   </span>
                 </span>
                 <Button
@@ -173,29 +186,37 @@ function TodayTasks({
                   variant="outline"
                   render={<Link href={`/app/reviser?cours=${course.id}` as never} />}
                 >
-                  Réviser
+                  {t("app.review.verb")}
                 </Button>
               </li>
             ))}
           </ul>
         ) : (
-          <TodayEmpty cardCount={cardCount} heldBack={heldBack} />
+          <TodayEmpty cardCount={cardCount} heldBack={heldBack} t={t} />
         )}
       </CardPanel>
     </Card>
   );
 }
 
-function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: number }) {
+function TodayEmpty({
+  cardCount,
+  heldBack,
+  t,
+}: {
+  cardCount: number;
+  heldBack: number;
+  t: Translator;
+}) {
   if (cardCount === 0) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-[15px] font-semibold text-ink">Pas encore de cartes</p>
-          <p className="mt-0.5 text-[13px] text-ink-tertiary">Importe un cours pour commencer.</p>
+          <p className="text-[15px] font-semibold text-ink">{t("app.home.empty.noCardsTitle")}</p>
+          <p className="mt-0.5 text-[13px] text-ink-tertiary">{t("app.home.empty.noCardsBody")}</p>
         </div>
         <Button size="sm" render={<Link href={"/app/importer" as never} />}>
-          Importer
+          {t("nav.import")}
         </Button>
       </div>
     );
@@ -205,8 +226,8 @@ function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: numb
     return (
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-[15px] font-semibold text-ink">C&apos;est fait</p>
-          <p className="mt-0.5 text-[13px] text-ink-secondary">{heldBackNew(heldBack)}</p>
+          <p className="text-[15px] font-semibold text-ink">{t("app.home.empty.doneTitle")}</p>
+          <p className="mt-0.5 text-[13px] text-ink-secondary">{copyHeldBackNew(t, heldBack)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -214,7 +235,7 @@ function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: numb
             size="sm"
             render={<Link href={"/app/reviser" as never} />}
           >
-            Réviser encore
+            {t("app.home.empty.reviewAgain")}
           </Button>
           <Button
             variant="link"
@@ -222,7 +243,7 @@ function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: numb
             className="h-auto px-0"
             render={<Link href={"/app/reglages" as never} />}
           >
-            Changer le rythme
+            {t("app.home.empty.changePace")}
           </Button>
         </div>
       </div>
@@ -231,8 +252,8 @@ function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: numb
 
   return (
     <div>
-      <p className="text-[15px] font-semibold text-ink">C&apos;est fait</p>
-      <p className="mt-0.5 text-[13px] text-ink-tertiary">Reviens demain.</p>
+      <p className="text-[15px] font-semibold text-ink">{t("app.home.empty.doneTitle")}</p>
+      <p className="mt-0.5 text-[13px] text-ink-tertiary">{t("app.home.empty.doneTomorrow")}</p>
     </div>
   );
 }
@@ -240,21 +261,23 @@ function TodayEmpty({ cardCount, heldBack }: { cardCount: number; heldBack: numb
 function UpcomingExams({
   next,
   others,
+  t,
 }: {
   next: ExamInsight | null;
   others: number;
+  t: Translator;
 }) {
   return (
     <section className="flex h-full min-h-0 min-w-0 flex-col" data-tour="examens">
       <div className="mb-3 flex min-w-0 items-end justify-between gap-3">
-        <h2 className="min-w-0 text-[15px] font-semibold text-ink">Examens</h2>
+        <h2 className="min-w-0 text-[15px] font-semibold text-ink">{t("app.home.exams.title")}</h2>
         <Button
           variant="link"
           size="sm"
           className="h-auto shrink-0 px-0"
           render={<Link href={"/app/examens" as never} />}
         >
-          {next ? "Voir" : "Ajouter"}
+          {next ? t("app.home.exams.see") : t("app.home.exams.add")}
         </Button>
       </div>
       {next ? (
@@ -263,7 +286,9 @@ function UpcomingExams({
           {others > 0 ? (
             <p className="mt-3 text-[13px] text-ink-tertiary">
               <Link href={"/app/examens" as never} className="underline-draw">
-                {others === 1 ? "1 autre examen" : `${others} autres examens`}
+                {others === 1
+                  ? t("app.home.exams.oneOther")
+                  : t("app.home.exams.otherCount", { count: others })}
               </Link>
             </p>
           ) : null}
@@ -271,9 +296,9 @@ function UpcomingExams({
       ) : (
         <Card className="min-w-0 flex-1 overflow-hidden">
           <CardPanel className="flex h-full min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="min-w-0 text-[15px] font-medium text-ink">Aucune date d&apos;examen</p>
+            <p className="min-w-0 text-[15px] font-medium text-ink">{t("app.home.exams.none")}</p>
             <Button size="sm" className="shrink-0 self-start sm:self-auto" render={<Link href={"/app/examens" as never} />}>
-              Ajouter
+              {t("app.home.exams.add")}
             </Button>
           </CardPanel>
         </Card>
@@ -282,23 +307,23 @@ function UpcomingExams({
   );
 }
 
-function FriendsCard({ requests }: { requests: FriendRequestRow[] }) {
+function FriendsCard({ requests, t }: { requests: FriendRequestRow[]; t: Translator }) {
   return (
     <Card data-tour="amis">
       <CardHeader className="pb-2">
-        <CardTitle className="text-[15px] font-semibold text-ink">Amis</CardTitle>
+        <CardTitle className="text-[15px] font-semibold text-ink">{t("app.home.friends.title")}</CardTitle>
         <CardAction>
           <Button variant="link" size="sm" className="h-auto px-0" render={<Link href={"/app/amis" as never} />}>
-            Voir
+            {t("app.common.see")}
           </Button>
         </CardAction>
       </CardHeader>
       <CardPanel className="pt-0">
         {requests.length === 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[15px] font-medium text-ink">Personne en attente</p>
+            <p className="text-[15px] font-medium text-ink">{t("app.home.friends.noPending")}</p>
             <Button size="sm" variant="outline" render={<Link href={"/app/amis" as never} />}>
-              Ajouter
+              {t("app.common.add")}
             </Button>
           </div>
         ) : (
@@ -312,7 +337,7 @@ function FriendsCard({ requests }: { requests: FriendRequestRow[] }) {
                   href={`/app/u/${request.username ?? ""}` as never}
                   className="truncate text-[14.5px] font-medium text-ink"
                 >
-                  {request.username ? `@${request.username}` : "Quelqu'un"}
+                  {request.username ? `@${request.username}` : t("app.home.friends.someone")}
                 </Link>
                 <FriendActions personId={request.requesterId} relation="awaitingMe" />
               </li>
@@ -409,10 +434,10 @@ function upcomingExamInsights(
     .sort((left, right) => left.daysRemaining - right.daysRemaining);
 }
 
-function greetingFor(now: Date): string {
+function greetingFor(now: Date, t: Translator): string {
   const hour = now.getHours();
-  if (hour < 6) return "Bonne nuit";
-  if (hour < 12) return "Bonjour";
-  if (hour < 18) return "Bon après-midi";
-  return "Bonsoir";
+  if (hour < 6) return t("app.home.greeting.night");
+  if (hour < 12) return t("app.home.greeting.morning");
+  if (hour < 18) return t("app.home.greeting.afternoon");
+  return t("app.home.greeting.evening");
 }

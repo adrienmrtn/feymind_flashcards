@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DETERMINISTIC_CONFIG,
   REVIEW_RATINGS,
-  REVIEW_RATING_LABELS,
   ReviewRating,
   advanceSession,
   enqueueInitial,
@@ -26,6 +25,8 @@ import { SessionDone } from "@/components/app/SessionDone";
 import { SessionPaywall } from "@/components/app/SessionPaywall";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { gradeCard } from "@/lib/actions/review";
+import { reviewRatingLabel } from "@/lib/i18n/copy";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * **La session, au clavier - et sans une seule animation.**
@@ -87,6 +88,7 @@ export function Session({
   isPro: boolean;
   leftoverNew?: number;
 }) {
+  const { t } = useI18n();
   const [loop, setLoop] = useState<Loop>(() =>
     advanceSession(enqueueInitial(cards, new Date()), new Date()),
   );
@@ -153,11 +155,11 @@ export function Session({
           return;
         }
         if (result.status === "error") {
-          setFailure(result.message ?? "Une note n'a pas été écrite.");
+          setFailure(result.message ?? t("app.session.gradeError"));
         }
       });
     },
-    [card, isPro, loop.pending, tally.answered],
+    [card, isPro, loop.pending, t, tally.answered],
   );
 
   // Le clavier, et **rien qui l'intercepte à moitié** : espace ne doit pas faire défiler la page,
@@ -296,7 +298,7 @@ export function Session({
               {card.hint ? (
                 <details className="mt-5">
                   <summary className="cursor-pointer text-[13.5px] text-ink-tertiary">
-                    Un indice
+                    {t("app.session.hintSummary")}
                   </summary>
                   <p className="mt-2 text-[14px] text-ink-secondary">
                     <InlineMarkup text={card.hint} />
@@ -319,7 +321,7 @@ export function Session({
           <div
             className="grid grid-cols-4 gap-2"
             role="group"
-            aria-label="Notation"
+            aria-label={t("app.session.ratingsGroup")}
             data-tour="session-notes"
           >
             {REVIEW_RATINGS.map((rating) => (
@@ -327,11 +329,14 @@ export function Session({
                 key={rating}
                 type="button"
                 onClick={() => grade(rating)}
-                aria-label={`${REVIEW_RATING_LABELS[rating]}, prochaine révision ${labels?.[rating] ?? ""}`}
+                aria-label={t("app.session.ratingAria", {
+                  rating: reviewRatingLabel(t, rating),
+                  interval: labels?.[rating] ?? "",
+                })}
                 className={`pressable rounded-button px-2 py-3.5 text-center shadow-[inset_0_0_0_1px_color-mix(in_srgb,currentColor_16%,transparent)] ${ratingTone(rating)}`}
               >
                 <span className="block text-[14px] font-semibold">
-                  {REVIEW_RATING_LABELS[rating]}
+                  {reviewRatingLabel(t, rating)}
                 </span>
                 <span className="numeral mt-0.5 block text-[12px] opacity-70">
                   {labels[rating]}
@@ -349,15 +354,15 @@ export function Session({
             data-tour="session-reponse"
             className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-primary bg-primary text-sm font-medium text-primary-foreground"
           >
-            Voir la réponse
+            {t("app.session.reveal")}
             <kbd className="ml-2.5 rounded-[5px] bg-white/15 px-2 py-0.5 text-[11px] font-medium">
-              espace
+              {t("app.session.spaceKey")}
             </kbd>
           </button>
         )}
 
         <p className="mt-3.5 text-center text-[12px] text-ink-tertiary">
-          Espace retourne la carte, 1 à 4 la notent.
+          {t("app.session.keyboardHelp")}
         </p>
       </div>
       </div>

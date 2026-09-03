@@ -1,4 +1,5 @@
 import type { Catalog } from "./fr";
+import { appDe, copyDe } from "./app-de";
 
 export const de: Catalog = {
   locale: {
@@ -147,6 +148,74 @@ export const de: Catalog = {
       "Mit Micabo setzt jede Erinnerung zurück - und der Abfall wird jedes Mal langsamer.",
     legendWithout: "Ohne Wiederholung bleibt nach einem Monat fast nichts.",
     dayShort: "{n} T",
+    courseTitle: "Wasserkreislauf",
+    chapter: "Kapitel 4 · Wasser auf der Erde",
+    raw1:
+      "Der Wasserkreislauf umfasst alle Bewegungen des Wassers zwischen Meeren, Atmosphäre und Kontinenten.",
+    raw2:
+      "Durch die Sonnenstrahlung geht Oberflächenwasser in Dampf über; dieses Phänomen heißt Verdunstung und betrifft vor allem die Meere, die 71 % der Erdoberfläche bedecken.",
+    raw3:
+      "Der Wasserdampf steigt und trifft auf kältere Schichten; er kondensiert dann um Kondensationskerne und bildet Tröpfchen, die Wolken bilden.",
+    raw4:
+      "Werden die Tröpfchen zu schwer, fallen sie als Niederschlag, Regen oder Schnee je nach Temperatur im Fall.",
+    raw5:
+      "Ein Teil dieses Wassers fließt ab und erreicht Flüsse und dann die Meere; ein anderer versickert im Boden und speist das Grundwasser.",
+    sheetParagraphMarked:
+      "Wasser wechselt den Zustand, ohne den Planeten zu verlassen: was aus den Meeren **verdunstet**, fällt auf die Kontinente und kehrt zurück. ==71 % der Verdunstung kommt aus den Meeren.==",
+    sheetCallout:
+      "Regen oder Schnee hängt nicht von der Wolkenhöhe ab, sondern von der **Temperatur im Fall**.",
+    rivers: "Die Flüsse bringen das Wasser zurück zum Meer",
+    sheetHighlight: "71 % der Verdunstung kommt aus den Meeren.",
+    tapToDrop: "Tippe, um es abzulegen",
+    dropAria: "{file} ablegen",
+    dropped: "Stoff abgelegt",
+    dropHere: "Hier ablegen",
+    readingNow: "Micabo liest…",
+    slidePdf: "Zieh das PDF hierher",
+    grabBelow: "Nimm es direkt darunter",
+    dropHint:
+      "Nimm das PDF unten, zieh es in die gestrichelte Zone direkt darüber, und lass es los.",
+    exampleCourseAria: "Beispielstoff, {file}",
+    showcase: {
+      waterSubject: "Biologie",
+      mathSubject: "Mathematik",
+      mathTitle: "Ableitungen",
+      mathHeading: "Ein Produkt ableiten",
+      mathParagraph:
+        "Die Ableitung eines Produkts ist **nicht** das Produkt der Ableitungen. Das ist der teuerste Fehler des Kapitels, und er verschwindet, wenn man die Formel in der richtigen Reihenfolge lernt.",
+      mathCaption: "Man leitet das eine ab, behält das andere — dann umgekehrt.",
+      mathStepsTitle: "An einem Beispiel",
+      mathStep1: "Man setzt u = x² und v = sin(x).",
+      mathStep2: "Man leitet getrennt ab: u' = 2x und v' = cos(x).",
+      mathStep3: "Man setzt zusammen: 2x·sin(x) + x²·cos(x).",
+      mathCallout:
+        "==Das Vorzeichen ist ein Plus, kein Minus.== Das Minus erscheint nur in der Ableitung eines **Quotienten**.",
+      histSubject: "Geschichte",
+      histTitle: "Die Französische Revolution",
+      histHeading: "1789, in vier Daten",
+      histTableTitle: "Was die Prüfung erwartet",
+      histH1: "Datum",
+      histH2: "Ereignis",
+      histH3: "Was sich ändert",
+      histR1c1: "5. Mai",
+      histR1c2: "Generalstände",
+      histR1c3: "Die drei Stände treten zusammen",
+      histR2c1: "17. Juni",
+      histR2c2: "Nationalversammlung",
+      histR2c3: "Der Dritte Stand erklärt sich allein souverän",
+      histR3c1: "14. Juli",
+      histR3c2: "Sturm auf die Bastille",
+      histR3c3: "Paris tritt in die Revolution ein",
+      histR4c1: "4. August",
+      histR4c2: "Abschaffung der Privilegien",
+      histR4c3: "Die Ständegesellschaft fällt",
+      histCaption: "Vier Daten, vier Wendungen — keine weitere Chronologie.",
+      histTerm: "Dritter Stand",
+      histDef:
+        "Alles, was weder Klerus noch Adel ist: **98 % der Bevölkerung**, und eine Stimme von drei.",
+      histCallout:
+        "Die Nacht des 4. August schafft nicht die Monarchie ab, sondern die **Privilegien**. Der König bleibt bis 1792.",
+    },
   },
   onboarding: {
     stepBienvenue: "Willkommen",
@@ -290,5 +359,9 @@ export const de: Catalog = {
     profile: "Profil",
     settings: "Einstellungen",
     import: "Importieren",
+    feedback: "Rückmeldungen",
+    openCourses: "Geöffnet",
   },
+  app: appDe,
+  copy: copyDe,
 };

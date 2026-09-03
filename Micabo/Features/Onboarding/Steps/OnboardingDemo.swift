@@ -11,10 +11,12 @@ import SwiftUI
 /// fiché après lecture, décomposé en cartes ensuite. C'est ce fil qui fait comprendre
 /// l'app : trois illustrations sans rapport ne montreraient que trois animations.
 enum OnboardingDemo {
-    static let courseTitle = "Le cycle de l'eau"
-    static let subject = "SVT"
-    static let chapter = "Chapitre 4 · L'eau sur Terre"
-    static let fileName = "Le cycle de l'eau.pdf"
+    static var locale: UiLocale { .resolved() }
+
+    static var courseTitle: String { L10n.t("demo.courseTitle", locale: locale) }
+    static var subject: String { L10n.t("demo.showcase.waterSubject", locale: locale) }
+    static var chapter: String { L10n.t("demo.chapter", locale: locale) }
+    static var fileName: String { L10n.t("demo.fileName", locale: locale) }
 
     /// Bleu d'eau : la figure et les accents de la démonstration.
     static let accent = Color(hex: 0x3E6C8C)
@@ -26,23 +28,25 @@ enum OnboardingDemo {
     /// C'est **volontairement mal écrit** et volontairement dense. Le premier écran doit
     /// montrer un cours tel qu'on le reçoit, pas un cours déjà mis en page : sinon l'écran
     /// suivant, qui le met en page, ne transforme rien.
-    static let rawLines: [String] = [
-        "Le cycle de l'eau désigne l'ensemble des mouvements de l'eau entre les océans, l'atmosphère et les continents.",
-        "Sous l'effet du rayonnement solaire l'eau de surface passe à l'état de vapeur, ce phénomène est appelé évaporation et concerne surtout les océans qui couvrent 71 % de la surface terrestre.",
-        "La vapeur d'eau s'élève et rencontre des couches plus froides, elle se condense alors autour de noyaux de condensation pour former des gouttelettes qui constituent les nuages.",
-        "Lorsque les gouttelettes deviennent trop lourdes elles retombent sous forme de précipitations, pluie ou neige selon la température rencontrée pendant la chute.",
-        "Une partie de cette eau ruisselle et rejoint les cours d'eau puis les océans, une autre s'infiltre dans le sol et alimente les nappes phréatiques."
-    ]
+    static var rawLines: [String] {
+        [
+            L10n.t("demo.raw1", locale: locale),
+            L10n.t("demo.raw2", locale: locale),
+            L10n.t("demo.raw3", locale: locale),
+            L10n.t("demo.raw4", locale: locale),
+            L10n.t("demo.raw5", locale: locale),
+        ]
+    }
 
     // MARK: - La fiche
 
     /// La fiche telle que Micabo l'écrirait : un plan, une définition, l'essentiel
     /// surligné, une figure. Les mêmes blocs que ceux de l'app, en miniature.
-    static let sheetHeading = "Trois temps, une boucle"
-    static let sheetParagraph = "L'eau change d'état sans jamais quitter la planète : ce qui s'évapore des océans retombe sur les continents, puis y retourne."
-    static let sheetTerm = "Condensation"
-    static let sheetDefinition = "Passage de la vapeur à l'état liquide, autour de noyaux de condensation."
-    static let sheetHighlight = "71 % de l'évaporation vient des océans."
+    static var sheetHeading: String { L10n.t("demo.sheetHeading", locale: locale) }
+    static var sheetParagraph: String { L10n.t("demo.sheetParagraph", locale: locale) }
+    static var sheetTerm: String { L10n.t("demo.defTerm", locale: locale) }
+    static var sheetDefinition: String { L10n.t("demo.defText", locale: locale) }
+    static var sheetHighlight: String { L10n.t("demo.sheetHighlight", locale: locale) }
 
     // MARK: - Les cartes
 
@@ -56,13 +60,29 @@ enum OnboardingDemo {
     }
 
     struct Card: Identifiable {
-        let id = UUID()
+        let id: UUID
         let kind: CardKind
         let front: String
         let back: String
         /// Propositions du QCM, la bonne en premier dans l'ordre d'écriture.
         var choices: [String] = []
         var answerIndex = 0
+
+        init(
+            id: UUID = UUID(),
+            kind: CardKind,
+            front: String,
+            back: String,
+            choices: [String] = [],
+            answerIndex: Int = 0
+        ) {
+            self.id = id
+            self.kind = kind
+            self.front = front
+            self.back = back
+            self.choices = choices
+            self.answerIndex = answerIndex
+        }
     }
 
     /// Les quatre formes que prend une fiche quand Micabo la découpe, dans l'ordre où
@@ -81,10 +101,10 @@ enum OnboardingDemo {
 
         var label: String {
             switch self {
-            case .schema: "Schéma"
-            case .flashcard: "Recto verso"
-            case .quiz: "QCM"
-            case .gap: "Texte à trou"
+            case .schema: L10n.t("demo.card4Kind", locale: .resolved())
+            case .flashcard: L10n.t("demo.card1Kind", locale: .resolved())
+            case .quiz: L10n.t("demo.card2Kind", locale: .resolved())
+            case .gap: L10n.t("demo.card3Kind", locale: .resolved())
             }
         }
 
@@ -99,30 +119,46 @@ enum OnboardingDemo {
     }
 
     /// Phrase du texte à trou, coupée là où le mot manque.
-    static let gapBefore = "Les gouttelettes trop lourdes retombent en"
-    static let gapAnswer = "précipitations"
-    static let gapAfter = "."
+    static var gapBefore: String {
+        let front = L10n.t("demo.card3Front", locale: locale)
+        if let range = front.range(of: "…") ?? front.range(of: "...") {
+            return String(front[..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
+        }
+        return front
+    }
+
+    static var gapAnswer: String { L10n.t("demo.card3Back", locale: locale) }
+    static var gapAfter: String { "." }
 
     /// Une ligne au recto, une ligne au verso : la démonstration se lit d'un coup d'œil.
-    static let cards: [Card] = [
-        Card(
-            kind: .basic,
-            front: "Que fait le soleil à l'eau des océans ?",
-            back: "Il la fait s'évaporer."
-        ),
-        Card(
-            kind: .choice,
-            front: "Où la vapeur se condense-t-elle ?",
-            back: "En altitude, où l'air est plus froid.",
-            choices: ["En altitude", "Au ras du sol", "Sous la mer"],
-            answerIndex: 0
-        ),
-        Card(
-            kind: .gap,
-            front: "Les gouttelettes trop lourdes retombent en …",
-            back: "précipitations"
-        )
-    ]
+    static var cards: [Card] {
+        [
+            Card(
+                id: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!,
+                kind: .basic,
+                front: L10n.t("demo.card1Front", locale: locale),
+                back: L10n.t("demo.card1Back", locale: locale)
+            ),
+            Card(
+                id: UUID(uuidString: "22222222-2222-2222-2222-222222222222")!,
+                kind: .choice,
+                front: L10n.t("demo.card2Front", locale: locale),
+                back: L10n.t("demo.card2Back", locale: locale),
+                choices: [
+                    L10n.t("demo.card2c1", locale: locale),
+                    L10n.t("demo.card2c2", locale: locale),
+                    L10n.t("demo.card2c3", locale: locale),
+                ],
+                answerIndex: 0
+            ),
+            Card(
+                id: UUID(uuidString: "33333333-3333-3333-3333-333333333333")!,
+                kind: .gap,
+                front: L10n.t("demo.card3Front", locale: locale),
+                back: L10n.t("demo.card3Back", locale: locale)
+            ),
+        ]
+    }
 }
 
 // MARK: - Le document brut
@@ -329,18 +365,18 @@ struct DemoWaterCycleFigure: View {
     var body: some View {
         VStack(spacing: 7) {
             HStack(spacing: 4) {
-                stage(symbol: "sun.max.fill", label: "Évaporation", tint: MicaboColor.caution)
+                stage(symbol: "sun.max.fill", label: L10n.t("demo.evap", locale: .resolved()), tint: MicaboColor.caution)
                 arrow
-                stage(symbol: "cloud.fill", label: "Condensation", tint: MicaboColor.inkSecondary)
+                stage(symbol: "cloud.fill", label: L10n.t("demo.cond", locale: .resolved()), tint: MicaboColor.inkSecondary)
                 arrow
-                stage(symbol: "cloud.rain.fill", label: "Précipitations", tint: OnboardingDemo.accent)
+                stage(symbol: "cloud.rain.fill", label: L10n.t("demo.precip", locale: .resolved()), tint: OnboardingDemo.accent)
             }
 
             HStack(spacing: 5) {
                 Image(systemName: "arrow.uturn.left")
                     .font(.system(size: 8, weight: .bold))
 
-                Text("Les rivières ramènent l'eau à la mer")
+                Text(L10n.t("demo.rivers", locale: .resolved()))
                     .font(MicaboFont.hanken(8, weight: .semibold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)

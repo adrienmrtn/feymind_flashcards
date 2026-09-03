@@ -1,4 +1,5 @@
 import type { Catalog } from "./fr";
+import { appTr, copyTr } from "./app-tr";
 
 export const tr: Catalog = {
   locale: {
@@ -147,6 +148,74 @@ export const tr: Catalog = {
       "Micabo ile her hatırlatma sıfırlar - ve iniş her seferinde yavaşlar.",
     legendWithout: "Tekrar yoksa bir ay sonra neredeyse bir şey kalmaz.",
     dayShort: "{n} g",
+    courseTitle: "Su döngüsü",
+    chapter: "Bölüm 4 · Yeryüzünde su",
+    raw1:
+      "Su döngüsü, suyun okyanuslar, atmosfer ve kıtalar arasındaki tüm hareketlerini ifade eder.",
+    raw2:
+      "Güneş ışınımıyla yüzey suyu buhara geçer; bu olaya buharlaşma denir ve yeryüzünün %71'ini kaplayan okyanusları özellikle ilgilendirir.",
+    raw3:
+      "Su buharı yükselir ve daha soğuk katmanlarla karşılaşır; yoğuşma çekirdeklerinin çevresinde yoğuşarak bulutları oluşturan damlacıklar yapar.",
+    raw4:
+      "Damlacıklar çok ağırlaşınca yağış olarak düşer: düşüş sırasındaki sıcaklığa göre yağmur veya kar.",
+    raw5:
+      "Bu suyun bir kısmı akar, akarsulara sonra okyanuslara ulaşır; bir kısmı toprağa sızar ve yeraltı sularını besler.",
+    sheetParagraphMarked:
+      "Su gezegeni terk etmeden hal değiştirir: okyanuslardan **buharlaşan** karalara düşer, sonra geri döner. ==Buharlaşmanın %71'i okyanuslardan gelir.==",
+    sheetCallout:
+      "Yağmur veya kar, bulutun yüksekliğine değil **düşüş sırasındaki sıcaklığa** bağlıdır.",
+    rivers: "Nehirler suyu denize geri götürür",
+    sheetHighlight: "Buharlaşmanın %71'i okyanuslardan gelir.",
+    tapToDrop: "Bırakmak için dokun",
+    dropAria: "{file} bırak",
+    dropped: "Ders bırakıldı",
+    dropHere: "Buraya bırak",
+    readingNow: "Micabo okuyor…",
+    slidePdf: "PDF'yi buraya sürükle",
+    grabBelow: "Hemen altındakini tut",
+    dropHint:
+      "Alttaki PDF'yi tut, hemen üstteki kesikli alana sürükle, sonra bırak.",
+    exampleCourseAria: "Örnek ders, {file}",
+    showcase: {
+      waterSubject: "Biyoloji",
+      mathSubject: "Matematik",
+      mathTitle: "Türevler",
+      mathHeading: "Bir çarpımı türetmek",
+      mathParagraph:
+        "Bir çarpımın türevi, türevlerin çarpımı **değildir**. Bölümün en pahalı hatası budur ve formülü doğru sırada öğrenerek düzelir.",
+      mathCaption: "Birini türet, diğerini tut — sonra tersini yap.",
+      mathStepsTitle: "Bir örnekle",
+      mathStep1: "u = x² ve v = sin(x) koy.",
+      mathStep2: "Ayrı türet: u' = 2x ve v' = cos(x).",
+      mathStep3: "Birleştir: 2x·sin(x) + x²·cos(x).",
+      mathCallout:
+        "==İşaret artıdır, eksi değil.== Eksi yalnızca bir **bölümün** türevinde çıkar.",
+      histSubject: "Tarih",
+      histTitle: "Fransız Devrimi",
+      histHeading: "1789, dört tarihle",
+      histTableTitle: "Sınavın beklediği",
+      histH1: "Tarih",
+      histH2: "Olay",
+      histH3: "Ne değişir",
+      histR1c1: "5 Mayıs",
+      histR1c2: "Etats généraux",
+      histR1c3: "Üç tabaka bir araya gelir",
+      histR2c1: "17 Haziran",
+      histR2c2: "Ulusal Meclis",
+      histR2c3: "Üçüncü tabaka kendini egemen ilan eder",
+      histR3c1: "14 Temmuz",
+      histR3c2: "Bastille'in alınması",
+      histR3c3: "Paris devrime girer",
+      histR4c1: "4 Ağustos",
+      histR4c2: "Ayrıcalıkların kaldırılması",
+      histR4c3: "Tabaka toplumu yıkılır",
+      histCaption: "Dört tarih, dört kırılma — bir kronoloji daha değil.",
+      histTerm: "Üçüncü tabaka",
+      histDef:
+        "Ruhban veya soylu olmayan herkes: **nüfusun %98'i**, ve üç oydan biri.",
+      histCallout:
+        "4 Ağustos gecesi monarşiyi değil **ayrıcalıkları** kaldırır. Kral 1792'ye kadar kalır.",
+    },
   },
   onboarding: {
     stepBienvenue: "Hoş geldin",
@@ -290,5 +359,9 @@ export const tr: Catalog = {
     profile: "Profil",
     settings: "Ayarlar",
     import: "İçe aktar",
+    feedback: "Geri bildirimler",
+    openCourses: "Açık",
   },
+  app: appTr,
+  copy: copyTr,
 };

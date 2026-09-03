@@ -3,6 +3,8 @@ import Link from "next/link";
 import { displayUsername } from "@micabo/core";
 
 import { Card, CardHeader, CardPanel, CardTitle } from "@/components/ui/card";
+import type { Translator } from "@/lib/i18n/copy";
+import type { UiLocale } from "@/lib/i18n/locales";
 
 export interface RankingRow {
   userId: string;
@@ -13,24 +15,29 @@ export interface RankingRow {
 
 /**
  * Le classement de la semaine, entre amis.
- *
- * On ne le montre que s'il y a vraiment un cercle : un podium tout seul
- * n'est pas un classement.
  */
-export function WeekRanking({ rows }: { rows: readonly RankingRow[] }) {
+export function WeekRanking({
+  rows,
+  locale: _locale,
+  t,
+}: {
+  rows: readonly RankingRow[];
+  locale: UiLocale;
+  t: Translator;
+}) {
   if (rows.length < 2) return null;
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-[15px] font-semibold text-ink">
-          Classement de la semaine
+          {t("app.home.ranking.title")}
         </CardTitle>
       </CardHeader>
       <CardPanel className="pt-0">
         <ol className="divide-y divide-hairline">
           {rows.map((row, index) => {
-            const label = row.username ? displayUsername(row.username) : "Quelqu'un";
+            const label = row.username ? displayUsername(row.username) : t("app.home.friends.someone");
             return (
               <li key={row.userId}>
                 <Link
@@ -43,7 +50,9 @@ export function WeekRanking({ rows }: { rows: readonly RankingRow[] }) {
                   <span className="min-w-0 flex-1 truncate text-[14.5px] font-medium text-ink">
                     {label}
                     {row.isMe ? (
-                      <span className="ml-1.5 text-[12px] font-normal text-ink-tertiary">toi</span>
+                      <span className="ml-1.5 text-[12px] font-normal text-ink-tertiary">
+                        {t("app.home.ranking.you")}
+                      </span>
                     ) : null}
                   </span>
                   <span className="numeral shrink-0 text-[14px] font-semibold text-ink">
@@ -54,7 +63,7 @@ export function WeekRanking({ rows }: { rows: readonly RankingRow[] }) {
             );
           })}
         </ol>
-        <p className="mt-3 text-[12px] text-ink-tertiary">cartes passées depuis lundi</p>
+        <p className="mt-3 text-[12px] text-ink-tertiary">{t("app.home.ranking.caption")}</p>
       </CardPanel>
     </Card>
   );

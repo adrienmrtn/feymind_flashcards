@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
-  REVIEW_RATING_LABELS,
   REVIEW_RATINGS,
   ReviewRating,
   entitlement,
@@ -12,7 +11,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { requestPaywall } from "@/lib/paywall";
-import { heldBackNew } from "@/lib/micabo-copy";
+import { copyHeldBackNew, reviewRatingLabel } from "@/lib/i18n/copy";
+import { useI18n } from "@/lib/i18n/client";
 
 export interface SessionTally {
   answered: number;
@@ -42,6 +42,7 @@ export function SessionDone({
   leftoverNew?: number;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [ready, setReady] = useState(false);
   const accuracy =
     tally.answered > 0 ? Math.round(((tally.answered - tally.again) / tally.answered) * 100) : 100;
@@ -57,18 +58,27 @@ export function SessionDone({
 
   const summary =
     tally.answered === 0
-      ? "Rien de noté."
-      : `${tally.answered} carte${tally.answered > 1 ? "s" : ""} · ${minutes} min · ${accuracy} %`;
+      ? t("app.session.done.noneGraded")
+      : t("app.session.done.summary", {
+          count: tally.answered,
+          minutes,
+          accuracy,
+        });
 
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">C&apos;est fait</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          {t("app.session.done.title")}
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {capped
-            ? `Le gratuit s'arrête à ${entitlement.FREE_TIER.cardsPerSession}. ${remaining} en attente.`
+            ? t("app.session.done.capped", {
+                limit: entitlement.FREE_TIER.cardsPerSession,
+                remaining,
+              })
             : leftoverNew > 0
-              ? `${summary} · ${heldBackNew(leftoverNew)}`
+              ? `${summary} · ${copyHeldBackNew(t, leftoverNew)}`
               : summary}
         </p>
       </header>
@@ -83,11 +93,15 @@ export function SessionDone({
               return (
                 <li
                   key={item.rating}
-                  aria-label={`${REVIEW_RATING_LABELS[item.rating]} : ${item.count} sur ${tally.answered}`}
+                  aria-label={t("app.session.done.ratingAria", {
+                    rating: reviewRatingLabel(t, item.rating),
+                    count: item.count,
+                    total: tally.answered,
+                  })}
                 >
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-[13px] font-medium text-foreground">
-                      {REVIEW_RATING_LABELS[item.rating]}
+                      {reviewRatingLabel(t, item.rating)}
                     </span>
                     <span className="numeral text-[13px] font-semibold text-foreground">
                       {item.count}
@@ -111,7 +125,7 @@ export function SessionDone({
 
       <div className="flex flex-wrap items-center gap-2">
         {capped ? (
-          <Button onClick={requestPaywall}>Continuer avec Pro</Button>
+          <Button onClick={requestPaywall}>{t("app.session.done.continuePro")}</Button>
         ) : leftoverNew > 0 ? (
           <Button
             onClick={() => {
@@ -119,7 +133,7 @@ export function SessionDone({
               router.refresh();
             }}
           >
-            Réviser encore
+            {t("app.review.again")}
           </Button>
         ) : null}
         <Button
@@ -129,7 +143,7 @@ export function SessionDone({
             router.refresh();
           }}
         >
-          Accueil
+          {t("nav.home")}
         </Button>
       </div>
     </div>

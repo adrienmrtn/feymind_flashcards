@@ -15,12 +15,14 @@ enum CardKind: String, Codable, CaseIterable {
     case choice
     case occlusion
 
-    var label: String {
+    var label: String { label(locale: .resolved()) }
+
+    func label(locale: UiLocale) -> String {
         switch self {
-        case .basic: "Recto verso"
-        case .cloze: "Texte à trou"
-        case .choice: "QCM"
-        case .occlusion: "Schéma"
+        case .basic: L10n.t("app.cardKind.basic", locale: locale)
+        case .cloze: L10n.t("app.cardKind.gap", locale: locale)
+        case .choice: L10n.t("app.cardKind.choice", locale: locale)
+        case .occlusion: L10n.t("app.cardKind.occlusion", locale: locale)
         }
     }
 
@@ -69,12 +71,14 @@ enum CardState: String, Codable, CaseIterable {
     case review
     case relearning
 
-    var label: String {
+    var label: String { label(locale: .resolved()) }
+
+    func label(locale: UiLocale) -> String {
         switch self {
-        case .new: "Nouvelle"
-        case .learning: "Apprentissage"
-        case .review: "Révision"
-        case .relearning: "Réapprentissage"
+        case .new: L10n.t("app.knowledge.new", locale: locale)
+        case .learning: L10n.t("app.knowledge.learning", locale: locale)
+        case .review: L10n.t("app.knowledge.reviewing", locale: locale)
+        case .relearning: L10n.t("app.knowledge.learning", locale: locale)
         }
     }
 }
@@ -88,12 +92,14 @@ enum ReviewRating: Int, Codable, CaseIterable, Identifiable {
 
     var id: Int { rawValue }
 
-    var label: String {
+    var label: String { label(locale: .resolved()) }
+
+    func label(locale: UiLocale) -> String {
         switch self {
-        case .again: "À revoir"
-        case .hard: "Difficile"
-        case .good: "Correct"
-        case .easy: "Facile"
+        case .again: L10n.t("app.session.rating.again", locale: locale)
+        case .hard: L10n.t("app.session.rating.hard", locale: locale)
+        case .good: L10n.t("app.session.rating.good", locale: locale)
+        case .easy: L10n.t("app.session.rating.easy", locale: locale)
         }
     }
 

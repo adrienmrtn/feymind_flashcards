@@ -75,25 +75,29 @@ export function ProfileSettings({
           role="status"
           aria-live="polite"
         >
-          {saved === "ok" ? "Enregistré" : saved === "erreur" ? "Non enregistré" : ""}
+          {saved === "ok"
+            ? t("app.settings.saved.ok")
+            : saved === "erreur"
+              ? t("app.settings.saved.error")
+              : ""}
         </p>
       </div>
 
       <label htmlFor="profile-name" className="mt-5 block text-[13px] text-ink-tertiary">
-        Ton nom
+        {t("app.settings.displayNameLabel")}
       </label>
       <input
         id="profile-name"
         value={name}
         onChange={(event) => setName(event.target.value)}
         onBlur={() => save({ displayName: name })}
-        placeholder="Comment on t'appelle"
+        placeholder={t("app.settings.displayNamePlaceholder")}
         className="mt-2 h-12 w-full rounded-button bg-surface-muted px-4 text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
       />
 
       <UsernameField initial={initialUsername} />
 
-      <p className="mt-7 text-[13px] text-ink-tertiary">Matières</p>
+      <p className="mt-7 text-[13px] text-ink-tertiary">{t("app.settings.subjects")}</p>
       <div className="mt-2.5 max-h-[220px] space-y-4 overflow-y-auto pr-1">
         {SUBJECT_FAMILIES.map((family) => (
           <div key={family.name}>
@@ -133,7 +137,7 @@ export function ProfileSettings({
         ))}
       </div>
 
-      <p className="mt-7 text-[13px] text-ink-tertiary">École</p>
+      <p className="mt-7 text-[13px] text-ink-tertiary">{t("app.settings.school")}</p>
       <div className="mt-2">
         <SchoolField
           initialName={initialSchool}
@@ -150,11 +154,13 @@ export function ProfileSettings({
       <div className="mt-7">
         <div className="flex items-baseline justify-between gap-3">
           <label htmlFor="profile-minutes" className="text-[13px] text-ink-tertiary">
-            Rythme quotidien
+            {t("app.settings.dailyPace")}
           </label>
           <p className="text-[13px] font-medium text-ink">
             {dailyMinutesLabel(minutes)}{" "}
-            <span className="text-ink-tertiary">· {newCardsPerDay(minutes)} cartes neuves</span>
+            <span className="text-ink-tertiary">
+              · {t("app.settings.newCardsPerDay", { count: newCardsPerDay(minutes) })}
+            </span>
           </p>
         </div>
         <input
@@ -176,7 +182,7 @@ export function ProfileSettings({
       <div className="mt-7">
         <div className="flex items-baseline justify-between gap-3">
           <label htmlFor="profile-blocks" className="text-[13px] text-ink-tertiary">
-            Longueur des fiches
+            {t("app.settings.sheetLength")}
           </label>
           <p className="text-[13px] font-medium text-ink">
             {sheetLengthTitle(length)}{" "}

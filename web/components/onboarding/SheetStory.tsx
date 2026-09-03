@@ -1,7 +1,8 @@
 "use client";
 
 import { SheetBlocks } from "@/components/sheet/SheetBlocks";
-import { SHOWCASE_SHEETS } from "@/components/onboarding/onboarding-sheets";
+import { showcaseSheets } from "@/components/onboarding/onboarding-sheets";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Trois fiches écrites par Micabo, posées les unes après les autres.
@@ -11,9 +12,11 @@ import { SHOWCASE_SHEETS } from "@/components/onboarding/onboarding-sheets";
  * plusieurs et qu'on peut faire défiler.
  */
 export function SheetStory() {
+  const { t } = useI18n();
+  const sheets = showcaseSheets(t);
   return (
     <div className="mx-auto w-full max-w-[460px] space-y-4">
-      {SHOWCASE_SHEETS.map((sheet, index) => (
+      {sheets.map((sheet, index) => (
         <article
           key={sheet.title}
           className="paper overflow-hidden rounded-group bg-surface p-4"

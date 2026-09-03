@@ -1,5 +1,7 @@
 import type { SheetBlock } from "@micabo/core";
 
+import type { Translator } from "@/lib/i18n/copy";
+
 /**
  * Le document de démonstration, repris mot pour mot de
  * `Micabo/Features/Onboarding/Steps/OnboardingDemo.swift`.
@@ -155,3 +157,88 @@ export const DEMO_CARDS: readonly DemoCard[] = [
     ],
   },
 ];
+
+export const DEMO_ACCENT = DEMO_COURSE.accent;
+
+export function localizedDemoCourse(t: Translator) {
+  return {
+    title: t("demo.courseTitle"),
+    subject: t("demo.showcase.waterSubject"),
+    chapter: t("demo.chapter"),
+    fileName: t("demo.fileName"),
+    accent: DEMO_ACCENT,
+  };
+}
+
+export function localizedRawLines(t: Translator): readonly string[] {
+  return [t("demo.raw1"), t("demo.raw2"), t("demo.raw3"), t("demo.raw4"), t("demo.raw5")];
+}
+
+export function localizedDemoSheet(t: Translator): SheetBlock[] {
+  return [
+    { type: "heading", level: 1, text: t("demo.sheetHeading") },
+    { type: "paragraph", text: t("demo.sheetParagraphMarked") },
+    { type: "definition", term: t("demo.defTerm"), text: t("demo.defText") },
+    {
+      type: "chart",
+      title: t("demo.chartTitle"),
+      unit: "%",
+      bars: [
+        { label: t("demo.oceans"), value: 71 },
+        { label: t("demo.continents"), value: 29 },
+      ],
+      caption: t("demo.chartCaption"),
+    },
+    { type: "callout", tone: "attention", text: t("demo.sheetCallout") },
+  ];
+}
+
+export function localizedTransformationSheet(t: Translator): SheetBlock[] {
+  return localizedDemoSheet(t).filter((block) => block.type !== "callout");
+}
+
+export function localizedCycleStages(t: Translator) {
+  return [
+    { label: t("demo.evap"), tint: "var(--color-caution-vivid)" },
+    { label: t("demo.cond"), tint: "var(--color-ink-secondary)" },
+    { label: t("demo.precip"), tint: DEMO_ACCENT },
+  ] as const;
+}
+
+export function localizedDemoCards(t: Translator): readonly DemoCard[] {
+  return [
+    {
+      kind: "basic",
+      kindLabel: t("demo.card1Kind"),
+      front: t("demo.card1Front"),
+      back: t("demo.card1Back"),
+      note: t("demo.card1Note"),
+    },
+    {
+      kind: "choice",
+      kindLabel: t("demo.card2Kind"),
+      front: t("demo.card2Front"),
+      back: t("demo.card2Back"),
+      choices: [t("demo.card2c1"), t("demo.card2c2"), t("demo.card2c3")],
+      answerIndex: 0,
+    },
+    {
+      kind: "gap",
+      kindLabel: t("demo.card3Kind"),
+      front: t("demo.card3Front"),
+      back: t("demo.card3Back"),
+      note: t("demo.card3Note"),
+    },
+    {
+      kind: "diagram",
+      kindLabel: t("demo.card4Kind"),
+      front: t("demo.card4Front"),
+      back: t("demo.card4Back"),
+      labels: [
+        { text: t("demo.evap"), hidden: true },
+        { text: t("demo.cond"), hidden: true },
+        { text: t("demo.precip"), hidden: true },
+      ],
+    },
+  ];
+}

@@ -14,7 +14,9 @@ import { CountStepper } from "@/components/app/CountStepper";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/card";
 import { requestPaywall } from "@/lib/paywall";
-import { heldBackNew, practiceReview } from "@/lib/micabo-copy";
+import { copyHeldBackNew, copyPracticeReview } from "@/lib/i18n/copy";
+import { useI18n } from "@/lib/i18n/client";
+import type { Translator } from "@/lib/i18n/copy";
 
 export interface ReviewSetupCard {
   id: string;
@@ -62,6 +64,7 @@ export function ReviewSetup({
   remaining: number;
   isPro: boolean;
 }) {
+  const { t } = useI18n();
   const now = useMemo(() => new Date(), []);
   const dueNew = cards.filter(
     (card) => !card.isSuspended && card.state === "new" && new Date(card.dueDate) <= now,
@@ -129,21 +132,25 @@ export function ReviewSetup({
     const empty = cards.length === 0;
     return (
       <EmptyState
-        title="Rien à réviser"
+        title={t("app.review.empty.title")}
         description={
           empty
-            ? "Importe un cours pour commencer."
+            ? t("app.review.empty.importBody")
             : isPro
-              ? "Rien à réviser aujourd'hui. Tu peux prendre de l'avance sur un cours."
-              : "Réviser sans compter est dans Pro."
+              ? t("app.review.empty.proAhead")
+              : t("app.review.empty.proGate")
         }
         action={
           empty ? (
-            <Button render={<Link href={"/app/importer" as never} />}>Importer un cours</Button>
+            <Button render={<Link href={"/app/importer" as never} />}>
+              {t("app.import.importCourse")}
+            </Button>
           ) : isPro ? (
-            <Button render={<Link href={"/app/cours" as never} />}>Voir les cours</Button>
+            <Button render={<Link href={"/app/cours" as never} />}>
+              {t("app.review.seeCourses")}
+            </Button>
           ) : (
-            <Button onClick={requestPaywall}>{practiceReview}</Button>
+            <Button onClick={requestPaywall}>{copyPracticeReview(t)}</Button>
           )
         }
       />
@@ -156,29 +163,32 @@ export function ReviewSetup({
     <div className="space-y-5">
       <header>
         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-          {leftoverOnly ? "C'est fait" : `${served} carte${served > 1 ? "s" : ""}`}
+          {leftoverOnly
+            ? t("app.review.done.title")
+            : t("app.review.queueCount", { count: served })}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {leftoverOnly
-            ? heldBackNew(dueNew)
+            ? copyHeldBackNew(t, dueNew)
             : courseId
-              ? "Ce cours"
-              : "Aujourd'hui"}
+              ? t("app.review.scope.course")
+              : t("app.review.scope.today")}
         </p>
       </header>
 
       {served > 0 || dueNew > 0 ? (
         <dl className="grid grid-cols-2 gap-3">
-          <Stat value={again} label="à revoir" />
+          <Stat value={again} label={t("app.review.stats.due")} />
           {dueNew > 0 ? (
             <NewCardsControl
+              t={t}
               value={Math.min(freshCap, dueNew)}
               max={dueNew}
               planned={remaining}
               onChange={setFreshCap}
             />
           ) : (
-            <Stat value={fresh} label={fresh === 1 ? "nouvelle" : "nouvelles"} />
+            <Stat value={fresh} label={t("app.review.stats.new", { count: fresh })} />
           )}
         </dl>
       ) : null}
@@ -205,13 +215,15 @@ export function ReviewSetup({
 
       {served > 0 ? (
         <Button className="w-full sm:w-auto" render={<Link href={href as never} />}>
-          {leftoverOnly ? `Réviser ${fresh} neuve${fresh > 1 ? "s" : ""}` : "Commencer"}
+          {leftoverOnly
+            ? t("app.review.startFresh", { count: fresh })
+            : t("app.review.start")}
         </Button>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Ton rythme du jour est atteint.{" "}
+          {t("app.review.paceReached")}{" "}
           <Link href={"/app/reglages" as never} className="underline-draw font-medium text-ink">
-            Changer le rythme
+            {t("app.home.empty.changePace")}
           </Link>
         </p>
       )}
@@ -220,11 +232,13 @@ export function ReviewSetup({
 }
 
 function NewCardsControl({
+  t,
   value,
   max,
   planned,
   onChange,
 }: {
+  t: Translator;
   value: number;
   max: number;
   planned: number;
@@ -233,10 +247,10 @@ function NewCardsControl({
   const relation = value === planned ? "at" : value > planned ? "above" : "below";
   const info =
     relation === "at"
-      ? "Nombre de nouvelles cartes prévues selon ton rythme."
+      ? t("app.review.newCards.atPace")
       : relation === "above"
-        ? "Au-dessus de ton rythme."
-        : "En dessous de ton rythme.";
+        ? t("app.review.newCards.above")
+        : t("app.review.newCards.below");
   const tone = relation === "at" ? "info" : relation === "above" ? "caution" : "ink";
 
   return (
@@ -247,14 +261,14 @@ function NewCardsControl({
           min={0}
           max={max}
           onChange={onChange}
-          minusLabel="Une carte neuve de moins"
-          plusLabel="Une carte neuve de plus"
+          minusLabel={t("app.review.newCards.minusAria")}
+          plusLabel={t("app.review.newCards.plusAria")}
           tone={tone}
           info={info}
         />
       </dd>
       <dt className="mt-2 text-[13px] text-muted-foreground">
-        {value === 1 ? "nouvelle" : "nouvelles"}
+        {t("app.review.stats.new", { count: value })}
       </dt>
     </div>
   );

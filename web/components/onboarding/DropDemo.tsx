@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { DEMO_COURSE } from "@/components/demo/demo-course";
+import { localizedDemoCourse } from "@/components/demo/demo-course";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * **Le geste de l'import, fait à la main.**
@@ -24,6 +25,8 @@ import { DEMO_COURSE } from "@/components/demo/demo-course";
  * exactement quoi faire. Cinq secondes : le PDF fait le geste tout seul.
  */
 export function DropDemo({ onDropped }: { onDropped: () => void }) {
+  const { t } = useI18n();
+  const course = localizedDemoCourse(t);
   const zone = useRef<HTMLDivElement>(null);
   const thumb = useRef<HTMLButtonElement>(null);
   const lastMove = useRef(typeof performance === "undefined" ? 0 : performance.now());
@@ -165,8 +168,8 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
             <span aria-hidden className="emoji text-[28px]">
               ✅
             </span>
-            <p className="mt-2.5 text-[15px] font-semibold text-accent">{DEMO_COURSE.fileName}</p>
-            <p className="mt-1 text-[13px] text-ink-secondary">Micabo le lit…</p>
+            <p className="mt-2.5 text-[15px] font-semibold text-accent">{course.fileName}</p>
+            <p className="mt-1 text-[13px] text-ink-secondary">{t("demo.readingNow")}</p>
           </>
         ) : (
           <>
@@ -194,10 +197,10 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
               />
             </svg>
             <p className="mt-3 text-[15.5px] font-semibold text-ink">
-              {active ? "Lâche-le ici" : "Glisse le PDF ici"}
+              {active ? t("app.import.dropHere") : t("demo.slidePdf")}
             </p>
             <p className="mt-1 text-[12.5px] text-ink-tertiary">
-              {active ? "\u00a0" : "Attrape-le juste en dessous"}
+              {active ? "\u00a0" : t("demo.grabBelow")}
             </p>
           </>
         )}
@@ -235,7 +238,7 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
               event.preventDefault();
               finish();
             }}
-            aria-label={`Déposer ${DEMO_COURSE.fileName}`}
+            aria-label={t("demo.dropAria", { file: course.fileName })}
             className={`flex touch-none items-center gap-3 rounded-button bg-surface px-4 py-3.5 paper ${
               offset ? "cursor-grabbing" : "shiny-loud cursor-grab"
             }`}
@@ -265,7 +268,7 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
             <span className="flex h-10 w-8 items-center justify-center rounded-[5px] bg-[#B5573C] text-[10px] font-bold tracking-[0.8px] text-on-ink">
               PDF
             </span>
-            <span className="text-[14px] font-medium text-ink">{DEMO_COURSE.fileName}</span>
+            <span className="text-[14px] font-medium text-ink">{course.fileName}</span>
           </button>
 
           {hint && !offset ? (
@@ -273,10 +276,7 @@ export function DropDemo({ onDropped }: { onDropped: () => void }) {
               role="status"
               className="rise paper max-w-[40ch] rounded-group bg-caution-soft px-4 py-3 text-center text-[13.5px] leading-relaxed text-ink"
             >
-              Prends le PDF <span className="font-semibold">en bas</span>,
-              glisse-le jusqu&apos;à la zone en pointillés{" "}
-              <span className="font-semibold">juste au-dessus</span>, puis
-              lâche-le.
+              {t("demo.dropHint")}
             </p>
           ) : null}
         </>

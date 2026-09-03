@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { courseAccent, courseAudienceLabel, resolveEmoji, studyCounts } from "@micabo/core";
+import { courseAccent, resolveEmoji, studyCounts } from "@micabo/core";
 
 import { CourseExamBadge } from "@/components/app/CourseExamBadge";
 import { CoursesExplore } from "@/components/app/CoursesExplore";
@@ -11,7 +11,9 @@ import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { canImportNow } from "@/lib/data/entitlement";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
 import { loadNewCardBudget } from "@/lib/data/reviews";
-import { heldBackNew } from "@/lib/micabo-copy";
+import { copyHeldBackNew, copyReviewButton } from "@/lib/i18n/copy";
+import { getTranslator } from "@/lib/i18n/server";
+import type { Translator } from "@/lib/i18n/copy";
 
 /**
  * L'étagère. Les cours des amis se lisent encore sur leur profil, selon
@@ -25,7 +27,8 @@ export default async function CoursesPage({
   const params = await searchParams;
   if (params.vue === "decouvrir") redirect("/app/cours");
 
-  const [courses, cards, budget, exams, canImport] = await Promise.all([
+  const [{ t }, courses, cards, budget, exams, canImport] = await Promise.all([
+    getTranslator(),
     listCourses(),
     listCardSnapshots(),
     loadNewCardBudget(),
@@ -60,16 +63,17 @@ export default async function CoursesPage({
       revise={
         counts.total > 0 ? (
           <Button render={<Link href={"/app/reviser" as never} />}>
-            Réviser <span className="numeral">{counts.total}</span>
+            {copyReviewButton(t, counts.total)}
           </Button>
         ) : heldBack > 0 ? (
           <Button variant="outline" render={<Link href={"/app/reviser" as never} />}>
-            Réviser encore
+            {t("app.review.again")}
           </Button>
         ) : null
       }
     >
       <Shelf
+        t={t}
         courses={courses}
         emptyReviews={counts.total === 0 && cards.length > 0}
         heldBack={heldBack}
@@ -81,12 +85,14 @@ export default async function CoursesPage({
 }
 
 function Shelf({
+  t,
   courses,
   emptyReviews,
   heldBack,
   exams,
   canImport,
 }: {
+  t: Translator;
   courses: Awaited<ReturnType<typeof listCourses>>;
   emptyReviews: boolean;
   heldBack: number;
@@ -97,14 +103,14 @@ function Shelf({
     <>
       {emptyReviews ? (
         <p className="text-[13px] text-muted-foreground">
-          {heldBack > 0 ? `C'est fait. ${heldBackNew(heldBack)}` : "C'est fait. Reviens demain."}
+          {heldBack > 0
+            ? t("app.courses.doneHeldBack", { message: copyHeldBackNew(t, heldBack) })
+            : t("app.courses.doneTomorrow")}
         </p>
       ) : null}
 
       {courses.length === 0 ? (
-        <p className="text-[15px] text-ink-secondary">
-          Ton premier cours t&apos;attend. PDF, photo, Word ou notes collées.
-        </p>
+        <p className="text-[15px] text-ink-secondary">{t("app.courses.emptyLead")}</p>
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-tour="cours-etagere">
@@ -132,13 +138,16 @@ function Shelf({
 
               <span className="min-w-0">
                 <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
-                  {course.title || "Sans titre"}
+                  {course.title || t("app.course.untitled")}
                 </span>
                 <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
                   {[
                     course.subject,
-                    course.is_from_library ? "Repris" : sourceLabel(course.source),
-                    courseAudienceLabel(course.view_count ?? 0, course.adopt_count ?? 0),
+                    course.is_from_library ? t("app.course.source.adopted") : sourceLabel(t, course.source),
+                    t("copy.audience", {
+                      views: course.view_count ?? 0,
+                      adopts: course.adopt_count ?? 0,
+                    }),
                   ]
                     .filter(Boolean)
                     .join(" · ")}
@@ -147,14 +156,14 @@ function Shelf({
             </Link>
           );
         })}
-        {canImport ? <AddCourseCard /> : <LockedAddCourseCard />}
+        {canImport ? <AddCourseCard t={t} /> : <LockedAddCourseCard />}
       </div>
     </>
   );
 }
 
 /** Même gabarit qu'un cours, posé à la fin : un + pour en ajouter un. */
-function AddCourseCard() {
+function AddCourseCard({ t }: { t: Translator }) {
   return (
     <Link
       href={"/app/importer" as never}
@@ -177,31 +186,31 @@ function AddCourseCard() {
       </span>
       <span className="min-w-0">
         <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
-          Ajouter un cours
+          {t("app.courses.addTitle")}
         </span>
         <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
-          PDF, Word, texte ou YouTube
+          {t("app.courses.addFormats")}
         </span>
       </span>
     </Link>
   );
 }
 
-function sourceLabel(source: string): string {
+function sourceLabel(t: Translator, source: string): string {
   switch (source) {
     case "pdf":
       return "PDF";
     case "photo":
-      return "Photos";
+      return t("app.course.source.photos");
     case "youtube":
-      return "Vidéo";
+      return t("app.course.source.video");
     case "docx":
-      return "Word";
+      return t("app.course.source.word");
     case "deck":
-      return "Paquet";
+      return t("app.course.source.deck");
     case "library":
-      return "Repris";
+      return t("app.course.source.adopted");
     default:
-      return "Texte";
+      return t("app.course.source.text");
   }
 }

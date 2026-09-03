@@ -70,7 +70,7 @@ function sectionLabel(pathname: string, t: (key: string) => string): string {
   if (pathname.startsWith("/app/importer")) return t("nav.import");
   if (pathname.startsWith("/app/reviser")) return t("nav.review");
   if (pathname.startsWith("/app/examens")) return t("nav.exams");
-  if (pathname.startsWith("/app/retours")) return "Retours";
+  if (pathname.startsWith("/app/retours")) return t("nav.feedback");
   if (pathname.startsWith("/app/amis") || pathname.startsWith("/app/u/")) return t("nav.friends");
   if (pathname.startsWith("/app/profil")) return t("nav.profile");
   if (pathname.startsWith("/app/reglages")) return t("nav.settings");
@@ -115,6 +115,7 @@ export function AppChrome({
 }) {
   const [drawer, setDrawer] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!drawer) return;
@@ -137,7 +138,7 @@ export function AppChrome({
         href="#main-content"
         className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-4 focus-visible:top-3 focus-visible:z-50 focus-visible:rounded-button focus-visible:bg-accent focus-visible:px-3 focus-visible:py-2 focus-visible:text-[13px] focus-visible:font-medium focus-visible:text-on-ink"
       >
-        Aller au contenu
+        {t("app.a11y.skipToContent")}
       </a>
       <Sidebar
         userName={userName}
@@ -169,7 +170,7 @@ export function AppChrome({
                 size="icon"
                 className="lg:hidden"
                 onClick={() => setDrawer(true)}
-                aria-label="Ouvrir le menu"
+                aria-label={t("app.a11y.openMenu")}
               >
                 <Menu />
               </Button>
@@ -177,7 +178,9 @@ export function AppChrome({
             </div>
             <Button variant="ghost" size="sm" onClick={() => void leave()} disabled={leaving}>
               <LogOut />
-              <span className="hidden sm:inline">{leaving ? "Déconnexion…" : "Se déconnecter"}</span>
+              <span className="hidden sm:inline">
+                {leaving ? t("app.auth.signingOut") : t("app.auth.signOut")}
+              </span>
             </Button>
           </div>
         </header>
@@ -209,9 +212,10 @@ function Sidebar({
   canImport: boolean;
   canReadInbox: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <aside
-      aria-label="Navigation"
+      aria-label={t("app.a11y.navigation")}
       className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col self-start border-r border-sidebar-border bg-sidebar lg:flex"
       data-print="hide"
     >
@@ -242,6 +246,8 @@ function MobileDrawer({
   canReadInbox: boolean;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
+
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -254,19 +260,19 @@ function MobileDrawer({
     <div className="fixed inset-0 z-40 lg:hidden" data-print="hide">
       <button
         type="button"
-        aria-label="Fermer le menu"
+        aria-label={t("app.a11y.closeMenu")}
         className="absolute inset-0 bg-ink/20"
         onClick={onClose}
       />
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label="Menu"
+        aria-label={t("app.a11y.menuDialog")}
         className="absolute inset-y-0 left-0 flex w-72 max-w-[calc(100vw-2rem)] flex-col border-r border-sidebar-border bg-sidebar"
       >
         <div className="flex items-center justify-between pr-2">
           <Brand />
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fermer">
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label={t("app.a11y.close")}>
             <X />
           </Button>
         </div>
@@ -287,6 +293,7 @@ function MobileDrawer({
 }
 
 function Brand() {
+  const { t } = useI18n();
   return (
     <Link href="/app" className="flex items-center gap-3 px-4 py-5" aria-label="Micabo">
       <BrandMark size={36} />
@@ -295,7 +302,7 @@ function Brand() {
           micabo
         </span>
         <span className="block truncate text-[10px] uppercase tracking-[0.16em] text-sidebar-foreground">
-          étudier
+          {t("app.brand.tagline")}
         </span>
       </span>
     </Link>
@@ -356,7 +363,7 @@ function NavList({ canReadInbox }: { canReadInbox: boolean }) {
                     : "text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground"
                 }`}
               />
-              <span className="truncate">Retours</span>
+              <span className="truncate">{t("nav.feedback")}</span>
             </Link>
           ) : null}
         </div>
@@ -367,6 +374,7 @@ function NavList({ canReadInbox }: { canReadInbox: boolean }) {
 
 function OpenCourses() {
   const pathname = usePathname();
+  const { t } = useI18n();
   const [open, setOpen] = useState<OpenCourseTab[]>([]);
 
   useEffect(() => {
@@ -384,7 +392,7 @@ function OpenCourses() {
   return (
     <div className="px-3 pb-2">
       <p className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/70">
-        Ouverts
+        {t("nav.openCourses")}
       </p>
       <div className="flex max-h-48 flex-col gap-0.5 overflow-y-auto">
         {open.map((course) => {
@@ -407,7 +415,7 @@ function OpenCourses() {
               <button
                 type="button"
                 onClick={() => setOpen(unpinOpenCourse(course.id))}
-                aria-label={`Fermer ${course.title}`}
+                aria-label={t("app.a11y.closeCourse", { title: course.title })}
                 className="flex size-8 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground opacity-0 hover:bg-sidebar-accent group-hover:opacity-100 focus-visible:opacity-100"
               >
                 <X className="size-3.5" />
@@ -422,6 +430,7 @@ function OpenCourses() {
 
 function ImportLink({ canImport }: { canImport: boolean }) {
   const pathname = usePathname();
+  const { t } = useI18n();
   const current = pathname.startsWith("/app/importer");
   const className = `flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-sm font-medium transition-[scale,background-color,border-color,color] duration-press ease-out-strong active:scale-[0.96] ${
     current
@@ -438,7 +447,7 @@ function ImportLink({ canImport }: { canImport: boolean }) {
         data-tour="nav-importer"
       >
         <Upload className="size-4 shrink-0 opacity-80" />
-        Importer
+        {t("nav.import")}
       </button>
     );
   }
@@ -446,7 +455,7 @@ function ImportLink({ canImport }: { canImport: boolean }) {
   return (
     <Link href={"/app/importer" as never} className={className} data-tour="nav-importer">
       <Upload className="size-4 shrink-0 opacity-80" />
-      Importer
+      {t("nav.import")}
     </Link>
   );
 }

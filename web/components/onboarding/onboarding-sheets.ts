@@ -1,6 +1,7 @@
 import type { SheetBlock } from "@micabo/core";
 
-import { DEMO_SHEET } from "@/components/demo/demo-course";
+import { localizedDemoSheet } from "@/components/demo/demo-course";
+import type { Translator } from "@/lib/i18n/copy";
 
 /**
  * Trois fiches, **en vrais blocs**.
@@ -24,79 +25,82 @@ export interface ShowcaseSheet {
   blocks: SheetBlock[];
 }
 
-const DERIVATIVES: SheetBlock[] = [
-  { type: "heading", level: 1, text: "Dériver un produit" },
-  {
-    type: "paragraph",
-    text: "La dérivée d'un produit n'est **pas** le produit des dérivées. C'est l'erreur la plus coûteuse du chapitre, et elle se corrige en apprenant la formule dans le bon ordre.",
-  },
-  {
-    type: "formula",
-    latex: "(uv)' = u'v + uv'",
-    caption: "On dérive l'un, on garde l'autre — puis l'inverse.",
-  },
-  {
-    type: "steps",
-    title: "Sur un exemple",
-    items: [
-      "On pose u = x² et v = sin(x).",
-      "On dérive séparément : u' = 2x et v' = cos(x).",
-      "On assemble : 2x·sin(x) + x²·cos(x).",
-    ],
-  },
-  {
-    type: "callout",
-    tone: "attention",
-    text: "==Le signe est un plus, pas un moins.== Le moins n'apparaît que dans la dérivée d'un **quotient**.",
-  },
-];
+function derivatives(t: Translator): SheetBlock[] {
+  return [
+    { type: "heading", level: 1, text: t("demo.showcase.mathHeading") },
+    { type: "paragraph", text: t("demo.showcase.mathParagraph") },
+    {
+      type: "formula",
+      latex: "(uv)' = u'v + uv'",
+      caption: t("demo.showcase.mathCaption"),
+    },
+    {
+      type: "steps",
+      title: t("demo.showcase.mathStepsTitle"),
+      items: [
+        t("demo.showcase.mathStep1"),
+        t("demo.showcase.mathStep2"),
+        t("demo.showcase.mathStep3"),
+      ],
+    },
+    {
+      type: "callout",
+      tone: "attention",
+      text: t("demo.showcase.mathCallout"),
+    },
+  ];
+}
 
-const REVOLUTION: SheetBlock[] = [
-  { type: "heading", level: 1, text: "1789, en quatre dates" },
-  {
-    type: "table",
-    title: "Ce que l'examen attend",
-    headers: ["Date", "Événement", "Ce que ça change"],
-    rows: [
-      ["5 mai", "États généraux", "Les trois ordres se réunissent"],
-      ["17 juin", "Assemblée nationale", "Le tiers état se déclare seul souverain"],
-      ["14 juillet", "Prise de la Bastille", "Paris entre dans la révolution"],
-      ["4 août", "Abolition des privilèges", "La société d'ordres tombe"],
-    ],
-    caption: "Quatre dates, quatre bascules — pas une chronologie de plus.",
-  },
-  {
-    type: "definition",
-    term: "Tiers état",
-    text: "Tout ce qui n'est ni clergé ni noblesse : **98 % de la population**, et une voix sur trois.",
-  },
-  {
-    type: "callout",
-    tone: "essentiel",
-    text: "La nuit du 4 août n'abolit pas la monarchie, elle abolit les **privilèges**. Le roi reste jusqu'en 1792.",
-  },
-];
+function revolution(t: Translator): SheetBlock[] {
+  return [
+    { type: "heading", level: 1, text: t("demo.showcase.histHeading") },
+    {
+      type: "table",
+      title: t("demo.showcase.histTableTitle"),
+      headers: [t("demo.showcase.histH1"), t("demo.showcase.histH2"), t("demo.showcase.histH3")],
+      rows: [
+        [t("demo.showcase.histR1c1"), t("demo.showcase.histR1c2"), t("demo.showcase.histR1c3")],
+        [t("demo.showcase.histR2c1"), t("demo.showcase.histR2c2"), t("demo.showcase.histR2c3")],
+        [t("demo.showcase.histR3c1"), t("demo.showcase.histR3c2"), t("demo.showcase.histR3c3")],
+        [t("demo.showcase.histR4c1"), t("demo.showcase.histR4c2"), t("demo.showcase.histR4c3")],
+      ],
+      caption: t("demo.showcase.histCaption"),
+    },
+    {
+      type: "definition",
+      term: t("demo.showcase.histTerm"),
+      text: t("demo.showcase.histDef"),
+    },
+    {
+      type: "callout",
+      tone: "essentiel",
+      text: t("demo.showcase.histCallout"),
+    },
+  ];
+}
 
-export const SHOWCASE_SHEETS: readonly ShowcaseSheet[] = [
-  {
-    emoji: "💧",
-    subject: "SVT",
-    title: "Le cycle de l'eau",
-    tint: "#3E6C8C",
-    blocks: DEMO_SHEET,
-  },
-  {
-    emoji: "📐",
-    subject: "Mathématiques",
-    title: "Dérivées",
-    tint: "#0b8a66",
-    blocks: DERIVATIVES,
-  },
-  {
-    emoji: "🏛️",
-    subject: "Histoire",
-    title: "La Révolution française",
-    tint: "#b3872b",
-    blocks: REVOLUTION,
-  },
-];
+export function showcaseSheets(t: Translator): readonly ShowcaseSheet[] {
+  return [
+    {
+      emoji: "💧",
+      subject: t("demo.showcase.waterSubject"),
+      title: t("demo.courseTitle"),
+      tint: "#3E6C8C",
+      blocks: localizedDemoSheet(t),
+    },
+    {
+      emoji: "📐",
+      subject: t("demo.showcase.mathSubject"),
+      title: t("demo.showcase.mathTitle"),
+      tint: "#0b8a66",
+      blocks: derivatives(t),
+    },
+    {
+      emoji: "🏛️",
+      subject: t("demo.showcase.histSubject"),
+      title: t("demo.showcase.histTitle"),
+      tint: "#b3872b",
+      blocks: revolution(t),
+    },
+  ];
+}

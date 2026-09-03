@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { entitlement } from "@micabo/core";
 
 import { PaywallOffer } from "@/components/app/PaywallOffer";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Le paywall qui **coupe une session au bout de cinq cartes**.
@@ -17,6 +18,7 @@ import { PaywallOffer } from "@/components/app/PaywallOffer";
  */
 export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
   const router = useRouter();
+  const { t } = useI18n();
   const titleId = useId();
   const [abandoning, setAbandoning] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -47,6 +49,7 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
 
       {abandoning ? (
         <AbandonCard
+          t={t}
           titleId={titleId}
           dialogRef={dialogRef}
           onReturn={() => setAbandoning(false)}
@@ -64,7 +67,7 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
           <div className="flex items-center justify-end px-5 pt-4">
             <button
               type="button"
-              aria-label="Fermer"
+              aria-label={t("app.a11y.close")}
               onClick={() => setAbandoning(true)}
               className="pressable -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
             >
@@ -77,15 +80,17 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
               <p className="inline-flex items-center gap-2 rounded-pill bg-accent-soft px-3.5 py-1.5 text-[13px] font-semibold text-accent">
                 <CheckIcon />
                 <span className="numeral">
-                  {reviewedCount} / {entitlement.FREE_TIER.cardsPerSession} cartes
-                  révisées
+                  {t("app.paywall.session.progress", {
+                    reviewed: reviewedCount,
+                    limit: entitlement.FREE_TIER.cardsPerSession,
+                  })}
                 </span>
               </p>
               <h2
                 id={titleId}
                 className="mt-4 text-[22px] font-bold leading-[1.15] tracking-tight-title text-ink"
               >
-                Tes {reviewedCount} cartes gratuites sont faites.
+                {t("app.paywall.session.title", { reviewed: reviewedCount })}
               </h2>
             </div>
           </div>
@@ -99,7 +104,7 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
                 onClick={leave}
                 className="pressable mt-2.5 flex h-12 w-full items-center justify-center rounded-button text-[15px] font-semibold text-ink-secondary hover:bg-canvas"
               >
-                Revenir à l&apos;accueil
+                {t("app.paywall.session.home")}
               </button>
             }
           />
@@ -110,11 +115,13 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
 }
 
 function AbandonCard({
+  t,
   titleId,
   dialogRef,
   onReturn,
   onAbandon,
 }: {
+  t: ReturnType<typeof useI18n>["t"];
   titleId: string;
   dialogRef: RefObject<HTMLDivElement | null>;
   onReturn: () => void;
@@ -139,25 +146,24 @@ function AbandonCard({
         id={titleId}
         className="mt-5 text-[20px] font-bold leading-[1.2] tracking-tight-title text-ink"
       >
-        Tu es sûr d&apos;abandonner ta progression ?
+        {t("app.paywall.session.abandonTitle")}
       </h2>
       <p className="mt-2.5 text-[14px] leading-relaxed text-ink-secondary">
-        Les cartes déjà notées sont enregistrées. Les suivantes attendront ta
-        prochaine session.
+        {t("app.paywall.session.abandonBody")}
       </p>
       <button
         type="button"
         onClick={onReturn}
         className="pressable shiny mt-6 flex h-12 w-full items-center justify-center rounded-button bg-accent text-[15px] font-semibold text-on-ink"
       >
-        Revenir
+        {t("app.common.back")}
       </button>
       <button
         type="button"
         onClick={onAbandon}
         className="pressable mt-2 flex h-12 w-full items-center justify-center rounded-button text-[14.5px] font-semibold text-negative hover:bg-negative-soft"
       >
-        Abandonner la session
+        {t("app.paywall.session.abandonConfirm")}
       </button>
     </div>
   );

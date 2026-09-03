@@ -79,8 +79,8 @@ struct DemoImportStepView: View {
             .animation(OnboardingMotion.tap, value: isDragging)
             .accessibilityElement()
             .accessibilityAddTraits(.isButton)
-            .accessibilityLabel("Cours d'exemple, \(OnboardingDemo.fileName)")
-            .accessibilityHint("Appuie pour le déposer")
+            .accessibilityLabel(i18n?.t("demo.exampleCourseAria", ["file": OnboardingDemo.fileName]) ?? "Cours d'exemple, \(OnboardingDemo.fileName)")
+            .accessibilityHint(i18n?.t("demo.tapToDrop") ?? "Appuie pour le déposer")
     }
 
     private var dragGesture: some Gesture {
@@ -163,7 +163,9 @@ struct DemoImportStepView: View {
                 Image(systemName: isDropped ? "checkmark.circle.fill" : "arrow.down.circle")
                     .font(.system(size: 30, weight: .medium))
 
-                Text(isDropped ? "Cours déposé" : "Dépose-le ici")
+                Text(isDropped
+                     ? (i18n?.t("demo.dropped") ?? "Cours déposé")
+                     : (i18n?.t("demo.dropHere") ?? "Dépose-le ici"))
                     .font(MicaboFont.hanken(18, weight: .semibold))
             }
             .foregroundStyle(labelTint)

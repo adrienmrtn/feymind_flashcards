@@ -32,6 +32,7 @@ struct StudyView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(TabRouter.self) private var router: TabRouter?
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     /// Faits figés à l'ouverture. Un `@Query` sur les journaux se réveillerait à
     /// chaque note et ferait ramer la carte suivante.
@@ -145,14 +146,14 @@ struct StudyView: View {
         }
         .micaboPaywall($paywall)
         .confirmationDialog(
-            "Quitter la session ?",
+            i18n?.t("app.session.leaveTitle") ?? "Quitter la session ?",
             isPresented: $confirmLeave,
             titleVisibility: .visible
         ) {
-            Button("Reprendre plus tard") { finish() }
-            Button("Annuler", role: .cancel) {}
+            Button(i18n?.t("app.session.leaveLater") ?? "Reprendre plus tard") { finish() }
+            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) {}
         } message: {
-            Text("Tes notes sont enregistrées. Tu pourras reprendre où tu t'es arrêté.")
+            Text(i18n?.t("app.session.leaveBody") ?? "Tes notes sont enregistrées. Tu pourras reprendre où tu t'es arrêté.")
         }
     }
 
@@ -162,7 +163,7 @@ struct StudyView: View {
         VStack(spacing: 12) {
             HStack(spacing: 14) {
                 if !isEmbedded {
-                    MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: "Fermer") {
+                    MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: i18n?.t("app.a11y.close") ?? "Fermer") {
                         if session.answeredCount > 0, !session.isFinished {
                             confirmLeave = true
                         } else {
@@ -183,7 +184,7 @@ struct StudyView: View {
                     MicaboCircleButton(
                         systemImage: "arrow.uturn.backward",
                         size: 32,
-                        accessibilityTitle: "Annuler la dernière note",
+                        accessibilityTitle: i18n?.t("app.session.undoAria") ?? "Annuler la dernière note",
                         feedback: .rigid
                     ) {
                         withAnimation(StudyMotion.next) {
@@ -212,7 +213,7 @@ struct StudyView: View {
     private var practiceBanner: some View {
         banner(
             systemImage: "dumbbell",
-            text: MicaboCopy.practiceReviewHint,
+            text: MicaboCopy.practiceReviewHint(),
             tint: MicaboColor.accent,
             background: MicaboColor.accentSoft
         )
@@ -223,7 +224,7 @@ struct StudyView: View {
     private var examBanner: some View {
         banner(
             systemImage: "calendar.badge.clock",
-            text: "Mode examen · aucune carte ne repart au delà du jour J",
+            text: i18n?.t("app.session.examBanner") ?? "Mode examen · aucune carte ne repart au delà du jour J",
             tint: MicaboColor.caution,
             background: MicaboColor.cautionSoft
         )
@@ -272,8 +273,12 @@ struct StudyView: View {
                     }
                 }
                 .accessibilityAddTraits(.isButton)
-                .accessibilityHint(session.isRevealed ? "Réponse visible" : "Affiche la réponse")
-                .accessibilityLabel(session.isRevealed ? "Carte, réponse" : "Carte, question")
+                .accessibilityHint(session.isRevealed
+                    ? (i18n?.t("app.session.answerVisible") ?? "Réponse visible")
+                    : (i18n?.t("app.session.showAnswerHint") ?? "Affiche la réponse"))
+                .accessibilityLabel(session.isRevealed
+                    ? (i18n?.t("app.session.cardAnswer") ?? "Carte, réponse")
+                    : (i18n?.t("app.session.cardQuestion") ?? "Carte, question"))
             }
         }
         .padding(.horizontal, MicaboSpacing.screen)
@@ -313,7 +318,7 @@ struct StudyView: View {
     private var controls: some View {
         VStack(spacing: 14) {
             if session.isRevealed {
-                Text("Comment as-tu répondu ?")
+                Text(i18n?.t("app.session.howAnswered") ?? "Comment as-tu répondu ?")
                     .font(MicaboFont.hanken(11, weight: .medium))
                     .foregroundStyle(MicaboColor.inkTertiary)
 
@@ -330,7 +335,7 @@ struct StudyView: View {
                         session.reveal()
                     }
                 } label: {
-                    Text("Afficher la réponse")
+                    Text(i18n?.t("app.session.reveal") ?? "Afficher la réponse")
                 }
                 .buttonStyle(MicaboPrimaryButtonStyle())
             }
@@ -349,17 +354,17 @@ struct StudyView: View {
     private var cardActions: some View {
         HStack(spacing: 20) {
             if !session.isRevealed {
-                quietAction("Passer", systemImage: "arrow.right.to.line") {
+                quietAction(i18n?.t("app.session.skip") ?? "Passer", systemImage: "arrow.right.to.line") {
                     withAnimation { session.skip() }
                 }
             }
 
-            quietAction("Modifier", systemImage: "pencil") {
+            quietAction(i18n?.t("app.session.edit") ?? "Modifier", systemImage: "pencil") {
                 guard let card = session.current else { return }
                 editingCard = card
             }
 
-            quietAction("Mettre de côté", systemImage: "tray.and.arrow.down", feedback: .warning) {
+            quietAction(i18n?.t("app.session.setAside") ?? "Mettre de côté", systemImage: "tray.and.arrow.down", feedback: .warning) {
                 withAnimation { session.setAsideCurrent() }
             }
         }
@@ -570,10 +575,12 @@ struct StudyCardFace: View {
     var selectedChoice: Int?
     var onSelectChoice: ((Int) -> Void)?
 
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
     var body: some View {
         VStack(alignment: showAnswer ? .leading : .center, spacing: 14) {
             if showAnswer {
-                Text("RÉPONSE")
+                Text((i18n?.t("app.session.answerEyebrow") ?? "Réponse").uppercased())
                     .font(MicaboFont.hanken(11, weight: .semibold))
                     .tracking(1.4)
                     .foregroundStyle(MicaboColor.accent)
@@ -660,7 +667,7 @@ struct StudyCardFace: View {
     /// ce qui est demandé avant de le demander.
     private var frontEyebrow: String? {
         if card.isReversed {
-            return "Sens inverse"
+            return i18n?.t("app.session.reversed") ?? "Sens inverse"
         }
         switch card.format {
         case .cloze, .choice:
@@ -709,7 +716,7 @@ struct StudyCardFace: View {
                 HStack(spacing: 6) {
                     Image(systemName: "lightbulb")
                         .font(.system(size: 12, weight: .semibold))
-                    Text("Indice")
+                    Text(i18n?.t("app.session.hint") ?? "Indice")
                         .font(MicaboFont.hanken(13, weight: .semibold))
                 }
                 .foregroundStyle(MicaboColor.inkSecondary)
@@ -718,7 +725,7 @@ struct StudyCardFace: View {
                 .background(MicaboColor.surfaceMuted, in: Capsule())
             }
             .buttonStyle(MicaboPressableButtonStyle())
-            .accessibilityLabel("Afficher un indice")
+            .accessibilityLabel(i18n?.t("app.session.showHint") ?? "Afficher un indice")
         }
     }
 }
@@ -869,6 +876,8 @@ struct GradeButtons: View {
     var intervals: [ReviewRating: String] = [:]
     var onSelect: (ReviewRating) -> Void
 
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
     var body: some View {
         LazyVGrid(
             columns: [GridItem(.flexible(), spacing: 9), GridItem(.flexible(), spacing: 9)],
@@ -879,7 +888,7 @@ struct GradeButtons: View {
                     onSelect(rating)
                 } label: {
                     VStack(spacing: 2) {
-                        Text(rating.label)
+                        Text(rating.label(locale: i18n?.locale ?? .resolved()))
                             .font(MicaboFont.hanken(14, weight: .semibold))
 
                         if let interval = intervals[rating] {
@@ -903,8 +912,10 @@ struct GradeButtons: View {
     /// Le lecteur d'écran annonce la note et son délai d'une seule voix : deux éléments
     /// séparés feraient lire « à revoir », puis « 10 min », sans dire que l'un est l'autre.
     private func accessibilityLabel(for rating: ReviewRating) -> String {
-        guard let interval = intervals[rating] else { return rating.label }
-        return "\(rating.label), revient dans \(interval)"
+        let name = rating.label(locale: i18n?.locale ?? .resolved())
+        guard let interval = intervals[rating] else { return name }
+        return i18n?.t("app.session.ratingAria", ["rating": name, "interval": interval])
+            ?? "\(name), revient dans \(interval)"
     }
 
     /// La couleur d'une note. Elle est publiée parce que le bilan de fin de session s'en
@@ -956,6 +967,8 @@ private struct SessionSetupView: View {
     var onClose: () -> Void
     var onStart: (Int) -> Void
 
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
     @State private var newPerSession: Int
 
     init(
@@ -987,7 +1000,7 @@ private struct SessionSetupView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if canClose {
-                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: "Fermer", action: onClose)
+                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: i18n?.t("app.a11y.close") ?? "Fermer", action: onClose)
                     .padding(.horizontal, MicaboSpacing.screen)
                     .padding(.top, 8)
             }
@@ -995,7 +1008,9 @@ private struct SessionSetupView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                     VStack(alignment: .leading, spacing: 6) {
-                        MicaboEyebrow(text: courseTitle == nil ? "Aujourd'hui" : "Ce cours")
+                        MicaboEyebrow(text: courseTitle == nil
+                            ? (i18n?.t("app.review.scope.today") ?? "Aujourd'hui")
+                            : (i18n?.t("app.review.scope.course") ?? "Ce cours"))
 
                         Text(title)
                             .font(MicaboFont.hanken(22, weight: .bold))
@@ -1007,19 +1022,19 @@ private struct SessionSetupView: View {
                     HStack(spacing: MicaboSpacing.sm) {
                         setupTile(
                             value: preview.learning + preview.review,
-                            label: "à revoir",
+                            label: i18n?.t("app.review.stats.due") ?? "à revoir",
                             accent: false
                         )
                         setupTile(
                             value: preview.newCards,
-                            label: preview.newCards == 1 ? "nouvelle" : "nouvelles",
+                            label: i18n?.t("app.review.stats.new", ["count": "\(preview.newCards)"]) ?? (preview.newCards == 1 ? "nouvelle" : "nouvelles"),
                             accent: true
                         )
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(alignment: .firstTextBaseline) {
-                            Text("Neuves")
+                            Text(i18n?.t("app.session.newCardsLabel") ?? "Neuves")
                                 .font(MicaboFont.hanken(13, weight: .medium))
                                 .foregroundStyle(MicaboColor.inkTertiary)
 
@@ -1049,8 +1064,8 @@ private struct SessionSetupView: View {
                         if introducedToday > 0 || rhythmNew > 0 {
                             Text(
                                 introducedToday > 0
-                                    ? "\(introducedToday) déjà aujourd'hui"
-                                    : "\(rhythmNew) prévues"
+                                    ? (i18n?.t("app.session.alreadyToday", ["count": "\(introducedToday)"]) ?? "\(introducedToday) déjà aujourd'hui")
+                                    : (i18n?.t("app.session.plannedCount", ["count": "\(rhythmNew)"]) ?? "\(rhythmNew) prévues")
                             )
                             .font(MicaboFont.hanken(12.5, weight: .regular))
                             .foregroundStyle(MicaboColor.inkTertiary)
@@ -1065,10 +1080,10 @@ private struct SessionSetupView: View {
 
             MicaboBottomBar {
                 if preview.total > 0 {
-                    Button("Commencer") { onStart(newPerSession) }
+                    Button(i18n?.t("app.review.start") ?? "Commencer") { onStart(newPerSession) }
                         .buttonStyle(MicaboPrimaryButtonStyle())
                 } else {
-                    Text("Ajoute des neuves, ou reviens demain.")
+                    Text(i18n?.t("app.session.addNewOrTomorrow") ?? "Ajoute des neuves, ou reviens demain.")
                         .font(MicaboFont.hanken(14, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .multilineTextAlignment(.center)
@@ -1080,11 +1095,10 @@ private struct SessionSetupView: View {
 
     private var title: String {
         if preview.total > 0 {
-            return preview.total > 1
-                ? "\(preview.total) cartes"
-                : "1 carte"
+            return i18n?.t("app.review.queueCount", ["count": "\(preview.total)"])
+                ?? (preview.total > 1 ? "\(preview.total) cartes" : "1 carte")
         }
-        return "C'est fait"
+        return i18n?.t("app.review.done.title") ?? "C'est fait"
     }
 
     private func setupTile(value: Int, label: String, accent: Bool) -> some View {
@@ -1119,10 +1133,12 @@ private struct ResumePromptView: View {
     var onRestart: () -> Void
     var onClose: () -> Void
 
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if canClose {
-                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: "Fermer", action: onClose)
+                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: i18n?.t("app.a11y.close") ?? "Fermer", action: onClose)
                     .padding(.horizontal, MicaboSpacing.screen)
                     .padding(.top, 8)
             }
@@ -1130,9 +1146,12 @@ private struct ResumePromptView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             VStack(alignment: .leading, spacing: 12) {
-                MicaboEyebrow(text: "Session interrompue")
+                MicaboEyebrow(text: i18n?.t("app.session.interrupted") ?? "Session interrompue")
 
-                Text("Tu en étais à la carte \(snapshot.position) sur \(max(snapshot.initialCount, snapshot.position)).")
+                Text(i18n?.t("app.session.resumeAt", [
+                    "position": "\(snapshot.position)",
+                    "total": "\(max(snapshot.initialCount, snapshot.position))"
+                ]) ?? "Tu en étais à la carte \(snapshot.position) sur \(max(snapshot.initialCount, snapshot.position)).")
                     .font(MicaboFont.hanken(28, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(-0.6)
@@ -1145,10 +1164,10 @@ private struct ResumePromptView: View {
 
             MicaboBottomBar {
                 VStack(spacing: 2) {
-                    Button("Reprendre", action: onResume)
+                    Button(i18n?.t("app.session.resume") ?? "Reprendre", action: onResume)
                         .buttonStyle(MicaboPrimaryButtonStyle())
 
-                    Button("Recommencer", action: onRestart)
+                    Button(i18n?.t("app.session.restart") ?? "Recommencer", action: onRestart)
                         .buttonStyle(MicaboQuietButtonStyle())
                 }
             }
@@ -1161,6 +1180,8 @@ private struct ResumePromptView: View {
 /// Ce qui manquait : quand la file du jour est vide, on le dit, on félicite sobrement et
 /// on annonce la prochaine échéance — au lieu de basculer en douce sur d'autres cartes.
 private struct NothingDueView: View {
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
     let nextDueLabel: String?
     var canPractice: Bool
     /// L'entraînement libre est proposé mais cadenassé : le retirer de l'écran laisserait
@@ -1173,7 +1194,7 @@ private struct NothingDueView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Spacer()
-                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: "Fermer", action: onClose)
+                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: i18n?.t("app.a11y.close") ?? "Fermer", action: onClose)
             }
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.top, 8)
@@ -1181,7 +1202,7 @@ private struct NothingDueView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("C'est fait")
+                Text(i18n?.t("app.session.done.title") ?? "C'est fait")
                     .font(MicaboFont.hanken(22, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(-0.4)
@@ -1201,7 +1222,7 @@ private struct NothingDueView: View {
                     if canPractice {
                         Button(action: onPractice) {
                             HStack(spacing: MicaboSpacing.xs) {
-                                Text(MicaboCopy.practiceReview)
+                                Text(MicaboCopy.practiceReview())
 
                                 if isPracticeLocked {
                                     Image(systemName: "lock.fill")
@@ -1212,7 +1233,7 @@ private struct NothingDueView: View {
                         .buttonStyle(MicaboSecondaryButtonStyle())
                     }
 
-                    Button("Fermer", action: onClose)
+                    Button(i18n?.t("app.a11y.close") ?? "Fermer", action: onClose)
                         .buttonStyle(MicaboQuietButtonStyle())
                 }
             }
@@ -1220,8 +1241,8 @@ private struct NothingDueView: View {
     }
 
     private var detail: String {
-        guard let nextDueLabel else { return "Reviens demain." }
-        return "Prochaine dans \(nextDueLabel)."
+        guard let nextDueLabel else { return i18n?.t("app.home.empty.doneTomorrow") ?? "Reviens demain." }
+        return i18n?.t("app.session.nextIn", ["delay": nextDueLabel]) ?? "Prochaine dans \(nextDueLabel)."
     }
 }
 
@@ -1250,6 +1271,8 @@ private struct CompletionView: View {
     let session: StudySession
     let isEmbedded: Bool
     var onFinish: () -> Void
+
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     /// Passe à vrai une fois, à l'apparition. Chaque élément déclare son propre retard, ce qui
     /// évite une machine à états pour trois cents millisecondes de cascade.
@@ -1285,7 +1308,9 @@ private struct CompletionView: View {
         .scrollIndicators(.hidden)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             MicaboBottomBar {
-                Button(isEmbedded ? "Recharger la session" : "Terminer", action: onFinish)
+                Button(isEmbedded
+                    ? (i18n?.t("app.session.reload") ?? "Recharger la session")
+                    : (i18n?.t("app.session.finish") ?? "Terminer"), action: onFinish)
                     .buttonStyle(MicaboPrimaryButtonStyle())
             }
             .opacity(isRevealed ? 1 : 0)
@@ -1363,7 +1388,7 @@ private struct CompletionView: View {
         let given = ReviewRating.allCases.filter { session.count(of: $0) > 0 }
         if !given.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: "Tes réponses")
+                MicaboSectionCaption(text: i18n?.t("app.session.yourAnswers") ?? "Tes réponses")
 
                 VStack(spacing: 11) {
                     ForEach(Array(given.enumerated()), id: \.element) { index, rating in
@@ -1388,7 +1413,7 @@ private struct CompletionView: View {
 
         return VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.xs) {
-                Text(rating.label)
+                Text(rating.label(locale: i18n?.locale ?? .resolved()))
                     .font(MicaboFont.hanken(14, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
 
@@ -1414,19 +1439,23 @@ private struct CompletionView: View {
             .frame(height: 7)
         }
         .accessibilityElement()
-        .accessibilityLabel("\(rating.label) : \(count) sur \(session.answeredCount)")
+        .accessibilityLabel(i18n?.t("app.session.done.ratingAria", [
+            "rating": rating.label(locale: i18n?.locale ?? .resolved()),
+            "count": "\(count)",
+            "total": "\(session.answeredCount)"
+        ]) ?? "\(rating.label) : \(count) sur \(session.answeredCount)")
     }
 
     /// Ce que la session a produit, et ce qu'elle a coûté.
     private var tiles: some View {
         HStack(spacing: 10) {
             if !isPractice {
-                tile("apprises", MicaboColor.positive) {
+                tile(i18n?.t("app.session.learned") ?? "apprises", MicaboColor.positive) {
                     counter(Double(session.graduatedCount), color: MicaboColor.positive)
                 }
             }
 
-            tile("de réussite", MicaboColor.accent) {
+            tile(i18n?.t("app.session.accuracy") ?? "de réussite", MicaboColor.accent) {
                 // Le pourcentage monte comme les autres, et son signe reste collé au nombre :
                 // un « % » qui s'éloigne pendant que le chiffre grandit se lit comme un défaut
                 // d'alignement.
@@ -1438,7 +1467,7 @@ private struct CompletionView: View {
                 }
             }
 
-            tile("de révision", MicaboColor.inkSecondary) {
+            tile(i18n?.t("app.session.reviewTime") ?? "de révision", MicaboColor.inkSecondary) {
                 // La durée ne compte pas : « 12 min » qui monterait de zéro se lirait comme un
                 // chronomètre qui tourne encore, et « < 1 min » n'a pas de nombre à monter.
                 Text(durationLabel)
@@ -1504,9 +1533,12 @@ private struct CompletionView: View {
     }
 
     private func comebackText(delay: TimeInterval, today: Int) -> String {
-        let next = "Prochaine dans \(SM2Scheduler.format(delay: delay))."
+        let next = i18n?.t("app.session.nextIn", ["delay": SM2Scheduler.format(delay: delay)])
+            ?? "Prochaine dans \(SM2Scheduler.format(delay: delay))."
         guard today > 0 else { return next }
-        return next + " \(MicaboCopy.cards(today)) aujourd'hui."
+        let extra = i18n?.t("app.session.todayCards", ["cards": MicaboCopy.cards(today)])
+            ?? "\(MicaboCopy.cards(today)) aujourd'hui."
+        return next + " " + extra
     }
 
     private var comeback: TimeInterval? {
@@ -1515,19 +1547,23 @@ private struct CompletionView: View {
     }
 
     private var title: String {
-        guard session.answeredCount > 0 else { return "Rien à réviser" }
-        return "Terminé"
+        guard session.answeredCount > 0 else { return i18n?.t("app.review.empty.title") ?? "Rien à réviser" }
+        return i18n?.t("ios.done") ?? "Terminé"
     }
 
     private var detail: String {
-        guard session.answeredCount > 0 else { return "Reviens demain." }
+        guard session.answeredCount > 0 else { return i18n?.t("app.home.empty.doneTomorrow") ?? "Reviens demain." }
         let volume = "\(MicaboCopy.cards(session.answeredCount)) · \(durationLabel)"
-        return isPractice ? "\(volume) · entraînement" : volume
+        if isPractice {
+            return "\(volume) · \(i18n?.t("app.session.practiceTag") ?? "entraînement")"
+        }
+        return volume
     }
 
     private var durationLabel: String {
         let minutes = Int(session.elapsed / 60)
-        return minutes < 1 ? "< 1 min" : "\(minutes) min"
+        if minutes < 1 { return i18n?.t("app.session.underOneMin") ?? "< 1 min" }
+        return i18n?.t("app.session.minutes", ["n": "\(minutes)"]) ?? "\(minutes) min"
     }
 }
 

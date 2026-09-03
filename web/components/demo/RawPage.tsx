@@ -1,4 +1,7 @@
-import { DEMO_COURSE, RAW_LINES } from "./demo-course";
+"use client";
+
+import { localizedDemoCourse, localizedRawLines } from "./demo-course";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * La page telle qu'on la dépose : dense, sans hiérarchie, pénible.
@@ -23,6 +26,10 @@ export function RawPage({
   className?: string;
   fill?: boolean;
 }) {
+  const { t } = useI18n();
+  const course = localizedDemoCourse(t);
+  const lines = localizedRawLines(t);
+
   return (
     <div
       className={`flex flex-col overflow-hidden rounded-button border border-stroke bg-surface ${
@@ -34,14 +41,14 @@ export function RawPage({
           PDF
         </span>
         <span className="truncate text-[11px] font-medium text-ink-secondary">
-          {DEMO_COURSE.fileName}
+          {course.fileName}
         </span>
       </div>
 
       <div
         className={`flex flex-1 flex-col p-4 ${fill ? "justify-between gap-2" : "gap-1.5"}`}
       >
-        {RAW_LINES.map((line, index) => (
+        {lines.map((line, index) => (
           <p
             key={index}
             className={`text-[9.5px] leading-[1.55] text-[#55504A] ${

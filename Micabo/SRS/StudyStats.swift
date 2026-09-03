@@ -83,12 +83,14 @@ enum StudyStats {
 
         var id: String { rawValue }
 
-        var label: String {
+        var label: String { label(locale: .resolved()) }
+
+        func label(locale: UiLocale) -> String {
             switch self {
-            case .new: "Nouvelles"
-            case .learning: "En cours"
-            case .review: "En révision"
-            case .mastered: "Maîtrisées"
+            case .new: L10n.t("app.knowledge.newMany", locale: locale)
+            case .learning: L10n.t("app.knowledge.learning", locale: locale)
+            case .review: L10n.t("app.knowledge.reviewing", locale: locale)
+            case .mastered: L10n.t("app.knowledge.mastered", locale: locale)
             }
         }
     }

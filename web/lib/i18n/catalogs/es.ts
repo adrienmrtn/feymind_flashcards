@@ -1,4 +1,5 @@
 import type { Catalog } from "./fr";
+import { appEs, copyEs } from "./app-es";
 
 export const es: Catalog = {
   locale: {
@@ -147,6 +148,74 @@ export const es: Catalog = {
       "Con Micabo, cada recuerdo pone el contador a cero - y la bajada es más lenta cada vez.",
     legendWithout: "Sin repaso, al cabo de un mes casi no queda nada.",
     dayShort: "{n} d",
+    courseTitle: "El ciclo del agua",
+    chapter: "Capítulo 4 · El agua en la Tierra",
+    raw1:
+      "El ciclo del agua designa el conjunto de movimientos del agua entre los océanos, la atmósfera y los continentes.",
+    raw2:
+      "Por la radiación solar el agua de superficie pasa a vapor; este fenómeno se llama evaporación y afecta sobre todo a los océanos, que cubren el 71 % de la superficie terrestre.",
+    raw3:
+      "El vapor de agua sube y encuentra capas más frías; entonces se condensa alrededor de núcleos de condensación para formar gotas que constituyen las nubes.",
+    raw4:
+      "Cuando las gotas se vuelven demasiado pesadas caen en forma de precipitaciones, lluvia o nieve según la temperatura durante la caída.",
+    raw5:
+      "Una parte de esta agua escurre y llega a los ríos y luego a los océanos; otra se infiltra en el suelo y alimenta los acuíferos.",
+    sheetParagraphMarked:
+      "El agua cambia de estado sin dejar el planeta: lo que se **evapora** de los océanos cae en los continentes y vuelve. ==El 71 % de la evaporación viene de los océanos.==",
+    sheetCallout:
+      "Lluvia o nieve no depende de la altura de la nube sino de la **temperatura durante la caída**.",
+    rivers: "Los ríos devuelven el agua al mar",
+    sheetHighlight: "El 71 % de la evaporación viene de los océanos.",
+    tapToDrop: "Toca para soltarlo",
+    dropAria: "Soltar {file}",
+    dropped: "Clase depositada",
+    dropHere: "Suéltalo aquí",
+    readingNow: "Micabo lo lee…",
+    slidePdf: "Arrastra el PDF aquí",
+    grabBelow: "Cógelo justo debajo",
+    dropHint:
+      "Coge el PDF abajo, arrástralo hasta la zona de puntos justo encima y suéltalo.",
+    exampleCourseAria: "Clase de ejemplo, {file}",
+    showcase: {
+      waterSubject: "Biología",
+      mathSubject: "Matemáticas",
+      mathTitle: "Derivadas",
+      mathHeading: "Derivar un producto",
+      mathParagraph:
+        "La derivada de un producto **no** es el producto de las derivadas. Es el error más caro del capítulo, y se corrige aprendiendo la fórmula en el orden correcto.",
+      mathCaption: "Se deriva uno, se conserva el otro — luego al revés.",
+      mathStepsTitle: "Con un ejemplo",
+      mathStep1: "Se pone u = x² y v = sin(x).",
+      mathStep2: "Se deriva por separado: u' = 2x y v' = cos(x).",
+      mathStep3: "Se junta: 2x·sin(x) + x²·cos(x).",
+      mathCallout:
+        "==El signo es un más, no un menos.== El menos solo aparece en la derivada de un **cociente**.",
+      histSubject: "Historia",
+      histTitle: "La Revolución francesa",
+      histHeading: "1789, en cuatro fechas",
+      histTableTitle: "Lo que espera el examen",
+      histH1: "Fecha",
+      histH2: "Acontecimiento",
+      histH3: "Qué cambia",
+      histR1c1: "5 de mayo",
+      histR1c2: "Estados generales",
+      histR1c3: "Los tres órdenes se reúnen",
+      histR2c1: "17 de junio",
+      histR2c2: "Asamblea nacional",
+      histR2c3: "El tercer estado se declara soberano",
+      histR3c1: "14 de julio",
+      histR3c2: "Toma de la Bastilla",
+      histR3c3: "París entra en la revolución",
+      histR4c1: "4 de agosto",
+      histR4c2: "Abolición de los privilegios",
+      histR4c3: "Cae la sociedad de órdenes",
+      histCaption: "Cuatro fechas, cuatro giros — no otra cronología.",
+      histTerm: "Tercer estado",
+      histDef:
+        "Todo lo que no es clero ni nobleza: **el 98 % de la población**, y un voto de tres.",
+      histCallout:
+        "La noche del 4 de agosto no abolió la monarquía, abolió los **privilegios**. El rey sigue hasta 1792.",
+    },
   },
   onboarding: {
     stepBienvenue: "Bienvenida",
@@ -290,5 +359,9 @@ export const es: Catalog = {
     profile: "Perfil",
     settings: "Ajustes",
     import: "Importar",
+    feedback: "Comentarios",
+    openCourses: "Abiertos",
   },
+  app: appEs,
+  copy: copyEs,
 };
