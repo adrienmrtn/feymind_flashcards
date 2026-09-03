@@ -1,7 +1,11 @@
+"use client";
+
 import { entitlement, pricing } from "@micabo/core";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardPanel } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n/client";
+import { planCaption, planTitle, presentmentFor } from "@/lib/pricing-copy";
 
 import { StartButton } from "./StartButton";
 import { WaitlistForm } from "./WaitlistForm";
@@ -19,6 +23,8 @@ import { WaitlistForm } from "./WaitlistForm";
  * bouton.
  */
 export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
+  const { t, locale } = useI18n();
+  const currency = presentmentFor(locale);
   const saving = pricing.savingsPercent();
 
   return (
@@ -38,11 +44,11 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
                     recommended ? "text-on-ink" : "text-ink"
                   }`}
                 >
-                  {plan.title}
+                  {planTitle(t, plan)}
                 </p>
                 {recommended ? (
                   <Badge className="rounded-pill bg-accent-vivid text-[11px] font-bold text-ink hover:bg-accent-vivid">
-                    Économise {saving} %
+                    {t("landing.savePercent", { pct: saving })}
                   </Badge>
                 ) : null}
               </div>
@@ -52,14 +58,14 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
                   recommended ? "text-on-ink" : "text-ink"
                 }`}
               >
-                {pricing.priceText(plan.price)}
+                {pricing.priceText(pricing.presentmentAmount(plan, currency), currency)}
               </p>
               <p
                 className={`mt-1 text-[13px] ${
                   recommended ? "text-on-ink-muted" : "text-ink-tertiary"
                 }`}
               >
-                {pricing.planCaption(plan)}
+                {planCaption(t, plan, currency)}
               </p>
 
               <p
@@ -69,10 +75,10 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
                     : "border-hairline text-ink-secondary"
                 }`}
               >
-                Cours et cartes sans limite, mode examen, et la fiche entière.
+                {t("landing.pricingFeatures")}
                 {recommended
-                  ? ` ${pricing.FREE_TRIAL_DAYS} jours offerts.`
-                  : " Sans essai."}
+                  ? ` ${t("landing.pricingTrial", { days: pricing.FREE_TRIAL_DAYS })}`
+                  : ` ${t("landing.pricingNoTrial")}`}
               </p>
               </CardPanel>
             </Card>
@@ -82,13 +88,13 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
 
       <Card className="mt-4">
       <CardPanel className="p-6">
-        <p className="eyebrow text-ink-tertiary">Sans payer</p>
+        <p className="eyebrow text-ink-tertiary">{t("landing.pricingFreeEyebrow")}</p>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
-          <strong className="font-semibold text-ink">Un cours entier à importer</strong>, dont tu
-          lis les {Math.round(entitlement.FREE_TIER.readableSheetRatio * 100)} % de la fiche, et{" "}
-          {entitlement.FREE_TIER.cardsPerSession} cartes par session. De quoi voir Micabo tourner
-          sur ton propre cours avant de décider quoi que ce soit - ce qui est le seul essai qui
-          veuille dire quelque chose.
+          <strong className="font-semibold text-ink">{t("landing.pricingFreeLead")}</strong>
+          {t("landing.pricingFreeBody", {
+            sheet: Math.round(entitlement.FREE_TIER.readableSheetRatio * 100),
+            cards: entitlement.FREE_TIER.cardsPerSession,
+          })}
         </p>
       </CardPanel>
       </Card>
@@ -96,7 +102,7 @@ export function Pricing({ signedIn = false }: { signedIn?: boolean }) {
       <div className="mx-auto mt-10 flex flex-col items-center">
         <StartButton signedIn={signedIn} />
         <p className="mt-10 mb-3 text-center text-[13.5px] text-ink-tertiary">
-          L&apos;abonnement n&apos;est pas encore ouvert. On t&apos;écrit le jour J.
+          {t("landing.pricingNotOpen")}
         </p>
         <div className="w-full max-w-[440px]">
           <WaitlistForm source="pricing" size="compact" />

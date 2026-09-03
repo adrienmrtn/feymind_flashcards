@@ -62,6 +62,15 @@ export const de: Catalog = {
     questionsTitle: "Was uns gefragt wird.",
     questionsMore: "Micabo oder Anki: der Vergleich",
     closingTitle: "Deine nächste Klausur fängt jetzt an.",
+    savePercent: "Spar {pct} %",
+    pricingFeatures: "Kurse und Karten ohne Limit, Prüfungsmodus, und das ganze Blatt.",
+    pricingTrial: "{days} Tage geschenkt.",
+    pricingNoTrial: "Ohne Probe.",
+    pricingFreeEyebrow: "Ohne zu zahlen",
+    pricingFreeLead: "Ein ganzer Kurs zum Importieren",
+    pricingFreeBody:
+      ", von dem du {sheet} % des Blatts liest, und {cards} Karten pro Sitzung. Genug, um Micabo an deinem eigenen Stoff zu sehen, bevor du irgendetwas entscheidest - das ist die einzige Probe, die etwas bedeutet.",
+    pricingNotOpen: "Das Abo ist noch nicht offen. Wir schreiben dir am Stichtag.",
     footerTagline:
       "Aus deinem Stoff wird ein Blatt zum Lesen und Karten, die zur richtigen Zeit wiederkommen.",
     footerProduct: "Das Produkt",
@@ -147,6 +156,13 @@ export const de: Catalog = {
     legendWith:
       "Mit Micabo setzt jede Erinnerung zurück - und der Abfall wird jedes Mal langsamer.",
     legendWithout: "Ohne Wiederholung bleibt nach einem Monat fast nichts.",
+    examCountdown: "in {days} Tagen",
+    examHistogramAria:
+      "Ein Histogramm über {days} Tage: die Wiederholungslast zieht sich vor dem Prüfungstag zusammen.",
+    examPrepHistogramAria:
+      "Histogramm über {days} Tage: die Karten rücken vor der Arbeit zusammen.",
+    retentionChartAria:
+      "Zwei Merkkurven über {days} Tage. Ohne Wiederholung bleibt nach einem Monat fast nichts. Mit Micabo holt jede Wiederholung - an Tag {intervals} - alles auf hundert Prozent zurück, und der Abfall wird jedes Mal langsamer.",
     dayShort: "{n} T",
     courseTitle: "Wasserkreislauf",
     chapter: "Kapitel 4 · Wasser auf der Erde",

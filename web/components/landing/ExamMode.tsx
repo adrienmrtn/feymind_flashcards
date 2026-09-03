@@ -1,6 +1,9 @@
+"use client";
+
 import { planExam, type ExamCard } from "@micabo/core";
 
 import { Card, CardPanel } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Le mode examen, montré par son calendrier.
@@ -19,6 +22,7 @@ const CARD_COUNT = 34;
 const DAYS_BEFORE = 21;
 
 export function ExamMode() {
+  const { t } = useI18n();
   // Un jeu plausible : quelques cartes en retard, quelques neuves, le reste à des intervalles
   // divers. Les valeurs importent peu, la forme de la charge dépend surtout de l'ordre.
   const now = new Date(2026, 4, 1, 9, 0);
@@ -37,9 +41,9 @@ export function ExamMode() {
     <Card className="lift" data-print="keep">
     <CardPanel className="p-6 sm:p-8">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <p className="text-[15px] font-semibold text-ink">Maths · DS sur table</p>
+        <p className="text-[15px] font-semibold text-ink">{t("demo.examCardTitle")}</p>
         <p className="text-[13px] text-ink-tertiary">
-          dans <span className="numeral font-bold text-ink">{DAYS_BEFORE}</span> jours
+          {t("demo.examCountdown", { days: DAYS_BEFORE })}
         </p>
       </div>
 
@@ -65,26 +69,19 @@ export function ExamMode() {
       </div>
 
       <div className="mt-2 flex items-baseline justify-between text-[11px] text-ink-tertiary">
-        <span>aujourd&apos;hui</span>
-        <span className="font-semibold text-negative">jour J</span>
+        <span>{t("demo.axisToday")}</span>
+        <span className="font-semibold text-negative">{t("demo.axisExamDay")}</span>
       </div>
 
-      <p className="sr-only">
-        Un histogramme de {load.length} jours montrant la charge de révision qui se resserre avant
-        le jour de l&apos;examen.
-      </p>
+      <p className="sr-only">{t("demo.examHistogramAria", { days: load.length })}</p>
 
       <dl className="mt-8 grid grid-cols-3 gap-4 border-t border-hairline pt-6">
-        <Stat value={plan.projection.cardCount} label="cartes couvertes" />
-        <Stat value={plan.projection.totalReviews} label="passages placés" />
-        <Stat value={load.length} label="jours utilisés" />
+        <Stat value={plan.projection.cardCount} label={t("demo.cardsCovered")} />
+        <Stat value={plan.projection.totalReviews} label={t("demo.reviewsPlaced")} />
+        <Stat value={load.length} label={t("demo.daysUsed")} />
       </dl>
 
-      <p className="mt-6 text-[13px] leading-relaxed text-ink-tertiary">
-        Et pendant que l&apos;examen approche, <strong className="font-semibold text-ink-secondary">
-        aucune carte ne repart au-delà du jour J</strong> - sans ce plafond, la première bonne
-        réponse renverrait la carte à trois semaines et le plan serait défait au premier passage.
-      </p>
+      <p className="mt-6 text-[13px] leading-relaxed text-ink-tertiary">{t("demo.examFoot")}</p>
     </CardPanel>
     </Card>
   );

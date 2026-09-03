@@ -2,6 +2,7 @@ import { pricing } from "@micabo/core";
 
 import { formatDayMonth, type Translator } from "./i18n/copy";
 import type { UiLocale } from "./i18n/locales";
+import { planTitleFor as localizedPlanTitle } from "./pricing-copy";
 
 /**
  * Le texte de la carte Abonnement, **décidé ici** pour que l'écran et les
@@ -19,14 +20,8 @@ export interface SubscriptionView {
   productId: string | null;
 }
 
-export function planTitleFor(productId: string | null): string | null {
-  if (!productId) return null;
-  const listed = pricing.STORE_PRODUCTS.find((product) => product.id === productId);
-  if (listed) return pricing.catalogPlanFor(listed.plan).title;
-  if (productId === pricing.YEARLY.productId) return pricing.YEARLY.title;
-  if (productId === pricing.WEEKLY.productId) return pricing.WEEKLY.title;
-  if (productId === pricing.DISCOUNT_YEARLY.productId) return pricing.DISCOUNT_YEARLY.title;
-  return null;
+export function planTitleFor(t: Translator, productId: string | null): string | null {
+  return localizedPlanTitle(t, productId);
 }
 
 export function subscriptionHeadline(t: Translator, view: SubscriptionView): string {

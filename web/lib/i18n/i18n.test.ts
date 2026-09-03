@@ -92,7 +92,19 @@ describe("catalogues", () => {
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "copy.cards")).toContain("plural");
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "app.home.tasks.title")).toBeTruthy();
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "nav.feedback")).toBeTruthy();
+      expect(lookup(CATALOGS[locale] as unknown as MessageTree, "demo.legendWith")).toBeTruthy();
+      expect(lookup(CATALOGS[locale] as unknown as MessageTree, "app.paywall.yearly")).toBeTruthy();
     }
+  });
+
+  it("traduit le paywall et le mode examen en turc", () => {
+    const t = makeTranslator("tr", CATALOGS.tr as unknown as MessageTree, fr as unknown as MessageTree);
+    expect(t("app.paywall.yearly")).toBe("Yıllık");
+    expect(t("app.paywall.weekly")).toBe("Haftalık");
+    expect(t("app.paywall.trialBadge", { days: 3 })).toBe("3 gün ücretsiz");
+    expect(t("demo.axisExamDay")).toBe("sınav günü");
+    expect(t("demo.cardsCovered")).not.toMatch(/cartes/);
+    expect(t("demo.legendWith")).not.toMatch(/Avec Micabo/);
   });
 });
 

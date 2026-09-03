@@ -1,12 +1,14 @@
+"use client";
+
 import {
   HORIZON_DAYS,
   REVIEW_DAYS,
   curveWithMicabo,
   curveWithoutReview,
-  intervalLabel,
 } from "@micabo/core";
 
 import { Card, CardPanel } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * La courbe de l'oubli, prise à contre-pied.
@@ -26,6 +28,7 @@ const FLOOR = 200;
 const CEILING = 24;
 
 export function RetentionChart() {
+  const { t } = useI18n();
   const without = curveWithoutReview();
   const withMicabo = curveWithMicabo();
 
@@ -36,7 +39,10 @@ export function RetentionChart() {
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="h-auto w-full"
         role="img"
-        aria-label={`Deux courbes de mémorisation sur ${HORIZON_DAYS} jours. Sans révision, ce qu'on retient tombe à presque rien en un mois. Avec Micabo, chaque révision - à ${REVIEW_DAYS.join(", ")} jours - la ramène à cent pour cent, et elle redescend de plus en plus lentement.`}
+        aria-label={t("demo.retentionChartAria", {
+          days: HORIZON_DAYS,
+          intervals: REVIEW_DAYS.join(", "),
+        })}
       >
         {/* Les repères de révision, posés avant les courbes pour passer dessous. */}
         {REVIEW_DAYS.map((day) => (
@@ -82,22 +88,15 @@ export function RetentionChart() {
               textAnchor="middle"
               className="fill-ink-tertiary text-[11px]"
             >
-              {intervalLabel(day)}
+              {t("demo.dayShort", { n: day })}
             </text>
           </g>
         ))}
       </svg>
 
       <figcaption className="mt-6 space-y-2 text-[13.5px]">
-        <Legend
-          color="var(--color-accent)"
-          label="Avec Micabo, chaque rappel remet à zéro - et la descente est plus lente à chaque fois."
-        />
-        <Legend
-          color="var(--color-ink-tertiary)"
-          dashed
-          label="Sans révision, il ne reste presque rien au bout d'un mois."
-        />
+        <Legend color="var(--color-accent)" label={t("demo.legendWith")} />
+        <Legend color="var(--color-ink-tertiary)" dashed label={t("demo.legendWithout")} />
       </figcaption>
     </CardPanel>
     </Card>

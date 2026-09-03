@@ -405,3 +405,52 @@ Elle ne se présente qu'une fois par appareil.
 
 - Web : `?debug=cadeau` sur n'importe quelle page de `/app`.
 - iOS : Réglages → Test → **Rejouer le cadeau** (DEBUG seulement), puis ouvrir une fiche.
+
+---
+
+## 14. La livre turque, sans RevenueCat ni Stripe
+
+On ne peut pas lire le prix du magasin : RevenueCat n'est pas branché sur iOS,
+Stripe n'expose pas encore un `price_…` TRY sur le web. Convertir 69,99 € au
+cours du jour donnerait un chiffre qui bouge tous les matins, et une allégation
+qu'on ne facture pas.
+
+**Ce qu'on fait aujourd'hui**
+
+1. **Un catalogue figé**, dans `web/packages/core/src/pricing.ts` (`TRY_AMOUNTS`).
+   Cours de référence : 1 € ≈ 56 ₺ (3 sept. 2026). Les montants sont **écrits**,
+   arrondis, pas calculés à l'affichage.
+2. **Quand l'afficher.** Langue du site `tr`, ou pays de scolarisation `tr`.
+   Le paywall, l'offre cadeau et la vitrine passent alors en ₺.
+3. **Les mots restent dans les catalogues i18n** (`Yıllık`, `Haftalık`,
+   `3 gün ücretsiz`). Les montants restent dans le noyau : un prix n'est pas
+   une chaîne à traduire.
+4. **L'encaissement ne change pas.** Checkout Stripe continue d'utiliser les
+   `price_…` EUR. Afficher ₺ et prélever € est un arrêt provisoire : dès qu'un
+   prix TRY existe chez Stripe / App Store Turkey, on le pose à côté de
+   `TRY_AMOUNTS` et on bascule l'`id` — on ne convertit toujours pas en live.
+
+| Offre | EUR (catalogue) | TRY (présentment) |
+| --- | --- | --- |
+| Annuel | 69,99 € / an → 5,83 € / mois | 3 899,99 ₺ / an |
+| Hebdomadaire | 7,99 € / semaine | 449,99 ₺ / semaine |
+| Annuel discount | 39,99 € / an → 3,30 € / mois | 2 199,99 ₺ / an → 183,30 ₺ / mois |
+
+**Le jour où le magasin répond**
+
+- iOS : `storeProduct.localizedPriceString` (étape 8). Le catalogue TRY devient
+  le repli pendant la seconde d'attente, plus la source.
+- Web : un second trio de `price_…` en TRY, choisis selon
+  `presentmentCurrencyFor`. Stripe Checkout facture alors vraiment en ₺.
+- App Store Connect : vérifier le palier Turkey généré par Apple sur les trois
+  produits. S'il s'écarte de `TRY_AMOUNTS`, **c'est Apple qui gagne** — on
+  réécrit le catalogue, on ne force pas le palier.
+
+**Ce qu'on ne fait pas**
+
+- Pas d'API de change (Fixer, ECB, Open Exchange). La livre bouge trop pour
+  qu'un paywall suive le marché.
+- Pas de conversion `69.99 * rate` dans le rendu. Le pourcentage d'économie
+  reste calculé sur les montants EUR du catalogue (même ratio), donc il ne
+  ment pas d'une devise à l'autre.
+- Pas de second entitlement. TRY n'est qu'une présentation, pas un droit.

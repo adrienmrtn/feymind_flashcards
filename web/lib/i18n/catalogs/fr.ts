@@ -61,6 +61,15 @@ export const fr = {
     questionsTitle: "Ce qu'on nous demande.",
     questionsMore: "Micabo ou Anki : la comparaison",
     closingTitle: "Ton prochain contrôle commence maintenant.",
+    savePercent: "Économise {pct} %",
+    pricingFeatures: "Cours et cartes sans limite, mode examen, et la fiche entière.",
+    pricingTrial: "{days} jours offerts.",
+    pricingNoTrial: "Sans essai.",
+    pricingFreeEyebrow: "Sans payer",
+    pricingFreeLead: "Un cours entier à importer",
+    pricingFreeBody:
+      ", dont tu lis les {sheet} % de la fiche, et {cards} cartes par session. De quoi voir Micabo tourner sur ton propre cours avant de décider quoi que ce soit - ce qui est le seul essai qui veuille dire quelque chose.",
+    pricingNotOpen: "L'abonnement n'est pas encore ouvert. On t'écrit le jour J.",
     footerTagline:
       "Tes cours deviennent une fiche qu'on relit, et des cartes qui reviennent au bon moment.",
     footerProduct: "Le produit",
@@ -146,6 +155,13 @@ export const fr = {
     legendWith:
       "Avec Micabo, chaque rappel remet à zéro - et la descente est plus lente à chaque fois.",
     legendWithout: "Sans révision, il ne reste presque rien au bout d'un mois.",
+    examCountdown: "dans {days} jours",
+    examHistogramAria:
+      "Un histogramme de {days} jours montrant la charge de révision qui se resserre avant le jour de l'examen.",
+    examPrepHistogramAria:
+      "Histogramme de {days} jours : les flashcards se resserrent avant le devoir.",
+    retentionChartAria:
+      "Deux courbes de mémorisation sur {days} jours. Sans révision, ce qu'on retient tombe à presque rien en un mois. Avec Micabo, chaque révision - à {intervals} jours - la ramène à cent pour cent, et elle redescend de plus en plus lentement.",
     dayShort: "{n} j",
     courseTitle: "Le cycle de l'eau",
     chapter: "Chapitre 4 · L'eau sur Terre",

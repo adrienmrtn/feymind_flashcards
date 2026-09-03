@@ -22,7 +22,7 @@ export function SubscriptionCard(view: SubscriptionView) {
   const { t, locale } = useI18n();
 
   const action = manageLabel(t, view);
-  const plan = planTitleFor(view.productId);
+  const plan = planTitleFor(t, view.productId);
   const headline = subscriptionHeadline(t, view);
 
   function run() {

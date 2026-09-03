@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import { planExam, type ExamCard } from "@micabo/core";
 
+import { useI18n } from "@/lib/i18n/client";
+
 /**
  * Le plan d'un examen générique, calculé par `planExam`.
  *
@@ -20,6 +22,7 @@ const CARD_COUNT = 28;
 const DAYS_BEFORE = 14;
 
 export function ExamPrepStory() {
+  const { t } = useI18n();
   const now = new Date(2026, 4, 1, 9, 0);
   const cards: ExamCard[] = Array.from({ length: CARD_COUNT }, (_, index) => ({
     id: `c${String(index).padStart(2, "0")}`,
@@ -38,14 +41,14 @@ export function ExamPrepStory() {
     <div className="paper w-full max-w-[420px] rounded-group bg-surface p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[15px] font-semibold text-ink">Devoir de SVT</p>
+          <p className="text-[15px] font-semibold text-ink">{t("demo.examTitle")}</p>
           <p className="mt-0.5 text-[12px] text-ink-tertiary">
-            Note visée <span className="numeral font-bold text-ink">16</span>
+            {t("demo.targetGrade")} <span className="numeral font-bold text-ink">16</span>
             <span>/20</span>
           </p>
         </div>
         <p className="text-[12px] text-ink-tertiary">
-          dans <span className="numeral font-bold text-ink">{DAYS_BEFORE}</span> jours
+          {t("demo.examCountdown", { days: DAYS_BEFORE })}
         </p>
       </div>
 
@@ -76,13 +79,11 @@ export function ExamPrepStory() {
       </div>
 
       <div className="mt-1.5 flex items-baseline justify-between text-[11px] text-ink-tertiary">
-        <span>aujourd&apos;hui</span>
-        <span className="font-semibold text-negative">jour J</span>
+        <span>{t("demo.axisToday")}</span>
+        <span className="font-semibold text-negative">{t("demo.axisExamDay")}</span>
       </div>
 
-      <p className="sr-only">
-        Histogramme de {load.length} jours : les flashcards se resserrent avant le devoir de SVT.
-      </p>
+      <p className="sr-only">{t("demo.examPrepHistogramAria", { days: load.length })}</p>
     </div>
     </div>
   );

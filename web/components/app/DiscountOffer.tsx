@@ -165,12 +165,12 @@ export function DiscountCard({
   startedAt: number;
   onClose: () => void;
 }) {
+  const { t, locale } = useI18n();
+  const currency = pricing.presentmentCurrencyFor(locale);
   const plan = pricing.DISCOUNT_YEARLY;
   const full = pricing.DISCOUNT_REFERENCE;
-  const monthly = pricing.monthlyEquivalent(plan);
+  const monthly = pricing.monthlyEquivalent(plan, currency);
   const saved = pricing.discountSavingsPercent();
-
-  const { t } = useI18n();
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -239,7 +239,9 @@ export function DiscountCard({
             <SaleSeal percent={saved} />
 
             <div className="min-w-0">
-              <p className="text-[14.5px] font-semibold text-offer-sky">{plan.title}</p>
+              <p className="text-[14.5px] font-semibold text-offer-sky">
+                {t("app.paywall.yearly")}
+              </p>
 
               <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
                 <span className="numeral text-[26px] font-bold leading-none text-ink">
@@ -251,7 +253,7 @@ export function DiscountCard({
               </p>
 
               <s className="mt-1 block text-[15.5px] font-medium text-ink-tertiary">
-                {pricing.priceText(full.price)}
+                {pricing.priceText(pricing.presentmentAmount(full, currency), currency)}
               </s>
             </div>
           </div>
@@ -277,7 +279,9 @@ export function DiscountCard({
             // Le mensuel vend, l'annuel engage : le montant réellement prélevé est écrit
             // sous le bouton, jamais ailleurs qu'à côté de lui.
             <p className="mt-3 text-[12.5px] text-ink-tertiary">
-              {t("app.paywall.discountYearly", { price: pricing.priceText(plan.price) })}
+              {t("app.paywall.discountYearly", {
+                price: pricing.priceText(pricing.presentmentAmount(plan, currency), currency),
+              })}
             </p>
           )}
         </div>

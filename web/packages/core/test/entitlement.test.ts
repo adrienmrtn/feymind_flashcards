@@ -34,6 +34,7 @@ import {
   PLANS,
   RECOMMENDED_PLAN,
   STORE_PRODUCTS,
+  TRY_AMOUNTS,
   WEEKLY,
   YEARLY,
   annualCost,
@@ -46,6 +47,9 @@ import {
   planDisplayedUnit,
   planFor,
   planRenewalCopy,
+  presentmentAmount,
+  presentmentCurrencyFor,
+  presentmentMonthly,
   priceText,
   savingsPercent,
   stripePriceId,
@@ -273,6 +277,19 @@ describe("les offres", () => {
     expect(offers().map((plan) => plan.price)).toEqual([69.99, 7.99]);
     expect(PLANS).not.toContainEqual(DISCOUNT_YEARLY);
     expect(DISCOUNT_YEARLY.productId).toBe("com.micabo.app.pro.yearly.discount");
+  });
+
+  it("affichent la livre turque sans lire Stripe ni RevenueCat", () => {
+    expect(presentmentCurrencyFor("tr")).toBe("TRY");
+    expect(presentmentCurrencyFor("fr", "tr")).toBe("TRY");
+    expect(presentmentCurrencyFor("fr")).toBe("EUR");
+    expect(presentmentCurrencyFor("de")).toBe("EUR");
+    expect(presentmentAmount(YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly);
+    expect(presentmentAmount(WEEKLY, "TRY")).toBe(TRY_AMOUNTS.weekly);
+    expect(presentmentMonthly(DISCOUNT_YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly_discount_monthly);
+    expect(priceText(TRY_AMOUNTS.weekly, "TRY")).toMatch(/₺|TRY/);
+    expect(planDisplayedPrice(YEARLY, "TRY")).toBe(monthlyEquivalent(YEARLY, "TRY"));
+    expect(YEARLY.price).toBe(69.99);
   });
 
   it("sont six chez RevenueCat, tous sur pro — pas trois", () => {
