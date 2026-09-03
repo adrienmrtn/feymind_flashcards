@@ -128,8 +128,15 @@ final class AuthController {
     }
 
     /// Envoie le lien, et n'ouvre pas la session. C'est le courriel qui la ferme.
+    ///
+    /// Sauf pour `review@apple.com` : les relecteurs n'ont pas cette boîte, donc
+    /// l'appui ouvre le compte tout de suite.
     func sendMagicLink(to email: String) async {
         let address = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        if AppStoreReview.matches(address) {
+            await openReviewSession()
+            return
+        }
         await perform {
             let pkce = PKCEPair()
             self.pendingVerifier = pkce.verifier
@@ -139,6 +146,22 @@ final class AuthController {
                 challenge: pkce.challenge
             )
             self.message = .sent(address)
+        }
+    }
+
+    /// Session du compte de relecture : le mot de passe d'abord, une session locale
+    /// si GoTrue ne répond pas. Dans les deux cas le cadeau est marqué vu.
+    private func openReviewSession() async {
+        await perform {
+            AppStoreReview.silenceDiscount()
+            if let session = try? await self.client.signInWithPassword(
+                email: AppStoreReview.email,
+                password: AppStoreReview.password
+            ) {
+                self.adopt(session)
+                return
+            }
+            self.adopt(AppStoreReview.localSession())
         }
     }
 

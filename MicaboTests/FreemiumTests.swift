@@ -170,6 +170,18 @@ final class FreemiumTests: XCTestCase {
         XCTAssertFalse(second.isPro)
     }
 
+    /// Le compte de relecture Apple reste ouvert même sans ligne ni SDK : un
+    /// `refresh` qui le refermerait poserait le cadeau et les cadenas sous les
+    /// yeux d'un relecteur.
+    @MainActor
+    func testTheAppStoreReviewAccountStaysProWithoutARow() async {
+        let pro = ProAccess(defaults: isolatedDefaults(), email: { AppStoreReview.email })
+
+        XCTAssertFalse(pro.isPro)
+        await pro.refresh()
+        XCTAssertTrue(pro.isPro)
+    }
+
     // MARK: - Outillage
 
     /// Un domaine par test : les réglages partagés feraient dépendre un test de l'ordre

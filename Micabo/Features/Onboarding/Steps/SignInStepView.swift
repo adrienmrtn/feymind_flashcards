@@ -39,16 +39,33 @@ struct SignInStepView: View {
         // l'état « connecté » qui fait avancer, quel que soit le fournisseur emprunté.
         .onChange(of: auth.isSignedIn) { _, isSignedIn in
             guard isSignedIn else { return }
-            advanceOnce()
+            continueAfterSignIn()
         }
         .onAppear {
             // Déjà connecté avant d'arriver ici, par un lien reçu par courriel par exemple :
             // on ne redemande pas.
-            if auth.isSignedIn { advanceOnce() }
+            if auth.isSignedIn { continueAfterSignIn() }
         }
     }
 
     // MARK: - Sorties
+
+    private func continueAfterSignIn() {
+        // Le compte de relecture entre dans l'app : l'essai et le paywall
+        // qui suivent ici sont pour quelqu'un qui n'a pas encore de droit.
+        if AppStoreReview.matches(auth.user?.email) {
+            finishReview()
+            return
+        }
+        advanceOnce()
+    }
+
+    private func finishReview() {
+        guard !didAdvance else { return }
+        didAdvance = true
+        auth.clearMessage()
+        OnboardingPreferences.markCompleted()
+    }
 
     private func advanceOnce() {
         guard !didAdvance else { return }

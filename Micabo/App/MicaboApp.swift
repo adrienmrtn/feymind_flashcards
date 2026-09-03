@@ -32,7 +32,8 @@ struct MicaboApp: App {
         _social = State(initialValue: SocialService(auth: auth))
         _pro = State(initialValue: ProAccess(
             accessToken: { await auth.validAccessToken() },
-            userID: { auth.user?.id }
+            userID: { auth.user?.id },
+            email: { auth.user?.email }
         ))
         SupabaseFunctions.accessToken = { await auth.validAccessToken() }
     }
