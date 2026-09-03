@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 
 import { RawPage } from "@/components/demo/RawPage";
-import { DEMO_COURSE, TRANSFORMATION_SHEET } from "@/components/demo/demo-course";
+import { DEMO_ACCENT, localizedTransformationSheet } from "@/components/demo/demo-course";
 import { SheetBlocks } from "@/components/sheet/SheetBlocks";
+import { useI18n } from "@/lib/i18n/client";
 
 const PANEL_COUNT = 4;
 /** Après « Ton examen », on reste encore un peu — autrement le reste de la page arrive tout de suite. */
@@ -63,16 +64,18 @@ export function CourseTransformation() {
   }, []);
 
   const travel = progress * (PANEL_COUNT - 2);
+  const { t } = useI18n();
+  const sheet = localizedTransformationSheet(t);
 
   return (
     <section
       ref={section}
       className="transformation-scroll relative mx-auto mt-16 max-w-page px-screen"
-      aria-label="Ton cours devient une fiche, des cartes, puis un plan d'examen"
+      aria-label={t("demo.transformAria")}
     >
       <div className="transformation-sticky">
         <div className="transformation-stage">
-          <Panel slot={0 - travel} label="Ton cours">
+          <Panel slot={0 - travel} label={t("demo.panelCourse")}>
             <RawPage className="h-full rotate-[-1.2deg]" fill />
           </Panel>
 
@@ -89,19 +92,19 @@ export function CourseTransformation() {
             </svg>
           </div>
 
-          <Panel slot={1 - travel} label="Ta fiche" accent>
+          <Panel slot={1 - travel} label={t("demo.panelSheet")} accent>
             <div className="paper h-full overflow-hidden rounded-group bg-surface p-5">
-              <SheetBlocks blocks={TRANSFORMATION_SHEET} tint={DEMO_COURSE.accent} />
+              <SheetBlocks blocks={sheet} tint={DEMO_ACCENT} />
             </div>
           </Panel>
 
-          <Panel slot={2 - travel} label="Tes cartes" accent>
+          <Panel slot={2 - travel} label={t("demo.panelCards")} accent>
             <div className="paper h-full overflow-hidden rounded-group bg-surface p-4">
               <GeneratedCards reveal={opacityForSlot(2 - travel)} />
             </div>
           </Panel>
 
-          <Panel slot={3 - travel} label="Ton examen" accent>
+          <Panel slot={3 - travel} label={t("demo.panelExam")} accent>
             <div className="paper h-full overflow-hidden rounded-group bg-surface p-3.5 sm:p-4">
               <ExamPreview />
             </div>
@@ -159,13 +162,14 @@ function opacityForSlot(slot: number) {
 }
 
 function GeneratedCards({ reveal }: { reveal: number }) {
+  const { t } = useI18n();
   const cards = [
     {
-      kind: "Schéma",
-      prompt: "Quelle étape manque dans le cycle de l'eau ?",
+      kind: t("demo.card4Kind"),
+      prompt: t("demo.card4Front"),
       body: (
         <div className="mt-2 flex items-center gap-1.5">
-          {["Évaporation", "?", "Précipitations"].map((label, index) => (
+          {[t("demo.evap"), "?", t("demo.precip")].map((label, index) => (
             <div key={label} className="contents">
               <span
                 className={`min-w-0 flex-1 rounded-[9px] px-2 py-1.5 text-center text-[9px] font-semibold ${
@@ -183,24 +187,20 @@ function GeneratedCards({ reveal }: { reveal: number }) {
       ),
     },
     {
-      kind: "Texte à trou",
-      prompt: "Complète la phrase.",
+      kind: t("demo.card3Kind"),
+      prompt: t("demo.card3Front"),
       body: (
         <p className="mt-2 text-[12px] font-medium leading-relaxed text-ink">
-          Les gouttelettes retombent sous forme de{" "}
-          <span className="inline-block min-w-16 border-b-2 border-accent align-baseline text-transparent">
-            pluie
-          </span>
-          .
+          {t("demo.card3Front")}
         </p>
       ),
     },
     {
-      kind: "QCM",
-      prompt: "Où se forme principalement la condensation ?",
+      kind: t("demo.card2Kind"),
+      prompt: t("demo.card2Front"),
       body: (
         <div className="mt-2 grid grid-cols-3 gap-1.5">
-          {["En altitude", "Sous la mer", "Dans le sol"].map((choice, index) => (
+          {[t("demo.card2c1"), t("demo.card2c3"), t("demo.card2c2")].map((choice, index) => (
             <span
               key={choice}
               className={`rounded-[8px] px-1.5 py-1.5 text-center text-[9px] font-medium ${
@@ -241,26 +241,27 @@ function GeneratedCards({ reveal }: { reveal: number }) {
 }
 
 function ExamPreview() {
+  const { t } = useI18n();
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[14px] font-semibold leading-tight text-ink sm:text-[15px]">
-            Devoir de SVT
+            {t("demo.examTitle")}
           </p>
           <p className="mt-0.5 text-[11px] text-ink-tertiary">
-            Note visée{" "}
+            {t("demo.targetGrade")}{" "}
             <span className="numeral font-bold text-ink">16</span>
             <span className="text-ink-tertiary">/20</span>
           </p>
         </div>
         <span className="rounded-pill bg-negative-soft px-2 py-0.5 text-[11px] font-bold tracking-caps text-negative">
-          J-3
+          {t("app.exams.countdown.inDays", { days: 3 })}
         </span>
       </div>
 
       <p className="mt-2.5 text-[12px] font-medium text-ink sm:mt-3">
-        Cours appris à <span className="numeral font-bold text-accent">78%</span>
+        {t("demo.progress")} <span className="numeral font-bold text-accent">78%</span>
       </p>
       <div className="mt-1 h-1.5 overflow-hidden rounded-pill bg-progress-track">
         <div className="h-full w-[78%] rounded-pill bg-progress" />
@@ -269,10 +270,10 @@ function ExamPreview() {
       <RetentionBars />
 
       <p className="mt-2.5 text-[10px] font-bold uppercase tracking-caps text-ink-tertiary sm:mt-3">
-        Tes points faibles
+        {t("demo.weakTitle")}
       </p>
       <ul className="mt-1.5 space-y-1.5">
-        {WEAK_CARDS.map((card, index) => (
+        {weakCards(t).map((card, index) => (
           <li
             key={card.prompt}
             className={`flex items-center gap-2 rounded-[10px] border border-stroke bg-surface px-2 py-1.5 ${
@@ -295,11 +296,13 @@ function ExamPreview() {
   );
 }
 
-const WEAK_CARDS = [
-  { kind: "QCM", prompt: "Où se forme la condensation ?", note: "2 oublis" },
-  { kind: "Trou", prompt: "Ruissellement ou infiltration", note: "Encore due" },
-  { kind: "Schéma", prompt: "Transpiration des végétaux", note: "Nouvelle" },
-] as const;
+function weakCards(t: ReturnType<typeof useI18n>["t"]) {
+  return [
+    { kind: t("demo.card2Kind"), prompt: t("demo.weak1"), note: t("demo.weak1note") },
+    { kind: t("demo.card3Kind"), prompt: t("demo.weak2"), note: t("demo.weak2note") },
+    { kind: t("demo.card4Kind"), prompt: t("demo.weak3"), note: t("demo.weak3note") },
+  ];
+}
 
 /**
  * Charge de révision (barres) + rétention (courbes). Les barres se resserrent
@@ -307,6 +310,7 @@ const WEAK_CARDS = [
  * s'effondre. C'est le même argument que `planExam`, dessiné plus dense.
  */
 function RetentionBars() {
+  const { t } = useI18n();
   const reviews = [3, 5, 7, 8, 6, 5, 4, 3, 5, 7, 6, 4, 0];
   const withMicabo = [70, 76, 81, 84, 83, 86, 87, 85, 88, 90, 93, 96, 98];
   const without = [70, 66, 60, 54, 49, 45, 42, 39, 37, 35, 33, 32, 30];
@@ -332,7 +336,7 @@ function RetentionBars() {
         viewBox={`0 0 ${width} ${height}`}
         className="h-full w-full"
         role="img"
-        aria-label="Graphique : Micabo place les révisions pour que la rétention culmine le jour de l'examen."
+        aria-label={t("demo.legendWith")}
       >
         <line
           x1={xAt(today)}
@@ -391,7 +395,7 @@ function RetentionBars() {
           fill="var(--color-ink-tertiary)"
           fontSize="8"
         >
-          il y a 12 j
+          {t("demo.axisPast")}
         </text>
         <text
           x={xAt(today)}
@@ -400,7 +404,7 @@ function RetentionBars() {
           fill="var(--color-ink-secondary)"
           fontSize="8"
         >
-          aujourd&apos;hui
+          {t("demo.axisToday")}
         </text>
         <text
           x={xAt(exam)}
@@ -410,7 +414,7 @@ function RetentionBars() {
           fontSize="8"
           fontWeight="700"
         >
-          examen
+          {t("demo.axisExam")}
         </text>
       </svg>
     </figure>

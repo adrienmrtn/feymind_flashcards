@@ -4,6 +4,7 @@ import { ExamWorkspace } from "@/components/app/exams/ExamWorkspace";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { examInsightFromRow, insightCardsFromSnapshots } from "@/lib/exams/from-rows";
 import { readProfile } from "@/lib/data/profile";
+import { getTranslator } from "@/lib/i18n/server";
 
 /**
  * Les examens, **sur un calendrier.**
@@ -13,7 +14,8 @@ import { readProfile } from "@/lib/data/profile";
  * Les examens déjà posés s'écrivent en pastille sur le jour, pas en point.
  */
 export default async function ExamsPage() {
-  const [exams, courses, cards, profile] = await Promise.all([
+  const [{ t }, exams, courses, cards, profile] = await Promise.all([
+    getTranslator(),
     listExams(),
     listCourses(),
     listCardSnapshots(),
@@ -35,8 +37,10 @@ export default async function ExamsPage() {
   return (
     <>
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">Examens</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Tes dates, tes cartes.</p>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          {t("app.exams.title")}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("app.exams.lead")}</p>
       </header>
 
       <div>

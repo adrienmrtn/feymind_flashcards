@@ -147,6 +147,74 @@ export const fr = {
       "Avec Micabo, chaque rappel remet à zéro - et la descente est plus lente à chaque fois.",
     legendWithout: "Sans révision, il ne reste presque rien au bout d'un mois.",
     dayShort: "{n} j",
+    courseTitle: "Le cycle de l'eau",
+    chapter: "Chapitre 4 · L'eau sur Terre",
+    raw1:
+      "Le cycle de l'eau désigne l'ensemble des mouvements de l'eau entre les océans, l'atmosphère et les continents.",
+    raw2:
+      "Sous l'effet du rayonnement solaire l'eau de surface passe à l'état de vapeur, ce phénomène est appelé évaporation et concerne surtout les océans qui couvrent 71 % de la surface terrestre.",
+    raw3:
+      "La vapeur d'eau s'élève et rencontre des couches plus froides, elle se condense alors autour de noyaux de condensation pour former des gouttelettes qui constituent les nuages.",
+    raw4:
+      "Lorsque les gouttelettes deviennent trop lourdes elles retombent sous forme de précipitations, pluie ou neige selon la température rencontrée pendant la chute.",
+    raw5:
+      "Une partie de cette eau ruisselle et rejoint les cours d'eau puis les océans, une autre s'infiltre dans le sol et alimente les nappes phréatiques.",
+    sheetParagraphMarked:
+      "L'eau change d'état sans jamais quitter la planète : ce qui s'**évapore** des océans retombe sur les continents, puis y retourne. ==71 % de l'évaporation vient des océans.==",
+    sheetCallout:
+      "Pluie ou neige ne dépend pas de l'altitude du nuage mais de la **température rencontrée pendant la chute**.",
+    rivers: "Les rivières ramènent l'eau à la mer",
+    sheetHighlight: "71 % de l'évaporation vient des océans.",
+    tapToDrop: "Appuie pour le déposer",
+    dropAria: "Déposer {file}",
+    dropped: "Cours déposé",
+    dropHere: "Dépose-le ici",
+    readingNow: "Micabo le lit…",
+    slidePdf: "Glisse le PDF ici",
+    grabBelow: "Attrape-le juste en dessous",
+    dropHint:
+      "Prends le PDF en bas, glisse-le jusqu'à la zone en pointillés juste au-dessus, puis lâche-le.",
+    exampleCourseAria: "Cours d'exemple, {file}",
+    showcase: {
+      waterSubject: "SVT",
+      mathSubject: "Mathématiques",
+      mathTitle: "Dérivées",
+      mathHeading: "Dériver un produit",
+      mathParagraph:
+        "La dérivée d'un produit n'est **pas** le produit des dérivées. C'est l'erreur la plus coûteuse du chapitre, et elle se corrige en apprenant la formule dans le bon ordre.",
+      mathCaption: "On dérive l'un, on garde l'autre — puis l'inverse.",
+      mathStepsTitle: "Sur un exemple",
+      mathStep1: "On pose u = x² et v = sin(x).",
+      mathStep2: "On dérive séparément : u' = 2x et v' = cos(x).",
+      mathStep3: "On assemble : 2x·sin(x) + x²·cos(x).",
+      mathCallout:
+        "==Le signe est un plus, pas un moins.== Le moins n'apparaît que dans la dérivée d'un **quotient**.",
+      histSubject: "Histoire",
+      histTitle: "La Révolution française",
+      histHeading: "1789, en quatre dates",
+      histTableTitle: "Ce que l'examen attend",
+      histH1: "Date",
+      histH2: "Événement",
+      histH3: "Ce que ça change",
+      histR1c1: "5 mai",
+      histR1c2: "États généraux",
+      histR1c3: "Les trois ordres se réunissent",
+      histR2c1: "17 juin",
+      histR2c2: "Assemblée nationale",
+      histR2c3: "Le tiers état se déclare seul souverain",
+      histR3c1: "14 juillet",
+      histR3c2: "Prise de la Bastille",
+      histR3c3: "Paris entre dans la révolution",
+      histR4c1: "4 août",
+      histR4c2: "Abolition des privilèges",
+      histR4c3: "La société d'ordres tombe",
+      histCaption: "Quatre dates, quatre bascules — pas une chronologie de plus.",
+      histTerm: "Tiers état",
+      histDef:
+        "Tout ce qui n'est ni clergé ni noblesse : **98 % de la population**, et une voix sur trois.",
+      histCallout:
+        "La nuit du 4 août n'abolit pas la monarchie, elle abolit les **privilèges**. Le roi reste jusqu'en 1792.",
+    },
   },
   onboarding: {
     stepBienvenue: "Bienvenue",

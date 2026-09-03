@@ -7,6 +7,7 @@ export const maxDuration = 120;
 import { SecondCourseCard } from "@/components/app/SecondCourseCard";
 import { canImportNow } from "@/lib/data/entitlement";
 import { readProfile } from "@/lib/data/profile";
+import { getTranslator } from "@/lib/i18n/server";
 
 /**
  * L'import : **une zone de dépôt**, et deux échappatoires.
@@ -21,7 +22,11 @@ import { readProfile } from "@/lib/data/profile";
  * La longueur de fiche part de **ce que le profil a retenu** - la colonne que l'iPhone écrit aussi.
  */
 export default async function ImportPage() {
-  const [profile, canImport] = await Promise.all([readProfile(), canImportNow()]);
+  const [{ t }, profile, canImport] = await Promise.all([
+    getTranslator(),
+    readProfile(),
+    canImportNow(),
+  ]);
 
   const initialLength = isSheetLength(profile?.sheet_length)
     ? profile.sheet_length
@@ -30,9 +35,11 @@ export default async function ImportPage() {
   return (
     <>
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">Importer</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          {t("nav.import")}
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {canImport ? "Relis d'abord, puis écris la fiche." : "Le premier cours est offert."}
+          {canImport ? t("app.import.lead.canImport") : t("app.import.lead.firstFree")}
         </p>
       </header>
 

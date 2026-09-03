@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { DEMO_CARDS, DEMO_COURSE, type DemoCard } from "@/components/demo/demo-course";
+import { DEMO_ACCENT, localizedDemoCards, type DemoCard } from "@/components/demo/demo-course";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Les cartes que Micabo tire d'une fiche - **et elles se retournent.**
@@ -20,11 +21,13 @@ import { DEMO_CARDS, DEMO_COURSE, type DemoCard } from "@/components/demo/demo-c
  * un faux survol et la carte resterait retournée après que le doigt est parti.
  */
 export function DemoCards({ layout = "wide" }: { layout?: "wide" | "compact" }) {
+  const { t } = useI18n();
+  const cards = localizedDemoCards(t);
   return (
     <div
       className={`grid gap-3.5 sm:grid-cols-2 ${layout === "wide" ? "lg:grid-cols-4" : ""}`}
     >
-      {DEMO_CARDS.map((card) => (
+      {cards.map((card) => (
         <FlipCard key={card.front} card={card} />
       ))}
     </div>
@@ -32,6 +35,7 @@ export function DemoCards({ layout = "wide" }: { layout?: "wide" | "compact" }) 
 }
 
 function FlipCard({ card }: { card: DemoCard }) {
+  const { t } = useI18n();
   const [tapped, setTapped] = useState(false);
 
   return (
@@ -68,7 +72,7 @@ function FlipCard({ card }: { card: DemoCard }) {
         </Face>
 
         <Face className="[transform:rotateY(180deg)]">
-          <Badge kind="Réponse" tone="accent" />
+          <Badge kind={t("demo.backBadge")} tone="accent" />
           <p className="mt-2.5 text-[14.5px] font-semibold leading-snug text-ink">{card.back}</p>
 
           {card.choices ? (
@@ -84,7 +88,7 @@ function FlipCard({ card }: { card: DemoCard }) {
           ) : null}
 
           <p className="mt-auto pt-3 text-[11px] text-ink-tertiary">
-            En session, tu te notes de 1 à 4
+            {t("demo.sessionNote")}
           </p>
         </Face>
       </div>
@@ -109,7 +113,7 @@ function Diagram({
   return (
     <div
       className="mt-3 rounded-[10px] p-2.5"
-      style={{ backgroundColor: `${DEMO_COURSE.accent}14` }}
+      style={{ backgroundColor: `${DEMO_ACCENT}14` }}
     >
       <div className="flex items-center justify-between gap-1">
         {labels.map((label, index) => (
@@ -118,7 +122,7 @@ function Diagram({
               <span
                 aria-hidden
                 className="mx-auto block h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: DEMO_COURSE.accent, opacity: revealed ? 1 : 0.35 }}
+                style={{ backgroundColor: DEMO_ACCENT, opacity: revealed ? 1 : 0.35 }}
               />
               <p
                 className={`mt-1.5 text-[9.5px] font-semibold leading-tight ${
@@ -133,7 +137,7 @@ function Diagram({
                 aria-hidden
                 viewBox="0 0 12 12"
                 className="mt-[-10px] h-2.5 w-2.5 shrink-0"
-                style={{ color: DEMO_COURSE.accent, opacity: 0.5 }}
+                style={{ color: DEMO_ACCENT, opacity: 0.5 }}
               >
                 <path
                   d="M2 6h7M6.5 3l3 3-3 3"
