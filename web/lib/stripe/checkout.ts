@@ -58,6 +58,13 @@ export function checkoutSessionFields(input: {
   trialDays: number;
   successUrl: string;
   cancelUrl: string;
+  locale?: string;
+  /**
+   * La devise, **dite** et non devinée. Sans elle, Checkout la déduit de
+   * l'adresse IP et un Turc en déplacement paierait des euros après avoir
+   * lu des livres. Elle doit exister dans les `currency_options` du prix.
+   */
+  currency?: string;
 }): Record<string, string> {
   const fields: Record<string, string> = {
     mode: "subscription",
@@ -67,8 +74,11 @@ export function checkoutSessionFields(input: {
     client_reference_id: input.userId,
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
-    locale: "fr",
+    locale: input.locale ?? "fr",
   };
+
+  const currency = input.currency?.trim().toLowerCase();
+  if (currency) fields.currency = currency;
 
   const email = input.email?.trim();
   if (email) fields.customer_email = email;
@@ -89,9 +99,10 @@ export function checkoutIdempotencyKey(
   userId: string,
   plan: string,
   now = Date.now(),
+  currency = "EUR",
 ): string {
   const hour = Math.floor(now / (60 * 60 * 1000));
-  return `checkout-${userId}-${plan}-${hour}`;
+  return `checkout-${userId}-${plan}-${currency}-${hour}`;
 }
 
 export function extractStripeMessage(payload: unknown): string {

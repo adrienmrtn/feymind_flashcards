@@ -10,6 +10,13 @@ import { BrandMark } from "@/components/BrandMark";
 import { startCheckout } from "@/lib/actions/checkout";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { useI18n } from "@/lib/i18n/client";
+import {
+  planDisplayedUnit,
+  planRenewalCopy,
+  planTitle,
+  trialBadge,
+} from "@/lib/pricing-copy";
+import { usePresentment } from "@/lib/presentment";
 
 /**
  * L'offre, en un écran : ce que Pro ouvre, puis les deux formules.
@@ -126,13 +133,13 @@ export function PaywallOffer({
           </p>
         ) : (
           <p className="mt-3 text-center text-[12px] leading-relaxed text-ink-tertiary">
-            En t&apos;abonnant, tu acceptes nos{" "}
+            {t("app.paywall.legalLead")}{" "}
             <Link href={TERMS_PATH} className="underline underline-offset-2">
-              Conditions d&apos;utilisation
+              {t("app.paywall.legalTerms")}
             </Link>{" "}
-            et notre{" "}
+            {t("app.paywall.legalAnd")}{" "}
             <Link href={PRIVACY_PATH} className="underline underline-offset-2">
-              Politique de confidentialité
+              {t("app.paywall.legalPrivacy")}
             </Link>
             .
           </p>
@@ -151,7 +158,9 @@ export function PlanChoice({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const badge = pricing.trialBadge(plan);
+  const { t } = useI18n();
+  const currency = usePresentment();
+  const badge = trialBadge(t, plan);
 
   return (
     <button
@@ -175,10 +184,10 @@ export function PlanChoice({
       ) : null}
       <div className="min-w-0">
         <p className={`text-[15px] font-bold ${selected ? "text-accent" : "text-ink"}`}>
-          {plan.title}
+          {planTitle(t, plan)}
         </p>
         <p className="mt-0.5 text-[12.5px] leading-snug text-ink-tertiary">
-          {pricing.planRenewalCopy(plan)}
+          {planRenewalCopy(t, plan, currency)}
         </p>
       </div>
       <div className="shrink-0 text-right">
@@ -187,9 +196,9 @@ export function PlanChoice({
             selected ? "text-accent" : "text-ink"
           }`}
         >
-          {pricing.planDisplayedPrice(plan)}
+          {pricing.planDisplayedPrice(plan, currency)}
         </p>
-        <p className="mt-1 text-[11.5px] text-ink-tertiary">{pricing.planDisplayedUnit(plan)}</p>
+        <p className="mt-1 text-[11.5px] text-ink-tertiary">{planDisplayedUnit(t, plan)}</p>
       </div>
     </button>
   );

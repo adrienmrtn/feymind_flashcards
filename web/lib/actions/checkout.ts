@@ -4,6 +4,7 @@ import { entitlement, pricing } from "@micabo/core";
 
 import { SITE_URL } from "@/lib/config";
 import { readEntitlement } from "@/lib/data/entitlement";
+import { readUiLocale } from "@/lib/i18n/server";
 import {
   checkoutIdempotencyKey,
   checkoutReturnUrl,
@@ -36,8 +37,16 @@ import { createClient } from "@/lib/supabase/server";
  * ## Ce qu'il manque, précisément
  *
  * `STRIPE_SECRET_KEY`. Les trois `price_…` sont dans `pricing.STORE_PRODUCTS` ;
- * `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY` et `STRIPE_PRICE_YEARLY_DISCOUNT`
- * les remplacent (test / live) si elles sont posées.
+ * `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY` et
+ * `STRIPE_PRICE_YEARLY_DISCOUNT` les remplacent (test / live) si elles
+ * sont posées.
+ *
+ * ## La livre turque
+ *
+ * Un seul `price_…` par offre, et la livre dans ses `currency_options`.
+ * Checkout devinerait la devise à l'adresse IP ; on la lui **dit**, pour
+ * qu'elle suive la langue du site et le pays de scolarisation — c'est-à-dire
+ * exactement ce que le paywall vient d'afficher.
  */
 
 export interface CheckoutResult {
@@ -79,6 +88,14 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
   const already = await readEntitlement();
   if (entitlement.isPaid(already)) return { status: "already" };
 
+  const locale = await readUiLocale();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("country_code")
+    .eq("id", user.id)
+    .maybeSingle();
+  const currency = pricing.presentmentCurrencyFor(locale, profile?.country_code);
+
   const key = stripeKey();
   const price = priceId(kind);
   const plan = pricing.catalogPlanFor(kind);
@@ -100,7 +117,7 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/x-www-form-urlencoded",
-      "Idempotency-Key": checkoutIdempotencyKey(user.id, kind),
+      "Idempotency-Key": checkoutIdempotencyKey(user.id, kind, Date.now(), currency),
     },
     body: new URLSearchParams(
       checkoutSessionFields({
@@ -110,6 +127,8 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
         trialDays: pricing.hasTrial(plan) ? plan.trialDays : 0,
         successUrl: checkoutReturnUrl(SITE_URL, "/app?abonnement=ok"),
         cancelUrl: checkoutReturnUrl(SITE_URL, "/app"),
+        locale,
+        currency: pricing.checkoutCurrency(currency),
       }),
     ),
   });

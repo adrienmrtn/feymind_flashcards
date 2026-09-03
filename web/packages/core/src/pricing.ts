@@ -20,6 +20,47 @@
 export type PlanKind = "yearly" | "weekly";
 export type BillingPeriod = "year" | "week";
 
+/**
+ * Devise d'affichage **et** d'encaissement web.
+ *
+ * Les montants TRY sont écrits, pas convertis au cours du jour. Convertir
+ * 69,99 € chaque matin donnerait un chiffre qui bouge, et une allégation
+ * qu'on ne facture pas. Les mêmes montants sont posés dans les
+ * `currency_options` des trois `price_…` Stripe : ce fichier et Stripe
+ * doivent dire le même nombre. iOS n'a pas encore `localizedPriceString` :
+ * le catalogue reste le repli App Store Turkey jusqu'à l'étape 8 de
+ * `docs/revenuecat.md`.
+ *
+ * Cours de référence (3 sept. 2026) : 1 € ≈ 56 ₺.
+ * 69,99 × 56 ≈ 3 919 → 3 899,99 ₺. 7,99 × 56 ≈ 447 → 449,99 ₺.
+ * 39,99 × 56 ≈ 2 239 → 2 199,99 ₺.
+ */
+export type PresentmentCurrency = "EUR" | "TRY";
+
+export const DEFAULT_PRESENTMENT: PresentmentCurrency = "EUR";
+
+export const TRY_AMOUNTS = {
+  yearly: 3899.99,
+  weekly: 449.99,
+  yearly_discount: 2199.99,
+  yearly_discount_monthly: 183.3,
+} as const;
+
+const CURRENCY_LOCALE: Record<PresentmentCurrency, string> = {
+  EUR: "fr-FR",
+  TRY: "tr-TR",
+};
+
+export function presentmentCurrencyFor(
+  locale: string,
+  country?: string | null,
+): PresentmentCurrency {
+  const lang = locale.trim().toLowerCase().split("-")[0];
+  const land = country?.trim().toLowerCase();
+  if (lang === "tr" || land === "tr") return "TRY";
+  return "EUR";
+}
+
 /** Combien de fois par an la somme est prélevée. Sans ce ramené à l'année, « 7,99 € » a
  * l'air moins cher que « 69,99 € ». */
 const OCCURRENCES_PER_YEAR: Record<BillingPeriod, number> = { year: 1, week: 52 };
@@ -81,11 +122,15 @@ export const WEEKLY: Plan = {
 };
 
 /**
- * Les **six** produits chez RevenueCat, tous attachés à l'entitlement `pro`.
+ * Les produits chez RevenueCat, tous attachés à l'entitlement `pro`.
  *
- * Trois offres × deux magasins. Ce n'est pas trois produits : Apple et Stripe
- * ont chacun leur identifiant. Le discount ouvre le même droit — on ne crée
- * pas un second entitlement.
+ * **Six, pas neuf.** Trois offres × deux magasins. La livre n'ajoute
+ * aucune ligne : elle vit dans les `currency_options` du `price_…` euro,
+ * qui reste un seul objet Stripe. Un prix par devise obligerait à
+ * réimporter un catalogue chez RevenueCat, à le rattacher à `pro`, et à
+ * couper les graphiques en deux pour un produit qu'on ne vend qu'une
+ * fois. Le discount ouvre le même droit — on ne crée pas un second
+ * entitlement.
  */
 export type StoreKind = "app_store" | "stripe";
 export type CatalogPlan = "yearly" | "weekly" | "yearly_discount";
@@ -107,9 +152,23 @@ export const STORE_PRODUCTS: readonly StoreProduct[] = [
 ];
 
 export function stripePriceId(plan: CatalogPlan): string {
-  const found = STORE_PRODUCTS.find((product) => product.store === "stripe" && product.plan === plan);
+  const found = STORE_PRODUCTS.find(
+    (product) => product.store === "stripe" && product.plan === plan,
+  );
   if (!found) throw new Error(`Prix Stripe manquant pour ${plan}`);
   return found.id;
+}
+
+/**
+ * La devise passée à Checkout, en minuscules comme l'attend Stripe.
+ *
+ * Sans elle, Checkout devine la devise à l'adresse IP. Un Turc en
+ * vacances paierait alors des euros après avoir lu des livres — et
+ * c'est l'écart entre le prix affiché et le prix prélevé qui fait les
+ * litiges.
+ */
+export function checkoutCurrency(currency: PresentmentCurrency): string {
+  return currency.toLowerCase();
 }
 
 /** L'ordre de la liste est l'ordre d'affichage : l'offre recommandée d'abord. */
@@ -178,10 +237,32 @@ export function savingsPercent(
  * tantôt U+202F, et un prix qui ne s'espace pas pareil en développement et en production est
  * une différence qu'on finit par chercher longtemps.
  */
-export function priceText(amount: number): string {
-  return new Intl.NumberFormat("fr-FR", {
+export function presentmentAmount(
+  plan: Plan,
+  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
+): number {
+  if (currency === "EUR") return plan.price;
+  if (plan.productId === DISCOUNT_YEARLY.productId) return TRY_AMOUNTS.yearly_discount;
+  return plan.kind === "weekly" ? TRY_AMOUNTS.weekly : TRY_AMOUNTS.yearly;
+}
+
+export function presentmentMonthly(
+  plan: Plan,
+  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
+): number | null {
+  if (plan.period !== "year") return null;
+  if (currency === "EUR") return plan.monthlyPrice ?? plan.price / 12;
+  if (plan.productId === DISCOUNT_YEARLY.productId) return TRY_AMOUNTS.yearly_discount_monthly;
+  return TRY_AMOUNTS.yearly / 12;
+}
+
+export function priceText(
+  amount: number,
+  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
+): string {
+  return new Intl.NumberFormat(CURRENCY_LOCALE[currency], {
     style: "currency",
-    currency: "EUR",
+    currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
@@ -196,14 +277,20 @@ export function priceText(amount: number): string {
  * par douze devant un paywall, et personne ne multiplie 7,99 par cinquante-deux. Le mois est
  * l'unité dans laquelle un budget se pense.
  */
-export function monthlyEquivalent(plan: Plan): string | null {
-  if (plan.period !== "year") return null;
-  return priceText(plan.monthlyPrice ?? plan.price / 12);
+export function monthlyEquivalent(
+  plan: Plan,
+  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
+): string | null {
+  const amount = presentmentMonthly(plan, currency);
+  return amount == null ? null : priceText(amount, currency);
 }
 
 /** La ligne posée sous le nom de l'offre, dans la liste des plans. */
-export function planCaption(plan: Plan): string {
-  const monthly = monthlyEquivalent(plan);
+export function planCaption(
+  plan: Plan,
+  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
+): string {
+  const monthly = monthlyEquivalent(plan, currency);
   return monthly ? `${monthly} / mois` : `facturé chaque ${PERIOD_UNIT[plan.period]}`;
 }
 
@@ -211,8 +298,11 @@ export function planCaption(plan: Plan): string {
  * Le prix affiché à droite de la carte : le mois pour l'annuel, la semaine
  * pour l'hebdomadaire. C'est l'unité dans laquelle on compare.
  */
-export function planDisplayedPrice(plan: Plan): string {
-  return monthlyEquivalent(plan) ?? priceText(plan.price);
+export function planDisplayedPrice(
+  plan: Plan,
+  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
+): string {
+  return monthlyEquivalent(plan, currency) ?? priceText(presentmentAmount(plan, currency), currency);
 }
 
 /** L'unité collée sous ce prix : « / mois » ou « / semaine ». */
@@ -224,9 +314,12 @@ export function planDisplayedUnit(plan: Plan): string {
  * La ligne sous le nom, sur le paywall. L'annuel dit ce qui sera prélevé
  * après l'essai ; l'hebdomadaire dit seulement qu'on peut partir.
  */
-export function planRenewalCopy(plan: Plan): string {
+export function planRenewalCopy(
+  plan: Plan,
+  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
+): string {
   if (plan.period === "year") {
-    return `Puis ${priceText(plan.price)} par an, résiliable à tout moment`;
+    return `Puis ${priceText(presentmentAmount(plan, currency), currency)} par an, résiliable à tout moment`;
   }
   return "Résiliable à tout moment";
 }

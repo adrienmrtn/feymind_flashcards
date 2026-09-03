@@ -62,6 +62,15 @@ export const es: Catalog = {
     questionsTitle: "Lo que nos preguntan.",
     questionsMore: "Micabo o Anki: la comparación",
     closingTitle: "Tu próximo control empieza ahora.",
+    savePercent: "Ahorra un {pct} %",
+    pricingFeatures: "Cursos y tarjetas sin límite, modo examen, y la ficha entera.",
+    pricingTrial: "{days} días de regalo.",
+    pricingNoTrial: "Sin prueba.",
+    pricingFreeEyebrow: "Sin pagar",
+    pricingFreeLead: "Un curso entero para importar",
+    pricingFreeBody:
+      ", del que lees el {sheet} % de la ficha, y {cards} tarjetas por sesión. Bastante para ver Micabo con tu propia clase antes de decidir nada - y esa es la única prueba que significa algo.",
+    pricingNotOpen: "La suscripción aún no está abierta. Te escribimos el día D.",
     footerTagline:
       "Tus clases se vuelven una ficha para releer, y tarjetas que vuelven en el momento justo.",
     footerProduct: "El producto",
@@ -147,6 +156,13 @@ export const es: Catalog = {
     legendWith:
       "Con Micabo, cada recuerdo pone el contador a cero - y la bajada es más lenta cada vez.",
     legendWithout: "Sin repaso, al cabo de un mes casi no queda nada.",
+    examCountdown: "en {days} días",
+    examHistogramAria:
+      "Un histograma de {days} días que muestra la carga de repaso apretándose antes del día del examen.",
+    examPrepHistogramAria:
+      "Histograma de {days} días: las tarjetas se aprietan antes del examen.",
+    retentionChartAria:
+      "Dos curvas de memoria en {days} días. Sin repaso, al cabo de un mes casi no queda nada. Con Micabo, cada repaso - a los {intervals} días - la vuelve al cien por cien, y baja cada vez más despacio.",
     dayShort: "{n} d",
     courseTitle: "El ciclo del agua",
     chapter: "Capítulo 4 · El agua en la Tierra",

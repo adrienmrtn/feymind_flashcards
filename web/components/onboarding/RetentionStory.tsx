@@ -10,6 +10,7 @@ import {
 } from "@micabo/core";
 
 import { BrandMark } from "@/components/BrandMark";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * **Deux courbes qui se tracent.** Sans méthode, on oublie ; avec Micabo, non.
@@ -30,6 +31,7 @@ const CEILING = 26;
 const DRAW_MS = 1_700;
 
 export function RetentionStory() {
+  const { t } = useI18n();
   const drawn = useDrawn();
   const without = curveWithoutReview();
   const withMicabo = curveWithMicabo();
@@ -38,7 +40,7 @@ export function RetentionStory() {
     <div className="mx-auto flex h-full w-full max-w-[440px] flex-col items-center justify-center">
       <div className="paper w-full rounded-group bg-surface p-4">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[14.5px] font-semibold text-ink">Ce qu&apos;il te reste, un mois après</p>
+          <p className="text-[14.5px] font-semibold text-ink">{t("onboarding.retentionChart")}</p>
           <span aria-hidden className="flex h-7 shrink-0 items-center gap-1.5">
             <BrandMark size={20} />
             <span className="text-[11px] font-bold tracking-tight text-ink">Micabo</span>
@@ -49,7 +51,10 @@ export function RetentionStory() {
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           className="mt-3 h-auto w-full"
           role="img"
-          aria-label={`Deux courbes de mémorisation sur ${HORIZON_DAYS} jours. Sans méthode, ce qu'on retient tombe à presque rien en un mois. Avec Micabo, chaque révision la ramène à cent pour cent, et elle redescend de plus en plus lentement.`}
+          aria-label={t("demo.retentionChartAria", {
+            days: HORIZON_DAYS,
+            intervals: REVIEW_DAYS.join(", "),
+          })}
         >
           {REVIEW_DAYS.map((day) => (
             <line
@@ -96,15 +101,8 @@ export function RetentionStory() {
         </svg>
 
         <div className="mt-3 space-y-1.5 border-t border-hairline pt-3 text-[12.5px]">
-          <Legend
-            color="var(--color-accent)"
-            label="Avec Micabo : chaque rappel remet à zéro, et la descente ralentit."
-          />
-          <Legend
-            color="var(--color-ink-tertiary)"
-            dashed
-            label="Sans méthode : il ne reste presque rien au bout d'un mois."
-          />
+          <Legend color="var(--color-accent)" label={t("demo.legendWith")} />
+          <Legend color="var(--color-ink-tertiary)" dashed label={t("demo.legendWithout")} />
         </div>
       </div>
     </div>

@@ -79,6 +79,9 @@ describe("checkoutSessionFields", () => {
     expect(checkoutIdempotencyKey("user-1", "weekly", now)).not.toBe(
       checkoutIdempotencyKey("user-1", "yearly", now),
     );
+    expect(checkoutIdempotencyKey("user-1", "weekly", now, "EUR")).not.toBe(
+      checkoutIdempotencyKey("user-1", "weekly", now, "TRY"),
+    );
   });
 
   it("pose l'essai seulement quand il y en a un", () => {
@@ -92,6 +95,35 @@ describe("checkoutSessionFields", () => {
     });
     expect(yearly.customer_email).toBe("a@b.c");
     expect(yearly["subscription_data[trial_period_days]"]).toBe("3");
+    expect(yearly.locale).toBe("fr");
+  });
+
+  it("dit la langue et la devise plutôt que de les laisser deviner", () => {
+    // Sans `currency`, Checkout la déduit de l'adresse IP : un Turc en
+    // déplacement paierait des euros après avoir lu des livres.
+    const fields = checkoutSessionFields({
+      price: "price_year",
+      userId: "user-1",
+      trialDays: 0,
+      successUrl: "https://micabo.app/ok",
+      cancelUrl: "https://micabo.app",
+      locale: "tr",
+      currency: "try",
+    });
+    expect(fields.locale).toBe("tr");
+    expect(fields.currency).toBe("try");
+  });
+
+  it("n'envoie pas de devise vide — Stripe la refuserait", () => {
+    const fields = checkoutSessionFields({
+      price: "price_year",
+      userId: "user-1",
+      trialDays: 0,
+      successUrl: "https://micabo.app/ok",
+      cancelUrl: "https://micabo.app",
+      currency: "  ",
+    });
+    expect(fields.currency).toBeUndefined();
   });
 });
 

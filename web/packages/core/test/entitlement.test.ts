@@ -34,9 +34,11 @@ import {
   PLANS,
   RECOMMENDED_PLAN,
   STORE_PRODUCTS,
+  TRY_AMOUNTS,
   WEEKLY,
   YEARLY,
   annualCost,
+  checkoutCurrency,
   discountSavingsPercent,
   hasTrial,
   monthlyEquivalent,
@@ -46,6 +48,9 @@ import {
   planDisplayedUnit,
   planFor,
   planRenewalCopy,
+  presentmentAmount,
+  presentmentCurrencyFor,
+  presentmentMonthly,
   priceText,
   savingsPercent,
   stripePriceId,
@@ -275,7 +280,25 @@ describe("les offres", () => {
     expect(DISCOUNT_YEARLY.productId).toBe("com.micabo.app.pro.yearly.discount");
   });
 
-  it("sont six chez RevenueCat, tous sur pro — pas trois", () => {
+  it("affichent la livre turque sans lire Stripe ni RevenueCat", () => {
+    expect(presentmentCurrencyFor("tr")).toBe("TRY");
+    expect(presentmentCurrencyFor("fr", "tr")).toBe("TRY");
+    expect(presentmentCurrencyFor("tr-TR", "fr")).toBe("TRY");
+    expect(presentmentCurrencyFor("fr", "TR")).toBe("TRY");
+    expect(presentmentCurrencyFor("fr")).toBe("EUR");
+    expect(presentmentCurrencyFor("de")).toBe("EUR");
+    expect(presentmentAmount(YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly);
+    expect(presentmentAmount(WEEKLY, "TRY")).toBe(TRY_AMOUNTS.weekly);
+    expect(presentmentMonthly(DISCOUNT_YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly_discount_monthly);
+    expect(priceText(TRY_AMOUNTS.weekly, "TRY")).toMatch(/₺|TRY/);
+    expect(planDisplayedPrice(YEARLY, "TRY")).toBe(monthlyEquivalent(YEARLY, "TRY"));
+    expect(YEARLY.price).toBe(69.99);
+  });
+
+  it("sont six chez RevenueCat, tous sur pro — la livre n'ajoute pas de ligne", () => {
+    // Un `price_…` par offre et par magasin. La livre vit dans les
+    // `currency_options` du prix euro : un second prix TRY forcerait un
+    // réimport chez RevenueCat et couperait les graphiques en deux.
     expect(STORE_PRODUCTS).toHaveLength(6);
     expect(STORE_PRODUCTS.filter((product) => product.store === "app_store")).toHaveLength(3);
     expect(STORE_PRODUCTS.filter((product) => product.store === "stripe")).toHaveLength(3);
@@ -283,5 +306,10 @@ describe("les offres", () => {
     expect(stripePriceId("yearly")).toBe("price_1UAqB547TFrcO0lvSacZ91Pp");
     expect(stripePriceId("weekly")).toBe("price_1UAqBI47TFrcO0lvTLjtkffx");
     expect(stripePriceId("yearly_discount")).toBe("price_1UAqBJ47TFrcO0lvb1vDYAPj");
+  });
+
+  it("dit la devise à Stripe en minuscules, comme il l'attend", () => {
+    expect(checkoutCurrency("TRY")).toBe("try");
+    expect(checkoutCurrency("EUR")).toBe("eur");
   });
 });

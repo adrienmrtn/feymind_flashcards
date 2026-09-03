@@ -42,7 +42,7 @@ describe("subscription-copy", () => {
       productId: pricing.stripePriceId("yearly"),
     };
     expect(subscriptionHeadline(t, view)).toBe("Micabo Pro");
-    expect(planTitleFor(view.productId)).toBe("Annuel");
+    expect(planTitleFor(t, view.productId)).toBe("Annuel");
     expect(subscriptionDetail(t, locale, view)).toMatch(/Pris sur le web/);
     expect(subscriptionDetail(t, locale, view)).toMatch(/12 octobre/);
     expect(manageLabel(t, view)).toBe("Gérer mon abonnement");

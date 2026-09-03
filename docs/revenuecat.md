@@ -23,6 +23,9 @@ RevenueCat ce n'est pas trois produits : c'est **six**. Trois offres × deux mag
 avec **son** identifiant (Apple : `com.micabo…`, Stripe : `price_…`). Les six s'attachent à
 l'entitlement `pro`. Le discount ouvre le même droit — on ne crée pas un second entitlement.
 
+**La livre turque n'ajoute aucune ligne** : elle vit dans les `currency_options` des trois
+`price_…`, pas dans un second trio (§14).
+
 L'`app_user_id` RevenueCat est toujours l'`auth.users.id` de Supabase. Sans ça, un achat
 iPhone n'ouvre pas le web, et inversement.
 
@@ -283,8 +286,9 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
      - **Pas d'essai**. Ne pas l'utiliser dans `startCheckout` pour l'instant.
 3. Les identifiants de **prix** (`price_…`, pas `prod_…`) sont ceux du tableau
    ci-dessus, déjà dans `pricing.STORE_PRODUCTS`. Ce sont les prix **TVA
-   incluse** du compte **live** Micabo. Une variable d'environnement
-   (`STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY`,
+   incluse** du compte **live** Micabo. Chacun porte la livre turque dans ses
+   `currency_options` (§14) — c'est le même prix, pas un second. Une variable
+   d'environnement (`STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY`,
    `STRIPE_PRICE_YEARLY_DISCOUNT`) les remplace si un preview doit
    encore encaisser sur le sandbox.
 4. Coller `STRIPE_SECRET_KEY` dans **Vercel → Environment Variables**
@@ -316,6 +320,10 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
 4. Dans RevenueCat, **Products** : les trois prix Stripe apparaissent avec leur
    `price_…` (pas l'identifiant Apple). Les six lignes — App Store + Stripe — se
    rattachent à l'entitlement `pro`. Le discount Stripe aussi.
+
+   **La livre ne s'importe pas, et c'est voulu.** Elle est une
+   `currency_option` des trois prix déjà importés, pas un quatrième produit.
+   Import répondra « No new products were found » : rien ne manque.
 5. **Le pont d'identité**, et c'est la seule ligne qui compte : dans
    `web/lib/actions/checkout.ts`, `client_reference_id` porte déjà `user.id` (Supabase).
    RevenueCat lit ce champ et pose le customer Stripe sous **ce** `app_user_id`. Si on
@@ -405,3 +413,77 @@ Elle ne se présente qu'une fois par appareil.
 
 - Web : `?debug=cadeau` sur n'importe quelle page de `/app`.
 - iOS : Réglages → Test → **Rejouer le cadeau** (DEBUG seulement), puis ouvrir une fiche.
+
+---
+
+## 14. La livre turque
+
+**Une devise de plus, pas un produit de plus.** Les trois `price_…` du
+compte live portent la livre dans leurs `currency_options`. Il n'y a
+donc rien à créer chez RevenueCat, rien à rattacher à `pro`, et rien à
+réconcilier dans les graphiques : c'est le même prix, présenté deux fois.
+
+C'est ce que RevenueCat écrit lui-même : « A Stripe price that carries
+several currency options imports as a single Product. »
+
+**Le premier essai était un trio de prix TRY séparés, et c'était une
+erreur.** Chez RevenueCat, un produit Stripe se rattache à `pro` par
+son `prod_…` et **une seule** de ses prix est retenue à l'import : un
+second prix sur le même produit n'apparaît nulle part, `Import` répond
+« No new products were found », et les prix TRY restent invendables
+dans les flux RC. Les trois `price_1UBg…` sont archivés (`active:
+false`) ; rien ne les référence.
+
+**Ce qui est en place**
+
+1. **Un catalogue figé**, dans `web/packages/core/src/pricing.ts`
+   (`TRY_AMOUNTS`). Cours de référence : 1 € ≈ 56 ₺ (3 sept. 2026). Les
+   montants sont **écrits**, arrondis, pas calculés à l'affichage. Les
+   `currency_options` Stripe portent exactement ces chiffres — ce
+   fichier et Stripe doivent dire le même nombre.
+2. **Quand facturer en ₺.** Langue du site `tr`, ou pays de scolarisation
+   `tr` (`presentmentCurrencyFor`). `startCheckout` pose alors
+   `currency=try` sur la session. **Sans ce champ, Checkout devine la
+   devise à l'adresse IP** : un Turc en déplacement lirait des livres et
+   paierait des euros. La clé d'idempotence porte la devise, donc un
+   changement de langue dans l'heure ne réutilise pas une session euro.
+3. **Les mots restent dans les catalogues i18n** (`Yıllık`, `Haftalık`,
+   `3 gün ücretsiz`). Les montants restent dans le noyau : un prix n'est
+   pas une chaîne à traduire.
+4. **Settlement.** Stripe convertit vers la devise du compte (EUR). Le
+   client voit et paie en ₺ ; le payout reste en euros.
+
+| Offre | EUR (défaut) | TRY (`currency_options`) |
+| --- | --- | --- |
+| Annuel | 69,99 € / an → 5,83 € / mois | 3 899,99 ₺ / an |
+| Hebdomadaire | 7,99 € / semaine | 449,99 ₺ / semaine |
+| Annuel discount | 39,99 € / an → 3,30 € / mois | 2 199,99 ₺ / an → 183,30 ₺ / mois |
+
+Les trois montants sont posés sur `price_1UAqB5…`, `price_1UAqBI…` et
+`price_1UAqBJ…`, TVA incluse dans les deux devises.
+
+**Ce qu'il reste à faire**
+
+1. **RevenueCat — rien.** Si les trois `price_…` sont déjà rattachés à
+   `pro`, un achat en livre ouvre le droit par le même chemin qu'un
+   achat en euros. Ne pas cliquer `Import` en espérant y trouver la
+   livre : il n'y a rien à importer.
+2. **iOS** — `storeProduct.localizedPriceString` (étape 8). Le catalogue
+   TRY reste le repli jusqu'à ce que le SDK réponde. Pas de nouveau
+   Product ID Apple : Turkey est un palier du même `com.micabo…`.
+3. **App Store Connect** — vérifier le palier Turkey généré par Apple
+   sur les trois produits. S'il s'écarte de `TRY_AMOUNTS`, **c'est Apple
+   qui gagne** — on réécrit le catalogue, on ne force pas le palier.
+4. **Preview Vercel** — si la clé est `sk_test_…`, les prix sandbox
+   doivent porter la même `currency_option` TRY, sinon Checkout retombe
+   sur l'euro sans le dire.
+
+**Ce qu'on ne fait pas**
+
+- Pas d'API de change (Fixer, ECB, Open Exchange). La livre bouge trop
+  pour qu'un paywall suive le marché.
+- Pas de conversion `69.99 * rate` dans le rendu. Le pourcentage
+  d'économie reste calculé sur les montants EUR du catalogue (même
+  ratio), donc il ne ment pas d'une devise à l'autre.
+- Pas de second prix, pas de second produit, pas de second entitlement.
+  TRY n'est qu'une devise.

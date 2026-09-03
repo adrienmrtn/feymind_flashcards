@@ -62,6 +62,15 @@ export const tr: Catalog = {
     questionsTitle: "Bize sorulanlar.",
     questionsMore: "Micabo veya Anki: karşılaştırma",
     closingTitle: "Bir sonraki sınavın şimdi başlıyor.",
+    savePercent: "%{pct} tasarruf",
+    pricingFeatures: "Sınırsız ders ve kart, sınav modu ve tüm özet.",
+    pricingTrial: "{days} gün hediye.",
+    pricingNoTrial: "Deneme yok.",
+    pricingFreeEyebrow: "Ödemeden",
+    pricingFreeLead: "İçe aktarılacak tam bir ders",
+    pricingFreeBody:
+      ", özetin %{sheet}'ini okursun ve oturumda {cards} kart. Bir şey karar vermeden önce Micabo'yu kendi dersinde görmek için yeter - anlamı olan tek deneme budur.",
+    pricingNotOpen: "Abonelik henüz açık değil. Sınav günü yazarız.",
     footerTagline:
       "Derslerin, yeniden okunan bir özet ve doğru anda dönen kartlar olur.",
     footerProduct: "Ürün",
@@ -147,6 +156,13 @@ export const tr: Catalog = {
     legendWith:
       "Micabo ile her hatırlatma sıfırlar - ve iniş her seferinde yavaşlar.",
     legendWithout: "Tekrar yoksa bir ay sonra neredeyse bir şey kalmaz.",
+    examCountdown: "sınava {days} gün kala",
+    examHistogramAria:
+      "{days} günlük bir histogram: sınav gününden önce tekrar yükü sıkışır.",
+    examPrepHistogramAria:
+      "{days} günlük histogram: kartlar ödevden önce sıkışır.",
+    retentionChartAria:
+      "{days} günlük iki bellek eğrisi. Tekrar yoksa bir ay sonra neredeyse bir şey kalmaz. Micabo ile her tekrar - {intervals} gün - yüzde yüze çıkarır ve iniş her seferinde yavaşlar.",
     dayShort: "{n} g",
     courseTitle: "Su döngüsü",
     chapter: "Bölüm 4 · Yeryüzünde su",
