@@ -1,3 +1,8 @@
+"use client";
+
+import { useI18n } from "@/lib/i18n/client";
+import { copyExamMarkTitle } from "@/lib/i18n/copy";
+
 /**
  * La pastille d'examen, **sur la carte**.
  *
@@ -23,21 +28,15 @@ export function ExamMark({
   name,
   daysRemaining,
 }: ExamMarkInfo) {
-  const label = name.trim() || "Examen";
+  const { t } = useI18n();
+  const label = name.trim() || t("app.exams.defaultName");
 
   return (
     <span
       className="inline-flex max-w-[11rem] items-center truncate rounded-pill bg-caution-soft px-1.5 py-px text-[10px] font-medium leading-4 text-caution"
-      title={titleFor(label, daysRemaining)}
+      title={copyExamMarkTitle(t, label, daysRemaining)}
     >
       {label}
     </span>
   );
-}
-
-function titleFor(name: string, daysRemaining: number): string {
-  if (daysRemaining < 0) return name;
-  if (daysRemaining === 0) return `${name} · aujourd'hui`;
-  if (daysRemaining === 1) return `${name} · demain`;
-  return `${name} · J-${daysRemaining}`;
 }

@@ -18,6 +18,8 @@ import { Flag } from "@/components/onboarding/Flag";
 import { listCardSnapshots, listCourses, listExams, type CardSnapshotRow } from "@/lib/data/courses";
 import { readProfile } from "@/lib/data/profile";
 import { loadNewCardBudget, loadProfileStats } from "@/lib/data/reviews";
+import type { Translator } from "@/lib/i18n/copy";
+import { getTranslator } from "@/lib/i18n/server";
 
 /**
  * Le profil, **en une page posée**.
@@ -30,7 +32,8 @@ import { loadNewCardBudget, loadProfileStats } from "@/lib/data/reviews";
  * Le reste - qui l'on est, combien de cartes, la maîtrise - n'a pas à l'attendre.
  */
 export default async function ProfilePage() {
-  const [profile, courses, cards, exams, budget] = await Promise.all([
+  const [{ t }, profile, courses, cards, exams, budget] = await Promise.all([
+    getTranslator(),
     readProfile(),
     listCourses(),
     listCardSnapshots(),
@@ -58,7 +61,7 @@ export default async function ProfilePage() {
       },
     },
   ).total;
-  const name = profile?.display_name ?? profile?.username ?? "Ton compte";
+  const name = profile?.display_name ?? profile?.username ?? t("app.friends.yourAccount");
   const handle = profile?.username ?? "";
 
   const levels = knowledgeDistribution(
@@ -94,7 +97,7 @@ export default async function ProfilePage() {
         </div>
         <Link
           href={"/app/reglages" as never}
-          aria-label="Réglages"
+          aria-label={t("nav.settings")}
           className="pressable ml-auto flex size-11 shrink-0 items-center justify-center rounded-full text-ink-secondary hover:bg-surface-muted"
         >
           <SettingsGlyph />
@@ -106,18 +109,18 @@ export default async function ProfilePage() {
         data-tour="profil-chiffres"
       >
         <div className="px-7 py-7">
-          <p className="text-[13px] text-ink-tertiary">Série</p>
+          <p className="text-[13px] text-ink-tertiary">{t("app.profile.streak.label")}</p>
           <Suspense fallback={<StreakPending />}>
-            <Streak />
+            <Streak t={t} />
           </Suspense>
         </div>
         <div className="border-t border-hairline px-7 py-7 sm:border-t-0 sm:border-l">
-          <p className="text-[13px] text-ink-tertiary">Cartes</p>
+          <p className="text-[13px] text-ink-tertiary">{t("app.profile.cards.label")}</p>
           <p className="numeral mt-3 text-[44px] font-bold leading-none tracking-display text-ink">
             {cards.length}
           </p>
           <p className="mt-2 text-[13px] text-ink-tertiary">
-            {courses.length === 1 ? "1 cours" : `${courses.length} cours`}
+            {t("app.profile.courseCount", { count: courses.length })}
           </p>
         </div>
       </section>
@@ -128,18 +131,17 @@ export default async function ProfilePage() {
           className="saas-card pressable hover-tile relative mt-4 flex items-center justify-between gap-4 px-7 py-5"
         >
           <span className="text-[15px] font-semibold text-ink">
-            <span className="numeral">{due}</span> carte{due > 1 ? "s" : ""} à revoir
+            {t("app.profile.dueCards", { count: due })}
           </span>
-          <span className="text-[14px] font-medium text-ink">Réviser</span>
+          <span className="text-[14px] font-medium text-ink">{t("nav.review")}</span>
         </Link>
       ) : null}
 
       <section className="saas-card relative mt-4 px-7 py-7" data-tour="profil-maitrise">
-        <p className="text-[13px] text-ink-tertiary">Niveau de connaissance</p>
+        <p className="text-[13px] text-ink-tertiary">{t("app.profile.mastery.label")}</p>
         {cards.length === 0 ? (
           <p className="mt-4 text-[14.5px] leading-relaxed text-ink-secondary">
-            Tes cartes se rangeront ici : nouvelles, en cours, en révision, parfaitement
-            maîtrisées.
+            {t("app.profile.mastery.empty")}
           </p>
         ) : (
           <KnowledgePie buckets={levels} />
@@ -147,21 +149,21 @@ export default async function ProfilePage() {
       </section>
 
       <section className="saas-card relative mt-4 overflow-hidden" data-tour="profil-passees">
-        <p className="px-7 pt-7 text-[13px] text-ink-tertiary">Cartes les plus passées</p>
+        <p className="px-7 pt-7 text-[13px] text-ink-tertiary">{t("app.profile.topCards.label")}</p>
         <Suspense fallback={<TopCardsPending />}>
-          <TopCards cards={cards} />
+          <TopCards t={t} cards={cards} />
         </Suspense>
       </section>
 
       <section className="saas-card relative mt-4 overflow-hidden">
-        <p className="px-7 pt-7 text-[13px] text-ink-tertiary">Autour de toi</p>
+        <p className="px-7 pt-7 text-[13px] text-ink-tertiary">{t("app.profile.aroundYou")}</p>
         <Link
           href={"/app/amis" as never}
           className="hover-row mt-3 flex items-center justify-between gap-4 px-7 py-4"
         >
-          <span className="text-[15px] text-ink">Amis</span>
+          <span className="text-[15px] text-ink">{t("nav.friends")}</span>
           <span className="text-[13px] text-ink-tertiary">
-            {handle ? `@${handle}` : "Ajouter"}
+            {handle ? `@${handle}` : t("app.common.add")}
           </span>
         </Link>
         {exams.length > 0 ? (
@@ -169,7 +171,7 @@ export default async function ProfilePage() {
             href={"/app/examens" as never}
             className="hover-row flex items-center justify-between gap-4 border-t border-hairline px-7 py-4"
           >
-            <span className="text-[15px] text-ink">Examens</span>
+            <span className="text-[15px] text-ink">{t("nav.exams")}</span>
             <span className="numeral text-[13px] text-ink-tertiary">{exams.length}</span>
           </Link>
         ) : null}
@@ -177,15 +179,15 @@ export default async function ProfilePage() {
           href={"/app/reglages#abonnement" as never}
           className="hover-row flex items-center justify-between gap-4 border-t border-hairline px-7 py-4"
         >
-          <span className="text-[15px] text-ink">Abonnement</span>
-          <span className="text-[13px] text-ink-tertiary">Gérer, factures, résilier</span>
+          <span className="text-[15px] text-ink">{t("app.settings.subscription")}</span>
+          <span className="text-[13px] text-ink-tertiary">{t("app.profile.subscriptionHint")}</span>
         </Link>
         <Link
           href={"/app/reglages" as never}
           className="hover-row flex items-center justify-between gap-4 border-t border-hairline px-7 py-4"
         >
-          <span className="text-[15px] text-ink">Réglages</span>
-          <span className="text-[13px] text-ink-tertiary">Compte, rythme, fiches</span>
+          <span className="text-[15px] text-ink">{t("nav.settings")}</span>
+          <span className="text-[13px] text-ink-tertiary">{t("app.profile.settingsHint")}</span>
         </Link>
       </section>
     </div>
@@ -198,7 +200,7 @@ export default async function ProfilePage() {
  * Les jours révisés sont une liste de dates, pas l'historique complet : c'est tout ce qu'une
  * série demande, et c'est ce qui a fait passer cette lecture du mégaoctet au kilooctet.
  */
-async function Streak() {
+async function Streak({ t }: { t: Translator }) {
   const { reviewDays } = await loadProfileStats();
   const dates = reviewDays.map((day) => new Date(day));
   const series = currentStreak(dates);
@@ -211,11 +213,9 @@ async function Streak() {
       </p>
       <p className="mt-2 text-[13px] text-ink-tertiary">
         {series === 0
-          ? "Ta première carte notée lance la série."
-          : series === 1
-            ? "1 jour"
-            : `${series} jours`}
-        {record > series ? ` · record ${record}` : ""}
+          ? t("app.profile.streak.empty")
+          : t("app.profile.streak.days", { count: series })}
+        {record > series ? t("app.profile.streak.record", { record }) : ""}
       </p>
     </>
   );
@@ -230,7 +230,7 @@ function StreakPending() {
   );
 }
 
-async function TopCards({ cards }: { cards: CardSnapshotRow[] }) {
+async function TopCards({ t, cards }: { t: Translator; cards: CardSnapshotRow[] }) {
   const { topCards } = await loadProfileStats();
   const ranked = rankReviewedCards(
     topCards,
@@ -240,7 +240,7 @@ async function TopCards({ cards }: { cards: CardSnapshotRow[] }) {
   if (ranked.length === 0) {
     return (
       <p className="px-7 pb-7 pt-4 text-[14.5px] leading-relaxed text-ink-secondary">
-        Note tes premières cartes pour voir celles que tu revois le plus.
+        {t("app.profile.topCards.empty")}
       </p>
     );
   }

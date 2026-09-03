@@ -2,15 +2,20 @@
 
 import { addDays, startOfDay } from "@micabo/core";
 
-const WEEKDAYS = [
-  { short: "L", label: "Lundi" },
-  { short: "M", label: "Mardi" },
-  { short: "M", label: "Mercredi" },
-  { short: "J", label: "Jeudi" },
-  { short: "V", label: "Vendredi" },
-  { short: "S", label: "Samedi" },
-  { short: "D", label: "Dimanche" },
-] as const;
+import { useI18n } from "@/lib/i18n/client";
+import { localeBcp47 } from "@/lib/i18n/copy";
+import type { UiLocale } from "@/lib/i18n/locales";
+
+function weekdayMarks(locale: UiLocale) {
+  const monday = startOfDay(new Date(2024, 0, 1));
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = addDays(monday, index);
+    return {
+      short: day.toLocaleDateString(localeBcp47(locale), { weekday: "narrow" }),
+      label: day.toLocaleDateString(localeBcp47(locale), { weekday: "long" }),
+    };
+  });
+}
 
 export interface CalendarExam {
   id: string;
@@ -39,6 +44,7 @@ export function ExamCalendar({
   onMonth: (next: Date) => void;
   onSelect: (day: Date) => void;
 }) {
+  const { t, locale } = useI18n();
   const today = startOfDay(new Date());
   const days = monthGrid(month);
   const byDay = new Map<string, CalendarExam[]>();
@@ -49,14 +55,14 @@ export function ExamCalendar({
     byDay.set(key, bucket);
   }
 
-  const label = month.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const label = month.toLocaleDateString(localeBcp47(locale), { month: "long", year: "numeric" });
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-xs/5 sm:p-5">
       <CalendarHeader label={label} month={month} onMonth={onMonth} />
 
       <div className="grid grid-cols-7 gap-1 overflow-hidden">
-        {WEEKDAYS.map((day, index) => (
+        {weekdayMarks(locale).map((day, index) => (
           <p
             key={`${day.label}-${index}`}
             aria-label={day.label}
@@ -80,7 +86,7 @@ export function ExamCalendar({
               key={key}
               type="button"
               onClick={() => onSelect(day)}
-              aria-label={calendarDayLabel(day, marks)}
+              aria-label={calendarDayLabel(day, marks, locale, t("app.exams.defaultName"))}
               className={`flex min-h-[3.75rem] min-w-0 w-full flex-col items-center overflow-hidden rounded-button px-0.5 transition-colors duration-hover sm:min-h-[4.5rem] sm:px-1 ${
                 first ? "pb-1 pt-1" : "justify-center"
               } ${
@@ -103,8 +109,8 @@ export function ExamCalendar({
                   <span
                     title={
                       extras > 0
-                        ? `${first.name.trim() || "Examen"} · +${extras}`
-                        : first.name.trim() || "Examen"
+                        ? `${first.name.trim() || t("app.exams.defaultName")} · +${extras}`
+                        : first.name.trim() || t("app.exams.defaultName")
                     }
                     className={`block min-w-0 w-full max-w-full truncate rounded-pill px-1 py-0.5 text-center text-[9px] font-semibold leading-tight sm:text-[11px] ${
                       isSelected
@@ -114,7 +120,7 @@ export function ExamCalendar({
                           : "bg-caution-soft text-caution"
                     }`}
                   >
-                    {first.name.trim() || "Examen"}
+                    {first.name.trim() || t("app.exams.defaultName")}
                   </span>
                   {extras > 0 ? (
                     <span
@@ -152,16 +158,17 @@ export function ExamDayPicker({
   onMonth: (next: Date) => void;
   onSelect: (day: Date) => void;
 }) {
+  const { locale } = useI18n();
   const today = startOfDay(new Date());
   const floor = minDate ? startOfDay(minDate) : undefined;
   const days = monthGrid(month);
-  const label = month.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const label = month.toLocaleDateString(localeBcp47(locale), { month: "long", year: "numeric" });
 
   return (
     <div>
       <CalendarHeader label={label} month={month} onMonth={onMonth} />
       <div className="grid grid-cols-7 gap-1">
-        {WEEKDAYS.map((day, index) => (
+        {weekdayMarks(locale).map((day, index) => (
           <p
             key={`${day.label}-${index}`}
             aria-label={day.label}
@@ -183,7 +190,7 @@ export function ExamDayPicker({
               type="button"
               disabled={blocked}
               onClick={() => onSelect(day)}
-              aria-label={day.toLocaleDateString("fr-FR", {
+              aria-label={day.toLocaleDateString(localeBcp47(locale), {
                 weekday: "long",
                 day: "numeric",
                 month: "long",
@@ -216,6 +223,7 @@ function CalendarHeader({
   month: Date;
   onMonth: (next: Date) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="mb-3 flex items-center justify-between gap-3">
       <p className="text-[16px] font-semibold capitalize text-ink">📅 {label}</p>
@@ -224,7 +232,7 @@ function CalendarHeader({
           type="button"
           onClick={() => onMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
           className="pressable flex h-8 w-8 items-center justify-center rounded-full bg-surface-muted text-ink-secondary"
-          aria-label="Mois précédent"
+          aria-label={t("app.exams.prevMonth")}
         >
           ‹
         </button>
@@ -232,7 +240,7 @@ function CalendarHeader({
           type="button"
           onClick={() => onMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
           className="pressable flex h-8 w-8 items-center justify-center rounded-full bg-surface-muted text-ink-secondary"
-          aria-label="Mois suivant"
+          aria-label={t("app.exams.nextMonth")}
         >
           ›
         </button>
@@ -241,14 +249,19 @@ function CalendarHeader({
   );
 }
 
-function calendarDayLabel(day: Date, marks: CalendarExam[]): string {
-  const date = day.toLocaleDateString("fr-FR", {
+function calendarDayLabel(
+  day: Date,
+  marks: CalendarExam[],
+  locale: UiLocale,
+  fallback: string,
+): string {
+  const date = day.toLocaleDateString(localeBcp47(locale), {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
   if (marks.length === 0) return date;
-  const names = marks.map((exam) => exam.name.trim() || "Examen").join(", ");
+  const names = marks.map((exam) => exam.name.trim() || fallback).join(", ");
   return `${date}, ${names}`;
 }
 

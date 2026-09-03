@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 
 import { signOut } from "@/lib/actions/profile";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Quitter la session, sans toucher au compte.
@@ -11,6 +12,7 @@ import { signOut } from "@/lib/actions/profile";
  * l'inverse : un appui, et c'est un autre appareil - le même compte, plus cette session.
  */
 export function SignOutButton({ compact = false }: { compact?: boolean }) {
+  const { t } = useI18n();
   const [pending, startTransition] = useTransition();
 
   function leave() {
@@ -26,8 +28,8 @@ export function SignOutButton({ compact = false }: { compact?: boolean }) {
         type="button"
         onClick={leave}
         disabled={pending}
-        aria-label="Se déconnecter"
-        title="Se déconnecter"
+        aria-label={t("app.auth.signOut")}
+        title={t("app.auth.signOut")}
         className="pressable flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-secondary"
       >
         <DoorIcon />
@@ -43,10 +45,10 @@ export function SignOutButton({ compact = false }: { compact?: boolean }) {
       className="pressable hover-row w-full px-7 py-5 text-left"
     >
       <p className="text-[15px] font-semibold text-ink">
-        {pending ? "Déconnexion…" : "Se déconnecter"}
+        {pending ? t("app.auth.signingOut") : t("app.auth.signOut")}
       </p>
       <p className="mt-1 text-[13px] leading-relaxed text-ink-tertiary">
-        Tes cours restent. Tu pourras te reconnecter avec la même adresse.
+        {t("app.auth.signOutHint")}
       </p>
     </button>
   );

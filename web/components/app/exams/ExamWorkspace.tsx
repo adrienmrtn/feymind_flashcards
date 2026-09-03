@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from "react";
 
 import {
   dayDifference,
-  examCountdownLabel,
   examUrgency,
   startOfDay,
   type ExamInsight,
@@ -12,6 +11,8 @@ import {
 } from "@micabo/core";
 
 import { Toast } from "@/components/app/Toast";
+import { useI18n } from "@/lib/i18n/client";
+import { copyExamCountdown, localeBcp47, type Translator } from "@/lib/i18n/copy";
 
 import { ExamCalendar, isoDay, sameDay, type CalendarExam } from "./ExamCalendar";
 import { ExamEditor, type EditorCard, type EditorCourse, type EditorExam } from "./ExamEditor";
@@ -40,6 +41,7 @@ export function ExamWorkspace({
   insights: ExamInsight[];
   countryCode?: string | null;
 }) {
+  const { t, locale } = useI18n();
   const today = startOfDay(new Date());
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selected, setSelected] = useState<Date | null>(null);
@@ -121,7 +123,7 @@ export function ExamWorkspace({
       </div>
 
       <p className="mt-3 text-center text-[12.5px] text-ink-secondary">
-        Choisis un jour pour y poser un examen.
+        {t("app.exams.pickDayHint")}
       </p>
 
       <button
@@ -130,13 +132,13 @@ export function ExamWorkspace({
         data-tour="examens-ajouter"
         className="pressable hover-tile mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-button bg-accent text-[15px] font-semibold text-on-ink"
       >
-        Ajouter un examen
+        {t("app.exams.add")}
       </button>
 
       {selected && onDay.length > 0 ? (
         <section className="mt-8">
           <p className="eyebrow mb-3 text-ink-tertiary">
-            {selected.toLocaleDateString("fr-FR", {
+            {selected.toLocaleDateString(localeBcp47(locale), {
               weekday: "long",
               day: "numeric",
               month: "long",
@@ -148,7 +150,7 @@ export function ExamWorkspace({
                 key={exam.id}
                 name={exam.name}
                 days={exam.days}
-                courses={courseLine(exam.courseIds, titles)}
+                courses={courseLine(t, exam.courseIds, titles)}
                 onClick={() => openExisting(exam)}
               />
             ))}
@@ -158,7 +160,7 @@ export function ExamWorkspace({
 
       {upcoming.length > 0 ? (
         <section className="mt-10">
-          <p className="eyebrow mb-3 text-ink-tertiary">À venir</p>
+          <p className="eyebrow mb-3 text-ink-tertiary">{t("app.exams.upcoming")}</p>
           <div className={`grid min-w-0 gap-4 ${upcoming.length > 1 ? "lg:grid-cols-2" : ""}`}>
             {upcoming.map((exam) => {
               const insight = insightById.get(exam.id);
@@ -173,7 +175,7 @@ export function ExamWorkspace({
                   key={exam.id}
                   name={exam.name}
                   days={exam.days}
-                  courses={courseLine(exam.courseIds, titles)}
+                  courses={courseLine(t, exam.courseIds, titles)}
                   onClick={() => openExisting(exam)}
                 />
               );
@@ -183,14 +185,14 @@ export function ExamWorkspace({
       ) : (
         <p className="mt-4 text-sm text-ink-secondary">
           {courses.length === 0
-            ? "Importe un cours avant de poser une date."
-            : "Aucune date pour l'instant. Choisis un jour dans le calendrier."}
+            ? t("app.exams.empty.needCourse")
+            : t("app.exams.empty.noDate")}
         </p>
       )}
 
       {past.length > 0 ? (
         <section className="mt-10">
-          <p className="mb-3 text-[13px] font-medium text-muted-foreground">Passés</p>
+          <p className="mb-3 text-[13px] font-medium text-muted-foreground">{t("app.exams.past")}</p>
           <ul className="divide-y divide-hairline overflow-hidden rounded-2xl border border-border bg-card">
             {past.map((exam) => (
               <li key={exam.id}>
@@ -217,7 +219,7 @@ export function ExamWorkspace({
           countryCode={countryCode}
           onClose={(outcome) => {
             setEditing(null);
-            if (outcome === "created") setNotice("Examen rajouté");
+            if (outcome === "created") setNotice(t("app.exams.toast.created"));
           }}
         />
       ) : null}
@@ -238,6 +240,7 @@ function ExamRow({
   courses: string;
   onClick: () => void;
 }) {
+  const { t } = useI18n();
   const urgency = examUrgency(days);
   const tone =
     urgency === "critical"
@@ -264,16 +267,20 @@ function ExamRow({
           </span>
         </span>
         <span className={`shrink-0 rounded-pill px-2.5 py-1 text-[12px] font-semibold ${tone}`}>
-          {examCountdownLabel(days)}
+          {copyExamCountdown(t, days)}
         </span>
       </button>
     </li>
   );
 }
 
-function courseLine(ids: string[], titles: Map<string, string>): string {
+function courseLine(
+  t: Translator,
+  ids: string[],
+  titles: Map<string, string>,
+): string {
   const names = ids.map((id) => titles.get(id)).filter(Boolean);
-  return names.length > 0 ? names.join(", ") : "Aucun cours rattaché";
+  return names.length > 0 ? names.join(", ") : t("app.exams.noCourses");
 }
 
 function asIntensity(value: string): ExamIntensity {

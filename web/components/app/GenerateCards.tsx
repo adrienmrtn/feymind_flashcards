@@ -19,6 +19,7 @@ import { CountStepper } from "@/components/app/CountStepper";
 import { Float } from "@/components/app/Float";
 import { GenerateCardsCta } from "@/components/app/GenerateCardsCta";
 import { generateCards } from "@/lib/actions/course";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Demander des cartes, **et combien de chaque format**.
@@ -43,6 +44,7 @@ export function GenerateCards({
   floating?: boolean;
   autoStart?: boolean;
 }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [failure, setFailure] = useState<string | null>(null);
@@ -73,13 +75,13 @@ export function GenerateCards({
             () =>
               resolve({
                 status: "error",
-                message: "L'écriture a pris trop longtemps. Réessaie.",
+                message: t("app.generate.timeout"),
               }),
             90_000,
           );
         }),
       ]);
-      if (result.status === "error") setFailure(result.message ?? "Ça n'a pas marché.");
+      if (result.status === "error") setFailure(result.message ?? t("app.common.errorGeneric"));
       else {
         setOpen(false);
         router.replace(`/app/c/${courseId}/cartes` as never);
@@ -106,9 +108,9 @@ export function GenerateCards({
       >
         <ThinkingOrb state="composing" size={64} />
         <div>
-          <p className="text-[15.5px] font-semibold text-ink">Micabo écrit les cartes…</p>
+          <p className="text-[15.5px] font-semibold text-ink">{t("app.generate.writing")}</p>
           <p className="numeral mt-0.5 text-[13px] text-ink-tertiary">
-            {total} carte{total > 1 ? "s" : ""} demandée{total > 1 ? "s" : ""}
+            {t("app.generate.requested", { count: total })}
           </p>
         </div>
       </div>
@@ -127,7 +129,7 @@ export function GenerateCards({
             className="fixed right-4 bottom-6 z-30 inline-flex h-9 items-center gap-2 rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground shadow-xs lg:right-8"
           >
             <span aria-hidden>✨</span>
-            Générer les cartes
+            {t("copy.cardsButton")}
           </button>
         </Float>
       );
@@ -147,9 +149,11 @@ export function GenerateCards({
               ➕
             </span>
             <span>
-              <span className="block text-[15.5px] font-semibold text-ink">Ajouter au paquet</span>
+              <span className="block text-[15.5px] font-semibold text-ink">
+                {t("app.generate.addToDeck")}
+              </span>
               <span className="mt-0.5 block text-[13px] text-ink-tertiary">
-                D&apos;autres questions, dans les formats que tu veux.
+                {t("app.generate.addHint")}
               </span>
             </span>
           </button>
@@ -170,13 +174,13 @@ export function GenerateCards({
       data-print="hide"
     >
       <div className="flex items-baseline justify-between gap-4">
-        <p className="eyebrow text-ink-tertiary">Combien de cartes, par format</p>
+        <p className="eyebrow text-ink-tertiary">{t("app.generate.howMany")}</p>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="text-[13px] text-ink-tertiary underline-draw"
         >
-          Annuler
+          {t("app.common.cancel")}
         </button>
       </div>
 
@@ -187,8 +191,16 @@ export function GenerateCards({
               {format.emoji}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[15px] font-medium text-ink">{format.title}</p>
-              <p className="mt-0.5 text-[12.5px] text-ink-tertiary">{format.detail}</p>
+              <p className="text-[15px] font-medium text-ink">
+                {t(format.kind === "cloze" ? "app.cardKind.gap" : `app.cardKind.${format.kind}`)}
+              </p>
+              <p className="mt-0.5 text-[12.5px] text-ink-tertiary">
+                {t(
+                  format.kind === "cloze"
+                    ? "app.generate.kindDetail.gap"
+                    : `app.generate.kindDetail.${format.kind}`,
+                )}
+              </p>
             </div>
 
             <CountStepper
@@ -197,16 +209,21 @@ export function GenerateCards({
               min={PER_FORMAT_RANGE.min}
               max={capped ? quota[format.kind] : PER_FORMAT_RANGE.max}
               onChange={(next) => step(format.kind, next - quota[format.kind])}
-              minusLabel={`Moins de ${format.title}`}
-              plusLabel={`Plus de ${format.title}`}
+              minusLabel={t("app.generate.lessAria", {
+                kind: t(format.kind === "cloze" ? "app.cardKind.gap" : `app.cardKind.${format.kind}`),
+              })}
+              plusLabel={t("app.generate.moreAria", {
+                kind: t(format.kind === "cloze" ? "app.cardKind.gap" : `app.cardKind.${format.kind}`),
+              })}
             />
           </div>
         ))}
       </div>
 
       <p className="numeral mt-4 text-[13px] text-ink-tertiary">
-        {total} carte{total > 1 ? "s" : ""} au total
-        {capped ? ` · le maximum est ${TOTAL_RANGE.max}` : ""}
+        {capped
+          ? t("app.generate.totalMax", { count: total, max: TOTAL_RANGE.max })
+          : t("app.generate.total", { count: total })}
       </p>
 
       <button
@@ -219,7 +236,7 @@ export function GenerateCards({
             : "border-primary bg-primary text-primary-foreground"
         }`}
       >
-        {existing === 0 ? "Générer ces cartes" : "Ajouter au paquet"}
+        {existing === 0 ? t("app.generate.generateThese") : t("app.generate.addToDeck")}
       </button>
 
       {failure ? <Failure message={failure} /> : null}

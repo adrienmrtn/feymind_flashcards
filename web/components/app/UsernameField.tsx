@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { displayUsername, normalizeUsername, validateUsername } from "@micabo/core";
 
 import { setUsername } from "@/lib/actions/social";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Le @, écrit seul dans `profiles.username`.
@@ -13,6 +14,7 @@ import { setUsername } from "@/lib/actions/social";
  * retard n'écraserait pas le nom qu'on vient de changer ici.
  */
 export function UsernameField({ initial }: { initial: string }) {
+  const { t } = useI18n();
   const [value, setValue] = useState(initial);
   const [message, setMessage] = useState<string | null>(null);
   const [kind, setKind] = useState<"ok" | "erreur" | null>(null);
@@ -30,7 +32,7 @@ export function UsernameField({ initial }: { initial: string }) {
       setMessage(
         result.status === "ok"
           ? displayUsername(result.username ?? preview)
-          : (result.message ?? "Non enregistré"),
+          : (result.message ?? t("app.settings.saved.error")),
       );
       if (result.status === "ok" && result.username) setValue(result.username);
     });
@@ -40,7 +42,7 @@ export function UsernameField({ initial }: { initial: string }) {
     <div className="mt-7">
       <div className="flex items-baseline justify-between gap-3">
         <label htmlFor="profile-username" className="text-[13px] text-ink-tertiary">
-          Ton @
+          {t("app.settings.usernameLabel")}
         </label>
         <p className={`text-[12.5px] ${kind === "erreur" ? "text-negative" : "text-ink-tertiary"}`}>
           {pending ? "…" : message ?? (preview ? displayUsername(preview) : "")}
@@ -56,13 +58,12 @@ export function UsernameField({ initial }: { initial: string }) {
           spellCheck={false}
           autoCapitalize="none"
           autoCorrect="off"
-          placeholder="ton-nom"
+          placeholder={t("app.settings.usernamePlaceholder")}
           className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
         />
       </div>
       <p className="mt-2 text-[12.5px] leading-relaxed text-ink-tertiary">
-        Un seul @ par compte, le même sur le téléphone et ici. C&apos;est comme ça qu&apos;on
-        t&apos;ajoute en ami.
+        {t("app.settings.usernameHelp")}
       </p>
     </div>
   );

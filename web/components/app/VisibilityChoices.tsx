@@ -2,6 +2,9 @@
 
 import { choosableVisibilities, type CourseVisibility } from "@micabo/core";
 
+import { useI18n } from "@/lib/i18n/client";
+import { copyVisibilityDetail, copyVisibilityTitle } from "@/lib/i18n/copy";
+
 /**
  * Les visibilités encore proposées, en icônes.
  *
@@ -20,10 +23,13 @@ export function VisibilityChoices({
   onChange: (next: CourseVisibility) => void;
   disabled?: boolean;
 }) {
+  const { t } = useI18n();
   return (
-    <div className="flex items-center gap-1.5" role="group" aria-label="Qui peut retrouver ce cours">
+    <div className="flex items-center gap-1.5" role="group" aria-label={t("app.course.visibility.groupAria")}>
       {choosableVisibilities(value).map((item) => {
         const selected = value === item.value;
+        const title = copyVisibilityTitle(t, item.value);
+        const detail = copyVisibilityDetail(t, item.value);
         return (
           <span key={item.value} className="relative">
             <button
@@ -31,7 +37,7 @@ export function VisibilityChoices({
               disabled={disabled}
               onClick={() => onChange(item.value)}
               aria-pressed={selected}
-              aria-label={`${item.title}. ${item.detail}`}
+              aria-label={t("app.course.visibility.optionAria", { title, detail })}
               className={`peer pressable flex h-10 w-10 items-center justify-center rounded-button transition-colors duration-hover ${
                 selected
                   ? "bg-accent text-on-ink"
@@ -44,8 +50,8 @@ export function VisibilityChoices({
               role="tooltip"
               className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-10 w-max max-w-[220px] -translate-x-1/2 rounded-tile bg-ink px-3 py-2 text-left text-[12.5px] leading-snug text-on-ink opacity-0 shadow-floating transition-opacity duration-[var(--duration-tooltip)] peer-hover:opacity-100 peer-focus-visible:opacity-100"
             >
-              <span className="block font-semibold">{item.title}</span>
-              <span className="mt-0.5 block text-on-ink-muted">{item.detail}</span>
+              <span className="block font-semibold">{title}</span>
+              <span className="mt-0.5 block text-on-ink-muted">{detail}</span>
             </span>
           </span>
         );
