@@ -13,6 +13,7 @@ struct LockedSheetTail: View {
     let blocks: [SheetBlock]
     let tint: Color
     var action: () -> Void
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private var lockedPercent: Int {
         Int(((1 - FreeTier.readableSheetRatio) * 100).rounded())
@@ -70,12 +71,13 @@ struct LockedSheetTail: View {
                     .background(MicaboColor.accent, in: Circle())
 
                 VStack(spacing: 5) {
-                    Text("La suite de la fiche est dans Pro")
+                    Text(i18n?.t("ios.sheetLockedTitle") ?? "La suite de la fiche est dans Pro")
                         .font(MicaboFont.hanken(16.5, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(-0.3)
 
-                    Text("Il te reste \(lockedPercent) % de ce cours à lire, et tous les suivants à importer.")
+                    Text(i18n?.t("ios.sheetLockedBody", ["pct": "\(lockedPercent)"])
+                        ?? "Il te reste \(lockedPercent) % de ce cours à lire, et tous les suivants à importer.")
                         .font(MicaboFont.hanken(13, weight: .regular))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineSpacing(2)
@@ -84,7 +86,7 @@ struct LockedSheetTail: View {
                 .multilineTextAlignment(.center)
 
                 HStack(spacing: 6) {
-                    Text("Débloquer la fiche")
+                    Text(i18n?.t("ios.unlockSheet") ?? "Débloquer la fiche")
                         .font(MicaboFont.hanken(14.5, weight: .semibold))
 
                     Image(systemName: "arrow.right")
@@ -100,7 +102,7 @@ struct LockedSheetTail: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
-        .accessibilityLabel("La suite de la fiche est réservée à Micabo Pro")
+        .accessibilityLabel(i18n?.t("ios.sheetLockedTitle") ?? "La suite de la fiche est dans Pro")
         .accessibilityAddTraits(.isButton)
     }
 }

@@ -10,6 +10,7 @@ struct CoursesListView: View {
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(TabRouter.self) private var router: TabRouter?
     @Environment(CloudSync.self) private var sync: CloudSync?
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
@@ -36,11 +37,11 @@ struct CoursesListView: View {
 
         var id: String { rawValue }
 
-        var label: String {
+        func label(_ i18n: UiLocaleStore?) -> String {
             switch self {
-            case .recent: "Récents"
-            case .alphabetical: "A à Z"
-            case .due: "À réviser"
+            case .recent: i18n?.t("app.courses.sortRecent") ?? "Récents"
+            case .alphabetical: i18n?.t("app.courses.sortAlpha") ?? "A à Z"
+            case .due: i18n?.t("app.courses.sortDue") ?? "À réviser"
             }
         }
     }
@@ -140,14 +141,14 @@ struct CoursesListView: View {
         }
         .micaboPaywall($paywall)
         .confirmationDialog(
-            "Supprimer ce cours ?",
+            i18n?.t("app.courses.deleteQ") ?? "Supprimer ce cours ?",
             isPresented: Binding(
                 get: { coursePendingDelete != nil },
                 set: { if !$0 { coursePendingDelete = nil } }
             ),
             titleVisibility: .visible
         ) {
-            Button("Supprimer le cours", role: .destructive) {
+            Button(i18n?.t("app.courses.deleteCourse") ?? "Supprimer le cours", role: .destructive) {
                 if let course = coursePendingDelete {
                     withAnimation {
                         try? CourseRepository.delete(course, in: modelContext)
@@ -155,10 +156,13 @@ struct CoursesListView: View {
                 }
                 coursePendingDelete = nil
             }
-            Button("Annuler", role: .cancel) { coursePendingDelete = nil }
+            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { coursePendingDelete = nil }
         } message: {
             if let course = coursePendingDelete {
-                Text("\(course.title) et \(MicaboCopy.cards(course.cards.count)) disparaissent.")
+                Text(i18n?.t("app.courses.deleteMsg", [
+                    "title": course.title,
+                    "cards": MicaboCopy.cards(course.cards.count)
+                ]) ?? "\(course.title) et \(MicaboCopy.cards(course.cards.count)) disparaissent.")
             }
         }
         .task(id: censusKey) {
@@ -178,7 +182,7 @@ struct CoursesListView: View {
     }
 
     private var header: some View {
-        MicaboScreenHeader(title: "Cours", eyebrow: countLabel)
+        MicaboScreenHeader(title: i18n?.t("nav.courses") ?? "Cours", eyebrow: countLabel)
             .padding(.top, MicaboSpacing.xs)
     }
 
@@ -198,7 +202,7 @@ struct CoursesListView: View {
                 systemImage: "plus",
                 style: .dark,
                 size: 56,
-                accessibilityTitle: "Importer un cours"
+                accessibilityTitle: i18n?.t("app.import.importCourse") ?? "Importer un cours"
             ) {
                 requestImport()
             }
@@ -209,7 +213,7 @@ struct CoursesListView: View {
     }
 
     private var countLabel: String {
-        guard !courses.isEmpty else { return "Aucun cours" }
+        guard !courses.isEmpty else { return i18n?.t("app.courses.none") ?? "Aucun cours" }
         if let cardCount {
             return "\(MicaboCopy.courses(courses.count)) · \(MicaboCopy.cards(cardCount))"
         }
@@ -219,7 +223,7 @@ struct CoursesListView: View {
     @ViewBuilder
     private var myCourses: some View {
         if !courses.isEmpty {
-            MicaboSearchField(text: $searchText, placeholder: "Rechercher un cours ou une carte")
+            MicaboSearchField(text: $searchText, placeholder: i18n?.t("app.courses.search") ?? "Rechercher un cours ou une carte")
                 .padding(.horizontal, MicaboSpacing.screen)
 
             filterRow
@@ -234,7 +238,7 @@ struct CoursesListView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: MicaboSpacing.xs) {
                 ForEach(SortOrder.allCases) { order in
-                    MicaboSelectChip(title: order.label, isSelected: order == sortOrder && subjectFilter == nil) {
+                    MicaboSelectChip(title: order.label(i18n), isSelected: order == sortOrder && subjectFilter == nil) {
                         withAnimation(.easeOut(duration: 0.2)) {
                             sortOrder = order
                             subjectFilter = nil
@@ -261,9 +265,9 @@ struct CoursesListView: View {
         if courses.isEmpty {
             MicaboEmptyState(
                 systemImage: "books.vertical",
-                title: "Aucun cours",
-                message: "Importe un polycopié pour commencer.",
-                actionTitle: "Importer"
+                title: i18n?.t("app.courses.emptyTitle") ?? "Aucun cours",
+                message: i18n?.t("app.courses.emptyBody") ?? "Importe un polycopié pour commencer.",
+                actionTitle: i18n?.t("ios.importAction") ?? "Importer"
             ) {
                 requestImport()
             }
@@ -271,8 +275,8 @@ struct CoursesListView: View {
         } else if filtered.isEmpty {
             MicaboEmptyState(
                 systemImage: "magnifyingglass",
-                title: "Aucun résultat",
-                message: "Essaie un autre mot."
+                title: i18n?.t("app.courses.noResults") ?? "Aucun résultat",
+                message: i18n?.t("app.courses.noResultsBody") ?? "Essaie un autre mot."
             )
             .padding(.horizontal, MicaboSpacing.screen)
         } else {
@@ -286,7 +290,7 @@ struct CoursesListView: View {
                         Button(role: .destructive) {
                             coursePendingDelete = course
                         } label: {
-                            Label("Supprimer", systemImage: "trash")
+                            Label(i18n?.t("app.common.delete") ?? "Supprimer", systemImage: "trash")
                         }
                     }
 

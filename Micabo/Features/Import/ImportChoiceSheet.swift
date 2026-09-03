@@ -17,25 +17,29 @@ enum ImportKind: String, CaseIterable, Identifiable {
         self != .cards
     }
 
-    var title: String {
+    var title: String { title(locale: .resolved()) }
+
+    func title(locale: UiLocale) -> String {
         switch self {
-        case .pdf: "Importer un PDF"
-        case .photo: "Scanner ou photos"
-        case .youtube: "Vidéo YouTube"
-        case .docx: "Document Word"
-        case .text: "Coller du texte"
-        case .cards: "Créer des cartes"
+        case .pdf: L10n.t("ios.import.pdf", locale: locale)
+        case .photo: L10n.t("ios.import.photo", locale: locale)
+        case .youtube: L10n.t("ios.import.youtube", locale: locale)
+        case .docx: L10n.t("ios.import.docx", locale: locale)
+        case .text: L10n.t("ios.import.text", locale: locale)
+        case .cards: L10n.t("ios.import.cards", locale: locale)
         }
     }
 
-    var subtitle: String {
+    var subtitle: String { subtitle(locale: .resolved()) }
+
+    func subtitle(locale: UiLocale) -> String {
         switch self {
-        case .pdf: "Cours, polycopié, notes"
-        case .photo: "Plusieurs pages, à la suite"
-        case .youtube: "Un lien, ses sous-titres"
-        case .docx: "Fichier .docx"
-        case .text: "Tes notes, telles quelles"
-        case .cards: "Un paquet, sans fiche"
+        case .pdf: L10n.t("ios.import.pdfHelp", locale: locale)
+        case .photo: L10n.t("ios.import.photoHelp", locale: locale)
+        case .youtube: L10n.t("ios.import.youtubeHelp", locale: locale)
+        case .docx: L10n.t("ios.import.docxHelp", locale: locale)
+        case .text: L10n.t("ios.import.textHelp", locale: locale)
+        case .cards: L10n.t("ios.import.cardsHelp", locale: locale)
         }
     }
 
@@ -117,19 +121,20 @@ enum ImportKind: String, CaseIterable, Identifiable {
 /// il n'y a pas de cours à ficher, il y a des choses à retenir.
 struct ImportChoiceSheet: View {
     var onSelect: (ImportKind) -> Void
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private let kinds: [ImportKind] = [.pdf, .photo, .youtube, .docx, .text]
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                MicaboScreenHeader(title: "D'où part-on ?")
+                MicaboScreenHeader(title: i18n?.t("ios.importWhere") ?? "D'où part-on ?")
                     .padding(.top, 24)
 
                 MicaboRowGroup(rows: kinds.map(row(for:)))
 
                 VStack(alignment: .leading, spacing: 8) {
-                    MicaboSectionCaption(text: "Sans cours")
+                    MicaboSectionCaption(text: i18n?.t("ios.withoutCourse") ?? "Sans cours")
                     MicaboRowGroup(rows: [row(for: .cards)])
                 }
 
