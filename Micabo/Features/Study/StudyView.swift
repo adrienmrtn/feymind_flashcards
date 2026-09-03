@@ -76,137 +76,205 @@ struct StudyView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if let resumable {
-                ResumePromptView(
-                    snapshot: resumable,
-                    canClose: !isEmbedded,
-                    onResume: { resume(resumable) },
-                    onRestart: restart,
-                    onClose: { dismiss() }
-                )
-            } else if awaitingStart {
-                SessionSetupView(
-                    courseTitle: setupCourseTitle,
-                    due: setupDue,
-                    rhythmNew: rhythmNew,
-                    introducedToday: introducedToday,
-                    initialNewPerSession: newPerSession,
-                    canClose: !isEmbedded,
-                    onClose: { dismiss() },
-                    onStart: confirmStart
-                )
-            } else if session.isEmpty {
-                NothingDueView(
-                    nextDueLabel: nextDueLabel,
-                    canPractice: !practiceCards.isEmpty,
-                    isPracticeLocked: !(pro?.canPractice ?? true),
-                    onPractice: startPractice,
-                    onClose: finish
-                )
-            } else if session.isFinished {
-                CompletionView(session: session, isEmbedded: isEmbedded) {
-                    finish()
-                }
-            } else {
-                studySession
-            }
-        }
-        .micaboScreenBackground()
-        .onAppear(perform: prepare)
-        // Les notes restent en mémoire pendant la session : quitter l'app doit les
-        // poser sur le disque avant de partir.
-        .onChange(of: scenePhase) { _, phase in
-            if phase != .active { session.flush() }
-        }
-        .sheet(item: $editingCard) { card in
-            FlashcardEditorSheet(card: card)
-                .onDisappear { session.cardWasEdited() }
-        }
-        // Feuille native : on la balaye pour abandonner. La croix, elle, demande
-        // encore confirmation — c'est un geste plus ambigu qu'un balayage.
-        .sheet(isPresented: $isGated, onDismiss: {
-            guard !sessionPaywallSettled else { return }
-            leaveForHome()
-        }) {
-            SessionPaywallView(
-                reviewedCount: session.answeredCount,
-                onGoHome: {
-                    sessionPaywallSettled = true
-                    leaveForHome()
-                },
-                onSubscribed: {
-                    sessionPaywallSettled = true
-                    isGated = false
-                }
+        sessionRoot
+            .micaboScreenBackground()
+            .onAppear(perform: prepare)
+            // Les notes restent en mémoire pendant la session : quitter l'app doit les
+            // poser sur le disque avant de partir.
+            .onChange(of: scenePhase, handleScenePhase)
+            .sheet(item: $editingCard, content: editorSheet)
+            // Feuille native : on la balaye pour abandonner. La croix, elle, demande
+            // encore confirmation — c'est un geste plus ambigu qu'un balayage.
+            .sheet(isPresented: $isGated, onDismiss: paywallDismissed, content: sessionPaywall)
+            .micaboPaywall($paywall)
+            .confirmationDialog(
+                leaveTitle,
+                isPresented: $confirmLeave,
+                titleVisibility: .visible,
+                actions: { leaveActions },
+                message: { leaveMessage }
             )
-            .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(MicaboRadius.sheet)
+    }
+
+    private func t(_ key: String, _ fallback: String, _ vars: [String: String] = [:]) -> String {
+        i18n?.t(key, vars) ?? fallback
+    }
+
+    private func handleScenePhase(_: ScenePhase, _ phase: ScenePhase) {
+        if phase != .active { session.flush() }
+    }
+
+    private func editorSheet(_ card: Flashcard) -> some View {
+        FlashcardEditorSheet(card: card)
+            .onDisappear { session.cardWasEdited() }
+    }
+
+    private func paywallDismissed() {
+        guard !sessionPaywallSettled else { return }
+        leaveForHome()
+    }
+
+    private func sessionPaywall() -> some View {
+        SessionPaywallView(
+            reviewedCount: session.answeredCount,
+            onGoHome: {
+                sessionPaywallSettled = true
+                leaveForHome()
+            },
+            onSubscribed: {
+                sessionPaywallSettled = true
+                isGated = false
+            }
+        )
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(MicaboRadius.sheet)
+    }
+
+    private var leaveTitle: String {
+        t("app.session.leaveTitle", "Quitter la session ?")
+    }
+
+    @ViewBuilder
+    private var leaveActions: some View {
+        Button(t("app.session.leaveLater", "Reprendre plus tard")) { finish() }
+        Button(t("app.common.cancel", "Annuler"), role: .cancel) {}
+    }
+
+    private var leaveMessage: some View {
+        Text(t("app.session.leaveBody", "Tes notes sont enregistrées. Tu pourras reprendre où tu t'es arrêté."))
+    }
+
+    private enum RootPhase {
+        case resume, setup, empty, done, study
+    }
+
+    private var rootPhase: RootPhase {
+        if resumable != nil { return .resume }
+        if awaitingStart { return .setup }
+        if session.isEmpty { return .empty }
+        if session.isFinished { return .done }
+        return .study
+    }
+
+    @ViewBuilder
+    private var sessionRoot: some View {
+        switch rootPhase {
+        case .resume: resumePane
+        case .setup: setupPane
+        case .empty: emptyPane
+        case .done: donePane
+        case .study: studySession
         }
-        .micaboPaywall($paywall)
-        .confirmationDialog(
-            i18n?.t("app.session.leaveTitle") ?? "Quitter la session ?",
-            isPresented: $confirmLeave,
-            titleVisibility: .visible
-        ) {
-            Button(i18n?.t("app.session.leaveLater") ?? "Reprendre plus tard") { finish() }
-            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) {}
-        } message: {
-            Text(i18n?.t("app.session.leaveBody") ?? "Tes notes sont enregistrées. Tu pourras reprendre où tu t'es arrêté.")
+    }
+
+    @ViewBuilder
+    private var resumePane: some View {
+        if let resumable {
+            ResumePromptView(
+                snapshot: resumable,
+                canClose: !isEmbedded,
+                onResume: { resume(resumable) },
+                onRestart: restart,
+                onClose: { dismiss() }
+            )
         }
+    }
+
+    private var setupPane: some View {
+        SessionSetupView(
+            courseTitle: setupCourseTitle,
+            due: setupDue,
+            rhythmNew: rhythmNew,
+            introducedToday: introducedToday,
+            initialNewPerSession: newPerSession,
+            canClose: !isEmbedded,
+            onClose: { dismiss() },
+            onStart: confirmStart
+        )
+    }
+
+    private var emptyPane: some View {
+        NothingDueView(
+            nextDueLabel: nextDueLabel,
+            canPractice: !practiceCards.isEmpty,
+            isPracticeLocked: !(pro?.canPractice ?? true),
+            onPractice: startPractice,
+            onClose: finish
+        )
+    }
+
+    private var donePane: some View {
+        CompletionView(session: session, isEmbedded: isEmbedded, onFinish: finish)
     }
 
     // MARK: - En-tête (X · barre · 4/12 · annuler)
 
     private var headerBar: some View {
         VStack(spacing: 12) {
-            HStack(spacing: 14) {
-                if !isEmbedded {
-                    MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: i18n?.t("app.a11y.close") ?? "Fermer") {
-                        if session.answeredCount > 0, !session.isFinished {
-                            confirmLeave = true
-                        } else {
-                            finish()
-                        }
-                    }
-                }
-
-                MicaboProgressBar(progress: session.progress)
-                    .frame(height: 5)
-
-                Text(totalLabel)
-                    .font(MicaboFont.number(12, weight: .semibold))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .monospacedDigit()
-
-                if session.canUndo {
-                    MicaboCircleButton(
-                        systemImage: "arrow.uturn.backward",
-                        size: 32,
-                        accessibilityTitle: i18n?.t("app.session.undoAria") ?? "Annuler la dernière note",
-                        feedback: .rigid
-                    ) {
-                        withAnimation(StudyMotion.next) {
-                            session.undo()
-                        }
-                        showHint = false
-                        selectedChoice = nil
-                    }
-                    .transition(.scale(scale: 0.6).combined(with: .opacity))
-                }
-            }
-            .animation(.easeOut(duration: 0.2), value: session.canUndo)
-
-            if !session.mode.affectsSchedule {
-                practiceBanner
-            } else if session.isCurrentUnderExamDeadline {
-                examBanner
-            }
+            headerControls
+            sessionBanner
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, 8)
         .padding(.bottom, 18)
+    }
+
+    private var headerControls: some View {
+        HStack(spacing: 14) {
+            if !isEmbedded {
+                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: t("app.a11y.close", "Fermer"), action: requestClose)
+            }
+
+            MicaboProgressBar(progress: session.progress)
+                .frame(height: 5)
+
+            Text(totalLabel)
+                .font(MicaboFont.number(12, weight: .semibold))
+                .foregroundStyle(MicaboColor.inkTertiary)
+                .monospacedDigit()
+
+            if session.canUndo {
+                undoButton
+            }
+        }
+        .animation(.easeOut(duration: 0.2), value: session.canUndo)
+    }
+
+    private var undoButton: some View {
+        MicaboCircleButton(
+            systemImage: "arrow.uturn.backward",
+            size: 32,
+            accessibilityTitle: t("app.session.undoAria", "Annuler la dernière note"),
+            feedback: .rigid,
+            action: undoLast
+        )
+        .transition(.scale(scale: 0.6).combined(with: .opacity))
+    }
+
+    @ViewBuilder
+    private var sessionBanner: some View {
+        if !session.mode.affectsSchedule {
+            practiceBanner
+        } else if session.isCurrentUnderExamDeadline {
+            examBanner
+        }
+    }
+
+    private func requestClose() {
+        if session.answeredCount > 0, !session.isFinished {
+            confirmLeave = true
+        } else {
+            finish()
+        }
+    }
+
+    private func undoLast() {
+        withAnimation(StudyMotion.next) {
+            session.undo()
+        }
+        showHint = false
+        selectedChoice = nil
     }
 
     /// Dit noir sur blanc que rien ne sera enregistré.
@@ -224,7 +292,7 @@ struct StudyView: View {
     private var examBanner: some View {
         banner(
             systemImage: "calendar.badge.clock",
-            text: i18n?.t("app.session.examBanner") ?? "Mode examen · aucune carte ne repart au delà du jour J",
+            text: t("app.session.examBanner", "Mode examen · aucune carte ne repart au delà du jour J"),
             tint: MicaboColor.caution,
             background: MicaboColor.cautionSoft
         )
@@ -299,17 +367,15 @@ struct StudyView: View {
     }
 
     private var cardAccessibilityHint: String {
-        if session.isRevealed {
-            return i18n?.t("app.session.answerVisible") ?? "Réponse visible"
-        }
-        return i18n?.t("app.session.showAnswerHint") ?? "Affiche la réponse"
+        session.isRevealed
+            ? t("app.session.answerVisible", "Réponse visible")
+            : t("app.session.showAnswerHint", "Affiche la réponse")
     }
 
     private var cardAccessibilityLabel: String {
-        if session.isRevealed {
-            return i18n?.t("app.session.cardAnswer") ?? "Carte, réponse"
-        }
-        return i18n?.t("app.session.cardQuestion") ?? "Carte, question"
+        session.isRevealed
+            ? t("app.session.cardAnswer", "Carte, réponse")
+            : t("app.session.cardQuestion", "Carte, question")
     }
 
     private func toggleHint() {
@@ -337,32 +403,9 @@ struct StudyView: View {
 
     // MARK: - Commandes
 
-    @ViewBuilder
     private var controls: some View {
         VStack(spacing: 14) {
-            if session.isRevealed {
-                Text(i18n?.t("app.session.howAnswered") ?? "Comment as-tu répondu ?")
-                    .font(MicaboFont.hanken(11, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-
-                GradeButtons(intervals: session.previewLabels) { rating in
-                    withAnimation(StudyMotion.next) {
-                        session.answer(rating)
-                    }
-                    gateIfNeeded()
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            } else {
-                Button {
-                    withAnimation(StudyMotion.reveal) {
-                        session.reveal()
-                    }
-                } label: {
-                    Text(i18n?.t("app.session.reveal") ?? "Afficher la réponse")
-                }
-                .buttonStyle(MicaboPrimaryButtonStyle())
-            }
-
+            gradeOrReveal
             cardActions
         }
         .padding(.horizontal, MicaboSpacing.screen)
@@ -371,23 +414,57 @@ struct StudyView: View {
         .animation(StudyMotion.reveal, value: session.isRevealed)
     }
 
+    @ViewBuilder
+    private var gradeOrReveal: some View {
+        if session.isRevealed {
+            gradeCluster
+        } else {
+            revealButton
+        }
+    }
+
+    private var gradeCluster: some View {
+        VStack(spacing: 14) {
+            Text(t("app.session.howAnswered", "Comment as-tu répondu ?"))
+                .font(MicaboFont.hanken(11, weight: .medium))
+                .foregroundStyle(MicaboColor.inkTertiary)
+
+            GradeButtons(intervals: session.previewLabels, onSelect: gradeCurrent)
+        }
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+
+    private var revealButton: some View {
+        Button(action: revealCurrent) {
+            Text(t("app.session.reveal", "Afficher la réponse"))
+        }
+        .buttonStyle(MicaboPrimaryButtonStyle())
+    }
+
+    private func gradeCurrent(_ rating: ReviewRating) {
+        withAnimation(StudyMotion.next) {
+            session.answer(rating)
+        }
+        gateIfNeeded()
+    }
+
     /// Corriger, passer ou écarter une carte sans quitter la session. Ces actions restent
     /// à portée avant comme après la réponse : c'est souvent en lisant le verso qu'on
     /// s'aperçoit qu'une carte est fausse.
     private var cardActions: some View {
         HStack(spacing: 20) {
             if !session.isRevealed {
-                quietAction(i18n?.t("app.session.skip") ?? "Passer", systemImage: "arrow.right.to.line") {
+                quietAction(t("app.session.skip", "Passer"), systemImage: "arrow.right.to.line") {
                     withAnimation { session.skip() }
                 }
             }
 
-            quietAction(i18n?.t("app.session.edit") ?? "Modifier", systemImage: "pencil") {
+            quietAction(t("app.session.edit", "Modifier"), systemImage: "pencil") {
                 guard let card = session.current else { return }
                 editingCard = card
             }
 
-            quietAction(i18n?.t("app.session.setAside") ?? "Mettre de côté", systemImage: "tray.and.arrow.down", feedback: .warning) {
+            quietAction(t("app.session.setAside", "Mettre de côté"), systemImage: "tray.and.arrow.down", feedback: .warning) {
                 withAnimation { session.setAsideCurrent() }
             }
         }
@@ -601,89 +678,118 @@ struct StudyCardFace: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
-        VStack(alignment: showAnswer ? .leading : .center, spacing: 14) {
-            if showAnswer {
-                Text((i18n?.t("app.session.answerEyebrow") ?? "Réponse").uppercased())
-                    .font(MicaboFont.hanken(11, weight: .semibold))
-                    .tracking(1.4)
-                    .foregroundStyle(MicaboColor.accent)
+        faceContent
+            .padding(showAnswer ? 26 : 30)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: showAnswer ? .topLeading : .center)
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
+            .shadow(color: Color.black.opacity(0.05), radius: 18, x: 0, y: 8)
+    }
 
-                FormulaText(source: card.front, size: 17, weight: .semibold)
-                    .fixedSize(horizontal: false, vertical: true)
+    @ViewBuilder
+    private var faceContent: some View {
+        if showAnswer {
+            answerFace
+        } else {
+            promptFace
+        }
+    }
 
-                MicaboHairline()
+    private var answerFace: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text((i18n?.t("app.session.answerEyebrow") ?? "Réponse").uppercased())
+                .font(MicaboFont.hanken(11, weight: .semibold))
+                .tracking(1.4)
+                .foregroundStyle(MicaboColor.accent)
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 14) {
-                        if card.isOcclusion {
-                            OcclusionFigure(card: card, isRevealed: true)
-                        }
-
-                        if card.format == .choice {
-                            ChoiceList(card: card, selected: selectedChoice, isRevealed: true)
-                        }
-
-                        FormulaText(
-                            source: card.back,
-                            size: 15,
-                            color: MicaboColor.inkBody
-                        )
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                        if card.hasAudio {
-                            CardAudioButton(card: card)
-                        }
-                    }
-                }
-            } else {
-                Spacer(minLength: 0)
-
-                if let label = frontEyebrow {
-                    Text(label.uppercased())
-                        .font(MicaboFont.hanken(11, weight: .semibold))
-                        .tracking(1.4)
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                }
-
-                if card.isOcclusion {
-                    OcclusionFigure(card: card, isRevealed: false)
-                }
-
-                FormulaText(
-                    source: card.front,
-                    size: frontSize,
-                    weight: .semibold,
-                    alignment: card.format == .choice ? .leading : .center
-                )
-                .tracking(-0.2)
+            FormulaText(source: card.front, size: 17, weight: .semibold)
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: card.format == .choice ? .leading : .center)
 
-                if card.format == .choice {
-                    ChoiceList(
-                        card: card,
-                        selected: selectedChoice,
-                        isRevealed: false,
-                        onSelect: onSelectChoice
-                    )
-                }
+            MicaboHairline()
 
-                if card.hasAudio {
-                    CardAudioButton(card: card)
-                }
-
-                Spacer(minLength: 0)
-
-                if let hint = card.hint?.nilIfBlank, onToggleHint != nil {
-                    hintArea(hint)
-                }
+            ScrollView {
+                answerDetails
             }
         }
-        .padding(showAnswer ? 26 : 30)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: showAnswer ? .topLeading : .center)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.xxl, style: .continuous))
-        .shadow(color: Color.black.opacity(0.05), radius: 18, x: 0, y: 8)
+    }
+
+    private var answerDetails: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if card.isOcclusion {
+                OcclusionFigure(card: card, isRevealed: true)
+            }
+
+            if card.format == .choice {
+                ChoiceList(card: card, selected: selectedChoice, isRevealed: true)
+            }
+
+            FormulaText(
+                source: card.back,
+                size: 15,
+                color: MicaboColor.inkBody
+            )
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+
+            if card.hasAudio {
+                CardAudioButton(card: card)
+            }
+        }
+    }
+
+    private var promptFace: some View {
+        VStack(alignment: .center, spacing: 14) {
+            Spacer(minLength: 0)
+            promptEyebrow
+            promptQuestion
+            promptExtras
+            Spacer(minLength: 0)
+            if let hint = card.hint?.nilIfBlank, onToggleHint != nil {
+                hintArea(hint)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var promptEyebrow: some View {
+        if let label = frontEyebrow {
+            Text(label.uppercased())
+                .font(MicaboFont.hanken(11, weight: .semibold))
+                .tracking(1.4)
+                .foregroundStyle(MicaboColor.inkTertiary)
+        }
+    }
+
+    @ViewBuilder
+    private var promptQuestion: some View {
+        if card.isOcclusion {
+            OcclusionFigure(card: card, isRevealed: false)
+        }
+
+        FormulaText(
+            source: card.front,
+            size: frontSize,
+            weight: .semibold,
+            alignment: card.format == .choice ? .leading : .center
+        )
+        .tracking(-0.2)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: card.format == .choice ? .leading : .center)
+    }
+
+    @ViewBuilder
+    private var promptExtras: some View {
+        if card.format == .choice {
+            ChoiceList(
+                card: card,
+                selected: selectedChoice,
+                isRevealed: false,
+                onSelect: onSelectChoice
+            )
+        }
+
+        if card.hasAudio {
+            CardAudioButton(card: card)
+        }
     }
 
     /// Le sens de révision compte en langues, et le format compte partout : on annonce
