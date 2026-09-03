@@ -116,7 +116,7 @@ struct SettingsView: View {
         .sheet(isPresented: $showAuth) {
             // Plus de « continuer sans compte » : `AuthView` n'a plus de sortie, et la
             // feuille se referme toute seule dès que la connexion aboutit.
-            AuthView()
+            AuthView(placement: .sheet, onDismiss: { showAuth = false })
                 .presentationCornerRadius(MicaboRadius.sheet)
                 .onChange(of: auth.isSignedIn) { _, isSignedIn in
                     guard isSignedIn else { return }
