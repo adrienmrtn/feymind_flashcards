@@ -23,6 +23,7 @@ struct CourseSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(CloudSync.self) private var sync
     @Environment(ProAccess.self) private var pro: ProAccess?
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     /// La fiche se décode hors de l'acteur principal. La décoder dans `init` retenait la
     /// poussée de navigation jusqu'à la fin du JSON et du surlignage ; l'en-tête n'avait
@@ -130,17 +131,17 @@ struct CourseSheetView: View {
         }
         .micaboPaywall($paywall)
         .micaboDiscountOffer($giftOffer)
-        .alert("Oups", isPresented: .constant(errorMessage != nil)) {
-            Button("Fermer", role: .cancel) { errorMessage = nil }
+        .alert(i18n?.t("app.common.oops") ?? "Oups", isPresented: .constant(errorMessage != nil)) {
+            Button(i18n?.t("app.a11y.close") ?? "Fermer", role: .cancel) { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "")
         }
-        .confirmationDialog("Supprimer ce cours ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
-            Button("Supprimer", role: .destructive) {
+        .confirmationDialog(i18n?.t("app.courses.deleteQ") ?? "Supprimer ce cours ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button(i18n?.t("app.common.delete") ?? "Supprimer", role: .destructive) {
                 try? CourseRepository.delete(course, in: modelContext)
                 dismiss()
             }
-            Button("Annuler", role: .cancel) {}
+            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) {}
         } message: {
             Text(deleteWarning)
         }
@@ -184,7 +185,10 @@ struct CourseSheetView: View {
             }
 
             if dueCount > 0 {
-                MicaboBadge(text: "\(dueCount) à réviser", tone: .accent)
+                MicaboBadge(
+                    text: i18n?.t("app.courses.dueBadge", ["count": "\(dueCount)"]) ?? "\(dueCount) à réviser",
+                    tone: .accent
+                )
             }
         }
         .padding(.top, MicaboSpacing.xs)
@@ -195,7 +199,12 @@ struct CourseSheetView: View {
     private var headerEyebrow: String {
         var parts: [String] = []
         if let subject = course.subject?.nilIfBlank { parts.append(subject) }
-        if let sheet { parts.append("\(sheet.readingMinutes) min de lecture") }
+        if let sheet {
+            parts.append(
+                i18n?.t("ios.readingMin", ["minutes": "\(sheet.readingMinutes)"])
+                    ?? "\(sheet.readingMinutes) min de lecture"
+            )
+        }
         parts.append(MicaboCopy.audience(of: course))
         return parts.isEmpty ? MicaboCopy.cards(cards.count) : parts.joined(separator: " · ")
     }
@@ -203,7 +212,7 @@ struct CourseSheetView: View {
     private var courseMenu: some View {
         Menu {
             Button { showCardOptions = true } label: {
-                Label(cards.isEmpty ? MicaboCopy.cardsButton() : "Générer de nouvelles cartes", systemImage: "sparkles")
+                Label(cards.isEmpty ? MicaboCopy.cardsButton() : (i18n?.t("ios.newCardsTitle") ?? "Générer de nouvelles cartes"), systemImage: "sparkles")
             }
             // Refaire la fiche est l'endroit où la longueur se choisit vraiment : on a la
             // fiche sous les yeux, et c'est en la lisant qu'on la trouve trop courte.
@@ -214,7 +223,7 @@ struct CourseSheetView: View {
                     }
                 }
             } label: {
-                Label(sheet == nil ? "Ficher ce cours" : "Refaire la fiche", systemImage: "text.book.closed")
+                Label(sheet == nil ? (i18n?.t("ios.makeSheet") ?? "Ficher ce cours") : (i18n?.t("ios.rewriteSheet") ?? "Refaire la fiche"), systemImage: "text.book.closed")
             }
             .disabled(course.rawText.nilIfBlank == nil || !course.source.expectsSheet)
 
@@ -234,12 +243,12 @@ struct CourseSheetView: View {
 
             Divider()
             Button(role: .destructive) { showDeleteConfirmation = true } label: {
-                Label("Supprimer le cours", systemImage: "trash")
+                Label(i18n?.t("app.courses.deleteCourse") ?? "Supprimer le cours", systemImage: "trash")
             }
         } label: {
             MicaboCircleIcon(systemImage: "ellipsis", size: 38)
         }
-        .accessibilityLabel("Actions du cours")
+        .accessibilityLabel(i18n?.t("ios.courseActions") ?? "Actions du cours")
     }
 
     /// Change qui peut retrouver ce cours dans la bibliothèque.
@@ -259,8 +268,9 @@ struct CourseSheetView: View {
 
     private var deleteWarning: String {
         cards.isEmpty
-            ? "La fiche de ce cours sera définitivement effacée."
-            : "La fiche et ses \(MicaboCopy.cards(cards.count)) seront définitivement effacées."
+            ? (i18n?.t("ios.deleteSheetOnly") ?? "La fiche de ce cours sera définitivement effacée.")
+            : (i18n?.t("ios.deleteSheetAndCards", ["cards": MicaboCopy.cards(cards.count)])
+                ?? "La fiche et ses \(MicaboCopy.cards(cards.count)) seront définitivement effacées.")
     }
 
     // MARK: - Chapeau
@@ -283,7 +293,7 @@ struct CourseSheetView: View {
         HStack(spacing: 7) {
             Image(systemName: "hand.tap")
                 .font(.system(size: 11, weight: .semibold))
-            Text("Sélectionne un mot ou une phrase pour demander une explication.")
+            Text(i18n?.t("ios.selectToExplain") ?? "Sélectionne un mot ou une phrase pour demander une explication.")
                 .font(MicaboFont.micro)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -335,14 +345,14 @@ struct CourseSheetView: View {
             HStack(spacing: MicaboSpacing.sm) {
                 ProgressView()
                     .tint(MicaboColor.accent)
-                Text("Ouverture de la fiche…")
+                Text(i18n?.t("ios.openingSheet") ?? "Ouverture de la fiche…")
                     .font(MicaboFont.hanken(13.5, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, MicaboSpacing.lg)
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Ouverture de la fiche")
+            .accessibilityLabel(i18n?.t("ios.openingSheet") ?? "Ouverture de la fiche")
         } else {
             missingSheet
         }
@@ -358,11 +368,11 @@ struct CourseSheetView: View {
         if course.source.expectsSheet {
             MicaboEmptyState(
                 systemImage: "text.book.closed",
-                title: "Pas encore de fiche",
+                title: i18n?.t("ios.noSheetYet") ?? "Pas encore de fiche",
                 message: course.rawText.nilIfBlank == nil
-                    ? "Réimporte le document."
-                    : "Micabo peut écrire la fiche.",
-                actionTitle: course.rawText.nilIfBlank == nil ? nil : "Ficher ce cours"
+                    ? (i18n?.t("ios.reimportDoc") ?? "Réimporte le document.")
+                    : (i18n?.t("ios.canWriteSheet") ?? "Micabo peut écrire la fiche."),
+                actionTitle: course.rawText.nilIfBlank == nil ? nil : (i18n?.t("ios.makeSheet") ?? "Ficher ce cours")
             ) {
                 Task { await writeSheet() }
             }
@@ -370,9 +380,9 @@ struct CourseSheetView: View {
         } else {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
-                title: "Un paquet",
-                message: "Pas de fiche — seulement des cartes.",
-                actionTitle: "Voir les cartes"
+                title: i18n?.t("ios.deckOnlyTitle") ?? "Un paquet",
+                message: i18n?.t("ios.deckOnlyBody") ?? "Pas de fiche — seulement des cartes.",
+                actionTitle: i18n?.t("ios.seeCards") ?? "Voir les cartes"
             ) {
                 generatedCards = CourseCardsRoute(course: course)
             }
@@ -387,7 +397,7 @@ struct CourseSheetView: View {
     @ViewBuilder
     private var cardsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Cartes")
+            MicaboSectionCaption(text: i18n?.t("ios.cardsCaption") ?? "Cartes")
 
             if !didLoadCards {
                 EmptyView()
@@ -426,9 +436,13 @@ struct CourseSheetView: View {
     }
 
     private var cardsSubtitle: String {
-        if dueCount > 0 { return "\(dueCount) à réviser aujourd'hui" }
+        if dueCount > 0 {
+            return i18n?.t("ios.dueToday", ["count": "\(dueCount)"]) ?? "\(dueCount) à réviser aujourd'hui"
+        }
         let newCount = cards.filter { $0.state == .new }.count
-        return newCount > 0 ? "\(newCount) jamais vues" : "À jour"
+        return newCount > 0
+            ? (i18n?.t("ios.neverSeen", ["count": "\(newCount)"]) ?? "\(newCount) jamais vues")
+            : (i18n?.t("ios.upToDateCap") ?? "À jour")
     }
 
     // MARK: - Bas d'écran
@@ -472,8 +486,8 @@ struct CourseSheetView: View {
     /// que de faire surgir un paywall à la place d'une session.
     private var sessionButtonTitle: String {
         if dueCount > 0 { return MicaboCopy.reviewButton(count: dueCount) }
-        if heldBackNewCards > 0 { return "Réviser" }
-        return MicaboCopy.practiceReview
+        if heldBackNewCards > 0 { return i18n?.t("nav.review") ?? "Réviser" }
+        return MicaboCopy.practiceReview()
     }
 
     private func startSession() {
@@ -490,11 +504,16 @@ struct CourseSheetView: View {
     private var workOverlay: some View {
         switch isWorking {
         case .sheet:
-            GenerationOverlay(title: "Écriture de la fiche", steps: SheetGenerationSteps.all())
+            GenerationOverlay(title: i18n?.t("ios.writingSheet") ?? "Écriture de la fiche", steps: SheetGenerationSteps.all())
         case .cards:
             GenerationOverlay(
-                title: "Écriture des cartes",
-                steps: ["Relecture de la fiche", "Choix des notions", "Rédaction", "Vérification des réponses"]
+                title: i18n?.t("ios.writingCards") ?? "Écriture des cartes",
+                steps: [
+                    i18n?.t("ios.genStepRead") ?? "Relecture de la fiche",
+                    i18n?.t("ios.genStepPick") ?? "Choix des notions",
+                    i18n?.t("ios.genStepWrite") ?? "Rédaction",
+                    i18n?.t("ios.genStepCheckAnswers") ?? "Vérification des réponses"
+                ]
             )
         case nil:
             EmptyView()
@@ -580,7 +599,13 @@ private struct ExplainedPassage: Identifiable, Equatable {
 /// Les étapes annoncées pendant l'écriture d'une fiche. Elles sont au même endroit, que
 /// l'import s'en serve ou que le cours refasse sa fiche : deux listes divergeraient.
 enum SheetGenerationSteps {
-    static func all(reading: String = "Lecture du document") -> [String] {
-        [reading, "Repérage du plan", "Rédaction de la fiche", "Mise en page"]
+    static func all(reading: String? = nil) -> [String] {
+        let locale = UiLocale.resolved()
+        return [
+            reading ?? L10n.t("ios.genStepDoc", locale: locale),
+            L10n.t("ios.genStepPlan", locale: locale),
+            L10n.t("ios.writingSheet", locale: locale),
+            L10n.t("ios.genStepLayout", locale: locale)
+        ]
     }
 }

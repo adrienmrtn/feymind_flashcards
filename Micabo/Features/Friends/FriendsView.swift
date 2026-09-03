@@ -13,6 +13,7 @@ import SwiftUI
 struct FriendsView: View {
     @Environment(SocialService.self) private var social
     @Environment(\.dismiss) private var dismiss
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var onOpen: (SocialService.Person) -> Void
 
@@ -32,25 +33,25 @@ struct FriendsView: View {
                 }
 
                 if !social.incoming.isEmpty {
-                    section("Demandes reçues", people: social.incoming)
+                    section(i18n?.t("app.friends.incoming") ?? "Demandes reçues", people: social.incoming)
                 }
 
                 searchField
 
                 if !results.isEmpty {
-                    section("Résultats", people: results)
+                    section(i18n?.t("app.friends.results") ?? "Résultats", people: results)
                 } else if !schoolmates.isEmpty, search.isEmpty {
                     section(schoolmatesCaption, people: schoolmates)
                 }
 
                 if !social.friends.isEmpty {
-                    section("Tes amis", people: social.friends)
+                    section(i18n?.t("app.friends.list") ?? "Tes amis", people: social.friends)
                 } else if search.isEmpty, results.isEmpty {
                     emptyState
                 }
 
                 if !social.outgoing.isEmpty {
-                    section("Demandes envoyées", people: social.outgoing)
+                    section(i18n?.t("app.friends.outgoing") ?? "Demandes envoyées", people: social.outgoing)
                 }
             }
             .padding(.horizontal, MicaboSpacing.screen)
@@ -71,7 +72,7 @@ struct FriendsView: View {
 
     private var header: some View {
         MicaboScreenHeader(
-            title: "Amis",
+            title: i18n?.t("nav.friends") ?? "Amis",
             eyebrow: headerEyebrow,
             back: MicaboHeaderBack.back { dismiss() }
         )
@@ -80,26 +81,28 @@ struct FriendsView: View {
 
     private var headerEyebrow: String {
         if let username = social.username { return Username.display(username) }
-        return "Ton compte"
+        return i18n?.t("app.friends.yourAccount") ?? "Ton compte"
     }
 
     private var schoolmatesCaption: String {
-        guard let school = OnboardingPreferences.institutionName?.nilIfBlank else { return "Ton école" }
-        return "À \(school)"
+        guard let school = OnboardingPreferences.institutionName?.nilIfBlank else {
+            return i18n?.t("ios.yourSchool") ?? "Ton école"
+        }
+        return i18n?.t("app.friends.atSchool", ["school": school]) ?? "À \(school)"
     }
 
     // MARK: - Recherche
 
     private var searchField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Ajouter quelqu'un")
+            MicaboSectionCaption(text: i18n?.t("app.friends.addSomeone") ?? "Ajouter quelqu'un")
 
             HStack(spacing: 9) {
                 Text("@")
                     .font(MicaboFont.hanken(15, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkTertiary)
 
-                TextField("nom d'utilisateur", text: $search)
+                TextField(i18n?.t("app.friends.usernamePlaceholder") ?? "nom d'utilisateur", text: $search)
                     .font(MicaboFont.body)
                     .foregroundStyle(MicaboColor.ink)
                     .tint(MicaboColor.accent)
@@ -173,8 +176,8 @@ struct FriendsView: View {
     private var emptyState: some View {
         MicaboEmptyState(
             systemImage: "person.2",
-            title: "Personne pour l'instant",
-            message: "Cherche un nom d'utilisateur pour ajouter quelqu'un."
+            title: i18n?.t("app.friends.emptyTitle") ?? "Personne pour l'instant",
+            message: i18n?.t("app.friends.emptyBody") ?? "Cherche un nom d'utilisateur pour ajouter quelqu'un."
         )
     }
 
@@ -203,6 +206,7 @@ private struct FriendRow: View {
     var onOpen: () -> Void
 
     @Environment(SocialService.self) private var social
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
         HStack(spacing: 13) {
@@ -235,29 +239,29 @@ private struct FriendRow: View {
     private var action: some View {
         switch person.relation {
         case .unknown:
-            compact("Ajouter", isProminent: true) {
+            compact(i18n?.t("app.common.add") ?? "Ajouter", isProminent: true) {
                 Task { await social.request(person) }
             }
 
         case .awaitingMe:
             HStack(spacing: 6) {
-                compact("Accepter", isProminent: true) {
+                compact(i18n?.t("app.friends.accept") ?? "Accepter", isProminent: true) {
                     Task { await social.accept(person) }
                 }
-                compact("Refuser", isProminent: false) {
+                compact(i18n?.t("app.friends.decline") ?? "Refuser", isProminent: false) {
                     Task { await social.remove(person) }
                 }
             }
 
         case .requested:
-            compact("Annuler", isProminent: false) {
+            compact(i18n?.t("app.common.cancel") ?? "Annuler", isProminent: false) {
                 Task { await social.remove(person) }
             }
 
         case .friends:
             Menu {
-                Button("Voir ses cours", systemImage: "books.vertical", action: open)
-                Button("Retirer de mes amis", systemImage: "person.badge.minus", role: .destructive) {
+                Button(i18n?.t("app.friends.seeCourses") ?? "Voir ses cours", systemImage: "books.vertical", action: open)
+                Button(i18n?.t("app.friends.removeFriend") ?? "Retirer de mes amis", systemImage: "person.badge.minus", role: .destructive) {
                     Task { await social.remove(person) }
                 }
             } label: {
@@ -268,7 +272,7 @@ private struct FriendRow: View {
             }
 
         case .me:
-            Text("Toi")
+            Text(i18n?.t("app.friends.you") ?? "Toi")
                 .font(MicaboFont.micro)
                 .foregroundStyle(MicaboColor.inkTertiary)
         }

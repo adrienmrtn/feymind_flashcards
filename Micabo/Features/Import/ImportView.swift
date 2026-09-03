@@ -28,6 +28,7 @@ struct ImportView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiService) private var aiService
     @Environment(\.dismiss) private var dismiss
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var title = ""
     @State private var pastedText = ""
@@ -253,8 +254,8 @@ struct ImportView: View {
 
     private var header: some View {
         MicaboScreenHeader(
-            title: kind.title,
-            eyebrow: "Nouveau cours",
+            title: kind.title(locale: i18n?.locale ?? .resolved()),
+            eyebrow: i18n?.t("ios.newCourse") ?? "Nouveau cours",
             back: MicaboHeaderBack.close { dismiss() }
         )
         .padding(.top, MicaboSpacing.xs)

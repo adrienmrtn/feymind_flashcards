@@ -665,7 +665,7 @@ struct TodayView: View {
     private func sessionButtonTitle(_ load: DayLoad) -> String {
         if !load.dueCards.isEmpty { return MicaboCopy.reviewButton(count: load.dueCards.count) }
         if load.heldBackNewCards > 0 { return i18n?.t("app.review.verb") ?? "Réviser" }
-        return MicaboCopy.practiceReview
+        return MicaboCopy.practiceReview()
     }
 
     private var canPractice: Bool { pro?.canPractice ?? true }
