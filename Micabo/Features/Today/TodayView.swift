@@ -19,6 +19,8 @@ import SwiftUI
 /// qu'elle est légendée juste dessous, et le bloc « Répartition » disparaît puisque c'est
 /// exactement ce que la légende dit.
 struct TodayView: View {
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
     @Query private var allCards: [Flashcard]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
@@ -261,7 +263,7 @@ struct TodayView: View {
     /// endroit de l'app où l'on ouvre, et ce qu'on vient y chercher est le chiffre juste
     /// dessous.
     private func header(streak: Int) -> some View {
-        MicaboScreenHeader(title: "Réviser") {
+        MicaboScreenHeader(title: i18n?.t("nav.review") ?? "Réviser") {
             if streak > 0 {
                 streakPill(streak)
             }

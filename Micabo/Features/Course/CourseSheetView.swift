@@ -203,7 +203,7 @@ struct CourseSheetView: View {
     private var courseMenu: some View {
         Menu {
             Button { showCardOptions = true } label: {
-                Label(cards.isEmpty ? MicaboCopy.cardsButton : "Générer de nouvelles cartes", systemImage: "sparkles")
+                Label(cards.isEmpty ? MicaboCopy.cardsButton() : "Générer de nouvelles cartes", systemImage: "sparkles")
             }
             // Refaire la fiche est l'endroit où la longueur se choisit vraiment : on a la
             // fiche sous les yeux, et c'est en la lisant qu'on la trouve trop courte.
@@ -401,7 +401,7 @@ struct CourseSheetView: View {
                     HStack(spacing: MicaboSpacing.xs) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 12, weight: .semibold))
-                        Text(MicaboCopy.cardsButton)
+                        Text(MicaboCopy.cardsButton())
                     }
                 }
                 .buttonStyle(MicaboSecondaryButtonStyle())
@@ -447,7 +447,7 @@ struct CourseSheetView: View {
                     HStack(spacing: MicaboSpacing.xs) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 13, weight: .semibold))
-                        Text(MicaboCopy.cardsButton)
+                        Text(MicaboCopy.cardsButton())
                     }
                 }
                 .buttonStyle(MicaboPrimaryButtonStyle())

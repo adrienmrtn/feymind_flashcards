@@ -1,4 +1,5 @@
 import type { Catalog } from "./fr";
+import { appTr, copyTr } from "./app-tr";
 
 export const tr: Catalog = {
   locale: {
@@ -290,5 +291,9 @@ export const tr: Catalog = {
     profile: "Profil",
     settings: "Ayarlar",
     import: "İçe aktar",
+    feedback: "Geri bildirimler",
+    openCourses: "Açık",
   },
+  app: appTr,
+  copy: copyTr,
 };

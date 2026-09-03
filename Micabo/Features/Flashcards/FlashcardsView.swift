@@ -179,7 +179,7 @@ struct FlashcardsView: View {
         Menu {
             if !cards.isEmpty {
                 Button(action: startPractice) {
-                    Label(MicaboCopy.practiceReview, systemImage: canPractice ? "dumbbell" : "lock.fill")
+                    Label(MicaboCopy.practiceReview(), systemImage: canPractice ? "dumbbell" : "lock.fill")
                 }
             }
             Button { isCreating = true } label: {
@@ -218,7 +218,7 @@ struct FlashcardsView: View {
     private var sessionButtonTitle: String {
         if dueCount > 0 { return MicaboCopy.reviewButton(count: dueCount) }
         if heldBackNewCards > 0 { return "Réviser" }
-        return MicaboCopy.practiceReview
+        return MicaboCopy.practiceReview()
     }
 
     private func startSession() {
@@ -260,7 +260,7 @@ struct FlashcardsView: View {
                 systemImage: "rectangle.on.rectangle.angled",
                 title: "Aucune carte",
                 message: emptyMessage,
-                actionTitle: canGenerate ? MicaboCopy.cardsButton : "Écrire une carte"
+                actionTitle: canGenerate ? MicaboCopy.cardsButton() : "Écrire une carte"
             ) {
                 if canGenerate {
                     showCardOptions = true

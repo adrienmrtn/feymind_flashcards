@@ -129,7 +129,7 @@ struct ImportView: View {
                         HStack(spacing: MicaboSpacing.xs) {
                             Image(systemName: "sparkles")
                                 .font(.system(size: 13, weight: .semibold))
-                            Text(MicaboCopy.sheetButton)
+                            Text(MicaboCopy.sheetButton())
                         }
                     }
                     .buttonStyle(MicaboPrimaryButtonStyle(tint: canGenerate ? MicaboColor.accent : MicaboColor.strokeStrong))

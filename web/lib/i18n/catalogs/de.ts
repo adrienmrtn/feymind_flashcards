@@ -1,4 +1,5 @@
 import type { Catalog } from "./fr";
+import { appDe, copyDe } from "./app-de";
 
 export const de: Catalog = {
   locale: {
@@ -290,5 +291,9 @@ export const de: Catalog = {
     profile: "Profil",
     settings: "Einstellungen",
     import: "Importieren",
+    feedback: "Rückmeldungen",
+    openCourses: "Geöffnet",
   },
+  app: appDe,
+  copy: copyDe,
 };

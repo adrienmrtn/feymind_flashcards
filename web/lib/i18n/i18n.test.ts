@@ -86,6 +86,14 @@ describe("catalogues", () => {
     expect(t("onboarding.continueMany", { n: 3 })).toContain("3");
     expect(t("onboarding.continueMany", { n: 3 })).not.toContain("{n}");
   });
+
+  it("couvre le lexique app et copy", () => {
+    for (const locale of UI_LOCALES) {
+      expect(lookup(CATALOGS[locale] as unknown as MessageTree, "copy.cards")).toContain("plural");
+      expect(lookup(CATALOGS[locale] as unknown as MessageTree, "app.home.tasks.title")).toBeTruthy();
+      expect(lookup(CATALOGS[locale] as unknown as MessageTree, "nav.feedback")).toBeTruthy();
+    }
+  });
 });
 
 describe("matières affichées", () => {

@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 
 import { Float } from "@/components/app/Float";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Le bouton de révision.
@@ -11,7 +14,7 @@ import { Float } from "@/components/app/Float";
  */
 export function ReviewCta({
   href,
-  title = "Réviser ce cours",
+  title,
   detail,
   floating = false,
 }: {
@@ -20,6 +23,9 @@ export function ReviewCta({
   detail?: string;
   floating?: boolean;
 }) {
+  const { t } = useI18n();
+  const label = title ?? t("app.review.thisCourse");
+  const subtitle = detail ?? t("app.review.ctaDetail");
   if (floating) {
     return (
       <Float>
@@ -28,7 +34,7 @@ export function ReviewCta({
           data-print="hide"
           className="fixed right-4 bottom-6 z-30 inline-flex h-9 items-center gap-2 rounded-lg border border-primary bg-primary px-3 text-sm font-medium text-primary-foreground shadow-xs lg:right-8"
         >
-          {title}
+          {label}
         </Link>
       </Float>
     );
@@ -40,10 +46,8 @@ export function ReviewCta({
       className="flex min-w-[240px] items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4"
     >
       <span className="min-w-0">
-        <span className="block text-[15px] font-semibold leading-tight text-foreground">{title}</span>
-        <span className="mt-0.5 block text-[13px] text-muted-foreground">
-          {detail ?? "Les cartes dues, maintenant."}
-        </span>
+        <span className="block text-[15px] font-semibold leading-tight text-foreground">{label}</span>
+        <span className="mt-0.5 block text-[13px] text-muted-foreground">{subtitle}</span>
       </span>
     </Link>
   );

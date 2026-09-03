@@ -1,63 +1,83 @@
 import type { WeekDayLoad } from "@micabo/core";
 
 import { Card, CardHeader, CardPanel, CardTitle } from "@/components/ui/card";
+import type { Translator } from "@/lib/i18n/copy";
+import { formatWeekdayShort } from "@/lib/i18n/copy";
+import type { UiLocale } from "@/lib/i18n/locales";
 
 const BAR_MAX = 52;
 
 /**
  * La semaine glissante du tableau de bord.
- *
- * Sept colonnes, trois jours derrière et trois devant. Chaque barre empile
- * ce qui a déjà été révisé ce jour-là et ce qui reste dû — les jours passés
- * portent donc un volume, plus seulement un point.
  */
-export function WeekStrip({ days }: { days: readonly WeekDayLoad[] }) {
+export function WeekStrip({
+  days,
+  locale,
+  t,
+}: {
+  days: readonly WeekDayLoad[];
+  locale: UiLocale;
+  t: Translator;
+}) {
   const peak = Math.max(1, ...days.map(dayTotal));
 
   return (
     <Card className="h-full min-w-0 overflow-hidden">
       <CardHeader className="pb-2">
-        <CardTitle className="text-[15px] font-semibold text-ink">Semaine</CardTitle>
+        <CardTitle className="text-[15px] font-semibold text-ink">{t("app.home.week.title")}</CardTitle>
       </CardHeader>
       <CardPanel className="flex min-w-0 flex-1 flex-col justify-center pt-0">
         <div className="mx-auto grid w-full min-w-0 max-w-[22rem] grid-cols-7 gap-0.5 sm:gap-1.5">
           {days.map((day) => (
-            <DayCell key={day.offset} day={day} peak={peak} />
+            <DayCell key={day.offset} day={day} peak={peak} locale={locale} t={t} />
           ))}
         </div>
         <p className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] text-ink-tertiary">
           <LegendSwatch className="bg-ink" />
-          révisées
+          {t("app.home.week.legendReviewed")}
           <LegendSwatch className="bg-ink/25" />
-          à réviser
+          {t("app.home.week.legendDue")}
         </p>
       </CardPanel>
     </Card>
   );
 }
 
-function DayCell({ day, peak }: { day: WeekDayLoad; peak: number }) {
+function DayCell({
+  day,
+  peak,
+  locale,
+  t,
+}: {
+  day: WeekDayLoad;
+  peak: number;
+  locale: UiLocale;
+  t: Translator;
+}) {
   const today = day.offset === 0;
   const reviewed = day.reviewCount;
   const due = day.planned;
   const total = reviewed + due;
   const reviewedHeight = heightFor(reviewed, peak);
   const dueHeight = heightFor(due, peak);
+  const label = labelFor(day, today, locale, t);
 
   return (
     <div
       className={`flex min-w-0 flex-col items-center overflow-hidden rounded-lg px-0 py-2 sm:px-1 ${
         today ? "bg-surface-muted" : ""
       }`}
-      aria-label={`${labelFor(day, today)} : ${reviewed} révisée${reviewed > 1 ? "s" : ""}, ${due} à réviser`}
+      aria-label={t("app.home.week.dayAria", { label, reviewed, due })}
     >
       <p
         className={`w-full truncate text-center text-[9px] font-semibold uppercase tracking-normal sm:text-[11px] sm:tracking-wide ${
           today ? "text-ink" : "text-ink-tertiary"
         }`}
       >
-        <span className="sm:hidden">{today ? "·" : weekday(day.date).slice(0, 1)}</span>
-        <span className="hidden sm:inline">{today ? "auj." : weekday(day.date)}</span>
+        <span className="sm:hidden">{today ? "·" : formatWeekdayShort(day.date, locale).slice(0, 1)}</span>
+        <span className="hidden sm:inline">
+          {today ? t("app.home.week.todayShort") : formatWeekdayShort(day.date, locale)}
+        </span>
       </p>
       <p className="numeral mt-0.5 text-[12px] font-semibold text-ink sm:text-[14px]">
         {day.date.getDate()}
@@ -96,11 +116,7 @@ function heightFor(count: number, peak: number): number {
   return Math.max(6, Math.round((count / peak) * BAR_MAX));
 }
 
-function labelFor(day: WeekDayLoad, today: boolean): string {
-  if (today) return "Aujourd'hui";
-  return weekday(day.date);
-}
-
-function weekday(date: Date): string {
-  return date.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "");
+function labelFor(day: WeekDayLoad, today: boolean, locale: UiLocale, t: Translator): string {
+  if (today) return t("app.home.week.today");
+  return formatWeekdayShort(day.date, locale);
 }

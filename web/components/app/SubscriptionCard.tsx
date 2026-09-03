@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { manageSubscription } from "@/lib/actions/checkout";
+import { useI18n } from "@/lib/i18n/client";
 import { requestPaywall } from "@/lib/paywall";
 import {
   manageLabel,
@@ -14,17 +15,15 @@ import {
 
 /**
  * L'abonnement, **en tête des réglages**.
- *
- * Le serveur sait déjà ouvrir le bon magasin. Sans cette carte, le bouton
- * n'existait nulle part : on allait le chercher dans le code.
  */
 export function SubscriptionCard(view: SubscriptionView) {
   const [pending, startTransition] = useTransition();
   const [failure, setFailure] = useState<string | null>(null);
+  const { t, locale } = useI18n();
 
-  const action = manageLabel(view);
+  const action = manageLabel(t, view);
   const plan = planTitleFor(view.productId);
-  const headline = subscriptionHeadline(view);
+  const headline = subscriptionHeadline(t, view);
 
   function run() {
     if (!action || pending) return;
@@ -41,13 +40,13 @@ export function SubscriptionCard(view: SubscriptionView) {
         window.location.href = result.url;
         return;
       }
-      setFailure(result.message ?? "Le portail n'a pas pu s'ouvrir.");
+      setFailure(result.message ?? t("app.subscription.portalError"));
     });
   }
 
   return (
     <section id="abonnement" className="saas-card scroll-mt-6 px-7 py-7">
-      <p className="text-[15px] font-semibold text-ink">Abonnement</p>
+      <p className="text-[15px] font-semibold text-ink">{t("app.settings.subscription")}</p>
       <p className="mt-1.5 text-[13.5px] font-medium text-ink">
         {headline}
         {plan && view.paid ? (
@@ -55,7 +54,7 @@ export function SubscriptionCard(view: SubscriptionView) {
         ) : null}
       </p>
       <p className="mt-1.5 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-secondary">
-        {subscriptionDetail(view)}
+        {subscriptionDetail(t, locale, view)}
       </p>
 
       {action ? (
@@ -65,7 +64,7 @@ export function SubscriptionCard(view: SubscriptionView) {
           disabled={pending}
           className="pressable mt-5 rounded-button bg-accent px-4 py-2.5 text-[14px] font-semibold text-on-ink disabled:opacity-40"
         >
-          {pending ? "Ouverture…" : action}
+          {pending ? t("app.subscription.opening") : action}
         </button>
       ) : null}
 

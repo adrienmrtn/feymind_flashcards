@@ -212,7 +212,7 @@ struct StudyView: View {
     private var practiceBanner: some View {
         banner(
             systemImage: "dumbbell",
-            text: MicaboCopy.practiceReviewHint,
+            text: MicaboCopy.practiceReviewHint(),
             tint: MicaboColor.accent,
             background: MicaboColor.accentSoft
         )
@@ -1201,7 +1201,7 @@ private struct NothingDueView: View {
                     if canPractice {
                         Button(action: onPractice) {
                             HStack(spacing: MicaboSpacing.xs) {
-                                Text(MicaboCopy.practiceReview)
+                                Text(MicaboCopy.practiceReview())
 
                                 if isPracticeLocked {
                                     Image(systemName: "lock.fill")

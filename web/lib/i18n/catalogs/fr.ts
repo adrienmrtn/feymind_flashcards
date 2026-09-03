@@ -1,3 +1,5 @@
+import { appFr, copyFr } from "./app-fr";
+
 export const fr = {
   locale: {
     switcher: "Langue du site",
@@ -290,7 +292,11 @@ export const fr = {
     profile: "Profil",
     settings: "Réglages",
     import: "Importer",
+    feedback: "Retours",
+    openCourses: "Ouverts",
   },
+  app: appFr,
+  copy: copyFr,
 } as const;
 
 type DeepString<T> = {

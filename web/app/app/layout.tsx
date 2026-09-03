@@ -11,6 +11,7 @@ import { canImportNow, ownedCourseCount, readEntitlement } from "@/lib/data/enti
 import { readProfile } from "@/lib/data/profile";
 import { currentUser } from "@/lib/data/user";
 import { canReadInbox } from "@/lib/feedback";
+import { getTranslator } from "@/lib/i18n/server";
 
 /**
  * La charpente de l'app : le chrome de micabo OS.
@@ -24,11 +25,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await currentUser();
   if (!user) redirect("/commencer/compte?suite=%2Fapp");
 
-  const [profile, canImport] = await Promise.all([readProfile(), canImportNow()]);
+  const [profile, canImport, { t }] = await Promise.all([readProfile(), canImportNow(), getTranslator()]);
 
   const userName =
     profile?.display_name?.trim() ||
-    (profile?.username ? `@${profile.username}` : user.email?.split("@")[0] || "Compte");
+    (profile?.username ? `@${profile.username}` : user.email?.split("@")[0] || t("app.auth.accountFallback"));
   const userInitial = userName.replace(/^@/, "").charAt(0).toUpperCase() || "M";
 
   return (
