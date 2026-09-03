@@ -283,11 +283,13 @@ private struct DemoOutputTile: View {
 private struct DemoSchemaMini: View {
     let showsLoop: Bool
 
-    private let stages: [(symbol: String, label: String, tint: Color)] = [
-        ("sun.max.fill", "Évaporation", MicaboColor.caution),
-        ("cloud.fill", "Condensation", MicaboColor.inkSecondary),
-        ("cloud.rain.fill", "Précipitations", OnboardingDemo.accent)
-    ]
+    private var stages: [(symbol: String, label: String, tint: Color)] {
+        [
+            ("sun.max.fill", L10n.t("demo.evap", locale: .resolved()), MicaboColor.caution),
+            ("cloud.fill", L10n.t("demo.cond", locale: .resolved()), MicaboColor.inkSecondary),
+            ("cloud.rain.fill", L10n.t("demo.precip", locale: .resolved()), OnboardingDemo.accent)
+        ]
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {

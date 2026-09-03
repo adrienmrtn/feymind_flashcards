@@ -118,6 +118,8 @@ enum IosI18nCatalogs {
         "ios.paywallSessionBody": "La session s'arrête là. Micabo Pro la laisse aller jusqu'au bout, tous les jours, sur tous tes cours.",
         "ios.paywallBack": "Revenir",
         "ios.results": "Résultats",
+        "ios.importWhere": "D'où part-on ?",
+        "ios.withoutCourse": "Sans cours",
     }
 
     static let de: [String: String] = [
@@ -238,6 +240,8 @@ enum IosI18nCatalogs {
         "ios.paywallSessionBody": "Die Sitzung endet hier. Micabo Pro lässt sie zu Ende gehen, jeden Tag, in allen Kursen.",
         "ios.paywallBack": "Zurück",
         "ios.results": "Treffer",
+        "ios.importWhere": "Womit fängst du an?",
+        "ios.withoutCourse": "Ohne Kurs",
     }
 
     static let es: [String: String] = [
@@ -358,6 +362,8 @@ enum IosI18nCatalogs {
         "ios.paywallSessionBody": "La sesión se para ahí. Micabo Pro la deja llegar al final, todos los días, en todos tus cursos.",
         "ios.paywallBack": "Volver",
         "ios.results": "Resultados",
+        "ios.importWhere": "¿De dónde partimos?",
+        "ios.withoutCourse": "Sin curso",
     }
 
     static let tr: [String: String] = [
@@ -478,6 +484,8 @@ enum IosI18nCatalogs {
         "ios.paywallSessionBody": "Oturum burada durur. Micabo Pro her gün, tüm derslerinde sonuna kadar gider.",
         "ios.paywallBack": "Geri",
         "ios.results": "Sonuçlar",
+        "ios.importWhere": "Nereden başlıyoruz?",
+        "ios.withoutCourse": "Derssiz",
     }
 
     static func table(for locale: String) -> [String: String] {
