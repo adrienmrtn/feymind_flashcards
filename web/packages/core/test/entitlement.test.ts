@@ -282,6 +282,8 @@ describe("les offres", () => {
   it("affichent la livre turque sans lire Stripe ni RevenueCat", () => {
     expect(presentmentCurrencyFor("tr")).toBe("TRY");
     expect(presentmentCurrencyFor("fr", "tr")).toBe("TRY");
+    expect(presentmentCurrencyFor("tr-TR", "fr")).toBe("TRY");
+    expect(presentmentCurrencyFor("fr", "TR")).toBe("TRY");
     expect(presentmentCurrencyFor("fr")).toBe("EUR");
     expect(presentmentCurrencyFor("de")).toBe("EUR");
     expect(presentmentAmount(YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly);
@@ -292,13 +294,16 @@ describe("les offres", () => {
     expect(YEARLY.price).toBe(69.99);
   });
 
-  it("sont six chez RevenueCat, tous sur pro — pas trois", () => {
-    expect(STORE_PRODUCTS).toHaveLength(6);
+  it("sont neuf chez RevenueCat, tous sur pro — pas trois", () => {
+    expect(STORE_PRODUCTS).toHaveLength(9);
     expect(STORE_PRODUCTS.filter((product) => product.store === "app_store")).toHaveLength(3);
-    expect(STORE_PRODUCTS.filter((product) => product.store === "stripe")).toHaveLength(3);
-    expect(new Set(STORE_PRODUCTS.map((product) => product.id)).size).toBe(6);
+    expect(STORE_PRODUCTS.filter((product) => product.store === "stripe")).toHaveLength(6);
+    expect(new Set(STORE_PRODUCTS.map((product) => product.id)).size).toBe(9);
     expect(stripePriceId("yearly")).toBe("price_1UAqB547TFrcO0lvSacZ91Pp");
     expect(stripePriceId("weekly")).toBe("price_1UAqBI47TFrcO0lvTLjtkffx");
     expect(stripePriceId("yearly_discount")).toBe("price_1UAqBJ47TFrcO0lvb1vDYAPj");
+    expect(stripePriceId("yearly", "TRY")).toBe("price_1UBgT347TFrcO0lvNrHwbsOw");
+    expect(stripePriceId("weekly", "TRY")).toBe("price_1UBgTC47TFrcO0lv1uQcZggk");
+    expect(stripePriceId("yearly_discount", "TRY")).toBe("price_1UBgTD47TFrcO0lvrOl7Z892");
   });
 });

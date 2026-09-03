@@ -19,9 +19,10 @@ Rappel de ce qu'on vend :
 Identifiant de l'app : `com.micabo.app`.
 
 **Stripe encaisse sur le web, Apple encaisse sur iOS, RevenueCat détient le droit.** Chez
-RevenueCat ce n'est pas trois produits : c'est **six**. Trois offres × deux magasins, chacun
-avec **son** identifiant (Apple : `com.micabo…`, Stripe : `price_…`). Les six s'attachent à
-l'entitlement `pro`. Le discount ouvre le même droit — on ne crée pas un second entitlement.
+RevenueCat ce n'est pas trois produits : c'est **neuf**. Trois offres × App Store, plus
+**deux** prix Stripe par offre (EUR et TRY). Chaque magasin / chaque devise a **son**
+identifiant. Les neuf s'attachent à l'entitlement `pro`. Le discount ouvre le même droit —
+on ne crée pas un second entitlement.
 
 L'`app_user_id` RevenueCat est toujours l'`auth.users.id` de Supabase. Sans ça, un achat
 iPhone n'ouvre pas le web, et inversement.
@@ -31,9 +32,12 @@ iPhone n'ouvre pas le web, et inversement.
 | App Store | Annuel | `com.micabo.app.pro.yearly` |
 | App Store | Hebdomadaire | `com.micabo.app.pro.weekly` |
 | App Store | Annuel discount | `com.micabo.app.pro.yearly.discount` |
-| Stripe | Annuel | `price_1UAqB547TFrcO0lvSacZ91Pp` |
-| Stripe | Hebdomadaire | `price_1UAqBI47TFrcO0lvTLjtkffx` |
-| Stripe | Annuel discount | `price_1UAqBJ47TFrcO0lvb1vDYAPj` |
+| Stripe EUR | Annuel | `price_1UAqB547TFrcO0lvSacZ91Pp` |
+| Stripe EUR | Hebdomadaire | `price_1UAqBI47TFrcO0lvTLjtkffx` |
+| Stripe EUR | Annuel discount | `price_1UAqBJ47TFrcO0lvb1vDYAPj` |
+| Stripe TRY | Annuel | `price_1UBgT347TFrcO0lvNrHwbsOw` |
+| Stripe TRY | Hebdomadaire | `price_1UBgTC47TFrcO0lv1uQcZggk` |
+| Stripe TRY | Annuel discount | `price_1UBgTD47TFrcO0lvrOl7Z892` |
 
 ---
 
@@ -112,11 +116,13 @@ sur l'appareil.
 3. Copier l'URL de notifications serveur affichée sur la même page et la coller dans App Store
    Connect (étape 3.3).
 4. **Products** → `Import` : les trois produits App Store remontent une fois créés côté
-   Apple. Les trois prix Stripe s'ajoutent avec l'intégration Stripe (étape 12) — ce sont
-   des `price_…`, pas les identifiants Apple. À la fin : **six** lignes, pas trois.
-5. **Entitlements** → créer `pro` → y attacher les **six** produits (3 App Store + 3 Stripe).
-   C'est le seul nom que l'app lira ; il ne doit plus changer. Le discount, des deux
-   magasins, donne le même droit : on ne crée pas un second entitlement.
+   Apple. Les six prix Stripe (3 EUR + 3 TRY) s'ajoutent avec l'intégration Stripe
+   (étape 12) — ce sont des `price_…`, pas les identifiants Apple. À la fin : **neuf**
+   lignes, pas trois.
+5. **Entitlements** → créer `pro` → y attacher les **neuf** produits (3 App Store +
+   3 Stripe EUR + 3 Stripe TRY). C'est le seul nom que l'app lira ; il ne doit plus
+   changer. Le discount, des deux magasins et des deux devises, donne le même droit :
+   on ne crée pas un second entitlement.
 6. **Offerings** → créer l'offering `default` et le marquer *Current*, puis y ajouter **deux**
    packages seulement :
    - `$rc_annual` → `com.micabo.app.pro.yearly`
@@ -283,10 +289,11 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
      - **Pas d'essai**. Ne pas l'utiliser dans `startCheckout` pour l'instant.
 3. Les identifiants de **prix** (`price_…`, pas `prod_…`) sont ceux du tableau
    ci-dessus, déjà dans `pricing.STORE_PRODUCTS`. Ce sont les prix **TVA
-   incluse** du compte **live** Micabo. Une variable d'environnement
+   incluse** du compte **live** Micabo — un trio EUR, un trio TRY sur les
+   **mêmes** `prod_…`. Une variable d'environnement
    (`STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY`,
-   `STRIPE_PRICE_YEARLY_DISCOUNT`) les remplace si un preview doit
-   encore encaisser sur le sandbox.
+   `STRIPE_PRICE_YEARLY_DISCOUNT`, et leurs `_TRY`) les
+   remplace si un preview doit encore encaisser sur le sandbox.
 4. Coller `STRIPE_SECRET_KEY` dans **Vercel → Environment Variables**
    (Production) : `sk_live_…`. Preview peut rester en `sk_test_…` avec
    les `STRIPE_PRICE_*` sandbox.
@@ -313,9 +320,11 @@ via l'intégration officielle, et **son** webhook (`supabase/functions/revenueca
    `checkout.session.completed`, `customer.subscription.created`,
    `customer.subscription.updated`, `customer.subscription.deleted`,
    `invoice.paid`, `invoice.payment_failed`.
-4. Dans RevenueCat, **Products** : les trois prix Stripe apparaissent avec leur
-   `price_…` (pas l'identifiant Apple). Les six lignes — App Store + Stripe — se
-   rattachent à l'entitlement `pro`. Le discount Stripe aussi.
+4. Dans RevenueCat, **Products** : les six prix Stripe apparaissent avec leur
+   `price_…` (pas l'identifiant Apple). Les neuf lignes — App Store + Stripe EUR
+   + Stripe TRY — se rattachent à l'entitlement `pro`. Le discount Stripe aussi,
+   dans les deux devises. **Sans les trois `price_…` TRY attachés à `pro`,
+   Checkout encaisse en ₺ et le webhook ne pose pas le droit.**
 5. **Le pont d'identité**, et c'est la seule ligne qui compte : dans
    `web/lib/actions/checkout.ts`, `client_reference_id` porte déjà `user.id` (Supabase).
    RevenueCat lit ce champ et pose le customer Stripe sous **ce** `app_user_id`. Si on
@@ -408,49 +417,55 @@ Elle ne se présente qu'une fois par appareil.
 
 ---
 
-## 14. La livre turque, sans RevenueCat ni Stripe
+## 14. La livre turque
 
-On ne peut pas lire le prix du magasin : RevenueCat n'est pas branché sur iOS,
-Stripe n'expose pas encore un `price_…` TRY sur le web. Convertir 69,99 € au
-cours du jour donnerait un chiffre qui bouge tous les matins, et une allégation
-qu'on ne facture pas.
+Les `price_…` TRY existent sur le compte live Micabo, sur les **mêmes**
+produits que l'euro. `startCheckout` lit la langue du site et
+`profiles.country_code`, puis `presentmentCurrencyFor` choisit le trio
+EUR ou TRY. Le paywall affiche la même devise : un Turc en interface
+française voit des ₺ et paie des ₺.
 
-**Ce qu'on fait aujourd'hui**
+**Ce qui est en place**
 
-1. **Un catalogue figé**, dans `web/packages/core/src/pricing.ts` (`TRY_AMOUNTS`).
-   Cours de référence : 1 € ≈ 56 ₺ (3 sept. 2026). Les montants sont **écrits**,
-   arrondis, pas calculés à l'affichage.
-2. **Quand l'afficher.** Langue du site `tr`, ou pays de scolarisation `tr`.
-   Le paywall, l'offre cadeau et la vitrine passent alors en ₺.
+1. **Un catalogue figé**, dans `web/packages/core/src/pricing.ts`
+   (`TRY_AMOUNTS` + `STORE_PRODUCTS`). Cours de référence : 1 € ≈ 56 ₺
+   (3 sept. 2026). Les montants sont **écrits**, arrondis, pas calculés
+   à l'affichage. Stripe porte exactement ces chiffres.
+2. **Quand facturer en ₺.** Langue du site `tr`, ou pays de scolarisation
+   `tr`. Checkout ouvre alors `price_1UBgT3…` / `price_1UBgTC…` /
+   `price_1UBgTD…`. La clé d'idempotence porte la devise : un changement
+   de langue dans l'heure ne réutilise pas une session euro.
 3. **Les mots restent dans les catalogues i18n** (`Yıllık`, `Haftalık`,
-   `3 gün ücretsiz`). Les montants restent dans le noyau : un prix n'est pas
-   une chaîne à traduire.
-4. **L'encaissement ne change pas.** Checkout Stripe continue d'utiliser les
-   `price_…` EUR. Afficher ₺ et prélever € est un arrêt provisoire : dès qu'un
-   prix TRY existe chez Stripe / App Store Turkey, on le pose à côté de
-   `TRY_AMOUNTS` et on bascule l'`id` — on ne convertit toujours pas en live.
+   `3 gün ücretsiz`). Les montants restent dans le noyau : un prix n'est
+   pas une chaîne à traduire.
+4. **Settlement.** Stripe convertit vers la devise du compte (EUR). Le
+   client voit et paie en ₺ ; le payout reste en euros.
 
-| Offre | EUR (catalogue) | TRY (présentment) |
+| Offre | EUR | TRY (Stripe live) |
 | --- | --- | --- |
-| Annuel | 69,99 € / an → 5,83 € / mois | 3 899,99 ₺ / an |
-| Hebdomadaire | 7,99 € / semaine | 449,99 ₺ / semaine |
-| Annuel discount | 39,99 € / an → 3,30 € / mois | 2 199,99 ₺ / an → 183,30 ₺ / mois |
+| Annuel | 69,99 € / an → 5,83 € / mois | 3 899,99 ₺ / an — `price_1UBgT347TFrcO0lvNrHwbsOw` |
+| Hebdomadaire | 7,99 € / semaine | 449,99 ₺ / semaine — `price_1UBgTC47TFrcO0lv1uQcZggk` |
+| Annuel discount | 39,99 € / an → 3,30 € / mois | 2 199,99 ₺ / an → 183,30 ₺ / mois — `price_1UBgTD47TFrcO0lvrOl7Z892` |
 
-**Le jour où le magasin répond**
+**Ce qu'il reste à faire**
 
-- iOS : `storeProduct.localizedPriceString` (étape 8). Le catalogue TRY devient
-  le repli pendant la seconde d'attente, plus la source.
-- Web : un second trio de `price_…` en TRY, choisis selon
-  `presentmentCurrencyFor`. Stripe Checkout facture alors vraiment en ₺.
-- App Store Connect : vérifier le palier Turkey généré par Apple sur les trois
-  produits. S'il s'écarte de `TRY_AMOUNTS`, **c'est Apple qui gagne** — on
-  réécrit le catalogue, on ne force pas le palier.
+1. **RevenueCat** — importer les trois `price_…` TRY et les attacher à
+   l'entitlement `pro`. Sans ça, Stripe encaisse et le webhook ne pose
+   pas le droit. Pas de second entitlement.
+2. **iOS** — `storeProduct.localizedPriceString` (étape 8). Le catalogue
+   TRY reste le repli jusqu'à ce que le SDK réponde. Pas de nouveau
+   Product ID Apple : Turkey est un palier du même `com.micabo…`.
+3. **App Store Connect** — vérifier le palier Turkey généré par Apple
+   sur les trois produits. S'il s'écarte de `TRY_AMOUNTS`, **c'est Apple
+   qui gagne** — on réécrit le catalogue, on ne force pas le palier.
+4. **Preview Vercel** — si la clé est `sk_test_…`, poser
+   `STRIPE_PRICE_*_TRY` sandbox. Les `price_…` du catalogue sont live.
 
 **Ce qu'on ne fait pas**
 
-- Pas d'API de change (Fixer, ECB, Open Exchange). La livre bouge trop pour
-  qu'un paywall suive le marché.
-- Pas de conversion `69.99 * rate` dans le rendu. Le pourcentage d'économie
-  reste calculé sur les montants EUR du catalogue (même ratio), donc il ne
-  ment pas d'une devise à l'autre.
-- Pas de second entitlement. TRY n'est qu'une présentation, pas un droit.
+- Pas d'API de change (Fixer, ECB, Open Exchange). La livre bouge trop
+  pour qu'un paywall suive le marché.
+- Pas de conversion `69.99 * rate` dans le rendu. Le pourcentage
+  d'économie reste calculé sur les montants EUR du catalogue (même
+  ratio), donc il ne ment pas d'une devise à l'autre.
+- Pas de second entitlement. TRY n'est qu'une devise, pas un droit.

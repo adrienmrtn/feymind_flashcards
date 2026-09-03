@@ -12,6 +12,7 @@ import { readProfile } from "@/lib/data/profile";
 import { currentUser } from "@/lib/data/user";
 import { canReadInbox } from "@/lib/feedback";
 import { getTranslator } from "@/lib/i18n/server";
+import { PresentmentProvider } from "@/lib/presentment";
 
 /**
  * La charpente de l'app : le chrome de micabo OS.
@@ -39,13 +40,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       canImport={canImport}
       canReadInbox={canReadInbox(user.email)}
     >
-      {children}
-      <Suspense fallback={null}>
-        <PaywallGate
-          tourSeen={profile?.tour_seen ?? []}
-          tourSkipped={profile?.tour_skipped ?? false}
-        />
-      </Suspense>
+      <PresentmentProvider country={profile?.country_code}>
+        {children}
+        <Suspense fallback={null}>
+          <PaywallGate
+            tourSeen={profile?.tour_seen ?? []}
+            tourSkipped={profile?.tour_skipped ?? false}
+          />
+        </Suspense>
+      </PresentmentProvider>
     </AppChrome>
   );
 }

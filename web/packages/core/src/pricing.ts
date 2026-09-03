@@ -21,13 +21,13 @@ export type PlanKind = "yearly" | "weekly";
 export type BillingPeriod = "year" | "week";
 
 /**
- * Devise d'affichage, **écrite**, pas lue chez Stripe ni RevenueCat.
+ * Devise d'affichage **et** d'encaissement web.
  *
- * On n'a pas le magasin sous la main : pas de `localizedPriceString` iOS,
- * pas de `price.currency` Stripe. Convertir 69,99 € au cours du jour
- * donnerait un chiffre qui bouge tous les matins, et une allégation qu'on
- * ne facture pas. Les montants TRY sont donc figés ici, arrondis, et
- * relus le jour où les `price_…` / App Store Turkey existent.
+ * Les montants TRY sont écrits, pas convertis au cours du jour. Convertir
+ * 69,99 € chaque matin donnerait un chiffre qui bouge, et une allégation
+ * qu'on ne facture pas. Les `price_…` Stripe TRY portent **ces** montants.
+ * iOS n'a pas encore `localizedPriceString` : le catalogue reste le repli
+ * App Store Turkey jusqu'à l'étape 8 de `docs/revenuecat.md`.
  *
  * Cours de référence (3 sept. 2026) : 1 € ≈ 56 ₺.
  * 69,99 × 56 ≈ 3 919 → 3 899,99 ₺. 7,99 × 56 ≈ 447 → 449,99 ₺.
@@ -53,7 +53,9 @@ export function presentmentCurrencyFor(
   locale: string,
   country?: string | null,
 ): PresentmentCurrency {
-  if (locale === "tr" || country === "tr") return "TRY";
+  const lang = locale.trim().toLowerCase().split("-")[0];
+  const land = country?.trim().toLowerCase();
+  if (lang === "tr" || land === "tr") return "TRY";
   return "EUR";
 }
 
@@ -118,11 +120,12 @@ export const WEEKLY: Plan = {
 };
 
 /**
- * Les **six** produits chez RevenueCat, tous attachés à l'entitlement `pro`.
+ * Les produits chez RevenueCat, tous attachés à l'entitlement `pro`.
  *
- * Trois offres × deux magasins. Ce n'est pas trois produits : Apple et Stripe
- * ont chacun leur identifiant. Le discount ouvre le même droit — on ne crée
- * pas un second entitlement.
+ * Trois offres × App Store, plus **deux** prix Stripe par offre (EUR et TRY).
+ * Ce n'est pas trois produits : chaque magasin / chaque devise a **son**
+ * identifiant. Le discount ouvre le même droit — on ne crée pas un second
+ * entitlement.
  */
 export type StoreKind = "app_store" | "stripe";
 export type CatalogPlan = "yearly" | "weekly" | "yearly_discount";
@@ -132,20 +135,33 @@ export interface StoreProduct {
   /** Tel que RevenueCat le montre. Apple : `com.micabo…`. Stripe : `price_…`. */
   id: string;
   plan: CatalogPlan;
+  /** Devise du `price_…` Stripe. Absent côté App Store. */
+  currency?: PresentmentCurrency;
 }
 
 export const STORE_PRODUCTS: readonly StoreProduct[] = [
   { store: "app_store", id: "com.micabo.app.pro.yearly", plan: "yearly" },
   { store: "app_store", id: "com.micabo.app.pro.weekly", plan: "weekly" },
   { store: "app_store", id: "com.micabo.app.pro.yearly.discount", plan: "yearly_discount" },
-  { store: "stripe", id: "price_1UAqB547TFrcO0lvSacZ91Pp", plan: "yearly" },
-  { store: "stripe", id: "price_1UAqBI47TFrcO0lvTLjtkffx", plan: "weekly" },
-  { store: "stripe", id: "price_1UAqBJ47TFrcO0lvb1vDYAPj", plan: "yearly_discount" },
+  { store: "stripe", id: "price_1UAqB547TFrcO0lvSacZ91Pp", plan: "yearly", currency: "EUR" },
+  { store: "stripe", id: "price_1UAqBI47TFrcO0lvTLjtkffx", plan: "weekly", currency: "EUR" },
+  { store: "stripe", id: "price_1UAqBJ47TFrcO0lvb1vDYAPj", plan: "yearly_discount", currency: "EUR" },
+  { store: "stripe", id: "price_1UBgT347TFrcO0lvNrHwbsOw", plan: "yearly", currency: "TRY" },
+  { store: "stripe", id: "price_1UBgTC47TFrcO0lv1uQcZggk", plan: "weekly", currency: "TRY" },
+  { store: "stripe", id: "price_1UBgTD47TFrcO0lvrOl7Z892", plan: "yearly_discount", currency: "TRY" },
 ];
 
-export function stripePriceId(plan: CatalogPlan): string {
-  const found = STORE_PRODUCTS.find((product) => product.store === "stripe" && product.plan === plan);
-  if (!found) throw new Error(`Prix Stripe manquant pour ${plan}`);
+export function stripePriceId(
+  plan: CatalogPlan,
+  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
+): string {
+  const found = STORE_PRODUCTS.find(
+    (product) =>
+      product.store === "stripe" &&
+      product.plan === plan &&
+      (product.currency ?? DEFAULT_PRESENTMENT) === currency,
+  );
+  if (!found) throw new Error(`Prix Stripe manquant pour ${plan} (${currency})`);
   return found.id;
 }
 

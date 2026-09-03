@@ -14,9 +14,9 @@ import {
   planDisplayedUnit,
   planRenewalCopy,
   planTitle,
-  presentmentFor,
   trialBadge,
 } from "@/lib/pricing-copy";
+import { usePresentment } from "@/lib/presentment";
 
 /**
  * L'offre, en un écran : ce que Pro ouvre, puis les deux formules.
@@ -158,8 +158,8 @@ export function PlanChoice({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const { t, locale } = useI18n();
-  const currency = presentmentFor(locale);
+  const { t } = useI18n();
+  const currency = usePresentment();
   const badge = trialBadge(t, plan);
 
   return (

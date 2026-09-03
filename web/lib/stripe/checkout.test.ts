@@ -79,6 +79,9 @@ describe("checkoutSessionFields", () => {
     expect(checkoutIdempotencyKey("user-1", "weekly", now)).not.toBe(
       checkoutIdempotencyKey("user-1", "yearly", now),
     );
+    expect(checkoutIdempotencyKey("user-1", "weekly", now, "EUR")).not.toBe(
+      checkoutIdempotencyKey("user-1", "weekly", now, "TRY"),
+    );
   });
 
   it("pose l'essai seulement quand il y en a un", () => {
@@ -92,6 +95,19 @@ describe("checkoutSessionFields", () => {
     });
     expect(yearly.customer_email).toBe("a@b.c");
     expect(yearly["subscription_data[trial_period_days]"]).toBe("3");
+    expect(yearly.locale).toBe("fr");
+  });
+
+  it("passe la locale turque à Checkout", () => {
+    const fields = checkoutSessionFields({
+      price: "price_try",
+      userId: "user-1",
+      trialDays: 0,
+      successUrl: "https://micabo.app/ok",
+      cancelUrl: "https://micabo.app",
+      locale: "tr",
+    });
+    expect(fields.locale).toBe("tr");
   });
 });
 

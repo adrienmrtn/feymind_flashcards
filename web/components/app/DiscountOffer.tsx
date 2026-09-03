@@ -18,6 +18,7 @@ import {
   startDiscount,
 } from "@/lib/discount";
 import { useI18n } from "@/lib/i18n/client";
+import { usePresentment } from "@/lib/presentment";
 import { requestTourRecheck } from "@/lib/tour/signal";
 
 /**
@@ -165,8 +166,8 @@ export function DiscountCard({
   startedAt: number;
   onClose: () => void;
 }) {
-  const { t, locale } = useI18n();
-  const currency = pricing.presentmentCurrencyFor(locale);
+  const { t } = useI18n();
+  const currency = usePresentment();
   const plan = pricing.DISCOUNT_YEARLY;
   const full = pricing.DISCOUNT_REFERENCE;
   const monthly = pricing.monthlyEquivalent(plan, currency);

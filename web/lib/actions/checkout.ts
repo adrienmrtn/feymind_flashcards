@@ -4,6 +4,7 @@ import { entitlement, pricing } from "@micabo/core";
 
 import { SITE_URL } from "@/lib/config";
 import { readEntitlement } from "@/lib/data/entitlement";
+import { readUiLocale } from "@/lib/i18n/server";
 import {
   checkoutIdempotencyKey,
   checkoutReturnUrl,
@@ -35,9 +36,9 @@ import { createClient } from "@/lib/supabase/server";
  *
  * ## Ce qu'il manque, précisément
  *
- * `STRIPE_SECRET_KEY`. Les trois `price_…` sont dans `pricing.STORE_PRODUCTS` ;
- * `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY` et `STRIPE_PRICE_YEARLY_DISCOUNT`
- * les remplacent (test / live) si elles sont posées.
+ * `STRIPE_SECRET_KEY`. Les `price_…` EUR et TRY sont dans `pricing.STORE_PRODUCTS` ;
+ * `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY`, `STRIPE_PRICE_YEARLY_DISCOUNT`
+ * et leurs `_TRY` les remplacent (test / live) si elles sont posées.
  */
 
 export interface CheckoutResult {
@@ -51,15 +52,21 @@ function stripeKey(): string | null {
 }
 
 /** L'identifiant de prix Stripe. L'env gagne s'il n'est pas vide ; sinon le catalogue. */
-function priceId(plan: pricing.CatalogPlan): string {
+function priceId(
+  plan: pricing.CatalogPlan,
+  currency: pricing.PresentmentCurrency,
+): string {
+  const tryMode = currency === "TRY";
   return priceIdFor(
     plan,
     {
-      yearly: process.env.STRIPE_PRICE_YEARLY,
-      weekly: process.env.STRIPE_PRICE_WEEKLY,
-      yearlyDiscount: process.env.STRIPE_PRICE_YEARLY_DISCOUNT,
+      yearly: tryMode ? process.env.STRIPE_PRICE_YEARLY_TRY : process.env.STRIPE_PRICE_YEARLY,
+      weekly: tryMode ? process.env.STRIPE_PRICE_WEEKLY_TRY : process.env.STRIPE_PRICE_WEEKLY,
+      yearlyDiscount: tryMode
+        ? process.env.STRIPE_PRICE_YEARLY_DISCOUNT_TRY
+        : process.env.STRIPE_PRICE_YEARLY_DISCOUNT,
     },
-    pricing.stripePriceId,
+    (catalogPlan) => pricing.stripePriceId(catalogPlan, currency),
   );
 }
 
@@ -79,8 +86,16 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
   const already = await readEntitlement();
   if (entitlement.isPaid(already)) return { status: "already" };
 
+  const locale = await readUiLocale();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("country_code")
+    .eq("id", user.id)
+    .maybeSingle();
+  const currency = pricing.presentmentCurrencyFor(locale, profile?.country_code);
+
   const key = stripeKey();
-  const price = priceId(kind);
+  const price = priceId(kind, currency);
   const plan = pricing.catalogPlanFor(kind);
 
   if (!key) {
@@ -100,7 +115,7 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/x-www-form-urlencoded",
-      "Idempotency-Key": checkoutIdempotencyKey(user.id, kind),
+      "Idempotency-Key": checkoutIdempotencyKey(user.id, kind, Date.now(), currency),
     },
     body: new URLSearchParams(
       checkoutSessionFields({
@@ -110,6 +125,7 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
         trialDays: pricing.hasTrial(plan) ? plan.trialDays : 0,
         successUrl: checkoutReturnUrl(SITE_URL, "/app?abonnement=ok"),
         cancelUrl: checkoutReturnUrl(SITE_URL, "/app"),
+        locale,
       }),
     ),
   });

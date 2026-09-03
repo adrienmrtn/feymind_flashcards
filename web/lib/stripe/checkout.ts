@@ -58,6 +58,7 @@ export function checkoutSessionFields(input: {
   trialDays: number;
   successUrl: string;
   cancelUrl: string;
+  locale?: string;
 }): Record<string, string> {
   const fields: Record<string, string> = {
     mode: "subscription",
@@ -67,7 +68,7 @@ export function checkoutSessionFields(input: {
     client_reference_id: input.userId,
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
-    locale: "fr",
+    locale: input.locale ?? "fr",
   };
 
   const email = input.email?.trim();
@@ -89,9 +90,10 @@ export function checkoutIdempotencyKey(
   userId: string,
   plan: string,
   now = Date.now(),
+  currency = "EUR",
 ): string {
   const hour = Math.floor(now / (60 * 60 * 1000));
-  return `checkout-${userId}-${plan}-${hour}`;
+  return `checkout-${userId}-${plan}-${currency}-${hour}`;
 }
 
 export function extractStripeMessage(payload: unknown): string {
