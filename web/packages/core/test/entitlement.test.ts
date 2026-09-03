@@ -38,6 +38,7 @@ import {
   WEEKLY,
   YEARLY,
   annualCost,
+  checkoutCurrency,
   discountSavingsPercent,
   hasTrial,
   monthlyEquivalent,
@@ -294,16 +295,21 @@ describe("les offres", () => {
     expect(YEARLY.price).toBe(69.99);
   });
 
-  it("sont neuf chez RevenueCat, tous sur pro — pas trois", () => {
-    expect(STORE_PRODUCTS).toHaveLength(9);
+  it("sont six chez RevenueCat, tous sur pro — la livre n'ajoute pas de ligne", () => {
+    // Un `price_…` par offre et par magasin. La livre vit dans les
+    // `currency_options` du prix euro : un second prix TRY forcerait un
+    // réimport chez RevenueCat et couperait les graphiques en deux.
+    expect(STORE_PRODUCTS).toHaveLength(6);
     expect(STORE_PRODUCTS.filter((product) => product.store === "app_store")).toHaveLength(3);
-    expect(STORE_PRODUCTS.filter((product) => product.store === "stripe")).toHaveLength(6);
-    expect(new Set(STORE_PRODUCTS.map((product) => product.id)).size).toBe(9);
+    expect(STORE_PRODUCTS.filter((product) => product.store === "stripe")).toHaveLength(3);
+    expect(new Set(STORE_PRODUCTS.map((product) => product.id)).size).toBe(6);
     expect(stripePriceId("yearly")).toBe("price_1UAqB547TFrcO0lvSacZ91Pp");
     expect(stripePriceId("weekly")).toBe("price_1UAqBI47TFrcO0lvTLjtkffx");
     expect(stripePriceId("yearly_discount")).toBe("price_1UAqBJ47TFrcO0lvb1vDYAPj");
-    expect(stripePriceId("yearly", "TRY")).toBe("price_1UBgT347TFrcO0lvNrHwbsOw");
-    expect(stripePriceId("weekly", "TRY")).toBe("price_1UBgTC47TFrcO0lv1uQcZggk");
-    expect(stripePriceId("yearly_discount", "TRY")).toBe("price_1UBgTD47TFrcO0lvrOl7Z892");
+  });
+
+  it("dit la devise à Stripe en minuscules, comme il l'attend", () => {
+    expect(checkoutCurrency("TRY")).toBe("try");
+    expect(checkoutCurrency("EUR")).toBe("eur");
   });
 });

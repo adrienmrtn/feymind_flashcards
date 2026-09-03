@@ -36,9 +36,17 @@ import { createClient } from "@/lib/supabase/server";
  *
  * ## Ce qu'il manque, précisément
  *
- * `STRIPE_SECRET_KEY`. Les `price_…` EUR et TRY sont dans `pricing.STORE_PRODUCTS` ;
- * `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY`, `STRIPE_PRICE_YEARLY_DISCOUNT`
- * et leurs `_TRY` les remplacent (test / live) si elles sont posées.
+ * `STRIPE_SECRET_KEY`. Les trois `price_…` sont dans `pricing.STORE_PRODUCTS` ;
+ * `STRIPE_PRICE_YEARLY`, `STRIPE_PRICE_WEEKLY` et
+ * `STRIPE_PRICE_YEARLY_DISCOUNT` les remplacent (test / live) si elles
+ * sont posées.
+ *
+ * ## La livre turque
+ *
+ * Un seul `price_…` par offre, et la livre dans ses `currency_options`.
+ * Checkout devinerait la devise à l'adresse IP ; on la lui **dit**, pour
+ * qu'elle suive la langue du site et le pays de scolarisation — c'est-à-dire
+ * exactement ce que le paywall vient d'afficher.
  */
 
 export interface CheckoutResult {
@@ -52,21 +60,15 @@ function stripeKey(): string | null {
 }
 
 /** L'identifiant de prix Stripe. L'env gagne s'il n'est pas vide ; sinon le catalogue. */
-function priceId(
-  plan: pricing.CatalogPlan,
-  currency: pricing.PresentmentCurrency,
-): string {
-  const tryMode = currency === "TRY";
+function priceId(plan: pricing.CatalogPlan): string {
   return priceIdFor(
     plan,
     {
-      yearly: tryMode ? process.env.STRIPE_PRICE_YEARLY_TRY : process.env.STRIPE_PRICE_YEARLY,
-      weekly: tryMode ? process.env.STRIPE_PRICE_WEEKLY_TRY : process.env.STRIPE_PRICE_WEEKLY,
-      yearlyDiscount: tryMode
-        ? process.env.STRIPE_PRICE_YEARLY_DISCOUNT_TRY
-        : process.env.STRIPE_PRICE_YEARLY_DISCOUNT,
+      yearly: process.env.STRIPE_PRICE_YEARLY,
+      weekly: process.env.STRIPE_PRICE_WEEKLY,
+      yearlyDiscount: process.env.STRIPE_PRICE_YEARLY_DISCOUNT,
     },
-    (catalogPlan) => pricing.stripePriceId(catalogPlan, currency),
+    pricing.stripePriceId,
   );
 }
 
@@ -95,7 +97,7 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
   const currency = pricing.presentmentCurrencyFor(locale, profile?.country_code);
 
   const key = stripeKey();
-  const price = priceId(kind, currency);
+  const price = priceId(kind);
   const plan = pricing.catalogPlanFor(kind);
 
   if (!key) {
@@ -126,6 +128,7 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
         successUrl: checkoutReturnUrl(SITE_URL, "/app?abonnement=ok"),
         cancelUrl: checkoutReturnUrl(SITE_URL, "/app"),
         locale,
+        currency: pricing.checkoutCurrency(currency),
       }),
     ),
   });

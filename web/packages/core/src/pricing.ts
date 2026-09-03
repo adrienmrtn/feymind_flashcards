@@ -25,9 +25,11 @@ export type BillingPeriod = "year" | "week";
  *
  * Les montants TRY sont écrits, pas convertis au cours du jour. Convertir
  * 69,99 € chaque matin donnerait un chiffre qui bouge, et une allégation
- * qu'on ne facture pas. Les `price_…` Stripe TRY portent **ces** montants.
- * iOS n'a pas encore `localizedPriceString` : le catalogue reste le repli
- * App Store Turkey jusqu'à l'étape 8 de `docs/revenuecat.md`.
+ * qu'on ne facture pas. Les mêmes montants sont posés dans les
+ * `currency_options` des trois `price_…` Stripe : ce fichier et Stripe
+ * doivent dire le même nombre. iOS n'a pas encore `localizedPriceString` :
+ * le catalogue reste le repli App Store Turkey jusqu'à l'étape 8 de
+ * `docs/revenuecat.md`.
  *
  * Cours de référence (3 sept. 2026) : 1 € ≈ 56 ₺.
  * 69,99 × 56 ≈ 3 919 → 3 899,99 ₺. 7,99 × 56 ≈ 447 → 449,99 ₺.
@@ -122,9 +124,12 @@ export const WEEKLY: Plan = {
 /**
  * Les produits chez RevenueCat, tous attachés à l'entitlement `pro`.
  *
- * Trois offres × App Store, plus **deux** prix Stripe par offre (EUR et TRY).
- * Ce n'est pas trois produits : chaque magasin / chaque devise a **son**
- * identifiant. Le discount ouvre le même droit — on ne crée pas un second
+ * **Six, pas neuf.** Trois offres × deux magasins. La livre n'ajoute
+ * aucune ligne : elle vit dans les `currency_options` du `price_…` euro,
+ * qui reste un seul objet Stripe. Un prix par devise obligerait à
+ * réimporter un catalogue chez RevenueCat, à le rattacher à `pro`, et à
+ * couper les graphiques en deux pour un produit qu'on ne vend qu'une
+ * fois. Le discount ouvre le même droit — on ne crée pas un second
  * entitlement.
  */
 export type StoreKind = "app_store" | "stripe";
@@ -135,34 +140,35 @@ export interface StoreProduct {
   /** Tel que RevenueCat le montre. Apple : `com.micabo…`. Stripe : `price_…`. */
   id: string;
   plan: CatalogPlan;
-  /** Devise du `price_…` Stripe. Absent côté App Store. */
-  currency?: PresentmentCurrency;
 }
 
 export const STORE_PRODUCTS: readonly StoreProduct[] = [
   { store: "app_store", id: "com.micabo.app.pro.yearly", plan: "yearly" },
   { store: "app_store", id: "com.micabo.app.pro.weekly", plan: "weekly" },
   { store: "app_store", id: "com.micabo.app.pro.yearly.discount", plan: "yearly_discount" },
-  { store: "stripe", id: "price_1UAqB547TFrcO0lvSacZ91Pp", plan: "yearly", currency: "EUR" },
-  { store: "stripe", id: "price_1UAqBI47TFrcO0lvTLjtkffx", plan: "weekly", currency: "EUR" },
-  { store: "stripe", id: "price_1UAqBJ47TFrcO0lvb1vDYAPj", plan: "yearly_discount", currency: "EUR" },
-  { store: "stripe", id: "price_1UBgT347TFrcO0lvNrHwbsOw", plan: "yearly", currency: "TRY" },
-  { store: "stripe", id: "price_1UBgTC47TFrcO0lv1uQcZggk", plan: "weekly", currency: "TRY" },
-  { store: "stripe", id: "price_1UBgTD47TFrcO0lvrOl7Z892", plan: "yearly_discount", currency: "TRY" },
+  { store: "stripe", id: "price_1UAqB547TFrcO0lvSacZ91Pp", plan: "yearly" },
+  { store: "stripe", id: "price_1UAqBI47TFrcO0lvTLjtkffx", plan: "weekly" },
+  { store: "stripe", id: "price_1UAqBJ47TFrcO0lvb1vDYAPj", plan: "yearly_discount" },
 ];
 
-export function stripePriceId(
-  plan: CatalogPlan,
-  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
-): string {
+export function stripePriceId(plan: CatalogPlan): string {
   const found = STORE_PRODUCTS.find(
-    (product) =>
-      product.store === "stripe" &&
-      product.plan === plan &&
-      (product.currency ?? DEFAULT_PRESENTMENT) === currency,
+    (product) => product.store === "stripe" && product.plan === plan,
   );
-  if (!found) throw new Error(`Prix Stripe manquant pour ${plan} (${currency})`);
+  if (!found) throw new Error(`Prix Stripe manquant pour ${plan}`);
   return found.id;
+}
+
+/**
+ * La devise passée à Checkout, en minuscules comme l'attend Stripe.
+ *
+ * Sans elle, Checkout devine la devise à l'adresse IP. Un Turc en
+ * vacances paierait alors des euros après avoir lu des livres — et
+ * c'est l'écart entre le prix affiché et le prix prélevé qui fait les
+ * litiges.
+ */
+export function checkoutCurrency(currency: PresentmentCurrency): string {
+  return currency.toLowerCase();
 }
 
 /** L'ordre de la liste est l'ordre d'affichage : l'offre recommandée d'abord. */

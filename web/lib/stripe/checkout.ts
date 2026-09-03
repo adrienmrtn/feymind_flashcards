@@ -59,6 +59,12 @@ export function checkoutSessionFields(input: {
   successUrl: string;
   cancelUrl: string;
   locale?: string;
+  /**
+   * La devise, **dite** et non devinée. Sans elle, Checkout la déduit de
+   * l'adresse IP et un Turc en déplacement paierait des euros après avoir
+   * lu des livres. Elle doit exister dans les `currency_options` du prix.
+   */
+  currency?: string;
 }): Record<string, string> {
   const fields: Record<string, string> = {
     mode: "subscription",
@@ -70,6 +76,9 @@ export function checkoutSessionFields(input: {
     cancel_url: input.cancelUrl,
     locale: input.locale ?? "fr",
   };
+
+  const currency = input.currency?.trim().toLowerCase();
+  if (currency) fields.currency = currency;
 
   const email = input.email?.trim();
   if (email) fields.customer_email = email;

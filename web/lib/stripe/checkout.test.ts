@@ -98,16 +98,32 @@ describe("checkoutSessionFields", () => {
     expect(yearly.locale).toBe("fr");
   });
 
-  it("passe la locale turque à Checkout", () => {
+  it("dit la langue et la devise plutôt que de les laisser deviner", () => {
+    // Sans `currency`, Checkout la déduit de l'adresse IP : un Turc en
+    // déplacement paierait des euros après avoir lu des livres.
     const fields = checkoutSessionFields({
-      price: "price_try",
+      price: "price_year",
       userId: "user-1",
       trialDays: 0,
       successUrl: "https://micabo.app/ok",
       cancelUrl: "https://micabo.app",
       locale: "tr",
+      currency: "try",
     });
     expect(fields.locale).toBe("tr");
+    expect(fields.currency).toBe("try");
+  });
+
+  it("n'envoie pas de devise vide — Stripe la refuserait", () => {
+    const fields = checkoutSessionFields({
+      price: "price_year",
+      userId: "user-1",
+      trialDays: 0,
+      successUrl: "https://micabo.app/ok",
+      cancelUrl: "https://micabo.app",
+      currency: "  ",
+    });
+    expect(fields.currency).toBeUndefined();
   });
 });
 
