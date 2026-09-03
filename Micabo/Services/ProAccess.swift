@@ -63,17 +63,20 @@ final class ProAccess {
     init(
         defaults: UserDefaults = .standard,
         accessToken: (() async -> String?)? = nil,
-        userID: (() -> UUID?)? = nil
+        userID: (() -> UUID?)? = nil,
+        email: (() -> String?)? = nil
     ) {
         self.defaults = defaults
         self.accessToken = accessToken
         self.userID = userID
+        self.email = email
         self.isPro = defaults.bool(forKey: Key.isPro)
     }
 
     private let defaults: UserDefaults
     private let accessToken: (() async -> String?)?
     private let userID: (() -> UUID?)?
+    private let email: (() -> String?)?
     /// Une seule veille sur le flux du SDK : deux boucles se répondraient.
     private var purchaseWatch: Task<Void, Never>?
 
@@ -106,6 +109,14 @@ final class ProAccess {
     /// Une échéance passée l'emporte sur le drapeau de la table : un webhook peut se perdre,
     /// et un abonnement fini qui reste ouvert est une fuite qui ne se voit pas.
     func refresh() async {
+        // Le compte de relecture Apple est Pro sans rien acheter. Le droit est aussi en
+        // base, mais il est lu ici sur l'adresse : un relecteur ne doit pas rencontrer
+        // de cadenas parce qu'une requête a échoué.
+        if let readEmail = email, AppStoreReview.matches(readEmail()) {
+            unlock()
+            return
+        }
+
         let fromSDK = await PurchasesBridge.isPro()
         let fromTable = await readEntitlementRow()
 

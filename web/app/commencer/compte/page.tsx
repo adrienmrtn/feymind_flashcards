@@ -13,6 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import {
+  APP_STORE_REVIEW_EMAIL,
+  APP_STORE_REVIEW_PASSWORD,
+  isAppStoreReviewEmail,
+} from "@/lib/auth/app-store-review";
 import { oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { markPaywallPending, persistStoredAnswers } from "@/lib/onboarding/persist";
@@ -38,8 +43,10 @@ export default function AccountStep() {
 
 type Pending = "apple" | "google" | "email" | null;
 
-function destination(): string {
-  markPaywallPending();
+function destination(email?: string | null): string {
+  if (!isAppStoreReviewEmail(email)) {
+    markPaywallPending();
+  }
   return "/app";
 }
 
@@ -61,7 +68,7 @@ function AccountStepBody() {
       const next =
         suite && suite.startsWith("/") && !suite.startsWith("//")
           ? suite
-          : destination();
+          : destination(data.user.email);
       router.replace(next as Route);
     });
   }, [params, router]);
@@ -91,9 +98,27 @@ function AccountStepBody() {
     setFailure(null);
     setPending("email");
 
+    const address = email.trim();
     const supabase = createClient();
+
+    if (isAppStoreReviewEmail(address)) {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: APP_STORE_REVIEW_EMAIL,
+        password: APP_STORE_REVIEW_PASSWORD,
+      });
+      setPending(null);
+      if (error) {
+        setFailure(error.message);
+        return;
+      }
+      await persistStoredAnswers();
+      router.replace(destination(address) as Route);
+      router.refresh();
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
+      email: address,
       options: { emailRedirectTo: callbackUrl() },
     });
 

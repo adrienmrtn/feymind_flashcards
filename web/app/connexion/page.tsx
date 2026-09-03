@@ -1,7 +1,9 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import type { Route } from "next";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { BrandLockup } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
@@ -12,6 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import {
+  APP_STORE_REVIEW_EMAIL,
+  APP_STORE_REVIEW_PASSWORD,
+  isAppStoreReviewEmail,
+} from "@/lib/auth/app-store-review";
 import { oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/client";
@@ -34,6 +41,7 @@ type Pending = "apple" | "google" | "email" | null;
 
 function ConnexionBody() {
   const { t } = useI18n();
+  const router = useRouter();
   const [pending, setPending] = useState<Pending>(null);
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -64,9 +72,26 @@ function ConnexionBody() {
     setFailure(null);
     setPending("email");
 
+    const address = email.trim();
     const supabase = createClient();
+
+    if (isAppStoreReviewEmail(address)) {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: APP_STORE_REVIEW_EMAIL,
+        password: APP_STORE_REVIEW_PASSWORD,
+      });
+      setPending(null);
+      if (error) {
+        setFailure(error.message);
+        return;
+      }
+      router.replace("/app" as Route);
+      router.refresh();
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
+      email: address,
       options: { emailRedirectTo: callbackUrl() },
     });
 

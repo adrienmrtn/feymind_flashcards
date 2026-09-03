@@ -40,6 +40,17 @@ struct SupabaseAuthClient {
         return try decodeSession(payload)
     }
 
+    /// Ouvre une session par mot de passe. Réservé au compte de relecture Apple :
+    /// l'écran continue d'offrir « Recevoir un lien », et c'est ce chemin qui s'y
+    /// substitue quand l'adresse est `review@apple.com`.
+    func signInWithPassword(email: String, password: String) async throws -> AuthSession {
+        let payload = try await post("token", query: ["grant_type": "password"], body: [
+            "email": email,
+            "password": password,
+        ])
+        return try decodeSession(payload)
+    }
+
     /// Envoie un lien de connexion. Le retour ouvre `micabo://auth-callback` : sans
     /// `redirect_to` dans la liste du tableau de bord, le courriel part et le lien refuse.
     func sendMagicLink(email: String, redirectTo: URL, challenge: String) async throws {
