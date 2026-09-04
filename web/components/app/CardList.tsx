@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useTransition } from "react";
 
-import { formatDelay, previewLabels } from "@micabo/core";
-
 import { ExamMark, examDeadline, type ExamMarkInfo } from "@/components/app/ExamMark";
 import { OcclusionEditor } from "@/components/app/OcclusionEditor";
 import { OcclusionFigure } from "@/components/app/OcclusionFigure";
@@ -11,7 +9,7 @@ import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { createCard, deleteCard, updateCard } from "@/lib/actions/cards";
 import type { CardRow } from "@/lib/data/courses";
 import { useI18n } from "@/lib/i18n/client";
-import type { Translator } from "@/lib/i18n/copy";
+import { formatDelayLocalized, previewLabelsLocalized, type Translator } from "@/lib/i18n/copy";
 
 /**
  * Les cartes d'un cours, **en grille et modifiables.**
@@ -110,7 +108,8 @@ function Tile({
   onEdit: () => void;
 }) {
   const { t } = useI18n();
-  const labels = previewLabels(
+  const labels = previewLabelsLocalized(
+    t,
     {
       state: card.state,
       intervalDays: card.interval_days,
@@ -170,7 +169,7 @@ function Tile({
       <span className="numeral mt-auto pt-4 text-[12px] text-ink-tertiary">
         {card.state === "new"
           ? labels[3]
-          : formatDelay((new Date(card.due_date).getTime() - Date.now()) / 1000)}
+          : formatDelayLocalized(t, (new Date(card.due_date).getTime() - Date.now()) / 1000)}
       </span>
     </button>
   );

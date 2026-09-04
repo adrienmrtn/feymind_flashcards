@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { courseAccent, courseAudienceLabel, displayUsername, resolveEmoji } from "@micabo/core";
+import { courseAccent, displayUsername, resolveEmoji } from "@micabo/core";
 
 import { FriendActions } from "@/components/app/FriendActions";
 import { getDirectoryPerson, listCoursesOf } from "@/lib/data/social";
+import { copyCards } from "@/lib/i18n/copy";
+import { getTranslator } from "@/lib/i18n/server";
+import { displaySubject } from "@/lib/i18n/subject-display";
 
 /**
  * Le profil d'un camarade : son @, son école, et **ses cours**.
@@ -18,12 +21,17 @@ export default async function UserPage({ params }: { params: Promise<{ username:
   if (!person) notFound();
   if (person.relation === "me") redirect("/app/profil");
 
-  const courses = await listCoursesOf(person.id);
+  const [{ t, locale }, courses] = await Promise.all([
+    getTranslator(),
+    listCoursesOf(person.id),
+  ]);
 
   return (
     <div className="mx-auto max-w-[560px]">
       <header>
-        <p className="eyebrow text-ink-tertiary">{person.institutionName ?? "Camarade"}</p>
+        <p className="eyebrow text-ink-tertiary">
+          {person.institutionName ?? t("app.friends.classmate")}
+        </p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <h1 className="text-lg font-semibold tracking-tight text-foreground">
             {displayUsername(person.username)}
@@ -34,8 +42,8 @@ export default async function UserPage({ params }: { params: Promise<{ username:
 
       <p className="mt-6 text-[14.5px] text-ink-secondary">
         {courses.length === 0
-          ? "Aucun cours partagé pour l'instant."
-          : `${courses.length} cours partagé${courses.length > 1 ? "s" : ""}`}
+          ? t("app.friends.noSharedYet")
+          : t("app.friends.sharedCount", { count: courses.length })}
       </p>
 
       {courses.length > 0 ? (
@@ -57,18 +65,16 @@ export default async function UserPage({ params }: { params: Promise<{ username:
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[16px] font-semibold text-ink">
-                    {course.title || "Sans titre"}
+                    {course.title || t("app.course.untitled")}
                   </span>
                   <span className="mt-0.5 block truncate text-[13px] text-ink-tertiary">
                     {[
-                      course.subject,
-                      course.cardCount > 0
-                        ? `${course.cardCount} carte${course.cardCount > 1 ? "s" : ""}`
-                        : null,
-                      courseAudienceLabel(course.viewCount, course.adoptCount),
+                      course.subject ? displaySubject(course.subject, locale) : null,
+                      course.cardCount > 0 ? copyCards(t, course.cardCount) : null,
+                      t("copy.audience", { views: course.viewCount, adopts: course.adoptCount }),
                     ]
                       .filter(Boolean)
-                      .join(" · ") || "Cours partagé"}
+                      .join(" · ") || t("app.friends.sharedCourse")}
                   </span>
                 </span>
               </Link>
@@ -79,7 +85,7 @@ export default async function UserPage({ params }: { params: Promise<{ username:
 
       <p className="mt-10 text-[13px] text-ink-tertiary">
         <Link href={"/app/amis" as never} className="underline-draw">
-          Tous les amis
+          {t("app.friends.allFriends")}
         </Link>
       </p>
     </div>

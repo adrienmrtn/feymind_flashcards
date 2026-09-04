@@ -4,6 +4,7 @@ import { useTransition } from "react";
 
 import { replayOnboarding } from "@/lib/actions/onboarding";
 import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
+import { useI18n } from "@/lib/i18n/client";
 import { clearStoredAnswers } from "@/lib/onboarding/persist";
 
 /**
@@ -13,6 +14,7 @@ import { clearStoredAnswers } from "@/lib/onboarding/persist";
  * on oublie les réponses locales, et on rouvre le tunnel.
  */
 export function ReplayOnboarding() {
+  const { t } = useI18n();
   const [pending, startTransition] = useTransition();
 
   return (
@@ -32,9 +34,11 @@ export function ReplayOnboarding() {
       }}
       className="pressable hover-row w-full px-7 py-5 text-left"
     >
-      <p className="text-[15px] font-semibold text-ink">Refaire l&apos;accueil</p>
+      <p className="text-[15px] font-semibold text-ink">{t("app.settings.replayOnboarding.title")}</p>
       <p className="mt-1 text-[13px] leading-relaxed text-ink-tertiary">
-        {pending ? "Ouverture du parcours…" : "Pour déboguer. Tes cours restent."}
+        {pending
+          ? t("app.settings.replayOnboarding.opening")
+          : t("app.settings.replayOnboarding.body")}
       </p>
     </button>
   );

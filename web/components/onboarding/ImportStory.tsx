@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { BrandMark } from "@/components/BrandMark";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Les formats qu'on dépose, absorbés par Micabo. **Un seul temps.**
@@ -17,12 +18,12 @@ import { BrandMark } from "@/components/BrandMark";
  */
 
 const DOCS = [
-  { id: "polycopie-pdf", emoji: "📄", label: "PDF" },
-  { id: "photo-notes", emoji: "📸", label: "Photo" },
-  { id: "document-word", emoji: "📝", label: "Word" },
-  { id: "video-youtube", emoji: "▶️", label: "Vidéo" },
-  { id: "diapositives", emoji: "🖥️", label: "Diapos" },
-  { id: "notes-manuscrites", emoji: "✍️", label: "Notes" },
+  { id: "polycopie-pdf", emoji: "📄", labelKey: "onboarding.formatPdf" },
+  { id: "photo-notes", emoji: "📸", labelKey: "onboarding.formatPhoto" },
+  { id: "document-word", emoji: "📝", labelKey: "onboarding.formatWord" },
+  { id: "video-youtube", emoji: "▶️", labelKey: "onboarding.formatVideo" },
+  { id: "diapositives", emoji: "🖥️", labelKey: "onboarding.formatSlides" },
+  { id: "notes-manuscrites", emoji: "✍️", labelKey: "onboarding.formatNotes" },
 ] as const;
 
 /** Une seule respiration, et lente : on la regarde une fois, sans rien à faire. */
@@ -112,8 +113,15 @@ function DocTile({
       }}
     >
       <SourceGlyph id={doc.id} emoji={doc.emoji} />
-      <p className="mt-1 text-center text-[9.5px] font-medium text-ink-secondary">{doc.label}</p>
+      <DocLabel labelKey={doc.labelKey} />
     </div>
+  );
+}
+
+function DocLabel({ labelKey }: { labelKey: (typeof DOCS)[number]["labelKey"] }) {
+  const { t } = useI18n();
+  return (
+    <p className="mt-1 text-center text-[9.5px] font-medium text-ink-secondary">{t(labelKey)}</p>
   );
 }
 

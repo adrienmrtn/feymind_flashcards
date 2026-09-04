@@ -8,6 +8,8 @@ import { GenerateCards } from "@/components/app/GenerateCards";
 import { ReviewCta } from "@/components/app/ReviewCta";
 import { getCourseMeta, listCards, listExams } from "@/lib/data/courses";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
+import { copyCards, type Translator } from "@/lib/i18n/copy";
+import { getTranslator } from "@/lib/i18n/server";
 
 /**
  * L'espace des cartes d'un cours.
@@ -24,7 +26,8 @@ export default async function CourseCardsPage({
 }) {
   const { id } = await params;
   const { generer } = await searchParams;
-  const [course, cards, exams] = await Promise.all([
+  const [{ t }, course, cards, exams] = await Promise.all([
+    getTranslator(),
     getCourseMeta(id),
     listCards(id),
     listExams(),
@@ -57,25 +60,25 @@ export default async function CourseCardsPage({
 
         <div className="mt-3">
           <h1 className="text-lg font-semibold tracking-tight text-foreground">
-            {cards.length === 0 ? "Aucune carte" : "Cartes"}
+            {cards.length === 0 ? t("app.workshop.emptyTitle") : t("app.workshop.title")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {cards.length === 0
-              ? "Génère-les depuis la fiche, ou écris-en une."
-              : packSummary(cards.length, counts)}
+              ? t("app.workshop.emptyHint")
+              : packSummary(t, cards.length, counts)}
           </p>
         </div>
       </header>
 
       {cards.length > 0 ? (
         <div className="mt-7 grid gap-2.5 sm:grid-cols-3" data-tour="cartes-etats">
-          <Stat emoji="🔥" value={counts.review} label={counts.review === 1 ? "à revoir" : "à revoir"} />
-          <Stat emoji="✨" value={counts.newCards} label={counts.newCards === 1 ? "jamais vue" : "jamais vues"} />
+          <Stat emoji="🔥" value={counts.review} label={t("app.workshop.statReview")} />
           <Stat
-            emoji="🧠"
-            value={counts.learning}
-            label={counts.learning === 1 ? "en cours" : "en cours"}
+            emoji="✨"
+            value={counts.newCards}
+            label={t("app.workshop.statNew", { count: counts.newCards })}
           />
+          <Stat emoji="🧠" value={counts.learning} label={t("app.workshop.statLearning")} />
         </div>
       ) : null}
 
@@ -89,9 +92,7 @@ export default async function CourseCardsPage({
 
       {cards.length > entitlement.FREE_TIER.cardsPerSession ? (
         <p className="mt-4 text-[12.5px] leading-relaxed text-ink-tertiary">
-          Toutes tes cartes se lisent ici. Ce que le gratuit borne, c&apos;est la{" "}
-          <strong className="font-medium text-ink-secondary">session</strong> :{" "}
-          {entitlement.FREE_TIER.cardsPerSession} cartes à la fois.
+          {t("app.workshop.freeCap", { limit: entitlement.FREE_TIER.cardsPerSession })}
         </p>
       ) : null}
 
@@ -117,13 +118,15 @@ function Stat({ emoji, value, label }: { emoji: string; value: number; label: st
 }
 
 function packSummary(
+  t: Translator,
   total: number,
   counts: { review: number; newCards: number; learning: number },
 ): string {
+  const cards = copyCards(t, total);
   if (counts.review + counts.newCards + counts.learning === 0) {
-    return `${total} carte${total > 1 ? "s" : ""} · rien à revoir aujourd'hui.`;
+    return t("app.workshop.summaryIdle", { cards });
   }
-  return `${total} carte${total > 1 ? "s" : ""}`;
+  return cards;
 }
 
 function toQueueCard(card: {

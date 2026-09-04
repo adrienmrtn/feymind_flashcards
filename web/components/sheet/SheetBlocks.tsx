@@ -1,4 +1,8 @@
+"use client";
+
 import { type SheetBlock } from "@micabo/core";
+
+import { useI18n } from "@/lib/i18n/client";
 
 import { InlineMarkup } from "./InlineMarkup";
 import { MathBlock } from "./Math";
@@ -17,12 +21,6 @@ import { MathBlock } from "./Math";
  * qu'une sous-partie commence.
  */
 
-const TONE_LABELS: Record<string, string> = {
-  essentiel: "À retenir",
-  attention: "Attention",
-  exemple: "Exemple",
-  astuce: "Astuce",
-};
 
 /**
  * Un encadré porte les couleurs de retour d'information, volontairement désaturées, et quatre
@@ -119,7 +117,7 @@ function Block({ block, tint }: { block: SheetBlock; tint: string }) {
       const style = TONE_STYLES[tone]!;
       return (
         <div className={`rounded-[18px] p-[13px] ${style.surface}`}>
-          <p className={`eyebrow ${style.label}`}>{TONE_LABELS[tone]}</p>
+          <CalloutLabel tone={tone} className={style.label} />
           <p className="mt-1.5 text-[14px] leading-[1.6]">
             <InlineMarkup text={block.text} />
           </p>
@@ -255,6 +253,15 @@ function Block({ block, tint }: { block: SheetBlock; tint: string }) {
         </div>
       );
   }
+}
+
+function CalloutLabel({ tone, className }: { tone: string; className: string }) {
+  const { t } = useI18n();
+  const key =
+    tone === "attention" || tone === "exemple" || tone === "astuce" || tone === "essentiel"
+      ? tone
+      : "essentiel";
+  return <p className={`eyebrow ${className}`}>{t(`app.sheetTone.${key}`)}</p>;
 }
 
 /** Un entier reste un entier, et le pourcentage reste collé à son nombre. */

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { sheetLanguage } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
+import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -44,12 +45,12 @@ export async function updateCard(input: {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const front = input.front.trim().slice(0, MAX_SIDE);
   const back = input.back.trim().slice(0, MAX_SIDE);
   if (front.length === 0 || back.length === 0) {
-    return { status: "error", message: "Une carte a besoin des deux faces." };
+    return { status: "error", message: await actionT("app.errors.cardNeedsBothSides") };
   }
 
   const patch: Record<string, unknown> = {
@@ -95,12 +96,12 @@ export async function createCard(input: {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const front = input.front.trim().slice(0, MAX_SIDE);
   const back = input.back.trim().slice(0, MAX_SIDE);
   if (front.length === 0 || back.length === 0) {
-    return { status: "error", message: "Une carte a besoin des deux faces." };
+    return { status: "error", message: await actionT("app.errors.cardNeedsBothSides") };
   }
 
   // La position se prend derrière la dernière : les cartes gardent l'ordre dans lequel elles sont
@@ -153,13 +154,13 @@ export async function createOcclusionCards(input: {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   if (!input.image.startsWith("data:image/")) {
-    return { status: "error", message: "L'image n'a pas pu être lue." };
+    return { status: "error", message: await actionT("app.errors.imageUnread") };
   }
   if (input.image.length > 1_800_000) {
-    return { status: "error", message: "Cette image est trop lourde. Choisis-en une plus petite." };
+    return { status: "error", message: await actionT("app.errors.imageTooHeavy") };
   }
 
   const zones = input.zones.filter(
@@ -167,7 +168,7 @@ export async function createOcclusionCards(input: {
       zone.label.trim().length > 0 && zone.width > 0.02 && zone.height > 0.02,
   );
   if (zones.length === 0) {
-    return { status: "error", message: "Trace au moins une zone et nomme-la." };
+    return { status: "error", message: await actionT("app.errors.nameAZone") };
   }
 
   const { data: last } = await supabase
@@ -219,7 +220,7 @@ export async function deleteCard(cardId: string, courseId: string): Promise<Card
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const { error } = await supabase
     .from("flashcards")
@@ -258,14 +259,14 @@ export async function explainSelection(input: {
 }): Promise<{ status: "ok" | "error"; explanation?: Explanation; message?: string }> {
   const selection = input.selection.trim().slice(0, 600);
   if (selection.length < 2) {
-    return { status: "error", message: "Sélectionne un passage à expliquer." };
+    return { status: "error", message: await actionT("app.errors.pickPassage") };
   }
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const [{ data: course }, { data: profile }] = await Promise.all([
     supabase
@@ -277,7 +278,7 @@ export async function explainSelection(input: {
     supabase.from("profiles").select("country_code, sheet_language").eq("id", user.id).maybeSingle(),
   ]);
 
-  if (!course) return { status: "error", message: "Cours introuvable." };
+  if (!course) return { status: "error", message: await actionT("app.errors.courseMissing") };
 
   const { data, error } = await supabase.functions.invoke("explain-selection", {
     body: {
@@ -303,11 +304,11 @@ export async function explainSelection(input: {
         // Un corps illisible : on retombe sur le message du transport.
       }
     }
-    return { status: "error", message: "L'explication n'a pas pu être écrite." };
+    return { status: "error", message: await actionT("app.errors.explainFailed") };
   }
 
   const explanation = (data as { explanation?: Explanation } | null)?.explanation;
-  if (!explanation?.headline) return { status: "error", message: "Rien n'est revenu." };
+  if (!explanation?.headline) return { status: "error", message: await actionT("app.errors.nothingBack") };
 
   return { status: "ok", explanation };
 }

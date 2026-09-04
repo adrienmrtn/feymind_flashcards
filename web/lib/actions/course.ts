@@ -30,6 +30,7 @@ import { revalidateUserData } from "@/lib/data/cache";
 import { listCourses } from "@/lib/data/courses";
 import { readEntitlement } from "@/lib/data/entitlement";
 import { previewYouTubeOnServer, readYouTubeOnServer } from "@/lib/import/youtube-server";
+import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -89,14 +90,14 @@ export async function importFromText(input: {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi pour importer un cours." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signInImport") };
 
   const blocked = await refuseSecondCourse();
   if (blocked) return blocked;
 
   const text = input.text.trim().slice(0, MAXIMUM_TEXT);
   if (text.length < MINIMUM_TEXT) {
-    return { status: "error", message: "Ce texte est trop court pour en faire une fiche." };
+    return { status: "error", message: await actionT("app.errors.textTooShort") };
   }
 
   // Le profil décide de **la façon dont le modèle écrit** : le stade d'étude commande le registre,
@@ -138,13 +139,13 @@ export async function importFromText(input: {
   if (error) return { status: "error", message: await readableError(error) };
 
   const course = (data as { course?: GeneratedCourse } | null)?.course;
-  if (!course) return { status: "error", message: "La fiche n'a pas pu être écrite." };
+  if (!course) return { status: "error", message: await actionT("app.errors.sheetWriteFailed") };
 
   // La fiche est renormalisée avec **le même code que le serveur** : c'est la copie surveillée du
   // module de fiche, donc les plafonds appliqués ici sont exactement ceux d'en face.
   const blocks: SheetBlock[] = normalizeSheet(course.sheet ?? { blocks: [] });
   if (blocks.length === 0) {
-    return { status: "error", message: "La fiche rendue n'était pas exploitable." };
+    return { status: "error", message: await actionT("app.errors.sheetUnusable") };
   }
 
   const title = (course.title ?? input.hintTitle ?? "Cours sans titre").trim();
@@ -214,7 +215,7 @@ export async function youtubeTranscript(url: string, languages?: string[]) {
   if (text.length < MINIMUM_TEXT) {
     return {
       status: "error" as const,
-      message: "Cette vidéo n'a pas assez de sous-titres exploitables.",
+      message: await actionT("app.errors.videoNoCaptions"),
     };
   }
 
@@ -268,7 +269,7 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error" as const, message: "Connecte-toi." };
+  if (!user) return { status: "error" as const, message: await actionT("app.errors.signIn") };
 
   const [{ data: course }, { data: profile }] = await Promise.all([
     supabase
@@ -284,7 +285,7 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
       .maybeSingle(),
   ]);
 
-  if (!course) return { status: "error" as const, message: "Cours introuvable." };
+  if (!course) return { status: "error" as const, message: await actionT("app.errors.courseMissing") };
 
   // Les recto des cartes déjà écrites partent avec la demande : sans elles, une seconde passe
   // repose les mêmes questions.
@@ -311,7 +312,7 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
 
   const cards = (data as { cards?: RawCard[] } | null)?.cards ?? [];
   if (cards.length === 0) {
-    return { status: "error" as const, message: "Aucune carte n'a pu être écrite." };
+    return { status: "error" as const, message: await actionT("app.errors.noCardsWritten") };
   }
 
   const start = (existing?.[0]?.position ?? -1) + 1;
@@ -392,7 +393,7 @@ async function refuseSecondCourse(): Promise<ImportResult | null> {
   ) {
     return null;
   }
-  return { status: "paywall", message: "Ton deuxième cours est dans Pro." };
+  return { status: "paywall", message: await actionT("app.errors.secondCoursePro") };
 }
 
 /** Empreinte du contenu, pour reconnaître un chapitre déjà importé. */

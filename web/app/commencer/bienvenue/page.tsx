@@ -30,7 +30,7 @@ export default function WelcomeStep() {
       }
     >
       <div className="flex h-full flex-col items-center justify-center">
-        <BrandWordmark mark={104} />
+        <BrandWordmark mark={104} tagline={t("app.brand.tagline")} />
       </div>
     </Scaffold>
   );

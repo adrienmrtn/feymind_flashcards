@@ -9,7 +9,6 @@ import {
   advanceSession,
   enqueueInitial,
   entitlement,
-  previewLabels,
   returnsInSession,
   schedule,
   clampedToDeadline,
@@ -25,7 +24,7 @@ import { SessionDone } from "@/components/app/SessionDone";
 import { SessionPaywall } from "@/components/app/SessionPaywall";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { gradeCard } from "@/lib/actions/review";
-import { reviewRatingLabel } from "@/lib/i18n/copy";
+import { previewLabelsLocalized, reviewRatingLabel } from "@/lib/i18n/copy";
 import { useI18n } from "@/lib/i18n/client";
 
 /**
@@ -110,8 +109,11 @@ export function Session({
   const finished = loop.done;
 
   const labels = useMemo(
-    () => (card ? previewLabels(card.snapshot, { deadline: examDeadline(card.exam) }) : null),
-    [card],
+    () =>
+      card
+        ? previewLabelsLocalized(t, card.snapshot, { deadline: examDeadline(card.exam) })
+        : null,
+    [card, t],
   );
 
   const grade = useCallback(

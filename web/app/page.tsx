@@ -16,18 +16,21 @@ import { currentUser } from "@/lib/data/user";
 import { T } from "@/components/i18n/T";
 import { listedLandingSourceImages } from "@/lib/landing-source-images";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
+import { getTranslator } from "@/lib/i18n/server";
 import { ANKI_PAGE, EXAM_PAGE, METHOD_PAGE } from "@/lib/site-pages";
 
 /**
  * `absolute` court-circuite le gabarit `%s - Micabo` de la charpente : sans ça, la marque
  * serait écrite deux fois dans le titre de la page qui la porte.
  */
-export const metadata: Metadata = {
-  title: { absolute: "Micabo - apprends tout, plus vite" },
-  description:
-    "Dépose un polycopié, une photo de tes notes ou une vidéo de cours. Micabo en écrit la fiche que tu relis, en tire les cartes qui te la font retenir, et les fait revenir juste avant que tu l'oublies.",
-  alternates: { canonical: "/" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getTranslator();
+  return {
+    title: { absolute: t("landing.metaTitle") },
+    description: t("landing.metaDescription"),
+    alternates: { canonical: "/" },
+  };
+}
 
 /**
  * La vitrine. Elle montre le produit. Elle ne pose aucune question.

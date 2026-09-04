@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+import { getTranslator } from "@/lib/i18n/server";
+
 /**
  * Le manifeste, pour l'icône d'un site épinglé et le nom sous cette icône.
  *
@@ -11,17 +13,17 @@ import type { MetadataRoute } from "next";
  * autorise Android à rogner l'icône en cercle sans manger le stylo — c'est le seul cas où
  * une icône a besoin d'une version à part, avec de la marge autour du dessin.
  */
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const { t, locale } = await getTranslator();
   return {
-    name: "Micabo - fiches et flashcards à partir de tes cours",
+    name: t("landing.siteTitle"),
     short_name: "Micabo",
-    description:
-      "Dépose un cours. Micabo en écrit la fiche, en tire les cartes, et les fait revenir avant que tu l'oublies.",
+    description: t("landing.manifestDescription"),
     start_url: "/",
     display: "standalone",
     background_color: "#f6f7f9",
     theme_color: "#f6f7f9",
-    lang: "fr",
+    lang: locale,
     icons: [
       { src: "/icon.svg", type: "image/svg+xml", sizes: "any" },
       { src: "/icon-192.png", type: "image/png", sizes: "192x192" },

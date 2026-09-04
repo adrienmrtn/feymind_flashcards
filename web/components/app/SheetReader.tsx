@@ -9,6 +9,7 @@ import { SheetBlocks } from "@/components/sheet/SheetBlocks";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { createCard } from "@/lib/actions/cards";
 import { explainSelection, type Explanation } from "@/lib/actions/cards";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * La fiche, **et le passage qu'on ne comprend pas.**
@@ -27,6 +28,7 @@ export function SheetReader({
   blocks: SheetBlock[];
   tint: string;
 }) {
+  const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState<string | null>(null);
   const [anchor, setAnchor] = useState<{ top: number; left: number; above: boolean } | null>(
@@ -91,7 +93,7 @@ export function SheetReader({
     const result = await explainSelection({ selection, courseId });
     if (result.status === "error" || !result.explanation) {
       setPanel("repos");
-      setFailure(result.message ?? "L'explication n'a pas pu être écrite.");
+      setFailure(result.message ?? t("app.sheetReader.error"));
       return;
     }
     setExplanation(result.explanation);
@@ -136,7 +138,7 @@ export function SheetReader({
                 onClick={ask}
                 className="pressable shrink-0 rounded-pill bg-on-ink px-3.5 py-1.5 text-[13.5px] font-semibold text-ink"
               >
-                Explique-moi
+                {t("app.sheetReader.ask")}
               </button>
             </div>
           ) : null}
@@ -145,7 +147,7 @@ export function SheetReader({
             <div className="paper flex items-center gap-3 rounded-group bg-surface p-4 shadow-floating">
               <ThinkingOrb state="composing" size={64} />
               <p className="text-[14.5px] font-semibold text-ink" role="status">
-                Micabo relit ce passage…
+                {t("app.sheetReader.reading")}
               </p>
             </div>
           ) : null}
@@ -153,11 +155,11 @@ export function SheetReader({
           {panel === "reponse" && explanation ? (
             <aside className="paper max-h-[min(70vh,560px)] overflow-y-auto rounded-group bg-surface p-5 shadow-floating">
               <div className="flex items-start justify-between gap-3">
-                <p className="eyebrow text-accent">Explication</p>
+                <p className="eyebrow text-accent">{t("app.sheetReader.title")}</p>
                 <button
                   type="button"
                   onClick={dismiss}
-                  aria-label="Fermer l'explication"
+                  aria-label={t("app.a11y.closeExplanation")}
                   className="pressable -mr-1 -mt-1 text-[15px] text-ink-tertiary"
                 >
                   ✕
@@ -182,7 +184,7 @@ export function SheetReader({
 
               {explanation.example ? (
                 <div className="mt-3 rounded-button bg-surface-muted px-3 py-2.5">
-                  <p className="eyebrow text-ink-tertiary">Exemple</p>
+                  <p className="eyebrow text-ink-tertiary">{t("app.sheetTone.exemple")}</p>
                   <p className="mt-1 text-[13.5px] leading-relaxed text-ink-reading">
                     <InlineMarkup text={explanation.example} />
                   </p>
@@ -191,7 +193,7 @@ export function SheetReader({
 
               {explanation.watchOut ? (
                 <div className="mt-2 rounded-button bg-caution-soft px-3 py-2.5">
-                  <p className="eyebrow text-caution">Attention</p>
+                  <p className="eyebrow text-caution">{t("app.sheetTone.attention")}</p>
                   <p className="mt-1 text-[13.5px] leading-relaxed text-ink-reading">
                     <InlineMarkup text={explanation.watchOut} />
                   </p>
@@ -201,7 +203,7 @@ export function SheetReader({
               {explanation.card ? (
                 <div className="mt-4 border-t border-hairline pt-4">
                   <p className="text-[12.5px] text-ink-tertiary">
-                    Micabo propose d&apos;en faire une carte :
+                    {t("app.sheetReader.proposeCard")}
                   </p>
                   <p className="mt-1.5 text-[14px] font-medium text-ink">{explanation.card.front}</p>
                   <p className="mt-1 text-[13.5px] text-ink-secondary">{explanation.card.back}</p>
@@ -213,7 +215,7 @@ export function SheetReader({
                       saved ? "bg-accent-soft text-accent" : "bg-accent text-on-ink"
                     }`}
                   >
-                    {saved ? "Carte ajoutée" : "Garder cette carte"}
+                    {saved ? t("app.sheetReader.cardSaved") : t("app.sheetReader.keepCard")}
                   </button>
                 </div>
               ) : null}

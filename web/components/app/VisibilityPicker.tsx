@@ -6,6 +6,7 @@ import { DEFAULT_VISIBILITY, isVisibility, type CourseVisibility } from "@micabo
 
 import { VisibilityChoices } from "@/components/app/VisibilityChoices";
 import { setCourseVisibility } from "@/lib/actions/profile";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Qui peut retrouver ce cours, changé depuis la fiche.
@@ -24,6 +25,7 @@ export function VisibilityPicker({
   courseId: string;
   initial: string;
 }) {
+  const { t } = useI18n();
   const start: CourseVisibility = isVisibility(initial) ? initial : DEFAULT_VISIBILITY;
   const [value, setValue] = useState<CourseVisibility>(start);
   const [failed, setFailed] = useState(false);
@@ -48,7 +50,7 @@ export function VisibilityPicker({
     <div data-print="hide">
       <VisibilityChoices value={value} onChange={choose} />
       {failed ? (
-        <p className="mt-2 text-[12.5px] text-negative">Le réglage n&apos;a pas pu être enregistré.</p>
+        <p className="mt-2 text-[12.5px] text-negative">{t("app.course.visibility.saveError")}</p>
       ) : null}
     </div>
   );

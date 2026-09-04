@@ -1,4 +1,6 @@
 import { CANONICAL_URL, IS_INDEXABLE } from "@/lib/config";
+import { UI_LOCALE_META } from "@/lib/i18n/locales";
+import { getTranslator } from "@/lib/i18n/server";
 
 /**
  * **Ce qui dit à Google que « Micabo » est un nom, pas un mot mal orthographié.**
@@ -17,11 +19,12 @@ import { CANONICAL_URL, IS_INDEXABLE } from "@/lib/config";
  * `WebSite` et `Organization` sont liés par `publisher` plutôt que répétés : deux entités qui
  * s'ignorent dans le même graphe se lisent comme deux marques.
  */
-export function SiteStructuredData() {
+export async function SiteStructuredData() {
   // Une prévisualisation ne se déclare pas : elle porterait le même `@id` que le site et
   // désignerait deux adresses pour une seule marque.
   if (!IS_INDEXABLE) return null;
 
+  const { t, locale } = await getTranslator();
   const graph = {
     "@context": "https://schema.org",
     "@graph": [
@@ -32,8 +35,7 @@ export function SiteStructuredData() {
         url: `${CANONICAL_URL}/`,
         logo: `${CANONICAL_URL}/icon-512.png`,
         email: "team@micabo.app",
-        description:
-          "Micabo transforme un cours en fiche et en flashcards, et les fait revenir par répétition espacée.",
+        description: t("landing.schemaDescription"),
       },
       {
         "@type": "WebSite",
@@ -43,7 +45,7 @@ export function SiteStructuredData() {
         name: "micabo",
         alternateName: ["Micabo", "micabo.app"],
         url: `${CANONICAL_URL}/`,
-        inLanguage: "fr-FR",
+        inLanguage: UI_LOCALE_META[locale].bcp47,
         publisher: { "@id": `${CANONICAL_URL}/#organization` },
       },
       {
@@ -54,8 +56,7 @@ export function SiteStructuredData() {
         operatingSystem: "Web, iOS",
         url: `${CANONICAL_URL}/`,
         publisher: { "@id": `${CANONICAL_URL}/#organization` },
-        description:
-          "Dépose un polycopié, une photo de tes notes ou une vidéo de cours. Micabo en écrit la fiche, en tire les cartes, et les fait revenir avant que tu l'oublies.",
+        description: t("landing.metaDescription"),
       },
     ],
   };

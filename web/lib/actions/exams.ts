@@ -14,6 +14,7 @@ import {
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
+import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -59,15 +60,15 @@ export async function saveExam(input: {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const name = input.name.trim() || "Examen";
   const examDate = input.examDate;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(examDate)) {
-    return { status: "error", message: "Date inconnue." };
+    return { status: "error", message: await actionT("app.errors.unknownDate") };
   }
   if (input.courseIds.length === 0) {
-    return { status: "error", message: "Choisis au moins un cours." };
+    return { status: "error", message: await actionT("app.errors.pickACourse") };
   }
   const targetScore = clampTargetScore(
     input.targetScore ?? targetScoreFromIntensity(asIntensity(input.intensity ?? "standard")),
@@ -80,7 +81,7 @@ export async function saveExam(input: {
   const day = new Date(`${examDate}T12:00:00`);
   day.setHours(0, 0, 0, 0);
   if (day.getTime() < today.getTime()) {
-    return { status: "error", message: "On ne planifie pas un examen déjà passé." };
+    return { status: "error", message: await actionT("app.errors.examInPast") };
   }
 
   if (input.id) {
@@ -92,7 +93,7 @@ export async function saveExam(input: {
       .is("deleted_at", null)
       .maybeSingle();
 
-    if (!existing) return { status: "error", message: "Examen introuvable." };
+    if (!existing) return { status: "error", message: await actionT("app.errors.examMissing") };
 
     if (existing.is_planned) {
       await restoreBackup(
@@ -185,7 +186,7 @@ export async function deleteExam(examId: string): Promise<ExamWriteResult> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const { data: existing } = await supabase
     .from("exams")
@@ -195,7 +196,7 @@ export async function deleteExam(examId: string): Promise<ExamWriteResult> {
     .is("deleted_at", null)
     .maybeSingle();
 
-  if (!existing) return { status: "error", message: "Examen introuvable." };
+  if (!existing) return { status: "error", message: await actionT("app.errors.examMissing") };
 
   if (existing.is_planned) {
     await restoreBackup(

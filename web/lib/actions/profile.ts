@@ -16,6 +16,7 @@ import {
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
+import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -49,7 +50,7 @@ export async function updateSettings(input: {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const patch: Record<string, unknown> = {};
 
@@ -90,7 +91,7 @@ export async function updateSettings(input: {
 
   if (input.sheetLanguage !== undefined) {
     if (!isContentLanguage(input.sheetLanguage)) {
-      return { status: "error", message: "Langue inconnue." };
+      return { status: "error", message: await actionT("app.errors.unknownLanguage") };
     }
     patch.sheet_language = input.sheetLanguage;
   }
@@ -121,13 +122,13 @@ export async function setCourseVisibility(
   courseId: string,
   visibility: CourseVisibility,
 ): Promise<SavedSettings> {
-  if (!isChoosableVisibility(visibility)) return { status: "error", message: "Réglage inconnu." };
+  if (!isChoosableVisibility(visibility)) return { status: "error", message: await actionT("app.errors.unknownSetting") };
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   // Le filtre `user_id` est écrit même si le cloisonnement le ferait : une requête qui compte sur
   // la politique pour ne pas toucher les lignes des autres est une requête qu'une politique
@@ -157,7 +158,7 @@ export async function deleteAccount(): Promise<SavedSettings> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const { error } = await supabase.rpc("delete_own_account");
   if (error) return { status: "error", message: error.message };
@@ -183,7 +184,7 @@ export async function exportAccountData(): Promise<AccountExport> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const [
     profile,

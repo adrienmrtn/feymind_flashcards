@@ -1,4 +1,13 @@
-import { ReviewRating } from "@micabo/core";
+import {
+  DETERMINISTIC_CONFIG,
+  REVIEW_RATINGS,
+  ReviewRating,
+  clampedToDeadline,
+  delaySeconds,
+  schedule,
+  type CardSnapshot,
+  type SchedulerConfig,
+} from "@micabo/core";
 
 import type { makeTranslator } from "./translate";
 import type { UiLocale } from "./locales";
@@ -113,4 +122,49 @@ export function copyVisibilityDetail(
   value: "public" | "friends" | "private",
 ): string {
   return t(`app.course.visibility.${value}Detail`);
+}
+
+export function formatDelayLocalized(t: Translator, seconds: number): string {
+  const minutes = seconds / 60;
+  if (minutes < 1) return t("app.common.delayUnderMin");
+  if (minutes < 60) return t("app.common.delayMinutes", { n: Math.round(minutes) });
+
+  const hours = minutes / 60;
+  if (hours < 24) return t("app.common.delayHours", { n: Math.round(hours) });
+
+  const days = hours / 24;
+  if (days < 31) return t("app.common.delayDays", { n: Math.round(days) });
+
+  const months = days / 30.4;
+  if (months < 12) return t("app.common.delayMonths", { n: Math.round(months) });
+
+  const years = days / 365;
+  const value = Math.round(years * 10) / 10;
+  return t("app.common.delayYears", { n: value });
+}
+
+export function previewLabelsLocalized(
+  t: Translator,
+  snapshot: CardSnapshot,
+  options: {
+    now?: Date;
+    config?: SchedulerConfig;
+    deadline?: Date | null;
+    dueDate?: Date | string | null;
+  } = {},
+): Record<ReviewRating, string> {
+  const now = options.now ?? new Date();
+  const config = options.config ?? DETERMINISTIC_CONFIG;
+  const labels = {} as Record<ReviewRating, string>;
+
+  for (const rating of REVIEW_RATINGS) {
+    const outcome = clampedToDeadline(
+      schedule(snapshot, rating, { now, config, dueDate: options.dueDate ?? snapshot.dueDate }),
+      options.deadline,
+      now,
+    );
+    labels[rating] = formatDelayLocalized(t, delaySeconds(outcome, now));
+  }
+
+  return labels;
 }
