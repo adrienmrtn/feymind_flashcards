@@ -53,7 +53,7 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
               author ? displayUsername(author.username) : null,
               cards.length > 0 ? copyCards(t, cards.length) : null,
               t("copy.audience", { views: course.viewCount, adopts: course.adoptCount }),
-            ]}
+            ]
               .filter(Boolean)
               .join(" · ")}
           </p>
