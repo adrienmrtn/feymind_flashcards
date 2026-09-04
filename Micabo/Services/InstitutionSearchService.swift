@@ -13,12 +13,13 @@ actor InstitutionSearchService {
 
     private lazy var localCatalog: [Institution] = Self.loadLocalCatalog()
 
-    func suggestions(matching query: String, limit: Int = 12) async -> [Institution] {
+    func suggestions(matching query: String, country: String? = nil, limit: Int = 12) async -> [Institution] {
         let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard needle.count >= 2 else { return [] }
 
-        let local = Self.filter(localCatalog, matching: needle, limit: limit)
-        let remote = await searchRemote(matching: needle, limit: limit)
+        let iso = Self.normalizedCountry(country)
+        let local = Self.filter(localCatalog, matching: needle, country: iso, limit: limit)
+        let remote = await searchRemote(matching: needle, country: iso, limit: limit)
         return Self.merge(local: local, remote: remote, limit: limit)
     }
 
@@ -39,18 +40,29 @@ actor InstitutionSearchService {
         return decoded
     }
 
-    private static func filter(_ catalog: [Institution], matching needle: String, limit: Int) -> [Institution] {
+    private static func normalizedCountry(_ country: String?) -> String? {
+        guard let trimmed = country?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else {
+            return nil
+        }
+        let upper = trimmed.uppercased()
+        return upper == "UK" ? "GB" : upper
+    }
+
+    private static func filter(
+        _ catalog: [Institution],
+        matching needle: String,
+        country: String?,
+        limit: Int
+    ) -> [Institution] {
         let query = needle.lowercased()
-        let scored: [(Institution, Double)] = catalog.compactMap { institution in
+        let scoped = country.map { iso in catalog.filter { $0.countryCode == iso } } ?? catalog
+        let scored: [(Institution, Double)] = scoped.compactMap { institution in
             let score = matchScore(institution, query: query)
             return score > 0 ? (institution, score) : nil
         }
         return scored
             .sorted { lhs, rhs in
                 if lhs.1 != rhs.1 { return lhs.1 > rhs.1 }
-                if (lhs.0.countryCode == "FR") != (rhs.0.countryCode == "FR") {
-                    return lhs.0.countryCode == "FR"
-                }
                 return lhs.0.name.count < rhs.0.name.count
             }
             .prefix(limit)
@@ -75,7 +87,7 @@ actor InstitutionSearchService {
 
     // MARK: - Remote
 
-    private func searchRemote(matching query: String, limit: Int) async -> [Institution] {
+    private func searchRemote(matching query: String, country: String?, limit: Int) async -> [Institution] {
         guard AppConfig.isConfigured,
               let base = URL(string: AppConfig.supabaseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))) else {
             return []
@@ -87,10 +99,14 @@ actor InstitutionSearchService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
         request.setValue("Bearer \(AppConfig.supabaseAnonKey)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: [
+        var payload: [String: Any] = [
             "query": query,
             "result_limit": limit
-        ])
+        ]
+        if let country {
+            payload["country"] = country
+        }
+        request.httpBody = try? JSONSerialization.data(withJSONObject: payload)
 
         do {
             let (data, response) = try await session.data(for: request)

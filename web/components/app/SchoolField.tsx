@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { ThinkingOrb } from "thinking-orbs";
 
+import { institutionCountryIso } from "@micabo/core";
+
 import { useI18n } from "@/lib/i18n/client";
+import { institutionKindLabel } from "@/lib/i18n/institution";
 import { createClient } from "@/lib/supabase/client";
 
 interface Suggestion {
@@ -22,10 +25,12 @@ interface Suggestion {
 export function SchoolField({
   initialName,
   initialId,
+  countryCode,
   onChange,
 }: {
   initialName: string;
   initialId: string | null;
+  countryCode?: string | null;
   onChange: (next: { name: string; id: string | null }) => void;
 }) {
   const { t } = useI18n();
@@ -52,12 +57,14 @@ export function SchoolField({
 
     const token = ++latest.current;
     setSearching(true);
+    const country = institutionCountryIso(countryCode);
 
     const timer = window.setTimeout(async () => {
       const supabase = createClient();
       const { data } = await supabase.rpc("search_institutions", {
         query: needle,
         result_limit: 8,
+        country,
       });
 
       if (token !== latest.current) return;
@@ -66,7 +73,7 @@ export function SchoolField({
     }, 220);
 
     return () => window.clearTimeout(timer);
-  }, [query, typing]);
+  }, [query, typing, countryCode]);
 
   return (
     <div>
@@ -121,7 +128,7 @@ export function SchoolField({
                   {item.name}
                 </span>
                 <span className="text-[11px] uppercase tracking-caps text-ink-tertiary">
-                  {item.kind}
+                  {institutionKindLabel(item.kind, t)}
                 </span>
               </button>
             );

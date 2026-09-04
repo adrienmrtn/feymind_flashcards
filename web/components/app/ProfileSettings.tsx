@@ -39,6 +39,7 @@ export function ProfileSettings({
   initialSubjects,
   initialSchool,
   initialSchoolId,
+  initialCountry,
 }: {
   heading?: string;
   initialName: string;
@@ -48,6 +49,7 @@ export function ProfileSettings({
   initialSubjects: string[];
   initialSchool: string;
   initialSchoolId: string | null;
+  initialCountry?: string | null;
 }) {
   const { locale, t } = useI18n();
   const [name, setName] = useState(initialName);
@@ -142,6 +144,7 @@ export function ProfileSettings({
         <SchoolField
           initialName={initialSchool}
           initialId={initialSchoolId}
+          countryCode={initialCountry}
           onChange={(next) =>
             save({
               institutionName: next.name || null,

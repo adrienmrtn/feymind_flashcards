@@ -3,8 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { ThinkingOrb } from "thinking-orbs";
 
+import { institutionCountryIso } from "@micabo/core";
+
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
 import { useI18n } from "@/lib/i18n/client";
+import { institutionKindLabel } from "@/lib/i18n/institution";
 import { useOnboarding } from "@/lib/onboarding/store";
 import { createClient } from "@/lib/supabase/client";
 
@@ -52,11 +55,13 @@ export default function SchoolStep() {
     const token = ++latest.current;
     setSearching(true);
 
+    const country = institutionCountryIso(answers.country);
     const timer = window.setTimeout(async () => {
       const supabase = createClient();
       const { data } = await supabase.rpc("search_institutions", {
         query: needle,
         result_limit: 8,
+        country,
       });
 
       if (token !== latest.current) return;
@@ -65,7 +70,7 @@ export default function SchoolStep() {
     }, 220);
 
     return () => window.clearTimeout(timer);
-  }, [query]);
+  }, [query, answers.country]);
 
   return (
     <Scaffold
@@ -131,7 +136,7 @@ export default function SchoolStep() {
                     {item.name}
                   </span>
                   <span className="block text-[12px] uppercase tracking-caps text-ink-tertiary">
-                    {item.kind}
+                    {institutionKindLabel(item.kind, t)}
                   </span>
                 </span>
               </button>

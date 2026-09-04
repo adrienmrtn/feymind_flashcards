@@ -33,7 +33,7 @@ export default function CountryStep() {
 
 function CountryStepBody() {
   const { answers, set, ready } = useOnboarding();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [guessed, setGuessed] = useState<CountryCode | null>(null);
 
   function countryName(code: CountryCode, fallback: string) {
@@ -43,8 +43,8 @@ function CountryStepBody() {
   }
 
   useEffect(() => {
-    setGuessed(guessCountry(navigator.languages ?? [navigator.language]));
-  }, []);
+    setGuessed(guessCountry(navigator.languages ?? [navigator.language], locale));
+  }, [locale]);
 
   const selected = answers.country ?? null;
   const [typed, setTyped] = useState(answers.customCountry ?? "");

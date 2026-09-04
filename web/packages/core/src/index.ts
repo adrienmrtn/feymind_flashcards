@@ -225,6 +225,7 @@ export {
   flagFor,
   isoFromFlagEmoji,
   guessCountry,
+  institutionCountryIso,
   isContentLanguage,
   languageFor,
   languageLabel,
