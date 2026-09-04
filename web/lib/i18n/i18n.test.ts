@@ -111,6 +111,28 @@ describe("catalogues", () => {
     expect(lookup(CATALOGS.tr as unknown as MessageTree, "legal.privacy.intro1")).toContain("[[site]]");
   });
 
+  it("ne laisse plus le chrome signalé en français hors fr", () => {
+    const leftovers = [
+      "app.brand.tagline",
+      "demo.card1Kind",
+      "demo.card1Front",
+      "demo.card1Back",
+      "demo.card1Note",
+      "app.course.visibility.label",
+      "app.course.lockedTitle",
+      "app.workshop.emptyTitle",
+      "app.workshop.emptyHint",
+    ] as const;
+    const french = leftovers.map((key) => lookup(fr as unknown as MessageTree, key));
+    for (const locale of UI_LOCALES.filter((item) => item !== "fr")) {
+      for (const [index, key] of leftovers.entries()) {
+        const value = lookup(CATALOGS[locale] as unknown as MessageTree, key);
+        expect(value, `${locale}:${key}`).not.toEqual(french[index]);
+        expect(value, `${locale}:${key}`).not.toMatch(/étudier|Recto verso|océans|évapor|Qui peut|Aucune carte|Génère-les|suite de la fiche/i);
+      }
+    }
+  });
+
   it("traduit le paywall et le mode examen en turc", () => {
     const t = makeTranslator("tr", CATALOGS.tr as unknown as MessageTree, fr as unknown as MessageTree);
     expect(t("app.paywall.yearly")).toBe("Yıllık");
