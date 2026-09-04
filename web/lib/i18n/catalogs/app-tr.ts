@@ -461,6 +461,12 @@ export const appTr = {
       idea: "Fikir",
     },
   },
+  institution: {
+    university: "Üniversite",
+    grandeEcole: "Grande école",
+    lycee: "Lise",
+    other: "Kurum",
+  },
   import: {
     lead: {
       canImport: "Önce oku, sonra özeti yaz.",
@@ -510,6 +516,7 @@ export const appTr = {
     seeVideo: "Videoyu gör",
     sheetLength: "Fişin uzunluğu",
     sheetLanguage: "Fişin dili",
+    documentLanguage: "Belgenin dili",
     instructionsLabel: "Özel yönergeler",
     instructionsHint: "Serbest bir not: Micabo fişi yazarken onu izler.",
     autoCaptions: "Otomatik altyazı · {name}",

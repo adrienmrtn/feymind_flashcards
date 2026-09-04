@@ -17,6 +17,7 @@ import {
   flagFor,
   isoFromFlagEmoji,
   guessCountry,
+  institutionCountryIso,
   languageFor,
   sheetLanguage,
 } from "../src/onboarding/countries";
@@ -217,12 +218,37 @@ describe("le pays deviné depuis la locale", () => {
     expect(guessCountry(["fr-CA", "en-US"])).toBe("ca");
   });
 
-  it("ignore une locale sans région et retombe sur le défaut", () => {
+  it("suit la langue d'interface choisie, même si le navigateur reste français", () => {
+    expect(guessCountry(["fr-FR", "fr"], "de")).toBe("de");
+    expect(guessCountry(["fr-FR"], "es")).toBe("es");
+    expect(guessCountry(["fr-FR"], "tr")).toBe("tr");
+    // Le français d'interface est aussi le défaut : il ne recouvre pas une région claire.
+    expect(guessCountry(["de-DE"], "fr")).toBe("de");
+  });
+
+  it("lit une langue seule quand il n'y a pas de région", () => {
+    expect(guessCountry(["de"])).toBe("de");
+    expect(guessCountry(["es"])).toBe("es");
+    expect(guessCountry(["tr"])).toBe("tr");
     expect(guessCountry(["fr"])).toBe(FALLBACK_COUNTRY);
+  });
+
+  it("ignore une locale sans région utile et retombe sur le défaut", () => {
     expect(guessCountry([])).toBe(FALLBACK_COUNTRY);
     // Un pays qu'on ne connaît pas n'est pas « Ailleurs » par défaut : on préfère la France, et
     // la question reste posée de toute façon.
     expect(guessCountry(["ja-JP"])).toBe(FALLBACK_COUNTRY);
+  });
+});
+
+describe("le code pays de l'annuaire", () => {
+  it("traduit le parcours vers l'ISO de la table", () => {
+    expect(institutionCountryIso("fr")).toBe("FR");
+    expect(institutionCountryIso("uk")).toBe("GB");
+    expect(institutionCountryIso("de")).toBe("DE");
+    expect(institutionCountryIso("UK")).toBe("GB");
+    expect(institutionCountryIso("other")).toBeNull();
+    expect(institutionCountryIso(null)).toBeNull();
   });
 });
 

@@ -229,7 +229,8 @@ struct SchoolStepView: View {
         searchTask = Task {
             try? await Task.sleep(nanoseconds: 280_000_000)
             guard !Task.isCancelled else { return }
-            let results = await InstitutionSearchService.shared.suggestions(matching: needle)
+            let country = model.country.institutionCountryIso ?? model.customCountry?.code
+            let results = await InstitutionSearchService.shared.suggestions(matching: needle, country: country)
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 withAnimation(.easeOut(duration: 0.2)) {

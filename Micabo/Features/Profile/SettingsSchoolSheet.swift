@@ -111,7 +111,9 @@ struct SettingsSchoolSheet: View {
         searchTask = Task {
             try? await Task.sleep(nanoseconds: 280_000_000)
             guard !Task.isCancelled else { return }
-            let results = await InstitutionSearchService.shared.suggestions(matching: needle)
+            let country = OnboardingPreferences.schoolingCountry.institutionCountryIso
+                ?? OnboardingPreferences.customCountry?.code
+            let results = await InstitutionSearchService.shared.suggestions(matching: needle, country: country)
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 suggestions = results

@@ -218,6 +218,15 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
     /// Ce que Micabo suppose quand la question n'a pas été posée : c'est le pays de la
     /// grande majorité des utilisateurs, et le seul que l'app connaissait avant.
     static let fallback = SchoolingCountry.fr
+
+    /// Code ISO de l'annuaire `institutions`. Le Royaume-Uni s'y écrit `GB`, pas `UK`.
+    var institutionCountryIso: String? {
+        switch self {
+        case .other: nil
+        case .uk: "GB"
+        default: rawValue.uppercased()
+        }
+    }
 }
 
 /// Rapport de l'étudiant à l'oubli.

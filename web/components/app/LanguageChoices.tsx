@@ -39,7 +39,9 @@ export function LanguageChoices({
       >
         {GENERATION_LANGUAGES.map((code) => (
           <option key={code} value={code}>
-            {generationLanguageLabel(code)}
+            {code === SOURCE_LANGUAGE
+              ? t("app.import.documentLanguage")
+              : generationLanguageLabel(code)}
           </option>
         ))}
       </select>

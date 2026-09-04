@@ -461,6 +461,12 @@ export const appEs = {
       idea: "Idea",
     },
   },
+  institution: {
+    university: "Universidad",
+    grandeEcole: "Grande école",
+    lycee: "Instituto",
+    other: "Centro",
+  },
   import: {
     lead: {
       canImport: "Relee primero, luego escribe la ficha.",
@@ -510,6 +516,7 @@ export const appEs = {
     seeVideo: "Ver el vídeo",
     sheetLength: "Longitud de la ficha",
     sheetLanguage: "Idioma de la ficha",
+    documentLanguage: "Idioma del documento",
     instructionsLabel: "Instrucciones particulares",
     instructionsHint: "Una consigna libre: Micabo la sigue al escribir la ficha.",
     autoCaptions: "Subtítulos automáticos · {name}",

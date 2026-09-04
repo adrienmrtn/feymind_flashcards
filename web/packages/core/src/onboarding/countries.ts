@@ -208,13 +208,43 @@ export function isoFromFlagEmoji(emoji: string): string | null {
 }
 
 /**
- * Le pays deviné depuis la locale du navigateur, pour le poser **en évidence**.
+ * Le code ISO de l'annuaire `institutions`.
  *
- * C'est une suggestion, jamais une réponse : la question reste posée et se répond d'un appui. Une
- * locale dit la langue du navigateur, pas le pays où l'on étudie - un Belge en français et un
- * Français ont la même, et c'est justement pour ça que la région compte plus que la langue.
+ * La table parle `FR` / `GB` / `DE`. Le parcours, lui, dit `fr` / `uk` / `de`.
+ * Sans cette traduction, une recherche allemande continuerait à ranger la France
+ * devant, et le Royaume-Uni ne trouverait rien.
+ *
+ * `other` et le vide ne filtrent pas : on n'invente pas un pays.
  */
-export function guessCountry(locales: readonly string[]): CountryCode {
+export function institutionCountryIso(code: string | null | undefined): string | null {
+  const trimmed = code?.trim();
+  if (!trimmed || trimmed.toLowerCase() === "other") return null;
+
+  const known = COUNTRIES.find((item) => item.code === trimmed.toLowerCase());
+  if (known) return known.iso ? known.iso.toUpperCase() : null;
+
+  if (!/^[a-z]{2}$/i.test(trimmed)) return null;
+  const upper = trimmed.toUpperCase();
+  return upper === "UK" ? "GB" : upper;
+}
+
+/**
+ * Le pays deviné, pour le poser **en évidence**.
+ *
+ * C'est une suggestion, jamais une réponse : la question reste posée et se répond d'un appui.
+ *
+ * La langue d'interface **choisie** (allemand, espagnol, turc) gagne sur le navigateur : un
+ * Allemand qui a basculé le site en Deutsch, le navigateur resté en `fr-FR`, ne doit plus voir
+ * la France marquée « détectée ». Le français d'interface, lui, ne force rien - c'est aussi le
+ * défaut, et la région du navigateur dit alors mieux où l'on étudie (`fr-BE` → Belgique).
+ */
+export function guessCountry(
+  locales: readonly string[],
+  languageHint?: string | null,
+): CountryCode {
+  const hint = languageHint?.trim().toLowerCase();
+  if (hint === "de" || hint === "es" || hint === "tr") return hint;
+
   for (const locale of locales) {
     const region = regionOf(locale);
     if (!region) continue;
@@ -223,6 +253,14 @@ export function guessCountry(locales: readonly string[]): CountryCode {
     const match = COUNTRIES.find((item) => item.code === region);
     if (match) return match.code;
   }
+
+  for (const locale of locales) {
+    const language = languageOf(locale);
+    if (!language || language === "en") continue;
+    const match = COUNTRIES.find((item) => item.code === language);
+    if (match) return match.code;
+  }
+
   return FALLBACK_COUNTRY;
 }
 
@@ -230,4 +268,9 @@ function regionOf(locale: string): string | null {
   const parts = locale.split("-");
   const last = parts[parts.length - 1];
   return last && last.length === 2 ? last.toLowerCase() : null;
+}
+
+function languageOf(locale: string): string | null {
+  const primary = locale.split("-")[0]?.toLowerCase();
+  return primary && primary.length >= 2 && primary.length <= 3 ? primary : null;
 }

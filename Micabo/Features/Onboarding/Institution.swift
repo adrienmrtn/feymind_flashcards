@@ -7,11 +7,15 @@ enum InstitutionKind: String, Codable, Hashable {
     case other
 
     var label: String {
+        label(locale: .resolved())
+    }
+
+    func label(locale: UiLocale) -> String {
         switch self {
-        case .university: "Université"
-        case .grandeEcole: "Grande école"
-        case .lycee: "Lycée"
-        case .other: "Établissement"
+        case .university: L10n.t("app.institution.university", locale: locale)
+        case .grandeEcole: L10n.t("app.institution.grandeEcole", locale: locale)
+        case .lycee: L10n.t("app.institution.lycee", locale: locale)
+        case .other: L10n.t("app.institution.other", locale: locale)
         }
     }
 }

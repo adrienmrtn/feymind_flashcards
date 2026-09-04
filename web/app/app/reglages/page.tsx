@@ -74,6 +74,7 @@ export default async function SettingsPage() {
             initialSubjects={Array.isArray(profile?.subjects) ? profile.subjects : []}
             initialSchool={profile?.institution_name ?? ""}
             initialSchoolId={profile?.institution_id ?? null}
+            initialCountry={profile?.country_code}
           />
         </div>
 

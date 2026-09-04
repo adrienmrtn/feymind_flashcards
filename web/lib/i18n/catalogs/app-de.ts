@@ -461,6 +461,12 @@ export const appDe = {
       idea: "Idee",
     },
   },
+  institution: {
+    university: "Universität",
+    grandeEcole: "Grande école",
+    lycee: "Gymnasium",
+    other: "Einrichtung",
+  },
   import: {
     lead: {
       canImport: "Lies zuerst nach, dann schreib das Blatt.",
@@ -510,6 +516,7 @@ export const appDe = {
     seeVideo: "Video ansehen",
     sheetLength: "Länge des Blatts",
     sheetLanguage: "Sprache des Blatts",
+    documentLanguage: "Sprache des Dokuments",
     instructionsLabel: "Besondere Anweisungen",
     instructionsHint: "Ein freier Hinweis: Micabo folgt ihm beim Schreiben.",
     autoCaptions: "Automatische Untertitel · {name}",

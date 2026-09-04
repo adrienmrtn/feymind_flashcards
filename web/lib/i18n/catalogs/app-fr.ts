@@ -461,6 +461,12 @@ export const appFr = {
       idea: "Idée",
     },
   },
+  institution: {
+    university: "Université",
+    grandeEcole: "Grande école",
+    lycee: "Lycée",
+    other: "Établissement",
+  },
   import: {
     lead: {
       canImport: "Relis d'abord, puis écris la fiche.",
@@ -510,6 +516,7 @@ export const appFr = {
     seeVideo: "Voir la vidéo",
     sheetLength: "Longueur de la fiche",
     sheetLanguage: "Langue de la fiche",
+    documentLanguage: "Langue du document",
     instructionsLabel: "Instructions particulières",
     instructionsHint: "Un prompt libre : Micabo le suit en écrivant la fiche.",
     autoCaptions: "Sous-titres automatiques · {name}",

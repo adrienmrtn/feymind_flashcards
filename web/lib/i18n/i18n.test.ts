@@ -122,6 +122,9 @@ describe("catalogues", () => {
       "app.course.lockedTitle",
       "app.workshop.emptyTitle",
       "app.workshop.emptyHint",
+      "app.import.documentLanguage",
+      "app.institution.university",
+      "app.institution.lycee",
     ] as const;
     const french = leftovers.map((key) => lookup(fr as unknown as MessageTree, key));
     for (const locale of UI_LOCALES.filter((item) => item !== "fr")) {
