@@ -1,3 +1,7 @@
+"use client";
+
+import { useI18n } from "@/lib/i18n/client";
+
 /**
  * Schéma d'une carte à occlusion. La zone à trouver est couverte d'un cache à
  * l'accent au recto ; au verso le cache se lève et laisse un cadre.
@@ -14,6 +18,7 @@ export function OcclusionFigure({
   mask: { x: number; y: number; width: number; height: number };
   revealed: boolean;
 }) {
+  const { t } = useI18n();
   const left = `${clamp(mask.x) * 100}%`;
   const top = `${clamp(mask.y) * 100}%`;
   const width = `${Math.max(0.02, clamp(mask.width)) * 100}%`;
@@ -22,7 +27,7 @@ export function OcclusionFigure({
   return (
     <div
       className="relative inline-block max-h-[260px] overflow-hidden rounded-md"
-      aria-label={revealed ? "Schéma, zone révélée" : "Schéma, une zone est masquée"}
+      aria-label={revealed ? t("app.occlusion.ariaRevealed") : t("app.occlusion.ariaMasked")}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={image} alt="" className="block max-h-[260px] w-auto max-w-full" />

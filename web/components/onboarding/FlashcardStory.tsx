@@ -5,13 +5,13 @@ import { useMemo, useState } from "react";
 import {
   DETERMINISTIC_CONFIG,
   REVIEW_RATINGS,
-  REVIEW_RATING_LABELS,
   ReviewRating,
-  previewLabels,
 } from "@micabo/core";
 
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
-import { STORY_CARDS } from "@/components/onboarding/onboarding-cards";
+import { localizedStoryCards } from "@/components/onboarding/onboarding-cards";
+import { useI18n } from "@/lib/i18n/client";
+import { previewLabelsLocalized, reviewRatingLabel } from "@/lib/i18n/copy";
 
 /**
  * **Une vraie session, en petit.**
@@ -25,17 +25,20 @@ import { STORY_CARDS } from "@/components/onboarding/onboarding-cards";
  * montre ici.
  */
 export function FlashcardStory() {
+  const { t } = useI18n();
+  const cards = localizedStoryCards(t);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [picked, setPicked] = useState<number | null>(null);
 
-  const card = STORY_CARDS[Math.min(index, STORY_CARDS.length - 1)]!;
+  const card = cards[Math.min(index, cards.length - 1)]!;
 
   // La carte est neuve : ses délais sont donc ceux d'un premier passage, avec
   // les paliers d'apprentissage de l'app.
   const labels = useMemo(
     () =>
-      previewLabels(
+      previewLabelsLocalized(
+        t,
         {
           state: "new",
           intervalDays: 0,
@@ -47,13 +50,13 @@ export function FlashcardStory() {
         },
         { config: DETERMINISTIC_CONFIG },
       ),
-    [],
+    [t],
   );
 
   function next() {
     setRevealed(false);
     setPicked(null);
-    setIndex((current) => (current + 1) % STORY_CARDS.length);
+    setIndex((current) => (current + 1) % cards.length);
   }
 
   return (
@@ -64,7 +67,7 @@ export function FlashcardStory() {
             {card.kindLabel}
           </span>
           <span className="numeral text-[11.5px] text-ink-tertiary">
-            {index + 1} / {STORY_CARDS.length}
+            {index + 1} / {cards.length}
           </span>
         </div>
 
@@ -113,7 +116,9 @@ export function FlashcardStory() {
           </div>
         ) : card.hint ? (
           <details className="mt-3.5">
-            <summary className="cursor-pointer text-[12.5px] text-ink-tertiary">Un indice</summary>
+            <summary className="cursor-pointer text-[12.5px] text-ink-tertiary">
+              {t("onboarding.hint")}
+            </summary>
             <p className="mt-1.5 text-[13px] text-ink-secondary">{card.hint}</p>
           </details>
         ) : null}
@@ -130,7 +135,7 @@ export function FlashcardStory() {
                 className={`pressable rounded-button px-1 py-2.5 text-center shadow-[inset_0_0_0_1px_color-mix(in_srgb,currentColor_16%,transparent)] ${ratingTone(rating)}`}
               >
                 <span className="block text-[12px] font-semibold leading-tight">
-                  {REVIEW_RATING_LABELS[rating]}
+                  {reviewRatingLabel(t, rating)}
                 </span>
                 <span className="numeral mt-0.5 block text-[11px] opacity-70">
                   {labels[rating]}
@@ -144,12 +149,12 @@ export function FlashcardStory() {
             onClick={() => setRevealed(true)}
             className="pressable inline-flex h-11 w-full items-center justify-center rounded-button bg-accent text-[14.5px] font-semibold text-on-ink"
           >
-            Voir la réponse
+            {t("onboarding.revealAnswer")}
           </button>
         )}
 
         <p className="mt-2.5 text-center text-[11.5px] text-ink-tertiary">
-          {revealed ? "Tu te notes, Micabo choisit quand la carte revient." : "Essaie de répondre avant de retourner."}
+          {revealed ? t("onboarding.youRate") : t("onboarding.tryFirst")}
         </p>
       </div>
     </div>

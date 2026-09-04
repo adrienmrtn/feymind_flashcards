@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ThinkingOrb } from "thinking-orbs";
 
+import { useI18n } from "@/lib/i18n/client";
 import { createClient } from "@/lib/supabase/client";
 
 interface Suggestion {
@@ -27,6 +28,7 @@ export function SchoolField({
   initialId: string | null;
   onChange: (next: { name: string; id: string | null }) => void;
 }) {
+  const { t } = useI18n();
   const [query, setQuery] = useState(initialName);
   const [chosenId, setChosenId] = useState<string | null>(initialId);
   const [results, setResults] = useState<Suggestion[]>([]);
@@ -73,7 +75,7 @@ export function SchoolField({
           🏫
         </span>
         <label htmlFor="profile-school" className="sr-only">
-          Ton école
+          {t("app.settings.schoolSr")}
         </label>
         <input
           id="profile-school"
@@ -90,7 +92,7 @@ export function SchoolField({
             }
           }}
           onBlur={() => onChange({ name: query.trim(), id: chosenId })}
-          placeholder="Tape le nom de ton école…"
+          placeholder={t("app.settings.schoolPlaceholder")}
           className="h-12 min-w-0 flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
         />
         {searching ? <ThinkingOrb state="searching" size={20} /> : null}
@@ -127,11 +129,11 @@ export function SchoolField({
         </div>
       ) : typing && query.trim().length < 2 ? (
         <p className="mt-2 text-[12.5px] text-ink-tertiary">
-          Encore une lettre ou deux pour voir les établissements.
+          {t("app.settings.schoolTypeMore")}
         </p>
       ) : !typing ? (
         <p className="mt-2 text-[12.5px] text-ink-tertiary">
-          Tape pour chercher ton établissement.
+          {t("app.settings.schoolSearchHint")}
         </p>
       ) : null}
     </div>

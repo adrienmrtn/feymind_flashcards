@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { examStoryFor, isoFromFlagEmoji, subjectEmoji, type ExamStory as Story } from "@micabo/core";
 
 import { Flag } from "@/components/onboarding/Flag";
+import { useI18n } from "@/lib/i18n/client";
 import { useOnboarding } from "@/lib/onboarding/store";
 
 /**
@@ -103,12 +104,17 @@ function ExamCard({ story }: { story: Story }) {
 }
 
 function ReviewBeat({ subject }: { subject: string }) {
+  const { t } = useI18n();
   return (
     <div className="exam-beat mt-4 rounded-group bg-surface px-4 py-4 paper">
-      <p className="eyebrow text-ink-tertiary">⚡ Révision</p>
+      <p className="eyebrow text-ink-tertiary">⚡ {t("onboarding.examReviewEyebrow")}</p>
       <div className="mt-3 space-y-2">
-        <MiniCard front={`Notion clé · ${subject}`} back="Revoir demain" done />
-        <MiniCard front="Deuxième passage" back="Dans 4 jours" done />
+        <MiniCard
+          front={t("onboarding.examKeyNotion", { subject })}
+          back={t("onboarding.examReviewTomorrow")}
+          done
+        />
+        <MiniCard front={t("onboarding.examSecondPass")} back={t("onboarding.examInFourDays")} done />
       </div>
       <div className="mt-3 h-1.5 overflow-hidden rounded-pill bg-progress-track">
         <div className="exam-fill h-full rounded-pill bg-progress" />

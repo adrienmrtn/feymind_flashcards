@@ -9,6 +9,7 @@ import {
   type FeedbackKind,
 } from "@/lib/feedback";
 import { currentUser } from "@/lib/data/user";
+import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
 export interface FeedbackSendResult {
@@ -22,14 +23,14 @@ export async function sendFeedback(
   source: "web" | "ios" = "web",
 ): Promise<FeedbackSendResult> {
   const user = await currentUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
   if (!isFeedbackKind(kind)) {
-    return { status: "invalid", message: "Dis s'il s'agit d'un bug ou d'une idée." };
+    return { status: "invalid", message: await actionT("app.errors.feedbackKind") };
   }
 
   const cleaned = cleanFeedbackMessage(message);
   if (!cleaned) {
-    return { status: "invalid", message: "Écris un message." };
+    return { status: "invalid", message: await actionT("app.errors.writeMessage") };
   }
 
   const supabase = await createClient();
@@ -41,7 +42,7 @@ export async function sendFeedback(
   });
 
   if (!error) {
-    return { status: "ok", message: "C'est noté." };
+    return { status: "ok", message: await actionT("app.errors.noted") };
   }
 
   if (error.code === "42501" || /feedback_today_count|row-level security/i.test(error.message)) {
@@ -51,13 +52,13 @@ export async function sendFeedback(
     };
   }
 
-  return { status: "error", message: "Ça n'est pas passé. Réessaie dans un instant." };
+  return { status: "error", message: await actionT("app.errors.tryAgain") };
 }
 
 export async function markFeedbackRead(id: string): Promise<{ status: "ok" | "error"; message?: string }> {
   const user = await currentUser();
   if (!canReadInbox(user?.email)) {
-    return { status: "error", message: "Cette page n'est pas pour ce compte." };
+    return { status: "error", message: await actionT("app.errors.wrongAccount") };
   }
 
   const supabase = await createClient();
@@ -67,7 +68,7 @@ export async function markFeedbackRead(id: string): Promise<{ status: "ok" | "er
     .eq("id", id)
     .is("read_at", null);
 
-  if (error) return { status: "error", message: "Impossible de marquer comme lu." };
+  if (error) return { status: "error", message: await actionT("app.errors.markReadFailed") };
   revalidatePath("/app/retours");
   return { status: "ok" };
 }

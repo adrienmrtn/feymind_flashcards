@@ -1,5 +1,6 @@
 "use server";
 
+import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -32,24 +33,24 @@ export async function joinWaitlist(
   const cleaned = email.trim().toLowerCase();
 
   if (!EMAIL_SHAPE.test(cleaned) || cleaned.length < 6 || cleaned.length > 254) {
-    return { status: "invalid", message: "Cette adresse n'a pas l'air d'en être une." };
+    return { status: "invalid", message: await actionT("app.errors.badEmail") };
   }
 
   const supabase = await createClient();
   const { error } = await supabase.from("waitlist").insert({ email: cleaned, source });
 
   if (!error) {
-    return { status: "ok", message: "C'est noté. On te prévient dès que Micabo ouvre." };
+    return { status: "ok", message: await actionT("app.errors.waitlistNoted") };
   }
 
   // 23505 : violation d'unicité. Une adresse déjà inscrite n'est pas une erreur pour la
   // personne qui la retape - elle est déjà sur la liste, et c'est ce qu'elle voulait.
   if (error.code === "23505") {
-    return { status: "already", message: "Tu y es déjà. On te prévient à l'ouverture." };
+    return { status: "already", message: await actionT("app.errors.waitlistAlready") };
   }
 
   return {
     status: "error",
-    message: "Ça n'est pas passé. Réessaie dans un instant.",
+    message: await actionT("app.errors.tryAgain"),
   };
 }

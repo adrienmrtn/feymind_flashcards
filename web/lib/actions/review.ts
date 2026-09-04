@@ -15,6 +15,7 @@ import {
 
 import { revalidateUserData } from "@/lib/data/cache";
 import { readEntitlement } from "@/lib/data/entitlement";
+import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -48,13 +49,13 @@ export async function gradeCard(input: {
   snapshot: CardSnapshot;
 }): Promise<GradeResult> {
   const rating = asRating(input.rating);
-  if (!rating) return { status: "error", message: "Note inconnue." };
+  if (!rating) return { status: "error", message: await actionT("app.errors.unknownRating") };
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Session expirée." };
+  if (!user) return { status: "error", message: await actionT("app.errors.sessionExpired") };
 
   const right = await readEntitlement();
   if (!right.isPro) {

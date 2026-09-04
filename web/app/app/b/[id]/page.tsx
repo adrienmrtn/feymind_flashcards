@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { courseAccent, courseAudienceLabel, displayUsername, resolveEmoji } from "@micabo/core";
+import { courseAccent, displayUsername, resolveEmoji } from "@micabo/core";
 
 import { AdoptCourse } from "@/components/app/AdoptCourse";
 import { SharedCardsPreview } from "@/components/app/SharedCardsPreview";
@@ -12,6 +12,9 @@ import {
   getSharedCourse,
   listSharedCards,
 } from "@/lib/data/social";
+import { copyCards } from "@/lib/i18n/copy";
+import { getTranslator } from "@/lib/i18n/server";
+import { displaySubject } from "@/lib/i18n/subject-display";
 
 /**
  * La fiche de quelqu'un d'autre, en lecture, avec un bouton pour la reprendre.
@@ -24,7 +27,8 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
   const course = await getSharedCourse(id);
   if (!course) notFound();
 
-  const [author, alreadyId, cards] = await Promise.all([
+  const [{ t, locale }, author, alreadyId, cards] = await Promise.all([
+    getTranslator(),
     getDirectoryById(course.userId),
     findAdoptedCourse(course.title),
     listSharedCards(course.id),
@@ -45,11 +49,11 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
         <div className="min-w-0 flex-1">
           <p className="eyebrow text-ink-tertiary">
             {[
-              course.subject,
+              course.subject ? displaySubject(course.subject, locale) : null,
               author ? displayUsername(author.username) : null,
-              cards.length > 0 ? `${cards.length} carte${cards.length > 1 ? "s" : ""}` : null,
-              courseAudienceLabel(course.viewCount, course.adoptCount),
-            ]
+              cards.length > 0 ? copyCards(t, cards.length) : null,
+              t("copy.audience", { views: course.viewCount, adopts: course.adoptCount }),
+            ]}
               .filter(Boolean)
               .join(" · ")}
           </p>
@@ -67,8 +71,8 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
         <AdoptCourse courseId={course.id} alreadyId={alreadyId} />
         <p className="mt-3 text-center text-[12.5px] text-ink-tertiary">
           {cards.length > 0
-            ? "La fiche et les cartes deviennent les tiennes. Tu les révises à zéro."
-            : "La fiche devient la tienne."}
+            ? t("app.shared.adoptHintWithCards")
+            : t("app.shared.adoptHintSheet")}
         </p>
       </div>
 
@@ -77,7 +81,7 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
           <SheetBlocks blocks={course.blocks} tint={tint} />
         ) : (
           <p className="rounded-group bg-caution-soft px-5 py-4 text-[14px] text-ink-reading">
-            Cette fiche n&apos;est plus lisible.
+            {t("app.shared.unreadable")}
           </p>
         )}
       </div>
@@ -91,7 +95,9 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
           href={(author?.username ? `/app/u/${author.username}` : "/app/amis") as never}
           className="underline-draw"
         >
-          {author?.username ? `Retour à @${author.username}` : "Retour aux amis"}
+          {author?.username
+            ? t("app.shared.backToUser", { username: author.username })
+            : t("app.shared.backToFriends")}
         </Link>
       </p>
     </article>

@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 
 import {
-  USERNAME_MESSAGES,
   displayUsername,
   normalizeSheet,
   resolveEmoji,
@@ -14,6 +13,7 @@ import {
 import { revalidateUserData } from "@/lib/data/cache";
 import { searchDirectory } from "@/lib/data/social";
 import type { DirectoryPerson } from "@/lib/social";
+import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -30,13 +30,21 @@ export async function searchPeople(query: string): Promise<DirectoryPerson[]> {
 
 export async function setUsername(raw: string): Promise<SocialResult> {
   const parsed = validateUsername(raw);
-  if (!parsed.ok) return { status: "error", message: USERNAME_MESSAGES[parsed.problem] };
+  if (!parsed.ok) {
+    const key = {
+      empty: "app.errors.usernameEmpty",
+      tooShort: "app.errors.usernameTooShort",
+      tooLong: "app.errors.usernameTooLong",
+      invalid: "app.errors.usernameInvalid",
+    }[parsed.problem];
+    return { status: "error", message: await actionT(key) };
+  }
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   // Le nom part **seul**, sans le reste du profil : CloudSync envoie le profil
   // entier, et un appareil en retard écraserait le @ qu'on vient de changer ici.
@@ -65,8 +73,8 @@ export async function requestFriend(personId: string): Promise<SocialResult> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
-  if (personId === user.id) return { status: "error", message: "C'est toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
+  if (personId === user.id) return { status: "error", message: await actionT("app.errors.thatsYou") };
 
   const { data: incoming } = await supabase
     .from("friendships")
@@ -85,7 +93,7 @@ export async function requestFriend(personId: string): Promise<SocialResult> {
   });
 
   if (error) {
-    if (error.code === "23505") return { status: "error", message: "Cette demande existe déjà." };
+    if (error.code === "23505") return { status: "error", message: await actionT("app.errors.requestExists") };
     return { status: "error", message: error.message };
   }
 
@@ -98,7 +106,7 @@ export async function acceptFriend(personId: string): Promise<SocialResult> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const { error } = await supabase
     .from("friendships")
@@ -117,7 +125,7 @@ export async function removeFriend(personId: string): Promise<SocialResult> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const { error } = await supabase
     .from("friendships")
@@ -137,7 +145,7 @@ export async function adoptSharedCourse(courseId: string): Promise<SocialResult>
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: "Connecte-toi." };
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
   const { data: shared } = await supabase
     .from("courses")
@@ -150,7 +158,7 @@ export async function adoptSharedCourse(courseId: string): Promise<SocialResult>
     .is("deleted_at", null)
     .maybeSingle();
 
-  if (!shared) return { status: "error", message: "Ce cours n'est plus partagé." };
+  if (!shared) return { status: "error", message: await actionT("app.errors.courseUnshared") };
 
   const title = (shared.title as string)?.trim() || "Cours repris";
 

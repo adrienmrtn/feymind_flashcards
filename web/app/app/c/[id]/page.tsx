@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { courseAccent, courseAudienceLabel, entitlement, resolveEmoji } from "@micabo/core";
+import { courseAccent, entitlement, resolveEmoji } from "@micabo/core";
 
 import { GenerateCardsCta } from "@/components/app/GenerateCardsCta";
 import { LockedSheetTail } from "@/components/app/LockedSheetTail";
@@ -10,6 +10,9 @@ import { SheetReader } from "@/components/app/SheetReader";
 import { VisibilityPicker } from "@/components/app/VisibilityPicker";
 import { getCourse, listCards } from "@/lib/data/courses";
 import { readEntitlement } from "@/lib/data/entitlement";
+import { copyCards } from "@/lib/i18n/copy";
+import { getTranslator } from "@/lib/i18n/server";
+import { displaySubject } from "@/lib/i18n/subject-display";
 
 /**
  * **La fiche : l'écran du cours.**
@@ -24,7 +27,8 @@ import { readEntitlement } from "@/lib/data/entitlement";
  */
 export default async function CourseSheetPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [course, cards, right] = await Promise.all([
+  const [{ t, locale }, course, cards, right] = await Promise.all([
+    getTranslator(),
     getCourse(id),
     listCards(id),
     readEntitlement(),
@@ -36,6 +40,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
   // Le droit est **lu en base**, par la seule fonction qui le lit. Un achat fait sur l'iPhone
   // referme donc le gratuit ici dans la seconde.
   const { readable, locked } = entitlement.splitSheet(course.blocks, right);
+  const minutes = readingMinutes(course.context_text);
 
   return (
     <article className="pb-24">
@@ -51,9 +56,12 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
         <div className="min-w-0 flex-1">
           <p className="eyebrow text-ink-tertiary">
             {[
-              course.subject,
-              readingTime(course.context_text),
-              courseAudienceLabel(course.view_count ?? 0, course.adopt_count ?? 0),
+              course.subject ? displaySubject(course.subject, locale) : null,
+              t("app.course.readTime", { minutes }),
+              t("copy.audience", {
+                views: course.view_count ?? 0,
+                adopts: course.adopt_count ?? 0,
+              }),
             ]
               .filter(Boolean)
               .join(" · ")}
@@ -85,11 +93,10 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[18px] font-bold leading-tight text-ink">
-              Espace des cartes
+              {t("app.course.cardsSpace")}
             </span>
             <span className="mt-1 block text-[14px] text-ink-secondary">
-              Ouvrir le paquet, le corriger · {cards.length} carte
-              {cards.length > 1 ? "s" : ""}
+              {t("app.course.cardsSpaceHint", { cards: copyCards(t, cards.length) })}
             </span>
           </span>
           <svg
@@ -120,7 +127,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
         data-print="hide"
         data-tour="fiche-visibilite"
       >
-        <p className="eyebrow mb-3 text-ink-tertiary">Qui peut la retrouver</p>
+        <p className="eyebrow mb-3 text-ink-tertiary">{t("app.course.visibility.label")}</p>
         <VisibilityPicker courseId={course.id} initial={course.visibility} />
       </div>
 
@@ -132,8 +139,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
 
       {course.blocks.length === 0 ? (
         <p className="mt-8 rounded-group bg-caution-soft px-5 py-4 text-[14px] text-ink-reading">
-          Ce cours n&apos;a pas de fiche lisible. Il a peut-être été importé avant qu&apos;elle
-          puisse être écrite - le texte d&apos;origine est conservé, donc elle peut être refaite.
+          {t("app.course.noReadableSheet")}
         </p>
       ) : null}
     </article>
@@ -141,7 +147,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
 }
 
 /** Durée de lecture annoncée, sur une base de 200 mots par minute, comme dans l'app. */
-function readingTime(text: string): string {
+function readingMinutes(text: string): number {
   const words = text.split(/\s+/).filter(Boolean).length;
-  return `${Math.max(1, Math.round(words / 200))} min de lecture`;
+  return Math.max(1, Math.round(words / 200));
 }

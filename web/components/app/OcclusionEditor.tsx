@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 
 import { createOcclusionCards } from "@/lib/actions/cards";
+import { useI18n } from "@/lib/i18n/client";
 
 /**
  * Création de cartes à occlusion, comme `OcclusionEditorSheet` sur iOS.
@@ -37,6 +38,7 @@ export function OcclusionEditor({
   courseId: string;
   onDone: () => void;
 }) {
+  const { t } = useI18n();
   const pickerId = useId();
   const surface = useRef<HTMLDivElement>(null);
   const [image, setImage] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export function OcclusionEditor({
       setZones([]);
       setDraft(null);
     } catch {
-      setFailure("Cette image n'a pas pu être lue.");
+      setFailure(t("app.occlusion.readError"));
     }
   }
 
@@ -132,28 +134,28 @@ export function OcclusionEditor({
         image,
         zones: named,
       });
-      if (result.status === "error") setFailure(result.message ?? "Ça n'a pas marché.");
+      if (result.status === "error") setFailure(result.message ?? t("app.common.errorGeneric"));
       else onDone();
     });
   }
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/35 p-4 sm:items-center">
-      <button type="button" className="absolute inset-0" aria-label="Fermer" onClick={onDone} />
+      <button type="button" className="absolute inset-0" aria-label={t("app.a11y.close")} onClick={onDone} />
       <div
         ref={surface}
         className="relative max-h-[92svh] w-full max-w-[640px] overflow-y-auto rounded-sheet bg-canvas p-6 shadow-floating"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="eyebrow text-ink-tertiary">Schéma</p>
-            <h2 className="mt-1 text-[22px] font-bold text-ink">Masquer un schéma</h2>
+            <p className="eyebrow text-ink-tertiary">{t("app.occlusion.eyebrow")}</p>
+            <h2 className="mt-1 text-[22px] font-bold text-ink">{t("app.occlusion.title")}</h2>
           </div>
           <button
             type="button"
             onClick={onDone}
             className="pressable text-[18px] text-ink-tertiary"
-            aria-label="Fermer"
+            aria-label={t("app.a11y.close")}
           >
             ✕
           </button>
@@ -161,7 +163,7 @@ export function OcclusionEditor({
 
         {image ? (
           <>
-            <p className="eyebrow mt-6 text-ink-tertiary">Trace les zones</p>
+            <p className="eyebrow mt-6 text-ink-tertiary">{t("app.occlusion.drawZones")}</p>
             <div
               className="relative mt-2 select-none overflow-hidden rounded-md bg-surface paper touch-none"
               onPointerDown={onPointerDown}
@@ -177,12 +179,11 @@ export function OcclusionEditor({
               {draft ? <ZoneBox zone={draft} index={zones.length + 1} draft /> : null}
             </div>
             <p className="mt-2 text-[12.5px] leading-relaxed text-ink-tertiary">
-              Glisse sur l&apos;image pour dessiner un cache. Une zone par notion : chacune
-              devient une carte.
+              {t("app.occlusion.drawHint")}
             </p>
 
             <label className="mt-3 inline-flex cursor-pointer text-[13.5px] text-ink-secondary underline-draw">
-              Changer l&apos;image
+              {t("app.occlusion.changeImage")}
               <input
                 type="file"
                 accept="image/*"
@@ -192,10 +193,10 @@ export function OcclusionEditor({
             </label>
 
             {zones.length === 0 ? (
-              <p className="mt-5 text-[13px] text-ink-tertiary">Aucune zone pour l&apos;instant.</p>
+              <p className="mt-5 text-[13px] text-ink-tertiary">{t("app.occlusion.noZones")}</p>
             ) : (
               <div className="mt-5">
-                <p className="eyebrow text-ink-tertiary">Nomme chaque zone</p>
+                <p className="eyebrow text-ink-tertiary">{t("app.occlusion.nameZones")}</p>
                 <div className="paper mt-2 overflow-hidden rounded-group bg-surface">
                   {zones.map((zone, index) => (
                     <div
@@ -220,12 +221,12 @@ export function OcclusionEditor({
                             ),
                           );
                         }}
-                        placeholder="Nom de la zone"
+                        placeholder={t("app.workshop.zoneName")}
                         className="h-10 min-w-0 flex-1 rounded-button bg-canvas px-3 text-[14px] text-ink outline-none"
                       />
                       <button
                         type="button"
-                        aria-label={`Retirer la zone ${index + 1}`}
+                        aria-label={t("app.occlusion.removeZone", { n: index + 1 })}
                         onClick={() =>
                           setZones((current) => current.filter((item) => item.id !== zone.id))
                         }
@@ -247,8 +248,8 @@ export function OcclusionEditor({
             <span className="flex h-12 w-12 items-center justify-center rounded-tile bg-accent-soft text-[20px] text-accent">
               +
             </span>
-            <span className="mt-3 text-[16px] font-semibold text-ink">Choisir une image</span>
-            <span className="mt-1 text-[13px] text-ink-tertiary">Depuis tes fichiers</span>
+            <span className="mt-3 text-[16px] font-semibold text-ink">{t("app.occlusion.pickImage")}</span>
+            <span className="mt-1 text-[13px] text-ink-tertiary">{t("app.occlusion.fromFiles")}</span>
             <input
               id={pickerId}
               type="file"
@@ -270,14 +271,14 @@ export function OcclusionEditor({
                 : "cursor-not-allowed bg-surface-sunken text-ink-tertiary"
             }`}
           >
-            {pending ? "…" : "Créer les cartes"}
+            {pending ? "…" : t("app.occlusion.createCards")}
           </button>
           <button
             type="button"
             onClick={onDone}
             className="pressable rounded-button px-3 py-2.5 text-[14px] text-ink-secondary"
           >
-            Annuler
+            {t("app.common.cancel")}
           </button>
         </div>
 

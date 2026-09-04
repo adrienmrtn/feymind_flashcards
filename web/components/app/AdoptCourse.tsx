@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { adoptSharedCourse } from "@/lib/actions/social";
+import { useI18n } from "@/lib/i18n/client";
 
 export function AdoptCourse({
   courseId,
@@ -12,6 +13,7 @@ export function AdoptCourse({
   courseId: string;
   alreadyId: string | null;
 }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export function AdoptCourse({
         onClick={() => router.push(`/app/c/${alreadyId}` as never)}
         className="pressable h-14 w-full rounded-button bg-accent text-[16px] font-semibold text-on-ink"
       >
-        Déjà dans tes cours
+        {t("app.shared.alreadyYours")}
       </button>
     );
   }
@@ -40,12 +42,12 @@ export function AdoptCourse({
               router.push(`/app/c/${result.courseId}` as never);
               return;
             }
-            setError(result.message ?? "Le cours n'a pas pu être repris.");
+            setError(result.message ?? t("app.shared.adoptError"));
           })
         }
         className="pressable h-14 w-full rounded-button bg-accent text-[16px] font-semibold text-on-ink"
       >
-        {pending ? "Ajout…" : "Ajouter le cours et les cartes"}
+        {pending ? t("app.shared.adding") : t("app.shared.addCourseAndCards")}
       </button>
       {error ? (
         <p className="mt-2 text-center text-[13px] text-negative" role="alert">

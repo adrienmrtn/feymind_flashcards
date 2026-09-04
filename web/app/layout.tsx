@@ -6,7 +6,7 @@ import { PreviewBanner } from "@/components/PreviewBanner";
 import { I18nProvider } from "@/lib/i18n/client";
 import { catalogFor } from "@/lib/i18n/catalogs";
 import { UI_LOCALE_META } from "@/lib/i18n/locales";
-import { readUiLocale } from "@/lib/i18n/server";
+import { getTranslator, readUiLocale } from "@/lib/i18n/server";
 import type { MessageTree } from "@/lib/i18n/format";
 import { CANONICAL_URL, IS_INDEXABLE, SITE_URL } from "@/lib/config";
 import { SiteStructuredData } from "@/components/landing/StructuredData";
@@ -59,44 +59,46 @@ const inter = Inter({
  * images de partage et les balises canoniques d'une prévisualisation pointeraient vers une
  * adresse qui meurt au déploiement suivant.
  */
-export const metadata: Metadata = {
-  metadataBase: new URL(IS_INDEXABLE ? CANONICAL_URL : SITE_URL),
-  title: {
-    default: "Micabo - fiches et flashcards à partir de tes cours",
-    template: "%s - Micabo",
-  },
-  description:
-    "Dépose un polycopié, une photo de tes notes ou une vidéo de cours. Micabo en écrit la fiche que tu relis, en tire les cartes qui te la font retenir, et les fait revenir juste avant que tu l'oublies.",
-  applicationName: "micabo",
-  alternates: { canonical: "/" },
-  robots: IS_INDEXABLE ? undefined : { index: false, follow: false },
-  icons: {
-    icon: [
-      { url: "/icon-48.png", type: "image/png", sizes: "48x48" },
-      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/icon-32.png", type: "image/png", sizes: "32x32" },
-      { url: "/favicon.ico", sizes: "32x32" },
-    ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
-  },
-  manifest: "/manifest.webmanifest",
-  openGraph: {
-    type: "website",
-    siteName: "micabo",
-    locale: "fr_FR",
-    url: "/",
-    title: "Micabo - fiches et flashcards à partir de tes cours",
-    description:
-      "Ton cours devient une fiche qu'on relit, et des cartes qui reviennent au bon moment. Sur le web et sur iPhone.",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Micabo - fiches et flashcards à partir de tes cours",
-    description:
-      "Ton cours devient une fiche qu'on relit, et des cartes qui reviennent au bon moment.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t, locale } = await getTranslator();
+  const title = t("landing.siteTitle");
+  const description = t("landing.metaDescription");
+  return {
+    metadataBase: new URL(IS_INDEXABLE ? CANONICAL_URL : SITE_URL),
+    title: {
+      default: title,
+      template: "%s - Micabo",
+    },
+    description,
+    applicationName: "micabo",
+    alternates: { canonical: "/" },
+    robots: IS_INDEXABLE ? undefined : { index: false, follow: false },
+    icons: {
+      icon: [
+        { url: "/icon-48.png", type: "image/png", sizes: "48x48" },
+        { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+        { url: "/icon.svg", type: "image/svg+xml" },
+        { url: "/icon-32.png", type: "image/png", sizes: "32x32" },
+        { url: "/favicon.ico", sizes: "32x32" },
+      ],
+      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+    },
+    manifest: "/manifest.webmanifest",
+    openGraph: {
+      type: "website",
+      siteName: "micabo",
+      locale: UI_LOCALE_META[locale].og,
+      url: "/",
+      title,
+      description: t("landing.ogDescription"),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: t("landing.ogDescriptionShort"),
+    },
+  };
+}
 
 export const viewport: Viewport = {
   // La couleur de la barre du navigateur suit le papier : une bande blanche au-dessus d'un fond

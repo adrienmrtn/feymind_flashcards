@@ -4,6 +4,7 @@ import { entitlement, pricing } from "@micabo/core";
 
 import { SITE_URL } from "@/lib/config";
 import { readEntitlement } from "@/lib/data/entitlement";
+import { actionT } from "@/lib/i18n/action";
 import { readUiLocale } from "@/lib/i18n/server";
 import {
   checkoutIdempotencyKey,
@@ -82,7 +83,7 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
   // doit porter l'identifiant Supabase, et un achat rattaché à un identifiant anonyme est un
   // achat qu'on ne saura pas rendre à son propriétaire.
   if (!user) {
-    return { status: "error", message: "Connecte-toi avant de t'abonner." };
+    return { status: "error", message: await actionT("app.errors.signInSubscribe") };
   }
 
   const already = await readEntitlement();
@@ -103,7 +104,7 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
   if (!key) {
     return {
       status: "unavailable",
-      message: "L'abonnement n'est pas encore ouvert.",
+      message: await actionT("app.errors.subscribeClosed"),
     };
   }
 
@@ -143,7 +144,7 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
   }
 
   const session = (await response.json()) as { url?: string };
-  if (!session.url) return { status: "error", message: "Stripe n'a pas rendu de page de paiement." };
+  if (!session.url) return { status: "error", message: await actionT("app.errors.stripeCheckout") };
 
   return { status: "redirect", url: session.url };
 }
@@ -164,7 +165,7 @@ export async function manageSubscription(): Promise<CheckoutResult> {
   const right = await readEntitlement();
 
   if (!entitlement.isPaid(right)) {
-    return { status: "error", message: "Tu n'as pas d'abonnement en cours." };
+    return { status: "error", message: await actionT("app.errors.noSubscription") };
   }
 
   if (right.store === "app_store") {
@@ -181,15 +182,15 @@ export async function manageSubscription(): Promise<CheckoutResult> {
   // Un abonnement offert n'a pas de portail : il n'y a rien à résilier, et ouvrir un portail
   // vide se lit comme une panne.
   if (right.store === "promotional") {
-    return { status: "error", message: "Cet accès a été offert : il n'y a rien à gérer." };
+    return { status: "error", message: await actionT("app.errors.giftedAccess") };
   }
 
   const key = stripeKey();
-  if (!key) return { status: "unavailable", message: "Le portail n'est pas encore branché." };
+  if (!key) return { status: "unavailable", message: await actionT("app.errors.portalUnwired") };
 
   const email = user?.email;
   if (!user?.id || !email) {
-    return { status: "error", message: "Aucune adresse rattachée à ce compte." };
+    return { status: "error", message: await actionT("app.errors.noEmail") };
   }
 
   // D'abord l'identifiant Supabase posé à l'encaissement, puis l'adresse.
@@ -198,7 +199,7 @@ export async function manageSubscription(): Promise<CheckoutResult> {
   if (!customerId) {
     return {
       status: "error",
-      message: "Cet abonnement n'a pas été pris sur le web. Gère-le depuis l'appareil d'achat.",
+      message: await actionT("app.errors.manageOnPurchaseDevice"),
     };
   }
 
@@ -225,7 +226,7 @@ export async function manageSubscription(): Promise<CheckoutResult> {
   }
 
   const session = (await response.json()) as { url?: string };
-  if (!session.url) return { status: "error", message: "Stripe n'a pas rendu de portail." };
+  if (!session.url) return { status: "error", message: await actionT("app.errors.stripePortal") };
 
   return { status: "redirect", url: session.url };
 }

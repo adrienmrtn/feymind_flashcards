@@ -58,16 +58,18 @@ export function BrandLockup({
 export function BrandWordmark({
   mark = 88,
   className = "",
+  tagline,
 }: {
   mark?: number;
   className?: string;
+  tagline: string;
 }) {
   return (
     <div className={`flex flex-col items-center ${className}`.trim()}>
       <BrandMark size={mark} />
       <p className="mt-3 text-[22px] font-bold leading-none tracking-tight text-ink">micabo</p>
       <p className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.22em] text-ink-tertiary">
-        Étudier
+        {tagline}
       </p>
     </div>
   );

@@ -1,8 +1,12 @@
+"use client";
+
 import { latexCommandsToUnicode } from "@micabo/core";
 
 import { OcclusionFigure } from "@/components/app/OcclusionFigure";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import type { SharedCard } from "@/lib/data/social";
+import { useI18n } from "@/lib/i18n/client";
+import { copyCards } from "@/lib/i18n/copy";
 
 /**
  * Les cartes d'un cours partagé, en lecture.
@@ -11,17 +15,18 @@ import type { SharedCard } from "@/lib/data/social";
  * Les reprendre les copie neuves dans son propre paquet.
  */
 export function SharedCardsPreview({ cards }: { cards: SharedCard[] }) {
+  const { t } = useI18n();
   if (cards.length === 0) {
     return (
       <p className="rounded-group bg-surface-muted px-5 py-4 text-[14px] text-ink-secondary">
-        Ce cours n&apos;a pas encore de cartes.
+        {t("app.shared.noCards")}
       </p>
     );
   }
 
   return (
     <section>
-      <p className="eyebrow text-ink-tertiary">🃏 {cards.length} carte{cards.length > 1 ? "s" : ""}</p>
+      <p className="eyebrow text-ink-tertiary">🃏 {copyCards(t, cards.length)}</p>
       <div className="paper mt-3 overflow-hidden rounded-group bg-surface">
         {cards.map((card, index) => {
           const occlusion =
@@ -49,7 +54,7 @@ export function SharedCardsPreview({ cards }: { cards: SharedCard[] }) {
                 <InlineMarkup text={occlusion ? card.back : card.front} />
               </p>
               {occlusion ? (
-                <p className="mt-1.5 text-[12.5px] text-ink-tertiary">Schéma</p>
+                <p className="mt-1.5 text-[12.5px] text-ink-tertiary">{t("app.cardKind.occlusion")}</p>
               ) : (
                 <p className="mt-1 text-[14px] leading-snug text-ink-secondary">
                   <InlineMarkup text={card.back} />
