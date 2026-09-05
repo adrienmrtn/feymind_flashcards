@@ -3,6 +3,10 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
+  // localhost et 127.0.0.1 : sans ça, Next 16 refuse les chunks au navigateur
+  // qui ouvre l'autre hôte, React ne s'hydrate pas, et les drapeaux ne répondent pas.
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
+
   // À la racine du dépôt les dossiers de l'app sont des liens vers `web/`. Sans ça, le
   // collecteur de pages de Next cherche `_not-found` à côté du lien et ne le trouve pas.
   outputFileTracingRoot: path.join(process.cwd()),
