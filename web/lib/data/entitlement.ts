@@ -4,7 +4,6 @@ import { cache } from "react";
 
 import { entitlement } from "@micabo/core";
 
-import { isAppStoreReviewEmail } from "@/lib/auth/app-store-review";
 import { listCourses } from "@/lib/data/courses";
 import { currentUser } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
@@ -31,7 +30,6 @@ import { createClient } from "@/lib/supabase/server";
 export const readEntitlement = cache(async (): Promise<entitlement.Entitlement> => {
   const user = await currentUser();
   if (!user) return entitlement.resolve();
-  if (isAppStoreReviewEmail(user.email)) return entitlement.PRO;
 
   const supabase = await createClient();
   const { data } = await supabase

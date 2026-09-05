@@ -11,19 +11,10 @@ final class AppStoreReviewTests: XCTestCase {
         XCTAssertFalse(AppStoreReview.matches(""))
     }
 
-    /// Le cadeau est refermé avant même la session : le droit Pro le couvre déjà, mais
-    /// il se présente pendant l'instant qui sépare la connexion du premier `refresh()`.
-    func testTheGiftIsAlreadySeenForTheReviewAccount() {
-        let name = "micabo.tests.review.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: name) ?? .standard
-        addTeardownBlock { defaults.removePersistentDomain(forName: name) }
-
-        XCTAssertFalse(DiscountOffer.isSeen(in: defaults))
-        DiscountOffer.markSeen(in: defaults)
-        XCTAssertTrue(DiscountOffer.isSeen(in: defaults))
-
-        XCTAssertFalse(
-            DiscountOffer.shouldPresentGift(isPro: true, courseCount: 1, seen: true, startedAt: nil)
+    /// Sans droit Pro, le cadeau et le paywall se posent comme pour les autres.
+    func testAFreeReviewSessionCanSeeTheGift() {
+        XCTAssertTrue(
+            DiscountOffer.shouldPresentGift(isPro: false, courseCount: 1, seen: false, startedAt: nil)
         )
     }
 }
