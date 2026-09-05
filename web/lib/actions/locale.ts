@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
 
 import { UI_LOCALE_COOKIE, isUiLocale, type UiLocale } from "@/lib/i18n/locales";
 
@@ -13,6 +12,7 @@ export async function setUiLocale(locale: UiLocale): Promise<{ status: "ok" | "e
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
   });
-  revalidatePath("/", "layout");
+  // Pas de revalidatePath ici : dans l'action, cookies().get() voit encore
+  // la requête d'origine, et le layout se repeindrait dans l'ancienne langue.
   return { status: "ok" };
 }

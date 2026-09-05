@@ -1,7 +1,7 @@
 import { ALL_SUBJECTS, SUBJECT_FAMILIES } from "@micabo/core";
 import { describe, expect, it } from "vitest";
 
-import { CATALOGS, fr } from "./catalogs";
+import { CATALOGS, catalogFor, fr } from "./catalogs";
 import { formatMessage, lookup, type MessageTree } from "./format";
 import {
   DEFAULT_UI_LOCALE,
@@ -30,6 +30,17 @@ describe("locales", () => {
     expect(isUiLocale("de")).toBe(true);
     expect(isUiLocale("it")).toBe(false);
     expect(isUiLocale("en")).toBe(false);
+  });
+
+  it("sert un catalogue distinct par langue", () => {
+    expect(catalogFor("fr")).not.toBe(catalogFor("de"));
+    expect(catalogFor("es")).not.toBe(catalogFor("tr"));
+    expect(lookup(catalogFor("fr") as unknown as MessageTree, "onboarding.welcomeTitle")).toMatch(
+      /Bienvenue/,
+    );
+    expect(lookup(catalogFor("de") as unknown as MessageTree, "onboarding.welcomeTitle")).toMatch(
+      /Willkommen/,
+    );
   });
 
   it("associe un drapeau à chaque langue", () => {
