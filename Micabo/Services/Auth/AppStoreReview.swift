@@ -17,11 +17,4 @@ enum AppStoreReview {
         guard let raw else { return false }
         return raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == email
     }
-
-    /// Le cadeau se pose sur la fiche du premier cours. Il est marqué vu d'avance : le
-    /// droit Pro le referme déjà, mais il se présente pendant les quelques centaines de
-    /// millisecondes qui séparent la session du premier `refresh()`.
-    static func silenceDiscount() {
-        DiscountOffer.markSeen()
-    }
 }

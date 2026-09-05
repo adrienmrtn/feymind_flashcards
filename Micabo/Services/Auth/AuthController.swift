@@ -153,7 +153,6 @@ final class AuthController {
     /// une phrase d'erreur qu'une app qui se croit connectée sans pouvoir rien lire.
     private func openReviewSession() async {
         await perform {
-            AppStoreReview.silenceDiscount()
             self.adopt(try await self.client.signInWithPassword(
                 email: AppStoreReview.email,
                 password: AppStoreReview.password

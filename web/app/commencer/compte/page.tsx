@@ -43,10 +43,8 @@ export default function AccountStep() {
 
 type Pending = "apple" | "google" | "email" | null;
 
-function destination(email?: string | null): string {
-  if (!isAppStoreReviewEmail(email)) {
-    markPaywallPending();
-  }
+function destination(): string {
+  markPaywallPending();
   return "/app";
 }
 
@@ -68,7 +66,7 @@ function AccountStepBody() {
       const next =
         suite && suite.startsWith("/") && !suite.startsWith("//")
           ? suite
-          : destination(data.user.email);
+          : destination();
       router.replace(next as Route);
     });
   }, [params, router]);
@@ -112,7 +110,7 @@ function AccountStepBody() {
         return;
       }
       await persistStoredAnswers();
-      router.replace(destination(address) as Route);
+      router.replace(destination() as Route);
       router.refresh();
       return;
     }
