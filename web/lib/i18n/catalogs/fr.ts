@@ -4,6 +4,7 @@ import { legalFr } from "./legal-fr";
 export const fr = {
   locale: {
     switcher: "Langue du site",
+    choose: "Ta langue",
     fr: "Français",
     de: "Deutsch",
     es: "Español",

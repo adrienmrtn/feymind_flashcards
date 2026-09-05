@@ -18,6 +18,7 @@ import { nextPath, previousPath, type OnboardingPath } from "@/lib/onboarding/st
  */
 export function Scaffold({
   eyebrow,
+  lead,
   title,
   titleClassName = "",
   skip,
@@ -26,6 +27,8 @@ export function Scaffold({
   center = false,
 }: {
   eyebrow?: string;
+  /** Contrôle posé au-dessus du titre — les drapeaux de l'accueil. */
+  lead?: React.ReactNode;
   title: React.ReactNode;
   /** Pour un titre d'accueil plus grand que les questions qui suivent. */
   titleClassName?: string;
@@ -64,6 +67,8 @@ export function Scaffold({
           </Link>
         ) : null}
       </div>
+
+      {lead ? <div className="rise mt-3 shrink-0">{lead}</div> : null}
 
       <h1
         className={`rise mt-2.5 shrink-0 font-bold leading-[1.12] tracking-tight-title text-ink ${

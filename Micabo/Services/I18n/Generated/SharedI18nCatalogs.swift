@@ -4,6 +4,7 @@
 enum SharedI18nCatalogs {
     static let fr: [String: String] = [
         "locale.switcher": "Langue du site",
+        "locale.choose": "Ta langue",
         "locale.fr": "Français",
         "locale.de": "Deutsch",
         "locale.es": "Español",
@@ -815,6 +816,7 @@ enum SharedI18nCatalogs {
 
     static let de: [String: String] = [
         "locale.switcher": "Sprache der Seite",
+        "locale.choose": "Deine Sprache",
         "locale.fr": "Français",
         "locale.de": "Deutsch",
         "locale.es": "Español",
@@ -1626,6 +1628,7 @@ enum SharedI18nCatalogs {
 
     static let es: [String: String] = [
         "locale.switcher": "Idioma del sitio",
+        "locale.choose": "Tu idioma",
         "locale.fr": "Français",
         "locale.de": "Deutsch",
         "locale.es": "Español",
@@ -2437,6 +2440,7 @@ enum SharedI18nCatalogs {
 
     static let tr: [String: String] = [
         "locale.switcher": "Site dili",
+        "locale.choose": "Dilin",
         "locale.fr": "Français",
         "locale.de": "Deutsch",
         "locale.es": "Español",

@@ -4,17 +4,20 @@ import type { Route } from "next";
 import Link from "next/link";
 
 import { BrandWordmark } from "@/components/BrandMark";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
 import { useI18n } from "@/lib/i18n/client";
 
 /**
- * La porte. Un mot large, le logo au centre, et la sortie pour ceux
- * qui ont déjà un compte.
+ * La porte. Les drapeaux d'abord — le choix de langue doit se voir
+ * avant le logo — puis le mot-symbole, et la sortie pour ceux qui
+ * ont déjà un compte.
  */
 export default function WelcomeStep() {
   const { t } = useI18n();
   return (
     <Scaffold
+      lead={<LanguageSwitcher variant="flags" />}
       title={t("onboarding.welcomeTitle")}
       titleClassName="text-[34px] tracking-display sm:text-[40px]"
       footer={

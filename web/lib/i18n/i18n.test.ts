@@ -5,6 +5,7 @@ import { CATALOGS, fr } from "./catalogs";
 import { formatMessage, lookup, type MessageTree } from "./format";
 import {
   DEFAULT_UI_LOCALE,
+  UI_LOCALE_META,
   UI_LOCALES,
   isUiLocale,
   localeFromAcceptLanguage,
@@ -29,6 +30,17 @@ describe("locales", () => {
     expect(isUiLocale("de")).toBe(true);
     expect(isUiLocale("it")).toBe(false);
     expect(isUiLocale("en")).toBe(false);
+  });
+
+  it("associe un drapeau à chaque langue", () => {
+    expect(UI_LOCALE_META.fr.flag).toBe("🇫🇷");
+    expect(UI_LOCALE_META.de.flag).toBe("🇩🇪");
+    expect(UI_LOCALE_META.es.flag).toBe("🇪🇸");
+    expect(UI_LOCALE_META.tr.flag).toBe("🇹🇷");
+    for (const locale of UI_LOCALES) {
+      expect(UI_LOCALE_META[locale].flag.length).toBeGreaterThan(0);
+      expect(UI_LOCALE_META[locale].native.length).toBeGreaterThan(0);
+    }
   });
 
   it("lit Accept-Language, sinon le français", () => {
@@ -94,6 +106,7 @@ describe("catalogues", () => {
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "nav.feedback")).toBeTruthy();
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "demo.legendWith")).toBeTruthy();
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "app.paywall.yearly")).toBeTruthy();
+      expect(lookup(CATALOGS[locale] as unknown as MessageTree, "locale.choose")).toBeTruthy();
     }
   });
 

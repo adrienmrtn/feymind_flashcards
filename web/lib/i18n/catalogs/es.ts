@@ -5,6 +5,7 @@ import { legalEs } from "./legal-es";
 export const es: Catalog = {
   locale: {
     switcher: "Idioma del sitio",
+    choose: "Tu idioma",
     fr: "Français",
     de: "Deutsch",
     es: "Español",
