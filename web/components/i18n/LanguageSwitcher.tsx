@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 import { setUiLocale } from "@/lib/actions/locale";
 import { useI18n } from "@/lib/i18n/client";
@@ -18,6 +19,7 @@ export function LanguageSwitcher({
   variant?: "compact" | "card" | "flags";
 }) {
   const { locale, t, pick } = useI18n();
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   function choose(next: UiLocale) {
@@ -25,6 +27,7 @@ export function LanguageSwitcher({
     pick(next);
     startTransition(async () => {
       await setUiLocale(next);
+      router.refresh();
     });
   }
 

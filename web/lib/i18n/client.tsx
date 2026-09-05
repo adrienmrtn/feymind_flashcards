@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { catalogFor } from "./catalogs";
 import type { MessageTree } from "./format";
@@ -26,27 +26,35 @@ export function I18nProvider({
   children: React.ReactNode;
 }) {
   const [current, setCurrent] = useState(locale);
-  const [tree, setTree] = useState(messages);
+  /// Locale posée par le sélecteur, en attendant que le cookie suive.
+  const pending = useRef<UiLocale | null>(null);
 
   useEffect(() => {
+    // `revalidatePath` dans l'action relit encore le cookie de la requête :
+    // sans ce garde, le serveur rétablit l'ancienne langue par-dessus le choix.
+    if (pending.current && locale !== pending.current) return;
+    pending.current = null;
     setCurrent(locale);
-    setTree(messages);
   }, [locale, messages]);
 
   const value = useMemo(() => {
     function pick(next: UiLocale) {
       if (next === current) return;
+      pending.current = next;
       setCurrent(next);
-      setTree(catalogFor(next) as unknown as MessageTree);
       document.documentElement.lang = UI_LOCALE_META[next].html;
     }
 
     return {
       locale: current,
-      t: makeTranslator(current, tree, fr as unknown as MessageTree),
+      t: makeTranslator(
+        current,
+        catalogFor(current) as unknown as MessageTree,
+        fr as unknown as MessageTree,
+      ),
       pick,
     };
-  }, [current, tree]);
+  }, [current]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
