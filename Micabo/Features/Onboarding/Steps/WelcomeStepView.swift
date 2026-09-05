@@ -40,9 +40,13 @@ struct WelcomeStepView: View {
 
     private var layout: some View {
         VStack(spacing: 0) {
-            Spacer(minLength: MicaboSpacing.md)
+            LanguageSwitcher(variant: .flags)
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, MicaboSpacing.sm)
+                .onboardingAppear(index: 0, stagger: 0.1)
+            Spacer(minLength: MicaboSpacing.sm)
             deck
-            Spacer(minLength: MicaboSpacing.lg)
+            Spacer(minLength: MicaboSpacing.md)
             titleBlock
             continueBar
         }
@@ -50,7 +54,7 @@ struct WelcomeStepView: View {
 
     private var deck: some View {
         WelcomeDeck()
-            .frame(height: 250)
+            .frame(height: 220)
             .padding(.horizontal, MicaboSpacing.xl)
     }
 
@@ -60,7 +64,7 @@ struct WelcomeStepView: View {
                 .font(MicaboFont.hanken(11, weight: .semibold))
                 .tracking(2)
                 .foregroundStyle(surface.eyebrow)
-                .onboardingAppear(index: 0, stagger: 0.1)
+                .onboardingAppear(index: 1, stagger: 0.1)
 
             Text(i18n?.t("ios.welcomeTitle") ?? "Apprends tout,\nplus vite.")
                 .font(MicaboFont.hanken(40, weight: .bold))
@@ -68,7 +72,7 @@ struct WelcomeStepView: View {
                 .tracking(-1.2)
                 .lineSpacing(-3)
                 .fixedSize(horizontal: false, vertical: true)
-                .onboardingAppear(index: 1, stagger: 0.1)
+                .onboardingAppear(index: 2, stagger: 0.1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, MicaboSpacing.screen)
@@ -92,7 +96,7 @@ struct WelcomeStepView: View {
                 .buttonStyle(.plain)
                 .disabled(auth.isWorking || checkingAccount)
             }
-            .onboardingAppear(index: 2, stagger: 0.1)
+            .onboardingAppear(index: 3, stagger: 0.1)
         }
     }
 

@@ -100,8 +100,10 @@ private struct OnboardingProgressBar: View {
         HStack(spacing: MicaboSpacing.sm) {
             MicaboProgressBar(progress: step.progress, tint: surface.progressTint, track: surface.progressTrack)
                 .frame(height: 4)
-            LanguageSwitcher()
-                .layoutPriority(1)
+            if step != .welcome {
+                LanguageSwitcher()
+                    .layoutPriority(1)
+            }
         }
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, MicaboSpacing.xs)

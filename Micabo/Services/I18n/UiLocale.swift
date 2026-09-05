@@ -24,6 +24,17 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// Drapeau du pays de référence de la langue. Une langue n'est pas un pays,
+    /// mais quatre drapeaux se lisent avant quatre noms — surtout à l'accueil.
+    var flag: String {
+        switch self {
+        case .fr: "🇫🇷"
+        case .de: "🇩🇪"
+        case .es: "🇪🇸"
+        case .tr: "🇹🇷"
+        }
+    }
+
     var bcp47: String {
         switch self {
         case .fr: "fr-FR"

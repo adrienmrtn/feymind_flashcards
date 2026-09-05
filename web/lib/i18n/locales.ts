@@ -13,12 +13,12 @@ export const UI_LOCALE_COOKIE = "micabo.ui_locale";
 
 export const UI_LOCALE_META: Record<
   UiLocale,
-  { html: string; bcp47: string; og: string; native: string }
+  { html: string; bcp47: string; og: string; native: string; flag: string }
 > = {
-  fr: { html: "fr", bcp47: "fr-FR", og: "fr_FR", native: "Français" },
-  de: { html: "de", bcp47: "de-DE", og: "de_DE", native: "Deutsch" },
-  es: { html: "es", bcp47: "es-ES", og: "es_ES", native: "Español" },
-  tr: { html: "tr", bcp47: "tr-TR", og: "tr_TR", native: "Türkçe" },
+  fr: { html: "fr", bcp47: "fr-FR", og: "fr_FR", native: "Français", flag: "🇫🇷" },
+  de: { html: "de", bcp47: "de-DE", og: "de_DE", native: "Deutsch", flag: "🇩🇪" },
+  es: { html: "es", bcp47: "es-ES", og: "es_ES", native: "Español", flag: "🇪🇸" },
+  tr: { html: "tr", bcp47: "tr-TR", og: "tr_TR", native: "Türkçe", flag: "🇹🇷" },
 };
 
 export function isUiLocale(value: string | undefined | null): value is UiLocale {

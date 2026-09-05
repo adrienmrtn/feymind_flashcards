@@ -44,7 +44,7 @@ struct DiscountFlowView: View {
     }
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             switch stage {
             case .gift:
                 DiscountGiftStage(onOpened: openOffer, onDismiss: onDismiss)
@@ -415,7 +415,13 @@ private struct DiscountPaywallStage: View {
         .padding(.horizontal, MicaboSpacing.screen)
         .padding(.top, MicaboSpacing.sm)
         .padding(.bottom, MicaboSpacing.md)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity, alignment: .top)
+        .fixedSize(horizontal: false, vertical: true)
+        .background {
+            GeometryReader { proxy in
+                Color.clear.preference(key: DiscountPaywallHeightKey.self, value: proxy.size.height)
+            }
+        }
     }
 
     /// Le pourcentage porte la couleur, la promesse porte l'encre : ce qu'on retient d'un
@@ -678,6 +684,40 @@ private struct DiscountGiftOverlay: View {
     }
 }
 
+/// Feuille du tarif : elle épouse le contenu au lieu d'un detent trop haut
+/// qui laissait un lavabo bleu vide sous les liens.
+private struct DiscountPaywallSheet: View {
+    var onDismiss: () -> Void
+    var onSubscribed: () -> Void
+
+    /// Hauteur de repli : assez pour le bloc, trop courte pour recouvrir Profil.
+    @State private var height: CGFloat = 496
+
+    var body: some View {
+        DiscountFlowView(
+            startsAtPaywall: true,
+            onDismiss: onDismiss,
+            onSubscribed: onSubscribed
+        )
+        .onPreferenceChange(DiscountPaywallHeightKey.self) { value in
+            guard value > 200 else { return }
+            let next = min(max(value + 32, 440), 530)
+            if abs(next - height) > 2 { height = next }
+        }
+        .presentationDetents([.height(height)])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(MicaboRadius.sheet)
+        .presentationBackground(DiscountWash.gradient)
+    }
+}
+
+private struct DiscountPaywallHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 extension View {
     /// **Ouvre l'offre cadeau par-dessus l'écran courant.**
     ///
@@ -712,20 +752,13 @@ extension View {
                 }
             )
         ) {
-            DiscountFlowView(
-                startsAtPaywall: true,
+            DiscountPaywallSheet(
                 onDismiss: {
                     DiscountOffer.markSeen()
                     presentation.wrappedValue = nil
                 },
                 onSubscribed: { presentation.wrappedValue = nil }
             )
-            // Même hauteur que les autres feuilles courtes : en `.large` le bloc
-            // tenait en haut et laissait un vide trop grand en bas.
-            .presentationDetents([.height(604)])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(MicaboRadius.sheet)
-            .presentationBackground(DiscountWash.gradient)
         }
     }
 }

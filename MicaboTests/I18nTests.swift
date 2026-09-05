@@ -9,6 +9,16 @@ final class I18nTests: XCTestCase {
         XCTAssertFalse(UiLocale.isKnown("it"))
     }
 
+    func testEachLocaleHasAFlag() {
+        XCTAssertEqual(UiLocale.fr.flag, "🇫🇷")
+        XCTAssertEqual(UiLocale.de.flag, "🇩🇪")
+        XCTAssertEqual(UiLocale.es.flag, "🇪🇸")
+        XCTAssertEqual(UiLocale.tr.flag, "🇹🇷")
+        for locale in UiLocale.allCases {
+            XCTAssertFalse(locale.flag.isEmpty)
+        }
+    }
+
     func testPreferredLanguagesFallbackToFrench() {
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["de-DE", "en"]), .de)
         XCTAssertEqual(UiLocale.fromPreferredLanguages(["es-MX"]), .es)

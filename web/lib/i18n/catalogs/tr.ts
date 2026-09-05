@@ -5,6 +5,7 @@ import { legalTr } from "./legal-tr";
 export const tr: Catalog = {
   locale: {
     switcher: "Site dili",
+    choose: "Dilin",
     fr: "Français",
     de: "Deutsch",
     es: "Español",
