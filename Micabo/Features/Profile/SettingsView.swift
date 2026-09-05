@@ -17,7 +17,6 @@ struct SettingsView: View {
     @Environment(AuthController.self) private var auth
     @Environment(CloudSync.self) private var sync
     @Environment(SocialService.self) private var social
-    @Environment(ProAccess.self) private var pro: ProAccess?
 
     @State private var username = ""
 
@@ -560,12 +559,8 @@ struct SettingsView: View {
         )
     }
 
-    /// **L'interrupteur Pro n'existe qu'en `DEBUG`.**
-    ///
-    /// C'est un outil de relecture : sans lui, les écrans de blocage ne se voient qu'une fois
-    /// et il faudrait réinstaller l'app pour revoir la fiche coupée. Mais dans une version
-    /// livrée, un interrupteur qui mentirait sur l'état réel d'un abonnement payé est pire
-    /// que pas d'interrupteur du tout — c'est RevenueCat qui décide, et lui seul.
+    /// Outils de relecture. Plus d'interrupteur Pro : un interrupteur qui ment
+    /// sur l'abonnement, même en `DEBUG`, se prend pour le vrai droit.
     private var testSection: some View {
         MicaboSettingsSection(
             caption: "Test",
@@ -578,22 +573,6 @@ struct SettingsView: View {
         var rows: [MicaboRow] = []
 
         #if DEBUG
-        rows.append(
-            MicaboRow(
-                tile: MicaboTile(glyph: .emoji("🔓"), background: MicaboColor.accentSoft),
-                title: "Micabo Pro",
-                subtitle: isPro ? "Tout est ouvert" : "Version gratuite : 1 cours, 70 % de la fiche, 5 cartes",
-                // La rangée fait vibrer la liaison elle-même : pas de `buzzing()` ici,
-                // sinon l'interrupteur répondrait deux fois au même appui.
-                accessory: .toggle(
-                    Binding(
-                        get: { isPro },
-                        set: { pro?.setPro($0) }
-                    )
-                )
-            )
-        )
-
         // L'offre cadeau ne se présente qu'une fois par appareil : sans ce bouton, la
         // revoir demanderait de désinstaller l'app.
         rows.append(
@@ -621,13 +600,11 @@ struct SettingsView: View {
 
     private var testFootnote: String {
         #if DEBUG
-        return "L'interrupteur Pro et le cadeau n'existent qu'en développement : ils permettent de revoir les écrans de blocage et l'offre. Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
+        return "Rejouer le cadeau n'existe qu'en développement. Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
         #else
         return "Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
         #endif
     }
-
-    private var isPro: Bool { pro?.isPro ?? false }
 
     private var feedbackSection: some View {
         MicaboSettingsSection(
