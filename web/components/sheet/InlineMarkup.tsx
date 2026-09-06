@@ -5,10 +5,11 @@ import { MathInline } from "./Math";
 /**
  * Le balisage en ligne d'une fiche, rendu.
  *
- * Quatre marques et pas une de plus, exactement comme sur l'iPhone. Le point qui compte est ce
- * que **le surlignage ne fait pas** : ce n'est pas un fond, c'est l'encre qui change. Un fond
- * posé derrière le texte débordait sous les jambages, changeait d'épaisseur d'une ligne à
- * l'autre, et se battait avec l'interligne au lieu de servir la lecture.
+ * Quatre marques et pas une de plus, exactement comme sur l'iPhone. Le surlignage est une
+ * **bande jaune** : elle l'a été, puis a laissé place à de l'encre bleue parce qu'un fond de
+ * texte se battait avec l'interligne, et elle est revenue parce que du texte bleu au milieu
+ * d'un paragraphe se lit comme un lien. L'épaisseur de la bande est tenue en `em` par
+ * `.sheet-marker`, ce qui règle le défaut d'origine.
  *
  * Un fragment `$…$` est **composé** par KaTeX (voir `lib/math/typeset`), et retombe sur la
  * transposition Unicode d'avant si le LaTeX est incomplet. Le texte hors `$…$` ne convertit
@@ -25,7 +26,7 @@ export function InlineMarkup({ text }: { text: string }) {
         const className = [
           span.bold ? "font-semibold text-ink" : "",
           span.italic ? "italic" : "",
-          span.highlighted ? "font-medium text-sheet-emphasis" : "",
+          span.highlighted ? "sheet-marker" : "",
         ]
           .filter(Boolean)
           .join(" ");

@@ -18,7 +18,7 @@ struct SupabaseDatabase {
             switch self {
             case .notConfigured: "L'accès au cloud n'est pas configuré."
             case .notSignedIn: "Aucun compte connecté."
-            case .network(let detail): "Connexion impossible. \(detail)"
+            case .network(let detail): L10n.t("ios.ai.network", locale: .resolved(), vars: ["detail": detail])
             case .server(_, let message, _): message
             }
         }

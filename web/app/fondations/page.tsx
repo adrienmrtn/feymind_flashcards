@@ -368,7 +368,7 @@ function ColorSection() {
     ["Accent", "--color-accent", "Ce qui est actif, sélectionné, interactif"],
     ["Accent vif", "--color-accent-vivid", "Grandes surfaces remplies, jamais de texte dessus"],
     ["Accent doux", "--color-accent-soft", "Fond d'une pastille active"],
-    ["Passage en avant", "--color-sheet-emphasis", "L'encre d'un passage marqué, pas son fond"],
+    ["Surligneur", "--color-sheet-marker", "La bande d'un passage marqué, sous une encre inchangée"],
   ] as const;
 
   return (

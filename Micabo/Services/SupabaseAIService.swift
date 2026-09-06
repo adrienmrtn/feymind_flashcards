@@ -111,13 +111,13 @@ extension AIServiceError {
             if message.localizedCaseInsensitiveContains("FAL_KEY") {
                 self = .missingProviderKey
             } else if status == 401 || status == 403 {
-                self = .server("Clé Supabase refusée (\(status)). Vérifie la clé publique dans Réglages.")
+                self = .server(L10n.t("ios.ai.keyRefused", locale: .resolved(), vars: ["status": "\(status)"]))
             } else if status == 404 {
-                self = .server("Fonction Supabase introuvable. Déployez les Edge Functions du dossier supabase/functions.")
+                self = .server(L10n.t("ios.ai.fnMissing", locale: .resolved()))
             } else if message.isEmpty {
-                self = .server("Le serveur a répondu \(status).")
+                self = .server(L10n.t("ios.ai.serverStatus", locale: .resolved(), vars: ["status": "\(status)"]))
             } else if Self.isParserJargon(message) {
-                self = .server("L'écriture a échoué. Réessaie, rien n'a été perdu.")
+                self = .server(L10n.t("ios.ai.writeFailed", locale: .resolved()))
             } else {
                 self = .server(message)
             }

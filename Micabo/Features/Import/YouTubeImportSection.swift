@@ -36,7 +36,7 @@ struct YouTubeImportSection: View {
 
     private var linkField: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text("Lien de la vidéo")
+            Text(L10n.t("ios.videoLink", locale: .resolved()))
                 .font(MicaboFont.captionEmphasis)
                 .foregroundStyle(MicaboColor.ink)
 
@@ -68,7 +68,7 @@ struct YouTubeImportSection: View {
                             .foregroundStyle(MicaboColor.inkTertiary)
                     }
                     .buttonStyle(MicaboPressableButtonStyle())
-                    .accessibilityLabel("Effacer le lien")
+                    .accessibilityLabel(L10n.t("ios.clearLink", locale: .resolved()))
                 }
             }
             .padding(.vertical, 13)
@@ -86,7 +86,7 @@ struct YouTubeImportSection: View {
             }
 
             if YouTubeLink.isValid(link), !isChecking {
-                Button("Voir l'aperçu", action: onCheck)
+                Button(L10n.t("ios.seePreview", locale: .resolved()), action: onCheck)
                     .buttonStyle(MicaboSecondaryButtonStyle())
                     .padding(.top, MicaboSpacing.xxs)
             }
@@ -129,7 +129,7 @@ struct YouTubeImportSection: View {
                 message(reason, systemImage: "exclamationmark.triangle", tint: MicaboColor.caution)
             }
 
-            Button("Changer de lien", action: onReset)
+            Button(L10n.t("ios.changeLink", locale: .resolved()), action: onReset)
                 .buttonStyle(MicaboQuietButtonStyle())
                 .padding(.leading, -MicaboSpacing.md)
         }

@@ -42,6 +42,10 @@ describe("les plafonds tiennent", () => {
     expect(SHEET_LIMITS.tableColumns).toBe(4);
     expect(SHEET_LIMITS.tableRows).toBe(8);
     expect(SHEET_LIMITS.chartBars).toBe(6);
+    expect(SHEET_LIMITS.chartBlocks).toBe(3);
+    expect(SHEET_LIMITS.figureBlocks).toBe(4);
+    expect(SHEET_LIMITS.objectRun).toBe(4);
+    expect(SHEET_LIMITS.highlights).toBe(12);
   });
 });
 
@@ -67,6 +71,22 @@ describe("la normalisation", () => {
     });
 
     expect(blocks.some((block) => block.type === "table")).toBe(false);
+  });
+
+  it("garde une figure localisée", () => {
+    const blocks = normalizeSheet({
+      blocks: [
+        { type: "paragraph", text: "Le cycle de Krebs oxyde l'acétyl-CoA dans la matrice." },
+        {
+          type: "figure",
+          caption: "Cycle de Krebs",
+          page: 2,
+          crop: { x: 0.1, y: 0.2, w: 0.8, h: 0.4 },
+        },
+      ],
+    });
+
+    expect(blocks.some((block) => block.type === "figure")).toBe(true);
   });
 
   it("met la fiche à plat, valeurs de tableau comprises", () => {

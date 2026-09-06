@@ -43,12 +43,42 @@ final class I18nTests: XCTestCase {
         XCTAssertTrue(french.contains("ios.welcomeTitle"))
         XCTAssertTrue(french.contains("ios.yourTurn"))
         XCTAssertTrue(french.contains("ios.appLanguage"))
+        XCTAssertTrue(french.contains("ios.retentionHeading"))
+        XCTAssertTrue(french.contains("ios.deck.history.question"))
+        XCTAssertTrue(french.contains("ios.deck.biology.opt1"))
+        XCTAssertTrue(french.contains("ios.sheetReady"))
+        XCTAssertTrue(french.contains("ios.examReviewsPlaced"))
+        XCTAssertTrue(french.contains("ios.review1.quote"))
+        XCTAssertTrue(french.contains("ios.trialReminder"))
         for goal in LearningGoal.allCases {
             XCTAssertTrue(french.contains("ios.goal.\(goal.rawValue)"), goal.rawValue)
         }
         for habit in ForgettingHabit.allCases {
             XCTAssertTrue(french.contains("ios.forget.\(habit.rawValue)"), habit.rawValue)
         }
+    }
+
+    func testWelcomeDeckAndRetentionCopyFollowLocale() {
+        XCTAssertEqual(
+            L10n.t("ios.deck.history.subject", locale: .de),
+            "Geschichte"
+        )
+        XCTAssertEqual(
+            L10n.t("ios.retentionRemember", locale: .es),
+            "Retienes"
+        )
+        XCTAssertEqual(
+            L10n.t("demo.legendWith", locale: .tr).contains("Micabo"),
+            true
+        )
+        XCTAssertEqual(
+            RetentionCurve.intervalLabel(forDay: 7, locale: .de),
+            "7 T"
+        )
+        XCTAssertEqual(
+            RetentionCurve.intervalLabel(forDay: 3, locale: .tr),
+            "3 g"
+        )
     }
 
     func testNoEmptyStrings() {

@@ -9,9 +9,9 @@ enum PDFImportError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .unreadable: "Ce PDF n'a pas pu être ouvert."
-        case .protected: "Ce PDF est protégé par un mot de passe."
-        case .empty: "Ce PDF ne contient ni texte ni page exploitable."
+        case .unreadable: L10n.t("ios.pdf.unreadable", locale: .resolved())
+        case .protected: L10n.t("ios.pdf.protected", locale: .resolved())
+        case .empty: L10n.t("ios.pdf.empty", locale: .resolved())
         }
     }
 }
@@ -66,7 +66,7 @@ enum PDFImportService {
             source: .pdf,
             extractionNote: text.count >= 200
                 ? "Texte extrait du PDF, sans OCR ni appel réseau."
-                : "Peu de texte dans le fichier : un scan, probablement."
+                : L10n.t("ios.pdf.scanNote", locale: .resolved())
         )
     }
 

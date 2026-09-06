@@ -54,7 +54,7 @@ struct ExplainSelectionSheet: View {
         HStack(alignment: .center, spacing: MicaboSpacing.sm) {
             VStack(alignment: .leading, spacing: 4) {
                 MicaboEyebrow(text: course.title)
-                Text("Explication")
+                Text(L10n.t("ios.explanation", locale: .resolved()))
                     .font(MicaboFont.hanken(26, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(MicaboTracking.tight)
@@ -62,7 +62,7 @@ struct ExplainSelectionSheet: View {
 
             Spacer(minLength: 0)
 
-            MicaboCircleButton(systemImage: "xmark", size: 36, accessibilityTitle: "Fermer") {
+            MicaboCircleButton(systemImage: "xmark", size: 36, accessibilityTitle: L10n.t("app.a11y.close", locale: .resolved())) {
                 dismiss()
             }
         }
@@ -125,7 +125,7 @@ struct ExplainSelectionSheet: View {
     @ViewBuilder
     private func cardOffer(_ card: GeneratedFlashcard) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            MicaboSectionCaption(text: "À réviser plus tard")
+            MicaboSectionCaption(text: L10n.t("ios.reviewLater", locale: .resolved()))
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(FormulaRenderer.stripped(card.front))
@@ -164,7 +164,7 @@ struct ExplainSelectionSheet: View {
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Button("Réessayer") {
+            Button(L10n.t("ios.retry", locale: .resolved())) {
                 Task { await load() }
             }
             .buttonStyle(MicaboSecondaryButtonStyle())
@@ -220,7 +220,7 @@ private struct LoadingLines: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-            Text("Micabo relit ton cours.")
+            Text(L10n.t("ios.rereadingCourse", locale: .resolved()))
                 .font(MicaboFont.hanken(15, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
 

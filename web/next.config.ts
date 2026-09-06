@@ -18,11 +18,12 @@ const config: NextConfig = {
 
   typedRoutes: true,
 
-  // Une carte à occlusion envoie le schéma en data URL JPEG. Un schéma à 1200 px
-  // tient largement sous 2 Mo ; le plafond par défaut (1 Mo) recassait l'enregistrement.
+  // Une carte à occlusion, ou un PDF dont on envoie les pages pour en extraire
+  // les figures, part en data URL JPEG. Le plafond par défaut (1 Mo) recassait
+  // l'enregistrement.
   experimental: {
     serverActions: {
-      bodySizeLimit: "2mb",
+      bodySizeLimit: "3mb",
     },
     // Next 15+ a mis ce délai à 0 : chaque clic attendait le serveur, même pour une
     // page visitée il y a dix secondes. Trente secondes suffisent à rendre la barre

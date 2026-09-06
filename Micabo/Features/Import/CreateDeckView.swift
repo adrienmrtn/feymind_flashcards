@@ -50,8 +50,8 @@ struct CreateDeckView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: MicaboSpacing.md) {
                         MicaboScreenHeader(
-                            title: "Un paquet de cartes",
-                            eyebrow: "Sans cours",
+                            title: L10n.t("ios.deckOfCards", locale: .resolved()),
+                            eyebrow: L10n.t("ios.withoutCourse", locale: .resolved()),
                             back: MicaboHeaderBack.close { dismiss() }
                         )
                         .padding(.top, MicaboSpacing.xs)
@@ -76,7 +76,9 @@ struct CreateDeckView: View {
                             HStack(spacing: MicaboSpacing.xs) {
                                 Image(systemName: hasMaterial ? "sparkles" : "plus")
                                     .font(.system(size: 13, weight: .semibold))
-                                Text(hasMaterial ? "Écrire les cartes" : "Créer le paquet")
+                                Text(hasMaterial
+                                    ? L10n.t("ios.writeCardsBtn", locale: .resolved())
+                                    : L10n.t("ios.createPack", locale: .resolved()))
                             }
                         }
                         .buttonStyle(MicaboPrimaryButtonStyle(tint: canCreate ? MicaboColor.accent : MicaboColor.strokeStrong))
@@ -85,7 +87,7 @@ struct CreateDeckView: View {
                         // Coller du texte n'oblige pas à laisser le modèle écrire : on peut
                         // le garder comme matière et écrire ses cartes soi-même.
                         if hasMaterial {
-                            Button("Créer sans générer") {
+                            Button(L10n.t("ios.createWithoutGen", locale: .resolved())) {
                                 Task { await create(generating: false) }
                             }
                             .buttonStyle(MicaboQuietButtonStyle())
@@ -98,13 +100,18 @@ struct CreateDeckView: View {
             .overlay {
                 if isWorking {
                     GenerationOverlay(
-                        title: "Écriture des cartes",
-                        steps: ["Lecture de tes notes", "Choix des notions", "Rédaction", "Vérification"]
+                        title: L10n.t("ios.writingCards", locale: .resolved()),
+                        steps: [
+                            L10n.t("ios.readNotes", locale: .resolved()),
+                            L10n.t("ios.genStepPick", locale: .resolved()),
+                            L10n.t("ios.genStepWrite", locale: .resolved()),
+                            L10n.t("ios.genStepCheck", locale: .resolved()),
+                        ]
                     )
                 }
             }
-            .alert("Oups", isPresented: .constant(errorMessage != nil)) {
-                Button("Fermer", role: .cancel) { errorMessage = nil }
+            .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(errorMessage != nil)) {
+                Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { errorMessage = nil }
             } message: {
                 Text(errorMessage ?? "")
             }
@@ -117,13 +124,13 @@ struct CreateDeckView: View {
 
     private var nameSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Nom du paquet")
+            MicaboSectionCaption(text: L10n.t("ios.deckName", locale: .resolved()))
 
             VStack(spacing: 0) {
                 field(
                     emoji: "🃏",
                     background: MicaboColor.tilePastels[1],
-                    placeholder: "Vocabulaire allemand, dates de la Révolution…",
+                    placeholder: L10n.t("ios.deckNameHint", locale: .resolved()),
                     text: $title,
                     field: .title
                 )
@@ -136,7 +143,7 @@ struct CreateDeckView: View {
                 field(
                     emoji: "🏷️",
                     background: MicaboColor.tilePastels[4],
-                    placeholder: "Matière, facultatif",
+                    placeholder: L10n.t("ios.subjectOptional", locale: .resolved()),
                     text: $subject,
                     field: .subject
                 )
@@ -147,7 +154,7 @@ struct CreateDeckView: View {
 
     private var materialSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "De quoi partir, si tu veux")
+            MicaboSectionCaption(text: L10n.t("ios.deckStartFrom", locale: .resolved()))
 
             TextEditor(text: $pastedText)
                 .font(MicaboFont.body)
@@ -159,7 +166,7 @@ struct CreateDeckView: View {
                 .micaboGroup()
                 .overlay(alignment: .topLeading) {
                     if pastedText.isEmpty {
-                        Text("Colle une liste, un lexique, tes notes… Micabo en tire des cartes. Laisse vide pour partir d'un paquet nu.")
+                        Text(L10n.t("ios.deckPasteHint", locale: .resolved()))
                             .font(MicaboFont.body)
                             .foregroundStyle(MicaboColor.inkTertiary)
                             .padding(.horizontal, 19)
@@ -174,7 +181,7 @@ struct CreateDeckView: View {
     /// c'est ici ou jamais.
     private var visibilitySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            MicaboSectionCaption(text: "Qui peut le retrouver")
+            MicaboSectionCaption(text: L10n.t("ios.whoCanFindDeck", locale: .resolved()))
 
             HStack(spacing: MicaboSpacing.xs) {
                 ForEach(CourseVisibility.choosable) { value in

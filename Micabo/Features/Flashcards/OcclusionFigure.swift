@@ -47,7 +47,11 @@ struct OcclusionFigure: View {
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
-                .accessibilityLabel(isRevealed ? "Schéma, zone révélée" : "Schéma, une zone est masquée")
+                .accessibilityLabel(
+                    isRevealed
+                        ? L10n.t("ios.schemaRevealed", locale: .resolved())
+                        : L10n.t("ios.schemaMasked", locale: .resolved())
+                )
         }
     }
 

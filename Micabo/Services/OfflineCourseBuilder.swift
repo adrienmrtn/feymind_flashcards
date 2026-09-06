@@ -10,7 +10,7 @@ enum OfflineCourseBuilder {
         let title = hintTitle?.nilIfBlank
             ?? sourceName?.nilIfBlank
             ?? lines.first.map { String($0.prefix(60)) }
-            ?? "Nouveau cours"
+            ?? L10n.t("ios.newCourse", locale: .resolved())
 
         return GeneratedCourse(
             title: title,

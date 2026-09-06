@@ -198,7 +198,7 @@ enum YouTubeImportError: LocalizedError, Equatable {
             self = .network(detail)
             return
         case .invalidResponse:
-            self = .server("La réponse n'a pas pu être lue. Réessaie.")
+            self = .server(L10n.t("ios.yt.responseUnread", locale: .resolved()))
             return
         case .server(let status, let message, let code):
             switch code {
@@ -221,19 +221,19 @@ enum YouTubeImportError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .invalidLink:
-            "Ce lien n'est pas une vidéo YouTube."
+            L10n.t("ios.yt.invalidLink", locale: .resolved())
         case .unavailable:
-            "Cette vidéo n'est pas accessible."
+            L10n.t("ios.yt.unavailable", locale: .resolved())
         case .noCaptions:
-            "Cette vidéo n'a pas de sous-titres. Micabo ne peut pas la lire."
+            L10n.t("ios.yt.noCaptions", locale: .resolved())
         case .transcriptTooShort:
-            "Cette vidéo est trop courte pour générer des cartes."
+            L10n.t("ios.yt.tooShort", locale: .resolved())
         case .tooLong(let duration, let limit):
             Self.tooLongMessage(duration: duration, limit: limit)
         case .notConfigured:
-            "L'accès à l'IA n'est pas configuré. Renseigne l'URL Supabase dans Profil, Réglages."
+            L10n.t("ios.ai.notConfigured", locale: .resolved())
         case .network(let detail):
-            "Connexion impossible. \(detail)"
+            L10n.t("ios.ai.network", locale: .resolved(), vars: ["detail": detail])
         case .server(let message):
             message
         }
@@ -243,12 +243,12 @@ enum YouTubeImportError: LocalizedError, Equatable {
     /// longue » au-dessus de « Cette vidéo dure 2 h 14 » se lit d'un coup d'œil.
     var failureTitle: String {
         switch self {
-        case .invalidLink: "Lien invalide"
-        case .unavailable: "Vidéo inaccessible"
-        case .noCaptions: "Pas de sous-titres"
-        case .transcriptTooShort: "Vidéo trop courte"
-        case .tooLong: "Vidéo trop longue"
-        case .notConfigured, .network, .server: "Lecture impossible"
+        case .invalidLink: L10n.t("ios.yt.titleInvalid", locale: .resolved())
+        case .unavailable: L10n.t("ios.yt.titleUnavailable", locale: .resolved())
+        case .noCaptions: L10n.t("ios.yt.titleNoCaptions", locale: .resolved())
+        case .transcriptTooShort: L10n.t("ios.yt.titleTooShort", locale: .resolved())
+        case .tooLong: L10n.t("ios.yt.titleTooLong", locale: .resolved())
+        case .notConfigured, .network, .server: L10n.t("ios.err.readFailed", locale: .resolved())
         }
     }
 
@@ -266,19 +266,19 @@ enum YouTubeImportError: LocalizedError, Equatable {
     private static func tooLongMessage(duration: TimeInterval, limit: TimeInterval) -> String {
         let ceiling = YouTubeDuration.label(for: limit) ?? "1 h 30"
         guard let measured = YouTubeDuration.label(for: duration) else {
-            return "Cette vidéo est trop longue. Micabo lit les vidéos jusqu'à \(ceiling)."
+            return L10n.t("ios.yt.tooLong", locale: .resolved(), vars: ["limit": ceiling])
         }
-        return "Cette vidéo dure \(measured). Micabo lit les vidéos jusqu'à \(ceiling)."
+        return L10n.t("ios.yt.tooLongMeasured", locale: .resolved(), vars: ["duration": measured, "limit": ceiling])
     }
 
     private static func transportMessage(status: Int, message: String) -> String {
         if status == 404 {
-            return "Fonction Supabase introuvable. Déploie youtube-transcript depuis supabase/functions."
+            return L10n.t("ios.yt.fnMissing", locale: .resolved())
         }
         if status == 401 || status == 403 {
-            return "Clé Supabase refusée (\(status)). Vérifie la clé publique dans Réglages."
+            return L10n.t("ios.yt.keyRefused", locale: .resolved(), vars: ["status": "\(status)"])
         }
-        return message.nilIfBlank ?? "Le serveur a répondu \(status)."
+        return message.nilIfBlank ?? L10n.t("ios.yt.serverStatus", locale: .resolved(), vars: ["status": "\(status)"])
     }
 }
 

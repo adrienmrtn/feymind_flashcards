@@ -257,7 +257,7 @@ struct CourseDuePreview: Equatable {
             .first
             .map { exam in
                 let name = exam.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                return name.isEmpty ? "Examen" : name
+                return name.isEmpty ? L10n.t("app.exams.defaultName", locale: .resolved()) : name
             }
     }
 }

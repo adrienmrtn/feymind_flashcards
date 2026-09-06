@@ -283,11 +283,15 @@ private struct DemoOutputTile: View {
 private struct DemoSchemaMini: View {
     let showsLoop: Bool
 
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    private var locale: UiLocale { i18n?.locale ?? .resolved() }
+
     private var stages: [(symbol: String, label: String, tint: Color)] {
         [
-            ("sun.max.fill", L10n.t("demo.evap", locale: .resolved()), MicaboColor.caution),
-            ("cloud.fill", L10n.t("demo.cond", locale: .resolved()), MicaboColor.inkSecondary),
-            ("cloud.rain.fill", L10n.t("demo.precip", locale: .resolved()), OnboardingDemo.accent)
+            ("sun.max.fill", L10n.t("demo.evap", locale: locale), MicaboColor.caution),
+            ("cloud.fill", L10n.t("demo.cond", locale: locale), MicaboColor.inkSecondary),
+            ("cloud.rain.fill", L10n.t("demo.precip", locale: locale), OnboardingDemo.accent)
         ]
     }
 
@@ -319,7 +323,7 @@ private struct DemoSchemaMini: View {
                 Image(systemName: "arrow.uturn.left")
                     .font(.system(size: 7, weight: .bold))
 
-                Text("retour à la mer")
+                Text(i18n?.t("ios.demo.backToSea") ?? L10n.t("ios.demo.backToSea", locale: locale))
                     .font(MicaboFont.hanken(8, weight: .semibold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)

@@ -180,7 +180,13 @@ enum MicaboCalendar {
     }()
 
     /// Initiales des jours, dans l'ordre de la grille.
-    static let weekdayInitials = ["L", "M", "M", "J", "V", "S", "D"]
+    static let weekdayInitials = weekdayInitials(locale: .resolved())
+
+    static func weekdayInitials(locale: UiLocale) -> [String] {
+        L10n.t("ios.weekdays", locale: locale)
+            .split(separator: ",")
+            .map { String($0) }
+    }
 
     /// « mardi 8 septembre », sans l'année quand c'est cette année-ci.
     static func dayLabel(_ date: Date, from reference: Date = Date()) -> String {

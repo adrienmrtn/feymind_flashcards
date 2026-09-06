@@ -14,12 +14,8 @@ import {
   jsonResponse,
 } from "../_shared/fal.ts";
 import { parseModelJSON } from "../_shared/json.ts";
-import {
-  ensureHighlights,
-  normalizeSheet,
-  sheetToPlainText,
-  stripInlineMarkup,
-} from "../_shared/sheet.ts";
+import { attachFigureImages, figuresBrief, injectUnusedFigures, parseExtractedFigures } from "../_shared/figures.ts";
+import { normalizeSheet, sheetToPlainText, stripInlineMarkup } from "../_shared/sheet.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
 import { languageBrief } from "../_shared/language.ts";
 import { sanitizeInstructions, sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
@@ -134,6 +130,7 @@ Deno.serve((request: Request) =>
           visualNotes = "";
         }
       }
+      const extractedFigures = parseExtractedFigures(visualNotes);
 
       // La langue passe en tête, avant même le titre : en queue de message, derrière un
       // document de soixante mille caractères, le modèle la perd et retombe sur le français
@@ -164,6 +161,8 @@ Deno.serve((request: Request) =>
       if (visualNotes) {
         sections.push(wrapUntrusted("DESCRIPTION DES VISUELS DU DOCUMENT", visualNotes));
       }
+      const extracted = figuresBrief(extractedFigures);
+      if (extracted) sections.push(extracted);
       sections.push("JSON compact, une seule ligne, sans indentation.");
       sections.push("Écris maintenant le JSON de la fiche.");
 
@@ -186,10 +185,11 @@ Deno.serve((request: Request) =>
         );
       }
 
-      // Le surligneur est appliqué ici, après la normalisation : le prompt l'exige depuis
-      // longtemps et les fiches arrivaient sans une seule marque. Une fiche qui en porte déjà
-      // n'est pas touchée.
-      const blocks = ensureHighlights(normalizeSheet(parsed.sheet ?? parsed.blocks));
+      const drafted = injectUnusedFigures(
+        normalizeSheet(parsed.sheet ?? parsed.blocks),
+        extractedFigures,
+      );
+      const blocks = await attachFigureImages(normalizeSheet(drafted), images);
 
       if (blocks.length < 3) {
         throw new FalError("Le modèle n'a pas produit de fiche exploitable.", 502);

@@ -31,22 +31,22 @@ struct FlashcardEditorSheet: View {
         ) { result in
             attachAudio(from: result)
         }
-        .confirmationDialog("Supprimer cette carte ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
-            Button("Supprimer", role: .destructive) {
+        .confirmationDialog(L10n.t("ios.deleteCardQ", locale: .resolved()), isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button(L10n.t("app.common.delete", locale: .resolved()), role: .destructive) {
                 _ = try? CourseRepository.delete(card, in: modelContext)
                 dismiss()
             }
-            Button("Annuler", role: .cancel) {}
+            Button(L10n.t("app.common.cancel", locale: .resolved()), role: .cancel) {}
         }
     }
 
     private var header: some View {
         MicaboScreenHeader(
-            title: "Modifier la carte",
+            title: L10n.t("ios.editCard", locale: .resolved()),
             eyebrow: card.course?.title,
             back: MicaboHeaderBack.close(save)
         ) {
-            Button("Terminé", action: save)
+            Button(L10n.t("ios.done", locale: .resolved()), action: save)
                 .font(MicaboFont.hanken(15, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
         }
@@ -73,7 +73,7 @@ struct FlashcardEditorSheet: View {
     /// en attendant le verso reste modifiable comme sur n'importe quelle carte.
     private var choicesSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Propositions")
+            MicaboSectionCaption(text: L10n.t("ios.choices", locale: .resolved()))
 
             VStack(spacing: 0) {
                 ForEach(Array(card.choices.enumerated()), id: \.offset) { index, choice in
@@ -107,16 +107,16 @@ struct FlashcardEditorSheet: View {
     /// vocabulaire muette n'apprend pas à prononcer.
     private var audioSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Prononciation")
+            MicaboSectionCaption(text: L10n.t("ios.pronunciation", locale: .resolved()))
 
             VStack(spacing: 0) {
                 if card.hasAudio {
                     HStack(spacing: MicaboSpacing.sm) {
-                        CardAudioButton(card: card, title: "Écouter")
+                        CardAudioButton(card: card, title: L10n.t("ios.listen", locale: .resolved()))
 
                         Spacer(minLength: 0)
 
-                        Button("Retirer") {
+                        Button(L10n.t("ios.remove", locale: .resolved())) {
                             card.audioData = nil
                             _ = try? modelContext.save()
                         }
@@ -129,8 +129,8 @@ struct FlashcardEditorSheet: View {
                 } else {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("🔊"), background: MicaboColor.accentSoft),
-                        title: "Ajouter un son",
-                        subtitle: "Un fichier audio depuis tes fichiers",
+                        title: L10n.t("ios.addSound", locale: .resolved()),
+                        subtitle: L10n.t("ios.audioFileHelp", locale: .resolved()),
                         accessory: .chevron,
                         action: { showAudioImporter = true }
                     )
@@ -142,7 +142,7 @@ struct FlashcardEditorSheet: View {
 
     private var occlusionSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Schéma")
+            MicaboSectionCaption(text: L10n.t("app.cardKind.diagram", locale: .resolved()))
 
             OcclusionFigure(card: card, isRevealed: true, maxHeight: 200)
                 .padding(MicaboSpacing.md)
@@ -153,23 +153,23 @@ struct FlashcardEditorSheet: View {
 
     private var schedulingSummary: some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-            MicaboSectionCaption(text: "Progression")
+            MicaboSectionCaption(text: L10n.t("ios.cardProgress", locale: .resolved()))
 
             HStack(spacing: MicaboSpacing.sm) {
-                summaryItem(card.state.label, "État")
-                summaryItem(card.intervalDays >= 1 ? "\(Int(card.intervalDays)) j" : "-", "Intervalle")
-                summaryItem(String(format: "%.2f", card.easeFactor), "Facilité")
-                summaryItem("\(card.lapses)", "Oublis")
+                summaryItem(card.state.label, L10n.t("ios.cardState", locale: .resolved()))
+                summaryItem(card.intervalDays >= 1 ? "\(Int(card.intervalDays)) j" : "-", L10n.t("ios.cardInterval", locale: .resolved()))
+                summaryItem(String(format: "%.2f", card.easeFactor), L10n.t("ios.cardEase", locale: .resolved()))
+                summaryItem("\(card.lapses)", L10n.t("ios.cardLapses", locale: .resolved()))
             }
 
             HStack(spacing: MicaboSpacing.md) {
-                Button("Réinitialiser cette carte") {
+                Button(L10n.t("ios.resetThisCard", locale: .resolved())) {
                     card.resetScheduling()
                     _ = try? modelContext.save()
                 }
                 .buttonStyle(MicaboQuietButtonStyle())
 
-                Button("Supprimer la carte") {
+                Button(L10n.t("ios.deleteCard", locale: .resolved())) {
                     showDeleteConfirmation = true
                 }
                 .font(MicaboFont.captionEmphasis)
@@ -245,11 +245,11 @@ struct FlashcardCreatorSheet: View {
 
     private var header: some View {
         MicaboScreenHeader(
-            title: "Nouvelle carte",
+            title: L10n.t("ios.newCard", locale: .resolved()),
             eyebrow: course.title,
             back: MicaboHeaderBack.close { dismiss() }
         ) {
-            Button("Ajouter", action: save)
+            Button(L10n.t("app.common.add", locale: .resolved()), action: save)
                 .font(MicaboFont.hanken(15, weight: .semibold))
                 .foregroundStyle(canSave ? MicaboColor.accent : MicaboColor.inkTertiary)
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
@@ -279,9 +279,14 @@ private struct FlashcardForm: View {
                 header()
                     .padding(.bottom, MicaboSpacing.xxs)
 
-                field(title: "Recto", text: $front, minHeight: 96)
-                field(title: "Verso", text: $back, minHeight: 140)
-                field(title: "Indice", subtitle: "Facultatif", text: $hint, minHeight: 60)
+                field(title: L10n.t("ios.front", locale: .resolved()), text: $front, minHeight: 96)
+                field(title: L10n.t("ios.back", locale: .resolved()), text: $back, minHeight: 140)
+                field(
+                    title: L10n.t("app.session.hint", locale: .resolved()),
+                    subtitle: L10n.t("ios.optional", locale: .resolved()),
+                    text: $hint,
+                    minHeight: 60
+                )
                 footer()
             }
             .padding(.horizontal, MicaboSpacing.screen)

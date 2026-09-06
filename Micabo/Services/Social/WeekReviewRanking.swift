@@ -20,7 +20,9 @@ enum WeekReviewRanking {
         let isMe: Bool
 
         var handle: String {
-            guard let username, !username.isEmpty else { return "Quelqu'un" }
+            guard let username, !username.isEmpty else {
+                return L10n.t("app.friends.someone", locale: .resolved())
+            }
             return Username.display(username)
         }
     }

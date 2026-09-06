@@ -10,11 +10,11 @@ enum DocxImportService {
         var errorDescription: String? {
             switch self {
             case .notADocx:
-                return "Ce fichier n'est pas un document Word (.docx)."
+                return L10n.t("ios.docx.notDocx", locale: .resolved())
             case .missingDocument:
-                return "Le document Word est incomplet ou corrompu."
+                return L10n.t("ios.docx.corrupt", locale: .resolved())
             case .empty:
-                return "Aucun texte n'a été trouvé dans ce document."
+                return L10n.t("ios.docx.empty", locale: .resolved())
             }
         }
     }
@@ -50,7 +50,7 @@ enum DocxImportService {
             pageCount: max(1, text.split(separator: "\n").count / 40),
             fileName: URL(fileURLWithPath: fileName).deletingPathExtension().lastPathComponent,
             source: .docx,
-            extractionNote: "Texte extrait du document Word, sans envoi au serveur."
+            extractionNote: L10n.t("ios.docx.extractedNote", locale: .resolved())
         )
     }
 }

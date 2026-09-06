@@ -160,11 +160,11 @@ private struct GeneratingPage: View {
     }
 
     /// Le passage mis en avant, montré ici parce que c'est la marque qu'on reconnaît d'une
-    /// fiche Micabo, et qu'on la découvre mieux en la voyant arriver. Il portait le jaune du
-    /// surligneur ; il prend le vert de la fiche, comme elle.
+    /// fiche Micabo, et qu'on la découvre mieux en la voyant arriver. C'est le jaune du
+    /// surligneur, comme dans la fiche.
     private var highlightedLine: some View {
         VStack(alignment: .leading, spacing: 6) {
-            bar(width: 0.88, height: 5, color: MicaboColor.sheetEmphasis.opacity(0.65))
+            bar(width: 0.88, height: 5, color: MicaboColor.sheetMarker)
             bar(width: 0.44, height: 5, color: MicaboColor.surfaceMuted)
         }
     }
@@ -246,7 +246,7 @@ private struct GeneratingPage: View {
 
 #Preview {
     GenerationOverlay(
-        title: "Écriture de la fiche",
+        title: L10n.t("ios.writingSheet", locale: .resolved()),
         steps: ["Lecture du document", "Repérage du plan", "Rédaction de la fiche", "Mise en page"]
     )
 }

@@ -4,6 +4,7 @@ import SwiftUI
 struct FeedbackView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthController.self) private var auth
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var kind: MicaboMail.Kind = .bug
     @State private var message = ""
@@ -16,8 +17,8 @@ struct FeedbackView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-            MicaboScreenHeader(title: "Faire un retour", back: MicaboHeaderBack.close { dismiss() }) {
-                Button("Envoyer", action: send)
+            MicaboScreenHeader(title: i18n?.t("app.feedback.title") ?? "Faire un retour", back: MicaboHeaderBack.close { dismiss() }) {
+                Button(i18n?.t("app.feedback.send") ?? "Envoyer", action: send)
                     .font(MicaboFont.hanken(15, weight: .semibold))
                     .foregroundStyle(ready ? MicaboColor.accent : MicaboColor.inkTertiary)
                     .disabled(!ready)
@@ -25,7 +26,7 @@ struct FeedbackView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: "C'est à propos de")
+                MicaboSectionCaption(text: i18n?.t("ios.aboutTopic") ?? "C'est à propos de")
                 MicaboRowGroup(rows: MicaboMail.Kind.allCases.map { option in
                     MicaboRow(
                         tile: MicaboTile(
@@ -40,7 +41,7 @@ struct FeedbackView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: "Ton message")
+                MicaboSectionCaption(text: i18n?.t("app.feedback.messageLabel") ?? "Ton message")
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: $message)
                         .font(MicaboFont.body)
@@ -59,7 +60,7 @@ struct FeedbackView: View {
                 .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
             }
 
-            Text(notice ?? "Ça s'écrit ici, sans ouvrir ta boîte mail.")
+            Text(notice ?? (i18n?.t("app.feedback.lead") ?? "Un bug, une idée…"))
                 .font(MicaboFont.micro)
                 .foregroundStyle(notice == nil ? MicaboColor.inkTertiary : MicaboColor.inkSecondary)
 
@@ -75,7 +76,7 @@ struct FeedbackView: View {
         let cleaned = message.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty, let userId = auth.user?.id else { return }
         guard cleaned.count <= 4000 else {
-            notice = "Un peu trop long."
+            notice = i18n?.t("ios.feedbackTooLong") ?? L10n.t("ios.feedbackTooLong", locale: .resolved())
             return
         }
         sending = true
@@ -101,9 +102,9 @@ struct FeedbackView: View {
         if let failure = error as? SupabaseDatabase.Failure,
            case .server(_, let message, let code) = failure,
            code == "42501" || message.localizedCaseInsensitiveContains("row-level security") {
-            return "Trop de retours aujourd'hui. Réessaie demain."
+            return L10n.t("ios.feedbackTooMany", locale: .resolved())
         }
-        return "Ça n'est pas passé. Réessaie dans un instant."
+        return L10n.t("ios.feedbackFailed", locale: .resolved())
     }
 }
 

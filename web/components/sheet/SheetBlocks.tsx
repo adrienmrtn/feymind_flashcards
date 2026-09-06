@@ -24,14 +24,15 @@ import { MathBlock } from "./Math";
 
 /**
  * Un encadré porte les couleurs de retour d'information, volontairement désaturées, et quatre
- * teintes qui se distinguent : le menthe de ce que la fiche met en avant, l'ambre de ce qui
- * coûte des points, le gris d'un exemple, le bleu d'un moyen de retenir.
+ * surfaces qui se distinguent : le menthe de ce que la fiche met en avant, l'ambre de ce qui
+ * coûte des points, le gris d'un exemple, le bleu pâle d'un moyen de retenir. Les libellés
+ * restent à l'encre : un mot bleu se lit comme un lien.
  */
 const TONE_STYLES: Record<string, { surface: string; label: string }> = {
   essentiel: { surface: "bg-accent-soft", label: "text-ink" },
   attention: { surface: "bg-caution-soft", label: "text-caution" },
   exemple: { surface: "bg-surface-muted", label: "text-ink-secondary" },
-  astuce: { surface: "bg-info-soft", label: "text-info" },
+  astuce: { surface: "bg-info-soft", label: "text-ink" },
 };
 
 function toneOf(raw: string) {
@@ -102,7 +103,7 @@ function Block({ block, tint }: { block: SheetBlock; tint: string }) {
             style={{ backgroundColor: tint, opacity: 0.55 }}
           />
           <div>
-            <p className="text-[14.5px] font-semibold" style={{ color: tint }}>
+            <p className="text-[14.5px] font-semibold text-ink">
               <InlineMarkup text={block.term} />
             </p>
             <p className="mt-1 text-[14px] leading-[1.6]">
@@ -138,8 +139,8 @@ function Block({ block, tint }: { block: SheetBlock; tint: string }) {
               <li key={index} className="flex gap-2.5">
                 <span
                   aria-hidden
-                  className="numeral mt-px flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-                  style={{ backgroundColor: `${tint}1f`, color: tint }}
+                  className="numeral mt-px flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-ink"
+                  style={{ backgroundColor: `${tint}1f` }}
                 >
                   {index + 1}
                 </span>
@@ -251,6 +252,23 @@ function Block({ block, tint }: { block: SheetBlock; tint: string }) {
             </p>
           ) : null}
         </div>
+      );
+
+    case "figure":
+      return (
+        <figure className="paper rounded-[18px] bg-surface p-[13px]">
+          {block.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={block.image}
+              alt=""
+              className="mx-auto max-h-[280px] w-auto max-w-full rounded-[16px] outline outline-1 outline-black/10"
+            />
+          ) : null}
+          <figcaption className="mt-2 text-[11.5px] text-ink-tertiary">
+            <InlineMarkup text={block.caption} />
+          </figcaption>
+        </figure>
       );
   }
 }

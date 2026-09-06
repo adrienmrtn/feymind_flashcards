@@ -665,6 +665,14 @@ export const appTr = {
     exemple: "Örnek",
     astuce: "İpucu",
   },
+  sheet: {
+    quiz: "Kendini dene",
+    showAnswer: "Cevabı gör",
+    answer: "Cevap",
+    keypoints: "Anahtar sayılar",
+    diagram: "Şema",
+    backToStart: "başa dönüş",
+  },
   generate: {
     timeout: "Yazmak çok uzun sürdü. Yeniden dene.",
     writing: "Micabo kartları yazıyor…",

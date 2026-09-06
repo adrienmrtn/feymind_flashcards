@@ -85,6 +85,11 @@ export async function importFromText(input: {
   language?: GenerationLanguage;
   /** Prompt libre, pris en compte à l'écriture de la fiche. */
   instructions?: string;
+  /**
+   * Pages JPEG en data URL, pour extraire les schémas. Plafond aligné sur
+   * `generate-course` : six images, quatre millions de caractères.
+   */
+  images?: string[];
 }): Promise<ImportResult> {
   const supabase = await createClient();
   const {
@@ -96,7 +101,8 @@ export async function importFromText(input: {
   if (blocked) return blocked;
 
   const text = input.text.trim().slice(0, MAXIMUM_TEXT);
-  if (text.length < MINIMUM_TEXT) {
+  const images = acceptedImportImages(input.images);
+  if (text.length < MINIMUM_TEXT && images.length === 0) {
     return { status: "error", message: await actionT("app.errors.textTooShort") };
   }
 
@@ -124,6 +130,7 @@ export async function importFromText(input: {
   const { data, error } = await supabase.functions.invoke("generate-course", {
     body: {
       text,
+      images: images.length > 0 ? images : undefined,
       hintTitle: input.hintTitle,
       sourceName: input.sourceName,
       level: profile?.study_level ?? undefined,
@@ -162,7 +169,7 @@ export async function importFromText(input: {
     source_file_name: input.sourceName ?? null,
     // L'empreinte reconnaît un chapitre déjà importé. Elle est calculée sur le texte lu, pas sur
     // la fiche : deux générations du même document donnent deux fiches et un seul cours.
-    fingerprint: await fingerprint(text),
+    fingerprint: await fingerprint(text.length >= 40 ? text : (images[0] ?? text)),
     raw_text: text,
     sheet: { blocks },
     context_text: course.contextText ?? sheetToPlainText(blocks),
@@ -380,6 +387,25 @@ async function readableError(error: unknown): Promise<string> {
 
 function fallbackMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Micabo n'a pas pu écrire cette fiche.";
+}
+
+const MAX_IMPORT_IMAGES = 6;
+const MAX_IMPORT_IMAGE_CHARS = 4_000_000;
+
+function acceptedImportImages(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  let total = 0;
+  for (const item of raw) {
+    if (typeof item !== "string") continue;
+    const url = item.trim();
+    if (!url.startsWith("data:image/")) continue;
+    total += url.length;
+    if (total > MAX_IMPORT_IMAGE_CHARS) break;
+    out.push(url);
+    if (out.length >= MAX_IMPORT_IMAGES) break;
+  }
+  return out;
 }
 
 /** Le premier cours est offert. Le deuxième s'achète — avant d'appeler le modèle. */

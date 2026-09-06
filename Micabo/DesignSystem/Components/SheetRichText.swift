@@ -46,6 +46,14 @@ struct SheetTextStyle {
         )
     }
 
+    /// Étiquette d'une valeur : nom d'une barre, d'un point de courbe, d'une part d'anneau.
+    static let chartLabel = SheetTextStyle(
+        size: SheetTypography.cell,
+        weight: .medium,
+        color: MicaboColor.ink,
+        lineSpacing: SheetTypography.tightLineSpacing
+    )
+
     /// Légende sous un tableau, un graphe ou une formule.
     static let caption = SheetTextStyle(
         size: SheetTypography.caption,
@@ -197,7 +205,7 @@ struct SheetProse: UIViewRepresentable {
                 return UIMenu(children: suggestedActions)
             }
 
-            let explain = UIAction(title: "Expliquer", image: UIImage(systemName: "sparkles")) { _ in
+            let explain = UIAction(title: L10n.t("ios.explanation", locale: .resolved()), image: UIImage(systemName: "sparkles")) { _ in
                 textView.selectedTextRange = nil
                 Haptics.selection()
                 onExplain(selection)
@@ -242,11 +250,16 @@ enum SheetAttributedText {
         for span in SheetMarkup.spans(markup) {
             var attributes: [NSAttributedString.Key: Any] = [
                 .font: uiFont(for: span, style: style),
-                .foregroundColor: UIColor(color(for: span, style: style)),
+                .foregroundColor: UIColor(style.color),
                 .paragraphStyle: paragraph
             ]
             if style.tracking != 0 {
                 attributes[.kern] = style.tracking
+            }
+            // La bande est peinte par `SheetMarkerLayoutManager`, qui remplace le fond de
+            // TextKit par un trait d'épaisseur constante.
+            if span.isHighlighted {
+                attributes[.backgroundColor] = UIColor(MicaboColor.sheetMarker)
             }
             result.append(NSAttributedString(string: span.text, attributes: attributes))
         }
@@ -260,25 +273,18 @@ enum SheetAttributedText {
         for span in SheetMarkup.spans(markup) {
             var piece = AttributedString(span.text)
             piece.font = font(for: span, style: style)
-            piece.foregroundColor = color(for: span, style: style)
+            piece.foregroundColor = style.color
+            // Ici la bande est celle de SwiftUI, qui prend toute la hauteur de ligne : ce
+            // rendu ne compose que des titres, des cellules et des légendes, tous à
+            // interligne serré et sur une ou deux lignes. Le paragraphe, lui, passe par
+            // `SheetProse`, où la bande est dessinée à la bonne épaisseur.
+            if span.isHighlighted {
+                piece.backgroundColor = MicaboColor.sheetMarker
+            }
             result.append(piece)
         }
 
         return result
-    }
-
-    // MARK: Couleur
-
-    /// L'encre du fragment. Un passage mis en avant change de **couleur**, et de rien
-    /// d'autre.
-    ///
-    /// Il portait un fond jaune, et ce fond était le problème : une bande derrière le texte
-    /// déborde sous les jambages, change d'épaisseur d'une ligne à l'autre, et se battait
-    /// avec l'interligne au lieu de servir la lecture. Le poids n'est pas touché non plus,
-    /// parce que le gras est déjà une marque : deux marques sur le même passage n'en font
-    /// aucune.
-    private static func color(for span: SheetMarkup.Span, style: SheetTextStyle) -> Color {
-        span.isHighlighted ? MicaboColor.sheetEmphasis : style.color
     }
 
     // MARK: Fontes

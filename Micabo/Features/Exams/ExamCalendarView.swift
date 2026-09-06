@@ -40,8 +40,8 @@ struct ExamCalendarView: View {
 
             Spacer(minLength: 0)
 
-            stepButton(systemImage: "chevron.left", step: -1, title: "Mois précédent")
-            stepButton(systemImage: "chevron.right", step: 1, title: "Mois suivant")
+            stepButton(systemImage: "chevron.left", step: -1, title: L10n.t("ios.prevMonth", locale: .resolved()))
+            stepButton(systemImage: "chevron.right", step: 1, title: L10n.t("ios.nextMonth", locale: .resolved()))
         }
     }
 

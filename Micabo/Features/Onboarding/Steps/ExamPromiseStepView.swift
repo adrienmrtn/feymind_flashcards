@@ -62,6 +62,12 @@ private struct ExamCountdownCalendar: View {
     @State private var pings = false
     @State private var didStart = false
 
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    private func t(_ key: String, _ vars: [String: String] = [:]) -> String {
+        i18n?.t(key, vars) ?? L10n.t(key, locale: .fr, vars: vars)
+    }
+
     var body: some View {
         VStack(spacing: 14) {
             grid
@@ -77,7 +83,7 @@ private struct ExamCountdownCalendar: View {
     private var grid: some View {
         VStack(spacing: 7) {
             HStack(spacing: 0) {
-                ForEach(Array(MicaboCalendar.weekdayInitials.enumerated()), id: \.offset) { _, initial in
+                ForEach(Array(MicaboCalendar.weekdayInitials(locale: i18n?.locale ?? .resolved()).enumerated()), id: \.offset) { _, initial in
                     Text(initial)
                         .font(MicaboFont.hanken(10, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkTertiary)
@@ -166,19 +172,19 @@ private struct ExamCountdownCalendar: View {
                 .frame(width: 3, height: showsLabel ? 26 : 0)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("EXAMEN")
+                Text(t("ios.examBadge").uppercased())
                     .font(MicaboFont.hanken(9, weight: .bold))
                     .tracking(1.2)
                     .foregroundStyle(MicaboColor.negative)
 
-                Text("Maths DS sur table")
+                Text(t("ios.examDemoName"))
                     .font(MicaboFont.hanken(14, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
             }
 
             Spacer(minLength: MicaboSpacing.xs)
 
-            Text("J-\(daysLeft)")
+            Text(t("ios.examCountdown", ["n": "\(daysLeft)"]))
                 .font(MicaboFont.number(12, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .monospacedDigit()
@@ -201,7 +207,7 @@ private struct ExamCountdownCalendar: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 12, weight: .semibold))
 
-            Text("\(reviewDays.count) révisions placées avant le jour J")
+            Text(t("ios.examReviewsPlaced", ["n": "\(reviewDays.count)"]))
                 .font(MicaboFont.hanken(12, weight: .semibold))
         }
         .foregroundStyle(MicaboColor.accent)

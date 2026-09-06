@@ -10,7 +10,7 @@ import {
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v1.2.0");
+  assertEquals(PROMPT_VERSION, "course-v1.3.0");
 });
 
 Deno.test("audienceBrief mappe lycée + France", () => {

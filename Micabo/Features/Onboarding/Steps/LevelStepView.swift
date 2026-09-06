@@ -24,7 +24,7 @@ struct LevelStepView: View {
         ) {
             OnboardingAnswerList(model.country.stages, spacing: 8) { stage in
                 OnboardingChoiceRow(
-                    title: stage.title,
+                    title: stage.localizedTitle,
                     emoji: stage.emoji,
                     isSelected: model.stage == stage,
                     fillsHeight: true

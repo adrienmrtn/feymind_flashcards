@@ -156,14 +156,16 @@ final class Course {
         (sheetData?.isEmpty == false)
     }
 
-    /// La fiche décodée, surligneur garanti. Le décodage n'est pas gratuit : un écran la lit
-    /// une fois et la garde, il ne l'appelle pas depuis un corps de vue.
+    /// La fiche décodée. Le décodage n'est pas gratuit : un écran la lit une fois et la
+    /// garde, il ne l'appelle pas depuis un corps de vue.
     ///
-    /// Le surlignage est posé à la lecture et non à l'enregistrement : ce qui est en base
-    /// reste ce que le modèle a écrit, et les fiches importées avant que le surligneur existe
-    /// se relisent marquées sans qu'on ait à les refaire.
+    /// Il y avait ici un surligneur posé à la lecture, qui marquait trois passages quand le
+    /// modèle n'en avait marqué aucun. Il est parti : le code ne sait pas ce qui compte dans
+    /// un cours, il savait seulement repérer une phrase de la bonne longueur, et une marque
+    /// tombée sur la phrase d'à côté est pire qu'une page sans marque. Ce qui est surligné
+    /// est maintenant ce que le modèle a choisi de surligner, et rien d'autre.
     func decodedSheet() -> CourseSheet? {
-        CourseSheet.decode(from: sheetData)?.highlighted()
+        CourseSheet.decode(from: sheetData)
     }
 
     func apply(_ sheet: CourseSheet?) {
