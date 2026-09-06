@@ -119,7 +119,12 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
           <GenerateCardsCta href={`/app/c/${course.id}/cartes?generer=1`} />
         </div>
       ) : (
-        <ReviewCta href={`/app/reviser?cours=${course.id}`} floating />
+        <>
+          <div className="mt-7" data-print="hide">
+            <ReviewCta href={`/app/reviser?cours=${course.id}`} />
+          </div>
+          <ReviewCta href={`/app/reviser?cours=${course.id}`} floating />
+        </>
       )}
 
       <div
