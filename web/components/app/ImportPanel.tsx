@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import type { PDFPageProxy } from "pdfjs-dist";
 import { ThinkingOrb } from "thinking-orbs";
 
 import {
@@ -728,19 +729,14 @@ async function extractDocument(file: File): Promise<{ text: string; images: stri
   return { text: await file.text(), images: [] };
 }
 
-async function renderPdfPage(page: {
-  getViewport: (params: { scale: number }) => { width: number; height: number };
-  render: (params: { canvasContext: CanvasRenderingContext2D; viewport: { width: number; height: number } }) => {
-    promise: Promise<void>;
-  };
-}): Promise<string | null> {
+async function renderPdfPage(page: PDFPageProxy): Promise<string | null> {
   const viewport = page.getViewport({ scale: 1.1 });
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(viewport.width));
   canvas.height = Math.max(1, Math.round(viewport.height));
   const context = canvas.getContext("2d");
   if (!context) return null;
-  await page.render({ canvasContext: context, viewport }).promise;
+  await page.render({ canvas, canvasContext: context, viewport }).promise;
   const url = canvas.toDataURL("image/jpeg", 0.5);
   return url.startsWith("data:image/") ? url : null;
 }
