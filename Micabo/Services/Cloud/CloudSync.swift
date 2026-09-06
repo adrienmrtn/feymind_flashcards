@@ -97,6 +97,7 @@ final class CloudSync {
             try await push(context: context, since: since)
             lastSyncedAt = checkpoint
             epoch += 1
+            LibraryCensus.forget()
             state = .done(Date())
         } catch {
             // Une panne de synchro ne casse rien : les données locales sont intactes et le

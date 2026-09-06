@@ -135,6 +135,20 @@ final class CloudRecordTests: XCTestCase {
         XCTAssertTrue(restored.plainText().contains("dioxygène"))
     }
 
+    func testJSONValueBuildsFromASerializedObjectWithoutASecondEncode() throws {
+        let object: [String: Any] = ["ok": true, "n": 2, "s": "fiche"]
+        let value = try XCTUnwrap(JSONValue(jsonObject: object))
+        guard case .object(let fields) = value else {
+            return XCTFail("L'objet JSON doit rester un objet")
+        }
+        XCTAssertEqual(fields["s"]?.stringValue, "fiche")
+        if case .bool(let flag) = fields["ok"] {
+            XCTAssertTrue(flag)
+        } else {
+            XCTFail("Un booléen JSONSerialization doit rester un booléen")
+        }
+    }
+
     func testABrokenSheetIsNeverSentToTheServer() {
         XCTAssertNil(JSONCodable(data: nil))
         XCTAssertNil(JSONCodable(data: Data()))

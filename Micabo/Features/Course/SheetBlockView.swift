@@ -254,10 +254,11 @@ struct SheetBlockView: View {
 
 struct SheetFigureView: View {
     let figure: SheetFigure
+    @State private var decoded: UIImage?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if let imageData = figure.imageData, let image = UIImage(data: imageData) {
+            if let image = decoded {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
@@ -278,6 +279,15 @@ struct SheetFigureView: View {
         .micaboGroup(radius: MicaboRadius.lg)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(SheetMarkup.plain(figure.caption))
+        .task(id: figure.imageData?.count) {
+            guard let data = figure.imageData else {
+                decoded = nil
+                return
+            }
+            decoded = await Task.detached(priority: .userInitiated) {
+                UIImage(data: data)
+            }.value
+        }
     }
 }
 

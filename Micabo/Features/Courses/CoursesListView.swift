@@ -161,15 +161,18 @@ struct CoursesListView: View {
             if let course = coursePendingDelete {
                 Text(i18n?.t("app.courses.deleteMsg", [
                     "title": course.title,
-                    "cards": MicaboCopy.cards(course.cards.count)
+                    "cards": MicaboCopy.cards(census[course.id]?.cardCount ?? course.cards.count)
                 ]) ?? "\(course.title) et \(MicaboCopy.cards(course.cards.count)) disparaissent.")
             }
         }
-        .task(id: censusKey) {
-            census = LibraryCensus.load(in: modelContext)
+        .task(id: "\(router?.selection == .courses)-\(censusKey)") {
+            guard router?.selection == .courses || path.count > 0 else { return }
+            census = LibraryCensus.load(in: modelContext, key: censusKey)
         }
         .onChange(of: path.count) { _, depth in
-            if depth == 0 { census = LibraryCensus.load(in: modelContext) }
+            if depth == 0, router?.selection == .courses {
+                census = LibraryCensus.load(in: modelContext, key: censusKey)
+            }
         }
         .onChange(of: router?.courseImportRequests ?? 0) { oldValue, newValue in
             guard newValue > oldValue else { return }
@@ -307,7 +310,7 @@ struct CoursesListView: View {
     /// Change quand la liste des cours, le jour ou une synchro bougent. Les notes
     /// d'une session, elles, se voient au retour sur la liste (`path.count == 0`).
     private var censusKey: String {
-        let stamp = courses.map(\.updatedAt).max()?.timeIntervalSince1970 ?? 0
+        let stamp = courses.first?.updatedAt.timeIntervalSince1970 ?? 0
         let day = MicaboCalendar.shared.startOfDay(for: Date()).timeIntervalSince1970
         return "\(courses.count)-\(stamp)-\(day)-\(sync?.epoch ?? 0)"
     }

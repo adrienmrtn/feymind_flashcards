@@ -10,6 +10,7 @@ import SwiftUI
 struct ExamsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(TabRouter.self) private var router: TabRouter?
+    @Environment(CloudSync.self) private var sync: CloudSync?
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
@@ -126,8 +127,12 @@ struct ExamsView: View {
             .reportsNavigationDepth(for: .exams, depth: path.count)
             .returnsHome(path: $path)
         }
-        .task(id: courses.count) {
-            census = LibraryCensus.load(in: modelContext)
+        .task(id: "\(router?.selection == .exams)-\(courses.count)-\(sync?.epoch ?? 0)") {
+            guard router?.selection == .exams else { return }
+            census = LibraryCensus.load(
+                in: modelContext,
+                key: "exams-\(courses.count)-\(sync?.epoch ?? 0)"
+            )
         }
         .sheet(item: $editing) { edition in
             ExamEditorSheet(exam: edition.exam, suggestedDate: edition.date)

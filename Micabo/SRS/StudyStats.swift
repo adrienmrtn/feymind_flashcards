@@ -105,7 +105,13 @@ enum StudyStats {
     }
 
     static func knowledgeDistribution(cards: [Flashcard]) -> [(level: KnowledgeLevel, count: Int)] {
-        let grouped = Dictionary(grouping: cards) {
+        knowledgeDistribution(from: cards.map { ($0.state, $0.intervalDays) })
+    }
+
+    static func knowledgeDistribution(
+        from samples: [(state: CardState, intervalDays: Double)]
+    ) -> [(level: KnowledgeLevel, count: Int)] {
+        let grouped = Dictionary(grouping: samples) {
             knowledgeLevel(state: $0.state, intervalDays: $0.intervalDays)
         }
         return KnowledgeLevel.allCases.map { level in
@@ -127,6 +133,41 @@ enum StudyStats {
             .map { $0 }
     }
 
+}
+
+/// Série du jour, pour ne pas relire tout l'historique à chaque frame de Réviser.
+enum ReviewStreakStore {
+    private static let currentKey = "micabo.stats.streak"
+    private static let bestKey = "micabo.stats.bestStreak"
+    private static let dayKey = "micabo.stats.streakDay"
+
+    static var current: Int {
+        UserDefaults.standard.integer(forKey: currentKey)
+    }
+
+    static var best: Int {
+        UserDefaults.standard.integer(forKey: bestKey)
+    }
+
+    static func isFresh(now: Date = Date()) -> Bool {
+        let stored = UserDefaults.standard.double(forKey: dayKey)
+        guard stored > 0 else { return false }
+        return MicaboCalendar.shared.startOfDay(for: now)
+            == Date(timeIntervalSince1970: stored)
+    }
+
+    static func remember(streak: Int, best: Int, now: Date = Date()) {
+        UserDefaults.standard.set(streak, forKey: currentKey)
+        UserDefaults.standard.set(max(best, streak), forKey: bestKey)
+        UserDefaults.standard.set(
+            MicaboCalendar.shared.startOfDay(for: now).timeIntervalSince1970,
+            forKey: dayKey
+        )
+    }
+
+    static func invalidate() {
+        UserDefaults.standard.removeObject(forKey: dayKey)
+    }
 }
 
 extension String {

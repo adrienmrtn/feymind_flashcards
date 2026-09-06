@@ -46,15 +46,15 @@ struct ProfileView: View {
         let knowledge: [(level: StudyStats.KnowledgeLevel, count: Int)]
         let mostReviewed: [(front: String, passes: Int)]
 
-        init(courses: [Course], cards: [Flashcard], logs: [ReviewLog]) {
-            let dates = logs.map(\.reviewedAt)
-            courseCount = courses.count
-            cardCount = cards.count
-            hasReviews = !logs.isEmpty
-            streak = StudyStats.streak(reviewDates: dates)
-            bestStreak = StudyStats.bestStreak(reviewDates: dates)
-            knowledge = StudyStats.knowledgeDistribution(cards: cards)
-            mostReviewed = StudyStats.mostReviewed(from: logs)
+        init(snapshot: ProfileSnapshot) {
+            courseCount = snapshot.courseCount
+            cardCount = snapshot.cardCount
+            hasReviews = !snapshot.reviewDates.isEmpty
+            streak = StudyStats.streak(reviewDates: snapshot.reviewDates)
+            bestStreak = StudyStats.bestStreak(reviewDates: snapshot.reviewDates)
+            knowledge = StudyStats.knowledgeDistribution(from: snapshot.knowledge)
+            mostReviewed = snapshot.mostReviewed
+            ReviewStreakStore.remember(streak: streak, best: bestStreak)
         }
 
         static let empty = Metrics(
@@ -83,6 +83,38 @@ struct ProfileView: View {
             self.bestStreak = bestStreak
             self.knowledge = knowledge
             self.mostReviewed = mostReviewed
+        }
+    }
+
+    /// Ce qu'il faut du profil, déjà aplati : le calcul des totaux peut quitter le
+    /// thread principal sans emporter des modèles SwiftData.
+    private struct ProfileSnapshot: Sendable {
+        let courseCount: Int
+        let cardCount: Int
+        let reviewDates: [Date]
+        let knowledge: [(state: CardState, intervalDays: Double)]
+        let mostReviewed: [(front: String, passes: Int)]
+
+        static func load(courses: [Course], in context: ModelContext) -> ProfileSnapshot {
+            let cards = (try? context.fetch(FetchDescriptor<Flashcard>())) ?? []
+            let logs = (try? context.fetch(FetchDescriptor<ReviewLog>())) ?? []
+            var counts: [UUID: (front: String, passes: Int)] = [:]
+            for log in logs {
+                guard let card = log.card else { continue }
+                var entry = counts[card.id] ?? (front: card.front, passes: 0)
+                entry.passes += 1
+                counts[card.id] = entry
+            }
+            let top = counts.values
+                .sorted { $0.passes == $1.passes ? $0.front < $1.front : $0.passes > $1.passes }
+                .prefix(5)
+            return ProfileSnapshot(
+                courseCount: courses.count,
+                cardCount: cards.count,
+                reviewDates: logs.map(\.reviewedAt),
+                knowledge: cards.map { ($0.state, $0.intervalDays) },
+                mostReviewed: Array(top)
+            )
         }
     }
 
@@ -117,9 +149,10 @@ struct ProfileView: View {
                 // Le `TabView` peut garder un onglet visité : le classement et les
                 // totaux ne se relisent que lorsque Profil est réellement actif.
                 guard router?.selection == .profile else { return }
-                let cards = (try? modelContext.fetch(FetchDescriptor<Flashcard>())) ?? []
-                let logs = (try? modelContext.fetch(FetchDescriptor<ReviewLog>())) ?? []
-                self.metrics = Metrics(courses: courses, cards: cards, logs: logs)
+                let snapshot = ProfileSnapshot.load(courses: courses, in: modelContext)
+                self.metrics = await Task.detached(priority: .utility) {
+                    Metrics(snapshot: snapshot)
+                }.value
                 await social.refreshWeekRanking()
             }
             .toolbar(.hidden, for: .navigationBar)
