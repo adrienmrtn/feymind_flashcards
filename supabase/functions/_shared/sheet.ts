@@ -9,6 +9,8 @@
 
 import { stripEmDashes } from "./fal.ts";
 
+export type SheetCrop = { x: number; y: number; w: number; h: number };
+
 export type SheetBlock =
   | { type: "heading"; level: number; text: string }
   | { type: "paragraph"; text: string }
@@ -23,42 +25,44 @@ export type SheetBlock =
     bars: { label: string; value: number }[];
     caption?: string;
   }
-  | { type: "formula"; latex: string; caption?: string };
+  | { type: "formula"; latex: string; caption?: string }
+  | {
+    type: "figure";
+    caption: string;
+    page?: number;
+    crop?: SheetCrop;
+    /** JPEG recadré, en data URL. Absent tant que la coupe n'a pas encore été faite. */
+    image?: string;
+  };
 
 export const SHEET_LIMITS = {
   blocks: 60,
-  stepsBlocks: 2,
+  stepsBlocks: 3,
   stepsItems: 7,
   tableColumns: 4,
   tableRows: 8,
   chartBars: 6,
+  chartBlocks: 3,
+  figureBlocks: 4,
   /**
    * Nombre de passages mis en avant sur toute la fiche. Au delà, plus rien ne ressort.
    *
-   * Il était de neuf du temps du surligneur jaune, un fond pâle qu'on pouvait multiplier
-   * sans que la page crie. Le passage se met maintenant en **couleur d'encre**, ce qui est
-   * une marque bien plus forte : neuf phrases vertes sur une page en font une page verte.
+   * C'est le seul garde-fou qui reste sur le surlignage, et il ne va que dans un sens : il
+   * en retire, il n'en ajoute pas. Il y avait un plancher en face, qui marquait trois
+   * passages quand le modèle n'en avait marqué aucun ; il choisissait la première phrase de
+   * la bonne longueur, ce qui n'est pas ce qui compte dans un cours. Une marque tombée sur
+   * la phrase d'à côté apprend la phrase d'à côté.
    */
-  highlights: 6,
-  /**
-   * Plancher garanti par `ensureHighlights`, quoi que le modèle ait rendu.
-   *
-   * Le prompt exige des passages en avant depuis plusieurs versions, et les fiches
-   * arrivaient quand même sans une seule marque : une consigne de mise en forme est ce
-   * qu'un modèle lâche en premier quand il se concentre sur le contenu. La marque est donc
-   * passée côté code, où elle ne dépend plus de la bonne volonté du modèle.
-   */
-  minimumHighlights: 3,
+  highlights: 12,
   /**
    * Nombre d'objets qui peuvent se suivre sans un paragraphe entre eux.
    *
-   * C'est le garde-fou contre la fiche en accordéon : une définition, puis un encadré, puis
-   * un tableau, puis un graphe, collés les uns aux autres sans une ligne pour les relier.
-   * Chaque bloc y est peut-être juste, mais la page ne se lit plus — elle se feuillette, et
-   * on ne sait plus ce qui répond à quoi. Trois objets d'affilée ne sont jamais une fiche
-   * écrite, c'est un vidage de notes ; au-delà de deux, le surplus est écarté.
+   * C'est le garde-fou contre la fiche en accordéon : une définition, un encadré, un
+   * tableau et un graphe collés les uns aux autres sans une ligne pour les relier. Deux
+   * objets qui se touchent éclairent souvent la même notion ; cinq d'affilée, c'est un
+   * vidage de notes. Au-delà de quatre, le surplus est écarté.
    */
-  objectRun: 2,
+  objectRun: 4,
 } as const;
 
 const TONES = new Set(["essentiel", "attention", "exemple", "astuce"]);
@@ -70,7 +74,15 @@ const TONES = new Set(["essentiel", "attention", "exemple", "astuce"]);
  * aussi celle qui décide du rythme : le texte est posé à même la page, les objets sont
  * encartés. Deux objets qui se touchent font deux cartes empilées.
  */
-const OBJECT_TYPES = new Set(["definition", "callout", "steps", "table", "chart", "formula"]);
+const OBJECT_TYPES = new Set([
+  "definition",
+  "callout",
+  "steps",
+  "table",
+  "chart",
+  "formula",
+  "figure",
+]);
 
 function isObject(block: SheetBlock): boolean {
   return OBJECT_TYPES.has(block.type);
@@ -79,10 +91,10 @@ function isObject(block: SheetBlock): boolean {
 /**
  * L'encadré « essentiel » ne s'écarte jamais, même au milieu d'une file d'objets.
  *
- * Le prompt lui demande de fermer la fiche, `ensureHighlights` le marque en premier, et c'est
- * le bloc que l'étudiant relit en dernier. Une fin de fiche en « paragraphe, tableau, graphe,
- * essentiel » le placerait troisième de la file : le garde-fou l'écarterait, et emporterait
- * avec lui la seule chose qu'on avait exigée.
+ * Le prompt lui demande de fermer la fiche, et c'est le bloc que l'étudiant relit en dernier.
+ * Une fin de fiche en « paragraphe, tableau, graphe, essentiel » le placerait quatrième de la
+ * file : le garde-fou l'écarterait, et emporterait avec lui la seule chose qu'on avait
+ * exigée.
  */
 function isKeystone(block: SheetBlock): boolean {
   return block.type === "callout" && block.tone === "essentiel";
@@ -128,6 +140,41 @@ function cellText(value: unknown): string {
   return cleanText(value);
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function normalizeCrop(raw: unknown): SheetCrop | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const entry = raw as Record<string, unknown>;
+  const x = toNumber(entry.x);
+  const y = toNumber(entry.y);
+  const w = toNumber(entry.w);
+  const h = toNumber(entry.h);
+  if (x === null || y === null || w === null || h === null) return undefined;
+
+  const crop = {
+    x: clamp(x, 0, 0.95),
+    y: clamp(y, 0, 0.95),
+    w: clamp(w, 0.08, 1),
+    h: clamp(h, 0.08, 1),
+  };
+  if (crop.x + crop.w > 1) crop.w = 1 - crop.x;
+  if (crop.y + crop.h > 1) crop.h = 1 - crop.y;
+  if (crop.w < 0.08 || crop.h < 0.08) return undefined;
+  return crop;
+}
+
+/** Une data URL JPEG, ou un base64 nu assez long pour être une vraie image. */
+function normalizeFigureImage(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const text = value.trim();
+  if (text.length < 32 || text.length > 400_000) return undefined;
+  if (text.startsWith("data:image/")) return text;
+  if (/^[A-Za-z0-9+/=\s]+$/.test(text.slice(0, 120))) return `data:image/jpeg;base64,${text.replace(/\s/g, "")}`;
+  return undefined;
+}
+
 /** Ramène la fiche du modèle à ce que l'application sait afficher. */
 export function normalizeSheet(raw: unknown): SheetBlock[] {
   const source = Array.isArray(raw)
@@ -138,6 +185,8 @@ export function normalizeSheet(raw: unknown): SheetBlock[] {
 
   const blocks: SheetBlock[] = [];
   let stepsBlocks = 0;
+  let chartBlocks = 0;
+  let figureBlocks = 0;
   let highlights = 0;
   let objectRun = 0;
 
@@ -147,7 +196,11 @@ export function normalizeSheet(raw: unknown): SheetBlock[] {
 
     const record = entry as Record<string, unknown>;
     const type = typeof record.type === "string" ? record.type.trim().toLowerCase() : "";
-    const block = normalizeBlock(type, record, () => stepsBlocks < SHEET_LIMITS.stepsBlocks);
+    const block = normalizeBlock(type, record, {
+      allowsSteps: () => stepsBlocks < SHEET_LIMITS.stepsBlocks,
+      allowsChart: () => chartBlocks < SHEET_LIMITS.chartBlocks,
+      allowsFigure: () => figureBlocks < SHEET_LIMITS.figureBlocks,
+    });
     if (!block) continue;
 
     // Le rythme de la page, tenu par le code. Un titre remet le compteur à zéro comme un
@@ -160,6 +213,8 @@ export function normalizeSheet(raw: unknown): SheetBlock[] {
     }
 
     if (block.type === "steps") stepsBlocks += 1;
+    if (block.type === "chart") chartBlocks += 1;
+    if (block.type === "figure") figureBlocks += 1;
 
     // La mise en avant est plafonnée sur toute la fiche : passé le quota, les marques
     // suivantes sont retirées plutôt que de tout faire ressortir.
@@ -178,7 +233,11 @@ export function normalizeSheet(raw: unknown): SheetBlock[] {
 function normalizeBlock(
   type: string,
   record: Record<string, unknown>,
-  allowsSteps: () => boolean,
+  allow: {
+    allowsSteps: () => boolean;
+    allowsChart: () => boolean;
+    allowsFigure: () => boolean;
+  },
 ): SheetBlock | null {
   switch (type) {
     case "heading": {
@@ -210,7 +269,7 @@ function normalizeBlock(
     }
 
     case "steps": {
-      if (!allowsSteps()) return null;
+      if (!allow.allowsSteps()) return null;
       const items = (Array.isArray(record.items) ? record.items : [])
         .map(cellText)
         .filter((item) => item.length >= 8)
@@ -240,6 +299,7 @@ function normalizeBlock(
     }
 
     case "chart": {
+      if (!allow.allowsChart()) return null;
       const bars = (Array.isArray(record.bars) ? record.bars : [])
         .map((bar) => {
           if (!bar || typeof bar !== "object") return null;
@@ -272,6 +332,23 @@ function normalizeBlock(
       return { type: "formula", latex, caption: cleanOptional(record.caption) };
     }
 
+    case "figure": {
+      if (!allow.allowsFigure()) return null;
+      const caption = cleanText(record.caption ?? record.text ?? record.title);
+      if (caption.length < 4) return null;
+      const page = toNumber(record.page);
+      const crop = normalizeCrop(record.crop);
+      const image = normalizeFigureImage(record.image);
+      if (page === null && !image) return null;
+      return {
+        type: "figure",
+        caption,
+        page: page !== null && page >= 1 ? Math.round(page) : undefined,
+        crop,
+        image,
+      };
+    }
+
     default:
       return null;
   }
@@ -293,6 +370,8 @@ function textsOf(block: SheetBlock): string[] {
       return [block.title ?? "", ...block.bars.map((bar) => bar.label), block.caption ?? ""];
     case "formula":
       return [block.caption ?? ""];
+    case "figure":
+      return [block.caption];
   }
 }
 
@@ -316,164 +395,6 @@ function removeHighlights(block: SheetBlock): SheetBlock {
     default:
       return block;
   }
-}
-
-// MARK: Surligneur
-
-/**
- * Garantit qu'une fiche porte des passages surlignés.
- *
- * Le choix des passages suit l'ordre dans lequel un étudiant les chercherait : ce que
- * l'encadré "essentiel" retient, l'enjeu posé par le premier paragraphe, ce qui distingue
- * une définition de sa voisine, puis la conclusion des parties suivantes. On ne surligne
- * jamais deux fois le même bloc, et on s'arrête dès le plancher atteint : une fiche
- * entièrement jaune ne se relit pas mieux qu'une fiche sans marque.
- */
-export function ensureHighlights(
-  blocks: SheetBlock[],
-  minimum: number = SHEET_LIMITS.minimumHighlights,
-): SheetBlock[] {
-  const result = [...blocks];
-  let total = result.reduce((sum, block) => sum + countHighlights(block), 0);
-  if (total >= minimum) return result;
-
-  const marked = new Set<number>();
-
-  for (const index of highlightOrder(result)) {
-    if (total >= minimum) break;
-    if (marked.has(index)) continue;
-
-    const block = result[index];
-    const updated = markBlock(block);
-    if (!updated) continue;
-
-    result[index] = updated;
-    marked.add(index);
-    total += 1;
-  }
-
-  return result;
-}
-
-/** L'ordre dans lequel les blocs se voient proposer le marqueur. */
-function highlightOrder(blocks: SheetBlock[]): number[] {
-  const essentials: number[] = [];
-  const firstParagraph: number[] = [];
-  const definitions: number[] = [];
-  const others: number[] = [];
-
-  blocks.forEach((block, index) => {
-    switch (block.type) {
-      case "callout":
-        if (block.tone === "essentiel") essentials.push(index);
-        else others.push(index);
-        break;
-      case "paragraph":
-        if (firstParagraph.length === 0) firstParagraph.push(index);
-        else others.push(index);
-        break;
-      case "definition":
-        definitions.push(index);
-        break;
-      default:
-        break;
-    }
-  });
-
-  return [...essentials, ...firstParagraph, ...definitions, ...others];
-}
-
-/** Repasse le texte d'un bloc avec une marque, ou rend `null` si rien ne s'y prête. */
-function markBlock(block: SheetBlock): SheetBlock | null {
-  switch (block.type) {
-    case "paragraph":
-    case "callout": {
-      const text = markPassage(block.text);
-      return text ? { ...block, text } : null;
-    }
-    case "definition": {
-      const text = markPassage(block.text);
-      return text ? { ...block, text } : null;
-    }
-    default:
-      return null;
-  }
-}
-
-/**
- * Enveloppe d'un `==` le passage du texte qui mérite le marqueur.
- *
- * On cherche une phrase, pas un texte entier : un surlignage doit se lire d'un coup d'œil.
- * La phrase qui porte un terme en gras passe devant, parce que c'est là que le modèle a
- * déjà placé ce qui compte. Une phrase trop longue est ramenée à sa première proposition,
- * coupée sur une virgule ou un deux-points, ce qui est exactement là où on relèverait le
- * marqueur à la main.
- */
-export function markPassage(text: string): string | null {
-  if (text.includes("==")) return null;
-
-  const candidates = sentenceRanges(text).filter(([start, end]) => {
-    const sentence = text.slice(start, end);
-    return !sentence.includes("$") && sentence.length >= HIGHLIGHT_MINIMUM_LENGTH;
-  });
-  if (candidates.length === 0) return null;
-
-  const scored = candidates
-    .map(([start, end]) => {
-      const sentence = text.slice(start, end);
-      const trimmed = trimToClause(sentence);
-      if (!trimmed) return null;
-      return { start: start + trimmed[0], end: start + trimmed[1], hasBold: sentence.includes("**") };
-    })
-    .filter((entry): entry is { start: number; end: number; hasBold: boolean } => entry !== null);
-  if (scored.length === 0) return null;
-
-  const best = scored.find((entry) => entry.hasBold) ?? scored[0];
-  return `${text.slice(0, best.start)}==${text.slice(best.start, best.end)}==${text.slice(best.end)}`;
-}
-
-const HIGHLIGHT_MINIMUM_LENGTH = 40;
-const HIGHLIGHT_MAXIMUM_LENGTH = 170;
-
-/** Bornes de chaque phrase du texte, ponctuation finale comprise. */
-function sentenceRanges(text: string): [number, number][] {
-  const ranges: [number, number][] = [];
-  let start = 0;
-
-  for (let index = 0; index < text.length; index += 1) {
-    if (!".!?".includes(text[index])) continue;
-    // Un point suivi d'une lettre est une abréviation ou une décimale, pas une fin.
-    const next = text[index + 1];
-    if (next !== undefined && next !== " ") continue;
-    ranges.push([start, index + 1]);
-    start = index + 2;
-  }
-
-  if (start < text.length) ranges.push([start, text.length]);
-  return ranges;
-}
-
-/**
- * Le morceau de phrase à marquer : la phrase sans sa ponctuation finale, ou sa première
- * proposition quand elle est trop longue. Rend `null` si rien de la bonne taille n'en sort.
- */
-function trimToClause(sentence: string): [number, number] | null {
-  let end = sentence.length;
-  while (end > 0 && " .!?,;:".includes(sentence[end - 1])) end -= 1;
-
-  let start = 0;
-  while (start < end && sentence[start] === " ") start += 1;
-
-  if (end - start < HIGHLIGHT_MINIMUM_LENGTH) return null;
-  if (end - start <= HIGHLIGHT_MAXIMUM_LENGTH) return [start, end];
-
-  // Trop long : on s'arrête à la dernière coupure naturelle qui tient dans la limite.
-  let cut = -1;
-  for (let index = start; index < start + HIGHLIGHT_MAXIMUM_LENGTH && index < end; index += 1) {
-    if (",;:".includes(sentence[index])) cut = index;
-  }
-  if (cut - start < HIGHLIGHT_MINIMUM_LENGTH) return null;
-  return [start, cut];
 }
 
 /** Retire le balisage en ligne : c'est la version qui part au modèle pour les cartes. */
@@ -542,6 +463,10 @@ export function sheetToPlainText(blocks: SheetBlock[]): string {
         lines.push(
           block.caption ? `${block.latex} (${stripInlineMarkup(block.caption)})` : block.latex,
         );
+        break;
+
+      case "figure":
+        lines.push(stripInlineMarkup(block.caption));
         break;
     }
   }

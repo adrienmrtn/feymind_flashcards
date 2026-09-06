@@ -368,17 +368,17 @@ enum AIServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notConfigured:
-            "L'accès à l'IA n'est pas configuré. Renseignez l'URL Supabase dans Profil, Réglages."
+            L10n.t("ios.ai.notConfigured", locale: .resolved())
         case .emptySource:
-            "Il n'y a pas assez de texte à analyser."
+            L10n.t("ios.ai.emptySource", locale: .resolved())
         case .network(let message):
-            "Connexion impossible. \(message)"
+            L10n.t("ios.ai.network", locale: .resolved(), vars: ["detail": message])
         case .server(let message):
             message
         case .invalidResponse:
-            "La réponse de l'IA n'a pas pu être lue. Réessaie."
+            L10n.t("ios.ai.invalidResponse", locale: .resolved())
         case .missingProviderKey:
-            "La clé fal.ai est absente côté Supabase. Ajoute le secret FAL_KEY à ton projet."
+            L10n.t("ios.ai.missingFal", locale: .resolved())
         }
     }
 }

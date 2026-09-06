@@ -70,17 +70,13 @@ struct SharedCourseView: View {
         .enablesSwipeBack()
         .overlay(alignment: .bottom) { bottomBar }
         .task {
-            // `highlighted()` et pas seulement `decode` : c'est ce que fait `Course.decodedSheet`
-            // pour ses propres cours, et une fiche partagée qui arriverait sans ses passages en
-            // couleur se lirait moins bien que la sienne — exactement ce que cet écran promet de
-            // ne pas faire.
-            sheet = CourseSheet.decode(from: course.sheet?.data)?.highlighted()
+            sheet = CourseSheet.decode(from: course.sheet?.data)
             existing = CourseRepository.adopted(course, in: modelContext)
             cards = await social.cards(of: course.id)
             await social.recordView(of: course.id)
         }
-        .alert("Oups", isPresented: .constant(failure != nil)) {
-            Button("Fermer", role: .cancel) { failure = nil }
+        .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(failure != nil)) {
+            Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { failure = nil }
         } message: {
             Text(failure ?? "")
         }
@@ -109,10 +105,12 @@ struct SharedCourseView: View {
         var parts: [String] = []
         if let author = route.author { parts.append(author.handle) }
         if let subject = course.subject?.nilIfBlank { parts.append(subject) }
-        if let sheet { parts.append("\(sheet.readingMinutes) min de lecture") }
+        if let sheet {
+            parts.append(L10n.t("ios.readingMin", locale: .resolved(), vars: ["minutes": "\(sheet.readingMinutes)"]))
+        }
         if !cards.isEmpty { parts.append(MicaboCopy.cards(cards.count)) }
         parts.append(MicaboCopy.audience(of: course))
-        return parts.isEmpty ? "Cours partagé" : parts.joined(separator: " · ")
+        return parts.isEmpty ? L10n.t("ios.sharedCourse", locale: .resolved()) : parts.joined(separator: " · ")
     }
 
     @ViewBuilder
@@ -123,7 +121,7 @@ struct SharedCourseView: View {
         }
 
         if let author = route.author, author.relation != .friends, author.relation != .me {
-            MicaboBadge(text: "De ton école", tone: .neutral)
+            MicaboBadge(text: L10n.t("ios.fromSchool", locale: .resolved()), tone: .neutral)
                 .padding(.top, MicaboSpacing.sm)
         }
     }
@@ -147,7 +145,7 @@ struct SharedCourseView: View {
     /// texte source est là, et c'est lui qu'on reprend.
     private var noSheet: some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-            Text("Ce cours n'a pas de fiche")
+            Text(L10n.t("ios.sharedNoSheet", locale: .resolved()))
                 .font(MicaboFont.cardTitle)
                 .foregroundStyle(MicaboColor.ink)
         }
@@ -161,7 +159,7 @@ struct SharedCourseView: View {
     private var cardsSection: some View {
         if !cards.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: "Cartes · \(cards.count)")
+                MicaboSectionCaption(text: L10n.t("ios.cardsSection", locale: .resolved(), vars: ["count": "\(cards.count)"]))
 
                 VStack(spacing: 0) {
                     ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
@@ -201,7 +199,7 @@ struct SharedCourseView: View {
                     HStack(spacing: MicaboSpacing.xs) {
                         Image(systemName: "checkmark")
                             .font(.system(size: 13, weight: .semibold))
-                        Text("Déjà dans tes cours")
+                        Text(L10n.t("ios.alreadyInCourses", locale: .resolved()))
                     }
                 }
                 .buttonStyle(MicaboSecondaryButtonStyle())
@@ -212,7 +210,7 @@ struct SharedCourseView: View {
                     HStack(spacing: MicaboSpacing.xs) {
                         Image(systemName: "square.and.arrow.down")
                             .font(.system(size: 13, weight: .semibold))
-                        Text("Ajouter le cours et les cartes")
+                        Text(L10n.t("ios.addCourseAndCards", locale: .resolved()))
                     }
                 }
                 .buttonStyle(MicaboPrimaryButtonStyle())
@@ -242,7 +240,7 @@ struct SharedCourseView: View {
             Haptics.success()
             onAdopted(adopted)
         } catch {
-            failure = "Le cours n'a pas pu être ajouté. Réessaie dans un instant."
+            failure = L10n.t("ios.addFailed", locale: .resolved())
         }
     }
 }

@@ -312,7 +312,7 @@ struct CourseSheetView: View {
 
         isLoadingSheet = true
         let decoded = await Task.detached(priority: .userInitiated) {
-            CourseSheet.decode(from: data)?.highlighted()
+            CourseSheet.decode(from: data)
         }.value
         guard !Task.isCancelled, course.sheetData == data else { return }
         sheet = decoded

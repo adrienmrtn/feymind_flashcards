@@ -18,7 +18,7 @@ struct AuthUser: Codable, Equatable, Identifiable {
         if let email = email?.nilIfBlank {
             return email.split(separator: "@").first.map(String.init) ?? email
         }
-        return "Étudiant"
+        return L10n.t("ios.student", locale: .resolved())
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -119,7 +119,7 @@ enum AuthError: LocalizedError, Equatable {
         case .notConfigured:
             "La connexion n'est pas configurée. Renseigne l'URL Supabase dans Profil, Réglages."
         case .network(let detail):
-            "Connexion impossible. \(detail)"
+            L10n.t("ios.ai.network", locale: .resolved(), vars: ["detail": detail])
         case .invalidResponse:
             "La réponse du serveur n'a pas pu être lue. Réessaie."
         case .invalidCredentials:

@@ -72,6 +72,8 @@ struct SignInScreen: View {
     var placement: Placement = .page
     var titleKey: String = "onboarding.connexionTitle"
     var subtitleKey: String = "onboarding.connexionSubtitle"
+    var showsBrand: Bool = true
+    var showsSubtitle: Bool = true
     var showsLanguageSwitcher: Bool = true
     var onDismiss: (() -> Void)? = nil
     var onCreateAccount: (() -> Void)? = nil
@@ -97,12 +99,13 @@ struct SignInScreen: View {
                         Spacer(minLength: MicaboSpacing.lg)
                     }
                 }
-                .frame(maxWidth: 440)
+                .frame(maxWidth: 400)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: proxy.size.height)
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, placement == .sheet ? MicaboSpacing.sm : 0)
                 .padding(.bottom, MicaboSpacing.xl)
+                .environment(\.locale, (i18n?.locale ?? .resolved()).foundation)
             }
             .scrollDismissesKeyboard(.interactively)
             .scrollBounceBehavior(.basedOnSize)
@@ -127,23 +130,25 @@ struct SignInScreen: View {
         VStack(alignment: .leading, spacing: 0) {
             toolbar
             titleBlock
-                .padding(.top, 28)
+                .padding(.top, showsBrand ? 28 : 20)
             SignInProviderButtons()
-                .padding(.top, 28)
+                .padding(.top, showsSubtitle ? 28 : 22)
             SignInFailureNote(includeSent: false, includeError: true)
                 .padding(.top, MicaboSpacing.sm)
             legalLine
-                .padding(.top, 32)
+                .padding(.top, 28)
             if let onCreateAccount {
                 createAccountLine(action: onCreateAccount)
-                    .padding(.top, 24)
+                    .padding(.top, 20)
             }
         }
     }
 
     private var toolbar: some View {
         HStack(spacing: 10) {
-            MicaboBrandLockup(size: 28)
+            if showsBrand {
+                MicaboBrandLockup(size: 28)
+            }
             Spacer(minLength: 8)
             if showsLanguageSwitcher {
                 LanguageSwitcher(variant: .compact)
@@ -173,15 +178,17 @@ struct SignInScreen: View {
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(t(titleKey))
-                .font(MicaboFont.display(32))
+                .font(MicaboFont.display(showsSubtitle ? 32 : 28))
                 .tracking(MicaboTracking.display)
                 .foregroundStyle(MicaboColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
-            Text(t(subtitleKey))
-                .font(MicaboFont.hanken(15))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .fixedSize(horizontal: false, vertical: true)
+            if showsSubtitle {
+                Text(t(subtitleKey))
+                    .font(MicaboFont.hanken(15))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -274,19 +281,37 @@ struct SignInProviderButtons: View {
     /// connexion. Il construit aussi sa propre requête, d'où le nonce gardé ici le temps de
     /// l'aller-retour.
     private var appleButton: some View {
-        SignInWithAppleButton(.continue) { request in
-            request.requestedScopes = [.fullName, .email]
-            request.nonce = appleNonce.hashed
-        } onCompletion: { result in
-            let nonce = appleNonce.raw
-            appleNonce = AppleNonce()
-            Haptics.medium()
-            Task { await auth.signInWithApple(result: result, nonce: nonce) }
+        ZStack {
+            SignInWithAppleButton(.continue) { request in
+                request.requestedScopes = [.fullName, .email]
+                request.nonce = appleNonce.hashed
+            } onCompletion: { result in
+                let nonce = appleNonce.raw
+                appleNonce = AppleNonce()
+                Haptics.medium()
+                Task { await auth.signInWithApple(result: result, nonce: nonce) }
+            }
+            .signInWithAppleButtonStyle(.black)
+            .opacity(0.02)
+
+            HStack(spacing: 10) {
+                Image(systemName: "apple.logo")
+                    .font(.system(size: 18, weight: .medium))
+                Text(SignInProvider.apple.title(t: t))
+                    .font(MicaboFont.cardTitle)
+            }
+            .foregroundStyle(Color.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(Color.black, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+            .allowsHitTesting(false)
         }
-        .signInWithAppleButtonStyle(.black)
         .frame(height: 56)
         .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
         .disabled(auth.isWorking)
+        .opacity(auth.isWorking ? 0.5 : 1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(.isButton)
         .accessibilityLabel(t("onboarding.continueApple"))
     }
 

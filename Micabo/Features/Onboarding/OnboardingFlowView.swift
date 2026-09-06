@@ -5,6 +5,7 @@ import SwiftUI
 struct OnboardingFlowView: View {
     var onFinish: () -> Void
 
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @State private var model = OnboardingModel()
 
     private var surface: OnboardingSurface { model.step.surface }
@@ -32,6 +33,7 @@ struct OnboardingFlowView: View {
         }
         .environment(model)
         .environment(\.onboardingSurface, surface)
+        .environment(\.locale, (i18n?.locale ?? .resolved()).foundation)
         // Sur fond sombre, l'heure et la batterie doivent passer en clair : sinon elles
         // disparaissent dans l'encre.
         .preferredColorScheme(surface.isDark ? .dark : .light)

@@ -62,8 +62,8 @@ struct DiscountFlowView: View {
             }
         }
         .animation(OnboardingMotion.page, value: stage)
-        .alert("Oups", isPresented: .constant(failure != nil)) {
-            Button("Fermer", role: .cancel) { failure = nil }
+        .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(failure != nil)) {
+            Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { failure = nil }
         } message: {
             Text(failure ?? "")
         }
@@ -164,7 +164,7 @@ private struct DiscountGiftStage: View {
             }
 
             VStack(spacing: MicaboSpacing.sm) {
-                Text("On a un cadeau pour toi")
+                Text(L10n.t("ios.giftTitle", locale: .resolved()))
                     .font(MicaboFont.hanken(26, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(MicaboTracking.tight)
@@ -172,7 +172,7 @@ private struct DiscountGiftStage: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .onboardingAppear(index: 0)
 
-                Text("Ton premier cours est écrit. Ouvre-le.")
+                Text(L10n.t("ios.giftBody", locale: .resolved()))
                     .font(MicaboFont.hanken(15, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.center)
@@ -187,8 +187,8 @@ private struct DiscountGiftStage: View {
                     .rotationEffect(.degrees(wobble))
             }
             .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: Haptics.Press.none))
-            .accessibilityLabel("Ouvrir le cadeau")
-            .accessibilityHint("Appuie \(DiscountOffer.taps) fois")
+            .accessibilityLabel(L10n.t("ios.openGift", locale: .resolved()))
+            .accessibilityHint(L10n.t("ios.tapGiftHint", locale: .resolved(), vars: ["n": "\(DiscountOffer.taps)"]))
             .padding(.top, MicaboSpacing.md)
             .onboardingAppear(index: 2)
 
@@ -458,7 +458,7 @@ private struct DiscountPaywallStage: View {
                         .font(MicaboFont.number(26, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
 
-                    Text("par mois")
+                    Text(L10n.t("ios.perMonth", locale: .resolved()))
                         .font(MicaboFont.hanken(15, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
@@ -488,7 +488,7 @@ private struct DiscountPaywallStage: View {
                         .controlSize(.small)
                         .tint(.white)
                 }
-                Text("Commencer avec \(DiscountOffer.savingsPercent)\u{00a0}% de moins")
+                Text(L10n.t("ios.startCheaper", locale: .resolved(), vars: ["pct": "\(DiscountOffer.savingsPercent)"]))
             }
             .frame(maxWidth: .infinity)
         }
@@ -566,7 +566,7 @@ private struct DiscountSeal: View {
                 )
 
             VStack(spacing: 1) {
-                Text("Remise")
+                Text(L10n.t("ios.discount", locale: .resolved()))
                     .font(MicaboFont.hanken(9.5, weight: .semibold))
 
                 HStack(alignment: .top, spacing: 0) {
@@ -641,7 +641,7 @@ private struct DiscountCloseButton: View {
                 .frame(width: 44, height: 44, alignment: .trailing)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
-        .accessibilityLabel("Fermer")
+        .accessibilityLabel(L10n.t("app.a11y.close", locale: .resolved()))
     }
 }
 
@@ -784,7 +784,7 @@ struct DiscountBadge: View {
                 Image(systemName: "gift.fill")
                     .font(.system(size: 16, weight: .semibold))
 
-                Text("OFFRE")
+                Text(L10n.t("ios.offerBadge", locale: .resolved()).uppercased())
                     .font(MicaboFont.hanken(9, weight: .bold))
                     .tracking(MicaboTracking.caps)
                     .foregroundStyle(Color.white.opacity(0.82))
@@ -814,7 +814,7 @@ struct DiscountBadge: View {
             .micaboSoftShadow(strength: 0.18)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .soft))
-        .accessibilityLabel("Rouvrir l'offre, \(DiscountOffer.countdownLabel(left))")
+        .accessibilityLabel(L10n.t("ios.reopenOffer", locale: .resolved(), vars: ["left": DiscountOffer.countdownLabel(left)]))
         .opacity(left > 0 ? 1 : 0)
         .allowsHitTesting(left > 0)
         .onAppear { refresh() }

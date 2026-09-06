@@ -25,7 +25,7 @@ struct SettingsSchoolSheet: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(MicaboColor.inkTertiary)
 
-                        TextField("Lycée, université, école…", text: $query)
+                        TextField(L10n.t("onboarding.schoolPlaceholder", locale: .resolved()), text: $query)
                             .font(MicaboFont.hanken(16, weight: .medium))
                             .foregroundStyle(MicaboColor.ink)
                             .textInputAutocapitalization(.words)

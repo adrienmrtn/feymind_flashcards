@@ -33,15 +33,15 @@ enum RetentionCurve {
     static let reviewDays: [Double] = [1, 3, 7, 16]
 
     /// Intervalle réel affiché sous chaque révision du graphe.
-    static func intervalLabel(forDay day: Double) -> String {
-        "\(Int(day)) j"
+    static func intervalLabel(forDay day: Double, locale: UiLocale = .resolved()) -> String {
+        L10n.t("demo.dayShort", locale: locale, vars: ["n": "\(Int(day))"])
     }
 
     /// Les mêmes intervalles, en liste. L'écran de la répétition espacée les reprend
     /// tels quels : deux écrans voisins qui parlent des mêmes révisions ne peuvent pas
     /// annoncer deux échéanciers différents.
-    static var intervalLabels: [String] {
-        reviewDays.map(intervalLabel(forDay:))
+    static func intervalLabels(locale: UiLocale = .resolved()) -> [String] {
+        reviewDays.map { intervalLabel(forDay: $0, locale: locale) }
     }
 
     /// Stabilité (en jours) de chaque segment. La première est identique à celle
@@ -80,6 +80,8 @@ enum RetentionCurve {
 }
 
 private struct RetentionChart: View {
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
     private let withoutPoints = RetentionCurve.withoutReview()
     private let withPoints = RetentionCurve.withMicabo()
     private let duration = 1.9
@@ -90,6 +92,10 @@ private struct RetentionChart: View {
     @State private var firedMarkers = 0
 
     private let ticker = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
+
+    private func t(_ key: String, _ vars: [String: String] = [:]) -> String {
+        i18n?.t(key, vars) ?? L10n.t(key, locale: .fr, vars: vars)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -156,7 +162,7 @@ private struct RetentionChart: View {
     /// Ce que le graphe raconte, dit avant de le regarder. Les intervalles réels sont
     /// posés sur les points ; l'écran suivant les reprend en liste.
     private var heading: some View {
-        Text("Ta mémoire, avec et sans révision")
+        Text(t("ios.retentionHeading"))
             .font(MicaboFont.hanken(14, weight: .semibold))
             .foregroundStyle(MicaboColor.ink)
             .fixedSize(horizontal: false, vertical: true)
@@ -168,12 +174,12 @@ private struct RetentionChart: View {
             legendItem(
                 color: MicaboColor.inkTertiary,
                 dashed: true,
-                label: "Sans révision, tu oublies en quelques jours."
+                label: t("demo.legendWithout")
             )
             legendItem(
                 color: MicaboColor.accent,
                 dashed: false,
-                label: "Chaque rappel au bon moment rallonge ta mémoire."
+                label: t("demo.legendWith")
             )
         }
     }
@@ -204,7 +210,7 @@ private struct RetentionChart: View {
             let x = day / RetentionCurve.horizonDays
             let isVisible = progress >= x
 
-            Text(RetentionCurve.intervalLabel(forDay: day))
+            Text(RetentionCurve.intervalLabel(forDay: day, locale: i18n?.locale ?? .resolved()))
                 .font(MicaboFont.hanken(9.5, weight: .bold))
                 .foregroundStyle(MicaboColor.accent)
                 .monospacedDigit()
@@ -250,7 +256,7 @@ private struct RetentionChart: View {
         let opacity = max(0, min(1, (progress - 0.82) / 0.18))
 
         return ZStack(alignment: .topLeading) {
-            Text("Tu retiens")
+            Text(t("ios.retentionRemember"))
                 .font(MicaboFont.hanken(10, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
                 .padding(.vertical, 3)
@@ -259,7 +265,7 @@ private struct RetentionChart: View {
                 .position(labelPosition(value: 0.82, in: size, offsetY: -14))
                 .opacity(opacity)
 
-            Text("Tu as oublié")
+            Text(t("ios.retentionForgot"))
                 .font(MicaboFont.hanken(10, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .padding(.vertical, 3)
@@ -272,9 +278,9 @@ private struct RetentionChart: View {
 
     private var axisLabels: some View {
         HStack {
-            Text("Aujourd'hui")
+            Text(t("app.home.week.today"))
             Spacer()
-            Text("Dans 1 mois")
+            Text(t("ios.retentionInOneMonth"))
         }
         .font(MicaboFont.hanken(10, weight: .medium))
         .foregroundStyle(MicaboColor.inkTertiary)

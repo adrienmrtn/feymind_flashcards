@@ -23,40 +23,32 @@ struct SocialProofStepView: View {
     @Environment(\.requestReview) private var requestReview
 
     private struct Review: Identifiable {
-        let id = UUID()
+        let id: Int
         let quote: String
         let name: String
         let level: String
     }
 
-    private let reviews: [Review] = [
-        Review(
-            quote: "J'ai arrêté de tout relire la veille. Micabo me dit quoi réviser, je révise, et ça reste.",
-            name: "Léa",
-            level: "PASS, 1re année"
-        ),
-        Review(
-            quote: "Mes fiches se font à partir des cours du prof. Je gagne deux heures par semaine, au minimum.",
-            name: "Yanis",
-            level: "Terminale"
-        ),
-        Review(
-            quote: "Les cartes reviennent pile au moment où j'allais oublier. Je ne sais pas comment, mais ça tombe juste.",
-            name: "Camille",
-            level: "Prépa HEC"
-        ),
-        Review(
-            quote: "Trois semaines avant les partiels, j'étais à jour pour la première fois de ma vie.",
-            name: "Thomas",
-            level: "Licence de droit"
-        )
-    ]
+    private var reviews: [Review] {
+        (1...4).map { index in
+            Review(
+                id: index,
+                quote: t("ios.review\(index).quote"),
+                name: t("ios.review\(index).name"),
+                level: t("ios.review\(index).level")
+            )
+        }
+    }
+
+    private func t(_ key: String) -> String {
+        i18n?.t(key) ?? L10n.t(key, locale: .fr)
+    }
 
     /// L'avis posé au milieu de l'écran. Le carrousel est un `ScrollView` horizontal qui
     /// s'aligne sur ses vues, et non un `TabView` paginé : il se peint sur le crème sans
     /// rapporter de fond, et le défilement automatique n'est qu'une écriture de plus dans
     /// cette variable.
-    @State private var visible: UUID?
+    @State private var visible: Int?
 
     private let ticker = Timer.publish(every: 3.5, on: .main, in: .common).autoconnect()
 
@@ -150,7 +142,7 @@ struct SocialProofStepView: View {
             }
         }
         .accessibilityElement()
-        .accessibilityLabel("5 étoiles sur 5")
+        .accessibilityLabel(t("ios.starsA11y"))
     }
 
     /// Les points disent combien d'avis restent : sans eux, un panneau qui glisse tout seul

@@ -81,7 +81,9 @@ struct DemoSheetStepView: View {
     /// Une ligne qui nomme ce qu'on regarde, et qui change une fois. Pas une liste
     /// d'étapes qui se cochent : l'écran montre déjà où il en est.
     private var caption: some View {
-        Text(isFinished ? "Plan, définitions, schémas. Prêt à réviser." : "Lecture du cours…")
+        Text(isFinished
+             ? (i18n?.t("ios.sheetReady") ?? "Plan, définitions, schémas. Prêt à réviser.")
+             : (i18n?.t("ios.sheetReading") ?? "Lecture du cours…"))
             .font(MicaboFont.hanken(13, weight: .medium))
             .foregroundStyle(isFinished ? MicaboColor.ink : MicaboColor.inkTertiary)
             .frame(maxWidth: .infinity)

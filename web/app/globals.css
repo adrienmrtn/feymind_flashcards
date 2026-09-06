@@ -57,10 +57,12 @@
   --color-progress: #2563eb;
   --color-progress-track: #e5e7eb;
 
-  /* La couleur des passages que la fiche met en avant. C'est l'encre qui change, pas le fond :
-     un surligneur posé derrière le texte déborde sous les jambages et se bat avec
-     l'interligne. */
-  --color-sheet-emphasis: #1d4ed8;
+  /* Le jaune du surligneur de la fiche. Le passage marqué a été de l'encre bleue pendant une
+     version, parce qu'un fond posé derrière le texte se battait avec l'interligne. Mais du
+     texte bleu au milieu d'un paragraphe se lit comme un lien, pas comme un surlignage,
+     d'autant que le bleu est déjà l'accent de l'app. La bande est revenue, et son épaisseur
+     est tenue en `em` par `.sheet-marker` : elle ne dépend plus de la hauteur de ligne. */
+  --color-sheet-marker: #f5d76e;
 
   /* ---- Retours d'information ---- */
   --color-positive: #3f7d53;
@@ -1045,6 +1047,31 @@ video {
 .math-inline .katex,
 .math-block .katex {
   color: inherit;
+}
+
+/* Le surligneur de la fiche.
+ *
+ * Un fond de texte posé sur toute la hauteur de ligne ne donne pas un trait de feutre : sur un
+ * paragraphe interligné à 1,72, la bande touche celle de la ligne du dessus et double
+ * d'épaisseur. Les marges verticales sont donc en `em`, donc proportionnelles au **texte** et
+ * indifférentes à l'interligne, ce qui est exactement le calcul que fait
+ * `SheetMarkerLayoutManager` sur l'iPhone.
+ *
+ * `box-decoration-break: clone` referme la bande à chaque bout de ligne : sans lui, un passage
+ * qui court sur deux lignes n'a un coin arrondi qu'au tout début et à la toute fin, et la
+ * coupure au milieu se voit. */
+@utility sheet-marker {
+  background-color: var(--color-sheet-marker);
+  border-radius: 3px;
+  padding: 0.07em 0.16em;
+  margin-inline: -0.07em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  /* Une fiche s'imprime, et un aplat derrière du texte est la première chose qu'un navigateur
+     jette à l'impression. Or c'est précisément la marque qu'on vient chercher sur une fiche
+     imprimée. */
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
 }
 
 /* La visite guidée : un voile percé sur une zone, et une bulle à côté.

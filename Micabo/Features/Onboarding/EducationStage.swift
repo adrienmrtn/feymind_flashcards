@@ -26,6 +26,43 @@ struct EducationStage: Identifiable, Hashable {
     let emoji: String
     let level: StudyLevel
     let tier: EducationTier
+
+    /// Titre montré à l'écran. Le nom canonique du système scolaire reste `title`
+    /// (les tests et le cloud s'en servent) ; ici on traduit les paliers francophones
+    /// selon la langue de l'app. Les noms déjà locaux (Abitur, Liceum, Cégep) restent.
+    var localizedTitle: String {
+        guard let key = Self.titleKey(for: id) else { return title }
+        return L10n.t(key, locale: .resolved())
+    }
+
+    private static func titleKey(for id: String) -> String? {
+        switch id {
+        case "fr.lycee": "ios.level.lycee"
+        case "fr.prepa", "ma.prepa": "ios.level.prepa"
+        case "fr.licence", "ma.licence", "dz.licence", "tn.licence", "sn.licence", "ci.licence":
+            "ios.level.licence"
+        case "fr.sante": "ios.level.pass"
+        case "fr.master", "be.master", "ch.master", "lu.master", "ma.master", "dz.master", "sn.master", "ci.master":
+            "ios.level.master"
+        case "fr.concours", "ma.concours": "ios.level.concours"
+        case "fr.other", "be.other", "ch.other", "ca.other", "lu.other", "ma.other", "dz.other", "tn.other", "sn.other", "ci.other":
+            "ios.level.other"
+        case "be.secondaire", "ca.secondaire", "lu.secondaire": "ios.level.secondary"
+        case "be.bachelier": "ios.level.bachelier"
+        case "be.medecine", "ch.medecine", "ca.medecine", "ma.medecine", "dz.medecine", "tn.medecine", "sn.medecine", "ci.medecine":
+            "ios.level.medicine"
+        case "be.concours": "ios.level.entrance"
+        case "ch.gymnase": "ios.level.gymnase"
+        case "ch.bachelor", "lu.bachelor": "ios.level.bachelor"
+        case "ca.cegep": "ios.level.cegep"
+        case "ca.bac": "ios.level.baccalaureat"
+        case "ca.maitrise": "ios.level.maitrise"
+        case "ma.lycee", "dz.lycee", "tn.lycee", "sn.lycee", "ci.lycee": "ios.level.lyceeBac"
+        case "tn.mastere": "ios.level.mastere"
+        case "sn.concours", "ci.concours": "ios.level.grandesEcoles"
+        default: nil
+        }
+    }
 }
 
 /// Le palier ramené à une échelle comparable d'un pays à l'autre.

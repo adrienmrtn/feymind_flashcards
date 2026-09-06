@@ -71,11 +71,18 @@ final class CourseSheetDecodingTests: XCTestCase {
           {"type": "steps", "title": "Trois temps", "items": ["Fixation", "Réduction", "Régénération"]},
           {"type": "table", "headers": ["A", "B"], "rows": [["1", "2"], ["3", "4"]]},
           {"type": "chart", "unit": "%", "bars": [{"label": "CO2", "value": 45}, {"label": "Lumière", "value": 11}]},
-          {"type": "formula", "latex": "E = mc^2", "caption": "Légende"}
+          {"type": "formula", "latex": "E = mc^2", "caption": "Légende"},
+          {"type": "figure", "page": 2, "caption": "Cycle de Krebs", "crop": {"x": 0.1, "y": 0.2, "w": 0.8, "h": 0.4}}
         ]}
         """)
 
-        XCTAssertEqual(decoded.blocks.count, 8)
+        XCTAssertEqual(decoded.blocks.count, 9)
+        guard case .figure(let figure) = decoded.blocks.last else {
+            return XCTFail("La figure doit être décodée")
+        }
+        XCTAssertEqual(figure.caption, "Cycle de Krebs")
+        XCTAssertEqual(figure.page, 2)
+        XCTAssertEqual(figure.crop?.w, 0.8)
     }
 
     /// Un bloc inconnu ou vide ne doit pas emporter la fiche entière : c'est la différence
@@ -126,6 +133,17 @@ final class CourseSheetDecodingTests: XCTestCase {
         }
         XCTAssertEqual(first, .attention)
         XCTAssertEqual(second, .essentiel)
+    }
+
+    func testAFigureWithoutAPageOrImageDoesNotSurviveCleaning() throws {
+        let decoded = try sheet("""
+        {"blocks": [
+          {"type": "figure", "caption": "Sans ancrage"}
+        ]}
+        """)
+
+        XCTAssertEqual(decoded.blocks.count, 1)
+        XCTAssertNil(decoded.sanitized().blocks.first)
     }
 
     func testRoundTripKeepsTheSheetIdentical() throws {
@@ -202,158 +220,26 @@ final class CourseSheetSanitizationTests: XCTestCase {
     }
 }
 
-/// Le surligneur garanti par le code. Le prompt le réclame depuis longtemps et les fiches
-/// arrivaient nues : ce plancher ne dépend plus du modèle.
-final class SheetHighlighterTests: XCTestCase {
-    private func highlightCount(_ sheet: CourseSheet) -> Int {
-        sheet.blocks.reduce(0) { total, block in
-            let texts: [String]
-            switch block {
-            case .paragraph(let text), .callout(_, let text), .heading(_, let text):
-                texts = [text]
-            case .definition(let term, let text):
-                texts = [term, text]
-            default:
-                texts = []
-            }
-            return total + texts.reduce(0) { $0 + ($1.components(separatedBy: "==").count - 1) / 2 }
-        }
-    }
-
-    func testAnUnmarkedSheetGetsItsMarker() {
-        let sheet = CourseSheet(blocks: [
-            .paragraph(text: "L'eau change d'état sans jamais quitter la planète, et c'est tout le sujet du chapitre."),
-            .heading(level: 1, text: "Les trois temps"),
-            .paragraph(text: "L'évaporation précède la condensation, puis la précipitation referme la boucle du cycle."),
-            .definition(
-                term: "Condensation",
-                text: "Passage de la vapeur à l'état liquide, autour de noyaux de condensation minuscules."
-            ),
-            .callout(
-                tone: .essentiel,
-                text: "Le cycle de l'eau est fermé : la quantité totale d'eau sur Terre ne varie jamais."
-            )
-        ])
-
-        XCTAssertEqual(highlightCount(sheet), 0)
-        XCTAssertGreaterThanOrEqual(highlightCount(sheet.highlighted()), SheetHighlighter.minimumHighlights)
-    }
-
-    /// L'encadré « essentiel » tient tout le chapitre : c'est le premier passage marqué.
-    func testTheEssentialCalloutIsMarkedFirst() {
-        let sheet = CourseSheet(blocks: [
-            .callout(
-                tone: .essentiel,
-                text: "La quantité totale d'eau sur Terre ne varie pas : le cycle est entièrement fermé."
-            ),
-            .paragraph(text: "L'évaporation précède la condensation, puis la précipitation referme la boucle.")
-        ])
-
-        let marked = CourseSheet(blocks: SheetHighlighter.ensuring(sheet.blocks, minimum: 1))
-
-        guard case .callout(_, let callout) = marked.blocks[0],
-              case .paragraph(let paragraph) = marked.blocks[1] else {
-            return XCTFail("Les deux blocs doivent être gardés")
-        }
-        XCTAssertTrue(callout.contains("=="))
-        XCTAssertFalse(paragraph.contains("=="))
-    }
-
-    func testASheetAlreadyMarkedIsLeftAlone() {
-        let sheet = CourseSheet(blocks: [
-            .paragraph(text: "==L'eau change d'état== sans jamais quitter la planète, et voilà le sujet."),
-            .paragraph(text: "==L'évaporation précède la condensation== puis la précipitation referme.")
-        ])
-
-        XCTAssertEqual(CourseSheet(blocks: SheetHighlighter.ensuring(sheet.blocks, minimum: 2)), sheet)
-    }
-
-    /// Le marqueur porte sur une phrase, jamais sur un paragraphe entier, et il laisse la
-    /// ponctuation finale dehors.
-    func testTheMarkerCoversASentenceAndNotThePunctuation() throws {
-        let marked = try XCTUnwrap(
-            SheetHighlighter.marked(
-                "L'eau circule sans jamais quitter la planète, et cette boucle est fermée. "
-                    + "La **condensation** transforme la vapeur en gouttelettes autour de noyaux minuscules."
-            )
-        )
-
-        XCTAssertTrue(marked.contains("==La **condensation**"))
-        XCTAssertTrue(marked.contains("minuscules==."))
-    }
-
-    func testASentenceTooLongIsCutOnItsFirstClause() throws {
-        let long = "La photosynthèse convertit l'énergie lumineuse en énergie chimique, "
-            + "ce qui suppose une chaîne de transporteurs, des pigments capables d'absorber "
-            + "certaines longueurs d'onde, et une organisation membranaire que seuls les "
-            + "thylakoïdes des chloroplastes rendent possible dans la cellule végétale."
-
-        let marked = try XCTUnwrap(SheetHighlighter.marked(long))
-        let passage = SheetMarkup.spans(marked).first { $0.isHighlighted }
-
-        XCTAssertNotNil(passage)
-        XCTAssertLessThanOrEqual(passage?.text.count ?? .max, 170)
-    }
-
-    func testNothingIsMarkedWhenNoSentenceIsWorthIt() {
-        XCTAssertNil(SheetHighlighter.marked("Trop court."))
-        XCTAssertNil(SheetHighlighter.marked("Un texte ==déjà marqué== et assez long pour être choisi."))
-        XCTAssertNil(
-            SheetHighlighter.marked("Le seuil est $p < 0,05$ et rien d'autre ne compte vraiment ici pour nous."),
-            "Une formule est déjà mise en valeur par son rendu"
-        )
-    }
-
-    /// Le marqueur posé par le code doit être lu par le parseur de l'app, sinon il n'aurait
-    /// servi à rien, et il ne doit pas déplacer un caractère du texte du cours.
-    func testTheMarkerIsReadBackByTheAppAndChangesNoText() throws {
-        let source = "L'eau circule sans jamais quitter la planète, et cette boucle est fermée. "
-            + "La **condensation** transforme la vapeur en gouttelettes autour de noyaux minuscules."
-        let marked = try XCTUnwrap(SheetHighlighter.marked(source))
-        let spans = SheetMarkup.spans(marked)
-
-        XCTAssertTrue(spans.contains { $0.isHighlighted })
-        XCTAssertTrue(spans.contains { $0.isBold }, "Le gras survit à l'intérieur de la marque")
-        XCTAssertEqual(SheetMarkup.plain(marked), SheetMarkup.plain(source))
-    }
-
-    /// Ni les titres, ni les tableaux : ils portent déjà leur mise en valeur.
-    func testHeadingsAndTablesAreNeverMarked() {
-        let sheet = CourseSheet(blocks: [
-            .heading(level: 1, text: "Un titre qui pourrait tenir une phrase entière sans problème"),
-            .table(SheetTable(
-                headers: ["Phase", "Lieu"],
-                rows: [["Photochimique", "Thylakoïdes"], ["Biochimique", "Stroma"]]
-            ))
-        ])
-
-        XCTAssertEqual(sheet.highlighted(), sheet)
-    }
-}
-
 /// Le rendu d'un passage mis en avant, et l'échelle typographique de la fiche.
 final class SheetRenderingTests: XCTestCase {
-    /// **Le surligneur a été retiré.** Un fond posé derrière le texte débordait sous les
-    /// jambages, changeait d'épaisseur d'une ligne à l'autre, et se battait avec l'interligne
-    /// au lieu de servir la lecture. Le passage change d'encre, et rien d'autre : pas de
-    /// fond, nulle part.
-    func testAnEmphasisedPassageChangesTheInkAndCarriesNoBackground() throws {
+    /// Le passage marqué porte **une bande, et garde son encre**. Il a été de l'encre bleue
+    /// pendant une version, le temps de savoir dessiner la bande correctement : mais du texte
+    /// bleu au milieu d'un paragraphe se lit comme un lien, pas comme un surlignage.
+    func testAnEmphasisedPassageCarriesTheMarkerAndKeepsItsInk() throws {
         let composed = SheetAttributedText.make("Un ==passage marqué== dans une phrase.", style: .prose)
         let text = composed.string as NSString
-
-        var backgrounds = 0
-        composed.enumerateAttribute(
-            .backgroundColor,
-            in: NSRange(location: 0, length: composed.length)
-        ) { value, _, _ in
-            if value != nil { backgrounds += 1 }
-        }
-        XCTAssertEqual(backgrounds, 0, "Plus aucun fond : c'était exactement ce qui rendait mal")
 
         let marked = text.range(of: "passage marqué")
         let plain = text.range(of: "dans une phrase")
         XCTAssertNotEqual(marked.location, NSNotFound)
         XCTAssertNotEqual(plain.location, NSNotFound)
+
+        let band = composed.attribute(.backgroundColor, at: marked.location, effectiveRange: nil) as? UIColor
+        XCTAssertEqual(band, UIColor(MicaboColor.sheetMarker))
+        XCTAssertNil(
+            composed.attribute(.backgroundColor, at: plain.location, effectiveRange: nil),
+            "La bande s'arrête au passage marqué"
+        )
 
         let markedInk = try XCTUnwrap(
             composed.attribute(.foregroundColor, at: marked.location, effectiveRange: nil) as? UIColor
@@ -361,17 +247,40 @@ final class SheetRenderingTests: XCTestCase {
         let plainInk = try XCTUnwrap(
             composed.attribute(.foregroundColor, at: plain.location, effectiveRange: nil) as? UIColor
         )
-        XCTAssertNotEqual(markedInk, plainInk, "Le passage change d'encre, le reste non")
+        XCTAssertEqual(markedInk, plainInk, "Une bande et une encre de couleur font deux marques pour une")
+    }
 
-        // Et cette encre est verte : c'est la couleur que la fiche donne à ce qu'elle met en
-        // avant, et elle doit se distinguer sans qu'on la cherche.
-        var red: CGFloat = 0
-        var green: CGFloat = 0
-        var blue: CGFloat = 0
-        var alpha: CGFloat = 0
-        markedInk.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        XCTAssertGreaterThan(green, red)
-        XCTAssertGreaterThan(green, blue)
+    /// **Le défaut qui avait fait retirer le surligneur, tenu par un test.**
+    ///
+    /// TextKit peint un fond sur toute la hauteur de la ligne, interligne compris : la bande
+    /// grossissait donc avec l'interligne du paragraphe. Celle qu'on dessine se cale sur la
+    /// hauteur des capitales, ce qui lui donne la même épaisseur partout dans la fiche.
+    func testTheMarkerBandDoesNotGrowWithTheLineSpacing() {
+        let font = MicaboFont.uiFont(SheetTypography.body, weight: .regular, italic: false)
+        let tight = SheetMarkerLayoutManager.band(
+            in: CGRect(x: 0, y: 0, width: 300, height: font.lineHeight),
+            font: font
+        )
+        let airy = SheetMarkerLayoutManager.band(
+            in: CGRect(x: 0, y: 0, width: 300, height: font.lineHeight + 12),
+            font: font
+        )
+
+        XCTAssertEqual(tight.height, airy.height, accuracy: 0.01)
+        XCTAssertEqual(tight.minY, airy.minY, accuracy: 0.01)
+        XCTAssertLessThan(tight.height, font.lineHeight, "Une bande plus haute que sa ligne toucherait sa voisine")
+    }
+
+    /// La bande passe derrière les jambages du p et du g, sinon elle couperait le texte
+    /// qu'elle met en avant, et elle laisse les capitales dépasser d'un cheveu.
+    func testTheMarkerBandCoversTheDescendersAndTheCapitals() {
+        let font = MicaboFont.uiFont(SheetTypography.body, weight: .regular, italic: false)
+        let line = CGRect(x: 0, y: 0, width: 300, height: font.lineHeight)
+        let band = SheetMarkerLayoutManager.band(in: line, font: font)
+        let baseline = line.minY + font.ascender
+
+        XCTAssertGreaterThan(band.maxY, baseline)
+        XCTAssertLessThan(band.minY, baseline - font.capHeight)
     }
 
     /// La couleur ne s'accompagne pas d'un changement de poids : le gras est déjà une marque,
@@ -566,9 +475,9 @@ final class CourseSheetPersistenceTests: XCTestCase {
         )
 
         XCTAssertTrue(course.hasSheet)
-        // Ce qui est enregistré est ce que le modèle a écrit ; ce qui se relit porte en plus
-        // le surligneur garanti par l'app.
-        XCTAssertEqual(course.decodedSheet(), SampleData.photosynthesisSheet.sanitized().highlighted())
+        // Ce qui se relit est exactement ce qui a été enregistré : l'app ne repasse plus
+        // derrière le modèle pour marquer des passages qu'il n'a pas marqués.
+        XCTAssertEqual(course.decodedSheet(), SampleData.photosynthesisSheet.sanitized())
         XCTAssertEqual(CourseSheet.decode(from: course.sheetData), SampleData.photosynthesisSheet.sanitized())
         // Sans contexte envoyé par le serveur, il est reconstitué depuis la fiche : c'est
         // lui qui sert à écrire les cartes.

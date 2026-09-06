@@ -64,19 +64,19 @@ final class YouTubeImportErrorTests: XCTestCase {
     func testEachRefusalHasItsExactSentence() {
         XCTAssertEqual(
             YouTubeImportError.invalidLink.errorDescription,
-            "Ce lien n'est pas une vidéo YouTube."
+            L10n.t("ios.yt.invalidLink", locale: .resolved())
         )
         XCTAssertEqual(
             YouTubeImportError.unavailable.errorDescription,
-            "Cette vidéo n'est pas accessible."
+            L10n.t("ios.yt.unavailable", locale: .resolved())
         )
         XCTAssertEqual(
             YouTubeImportError.noCaptions.errorDescription,
-            "Cette vidéo n'a pas de sous-titres. Micabo ne peut pas la lire."
+            L10n.t("ios.yt.noCaptions", locale: .resolved())
         )
         XCTAssertEqual(
             YouTubeImportError.transcriptTooShort.errorDescription,
-            "Cette vidéo est trop courte pour générer des cartes."
+            L10n.t("ios.yt.tooShort", locale: .resolved())
         )
     }
 
@@ -86,13 +86,13 @@ final class YouTubeImportErrorTests: XCTestCase {
         let known = YouTubeImportError.tooLong(duration: 134 * 60, limit: 90 * 60)
         XCTAssertEqual(
             known.errorDescription,
-            "Cette vidéo dure 2 h 14. Micabo lit les vidéos jusqu'à 1 h 30."
+            L10n.t("ios.yt.tooLongMeasured", locale: .resolved(), vars: ["duration": "2 h 14", "limit": "1 h 30"])
         )
 
         let unknown = YouTubeImportError.tooLong(duration: 0, limit: 90 * 60)
         XCTAssertEqual(
             unknown.errorDescription,
-            "Cette vidéo est trop longue. Micabo lit les vidéos jusqu'à 1 h 30."
+            L10n.t("ios.yt.tooLong", locale: .resolved(), vars: ["limit": "1 h 30"])
         )
     }
 
@@ -341,7 +341,7 @@ final class YouTubeSourceTests: XCTestCase {
             kind: .youtube
         )
 
-        XCTAssertEqual(failure?.message, "Cette vidéo est trop courte pour générer des cartes.")
+        XCTAssertEqual(failure?.message, L10n.t("ios.yt.tooShort", locale: .resolved()))
     }
 }
 

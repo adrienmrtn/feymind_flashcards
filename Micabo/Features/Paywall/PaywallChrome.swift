@@ -27,7 +27,7 @@ struct PaywallCloseButton: View {
                 .frame(width: 44, height: 44, alignment: .leading)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
-        .accessibilityLabel("Fermer")
+        .accessibilityLabel(L10n.t("app.a11y.close", locale: .resolved()))
     }
 }
 
@@ -68,8 +68,8 @@ struct PaywallCallToAction: View {
 
                 Text(
                     hasTrial
-                        ? "Démarrer mes \(PaywallCatalog.freeTrialDays) jours gratuits"
-                        : "S'abonner"
+                        ? L10n.t("ios.paywallStartTrial", locale: .resolved(), vars: ["n": "\(PaywallCatalog.freeTrialDays)"])
+                        : L10n.t("app.paywall.subscribe", locale: .resolved())
                 )
             }
             .frame(maxWidth: .infinity)
@@ -90,11 +90,11 @@ struct PaywallLegalFooter: View {
 
     var body: some View {
         HStack(spacing: 7) {
-            entry("Restaurer", action: onRestore)
+            entry(L10n.t("ios.paywallRestore", locale: .resolved()), action: onRestore)
             separator
-            entry("Conditions d'utilisation") { open(PaywallLinks.terms) }
+            entry(L10n.t("ios.paywallTerms", locale: .resolved())) { open(PaywallLinks.terms) }
             separator
-            entry("Confidentialité") { open(PaywallLinks.privacy) }
+            entry(L10n.t("common.privacy", locale: .resolved())) { open(PaywallLinks.privacy) }
         }
         .frame(maxWidth: .infinity)
     }
@@ -129,20 +129,31 @@ enum PaywallPitch {
     /// Le vert ne porte que la partie gratuite. Colorer la phrase entière n'aurait mis en
     /// avant que le prix, colorer le prix aurait mis en avant ce qu'on demande.
     static func text(for plan: PaywallPlan) -> Text {
-        let free = Text("Essaie \(PaywallCatalog.freeTrialDays) jours gratuitement, ")
+        let locale = UiLocale.resolved()
+        let free = Text(L10n.t("ios.paywallTryDays", locale: locale, vars: ["n": "\(PaywallCatalog.freeTrialDays)"]))
             .foregroundStyle(MicaboColor.accent)
-        let price = Text(sentence(for: plan))
+        let price = Text(sentence(for: plan, locale: locale))
             .foregroundStyle(MicaboColor.ink)
         return free + price
     }
 
-    static func sentence(for plan: PaywallPlan) -> String {
+    static func sentence(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
         if let monthly = plan.monthlyEquivalent {
-            return "puis \(monthly) / mois (facturé \(plan.displayPrice) par an)."
+            return L10n.t(
+                "ios.paywallThenYear",
+                locale: locale,
+                vars: ["monthly": monthly, "yearly": plan.displayPrice]
+            )
         }
-        return "puis \(plan.displayPrice) par \(plan.period.unit)."
+        return L10n.t(
+            "ios.paywallThenPeriod",
+            locale: locale,
+            vars: ["price": plan.displayPrice, "unit": plan.period.unit]
+        )
     }
 
     /// La ligne grise posée juste au-dessus du bouton.
-    static let reassurance = "Deux appuis pour commencer, résiliable en quinze secondes."
+    static var reassurance: String {
+        L10n.t("ios.paywallReassurance", locale: .resolved())
+    }
 }

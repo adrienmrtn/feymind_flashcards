@@ -692,9 +692,10 @@ final class OnboardingFlowTests: XCTestCase {
     /// Le graphe de rétention garde ses intervalles réels : ce sont eux qu'annoncent les
     /// étiquettes au-dessus de chaque révision.
     func testRetentionChartKeepsItsRealIntervals() {
-        XCTAssertEqual(RetentionCurve.intervalLabels, ["1 j", "3 j", "7 j", "16 j"])
+        XCTAssertEqual(RetentionCurve.intervalLabels(locale: .fr), ["1 j", "3 j", "7 j", "16 j"])
+        XCTAssertEqual(RetentionCurve.intervalLabels(locale: .de), ["1 T", "3 T", "7 T", "16 T"])
         XCTAssertEqual(
-            RetentionCurve.intervalLabels.count,
+            RetentionCurve.intervalLabels(locale: .fr).count,
             RetentionCurve.reviewDays.count,
             "La liste des intervalles doit couvrir toutes les révisions du graphe"
         )

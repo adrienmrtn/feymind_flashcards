@@ -7,7 +7,7 @@ import SwiftUI
 /// Pas de micro, donc pas d'autorisation à accorder pour réviser.
 struct CardAudioButton: View {
     let card: Flashcard
-    var title: String = "Écouter"
+    var title: String = L10n.t("ios.listen", locale: .resolved())
 
     @State private var player: AVAudioPlayer?
     @State private var isPlaying = false
@@ -28,7 +28,7 @@ struct CardAudioButton: View {
             .background(MicaboColor.accentSoft, in: Capsule())
         }
         .buttonStyle(MicaboPressableButtonStyle())
-        .accessibilityLabel("Écouter la prononciation")
+        .accessibilityLabel(L10n.t("ios.listenPronunciation", locale: .resolved()))
         .onDisappear {
             player?.stop()
             isPlaying = false

@@ -340,15 +340,17 @@ struct DemoSheetPage: View {
 
     /// La marque de la fiche, en miniature.
     ///
-    /// C'était un fond jaune, comme le surligneur de l'app ; c'est maintenant du texte en
-    /// couleur, comme lui. Une démonstration qui promettrait une marque que la fiche ne fait
-    /// plus serait une promesse à tenir deux fois.
+    /// C'est la bande du surligneur, comme dans la fiche : une démonstration qui promettrait
+    /// une marque que la fiche ne fait pas serait une promesse à tenir deux fois. À cette
+    /// échelle, la bande est posée par SwiftUI plutôt que dessinée — une ligne de huit
+    /// points n'a pas d'interligne à ménager.
     private var highlight: some View {
         Text(OnboardingDemo.sheetHighlight)
-            // Un demi-point au-dessus du paragraphe, et le demi-gras : à cette échelle, la
-            // couleur seule ne suffisait pas à distinguer cette ligne de celle du dessus.
             .font(MicaboFont.hanken(8, weight: .semibold))
-            .foregroundStyle(MicaboColor.sheetEmphasis)
+            .foregroundStyle(MicaboColor.inkReading)
+            .padding(.horizontal, 2)
+            .padding(.vertical, 0.5)
+            .background(MicaboColor.sheetMarker, in: RoundedRectangle(cornerRadius: 2, style: .continuous))
     }
 }
 

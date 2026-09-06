@@ -45,7 +45,7 @@ final class WeekReviewRankingTests: XCTestCase {
             from: [.init(userId: friend, username: nil, passes: 1)],
             me: me
         )
-        XCTAssertEqual(rows[0].handle, "Quelqu'un")
+        XCTAssertEqual(rows[0].handle, L10n.t("app.friends.someone", locale: .resolved()))
     }
 
     /// PostgREST rend parfois un `bigint` en nombre, parfois en chaîne. Les deux

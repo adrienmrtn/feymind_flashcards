@@ -221,14 +221,14 @@ struct SettingsView: View {
     private var identitySection: some View {
         if auth.isSignedIn {
             VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: "Nom d'utilisateur")
+                MicaboSectionCaption(text: i18n?.t("ios.usernameLabel") ?? "Nom d'utilisateur")
 
                 HStack(spacing: 11) {
                     Text("@")
                         .font(MicaboFont.hanken(16, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkTertiary)
 
-                    TextField("nom d'utilisateur", text: $username)
+                    TextField(i18n?.t("ios.usernamePlaceholder") ?? "nom d'utilisateur", text: $username)
                         .font(MicaboFont.rowTitle)
                         .foregroundStyle(MicaboColor.ink)
                         .tint(MicaboColor.accent)
@@ -242,7 +242,7 @@ struct SettingsView: View {
                             .controlSize(.small)
                             .tint(MicaboColor.progress)
                     } else if hasUsernameChange {
-                        Button("Enregistrer", action: commitUsername)
+                        Button(i18n?.t("app.common.save") ?? "Enregistrer", action: commitUsername)
                             .font(MicaboFont.hanken(13, weight: .semibold))
                             .foregroundStyle(MicaboColor.accent)
                             .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
@@ -279,8 +279,8 @@ struct SettingsView: View {
             let preview = Username.normalize(username)
             MicaboSectionFootnote(
                 text: preview.isEmpty
-                    ? "Trois à vingt caractères, en commençant par une lettre ou un chiffre."
-                    : "Sera enregistré sous \(Username.display(preview))."
+                    ? (i18n?.t("ios.usernameRules") ?? "Trois à vingt caractères, en commençant par une lettre ou un chiffre.")
+                    : (i18n?.t("ios.usernameSavedAs", ["name": Username.display(preview)]) ?? "Sera enregistré sous \(Username.display(preview)).")
             )
         }
     }
@@ -334,7 +334,7 @@ struct SettingsView: View {
                 Menu {
                     Picker(i18n?.t("ios.stage") ?? "Stade d'étude", selection: $stage) {
                         ForEach(country.stages) { value in
-                            Text("\(value.emoji) \(value.title)").tag(Optional(value))
+                            Text("\(value.emoji) \(value.localizedTitle)").tag(Optional(value))
                         }
                         Text(i18n?.t("ios.unspecified") ?? "Non précisé").tag(Optional<EducationStage>.none)
                     }
@@ -343,7 +343,7 @@ struct SettingsView: View {
                         tile: MicaboTile(glyph: .emoji(stage?.emoji ?? "🎓"), background: MicaboColor.tilePastels[0]),
                         title: i18n?.t("ios.stage") ?? "Stade d'étude",
                         subtitle: stage?.level.detail ?? i18n?.t("ios.balancedCopy") ?? "Rédaction équilibrée, sans niveau supposé.",
-                        accessory: .value(stage?.title ?? i18n?.t("ios.unspecified") ?? "Non précisé")
+                        accessory: .value(stage?.localizedTitle ?? i18n?.t("ios.unspecified") ?? "Non précisé")
                     )
                 }
 
@@ -370,7 +370,7 @@ struct SettingsView: View {
                 MicaboHairline(inset: 71)
 
                 Menu {
-                    Picker("Longueur des fiches", selection: $sheetLength) {
+                    Picker(i18n?.t("ios.sheetLength") ?? "Longueur des fiches", selection: $sheetLength) {
                         ForEach(SheetLength.allCases) { length in
                             Text("\(length.title) · \(readingHint(for: length))").tag(length)
                         }
@@ -476,11 +476,11 @@ struct SettingsView: View {
 
     private var intelligenceSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Intelligence")
+            MicaboSectionCaption(text: i18n?.t("ios.debug.intelligence") ?? "Intelligence")
 
             VStack(spacing: 0) {
                 Menu {
-                    Picker("Modèle", selection: $model) {
+                    Picker(i18n?.t("ios.debug.model") ?? "Modèle", selection: $model) {
                         ForEach(models, id: \.self) { name in
                             Text(name).tag(name)
                         }
@@ -488,7 +488,7 @@ struct SettingsView: View {
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("🧠"), background: MicaboColor.accentSoft),
-                        title: "Modèle",
+                        title: i18n?.t("ios.debug.model") ?? "Modèle",
                         subtitle: model,
                         accessory: .symbol("chevron.up.chevron.down")
                     )
@@ -500,13 +500,13 @@ struct SettingsView: View {
 
     private var connectionSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Connexion")
+            MicaboSectionCaption(text: i18n?.t("ios.debug.connection") ?? "Connexion")
 
             VStack(spacing: 0) {
                 fieldRow(
                     emoji: "☁️",
                     background: MicaboColor.tilePastels[3],
-                    title: "URL Supabase",
+                    title: i18n?.t("ios.debug.supabaseURL") ?? "URL Supabase",
                     placeholder: "https://votre-projet.supabase.co",
                     text: $supabaseURL
                 )
@@ -516,7 +516,7 @@ struct SettingsView: View {
                 fieldRow(
                     emoji: "🔑",
                     background: MicaboColor.tilePastels[5],
-                    title: "Clé publique",
+                    title: i18n?.t("ios.debug.publicKey") ?? "Clé publique",
                     placeholder: "sb_publishable_…",
                     text: $anonKey
                 )
@@ -529,13 +529,13 @@ struct SettingsView: View {
         var rows = [
             MicaboRow(
                 tile: MicaboTile(glyph: .emoji("♻️"), background: MicaboColor.tilePastels[1]),
-                title: "Rétablir les valeurs par défaut",
+                title: i18n?.t("ios.restoreDefaults") ?? "Rétablir les valeurs par défaut",
                 accessory: .none,
                 action: restoreDefaults
             ),
             MicaboRow(
                 tile: MicaboTile(glyph: .emoji("🗑️"), background: MicaboColor.negativeSoft),
-                title: "Effacer tous mes cours",
+                title: i18n?.t("ios.eraseAllCourses") ?? "Effacer tous mes cours",
                 accessory: .none,
                 titleColor: MicaboColor.negative,
                 action: { showResetConfirmation = true }
@@ -545,7 +545,7 @@ struct SettingsView: View {
             rows.append(
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("🚪"), background: MicaboColor.negativeSoft),
-                    title: "Supprimer mon compte",
+                    title: i18n?.t("ios.deleteAccount") ?? "Supprimer mon compte",
                     accessory: .none,
                     titleColor: MicaboColor.negative,
                     action: { showDeleteAccountConfirmation = true }
@@ -553,9 +553,9 @@ struct SettingsView: View {
             )
         }
         return MicaboSettingsSection(
-            caption: "Données",
+            caption: i18n?.t("ios.dataSection") ?? "Données",
             rows: rows,
-            footnote: "Effacer tes cours les efface aussi de ton compte à la prochaine synchronisation. Supprimer le compte les efface partout."
+            footnote: i18n?.t("ios.dataFootnote") ?? "Effacer tes cours les efface aussi de ton compte à la prochaine synchronisation. Supprimer le compte les efface partout."
         )
     }
 
@@ -563,7 +563,7 @@ struct SettingsView: View {
     /// sur l'abonnement, même en `DEBUG`, se prend pour le vrai droit.
     private var testSection: some View {
         MicaboSettingsSection(
-            caption: "Test",
+            caption: i18n?.t("ios.debug.test") ?? "Test",
             rows: testRows,
             footnote: testFootnote
         )
@@ -578,8 +578,8 @@ struct SettingsView: View {
         rows.append(
             MicaboRow(
                 tile: MicaboTile(glyph: .emoji("🎁"), background: MicaboColor.infoSoft),
-                title: "Rejouer le cadeau",
-                subtitle: "Ouvre la boîte sur la prochaine fiche",
+                title: i18n?.t("ios.debug.replayGift") ?? "Rejouer le cadeau",
+                subtitle: i18n?.t("ios.debug.replayGiftHelp") ?? "Ouvre la boîte sur la prochaine fiche",
                 accessory: .chevron,
                 action: { DiscountOffer.forget() }
             )
@@ -589,7 +589,7 @@ struct SettingsView: View {
         rows.append(
             MicaboRow(
                 tile: MicaboTile(glyph: .emoji("🔁"), background: MicaboColor.tilePastels[2]),
-                title: "Refaire l'onboarding",
+                title: i18n?.t("ios.debug.replayOnboarding") ?? "Refaire l'onboarding",
                 accessory: .chevron,
                 action: replayOnboarding
             )
@@ -600,51 +600,51 @@ struct SettingsView: View {
 
     private var testFootnote: String {
         #if DEBUG
-        return "Rejouer le cadeau n'existe qu'en développement. Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
+        return i18n?.t("ios.debug.footnoteDebug") ?? "Rejouer le cadeau n'existe qu'en développement. Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
         #else
-        return "Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
+        return i18n?.t("ios.debug.footnote") ?? "Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
         #endif
     }
 
     private var feedbackSection: some View {
         MicaboSettingsSection(
-            caption: "Retour",
+            caption: i18n?.t("ios.feedbackSection") ?? "Retour",
             rows: [
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("✉️"), background: MicaboColor.infoSoft),
-                    title: "Faire un retour",
-                    subtitle: "Un bug, une idée",
+                    title: i18n?.t("app.feedback.title") ?? "Faire un retour",
+                    subtitle: i18n?.t("ios.feedbackIdea") ?? "Un bug, une idée",
                     accessory: .chevron,
                     action: { showFeedback = true }
                 )
             ],
-            footnote: "Ça arrive chez \(MicaboMail.team)."
+            footnote: i18n?.t("ios.feedbackArrives", ["team": MicaboMail.team]) ?? "Ça arrive chez \(MicaboMail.team)."
         )
     }
 
     private var aboutSection: some View {
         MicaboSettingsSection(
-            caption: "À propos",
+            caption: i18n?.t("ios.about") ?? "À propos",
             rows: [
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("📦"), background: MicaboColor.tilePastels[4]),
-                    title: "Version",
+                    title: i18n?.t("ios.version") ?? "Version",
                     accessory: .value(appVersion)
                 ),
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("📈"), background: MicaboColor.tilePastels[0]),
-                    title: "Répétition espacée",
+                    title: i18n?.t("ios.spacedRep") ?? "Répétition espacée",
                     accessory: .value("SM-2")
                 ),
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("🔒"), background: MicaboColor.tilePastels[3]),
-                    title: "Confidentialité",
+                    title: i18n?.t("common.privacy") ?? "Confidentialité",
                     accessory: .chevron,
                     action: { openLegal(PaywallLinks.privacy) }
                 ),
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("📜"), background: MicaboColor.tilePastels[5]),
-                    title: "Conditions",
+                    title: i18n?.t("common.terms") ?? "Conditions",
                     accessory: .chevron,
                     action: { openLegal(PaywallLinks.terms) }
                 )

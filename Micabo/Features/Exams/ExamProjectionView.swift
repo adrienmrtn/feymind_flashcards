@@ -13,7 +13,7 @@ struct ExamProjectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-            MicaboSectionCaption(text: "Ce que ça donne")
+            MicaboSectionCaption(text: L10n.t("ios.examProjection", locale: .resolved()))
 
             VStack(spacing: 0) {
                 figures
@@ -27,22 +27,22 @@ struct ExamProjectionView: View {
     private var figures: some View {
         VStack(spacing: 0) {
             figure(
-                label: "Cartes concernées",
+                label: L10n.t("ios.cardsAffected", locale: .resolved()),
                 value: MicaboCopy.cards(projection.cardCount)
             )
             MicaboHairline(inset: MicaboSpacing.md)
             figure(
-                label: "Jours restants",
+                label: L10n.t("ios.daysLeft", locale: .resolved()),
                 value: daysLabel
             )
             MicaboHairline(inset: MicaboSpacing.md)
             figure(
-                label: "Charge quotidienne moyenne",
+                label: L10n.t("ios.avgDailyLoad", locale: .resolved()),
                 value: "≈ \(MicaboCopy.cards(projection.averageDailyLoad))"
             )
             MicaboHairline(inset: MicaboSpacing.md)
             figure(
-                label: "Jour le plus chargé",
+                label: L10n.t("ios.busiestDay", locale: .resolved()),
                 value: busiestLabel,
                 tone: .warm
             )

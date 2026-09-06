@@ -19,10 +19,10 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
 
     var headline: String {
         switch self {
-        case .lockedSheet: "La fin de ta fiche t'attend"
-        case .secondCourse: "Ton deuxième cours t'attend"
-        case .practice: "L'entraînement libre est dans Pro"
-        case .sessionLimit: "Ta session t'attend"
+        case .lockedSheet: L10n.t("ios.paywallLockedHeadline", locale: .resolved())
+        case .secondCourse: L10n.t("app.import.secondCourse.title", locale: .resolved())
+        case .practice: L10n.t("ios.paywallPracticeHeadline", locale: .resolved())
+        case .sessionLimit: L10n.t("ios.paywallSessionHeadline", locale: .resolved())
         }
     }
 }
@@ -82,8 +82,8 @@ struct PaywallFlowView: View {
         }
         .animation(OnboardingMotion.page, value: stage)
         .micaboScreenBackground()
-        .alert("Oups", isPresented: .constant(failure != nil)) {
-            Button("Fermer", role: .cancel) { failure = nil }
+        .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(failure != nil)) {
+            Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { failure = nil }
         } message: {
             Text(failure ?? "")
         }
@@ -115,8 +115,8 @@ struct PaywallFlowView: View {
             onSubscribed()
         case .unavailable:
             failure = PaywallPurchases.isReady
-                ? "L'achat n'a pas abouti. Réessaie dans un instant."
-                : "L'abonnement n'est pas encore ouvert."
+                ? L10n.t("ios.paywallBuyFail", locale: .resolved())
+                : L10n.t("ios.paywallNotOpen", locale: .resolved())
         case .cancelled:
             break
         }
@@ -133,7 +133,7 @@ struct PaywallFlowView: View {
         isPurchasing = false
 
         guard outcome == .purchased else {
-            failure = "Aucun abonnement à restaurer sur ce compte."
+            failure = L10n.t("ios.paywallNoRestore", locale: .resolved())
             return
         }
         pro?.unlock()

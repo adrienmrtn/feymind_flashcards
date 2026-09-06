@@ -52,7 +52,7 @@ struct PaywallOfferView: View {
                     .onboardingAppear(index: 2)
 
                 Button(action: onSeeAllPlans) {
-                    Text("Voir toutes les offres")
+                    Text(L10n.t("ios.paywallSeeAll", locale: .resolved()))
                         .font(MicaboFont.hanken(15, weight: .medium))
                         .foregroundStyle(MicaboColor.info)
                 }
@@ -106,7 +106,7 @@ struct PaywallPlansView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 26) {
-                    Text("Les abonnés Pro\napprennent plus, plus vite")
+                    Text(L10n.t("ios.paywallPlansTitle", locale: .resolved()))
                         .font(MicaboFont.hanken(26, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(-0.7)
@@ -121,7 +121,9 @@ struct PaywallPlansView: View {
                             PaywallPlanCard(
                                 plan: plan,
                                 isSelected: plan.kind == selection,
-                                badge: plan.kind == .yearly ? "Économise \(PaywallCatalog.savingsPercent) %" : nil
+                                badge: plan.kind == .yearly
+                                    ? L10n.t("ios.paywallSave", locale: .resolved(), vars: ["pct": "\(PaywallCatalog.savingsPercent)"])
+                                    : nil
                             ) {
                                 withAnimation(OnboardingMotion.tap) {
                                     selection = plan.kind
@@ -152,14 +154,9 @@ struct PaywallPlansView: View {
 
 /// Ce que l'abonnement ouvre, en face de ce que la version gratuite laisse fermé.
 private struct PaywallComparisonTable: View {
-    private let features = [
-        "Toutes les matières",
-        "Cours illimités",
-        "Cartes générées par l'IA",
-        "Import PDF, photos et Word",
-        "Répétition espacée et statistiques",
-        "Sans publicité"
-    ]
+    private var features: [String] {
+        (1...6).map { L10n.t("ios.paywallFeat\($0)", locale: .resolved()) }
+    }
 
     /// Les deux colonnes ont la même largeur : une croix et une coche qui ne tombent pas
     /// l'une sous l'autre transforment un tableau en liste mal alignée.
@@ -185,7 +182,7 @@ private struct PaywallComparisonTable: View {
         HStack(spacing: 0) {
             Spacer(minLength: 0)
 
-            Text("Gratuit")
+            Text(L10n.t("ios.paywallFree", locale: .resolved()))
                 .font(MicaboFont.hanken(13, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .frame(width: columnWidth)

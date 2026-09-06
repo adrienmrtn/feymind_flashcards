@@ -78,7 +78,7 @@ struct LibraryView: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
 
-            TextField("Un cours, une matière…", text: $search)
+            TextField(L10n.t("ios.searchCourse", locale: .resolved()), text: $search)
                 .font(MicaboFont.body)
                 .foregroundStyle(MicaboColor.ink)
                 .tint(MicaboColor.accent)
@@ -96,7 +96,7 @@ struct LibraryView: View {
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
                 .buttonStyle(MicaboPressableButtonStyle())
-                .accessibilityLabel("Effacer la recherche")
+                .accessibilityLabel(L10n.t("ios.clearSearch", locale: .resolved()))
             }
         }
         .padding(.vertical, 11)
@@ -106,7 +106,7 @@ struct LibraryView: View {
 
     private var subjectFilter: some View {
         MicaboFlowLayout(spacing: MicaboSpacing.xs, lineSpacing: MicaboSpacing.xs) {
-            MicaboSelectChip(title: "Toutes", isSelected: subject == nil) {
+            MicaboSelectChip(title: L10n.t("ios.all", locale: .resolved()), isSelected: subject == nil) {
                 subject = nil
             }
 
@@ -151,14 +151,14 @@ struct LibraryView: View {
     private func subtitle(for course: SharedCourseRecord) -> String {
         var parts: [String] = []
         if let author = authors[course.user_id] {
-            parts.append(author.relation == .friends ? "\(author.handle) · ami" : author.handle)
+            parts.append(author.relation == .friends ? "\(author.handle) · \(L10n.t("ios.friend", locale: .resolved()).lowercased())" : author.handle)
         }
         if let subject = course.subject?.nilIfBlank { parts.append(subject) }
         if let count = cardCounts[course.id], count > 0 {
             parts.append(MicaboCopy.cards(count))
         }
         parts.append(MicaboCopy.audience(of: course))
-        return parts.isEmpty ? "Cours partagé" : parts.joined(separator: " · ")
+        return parts.isEmpty ? L10n.t("ios.sharedCourse", locale: .resolved()) : parts.joined(separator: " · ")
     }
 
     private func tint(for course: SharedCourseRecord) -> Color {
@@ -173,7 +173,7 @@ struct LibraryView: View {
             ProgressView()
                 .controlSize(.small)
                 .tint(MicaboColor.progress)
-            Text("On regarde ce que ton école a partagé…")
+            Text(L10n.t("ios.libraryLoading", locale: .resolved()))
                 .font(MicaboFont.caption)
                 .foregroundStyle(MicaboColor.inkTertiary)
         }
@@ -200,19 +200,22 @@ struct LibraryView: View {
     }
 
     private var emptyTitle: String {
-        if OnboardingPreferences.institutionName?.nilIfBlank == nil { return "Ton école n'est pas renseignée" }
-        if !search.isEmpty { return "Aucun cours pour cette recherche" }
-        return "Rien de partagé pour l'instant"
+        if OnboardingPreferences.institutionName?.nilIfBlank == nil {
+            return L10n.t("ios.libraryNoSchool", locale: .resolved())
+        }
+        if !search.isEmpty { return L10n.t("ios.libraryNoSearch", locale: .resolved()) }
+        return L10n.t("ios.libraryEmpty", locale: .resolved())
     }
 
     private var emptyDetail: String {
         if OnboardingPreferences.institutionName?.nilIfBlank == nil {
-            return "La bibliothèque montre les cours de ton établissement. Renseigne-le dans les réglages pour retrouver ceux de tes camarades."
+            return L10n.t("ios.libraryNoSchoolHelp", locale: .resolved())
         }
         if !search.isEmpty {
-            return "Essaie un autre mot, ou regarde la liste entière."
+            return L10n.t("ios.libraryNoSearchHelp", locale: .resolved())
         }
-        return "Personne de \(OnboardingPreferences.institutionName ?? "ton école") n'a encore partagé de cours. Les tiens sont publics par défaut : ce sera peut-être toi le premier."
+        let school = OnboardingPreferences.institutionName ?? L10n.t("ios.yourSchool", locale: .resolved()).lowercased()
+        return L10n.t("ios.libraryEmptySchool", locale: .resolved(), vars: ["school": school])
     }
 
     // MARK: - Chargement

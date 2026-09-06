@@ -12,11 +12,11 @@ struct WelcomeDeck: View {
         case choice(question: String, options: [String], answer: Int)
         case gap(before: String, after: String, answer: String)
 
-        var badge: String {
+        var kindKey: String {
             switch self {
-            case .question: "Recto verso"
-            case .choice: "QCM"
-            case .gap: "Texte à trou"
+            case .question: "app.cardKind.basic"
+            case .choice: "app.cardKind.choice"
+            case .gap: "app.cardKind.gap"
             }
         }
 
@@ -30,24 +30,31 @@ struct WelcomeDeck: View {
     }
 
     private struct Item: Identifiable {
-        let id = UUID()
+        let id: Int
         let subject: String
         let tint: Color
         let face: Face
     }
 
-    private let items: [Item] = WelcomeDeck.makeItems()
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var top = 0
     @State private var hasAppeared = false
 
     private let timer = Timer.publish(every: 2.6, on: .main, in: .common).autoconnect()
 
+    private var items: [Item] {
+        Self.makeItems(t: translate)
+    }
+
     var body: some View {
         stack
             .opacity(hasAppeared ? 1 : 0)
             .onAppear(perform: appear)
             .onReceive(timer) { _ in advance() }
+            .onChange(of: i18n?.locale) { _, _ in
+                top = 0
+            }
     }
 
     private var stack: some View {
@@ -59,7 +66,12 @@ struct WelcomeDeck: View {
     }
 
     private func card(_ item: Item, depth: Int) -> some View {
-        CardFace(subject: item.subject, tint: item.tint, face: item.face)
+        CardFace(
+            subject: item.subject,
+            tint: item.tint,
+            badge: translate(item.face.kindKey),
+            face: item.face
+        )
             .scaleEffect(scale(for: depth))
             .offset(y: offset(for: depth))
             .rotationEffect(.degrees(rotation(for: depth)))
@@ -105,38 +117,55 @@ struct WelcomeDeck: View {
         Haptics.tick()
     }
 
-    private static func makeItems() -> [Item] {
+    private func translate(_ key: String) -> String {
+        i18n?.t(key) ?? L10n.t(key, locale: .fr)
+    }
+
+    private static func makeItems(t: (String) -> String) -> [Item] {
         [
             Item(
-                subject: "Histoire",
+                id: 0,
+                subject: t("ios.deck.history.subject"),
                 tint: Color(hex: 0x1E3A8A),
-                face: .question("Quelle année marque la chute du mur de Berlin ?")
+                face: .question(t("ios.deck.history.question"))
             ),
             Item(
-                subject: "Biologie",
+                id: 1,
+                subject: t("ios.deck.biology.subject"),
                 tint: Color(hex: 0x0F766E),
                 face: .choice(
-                    question: "Où se déroule le cycle de Calvin ?",
-                    options: ["Dans le stroma", "Dans les thylakoïdes", "Dans le noyau"],
+                    question: t("ios.deck.biology.question"),
+                    options: [
+                        t("ios.deck.biology.opt1"),
+                        t("ios.deck.biology.opt2"),
+                        t("ios.deck.biology.opt3"),
+                    ],
                     answer: 0
                 )
             ),
             Item(
-                subject: "Maths",
+                id: 2,
+                subject: t("ios.deck.math.subject"),
                 tint: MicaboColor.accent,
-                face: .gap(before: "La dérivée de ln(x) vaut", after: "sur son intervalle.", answer: "1/x")
+                face: .gap(
+                    before: t("ios.deck.math.before"),
+                    after: t("ios.deck.math.after"),
+                    answer: "1/x"
+                )
             ),
             Item(
-                subject: "Espagnol",
+                id: 3,
+                subject: t("ios.deck.lang.subject"),
                 tint: Color(hex: 0x7C3AED),
-                face: .question("Comment dit-on « apprendre par cœur » ?")
-            )
+                face: .question(t("ios.deck.lang.question"))
+            ),
         ]
     }
 
     private struct CardFace: View {
         let subject: String
         let tint: Color
+        let badge: String
         let face: Face
 
         var body: some View {
@@ -160,7 +189,7 @@ struct WelcomeDeck: View {
             HStack(spacing: 6) {
                 Image(systemName: face.symbol)
                     .font(.system(size: 9, weight: .semibold))
-                Text(face.badge.uppercased())
+                Text(badge.uppercased())
                     .font(MicaboFont.hanken(9.5, weight: .bold))
                     .tracking(1.1)
 

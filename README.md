@@ -613,13 +613,15 @@ l'une écrit les mots, l'autre les nombres.
   et durée de lecture en sur-titre, titre — et se distinguent par leur sur-titre, pas par un
   bandeau. La fiche pose son texte à même l'ivoire et n'encadre que les objets : définitions,
   encadrés, tableaux, graphes, formules
-- Ce que la fiche met en avant change **d'encre**, pas de fond (`MicaboColor.sheetEmphasis`).
-  Le surligneur jaune a été retiré : une bande posée derrière le texte débordait sous les
-  jambages, changeait d'épaisseur d'une ligne à l'autre, et se battait avec l'interligne au
-  lieu de servir la lecture — un `NSLayoutManager` entier ne servait qu'à en arrondir les
-  coins. C'est un vert plus dense que l'accent, parce qu'un mot en couleur au milieu d'un
-  paragraphe doit se voir sans qu'on le cherche. Les encadrés, eux, gardent les couleurs de
-  retour d'information de l'app, volontairement désaturées
+- Ce que la fiche met en avant porte **une bande jaune** (`MicaboColor.sheetMarker`), et garde
+  son encre. Le passage marqué a été du texte bleu pendant une version, parce qu'un fond de
+  texte posé par TextKit prend toute la hauteur de ligne, interligne compris : la bande
+  touchait celle de la ligne du dessus et changeait d'épaisseur d'une ligne à l'autre. Mais du
+  texte bleu au milieu d'un paragraphe se lit comme un lien, d'autant que le bleu est déjà
+  l'accent de l'app. La bande est donc revenue, et son épaisseur est calée sur la hauteur des
+  capitales de la fonte du passage plutôt que sur celle de la ligne
+  (`SheetMarkerLayoutManager`, et `.sheet-marker` en `em` sur le web). Les encadrés, eux,
+  gardent les couleurs de retour d'information de l'app, volontairement désaturées
 - Chaque cours porte un emoji sur pastel, déduit de la matière quand l'analyse n'en propose
   pas (`CourseEmoji`). **Une matière, un emoji** : la table servait le même dessin à six
   matières voisines — quatre matières de santé pour un stéthoscope, dix langues pour une
@@ -1220,20 +1222,24 @@ Quatre marques, et chacune a une raison d'exister sur une fiche de révision
 | --- | --- | --- |
 | `**terme**` | gras | le mot que l'examen attend, une à deux fois par paragraphe, jamais zéro dans un paragraphe qui introduit une notion |
 | `*nuance*` | italique | un mot étranger, un titre d'œuvre, une réserve |
-| `==l'essentiel==` | texte en couleur | ce qu'on relit en dernier, **trois à cinq passages sur la fiche**, jamais deux dans le même paragraphe |
+| `==l'essentiel==` | surligné | ce qu'on relit en dernier, **trois à cinq passages sur la fiche**, jamais deux dans le même paragraphe |
 | `$E = mc^2$` | formule | composée par le moteur mathématique, comme sur les cartes |
 
-**Le surligneur jaune a été retiré, et c'était son rendu.** Un fond posé derrière le texte
-débordait sous les jambages, changeait d'épaisseur d'une ligne à l'autre, et se battait avec
-l'interligne au lieu de servir la lecture — il fallait un `NSLayoutManager` entier pour en
-arrondir les coins, et ça ne suffisait pas. C'est maintenant **la couleur du texte lui-même**.
-Le balisage n'a pas bougé : `==` est écrit dans les fiches déjà en base, le renommer les aurait
-toutes cassées. Seul le rendu change, et le poids n'est pas touché non plus — le gras est déjà
-une marque, et deux marques sur le même passage n'en font aucune.
+**Le surligneur est une bande jaune, et il a fait un aller-retour.** Un fond de texte posé par
+TextKit prend toute la hauteur de la ligne, interligne compris : sur un paragraphe de fiche, où
+l'interligne vaut près de la moitié du corps, la bande touchait celle de la ligne du dessus et
+grossissait dès qu'une ligne portait un exposant. La marque est donc devenue de l'encre bleue
+le temps d'une version — sauf qu'un passage bleu au milieu d'un paragraphe se lit comme un lien,
+et le bleu est déjà l'accent de l'app. La bande est revenue, et le défaut est traité là où il
+devait l'être : `SheetMarkerLayoutManager` la dessine à la **hauteur des capitales** de la
+fonte du passage, ce qui lui donne la même épaisseur partout dans la fiche quelle que soit
+l'interligne du paragraphe ; le web fait le même calcul avec un padding en `em`
+(`.sheet-marker`). Le balisage n'a jamais bougé : `==` est écrit dans les fiches déjà en base.
+L'encre du passage n'est pas touchée, ni son poids — une bande, une encre de couleur et du gras
+sur le même passage, ça fait trois marques pour une intention.
 
-Comme la marque est maintenant beaucoup plus forte, **elle est devenue rare** : trois à cinq
-passages là où le prompt en demandait six à huit, plafond à six côté serveur, plancher à trois.
-Neuf phrases vertes sur une page en feraient une page verte.
+La marque est forte, donc **elle est rare** : trois à cinq passages sur la fiche, plafond à six
+côté serveur. Une page entièrement surlignée ne se relit pas mieux qu'une page nue.
 
 **Elle a longtemps été absente des fiches, et c'était le prompt.** Il ne parlait de mise en
 valeur qu'en plafonds — « cinq marques au maximum », « trois mots en gras c'est trois de trop »,
@@ -1243,19 +1249,14 @@ ordre de sobriété : il n'en produisait aucune. Le prompt donne donc un planche
 réciter dans chaque partie, le résultat chiffré qu'un correcteur attend, et l'encadré
 « essentiel ».
 
-**Et la marque ne dépend plus du prompt.** Le plancher a été demandé plusieurs versions de
-suite, et des fiches continuaient d'arriver sans une seule marque : une consigne de mise en
-forme est la première chose qu'un modèle lâche quand il se concentre sur le contenu. Elle est
-donc passée côté code, aux deux endroits où vivent les garde-fous de la fiche :
-`ensureHighlights` dans `supabase/functions/_shared/sheet.ts` marque ce qui s'enregistre,
-`SheetHighlighter` dans `Micabo/Services/SheetHighlighter.swift` marque ce qui se relit, ce qui
-rattrape les cours importés avant la mise à jour des fonctions. Les deux garantissent
-**trois passages au minimum**, ne touchent jamais une fiche déjà marquée, et choisissent dans
-le même ordre : l'encadré « essentiel », l'enjeu du premier paragraphe, les définitions, puis
-le reste. Une marque porte sur une phrase, ponctuation finale exclue, ramenée à sa première
-proposition quand elle dépasse 170 caractères, et la phrase qui contient déjà un terme en gras
-passe devant, parce que c'est là que le modèle a placé ce qui compte. Trois et pas huit : ce
-que le code choisit vaut moins que ce que le modèle choisit.
+**Le code n'ajoute plus de marque, il n'en retire que le surplus.** Il y a eu un plancher des
+deux côtés — `ensureHighlights` sur le serveur, `SheetHighlighter` dans l'app — qui marquait
+trois passages quand le modèle n'en avait marqué aucun. Le principe se défendait : une consigne
+de mise en forme est la première chose qu'un modèle lâche quand il se concentre sur le contenu.
+Le résultat, non : le code ne sait pas ce qui compte dans un cours, il savait seulement repérer
+la première phrase de la bonne longueur, et une marque tombée sur la phrase d'à côté fait
+réviser la phrase d'à côté. Les deux planchers sont partis. Reste le plafond de six, qui ne va
+que dans un sens.
 
 Hanken Grotesk n'embarque pas d'italique : elle est penchée à la main par une matrice de
 fonte, ce qui reste préférable à un changement de famille en plein paragraphe.

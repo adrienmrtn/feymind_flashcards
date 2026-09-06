@@ -8,8 +8,8 @@ enum PaywallPeriod {
     /// Le mot qui suit la barre oblique : « 7,99 € / semaine ».
     var unit: String {
         switch self {
-        case .week: "semaine"
-        case .year: "an"
+        case .week: L10n.t("ios.unitWeek", locale: .resolved())
+        case .year: L10n.t("ios.unitYear", locale: .resolved())
         }
     }
 
@@ -39,13 +39,19 @@ struct PaywallPlan: Identifiable, Equatable {
     let kind: Kind
     /// Identifiant App Store Connect, et identifiant du produit côté RevenueCat.
     let productID: String
-    let title: String
     let price: Decimal
     let period: PaywallPeriod
     /// Jours d'essai. Zéro : rien n'est offert, et le bouton ne doit pas le dire.
     let trialDays: Int
 
     var id: Kind { kind }
+
+    var title: String {
+        switch kind {
+        case .yearly: L10n.t("ios.planYearly", locale: .resolved())
+        case .weekly: L10n.t("ios.planWeekly", locale: .resolved())
+        }
+    }
 
     var hasTrial: Bool { trialDays > 0 }
 
@@ -72,9 +78,9 @@ struct PaywallPlan: Identifiable, Equatable {
     /// La ligne posée sous le nom de l'offre, dans la liste des plans.
     var caption: String {
         if let monthlyEquivalent {
-            return "\(monthlyEquivalent) / mois"
+            return L10n.t("ios.pricePerMonth", locale: .resolved(), vars: ["price": monthlyEquivalent])
         }
-        return "facturé chaque \(period.unit)"
+        return L10n.t("ios.billedEach", locale: .resolved(), vars: ["unit": period.unit])
     }
 }
 
@@ -91,7 +97,6 @@ enum PaywallCatalog {
     static let yearly = PaywallPlan(
         kind: .yearly,
         productID: "com.micabo.app.pro.yearly",
-        title: "Annuel",
         price: 69.99,
         period: .year,
         trialDays: 3
@@ -100,7 +105,6 @@ enum PaywallCatalog {
     static let weekly = PaywallPlan(
         kind: .weekly,
         productID: "com.micabo.app.pro.weekly",
-        title: "Hebdomadaire",
         price: 7.99,
         period: .week,
         trialDays: 0
@@ -110,7 +114,6 @@ enum PaywallCatalog {
     static let discount = PaywallPlan(
         kind: .yearly,
         productID: "com.micabo.app.pro.yearly.discount",
-        title: "Annuel",
         price: 39.99,
         period: .year,
         trialDays: 0

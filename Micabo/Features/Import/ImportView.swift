@@ -169,35 +169,35 @@ struct ImportView: View {
                     GenerationOverlay(title: readingOverlayTitle, steps: readingOverlaySteps)
                 } else if isGenerating {
                     GenerationOverlay(
-                        title: "Écriture de la fiche",
+                        title: L10n.t("ios.writingSheet", locale: .resolved()),
                         steps: SheetGenerationSteps.all(reading: readingStepTitle)
                     )
                 }
             }
             .alert(failure?.title ?? "", isPresented: .constant(failure != nil), presenting: failure) { failure in
                 recoveryButton(for: failure.recovery)
-                Button("Fermer", role: .cancel) { self.failure = nil }
+                Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { self.failure = nil }
             } message: { failure in
                 Text(failure.message)
             }
             .confirmationDialog(
-                "Ce chapitre semble déjà importé",
+                L10n.t("ios.alreadyImported", locale: .resolved()),
                 isPresented: .constant(duplicate != nil),
                 titleVisibility: .visible,
                 presenting: duplicate
             ) { existing in
-                Button("Ouvrir « \(existing.title) »") {
+                Button(L10n.t("ios.openQuoted", locale: .resolved(), vars: ["title": existing.title])) {
                     duplicate = nil
                     onCreated(existing)
                 }
-                Button("Importer quand même") {
+                Button(L10n.t("ios.importAnyway", locale: .resolved())) {
                     duplicate = nil
                     ignoresDuplicate = true
                     Task { await start(offline: false) }
                 }
-                Button("Annuler", role: .cancel) { duplicate = nil }
+                Button(L10n.t("app.common.cancel", locale: .resolved()), role: .cancel) { duplicate = nil }
             } message: { existing in
-                Text("« \(existing.title) » contient déjà ce contenu. Tu peux l'ouvrir plutôt que d'en créer un doublon.")
+                Text(L10n.t("ios.duplicateHelp", locale: .resolved(), vars: ["title": existing.title]))
             }
         }
         .interactiveDismissDisabled(isGenerating || isReading)
@@ -210,12 +210,12 @@ struct ImportView: View {
         case .none:
             EmptyView()
         case .buildOffline:
-            Button("Créer sans IA") {
+            Button(L10n.t("ios.createWithoutAI", locale: .resolved())) {
                 failure = nil
                 Task { await start(offline: true) }
             }
         case .enableVision:
-            Button("Analyser les schémas") {
+            Button(L10n.t("ios.analyzeFigures", locale: .resolved())) {
                 failure = nil
                 analyzeVisuals = true
                 Task { await start(offline: false) }
@@ -223,7 +223,7 @@ struct ImportView: View {
         case .retry:
             // Reprise, pas reprise à zéro : ce qui a déjà été obtenu est gardé, donc une
             // transcription réussie ne repart pas sur le réseau parce que l'analyse a lâché.
-            Button("Réessayer") {
+            Button(L10n.t("ios.retry", locale: .resolved())) {
                 failure = nil
                 Task { await start(offline: false) }
             }
@@ -232,22 +232,32 @@ struct ImportView: View {
 
     private var readingStepTitle: String {
         switch kind {
-        case .photo: "Lecture des photos"
-        case .text: "Lecture de tes notes"
-        case .youtube: "Lecture des sous-titres"
-        case .pdf, .docx: "Lecture du document"
-        case .cards: "Préparation du paquet"
+        case .photo: L10n.t("ios.readPhotos", locale: .resolved())
+        case .text: L10n.t("ios.readNotes", locale: .resolved())
+        case .youtube: L10n.t("ios.readSubtitles", locale: .resolved())
+        case .pdf, .docx: L10n.t("ios.genStepDoc", locale: .resolved())
+        case .cards: L10n.t("ios.prepDeck", locale: .resolved())
         }
     }
 
     private var readingOverlayTitle: String {
-        kind == .youtube ? "Lecture de la vidéo" : "Lecture des pages"
+        kind == .youtube
+            ? L10n.t("ios.readVideo", locale: .resolved())
+            : L10n.t("ios.readPages", locale: .resolved())
     }
 
     private var readingOverlaySteps: [String] {
         kind == .youtube
-            ? ["Choix de la piste de sous-titres", "Téléchargement de la transcription", "Nettoyage du texte"]
-            : ["Préparation des images", "OCR sur l'appareil", "Nettoyage du texte"]
+            ? [
+                L10n.t("ios.pickSubtitleTrack", locale: .resolved()),
+                L10n.t("ios.downloadTranscript", locale: .resolved()),
+                L10n.t("ios.cleanText", locale: .resolved()),
+            ]
+            : [
+                L10n.t("ios.prepImages", locale: .resolved()),
+                L10n.t("ios.ocrOnDevice", locale: .resolved()),
+                L10n.t("ios.cleanText", locale: .resolved()),
+            ]
     }
 
     // MARK: - Sections
@@ -264,11 +274,11 @@ struct ImportView: View {
 
     private var titleField: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text("Titre")
+            Text(L10n.t("ios.fieldTitle", locale: .resolved()))
                 .font(MicaboFont.captionEmphasis)
                 .foregroundStyle(MicaboColor.ink)
 
-            TextField("Facultatif, l'IA en proposera un", text: $title)
+            TextField(L10n.t("ios.titleOptionalAI", locale: .resolved()), text: $title)
                 .font(MicaboFont.body)
                 .padding(MicaboSpacing.sm)
                 .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
@@ -278,11 +288,11 @@ struct ImportView: View {
     private var textInput: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack {
-                Text("Contenu")
+                Text(L10n.t("ios.fieldContent", locale: .resolved()))
                     .font(MicaboFont.captionEmphasis)
                     .foregroundStyle(MicaboColor.ink)
                 Spacer()
-                Text("\(pastedText.count) caractères")
+                Text(L10n.t("ios.charCount", locale: .resolved(), vars: ["count": "\(pastedText.count)"]))
                     .font(MicaboFont.micro)
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
@@ -295,7 +305,7 @@ struct ImportView: View {
                     .frame(minHeight: 260, alignment: .topLeading)
 
                 if pastedText.isEmpty {
-                    Text("Colle ici ton chapitre, tes notes de cours ou un article.")
+                    Text(L10n.t("ios.pasteChapter", locale: .resolved()))
                         .font(MicaboFont.body)
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .padding(MicaboSpacing.sm + 4)
@@ -317,8 +327,12 @@ struct ImportView: View {
                 icon: kind == .docx ? "doc.richtext" : "arrow.up.doc",
                 tint: kind.swatchTint,
                 background: kind.swatchBackground,
-                title: kind == .docx ? "Choisir un document Word" : "Choisir un PDF",
-                subtitle: kind == .docx ? "Fichier .docx uniquement" : "Jusqu'à quelques centaines de pages"
+                title: kind == .docx
+                    ? L10n.t("ios.chooseWord", locale: .resolved())
+                    : L10n.t("ios.choosePDF", locale: .resolved()),
+                subtitle: kind == .docx
+                    ? L10n.t("ios.wordOnly", locale: .resolved())
+                    : L10n.t("ios.pdfPagesHelp", locale: .resolved())
             ) {
                 showFileImporter = true
             }
@@ -339,8 +353,8 @@ struct ImportView: View {
                         icon: "camera.viewfinder",
                         tint: kind.swatchTint,
                         background: kind.swatchBackground,
-                        title: "Scanner des pages",
-                        subtitle: "Jusqu'à \(OnDeviceOCR.pageLimit) pages, à la suite"
+                        title: L10n.t("ios.scanPages", locale: .resolved()),
+                        subtitle: L10n.t("ios.scanHelp", locale: .resolved(), vars: ["n": "\(OnDeviceOCR.pageLimit)"])
                     ) {
                         showScanner = true
                     }
@@ -352,7 +366,7 @@ struct ImportView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "photo.on.rectangle.angled")
                                 .font(.system(size: 15, weight: .medium))
-                            Text("Choisir des photos")
+                            Text(L10n.t("ios.pickPhotos", locale: .resolved()))
                                 .font(MicaboFont.cardTitle)
                         }
                         .frame(maxWidth: .infinity)
@@ -363,8 +377,8 @@ struct ImportView: View {
                         icon: "photo.on.rectangle.angled",
                         tint: kind.swatchTint,
                         background: kind.swatchBackground,
-                        title: "Choisir des photos",
-                        subtitle: "Plusieurs pages, dans l'ordre du cours"
+                        title: L10n.t("ios.pickPhotos", locale: .resolved()),
+                        subtitle: L10n.t("ios.pickPhotosOrder", locale: .resolved())
                     ) {
                         photoItems = []
                         showPhotoPicker = true
@@ -408,14 +422,17 @@ struct ImportView: View {
                         .font(MicaboFont.cardTitle)
                         .foregroundStyle(MicaboColor.ink)
                         .lineLimit(2)
-                    Text("\(document.pageCount) page\(document.pageCount > 1 ? "s" : ""), \(document.text.count) caractères lus")
+                    Text(L10n.t("ios.pagesRead", locale: .resolved(), vars: [
+                        "pages": "\(document.pageCount)",
+                        "chars": "\(document.text.count)",
+                    ]))
                         .font(MicaboFont.micro)
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
 
                 Spacer(minLength: 0)
 
-                Button("Changer", action: replace)
+                Button(L10n.t("app.common.change", locale: .resolved()), action: replace)
                     .buttonStyle(MicaboQuietButtonStyle())
             }
 
@@ -492,7 +509,7 @@ struct ImportView: View {
     private var lengthSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                MicaboSectionCaption(text: "Longueur de la fiche")
+                MicaboSectionCaption(text: L10n.t("ios.sheetLengthCaption", locale: .resolved()))
 
                 Spacer(minLength: MicaboSpacing.xs)
 
@@ -544,17 +561,17 @@ struct ImportView: View {
     /// polycopié français est un choix, pas un défaut caché derrière le pays.
     private var languageSection: some View {
         VStack(alignment: .leading, spacing: 7) {
-            MicaboSectionCaption(text: "Langue de la fiche")
+            MicaboSectionCaption(text: L10n.t("ios.sheetLanguageCaption", locale: .resolved()))
 
             Menu {
-                Button("Celle du document") { generationLanguage = nil }
+                Button(L10n.t("ios.docLanguage", locale: .resolved())) { generationLanguage = nil }
                 Divider()
                 ForEach(ContentLanguage.allCases) { value in
                     Button(value.label) { generationLanguage = value }
                 }
             } label: {
                 HStack {
-                    Text(generationLanguage?.label ?? "Celle du document")
+                    Text(generationLanguage?.label ?? L10n.t("ios.docLanguage", locale: .resolved()))
                         .font(MicaboFont.body)
                         .foregroundStyle(MicaboColor.ink)
                     Spacer(minLength: 0)
@@ -568,8 +585,8 @@ struct ImportView: View {
             .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
 
             Text(generationLanguage == nil
-                 ? "Micabo écrit dans la langue du cours."
-                 : "La fiche sera traduite dans cette langue.")
+                 ? L10n.t("ios.writesInCourseLang", locale: .resolved())
+                 : L10n.t("ios.sheetTranslated", locale: .resolved()))
                 .font(MicaboFont.caption)
                 .foregroundStyle(MicaboColor.inkTertiary)
         }
@@ -582,7 +599,7 @@ struct ImportView: View {
     /// redire à chaque document.
     private var visibilitySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            MicaboSectionCaption(text: "Qui peut la retrouver")
+            MicaboSectionCaption(text: L10n.t("app.course.visibility.label", locale: .resolved()))
 
             HStack(spacing: MicaboSpacing.xs) {
                 ForEach(CourseVisibility.choosable) { value in
@@ -599,7 +616,7 @@ struct ImportView: View {
     private func handleFileSelection(_ result: Result<[URL], Error>) {
         guard case .success(let urls) = result, let url = urls.first else {
             if case .failure(let error) = result {
-                report(error, title: "Fichier illisible")
+                report(error, title: L10n.t("ios.err.unreadableFile", locale: .resolved()))
             }
             return
         }
@@ -624,7 +641,7 @@ struct ImportView: View {
             }
             applyImported(parsed)
         } catch {
-            report(error, title: "Lecture impossible")
+            report(error, title: L10n.t("ios.err.readFailed", locale: .resolved()))
         }
     }
 
@@ -642,7 +659,7 @@ struct ImportView: View {
         }
 
         guard !images.isEmpty else {
-            report(PhotoImportError.unreadable, title: "Photos illisibles")
+            report(PhotoImportError.unreadable, title: L10n.t("ios.err.unreadablePhotos", locale: .resolved()))
             return
         }
         await ingestPhotos(images)
@@ -657,7 +674,7 @@ struct ImportView: View {
             let parsed = try await PhotoImportService.importImages(images)
             applyImported(parsed)
         } catch {
-            report(error, title: "Lecture impossible")
+            report(error, title: L10n.t("ios.err.readFailed", locale: .resolved()))
         }
     }
 
@@ -665,11 +682,10 @@ struct ImportView: View {
     private func applyImported(_ document: ImportedDocument) {
         imported = document
         if title.isEmpty { title = document.fileName }
-        // La vision ne s'allume pas d'elle-même, même sur un scan sans texte. Elle le faisait,
-        // du temps où l'interrupteur était à l'écran : on voyait la case se cocher, donc on
-        // pouvait la décocher. Sans l'interrupteur, ce serait un appel payant déclenché en
-        // silence — c'est l'échec qui la propose maintenant, avec la raison.
-        analyzeVisuals = false
+        // Une fiche extraite d'un PDF ou d'une photo sans les pages ne peut pas recadrer
+        // les schémas. La passe visuelle coûte un appel, et c'est le prix d'une figure
+        // réelle plutôt que d'un dessin inventé.
+        analyzeVisuals = document.source == .pdf || document.source == .photo
     }
 
     // MARK: - Vidéo YouTube
@@ -707,7 +723,7 @@ struct ImportView: View {
     private func youtubeFailure(_ error: Error) -> ImportFailure {
         guard let youtubeError = error as? YouTubeImportError else {
             return ImportFailure(
-                title: "Lecture impossible",
+                title: L10n.t("ios.err.readFailed", locale: .resolved()),
                 message: describe(error),
                 recovery: isRecoverable(error) ? .retry : .none
             )
@@ -849,7 +865,7 @@ struct ImportView: View {
         )
 
         // Étape 1 : la fiche. Si elle échoue, rien n'a été créé.
-        let generated: GeneratedCourse
+        var generated: GeneratedCourse
         if offline {
             generated = OfflineCourseBuilder.build(
                 from: rawText,
@@ -859,10 +875,13 @@ struct ImportView: View {
         } else {
             do {
                 generated = try await aiService.generateCourse(request)
+                if let sheet = generated.sheet {
+                    generated.sheet = sheet.attachingFigureImages(from: images)
+                }
             } catch {
                 failure = ImportFailure(
-                    title: "L'analyse du document a échoué",
-                    message: "\(describe(error)) Le document n'a pas été importé.",
+                    title: L10n.t("ios.err.analysisFailed", locale: .resolved()),
+                    message: "\(describe(error)) \(L10n.t("ios.err.notImported", locale: .resolved()))",
                     recovery: isRecoverable(error) ? .buildOffline : .none
                 )
                 return
@@ -884,8 +903,8 @@ struct ImportView: View {
             onCreated(course)
         } catch {
             failure = ImportFailure(
-                title: "Enregistrement impossible",
-                message: "\(describe(error)) Réessaie dans un instant.",
+                title: L10n.t("ios.err.saveFailed", locale: .resolved()),
+                message: "\(describe(error)) \(L10n.t("ios.err.retrySoon", locale: .resolved()))",
                 recovery: .none
             )
         }
@@ -947,32 +966,32 @@ enum ImportReadiness {
         guard usable.count < minimumCharacters, !hasImages else { return nil }
 
         let read = usable.isEmpty
-            ? "Aucun texte n'a été lu."
-            : "Seuls \(usable.count) caractères ont été lus."
+            ? L10n.t("ios.noTextRead", locale: .resolved())
+            : L10n.t("ios.err.onlyCharsRead", locale: .resolved(), vars: ["count": "\(usable.count)"])
 
         switch kind {
         case .photo:
             return ImportFailure(
-                title: "Ces pages sont illisibles",
-                message: "\(read) Une écriture manuscrite serrée ou une photo floue résistent à l'OCR. Reprends la photo bien à plat et en pleine lumière\(canEnableVision ? ", ou laisse le modèle de vision analyser les pages" : "").",
+                title: L10n.t("ios.err.pagesUnreadable", locale: .resolved()),
+                message: "\(read) \(L10n.t(canEnableVision ? "ios.err.photoBlurHelpVision" : "ios.err.photoBlurHelp", locale: .resolved()))",
                 recovery: canEnableVision ? .enableVision : .none
             )
         case .pdf:
             return ImportFailure(
-                title: "Ce PDF ne contient presque pas de texte",
-                message: "\(read) Il s'agit sans doute d'un scan d'images\(canEnableVision ? " : active l'analyse des schémas pour l'envoyer au modèle de vision" : "").",
+                title: L10n.t("ios.err.pdfAlmostEmpty", locale: .resolved()),
+                message: "\(read) \(L10n.t(canEnableVision ? "ios.err.pdfScanHelpVision" : "ios.err.pdfScanHelp", locale: .resolved()))",
                 recovery: canEnableVision ? .enableVision : .none
             )
         case .docx:
             return ImportFailure(
-                title: "Ce document est presque vide",
-                message: "\(read) Vérifie qu'il ne contient pas seulement des images, puis réessaie.",
+                title: L10n.t("ios.err.docAlmostEmpty", locale: .resolved()),
+                message: "\(read) \(L10n.t("ios.err.docxEmptyHelp", locale: .resolved()))",
                 recovery: .none
             )
         case .text:
             return ImportFailure(
-                title: "Il manque du texte",
-                message: "\(read) Colle au moins un paragraphe : c'est le minimum pour en tirer une fiche.",
+                title: L10n.t("ios.err.missingText", locale: .resolved()),
+                message: "\(read) \(L10n.t("ios.err.pasteParagraph", locale: .resolved()))",
                 recovery: .none
             )
         case .youtube:

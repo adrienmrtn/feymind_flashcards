@@ -71,7 +71,7 @@ struct ExamDeadlines {
         for exam in planned {
             let examDay = calendar.startOfDay(for: exam.date)
             let label = exam.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            let name = label.isEmpty ? "Examen" : label
+            let name = label.isEmpty ? L10n.t("app.exams.defaultName", locale: .resolved()) : label
 
             for courseID in exam.courseIDs {
                 for card in byCourse[courseID] ?? [] {
@@ -117,7 +117,7 @@ struct ExamDeadlines {
             let examDay = calendar.startOfDay(for: exam.date)
             guard examDay >= today else { continue }
             let label = exam.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            let name = label.isEmpty ? "Examen" : label
+            let name = label.isEmpty ? L10n.t("app.exams.defaultName", locale: .resolved()) : label
 
             for card in activeCards {
                 if let existing = byCard[card.id], existing <= examDay { continue }

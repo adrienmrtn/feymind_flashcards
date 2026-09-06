@@ -57,13 +57,13 @@ enum StudyLevel: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .lycee: "Lycée"
-        case .prepa: "Prépa"
-        case .licence: "Licence"
-        case .sante: "PASS, santé"
-        case .master: "Master"
-        case .concours: "Concours"
-        case .other: "Autre"
+        case .lycee: L10n.t("ios.level.lycee", locale: .resolved())
+        case .prepa: L10n.t("ios.level.prepa", locale: .resolved())
+        case .licence: L10n.t("ios.level.licence", locale: .resolved())
+        case .sante: L10n.t("ios.level.pass", locale: .resolved())
+        case .master: L10n.t("ios.level.master", locale: .resolved())
+        case .concours: L10n.t("ios.level.concours", locale: .resolved())
+        case .other: L10n.t("ios.level.other", locale: .resolved())
         }
     }
 
@@ -87,13 +87,13 @@ enum StudyLevel: String, CaseIterable, Identifiable {
     /// voit pas l'effet ne se touche pas.
     var detail: String {
         switch self {
-        case .lycee: "Vocabulaire du programme, attendus du bac."
-        case .prepa: "Raisonnements complets, exigence de concours."
-        case .licence: "Termes du cours magistral, cadrage disciplinaire."
-        case .sante: "Densité et précision d'un tutorat santé."
-        case .master: "Débats du champ, nuances et limites."
-        case .concours: "Ce qui tombe, et les pièges classiques."
-        case .other: "Rédaction équilibrée, sans niveau supposé."
+        case .lycee: L10n.t("ios.level.lyceeDetail", locale: .resolved())
+        case .prepa: L10n.t("ios.level.prepaDetail", locale: .resolved())
+        case .licence: L10n.t("ios.level.licenceDetail", locale: .resolved())
+        case .sante: L10n.t("ios.level.santeDetail", locale: .resolved())
+        case .master: L10n.t("ios.level.masterDetail", locale: .resolved())
+        case .concours: L10n.t("ios.level.concoursDetail", locale: .resolved())
+        case .other: L10n.t("ios.level.otherDetail", locale: .resolved())
         }
     }
 }

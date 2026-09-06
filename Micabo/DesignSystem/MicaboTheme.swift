@@ -36,17 +36,20 @@ enum MicaboColor {
     /// Encre des versos de carte et des puces non sélectionnées.
     static let inkBody = Color(hex: 0x4B5563)
 
-    /// La couleur des passages que la fiche met en avant.
+    /// Le jaune du surligneur de la fiche.
     ///
-    /// **Le surligneur jaune a été retiré.** Un fond posé derrière le texte se battait avec
-    /// lui : la bande débordait sous les jambages, changeait d'épaisseur d'une ligne à
-    /// l'autre, et sur un paragraphe à interligne serré elle écrasait ce qu'elle voulait
-    /// mettre en valeur. Un `NSLayoutManager` entier ne servait qu'à en arrondir les coins.
+    /// Le passage mis en avant a été du texte bleu pendant une version, parce qu'un fond
+    /// posé derrière le texte débordait sous les jambages et changeait d'épaisseur d'une
+    /// ligne à l'autre. Mais du texte bleu au milieu d'un paragraphe ne se lit pas comme un
+    /// surlignage : ça se lit comme un lien, d'autant que le bleu est déjà l'accent de
+    /// l'app. La bande est donc revenue, et le défaut qui l'avait fait partir est traité là
+    /// où il devait l'être : `SheetMarkerLayoutManager` dessine une bande d'épaisseur
+    /// constante, calée sur la hauteur des capitales, au lieu de laisser TextKit peindre
+    /// toute la hauteur de ligne, interligne compris.
     ///
-    /// C'est maintenant la couleur du texte lui-même. Un bleu plus dense que l'accent,
-    /// parce qu'un mot en couleur au milieu d'un paragraphe doit se voir sans qu'on le
-    /// cherche, et rester lisible à quatorze points sur le gris.
-    static let sheetEmphasis = Color(hex: 0x1D4ED8)
+    /// Le texte surligné garde son encre : un fond jaune **et** une encre de couleur, ce
+    /// sont deux marques pour une seule intention.
+    static let sheetMarker = Color(hex: 0xF5D76E)
 
     // Sur fond sombre
     static let onInk = Color.white
@@ -332,6 +335,12 @@ enum SheetTypography {
     static let spaceBeforeSmallHeading: CGFloat = 15
     /// Espace entre deux blocs de même nature.
     static let blockSpacing: CGFloat = 11
+    /// Espace au-dessus d'une énumération à puces.
+    ///
+    /// Une liste est **la suite du paragraphe qui l'amène**, et non un bloc de plus : à onze
+    /// points, elle s'en détachait et se lisait comme un objet posé après. À six, elle reste
+    /// accrochée à sa phrase d'introduction.
+    static let spaceBeforeList: CGFloat = 6
     /// Marge intérieure d'un objet encarté.
     static let objectPadding: CGFloat = 13
 

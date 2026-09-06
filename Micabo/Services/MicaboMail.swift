@@ -15,8 +15,8 @@ enum MicaboMail {
 
         var title: String {
             switch self {
-            case .bug: "Un bug"
-            case .idea: "Une idée"
+            case .bug: L10n.t("app.feedback.kind.bug", locale: .resolved())
+            case .idea: L10n.t("app.feedback.kind.idea", locale: .resolved())
             }
         }
 
@@ -29,8 +29,8 @@ enum MicaboMail {
 
         var placeholder: String {
             switch self {
-            case .bug: "Ce qui s'est passé, et où."
-            case .idea: "Ce que tu aimerais pouvoir faire."
+            case .bug: L10n.t("app.feedback.placeholder.bug", locale: .resolved())
+            case .idea: L10n.t("app.feedback.placeholder.idea", locale: .resolved())
             }
         }
     }

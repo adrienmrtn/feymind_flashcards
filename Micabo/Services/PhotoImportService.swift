@@ -7,9 +7,9 @@ enum PhotoImportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .empty:
-            return "Aucune page lisible. Réessaie avec des photos plus nettes."
+            return L10n.t("ios.photo.empty", locale: .resolved())
         case .unreadable:
-            return "Ces photos n'ont pas pu être lues."
+            return L10n.t("ios.photo.unreadable", locale: .resolved())
         }
     }
 }
@@ -27,8 +27,8 @@ enum PhotoImportService {
         guard text.count >= 20 || !pageImages.isEmpty else { throw PhotoImportError.empty }
 
         let fileName = pages.count == 1
-            ? "Photo de cours"
-            : "Scan (\(pages.count) pages)"
+            ? L10n.t("ios.photo.courseName", locale: .resolved())
+            : L10n.t("ios.photo.scanName", locale: .resolved(), vars: ["count": "\(pages.count)"])
 
         return ImportedDocument(
             text: text,
@@ -38,8 +38,8 @@ enum PhotoImportService {
             fileName: fileName,
             source: .photo,
             extractionNote: text.count >= 200
-                ? "Texte lu sur l'appareil (OCR), sans frais."
-                : "Peu de texte lu : active l'analyse des schémas si tes pages en contiennent."
+                ? L10n.t("ios.photo.ocrNote", locale: .resolved())
+                : L10n.t("ios.photo.littleText", locale: .resolved())
         )
     }
 }

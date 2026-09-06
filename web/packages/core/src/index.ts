@@ -11,12 +11,11 @@
 // La fiche : le module canonique du serveur, et le parseur de balisage pour le rendu.
 export {
   SHEET_LIMITS,
-  ensureHighlights,
-  markPassage,
   normalizeSheet,
   sheetToPlainText,
   stripInlineMarkup,
   type SheetBlock,
+  type SheetCrop,
 } from "./sheet/canonical";
 export {
   containsInlineMarkup,

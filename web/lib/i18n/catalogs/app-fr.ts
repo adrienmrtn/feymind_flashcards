@@ -665,6 +665,14 @@ export const appFr = {
     exemple: "Exemple",
     astuce: "Astuce",
   },
+  sheet: {
+    quiz: "Teste-toi",
+    showAnswer: "Voir la réponse",
+    answer: "Réponse",
+    keypoints: "Chiffres clés",
+    diagram: "Schéma",
+    backToStart: "retour au début",
+  },
   generate: {
     timeout: "L'écriture a pris trop longtemps. Réessaie.",
     writing: "Micabo écrit les cartes…",

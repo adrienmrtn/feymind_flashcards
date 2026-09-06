@@ -47,7 +47,7 @@ enum ExamRepository {
         calendar: Calendar = MicaboCalendar.shared
     ) throws -> Exam {
         let exam = Exam(
-            name: TextSanitizer.clean(name).nilIfBlank ?? "Examen",
+            name: TextSanitizer.clean(name).nilIfBlank ?? L10n.t("app.exams.defaultName", locale: .resolved()),
             date: calendar.startOfDay(for: date),
             courseIDs: courseIDs,
             intensity: intensity,
@@ -77,7 +77,7 @@ enum ExamRepository {
             try unplan(exam, in: context)
         }
 
-        exam.name = TextSanitizer.clean(name).nilIfBlank ?? "Examen"
+        exam.name = TextSanitizer.clean(name).nilIfBlank ?? L10n.t("app.exams.defaultName", locale: .resolved())
         exam.date = calendar.startOfDay(for: date)
         exam.courseIDs = courseIDs
         if let targetScore {

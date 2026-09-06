@@ -52,11 +52,11 @@ struct OcclusionEditorSheet: View {
 
     private var header: some View {
         MicaboScreenHeader(
-            title: "Masquer un schéma",
+            title: L10n.t("ios.maskFigure", locale: .resolved()),
             eyebrow: course.title,
             back: MicaboHeaderBack.close { dismiss() }
         ) {
-            Button("Créer", action: save)
+            Button(L10n.t("ios.create", locale: .resolved()), action: save)
                 .font(MicaboFont.hanken(15, weight: .semibold))
                 .foregroundStyle(canSave ? MicaboColor.accent : MicaboColor.inkTertiary)
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
@@ -79,11 +79,11 @@ struct OcclusionEditorSheet: View {
                         .frame(width: 52, height: 52)
                         .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
 
-                    Text("Choisir une image")
+                    Text(L10n.t("ios.chooseImage", locale: .resolved()))
                         .font(MicaboFont.cardTitle)
                         .foregroundStyle(MicaboColor.ink)
 
-                    Text("Depuis ta photothèque")
+                    Text(L10n.t("ios.fromLibrary", locale: .resolved()))
                         .font(MicaboFont.caption)
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
@@ -103,7 +103,7 @@ struct OcclusionEditorSheet: View {
 
     private func canvas(for image: UIImage) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Trace les zones")
+            MicaboSectionCaption(text: L10n.t("ios.traceZones", locale: .resolved()))
 
             Image(uiImage: image)
                 .resizable()
@@ -128,7 +128,7 @@ struct OcclusionEditorSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
                 .micaboGroup(radius: MicaboRadius.md)
 
-            Text("Glisse sur l'image pour dessiner un cache. Une zone par notion : chacune devient une carte.")
+            Text(L10n.t("ios.occlusionHint", locale: .resolved()))
                 .font(MicaboFont.hanken(12, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -195,12 +195,12 @@ struct OcclusionEditorSheet: View {
     @ViewBuilder
     private var zoneList: some View {
         if zones.isEmpty {
-            Text("Aucune zone pour l'instant.")
+            Text(L10n.t("ios.noZones", locale: .resolved()))
                 .font(MicaboFont.caption)
                 .foregroundStyle(MicaboColor.inkTertiary)
         } else {
             VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: "Nomme chaque zone")
+                MicaboSectionCaption(text: L10n.t("ios.nameZones", locale: .resolved()))
 
                 VStack(spacing: 0) {
                     ForEach(Array(zones.enumerated()), id: \.element.id) { index, zone in
@@ -211,7 +211,7 @@ struct OcclusionEditorSheet: View {
                                 .frame(width: 24, height: 24)
                                 .background(MicaboColor.accent, in: Circle())
 
-                            TextField("Nom de la zone", text: label(of: zone))
+                            TextField(L10n.t("ios.zoneName", locale: .resolved()), text: label(of: zone))
                                 .font(MicaboFont.body)
                                 .foregroundStyle(MicaboColor.ink)
                                 .tint(MicaboColor.accent)

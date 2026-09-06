@@ -34,9 +34,9 @@ enum CourseVisibility: String, Codable, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .public: "Public"
-        case .friends: "Mes amis"
-        case .private: "Privé"
+        case .public: L10n.t("ios.vis.public", locale: .resolved())
+        case .friends: L10n.t("ios.vis.friends", locale: .resolved())
+        case .private: L10n.t("ios.vis.private", locale: .resolved())
         }
     }
 
@@ -44,9 +44,9 @@ enum CourseVisibility: String, Codable, CaseIterable, Identifiable {
     /// comprend pas la portée ne se touche pas, et reste donc au défaut.
     var detail: String {
         switch self {
-        case .public: "Visible par ton école et tes amis dans la bibliothèque."
-        case .friends: "Visible par tes amis seulement."
-        case .private: "Visible par toi seul."
+        case .public: L10n.t("ios.vis.publicHelp", locale: .resolved())
+        case .friends: L10n.t("ios.vis.friendsHelp", locale: .resolved())
+        case .private: L10n.t("ios.vis.privateHelp", locale: .resolved())
         }
     }
 

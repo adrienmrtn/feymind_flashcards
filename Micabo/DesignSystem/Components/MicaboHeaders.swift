@@ -134,7 +134,7 @@ struct MicaboSearchField: View {
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
                 .buttonStyle(MicaboPressableButtonStyle())
-                .accessibilityLabel("Effacer la recherche")
+                .accessibilityLabel(L10n.t("ios.clearSearch", locale: .resolved()))
             }
         }
         .padding(.vertical, 13)

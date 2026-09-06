@@ -118,8 +118,8 @@ struct ExamEditorSheet: View {
             }
         }
         .task { load() }
-        .alert("Oups", isPresented: .constant(errorMessage != nil)) {
-            Button("Fermer", role: .cancel) { errorMessage = nil }
+        .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(errorMessage != nil)) {
+            Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "")
         }
@@ -141,17 +141,19 @@ struct ExamEditorSheet: View {
     }
 
     private var headerTitle: String {
-        if isEditing { return "Modifier l'examen" }
-        return creationStep == .grade ? "Note souhaitée" : "Nouvel examen"
+        if isEditing { return L10n.t("ios.editExam", locale: .resolved()) }
+        return creationStep == .grade
+            ? L10n.t("ios.desiredGrade", locale: .resolved())
+            : L10n.t("ios.newExam", locale: .resolved())
     }
 
     private var headerEyebrow: String {
-        if isEditing { return "Mode examen" }
+        if isEditing { return L10n.t("ios.examMode", locale: .resolved()) }
         if creationStep == .grade {
             let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-            return trimmed.isEmpty ? "Nouvel examen" : trimmed
+            return trimmed.isEmpty ? L10n.t("ios.newExam", locale: .resolved()) : trimmed
         }
-        return "Mode examen"
+        return L10n.t("ios.examMode", locale: .resolved())
     }
 
     private var headerBack: MicaboHeaderBack {
@@ -168,7 +170,11 @@ struct ExamEditorSheet: View {
             pip(isCurrent: creationStep == .grade, isDone: false)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(creationStep == .details ? "Étape 1 sur 2" : "Étape 2 sur 2")
+        .accessibilityLabel(L10n.t(
+            "ios.stepOf",
+            locale: .resolved(),
+            vars: ["current": creationStep == .details ? "1" : "2", "total": "2"]
+        ))
     }
 
     private func pip(isCurrent: Bool, isDone: Bool) -> some View {
@@ -179,11 +185,11 @@ struct ExamEditorSheet: View {
 
     private var nameField: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text("Nom")
+            Text(L10n.t("ios.fieldName", locale: .resolved()))
                 .font(MicaboFont.captionEmphasis)
                 .foregroundStyle(MicaboColor.ink)
 
-            TextField("Bac blanc, partiel de SVT…", text: $name)
+            TextField(L10n.t("ios.examNameHint", locale: .resolved()), text: $name)
                 .font(MicaboFont.body)
                 .focused($nameFocused)
                 .padding(MicaboSpacing.sm)
@@ -193,20 +199,20 @@ struct ExamEditorSheet: View {
 
     private var dateField: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text("Date")
+            Text(L10n.t("ios.fieldDate", locale: .resolved()))
                 .font(MicaboFont.captionEmphasis)
                 .foregroundStyle(MicaboColor.ink)
 
             DatePicker("", selection: $date, in: Date().addingTimeInterval(-86_400)..., displayedComponents: .date)
                 .datePickerStyle(.compact)
                 .labelsHidden()
-                .environment(\.locale, Locale(identifier: "fr_FR"))
+                .environment(\.locale, UiLocale.resolved().foundation)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(MicaboSpacing.sm)
                 .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
 
             if isPastDate {
-                Text("Un examen passé ne se planifie pas.")
+                Text(L10n.t("ios.examPastHint", locale: .resolved()))
                     .font(MicaboFont.caption)
                     .foregroundStyle(MicaboColor.negative)
             }
@@ -217,7 +223,7 @@ struct ExamEditorSheet: View {
     /// volume qui fait la charge, donc c'est lui qu'on doit voir en cochant.
     private var coursesSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Cours au programme")
+            MicaboSectionCaption(text: L10n.t("ios.coursesOnProgram", locale: .resolved()))
 
             if courses.isEmpty {
                 MicaboSectionFootnote(text: "Aucun cours importé. Il faut au moins un cours avec des cartes pour planifier un examen.")
@@ -281,7 +287,7 @@ struct ExamEditorSheet: View {
         return VStack(alignment: .leading, spacing: 8) {
             // À la création, le titre d'écran dit déjà « Note souhaitée ».
             if isEditing {
-                MicaboSectionCaption(text: "Note souhaitée")
+                MicaboSectionCaption(text: L10n.t("ios.desiredGrade", locale: .resolved()))
             }
 
             Text(scale.label(for: score))
@@ -304,7 +310,7 @@ struct ExamEditorSheet: View {
                     step: 1
                 )
                 .tint(MicaboColor.ink)
-                .accessibilityLabel("Note souhaitée")
+                .accessibilityLabel(L10n.t("ios.desiredGrade", locale: .resolved()))
                 .accessibilityValue(scale.label(for: score))
                 .onChange(of: targetScore) { _, next in
                     intensity = TargetScore.intensity(from: Int(next.rounded()))
@@ -318,9 +324,9 @@ struct ExamEditorSheet: View {
 
     private var intensityDetail: String {
         switch intensity {
-        case .light: "Deux passages, pour un chapitre déjà su."
-        case .standard: "Trois passages, le rythme d'un contrôle."
-        case .intense: "Quatre passages, quand ça compte vraiment."
+        case .light: L10n.t("ios.exam.light", locale: .resolved())
+        case .standard: L10n.t("ios.exam.standard", locale: .resolved())
+        case .intense: L10n.t("ios.exam.intense", locale: .resolved())
         }
     }
 
@@ -332,14 +338,14 @@ struct ExamEditorSheet: View {
     @ViewBuilder
     private var dangerZone: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: "Annuler")
+            MicaboSectionCaption(text: L10n.t("ios.cancel", locale: .resolved()))
 
             VStack(spacing: 0) {
                 if exam?.isPlanned == true {
                     MicaboRow(
                         tile: MicaboTile(glyph: .symbol("arrow.uturn.backward"), background: MicaboColor.surfaceMuted),
-                        title: "Rendre le planning normal",
-                        subtitle: "Les cartes retrouvent leurs échéances d'avant",
+                        title: L10n.t("ios.restoreSchedule", locale: .resolved()),
+                        subtitle: L10n.t("ios.restoreScheduleHelp", locale: .resolved()),
                         accessory: .none,
                         action: unplan
                     )
@@ -349,8 +355,8 @@ struct ExamEditorSheet: View {
 
                 MicaboRow(
                     tile: MicaboTile(glyph: .symbol("trash"), background: MicaboColor.negativeSoft, tint: MicaboColor.negative),
-                    title: "Supprimer l'examen",
-                    subtitle: exam?.isPlanned == true ? "La replanification est défaite" : nil,
+                    title: L10n.t("ios.deleteExam", locale: .resolved()),
+                    subtitle: exam?.isPlanned == true ? L10n.t("ios.unplanHelp", locale: .resolved()) : nil,
                     accessory: .none,
                     titleColor: MicaboColor.negative,
                     action: { showDeleteConfirmation = true }
@@ -358,14 +364,14 @@ struct ExamEditorSheet: View {
             }
             .micaboGroup()
         }
-        .confirmationDialog("Supprimer cet examen ?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
-            Button("Supprimer", role: .destructive, action: delete)
-            Button("Annuler", role: .cancel) {}
+        .confirmationDialog(L10n.t("ios.deleteExamQ", locale: .resolved()), isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button(L10n.t("app.common.delete", locale: .resolved()), role: .destructive, action: delete)
+            Button(L10n.t("app.common.cancel", locale: .resolved()), role: .cancel) {}
         } message: {
             Text(
                 exam?.isPlanned == true
-                    ? "Les révisions replanifiées retrouveront leurs échéances d'avant."
-                    : "L'examen sera retiré du calendrier."
+                    ? L10n.t("ios.deleteExamPlannedMsg", locale: .resolved())
+                    : L10n.t("ios.deleteExamMsg", locale: .resolved())
             )
         }
     }
@@ -374,9 +380,11 @@ struct ExamEditorSheet: View {
 
     private var primaryTitle: String {
         if !isEditing, creationStep == .details {
-            return "Continuer"
+            return L10n.t("app.common.continue", locale: .resolved())
         }
-        return isEditing ? "Replanifier" : "Planifier l'examen"
+        return isEditing
+            ? L10n.t("ios.replanExam", locale: .resolved())
+            : L10n.t("ios.planExam", locale: .resolved())
     }
 
     private var showsPrimaryIcon: Bool {

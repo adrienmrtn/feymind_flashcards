@@ -30,29 +30,34 @@ enum TrialTimeline {
         let tone: Tone
     }
 
-    static func milestones(from date: Date = .now, calendar: Calendar = .current) -> [Milestone] {
-        [
+    static func milestones(
+        from date: Date = .now,
+        calendar: Calendar = .current,
+        locale: UiLocale = .fr
+    ) -> [Milestone] {
+        let dateText = billingDateText(from: date, calendar: calendar, locale: locale)
+        return [
             Milestone(
-                title: "Compte créé",
-                detail: "Ton profil est prêt, tes réponses sont enregistrées.",
+                title: L10n.t("ios.accountCreated", locale: locale),
+                detail: L10n.t("ios.trialCreatedDetail", locale: locale),
                 systemImage: "checkmark",
                 tone: .done
             ),
             Milestone(
-                title: "Aujourd'hui : essaie Micabo Pro",
-                detail: "Cours illimités, cartes générées, révisions : tout est ouvert.",
+                title: L10n.t("ios.trialToday", locale: locale),
+                detail: L10n.t("ios.trialTodayDetail", locale: locale),
                 systemImage: "lock.open.fill",
                 tone: .current
             ),
             Milestone(
-                title: "Jour 2 : rappel avant la fin",
-                detail: "On te prévient par notification. Résiliable en quinze secondes.",
+                title: L10n.t("ios.trialDay2", locale: locale),
+                detail: L10n.t("ios.trialDay2Detail", locale: locale),
                 systemImage: "bell.fill",
                 tone: .upcoming
             ),
             Milestone(
-                title: "Jour \(freeDays) : fin de l'essai",
-                detail: "Ton abonnement démarrera le \(billingDateText(from: date, calendar: calendar)).",
+                title: L10n.t("ios.trialLast", locale: locale, vars: ["n": "\(freeDays)"]),
+                detail: L10n.t("ios.trialLastDetail", locale: locale, vars: ["date": dateText]),
                 systemImage: "star.fill",
                 tone: .upcoming
             )
@@ -60,10 +65,14 @@ enum TrialTimeline {
     }
 
     /// Le jour du premier prélèvement, écrit comme on le dirait : « 28 août ».
-    static func billingDateText(from date: Date = .now, calendar: Calendar = .current) -> String {
+    static func billingDateText(
+        from date: Date = .now,
+        calendar: Calendar = .current,
+        locale: UiLocale = .fr
+    ) -> String {
         let billingDate = calendar.date(byAdding: .day, value: freeDays, to: date) ?? date
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = locale.foundation
         formatter.calendar = calendar
         // Le fuseau vient du calendrier, et pas du système : sans lui, un minuit calculé à
         // Paris s'écrit « la veille » dès que l'appareil est réglé plus à l'ouest.
@@ -87,7 +96,9 @@ struct TrialOfferStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    private let milestones = TrialTimeline.milestones()
+    private var milestones: [TrialTimeline.Milestone] {
+        TrialTimeline.milestones(locale: i18n?.locale ?? .fr)
+    }
 
     @State private var revealedCount = 0
     @State private var showsAction = false
@@ -249,7 +260,7 @@ struct TrialReminderStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             OnboardingWordByWordTitle(
-                text: "Tu recevras un rappel\n1 jour avant la fin\nde ton essai.",
+                text: i18n?.t("ios.trialReminder") ?? "Tu recevras un rappel\n1 jour avant la fin\nde ton essai.",
                 size: 29,
                 alignment: .center,
                 wordDelay: 0.13,

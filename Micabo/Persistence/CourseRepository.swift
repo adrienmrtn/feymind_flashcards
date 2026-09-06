@@ -68,7 +68,7 @@ enum CourseRepository {
         let accent = MicaboColor.courseAccents[index % MicaboColor.courseAccents.count]
 
         let course = Course(
-            title: clean.title.nilIfBlank ?? "Nouveau cours",
+            title: clean.title.nilIfBlank ?? L10n.t("ios.newCourse", locale: .resolved()),
             subject: clean.subject?.nilIfBlank,
             summary: clean.summary,
             emoji: CourseEmoji.resolve(proposed: clean.emoji, subject: clean.subject, title: clean.title),

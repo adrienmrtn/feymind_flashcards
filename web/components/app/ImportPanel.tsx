@@ -40,9 +40,9 @@ import {
  * vidéo, on règle, puis on écrit la fiche. Générer au moment du dépôt
  * brûlait un appel avant d'avoir rien relu.
  *
- * Le fichier est lu **dans l'onglet** : seul le texte extrait part au
- * modèle. YouTube suit le même chemin que l'iPhone : l'onglet d'abord
- * (l'IP n'est pas un datacenter), le serveur en repli.
+ * Le fichier est lu **dans l'onglet** : le texte, et les pages d'un PDF
+ * pour en extraire les schémas. YouTube suit le même chemin que l'iPhone :
+ * l'onglet d'abord (l'IP n'est pas un datacenter), le serveur en repli.
  */
 
 type Extra = null | "coller" | "video";
@@ -56,6 +56,8 @@ interface Draft {
   source: SourceKind;
   fileUrl?: string;
   video?: YouTubePreview;
+  /** Pages JPEG en data URL, pour extraire les schémas du PDF. */
+  images?: string[];
 }
 
 export function ImportPanel({
@@ -143,6 +145,7 @@ export function ImportPanel({
             visibility,
             language,
             instructions: instructions.trim() || undefined,
+            images: payload.images,
           }),
           // Sans ça, une fonction qui ne répond plus laisse l'écran sur
           // « Micabo écrit la fiche… » jusqu'à ce qu'on quitte la page.
@@ -225,8 +228,8 @@ export function ImportPanel({
     setPhase("lecture");
 
     try {
-      const extracted = await extractText(file);
-      if (extracted.trim().length < 40) {
+      const extracted = await extractDocument(file);
+      if (extracted.text.trim().length < 40 && extracted.images.length === 0) {
         setPhase("repos");
         setFailure(
           t("app.import.scannedPdf"),
@@ -242,11 +245,12 @@ export function ImportPanel({
           : "text";
 
       showDraft({
-        text: extracted,
+        text: extracted.text,
         title: file.name.replace(/\.[^.]+$/, ""),
         sourceName: file.name,
         source,
         fileUrl: source === "pdf" ? URL.createObjectURL(file) : undefined,
+        images: extracted.images,
       }, file.name);
     } catch (error) {
       setPhase("repos");
@@ -258,7 +262,7 @@ export function ImportPanel({
   const canGenerate = previewing && (
     draft.source === "youtube"
       ? Boolean(draft.video && !videoBlocked)
-      : draft.text.trim().length >= 40
+      : draft.text.trim().length >= 40 || (draft.images?.length ?? 0) > 0
   );
 
   return (
@@ -678,7 +682,7 @@ function Waiting({
   );
 }
 
-async function extractText(file: File): Promise<string> {
+async function extractDocument(file: File): Promise<{ text: string; images: string[] }> {
   const name = file.name.toLowerCase();
 
   if (name.endsWith(".pdf")) {
@@ -690,6 +694,8 @@ async function extractText(file: File): Promise<string> {
 
     const document = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
     const pages: string[] = [];
+    const images: string[] = [];
+    const pageLimit = Math.min(document.numPages, 4);
 
     for (let index = 1; index <= document.numPages; index += 1) {
       const page = await document.getPage(index);
@@ -701,20 +707,42 @@ async function extractText(file: File): Promise<string> {
           .replace(/\s+/g, " ")
           .trim(),
       );
+
+      if (index <= pageLimit) {
+        const rendered = await renderPdfPage(page);
+        if (rendered) images.push(rendered);
+      }
     }
 
-    return pages.filter(Boolean).join("\n\n");
+    return { text: pages.filter(Boolean).join("\n\n"), images };
   }
 
   if (name.endsWith(".docx")) {
-    return extractDocxText(new Uint8Array(await file.arrayBuffer()));
+    return { text: await extractDocxText(new Uint8Array(await file.arrayBuffer())), images: [] };
   }
 
   if (name.endsWith(".doc")) {
     throw new DocxError("notDocx");
   }
 
-  return file.text();
+  return { text: await file.text(), images: [] };
+}
+
+async function renderPdfPage(page: {
+  getViewport: (params: { scale: number }) => { width: number; height: number };
+  render: (params: { canvasContext: CanvasRenderingContext2D; viewport: { width: number; height: number } }) => {
+    promise: Promise<void>;
+  };
+}): Promise<string | null> {
+  const viewport = page.getViewport({ scale: 1.1 });
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(viewport.width));
+  canvas.height = Math.max(1, Math.round(viewport.height));
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+  await page.render({ canvasContext: context, viewport }).promise;
+  const url = canvas.toDataURL("image/jpeg", 0.5);
+  return url.startsWith("data:image/") ? url : null;
 }
 
 function remoteVideo(

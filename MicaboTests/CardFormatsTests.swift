@@ -385,8 +385,8 @@ final class ImportFailureTests: XCTestCase {
         let failure = ImportReadiness.failure(text: "  ", hasImages: false, canEnableVision: true, kind: .photo)
 
         XCTAssertNotNil(failure)
-        XCTAssertEqual(failure?.title, "Ces pages sont illisibles")
-        XCTAssertTrue(failure?.message.contains("Aucun texte") ?? false)
+        XCTAssertEqual(failure?.title, L10n.t("ios.err.pagesUnreadable", locale: .resolved()))
+        XCTAssertTrue(failure?.message.contains(L10n.t("ios.noTextRead", locale: .resolved())) ?? false)
         XCTAssertTrue(isEnableVision(failure?.recovery ?? .none), "On doit proposer le modèle de vision")
     }
 

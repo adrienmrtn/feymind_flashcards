@@ -31,7 +31,8 @@ struct SignInStepView: View {
         SignInScreen(
             placement: .page,
             titleKey: "onboarding.compteTitle",
-            subtitleKey: "onboarding.compteSubtitle",
+            showsBrand: false,
+            showsSubtitle: false,
             showsLanguageSwitcher: false,
             onSkip: skip
         )
