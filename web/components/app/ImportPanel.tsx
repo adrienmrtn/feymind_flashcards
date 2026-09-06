@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { PDFPageProxy } from "pdfjs-dist";
 import { ThinkingOrb } from "thinking-orbs";
@@ -25,6 +26,7 @@ import { useI18n } from "@/lib/i18n/client";
 import { copySheetLengthTitle, type Translator } from "@/lib/i18n/copy";
 import { importFromText, youtubePreview, youtubeTranscript } from "@/lib/actions/course";
 import { requestPaywall } from "@/lib/paywall";
+import { isAnkiFileName } from "@/lib/import/anki";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
 import {
   isYouTubeUrl,
@@ -84,6 +86,8 @@ export function ImportPanel({
   const [fileName, setFileName] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
+  /** Un paquet Anki déposé ici : il n'y a rien à ficher, donc on montre la bonne porte. */
+  const [ankiFile, setAnkiFile] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const busy = pending || phase === "lecture" || phase === "ecriture";
@@ -225,6 +229,18 @@ export function ImportPanel({
 
   async function handleFile(file: File) {
     setFailure(null);
+    setAnkiFile(null);
+
+    // Un `.apkg` n'est pas un document : c'est un paquet de cartes déjà écrites. L'envoyer au
+    // modèle donnerait une fiche sur un fichier binaire. On renvoie donc vers l'écran qui sait
+    // le lire, plutôt que d'échouer sur « ce document ne contient pas assez de contenu ».
+    if (isAnkiFileName(file.name)) {
+      setAnkiFile(file.name);
+      setFileName(null);
+      setPhase("repos");
+      return;
+    }
+
     setFileName(file.name);
     setPhase("lecture");
 
@@ -289,7 +305,7 @@ export function ImportPanel({
           <input
             ref={fileInput}
             type="file"
-            accept=".pdf,.txt,.md,.markdown,.docx"
+            accept=".pdf,.txt,.md,.markdown,.docx,.apkg,.colpkg"
             className="sr-only"
             onChange={(event) => {
               const file = event.target.files?.[0];
@@ -347,9 +363,34 @@ export function ImportPanel({
                 >
                   {t("app.import.youtubeAction")}
                 </button>
+                <span aria-hidden className="text-ink-tertiary">
+                  ·
+                </span>
+                {/* La troisième porte ne mène pas à une fiche : elle mène à des cartes sans
+                    cours, et c'est aussi par là qu'entre un paquet Anki. */}
+                <Link
+                  href={"/app/paquet" as never}
+                  className="underline-draw font-medium text-ink-secondary"
+                >
+                  {t("app.import.deckAction")}
+                </Link>
               </div>
             </>
           )}
+        </div>
+      ) : null}
+
+      {ankiFile ? (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
+          <div className="min-w-0">
+            <p className="text-[15px] font-semibold text-ink">{t("app.import.ankiTitle")}</p>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-ink-secondary">
+              {t("app.import.ankiHint", { name: ankiFile })}
+            </p>
+          </div>
+          <Button render={<Link href={"/app/paquet" as never} />}>
+            {t("app.import.ankiAction")}
+          </Button>
         </div>
       ) : null}
 

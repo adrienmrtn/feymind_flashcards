@@ -109,6 +109,8 @@ export const appTr = {
     lead: "Özetlerin.",
     addTitle: "Ders ekle",
     addFormats: "PDF, Word, metin veya YouTube",
+    addDeckTitle: "Deste ekle",
+    addDeckHint: "Ders olmadan kartlar ya da Anki'den içe aktarma",
     doneHeldBack: "Bitti. {message}",
     doneTomorrow: "Bitti. Yarın gel.",
     emptyLead: "İlk dersin seni bekliyor. PDF, fotoğraf, Word veya yapıştırılmış notlar.",
@@ -467,6 +469,58 @@ export const appTr = {
     lycee: "Lise",
     other: "Kurum",
   },
+  deck: {
+    title: "Bir kart destesi",
+    lead: "Ders olmadan: kelimeler, tarihler, formüller. Ya da devraldığın bir Anki destesi.",
+    untitled: "Yeni deste",
+    nameLabel: "Destenin adı",
+    namePlaceholder: "İngilizce kelimeler, 1. sınıf",
+    subjectLabel: "Ders, istersen",
+    subjectPlaceholder: "İngilizce, hukuk, anatomi…",
+    subjectHint:
+      "Desteyi filtrelerine yerleştirir ve Micabo'ya hangi ders için yazdığını söyler.",
+    materialLabel: "Nereden başlanacak",
+    materialPlaceholder:
+      "Listeni, notlarını, çekim tablonu yapıştır… Micabo ilk kartları oradan çıkarır.",
+    visibilityLabel: "Bu desteyi kim bulabilir",
+    visibilityHint:
+      "Bir destenin özeti yok, dolayısıyla bu seçime geri dönebileceğin bir ekran da yok: karar burada veriliyor.",
+    ankiDrop: "Bir Anki destesi bırak",
+    ankiHint: "Anki'den aktarılmış bir .apkg dosyası ya da düz metin notların.",
+    ankiScope:
+      "Kartlar yazıldıkları gibi gelir, modelden geçmeden. Görseller ve Anki'nin tekrar planı gelmez: burada her şey sıfırdan başlar.",
+    chooseAnki: "Dosya seç",
+    dropHere: "Buraya bırak.",
+    reading: "Micabo desteyi açıyor…",
+    ankiFile: "Anki destesi",
+    cardsFound: "{count, plural, one {# kart bulundu} other {# kart bulundu}}",
+    skipped: "{count, plural, one {# not atlandı} other {# not atlandı}}",
+    capped: "{limit} kartla sınırlandı",
+    whichDecks: "Hangi desteler alınsın",
+    unnamedDeck: "Adsız",
+    nothingSelected: "Hiçbir deste seçilmedi.",
+    andMore: "{count, plural, one {ve # kart daha} other {ve # kart daha}}",
+    willImport: "{count, plural, one {# kart alınacak} other {# kart alınacak}}",
+    importCards: "Kartları al",
+    writeCards: "Kartları yaz",
+    createEmpty: "Desteyi aç",
+    partial: "Deste açıldı ama kartların tamamı gelmedi.",
+    openAnyway: "Desteyi aç",
+    pouring: "Micabo kartları yerleştiriyor…",
+    pouringCount: "{done} / {total}",
+    openingHint: "Genellikle on saniye kadar.",
+    errors: {
+      notPackage:
+        "Bu dosya bir Anki destesi değil. Anki'den bir .apkg aktar ya da notlarını düz metin olarak bırak.",
+      noCollection:
+        "Bu arşivde Anki koleksiyonu yok. Anki'den kartları da dahil ederek yeniden aktar.",
+      empty:
+        "Bu destede okunabilir kart yok. Yalnızca görselden oluşan notlar alınmaz.",
+      noZstd:
+        "Bu deste açılamadı. « eski Anki sürümleri desteği » seçeneğini işaretleyerek yeniden aktar.",
+      unreadable: "Bu deste okunamadı.",
+    },
+  },
   import: {
     lead: {
       canImport: "Önce oku, sonra özeti yaz.",
@@ -507,6 +561,11 @@ export const appTr = {
     chooseFile: "Dosya seç",
     pasteAction: "Metin yapıştır",
     youtubeAction: "Bir YouTube videosu",
+    deckAction: "Bir kart destesi",
+    ankiTitle: "Bu bir Anki destesi",
+    ankiHint:
+      "{name} zaten yazılmış kartlar taşıyor, özetlenecek bir ders değil. Yanında açılır.",
+    ankiAction: "Deste aç",
     optionalTitle: "Başlık, istersen",
     yourCourse: "Dersin",
     charCount: "{count, plural, one {# karakter} other {# karakter}}",

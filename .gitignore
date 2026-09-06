@@ -3,6 +3,10 @@ xcuserdata/
 *.xcuserstate
 build/
 DerivedData/
+# Le cache d'Xcode, quand on le range dans le dépôt : il contient des liens
+# symboliques circulaires (les checkouts SPM), que le scan de sources de
+# Tailwind suit jusqu'à faire tomber le build du site.
+.derivedData/
 .swiftpm/
 __pycache__/
 node_modules/

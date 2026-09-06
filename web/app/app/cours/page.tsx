@@ -158,7 +158,16 @@ function Shelf({
             </Link>
           );
         })}
-        {canImport ? <AddCourseCard t={t} /> : <LockedAddCourseCard />}
+        {canImport ? (
+          <>
+            <AddCourseCard t={t} />
+            {/* Deux portes, et la distinction n'est pas cosmétique : l'une part d'un document
+                et rend une fiche, l'autre ne part de rien et ne rend que des cartes. */}
+            <AddDeckCard t={t} />
+          </>
+        ) : (
+          <LockedAddCourseCard />
+        )}
       </div>
     </>
   );
@@ -192,6 +201,31 @@ function AddCourseCard({ t }: { t: Translator }) {
         </span>
         <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
           {t("app.courses.addFormats")}
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+/** Des cartes sans cours : du vocabulaire, des dates, ou un paquet Anki qu'on reprend. */
+function AddDeckCard({ t }: { t: Translator }) {
+  return (
+    <Link
+      href={"/app/paquet" as never}
+      className="relative flex flex-col gap-4 rounded-2xl border border-dashed border-border bg-card p-5 transition-[scale,background-color,border-color] duration-press ease-out-strong hover:border-stroke-strong hover:bg-surface-muted active:scale-[0.96]"
+    >
+      <span
+        aria-hidden
+        className="flex h-12 w-12 items-center justify-center rounded-tile bg-surface-muted text-[22px]"
+      >
+        🃏
+      </span>
+      <span className="min-w-0">
+        <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
+          {t("app.courses.addDeckTitle")}
+        </span>
+        <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
+          {t("app.courses.addDeckHint")}
         </span>
       </span>
     </Link>

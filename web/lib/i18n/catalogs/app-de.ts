@@ -109,6 +109,8 @@ export const appDe = {
     lead: "Deine Blätter.",
     addTitle: "Kurs hinzufügen",
     addFormats: "PDF, Word, Text oder YouTube",
+    addDeckTitle: "Stapel hinzufügen",
+    addDeckHint: "Karten ohne Kurs, oder ein Anki-Import",
     doneHeldBack: "Erledigt. {message}",
     doneTomorrow: "Erledigt. Komm morgen wieder.",
     emptyLead: "Dein erster Kurs wartet. PDF, Foto, Word oder eingefügte Notizen.",
@@ -467,6 +469,58 @@ export const appDe = {
     lycee: "Gymnasium",
     other: "Einrichtung",
   },
+  deck: {
+    title: "Ein Kartenstapel",
+    lead: "Ohne Kurs: Vokabeln, Daten, Formeln. Oder ein Anki-Stapel, den du übernimmst.",
+    untitled: "Neuer Stapel",
+    nameLabel: "Name des Stapels",
+    namePlaceholder: "Englischvokabeln, 1. Semester",
+    subjectLabel: "Fach, wenn du willst",
+    subjectPlaceholder: "Englisch, Recht, Anatomie…",
+    subjectHint:
+      "Es sortiert den Stapel in deine Filter und sagt Micabo, für welches Fach geschrieben wird.",
+    materialLabel: "Woher es losgeht",
+    materialPlaceholder:
+      "Füg deine Liste, deine Notizen, deine Konjugationstabelle ein… Micabo zieht die ersten Karten daraus.",
+    visibilityLabel: "Wer diesen Stapel finden kann",
+    visibilityHint:
+      "Ein Stapel hat kein Blatt, also auch keinen Bildschirm, auf dem du das später änderst: die Wahl fällt hier.",
+    ankiDrop: "Leg einen Anki-Stapel ab",
+    ankiHint: "Eine .apkg-Datei aus Anki, oder deine Notizen als reinen Text.",
+    ankiScope:
+      "Die Karten kommen so an, wie sie geschrieben sind, ohne Umweg über das Modell. Bilder und Ankis Terminplanung kommen nicht mit: hier fängt alles neu an.",
+    chooseAnki: "Datei wählen",
+    dropHere: "Lass sie hier fallen.",
+    reading: "Micabo öffnet den Stapel…",
+    ankiFile: "Anki-Stapel",
+    cardsFound: "{count, plural, one {# Karte gefunden} other {# Karten gefunden}}",
+    skipped: "{count, plural, one {# Notiz übergangen} other {# Notizen übergangen}}",
+    capped: "Auf {limit} Karten begrenzt",
+    whichDecks: "Welche Stapel übernehmen",
+    unnamedDeck: "Ohne Namen",
+    nothingSelected: "Kein Stapel ausgewählt.",
+    andMore: "{count, plural, one {und # weitere Karte} other {und # weitere Karten}}",
+    willImport: "{count, plural, one {# Karte zu übernehmen} other {# Karten zu übernehmen}}",
+    importCards: "Karten übernehmen",
+    writeCards: "Karten schreiben",
+    createEmpty: "Stapel anlegen",
+    partial: "Der Stapel ist angelegt, aber nicht alle Karten sind angekommen.",
+    openAnyway: "Stapel öffnen",
+    pouring: "Micabo legt die Karten ab…",
+    pouringCount: "{done} / {total}",
+    openingHint: "Meist etwa zehn Sekunden.",
+    errors: {
+      notPackage:
+        "Diese Datei ist kein Anki-Stapel. Exportiere eine .apkg aus Anki, oder leg deine Notizen als reinen Text ab.",
+      noCollection:
+        "Dieses Archiv enthält keine Anki-Sammlung. Exportiere erneut aus Anki, Karten inbegriffen.",
+      empty:
+        "Keine lesbare Karte in diesem Stapel. Notizen, die nur ein Bild sind, werden nicht übernommen.",
+      noZstd:
+        "Dieser Stapel ließ sich nicht entpacken. Exportiere ihn erneut mit « Unterstützung älterer Anki-Versionen ».",
+      unreadable: "Dieser Stapel ließ sich nicht lesen.",
+    },
+  },
   import: {
     lead: {
       canImport: "Lies zuerst nach, dann schreib das Blatt.",
@@ -507,6 +561,11 @@ export const appDe = {
     chooseFile: "Datei wählen",
     pasteAction: "Text einfügen",
     youtubeAction: "Ein YouTube-Video",
+    deckAction: "Ein Kartenstapel",
+    ankiTitle: "Das ist ein Anki-Stapel",
+    ankiHint:
+      "{name} enthält fertig geschriebene Karten, keinen Kurs zum Zusammenfassen. Er öffnet sich daneben.",
+    ankiAction: "Stapel öffnen",
     optionalTitle: "Titel, wenn du willst",
     yourCourse: "Dein Kurs",
     charCount: "{count, plural, one {# Zeichen} other {# Zeichen}}",

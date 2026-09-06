@@ -109,6 +109,8 @@ export const appEs = {
     lead: "Tus fichas.",
     addTitle: "Añadir un curso",
     addFormats: "PDF, Word, texto o YouTube",
+    addDeckTitle: "Añadir un mazo",
+    addDeckHint: "Tarjetas sin curso, o una importación de Anki",
     doneHeldBack: "Hecho. {message}",
     doneTomorrow: "Hecho. Vuelve mañana.",
     emptyLead: "Tu primer curso te espera. PDF, foto, Word o notas pegadas.",
@@ -467,6 +469,58 @@ export const appEs = {
     lycee: "Instituto",
     other: "Centro",
   },
+  deck: {
+    title: "Un mazo de tarjetas",
+    lead: "Sin curso: vocabulario, fechas, fórmulas. O un mazo de Anki que recuperas.",
+    untitled: "Mazo nuevo",
+    nameLabel: "Nombre del mazo",
+    namePlaceholder: "Vocabulario de inglés, 1.º",
+    subjectLabel: "Asignatura, si quieres",
+    subjectPlaceholder: "Inglés, derecho, anatomía…",
+    subjectHint:
+      "Ordena el mazo en tus filtros y le dice a Micabo para qué asignatura escribe.",
+    materialLabel: "De dónde partir",
+    materialPlaceholder:
+      "Pega tu lista, tus apuntes, tu tabla de conjugación… Micabo saca las primeras tarjetas.",
+    visibilityLabel: "Quién puede encontrar este mazo",
+    visibilityHint:
+      "Un mazo no tiene ficha, así que no hay pantalla donde volver sobre esta decisión: se toma aquí.",
+    ankiDrop: "Suelta un mazo de Anki",
+    ankiHint: "Un archivo .apkg exportado de Anki, o tus notas en texto plano.",
+    ankiScope:
+      "Las tarjetas llegan tal como están escritas, sin pasar por el modelo. Las imágenes y la planificación de Anki no vienen: aquí todo empieza de nuevo.",
+    chooseAnki: "Elegir un archivo",
+    dropHere: "Suéltalo aquí.",
+    reading: "Micabo abre el mazo…",
+    ankiFile: "Mazo de Anki",
+    cardsFound: "{count, plural, one {# tarjeta encontrada} other {# tarjetas encontradas}}",
+    skipped: "{count, plural, one {# nota descartada} other {# notas descartadas}}",
+    capped: "Limitado a {limit} tarjetas",
+    whichDecks: "Qué mazos recuperar",
+    unnamedDeck: "Sin nombre",
+    nothingSelected: "Ningún mazo seleccionado.",
+    andMore: "{count, plural, one {y # tarjeta más} other {y # tarjetas más}}",
+    willImport: "{count, plural, one {# tarjeta por recuperar} other {# tarjetas por recuperar}}",
+    importCards: "Recuperar las tarjetas",
+    writeCards: "Escribir las tarjetas",
+    createEmpty: "Abrir el mazo",
+    partial: "El mazo está abierto, pero no han llegado todas las tarjetas.",
+    openAnyway: "Abrir el mazo",
+    pouring: "Micabo coloca las tarjetas…",
+    pouringCount: "{done} / {total}",
+    openingHint: "Unos diez segundos, normalmente.",
+    errors: {
+      notPackage:
+        "Este archivo no es un mazo de Anki. Exporta un .apkg desde Anki, o suelta tus notas en texto plano.",
+      noCollection:
+        "Este archivo no contiene ninguna colección de Anki. Vuelve a exportar desde Anki, con las tarjetas incluidas.",
+      empty:
+        "Ninguna tarjeta legible en este mazo. Las notas que solo son una imagen no se recuperan.",
+      noZstd:
+        "Este mazo no se pudo descomprimir. Vuelve a exportarlo marcando « compatibilidad con versiones antiguas de Anki ».",
+      unreadable: "Este mazo no se pudo leer.",
+    },
+  },
   import: {
     lead: {
       canImport: "Relee primero, luego escribe la ficha.",
@@ -507,6 +561,11 @@ export const appEs = {
     chooseFile: "Elegir un archivo",
     pasteAction: "Pegar texto",
     youtubeAction: "Un vídeo de YouTube",
+    deckAction: "Un mazo de tarjetas",
+    ankiTitle: "Es un mazo de Anki",
+    ankiHint:
+      "{name} contiene tarjetas ya escritas, no un curso que resumir. Se abre al lado.",
+    ankiAction: "Abrir un mazo",
     optionalTitle: "Título, si quieres",
     yourCourse: "Tu curso",
     charCount: "{count, plural, one {# carácter} other {# caracteres}}",
