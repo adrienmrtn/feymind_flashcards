@@ -217,7 +217,9 @@ final class StudySession {
         self.mode = mode
         self.sourceKey = mode.affectsSchedule ? sourceKey : nil
         beginQuietWrites()
-        self.deadlines = mode.affectsSchedule ? ExamDeadlines.active(in: context, now: now) : .empty
+        self.deadlines = mode.affectsSchedule
+            ? ExamDeadlines.active(in: context, cards: cards, now: now)
+            : .empty
         startedAt = now
 
         let usable: [Flashcard]
@@ -256,7 +258,7 @@ final class StudySession {
         mode = .scheduled
         sourceKey = snapshot.sourceKey
         beginQuietWrites()
-        deadlines = ExamDeadlines.active(in: context, now: now)
+        deadlines = ExamDeadlines.active(in: context, cards: cards, now: now)
         // La durée affichée en fin de session reste celle du temps réellement passé.
         startedAt = now.addingTimeInterval(-snapshot.elapsed)
 
@@ -498,6 +500,8 @@ final class StudySession {
         applyPendingWrites()
         guard context?.hasChanges == true else { return }
         try? context?.save()
+        LibraryCensus.forget()
+        ReviewStreakStore.invalidate()
     }
 
     /// Remet l'écriture automatique et pose ce qui restait. À appeler en quittant.

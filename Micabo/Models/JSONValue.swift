@@ -83,4 +83,26 @@ enum JSONValue: Codable {
             .sorted()
         return known + others
     }
+
+    /// Construit l'arbre depuis un objet `JSONSerialization`, sans réencoder.
+    init?(jsonObject: Any) {
+        switch jsonObject {
+        case is NSNull:
+            self = .null
+        case let number as NSNumber:
+            if CFGetTypeID(number) == CFBooleanGetTypeID() {
+                self = .bool(number.boolValue)
+            } else {
+                self = .number(number.doubleValue)
+            }
+        case let string as String:
+            self = .string(string)
+        case let values as [Any]:
+            self = .array(values.compactMap(JSONValue.init(jsonObject:)))
+        case let fields as [String: Any]:
+            self = .object(fields.compactMapValues(JSONValue.init(jsonObject:)))
+        default:
+            return nil
+        }
+    }
 }

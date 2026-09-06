@@ -21,7 +21,7 @@ import SwiftUI
 struct TodayView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    @Query private var allCards: [Flashcard]
+    @Query(sort: \Flashcard.updatedAt, order: .reverse) private var allCards: [Flashcard]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
 
@@ -55,6 +55,8 @@ struct TodayView: View {
         let coursesWithDue: Int
         let estimatedMinutes: Int
         let dueByCourse: [(course: Course, count: Int)]
+        let nextDue: [(course: Course, due: Date)]
+        let examProgress: [UUID: Int]
 
         let streak: Int
 
@@ -84,6 +86,35 @@ struct TodayView: View {
                 return (course: course, count: count)
             }
             .sorted { $0.count > $1.count }
+
+            var earliest: [UUID: Date] = [:]
+            for card in allCards where !card.isSuspended {
+                guard let courseID = card.course?.id else { continue }
+                if let existing = earliest[courseID] {
+                    if card.dueDate < existing { earliest[courseID] = card.dueDate }
+                } else {
+                    earliest[courseID] = card.dueDate
+                }
+            }
+            let now = Date()
+            nextDue = courses.compactMap { course in
+                guard let next = earliest[course.id], next.timeIntervalSince(now) > 0 else { return nil }
+                return (course, next)
+            }
+            .prefix(4)
+            .map { $0 }
+
+            var progress: [UUID: Int] = [:]
+            for exam in exams {
+                let relevant = allCards.filter { card in
+                    guard !card.isSuspended, let courseID = card.course?.id else { return false }
+                    return exam.courseIDs.contains(courseID)
+                }
+                guard !relevant.isEmpty else { continue }
+                let started = relevant.filter { $0.state != .new }.count
+                progress[exam.id] = Int((Double(started) / Double(relevant.count) * 100).rounded())
+            }
+            examProgress = progress
         }
     }
 
@@ -94,7 +125,6 @@ struct TodayView: View {
 
     private struct DayLoadKey: Equatable {
         let day: Date
-        let minute: Int
         let cardCount: Int
         let cardStamp: Date?
         let courseCount: Int
@@ -107,11 +137,10 @@ struct TodayView: View {
     private func dayLoadKey(now: Date = Date()) -> DayLoadKey {
         DayLoadKey(
             day: MicaboCalendar.shared.startOfDay(for: now),
-            minute: Int(now.timeIntervalSince1970 / 60),
             cardCount: allCards.count,
-            cardStamp: allCards.map(\.updatedAt).max(),
+            cardStamp: allCards.first?.updatedAt,
             courseCount: courses.count,
-            courseStamp: courses.map(\.updatedAt).max(),
+            courseStamp: courses.first?.updatedAt,
             examCount: exams.count,
             examStamp: exams.map(\.updatedAt).max(),
             syncEpoch: sync?.epoch ?? 0
@@ -158,8 +187,11 @@ struct TodayView: View {
     }
 
     private func currentStreak() -> Int {
+        if ReviewStreakStore.isFresh() { return ReviewStreakStore.current }
         let dates = (try? modelContext.fetch(FetchDescriptor<ReviewLog>()))?.map(\.reviewedAt) ?? []
-        return StudyStats.streak(reviewDates: dates)
+        let streak = StudyStats.streak(reviewDates: dates)
+        ReviewStreakStore.remember(streak: streak, best: StudyStats.bestStreak(reviewDates: dates))
+        return streak
     }
 
     var body: some View {
@@ -174,7 +206,7 @@ struct TodayView: View {
                     header(streak: load.streak)
 
                     if load.dueCards.isEmpty && load.heldBackNewCards == 0 {
-                        restState
+                        restState(load)
                     } else if load.dueCards.isEmpty {
                         rhythmReachedCard(held: load.heldBackNewCards)
                         dueCoursesSection(load.dueByCourse)
@@ -183,7 +215,7 @@ struct TodayView: View {
                         dueCoursesSection(load.dueByCourse)
                     }
 
-                    examSection
+                    examSection(load)
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, MicaboSpacing.md)
@@ -411,7 +443,7 @@ struct TodayView: View {
     /// Elle reste ici parce qu'un examen oriente la file du jour. Un appui ouvre l'onglet,
     /// plus un écran poussé : le calendrier a sa propre place dans la barre.
     /// **La rangée des examens est toujours là**, même sans un seul cours.
-    private var examSection: some View {
+    private func examSection(_ load: DayLoad) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             MicaboSectionCaption(text: i18n?.t("app.today.upcoming") ?? "Prochains examens")
 
@@ -445,7 +477,7 @@ struct TodayView: View {
                                     tint: MicaboColor.caution
                                 ),
                                 title: exam.name,
-                                subtitle: examLine(exam),
+                                subtitle: examLine(exam, progress: load.examProgress[exam.id] ?? 0),
                                 accessory: .badge(exam.countdownLabel(), .warm)
                             )
                         }
@@ -471,21 +503,10 @@ struct TodayView: View {
             : (i18n?.t("app.today.addDate") ?? "Ajouter une date")
     }
 
-    private func examLine(_ exam: Exam) -> String {
+    private func examLine(_ exam: Exam, progress: Int) -> String {
         let grade = DesiredGradeScale.for(OnboardingPreferences.schoolingCountry).label(for: exam.targetScore)
-        return i18n?.t("app.today.examLine", ["grade": grade, "pct": "\(examProgress(exam))"])
-            ?? "\(grade) souhaitée · \(examProgress(exam)) % d'avancée"
-    }
-
-    /// Cartes déjà introduites parmi celles des cours de l'examen.
-    private func examProgress(_ exam: Exam) -> Int {
-        let relevant = allCards.filter { card in
-            guard !card.isSuspended, let courseID = card.course?.id else { return false }
-            return exam.courseIDs.contains(courseID)
-        }
-        guard !relevant.isEmpty else { return 0 }
-        let started = relevant.filter { $0.state != .new }.count
-        return Int((Double(started) / Double(relevant.count) * 100).rounded())
+        return i18n?.t("app.today.examLine", ["grade": grade, "pct": "\(progress)"])
+            ?? "\(grade) souhaitée · \(progress) % d'avancée"
     }
 
     // MARK: - La barre et sa légende
@@ -563,7 +584,7 @@ struct TodayView: View {
     // MARK: - Rien à réviser
 
     @ViewBuilder
-    private var restState: some View {
+    private func restState(_ load: DayLoad) -> some View {
         if allCards.isEmpty {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
@@ -577,16 +598,18 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                 doneState
 
-                if !nextDueSummary.isEmpty {
+                if !load.nextDue.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         MicaboSectionCaption(text: i18n?.t("app.today.nextDue") ?? "Prochaines échéances")
 
                         MicaboRowGroup(
-                            rows: nextDueSummary.map { entry in
+                            rows: load.nextDue.map { entry in
                                 MicaboRow(
                                     tile: MicaboTile.course(entry.course),
                                     title: entry.course.title,
-                                    subtitle: entry.label,
+                                    subtitle: i18n?.t("app.today.inDelay", [
+                                        "delay": SM2Scheduler.format(delay: entry.due.timeIntervalSinceNow)
+                                    ]) ?? ("Dans " + SM2Scheduler.format(delay: entry.due.timeIntervalSinceNow)),
                                     accessory: .none
                                 )
                             }
@@ -633,26 +656,6 @@ struct TodayView: View {
         .micaboGroup()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(i18n?.t("app.today.doneTitle") ?? "C'est fait"). \(subtitle)")
-    }
-
-    private var nextDueSummary: [(course: Course, label: String)] {
-        var earliest: [UUID: Date] = [:]
-        for card in allCards where !card.isSuspended {
-            guard let courseID = card.course?.id else { continue }
-            if let existing = earliest[courseID] {
-                if card.dueDate < existing { earliest[courseID] = card.dueDate }
-            } else {
-                earliest[courseID] = card.dueDate
-            }
-        }
-        return courses.compactMap { course in
-            guard let next = earliest[course.id] else { return nil }
-            let delay = next.timeIntervalSinceNow
-            guard delay > 0 else { return nil }
-            return (course, i18n?.t("app.today.inDelay", ["delay": SM2Scheduler.format(delay: delay)]) ?? ("Dans " + SM2Scheduler.format(delay: delay)))
-        }
-        .prefix(4)
-        .map { $0 }
     }
 
     // MARK: - Session

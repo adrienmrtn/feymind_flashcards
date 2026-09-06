@@ -130,11 +130,15 @@ struct ExamDeadlines {
     }
 
     /// Même chose, lue directement depuis la base : c'est la forme dont une session a besoin.
-    static func active(in context: ModelContext, now: Date = Date()) -> ExamDeadlines {
+    static func active(
+        in context: ModelContext,
+        cards: [Flashcard]? = nil,
+        now: Date = Date()
+    ) -> ExamDeadlines {
         let exams = (try? context.fetch(FetchDescriptor<Exam>())) ?? []
         guard !exams.isEmpty else { return .empty }
-        let cards = (try? context.fetch(FetchDescriptor<Flashcard>())) ?? []
-        return active(exams: exams, cards: cards, now: now)
+        let pool = cards ?? ((try? context.fetch(FetchDescriptor<Flashcard>())) ?? [])
+        return active(exams: exams, cards: pool, now: now)
     }
 }
 

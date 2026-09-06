@@ -9,6 +9,16 @@ final class StudyStatsTests: XCTestCase {
         calendar.startOfDay(for: now).addingTimeInterval(Double(offset) * 86_400)
     }
 
+    func testStreakStoreRemembersTheCurrentDay() {
+        ReviewStreakStore.invalidate()
+        defer { ReviewStreakStore.invalidate() }
+        XCTAssertFalse(ReviewStreakStore.isFresh())
+        ReviewStreakStore.remember(streak: 4, best: 9)
+        XCTAssertTrue(ReviewStreakStore.isFresh())
+        XCTAssertEqual(ReviewStreakStore.current, 4)
+        XCTAssertEqual(ReviewStreakStore.best, 9)
+    }
+
     func testStreakCountsConsecutiveDays() {
         let dates = [day(0), day(-1), day(-2), day(-4)]
         XCTAssertEqual(StudyStats.streak(reviewDates: dates, calendar: calendar, now: now), 3)

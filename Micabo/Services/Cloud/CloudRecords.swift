@@ -482,17 +482,14 @@ struct JSONCodable: Codable {
     }
 
     func encode(to encoder: Encoder) throws {
-        guard let object = try? JSONSerialization.jsonObject(with: data) else {
+        guard
+            let object = try? JSONSerialization.jsonObject(with: data),
+            let value = JSONValue(jsonObject: object)
+        else {
             var container = encoder.singleValueContainer()
             try container.encodeNil()
             return
         }
-        // `JSONSerialization` rend un objet Foundation, que `Encoder` ne sait pas écrire : on
-        // repasse par `JSONValue`, qui est codable des deux côtés.
-        let normalized = try JSONDecoder().decode(
-            JSONValue.self,
-            from: try JSONSerialization.data(withJSONObject: object)
-        )
-        try normalized.encode(to: encoder)
+        try value.encode(to: encoder)
     }
 }

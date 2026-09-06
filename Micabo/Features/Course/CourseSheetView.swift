@@ -159,8 +159,9 @@ struct CourseSheetView: View {
         guard
             DiscountOffer.shouldPresentGift(
                 isPro: isPro,
-                courseCount: CourseRepository.allCourses(in: modelContext)
-                    .filter { !$0.isFromLibrary }.count,
+                courseCount: (try? modelContext.fetchCount(FetchDescriptor<Course>(
+                    predicate: #Predicate { !$0.isFromLibrary }
+                ))) ?? 0,
                 seen: DiscountOffer.isSeen(),
                 startedAt: DiscountOffer.start()
             )

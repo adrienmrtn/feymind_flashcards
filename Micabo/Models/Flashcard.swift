@@ -65,7 +65,7 @@ enum ClozeGap {
 }
 
 /// États d'une carte, calqués sur ceux d'Anki.
-enum CardState: String, Codable, CaseIterable {
+enum CardState: String, Codable, CaseIterable, Sendable {
     case new
     case learning
     case review

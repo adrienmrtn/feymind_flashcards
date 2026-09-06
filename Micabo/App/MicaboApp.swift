@@ -57,6 +57,10 @@ struct MicaboApp: App {
                     await PurchasesBridge.identify(auth.user?.id)
                     await pro.refresh()
                     pro.observePurchases()
+                    // La première image se pose avant le premier encodage des fiches :
+                    // c'est ça, pas le réseau, qui figeait l'ouverture.
+                    await Task.yield()
+                    try? await Task.sleep(for: .milliseconds(180))
                     await sync.sync(context: container.mainContext)
                     // L'annuaire et les amitiés viennent après la synchro : ils n'ont de sens
                     // qu'avec un compte, et la synchro est ce qui confirme qu'il y en a un.

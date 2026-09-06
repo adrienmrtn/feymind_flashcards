@@ -15,10 +15,20 @@ struct CourseStats: Equatable, Sendable {
 }
 
 enum LibraryCensus {
+    private static var cache: (key: String, value: [UUID: CourseStats])?
+
     /// Une seule lecture de la table des cartes, puis des totaux par cours.
-    static func load(in context: ModelContext, now: Date = Date()) -> [UUID: CourseStats] {
+    static func load(in context: ModelContext, key: String? = nil, now: Date = Date()) -> [UUID: CourseStats] {
+        if let key, let cache, cache.key == key { return cache.value }
         let cards = (try? context.fetch(FetchDescriptor<Flashcard>())) ?? []
-        return summarize(cards, now: now)
+        let value = summarize(cards, now: now)
+        if let key { cache = (key, value) }
+        return value
+    }
+
+    /// Après une session ou une synchro : les totaux ne sont plus ceux du cache.
+    static func forget() {
+        cache = nil
     }
 
     static func summarize(_ cards: [Flashcard], now: Date = Date()) -> [UUID: CourseStats] {
