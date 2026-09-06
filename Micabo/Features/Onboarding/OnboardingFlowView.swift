@@ -36,7 +36,7 @@ struct OnboardingFlowView: View {
         .environment(\.locale, (i18n?.locale ?? .resolved()).foundation)
         // Sur fond sombre, l'heure et la batterie doivent passer en clair : sinon elles
         // disparaissent dans l'encre.
-        .preferredColorScheme(surface.isDark ? .dark : .light)
+        .preferredColorScheme(surface.isDark ? .dark : AppearanceStore.shared.appearance.colorScheme)
         .onAppear { Haptics.prepare() }
     }
 
@@ -102,6 +102,7 @@ private struct OnboardingProgressBar: View {
         HStack(spacing: MicaboSpacing.sm) {
             MicaboProgressBar(progress: step.progress, tint: surface.progressTint, track: surface.progressTrack)
                 .frame(height: 4)
+            AppearanceSwitcher(variant: .compact)
             if step != .welcome {
                 LanguageSwitcher()
                     .layoutPriority(1)

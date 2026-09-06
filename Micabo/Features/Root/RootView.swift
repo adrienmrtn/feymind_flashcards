@@ -45,14 +45,9 @@ struct RootView: View {
                 .transition(.opacity.combined(with: .scale(scale: 1.03)))
             } else if showsAccountGate {
                 AuthView()
-                    .preferredColorScheme(.light)
                     .transition(.opacity)
             } else {
-                // L'app est écrite en couleurs fixes : elle reste claire quel que soit
-                // le réglage du téléphone. Le parcours d'accueil, lui, gère sa propre
-                // bascule écran par écran.
                 RootTabView()
-                    .preferredColorScheme(.light)
                     .transition(.opacity)
             }
         }

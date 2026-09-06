@@ -20,7 +20,7 @@ enum OnboardingSurface {
     var background: Color {
         switch self {
         case .canvas: MicaboColor.canvas
-        case .ink: MicaboColor.ink
+        case .ink: Color(hex: 0x111827)
         case .accentSoft: MicaboColor.accentSoft
         case .sage: MicaboColor.canvasSage
         }
@@ -33,17 +33,17 @@ enum OnboardingSurface {
     }
 
     var title: Color {
-        isDark ? MicaboColor.onInk : MicaboColor.ink
+        isDark ? Color.white : MicaboColor.ink
     }
 
     var prose: Color {
-        isDark ? MicaboColor.onInk.opacity(0.78) : MicaboColor.inkSecondary
+        isDark ? Color.white.opacity(0.78) : MicaboColor.inkSecondary
     }
 
     var eyebrow: Color {
         switch self {
         case .canvas, .accentSoft, .sage: MicaboColor.accent
-        case .ink: MicaboColor.accentSoft
+        case .ink: Color(hex: 0xDBEAFE)
         }
     }
 
@@ -51,13 +51,13 @@ enum OnboardingSurface {
     /// l'inverse de l'encre sur les fonds sombres, puisqu'un vert posé sur le vert ne se
     /// verrait pas.
     var progressTint: Color {
-        isDark ? MicaboColor.onInk : MicaboColor.progress
+        isDark ? Color.white : MicaboColor.progress
     }
 
     var progressTrack: Color {
         switch self {
         case .canvas: MicaboColor.progressTrack
-        case .ink: MicaboColor.onInk.opacity(0.22)
+        case .ink: Color.white.opacity(0.22)
         // La piste beige du crème disparaîtrait sur les verts : c'est l'accent lui-même,
         // très dilué, qui fait la piste.
         case .accentSoft: MicaboColor.accent.opacity(0.18)
@@ -67,15 +67,15 @@ enum OnboardingSurface {
 
     /// Surface du bouton d'action, inversée sur fond sombre.
     var buttonTint: Color {
-        isDark ? MicaboColor.onInk : MicaboColor.accent
+        isDark ? Color.white : MicaboColor.accent
     }
 
     var buttonForeground: Color {
-        isDark ? MicaboColor.ink : MicaboColor.onInk
+        isDark ? Color(hex: 0x111827) : MicaboColor.onInk
     }
 
     var disabledButtonTint: Color {
-        isDark ? MicaboColor.onInk.opacity(0.3) : MicaboColor.strokeStrong
+        isDark ? Color.white.opacity(0.3) : MicaboColor.strokeStrong
     }
 }
 
@@ -325,11 +325,11 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 9, weight: .bold))
             }
-            .foregroundStyle(surface.isDark ? MicaboColor.onInk.opacity(0.72) : MicaboColor.inkSecondary)
+            .foregroundStyle(surface.isDark ? Color.white.opacity(0.72) : MicaboColor.inkSecondary)
             .padding(.vertical, 7)
             .padding(.horizontal, 11)
             .background(
-                surface.isDark ? MicaboColor.onInk.opacity(0.12) : MicaboColor.surfaceMuted,
+                surface.isDark ? Color.white.opacity(0.12) : MicaboColor.surfaceMuted,
                 in: Capsule()
             )
         }
@@ -638,7 +638,7 @@ struct OnboardingHint: View {
     var body: some View {
         Text(text)
             .font(MicaboFont.hanken(12, weight: .medium))
-            .foregroundStyle(surface.isDark ? MicaboColor.onInk.opacity(0.6) : MicaboColor.inkTertiary)
+            .foregroundStyle(surface.isDark ? Color.white.opacity(0.6) : MicaboColor.inkTertiary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .opacity(isVisible ? 1 : 0)

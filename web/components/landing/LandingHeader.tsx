@@ -59,7 +59,9 @@ export function LandingHeader({ signedIn = false }: { signedIn?: boolean }) {
         </nav>
 
         <div className="flex min-w-0 items-center justify-end gap-1 sm:gap-2">
-          <AppearanceSwitcher variant="compact" />
+          <div className="shrink-0">
+            <AppearanceSwitcher variant="compact" />
+          </div>
           <LanguageSwitcher />
           <StartButton signedIn={signedIn} size="compact" />
         </div>

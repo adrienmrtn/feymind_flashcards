@@ -44,7 +44,7 @@ struct LanguageSwitcher: View {
                     .accessibilityHidden(true)
                 Text(i18n.locale.nativeName)
                     .font(MicaboFont.hanken(13, weight: .medium))
-                    .foregroundStyle(surface.isDark ? MicaboColor.onInk.opacity(0.78) : MicaboColor.inkSecondary)
+                    .foregroundStyle(surface.isDark ? Color.white.opacity(0.78) : MicaboColor.inkSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -101,7 +101,7 @@ struct LanguageSwitcher: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(i18n.t("locale.choose"))
                 .font(MicaboFont.hanken(13, weight: .medium))
-                .foregroundStyle(surface.isDark ? MicaboColor.onInk.opacity(0.7) : MicaboColor.inkTertiary)
+                .foregroundStyle(surface.isDark ? Color.white.opacity(0.7) : MicaboColor.inkTertiary)
 
             HStack(spacing: 8) {
                 ForEach(UiLocale.allCases) { code in

@@ -43,6 +43,8 @@ final class I18nTests: XCTestCase {
         XCTAssertTrue(french.contains("ios.welcomeTitle"))
         XCTAssertTrue(french.contains("ios.yourTurn"))
         XCTAssertTrue(french.contains("ios.appLanguage"))
+        XCTAssertTrue(french.contains("ios.appearance"))
+        XCTAssertTrue(french.contains("ios.appearanceTwilight"))
         XCTAssertTrue(french.contains("ios.retentionHeading"))
         XCTAssertTrue(french.contains("ios.deck.history.question"))
         XCTAssertTrue(french.contains("ios.deck.biology.opt1"))

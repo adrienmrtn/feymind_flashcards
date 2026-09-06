@@ -14,6 +14,7 @@ struct MicaboApp: App {
     /// même question, et personne n'y répond de son côté.
     @State private var pro: ProAccess
     @State private var uiLocale = UiLocaleStore()
+    @State private var appearance = AppearanceStore.shared
 
     private static let schema = Schema([Course.self, Flashcard.self, ReviewLog.self, Exam.self])
 
@@ -39,9 +40,8 @@ struct MicaboApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // Le thème clair n'est pas posé ici : le parcours d'accueil bascule en
-            // sombre le temps de ses écrans d'encre, et une valeur fixée au-dessus de
-            // lui l'en empêcherait. `RootView` l'applique donc à l'app elle-même.
+            // L'apparence (jour, nuit, crépuscule) est posée ici. Le parcours
+            // d'accueil peut encore forcer le sombre le temps de ses écrans d'encre.
             RootView()
                 .tint(MicaboColor.accent)
                 .environment(auth)
@@ -49,7 +49,9 @@ struct MicaboApp: App {
                 .environment(social)
                 .environment(pro)
                 .environment(uiLocale)
+                .environment(appearance)
                 .environment(\.locale, uiLocale.locale.foundation)
+                .preferredColorScheme(appearance.appearance.colorScheme)
                 .task {
                     await auth.restore()
                     // L'identité RevenueCat **avant** de lire le droit, et avant tout achat :
