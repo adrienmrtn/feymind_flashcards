@@ -92,6 +92,7 @@
   --color-offer-wash: #c4e7fa;
   --color-offer-wash-soft: #eaf7fe;
   --color-offer-urgency: #5b46e5;
+  --app-float-dock: 0px;
 
   /* Chrome de micabo OS, pour l'app connectée. */
   --color-sidebar: #fafafa;
@@ -991,6 +992,13 @@ video {
 
 @utility paywall-card {
   animation: micabo-paywall-in 260ms var(--ease-out-strong) both;
+}
+
+/* La pastille d'offre se cale au-dessus du bouton flottant (« Réviser ce
+   cours ») quand celui-ci a réservé `--app-float-dock`. Sans ça, les deux
+   pastilles se mordent dans le même coin. */
+.app-offer-badge {
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px) + var(--app-float-dock, 0px));
 }
 
 @keyframes micabo-veil {

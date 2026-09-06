@@ -6,6 +6,7 @@ import { ThinkingOrb } from "thinking-orbs";
 
 import { discount, pricing } from "@micabo/core";
 
+import { Float } from "@/components/app/Float";
 import { startCheckout } from "@/lib/actions/checkout";
 import {
   claimOffer,
@@ -401,8 +402,9 @@ function scallopedDisc(scallops: number, radius: number, bump: number): string {
  * La pastille, quand la carte s'est refermée.
  *
  * Elle porte le décompte des vingt-quatre heures et rien d'autre : un clic
- * rouvre l'offre. En bas à droite, au-dessus de la page, hors du flux — elle ne
- * doit pas pousser l'étagère vers le bas à chaque chargement.
+ * rouvre l'offre. En bas à droite, hors du flux — et au-dessus du bouton
+ * « Réviser ce cours » quand il flotte, pour que les deux pastilles ne se
+ * mordent pas.
  *
  * Elle compte en secondes, pas en centièmes : sur vingt-quatre heures, des
  * centièmes qui défilent dans un coin de l'écran sont un clignotant.
@@ -419,24 +421,26 @@ export function DiscountBadge({
   if (left <= 0) return null;
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-label={t("app.paywall.reopenOffer", { time: discount.countdownLabel(left) })}
-      className="pressable fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-pill bg-offer-sky px-4 py-3 text-white shadow-[0_16px_40px_-12px_rgba(11,143,220,0.6)]"
-    >
-      <span aria-hidden className="text-white">
-        <GiftGlyph />
-      </span>
-      <span className="text-left">
-        <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80">
-          {t("app.paywall.yourOffer")}
+    <Float>
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={t("app.paywall.reopenOffer", { time: discount.countdownLabel(left) })}
+        className="app-offer-badge pressable fixed right-4 z-40 flex items-center gap-2.5 rounded-pill bg-offer-sky px-4 py-3 text-white shadow-[0_16px_40px_-12px_rgba(11,143,220,0.6)] lg:right-8"
+      >
+        <span aria-hidden className="text-white">
+          <GiftGlyph />
         </span>
-        <span className="block font-number text-[15px] font-bold tabular-nums" aria-hidden>
-          {discount.countdown(left)}
+        <span className="text-left">
+          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80">
+            {t("app.paywall.yourOffer")}
+          </span>
+          <span className="block font-number text-[15px] font-bold tabular-nums" aria-hidden>
+            {discount.countdown(left)}
+          </span>
         </span>
-      </span>
-    </button>
+      </button>
+    </Float>
   );
 }
 

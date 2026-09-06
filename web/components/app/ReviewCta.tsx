@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 
-import { Float } from "@/components/app/Float";
+import { Float, useFloatDock } from "@/components/app/Float";
 import { useI18n } from "@/lib/i18n/client";
+
+/** Hauteur du bouton flottant (h-9) + 12 px d'écart pour la pastille d'offre. */
+const FLOATING_CTA_DOCK = 48;
 
 /**
  * Le bouton de révision.
@@ -26,6 +29,7 @@ export function ReviewCta({
   const { t } = useI18n();
   const label = title ?? t("app.review.thisCourse");
   const subtitle = detail ?? t("app.review.ctaDetail");
+  useFloatDock(floating ? FLOATING_CTA_DOCK : 0);
   if (floating) {
     return (
       <Float>

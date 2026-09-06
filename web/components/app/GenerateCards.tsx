@@ -16,7 +16,7 @@ import {
 } from "@micabo/core";
 
 import { CountStepper } from "@/components/app/CountStepper";
-import { Float } from "@/components/app/Float";
+import { Float, useFloatDock } from "@/components/app/Float";
 import { GenerateCardsCta } from "@/components/app/GenerateCardsCta";
 import { generateCards } from "@/lib/actions/course";
 import { useI18n } from "@/lib/i18n/client";
@@ -54,6 +54,7 @@ export function GenerateCards({
 
   const total = quotaTotal(quota);
   const capped = isAtCap(quota);
+  useFloatDock(floating ? (open || pending ? 280 : 48) : 0);
 
   function step(kind: CardKind, delta: number) {
     setQuota((current) => {
