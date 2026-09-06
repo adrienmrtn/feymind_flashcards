@@ -109,6 +109,8 @@ export const appFr = {
     lead: "Tes fiches.",
     addTitle: "Ajouter un cours",
     addFormats: "PDF, Word, texte ou YouTube",
+    addDeckTitle: "Ajouter un paquet",
+    addDeckHint: "Des cartes sans cours, ou un import Anki",
     doneHeldBack: "C'est fait. {message}",
     doneTomorrow: "C'est fait. Reviens demain.",
     emptyLead: "Ton premier cours t'attend. PDF, photo, Word ou notes collées.",
@@ -467,6 +469,58 @@ export const appFr = {
     lycee: "Lycée",
     other: "Établissement",
   },
+  deck: {
+    title: "Un paquet de cartes",
+    lead: "Sans cours : du vocabulaire, des dates, des formules. Ou un paquet Anki que tu reprends.",
+    untitled: "Nouveau paquet",
+    nameLabel: "Nom du paquet",
+    namePlaceholder: "Vocabulaire d'allemand, L1",
+    subjectLabel: "Matière, si tu veux",
+    subjectPlaceholder: "Allemand, droit, anatomie…",
+    subjectHint:
+      "Elle range le paquet dans tes filtres, et dit à Micabo pour quelle matière il écrit.",
+    materialLabel: "De quoi partir",
+    materialPlaceholder:
+      "Colle ta liste, tes notes, ton tableau de conjugaison… Micabo en tire les premières cartes.",
+    visibilityLabel: "Qui peut retrouver ce paquet",
+    visibilityHint:
+      "Un paquet n'a pas de fiche, donc pas d'écran où revenir sur ce choix : il se fait ici.",
+    ankiDrop: "Dépose un paquet Anki",
+    ankiHint: "Un fichier .apkg exporté d'Anki, ou tes notes en texte brut.",
+    ankiScope:
+      "Les cartes arrivent telles qu'elles sont écrites, sans passer par le modèle. Les images et l'ordonnancement d'Anki ne suivent pas : ici, tout repart neuf.",
+    chooseAnki: "Choisir un fichier",
+    dropHere: "Lâche-le ici.",
+    reading: "Micabo ouvre le paquet…",
+    ankiFile: "Paquet Anki",
+    cardsFound: "{count, plural, one {# carte trouvée} other {# cartes trouvées}}",
+    skipped: "{count, plural, one {# note écartée} other {# notes écartées}}",
+    capped: "Limité à {limit} cartes",
+    whichDecks: "Quels paquets reprendre",
+    unnamedDeck: "Sans nom",
+    nothingSelected: "Aucun paquet sélectionné.",
+    andMore: "{count, plural, one {et # autre carte} other {et # autres cartes}}",
+    willImport: "{count, plural, one {# carte à reprendre} other {# cartes à reprendre}}",
+    importCards: "Reprendre les cartes",
+    writeCards: "Écrire les cartes",
+    createEmpty: "Ouvrir le paquet",
+    partial: "Le paquet est ouvert, mais toutes les cartes ne sont pas arrivées.",
+    openAnyway: "Ouvrir le paquet",
+    pouring: "Micabo range les cartes…",
+    pouringCount: "{done} / {total}",
+    openingHint: "Une dizaine de secondes, en général.",
+    errors: {
+      notPackage:
+        "Ce fichier n'est pas un paquet Anki. Exporte un .apkg depuis Anki, ou dépose tes notes en texte brut.",
+      noCollection:
+        "Cette archive ne contient pas de collection Anki. Exporte à nouveau depuis Anki, cartes incluses.",
+      empty:
+        "Aucune carte lisible dans ce paquet. Les notes qui ne sont qu'une image ne sont pas reprises.",
+      noZstd:
+        "Ce paquet n'a pas pu être décompressé. Ré-exporte-le en cochant « prise en charge des anciennes versions d'Anki ».",
+      unreadable: "Ce paquet n'a pas pu être lu.",
+    },
+  },
   import: {
     lead: {
       canImport: "Relis d'abord, puis écris la fiche.",
@@ -507,6 +561,10 @@ export const appFr = {
     chooseFile: "Choisir un fichier",
     pasteAction: "Coller du texte",
     youtubeAction: "Une vidéo YouTube",
+    deckAction: "Un paquet de cartes",
+    ankiTitle: "C'est un paquet Anki",
+    ankiHint: "{name} porte des cartes déjà écrites, pas un cours à ficher. Il s'ouvre à côté.",
+    ankiAction: "Ouvrir un paquet",
     optionalTitle: "Titre, si tu veux",
     yourCourse: "Ton cours",
     charCount: "{count, plural, one {# caractère} other {# caractères}}",

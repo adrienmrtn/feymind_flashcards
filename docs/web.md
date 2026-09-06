@@ -58,7 +58,7 @@ Donc :
 | --- | --- | --- |
 | Écran d'ouverture | **Réviser** | **Cours** |
 | Navigation | trois onglets en pied d'écran | une barre latérale, et le clavier |
-| Import | scan, photo, PDF, Word, YouTube | glisser-déposer, coller, YouTube |
+| Import | scan, photo, PDF, Word, YouTube | glisser-déposer, coller, YouTube, **et un paquet Anki** |
 | Session | le pouce, quatre boutons | **le clavier** : espace pour retourner, 1–4 pour noter |
 | Fiche | une colonne, lecture au doigt | une colonne de lecture, **et l'impression** |
 | Parcours d'accueil | 22 écrans | court, et pas le même (voir plus bas) |
@@ -1013,6 +1013,7 @@ supabase functions deploy youtube-transcript
 | --- | --- | --- |
 | Navigation | trois onglets en pied d'écran | **barre latérale** toujours visible, et Cours en écran d'ouverture |
 | Import | scan, photo, PDF, Word, YouTube | **glisser-déposer, collage, YouTube** — pas de scanner, un `input capture` sur un portable ouvrant une webcam |
+| Paquet Anki | — | **`.apkg` lu dans l'onglet**, le seul import du produit qui ne dépense rien |
 | Extraction | PDFKit et reconnaissance de texte, sur l'appareil | **`pdfjs` dans l'onglet** : seul le texte extrait part au modèle |
 | Cartes | une par une, sous le pouce | **en table**, pour en corriger vingt à la suite |
 | Session | quatre boutons, le pouce | **le clavier** : espace retourne, 1 à 4 notent |

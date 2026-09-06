@@ -41,6 +41,10 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
   // referme donc le gratuit ici dans la seconde.
   const { readable, locked } = entitlement.splitSheet(course.blocks, right);
   const minutes = readingMinutes(course.context_text);
+  // **Un paquet est un cours sans fiche** : il n'y a rien à lire, donc pas de colonne de
+  // lecture et pas d'avertissement sur une fiche manquante. C'est prévu depuis le schéma,
+  // et l'iPhone range les paquets dans la même liste.
+  const isDeck = course.source === "deck" && course.blocks.length === 0;
 
   return (
     <article className="pb-24">
@@ -57,7 +61,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
           <p className="eyebrow text-ink-tertiary">
             {[
               course.subject ? displaySubject(course.subject, locale) : null,
-              t("app.course.readTime", { minutes }),
+              isDeck ? t("app.course.source.deck") : t("app.course.readTime", { minutes }),
               t("copy.audience", {
                 views: course.view_count ?? 0,
                 adopts: course.adopt_count ?? 0,
@@ -136,13 +140,15 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
         <VisibilityPicker courseId={course.id} initial={course.visibility} />
       </div>
 
-      <div className="mt-10" data-tour="fiche-texte">
-        <SheetReader courseId={course.id} blocks={readable} tint={tint} />
+      {isDeck ? null : (
+        <div className="mt-10" data-tour="fiche-texte">
+          <SheetReader courseId={course.id} blocks={readable} tint={tint} />
 
-        {locked.length > 0 ? <LockedSheetTail blocks={locked} tint={tint} /> : null}
-      </div>
+          {locked.length > 0 ? <LockedSheetTail blocks={locked} tint={tint} /> : null}
+        </div>
+      )}
 
-      {course.blocks.length === 0 ? (
+      {!isDeck && course.blocks.length === 0 ? (
         <p className="mt-8 rounded-group bg-caution-soft px-5 py-4 text-[14px] text-ink-reading">
           {t("app.course.noReadableSheet")}
         </p>

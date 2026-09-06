@@ -1423,6 +1423,30 @@ jamais (`CourseSource.expectsSheet`), et « Générer avec l'IA » disparaît d'
 mènerait qu'à une erreur. Il n'a pas non plus d'empreinte : deux paquets du même nom ne sont pas
 un doublon, puisque rien n'a été importé.
 
+### Reprendre un paquet Anki
+
+Le web ouvre la même porte (`/app/paquet`, `lib/actions/decks.ts`), et il en ouvre une seconde que
+l'iPhone n'a pas : **un `.apkg` déposé dans la page**. C'est le seul import du produit qui ne
+dépense rien — les cartes sont déjà écrites, il n'y a personne à faire rédiger — et c'est ce qui
+permet d'arriver avec quatre ans de vocabulaire au lieu de recommencer.
+
+Un `.apkg` est un ZIP dont la collection **est une base SQLite**. Le réflexe serait `sql.js`, donc
+un mégaoctet et demi de WebAssembly pour exécuter des requêtes qu'on n'écrit pas : `lib/import/`
+relit quatre tables entières, sans jointure et sans index, donc le format de fichier est lu à la
+main (`sqlite.ts` : en-tête, `sqlite_master`, descente d'arbre B, pages de débordement, codage des
+enregistrements). Une seule dépendance s'ajoute, `fzstd`, et seulement en import dynamique : Anki
+moderne écrit `collection.anki21b`, compressé en zstd, et personne qui dépose un PDF n'a à payer
+ce décodeur. Les deux schémas d'Anki sont lus - les paquets vivent dans un JSON de la table `col`
+avant 2.1.28, dans une table `decks` après.
+
+Ce qui **ne suit pas** est aussi un choix. Les intervalles d'Anki sortent de ses propres options de
+paquet : recopiés ici, ils donneraient des échéances que la file d'étude ne sait pas expliquer, et
+une carte due dans huit mois le jour de l'import. Tout repart neuf. Les médias non plus ne suivent
+pas — une image d'Anki vit dans le ZIP sous un nom numéroté — donc les notes qui ne sont qu'une
+image sont comptées et annoncées, plutôt que versées vides. Les textes à trous, eux, sont fidèles :
+`{{c1::…}}` donne **une carte par numéro**, les autres trous découverts, exactement comme Anki, et
+avec la graphie du blanc du produit (`ClozeGap`).
+
 ## Types de cartes
 
 Une carte recto verso muette ne sert ni l'anatomie, ni les langues, ni la physique. Cinq
