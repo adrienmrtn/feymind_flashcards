@@ -12,29 +12,31 @@ import UIKit
 /// texte de onze points sur un fond pastel, `accentVivid` ne sert qu'aux surfaces
 /// sur lesquelles rien n'est écrit — jauges, barres, remplissages.
 enum MicaboColor {
+    private static var palette: MicaboPalette { AppearanceStore.shared.palette }
+
     // Fonds
-    static let canvas = Color(hex: 0xF2F4F7)
-    static let surface = Color.white
-    static let surfaceMuted = Color(hex: 0xE8ECF1)
-    static let surfaceSunken = Color(hex: 0xDEE3EA)
-    static let stroke = Color(hex: 0xE5E7EB)
-    static let strokeStrong = Color(hex: 0xD1D5DB)
+    static var canvas: Color { palette.canvas }
+    static var surface: Color { palette.surface }
+    static var surfaceMuted: Color { palette.surfaceMuted }
+    static var surfaceSunken: Color { palette.surfaceSunken }
+    static var stroke: Color { palette.stroke }
+    static var strokeStrong: Color { palette.strokeStrong }
 
     /// Filet de séparation entre deux rangées, dans un bloc blanc ou sur le fond.
-    static let hairline = Color(hex: 0xE5E7EB)
-    static let hairlineOnCanvas = Color(hex: 0xD8DCE3)
+    static var hairline: Color { palette.hairline }
+    static var hairlineOnCanvas: Color { palette.hairlineOnCanvas }
 
     // Encre
-    static let ink = Color(hex: 0x111827)
-    static let inkSecondary = Color(hex: 0x6B7280)
-    static let inkTertiary = Color(hex: 0x6B7280)
+    static var ink: Color { palette.ink }
+    static var inkSecondary: Color { palette.inkSecondary }
+    static var inkTertiary: Color { palette.inkTertiary }
 
     /// Encre des longs paragraphes d'une fiche. Un noir de titre tenu sur trente lignes
     /// fatigue : celui-ci est un cran plus doux, sans retomber dans le brun.
-    static let inkReading = Color(hex: 0x1F2937)
+    static var inkReading: Color { palette.inkReading }
 
     /// Encre des versos de carte et des puces non sélectionnées.
-    static let inkBody = Color(hex: 0x4B5563)
+    static var inkBody: Color { palette.inkBody }
 
     /// Le jaune du surligneur de la fiche.
     ///
@@ -49,57 +51,56 @@ enum MicaboColor {
     ///
     /// Le texte surligné garde son encre : un fond jaune **et** une encre de couleur, ce
     /// sont deux marques pour une seule intention.
-    static let sheetMarker = Color(hex: 0xF5D76E)
+    static var sheetMarker: Color { palette.sheetMarker }
 
-    // Sur fond sombre
-    static let onInk = Color.white
-    static let onInkMuted = Color(hex: 0x9CA3AF)
+    // Sur fond d'accent / de bouton plein
+    static var onInk: Color { palette.onInk }
+    static var onInkMuted: Color { palette.onInkMuted }
 
-    /// Fond des écrans qui ne sont ni une liste ni une lecture. Même gris que `canvas` :
-    /// plus de papier teinté.
-    static let canvasSage = canvas
+    /// Fond des écrans qui ne sont ni une liste ni une lecture.
+    static var canvasSage: Color { palette.canvasSage }
 
     /// Accent unique de l'app : sélection, onglet actif, éléments interactifs.
     ///
     /// Assez sombre pour qu'une pastille de onze points reste lisible sur `accentSoft`.
-    static let accent = Color(hex: 0x2563EB)
-    static let accentSoft = Color(hex: 0xDBEAFE)
+    static var accent: Color { palette.accent }
+    static var accentSoft: Color { palette.accentSoft }
 
     /// Le bleu des **grandes** surfaces, et d'elles seules : un curseur, un histogramme,
     /// un remplissage. Il ne porte jamais de texte.
-    static let accentVivid = Color(hex: 0x3B82F6)
+    static var accentVivid: Color { palette.accentVivid }
 
     /// Toute progression porte cette couleur, sans exception : jauge du parcours
     /// d'accueil, barre de session, anneaux, curseurs, indicateurs d'attente.
     /// Une seule couleur pour « ça avance », sinon l'utilisateur cherche un sens
     /// derrière chaque nuance.
-    static let progress = accent
-    static let progressTrack = Color(hex: 0xE5E7EB)
+    static var progress: Color { accent }
+    static var progressTrack: Color { palette.progressTrack }
 
     /// Retours d'information. Ils étaient désaturés au point de se ressembler tous ; ils
     /// sont remontés d'un cran, parce qu'un écran de révision doit dire « juste » et
     /// « faux » sans qu'on plisse les yeux. `positive` reste plus forestier que l'accent :
     /// deux verts qui veulent dire deux choses ne peuvent pas être le même vert.
-    static let positive = Color(hex: 0x3F7D53)
-    static let caution = Color(hex: 0xB3872B)
+    static var positive: Color { palette.positive }
+    static var caution: Color { palette.caution }
     /// Le jaune des **grandes** surfaces, et d'elles seules : la cloche du rappel d'essai.
     ///
     /// Même partage que `accent` et `accentVivid`. `caution` est assombri pour porter du
     /// texte de onze points sur un fond pastel, ce qui en fait un ocre terne dès qu'on le
     /// tient sur cent points de haut ; celui-ci est le jaune qu'on attend d'une cloche, et
     /// il ne porte jamais rien d'écrit.
-    static let cautionVivid = Color(hex: 0xE8B23C)
-    static let negative = Color(hex: 0xC93B2B)
+    static var cautionVivid: Color { palette.cautionVivid }
+    static var negative: Color { palette.negative }
     /// Le rouge du bouton « À revoir » : plus terre que `negative`, pour
     /// rester dans le papier plutôt que dans l'alerte système.
-    static let ratingAgain = Color(hex: 0xB5573C)
-    static let info = Color(hex: 0x3A6FC4)
+    static var ratingAgain: Color { palette.ratingAgain }
+    static var info: Color { palette.info }
 
     // Fonds doux assortis : notation en session, pastilles d'état.
-    static let positiveSoft = Color(hex: 0xDCFCE7)
-    static let cautionSoft = Color(hex: 0xFEF3C7)
-    static let negativeSoft = Color(hex: 0xFEE2E2)
-    static let infoSoft = Color(hex: 0xDBEAFE)
+    static var positiveSoft: Color { palette.positiveSoft }
+    static var cautionSoft: Color { palette.cautionSoft }
+    static var negativeSoft: Color { palette.negativeSoft }
+    static var infoSoft: Color { palette.infoSoft }
 
     /// **Les couleurs de l'offre cadeau**, et d'elle seule.
     ///
@@ -113,8 +114,8 @@ enum MicaboColor {
     /// bleu ciel sur le téléphone puis indigo sur le site ferait douter du prix.
     static let offerSky = Color(hex: 0x12A3F2)
     static let offerSkyDeep = Color(hex: 0x0B8FDC)
-    static let offerWash = Color(hex: 0xC4E7FA)
-    static let offerWashSoft = Color(hex: 0xEAF7FE)
+    static var offerWash: Color { palette.offerWash }
+    static var offerWashSoft: Color { palette.offerWashSoft }
     /// Le violet de la minuterie, et rien d'autre : c'est la seule chose de la carte qui
     /// compte à rebours, et elle ne doit pas se confondre avec le bleu qui vend.
     static let offerUrgency = Color(hex: 0x5B46E5)
@@ -136,14 +137,7 @@ enum MicaboColor {
     ]
 
     /// Pastels des tuiles d'icône, quand aucune teinte de cours n'est disponible.
-    static let tilePastels: [Color] = [
-        Color(hex: 0xDBEAFE),
-        Color(hex: 0xE0E7FF),
-        Color(hex: 0xE5E7EB),
-        Color(hex: 0xE0F2FE),
-        Color(hex: 0xF3E8FF),
-        Color(hex: 0xF1F5F9)
-    ]
+    static var tilePastels: [Color] { palette.tilePastels }
 }
 
 enum MicaboSpacing {
@@ -386,18 +380,26 @@ extension Color {
         return String(format: "%02X%02X%02X", red, green, blue)
     }
 
-    /// Mélange avec du blanc : utilisé pour dériver un fond pastel à partir d'une teinte de cours.
+    /// Mélange vers le papier : blanc le jour, surface sombre la nuit et au crépuscule.
     func lightened(by amount: Double) -> Color {
         var red: CGFloat = 0
         var green: CGFloat = 0
         var blue: CGFloat = 0
         var alpha: CGFloat = 0
         UIColor(self).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        var targetRed: CGFloat = 1
+        var targetGreen: CGFloat = 1
+        var targetBlue: CGFloat = 1
+        if AppearanceStore.shared.appearance.isDark {
+            var unused: CGFloat = 1
+            UIColor(AppearanceStore.shared.palette.surface)
+                .getRed(&targetRed, green: &targetGreen, blue: &targetBlue, alpha: &unused)
+        }
         let amount = CGFloat(amount)
         return Color(
-            red: red + (1 - red) * amount,
-            green: green + (1 - green) * amount,
-            blue: blue + (1 - blue) * amount,
+            red: red + (targetRed - red) * amount,
+            green: green + (targetGreen - green) * amount,
+            blue: blue + (targetBlue - blue) * amount,
             opacity: alpha
         )
     }
@@ -431,7 +433,11 @@ struct MicaboCardStyle: ViewModifier {
             .padding(padding)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .shadow(
-                color: Color.black.opacity(elevated ? 0.04 : 0.02),
+                color: Color.black.opacity(
+                    elevated
+                        ? AppearanceStore.shared.palette.cardShadow
+                        : AppearanceStore.shared.palette.cardShadow * 0.5
+                ),
                 radius: elevated ? 14 : 6,
                 x: 0,
                 y: elevated ? 7 : 2
@@ -449,7 +455,7 @@ extension View {
     func micaboGroup(radius: CGFloat = MicaboRadius.group) -> some View {
         background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 4)
+            .shadow(color: Color.black.opacity(AppearanceStore.shared.palette.groupShadow), radius: 10, x: 0, y: 4)
     }
 
     /// Ombre douce des éléments posés sur le fond, sans passer par une carte complète.

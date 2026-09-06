@@ -3,6 +3,7 @@
 import type { Route } from "next";
 import Link from "next/link";
 
+import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/lib/i18n/client";
@@ -48,6 +49,9 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
             <p className="mt-2.5 text-[13.5px] leading-relaxed text-ink-secondary">
               {t("landing.footerTagline")}
             </p>
+            <div className="mt-4">
+              <AppearanceSwitcher variant="compact" />
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-x-14 gap-y-8 text-[13.5px]">

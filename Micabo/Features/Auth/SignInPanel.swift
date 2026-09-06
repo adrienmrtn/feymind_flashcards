@@ -150,6 +150,7 @@ struct SignInScreen: View {
                 MicaboBrandLockup(size: 28)
             }
             Spacer(minLength: 8)
+            AppearanceSwitcher(variant: .compact)
             if showsLanguageSwitcher {
                 LanguageSwitcher(variant: .compact)
             }

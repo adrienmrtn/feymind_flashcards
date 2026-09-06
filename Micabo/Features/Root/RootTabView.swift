@@ -21,7 +21,7 @@ struct RootTabView: View {
     @State private var router = TabRouter()
 
     init() {
-        Self.configureAppearance()
+        Self.configureChrome()
     }
 
     var body: some View {
@@ -75,14 +75,12 @@ struct RootTabView: View {
         }
         .tint(MicaboColor.accent)
         .environment(router)
+        .onChange(of: AppearanceStore.shared.appearance) { _, _ in
+            Self.configureChrome()
+        }
     }
 
-    private static var didConfigureAppearance = false
-
-    private static func configureAppearance() {
-        guard !didConfigureAppearance else { return }
-        didConfigureAppearance = true
-
+    private static func configureChrome() {
         let navigationBar = UINavigationBarAppearance()
         navigationBar.configureWithOpaqueBackground()
         navigationBar.backgroundColor = UIColor(MicaboColor.canvas)
