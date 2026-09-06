@@ -196,7 +196,8 @@
    Base
    -------------------------------------------------------------------------- */
 
-:root {
+:root,
+[data-appearance="day"] {
   color-scheme: light;
   --background: var(--color-canvas);
   --foreground: var(--color-ink);
@@ -220,7 +221,187 @@
   --warning-foreground: var(--color-caution);
   --border: var(--color-stroke);
   --input: var(--color-stroke-strong);
-  --ring: #0b8a66;
+  --ring: #2563eb;
+}
+
+/* --------------------------------------------------------------------------
+   Nuit et crépuscule
+
+   Tout passe par les jetons. Une couleur en dur dans un composant resterait
+   blanche (ou noire) quand le reste de la page bascule. Les deux modes
+   sombres portent aussi `.dark` sur `html`, pour que les variantes Tailwind
+   déjà posées suivent.
+
+   Nuit : papier froid, bleu inchangé. Crépuscule : la même page sous une
+   lampe, surfaces chaudes, accent encore bleu - pas un thème sépia générique.
+   -------------------------------------------------------------------------- */
+
+[data-appearance="night"] {
+  color-scheme: dark;
+  --color-canvas: #101216;
+  --color-surface: #1a1d24;
+  --color-surface-muted: #252830;
+  --color-surface-sunken: #0c0d10;
+  --color-stroke: rgba(255, 255, 255, 0.08);
+  --color-stroke-strong: rgba(255, 255, 255, 0.14);
+  --color-hairline: rgba(255, 255, 255, 0.08);
+  --color-hairline-on-canvas: rgba(255, 255, 255, 0.06);
+  --color-ink: #e8eaee;
+  --color-ink-secondary: #9aa1ab;
+  --color-ink-tertiary: #8b919a;
+  --color-ink-reading: #d5d8de;
+  --color-on-ink: #101216;
+  --color-on-ink-muted: #6b7280;
+  --color-canvas-sage: #141a16;
+  --color-accent: #60a5fa;
+  --color-accent-soft: #1e3a5f;
+  --color-accent-vivid: #3b82f6;
+  --color-progress: #60a5fa;
+  --color-progress-track: #2a2e36;
+  --color-sheet-marker: #c9a227;
+  --color-positive: #6fbf86;
+  --color-caution: #d4a84b;
+  --color-caution-vivid: #e8b23c;
+  --color-negative: #e06a5a;
+  --color-info: #7eb0e8;
+  --color-positive-soft: #1a2a1e;
+  --color-caution-soft: #2e2614;
+  --color-negative-soft: #2f1a16;
+  --color-info-soft: #182433;
+  --color-offer-wash: #163247;
+  --color-offer-wash-soft: #12202c;
+  --color-sidebar: #14161b;
+  --color-sidebar-foreground: #9aa1ab;
+  --color-sidebar-accent: rgba(255, 255, 255, 0.06);
+  --color-sidebar-accent-foreground: #e8eaee;
+  --color-sidebar-border: rgba(255, 255, 255, 0.08);
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-accent);
+  --color-primary-foreground: var(--color-on-ink);
+  --color-secondary: var(--color-surface-muted);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-surface-muted);
+  --color-muted-foreground: var(--color-ink-secondary);
+  --color-accent-foreground: var(--color-on-ink);
+  --color-destructive: var(--color-negative);
+  --color-border: var(--color-stroke);
+  --color-input: var(--color-stroke-strong);
+  --color-ring: #60a5fa;
+  --background: var(--color-canvas);
+  --foreground: var(--color-ink);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-accent);
+  --primary-foreground: var(--color-on-ink);
+  --secondary: var(--color-surface-muted);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-surface-muted);
+  --muted-foreground: var(--color-ink-secondary);
+  --destructive: var(--color-negative);
+  --destructive-foreground: var(--color-negative);
+  --info: var(--color-info);
+  --info-foreground: var(--color-info);
+  --success: var(--color-positive);
+  --success-foreground: var(--color-positive);
+  --warning: var(--color-caution);
+  --warning-foreground: var(--color-caution);
+  --border: var(--color-stroke);
+  --input: var(--color-stroke-strong);
+  --ring: #60a5fa;
+  --shadow-paper: 0 0 0 1px oklch(1 0 0 / 0.08), 0 1px 2px 0 oklch(0 0 0 / 0.35);
+  --shadow-paper-hover: 0 0 0 1px oklch(1 0 0 / 0.12), 0 2px 6px 0 oklch(0 0 0 / 0.4);
+  --shadow-floating: 0 0 0 1px oklch(1 0 0 / 0.08), 0 10px 28px -8px oklch(0 0 0 / 0.55);
+}
+
+[data-appearance="twilight"] {
+  color-scheme: dark;
+  --color-canvas: #1c1612;
+  --color-surface: #2a211b;
+  --color-surface-muted: #362b23;
+  --color-surface-sunken: #15110e;
+  --color-stroke: rgba(243, 230, 212, 0.1);
+  --color-stroke-strong: rgba(243, 230, 212, 0.16);
+  --color-hairline: rgba(243, 230, 212, 0.1);
+  --color-hairline-on-canvas: rgba(243, 230, 212, 0.08);
+  --color-ink: #f3e6d4;
+  --color-ink-secondary: #c4b09a;
+  --color-ink-tertiary: #a89480;
+  --color-ink-reading: #ead9c4;
+  --color-on-ink: #1c1612;
+  --color-on-ink-muted: #8a7a68;
+  --color-canvas-sage: #1f1a14;
+  --color-accent: #8bb0ff;
+  --color-accent-soft: #2a3348;
+  --color-accent-vivid: #7aa2ff;
+  --color-progress: #8bb0ff;
+  --color-progress-track: #3a3028;
+  --color-sheet-marker: #c9a227;
+  --color-positive: #8fbf8a;
+  --color-caution: #e0b84a;
+  --color-caution-vivid: #e8b23c;
+  --color-negative: #e07a68;
+  --color-info: #8bb0ff;
+  --color-positive-soft: #24301f;
+  --color-caution-soft: #3a2e16;
+  --color-negative-soft: #3a1e18;
+  --color-info-soft: #222838;
+  --color-offer-wash: #243040;
+  --color-offer-wash-soft: #1c222c;
+  --color-sidebar: #211a15;
+  --color-sidebar-foreground: #c4b09a;
+  --color-sidebar-accent: rgba(243, 230, 212, 0.08);
+  --color-sidebar-accent-foreground: #f3e6d4;
+  --color-sidebar-border: rgba(243, 230, 212, 0.1);
+  --color-background: var(--color-canvas);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-accent);
+  --color-primary-foreground: var(--color-on-ink);
+  --color-secondary: var(--color-surface-muted);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-surface-muted);
+  --color-muted-foreground: var(--color-ink-secondary);
+  --color-accent-foreground: var(--color-on-ink);
+  --color-destructive: var(--color-negative);
+  --color-border: var(--color-stroke);
+  --color-input: var(--color-stroke-strong);
+  --color-ring: #8bb0ff;
+  --background: var(--color-canvas);
+  --foreground: var(--color-ink);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-accent);
+  --primary-foreground: var(--color-on-ink);
+  --secondary: var(--color-surface-muted);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-surface-muted);
+  --muted-foreground: var(--color-ink-secondary);
+  --destructive: var(--color-negative);
+  --destructive-foreground: var(--color-negative);
+  --info: var(--color-info);
+  --info-foreground: var(--color-info);
+  --success: var(--color-positive);
+  --success-foreground: var(--color-positive);
+  --warning: var(--color-caution);
+  --warning-foreground: var(--color-caution);
+  --border: var(--color-stroke);
+  --input: var(--color-stroke-strong);
+  --ring: #8bb0ff;
+  --shadow-paper: 0 0 0 1px oklch(0.95 0.04 70 / 0.08), 0 1px 2px 0 oklch(0 0 0 / 0.35);
+  --shadow-paper-hover: 0 0 0 1px oklch(0.95 0.04 70 / 0.12), 0 2px 6px 0 oklch(0 0 0 / 0.4);
+  --shadow-floating: 0 0 0 1px oklch(0.95 0.04 70 / 0.08), 0 10px 28px -8px oklch(0 0 0 / 0.55);
 }
 
 html {
@@ -660,6 +841,11 @@ video {
   border-radius: var(--radius-group);
   background: var(--color-surface);
   box-shadow: 0 0 0 1px oklch(0 0 0 / 0.1);
+}
+
+[data-appearance="night"] .source-tile-frame,
+[data-appearance="twilight"] .source-tile-frame {
+  box-shadow: 0 0 0 1px oklch(1 0 0 / 0.1);
 }
 
 .source-tile-image {
@@ -1267,6 +1453,21 @@ video {
 .app-shell {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --radius: 0.625rem;
+  --radius-tile: 10px;
+  --radius-button: 10px;
+  --radius-group: 18px;
+  --radius-sheet: 18px;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Le blanc de micabo OS ne tient que le jour. Nuit et crépuscule gardent
+   les jetons posés sur `html` — sinon la sidebar et les cartes restent
+   un rectangle blanc dans une page sombre. */
+[data-appearance="day"] .app-shell,
+html:not([data-appearance]) .app-shell {
   --color-canvas: #ffffff;
   --color-surface: #ffffff;
   --color-surface-muted: rgba(0, 0, 0, 0.04);
@@ -1300,17 +1501,9 @@ video {
   --sidebar-accent: rgba(0, 0, 0, 0.04);
   --sidebar-accent-foreground: #262626;
   --sidebar-border: rgba(0, 0, 0, 0.06);
-  --radius: 0.625rem;
-  --radius-tile: 10px;
-  --radius-button: 10px;
-  --radius-group: 18px;
-  --radius-sheet: 18px;
   --shadow-paper: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-paper-hover: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-floating: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 28px rgba(0, 0, 0, 0.06);
-  background: #ffffff;
-  color: #262626;
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 .app-shell .saas-card {
@@ -1371,6 +1564,33 @@ video {
 
 .app-shell .btn-arrow {
   translate: none;
+}
+
+[data-appearance="night"] .app-shell,
+[data-appearance="twilight"] .app-shell {
+  --primary: var(--color-ink);
+  --primary-foreground: var(--color-canvas);
+  --accent: var(--color-surface-muted);
+  --accent-foreground: var(--color-ink);
+  --sidebar: var(--color-sidebar);
+  --sidebar-foreground: var(--color-sidebar-foreground);
+  --sidebar-accent: var(--color-sidebar-accent);
+  --sidebar-accent-foreground: var(--color-sidebar-accent-foreground);
+  --sidebar-border: var(--color-sidebar-border);
+}
+
+[data-appearance="night"] .app-shell .saas-card,
+[data-appearance="twilight"] .app-shell .saas-card,
+[data-appearance="night"] .app-shell .paper,
+[data-appearance="twilight"] .app-shell .paper {
+  box-shadow: var(--shadow-paper);
+}
+
+[data-appearance="night"] img,
+[data-appearance="night"] video,
+[data-appearance="twilight"] img,
+[data-appearance="twilight"] video {
+  outline-color: oklch(1 0 0 / 0.1);
 }
 
 @keyframes os-fade-in {

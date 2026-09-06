@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { SignOutButton } from "@/components/app/SignOutButton";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
@@ -65,6 +66,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
                 />
               </div>
               <span className="flex-1" />
+              <AppearanceSwitcher variant="compact" />
               {pathname !== "/commencer/bienvenue" ? <LanguageSwitcher /> : null}
               <OnboardingLogout />
             </header>

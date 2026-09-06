@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { Hanken_Grotesk, Inter, Nunito } from "next/font/google";
 
+import { AppearanceProvider } from "@/components/appearance/AppearanceProvider";
 import { AuthReturnCatcher } from "@/components/landing/AuthReturnCatcher";
 import { PreviewBanner } from "@/components/PreviewBanner";
+import {
+  APPEARANCE_BOOT_SCRIPT,
+  APPEARANCE_THEME_COLOR,
+  appearanceIsDark,
+} from "@/lib/appearance";
+import { readAppearance } from "@/lib/appearance-server";
 import { I18nProvider } from "@/lib/i18n/client";
 import { catalogFor } from "@/lib/i18n/catalogs";
 import { UI_LOCALE_META } from "@/lib/i18n/locales";
@@ -102,22 +109,35 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = {
   // La couleur de la barre du navigateur suit le papier : une bande blanche au-dessus d'un fond
-  // teinté fait lire une bordure là où il n'y en a pas.
-  themeColor: "#f6f7f9",
+  // teinté fait lire une bordure là où il n'y en a pas. Nuit et crépuscule la remplacent
+  // au moment du choix (`applyAppearance`).
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: APPEARANCE_THEME_COLOR.day },
+    { color: APPEARANCE_THEME_COLOR.day },
+  ],
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await readUiLocale();
+  const [locale, appearance] = await Promise.all([readUiLocale(), readAppearance()]);
   return (
-    <html lang={UI_LOCALE_META[locale].html} className={`${hanken.variable} ${inter.variable} ${nunito.variable}`}>
+    <html
+      lang={UI_LOCALE_META[locale].html}
+      data-appearance={appearance}
+      className={`${hanken.variable} ${inter.variable} ${nunito.variable}${appearanceIsDark(appearance) ? " dark" : ""}`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOT_SCRIPT }} />
+      </head>
       <body className="relative antialiased">
         <I18nProvider locale={locale} messages={catalogFor(locale) as unknown as MessageTree}>
-          <SiteStructuredData />
-          <div className="relative isolate flex min-h-svh flex-col">
-            <PreviewBanner />
-            <AuthReturnCatcher />
-            {children}
-          </div>
+          <AppearanceProvider initial={appearance}>
+            <SiteStructuredData />
+            <div className="relative isolate flex min-h-svh flex-col bg-canvas text-ink">
+              <PreviewBanner />
+              <AuthReturnCatcher />
+              {children}
+            </div>
+          </AppearanceProvider>
         </I18nProvider>
       </body>
     </html>

@@ -2,8 +2,10 @@
 
 import { GrainGradient, MeshGradient } from "@paper-design/shaders-react";
 
+import { useAppearance } from "@/components/appearance/AppearanceProvider";
 import { WhenWebGL } from "@/components/landing/WhenWebGL";
 import { SHADER_BUDGET } from "@/components/landing/shader-budget";
+import { APPEARANCE_SHADER } from "@/lib/appearance";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 /**
@@ -14,8 +16,6 @@ import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
  * comme une animation. Deux formes, deux endroits, et on s'arrête.
  */
 
-const MESH_COLORS = ["#dce8dc", "#f6f7f9", "#16c08c", "#0b8a66"];
-const GRAIN_COLORS = ["#d7e6d8", "#f6f7f9", "#16c08c"];
 
 const SOFT_BUDGET = {
   ...SHADER_BUDGET,
@@ -25,6 +25,8 @@ const SOFT_BUDGET = {
 /** Tache mesh derrière une page de porte (connexion, compte). */
 export function SoftMesh() {
   const reduced = usePrefersReducedMotion();
+  const { appearance } = useAppearance();
+  const palette = APPEARANCE_SHADER[appearance];
 
   return (
     <div
@@ -48,7 +50,7 @@ export function SoftMesh() {
           className="absolute inset-0 opacity-50"
           width="100%"
           height="100%"
-          colors={MESH_COLORS}
+          colors={palette.mesh}
           distortion={0.42}
           swirl={0.16}
           grainMixer={0.08}
@@ -67,6 +69,8 @@ export function SoftMesh() {
 /** Grain posé en haut de l'app, assez pâle pour rester du papier. */
 export function SoftGrain() {
   const reduced = usePrefersReducedMotion();
+  const { appearance } = useAppearance();
+  const palette = APPEARANCE_SHADER[appearance];
 
   return (
     <div
@@ -83,8 +87,8 @@ export function SoftGrain() {
           className="absolute inset-0 opacity-40"
           width="100%"
           height="100%"
-          colorBack="#f6f7f9"
-          colors={GRAIN_COLORS}
+          colorBack={palette.back}
+          colors={palette.grain}
           shape="wave"
           softness={0.86}
           intensity={0.16}

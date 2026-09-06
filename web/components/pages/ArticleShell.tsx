@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
 import { Footer } from "@/components/landing/Footer";
 import { StartButton } from "@/components/landing/StartButton";
@@ -69,7 +70,10 @@ export function ArticleShell({
             })}
           </nav>
 
-          <StartButton size="compact" />
+          <div className="flex shrink-0 items-center gap-2">
+            <AppearanceSwitcher variant="compact" />
+            <StartButton size="compact" />
+          </div>
         </div>
       </header>
 

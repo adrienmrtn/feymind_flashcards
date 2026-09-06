@@ -139,7 +139,7 @@ function SourceGlyph({ id, emoji }: { id: string; emoji: string }) {
   }, [src]);
 
   return (
-    <div className="flex h-14 w-[3.35rem] items-center justify-center overflow-hidden rounded-[10px] bg-surface shadow-[0_0_0_1px_oklch(0_0_0/0.1)]">
+    <div className="flex h-14 w-[3.35rem] items-center justify-center overflow-hidden rounded-[10px] bg-surface shadow-[0_0_0_1px_var(--color-stroke-strong)]">
       {ready ? (
         <img src={src} alt="" className="h-full w-full object-cover" />
       ) : (

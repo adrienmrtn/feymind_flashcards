@@ -383,6 +383,11 @@ export const fr = {
     siteLanguage: "Langue du site",
     siteLanguageHelp:
       "Les textes du site. Les fiches déjà écrites restent dans leur langue.",
+    appearance: "Apparence",
+    appearanceHelp: "Jour, nuit ou crépuscule. Ça reste sur cet appareil.",
+    appearanceDay: "Jour",
+    appearanceNight: "Nuit",
+    appearanceTwilight: "Crépuscule",
     you: "Toi",
     sheetLanguage: "Langue des fiches",
     sheetLanguageHelp:

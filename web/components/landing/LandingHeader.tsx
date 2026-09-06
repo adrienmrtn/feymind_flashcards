@@ -1,5 +1,6 @@
 "use client";
 
+import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
@@ -58,6 +59,7 @@ export function LandingHeader({ signedIn = false }: { signedIn?: boolean }) {
         </nav>
 
         <div className="flex min-w-0 items-center justify-end gap-1 sm:gap-2">
+          <AppearanceSwitcher variant="compact" />
           <LanguageSwitcher />
           <StartButton signedIn={signedIn} size="compact" />
         </div>

@@ -2,6 +2,8 @@
 
 import { GrainGradient } from "@paper-design/shaders-react";
 
+import { useAppearance } from "@/components/appearance/AppearanceProvider";
+import { APPEARANCE_SHADER } from "@/lib/appearance";
 import { useI18n } from "@/lib/i18n/client";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
@@ -9,8 +11,6 @@ import { Reveal } from "./Reveal";
 import { SHADER_BUDGET } from "./shader-budget";
 import { StartButton } from "./StartButton";
 import { WhenWebGL } from "./WhenWebGL";
-
-const WASH_COLORS = ["#d7e6d8", "#f6f7f9", "#16c08c"];
 
 /**
  * Le dernier appel : un lavage grainé, en tache, derrière le titre.
@@ -20,6 +20,8 @@ const WASH_COLORS = ["#d7e6d8", "#f6f7f9", "#16c08c"];
 export function ClosingWash({ signedIn = false }: { signedIn?: boolean }) {
   const reduced = usePrefersReducedMotion();
   const { t } = useI18n();
+  const { appearance } = useAppearance();
+  const wash = APPEARANCE_SHADER[appearance];
 
   return (
     <section className="relative mx-auto mt-28 max-w-page overflow-hidden px-screen pb-12 text-center">
@@ -45,8 +47,8 @@ export function ClosingWash({ signedIn = false }: { signedIn?: boolean }) {
             className="absolute inset-0 opacity-90"
             width="100%"
             height="100%"
-            colorBack="#f6f7f9"
-            colors={WASH_COLORS}
+            colorBack={wash.back}
+            colors={wash.grain}
             shape="blob"
             softness={0.78}
             intensity={0.3}
