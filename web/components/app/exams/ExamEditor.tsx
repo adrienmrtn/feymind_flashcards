@@ -59,12 +59,6 @@ type Step = "jour" | "cours" | "intensite";
 
 const STEPS: Step[] = ["jour", "cours", "intensite"];
 
-const INTENSITY_KEY: Record<ExamIntensity, "light" | "standard" | "intense"> = {
-  light: "light",
-  standard: "standard",
-  intense: "intense",
-};
-
 /**
  * Ajouter un examen : **trois questions, jamais plein écran.**
  *
@@ -432,7 +426,6 @@ function IntensityStep({
   load: number[];
 }) {
   const scale = desiredGradeScale(countryCode);
-  const intensity = intensityFromTargetScore(targetScore);
 
   return (
     <div>
@@ -442,9 +435,6 @@ function IntensityStep({
       </h2>
       <p className="mt-6 text-center text-[32px] font-bold leading-none text-ink">
         {desiredGradeLabel(targetScore, countryCode)}
-      </p>
-      <p className="mt-2 text-center text-[13.5px] text-ink-secondary">
-        {t(`app.exams.${INTENSITY_KEY[intensity]}`)}
       </p>
       <div className="mt-6 flex items-center gap-3">
         <span className="numeral w-12 shrink-0 text-[12.5px] text-ink-tertiary">

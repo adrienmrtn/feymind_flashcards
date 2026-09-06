@@ -164,23 +164,30 @@ function TodayTasks({
           <ul className="divide-y divide-hairline">
             {tasks.map(({ course, due }) => (
               <li key={course.id} className="flex items-center gap-3 py-3 first:pt-1 last:pb-0">
-                <span
-                  aria-hidden
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-tile text-[18px]"
-                  style={{
-                    backgroundColor: `${course.accent_hex ?? courseAccent(course.id)}1f`,
-                  }}
+                <Link
+                  href={`/app/c/${course.id}` as never}
+                  className="hover-row -mx-2 flex min-w-0 flex-1 items-center gap-3 rounded-tile px-2 py-1"
                 >
-                  {resolveEmoji(course.emoji, course.subject, course.title)}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-medium text-ink">
-                    {course.title || t("app.course.untitled")}
+                  <span
+                    aria-hidden
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-tile text-[18px]"
+                    style={{
+                      backgroundColor: `${course.accent_hex ?? courseAccent(course.id)}1f`,
+                    }}
+                  >
+                    {resolveEmoji(course.emoji, course.subject, course.title)}
                   </span>
-                  <span className="numeral mt-0.5 block text-[13px] text-ink-tertiary">
-                    {t("app.home.tasks.dueCards", { count: due })}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-medium text-ink">
+                      <span className="underline-draw">
+                        {course.title || t("app.course.untitled")}
+                      </span>
+                    </span>
+                    <span className="numeral mt-0.5 block text-[13px] text-ink-tertiary">
+                      {t("app.home.tasks.dueCards", { count: due })}
+                    </span>
                   </span>
-                </span>
+                </Link>
                 <Button
                   size="sm"
                   variant="outline"
