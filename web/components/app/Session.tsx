@@ -343,7 +343,7 @@ export function Session({
                 <span className="numeral mt-0.5 block text-[12px] opacity-70">
                   {labels[rating]}
                 </span>
-                <kbd className="mt-1.5 inline-block rounded-[5px] bg-black/8 px-1.5 text-[10px] font-medium">
+                <kbd className="mt-1.5 inline-block rounded-[5px] bg-ink/8 px-1.5 text-[10px] font-medium">
                   {rating}
                 </kbd>
               </button>

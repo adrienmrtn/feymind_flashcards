@@ -14,6 +14,7 @@ import { ProfileSettings } from "@/components/app/ProfileSettings";
 import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
 import { ReplayPaywallOnboarding } from "@/components/app/ReplayPaywallOnboarding";
 import { ReplayTour } from "@/components/app/ReplayTour";
+import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { T } from "@/components/i18n/T";
 import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
@@ -64,6 +65,8 @@ export default async function SettingsPage() {
         />
 
         <LanguageSwitcher variant="card" />
+
+        <AppearanceSwitcher />
 
         <div className="min-w-0 lg:col-span-2" data-tour="reglages-toi">
           <ProfileSettings

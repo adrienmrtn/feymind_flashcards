@@ -5,6 +5,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n/client";
@@ -135,7 +136,10 @@ function AccountStepBody() {
             className="text-ink"
             wordClassName="text-[15px] font-bold text-ink"
           />
-          <LanguageSwitcher />
+          <div className="flex items-center gap-2">
+            <AppearanceSwitcher variant="compact" />
+            <LanguageSwitcher />
+          </div>
         </div>
 
         <h1 className="mt-8 text-[32px] font-bold leading-[1.08] tracking-display text-ink sm:text-[38px] text-balance">

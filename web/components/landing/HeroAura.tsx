@@ -2,12 +2,12 @@
 
 import { MeshGradient } from "@paper-design/shaders-react";
 
+import { useAppearance } from "@/components/appearance/AppearanceProvider";
+import { APPEARANCE_SHADER } from "@/lib/appearance";
 import { usePrefersReducedMotion } from "@/lib/usePrefersReducedMotion";
 
 import { SHADER_BUDGET } from "./shader-budget";
 import { WhenWebGL } from "./WhenWebGL";
-
-const AURA_COLORS = ["#dbeafe", "#f6f7f9", "#3b82f6", "#2563eb"];
 
 /**
  * La lueur du hero : un mesh bleu et gris, masqué en ellipse.
@@ -18,6 +18,8 @@ const AURA_COLORS = ["#dbeafe", "#f6f7f9", "#3b82f6", "#2563eb"];
  */
 export function HeroAura() {
   const reduced = usePrefersReducedMotion();
+  const { appearance } = useAppearance();
+  const colors = APPEARANCE_SHADER[appearance].mesh;
 
   return (
     <div
@@ -39,7 +41,7 @@ export function HeroAura() {
           className="absolute inset-0 opacity-90"
           width="100%"
           height="100%"
-          colors={AURA_COLORS}
+          colors={colors}
           distortion={0.62}
           swirl={0.28}
           grainMixer={0.12}

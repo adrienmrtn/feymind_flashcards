@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 
+import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/profile";
@@ -176,12 +177,15 @@ export function AppChrome({
               </Button>
               <HeaderTitle />
             </div>
-            <Button variant="ghost" size="sm" onClick={() => void leave()} disabled={leaving}>
-              <LogOut />
-              <span className="hidden sm:inline">
-                {leaving ? t("app.auth.signingOut") : t("app.auth.signOut")}
-              </span>
-            </Button>
+            <div className="flex shrink-0 items-center gap-2">
+              <AppearanceSwitcher variant="compact" />
+              <Button variant="ghost" size="sm" onClick={() => void leave()} disabled={leaving}>
+                <LogOut />
+                <span className="hidden sm:inline">
+                  {leaving ? t("app.auth.signingOut") : t("app.auth.signOut")}
+                </span>
+              </Button>
+            </div>
           </div>
         </header>
 

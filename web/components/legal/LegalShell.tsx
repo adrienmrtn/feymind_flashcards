@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Footer } from "@/components/landing/Footer";
@@ -40,6 +41,7 @@ export function LegalShell({
             wordClassName="text-[15px] font-bold tracking-tight text-ink"
           />
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <AppearanceSwitcher variant="compact" />
             <LanguageSwitcher />
             <Link
               href="/"
