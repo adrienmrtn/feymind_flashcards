@@ -13,7 +13,13 @@ import { useI18n } from "@/lib/i18n/client";
  * CloudSync n'emporte pas ce champ avec le reste du profil : un iPhone en
  * retard n'écraserait pas le nom qu'on vient de changer ici.
  */
-export function UsernameField({ initial }: { initial: string }) {
+export function UsernameField({
+  initial,
+  className,
+}: {
+  initial: string;
+  className?: string;
+}) {
   const { t } = useI18n();
   const [value, setValue] = useState(initial);
   const [message, setMessage] = useState<string | null>(null);
@@ -39,7 +45,7 @@ export function UsernameField({ initial }: { initial: string }) {
   }
 
   return (
-    <div className="mt-7">
+    <div className={className ?? "mt-7"}>
       <div className="flex items-baseline justify-between gap-3">
         <label htmlFor="profile-username" className="text-[13px] text-ink-tertiary">
           {t("app.settings.usernameLabel")}
