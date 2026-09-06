@@ -84,7 +84,7 @@ function InsightBody({ insight }: { insight: ExamInsight }) {
       </div>
 
       <p className="numeral mt-4 text-[32px] font-bold leading-none text-ink sm:mt-5 sm:text-[40px]">
-        <span className="sheet-marker">{insight.gradeLabel}</span>
+        {insight.gradeLabel}
       </p>
       <p className="mt-1.5 text-[13px] text-ink-tertiary">{t("app.exams.targetGrade")}</p>
 
