@@ -11,10 +11,8 @@ import { LandingHeader } from "@/components/landing/LandingHeader";
 import { Questions } from "@/components/landing/Questions";
 import { RetentionChart } from "@/components/landing/RetentionChart";
 import { Reveal } from "@/components/landing/Reveal";
-import { SourceMarquee } from "@/components/landing/SourceMarquee";
 import { currentUser } from "@/lib/data/user";
 import { T } from "@/components/i18n/T";
-import { listedLandingSourceImages } from "@/lib/landing-source-images";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
 import { getTranslator } from "@/lib/i18n/server";
 import { ANKI_PAGE, EXAM_PAGE, METHOD_PAGE } from "@/lib/site-pages";
@@ -68,8 +66,6 @@ export default async function LandingPage({
       <LandingHeader signedIn={signedIn} />
       <main id="contenu">
         <Hero signedIn={signedIn} />
-
-        <SourceMarquee availableIds={listedLandingSourceImages()} />
 
         <Section
           id={LANDING_SECTIONS.cards}
