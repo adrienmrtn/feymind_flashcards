@@ -85,19 +85,22 @@ export function ProfileSettings({
         </p>
       </div>
 
-      <label htmlFor="profile-name" className="mt-5 block text-[13px] text-ink-tertiary">
-        {t("app.settings.displayNameLabel")}
-      </label>
-      <input
-        id="profile-name"
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        onBlur={() => save({ displayName: name })}
-        placeholder={t("app.settings.displayNamePlaceholder")}
-        className="mt-2 h-12 w-full rounded-button bg-surface-muted px-4 text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
-      />
-
-      <UsernameField initial={initialUsername} />
+      <div className="mt-5 grid min-w-0 gap-x-6 lg:grid-cols-2">
+        <div className="min-w-0">
+          <label htmlFor="profile-name" className="block text-[13px] text-ink-tertiary">
+            {t("app.settings.displayNameLabel")}
+          </label>
+          <input
+            id="profile-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            onBlur={() => save({ displayName: name })}
+            placeholder={t("app.settings.displayNamePlaceholder")}
+            className="mt-2 h-12 w-full rounded-button bg-surface-muted px-4 text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
+          />
+        </div>
+        <UsernameField className="mt-7 lg:mt-0" initial={initialUsername} />
+      </div>
 
       <p className="mt-7 text-[13px] text-ink-tertiary">{t("app.settings.subjects")}</p>
       <div className="mt-2.5 max-h-[220px] space-y-4 overflow-y-auto pr-1">
@@ -154,55 +157,57 @@ export function ProfileSettings({
         />
       </div>
 
-      <div className="mt-7">
-        <div className="flex items-baseline justify-between gap-3">
-          <label htmlFor="profile-minutes" className="text-[13px] text-ink-tertiary">
-            {t("app.settings.dailyPace")}
-          </label>
-          <p className="text-[13px] font-medium text-ink">
-            {dailyMinutesLabel(minutes)}{" "}
-            <span className="text-ink-tertiary">
-              · {t("app.settings.newCardsPerDay", { count: newCardsPerDay(minutes) })}
-            </span>
-          </p>
+      <div className="mt-7 grid min-w-0 gap-7 lg:grid-cols-2">
+        <div>
+          <div className="flex items-baseline justify-between gap-3">
+            <label htmlFor="profile-minutes" className="text-[13px] text-ink-tertiary">
+              {t("app.settings.dailyPace")}
+            </label>
+            <p className="text-[13px] font-medium text-ink">
+              {dailyMinutesLabel(minutes)}{" "}
+              <span className="text-ink-tertiary">
+                · {t("app.settings.newCardsPerDay", { count: newCardsPerDay(minutes) })}
+              </span>
+            </p>
+          </div>
+          <input
+            id="profile-minutes"
+            type="range"
+            min={0}
+            max={DAILY_MINUTES_STEPS.length - 1}
+            value={Math.max(0, DAILY_MINUTES_STEPS.indexOf(minutes))}
+            onChange={(event) => {
+              const next = DAILY_MINUTES_STEPS[Number(event.target.value)] ?? minutes;
+              setMinutes(next);
+            }}
+            onPointerUp={() => save({ dailyMinutes: minutes })}
+            onKeyUp={() => save({ dailyMinutes: minutes })}
+            className="mt-4 w-full accent-[var(--color-accent)]"
+          />
         </div>
-        <input
-          id="profile-minutes"
-          type="range"
-          min={0}
-          max={DAILY_MINUTES_STEPS.length - 1}
-          value={Math.max(0, DAILY_MINUTES_STEPS.indexOf(minutes))}
-          onChange={(event) => {
-            const next = DAILY_MINUTES_STEPS[Number(event.target.value)] ?? minutes;
-            setMinutes(next);
-          }}
-          onPointerUp={() => save({ dailyMinutes: minutes })}
-          onKeyUp={() => save({ dailyMinutes: minutes })}
-          className="mt-4 w-full accent-[var(--color-accent)]"
-        />
-      </div>
 
-      <div className="mt-7">
-        <div className="flex items-baseline justify-between gap-3">
-          <label htmlFor="profile-blocks" className="text-[13px] text-ink-tertiary">
-            {t("app.settings.sheetLength")}
-          </label>
-          <p className="text-[13px] font-medium text-ink">
-            {sheetLengthTitle(length)}{" "}
-            <span className="text-ink-tertiary">· {readingHint(blocks)}</span>
-          </p>
+        <div>
+          <div className="flex items-baseline justify-between gap-3">
+            <label htmlFor="profile-blocks" className="text-[13px] text-ink-tertiary">
+              {t("app.settings.sheetLength")}
+            </label>
+            <p className="text-[13px] font-medium text-ink">
+              {sheetLengthTitle(length)}{" "}
+              <span className="text-ink-tertiary">· {readingHint(blocks)}</span>
+            </p>
+          </div>
+          <input
+            id="profile-blocks"
+            type="range"
+            min={BLOCK_BOUNDS.min}
+            max={BLOCK_BOUNDS.max}
+            value={blocks}
+            onChange={(event) => setBlocks(clampBlocks(Number(event.target.value)))}
+            onPointerUp={() => save({ sheetBlocks: blocks })}
+            onKeyUp={() => save({ sheetBlocks: blocks })}
+            className="mt-4 w-full accent-[var(--color-accent)]"
+          />
         </div>
-        <input
-          id="profile-blocks"
-          type="range"
-          min={BLOCK_BOUNDS.min}
-          max={BLOCK_BOUNDS.max}
-          value={blocks}
-          onChange={(event) => setBlocks(clampBlocks(Number(event.target.value)))}
-          onPointerUp={() => save({ sheetBlocks: blocks })}
-          onKeyUp={() => save({ sheetBlocks: blocks })}
-          className="mt-4 w-full accent-[var(--color-accent)]"
-        />
       </div>
     </div>
   );

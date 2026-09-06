@@ -43,7 +43,7 @@ export default async function SettingsPage() {
   const handle = profile?.username ?? "";
 
   return (
-    <div className="mx-auto max-w-[560px]">
+    <>
       <header>
         <h1 className="text-lg font-semibold tracking-tight text-foreground">
           <T k="settings.title" />
@@ -53,7 +53,7 @@ export default async function SettingsPage() {
         </p>
       </header>
 
-      <div className="mt-5 space-y-4">
+      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
         <SubscriptionCard
           paid={entitlement.isPaid(right)}
           store={right.store ?? null}
@@ -63,7 +63,9 @@ export default async function SettingsPage() {
           productId={right.productId ?? null}
         />
 
-        <div data-tour="reglages-toi">
+        <LanguageSwitcher variant="card" />
+
+        <div className="min-w-0 lg:col-span-2" data-tour="reglages-toi">
           <ProfileSettings
             initialName={profile?.display_name ?? ""}
             initialUsername={handle}
@@ -78,8 +80,6 @@ export default async function SettingsPage() {
           />
         </div>
 
-        <LanguageSwitcher variant="card" />
-
         <section className="saas-card p-7" data-tour="reglages-langue">
           <SheetLanguageCard
             initial={sheetLanguage(profile?.sheet_language, profile?.country_code)}
@@ -90,7 +90,7 @@ export default async function SettingsPage() {
         <FeedbackCard />
 
         {canReadInbox(user?.email) ? (
-          <p className="px-1 text-[13.5px]">
+          <p className="px-1 text-[13.5px] lg:col-span-2">
             <Link href={"/app/retours" as never} className="underline-draw font-medium text-ink">
               Lire les retours
             </Link>
@@ -110,10 +110,11 @@ export default async function SettingsPage() {
           </div>
         </section>
 
-        <ExportData />
-
-        <DeleteAccount email={user?.email ?? ""} />
+        <div className="grid min-w-0 gap-4">
+          <ExportData />
+          <DeleteAccount email={user?.email ?? ""} />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
