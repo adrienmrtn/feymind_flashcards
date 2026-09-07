@@ -10,6 +10,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { startCheckout } from "@/lib/actions/checkout";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { useI18n } from "@/lib/i18n/client";
+import { useLocalizedHref } from "@/lib/i18n/href";
 import {
   planDisplayedUnit,
   planRenewalCopy,
@@ -37,6 +38,8 @@ export function PaywallOffer({
   extraAction?: ReactNode;
 }) {
   const { t } = useI18n();
+  const termsHref = useLocalizedHref(TERMS_PATH);
+  const privacyHref = useLocalizedHref(PRIVACY_PATH);
   const [chosen, setChosen] = useState<pricing.PlanKind>("yearly");
   const [checkout, setCheckout] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -134,11 +137,11 @@ export function PaywallOffer({
         ) : (
           <p className="mt-3 text-center text-[12px] leading-relaxed text-ink-tertiary">
             {t("app.paywall.legalLead")}{" "}
-            <Link href={TERMS_PATH} className="underline underline-offset-2">
+            <Link href={termsHref} className="underline underline-offset-2">
               {t("app.paywall.legalTerms")}
             </Link>{" "}
             {t("app.paywall.legalAnd")}{" "}
-            <Link href={PRIVACY_PATH} className="underline underline-offset-2">
+            <Link href={privacyHref} className="underline underline-offset-2">
               {t("app.paywall.legalPrivacy")}
             </Link>
             .

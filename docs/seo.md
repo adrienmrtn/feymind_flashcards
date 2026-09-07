@@ -101,30 +101,38 @@ Le nom au-dessus de l'URL (`micabo`, pas `micabo.app`) vient de `WebSite.name`,
 lui donner le signal, puis redemander l'indexation. Une marque inventée peut rester
 affichée comme le domaine pendant des jours ou des semaines.
 
-## Inventaire des pages indexables (phase 0)
+## Inventaire des pages indexables
 
-Une URL, une langue servie au robot aujourd'hui : le français (défaut, cookie
-absent). Les préfixes `/tr` `/de` `/es` ne sont **pas** encore là — sans eux,
-Google n'indexe qu'une version par adresse. Ce que cette phase a réglé : plus
-aucun corps d'article figé en français. Un visiteur dont le navigateur est en
-turc lit `/methode` en turc. Le titre dans Google restera français tant que
-l'URL unique n'aura pas de sœur préfixée.
+Une URL publique = une langue. Le français n'a pas de préfixe (`/methode`).
+L'allemand, l'espagnol et le turc ont le leur (`/tr/methode`, `/de/methode`,
+`/es/methode`). `x-default` est le français. Il n'y a pas d'anglais.
 
-| URL | Dans le sitemap | `noindex` | Corps |
-|---|---|---|---|
-| `/` | oui | non | catalogues (`landing.*`) |
-| `/methode` | oui (0,8) | non | catalogues (`articles.method.*`) |
-| `/mode-examen` | oui (0,8) | non | catalogues (`articles.exam.*`) |
-| `/micabo-ou-anki` | oui (0,7) | non | catalogues (`articles.anki.*`) |
-| `/confidentialite` | oui (0,3) | non | catalogues (`legal.privacy.*`) |
-| `/conditions` | oui (0,3) | non | catalogues (`legal.terms.*`) |
-| `/app/*`, `/commencer/*`, `/connexion`, `/auth/*`, `/fondations` | non | oui (`X-Robots-Tag`) | hors sujet |
+Sur une page indexable, **l'adresse seule** décide de la langue. Un cookie
+turc ou un `Accept-Language: tr` sur `/methode` sert encore le français —
+sinon Googlebot et le visiteur ne verraient pas la même chose. Les écrans
+privés (`/app`, `/commencer`) n'ont pas de préfixe : le cookie suffit, ils
+sont `noindex`.
 
-Les trois articles étaient les seules pages publiques dont le **titre, l'extrait
-et le texte** étaient écrits en dur en français (`site-pages.ts`, les `page.tsx`,
-`ArticleShell`). C'est ce qui a été sorti. Ils restent dans le sitemap et
-explorables : rien à « ré-indexer » côté robots — seulement à redemander
-l'indexation dans Search Console après fusion, pour que Google relise le HTML.
+| URL | Variantes | Sitemap | `noindex` | Corps |
+|---|---|---|---|---|
+| `/` | `/de` `/es` `/tr` | oui × 4 | non | catalogues (`landing.*`) |
+| `/methode` | `/de/methode` … | oui × 4 (0,8) | non | catalogues (`articles.method.*`) |
+| `/mode-examen` | `/de/mode-examen` … | oui × 4 (0,8) | non | catalogues (`articles.exam.*`) |
+| `/micabo-ou-anki` | `/de/micabo-ou-anki` … | oui × 4 (0,7) | non | catalogues (`articles.anki.*`) |
+| `/confidentialite` | `/de/confidentialite` … | oui × 4 (0,3) | non | catalogues (`legal.privacy.*`) |
+| `/conditions` | `/de/conditions` … | oui × 4 (0,3) | non | catalogues (`legal.terms.*`) |
+| `/app/*`, `/commencer/*`, `/connexion`, `/auth/*`, `/fondations` | aucune | non | oui (`X-Robots-Tag`) | hors sujet |
+
+`/fr` et `/fr/methode` redirigent en 301 vers la version nue. `/tr/app`
+redirige en 302 vers `/app` et pose le cookie : l'app n'a pas de préfixe.
+
+Chaque page indexable pose le même jeu `hreflang` dans le HTML et dans
+`sitemap.xml` : les quatre langues plus `x-default` → français. Un oubli
+d'un côté, Google jette le jeu entier.
+
+Ne **jamais** rediriger `/` vers `/tr` d'après `Accept-Language`. Le robot
+arriverait en turc, ou pire : il verrait une redirection et n'indexerait
+plus l'accueil français.
 
 ## Les sitelinks : ce qui se fait et ce qui ne se fait pas
 
@@ -165,8 +173,12 @@ obligatoire.
    et citer le sitemap. S'il dit encore `Disallow: /`, le déploiement n'est pas celui de
    production (`IS_INDEXABLE` ne s'allume que si `VERCEL_ENV=production`).
 
-Répète l'inspection pour `/methode`, `/mode-examen` et `/micabo-ou-anki` : ce sont les
-pages que Google peut proposer sous le résultat principal.
+Répète l'inspection pour `/methode`, `/mode-examen` et `/micabo-ou-anki`, puis
+pour une variante préfixée de chaque (`/tr`, `/tr/methode`, `/de/mode-examen`,
+`/es/micabo-ou-anki`). Sans ça, Google n'a que le français dans l'index.
+
+Il n'y a rien à régler dans « ciblage international » : les `hreflang`
+réciproques suffisent. Ne pas activer une redirection par pays dans Vercel.
 
 ### 2. Les sitelinks (les sous-liens sous le résultat)
 

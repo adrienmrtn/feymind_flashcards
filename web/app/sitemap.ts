@@ -1,51 +1,49 @@
 import type { MetadataRoute } from "next";
 
 import { CANONICAL_URL } from "@/lib/config";
+import { UI_LOCALES } from "@/lib/i18n/locales";
+import { INDEXABLE_PATHS, languageAlternatePaths, localizedPath } from "@/lib/i18n/paths";
 import { SITE_PAGES } from "@/lib/site-pages";
 
 /**
- * Les pages publiques, et rien d'autre.
+ * Les pages publiques, **dans les quatre langues**.
  *
- * Un sitemap n'améliore pas un classement : il dit à Google **quoi lire et dans quel
- * ordre**. Y mettre les écrans de l'app connectée serait pire que de ne rien mettre, parce
- * que chacun répond par une redirection vers la connexion et fait baisser la confiance
- * accordée au fichier entier.
- *
- * `priority` est relatif à ce seul fichier : il ne compare pas Micabo à un autre site, il
- * dit lequel de nos écrans compte le plus si Google n'a le temps que d'un.
- *
- * Les pages de contenu viennent de `lib/site-pages.ts`, qui sert aussi au pied de page et aux
- * liens croisés. Une page listée là est donc **forcément** ici : le sitemap est le fichier
- * qu'on oublie de mettre à jour, et une page absente est une page que Google trouvera des
- * semaines plus tard, par un lien, s'il en trouve un.
+ * Chaque URL a son jeu `hreflang` dans le sitemap, le même que dans le HTML.
+ * Les deux doivent dire la même chose.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const updated = new Date("2026-08-30");
+  const updated = new Date("2026-09-07");
+  const priorityOf = (path: string): number => {
+    if (path === "/") return 1;
+    const page = SITE_PAGES.find((item) => item.path === path);
+    return page?.priority ?? 0.3;
+  };
+  const frequency = (path: string): "weekly" | "monthly" | "yearly" => {
+    if (path === "/") return "weekly";
+    if (path === "/confidentialite" || path === "/conditions") return "yearly";
+    return "monthly";
+  };
 
-  return [
-    {
-      url: `${CANONICAL_URL}/`,
-      lastModified: updated,
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-    ...SITE_PAGES.map((page) => ({
-      url: `${CANONICAL_URL}${page.path}`,
-      lastModified: updated,
-      changeFrequency: "monthly" as const,
-      priority: page.priority,
-    })),
-    {
-      url: `${CANONICAL_URL}/confidentialite`,
-      lastModified: updated,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-    {
-      url: `${CANONICAL_URL}/conditions`,
-      lastModified: updated,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-  ];
+  return INDEXABLE_PATHS.flatMap((path) => {
+    const languages = languageAlternatePaths(path);
+    const alternates = {
+      languages: {
+        fr: `${CANONICAL_URL}${languages.fr === "/" ? "/" : languages.fr}`,
+        de: `${CANONICAL_URL}${languages.de}`,
+        es: `${CANONICAL_URL}${languages.es}`,
+        tr: `${CANONICAL_URL}${languages.tr}`,
+        "x-default": `${CANONICAL_URL}${languages.fr === "/" ? "/" : languages.fr}`,
+      },
+    };
+    return UI_LOCALES.map((locale) => {
+      const href = localizedPath(locale, path);
+      return {
+        url: href === "/" ? `${CANONICAL_URL}/` : `${CANONICAL_URL}${href}`,
+        lastModified: updated,
+        changeFrequency: frequency(path),
+        priority: priorityOf(path),
+        alternates,
+      };
+    });
+  });
 }

@@ -7,6 +7,7 @@ import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
 import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/lib/i18n/client";
+import { localizedHref } from "@/lib/i18n/paths";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { SITE_PAGES, siteNavKey } from "@/lib/site-pages";
@@ -19,14 +20,14 @@ import { SITE_PAGES, siteNavKey } from "@/lib/site-pages";
  * s'ouvre par **Commencer**. Une session déjà ouverte remplace ça par Ouvrir l'app.
  */
 export function Footer({ signedIn = false }: { signedIn?: boolean }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const product = [
     { href: `#${LANDING_SECTIONS.method}`, label: t("site.method") },
     { href: `#${LANDING_SECTIONS.exam}`, label: t("site.exam") },
     { href: `#${LANDING_SECTIONS.questions}`, label: t("site.questions") },
   ];
   const pages = SITE_PAGES.map((page) => ({
-    path: page.path,
+    path: localizedHref(locale, page.path),
     label: t(siteNavKey(page.id)),
   }));
   return (
@@ -36,7 +37,7 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
         <div className="flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-[34ch]">
             <BrandLockup
-              href="/"
+              href={localizedHref(locale, "/")}
               size={32}
               className="text-ink"
               wordClassName="text-[15px] font-bold text-ink"
@@ -115,12 +116,12 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
               <p className="eyebrow mb-3 text-ink-tertiary">{t("landing.footerLegal")}</p>
               <ul className="space-y-1.5 text-ink-secondary">
                 <li>
-                  <Link href={PRIVACY_PATH} className="underline-draw" data-print="bare">
+                  <Link href={localizedHref(locale, PRIVACY_PATH)} className="underline-draw" data-print="bare">
                     {t("common.privacy")}
                   </Link>
                 </li>
                 <li>
-                  <Link href={TERMS_PATH} className="underline-draw" data-print="bare">
+                  <Link href={localizedHref(locale, TERMS_PATH)} className="underline-draw" data-print="bare">
                     {t("common.terms")}
                   </Link>
                 </li>
@@ -132,11 +133,11 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
         <p className="mt-12 text-[12px] text-ink-tertiary">
           © {new Date().getFullYear()} Micabo
           <span aria-hidden> · </span>
-          <Link href={PRIVACY_PATH} className="underline-draw">
+          <Link href={localizedHref(locale, PRIVACY_PATH)} className="underline-draw">
             {t("common.privacy")}
           </Link>
           <span aria-hidden> · </span>
-          <Link href={TERMS_PATH} className="underline-draw">
+          <Link href={localizedHref(locale, TERMS_PATH)} className="underline-draw">
             {t("common.terms")}
           </Link>
         </p>

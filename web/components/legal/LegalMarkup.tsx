@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { useI18n } from "@/lib/i18n/client";
+import { useLocalizedHref } from "@/lib/i18n/href";
 import {
   LEGAL_CONTACT,
   LEGAL_EDITOR,
@@ -26,6 +27,8 @@ const PIECE =
 
 export function LegalMarkup({ text }: { text: string }) {
   const { t } = useI18n();
+  const termsHref = useLocalizedHref(TERMS_PATH);
+  const privacyHref = useLocalizedHref(PRIVACY_PATH);
   const parts = text.split(PIECE).filter(Boolean);
 
   return (
@@ -51,14 +54,14 @@ export function LegalMarkup({ text }: { text: string }) {
         }
         if (part === "[[terms]]") {
           return (
-            <Link key={index} href={TERMS_PATH} className="underline-draw text-ink">
+            <Link key={index} href={termsHref} className="underline-draw text-ink">
               {t("legal.terms.linkLabel")}
             </Link>
           );
         }
         if (part === "[[privacy]]") {
           return (
-            <Link key={index} href={PRIVACY_PATH} className="underline-draw text-ink">
+            <Link key={index} href={privacyHref} className="underline-draw text-ink">
               {t("legal.privacy.linkLabel")}
             </Link>
           );

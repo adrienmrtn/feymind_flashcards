@@ -9,6 +9,7 @@ import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n/client";
+import { useLocalizedHref } from "@/lib/i18n/href";
 import { SoftMesh } from "@/components/atmosphere/SoftAtmosphere";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,9 @@ type Pending = "apple" | "google" | "email" | null;
 
 function ConnexionBody() {
   const { t } = useI18n();
+  const homeHref = useLocalizedHref("/");
+  const termsHref = useLocalizedHref(TERMS_PATH);
+  const privacyHref = useLocalizedHref(PRIVACY_PATH);
   const router = useRouter();
   const [pending, setPending] = useState<Pending>(null);
   const [email, setEmail] = useState("");
@@ -145,7 +149,7 @@ function ConnexionBody() {
       <div className="relative">
         <div className="flex items-center justify-between gap-3">
           <BrandLockup
-            href="/"
+            href={homeHref}
             size={28}
             className="text-ink"
             wordClassName="text-[15px] font-bold text-ink"
@@ -261,11 +265,11 @@ function ConnexionBody() {
 
         <p className="mt-8 text-[12.5px] leading-relaxed text-ink-tertiary">
           {t("onboarding.legalPrefix")}{" "}
-          <Link href={TERMS_PATH} className="underline-draw text-ink-secondary">
+          <Link href={termsHref} className="underline-draw text-ink-secondary">
             {t("onboarding.legalTerms")}
           </Link>{" "}
           {t("onboarding.legalAnd")}{" "}
-          <Link href={PRIVACY_PATH} className="underline-draw text-ink-secondary">
+          <Link href={privacyHref} className="underline-draw text-ink-secondary">
             {t("onboarding.legalPrivacy")}
           </Link>
           .

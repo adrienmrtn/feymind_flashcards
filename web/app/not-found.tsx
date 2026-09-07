@@ -1,10 +1,11 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { localizedHref } from "@/lib/i18n/paths";
 import { getTranslator } from "@/lib/i18n/server";
 
 export default async function NotFound() {
-  const { t } = await getTranslator();
+  const { t, locale } = await getTranslator();
   return (
     <main className="mx-auto flex min-h-dvh max-w-[680px] flex-col justify-center px-6">
       <p className="text-[13px] font-medium text-ink-tertiary">404</p>
@@ -13,7 +14,7 @@ export default async function NotFound() {
       <Button
         variant="link"
         className="mt-8 h-auto w-fit px-0 text-[15px] text-accent"
-        render={<Link href="/" />}
+        render={<Link href={localizedHref(locale, "/")} />}
       >
         {t("common.notFoundHome")}
       </Button>

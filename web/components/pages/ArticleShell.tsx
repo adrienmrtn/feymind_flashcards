@@ -3,9 +3,11 @@ import Link from "next/link";
 
 import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Footer } from "@/components/landing/Footer";
 import { StartButton } from "@/components/landing/StartButton";
 import { CANONICAL_URL, IS_INDEXABLE } from "@/lib/config";
+import { localizedHref, localizedPath } from "@/lib/i18n/paths";
 import { getTranslator } from "@/lib/i18n/server";
 import { UI_LOCALE_META } from "@/lib/i18n/locales";
 import {
@@ -53,7 +55,7 @@ export async function ArticleShell({
         </a>
         <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-6 px-screen">
           <BrandLockup
-            href="/"
+            href={localizedHref(locale, "/")}
             size={28}
             className="shrink-0 text-foreground"
             wordClassName="text-[15px] font-bold tracking-tight text-foreground"
@@ -65,7 +67,7 @@ export async function ArticleShell({
               return (
                 <Link
                   key={item.path}
-                  href={item.path}
+                  href={localizedHref(locale, item.path)}
                   aria-current={current ? "page" : undefined}
                   className={
                     current
@@ -79,8 +81,9 @@ export async function ArticleShell({
             })}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-2">
             <AppearanceSwitcher variant="compact" />
+            <LanguageSwitcher />
             <StartButton size="compact" />
           </div>
         </div>
@@ -164,7 +167,7 @@ export function ArticleNote({ children }: { children: ReactNode }) {
 }
 
 async function NextToRead({ current }: { current: SitePage }) {
-  const { t } = await getTranslator();
+  const { t, locale } = await getTranslator();
   const rest = otherPages(current);
 
   return (
@@ -174,7 +177,7 @@ async function NextToRead({ current }: { current: SitePage }) {
         {rest.map((page) => (
           <li key={page.path}>
             <Link
-              href={page.path}
+              href={localizedHref(locale, page.path)}
               className="lift block h-full rounded-group border border-stroke bg-surface p-5 transition-[border-color] duration-hover ease-out-strong hover:border-stroke-strong"
             >
               <p className="text-[16px] font-semibold tracking-tight text-ink">
@@ -211,7 +214,9 @@ function ArticleStructuredData({
 }) {
   if (!IS_INDEXABLE) return null;
 
-  const url = `${CANONICAL_URL}${page.path}`;
+  const path = localizedPath(locale, page.path);
+  const url = path === "/" ? `${CANONICAL_URL}/` : `${CANONICAL_URL}${path}`;
+  const home = localizedPath(locale, "/") === "/" ? `${CANONICAL_URL}/` : `${CANONICAL_URL}${localizedPath(locale, "/")}`;
   const graph = {
     "@context": "https://schema.org",
     "@graph": [
@@ -234,7 +239,7 @@ function ArticleStructuredData({
             "@type": "ListItem",
             position: 1,
             name: "Micabo",
-            item: `${CANONICAL_URL}/`,
+            item: home,
           },
           {
             "@type": "ListItem",

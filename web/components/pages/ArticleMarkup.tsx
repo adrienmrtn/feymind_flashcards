@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { useI18n } from "@/lib/i18n/client";
+import { useLocalizedHref } from "@/lib/i18n/href";
 import { ANKI_PAGE, EXAM_PAGE, METHOD_PAGE } from "@/lib/site-pages";
 
 /**
@@ -32,6 +33,10 @@ export function ArticleMarkup({
   links?: Partial<Record<ArticleLinkId, string>>;
   linkClassName?: string;
 }) {
+  const methodHref = useLocalizedHref(HREF.method);
+  const examHref = useLocalizedHref(HREF.exam);
+  const ankiHref = useLocalizedHref(HREF.anki);
+  const hrefs = { method: methodHref, exam: examHref, anki: ankiHref };
   const parts = text.split(PIECE).filter(Boolean);
 
   return (
@@ -43,7 +48,7 @@ export function ArticleMarkup({
           const label = links?.[id];
           if (!label) return <span key={index}>{part}</span>;
           return (
-            <Link key={index} href={HREF[id]} className={linkClassName}>
+            <Link key={index} href={hrefs[id]} className={linkClassName}>
               {label}
             </Link>
           );

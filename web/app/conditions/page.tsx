@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 
 import { TermsDoc } from "@/components/legal/TermsDoc";
+import { indexableAlternates } from "@/lib/i18n/alternates";
 import { getTranslator } from "@/lib/i18n/server";
+import { TERMS_PATH } from "@/lib/legal";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getTranslator();
+  const { t, locale } = await getTranslator();
   return {
     title: t("legal.terms.metaTitle"),
     description: t("legal.terms.metaDescription"),
-    alternates: { canonical: "/conditions" },
+    alternates: indexableAlternates(locale, TERMS_PATH),
   };
 }
 

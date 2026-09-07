@@ -7,6 +7,7 @@ import { BrandLockup } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Footer } from "@/components/landing/Footer";
 import { useI18n } from "@/lib/i18n/client";
+import { useLocalizedHref } from "@/lib/i18n/href";
 
 /**
  * Une page de droit, sur le même papier que le reste.
@@ -23,6 +24,7 @@ export function LegalShell({
   children: React.ReactNode;
 }) {
   const { t } = useI18n();
+  const homeHref = useLocalizedHref("/");
 
   return (
     <>
@@ -35,7 +37,7 @@ export function LegalShell({
       <header className="border-b border-hairline-on-canvas">
         <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-3 px-screen">
           <BrandLockup
-            href="/"
+            href={homeHref}
             size={28}
             className="text-ink"
             wordClassName="text-[15px] font-bold tracking-tight text-ink"
@@ -44,7 +46,7 @@ export function LegalShell({
             <AppearanceSwitcher variant="compact" />
             <LanguageSwitcher />
             <Link
-              href="/"
+              href={homeHref}
               className="underline-draw shrink-0 text-[13.5px] text-ink-secondary"
             >
               {t("legal.backHome")}

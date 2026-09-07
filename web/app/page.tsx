@@ -14,6 +14,9 @@ import { Reveal } from "@/components/landing/Reveal";
 import { currentUser } from "@/lib/data/user";
 import { T } from "@/components/i18n/T";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
+import { indexableAlternates } from "@/lib/i18n/alternates";
+import { UI_LOCALE_META } from "@/lib/i18n/locales";
+import { localizedHref, localizedPath } from "@/lib/i18n/paths";
 import { getTranslator } from "@/lib/i18n/server";
 import { ANKI_PAGE, EXAM_PAGE, METHOD_PAGE } from "@/lib/site-pages";
 
@@ -22,11 +25,15 @@ import { ANKI_PAGE, EXAM_PAGE, METHOD_PAGE } from "@/lib/site-pages";
  * serait écrite deux fois dans le titre de la page qui la porte.
  */
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getTranslator();
+  const { t, locale } = await getTranslator();
   return {
     title: { absolute: t("landing.metaTitle") },
     description: t("landing.metaDescription"),
-    alternates: { canonical: "/" },
+    alternates: indexableAlternates(locale, "/"),
+    openGraph: {
+      url: localizedPath(locale, "/"),
+      locale: UI_LOCALE_META[locale].og,
+    },
   };
 }
 
@@ -58,7 +65,7 @@ export default async function LandingPage({
     redirect(`${callback.pathname}${callback.search}` as Route);
   }
 
-  const user = await currentUser();
+  const [{ locale }, user] = await Promise.all([getTranslator(), currentUser()]);
   const signedIn = Boolean(user);
 
   return (
@@ -81,7 +88,7 @@ export default async function LandingPage({
           eyebrow="landing.methodEyebrow"
           title="landing.methodTitle"
           note="landing.methodNote"
-          more={{ href: METHOD_PAGE.path, label: "landing.methodMore" }}
+          more={{ href: localizedHref(locale, METHOD_PAGE.path), label: "landing.methodMore" }}
         >
           <RetentionChart />
         </Section>
@@ -91,7 +98,7 @@ export default async function LandingPage({
           eyebrow="landing.examEyebrow"
           title="landing.examTitle"
           note="landing.examNote"
-          more={{ href: EXAM_PAGE.path, label: "landing.examMore" }}
+          more={{ href: localizedHref(locale, EXAM_PAGE.path), label: "landing.examMore" }}
         >
           <ExamMode />
         </Section>
@@ -101,7 +108,7 @@ export default async function LandingPage({
           eyebrow="landing.questionsEyebrow"
           title="landing.questionsTitle"
           note=""
-          more={{ href: ANKI_PAGE.path, label: "landing.questionsMore" }}
+          more={{ href: localizedHref(locale, ANKI_PAGE.path), label: "landing.questionsMore" }}
         >
           <Questions />
         </Section>

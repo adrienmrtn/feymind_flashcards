@@ -1,11 +1,13 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
+import type { Route } from "next";
+import { usePathname, useRouter } from "next/navigation";
 
 import { setUiLocale } from "@/lib/actions/locale";
 import { useI18n } from "@/lib/i18n/client";
 import { UI_LOCALES, UI_LOCALE_META, type UiLocale } from "@/lib/i18n/locales";
+import { localeSwitchHref } from "@/lib/i18n/paths";
 
 /**
  * La langue du site. Les drapeaux se lisent avant les noms.
@@ -20,6 +22,7 @@ export function LanguageSwitcher({
 }) {
   const { locale, t, pick } = useI18n();
   const router = useRouter();
+  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
 
   function choose(next: UiLocale) {
@@ -27,6 +30,11 @@ export function LanguageSwitcher({
     pick(next);
     startTransition(async () => {
       await setUiLocale(next);
+      const target = localeSwitchHref(pathname, next);
+      if (target) {
+        router.push(target as Route);
+        return;
+      }
       router.refresh();
     });
   }

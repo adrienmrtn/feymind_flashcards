@@ -80,7 +80,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description,
     applicationName: "micabo",
-    alternates: { canonical: "/" },
+    // Canonique et hreflang : chaque page indexable les pose elle-même.
+    // Les poser ici, sur `/`, ferait de toutes les pages un doublon de l'accueil.
     robots: IS_INDEXABLE ? undefined : { index: false, follow: false },
     icons: {
       icon: [

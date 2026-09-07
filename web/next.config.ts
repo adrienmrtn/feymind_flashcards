@@ -59,6 +59,9 @@ const config: NextConfig = {
       //
       // `follow` reste autorisé : ces pages renvoient vers la vitrine et les pages de cadre,
       // et couper le suivi ferait perdre ces liens.
+      //
+      // `/tr`, `/de`, `/es` et leurs articles ne sont **pas** ici : ce sont
+      // les versions indexables. Un `noindex` sur le préfixe casserait hreflang.
       ...[
         "/app",
         "/app/:path*",

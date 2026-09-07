@@ -3,6 +3,7 @@
 import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { useLocalizedHref } from "@/lib/i18n/href";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -21,6 +22,7 @@ import { StartButton } from "./StartButton";
  */
 export function LandingHeader({ signedIn = false }: { signedIn?: boolean }) {
   const { t } = useI18n();
+  const homeHref = useLocalizedHref("/");
   const nav = [
     { href: `#${LANDING_SECTIONS.method}`, label: t("site.method") },
     { href: `#${LANDING_SECTIONS.exam}`, label: t("site.exam") },
@@ -36,7 +38,7 @@ export function LandingHeader({ signedIn = false }: { signedIn?: boolean }) {
       </a>
       <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-3 px-screen sm:gap-6">
         <BrandLockup
-          href="/"
+          href={homeHref}
           size={28}
           className="shrink-0 text-foreground"
           wordClassName="text-[15px] font-bold tracking-tight text-foreground"

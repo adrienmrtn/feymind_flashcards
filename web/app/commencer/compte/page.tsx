@@ -9,6 +9,7 @@ import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n/client";
+import { useLocalizedHref } from "@/lib/i18n/href";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -53,6 +54,8 @@ function destination(): string {
 
 function AccountStepBody() {
   const { t } = useI18n();
+  const termsHref = useLocalizedHref(TERMS_PATH);
+  const privacyHref = useLocalizedHref(PRIVACY_PATH);
   const params = useSearchParams();
   const router = useRouter();
   const [pending, setPending] = useState<Pending>(null);
@@ -285,11 +288,11 @@ function AccountStepBody() {
 
         <p className="mt-8 text-[12.5px] leading-relaxed text-ink-tertiary">
           {t("onboarding.legalPrefix")}{" "}
-          <Link href={TERMS_PATH} className="underline-draw text-ink-secondary">
+          <Link href={termsHref} className="underline-draw text-ink-secondary">
             {t("onboarding.legalTerms")}
           </Link>{" "}
           {t("onboarding.legalAnd")}{" "}
-          <Link href={PRIVACY_PATH} className="underline-draw text-ink-secondary">
+          <Link href={privacyHref} className="underline-draw text-ink-secondary">
             {t("onboarding.legalPrivacy")}
           </Link>
           .
