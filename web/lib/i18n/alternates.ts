@@ -10,10 +10,10 @@ function absolute(path: string): string {
 }
 
 /**
- * Canonique self + `hreflang` des quatre langues.
+ * Canonique self + `hreflang` des cinq langues.
  *
- * Chaque variante doit lister les quatre autres et `x-default`. Un oubli,
- * Google jette le jeu entier.
+ * Chaque variante doit lister les quatre autres et `x-default` (anglais).
+ * Un oubli, Google jette le jeu entier.
  */
 export function indexableAlternates(locale: UiLocale, path: string): NonNullable<Metadata["alternates"]> {
   const rest = stripLocalePrefix(path);

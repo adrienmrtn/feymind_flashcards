@@ -2,7 +2,7 @@ import { cache } from "react";
 import { cookies, headers } from "next/headers";
 
 import { catalogFor } from "./catalogs";
-import { fr } from "./catalogs/fr";
+import { en } from "./catalogs/en";
 import {
   DEFAULT_UI_LOCALE,
   UI_LOCALE_COOKIE,
@@ -36,6 +36,6 @@ export const readUiLocale = cache(async (): Promise<UiLocale> => {
 export const getTranslator = cache(async () => {
   const locale = await readUiLocale();
   const messages = catalogFor(locale) as unknown as MessageTree;
-  const fallback = fr as unknown as MessageTree;
+  const fallback = en as unknown as MessageTree;
   return { locale, t: makeTranslator(locale, messages, fallback), messages };
 });

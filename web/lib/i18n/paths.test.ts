@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { UI_LOCALES } from "./locales";
 import {
   INDEXABLE_PATHS,
+  forwardedUrlLocale,
   languageAlternatePaths,
   localeSwitchHref,
   localizedPath,
@@ -12,13 +13,15 @@ import {
 } from "./paths";
 
 describe("localizedPath", () => {
-  it("laisse le français sans préfixe", () => {
-    expect(localizedPath("fr", "/")).toBe("/");
-    expect(localizedPath("fr", "/methode")).toBe("/methode");
-    expect(localizedPath("fr", "/tr/methode")).toBe("/methode");
+  it("laisse l'anglais sans préfixe", () => {
+    expect(localizedPath("en", "/")).toBe("/");
+    expect(localizedPath("en", "/methode")).toBe("/methode");
+    expect(localizedPath("en", "/fr/methode")).toBe("/methode");
   });
 
-  it("préfixe de, es, tr", () => {
+  it("préfixe fr, de, es, tr", () => {
+    expect(localizedPath("fr", "/")).toBe("/fr");
+    expect(localizedPath("fr", "/methode")).toBe("/fr/methode");
     expect(localizedPath("tr", "/")).toBe("/tr");
     expect(localizedPath("tr", "/methode")).toBe("/tr/methode");
     expect(localizedPath("de", "/mode-examen")).toBe("/de/mode-examen");
@@ -32,20 +35,36 @@ describe("splitLocalePrefix", () => {
     expect(splitLocalePrefix("/de")).toEqual({ prefix: "de", rest: "/" });
     expect(splitLocalePrefix("/methode")).toEqual({ prefix: null, rest: "/methode" });
     expect(splitLocalePrefix("/fr/methode")).toEqual({ prefix: "fr", rest: "/methode" });
+    expect(splitLocalePrefix("/en/methode")).toEqual({ prefix: "en", rest: "/methode" });
   });
 });
 
 describe("resolveLocaleRequest", () => {
-  it("redirige /fr vers la version sans préfixe", () => {
-    expect(resolveLocaleRequest("/fr")).toEqual({
+  it("redirige /en vers la version sans préfixe", () => {
+    expect(resolveLocaleRequest("/en")).toEqual({
       action: "redirect",
       location: "/",
       status: 301,
     });
-    expect(resolveLocaleRequest("/fr/methode")).toEqual({
+    expect(resolveLocaleRequest("/en/methode")).toEqual({
       action: "redirect",
       location: "/methode",
       status: 301,
+    });
+  });
+
+  it("sert le français sur /fr, sans rediriger", () => {
+    expect(resolveLocaleRequest("/fr")).toEqual({
+      action: "continue",
+      pathname: "/",
+      urlLocale: "fr",
+      setCookie: "fr",
+    });
+    expect(resolveLocaleRequest("/fr/methode")).toEqual({
+      action: "continue",
+      pathname: "/methode",
+      urlLocale: "fr",
+      setCookie: "fr",
     });
   });
 
@@ -58,16 +77,16 @@ describe("resolveLocaleRequest", () => {
     });
   });
 
-  it("force le français sur une page publique sans préfixe", () => {
+  it("force l'anglais sur une page publique sans préfixe", () => {
     expect(resolveLocaleRequest("/methode")).toEqual({
       action: "continue",
       pathname: "/methode",
-      urlLocale: "fr",
+      urlLocale: "en",
     });
     expect(resolveLocaleRequest("/")).toEqual({
       action: "continue",
       pathname: "/",
-      urlLocale: "fr",
+      urlLocale: "en",
     });
   });
 
@@ -83,6 +102,12 @@ describe("resolveLocaleRequest", () => {
       location: "/commencer/bienvenue",
       status: 302,
       setCookie: "de",
+    });
+    expect(resolveLocaleRequest("/fr/app")).toEqual({
+      action: "redirect",
+      location: "/app",
+      status: 302,
+      setCookie: "fr",
     });
   });
 
@@ -100,10 +125,22 @@ describe("resolveLocaleRequest", () => {
   });
 });
 
+describe("forwardedUrlLocale", () => {
+  it("garde la langue de la première passe après la réécriture", () => {
+    expect(forwardedUrlLocale("fr", "en")).toBe("fr");
+    expect(forwardedUrlLocale("tr", "en")).toBe("tr");
+    expect(forwardedUrlLocale(null, "en")).toBe("en");
+    expect(forwardedUrlLocale(null, "fr")).toBe("fr");
+    expect(forwardedUrlLocale("it", "en")).toBe("en");
+  });
+});
+
 describe("localeSwitchHref", () => {
   it("navigue sur une page indexable, reste dans l'app", () => {
     expect(localeSwitchHref("/methode", "tr")).toBe("/tr/methode");
-    expect(localeSwitchHref("/tr/methode", "fr")).toBe("/methode");
+    expect(localeSwitchHref("/methode", "fr")).toBe("/fr/methode");
+    expect(localeSwitchHref("/fr/methode", "en")).toBe("/methode");
+    expect(localeSwitchHref("/tr/methode", "fr")).toBe("/fr/methode");
     expect(localeSwitchHref("/tr", "de")).toBe("/de");
     expect(localeSwitchHref("/app", "tr")).toBeNull();
     expect(localeSwitchHref("/commencer/compte", "de")).toBeNull();
@@ -114,8 +151,9 @@ describe("hreflang", () => {
   it("est réciproque sur chaque page indexable", () => {
     for (const path of INDEXABLE_PATHS) {
       const map = languageAlternatePaths(path);
-      expect(Object.keys(map).sort()).toEqual(["de", "es", "fr", "tr", "x-default"].sort());
-      expect(map["x-default"]).toBe(map.fr);
+      expect(Object.keys(map).sort()).toEqual(["de", "en", "es", "fr", "tr", "x-default"].sort());
+      expect(map["x-default"]).toBe(map.en);
+      expect(map.en).toBe(localizedPath("en", path));
       expect(map.fr).toBe(localizedPath("fr", path));
       expect(stripLocalePrefix(map.tr)).toBe(path === "/" ? "/" : path);
       for (const locale of UI_LOCALES) {

@@ -7,6 +7,7 @@ export const de: Catalog = {
   locale: {
     switcher: "Sprache der Seite",
     choose: "Deine Sprache",
+    en: "English",
     fr: "Français",
     de: "Deutsch",
     es: "Español",
@@ -103,7 +104,7 @@ export const de: Catalog = {
       "Das nehmen wir am ernstesten, weil ein falsches Blatt nicht wie ein Fehler aussieht. Ein schlecht gelesenes Wort kann eine völlig glaubhafte und völlig falsche Definition ergeben. Micabo definiert deshalb nie einen Begriff, dessen es sich nicht sicher ist: wenn der Kontext nicht reicht, erscheint das zweifelhafte Wort einfach nicht auf dem Blatt.",
     faq3q: "Geht das in anderen Sprachen? Anderen Schulsystemen?",
     faq3a:
-      "Ja. Das Land der Schule bestimmt das Bezugssystem und die Sprache der Blätter. Die Seite selbst liest sich auf Französisch, Deutsch, Spanisch oder Türkisch: du wechselst die Sprache oben auf der Seite, im Einstieg oder in den Einstellungen. iPhone und Browser teilen die Sprache der Blätter.",
+      "Ja. Das Land der Schule bestimmt das Bezugssystem und die Sprache der Blätter. Die Seite selbst liest sich auf Englisch, Französisch, Deutsch, Spanisch oder Türkisch: du wechselst die Sprache oben auf der Seite, im Einstieg oder in den Einstellungen. iPhone und Browser teilen die Sprache der Blätter.",
     faq4q: "Was passiert nach der Probezeit?",
     faq4a:
       "Die {days} Probetage enden, und es wird nichts abgebucht, ohne dass du es entschieden hast. Kurse und Karten bleiben, auf der Seite wie auf dem iPhone: zu geht, was Pro öffnete, nicht was du schon geschrieben hast.",

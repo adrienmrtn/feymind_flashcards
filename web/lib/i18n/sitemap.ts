@@ -16,9 +16,10 @@ function absolute(path: string): string {
 }
 
 /**
- * Les pages publiques, **dans les quatre langues**.
+ * Les pages publiques, **dans les cinq langues**.
  *
  * Chaque URL a son jeu `hreflang`, le même que dans le HTML.
+ * `x-default` est l'anglais, la version sans préfixe.
  */
 export function indexableSitemap(updated = new Date("2026-09-07")): SitemapEntry[] {
   const priorityOf = (path: string): number => {
@@ -35,13 +36,9 @@ export function indexableSitemap(updated = new Date("2026-09-07")): SitemapEntry
   return INDEXABLE_PATHS.flatMap((path) => {
     const languages = languageAlternatePaths(path);
     const alternates = {
-      languages: {
-        fr: absolute(languages.fr),
-        de: absolute(languages.de),
-        es: absolute(languages.es),
-        tr: absolute(languages.tr),
-        "x-default": absolute(languages.fr),
-      },
+      languages: Object.fromEntries(
+        Object.entries(languages).map(([lang, href]) => [lang, absolute(href)]),
+      ),
     };
     return UI_LOCALES.map((locale) => {
       const href = localizedPath(locale, path);
@@ -56,7 +53,7 @@ export function indexableSitemap(updated = new Date("2026-09-07")): SitemapEntry
   });
 }
 
-/** Les 24 adresses à coller dans Search Console, dans le même ordre que le sitemap. */
+/** Les 30 adresses à coller dans Search Console, dans le même ordre que le sitemap. */
 export function searchConsoleUrls(): string[] {
   return indexableSitemap().map((entry) => entry.url);
 }

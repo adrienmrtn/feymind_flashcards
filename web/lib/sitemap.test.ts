@@ -5,43 +5,53 @@ import { INDEXABLE_PATHS, localizedPath } from "./i18n/paths";
 import { indexableSitemap, searchConsoleUrls } from "./i18n/sitemap";
 
 describe("sitemap", () => {
-  it("émet chaque page indexable dans les quatre langues", () => {
+  it("émet chaque page indexable dans les cinq langues", () => {
     const entries = indexableSitemap();
-    expect(entries).toHaveLength(INDEXABLE_PATHS.length * 4);
+    expect(entries).toHaveLength(INDEXABLE_PATHS.length * 5);
     const urls = entries.map((entry) => entry.url);
     expect(urls).toContain("https://www.micabo.app/");
+    expect(urls).toContain("https://www.micabo.app/fr");
     expect(urls).toContain("https://www.micabo.app/tr");
+    expect(urls).toContain("https://www.micabo.app/fr/methode");
     expect(urls).toContain("https://www.micabo.app/tr/methode");
     expect(urls).toContain("https://www.micabo.app/de/mode-examen");
     expect(urls).toContain("https://www.micabo.app/es/micabo-ou-anki");
     expect(urls.some((url) => url.includes("/app"))).toBe(false);
     expect(urls.some((url) => url.includes("/commencer"))).toBe(false);
-    expect(urls.some((url) => url.includes("/fr/"))).toBe(false);
+    expect(urls.some((url) => /\/en(\/|$)/.test(url.replace("https://www.micabo.app", "")))).toBe(
+      false,
+    );
   });
 
-  it("liste les 24 URL que Search Console doit lire, sans /fr ni l'app", () => {
+  it("liste les 30 URL que Search Console doit lire, sans /en ni l'app", () => {
     expect(searchConsoleUrls()).toEqual([
       "https://www.micabo.app/",
+      "https://www.micabo.app/fr",
       "https://www.micabo.app/de",
       "https://www.micabo.app/es",
       "https://www.micabo.app/tr",
       "https://www.micabo.app/methode",
+      "https://www.micabo.app/fr/methode",
       "https://www.micabo.app/de/methode",
       "https://www.micabo.app/es/methode",
       "https://www.micabo.app/tr/methode",
       "https://www.micabo.app/mode-examen",
+      "https://www.micabo.app/fr/mode-examen",
       "https://www.micabo.app/de/mode-examen",
       "https://www.micabo.app/es/mode-examen",
       "https://www.micabo.app/tr/mode-examen",
       "https://www.micabo.app/micabo-ou-anki",
+      "https://www.micabo.app/fr/micabo-ou-anki",
       "https://www.micabo.app/de/micabo-ou-anki",
       "https://www.micabo.app/es/micabo-ou-anki",
       "https://www.micabo.app/tr/micabo-ou-anki",
       "https://www.micabo.app/confidentialite",
+      "https://www.micabo.app/fr/confidentialite",
       "https://www.micabo.app/de/confidentialite",
       "https://www.micabo.app/es/confidentialite",
       "https://www.micabo.app/tr/confidentialite",
       "https://www.micabo.app/conditions",
+      "https://www.micabo.app/fr/conditions",
       "https://www.micabo.app/de/conditions",
       "https://www.micabo.app/es/conditions",
       "https://www.micabo.app/tr/conditions",
@@ -58,9 +68,10 @@ describe("sitemap", () => {
   it("pose le même jeu hreflang sur chaque ligne", () => {
     for (const entry of indexableSitemap()) {
       const languages = entry.alternates.languages;
+      expect(languages.en).toBeTruthy();
       expect(languages.fr).toBeTruthy();
       expect(languages.tr).toBeTruthy();
-      expect(languages["x-default"]).toBe(languages.fr);
+      expect(languages["x-default"]).toBe(languages.en);
     }
   });
 });

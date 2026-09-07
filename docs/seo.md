@@ -103,36 +103,36 @@ affichée comme le domaine pendant des jours ou des semaines.
 
 ## Inventaire des pages indexables
 
-Une URL publique = une langue. Le français n'a pas de préfixe (`/methode`).
-L'allemand, l'espagnol et le turc ont le leur (`/tr/methode`, `/de/methode`,
-`/es/methode`). `x-default` est le français. Il n'y a pas d'anglais.
+Une URL publique = une langue. L'anglais n'a pas de préfixe (`/methode`).
+Le français, l'allemand, l'espagnol et le turc ont le leur (`/fr/methode`,
+`/tr/methode`, `/de/methode`, `/es/methode`). `x-default` est l'anglais.
 
 Sur une page indexable, **l'adresse seule** décide de la langue. Un cookie
-turc ou un `Accept-Language: tr` sur `/methode` sert encore le français —
+turc ou un `Accept-Language: tr` sur `/methode` sert encore l'anglais —
 sinon Googlebot et le visiteur ne verraient pas la même chose. Les écrans
 privés (`/app`, `/commencer`) n'ont pas de préfixe : le cookie suffit, ils
 sont `noindex`.
 
 | URL | Variantes | Sitemap | `noindex` | Corps |
 |---|---|---|---|---|
-| `/` | `/de` `/es` `/tr` | oui × 4 | non | catalogues (`landing.*`) |
-| `/methode` | `/de/methode` … | oui × 4 (0,8) | non | catalogues (`articles.method.*`) |
-| `/mode-examen` | `/de/mode-examen` … | oui × 4 (0,8) | non | catalogues (`articles.exam.*`) |
-| `/micabo-ou-anki` | `/de/micabo-ou-anki` … | oui × 4 (0,7) | non | catalogues (`articles.anki.*`) |
-| `/confidentialite` | `/de/confidentialite` … | oui × 4 (0,3) | non | catalogues (`legal.privacy.*`) |
-| `/conditions` | `/de/conditions` … | oui × 4 (0,3) | non | catalogues (`legal.terms.*`) |
+| `/` | `/fr` `/de` `/es` `/tr` | oui × 5 | non | catalogues (`landing.*`) |
+| `/methode` | `/fr/methode` … | oui × 5 (0,8) | non | catalogues (`articles.method.*`) |
+| `/mode-examen` | `/fr/mode-examen` … | oui × 5 (0,8) | non | catalogues (`articles.exam.*`) |
+| `/micabo-ou-anki` | `/fr/micabo-ou-anki` … | oui × 5 (0,7) | non | catalogues (`articles.anki.*`) |
+| `/confidentialite` | `/fr/confidentialite` … | oui × 5 (0,3) | non | catalogues (`legal.privacy.*`) |
+| `/conditions` | `/fr/conditions` … | oui × 5 (0,3) | non | catalogues (`legal.terms.*`) |
 | `/app/*`, `/commencer/*`, `/connexion`, `/auth/*`, `/fondations` | aucune | non | oui (`X-Robots-Tag`) | hors sujet |
 
-`/fr` et `/fr/methode` redirigent en 301 vers la version nue. `/tr/app`
+`/en` et `/en/methode` redirigent en 301 vers la version nue. `/tr/app`
 redirige en 302 vers `/app` et pose le cookie : l'app n'a pas de préfixe.
 
 Chaque page indexable pose le même jeu `hreflang` dans le HTML et dans
-`sitemap.xml` : les quatre langues plus `x-default` → français. Un oubli
+`sitemap.xml` : les cinq langues plus `x-default` → anglais. Un oubli
 d'un côté, Google jette le jeu entier.
 
 Ne **jamais** rediriger `/` vers `/tr` d'après `Accept-Language`. Le robot
 arriverait en turc, ou pire : il verrait une redirection et n'indexerait
-plus l'accueil français.
+plus l'accueil anglais.
 
 ## Les sitelinks : ce qui se fait et ce qui ne se fait pas
 
@@ -173,8 +173,10 @@ obligatoire.
    et citer le sitemap. S'il dit encore `Disallow: /`, le déploiement n'est pas celui de
    production (`IS_INDEXABLE` ne s'allume que si `VERCEL_ENV=production`).
 
-Répète l'inspection pour **les 24 URL** ci-dessous. Le sitemap passe de 6
-lignes à 24 : sans une nouvelle soumission, Google n'a que le français.
+Répète l'inspection pour **les 30 URL** ci-dessous. Les adresses nues
+(`/`, `/methode`, …) **changent de langue** : elles étaient françaises,
+elles sont anglaises. Sans une nouvelle soumission, Google garde l'ancien
+français sur ces URL, et ignore les `/fr` nouvelles.
 
 Il n'y a rien à régler dans « ciblage international » : les `hreflang`
 réciproques suffisent. Ne pas activer une redirection par pays dans Vercel.
@@ -183,41 +185,51 @@ Ne pas ajouter une URL `*.vercel.app`, ni `micabo.app` sans www à la place
 de `www`. Un aperçu de branche redirige vers le site : ce n'est pas lui
 qu'il faut indexer.
 
-### Les 24 URL (après fusion)
+### Les 30 URL (après fusion)
 
 Dans Search Console → Inspection d'URL, coller une adresse, tester en
 direct, demander l'indexation. L'ordre est celui du sitemap.
 
+Les six adresses nues doivent être **réinspectées** : le HTML n'est plus
+le français que Google a déjà lu.
+
 ```
 https://www.micabo.app/
+https://www.micabo.app/fr
 https://www.micabo.app/de
 https://www.micabo.app/es
 https://www.micabo.app/tr
 https://www.micabo.app/methode
+https://www.micabo.app/fr/methode
 https://www.micabo.app/de/methode
 https://www.micabo.app/es/methode
 https://www.micabo.app/tr/methode
 https://www.micabo.app/mode-examen
+https://www.micabo.app/fr/mode-examen
 https://www.micabo.app/de/mode-examen
 https://www.micabo.app/es/mode-examen
 https://www.micabo.app/tr/mode-examen
 https://www.micabo.app/micabo-ou-anki
+https://www.micabo.app/fr/micabo-ou-anki
 https://www.micabo.app/de/micabo-ou-anki
 https://www.micabo.app/es/micabo-ou-anki
 https://www.micabo.app/tr/micabo-ou-anki
 https://www.micabo.app/confidentialite
+https://www.micabo.app/fr/confidentialite
 https://www.micabo.app/de/confidentialite
 https://www.micabo.app/es/confidentialite
 https://www.micabo.app/tr/confidentialite
 https://www.micabo.app/conditions
+https://www.micabo.app/fr/conditions
 https://www.micabo.app/de/conditions
 https://www.micabo.app/es/conditions
 https://www.micabo.app/tr/conditions
 ```
 
-Le minimum si tu n'en fais que huit : l'accueil et `/methode` dans les
-quatre langues. Sans `/tr` et `/de` et `/es` dans l'index, l'annonce
-Google reste française.
+Le minimum si tu n'en fais que dix : l'accueil et `/methode` dans les
+cinq langues. Sans `/fr` et `/tr` et `/de` et `/es` dans l'index, l'annonce
+Google reste anglaise — et l'ancien extrait français des URL nues disparaît
+seulement après réinspection.
 
 ### 2. Les sitelinks (les sous-liens sous le résultat)
 
@@ -245,7 +257,7 @@ elle-même est moins mise en avant, ou retirée de l'index.
 ### 3. Ensuite seulement
 
 - Bing Webmaster Tools : le même `https://www.micabo.app/sitemap.xml`,
-  les mêmes 24 URL. Rien à traduire en plus.
+  les mêmes 30 URL. Rien à traduire en plus.
 - Apple Search (App Store) est un autre index : le site n'y change rien, la fiche App
   Store si.
 - Écrire d'autres pages publiques quand il y aura un sujet. Les sitelinks pointent vers

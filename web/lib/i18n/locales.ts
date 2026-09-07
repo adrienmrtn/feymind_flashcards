@@ -3,18 +3,22 @@
  *
  * Cookie, pas colonne : l'iPhone n'en sait rien encore, et un réglage écrit
  * dans `profiles` se synchroniserait là-bas sans rien à afficher.
+ *
+ * L'anglais est la langue de base du site. L'iPhone, lui, reste en
+ * français / allemand / espagnol / turc : ce fichier ne le concerne pas.
  */
 
-export const UI_LOCALES = ["fr", "de", "es", "tr"] as const;
+export const UI_LOCALES = ["en", "fr", "de", "es", "tr"] as const;
 export type UiLocale = (typeof UI_LOCALES)[number];
 
-export const DEFAULT_UI_LOCALE: UiLocale = "fr";
+export const DEFAULT_UI_LOCALE: UiLocale = "en";
 export const UI_LOCALE_COOKIE = "micabo.ui_locale";
 
 export const UI_LOCALE_META: Record<
   UiLocale,
   { html: string; bcp47: string; og: string; native: string; flag: string }
 > = {
+  en: { html: "en", bcp47: "en-US", og: "en_US", native: "English", flag: "🇬🇧" },
   fr: { html: "fr", bcp47: "fr-FR", og: "fr_FR", native: "Français", flag: "🇫🇷" },
   de: { html: "de", bcp47: "de-DE", og: "de_DE", native: "Deutsch", flag: "🇩🇪" },
   es: { html: "es", bcp47: "es-ES", og: "es_ES", native: "Español", flag: "🇪🇸" },
@@ -25,7 +29,7 @@ export function isUiLocale(value: string | undefined | null): value is UiLocale 
   return UI_LOCALES.includes(value as UiLocale);
 }
 
-/** `Accept-Language` → une de nos langues, sinon le français. */
+/** `Accept-Language` → une de nos langues, sinon l'anglais. */
 export function localeFromAcceptLanguage(header: string | null): UiLocale {
   if (!header) return DEFAULT_UI_LOCALE;
   for (const part of header.split(",")) {

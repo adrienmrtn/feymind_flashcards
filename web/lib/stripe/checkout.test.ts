@@ -95,7 +95,7 @@ describe("checkoutSessionFields", () => {
     });
     expect(yearly.customer_email).toBe("a@b.c");
     expect(yearly["subscription_data[trial_period_days]"]).toBe("3");
-    expect(yearly.locale).toBe("fr");
+    expect(yearly.locale).toBe("en");
   });
 
   it("dit la langue et la devise plutôt que de les laisser deviner", () => {

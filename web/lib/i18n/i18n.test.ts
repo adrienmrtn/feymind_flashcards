@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { SITE_PAGES } from "../site-pages";
 
-import { CATALOGS, catalogFor, fr } from "./catalogs";
+import { CATALOGS, catalogFor, en, fr } from "./catalogs";
 import { formatMessage, lookup, type MessageTree } from "./format";
 import {
   DEFAULT_UI_LOCALE,
@@ -26,17 +26,22 @@ function flattenKeys(tree: MessageTree, prefix = ""): string[] {
 }
 
 describe("locales", () => {
-  it("n'accepte que fr, de, es, tr", () => {
-    expect(UI_LOCALES).toEqual(["fr", "de", "es", "tr"]);
+  it("accepte en, fr, de, es, tr — l'anglais est la base", () => {
+    expect(UI_LOCALES).toEqual(["en", "fr", "de", "es", "tr"]);
+    expect(DEFAULT_UI_LOCALE).toBe("en");
+    expect(isUiLocale("en")).toBe(true);
     expect(isUiLocale("fr")).toBe(true);
     expect(isUiLocale("de")).toBe(true);
     expect(isUiLocale("it")).toBe(false);
-    expect(isUiLocale("en")).toBe(false);
   });
 
   it("sert un catalogue distinct par langue", () => {
+    expect(catalogFor("en")).not.toBe(catalogFor("fr"));
     expect(catalogFor("fr")).not.toBe(catalogFor("de"));
     expect(catalogFor("es")).not.toBe(catalogFor("tr"));
+    expect(lookup(catalogFor("en") as unknown as MessageTree, "onboarding.welcomeTitle")).toMatch(
+      /Welcome/,
+    );
     expect(lookup(catalogFor("fr") as unknown as MessageTree, "onboarding.welcomeTitle")).toMatch(
       /Bienvenue/,
     );
@@ -46,6 +51,7 @@ describe("locales", () => {
   });
 
   it("associe un drapeau à chaque langue", () => {
+    expect(UI_LOCALE_META.en.flag).toBe("🇬🇧");
     expect(UI_LOCALE_META.fr.flag).toBe("🇫🇷");
     expect(UI_LOCALE_META.de.flag).toBe("🇩🇪");
     expect(UI_LOCALE_META.es.flag).toBe("🇪🇸");
@@ -56,13 +62,14 @@ describe("locales", () => {
     }
   });
 
-  it("lit Accept-Language, sinon le français", () => {
+  it("lit Accept-Language, sinon l'anglais", () => {
     expect(localeFromAcceptLanguage("de-DE,de;q=0.9,en;q=0.8")).toBe("de");
     expect(localeFromAcceptLanguage("es-MX,es;q=0.8")).toBe("es");
     expect(localeFromAcceptLanguage("tr")).toBe("tr");
     expect(localeFromAcceptLanguage("fr-CA,fr;q=0.9")).toBe("fr");
-    expect(localeFromAcceptLanguage("en-US,en;q=0.9")).toBe(DEFAULT_UI_LOCALE);
-    expect(localeFromAcceptLanguage(null)).toBe("fr");
+    expect(localeFromAcceptLanguage("en-US,en;q=0.9")).toBe("en");
+    expect(localeFromAcceptLanguage(null)).toBe("en");
+    expect(localeFromAcceptLanguage("it-IT,it;q=0.9")).toBe(DEFAULT_UI_LOCALE);
   });
 });
 
@@ -89,7 +96,7 @@ describe("formatMessage", () => {
 describe("catalogues", () => {
   const frenchKeys = flattenKeys(fr as unknown as MessageTree);
 
-  it("a les mêmes clés en allemand, espagnol et turc", () => {
+  it("a les mêmes clés en anglais, allemand, espagnol et turc", () => {
     for (const locale of UI_LOCALES) {
       expect(flattenKeys(CATALOGS[locale] as unknown as MessageTree)).toEqual(frenchKeys);
     }
@@ -120,13 +127,17 @@ describe("catalogues", () => {
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "demo.legendWith")).toBeTruthy();
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "app.paywall.yearly")).toBeTruthy();
       expect(lookup(CATALOGS[locale] as unknown as MessageTree, "locale.choose")).toBeTruthy();
+      expect(lookup(CATALOGS[locale] as unknown as MessageTree, "locale.en")).toBe("English");
     }
   });
 
   it("traduit les pages de droit", () => {
+    const tEn = makeTranslator("en", CATALOGS.en as unknown as MessageTree, fr as unknown as MessageTree);
     const tTr = makeTranslator("tr", CATALOGS.tr as unknown as MessageTree, fr as unknown as MessageTree);
     const tDe = makeTranslator("de", CATALOGS.de as unknown as MessageTree, fr as unknown as MessageTree);
     const tEs = makeTranslator("es", CATALOGS.es as unknown as MessageTree, fr as unknown as MessageTree);
+    expect(tEn("legal.privacy.heading")).toBe("Privacy policy");
+    expect(tEn("legal.terms.heading")).toBe("Terms of use");
     expect(tTr("legal.privacy.heading")).toBe("Gizlilik politikası");
     expect(tTr("legal.terms.heading")).toBe("Kullanım koşulları");
     expect(tDe("legal.privacy.heading")).toBe("Datenschutzrichtlinie");
@@ -134,6 +145,7 @@ describe("catalogues", () => {
     expect(tTr("legal.privacy.heading")).not.toMatch(/Politique|Confidentialité/);
     expect(tDe("legal.terms.lawBody")).toMatch(/französischen|französischem/);
     expect(lookup(CATALOGS.fr as unknown as MessageTree, "legal.privacy.intro1")).toContain("[[site]]");
+    expect(lookup(CATALOGS.en as unknown as MessageTree, "legal.privacy.intro1")).toContain("[[site]]");
     expect(lookup(CATALOGS.tr as unknown as MessageTree, "legal.privacy.intro1")).toContain("[[site]]");
   });
 
@@ -166,7 +178,7 @@ describe("catalogues", () => {
     expect(SITE_PAGES.map((page) => page.id)).toEqual(["method", "exam", "anki"]);
     for (const page of SITE_PAGES) {
       expect(lookup(fr as unknown as MessageTree, `articles.${page.id}.metaTitle`)).toBeTruthy();
-      expect(lookup(fr as unknown as MessageTree, `articles.${page.id}.h1`)).toBeTruthy();
+      expect(lookup(en as unknown as MessageTree, `articles.${page.id}.h1`)).toBeTruthy();
     }
   });
 
@@ -190,7 +202,9 @@ describe("catalogues", () => {
         );
       }
     }
+    const tEn = makeTranslator("en", CATALOGS.en as unknown as MessageTree, fr as unknown as MessageTree);
     const tTr = makeTranslator("tr", CATALOGS.tr as unknown as MessageTree, fr as unknown as MessageTree);
+    expect(tEn("articles.method.h1")).toMatch(/Rereading|Remembering/);
     expect(tTr("articles.method.h1")).toMatch(/Hatırlamak/);
     expect(tTr("articles.anki.metaTitle")).toMatch(/Anki/);
   });

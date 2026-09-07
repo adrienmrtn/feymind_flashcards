@@ -1,9 +1,9 @@
 /**
  * Une URL publique = une langue.
  *
- * Le français n'a pas de préfixe (`/methode`). L'allemand, l'espagnol et le turc
- * ont le leur (`/tr/methode`). Sans ça, Google n'indexe qu'une version — celle
- * que le robot a vue, aujourd'hui le français.
+ * L'anglais n'a pas de préfixe (`/methode`). Le français, l'allemand,
+ * l'espagnol et le turc ont le leur (`/fr/methode`, `/tr/methode`). Sans ça,
+ * Google n'indexe qu'une version — celle que le robot a vue.
  *
  * Les écrans privés (`/app`, `/commencer`, …) n'ont pas de préfixe : ils sont
  * `noindex`, le cookie suffit.
@@ -13,8 +13,8 @@ import type { Route } from "next";
 
 import { DEFAULT_UI_LOCALE, isUiLocale, type UiLocale } from "./locales";
 
-/** Préfixes visibles dans l'adresse. Le français n'en a pas. */
-export const URL_PREFIX_LOCALES = ["de", "es", "tr"] as const;
+/** Préfixes visibles dans l'adresse. L'anglais n'en a pas. */
+export const URL_PREFIX_LOCALES = ["fr", "de", "es", "tr"] as const;
 export type UrlPrefixLocale = (typeof URL_PREFIX_LOCALES)[number];
 
 /** Header posé par le middleware : la langue de l'URL, pas celle du cookie. */
@@ -65,7 +65,7 @@ export function stripLocalePrefix(pathname: string): string {
   return splitLocalePrefix(pathname).rest;
 }
 
-/** Chemin public dans une langue. `fr` + `/methode` → `/methode`. `tr` + `/` → `/tr`. */
+/** Chemin public dans une langue. `en` + `/methode` → `/methode`. `fr` + `/` → `/fr`. */
 export function localizedPath(locale: UiLocale, path: string): string {
   const rest = normalizePath(stripLocalePrefix(path));
   if (locale === DEFAULT_UI_LOCALE) return rest;
@@ -126,9 +126,24 @@ export function resolveLocaleRequest(pathname: string): LocaleResolution {
 }
 
 /**
+ * Header à poser sur la requête.
+ *
+ * Une adresse préfixée (`/fr`) se réécrit en `/`, et le middleware
+ * tourne une deuxième fois sur le chemin nu. Sans garder le header de
+ * la première passe, la version de base écraserait la langue de l'URL.
+ */
+export function forwardedUrlLocale(
+  incoming: string | null,
+  resolved: UiLocale | null,
+): UiLocale | null {
+  if (isUiLocale(incoming)) return incoming;
+  return resolved;
+}
+
+/**
  * Où aller après un changement de langue.
  *
- * Page indexable : l'adresse décide, donc on navigue (`/methode` → `/tr/methode`).
+ * Page indexable : l'adresse décide, donc on navigue (`/methode` → `/fr/methode`).
  * Écran privé : le cookie suffit, on reste.
  */
 export function localeSwitchHref(pathname: string, next: UiLocale): string | null {
@@ -138,6 +153,7 @@ export function localeSwitchHref(pathname: string, next: UiLocale): string | nul
 }
 
 export type LanguageAlternateMap = {
+  en: string;
   fr: string;
   de: string;
   es: string;
@@ -145,14 +161,15 @@ export type LanguageAlternateMap = {
   "x-default": string;
 };
 
-/** Jeu `hreflang` réciproque + `x-default` = français. */
+/** Jeu `hreflang` réciproque + `x-default` = anglais. */
 export function languageAlternatePaths(path: string): LanguageAlternateMap {
   const rest = stripLocalePrefix(path);
   return {
+    en: localizedPath("en", rest),
     fr: localizedPath("fr", rest),
     de: localizedPath("de", rest),
     es: localizedPath("es", rest),
     tr: localizedPath("tr", rest),
-    "x-default": localizedPath("fr", rest),
+    "x-default": localizedPath("en", rest),
   };
 }

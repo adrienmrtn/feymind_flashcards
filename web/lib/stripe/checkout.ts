@@ -74,7 +74,7 @@ export function checkoutSessionFields(input: {
     client_reference_id: input.userId,
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
-    locale: input.locale ?? "fr",
+    locale: input.locale ?? "en",
   };
 
   const currency = input.currency?.trim().toLowerCase();

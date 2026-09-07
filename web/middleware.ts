@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
 import { PRODUCTION_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 import { UI_LOCALE_COOKIE, type UiLocale } from "@/lib/i18n/locales";
-import { LOCALE_HEADER, resolveLocaleRequest } from "@/lib/i18n/paths";
+import { LOCALE_HEADER, forwardedUrlLocale, resolveLocaleRequest } from "@/lib/i18n/paths";
 
 /**
  * Cinq choses, dans cet ordre :
@@ -12,10 +12,11 @@ import { LOCALE_HEADER, resolveLocaleRequest } from "@/lib/i18n/paths";
  * 1. Un aperçu renvoie au site.
  * 2. Un `?code=` (ou un jeton de mail) est renvoyé au callback.
  * 3. **La langue de l'URL.** `/tr/methode` se réécrit en `/methode` et pose
- *    `x-micabo-locale: tr`. `/methode` pose `fr`. Cookie et navigateur ne
- *    changent pas une page indexable. `/fr/…` redirige vers la version nue.
+ *    `x-micabo-locale: tr`. `/methode` pose `en`. Cookie et navigateur ne
+ *    changent pas une page indexable. `/en/…` redirige vers la version nue.
  *    `/tr/app` redirige vers `/app` en posant le cookie : l'app n'a pas de
- *    préfixe.
+ *    préfixe. La réécriture relance le middleware sur le chemin nu : on
+ *    garde le header de la première passe, sinon `/` écraserait `/fr`.
  * 4. La session se rafraîchit.
  * 5. Une session ouverte n'a plus rien à faire sur le parcours.
  */
@@ -53,8 +54,9 @@ export async function middleware(request: NextRequest) {
   }
 
   const requestHeaders = new Headers(request.headers);
-  if (locale.urlLocale) {
-    requestHeaders.set(LOCALE_HEADER, locale.urlLocale);
+  const urlLocale = forwardedUrlLocale(request.headers.get(LOCALE_HEADER), locale.urlLocale);
+  if (urlLocale) {
+    requestHeaders.set(LOCALE_HEADER, urlLocale);
   }
 
   const rewriteUrl = url.clone();

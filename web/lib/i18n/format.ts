@@ -1,8 +1,9 @@
 /**
  * ICU réduit : `{name}` et `{count, plural, one {…} other {…}}`.
  *
- * Assez pour le français, l'allemand, l'espagnol et le turc (one / other).
- * `#` dans une branche plurielle est le nombre formaté dans la locale.
+ * Assez pour l'anglais, le français, l'allemand, l'espagnol et le turc
+ * (one / other). `#` dans une branche plurielle est le nombre formaté
+ * dans la locale.
  */
 
 const PLURAL =
@@ -12,7 +13,7 @@ const TOKEN = /\{(\w+)\}/g;
 export function formatMessage(
   template: string,
   vars: Record<string, string | number> = {},
-  locale = "fr",
+  locale = "en",
 ): string {
   const withPlurals = template.replace(PLURAL, (_all, key, one, other) => {
     const raw = vars[key];

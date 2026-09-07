@@ -7,6 +7,7 @@ export const tr: Catalog = {
   locale: {
     switcher: "Site dili",
     choose: "Dilin",
+    en: "English",
     fr: "Français",
     de: "Deutsch",
     es: "Español",
@@ -103,7 +104,7 @@ export const tr: Catalog = {
       "Bunu en ciddi dert ederiz, çünkü yanlış bir özet hataya benzemez. Kötü okunmuş bir sözcük, tamamen inandırıcı ve tamamen yanlış bir tanım verebilir. Micabo emin olmadığı bir terimi asla tanımlamaz: bağlam yetmezse kuşkulu sözcük özette görünmez.",
     faq3q: "Başka dillerde çalışır mı? Başka okul sistemlerinde?",
     faq3a:
-      "Evet. Okuduğun ülke hem referans sistemini hem özetlerin dilini belirler. Site Fransızca, Almanca, İspanyolca veya Türkçe okunur: dili sayfanın üstünden, başlangıçta veya ayarlardan değiştirirsin. iPhone ve tarayıcı özet dilini paylaşır.",
+      "Evet. Okuduğun ülke hem referans sistemini hem özetlerin dilini belirler. Site İngilizce, Fransızca, Almanca, İspanyolca veya Türkçe okunur: dili sayfanın üstünden, başlangıçta veya ayarlardan değiştirirsin. iPhone ve tarayıcı özet dilini paylaşır.",
     faq4q: "Deneme bitince ne olur?",
     faq4a:
       "{days} günlük deneme biter ve sen karar vermeden hiçbir şey çekilmez. Derslerin ve kartların kalır, sitede de iPhone'da da: kapanan, Pro'nun açtığıdır, senin yazdığın değil.",
