@@ -44,7 +44,7 @@ export const legalDe = {
     whyContract:
       "**Die Vertragserfüllung** — das Konto anlegen, einen Kurs importieren, Merkblatt und Karten schreiben, sie wiederholen, iPhone und Website synchronisieren, das Abo verwalten.",
     whyLegitimate:
-      "**Das berechtigte Interesse** — den Dienst sichern, Missbrauch verhindern, eine Störung diagnostizieren und die Rückmeldungen lesen, die Sie uns senden. Dieses Interesse geht nicht vor Ihrem: die Trennung liegt in der Datenbank, nicht nur in der Anwendung.",
+      "**Das berechtigte Interesse** — den Dienst sichern, Missbrauch verhindern, eine Störung diagnostizieren, die Reichweite der Website in aggregierter Form messen und die Rückmeldungen lesen, die Sie uns senden. Dieses Interesse geht nicht vor Ihrem: die Trennung liegt in der Datenbank, nicht nur in der Anwendung.",
     whyLegal:
       "**Die gesetzliche Pflicht** — das aufzubewahren, was Abrechnung oder Buchhaltung verlangen, für die vorgeschriebene Zeit.",
     whyConsent:
@@ -57,7 +57,7 @@ export const legalDe = {
     accessSupabase:
       "**Supabase** (Europäische Union, Region Stockholm) — Konto, Datenbank, Dateien.",
     accessVercel:
-      "**Vercel** — Hosting der Website und technische Protokolle (IP-Adresse, URL). Die Verarbeitung kann außerhalb der Europäischen Union stattfinden, unter den Standardvertragsklauseln des Anbieters.",
+      "**Vercel** — Hosting der Website, technische Protokolle (IP-Adresse, URL) und Reichweitenmessung: die Zahl der Seitenaufrufe, die Seite, von der Sie kommen, das Land und die Geräteart, ohne Cookie und ohne Kennung, die Ihnen folgt. Die Verarbeitung kann außerhalb der Europäischen Union stattfinden, unter den Standardvertragsklauseln des Anbieters.",
     accessApple:
       "**Apple und Google** — wenn Sie sich über sie anmelden oder im App Store zahlen.",
     accessStripe: "**Stripe** — Zahlung auf der Website.",
@@ -71,7 +71,7 @@ export const legalDe = {
       "Einige dieser Dienstleister sind außerhalb der Europäischen Union niedergelassen. Die Übermittlung erfolgt dann nur, um den Dienst zu erbringen, und stützt sich auf die von der DSGVO vorgesehenen Garantien (Angemessenheitsbeschluss oder Standardvertragsklauseln des Anbieters).",
     cookiesTitle: "Cookies und Tracker",
     cookiesWeb:
-      "Die Website setzt die für die Sitzung nötigen Cookies (Sie von einer Seite zur nächsten wiedererkennen, sobald Sie angemeldet sind) und ein Cookie für die Oberflächensprache (`micabo.ui_locale`), ein Jahr gültig, das Französisch, Deutsch, Spanisch oder Türkisch merkt. Wir setzen kein Audience-Cookie, keine Werbung und kein standortübergreifendes Tracking. Deshalb gibt es kein Einwilligungsbanner: auf dieser Seite gibt es nichts abzulehnen.",
+      "Die Website setzt die für die Sitzung nötigen Cookies (Sie von einer Seite zur nächsten wiedererkennen, sobald Sie angemeldet sind) und ein Cookie für die Oberflächensprache (`micabo.ui_locale`), ein Jahr gültig, das Französisch, Deutsch, Spanisch oder Türkisch merkt. Wir setzen kein Audience-Cookie, keine Werbung und kein standortübergreifendes Tracking. Die Website zählt ihre Besuche durchaus, schreibt dafür aber nichts auf Ihr Gerät: die Messung behält einen Seitenaufruf, dessen Herkunft, ein Land, eine Geräteart — und nichts, womit man Sie von einem Besuch zum nächsten oder auf einer anderen Website wiedererkennen könnte. Deshalb gibt es kein Einwilligungsbanner: auf dieser Seite gibt es nichts abzulehnen.",
     cookiesIos:
       "Das iPhone verwendet keine Cookies. Es bewahrt ein Sitzungstoken im Schlüsselbund des Geräts.",
     retentionTitle: "Wie lange wir sie behalten",

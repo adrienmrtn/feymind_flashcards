@@ -44,7 +44,7 @@ export const legalTr = {
     whyContract:
       "**Sözleşmenin ifası** — hesabı oluşturmak, bir dersi içe aktarmak, özet kâğıdını ve kartları yazmak, tekrarlamak, iPhone ile siteyi eşitlemek, aboneliği yönetmek.",
     whyLegitimate:
-      "**Meşru menfaat** — hizmeti güvenceye almak, kötüye kullanımı engellemek, bir arızayı teşhis etmek ve gönderdiğiniz geri bildirimleri okumak. Bu menfaat sizinkinin önüne geçmez: ayrıştırma uygulamada değil, veritabanındadır.",
+      "**Meşru menfaat** — hizmeti güvenceye almak, kötüye kullanımı engellemek, bir arızayı teşhis etmek, sitenin kitlesini toplu biçimde ölçmek ve gönderdiğiniz geri bildirimleri okumak. Bu menfaat sizinkinin önüne geçmez: ayrıştırma uygulamada değil, veritabanındadır.",
     whyLegal:
       "**Yasal yükümlülük** — faturalama veya muhasebenin istediğini, öngörülen süre boyunca saklamak.",
     whyConsent:
@@ -57,7 +57,7 @@ export const legalTr = {
     accessSupabase:
       "**Supabase** (Avrupa Birliği, Stockholm bölgesi) — hesap, veritabanı, dosyalar.",
     accessVercel:
-      "**Vercel** — sitenin barındırılması ve teknik günlükler (IP adresi, URL). İşleme, yüklenicinin standart sözleşme maddeleri altında Avrupa Birliği dışında da olabilir.",
+      "**Vercel** — sitenin barındırılması, teknik günlükler (IP adresi, URL) ve kitle ölçümü: görüntülenen sayfa sayısı, geldiğiniz sayfa, ülke ve cihaz türü; çerezsiz ve sizi izleyen bir tanımlayıcı olmadan. İşleme, yüklenicinin standart sözleşme maddeleri altında Avrupa Birliği dışında da olabilir.",
     accessApple:
       "**Apple ve Google** — onlarla giriş yaparsanız veya App Store'da öderseniz.",
     accessStripe: "**Stripe** — sitedeki ödeme.",
@@ -71,7 +71,7 @@ export const legalTr = {
       "Bu yüklenicilerden bazıları Avrupa Birliği dışında kuruludur. Aktarım o zaman yalnızca hizmeti sağlamak için olur ve GDPR'nin öngördüğü güvencelere dayanır (yeterlilik kararı veya yüklenicinin standart sözleşme maddeleri).",
     cookiesTitle: "Çerezler ve izleyiciler",
     cookiesWeb:
-      "Site, oturum için gerekli çerezleri (bağlandıktan sonra sizi bir sayfadan ötekine tanımak) ve bir yıl saklanan, Fransızca, Almanca, İspanyolca veya Türkçeyi tutan bir arayüz dili çerezi (`micabo.ui_locale`) koyar. Kitle ölçümü, reklam veya siteler arası izleme çerezi koymuyoruz. Bu yüzden bir onay şeridi yoktur: o tarafta reddedecek bir şey yoktur.",
+      "Site, oturum için gerekli çerezleri (bağlandıktan sonra sizi bir sayfadan ötekine tanımak) ve bir yıl saklanan, Fransızca, Almanca, İspanyolca veya Türkçeyi tutan bir arayüz dili çerezi (`micabo.ui_locale`) koyar. Kitle ölçümü, reklam veya siteler arası izleme çerezi koymuyoruz. Site ziyaretlerini elbette sayıyor, ama cihazınıza hiçbir şey yazmadan: ölçüm bir sayfa görüntülemesini, nereden geldiğini, bir ülkeyi ve bir cihaz türünü tutar; sizi bir ziyaretten ötekine ya da başka bir sitede tanımaya yarayacak hiçbir şeyi tutmaz. Bu yüzden bir onay şeridi yoktur: o tarafta reddedecek bir şey yoktur.",
     cookiesIos:
       "iPhone çerez kullanmaz. Oturum jetonunu cihazın anahtarlığında tutar.",
     retentionTitle: "Ne kadar saklarız",
