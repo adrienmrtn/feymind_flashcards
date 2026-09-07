@@ -137,8 +137,16 @@ export function localeSwitchHref(pathname: string, next: UiLocale): string | nul
   return localizedPath(next, rest);
 }
 
+export type LanguageAlternateMap = {
+  fr: string;
+  de: string;
+  es: string;
+  tr: string;
+  "x-default": string;
+};
+
 /** Jeu `hreflang` réciproque + `x-default` = français. */
-export function languageAlternatePaths(path: string): Record<string, string> {
+export function languageAlternatePaths(path: string): LanguageAlternateMap {
   const rest = stripLocalePrefix(path);
   return {
     fr: localizedPath("fr", rest),

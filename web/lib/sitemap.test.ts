@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import sitemap from "./sitemap";
-import { INDEXABLE_PATHS } from "@/lib/i18n/paths";
+import { INDEXABLE_PATHS } from "./i18n/paths";
+import { indexableSitemap } from "./i18n/sitemap";
 
 describe("sitemap", () => {
   it("émet chaque page indexable dans les quatre langues", () => {
-    const entries = sitemap();
+    const entries = indexableSitemap();
     expect(entries).toHaveLength(INDEXABLE_PATHS.length * 4);
     const urls = entries.map((entry) => entry.url);
     expect(urls).toContain("https://www.micabo.app/");
@@ -19,11 +19,11 @@ describe("sitemap", () => {
   });
 
   it("pose le même jeu hreflang sur chaque ligne", () => {
-    for (const entry of sitemap()) {
-      const languages = entry.alternates?.languages;
-      expect(languages?.fr).toBeTruthy();
-      expect(languages?.tr).toBeTruthy();
-      expect(languages?.["x-default"]).toBe(languages?.fr);
+    for (const entry of indexableSitemap()) {
+      const languages = entry.alternates.languages;
+      expect(languages.fr).toBeTruthy();
+      expect(languages.tr).toBeTruthy();
+      expect(languages["x-default"]).toBe(languages.fr);
     }
   });
 });
