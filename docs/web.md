@@ -749,6 +749,8 @@ critique.**
    de Supabase est plafonné à quelques courriels par heure. Il faut brancher un vrai envoyeur
    (Resend, Postmark, SES) dans *Project Settings → Authentication → SMTP*. En attendant, Apple et
    Google sont en premier et le courriel est en troisième position, où son échec ne bloque personne.
+   Ce point n'est plus seulement une limite de débit : les rebonds de septembre ont failli fermer
+   l'envoi, et [Le courriel](courriel.md) raconte ce qui s'est passé et ce qui reste à brancher.
 4. **« Restaurer mes achats » est une notion iOS.** Sur le web, avec Stripe, il n'y a rien à
    restaurer : ce qu'il faut à cette place, c'est « J'ai déjà un abonnement », qui mène à la
    connexion. Le libellé iOS reste sur iOS.
@@ -1246,7 +1248,7 @@ donc à faire à la main, et c'est tout ce qui manque.
 | 1 | Supabase → Authentication → **URL Configuration** | Les trois **Redirect URLs** (dont le joker de prévisualisation), et la **Site URL** | **La connexion sur le web.** Je peux écrire tout l'écran, je ne peux pas vérifier l'aller-retour OAuth |
 | 2 | Vercel → Settings → Build & Development | **Inutile maintenant** : les liens à la racine font détecter Next.js. Vous pouvez quand même poser Root Directory = `web` | **Tout le site.** Sans ça, un build git « vert » en 180 ms n'était que l'arbre iOS |
 | 3 | Vercel → Domains, puis Supabase et Apple | Acheter `micabo.app`, le rattacher, puis reporter le domaine dans la Site URL, les Redirect URLs et le Service ID Apple | Le vrai domaine. Peut attendre : les URL `*.vercel.app` suffisent pour tout construire |
-| 4 | Supabase → Project Settings → **SMTP** | Un vrai envoyeur (Resend, Postmark, SES) | La connexion par **courriel** de l'écran 1. Apple et Google marchent sans |
+| 4 | Supabase → Authentication → **SMTP Settings** | Un vrai envoyeur (Resend, Postmark, SES) | La connexion par **courriel** de l'écran 1. Apple et Google marchent sans. **Devenu urgent** : Supabase a averti le 7 septembre que les rebonds pouvaient fermer l'envoi — voir [Le courriel](courriel.md) |
 
 Ce que je peux faire moi-même, en revanche, et qui couvre le reste : appliquer des migrations,
 déployer des Edge Functions, lire les avis de sécurité, déployer, et **lire les journaux de
