@@ -67,6 +67,15 @@ enum EmailAddress {
 
     // MARK: - Rouages
 
+    // Construites une fois : `isPlausible` décide de l'état du bouton, donc elle repasse à
+    // chaque frappe.
+    private static let localAllowed = CharacterSet(
+        charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789!#$%&'*+/=?^_`{|}~.-"
+    )
+    private static let domainAllowed = CharacterSet(
+        charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789.-"
+    )
+
     /// La forme, et rien d'autre. Plus strict que la RFC 5321, qui accepte `eleve@lycee` -
     /// une adresse légale dans la norme, et qui rebondit dans la vraie vie.
     private static func isWellFormed(_ address: String) -> Bool {
@@ -82,11 +91,9 @@ enum EmailAddress {
         guard !local.hasPrefix("."), !local.hasSuffix("."), !local.contains("..") else {
             return false
         }
-        let localAllowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789!#$%&'*+/=?^_`{|}~.-")
         guard local.unicodeScalars.allSatisfy({ localAllowed.contains($0) }) else { return false }
 
         guard !domain.isEmpty, domain.count <= 253 else { return false }
-        let domainAllowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789.-")
         guard domain.unicodeScalars.allSatisfy({ domainAllowed.contains($0) }) else { return false }
         guard !domain.contains("..") else { return false }
 
