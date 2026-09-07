@@ -55,3 +55,8 @@ export function indexableSitemap(updated = new Date("2026-09-07")): SitemapEntry
     });
   });
 }
+
+/** Les 24 adresses à coller dans Search Console, dans le même ordre que le sitemap. */
+export function searchConsoleUrls(): string[] {
+  return indexableSitemap().map((entry) => entry.url);
+}

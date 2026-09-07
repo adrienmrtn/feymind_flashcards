@@ -173,12 +173,51 @@ obligatoire.
    et citer le sitemap. S'il dit encore `Disallow: /`, le déploiement n'est pas celui de
    production (`IS_INDEXABLE` ne s'allume que si `VERCEL_ENV=production`).
 
-Répète l'inspection pour `/methode`, `/mode-examen` et `/micabo-ou-anki`, puis
-pour une variante préfixée de chaque (`/tr`, `/tr/methode`, `/de/mode-examen`,
-`/es/micabo-ou-anki`). Sans ça, Google n'a que le français dans l'index.
+Répète l'inspection pour **les 24 URL** ci-dessous. Le sitemap passe de 6
+lignes à 24 : sans une nouvelle soumission, Google n'a que le français.
 
 Il n'y a rien à régler dans « ciblage international » : les `hreflang`
 réciproques suffisent. Ne pas activer une redirection par pays dans Vercel.
+
+Ne pas ajouter une URL `*.vercel.app`, ni `micabo.app` sans www à la place
+de `www`. Un aperçu de branche redirige vers le site : ce n'est pas lui
+qu'il faut indexer.
+
+### Les 24 URL (après fusion)
+
+Dans Search Console → Inspection d'URL, coller une adresse, tester en
+direct, demander l'indexation. L'ordre est celui du sitemap.
+
+```
+https://www.micabo.app/
+https://www.micabo.app/de
+https://www.micabo.app/es
+https://www.micabo.app/tr
+https://www.micabo.app/methode
+https://www.micabo.app/de/methode
+https://www.micabo.app/es/methode
+https://www.micabo.app/tr/methode
+https://www.micabo.app/mode-examen
+https://www.micabo.app/de/mode-examen
+https://www.micabo.app/es/mode-examen
+https://www.micabo.app/tr/mode-examen
+https://www.micabo.app/micabo-ou-anki
+https://www.micabo.app/de/micabo-ou-anki
+https://www.micabo.app/es/micabo-ou-anki
+https://www.micabo.app/tr/micabo-ou-anki
+https://www.micabo.app/confidentialite
+https://www.micabo.app/de/confidentialite
+https://www.micabo.app/es/confidentialite
+https://www.micabo.app/tr/confidentialite
+https://www.micabo.app/conditions
+https://www.micabo.app/de/conditions
+https://www.micabo.app/es/conditions
+https://www.micabo.app/tr/conditions
+```
+
+Le minimum si tu n'en fais que huit : l'accueil et `/methode` dans les
+quatre langues. Sans `/tr` et `/de` et `/es` dans l'index, l'annonce
+Google reste française.
 
 ### 2. Les sitelinks (les sous-liens sous le résultat)
 
