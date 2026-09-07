@@ -27,7 +27,7 @@ export function Scaffold({
   center = false,
 }: {
   eyebrow?: string;
-  /** Contrôle posé au-dessus du titre — les drapeaux de l'accueil. */
+  /** Contrôle posé au-dessus du titre. */
   lead?: React.ReactNode;
   title: React.ReactNode;
   /** Pour un titre d'accueil plus grand que les questions qui suivent. */
