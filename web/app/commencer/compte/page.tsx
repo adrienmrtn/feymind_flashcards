@@ -19,10 +19,12 @@ import {
   APP_STORE_REVIEW_PASSWORD,
   isAppStoreReviewEmail,
 } from "@/lib/auth/app-store-review";
+import { inspectAddress } from "@/lib/auth/email";
 import { oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { markPaywallPending, persistStoredAnswers } from "@/lib/onboarding/persist";
 import { createClient } from "@/lib/supabase/client";
+import { EmailSuggestion } from "@/components/auth/EmailSuggestion";
 
 /**
  * La création du compte : **une vraie page**, posée à la **fin** du parcours.
@@ -57,6 +59,7 @@ function AccountStepBody() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [failure, setFailure] = useState<string | null>(params.get("erreur"));
+  const [suggestion, setSuggestion] = useState<{ typed: string; corrected: string } | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -92,12 +95,44 @@ function AccountStepBody() {
     }
   }
 
+  /**
+   * Le lien part **une fois l'adresse relue**.
+   *
+   * C'est ici que ça compte le plus : à la création du compte, personne n'a encore de
+   * session, donc une adresse ratée n'est pas un lien perdu - c'est un compte qui n'existera
+   * jamais, et un rebond de plus sur l'envoyeur mutualisé de Supabase.
+   */
   async function sendLink(event: React.FormEvent) {
     event.preventDefault();
     setFailure(null);
+
+    const verdict = inspectAddress(email);
+
+    if (verdict.kind === "malformed") {
+      setSuggestion(null);
+      setFailure(t("onboarding.emailMalformed"));
+      return;
+    }
+
+    if (verdict.kind === "undeliverable") {
+      setSuggestion(null);
+      setFailure(t("onboarding.emailUndeliverable"));
+      return;
+    }
+
+    if (verdict.kind === "suspicious") {
+      setSuggestion({ typed: verdict.address, corrected: verdict.suggestion });
+      return;
+    }
+
+    await deliver(verdict.address);
+  }
+
+  async function deliver(address: string) {
+    setFailure(null);
+    setSuggestion(null);
     setPending("email");
 
-    const address = email.trim();
     const supabase = createClient();
 
     if (isAppStoreReviewEmail(address)) {
@@ -123,7 +158,10 @@ function AccountStepBody() {
 
     setPending(null);
     if (error) setFailure(error.message);
-    else setSent(true);
+    else {
+      setEmail(address);
+      setSent(true);
+    }
   }
 
   return (
@@ -209,7 +247,11 @@ function AccountStepBody() {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setSuggestion(null);
+                  setFailure(null);
+                }}
                 placeholder={t("onboarding.emailPlaceholder")}
                 className="h-14 rounded-button text-[16px] sm:text-[16px] [&_[data-slot=input]]:h-14 [&_[data-slot=input]]:text-[16px] [&_[data-slot=input]]:leading-[3.5rem]"
               />
@@ -225,6 +267,15 @@ function AccountStepBody() {
             </Button>
           </form>
         )}
+
+        {suggestion ? (
+          <EmailSuggestion
+            typed={suggestion.typed}
+            corrected={suggestion.corrected}
+            onAccept={() => void deliver(suggestion.corrected)}
+            onKeep={() => void deliver(suggestion.typed)}
+          />
+        ) : null}
 
         {failure ? (
           <Alert variant="error" className="mt-3">

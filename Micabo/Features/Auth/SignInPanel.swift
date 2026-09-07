@@ -259,6 +259,12 @@ struct SignInProviderButtons: View {
         return false
     }
 
+    /// La correction proposée, quand l'adresse tapée ressemble à une autre.
+    private var suggestion: (typed: String, corrected: String)? {
+        if case .suggestion(let typed, let corrected) = auth.message { return (typed, corrected) }
+        return nil
+    }
+
     var body: some View {
         VStack(spacing: 10) {
             appleButton
@@ -271,10 +277,52 @@ struct SignInProviderButtons: View {
                 orDivider
                     .padding(.vertical, 10)
                 emailForm
+                if let suggestion {
+                    suggestionNote(typed: suggestion.typed, corrected: suggestion.corrected)
+                }
             }
         }
         .animation(.easeOut(duration: 0.2), value: auth.isWorking)
         .animation(.easeOut(duration: 0.2), value: auth.message)
+    }
+
+    /// « Tu voulais dire … ? », et les deux réponses partent.
+    ///
+    /// `gmial.com` existe et garde le courrier qu'on lui donne : personne ne peut jurer à la
+    /// place de l'élève que ce n'est pas sa boîte. On corrige donc d'un appui, et on passe
+    /// outre d'un autre — bloquer enfermerait dehors les rares qui ont raison.
+    private func suggestionNote(typed: String, corrected: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 4) {
+                Text(t("onboarding.emailSuggestionQuestion"))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                Button {
+                    email = corrected
+                    Haptics.medium()
+                    Task { await auth.deliverMagicLink(to: corrected) }
+                } label: {
+                    Text(corrected)
+                        .font(MicaboFont.hanken(14, weight: .bold))
+                        .foregroundStyle(MicaboColor.ink)
+                        .underline()
+                }
+            }
+
+            Button {
+                Task { await auth.deliverMagicLink(to: typed) }
+            } label: {
+                Text(i18n?.t("onboarding.emailSuggestionKeep", ["email": typed])
+                    ?? L10n.t("onboarding.emailSuggestionKeep", locale: .resolved(), vars: ["email": typed]))
+                    .font(MicaboFont.hanken(13, weight: .medium))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .underline()
+                    .multilineTextAlignment(.leading)
+            }
+        }
+        .font(MicaboFont.hanken(14, weight: .medium))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 4)
+        .transition(.opacity)
     }
 
     /// Le bouton d'Apple est dessiné par le système, et ce n'est pas négociable : ses règles
@@ -386,6 +434,11 @@ struct SignInProviderButtons: View {
                 }
                 .disabled(auth.isWorking)
                 .onSubmit { sendLink() }
+                .onChange(of: email) {
+                    // Corriger l'adresse répond déjà à la question : la garder affichée
+                    // proposerait une correction pour un texte qui n'est plus là.
+                    if auth.message != nil { auth.clearMessage() }
+                }
                 .accessibilityLabel(t("onboarding.emailLabel"))
 
             Button {

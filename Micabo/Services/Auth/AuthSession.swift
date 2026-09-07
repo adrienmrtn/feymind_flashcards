@@ -137,16 +137,5 @@ enum AuthError: LocalizedError, Equatable {
     }
 }
 
-/// Une adresse assez crédible pour envoyer un lien, pas une RFC.
-enum EmailAddress {
-    static func isPlausible(_ raw: String) -> Bool {
-        let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let at = value.firstIndex(of: "@") else { return false }
-        let local = value[..<at]
-        let domain = value[value.index(after: at)...]
-        return !local.isEmpty
-            && domain.contains(".")
-            && !domain.hasPrefix(".")
-            && !domain.hasSuffix(".")
-    }
-}
+// `EmailAddress` vit maintenant dans `EmailAddress.swift` : ce qui tenait en quatre lignes
+// ici laissait passer `eleve@gmial.com`, et chaque lien parti là-bas revenait en rebond.

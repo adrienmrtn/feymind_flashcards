@@ -2,6 +2,12 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  KNOWN_DOMAINS,
+  TLD_TYPOS,
+  UNDELIVERABLE_DOMAINS,
+  UNDELIVERABLE_TLDS,
+} from "../web/lib/auth/email.ts";
 import { de } from "../web/lib/i18n/catalogs/de.ts";
 import { es } from "../web/lib/i18n/catalogs/es.ts";
 import { fr } from "../web/lib/i18n/catalogs/fr.ts";
@@ -9,6 +15,7 @@ import { tr } from "../web/lib/i18n/catalogs/tr.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "Micabo/Services/I18n/Generated");
+const authOutDir = join(root, "Micabo/Services/Auth/Generated");
 
 function flatten(tree: Record<string, unknown>, prefix = "", into: Record<string, string> = {}) {
   for (const [key, value] of Object.entries(tree)) {
@@ -50,6 +57,46 @@ ${blocks.join("\n\n")}
 `;
 }
 
+/**
+ * Les listes du garde-fou des adresses, recopiées en Swift.
+ *
+ * Elles sont générées et non retapées parce que c'est exactement la dérive entre les deux
+ * plateformes qui a coûté un rebond : le site et l'iPhone tenaient chacun leur idée de
+ * l'adresse des relecteurs d'Apple, et les deux étaient trop étroites. Une liste de
+ * référence n'a qu'une source.
+ */
+function emitEmailSwift() {
+  const list = (values: readonly string[]) =>
+    values.map((value) => `        ${swiftString(value)},`).join("\n");
+  const pairs = Object.entries(TLD_TYPOS)
+    .map(([wrong, right]) => `        ${swiftString(wrong)}: ${swiftString(right)},`)
+    .join("\n");
+
+  return `// Généré depuis web/lib/auth/email.ts. Ne pas éditer à la main.
+// Relancer : node --experimental-strip-types scripts/export-i18n-catalogs.ts
+
+enum EmailReference {
+    static let knownDomains: [String] = [
+${list(KNOWN_DOMAINS)}
+    ]
+
+    static let knownDomainSet: Set<String> = Set(knownDomains)
+
+    static let undeliverableTLDs: Set<String> = [
+${list(UNDELIVERABLE_TLDS)}
+    ]
+
+    static let undeliverableDomains: Set<String> = [
+${list(UNDELIVERABLE_DOMAINS)}
+    ]
+
+    static let tldTypos: [String: String] = [
+${pairs}
+    ]
+}
+`;
+}
+
 const catalogs = {
   fr: flatten(fr as unknown as Record<string, unknown>),
   de: flatten(de as unknown as Record<string, unknown>),
@@ -59,7 +106,12 @@ const catalogs = {
 
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, "SharedI18nCatalogs.swift"), emitSwift(catalogs));
+
+mkdirSync(authOutDir, { recursive: true });
+writeFileSync(join(authOutDir, "EmailReference.swift"), emitEmailSwift());
+
 console.log(
   "écrit",
   Object.fromEntries(Object.entries(catalogs).map(([locale, table]) => [locale, Object.keys(table).length])),
+  `+ ${KNOWN_DOMAINS.length} domaines connus`,
 );
