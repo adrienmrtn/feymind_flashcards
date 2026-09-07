@@ -20,9 +20,11 @@ import {
   APP_STORE_REVIEW_PASSWORD,
   isAppStoreReviewEmail,
 } from "@/lib/auth/app-store-review";
+import { inspectAddress } from "@/lib/auth/email";
 import { oauthCallbackUrl, oauthFailureMessage } from "@/lib/auth/oauth";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/client";
+import { EmailSuggestion } from "@/components/auth/EmailSuggestion";
 
 /**
  * La porte de ceux qui ont déjà un compte.
@@ -47,6 +49,7 @@ function ConnexionBody() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  const [suggestion, setSuggestion] = useState<{ typed: string; corrected: string } | null>(null);
 
   function callbackUrl() {
     return oauthCallbackUrl("/app");
@@ -68,12 +71,44 @@ function ConnexionBody() {
     }
   }
 
+  /**
+   * Le lien part **une fois l'adresse relue**.
+   *
+   * Un lien envoyé à une boîte qui n'existe pas revient, et ce rebond est compté contre
+   * l'envoyeur mutualisé qu'on partage avec tous les projets Supabase. Une faute de frappe
+   * coûte donc plus qu'un élève qui attend : elle grignote le droit d'envoyer.
+   */
   async function sendLink(event: React.FormEvent) {
     event.preventDefault();
     setFailure(null);
+
+    const verdict = inspectAddress(email);
+
+    if (verdict.kind === "malformed") {
+      setSuggestion(null);
+      setFailure(t("onboarding.emailMalformed"));
+      return;
+    }
+
+    if (verdict.kind === "undeliverable") {
+      setSuggestion(null);
+      setFailure(t("onboarding.emailUndeliverable"));
+      return;
+    }
+
+    if (verdict.kind === "suspicious") {
+      setSuggestion({ typed: verdict.address, corrected: verdict.suggestion });
+      return;
+    }
+
+    await deliver(verdict.address);
+  }
+
+  async function deliver(address: string) {
+    setFailure(null);
+    setSuggestion(null);
     setPending("email");
 
-    const address = email.trim();
     const supabase = createClient();
 
     if (isAppStoreReviewEmail(address)) {
@@ -98,7 +133,10 @@ function ConnexionBody() {
 
     setPending(null);
     if (error) setFailure(error.message);
-    else setSent(true);
+    else {
+      setEmail(address);
+      setSent(true);
+    }
   }
 
   return (
@@ -185,7 +223,11 @@ function ConnexionBody() {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setSuggestion(null);
+                  setFailure(null);
+                }}
                 placeholder={t("onboarding.emailPlaceholder")}
                 className="h-14 rounded-button text-[16px] sm:text-[16px] [&_[data-slot=input]]:h-14 [&_[data-slot=input]]:text-[16px] [&_[data-slot=input]]:leading-[3.5rem]"
               />
@@ -201,6 +243,15 @@ function ConnexionBody() {
             </Button>
           </form>
         )}
+
+        {suggestion ? (
+          <EmailSuggestion
+            typed={suggestion.typed}
+            corrected={suggestion.corrected}
+            onAccept={() => void deliver(suggestion.corrected)}
+            onKeep={() => void deliver(suggestion.typed)}
+          />
+        ) : null}
 
         {failure ? (
           <Alert variant="error" className="mt-3">
