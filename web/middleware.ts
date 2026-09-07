@@ -12,8 +12,8 @@ import { LOCALE_HEADER, resolveLocaleRequest } from "@/lib/i18n/paths";
  * 1. Un aperçu renvoie au site.
  * 2. Un `?code=` (ou un jeton de mail) est renvoyé au callback.
  * 3. **La langue de l'URL.** `/tr/methode` se réécrit en `/methode` et pose
- *    `x-micabo-locale: tr`. `/methode` pose `fr`. Cookie et navigateur ne
- *    changent pas une page indexable. `/fr/…` redirige vers la version nue.
+ *    `x-micabo-locale: tr`. `/methode` pose `en`. Cookie et navigateur ne
+ *    changent pas une page indexable. `/en/…` redirige vers la version nue.
  *    `/tr/app` redirige vers `/app` en posant le cookie : l'app n'a pas de
  *    préfixe.
  * 4. La session se rafraîchit.

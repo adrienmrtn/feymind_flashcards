@@ -212,7 +212,7 @@ export async function manageSubscription(): Promise<CheckoutResult> {
     body: new URLSearchParams({
       customer: customerId,
       return_url: checkoutReturnUrl(SITE_URL, "/app/reglages"),
-      locale: "fr",
+      locale: await readUiLocale(),
     }),
   });
 

@@ -71,7 +71,7 @@ export const legalTr = {
       "Bu yüklenicilerden bazıları Avrupa Birliği dışında kuruludur. Aktarım o zaman yalnızca hizmeti sağlamak için olur ve GDPR'nin öngördüğü güvencelere dayanır (yeterlilik kararı veya yüklenicinin standart sözleşme maddeleri).",
     cookiesTitle: "Çerezler ve izleyiciler",
     cookiesWeb:
-      "Site, oturum için gerekli çerezleri (bağlandıktan sonra sizi bir sayfadan ötekine tanımak) ve bir yıl saklanan, Fransızca, Almanca, İspanyolca veya Türkçeyi tutan bir arayüz dili çerezi (`micabo.ui_locale`) koyar. Kitle ölçümü, reklam veya siteler arası izleme çerezi koymuyoruz. Site ziyaretlerini elbette sayıyor, ama cihazınıza hiçbir şey yazmadan: ölçüm bir sayfa görüntülemesini, nereden geldiğini, bir ülkeyi ve bir cihaz türünü tutar; sizi bir ziyaretten ötekine ya da başka bir sitede tanımaya yarayacak hiçbir şeyi tutmaz. Bu yüzden bir onay şeridi yoktur: o tarafta reddedecek bir şey yoktur.",
+      "Site, oturum için gerekli çerezleri (bağlandıktan sonra sizi bir sayfadan ötekine tanımak) ve bir yıl saklanan, İngilizce, Fransızca, Almanca, İspanyolca veya Türkçeyi tutan bir arayüz dili çerezi (`micabo.ui_locale`) koyar. Kitle ölçümü, reklam veya siteler arası izleme çerezi koymuyoruz. Site ziyaretlerini elbette sayıyor, ama cihazınıza hiçbir şey yazmadan: ölçüm bir sayfa görüntülemesini, nereden geldiğini, bir ülkeyi ve bir cihaz türünü tutar; sizi bir ziyaretten ötekine ya da başka bir sitede tanımaya yarayacak hiçbir şeyi tutmaz. Bu yüzden bir onay şeridi yoktur: o tarafta reddedecek bir şey yoktur.",
     cookiesIos:
       "iPhone çerez kullanmaz. Oturum jetonunu cihazın anahtarlığında tutar.",
     retentionTitle: "Ne kadar saklarız",

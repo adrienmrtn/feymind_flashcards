@@ -7,6 +7,7 @@ export const es: Catalog = {
   locale: {
     switcher: "Idioma del sitio",
     choose: "Tu idioma",
+    en: "English",
     fr: "Français",
     de: "Deutsch",
     es: "Español",
@@ -103,7 +104,7 @@ export const es: Catalog = {
       "Es el riesgo que más nos tomamos en serio, porque una ficha falsa no parece un error. Una palabra mal leída puede dar una definición perfectamente creíble y completamente falsa. Micabo no define nunca un término del que no está seguro: si el contexto no basta, la palabra dudosa simplemente no aparece en la ficha.",
     faq3q: "¿Funciona en otros idiomas? ¿Otros sistemas escolares?",
     faq3a:
-      "Sí. El país de estudios decide el sistema de referencia y el idioma de las fichas. El sitio se lee en francés, alemán, español o turco: cambias el idioma arriba de la página, en el recorrido o en ajustes. iPhone y navegador comparten el ajuste de las fichas.",
+      "Sí. El país de estudios decide el sistema de referencia y el idioma de las fichas. El sitio se lee en inglés, francés, alemán, español o turco: cambias el idioma arriba de la página, en el recorrido o en ajustes. iPhone y navegador comparten el ajuste de las fichas.",
     faq4q: "¿Qué pasa al final de la prueba?",
     faq4a:
       "Los {days} días de prueba se acaban, y no se cobra nada si tú no lo has decidido. Tus cursos y tus tarjetas se quedan, en el sitio y en el iPhone: lo que se cierra es lo que Pro abría, no lo que ya has escrito.",

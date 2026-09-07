@@ -6,6 +6,7 @@ export const fr = {
   locale: {
     switcher: "Langue du site",
     choose: "Ta langue",
+    en: "English",
     fr: "Français",
     de: "Deutsch",
     es: "Español",
@@ -102,7 +103,7 @@ export const fr = {
       "C'est le risque qu'on prend le plus au sérieux, parce qu'une fiche fausse ne ressemble pas à une erreur. Un mot mal lu par la reconnaissance de texte peut donner une définition parfaitement crédible et complètement fausse. Micabo ne définit donc jamais un terme dont il n'est pas sûr : quand le contexte ne tranche pas, le mot douteux n'apparaît simplement pas dans la fiche.",
     faq3q: "Ça marche dans d'autres langues ? D'autres systèmes scolaires ?",
     faq3a:
-      "Oui. Le pays de scolarisation décide du système de référence et de la langue des fiches. Le site, lui, se lit en français, allemand, espagnol ou turc : tu changes la langue en haut de la page, dans le parcours, ou dans les réglages. iPhone et navigateur partagent le réglage des fiches.",
+      "Oui. Le pays de scolarisation décide du système de référence et de la langue des fiches. Le site, lui, se lit en anglais, français, allemand, espagnol ou turc : tu changes la langue en haut de la page, dans le parcours, ou dans les réglages. iPhone et navigateur partagent le réglage des fiches.",
     faq4q: "Que se passe-t-il à la fin de l'essai ?",
     faq4a:
       "Les {days} jours d'essai s'arrêtent, et rien ne se prélève sans que tu l'aies décidé. Tes cours et tes cartes restent, sur le site comme sur iPhone : ce qui se referme, c'est ce que Pro ouvrait, pas ce que tu as déjà écrit.",

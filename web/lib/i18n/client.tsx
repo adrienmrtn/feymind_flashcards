@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 
 import { catalogFor } from "./catalogs";
 import type { MessageTree } from "./format";
-import { fr } from "./catalogs/fr";
+import { en } from "./catalogs/en";
 import { UI_LOCALE_META, type UiLocale } from "./locales";
 import { makeTranslator } from "./translate";
 
@@ -50,7 +50,7 @@ export function I18nProvider({
       t: makeTranslator(
         current,
         catalogFor(current) as unknown as MessageTree,
-        fr as unknown as MessageTree,
+        en as unknown as MessageTree,
       ),
       pick,
     };
