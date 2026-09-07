@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import type { Route } from "next";
 import { usePathname, useRouter } from "next/navigation";
 
 import { setUiLocale } from "@/lib/actions/locale";
@@ -32,7 +31,10 @@ export function LanguageSwitcher({
       await setUiLocale(next);
       const target = localeSwitchHref(pathname, next);
       if (target) {
-        router.push(target as Route);
+        // `router.push` ne suffit pas : `/tr/methode` est déjà réécrit en
+        // `/methode`, le cache RSC sert encore le turc. L'adresse doit
+        // recharger, sinon titres et corps ne sont plus la même langue.
+        window.location.assign(target);
         return;
       }
       router.refresh();
