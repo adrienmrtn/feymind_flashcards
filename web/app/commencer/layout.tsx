@@ -67,7 +67,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
               </div>
               <span className="flex-1" />
               <AppearanceSwitcher variant="compact" />
-              {pathname !== "/commencer/bienvenue" ? <LanguageSwitcher /> : null}
+              <LanguageSwitcher />
               <OnboardingLogout />
             </header>
           ) : null}
