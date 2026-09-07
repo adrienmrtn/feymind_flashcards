@@ -29,6 +29,9 @@ final class AuthController {
     enum AuthMessage: Equatable {
         case error(String)
         case sent(String)
+        /// L'adresse ressemble à une autre. On demande avant d'envoyer, parce qu'un lien
+        /// parti à `gmial.com` ne revient pas à l'élève : il revient en rebond.
+        case suggestion(typed: String, corrected: String)
     }
 
     private let client: SupabaseAuthClient
@@ -127,12 +130,36 @@ final class AuthController {
         }
     }
 
-    /// Envoie le lien, et n'ouvre pas la session. C'est le courriel qui la ferme.
+    /// Relit l'adresse, puis envoie le lien. C'est le courriel qui ferme la session.
     ///
-    /// Sauf pour `review@apple.com` : les relecteurs n'ont pas cette boîte, donc
-    /// l'appui ouvre le compte tout de suite.
+    /// Sauf pour `@apple.com` : les relecteurs n'ont pas de boîte là-bas, donc l'appui ouvre
+    /// le compte tout de suite plutôt que d'envoyer un lien qui rebondirait.
+    ///
+    /// Le tri des adresses se fait ici et non dans la vue, pour que l'écran d'accueil, la
+    /// feuille des réglages et l'étape du parcours obéissent tous à la même règle.
     func sendMagicLink(to email: String) async {
-        let address = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !isWorking else { return }
+
+        if AppStoreReview.matches(email) {
+            await openReviewSession()
+            return
+        }
+
+        switch EmailAddress.inspect(email) {
+        case .malformed:
+            message = .error(L10n.t("onboarding.emailMalformed", locale: .resolved()))
+        case .undeliverable:
+            message = .error(L10n.t("onboarding.emailUndeliverable", locale: .resolved()))
+        case .suspicious(let address, let suggestion):
+            message = .suggestion(typed: address, corrected: suggestion)
+        case .ok(let address):
+            await deliverMagicLink(to: address)
+        }
+    }
+
+    /// Envoie sans redemander. Les deux réponses à « tu voulais dire … ? » passent par ici :
+    /// la correction, et le refus de corriger.
+    func deliverMagicLink(to address: String) async {
         if AppStoreReview.matches(address) {
             await openReviewSession()
             return
