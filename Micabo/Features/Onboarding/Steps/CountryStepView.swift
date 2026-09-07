@@ -10,9 +10,9 @@ import SwiftUI
 /// réponse juste. Poser le niveau d'abord obligeait à servir les mêmes sept réponses
 /// françaises à tout le monde.
 ///
-/// Des pastilles à drapeau : un drapeau se reconnaît avant qu'on ait lu le nom. La France est
-/// pré-choisie parce que c'est le cas de la grande majorité, et c'est ce que l'app supposait
-/// déjà en silence.
+/// Des pastilles à drapeau : un drapeau se reconnaît avant qu'on ait lu le nom. Le pays
+/// de l'appareil est pré-choisi — plus la France pour tout le monde, sans quoi un iPhone
+/// anglais n'ouvrirait que des lycées français à l'écran suivant.
 ///
 /// **« Autre pays » n'est plus une impasse.** La pastille rendait un « ailleurs » qui ne
 /// disait rien de plus que le silence : on ne savait ni où était l'étudiant, ni combien

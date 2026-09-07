@@ -18,7 +18,11 @@ actor InstitutionSearchService {
         guard needle.count >= 2 else { return [] }
 
         let iso = Self.normalizedCountry(country)
-        let local = Self.filter(localCatalog, matching: needle, country: iso, limit: limit)
+        // Le catalogue embarqué n'est français. Sans pays, le servir en premier
+        // recouvre Harvard derrière une liste de lycées.
+        let local = iso == nil
+            ? []
+            : Self.filter(localCatalog, matching: needle, country: iso, limit: limit)
         let remote = await searchRemote(matching: needle, country: iso, limit: limit)
         return Self.merge(local: local, remote: remote, limit: limit)
     }

@@ -251,6 +251,7 @@ final class OnboardingFlowTests: XCTestCase {
         defer { OnboardingPreferences.reset() }
 
         let model = self.model(advancingTo: .level)
+        model.select(country: .fr)
         let sante = try XCTUnwrap(model.country.stages.first { $0.level == .sante })
         model.stage = sante
         model.advance()
@@ -610,6 +611,15 @@ final class OnboardingFlowTests: XCTestCase {
         }
         // Le brut est envoyé à la fonction : le renommer changerait la consigne de rédaction.
         XCTAssertEqual(SchoolingCountry.fr.rawValue, "fr")
+
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["en-US"]), .us)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["en-GB"]), .uk)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["en"]), .us)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["de-DE"]), .de)
+        XCTAssertEqual(SchoolingCountry.guessed(languages: ["fr-FR"]), .fr)
+        XCTAssertEqual(SchoolingCountry.fr.institutionSearchIso(uiLocale: nil), "FR")
+        XCTAssertEqual(SchoolingCountry.fr.institutionSearchIso(uiLocale: .de), "DE")
+        XCTAssertEqual(SchoolingCountry.us.institutionSearchIso(uiLocale: .de), "US")
     }
 
     /// **L'ordre des pastilles est celui des marchés visés**, et il est verrouillé : c'est un
@@ -629,7 +639,7 @@ final class OnboardingFlowTests: XCTestCase {
     /// nommé, faute de quoi la question n'a pas de réponse.
     func testElsewhereIsOnlyAnAnswerOnceACountryIsNamed() throws {
         let model = OnboardingModel()
-        XCTAssertTrue(model.hasAnsweredCountry, "La France est cochée d'avance")
+        XCTAssertTrue(model.hasAnsweredCountry, "Un pays est coché d'avance")
 
         model.select(country: .other)
         XCTAssertFalse(model.hasAnsweredCountry, "« Autre pays » seul ne dit rien")

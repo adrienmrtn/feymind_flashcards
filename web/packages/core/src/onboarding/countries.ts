@@ -229,14 +229,47 @@ export function institutionCountryIso(code: string | null | undefined): string |
 }
 
 /**
+ * Le pays que l'interface implique, quand le parcours n'en a pas encore nommé
+ * un. L'anglais est la langue de base du site : ce n'est plus la France.
+ */
+export function countryFromUiLocale(locale: string | null | undefined): CountryCode {
+  const hint = locale?.trim().toLowerCase();
+  if (hint === "de" || hint === "es" || hint === "tr") return hint;
+  if (hint === "en") return "us";
+  return FALLBACK_COUNTRY;
+}
+
+/**
+ * Le filtre de l'annuaire, pour l'écran « Which school do you study at? ».
+ *
+ * Le pays choisi gagne, sauf la France sous une interface anglaise : c'est
+ * encore le défaut du parcours (navigateur `fr-FR`, France en tête de liste,
+ * session d'avant). Sans ça, taper « university » ne sort que des campus
+ * français, et l'anglais n'a plus d'écoles à soi.
+ */
+export function institutionSearchCountry(
+  country: string | null | undefined,
+  uiLocale?: string | null,
+): string | null {
+  const chosen = institutionCountryIso(country);
+  const locale = uiLocale?.trim().toLowerCase() || null;
+  const fromLocale = institutionCountryIso(countryFromUiLocale(locale));
+
+  if (locale === "en" && chosen === "FR") return fromLocale;
+  return chosen ?? fromLocale;
+}
+
+/**
  * Le pays deviné, pour le poser **en évidence**.
  *
  * C'est une suggestion, jamais une réponse : la question reste posée et se répond d'un appui.
  *
- * La langue d'interface **choisie** (allemand, espagnol, turc) gagne sur le navigateur : un
- * Allemand qui a basculé le site en Deutsch, le navigateur resté en `fr-FR`, ne doit plus voir
- * la France marquée « détectée ». Le français d'interface, lui, ne force rien - c'est aussi le
- * défaut, et la région du navigateur dit alors mieux où l'on étudie (`fr-BE` → Belgique).
+ * La langue d'interface **choisie** gagne sur le navigateur : un Allemand qui a
+ * basculé le site en Deutsch, le navigateur resté en `fr-FR`, ne doit plus voir
+ * la France marquée « détectée ». L'anglais non plus — c'est désormais la langue
+ * de base, et un `fr-FR` résiduel ne doit plus y recoller la France. Le français
+ * d'interface, lui, ne force rien : la région du navigateur dit alors mieux où
+ * l'on étudie (`fr-BE` → Belgique).
  */
 export function guessCountry(
   locales: readonly string[],
@@ -244,6 +277,7 @@ export function guessCountry(
 ): CountryCode {
   const hint = languageHint?.trim().toLowerCase();
   if (hint === "de" || hint === "es" || hint === "tr") return hint;
+  if (hint === "en") return englishSpeakingCountry(locales) ?? "us";
 
   for (const locale of locales) {
     const region = regionOf(locale);
@@ -256,12 +290,24 @@ export function guessCountry(
 
   for (const locale of locales) {
     const language = languageOf(locale);
-    if (!language || language === "en") continue;
+    if (!language) continue;
+    if (language === "en") return englishSpeakingCountry(locales) ?? "us";
     const match = COUNTRIES.find((item) => item.code === language);
     if (match) return match.code;
   }
 
   return FALLBACK_COUNTRY;
+}
+
+/** Royaume-Uni, États-Unis, Canada : les pays anglais que le parcours connaît. */
+function englishSpeakingCountry(locales: readonly string[]): CountryCode | null {
+  for (const locale of locales) {
+    const region = regionOf(locale);
+    if (region === "gb" || region === "uk") return "uk";
+    if (region === "us") return "us";
+    if (region === "ca") return "ca";
+  }
+  return null;
 }
 
 function regionOf(locale: string): string | null {

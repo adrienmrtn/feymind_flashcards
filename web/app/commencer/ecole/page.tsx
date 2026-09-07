@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ThinkingOrb } from "thinking-orbs";
 
-import { institutionCountryIso } from "@micabo/core";
+import { institutionSearchCountry } from "@micabo/core";
 
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
 import { useI18n } from "@/lib/i18n/client";
@@ -36,7 +36,7 @@ interface Suggestion {
 
 export default function SchoolStep() {
   const { answers, set, ready } = useOnboarding();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [query, setQuery] = useState(answers.institutionName ?? "");
   const [results, setResults] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
@@ -55,7 +55,7 @@ export default function SchoolStep() {
     const token = ++latest.current;
     setSearching(true);
 
-    const country = institutionCountryIso(answers.country);
+    const country = institutionSearchCountry(answers.country, locale);
     const timer = window.setTimeout(async () => {
       const supabase = createClient();
       const { data } = await supabase.rpc("search_institutions", {
@@ -70,7 +70,7 @@ export default function SchoolStep() {
     }, 220);
 
     return () => window.clearTimeout(timer);
-  }, [query, answers.country]);
+  }, [query, answers.country, locale]);
 
   return (
     <Scaffold

@@ -17,7 +17,9 @@ import {
   flagFor,
   isoFromFlagEmoji,
   guessCountry,
+  countryFromUiLocale,
   institutionCountryIso,
+  institutionSearchCountry,
   languageFor,
   sheetLanguage,
 } from "../src/onboarding/countries";
@@ -222,7 +224,11 @@ describe("le pays deviné depuis la locale", () => {
     expect(guessCountry(["fr-FR", "fr"], "de")).toBe("de");
     expect(guessCountry(["fr-FR"], "es")).toBe("es");
     expect(guessCountry(["fr-FR"], "tr")).toBe("tr");
-    // Le français d'interface est aussi le défaut : il ne recouvre pas une région claire.
+    // L'anglais est la langue de base : un fr-FR résiduel ne recouvre plus la France.
+    expect(guessCountry(["fr-FR"], "en")).toBe("us");
+    expect(guessCountry(["en-GB", "fr-FR"], "en")).toBe("uk");
+    expect(guessCountry(["en-US"], "en")).toBe("us");
+    // Le français d'interface, lui, ne recouvre pas une région claire.
     expect(guessCountry(["de-DE"], "fr")).toBe("de");
   });
 
@@ -230,6 +236,7 @@ describe("le pays deviné depuis la locale", () => {
     expect(guessCountry(["de"])).toBe("de");
     expect(guessCountry(["es"])).toBe("es");
     expect(guessCountry(["tr"])).toBe("tr");
+    expect(guessCountry(["en"])).toBe("us");
     expect(guessCountry(["fr"])).toBe(FALLBACK_COUNTRY);
   });
 
@@ -249,6 +256,18 @@ describe("le code pays de l'annuaire", () => {
     expect(institutionCountryIso("UK")).toBe("GB");
     expect(institutionCountryIso("other")).toBeNull();
     expect(institutionCountryIso(null)).toBeNull();
+  });
+
+  it("ne sert plus la France sous un titre anglais", () => {
+    expect(countryFromUiLocale("en")).toBe("us");
+    expect(countryFromUiLocale("de")).toBe("de");
+    expect(countryFromUiLocale("fr")).toBe(FALLBACK_COUNTRY);
+    expect(institutionSearchCountry("fr", "en")).toBe("US");
+    expect(institutionSearchCountry("uk", "en")).toBe("GB");
+    expect(institutionSearchCountry("de", "en")).toBe("DE");
+    expect(institutionSearchCountry(undefined, "en")).toBe("US");
+    expect(institutionSearchCountry("fr", "fr")).toBe("FR");
+    expect(institutionSearchCountry("other", "en")).toBe("US");
   });
 });
 

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ThinkingOrb } from "thinking-orbs";
 
-import { institutionCountryIso } from "@micabo/core";
+import { institutionSearchCountry } from "@micabo/core";
 
 import { useI18n } from "@/lib/i18n/client";
 import { institutionKindLabel } from "@/lib/i18n/institution";
@@ -33,7 +33,7 @@ export function SchoolField({
   countryCode?: string | null;
   onChange: (next: { name: string; id: string | null }) => void;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [query, setQuery] = useState(initialName);
   const [chosenId, setChosenId] = useState<string | null>(initialId);
   const [results, setResults] = useState<Suggestion[]>([]);
@@ -57,7 +57,7 @@ export function SchoolField({
 
     const token = ++latest.current;
     setSearching(true);
-    const country = institutionCountryIso(countryCode);
+    const country = institutionSearchCountry(countryCode, locale);
 
     const timer = window.setTimeout(async () => {
       const supabase = createClient();
@@ -73,7 +73,7 @@ export function SchoolField({
     }, 220);
 
     return () => window.clearTimeout(timer);
-  }, [query, typing, countryCode]);
+  }, [query, typing, countryCode, locale]);
 
   return (
     <div>

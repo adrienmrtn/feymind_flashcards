@@ -219,6 +219,25 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
     /// grande majorité des utilisateurs, et le seul que l'app connaissait avant.
     static let fallback = SchoolingCountry.fr
 
+    /// Le pays déduit des langues de l'appareil, pour ne plus pré-cocher la France
+    /// sur un iPhone anglais, allemand, espagnol ou turc.
+    static func guessed(languages: [String] = Locale.preferredLanguages) -> SchoolingCountry {
+        for tag in languages {
+            let parts = tag.split(separator: "-").map { String($0).lowercased() }
+            guard let region = parts.last, region.count == 2 else { continue }
+            if region == "gb" || region == "uk" { return .uk }
+            if let match = SchoolingCountry(rawValue: region) { return match }
+        }
+
+        for tag in languages {
+            let language = tag.split(separator: "-").first.map { String($0).lowercased() }
+            if language == "en" { return .us }
+            if let language, let match = SchoolingCountry(rawValue: language) { return match }
+        }
+
+        return fallback
+    }
+
     /// Code ISO de l'annuaire `institutions`. Le Royaume-Uni s'y écrit `GB`, pas `UK`.
     var institutionCountryIso: String? {
         switch self {
@@ -226,6 +245,16 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
         case .uk: "GB"
         default: rawValue.uppercased()
         }
+    }
+
+    /// Le filtre de recherche : la France pré-cochée ne doit plus gouverner
+    /// l'annuaire quand l'interface n'est pas française.
+    func institutionSearchIso(uiLocale: UiLocale? = nil, custom: WorldCountry? = nil) -> String? {
+        if self == .other { return custom?.code }
+        if institutionCountryIso == "FR", let uiLocale, uiLocale != .fr {
+            return uiLocale.rawValue.uppercased()
+        }
+        return institutionCountryIso
     }
 }
 

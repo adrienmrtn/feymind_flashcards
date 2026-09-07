@@ -10,7 +10,7 @@ final class OnboardingModel {
     /// Le palier d'études, dans les termes du pays choisi. Il n'est proposé qu'après le
     /// pays, faute de quoi il n'y aurait rien de juste à proposer.
     var stage: EducationStage?
-    private(set) var country: SchoolingCountry = .fallback
+    private(set) var country: SchoolingCountry = .guessed()
     /// Le pays nommé à la main, quand la réponse est « Autre pays ». Il n'a de sens que dans
     /// ce cas-là, et il est effacé dès qu'on revient sur une pastille.
     var customCountry: WorldCountry?
