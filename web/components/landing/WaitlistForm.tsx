@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { joinWaitlist, type WaitlistResult, type WaitlistSource } from "@/lib/actions/waitlist";
+import { useLocalizedHref } from "@/lib/i18n/href";
+import { PRIVACY_PATH } from "@/lib/legal";
 
 /**
  * Le seul appel à l'action du site, et il marche.
@@ -29,6 +31,7 @@ export function WaitlistForm({
   const [email, setEmail] = useState("");
   const [result, setResult] = useState<WaitlistResult | null>(null);
   const [pending, startTransition] = useTransition();
+  const privacyHref = useLocalizedHref(PRIVACY_PATH);
 
   const done = result?.status === "ok" || result?.status === "already";
 
@@ -90,7 +93,7 @@ export function WaitlistForm({
           {result?.message ?? (
             <>
               Une adresse, rien d&apos;autre. Pas de lettre d&apos;information.{" "}
-              <a href="/confidentialite" className="underline-draw text-ink">
+              <a href={privacyHref} className="underline-draw text-ink">
                 Confidentialité
               </a>
             </>

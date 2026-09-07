@@ -244,7 +244,8 @@ elle-même est moins mise en avant, ou retirée de l'index.
 
 ### 3. Ensuite seulement
 
-- Bing Webmaster Tools, même sitemap, si tu veux aussi Bing.
+- Bing Webmaster Tools : le même `https://www.micabo.app/sitemap.xml`,
+  les mêmes 24 URL. Rien à traduire en plus.
 - Apple Search (App Store) est un autre index : le site n'y change rien, la fiche App
   Store si.
 - Écrire d'autres pages publiques quand il y aura un sujet. Les sitelinks pointent vers
