@@ -53,12 +53,12 @@ export async function ArticleShell({
         >
           {t("common.skipToContent")}
         </a>
-        <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-6 px-screen">
+        <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-3 px-screen sm:gap-6">
           <BrandLockup
             href={localizedHref(locale, "/")}
             size={28}
             className="shrink-0 text-foreground"
-            wordClassName="text-[15px] font-bold tracking-tight text-foreground"
+            wordClassName="hidden text-[15px] font-bold tracking-tight text-foreground sm:inline"
           />
 
           <nav aria-label={t("articles.shared.navAria")} className="hidden items-center gap-7 md:flex">
@@ -81,8 +81,10 @@ export async function ArticleShell({
             })}
           </nav>
 
-          <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-2">
-            <AppearanceSwitcher variant="compact" />
+          <div className="flex min-w-0 items-center justify-end gap-1 sm:gap-2">
+            <div className="hidden shrink-0 sm:block">
+              <AppearanceSwitcher variant="compact" />
+            </div>
             <LanguageSwitcher />
             <StartButton size="compact" />
           </div>

@@ -109,7 +109,7 @@ export function LanguageSwitcher({
         value={locale}
         disabled={pending}
         onChange={(event) => choose(event.target.value as UiLocale)}
-        className="max-w-[9.5rem] truncate rounded-button bg-transparent py-1.5 pe-7 ps-2 text-[13px] font-medium text-ink-secondary outline-none sm:max-w-[12rem]"
+        className="max-w-[4.25rem] truncate rounded-button bg-transparent py-1.5 pe-7 ps-2 text-[13px] font-medium text-ink-secondary outline-none sm:max-w-[12rem]"
         aria-label={t("locale.switcher")}
       >
         {UI_LOCALES.map((code) => (

@@ -24,7 +24,7 @@ export function StartButton({
   const large = size === "large";
   const { t } = useI18n();
   return (
-    <div className={large ? "flex flex-col items-center gap-3" : "flex min-w-0 items-center gap-2.5 sm:gap-3.5"}>
+    <div className={large ? "flex flex-col items-center gap-3" : "flex shrink-0 items-center gap-2.5 sm:gap-3.5"}>
       <Button
         size={large ? "xl" : "lg"}
         className={
