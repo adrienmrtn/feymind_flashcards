@@ -101,6 +101,31 @@ Le nom au-dessus de l'URL (`micabo`, pas `micabo.app`) vient de `WebSite.name`,
 lui donner le signal, puis redemander l'indexation. Une marque inventée peut rester
 affichée comme le domaine pendant des jours ou des semaines.
 
+## Inventaire des pages indexables (phase 0)
+
+Une URL, une langue servie au robot aujourd'hui : le français (défaut, cookie
+absent). Les préfixes `/tr` `/de` `/es` ne sont **pas** encore là — sans eux,
+Google n'indexe qu'une version par adresse. Ce que cette phase a réglé : plus
+aucun corps d'article figé en français. Un visiteur dont le navigateur est en
+turc lit `/methode` en turc. Le titre dans Google restera français tant que
+l'URL unique n'aura pas de sœur préfixée.
+
+| URL | Dans le sitemap | `noindex` | Corps |
+|---|---|---|---|
+| `/` | oui | non | catalogues (`landing.*`) |
+| `/methode` | oui (0,8) | non | catalogues (`articles.method.*`) |
+| `/mode-examen` | oui (0,8) | non | catalogues (`articles.exam.*`) |
+| `/micabo-ou-anki` | oui (0,7) | non | catalogues (`articles.anki.*`) |
+| `/confidentialite` | oui (0,3) | non | catalogues (`legal.privacy.*`) |
+| `/conditions` | oui (0,3) | non | catalogues (`legal.terms.*`) |
+| `/app/*`, `/commencer/*`, `/connexion`, `/auth/*`, `/fondations` | non | oui (`X-Robots-Tag`) | hors sujet |
+
+Les trois articles étaient les seules pages publiques dont le **titre, l'extrait
+et le texte** étaient écrits en dur en français (`site-pages.ts`, les `page.tsx`,
+`ArticleShell`). C'est ce qui a été sorti. Ils restent dans le sitemap et
+explorables : rien à « ré-indexer » côté robots — seulement à redemander
+l'indexation dans Search Console après fusion, pour que Google relise le HTML.
+
 ## Les sitelinks : ce qui se fait et ce qui ne se fait pas
 
 Les liens qui apparaissent sous un résultat ne se déclarent pas. **Il n'existe aucune balise

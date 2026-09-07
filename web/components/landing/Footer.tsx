@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/lib/i18n/client";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
-import { SITE_PAGES } from "@/lib/site-pages";
+import { SITE_PAGES, siteNavKey } from "@/lib/site-pages";
 
 /**
  * Le pied de page de la vitrine.
@@ -27,12 +27,7 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
   ];
   const pages = SITE_PAGES.map((page) => ({
     path: page.path,
-    label:
-      page.path === "/methode"
-        ? t("site.method")
-        : page.path === "/mode-examen"
-          ? t("site.exam")
-          : t("site.anki"),
+    label: t(siteNavKey(page.id)),
   }));
   return (
     <footer className="mt-24" data-print="hide">

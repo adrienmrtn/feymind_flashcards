@@ -1,5 +1,6 @@
 import type { Catalog } from "./fr";
 import { appDe, copyDe } from "./app-de";
+import { articlesDe } from "./articles-de";
 import { legalDe } from "./legal-de";
 
 export const de: Catalog = {
@@ -415,4 +416,5 @@ export const de: Catalog = {
   app: appDe,
   copy: copyDe,
   legal: legalDe,
+  articles: articlesDe,
 };

@@ -1,6 +1,8 @@
 import { ALL_SUBJECTS, SUBJECT_FAMILIES } from "@micabo/core";
 import { describe, expect, it } from "vitest";
 
+import { SITE_PAGES } from "../site-pages";
+
 import { CATALOGS, catalogFor, fr } from "./catalogs";
 import { formatMessage, lookup, type MessageTree } from "./format";
 import {
@@ -158,6 +160,39 @@ describe("catalogues", () => {
         expect(value, `${locale}:${key}`).not.toMatch(/étudier|Recto verso|océans|évapor|Qui peut|Aucune carte|Génère-les|suite de la fiche/i);
       }
     }
+  });
+
+  it("relie chaque page d'article à des clés de catalogue", () => {
+    expect(SITE_PAGES.map((page) => page.id)).toEqual(["method", "exam", "anki"]);
+    for (const page of SITE_PAGES) {
+      expect(lookup(fr as unknown as MessageTree, `articles.${page.id}.metaTitle`)).toBeTruthy();
+      expect(lookup(fr as unknown as MessageTree, `articles.${page.id}.h1`)).toBeTruthy();
+    }
+  });
+
+  it("traduit les trois articles, titres compris", () => {
+    const leftovers = [
+      "articles.method.h1",
+      "articles.exam.h1",
+      "articles.anki.h1",
+      "articles.method.metaTitle",
+      "articles.exam.metaTitle",
+      "articles.anki.metaTitle",
+      "articles.shared.ctaTitle",
+    ] as const;
+    const french = leftovers.map((key) => lookup(fr as unknown as MessageTree, key));
+    for (const locale of UI_LOCALES.filter((item) => item !== "fr")) {
+      for (const [index, key] of leftovers.entries()) {
+        const value = lookup(CATALOGS[locale] as unknown as MessageTree, key);
+        expect(value, `${locale}:${key}`).not.toEqual(french[index]);
+        expect(value, `${locale}:${key}`).not.toMatch(
+          /Relire ne suffit|Tu donnes la date|ce qui change vraiment|Dépose un cours/i,
+        );
+      }
+    }
+    const tTr = makeTranslator("tr", CATALOGS.tr as unknown as MessageTree, fr as unknown as MessageTree);
+    expect(tTr("articles.method.h1")).toMatch(/Hatırlamak/);
+    expect(tTr("articles.anki.metaTitle")).toMatch(/Anki/);
   });
 
   it("traduit le paywall et le mode examen en turc", () => {

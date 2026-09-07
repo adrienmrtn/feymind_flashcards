@@ -1,5 +1,6 @@
 import type { Catalog } from "./fr";
 import { appTr, copyTr } from "./app-tr";
+import { articlesTr } from "./articles-tr";
 import { legalTr } from "./legal-tr";
 
 export const tr: Catalog = {
@@ -415,4 +416,5 @@ export const tr: Catalog = {
   app: appTr,
   copy: copyTr,
   legal: legalTr,
+  articles: articlesTr,
 };
