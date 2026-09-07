@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { UI_LOCALES } from "./locales";
 import {
   INDEXABLE_PATHS,
+  forwardedUrlLocale,
   languageAlternatePaths,
   localeSwitchHref,
   localizedPath,
@@ -121,6 +122,16 @@ describe("resolveLocaleRequest", () => {
       pathname: "/commencer/compte",
       urlLocale: null,
     });
+  });
+});
+
+describe("forwardedUrlLocale", () => {
+  it("garde la langue de la première passe après la réécriture", () => {
+    expect(forwardedUrlLocale("fr", "en")).toBe("fr");
+    expect(forwardedUrlLocale("tr", "en")).toBe("tr");
+    expect(forwardedUrlLocale(null, "en")).toBe("en");
+    expect(forwardedUrlLocale(null, "fr")).toBe("fr");
+    expect(forwardedUrlLocale("it", "en")).toBe("en");
   });
 });
 

@@ -126,6 +126,21 @@ export function resolveLocaleRequest(pathname: string): LocaleResolution {
 }
 
 /**
+ * Header à poser sur la requête.
+ *
+ * Une adresse préfixée (`/fr`) se réécrit en `/`, et le middleware
+ * tourne une deuxième fois sur le chemin nu. Sans garder le header de
+ * la première passe, la version de base écraserait la langue de l'URL.
+ */
+export function forwardedUrlLocale(
+  incoming: string | null,
+  resolved: UiLocale | null,
+): UiLocale | null {
+  if (isUiLocale(incoming)) return incoming;
+  return resolved;
+}
+
+/**
  * Où aller après un changement de langue.
  *
  * Page indexable : l'adresse décide, donc on navigue (`/methode` → `/fr/methode`).
