@@ -44,7 +44,7 @@ export const legalEs = {
     whyContract:
       "**La ejecución del contrato** — crear la cuenta, importar un curso, escribir la ficha y las tarjetas, revisarlas, sincronizar iPhone y sitio, gestionar la suscripción.",
     whyLegitimate:
-      "**El interés legítimo** — asegurar el servicio, impedir abusos, diagnosticar una avería y leer los comentarios que nos envía. Ese interés no pasa por delante del suyo: el aislamiento está en la base, no solo en la aplicación.",
+      "**El interés legítimo** — asegurar el servicio, impedir abusos, diagnosticar una avería, medir la audiencia del sitio de forma agregada y leer los comentarios que nos envía. Ese interés no pasa por delante del suyo: el aislamiento está en la base, no solo en la aplicación.",
     whyLegal:
       "**La obligación legal** — conservar lo que la facturación o la contabilidad exigen, el tiempo prescrito.",
     whyConsent:
@@ -57,7 +57,7 @@ export const legalEs = {
     accessSupabase:
       "**Supabase** (Unión Europea, región Estocolmo) — cuenta, base, archivos.",
     accessVercel:
-      "**Vercel** — alojamiento del sitio y registros técnicos (dirección IP, URL). El tratamiento puede tener lugar fuera de la Unión Europea, bajo las cláusulas contractuales tipo del prestador.",
+      "**Vercel** — alojamiento del sitio, registros técnicos (dirección IP, URL) y medición de audiencia: el número de páginas vistas, la página de la que viene, el país y el tipo de aparato, sin cookie y sin identificador que le siga. El tratamiento puede tener lugar fuera de la Unión Europea, bajo las cláusulas contractuales tipo del prestador.",
     accessApple:
       "**Apple y Google** — si se conecta con ellos o si paga en el App Store.",
     accessStripe: "**Stripe** — pago en el sitio.",
@@ -71,7 +71,7 @@ export const legalEs = {
       "Algunos de estos prestadores están establecidos fuera de la Unión Europea. La transferencia solo tiene entonces lugar para prestar el servicio, y se apoya en las garantías previstas por el RGPD (decisión de adecuación o cláusulas contractuales tipo del prestador).",
     cookiesTitle: "Cookies y rastreadores",
     cookiesWeb:
-      "El sitio coloca las cookies necesarias para la sesión (reconocerle de una página a otra una vez conectado) y una cookie de preferencia de idioma de interfaz (`micabo.ui_locale`), guardada un año, que retiene el francés, el alemán, el español o el turco. No colocamos cookie de medición de audiencia, ni de publicidad, ni de rastreo entre sitios. Por eso no hay banner de consentimiento: no hay nada que rechazar de ese lado.",
+      "El sitio coloca las cookies necesarias para la sesión (reconocerle de una página a otra una vez conectado) y una cookie de preferencia de idioma de interfaz (`micabo.ui_locale`), guardada un año, que retiene el francés, el alemán, el español o el turco. No colocamos cookie de medición de audiencia, ni de publicidad, ni de rastreo entre sitios. El sitio sí cuenta sus visitas, pero sin escribir nada en su aparato: la medición retiene una página vista, su procedencia, un país, un tipo de aparato, y nada que permita reconocerle de una visita a otra ni en otro sitio. Por eso no hay banner de consentimiento: no hay nada que rechazar de ese lado.",
     cookiesIos:
       "El iPhone no usa cookies. Guarda un token de sesión en el llavero del aparato.",
     retentionTitle: "Cuánto tiempo los guardamos",

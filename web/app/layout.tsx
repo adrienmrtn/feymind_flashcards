@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Hanken_Grotesk, Inter, Nunito } from "next/font/google";
 
+import { Analytics } from "@vercel/analytics/next";
+
 import { AppearanceProvider } from "@/components/appearance/AppearanceProvider";
 import { AuthReturnCatcher } from "@/components/landing/AuthReturnCatcher";
 import { PreviewBanner } from "@/components/PreviewBanner";
@@ -139,6 +141,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
           </AppearanceProvider>
         </I18nProvider>
+        {/*
+          La mesure d'audience. Elle ne pose pas de cookie et ne reconnaît personne : une
+          page vue, sa provenance, un pays, rien qui se recolle à un compte — c'est pour ça
+          qu'elle n'appelle pas de bandeau de consentement.
+
+          Ce qu'elle donne sans qu'on écrive un événement, c'est le parcours d'accueil : les
+          treize écrans de `/commencer/*` sont treize adresses, donc treize lignes dans le
+          tableau des pages vues, et l'écran où l'on décroche se lit dessus. Le reste se
+          compte ailleurs — les comptes et l'accueil terminé en base, l'abonnement chez
+          RevenueCat. `docs/mesure.md` dit qui répond à quoi.
+
+          Les aperçus n'en produisent rien : le middleware les renvoie au site avant le rendu.
+        */}
+        <Analytics />
       </body>
     </html>
   );
