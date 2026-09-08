@@ -1,16 +1,11 @@
 /**
- * Client modèle partagé par les Edge Functions de Micabo.
- * fal.ai d'abord (`FAL_KEY`), Replicate si ça casse (`REPLICATE_API_TOKEN`).
- * Les deux clés restent dans les secrets du projet Supabase.
+ * Client fal.ai partagé par les Edge Functions de Micabo.
+ * La clé reste côté serveur, dans le secret `FAL_KEY` du projet Supabase.
  */
 
-import { checkCircuit, circuitIsOpen, recordFailure, recordSuccess } from "./circuit.ts";
+import { checkCircuit, recordFailure, recordSuccess } from "./circuit.ts";
 import { parseModelJSON } from "./json.ts";
-import { FalError } from "./model-error.ts";
 import { DEFAULT_MODEL, resolveModel } from "./models.ts";
-import { callReplicate } from "./replicate.ts";
-
-export { FalError } from "./model-error.ts";
 
 const TEXT_ENDPOINT = "https://fal.run/fal-ai/any-llm";
 const VISION_ENDPOINT = "https://fal.run/fal-ai/any-llm/vision";
@@ -23,6 +18,15 @@ export const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+export class FalError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status = 502) {
+    super(message);
+    this.status = status;
+  }
+}
+
 export interface CallOptions {
   prompt: string;
   systemPrompt?: string;
@@ -33,34 +37,13 @@ export interface CallOptions {
 }
 
 export async function callModel(options: CallOptions): Promise<string> {
-  const falKey = Deno.env.get("FAL_KEY")?.trim() ?? "";
-  const replicateKey = Deno.env.get("REPLICATE_API_TOKEN")?.trim() ?? "";
-  if (!falKey && !replicateKey) {
+  const key = Deno.env.get("FAL_KEY");
+  if (!key) {
     throw new FalError("Configuration serveur incomplète.", 500);
   }
 
-  if (falKey && !circuitIsOpen()) {
-    try {
-      return await callFal(options, falKey);
-    } catch (error) {
-      if (replicateKey && isRetryable(error)) {
-        console.error(JSON.stringify({ fal: "fallback_replicate" }));
-        return await callReplicate(options, replicateKey);
-      }
-      throw error;
-    }
-  }
-
-  if (replicateKey) {
-    if (falKey) console.error(JSON.stringify({ fal: "circuit_open_replicate" }));
-    return await callReplicate(options, replicateKey);
-  }
-
   checkCircuit();
-  throw new FalError("Configuration serveur incomplète.", 500);
-}
 
-async function callFal(options: CallOptions, key: string): Promise<string> {
   const model = resolveModel(options.model);
   const useVision = Array.isArray(options.imageUrls) && options.imageUrls.length > 0;
   const body: Record<string, unknown> = {
@@ -118,11 +101,6 @@ async function callFal(options: CallOptions, key: string): Promise<string> {
   if (!parsed.output) throw new FalError("Le modèle n'a renvoyé aucun contenu.", 502);
 
   return parsed.output;
-}
-
-function isRetryable(error: unknown): boolean {
-  if (!(error instanceof FalError)) return true;
-  return error.status >= 500;
 }
 
 /** Extrait le premier objet ou tableau JSON d'une réponse, même entourée de texte ou de balises. */

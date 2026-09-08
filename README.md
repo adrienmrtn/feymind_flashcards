@@ -723,26 +723,6 @@ FAL_KEY = votre clé fal.ai
 Ce secret n'existe **que** dans Supabase. Le site Vercel n'appelle pas le modèle : seules
 les Edge Functions le font. Ne le mettez pas dans `.env` du dépôt, ni dans Vercel.
 
-### 1b. Repli Replicate (recommandé)
-
-Si fal.ai refuse (404 modèle, timeout, circuit ouvert), la fonction retente tout de suite
-chez Replicate, sur `google/gemini-2.5-flash`. Sans cette clé, un échec Fal reste un 502.
-
-Même écran Secrets, **un second secret** :
-
-```
-REPLICATE_API_TOKEN = r8_…
-```
-
-La clé se crée sur [replicate.com/account/api-tokens](https://replicate.com/account/api-tokens).
-Le nom du secret est exactement `REPLICATE_API_TOKEN` (c'est celui que Replicate documente).
-
-En CLI, une fois le projet lié :
-
-```bash
-supabase secrets set REPLICATE_API_TOKEN=r8_… --project-ref khuzodsrznanzhwlbjbx
-```
-
 ### 2. Déployer les fonctions
 
 ```bash
