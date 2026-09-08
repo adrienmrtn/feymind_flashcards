@@ -34,7 +34,12 @@
 			membershipExceptions = (
 				Info.plist,
 				Micabo.entitlements,
+				Micabo-Bridging-Header.h,
 				Resources/Micabo.storekit,
+				Vendor/Zstd/LICENSE,
+				Vendor/Zstd/MicaboZstd.h,
+				Vendor/Zstd/include/zstd.h,
+				Vendor/Zstd/include/zstd_errors.h,
 			);
 			target = FE00000000000000000040 /* Micabo */;
 		};
@@ -358,6 +363,11 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Micabo/Vendor/Zstd",
+					"$(SRCROOT)/Micabo/Vendor/Zstd/include",
+				);
 				INFOPLIST_FILE = Micabo/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Micabo;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Micabo utilise l'appareil photo pour scanner vos pages de cours.";
@@ -377,6 +387,7 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = Micabo/Micabo-Bridging-Header.h;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -393,6 +404,11 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Micabo/Vendor/Zstd",
+					"$(SRCROOT)/Micabo/Vendor/Zstd/include",
+				);
 				INFOPLIST_FILE = Micabo/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Micabo;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Micabo utilise l'appareil photo pour scanner vos pages de cours.";
@@ -412,6 +428,7 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = Micabo/Micabo-Bridging-Header.h;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
