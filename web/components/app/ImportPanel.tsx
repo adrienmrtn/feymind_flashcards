@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type { PDFPageProxy } from "pdfjs-dist";
 
 import {
   BLOCK_BOUNDS,
@@ -36,16 +35,12 @@ import { requestPaywall } from "@/lib/paywall";
 import { writeSheetFromBrowser } from "@/lib/import/write-sheet";
 import { isAnkiFileName } from "@/lib/import/anki";
 import {
-  EmptyFileError,
-  UnsupportedFileError,
-  decodeDocumentText,
-  documentKind,
-  looksLikeText,
-  readFileBytes,
-  readPdfPageText,
-  type DocumentKind,
-} from "@/lib/import/document";
-import { DocxError, extractDocxText } from "@/lib/import/docx";
+  MIN_TEXT_LENGTH,
+  classifyReadFailure,
+  failureDetail,
+  readDocument,
+  type ReadFailureCode,
+} from "@/lib/import/read-document";
 import {
   isYouTubeUrl,
   preferredLanguages,
@@ -294,31 +289,26 @@ export function ImportPanel({
     setPhase("lecture");
 
     try {
-      const extracted = await extractDocument(file);
-      if (extracted.text.trim().length < 40 && extracted.images.length === 0) {
+      const read = await readDocument(file);
+      if (read.text.trim().length < MIN_TEXT_LENGTH && read.images.length === 0) {
         setPhase("repos");
-        // Un PDF scanné n'a pas de texte, et c'est le document qui est en cause. Une lecture
-        // qui a lâché, elle, est de notre côté : les deux messages ne disent pas la même chose.
-        setFailure(
-          extracted.unreadable ? t("app.import.fileUnreadable") : t("app.import.scannedPdf"),
-        );
+        setFailure(t("app.import.scannedPdf"));
         return;
       }
 
-      const source: SourceKind =
-        extracted.kind === "pdf" ? "pdf" : extracted.kind === "docx" ? "docx" : "text";
-
       showDraft({
-        text: extracted.text,
+        text: read.text,
         title: file.name.replace(/\.[^.]+$/, ""),
         sourceName: file.name,
-        source,
-        fileUrl: source === "pdf" ? URL.createObjectURL(file) : undefined,
-        images: extracted.images,
+        source: read.kind,
+        fileUrl: read.kind === "pdf" ? URL.createObjectURL(file) : undefined,
+        images: read.images,
       }, file.name);
     } catch (error) {
+      // Le message dit ce qui s'est passé ; la console garde de quoi le confirmer.
+      console.error("[micabo] lecture du document refusée", error);
       setPhase("repos");
-      setFailure(readFailure(error, t));
+      setFailure(readFailureMessage(error, t));
     }
   }
 
@@ -777,82 +767,6 @@ function Waiting({
   );
 }
 
-interface Extraction {
-  text: string;
-  images: string[];
-  kind: DocumentKind;
-  /** Une lecture a lâché en route : le document n'est pas forcément vide pour autant. */
-  unreadable: boolean;
-}
-
-async function extractDocument(file: File): Promise<Extraction> {
-  // Les octets sont lus une seule fois, puis c'est eux qui disent ce qu'est le fichier.
-  // Sur iPhone, le nom ne le dit pas toujours.
-  const bytes = await readFileBytes(file);
-  const kind = documentKind(bytes, file.name);
-
-  if (kind === "pdf") return extractPdf(bytes);
-  if (kind === "legacyDoc") throw new DocxError("notDocx");
-  if (kind === "image") throw new UnsupportedFileError("image");
-  if (kind === "docx") {
-    return { text: await extractDocxText(bytes), images: [], kind, unreadable: false };
-  }
-
-  const text = decodeDocumentText(bytes);
-  if (!looksLikeText(text)) throw new UnsupportedFileError("binary");
-  return { text, images: [], kind, unreadable: false };
-}
-
-async function extractPdf(bytes: Uint8Array): Promise<Extraction> {
-  const pdfjs = await import("pdfjs-dist");
-  // L'ouvrier vient du CDN, et sa version est **celle de la bibliothèque chargée** : pdf.js
-  // refuse de travailler avec un ouvrier d'une autre version, et une mise à jour du paquet
-  // aurait laissé un numéro figé ici.
-  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
-  const document = await pdfjs.getDocument({ data: bytes }).promise;
-  const pages: string[] = [];
-  const images: string[] = [];
-  const pageLimit = Math.min(document.numPages, 4);
-  let unreadable = false;
-
-  for (let index = 1; index <= document.numPages; index += 1) {
-    const page = await document.getPage(index);
-
-    // Le texte et l'image d'une page sont pris séparément, et l'échec de l'un ne coûte pas
-    // l'autre : une page qui refuse de se dessiner garde son texte, un scan sans texte garde
-    // son image, et le document entier ne se perd pas sur une page.
-    try {
-      pages.push(await readPdfPageText(page));
-    } catch {
-      unreadable = true;
-    }
-
-    if (index <= pageLimit) {
-      try {
-        const rendered = await renderPdfPage(page);
-        if (rendered) images.push(rendered);
-      } catch {
-        unreadable = true;
-      }
-    }
-  }
-
-  return { text: pages.filter(Boolean).join("\n\n"), images, kind: "pdf", unreadable };
-}
-
-async function renderPdfPage(page: PDFPageProxy): Promise<string | null> {
-  const viewport = page.getViewport({ scale: 1.1 });
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(viewport.width));
-  canvas.height = Math.max(1, Math.round(viewport.height));
-  const context = canvas.getContext("2d");
-  if (!context) return null;
-  await page.render({ canvas, canvasContext: context, viewport }).promise;
-  const url = canvas.toDataURL("image/jpeg", 0.5);
-  return url.startsWith("data:image/") ? url : null;
-}
-
 function remoteVideo(
   result: { status: string; video?: unknown; message?: string },
   t: Translator,
@@ -897,17 +811,33 @@ function remoteVideo(
   };
 }
 
-function readFailure(error: unknown, t: Translator): string {
-  if (error instanceof EmptyFileError) return t("app.import.emptyFile");
-  if (error instanceof UnsupportedFileError) {
-    return error.code === "image" ? t("app.import.imageFile") : t("app.import.fileUnreadable");
-  }
-  if (error instanceof DocxError) {
-    if (error.code === "empty") return t("app.import.docxEmpty");
-    if (error.code === "missingDocument") return t("app.import.docxUnreadable");
-    if (error.code === "notDocx") {
-      return t("app.import.docxLegacy");
-    }
-  }
-  return t("app.import.fileUnreadable");
+/**
+ * Une phrase par cause, et jamais « illisible » quand on sait mieux.
+ *
+ * Le dernier cas garde le nom de l'erreur : c'est la seule branche où l'on n'a
+ * rien à expliquer, donc la seule où un détail technique vaut mieux que rien.
+ * Sans lui, un rapport se résume à « ça ne marche pas », et on cherche à
+ * l'aveugle - ce qui est exactement arrivé.
+ */
+function readFailureMessage(error: unknown, t: Translator): string {
+  const messages: Record<ReadFailureCode, string> = {
+    unsupported: "app.import.unsupportedFile",
+    legacyWord: "app.import.docxLegacy",
+    unreachable: "app.import.fileUnreachable",
+    locked: "app.import.pdfLocked",
+    damaged: "app.import.pdfDamaged",
+    engine: "app.import.readerFailed",
+    wordEmpty: "app.import.docxEmpty",
+    wordUnreadable: "app.import.docxUnreadable",
+    empty: "app.import.scannedPdf",
+    unknown: "app.import.fileUnreadable",
+  };
+
+  const code = classifyReadFailure(error);
+  if (code !== "unknown") return t(messages[code] as never);
+
+  const detail = failureDetail(error);
+  return detail
+    ? t("app.import.fileUnreadableDetail", { detail })
+    : t("app.import.fileUnreadable");
 }

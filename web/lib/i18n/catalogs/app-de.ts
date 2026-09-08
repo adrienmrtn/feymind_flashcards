@@ -573,10 +573,16 @@ export const appDe = {
     docxUnreadable: "Diese Word-Datei konnte nicht gelesen werden.",
     docxLegacy: "Speichere das Dokument als .docx - das alte Word-Format ist hier nicht lesbar.",
     fileUnreadable: "Diese Datei konnte nicht gelesen werden.",
-    imageFile:
-      "Ein Foto hat keinen Text zum Extrahieren. Auf dem iPhone liest die App eine abfotografierte Seite mit der Kamera - hier füge den Text ein oder importiere das Dokument.",
-    emptyFile:
-      "Diese Datei kam leer an. Öffne sie auf dem iPhone einmal in Dateien, damit sie aus iCloud geladen wird, und importiere sie dann erneut.",
+    fileUnreadableDetail: "Diese Datei konnte nicht gelesen werden. ({detail})",
+    unsupportedFile:
+      "Dieses Format lässt sich hier nicht lesen. Exportiere das Dokument als PDF, als Word (.docx) oder als Text.",
+    fileUnreachable:
+      "Diese Datei konnte nicht geöffnet werden. Wenn sie noch in iCloud oder OneDrive liegt, lade sie auf das Gerät und versuche es erneut.",
+    pdfLocked: "Dieses PDF ist mit einem Passwort geschützt. Entferne den Schutz und versuche es erneut.",
+    pdfDamaged:
+      "Dieses PDF ist unvollständig oder beschädigt. Exportiere es erneut aus der Quelle und versuche es noch einmal.",
+    readerFailed:
+      "Der PDF-Leser konnte nicht geladen werden. Prüfe die Verbindung und lade die Seite neu.",
     formatsHint: "PDF, Word oder Text.",
     chooseFile: "Datei wählen",
     pasteAction: "Text einfügen",
