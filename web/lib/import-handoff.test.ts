@@ -47,11 +47,10 @@ describe("le relais d'import", () => {
   });
 
   it("ouvre la fiche en quittant le document App Router", () => {
-    expect(handoff).toContain("document.write");
-    expect(handoff).toContain("createObjectURL");
+    expect(handoff).toContain("HTMLFormElement.prototype.submit");
     expect(handoff).toContain("waitForPaint");
     expect(handoff).toContain("LAST_WRITTEN_COURSE_KEY");
-    expect(handoff).not.toMatch(/HTMLFormElement/);
+    expect(handoff).toContain("beginStandaloneWrite");
     expect(handoff).not.toMatch(/window\.location\.href\s*=/);
     expect(handoff).not.toContain("/api/open-course");
   });

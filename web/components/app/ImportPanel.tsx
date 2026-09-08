@@ -25,6 +25,7 @@ import { useI18n } from "@/lib/i18n/client";
 import { copySheetLengthTitle, type Translator } from "@/lib/i18n/copy";
 import { youtubePreview, youtubeTranscript } from "@/lib/actions/course";
 import {
+  beginStandaloneWrite,
   holdImportHandoff,
   openGeneratedPage,
   releaseImportHandoff,
@@ -150,14 +151,34 @@ export function ImportPanel({
   }
 
   async function generate(payload: Draft) {
+    const name = title.trim() || payload.sourceName || payload.title;
+    // On quitte Next **avant** le POST. Tant que React peint l'import, un
+    // vol RSC avorté affiche « This page couldn't load » pendant l'écriture.
+    const left = beginStandaloneWrite(
+      {
+        text: payload.text,
+        hintTitle: title.trim() || payload.title,
+        sourceName: payload.sourceName,
+        source: payload.source,
+        blocks,
+        length,
+        visibility,
+        language,
+        instructions: instructions.trim() || undefined,
+        images: payload.images,
+      },
+      {
+        writing: t("app.import.writing"),
+        waitHint: name.trim() || t("app.import.waitHint"),
+      },
+    );
+    if (left) {
+      await new Promise(() => {});
+      return;
+    }
     setFailure(null);
     setPhase("ecriture");
-    // Le voile d'abord, **puis** un POST JSON. Une Server Action relance un
-    // vol RSC de l'import à la fin de l'appel, et c'est ce vol qui affichait
-    // « This page couldn't load » pendant que le cours était déjà en base.
-    holdImportHandoff({
-      name: title.trim() || payload.sourceName || payload.title,
-    });
+    holdImportHandoff({ name });
     await waitForPaint();
     finish(
       await Promise.race([
@@ -173,8 +194,6 @@ export function ImportPanel({
           instructions: instructions.trim() || undefined,
           images: payload.images,
         }),
-        // Sans ça, une fonction qui ne répond plus laisse l'écran sur
-        // « Micabo écrit la fiche… » jusqu'à ce qu'on quitte la page.
         new Promise<{ status: "error"; message: string }>((resolve) => {
           setTimeout(
             () =>

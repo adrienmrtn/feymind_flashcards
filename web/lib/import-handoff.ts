@@ -2,17 +2,11 @@
  * L'écriture d'une fiche ne vit pas sur l'écran d'import : elle doit
  * couvrir le changement de route jusqu'à la fiche ouverte.
  *
- * Le voile (`IMPORT_HANDOFF_KEY`) ne survit **pas** au chargement de la
- * fiche : le garder hydratait `/app/c/:id` avec un état que le serveur n'a
- * pas, et Next remplaçait la page par l'écran d'erreur. On le lève avant
- * d'ouvrir. L'identifiant du cours neuf va dans une autre clé, uniquement
- * pour y revenir si Next casse encore.
- *
- * Un `location` vers une route API ou une page `/app/c/:id` reste une
- * navigation App Router : Next tente un vol RSC, affiche « This page
- * couldn't load », puis le document gagne. On quitte d'abord le document
- * courant (`document.write` / `blob:`) : le routeur n'existe plus, et le
- * chargement de la fiche est un vrai GET.
+ * Le voile React (`IMPORT_HANDOFF_KEY`) ne survit **pas** au chargement de
+ * la fiche : le garder hydratait `/app/c/:id` avec un état que le serveur
+ * n'a pas. Pour écrire, on quitte le document App Router **avant** le POST
+ * (`document.write` / `blob:`). Le POST et le % vivent alors hors de Next,
+ * donc plus de « This page couldn't load » pendant l'attente.
  */
 
 export const IMPORT_HANDOFF_KEY = "micabo.app.importHandoff";
@@ -106,48 +100,27 @@ export function isGeneratedPagePath(pathname: string): boolean {
   return GENERATED_PAGE.test(pathname);
 }
 
-function bounceMarkup(absoluteUrl: string): string {
-  const dest = JSON.stringify(absoluteUrl);
-  const meta = absoluteUrl.replace(/&/g, "&amp;");
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${meta}"><title>Micabo</title><style>html,body{margin:0;height:100%;background:#F8F4F0}</style></head><body><script>location.replace(${dest});<\/script></body></html>`;
+function nativeGet(absoluteUrl: string): void {
+  const form = document.createElement("form");
+  form.method = "GET";
+  form.action = absoluteUrl;
+  form.style.display = "none";
+  document.body.appendChild(form);
+  HTMLFormElement.prototype.submit.call(form);
 }
 
 /**
- * Détruit le document App Router, puis charge la fiche. Tant que Next
- * tourne, n'importe quel `location` vers une URL du site est un vol SPA.
- */
-function leaveAppRouter(absoluteUrl: string): void {
-  const html = bounceMarkup(absoluteUrl);
-  try {
-    const doc = window.document;
-    doc.open();
-    doc.write(html);
-    doc.close();
-    return;
-  } catch {
-    // Certains navigateurs refusent d'écrire après le chargement.
-  }
-  try {
-    const blobUrl = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-    Window.prototype.open.call(window, blobUrl, "_self");
-    return;
-  } catch {
-    // Dernier recours : un chargement document, encore passible d'un vol.
-  }
-  window.location.replace(absoluteUrl);
-}
-
-/**
- * Ouvre la fiche par un chargement document, hors du routeur Next.
+ * Ouvre la fiche par un GET de formulaire natif : `submit()` ne déclenche
+ * pas l'événement que Next intercepte.
  */
 export function openGeneratedPage(href: string): void {
   if (typeof window === "undefined") return;
   const url = new URL(href, window.location.origin);
   if (!isGeneratedPagePath(url.pathname)) {
-    window.location.replace(new URL("/app", window.location.origin).href);
+    nativeGet(new URL("/app", window.location.origin).href);
     return;
   }
-  leaveAppRouter(`${window.location.origin}${url.pathname}${url.search}`);
+  nativeGet(`${window.location.origin}${url.pathname}${url.search}`);
 }
 
 /** Si l'écriture a réussi et que Next a quand même cassé la page, on y retourne. */
@@ -156,9 +129,8 @@ export function recoverGeneratedCourseIfAny(): boolean {
   const courseId = readWrittenCourse();
   if (!courseId) return false;
   const target = `/app/c/${courseId}`;
-  // Déjà sur la fiche : un reload ici bouclait (voile + hydratation).
   if (window.location.pathname.startsWith(target)) return false;
-  leaveAppRouter(`${window.location.origin}${target}`);
+  nativeGet(`${window.location.origin}${target}`);
   return true;
 }
 
@@ -173,3 +145,5 @@ export function releaseImportHandoff(courseId?: string): void {
   }
   window.dispatchEvent(new Event(IMPORT_HANDOFF_EVENT));
 }
+
+export { beginStandaloneWrite } from "./import/start-write";

@@ -12,6 +12,8 @@ const createSheet = readFileSync(resolve(here, "./import/create-sheet.ts"), "utf
 const writeRoute = readFileSync(resolve(here, "../app/api/import-course/route.ts"), "utf8");
 const openCourse = readFileSync(resolve(here, "../app/api/open-course/route.ts"), "utf8");
 const handoff = readFileSync(resolve(here, "./import-handoff.ts"), "utf8");
+const startWrite = readFileSync(resolve(here, "./import/start-write.ts"), "utf8");
+const writerPage = readFileSync(resolve(here, "./import/writer-page.ts"), "utf8");
 const writeSheet = readFileSync(resolve(here, "./import/write-sheet.ts"), "utf8");
 const handoffUi = readFileSync(resolve(here, "../components/app/ImportHandoff.tsx"), "utf8");
 const status = readFileSync(resolve(here, "../components/app/GenerationStatus.tsx"), "utf8");
@@ -37,9 +39,14 @@ describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
     expect(createSheet).not.toMatch(/revalidatePath\(/);
     expect(openCourse).toContain("NextResponse.redirect");
     expect(openCourse).toContain("/app/c/");
-    expect(handoff).toContain("document.write");
+    expect(startWrite).toContain("document.write");
+    expect(startWrite).toContain("WRITER_ROOT_ID");
+    expect(writerPage).toContain("XMLHttpRequest");
+    expect(writerPage).toContain("IMPORT_WRITE_PATH");
+    expect(handoff).toContain("HTMLFormElement.prototype.submit");
     expect(handoff).not.toContain("/api/open-course");
     const generate = importPanel.slice(importPanel.indexOf("async function generate"));
+    expect(generate).toContain("beginStandaloneWrite");
     expect(generate).toContain("writeSheetFromBrowser");
     expect(generate).not.toMatch(/importFromText\(/);
   });
