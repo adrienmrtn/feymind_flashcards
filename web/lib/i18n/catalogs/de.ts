@@ -405,6 +405,7 @@ export const de: Catalog = {
     review: "Wiederholen",
     library: "Bibliothek",
     courses: "Kurse",
+    decks: "Stapel",
     exams: "Prüfungen",
     account: "Konto",
     friends: "Freunde",

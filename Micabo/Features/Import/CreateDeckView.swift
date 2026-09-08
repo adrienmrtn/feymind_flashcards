@@ -1,30 +1,27 @@
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Créer un **paquet de cartes**, sans document et sans fiche.
 ///
-/// Tout partait d'un import, donc d'une fiche, et on ne pouvait pas simplement se faire un
-/// paquet de vocabulaire, de dates ou de formules. C'est pourtant la moitié de ce qu'on
-/// révise : des choses qu'on a déjà comprises et qu'il faut retenir. Un paquet n'a donc rien
-/// à analyser, et cet écran ne demande que ce qui est nécessaire pour en ouvrir un.
-///
-/// Le texte est facultatif, et c'est tout l'écran : **collé**, Micabo en tire les premières
-/// cartes ; **vide**, le paquet démarre nu et se remplit à la main. Les deux mènent au même
-/// endroit, l'écran des cartes, où l'on ajoute, corrige et génère à volonté.
+/// Deux départs : un fichier Anki, ou rien. Les deux mènent à l'écran des cartes,
+/// où l'on ajoute, corrige et génère à volonté, carte par carte.
 struct CreateDeckView: View {
     var onCreated: (Course) -> Void
 
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.aiService) private var aiService
     @Environment(\.dismiss) private var dismiss
 
     @State private var title = ""
     @State private var subject = ""
-    @State private var pastedText = ""
-    /// Qui pourra retrouver le paquet. Même réglage retenu qu'à l'import.
     @AppStorage(CourseVisibility.importKey) private var visibility = CourseVisibility.standard
     @State private var isWorking = false
+    @State private var isReading = false
     @State private var errorMessage: String?
+    @State private var showFileImporter = false
+    @State private var imported: AnkiImportedPackage?
+    @State private var fileName: String?
+    @State private var excluded = Set<String>()
     @FocusState private var focus: Field?
 
     private enum Field: Hashable {
@@ -32,16 +29,12 @@ struct CreateDeckView: View {
         case subject
     }
 
-    /// En dessous, il n'y a pas de quoi écrire une carte : le bouton propose alors un paquet
-    /// vide plutôt que de lancer une génération qui échouera.
-    private static let minimumMaterial = 40
-
-    private var hasMaterial: Bool {
-        pastedText.trimmingCharacters(in: .whitespacesAndNewlines).count >= Self.minimumMaterial
+    private var chosen: [AnkiImportedCard] {
+        imported?.cards.filter { !excluded.contains($0.deck) } ?? []
     }
 
     private var canCreate: Bool {
-        title.nilIfBlank != nil
+        title.nilIfBlank != nil && (imported == nil || !chosen.isEmpty)
     }
 
     var body: some View {
@@ -57,7 +50,7 @@ struct CreateDeckView: View {
                         .padding(.top, MicaboSpacing.xs)
 
                         nameSection
-                        materialSection
+                        ankiSection
                         visibilitySection
                     }
                     .padding(.horizontal, MicaboSpacing.screen)
@@ -69,43 +62,40 @@ struct CreateDeckView: View {
                 .scrollDismissesKeyboard(.interactively)
 
                 MicaboBottomBar {
-                    VStack(spacing: 2) {
-                        Button {
-                            Task { await create(generating: hasMaterial) }
-                        } label: {
-                            HStack(spacing: MicaboSpacing.xs) {
-                                Image(systemName: hasMaterial ? "sparkles" : "plus")
-                                    .font(.system(size: 13, weight: .semibold))
-                                Text(hasMaterial
-                                    ? L10n.t("ios.writeCardsBtn", locale: .resolved())
-                                    : L10n.t("ios.createPack", locale: .resolved()))
-                            }
-                        }
-                        .buttonStyle(MicaboPrimaryButtonStyle(tint: canCreate ? MicaboColor.accent : MicaboColor.strokeStrong))
-                        .disabled(!canCreate || isWorking)
-
-                        // Coller du texte n'oblige pas à laisser le modèle écrire : on peut
-                        // le garder comme matière et écrire ses cartes soi-même.
-                        if hasMaterial {
-                            Button(L10n.t("ios.createWithoutGen", locale: .resolved())) {
-                                Task { await create(generating: false) }
-                            }
-                            .buttonStyle(MicaboQuietButtonStyle())
-                            .disabled(!canCreate || isWorking)
+                    Button {
+                        Task { await create() }
+                    } label: {
+                        HStack(spacing: MicaboSpacing.xs) {
+                            Image(systemName: imported == nil ? "plus" : "square.and.arrow.down")
+                                .font(.system(size: 13, weight: .semibold))
+                            Text(
+                                imported == nil
+                                    ? L10n.t("app.deck.createEmpty", locale: .resolved())
+                                    : L10n.t("app.deck.importCards", locale: .resolved())
+                            )
                         }
                     }
+                    .buttonStyle(MicaboPrimaryButtonStyle(tint: canCreate ? MicaboColor.accent : MicaboColor.strokeStrong))
+                    .disabled(!canCreate || isWorking || isReading)
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
+            .fileImporter(
+                isPresented: $showFileImporter,
+                allowedContentTypes: UTType.ankiImports,
+                allowsMultipleSelection: false
+            ) { result in
+                handleFileSelection(result)
+            }
             .overlay {
-                if isWorking {
+                if isWorking || isReading {
                     GenerationOverlay(
-                        title: L10n.t("ios.writingCards", locale: .resolved()),
+                        title: isReading
+                            ? L10n.t("app.deck.reading", locale: .resolved())
+                            : L10n.t("app.deck.pouring", locale: .resolved()),
                         steps: [
-                            L10n.t("ios.readNotes", locale: .resolved()),
-                            L10n.t("ios.genStepPick", locale: .resolved()),
-                            L10n.t("ios.genStepWrite", locale: .resolved()),
-                            L10n.t("ios.genStepCheck", locale: .resolved()),
+                            L10n.t("app.deck.reading", locale: .resolved()),
+                            L10n.t("app.deck.pouring", locale: .resolved()),
                         ]
                     )
                 }
@@ -116,7 +106,7 @@ struct CreateDeckView: View {
                 Text(errorMessage ?? "")
             }
         }
-        .interactiveDismissDisabled(isWorking)
+        .interactiveDismissDisabled(isWorking || isReading)
         .onAppear { focus = .title }
     }
 
@@ -137,9 +127,6 @@ struct CreateDeckView: View {
 
                 MicaboHairline(inset: 71)
 
-                // La matière n'est pas décorative : c'est elle qui dit au modèle s'il écrit
-                // pour un cours de droit ou de médecine, et elle range le paquet dans les
-                // filtres de la liste.
                 field(
                     emoji: "🏷️",
                     background: MicaboColor.tilePastels[4],
@@ -152,33 +139,72 @@ struct CreateDeckView: View {
         }
     }
 
-    private var materialSection: some View {
+    @ViewBuilder
+    private var ankiSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: L10n.t("ios.deckStartFrom", locale: .resolved()))
+            MicaboSectionCaption(text: L10n.t("app.deck.ankiDrop", locale: .resolved()))
 
-            TextEditor(text: $pastedText)
-                .font(MicaboFont.body)
-                .foregroundStyle(MicaboColor.ink)
-                .tint(MicaboColor.accent)
-                .scrollContentBackground(.hidden)
-                .frame(minHeight: 150)
-                .padding(14)
-                .micaboGroup()
-                .overlay(alignment: .topLeading) {
-                    if pastedText.isEmpty {
-                        Text(L10n.t("ios.deckPasteHint", locale: .resolved()))
-                            .font(MicaboFont.body)
+            if let imported {
+                preview(imported)
+            } else {
+                Button {
+                    showFileImporter = true
+                } label: {
+                    VStack(spacing: 10) {
+                        Text("🃏")
+                            .font(.system(size: 28))
+                        Text(L10n.t("app.deck.chooseAnki", locale: .resolved()))
+                            .font(MicaboFont.rowTitle)
+                            .foregroundStyle(MicaboColor.ink)
+                        Text(L10n.t("app.deck.ankiHint", locale: .resolved()))
+                            .font(MicaboFont.rowSubtitle)
                             .foregroundStyle(MicaboColor.inkTertiary)
-                            .padding(.horizontal, 19)
-                            .padding(.vertical, 22)
-                            .allowsHitTesting(false)
+                            .multilineTextAlignment(.center)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 28)
+                    .padding(.horizontal, MicaboSpacing.md)
                 }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: true))
+                .micaboGroup()
+            }
         }
     }
 
-    /// Un paquet n'a pas de fiche, donc pas d'écran où l'on pourrait le refermer plus tard :
-    /// c'est ici ou jamais.
+    private func preview(_ parsed: AnkiImportedPackage) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(fileName ?? L10n.t("app.deck.ankiFile", locale: .resolved()))
+                        .font(MicaboFont.rowTitle)
+                        .foregroundStyle(MicaboColor.ink)
+                    Text(
+                        L10n.t(
+                            "app.deck.cardsFound",
+                            locale: .resolved(),
+                            vars: ["count": "\(parsed.cards.count)"]
+                        )
+                    )
+                    .font(MicaboFont.rowSubtitle)
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                }
+                Spacer(minLength: 0)
+                Button(L10n.t("app.common.change", locale: .resolved())) {
+                    imported = nil
+                    fileName = nil
+                    excluded = []
+                }
+                .buttonStyle(MicaboQuietButtonStyle())
+            }
+
+            if parsed.decks.count > 1 {
+                FlowDeckChips(decks: parsed.decks, excluded: $excluded)
+            }
+        }
+        .padding(MicaboSpacing.md)
+        .micaboGroup()
+    }
+
     private var visibilitySection: some View {
         VStack(alignment: .leading, spacing: 10) {
             MicaboSectionCaption(text: L10n.t("ios.whoCanFindDeck", locale: .resolved()))
@@ -216,11 +242,63 @@ struct CreateDeckView: View {
         .padding(.horizontal, MicaboSpacing.md)
     }
 
+    // MARK: - Fichier
+
+    private func handleFileSelection(_ result: Result<[URL], Error>) {
+        switch result {
+        case .failure:
+            errorMessage = L10n.t("app.deck.errors.unreadable", locale: .resolved())
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            Task { await readFile(url) }
+        }
+    }
+
+    @MainActor
+    private func readFile(_ url: URL) async {
+        isReading = true
+        errorMessage = nil
+        defer { isReading = false }
+
+        let accessed = url.startAccessingSecurityScopedResource()
+        defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+
+        do {
+            let data = try Data(contentsOf: url)
+            let parsed = try AnkiPackageReader.read(data: data, fileName: url.lastPathComponent)
+            imported = parsed
+            fileName = url.lastPathComponent
+            excluded = []
+            if title.nilIfBlank == nil, !parsed.title.isEmpty {
+                title = parsed.title
+            }
+        } catch let error as AnkiImportError {
+            imported = nil
+            fileName = nil
+            errorMessage = ankiMessage(error)
+        } catch {
+            imported = nil
+            fileName = nil
+            errorMessage = L10n.t("app.deck.errors.unreadable", locale: .resolved())
+        }
+    }
+
+    private func ankiMessage(_ error: AnkiImportError) -> String {
+        switch error {
+        case .notPackage: L10n.t("app.deck.errors.notPackage", locale: .resolved())
+        case .noCollection: L10n.t("app.deck.errors.noCollection", locale: .resolved())
+        case .empty: L10n.t("app.deck.errors.empty", locale: .resolved())
+        case .noZstd: L10n.t("app.deck.errors.noZstd", locale: .resolved())
+        case .unreadableCollection: L10n.t("app.deck.errors.unreadable", locale: .resolved())
+        }
+    }
+
     // MARK: - Création
 
     @MainActor
-    private func create(generating: Bool) async {
+    private func create() async {
         guard !isWorking, let name = title.nilIfBlank else { return }
+        if imported != nil, chosen.isEmpty { return }
         isWorking = true
         defer { isWorking = false }
 
@@ -229,20 +307,23 @@ struct CreateDeckView: View {
             course = try CourseRepository.makeDeck(
                 title: name,
                 subject: subject.nilIfBlank,
-                rawText: pastedText,
                 visibility: visibility.asChoice,
                 in: modelContext
             )
         } catch {
-            errorMessage = "Le paquet n'a pas pu être créé. Réessaie dans un instant."
+            errorMessage = L10n.t("app.common.errorGeneric", locale: .resolved())
             return
         }
 
-        // Le paquet existe, quoi qu'il arrive ensuite : une génération qui échoue ne doit pas
-        // faire perdre le nom et le texte qu'on vient de saisir.
-        if generating {
+        if !chosen.isEmpty {
             do {
-                try await CardGeneration.run(for: course, using: aiService, in: modelContext)
+                _ = try CourseRepository.addFlashcards(
+                    chosen.map {
+                        GeneratedFlashcard(front: $0.front, back: $0.back, hint: $0.hint, kind: $0.kind)
+                    },
+                    to: course,
+                    in: modelContext
+                )
             } catch {
                 onCreated(course)
                 return
@@ -250,5 +331,61 @@ struct CreateDeckView: View {
         }
 
         onCreated(course)
+    }
+}
+
+private struct FlowDeckChips: View {
+    let decks: [AnkiDeckSummary]
+    @Binding var excluded: Set<String>
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(L10n.t("app.deck.whichDecks", locale: .resolved()))
+                .font(MicaboFont.eyebrow)
+                .foregroundStyle(MicaboColor.inkTertiary)
+
+            FlexibleChips(decks: decks, excluded: $excluded)
+        }
+    }
+}
+
+/// Puces de paquets Anki, en ligne, à cocher.
+private struct FlexibleChips: View {
+    let decks: [AnkiDeckSummary]
+    @Binding var excluded: Set<String>
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(decks, id: \.name) { deck in
+                let on = !excluded.contains(deck.name)
+                Button {
+                    if excluded.contains(deck.name) {
+                        excluded.remove(deck.name)
+                    } else {
+                        excluded.insert(deck.name)
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(deck.name.isEmpty ? L10n.t("app.deck.unnamedDeck", locale: .resolved()) : deck.name)
+                        Text("\(deck.cards)")
+                            .opacity(0.7)
+                    }
+                    .font(MicaboFont.hanken(13, weight: .medium))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .foregroundStyle(on ? MicaboColor.onInk : MicaboColor.inkTertiary)
+                    .background(on ? MicaboColor.accent : MicaboColor.surfaceMuted, in: Capsule())
+                }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: false))
+            }
+        }
+    }
+}
+
+private extension UTType {
+    static var ankiImports: [UTType] {
+        let extras = ["apkg", "colpkg", "anki2", "anki21", "anki21b", "txt", "csv", "tsv"]
+            .compactMap { UTType(filenameExtension: $0) }
+        return extras + [.plainText, .commaSeparatedText, .data]
     }
 }

@@ -131,6 +131,22 @@ export const appDe = {
     emptyBadge: "leer",
     upToDate: "aktuell",
   },
+  decks: {
+    title: "Stapel",
+    lead: "Die Karten deiner Kurse, und die, die du von Hand anlegst.",
+    emptyLead: "Öffne einen leeren Stapel, Karte für Karte, oder nimm eine Anki-Datei.",
+    addTitle: "Einen Stapel öffnen",
+    addHint: "Leer, von Hand, oder ein Anki-Import",
+    none: "Kein Stapel",
+    emptyTitle: "Kein Stapel",
+    emptyBody: "Öffne einen, um anzufangen, leer oder aus Anki.",
+    search: "Stapel suchen",
+    fromCourse: "Kurs",
+    standalone: "Ohne Kurs",
+    deleteQ: "Diesen Stapel löschen?",
+    deleteDeck: "Stapel löschen",
+    deleteMsg: "{title} und {cards} verschwinden.",
+  },
   review: {
     verb: "Wiederholen",
     again: "Noch einmal wiederholen",
@@ -471,7 +487,7 @@ export const appDe = {
   },
   deck: {
     title: "Ein Kartenstapel",
-    lead: "Ohne Kurs: Vokabeln, Daten, Formeln. Oder ein Anki-Stapel, den du übernimmst.",
+    lead: "Ein leerer Stapel, Karte für Karte. Oder eine Anki-Datei, die du übernimmst.",
     untitled: "Neuer Stapel",
     nameLabel: "Name des Stapels",
     namePlaceholder: "Englischvokabeln, 1. Semester",
@@ -844,6 +860,16 @@ export const appDe = {
       add: {
         title: "Einen Kurs hinzufügen",
         body: "PDF, Word, eingefügter Text oder YouTube-Video. Micabo liest, dann schreibt das Blatt.",
+      },
+    },
+    decks: {
+      shelf: {
+        title: "Deine Stapel",
+        body: "Jeder Kurs hat einen, plus die, die du von Hand anlegst. Hier findest du sie.",
+      },
+      add: {
+        title: "Einen Stapel öffnen",
+        body: "Ein leerer Stapel, Karte für Karte. Oder eine fertige Anki-Datei.",
       },
     },
     sheet: {

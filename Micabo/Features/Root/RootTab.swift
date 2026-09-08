@@ -8,6 +8,7 @@ import SwiftUI
 /// sur leur profil, si leur visibilité le permet.
 enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     case courses
+    case decks
     case today
     case exams
     case profile
@@ -17,6 +18,7 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     func label(t: (String) -> String) -> String {
         switch self {
         case .courses: t("nav.courses")
+        case .decks: t("nav.decks")
         case .today: t("nav.review")
         case .exams: t("nav.exams")
         case .profile: t("nav.profile")
@@ -30,6 +32,7 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     var systemImage: String {
         switch self {
         case .courses: "books.vertical"
+        case .decks: "rectangle.on.rectangle.angled"
         case .today: "arrow.triangle.2.circlepath"
         case .exams: "calendar"
         case .profile: "person"
@@ -44,6 +47,7 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     var selectedSystemImage: String {
         switch self {
         case .courses: "books.vertical.fill"
+        case .decks: "rectangle.on.rectangle.angled.fill"
         case .today: "arrow.triangle.2.circlepath"
         case .exams: "calendar"
         case .profile: "person.fill"

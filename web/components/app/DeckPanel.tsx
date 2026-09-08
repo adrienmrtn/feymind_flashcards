@@ -9,7 +9,6 @@ import { DEFAULT_VISIBILITY, type CourseVisibility } from "@micabo/core";
 
 import { VisibilityChoices } from "@/components/app/VisibilityChoices";
 import { Button } from "@/components/ui/button";
-import { generateCards } from "@/lib/actions/course";
 import { addDeckCards, createDeck } from "@/lib/actions/decks";
 import { DECK_CHUNK } from "@/lib/deck";
 import {
@@ -33,13 +32,12 @@ import { requestPaywall } from "@/lib/paywall";
  * vocabulaire, des dates, des déclinaisons, une liste de médicaments. C'est l'écran que
  * l'iPhone a depuis longtemps (`CreateDeckView`), et qui manquait ici.
  *
- * Trois départs, une seule arrivée - l'atelier des cartes :
+ * Deux départs, une seule arrivée - l'atelier des cartes :
  *
  * 1. **Un fichier Anki.** Les cartes arrivent telles qu'elles sont écrites, sans passer par
  *    le modèle. C'est le seul chemin du produit qui ne dépense rien : on reprend un travail
  *    déjà fait, il n'y a rien à rédiger.
- * 2. **Du texte collé.** Micabo en tire les premières cartes, comme après un import.
- * 3. **Rien.** Le paquet démarre nu et se remplit à la main.
+ * 2. **Rien.** Le paquet démarre nu et se remplit à la main, carte par carte.
  *
  * Le fichier est lu **dans l'onglet**, comme un PDF ou un Word : le serveur reçoit des
  * cartes, jamais l'archive. Elles y partent ensuite par paquets de deux cents, parce que
@@ -49,9 +47,6 @@ import { requestPaywall } from "@/lib/paywall";
 
 type Phase = "repos" | "lecture" | "creation";
 
-/** En dessous, il n'y a pas de quoi écrire une carte : on propose alors un paquet nu. */
-const MINIMUM_MATERIAL = 40;
-
 export function DeckPanel() {
   const { t } = useI18n();
   const router = useRouter();
@@ -60,7 +55,6 @@ export function DeckPanel() {
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
   const [visibility, setVisibility] = useState<CourseVisibility>(DEFAULT_VISIBILITY);
-  const [text, setText] = useState("");
 
   const [imported, setImported] = useState<AnkiPackage | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -77,7 +71,6 @@ export function DeckPanel() {
   const chosen = imported
     ? imported.cards.filter((card) => !excluded.has(card.deck))
     : [];
-  const hasMaterial = text.trim().length >= MINIMUM_MATERIAL;
   const canCreate = title.trim().length > 0 && (!imported || chosen.length > 0);
 
   async function handleFile(file: File) {
@@ -120,7 +113,6 @@ export function DeckPanel() {
       title,
       subject,
       visibility,
-      rawText: imported ? "" : text,
     });
 
     if (deck.status === "paywall") {
@@ -153,11 +145,7 @@ export function DeckPanel() {
       setPoured(Math.min(chosen.length, at + DECK_CHUNK));
     }
 
-    // Du texte collé sans fichier : Micabo écrit les premières cartes, comme à l'import. Un
-    // échec ici n'annule rien - on arrive dans un atelier vide, avec le bouton pour réessayer.
-    if (!imported && hasMaterial) await generateCards(courseId);
-
-    router.push(`/app/c/${courseId}/cartes` as never);
+    router.push(`/app/paquets/${courseId}` as never);
   }
 
   if (phase === "creation" && failure && opened) {
@@ -168,7 +156,7 @@ export function DeckPanel() {
           {failure}
         </p>
         <div className="mt-4">
-          <Button render={<Link href={`/app/c/${opened}/cartes` as never} />}>
+          <Button render={<Link href={`/app/paquets/${opened}` as never} />}>
             {t("app.deck.openAnyway")}
           </Button>
         </div>
@@ -301,26 +289,6 @@ export function DeckPanel() {
         </div>
       )}
 
-      {!imported ? (
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <label htmlFor="deck-text" className="eyebrow block text-ink-tertiary">
-            {t("app.deck.materialLabel")}
-          </label>
-          <textarea
-            id="deck-text"
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            placeholder={t("app.deck.materialPlaceholder")}
-            rows={7}
-            disabled={busy}
-            className="mt-2 w-full resize-y rounded-button bg-surface-muted p-4 text-[15px] leading-relaxed text-ink outline-none placeholder:text-ink-tertiary"
-          />
-          <p className="numeral mt-2 text-[12.5px] text-ink-tertiary">
-            {t("app.import.charCount", { count: text.trim().length })}
-          </p>
-        </div>
-      ) : null}
-
       <div className="rounded-2xl border border-border bg-card p-5">
         <p className="eyebrow text-ink-tertiary">{t("app.deck.visibilityLabel")}</p>
         <div className="mt-3.5">
@@ -340,11 +308,7 @@ export function DeckPanel() {
           </p>
         ) : null}
         <Button type="button" disabled={!canCreate || busy} onClick={() => void create()}>
-          {imported
-            ? t("app.deck.importCards")
-            : hasMaterial
-              ? t("app.deck.writeCards")
-              : t("app.deck.createEmpty")}
+          {imported ? t("app.deck.importCards") : t("app.deck.createEmpty")}
         </Button>
       </div>
 

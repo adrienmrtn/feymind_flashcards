@@ -131,6 +131,22 @@ export const appFr = {
     emptyBadge: "vide",
     upToDate: "à jour",
   },
+  decks: {
+    title: "Paquets",
+    lead: "Les cartes de tes cours, et ceux que tu ouvres à la main.",
+    emptyLead: "Ouvre un paquet vide, carte par carte, ou reprends un fichier Anki.",
+    addTitle: "Ouvrir un paquet",
+    addHint: "Vide, à la main, ou un import Anki",
+    none: "Aucun paquet",
+    emptyTitle: "Aucun paquet",
+    emptyBody: "Ouvre-en un pour commencer, vide ou depuis Anki.",
+    search: "Rechercher un paquet",
+    fromCourse: "Cours",
+    standalone: "Sans cours",
+    deleteQ: "Supprimer ce paquet ?",
+    deleteDeck: "Supprimer le paquet",
+    deleteMsg: "{title} et {cards} disparaissent.",
+  },
   review: {
     verb: "Réviser",
     again: "Réviser encore",
@@ -471,7 +487,7 @@ export const appFr = {
   },
   deck: {
     title: "Un paquet de cartes",
-    lead: "Sans cours : du vocabulaire, des dates, des formules. Ou un paquet Anki que tu reprends.",
+    lead: "Un paquet vide, carte par carte. Ou un fichier Anki que tu reprends.",
     untitled: "Nouveau paquet",
     nameLabel: "Nom du paquet",
     namePlaceholder: "Vocabulaire d'allemand, L1",
@@ -843,6 +859,16 @@ export const appFr = {
       add: {
         title: "Ajouter un cours",
         body: "PDF, Word, texte collé ou vidéo YouTube. Micabo lit, puis écrit la fiche.",
+      },
+    },
+    decks: {
+      shelf: {
+        title: "Tes paquets",
+        body: "Chaque cours a le sien, et ceux que tu ouvres à la main. C'est ici qu'on les retrouve.",
+      },
+      add: {
+        title: "Ouvrir un paquet",
+        body: "Un paquet vide, carte par carte. Ou un fichier Anki déjà écrit.",
       },
     },
     sheet: {

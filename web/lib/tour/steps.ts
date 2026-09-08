@@ -131,6 +131,23 @@ const COURSES: Tour = {
   ],
 };
 
+const DECKS: Tour = {
+  id: "paquets",
+  mode: "guided",
+  steps: [
+    {
+      anchor: "paquets-etagere",
+      title: "app.tour.decks.shelf.title",
+      body: "app.tour.decks.shelf.body",
+    },
+    {
+      anchor: "paquets-ajouter",
+      title: "app.tour.decks.add.title",
+      body: "app.tour.decks.add.body",
+    },
+  ],
+};
+
 const SHEET: Tour = {
   id: "cours-fiche",
   mode: "guided",
@@ -268,6 +285,7 @@ export const TOURS: readonly Tour[] = [
   REVIEW,
   SESSION,
   COURSES,
+  DECKS,
   SHEET,
   CARDS,
   EXAMS,
@@ -295,6 +313,7 @@ export function tourFor(input: { pathname: string; inSession: boolean }): Tour |
   if (path === "/app/reviser") return input.inSession ? SESSION : REVIEW;
   if (path === "/app") return HOME;
   if (path === "/app/cours") return COURSES;
+  if (path === "/app/paquets") return DECKS;
   if (path === "/app/examens") return EXAMS;
   if (path === "/app/amis") return FRIENDS;
   if (path === "/app/reglages") return SETTINGS;

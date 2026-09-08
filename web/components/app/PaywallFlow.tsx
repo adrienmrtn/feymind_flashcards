@@ -130,16 +130,31 @@ export function PaywallCard({
   const titleId = useId();
   const [stage, setStage] = useState<Stage>(startAt);
   const index = STAGES.indexOf(stage);
+  /**
+   * Les trois premières pages n'ont pas de sortie. La croix n'apparaît que sur
+   * l'offre, et seulement après deux secondes : avant ça, un geste nerveux
+   * fermait le court accueil avant d'avoir vu Pro.
+   */
+  const [canClose, setCanClose] = useState(false);
+
+  useEffect(() => {
+    if (stage !== "plans") {
+      setCanClose(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setCanClose(true), 2_000);
+    return () => window.clearTimeout(timer);
+  }, [stage]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      onClose();
+      if (canClose) onClose();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [canClose, onClose]);
 
   function next() {
     const following = STAGES[index + 1];
@@ -149,12 +164,7 @@ export function PaywallCard({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-6">
-      <button
-        type="button"
-        aria-label={t("app.paywall.closeOffer")}
-        onClick={onClose}
-        className="paywall-veil absolute inset-0 bg-ink/45 backdrop-blur-[8px]"
-      />
+      <div className="paywall-veil absolute inset-0 bg-ink/45 backdrop-blur-[8px]" />
 
       <div
         role="dialog"
@@ -181,22 +191,26 @@ export function PaywallCard({
           ) : (
             <span />
           )}
-          <button
-            type="button"
-            aria-label={t("app.a11y.close")}
-            onClick={onClose}
-            className="pressable -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
-          >
-            <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5">
-              <path
-                d="M5 5l10 10M15 5L5 15"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
+          {canClose ? (
+            <button
+              type="button"
+              aria-label={t("app.a11y.close")}
+              onClick={onClose}
+              className="pressable -mr-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-tertiary hover:bg-canvas"
+            >
+              <svg aria-hidden viewBox="0 0 20 20" className="h-5 w-5">
+                <path
+                  d="M5 5l10 10M15 5L5 15"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          ) : (
+            <span className="h-9 w-9" />
+          )}
         </div>
 
         {/*

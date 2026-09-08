@@ -131,6 +131,22 @@ export const appTr = {
     emptyBadge: "boş",
     upToDate: "güncel",
   },
+  decks: {
+    title: "Desteler",
+    lead: "Derslerinin kartları, bir de elle açtıkların.",
+    emptyLead: "Boş bir deste aç, kart kart, ya da bir Anki dosyası al.",
+    addTitle: "Deste aç",
+    addHint: "Boş, elle, ya da Anki'den içe aktarma",
+    none: "Deste yok",
+    emptyTitle: "Deste yok",
+    emptyBody: "Başlamak için bir tane aç, boş ya da Anki'den.",
+    search: "Deste ara",
+    fromCourse: "Ders",
+    standalone: "Ders yok",
+    deleteQ: "Bu deste silinsin mi?",
+    deleteDeck: "Desteyi sil",
+    deleteMsg: "{title} ve {cards} gider.",
+  },
   review: {
     verb: "Tekrar et",
     again: "Bir daha tekrar et",
@@ -471,7 +487,7 @@ export const appTr = {
   },
   deck: {
     title: "Bir kart destesi",
-    lead: "Ders olmadan: kelimeler, tarihler, formüller. Ya da devraldığın bir Anki destesi.",
+    lead: "Boş deste, kart kart. Ya da devraldığın bir Anki dosyası.",
     untitled: "Yeni deste",
     nameLabel: "Destenin adı",
     namePlaceholder: "İngilizce kelimeler, 1. sınıf",
@@ -844,6 +860,16 @@ export const appTr = {
       add: {
         title: "Ders ekle",
         body: "PDF, Word, yapıştırılan metin veya YouTube videosu. Micabo okur, sonra özeti yazar.",
+      },
+    },
+    decks: {
+      shelf: {
+        title: "Destelerin",
+        body: "Her dersin bir destesi var, bir de elle açtıkların. Hepsi burada.",
+      },
+      add: {
+        title: "Deste aç",
+        body: "Boş deste, kart kart. Ya da hazır bir Anki dosyası.",
       },
     },
     sheet: {

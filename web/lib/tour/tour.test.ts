@@ -28,11 +28,12 @@ const OPEN = {
 };
 
 describe("tourFor", () => {
-  it("donne une visite à chacune des dix pages", () => {
+  it("donne une visite à chacune des pages de l'app", () => {
     const pages = [
       "/app",
       "/app/reviser",
       "/app/cours",
+      "/app/paquets",
       "/app/examens",
       "/app/amis",
       "/app/profil",
@@ -58,6 +59,7 @@ describe("tourFor", () => {
 
   it("supporte la barre oblique finale", () => {
     expect(tourFor({ pathname: "/app/cours/", inSession: false })?.id).toBe("cours");
+    expect(tourFor({ pathname: "/app/paquets/", inSession: false })?.id).toBe("paquets");
   });
 
   it("ne visite pas le profil public d'un ami ni un cours repris", () => {

@@ -140,8 +140,10 @@ export async function createCard(input: {
 
   revalidateUserData(user.id, "cards");
   revalidatePath(`/app/c/${input.courseId}/cartes`);
+  revalidatePath(`/app/paquets/${input.courseId}`);
   revalidatePath("/app");
   revalidatePath("/app/cours");
+  revalidatePath("/app/paquets");
   return { status: "ok", cardId: id };
 }
 
@@ -209,8 +211,10 @@ export async function createOcclusionCards(input: {
 
   revalidateUserData(user.id, "cards");
   revalidatePath(`/app/c/${input.courseId}/cartes`);
+  revalidatePath(`/app/paquets/${input.courseId}`);
   revalidatePath("/app");
   revalidatePath("/app/cours");
+  revalidatePath("/app/paquets");
   revalidatePath("/app/reviser");
   return { status: "ok", cardId: rows[0]?.id };
 }
