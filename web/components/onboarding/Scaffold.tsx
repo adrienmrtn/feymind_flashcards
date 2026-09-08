@@ -79,12 +79,15 @@ export function Scaffold({
       </h1>
 
       {/*
-        Un peu d'air sous le titre : les cartes d'explication (fiche, session,
-        courbe) venaient lécher la dernière ligne. `my-auto` centre quand ça
-        tient, sans `justify-center` qui coupait le haut dès que ça déborde.
+        Un vrai écart sous le titre : `mt-6` (24 px) ne se voyait pas — les cartes
+        d'explication (fiche, session, courbe) léchaient encore la dernière ligne.
       */}
-      <div className="rise mt-6 min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className={center ? "my-auto" : undefined}>{children}</div>
+      <div
+        className={`rise mt-10 min-h-0 flex-1 overflow-y-auto overscroll-contain ${
+          center ? "flex flex-col" : ""
+        }`}
+      >
+        <div className={center ? "my-auto w-full" : undefined}>{children}</div>
       </div>
 
       <div className="rise flex shrink-0 items-center justify-between gap-3 pt-4">

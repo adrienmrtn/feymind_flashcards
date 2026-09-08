@@ -42,7 +42,7 @@ struct DemoReviewStepView: View {
         OnboardingScaffold(
             title: i18n?.t("ios.reviewTitle") ?? "Tes cours sont transformés\nen contenus interactifs.",
             titleSize: 26,
-            contentSpacing: MicaboSpacing.lg,
+            contentSpacing: MicaboSpacing.xxl,
             scrolls: false
         ) {
             VStack(spacing: 0) {

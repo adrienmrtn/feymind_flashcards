@@ -2,8 +2,8 @@
 
 import { useEffect, useLayoutEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
-import { ThinkingOrb } from "thinking-orbs";
 
+import { GenerationStatus } from "@/components/app/GenerationStatus";
 import {
   IMPORT_HANDOFF_EVENT,
   readImportHandoff,
@@ -45,12 +45,9 @@ export function ImportHandoffOverlay() {
   return (
     <div
       className="fixed inset-0 z-40 flex items-center justify-center bg-background px-6"
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
       data-print="hide"
     >
-      <WritingSheetStatus name={handoff.name} />
+      <WritingSheetStatus name={handoff.name} startedAt={handoff.startedAt} />
     </div>
   );
 }
@@ -68,23 +65,25 @@ export function CourseOpeningFallback({ children }: { children: React.ReactNode 
   if (!handoff) return children;
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center">
-      <WritingSheetStatus name={handoff.name} />
+      <WritingSheetStatus name={handoff.name} startedAt={handoff.startedAt} />
     </div>
   );
 }
 
-export function WritingSheetStatus({ name }: { name?: string | null }) {
+export function WritingSheetStatus({
+  name,
+  startedAt,
+}: {
+  name?: string | null;
+  startedAt?: number;
+}) {
   const { t } = useI18n();
   return (
-    <div className="flex flex-col items-center gap-4">
-      <ThinkingOrb state="composing" size={64} />
-      <div className="min-w-0 text-center">
-        <p className="text-[16px] font-semibold text-ink">{t("app.import.writing")}</p>
-        <p className="mt-1 truncate text-[13px] text-ink-tertiary">
-          {name?.trim() || t("app.import.waitHint")}
-        </p>
-      </div>
-    </div>
+    <GenerationStatus
+      title={t("app.import.writing")}
+      hint={name?.trim() || t("app.import.waitHint")}
+      startedAt={startedAt}
+    />
   );
 }
 

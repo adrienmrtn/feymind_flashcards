@@ -13,7 +13,8 @@ struct RetentionChartStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n?.t("ios.retentionTitle") ?? "Relire ne suffit pas.\nSe souvenir, oui.",
-            titleSize: 28
+            titleSize: 28,
+            contentSpacing: MicaboSpacing.xxl
         ) {
             RetentionChart()
         } footer: {

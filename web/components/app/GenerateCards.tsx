@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { ThinkingOrb } from "thinking-orbs";
 
 import {
   CARD_KINDS,
@@ -18,8 +16,10 @@ import {
 import { CountStepper } from "@/components/app/CountStepper";
 import { Float, useFloatDock } from "@/components/app/Float";
 import { GenerateCardsCta } from "@/components/app/GenerateCardsCta";
+import { GenerationStatus } from "@/components/app/GenerationStatus";
 import { generateCards } from "@/lib/actions/course";
 import { useI18n } from "@/lib/i18n/client";
+import { openGeneratedPage } from "@/lib/import-handoff";
 
 /**
  * Demander des cartes, **et combien de chaque format**.
@@ -48,11 +48,11 @@ export function GenerateCards({
   canGenerate?: boolean;
 }) {
   const { t } = useI18n();
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [failure, setFailure] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [quota, setQuota] = useState<QuestionQuota>(DEFAULT_QUOTA);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
   const opened = useRef(false);
 
   const total = quotaTotal(quota);
@@ -71,6 +71,7 @@ export function GenerateCards({
 
   function ask() {
     setFailure(null);
+    setStartedAt(Date.now());
     startTransition(async () => {
       const result = await Promise.race([
         generateCards(courseId, quota),
@@ -88,8 +89,7 @@ export function GenerateCards({
       if (result.status === "error") setFailure(result.message ?? t("app.common.errorGeneric"));
       else {
         setOpen(false);
-        router.replace(`/app/c/${courseId}/cartes` as never);
-        router.refresh();
+        openGeneratedPage(`/app/c/${courseId}/cartes`);
       }
     });
   }
@@ -119,13 +119,12 @@ export function GenerateCards({
         }
         data-print="hide"
       >
-        <ThinkingOrb state="composing" size={64} />
-        <div>
-          <p className="text-[15.5px] font-semibold text-ink">{t("app.generate.writing")}</p>
-          <p className="numeral mt-0.5 text-[13px] text-ink-tertiary">
-            {t("app.generate.requested", { count: total })}
-          </p>
-        </div>
+        <GenerationStatus
+          compact
+          title={t("app.generate.writing")}
+          hint={t("app.generate.requested", { count: total })}
+          startedAt={startedAt ?? undefined}
+        />
       </div>
     );
     return floating ? <Float>{pendingUi}</Float> : pendingUi;

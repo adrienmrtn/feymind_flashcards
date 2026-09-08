@@ -15,6 +15,12 @@ describe("le relais d'import", () => {
     ).toEqual({ name: "Cours.pdf", courseId: "abc" });
   });
 
+  it("garde l'instant de départ pour le pourcentage", () => {
+    expect(
+      parseImportHandoff(JSON.stringify({ name: "Cours.pdf", startedAt: 1_700_000_000_000 })),
+    ).toEqual({ name: "Cours.pdf", startedAt: 1_700_000_000_000 });
+  });
+
   it("ignore une valeur illisible", () => {
     expect(parseImportHandoff(null)).toBeNull();
     expect(parseImportHandoff("{")).toBeNull();

@@ -13,8 +13,8 @@ import SwiftUI
 /// un passage surligné, un tableau, une figure, qui se posent l'un après l'autre pendant
 /// qu'un balayage de lecture descend sur la page. C'est la même image que celle du parcours
 /// d'accueil, et c'est voulu : ce qu'on a promis à l'inscription est ce qu'on montre en
-/// train d'arriver. L'étape en cours est écrite en une ligne sous la page, et la jauge
-/// mesure le chemin des étapes, pas un temps qu'on ne connaît pas.
+/// train d'arriver. L'étape en cours est écrite en une ligne sous la page. Le pourcentage
+/// et la jauge mesurent le temps d'attente, pas un travail qu'on ne connaît pas.
 struct GenerationOverlay: View {
     let title: String
     let steps: [String]
@@ -22,6 +22,7 @@ struct GenerationOverlay: View {
     @State private var currentStep = 0
     @State private var laidBlocks = 0
     @State private var sweep = -1.0
+    @State private var elapsed = 0.0
 
     /// Cadence des étapes annoncées. Elle est indicative et l'a toujours été : personne ne
     /// sait combien de temps prend un modèle. La dernière étape reste donc affichée aussi
@@ -30,10 +31,17 @@ struct GenerationOverlay: View {
     /// Cadence de pose des blocs de la page. Plus rapide que les étapes : c'est ce qui donne
     /// à l'écran son impression de travail en cours.
     private let blockTimer = Timer.publish(every: 0.55, on: .main, in: .common).autoconnect()
+    /// Le pourcentage doit bouger image par image, pas par palier d'étape.
+    private static let ticker = Timer.publish(every: 1.0 / 30.0, on: .main, in: .common).autoconnect()
 
     private var progress: Double {
-        guard steps.count > 1 else { return 0.5 }
-        return Double(currentStep + 1) / Double(steps.count)
+        // Jauge de temps, plafonnée : on ne connaît pas la durée réelle.
+        let t = 1 - exp(-elapsed / 16)
+        return min(0.94, t)
+    }
+
+    private var percentLabel: Int {
+        max(1, min(99, Int((progress * 100).rounded())))
     }
 
     var body: some View {
@@ -48,8 +56,18 @@ struct GenerationOverlay: View {
                     .shadow(color: Color.black.opacity(0.07), radius: 20, x: 0, y: 12)
 
                 VStack(spacing: MicaboSpacing.sm) {
+                    Text("\(percentLabel) %")
+                        .font(MicaboFont.number(44))
+                        .foregroundStyle(MicaboColor.ink)
+                        .tracking(-1.4)
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .animation(.easeOut(duration: 0.2), value: percentLabel)
+                        .accessibilityLabel(title)
+                        .accessibilityValue("\(percentLabel) %")
+
                     Text(title)
-                        .font(MicaboFont.hanken(24, weight: .bold))
+                        .font(MicaboFont.hanken(20, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(MicaboTracking.tight)
                         .multilineTextAlignment(.center)
@@ -65,7 +83,7 @@ struct GenerationOverlay: View {
                         .frame(height: 4)
                         .frame(maxWidth: 190)
                         .padding(.top, MicaboSpacing.xxs)
-                        .animation(.easeOut(duration: 0.4), value: progress)
+                        .animation(.easeOut(duration: 0.2), value: progress)
                 }
 
                 Spacer(minLength: 0)
@@ -73,6 +91,9 @@ struct GenerationOverlay: View {
             .padding(MicaboSpacing.lg)
         }
         .onAppear(perform: start)
+        .onReceive(Self.ticker) { _ in
+            elapsed += 1.0 / 30.0
+        }
         .onReceive(stepTimer) { _ in
             guard currentStep < steps.count - 1 else { return }
             currentStep += 1
