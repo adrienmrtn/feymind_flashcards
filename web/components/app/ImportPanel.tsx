@@ -2,9 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { PDFPageProxy } from "pdfjs-dist";
-import { ThinkingOrb } from "thinking-orbs";
 
 import {
   BLOCK_BOUNDS,
@@ -19,13 +17,14 @@ import {
   type SheetLength,
 } from "@micabo/core";
 
+import { GenerationStatus } from "@/components/app/GenerationStatus";
 import { LanguageChoices } from "@/components/app/LanguageChoices";
 import { VisibilityChoices } from "@/components/app/VisibilityChoices";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
 import { copySheetLengthTitle, type Translator } from "@/lib/i18n/copy";
 import { importFromText, youtubePreview, youtubeTranscript } from "@/lib/actions/course";
-import { holdImportHandoff, releaseImportHandoff } from "@/lib/import-handoff";
+import { holdImportHandoff, openGeneratedPage, releaseImportHandoff } from "@/lib/import-handoff";
 import { requestPaywall } from "@/lib/paywall";
 import { isAnkiFileName } from "@/lib/import/anki";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
@@ -71,7 +70,6 @@ export function ImportPanel({
   initialLength?: SheetLength;
 }) {
   const { t } = useI18n();
-  const router = useRouter();
   const [extra, setExtra] = useState<Extra>(null);
   const [phase, setPhase] = useState<Phase>("repos");
   const [failure, setFailure] = useState<string | null>(null);
@@ -108,14 +106,9 @@ export function ImportPanel({
         courseId: result.courseId,
         name: draft?.sourceName ?? title,
       });
-      // Le voile vit sur le chrome : on quitte l'import sans le baisser.
-      // Le pousser dans le même tick que la fin de la transition laissait
-      // un cadre vide avant que la fiche soit peinte.
-      const href = `/app/c/${result.courseId}`;
-      router.prefetch(href as never);
-      queueMicrotask(() => {
-        router.push(href as never);
-      });
+      // Un `router.push` ici cassait le vol RSC : « This page couldn't load ».
+      // Le cours existe — il s'ouvre depuis Cours. On recharge donc la page.
+      openGeneratedPage(`/app/c/${result.courseId}`);
       return;
     }
     releaseImportHandoff();
@@ -742,17 +735,10 @@ function Waiting({
   name: string | null;
 }) {
   return (
-    <div className="flex flex-col items-center gap-4">
-      <ThinkingOrb state={phase === "lecture" ? "searching" : "composing"} size={64} />
-      <div className="min-w-0 text-center">
-        <p className="text-[16px] font-semibold text-ink">
-          {phase === "lecture" ? t("app.import.reading") : t("app.import.writing")}
-        </p>
-        <p className="mt-1 truncate text-[13px] text-ink-tertiary">
-          {name ?? t("app.import.waitHint")}
-        </p>
-      </div>
-    </div>
+    <GenerationStatus
+      title={phase === "lecture" ? t("app.import.reading") : t("app.import.writing")}
+      hint={name ?? t("app.import.waitHint")}
+    />
   );
 }
 

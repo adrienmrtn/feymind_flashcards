@@ -2,11 +2,10 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ThinkingOrb } from "thinking-orbs";
 
 import { DEFAULT_VISIBILITY, type CourseVisibility } from "@micabo/core";
 
+import { GenerationStatus } from "@/components/app/GenerationStatus";
 import { VisibilityChoices } from "@/components/app/VisibilityChoices";
 import { Button } from "@/components/ui/button";
 import { addDeckCards, createDeck } from "@/lib/actions/decks";
@@ -22,6 +21,7 @@ import {
 } from "@/lib/import/anki";
 import { useI18n } from "@/lib/i18n/client";
 import type { Translator } from "@/lib/i18n/copy";
+import { openGeneratedPage } from "@/lib/import-handoff";
 import { requestPaywall } from "@/lib/paywall";
 
 /**
@@ -49,7 +49,6 @@ type Phase = "repos" | "lecture" | "creation";
 
 export function DeckPanel() {
   const { t } = useI18n();
-  const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState("");
@@ -63,6 +62,7 @@ export function DeckPanel() {
 
   const [phase, setPhase] = useState<Phase>("repos");
   const [poured, setPoured] = useState(0);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   /** Le paquet ouvert, quand le versement casse ensuite : il existe, il faut pouvoir y aller. */
   const [opened, setOpened] = useState<string | null>(null);
@@ -108,6 +108,7 @@ export function DeckPanel() {
     setFailure(null);
     setPhase("creation");
     setPoured(0);
+    setStartedAt(Date.now());
 
     const deck = await createDeck({
       title,
@@ -145,7 +146,7 @@ export function DeckPanel() {
       setPoured(Math.min(chosen.length, at + DECK_CHUNK));
     }
 
-    router.push(`/app/paquets/${courseId}` as never);
+    openGeneratedPage(`/app/paquets/${courseId}`);
   }
 
   if (phase === "creation" && failure && opened) {
@@ -166,18 +167,17 @@ export function DeckPanel() {
 
   if (phase === "creation") {
     return (
-      <div className="flex min-h-[260px] flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-card px-6 py-10 text-center">
-        <ThinkingOrb state={imported ? "searching" : "composing"} size={64} />
-        <div className="min-w-0">
-          <p className="text-[16px] font-semibold text-ink">
-            {imported ? t("app.deck.pouring") : t("app.import.writing")}
-          </p>
-          <p className="numeral mt-1 text-[13px] text-ink-tertiary">
-            {imported
+      <div className="flex min-h-[260px] flex-col items-center justify-center rounded-2xl border border-border bg-card px-6 py-10">
+        <GenerationStatus
+          title={imported ? t("app.deck.pouring") : t("app.import.writing")}
+          hint={
+            imported
               ? t("app.deck.pouringCount", { done: poured, total: chosen.length })
-              : t("app.deck.openingHint")}
-          </p>
-        </div>
+              : t("app.deck.openingHint")
+          }
+          startedAt={startedAt ?? undefined}
+          known={imported ? { done: poured, total: chosen.length } : undefined}
+        />
       </div>
     );
   }
@@ -262,11 +262,7 @@ export function DeckPanel() {
           />
 
           {phase === "lecture" ? (
-            <div className="flex flex-col items-center gap-4">
-              <ThinkingOrb state="searching" size={64} />
-              <p className="text-[15px] font-semibold text-ink">{t("app.deck.reading")}</p>
-              <p className="truncate text-[13px] text-ink-tertiary">{fileName}</p>
-            </div>
+            <GenerationStatus title={t("app.deck.reading")} hint={fileName} />
           ) : (
             <>
               <span aria-hidden className="emoji text-[30px]">

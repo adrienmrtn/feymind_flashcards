@@ -31,7 +31,7 @@ struct DemoSheetStepView: View {
         OnboardingScaffold(
             title: i18n?.t("ios.sheetTitle") ?? "Micabo le met au propre.",
             titleSize: 30,
-            contentSpacing: MicaboSpacing.lg,
+            contentSpacing: MicaboSpacing.xxl,
             scrolls: false,
             expandsContent: true
         ) {
