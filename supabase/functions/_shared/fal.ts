@@ -15,6 +15,9 @@ export { FalError } from "./model-error.ts";
 const TEXT_ENDPOINT = "https://fal.run/fal-ai/any-llm";
 const VISION_ENDPOINT = "https://fal.run/fal-ai/any-llm/vision";
 const FAL_TIMEOUT_MS = 120_000;
+/** Pauses entre essais Fal (texte seulement). La vision échoue tout de suite. */
+export const falRetry = { delaysMs: [2_000, 8_000] };
+const FLASH = "google/gemini-2.5-flash";
 
 export { DEFAULT_MODEL };
 
@@ -62,8 +65,47 @@ export async function callModel(options: CallOptions): Promise<string> {
 }
 
 async function callFal(options: CallOptions, key: string): Promise<string> {
-  const model = resolveModel(options.model);
   const useVision = Array.isArray(options.imageUrls) && options.imageUrls.length > 0;
+  const primary = resolveModel(options.model);
+  // Un 403 lite n'est pas forcément un 403 Flash : on change de modèle
+  // au deuxième essai, puis on reprend le défaut après la pause longue.
+  const models = useVision ? [primary] : [primary, FLASH, primary];
+  const delays = useVision ? [] : falRetry.delaysMs;
+
+  let lastError: FalError | null = null;
+  for (let attempt = 0; attempt < models.length; attempt += 1) {
+    const model = models[attempt]!;
+    if (attempt > 0) {
+      const wait = delays[attempt - 1] ?? 0;
+      if (wait > 0) await sleep(wait);
+      console.error(JSON.stringify({ fal: "retry", attempt: attempt + 1, model }));
+    }
+    try {
+      const output = await callFalOnce(options, key, model, useVision);
+      recordSuccess();
+      return output;
+    } catch (error) {
+      lastError = error instanceof FalError
+        ? error
+        : new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502);
+      const retry = !useVision && attempt < models.length - 1 && isTransientFal(lastError);
+      if (!retry) {
+        recordFailure();
+        throw lastError;
+      }
+    }
+  }
+
+  recordFailure();
+  throw lastError ?? new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502);
+}
+
+async function callFalOnce(
+  options: CallOptions,
+  key: string,
+  model: string,
+  useVision: boolean,
+): Promise<string> {
   const body: Record<string, unknown> = {
     model,
     prompt: options.prompt,
@@ -88,7 +130,6 @@ async function callFal(options: CallOptions, key: string): Promise<string> {
       signal: AbortSignal.timeout(FAL_TIMEOUT_MS),
     });
   } catch (error) {
-    recordFailure();
     if (error instanceof DOMException && error.name === "TimeoutError") {
       throw new FalError("Le modèle a mis trop longtemps à répondre.", 504);
     }
@@ -98,12 +139,9 @@ async function callFal(options: CallOptions, key: string): Promise<string> {
   const raw = await response.text();
 
   if (!response.ok) {
-    recordFailure();
     console.error(JSON.stringify({ fal: "http_error", status: response.status, model }));
     throw new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502);
   }
-
-  recordSuccess();
 
   let parsed: { output?: string; error?: string };
   try {
@@ -119,6 +157,16 @@ async function callFal(options: CallOptions, key: string): Promise<string> {
   if (!parsed.output) throw new FalError("Le modèle n'a renvoyé aucun contenu.", 502);
 
   return parsed.output;
+}
+
+function isTransientFal(error: FalError): boolean {
+  // 504 : on a déjà attendu deux minutes, un second tour ne ferait que
+  // rater le timeout client. 403 / 429 / 502 : Fal a dit non tout de suite.
+  return error.status === 502 || error.status === 503;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function isRetryable(error: unknown): boolean {
