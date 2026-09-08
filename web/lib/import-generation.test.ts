@@ -74,11 +74,9 @@ describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
 
   it("garde le voile jusqu'à la fiche peinte", () => {
     const finish = importPanel.slice(importPanel.indexOf("function finish"));
-    const success = finish.slice(0, finish.indexOf("releaseImportHandoff"));
-    expect(success).toContain("holdImportHandoff");
-    expect(success).toContain("courseId: result.courseId");
-    expect(success).toContain("openGeneratedPage");
-    expect(success).not.toMatch(/releaseImportHandoff\(/);
+    const success = finish.slice(0, finish.indexOf("openGeneratedPage"));
+    expect(success).toContain("rememberWrittenCourse");
+    expect(success).toContain("releaseImportHandoff");
     expect(appError).toContain("recoverGeneratedCourseIfAny");
     expect(globalError).toContain("recoverGeneratedCourseIfAny");
   });

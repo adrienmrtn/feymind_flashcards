@@ -2,18 +2,19 @@
  * L'écriture d'une fiche ne vit pas sur l'écran d'import : elle doit
  * couvrir le changement de route jusqu'à la fiche ouverte.
  *
- * `ImportPanel` se démonte dès que la fiche s'ouvre. Sans ce relais, le
- * « Micabo écrit la fiche… » disparaît, et l'écran du cours n'est pas encore
- * là — le trou que l'on voyait sur le web.
+ * Le voile (`IMPORT_HANDOFF_KEY`) ne survit **pas** au chargement de la
+ * fiche : le garder hydratait `/app/c/:id` avec un état que le serveur n'a
+ * pas, et Next remplaçait la page par l'écran d'erreur. On le lève avant
+ * d'ouvrir. L'identifiant du cours neuf va dans une autre clé, uniquement
+ * pour y revenir si Next casse encore.
  *
- * L'ouverture se fait par un GET de formulaire **après un POST JSON**, pas
- * par le routeur Next ni par `location.href` : les deux sont interceptés
- * et relançaient un vol RSC (« This page couldn't load »), alors que le
- * cours était déjà en base.
+ * L'ouverture passe par `/api/open-course` via le setter natif de
+ * `Location`, pour que le routeur App n'en fasse pas un vol SPA.
  */
 
 export const IMPORT_HANDOFF_KEY = "micabo.app.importHandoff";
 export const IMPORT_HANDOFF_EVENT = "micabo:import-handoff";
+export const LAST_WRITTEN_COURSE_KEY = "micabo.app.lastWrittenCourse";
 
 export interface ImportHandoff {
   name: string;
@@ -64,6 +65,25 @@ export function holdImportHandoff(next: ImportHandoff): void {
   window.dispatchEvent(new Event(IMPORT_HANDOFF_EVENT));
 }
 
+export function rememberWrittenCourse(courseId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(LAST_WRITTEN_COURSE_KEY, courseId);
+  } catch {
+    // Voir plus haut.
+  }
+}
+
+export function readWrittenCourse(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const id = window.sessionStorage.getItem(LAST_WRITTEN_COURSE_KEY);
+    return id && id.length > 0 ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Attend que le voile d'écriture soit réellement peint avant d'appeler le serveur. */
 export function waitForPaint(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
@@ -76,47 +96,37 @@ export function waitForPaint(): Promise<void> {
   });
 }
 
+function hardNavigate(href: string): void {
+  const desc = Object.getOwnPropertyDescriptor(Location.prototype, "href");
+  if (desc?.set) {
+    desc.set.call(window.location, href);
+    return;
+  }
+  window.location.replace(href);
+}
+
 /**
  * Ouvre la fiche par un chargement document, hors du routeur Next.
- *
- * On passe par `/api/open-course` : ce n'est pas une page de l'app, donc
- * Next ne peut pas en faire un vol RSC. Un GET direct vers `/app/c/:id`
- * (location.href, form, assign) restait une navigation SPA.
- *
- * Ne pas abort la page courante : ça coupait les vols en cours et
- * affichait l'écran d'erreur sur l'import, alors que le cours était écrit.
  */
 export function openGeneratedPage(href: string): void {
   if (typeof window === "undefined") return;
   const url = new URL(href, window.location.origin);
   const bounce = new URL("/api/open-course", window.location.origin);
   bounce.searchParams.set("to", `${url.pathname}${url.search}`);
-  const form = document.createElement("form");
-  form.method = "GET";
-  form.action = bounce.pathname;
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = "to";
-  input.value = `${url.pathname}${url.search}`;
-  form.appendChild(input);
-  form.setAttribute("data-micabo-open", "");
-  form.style.display = "none";
-  document.body.appendChild(form);
-  HTMLFormElement.prototype.submit.call(form);
+  hardNavigate(bounce.href);
 }
 
 /** Si l'écriture a réussi et que Next a quand même cassé la page, on y retourne. */
 export function recoverGeneratedCourseIfAny(): boolean {
   if (typeof window === "undefined") return false;
-  const current = readImportHandoff();
-  if (!current?.courseId) return false;
-  const target = `/app/c/${current.courseId}`;
-  if (window.location.pathname === target) {
-    window.location.reload();
-    return true;
-  }
-  // Ici le routeur est déjà mort : un replace document suffit.
-  window.location.replace(`${window.location.origin}${target}`);
+  const courseId = readWrittenCourse();
+  if (!courseId) return false;
+  const target = `/app/c/${courseId}`;
+  // Déjà sur la fiche : un reload ici bouclait (voile + hydratation).
+  if (window.location.pathname.startsWith(target)) return false;
+  const bounce = new URL("/api/open-course", window.location.origin);
+  bounce.searchParams.set("to", target);
+  hardNavigate(bounce.href);
   return true;
 }
 

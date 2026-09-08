@@ -27,8 +27,8 @@ import { youtubePreview, youtubeTranscript } from "@/lib/actions/course";
 import {
   holdImportHandoff,
   openGeneratedPage,
-  readImportHandoff,
   releaseImportHandoff,
+  rememberWrittenCourse,
   waitForPaint,
 } from "@/lib/import-handoff";
 import { requestPaywall } from "@/lib/paywall";
@@ -107,14 +107,10 @@ export function ImportPanel({
 
   function finish(result: { status: string; courseId?: string; message?: string }) {
     if (result.status === "ok" && result.courseId) {
-      // Le voile reste jusqu'à la fiche peinte. Le lever ici laissait
-      // « This page couldn't load » à nu, et Next n'avait plus l'identifiant
-      // pour y retourner.
-      const current = readImportHandoff();
-      holdImportHandoff({
-        name: current?.name ?? (title.trim() || "Cours"),
-        courseId: result.courseId,
-      });
+      rememberWrittenCourse(result.courseId);
+      // Lever le voile **avant** le chargement : le garder hydratait la
+      // fiche avec un état que le serveur n'a pas.
+      releaseImportHandoff();
       openGeneratedPage(`/app/c/${result.courseId}`);
       return;
     }
