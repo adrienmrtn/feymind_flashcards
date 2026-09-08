@@ -33,6 +33,10 @@ enum CardGeneration {
         using service: any AIService,
         in modelContext: ModelContext
     ) async throws -> [Flashcard] {
+        guard course.source != .deck else {
+            throw CardGenerationError.noUsableCards(courseTitle: course.title)
+        }
+
         let quota = options.quota.clamped()
         let request = FlashcardGenerationRequest(
             courseTitle: course.title,

@@ -530,16 +530,16 @@ final class CourseSheetPersistenceTests: XCTestCase {
         XCTAssertTrue(deck.fingerprint.isEmpty)
     }
 
-    func testADeckKeepsItsPastedTextAsMaterialForTheModel() throws {
+    func testADeckDoesNotKeepTextForTheModel() throws {
         let deck = try CourseRepository.makeDeck(
             title: "Dates de la Révolution",
-            rawText: "1789 : prise de la Bastille.\n1792 : proclamation de la République.",
+            subject: "Histoire",
             in: context
         )
 
-        XCTAssertTrue(deck.contextText.contains("Bastille"))
-        XCTAssertTrue(deck.rawText.contains("Bastille"))
-        XCTAssertTrue(deck.contextSnippet().contains("Bastille"))
+        XCTAssertEqual(deck.subject, "Histoire")
+        XCTAssertTrue(deck.contextText.isEmpty)
+        XCTAssertTrue(deck.rawText.isEmpty)
     }
 
     func testADeckWithoutANameStillOpens() throws {

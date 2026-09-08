@@ -46,14 +46,11 @@ export interface DeckResult {
 const MAX_TITLE = 120;
 const MAX_SUBJECT = 80;
 const MAX_SIDE = 2_000;
-const MAX_CONTEXT = 60_000;
 
 export async function createDeck(input: {
   title: string;
   subject?: string;
   visibility?: CourseVisibility;
-  /** Matière collée, gardée comme contexte : c'est elle qui laisse générer des cartes après. */
-  rawText?: string;
 }): Promise<DeckResult> {
   const supabase = await createClient();
   const {
@@ -75,7 +72,6 @@ export async function createDeck(input: {
 
   const title = input.title.trim().slice(0, MAX_TITLE) || (await actionT("app.deck.untitled"));
   const subject = input.subject?.trim().slice(0, MAX_SUBJECT) || null;
-  const text = (input.rawText ?? "").trim().slice(0, MAX_CONTEXT);
   const id = crypto.randomUUID();
 
   const { error } = await supabase.from("courses").insert({
@@ -89,10 +85,11 @@ export async function createDeck(input: {
     // Pas d'empreinte : deux paquets du même nom ne sont pas un doublon, et rien n'a été lu
     // qu'on risquerait de relire deux fois.
     fingerprint: "",
-    raw_text: text,
-    // Pas de fiche : c'est ce qui fait d'un cours un paquet, et l'écran du cours le lit ainsi.
+    raw_text: "",
+    // Pas de fiche, et pas de contexte pour le modèle : un paquet se remplit à la
+    // main, ou on recopie un Anki. La matière range le paquet, elle n'écrit rien.
     sheet: null,
-    context_text: text,
+    context_text: "",
     visibility: isChoosableVisibility(input.visibility) ? input.visibility : DEFAULT_VISIBILITY,
   });
 

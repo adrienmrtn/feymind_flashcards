@@ -491,10 +491,9 @@ export const appEn = {
     untitled: "New deck",
     nameLabel: "Deck name",
     namePlaceholder: "German vocabulary, year 1",
-    subjectLabel: "Subject, if you want",
+    subjectLabel: "Subject",
     subjectPlaceholder: "German, law, anatomy…",
-    subjectHint:
-      "It files the deck in your filters, and tells Micabo which subject it's writing for.",
+    subjectHint: "It files the deck in your filters.",
     materialLabel: "What to start from",
     materialPlaceholder:
       "Paste your list, notes, conjugation table… Micabo turns them into the first cards.",
@@ -520,6 +519,7 @@ export const appEn = {
     importCards: "Import the cards",
     writeCards: "Write the cards",
     createEmpty: "Open the deck",
+    emptyHint: "Write them by hand, or import an Anki file.",
     partial: "The deck is open, but not every card arrived.",
     openAnyway: "Open the deck",
     pouring: "Micabo is filing the cards…",

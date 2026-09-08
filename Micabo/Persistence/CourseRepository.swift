@@ -229,13 +229,12 @@ enum CourseRepository {
     /// un autre pour le reste de l'app — il se révise, il compte dans la file du jour, il
     /// entre dans un plan d'examen — il n'a simplement rien à ficher.
     ///
-    /// Le texte est facultatif : collé, il sert de matière au modèle pour écrire les
-    /// premières cartes ; absent, le paquet démarre vide et se remplit à la main.
+    /// La matière range le paquet dans les filtres. Elle n'est pas envoyée au modèle :
+    /// les cartes s'écrivent à la main, ou on recopie un Anki.
     @discardableResult
     static func makeDeck(
         title: String,
         subject: String? = nil,
-        rawText: String = "",
         /// Décidée à la création. Un paquet n'a pas de fiche, donc pas d'écran où l'on
         /// pourrait le refermer après coup : sans ce choix ici, il resterait public à vie.
         visibility: CourseVisibility = .standard,
@@ -244,7 +243,6 @@ enum CourseRepository {
         let cleanTitle = TextSanitizer.clean(title).nilIfBlank ?? "Nouveau paquet"
         let cleanSubject = subject.flatMap { TextSanitizer.subject($0).nilIfBlank }
         let index = abs(cleanTitle.hashValue) % MicaboColor.courseAccents.count
-        let text = TextSanitizer.normalizeExtractedText(rawText)
 
         let course = Course(
             title: cleanTitle,
@@ -253,8 +251,8 @@ enum CourseRepository {
             emoji: CourseEmoji.resolve(proposed: nil, subject: cleanSubject, title: cleanTitle),
             accentHex: MicaboColor.courseAccents[index].hexString,
             source: .deck,
-            rawText: text,
-            contextText: text
+            rawText: "",
+            contextText: ""
         )
         course.visibility = visibility
         // Pas d'empreinte : deux paquets du même nom ne sont pas un doublon, et rien n'a été

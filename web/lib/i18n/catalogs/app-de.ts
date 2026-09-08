@@ -491,10 +491,9 @@ export const appDe = {
     untitled: "Neuer Stapel",
     nameLabel: "Name des Stapels",
     namePlaceholder: "Englischvokabeln, 1. Semester",
-    subjectLabel: "Fach, wenn du willst",
+    subjectLabel: "Fach",
     subjectPlaceholder: "Englisch, Recht, Anatomie…",
-    subjectHint:
-      "Es sortiert den Stapel in deine Filter und sagt Micabo, für welches Fach geschrieben wird.",
+    subjectHint: "Es sortiert den Stapel in deine Filter.",
     materialLabel: "Woher es losgeht",
     materialPlaceholder:
       "Füg deine Liste, deine Notizen, deine Konjugationstabelle ein… Micabo zieht die ersten Karten daraus.",
@@ -520,6 +519,7 @@ export const appDe = {
     importCards: "Karten übernehmen",
     writeCards: "Karten schreiben",
     createEmpty: "Stapel anlegen",
+    emptyHint: "Schreib sie von Hand, oder übernimm eine Anki-Datei.",
     partial: "Der Stapel ist angelegt, aber nicht alle Karten sind angekommen.",
     openAnyway: "Stapel öffnen",
     pouring: "Micabo legt die Karten ab…",
