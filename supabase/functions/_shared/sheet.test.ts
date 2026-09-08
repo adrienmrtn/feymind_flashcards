@@ -149,4 +149,19 @@ describe("normalizeSheet", () => {
 
     assert.equal(blocks.filter((block) => block.type === "figure").length, 1);
   });
+
+  it("garde l'image d'une figure dense, au-delà de 400 000 caractères", () => {
+    const image = "data:image/jpeg;base64," + "A".repeat(500_000);
+    const blocks = normalizeSheet([
+      paragraph("Le cycle de Krebs oxyde l'acétyl-CoA dans la matrice mitochondriale."),
+      {
+        type: "figure",
+        caption: "Cycle de Krebs",
+        page: 1,
+        image,
+      },
+    ]);
+    const figure = blocks.find((block) => block.type === "figure");
+    assert.equal(figure?.type === "figure" ? figure.image : undefined, image);
+  });
 });

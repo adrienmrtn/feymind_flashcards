@@ -31,9 +31,12 @@ export function SheetReader({
   const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
   const [selection, setSelection] = useState<string | null>(null);
-  const [anchor, setAnchor] = useState<{ top: number; left: number; above: boolean } | null>(
-    null,
-  );
+  const [anchor, setAnchor] = useState<{
+    top: number;
+    left: number;
+    above: boolean;
+    maxHeight: number;
+  } | null>(null);
   const [panel, setPanel] = useState<"repos" | "attente" | "reponse">("repos");
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
@@ -153,7 +156,10 @@ export function SheetReader({
           ) : null}
 
           {panel === "reponse" && explanation ? (
-            <aside className="paper max-h-[min(70vh,560px)] overflow-y-auto rounded-group bg-surface p-5 shadow-floating">
+            <aside
+              className="paper overflow-y-auto rounded-group bg-surface p-5 shadow-floating"
+              style={{ maxHeight: anchor.maxHeight }}
+            >
               <div className="flex items-start justify-between gap-3">
                 <p className="eyebrow text-accent">{t("app.sheetReader.title")}</p>
                 <button
@@ -234,10 +240,17 @@ export function SheetReader({
 }
 
 /** Place la carte sous le passage, et la rabat dans la fenêtre si elle déborde. */
-function place(rect: DOMRect): { top: number; left: number; above: boolean } {
+function place(rect: DOMRect): { top: number; left: number; above: boolean; maxHeight: number } {
   const width = Math.min(420, window.innerWidth - 32);
   const left = Math.min(Math.max(16, rect.left), window.innerWidth - width - 16);
-  const below = rect.bottom + 10;
-  const above = below + 300 > window.innerHeight && rect.top > 220;
-  return { top: above ? rect.top - 10 : below, left, above };
+  const margin = 16;
+  const gap = 10;
+  const spaceBelow = window.innerHeight - rect.bottom - gap - margin;
+  const spaceAbove = rect.top - gap - margin;
+  const above = spaceBelow < 220 && spaceAbove > spaceBelow;
+  const maxHeight = Math.max(
+    160,
+    Math.min(560, window.innerHeight * 0.7, above ? spaceAbove : spaceBelow),
+  );
+  return { top: above ? rect.top - gap : rect.bottom + gap, left, above, maxHeight };
 }

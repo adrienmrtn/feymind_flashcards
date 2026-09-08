@@ -16,8 +16,8 @@ export interface ExtractedFigure {
 const FIGURE_LINE =
   /FIGURE\s+page\s*=\s*(\d+)\s+x\s*=\s*([\d.,]+)\s+y\s*=\s*([\d.,]+)\s+w\s*=\s*([\d.,]+)\s+h\s*=\s*([\d.,]+)\s+caption\s*=\s*(.+)/i;
 
-const MAX_FIGURE_WIDTH = 720;
-const JPEG_QUALITY = 70;
+const MAX_FIGURE_WIDTH = 640;
+const JPEG_QUALITY = 62;
 
 function parseNumber(raw: string): number | null {
   const parsed = Number.parseFloat(raw.replace(",", "."));

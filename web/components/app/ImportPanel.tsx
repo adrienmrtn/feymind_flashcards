@@ -102,11 +102,14 @@ export function ImportPanel({
   }, [draft?.fileUrl]);
 
   function finish(result: { status: string; courseId?: string; message?: string }) {
-    setPhase(draft ? "apercu" : "repos");
     if (result.status === "ok" && result.courseId) {
+      // On reste sur « écrit la fiche » jusqu'à ce que la page du cours soit
+      // vraiment là. Remettre l'aperçu dès la fin de l'appel laissait un trou
+      // entre le chargement et l'ouverture — le cours était prêt, l'écran non.
       router.push(`/app/c/${result.courseId}` as never);
       return;
     }
+    setPhase(draft ? "apercu" : "repos");
     if (result.status === "paywall") {
       requestPaywall();
       return;
