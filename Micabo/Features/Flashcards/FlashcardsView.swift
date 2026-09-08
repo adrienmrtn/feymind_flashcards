@@ -254,7 +254,8 @@ struct FlashcardsView: View {
     /// paquet. Un paquet nu n'a rien à relire, et proposer de générer n'y mènerait qu'à une
     /// erreur.
     private var canGenerate: Bool {
-        course.contextText.nilIfBlank != nil || course.rawText.nilIfBlank != nil
+        let context = (course.contextText.nilIfBlank ?? course.rawText).trimmingCharacters(in: .whitespacesAndNewlines)
+        return context.count >= 40
     }
 
     @ViewBuilder

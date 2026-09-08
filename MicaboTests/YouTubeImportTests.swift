@@ -153,12 +153,12 @@ final class YouTubeVideoTests: XCTestCase {
         )
     }
 
-    /// Le refus d'une vidéo trop longue se décide à l'aperçu, donc **avant** la
-    /// transcription et avant toute génération.
-    func testATooLongVideoIsBlockedFromThePreview() {
-        let blocked = video(duration: 134 * 60).blockingReason
-        XCTAssertEqual(blocked, .tooLong(duration: 134 * 60, limit: 90 * 60))
+    /// Un cours trop long n'est plus un refus à l'aperçu : on lit le début.
+    func testATooLongVideoIsNotBlockedFromThePreview() {
+        XCTAssertNil(video(duration: 134 * 60).blockingReason)
+        XCTAssertNotNil(video(duration: 134 * 60).durationNotice)
         XCTAssertNil(video(duration: 42 * 60).blockingReason)
+        XCTAssertNil(video(duration: 42 * 60).durationNotice)
     }
 
     func testAVideoWithoutCaptionsIsBlockedFromThePreview() {

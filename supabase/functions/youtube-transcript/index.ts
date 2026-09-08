@@ -22,14 +22,12 @@ interface RequestBody {
  * La fonction sert deux moments du parcours. L'**aperçu** (`metadataOnly`) rend le titre,
  * la chaîne, la durée, la vignette et les langues de sous-titres disponibles. La
  * **transcription** vient après confirmation, et c'est le seul moment où l'on télécharge du
- * texte. Découper ainsi permet de refuser une vidéo de trois heures avant de dépenser le
- * moindre appel de génération.
+ * texte. Découper ainsi permet de montrer la vidéo avant de lancer la génération,
+ * et de ne télécharger les sous-titres qu'après confirmation.
  *
  * L'aperçu ne refuse que ce dont il n'y a rien à montrer : un lien qui n'en est pas, une
- * vidéo inaccessible. L'absence de sous-titres et une durée hors limite sont **renvoyées
- * telles quelles** : l'application préfère afficher la vidéo et dire pourquoi elle ne peut
- * pas la lire, avec sa durée réelle, plutôt qu'une alerte sans contexte. La transcription,
- * elle, applique les deux règles pour de bon.
+ * vidéo inaccessible. L'absence de sous-titres est renvoyée telle quelle. Un cours trop
+ * long n'est plus un refus : on lit le début, jusqu'à `YOUTUBE_LIMITS.maxDurationSeconds`.
  */
 Deno.serve((request: Request) =>
   withCors(request, async () => {
@@ -75,22 +73,6 @@ Deno.serve((request: Request) =>
 
       if (metadata.captions.length === 0) {
         throw new YouTubeError("no_captions", "Cette vidéo n'a pas de piste de sous-titres.");
-      }
-
-      // La durée est refusée avant tout téléchargement, et donc avant toute génération.
-      if (
-        metadata.durationSeconds > 0 &&
-        metadata.durationSeconds > YOUTUBE_LIMITS.maxDurationSeconds
-      ) {
-        throw new YouTubeError(
-          "too_long",
-          `Cette vidéo dure ${metadata.durationSeconds} secondes, au delà de la limite.`,
-          422,
-          {
-            durationSeconds: metadata.durationSeconds,
-            limitSeconds: YOUTUBE_LIMITS.maxDurationSeconds,
-          },
-        );
       }
 
       const transcript = await fetchBestTranscript(metadata.captions, languages);

@@ -36,10 +36,9 @@ struct SettingsView: View {
     @State private var schoolName = OnboardingPreferences.institutionName
 
     private let models = [
-        "google/gemini-flash-1.5",
-        "google/gemini-flash-1.5-8b",
-        "google/gemini-2.0-flash-001",
         "google/gemini-2.5-flash-lite",
+        "google/gemini-2.5-flash",
+        "google/gemini-2.0-flash-001",
         "openai/gpt-4o-mini"
     ]
 

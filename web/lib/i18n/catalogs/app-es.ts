@@ -571,7 +571,8 @@ export const appEs = {
     charCount: "{count, plural, one {# carácter} other {# caracteres}}",
     seeText: "Ver el texto",
     videoLink: "Enlace del vídeo",
-    subsRequired: "Subtítulos necesarios · 90 min máx.",
+    subsRequired: "Subtítulos necesarios. Un curso demasiado largo: leemos el principio.",
+    longVideo: "Este vídeo dura {duration}. La ficha se escribirá a partir de los primeros 90 minutos.",
     seeVideo: "Ver el vídeo",
     sheetLength: "Longitud de la ficha",
     sheetLanguage: "Idioma de la ficha",
@@ -984,6 +985,8 @@ export const appEs = {
     videoNoCaptions: "Este vídeo no tiene suficientes subtítulos aprovechables.",
     courseMissing: "Curso no encontrado.",
     noCardsWritten: "No se ha podido escribir ninguna tarjeta.",
+    cardsNeedContext:
+      "Este mazo no tiene suficiente materia para escribir tarjetas. Pega un curso, o escríbelas a mano.",
     secondCoursePro: "Tu segundo curso está en Pro.",
     badEmail: "Esta dirección no parece una.",
     waitlistNoted: "Anotado. Te avisamos cuando Micabo abra.",

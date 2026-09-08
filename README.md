@@ -686,7 +686,7 @@ travail qui en découle, en quatre lots.
 - SwiftData pour le stockage local (aucune donnée n'est envoyée hors des appels IA)
 - PDFKit pour le texte embarqué d'un PDF, Vision (OCR) pour les scans et les photos
 - Lecture locale des `.docx` (ZIP + `word/document.xml`), sans dépendance
-- Supabase Edge Functions comme relais vers fal.ai (`google/gemini-flash-1.5`)
+- Supabase Edge Functions comme relais vers fal.ai (`google/gemini-2.5-flash-lite`)
 
 ## Ouvrir le projet
 

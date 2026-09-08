@@ -294,6 +294,11 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
 
   if (!course) return { status: "error" as const, message: await actionT("app.errors.courseMissing") };
 
+  const context = (course.context_text ?? "").trim();
+  if (context.length < 40) {
+    return { status: "error" as const, message: await actionT("app.errors.cardsNeedContext") };
+  }
+
   // Les recto des cartes déjà écrites partent avec la demande : sans elles, une seconde passe
   // repose les mêmes questions.
   const { data: existing } = await supabase
@@ -308,7 +313,7 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
     body: {
       title: course.title,
       subject: course.subject ?? undefined,
-      context: course.context_text,
+      context: context,
       existing: (existing ?? []).slice(0, 60).map((row) => row.front),
       quota,
       language: sheetLanguage(profile?.sheet_language, profile?.country_code),

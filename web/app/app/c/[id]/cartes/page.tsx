@@ -6,7 +6,7 @@ import { UNLIMITED, entitlement, studyCounts, type QueueCard } from "@micabo/cor
 import { CardList } from "@/components/app/CardList";
 import { GenerateCards } from "@/components/app/GenerateCards";
 import { ReviewCta } from "@/components/app/ReviewCta";
-import { getCourseMeta, listCards, listExams } from "@/lib/data/courses";
+import { getCourse, listCards, listExams } from "@/lib/data/courses";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
 import { copyCards, type Translator } from "@/lib/i18n/copy";
 import { getTranslator } from "@/lib/i18n/server";
@@ -28,7 +28,7 @@ export default async function CourseCardsPage({
   const { generer } = await searchParams;
   const [{ t }, course, cards, exams] = await Promise.all([
     getTranslator(),
-    getCourseMeta(id),
+    getCourse(id),
     listCards(id),
     listExams(),
   ]);
@@ -83,7 +83,12 @@ export default async function CourseCardsPage({
       ) : null}
 
       <div className="mt-7" data-tour="cartes-generer">
-        <GenerateCards courseId={course.id} existing={cards.length} autoStart={generer === "1"} />
+        <GenerateCards
+          courseId={course.id}
+          existing={cards.length}
+          autoStart={generer === "1"}
+          canGenerate={(course.context_text ?? "").trim().length >= 40}
+        />
       </div>
 
       <div className="mt-8" data-tour="cartes-liste">

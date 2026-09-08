@@ -571,7 +571,8 @@ export const appDe = {
     charCount: "{count, plural, one {# Zeichen} other {# Zeichen}}",
     seeText: "Text ansehen",
     videoLink: "Videolink",
-    subsRequired: "Untertitel nötig · höchstens 90 Min.",
+    subsRequired: "Untertitel nötig. Ein zu langer Kurs: wir lesen den Anfang.",
+    longVideo: "Dieses Video dauert {duration}. Das Blatt entsteht aus den ersten 90 Minuten.",
     seeVideo: "Video ansehen",
     sheetLength: "Länge des Blatts",
     sheetLanguage: "Sprache des Blatts",
@@ -984,6 +985,8 @@ export const appDe = {
     videoNoCaptions: "Dieses Video hat zu wenig verwertbare Untertitel.",
     courseMissing: "Kurs nicht gefunden.",
     noCardsWritten: "Keine Karte konnte geschrieben werden.",
+    cardsNeedContext:
+      "Dieses Paket hat nicht genug Stoff für Karten. Füge einen Kurs ein, oder schreib sie von Hand.",
     secondCoursePro: "Dein zweiter Kurs ist in Pro.",
     badEmail: "Diese Adresse sieht nicht nach einer aus.",
     waitlistNoted: "Notiert. Wir schreiben dir, sobald Micabo öffnet.",

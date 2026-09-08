@@ -8,7 +8,6 @@
  */
 
 import {
-  MAX_DURATION_SECONDS,
   MIN_CAPTION_CHARS,
   extractVideoId,
   parseCaptionXml,
@@ -62,13 +61,6 @@ export async function readYouTubeOnServer(
 ): Promise<{ status: "ok"; text: string; title: string } | { status: "error"; message: string }> {
   const preview = await previewYouTubeOnServer(url, languages[0] ?? "fr");
   if (preview.status !== "ok") return preview;
-
-  if (preview.video.durationSeconds > MAX_DURATION_SECONDS) {
-    return {
-      status: "error",
-      message: `Cette vidéo dure plus de 90 min.`,
-    };
-  }
 
   const text = await transcriptFromTracks(preview.video.captions, languages);
   if (text && text.length >= MIN_CAPTION_CHARS) {

@@ -4,7 +4,8 @@
  * sans `Deno.serve`, et chaque appel pend jusqu'au 504 — l'écran reste alors
  * sur « Micabo écrit la fiche… ».
  */
-import { authorize, withCors } from "../_shared/caller.ts";
+import { consumeQuota, readCaller, withCors } from "../_shared/caller.ts";
+import { CircuitOpenError } from "../_shared/circuit.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
   callModel,
@@ -47,7 +48,10 @@ async function writeSheet(
       maxTokens: OUTPUT_TOKEN_LIMIT,
     });
     return deepStripEmDashes(parseModelJSON<Record<string, unknown>>(output));
-  } catch {
+  } catch (error) {
+    // Une panne Fal (404 modèle, circuit ouvert, timeout) n'est pas une fiche
+    // illisible : retenter tout de suite paie un second appel pour le même refus.
+    if (error instanceof FalError || error instanceof CircuitOpenError) throw error;
     return null;
   }
 }
@@ -100,9 +104,10 @@ const LONG_DOCUMENT_LENGTH = 12_000;
 Deno.serve((request: Request) =>
   withCors(request, async () => {
     try {
-      // Qui appelle, et lui reste-t-il du quota. En première ligne : tout ce qui suit coûte de
-      // l'argent.
-      await authorize(request, "generate-course");
+      // Qui appelle. Le décompte attend d'avoir un document utilisable : un 400
+      // ne doit pas brûler une unité, c'est ce qui s'est passé sur generate-flashcards
+      // le 8 septembre (quatre refus, quatre lignes dans ai_usage).
+      const caller = readCaller(request);
 
       const body = (await request.json()) as RequestBody;
       const text = (body.text ?? "").trim().slice(0, MAX_TEXT_LENGTH);
@@ -111,6 +116,8 @@ Deno.serve((request: Request) =>
       if (text.length < 40 && images.length === 0) {
         throw new FalError("Le document ne contient pas assez de contenu à analyser.", 400);
       }
+
+      await consumeQuota(caller, "generate-course");
 
       // Passe visuelle : le modèle décrit les schémas que l'extraction texte ne voit pas, et
       // relève leurs valeurs, sans quoi la fiche ne pourrait pas porter de graphe.

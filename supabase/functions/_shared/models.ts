@@ -5,12 +5,21 @@
  * facturer le plus cher. La liste ci-dessous est la seule que fal.ai a le droit de voir.
  */
 
-export const DEFAULT_MODEL = "google/gemini-flash-1.5";
+export const DEFAULT_MODEL = "google/gemini-2.5-flash-lite";
+
+/**
+ * Gemini 1.5 a été retiré chez Google (septembre 2025). Fal le liste encore, mais
+ * l'amont répond en 404 en une fraction de seconde : c'est exactement les 502
+ * d'`generate-course` qu'on a vus le 8 septembre. On le réécrit, on ne le sert plus.
+ */
+const RETIRED: Record<string, string> = {
+  "google/gemini-flash-1.5": DEFAULT_MODEL,
+  "google/gemini-flash-1.5-8b": DEFAULT_MODEL,
+};
 
 const ALLOWED = new Set([
-  "google/gemini-flash-1.5",
-  "google/gemini-flash-1.5-8b",
   "google/gemini-2.0-flash-001",
+  "google/gemini-2.5-flash",
   "google/gemini-2.5-flash-lite",
   "openai/gpt-4o-mini",
 ]);
@@ -18,10 +27,12 @@ const ALLOWED = new Set([
 /** Un identifiant connu, sinon le modèle par défaut. Tout le reste est ignoré. */
 export function resolveModel(requested?: string): string {
   const normalized = (requested ?? "").trim();
+  if (normalized.length > 0 && RETIRED[normalized]) return RETIRED[normalized];
   if (normalized.length > 0 && ALLOWED.has(normalized)) return normalized;
   return DEFAULT_MODEL;
 }
 
 export function isAllowedModel(requested: string): boolean {
-  return ALLOWED.has(requested.trim());
+  const normalized = requested.trim();
+  return ALLOWED.has(normalized) || normalized in RETIRED;
 }

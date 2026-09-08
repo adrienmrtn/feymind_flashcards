@@ -1,4 +1,4 @@
-import { authorize, withCors } from "../_shared/caller.ts";
+import { consumeQuota, readCaller, withCors } from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
   callModel,
@@ -240,9 +240,7 @@ function selectByQuota(cards: OutputCard[], quota: Record<Format, number>): Outp
 Deno.serve((request: Request) =>
   withCors(request, async () => {
     try {
-      // Qui appelle, et lui reste-t-il du quota. En première ligne : tout ce qui suit coûte de
-      // l'argent.
-      await authorize(request, "generate-flashcards");
+      const caller = readCaller(request);
 
       const body = (await request.json()) as RequestBody;
       const context = (body.context ?? "").trim().slice(0, 40_000);
@@ -250,6 +248,8 @@ Deno.serve((request: Request) =>
       if (context.length < 40) {
         throw new FalError("Le cours est trop court pour générer des flashcards.", 400);
       }
+
+      await consumeQuota(caller, "generate-flashcards");
 
       const quota = resolveQuota(body);
       const count = quota.basic + quota.cloze + quota.choice;

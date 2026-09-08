@@ -570,7 +570,8 @@ export const appFr = {
     charCount: "{count, plural, one {# caractère} other {# caractères}}",
     seeText: "Voir le texte",
     videoLink: "Lien de la vidéo",
-    subsRequired: "Sous-titres requis · 90 min max.",
+    subsRequired: "Sous-titres requis. Un cours trop long : on lit le début.",
+    longVideo: "Cette vidéo dure {duration}. On écrira la fiche à partir des 90 premières minutes.",
     seeVideo: "Voir la vidéo",
     sheetLength: "Longueur de la fiche",
     sheetLanguage: "Langue de la fiche",
@@ -983,6 +984,8 @@ export const appFr = {
     videoNoCaptions: "Cette vidéo n'a pas assez de sous-titres exploitables.",
     courseMissing: "Cours introuvable.",
     noCardsWritten: "Aucune carte n'a pu être écrite.",
+    cardsNeedContext:
+      "Ce paquet n'a pas assez de matière pour écrire des cartes. Colle un cours, ou écris-les à la main.",
     secondCoursePro: "Ton deuxième cours est dans Pro.",
     badEmail: "Cette adresse n'a pas l'air d'en être une.",
     waitlistNoted: "C'est noté. On te prévient dès que Micabo ouvre.",

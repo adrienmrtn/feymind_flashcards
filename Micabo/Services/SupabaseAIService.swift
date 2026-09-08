@@ -37,11 +37,16 @@ struct SupabaseAIService: AIService {
     // MARK: - Flashcards
 
     func generateFlashcards(_ request: FlashcardGenerationRequest) async throws -> [GeneratedFlashcard] {
+        let context = request.courseContext.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard context.count >= 40 else {
+            throw AIServiceError.emptySource
+        }
+
         // `count` et `kinds` restent envoyés en plus du quota : une fonction déployée avant
         // les quotas les comprend encore, et produira le bon volume à défaut du bon détail.
         let payload: [String: Any] = [
             "title": request.courseTitle,
-            "context": String(request.courseContext.prefix(40_000)),
+            "context": String(context.prefix(40_000)),
             "count": request.quota.total,
             "quota": request.quota.wireCounts,
             "existing": request.existingFronts,

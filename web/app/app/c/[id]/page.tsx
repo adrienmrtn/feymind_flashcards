@@ -45,6 +45,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
   // lecture et pas d'avertissement sur une fiche manquante. C'est prévu depuis le schéma,
   // et l'iPhone range les paquets dans la même liste.
   const isDeck = course.source === "deck" && course.blocks.length === 0;
+  const canGenerateCards = (course.context_text ?? "").trim().length >= 40;
 
   return (
     <article className="pb-24">
@@ -118,10 +119,32 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
         </Link>
       ) : null}
 
-      {cards.length === 0 ? (
+      {cards.length === 0 && canGenerateCards ? (
         <div className="mt-7" data-print="hide" data-tour="fiche-cartes">
           <GenerateCardsCta href={`/app/c/${course.id}/cartes?generer=1`} />
         </div>
+      ) : cards.length === 0 ? (
+        <Link
+          href={`/app/c/${course.id}/cartes` as never}
+          className="mt-7 flex w-full items-center gap-4 rounded-2xl border border-border bg-card px-6 py-5"
+          data-print="hide"
+          data-tour="fiche-cartes"
+        >
+          <span
+            aria-hidden
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-tile bg-surface-muted text-[28px]"
+          >
+            🃏
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[18px] font-bold leading-tight text-ink">
+              {t("app.course.cardsSpace")}
+            </span>
+            <span className="mt-1 block text-[14px] text-ink-secondary">
+              {t("app.errors.cardsNeedContext")}
+            </span>
+          </span>
+        </Link>
       ) : (
         <>
           <div className="mt-7" data-print="hide">

@@ -11,7 +11,7 @@ enum AppConfig {
 
     static let defaultSupabaseURL = "https://khuzodsrznanzhwlbjbx.supabase.co"
     static let defaultSupabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtodXpvZHNyem5hbnpod2xiamJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NDg1MzIsImV4cCI6MjEwMTUyNDUzMn0.-PBadJI6rdYgoHisEfP54CN126IiT9DNIXR4J-vNYLw"
-    static let defaultModel = "google/gemini-flash-1.5"
+    static let defaultModel = "google/gemini-2.5-flash-lite"
 
     static var supabaseURL: String {
         get { stored(Key.supabaseURL) ?? defaultSupabaseURL }
