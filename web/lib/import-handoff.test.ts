@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { parseImportHandoff } from "./import-handoff";
+import { isGeneratedPagePath, parseImportHandoff } from "./import-handoff";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const handoff = readFileSync(resolve(here, "./import-handoff.ts"), "utf8");
@@ -34,12 +34,25 @@ describe("le relais d'import", () => {
     expect(parseImportHandoff(JSON.stringify({ courseId: "abc" }))).toBeNull();
   });
 
-  it("ouvre la fiche par un chargement complet, hors du routeur", () => {
-    expect(handoff).toContain("/api/open-course");
-    expect(handoff).toContain("Location.prototype");
+  it("n'ouvre que les pages de fiche, cartes ou paquet", () => {
+    expect(isGeneratedPagePath("/app/c/47ef38c8-368b-4545-8330-c85cd2f7231a")).toBe(true);
+    expect(isGeneratedPagePath("/app/c/47ef38c8-368b-4545-8330-c85cd2f7231a/cartes")).toBe(
+      true,
+    );
+    expect(isGeneratedPagePath("/app/paquets/47ef38c8-368b-4545-8330-c85cd2f7231a")).toBe(
+      true,
+    );
+    expect(isGeneratedPagePath("/app/importer")).toBe(false);
+    expect(isGeneratedPagePath("/app")).toBe(false);
+  });
+
+  it("ouvre la fiche en quittant le document App Router", () => {
+    expect(handoff).toContain("document.write");
+    expect(handoff).toContain("createObjectURL");
     expect(handoff).toContain("waitForPaint");
     expect(handoff).toContain("LAST_WRITTEN_COURSE_KEY");
     expect(handoff).not.toMatch(/HTMLFormElement/);
     expect(handoff).not.toMatch(/window\.location\.href\s*=/);
+    expect(handoff).not.toContain("/api/open-course");
   });
 });

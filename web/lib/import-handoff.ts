@@ -8,8 +8,11 @@
  * d'ouvrir. L'identifiant du cours neuf va dans une autre clé, uniquement
  * pour y revenir si Next casse encore.
  *
- * L'ouverture passe par `/api/open-course` via le setter natif de
- * `Location`, pour que le routeur App n'en fasse pas un vol SPA.
+ * Un `location` vers une route API ou une page `/app/c/:id` reste une
+ * navigation App Router : Next tente un vol RSC, affiche « This page
+ * couldn't load », puis le document gagne. On quitte d'abord le document
+ * courant (`document.write` / `blob:`) : le routeur n'existe plus, et le
+ * chargement de la fiche est un vrai GET.
  */
 
 export const IMPORT_HANDOFF_KEY = "micabo.app.importHandoff";
@@ -96,13 +99,42 @@ export function waitForPaint(): Promise<void> {
   });
 }
 
-function hardNavigate(href: string): void {
-  const desc = Object.getOwnPropertyDescriptor(Location.prototype, "href");
-  if (desc?.set) {
-    desc.set.call(window.location, href);
+const GENERATED_PAGE =
+  /^\/app\/(c\/[0-9a-f-]{36}(\/cartes)?|paquets\/[0-9a-f-]{36})$/i;
+
+export function isGeneratedPagePath(pathname: string): boolean {
+  return GENERATED_PAGE.test(pathname);
+}
+
+function bounceMarkup(absoluteUrl: string): string {
+  const dest = JSON.stringify(absoluteUrl);
+  const meta = absoluteUrl.replace(/&/g, "&amp;");
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${meta}"><title>Micabo</title><style>html,body{margin:0;height:100%;background:#F8F4F0}</style></head><body><script>location.replace(${dest});<\/script></body></html>`;
+}
+
+/**
+ * Détruit le document App Router, puis charge la fiche. Tant que Next
+ * tourne, n'importe quel `location` vers une URL du site est un vol SPA.
+ */
+function leaveAppRouter(absoluteUrl: string): void {
+  const html = bounceMarkup(absoluteUrl);
+  try {
+    const doc = window.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
     return;
+  } catch {
+    // Certains navigateurs refusent d'écrire après le chargement.
   }
-  window.location.replace(href);
+  try {
+    const blobUrl = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    Window.prototype.open.call(window, blobUrl, "_self");
+    return;
+  } catch {
+    // Dernier recours : un chargement document, encore passible d'un vol.
+  }
+  window.location.replace(absoluteUrl);
 }
 
 /**
@@ -111,9 +143,11 @@ function hardNavigate(href: string): void {
 export function openGeneratedPage(href: string): void {
   if (typeof window === "undefined") return;
   const url = new URL(href, window.location.origin);
-  const bounce = new URL("/api/open-course", window.location.origin);
-  bounce.searchParams.set("to", `${url.pathname}${url.search}`);
-  hardNavigate(bounce.href);
+  if (!isGeneratedPagePath(url.pathname)) {
+    window.location.replace(new URL("/app", window.location.origin).href);
+    return;
+  }
+  leaveAppRouter(`${window.location.origin}${url.pathname}${url.search}`);
 }
 
 /** Si l'écriture a réussi et que Next a quand même cassé la page, on y retourne. */
@@ -124,9 +158,7 @@ export function recoverGeneratedCourseIfAny(): boolean {
   const target = `/app/c/${courseId}`;
   // Déjà sur la fiche : un reload ici bouclait (voile + hydratation).
   if (window.location.pathname.startsWith(target)) return false;
-  const bounce = new URL("/api/open-course", window.location.origin);
-  bounce.searchParams.set("to", target);
-  hardNavigate(bounce.href);
+  leaveAppRouter(`${window.location.origin}${target}`);
   return true;
 }
 
