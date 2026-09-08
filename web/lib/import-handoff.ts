@@ -79,24 +79,30 @@ export function waitForPaint(): Promise<void> {
 /**
  * Ouvre la fiche par un chargement document, hors du routeur Next.
  *
- * `HTMLFormElement.submit()` n'émet pas `submit` : Next n'intercepte pas.
- * `location.href` / `assign`, si — et le vol RSC cassait la page d'import.
+ * On passe par `/api/open-course` : ce n'est pas une page de l'app, donc
+ * Next ne peut pas en faire un vol RSC. Un GET direct vers `/app/c/:id`
+ * (location.href, form, assign) restait une navigation SPA.
+ *
+ * Ne pas abort la page courante : ça coupait les vols en cours et
+ * affichait l'écran d'erreur sur l'import, alors que le cours était écrit.
  */
 export function openGeneratedPage(href: string): void {
   if (typeof window === "undefined") return;
   const url = new URL(href, window.location.origin);
-  try {
-    window.stop();
-  } catch {
-    // stop() n'est pas toujours autorisé.
-  }
+  const bounce = new URL("/api/open-course", window.location.origin);
+  bounce.searchParams.set("to", `${url.pathname}${url.search}`);
   const form = document.createElement("form");
   form.method = "GET";
-  form.action = `${url.pathname}${url.search}`;
+  form.action = bounce.pathname;
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = "to";
+  input.value = `${url.pathname}${url.search}`;
+  form.appendChild(input);
   form.setAttribute("data-micabo-open", "");
   form.style.display = "none";
   document.body.appendChild(form);
-  form.submit();
+  HTMLFormElement.prototype.submit.call(form);
 }
 
 /** Si l'écriture a réussi et que Next a quand même cassé la page, on y retourne. */
@@ -104,8 +110,13 @@ export function recoverGeneratedCourseIfAny(): boolean {
   if (typeof window === "undefined") return false;
   const current = readImportHandoff();
   if (!current?.courseId) return false;
-  if (window.location.pathname === `/app/c/${current.courseId}`) return false;
-  openGeneratedPage(`/app/c/${current.courseId}`);
+  const target = `/app/c/${current.courseId}`;
+  if (window.location.pathname === target) {
+    window.location.reload();
+    return true;
+  }
+  // Ici le routeur est déjà mort : un replace document suffit.
+  window.location.replace(`${window.location.origin}${target}`);
   return true;
 }
 
