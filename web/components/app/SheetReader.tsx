@@ -10,6 +10,11 @@ import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { createCard } from "@/lib/actions/cards";
 import { explainSelection, type Explanation } from "@/lib/actions/cards";
 import { useI18n } from "@/lib/i18n/client";
+import {
+  placeExplanation,
+  windowViewport,
+  type ExplanationAnchor,
+} from "@/lib/sheet/explanation-place";
 
 /**
  * La fiche, **et le passage qu'on ne comprend pas.**
@@ -30,13 +35,10 @@ export function SheetReader({
 }) {
   const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
+  const passage = useRef<DOMRect | null>(null);
+  const range = useRef<Range | null>(null);
   const [selection, setSelection] = useState<string | null>(null);
-  const [anchor, setAnchor] = useState<{
-    top: number;
-    left: number;
-    above: boolean;
-    maxHeight: number;
-  } | null>(null);
+  const [anchor, setAnchor] = useState<ExplanationAnchor | null>(null);
   const [panel, setPanel] = useState<"repos" | "attente" | "reponse">("repos");
   const [explanation, setExplanation] = useState<Explanation | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
@@ -50,6 +52,8 @@ export function SheetReader({
         if (panel === "repos") {
           setSelection(null);
           setAnchor(null);
+          passage.current = null;
+          range.current = null;
         }
         return;
       }
@@ -58,12 +62,17 @@ export function SheetReader({
         if (panel === "repos") {
           setSelection(null);
           setAnchor(null);
+          passage.current = null;
+          range.current = null;
         }
         return;
       }
-      const rect = active.getRangeAt(0).getBoundingClientRect();
+      const live = active.getRangeAt(0);
+      const rect = live.getBoundingClientRect();
+      range.current = live.cloneRange();
+      passage.current = rect;
       setSelection(text.slice(0, 600));
-      setAnchor(place(rect));
+      setAnchor(placeExplanation(rect, windowViewport()));
     }
 
     document.addEventListener("selectionchange", read);
@@ -78,12 +87,42 @@ export function SheetReader({
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  useEffect(() => {
+    function relayout() {
+      const live = livePassage();
+      if (!live) return;
+      passage.current = live;
+      setAnchor(placeExplanation(live, windowViewport()));
+    }
+    window.addEventListener("resize", relayout);
+    window.addEventListener("scroll", relayout, true);
+    return () => {
+      window.removeEventListener("resize", relayout);
+      window.removeEventListener("scroll", relayout, true);
+    };
+  }, []);
+
   function dismiss() {
     setPanel("repos");
     setExplanation(null);
     setFailure(null);
     setSelection(null);
     setAnchor(null);
+    passage.current = null;
+    range.current = null;
+  }
+
+  function livePassage(): DOMRect | null {
+    try {
+      const saved = range.current;
+      if (saved) {
+        const rect = saved.getBoundingClientRect();
+        if (rect.width > 0 || rect.height > 0) return rect;
+      }
+    } catch {
+      // Le nœud a disparu avec un re-rendu.
+    }
+    return passage.current;
   }
 
   async function ask() {
@@ -123,14 +162,15 @@ export function SheetReader({
 
       {floating && anchor ? (
         <div
-          className="rise fixed z-40 w-[min(420px,calc(100vw-2rem))]"
-          style={{
-            top: anchor.top,
-            left: anchor.left,
-            transform: anchor.above ? "translateY(-100%)" : undefined,
-          }}
+          className="fixed z-40 w-[min(420px,calc(100vw-2rem))]"
+          style={
+            anchor.bottom != null
+              ? { left: anchor.left, bottom: anchor.bottom }
+              : { left: anchor.left, top: anchor.top }
+          }
           data-print="hide"
         >
+          <div className="rise">
           {panel === "repos" && selection ? (
             <div className="flex items-center gap-3 rounded-pill bg-ink px-4 py-2.5 shadow-floating">
               <span className="max-w-[28ch] truncate text-[13px] text-on-ink-muted">
@@ -160,7 +200,7 @@ export function SheetReader({
               className="paper overflow-y-auto rounded-group bg-surface p-5 shadow-floating"
               style={{ maxHeight: anchor.maxHeight }}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="sticky top-0 z-10 -mx-5 -mt-5 mb-3 flex items-start justify-between gap-3 bg-surface px-5 pt-5 pb-2">
                 <p className="eyebrow text-accent">{t("app.sheetReader.title")}</p>
                 <button
                   type="button"
@@ -233,24 +273,9 @@ export function SheetReader({
               {failure}
             </p>
           ) : null}
+          </div>
         </div>
       ) : null}
     </div>
   );
-}
-
-/** Place la carte sous le passage, et la rabat dans la fenêtre si elle déborde. */
-function place(rect: DOMRect): { top: number; left: number; above: boolean; maxHeight: number } {
-  const width = Math.min(420, window.innerWidth - 32);
-  const left = Math.min(Math.max(16, rect.left), window.innerWidth - width - 16);
-  const margin = 16;
-  const gap = 10;
-  const spaceBelow = window.innerHeight - rect.bottom - gap - margin;
-  const spaceAbove = rect.top - gap - margin;
-  const above = spaceBelow < 220 && spaceAbove > spaceBelow;
-  const maxHeight = Math.max(
-    160,
-    Math.min(560, window.innerHeight * 0.7, above ? spaceAbove : spaceBelow),
-  );
-  return { top: above ? rect.top - gap : rect.bottom + gap, left, above, maxHeight };
 }
