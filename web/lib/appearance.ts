@@ -5,6 +5,8 @@
  * dans `profiles` se synchroniserait là-bas sans rien à afficher.
  */
 
+import { PASTEL_SHADER, PASTEL_THEME_COLOR, WEBSITE_PASTEL } from "./pastel";
+
 export const APPEARANCES = ["day", "night", "twilight"] as const;
 export type Appearance = (typeof APPEARANCES)[number];
 
@@ -12,16 +14,13 @@ export const DEFAULT_APPEARANCE: Appearance = "day";
 export const APPEARANCE_COOKIE = "micabo.appearance";
 export const APPEARANCE_STORAGE = "micabo.appearance";
 
-export const APPEARANCE_THEME_COLOR: Record<Appearance, string> = {
+const PAPER_THEME_COLOR: Record<Appearance, string> = {
   day: "#f6f7f9",
   night: "#101216",
   twilight: "#1c1612",
 };
 
-export const APPEARANCE_SHADER: Record<
-  Appearance,
-  { mesh: string[]; grain: string[]; back: string }
-> = {
+const PAPER_SHADER: Record<Appearance, { mesh: string[]; grain: string[]; back: string }> = {
   day: {
     mesh: ["#dbeafe", "#f6f7f9", "#3b82f6", "#2563eb"],
     grain: ["#dbeafe", "#f6f7f9", "#3b82f6"],
@@ -38,6 +37,9 @@ export const APPEARANCE_SHADER: Record<
     back: "#1c1612",
   },
 };
+
+export const APPEARANCE_THEME_COLOR = WEBSITE_PASTEL ? PASTEL_THEME_COLOR : PAPER_THEME_COLOR;
+export const APPEARANCE_SHADER = WEBSITE_PASTEL ? PASTEL_SHADER : PAPER_SHADER;
 
 export function isAppearance(value: string | undefined | null): value is Appearance {
   return APPEARANCES.includes(value as Appearance);
@@ -61,7 +63,7 @@ export const APPEARANCE_BOOT_SCRIPT = `(function(){
     root.classList.toggle("dark", a !== "day");
     root.style.colorScheme = a === "day" ? "light" : "dark";
     var meta = document.querySelector('meta[name="theme-color"]');
-    var colors = { day: "#f6f7f9", night: "#101216", twilight: "#1c1612" };
+    var colors = ${JSON.stringify(APPEARANCE_THEME_COLOR)};
     if (meta) meta.setAttribute("content", colors[a]);
   } catch (e) {}
 })();`;
