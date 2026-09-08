@@ -89,6 +89,18 @@ describe("la normalisation", () => {
     expect(blocks.some((block) => block.type === "figure")).toBe(true);
   });
 
+  it("garde l'image d'une figure dense, au-delà de 400 000 caractères", () => {
+    const image = "data:image/jpeg;base64," + "A".repeat(500_000);
+    const blocks = normalizeSheet({
+      blocks: [
+        { type: "paragraph", text: "Le cycle de Krebs oxyde l'acétyl-CoA dans la matrice." },
+        { type: "figure", caption: "Cycle de Krebs", page: 1, image },
+      ],
+    });
+    const figure = blocks.find((block) => block.type === "figure");
+    expect(figure?.type === "figure" ? figure.image : undefined).toBe(image);
+  });
+
   it("met la fiche à plat, valeurs de tableau comprises", () => {
     const flat = sheetToPlainText([
       { type: "heading", level: 1, text: "Le cycle de l'eau" },

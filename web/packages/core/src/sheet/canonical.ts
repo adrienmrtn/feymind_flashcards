@@ -190,11 +190,18 @@ function normalizeCrop(raw: unknown): SheetCrop | undefined {
   return crop;
 }
 
-/** Une data URL JPEG, ou un base64 nu assez long pour être une vraie image. */
+/**
+ * Une data URL JPEG, ou un base64 nu assez long pour être une vraie image.
+ *
+ * Le plafond n'est pas cosmétique : trop bas, un schéma dense recadré disparaissait
+ * à l'enregistrement (la légende restait, l'image non). 1 200 000 caractères, c'est
+ * ~900 Ko — largement assez pour quatre figures à 640 px, sans ouvrir la porte à
+ * une fiche de plusieurs mégaoctets.
+ */
 function normalizeFigureImage(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
   const text = value.trim();
-  if (text.length < 32 || text.length > 400_000) return undefined;
+  if (text.length < 32 || text.length > 1_200_000) return undefined;
   if (text.startsWith("data:image/")) return text;
   if (/^[A-Za-z0-9+/=\s]+$/.test(text.slice(0, 120))) return `data:image/jpeg;base64,${text.replace(/\s/g, "")}`;
   return undefined;

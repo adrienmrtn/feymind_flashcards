@@ -29,6 +29,7 @@ import {
 import { revalidateUserData } from "@/lib/data/cache";
 import { listCourses } from "@/lib/data/courses";
 import { readEntitlement } from "@/lib/data/entitlement";
+import { attachFigureImages } from "@/lib/import/figures";
 import { previewYouTubeOnServer, readYouTubeOnServer } from "@/lib/import/youtube-server";
 import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
@@ -150,7 +151,12 @@ export async function importFromText(input: {
 
   // La fiche est renormalisée avec **le même code que le serveur** : c'est la copie surveillée du
   // module de fiche, donc les plafonds appliqués ici sont exactement ceux d'en face.
-  const blocks: SheetBlock[] = normalizeSheet(course.sheet ?? { blocks: [] });
+  //
+  // Puis on recadre les figures, comme l'iPhone. La fonction Edge le fait déjà quand
+  // imagescript répond ; ici c'est le filet. Sans ça, un schéma trop lourd (ou un
+  // recadrage qui a lâché) arrivait avec sa légende et une boîte vide.
+  const drafted: SheetBlock[] = normalizeSheet(course.sheet ?? { blocks: [] });
+  const blocks = await attachFigureImages(drafted, images);
   if (blocks.length === 0) {
     return { status: "error", message: await actionT("app.errors.sheetUnusable") };
   }

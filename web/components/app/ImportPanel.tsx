@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
 import { copySheetLengthTitle, type Translator } from "@/lib/i18n/copy";
 import { importFromText, youtubePreview, youtubeTranscript } from "@/lib/actions/course";
+import { holdImportHandoff, releaseImportHandoff } from "@/lib/import-handoff";
 import { requestPaywall } from "@/lib/paywall";
 import { isAnkiFileName } from "@/lib/import/anki";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
@@ -102,11 +103,23 @@ export function ImportPanel({
   }, [draft?.fileUrl]);
 
   function finish(result: { status: string; courseId?: string; message?: string }) {
-    setPhase(draft ? "apercu" : "repos");
     if (result.status === "ok" && result.courseId) {
-      router.push(`/app/c/${result.courseId}` as never);
+      holdImportHandoff({
+        courseId: result.courseId,
+        name: draft?.sourceName ?? title,
+      });
+      // Le voile vit sur le chrome : on quitte l'import sans le baisser.
+      // Le pousser dans le même tick que la fin de la transition laissait
+      // un cadre vide avant que la fiche soit peinte.
+      const href = `/app/c/${result.courseId}`;
+      router.prefetch(href as never);
+      queueMicrotask(() => {
+        router.push(href as never);
+      });
       return;
     }
+    releaseImportHandoff();
+    setPhase(draft ? "apercu" : "repos");
     if (result.status === "paywall") {
       requestPaywall();
       return;
@@ -138,6 +151,11 @@ export function ImportPanel({
   function generate(payload: Draft) {
     setFailure(null);
     setPhase("ecriture");
+    // Avant la transition : le voile du chrome se peint tout de suite, et
+    // reste jusqu'à l'ouverture du cours — pas seulement jusqu'à la fin de l'appel.
+    holdImportHandoff({
+      name: title.trim() || payload.sourceName || payload.title,
+    });
     startTransition(async () =>
       finish(
         await Promise.race([

@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 
+import { ImportHandoffOverlay } from "@/components/app/ImportHandoff";
 import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
@@ -201,6 +202,7 @@ export function AppChrome({
           <div className="mx-auto w-full max-w-6xl space-y-5">{children}</div>
         </main>
       </div>
+      <ImportHandoffOverlay />
     </div>
   );
 }

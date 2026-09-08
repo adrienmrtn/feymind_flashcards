@@ -18,10 +18,14 @@ const config: NextConfig = {
 
   typedRoutes: true,
 
-  // Une carte à occlusion, ou un PDF dont on envoie les pages pour en extraire
-  // les figures, part en data URL JPEG. Le plafond par défaut (1 Mo) recassait
-  // l'enregistrement.
+  // Recadrage des figures à l'import : imagescript décode les JPEG des pages.
+  // Sans ça, Turbopack l'emballe et le décodage lâche silencieusement.
+  serverExternalPackages: ["imagescript"],
+
   experimental: {
+    // Une carte à occlusion, ou un PDF dont on envoie les pages pour en extraire
+    // les figures, part en data URL JPEG. Le plafond par défaut (1 Mo) recassait
+    // l'enregistrement.
     serverActions: {
       bodySizeLimit: "3mb",
     },
