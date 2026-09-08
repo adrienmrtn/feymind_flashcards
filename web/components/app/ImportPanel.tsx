@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type { PDFPageProxy } from "pdfjs-dist";
 
 import {
   BLOCK_BOUNDS,
@@ -35,7 +34,13 @@ import {
 import { requestPaywall } from "@/lib/paywall";
 import { writeSheetFromBrowser } from "@/lib/import/write-sheet";
 import { isAnkiFileName } from "@/lib/import/anki";
-import { DocxError, extractDocxText } from "@/lib/import/docx";
+import {
+  MIN_TEXT_LENGTH,
+  classifyReadFailure,
+  failureDetail,
+  readDocument,
+  type ReadFailureCode,
+} from "@/lib/import/read-document";
 import {
   isYouTubeUrl,
   preferredLanguages,
@@ -284,33 +289,26 @@ export function ImportPanel({
     setPhase("lecture");
 
     try {
-      const extracted = await extractDocument(file);
-      if (extracted.text.trim().length < 40 && extracted.images.length === 0) {
+      const read = await readDocument(file);
+      if (read.text.trim().length < MIN_TEXT_LENGTH && read.images.length === 0) {
         setPhase("repos");
-        setFailure(
-          t("app.import.scannedPdf"),
-        );
+        setFailure(t("app.import.scannedPdf"));
         return;
       }
 
-      const name = file.name.toLowerCase();
-      const source: SourceKind = name.endsWith(".pdf")
-        ? "pdf"
-        : name.endsWith(".docx")
-          ? "docx"
-          : "text";
-
       showDraft({
-        text: extracted.text,
+        text: read.text,
         title: file.name.replace(/\.[^.]+$/, ""),
         sourceName: file.name,
-        source,
-        fileUrl: source === "pdf" ? URL.createObjectURL(file) : undefined,
-        images: extracted.images,
+        source: read.kind,
+        fileUrl: read.kind === "pdf" ? URL.createObjectURL(file) : undefined,
+        images: read.images,
       }, file.name);
     } catch (error) {
+      // Le message dit ce qui s'est passé ; la console garde de quoi le confirmer.
+      console.error("[micabo] lecture du document refusée", error);
       setPhase("repos");
-      setFailure(docxFailure(error, t));
+      setFailure(readFailureMessage(error, t));
     }
   }
 
@@ -769,61 +767,6 @@ function Waiting({
   );
 }
 
-async function extractDocument(file: File): Promise<{ text: string; images: string[] }> {
-  const name = file.name.toLowerCase();
-
-  if (name.endsWith(".pdf")) {
-    const pdfjs = await import("pdfjs-dist");
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs`;
-
-    const document = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
-    const pages: string[] = [];
-    const images: string[] = [];
-    const pageLimit = Math.min(document.numPages, 4);
-
-    for (let index = 1; index <= document.numPages; index += 1) {
-      const page = await document.getPage(index);
-      const content = await page.getTextContent();
-      pages.push(
-        content.items
-          .map((item) => ("str" in item ? item.str : ""))
-          .join(" ")
-          .replace(/\s+/g, " ")
-          .trim(),
-      );
-
-      if (index <= pageLimit) {
-        const rendered = await renderPdfPage(page);
-        if (rendered) images.push(rendered);
-      }
-    }
-
-    return { text: pages.filter(Boolean).join("\n\n"), images };
-  }
-
-  if (name.endsWith(".docx")) {
-    return { text: await extractDocxText(new Uint8Array(await file.arrayBuffer())), images: [] };
-  }
-
-  if (name.endsWith(".doc")) {
-    throw new DocxError("notDocx");
-  }
-
-  return { text: await file.text(), images: [] };
-}
-
-async function renderPdfPage(page: PDFPageProxy): Promise<string | null> {
-  const viewport = page.getViewport({ scale: 1.1 });
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(viewport.width));
-  canvas.height = Math.max(1, Math.round(viewport.height));
-  const context = canvas.getContext("2d");
-  if (!context) return null;
-  await page.render({ canvas, canvasContext: context, viewport }).promise;
-  const url = canvas.toDataURL("image/jpeg", 0.5);
-  return url.startsWith("data:image/") ? url : null;
-}
-
 function remoteVideo(
   result: { status: string; video?: unknown; message?: string },
   t: Translator,
@@ -868,13 +811,33 @@ function remoteVideo(
   };
 }
 
-function docxFailure(error: unknown, t: Translator): string {
-  if (error instanceof DocxError) {
-    if (error.code === "empty") return t("app.import.docxEmpty");
-    if (error.code === "missingDocument") return t("app.import.docxUnreadable");
-    if (error.code === "notDocx") {
-      return t("app.import.docxLegacy");
-    }
-  }
-  return t("app.import.fileUnreadable");
+/**
+ * Une phrase par cause, et jamais « illisible » quand on sait mieux.
+ *
+ * Le dernier cas garde le nom de l'erreur : c'est la seule branche où l'on n'a
+ * rien à expliquer, donc la seule où un détail technique vaut mieux que rien.
+ * Sans lui, un rapport se résume à « ça ne marche pas », et on cherche à
+ * l'aveugle - ce qui est exactement arrivé.
+ */
+function readFailureMessage(error: unknown, t: Translator): string {
+  const messages: Record<ReadFailureCode, string> = {
+    unsupported: "app.import.unsupportedFile",
+    legacyWord: "app.import.docxLegacy",
+    unreachable: "app.import.fileUnreachable",
+    locked: "app.import.pdfLocked",
+    damaged: "app.import.pdfDamaged",
+    engine: "app.import.readerFailed",
+    wordEmpty: "app.import.docxEmpty",
+    wordUnreadable: "app.import.docxUnreadable",
+    empty: "app.import.scannedPdf",
+    unknown: "app.import.fileUnreadable",
+  };
+
+  const code = classifyReadFailure(error);
+  if (code !== "unknown") return t(messages[code] as never);
+
+  const detail = failureDetail(error);
+  return detail
+    ? t("app.import.fileUnreadableDetail", { detail })
+    : t("app.import.fileUnreadable");
 }
