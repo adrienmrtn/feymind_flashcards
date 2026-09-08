@@ -573,6 +573,14 @@ export const appTr = {
     docxUnreadable: "Bu Word dosyası okunamadı.",
     docxLegacy: "Belgeyi .docx olarak kaydet - eski Word biçimi burada okunmaz.",
     fileUnreadable: "Bu dosya okunamadı.",
+    fileUnreadableDetail: "Bu dosya okunamadı. ({detail})",
+    unsupportedFile:
+      "Bu biçim burada okunamıyor. Belgeyi PDF, Word (.docx) veya metin olarak dışa aktar.",
+    fileUnreachable:
+      "Bu dosya açılamadı. Hâlâ iCloud veya OneDrive'daysa cihaza indir, sonra yeniden dene.",
+    pdfLocked: "Bu PDF parola korumalı. Korumayı kaldır, sonra yeniden dene.",
+    pdfDamaged: "Bu PDF eksik veya bozuk. Kaynağından yeniden dışa aktar, sonra yeniden dene.",
+    readerFailed: "PDF okuyucu yüklenemedi. Bağlantını denetle, sonra sayfayı yeniden yükle.",
     formatsHint: "PDF, Word veya metin.",
     chooseFile: "Dosya seç",
     pasteAction: "Metin yapıştır",
