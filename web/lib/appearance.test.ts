@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  APPEARANCE_BOOT_SCRIPT,
   APPEARANCES,
+  APPEARANCE_THEME_COLOR,
   DEFAULT_APPEARANCE,
   appearanceFromUnknown,
   appearanceIsDark,
@@ -28,5 +30,10 @@ describe("l'apparence", () => {
     expect(appearanceIsDark("day")).toBe(false);
     expect(appearanceIsDark("night")).toBe(true);
     expect(appearanceIsDark("twilight")).toBe(true);
+  });
+
+  it("écrit les couleurs de barre dans le script de démarrage", () => {
+    expect(APPEARANCE_BOOT_SCRIPT).toContain(APPEARANCE_THEME_COLOR.day);
+    expect(APPEARANCE_BOOT_SCRIPT).toContain(APPEARANCE_THEME_COLOR.night);
   });
 });
