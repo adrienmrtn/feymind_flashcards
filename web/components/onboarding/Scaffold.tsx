@@ -79,11 +79,11 @@ export function Scaffold({
       </h1>
 
       {/*
-        Un vrai écart sous le titre : `mt-6` (24 px) ne se voyait pas — les cartes
-        d'explication (fiche, session, courbe) léchaient encore la dernière ligne.
+        Un vrai écart sous le titre : 24 px ne se voyait pas. 48 px sépare
+        clairement la dernière ligne des cartes d'explication (fiche, session, courbe).
       */}
       <div
-        className={`rise mt-10 min-h-0 flex-1 overflow-y-auto overscroll-contain ${
+        className={`rise mt-12 min-h-0 flex-1 overflow-y-auto overscroll-contain ${
           center ? "flex flex-col" : ""
         }`}
       >
