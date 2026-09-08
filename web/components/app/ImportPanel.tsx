@@ -754,10 +754,7 @@ async function extractDocument(file: File): Promise<{ text: string; images: stri
 
   if (name.endsWith(".pdf")) {
     const pdfjs = await import("pdfjs-dist");
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      "pdfjs-dist/build/pdf.worker.min.mjs",
-      import.meta.url,
-    ).toString();
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs`;
 
     const document = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
     const pages: string[] = [];
