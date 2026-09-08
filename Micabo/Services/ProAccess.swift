@@ -32,6 +32,23 @@ enum FreeTier {
     static let allowsPractice = false
 }
 
+/// Comptes développeur : Pro à vie, sans abonnement.
+///
+/// La table `entitlements` ne suffit pas : le compte peut ne pas encore
+/// exister, et un webhook RevenueCat peut refermer une ligne offerte. La
+/// liste vit donc ici, et dans `entitlement.ts` — `freemium-parity.test.ts`
+/// relit ces adresses.
+enum LifetimePro {
+    static let emails: Set<String> = [
+        "adrien.not@gmail.com"
+    ]
+
+    static func matches(_ raw: String?) -> Bool {
+        guard let raw else { return false }
+        return emails.contains(raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())
+    }
+}
+
 /// **L'abonnement, tel que l'app le lit.**
 ///
 /// Un seul objet répond à « est-ce que cette personne est abonnée ? », et tout ce qui se
@@ -63,17 +80,20 @@ final class ProAccess {
     init(
         defaults: UserDefaults = .standard,
         accessToken: (() async -> String?)? = nil,
-        userID: (() -> UUID?)? = nil
+        userID: (() -> UUID?)? = nil,
+        email: (() -> String?)? = nil
     ) {
         self.defaults = defaults
         self.accessToken = accessToken
         self.userID = userID
+        self.email = email
         self.isPro = defaults.bool(forKey: Key.isPro)
     }
 
     private let defaults: UserDefaults
     private let accessToken: (() async -> String?)?
     private let userID: (() -> UUID?)?
+    private let email: (() -> String?)?
     /// Une seule veille sur le flux du SDK : deux boucles se répondraient.
     private var purchaseWatch: Task<Void, Never>?
 
@@ -106,6 +126,14 @@ final class ProAccess {
     /// Une échéance passée l'emporte sur le drapeau de la table : un webhook peut se perdre,
     /// et un abonnement fini qui reste ouvert est une fuite qui ne se voit pas.
     func refresh() async {
+        // Un compte développeur reste Pro même sans ligne, et même si un
+        // webhook a refermé la sienne : l'adresse l'emporte sur le SDK et
+        // sur la table.
+        if LifetimePro.matches(email?()) {
+            setPro(true)
+            return
+        }
+
         let fromSDK = await PurchasesBridge.isPro()
         let fromTable = await readEntitlementRow()
 

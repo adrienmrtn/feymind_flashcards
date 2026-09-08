@@ -88,6 +88,23 @@ export const FREE: Entitlement = { isPro: false };
 export const PRO: Entitlement = { isPro: true };
 
 /**
+ * Comptes développeur : Pro à vie, sans abonnement.
+ *
+ * La table `entitlements` ne suffit pas : le compte peut ne pas encore exister,
+ * et un webhook RevenueCat peut refermer une ligne offerte. La liste vit donc
+ * dans le code, des deux côtés — `freemium-parity.test.ts` relit le Swift.
+ */
+export const LIFETIME_PRO_EMAILS = ["adrien.not@gmail.com"] as const;
+
+/** Un accès offert, sans échéance : le paywall n'a rien à gérer. */
+export const LIFETIME_PRO: Entitlement = { isPro: true, store: "promotional" };
+
+export function isLifetimeProEmail(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return (LIFETIME_PRO_EMAILS as readonly string[]).includes(email.trim().toLowerCase());
+}
+
+/**
  * Le droit **deviné** : pas de ligne, donc pas d'achat, mais le verrou resterait ouvert.
  *
  * Il ne s'applique plus (`ASSUME_PRO_WITHOUT_ROW` est à `false`). On le garde pour

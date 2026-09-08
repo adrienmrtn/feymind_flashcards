@@ -31,6 +31,10 @@ export const readEntitlement = cache(async (): Promise<entitlement.Entitlement> 
   const user = await currentUser();
   if (!user) return entitlement.resolve();
 
+  // Un compte développeur reste Pro même sans ligne, et même si un webhook
+  // a refermé la sienne : la liste dans le noyau l'emporte sur la table.
+  if (entitlement.isLifetimeProEmail(user.email)) return entitlement.LIFETIME_PRO;
+
   const supabase = await createClient();
   const { data } = await supabase
     .from("entitlements")

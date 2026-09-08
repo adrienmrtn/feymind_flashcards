@@ -15,10 +15,6 @@ struct LockedSheetTail: View {
     var action: () -> Void
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    private var lockedPercent: Int {
-        Int(((1 - FreeTier.readableSheetRatio) * 100).rounded())
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             lock
@@ -70,20 +66,11 @@ struct LockedSheetTail: View {
                     .frame(width: 48, height: 48)
                     .background(MicaboColor.accent, in: Circle())
 
-                VStack(spacing: 5) {
-                    Text(i18n?.t("ios.sheetLockedTitle") ?? "La suite de la fiche est dans Pro")
-                        .font(MicaboFont.hanken(16.5, weight: .bold))
-                        .foregroundStyle(MicaboColor.ink)
-                        .tracking(-0.3)
-
-                    Text(i18n?.t("ios.sheetLockedBody", ["pct": "\(lockedPercent)"])
-                        ?? "Il te reste \(lockedPercent) % de ce cours à lire, et tous les suivants à importer.")
-                        .font(MicaboFont.hanken(13, weight: .regular))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .lineSpacing(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .multilineTextAlignment(.center)
+                Text(i18n?.t("ios.sheetLockedTitle") ?? "La suite de la fiche est dans Pro")
+                    .font(MicaboFont.hanken(16.5, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .tracking(-0.3)
+                    .multilineTextAlignment(.center)
 
                 HStack(spacing: 6) {
                     Text(i18n?.t("ios.unlockSheet") ?? "Débloquer la fiche")
