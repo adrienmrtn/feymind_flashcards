@@ -1029,27 +1029,33 @@ un endroit et fausse à l'autre.
 #### Safari de l'iPhone ne lisait aucun document
 
 L'import marchait sur un ordinateur et dans l'app, et échouait sur **le site ouvert au
-téléphone**, sur chaque fichier. Le message affiché accusait le document — « ce fichier ne
-contient pas de texte lisible » — alors que la panne était dans la lecture.
+téléphone**, sur chaque fichier. L'écran accusait le document — « ce fichier ne contient pas
+de texte lisible » — alors que la panne était dans la lecture.
 
 `page.getTextContent()` de pdf.js parcourt son flux de texte avec `for await`, et WebKit
-n'expose pas `Symbol.asyncIterator` sur un `ReadableStream` : aucun Safari livré ne sait
-faire cette boucle. La première page levait « iterable should have an iterator symbol », et
-le PDF s'arrêtait là. Le même flux, lu par son `reader`, marche partout — c'est ce que fait
-`lib/import/document.ts`, et un test le vérifie sur un flux privé de sa méthode manquante,
-sans navigateur.
+n'expose pas `Symbol.asyncIterator` sur un `ReadableStream` : **aucun Safari livré ne sait
+faire cette boucle.** Chaque page levait « iterable should have an iterator symbol », donc
+chaque page était perdue, et il ne restait qu'un document sans texte à annoncer. Le même
+flux, lu par son `reader`, marche partout : c'est ce que fait `readDocument`, et un test le
+vérifie sur une page dont le flux est privé de sa méthode manquante — sans navigateur, et
+`getTextContent` y lève, pour qu'un retour en arrière se voie tout de suite.
 
-Deux voisins du même coin ont été fermés en passant. **La nature du fichier se reconnaît
-maintenant à ses octets**, pas à son nom : un document qui sort du sélecteur de l'iPhone
-n'arrive pas toujours avec son extension, et un PDF finissait décodé comme du texte. Et un
-fichier iCloud pas encore descendu sur l'appareil se lit vide : il est relu par
-`FileReader`, puis, s'il reste vide, on le dit — plutôt que de reprocher au document de
-n'avoir pas de texte. Une photo, que la photothèque propose avant les fichiers, ne part
-plus au modèle décodée en caractères de remplacement.
+Trois voisins du même coin ont été fermés en passant :
+
+- **Les octets ont le dernier mot sur le nom.** Un document qui sort du sélecteur de
+  l'iPhone n'arrive pas toujours avec son extension : un PDF tombait dans la branche
+  « lis-le comme du texte », en ressortait en mojibake, et se faisait refuser comme un
+  format inconnu. `%PDF`, l'entrée `word/document.xml` d'un ZIP, la signature OLE d'un
+  `.doc` et les en-têtes d'image, HEIC compris, décident avant l'extension.
+- **Zéro octet lu n'est pas un fichier vide.** Un fichier resté dans iCloud se lit vide,
+  parfois sans même lever : il est relu par `FileReader`, l'autre chemin du navigateur, et
+  s'il reste vide on renvoie vers le nuage — ce qui se répare.
+- **« Pas de texte » est une conclusion sur le document**, et elle ne vaut que si la lecture
+  a réussi. Aucune page lue et une panne en réserve : c'est la panne qu'on nomme.
 
 **La leçon tient au message.** Un import qui échoue en accusant le fichier ferme l'enquête :
 tant que l'écran disait « ce document n'a pas de texte », la panne a paru venir des PDF de
-l'utilisateur. Un message ne doit désigner le document que quand la lecture, elle, a réussi.
+l'étudiant. Un message ne doit désigner le document que quand la lecture, elle, a abouti.
 
 #### Un défaut que seul le test de bout en bout pouvait trouver
 
