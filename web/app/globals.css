@@ -405,58 +405,19 @@
 }
 
 /* --------------------------------------------------------------------------
-   Pastel
+   Pastel — app connectée seulement
 
-   Tout le pastel du site vit derrière `data-pastel="on"`, posé depuis
-   `lib/pastel.ts`. Mettre `WEBSITE_PASTEL` à `false` retire l'attribut : ces
-   jetons ne s'appliquent plus, la nappe ne se peint plus, et le papier gris
-   froid reprend. Les teintes sont celles des tuiles (`TILE_PASTELS`).
+   `data-pastel="on"` est posé sur `.app-shell` depuis `AppChrome`, jamais sur
+   `html`. Landing et onboarding restent sur le papier gris. Mettre
+   `WEBSITE_PASTEL` à `false` retire l'attribut : ces jetons ne s'appliquent
+   plus. Les teintes sont celles des tuiles (`TILE_PASTELS`).
    -------------------------------------------------------------------------- */
-
-html[data-pastel="on"][data-appearance="day"] {
-  --color-canvas: #f3f1f8;
-  --color-surface: #fffcfb;
-  --color-surface-muted: #ebe8f2;
-  --color-surface-sunken: #e6eaf3;
-  --color-stroke: #e4e4ee;
-  --color-stroke-strong: #d5d6e4;
-  --color-hairline: #eeeaf3;
-  --color-hairline-on-canvas: #e4e8f0;
-  --color-canvas-sage: #e4f0dc;
-  --color-accent-soft: #dfeaf8;
-  --color-positive-soft: #dff2e8;
-  --color-caution-soft: #fbebda;
-  --color-negative-soft: #f8e4ec;
-  --color-info-soft: #dfeaf8;
-  --color-sidebar: #faf8fc;
-  --color-background: var(--color-canvas);
-  --background: var(--color-canvas);
-}
-
-html[data-pastel="on"][data-appearance="night"] {
-  --color-canvas: #13141c;
-  --color-canvas-sage: #141a18;
-  --color-accent-soft: #24344a;
-  --color-positive-soft: #1a2a22;
-  --color-caution-soft: #2e2418;
-  --color-negative-soft: #2c1c22;
-  --color-info-soft: #1a2433;
-  --color-background: var(--color-canvas);
-  --background: var(--color-canvas);
-}
-
-html[data-pastel="on"][data-appearance="twilight"] {
-  --color-canvas: #1e1716;
-  --color-canvas-sage: #1c1a16;
-  --color-background: var(--color-canvas);
-  --background: var(--color-canvas);
-}
 
 .pastel-wash {
   display: none;
 }
 
-html[data-pastel="on"] .pastel-wash {
+.app-shell[data-pastel="on"] .pastel-wash {
   display: block;
   pointer-events: none;
   position: absolute;
@@ -471,8 +432,8 @@ html[data-pastel="on"] .pastel-wash {
   opacity: 0.88;
 }
 
-html[data-pastel="on"][data-appearance="night"] .pastel-wash,
-html[data-pastel="on"][data-appearance="twilight"] .pastel-wash {
+[data-appearance="night"] .app-shell[data-pastel="on"] .pastel-wash,
+[data-appearance="twilight"] .app-shell[data-pastel="on"] .pastel-wash {
   opacity: 0.26;
 }
 
@@ -1578,8 +1539,15 @@ html:not([data-appearance]) .app-shell {
   --shadow-floating: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 28px rgba(0, 0, 0, 0.06);
 }
 
-html[data-pastel="on"][data-appearance="day"] .app-shell {
+[data-appearance="day"] .app-shell[data-pastel="on"] {
   --color-canvas: #faf7fc;
+  --color-surface-sunken: #f3f0f8;
+  --color-accent-soft: #dfeaf8;
+  --color-positive-soft: #dff2e8;
+  --color-caution-soft: #fbebda;
+  --color-negative-soft: #f8e4ec;
+  --color-info-soft: #dfeaf8;
+  --color-sidebar: #faf8fc;
   --background: #faf7fc;
 }
 
@@ -1654,6 +1622,16 @@ html[data-pastel="on"][data-appearance="day"] .app-shell {
   --sidebar-accent: var(--color-sidebar-accent);
   --sidebar-accent-foreground: var(--color-sidebar-accent-foreground);
   --sidebar-border: var(--color-sidebar-border);
+}
+
+[data-appearance="night"] .app-shell[data-pastel="on"] {
+  --color-canvas: #13141c;
+  --background: #13141c;
+}
+
+[data-appearance="twilight"] .app-shell[data-pastel="on"] {
+  --color-canvas: #1e1716;
+  --background: #1e1716;
 }
 
 [data-appearance="night"] .app-shell .saas-card,

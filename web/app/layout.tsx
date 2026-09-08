@@ -4,7 +4,6 @@ import { Hanken_Grotesk, Inter, Nunito } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 
 import { AppearanceProvider } from "@/components/appearance/AppearanceProvider";
-import { PastelWash } from "@/components/atmosphere/PastelWash";
 import { AuthReturnCatcher } from "@/components/landing/AuthReturnCatcher";
 import { PreviewBanner } from "@/components/PreviewBanner";
 import {
@@ -19,7 +18,6 @@ import { UI_LOCALE_META } from "@/lib/i18n/locales";
 import { getTranslator, readUiLocale } from "@/lib/i18n/server";
 import type { MessageTree } from "@/lib/i18n/format";
 import { CANONICAL_URL, IS_INDEXABLE, SITE_URL } from "@/lib/config";
-import { WEBSITE_PASTEL } from "@/lib/pastel";
 import { SiteStructuredData } from "@/components/landing/StructuredData";
 
 import "./globals.css";
@@ -128,7 +126,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       lang={UI_LOCALE_META[locale].html}
       data-appearance={appearance}
-      {...(WEBSITE_PASTEL ? { "data-pastel": "on" } : {})}
       className={`${hanken.variable} ${inter.variable} ${nunito.variable}${appearanceIsDark(appearance) ? " dark" : ""}`}
     >
       <head>
@@ -139,7 +136,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <AppearanceProvider initial={appearance}>
             <SiteStructuredData />
             <div className="relative isolate flex min-h-svh flex-col bg-canvas text-ink">
-              {WEBSITE_PASTEL ? <PastelWash /> : null}
               <PreviewBanner />
               <AuthReturnCatcher />
               {children}
