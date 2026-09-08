@@ -27,7 +27,8 @@ export function ImportHandoffOverlay() {
     if (!handoff) return;
     // L'identifiant n'est connu qu'à la fin de l'appel : on ne baisse pas
     // le voile juste parce que l'URL a quitté /importer.
-    if (pathname.startsWith("/app/importer") || pathname.startsWith("/app/c/")) return;
+    if (pathname.startsWith("/app/c/")) return;
+    if (pathname.startsWith("/app/importer")) return;
     releaseImportHandoff();
   }, [handoff, pathname]);
 

@@ -105,6 +105,11 @@ export function ImportPanel({
     };
   }, [draft?.fileUrl]);
 
+  useEffect(() => {
+    // Un voile resté d'une écriture cassée recouvrait l'import au rechargement.
+    releaseImportHandoff();
+  }, []);
+
   function finish(result: { status: string; courseId?: string; message?: string }) {
     if (result.status === "ok" && result.courseId) {
       rememberWrittenCourse(result.courseId);

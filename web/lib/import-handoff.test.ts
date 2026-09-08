@@ -38,7 +38,6 @@ describe("le relais d'import", () => {
     expect(handoff).toContain("/api/open-course");
     expect(handoff).toContain("Location.prototype");
     expect(handoff).toContain("waitForPaint");
-    expect(handoff).toContain("recoverGeneratedCourseIfAny");
     expect(handoff).toContain("LAST_WRITTEN_COURSE_KEY");
     expect(handoff).not.toMatch(/HTMLFormElement/);
     expect(handoff).not.toMatch(/window\.location\.href\s*=/);

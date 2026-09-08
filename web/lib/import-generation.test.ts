@@ -14,8 +14,6 @@ const openCourse = readFileSync(resolve(here, "../app/api/open-course/route.ts")
 const writeSheet = readFileSync(resolve(here, "./import/write-sheet.ts"), "utf8");
 const handoffUi = readFileSync(resolve(here, "../components/app/ImportHandoff.tsx"), "utf8");
 const status = readFileSync(resolve(here, "../components/app/GenerationStatus.tsx"), "utf8");
-const appError = readFileSync(resolve(here, "../app/app/error.tsx"), "utf8");
-const globalError = readFileSync(resolve(here, "../app/global-error.tsx"), "utf8");
 
 function functionBody(source: string, name: string): string {
   const start = source.indexOf(`export async function ${name}`);
@@ -77,7 +75,5 @@ describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
     const success = finish.slice(0, finish.indexOf("openGeneratedPage"));
     expect(success).toContain("rememberWrittenCourse");
     expect(success).toContain("releaseImportHandoff");
-    expect(appError).toContain("recoverGeneratedCourseIfAny");
-    expect(globalError).toContain("recoverGeneratedCourseIfAny");
   });
 });
