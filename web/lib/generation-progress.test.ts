@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   displayGenerationPercent,
   elapsedGenerationProgress,
+  generationRingOffset,
   knownGenerationProgress,
 } from "./generation-progress";
 
@@ -28,5 +29,11 @@ describe("la jauge d'écriture", () => {
     expect(displayGenerationPercent(1, { known: false })).toBe(99);
     expect(displayGenerationPercent(1, { known: true })).toBe(100);
     expect(displayGenerationPercent(0, { known: true })).toBe(0);
+  });
+
+  it("décale l'anneau sans passer par React", () => {
+    expect(generationRingOffset(0)).toBe(99.2);
+    expect(generationRingOffset(0.5)).toBe(50);
+    expect(generationRingOffset(1)).toBe(0);
   });
 });

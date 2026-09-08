@@ -25,3 +25,8 @@ export function displayGenerationPercent(
   if (known) return Math.min(100, Math.max(0, rounded));
   return Math.min(99, Math.max(1, rounded));
 }
+
+/** Décalage de l'anneau SVG (`pathLength` 100), pour peindre hors de React. */
+export function generationRingOffset(fraction: number): number {
+  return 100 - Math.max(0.8, fraction * 100);
+}

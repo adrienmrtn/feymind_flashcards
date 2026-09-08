@@ -1,6 +1,13 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { parseImportHandoff } from "./import-handoff";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const handoff = readFileSync(resolve(here, "./import-handoff.ts"), "utf8");
 
 describe("le relais d'import", () => {
   it("lit le nom du document pendant l'écriture", () => {
@@ -25,5 +32,12 @@ describe("le relais d'import", () => {
     expect(parseImportHandoff(null)).toBeNull();
     expect(parseImportHandoff("{")).toBeNull();
     expect(parseImportHandoff(JSON.stringify({ courseId: "abc" }))).toBeNull();
+  });
+
+  it("ouvre la fiche après le tour de l'action, par replace", () => {
+    expect(handoff).toContain("location.replace");
+    expect(handoff).toContain("GENERATED_PAGE_OPEN_DELAY_MS");
+    expect(handoff).toContain("waitForPaint");
+    expect(handoff).not.toMatch(/location\.assign/);
   });
 });

@@ -185,14 +185,32 @@ export async function importFromText(input: {
 
   if (insertError) return { status: "error", message: insertError.message };
 
+  // **Pas de revalidation ici.** Next relance un vol RSC de la page d'import
+  // dès qu'une action se termine ; `revalidatePath` en rajoutait un second,
+  // et l'ouverture de `/app/c/:id` partait dans le même tour. Le navigateur
+  // affichait « This page couldn't load », alors que le cours était déjà
+  // en base — d'où le refresh qui « réparait » tout. La fiche neuve n'est
+  // pas en cache (nouvel identifiant). Les listes se rafraîchissent une
+  // fois la fiche peinte, via `refreshLibraryAfterImport`.
+  return { status: "ok", courseId: id };
+}
+
+/**
+ * Invalide les listes **après** l'ouverture de la fiche. Appelé depuis le
+ * voile, une fois le cours dans le DOM : plus de collision de vols.
+ */
+export async function refreshLibraryAfterImport(): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
   revalidateUserData(user.id, "courses");
-  // **La charpente aussi**, et pas seulement les pages : c'est elle qui compte les cours,
-  // et c'est ce compte qui décide du bouton d'import et de l'offre cadeau. Sans ça, on
-  // arrive sur sa première fiche avec un « zéro cours » vieux d'une seconde.
   revalidatePath("/app", "layout");
+  revalidatePath("/app", "page");
   revalidatePath("/app/cours");
   revalidatePath("/app/paquets");
-  return { status: "ok", courseId: id };
 }
 
 /** L'aperçu d'une vidéo, avant de dépenser quoi que ce soit. */

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import {
   displayGenerationPercent,
   elapsedGenerationProgress,
+  generationRingOffset,
   knownGenerationProgress,
 } from "@/lib/generation-progress";
 
@@ -37,6 +38,28 @@ export function GenerationStatus({
   const radius = compact ? 34 : 52;
   const view = compact ? 88 : 120;
   const center = view / 2;
+  const percentRef = useRef<HTMLSpanElement>(null);
+  const ringRef = useRef<SVGCircleElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const origin = startedAt && Number.isFinite(startedAt) ? startedAt : Date.now();
+    const paint = () => {
+      const current = known
+        ? knownGenerationProgress(known.done, known.total)
+        : elapsedGenerationProgress(Math.max(0, Date.now() - origin));
+      const shown = displayGenerationPercent(current, { known: Boolean(known) });
+      if (percentRef.current) percentRef.current.textContent = String(shown);
+      if (ringRef.current) {
+        ringRef.current.setAttribute("stroke-dashoffset", String(generationRingOffset(current)));
+      }
+      if (barRef.current) barRef.current.setAttribute("aria-valuenow", String(shown));
+    };
+    paint();
+    if (known) return;
+    const id = window.setInterval(paint, 80);
+    return () => window.clearInterval(id);
+  }, [startedAt, known]);
 
   return (
     <div
@@ -46,6 +69,7 @@ export function GenerationStatus({
       aria-busy={pct < 100}
     >
       <div
+        ref={barRef}
         className="relative flex shrink-0 items-center justify-center"
         style={{ width: size, height: size }}
         role="progressbar"
@@ -69,6 +93,7 @@ export function GenerationStatus({
             opacity={0.16}
           />
           <circle
+            ref={ringRef}
             cx={center}
             cy={center}
             r={radius}
@@ -78,7 +103,7 @@ export function GenerationStatus({
             strokeLinecap="round"
             pathLength={100}
             strokeDasharray={100}
-            strokeDashoffset={100 - Math.max(0.8, fraction * 100)}
+            strokeDashoffset={generationRingOffset(fraction)}
           />
         </svg>
         <p
@@ -86,7 +111,7 @@ export function GenerationStatus({
             compact ? "text-[22px]" : "text-[44px]"
           }`}
         >
-          {pct}
+          <span ref={percentRef}>{pct}</span>
           <span className={compact ? "text-[12px]" : "text-[22px]"}> %</span>
         </p>
       </div>

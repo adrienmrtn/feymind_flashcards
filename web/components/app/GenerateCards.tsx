@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   CARD_KINDS,
@@ -19,7 +19,7 @@ import { GenerateCardsCta } from "@/components/app/GenerateCardsCta";
 import { GenerationStatus } from "@/components/app/GenerationStatus";
 import { generateCards } from "@/lib/actions/course";
 import { useI18n } from "@/lib/i18n/client";
-import { openGeneratedPage } from "@/lib/import-handoff";
+import { openGeneratedPage, waitForPaint } from "@/lib/import-handoff";
 
 /**
  * Demander des cartes, **et combien de chaque format**.
@@ -48,7 +48,7 @@ export function GenerateCards({
   canGenerate?: boolean;
 }) {
   const { t } = useI18n();
-  const [pending, startTransition] = useTransition();
+  const [writing, setWriting] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [quota, setQuota] = useState<QuestionQuota>(DEFAULT_QUOTA);
@@ -57,7 +57,7 @@ export function GenerateCards({
 
   const total = quotaTotal(quota);
   const capped = isAtCap(quota);
-  useFloatDock(floating ? (open || pending ? 280 : 48) : 0);
+  useFloatDock(floating ? (open || writing ? 280 : 48) : 0);
 
   function step(kind: CardKind, delta: number) {
     setQuota((current) => {
@@ -69,29 +69,31 @@ export function GenerateCards({
     });
   }
 
-  function ask() {
+  async function ask() {
     setFailure(null);
     setStartedAt(Date.now());
-    startTransition(async () => {
-      const result = await Promise.race([
-        generateCards(courseId, quota),
-        new Promise<{ status: "error"; message: string }>((resolve) => {
-          setTimeout(
-            () =>
-              resolve({
-                status: "error",
-                message: t("app.generate.timeout"),
-              }),
-            90_000,
-          );
-        }),
-      ]);
-      if (result.status === "error") setFailure(result.message ?? t("app.common.errorGeneric"));
-      else {
-        setOpen(false);
-        openGeneratedPage(`/app/c/${courseId}/cartes`);
-      }
-    });
+    setWriting(true);
+    await waitForPaint();
+    const result = await Promise.race([
+      generateCards(courseId, quota),
+      new Promise<{ status: "error"; message: string }>((resolve) => {
+        setTimeout(
+          () =>
+            resolve({
+              status: "error",
+              message: t("app.generate.timeout"),
+            }),
+          90_000,
+        );
+      }),
+    ]);
+    if (result.status === "error") {
+      setWriting(false);
+      setFailure(result.message ?? t("app.common.errorGeneric"));
+    } else {
+      setOpen(false);
+      openGeneratedPage(`/app/c/${courseId}/cartes`);
+    }
   }
 
   useEffect(() => {
@@ -109,7 +111,7 @@ export function GenerateCards({
     );
   }
 
-  if (pending) {
+  if (writing) {
     const pendingUi = (
       <div
         className={
@@ -240,7 +242,7 @@ export function GenerateCards({
 
       <button
         type="button"
-        onClick={ask}
+        onClick={() => void ask()}
         disabled={total === 0}
         className={`mt-4 inline-flex h-9 w-full items-center justify-center rounded-lg border text-sm font-medium ${
           total === 0

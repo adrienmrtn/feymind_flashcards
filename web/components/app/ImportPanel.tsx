@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { PDFPageProxy } from "pdfjs-dist";
 
@@ -24,7 +24,12 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
 import { copySheetLengthTitle, type Translator } from "@/lib/i18n/copy";
 import { importFromText, youtubePreview, youtubeTranscript } from "@/lib/actions/course";
-import { holdImportHandoff, openGeneratedPage, releaseImportHandoff } from "@/lib/import-handoff";
+import {
+  holdImportHandoff,
+  openGeneratedPage,
+  releaseImportHandoff,
+  waitForPaint,
+} from "@/lib/import-handoff";
 import { requestPaywall } from "@/lib/paywall";
 import { isAnkiFileName } from "@/lib/import/anki";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
@@ -73,8 +78,6 @@ export function ImportPanel({
   const [extra, setExtra] = useState<Extra>(null);
   const [phase, setPhase] = useState<Phase>("repos");
   const [failure, setFailure] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-
   const [blocks, setBlocks] = useState(() => defaultBlocks(initialLength));
   const [visibility, setVisibility] = useState<CourseVisibility>(DEFAULT_VISIBILITY);
   const [language, setLanguage] = useState<GenerationLanguage>(SOURCE_LANGUAGE);
@@ -90,7 +93,7 @@ export function ImportPanel({
   const [ankiFile, setAnkiFile] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const busy = pending || phase === "lecture" || phase === "ecriture";
+  const busy = phase === "lecture" || phase === "ecriture";
   const length = lengthContaining(blocks);
   const previewing = draft !== null;
 
@@ -106,8 +109,7 @@ export function ImportPanel({
         courseId: result.courseId,
         name: draft?.sourceName ?? title,
       });
-      // Un `router.push` ici cassait le vol RSC : « This page couldn't load ».
-      // Le cours existe — il s'ouvre depuis Cours. On recharge donc la page.
+      // Hors du tour de l'action, et hors du routeur : voir `openGeneratedPage`.
       openGeneratedPage(`/app/c/${result.courseId}`);
       return;
     }
@@ -141,43 +143,44 @@ export function ImportPanel({
     setFailure(null);
   }
 
-  function generate(payload: Draft) {
+  async function generate(payload: Draft) {
     setFailure(null);
     setPhase("ecriture");
-    // Avant la transition : le voile du chrome se peint tout de suite, et
-    // reste jusqu'à l'ouverture du cours — pas seulement jusqu'à la fin de l'appel.
+    // Le voile d'abord, **puis** l'action. Un `startTransition` autour de
+    // l'appel gelait le pourcentage à 1 % : React différait les peintures
+    // pendant tout le temps du modèle, et sérialiser le document dans le
+    // même tour empêchait même le premier paint du voile.
     holdImportHandoff({
       name: title.trim() || payload.sourceName || payload.title,
     });
-    startTransition(async () =>
-      finish(
-        await Promise.race([
-          importFromText({
-            text: payload.text,
-            hintTitle: title.trim() || payload.title,
-            sourceName: payload.sourceName,
-            source: payload.source,
-            blocks,
-            length,
-            visibility,
-            language,
-            instructions: instructions.trim() || undefined,
-            images: payload.images,
-          }),
-          // Sans ça, une fonction qui ne répond plus laisse l'écran sur
-          // « Micabo écrit la fiche… » jusqu'à ce qu'on quitte la page.
-          new Promise<{ status: "error"; message: string }>((resolve) => {
-            setTimeout(
-              () =>
-                resolve({
-                  status: "error",
-                  message: t("app.import.timeout"),
-                }),
-              90_000,
-            );
-          }),
-        ]),
-      ),
+    await waitForPaint();
+    finish(
+      await Promise.race([
+        importFromText({
+          text: payload.text,
+          hintTitle: title.trim() || payload.title,
+          sourceName: payload.sourceName,
+          source: payload.source,
+          blocks,
+          length,
+          visibility,
+          language,
+          instructions: instructions.trim() || undefined,
+          images: payload.images,
+        }),
+        // Sans ça, une fonction qui ne répond plus laisse l'écran sur
+        // « Micabo écrit la fiche… » jusqu'à ce qu'on quitte la page.
+        new Promise<{ status: "error"; message: string }>((resolve) => {
+          setTimeout(
+            () =>
+              resolve({
+                status: "error",
+                message: t("app.import.timeout"),
+              }),
+            90_000,
+          );
+        }),
+      ]),
     );
   }
 
@@ -225,13 +228,13 @@ export function ImportPanel({
 
     const local = await readYouTubeInBrowser(link);
     if (local.status === "ok") {
-      generate({ ...draft, text: local.text, title: local.title, sourceName: local.title });
+      void generate({ ...draft, text: local.text, title: local.title, sourceName: local.title });
       return;
     }
 
     const remote = await youtubeTranscript(link, preferredLanguages());
     if (remote.status === "ok") {
-      generate({ ...draft, text: remote.text, title: remote.title, sourceName: remote.title });
+      void generate({ ...draft, text: remote.text, title: remote.title, sourceName: remote.title });
       return;
     }
 
@@ -594,7 +597,7 @@ export function ImportPanel({
                 void generateVideo();
                 return;
               }
-              generate(draft);
+              void generate(draft);
             }}
           >
             {phase === "ecriture"

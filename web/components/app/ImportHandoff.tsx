@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 
 import { GenerationStatus } from "@/components/app/GenerationStatus";
+import { refreshLibraryAfterImport } from "@/lib/actions/course";
 import {
   IMPORT_HANDOFF_EVENT,
   readImportHandoff,
@@ -55,7 +56,13 @@ export function ImportHandoffOverlay() {
 /** Retire le voile au moment où la fiche est dans le DOM. */
 export function ReleaseImportHandoff({ courseId }: { courseId: string }) {
   useLayoutEffect(() => {
+    const current = readImportHandoff();
+    const handingOff = Boolean(
+      current && (!current.courseId || current.courseId === courseId),
+    );
     releaseImportHandoff(courseId);
+    // Les listes, **après** la peinture : plus de vol RSC sur l'import.
+    if (handingOff) void refreshLibraryAfterImport();
   }, [courseId]);
   return null;
 }
