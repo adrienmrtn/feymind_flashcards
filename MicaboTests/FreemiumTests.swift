@@ -181,6 +181,25 @@ final class FreemiumTests: XCTestCase {
         XCTAssertFalse(pro.isPro)
     }
 
+    /// Un compte développeur reste Pro sans ligne ni achat. L'adresse
+    /// l'emporte sur la table : `web/packages/core/test/freemium-parity.test.ts`
+    /// relit la liste.
+    @MainActor
+    func testALifetimeDeveloperEmailUnlocksWithoutARow() async {
+        XCTAssertTrue(LifetimePro.matches("adrien.not@gmail.com"))
+        XCTAssertTrue(LifetimePro.matches("  Adrien.Not@Gmail.com  "))
+        XCTAssertFalse(LifetimePro.matches("eleve@micabo.app"))
+        XCTAssertFalse(LifetimePro.matches(nil))
+
+        let pro = ProAccess(
+            defaults: isolatedDefaults(),
+            email: { "adrien.not@gmail.com" }
+        )
+        XCTAssertFalse(pro.isPro)
+        await pro.refresh()
+        XCTAssertTrue(pro.isPro)
+    }
+
     // MARK: - Outillage
 
     /// Un domaine par test : les réglages partagés feraient dépendre un test de l'ordre

@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import * as discount from "../src/discount";
-import { ASSUME_PRO_WITHOUT_ROW, ENTITLEMENT_ID, FREE_TIER } from "../src/entitlement";
+import { ASSUME_PRO_WITHOUT_ROW, ENTITLEMENT_ID, FREE_TIER, LIFETIME_PRO_EMAILS } from "../src/entitlement";
 import { DISCOUNT_YEARLY } from "../src/pricing";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -61,6 +61,12 @@ describe("le gratuit, des deux côtés", () => {
     // Trois endroits nomment cette chaîne : ici, le Swift, et le webhook. Un nom qui
     // diverge donne un abonné que personne ne reconnaît.
     expect(swiftConstant(purchases, "id")).toBe(`"${ENTITLEMENT_ID}"`);
+  });
+
+  it("offre Pro à vie aux mêmes adresses développeur", () => {
+    for (const email of LIFETIME_PRO_EMAILS) {
+      expect(proAccess).toContain(`"${email}"`);
+    }
   });
 });
 

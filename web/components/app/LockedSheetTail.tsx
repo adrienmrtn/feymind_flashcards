@@ -1,6 +1,6 @@
 "use client";
 
-import { entitlement, type SheetBlock } from "@micabo/core";
+import { type SheetBlock } from "@micabo/core";
 
 import { SheetBlocks } from "@/components/sheet/SheetBlocks";
 import { useI18n } from "@/lib/i18n/client";
@@ -21,7 +21,6 @@ export function LockedSheetTail({
   tint: string;
 }) {
   const { t } = useI18n();
-  const percent = entitlement.lockedSheetPercent();
 
   return (
     <div className="relative mt-8" data-print="hide">
@@ -39,9 +38,6 @@ export function LockedSheetTail({
           </svg>
         </span>
         <p className="mt-3.5 text-[16.5px] font-bold text-ink">{t("app.course.lockedTitle")}</p>
-        <p className="mx-auto mt-1.5 max-w-[38ch] text-[13px] leading-relaxed text-ink-secondary">
-          {t("app.course.lockedBody", { percent })}
-        </p>
         <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-3 text-[14.5px] font-semibold text-on-ink">
           {t("app.course.unlock")}
           <svg aria-hidden viewBox="0 0 20 20" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.2">

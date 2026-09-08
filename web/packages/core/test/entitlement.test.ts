@@ -16,10 +16,13 @@ import {
   ENTITLEMENT_ID,
   FREE,
   FREE_TIER,
+  LIFETIME_PRO,
+  LIFETIME_PRO_EMAILS,
   PRO,
   canImportCourse,
   canPractice,
   hasReachedSessionLimit,
+  isLifetimeProEmail,
   isPaid,
   shouldInterruptSession,
   lockedSheetPercent,
@@ -92,6 +95,18 @@ describe("le droit", () => {
 
   it("connaît le nom de l'entitlement fixé par docs/revenuecat.md", () => {
     expect(ENTITLEMENT_ID).toBe("pro");
+  });
+
+  it("offre Pro à vie aux comptes développeur, sans les prendre pour un essai", () => {
+    expect(LIFETIME_PRO_EMAILS).toEqual(["adrien.not@gmail.com"]);
+    expect(isLifetimeProEmail("adrien.not@gmail.com")).toBe(true);
+    expect(isLifetimeProEmail("  Adrien.Not@Gmail.com  ")).toBe(true);
+    expect(isLifetimeProEmail("eleve@micabo.app")).toBe(false);
+    expect(isLifetimeProEmail(null)).toBe(false);
+    expect(isLifetimeProEmail("")).toBe(false);
+    expect(LIFETIME_PRO.isPro).toBe(true);
+    expect(LIFETIME_PRO.store).toBe("promotional");
+    expect(isPaid(LIFETIME_PRO)).toBe(true);
   });
 });
 
