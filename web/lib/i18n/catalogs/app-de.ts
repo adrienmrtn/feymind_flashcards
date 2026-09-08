@@ -573,6 +573,8 @@ export const appDe = {
     docxUnreadable: "Diese Word-Datei konnte nicht gelesen werden.",
     docxLegacy: "Speichere das Dokument als .docx - das alte Word-Format ist hier nicht lesbar.",
     fileUnreadable: "Diese Datei konnte nicht gelesen werden.",
+    emptyFile:
+      "Diese Datei kam leer an. Öffne sie auf dem iPhone einmal in Dateien, damit sie aus iCloud geladen wird, und importiere sie dann erneut.",
     formatsHint: "PDF, Word oder Text.",
     chooseFile: "Datei wählen",
     pasteAction: "Text einfügen",

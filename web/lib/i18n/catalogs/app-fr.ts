@@ -573,6 +573,8 @@ export const appFr = {
     docxUnreadable: "Ce fichier Word n'a pas pu être lu.",
     docxLegacy: "Enregistre le document en .docx - l'ancien format Word n'est pas lisible ici.",
     fileUnreadable: "Ce fichier n'a pas pu être lu.",
+    emptyFile:
+      "Ce fichier est arrivé vide. Sur iPhone, ouvre-le une fois dans Fichiers pour qu'il descende d'iCloud, puis réimporte-le.",
     formatsHint: "PDF, Word ou texte.",
     chooseFile: "Choisir un fichier",
     pasteAction: "Coller du texte",

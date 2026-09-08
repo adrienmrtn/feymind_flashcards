@@ -35,6 +35,14 @@ import {
 import { requestPaywall } from "@/lib/paywall";
 import { writeSheetFromBrowser } from "@/lib/import/write-sheet";
 import { isAnkiFileName } from "@/lib/import/anki";
+import {
+  EmptyFileError,
+  decodeDocumentText,
+  documentKind,
+  readFileBytes,
+  readPdfPageText,
+  type DocumentKind,
+} from "@/lib/import/document";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
 import {
   isYouTubeUrl,
@@ -287,18 +295,16 @@ export function ImportPanel({
       const extracted = await extractDocument(file);
       if (extracted.text.trim().length < 40 && extracted.images.length === 0) {
         setPhase("repos");
+        // Un PDF scanné n'a pas de texte, et c'est le document qui est en cause. Une lecture
+        // qui a lâché, elle, est de notre côté : les deux messages ne disent pas la même chose.
         setFailure(
-          t("app.import.scannedPdf"),
+          extracted.unreadable ? t("app.import.fileUnreadable") : t("app.import.scannedPdf"),
         );
         return;
       }
 
-      const name = file.name.toLowerCase();
-      const source: SourceKind = name.endsWith(".pdf")
-        ? "pdf"
-        : name.endsWith(".docx")
-          ? "docx"
-          : "text";
+      const source: SourceKind =
+        extracted.kind === "pdf" ? "pdf" : extracted.kind === "docx" ? "docx" : "text";
 
       showDraft({
         text: extracted.text,
@@ -310,7 +316,7 @@ export function ImportPanel({
       }, file.name);
     } catch (error) {
       setPhase("repos");
-      setFailure(docxFailure(error, t));
+      setFailure(readFailure(error, t));
     }
   }
 
@@ -769,47 +775,65 @@ function Waiting({
   );
 }
 
-async function extractDocument(file: File): Promise<{ text: string; images: string[] }> {
-  const name = file.name.toLowerCase();
+interface Extraction {
+  text: string;
+  images: string[];
+  kind: DocumentKind;
+  /** Une lecture a lâché en route : le document n'est pas forcément vide pour autant. */
+  unreadable: boolean;
+}
 
-  if (name.endsWith(".pdf")) {
-    const pdfjs = await import("pdfjs-dist");
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs`;
+async function extractDocument(file: File): Promise<Extraction> {
+  // Les octets sont lus une seule fois, puis c'est eux qui disent ce qu'est le fichier.
+  // Sur iPhone, le nom ne le dit pas toujours.
+  const bytes = await readFileBytes(file);
+  const kind = documentKind(bytes, file.name);
 
-    const document = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
-    const pages: string[] = [];
-    const images: string[] = [];
-    const pageLimit = Math.min(document.numPages, 4);
+  if (kind === "pdf") return extractPdf(bytes);
+  if (kind === "legacyDoc") throw new DocxError("notDocx");
+  if (kind === "docx") {
+    return { text: await extractDocxText(bytes), images: [], kind, unreadable: false };
+  }
 
-    for (let index = 1; index <= document.numPages; index += 1) {
-      const page = await document.getPage(index);
-      const content = await page.getTextContent();
-      pages.push(
-        content.items
-          .map((item) => ("str" in item ? item.str : ""))
-          .join(" ")
-          .replace(/\s+/g, " ")
-          .trim(),
-      );
+  return { text: decodeDocumentText(bytes), images: [], kind, unreadable: false };
+}
 
-      if (index <= pageLimit) {
-        const rendered = await renderPdfPage(page);
-        if (rendered) images.push(rendered);
-      }
+async function extractPdf(bytes: Uint8Array): Promise<Extraction> {
+  const pdfjs = await import("pdfjs-dist");
+  // L'ouvrier vient du CDN, et sa version est **celle de la bibliothèque chargée** : pdf.js
+  // refuse de travailler avec un ouvrier d'une autre version, et une mise à jour du paquet
+  // aurait laissé un numéro figé ici.
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+  const document = await pdfjs.getDocument({ data: bytes }).promise;
+  const pages: string[] = [];
+  const images: string[] = [];
+  const pageLimit = Math.min(document.numPages, 4);
+  let unreadable = false;
+
+  for (let index = 1; index <= document.numPages; index += 1) {
+    const page = await document.getPage(index);
+
+    // Le texte et l'image d'une page sont pris séparément, et l'échec de l'un ne coûte pas
+    // l'autre : une page qui refuse de se dessiner garde son texte, un scan sans texte garde
+    // son image, et le document entier ne se perd pas sur une page.
+    try {
+      pages.push(await readPdfPageText(page));
+    } catch {
+      unreadable = true;
     }
 
-    return { text: pages.filter(Boolean).join("\n\n"), images };
+    if (index <= pageLimit) {
+      try {
+        const rendered = await renderPdfPage(page);
+        if (rendered) images.push(rendered);
+      } catch {
+        unreadable = true;
+      }
+    }
   }
 
-  if (name.endsWith(".docx")) {
-    return { text: await extractDocxText(new Uint8Array(await file.arrayBuffer())), images: [] };
-  }
-
-  if (name.endsWith(".doc")) {
-    throw new DocxError("notDocx");
-  }
-
-  return { text: await file.text(), images: [] };
+  return { text: pages.filter(Boolean).join("\n\n"), images, kind: "pdf", unreadable };
 }
 
 async function renderPdfPage(page: PDFPageProxy): Promise<string | null> {
@@ -868,7 +892,8 @@ function remoteVideo(
   };
 }
 
-function docxFailure(error: unknown, t: Translator): string {
+function readFailure(error: unknown, t: Translator): string {
+  if (error instanceof EmptyFileError) return t("app.import.emptyFile");
   if (error instanceof DocxError) {
     if (error.code === "empty") return t("app.import.docxEmpty");
     if (error.code === "missingDocument") return t("app.import.docxUnreadable");
