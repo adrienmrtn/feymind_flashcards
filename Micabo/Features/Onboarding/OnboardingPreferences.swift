@@ -324,7 +324,11 @@ enum OnboardingPreferences {
         static let institutionId = "micabo.onboarding.institutionId"
         static let institutionName = "micabo.onboarding.institutionName"
         static let dailyMinutes = "micabo.onboarding.dailyMinutes"
-        static let ratingAsked = "micabo.onboarding.ratingAsked"
+        /// Écrite par la demande de note du système, qui n'existe plus. Elle reste listée
+        /// pour que la remise à zéro l'efface sur les appareils qui ont fait l'ancien
+        /// parcours : une clé oubliée dans les réglages est une clé qu'on retrouve un jour
+        /// en croyant qu'elle veut encore dire quelque chose.
+        static let retiredRatingAsked = "micabo.onboarding.ratingAsked"
         /// Écrite par l'écran des rappels, qui n'existe plus. Elle reste listée pour que la
         /// remise à zéro l'efface sur les appareils qui ont fait l'ancien parcours : une clé
         /// oubliée dans les réglages est une clé qu'on retrouve un jour en croyant qu'elle
@@ -337,7 +341,7 @@ enum OnboardingPreferences {
             completed, level, stage, tier, country, customCountryCode,
             goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
-            dailyMinutes, ratingAsked, retiredNotificationsOptIn, completedAt,
+            dailyMinutes, retiredRatingAsked, retiredNotificationsOptIn, completedAt,
             sheetLanguage
         ]
     }
@@ -542,17 +546,6 @@ enum OnboardingPreferences {
             return stored == 0 ? 15 : stored
         }
         set { defaults.set(newValue, forKey: Key.dailyMinutes) }
-    }
-
-    /// Vrai dès que la note a été demandée une fois.
-    ///
-    /// Le système limite déjà les demandes de note à trois par an et ignore les suivantes en
-    /// silence — mais il les ignore *après* les avoir comptées. Sans ce drapeau, quelqu'un
-    /// qui refait le parcours brûlerait ses trois demandes de l'année sur le même écran, et
-    /// il n'en resterait aucune pour le moment où l'app aura vraiment rendu service.
-    static var ratingAsked: Bool {
-        get { defaults.bool(forKey: Key.ratingAsked) }
-        set { defaults.set(newValue, forKey: Key.ratingAsked) }
     }
 
     static func markCompleted() {
