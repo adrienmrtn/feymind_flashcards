@@ -23,7 +23,7 @@ import { VisibilityChoices } from "@/components/app/VisibilityChoices";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
 import { copySheetLengthTitle, type Translator } from "@/lib/i18n/copy";
-import { importFromText, youtubePreview, youtubeTranscript } from "@/lib/actions/course";
+import { youtubePreview, youtubeTranscript } from "@/lib/actions/course";
 import {
   holdImportHandoff,
   openGeneratedPage,
@@ -31,6 +31,7 @@ import {
   waitForPaint,
 } from "@/lib/import-handoff";
 import { requestPaywall } from "@/lib/paywall";
+import { writeSheetFromBrowser } from "@/lib/import/write-sheet";
 import { isAnkiFileName } from "@/lib/import/anki";
 import { DocxError, extractDocxText } from "@/lib/import/docx";
 import {
@@ -146,17 +147,16 @@ export function ImportPanel({
   async function generate(payload: Draft) {
     setFailure(null);
     setPhase("ecriture");
-    // Le voile d'abord, **puis** l'action. Un `startTransition` autour de
-    // l'appel gelait le pourcentage à 1 % : React différait les peintures
-    // pendant tout le temps du modèle, et sérialiser le document dans le
-    // même tour empêchait même le premier paint du voile.
+    // Le voile d'abord, **puis** un POST JSON. Une Server Action relance un
+    // vol RSC de l'import à la fin de l'appel, et c'est ce vol qui affichait
+    // « This page couldn't load » pendant que le cours était déjà en base.
     holdImportHandoff({
       name: title.trim() || payload.sourceName || payload.title,
     });
     await waitForPaint();
     finish(
       await Promise.race([
-        importFromText({
+        writeSheetFromBrowser({
           text: payload.text,
           hintTitle: title.trim() || payload.title,
           sourceName: payload.sourceName,

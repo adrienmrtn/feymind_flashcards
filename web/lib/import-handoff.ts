@@ -6,10 +6,10 @@
  * « Micabo écrit la fiche… » disparaît, et l'écran du cours n'est pas encore
  * là — le trou que l'on voyait sur le web.
  *
- * L'ouverture se fait **après** le tour de l'action, par `location.replace` :
- * `router.push` (et même `assign` dans le même tour) se heurtait au vol RSC
- * que Next relance à la fin de l'action — « This page couldn't load » —
- * alors que le cours était déjà en base.
+ * L'ouverture se fait par `location.replace` **après un POST JSON**, pas
+ * après une Server Action : Next relançait un vol RSC de l'import à la
+ * fin de l'action (« This page couldn't load »), alors que le cours
+ * était déjà en base.
  */
 
 export const IMPORT_HANDOFF_KEY = "micabo.app.importHandoff";
@@ -64,13 +64,6 @@ export function holdImportHandoff(next: ImportHandoff): void {
   window.dispatchEvent(new Event(IMPORT_HANDOFF_EVENT));
 }
 
-/**
- * Délai avant d'ouvrir la fiche : il faut que Next ait fini d'appliquer
- * le résultat de l'action, sinon le vol de rafraîchissement et le
- * changement d'URL se marchent dessus.
- */
-export const GENERATED_PAGE_OPEN_DELAY_MS = 50;
-
 /** Attend que le voile d'écriture soit réellement peint avant d'appeler le serveur. */
 export function waitForPaint(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
@@ -84,14 +77,12 @@ export function waitForPaint(): Promise<void> {
 }
 
 /**
- * Ouvre la fiche hors du routeur, et hors du tour de l'action.
+ * Ouvre la fiche par un vrai chargement, hors du routeur Next.
  * Un `replace` évite de revenir sur l'import figé avec le bouton retour.
  */
 export function openGeneratedPage(href: string): void {
   if (typeof window === "undefined") return;
-  window.setTimeout(() => {
-    window.location.replace(href);
-  }, GENERATED_PAGE_OPEN_DELAY_MS);
+  window.location.replace(href);
 }
 
 export function releaseImportHandoff(courseId?: string): void {

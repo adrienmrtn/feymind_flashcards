@@ -8,6 +8,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const importPanel = readFileSync(resolve(here, "../components/app/ImportPanel.tsx"), "utf8");
 const generateCards = readFileSync(resolve(here, "../components/app/GenerateCards.tsx"), "utf8");
 const courseActions = readFileSync(resolve(here, "./actions/course.ts"), "utf8");
+const writeRoute = readFileSync(resolve(here, "../app/app/importer/write/route.ts"), "utf8");
+const writeSheet = readFileSync(resolve(here, "./import/write-sheet.ts"), "utf8");
 const handoffUi = readFileSync(resolve(here, "../components/app/ImportHandoff.tsx"), "utf8");
 const status = readFileSync(resolve(here, "../components/app/GenerationStatus.tsx"), "utf8");
 
@@ -19,13 +21,16 @@ function functionBody(source: string, name: string): string {
 }
 
 describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
-  it("n'enveloppe plus l'import dans une transition React", () => {
+  it("écrit la fiche par un POST JSON, pas par une Server Action", () => {
     expect(importPanel).not.toMatch(/useTransition/);
     expect(importPanel).toContain("waitForPaint");
+    expect(importPanel).toContain("writeSheetFromBrowser");
+    expect(writeSheet).toContain('fetch(IMPORT_WRITE_PATH');
+    expect(writeRoute).toContain("export async function POST");
+    expect(writeRoute).toContain("importFromText");
     const generate = importPanel.slice(importPanel.indexOf("async function generate"));
-    const beforeCall = generate.slice(0, generate.indexOf("importFromText"));
-    expect(beforeCall).toContain("waitForPaint");
-    expect(beforeCall).not.toMatch(/startTransition\(/);
+    expect(generate).toContain("writeSheetFromBrowser");
+    expect(generate).not.toMatch(/importFromText\(/);
   });
 
   it("n'invalide pas les listes avant d'ouvrir la fiche neuve", () => {
