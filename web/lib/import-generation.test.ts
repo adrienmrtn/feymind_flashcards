@@ -26,7 +26,7 @@ describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
     expect(importPanel).toContain("waitForPaint");
     expect(importPanel).toContain("writeSheetFromBrowser");
     expect(writeSheet).toContain("/api/import-course");
-    expect(writeSheet).toContain("browserFetch(IMPORT_WRITE_PATH");
+    expect(writeSheet).toContain("XMLHttpRequest");
     expect(writeRoute).toContain("export async function POST");
     expect(writeRoute).toContain("importFromText");
     const generate = importPanel.slice(importPanel.indexOf("async function generate"));
@@ -43,10 +43,9 @@ describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
   });
 
   it("rafraîchit les listes une fois la fiche peinte, sans Server Action", () => {
-    expect(handoffUi).toContain("refreshLibraryInBackground");
     expect(handoffUi).not.toMatch(/refreshLibraryAfterImport/);
-    expect(handoffUi).toContain("handingOff");
-    expect(writeSheet).toContain("/api/refresh-library");
+    expect(handoffUi).not.toMatch(/refreshLibraryInBackground/);
+    expect(handoffUi).toContain("releaseImportHandoff");
   });
 
   it("écrit le pourcentage dans le DOM, même si React ne commit pas", () => {

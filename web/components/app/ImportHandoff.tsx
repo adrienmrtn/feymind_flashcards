@@ -10,7 +10,6 @@ import {
   releaseImportHandoff,
   type ImportHandoff,
 } from "@/lib/import-handoff";
-import { refreshLibraryInBackground } from "@/lib/import/write-sheet";
 import { useI18n } from "@/lib/i18n/client";
 
 /**
@@ -56,14 +55,7 @@ export function ImportHandoffOverlay() {
 /** Retire le voile au moment où la fiche est dans le DOM. */
 export function ReleaseImportHandoff({ courseId }: { courseId: string }) {
   useLayoutEffect(() => {
-    const current = readImportHandoff();
-    const handingOff = Boolean(
-      current && (!current.courseId || current.courseId === courseId),
-    );
     releaseImportHandoff(courseId);
-    // Les listes, **après** la peinture, et **sans** Server Action : une
-    // action ici relançait un vol RSC de la fiche et cassait l'ouverture.
-    if (handingOff) refreshLibraryInBackground();
   }, [courseId]);
   return null;
 }

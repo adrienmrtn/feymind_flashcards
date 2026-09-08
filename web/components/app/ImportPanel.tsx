@@ -106,11 +106,11 @@ export function ImportPanel({
 
   function finish(result: { status: string; courseId?: string; message?: string }) {
     if (result.status === "ok" && result.courseId) {
-      holdImportHandoff({
-        courseId: result.courseId,
-        name: draft?.sourceName ?? title,
-      });
-      // Hors du tour de l'action, et hors du routeur : voir `openGeneratedPage`.
+      // Le voile a couvert l'écriture. On le lève **avant** le chargement
+      // de la fiche : le garder dans sessionStorage faisait hydrater la
+      // page du cours avec un état que le serveur n'a pas, et Next
+      // affichait « This page couldn't load ».
+      releaseImportHandoff();
       openGeneratedPage(`/app/c/${result.courseId}`);
       return;
     }

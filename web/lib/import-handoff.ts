@@ -6,7 +6,7 @@
  * « Micabo écrit la fiche… » disparaît, et l'écran du cours n'est pas encore
  * là — le trou que l'on voyait sur le web.
  *
- * L'ouverture se fait par `location.replace` **après un POST JSON**, pas
+ * L'ouverture se fait par `location.href` **après un POST JSON**, pas
  * après une Server Action : Next relançait un vol RSC de l'import à la
  * fin de l'action (« This page couldn't load »), alors que le cours
  * était déjà en base.
@@ -78,11 +78,11 @@ export function waitForPaint(): Promise<void> {
 
 /**
  * Ouvre la fiche par un vrai chargement, hors du routeur Next.
- * Un `replace` évite de revenir sur l'import figé avec le bouton retour.
  */
 export function openGeneratedPage(href: string): void {
   if (typeof window === "undefined") return;
-  window.location.replace(href);
+  const url = new URL(href, window.location.origin);
+  window.location.href = url.href;
 }
 
 export function releaseImportHandoff(courseId?: string): void {

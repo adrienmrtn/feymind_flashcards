@@ -8,7 +8,6 @@
  */
 
 export const IMPORT_WRITE_PATH = "/api/import-course";
-export const REFRESH_LIBRARY_PATH = "/api/refresh-library";
 
 export interface WriteSheetResult {
   status: "ok" | "error" | "paywall";
@@ -16,9 +15,29 @@ export interface WriteSheetResult {
   message?: string;
 }
 
-function browserFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  const impl = typeof window !== "undefined" ? window.fetch.bind(window) : fetch;
-  return impl(input, init);
+function postJson(path: string, body: unknown): Promise<WriteSheetResult> {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", path);
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = 120_000;
+    xhr.onload = () => {
+      try {
+        const payload = JSON.parse(xhr.responseText) as WriteSheetResult;
+        if (payload.status === "ok" || payload.status === "error" || payload.status === "paywall") {
+          resolve(payload);
+          return;
+        }
+      } catch {
+        // Corps illisible.
+      }
+      resolve({ status: "error", message: xhr.statusText || "error" });
+    };
+    xhr.onerror = () => resolve({ status: "error", message: "error" });
+    xhr.ontimeout = () => resolve({ status: "error", message: "timeout" });
+    xhr.send(JSON.stringify(body));
+  });
 }
 
 export async function writeSheetFromBrowser(input: {
@@ -33,28 +52,5 @@ export async function writeSheetFromBrowser(input: {
   instructions?: string;
   images?: string[];
 }): Promise<WriteSheetResult> {
-  const response = await browserFetch(IMPORT_WRITE_PATH, {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-
-  try {
-    const payload = (await response.json()) as WriteSheetResult;
-    if (payload.status === "ok" || payload.status === "error" || payload.status === "paywall") {
-      return payload;
-    }
-  } catch {
-    // Un corps vide ou illisible : on tombe sur l'erreur générique.
-  }
-
-  return { status: "error", message: response.statusText || "error" };
-}
-
-/** Invalide les listes après la peinture, sans vol RSC. */
-export function refreshLibraryInBackground(): void {
-  void browserFetch(REFRESH_LIBRARY_PATH, {
-    method: "POST",
-    headers: { Accept: "application/json" },
-  });
+  return postJson(IMPORT_WRITE_PATH, input);
 }

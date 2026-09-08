@@ -34,9 +34,9 @@ describe("le relais d'import", () => {
     expect(parseImportHandoff(JSON.stringify({ courseId: "abc" }))).toBeNull();
   });
 
-  it("ouvre la fiche par replace, hors du routeur", () => {
-    expect(handoff).toContain("location.replace");
+  it("ouvre la fiche par un chargement complet, hors du routeur", () => {
+    expect(handoff).toContain("window.location.href");
     expect(handoff).toContain("waitForPaint");
-    expect(handoff).not.toMatch(/location\.assign/);
+    expect(handoff).not.toMatch(/location\.assign\(/);
   });
 });
