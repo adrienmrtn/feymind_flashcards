@@ -1,20 +1,18 @@
 /**
- * Le pastel du site, **un seul interrupteur**.
+ * Le pastel de **l'app connectée**, **un seul interrupteur**.
  *
- * À `true`, le papier se teinte, les lueurs du hero et le lavage de
- * fermeture prennent les pastels des tuiles, et une nappe de taches
- * s'installe derrière les pages. À `false`, tout ça s'éteint : le site
- * reprend le gris froid de `globals.css`, sans autre modification.
+ * À `true`, le chrome de `/app` se teinte et une nappe de taches s'installe
+ * derrière les écrans de travail. La landing, l'onboarding et le reste du
+ * site restent sur le papier gris froid. À `false`, l'app aussi.
  *
- * Les teintes viennent de `TILE_PASTELS` : les mêmes que les tuiles de
- * cours, pour que l'étagère et la vitrine parlent la même langue.
+ * Les teintes viennent de `TILE_PASTELS` : les mêmes que les tuiles de cours.
  */
 
 import { TILE_PASTELS } from "@micabo/core";
 
 type Appearance = "day" | "night" | "twilight";
 
-/** Mettre à `false` pour retirer le pastel du site. */
+/** Mettre à `false` pour retirer le pastel de l'app. */
 export const WEBSITE_PASTEL = true;
 
 export const PASTEL_MINT = TILE_PASTELS[0]!;

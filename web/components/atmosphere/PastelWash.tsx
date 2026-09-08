@@ -1,8 +1,7 @@
 /**
- * Nappe de taches pastel, derrière le papier.
+ * Nappe de taches pastel, derrière le papier de l'app.
  *
- * Elle ne s'allume que si `html` porte `data-pastel="on"` — le même
- * interrupteur que les jetons. Sans ça, elle ne peint rien.
+ * Elle ne s'allume que si `.app-shell` porte `data-pastel="on"`.
  */
 export function PastelWash() {
   return <div aria-hidden data-print="hide" className="pastel-wash" />;

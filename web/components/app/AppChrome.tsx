@@ -21,17 +21,14 @@ import {
 
 import { ImportHandoffOverlay } from "@/components/app/ImportHandoff";
 import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
+import { PastelWash } from "@/components/atmosphere/PastelWash";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions/profile";
 import { useI18n } from "@/lib/i18n/client";
 import { requestPaywall } from "@/lib/paywall";
-import {
-  OPEN_COURSES_EVENT,
-  readOpenCourses,
-  unpinOpenCourse,
-  type OpenCourseTab,
-} from "@/lib/open-courses";
+import { OPEN_COURSES_EVENT, readOpenCourses, unpinOpenCourse, type OpenCourseTab } from "@/lib/open-courses";
+import { WEBSITE_PASTEL } from "@/lib/pastel";
 
 /**
  * Le chrome de l'app : celui de micabo OS.
@@ -143,7 +140,11 @@ export function AppChrome({
   }
 
   return (
-    <div className="app-shell flex min-h-svh bg-background">
+    <div
+      className="app-shell relative isolate flex min-h-svh bg-background"
+      {...(WEBSITE_PASTEL ? { "data-pastel": "on" } : {})}
+    >
+      {WEBSITE_PASTEL ? <PastelWash /> : null}
       <a
         href="#main-content"
         className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-4 focus-visible:top-3 focus-visible:z-50 focus-visible:rounded-button focus-visible:bg-accent focus-visible:px-3 focus-visible:py-2 focus-visible:text-[13px] focus-visible:font-medium focus-visible:text-on-ink"
