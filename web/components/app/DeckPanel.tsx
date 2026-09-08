@@ -8,6 +8,7 @@ import { ThinkingOrb } from "thinking-orbs";
 import { DEFAULT_VISIBILITY, type CourseVisibility } from "@micabo/core";
 
 import { VisibilityChoices } from "@/components/app/VisibilityChoices";
+import { CARDS_HOLD_MS, HeldPercent, READING_HOLD_MS } from "@/components/app/HeldPercent";
 import { Button } from "@/components/ui/button";
 import { generateCards } from "@/lib/actions/course";
 import { addDeckCards, createDeck } from "@/lib/actions/decks";
@@ -189,6 +190,11 @@ export function DeckPanel() {
               ? t("app.deck.pouringCount", { done: poured, total: chosen.length })
               : t("app.deck.openingHint")}
           </p>
+          {!imported ? (
+            <div className="mt-2 flex justify-center">
+              <HeldPercent active durationMs={CARDS_HOLD_MS} label={t("app.import.writing")} />
+            </div>
+          ) : null}
         </div>
       </div>
     );
@@ -277,7 +283,10 @@ export function DeckPanel() {
             <div className="flex flex-col items-center gap-4">
               <ThinkingOrb state="searching" size={64} />
               <p className="text-[15px] font-semibold text-ink">{t("app.deck.reading")}</p>
-              <p className="truncate text-[13px] text-ink-tertiary">{fileName}</p>
+              {fileName ? (
+                <p className="truncate text-[13px] text-ink-tertiary">{fileName}</p>
+              ) : null}
+              <HeldPercent active durationMs={READING_HOLD_MS} label={t("app.deck.reading")} />
             </div>
           ) : (
             <>

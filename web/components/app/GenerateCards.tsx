@@ -18,6 +18,7 @@ import {
 import { CountStepper } from "@/components/app/CountStepper";
 import { Float, useFloatDock } from "@/components/app/Float";
 import { GenerateCardsCta } from "@/components/app/GenerateCardsCta";
+import { CARDS_HOLD_MS, HeldPercent } from "@/components/app/HeldPercent";
 import { generateCards } from "@/lib/actions/course";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -125,6 +126,9 @@ export function GenerateCards({
           <p className="numeral mt-0.5 text-[13px] text-ink-tertiary">
             {t("app.generate.requested", { count: total })}
           </p>
+          <div className="mt-1.5">
+            <HeldPercent active durationMs={CARDS_HOLD_MS} label={t("app.generate.writing")} />
+          </div>
         </div>
       </div>
     );

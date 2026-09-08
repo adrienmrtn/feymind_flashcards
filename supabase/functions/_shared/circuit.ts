@@ -21,8 +21,12 @@ export class CircuitOpenError extends Error {
   }
 }
 
+export function circuitIsOpen(): boolean {
+  return Date.now() < openUntil;
+}
+
 export function checkCircuit(): void {
-  if (Date.now() < openUntil) throw new CircuitOpenError();
+  if (circuitIsOpen()) throw new CircuitOpenError();
 }
 
 export function recordSuccess(): void {

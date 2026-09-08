@@ -7,6 +7,7 @@ import type { SheetBlock } from "@micabo/core";
 
 import { SheetBlocks } from "@/components/sheet/SheetBlocks";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
+import { EXPLAIN_HOLD_MS, HeldPercent } from "@/components/app/HeldPercent";
 import { createCard } from "@/lib/actions/cards";
 import { explainSelection, type Explanation } from "@/lib/actions/cards";
 import { useI18n } from "@/lib/i18n/client";
@@ -146,9 +147,18 @@ export function SheetReader({
           {panel === "attente" ? (
             <div className="paper flex items-center gap-3 rounded-group bg-surface p-4 shadow-floating">
               <ThinkingOrb state="composing" size={64} />
-              <p className="text-[14.5px] font-semibold text-ink" role="status">
-                {t("app.sheetReader.reading")}
-              </p>
+              <div>
+                <p className="text-[14.5px] font-semibold text-ink" role="status">
+                  {t("app.sheetReader.reading")}
+                </p>
+                <div className="mt-1">
+                  <HeldPercent
+                    active
+                    durationMs={EXPLAIN_HOLD_MS}
+                    label={t("app.sheetReader.reading")}
+                  />
+                </div>
+              </div>
             </div>
           ) : null}
 

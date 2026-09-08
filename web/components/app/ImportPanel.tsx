@@ -21,6 +21,7 @@ import {
 
 import { LanguageChoices } from "@/components/app/LanguageChoices";
 import { VisibilityChoices } from "@/components/app/VisibilityChoices";
+import { HeldPercent, READING_HOLD_MS, WRITING_HOLD_MS } from "@/components/app/HeldPercent";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
 import { copySheetLengthTitle, type Translator } from "@/lib/i18n/copy";
@@ -730,9 +731,16 @@ function Waiting({
         <p className="text-[16px] font-semibold text-ink">
           {phase === "lecture" ? t("app.import.reading") : t("app.import.writing")}
         </p>
-        <p className="mt-1 truncate text-[13px] text-ink-tertiary">
-          {name ?? t("app.import.waitHint")}
-        </p>
+        {name ? (
+          <p className="mt-1 truncate text-[13px] text-ink-tertiary">{name}</p>
+        ) : null}
+        <div className="mt-2">
+          <HeldPercent
+            active
+            durationMs={phase === "lecture" ? READING_HOLD_MS : WRITING_HOLD_MS}
+            label={phase === "lecture" ? t("app.import.reading") : t("app.import.writing")}
+          />
+        </div>
       </div>
     </div>
   );
