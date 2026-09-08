@@ -106,8 +106,16 @@ export function youtubeBlockingReason(video: YouTubePreview): string | null {
   if (video.captionsKnown && video.captions.length === 0) {
     return "Cette vidéo n'a pas de piste de sous-titres.";
   }
+  return null;
+}
+
+/** Un cours trop long n'est plus un refus : on lit le début. */
+export function youtubeDurationNotice(video: YouTubePreview): string | null {
   if (video.durationSeconds > 0 && video.durationSeconds > MAX_DURATION_SECONDS) {
-    return `Cette vidéo dure ${youtubeDurationLabel(video.durationSeconds)}, au-delà de 90 min.`;
+    const duration = youtubeDurationLabel(video.durationSeconds);
+    return duration
+      ? `Cette vidéo dure ${duration}. On écrira la fiche à partir des 90 premières minutes.`
+      : "On écrira la fiche à partir des 90 premières minutes.";
   }
   return null;
 }
@@ -547,8 +555,9 @@ export function parseJson3(raw: string): string | null {
     const lines: string[] = [];
     for (const entry of events) {
       if (!entry || typeof entry !== "object") continue;
-      const event = entry as { aAppend?: number; segs?: unknown };
+      const event = entry as { aAppend?: number; segs?: unknown; t?: number };
       if (event.aAppend === 1) continue;
+      if (typeof event.t === "number" && event.t > MAX_DURATION_SECONDS * 1000) break;
       const segments = Array.isArray(event.segs) ? event.segs : [];
       const line = segments
         .map((segment) => {

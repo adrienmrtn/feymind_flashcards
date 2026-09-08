@@ -9,7 +9,8 @@
  */
 
 export const YOUTUBE_LIMITS = {
-  /** Au delà, la transcription dépasse ce qu'un seul appel de génération peut lire. */
+  /** Au delà, on ne garde que le début de la transcription. Un cours de deux heures
+   *  n'est plus un refus : c'est le début qui rentre dans un appel de génération. */
   maxDurationSeconds: 90 * 60,
   /** En dessous, il n'y a pas de quoi écrire une fiche ni des cartes. */
   minTranscriptCharacters: 400,
@@ -575,6 +576,9 @@ async function fetchJson3(baseUrl: string): Promise<string | null> {
       // Les sous-titres automatiques défilent : un événement « aAppend » réécrit la ligne
       // précédente et la reprendre doublerait tout le texte.
       if (event?.aAppend === 1) continue;
+
+      const startMs = typeof event?.t === "number" ? event.t : 0;
+      if (startMs > YOUTUBE_LIMITS.maxDurationSeconds * 1000) break;
 
       const segments = Array.isArray(event?.segs) ? event.segs : [];
       const line = segments

@@ -38,11 +38,14 @@ export function GenerateCards({
   existing,
   floating = false,
   autoStart = false,
+  canGenerate = true,
 }: {
   courseId: string;
   existing: number;
   floating?: boolean;
   autoStart?: boolean;
+  /** Faux pour un paquet Anki sans cours : le modèle n'a rien à lire. */
+  canGenerate?: boolean;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -92,10 +95,19 @@ export function GenerateCards({
   }
 
   useEffect(() => {
-    if (!autoStart || opened.current) return;
+    if (!canGenerate || !autoStart || opened.current) return;
     opened.current = true;
     setOpen(true);
-  }, [autoStart]);
+  }, [autoStart, canGenerate]);
+
+  if (!canGenerate) {
+    if (existing > 0) return null;
+    return (
+      <p className="rounded-group bg-surface-muted px-5 py-4 text-[14px] leading-relaxed text-ink-secondary">
+        {t("app.errors.cardsNeedContext")}
+      </p>
+    );
+  }
 
   if (pending) {
     const pendingUi = (

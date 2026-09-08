@@ -44,9 +44,10 @@ export async function callModel(options: CallOptions): Promise<string> {
 
   checkCircuit();
 
+  const model = resolveModel(options.model);
   const useVision = Array.isArray(options.imageUrls) && options.imageUrls.length > 0;
   const body: Record<string, unknown> = {
-    model: resolveModel(options.model),
+    model,
     prompt: options.prompt,
     priority: "throughput",
     reasoning: false,
@@ -80,6 +81,7 @@ export async function callModel(options: CallOptions): Promise<string> {
 
   if (!response.ok) {
     recordFailure();
+    console.error(JSON.stringify({ fal: "http_error", status: response.status, model }));
     throw new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502);
   }
 
@@ -93,6 +95,7 @@ export async function callModel(options: CallOptions): Promise<string> {
   }
 
   if (parsed.error) {
+    console.error(JSON.stringify({ fal: "model_error", model }));
     throw new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502);
   }
   if (!parsed.output) throw new FalError("Le modèle n'a renvoyé aucun contenu.", 502);

@@ -570,7 +570,8 @@ export const appEn = {
     charCount: "{count, plural, one {# character} other {# characters}}",
     seeText: "See the text",
     videoLink: "Video link",
-    subsRequired: "Captions required · 90 min max.",
+    subsRequired: "Captions required. A long lecture: we read the beginning.",
+    longVideo: "This video is {duration}. The sheet will be written from the first 90 minutes.",
     seeVideo: "See the video",
     sheetLength: "Sheet length",
     sheetLanguage: "Sheet language",
@@ -983,6 +984,8 @@ export const appEn = {
     videoNoCaptions: "This video doesn't have enough usable captions.",
     courseMissing: "Course not found.",
     noCardsWritten: "No cards could be written.",
+    cardsNeedContext:
+      "This deck doesn't have enough material to write cards. Paste a course, or write them by hand.",
     secondCoursePro: "Your second course is in Pro.",
     badEmail: "That doesn't look like an email address.",
     waitlistNoted: "Noted. We'll tell you when Micabo opens.",

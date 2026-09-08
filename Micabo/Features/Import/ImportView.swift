@@ -90,7 +90,8 @@ struct ImportView: View {
         }
     }
 
-    /// Un aperçu obtenu, et rien qui empêche de lire la vidéo.
+    /// Un aperçu obtenu, et rien qui empêche de lire la vidéo. Un cours trop
+    /// long n'empêche plus : on lira le début.
     private var youtubeIsReady: Bool {
         guard let youtubeVideo else { return false }
         return youtubeVideo.blockingReason == nil
@@ -755,8 +756,8 @@ struct ImportView: View {
     private func loadTranscript() async -> Bool {
         guard let video = youtubeVideo else { return false }
 
-        // Le garde qui compte : une vidéo hors limite, ou sans sous-titres, ne déclenche
-        // aucun appel, ni de transcription ni de génération.
+        // Le garde qui compte : une vidéo sans sous-titres ne déclenche
+        // aucun appel. Un cours trop long, lui, se lit par le début.
         if let reason = video.blockingReason {
             failure = youtubeFailure(reason)
             return false

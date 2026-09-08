@@ -64,8 +64,8 @@ enum YouTubeLink {
 
 /// Ce que Micabo accepte de lire dans une vidéo.
 enum YouTubeLimits {
-    /// Au delà, la transcription dépasse ce qu'un seul appel de génération peut lire.
-    /// La même valeur est appliquée côté serveur : celle-ci sert à refuser sans appeler.
+    /// Au delà, on ne garde que le début de la transcription. Un cours de deux heures
+    /// n'est plus un refus : c'est le début qui rentre dans un appel de génération.
     static let maximumDuration: TimeInterval = 90 * 60
 }
 
@@ -127,14 +127,18 @@ struct YouTubeVideo: Codable, Equatable, Identifiable {
 
     /// Ce qui empêche de lire cette vidéo, s'il y a quelque chose.
     ///
-    /// C'est ici, et pas dans une alerte lancée depuis le réseau, que les deux refus qui se
-    /// voient à l'aperçu sont décidés : l'écran peut ainsi montrer la vidéo **et** dire
-    /// pourquoi elle ne passe pas, avec sa durée réelle. Surtout, une vidéo trop longue est
-    /// écartée sans qu'aucun appel de transcription ni de génération ne soit lancé.
+    /// Un cours trop long n'est plus un refus : on lit le début. Seule l'absence
+    /// de sous-titres bloque encore, et l'écran peut alors montrer la vidéo **et**
+    /// dire pourquoi elle ne passe pas.
     var blockingReason: YouTubeImportError? {
         if captionLanguages.isEmpty { return .noCaptions }
-        if duration > limit { return .tooLong(duration: duration, limit: limit) }
         return nil
+    }
+
+    /// Un cours magistral trop long : on l'annonce, on n'interdit pas.
+    var durationNotice: String? {
+        guard duration > 0, duration > limit else { return nil }
+        return YouTubeImportError.noticeForLongVideo(duration: duration, limit: limit)
     }
 }
 
@@ -229,7 +233,7 @@ enum YouTubeImportError: LocalizedError, Equatable {
         case .transcriptTooShort:
             L10n.t("ios.yt.tooShort", locale: .resolved())
         case .tooLong(let duration, let limit):
-            Self.tooLongMessage(duration: duration, limit: limit)
+            Self.noticeForLongVideo(duration: duration, limit: limit)
         case .notConfigured:
             L10n.t("ios.ai.notConfigured", locale: .resolved())
         case .network(let detail):
@@ -263,7 +267,7 @@ enum YouTubeImportError: LocalizedError, Equatable {
 
     /// La limite est **toujours** annoncée : un refus qui ne dit pas jusqu'où on peut aller
     /// laisse l'utilisateur essayer au hasard.
-    private static func tooLongMessage(duration: TimeInterval, limit: TimeInterval) -> String {
+    static func noticeForLongVideo(duration: TimeInterval, limit: TimeInterval) -> String {
         let ceiling = YouTubeDuration.label(for: limit) ?? "1 h 30"
         guard let measured = YouTubeDuration.label(for: duration) else {
             return L10n.t("ios.yt.tooLong", locale: .resolved(), vars: ["limit": ceiling])

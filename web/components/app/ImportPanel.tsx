@@ -35,6 +35,7 @@ import {
   readYouTubeInBrowser,
   youtubeBlockingReason,
   youtubeDurationLabel,
+  MAX_DURATION_SECONDS,
   type YouTubePreview,
 } from "@/lib/import/youtube";
 
@@ -276,6 +277,12 @@ export function ImportPanel({
   }
 
   const videoBlocked = draft?.video ? youtubeBlockingReason(draft.video) : null;
+  const videoNotice =
+    draft?.video && draft.video.durationSeconds > MAX_DURATION_SECONDS
+      ? t("app.import.longVideo", {
+          duration: youtubeDurationLabel(draft.video.durationSeconds) ?? "",
+        })
+      : null;
   const canGenerate = previewing && (
     draft.source === "youtube"
       ? Boolean(draft.video && !videoBlocked)
@@ -400,6 +407,7 @@ export function ImportPanel({
           draft={draft}
           title={title}
           blocked={videoBlocked}
+          notice={videoNotice}
           reading={phase === "lecture"}
           writing={phase === "ecriture"}
           onChange={() => {
@@ -604,6 +612,7 @@ function Preview({
   draft,
   title,
   blocked,
+  notice,
   reading,
   writing,
   onChange,
@@ -612,6 +621,7 @@ function Preview({
   draft: Draft;
   title: string;
   blocked: string | null;
+  notice: string | null;
   reading: boolean;
   writing: boolean;
   onChange: () => void;
@@ -657,6 +667,10 @@ function Preview({
             {blocked ? (
               <p className="mt-3 text-[13.5px] leading-relaxed text-caution" role="status">
                 {blocked}
+              </p>
+            ) : notice ? (
+              <p className="mt-3 text-[13.5px] leading-relaxed text-ink-secondary" role="status">
+                {notice}
               </p>
             ) : null}
           </div>

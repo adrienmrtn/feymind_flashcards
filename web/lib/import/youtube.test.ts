@@ -7,6 +7,7 @@ import {
   parseCaptionXml,
   parseJson3,
   parseVtt,
+  youtubeDurationNotice,
   youtubeBlockingReason,
   youtubeDurationLabel,
 } from "./youtube";
@@ -40,10 +41,10 @@ describe("youtubeBlockingReason", () => {
     expect(youtubeBlockingReason(base)).toBeNull();
   });
 
-  it("interdit seulement quand les pistes ont été lues et sont vides", () => {
-    expect(youtubeBlockingReason({ ...base, captionsKnown: true })).toBe(
-      "Cette vidéo n'a pas de piste de sous-titres.",
-    );
+  it("n'interdit plus une vidéo trop longue : on lit le début", () => {
+    expect(youtubeBlockingReason({ ...base, durationSeconds: 3 * 60 * 60 })).toBeNull();
+    expect(youtubeDurationNotice({ ...base, durationSeconds: 3 * 60 * 60 })).toMatch(/90/);
+    expect(youtubeDurationNotice(base)).toBeNull();
   });
 });
 
@@ -76,6 +77,18 @@ describe("parseJson3", () => {
       }),
     );
     expect(text).toBe("Bonjour le monde");
+  });
+
+  it("s'arrête à 90 minutes", () => {
+    const text = parseJson3(
+      JSON.stringify({
+        events: [
+          { t: 0, segs: [{ utf8: "Début" }] },
+          { t: 91 * 60 * 1000, segs: [{ utf8: "Trop tard" }] },
+        ],
+      }),
+    );
+    expect(text).toBe("Début");
   });
 });
 

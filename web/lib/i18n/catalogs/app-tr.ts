@@ -571,7 +571,8 @@ export const appTr = {
     charCount: "{count, plural, one {# karakter} other {# karakter}}",
     seeText: "Metni gör",
     videoLink: "Videonun bağlantısı",
-    subsRequired: "Altyazı gerekli · en fazla 90 dk.",
+    subsRequired: "Altyazı gerekli. Uzun bir ders: başını okuruz.",
+    longVideo: "Bu video {duration} sürüyor. Fiş ilk 90 dakikadan yazılacak.",
     seeVideo: "Videoyu gör",
     sheetLength: "Fişin uzunluğu",
     sheetLanguage: "Fişin dili",
@@ -984,6 +985,8 @@ export const appTr = {
     videoNoCaptions: "Bu videoda yeterli altyazı yok.",
     courseMissing: "Ders bulunamadı.",
     noCardsWritten: "Hiç kart yazılamadı.",
+    cardsNeedContext:
+      "Bu destede kart yazacak kadar madde yok. Bir ders yapıştır, ya da elle yaz.",
     secondCoursePro: "İkinci dersin Pro'da.",
     badEmail: "Bu adres bir adres gibi durmuyor.",
     waitlistNoted: "Not edildi. Micabo açılınca haber veririz.",
