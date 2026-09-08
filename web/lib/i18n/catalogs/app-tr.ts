@@ -573,6 +573,8 @@ export const appTr = {
     docxUnreadable: "Bu Word dosyası okunamadı.",
     docxLegacy: "Belgeyi .docx olarak kaydet - eski Word biçimi burada okunmaz.",
     fileUnreadable: "Bu dosya okunamadı.",
+    imageFile:
+      "Bir fotoğrafta çıkarılacak metin yok. iPhone'da uygulama fotoğraflanan sayfayı kamerayla okur - burada metni yapıştır ya da belgeyi içe aktar.",
     emptyFile:
       "Bu dosya boş geldi. iPhone'da bir kez Dosyalar'da aç, iCloud'dan insin, sonra yeniden içe aktar.",
     formatsHint: "PDF, Word veya metin.",

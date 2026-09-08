@@ -37,8 +37,10 @@ import { writeSheetFromBrowser } from "@/lib/import/write-sheet";
 import { isAnkiFileName } from "@/lib/import/anki";
 import {
   EmptyFileError,
+  UnsupportedFileError,
   decodeDocumentText,
   documentKind,
+  looksLikeText,
   readFileBytes,
   readPdfPageText,
   type DocumentKind,
@@ -791,11 +793,14 @@ async function extractDocument(file: File): Promise<Extraction> {
 
   if (kind === "pdf") return extractPdf(bytes);
   if (kind === "legacyDoc") throw new DocxError("notDocx");
+  if (kind === "image") throw new UnsupportedFileError("image");
   if (kind === "docx") {
     return { text: await extractDocxText(bytes), images: [], kind, unreadable: false };
   }
 
-  return { text: decodeDocumentText(bytes), images: [], kind, unreadable: false };
+  const text = decodeDocumentText(bytes);
+  if (!looksLikeText(text)) throw new UnsupportedFileError("binary");
+  return { text, images: [], kind, unreadable: false };
 }
 
 async function extractPdf(bytes: Uint8Array): Promise<Extraction> {
@@ -894,6 +899,9 @@ function remoteVideo(
 
 function readFailure(error: unknown, t: Translator): string {
   if (error instanceof EmptyFileError) return t("app.import.emptyFile");
+  if (error instanceof UnsupportedFileError) {
+    return error.code === "image" ? t("app.import.imageFile") : t("app.import.fileUnreadable");
+  }
   if (error instanceof DocxError) {
     if (error.code === "empty") return t("app.import.docxEmpty");
     if (error.code === "missingDocument") return t("app.import.docxUnreadable");

@@ -573,6 +573,8 @@ export const appEn = {
     docxUnreadable: "This Word file could not be read.",
     docxLegacy: "Save the document as .docx - the older Word format isn't readable here.",
     fileUnreadable: "This file could not be read.",
+    imageFile:
+      "A photo has no text to extract. On iPhone, the app reads a photographed page with the camera - here, paste the text or import the document.",
     emptyFile:
       "This file came through empty. On an iPhone, open it once in Files so it downloads from iCloud, then import it again.",
     formatsHint: "PDF, Word, or text.",

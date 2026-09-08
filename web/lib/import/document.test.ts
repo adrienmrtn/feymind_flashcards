@@ -4,6 +4,7 @@ import {
   EmptyFileError,
   decodeDocumentText,
   documentKind,
+  looksLikeText,
   readFileBytes,
   readPdfPageText,
   type PdfTextPage,
@@ -85,6 +86,14 @@ describe("documentKind", () => {
     expect(documentKind(storedZip({ "collection.anki2": "sqlite" }), "paquet")).toBe("text");
   });
 
+  it("reconnaît une photo, que le sélecteur de l'iPhone propose en premier", () => {
+    expect(documentKind(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]), "image.jpg")).toBe("image");
+    expect(documentKind(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), "")).toBe("image");
+    const heic = new Uint8Array(16);
+    heic.set([...new TextEncoder().encode("ftypheic")], 4);
+    expect(documentKind(heic, "IMG_0042.HEIC")).toBe("image");
+  });
+
   it("reconnaît un .doc d'avant 2007 à sa signature OLE", () => {
     const ole = new Uint8Array([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0x00, 0x00]);
     expect(documentKind(ole, "memoire")).toBe("legacyDoc");
@@ -129,6 +138,22 @@ describe("decodeDocumentText", () => {
 
   it("normalise les fins de ligne de Windows", () => {
     expect(decodeDocumentText(new TextEncoder().encode("une\r\ndeux\rtrois"))).toBe("une\ndeux\ntrois");
+  });
+});
+
+describe("looksLikeText", () => {
+  it("accepte un cours, ses accents et ses retours à la ligne", () => {
+    expect(looksLikeText("Le théorème de Thalès\n\ts'écrit ainsi :\r\nAB/AC = AD/AE")).toBe(true);
+  });
+
+  it("refuse un binaire que le décodeur a rendu lisible de force", () => {
+    const binary = new Uint8Array(400);
+    for (let index = 0; index < binary.length; index += 1) binary[index] = 0x80 + (index % 60);
+    expect(looksLikeText(decodeDocumentText(binary))).toBe(false);
+  });
+
+  it("refuse un fichier sans rien", () => {
+    expect(looksLikeText("")).toBe(false);
   });
 });
 

@@ -27,12 +27,25 @@
 
 import { looksLikeZip, zipEntries } from "./zip";
 
-export type DocumentKind = "pdf" | "docx" | "legacyDoc" | "text";
+export type DocumentKind = "pdf" | "docx" | "legacyDoc" | "image" | "text";
 
 /** Le fichier est arrivé vide : ni `arrayBuffer()` ni `FileReader` n'en tirent d'octets. */
 export class EmptyFileError extends Error {
   constructor() {
     super("empty");
+  }
+}
+
+/**
+ * Le fichier n'est pas un document à ficher.
+ *
+ * Sur iPhone, le sélecteur de fichiers ouvre d'abord la photothèque : une photo du cours
+ * partait donc au modèle décodée en UTF-8, et la fiche s'écrivait sur une suite de
+ * caractères de remplacement. Mieux vaut le dire.
+ */
+export class UnsupportedFileError extends Error {
+  constructor(readonly code: "image" | "binary") {
+    super(code);
   }
 }
 
@@ -50,6 +63,7 @@ export function documentKind(bytes: Uint8Array, name = ""): DocumentKind {
   if (hasPdfHeader(bytes)) return "pdf";
   if (looksLikeZip(bytes) && holdsWordDocument(bytes)) return "docx";
   if (isLegacyOfficeFile(bytes)) return "legacyDoc";
+  if (isImage(bytes)) return "image";
 
   // Les octets n'ont rien dit : un ZIP illisible ou un PDF tronqué garde tout de même
   // son nom, et pdf.js dira mieux que nous ce qui manque dedans.
@@ -64,6 +78,26 @@ export function documentKind(bytes: Uint8Array, name = ""): DocumentKind {
 export function decodeDocumentText(bytes: Uint8Array): string {
   const { label, skip } = textEncodingOf(bytes);
   return new TextDecoder(label).decode(bytes.subarray(skip)).replace(/\r\n?/g, "\n");
+}
+
+/**
+ * Du texte, ou des octets qu'un décodeur a rendus lisibles de force ?
+ *
+ * Un binaire décodé en UTF-8 rend un caractère de remplacement par octet invalide : c'est
+ * long, ça passe la longueur minimale d'un cours, et ça ne veut rien dire.
+ */
+export function looksLikeText(text: string): boolean {
+  const sample = text.slice(0, 2_000);
+  if (sample.length === 0) return false;
+
+  let suspect = 0;
+  for (const character of sample) {
+    const code = character.codePointAt(0) ?? 0;
+    const control = code < 0x20 && code !== 0x09 && code !== 0x0a && code !== 0x0d;
+    if (control || code === 0xfffd) suspect += 1;
+  }
+
+  return suspect / sample.length < 0.1;
 }
 
 interface PdfTextChunk {
@@ -165,6 +199,24 @@ function holdsWordDocument(bytes: Uint8Array): boolean {
     const path = entry.name.replace(/\\/g, "/").toLowerCase();
     return path === "word/document.xml" || path.endsWith("/word/document.xml");
   });
+}
+
+/** Une photo, pas un document : JPEG, PNG, GIF, WebP, TIFF, et le HEIC de l'iPhone. */
+function isImage(bytes: Uint8Array): boolean {
+  const starts = (...signature: number[]) => signature.every((byte, index) => bytes[index] === byte);
+  const tag = (offset: number, value: string) =>
+    [...value].every((character, index) => bytes[offset + index] === character.charCodeAt(0));
+
+  if (starts(0xff, 0xd8, 0xff)) return true;
+  if (starts(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return true;
+  if (tag(0, "GIF8")) return true;
+  if (tag(0, "RIFF") && tag(8, "WEBP")) return true;
+  if (starts(0x49, 0x49, 0x2a, 0x00) || starts(0x4d, 0x4d, 0x00, 0x2a)) return true;
+  if (tag(4, "ftyp")) {
+    const brand = String.fromCharCode(...bytes.subarray(8, 12));
+    return ["heic", "heix", "hevc", "heim", "heis", "hevm", "mif1", "msf1", "avif"].includes(brand);
+  }
+  return false;
 }
 
 /** La signature OLE2 : un `.doc` d'avant 2007, que le navigateur ne sait pas ouvrir. */
