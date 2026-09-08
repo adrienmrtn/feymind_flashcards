@@ -5,13 +5,11 @@ import { isChoosableVisibility, isGenerationLanguage, isSheetLength } from "@mic
 import { importFromText } from "@/lib/actions/course";
 
 /**
- * L'écriture de fiche **n'est pas une Server Action**.
+ * L'écriture de fiche **n'est pas une Server Action**, et n'est pas sous `/app`.
  *
- * Une action, même sans `revalidatePath`, relance un vol RSC de la page
- * d'import à la fin de l'appel. Ce vol et l'ouverture de `/app/c/:id` se
- * marchent dessus : « This page couldn't load », cours déjà en base.
- * Un `POST` JSON n'a pas ce vol. Le navigateur reste sur le voile jusqu'à
- * `location.replace`.
+ * Un `fetch` vers une URL du layout `/app` est intercepté par le routeur
+ * Next (en-têtes RSC) : le JSON n'est pas un vol, d'où « This page couldn't
+ * load » pendant que le cours s'écrit. `/api` n'a pas ce vol.
  */
 export const maxDuration = 120;
 

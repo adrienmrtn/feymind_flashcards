@@ -4,13 +4,13 @@ import { useEffect, useLayoutEffect, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 
 import { GenerationStatus } from "@/components/app/GenerationStatus";
-import { refreshLibraryAfterImport } from "@/lib/actions/course";
 import {
   IMPORT_HANDOFF_EVENT,
   readImportHandoff,
   releaseImportHandoff,
   type ImportHandoff,
 } from "@/lib/import-handoff";
+import { refreshLibraryInBackground } from "@/lib/import/write-sheet";
 import { useI18n } from "@/lib/i18n/client";
 
 /**
@@ -61,8 +61,9 @@ export function ReleaseImportHandoff({ courseId }: { courseId: string }) {
       current && (!current.courseId || current.courseId === courseId),
     );
     releaseImportHandoff(courseId);
-    // Les listes, **après** la peinture : plus de vol RSC sur l'import.
-    if (handingOff) void refreshLibraryAfterImport();
+    // Les listes, **après** la peinture, et **sans** Server Action : une
+    // action ici relançait un vol RSC de la fiche et cassait l'ouverture.
+    if (handingOff) refreshLibraryInBackground();
   }, [courseId]);
   return null;
 }

@@ -8,7 +8,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const importPanel = readFileSync(resolve(here, "../components/app/ImportPanel.tsx"), "utf8");
 const generateCards = readFileSync(resolve(here, "../components/app/GenerateCards.tsx"), "utf8");
 const courseActions = readFileSync(resolve(here, "./actions/course.ts"), "utf8");
-const writeRoute = readFileSync(resolve(here, "../app/app/importer/write/route.ts"), "utf8");
+const writeRoute = readFileSync(resolve(here, "../app/api/import-course/route.ts"), "utf8");
 const writeSheet = readFileSync(resolve(here, "./import/write-sheet.ts"), "utf8");
 const handoffUi = readFileSync(resolve(here, "../components/app/ImportHandoff.tsx"), "utf8");
 const status = readFileSync(resolve(here, "../components/app/GenerationStatus.tsx"), "utf8");
@@ -21,11 +21,12 @@ function functionBody(source: string, name: string): string {
 }
 
 describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
-  it("écrit la fiche par un POST JSON, pas par une Server Action", () => {
+  it("écrit la fiche par un POST JSON hors de /app, pas par une Server Action", () => {
     expect(importPanel).not.toMatch(/useTransition/);
     expect(importPanel).toContain("waitForPaint");
     expect(importPanel).toContain("writeSheetFromBrowser");
-    expect(writeSheet).toContain('fetch(IMPORT_WRITE_PATH');
+    expect(writeSheet).toContain("/api/import-course");
+    expect(writeSheet).toContain("browserFetch(IMPORT_WRITE_PATH");
     expect(writeRoute).toContain("export async function POST");
     expect(writeRoute).toContain("importFromText");
     const generate = importPanel.slice(importPanel.indexOf("async function generate"));
@@ -41,9 +42,11 @@ describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
     expect(courseActions).toContain("export async function refreshLibraryAfterImport");
   });
 
-  it("rafraîchit les listes une fois la fiche peinte", () => {
-    expect(handoffUi).toContain("refreshLibraryAfterImport");
+  it("rafraîchit les listes une fois la fiche peinte, sans Server Action", () => {
+    expect(handoffUi).toContain("refreshLibraryInBackground");
+    expect(handoffUi).not.toMatch(/refreshLibraryAfterImport/);
     expect(handoffUi).toContain("handingOff");
+    expect(writeSheet).toContain("/api/refresh-library");
   });
 
   it("écrit le pourcentage dans le DOM, même si React ne commit pas", () => {
