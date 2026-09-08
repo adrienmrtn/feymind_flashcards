@@ -1026,6 +1026,37 @@ font des centaines de fois par soirée : au-delà de cent fois par jour, la règ
 d'accueil et dans la démonstration, où elles se voient une fois. C'est la même animation, juste à
 un endroit et fausse à l'autre.
 
+#### Safari de l'iPhone ne lisait aucun document
+
+L'import marchait sur un ordinateur et dans l'app, et échouait sur **le site ouvert au
+téléphone**, sur chaque fichier. L'écran accusait le document — « ce fichier ne contient pas
+de texte lisible » — alors que la panne était dans la lecture.
+
+`page.getTextContent()` de pdf.js parcourt son flux de texte avec `for await`, et WebKit
+n'expose pas `Symbol.asyncIterator` sur un `ReadableStream` : **aucun Safari livré ne sait
+faire cette boucle.** Chaque page levait « iterable should have an iterator symbol », donc
+chaque page était perdue, et il ne restait qu'un document sans texte à annoncer. Le même
+flux, lu par son `reader`, marche partout : c'est ce que fait `readDocument`, et un test le
+vérifie sur une page dont le flux est privé de sa méthode manquante — sans navigateur, et
+`getTextContent` y lève, pour qu'un retour en arrière se voie tout de suite.
+
+Trois voisins du même coin ont été fermés en passant :
+
+- **Les octets ont le dernier mot sur le nom.** Un document qui sort du sélecteur de
+  l'iPhone n'arrive pas toujours avec son extension : un PDF tombait dans la branche
+  « lis-le comme du texte », en ressortait en mojibake, et se faisait refuser comme un
+  format inconnu. `%PDF`, l'entrée `word/document.xml` d'un ZIP, la signature OLE d'un
+  `.doc` et les en-têtes d'image, HEIC compris, décident avant l'extension.
+- **Zéro octet lu n'est pas un fichier vide.** Un fichier resté dans iCloud se lit vide,
+  parfois sans même lever : il est relu par `FileReader`, l'autre chemin du navigateur, et
+  s'il reste vide on renvoie vers le nuage — ce qui se répare.
+- **« Pas de texte » est une conclusion sur le document**, et elle ne vaut que si la lecture
+  a réussi. Aucune page lue et une panne en réserve : c'est la panne qu'on nomme.
+
+**La leçon tient au message.** Un import qui échoue en accusant le fichier ferme l'enquête :
+tant que l'écran disait « ce document n'a pas de texte », la panne a paru venir des PDF de
+l'étudiant. Un message ne doit désigner le document que quand la lecture, elle, a abouti.
+
 #### Un défaut que seul le test de bout en bout pouvait trouver
 
 Le bilan annonçait **six cartes apprises pour deux**. Je comptais « apprise » depuis le bouton

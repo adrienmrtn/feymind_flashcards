@@ -24,6 +24,7 @@
 import type { PDFPageProxy } from "pdfjs-dist";
 
 import { DocxError, extractDocxText } from "./docx";
+import { looksLikeZip, zipEntries } from "./zip";
 
 export type DocumentKind = "pdf" | "docx" | "text";
 
@@ -104,6 +105,97 @@ export function documentKind(fileName: string): DocumentKind | null {
   if (endsWithOneOf(name, WORD_EXTENSIONS)) return "docx";
   if (endsWithOneOf(name, TEXT_EXTENSIONS)) return "text";
   return null;
+}
+
+/**
+ * Ce que disent les octets, quand le nom se tait ou se trompe.
+ *
+ * Le sélecteur de fichiers de l'iPhone ne garantit pas l'extension, et c'est là que le nom
+ * seul devenait un piège : un PDF arrivait dans la branche « lis-le comme du texte », en
+ * ressortait en mojibake, et se faisait refuser comme un format inconnu. `null` veut dire
+ * « les octets ne tranchent pas » : au nom de décider.
+ */
+export function sniffKind(
+  data: Uint8Array,
+): "pdf" | "docx" | "image" | "legacyWord" | null {
+  if (hasPdfHeader(data)) return "pdf";
+  if (looksLikeZip(data) && holdsWordDocument(data)) return "docx";
+  if (startsWith(data, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])) return "legacyWord";
+  if (isImage(data)) return "image";
+  return null;
+}
+
+/** `%PDF` ouvre le fichier ; quelques exports le font précéder de deux ou trois octets. */
+function hasPdfHeader(data: Uint8Array): boolean {
+  const head = data.subarray(0, 1_024);
+  for (let index = 0; index + 4 <= head.length; index += 1) {
+    if (head[index] === 0x25 && head[index + 1] === 0x50 && head[index + 2] === 0x44 && head[index + 3] === 0x46) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Un `.docx` est un ZIP qui déclare `word/document.xml` ; un `.apkg` ou un `.xlsx` non. */
+function holdsWordDocument(data: Uint8Array): boolean {
+  return zipEntries(data).some((entry) => {
+    const path = entry.name.replace(/\\/g, "/").toLowerCase();
+    return path === "word/document.xml" || path.endsWith("/word/document.xml");
+  });
+}
+
+/** Une photo, pas un document : JPEG, PNG, GIF, WebP, TIFF, et le HEIC de l'iPhone. */
+function isImage(data: Uint8Array): boolean {
+  if (startsWith(data, [0xff, 0xd8, 0xff])) return true;
+  if (startsWith(data, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return true;
+  if (hasTag(data, 0, "GIF8")) return true;
+  if (hasTag(data, 0, "RIFF") && hasTag(data, 8, "WEBP")) return true;
+  if (startsWith(data, [0x49, 0x49, 0x2a, 0x00]) || startsWith(data, [0x4d, 0x4d, 0x00, 0x2a])) return true;
+  if (hasTag(data, 4, "ftyp")) {
+    const brand = String.fromCharCode(...data.subarray(8, 12));
+    return ["heic", "heix", "hevc", "heim", "heis", "hevm", "mif1", "msf1", "avif"].includes(brand);
+  }
+  return false;
+}
+
+function startsWith(data: Uint8Array, signature: number[]): boolean {
+  return signature.every((byte, index) => data[index] === byte);
+}
+
+function hasTag(data: Uint8Array, offset: number, tag: string): boolean {
+  return [...tag].every((character, index) => data[offset + index] === character.charCodeAt(0));
+}
+
+/**
+ * Décoder un fichier texte, en respectant sa marque d'ordre et l'UTF-16 sans marque.
+ *
+ * Un export « texte brut » de Word part souvent en UTF-16 : un octet nul sur deux. Décodé
+ * en UTF-8 il ne reste qu'une suite de caractères de remplacement, que `looksBinary` refuse
+ * — à raison, mais le fichier, lui, était lisible.
+ */
+export function decodeText(data: Uint8Array): string {
+  const { label, skip } = textEncodingOf(data);
+  return new TextDecoder(label).decode(data.subarray(skip)).replace(/\r\n?/g, "\n");
+}
+
+function textEncodingOf(data: Uint8Array): { label: string; skip: number } {
+  if (data[0] === 0xef && data[1] === 0xbb && data[2] === 0xbf) return { label: "utf-8", skip: 3 };
+  if (data[0] === 0xff && data[1] === 0xfe) return { label: "utf-16le", skip: 2 };
+  if (data[0] === 0xfe && data[1] === 0xff) return { label: "utf-16be", skip: 2 };
+
+  const head = data.subarray(0, 512);
+  let evenNulls = 0;
+  let oddNulls = 0;
+  for (let index = 0; index < head.length; index += 1) {
+    if (head[index] !== 0) continue;
+    if (index % 2 === 0) evenNulls += 1;
+    else oddNulls += 1;
+  }
+  const pairs = Math.floor(head.length / 2);
+  if (pairs > 8 && oddNulls > pairs * 0.4 && evenNulls === 0) return { label: "utf-16le", skip: 0 };
+  if (pairs > 8 && evenNulls > pairs * 0.4 && oddNulls === 0) return { label: "utf-16be", skip: 0 };
+
+  return { label: "utf-8", skip: 0 };
 }
 
 /** Un format nommément refusé, ou l'ancien Word. */
@@ -209,17 +301,30 @@ export async function readDocument(
   loadPdfEngine: () => Promise<PdfEngine> = loadBundledPdfEngine,
 ): Promise<ReadDocument> {
   const refused = refusedKind(file.name);
-  if (refused) throw new ReadFailure(refused, file.name.split(".").pop());
+  if (refused) throw new ReadFailure(refused, extensionOf(file.name));
 
-  const kind = documentKind(file.name);
+  const data = await bytes(file);
+  // Les octets ont le dernier mot sur le nom : un document qui sort du sélecteur de
+  // l'iPhone n'arrive pas toujours avec son extension, et un PDF sans « .pdf » finissait
+  // décodé comme du texte, puis refusé comme un binaire.
+  const sniffed = sniffKind(new Uint8Array(data));
+  if (sniffed === "image") throw new ReadFailure("unsupported", extensionOf(file.name) ?? "image");
+  if (sniffed === "legacyWord") throw new ReadFailure("legacyWord", extensionOf(file.name));
 
-  if (kind === "pdf") return readPdf(file, await pdfEngine(loadPdfEngine));
-  if (kind === "docx") return { ...(await readWord(file)), kind: "docx" };
+  const kind = sniffed ?? documentKind(file.name);
 
-  const text = await readText(file);
+  if (kind === "pdf") return readPdf(data, await pdfEngine(loadPdfEngine));
+  if (kind === "docx") return { ...(await readWord(new Uint8Array(data))), kind: "docx" };
+
+  const text = decodeText(new Uint8Array(data));
   // Sans extension connue, c'est le contenu qui décide. Un ZIP déguisé s'arrête ici.
-  if (looksBinary(text)) throw new ReadFailure("unsupported", file.name.split(".").pop());
+  if (looksBinary(text)) throw new ReadFailure("unsupported", extensionOf(file.name));
   return { text, images: [], kind: "text" };
+}
+
+function extensionOf(fileName: string): string | undefined {
+  const parts = fileName.split(".");
+  return parts.length > 1 ? parts.pop() : undefined;
 }
 
 /** Le contrat minimal qu'on attend de pdf.js, pour pouvoir le remplacer en essai. */
@@ -251,24 +356,48 @@ async function loadBundledPdfEngine(): Promise<PdfEngine> {
   return pdfjs as unknown as PdfEngine;
 }
 
+/**
+ * Les octets du fichier, en une seule lecture, et deux chemins pour les obtenir.
+ *
+ * Safari iOS remet parfois un `File` dont la lecture ne rend rien : un document encore dans
+ * iCloud, ou déplacé entre le choix et la lecture. Selon le cas il lève, ou il rend zéro
+ * octet sans rien dire - et zéro octet lu n'est pas un fichier vide. `FileReader`, l'autre
+ * chemin de lecture du navigateur, aboutit parfois là où `arrayBuffer()` renonce ; sinon on
+ * renvoie vers le nuage, ce qui se répare, au lieu d'un « illisible » qui ne dit rien.
+ */
 async function bytes(file: File): Promise<ArrayBuffer> {
+  let direct: ArrayBuffer | null = null;
   try {
-    return await file.arrayBuffer();
+    direct = await file.arrayBuffer();
   } catch (error) {
+    const retried = await bytesFromFileReader(file);
+    if (retried) return retried;
     throw new ReadFailure(classifyReadFailure(error), failureDetail(error));
+  }
+
+  if (direct.byteLength > 0) return direct;
+
+  const retried = await bytesFromFileReader(file);
+  if (retried) return retried;
+  throw new ReadFailure("unreachable");
+}
+
+async function bytesFromFileReader(file: File): Promise<ArrayBuffer | null> {
+  if (typeof FileReader === "undefined") return null;
+  try {
+    const buffer = await new Promise<ArrayBuffer | null>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result instanceof ArrayBuffer ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsArrayBuffer(file);
+    });
+    return buffer && buffer.byteLength > 0 ? buffer : null;
+  } catch {
+    return null;
   }
 }
 
-async function readText(file: File): Promise<string> {
-  try {
-    return await file.text();
-  } catch (error) {
-    throw new ReadFailure(classifyReadFailure(error), failureDetail(error));
-  }
-}
-
-async function readWord(file: File): Promise<{ text: string; images: string[] }> {
-  const data = new Uint8Array(await bytes(file));
+async function readWord(data: Uint8Array): Promise<{ text: string; images: string[] }> {
   try {
     return { text: await extractDocxText(data), images: [] };
   } catch (error) {
@@ -276,9 +405,7 @@ async function readWord(file: File): Promise<{ text: string; images: string[] }>
   }
 }
 
-async function readPdf(file: File, engine: PdfEngine): Promise<ReadDocument> {
-  const data = await bytes(file);
-
+async function readPdf(data: ArrayBuffer, engine: PdfEngine): Promise<ReadDocument> {
   let pdf: { numPages: number; getPage(index: number): Promise<PDFPageProxy> };
   try {
     pdf = await engine.getDocument({ data }).promise;
@@ -289,37 +416,110 @@ async function readPdf(file: File, engine: PdfEngine): Promise<ReadDocument> {
   const pages: string[] = [];
   const images: string[] = [];
   const imageLimit = Math.min(pdf.numPages, IMAGE_PAGE_LIMIT);
+  let refusal: unknown = null;
+  let readPages = 0;
 
   for (let index = 1; index <= pdf.numPages; index += 1) {
     // Une page qui refuse est une page perdue, pas un document perdu : un PDF de
-    // cinquante pages dont la douzième porte une police cassée reste fichable.
+    // cinquante pages dont la douzième porte une police cassée reste fichable. Le texte
+    // et l'image se tentent séparément : un scan sans texte garde son image, et une page
+    // qui ne se dessine pas garde son texte.
+    let page: PDFPageProxy;
     try {
-      const page = await pdf.getPage(index);
-      pages.push(pageText(await page.getTextContent()));
+      page = await pdf.getPage(index);
+    } catch (error) {
+      refusal ??= error;
+      continue;
+    }
 
-      if (index <= imageLimit) {
+    try {
+      pages.push(await pageText(page));
+      readPages += 1;
+    } catch (error) {
+      refusal ??= error;
+    }
+
+    if (index <= imageLimit) {
+      try {
         const rendered = await renderPdfPage(page);
         if (rendered) images.push(rendered);
+      } catch (error) {
+        refusal ??= error;
       }
-    } catch {
-      continue;
     }
   }
 
   const text = pages.filter(Boolean).join("\n\n");
   if (text.trim().length === 0 && images.length === 0) {
+    // « Pas de texte » est une conclusion sur le document, et elle ne vaut que si on a
+    // réussi à le lire. Aucune page lue et une panne en réserve : c'est la lecture qu'il
+    // faut nommer, sinon un défaut de notre côté se déguise en PDF scanné.
+    if (readPages === 0 && refusal !== null) {
+      throw new ReadFailure(classifyReadFailure(refusal), failureDetail(refusal));
+    }
     throw new ReadFailure("empty");
   }
 
   return { text, images, kind: "pdf" };
 }
 
-function pageText(content: { items: unknown[] }): string {
-  return content.items
-    .map((item) => (item && typeof item === "object" && "str" in item ? String(item.str) : ""))
+/**
+ * Le texte d'une page, lu par le `reader` du flux et **jamais** par
+ * `page.getTextContent()`.
+ *
+ * Cette méthode de pdf.js parcourt son flux avec `for await`, et WebKit n'expose pas
+ * `Symbol.asyncIterator` sur un `ReadableStream` : aucun Safari livré ne sait faire cette
+ * boucle. Sur le site ouvert à l'iPhone, la première page levait « iterable should have an
+ * iterator symbol », chaque page était donc perdue, et l'écran concluait que le document
+ * n'avait pas de texte. Le même flux, lu par son `reader`, marche partout.
+ */
+async function pageText(page: PdfTextSource): Promise<string> {
+  const chunks = page.streamTextContent
+    ? await collectChunks(page.streamTextContent().getReader())
+    : page.getTextContent
+      ? [await page.getTextContent()]
+      : [];
+
+  return chunks
+    .flatMap((chunk) => (chunk.items ?? []).map(itemText))
     .join(" ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+interface PdfTextChunk {
+  items?: readonly unknown[];
+}
+
+interface PdfTextReader {
+  read: () => Promise<{ done: boolean; value?: PdfTextChunk }>;
+  releaseLock: () => void;
+}
+
+/** De la page, on ne prend que le texte : d'où ce contrat, plus étroit que pdf.js. */
+interface PdfTextSource {
+  streamTextContent?: () => { getReader: () => PdfTextReader };
+  getTextContent?: () => Promise<PdfTextChunk>;
+}
+
+async function collectChunks(reader: PdfTextReader): Promise<PdfTextChunk[]> {
+  const chunks: PdfTextChunk[] = [];
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  return chunks;
+}
+
+function itemText(item: unknown): string {
+  if (!item || typeof item !== "object" || !("str" in item)) return "";
+  const value = (item as { str: unknown }).str;
+  return typeof value === "string" ? value : "";
 }
 
 async function renderPdfPage(page: PDFPageProxy): Promise<string | null> {

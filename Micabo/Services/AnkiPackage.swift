@@ -1,4 +1,3 @@
-import Compression
 import Foundation
 import SQLite3
 
@@ -87,6 +86,12 @@ enum AnkiPackageReader {
         return Array(data.prefix(15)) == Array("SQLite format 3".utf8) && data[15] == 0
     }
 
+    /// Apple n'expose pas `COMPRESSION_ZSTD` dans Compression.framework.
+    /// On décode avec l'amalgame officiel de zstd, comme `fzstd` côté web.
+    private static let zstdUnknownSize = UInt64.max
+    private static let zstdErrorSize = UInt64.max - 1
+    private static let zstdMaxOutput = 256 * 1024 * 1024
+
     private static func decompressZstd(_ data: Data) throws -> Data {
         guard data.count >= 4,
               data[0] == 0x28, data[1] == 0xB5, data[2] == 0x2F, data[3] == 0xFD
@@ -94,29 +99,53 @@ enum AnkiPackageReader {
             throw AnkiImportError.unreadableCollection
         }
 
+        let contentSize = data.withUnsafeBytes { raw -> UInt64 in
+            guard let base = raw.baseAddress else { return zstdErrorSize }
+            return MicaboZstdFrameContentSize(base, data.count)
+        }
+        if contentSize == zstdErrorSize {
+            throw AnkiImportError.unreadableCollection
+        }
+
+        if contentSize != zstdUnknownSize {
+            guard contentSize > 0, contentSize <= UInt64(zstdMaxOutput) else {
+                throw AnkiImportError.noZstd
+            }
+            return try inflateZstd(data, capacity: Int(contentSize))
+        }
+
         var size = max(data.count * 8, 64 * 1024)
         for _ in 0..<8 {
-            var destination = Data(count: size)
-            let written = destination.withUnsafeMutableBytes { dest in
-                data.withUnsafeBytes { source in
-                    compression_decode_buffer(
-                        dest.bindMemory(to: UInt8.self).baseAddress!,
-                        size,
-                        source.bindMemory(to: UInt8.self).baseAddress!,
-                        data.count,
-                        nil,
-                        COMPRESSION_ZSTD
-                    )
-                }
+            guard size <= zstdMaxOutput else { throw AnkiImportError.noZstd }
+            do {
+                return try inflateZstd(data, capacity: size)
+            } catch AnkiImportError.noZstd {
+                size *= 2
             }
-            if written > 0, written < size {
-                destination.removeSubrange(written..<size)
-                if looksLikeSqlite(destination) { return destination }
-                throw AnkiImportError.unreadableCollection
-            }
-            size *= 2
         }
         throw AnkiImportError.noZstd
+    }
+
+    private static func inflateZstd(_ data: Data, capacity: Int) throws -> Data {
+        var destination = Data(count: capacity)
+        let written = destination.withUnsafeMutableBytes { dest in
+            data.withUnsafeBytes { source in
+                MicaboZstdDecompress(
+                    dest.baseAddress,
+                    capacity,
+                    source.baseAddress,
+                    data.count
+                )
+            }
+        }
+        guard MicaboZstdIsError(written) == 0, written > 0 else {
+            throw AnkiImportError.noZstd
+        }
+        if written < capacity {
+            destination.removeSubrange(written..<capacity)
+        }
+        if looksLikeSqlite(destination) { return destination }
+        throw AnkiImportError.unreadableCollection
     }
 
     private static func readCollection(_ data: Data, fileName: String) throws -> AnkiImportedPackage {
