@@ -723,6 +723,26 @@ FAL_KEY = votre clé fal.ai
 Ce secret n'existe **que** dans Supabase. Le site Vercel n'appelle pas le modèle : seules
 les Edge Functions le font. Ne le mettez pas dans `.env` du dépôt, ni dans Vercel.
 
+### 1b. Repli Gemini (API directe)
+
+Si fal.ai refuse (403, 502, timeout, circuit ouvert), la fonction retente tout de suite
+chez Google, sur `gemini-2.5-flash-lite`. C'est le même modèle, sans le relais Fal.
+
+Même écran Secrets, **un second secret** :
+
+```
+GEMINI_API_KEY = votre clé Google AI Studio
+```
+
+La clé se crée sur [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+Pas de redéploiement après l'ajout du secret : la fonction la lit à chaque appel.
+
+En CLI, une fois le projet lié :
+
+```bash
+supabase secrets set GEMINI_API_KEY=… --project-ref khuzodsrznanzhwlbjbx
+```
+
 ### 2. Déployer les fonctions
 
 ```bash

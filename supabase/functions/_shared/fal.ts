@@ -1,11 +1,16 @@
 /**
- * Client fal.ai partagé par les Edge Functions de Micabo.
- * La clé reste côté serveur, dans le secret `FAL_KEY` du projet Supabase.
+ * Client modèle partagé par les Edge Functions de Micabo.
+ * fal.ai d'abord (`FAL_KEY`), Gemini directe si ça casse (`GEMINI_API_KEY`).
+ * Les deux clés restent dans les secrets du projet Supabase.
  */
 
-import { checkCircuit, recordFailure, recordSuccess } from "./circuit.ts";
+import { checkCircuit, circuitIsOpen, recordFailure, recordSuccess } from "./circuit.ts";
 import { parseModelJSON } from "./json.ts";
+import { FalError } from "./model-error.ts";
+import { callGemini, readGeminiKey } from "./gemini.ts";
 import { DEFAULT_MODEL, resolveModel } from "./models.ts";
+
+export { FalError } from "./model-error.ts";
 
 const TEXT_ENDPOINT = "https://fal.run/fal-ai/any-llm";
 const VISION_ENDPOINT = "https://fal.run/fal-ai/any-llm/vision";
@@ -18,15 +23,6 @@ export const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-export class FalError extends Error {
-  readonly status: number;
-
-  constructor(message: string, status = 502) {
-    super(message);
-    this.status = status;
-  }
-}
-
 export interface CallOptions {
   prompt: string;
   systemPrompt?: string;
@@ -37,13 +33,35 @@ export interface CallOptions {
 }
 
 export async function callModel(options: CallOptions): Promise<string> {
-  const key = Deno.env.get("FAL_KEY");
-  if (!key) {
+  const falKey = Deno.env.get("FAL_KEY")?.trim() ?? "";
+  const geminiKey = readGeminiKey();
+  if (!falKey && !geminiKey) {
     throw new FalError("Configuration serveur incomplète.", 500);
   }
 
-  checkCircuit();
+  if (falKey && !circuitIsOpen()) {
+    try {
+      return await callFal(options, falKey);
+    } catch (error) {
+      if (geminiKey && isRetryable(error)) {
+        const status = error instanceof FalError ? error.status : 502;
+        console.error(JSON.stringify({ fal: "fallback_gemini", status }));
+        return await callGemini(options, geminiKey);
+      }
+      throw error;
+    }
+  }
 
+  if (geminiKey) {
+    if (falKey) console.error(JSON.stringify({ fal: "circuit_open_gemini" }));
+    return await callGemini(options, geminiKey);
+  }
+
+  checkCircuit();
+  throw new FalError("Configuration serveur incomplète.", 500);
+}
+
+async function callFal(options: CallOptions, key: string): Promise<string> {
   const model = resolveModel(options.model);
   const useVision = Array.isArray(options.imageUrls) && options.imageUrls.length > 0;
   const body: Record<string, unknown> = {
@@ -101,6 +119,11 @@ export async function callModel(options: CallOptions): Promise<string> {
   if (!parsed.output) throw new FalError("Le modèle n'a renvoyé aucun contenu.", 502);
 
   return parsed.output;
+}
+
+function isRetryable(error: unknown): boolean {
+  if (!(error instanceof FalError)) return true;
+  return error.status >= 500;
 }
 
 /** Extrait le premier objet ou tableau JSON d'une réponse, même entourée de texte ou de balises. */
