@@ -78,12 +78,13 @@ export function Scaffold({
         {title}
       </h1>
 
-      <div
-        className={`rise mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain ${
-          center ? "justify-center" : ""
-        }`}
-      >
-        {children}
+      {/*
+        Un peu d'air sous le titre : les cartes d'explication (fiche, session,
+        courbe) venaient lécher la dernière ligne. `my-auto` centre quand ça
+        tient, sans `justify-center` qui coupait le haut dès que ça déborde.
+      */}
+      <div className="rise mt-6 min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className={center ? "my-auto" : undefined}>{children}</div>
       </div>
 
       <div className="rise flex shrink-0 items-center justify-between gap-3 pt-4">

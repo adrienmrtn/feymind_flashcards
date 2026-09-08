@@ -26,7 +26,7 @@ export default async function NewDeckPage() {
     <>
       <header>
         <Link
-          href={"/app/importer" as never}
+          href={"/app/paquets" as never}
           className="inline-flex items-center gap-1.5 text-[13.5px] text-ink-tertiary"
         >
           <svg
@@ -41,7 +41,7 @@ export default async function NewDeckPage() {
           >
             <path d="M12 4l-6 6 6 6" />
           </svg>
-          {t("nav.import")}
+          {t("nav.decks")}
         </Link>
 
         <div className="mt-3">

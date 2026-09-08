@@ -407,6 +407,7 @@ export const en: Catalog = {
     review: "Review",
     library: "Library",
     courses: "Courses",
+    decks: "Decks",
     exams: "Exams",
     account: "Account",
     friends: "Friends",

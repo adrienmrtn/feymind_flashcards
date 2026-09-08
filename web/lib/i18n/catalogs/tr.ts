@@ -405,6 +405,7 @@ export const tr: Catalog = {
     review: "Tekrar",
     library: "Kitaplık",
     courses: "Dersler",
+    decks: "Desteler",
     exams: "Sınavlar",
     account: "Hesap",
     friends: "Arkadaşlar",

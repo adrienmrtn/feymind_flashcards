@@ -131,6 +131,22 @@ export const appEs = {
     emptyBadge: "vacío",
     upToDate: "al día",
   },
+  decks: {
+    title: "Mazos",
+    lead: "Las tarjetas de tus cursos, y los que abres a mano.",
+    emptyLead: "Abre un mazo vacío, tarjeta a tarjeta, o retoma un archivo de Anki.",
+    addTitle: "Abrir un mazo",
+    addHint: "Vacío, a mano, o una importación de Anki",
+    none: "Ningún mazo",
+    emptyTitle: "Ningún mazo",
+    emptyBody: "Abre uno para empezar, vacío o desde Anki.",
+    search: "Buscar un mazo",
+    fromCourse: "Curso",
+    standalone: "Sin curso",
+    deleteQ: "¿Eliminar este mazo?",
+    deleteDeck: "Eliminar el mazo",
+    deleteMsg: "{title} y {cards} desaparecen.",
+  },
   review: {
     verb: "Repasar",
     again: "Repasar otra vez",
@@ -471,7 +487,7 @@ export const appEs = {
   },
   deck: {
     title: "Un mazo de tarjetas",
-    lead: "Sin curso: vocabulario, fechas, fórmulas. O un mazo de Anki que recuperas.",
+    lead: "Un mazo vacío, tarjeta a tarjeta. O un archivo de Anki que recuperas.",
     untitled: "Mazo nuevo",
     nameLabel: "Nombre del mazo",
     namePlaceholder: "Vocabulario de inglés, 1.º",
@@ -844,6 +860,16 @@ export const appEs = {
       add: {
         title: "Añadir un curso",
         body: "PDF, Word, texto pegado o vídeo de YouTube. Micabo lee, luego escribe la ficha.",
+      },
+    },
+    decks: {
+      shelf: {
+        title: "Tus mazos",
+        body: "Cada curso tiene el suyo, y los que abres a mano. Aquí los encuentras.",
+      },
+      add: {
+        title: "Abrir un mazo",
+        body: "Un mazo vacío, tarjeta a tarjeta. O un archivo de Anki ya escrito.",
       },
     },
     sheet: {

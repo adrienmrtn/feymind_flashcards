@@ -90,6 +90,18 @@ enum ZipArchive {
         }
     }
 
+    /// Premier fichier dont le nom se termine par l'un des suffixes, dans cet ordre.
+    static func firstData(suffixes: [String], in archive: Data) throws -> Data {
+        let entries = try centralDirectory(of: archive)
+        for name in suffixes {
+            let needle = name.lowercased()
+            if let entry = entries.first(where: { $0.name.lowercased().hasSuffix(needle) }) {
+                return try extract(entry, from: archive)
+            }
+        }
+        throw ArchiveError.notFound
+    }
+
     private struct EOCD {
         let count: Int
         let offset: Int

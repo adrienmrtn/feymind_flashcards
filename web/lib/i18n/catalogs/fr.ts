@@ -406,6 +406,7 @@ export const fr = {
     review: "Réviser",
     library: "Bibliothèque",
     courses: "Cours",
+    decks: "Paquets",
     exams: "Examens",
     account: "Compte",
     friends: "Amis",

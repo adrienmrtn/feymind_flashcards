@@ -101,6 +101,7 @@ export async function createDeck(input: {
   revalidateUserData(user.id, "courses");
   revalidatePath("/app", "layout");
   revalidatePath("/app/cours");
+  revalidatePath("/app/paquets");
   return { status: "ok", courseId: id };
 }
 
@@ -184,5 +185,7 @@ export async function addDeckCards(input: {
   revalidatePath(`/app/c/${input.courseId}`);
   revalidatePath("/app");
   revalidatePath("/app/cours");
+  revalidatePath("/app/paquets");
+  revalidatePath(`/app/paquets/${input.courseId}`);
   return { status: "ok", count: rows.length };
 }

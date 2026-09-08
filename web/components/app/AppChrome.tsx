@@ -11,6 +11,7 @@ import {
   Layers,
   LogOut,
   Menu,
+  Repeat,
   Settings,
   Upload,
   UserRound,
@@ -47,13 +48,14 @@ const GROUPS = [
     titleKey: "nav.study",
     items: [
       { href: "/app", labelKey: "nav.home", icon: House, prefetch: true },
-      { href: "/app/reviser", labelKey: "nav.review", icon: Layers, prefetch: true },
+      { href: "/app/reviser", labelKey: "nav.review", icon: Repeat, prefetch: true },
     ],
   },
   {
     titleKey: "nav.library",
     items: [
       { href: "/app/cours", labelKey: "nav.courses", icon: BookOpen, prefetch: true },
+      { href: "/app/paquets", labelKey: "nav.decks", icon: Layers, prefetch: true },
       { href: "/app/examens", labelKey: "nav.exams", icon: CalendarDays, prefetch: true },
     ],
   },
@@ -70,6 +72,9 @@ const GROUPS = [
 function sectionLabel(pathname: string, t: (key: string) => string): string {
   if (pathname.startsWith("/app/importer")) return t("nav.import");
   if (pathname.startsWith("/app/reviser")) return t("nav.review");
+  if (pathname.startsWith("/app/paquets") || pathname.startsWith("/app/paquet")) {
+    return t("nav.decks");
+  }
   if (pathname.startsWith("/app/examens")) return t("nav.exams");
   if (pathname.startsWith("/app/retours")) return t("nav.feedback");
   if (pathname.startsWith("/app/amis") || pathname.startsWith("/app/u/")) return t("nav.friends");
@@ -93,6 +98,9 @@ function isCurrent(pathname: string, href: string): boolean {
       pathname.startsWith("/app/c/") ||
       pathname.startsWith("/app/b/")
     );
+  }
+  if (href === "/app/paquets") {
+    return pathname.startsWith("/app/paquets") || pathname.startsWith("/app/paquet");
   }
   if (href === "/app/profil") return pathname.startsWith("/app/profil");
   if (href === "/app/amis") {

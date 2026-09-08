@@ -131,6 +131,22 @@ export const appEn = {
     emptyBadge: "empty",
     upToDate: "up to date",
   },
+  decks: {
+    title: "Decks",
+    lead: "The cards from your courses, and the ones you open by hand.",
+    emptyLead: "Open an empty deck, card by card, or pick up an Anki file.",
+    addTitle: "Open a deck",
+    addHint: "Empty, by hand, or an Anki import",
+    none: "No decks",
+    emptyTitle: "No decks",
+    emptyBody: "Open one to start, empty or from Anki.",
+    search: "Search a deck",
+    fromCourse: "Course",
+    standalone: "No course",
+    deleteQ: "Delete this deck?",
+    deleteDeck: "Delete deck",
+    deleteMsg: "{title} and {cards} will be gone.",
+  },
   review: {
     verb: "Review",
     again: "Review again",
@@ -471,7 +487,7 @@ export const appEn = {
   },
   deck: {
     title: "A card deck",
-    lead: "No course: vocabulary, dates, formulas. Or an Anki deck you pick up again.",
+    lead: "An empty deck, card by card. Or an Anki file you pick up again.",
     untitled: "New deck",
     nameLabel: "Deck name",
     namePlaceholder: "German vocabulary, year 1",
@@ -843,6 +859,16 @@ export const appEn = {
       add: {
         title: "Add a course",
         body: "PDF, Word, pasted text, or a YouTube video. Micabo reads, then writes the sheet.",
+      },
+    },
+    decks: {
+      shelf: {
+        title: "Your decks",
+        body: "Every course has one, plus the ones you open by hand. This is where you find them.",
+      },
+      add: {
+        title: "Open a deck",
+        body: "An empty deck, card by card. Or an Anki file already written.",
       },
     },
     sheet: {

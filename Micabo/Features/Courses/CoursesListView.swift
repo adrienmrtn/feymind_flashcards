@@ -23,8 +23,6 @@ struct CoursesListView: View {
     @State private var showImportChoice = false
     @State private var pendingImport: ImportKind?
     @State private var activeImport: ImportKind?
-    /// Un paquet de cartes ne passe pas par l'écran d'import : il n'y a rien à lire.
-    @State private var isCreatingDeck = false
     @State private var paywall: PaywallTrigger?
     @State private var coursePendingDelete: Course?
     /// Totaux par cours, lus **une fois**. Le corps ne touche plus `course.cards`.
@@ -46,14 +44,18 @@ struct CoursesListView: View {
         }
     }
 
+    private var sheets: [Course] {
+        courses.filter { $0.source != .deck }
+    }
+
     private var subjects: [String] {
-        Set(courses.compactMap { $0.subject?.nilIfBlank }).sorted()
+        Set(sheets.compactMap { $0.subject?.nilIfBlank }).sorted()
     }
 
     private var filtered: [Course] {
         var base = searchText.isEmpty
-            ? courses
-            : courses.filter {
+            ? sheets
+            : sheets.filter {
                 $0.title.localizedCaseInsensitiveContains(searchText)
                     || ($0.subject ?? "").localizedCaseInsensitiveContains(searchText)
                     || $0.summary.localizedCaseInsensitiveContains(searchText)
@@ -74,7 +76,8 @@ struct CoursesListView: View {
     }
 
     private var cardCount: Int? {
-        census.isEmpty ? nil : LibraryCensus.totalCards(in: census)
+        guard !census.isEmpty else { return nil }
+        return sheets.reduce(0) { $0 + (census[$1.id]?.cardCount ?? 0) }
     }
 
     var body: some View {
@@ -120,7 +123,7 @@ struct CoursesListView: View {
                     showImportChoice = false
                 }
             )
-            .presentationDetents([.height(604)])
+            .presentationDetents([.height(520)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
@@ -130,13 +133,6 @@ struct CoursesListView: View {
                 // Un import se termine sur la fiche : c'est le résultat, et c'est ce qu'on
                 // veut lire avant de décider si on en fait des cartes.
                 path = NavigationPath([course])
-            }
-        }
-        .fullScreenCover(isPresented: $isCreatingDeck) {
-            CreateDeckView { course in
-                isCreatingDeck = false
-                // Un paquet se termine sur ses cartes : il n'a pas de fiche à lire.
-                path = NavigationPath([CourseCardsRoute(course: course)])
             }
         }
         .micaboPaywall($paywall)
@@ -200,7 +196,7 @@ struct CoursesListView: View {
     /// une réponse, et la réponse dit ce qu'elle coûte.
     @ViewBuilder
     private var importButton: some View {
-        if !courses.isEmpty {
+        if !sheets.isEmpty {
             MicaboCircleButton(
                 systemImage: "plus",
                 style: .dark,
@@ -216,16 +212,16 @@ struct CoursesListView: View {
     }
 
     private var countLabel: String {
-        guard !courses.isEmpty else { return i18n?.t("app.courses.none") ?? "Aucun cours" }
+        guard !sheets.isEmpty else { return i18n?.t("app.courses.none") ?? "Aucun cours" }
         if let cardCount {
-            return "\(MicaboCopy.courses(courses.count)) · \(MicaboCopy.cards(cardCount))"
+            return "\(MicaboCopy.courses(sheets.count)) · \(MicaboCopy.cards(cardCount))"
         }
-        return MicaboCopy.courses(courses.count)
+        return MicaboCopy.courses(sheets.count)
     }
 
     @ViewBuilder
     private var myCourses: some View {
-        if !courses.isEmpty {
+        if !sheets.isEmpty {
             MicaboSearchField(text: $searchText, placeholder: i18n?.t("app.courses.search") ?? "Rechercher un cours ou une carte")
                 .padding(.horizontal, MicaboSpacing.screen)
 
@@ -233,7 +229,7 @@ struct CoursesListView: View {
         }
 
         content
-            .padding(.top, courses.isEmpty ? MicaboSpacing.md : 0)
+            .padding(.top, sheets.isEmpty ? MicaboSpacing.md : 0)
     }
 
     /// Tri puis matières, dans une seule bande qui défile.
@@ -265,7 +261,7 @@ struct CoursesListView: View {
 
     @ViewBuilder
     private var content: some View {
-        if courses.isEmpty {
+        if sheets.isEmpty {
             MicaboEmptyState(
                 systemImage: "books.vertical",
                 title: i18n?.t("app.courses.emptyTitle") ?? "Aucun cours",
@@ -336,11 +332,7 @@ struct CoursesListView: View {
         guard let kind = pendingImport else { return }
         pendingImport = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            if kind.producesSheet {
-                activeImport = kind
-            } else {
-                isCreatingDeck = true
-            }
+            activeImport = kind
         }
     }
 }

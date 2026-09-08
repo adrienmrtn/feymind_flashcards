@@ -6,9 +6,9 @@ import { getCourse, listCards, listExams } from "@/lib/data/courses";
 import { getTranslator } from "@/lib/i18n/server";
 
 /**
- * L'atelier des cartes, ouvert depuis la fiche du cours.
+ * La vue paquets dédiée : le même atelier, le retour vers la liste des paquets.
  */
-export default async function CourseCardsPage({
+export default async function DeckWorkshopPage({
   params,
   searchParams,
 }: {
@@ -32,8 +32,9 @@ export default async function CourseCardsPage({
       cards={cards}
       exams={exams}
       generer={generer}
-      backHref={`/app/c/${course.id}` as Route}
-      backLabel={course.title}
+      backHref={"/app/paquets" as Route}
+      backLabel={t("nav.decks")}
+      heading={course.title}
     />
   );
 }

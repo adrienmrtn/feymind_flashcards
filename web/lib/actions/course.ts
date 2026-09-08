@@ -185,6 +185,7 @@ export async function importFromText(input: {
   // arrive sur sa première fiche avec un « zéro cours » vieux d'une seconde.
   revalidatePath("/app", "layout");
   revalidatePath("/app/cours");
+  revalidatePath("/app/paquets");
   return { status: "ok", courseId: id };
 }
 
@@ -357,6 +358,7 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
   revalidatePath(`/app/c/${courseId}/cartes`);
   revalidatePath("/app");
   revalidatePath("/app/cours");
+  revalidatePath("/app/paquets");
   return { status: "ok" as const, count: cards.length };
 }
 

@@ -35,8 +35,6 @@ struct TodayView: View {
     @State private var showImportChoice = false
     @State private var pendingImport: ImportKind?
     @State private var activeImport: ImportKind?
-    /// Un paquet de cartes ne passe pas par l'écran d'import : il n'y a rien à lire.
-    @State private var isCreatingDeck = false
     @State private var paywall: PaywallTrigger?
 
     /// Dernière file calculée. Une bascule de feuille, de paywall ou de navigation ne change
@@ -262,7 +260,7 @@ struct TodayView: View {
                     showImportChoice = false
                 }
             )
-            .presentationDetents([.height(604)])
+            .presentationDetents([.height(520)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
@@ -270,12 +268,6 @@ struct TodayView: View {
             ImportView(kind: kind) { course in
                 activeImport = nil
                 path = NavigationPath([course])
-            }
-        }
-        .fullScreenCover(isPresented: $isCreatingDeck) {
-            CreateDeckView { course in
-                isCreatingDeck = false
-                path = NavigationPath([CourseCardsRoute(course: course)])
             }
         }
         .fullScreenCover(isPresented: $showStudy) {
@@ -703,11 +695,7 @@ struct TodayView: View {
         guard let kind = pendingImport else { return }
         pendingImport = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            if kind.producesSheet {
-                activeImport = kind
-            } else {
-                isCreatingDeck = true
-            }
+            activeImport = kind
         }
     }
 }

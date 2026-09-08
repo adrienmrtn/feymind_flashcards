@@ -14,7 +14,7 @@ import UIKit
 ///
 /// **Le changement de page est immédiat.** Un fondu de 220 ms sur quatre `NavigationStack`
 /// animait tout l'arbre — listes, calendrier, fiche — et chaque onglet arrivait en retard.
-/// Le `TabView` système garde les piles déjà ouvertes sans dessiner quatre pages superposées.
+/// Le `TabView` système garde les piles déjà ouvertes sans dessiner cinq pages superposées.
 /// L'ancien `ZStack` à opacité zéro laissait chaque `@Query`, chaque calendrier et chaque
 /// statistique vivre derrière l'écran actif ; une écriture SwiftData réveillait tout.
 struct RootTabView: View {
@@ -35,6 +35,9 @@ struct RootTabView: View {
                 CoursesListView()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.courses)
+                DecksListView()
+                    .toolbar(.hidden, for: .tabBar)
+                    .tag(RootTab.decks)
                 TodayView()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.today)

@@ -115,10 +115,8 @@ enum ImportKind: String, CaseIterable, Identifiable {
 
 /// Panneau qui remonte du bas quand on touche le bouton « + ».
 ///
-/// Deux blocs, et la séparation compte : les cinq premières entrées partent d'un document
-/// et donnent une fiche, la dernière ne part de rien et ne donne que des cartes. C'est ce
-/// qu'on veut quand on révise du vocabulaire, des dates ou des formules qu'on connaît déjà :
-/// il n'y a pas de cours à ficher, il y a des choses à retenir.
+/// Cinq sources, toutes un document, toutes une fiche. Un paquet de cartes
+/// s'ouvre depuis l'onglet Paquets, pas d'ici.
 struct ImportChoiceSheet: View {
     var onSelect: (ImportKind) -> Void
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -132,11 +130,6 @@ struct ImportChoiceSheet: View {
                     .padding(.top, 24)
 
                 MicaboRowGroup(rows: kinds.map(row(for:)))
-
-                VStack(alignment: .leading, spacing: 8) {
-                    MicaboSectionCaption(text: i18n?.t("ios.withoutCourse") ?? "Sans cours")
-                    MicaboRowGroup(rows: [row(for: .cards)])
-                }
 
             }
             .padding(.horizontal, MicaboSpacing.screen)
