@@ -288,7 +288,7 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
   const [{ data: course }, { data: profile }] = await Promise.all([
     supabase
       .from("courses")
-      .select("id, title, subject, context_text")
+      .select("id, title, subject, context_text, source")
       .eq("user_id", user.id)
       .eq("id", courseId)
       .maybeSingle(),
@@ -300,6 +300,12 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
   ]);
 
   if (!course) return { status: "error" as const, message: await actionT("app.errors.courseMissing") };
+
+  // Un paquet n'a pas de fiche à relire : les cartes s'écrivent à la main,
+  // ou on recopie un Anki. La matière ne part pas au modèle.
+  if (course.source === "deck") {
+    return { status: "error" as const, message: await actionT("app.errors.cardsNeedContext") };
+  }
 
   const context = (course.context_text ?? "").trim();
   if (context.length < 40) {

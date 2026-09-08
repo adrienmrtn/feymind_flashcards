@@ -4,8 +4,8 @@ import UniformTypeIdentifiers
 
 /// Créer un **paquet de cartes**, sans document et sans fiche.
 ///
-/// Deux départs : un fichier Anki, ou rien. Les deux mènent à l'écran des cartes,
-/// où l'on ajoute, corrige et génère à volonté, carte par carte.
+/// Deux départs : un fichier Anki (on recopie les cartes), ou rien (on
+/// les écrit à la main). La matière range le paquet, elle n'écrit rien.
 struct CreateDeckView: View {
     var onCreated: (Course) -> Void
 

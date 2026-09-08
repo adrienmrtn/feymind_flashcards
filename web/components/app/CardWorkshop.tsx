@@ -66,7 +66,9 @@ export function CardWorkshop({
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {cards.length === 0
-              ? t("app.workshop.emptyHint")
+              ? course.source === "deck"
+                ? t("app.deck.emptyHint")
+                : t("app.workshop.emptyHint")
               : packSummary(t, cards.length, counts)}
           </p>
         </div>
@@ -84,14 +86,16 @@ export function CardWorkshop({
         </div>
       ) : null}
 
-      <div className="mt-7" data-tour="cartes-generer">
-        <GenerateCards
-          courseId={course.id}
-          existing={cards.length}
-          autoStart={generer === "1"}
-          canGenerate={(course.context_text ?? "").trim().length >= 40}
-        />
-      </div>
+      {course.source === "deck" ? null : (
+        <div className="mt-7" data-tour="cartes-generer">
+          <GenerateCards
+            courseId={course.id}
+            existing={cards.length}
+            autoStart={generer === "1"}
+            canGenerate={(course.context_text ?? "").trim().length >= 40}
+          />
+        </div>
+      )}
 
       <div className="mt-8" data-tour="cartes-liste">
         <CardList courseId={course.id} cards={cards} exam={exam} />

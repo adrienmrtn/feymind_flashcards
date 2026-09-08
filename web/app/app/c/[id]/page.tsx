@@ -46,7 +46,7 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
   // lecture et pas d'avertissement sur une fiche manquante. C'est prévu depuis le schéma,
   // et l'iPhone range les paquets dans la même liste.
   const isDeck = course.source === "deck" && course.blocks.length === 0;
-  const canGenerateCards = (course.context_text ?? "").trim().length >= 40;
+  const canGenerateCards = !isDeck && (course.context_text ?? "").trim().length >= 40;
 
   return (
     <article className="pb-24">

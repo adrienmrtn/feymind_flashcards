@@ -491,10 +491,9 @@ export const appEs = {
     untitled: "Mazo nuevo",
     nameLabel: "Nombre del mazo",
     namePlaceholder: "Vocabulario de inglés, 1.º",
-    subjectLabel: "Asignatura, si quieres",
+    subjectLabel: "Asignatura",
     subjectPlaceholder: "Inglés, derecho, anatomía…",
-    subjectHint:
-      "Ordena el mazo en tus filtros y le dice a Micabo para qué asignatura escribe.",
+    subjectHint: "Ordena el mazo en tus filtros.",
     materialLabel: "De dónde partir",
     materialPlaceholder:
       "Pega tu lista, tus apuntes, tu tabla de conjugación… Micabo saca las primeras tarjetas.",
@@ -520,6 +519,7 @@ export const appEs = {
     importCards: "Recuperar las tarjetas",
     writeCards: "Escribir las tarjetas",
     createEmpty: "Abrir el mazo",
+    emptyHint: "Escríbelas a mano, o recupera un archivo de Anki.",
     partial: "El mazo está abierto, pero no han llegado todas las tarjetas.",
     openAnyway: "Abrir el mazo",
     pouring: "Micabo coloca las tarjetas…",

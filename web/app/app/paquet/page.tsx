@@ -5,16 +5,15 @@ import { SecondCourseCard } from "@/components/app/SecondCourseCard";
 import { canImportNow } from "@/lib/data/entitlement";
 import { getTranslator } from "@/lib/i18n/server";
 
-/** Coller du texte fait écrire les premières cartes : c'est le modèle qui répond, pas la base. */
+/** Un versement Anki peut être long : les cartes partent par paquets. */
 export const maxDuration = 120;
 
 /**
  * **Un paquet, sans cours.**
  *
- * L'import demande un document et rend une fiche. Ici il n'y a pas de document : il y a du
- * vocabulaire, des dates, des formules - des choses déjà comprises qu'il faut retenir. Un
- * paquet Anki entre par le même écran, parce que c'est le même objet : des cartes que
- * personne n'a besoin d'écrire.
+ * L'import demande un document et rend une fiche. Ici il n'y a pas de document : un
+ * paquet vide qu'on remplit à la main, ou un fichier Anki qu'on recopie. Rien ne passe
+ * par le modèle.
  *
  * Le paquet occupe une place de cours, donc il passe la même porte : sans ça, le gratuit
  * s'ouvrirait en grand par un chemin qui ne s'appelle pas « importer ».

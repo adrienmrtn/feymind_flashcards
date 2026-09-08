@@ -250,10 +250,10 @@ struct FlashcardsView: View {
 
     // MARK: - Liste
 
-    /// Vrai quand le modèle a de quoi écrire : la fiche d'un cours, ou le texte collé dans un
-    /// paquet. Un paquet nu n'a rien à relire, et proposer de générer n'y mènerait qu'à une
-    /// erreur.
+    /// Vrai quand le modèle a de quoi écrire : la fiche d'un cours. Un paquet
+    /// se remplit à la main, ou on recopie un Anki — la matière ne part pas au modèle.
     private var canGenerate: Bool {
+        if course.source == .deck { return false }
         let context = (course.contextText.nilIfBlank ?? course.rawText).trimmingCharacters(in: .whitespacesAndNewlines)
         return context.count >= 40
     }

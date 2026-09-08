@@ -491,10 +491,9 @@ export const appFr = {
     untitled: "Nouveau paquet",
     nameLabel: "Nom du paquet",
     namePlaceholder: "Vocabulaire d'allemand, L1",
-    subjectLabel: "Matière, si tu veux",
+    subjectLabel: "Matière",
     subjectPlaceholder: "Allemand, droit, anatomie…",
-    subjectHint:
-      "Elle range le paquet dans tes filtres, et dit à Micabo pour quelle matière il écrit.",
+    subjectHint: "Elle range le paquet dans tes filtres.",
     materialLabel: "De quoi partir",
     materialPlaceholder:
       "Colle ta liste, tes notes, ton tableau de conjugaison… Micabo en tire les premières cartes.",
@@ -520,6 +519,7 @@ export const appFr = {
     importCards: "Reprendre les cartes",
     writeCards: "Écrire les cartes",
     createEmpty: "Ouvrir le paquet",
+    emptyHint: "Écris-les à la main, ou reprends un fichier Anki.",
     partial: "Le paquet est ouvert, mais toutes les cartes ne sont pas arrivées.",
     openAnyway: "Ouvrir le paquet",
     pouring: "Micabo range les cartes…",

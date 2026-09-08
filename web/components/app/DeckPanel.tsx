@@ -34,10 +34,11 @@ import { requestPaywall } from "@/lib/paywall";
  *
  * Deux départs, une seule arrivée - l'atelier des cartes :
  *
- * 1. **Un fichier Anki.** Les cartes arrivent telles qu'elles sont écrites, sans passer par
- *    le modèle. C'est le seul chemin du produit qui ne dépense rien : on reprend un travail
- *    déjà fait, il n'y a rien à rédiger.
+ * 1. **Un fichier Anki.** Les cartes arrivent telles qu'elles sont écrites. On recopie,
+ *    on n'écrit pas. C'est le seul chemin du produit qui ne dépense rien.
  * 2. **Rien.** Le paquet démarre nu et se remplit à la main, carte par carte.
+ *
+ * La matière range le paquet dans les filtres. Elle ne part pas au modèle.
  *
  * Le fichier est lu **dans l'onglet**, comme un PDF ou un Word : le serveur reçoit des
  * cartes, jamais l'archive. Elles y partent ensuite par paquets de deux cents, parce que

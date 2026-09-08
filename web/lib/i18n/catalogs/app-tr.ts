@@ -491,10 +491,9 @@ export const appTr = {
     untitled: "Yeni deste",
     nameLabel: "Destenin adı",
     namePlaceholder: "İngilizce kelimeler, 1. sınıf",
-    subjectLabel: "Ders, istersen",
+    subjectLabel: "Ders",
     subjectPlaceholder: "İngilizce, hukuk, anatomi…",
-    subjectHint:
-      "Desteyi filtrelerine yerleştirir ve Micabo'ya hangi ders için yazdığını söyler.",
+    subjectHint: "Desteyi filtrelerine yerleştirir.",
     materialLabel: "Nereden başlanacak",
     materialPlaceholder:
       "Listeni, notlarını, çekim tablonu yapıştır… Micabo ilk kartları oradan çıkarır.",
@@ -520,6 +519,7 @@ export const appTr = {
     importCards: "Kartları al",
     writeCards: "Kartları yaz",
     createEmpty: "Desteyi aç",
+    emptyHint: "Elle yaz, ya da bir Anki dosyasını al.",
     partial: "Deste açıldı ama kartların tamamı gelmedi.",
     openAnyway: "Desteyi aç",
     pouring: "Micabo kartları yerleştiriyor…",
