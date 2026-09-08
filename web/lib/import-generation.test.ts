@@ -8,10 +8,13 @@ const here = dirname(fileURLToPath(import.meta.url));
 const importPanel = readFileSync(resolve(here, "../components/app/ImportPanel.tsx"), "utf8");
 const generateCards = readFileSync(resolve(here, "../components/app/GenerateCards.tsx"), "utf8");
 const courseActions = readFileSync(resolve(here, "./actions/course.ts"), "utf8");
+const createSheet = readFileSync(resolve(here, "./import/create-sheet.ts"), "utf8");
 const writeRoute = readFileSync(resolve(here, "../app/api/import-course/route.ts"), "utf8");
 const writeSheet = readFileSync(resolve(here, "./import/write-sheet.ts"), "utf8");
 const handoffUi = readFileSync(resolve(here, "../components/app/ImportHandoff.tsx"), "utf8");
 const status = readFileSync(resolve(here, "../components/app/GenerationStatus.tsx"), "utf8");
+const appError = readFileSync(resolve(here, "../app/app/error.tsx"), "utf8");
+const globalError = readFileSync(resolve(here, "../app/global-error.tsx"), "utf8");
 
 function functionBody(source: string, name: string): string {
   const start = source.indexOf(`export async function ${name}`);
@@ -28,18 +31,21 @@ describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
     expect(writeSheet).toContain("/api/import-course");
     expect(writeSheet).toContain("XMLHttpRequest");
     expect(writeRoute).toContain("export async function POST");
-    expect(writeRoute).toContain("importFromText");
+    expect(writeRoute).toContain("createSheetFromImport");
+    expect(writeRoute).not.toContain('from "@/lib/actions/course"');
+     expect(createSheet).not.toMatch(/^["']use server["']/m);
+    expect(createSheet).not.toMatch(/revalidatePath\(/);
     const generate = importPanel.slice(importPanel.indexOf("async function generate"));
     expect(generate).toContain("writeSheetFromBrowser");
     expect(generate).not.toMatch(/importFromText\(/);
   });
 
   it("n'invalide pas les listes avant d'ouvrir la fiche neuve", () => {
-    const importFromText = functionBody(courseActions, "importFromText");
-    expect(importFromText).not.toMatch(/revalidatePath\(/);
-    expect(importFromText).not.toMatch(/revalidateUserData\(/);
-    expect(importFromText).toContain("return { status: \"ok\", courseId: id }");
+    expect(createSheet).not.toMatch(/revalidatePath\(/);
+    expect(createSheet).not.toMatch(/revalidateUserData\(/);
+    expect(createSheet).toContain("return { status: \"ok\", courseId: id }");
     expect(courseActions).toContain("export async function refreshLibraryAfterImport");
+    expect(functionBody(courseActions, "importFromText")).toContain("createSheetFromImport");
   });
 
   it("rafraîchit les listes une fois la fiche peinte, sans Server Action", () => {
@@ -61,5 +67,16 @@ describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
     const beforeCall = ask.slice(0, ask.indexOf("generateCards("));
     expect(beforeCall).toContain("waitForPaint");
     expect(beforeCall).not.toMatch(/startTransition\(/);
+  });
+
+  it("garde le voile jusqu'à la fiche peinte", () => {
+    const finish = importPanel.slice(importPanel.indexOf("function finish"));
+    const success = finish.slice(0, finish.indexOf("releaseImportHandoff"));
+    expect(success).toContain("holdImportHandoff");
+    expect(success).toContain("courseId: result.courseId");
+    expect(success).toContain("openGeneratedPage");
+    expect(success).not.toMatch(/releaseImportHandoff\(/);
+    expect(appError).toContain("recoverGeneratedCourseIfAny");
+    expect(globalError).toContain("recoverGeneratedCourseIfAny");
   });
 });

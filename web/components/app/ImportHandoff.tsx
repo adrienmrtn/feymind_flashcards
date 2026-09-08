@@ -46,6 +46,7 @@ export function ImportHandoffOverlay() {
     <div
       className="fixed inset-0 z-40 flex items-center justify-center bg-background px-6"
       data-print="hide"
+      data-writing-sheet=""
     >
       <WritingSheetStatus name={handoff.name} startedAt={handoff.startedAt} />
     </div>

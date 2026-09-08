@@ -2,14 +2,15 @@ import { NextResponse } from "next/server";
 
 import { isChoosableVisibility, isGenerationLanguage, isSheetLength } from "@micabo/core";
 
-import { importFromText } from "@/lib/actions/course";
+import { createSheetFromImport } from "@/lib/import/create-sheet";
 
 /**
  * L'écriture de fiche **n'est pas une Server Action**, et n'est pas sous `/app`.
  *
  * Un `fetch` vers une URL du layout `/app` est intercepté par le routeur
  * Next (en-têtes RSC) : le JSON n'est pas un vol, d'où « This page couldn't
- * load » pendant que le cours s'écrit. `/api` n'a pas ce vol.
+ * load » pendant que le cours s'écrit. `/api` n'a pas ce vol, et
+ * l'écriture n'est plus une Server Action.
  */
 export const maxDuration = 120;
 
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
   const language =
     typeof row.language === "string" && isGenerationLanguage(row.language) ? row.language : undefined;
 
-  const result = await importFromText({
+  const result = await createSheetFromImport({
     text: row.text,
     hintTitle: typeof row.hintTitle === "string" ? row.hintTitle : undefined,
     sourceName: typeof row.sourceName === "string" ? row.sourceName : undefined,

@@ -35,8 +35,11 @@ describe("le relais d'import", () => {
   });
 
   it("ouvre la fiche par un chargement complet, hors du routeur", () => {
-    expect(handoff).toContain("window.location.href");
+    expect(handoff).toContain("form.submit()");
+    expect(handoff).toContain("window.stop()");
     expect(handoff).toContain("waitForPaint");
+    expect(handoff).toContain("recoverGeneratedCourseIfAny");
     expect(handoff).not.toMatch(/location\.assign\(/);
+    expect(handoff).not.toMatch(/window\.location\.href\s*=/);
   });
 });

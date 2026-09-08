@@ -4,35 +4,22 @@ import { revalidatePath } from "next/cache";
 
 import {
   DEFAULT_QUOTA,
-  SOURCE_LANGUAGE,
-  clampBlocks,
   clampQuota,
-  countryFor,
-  entitlement,
-  isGenerationLanguage,
-  isSheetLength,
-  sheetLanguage,
-  DEFAULT_VISIBILITY,
-  isChoosableVisibility,
   latexCommandsToUnicode,
-  lengthContaining,
-  normalizeSheet,
-  resolveEmoji,
-  sheetToPlainText,
+  sheetLanguage,
   type CourseVisibility,
   type GenerationLanguage,
   type QuestionQuota,
-  type SheetBlock,
   type SheetLength,
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
-import { listCourses } from "@/lib/data/courses";
-import { readEntitlement } from "@/lib/data/entitlement";
-import { attachFigureImages } from "@/lib/import/figures";
+import { createSheetFromImport, type ImportResult } from "@/lib/import/create-sheet";
 import { previewYouTubeOnServer, readYouTubeOnServer } from "@/lib/import/youtube-server";
 import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
+
+export type { ImportResult } from "@/lib/import/create-sheet";
 
 /**
  * L'import, et la production des cartes.
@@ -49,26 +36,8 @@ import { createClient } from "@/lib/supabase/server";
  * appareils qui remontent le même cours créeraient deux lignes.
  */
 
-export interface ImportResult {
-  status: "ok" | "error" | "paywall";
-  courseId?: string;
-  message?: string;
-}
-
-interface GeneratedCourse {
-  title?: string;
-  subject?: string;
-  emoji?: string;
-  summary?: string;
-  sheet?: { blocks?: unknown };
-  contextText?: string;
-}
-
 /** Le texte le plus court qui mérite qu'on dépense un appel. La fonction refuse en dessous. */
 const MINIMUM_TEXT = 40;
-const MAXIMUM_TEXT = 60_000;
-/** Même plafond que `generate-course` : un prompt, pas un second document. */
-const MAXIMUM_INSTRUCTIONS = 2_000;
 
 export async function importFromText(input: {
   text: string;
@@ -92,107 +61,8 @@ export async function importFromText(input: {
    */
   images?: string[];
 }): Promise<ImportResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { status: "error", message: await actionT("app.errors.signInImport") };
-
-  const blocked = await refuseSecondCourse();
-  if (blocked) return blocked;
-
-  const text = input.text.trim().slice(0, MAXIMUM_TEXT);
-  const images = acceptedImportImages(input.images);
-  if (text.length < MINIMUM_TEXT && images.length === 0) {
-    return { status: "error", message: await actionT("app.errors.textTooShort") };
-  }
-
-  // Le profil décide de **la façon dont le modèle écrit** : le stade d'étude commande le registre,
-  // et le pays commande à la fois le système scolaire de référence et la langue. Les envoyer
-  // n'est pas une option, c'est ce qui distingue une fiche de lycée d'une fiche de master.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("study_level, country_code, sheet_length, sheet_language")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const country = countryFor(profile?.country_code);
-  const language = isGenerationLanguage(input.language)
-    ? input.language
-    : SOURCE_LANGUAGE;
-
-  // Le réglage de l'écran gagne sur celui du profil, et le profil sert de défaut : c'est ce que
-  // fait l'app, où le curseur de l'import part de la préférence enregistrée. `blocks` commande, et
-  // `length` reste envoyé parce que la fonction Edge le comprend depuis toujours.
-  const stored = isSheetLength(profile?.sheet_length) ? profile.sheet_length : "standard";
-  const wantedBlocks = input.blocks ? clampBlocks(input.blocks) : undefined;
-  const length = wantedBlocks ? lengthContaining(wantedBlocks) : (input.length ?? stored);
-
-  const { data, error } = await supabase.functions.invoke("generate-course", {
-    body: {
-      text,
-      images: images.length > 0 ? images : undefined,
-      hintTitle: input.hintTitle,
-      sourceName: input.sourceName,
-      level: profile?.study_level ?? undefined,
-      country: country.code,
-      language,
-      length,
-      blocks: wantedBlocks,
-      source: input.source ?? "text",
-      instructions: (input.instructions ?? "").trim().slice(0, MAXIMUM_INSTRUCTIONS) || undefined,
-    },
-  });
-
-  if (error) return { status: "error", message: await readableError(error) };
-
-  const course = (data as { course?: GeneratedCourse } | null)?.course;
-  if (!course) return { status: "error", message: await actionT("app.errors.sheetWriteFailed") };
-
-  // La fiche est renormalisée avec **le même code que le serveur** : c'est la copie surveillée du
-  // module de fiche, donc les plafonds appliqués ici sont exactement ceux d'en face.
-  //
-  // Puis on recadre les figures, comme l'iPhone. La fonction Edge le fait déjà quand
-  // imagescript répond ; ici c'est le filet. Sans ça, un schéma trop lourd (ou un
-  // recadrage qui a lâché) arrivait avec sa légende et une boîte vide.
-  const drafted: SheetBlock[] = normalizeSheet(course.sheet ?? { blocks: [] });
-  const blocks = await attachFigureImages(drafted, images);
-  if (blocks.length === 0) {
-    return { status: "error", message: await actionT("app.errors.sheetUnusable") };
-  }
-
-  const title = (course.title ?? input.hintTitle ?? "Cours sans titre").trim();
-  const id = crypto.randomUUID();
-
-  const { error: insertError } = await supabase.from("courses").insert({
-    id,
-    user_id: user.id,
-    title,
-    subject: course.subject ?? null,
-    summary: course.summary ?? "",
-    emoji: resolveEmoji(course.emoji, course.subject, title),
-    source: input.source ?? "text",
-    source_file_name: input.sourceName ?? null,
-    // L'empreinte reconnaît un chapitre déjà importé. Elle est calculée sur le texte lu, pas sur
-    // la fiche : deux générations du même document donnent deux fiches et un seul cours.
-    fingerprint: await fingerprint(text.length >= 40 ? text : (images[0] ?? text)),
-    raw_text: text,
-    sheet: { blocks },
-    context_text: course.contextText ?? sheetToPlainText(blocks),
-    // Plus de dépôt public : sans choix, le cours reste entre soi.
-    visibility: isChoosableVisibility(input.visibility) ? input.visibility : DEFAULT_VISIBILITY,
-  });
-
-  if (insertError) return { status: "error", message: insertError.message };
-
-  // **Pas de revalidation ici.** Next relance un vol RSC de la page d'import
-  // dès qu'une action se termine ; `revalidatePath` en rajoutait un second,
-  // et l'ouverture de `/app/c/:id` partait dans le même tour. Le navigateur
-  // affichait « This page couldn't load », alors que le cours était déjà
-  // en base — d'où le refresh qui « réparait » tout. La fiche neuve n'est
-  // pas en cache (nouvel identifiant). Les listes se rafraîchissent une
-  // fois la fiche peinte, via `refreshLibraryAfterImport`.
-  return { status: "ok", courseId: id };
+  // L'écriture réelle n'est **pas** une Server Action : voir `create-sheet`.
+  return createSheetFromImport(input);
 }
 
 /**
@@ -424,47 +294,4 @@ async function readableError(error: unknown): Promise<string> {
 
 function fallbackMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Micabo n'a pas pu écrire cette fiche.";
-}
-
-const MAX_IMPORT_IMAGES = 6;
-const MAX_IMPORT_IMAGE_CHARS = 4_000_000;
-
-function acceptedImportImages(raw: unknown): string[] {
-  if (!Array.isArray(raw)) return [];
-  const out: string[] = [];
-  let total = 0;
-  for (const item of raw) {
-    if (typeof item !== "string") continue;
-    const url = item.trim();
-    if (!url.startsWith("data:image/")) continue;
-    total += url.length;
-    if (total > MAX_IMPORT_IMAGE_CHARS) break;
-    out.push(url);
-    if (out.length >= MAX_IMPORT_IMAGES) break;
-  }
-  return out;
-}
-
-/** Le premier cours est offert. Le deuxième s'achète — avant d'appeler le modèle. */
-async function refuseSecondCourse(): Promise<ImportResult | null> {
-  const [right, courses] = await Promise.all([readEntitlement(), listCourses()]);
-  if (
-    entitlement.canImportCourse(
-      right,
-      courses.map((course) => ({ isFromLibrary: course.is_from_library })),
-    )
-  ) {
-    return null;
-  }
-  return { status: "paywall", message: await actionT("app.errors.secondCoursePro") };
-}
-
-/** Empreinte du contenu, pour reconnaître un chapitre déjà importé. */
-async function fingerprint(text: string): Promise<string> {
-  const normalized = text.toLowerCase().replace(/\s+/g, " ").trim().slice(0, 4_000);
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalized));
-  return Array.from(new Uint8Array(digest))
-    .slice(0, 16)
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }
