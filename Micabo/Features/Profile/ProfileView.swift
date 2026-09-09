@@ -45,6 +45,12 @@ struct ProfileView: View {
         let bestStreak: Int
         let knowledge: [(level: StudyStats.KnowledgeLevel, count: Int)]
         let mostReviewed: [(front: String, passes: Int)]
+        /// La maîtrise, la même que la page Progrès du site : la moyenne des solidités.
+        let masteryPercent: Int
+        let byCourse: [CourseMastery]
+        let weak: [ExamReadiness.WeakCard]
+        /// Réponses sues du premier coup, sur tous les passages.
+        let accuracyPercent: Int
 
         init(snapshot: ProfileSnapshot) {
             courseCount = snapshot.courseCount
@@ -54,6 +60,10 @@ struct ProfileView: View {
             bestStreak = StudyStats.bestStreak(reviewDates: snapshot.reviewDates)
             knowledge = StudyStats.knowledgeDistribution(from: snapshot.knowledge)
             mostReviewed = snapshot.mostReviewed
+            masteryPercent = snapshot.masteryPercent
+            byCourse = snapshot.byCourse
+            weak = snapshot.weak
+            accuracyPercent = snapshot.accuracyPercent
             ReviewStreakStore.remember(streak: streak, best: bestStreak)
         }
 
@@ -64,7 +74,11 @@ struct ProfileView: View {
             streak: 0,
             bestStreak: 0,
             knowledge: [],
-            mostReviewed: []
+            mostReviewed: [],
+            masteryPercent: 0,
+            byCourse: [],
+            weak: [],
+            accuracyPercent: 0
         )
 
         private init(
@@ -74,7 +88,11 @@ struct ProfileView: View {
             streak: Int,
             bestStreak: Int,
             knowledge: [(level: StudyStats.KnowledgeLevel, count: Int)],
-            mostReviewed: [(front: String, passes: Int)]
+            mostReviewed: [(front: String, passes: Int)],
+            masteryPercent: Int,
+            byCourse: [CourseMastery],
+            weak: [ExamReadiness.WeakCard],
+            accuracyPercent: Int
         ) {
             self.courseCount = courseCount
             self.cardCount = cardCount
@@ -83,7 +101,20 @@ struct ProfileView: View {
             self.bestStreak = bestStreak
             self.knowledge = knowledge
             self.mostReviewed = mostReviewed
+            self.masteryPercent = masteryPercent
+            self.byCourse = byCourse
+            self.weak = weak
+            self.accuracyPercent = accuracyPercent
         }
+    }
+
+    /// La maîtrise d'un cours, déjà aplatie : un titre, un emoji, un chiffre.
+    struct CourseMastery: Identifiable, Sendable {
+        let id: UUID
+        let title: String
+        let emoji: String
+        let percent: Int
+        let cards: Int
     }
 
     /// Ce qu'il faut du profil, déjà aplati : le calcul des totaux peut quitter le
@@ -94,10 +125,29 @@ struct ProfileView: View {
         let reviewDates: [Date]
         let knowledge: [(state: CardState, intervalDays: Double)]
         let mostReviewed: [(front: String, passes: Int)]
+        let masteryPercent: Int
+        let byCourse: [CourseMastery]
+        let weak: [ExamReadiness.WeakCard]
+        let accuracyPercent: Int
 
         static func load(courses: [Course], in context: ModelContext) -> ProfileSnapshot {
             let cards = (try? context.fetch(FetchDescriptor<Flashcard>())) ?? []
             let logs = (try? context.fetch(FetchDescriptor<ReviewLog>())) ?? []
+            let now = Date()
+            let usable = cards.filter { !$0.isSuspended }
+            let byCourse: [CourseMastery] = courses.compactMap { course in
+                let own = course.cards.filter { !$0.isSuspended }
+                guard !own.isEmpty else { return nil }
+                return CourseMastery(
+                    id: course.id,
+                    title: course.title,
+                    emoji: course.emoji,
+                    percent: ExamReadiness.masteryPercent(of: own, now: now),
+                    cards: own.count
+                )
+            }
+            .sorted { $0.percent == $1.percent ? $0.title < $1.title : $0.percent > $1.percent }
+            let again = logs.filter { $0.rating == .again }.count
             var counts: [UUID: (front: String, passes: Int)] = [:]
             for log in logs {
                 guard let card = log.card else { continue }
@@ -113,7 +163,11 @@ struct ProfileView: View {
                 cardCount: cards.count,
                 reviewDates: logs.map(\.reviewedAt),
                 knowledge: cards.map { ($0.state, $0.intervalDays) },
-                mostReviewed: Array(top)
+                mostReviewed: Array(top),
+                masteryPercent: ExamReadiness.masteryPercent(of: usable, now: now),
+                byCourse: byCourse,
+                weak: ExamReadiness.weakCards(in: usable, now: now, limit: 5),
+                accuracyPercent: logs.isEmpty ? 0 : Int((Double(logs.count - again) / Double(logs.count) * 100).rounded())
             )
         }
     }
@@ -129,7 +183,9 @@ struct ProfileView: View {
                     header
                     streakPanel(metrics)
                     totalsStrip(metrics)
+                    masteryPanel(metrics)
                     knowledgeChart(metrics)
+                    weakPanel(metrics)
                     mostReviewed(metrics)
                     weekRanking
                     friendsRow
@@ -311,6 +367,14 @@ struct ProfileView: View {
                 "\(metrics.courseCount)",
                 i18n?.t("ios.courseUnit", ["count": "\(metrics.courseCount)"]) ?? "cours"
             )
+            // La justesse, comme sur la page Progrès du site : ce qu'on a su du premier coup.
+            if metrics.hasReviews {
+                columnDivider
+                total(
+                    "\(metrics.accuracyPercent) %",
+                    i18n?.t("app.home.stats.accuracy") ?? "Justesse"
+                )
+            }
         }
         .padding(.vertical, 15)
         .frame(maxWidth: .infinity)
@@ -318,6 +382,137 @@ struct ProfileView: View {
     }
 
     // MARK: - La maîtrise
+
+    /// **Ce qu'on sait, en un chiffre, puis cours par cours** - la page Progrès du site.
+    /// La moyenne des solidités, pas la part de cartes acquises : une carte à mi-chemin
+    /// compte pour la moitié, sinon la barre reste à zéro deux semaines puis saute.
+    private func masteryPanel(_ metrics: Metrics) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(i18n?.t("app.home.mastery.title") ?? "Maîtrise")
+                .font(MicaboFont.hanken(12, weight: .semibold))
+                .foregroundStyle(MicaboColor.inkTertiary)
+                .textCase(.uppercase)
+                .tracking(0.6)
+
+            if metrics.cardCount == 0 {
+                Text(i18n?.t("app.home.mastery.empty") ?? "Importe un cours pour commencer à mesurer.")
+                    .font(MicaboFont.hanken(13.5, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(metrics.masteryPercent)")
+                            .font(MicaboFont.number(34, weight: .bold))
+                            .foregroundStyle(MicaboColor.ink)
+                            .monospacedDigit()
+                        Text("%")
+                            .font(MicaboFont.hanken(16, weight: .semibold))
+                            .foregroundStyle(MicaboColor.inkSecondary)
+                    }
+                    Text(i18n?.t("app.home.mastery.of", ["count": "\(metrics.cardCount)"]) ?? "sur \(metrics.cardCount) cartes")
+                        .font(MicaboFont.hanken(12.5, weight: .medium))
+                        .foregroundStyle(MicaboColor.inkTertiary)
+                }
+
+                masteryBar(metrics.masteryPercent, height: 8)
+
+                if !metrics.byCourse.isEmpty {
+                    Text(i18n?.t("app.home.mastery.byCourse") ?? "Par cours")
+                        .font(MicaboFont.hanken(12, weight: .semibold))
+                        .foregroundStyle(MicaboColor.inkTertiary)
+                        .padding(.top, 4)
+
+                    VStack(spacing: 10) {
+                        ForEach(metrics.byCourse) { entry in
+                            HStack(spacing: 10) {
+                                Text(entry.emoji)
+                                    .font(.system(size: 15))
+                                Text(entry.title)
+                                    .font(MicaboFont.hanken(13.5, weight: .medium))
+                                    .foregroundStyle(MicaboColor.ink)
+                                    .lineLimit(1)
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                masteryBar(entry.percent, height: 6)
+                                    .frame(width: 64)
+                                Text("\(entry.percent) %")
+                                    .font(MicaboFont.number(12.5, weight: .semibold))
+                                    .foregroundStyle(MicaboColor.inkSecondary)
+                                    .monospacedDigit()
+                                    .frame(width: 44, alignment: .trailing)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .micaboGroup()
+    }
+
+    private func masteryBar(_ percent: Int, height: CGFloat) -> some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule().fill(MicaboColor.surfaceMuted)
+                Capsule()
+                    .fill(MicaboColor.accent)
+                    .frame(width: proxy.size.width * CGFloat(max(2, min(100, percent))) / 100)
+            }
+        }
+        .frame(height: height)
+    }
+
+    /// **Ce qui résiste** : les cartes les plus ratées, celles qui passent en premier dans
+    /// les sessions. Absent tant que rien ne résiste - une section vide qui dit « rien »
+    /// n'apprend rien.
+    @ViewBuilder
+    private func weakPanel(_ metrics: Metrics) -> some View {
+        if !metrics.weak.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(i18n?.t("app.home.weak.title") ?? "Ce qui résiste")
+                    .font(MicaboFont.hanken(12, weight: .semibold))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .textCase(.uppercase)
+                    .tracking(0.6)
+
+                Text(i18n?.t("app.home.weak.lead") ?? "Tes cartes les plus ratées. Elles passent en premier.")
+                    .font(MicaboFont.hanken(13, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                VStack(spacing: 0) {
+                    ForEach(Array(metrics.weak.enumerated()), id: \.element.id) { index, card in
+                        HStack(alignment: .top, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(FormulaRenderer.stripped(card.front))
+                                    .font(MicaboFont.hanken(14, weight: .medium))
+                                    .foregroundStyle(MicaboColor.ink)
+                                    .lineLimit(2)
+                                Text(i18n?.t("app.home.weak.line", ["again": "\(card.againCount)", "reviews": "\(card.reviews)"])
+                                    ?? "Ratée \(card.againCount) fois sur \(card.reviews) passages")
+                                    .font(MicaboFont.hanken(12.5, weight: .regular))
+                                    .foregroundStyle(MicaboColor.inkTertiary)
+                            }
+                            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+
+                            if card.isStubborn {
+                                MicaboBadge(text: i18n?.t("app.plan.sheet.stubborn") ?? "À revoir", tone: .warm)
+                            }
+                        }
+                        .padding(.vertical, 11)
+
+                        if index < metrics.weak.count - 1 {
+                            MicaboHairline()
+                        }
+                    }
+                }
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .micaboGroup()
+        }
+    }
 
     private func knowledgeChart(_ metrics: Metrics) -> some View {
         let buckets = metrics.knowledge
