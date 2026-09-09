@@ -79,8 +79,17 @@ interface Draft {
 
 export function ImportPanel({
   initialLength = DEFAULT_SHEET_LENGTH,
+  onImported,
 }: {
   initialLength?: SheetLength;
+  /**
+   * Où va l'étudiant une fois la fiche écrite.
+   *
+   * Sans rappel, on ouvre la fiche : c'est ce qu'on vient chercher quand on importe pour
+   * importer. Avec, l'import est **une étape dans autre chose** - la création d'un plan - et
+   * quitter le parcours pour montrer la fiche ferait perdre le fil.
+   */
+  onImported?: (courseId: string) => void;
 }) {
   const { t } = useI18n();
   const [extra, setExtra] = useState<Extra>(null);
@@ -122,6 +131,16 @@ export function ImportPanel({
       // Lever le voile **avant** le chargement : le garder hydratait la
       // fiche avec un état que le serveur n'a pas.
       releaseImportHandoff();
+      if (onImported) {
+        setPhase("repos");
+        setDraft(null);
+        setText("");
+        setTitle("");
+        setUrl("");
+        setFileName(null);
+        onImported(result.courseId);
+        return;
+      }
       openGeneratedPage(`/app/c/${result.courseId}`);
       return;
     }

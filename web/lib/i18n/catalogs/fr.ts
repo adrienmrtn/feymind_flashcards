@@ -431,6 +431,8 @@ export const fr = {
     feedback: "Retours",
     openCourses: "Ouverts",
       plan: "Plan",
+      material: "Matériel",
+    progress: "Progrès",
   },
   app: appFr,
   copy: copyFr,

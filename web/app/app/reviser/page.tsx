@@ -26,6 +26,10 @@ import { loadNewCardBudget } from "@/lib/data/reviews";
 /**
  * La session, **et l'écran qui la précède.**
  *
+ * Depuis que le plan est la page centrale, cet écran a un rôle plus étroit et plus clair :
+ * réviser **hors** de tout examen, c'est-à-dire tenir sa mémoire à jour sur ce qui n'a pas de
+ * date. Ce qui est au programme d'une épreuve est servi par le plan, dans son ordre à lui.
+ *
  * `?cours=<id>` restreint la session à un cours. La file reste construite par le
  * **même `buildQueue`**, seulement sur un sous-ensemble de cartes. Le plafond de
  * neuves est celui du **jour** : une session depuis un cours consomme le même

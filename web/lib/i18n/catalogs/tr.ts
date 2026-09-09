@@ -430,6 +430,8 @@ export const tr: Catalog = {
     feedback: "Geri bildirimler",
     openCourses: "Açık",
       plan: "Plan",
+      material: "Malzeme",
+    progress: "İlerleme",
   },
   app: appTr,
   copy: copyTr,

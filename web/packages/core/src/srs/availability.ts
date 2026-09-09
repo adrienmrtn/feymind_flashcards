@@ -106,10 +106,6 @@ export function capacityWindow(
   return window;
 }
 
-/** Les cartes qu'on peut passer dans un temps donné. */
-export function cardsForMinutes(minutes: number): number {
-  return Math.max(0, Math.floor(clampMinutes(minutes) * CARDS_PER_MINUTE));
-}
 
 /** Le temps que coûte un nombre de passages, arrondi à la minute supérieure. */
 export function minutesForCards(cards: number): number {
@@ -122,14 +118,6 @@ export function weeklyTotal(weekly: WeeklyMinutes): number {
   return weekly.reduce((sum, value) => sum + clampMinutes(value), 0);
 }
 
-/** Les jours utilisables d'une fenêtre : ceux dont la capacité n'est pas nulle. */
-export function usableOffsets(capacities: readonly number[]): number[] {
-  const offsets: number[] = [];
-  capacities.forEach((minutes, offset) => {
-    if (minutes > 0) offsets.push(offset);
-  });
-  return offsets;
-}
 
 /**
  * Combien de jours utilisables séparent aujourd'hui d'une date.

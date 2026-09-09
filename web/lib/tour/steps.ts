@@ -55,11 +55,6 @@ const HOME: Tour = {
       body: "app.tour.home.import.body",
     },
     {
-      anchor: "taches",
-      title: "app.tour.home.tasks.title",
-      body: "app.tour.home.tasks.body",
-    },
-    {
       anchor: "semaine",
       title: "app.tour.home.week.title",
       body: "app.tour.home.week.body",
@@ -298,9 +293,9 @@ export function tourFor(input: { pathname: string; inSession: boolean }): Tour |
   const path = input.pathname.replace(/\/+$/, "") || "/app";
 
   if (path === "/app/reviser") return input.inSession ? SESSION : REVIEW;
-  if (path === "/app") return HOME;
+  if (path === "/app") return PLAN;
   if (path === "/app/cours") return COURSES;
-  if (path === "/app/plan") return PLAN;
+  if (path === "/app/progres") return HOME;
   if (path === "/app/amis") return FRIENDS;
   if (path === "/app/reglages") return SETTINGS;
   if (path === "/app/importer") return IMPORT;

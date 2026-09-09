@@ -432,6 +432,8 @@ export const en: Catalog = {
     feedback: "Feedback",
     openCourses: "Open",
       plan: "Plan",
+      material: "Material",
+    progress: "Progress",
   },
   app: appEn,
   copy: copyEn,

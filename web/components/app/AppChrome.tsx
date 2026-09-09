@@ -5,9 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
-  CalendarDays,
-  House,
+  CalendarCheck,
   Inbox,
+  LineChart,
   Repeat,
   Settings,
   Upload,
@@ -43,10 +43,10 @@ import { WEBSITE_PASTEL } from "@/lib/pastel";
 // Les liens du chrome préchargent : ce sont les quatre pages ouvertes en boucle, et elles
 // lisent toutes des instantanés déjà mis en cache.
 const DESTINATIONS = [
-  { href: "/app", labelKey: "nav.home", icon: House },
+  { href: "/app", labelKey: "nav.plan", icon: CalendarCheck },
   { href: "/app/reviser", labelKey: "nav.review", icon: Repeat },
-  { href: "/app/cours", labelKey: "nav.courses", icon: BookOpen },
-  { href: "/app/plan", labelKey: "nav.plan", icon: CalendarDays },
+  { href: "/app/cours", labelKey: "nav.material", icon: BookOpen },
+  { href: "/app/progres", labelKey: "nav.progress", icon: LineChart },
 ] as const;
 
 /** Ce qui vit sous l'avatar : rarement ouvert, jamais dans le chemin du travail. */
@@ -62,9 +62,11 @@ function sectionLabel(pathname: string, t: (key: string) => string): string {
   if (pathname.startsWith("/app/paquet")) {
     return t("nav.decks");
   }
+  if (pathname.startsWith("/app/plan/nouveau")) return t("app.newPlan.title");
   if (pathname.startsWith("/app/plan") || pathname.startsWith("/app/examens")) {
     return t("nav.plan");
   }
+  if (pathname.startsWith("/app/progres")) return t("nav.progress");
   if (pathname.startsWith("/app/retours")) return t("nav.feedback");
   if (pathname.startsWith("/app/amis") || pathname.startsWith("/app/u/")) return t("nav.friends");
   if (pathname.startsWith("/app/profil")) return t("nav.profile");
@@ -76,11 +78,18 @@ function sectionLabel(pathname: string, t: (key: string) => string): string {
   ) {
     return t("nav.courses");
   }
-  return t("nav.home");
+  return t("nav.plan");
 }
 
 function isCurrent(pathname: string, href: string): boolean {
-  if (href === "/app") return pathname === "/app";
+  // Le plan est la racine, et tout ce qui le prolonge s'allume avec lui.
+  if (href === "/app") {
+    return (
+      pathname === "/app" ||
+      pathname.startsWith("/app/plan") ||
+      pathname.startsWith("/app/examens")
+    );
+  }
   if (href === "/app/cours") {
     // Un paquet est un cours : ses anciennes routes s'allument sur la même destination.
     return (
@@ -89,9 +98,6 @@ function isCurrent(pathname: string, href: string): boolean {
       pathname.startsWith("/app/b/") ||
       pathname.startsWith("/app/paquet")
     );
-  }
-  if (href === "/app/plan") {
-    return pathname.startsWith("/app/plan") || pathname.startsWith("/app/examens");
   }
   if (href === "/app/profil") return pathname.startsWith("/app/profil");
   if (href === "/app/amis") {
@@ -286,7 +292,7 @@ function NavRow({
 }: {
   href: string;
   label: string;
-  icon: typeof House;
+  icon: typeof BookOpen;
   current: boolean;
 }) {
   return (

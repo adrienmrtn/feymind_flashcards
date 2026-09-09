@@ -7,6 +7,8 @@ import {
   examCountdownLabel,
   masteryByCourse,
   masteryForCourses,
+  mockQuestionCount,
+  mockScore,
   resolveEmoji,
   startOfDay,
   weakCards,
@@ -15,6 +17,7 @@ import {
 import { ExamSheet, type SheetCourse } from "@/components/app/plan/ExamSheet";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { loadCardDifficulty } from "@/lib/data/difficulty";
+import { listMockResults } from "@/lib/data/mocks";
 import { getTranslator } from "@/lib/i18n/server";
 
 /** Combien de points faibles on montre : au-delà, la liste cesse d'être une liste d'actions. */
@@ -36,11 +39,12 @@ export default async function ExamSheetPage({
   const { id } = await params;
   const { t } = await getTranslator();
 
-  const [exams, courses, snapshots, difficulties] = await Promise.all([
+  const [exams, courses, snapshots, difficulties, mocks] = await Promise.all([
     listExams(),
     listCourses(),
     listCardSnapshots(),
     loadCardDifficulty(),
+    listMockResults(),
   ]);
 
   const exam = exams.find((row) => row.id === id);
@@ -127,6 +131,15 @@ export default async function ExamSheetPage({
         courses={sheetCourses}
         weak={weak}
         availableKinds={[...kinds]}
+        canRunMock={mockQuestionCount(overall.cardCount) > 0}
+        mocks={mocks
+          .filter((mock) => mock.examId === exam.id)
+          .map((mock) => ({
+            id: mock.id,
+            score: mockScore(mock),
+            questionCount: mock.questionCount,
+            finishedAt: mock.finishedAt.toISOString().slice(0, 10),
+          }))}
       />
     </>
   );
