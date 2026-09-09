@@ -50,6 +50,21 @@ export function targetScoreFromIntensity(intensity: ExamIntensity): number {
   return 15;
 }
 
+/**
+ * La note visée, ramenée à un pourcentage de copie.
+ *
+ * L'échelle canonique est **sur vingt** : 15 veut dire 15/20, donc trois quarts des points.
+ * C'est cette conversion qui manquait entre le plan et ses graphes. Ils recevaient la note
+ * brute et la lisaient en pourcentage - un objectif de 20/20 devenait « objectif : 20 % »,
+ * posé au cinquième d'une jauge qui va jusqu'à cent, sous une ligne que rien ne nommait.
+ *
+ * `null` reste `null` : une épreuve sans note visée n'a pas de trait d'objectif.
+ */
+export function targetPercent(score: number | null | undefined): number | null {
+  if (score == null || !Number.isFinite(score)) return null;
+  return Math.round((clampTargetScore(score) / TARGET_SCORE_MAX) * 100);
+}
+
 export function desiredGradeScale(country?: string | null): DesiredGradeScale {
   const ticks = gradeTicks(country);
   return {

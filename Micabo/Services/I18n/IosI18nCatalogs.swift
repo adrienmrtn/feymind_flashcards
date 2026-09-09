@@ -1,6 +1,36 @@
 /// Phrases propres à l'iPhone. Les clés partagées vivent dans `SharedI18nCatalogs`.
 enum IosI18nCatalogs {
     static let fr: [String: String] = [
+        // Le parcours d'accueil : l'épreuve en trois écrans, Feynman, les résultats,
+        // et les deux moyennes qui précèdent la construction du parcours.
+        "ios.examPlanTitle": "Ton plan se pose\njusqu'au jour J.",
+        "ios.examPlanLead": "Tu donnes la date. Micabo répartit le travail, et resserre à l'approche.",
+        "ios.examMockTitle": "Un examen blanc,\nà J-7 et à J-2.",
+        "ios.examMockLead": "Vingt questions sur tout le programme, en temps imparti. C'est le seul moment où Micabo mesure au lieu d'estimer.",
+        "ios.examMockPaper": "Ta copie",
+        "ios.examMockMinutes": "{n} min",
+        "ios.examMockScore": "Ta note sur cette copie",
+        "ios.examWeakTitle": "Et ce qui résiste\npasse devant.",
+        "ios.examWeakLead": "Les cartes que tu rates le plus remontent en tête de file. C'est là que la note se perd.",
+        "ios.examWeakLine": "Ratée {again} fois sur {reviews} passages",
+        "ios.examWeakBadge": "À revoir",
+        "ios.feynmanTitle": "Explique-le à voix haute.\nTu sauras si tu sais.",
+        "ios.feynmanLead": "Un QCM se devine, un texte à trou se retrouve. Une explication dite tout haut, non.",
+        "ios.feynmanQuestion": "Explique le cycle de l'eau, comme à quelqu'un qui ne l'a jamais vu.",
+        "ios.feynmanGap": "C'est exactement là que ta fiche a une réponse.",
+        "ios.resultsTitle": "En moyenne, les notes\nmontent de 17 %.",
+        "ios.resultsLead": "Sur les étudiants qui suivent leur plan jusqu'au jour J.",
+        "ios.resultsBefore": "Semaine 1",
+        "ios.resultsAfter": "Semaine 12",
+        "ios.averageTitle": "Quelle est ta moyenne\nen ce moment ?",
+        "ios.averageLead": "Personne ne te juge. C'est un point de départ, pas un bulletin.",
+        "ios.averageBelow": "Moins de {grade}",
+        "ios.averageBelowShort": "Aujourd'hui",
+        "ios.targetTitle": "Et tu vises\ncombien ?",
+        "ios.targetLead": "Vise ce qui te ferait vraiment plaisir, pas ce qui te paraît raisonnable.",
+        "ios.targetAtTop": "Tu es déjà en haut du barème. On va t'y garder.",
+        "ios.togetherTitle": "On va t'aider\nà y arriver.",
+        "ios.togetherLead": "D'autres sont partis d'où tu pars. Voilà le chemin.",
         "ios.welcomeTitle": "Apprends tout,\nplus vite.",
         "ios.countryTitle": "Tu étudies où ?",
         "ios.levelTitle": "Tu en es où ?",
@@ -510,6 +540,36 @@ enum IosI18nCatalogs {
     ]
 
     static let de: [String: String] = [
+        // Le parcours d'accueil : l'épreuve en trois écrans, Feynman, les résultats,
+        // et les deux moyennes qui précèdent la construction du parcours.
+        "ios.examPlanTitle": "Dein Plan reicht\nbis zum Prüfungstag.",
+        "ios.examPlanLead": "Du nennst das Datum. Micabo verteilt die Arbeit und zieht sie zum Schluss enger.",
+        "ios.examMockTitle": "Eine Probeklausur,\nan Tag 7 und Tag 2.",
+        "ios.examMockLead": "Zwanzig Fragen zum ganzen Stoff, auf Zeit. Der einzige Moment, in dem Micabo misst statt schätzt.",
+        "ios.examMockPaper": "Deine Arbeit",
+        "ios.examMockMinutes": "{n} Min",
+        "ios.examMockScore": "Dein Ergebnis",
+        "ios.examWeakTitle": "Und was hakt,\nkommt zuerst.",
+        "ios.examWeakLead": "Die Karten, die du am häufigsten verfehlst, rücken nach vorn. Dort gehen die Punkte verloren.",
+        "ios.examWeakLine": "{again} von {reviews} Durchgängen verfehlt",
+        "ios.examWeakBadge": "Nochmal",
+        "ios.feynmanTitle": "Sag es laut.\nDann weißt du es.",
+        "ios.feynmanLead": "Ein Kreuz lässt sich raten, eine Lücke füllen. Eine laut gesprochene Erklärung nicht.",
+        "ios.feynmanQuestion": "Erkläre den Wasserkreislauf, als hätte ihn nie jemand gesehen.",
+        "ios.feynmanGap": "Genau dort steht die Antwort in deinem Lernzettel.",
+        "ios.resultsTitle": "Im Schnitt steigen\ndie Noten um 17 %.",
+        "ios.resultsLead": "Bei Studierenden, die ihren Plan bis zum Prüfungstag durchziehen.",
+        "ios.resultsBefore": "Woche 1",
+        "ios.resultsAfter": "Woche 12",
+        "ios.averageTitle": "Wie ist dein Schnitt\ngerade?",
+        "ios.averageLead": "Niemand urteilt. Das ist ein Ausgangspunkt, kein Zeugnis.",
+        "ios.averageBelow": "Schlechter als {grade}",
+        "ios.averageBelowShort": "Heute",
+        "ios.targetTitle": "Und was willst\ndu erreichen?",
+        "ios.targetLead": "Ziel auf das, was dich wirklich freuen würde, nicht auf das Vernünftige.",
+        "ios.targetAtTop": "Du bist schon ganz oben. Wir halten dich dort.",
+        "ios.togetherTitle": "Wir helfen dir\ndahin.",
+        "ios.togetherLead": "Andere sind da gestartet, wo du stehst. Das ist der Weg.",
         "ios.welcomeTitle": "Lerne alles,\nschneller.",
         "ios.countryTitle": "Wo lernst du?",
         "ios.levelTitle": "Wo stehst du?",
@@ -1019,6 +1079,36 @@ enum IosI18nCatalogs {
     ]
 
     static let es: [String: String] = [
+        // Le parcours d'accueil : l'épreuve en trois écrans, Feynman, les résultats,
+        // et les deux moyennes qui précèdent la construction du parcours.
+        "ios.examPlanTitle": "Tu plan llega\nhasta el día del examen.",
+        "ios.examPlanLead": "Tú das la fecha. Micabo reparte el trabajo y aprieta al acercarse.",
+        "ios.examMockTitle": "Un examen de prueba,\na 7 y a 2 días.",
+        "ios.examMockLead": "Veinte preguntas de todo el temario, con tiempo. Es el único momento en que Micabo mide en vez de estimar.",
+        "ios.examMockPaper": "Tu examen",
+        "ios.examMockMinutes": "{n} min",
+        "ios.examMockScore": "Tu nota en este examen",
+        "ios.examWeakTitle": "Y lo que se resiste\npasa primero.",
+        "ios.examWeakLead": "Las tarjetas que más fallas suben al principio de la cola. Ahí es donde se pierde la nota.",
+        "ios.examWeakLine": "Fallada {again} veces de {reviews}",
+        "ios.examWeakBadge": "Repasar",
+        "ios.feynmanTitle": "Dilo en voz alta.\nAsí sabrás si lo sabes.",
+        "ios.feynmanLead": "Un test se adivina, un hueco se rellena. Una explicación en voz alta, no.",
+        "ios.feynmanQuestion": "Explica el ciclo del agua, como a alguien que no lo ha visto nunca.",
+        "ios.feynmanGap": "Ahí es exactamente donde tu ficha tiene la respuesta.",
+        "ios.resultsTitle": "De media, las notas\nsuben un 17 %.",
+        "ios.resultsLead": "Entre los estudiantes que siguen su plan hasta el día del examen.",
+        "ios.resultsBefore": "Semana 1",
+        "ios.resultsAfter": "Semana 12",
+        "ios.averageTitle": "¿Cuál es tu media\nahora mismo?",
+        "ios.averageLead": "Nadie te juzga. Es un punto de partida, no un boletín.",
+        "ios.averageBelow": "Menos de {grade}",
+        "ios.averageBelowShort": "Hoy",
+        "ios.targetTitle": "¿Y a cuánto\naspiras?",
+        "ios.targetLead": "Apunta a lo que de verdad te haría feliz, no a lo que suena razonable.",
+        "ios.targetAtTop": "Ya estás en lo más alto de la escala. Te mantendremos ahí.",
+        "ios.togetherTitle": "Te vamos a ayudar\na llegar.",
+        "ios.togetherLead": "Otros salieron de donde tú sales. Este es el camino.",
         "ios.welcomeTitle": "Aprende todo,\nmás rápido.",
         "ios.countryTitle": "¿Dónde estudias?",
         "ios.levelTitle": "¿En qué punto estás?",
@@ -1528,6 +1618,36 @@ enum IosI18nCatalogs {
     ]
 
     static let tr: [String: String] = [
+        // Le parcours d'accueil : l'épreuve en trois écrans, Feynman, les résultats,
+        // et les deux moyennes qui précèdent la construction du parcours.
+        "ios.examPlanTitle": "Planın sınav gününe\nkadar uzanır.",
+        "ios.examPlanLead": "Tarihi sen verirsin. Micabo işi dağıtır ve yaklaştıkça sıklaştırır.",
+        "ios.examMockTitle": "Deneme sınavı,\n7 ve 2 gün kala.",
+        "ios.examMockLead": "Tüm müfredattan yirmi soru, süreli. Micabo'nun tahmin etmek yerine ölçtüğü tek an.",
+        "ios.examMockPaper": "Kâğıdın",
+        "ios.examMockMinutes": "{n} dk",
+        "ios.examMockScore": "Bu kâğıttaki notun",
+        "ios.examWeakTitle": "Ve direnen\nöne geçer.",
+        "ios.examWeakLead": "En çok kaçırdığın kartlar sıranın başına gelir. Puan orada kaybolur.",
+        "ios.examWeakLine": "{reviews} geçişte {again} kez kaçırıldı",
+        "ios.examWeakBadge": "Tekrar",
+        "ios.feynmanTitle": "Yüksek sesle anlat.\nBildiğini o zaman anlarsın.",
+        "ios.feynmanLead": "Test tahmin edilir, boşluk doldurulur. Yüksek sesle anlatım edilmez.",
+        "ios.feynmanQuestion": "Su döngüsünü, hiç görmemiş birine anlatır gibi anlat.",
+        "ios.feynmanGap": "Cevap tam da orada, özetinde duruyor.",
+        "ios.resultsTitle": "Ortalamada notlar\n%17 yükseliyor.",
+        "ios.resultsLead": "Planını sınav gününe kadar sürdüren öğrencilerde.",
+        "ios.resultsBefore": "1. hafta",
+        "ios.resultsAfter": "12. hafta",
+        "ios.averageTitle": "Şu anki ortalaman\nkaç?",
+        "ios.averageLead": "Kimse seni yargılamıyor. Bu bir başlangıç noktası, karne değil.",
+        "ios.averageBelow": "{grade} altı",
+        "ios.averageBelowShort": "Bugün",
+        "ios.targetTitle": "Peki hedefin\nkaç?",
+        "ios.targetLead": "Makul olana değil, seni gerçekten mutlu edecek olana nişan al.",
+        "ios.targetAtTop": "Zaten en üsttesin. Seni orada tutacağız.",
+        "ios.togetherTitle": "Oraya ulaşmana\nyardım edeceğiz.",
+        "ios.togetherLead": "Başkaları da senin durduğun yerden başladı. Yol bu.",
         "ios.welcomeTitle": "Her şeyi öğren,\ndaha hızlı.",
         "ios.countryTitle": "Nerede okuyorsun?",
         "ios.levelTitle": "Neredesin?",
@@ -2036,9 +2156,49 @@ enum IosI18nCatalogs {
         "ios.level.otherDetail": "Dengeli yazım, varsayılan seviye yok.",
     ]
 
+    /// **L'anglais, en cours de rattrapage.**
+    ///
+    /// Cette table n'est pas complète, et c'est volontaire : elle porte les clés écrites
+    /// depuis qu'on s'est aperçu qu'un anglophone lisait le parcours en français. Ce qui n'y
+    /// est pas encore retombe sur le catalogue partagé, puis sur le français - le
+    /// comportement d'avant, ni meilleur ni pire. Chaque écran retouché ajoute les siennes.
+    static let en: [String: String] = [
+        // Le parcours d'accueil : l'épreuve en trois écrans, Feynman, les résultats,
+        // et les deux moyennes qui précèdent la construction du parcours.
+        "ios.examPlanTitle": "Your plan runs\nall the way to the exam.",
+        "ios.examPlanLead": "You give the date. Micabo spreads the work, and tightens as it nears.",
+        "ios.examMockTitle": "A mock exam,\nat D-7 and D-2.",
+        "ios.examMockLead": "Twenty questions on the whole syllabus, against the clock. The one moment Micabo measures instead of estimating.",
+        "ios.examMockPaper": "Your paper",
+        "ios.examMockMinutes": "{n} min",
+        "ios.examMockScore": "Your score on this paper",
+        "ios.examWeakTitle": "And what resists\ncomes first.",
+        "ios.examWeakLead": "The cards you miss most move to the front of the queue. That is where the marks go.",
+        "ios.examWeakLine": "Missed {again} times out of {reviews}",
+        "ios.examWeakBadge": "To redo",
+        "ios.feynmanTitle": "Say it out loud.\nThen you will know.",
+        "ios.feynmanLead": "A multiple choice can be guessed, a gap can be filled in. An explanation spoken aloud cannot.",
+        "ios.feynmanQuestion": "Explain the water cycle, as if to someone who has never seen it.",
+        "ios.feynmanGap": "That is exactly where your sheet has the answer.",
+        "ios.resultsTitle": "On average, grades\nrise by 17 %.",
+        "ios.resultsLead": "Among students who follow their plan to exam day.",
+        "ios.resultsBefore": "Week 1",
+        "ios.resultsAfter": "Week 12",
+        "ios.averageTitle": "What is your average\nright now?",
+        "ios.averageLead": "Nobody is judging. This is a starting point, not a report card.",
+        "ios.averageBelow": "Below {grade}",
+        "ios.averageBelowShort": "Today",
+        "ios.targetTitle": "And what are you\naiming for?",
+        "ios.targetLead": "Aim at what would genuinely make you happy, not at what sounds reasonable.",
+        "ios.targetAtTop": "You are already at the top of the scale. We will keep you there.",
+        "ios.togetherTitle": "We will help you\nget there.",
+        "ios.togetherLead": "Others started where you are. Here is the road.",
+    ]
+
     static func table(for locale: String) -> [String: String] {
         switch locale {
         case "de": de
+        case "en": en
         case "es": es
         case "tr": tr
         default: fr

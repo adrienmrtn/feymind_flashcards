@@ -484,6 +484,7 @@ export const appEs = {
   exam: {
     schedule: {
       freeShort: "libre",
+      cardsShort: "tarjetas",
       examShort: "Examen",
       mockShort: "Simulacro",
       offShort: "pausa",
@@ -510,6 +511,7 @@ export const appEs = {
       down: "−{points} puntos",
       flat: "estable",
       noMock: "Ningún simulacro hecho. Es la única medida que no es una estimación: vale el cuarto de hora.",
+      single: "Un solo examen de prueba por ahora: {score} % el {day}. El siguiente dirá si sube.",
       gapWide: "Tus tarjetas dicen {mastery} % y tu simulacro {score} %. Esa diferencia se cierra trabajando sin pistas, no repasando más.",
       gapClose: "Tus tarjetas y tu simulacro concuerdan. Sigue así.",
       seeAll: "Ver todo tu progreso",
@@ -629,6 +631,7 @@ export const appEs = {
     mock: {
       aria: "Puntuaciones de los simulacros, en orden",
       point: "{score} % el {day} ({total} preguntas)",
+      target: "objetivo {percent} %",
     },
   },
   progress: {

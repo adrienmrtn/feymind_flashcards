@@ -40,10 +40,18 @@ struct WelcomeStepView: View {
 
     private var layout: some View {
         VStack(spacing: 0) {
-            LanguageSwitcher(variant: .flags)
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, MicaboSpacing.sm)
-                .onboardingAppear(index: 0, stagger: 0.1)
+            // **La langue est un menu, pas une rangée de drapeaux.**
+            //
+            // Cinq pavés alignés en haut du premier écran pesaient autant que le titre, et
+            // le premier écran d'une app a une seule chose à faire : donner envie d'entrer.
+            // Un menu dit la même chose en une ligne, et il se déroule pour qui en a besoin.
+            HStack {
+                Spacer(minLength: 0)
+                LanguageSwitcher(variant: .menu)
+            }
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, MicaboSpacing.sm)
+            .onboardingAppear(index: 0, stagger: 0.1)
             Spacer(minLength: MicaboSpacing.sm)
             deck
             Spacer(minLength: MicaboSpacing.md)

@@ -484,6 +484,7 @@ export const appDe = {
   exam: {
     schedule: {
       freeShort: "frei",
+      cardsShort: "Karten",
       examShort: "Prüfung",
       mockShort: "Probe",
       offShort: "Pause",
@@ -510,6 +511,7 @@ export const appDe = {
       down: "−{points} Punkte",
       flat: "gleichbleibend",
       noMock: "Noch keine Probe geschrieben. Sie ist die einzige Messung, die keine Schätzung ist - die Viertelstunde lohnt sich.",
+      single: "Bisher eine Probeklausur: {score} % am {day}. Die nächste zeigt, ob es aufwärts geht.",
       gapWide: "Deine Karten sagen {mastery} %, deine Probe {score} %. Diese Lücke schließt sich durch Arbeiten ohne Hilfe, nicht durch mehr Wiederholen.",
       gapClose: "Deine Karten und deine Probe stimmen überein. Weiter so.",
       seeAll: "Allen Fortschritt ansehen",
@@ -629,6 +631,7 @@ export const appDe = {
     mock: {
       aria: "Ergebnisse der Probeprüfungen, der Reihe nach",
       point: "{score} % am {day} ({total} Fragen)",
+      target: "Ziel {percent} %",
     },
   },
   progress: {

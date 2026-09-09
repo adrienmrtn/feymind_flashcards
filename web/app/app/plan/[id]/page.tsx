@@ -16,6 +16,7 @@ import {
   planTerm,
   resolveEmoji,
   startOfDay,
+  targetPercent,
   weakCards,
   TERM_HORIZON_DAYS,
   type TermCard,
@@ -212,7 +213,7 @@ export default async function ExamSheetPage({
         mockScore={readiness.mockScore}
         cardCount={overall.cardCount}
         daysRemaining={daysRemaining}
-        targetScore={exam.target_score}
+        targetScore={targetPercent(exam.target_score)}
         mocks={mine.slice(0, 8).map((mock) => ({
           id: mock.id,
           score: mockScore(mock),

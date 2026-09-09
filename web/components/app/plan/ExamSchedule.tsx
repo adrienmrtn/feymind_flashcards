@@ -42,7 +42,9 @@ export function ExamSchedule({
   const free = days.filter((day) => !day.isExamDay && day.cards === 0 && !day.mock);
   const mocks = days.filter((day) => day.mock);
   const totalCards = days.reduce((sum, day) => sum + day.cards, 0);
-  const max = Math.max(1, ...days.map((day) => day.minutes));
+  // La barre parle du **nombre de cartes**, comme le chiffre au-dessus d'elle. Elle mesurait
+  // des minutes tandis que la case en affichait aussi : deux échelles pour une seule case.
+  const max = Math.max(1, ...days.map((day) => day.cards));
   const shown = expanded ? days : days.slice(0, 21);
   const todayMock = days.find((day) => day.offset === 0 && day.mock);
 
@@ -81,7 +83,7 @@ export function ExamSchedule({
                   : day.cards === 0 && !day.mock
                     ? t("app.exam.schedule.free")
                   : `${t("app.exam.schedule.cards", { cards: day.cards, minutes: day.minutes })}${day.mock ? ` · ${t("app.exam.schedule.mock", { questions: day.mock.questionCount, minutes: day.mock.minutes })}` : ""}`;
-              const fill = Math.min(1, day.minutes / max);
+              const fill = Math.min(1, day.cards / max);
               return (
                 <div
                   key={day.offset}
@@ -130,22 +132,43 @@ export function ExamSchedule({
                       {t("app.exam.schedule.freeShort")}
                     </span>
                   ) : (
-                    <span className="flex items-end gap-1">
-                      <span className="relative h-5 w-1.5 shrink-0 overflow-hidden rounded-full bg-surface-sunken">
-                        <span
-                          aria-hidden
-                          className="absolute inset-x-0 bottom-0 rounded-full"
-                          style={{ height: `${Math.max(day.cards > 0 ? 12 : 0, fill * 100)}%`, backgroundColor: "var(--chart-work)" }}
-                        />
+                    /*
+                      **Un nombre de cartes, pas un nombre de minutes.**
+
+                      La case annonçait « 1 min » vingt fois de suite, à côté d'un trait de
+                      six pixels de haut censé porter la charge du jour. Deux défauts d'un
+                      coup : la minute est ce que le plan estime le plus mal - elle dépend de
+                      la vitesse de celui qui révise - et une barre verticale de la hauteur
+                      d'une lettre ne se compare pas d'une case à l'autre.
+
+                      Le chiffre qui compte est donc écrit en grand, et la charge relative
+                      passe dans un filet posé au bas de la case, sur toute sa largeur : sept
+                      cases côte à côte se lisent alors comme un profil de semaine.
+                    */
+                    <span className="flex items-baseline gap-1">
+                      <span className="numeral text-[15px] font-semibold leading-none text-ink">
+                        {day.cards}
                       </span>
-                      <span className="numeral truncate text-[10.5px] text-ink-secondary">
-                        {day.cards > 0 ? `${day.minutes} min` : ""}
+                      <span className="truncate text-[9.5px] uppercase tracking-wide text-ink-tertiary">
+                        {t("app.exam.schedule.cardsShort")}
                       </span>
-                      {day.mock ? (
-                        <span aria-hidden className="ml-auto size-1.5 shrink-0 rounded-full" style={{ backgroundColor: "var(--chart-fragile)" }} />
-                      ) : null}
                     </span>
                   )}
+
+                  {day.cards > 0 && !day.isExamDay ? (
+                    <span
+                      aria-hidden
+                      className="absolute inset-x-0 bottom-0 h-[3px] bg-surface-sunken"
+                    >
+                      <span
+                        className="block h-full rounded-r-full"
+                        style={{
+                          width: `${Math.max(14, fill * 100)}%`,
+                          backgroundColor: day.mock ? "var(--chart-fragile)" : "var(--chart-work)",
+                        }}
+                      />
+                    </span>
+                  ) : null}
                 </div>
               );
             })}

@@ -53,9 +53,16 @@ struct OnboardingFlowView: View {
         case .demoImport: DemoImportStepView()
         case .demoSheet: DemoSheetStepView()
         case .demoReview: DemoReviewStepView()
-        case .examPromise: ExamPromiseStepView()
+        case .examPlan: ExamPlanStepView()
+        case .examMock: ExamMockStepView()
+        case .examWeak: ExamWeakStepView()
+        case .feynman: FeynmanStepView()
+        case .results: ResultsStepView()
         case .subjects: SubjectsStepView()
         case .school: SchoolStepView()
+        case .currentAverage: CurrentAverageStepView()
+        case .targetAverage: TargetAverageStepView()
+        case .together: TogetherStepView()
         case .personalizing: PersonalizingStepView()
         case .socialProof: SocialProofStepView()
         case .yourTurn: YourTurnStepView()
@@ -102,7 +109,9 @@ private struct OnboardingProgressBar: View {
         HStack(spacing: MicaboSpacing.sm) {
             MicaboProgressBar(progress: step.progress, tint: surface.progressTint, track: surface.progressTrack)
                 .frame(height: 4)
-            AppearanceSwitcher(variant: .compact)
+            // **Le thème a quitté le parcours.** Jour ou nuit n'est pas une question
+            // d'inscription : c'est un réglage, il vit dans les Réglages, et le poser au-dessus
+            // de chaque écran invitait à jouer avec au lieu de répondre.
             if step != .welcome {
                 LanguageSwitcher()
                     .layoutPriority(1)

@@ -1529,6 +1529,19 @@ Côté iPhone, tout ce qui touche au moteur passe par `MathTypesetter`, derrièr
 `#if canImport(SwiftMath)` : le dépôt compile avec ou sans le paquet résolu, comme pour
 RevenueCat. Sans lui, le produit garde exactement le rendu d'avant.
 
+### Les paquets sont épinglés dans le dépôt
+
+`Micabo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved` est **versionné**,
+et il doit le rester. La machine de construction résout les dépendances avec la résolution
+automatique coupée : sans ce fichier, elle s'arrête sur « a resolved file is required », en
+nommant les paquets qu'elle aurait dû aller chercher elle-même.
+
+C'est aussi ce qui rend une construction reproductible : deux constructions du même commit
+prennent la même révision de RevenueCat, et une version publiée un mardi ne change pas de
+dépendance parce qu'un mainteneur a poussé un correctif le mercredi. Le fichier se met à jour
+depuis Xcode - **Fichier > Paquets > Mettre à jour vers les dernières versions** - et le
+résultat se commite comme du code.
+
 ## Quand l'import échoue
 
 Trois échecs sont traités nommément, chacun avec une sortie.

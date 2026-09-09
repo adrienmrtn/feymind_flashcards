@@ -36,6 +36,16 @@ struct CoursesListView: View {
     @State private var renamingFolder: CourseFolder?
     @State private var folderName = ""
     @State private var namingNewFolder = false
+    /// Le dossier survolé par un glisser en cours. Il sert à le montrer, et à savoir qu'un
+    /// lâcher vient d'avoir lieu.
+    @State private var dropTarget: UUID?
+    /// Quand le dernier lâcher a eu lieu.
+    ///
+    /// Une rangée de dossier est un **bouton**, et lâcher quelque chose dessus déclenche son
+    /// appui juste après le dépôt. Le dossier s'ouvrait donc dans la foulée : le cours venait
+    /// d'y entrer, on se retrouvait dedans, et de l'extérieur les deux avaient disparu de la
+    /// liste. C'est exactement ce que le glisser-déposer semblait faire.
+    @State private var lastDrop = Date.distantPast
 
     /// Ce qu'on déplace : un cours, ou un dossier avec tout ce qu'il contient.
     private enum MovingItem: Identifiable {
@@ -353,15 +363,30 @@ struct CoursesListView: View {
 
     @ViewBuilder
     private func folderRow(_ branch: FolderTree) -> some View {
+        let isTargeted = dropTarget == branch.folder.id
+
         MicaboRow.folder(branch.folder, total: branch.total) {
+            // Un lâcher n'est pas un appui : voir `lastDrop`.
+            guard Date().timeIntervalSince(lastDrop) > 0.4 else { return }
             withAnimation(.easeOut(duration: 0.2)) { openFolder = branch.folder.id }
         }
         .contextMenu { folderMenu(branch.folder) }
+        // Le dossier visé se colore pendant le survol. Sans ça, on lâche à l'aveugle : rien
+        // ne dit lequel des quatre dossiers de l'écran va recevoir le cours.
+        .background(
+            isTargeted ? MicaboColor.accentSoft : Color.clear,
+            in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
+        )
+        .animation(.easeOut(duration: 0.15), value: isTargeted)
         // Le glisser-déposer existe aussi sur le téléphone, pour qui le connaît :
         // une rangée se prend et se lâche sur un dossier. Ce n'est pas la voie
         // principale - « Déplacer vers » l'est - mais elle ne coûte rien.
         .dropDestination(for: String.self) { items, _ in
-            drop(items, into: branch.folder.id)
+            dropTarget = nil
+            lastDrop = Date()
+            return drop(items, into: branch.folder.id)
+        } isTargeted: { targeted in
+            dropTarget = targeted ? branch.folder.id : nil
         }
 
         MicaboHairline(inset: MicaboSpacing.md, onCanvas: true)
@@ -373,7 +398,7 @@ struct CoursesListView: View {
         MicaboRow.course(course, stats: census[course.id]) {
             path.append(course)
         }
-        .draggable(course.id.uuidString)
+        .draggable(CourseDrag.payload(for: course))
         .contextMenu { courseMenu(course) }
 
         if !isLast {
@@ -445,7 +470,8 @@ struct CoursesListView: View {
                 // Lâcher un cours ici le sort du dossier : c'est le `..` d'un gestionnaire
                 // de fichiers, et le même geste que sur le site.
                 .dropDestination(for: String.self) { items, _ in
-                    drop(items, into: trail.count > 1 ? trail[trail.count - 2].id : nil)
+                    lastDrop = Date()
+                    return drop(items, into: trail.count > 1 ? trail[trail.count - 2].id : nil)
                 }
 
                 if let current = trail.last {
@@ -676,15 +702,23 @@ struct CoursesListView: View {
     // MARK: - Ranger
 
     /// Le lâcher : on ne transporte qu'un identifiant, et on retrouve ce qu'il désigne.
+    ///
+    /// L'identifiant est **préfixé**. Une rangée qu'on glisse peut arriver au lâcher sous
+    /// plusieurs formes - le texte qu'on transportait, celui que le système a cru bon
+    /// d'ajouter - et un identifiant nu ne se distingue pas d'une chaîne quelconque : le
+    /// dépôt échouait alors en silence, sans qu'on sache s'il n'avait pas été vu ou s'il
+    /// avait été refusé.
     private func drop(_ items: [String], into target: UUID?) -> Bool {
-        guard let raw = items.first, let id = UUID(uuidString: raw) else { return false }
+        guard let id = items.compactMap(CourseDrag.identifier(in:)).first else { return false }
 
         if let course = sheets.first(where: { $0.id == id }) {
             move(course, to: target)
+            Haptics.success()
             return true
         }
         if let folder = folders.first(where: { $0.id == id }) {
             move(folder, to: target)
+            Haptics.success()
             return true
         }
         return false

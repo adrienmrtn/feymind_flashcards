@@ -23,6 +23,13 @@ enum TargetScore {
         }
     }
 
+    /// La note visée en pourcentage de copie : l'échelle est sur vingt, donc 15 vaut 75 %.
+    /// C'est ce que les jauges et les blancs comparent ; la note brute, elle, ne se compare
+    /// qu'à une autre note.
+    static func percent(from score: Int) -> Int {
+        Int((Double(clamp(score)) / Double(max) * 100).rounded())
+    }
+
     /// Quand on n'a que l'ancien palier, on reprend le milieu de sa bande.
     static func score(from intensity: ExamIntensity) -> Int {
         switch intensity {
@@ -53,6 +60,31 @@ struct DesiredGradeScale: Equatable {
             }
         )
     }
+
+    /// **Les notes proposables, sans doublon.**
+    ///
+    /// Onze crans pour neuf lettres donnent deux « C- » de suite : invisible sur un curseur
+    /// continu, incompréhensible dès qu'on affiche le libellé sous le pouce. On garde le
+    /// premier cran de chaque libellé, donc le plus bas - celui qui répond « B » obtient la
+    /// plus petite valeur que « B » peut vouloir dire, et personne n'est crédité d'un point
+    /// qu'il n'a pas dit avoir.
+    var choices: [GradeTick] {
+        var seen: Set<String> = []
+        return ticks.filter { seen.insert($0.label).inserted }
+    }
+
+    /// Ce qu'on peut viser en partant de là : strictement au-dessus, jamais en dessous.
+    func targets(above score: Int?) -> [GradeTick] {
+        let floor = score ?? Self.belowScore
+        return choices.filter { $0.score > floor }
+    }
+
+    /// Le cran hors barème : « moins que la première note proposée ».
+    ///
+    /// Il existe parce qu'une échelle qui commence à la moyenne annonce à celui qui ne l'a
+    /// pas qu'il n'était pas prévu - et c'est précisément l'étudiant à qui ce produit sert
+    /// le plus.
+    static let belowScore = TargetScore.min - 1
 
     func label(for score: Int) -> String {
         let clamped = TargetScore.clamp(score)

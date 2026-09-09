@@ -5,6 +5,7 @@ import {
   desiredGradeScale,
   gradeTicks,
   intensityFromTargetScore,
+  targetPercent,
   targetScoreFromIntensity,
 } from "../src/index";
 
@@ -30,5 +31,24 @@ describe("la note souhaitée", () => {
     expect(targetScoreFromIntensity("light")).toBe(12);
     expect(desiredGradeLabel("standard", "fr")).toBe("15/20");
     expect(desiredGradeLabel("intense", "us")).toBe("A");
+  });
+});
+
+describe("la note visée en pourcentage de copie", () => {
+  it("lit l'échelle sur vingt", () => {
+    // 20/20 est la copie parfaite ; c'est ce que « objectif : 20 % » disait de travers.
+    expect(targetPercent(20)).toBe(100);
+    expect(targetPercent(15)).toBe(75);
+    expect(targetPercent(10)).toBe(50);
+  });
+
+  it("ne dessine pas d'objectif quand il n'y en a pas", () => {
+    expect(targetPercent(null)).toBeNull();
+    expect(targetPercent(undefined)).toBeNull();
+  });
+
+  it("ramène une valeur hors échelle dans l'échelle", () => {
+    expect(targetPercent(35)).toBe(100);
+    expect(targetPercent(2)).toBe(50);
   });
 });

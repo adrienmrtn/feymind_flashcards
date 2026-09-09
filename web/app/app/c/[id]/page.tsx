@@ -147,12 +147,19 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
           </span>
         </Link>
       ) : (
-        <>
-          <div className="mt-7" data-print="hide">
-            <ReviewCta href={`/app/reviser?cours=${course.id}`} />
-          </div>
-          <ReviewCta href={`/app/reviser?cours=${course.id}`} floating />
-        </>
+        /*
+          **Une seule invitation à réviser, et elle flotte.**
+
+          La page en portait deux : un panneau posé sous « Espace des cartes », et le bouton
+          flottant, qui disent le même mot et mènent au même endroit. Trois blocs empilés en
+          haut d'une fiche - ouvrir le paquet, réviser, réviser - font hésiter là où il n'y a
+          rien à décider.
+
+          C'est le flottant qui reste, parce qu'il est le seul des deux à servir au bon
+          moment : on lit la fiche, et le bouton est encore là en bas quand on a fini. Le
+          panneau, lui, n'était visible qu'avant d'avoir rien lu.
+        */
+        <ReviewCta href={`/app/reviser?cours=${course.id}`} floating />
       )}
 
       <div

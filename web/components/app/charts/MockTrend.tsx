@@ -52,15 +52,22 @@ export function MockTrend({ points, target }: { points: MockPoint[]; target?: nu
           </g>
         ))}
         {target != null ? (
-          <line
-            x1={PAD.left}
-            x2={W - PAD.right}
-            y1={y(target)}
-            y2={y(target)}
-            stroke="var(--color-ink)"
-            strokeWidth="1"
-            strokeOpacity="0.5"
-          />
+          <g>
+            <line
+              x1={PAD.left}
+              x2={W - PAD.right}
+              y1={y(target)}
+              y2={y(target)}
+              stroke="var(--color-ink)"
+              strokeWidth="1"
+              strokeOpacity="0.5"
+              strokeDasharray="3 3"
+            />
+            {/* Un trait sans nom se lit comme une erreur de tracé. */}
+            <text x={W - PAD.right} y={y(target) - 4} textAnchor="end" fontSize="10" fill="var(--color-ink)" fillOpacity="0.6" className="numeral">
+              {t("app.chart.mock.target", { percent: target })}
+            </text>
+          </g>
         ) : null}
         <path d={path} fill="none" stroke="var(--chart-work)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
         {ordered.map((point, index) => (
