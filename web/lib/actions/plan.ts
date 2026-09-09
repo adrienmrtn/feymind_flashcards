@@ -12,13 +12,13 @@ import { saveExam } from "./exams";
 /**
  * Créer un plan, d'un seul geste.
  *
- * Le parcours pose six questions dont trois ne concernent pas l'épreuve mais **l'étudiant** :
- * son temps, ses pauses, son point de départ. Les écrire une par une laisserait un compte à
- * moitié réglé si l'une échoue, et surtout ferait recalculer le plan trois fois pour rien.
+ * Le parcours pose une suite de questions dont deux ne concernent pas l'épreuve mais
+ * **l'étudiant** : ses jours off et son point de départ. Les écrire une par une laisserait un
+ * compte à moitié réglé si l'une échoue, et ferait recalculer le plan deux fois pour rien.
  *
- * L'ordre compte : les disponibilités et les pauses **avant** l'épreuve. `saveExam` replanifie
- * les échéances en lisant la capacité de chaque jour ; l'écrire après poserait le plan sur des
- * disponibilités périmées, et le premier samedi de pause le déferait.
+ * L'ordre compte, et `saveExam` le tient : les jours off **avant** la replanification. Il pose
+ * les échéances sur les jours ouverts ; les écrire après poserait le plan sur des jours qu'on
+ * s'apprête à fermer, et le premier dimanche de pause le déferait.
  */
 
 export interface CreatePlanResult {
@@ -35,6 +35,8 @@ export async function createPlan(input: {
   targetScore: number;
   formats: string[];
   name: string;
+  /** Les jours où l'étudiant a dit qu'il ne réviserait pas, en dates ISO. */
+  offDays?: readonly string[];
 }): Promise<CreatePlanResult> {
   const supabase = await createClient();
   const {
@@ -49,7 +51,6 @@ export async function createPlan(input: {
     return { status: "error", message: await actionT("app.errors.unknownDate") };
   }
 
-  // 2. L'épreuve ensuite, sur des disponibilités à jour.
   const saved = await saveExam({
     name: input.name.trim() || (await actionT("app.exams.defaultName")),
     examDate: input.examDate,
@@ -58,6 +59,7 @@ export async function createPlan(input: {
     kind: asExamKind(input.kind),
     formats: input.formats,
     startingPoint: asStartingPoint(input.startingPoint),
+    offDays: input.offDays,
   });
 
   if (saved.status === "error") {

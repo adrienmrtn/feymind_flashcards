@@ -17,6 +17,7 @@ import {
   resolveEmoji,
   startOfDay,
   weakCards,
+  TERM_HORIZON_DAYS,
   type TermCard,
   type TermExam,
 } from "@micabo/core";
@@ -27,6 +28,7 @@ import { ExamSheet, type SheetCourse } from "@/components/app/plan/ExamSheet";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { loadCardDifficulty } from "@/lib/data/difficulty";
 import { listMockResults, loadThroughput } from "@/lib/data/mocks";
+import { listOffDays, offDayOffsets } from "@/lib/data/off-days";
 import { getTranslator } from "@/lib/i18n/server";
 import { projectedMastery } from "@/lib/term-plan";
 
@@ -49,13 +51,14 @@ export default async function ExamSheetPage({
   const { id } = await params;
   const { t } = await getTranslator();
 
-  const [exams, courses, snapshots, difficulties, mocks, throughput] = await Promise.all([
+  const [exams, courses, snapshots, difficulties, mocks, throughput, offDays] = await Promise.all([
     listExams(),
     listCourses(),
     listCardSnapshots(),
     loadCardDifficulty(),
     listMockResults(),
     loadThroughput(),
+    listOffDays(),
   ]);
 
   const exam = exams.find((row) => row.id === id);
@@ -111,6 +114,7 @@ export default async function ExamSheetPage({
     throughput,
     difficulties,
     mocks,
+    offDays: offDayOffsets(offDays, today, TERM_HORIZON_DAYS),
   });
 
   const schedule: ScheduleDay[] = plan.days
@@ -129,6 +133,7 @@ export default async function ExamSheetPage({
         minutes: mine.filter(isReviewBlock).reduce((sum, block) => sum + block.minutes, 0),
         mock: mock ? { questionCount: mock.questionCount, minutes: mock.minutes } : null,
         isExamDay: day.offset === daysRemaining,
+        isOff: day.isOff,
       };
     });
 

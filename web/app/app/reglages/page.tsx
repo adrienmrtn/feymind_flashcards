@@ -17,7 +17,6 @@ import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { T } from "@/components/i18n/T";
 import { SheetLanguageCard } from "@/components/app/SheetLanguageCard";
-import { SignOutButton } from "@/components/app/SignOutButton";
 import { SubscriptionCard } from "@/components/app/SubscriptionCard";
 import { readEntitlement } from "@/lib/data/entitlement";
 import { readProfile } from "@/lib/data/profile";
@@ -103,10 +102,6 @@ export default async function SettingsPage() {
           <ExportData />
           <DeleteAccount email={user?.email ?? ""} />
         </div>
-
-        <section className="saas-card overflow-hidden">
-          <SignOutButton />
-        </section>
       </Section>
 
       <details className="rounded-group border border-border bg-card">

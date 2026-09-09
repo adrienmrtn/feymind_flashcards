@@ -296,3 +296,80 @@ async function readableError(error: unknown): Promise<string> {
 function fallbackMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Micabo n'a pas pu écrire cette fiche.";
 }
+
+/**
+ * Supprimer un cours, sa fiche, ses cartes, et son passage dans les épreuves.
+ *
+ * **Une suppression douce** (`deleted_at`), comme partout : un appareil hors ligne qui remonte
+ * plus tard doit pouvoir apprendre que la ligne a disparu, ce qu'une ligne effacée ne raconte
+ * plus. Les cartes suivent le cours : les laisser vivantes ferait revenir en révision des
+ * questions tirées d'une fiche qui n'existe plus, ce qui est la pire façon de découvrir qu'on
+ * a supprimé quelque chose.
+ *
+ * Les épreuves aussi. Un programme est une liste de cours ; on retire celui-ci de chacune, et
+ * une épreuve qui n'a plus rien au programme part avec, parce qu'elle ne peut plus rien
+ * planifier et resterait à compter les jours pour rien.
+ */
+export async function deleteCourse(courseId: string): Promise<{ status: "ok" | "error"; message?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
+
+  const { data: course } = await supabase
+    .from("courses")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("id", courseId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (!course) return { status: "error", message: await actionT("app.errors.courseMissing") };
+
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("courses")
+    .update({ deleted_at: now, updated_at: now })
+    .eq("user_id", user.id)
+    .eq("id", courseId);
+
+  if (error) return { status: "error", message: error.message };
+
+  await supabase
+    .from("flashcards")
+    .update({ deleted_at: now, updated_at: now })
+    .eq("user_id", user.id)
+    .eq("course_id", courseId)
+    .is("deleted_at", null);
+
+  const { data: exams } = await supabase
+    .from("exams")
+    .select("id, course_ids")
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .contains("course_ids", [courseId]);
+
+  for (const exam of (exams as { id: string; course_ids: string[] | null }[] | null) ?? []) {
+    const remaining = (exam.course_ids ?? []).filter((id) => id !== courseId);
+    await supabase
+      .from("exams")
+      .update(
+        remaining.length > 0
+          ? { course_ids: remaining }
+          : { course_ids: remaining, deleted_at: now, is_planned: false },
+      )
+      .eq("user_id", user.id)
+      .eq("id", exam.id);
+  }
+
+  revalidateUserData(user.id, "all");
+  revalidatePath("/app");
+  revalidatePath("/app/cours");
+  revalidatePath("/app/paquets");
+  revalidatePath("/app/plan");
+  revalidatePath("/app/reviser");
+  return { status: "ok" };
+}
+

@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 
 import { courseAccent, entitlement, resolveEmoji } from "@micabo/core";
 
+import { DeleteCourse } from "@/components/app/DeleteCourse";
 import { GenerateCardsCta } from "@/components/app/GenerateCardsCta";
-import { ReleaseImportHandoff } from "@/components/app/ImportHandoff";
 import { LockedSheetTail } from "@/components/app/LockedSheetTail";
 import { ReviewCta } from "@/components/app/ReviewCta";
 import { SheetReader } from "@/components/app/SheetReader";
@@ -50,7 +50,6 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
 
   return (
     <article className="pb-24">
-      <ReleaseImportHandoff courseId={course.id} />
       <header className="flex items-start gap-4" data-print="keep">
         <span
           aria-hidden
@@ -178,6 +177,10 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
           {t("app.course.noReadableSheet")}
         </p>
       ) : null}
+
+      <div className="mt-12 border-t border-hairline-on-canvas pt-6" data-print="hide">
+        <DeleteCourse courseId={course.id} title={course.title} />
+      </div>
     </article>
   );
 }

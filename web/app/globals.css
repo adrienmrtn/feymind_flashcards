@@ -645,6 +645,26 @@ video {
   animation: micabo-pop 320ms var(--ease-out-strong);
 }
 
+/* La note visée grossit d'un cran quand elle monte. C'est la seule question du parcours dont
+   la réponse change ce que le produit va demander tous les jours, et un chiffre qui se
+   contente de changer ne le fait pas sentir. Pas de rotation ici : ce n'est pas un emoji qui
+   rebondit, c'est un nombre qu'on lit. */
+@keyframes micabo-grade-pop {
+  0% {
+    scale: 1;
+  }
+  38% {
+    scale: 1.13;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+@utility grade-pop {
+  animation: micabo-grade-pop 420ms var(--ease-out-strong);
+}
+
 /* **La seule fioriture du site.** Un filet de 1 px qui se trace depuis la gauche : c'est le
    survol qui a le plus l'air fait à la main, et il ne coûte qu'une transition de
    `background-size`. */

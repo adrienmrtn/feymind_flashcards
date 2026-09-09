@@ -23,14 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
 import { copySheetLengthTitle, type Translator } from "@/lib/i18n/copy";
 import { youtubePreview, youtubeTranscript } from "@/lib/actions/course";
-import {
-  beginStandaloneWrite,
-  holdImportHandoff,
-  openGeneratedPage,
-  releaseImportHandoff,
-  rememberWrittenCourse,
-  waitForPaint,
-} from "@/lib/import-handoff";
+import { openGeneratedPage, waitForPaint } from "@/lib/import-handoff";
 import { requestPaywall } from "@/lib/paywall";
 import { writeSheetFromBrowser } from "@/lib/import/write-sheet";
 import { isAnkiFileName } from "@/lib/import/anki";
@@ -140,6 +133,9 @@ export function ImportPanel({
   const [draft, setDraft] = useState<Draft | null>(null);
   /** Un paquet Anki déposé ici : il n'y a rien à ficher, donc on montre la bonne porte. */
   const [ankiFile, setAnkiFile] = useState<string | null>(null);
+  /** Le nom du document en cours d'écriture. C'est lui que l'attente affiche, en place. */
+  const [writing, setWriting] = useState<string | null>(null);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const busy = phase === "lecture" || phase === "ecriture";
@@ -152,17 +148,8 @@ export function ImportPanel({
     };
   }, [draft?.fileUrl]);
 
-  useEffect(() => {
-    // Un voile resté d'une écriture cassée recouvrait l'import au rechargement.
-    releaseImportHandoff();
-  }, []);
-
   function finish(result: { status: string; courseId?: string; message?: string }) {
     if (result.status === "ok" && result.courseId) {
-      rememberWrittenCourse(result.courseId);
-      // Lever le voile **avant** le chargement : le garder hydratait la
-      // fiche avec un état que le serveur n'a pas.
-      releaseImportHandoff();
       if (onImported) {
         setPhase("repos");
         setDraft(null);
@@ -176,7 +163,6 @@ export function ImportPanel({
       openGeneratedPage(`/app/c/${result.courseId}`);
       return;
     }
-    releaseImportHandoff();
     setPhase(draft ? "apercu" : "repos");
     if (result.status === "paywall") {
       requestPaywall();
@@ -232,33 +218,10 @@ export function ImportPanel({
       setInstructions("");
       return;
     }
-    // On quitte Next **avant** le POST. Tant que React peint l'import, un
-    // vol RSC avorté affiche « This page couldn't load » pendant l'écriture.
-    const left = beginStandaloneWrite(
-      {
-        text: payload.text,
-        hintTitle: title.trim() || payload.title,
-        sourceName: payload.sourceName,
-        source: payload.source,
-        blocks,
-        length,
-        visibility,
-        language,
-        instructions: instructions.trim() || undefined,
-        images: payload.images,
-      },
-      {
-        writing: t("app.import.writing"),
-        waitHint: name.trim() || t("app.import.waitHint"),
-      },
-    );
-    if (left) {
-      await new Promise(() => {});
-      return;
-    }
     setFailure(null);
+    setWriting(name);
+    setStartedAt(Date.now());
     setPhase("ecriture");
-    holdImportHandoff({ name });
     await waitForPaint();
     finish(
       await Promise.race([
@@ -409,6 +372,24 @@ export function ImportPanel({
       : draft.text.trim().length >= 40 || (draft.images?.length ?? 0) > 0
   );
 
+  // **L'attente reste dans la page.** Elle occupait tout l'écran : un voile noir sur l'app,
+  // le défilement bloqué, et sur le chemin le plus courant un document HTML autonome écrit
+  // par-dessus le site. Ça mettait une page entière au service d'un travail qui n'en demande
+  // pas tant, et ça faisait disparaître ce qu'on venait de déposer. Le panneau se remplace
+  // lui-même, à sa place, et le reste de l'écran continue d'exister.
+  if (phase === "ecriture") {
+    return (
+      <div className="panel flex items-center gap-4 p-5" data-print="hide" data-writing-sheet="">
+        <GenerationStatus
+          compact
+          title={t("app.import.writing")}
+          hint={writing?.trim() || t("app.import.waitHint")}
+          startedAt={startedAt ?? undefined}
+        />
+      </div>
+    );
+  }
+
   return (
     <div>
       {!previewing ? (
@@ -441,7 +422,7 @@ export function ImportPanel({
           />
 
           {phase === "lecture" ? (
-            <Waiting t={t} phase={phase} name={fileName} />
+            <Waiting t={t} name={fileName} />
           ) : (
             <>
               <svg
@@ -529,7 +510,6 @@ export function ImportPanel({
           notice={videoNotice}
           reading={phase === "lecture"}
           watching={watching}
-          writing={phase === "ecriture"}
           onChange={() => {
             if (draft.source === "youtube") {
               setUrl("");
@@ -706,11 +686,9 @@ export function ImportPanel({
               void generate(draft);
             }}
           >
-            {phase === "ecriture"
-              ? t("app.import.writing")
-              : phase === "lecture"
-                ? t("app.import.readingSubs")
-                : (queueLabel ?? t("app.import.writeSheet"))}
+            {phase === "lecture"
+              ? t("app.import.readingSubs")
+              : (queueLabel ?? t("app.import.writeSheet"))}
           </Button>
         </div>
       ) : null}
@@ -734,7 +712,6 @@ function Preview({
   notice,
   reading,
   watching,
-  writing,
   onChange,
 }: {
   t: Translator;
@@ -743,17 +720,15 @@ function Preview({
   notice: string | null;
   reading: boolean;
   watching: boolean;
-  writing: boolean;
   onChange: () => void;
 }) {
-  if (reading || writing) {
+  if (reading) {
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-border bg-card px-6 py-10">
         <Waiting
           t={t}
-          phase={writing ? "ecriture" : "lecture"}
           name={draft.sourceName ?? title}
-          hint={!writing && watching ? t("app.import.watchingHint") : undefined}
+          hint={watching ? t("app.import.watchingHint") : undefined}
         />
       </div>
     );
@@ -837,20 +812,15 @@ function Preview({
 
 function Waiting({
   t,
-  phase,
   name,
   hint,
 }: {
   t: Translator;
-  phase: Phase;
   name: string | null;
   hint?: string;
 }) {
   return (
-    <GenerationStatus
-      title={phase === "lecture" ? t("app.import.reading") : t("app.import.writing")}
-      hint={hint ?? name ?? t("app.import.waitHint")}
-    />
+    <GenerationStatus title={t("app.import.reading")} hint={hint ?? name ?? t("app.import.waitHint")} />
   );
 }
 

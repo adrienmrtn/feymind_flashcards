@@ -12,6 +12,7 @@ import {
   resolveEmoji,
   startOfDay,
   termLoad,
+  TERM_HORIZON_DAYS,
   todayBlocks,
   todayCardCount,
   type LoadBar,
@@ -32,6 +33,7 @@ import {
 } from "@/lib/data/courses";
 import { loadCardDifficulty } from "@/lib/data/difficulty";
 import { listMockResults, loadThroughput } from "@/lib/data/mocks";
+import { listOffDays, offDayOffsets } from "@/lib/data/off-days";
 import { readProfile, type ProfileRow } from "@/lib/data/profile";
 import { getTranslator } from "@/lib/i18n/server";
 
@@ -92,7 +94,7 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
   const today = startOfDay(now);
   const { t } = await getTranslator();
 
-  const [exams, courses, snapshots, difficulties, profile, throughput, mocks] =
+  const [exams, courses, snapshots, difficulties, profile, throughput, mocks, offDays] =
     await Promise.all([
       listExams(),
       listCourses(),
@@ -101,6 +103,7 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
       readProfile(),
       loadThroughput(),
       listMockResults(),
+      listOffDays(),
     ]);
 
   const termCards: TermCard[] = snapshots.map((card) => ({
@@ -131,6 +134,7 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
     throughput,
     mocks,
     difficulties,
+    offDays: offDayOffsets(offDays, today, TERM_HORIZON_DAYS),
   });
   const load = termLoad(plan);
   const bars = loadBars(plan);

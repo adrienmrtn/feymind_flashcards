@@ -26,6 +26,7 @@ import {
   passesFor,
   planExam,
   startOfDay,
+  usableDays,
   type ExamCard,
 } from "../src/srs/exam";
 import { DETERMINISTIC_CONFIG, clampedToDeadline, schedule } from "../src/srs/sm2";
@@ -137,6 +138,24 @@ describe("le plan", () => {
     expect(plan.projection.cardCount).toBe(12);
     expect(averageDailyLoad(plan.projection)).toBeGreaterThan(0);
     expect(busiestDay(plan.projection)).not.toBeNull();
+  });
+
+  it("ne pose aucun passage sur un jour off", () => {
+    const cards = Array.from({ length: 20 }, (_, index) => card(`c${index}`));
+    const plan = planExam(cards, addDays(now, 12), { now, offDays: [3, 4, 5] });
+
+    for (const offset of [3, 4, 5]) expect(plan.projection.load[offset]).toBe(0);
+    expect(plan.projection.totalReviews).toBeGreaterThan(0);
+  });
+
+  it("rend tous les jours quand ils sont tous posés off", () => {
+    const days = Array.from({ length: 6 }, (_, offset) => offset);
+    expect(usableDays(6, days)).toEqual(days);
+    expect(usableDays(6, [1, 2])).toEqual([0, 3, 4, 5]);
+    expect(usableDays(4)).toEqual([0, 1, 2, 3]);
+
+    const plan = planExam([card("a")], addDays(now, 6), { now, offDays: days });
+    expect(plan.projection.totalReviews).toBeGreaterThan(0);
   });
 
   it("place les cartes en retard, puis les neuves, puis les moins solides", () => {
