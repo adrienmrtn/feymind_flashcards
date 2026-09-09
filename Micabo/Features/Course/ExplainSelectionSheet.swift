@@ -102,11 +102,21 @@ struct ExplainSelectionSheet: View {
             }
 
             if let example = explanation.example?.nilIfBlank {
-                block(tone: .exemple, text: example)
+                note(
+                    label: L10n.t("app.sheetTone.exemple", locale: .resolved()),
+                    tint: MicaboColor.inkSecondary,
+                    background: MicaboColor.surfaceMuted,
+                    text: example
+                )
             }
 
             if let watchOut = explanation.watchOut?.nilIfBlank {
-                block(tone: .attention, text: watchOut)
+                note(
+                    label: L10n.t("app.sheetTone.attention", locale: .resolved()),
+                    tint: MicaboColor.caution,
+                    background: MicaboColor.cautionSoft,
+                    text: watchOut
+                )
             }
 
             if let card = explanation.card {
@@ -115,8 +125,24 @@ struct ExplainSelectionSheet: View {
         }
     }
 
-    private func block(tone: SheetCalloutTone, text: String) -> some View {
-        SheetBlockView(block: .callout(tone: tone, text: text), tint: Color(hexString: course.accentHex))
+    /// L'exemple et le piège, encartés.
+    ///
+    /// Ils passaient par le bloc `callout` de la fiche, qui n'existe plus : une fiche est du
+    /// texte, et ce qu'un encadré appuyait s'y écrit en gras. Une **explication**, elle, n'est
+    /// pas une fiche - c'est une réponse ponctuelle, lue une fois, où le cadre sert à séparer
+    /// l'exemple du raisonnement. Il est donc dessiné ici, et n'appartient qu'à cet écran.
+    private func note(label: String, tint: Color, background: Color, text: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label.uppercased())
+                .font(MicaboFont.eyebrow)
+                .tracking(MicaboTracking.caps)
+                .foregroundStyle(tint)
+
+            SheetProse(markup: text, style: .callout)
+        }
+        .padding(SheetTypography.objectPadding)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(background, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
     }
 
     /// « En faire une carte » : le seul chemin de la compréhension vers la révision, et il

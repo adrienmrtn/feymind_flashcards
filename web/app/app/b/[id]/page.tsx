@@ -78,7 +78,7 @@ export default async function SharedCoursePage({ params }: { params: Promise<{ i
 
       <div className="mt-10">
         {course.blocks.length > 0 ? (
-          <SheetBlocks blocks={course.blocks} tint={tint} />
+          <SheetBlocks blocks={course.blocks} />
         ) : (
           <p className="rounded-group bg-caution-soft px-5 py-4 text-[14px] text-ink-reading">
             {t("app.shared.unreadable")}

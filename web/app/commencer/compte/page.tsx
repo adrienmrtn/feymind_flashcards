@@ -166,8 +166,10 @@ function AccountStepBody() {
     }
   }
 
-  // La carte fait 760 px de haut sur tous les écrans : cette page-ci en occupe 500, donc elle
-  // se centre plutôt que de se coller en haut avec un vide dessous.
+  // La carte fait 760 px de haut sur tous les écrans, et cette page-ci doit tenir dedans sans
+  // ascenseur : c'est la dernière du parcours, celle où l'on s'engage, et une page qui défile à
+  // ce moment-là cache la moitié des façons de créer un compte. Tout y est donc réglé au plus
+  // serré - un titre, deux boutons, un champ, la mention légale - et elle se centre.
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-6 sm:px-10 sm:py-8">
       <div className="rise mx-auto my-auto w-full max-w-[400px]">
@@ -181,14 +183,11 @@ function AccountStepBody() {
           <LanguageSwitcher />
         </div>
 
-        <h1 className="mt-8 text-[32px] font-bold leading-[1.08] tracking-display text-ink sm:text-[38px] text-balance">
+        <h1 className="mt-7 text-[28px] font-bold leading-[1.1] tracking-display text-ink sm:text-[32px] text-balance">
           {t("onboarding.compteTitle")}
         </h1>
-        <p className="mt-3 text-[15px] text-ink-secondary">
-          {t("onboarding.compteSubtitle")}
-        </p>
 
-        <div className="mt-8 space-y-2.5">
+        <div className="mt-6 space-y-2.5">
           <ProviderButton
             label={t("onboarding.continueApple")}
             dark
@@ -225,7 +224,7 @@ function AccountStepBody() {
           />
         </div>
 
-        <div className="my-6 flex items-center gap-3">
+        <div className="my-5 flex items-center gap-3">
           <Separator className="flex-1" />
           <span className="text-[12px] text-ink-tertiary">{t("onboarding.or")}</span>
           <Separator className="flex-1" />
@@ -254,7 +253,7 @@ function AccountStepBody() {
                   setFailure(null);
                 }}
                 placeholder={t("onboarding.emailPlaceholder")}
-                className="h-14 rounded-button text-[16px] sm:text-[16px] [&_[data-slot=input]]:h-14 [&_[data-slot=input]]:text-[16px] [&_[data-slot=input]]:leading-[3.5rem]"
+                className="h-12 rounded-button text-[16px] sm:text-[16px] [&_[data-slot=input]]:h-12 [&_[data-slot=input]]:text-[16px] [&_[data-slot=input]]:leading-[3rem]"
               />
             </Field>
             <Button
@@ -262,7 +261,7 @@ function AccountStepBody() {
               size="xl"
               loading={pending === "email"}
               disabled={email.trim().length === 0}
-              className="h-14 w-full text-[16px] sm:h-14 sm:text-[16px]"
+              className="h-12 w-full text-[16px] sm:h-12 sm:text-[16px]"
             >
               {t("onboarding.sendLink")}
             </Button>
@@ -284,7 +283,7 @@ function AccountStepBody() {
           </Alert>
         ) : null}
 
-        <p className="mt-8 text-[12.5px] leading-relaxed text-ink-tertiary">
+        <p className="mt-6 text-[12px] leading-relaxed text-ink-tertiary">
           {t("onboarding.legalPrefix")}{" "}
           <Link href={termsHref} className="underline-draw text-ink-secondary">
             {t("onboarding.legalTerms")}
@@ -320,7 +319,7 @@ function ProviderButton({
       variant={dark ? "default" : "outline"}
       loading={pending}
       onClick={onPress}
-      className={`h-14 w-full text-[16px] sm:h-14 sm:text-[16px] ${
+      className={`h-12 w-full text-[16px] sm:h-12 sm:text-[16px] ${
         dark ? "shiny" : "btn-fill hover:bg-transparent"
       }`}
     >

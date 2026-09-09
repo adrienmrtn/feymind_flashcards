@@ -36,6 +36,12 @@ struct MicaboPalette: Equatable {
     var inkReading: Color
     var inkBody: Color
     var sheetMarker: Color
+    /// Les cinq surligneurs d'une fiche, dans l'ordre de `SheetHighlight.allCases`.
+    ///
+    /// Ce sont des pastels : ils passent **sous** le texte sans le noyer, et c'est ce qui
+    /// permet d'en avoir cinq sur la même page sans qu'elle devienne un nuancier. Ce sont
+    /// les mêmes valeurs que les jetons `--color-hl-*` du site.
+    var sheetHighlights: [Color]
     var onInk: Color
     var onInkMuted: Color
     var canvasSage: Color
@@ -74,6 +80,13 @@ struct MicaboPalette: Equatable {
         inkReading: Color(hex: 0x1F2937),
         inkBody: Color(hex: 0x4B5563),
         sheetMarker: Color(hex: 0xF5D76E),
+        sheetHighlights: [
+            Color(hex: 0xF8E08E),
+            Color(hex: 0xBFE6CF),
+            Color(hex: 0xC3DDF7),
+            Color(hex: 0xF7CDDA),
+            Color(hex: 0xDCD0F5)
+        ],
         onInk: .white,
         onInkMuted: Color(hex: 0x9CA3AF),
         canvasSage: Color(hex: 0xF2F4F7),
@@ -120,6 +133,13 @@ struct MicaboPalette: Equatable {
         inkReading: Color(hex: 0xD5D8DE),
         inkBody: Color(hex: 0x9AA1AB),
         sheetMarker: Color(hex: 0xC9A227),
+        sheetHighlights: [
+            Color(hex: 0x55491C),
+            Color(hex: 0x1F4034),
+            Color(hex: 0x1E3A56),
+            Color(hex: 0x4D2733),
+            Color(hex: 0x382F57)
+        ],
         onInk: Color(hex: 0x101216),
         onInkMuted: Color(hex: 0x6B7280),
         canvasSage: Color(hex: 0x141A16),
@@ -166,6 +186,13 @@ struct MicaboPalette: Equatable {
         inkReading: Color(hex: 0xEAD9C4),
         inkBody: Color(hex: 0xC4B09A),
         sheetMarker: Color(hex: 0xC9A227),
+        sheetHighlights: [
+            Color(hex: 0x55491C),
+            Color(hex: 0x1F4034),
+            Color(hex: 0x1E3A56),
+            Color(hex: 0x4D2733),
+            Color(hex: 0x382F57)
+        ],
         onInk: Color(hex: 0x1C1612),
         onInkMuted: Color(hex: 0x8A7A68),
         canvasSage: Color(hex: 0x1F1A14),

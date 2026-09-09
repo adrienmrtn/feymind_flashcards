@@ -1,76 +1,126 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useI18n } from "@/lib/i18n/client";
 
 /**
- * La vignette des résultats : **avant, après.**
+ * La vignette des résultats : **la courbe qui monte.**
  *
- * Deux barres, et le chiffre entre les deux. C'est le seul écran du parcours qui avance une
- * mesure, donc il ne doit avancer que celle-là : ni courbe à trois séries, ni axe à graduer.
- * Les barres montent à l'arrivée sur l'écran, parce qu'un écart se lit dans le mouvement bien
- * avant de se lire dans les chiffres.
+ * C'étaient deux barres, avant et après. Deux barres disent qu'il s'est passé quelque chose,
+ * elles ne disent pas quoi : on saute d'un état à l'autre sans rien voir entre les deux, et
+ * c'est exactement ce qu'un étudiant veut savoir - à quoi ressemblent les semaines.
+ *
+ * Donc une courbe, et **une courbe imparfaite** : elle redescend trois fois. Une droite
+ * parfaite de 74 à 91 se lit comme une promesse commerciale ; un tracé qui bute et repart se
+ * lit comme un semestre. Le trait se dessine à l'arrivée sur l'écran, de gauche à droite,
+ * parce que c'est le sens de la lecture et le sens du temps.
  */
+
+/** La note, semaine après semaine. Elle finit à 91, elle n'y va pas tout droit. */
+const SERIES = [74, 76, 75, 79, 82, 80, 84, 87, 86, 89, 91] as const;
+
+const WIDTH = 320;
+const HEIGHT = 150;
+const PADDING = { top: 14, right: 10, bottom: 10, left: 10 };
+/** L'échelle verticale déborde des valeurs : une courbe qui touche les bords se lit mal. */
+const FLOOR = 68;
+const CEILING = 96;
+
 export function ResultsStory() {
   const { t } = useI18n();
-  const [grown, setGrown] = useState(false);
+  const [drawn, setDrawn] = useState(false);
+  const line = useRef<SVGPolylineElement>(null);
+  const [length, setLength] = useState(0);
 
   useEffect(() => {
-    const id = window.setTimeout(() => setGrown(true), 220);
+    if (line.current) setLength(line.current.getTotalLength());
+    const id = window.setTimeout(() => setDrawn(true), 180);
     return () => window.clearTimeout(id);
   }, []);
 
-  // Les deux valeurs viennent du catalogue : une moyenne sur 20 ne veut rien dire pour un
-  // étudiant américain, et un pourcentage n'en veut aucun pour un Français.
-  const bars = [
-    {
-      label: t("onboarding.resultatsBefore"),
-      height: 52,
-      tone: "var(--color-stroke-strong)",
-      value: t("onboarding.resultatsBeforeValue"),
-    },
-    {
-      label: t("onboarding.resultatsAfter"),
-      height: 100,
-      tone: "var(--color-accent)",
-      value: t("onboarding.resultatsAfterValue"),
-    },
-  ];
+  const points = SERIES.map((value, index) => {
+    const span = SERIES.length - 1;
+    const x = PADDING.left + ((WIDTH - PADDING.left - PADDING.right) * index) / span;
+    const ratio = (value - FLOOR) / (CEILING - FLOOR);
+    const y = HEIGHT - PADDING.bottom - (HEIGHT - PADDING.top - PADDING.bottom) * ratio;
+    return { x, y };
+  });
+
+  const path = points.map((point) => `${point.x},${point.y}`).join(" ");
+  const area = `${PADDING.left},${HEIGHT} ${path} ${points[points.length - 1]!.x},${HEIGHT}`;
+  const last = points[points.length - 1]!;
 
   return (
     <div className="w-full max-w-[320px]">
-      <div className="flex h-[190px] items-end justify-center gap-10">
-        {bars.map((bar, index) => (
-          <div key={bar.label} className="flex w-[84px] flex-col items-center">
-            <span
-              className="numeral text-[14px] font-semibold text-ink transition-opacity duration-slow"
-              style={{ opacity: grown ? 1 : 0, transitionDelay: `${420 + index * 120}ms` }}
-            >
-              {bar.value}
-            </span>
-            <span className="mt-2 flex h-[130px] w-full items-end">
-              <span
-                aria-hidden
-                className="w-full rounded-t-[10px]"
-                style={{
-                  height: grown ? `${bar.height}%` : "6%",
-                  backgroundColor: bar.tone,
-                  transition: "height 900ms var(--ease-out-strong)",
-                  transitionDelay: `${index * 140}ms`,
-                }}
-              />
-            </span>
-            <span className="mt-2.5 text-center text-[11.5px] leading-tight text-ink-tertiary">
-              {bar.label}
-            </span>
-          </div>
-        ))}
+      <div className="flex items-baseline justify-between">
+        <span className="text-[11.5px] text-ink-tertiary">{t("onboarding.resultatsBefore")}</span>
+        <span className="text-[11.5px] text-ink-tertiary">{t("onboarding.resultatsAfter")}</span>
+      </div>
+
+      <div className="relative mt-1.5">
+        <svg
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          className="w-full"
+          role="img"
+          aria-label={t("onboarding.resultatsChartAria")}
+        >
+          <defs>
+            <linearGradient id="resultats-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          <polygon
+            points={area}
+            fill="url(#resultats-fill)"
+            className="transition-opacity duration-slower"
+            style={{ opacity: drawn ? 1 : 0, transitionDelay: "520ms" }}
+          />
+
+          <polyline
+            ref={line}
+            points={path}
+            fill="none"
+            stroke="var(--color-accent)"
+            strokeWidth="2.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              strokeDasharray: length || 600,
+              strokeDashoffset: drawn ? 0 : length || 600,
+              transition: "stroke-dashoffset 1400ms var(--ease-out-strong)",
+            }}
+          />
+
+          <circle
+            cx={last.x}
+            cy={last.y}
+            r="4.5"
+            fill="var(--color-accent)"
+            className="transition-opacity duration-slow"
+            style={{ opacity: drawn ? 1 : 0, transitionDelay: "1250ms" }}
+          />
+        </svg>
+
+        <span
+          className="numeral absolute left-0 top-0 text-[13px] font-semibold text-ink-tertiary transition-opacity duration-slow"
+          style={{ opacity: drawn ? 1 : 0, transitionDelay: "260ms" }}
+        >
+          {t("onboarding.resultatsBeforeValue")}
+        </span>
+        <span
+          className="numeral absolute right-0 top-0 text-[15px] font-bold text-accent transition-opacity duration-slow"
+          style={{ opacity: drawn ? 1 : 0, transitionDelay: "1300ms" }}
+        >
+          {t("onboarding.resultatsAfterValue")}
+        </span>
       </div>
 
       <p
-        className="mt-4 text-center text-[13px] text-ink-tertiary transition-opacity duration-slow"
-        style={{ opacity: grown ? 1 : 0, transitionDelay: "700ms" }}
+        className="mt-2 text-center text-[13px] text-ink-tertiary transition-opacity duration-slow"
+        style={{ opacity: drawn ? 1 : 0, transitionDelay: "1400ms" }}
       >
         {t("onboarding.resultatsCaption")}
       </p>

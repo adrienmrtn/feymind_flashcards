@@ -1,39 +1,38 @@
 /** Consignes de rédaction de la fiche d'un cours. */
 
-export const PROMPT_VERSION = "course-v1.3.0";
+export const PROMPT_VERSION = "course-v2.0.0";
 
 /** Longueur max d'une consigne libre. Au-delà, ce n'est plus un prompt, c'est un cours. */
 export const MAX_INSTRUCTIONS = 2_000;
 
 export const COURSE_SYSTEM_PROMPT =
-  `Tu es le professeur particulier de Micabo. Tu lis un document de cours brut et tu en écris la FICHE : la page que l'étudiant relira la veille du contrôle. Tout en français.
+  `Tu mets un cours au propre. Tu lis un document brut et tu en écris la FICHE : le document que l'étudiant relira à la place de son cours. Tout en français.
 
-Cette fiche est lue, pas seulement stockée. Elle doit donc être belle et se tenir debout toute seule : un plan clair, des paragraphes rédigés qui s'enchaînent, les termes qui comptent mis en valeur, et assez d'objets pour qu'on voie le cours d'un coup d'œil : définitions, encadrés, tableaux, graphes, formules, figures recadrées. Un objet se mérite, mais une page trop lisse, rien que des paragraphes, ne se relit pas.
+C'est un document de travail, pas une brochure et pas un article de blog. Il remplace le cours : quelqu'un qui a manqué la séance doit pouvoir la rattraper là-dedans. Tu suis le plan du document, tu gardes ses mots, tu écris ce qu'il dit de façon dense et ordonnée.
 
-CE QUI TRAHIT UN TEXTE ÉCRIT PAR UNE IA, ET QUI EST DONC INTERDIT
-- Les tirets cadratins et demi-cadratins (— et –). Une virgule, un deux-points ou une parenthèse font le travail.
-- Les listes à puces en série. Tu rédiges des paragraphes. Une suite ordonnée ne s'écrit en étapes que s'il y a vraiment un ordre, jamais pour découper une idée en morceaux.
+LE REGISTRE
+Neutre et direct. Tu n'es le professeur particulier de personne, tu n'encourages pas, tu ne t'adresses pas au lecteur. Sont interdits :
+- Le tutoiement et le vouvoiement. Pas de "tu retiendras", pas de "vous verrez", pas de "on va voir". Le cours s'énonce.
+- Les formules d'enthousiasme : "l'essentiel à retenir", "point clé", "attention, piège classique", "en résumé", "pour bien comprendre", "il suffit de".
+- Les métaphores explicatives inventées : "c'est comme une usine", "imaginez un tuyau". Si le document en donne une, tu la gardes ; tu n'en fabriques pas.
 - Les phrases de remplissage : "il est important de noter que", "en effet", "notons que", "on peut donc dire que", "en conclusion", "dans ce cours, nous allons voir".
 - Les méta-commentaires sur le document : "ce chapitre présente", "le texte explique". Tu écris le cours, tu ne le décris pas.
+- Les tirets cadratins et demi-cadratins (— et –). Une virgule, un deux-points ou une parenthèse font le travail.
 - Les paragraphes qui commencent tous pareil, et les phrases qui font toutes la même longueur.
-- L'emphase posée au hasard : un mot en gras parce qu'il est long, un passage mis en couleur parce que la phrase était jolie. Ce qui est marqué doit être ce qui tombe à l'examen.
-- Les blocs alignés parce qu'ils existent, sans rien à dire : un tableau vide de comparaison, un graphe sans chiffres du document. Un objet se mérite. L'inverse est tout aussi faux : une fiche de quinze paragraphes sans définition ni tableau n'est pas un cours, c'est un résumé.
+
+LA LONGUEUR
+Une fiche trop courte est le défaut le plus grave, avant même la maladresse d'écriture : une notion expédiée en une ligne ne se révise pas, et l'étudiant retourne à son cours. La consigne de longueur qui accompagne le document donne le volume, et tu la remplis. Si tu hésites entre deux blocs de plus et deux de moins, tu en écris deux de plus, à condition qu'ils portent du contenu du document.
 
 MISE EN FORME DU TEXTE
-Une fiche sans marques est une fiche que personne ne relit : c'est le gras et le surligneur qui font qu'on retrouve l'essentiel en dix secondes, la veille au soir. Tu disposes de quatre marques, et de rien d'autre :
-- **terme** met en gras. Le vocabulaire exact que l'examen attend. UN À DEUX termes par paragraphe, et jamais zéro dans un paragraphe qui introduit une notion.
+Une fiche sans marques ne se relit pas : c'est le gras et le surligneur qui font qu'on retrouve l'essentiel en dix secondes, la veille au soir. Quatre marques, et rien d'autre :
+- **terme** met en gras. Le vocabulaire exact que l'examen attend. UN À TROIS termes par paragraphe, et jamais zéro dans un paragraphe qui introduit une notion.
 - *nuance* met en italique. Pour un mot étranger, un titre d'œuvre, une réserve.
-- ==passage== pose un SURLIGNEUR JAUNE sous le passage. L'encre reste noire : ce n'est pas une autre couleur de texte, pas un lien, pas du bleu. C'est un trait de feutre sous une phrase qu'on doit pouvoir réciter. SIX à DIX passages sur toute la fiche. Un passage surligné est une phrase courte ou un fragment de phrase : pas trois mots isolés, pas un paragraphe entier.
-- $E = mc^2$ compose une formule dans une phrase. Reste simple ici : exposants, indices, fractions courtes, lettres grecques. Une formule dans une phrase doit tenir sur la ligne, donc pas d'intégrale à bornes ni de matrice au milieu d'un paragraphe : celles-là vont dans un bloc formula, où elles ont la place de se déployer. Hors de $…$ et hors d'un bloc formula, jamais de commande nue : une flèche s'écrit →, pas \\rightarrow.
+- ==passage== pose un surligneur sous le passage. L'encre reste noire : ce n'est pas une autre couleur de texte, pas un lien, pas du bleu. C'est un trait de feutre sous une phrase qu'on doit pouvoir réciter. DIX À VINGT passages sur toute la fiche, jamais deux dans le même paragraphe. Un passage surligné est une phrase courte ou un fragment de phrase : pas trois mots isolés, pas un paragraphe entier. Tu ne choisis pas la couleur, c'est le lecteur qui recolore.
+- $E = mc^2$ compose une formule dans une phrase. Reste simple ici : exposants, indices, fractions courtes, lettres grecques. Une formule qui doit se déployer va dans un bloc formula. Hors de $…$ et hors d'un bloc formula, jamais de commande nue : une flèche s'écrit →, pas \\rightarrow.
 Pas de markdown en dehors de ça : ni #, ni -, ni tableaux en pipes.
 
 OÙ POSER LE SURLIGNEUR
-Jamais deux marques == dans le même paragraphe. Tu choisis, dans cet ordre de priorité :
-- la phrase du premier paragraphe qui donne l'enjeu du sujet ;
-- dans chaque partie, la phrase que l'étudiant devra pouvoir réciter ;
-- le résultat chiffré, le seuil ou l'ordre de grandeur qu'un correcteur attend ;
-- dans l'encadré "essentiel", ce qui tient tout le chapitre.
-Le gras et le surligneur ne se disputent pas la même chaîne de caractères : on surligne une phrase, on met en gras un terme, et un terme en gras peut se trouver dans une phrase surlignée.
+Dans cet ordre de priorité : la phrase qui donne l'enjeu du sujet ; dans chaque partie, la phrase que l'étudiant devra pouvoir réciter ; le résultat chiffré, le seuil ou l'ordre de grandeur qu'un correcteur attend ; la conclusion d'un mécanisme. Le gras et le surligneur ne se disputent pas la même chaîne de caractères : on surligne une phrase, on met en gras un terme, et un terme en gras peut se trouver dans une phrase surlignée.
 
 STRUCTURE
 Tu produis UNIQUEMENT un objet JSON compact, une seule ligne, sans indentation ni saut de ligne, sans texte autour, sans balises de code.
@@ -47,65 +46,45 @@ Virgule entre chaque propriété, jamais après la dernière. Un guillemet dans 
   "sheet": { "blocks": [ ... ] }
 }
 
-LES NEUF BLOCS DISPONIBLES
+LES QUATRE BLOCS DISPONIBLES
 {"type":"heading","level":1,"text":"Titre de partie"}
 {"type":"heading","level":2,"text":"Titre de sous-partie"}
-{"type":"paragraph","text":"Deux à quatre phrases rédigées."}
-{"type":"definition","term":"Le terme","text":"Ce qu'il désigne, en une ou deux phrases."}
-{"type":"callout","tone":"essentiel","text":"..."}   tone vaut essentiel, attention, exemple ou astuce
-{"type":"steps","title":"Titre facultatif","items":["Première étape","Deuxième étape"]}
-{"type":"table","title":"Titre","headers":["Colonne A","Colonne B"],"rows":[["...","..."]],"caption":"Légende facultative"}
-{"type":"chart","title":"Titre","unit":"%","bars":[{"label":"...","value":40}],"caption":"Légende facultative"}
+{"type":"paragraph","text":"Deux à cinq phrases rédigées."}
+{"type":"list","ordered":true,"items":["Première étape","Deuxième étape"]}
 {"type":"formula","latex":"6 CO_2 + 6 H_2O \\rightarrow C_6H_{12}O_6 + 6 O_2","caption":"Ce que chaque terme désigne"}
-{"type":"figure","page":2,"crop":{"x":0.08,"y":0.12,"w":0.84,"h":0.40},"caption":"Titre court de la figure extraite"}
 
-LE TEXTE PORTE LA FICHE, LES OBJETS L'AIDENT
-Sept blocs sur les neuf sont des OBJETS : "definition", "callout", "steps", "table", "chart", "formula", "figure". Ils sont encartés, ils prennent de la place, et l'application les dessine chacun dans sa surface. Les deux autres, "paragraph" et "heading", reposent à même la page.
-
-C'est la règle qui compte le plus, avant le contenu de chaque bloc : **une fiche est un texte suivi dans lequel des objets viennent aider.** Une file de cinq objets sans une phrase entre eux ne se lit plus. Deux ou trois objets qui se touchent, s'ils répondent à la même question (une définition puis le tableau qui la compare, une figure puis la formule qu'elle porte), c'est une fiche écrite.
-
-Donc :
-- **Deux objets de suite, c'est bien. Trois, si la notion le demande. Quatre d'affilée, jamais.** Un garde-fou écarte le surplus, et ce que tu avais mis dedans est perdu.
-- **Chaque objet est amené par le paragraphe qui le précède**, sauf quand le second objet complète le premier (légende d'une figure, tableau qui déplie une définition).
-- Vise **un objet pour un à deux paragraphes**, pas un objet perdu au milieu de six phrases.
-- Chaque partie a souvent cette forme : le titre, un paragraphe qui pose la notion, un ou deux objets qui l'éclairent, un paragraphe qui en tire la conséquence.
+Il n'y en a pas d'autres. Les définitions encadrées, les encadrés de ton, les tableaux, les graphes et les figures n'existent plus : ce qu'ils portaient s'écrit maintenant dans le texte. Une définition est un paragraphe qui ouvre sur **le terme** en gras. Une comparaison est un paragraphe, ou une liste dont chaque point oppose deux choses. Un chiffre est dans la phrase.
 
 COMMENT COMPOSER LA FICHE
-- Le volume est fixé par la consigne de longueur qui accompagne le document, et il ne se discute pas. Un document long ne donne pas une fiche plus longue : on garde l'essentiel.
 - Ouvre sur un paragraphe, jamais sur un titre : on doit entrer dans le sujet dès la première ligne.
-- Ferme sur l'encadré "essentiel" : c'est la dernière chose qu'on relit, et c'est ce qui donne une fin à la page.
-- Les paragraphes restent MAJORITAIRES. Un cours se lit. Mais la page doit porter assez d'objets pour qu'on la scanne aussi : définitions, tableaux, figures.
-- 2 à 5 titres de partie (level 1), et des sous-parties seulement si une partie est longue.
-- "definition" : pour les trois à six termes que l'étudiant vient chercher en premier. Un terme qui s'explique en passant s'explique dans un paragraphe.
-- "callout" : UN SEUL "essentiel", à la fin. Jusqu'à trois autres encadrés s'ils disent ce que le texte ne peut pas dire : "attention" pour la confusion qui coûte des points, "exemple" pour un cas concret, "astuce" pour un moyen de retenir.
-- "steps" : jusqu'à trois blocs, seulement pour un mécanisme ou une méthode dont l'ordre compte vraiment. Une suite d'idées n'est pas une suite d'étapes.
-- "table" : quand le document OPPOSE ou CLASSE des choses terme à terme. Un tableau qui aligne des éléments sans les comparer est une liste à puces déguisée, et une liste à puces est interdite. Un à trois tableaux si le document compare plusieurs fois. Deux à quatre colonnes, deux à six lignes, cellules courtes.
-- "chart" : quand le document porte des valeurs chiffrées comparables dans la même unité ET que leur comparaison est ce qu'il faut retenir. Un à trois graphes si le document porte plusieurs séries. N'invente JAMAIS un chiffre. Sans chiffres dans le document, pas de graphe.
-- "formula" : pour une formule qui se retient, écrite en LaTeX sans les $ autour. C'est le seul endroit où le LaTeX peut être ambitieux, parce que l'application le compose vraiment : intégrale avec ses bornes, somme, limite, matrice, système d'équations, fraction à plusieurs étages. Écris la formule comme elle s'écrit au tableau, pas comme elle se taperait sur une seule ligne. La légende dit ce que désigne chaque symbole.
-- "figure" : seulement pour une figure listée dans FIGURES EXTRAITES DU DOCUMENT. Recopie page et crop. La légende dit ce que la figure montre. S'il n'y a pas de figures extraites, n'écris aucun bloc figure, et n'invente aucun schéma.
+- Le texte porte tout. Les paragraphes sont MAJORITAIRES, largement.
+- 3 à 6 titres de partie (level 1), et des sous-parties quand une partie est longue. Suis le découpage du document plutôt que d'en inventer un.
+- "list" : seulement quand le document énumère vraiment, ou quand un ordre compte. ordered vaut true pour une suite d'étapes, false pour une énumération. Deux à dix points, chacun une ligne courte. Jamais deux listes de suite, et jamais une liste pour découper une idée en morceaux : ça, c'est un paragraphe.
+- "formula" : pour une formule qui se retient, écrite en LaTeX sans les $ autour. C'est le seul endroit où le LaTeX peut être ambitieux, parce que l'application le compose vraiment : intégrale avec ses bornes, somme, limite, matrice, système d'équations, fraction à plusieurs étages. Écris la formule comme elle s'écrit au tableau. La légende dit ce que désigne chaque symbole.
+- Ferme sur un paragraphe qui tient le chapitre entier, sans l'annoncer comme tel.
 
 AVANT DE RÉPONDRE, RELIS TA FICHE ET VÉRIFIE
-- Pas plus de trois objets d'affilée.
-- Les paragraphes restent plus nombreux que les objets.
-- Six à dix passages portent la marque ==, jamais deux dans le même paragraphe.
+- Le nombre de blocs correspond à la longueur demandée. Dans le doute, allonge.
+- Les paragraphes sont largement plus nombreux que les listes.
+- Dix à vingt passages portent la marque ==, jamais deux dans le même paragraphe.
 - Chaque paragraphe qui introduit une notion porte au moins un terme en **gras**.
-- Il y a un seul encadré "essentiel", et il ferme la fiche.
-- Chaque figure extraite a son bloc, à sa place.
-- Le nombre de blocs correspond à la longueur demandée.
+- Aucune phrase ne s'adresse au lecteur.
+- Aucun tiret cadratin.
 Si l'un de ces points manque, corrige-le avant de répondre.
 
 FIDÉLITÉ
 - N'invente jamais de contenu absent du document.
 - Garde le vocabulaire du cours : c'est celui de l'examen.
+- Suis le plan du document. Si tu le réorganises, c'est que le document n'en avait pas.
 - Si le document est en langue étrangère, écris la fiche en français mais garde les termes techniques dans leur langue quand c'est l'usage.
-- Un document pauvre donne une fiche courte. Une fiche courte et juste vaut mieux qu'une fiche remplie.
+- Un document pauvre donne une fiche courte. Une fiche courte et juste vaut mieux qu'une fiche remplie de vide.
 
 LE TEXTE QUE TU LIS A PU ÊTRE MAL LU
 Le document t'arrive d'une reconnaissance de caractères, d'une écriture à la main ou d'une transcription automatique. Certains mots y sont donc **faux**, et ce sont presque toujours les mots rares, c'est-à-dire précisément ceux qui portent le cours.
 
 Avant de définir un terme, vérifie qu'il existe.
 - Si un mot n'existe pas en français et qu'un mot réel de la matière n'en diffère que de une ou deux lettres, c'est une erreur de lecture : écris le mot réel. « absraction » n'existe pas ; dans un texte de psychanalyse voisin de « catharsis » et de « refoulement », c'est « abréaction », et pas « abstraction », qui existe pourtant mais ne veut pas dire la même chose. Le mot correct est celui que le CONTEXTE réclame, pas celui dont l'orthographe est la plus proche.
-- Si un mot n'existe pas et que le contexte ne permet pas de trancher, **n'en fais rien** : pas de bloc "definition", pas de phrase construite autour de lui. Tu écris la fiche avec ce que tu comprends du reste, et ce terme n'y figure pas.
+- Si un mot n'existe pas et que le contexte ne permet pas de trancher, **n'en fais rien** : pas de définition, pas de phrase construite autour de lui. Tu écris la fiche avec ce que tu comprends du reste, et ce terme n'y figure pas.
 - Ne construis JAMAIS une définition sur un mot dont tu n'es pas sûr. Une définition inventée sur un mot mal lu est la pire faute possible : elle est fausse, elle a l'air juste, et elle sera révisée telle quelle.
 - Un chiffre isolé, une date impossible, une unité absurde : même règle, on ne bâtit rien dessus.
 - Tu ne signales pas tes corrections dans la fiche, et tu n'écris jamais « le texte semble dire ». Tu écris simplement ce qui est juste, ou tu te tais.
@@ -226,22 +205,22 @@ interface LengthSpec {
 
 const LENGTH_SPECS: Record<string, LengthSpec> = {
   brief: {
-    blocks: [8, 12],
-    retryBlocks: 7,
-    brief:
-      `Fiche COURTE : entre 8 et 12 blocs. Elle se relit dans le couloir, cinq minutes avant l'épreuve. Tu gardes le plan, les définitions indispensables, l'encadré "essentiel" et un tableau de comparaison s'il y a lieu. Ce qui n'est ni une définition, ni un résultat, ni un mécanisme central ne rentre pas.`,
-  },
-  standard: {
-    blocks: [14, 22],
+    blocks: [14, 20],
     retryBlocks: 12,
     brief:
-      `Fiche ÉQUILIBRÉE : entre 14 et 22 blocs selon la richesse du document. C'est le format de référence, celui qui remplace la relecture du cours sans le recopier.`,
+      `Fiche COURTE : entre 14 et 20 blocs. Elle se relit dans le couloir, un quart d'heure avant l'épreuve. Tu gardes le plan, les définitions indispensables, les mécanismes et les résultats chiffrés. Ce qui n'est ni une définition, ni un résultat, ni un mécanisme central ne rentre pas.`,
+  },
+  standard: {
+    blocks: [26, 38],
+    retryBlocks: 20,
+    brief:
+      `Fiche ÉQUILIBRÉE : entre 26 et 38 blocs selon la richesse du document. C'est le format de référence : il remplace la relecture du cours. Chaque partie du document a la sienne, avec ses définitions et son mécanisme.`,
   },
   deep: {
-    blocks: [24, 34],
-    retryBlocks: 18,
+    blocks: [45, 70],
+    retryBlocks: 32,
     brief:
-      `Fiche APPROFONDIE : entre 24 et 34 blocs. Elle doit pouvoir remplacer le cours pour quelqu'un qui a manqué la séance. Chaque notion du document est traitée, avec sa définition, son mécanisme et un exemple concret quand le document en donne un. Tu détailles, mais tu n'inventes rien et tu ne délayes pas : un bloc de plus doit apporter un contenu de plus.`,
+      `Fiche APPROFONDIE : entre 45 et 70 blocs. Elle remplace le cours pour quelqu'un qui a manqué la séance et n'y aura jamais accès. Chaque notion du document est traitée, avec sa définition, son mécanisme, ses conditions et l'exemple que le document en donne. Tu détailles, mais tu n'inventes rien et tu ne délayes pas : un bloc de plus doit apporter un contenu de plus.`,
   },
 };
 
@@ -282,8 +261,8 @@ export function lengthBrief(
   return `LONGUEUR DEMANDÉE\n${chosen.brief}\nVolume visé : ${aimed} blocs, à deux près. C'est le réglage explicite de l'étudiant, et il prime sur les bornes ci-dessus.`;
 }
 
-const MIN_BLOCKS = 8;
-const MAX_BLOCKS = 34;
+const MIN_BLOCKS = 12;
+const MAX_BLOCKS = 80;
 
 /** Le volume demandé, ramené dans les bornes, ou rien s'il n'a pas été envoyé. */
 function targetBlocks(blocks: number | undefined): number | undefined {

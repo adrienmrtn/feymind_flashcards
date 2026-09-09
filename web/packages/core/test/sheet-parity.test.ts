@@ -37,15 +37,9 @@ describe("les plafonds tiennent", () => {
   it("porte les valeurs que l'app applique aussi", () => {
     // Recopiées depuis `SheetLimits` dans `Micabo/Models/CourseSheet.swift`. Un plafond réglé
     // sous ce que le prompt exige efface exactement ce qu'on vient de demander.
-    expect(SHEET_LIMITS.blocks).toBe(60);
-    expect(SHEET_LIMITS.stepsItems).toBe(7);
-    expect(SHEET_LIMITS.tableColumns).toBe(4);
-    expect(SHEET_LIMITS.tableRows).toBe(8);
-    expect(SHEET_LIMITS.chartBars).toBe(6);
-    expect(SHEET_LIMITS.chartBlocks).toBe(3);
-    expect(SHEET_LIMITS.figureBlocks).toBe(4);
-    expect(SHEET_LIMITS.objectRun).toBe(4);
-    expect(SHEET_LIMITS.highlights).toBe(12);
+    expect(SHEET_LIMITS.blocks).toBe(90);
+    expect(SHEET_LIMITS.listItems).toBe(10);
+    expect(SHEET_LIMITS.highlights).toBe(24);
   });
 });
 
@@ -62,56 +56,110 @@ describe("la normalisation", () => {
     expect(blocks[0]!.type).toBe("paragraph");
   });
 
-  it("jette un tableau à une seule colonne", () => {
+  it("garde une liste, ordonnée ou non", () => {
     const blocks = normalizeSheet({
       blocks: [
-        { type: "paragraph", text: "Une phrase assez longue pour passer le seuil de trente." },
-        { type: "table", headers: ["Seul"], rows: [["a"], ["b"]] },
+        { type: "list", ordered: true, items: ["Évaporation", "Condensation", "Précipitations"] },
       ],
     });
 
-    expect(blocks.some((block) => block.type === "table")).toBe(false);
+    const list = blocks[0];
+    expect(list?.type).toBe("list");
+    expect(list?.type === "list" ? list.ordered : null).toBe(true);
+    expect(list?.type === "list" ? list.items : []).toHaveLength(3);
   });
 
-  it("garde une figure localisée", () => {
+  it("convertit une définition en phrase, terme en gras", () => {
+    const blocks = normalizeSheet({
+      blocks: [{ type: "definition", term: "Évaporation", text: "Le passage à l'état gazeux." }],
+    });
+
+    expect(blocks[0]).toEqual({
+      type: "paragraph",
+      text: "**Évaporation** : Le passage à l'état gazeux.",
+    });
+  });
+
+  it("convertit une suite d'étapes en liste numérotée", () => {
     const blocks = normalizeSheet({
       blocks: [
-        { type: "paragraph", text: "Le cycle de Krebs oxyde l'acétyl-CoA dans la matrice." },
+        { type: "steps", title: "Dans l'ordre", items: ["Évaporation", "Condensation"] },
+      ],
+    });
+
+    expect(blocks[0]).toEqual({ type: "paragraph", text: "**Dans l'ordre**" });
+    expect(blocks[1]).toEqual({
+      type: "list",
+      ordered: true,
+      items: ["Évaporation", "Condensation"],
+    });
+  });
+
+  it("convertit un tableau en lignes lisibles plutôt que de le jeter", () => {
+    const blocks = normalizeSheet({
+      blocks: [
         {
-          type: "figure",
-          caption: "Cycle de Krebs",
-          page: 2,
-          crop: { x: 0.1, y: 0.2, w: 0.8, h: 0.4 },
+          type: "table",
+          title: "Les réservoirs",
+          headers: ["Réservoir", "Part"],
+          rows: [["Océans", "97 %"], ["Glaciers", "2 %"]],
         },
       ],
     });
 
-    expect(blocks.some((block) => block.type === "figure")).toBe(true);
+    const list = blocks.find((block) => block.type === "list");
+    expect(list?.type === "list" ? list.items : []).toEqual([
+      "**Réservoir** : Océans, **Part** : 97 %",
+      "**Réservoir** : Glaciers, **Part** : 2 %",
+    ]);
   });
 
-  it("garde l'image d'une figure dense, au-delà de 400 000 caractères", () => {
-    const image = "data:image/jpeg;base64," + "A".repeat(500_000);
+  it("convertit un graphe en liste de valeurs", () => {
     const blocks = normalizeSheet({
       blocks: [
-        { type: "paragraph", text: "Le cycle de Krebs oxyde l'acétyl-CoA dans la matrice." },
-        { type: "figure", caption: "Cycle de Krebs", page: 1, image },
+        {
+          type: "chart",
+          title: "Temps de résidence",
+          unit: "ans",
+          bars: [{ label: "Océans", value: 3000 }, { label: "Lacs", value: 10 }],
+        },
       ],
     });
-    const figure = blocks.find((block) => block.type === "figure");
-    expect(figure?.type === "figure" ? figure.image : undefined).toBe(image);
+
+    const list = blocks.find((block) => block.type === "list");
+    expect(list?.type === "list" ? list.items : []).toEqual([
+      "**Océans** : 3000 ans",
+      "**Lacs** : 10 ans",
+    ]);
   });
 
-  it("met la fiche à plat, valeurs de tableau comprises", () => {
+  it("ne garde d'une figure que sa légende", () => {
+    const blocks = normalizeSheet({
+      blocks: [
+        { type: "figure", caption: "Cycle de Krebs", page: 2, image: "data:image/jpeg;base64,AAAA" },
+      ],
+    });
+
+    expect(blocks).toEqual([{ type: "paragraph", text: "Cycle de Krebs" }]);
+  });
+
+  it("laisse le nom d'une couleur de surligneur hors du texte à plat", () => {
+    // Sinon le modèle reçoit « menthe|le cycle » et le nom de la couleur se révise avec le
+    // cours, sur les cartes comme sur les examens blancs.
     const flat = sheetToPlainText([
-      { type: "heading", level: 1, text: "Le cycle de l'eau" },
-      {
-        type: "table",
-        headers: ["Phase", "Lieu"],
-        rows: [["Photochimique", "thylakoïdes"]],
-      },
+      { type: "paragraph", text: "Retiens ==menthe|le cycle de l'eau== avant tout." },
     ]);
 
-    // « thylakoïdes » seul ne se révise pas : le nom de la colonne part avec la valeur.
-    expect(flat).toContain("Phase : Photochimique, Lieu : thylakoïdes");
+    expect(flat).toBe("Retiens le cycle de l'eau avant tout.");
+  });
+
+  it("met la fiche à plat, listes comprises", () => {
+    const flat = sheetToPlainText([
+      { type: "heading", level: 1, text: "Le cycle de l'eau" },
+      { type: "list", ordered: true, items: ["Évaporation", "Condensation"] },
+      { type: "list", ordered: false, items: ["Océans : 97 %"] },
+    ]);
+
+    expect(flat).toBe("Le cycle de l'eau\n1. Évaporation\n2. Condensation\nOcéans : 97 %");
   });
 });

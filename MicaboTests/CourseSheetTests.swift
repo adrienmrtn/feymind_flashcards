@@ -47,6 +47,29 @@ final class SheetMarkupTests: XCTestCase {
         XCTAssertEqual(SheetMarkup.plain("On écrit $H_2O$ pour l'eau."), "On écrit H₂O pour l'eau.")
     }
 
+    /// Une couleur nommée avant la barre change la teinte, sans entrer dans le texte.
+    func testANamedColourChangesTheHighlight() {
+        let spans = SheetMarkup.spans("==menthe|ce passage== et ==celui-ci==")
+
+        XCTAssertEqual(spans.first { $0.isHighlighted }?.text, "ce passage")
+        XCTAssertEqual(spans.first { $0.isHighlighted }?.highlight, .menthe)
+        XCTAssertEqual(spans.last { $0.isHighlighted }?.highlight, .jaune)
+        XCTAssertEqual(SheetMarkup.plain("==menthe|ce passage=="), "ce passage")
+    }
+
+    /// Un nom qui n'est pas une couleur reste du texte, barre comprise : « a | b » veut dire
+    /// quelque chose dans un cours d'informatique.
+    func testAnUnknownColourNameStaysInTheText() {
+        XCTAssertEqual(SheetMarkup.plain("==a | b=="), "a | b")
+    }
+
+    /// Le chemin inverse, celui de l'éditeur : des fragments vers le texte balisé.
+    func testSpansGoBackToMarkup() {
+        let source = "Le **chloroplaste** porte ==menthe|l'essentiel==."
+
+        XCTAssertEqual(SheetMarkup.markup(from: SheetMarkup.spans(source)), source)
+    }
+
     func testMarkupInsideAHighlightIsKept() {
         let spans = SheetMarkup.spans("==le **carbone** de l'air==")
 
@@ -66,23 +89,55 @@ final class CourseSheetDecodingTests: XCTestCase {
         {"blocks": [
           {"type": "heading", "level": 1, "text": "Partie"},
           {"type": "paragraph", "text": "Un paragraphe assez long pour être gardé tel quel."},
-          {"type": "definition", "term": "Stroma", "text": "Le liquide qui baigne les thylakoïdes."},
-          {"type": "callout", "tone": "attention", "text": "La phase sombre n'a pas lieu la nuit."},
-          {"type": "steps", "title": "Trois temps", "items": ["Fixation", "Réduction", "Régénération"]},
-          {"type": "table", "headers": ["A", "B"], "rows": [["1", "2"], ["3", "4"]]},
-          {"type": "chart", "unit": "%", "bars": [{"label": "CO2", "value": 45}, {"label": "Lumière", "value": 11}]},
-          {"type": "formula", "latex": "E = mc^2", "caption": "Légende"},
-          {"type": "figure", "page": 2, "caption": "Cycle de Krebs", "crop": {"x": 0.1, "y": 0.2, "w": 0.8, "h": 0.4}}
+          {"type": "list", "ordered": true, "items": ["Fixation", "Réduction"]},
+          {"type": "formula", "latex": "E = mc^2", "caption": "Légende"}
         ]}
         """)
 
-        XCTAssertEqual(decoded.blocks.count, 9)
-        guard case .figure(let figure) = decoded.blocks.last else {
-            return XCTFail("La figure doit être décodée")
+        XCTAssertEqual(decoded.blocks.count, 4)
+        guard case .list(let ordered, let items) = decoded.blocks[2] else {
+            return XCTFail("La liste doit être décodée")
         }
-        XCTAssertEqual(figure.caption, "Cycle de Krebs")
-        XCTAssertEqual(figure.page, 2)
-        XCTAssertEqual(figure.crop?.w, 0.8)
+        XCTAssertTrue(ordered)
+        XCTAssertEqual(items, ["Fixation", "Réduction"])
+    }
+
+    /// **Les fiches déjà en base ne sont pas perdues.** Les blocs d'avant sont convertis à la
+    /// lecture, exactement comme le serveur les convertit : une définition devient sa phrase,
+    /// un tableau ses lignes, un graphe ses valeurs.
+    func testTheBlocksFromBeforeAreConvertedRatherThanDropped() throws {
+        let decoded = try sheet("""
+        {"blocks": [
+          {"type": "definition", "term": "Stroma", "text": "Le liquide qui baigne les thylakoïdes."},
+          {"type": "callout", "tone": "attention", "text": "La phase sombre n'a pas lieu la nuit."},
+          {"type": "steps", "title": "Trois temps", "items": ["Fixation", "Réduction"]},
+          {"type": "table", "headers": ["A", "B"], "rows": [["1", "2"]]},
+          {"type": "chart", "unit": "%", "bars": [{"label": "CO2", "value": 45}]},
+          {"type": "figure", "page": 2, "caption": "Cycle de Krebs"}
+        ]}
+        """)
+
+        let texts = decoded.blocks.flatMap { block -> [String] in
+            switch block {
+            case .paragraph(let text): [text]
+            case .list(_, let items): items
+            default: []
+            }
+        }
+
+        XCTAssertTrue(texts.contains("**Stroma** : Le liquide qui baigne les thylakoïdes."))
+        XCTAssertTrue(texts.contains("La phase sombre n'a pas lieu la nuit."))
+        XCTAssertTrue(texts.contains("**Trois temps**"))
+        XCTAssertTrue(texts.contains("Fixation"))
+        XCTAssertTrue(texts.contains("**A** : 1, **B** : 2"))
+        XCTAssertTrue(texts.contains("**CO2** : 45 %"))
+        XCTAssertTrue(texts.contains("Cycle de Krebs"))
+
+        // Une suite d'étapes vaut deux blocs : son titre, puis la liste numérotée.
+        guard case .list(let ordered, _) = decoded.blocks[3] else {
+            return XCTFail("Les étapes doivent devenir une liste numérotée")
+        }
+        XCTAssertTrue(ordered)
     }
 
     /// Un bloc inconnu ou vide ne doit pas emporter la fiche entière : c'est la différence
@@ -103,47 +158,20 @@ final class CourseSheetDecodingTests: XCTestCase {
     func testNumericCellsAndValuesSurviveTheirQuotes() throws {
         let decoded = try sheet("""
         {"blocks": [
-          {"type": "table", "headers": ["Année", "Valeur"], "rows": [["1885", 68], ["1978", 42]]},
-          {"type": "chart", "bars": [{"label": "A", "value": "40"}, {"label": "B", "value": 12}]}
+          {"type": "list", "items": ["1885", 68, true]},
+          {"type": "chart", "bars": [{"label": "A", "value": "40"}]}
         ]}
         """)
 
-        guard case .table(let table) = decoded.blocks.first else {
-            return XCTFail("Le tableau doit être décodé")
+        guard case .list(_, let items) = decoded.blocks.first else {
+            return XCTFail("La liste doit être décodée")
         }
-        XCTAssertEqual(table.rows.first, ["1885", "68"])
+        XCTAssertEqual(items, ["1885", "68", "oui"])
 
-        guard case .chart(let chart) = decoded.blocks.last else {
-            return XCTFail("Le graphe doit être décodé")
+        guard case .list(_, let values) = decoded.blocks.last else {
+            return XCTFail("Le graphe doit devenir une liste")
         }
-        XCTAssertEqual(chart.bars.first?.value, 40)
-    }
-
-    func testCalloutToneFallsBackInsteadOfFailing() throws {
-        let decoded = try sheet("""
-        {"blocks": [
-          {"type": "callout", "tone": "piège", "text": "Une confusion fréquente sur ce point."},
-          {"type": "callout", "tone": "n'importe quoi", "text": "Ce qu'il faut retenir de la partie."}
-        ]}
-        """)
-
-        guard case .callout(let first, _) = decoded.blocks.first,
-              case .callout(let second, _) = decoded.blocks.last else {
-            return XCTFail("Les deux encadrés doivent être décodés")
-        }
-        XCTAssertEqual(first, .attention)
-        XCTAssertEqual(second, .essentiel)
-    }
-
-    func testAFigureWithoutAPageOrImageDoesNotSurviveCleaning() throws {
-        let decoded = try sheet("""
-        {"blocks": [
-          {"type": "figure", "caption": "Sans ancrage"}
-        ]}
-        """)
-
-        XCTAssertEqual(decoded.blocks.count, 1)
-        XCTAssertNil(decoded.sanitized().blocks.first)
+        XCTAssertEqual(values, ["**A** : 40"])
     }
 
     func testRoundTripKeepsTheSheetIdentical() throws {
@@ -192,31 +220,22 @@ final class CourseSheetSanitizationTests: XCTestCase {
 
     func testBlocksThatCannotBeDisplayedDisappear() {
         let sheet = CourseSheet(blocks: [
-            .steps(title: "Une seule étape", items: ["Fixation"]),
-            .table(SheetTable(headers: ["Seule colonne"], rows: [["a"], ["b"]])),
-            .chart(SheetChart(bars: [SheetChart.Bar(label: "Unique", value: 12)])),
-            .chart(SheetChart(bars: [
-                SheetChart.Bar(label: "A", value: 0),
-                SheetChart.Bar(label: "B", value: 0)
-            ])),
-            .paragraph(text: "Le seul bloc qui tient debout.")
+            .paragraph(text: "Trop court."),
+            .list(ordered: false, items: []),
+            .formula(latex: "  ", caption: nil),
+            .heading(level: 1, text: "   "),
+            .paragraph(text: "Le seul bloc qui tient debout, et qui a la longueur qu'il faut.")
         ]).sanitized()
 
         XCTAssertEqual(sheet.blocks.count, 1)
     }
 
-    func testIncompleteTableRowsArePaddedRatherThanDropped() {
-        let sheet = CourseSheet(blocks: [
-            .table(SheetTable(
-                headers: ["A", "B", "C"],
-                rows: [["1", "2", "3"], ["4"]]
-            ))
-        ]).sanitized()
+    /// Une puce seule est acceptée : sur une fiche qu'on modifie à la main, elle est le
+    /// premier point d'une liste qu'on est en train d'écrire, pas une erreur du modèle.
+    func testASingleBulletIsKeptOnAnEditableSheet() {
+        let sheet = CourseSheet(blocks: [.list(ordered: false, items: ["Fixation"])]).sanitized()
 
-        guard case .table(let table) = sheet.blocks.first else {
-            return XCTFail("Le tableau doit être gardé")
-        }
-        XCTAssertEqual(table.rows.last, ["4", "", ""])
+        XCTAssertEqual(sheet.blocks.count, 1)
     }
 }
 
@@ -235,7 +254,7 @@ final class SheetRenderingTests: XCTestCase {
         XCTAssertNotEqual(plain.location, NSNotFound)
 
         let band = composed.attribute(.backgroundColor, at: marked.location, effectiveRange: nil) as? UIColor
-        XCTAssertEqual(band, UIColor(MicaboColor.sheetMarker))
+        XCTAssertEqual(band, UIColor(MicaboColor.sheetHighlight(.jaune)))
         XCTAssertNil(
             composed.attribute(.backgroundColor, at: plain.location, effectiveRange: nil),
             "La bande s'arrête au passage marqué"
@@ -356,32 +375,35 @@ final class SheetRenderingTests: XCTestCase {
 /// La fiche à plat : c'est ce texte qui part au modèle pour écrire des cartes ou expliquer
 /// un passage, donc rien de ce qui se mémorise ne doit y disparaître.
 final class CourseSheetFlatteningTests: XCTestCase {
-    func testTableAndChartValuesAreKeptWithTheirColumnName() {
+    /// Ce qu'un tableau portait s'écrit maintenant en lignes, et la mise à plat garde les
+    /// noms de colonnes qui donnaient leur sens aux valeurs.
+    func testValuesAreKeptWithTheirColumnName() {
         let sheet = CourseSheet(blocks: [
-            .table(SheetTable(
-                headers: ["", "Photochimique", "Biochimique"],
-                rows: [["Lieu", "Thylakoïdes", "Stroma"], ["Produit", "ATP", "Glucose"]]
-            )),
-            .chart(SheetChart(
-                bars: [SheetChart.Bar(label: "CO₂ enrichi", value: 45)],
-                unit: "%"
-            ))
+            .list(ordered: false, items: [
+                "**Lieu** : Thylakoïdes, **Produit** : ATP",
+                "**CO₂ enrichi** : 45 %"
+            ])
         ])
 
         let text = sheet.plainText()
 
-        XCTAssertTrue(text.contains("Lieu"))
-        XCTAssertTrue(text.contains("Photochimique : Thylakoïdes"))
-        // Le chiffre d'un graphe se révise : il ne doit pas être perdu en route.
-        XCTAssertTrue(text.contains("45%"))
+        XCTAssertTrue(text.contains("Lieu : Thylakoïdes"))
+        // Le chiffre se révise : il ne doit pas être perdu en route.
+        XCTAssertTrue(text.contains("45 %"))
     }
 
-    func testStepsAreNumberedOnceFlattened() {
+    func testAnOrderedListIsNumberedOnceFlattened() {
         let sheet = CourseSheet(blocks: [
-            .steps(title: nil, items: ["Fixation du CO₂", "Réduction en G3P"])
+            .list(ordered: true, items: ["Fixation du CO₂", "Réduction en G3P"])
         ])
 
         XCTAssertEqual(sheet.plainText(), "1. Fixation du CO₂\n2. Réduction en G3P")
+    }
+
+    func testAnUnorderedListIsNotNumbered() {
+        let sheet = CourseSheet(blocks: [.list(ordered: false, items: ["Océans", "Continents"])])
+
+        XCTAssertEqual(sheet.plainText(), "Océans\nContinents")
     }
 
     func testReadingTimeIsAnnouncedFromTheSheetItself() {
@@ -586,7 +608,7 @@ final class OfflineSheetBuilderTests: XCTestCase {
             return false
         }
         let hasDefinition = sheet.blocks.contains { block in
-            if case .definition(let term, _) = block { return term == "Coefficient directeur" }
+            if case .paragraph(let text) = block { return text.hasPrefix("**Coefficient directeur** : ") }
             return false
         }
 
@@ -594,13 +616,14 @@ final class OfflineSheetBuilderTests: XCTestCase {
         XCTAssertTrue(hasDefinition)
     }
 
-    func testNothingIsEmphasizedWithoutHavingReadTheCourse() throws {
+    /// Rien n'est **surligné** sans avoir lu le cours : le gras du terme d'une définition
+    /// est une structure reconnue, pas un jugement sur ce qui compte.
+    func testNothingIsHighlightedWithoutHavingReadTheCourse() throws {
         let sheet = try XCTUnwrap(OfflineSheetBuilder.build(from: source, title: "Chapitre 3"))
 
         XCTAssertFalse(SheetMarkup.containsMarkup(sheet.plainText()))
         for block in sheet.blocks {
             for line in block.plainLines() {
-                XCTAssertFalse(line.contains("**"), "La fiche hors ligne ne met rien en gras")
                 XCTAssertFalse(line.contains("=="), "La fiche hors ligne ne surligne rien")
             }
         }

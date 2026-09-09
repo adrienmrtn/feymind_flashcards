@@ -10,16 +10,19 @@
 
 // La fiche : le module canonique du serveur, et le parseur de balisage pour le rendu.
 export {
+  DEFAULT_HIGHLIGHT,
+  SHEET_HIGHLIGHTS,
   SHEET_LIMITS,
   normalizeSheet,
   sheetToPlainText,
   stripInlineMarkup,
   type SheetBlock,
-  type SheetCrop,
+  type SheetHighlight,
 } from "./sheet/canonical";
 export {
   containsInlineMarkup,
   parseInlineMarkup,
+  toInlineMarkup,
   type MarkupSpan,
 } from "./sheet/markup";
 export { stripEmDashes } from "./sheet/em-dashes";

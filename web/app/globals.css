@@ -64,6 +64,17 @@
      est tenue en `em` par `.sheet-marker` : elle ne dépend plus de la hauteur de ligne. */
   --color-sheet-marker: #f5d76e;
 
+  /* Les cinq surligneurs, et le choix qui va avec : ils sont **pastel**, donc l'encre reste
+     lisible dessus. Un feutre saturé oblige à alléger le texte pour qu'il ressorte, et une
+     fiche qu'on a surlignée en entier devient alors moins lisible qu'avant de l'avoir
+     travaillée. Cinq teintes parce qu'au-delà on ne les distingue plus en diagonale, et que
+     le code couleur d'une fiche ne tient que s'il se retient. */
+  --color-hl-jaune: #f8e08e;
+  --color-hl-menthe: #bfe6cf;
+  --color-hl-bleu: #c3ddf7;
+  --color-hl-rose: #f7cdda;
+  --color-hl-lilas: #dcd0f5;
+
   /* ---- Retours d'information ---- */
   --color-positive: #3f7d53;
   --color-caution: #b3872b;
@@ -259,6 +270,13 @@
   --color-progress: #60a5fa;
   --color-progress-track: #2a2e36;
   --color-sheet-marker: #c9a227;
+  /* De nuit, la bande est sombre et l'encre reste claire : un pastel de jour porterait du
+     texte blanc sur du crème. */
+  --color-hl-jaune: #55491c;
+  --color-hl-menthe: #1f4034;
+  --color-hl-bleu: #1e3a56;
+  --color-hl-rose: #4d2733;
+  --color-hl-lilas: #382f57;
   --color-positive: #6fbf86;
   --color-caution: #d4a84b;
   --color-caution-vivid: #e8b23c;
@@ -343,6 +361,13 @@
   --color-progress: #8bb0ff;
   --color-progress-track: #3a3028;
   --color-sheet-marker: #c9a227;
+  /* De nuit, la bande est sombre et l'encre reste claire : un pastel de jour porterait du
+     texte blanc sur du crème. */
+  --color-hl-jaune: #55491c;
+  --color-hl-menthe: #1f4034;
+  --color-hl-bleu: #1e3a56;
+  --color-hl-rose: #4d2733;
+  --color-hl-lilas: #382f57;
   --color-positive: #8fbf8a;
   --color-caution: #e0b84a;
   --color-caution-vivid: #e8b23c;
@@ -1170,6 +1195,88 @@ video {
      imprimée. */
   print-color-adjust: exact;
   -webkit-print-color-adjust: exact;
+}
+
+/* Le surligneur du document. C'est un `<mark>`, et le navigateur lui pose un fond jaune vif
+   et une encre noire par défaut : les deux sont repris ici, sinon la teinte choisie ne se
+   verrait jamais et l'encre ne suivrait pas le thème. */
+.sheet-doc mark {
+  background-color: var(--color-hl-jaune);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0.07em 0.16em;
+  margin-inline: -0.07em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.sheet-doc mark[data-hl="menthe"] {
+  background-color: var(--color-hl-menthe);
+}
+
+.sheet-doc mark[data-hl="bleu"] {
+  background-color: var(--color-hl-bleu);
+}
+
+.sheet-doc mark[data-hl="rose"] {
+  background-color: var(--color-hl-rose);
+}
+
+.sheet-doc mark[data-hl="lilas"] {
+  background-color: var(--color-hl-lilas);
+}
+
+/* Le document lui-même : les blocs y sont des éléments ordinaires, donc c'est ici qu'ils
+   prennent leur taille et leur air. Un `contenteditable` n'hérite d'aucune feuille de style
+   d'éditeur ; sans ces règles, un titre créé à la volée aurait la taille du corps. */
+.sheet-doc {
+  outline: none;
+}
+
+.sheet-doc > * + * {
+  margin-top: 11px;
+}
+
+.sheet-doc h1 {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.2px;
+  margin-top: 36px;
+}
+
+.sheet-doc h2 {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 28px;
+}
+
+.sheet-doc > :first-child {
+  margin-top: 0;
+}
+
+.sheet-doc ul,
+.sheet-doc ol {
+  padding-left: 1.35em;
+}
+
+.sheet-doc ul {
+  list-style: disc;
+}
+
+.sheet-doc ol {
+  list-style: decimal;
+}
+
+.sheet-doc li {
+  margin-top: 3px;
+}
+
+.sheet-doc li::marker {
+  color: var(--color-ink-tertiary);
 }
 
 /* La visite guidée : un voile percé sur une zone, et une bulle à côté.

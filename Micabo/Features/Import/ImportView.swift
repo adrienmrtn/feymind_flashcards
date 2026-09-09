@@ -869,9 +869,6 @@ struct ImportView: View {
         } else {
             do {
                 generated = try await aiService.generateCourse(request)
-                if let sheet = generated.sheet {
-                    generated.sheet = sheet.attachingFigureImages(from: images)
-                }
             } catch {
                 failure = ImportFailure(
                     title: L10n.t("ios.err.analysisFailed", locale: .resolved()),

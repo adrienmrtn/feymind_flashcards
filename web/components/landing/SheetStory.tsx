@@ -1,6 +1,6 @@
 "use client";
 
-import { DEMO_ACCENT, localizedDemoCards, localizedTransformationSheet } from "@/components/demo/demo-course";
+import { localizedDemoCards, localizedTransformationSheet } from "@/components/demo/demo-course";
 import { SheetBlocks } from "@/components/sheet/SheetBlocks";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -37,7 +37,7 @@ export function SheetStory() {
       </span>
 
       <div className="paper relative max-h-[236px] overflow-hidden rounded-[18px] bg-surface p-4 pt-5">
-        <SheetBlocks blocks={sheet} tint={DEMO_ACCENT} />
+        <SheetBlocks blocks={sheet} />
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-surface to-transparent"

@@ -24,7 +24,6 @@ export type OnboardingPath =
   | "/commencer/pays"
   | "/commencer/niveau"
   | "/commencer/matieres"
-  | "/commencer/ecole"
   | "/commencer/parcours"
   | "/commencer/compte"
   | "/app";
@@ -50,7 +49,6 @@ export const STEPS: readonly Step[] = [
   { path: "/commencer/pays", label: "Ton pays", chrome: true },
   { path: "/commencer/niveau", label: "Ton niveau", chrome: true },
   { path: "/commencer/matieres", label: "Tes matières", chrome: true },
-  { path: "/commencer/ecole", label: "Ton école", chrome: true },
   { path: "/commencer/parcours", label: "Ton parcours", chrome: true },
   // La création du compte est une **page** et non un écran de parcours : elle porte sa propre
   // mise en page, donc ni jauge ni flèche par-dessus.

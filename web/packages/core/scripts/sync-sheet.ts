@@ -18,7 +18,7 @@ const repoRoot = resolve(here, "../../../..");
 
 export const SOURCE = resolve(repoRoot, "supabase/functions/_shared/sheet.ts");
 export const TARGET = resolve(here, "../src/sheet/canonical.ts");
-export const ANCHOR = "export type SheetCrop =";
+export const ANCHOR = "export type SheetBlock =";
 
 export const HEADER = `/**
  * Le module de fiche, **copie conforme du serveur**.

@@ -55,41 +55,33 @@ export const DEMO_SHEET: SheetBlock[] = [
     text: "L'eau change d'état sans jamais quitter la planète : ce qui s'**évapore** des océans retombe sur les continents, puis y retourne. ==71 % de l'évaporation vient des océans.==",
   },
   {
-    type: "definition",
-    term: "Condensation",
-    text: "Passage de la vapeur à l'état liquide, autour de **noyaux de condensation**.",
+    type: "paragraph",
+    text: "**Condensation** : passage de la vapeur à l'état liquide, autour de *noyaux de condensation*.",
   },
   {
-    type: "chart",
-    title: "D'où vient l'eau qui s'évapore",
-    unit: "%",
-    bars: [
-      { label: "Océans", value: 71 },
-      { label: "Continents", value: 29 },
+    type: "list",
+    ordered: true,
+    items: [
+      "L'eau des océans s'évapore sous l'effet du rayonnement solaire.",
+      "La vapeur se condense en altitude et forme les nuages.",
+      "Les précipitations rendent l'eau aux continents et aux océans.",
     ],
-    caption: "Les océans couvrent 71 % de la surface terrestre.",
   },
   {
-    type: "callout",
-    tone: "attention",
-    text: "Pluie ou neige ne dépend pas de l'altitude du nuage mais de la **température rencontrée pendant la chute**.",
+    type: "paragraph",
+    text: "==menthe|Pluie ou neige ne dépend pas de l'altitude du nuage== mais de la **température rencontrée pendant la chute**.",
   },
 ];
 
 /**
  * La fiche de la section de transformation, un bloc plus courte.
  *
- * L'encadré « Attention » en est retiré, et pour une raison de mise en page qui compte : cette
- * section tient les deux états dans **un seul rectangle**, et ce rectangle doit entrer en entier
- * dans un écran de portable sans être rogné. Une fiche rognée à mi-hauteur ne montre pas une
- * transformation, elle montre un défaut d'affichage.
- *
- * Ce qui reste couvre déjà tout ce que la section a à prouver : un plan, de la prose, une
- * définition, un objet chiffré, et le schéma.
+ * La dernière phrase en est retirée, et pour une raison de mise en page qui compte : cette
+ * section tient les deux états dans **un seul rectangle**, et ce rectangle doit entrer en
+ * entier dans un écran de portable sans être rogné. Une fiche rognée à mi-hauteur ne montre
+ * pas une transformation, elle montre un défaut d'affichage.
  */
-export const TRANSFORMATION_SHEET: SheetBlock[] = DEMO_SHEET.filter(
-  (block) => block.type !== "callout",
-);
+export const TRANSFORMATION_SHEET: SheetBlock[] = DEMO_SHEET.slice(0, -1);
 
 /** Les trois temps du cycle, pour la figure. */
 export const CYCLE_STAGES = [
@@ -178,23 +170,18 @@ export function localizedDemoSheet(t: Translator): SheetBlock[] {
   return [
     { type: "heading", level: 1, text: t("demo.sheetHeading") },
     { type: "paragraph", text: t("demo.sheetParagraphMarked") },
-    { type: "definition", term: t("demo.defTerm"), text: t("demo.defText") },
+    { type: "paragraph", text: `**${t("demo.defTerm")}** : ${t("demo.defText")}` },
     {
-      type: "chart",
-      title: t("demo.chartTitle"),
-      unit: "%",
-      bars: [
-        { label: t("demo.oceans"), value: 71 },
-        { label: t("demo.continents"), value: 29 },
-      ],
-      caption: t("demo.chartCaption"),
+      type: "list",
+      ordered: true,
+      items: [t("demo.sheetStep1"), t("demo.sheetStep2"), t("demo.sheetStep3")],
     },
-    { type: "callout", tone: "attention", text: t("demo.sheetCallout") },
+    { type: "paragraph", text: t("demo.sheetCallout") },
   ];
 }
 
 export function localizedTransformationSheet(t: Translator): SheetBlock[] {
-  return localizedDemoSheet(t).filter((block) => block.type !== "callout");
+  return localizedDemoSheet(t).slice(0, -1);
 }
 
 export function localizedCycleStages(t: Translator) {

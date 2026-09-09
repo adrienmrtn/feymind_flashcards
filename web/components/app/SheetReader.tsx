@@ -5,7 +5,7 @@ import { ThinkingOrb } from "thinking-orbs";
 
 import type { SheetBlock } from "@micabo/core";
 
-import { SheetBlocks } from "@/components/sheet/SheetBlocks";
+import { SheetDocument } from "@/components/sheet/SheetDocument";
 import { InlineMarkup } from "@/components/sheet/InlineMarkup";
 import { createCard } from "@/lib/actions/cards";
 import { explainSelection, type Explanation } from "@/lib/actions/cards";
@@ -19,19 +19,23 @@ import {
 /**
  * La fiche, **et le passage qu'on ne comprend pas.**
  *
- * On sélectionne trois mots, le bouton apparaît **à côté du passage**, pas en bas de page.
- * L'explication aussi : une carte flottante, fermable, ancrée sur le texte qu'on vient de
- * pointer. La coller en fin de fiche obligeait à quitter le paragraphe, donc à perdre le
- * fil - c'est précisément ce qu'une explication ne doit pas faire.
+ * La fiche est un document qu'on écrit ; « Explique-moi » vit donc dans sa barre d'outils, à
+ * côté du gras et des surligneurs, et pas dans une pastille qui surgirait sous le curseur.
+ * C'est le même geste que pour surligner - on sélectionne, on clique - au lieu de deux gestes
+ * qui se disputeraient le même écran.
+ *
+ * L'explication, elle, reste flottante : une carte fermable, ancrée sur le passage pointé. La
+ * coller en fin de fiche obligeait à quitter le paragraphe, donc à perdre le fil - c'est
+ * précisément ce qu'une explication ne doit pas faire.
  */
 export function SheetReader({
   courseId,
   blocks,
-  tint,
+  lockedCount,
 }: {
   courseId: string;
   blocks: SheetBlock[];
-  tint: string;
+  lockedCount: number;
 }) {
   const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
@@ -152,12 +156,28 @@ export function SheetReader({
     if (result.status === "ok") setSaved(true);
   }
 
-  const floating = Boolean(anchor && (selection || panel !== "repos" || failure));
+  const floating = Boolean(anchor && (panel !== "repos" || failure));
 
   return (
     <div>
       <div ref={container} className="w-full max-w-page">
-        <SheetBlocks blocks={blocks} tint={tint} />
+        <SheetDocument
+          courseId={courseId}
+          blocks={blocks}
+          lockedCount={lockedCount}
+          tool={
+            <button
+              type="button"
+              // Sans ça, le clic vide la sélection avant qu'on ait pu la lire.
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={ask}
+              disabled={!selection || panel === "attente"}
+              className="pressable h-9 rounded-button px-3 text-[13.5px] font-semibold text-accent transition-colors duration-hover hover:bg-accent-soft disabled:text-ink-tertiary disabled:hover:bg-transparent"
+            >
+              {t("app.sheetReader.ask")}
+            </button>
+          }
+        />
       </div>
 
       {floating && anchor ? (
@@ -171,21 +191,6 @@ export function SheetReader({
           data-print="hide"
         >
           <div className="rise">
-          {panel === "repos" && selection ? (
-            <div className="flex items-center gap-3 rounded-pill bg-ink px-4 py-2.5 shadow-floating">
-              <span className="max-w-[28ch] truncate text-[13px] text-on-ink-muted">
-                « {selection} »
-              </span>
-              <button
-                type="button"
-                onClick={ask}
-                className="pressable shrink-0 rounded-pill bg-on-ink px-3.5 py-1.5 text-[13.5px] font-semibold text-ink"
-              >
-                {t("app.sheetReader.ask")}
-              </button>
-            </div>
-          ) : null}
-
           {panel === "attente" ? (
             <div className="paper flex items-center gap-3 rounded-group bg-surface p-4 shadow-floating">
               <ThinkingOrb state="composing" size={64} />

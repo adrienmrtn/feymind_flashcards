@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { containsInlineMarkup, parseInlineMarkup } from "../src/sheet/markup";
+import { containsInlineMarkup, parseInlineMarkup, toInlineMarkup } from "../src/sheet/markup";
 import { stripInlineMarkup } from "../src/sheet/canonical";
 
 function rendered(source: string) {
@@ -137,5 +137,34 @@ describe("la mise à plat reste celle du serveur", () => {
       .trim();
 
     expect(joined).toBe(stripInlineMarkup(source));
+  });
+});
+
+describe("les couleurs de surlignage", () => {
+  it("marque en jaune par défaut", () => {
+    const spans = parseInlineMarkup("Ce qui compte est ==ici==.");
+    const marked = spans.find((span) => span.highlighted);
+    expect(marked?.text).toBe("ici");
+    expect(marked?.highlight).toBe("jaune");
+  });
+
+  it("lit une couleur nommée avant la barre", () => {
+    const spans = parseInlineMarkup("Retiens ==menthe|la condensation== pour demain.");
+    const marked = spans.find((span) => span.highlighted);
+    expect(marked?.text).toBe("la condensation");
+    expect(marked?.highlight).toBe("menthe");
+  });
+
+  it("laisse une barre ordinaire tranquille", () => {
+    // Un cours d'informatique écrit « a | b » sans vouloir colorer quoi que ce soit.
+    const spans = parseInlineMarkup("On note ==a | b== la disjonction.");
+    const marked = spans.find((span) => span.highlighted);
+    expect(marked?.text).toBe("a | b");
+    expect(marked?.highlight).toBe("jaune");
+  });
+
+  it("fait l'aller-retour sans rien perdre", () => {
+    const source = "**Le cycle** de ==bleu|l'eau== et *ses* phases, $E = mc^2$.";
+    expect(toInlineMarkup(parseInlineMarkup(source))).toBe(source);
   });
 });

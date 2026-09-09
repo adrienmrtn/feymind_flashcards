@@ -13,13 +13,7 @@ import { requestPaywall } from "@/lib/paywall";
  * suite, on peut la faire défiler, et on ne la lit pas. Même geste que
  * sur l'iPhone — voir ce qu'on y perd.
  */
-export function LockedSheetTail({
-  blocks,
-  tint,
-}: {
-  blocks: readonly SheetBlock[];
-  tint: string;
-}) {
+export function LockedSheetTail({ blocks }: { blocks: readonly SheetBlock[] }) {
   const { t } = useI18n();
 
   return (
@@ -53,7 +47,7 @@ export function LockedSheetTail({
         aria-hidden
         className="mt-6 block w-full cursor-pointer select-none text-left blur-[6.5px] [user-select:none]"
       >
-        <SheetBlocks blocks={[...blocks]} tint={tint} />
+        <SheetBlocks blocks={[...blocks]} />
       </button>
     </div>
   );

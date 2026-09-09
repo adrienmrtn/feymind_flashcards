@@ -3,11 +3,12 @@ import Foundation
 /// Fiche construite sans IA, à partir du seul texte extrait.
 ///
 /// C'est le repli de « Créer sans IA », proposé quand la clé fal n'est pas configurée ou
-/// que l'analyse échoue. Elle n'invente rien et n'ajoute **aucune mise en valeur** : pas de
-/// gras, pas de surlignage, pas d'encadré. Deviner ce qui compte dans un cours qu'on n'a
-/// pas lu produirait une fiche qui a l'air travaillée et qui souligne n'importe quoi, ce
-/// qui est bien pire qu'une fiche sobre. Ce qu'on peut reconnaître sans comprendre, en
-/// revanche, on le structure : les titres et les définitions écrites « terme : sens ».
+/// que l'analyse échoue. Elle n'invente rien et **ne surligne rien** : deviner ce qui compte
+/// dans un cours qu'on n'a pas lu produirait une fiche qui a l'air travaillée et qui souligne
+/// n'importe quoi, ce qui est bien pire qu'une fiche sobre. Ce qu'on peut reconnaître sans
+/// comprendre, en revanche, on le structure : les titres, et les définitions écrites
+/// « terme : sens », dont le terme passe en gras parce que c'est une structure reconnue et
+/// non un jugement sur ce qui compte.
 enum OfflineSheetBuilder {
     static func build(from rawText: String, title: String) -> CourseSheet? {
         let lines = OfflineSheetBuilder.lines(of: TextSanitizer.normalizeExtractedText(rawText))
@@ -19,7 +20,9 @@ enum OfflineSheetBuilder {
             if isLikelyHeading(line) {
                 blocks.append(.heading(level: 2, text: line))
             } else if let definition = definition(in: line) {
-                blocks.append(.definition(term: definition.term, text: definition.text))
+                // La définition n'a plus de bloc à elle : elle s'écrit comme sur une fiche
+                // papier, le terme en gras et sa phrase derrière.
+                blocks.append(.paragraph(text: "**\(definition.term)** : \(definition.text)"))
             } else {
                 blocks.append(.paragraph(text: line))
             }
@@ -28,7 +31,7 @@ enum OfflineSheetBuilder {
         // Une fiche qui n'est qu'une suite de titres n'est pas une fiche.
         let hasBody = blocks.contains { block in
             switch block {
-            case .paragraph, .definition: true
+            case .paragraph: true
             default: false
             }
         }

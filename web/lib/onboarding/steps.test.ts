@@ -16,15 +16,14 @@ describe("le parcours", () => {
       "/commencer/pays",
       "/commencer/niveau",
       "/commencer/matieres",
-      "/commencer/ecole",
       "/commencer/parcours",
       "/commencer/compte",
     ]);
   });
 
-  it("enchaîne les matières sur l'école", () => {
-    expect(nextPath("/commencer/matieres")).toBe("/commencer/ecole");
-    expect(previousPath("/commencer/ecole")).toBe("/commencer/matieres");
+  it("enchaîne les matières sur le parcours", () => {
+    expect(nextPath("/commencer/matieres")).toBe("/commencer/parcours");
+    expect(previousPath("/commencer/parcours")).toBe("/commencer/matieres");
   });
 
   it("ramène le premier écran à la vitrine", () => {

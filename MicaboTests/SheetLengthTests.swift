@@ -32,7 +32,7 @@ final class SheetLengthTests: XCTestCase {
     func testTheSliderHasFarMoreThanTenNotches() {
         let notches = SheetLength.blockBounds.count
         XCTAssertGreaterThanOrEqual(notches, 10, "Un curseur à moins de dix crans n'est pas un curseur")
-        XCTAssertEqual(SheetLength.blockBounds, 8...34)
+        XCTAssertEqual(SheetLength.blockBounds, 14...70)
     }
 
     /// Le nom du format suit le nombre de blocs, et il le suit sans trou : chaque position
@@ -43,11 +43,11 @@ final class SheetLengthTests: XCTestCase {
             XCTAssertFalse(format.title.isEmpty, "\(blocks) blocs sans format")
         }
 
-        XCTAssertEqual(SheetLength.containing(blocks: 8), .brief)
-        XCTAssertEqual(SheetLength.containing(blocks: 12), .brief)
-        XCTAssertEqual(SheetLength.containing(blocks: 18), .standard)
-        XCTAssertEqual(SheetLength.containing(blocks: 22), .standard)
-        XCTAssertEqual(SheetLength.containing(blocks: 34), .deep)
+        XCTAssertEqual(SheetLength.containing(blocks: 14), .brief)
+        XCTAssertEqual(SheetLength.containing(blocks: 20), .brief)
+        XCTAssertEqual(SheetLength.containing(blocks: 30), .standard)
+        XCTAssertEqual(SheetLength.containing(blocks: 38), .standard)
+        XCTAssertEqual(SheetLength.containing(blocks: 70), .deep)
     }
 
     /// Le format monte quand le curseur monte : une échelle qui ferait un aller-retour se
@@ -76,8 +76,8 @@ final class SheetLengthTests: XCTestCase {
     /// sauter d'un nom à l'autre.
     func testTheReadingHintMovesWithinAFormat() {
         XCTAssertNotEqual(
-            SheetPreferences.readingHint(forBlocks: 14),
-            SheetPreferences.readingHint(forBlocks: 22),
+            SheetPreferences.readingHint(forBlocks: 26),
+            SheetPreferences.readingHint(forBlocks: 38),
             "Deux fiches équilibrées de volumes très différents ne se lisent pas en autant de temps"
         )
     }
@@ -95,7 +95,7 @@ final class SheetLengthTests: XCTestCase {
     /// Le format reste écrit à côté du nombre : c'est lui que le profil synchronise, et lui
     /// que la fonction Edge comprend depuis toujours.
     func testWritingBlocksAlsoWritesTheFormat() {
-        SheetPreferences.blocks = 30
+        SheetPreferences.blocks = 60
         XCTAssertEqual(SheetPreferences.length, .deep)
         XCTAssertEqual(UserDefaults.standard.string(forKey: SheetPreferences.lengthKey), "deep")
     }
@@ -103,9 +103,9 @@ final class SheetLengthTests: XCTestCase {
     /// Choisir un format depuis un menu replace le curseur au milieu de la plage — sauf s'il
     /// y est déjà, auquel cas y toucher effacerait un réglage fin pour rien.
     func testChoosingAFormatOnlyMovesTheSliderWhenItHasTo() {
-        SheetPreferences.blocks = 20
+        SheetPreferences.blocks = 30
         SheetPreferences.length = .standard
-        XCTAssertEqual(SheetPreferences.blocks, 20, "On était déjà en équilibrée")
+        XCTAssertEqual(SheetPreferences.blocks, 30, "On était déjà en équilibrée")
 
         SheetPreferences.length = .brief
         XCTAssertEqual(SheetPreferences.blocks, SheetLength.brief.defaultBlocks)

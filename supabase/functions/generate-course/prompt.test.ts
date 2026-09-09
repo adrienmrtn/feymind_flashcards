@@ -10,7 +10,7 @@ import {
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v1.3.0");
+  assertEquals(PROMPT_VERSION, "course-v2.0.0");
 });
 
 Deno.test("audienceBrief mappe lycée + France", () => {
@@ -30,7 +30,7 @@ Deno.test("readingBrief prévient sur un document court", () => {
 });
 
 Deno.test("retryBrief nomme un volume", () => {
-  assertEquals(retryBrief("brief").includes("7 blocs"), true);
+  assertEquals(retryBrief("brief").includes("12 blocs"), true);
 });
 
 Deno.test("instructionsBrief est vide sans texte", () => {

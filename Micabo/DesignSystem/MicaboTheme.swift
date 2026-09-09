@@ -53,6 +53,16 @@ enum MicaboColor {
     /// sont deux marques pour une seule intention.
     static var sheetMarker: Color { palette.sheetMarker }
 
+    /// Le surligneur d'une teinte donnée. C'est l'étudiant qui choisit la couleur, sur le
+    /// site comme dans l'app ; un nom inconnu retombe sur le jaune plutôt que sur rien.
+    static func sheetHighlight(_ highlight: SheetHighlight) -> Color {
+        let colors = palette.sheetHighlights
+        guard let index = SheetHighlight.allCases.firstIndex(of: highlight),
+              colors.indices.contains(index)
+        else { return palette.sheetMarker }
+        return colors[index]
+    }
+
     // Sur fond d'accent / de bouton plein
     static var onInk: Color { palette.onInk }
     static var onInkMuted: Color { palette.onInkMuted }
