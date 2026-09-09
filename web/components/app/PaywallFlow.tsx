@@ -7,8 +7,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { pricing } from "@micabo/core";
 
 import { PaywallOffer } from "@/components/app/PaywallOffer";
+import { signOut } from "@/lib/actions/profile";
 import { isOfferClaimed } from "@/lib/discount";
 import {
+  isHardPaywall,
   isPaywallDismissed,
   isPaywallPending,
   markPaywallDismissed,
@@ -39,12 +41,15 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [startAt, setStartAt] = useState<Stage>("social");
+  /** Voir `isHardPaywall` : le mur de l'accueil n'a pas de croix, les portes en gardent une. */
+  const [hard, setHard] = useState(false);
   const debugReplay = params.get("debug") === "paywall";
 
   useEffect(() => {
     function onRequest() {
       if (isPaid && !debugReplay) return;
       setStartAt("plans");
+      setHard(isHardPaywall({ force: false, demand: true, debug: debugReplay }));
       setOpen(true);
     }
     window.addEventListener(PAYWALL_EVENT, onRequest);
@@ -85,6 +90,7 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
       }
 
       setStartAt(force && !debugReplay ? "plans" : "social");
+      setHard(isHardPaywall({ force, debug: debugReplay }));
       const delay = force || debugReplay ? 0 : 980;
       timer = window.setTimeout(() => {
         if (cancelled || isOfferClaimed()) return;
@@ -114,6 +120,7 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
     <PaywallCard
       key={`${debugReplay ? "debug" : "live"}-${startAt}`}
       startAt={startAt}
+      hard={hard}
       onClose={close}
     />
   );
@@ -122,9 +129,12 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
 export function PaywallCard({
   onClose,
   startAt = "social",
+  hard = false,
 }: {
   onClose: () => void;
   startAt?: Stage;
+  /** Aucune sortie vers l'app : l'offre se règle ou la session se ferme. */
+  hard?: boolean;
 }) {
   const { t } = useI18n();
   const titleId = useId();
@@ -134,17 +144,19 @@ export function PaywallCard({
    * Les trois premières pages n'ont pas de sortie. La croix n'apparaît que sur
    * l'offre, et seulement après deux secondes : avant ça, un geste nerveux
    * fermait le court accueil avant d'avoir vu Pro.
+   *
+   * En mur dur, elle n'apparaît jamais.
    */
   const [canClose, setCanClose] = useState(false);
 
   useEffect(() => {
-    if (stage !== "plans") {
+    if (hard || stage !== "plans") {
       setCanClose(false);
       return;
     }
     const timer = window.setTimeout(() => setCanClose(true), 2_000);
     return () => window.clearTimeout(timer);
-  }, [stage]);
+  }, [hard, stage]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -158,8 +170,14 @@ export function PaywallCard({
 
   function next() {
     const following = STAGES[index + 1];
-    if (following) setStage(following);
-    else onClose();
+    if (following) {
+      setStage(following);
+      return;
+    }
+    // Le pied de page n'est pas rendu sur l'offre, donc on n'arrive pas ici en pratique.
+    // La garde est là pour que la fermeture du mur ne dépende pas d'une structure de JSX :
+    // rendre ce bouton une page plus loin rouvrirait la sortie sans que rien ne le signale.
+    if (!hard) onClose();
   }
 
   return (
@@ -213,6 +231,8 @@ export function PaywallCard({
           )}
         </div>
 
+        {hard && stage === "plans" ? <HardExit /> : null}
+
         {/*
           Les quatre pages du court accueil partagent la même entrée : `rise`,
           comme un écran de parcours. L'offre se montait à part, sans
@@ -245,6 +265,35 @@ export function PaywallCard({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * La seule porte d'un mur dur : **se déconnecter**, pas entrer.
+ *
+ * Un mur sans aucune issue n'est pas un mur, c'est une serrure : il enferme aussi celui qui
+ * veut simplement récupérer ou effacer son compte, et la suppression vit derrière l'offre.
+ * Ce lien ne donne accès à rien de payant - il rend seulement à l'étudiant la porte de sa
+ * propre session.
+ */
+function HardExit() {
+  const { t } = useI18n();
+  const [leaving, setLeaving] = useState(false);
+
+  return (
+    <div className="px-6 pb-1 pt-1 text-center">
+      <button
+        type="button"
+        disabled={leaving}
+        onClick={() => {
+          setLeaving(true);
+          void signOut();
+        }}
+        className="pressable text-[12.5px] text-ink-tertiary underline underline-offset-2"
+      >
+        {leaving ? t("app.auth.signingOut") : t("app.auth.signOut")}
+      </button>
     </div>
   );
 }
