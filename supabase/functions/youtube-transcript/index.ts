@@ -1,15 +1,12 @@
 import { authorize, withCors } from "../_shared/caller.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import {
-  type CaptionTrack,
   extractVideoId,
-  fetchBestTranscript,
   fetchVideoMetadata,
-  type Transcript,
   YOUTUBE_LIMITS,
   YouTubeError,
 } from "../_shared/youtube.ts";
-import { canReadVideo, readVideoWithGemini } from "../_shared/youtube-video.ts";
+import { readTranscript } from "../_shared/youtube-video.ts";
 
 interface RequestBody {
   url?: string;
@@ -110,50 +107,6 @@ Deno.serve((request: Request) =>
     }
   })
 );
-
-/**
- * Le texte de la vidéo : les sous-titres si YouTube les laisse passer, sinon le modèle.
- *
- * L'ordre n'est pas négociable. Une piste de sous-titres est écrite par un humain ou par la
- * reconnaissance de YouTube, elle est exacte, et elle ne coûte rien. La lecture par Gemini
- * coûte des jetons vidéo et reformule. On ne la demande donc qu'après un refus, et le refus
- * est tracé : c'est lui qui dira si YouTube rouvre un jour.
- */
-async function readTranscript(
-  videoId: string,
-  captions: CaptionTrack[],
-  languages: string[],
-): Promise<Transcript & { source: "captions" | "model" }> {
-  if (captions.length > 0) {
-    try {
-      const captioned = await fetchBestTranscript(captions, languages);
-      return { ...captioned, source: "captions" };
-    } catch (error) {
-      // Sans clé Gemini il n'y a pas de second chemin : le refus des sous-titres
-      // est alors la réponse, avec son propre code.
-      if (!canReadVideo()) throw error;
-      console.error(JSON.stringify({
-        youtube: "sous_titres_refuses",
-        code: error instanceof YouTubeError ? error.code : "inconnu",
-        pistes: captions.length,
-      }));
-    }
-  } else {
-    console.error(JSON.stringify({ youtube: "aucune_piste", pistes: 0 }));
-  }
-
-  const reading = await readVideoWithGemini(videoId);
-  return {
-    text: reading.text,
-    // Gemini écrit dans la langue parlée dans la vidéo, qu'on ne connaît pas d'avance.
-    // Mieux vaut ne rien affirmer que nommer une langue au hasard : `source` dit déjà
-    // d'où vient le texte, et c'est ce dont l'app a besoin pour l'annoncer.
-    languageCode: "",
-    languageName: "",
-    isAutomatic: true,
-    source: "model",
-  };
-}
 
 function stripEmDashes(value: string): string {
   return value.replace(/\s+[—–―]\s+/g, ", ").replace(/[—–―]/g, "-");

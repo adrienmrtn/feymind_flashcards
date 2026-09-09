@@ -41,7 +41,13 @@
  */
 
 import { readGeminiKey, upstreamReason } from "./gemini.ts";
-import { YOUTUBE_LIMITS, YouTubeError } from "./youtube.ts";
+import {
+  type CaptionTrack,
+  fetchBestTranscript,
+  type Transcript,
+  YOUTUBE_LIMITS,
+  YouTubeError,
+} from "./youtube.ts";
 
 const GEMINI_VIDEO = "https://generativelanguage.googleapis.com/v1beta/models";
 
@@ -81,9 +87,56 @@ export interface VideoReading {
   model: string;
 }
 
+/** D'où vient le texte : d'une piste de sous-titres, ou de la lecture par le modèle. */
+export type TranscriptSource = "captions" | "model";
+
 /** Vrai quand la clé Gemini est posée, donc quand ce repli est disponible. */
 export function canReadVideo(): boolean {
   return readGeminiKey().length > 0;
+}
+
+/**
+ * Le texte de la vidéo : les sous-titres si YouTube les laisse passer, sinon le modèle.
+ *
+ * L'ordre n'est pas négociable. Une piste de sous-titres est écrite à la main ou par la
+ * reconnaissance de YouTube, elle est exacte, et elle ne coûte rien. La lecture par Gemini
+ * coûte des jetons vidéo et reformule. On ne la demande donc qu'après un refus — et le refus
+ * est tracé, parce que c'est lui qui dira si YouTube rouvre un jour.
+ */
+export async function readTranscript(
+  videoId: string,
+  captions: CaptionTrack[],
+  languages: string[],
+): Promise<Transcript & { source: TranscriptSource }> {
+  if (captions.length > 0) {
+    try {
+      const captioned = await fetchBestTranscript(captions, languages);
+      return { ...captioned, source: "captions" };
+    } catch (error) {
+      // Sans clé Gemini il n'y a pas de second chemin : le refus des sous-titres est
+      // alors la réponse, avec son propre code.
+      if (!canReadVideo()) throw error;
+      console.error(JSON.stringify({
+        youtube: "sous_titres_refuses",
+        code: error instanceof YouTubeError ? error.code : "inconnu",
+        pistes: captions.length,
+      }));
+    }
+  } else {
+    console.error(JSON.stringify({ youtube: "aucune_piste", pistes: 0 }));
+  }
+
+  const reading = await readVideoWithGemini(videoId);
+  return {
+    text: reading.text,
+    // Gemini écrit dans la langue parlée dans la vidéo, qu'on ne connaît pas d'avance.
+    // Mieux vaut ne rien affirmer que nommer une langue au hasard : `source` dit déjà d'où
+    // vient le texte, et c'est ce dont l'app a besoin pour l'annoncer.
+    languageCode: "",
+    languageName: "",
+    isAutomatic: true,
+    source: "model",
+  };
 }
 
 /**
