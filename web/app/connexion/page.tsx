@@ -10,7 +10,6 @@ import { BrandLockup } from "@/components/BrandMark";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n/client";
 import { useLocalizedHref } from "@/lib/i18n/href";
-import { SoftMesh } from "@/components/atmosphere/SoftAtmosphere";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -32,6 +31,9 @@ import { EmailSuggestion } from "@/components/auth/EmailSuggestion";
  *
  * Apple, Google, ou un lien. Après l'échange, on ouvre l'app : la session
  * Supabase *est* le compte. On ne recréera plus un parcours par-dessus.
+ *
+ * La page porte la carte du parcours d'inscription : fond sauge, carte blanche, titre
+ * centré. Celui qui revient et celui qui arrive passent par la même porte.
  */
 export default function ConnexionPage() {
   return (
@@ -144,9 +146,8 @@ function ConnexionBody() {
   }
 
   return (
-    <div className="relative mx-auto flex min-h-svh w-full max-w-[440px] flex-col justify-center px-screen py-12">
-      <SoftMesh />
-      <div className="relative">
+    <div className="flex min-h-svh items-center justify-center bg-canvas-sage px-3 py-3 sm:px-6 sm:py-6">
+      <div className="rise relative w-full max-w-[520px] rounded-[28px] bg-surface px-6 py-8 shadow-floating sm:px-12 sm:py-12">
         <div className="flex items-center justify-between gap-3">
           <BrandLockup
             href={homeHref}
@@ -160,10 +161,10 @@ function ConnexionBody() {
           </div>
         </div>
 
-        <h1 className="mt-8 text-[32px] font-bold leading-[1.08] tracking-display text-ink sm:text-[38px] text-balance">
+        <h1 className="mt-9 text-balance text-center text-[28px] font-bold leading-[1.12] tracking-tight-title text-ink sm:text-[32px]">
           {t("onboarding.connexionTitle")}
         </h1>
-        <p className="mt-3 text-[15px] text-ink-secondary">
+        <p className="mx-auto mt-3 max-w-[40ch] text-center text-[15px] text-ink-secondary">
           {t("onboarding.connexionSubtitle")}
         </p>
 
@@ -263,7 +264,7 @@ function ConnexionBody() {
           </Alert>
         ) : null}
 
-        <p className="mt-8 text-[12.5px] leading-relaxed text-ink-tertiary">
+        <p className="mt-8 text-center text-[12.5px] leading-relaxed text-ink-tertiary">
           {t("onboarding.legalPrefix")}{" "}
           <Link href={termsHref} className="underline-draw text-ink-secondary">
             {t("onboarding.legalTerms")}
@@ -275,7 +276,7 @@ function ConnexionBody() {
           .
         </p>
 
-        <p className="mt-6 text-[13.5px] text-ink-tertiary">
+        <p className="mt-6 text-center text-[13.5px] text-ink-tertiary">
           {t("onboarding.noAccount")}{" "}
           <Link href="/commencer" className="underline-draw font-medium text-ink">
             {t("onboarding.createIt")}

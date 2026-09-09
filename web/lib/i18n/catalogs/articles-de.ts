@@ -4,7 +4,7 @@ export const articlesDe = {
     navAria: "Seiten",
     nextTitle: "Als Nächstes lesen",
     ctaTitle: "Leg einen Kurs ab und sieh, was daraus wird.",
-    ctaBody: "Der erste ist kostenlos, auf der Website wie auf dem iPhone.",
+    ctaBody: "Auf der Website wie auf dem iPhone, mit demselben Konto und demselben Plan.",
   },
   method: {
     metaTitle: "Die Methode: verteiltes Wiederholen und aktiver Abruf",
@@ -30,6 +30,7 @@ export const articlesDe = {
       "Micabo plant nach **SM-2**, Ankis Standardregel. Eine neue Karte geht durch kurze Stufen — {steps} — bevor sie in Tagen läuft. Danach multipliziert jede Note den Abstand mit einer Leichtigkeit, die bei {ease} startet und sich nach deinen Antworten bewegt.",
     planner2:
       "Vier Knöpfe, nicht zwei: « ich kann / ich kann nicht » trennt nicht die mühsam geholte Karte von der, die von allein kam — und genau dieser Abstand entscheidet das nächste Datum. Das kündigen die vier Knöpfe auf einer neuen Karte an:",
+    buttonsCaption: "Die Intervalle berechnet der Planer der App, sie sind nicht von Hand geschrieben.",
     planner3:
       "Der Abstand steht **vor** dem Tippen auf dem Knopf. Ein Planer, der im Verborgenen entscheidet, wird schnell manuell überstimmt: man tippt « leicht », um schneller fertig zu sein, die Karte wandert drei Wochen weg, und man entdeckt sie am Prüfungstag neu.",
     stepMinutes: "{n} Min.",
@@ -41,10 +42,14 @@ export const articlesDe = {
     sheetTitle: "Zuerst das Merkblatt, dann die Karten",
     sheet1:
       "Eine Karteikarte setzt voraus, dass man schon verstanden hat. Sich zu einer ungelesenen Idee zu prüfen heißt, eine Antwort auswendig zu lernen, ohne zu wissen, wovon sie handelt — die Karte sitzt, die Prüfung nicht.",
+    sheetFigure: "Das abgelegte Dokument wird **ein Merkblatt**: der Stoff in der richtigen Reihenfolge, die Stellen markiert, die zählen. Daraus kommen dann die Karten. Es ist dieselbe Merkblatt-Komponente wie in der App, am Demo-Kurs.",
     sheet2:
       "Darum schreibt Micabo zuerst **das Merkblatt** aus deinem Dokument: der Stoff in der richtigen Reihenfolge, die Stellen markiert, die zählen. Die Karten kommen aus diesem Blatt, nicht aus dem Rohtext. Du liest, dann prüfst du dich.",
     sheet3:
       "Micabo definiert nie einen Begriff, über den das Dokument nicht spricht. Ist der Kontext unklar, erscheint das zweifelhafte Wort nicht im Blatt: eine erfundene Definition klingt glaubwürdig — und genau das macht sie gefährlich.",
+    formatsTitle: "Vier Arten, zum selben Merkblatt abgefragt zu werden",
+    formats1: "Aktives Erinnern beschränkt sich nicht auf Vorder- und Rückseite. Zum selben Merkblatt stellt Micabo Quizfragen, Lückentexte und Karten und setzt bewertete Probeprüfungen zusammen. Die Fragen stammen aus deinen Unterlagen, und der Planer behandelt sie alle gleich: Eine gefundene Antwort schiebt die nächste weiter hinaus.",
+    formatsFigure: "Ein Quiz erkennt man an seinen Punkten, einen Lückentext an seiner leeren Zeile, eine Karte an ihrer stummen Vorderseite. **Alle vier Formate kommen aus demselben Merkblatt** und werden auf derselben Skala bewertet.",
     limitsTitle: "Was die Methode nicht tut",
     limits1:
       "Verteiltes Wiederholen legt die Wiederholungen. Es versteht nicht für dich, schreibt keine Klausur, und rettet kein Kapitel, das gestern angefangen wurde — über eine Nacht gibt es keinen Abstand.",
@@ -76,6 +81,9 @@ export const articlesDe = {
       "Micabo zeigt die Vorhersage **bevor** etwas verschoben wird: wie viele Karten abgedeckt sind, wie viele Durchgänge liegen, über wie viele Tage. Eine Umplanung, die man hinterher entdeckt, ist eine, die man rückgängig macht.",
     plan2:
       "Die Last zieht sich zum Ende zusammen, ohne auf dem Vorabend zu stapeln: die letzten Durchgänge liegen auf den {days} letzten Tagen, von Karte zu Karte versetzt.",
+    dailyTitle: "Jeder Tag trägt eine benannte Aufgabe",
+    daily1: "Ein Plan, der „30 Minuten wiederholen“ sagt, unterscheidet sich nicht von einem Timer. Der von Micabo sagt, was zu tun ist: ein Quiz zu Kapitel 3, eine Probeprüfung, eine Erklärung laut, ein freier Tag. Du öffnest die App, und der Tag ist schon geschrieben.",
+    dailyFigure: "Der Plan liest sich in der Reihenfolge der Zeit, und die letzte Zeile ist die Prüfung. **Ein verpasster Tag verschiebt die Arbeit, er reißt kein Loch**: Der Plan wird bei der nächsten Berechnung neu gebaut.",
     intensityTitle: "Drei Stärken, je nach der Note, die du willst",
     intensityLead:
       "Wie oft jede Karte vor der Prüfung wiederkommen soll, ist nicht dieselbe Frage für « ich will bestehen » und « ich will die Bestnote ». Du nennst die Zielnote, Micabo leitet die Stärke ab:",
@@ -100,17 +108,14 @@ export const articlesDe = {
   },
   anki: {
     metaTitle: "Micabo oder Anki: was sich wirklich ändert",
-    metaDescription:
-      "Anki ist kostenlos, offen und ausgezeichnet. Micabo schreibt die Karten aus deinem Kurs und legt alles um ein Prüfungsdatum neu. Ein ehrlicher Vergleich, auch dort, wo Anki gewinnt.",
+    metaDescription: "Anki ist offen, bewährt und ausgezeichnet. Micabo schreibt die Karten aus deinem Kurs und plant alles um ein Prüfungsdatum herum neu. Ein ehrlicher Vergleich, auch dort, wo Anki gewinnt.",
     eyebrow: "Vergleich",
     h1: "Micabo oder Anki: was sich wirklich ändert",
-    lead1:
-      "Anki ist sehr gute Software. Sie ist kostenlos, offen, hat zwanzig Jahre Abstand und eine Gemeinde, die alles dokumentiert hat. Wenn du sie schon nutzt und es passt, gibt es keinen Grund zu wechseln.",
+    lead1: "Anki ist ein sehr gutes Programm. Es ist offen, hat zwanzig Jahre Erfahrung und eine Community, die alles dokumentiert hat. Wenn du es schon benutzt und es dir passt, hast du keinen Grund zu wechseln.",
     lead2:
       "Der Unterschied liegt nicht in der Planung — **es ist dasselbe SM-2**. Er liegt davor, in der Zeit bis man Karten hat, und danach, wenn ein Prüfungsdatum fällt.",
     tableTitle: "Zeile für Zeile",
-    tableLead:
-      "Drei Zeilen gehen an Anki, darunter die wichtigste für viele: es kostet nichts.",
+    tableLead: "Drei Zeilen gehen an Anki, und sie stehen so da, wie sie sind.",
     tableCaption: "Vergleich von Micabo und Anki, Kriterium für Kriterium.",
     colCriterion: "Kriterium",
     rowAlgo: "Der Algorithmus",
@@ -123,10 +128,9 @@ export const articlesDe = {
     rowDate: "Ein Prüfungsdatum",
     rowDateMicabo: "Das Deck legt sich um den Stichtag neu, und nichts geht darüber hinaus.",
     rowDateAnki: "Kein Begriff von einer Frist. Man schiebt das Deck von Hand vor.",
-    rowPrice: "Der Preis",
-    rowPriceMicabo:
-      "Ein Kurs kostenlos, {cards} Karten pro Sitzung. Darüber {price} im Jahr.",
-    rowPriceAnki: "Kostenlos und quelloffen, außer der iPhone-App.",
+    rowQuestions: "Die Arten der Abfrage",
+    rowQuestionsMicabo: "Karten, Quiz, Lückentexte, bewertete Probeprüfungen, laut erklären.",
+    rowQuestionsAnki: "Vorder- und Rückseite, und die Kartentypen, die man selbst baut.",
     rowPlatforms: "Die Plattformen",
     rowPlatformsMicabo: "iPhone und Browser, dasselbe Konto auf beiden Seiten.",
     rowPlatformsAnki: "Rechner, Android, iPhone, Browser.",
@@ -139,9 +143,10 @@ export const articlesDe = {
     rowStart: "Der Einstieg",
     rowStartMicabo: "Ein Dokument abgelegt, ein Blatt zu lesen, am Abend schon eine Sitzung.",
     rowStartAnki: "Einstellungen, die man versteht, bevor die erste Karte kommt.",
-    costTitle: "Ankis Kosten sind nicht sein Preis",
+    costTitle: "Was Anki wirklich kostet: Zeit",
     cost1:
       "Ein nützliches Anki-Deck für einen Unikurs sind zwei bis vier Stunden Tippen pro Kapitel: schneiden, eine Frage pro Idee, nicht fünf Punkte auf eine Karte. Die Arbeit lehrt etwas — das zu leugnen wäre unehrlich — aber es ist die Arbeit, wegen der man Anki im September öffnet und im November nicht mehr.",
+    costFigure: "Skript, Fotos, Word, PowerPoint, Video, Audio: **Alles kommt so rein, wie es ist**, und ein Anki-Stapel auch. Das Abtippen entfällt, das Nachlesen bleibt.",
     cost2:
       "Micabo übernimmt diesen Schritt. Aus dem Kurs wird ein geordnetes Merkblatt, dann Karten aus diesem Blatt. Du liest nach, streichst das Falsche, löschst, was nicht nützt. Es bleibt deine Arbeit, aber sie beginnt beim Gegenlesen, nicht bei der leeren Seite.",
     costNote:
@@ -153,8 +158,7 @@ export const articlesDe = {
       "In Anki schiebt man das Deck von Hand vor oder wiederholt alles am Vorabend. In Micabo setzt du das Datum, und das Deck legt sich darum neu, mit einer Deckelung, die keine Karte über den Stichtag hinauslässt. [[exam]] sagt, wie.",
     examLink: "Der Prüfungsmodus",
     pickTitle: "Welches nehmen",
-    pickAnki:
-      "**Bleib bei Anki**, wenn du den Planer gern selbst stellst, FSRS willst, auf Android bist oder ein kostenloses, offenes Werkzeug willst, dessen Dateien dir gehören.",
+    pickAnki: "**Bleib bei Anki**, wenn du deinen Planer gern selbst einstellst, wenn du FSRS willst, wenn du auf Android bist, oder wenn dir ein offenes Werkzeug wichtig ist, dessen Dateien dir gehören.",
     pickMicabo:
       "**Versuch Micabo**, wenn nicht das Wiederholen blockiert, sondern das Herstellen der Karten — oder wenn deine Wiederholungen um Prüfungsdaten kreisen, nicht um einen Dauerfluss.",
     pickBoth:

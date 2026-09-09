@@ -5,7 +5,6 @@ import Link from "next/link";
 
 import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
-import { Separator } from "@/components/ui/separator";
 import { useI18n } from "@/lib/i18n/client";
 import { localizedHref } from "@/lib/i18n/paths";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
@@ -13,31 +12,35 @@ import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { SITE_PAGES, siteNavKey } from "@/lib/site-pages";
 
 /**
- * Le pied de page de la vitrine.
+ * Le pied de page de toutes les pages publiques.
  *
  * Pas de badge App Store tant que le lien n'est pas public : un badge mort se voit.
  * Confidentialité et conditions sont les adresses que l'iPhone ouvre déjà. Le parcours
  * s'ouvre par **Commencer**. Une session déjà ouverte remplace ça par Ouvrir l'app.
+ *
+ * Les sections de la vitrine sont écrites en adresse complète (`/#comment-ca-marche`) : le
+ * pied de page vit aussi sur les pages de fond, où une ancre nue ne mènerait nulle part.
  */
 export function Footer({ signedIn = false }: { signedIn?: boolean }) {
   const { t, locale } = useI18n();
+  const home = localizedHref(locale, "/");
   const product = [
-    { href: `#${LANDING_SECTIONS.method}`, label: t("site.method") },
-    { href: `#${LANDING_SECTIONS.exam}`, label: t("site.exam") },
-    { href: `#${LANDING_SECTIONS.questions}`, label: t("site.questions") },
+    { href: `${home}#${LANDING_SECTIONS.how}`, label: t("site.how") },
+    { href: `${home}#${LANDING_SECTIONS.app}`, label: t("landing.footerApp") },
+    { href: `${home}#${LANDING_SECTIONS.cards}`, label: t("landing.footerCards") },
+    { href: `${home}#${LANDING_SECTIONS.questions}`, label: t("site.questions") },
   ];
   const pages = SITE_PAGES.map((page) => ({
     path: localizedHref(locale, page.path),
     label: t(siteNavKey(page.id)),
   }));
   return (
-    <footer className="mt-24" data-print="hide">
-      <Separator />
+    <footer className="mt-24 border-t border-hairline-on-canvas" data-print="hide">
       <div className="mx-auto max-w-page px-screen py-14">
         <div className="flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-[34ch]">
             <BrandLockup
-              href={localizedHref(locale, "/")}
+              href={home}
               size={32}
               className="text-ink"
               wordClassName="text-[15px] font-bold text-ink"
@@ -83,11 +86,7 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
                       </Link>
                     </li>
                     <li>
-                      <Link
-                        href="/commencer/compte?suite=%2Fapp"
-                        className="underline-draw"
-                        data-print="bare"
-                      >
+                      <Link href={"/connexion" as Route} className="underline-draw" data-print="bare">
                         {t("common.signIn")}
                       </Link>
                     </li>
