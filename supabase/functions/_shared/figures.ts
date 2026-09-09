@@ -28,12 +28,20 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+/**
+ * Le cadre de la figure, ou `null` s'il est trop petit pour en être une.
+ *
+ * La largeur et la hauteur ne sont **pas** remontées à 0.08. Elles l'étaient, et le refus
+ * plus bas ne pouvait alors jamais tomber : une ligne `w=0.02 h=0.02` ressortait cadrée à
+ * 8 %, donc un recadrage faux au lieu d'aucun recadrage. Un point perdu dans une page n'est
+ * pas un schéma, et mieux vaut ne rien découper que découper à côté.
+ */
 function cropOf(x: number, y: number, w: number, h: number): SheetCrop | null {
   const crop = {
     x: clamp(x, 0, 0.95),
     y: clamp(y, 0, 0.95),
-    w: clamp(w, 0.08, 1),
-    h: clamp(h, 0.08, 1),
+    w: clamp(w, 0, 1),
+    h: clamp(h, 0, 1),
   };
   if (crop.x + crop.w > 1) crop.w = 1 - crop.x;
   if (crop.y + crop.h > 1) crop.h = 1 - crop.y;
