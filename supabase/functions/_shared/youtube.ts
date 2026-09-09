@@ -134,6 +134,32 @@ export interface VideoMetadata {
 const INNERTUBE_KEY = "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
 
 /**
+ * Le délai au bout duquel on abandonne une source.
+ *
+ * Sans plafond, l'aperçu d'une vidéo prenait **vingt secondes** en production : sept sources
+ * essayées les unes après les autres, dont une page de un mégaoctet et demi, et pas une pour
+ * dire non vite. Aucune de ces sources n'a jamais mis plus de deux secondes quand elle
+ * répondait ; ce qu'on attendait, c'était un refus qui ne venait pas.
+ */
+const SOURCE_TIMEOUT_MS = 5_000;
+
+/** Le texte d'une piste est plus gros qu'une réponse d'API : il a droit à plus de temps. */
+const CAPTION_TIMEOUT_MS = 15_000;
+
+/** `fetch`, mais qui renonce. Rendre `null` plutôt que lever : tous les appelants replient. */
+async function fetchWithin(
+  input: string,
+  init: RequestInit & { timeoutMs?: number } = {},
+): Promise<Response | null> {
+  const { timeoutMs = SOURCE_TIMEOUT_MS, ...rest } = init;
+  try {
+    return await fetch(input, { ...rest, signal: AbortSignal.timeout(timeoutMs) });
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Le client WEB exige désormais un jeton d'origine (PO / BotGuard). Depuis un
  * serveur, la réponse est `UNPLAYABLE` et **sans pistes**. iOS et Android, eux,
  * rendent encore les sous-titres. On les essaie dans cet ordre, puis la page.
@@ -273,30 +299,29 @@ async function fetchFromInnerTube(
   language: string,
   client: InnerTubeClient,
 ): Promise<Record<string, unknown> | null> {
-  try {
-    const response = await fetch(
-      `https://www.youtube.com/youtubei/v1/player?key=${INNERTUBE_KEY}&prettyPrint=false`,
-      {
-        method: "POST",
-        headers: { ...client.headers, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          videoId,
-          contentCheckOk: true,
-          racyCheckOk: true,
-          context: {
-            client: {
-              ...client.context,
-              hl: language,
-              gl: "FR",
-            },
+  const response = await fetchWithin(
+    `https://www.youtube.com/youtubei/v1/player?key=${INNERTUBE_KEY}&prettyPrint=false`,
+    {
+      method: "POST",
+      headers: { ...client.headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        videoId,
+        contentCheckOk: true,
+        racyCheckOk: true,
+        context: {
+          client: {
+            ...client.context,
+            hl: language,
+            gl: "FR",
           },
-        }),
-      },
-    );
+        },
+      }),
+    },
+  );
 
-    if (!response.ok) return null;
-    const parsed = await response.json();
-    return asRecord(parsed);
+  if (!response?.ok) return null;
+  try {
+    return asRecord(await response.json());
   } catch {
     return null;
   }
@@ -306,13 +331,17 @@ async function fetchFromWatchPage(
   videoId: string,
   language: string,
 ): Promise<Record<string, unknown> | null> {
-  try {
-    const response = await fetch(
-      `https://www.youtube.com/watch?v=${videoId}&hl=${encodeURIComponent(language)}&has_verified=1`,
-      { headers: { ...BROWSER_HEADERS, "Accept-Language": `${language},en;q=0.8` } },
-    );
-    if (!response.ok) return null;
+  const response = await fetchWithin(
+    `https://www.youtube.com/watch?v=${videoId}&hl=${encodeURIComponent(language)}&has_verified=1`,
+    {
+      headers: { ...BROWSER_HEADERS, "Accept-Language": `${language},en;q=0.8` },
+      // La page pèse un mégaoctet et demi : elle a droit à un peu plus que les API.
+      timeoutMs: 8_000,
+    },
+  );
+  if (!response?.ok) return null;
 
+  try {
     const html = await response.text();
     for (const marker of ["ytInitialPlayerResponse =", 'ytInitialPlayerResponse":']) {
       const parsed = jsonAfter(html, marker);
@@ -560,10 +589,13 @@ const CAPTION_HEADERS: Record<string, string> = {
 };
 
 async function fetchJson3(baseUrl: string): Promise<string | null> {
-  try {
-    const response = await fetch(withCaptionFormat(baseUrl, "json3"), { headers: CAPTION_HEADERS });
-    if (!response.ok) return null;
+  const response = await fetchWithin(withCaptionFormat(baseUrl, "json3"), {
+    headers: CAPTION_HEADERS,
+    timeoutMs: CAPTION_TIMEOUT_MS,
+  });
+  if (!response?.ok) return null;
 
+  try {
     const raw = await response.text();
     if (looksLikeHtml(raw) || !raw.trim().startsWith("{")) return null;
 
@@ -609,8 +641,11 @@ async function fetchXml(baseUrl: string): Promise<string | null> {
   try {
     // Sans `fmt` : le XML historique (`<text>`). Avec `srv3` : le format actuel (`<p>`).
     for (const url of [baseUrl, withCaptionFormat(baseUrl, "srv3")]) {
-      const response = await fetch(url, { headers: CAPTION_HEADERS });
-      if (!response.ok) continue;
+      const response = await fetchWithin(url, {
+        headers: CAPTION_HEADERS,
+        timeoutMs: CAPTION_TIMEOUT_MS,
+      });
+      if (!response?.ok) continue;
       const xml = await response.text();
       if (looksLikeHtml(xml)) continue;
       const lines = parseCaptionXml(xml);
@@ -627,11 +662,13 @@ async function fetchXml(baseUrl: string): Promise<string | null> {
  * Les `<s>` imbriqués du défilement automatique sont aplatis.
  */
 async function fetchVtt(baseUrl: string): Promise<string | null> {
+  const response = await fetchWithin(baseUrl, {
+    headers: { ...CAPTION_HEADERS, Accept: "text/vtt, text/plain, */*" },
+    timeoutMs: CAPTION_TIMEOUT_MS,
+  });
+  if (!response?.ok) return null;
+
   try {
-    const response = await fetch(baseUrl, {
-      headers: { ...CAPTION_HEADERS, Accept: "text/vtt, text/plain, */*" },
-    });
-    if (!response.ok) return null;
     const raw = await response.text();
     if (looksLikeHtml(raw) || !/WEBVTT/i.test(raw.slice(0, 80))) return null;
     const lines = parseVtt(raw);
@@ -679,10 +716,10 @@ async function fetchFromInvidious(
 ): Promise<VideoMetadata | null> {
   for (const host of INVIDIOUS_HOSTS) {
     try {
-      const response = await fetch(`${host}/api/v1/videos/${videoId}`, {
+      const response = await fetchWithin(`${host}/api/v1/videos/${videoId}`, {
         headers: { Accept: "application/json", "User-Agent": "Micabo/1.0" },
       });
-      if (!response.ok) continue;
+      if (!response?.ok) continue;
 
       const parsed = asRecord(await response.json());
       if (!parsed || typeof parsed.title !== "string") continue;
@@ -754,13 +791,13 @@ async function fetchOEmbed(
   videoId: string,
 ): Promise<{ title: string; author: string; thumbnailUrl: string } | null> {
   try {
-    const response = await fetch(
+    const response = await fetchWithin(
       `https://www.youtube.com/oembed?url=${
         encodeURIComponent(`https://www.youtube.com/watch?v=${videoId}`)
       }&format=json`,
       { headers: { Accept: "application/json" } },
     );
-    if (!response.ok) return null;
+    if (!response?.ok) return null;
     const parsed = asRecord(await response.json());
     if (!parsed || typeof parsed.title !== "string") return null;
     return {

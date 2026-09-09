@@ -15,7 +15,6 @@ import {
 
 import { revalidateUserData } from "@/lib/data/cache";
 import { createSheetFromImport, type ImportResult } from "@/lib/import/create-sheet";
-import { previewYouTubeOnServer, readYouTubeOnServer } from "@/lib/import/youtube-server";
 import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
@@ -83,11 +82,16 @@ export async function refreshLibraryAfterImport(): Promise<void> {
   revalidatePath("/app/paquets");
 }
 
-/** L'aperçu d'une vidéo, avant de dépenser quoi que ce soit. */
+/**
+ * L'aperçu d'une vidéo, avant de dépenser quoi que ce soit.
+ *
+ * Un seul appel, et il part vers l'Edge Function. Ce module a longtemps rejoué le client
+ * iPhone d'InnerTube ici, en pariant sur une IP plus propre que celle de Supabase : les deux
+ * sont des datacenters, YouTube répond `LOGIN_REQUIRED` aux deux, et l'Edge Function essaie
+ * déjà exactement les mêmes clients. Ce détour ne rendait donc jamais rien - il ajoutait
+ * seulement quelques secondes devant chaque import.
+ */
 export async function youtubePreview(url: string, languages?: string[]) {
-  const local = await previewYouTubeOnServer(url, languages?.[0] ?? "fr");
-  if (local.status === "ok") return local;
-
   const supabase = await createClient();
   const { data, error } = await supabase.functions.invoke("youtube-transcript", {
     body: { url, metadataOnly: true, languages: languages?.slice(0, 6) },
@@ -97,11 +101,8 @@ export async function youtubePreview(url: string, languages?: string[]) {
   return { status: "ok" as const, video: (data as { video?: unknown })?.video };
 }
 
-/** Les sous-titres seuls, sans écrire la fiche : le repli quand l'onglet n'a pas pu lire. */
+/** Le texte de la vidéo, sans écrire la fiche : le repli quand l'onglet n'a pas pu lire. */
 export async function youtubeTranscript(url: string, languages?: string[]) {
-  const local = await readYouTubeOnServer(url, languages ?? ["fr", "en"]);
-  if (local.status === "ok") return local;
-
   const supabase = await createClient();
   const { data, error } = await supabase.functions.invoke("youtube-transcript", {
     body: { url, languages: languages?.slice(0, 6) },
