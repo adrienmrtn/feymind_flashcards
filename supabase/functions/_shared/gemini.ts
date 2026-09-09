@@ -26,6 +26,22 @@ export function resolveGeminiModel(requested?: string): string {
   return fal === "google/gemini-2.5-flash" ? "gemini-flash-latest" : "gemini-flash-lite-latest";
 }
 
+/** L'autre alias, celui qu'on essaie quand le premier est en panne ou saturé. */
+function otherGeminiModel(model: string): string {
+  return model === "gemini-flash-latest" ? "gemini-flash-lite-latest" : "gemini-flash-latest";
+}
+
+/**
+ * Est-ce que l'autre alias a une chance ?
+ *
+ * Oui sur un 503 « high demand », qui est une file d'attente et non un verdict, et sur un 404
+ * ou un 5xx, qui parlent du modèle et pas de la demande. Non sur un 400 — la requête est en
+ * cause, elle le restera — ni sur un 401 ou un 403, qui parlent de la clé.
+ */
+function worthTheOtherModel(status: number): boolean {
+  return status === 404 || status === 429 || status >= 500;
+}
+
 export function readGeminiKey(): string {
   return Deno.env.get("GEMINI_API_KEY")?.trim() ?? "";
 }
@@ -38,7 +54,27 @@ export async function callGemini(options: {
   temperature?: number;
   maxTokens?: number;
 }, key: string): Promise<string> {
-  const model = resolveGeminiModel(options.model);
+  const first = resolveGeminiModel(options.model);
+
+  try {
+    return await callGeminiOnce(options, key, first);
+  } catch (error) {
+    // Gemini est le dernier chemin : quand il tombe, la génération finit en 502. Un second
+    // alias coûte un appel et rattrape le refus le plus fréquent, la file d'attente.
+    if (!(error instanceof FalError) || !worthTheOtherModel(error.upstreamStatus ?? 0)) throw error;
+    const second = otherGeminiModel(first);
+    console.error(JSON.stringify({ gemini: "autre_modele", model: second }));
+    return await callGeminiOnce(options, key, second);
+  }
+}
+
+async function callGeminiOnce(options: {
+  prompt: string;
+  systemPrompt?: string;
+  imageUrls?: string[];
+  temperature?: number;
+  maxTokens?: number;
+}, key: string, model: string): Promise<string> {
   const images = Array.isArray(options.imageUrls) ? options.imageUrls : [];
   const messages: Array<Record<string, unknown>> = [];
   if (options.systemPrompt) {
@@ -86,7 +122,11 @@ export async function callGemini(options: {
       model,
       upstream: upstreamReason(raw),
     }));
-    throw new FalError("L'écriture a échoué. Réessaie, le document n'a rien perdu.", 502);
+    throw new FalError(
+      "L'écriture a échoué. Réessaie, le document n'a rien perdu.",
+      502,
+      response.status,
+    );
   }
 
   let parsed: { choices?: Array<{ message?: { content?: unknown } }> };
