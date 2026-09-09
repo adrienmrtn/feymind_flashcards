@@ -1,21 +1,10 @@
-"use client";
-
-import { FlashcardStory } from "@/components/onboarding/FlashcardStory";
-import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
-import { useI18n } from "@/lib/i18n/client";
+import { redirect } from "next/navigation";
 
 /**
- * Une session, en petit : on répond, on se note, la carte revient.
+ * Cet écran a quitté le parcours : les six écrans de démonstration ont été refaits sur une
+ * seule forme, et celui-ci n'y avait plus sa place. Un ancien lien ne doit pas tomber dans
+ * le vide, il rejoint le premier écran de la nouvelle série.
  */
-export default function CardsIntroStep() {
-  const { t } = useI18n();
-  return (
-    <Scaffold
-      title={t("onboarding.cartesTitle")}
-      footer={<ContinueButton enabled href="/commencer/reussir" />}
-      center
-    >
-      <FlashcardStory />
-    </Scaffold>
-  );
+export default function RetiredStoryStep() {
+  redirect("/commencer/examen");
 }

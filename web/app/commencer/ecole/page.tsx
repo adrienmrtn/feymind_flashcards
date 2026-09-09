@@ -74,7 +74,6 @@ export default function SchoolStep() {
 
   return (
     <Scaffold
-      eyebrow={t("onboarding.eyebrowPath")}
       title={t("onboarding.ecoleTitle")}
       skip={{ label: t("common.skip"), href: "/commencer/parcours" }}
       footer={

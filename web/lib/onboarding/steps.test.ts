@@ -6,11 +6,12 @@ describe("le parcours", () => {
   it("ouvre sur l'accueil, puis montre le produit avant le pays", () => {
     expect(STEPS.map((step) => step.path)).toEqual([
       "/commencer/bienvenue",
+      "/commencer/examen",
       "/commencer/importer",
-      "/commencer/fiches",
-      "/commencer/cartes",
-      "/commencer/reussir",
-      "/commencer/retention",
+      "/commencer/plan",
+      "/commencer/ia",
+      "/commencer/feynman",
+      "/commencer/resultats",
       "/commencer/personnaliser",
       "/commencer/pays",
       "/commencer/niveau",
@@ -28,5 +29,10 @@ describe("le parcours", () => {
 
   it("ramène le premier écran à la vitrine", () => {
     expect(previousPath("/commencer/bienvenue")).toBe("/");
+  });
+
+  it("ne met de jauge ni sur l'accueil ni sur le compte", () => {
+    const withoutChrome = STEPS.filter((step) => !step.chrome).map((step) => step.path);
+    expect(withoutChrome).toEqual(["/commencer/bienvenue", "/commencer/compte"]);
   });
 });

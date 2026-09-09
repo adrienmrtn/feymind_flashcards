@@ -14,11 +14,12 @@
 export type OnboardingPath =
   | "/commencer"
   | "/commencer/bienvenue"
+  | "/commencer/examen"
   | "/commencer/importer"
-  | "/commencer/fiches"
-  | "/commencer/cartes"
-  | "/commencer/reussir"
-  | "/commencer/retention"
+  | "/commencer/plan"
+  | "/commencer/ia"
+  | "/commencer/feynman"
+  | "/commencer/resultats"
   | "/commencer/personnaliser"
   | "/commencer/pays"
   | "/commencer/niveau"
@@ -35,12 +36,15 @@ export interface Step {
 }
 
 export const STEPS: readonly Step[] = [
-  { path: "/commencer/bienvenue", label: "Bienvenue", chrome: true },
-  { path: "/commencer/importer", label: "Importe tes cours", chrome: true },
-  { path: "/commencer/fiches", label: "Tes fiches", chrome: true },
-  { path: "/commencer/cartes", label: "Comprendre ton cours", chrome: true },
-  { path: "/commencer/reussir", label: "Tes examens", chrome: true },
-  { path: "/commencer/retention", label: "La méthode", chrome: true },
+  // L'accueil n'a pas de jauge : une barre à zéro sur le premier écran annonce une file
+  // d'attente avant d'avoir rien montré.
+  { path: "/commencer/bienvenue", label: "Bienvenue", chrome: false },
+  { path: "/commencer/examen", label: "Ton examen", chrome: true },
+  { path: "/commencer/importer", label: "Tes documents", chrome: true },
+  { path: "/commencer/plan", label: "Ton plan", chrome: true },
+  { path: "/commencer/ia", label: "L'IA", chrome: true },
+  { path: "/commencer/feynman", label: "La méthode Feynman", chrome: true },
+  { path: "/commencer/resultats", label: "Tes résultats", chrome: true },
   // La charnière : ce qui précède montre le produit, ce qui suit pose les questions.
   { path: "/commencer/personnaliser", label: "Personnalisation", chrome: true },
   { path: "/commencer/pays", label: "Ton pays", chrome: true },

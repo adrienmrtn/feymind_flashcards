@@ -1,9 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
 import { useI18n } from "@/lib/i18n/client";
@@ -12,11 +11,20 @@ import { progressFor, stepIndex, STEPS } from "@/lib/onboarding/steps";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * L'habillage du parcours : une carte blanche sur le fond, pas tout l'écran.
+ * L'habillage du parcours : **une seule carte, la même du premier écran au dernier.**
  *
- * La jauge est en haut à gauche de la carte. Le retour et le bouton vivent
- * en bas, dans l'écran. Le compte n'a plus de jauge : c'est une page, et
- * elle arrive à la fin.
+ * Elle était étroite, haute de 760 px et large de 720. Ça allait tant que chaque écran ne
+ * portait qu'une liste ; ça ne va plus, parce que les écrans de démonstration montrent
+ * maintenant une chose à gauche et l'expliquent à droite, et deux colonnes dans 720 px ne
+ * sont pas deux colonnes. La carte s'élargit donc à 1120, et **elle garde la même taille
+ * partout** : un cadre qui change de forme d'un écran à l'autre donne un parcours qui
+ * tremble, et l'étudiant réapprend où regarder à chaque clic.
+ *
+ * Deux choses ont quitté l'en-tête. Le **choix jour / nuit** n'a rien à faire dans un tunnel
+ * d'inscription : c'est un réglage, il vit dans les réglages, et le poser ici invite à jouer
+ * avec au lieu de répondre. La **jauge** ne s'affiche plus sur l'accueil : une barre à zéro
+ * sur le premier écran annonce une file d'attente avant d'avoir rien montré. Reste la
+ * **langue**, et seulement sur l'accueil, là où elle se décide.
  */
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,14 +32,16 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
   const index = stepIndex(pathname);
   const step = index >= 0 ? STEPS[index] : undefined;
   const showChrome = step?.chrome ?? false;
+  const isWelcome = pathname === "/commencer/bienvenue";
   const progress = progressFor(pathname);
   const stepLabels = [
     t("onboarding.stepBienvenue"),
+    t("onboarding.stepExamen"),
     t("onboarding.stepImporter"),
-    t("onboarding.stepFiches"),
-    t("onboarding.stepCartes"),
-    t("onboarding.stepReussir"),
-    t("onboarding.stepRetention"),
+    t("onboarding.stepPlan"),
+    t("onboarding.stepIa"),
+    t("onboarding.stepFeynman"),
+    t("onboarding.stepResultats"),
     t("onboarding.stepPersonnaliser"),
     t("onboarding.stepPays"),
     t("onboarding.stepNiveau"),
@@ -48,11 +58,16 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
         <LoggedInBounce />
       </Suspense>
       <div className="flex min-h-svh items-center justify-center bg-canvas-sage px-3 py-3 sm:px-6 sm:py-6">
-        <div className="flex h-[min(760px,calc(100svh-1.5rem))] w-full max-w-[720px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-floating sm:h-[min(760px,calc(100svh-3rem))]">
+        <div className="flex h-[min(760px,calc(100svh-1.5rem))] w-full max-w-[1120px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-floating sm:h-[min(760px,calc(100svh-3rem))]">
+          {/*
+            La jauge tient toute la largeur de la carte, et non un moignon de 72 px calé dans
+            un coin. Un avancement se lit à la proportion : un trait court laisse deviner, un
+            trait qui traverse l'écran se lit d'un regard.
+          */}
           {showChrome ? (
-            <header className="flex shrink-0 items-center gap-3 px-6 pt-5 sm:px-8">
+            <div className="shrink-0 px-8 pt-6 sm:px-14">
               <div
-                className="h-1 w-[72px] overflow-hidden rounded-pill bg-progress-track"
+                className="h-[3px] w-full overflow-hidden rounded-pill bg-progress-track"
                 role="progressbar"
                 aria-valuemin={0}
                 aria-valuemax={100}
@@ -64,10 +79,13 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
                   style={{ width: `${progress * 100}%` }}
                 />
               </div>
-              <span className="flex-1" />
-              <AppearanceSwitcher variant="compact" />
+            </div>
+          ) : null}
+
+          {isWelcome ? (
+            <div className="flex shrink-0 justify-end px-6 pt-5 sm:px-8">
               <LanguageSwitcher />
-            </header>
+            </div>
           ) : null}
 
           {children}

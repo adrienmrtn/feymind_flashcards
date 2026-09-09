@@ -82,7 +82,6 @@ export default function PersonalizingStep() {
 
   return (
     <Scaffold
-      eyebrow={t("onboarding.stepPersonnaliser")}
       title={isDone ? t("onboarding.parcoursDone") : t(current.headline)}
       footer={
         <ContinueButton

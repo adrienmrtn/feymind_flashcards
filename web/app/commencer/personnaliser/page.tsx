@@ -22,8 +22,9 @@ export default function PersonalizeIntroStep() {
     <Scaffold
       title={t("onboarding.personnaliserTitle")}
       footer={<ContinueButton label={t("onboarding.letsGo")} enabled href="/commencer/pays" />}
+      center
     >
-      <div className="mx-auto w-full max-w-[420px]">
+      <div className="w-full">
         <p className="text-[14.5px] leading-relaxed text-ink-secondary">
           {t("onboarding.personnaliserIntro")}
         </p>
