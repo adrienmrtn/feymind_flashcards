@@ -4,10 +4,17 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import { EXAM_KINDS, type ExamKind, type WeakCard } from "@micabo/core";
+import {
+  EXAM_KINDS,
+  defaultFormatsFor,
+  wantsMock,
+  type ExamKind,
+  type WeakCard,
+} from "@micabo/core";
 
 import { Button } from "@/components/ui/button";
 import { saveExamDetails } from "@/lib/actions/exams";
+import { startMockSession } from "@/lib/actions/mocks";
 import { useI18n } from "@/lib/i18n/client";
 
 /**
@@ -21,6 +28,13 @@ import { useI18n } from "@/lib/i18n/client";
  * Chaque case cochée change ce que le plan pose, donc chaque enregistrement refait le plan.
  * Une case qui ne changerait rien serait une décoration, et le produit en a déjà assez.
  */
+
+export interface PastMock {
+  id: string;
+  score: number;
+  questionCount: number;
+  finishedAt: string;
+}
 
 export interface SheetCourse {
   id: string;
@@ -43,6 +57,8 @@ export function ExamSheet({
   courses,
   weak,
   availableKinds,
+  mocks,
+  canRunMock,
 }: {
   examId: string;
   kind: ExamKind;
@@ -50,6 +66,8 @@ export function ExamSheet({
   courses: SheetCourse[];
   weak: WeakCard[];
   availableKinds: string[];
+  mocks: PastMock[];
+  canRunMock: boolean;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -60,6 +78,22 @@ export function ExamSheet({
   const [failed, setFailed] = useState(false);
 
   const dirty = draftKind !== kind || !sameSet(draftFormats, formats);
+
+  /**
+   * Changer de type propose les formats de ce type, sans écraser un choix déjà fait.
+   *
+   * Un QCM se prépare avec des QCM, un oral avec des questions ouvertes. Mais quelqu'un qui a
+   * coché ses formats à la main a une raison de l'avoir fait, et le type ne doit pas la lui
+   * retirer dans son dos.
+   */
+  function pickKind(option: ExamKind) {
+    setDraftKind(option);
+    if (draftFormats.length > 0) return;
+    const suggested = defaultFormatsFor(option).filter((format) =>
+      availableKinds.includes(format),
+    );
+    if (suggested.length > 0) setDraftFormats(suggested);
+  }
 
   function toggleFormat(value: string) {
     setDraftFormats((current) =>
@@ -116,6 +150,13 @@ export function ExamSheet({
           ))}
         </ul>
       </section>
+
+      <MockPanel
+        examId={examId}
+        kind={draftKind}
+        mocks={mocks}
+        canRun={canRunMock}
+      />
 
       {weak.length > 0 ? (
         <section className="rounded-group border border-caution/40 bg-caution-soft p-5">
@@ -184,7 +225,7 @@ export function ExamSheet({
                 <button
                   key={option}
                   type="button"
-                  onClick={() => setDraftKind(option)}
+                  onClick={() => pickKind(option)}
                   aria-pressed={draftKind === option}
                   className={`pressable rounded-pill px-3 py-1.5 text-[13px] font-medium ${
                     draftKind === option
@@ -224,6 +265,87 @@ export function ExamSheet({
         </Link>
       </p>
     </div>
+  );
+}
+
+/**
+ * L'examen blanc, sur la fiche.
+ *
+ * Un blanc se lance d'ici quand l'étudiant le veut, sans attendre que le plan le pose : à
+ * J-15 on a parfois besoin de savoir où l'on en est. Les scores passés se lisent en dessous,
+ * dans l'ordre, parce que la progression entre deux blancs dit plus que le dernier score.
+ */
+function MockPanel({
+  examId,
+  kind,
+  mocks,
+  canRun,
+}: {
+  examId: string;
+  kind: ExamKind;
+  mocks: PastMock[];
+  canRun: boolean;
+}) {
+  const { t } = useI18n();
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [failed, setFailed] = useState(false);
+
+  if (!wantsMock(kind)) return null;
+
+  return (
+    <section className="rounded-group border border-border bg-card p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h2 className="text-[15px] font-semibold text-ink">{t("app.mock.panelTitle")}</h2>
+        {canRun ? (
+          <Button
+            size="sm"
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                setFailed(false);
+                const result = await startMockSession(examId);
+                if (result.status === "ok" && result.sessionId) {
+                  router.push(`/app/plan/blanc/${result.sessionId}` as never);
+                } else {
+                  setFailed(true);
+                }
+              })
+            }
+          >
+            {pending ? t("app.exams.wait") : t("app.mock.start")}
+          </Button>
+        ) : null}
+      </div>
+
+      <p className="mt-1 text-[13px] text-ink-secondary">{t("app.mock.panelLead")}</p>
+
+      {mocks.length > 0 ? (
+        <ul className="mt-4 divide-y divide-hairline">
+          {mocks.map((mock) => (
+            <li key={mock.id} className="flex items-center justify-between gap-3 py-2.5">
+              <span className="numeral text-[13px] text-ink-tertiary">{mock.finishedAt}</span>
+              <span className="numeral text-[15px] font-semibold text-ink">
+                {t("app.mock.scoreLine", {
+                  score: mock.score,
+                  total: mock.questionCount,
+                })}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-[13.5px] text-ink-tertiary">
+          {canRun ? t("app.mock.none") : t("app.mock.tooFew")}
+        </p>
+      )}
+
+      {failed ? (
+        <p className="mt-3 text-[13px] text-negative" role="alert">
+          {t("app.mock.failed")}
+        </p>
+      ) : null}
+    </section>
   );
 }
 

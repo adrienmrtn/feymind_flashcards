@@ -2,10 +2,14 @@ import Link from "next/link";
 
 import {
   addDays,
+  adherenceFrom,
+  asExamKind,
+  capacityFor,
   courseAccent,
   examCountdownLabel,
   feasibility,
   isDue,
+  isMockBlock,
   masteryOf,
   minutesForCards,
   planTerm,
@@ -35,6 +39,7 @@ import {
   type CourseRow,
 } from "@/lib/data/courses";
 import { loadCardDifficulty, loadDailyReviews } from "@/lib/data/difficulty";
+import { listMockResults, loadThroughput } from "@/lib/data/mocks";
 import { readProfile } from "@/lib/data/profile";
 import { loadNewCardBudget, loadReviewDatesSince } from "@/lib/data/reviews";
 import { getTranslator } from "@/lib/i18n/server";
@@ -62,18 +67,31 @@ export default async function DashboardPage() {
   const today = startOfDay(now);
   const { t, locale } = await getTranslator();
 
-  const [courses, cards, exams, profile, budget, reviewDates, availability, difficulties, daily] =
-    await Promise.all([
-      listCourses(),
-      listCardSnapshots(),
-      listExams(),
-      readProfile(),
-      loadNewCardBudget(),
-      loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
-      readAvailability(),
-      loadCardDifficulty(),
-      loadDailyReviews(),
-    ]);
+  const [
+    courses,
+    cards,
+    exams,
+    profile,
+    budget,
+    reviewDates,
+    availability,
+    difficulties,
+    daily,
+    throughput,
+    mocks,
+  ] = await Promise.all([
+    listCourses(),
+    listCardSnapshots(),
+    listExams(),
+    readProfile(),
+    loadNewCardBudget(),
+    loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
+    readAvailability(),
+    loadCardDifficulty(),
+    loadDailyReviews(),
+    loadThroughput(),
+    listMockResults(),
+  ]);
 
   const week = weekStrip(
     cards.map((card) => ({
@@ -91,6 +109,15 @@ export default async function DashboardPage() {
     cards: cards.map(toTermCard),
     availability,
     now,
+    throughput,
+    mocks,
+    difficulties,
+    adherence: adherenceFrom(
+      daily,
+      (date) => capacityFor(availability, date),
+      throughput,
+      now,
+    ),
   });
   const verdict = feasibility(plan);
 
@@ -112,6 +139,17 @@ export default async function DashboardPage() {
 
   const tasks = planned.length > 0
     ? planned.map((block) => {
+        if (isMockBlock(block)) {
+          return {
+            key: `mock:${block.examId}`,
+            courseId: null,
+            title: t("app.mock.blockTitle"),
+            emoji: "⏱",
+            count: block.questionCount,
+            minutes: block.minutes,
+            examName: block.examName,
+          };
+        }
         const course = block.courseId ? titles.get(block.courseId) : undefined;
         return {
           key: `${block.examId}:${block.courseId ?? "sans"}`,
@@ -153,7 +191,7 @@ export default async function DashboardPage() {
     .sort((left, right) => left.days - right.days)[0];
 
   const name = profile?.display_name?.trim().split(/\s+/)[0];
-  const totalMinutes = plannedCards > 0 ? minutesForCards(plannedCards) : 0;
+  const totalMinutes = plan.days[0]?.minutes ?? 0;
 
   return (
     <>
@@ -441,6 +479,7 @@ function toTermExam(exam: {
   intensity: string;
   course_ids: string[] | null;
   formats: string[] | null;
+  kind: string;
 }): TermExam {
   return {
     id: exam.id,
@@ -450,6 +489,7 @@ function toTermExam(exam: {
       exam.intensity === "light" || exam.intensity === "intense" ? exam.intensity : "standard",
     courseIds: exam.course_ids ?? [],
     formats: exam.formats ?? [],
+    kind: asExamKind(exam.kind),
   };
 }
 

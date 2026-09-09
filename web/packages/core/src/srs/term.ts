@@ -22,8 +22,16 @@
  * minutes et les leviers qui le comblent. Un plan qui ment est pire qu'un plan absent.
  */
 
-import { capacityWindow, minutesForCards, type Availability } from "./availability";
-import { CARDS_PER_MINUTE } from "./daily-load";
+import { capacityWindow, type Availability } from "./availability";
+import {
+  DEFAULT_THROUGHPUT,
+  cardsIn,
+  minutesFor,
+  realisticCapacity,
+  type Adherence,
+  type Throughput,
+} from "./calibration";
+import { planMocks, type MockResult, type PlannedMock } from "./mock";
 import {
   addDays,
   dayDifference,
@@ -32,6 +40,7 @@ import {
   type ExamCard,
   type ExamIntensity,
 } from "./exam";
+import { extraPassesFor, type CardDifficulty } from "./weakness";
 import { isMature, type CardState } from "./types";
 
 /** Au-delà, on ne planifie plus : une épreuve dans six mois n'a pas d'emploi du temps. */
@@ -47,6 +56,8 @@ export interface TermExam {
   courseIds: readonly string[];
   /** Formats retenus. Vide signifie « tous les formats du cours ». */
   formats?: readonly string[];
+  /** Type d'épreuve. Décide si un blanc a un sens, et lequel. */
+  kind?: ExamKind;
 }
 
 export interface TermCard extends ExamCard {
@@ -75,13 +86,39 @@ export interface PlanDay {
   examIds: string[];
 }
 
-/** Un bloc de travail : une matière, une épreuve, un volume. */
-export interface PlanBlock {
+/**
+ * Un bloc de travail.
+ *
+ * Deux formes, et c'est le changement de fond : un plan n'est plus une suite de « révise N
+ * cartes ». Une **révision** travaille une matière ; un **blanc** mesure tout le programme en
+ * temps imparti. Le champ `type` les sépare pour que l'écran n'ait pas à deviner.
+ */
+export type PlanBlock = ReviewBlock | MockBlock;
+
+export interface ReviewBlock {
+  type: "review";
   courseId: string | null;
   examId: string;
   examName: string;
   cardIds: string[];
   minutes: number;
+}
+
+export interface MockBlock {
+  type: "mock";
+  courseId: null;
+  examId: string;
+  examName: string;
+  questionCount: number;
+  minutes: number;
+}
+
+export function isMockBlock(block: PlanBlock): block is MockBlock {
+  return block.type === "mock";
+}
+
+export function isReviewBlock(block: PlanBlock): block is ReviewBlock {
+  return block.type === "review";
 }
 
 export interface TermPlan {
@@ -92,6 +129,10 @@ export interface TermPlan {
   overflow: PlannedPass[];
   totalPasses: number;
   horizonDays: number;
+  /** Les examens blancs posés, dans l'ordre des jours. */
+  mocks: PlannedMock[];
+  /** Le débit retenu pour convertir cartes et minutes. */
+  throughput: Throughput;
 }
 
 export interface TermInput {
@@ -99,6 +140,20 @@ export interface TermInput {
   cards: readonly TermCard[];
   availability: Availability;
   now?: Date;
+  /** Le débit de cet étudiant. Absent, on retombe sur la constante d'avant. */
+  throughput?: Throughput;
+  /** Ce qu'il tient réellement de son temps déclaré. Absente, on croit le déclaré. */
+  adherence?: Adherence;
+  /** Les blancs déjà passés : le plan ne repose pas celui qui est fait. */
+  mocks?: readonly MockResult[];
+  /**
+   * Ce que le journal dit de chaque carte.
+   *
+   * Une carte que l'étudiant rate une fois sur deux mérite un passage de plus que ses
+   * voisines : c'est la seule façon de faire **revenir** ce qui résiste plutôt que de se
+   * contenter de le montrer en premier dans la session du jour.
+   */
+  difficulties?: ReadonlyMap<string, CardDifficulty>;
 }
 
 // MARK: - Le plan
@@ -115,7 +170,14 @@ export function planTerm(input: TermInput): TermPlan {
     ? dayDifference(today, upcoming[upcoming.length - 1]!.examDate)
     : 0;
   const horizon = Math.min(TERM_HORIZON_DAYS, Math.max(1, lastDay + 1));
-  const capacities = capacityWindow(input.availability, today, horizon);
+  const throughput = input.throughput ?? DEFAULT_THROUGHPUT;
+
+  // La capacité déclarée dit ce qu'on s'est promis ; l'observance dit ce qu'on tient. On
+  // planifie sur le second, pour que le déficit se voie pendant qu'il est absorbable.
+  const declared = capacityWindow(input.availability, today, horizon);
+  const capacities = input.adherence
+    ? declared.map((minutes) => realisticCapacity(minutes, input.adherence!))
+    : declared;
 
   const days: PlanDay[] = capacities.map((capacityMinutes, offset) => ({
     offset,
@@ -130,6 +192,46 @@ export function planTerm(input: TermInput): TermPlan {
   for (const exam of upcoming) {
     const offset = dayDifference(today, exam.examDate);
     if (offset >= 0 && offset < days.length) days[offset]!.examIds.push(exam.id);
+  }
+
+  // Les blancs se posent **avant** les révisions, et leur temps est retiré du budget du jour.
+  // L'inverse - caler le blanc dans ce qui reste - reviendrait à le sacrifier dès que la
+  // période est chargée, c'est-à-dire exactement quand il sert le plus.
+  const cardsByCourse = new Map<string, number>();
+  for (const card of input.cards) {
+    if (card.isSuspended || !card.courseId) continue;
+    cardsByCourse.set(card.courseId, (cardsByCourse.get(card.courseId) ?? 0) + 1);
+  }
+
+  const mocks = planMocks({
+    exams: upcoming.map((exam) => ({
+      id: exam.id,
+      name: exam.name,
+      examDate: exam.examDate,
+      kind: exam.kind ?? "exam",
+      cardCount: exam.courseIds.reduce(
+        (sum, courseId) => sum + (cardsByCourse.get(courseId) ?? 0),
+        0,
+      ),
+    })),
+    done: input.mocks ?? [],
+    capacities,
+    now,
+  });
+
+  const reserved = capacities.map(() => 0);
+  for (const mock of mocks) {
+    const day = days[mock.offset];
+    if (!day) continue;
+    day.blocks.push({
+      type: "mock",
+      courseId: null,
+      examId: mock.examId,
+      examName: mock.examName,
+      questionCount: mock.questionCount,
+      minutes: mock.minutes,
+    });
+    reserved[mock.offset] = (reserved[mock.offset] ?? 0) + mock.minutes;
   }
 
   // Chaque épreuve produit ses passages, puis on les fusionne. On garde l'épreuve d'origine
@@ -158,12 +260,29 @@ export function planTerm(input: TermInput): TermPlan {
     passesByExam.set(exam.id, 0);
 
     for (const card of concerned) {
-      for (const offset of plan.days.get(card.id) ?? []) {
+      const offsets = plan.days.get(card.id) ?? [];
+      for (const offset of offsets) {
         wanted.push({
           pass: { cardId: card.id, courseId: card.courseId, examId: exam.id },
           offset,
           deadline,
           priority,
+        });
+      }
+
+      // Les passages de plus d'une carte fragile se glissent **entre** ceux que l'échelle a
+      // posés : les coller à la fin les ferait tous tomber la veille, ce que l'échelle
+      // s'emploie justement à éviter.
+      const extra = extraPassesFor(input.difficulties?.get(card.id));
+      for (let step = 0; step < extra && offsets.length >= 2; step += 1) {
+        const between = midpoint(offsets, step);
+        if (between == null) continue;
+        wanted.push({
+          pass: { cardId: card.id, courseId: card.courseId, examId: exam.id },
+          offset: between,
+          deadline,
+          // Un passage de rattrapage ne doit pas déloger un premier passage : il sert après.
+          priority: priority * 0.9,
         });
       }
     }
@@ -177,14 +296,26 @@ export function planTerm(input: TermInput): TermPlan {
     return left.pass.cardId < right.pass.cardId ? -1 : 1;
   });
 
-  const budget = capacities.map((minutes) => Math.max(0, minutes));
+  // Ce qui reste aux révisions une fois les blancs servis. Jamais négatif : un jour dont le
+  // blanc dépasse la capacité ne reçoit simplement plus de révision.
+  const budget = capacities.map((minutes, offset) =>
+    Math.max(0, minutes - (reserved[offset] ?? 0)),
+  );
   const spent = capacities.map(() => 0);
   const seen = new Map<number, Set<string>>();
   const overflow: PlannedPass[] = [];
   const placed: { pass: PlannedPass; offset: number }[] = [];
 
   for (const item of wanted) {
-    const offset = placeOn(item.offset, item.deadline, item.pass.cardId, budget, spent, seen);
+    const offset = placeOn(
+      item.offset,
+      item.deadline,
+      item.pass.cardId,
+      budget,
+      spent,
+      seen,
+      throughput,
+    );
     if (offset == null) {
       overflow.push(item.pass);
       continue;
@@ -202,9 +333,17 @@ export function planTerm(input: TermInput): TermPlan {
   }
 
   for (const day of days) {
-    for (const block of day.blocks) block.minutes = minutesForCards(block.cardIds.length);
-    day.minutes = minutesForCards(day.cardCount);
-    day.blocks.sort((left, right) => right.cardIds.length - left.cardIds.length);
+    let minutes = 0;
+    for (const block of day.blocks) {
+      if (isReviewBlock(block)) block.minutes = minutesFor(block.cardIds.length, throughput);
+      minutes += block.minutes;
+    }
+    day.minutes = minutes;
+    // Le blanc passe en tête : c'est un rendez-vous, pas un reste de session.
+    day.blocks.sort((left, right) => {
+      if (isMockBlock(left) !== isMockBlock(right)) return isMockBlock(left) ? -1 : 1;
+      return right.minutes - left.minutes;
+    });
   }
 
   return {
@@ -213,7 +352,18 @@ export function planTerm(input: TermInput): TermPlan {
     overflow,
     totalPasses: placed.length,
     horizonDays: horizon,
+    mocks,
+    throughput,
   };
+}
+
+/** Le milieu du n-ième intervalle entre deux passages déjà posés. */
+function midpoint(offsets: readonly number[], step: number): number | null {
+  const index = step % Math.max(1, offsets.length - 1);
+  const left = offsets[index];
+  const right = offsets[index + 1];
+  if (left == null || right == null || right - left < 2) return null;
+  return Math.floor((left + right) / 2);
 }
 
 /**
@@ -230,6 +380,7 @@ function placeOn(
   budget: number[],
   spent: number[],
   seen: Map<number, Set<string>>,
+  throughput: Throughput,
 ): number | null {
   const limit = Math.min(deadline, budget.length - 1);
   const cost = 1;
@@ -237,7 +388,7 @@ function placeOn(
   for (let distance = 0; distance <= budget.length; distance += 1) {
     for (const offset of distance === 0 ? [wanted] : [wanted - distance, wanted + distance]) {
       if (offset < 0 || offset > limit) continue;
-      const capacityCards = Math.floor((budget[offset] ?? 0) * CARDS_PER_MINUTE);
+      const capacityCards = cardsIn(budget[offset] ?? 0, throughput);
       if (capacityCards <= 0) continue;
       if ((spent[offset] ?? 0) + cost > capacityCards) continue;
       const already = seen.get(offset);
@@ -251,12 +402,14 @@ function placeOn(
   return null;
 }
 
-function blockFor(day: PlanDay, pass: PlannedPass, examName: string): PlanBlock {
+function blockFor(day: PlanDay, pass: PlannedPass, examName: string): ReviewBlock {
   const existing = day.blocks.find(
-    (block) => block.courseId === pass.courseId && block.examId === pass.examId,
+    (block): block is ReviewBlock =>
+      isReviewBlock(block) && block.courseId === pass.courseId && block.examId === pass.examId,
   );
   if (existing) return existing;
-  const block: PlanBlock = {
+  const block: ReviewBlock = {
+    type: "review",
     courseId: pass.courseId,
     examId: pass.examId,
     examName,
@@ -345,7 +498,7 @@ export function feasibility(plan: TermPlan): TermVerdict {
   }
   if (busiest && busiest.minutes === 0) busiest = null;
 
-  const deficitMinutes = minutesForCards(plan.overflow.length);
+  const deficitMinutes = minutesFor(plan.overflow.length, plan.throughput);
   const examIds = [...new Set(plan.overflow.map((pass) => pass.examId))];
 
   const level: VerdictLevel =
@@ -397,12 +550,12 @@ export function levers(plan: TermPlan, verdict: TermVerdict): TermLever[] {
     const passes = plan.passesByExam.get(worst) ?? 0;
     list.push({
       kind: "target",
-      recoveredMinutes: minutesForCards(Math.round(passes / 3)),
+      recoveredMinutes: minutesFor(Math.round(passes / 3), plan.throughput),
       examId: worst,
     });
     list.push({
       kind: "scope",
-      recoveredMinutes: minutesForCards(Math.round(passes / 4)),
+      recoveredMinutes: minutesFor(Math.round(passes / 4), plan.throughput),
       examId: worst,
     });
   }
@@ -438,12 +591,6 @@ export function todayCardCount(plan: TermPlan): number {
   return plan.days[0]?.cardCount ?? 0;
 }
 
-/** Les identifiants de cartes que le plan demande aujourd'hui, dans l'ordre des blocs. */
-export function todayCardIds(plan: TermPlan): string[] {
-  const ids: string[] = [];
-  for (const block of plan.days[0]?.blocks ?? []) ids.push(...block.cardIds);
-  return ids;
-}
 
 /** La charge de chaque jour, pour la frise : ce qui est demandé et ce qui est disponible. */
 export interface LoadBar {

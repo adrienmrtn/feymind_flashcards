@@ -1,21 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import {
+  adherenceLevel,
   courseAccent,
   examCountdownLabel,
   examUrgency,
+  type Adherence,
   type LoadBar,
   type TermLever,
   type TermVerdict,
+  type Throughput,
 } from "@micabo/core";
 
 import { Button } from "@/components/ui/button";
 import { Toast } from "@/components/app/Toast";
 import { ExamCalendar, isoDay, type CalendarExam } from "@/components/app/exams/ExamCalendar";
 import { ExamEditor, type EditorCard, type EditorCourse, type EditorExam } from "@/components/app/exams/ExamEditor";
+import { startMockSession } from "@/lib/actions/mocks";
 import { useI18n } from "@/lib/i18n/client";
 
 import { TermStrip, type StripExam } from "./TermStrip";
@@ -41,11 +46,15 @@ export interface PlanExam {
   courseIds: string[];
   masteryPercent: number;
   projectedPercent: number;
+  /** Vrai quand la préparation vient d'un blanc passé et non d'une projection. */
+  measured: boolean;
+  mockScore: number | null;
   cardCount: number;
   isPlanned: boolean;
 }
 
 export interface PlanTodayBlock {
+  kind: "review" | "mock";
   courseId: string | null;
   courseTitle: string;
   emoji: string;
@@ -67,6 +76,8 @@ export function PlanWorkspace({
   cards,
   countryCode,
   weeklyMinutes,
+  adherence,
+  throughput,
 }: {
   bars: LoadBar[];
   verdict: TermVerdict;
@@ -79,6 +90,8 @@ export function PlanWorkspace({
   cards: EditorCard[];
   countryCode?: string | null;
   weeklyMinutes: number;
+  adherence: Adherence;
+  throughput: Throughput;
 }) {
   const { t } = useI18n();
   const [editing, setEditing] = useState<{ exam: EditorExam | null; date: Date } | null>(null);
@@ -157,11 +170,9 @@ export function PlanWorkspace({
 
       <Verdict verdict={verdict} levers={levers} exams={upcoming} />
 
-      <TodayWork
-        blocks={todayBlocks}
-        minutes={todayMinutes}
-        cards={todayCards}
-      />
+      <TodayWork blocks={todayBlocks} minutes={todayMinutes} cards={todayCards} />
+
+      <Calibration adherence={adherence} throughput={throughput} />
 
       <section>
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
@@ -280,14 +291,17 @@ function TodayWork({
         <ul className="divide-y divide-hairline">
           {blocks.map((block) => (
             <li
-              key={`${block.examId}:${block.courseId ?? "sans"}`}
+              key={`${block.kind}:${block.examId}:${block.courseId ?? "sans"}`}
               className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
             >
               <span
                 aria-hidden
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-tile text-[18px]"
                 style={{
-                  backgroundColor: `${courseAccent(block.courseId ?? block.examId)}1f`,
+                  backgroundColor:
+                    block.kind === "mock"
+                      ? "var(--color-caution-soft)"
+                      : `${courseAccent(block.courseId ?? block.examId)}1f`,
                 }}
               >
                 {block.emoji}
@@ -297,13 +311,20 @@ function TodayWork({
                   {block.courseTitle}
                 </span>
                 <span className="numeral mt-0.5 block truncate text-[12.5px] text-ink-tertiary">
-                  {t("app.plan.today.forExam", {
-                    exam: block.examName,
-                    cards: block.cards,
-                    minutes: block.minutes,
-                  })}
+                  {block.kind === "mock"
+                    ? t("app.mock.blockLine", {
+                        exam: block.examName,
+                        questions: block.cards,
+                        minutes: block.minutes,
+                      })
+                    : t("app.plan.today.forExam", {
+                        exam: block.examName,
+                        cards: block.cards,
+                        minutes: block.minutes,
+                      })}
                 </span>
               </span>
+              {block.kind === "mock" ? <StartMock examId={block.examId} /> : null}
             </li>
           ))}
         </ul>
@@ -315,6 +336,82 @@ function TodayWork({
         </p>
       ) : null}
     </section>
+  );
+}
+
+/**
+ * Le débit et l'observance, dits une fois.
+ *
+ * Le bloc ne s'affiche que **quand il y a quelque chose à dire** : tant que rien n'est mesuré,
+ * le plan tourne sur ses valeurs par défaut et annoncer « débit standard » n'apprendrait rien
+ * à personne. De même quand tout va bien : on ne félicite pas quelqu'un de suivre son plan.
+ */
+function Calibration({
+  adherence,
+  throughput,
+}: {
+  adherence: Adherence;
+  throughput: Throughput;
+}) {
+  const { t } = useI18n();
+  const level = adherenceLevel(adherence);
+  const drifted = throughput.measured && Math.abs(throughput.driftPercent) >= 15;
+
+  if (level === "steady" && !drifted) return null;
+
+  return (
+    <section className="rounded-group border border-border bg-surface-muted p-5">
+      <h2 className="text-[15px] font-semibold text-ink">{t("app.plan.calibration.title")}</h2>
+      <ul className="mt-2 space-y-1.5 text-[13.5px] leading-relaxed text-ink-secondary">
+        {drifted ? (
+          <li>
+            {throughput.driftPercent < 0
+              ? t("app.plan.calibration.slower", {
+                  rate: throughput.cardsPerMinute,
+                  percent: Math.abs(throughput.driftPercent),
+                })
+              : t("app.plan.calibration.faster", {
+                  rate: throughput.cardsPerMinute,
+                  percent: throughput.driftPercent,
+                })}
+          </li>
+        ) : null}
+        {level !== "steady" ? (
+          <li>
+            {t(
+              level === "behind"
+                ? "app.plan.calibration.behind"
+                : "app.plan.calibration.slipping",
+              { percent: Math.round(adherence.ratio * 100), days: adherence.missedDays },
+            )}
+          </li>
+        ) : null}
+      </ul>
+    </section>
+  );
+}
+
+/** Ouvrir un blanc : l'action pose le tirage, puis la page de passation le sert. */
+function StartMock({ examId }: { examId: string }) {
+  const { t } = useI18n();
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <Button
+      size="sm"
+      disabled={pending}
+      onClick={() =>
+        startTransition(async () => {
+          const result = await startMockSession(examId);
+          if (result.status === "ok" && result.sessionId) {
+            router.push(`/app/plan/blanc/${result.sessionId}` as never);
+          }
+        })
+      }
+    >
+      {pending ? t("app.exams.wait") : t("app.mock.start")}
+    </Button>
   );
 }
 
@@ -348,10 +445,15 @@ function ExamRow({ exam }: { exam: PlanExam }) {
             />
           </span>
           <span className="numeral truncate text-[12.5px] text-ink-secondary">
-            {t("app.plan.exams.readiness", {
-              now: exam.masteryPercent,
-              projected: exam.projectedPercent,
-            })}
+            {exam.measured && exam.mockScore != null
+              ? t("app.plan.exams.measured", {
+                  score: exam.mockScore,
+                  projected: exam.projectedPercent,
+                })
+              : t("app.plan.exams.readiness", {
+                  now: exam.masteryPercent,
+                  projected: exam.projectedPercent,
+                })}
           </span>
         </span>
       </span>

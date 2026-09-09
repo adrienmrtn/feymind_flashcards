@@ -5,6 +5,7 @@ import {
   capacityFor,
   capacityWindow,
   feasibility,
+  isReviewBlock,
   levers,
   loadBars,
   matchesFormat,
@@ -165,7 +166,7 @@ describe("planTerm", () => {
     });
 
     for (const day of plan.days) {
-      const ids = day.blocks.flatMap((block) => block.cardIds);
+      const ids = day.blocks.filter(isReviewBlock).flatMap((block) => block.cardIds);
       expect(new Set(ids).size).toBe(ids.length);
     }
   });
@@ -178,7 +179,9 @@ describe("planTerm", () => {
       now,
     });
     expect(plan.passesByExam.has("vieux")).toBe(false);
-    const ids = plan.days.flatMap((day) => day.blocks.flatMap((block) => block.cardIds));
+    const ids = plan.days.flatMap((day) =>
+      day.blocks.filter(isReviewBlock).flatMap((block) => block.cardIds),
+    );
     expect(ids).not.toContain("a");
   });
 
@@ -193,7 +196,9 @@ describe("planTerm", () => {
       availability: open(60),
       now,
     });
-    const ids = plan.days.flatMap((day) => day.blocks.flatMap((block) => block.cardIds));
+    const ids = plan.days.flatMap((day) =>
+      day.blocks.filter(isReviewBlock).flatMap((block) => block.cardIds),
+    );
     expect(ids).toContain("b");
     expect(ids).not.toContain("a");
   });

@@ -1,12 +1,16 @@
 import {
+  adherenceFrom,
+  capacityFor,
   dayDifference,
+  examReadiness,
   feasibility,
+  isMockBlock,
   levers,
   loadBars,
   masteryForCourses,
-  minutesForCards,
   planTerm,
   resolveEmoji,
+  asExamKind,
   startOfDay,
   todayBlocks,
   todayCardCount,
@@ -18,7 +22,8 @@ import {
 import { PlanWorkspace, type PlanExam, type PlanTodayBlock } from "@/components/app/plan/PlanWorkspace";
 import { readAvailability } from "@/lib/data/availability";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
-import { loadCardDifficulty } from "@/lib/data/difficulty";
+import { loadCardDifficulty, loadDailyReviews } from "@/lib/data/difficulty";
+import { listMockResults, loadThroughput } from "@/lib/data/mocks";
 import { readProfile } from "@/lib/data/profile";
 import { getTranslator } from "@/lib/i18n/server";
 
@@ -39,14 +44,36 @@ export default async function PlanPage() {
   const today = startOfDay(now);
   const { t } = await getTranslator();
 
-  const [exams, courses, snapshots, availability, difficulties, profile] = await Promise.all([
+  const [
+    exams,
+    courses,
+    snapshots,
+    availability,
+    difficulties,
+    profile,
+    throughput,
+    mocks,
+    daily,
+  ] = await Promise.all([
     listExams(),
     listCourses(),
     listCardSnapshots(),
     readAvailability(),
     loadCardDifficulty(),
     readProfile(),
+    loadThroughput(),
+    listMockResults(),
+    loadDailyReviews(30),
   ]);
+
+  // Le plan se règle sur ce que cet étudiant fait réellement : son débit, et la part de son
+  // temps déclaré qu'il tient. Sans mesure, les deux retombent sur le comportement d'avant.
+  const adherence = adherenceFrom(
+    daily,
+    (date) => capacityFor(availability, date),
+    throughput,
+    now,
+  );
 
   const termCards: TermCard[] = snapshots.map((card) => ({
     id: card.id,
@@ -65,9 +92,19 @@ export default async function PlanPage() {
     intensity: asIntensity(exam.intensity),
     courseIds: exam.course_ids ?? [],
     formats: exam.formats ?? [],
+    kind: asExamKind(exam.kind),
   }));
 
-  const plan = planTerm({ exams: termExams, cards: termCards, availability, now });
+  const plan = planTerm({
+    exams: termExams,
+    cards: termCards,
+    availability,
+    now,
+    throughput,
+    adherence,
+    mocks,
+    difficulties,
+  });
   const verdict = feasibility(plan);
   const bars = loadBars(plan);
 
@@ -93,6 +130,20 @@ export default async function PlanPage() {
         courseIds,
       );
 
+      // Un blanc passé l'emporte sur la projection : une formule qui annonce 88 % contre un
+      // score mesuré à 54 a tort, et c'est le score qu'il faut croire.
+      const readiness = examReadiness({
+        masteryPercent: mastery.percent,
+        projectedPercent: projectedMastery(
+          mastery.percent,
+          plan.passesByExam.get(exam.id) ?? 0,
+          mastery.cardCount,
+        ),
+        mocks,
+        examId: exam.id,
+        now,
+      });
+
       return {
         id: exam.id,
         name: exam.name,
@@ -100,7 +151,9 @@ export default async function PlanPage() {
         daysRemaining: dayDifference(today, new Date(`${exam.exam_date}T12:00:00`)),
         courseIds,
         masteryPercent: mastery.percent,
-        projectedPercent: projectedMastery(mastery.percent, plan.passesByExam.get(exam.id) ?? 0, mastery.cardCount),
+        projectedPercent: readiness.percent,
+        measured: readiness.measured,
+        mockScore: readiness.mockScore,
         cardCount: mastery.cardCount,
         isPlanned: exam.is_planned,
       };
@@ -108,8 +161,21 @@ export default async function PlanPage() {
     .sort((left, right) => left.daysRemaining - right.daysRemaining);
 
   const blocks: PlanTodayBlock[] = todayBlocks(plan).map((block) => {
+    if (isMockBlock(block)) {
+      return {
+        kind: "mock" as const,
+        courseId: null,
+        courseTitle: t("app.mock.blockTitle"),
+        emoji: "⏱",
+        examId: block.examId,
+        examName: block.examName,
+        cards: block.questionCount,
+        minutes: block.minutes,
+      };
+    }
     const course = block.courseId ? titles.get(block.courseId) : undefined;
     return {
+      kind: "review" as const,
       courseId: block.courseId,
       courseTitle: course?.title || t("app.course.untitled"),
       emoji: course ? resolveEmoji(course.emoji, course.subject, course.title) : "📘",
@@ -138,7 +204,9 @@ export default async function PlanPage() {
         levers={levers(plan, verdict)}
         exams={planExams}
         todayBlocks={blocks}
-        todayMinutes={minutesForCards(todayCards)}
+        todayMinutes={plan.days[0]?.minutes ?? 0}
+        adherence={adherence}
+        throughput={throughput}
         todayCards={todayCards}
         weeklyMinutes={weeklyTotal(availability.weekly)}
         countryCode={profile?.country_code}
