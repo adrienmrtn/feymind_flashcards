@@ -10,6 +10,8 @@
  * | `~~faux~~` | barré | ce qu'on avait noté et qui s'est révélé faux |
  * | `==l'essentiel==` | surligné en jaune | ce qu'on relit la veille, et rien d'autre |
  * | `==menthe\|l'essentiel==` | surligné en menthe | la même marque, dans une autre couleur |
+ * | `^^grand\|le titre^^` | plus gros | ce qu'on veut voir de loin en feuilletant |
+ * | `^^petit\|l'aparté^^` | plus petit | la remarque qu'on garde sans qu'elle encombre |
  * | `$E = mc^2$` | formule | rendue à part |
  *
  * **Ce module sert au rendu, et à rien d'autre.** Pour obtenir le texte sans ses marques,
@@ -23,7 +25,13 @@
  * « significatif ».
  */
 
-import { DEFAULT_HIGHLIGHT, SHEET_HIGHLIGHTS, type SheetHighlight } from "./canonical";
+import {
+  DEFAULT_HIGHLIGHT,
+  SHEET_HIGHLIGHTS,
+  SHEET_TEXT_SIZES,
+  type SheetHighlight,
+  type SheetTextSize,
+} from "./canonical";
 
 export interface MarkupSpan {
   text: string;
@@ -49,6 +57,16 @@ export interface MarkupSpan {
    * tel quel, barre comprise.
    */
   highlight: SheetHighlight | null;
+  /**
+   * La taille du fragment, quand elle n'est pas celle du bloc.
+   *
+   * C'est une marque du **texte**, comme le gras, et pas un réglage de lecture. La différence
+   * se voit à l'usage : agrandir une définition parce qu'elle compte est une décision sur la
+   * fiche, qui doit suivre le cours sur le téléphone d'à côté ; grossir toute la page parce
+   * qu'il est deux heures du matin est une décision sur l'écran, qui n'a rien à faire en base.
+   * Le produit a les deux, et ce champ ne porte que la première.
+   */
+  size: SheetTextSize | null;
   /** Fragment mathématique. `text` porte le LaTeX brut, sans ses `$`. */
   math: boolean;
 }
@@ -56,9 +74,16 @@ export interface MarkupSpan {
 const BOLD = "**";
 const HIGHLIGHT = "==";
 const STRIKE = "~~";
+const SIZE = "^^";
 const ITALIC = "*";
 const MATH = "$";
-const COLOR = "|";
+/**
+ * Le séparateur d'un paramètre : la couleur d'un surligneur, la taille d'un fragment.
+ *
+ * La barre verticale, et pas le deux-points, parce qu'elle ne se rencontre à peu près jamais
+ * dans un cours - là où le deux-points est partout.
+ */
+const PARAM = "|";
 
 /** Découpe un texte balisé en fragments homogènes. */
 export function parseInlineMarkup(source: string): MarkupSpan[] {
@@ -70,6 +95,7 @@ export function parseInlineMarkup(source: string): MarkupSpan[] {
   let italic = false;
   let strike = false;
   let highlight: SheetHighlight | null = null;
+  let size: SheetTextSize | null = null;
   let index = 0;
 
   const flush = () => {
@@ -81,6 +107,7 @@ export function parseInlineMarkup(source: string): MarkupSpan[] {
       strike,
       highlighted: highlight !== null,
       highlight,
+      size,
       math: false,
     });
     buffer = "";
@@ -102,6 +129,7 @@ export function parseInlineMarkup(source: string): MarkupSpan[] {
             strike,
             highlighted: highlight !== null,
             highlight,
+            size,
             math: true,
           });
         }
@@ -157,6 +185,27 @@ export function parseInlineMarkup(source: string): MarkupSpan[] {
       }
     }
 
+    if (matches(SIZE, characters, index)) {
+      if (size !== null) {
+        flush();
+        size = null;
+        index += SIZE.length;
+        continue;
+      }
+      const close = nextIndex(SIZE, characters, index + SIZE.length);
+      if (close !== null) {
+        const named = namedSize(characters, index + SIZE.length, close);
+        // Sans nom lisible, ce n'est pas une marque : deux accents circonflexes restent deux
+        // accents circonflexes, ce qui compte pour un cours qui écrit des exposants à la main.
+        if (named) {
+          flush();
+          size = named.size;
+          index = named.start;
+          continue;
+        }
+      }
+    }
+
     if (characters[index] === ITALIC) {
       if (italic) {
         flush();
@@ -192,17 +241,31 @@ function namedColor(
   from: number,
   close: number,
 ): { color: SheetHighlight; start: number } | null {
-  const bar = characters.indexOf(COLOR, from);
+  const bar = characters.indexOf(PARAM, from);
   if (bar < 0 || bar >= close) return null;
   const name = characters.slice(from, bar).join("").trim().toLowerCase();
   const color = SHEET_HIGHLIGHTS.find((item) => item === name);
   return color ? { color, start: bar + 1 } : null;
 }
 
+/** La taille écrite juste après l'ouverture, s'il y en a une. Voir `namedColor`. */
+function namedSize(
+  characters: string[],
+  from: number,
+  close: number,
+): { size: SheetTextSize; start: number } | null {
+  const bar = characters.indexOf(PARAM, from);
+  if (bar < 0 || bar >= close) return null;
+  const name = characters.slice(from, bar).join("").trim().toLowerCase();
+  const size = SHEET_TEXT_SIZES.find((item) => item === name);
+  return size ? { size, start: bar + 1 } : null;
+}
+
 /** Vrai si le texte porte au moins une marque exploitable. */
 export function containsInlineMarkup(source: string): boolean {
   return parseInlineMarkup(source).some(
-    (span) => span.bold || span.italic || span.strike || span.highlighted || span.math,
+    (span) =>
+      span.bold || span.italic || span.strike || span.highlighted || span.math || span.size !== null,
   );
 }
 
@@ -229,8 +292,9 @@ export function toInlineMarkup(spans: readonly MarkupSpan[]): string {
     if (span.highlight) {
       text = span.highlight === DEFAULT_HIGHLIGHT
         ? `${HIGHLIGHT}${text}${HIGHLIGHT}`
-        : `${HIGHLIGHT}${span.highlight}${COLOR}${text}${HIGHLIGHT}`;
+        : `${HIGHLIGHT}${span.highlight}${PARAM}${text}${HIGHLIGHT}`;
     }
+    if (span.size) text = `${SIZE}${span.size}${PARAM}${text}${SIZE}`;
     if (span.strike) text = `${STRIKE}${text}${STRIKE}`;
     if (span.italic) text = `${ITALIC}${text}${ITALIC}`;
     if (span.bold) text = `${BOLD}${text}${BOLD}`;

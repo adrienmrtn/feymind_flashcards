@@ -9,9 +9,17 @@ import Foundation
 /// | --- | --- | --- |
 /// | `**terme**` | gras | le mot que l'examen attend |
 /// | `*nuance*` | italique | une réserve, un mot étranger, un titre d'œuvre |
+/// | `~~faux~~` | barré | ce qu'on avait noté et qui s'est révélé faux |
 /// | `==l'essentiel==` | surligné en jaune | ce qu'on relit la veille, et rien d'autre |
 /// | `==menthe\|l'essentiel==` | surligné en menthe | la même marque, dans une autre couleur |
+/// | `^^grand\|le point clé^^` | plus gros | ce qu'on veut voir de loin en feuilletant |
+/// | `^^petit\|l'aparté^^` | plus petit | la remarque qu'on garde sans qu'elle encombre |
 /// | `$E = mc^2$` | formule | transposée par `FormulaRenderer`, comme sur les cartes |
+///
+/// Le barré et la taille sont arrivés par le site, où la fiche s'écrit. Tant qu'ils
+/// manquaient ici, une fiche annotée sur ordinateur s'ouvrait sur le téléphone avec ses
+/// tildes et ses accents circonflexes en toutes lettres : le balisage doit être lu partout
+/// où la fiche se lit, sans quoi il n'est pas un format mais une décoration locale.
 ///
 /// Le balisage est **résolu à l'affichage**, jamais stocké dans un texte destiné aux
 /// cartes : `plain(_:)` rend la même phrase sans ses marques, et c'est cette version qui
@@ -24,6 +32,9 @@ enum SheetMarkup {
         var isBold: Bool = false
         var isItalic: Bool = false
         var isHighlighted: Bool = false
+        /// Barré : la ligne qu'on tire sur une définition apprise de travers, gardée sous
+        /// les yeux pour ne plus la refaire.
+        var isStruck: Bool = false
         /// La teinte du surlignage, quand il y en a un.
         ///
         /// La couleur s'écrit avant une barre verticale - `==menthe|texte==` - parce que la
@@ -32,6 +43,9 @@ enum SheetMarkup {
         /// comprise, ce qui est le seul comportement acceptable pour un cours
         /// d'informatique où « a | b » veut dire quelque chose.
         var highlight: SheetHighlight? = nil
+        /// La taille du fragment, quand elle n'est pas celle du bloc. Marque du texte, et
+        /// non réglage de lecture : elle voyage avec la fiche.
+        var size: SheetTextSize? = nil
         /// Fragment mathématique, déjà transposé en Unicode.
         var isMath: Bool = false
     }
@@ -39,9 +53,12 @@ enum SheetMarkup {
     private enum Marker {
         static let bold = "**"
         static let highlight = "=="
+        static let strike = "~~"
+        static let size = "^^"
         static let italic = "*"
         static let math = "$"
-        static let color: Character = "|"
+        /// Le séparateur d'un paramètre : la couleur d'un surligneur, la taille d'un fragment.
+        static let param: Character = "|"
     }
 
     /// Découpe un texte balisé en fragments homogènes.
@@ -51,7 +68,9 @@ enum SheetMarkup {
         var buffer = ""
         var bold = false
         var italic = false
+        var struck = false
         var highlight: SheetHighlight?
+        var size: SheetTextSize?
         var index = 0
 
         func flush() {
@@ -62,7 +81,9 @@ enum SheetMarkup {
                     isBold: bold,
                     isItalic: italic,
                     isHighlighted: highlight != nil,
-                    highlight: highlight
+                    isStruck: struck,
+                    highlight: highlight,
+                    size: size
                 )
             )
             buffer = ""
@@ -83,7 +104,9 @@ enum SheetMarkup {
                             isBold: bold,
                             isItalic: italic,
                             isHighlighted: highlight != nil,
+                            isStruck: struck,
                             highlight: highlight,
+                            size: size,
                             isMath: true
                         )
                     )
@@ -103,6 +126,40 @@ enum SheetMarkup {
                     flush()
                     bold = true
                     index += Marker.bold.count
+                    continue
+                }
+            }
+
+            if matches(Marker.strike, in: characters, at: index) {
+                if struck {
+                    flush()
+                    struck = false
+                    index += Marker.strike.count
+                    continue
+                }
+                if nextIndex(of: Marker.strike, in: characters, from: index + Marker.strike.count) != nil {
+                    flush()
+                    struck = true
+                    index += Marker.strike.count
+                    continue
+                }
+            }
+
+            if matches(Marker.size, in: characters, at: index) {
+                if size != nil {
+                    flush()
+                    size = nil
+                    index += Marker.size.count
+                    continue
+                }
+                let opening = index + Marker.size.count
+                if let close = nextIndex(of: Marker.size, in: characters, from: opening),
+                   let named = namedSize(in: characters, from: opening, before: close) {
+                    // Sans nom lisible, ce ne sont que deux accents circonflexes, et un cours
+                    // de maths en écrit.
+                    flush()
+                    size = named.size
+                    index = named.start
                     continue
                 }
             }
@@ -159,7 +216,9 @@ enum SheetMarkup {
     /// Vrai si le texte porte au moins une marque exploitable. Sert aux tests et aux
     /// aperçus, pas au rendu.
     static func containsMarkup(_ source: String) -> Bool {
-        spans(source).contains { $0.isBold || $0.isItalic || $0.isHighlighted || $0.isMath }
+        spans(source).contains {
+            $0.isBold || $0.isItalic || $0.isStruck || $0.isHighlighted || $0.isMath || $0.size != nil
+        }
     }
 
     /// La couleur écrite juste après l'ouverture d'un surlignage, s'il y en a une, et
@@ -169,12 +228,26 @@ enum SheetMarkup {
         from start: Int,
         before close: Int
     ) -> (color: SheetHighlight, start: Int)? {
-        guard let bar = characters[start..<close].firstIndex(of: Marker.color) else { return nil }
+        guard let bar = characters[start..<close].firstIndex(of: Marker.param) else { return nil }
         let name = String(characters[start..<bar])
             .trimmingCharacters(in: .whitespaces)
             .lowercased()
         guard let color = SheetHighlight(rawValue: name) else { return nil }
         return (color, bar + 1)
+    }
+
+    /// La taille écrite juste après l'ouverture, s'il y en a une. Voir `namedColor`.
+    private static func namedSize(
+        in characters: [Character],
+        from start: Int,
+        before close: Int
+    ) -> (size: SheetTextSize, start: Int)? {
+        guard let bar = characters[start..<close].firstIndex(of: Marker.param) else { return nil }
+        let name = String(characters[start..<bar])
+            .trimmingCharacters(in: .whitespaces)
+            .lowercased()
+        guard let size = SheetTextSize(rawValue: name) else { return nil }
+        return (size, bar + 1)
     }
 
     /// Le chemin inverse : des fragments vers le texte balisé.
@@ -190,8 +263,12 @@ enum SheetMarkup {
             if let highlight = span.highlight {
                 text = highlight == .fallback
                     ? "\(Marker.highlight)\(text)\(Marker.highlight)"
-                    : "\(Marker.highlight)\(highlight.rawValue)\(Marker.color)\(text)\(Marker.highlight)"
+                    : "\(Marker.highlight)\(highlight.rawValue)\(Marker.param)\(text)\(Marker.highlight)"
             }
+            if let size = span.size {
+                text = "\(Marker.size)\(size.rawValue)\(Marker.param)\(text)\(Marker.size)"
+            }
+            if span.isStruck { text = "\(Marker.strike)\(text)\(Marker.strike)" }
             if span.isItalic { text = "\(Marker.italic)\(text)\(Marker.italic)" }
             if span.isBold { text = "\(Marker.bold)\(text)\(Marker.bold)" }
             out += text

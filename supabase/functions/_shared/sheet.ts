@@ -45,6 +45,21 @@ export type SheetHighlight = (typeof SHEET_HIGHLIGHTS)[number];
 
 export const DEFAULT_HIGHLIGHT: SheetHighlight = "jaune";
 
+/**
+ * Les tailles qu'un fragment de texte peut prendre.
+ *
+ * Deux, de part et d'autre de la taille du bloc, et c'est tout ce qu'il faut : un passage
+ * qu'on veut voir de loin en feuilletant, un aparté qu'on garde sans qu'il encombre. Une
+ * échelle plus fine transformerait la fiche en mise en page, et une fiche dont on règle la
+ * typographie est une fiche qu'on ne révise plus.
+ *
+ * **Le modèle ne s'en sert pas.** Il écrit des titres et des paragraphes ; la taille d'un
+ * fragment est une décision de relecture, prise par l'étudiant sur sa propre fiche.
+ */
+export const SHEET_TEXT_SIZES = ["petit", "grand"] as const;
+
+export type SheetTextSize = (typeof SHEET_TEXT_SIZES)[number];
+
 export const SHEET_LIMITS = {
   /**
    * Le plafond de blocs. Il passe de 60 à 90, et c'est délibéré.
@@ -286,8 +301,11 @@ export function stripInlineMarkup(text: string): string {
     // et n'appartient qu'au rendu. Sans cette ligne, le modèle recevrait « menthe|texte »
     // et le nom de la couleur se réviserait avec le cours.
     .replace(new RegExp(`==(?:${SHEET_HIGHLIGHTS.join("|")})\\|`, "gi"), "")
+    // Même chose pour la taille d'un fragment : `^^grand|texte^^` n'est pas du contenu.
+    .replace(new RegExp(`\\^\\^(?:${SHEET_TEXT_SIZES.join("|")})\\|`, "gi"), "")
     .replace(/\*\*/g, "")
     .replace(/==/g, "")
+    .replace(/\^\^/g, "")
     .replace(/~~/g, "")
     .replace(/\*/g, "")
     .replace(/`/g, "")

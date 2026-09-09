@@ -13,11 +13,13 @@ export {
   DEFAULT_HIGHLIGHT,
   SHEET_HIGHLIGHTS,
   SHEET_LIMITS,
+  SHEET_TEXT_SIZES,
   normalizeSheet,
   sheetToPlainText,
   stripInlineMarkup,
   type SheetBlock,
   type SheetHighlight,
+  type SheetTextSize,
 } from "./sheet/canonical";
 export {
   containsInlineMarkup,

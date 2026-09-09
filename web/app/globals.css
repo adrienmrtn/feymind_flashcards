@@ -1313,6 +1313,26 @@ video {
   color: var(--color-ink-tertiary);
 }
 
+/**
+ * La taille d'un passage, marquée dans le texte.
+ *
+ * En `em`, jamais en pixels : un passage agrandi doit l'être **par rapport à son bloc**, donc
+ * un mot mis en avant dans un titre reste plus gros que le même mot mis en avant dans un
+ * paragraphe. Et l'échelle de lecture de l'appareil se multiplie par-dessus sans que rien ne
+ * se batte.
+ *
+ * L'écart est délibérément faible. Un passage deux fois plus gros ne se lit plus comme du
+ * texte mis en avant mais comme un titre égaré au milieu d'une phrase.
+ */
+.sheet-doc [data-size="grand"] {
+  font-size: 1.22em;
+  line-height: 1.35;
+}
+
+.sheet-doc [data-size="petit"] {
+  font-size: 0.85em;
+}
+
 .sheet-doc > :first-child {
   margin-top: 0;
 }

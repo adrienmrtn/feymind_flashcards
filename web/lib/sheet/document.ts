@@ -1,12 +1,14 @@
 import {
   DEFAULT_HIGHLIGHT,
   SHEET_HIGHLIGHTS,
+  SHEET_TEXT_SIZES,
   normalizeSheet,
   parseInlineMarkup,
   toInlineMarkup,
   type MarkupSpan,
   type SheetBlock,
   type SheetHighlight,
+  type SheetTextSize,
 } from "@micabo/core";
 
 /**
@@ -72,6 +74,9 @@ function inlineToHtml(text: string): string {
         return `<span data-math="${escapeAttribute(span.text)}" contenteditable="false">${escapeText(span.text)}</span>`;
       }
       let out = escapeText(span.text);
+      // La taille est portée par un attribut, pas par une classe : c'est elle qu'on relit à
+      // l'enregistrement, et une classe se perd au premier collage depuis un autre document.
+      if (span.size) out = `<span data-size="${span.size}">${out}</span>`;
       if (span.highlight) out = `<mark data-hl="${span.highlight}">${out}</mark>`;
       if (span.strike) out = `<s>${out}</s>`;
       if (span.italic) out = `<em>${out}</em>`;
@@ -150,7 +155,7 @@ function elementToBlocks(node: NodeLike): SheetBlock[] {
 /** Le contenu d'un élément, ramené au texte balisé de la fiche. */
 export function readInline(node: NodeLike): string {
   const spans: MarkupSpan[] = [];
-  collect(node, { bold: false, italic: false, strike: false, highlight: null }, spans);
+  collect(node, { bold: false, italic: false, strike: false, highlight: null, size: null }, spans);
   return toInlineMarkup(spans).trim();
 }
 
@@ -159,6 +164,7 @@ interface Marks {
   italic: boolean;
   strike: boolean;
   highlight: SheetHighlight | null;
+  size: SheetTextSize | null;
 }
 
 function collect(node: NodeLike, marks: Marks, out: MarkupSpan[]): void {
@@ -175,6 +181,7 @@ function collect(node: NodeLike, marks: Marks, out: MarkupSpan[]): void {
         strike: marks.strike,
         highlighted: marks.highlight !== null,
         highlight: marks.highlight,
+        size: marks.size,
         math: false,
       });
       continue;
@@ -194,6 +201,7 @@ function collect(node: NodeLike, marks: Marks, out: MarkupSpan[]): void {
         strike: marks.strike,
         highlighted: marks.highlight !== null,
         highlight: marks.highlight,
+        size: marks.size,
         math: true,
       });
       continue;
@@ -207,6 +215,7 @@ function collect(node: NodeLike, marks: Marks, out: MarkupSpan[]): void {
         strike: false,
         highlighted: false,
         highlight: null,
+        size: null,
         math: false,
       });
       continue;
@@ -218,8 +227,15 @@ function collect(node: NodeLike, marks: Marks, out: MarkupSpan[]): void {
       // `del` et `strike` viennent d'un collage : un document externe barre comme il veut.
       strike: marks.strike || name === "s" || name === "del" || name === "strike",
       highlight: name === "mark" ? highlightOf(child.getAttribute?.("data-hl")) : marks.highlight,
+      size: sizeOf(child.getAttribute?.("data-size")) ?? marks.size,
     }, out);
   }
+}
+
+/** La taille portée par un `span[data-size]`, ou rien si ce n'en est pas un. */
+function sizeOf(raw: string | null | undefined): SheetTextSize | null {
+  const value = (raw ?? "").trim().toLowerCase();
+  return SHEET_TEXT_SIZES.find((item) => item === value) ?? null;
 }
 
 function highlightOf(raw: string | null | undefined): SheetHighlight {

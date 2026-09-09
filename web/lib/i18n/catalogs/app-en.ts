@@ -713,6 +713,8 @@ export const appEn = {
     changePace: "Change the pace",
     subscription: "Subscription",
     readFeedback: "Read feedback",
+    readingSize: "Sheet text size",
+    readingSizeHint: "On this device only. A shared sheet keeps its own.",
     saved: {
       ok: "Saved",
       error: "Not saved",

@@ -54,6 +54,11 @@ describe("des blocs vers le document", () => {
     expect(html).toContain('<mark data-hl="menthe">ceci</mark>');
   });
 
+  it("pose la taille d'un passage sur un span", () => {
+    const html = blocksToHtml([{ type: "paragraph", text: "Le ^^grand|point clé^^ compte." }]);
+    expect(html).toContain('<span data-size="grand">point clé</span>');
+  });
+
   it("donne une hauteur à un bloc vide", () => {
     // Sans le saut de ligne, on ne peut plus poser le curseur dans le paragraphe, donc plus
     // jamais le remplir.
@@ -108,6 +113,19 @@ describe("du document vers les blocs", () => {
     ]);
 
     expect(htmlToBlocks(root)).toEqual(blocks);
+  });
+
+  it("relit la taille d'un passage", () => {
+    const root = el("div", [
+      el("p", [
+        text("Le "),
+        el("span", [text("point clé")], { "data-size": "grand" }),
+        text(" compte."),
+      ]),
+    ]);
+    expect(htmlToBlocks(root)).toEqual([
+      { type: "paragraph", text: "Le ^^grand|point clé^^ compte." },
+    ]);
   });
 
   it("garde le LaTeX d'une formule plutôt que son rendu", () => {

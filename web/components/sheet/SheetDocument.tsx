@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 
-import { SHEET_HIGHLIGHTS, type SheetBlock, type SheetHighlight } from "@micabo/core";
+import {
+  SHEET_HIGHLIGHTS,
+  type SheetBlock,
+  type SheetHighlight,
+  type SheetTextSize,
+} from "@micabo/core";
 
 import { Button } from "@/components/ui/button";
 import { saveSheet } from "@/lib/actions/sheet";
@@ -13,7 +18,14 @@ import { READING_SIZES, readingStyle, type ReadingSize } from "@/lib/sheet/readi
 import { useReadingSize } from "@/lib/sheet/use-reading-size";
 
 import { FormulaEditor, type FormulaDraft } from "./FormulaEditor";
-import { currentBlock, toggleHighlight, toggleMark, type Mark } from "./marks";
+import {
+  clearTextSize,
+  currentBlock,
+  toggleHighlight,
+  toggleMark,
+  toggleTextSize,
+  type Mark,
+} from "./marks";
 import { MathBlock, MathInline } from "./Math";
 
 /**
@@ -43,11 +55,14 @@ const HIGHLIGHT_LABEL: Record<SheetHighlight, string> = {
   lilas: "app.sheet.hl.lilas",
 };
 
-const SIZE_LABEL: Record<ReadingSize, string> = {
+const SIZE_LABEL: Record<"petit" | "normal" | "grand", string> = {
   petit: "app.sheet.size.petit",
   normal: "app.sheet.size.normal",
   grand: "app.sheet.size.grand",
 };
+
+/** Les trois boutons de la barre : plus petit, la taille du bloc, plus gros. */
+const TEXT_SIZES: readonly (SheetTextSize | null)[] = ["petit", null, "grand"];
 
 type Style = "h1" | "h2" | "p" | "ul" | "ol";
 
@@ -180,6 +195,13 @@ export function SheetDocument({
   function highlight(color: SheetHighlight) {
     if (!editor.current || readOnly) return;
     if (toggleHighlight(editor.current, color)) touched();
+  }
+
+  /** La taille du passage choisi. `null` la retire et rend le texte à son bloc. */
+  function resize(size: SheetTextSize | null) {
+    const root = editor.current;
+    if (!root || readOnly) return;
+    if (size === null ? clearTextSize(root) : toggleTextSize(root, size)) touched();
   }
 
   /**
@@ -414,25 +436,28 @@ export function SheetDocument({
             <span className="text-[15px] font-serif">∑</span>
           </ToolButton>
 
-          {/* La taille de lecture : elle n'entre pas dans la fiche, elle reste sur
-              l'appareil. Elle est donc à droite des marques, séparée d'elles. */}
+          {/*
+            **Les trois A marquent le texte choisi**, ils ne règlent plus la page.
+
+            Ils changeaient l'échelle de toute la fiche, sur cet appareil. C'est un réglage
+            utile - il vit maintenant dans les réglages - mais ce n'est pas ce qu'on demande
+            en ayant d'abord sélectionné trois mots : on veut ces trois mots plus gros. Le
+            « A » du milieu retire la marque et rend le passage à la taille de son bloc.
+          */}
           <div
             role="group"
             aria-label={t("app.sheet.size.label")}
             className="flex items-center gap-0.5 rounded-button bg-surface-muted p-0.5"
           >
-            {READING_SIZES.map((value, index) => (
+            {TEXT_SIZES.map((value, index) => (
               <button
-                key={value}
+                key={value ?? "normal"}
                 type="button"
                 onMouseDown={(event) => event.preventDefault()}
-                onClick={() => setSize(value)}
-                aria-pressed={value === size}
-                title={t(SIZE_LABEL[value])}
-                aria-label={t(SIZE_LABEL[value])}
-                className={`pressable flex h-8 w-8 items-center justify-center rounded-[calc(var(--radius-button)-2px)] font-semibold transition-colors duration-hover ${
-                  value === size ? "bg-surface text-ink shadow-paper" : "text-ink-tertiary"
-                }`}
+                onClick={() => resize(value)}
+                title={t(SIZE_LABEL[value ?? "normal"])}
+                aria-label={t(SIZE_LABEL[value ?? "normal"])}
+                className="pressable flex h-8 w-8 items-center justify-center rounded-[calc(var(--radius-button)-2px)] font-semibold text-ink-tertiary transition-colors duration-hover hover:bg-surface hover:text-ink"
                 style={{ fontSize: `${11 + index * 2}px` }}
               >
                 A

@@ -34,21 +34,25 @@ export function InlineMarkup({ text }: { text: string }) {
           .filter(Boolean)
           .join(" ");
 
+        // La taille est portée par `data-size`, comme dans le document modifiable : les deux
+        // rendus doivent produire le même arbre, sinon la couture se voit entre une fiche lue
+        // et la même fiche ouverte à l'écriture.
+        const size = span.size ?? undefined;
+
         // Le surlignage est un `<mark>` et non une classe : c'est l'élément que le document
-        // modifiable pose et relit, et les deux rendus doivent produire le même arbre pour
-        // que la couture ne se voie pas entre une fiche lue et une fiche écrite.
+        // modifiable pose et relit, pour la même raison.
         if (span.highlight) {
           return (
-            <mark key={index} data-hl={span.highlight} className={className || undefined}>
+            <mark key={index} data-hl={span.highlight} data-size={size} className={className || undefined}>
               {rendered}
             </mark>
           );
         }
 
-        if (!className) return <span key={index}>{rendered}</span>;
+        if (!className && !size) return <span key={index}>{rendered}</span>;
 
         return (
-          <span key={index} className={className}>
+          <span key={index} data-size={size} className={className || undefined}>
             {rendered}
           </span>
         );
