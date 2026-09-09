@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { courseAccent, resolveEmoji, studyCounts } from "@micabo/core";
+import { courseAccent, masteryByCourse, resolveEmoji, studyCounts, type Mastery } from "@micabo/core";
 
 import { CourseExamBadge } from "@/components/app/CourseExamBadge";
 import { CoursesExplore } from "@/components/app/CoursesExplore";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { canImportNow } from "@/lib/data/entitlement";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
+import { loadCardDifficulty } from "@/lib/data/difficulty";
 import { loadNewCardBudget } from "@/lib/data/reviews";
 import { copyCourseSource, copyHeldBackNew, copyReviewButton } from "@/lib/i18n/copy";
 import { getTranslator } from "@/lib/i18n/server";
@@ -27,14 +28,28 @@ export default async function CoursesPage({
   const params = await searchParams;
   if (params.vue === "decouvrir") redirect("/app/cours");
 
-  const [{ t }, courses, cards, budget, exams, canImport] = await Promise.all([
+  const [{ t }, courses, cards, budget, exams, canImport, difficulties] = await Promise.all([
     getTranslator(),
     listCourses(),
     listCardSnapshots(),
     loadNewCardBudget(),
     listExams(),
     canImportNow(),
+    loadCardDifficulty(),
   ]);
+
+  // La maîtrise remplace le compte de vues sur chaque tuile : « 42 vues » ne dit rien à celui
+  // qui révise, « appris à 61 % » lui dit s'il peut passer à autre chose.
+  const mastery = masteryByCourse(
+    cards.map((card) => ({
+      id: card.id,
+      courseId: card.course_id,
+      state: card.state,
+      intervalDays: card.interval_days,
+      isSuspended: card.is_suspended,
+    })),
+    difficulties,
+  );
 
   const now = new Date();
   const counts = studyCounts(
@@ -79,6 +94,7 @@ export default async function CoursesPage({
         heldBack={heldBack}
         exams={exams}
         canImport={canImport}
+        mastery={mastery}
       />
     </CoursesExplore>
   );
@@ -91,6 +107,7 @@ function Shelf({
   heldBack,
   exams,
   canImport,
+  mastery,
 }: {
   t: Translator;
   courses: Awaited<ReturnType<typeof listCourses>>;
@@ -98,8 +115,10 @@ function Shelf({
   heldBack: number;
   exams: Awaited<ReturnType<typeof listExams>>;
   canImport: boolean;
+  mastery: Map<string, Mastery>;
 }) {
-  const sheets = courses.filter((course) => course.source !== "deck");
+  // Une seule étagère : un paquet Anki est un cours sans fiche, pas une autre espèce.
+  const sheets = courses;
 
   return (
     <>
@@ -142,19 +161,35 @@ function Shelf({
                 <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
                   {course.title || t("app.course.untitled")}
                 </span>
-                <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
+                <span className="mt-1.5 line-clamp-1 block text-[13px] text-ink-tertiary">
                   {[
                     course.subject,
                     course.is_from_library
                       ? t("app.course.source.adopted")
                       : copyCourseSource(t, course.source),
-                    t("copy.audience", {
-                      views: course.view_count ?? 0,
-                      adopts: course.adopt_count ?? 0,
-                    }),
                   ]
                     .filter(Boolean)
                     .join(" · ")}
+                </span>
+              </span>
+
+              <span className="mt-auto flex items-center gap-2.5">
+                <span
+                  aria-hidden
+                  className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-pill bg-surface-sunken"
+                >
+                  <span
+                    className="block h-full rounded-pill bg-accent"
+                    style={{
+                      width: `${Math.max(2, mastery.get(course.id)?.percent ?? 0)}%`,
+                    }}
+                  />
+                </span>
+                <span className="numeral shrink-0 text-[12.5px] text-ink-secondary">
+                  {t("app.courses.mastery", {
+                    percent: mastery.get(course.id)?.percent ?? 0,
+                    cards: mastery.get(course.id)?.cardCount ?? 0,
+                  })}
                 </span>
               </span>
             </Link>

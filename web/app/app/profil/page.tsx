@@ -168,7 +168,7 @@ export default async function ProfilePage() {
         </Link>
         {exams.length > 0 ? (
           <Link
-            href={"/app/examens" as never}
+            href={"/app/plan" as never}
             className="hover-row flex items-center justify-between gap-4 border-t border-hairline px-7 py-4"
           >
             <span className="text-[15px] text-ink">{t("nav.exams")}</span>

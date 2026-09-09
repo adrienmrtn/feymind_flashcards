@@ -33,8 +33,7 @@ describe("tourFor", () => {
       "/app",
       "/app/reviser",
       "/app/cours",
-      "/app/paquets",
-      "/app/examens",
+      "/app/plan",
       "/app/amis",
       "/app/profil",
       "/app/reglages",
@@ -59,7 +58,7 @@ describe("tourFor", () => {
 
   it("supporte la barre oblique finale", () => {
     expect(tourFor({ pathname: "/app/cours/", inSession: false })?.id).toBe("cours");
-    expect(tourFor({ pathname: "/app/paquets/", inSession: false })?.id).toBe("paquets");
+    expect(tourFor({ pathname: "/app/plan/", inSession: false })?.id).toBe("plan");
   });
 
   it("ne visite pas le profil public d'un ami ni un cours repris", () => {

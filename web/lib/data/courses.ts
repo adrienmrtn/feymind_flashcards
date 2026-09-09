@@ -263,6 +263,12 @@ export interface ExamRow {
   target_score: number | null;
   course_ids: string[];
   is_planned: boolean;
+  /** Type d'épreuve. Décide des formats proposés, pas de la replanification. */
+  kind: string;
+  /** Formats retenus : basic, choice, cloze. Vide signifie « tous ». */
+  formats: string[];
+  /** Blocs de fiche au programme. Vide signifie « le cours entier ». */
+  chapter_ids: string[];
 }
 
 export interface FriendRequestRow {
@@ -314,7 +320,9 @@ export async function listExams(): Promise<ExamRow[]> {
   return cachedRead(auth.userId, "exams", [userTag(auth.userId), examsTag(auth.userId)], async () => {
     const { data } = await dataClient(auth.token)
       .from("exams")
-      .select("id, name, exam_date, intensity, target_score, course_ids, is_planned")
+      .select(
+        "id, name, exam_date, intensity, target_score, course_ids, is_planned, kind, formats, chapter_ids",
+      )
       .eq("user_id", auth.userId)
       .is("deleted_at", null)
       .order("exam_date", { ascending: true });

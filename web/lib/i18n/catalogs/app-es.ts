@@ -31,6 +31,10 @@ export const appEs = {
       title: "Tareas de hoy",
       reviewAll: "Repasar todo",
       dueCards: "{count, plural, one {# tarjeta a repasar} other {# tarjetas a repasar}}",
+          startMinutes: "Empezar ({minutes} min)",
+      forExam: "{cards} tarjetas · {minutes} min · {exam}",
+      fromPlan: "Orden fijado por tu plan.",
+      planTight: "Tu plan no cuadra. Ver las opciones.",
     },
     empty: {
       noCardsTitle: "Aún no hay tarjetas",
@@ -66,6 +70,38 @@ export const appEs = {
       title: "Amigos",
       noPending: "Nadie en espera",
       someone: "Alguien",
+    },
+      mastery: {
+      title: "Dominio",
+      of: "sobre {count} tarjetas",
+      byCourse: "Por curso",
+      empty: "Importa un curso para empezar a medir.",
+      solid: "Asentado",
+      fragile: "Frágil",
+      learning: "En curso",
+      untouched: "Nunca visto",
+      aria: "Aprendido al {percent} %: {solid} asentadas, {fragile} frágiles, {learning} en curso, {untouched} nunca vistas.",
+    },
+    stats: {
+      title: "Tus estadísticas",
+      passes: "Pasadas",
+      passesDetail: "en {days} días activos",
+      accuracy: "Acierto",
+      accuracyDetail: "respuestas bien a la primera",
+      streak: "Racha",
+      streakDetail: "récord: {best} días",
+      average: "Media",
+      averageDetail: "mejor día: {best}",
+      averageEmpty: "por día activo",
+      chartAria: "Pasadas por día en las últimas seis semanas.",
+      chartDay: "{passes} pasadas, {again} falladas",
+      chartLegend: "Una barra por día. En ocre, los días con más de un tercio fallado.",
+    },
+    weak: {
+      title: "Lo que se resiste",
+      lead: "Las tarjetas que más fallas. Pasan primero.",
+      none: "Ahora mismo no se resiste nada.",
+      line: "Fallada {again} veces de {reviews}",
     },
   },
   course: {
@@ -130,6 +166,7 @@ export const appEs = {
     dueBadge: "{count} a repasar",
     emptyBadge: "vacío",
     upToDate: "al día",
+      mastery: "aprendido al {percent} %",
   },
   decks: {
     title: "Mazos",
@@ -313,6 +350,103 @@ export const appEs = {
     examEyebrow: "📅 Examen",
     coursesEyebrow: "📚 Cursos",
     gradeEyebrow: "Nota",
+  },
+  plan: {
+    title: "Plan",
+    lead: "Tus exámenes, tu tiempo y lo que sale de ahí.",
+    strip: {
+      title: "El periodo",
+      today: "Hoy",
+      lastDay: "Hasta el {day}",
+      day: "{day} — {minutes} min de {capacity} min",
+      closed: "{day} — no disponible",
+      inDays: "{count, plural, one {en # día} other {en # días}}",
+      summary: "{days} días, {closed} de ellos no disponibles.",
+    },
+    verdict: {
+      clear: "Cuadra. Unos {minutes} min al día.",
+      tight: "Cabe, pero va lleno: unos {minutes} min al día.",
+      short: "Te faltan {minutes} min antes de tus exámenes.",
+      shortLead: "El plan no cuadra para: {exams}.",
+      busiest: "Día más cargado: {minutes} min, dentro de {days} días.",
+      failed: "No se ha podido guardar.",
+    },
+    lever: {
+      capacity: "Añade {minutes} a cada día ya abierto",
+      capacityAction: "Abrir tiempo",
+      target: "Baja la nota buscada en {exam}",
+      scope: "Quita formatos en {exam}",
+      gain: "Recupera unos {minutes} min",
+      open: "Abrir",
+    },
+    today: {
+      title: "Hoy",
+      start: "Empezar ({minutes} min)",
+      nothing: "El plan no tiene nada para hoy.",
+      forExam: "{cards} tarjetas · {minutes} min · {exam}",
+      total: "{cards} tarjetas en total, unos {minutes} min.",
+    },
+    exams: {
+      title: "Tus exámenes",
+      readiness: "{now} % hoy → {projected} % el día del examen",
+    },
+    month: {
+      show: "Ver el mes",
+      hide: "Ocultar el mes",
+    },
+    empty: {
+      title: "Ningún examen todavía",
+      body: "Pon una fecha y la app construye el plan: qué repasar, qué día y si cuadra.",
+    },
+    weekly: {
+      pageTitle: "Mis semanas",
+      pageLead: "El tiempo que tienes de verdad. Es lo que hace honesto al plan.",
+      title: "Semana tipo",
+      total: "{total} por semana en {days} días",
+      open: "{minutes} min por semana",
+      off: "Ninguno",
+      hint: "Un día a cero nunca recibe repaso. El plan lo reparte en los demás.",
+      saving: "Guardando…",
+      saved: "Guardado",
+    },
+    exceptions: {
+      title: "Días aparte",
+      lead: "Vacaciones, prácticas, un fin de semana ocupado: estas fechas mandan sobre la semana tipo.",
+      none: "Ningún día aparte.",
+      add: "Marcar día libre",
+      remove: "Quitar",
+      pick: "Elegir una fecha",
+    },
+    kind: {
+      exam: "Examen",
+      midterm: "Parcial",
+      final: "Final",
+      quiz: "Control",
+      oral: "Oral",
+      mock: "Simulacro",
+    },
+    sheet: {
+      lead: "Aprendido al {percent} % sobre {cards} tarjetas.",
+      programTitle: "En el temario",
+      courseLine: "{cards} tarjetas · aprendido al {percent} %",
+      weakTitle: "Lo que se resiste",
+      weakLead: "Estas vuelven porque las fallas, no por azar.",
+      weakLine: "Fallada {again} veces de {reviews}",
+      weakHint: "Pasan primero en tus sesiones. Si una sigue resistiéndose, suele pedir dos respuestas en vez de una.",
+      stubborn: "Reescribir",
+      formatsTitle: "Formatos a trabajar",
+      formatsAll: "Todos los formatos del curso",
+      formatsSome: "{count} formatos elegidos",
+      kindTitle: "Tipo de prueba",
+      effect: {
+        basic: "Las de pregunta y respuesta entran en el plan.",
+        choice: "Las de opción múltiple entran en el plan.",
+        cloze: "Los textos con huecos entran en el plan.",
+      },
+      apply: "Aplicar y rehacer el plan",
+      applyHint: "El plan se recalcula sobre los días que quedan.",
+      back: "Volver al plan",
+    },
   },
   friends: {
     title: "Amigos",
@@ -841,13 +975,13 @@ export const appEs = {
         title: "Tu semana",
         body: "Un día, una columna. Ves lo que has repasado y lo que llega.",
       },
-      exams: {
-        title: "Tus exámenes",
-        body: "Pon una fecha, y Micabo hace pasar las tarjetas del curso antes del día D.",
+          mastery: {
+        title: "Tu dominio",
+        body: "La única cifra que llega al 100 %. Sube cuando una tarjeta se sostiene, no cuando dedicas tiempo.",
       },
-      friends: {
-        title: "Tus amigos",
-        body: "Añade a tus compañeros para ver quién repasa esta semana.",
+      stats: {
+        title: "Tus estadísticas",
+        body: "El volumen dice cuánto has trabajado. El acierto dice si funciona.",
       },
     },
     review: {
@@ -874,16 +1008,6 @@ export const appEs = {
       add: {
         title: "Añadir un curso",
         body: "PDF, Word, texto pegado o vídeo de YouTube. Micabo lee, luego escribe la ficha.",
-      },
-    },
-    decks: {
-      shelf: {
-        title: "Tus mazos",
-        body: "Cada curso tiene el suyo, y los que abres a mano. Aquí los encuentras.",
-      },
-      add: {
-        title: "Abrir un mazo",
-        body: "Un mazo vacío, tarjeta a tarjeta. O un archivo de Anki ya escrito.",
       },
     },
     sheet: {
@@ -914,14 +1038,18 @@ export const appEs = {
         body: "Puedes corregir una pregunta, su respuesta, o añadir una a mano.",
       },
     },
-    exams: {
-      calendar: {
-        title: "Tu calendario",
-        body: "Las fechas puestas se escriben en el día. Pulsa un día para añadir una.",
-      },
+    plan: {
       add: {
         title: "Añadir un examen",
         body: "Una fecha, los cursos, la intensidad. Micabo adelanta las tarjetas antes del examen.",
+      },
+          strip: {
+        title: "El periodo",
+        body: "Una barra por día hasta tu último examen. Los huecos son tus días no disponibles.",
+      },
+      today: {
+        title: "Hoy",
+        body: "Lo que el plan te pide, asignatura por asignatura, y para qué examen.",
       },
     },
     friends: {
@@ -1052,6 +1180,8 @@ export const appEs = {
     usernameTooShort: "Tres caracteres como mínimo.",
     usernameTooLong: "Veinte caracteres como máximo.",
     usernameInvalid: "Letras, números, guiones o guiones bajos.",
+      badWeek: "Una semana tiene siete días.",
+    saveFailed: "No se ha podido guardar.",
   },
   common: {
     see: "Ver",

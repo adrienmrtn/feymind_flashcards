@@ -399,6 +399,21 @@ export const fr = {
     sheetLanguageHelp:
       "Les prochaines fiches s'écriront dans cette langue. Celles déjà là restent.",
     sheetLanguageSr: "Langue des prochaines fiches",
+      section: {
+      study: "Ton étude",
+      studyHint: "Ce qui change ce que l'app te sert.",
+      app: "L'app",
+      appHint: "Sa langue et son apparence.",
+      account: "Ton compte",
+      accountHint: "Abonnement, données, session.",
+    },
+    weekly: {
+      title: "Mes semaines",
+      detail: "Le temps disponible chaque jour, qui pilote ton plan.",
+    },
+    help: {
+      title: "Aide et rejouer les parcours",
+    },
   },
   nav: {
     study: "Étudier",
@@ -415,6 +430,7 @@ export const fr = {
     import: "Importer",
     feedback: "Retours",
     openCourses: "Ouverts",
+      plan: "Plan",
   },
   app: appFr,
   copy: copyFr,

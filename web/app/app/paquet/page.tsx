@@ -25,7 +25,7 @@ export default async function NewDeckPage() {
     <>
       <header>
         <Link
-          href={"/app/paquets" as never}
+          href={"/app/cours" as never}
           className="inline-flex items-center gap-1.5 text-[13.5px] text-ink-tertiary"
         >
           <svg

@@ -4,13 +4,19 @@ import { revalidatePath } from "next/cache";
 
 import {
   addDays,
+  asExamKind,
+  capacityWindow,
   clampTargetScore,
+  dayDifference,
   intensityFromTargetScore,
   planExam,
   startOfDay,
   targetScoreFromIntensity,
+  weeklyFromRow,
+  type Availability,
   type CardState,
   type ExamIntensity,
+  type ExamKind,
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
@@ -55,6 +61,9 @@ export async function saveExam(input: {
   intensity?: ExamIntensity;
   targetScore?: number;
   courseIds: string[];
+  kind?: string;
+  formats?: string[];
+  chapterIds?: string[];
 }): Promise<ExamWriteResult> {
   const supabase = await createClient();
   const {
@@ -78,6 +87,12 @@ export async function saveExam(input: {
   const now = new Date();
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
+  // Ce que l'épreuve demandait déjà, quand on la modifie sans passer par sa fiche.
+  let kept: { kind: ExamKind; formats: string[]; chapterIds: string[] } = {
+    kind: "exam",
+    formats: [],
+    chapterIds: [],
+  };
   const day = new Date(`${examDate}T12:00:00`);
   day.setHours(0, 0, 0, 0);
   if (day.getTime() < today.getTime()) {
@@ -87,13 +102,19 @@ export async function saveExam(input: {
   if (input.id) {
     const { data: existing } = await supabase
       .from("exams")
-      .select("id, is_planned, schedule_backup")
+      .select("id, is_planned, schedule_backup, kind, formats, chapter_ids")
       .eq("user_id", user.id)
       .eq("id", input.id)
       .is("deleted_at", null)
       .maybeSingle();
 
     if (!existing) return { status: "error", message: await actionT("app.errors.examMissing") };
+
+    kept = {
+      kind: asExamKind((existing as { kind?: string }).kind),
+      formats: (existing as { formats?: string[] }).formats ?? [],
+      chapterIds: (existing as { chapter_ids?: string[] }).chapter_ids ?? [],
+    };
 
     if (existing.is_planned) {
       await restoreBackup(
@@ -127,6 +148,15 @@ export async function saveExam(input: {
       })),
     };
 
+    // Le plan ne pose plus rien sur un jour déclaré indisponible : sans ça, la première
+    // échéance retomberait un samedi off et le planning serait faux dès la première carte.
+    const availability = await readAvailabilityFor(supabase, user.id);
+    const capacities = capacityWindow(
+      availability,
+      today,
+      Math.max(1, dayDifference(today, day)),
+    );
+
     const plan = planExam(
       usable.map((card) => ({
         id: card.id,
@@ -135,7 +165,7 @@ export async function saveExam(input: {
         dueDate: new Date(card.due_date),
       })),
       day,
-      { now, intensity },
+      { now, intensity, capacities },
     );
 
     for (const card of usable) {
@@ -164,6 +194,9 @@ export async function saveExam(input: {
     intensity,
     target_score: targetScore,
     course_ids: input.courseIds,
+    kind: input.kind ? asExamKind(input.kind) : kept.kind,
+    formats: input.formats ?? kept.formats,
+    chapter_ids: input.chapterIds ?? kept.chapterIds,
     is_planned: planned,
     planned_at: planned ? now.toISOString() : null,
     schedule_backup: backup,
@@ -260,6 +293,96 @@ function revalidateExams(userId: string) {
   revalidateUserData(userId, "exams");
   revalidateUserData(userId, "cards");
   revalidatePath("/app");
-  revalidatePath("/app/examens");
+  revalidatePath("/app/plan");
   revalidatePath("/app/reviser");
+}
+
+/**
+ * Enregistrer ce que l'épreuve demande, sans repasser par les trois questions.
+ *
+ * La feuille de création reste à trois gestes - jour, cours, note visée - et tout le reste
+ * vit sur la fiche de l'épreuve : type, formats d'entraînement, chapitres au programme.
+ * Chacun de ces réglages change ce que le plan pose, donc chacun **refait le plan** : garder
+ * des échéances calculées pour un autre programme donnerait un planning qui ne correspond
+ * plus à rien, exactement comme un déplacement de date.
+ */
+export async function saveExamDetails(input: {
+  id: string;
+  kind?: string;
+  formats?: string[];
+  chapterIds?: string[];
+}): Promise<ExamWriteResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
+
+  const { data: existing } = await supabase
+    .from("exams")
+    .select("id, name, exam_date, target_score, intensity, course_ids")
+    .eq("user_id", user.id)
+    .eq("id", input.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (!existing) return { status: "error", message: await actionT("app.errors.examMissing") };
+
+  const row = existing as {
+    name: string;
+    exam_date: string;
+    target_score: number | null;
+    intensity: string;
+    course_ids: string[] | null;
+  };
+
+  return saveExam({
+    id: input.id,
+    name: row.name,
+    examDate: row.exam_date,
+    targetScore: row.target_score ?? undefined,
+    intensity: asIntensity(row.intensity),
+    courseIds: row.course_ids ?? [],
+    kind: input.kind,
+    formats: input.formats,
+    chapterIds: input.chapterIds,
+  });
+}
+
+/**
+ * La disponibilité, lue depuis l'action.
+ *
+ * `lib/data/availability.ts` fait la même lecture pour les écrans, mais en passant par le
+ * cache de Next, qu'une action serveur n'a aucune raison de remplir : elle écrit juste après
+ * et l'invaliderait dans la foulée.
+ */
+async function readAvailabilityFor(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<Availability> {
+  const since = new Date();
+  since.setDate(since.getDate() - 7);
+
+  const [{ data: profile }, { data: exceptions }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("daily_minutes, weekly_minutes")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("availability_exceptions")
+      .select("day, minutes")
+      .eq("user_id", userId)
+      .gte("day", since.toISOString().slice(0, 10)),
+  ]);
+
+  const row = profile as { daily_minutes: number | null; weekly_minutes: number[] | null } | null;
+
+  return {
+    weekly: weeklyFromRow(row?.weekly_minutes, row?.daily_minutes ?? undefined),
+    exceptions: ((exceptions as { day: string; minutes: number }[] | null) ?? []).map((entry) => ({
+      day: new Date(`${entry.day}T12:00:00`),
+      minutes: entry.minutes,
+    })),
+  };
 }

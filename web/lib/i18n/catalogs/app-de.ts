@@ -31,6 +31,10 @@ export const appDe = {
       title: "Aufgaben für heute",
       reviewAll: "Alles wiederholen",
       dueCards: "{count, plural, one {# Karte zu wiederholen} other {# Karten zu wiederholen}}",
+          startMinutes: "Beginnen ({minutes} Min.)",
+      forExam: "{cards} Karten · {minutes} Min. · {exam}",
+      fromPlan: "Reihenfolge nach deinem Plan.",
+      planTight: "Dein Plan geht nicht auf. Abwägungen ansehen.",
     },
     empty: {
       noCardsTitle: "Noch keine Karten",
@@ -66,6 +70,38 @@ export const appDe = {
       title: "Freunde",
       noPending: "Niemand wartet",
       someone: "Jemand",
+    },
+      mastery: {
+      title: "Beherrschung",
+      of: "von {count} Karten",
+      byCourse: "Nach Kurs",
+      empty: "Importiere einen Kurs, um zu messen.",
+      solid: "Sitzt",
+      fragile: "Wackelig",
+      learning: "Im Gange",
+      untouched: "Nie gesehen",
+      aria: "Zu {percent} % gelernt: {solid} sitzen, {fragile} wackelig, {learning} im Gange, {untouched} nie gesehen.",
+    },
+    stats: {
+      title: "Deine Statistik",
+      passes: "Durchgänge",
+      passesDetail: "an {days} aktiven Tagen",
+      accuracy: "Trefferquote",
+      accuracyDetail: "auf Anhieb richtig",
+      streak: "Serie",
+      streakDetail: "Rekord: {best} Tage",
+      average: "Schnitt",
+      averageDetail: "bester Tag: {best}",
+      averageEmpty: "pro aktivem Tag",
+      chartAria: "Durchgänge pro Tag über die letzten sechs Wochen.",
+      chartDay: "{passes} Durchgänge, {again} falsch",
+      chartLegend: "Ein Strich pro Tag. In Ocker die Tage mit über einem Drittel Fehlern.",
+    },
+    weak: {
+      title: "Was sich sperrt",
+      lead: "Deine meistverfehlten Karten. Sie kommen zuerst.",
+      none: "Im Moment sperrt sich nichts.",
+      line: "{again} von {reviews} Durchgängen falsch",
     },
   },
   course: {
@@ -130,6 +166,7 @@ export const appDe = {
     dueBadge: "{count} zu wiederholen",
     emptyBadge: "leer",
     upToDate: "aktuell",
+      mastery: "zu {percent} % gelernt",
   },
   decks: {
     title: "Stapel",
@@ -313,6 +350,103 @@ export const appDe = {
     examEyebrow: "📅 Prüfung",
     coursesEyebrow: "📚 Kurse",
     gradeEyebrow: "Note",
+  },
+  plan: {
+    title: "Plan",
+    lead: "Deine Prüfungen, deine Zeit und was dabei herauskommt.",
+    strip: {
+      title: "Der Zeitraum",
+      today: "Heute",
+      lastDay: "Bis {day}",
+      day: "{day} — {minutes} Min. von {capacity} Min.",
+      closed: "{day} — nicht verfügbar",
+      inDays: "{count, plural, one {in # Tag} other {in # Tagen}}",
+      summary: "{days} Tage, davon {closed} nicht verfügbar.",
+    },
+    verdict: {
+      clear: "Das hält. Etwa {minutes} Min. pro Tag.",
+      tight: "Es geht auf, aber knapp: etwa {minutes} Min. pro Tag.",
+      short: "Dir fehlen {minutes} Min. vor deinen Prüfungen.",
+      shortLead: "Der Plan geht nicht auf für: {exams}.",
+      busiest: "Vollster Tag: {minutes} Min., in {days} Tagen.",
+      failed: "Das konnte nicht gespeichert werden.",
+    },
+    lever: {
+      capacity: "Füge {minutes} auf jeden offenen Tag hinzu",
+      capacityAction: "Zeit öffnen",
+      target: "Senke die Zielnote in {exam}",
+      scope: "Nimm Formate aus {exam}",
+      gain: "Bringt etwa {minutes} Min.",
+      open: "Öffnen",
+    },
+    today: {
+      title: "Heute",
+      start: "Beginnen ({minutes} Min.)",
+      nothing: "Der Plan sieht heute nichts vor.",
+      forExam: "{cards} Karten · {minutes} Min. · {exam}",
+      total: "{cards} Karten insgesamt, etwa {minutes} Min.",
+    },
+    exams: {
+      title: "Deine Prüfungen",
+      readiness: "{now} % heute → {projected} % am Prüfungstag",
+    },
+    month: {
+      show: "Monat zeigen",
+      hide: "Monat ausblenden",
+    },
+    empty: {
+      title: "Noch keine Prüfung",
+      body: "Setz ein Datum, und die App baut den Plan: was zu lernen ist, an welchem Tag, und ob es aufgeht.",
+    },
+    weekly: {
+      pageTitle: "Meine Wochen",
+      pageLead: "Die Zeit, die du wirklich hast. Sie macht den Plan ehrlich.",
+      title: "Typische Woche",
+      total: "{total} pro Woche an {days} Tagen",
+      open: "{minutes} Min. pro Woche",
+      off: "Keine",
+      hint: "Ein Tag auf null bekommt nie Wiederholungen. Der Plan verteilt sie auf die anderen.",
+      saving: "Wird gespeichert…",
+      saved: "Gespeichert",
+    },
+    exceptions: {
+      title: "Einzelne Tage",
+      lead: "Ferien, Praktikum, ein belegtes Wochenende: diese Daten überschreiben die Woche.",
+      none: "Keine einzelnen Tage.",
+      add: "Freien Tag setzen",
+      remove: "Entfernen",
+      pick: "Datum wählen",
+    },
+    kind: {
+      exam: "Prüfung",
+      midterm: "Zwischenprüfung",
+      final: "Abschluss",
+      quiz: "Test",
+      oral: "Mündlich",
+      mock: "Probe",
+    },
+    sheet: {
+      lead: "Zu {percent} % gelernt, bei {cards} Karten.",
+      programTitle: "Im Stoff",
+      courseLine: "{cards} Karten · zu {percent} % gelernt",
+      weakTitle: "Was sich sperrt",
+      weakLead: "Diese Karten kommen wieder, weil du sie falsch hast, nicht zufällig.",
+      weakLine: "{again} von {reviews} Durchgängen falsch",
+      weakHint: "Sie kommen in deinen Sitzungen zuerst. Sperrt sich eine weiter, verlangt sie meist zwei Antworten statt einer.",
+      stubborn: "Neu fassen",
+      formatsTitle: "Formate zum Üben",
+      formatsAll: "Alle Formate des Kurses",
+      formatsSome: "{count} Formate gewählt",
+      kindTitle: "Art der Prüfung",
+      effect: {
+        basic: "Frage-Antwort-Karten kommen in den Plan.",
+        choice: "Multiple Choice kommt in den Plan.",
+        cloze: "Lückentexte kommen in den Plan.",
+      },
+      apply: "Übernehmen und Plan neu bauen",
+      applyHint: "Der Plan wird über die verbleibenden Tage neu berechnet.",
+      back: "Zurück zum Plan",
+    },
   },
   friends: {
     title: "Freunde",
@@ -841,13 +975,13 @@ export const appDe = {
         title: "Deine Woche",
         body: "Ein Tag, eine Spalte. Du siehst, was du wiederholt hast und was kommt.",
       },
-      exams: {
-        title: "Deine Prüfungen",
-        body: "Setze ein Datum, und Micabo lässt die Karten des Kurses vor dem Stichtag durchlaufen.",
+          mastery: {
+        title: "Deine Beherrschung",
+        body: "Die einzige Zahl, die bis 100 % läuft. Sie steigt, wenn eine Karte sitzt, nicht wenn du Zeit aufwendest.",
       },
-      friends: {
-        title: "Deine Freunde",
-        body: "Füge deine Kommilitonen hinzu, um zu sehen, wer diese Woche wiederholt.",
+      stats: {
+        title: "Deine Statistik",
+        body: "Das Volumen sagt, wie viel du gearbeitet hast. Die Trefferquote sagt, ob es wirkt.",
       },
     },
     review: {
@@ -874,16 +1008,6 @@ export const appDe = {
       add: {
         title: "Einen Kurs hinzufügen",
         body: "PDF, Word, eingefügter Text oder YouTube-Video. Micabo liest, dann schreibt das Blatt.",
-      },
-    },
-    decks: {
-      shelf: {
-        title: "Deine Stapel",
-        body: "Jeder Kurs hat einen, plus die, die du von Hand anlegst. Hier findest du sie.",
-      },
-      add: {
-        title: "Einen Stapel öffnen",
-        body: "Ein leerer Stapel, Karte für Karte. Oder eine fertige Anki-Datei.",
       },
     },
     sheet: {
@@ -914,14 +1038,18 @@ export const appDe = {
         body: "Du kannst eine Frage, ihre Antwort korrigieren oder eine von Hand hinzufügen.",
       },
     },
-    exams: {
-      calendar: {
-        title: "Dein Kalender",
-        body: "Gesetzte Daten stehen auf dem Tag. Klicke einen Tag, um eines hinzuzufügen.",
-      },
+    plan: {
       add: {
         title: "Eine Prüfung hinzufügen",
         body: "Ein Datum, die betroffenen Kurse, die Intensität. Micabo holt die Karten vor der Prüfung nach vorn.",
+      },
+          strip: {
+        title: "Der Zeitraum",
+        body: "Ein Strich pro Tag bis zur letzten Prüfung. Die Senken sind deine freien Tage.",
+      },
+      today: {
+        title: "Heute",
+        body: "Was der Plan von dir will, Fach für Fach, und für welche Prüfung.",
       },
     },
     friends: {
@@ -1052,6 +1180,8 @@ export const appDe = {
     usernameTooShort: "Mindestens drei Zeichen.",
     usernameTooLong: "Höchstens zwanzig Zeichen.",
     usernameInvalid: "Buchstaben, Zahlen, Bindestriche oder Unterstriche.",
+      badWeek: "Eine Woche hat sieben Tage.",
+    saveFailed: "Das konnte nicht gespeichert werden.",
   },
   common: {
     see: "Ansehen",

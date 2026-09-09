@@ -140,7 +140,7 @@ export function examUrgency(daysRemaining: number): ExamUrgency {
 export function planExam(
   cards: ExamCard[],
   examDate: Date,
-  options: { now?: Date; intensity?: ExamIntensity } = {},
+  options: { now?: Date; intensity?: ExamIntensity; capacities?: readonly number[] } = {},
 ): ExamPlan {
   const now = options.now ?? new Date();
   const intensity = options.intensity ?? "standard";
@@ -153,13 +153,14 @@ export function planExam(
   // aujourd'hui ou demain ne laisse qu'une journée, celle-ci.
   const window = Math.max(1, daysRemaining);
   const lastReviewDay = addDays(today, window - 1);
+  const usable = usableDays(options.capacities, window);
 
   const days = new Map<string, number[]>();
   const load = new Array<number>(window).fill(0);
   let total = 0;
 
   orderedCards(cards, now).forEach((card, index) => {
-    const offsets = ladder(passesFor(card, intensity), window, index);
+    const offsets = ladder(passesFor(card, intensity), window, index, usable);
     days.set(card.id, offsets);
     total += offsets.length;
     for (const offset of offsets) {
@@ -175,6 +176,21 @@ export function planExam(
     days,
     projection: { cardCount: cards.length, daysRemaining, totalReviews: total, load },
   };
+}
+
+/**
+ * Les décalages sur lesquels on a le droit de poser un passage.
+ *
+ * Sans capacités, ce sont tous les jours de la fenêtre - le comportement d'avant. Avec, on
+ * retire les jours à zéro minute. Si l'étudiant a déclaré la fenêtre entière indisponible, on
+ * lui rend quand même la fenêtre : un plan vide ne l'aiderait pas, et c'est `feasibility` qui
+ * a le rôle de dire que ça ne tient pas.
+ */
+function usableDays(capacities: readonly number[] | undefined, window: number): number[] {
+  const all = Array.from({ length: window }, (_, offset) => offset);
+  if (!capacities || capacities.length === 0) return all;
+  const open = all.filter((offset) => (capacities[offset] ?? 0) > 0);
+  return open.length > 0 ? open : all;
 }
 
 /**
@@ -218,29 +234,43 @@ export function passesFor(card: ExamCard, intensity: ExamIntensity): number {
  * passages sont **régulièrement espacés**, ce qui donne une charge quotidienne à peu près
  * constante, la seule qu'on puisse tenir.
  */
-export function ladder(passes: number, window: number, phase: number): number[] {
+export function ladder(
+  passes: number,
+  window: number,
+  phase: number,
+  usable?: readonly number[],
+): number[] {
   if (window <= 0) return [];
 
-  const closing = Math.max(1, Math.min(window, CLOSING_DAYS));
-  const last = Math.max(0, window - 1 - (phase % closing));
+  // Les jours sur lesquels on a le droit de poser un passage. Sans liste, ce sont tous les
+  // jours de la fenêtre, et l'échelle est exactement celle d'avant les disponibilités.
+  const days =
+    usable && usable.length > 0
+      ? [...usable].filter((offset) => offset >= 0 && offset < window).sort((a, b) => a - b)
+      : Array.from({ length: window }, (_, offset) => offset);
+  if (days.length === 0) return [];
+
+  const count = days.length;
+  const closing = Math.max(1, Math.min(count, CLOSING_DAYS));
+  const last = Math.max(0, count - 1 - (phase % closing));
 
   // On ne peut pas voir une carte deux fois le même jour : le nombre de passages est borné
   // par le nombre de jours disponibles avant son dernier.
   const wanted = Math.max(1, Math.min(passes, last + 1));
-  if (wanted <= 1) return [last];
+  if (wanted <= 1) return [days[last]!];
 
-  const span = Math.max(1, window - wanted + 1);
+  const span = Math.max(1, count - wanted + 1);
   const first = Math.min(last, phase % span);
-  if (last <= first) return [last];
+  if (last <= first) return [days[last]!];
 
-  const offsets: number[] = [];
+  const positions: number[] = [];
   for (let step = 0; step < wanted; step += 1) {
     const position = first + ((last - first) * step) / (wanted - 1);
-    const day = Math.round(position);
-    if (offsets[offsets.length - 1] !== day) offsets.push(day);
+    const index = Math.round(position);
+    if (positions[positions.length - 1] !== index) positions.push(index);
   }
-  if (offsets[offsets.length - 1] !== last) offsets.push(last);
-  return offsets;
+  if (positions[positions.length - 1] !== last) positions.push(last);
+  return positions.map((index) => days[index]!);
 }
 
 export function averageDailyLoad(projection: ExamProjection): number {

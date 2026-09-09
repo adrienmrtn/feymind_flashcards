@@ -3,6 +3,7 @@ import {
   activeDeadlines,
   buildQueue,
   sessionNewLimit,
+  weakFirst,
 } from "@micabo/core";
 
 import { ReviewSetup } from "@/components/app/ReviewSetup";
@@ -18,6 +19,7 @@ import {
   type ExamRow,
 } from "@/lib/data/courses";
 import { examMarksFor } from "@/lib/data/exam-marks";
+import { loadCardDifficulty } from "@/lib/data/difficulty";
 import { readEntitlement } from "@/lib/data/entitlement";
 import { loadNewCardBudget } from "@/lib/data/reviews";
 
@@ -70,12 +72,13 @@ export default async function ReviewPage({
     );
   }
 
-  const [allCards, courses, exams, right, budget] = await Promise.all([
+  const [allCards, courses, exams, right, budget, difficulties] = await Promise.all([
     courseId ? listCards(courseId) : listAllCards(),
     listCourses(),
     listExams(),
     readEntitlement(),
     loadNewCardBudget(),
+    loadCardDifficulty(),
   ]);
 
   const cards = courseId ? allCards.filter((card) => card.course_id === courseId) : allCards;
@@ -124,8 +127,12 @@ export default async function ReviewPage({
   const titles = new Map(courses.map((course) => [course.id, course.title]));
   const marks = examMarksFor(exams, cards);
 
-  const ordered = queue
-    .map((item) => byId.get(item.id))
+  // Ce qui résiste passe en premier, **dans la file déjà construite**. `buildQueue` décide de
+  // ce qui est dû ; ceci ne décide que de l'ordre. Une carte ratée quatre fois sur six est
+  // une note perdue le jour J, et la répétition espacée la traite comme les autres : elle ne
+  // regarde que le dernier intervalle, jamais le taux d'échec.
+  const ordered = weakFirst(queue.map((item) => item.id), difficulties)
+    .map((id) => byId.get(id))
     .filter((card): card is NonNullable<typeof card> => Boolean(card))
     .map((card) => ({
       id: card.id,

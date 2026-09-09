@@ -31,6 +31,10 @@ export const appFr = {
       title: "Tâches du jour",
       reviewAll: "Tout réviser",
       dueCards: "{count, plural, one {# carte à réviser} other {# cartes à réviser}}",
+          startMinutes: "Commencer ({minutes} min)",
+      forExam: "{cards} cartes · {minutes} min · {exam}",
+      fromPlan: "Ordre donné par ton plan.",
+      planTight: "Ton plan ne rentre pas. Voir les arbitrages.",
     },
     empty: {
       noCardsTitle: "Pas encore de cartes",
@@ -66,6 +70,38 @@ export const appFr = {
       title: "Amis",
       noPending: "Personne en attente",
       someone: "Quelqu'un",
+    },
+      mastery: {
+      title: "Maîtrise",
+      of: "sur {count} cartes",
+      byCourse: "Par cours",
+      empty: "Importe un cours pour commencer à mesurer.",
+      solid: "Acquis",
+      fragile: "Fragile",
+      learning: "En cours",
+      untouched: "Jamais vu",
+      aria: "Appris à {percent} % : {solid} acquises, {fragile} fragiles, {learning} en cours, {untouched} jamais vues.",
+    },
+    stats: {
+      title: "Tes statistiques",
+      passes: "Passages",
+      passesDetail: "sur {days} jours actifs",
+      accuracy: "Justesse",
+      accuracyDetail: "réponses sues du premier coup",
+      streak: "Série",
+      streakDetail: "record : {best} jours",
+      average: "Moyenne",
+      averageDetail: "meilleur jour : {best}",
+      averageEmpty: "par jour actif",
+      chartAria: "Passages par jour sur les six dernières semaines.",
+      chartDay: "{passes} passages, {again} ratés",
+      chartLegend: "Un trait par jour. En ocre, les jours où plus d'un tiers est raté.",
+    },
+    weak: {
+      title: "Ce qui résiste",
+      lead: "Tes cartes les plus ratées. Elles passent en premier.",
+      none: "Rien ne résiste pour l'instant.",
+      line: "Ratée {again} fois sur {reviews} passages",
     },
   },
   course: {
@@ -130,6 +166,7 @@ export const appFr = {
     dueBadge: "{count} à réviser",
     emptyBadge: "vide",
     upToDate: "à jour",
+      mastery: "appris à {percent} %",
   },
   decks: {
     title: "Paquets",
@@ -313,6 +350,103 @@ export const appFr = {
     examEyebrow: "📅 Examen",
     coursesEyebrow: "📚 Cours",
     gradeEyebrow: "Note",
+  },
+  plan: {
+    title: "Plan",
+    lead: "Tes épreuves, ton temps, et ce que ça donne.",
+    strip: {
+      title: "La période",
+      today: "Aujourd'hui",
+      lastDay: "Jusqu'au {day}",
+      day: "{day} — {minutes} min sur {capacity} min",
+      closed: "{day} — indisponible",
+      inDays: "{count, plural, one {dans # jour} other {dans # jours}}",
+      summary: "{days} jours, dont {closed} indisponibles.",
+    },
+    verdict: {
+      clear: "Ça tient. Environ {minutes} min par jour.",
+      tight: "Ça passe, mais c'est plein : environ {minutes} min par jour.",
+      short: "Il te manque {minutes} min avant tes épreuves.",
+      shortLead: "Le plan ne rentre pas pour : {exams}.",
+      busiest: "Jour le plus chargé : {minutes} min, dans {days} jours.",
+      failed: "Ça n'a pas pu être enregistré.",
+    },
+    lever: {
+      capacity: "Ajoute {minutes} sur chaque jour déjà ouvert",
+      capacityAction: "Ouvrir du temps",
+      target: "Baisse la note visée en {exam}",
+      scope: "Retire des formats en {exam}",
+      gain: "Récupère environ {minutes} min",
+      open: "Ouvrir",
+    },
+    today: {
+      title: "Aujourd'hui",
+      start: "Commencer ({minutes} min)",
+      nothing: "Rien de prévu aujourd'hui par le plan.",
+      forExam: "{cards} cartes · {minutes} min · {exam}",
+      total: "{cards} cartes au total, environ {minutes} min.",
+    },
+    exams: {
+      title: "Tes épreuves",
+      readiness: "{now} % aujourd'hui → {projected} % le jour J",
+    },
+    month: {
+      show: "Voir le mois",
+      hide: "Masquer le mois",
+    },
+    empty: {
+      title: "Aucune épreuve déclarée",
+      body: "Pose une date et l'app construit le plan : quoi réviser, quel jour, et si ça tient.",
+    },
+    weekly: {
+      pageTitle: "Mes semaines",
+      pageLead: "Le temps que tu as vraiment. C'est lui qui rend le plan honnête.",
+      title: "Semaine type",
+      total: "{total} par semaine sur {days} jours",
+      off: "Aucun",
+      hint: "Un jour à zéro ne reçoit jamais de révision. Le plan répartit sur les autres.",
+      saving: "Enregistrement…",
+      saved: "Enregistré",
+      open: "{minutes} min par semaine",
+    },
+    exceptions: {
+      title: "Jours à part",
+      lead: "Vacances, stage, week-end pris : ces dates écrasent la semaine type.",
+      none: "Aucune date à part.",
+      add: "Poser un jour off",
+      remove: "Retirer",
+      pick: "Choisir une date",
+    },
+    kind: {
+      exam: "Examen",
+      midterm: "Mi-parcours",
+      final: "Final",
+      quiz: "Contrôle",
+      oral: "Oral",
+      mock: "Blanc",
+    },
+    sheet: {
+      lead: "Appris à {percent} % sur {cards} cartes.",
+      programTitle: "Au programme",
+      courseLine: "{cards} cartes · appris à {percent} %",
+      weakTitle: "Ce qui résiste",
+      weakLead: "Ces cartes reviennent parce que tu les rates, pas par hasard.",
+      weakLine: "Ratée {again} fois sur {reviews} passages",
+      weakHint: "Elles passent en premier dans tes sessions. Si l'une résiste encore, c'est souvent qu'elle demande deux réponses au lieu d'une.",
+      stubborn: "À revoir",
+      formatsTitle: "Formats à travailler",
+      formatsAll: "Tous les formats du cours",
+      formatsSome: "{count} formats retenus",
+      kindTitle: "Type d'épreuve",
+      effect: {
+        basic: "Les questions-réponses entrent dans le plan.",
+        choice: "Les QCM entrent dans le plan.",
+        cloze: "Les textes à trous entrent dans le plan.",
+      },
+      apply: "Appliquer et refaire le plan",
+      applyHint: "Le plan se recalcule sur les jours qui restent.",
+      back: "Retour au plan",
+    },
   },
   friends: {
     title: "Amis",
@@ -839,13 +973,13 @@ export const appFr = {
         title: "Ta semaine",
         body: "Un jour, une colonne. Tu vois ce que tu as révisé et ce qui arrive.",
       },
-      exams: {
-        title: "Tes examens",
-        body: "Pose une date, et Micabo fait passer les cartes du cours avant le jour J.",
+          mastery: {
+        title: "Ta maîtrise",
+        body: "Le seul chiffre qui va jusqu'à 100 %. Il monte quand une carte tient, pas quand tu passes du temps.",
       },
-      friends: {
-        title: "Tes amis",
-        body: "Ajoute tes camarades pour voir qui révise cette semaine.",
+      stats: {
+        title: "Tes statistiques",
+        body: "Le volume dit combien tu as travaillé. La justesse dit si ça marche.",
       },
     },
     review: {
@@ -872,16 +1006,6 @@ export const appFr = {
       add: {
         title: "Ajouter un cours",
         body: "PDF, Word, texte collé ou vidéo YouTube. Micabo lit, puis écrit la fiche.",
-      },
-    },
-    decks: {
-      shelf: {
-        title: "Tes paquets",
-        body: "Chaque cours a le sien, et ceux que tu ouvres à la main. C'est ici qu'on les retrouve.",
-      },
-      add: {
-        title: "Ouvrir un paquet",
-        body: "Un paquet vide, carte par carte. Ou un fichier Anki déjà écrit.",
       },
     },
     sheet: {
@@ -912,14 +1036,18 @@ export const appFr = {
         body: "Tu peux corriger une question, sa réponse, ou en ajouter une à la main.",
       },
     },
-    exams: {
-      calendar: {
-        title: "Ton calendrier",
-        body: "Les dates posées s'écrivent sur le jour. Clique un jour pour en ajouter une.",
-      },
+    plan: {
       add: {
         title: "Ajouter un examen",
         body: "Une date, les cours concernés, l'intensité. Micabo remonte les cartes avant l'examen.",
+      },
+          strip: {
+        title: "La période",
+        body: "Un trait par jour jusqu'à ta dernière épreuve. Les creux sont tes jours indisponibles.",
+      },
+      today: {
+        title: "Aujourd'hui",
+        body: "Ce que le plan te demande, matière par matière, et pour quelle épreuve.",
       },
     },
     friends: {
@@ -1050,6 +1178,8 @@ export const appFr = {
     usernameTooShort: "Trois caractères au minimum.",
     usernameTooLong: "Vingt caractères au maximum.",
     usernameInvalid: "Lettres, chiffres, tirets ou soulignés.",
+      badWeek: "Une semaine fait sept jours.",
+    saveFailed: "Ça n'a pas pu être enregistré.",
   },
   common: {
     see: "Voir",

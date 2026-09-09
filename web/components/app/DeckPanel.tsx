@@ -147,7 +147,7 @@ export function DeckPanel() {
       setPoured(Math.min(chosen.length, at + DECK_CHUNK));
     }
 
-    openGeneratedPage(`/app/paquets/${courseId}`);
+    openGeneratedPage(`/app/c/${courseId}/cartes`);
   }
 
   if (phase === "creation" && failure && opened) {
@@ -158,7 +158,7 @@ export function DeckPanel() {
           {failure}
         </p>
         <div className="mt-4">
-          <Button render={<Link href={`/app/paquets/${opened}` as never} />}>
+          <Button render={<Link href={`/app/c/${opened}/cartes` as never} />}>
             {t("app.deck.openAnyway")}
           </Button>
         </div>

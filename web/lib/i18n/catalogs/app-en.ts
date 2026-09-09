@@ -31,6 +31,10 @@ export const appEn = {
       title: "Today's tasks",
       reviewAll: "Review all",
       dueCards: "{count, plural, one {# card to review} other {# cards to review}}",
+          startMinutes: "Start ({minutes} min)",
+      forExam: "{cards} cards · {minutes} min · {exam}",
+      fromPlan: "Order set by your plan.",
+      planTight: "Your plan doesn't fit. See the trade-offs.",
     },
     empty: {
       noCardsTitle: "No cards yet",
@@ -66,6 +70,38 @@ export const appEn = {
       title: "Friends",
       noPending: "No one waiting",
       someone: "Someone",
+    },
+      mastery: {
+      title: "Mastery",
+      of: "across {count} cards",
+      byCourse: "By course",
+      empty: "Import a course to start measuring.",
+      solid: "Solid",
+      fragile: "Shaky",
+      learning: "In progress",
+      untouched: "Never seen",
+      aria: "Learned to {percent} %: {solid} solid, {fragile} shaky, {learning} in progress, {untouched} never seen.",
+    },
+    stats: {
+      title: "Your stats",
+      passes: "Reviews",
+      passesDetail: "over {days} active days",
+      accuracy: "Accuracy",
+      accuracyDetail: "answers right first time",
+      streak: "Streak",
+      streakDetail: "best: {best} days",
+      average: "Average",
+      averageDetail: "best day: {best}",
+      averageEmpty: "per active day",
+      chartAria: "Reviews per day over the last six weeks.",
+      chartDay: "{passes} reviews, {again} missed",
+      chartLegend: "One bar a day. In amber, days where more than a third was missed.",
+    },
+    weak: {
+      title: "What resists",
+      lead: "The cards you miss most. They come first.",
+      none: "Nothing is resisting right now.",
+      line: "Missed {again} times out of {reviews}",
     },
   },
   course: {
@@ -130,6 +166,7 @@ export const appEn = {
     dueBadge: "{count} due",
     emptyBadge: "empty",
     upToDate: "up to date",
+      mastery: "learned to {percent} %",
   },
   decks: {
     title: "Decks",
@@ -313,6 +350,103 @@ export const appEn = {
     examEyebrow: "📅 Exam",
     coursesEyebrow: "📚 Courses",
     gradeEyebrow: "Grade",
+  },
+  plan: {
+    title: "Plan",
+    lead: "Your exams, your time, and what comes of it.",
+    strip: {
+      title: "The term",
+      today: "Today",
+      lastDay: "Through {day}",
+      day: "{day} — {minutes} min of {capacity} min",
+      closed: "{day} — unavailable",
+      inDays: "{count, plural, one {in # day} other {in # days}}",
+      summary: "{days} days, {closed} of them unavailable.",
+    },
+    verdict: {
+      clear: "This holds. About {minutes} min a day.",
+      tight: "It fits, but it's full: about {minutes} min a day.",
+      short: "You're {minutes} min short before your exams.",
+      shortLead: "The plan doesn't fit for: {exams}.",
+      busiest: "Busiest day: {minutes} min, in {days} days.",
+      failed: "That couldn't be saved.",
+    },
+    lever: {
+      capacity: "Add {minutes} to every day already open",
+      capacityAction: "Open time",
+      target: "Lower your target grade in {exam}",
+      scope: "Drop formats in {exam}",
+      gain: "Recovers about {minutes} min",
+      open: "Open",
+    },
+    today: {
+      title: "Today",
+      start: "Start ({minutes} min)",
+      nothing: "The plan has nothing for today.",
+      forExam: "{cards} cards · {minutes} min · {exam}",
+      total: "{cards} cards in all, about {minutes} min.",
+    },
+    exams: {
+      title: "Your exams",
+      readiness: "{now} % today → {projected} % on the day",
+    },
+    month: {
+      show: "Show the month",
+      hide: "Hide the month",
+    },
+    empty: {
+      title: "No exam yet",
+      body: "Set a date and the app builds the plan: what to review, which day, and whether it holds.",
+    },
+    weekly: {
+      pageTitle: "My weeks",
+      pageLead: "The time you actually have. It's what makes the plan honest.",
+      title: "Typical week",
+      total: "{total} a week across {days} days",
+      open: "{minutes} min a week",
+      off: "None",
+      hint: "A day at zero never gets review. The plan spreads it over the others.",
+      saving: "Saving…",
+      saved: "Saved",
+    },
+    exceptions: {
+      title: "Days apart",
+      lead: "Holidays, an internship, a weekend taken: these dates override the typical week.",
+      none: "No days apart.",
+      add: "Mark a day off",
+      remove: "Remove",
+      pick: "Pick a date",
+    },
+    kind: {
+      exam: "Exam",
+      midterm: "Midterm",
+      final: "Final",
+      quiz: "Quiz",
+      oral: "Oral",
+      mock: "Mock",
+    },
+    sheet: {
+      lead: "Learned to {percent} % across {cards} cards.",
+      programTitle: "On the syllabus",
+      courseLine: "{cards} cards · learned to {percent} %",
+      weakTitle: "What resists",
+      weakLead: "These come back because you get them wrong, not by chance.",
+      weakLine: "Missed {again} times out of {reviews}",
+      weakHint: "They come first in your sessions. If one still resists, it usually asks for two answers instead of one.",
+      stubborn: "Rewrite it",
+      formatsTitle: "Formats to work on",
+      formatsAll: "Every format in the course",
+      formatsSome: "{count} formats kept",
+      kindTitle: "Kind of exam",
+      effect: {
+        basic: "Question-and-answer cards enter the plan.",
+        choice: "Multiple choice enters the plan.",
+        cloze: "Fill-in-the-blank enters the plan.",
+      },
+      apply: "Apply and rebuild the plan",
+      applyHint: "The plan is recomputed over the days that remain.",
+      back: "Back to the plan",
+    },
   },
   friends: {
     title: "Friends",
@@ -838,13 +972,13 @@ export const appEn = {
         title: "Your week",
         body: "One day, one column. You see what you reviewed and what's coming.",
       },
-      exams: {
-        title: "Your exams",
-        body: "Set a date, and Micabo runs the course cards before exam day.",
+          mastery: {
+        title: "Your mastery",
+        body: "The one number that runs to 100 %. It rises when a card holds, not when you spend time.",
       },
-      friends: {
-        title: "Your friends",
-        body: "Add your classmates to see who is reviewing this week.",
+      stats: {
+        title: "Your stats",
+        body: "Volume says how much you worked. Accuracy says whether it works.",
       },
     },
     review: {
@@ -871,16 +1005,6 @@ export const appEn = {
       add: {
         title: "Add a course",
         body: "PDF, Word, pasted text, or a YouTube video. Micabo reads, then writes the sheet.",
-      },
-    },
-    decks: {
-      shelf: {
-        title: "Your decks",
-        body: "Every course has one, plus the ones you open by hand. This is where you find them.",
-      },
-      add: {
-        title: "Open a deck",
-        body: "An empty deck, card by card. Or an Anki file already written.",
       },
     },
     sheet: {
@@ -911,14 +1035,18 @@ export const appEn = {
         body: "You can fix a question, its answer, or add one by hand.",
       },
     },
-    exams: {
-      calendar: {
-        title: "Your calendar",
-        body: "Set dates appear on the day. Click a day to add one.",
-      },
+    plan: {
       add: {
         title: "Add an exam",
         body: "A date, the courses involved, the intensity. Micabo brings the cards forward before the exam.",
+      },
+          strip: {
+        title: "The term",
+        body: "One bar a day through to your last exam. The dips are your unavailable days.",
+      },
+      today: {
+        title: "Today",
+        body: "What the plan asks of you, subject by subject, and for which exam.",
       },
     },
     friends: {
@@ -1049,6 +1177,8 @@ export const appEn = {
     usernameTooShort: "At least three characters.",
     usernameTooLong: "Twenty characters at most.",
     usernameInvalid: "Letters, numbers, hyphens, or underscores.",
+      badWeek: "A week has seven days.",
+    saveFailed: "That couldn't be saved.",
   },
   common: {
     see: "See",

@@ -398,6 +398,21 @@ export const de: Catalog = {
     sheetLanguage: "Sprache der Blätter",
     sheetLanguageHelp: "Die nächsten Blätter entstehen in dieser Sprache. Die alten bleiben.",
     sheetLanguageSr: "Sprache der nächsten Blätter",
+      section: {
+      study: "Dein Lernen",
+      studyHint: "Was ändert, was die App dir vorlegt.",
+      app: "Die App",
+      appHint: "Sprache und Aussehen.",
+      account: "Dein Konto",
+      accountHint: "Abo, Daten, Sitzung.",
+    },
+    weekly: {
+      title: "Meine Wochen",
+      detail: "Die Zeit, die täglich zur Verfügung steht und deinen Plan steuert.",
+    },
+    help: {
+      title: "Hilfe und Touren erneut ansehen",
+    },
   },
   nav: {
     study: "Lernen",
@@ -414,6 +429,7 @@ export const de: Catalog = {
     import: "Importieren",
     feedback: "Rückmeldungen",
     openCourses: "Geöffnet",
+      plan: "Plan",
   },
   app: appDe,
   copy: copyDe,
