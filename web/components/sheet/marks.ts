@@ -15,10 +15,15 @@ import type { SheetHighlight } from "@micabo/core";
  * déjà marqué, parce qu'un bouton de mise en forme doit faire l'aller comme le retour.
  */
 
-export type Mark = "bold" | "italic";
+export type Mark = "bold" | "italic" | "strike";
 
-const TAGS: Record<Mark, string> = { bold: "STRONG", italic: "EM" };
-const ALIASES: Record<Mark, string[]> = { bold: ["STRONG", "B"], italic: ["EM", "I"] };
+const TAGS: Record<Mark, string> = { bold: "STRONG", italic: "EM", strike: "S" };
+const ALIASES: Record<Mark, string[]> = {
+  bold: ["STRONG", "B"],
+  italic: ["EM", "I"],
+  // `del` et `strike` arrivent par collage : le bouton doit savoir les retirer aussi.
+  strike: ["S", "DEL", "STRIKE"],
+};
 
 export function toggleMark(root: HTMLElement, mark: Mark): boolean {
   return applyToSelection(root, {

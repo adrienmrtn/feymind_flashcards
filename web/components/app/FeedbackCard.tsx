@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { ROW_GHOST, SettingsRow } from "@/components/app/settings/Rows";
 import { Button } from "@/components/ui/button";
 import { sendFeedback } from "@/lib/actions/feedback";
 import type { FeedbackKind } from "@/lib/feedback";
@@ -16,6 +17,7 @@ export function FeedbackCard() {
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
+  const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const ready = message.trim().length > 0 && !pending;
@@ -31,60 +33,76 @@ export function FeedbackCard() {
     });
   }
 
+  // Le formulaire était déplié en permanence dans les réglages : une zone de texte de cinq
+  // lignes, ouverte, au milieu d'un écran où l'on vient changer sa langue. Il se demande.
   return (
-    <section className="saas-card p-7">
-      <p className="text-[13px] text-ink-tertiary">{t("app.feedback.title")}</p>
-      <p className="mt-1 text-[13.5px] leading-relaxed text-ink-secondary">
-        {t("app.feedback.lead")}
-      </p>
+    <SettingsRow
+      label={t("app.feedback.title")}
+      hint={t("app.feedback.lead")}
+      control={
+        open ? null : (
+          <button type="button" onClick={() => setOpen(true)} className={ROW_GHOST}>
+            {t("app.feedback.open")}
+          </button>
+        )
+      }
+    >
+      {open ? (
+        <div className="rise rounded-group bg-surface-muted p-4">
+          <div className="grid max-w-[320px] grid-cols-2 gap-2">
+            <KindButton
+              label={t("app.feedback.kind.bug")}
+              selected={kind === "bug"}
+              onSelect={() => setKind("bug")}
+            />
+            <KindButton
+              label={t("app.feedback.kind.idea")}
+              selected={kind === "idea"}
+              onSelect={() => setKind("idea")}
+            />
+          </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-2">
-        <KindButton
-          label={t("app.feedback.kind.bug")}
-          selected={kind === "bug"}
-          onSelect={() => setKind("bug")}
-        />
-        <KindButton
-          label={t("app.feedback.kind.idea")}
-          selected={kind === "idea"}
-          onSelect={() => setKind("idea")}
-        />
-      </div>
+          <label htmlFor="feedback-message" className="mt-3 block text-[13px] text-ink-tertiary">
+            {t("app.feedback.messageLabel")}
+          </label>
+          <textarea
+            id="feedback-message"
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            rows={4}
+            maxLength={4000}
+            placeholder={
+              kind === "bug"
+                ? t("app.feedback.placeholder.bug")
+                : t("app.feedback.placeholder.idea")
+            }
+            className="mt-2 w-full resize-y rounded-button bg-surface px-4 py-3 text-[14.5px] text-ink outline-none placeholder:text-ink-tertiary"
+          />
 
-      <label htmlFor="feedback-message" className="mt-5 block text-[13px] text-ink-tertiary">
-        {t("app.feedback.messageLabel")}
-      </label>
-      <textarea
-        id="feedback-message"
-        value={message}
-        onChange={(event) => setMessage(event.target.value)}
-        rows={5}
-        maxLength={4000}
-        placeholder={
-          kind === "bug" ? t("app.feedback.placeholder.bug") : t("app.feedback.placeholder.idea")
-        }
-        className="mt-2 w-full resize-y rounded-button bg-surface-muted px-4 py-3 text-[15px] text-ink outline-none placeholder:text-ink-tertiary"
-      />
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Button type="button" disabled={!ready} onClick={send}>
+              {pending ? t("app.feedback.pending") : t("app.feedback.send")}
+            </Button>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="pressable h-10 rounded-button px-3 text-[13.5px] text-ink-secondary"
+            >
+              {t("app.common.cancel")}
+            </button>
+          </div>
 
-      <Button
-        type="button"
-        size="lg"
-        disabled={!ready}
-        onClick={send}
-        className="mt-4 w-full"
-      >
-        {pending ? t("app.feedback.pending") : t("app.feedback.send")}
-      </Button>
-
-      {status ? (
-        <p
-          className={`mt-3 text-[13px] ${ok ? "text-ink-secondary" : "text-negative"}`}
-          role={ok ? "status" : "alert"}
-        >
-          {status}
-        </p>
+          {status ? (
+            <p
+              className={`mt-3 text-[13px] ${ok ? "text-ink-secondary" : "text-negative"}`}
+              role={ok ? "status" : "alert"}
+            >
+              {status}
+            </p>
+          ) : null}
+        </div>
       ) : null}
-    </section>
+    </SettingsRow>
   );
 }
 
@@ -102,10 +120,10 @@ function KindButton({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`pressable min-h-11 rounded-button px-3 text-[14.5px] font-medium ${
+      className={`pressable h-10 rounded-button px-3 text-[14px] font-medium ${
         selected
           ? "bg-accent-soft text-accent"
-          : "bg-surface-muted text-ink shadow-[inset_0_0_0_1px_var(--color-stroke-strong)]"
+          : "bg-surface text-ink"
       }`}
     >
       {label}

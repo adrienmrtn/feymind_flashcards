@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { ROW_GHOST, SettingsRow } from "@/components/app/settings/Rows";
 import { resetTour } from "@/lib/actions/tour";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -23,21 +24,24 @@ export function ReplayTour() {
   const [pending, startTransition] = useTransition();
 
   return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={() => {
-        startTransition(async () => {
-          await resetTour();
-          router.push("/app");
-        });
-      }}
-      className="pressable hover-row w-full px-7 py-5 text-left"
-    >
-      <p className="section-title">{t("app.settings.replayTour.title")}</p>
-      <p className="mt-1 text-[13px] leading-relaxed text-ink-tertiary">
-        {pending ? t("app.settings.replayTour.pending") : t("app.settings.replayTour.body")}
-      </p>
-    </button>
+    <SettingsRow
+      label={t("app.settings.replayTour.title")}
+      hint={t("app.settings.replayTour.body")}
+      control={
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => {
+            startTransition(async () => {
+              await resetTour();
+              router.push("/app");
+            });
+          }}
+          className={ROW_GHOST}
+        >
+          {pending ? t("app.settings.replayTour.pending") : t("app.settings.replay.go")}
+        </button>
+      }
+    />
   );
 }

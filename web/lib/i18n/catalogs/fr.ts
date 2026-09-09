@@ -450,9 +450,8 @@ export const fr = {
       appHint: "Sa langue et son apparence.",
       account: "Ton compte",
       accountHint: "Abonnement, données, session.",
-    },
-    help: {
-      title: "Aide et rejouer les parcours",
+      help: "Aide",
+      helpHint: "Refaire une découverte, ou nous écrire.",
     },
   },
   nav: {

@@ -718,6 +718,12 @@ export const appDe = {
     displayNameLabel: "Dein Name",
     displayNamePlaceholder: "Wie man dich nennt",
     subjects: "Fächer",
+    subjectsEmpty: "Noch kein Fach gewählt.",
+    change: "Ändern",
+    done: "Fertig",
+    schoolHint: "Sie öffnet die Bibliothek deiner Schule.",
+    replay: { go: "Nochmal" },
+    inbox: { title: "Rückmeldungen", body: "Was andere geschickt haben." },
     school: "Schule",
     sheetLength: "Länge der Blätter",
     usernameLabel: "Dein @",
@@ -726,7 +732,6 @@ export const appDe = {
     schoolSr: "Deine Schule",
     schoolPlaceholder: "Tipp den Namen deiner Schule…",
     schoolTypeMore: "Noch ein oder zwei Buchstaben, dann siehst du die Schulen.",
-    schoolSearchHint: "Tipp, um deine Schule zu suchen.",
     export: {
       title: "Meine Daten herunterladen",
       body: "Eine Kopie deines Profils, deiner Kurse und deiner Karten, als JSON.",
@@ -762,6 +767,7 @@ export const appDe = {
   feedback: {
     title: "Rückmeldung geben",
     lead: "Ein Fehler, eine Idee…",
+    open: "Schreiben",
     messageLabel: "Deine Nachricht",
     pending: "Senden…",
     send: "Senden",
@@ -1105,6 +1111,13 @@ export const appDe = {
     styleNumbers: "Nummerierte Liste",
     bold: "Fett",
     italic: "Kursiv",
+    strike: "Durchgestrichen",
+    size: {
+      label: "Textgröße",
+      petit: "Klein",
+      normal: "Normal",
+      grand: "Groß",
+    },
     hl: {
       jaune: "Gelb",
       menthe: "Minze",
@@ -1117,6 +1130,20 @@ export const appDe = {
     saved: "Gespeichert",
     aria: "Deine Lernzettel, bearbeitbar",
   },
+  formula: {
+    title: "Die Formel",
+    lead: "Bau sie mit den Tasten, oder schreib sie, wenn du LaTeX kannst. Die Vorschau folgt.",
+    empty: "Noch nichts zu setzen.",
+    source: "Das LaTeX",
+    caption: "Bildunterschrift",
+    captionPlaceholder: "Was die Zeichen bedeuten",
+    apply: "Übernehmen",
+    remove: "Formel entfernen",
+    add: "Formel einfügen",
+    slots: "Es sind noch Kästchen offen.",
+    broken: "Das lässt sich nicht setzen. Prüf die Klammern.",
+  },
+
   generate: {
     timeout: "Das Schreiben hat zu lange gedauert. Versuch es erneut.",
     writing: "Micabo schreibt die Karten…",

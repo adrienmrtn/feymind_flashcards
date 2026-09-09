@@ -718,6 +718,12 @@ export const appFr = {
     displayNameLabel: "Ton nom",
     displayNamePlaceholder: "Comment on t'appelle",
     subjects: "Matières",
+    subjectsEmpty: "Aucune matière choisie.",
+    change: "Modifier",
+    done: "Terminé",
+    schoolHint: "Elle ouvre la bibliothèque de ton établissement.",
+    replay: { go: "Rejouer" },
+    inbox: { title: "Boîte de retours", body: "Ce que les autres ont envoyé." },
     school: "École",
     sheetLength: "Longueur des fiches",
     usernameLabel: "Ton @",
@@ -726,7 +732,6 @@ export const appFr = {
     schoolSr: "Ton école",
     schoolPlaceholder: "Tape le nom de ton école…",
     schoolTypeMore: "Encore une lettre ou deux pour voir les établissements.",
-    schoolSearchHint: "Tape pour chercher ton établissement.",
     export: {
       title: "Télécharger mes données",
       body: "Une copie de ton profil, tes cours et tes cartes, au format JSON.",
@@ -762,6 +767,7 @@ export const appFr = {
   feedback: {
     title: "Faire un retour",
     lead: "Un bug, une idée…",
+    open: "Écrire",
     messageLabel: "Ton message",
     pending: "Envoi…",
     send: "Envoyer",
@@ -1103,6 +1109,13 @@ export const appFr = {
     styleNumbers: "Liste numérotée",
     bold: "Gras",
     italic: "Italique",
+    strike: "Barré",
+    size: {
+      label: "Taille du texte",
+      petit: "Petit",
+      normal: "Normal",
+      grand: "Grand",
+    },
     hl: {
       jaune: "Jaune",
       menthe: "Menthe",
@@ -1115,6 +1128,20 @@ export const appFr = {
     saved: "Enregistré",
     aria: "Ta fiche, modifiable",
   },
+  formula: {
+    title: "La formule",
+    lead: "Compose-la aux boutons, ou écris-la si tu connais le LaTeX. L'aperçu suit.",
+    empty: "Rien à composer pour l'instant.",
+    source: "Le LaTeX",
+    caption: "Légende",
+    captionPlaceholder: "Ce que disent les symboles",
+    apply: "Appliquer",
+    remove: "Retirer la formule",
+    add: "Insérer une formule",
+    slots: "Il reste des cases à remplir.",
+    broken: "Cette écriture ne se compose pas. Vérifie les accolades.",
+  },
+
   generate: {
     timeout: "L'écriture a pris trop longtemps. Réessaie.",
     writing: "Micabo écrit les cartes…",

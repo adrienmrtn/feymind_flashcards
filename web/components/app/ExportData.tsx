@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { ROW_GHOST, SettingsRow } from "@/components/app/settings/Rows";
 import { exportAccountData } from "@/lib/actions/profile";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -38,24 +39,26 @@ export function ExportData() {
   }
 
   return (
-    <section className="saas-card px-7 py-7">
-      <p className="section-title">{t("app.settings.export.title")}</p>
-      <p className="mt-1.5 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-secondary">
-        {t("app.settings.export.body")}
-      </p>
-      <button
-        type="button"
-        onClick={download}
-        disabled={pending}
-        className="pressable mt-4 rounded-button bg-accent px-4 py-2.5 text-[14px] font-semibold text-on-ink disabled:opacity-40"
-      >
-        {pending ? t("app.settings.export.pending") : t("app.settings.export.download")}
-      </button>
-      {failure ? (
-        <p className="mt-3 text-[13px] text-negative" role="alert">
-          {failure}
-        </p>
-      ) : null}
-    </section>
+    <SettingsRow
+      label={t("app.settings.export.title")}
+      hint={
+        <>
+          {t("app.settings.export.body")}
+          {failure ? (
+            <>
+              <br />
+              <span className="text-negative" role="alert">
+                {failure}
+              </span>
+            </>
+          ) : null}
+        </>
+      }
+      control={
+        <button type="button" onClick={download} disabled={pending} className={ROW_GHOST}>
+          {pending ? t("app.settings.export.pending") : t("app.settings.export.download")}
+        </button>
+      }
+    />
   );
 }

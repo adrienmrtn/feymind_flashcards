@@ -1233,25 +1233,41 @@ video {
    d'éditeur ; sans ces règles, un titre créé à la volée aurait la taille du corps. */
 .sheet-doc {
   outline: none;
+  /* La taille de lecture, réglée par le lecteur et jamais enregistrée dans la fiche.
+     Toute l'échelle en dépend, corps comme titres : agrandir le seul corps rapprocherait
+     les titres du texte et effacerait le plan. */
+  --sheet-scale: 1;
+  font-size: calc(15px * var(--sheet-scale));
+  line-height: 1.6;
 }
 
 .sheet-doc > * + * {
-  margin-top: 11px;
+  margin-top: calc(11px * var(--sheet-scale));
 }
 
 .sheet-doc h1 {
-  font-size: 21px;
+  font-size: calc(21px * var(--sheet-scale));
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.2px;
-  margin-top: 36px;
+  margin-top: calc(36px * var(--sheet-scale));
 }
 
 .sheet-doc h2 {
-  font-size: 17px;
+  font-size: calc(17px * var(--sheet-scale));
   font-weight: 600;
   line-height: 1.3;
-  margin-top: 28px;
+  margin-top: calc(28px * var(--sheet-scale));
+}
+
+/* Barré : ce qu'on avait noté et qui s'est révélé faux. Il reste lisible - c'est même tout
+   son intérêt - donc le trait est fin et l'encre à peine reculée. */
+.sheet-doc s,
+.sheet-doc del,
+.sheet-doc strike {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  color: var(--color-ink-tertiary);
 }
 
 .sheet-doc > :first-child {
@@ -1272,7 +1288,7 @@ video {
 }
 
 .sheet-doc li {
-  margin-top: 3px;
+  margin-top: calc(3px * var(--sheet-scale));
 }
 
 .sheet-doc li::marker {
@@ -1431,11 +1447,63 @@ video {
   .paywall-card,
   .paywall-stagger,
   .paywall-veil,
+  .step-part {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+    translate: none;
+  }
+
+  /* La coque de téléphone garde son inclinaison de repos : c'est sa forme, pas un
+     mouvement. Elle était appliquée à tout le groupe ci-dessus, ce qui penchait de huit
+     degrés chaque élément de la page pour qui demande moins d'animations. */
   .phone-shell {
-    animation-duration: 200ms;
+    animation-duration: 1ms;
     translate: none;
     rotate: -8deg;
   }
+}
+
+/* **La transition d'un écran de parcours à l'autre.**
+
+   Chaque écran entrait d'un bloc, par le bas, tout en même temps : c'est correct et c'est
+   plat. Deux choses le rendent fluide sans rien coûter.
+
+   D'abord le **sens** : on avance vers la droite, on revient vers la gauche. Le mouvement
+   dit ce que le clic a fait, et c'est ce qui donne l'impression de traverser un parcours
+   plutôt que de sauter d'une page à une autre. La carte, la jauge et la langue ne bougent
+   pas - seul le contenu glisse dedans, donc le cadre reste le point fixe de l'écran.
+
+   Ensuite le **décalage** : le titre entre, puis le contenu, puis les boutons, à quarante
+   millisecondes d'écart. C'est trop court pour se compter et assez pour que la page se
+   compose sous les yeux au lieu d'apparaître d'un coup. */
+@keyframes micabo-step-forward {
+  from {
+    opacity: 0;
+    translate: 22px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes micabo-step-back {
+  from {
+    opacity: 0;
+    translate: -22px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.step-part {
+  animation: micabo-step-forward 320ms var(--ease-out-strong) both;
+}
+
+[data-step-dir="back"] .step-part {
+  animation-name: micabo-step-back;
 }
 
 /* Les nombres qui se lisent comme un résultat, et eux seuls. */

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { ROW_FIELD, SettingsRow } from "@/components/app/settings/Rows";
 import { deleteAccount } from "@/lib/actions/profile";
 import { useI18n } from "@/lib/i18n/client";
 import { forgetLocalAccount } from "@/lib/onboarding/persist";
@@ -41,10 +42,11 @@ export function DeleteAccount({ email }: { email: string }) {
   }
 
   return (
-    <section className="saas-card relative mt-4 px-7 py-7">
-      <div>
-        <p className="section-title">{t("app.settings.delete.title")}</p>
-        <p className="mt-1.5 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-secondary">
+    <SettingsRow
+      label={t("app.settings.delete.title")}
+      tone="danger"
+      hint={
+        <>
           {t("app.settings.delete.body")}
           {email ? (
             <>
@@ -52,58 +54,64 @@ export function DeleteAccount({ email }: { email: string }) {
               (<span className="text-ink">{email}</span>)
             </>
           ) : null}
-        </p>
-
-        {open ? (
-          <div className="mt-4">
-            <label htmlFor="delete-account-confirm" className="block text-[13px] text-ink-tertiary">
-              {t("app.settings.delete.confirmLabel")}
-            </label>
-            <input
-              id="delete-account-confirm"
-              value={typed}
-              onChange={(event) => setTyped(event.target.value)}
-              autoComplete="off"
-              className="mt-2 h-11 w-full max-w-[280px] rounded-button bg-surface-muted px-3 text-[15px] text-ink outline-none"
-            />
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                disabled={!ready || pending}
-                onClick={confirm}
-                className="pressable rounded-button bg-negative px-4 py-2.5 text-[14px] font-semibold text-white disabled:opacity-40"
-              >
-                {pending ? t("app.settings.delete.pending") : t("app.settings.delete.confirm")}
-              </button>
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() => {
-                  setOpen(false);
-                  setTyped("");
-                  setFailure(null);
-                }}
-                className="pressable rounded-button px-3 py-2.5 text-[14px] text-ink-secondary"
-              >
-                {t("app.common.cancel")}
-              </button>
-            </div>
-            {failure ? (
-              <p className="mt-3 text-[13px] text-negative" role="alert">
-                {failure}
-              </p>
-            ) : null}
-          </div>
-        ) : (
+        </>
+      }
+      control={
+        open ? null : (
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="pressable mt-4 text-[13.5px] font-medium text-negative"
+            className="pressable h-10 rounded-button bg-negative-soft px-4 text-[13.5px] font-semibold text-negative"
           >
             {t("app.settings.delete.open")}
           </button>
-        )}
-      </div>
-    </section>
+        )
+      }
+    >
+      {open ? (
+        <div className="rise rounded-group bg-negative-soft p-4">
+          <label
+            htmlFor="delete-account-confirm"
+            className="block text-[13px] text-ink-secondary"
+          >
+            {t("app.settings.delete.confirmLabel")}
+          </label>
+          <input
+            id="delete-account-confirm"
+            value={typed}
+            onChange={(event) => setTyped(event.target.value)}
+            autoComplete="off"
+            className={`${ROW_FIELD} mt-2 w-full max-w-[280px] bg-surface`}
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={!ready || pending}
+              onClick={confirm}
+              className="pressable h-10 rounded-button bg-negative px-4 text-[13.5px] font-semibold text-white disabled:opacity-40"
+            >
+              {pending ? t("app.settings.delete.pending") : t("app.settings.delete.confirm")}
+            </button>
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                setOpen(false);
+                setTyped("");
+                setFailure(null);
+              }}
+              className="pressable h-10 rounded-button px-3 text-[13.5px] text-ink-secondary"
+            >
+              {t("app.common.cancel")}
+            </button>
+          </div>
+          {failure ? (
+            <p className="mt-3 text-[13px] text-negative" role="alert">
+              {failure}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </SettingsRow>
   );
 }

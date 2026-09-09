@@ -718,6 +718,12 @@ export const appEs = {
     displayNameLabel: "Tu nombre",
     displayNamePlaceholder: "Cómo te llaman",
     subjects: "Asignaturas",
+    subjectsEmpty: "Ninguna materia elegida.",
+    change: "Cambiar",
+    done: "Listo",
+    schoolHint: "Abre la biblioteca de tu centro.",
+    replay: { go: "Repetir" },
+    inbox: { title: "Buzón de comentarios", body: "Lo que han enviado los demás." },
     school: "Escuela",
     sheetLength: "Longitud de las fichas",
     usernameLabel: "Tu @",
@@ -726,7 +732,6 @@ export const appEs = {
     schoolSr: "Tu escuela",
     schoolPlaceholder: "Escribe el nombre de tu escuela…",
     schoolTypeMore: "Una letra o dos más para ver los centros.",
-    schoolSearchHint: "Escribe para buscar tu centro.",
     export: {
       title: "Descargar mis datos",
       body: "Una copia de tu perfil, tus cursos y tus tarjetas, en JSON.",
@@ -762,6 +767,7 @@ export const appEs = {
   feedback: {
     title: "Dejar un comentario",
     lead: "Un fallo, una idea…",
+    open: "Escribir",
     messageLabel: "Tu mensaje",
     pending: "Envío…",
     send: "Enviar",
@@ -1105,6 +1111,13 @@ export const appEs = {
     styleNumbers: "Lista numerada",
     bold: "Negrita",
     italic: "Cursiva",
+    strike: "Tachado",
+    size: {
+      label: "Tamaño del texto",
+      petit: "Pequeño",
+      normal: "Normal",
+      grand: "Grande",
+    },
     hl: {
       jaune: "Amarillo",
       menthe: "Menta",
@@ -1117,6 +1130,20 @@ export const appEs = {
     saved: "Guardado",
     aria: "Tu ficha, editable",
   },
+  formula: {
+    title: "La fórmula",
+    lead: "Constrúyela con los botones, o escríbela si sabes LaTeX. La vista previa sigue.",
+    empty: "Nada que componer todavía.",
+    source: "El LaTeX",
+    caption: "Leyenda",
+    captionPlaceholder: "Qué dicen los símbolos",
+    apply: "Aplicar",
+    remove: "Quitar la fórmula",
+    add: "Insertar una fórmula",
+    slots: "Quedan casillas por rellenar.",
+    broken: "Esto no se compone. Revisa las llaves.",
+  },
+
   generate: {
     timeout: "La escritura ha tardado demasiado. Inténtalo de nuevo.",
     writing: "Micabo escribe las tarjetas…",

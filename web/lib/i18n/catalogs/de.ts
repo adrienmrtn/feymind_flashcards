@@ -449,9 +449,8 @@ export const de: Catalog = {
       appHint: "Sprache und Aussehen.",
       account: "Dein Konto",
       accountHint: "Abo, Daten, Sitzung.",
-    },
-    help: {
-      title: "Hilfe und Touren erneut ansehen",
+      help: "Hilfe",
+      helpHint: "Eine Tour erneut ansehen oder uns schreiben.",
     },
   },
   nav: {

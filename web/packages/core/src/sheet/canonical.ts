@@ -298,6 +298,7 @@ export function stripInlineMarkup(text: string): string {
     .replace(new RegExp(`==(?:${SHEET_HIGHLIGHTS.join("|")})\\|`, "gi"), "")
     .replace(/\*\*/g, "")
     .replace(/==/g, "")
+    .replace(/~~/g, "")
     .replace(/\*/g, "")
     .replace(/`/g, "")
     .replace(/\$/g, "")

@@ -68,6 +68,7 @@ function inlineToHtml(text: string): string {
       if (span.math) return `<span data-math="${escapeAttribute(span.text)}">${escapeText(span.text)}</span>`;
       let out = escapeText(span.text);
       if (span.highlight) out = `<mark data-hl="${span.highlight}">${out}</mark>`;
+      if (span.strike) out = `<s>${out}</s>`;
       if (span.italic) out = `<em>${out}</em>`;
       if (span.bold) out = `<strong>${out}</strong>`;
       return out;
@@ -144,13 +145,14 @@ function elementToBlocks(node: NodeLike): SheetBlock[] {
 /** Le contenu d'un élément, ramené au texte balisé de la fiche. */
 export function readInline(node: NodeLike): string {
   const spans: MarkupSpan[] = [];
-  collect(node, { bold: false, italic: false, highlight: null }, spans);
+  collect(node, { bold: false, italic: false, strike: false, highlight: null }, spans);
   return toInlineMarkup(spans).trim();
 }
 
 interface Marks {
   bold: boolean;
   italic: boolean;
+  strike: boolean;
   highlight: SheetHighlight | null;
 }
 
@@ -165,6 +167,7 @@ function collect(node: NodeLike, marks: Marks, out: MarkupSpan[]): void {
         text,
         bold: marks.bold,
         italic: marks.italic,
+        strike: marks.strike,
         highlighted: marks.highlight !== null,
         highlight: marks.highlight,
         math: false,
@@ -183,6 +186,7 @@ function collect(node: NodeLike, marks: Marks, out: MarkupSpan[]): void {
         text: math,
         bold: marks.bold,
         italic: marks.italic,
+        strike: marks.strike,
         highlighted: marks.highlight !== null,
         highlight: marks.highlight,
         math: true,
@@ -191,13 +195,23 @@ function collect(node: NodeLike, marks: Marks, out: MarkupSpan[]): void {
     }
 
     if (name === "br") {
-      out.push({ text: " ", bold: false, italic: false, highlighted: false, highlight: null, math: false });
+      out.push({
+        text: " ",
+        bold: false,
+        italic: false,
+        strike: false,
+        highlighted: false,
+        highlight: null,
+        math: false,
+      });
       continue;
     }
 
     collect(child, {
       bold: marks.bold || name === "strong" || name === "b",
       italic: marks.italic || name === "em" || name === "i",
+      // `del` et `strike` viennent d'un collage : un document externe barre comme il veut.
+      strike: marks.strike || name === "s" || name === "del" || name === "strike",
       highlight: name === "mark" ? highlightOf(child.getAttribute?.("data-hl")) : marks.highlight,
     }, out);
   }

@@ -2,6 +2,9 @@
 
 import { type SheetBlock } from "@micabo/core";
 
+import { readingStyle } from "@/lib/sheet/reading-size";
+import { useReadingSize } from "@/lib/sheet/use-reading-size";
+
 import { InlineMarkup } from "./InlineMarkup";
 import { MathBlock } from "./Math";
 
@@ -19,8 +22,13 @@ import { MathBlock } from "./Math";
  * maintenant dans le texte.
  */
 export function SheetBlocks({ blocks }: { blocks: readonly SheetBlock[] }) {
+  // La taille de lecture est celle de l'appareil, pas celle de la fiche : une fiche
+  // verrouillée, un cours partagé et le document qu'on écrit doivent grossir ensemble,
+  // sinon la couture entre les deux moitiés d'une même page se voit.
+  const [size] = useReadingSize();
+
   return (
-    <div className="sheet-doc text-ink-reading">
+    <div className="sheet-doc text-ink-reading" style={readingStyle(size)}>
       {blocks.map((block, index) => (
         <Block key={index} block={block} />
       ))}

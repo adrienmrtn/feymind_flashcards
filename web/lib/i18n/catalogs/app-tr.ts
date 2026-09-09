@@ -718,6 +718,12 @@ export const appTr = {
     displayNameLabel: "Adın",
     displayNamePlaceholder: "Sana nasıl denir",
     subjects: "Dersler",
+    subjectsEmpty: "Henüz ders seçilmedi.",
+    change: "Değiştir",
+    done: "Bitti",
+    schoolHint: "Okulunun kitaplığını açar.",
+    replay: { go: "Yeniden" },
+    inbox: { title: "Geri bildirim kutusu", body: "Başkalarının gönderdikleri." },
     school: "Okul",
     sheetLength: "Özetlerin uzunluğu",
     usernameLabel: "Senin @",
@@ -726,7 +732,6 @@ export const appTr = {
     schoolSr: "Okulun",
     schoolPlaceholder: "Okulunun adını yaz…",
     schoolTypeMore: "Okulları görmek için bir iki harf daha.",
-    schoolSearchHint: "Okulunu aramak için yaz.",
     export: {
       title: "Verilerimi indir",
       body: "Profilinin, derslerinin ve kartlarının bir kopyası, JSON olarak.",
@@ -762,6 +767,7 @@ export const appTr = {
   feedback: {
     title: "Geri bildirim bırak",
     lead: "Bir hata, bir fikir…",
+    open: "Yaz",
     messageLabel: "Mesajın",
     pending: "Gönderiliyor…",
     send: "Gönder",
@@ -1103,6 +1109,13 @@ export const appTr = {
     styleNumbers: "Numaralı liste",
     bold: "Kalın",
     italic: "İtalik",
+    strike: "Üstü çizili",
+    size: {
+      label: "Metin boyutu",
+      petit: "Küçük",
+      normal: "Normal",
+      grand: "Büyük",
+    },
     hl: {
       jaune: "Sarı",
       menthe: "Nane",
@@ -1115,6 +1128,20 @@ export const appTr = {
     saved: "Kaydedildi",
     aria: "Fişin, düzenlenebilir",
   },
+  formula: {
+    title: "Formül",
+    lead: "Düğmelerle kur ya da LaTeX biliyorsan yaz. Önizleme takip eder.",
+    empty: "Henüz dizilecek bir şey yok.",
+    source: "LaTeX",
+    caption: "Açıklama",
+    captionPlaceholder: "Simgeler ne diyor",
+    apply: "Uygula",
+    remove: "Formülü kaldır",
+    add: "Formül ekle",
+    slots: "Doldurulacak kutular var.",
+    broken: "Bu dizilmiyor. Süslü parantezleri kontrol et.",
+  },
+
   generate: {
     timeout: "Yazmak çok uzun sürdü. Yeniden dene.",
     writing: "Micabo kartları yazıyor…",
