@@ -14,12 +14,20 @@ export function Reveal({
   children,
   className = "",
   delay = 0,
+  soft = false,
   as: Tag = "div",
 }: {
   children: React.ReactNode;
   className?: string;
   /** Le cran de la cascade, pas une durée. */
   delay?: number;
+  /**
+   * L'entrée longue, pour ce qui occupe la moitié de l'écran.
+   *
+   * Une grande carte qui monte à la même vitesse qu'un titre se voit arriver ; elle part donc
+   * de plus loin et se pose plus lentement, et ses deux moitiés entrent l'une après l'autre.
+   */
+  soft?: boolean;
   as?: "div" | "section" | "li" | "figure";
 }) {
   const node = useRef<HTMLElement>(null);
@@ -38,18 +46,21 @@ export function Reveal({
         }
       },
       // Le déclenchement se fait un peu avant le bord : une section qui commence son entrée
-      // pile au moment où elle touche l'écran se lit comme un retard.
-      { rootMargin: "0px 0px -12% 0px", threshold: 0.08 },
+      // pile au moment où elle touche l'écran se lit comme un retard. Une entrée douce dure
+      // plus longtemps, donc elle part plus tôt, sans quoi elle finirait au milieu de l'écran.
+      soft
+        ? { rootMargin: "0px 0px -4% 0px", threshold: 0.01 }
+        : { rootMargin: "0px 0px -12% 0px", threshold: 0.08 },
     );
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [soft]);
 
   return (
     <Tag
       ref={node as never}
-      className={`reveal stagger ${className}`}
+      className={`reveal stagger ${soft ? "reveal-soft" : ""} ${className}`}
       data-shown={shown ? "true" : undefined}
       style={{ ["--index" as string]: delay }}
     >

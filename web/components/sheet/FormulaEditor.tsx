@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/client";
 import { typesetMath } from "@/lib/math/typeset";
 
-import { MathBlock } from "./Math";
+import { MathBlock, MathInline } from "./Math";
 
 /**
  * **Corriger une formule sans savoir écrire du LaTeX.**
@@ -76,6 +76,16 @@ const SYMBOLS: Insert[] = [
 export interface FormulaDraft {
   latex: string;
   caption: string;
+  /**
+   * Dans le texte, ou posée seule.
+   *
+   * Une formule n'est pas forcément un bloc, et c'était le défaut du premier jet : tout ce
+   * qu'on écrivait descendait en bas de page, encadré, alors que la moitié des formules d'un
+   * cours vivent **dans** la phrase - « on note $v = d/t$ la vitesse ». Posée seule, elle
+   * passe en mode display : une somme met alors ses bornes au-dessus et en dessous, une
+   * fraction prend sa hauteur. C'est la seule différence, et elle se choisit.
+   */
+  inline: boolean;
 }
 
 export function FormulaEditor({
@@ -93,6 +103,7 @@ export function FormulaEditor({
   const { t } = useI18n();
   const [latex, setLatex] = useState(initial.latex);
   const [caption, setCaption] = useState(initial.caption);
+  const [inline, setInline] = useState(initial.inline);
   const field = useRef<HTMLTextAreaElement>(null);
 
   const filled = !latex.includes(SLOT);
@@ -155,10 +166,38 @@ export function FormulaEditor({
 
         <div className="mt-4 flex min-h-[86px] items-center justify-center rounded-group bg-surface-muted px-4 py-5">
           {trimmed.length > 0 ? (
-            <MathBlock latex={trimmed.replaceAll(SLOT, "\\square")} />
+            // L'aperçu compose dans le mode où la formule ira : une somme en ligne et une
+            // somme posée seule n'ont pas la même allure, et c'est justement ce qu'on choisit.
+            inline ? (
+              <p className="text-[15px] text-ink-reading">
+                <MathInline latex={trimmed.replaceAll(SLOT, "\\square")} />
+              </p>
+            ) : (
+              <MathBlock latex={trimmed.replaceAll(SLOT, "\\square")} />
+            )
           ) : (
             <p className="text-[13.5px] text-ink-tertiary">{t("app.formula.empty")}</p>
           )}
+        </div>
+
+        <div
+          role="group"
+          aria-label={t("app.formula.placement")}
+          className="mt-3 grid grid-cols-2 gap-1 rounded-button bg-surface-muted p-1"
+        >
+          {[true, false].map((value) => (
+            <button
+              key={String(value)}
+              type="button"
+              onClick={() => setInline(value)}
+              aria-pressed={value === inline}
+              className={`pressable h-9 rounded-[calc(var(--radius-button)-3px)] text-[13.5px] font-medium transition-colors duration-hover ${
+                value === inline ? "bg-surface text-ink shadow-paper" : "text-ink-secondary"
+              }`}
+            >
+              {value ? t("app.formula.inline") : t("app.formula.block")}
+            </button>
+          ))}
         </div>
 
         <div className="mt-4 flex flex-wrap gap-1.5">
@@ -191,22 +230,30 @@ export function FormulaEditor({
           <p className="mt-2 text-[13px] text-caution">{t("app.formula.broken")}</p>
         ) : null}
 
-        <label htmlFor="formula-caption" className="mt-4 block text-[13px] text-ink-tertiary">
-          {t("app.formula.caption")}
-        </label>
-        <input
-          id="formula-caption"
-          value={caption}
-          onChange={(event) => setCaption(event.target.value)}
-          placeholder={t("app.formula.captionPlaceholder")}
-          className="mt-2 h-10 w-full rounded-button bg-surface-muted px-3 text-[14px] text-ink outline-none placeholder:text-ink-tertiary"
-        />
+        {/* Une légende sous une formule prise dans une phrase n'aurait nulle part où se
+            poser : c'est la phrase elle-même qui dit ce que les symboles veulent dire. */}
+        {inline ? null : (
+          <>
+            <label htmlFor="formula-caption" className="mt-4 block text-[13px] text-ink-tertiary">
+              {t("app.formula.caption")}
+            </label>
+            <input
+              id="formula-caption"
+              value={caption}
+              onChange={(event) => setCaption(event.target.value)}
+              placeholder={t("app.formula.captionPlaceholder")}
+              className="mt-2 h-10 w-full rounded-button bg-surface-muted px-3 text-[14px] text-ink outline-none placeholder:text-ink-tertiary"
+            />
+          </>
+        )}
 
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <button
             type="button"
             disabled={!ready}
-            onClick={() => onSave({ latex: trimmed, caption: caption.trim() })}
+            onClick={() =>
+              onSave({ latex: trimmed, caption: inline ? "" : caption.trim(), inline })
+            }
             className="pressable h-10 rounded-button bg-accent px-4 text-[13.5px] font-semibold text-on-ink disabled:opacity-40"
           >
             {t("app.formula.apply")}

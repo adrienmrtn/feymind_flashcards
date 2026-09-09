@@ -23,11 +23,60 @@ import { createClient } from "@/lib/supabase/client";
 /** Onze secondes au départ, un tiers de moins depuis : l'attente se sentait. */
 const DURATION_MS = 7_700;
 
+/**
+ * **La courbe d'avancement, volontairement irrégulière.**
+ *
+ * Une barre qui avance d'un point toutes les soixante-dix millisecondes ne ressemble à rien de
+ * ce qu'un ordinateur fait vraiment : un vrai travail part vite sur ce qui est déjà en
+ * mémoire, s'arrête sur ce qui demande un calcul, repart d'un bond quand le calcul tombe. Une
+ * progression parfaitement linéaire se lit donc pour ce qu'elle est - une minuterie - et tout
+ * ce que l'écran raconte tombe avec elle.
+ *
+ * D'où ces points de passage : le temps écoulé à gauche, l'avancement à droite, et une droite
+ * entre chaque paire. Trois paliers, trois bonds, et une fin qui traîne un peu, comme partout.
+ * Rien n'est tiré au hasard : deux étudiants côte à côte voient la même chose, et une capture
+ * d'écran de test se compare à la précédente.
+ */
+const CURVE: readonly { at: number; value: number }[] = [
+  { at: 0, value: 0 },
+  { at: 0.07, value: 0.16 },
+  { at: 0.16, value: 0.19 },
+  { at: 0.21, value: 0.2 },
+  { at: 0.34, value: 0.44 },
+  { at: 0.45, value: 0.47 },
+  { at: 0.52, value: 0.61 },
+  { at: 0.58, value: 0.63 },
+  { at: 0.66, value: 0.79 },
+  { at: 0.83, value: 0.82 },
+  { at: 0.92, value: 0.96 },
+  { at: 1, value: 1 },
+];
+
+function curveAt(fraction: number): number {
+  const time = Math.min(1, Math.max(0, fraction));
+  for (let index = 1; index < CURVE.length; index += 1) {
+    const from = CURVE[index - 1]!;
+    const to = CURVE[index]!;
+    if (time > to.at) continue;
+    const span = to.at - from.at;
+    const ratio = span > 0 ? (time - from.at) / span : 1;
+    return from.value + (to.value - from.value) * ratio;
+  }
+  return 1;
+}
+
+/**
+ * Les quatre phases, et l'avancement auquel chacune est finie.
+ *
+ * Elles ne durent pas le même temps, et c'est le propos : quatre quarts égaux redisent la
+ * minuterie que la courbe vient d'effacer. Chaque phase se coche sur un palier, juste avant le
+ * bond suivant - c'est là qu'un vrai travail annonce ce qu'il vient de terminer.
+ */
 const PHASES = [
-  { headline: "onboarding.parcoursWorking1", step: "onboarding.parcoursStep1" },
-  { headline: "onboarding.parcoursWorking2", step: "onboarding.parcoursStep2" },
-  { headline: "onboarding.parcoursWorking3", step: "onboarding.parcoursStep3" },
-  { headline: "onboarding.parcoursWorking4", step: "onboarding.parcoursStep4" },
+  { headline: "onboarding.parcoursWorking1", step: "onboarding.parcoursStep1", until: 0.19 },
+  { headline: "onboarding.parcoursWorking2", step: "onboarding.parcoursStep2", until: 0.47 },
+  { headline: "onboarding.parcoursWorking3", step: "onboarding.parcoursStep3", until: 0.63 },
+  { headline: "onboarding.parcoursWorking4", step: "onboarding.parcoursStep4", until: 0.82 },
 ] as const;
 
 export default function PersonalizingStep() {
@@ -55,8 +104,10 @@ export default function PersonalizingStep() {
     return () => window.clearInterval(id);
   }, []);
 
-  const progress = elapsed / DURATION_MS;
-  const completed = Math.min(PHASES.length, Math.floor(progress * PHASES.length + 0.001));
+  const progress = curveAt(elapsed / DURATION_MS);
+  // Une phase est finie quand la courbe a dépassé son palier, et non quand un quart du temps
+  // s'est écoulé : les coches tombent donc de façon inégale, elles aussi.
+  const completed = PHASES.filter((phase) => progress >= phase.until).length;
   const isDone = progress >= 1;
   const current = PHASES[Math.min(completed, PHASES.length - 1)] ?? PHASES[0];
 
@@ -106,7 +157,7 @@ export default function PersonalizingStep() {
       {summary ? <p className="mb-3 text-center text-[12.5px] text-ink-tertiary">{summary}</p> : null}
 
       <div className="flex flex-col items-center justify-center">
-        <div className="relative flex h-[112px] w-[112px] items-center justify-center">
+        <div className="relative flex h-[96px] w-[96px] items-center justify-center">
           <svg
             viewBox="0 0 120 120"
             className="absolute inset-0 h-full w-full -rotate-90"
@@ -136,22 +187,22 @@ export default function PersonalizingStep() {
           </svg>
           {/* Le mot sort de l'anneau : à 112 px, « Micabo travaille » venait mordre le
               tracé, et un texte posé sur un trait qui tourne se lit deux fois moins vite. */}
-          <p className="numeral relative text-[34px] font-bold leading-none tracking-display text-ink">
+          <p className="numeral relative text-[30px] font-bold leading-none tracking-display text-ink">
             {Math.round(progress * 100)}
-            <span className="text-[17px]"> %</span>
+            <span className="text-[15px]"> %</span>
           </p>
         </div>
-        <p className="mt-2.5 text-[12px] font-medium text-ink-secondary">
+        <p className="mt-2 text-[12px] font-medium text-ink-secondary">
           {isDone ? t("onboarding.parcoursFinished") : t("onboarding.parcoursBusy")}
         </p>
       </div>
 
-      <div className="paper mt-5 shrink-0 divide-y divide-hairline overflow-hidden rounded-group bg-surface">
+      <div className="paper mt-4 shrink-0 divide-y divide-hairline overflow-hidden rounded-group bg-surface">
         {PHASES.map((phase, index) => {
           const done = index < completed || isDone;
           const active = !isDone && index === completed;
           return (
-            <div key={phase.step} className="flex items-center gap-3 px-4 py-2.5">
+            <div key={phase.step} className="flex items-center gap-3 px-4 py-2">
               <span
                 aria-hidden
                 className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${

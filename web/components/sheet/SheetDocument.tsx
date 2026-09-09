@@ -14,7 +14,7 @@ import { useReadingSize } from "@/lib/sheet/use-reading-size";
 
 import { FormulaEditor, type FormulaDraft } from "./FormulaEditor";
 import { currentBlock, toggleHighlight, toggleMark, type Mark } from "./marks";
-import { MathBlock } from "./Math";
+import { MathBlock, MathInline } from "./Math";
 
 /**
  * La fiche, **modifiable là où elle se lit.**
@@ -50,6 +50,14 @@ const SIZE_LABEL: Record<ReadingSize, string> = {
 };
 
 type Style = "h1" | "h2" | "p" | "ul" | "ol";
+
+interface FormulaTarget {
+  /** La formule qu'on rouvre, ou `null` pour une nouvelle. */
+  node: HTMLElement | null;
+  /** Le point d'insertion, figé au clic. */
+  range: Range | null;
+  draft: FormulaDraft;
+}
 
 export function SheetDocument({
   courseId,
@@ -88,15 +96,18 @@ export function SheetDocument({
   const [failure, setFailure] = useState<string | null>(null);
   const [size, setSize] = useReadingSize();
   /**
-   * La formule ouverte dans son éditeur.
+   * La formule ouverte dans son éditeur, et **où elle va**.
    *
-   * `node` est le `div` du document : c'est lui qui porte le LaTeX, et c'est lui qu'on
-   * réécrit à l'application. `null` quand la formule vient d'être posée et n'existe pas
-   * encore dans le document.
+   * `node` est la formule déjà posée qu'on rouvre - le `div` d'un bloc, ou le `span` d'une
+   * formule prise dans une phrase. Quand on en crée une, il n'y a pas encore de nœud : ce qui
+   * compte alors est `range`, la sélection **telle qu'elle était au moment du clic**.
+   *
+   * C'est tout le bug qu'on répare ici. L'ancre était relue au moment d'appliquer, alors que
+   * le curseur était depuis longtemps parti dans le champ de l'éditeur : on ne trouvait plus
+   * de bloc courant, et la formule tombait en fin de document. Une formule doit se poser là
+   * où on la demande.
    */
-  const [editing, setEditing] = useState<{ node: HTMLElement | null; draft: FormulaDraft } | null>(
-    null,
-  );
+  const [editing, setEditing] = useState<FormulaTarget | null>(null);
   /** Change quand une formule est posée, corrigée ou retirée : les portails se refont. */
   const [formulaKey, setFormulaKey] = useState(0);
   const [pending, startTransition] = useTransition();
@@ -119,6 +130,31 @@ export function SheetDocument({
     document.addEventListener("selectionchange", readStyle);
     return () => document.removeEventListener("selectionchange", readStyle);
   }, [readStyle]);
+
+  /**
+   * Le clic qui rouvre une formule, posé **à la main** sur le document.
+   *
+   * Un `onClick` de React ne suffit pas ici, et c'est ce qui rendait les formules déjà
+   * écrites impossibles à corriger. Ce qu'on voit d'une formule est rendu dans un portail ;
+   * or un évènement né dans un portail remonte l'arbre **React** - où le portail est un
+   * frère du document - et non l'arbre du DOM. Le `div` de la fiche ne le voyait donc jamais.
+   * Un écouteur natif, lui, suit le DOM : le portail est bien dans le document, et le clic
+   * arrive.
+   */
+  useEffect(() => {
+    const root = editor.current;
+    if (!root || readOnly) return;
+
+    function reopen(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      const formula = target?.closest?.("[data-formula],[data-math]");
+      if (formula instanceof HTMLElement) openFormula(formula);
+    }
+
+    root.addEventListener("click", reopen);
+    return () => root.removeEventListener("click", reopen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readOnly]);
 
   function touched() {
     setDirty(true);
@@ -177,36 +213,86 @@ export function SheetDocument({
     touched();
   }
 
-  /** Ouvre l'éditeur sur la formule cliquée. */
+  /**
+   * Ouvre l'éditeur sur une formule déjà écrite.
+   *
+   * Les deux formes s'y rouvrent : le bloc posé seul (`data-formula`) et la formule prise
+   * dans une phrase (`data-math`). C'est ce qui manquait : une écriture mathématique déjà
+   * là ne se corrigeait pas, il fallait la supprimer et la refaire.
+   */
   function openFormula(node: HTMLElement) {
     if (readOnly) return;
+    const isInline = node.dataset.math !== undefined;
     setEditing({
       node,
-      draft: { latex: node.dataset.latex ?? "", caption: node.dataset.caption ?? "" },
+      range: null,
+      draft: {
+        latex: (isInline ? node.dataset.math : node.dataset.latex) ?? "",
+        caption: node.dataset.caption ?? "",
+        inline: isInline,
+      },
     });
   }
 
-  /** Pose une formule vide après le bloc courant, et l'ouvre aussitôt. */
+  /**
+   * Une nouvelle formule, posée là où est le curseur.
+   *
+   * La sélection est **clonée maintenant** : le clic sur le bouton la garde (la barre
+   * annule son `mousedown`), mais l'éditeur qui s'ouvre ensuite prend le focus et la
+   * déplace. Ce clone est le seul souvenir fiable de l'endroit visé.
+   *
+   * Le défaut se choisit tout seul : le curseur est dans une phrase, donc la formule y
+   * entre ; il n'y a pas de curseur, donc elle se pose seule à la fin.
+   */
   function addFormula() {
     if (readOnly) return;
-    setEditing({ node: null, draft: { latex: "", caption: "" } });
+    const root = editor.current;
+    const selection = window.getSelection();
+    const live =
+      selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    const inside = live && root?.contains(live.commonAncestorContainer) ? live.cloneRange() : null;
+
+    setEditing({
+      node: null,
+      range: inside,
+      draft: { latex: "", caption: "", inline: inside !== null },
+    });
   }
 
+  /**
+   * Écrit la formule : celle qu'on corrige, ou celle qu'on pose.
+   *
+   * Poser une formule en ligne, c'est l'écrire **dans la phrase**, à la place de la sélection.
+   * Poser un bloc, c'est l'écrire après le paragraphe où était le curseur. Dans les deux cas
+   * on part de `editing.range`, capturé à l'ouverture ; la fin du document n'est plus qu'un
+   * dernier recours, quand rien ne disait où aller.
+   *
+   * Changer d'avis entre les deux formes remplace le nœud plutôt que de le réécrire : ce ne
+   * sont pas les mêmes balises, et une formule en ligne dans un `div` ne se lirait pas.
+   */
   function applyFormula(draft: FormulaDraft) {
     const root = editor.current;
-    if (!root || !editing) return;
+    if (!root || readOnly || !editing) return;
 
-    let node = editing.node;
-    if (!node) {
-      node = document.createElement("div");
-      node.setAttribute("data-formula", "");
-      node.setAttribute("contenteditable", "false");
-      const anchor = currentBlock(root);
-      if (anchor && anchor.parentElement === root) anchor.after(node);
-      else root.appendChild(node);
+    const previous = editing.node;
+    const sameShape = previous !== null && (previous.dataset.math !== undefined) === draft.inline;
+    const node = sameShape ? previous! : createFormulaNode(draft.inline);
+
+    if (draft.inline) {
+      node.dataset.math = draft.latex;
+      node.removeAttribute("data-latex");
+      node.removeAttribute("data-caption");
+    } else {
+      node.dataset.latex = draft.latex;
+      node.dataset.caption = draft.caption;
+      node.removeAttribute("data-math");
     }
-    node.dataset.latex = draft.latex;
-    node.dataset.caption = draft.caption;
+
+    if (!sameShape) {
+      if (previous) previous.replaceWith(node);
+      else if (draft.inline) insertInline(root, node, editing.range);
+      else insertBlock(root, node, editing.range);
+    }
 
     setEditing(null);
     touched();
@@ -372,10 +458,6 @@ export function SheetDocument({
         ref={editor}
         className="sheet-doc text-ink-reading"
         style={readingStyle(size)}
-        onClick={(event) => {
-          const formula = (event.target as HTMLElement).closest?.("[data-formula]");
-          if (formula instanceof HTMLElement) openFormula(formula);
-        }}
         contentEditable={!readOnly}
         suppressContentEditableWarning
         spellCheck={false}
@@ -430,10 +512,13 @@ function ToolButton({
  * Les formules, composées **dans** le document.
  *
  * Le document est monté à la main et React n'y touche plus ; une formule doit pourtant être
- * rendue par KaTeX, qui est un composant. On les porte donc dans des portails, un par bloc
- * `data-formula`, ce qui laisse le document maître de sa structure et React maître du rendu
- * mathématique. Le LaTeX vit dans l'attribut : c'est lui qui sera enregistré, et il survit à
- * tout ce que l'étudiant peut faire autour.
+ * rendue par KaTeX, qui est un composant. On les porte donc dans des portails, un par formule,
+ * ce qui laisse le document maître de sa structure et React maître du rendu mathématique. Le
+ * LaTeX vit dans l'attribut : c'est lui qui sera enregistré, et il survit à tout ce que
+ * l'étudiant peut faire autour.
+ *
+ * Deux formes cohabitent : le bloc posé seul, encadré et légendé, et la formule prise dans
+ * une phrase, qui doit tenir sur la ligne du texte sans la faire respirer autrement.
  */
 function Formulas({
   root,
@@ -442,17 +527,23 @@ function Formulas({
   root: React.RefObject<HTMLDivElement | null>;
   blocks: SheetBlock[];
 }) {
-  const [nodes, setNodes] = useState<{ node: HTMLElement; latex: string; caption?: string }[]>([]);
+  const [nodes, setNodes] = useState<
+    { node: HTMLElement; latex: string; caption?: string; inline: boolean }[]
+  >([]);
 
   useEffect(() => {
     if (!root.current) return;
-    const found = Array.from(root.current.querySelectorAll<HTMLElement>("[data-formula]")).map(
-      (node) => ({
+    const found = Array.from(
+      root.current.querySelectorAll<HTMLElement>("[data-formula],[data-math]"),
+    ).map((node) => {
+      const inline = node.dataset.math !== undefined;
+      return {
         node,
-        latex: node.dataset.latex ?? "",
-        caption: node.dataset.caption || undefined,
-      }),
-    );
+        inline,
+        latex: (inline ? node.dataset.math : node.dataset.latex) ?? "",
+        caption: inline ? undefined : node.dataset.caption || undefined,
+      };
+    });
     setNodes(found);
   }, [root, blocks]);
 
@@ -469,10 +560,12 @@ function FormulaPortal({
   node,
   latex,
   caption,
+  inline,
 }: {
   node: HTMLElement;
   latex: string;
   caption?: string;
+  inline: boolean;
 }) {
   const [ready, setReady] = useState(false);
 
@@ -483,6 +576,15 @@ function FormulaPortal({
 
   if (!ready) return null;
 
+  if (inline) {
+    return createPortal(
+      <span className="cursor-pointer rounded-[6px] px-[3px] transition-colors duration-hover hover:bg-surface-muted">
+        <MathInline latex={latex} />
+      </span>,
+      node,
+    );
+  }
+
   return createPortal(
     <div className="rounded-group bg-surface-muted px-5 py-4">
       <MathBlock latex={latex} />
@@ -490,6 +592,70 @@ function FormulaPortal({
     </div>,
     node,
   );
+}
+
+/** L'enveloppe d'une formule : un `span` dans la phrase, un `div` posé seul. */
+function createFormulaNode(inline: boolean): HTMLElement {
+  const node = document.createElement(inline ? "span" : "div");
+  if (!inline) node.setAttribute("data-formula", "");
+  // Une formule est composée : on la corrige par son LaTeX, pas en tapant au milieu des
+  // symboles rendus.
+  node.setAttribute("contenteditable", "false");
+  return node;
+}
+
+/**
+ * Glisse une formule dans la phrase, à la place de la sélection.
+ *
+ * L'espace qui suit n'est pas un détail : sans lui, une formule posée en fin de paragraphe
+ * ferme le paragraphe sur un élément non modifiable, et le curseur n'a plus où se poser pour
+ * écrire la suite. Il est retiré à l'enregistrement, qui coupe les bords.
+ */
+function insertInline(root: HTMLElement, node: HTMLElement, range: Range | null): void {
+  if (!range || !root.contains(range.commonAncestorContainer)) {
+    appendToLastBlock(root, node);
+  } else {
+    // Le `<br>` d'un bloc vide n'a plus lieu d'être une fois qu'il porte quelque chose.
+    const host = blockOf(root, range.startContainer);
+    range.deleteContents();
+    range.insertNode(node);
+    if (host && host.childNodes.length > 1) host.querySelector(":scope > br")?.remove();
+  }
+
+  const tail = document.createTextNode("\u00a0");
+  node.after(tail);
+  const after = document.createRange();
+  after.setStart(tail, tail.length);
+  after.collapse(true);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(after);
+}
+
+/** Pose une formule seule, juste après le bloc où était le curseur. */
+function insertBlock(root: HTMLElement, node: HTMLElement, range: Range | null): void {
+  const anchor = range && root.contains(range.commonAncestorContainer)
+    ? blockOf(root, range.startContainer)
+    : null;
+  if (anchor) anchor.after(node);
+  else root.appendChild(node);
+}
+
+/** Le bloc de premier niveau qui contient ce nœud. */
+function blockOf(root: HTMLElement, node: Node): HTMLElement | null {
+  let cursor: Node | null = node;
+  while (cursor && cursor.parentNode !== root) cursor = cursor.parentNode;
+  return cursor instanceof HTMLElement ? cursor : null;
+}
+
+/** Le dernier recours : la formule rejoint la fin du dernier paragraphe, ou un nouveau. */
+function appendToLastBlock(root: HTMLElement, node: HTMLElement): void {
+  const last = root.lastElementChild;
+  const host = last instanceof HTMLElement && last.dataset.formula === undefined
+    ? last
+    : root.appendChild(document.createElement("p"));
+  host.querySelector(":scope > br")?.remove();
+  host.appendChild(node);
 }
 
 function placeCaretAtEnd(node: HTMLElement): void {

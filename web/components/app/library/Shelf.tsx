@@ -429,11 +429,19 @@ function FolderTile({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(node.name);
 
+  // Toute la tuile ouvre le dossier. Viser le nom pour entrer dans un dossier est un geste
+  // que personne n'a : on clique sur le dossier, pas sur son étiquette.
   return (
     <div
       draggable
       {...rest}
-      className="drop-target hover-tile group relative flex flex-col gap-4 rounded-group border border-border bg-card p-5 transition-[border-color] duration-hover"
+      onClick={(event) => {
+        // Les commandes posées sur la tuile - renommer, supprimer, le champ de nom -
+        // gardent leur clic ; tout le reste de la surface ouvre le dossier.
+        if ((event.target as HTMLElement).closest("button,input")) return;
+        onOpen();
+      }}
+      className="drop-target hover-tile group relative flex cursor-pointer flex-col gap-4 rounded-group border border-border bg-card p-5 transition-[border-color] duration-hover"
     >
       <span
         aria-hidden
