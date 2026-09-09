@@ -55,23 +55,27 @@ final class AuthController {
     /// À appeler au lancement. Relit la session du trousseau et la rafraîchit si son jeton a
     /// expiré.
     func restore() async {
-        if let stored = AuthTokenStore.load() {
-            if stored.isExpired {
-                // Le jeton d'accès dure une heure : au lancement, il a presque toujours
-                // expiré. Un échec de rafraîchissement n'est pas forcément une déconnexion,
-                // c'est peut-être l'avion : on garde la session et on réessaiera.
-                if let renewed = try? await client.refresh(refreshToken: stored.refreshToken) {
-                    adopt(renewed)
-                } else {
-                    session = stored
-                    state = .signedIn(stored.user)
-                }
-            } else {
-                session = stored
-                state = .signedIn(stored.user)
-            }
-        } else {
+        guard let stored = AuthTokenStore.load() else {
             state = .signedOut
+            return
+        }
+
+        guard stored.isExpired else {
+            session = stored
+            state = .signedIn(stored.user)
+            return
+        }
+
+        // Le jeton d'accès dure une heure : au lancement, il a presque toujours expiré.
+        do {
+            adopt(try await client.refresh(refreshToken: stored.refreshToken))
+        } catch AuthError.sessionExpired {
+            forget()
+        } catch {
+            // Un échec de rafraîchissement n'est pas forcément une déconnexion, c'est
+            // peut-être l'avion : on garde la session et on réessaiera.
+            session = stored
+            state = .signedIn(stored.user)
         }
     }
 
@@ -81,11 +85,18 @@ final class AuthController {
         guard let current = session else { return nil }
         guard current.isExpired else { return current.accessToken }
 
-        guard let renewed = try? await client.refresh(refreshToken: current.refreshToken) else {
+        do {
+            let renewed = try await client.refresh(refreshToken: current.refreshToken)
+            adopt(renewed)
+            return renewed.accessToken
+        } catch AuthError.sessionExpired {
+            // Un jeton que GoTrue a oublié ne se rattrape pas. Le garder rejouait le même
+            // appel à chaque écran, et laissait l'app affirmer une session qui n'ouvre rien.
+            forget()
+            return nil
+        } catch {
             return nil
         }
-        adopt(renewed)
-        return renewed.accessToken
     }
 
     // MARK: - Fournisseurs
@@ -252,10 +263,7 @@ final class AuthController {
         if let token = session?.accessToken {
             try? await client.signOut(accessToken: token)
         }
-        session = nil
-        AuthTokenStore.clear()
-        state = .signedOut
-        message = nil
+        forget()
     }
 
     /// Efface le compte Auth. Le reste suit par cascade côté serveur.
@@ -268,7 +276,10 @@ final class AuthController {
             message = .error("Le compte n'a pas pu être supprimé.")
             return
         }
-        await signOut()
+        // Pas de `logout` : l'utilisateur vient d'être supprimé, et GoTrue répond alors
+        // `user_not_found`. Ça se lisait dans les journaux comme un incident
+        // d'authentification, alors que c'était la suppression qui avait réussi.
+        forget()
     }
 
     func clearMessage() {
@@ -281,6 +292,15 @@ final class AuthController {
         self.session = session
         AuthTokenStore.save(session)
         state = .signedIn(session.user)
+        message = nil
+    }
+
+    /// Oublie la session, sans rien demander au serveur. C'est le geste commun à la
+    /// déconnexion, à la suppression du compte, et à un jeton que GoTrue ne connaît plus.
+    private func forget() {
+        session = nil
+        AuthTokenStore.clear()
+        state = .signedOut
         message = nil
     }
 

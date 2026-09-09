@@ -88,6 +88,7 @@ final class AuthDecodingTests: XCTestCase {
         XCTAssertNil(AuthError.cancelled.errorDescription)
         XCTAssertNotNil(AuthError.invalidCredentials.errorDescription)
         XCTAssertNotNil(AuthError.emailNotConfirmed.errorDescription)
+        XCTAssertNotNil(AuthError.sessionExpired.errorDescription)
     }
 
     /// Le schéma de retour est écrit à deux endroits, l'`Info.plist` et le code. S'ils

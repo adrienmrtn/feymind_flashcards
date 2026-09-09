@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { ONBOARDING_REPLAY_COOKIE } from "@/lib/auth/onboarding-replay";
+import { expireSessionCookies, sessionIsGone } from "@/lib/auth/session-cookies";
 import { PRODUCTION_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 import { UI_LOCALE_COOKIE, type UiLocale } from "@/lib/i18n/locales";
 import { LOCALE_HEADER, forwardedUrlLocale, resolveLocaleRequest } from "@/lib/i18n/paths";
@@ -17,7 +18,7 @@ import { LOCALE_HEADER, forwardedUrlLocale, resolveLocaleRequest } from "@/lib/i
  *    `/tr/app` redirige vers `/app` en posant le cookie : l'app n'a pas de
  *    préfixe. La réécriture relance le middleware sur le chemin nu : on
  *    garde le header de la première passe, sinon `/` écraserait `/fr`.
- * 4. La session se rafraîchit.
+ * 4. La session se rafraîchit, ou s'efface quand GoTrue l'a oubliée.
  * 5. Une session ouverte n'a plus rien à faire sur le parcours.
  */
 export async function middleware(request: NextRequest) {
@@ -91,9 +92,13 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const { data: { session }, error } = await supabase.auth.getSession();
+
+  // Un jeton de rafraîchissement que GoTrue a oublié revient à chaque requête de la page tant
+  // que le cookie est là. On l'expire donc ici : voir `lib/auth/session-cookies`.
+  if (!session && sessionIsGone(error)) {
+    expireSessionCookies(request, response);
+  }
 
   const replaying = request.cookies.get(ONBOARDING_REPLAY_COOKIE)?.value === "1";
   if (session && !replaying && locale.pathname.startsWith("/commencer")) {

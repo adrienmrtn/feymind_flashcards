@@ -92,11 +92,20 @@ struct SupabaseAuthClient {
 
     // MARK: - Session
 
+    /// Rafraîchit la session, ou dit qu'elle est perdue.
+    ///
+    /// `invalid_grant` devient ici `sessionExpired`, et pas `invalidCredentials` : il n'y a
+    /// aucun identifiant dans un rafraîchissement, donc ce refus ne peut parler que du jeton.
+    /// La nuance compte, parce que l'appelant réessaie l'un et abandonne l'autre.
     func refresh(refreshToken: String) async throws -> AuthSession {
-        let payload = try await post("token", query: ["grant_type": "refresh_token"], body: [
-            "refresh_token": refreshToken
-        ])
-        return try decodeSession(payload)
+        do {
+            let payload = try await post("token", query: ["grant_type": "refresh_token"], body: [
+                "refresh_token": refreshToken
+            ])
+            return try decodeSession(payload)
+        } catch AuthError.invalidCredentials {
+            throw AuthError.sessionExpired
+        }
     }
 
     func signOut(accessToken: String) async throws {
@@ -166,6 +175,9 @@ struct SupabaseAuthClient {
             ?? "Le serveur a répondu \(status)."
 
         switch code {
+        case "refresh_token_not_found", "refresh_token_already_used",
+             "session_not_found", "session_expired", "user_not_found":
+            return .sessionExpired
         case "invalid_credentials", "invalid_grant":
             return .invalidCredentials
         case "email_not_confirmed":
