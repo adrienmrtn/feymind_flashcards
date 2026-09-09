@@ -30,6 +30,11 @@ import Foundation
 /// elle sert — la première fois qu'il y a des cartes à rappeler — et pas au milieu d'une
 /// inscription.
 ///
+/// **Trois écrans nouveaux avant la construction du parcours** : la moyenne d'aujourd'hui,
+/// celle qu'on vise, et la promesse de les relier. Ce sont les deux seuls chiffres que
+/// l'étudiant connaît vraiment sur lui-même, et l'écart entre les deux est ce qui règle
+/// l'intensité du plan.
+///
 /// La fin du parcours a sa propre progression, et elle est délibérée : le parcours vient
 /// d'être construit sous les yeux (`personalizing`), d'autres l'ont déjà suivi
 /// (`socialProof`), c'est maintenant à cet étudiant-là de s'y mettre (`yourTurn`), et on
@@ -46,9 +51,27 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case demoImport
     case demoSheet
     case demoReview
-    case examPromise
+    // **La préparation d'une épreuve, en trois écrans et non plus un.**
+    //
+    // Un seul écran disait « on t'aide même à préparer parfaitement ton examen », ce qui est
+    // une promesse et non une explication : il montrait un calendrier, et l'étudiant devait
+    // deviner le reste. Trois écrans disent ce que Micabo fait vraiment - il pose un plan
+    // jusqu'au jour J, il fait passer des examens blancs, et il montre ce qui résiste - et
+    // chacun montre le geste au lieu de l'annoncer.
+    case examPlan
+    case examMock
+    case examWeak
+    /// La méthode Feynman : expliquer à voix haute ce qu'on croit savoir.
+    case feynman
+    /// Ce que ça donne : la moyenne qui monte, semaine après semaine.
+    case results
     case subjects
     case school
+    // Le point de départ, l'objectif, et la promesse de les relier. Ils arrivent juste avant
+    // la construction du parcours parce que c'est elle qui s'en sert.
+    case currentAverage
+    case targetAverage
+    case together
     case personalizing
     case socialProof
     case yourTurn

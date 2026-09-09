@@ -484,6 +484,7 @@ export const appEn = {
   exam: {
     schedule: {
       freeShort: "free",
+      cardsShort: "cards",
       examShort: "Exam day",
       mockShort: "Mock",
       offShort: "off",
@@ -510,6 +511,7 @@ export const appEn = {
       down: "−{points} points",
       flat: "steady",
       noMock: "No mock taken. It's the one measure that isn't an estimate — worth the quarter of an hour.",
+      single: "One mock so far: {score} % on {day}. The next one will say whether it climbs.",
       gapWide: "Your cards say {mastery} %, your mock {score} %. That gap closes by working without hints, not by revising more.",
       gapClose: "Your cards and your mock agree. Keep going.",
       seeAll: "See all your progress",
@@ -629,6 +631,7 @@ export const appEn = {
     mock: {
       aria: "Mock exam scores, in order",
       point: "{score} % on {day} ({total} questions)",
+      target: "target {percent} %",
     },
   },
   progress: {

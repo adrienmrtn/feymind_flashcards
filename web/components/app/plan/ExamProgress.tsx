@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MockTrend, type MockPoint } from "@/components/app/charts/MockTrend";
 import { ReadinessBar } from "@/components/app/charts/ReadinessBar";
 import { useI18n } from "@/lib/i18n/client";
+import { localeBcp47 } from "@/lib/i18n/copy";
 
 export type { MockPoint } from "@/components/app/charts/MockTrend";
 
@@ -32,7 +33,7 @@ export function ExamProgress({
   targetScore: number | null;
   mocks: MockPoint[];
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const ordered = [...mocks].sort((left, right) => (left.finishedAt < right.finishedAt ? 1 : -1));
   const trend = ordered.length >= 2 ? ordered[0]!.score - ordered[1]!.score : null;
 
@@ -72,24 +73,41 @@ export function ExamProgress({
           ) : null}
         </div>
 
-        {mocks.length > 0 ? (
-          <>
-            <div className="mt-3">
-              <MockTrend points={mocks} target={targetScore} />
-            </div>
-            {measured && mockScore != null ? (
-              <p className="mt-3 text-[13px] leading-relaxed text-ink-secondary">
-                {masteryPercent - mockScore >= 15
-                  ? t("app.exam.progress.gapWide", { mastery: masteryPercent, score: mockScore })
-                  : t("app.exam.progress.gapClose")}
-              </p>
-            ) : null}
-          </>
+        {mocks.length >= 2 ? (
+          <div className="mt-3">
+            <MockTrend points={mocks} target={targetScore} />
+          </div>
+        ) : mocks.length === 1 ? (
+          /*
+            **Un seul blanc n'est pas une courbe.** Le graphe dessinait un point seul au
+            milieu de trois lignes de grille, sous un trait d'objectif que rien ne nommait :
+            on lisait un graphe cassé, pas un résultat. Un score, sa date, et ce que dira le
+            prochain - c'est tout ce qu'un point sait dire.
+          */
+          <p className="mt-2 text-[13px] leading-relaxed text-ink-secondary">
+            {t("app.exam.progress.single", {
+              score: ordered[0]!.score,
+              day: new Date(`${ordered[0]!.finishedAt}T12:00:00`).toLocaleDateString(localeBcp47(locale), {
+                day: "numeric",
+                month: "long",
+              }),
+            })}
+          </p>
         ) : (
           <p className="mt-2 text-[13px] leading-relaxed text-ink-secondary">
             {t("app.exam.progress.noMock")}
           </p>
         )}
+
+        {/* La phrase sur l'écart n'a de sens qu'entre deux mesures qui disent quelque chose :
+            « tes cartes et ton blanc concordent » au-dessus de deux zéros est une plaisanterie. */}
+        {measured && mockScore != null && mockScore > 0 && masteryPercent > 0 ? (
+          <p className="mt-3 text-[13px] leading-relaxed text-ink-secondary">
+            {masteryPercent - mockScore >= 15
+              ? t("app.exam.progress.gapWide", { mastery: masteryPercent, score: mockScore })
+              : t("app.exam.progress.gapClose")}
+          </p>
+        ) : null}
       </div>
 
       <p className="mt-4 text-[12.5px]">

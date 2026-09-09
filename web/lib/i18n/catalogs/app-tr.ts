@@ -484,6 +484,7 @@ export const appTr = {
   exam: {
     schedule: {
       freeShort: "boş",
+      cardsShort: "kart",
       examShort: "Sınav günü",
       mockShort: "Deneme",
       offShort: "ara",
@@ -510,6 +511,7 @@ export const appTr = {
       down: "−{points} puan",
       flat: "sabit",
       noMock: "Hiç deneme yapılmadı. Tahmin olmayan tek ölçüm bu; çeyrek saate değer.",
+      single: "Şimdilik tek deneme: {day} tarihinde %{score}. Bir sonraki yükselip yükselmediğini söyleyecek.",
       gapWide: "Kartların % {mastery}, denemen % {score} diyor. Bu fark ipucusuz çalışarak kapanır, daha çok tekrar ederek değil.",
       gapClose: "Kartlarınla denemen örtüşüyor. Devam et.",
       seeAll: "Tüm ilerlemeni gör",
@@ -629,6 +631,7 @@ export const appTr = {
     mock: {
       aria: "Deneme sınavı puanları, sırayla",
       point: "{day} tarihinde % {score} ({total} soru)",
+      target: "hedef %{percent}",
     },
   },
   progress: {

@@ -19,6 +19,13 @@ final class OnboardingModel {
     var subjects: Set<String> = []
     var institutionId: String?
     var institutionName: String?
+    /// La moyenne d'aujourd'hui, sur l'échelle 10-20. `TargetScore.min - 1` veut dire « en
+    /// dessous du barème » : c'est le seul cran hors échelle, et il existe parce qu'un
+    /// parcours qui ne propose que la moyenne et au-dessus dit à celui qui rame qu'il n'est
+    /// pas prévu.
+    var currentScore: Int?
+    /// La moyenne visée. Toujours au-dessus de l'actuelle.
+    var targetScore: Int?
     /// Le registre de rédaction, seule forme sous laquelle le niveau sort du parcours.
     var level: StudyLevel? {
         stage?.level
@@ -89,6 +96,8 @@ final class OnboardingModel {
         OnboardingPreferences.subjects = subjects.sorted()
         OnboardingPreferences.institutionId = institutionId
         OnboardingPreferences.institutionName = institutionName
+        OnboardingPreferences.currentScore = currentScore
+        OnboardingPreferences.targetScore = targetScore
     }
 }
 

@@ -8,18 +8,20 @@ import { useI18n } from "@/lib/i18n/client";
  * **Les avis, un à la fois, et on les fait glisser.**
  *
  * Trois cartes côte à côte se lisent en diagonale, donc ne se lisent pas. Une seule, assez
- * grande pour qu'on la lise vraiment, posée sur un rail qu'on pousse au doigt comme partout
- * ailleurs sur un téléphone. Le rail est un simple débordement horizontal avec accrochage
- * natif : l'inertie, le rebond du bord et le sens de lecture sont ceux du système, et une
- * reconstruction au `pointermove` les refait toujours moins bien.
+ * grande pour qu'on la lise vraiment, posée sur un rail qu'on pousse.
  *
- * La souris ne fait pas ce geste, elle : sur un ordinateur sans pavé tactile, un rail ne se
- * pousse pas. D'où le glisser au bouton enfoncé, qui ne fait que déplacer le défilement -
- * quelques lignes, et rien de ce que le tactile sait faire n'est perdu.
+ * **Le rail est un débordement horizontal, et rien d'autre.** La première version reposait
+ * sur `scroll-snap-type: mandatory` avec un `scrollLeft` réécrit à la main pendant le geste ;
+ * les deux se battaient. L'accrochage obligatoire ramène le rail sur son point d'ancrage à
+ * chaque écriture, si bien que le rail ne bougeait pas d'un pixel sous la souris - ce qui
+ * marchait sous un test qui déplace le pointeur par sauts, et ne marchait pas sous une vraie
+ * main qui le déplace en continu.
  *
- * Le défilement automatique s'arrête dès que la souris entre, qu'un doigt se pose ou que le
- * clavier attrape une pastille - lire une phrase qui s'échappe au milieu est la seule façon de
- * rendre un avis agaçant - et il ne démarre pas du tout pour qui a demandé moins d'animations.
+ * L'accrochage est donc **proximity** et non **mandatory** : il range la carte quand on
+ * relâche près d'un bord, sans jamais reprendre la main pendant le geste. Le doigt et le
+ * pavé tactile passent directement par le défilement du système, avec son inertie et son
+ * rebond. Reste la souris, qui ne fait pas ce geste : le glisser au bouton enfoncé lui est
+ * réservé, et il ne fait que déplacer le défilement.
  */
 
 const REVIEWS = ["review1", "review2", "review3", "review4"] as const;
@@ -32,7 +34,7 @@ export function ReviewCarousel() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  /** Le rail décide, pas l'état : c'est lui que le doigt déplace. */
+  /** Aller à une carte. C'est le rail qui décide, pas l'état : c'est lui que le doigt pousse. */
   function goTo(position: number) {
     const node = rail.current;
     if (!node) return;
@@ -57,53 +59,55 @@ export function ReviewCarousel() {
     const id = window.setInterval(() => {
       const node = rail.current;
       if (!node) return;
-      const next = (Math.round(node.scrollLeft / Math.max(1, node.clientWidth)) + 1) % REVIEWS.length;
+      const next =
+        (Math.round(node.scrollLeft / Math.max(1, node.clientWidth)) + 1) % REVIEWS.length;
       node.scrollTo({ left: next * node.clientWidth, behavior: "smooth" });
     }, INTERVAL_MS);
     return () => window.clearInterval(id);
   }, [paused]);
 
-  /** Le glisser à la souris : on suit le curseur, on ne calcule rien d'autre. */
-  const drag = useRef<{ x: number; from: number } | null>(null);
+  /**
+   * Le glisser à la souris.
+   *
+   * Il n'écrit plus `scrollLeft` : il appelle `scrollBy` avec le déplacement du dernier
+   * évènement. La différence compte, parce qu'un `scrollBy` passe par le défilement du
+   * navigateur - celui-là même que l'accrochage respecte - là où une affectation directe se
+   * fait corriger dans la foulée.
+   */
+  const drag = useRef<{ x: number; moved: number } | null>(null);
 
   function onPointerDown(event: React.PointerEvent) {
-    if (event.pointerType !== "mouse") return;
+    if (event.pointerType !== "mouse" || event.button !== 0) return;
     const node = rail.current;
     if (!node) return;
-    drag.current = { x: event.clientX, from: node.scrollLeft };
+    drag.current = { x: event.clientX, moved: 0 };
     node.setPointerCapture(event.pointerId);
-    // **L'accrochage se coupe le temps du geste.** Il est déclaré « mandatory » : tant qu'il
-    // tient, une position posée à la main est ramenée sur le point d'accroche le plus proche
-    // dans la foulée, et le rail ne bouge pas d'un pixel sous la souris.
-    node.style.scrollSnapType = "none";
   }
 
   function onPointerMove(event: React.PointerEvent) {
     const node = rail.current;
     if (!node || !drag.current) return;
-    node.scrollLeft = drag.current.from - (event.clientX - drag.current.x);
+    const step = drag.current.x - event.clientX;
+    drag.current = { x: event.clientX, moved: drag.current.moved + step };
+    node.scrollBy({ left: step });
+    // Sans ça, le navigateur commence à sélectionner le texte de la citation dès le
+    // deuxième pixel, et le rail se traîne derrière un surlignage bleu.
+    event.preventDefault();
   }
-
-  /** Au-delà de ce cinquième de carte, le geste vaut « la suivante ». */
-  const FLICK = 0.2;
 
   function endDrag(event: React.PointerEvent) {
     const node = rail.current;
     if (!node || !drag.current) return;
-    const from = drag.current.from;
+    const { moved } = drag.current;
     drag.current = null;
     if (node.hasPointerCapture(event.pointerId)) node.releasePointerCapture(event.pointerId);
-    node.style.scrollSnapType = "";
 
-    // Le lâcher se range à la main : l'accrochage natif ne s'applique qu'au défilement du
-    // système, pas à un `scrollLeft` qu'on a posé soi-même. Et il se range sur le geste, pas
-    // sur la position : pousser d'un tiers de carte veut dire « la suivante », alors que
-    // l'arrondi à la carte la plus proche ramènerait à celle qu'on quitte.
+    // Le lâcher se range sur le **geste**, pas sur la position : pousser d'un cinquième de
+    // carte veut dire « la suivante », alors qu'un arrondi ramènerait à celle qu'on quitte.
     const width = Math.max(1, node.clientWidth);
-    const moved = (node.scrollLeft - from) / width;
-    const start = Math.round(from / width);
-    const step = Math.abs(moved) > FLICK ? Math.sign(moved) : 0;
-    goTo(Math.min(REVIEWS.length - 1, Math.max(0, start + step)));
+    const from = Math.round((node.scrollLeft - moved) / width);
+    const step = Math.abs(moved) > width * 0.2 ? Math.sign(moved) : 0;
+    goTo(Math.min(REVIEWS.length - 1, Math.max(0, from + step)));
   }
 
   return (
@@ -118,7 +122,7 @@ export function ReviewCarousel() {
     >
       <div
         ref={rail}
-        className="slider-rail flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
+        className="slider-rail flex cursor-grab snap-x snap-proximity overflow-x-auto overscroll-x-contain active:cursor-grabbing"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -127,7 +131,7 @@ export function ReviewCarousel() {
         {REVIEWS.map((review) => (
           <figure
             key={review}
-            className="flex min-h-[188px] w-full shrink-0 snap-center flex-col justify-center rounded-group bg-surface-muted px-6 py-7 text-center select-none sm:px-10"
+            className="flex min-h-[188px] w-full shrink-0 snap-center select-none flex-col justify-center rounded-group bg-surface-muted px-6 py-7 text-center sm:px-10"
           >
             <span className="mx-auto inline-flex items-center rounded-pill bg-accent-soft px-3 py-1 text-[12.5px] font-semibold text-accent">
               {t(`onboarding.${review}Gain`)}

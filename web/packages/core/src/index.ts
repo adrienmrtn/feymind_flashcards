@@ -95,6 +95,7 @@ export {
   TARGET_SCORE_MIN,
   clampTargetScore,
   desiredGradeLabel,
+  targetPercent,
   desiredGradeScale,
   gradeIndexFor,
   gradeTicks,

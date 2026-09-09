@@ -484,6 +484,7 @@ export const appFr = {
   exam: {
     schedule: {
       freeShort: "libre",
+      cardsShort: "cartes",
       examShort: "Jour J",
       mockShort: "Blanc",
       offShort: "pause",
@@ -510,6 +511,7 @@ export const appFr = {
       down: "−{points} points",
       flat: "stable",
       noMock: "Aucun blanc passé. C'est la seule mesure qui ne soit pas une estimation : elle vaut le quart d'heure.",
+      single: "Un seul blanc pour l'instant : {score} % le {day}. Le prochain dira si ça monte.",
       gapWide: "Tes cartes disent {mastery} %, ton blanc {score} %. L'écart se comble en travaillant sans indice, pas en révisant plus.",
       gapClose: "Tes cartes et ton blanc concordent. Continue.",
       seeAll: "Voir tous tes progrès",
@@ -629,6 +631,7 @@ export const appFr = {
     mock: {
       aria: "Scores des examens blancs, dans l'ordre",
       point: "{score} % le {day} ({total} questions)",
+      target: "objectif {percent} %",
     },
   },
   progress: {

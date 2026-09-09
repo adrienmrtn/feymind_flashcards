@@ -1,20 +1,25 @@
 import SwiftUI
 
-/// Après la démonstration : ce que Micabo fait des examens.
+/// **Premier des trois écrans sur l'épreuve : le plan.**
 ///
-/// L'écran arrive là parce qu'on vient de voir le cycle complet, dépôt, fiche, cartes, et
-/// que la question suivante est naturellement « et pour mon contrôle de jeudi ? ».
+/// Il arrive là parce qu'on vient de voir le cycle complet - dépôt, fiche, cartes - et que la
+/// question suivante est naturellement « et pour mon contrôle de jeudi ? ».
+///
+/// L'écran unique qui promettait « on t'aide même à préparer parfaitement ton examen » est
+/// devenu trois écrans qui montrent comment : le plan se pose jusqu'au jour J, l'examen blanc
+/// mesure, et ce qui résiste remonte. Une promesse tient dans un titre ; ce que fait le
+/// produit demande d'être vu.
 ///
 /// Le calendrier ne se contente pas d'entourer une date : les jours qui la précèdent se
-/// remplissent un à un de points de révision. C'est exactement ce que fait le mode examen,
-/// et le voir vaut mieux que le lire.
-struct ExamPromiseStepView: View {
+/// remplissent un à un de points de révision.
+struct ExamPlanStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.examTitle") ?? "On t'aide même à préparer\nparfaitement ton examen.",
+            title: i18n?.t("ios.examPlanTitle") ?? "Ton plan se pose\njusqu'au jour J.",
+            subtitle: i18n?.t("ios.examPlanLead"),
             titleSize: 26
         ) {
             ExamCountdownCalendar()

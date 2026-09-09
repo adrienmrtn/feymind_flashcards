@@ -13,6 +13,10 @@ struct LanguageSwitcher: View {
         case card
         /// Rangée de drapeaux, pour le premier écran du parcours.
         case flags
+        /// Le même menu que `compact`, mais habillé en champ : un fond, un chevron, une
+        /// zone de touche franche. C'est ce qu'il faut sur le premier écran, où le contrôle
+        /// est seul et doit se voir comme un contrôle.
+        case menu
     }
 
     var body: some View {
@@ -20,23 +24,56 @@ struct LanguageSwitcher: View {
         case .compact: compact
         case .card: card
         case .flags: flags
+        case .menu: menu
+        }
+    }
+
+    private var menu: some View {
+        Menu {
+            picker
+        } label: {
+            HStack(spacing: 7) {
+                Text(i18n.locale.flag)
+                    .font(.system(size: 16))
+                    .accessibilityHidden(true)
+                Text(i18n.locale.nativeName)
+                    .font(MicaboFont.hanken(14, weight: .medium))
+                    .lineLimit(1)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundStyle(surface.isDark ? Color.white.opacity(0.82) : MicaboColor.ink)
+            .padding(.vertical, 9)
+            .padding(.horizontal, 13)
+            .background(
+                surface.isDark ? Color.white.opacity(0.14) : MicaboColor.surface.opacity(0.78),
+                in: Capsule()
+            )
+        }
+        .accessibilityLabel(i18n.t("ios.appLanguage"))
+        .accessibilityValue(i18n.locale.nativeName)
+    }
+
+    /// Le contenu du menu, partagé par les deux habillages : une seule liste de langues.
+    @ViewBuilder
+    private var picker: some View {
+        ForEach(UiLocale.allCases) { code in
+            Button {
+                i18n.pick(code)
+            } label: {
+                HStack {
+                    Text("\(code.flag)  \(code.nativeName)")
+                    if code == i18n.locale {
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
         }
     }
 
     private var compact: some View {
         Menu {
-            ForEach(UiLocale.allCases) { code in
-                Button {
-                    i18n.pick(code)
-                } label: {
-                    HStack {
-                        Text("\(code.flag)  \(code.nativeName)")
-                        if code == i18n.locale {
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-            }
+            picker
         } label: {
             HStack(spacing: 6) {
                 Text(i18n.locale.flag)

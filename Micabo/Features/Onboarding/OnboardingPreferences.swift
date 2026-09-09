@@ -321,6 +321,10 @@ enum OnboardingPreferences {
         static let forgetting = "micabo.onboarding.forgetting"
         static let forgetsOften = "micabo.onboarding.forgetsOften"
         static let subjects = "micabo.onboarding.subjects"
+        /// La moyenne d'aujourd'hui et celle qu'on vise, sur l'échelle 10-20 du produit. Un
+        /// `TargetScore.min - 1` pour la première veut dire « en dessous du barème ».
+        static let currentScore = "micabo.onboarding.currentScore"
+        static let targetScore = "micabo.onboarding.targetScore"
         static let institutionId = "micabo.onboarding.institutionId"
         static let institutionName = "micabo.onboarding.institutionName"
         static let dailyMinutes = "micabo.onboarding.dailyMinutes"
@@ -515,6 +519,32 @@ enum OnboardingPreferences {
     static var subjects: [String] {
         get { defaults.stringArray(forKey: Key.subjects) ?? [] }
         set { defaults.set(newValue, forKey: Key.subjects) }
+    }
+
+    /// La moyenne d'aujourd'hui, telle que l'étudiant l'a posée au curseur.
+    static var currentScore: Int? {
+        get { score(forKey: Key.currentScore) }
+        set { write(newValue, forKey: Key.currentScore) }
+    }
+
+    /// La moyenne visée. Toujours strictement au-dessus de l'actuelle : c'est l'écran qui
+    /// le garantit, et l'écart entre les deux est ce qui règle l'intensité du plan.
+    static var targetScore: Int? {
+        get { score(forKey: Key.targetScore) }
+        set { write(newValue, forKey: Key.targetScore) }
+    }
+
+    private static func score(forKey key: String) -> Int? {
+        guard defaults.object(forKey: key) != nil else { return nil }
+        return defaults.integer(forKey: key)
+    }
+
+    private static func write(_ value: Int?, forKey key: String) {
+        if let value {
+            defaults.set(value, forKey: key)
+        } else {
+            defaults.removeObject(forKey: key)
+        }
     }
 
     static var institutionId: String? {
