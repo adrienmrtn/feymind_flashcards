@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -42,7 +42,8 @@ import { ChoiceRow } from "@/components/onboarding/Scaffold";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ExamDayPicker, isoDay } from "@/components/app/exams/ExamCalendar";
-import { generateCards } from "@/lib/actions/course";
+import { generateCards, type WrittenCard } from "@/lib/actions/course";
+import { deleteCard } from "@/lib/actions/cards";
 import { createPlan } from "@/lib/actions/plan";
 import { useI18n } from "@/lib/i18n/client";
 import { writeSheetFromBrowser } from "@/lib/import/write-sheet";
@@ -149,6 +150,21 @@ export function NewPlan({
   const [failure, setFailure] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  /**
+   * Le document posé dans l'aperçu, pas encore au programme.
+   *
+   * Le panneau d'import posait un bouton « Ajouter au programme » sous l'aperçu. Ici ce
+   * n'était pas un choix : tout ce qu'on dépose sur cet écran **est** le programme. Le
+   * bouton posait donc une question dont la réponse était connue, et coûtait un clic de
+   * plus. C'est « Continuer » qui met de côté, puis avance.
+   */
+  const pendingImport = useRef<(() => void) | null>(null);
+  const [hasPendingImport, setHasPendingImport] = useState(false);
+  /** Ce que « Continuer » exécute sur l'étape des cartes tant que rien n'est écrit. */
+  const pendingCards = useRef<(() => Promise<void>) | null>(null);
+  const [hasPendingCards, setHasPendingCards] = useState(false);
+  const [writingCards, setWritingCards] = useState(false);
+
   /** Les cours du programme : ceux qu'on a cochés, plus ceux qu'on vient de ficher. */
   const known = useMemo(() => {
     const all = new Map(courses.map((course) => [course.id, course]));
@@ -203,7 +219,7 @@ export function NewPlan({
 
   const canContinue =
     step === "materiel"
-      ? picked.length > 0 || queue.length > 0
+      ? picked.length > 0 || queue.length > 0 || hasPendingImport
       : step === "jour"
         ? daysRemaining >= 0
         : true;
@@ -254,6 +270,13 @@ export function NewPlan({
     setFailure(null);
 
     if (step === "materiel") {
+      // Un document laissé dans l'aperçu part au programme sans qu'on le redemande.
+      if (pendingImport.current) {
+        pendingImport.current();
+        pendingImport.current = null;
+        setHasPendingImport(false);
+        return;
+      }
       if (queue.length === 0) {
         setStep(stepAfter("materiel", fresh.length));
         return;
@@ -266,6 +289,15 @@ export function NewPlan({
       setPicked((current) => [...new Set([...current, ...written.map((course) => course.id)])]);
       setFreshIndex(0);
       setStep(stepAfter("materiel", all.length));
+      return;
+    }
+
+    // Sur l'étape des cartes, le premier « Continuer » écrit ; le suivant avance.
+    if (step === "cartes" && pendingCards.current) {
+      const write = pendingCards.current;
+      pendingCards.current = null;
+      setHasPendingCards(false);
+      await write();
       return;
     }
 
@@ -354,6 +386,11 @@ export function NewPlan({
             courses={courses}
             picked={picked}
             queue={queue}
+            onQueueHandle={(fn) => {
+              pendingImport.current = fn;
+              // Le bouton s'allume dès qu'un document attend, même sans cours coché.
+              setHasPendingImport(Boolean(fn));
+            }}
             sheetLength={sheetLength}
             onToggle={(id) =>
               setPicked((current) =>
@@ -377,11 +414,16 @@ export function NewPlan({
               setFresh((all) =>
                 all.map((course) =>
                   course.id === current.id
-                    ? { ...course, cardCount: course.cardCount + count }
+                    ? { ...course, cardCount: Math.max(0, course.cardCount + count) }
                     : course,
                 ),
               )
             }
+            onGenerateHandle={(fn) => {
+              pendingCards.current = fn;
+              setHasPendingCards(Boolean(fn));
+            }}
+            onWritingChange={setWritingCards}
           />
         ) : null}
 
@@ -453,26 +495,26 @@ export function NewPlan({
         <Button
           className="h-14 w-full text-[16px]"
           onClick={() => void next()}
-          disabled={busy || pending || !canContinue}
+          disabled={busy || pending || writingCards || !canContinue}
         >
-          {busy || pending ? (
+          {busy || pending || writingCards ? (
             <>
               <ThinkingOrb state="connecting" size={20} theme="dark" />
-              {t("app.exams.wait")}
+              {writingCards ? t("app.generate.writing") : t("app.exams.wait")}
             </>
           ) : step === "note" ? (
             t("app.newPlan.create")
           ) : step === "materiel" && queue.length > 0 ? (
             t("app.newPlan.writeQueue", { count: queue.length })
           ) : step === "cartes" ? (
-            t("app.newPlan.cardsNext")
+            hasPendingCards ? t("app.newPlan.cardsWrite") : t("app.newPlan.cardsNext")
           ) : (
             t("app.common.continue")
           )}
         </Button>
 
         {index > 0 || (step === "cartes" && freshIndex > 0) ? (
-          <Button variant="ghost" className="mt-2 w-full" onClick={back} disabled={busy || pending}>
+          <Button variant="ghost" className="mt-2 w-full" onClick={back} disabled={busy || pending || writingCards}>
             {t("app.common.back")}
           </Button>
         ) : null}
@@ -520,6 +562,7 @@ function MaterialStep({
   onToggle,
   onQueue,
   onDrop,
+  onQueueHandle,
 }: {
   courses: PlanCourse[];
   picked: string[];
@@ -528,6 +571,8 @@ function MaterialStep({
   onToggle: (id: string) => void;
   onQueue: (document: QueuedDocument) => void;
   onDrop: (position: number) => void;
+  /** Ce que « Continuer » doit exécuter quand un document attend dans l'aperçu. */
+  onQueueHandle: (queue: (() => void) | null) => void;
 }) {
   const { t } = useI18n();
   const [adding, setAdding] = useState(courses.length === 0);
@@ -592,11 +637,11 @@ function MaterialStep({
         <div className="mt-6 panel p-5">
           <ImportPanel
             initialLength={sheetLength as never}
-            queueLabel={t("app.newPlan.queueAdd")}
             onQueue={(document) => {
               onQueue(document);
               setAdding(false);
             }}
+            queueHandle={onQueueHandle}
           />
         </div>
       ) : (
@@ -611,30 +656,43 @@ function MaterialStep({
 /**
  * Les cartes d'un cours qui vient d'arriver, **dans le parcours**.
  *
- * On y demande les mêmes formats et les mêmes nombres qu'ailleurs, et on valide pour passer au
- * cours suivant. Sans cette étape, un plan se créait sur des cours sans cartes : le plan était
- * alors vide, et rien ne disait pourquoi.
+ * L'étape demandait les formats, puis posait un bouton « Générer ces cartes », puis un
+ * « Continuer » à côté. Deux boutons pour un seul geste : on choisissait combien de cartes,
+ * on validait ce choix, puis on validait le fait d'avoir validé. Et une fois écrites, les
+ * cartes n'étaient qu'un nombre - il fallait quitter le parcours pour aller voir ce que le
+ * modèle avait produit, donc personne n'allait voir.
+ *
+ * Un seul bouton maintenant, celui de l'écran : **Continuer écrit les cartes**, puis les
+ * montre. On les lit, on jette celles qui ne valent rien, on en redemande si le compte est
+ * court, et le Continuer suivant passe au cours d'après.
  */
 function CardsStep({
   course,
   position,
   total,
   onWritten,
+  onGenerateHandle,
+  onWritingChange,
 }: {
   course: FreshCourse;
   position: number;
   total: number;
   onWritten: (count: number) => void;
+  /** Ce que « Continuer » exécute tant qu'aucune carte n'a été écrite. */
+  onGenerateHandle: (generate: (() => Promise<void>) | null) => void;
+  onWritingChange: (writing: boolean) => void;
 }) {
   const { t } = useI18n();
   const [quota, setQuota] = useState<QuestionQuota>(DEFAULT_QUOTA);
   const [writing, setWriting] = useState(false);
-  const [written, setWritten] = useState(0);
+  const [cards, setCards] = useState<WrittenCard[]>([]);
   const [failure, setFailure] = useState<string | null>(null);
   const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [asking, setAsking] = useState(false);
 
   const count = quotaTotal(quota);
   const capped = isAtCap(quota);
+  const written = cards.length;
 
   function step(kind: CardKind, delta: number) {
     setQuota((current) => ({
@@ -646,18 +704,34 @@ function CardsStep({
     }));
   }
 
-  async function ask() {
+  const ask = useCallback(async () => {
     setFailure(null);
     setStartedAt(Date.now());
     setWriting(true);
+    onWritingChange(true);
     const result = await generateCards(course.id, quota);
     setWriting(false);
+    onWritingChange(false);
+    setAsking(false);
     if (result.status === "error") {
       setFailure(result.message ?? t("app.common.errorGeneric"));
       return;
     }
-    setWritten((current) => current + result.count);
+    setCards((current) => [...current, ...(result.cards ?? [])]);
     onWritten(result.count);
+  }, [course.id, onWritingChange, onWritten, quota, t]);
+
+  // Tant que rien n'est écrit, « Continuer » écrit. Ensuite il passe au cours suivant.
+  useEffect(() => {
+    onGenerateHandle(written === 0 && !writing ? ask : null);
+    return () => onGenerateHandle(null);
+  }, [ask, onGenerateHandle, writing, written]);
+
+  async function drop(cardId: string) {
+    setCards((current) => current.filter((card) => card.id !== cardId));
+    onWritten(-1);
+    const result = await deleteCard(cardId, course.id);
+    if (result.status === "error") setFailure(result.message ?? t("app.common.errorGeneric"));
   }
 
   return (
@@ -683,6 +757,44 @@ function CardsStep({
             startedAt={startedAt ?? undefined}
           />
         </div>
+      ) : written > 0 && !asking ? (
+        <>
+          <ul className="mt-6 panel divide-y divide-hairline">
+            {cards.map((card) => (
+              <li key={card.id} className="flex items-start gap-3 px-5 py-3.5">
+                <span
+                  aria-hidden
+                  className="mt-0.5 flex h-6 shrink-0 items-center rounded-pill bg-surface-muted px-2 text-[10.5px] font-semibold uppercase tracking-wide text-ink-tertiary"
+                >
+                  {t(card.kind === "cloze" ? "app.cardKind.gap" : `app.cardKind.${card.kind}`)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14.5px] font-medium leading-snug text-ink">
+                    {card.front}
+                  </span>
+                  <span className="mt-0.5 block text-[13px] leading-snug text-ink-tertiary">
+                    {card.back}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void drop(card.id)}
+                  className="pressable shrink-0 text-[12.5px] font-medium text-ink-tertiary underline-draw hover:text-negative"
+                >
+                  {t("app.common.remove")}
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          <button
+            type="button"
+            onClick={() => setAsking(true)}
+            className="pressable mt-3 text-[13px] font-medium text-ink-secondary underline-draw"
+          >
+            {t("app.newPlan.cardsMore")}
+          </button>
+        </>
       ) : (
         <>
           <div className="mt-6 panel divide-y divide-hairline px-5">
@@ -724,15 +836,17 @@ function CardsStep({
             ))}
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="numeral text-[13px] text-ink-tertiary">
               {capped
                 ? t("app.generate.totalMax", { count, max: TOTAL_RANGE.max })
                 : t("app.generate.total", { count })}
             </p>
-            <Button variant={written > 0 ? "outline" : "default"} disabled={count === 0} onClick={() => void ask()}>
-              {written > 0 ? t("app.generate.addToDeck") : t("app.generate.generateThese")}
-            </Button>
+            {asking ? (
+              <Button variant="outline" size="sm" disabled={count === 0} onClick={() => void ask()}>
+                {t("app.generate.addToDeck")}
+              </Button>
+            ) : null}
           </div>
         </>
       )}

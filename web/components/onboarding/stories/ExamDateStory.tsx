@@ -44,11 +44,11 @@ export function ExamDateStory() {
   const filled = (score - TARGET_SCORE_MIN) / (TARGET_SCORE_MAX - TARGET_SCORE_MIN);
 
   return (
-    <div className="relative w-full max-w-[320px] pb-24">
-      <div className="paper rounded-[18px] bg-surface px-4 py-4">
-        <p className="text-center text-[14px] font-semibold capitalize text-ink">{monthLabel}</p>
+    <div className="relative w-full max-w-[300px] pb-[86px]">
+      <div className="paper rounded-[18px] bg-surface px-3.5 py-3">
+        <p className="text-center text-[13px] font-semibold capitalize text-ink">{monthLabel}</p>
 
-        <div className="mt-3 grid grid-cols-7 gap-y-1.5 text-center">
+        <div className="mt-2 grid grid-cols-7 gap-y-1 text-center">
           {weekdays.map((day, index) => (
             <span key={index} className="text-[10.5px] font-medium text-ink-tertiary">
               {day}
@@ -60,7 +60,7 @@ export function ExamDateStory() {
             ) : (
               <span
                 key={day}
-                className={`numeral mx-auto flex h-6 w-6 items-center justify-center rounded-[7px] text-[11.5px] ${
+                className={`numeral mx-auto flex h-[22px] w-[22px] items-center justify-center rounded-[6px] text-[11px] ${
                   day === exam.getDate()
                     ? "bg-accent-soft font-semibold text-accent shadow-[inset_0_0_0_1.5px_var(--color-accent)]"
                     : "text-ink-secondary"
@@ -74,11 +74,11 @@ export function ExamDateStory() {
       </div>
 
       {/* La note chevauche le calendrier : les deux réponses ne font qu'une décision. */}
-      <div className="paper absolute inset-x-4 bottom-0 rounded-[18px] bg-surface px-4 pb-3.5 pt-3">
-        <p className="numeral text-center text-[40px] font-semibold leading-none tracking-tight text-ink">
+      <div className="paper absolute inset-x-3 bottom-0 rounded-[16px] bg-surface px-3.5 pb-3 pt-2.5">
+        <p className="numeral text-center text-[34px] font-semibold leading-none tracking-tight text-ink">
           {desiredGradeLabel(score, gradeCountry(locale))}
         </p>
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-2.5 flex items-center gap-2">
           <span className="text-[10px] text-ink-tertiary">
             {desiredGradeLabel(TARGET_SCORE_MIN, gradeCountry(locale))}
           </span>
@@ -97,7 +97,7 @@ export function ExamDateStory() {
             {desiredGradeLabel(TARGET_SCORE_MAX, gradeCountry(locale))}
           </span>
         </div>
-        <p className="mt-1.5 text-center text-[10.5px] text-ink-tertiary">
+        <p className="mt-1.5 text-center text-[10px] text-ink-tertiary">
           {t("onboarding.examenSliderHint")}
         </p>
       </div>

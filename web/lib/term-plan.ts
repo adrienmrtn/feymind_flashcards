@@ -136,6 +136,19 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
     difficulties,
     offDays: offDayOffsets(offDays, today, TERM_HORIZON_DAYS),
   });
+  /**
+   * Une carte encore à faire : due, et pas mise de côté.
+   *
+   * C'est exactement ce que la session de révision servira. Compter autrement ferait dire à
+   * l'accueil un nombre que le bouton « Réviser » ne tient pas.
+   */
+  const dueById = new Map(snapshots.map((card) => [card.id, card]));
+  const pending = (cardId: string) => {
+    const card = dueById.get(cardId);
+    if (!card || card.is_suspended) return false;
+    return new Date(card.due_date).getTime() <= now.getTime();
+  };
+
   const load = termLoad(plan);
   const bars = loadBars(plan);
   const titles = new Map(courses.map((course) => [course.id, course]));
@@ -180,7 +193,7 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
     })
     .sort((left, right) => left.daysRemaining - right.daysRemaining);
 
-  const blocks: PlanTodayBlock[] = todayBlocks(plan).map((block) => {
+  const blocks: PlanTodayBlock[] = todayBlocks(plan, pending).map((block) => {
     if (isMockBlock(block)) {
       return {
         kind: "mock" as const,
@@ -215,7 +228,7 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
     exams: planExams,
     upcoming: planExams.filter((exam) => exam.daysRemaining >= 0),
     blocks,
-    todayCards: todayCardCount(plan),
+    todayCards: todayCardCount(plan, pending),
     todayMinutes: plan.days[0]?.minutes ?? 0,
     throughput,
     courses,

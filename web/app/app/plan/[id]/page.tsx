@@ -208,7 +208,6 @@ export default async function ExamSheetPage({
 
       <ExamProgress
         masteryPercent={overall.percent}
-        projectedPercent={readiness.percent}
         measured={readiness.measured}
         mockScore={readiness.mockScore}
         cardCount={overall.cardCount}

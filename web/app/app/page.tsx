@@ -120,7 +120,6 @@ function NextExam({
       <div className="mt-4">
         <ReadinessBar
           now={exam.measured && exam.mockScore != null ? exam.mockScore : exam.masteryPercent}
-          projected={exam.projectedPercent}
           target={exam.targetScore}
           measured={exam.measured}
         />

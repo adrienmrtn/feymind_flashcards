@@ -8,6 +8,7 @@ import {
   planTerm,
   startOfDay,
   termLoad,
+  todayBlocks,
   todayCardCount,
   type TermCard,
   type TermExam,
@@ -131,6 +132,42 @@ describe("planTerm", () => {
     const blocks = plan.days.flatMap((day) => day.blocks);
     expect(blocks[0]?.examName).toBe("Partiel de biologie");
     expect(blocks[0]?.courseId).toBe("bio");
+  });
+});
+
+describe("ce qu'il reste aujourd'hui", () => {
+  it("ne compte plus une carte déjà revue", () => {
+    const cards = Array.from({ length: 12 }, (_, index) => card(`c${index}`, "bio"));
+    const plan = planTerm({ exams: [exam("bio", 6, ["bio"])], cards, now });
+
+    const planted = todayCardCount(plan);
+    expect(planted).toBeGreaterThan(0);
+
+    // Les trois premières cartes du jour sont faites : le compte descend d'autant.
+    const done = new Set(
+      plan.days[0]!.blocks.flatMap((block) => (isReviewBlock(block) ? block.cardIds : [])).slice(0, 3),
+    );
+    expect(todayCardCount(plan, (id) => !done.has(id))).toBe(planted - 3);
+  });
+
+  it("retire un bloc dont toutes les cartes sont faites", () => {
+    const plan = planTerm({
+      exams: [exam("bio", 6, ["bio"])],
+      cards: [card("c1", "bio"), card("c2", "bio")],
+      now,
+    });
+    expect(todayBlocks(plan).length).toBeGreaterThan(0);
+    expect(todayBlocks(plan, () => false)).toHaveLength(0);
+    expect(todayCardCount(plan, () => false)).toBe(0);
+  });
+
+  it("garde le total posé quand on ne dit rien de ce qui est fait", () => {
+    const plan = planTerm({
+      exams: [exam("bio", 6, ["bio"])],
+      cards: [card("c1", "bio"), card("c2", "bio")],
+      now,
+    });
+    expect(todayCardCount(plan)).toBe(plan.days[0]!.cardCount);
   });
 });
 

@@ -97,10 +97,16 @@ export default function PersonalizingStep() {
         />
       }
     >
-      {summary ? <p className="mb-4 text-[13px] text-ink-tertiary">{summary}</p> : null}
+      {/*
+        L'écran tenait sur 400 px de haut : un anneau de 148, quatre lignes de 52, et un
+        résumé. Sur un portable, la dernière phase passait sous le pli, si bien qu'on
+        attendait la fin d'une liste dont on ne voyait pas le bout. Tout se resserre d'un
+        cran ; rien ne disparaît.
+      */}
+      {summary ? <p className="mb-3 text-center text-[12.5px] text-ink-tertiary">{summary}</p> : null}
 
-      <div className="flex flex-col items-center justify-center py-4">
-        <div className="relative flex h-[148px] w-[148px] items-center justify-center">
+      <div className="flex flex-col items-center justify-center">
+        <div className="relative flex h-[112px] w-[112px] items-center justify-center">
           <svg
             viewBox="0 0 120 120"
             className="absolute inset-0 h-full w-full -rotate-90"
@@ -112,7 +118,7 @@ export default function PersonalizingStep() {
               r="52"
               fill="none"
               stroke="var(--color-accent)"
-              strokeWidth="8"
+              strokeWidth="9"
               opacity={0.16}
             />
             <circle
@@ -121,34 +127,34 @@ export default function PersonalizingStep() {
               r="52"
               fill="none"
               stroke="var(--color-accent)"
-              strokeWidth="8"
+              strokeWidth="9"
               strokeLinecap="round"
               pathLength={100}
               strokeDasharray={100}
               strokeDashoffset={100 - Math.max(0.8, progress * 100)}
             />
           </svg>
-          <div className="relative flex flex-col items-center">
-            <p className="numeral text-[44px] font-bold leading-none tracking-display text-ink">
-              {Math.round(progress * 100)}
-              <span className="text-[22px]"> %</span>
-            </p>
-            <p className="mt-2 text-[12px] font-medium text-ink-secondary">
-              {isDone ? t("onboarding.parcoursFinished") : t("onboarding.parcoursBusy")}
-            </p>
-          </div>
+          {/* Le mot sort de l'anneau : à 112 px, « Micabo travaille » venait mordre le
+              tracé, et un texte posé sur un trait qui tourne se lit deux fois moins vite. */}
+          <p className="numeral relative text-[34px] font-bold leading-none tracking-display text-ink">
+            {Math.round(progress * 100)}
+            <span className="text-[17px]"> %</span>
+          </p>
         </div>
+        <p className="mt-2.5 text-[12px] font-medium text-ink-secondary">
+          {isDone ? t("onboarding.parcoursFinished") : t("onboarding.parcoursBusy")}
+        </p>
       </div>
 
-      <div className="paper mb-4 shrink-0 divide-y divide-hairline overflow-hidden rounded-group bg-surface">
+      <div className="paper mt-5 shrink-0 divide-y divide-hairline overflow-hidden rounded-group bg-surface">
         {PHASES.map((phase, index) => {
           const done = index < completed || isDone;
           const active = !isDone && index === completed;
           return (
-            <div key={phase.step} className="flex items-center gap-3 px-4 py-3.5">
+            <div key={phase.step} className="flex items-center gap-3 px-4 py-2.5">
               <span
                 aria-hidden
-                className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full ${
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
                   done
                     ? "bg-accent text-on-ink"
                     : active
@@ -170,7 +176,7 @@ export default function PersonalizingStep() {
                 ) : null}
               </span>
               <span
-                className={`text-[15px] ${
+                className={`text-[14px] ${
                   done || active ? "font-medium text-ink" : "text-ink-tertiary"
                 }`}
               >
