@@ -33,7 +33,6 @@ export default function SubjectsStep() {
 
   return (
     <Scaffold
-      eyebrow={t("onboarding.eyebrowPath")}
       title={t("onboarding.matieresTitle")}
       footer={
         <ContinueButton
@@ -48,6 +47,7 @@ export default function SubjectsStep() {
           href="/commencer/ecole"
         />
       }
+      width="wide"
     >
       <div className="space-y-6 pr-1">
         {SUBJECT_FAMILIES.map((family) => (

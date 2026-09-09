@@ -34,9 +34,9 @@ export default function LevelStep() {
 
   return (
     <Scaffold
-      eyebrow={t("onboarding.eyebrowPath")}
       title={t("onboarding.niveauTitle")}
       footer={<ContinueButton enabled={Boolean(selectedId) && ready} href="/commencer/matieres" />}
+      center
     >
       <div className="space-y-2 pr-1">
         {stages.map((stage) => (

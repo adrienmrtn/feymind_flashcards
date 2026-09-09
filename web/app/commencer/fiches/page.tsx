@@ -1,20 +1,10 @@
-"use client";
-
-import { SheetStory } from "@/components/onboarding/SheetStory";
-import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
-import { useI18n } from "@/lib/i18n/client";
+import { redirect } from "next/navigation";
 
 /**
- * Ce qui sort de l'import : des fiches, montrées telles qu'elles sont écrites.
+ * Cet écran a quitté le parcours : les six écrans de démonstration ont été refaits sur une
+ * seule forme, et celui-ci n'y avait plus sa place. Un ancien lien ne doit pas tomber dans
+ * le vide, il rejoint le premier écran de la nouvelle série.
  */
-export default function SheetsStep() {
-  const { t } = useI18n();
-  return (
-    <Scaffold
-      title={t("onboarding.fichesTitle")}
-      footer={<ContinueButton enabled href="/commencer/cartes" />}
-    >
-      <SheetStory />
-    </Scaffold>
-  );
+export default function RetiredStoryStep() {
+  redirect("/commencer/examen");
 }

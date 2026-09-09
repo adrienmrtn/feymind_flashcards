@@ -1,21 +1,24 @@
 "use client";
 
-import { ImportStory } from "@/components/onboarding/ImportStory";
-import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
+import { StoryScaffold } from "@/components/onboarding/Scaffold";
+import { FormatsStory } from "@/components/onboarding/stories/FormatsStory";
 import { useI18n } from "@/lib/i18n/client";
 
-/**
- * Comment un document devient une fiche, montré plutôt que raconté.
- */
+/** Ce qu'on apporte, et ce que Micabo accepte : tout ce qui traîne autour d'un examen. */
 export default function ImportStep() {
   const { t } = useI18n();
   return (
-    <Scaffold
-      title={t("onboarding.importTitle")}
-      footer={<ContinueButton enabled href="/commencer/fiches" />}
-      center
+    <StoryScaffold
+      title={
+        <>
+          {t("onboarding.importerTitleLead")}{" "}
+          <span className="text-accent">{t("onboarding.importerTitleStrong")}</span>
+        </>
+      }
+      lead={t("onboarding.importerLead")}
+      next="/commencer/plan"
     >
-      <ImportStory />
-    </Scaffold>
+      <FormatsStory />
+    </StoryScaffold>
   );
 }

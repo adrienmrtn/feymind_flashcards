@@ -39,13 +39,13 @@ describe("locales", () => {
     expect(catalogFor("en")).not.toBe(catalogFor("fr"));
     expect(catalogFor("fr")).not.toBe(catalogFor("de"));
     expect(catalogFor("es")).not.toBe(catalogFor("tr"));
-    expect(lookup(catalogFor("en") as unknown as MessageTree, "onboarding.welcomeTitle")).toMatch(
+    expect(lookup(catalogFor("en") as unknown as MessageTree, "onboarding.stepBienvenue")).toMatch(
       /Welcome/,
     );
-    expect(lookup(catalogFor("fr") as unknown as MessageTree, "onboarding.welcomeTitle")).toMatch(
+    expect(lookup(catalogFor("fr") as unknown as MessageTree, "onboarding.stepBienvenue")).toMatch(
       /Bienvenue/,
     );
-    expect(lookup(catalogFor("de") as unknown as MessageTree, "onboarding.welcomeTitle")).toMatch(
+    expect(lookup(catalogFor("de") as unknown as MessageTree, "onboarding.stepBienvenue")).toMatch(
       /Willkommen/,
     );
   });
