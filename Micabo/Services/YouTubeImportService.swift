@@ -89,6 +89,9 @@ struct YouTubeVideo: Codable, Equatable, Identifiable {
     /// constante locale fait foi.
     var limitSeconds: Int?
     var captionLanguages: [YouTubeCaptionLanguage]
+    /// Vrai quand le serveur sait faire regarder la vidéo par le modèle, faute de
+    /// sous-titres. Absente d'un aperçu fait sur l'appareil, et d'un déploiement antérieur.
+    var canWatch: Bool?
 
     var duration: TimeInterval {
         TimeInterval(durationSeconds)
@@ -125,18 +128,23 @@ struct YouTubeVideo: Codable, Equatable, Identifiable {
         return captionLanguages.first
     }
 
-    /// Ce qui empêche de lire cette vidéo, s'il y a quelque chose.
+    /// Vrai quand il faudra faire regarder la vidéo, faute de piste de sous-titres.
     ///
-    /// Un cours trop long n'est plus un refus : on lit le début. Seule l'absence
-    /// de sous-titres bloque encore, et l'écran peut alors montrer la vidéo **et**
-    /// dire pourquoi elle ne passe pas.
-    var blockingReason: YouTubeImportError? {
-        if captionLanguages.isEmpty { return .noCaptions }
-        return nil
+    /// Ce n'est plus un refus. Depuis un serveur, YouTube ferme l'accès aux pistes : le
+    /// 8 septembre 2026, les dix-neuf transcriptions demandées ont toutes été refusées. Le
+    /// serveur fait donc lire la vidéo par le modèle, chez Google, où il n'y a ni IP à
+    /// cacher ni signature à obtenir. Ça marche, c'est juste plus lent, et c'est ce que dit
+    /// l'aperçu.
+    var needsWatching: Bool {
+        captionLanguages.isEmpty
     }
 
-    /// Un cours magistral trop long : on l'annonce, on n'interdit pas.
-    var durationNotice: String? {
+    /// Ce que l'aperçu annonce sans rien télécharger : une lecture plus longue, ou un cours
+    /// magistral dont on ne lira que le début. Jamais un refus.
+    var readingNotice: String? {
+        if needsWatching {
+            return L10n.t("ios.yt.watched", locale: .resolved())
+        }
         guard duration > 0, duration > limit else { return nil }
         return YouTubeImportError.noticeForLongVideo(duration: duration, limit: limit)
     }
@@ -155,6 +163,14 @@ struct YouTubeTranscript: Codable, Equatable {
     var languageCode: String
     var languageName: String
     var isAutomatic: Bool
+    /// « captions » ou « model » : d'où vient le texte. Absent d'un déploiement antérieur et
+    /// d'une lecture faite sur l'appareil, qui ne passe que par les sous-titres.
+    var source: String?
+
+    /// Vrai quand c'est le modèle qui a regardé la vidéo, et non une piste de sous-titres.
+    var isWatched: Bool {
+        source == "model"
+    }
 }
 
 /// Mise en forme d'une durée, la même à l'aperçu et dans les messages d'erreur.
@@ -256,12 +272,15 @@ enum YouTubeImportError: LocalizedError, Equatable {
         }
     }
 
-    /// Vrai quand réessayer a une chance de marcher. Une vidéo sans sous-titres n'en aura
-    /// pas plus au second essai : proposer « Réessayer » serait une fausse promesse.
+    /// Vrai quand réessayer a une chance de marcher.
+    ///
+    /// `noCaptions` en fait partie depuis que le serveur fait regarder la vidéo par le
+    /// modèle : le refus le plus fréquent est alors un 503 « high demand », qui est une file
+    /// d'attente et non un verdict. Un lien qui n'en est pas, lui, n'en deviendra pas un.
     var allowsRetry: Bool {
         switch self {
-        case .network, .server, .unavailable: true
-        case .invalidLink, .noCaptions, .transcriptTooShort, .tooLong, .notConfigured: false
+        case .network, .server, .unavailable, .noCaptions: true
+        case .invalidLink, .transcriptTooShort, .tooLong, .notConfigured: false
         }
     }
 
@@ -315,9 +334,8 @@ struct YouTubeImportService {
 
     /// L'aperçu de la vidéo : titre, chaîne, durée, vignette, langues disponibles.
     ///
-    /// L'aperçu ne refuse ni l'absence de sous-titres ni une durée hors limite : il les
-    /// rapporte, et c'est `YouTubeVideo.blockingReason` qui les nomme. L'écran montre alors
-    /// la vidéo et la raison, ce qui vaut mieux qu'une alerte sur un écran vide.
+    /// L'aperçu ne refuse rien : ni l'absence de sous-titres, ni une durée hors limite. Il
+    /// les rapporte, et c'est `YouTubeVideo.readingNotice` qui les annonce, sous la vidéo.
     ///
     /// L'appareil d'abord : YouTube bloque les IP de datacenter, pas celle du
     /// téléphone. Le serveur ne sert que de repli.
@@ -335,8 +353,11 @@ struct YouTubeImportService {
         ], key: "video")
     }
 
-    /// La transcription, après confirmation. Elle n'est demandée que sur un aperçu sans
-    /// `blockingReason` : le serveur revérifie de son côté, il est seul à voir le texte.
+    /// La transcription, après confirmation.
+    ///
+    /// L'appareil essaie ses pistes de sous-titres, et passe la main dès qu'il n'en tire pas
+    /// de quoi écrire une fiche : le serveur a encore un chemin, celui où le modèle regarde
+    /// la vidéo. Un texte de trente mots gardé ici privait la vidéo de ce repli.
     func transcript(link: String) async throws -> YouTubeTranscript {
         guard let id = YouTubeLink.videoID(from: link) else { throw YouTubeImportError.invalidLink }
 
@@ -402,10 +423,16 @@ extension YouTubeImportService {
 
     private static func note(video: YouTubeVideo, transcript: YouTubeTranscript) -> String {
         var parts: [String] = []
-        let language = transcript.languageName.nilIfBlank ?? transcript.languageCode
-        parts.append(transcript.isAutomatic
-            ? "Sous-titres automatiques (\(language))"
-            : "Sous-titres \(language)")
+        // Le modèle écrit dans la langue parlée dans la vidéo, que le serveur ne nomme pas :
+        // il n'y a donc pas de langue à annoncer, et « Sous-titres  » se lirait mal.
+        let language = transcript.languageName.nilIfBlank ?? transcript.languageCode.nilIfBlank
+        if transcript.isWatched || language == nil {
+            parts.append("Vidéo lue par Micabo")
+        } else if let language {
+            parts.append(transcript.isAutomatic
+                ? "Sous-titres automatiques (\(language))"
+                : "Sous-titres \(language)")
+        }
         if let duration = video.durationLabel { parts.append(duration) }
         parts.append("\(transcript.text.count) caractères lus")
         return parts.joined(separator: " · ")
@@ -437,23 +464,21 @@ enum YouTubeOnDevice {
         guard !tracks.isEmpty else { throw YouTubeImportError.noCaptions }
 
         let ordered = orderedTracks(tracks, languages: languages)
-        var longest: YouTubeTranscript?
 
         for track in ordered {
-            guard let text = await captionText(from: track.baseURL), !text.isEmpty else { continue }
-            let result = YouTubeTranscript(
+            guard let text = await captionText(from: track.baseURL),
+                  text.count >= minimumCharacters else { continue }
+            return YouTubeTranscript(
                 text: text,
                 languageCode: track.code,
                 languageName: track.name,
-                isAutomatic: track.isAutomatic
+                isAutomatic: track.isAutomatic,
+                source: "captions"
             )
-            if text.count >= minimumCharacters { return result }
-            if longest == nil || text.count > (longest?.text.count ?? 0) {
-                longest = result
-            }
         }
 
-        if let longest { return longest }
+        // Une piste de trente mots ne fait pas une fiche, et la garder ici privait la vidéo du
+        // repli serveur, qui la fait regarder par le modèle. On laisse donc passer la main.
         throw YouTubeImportError.noCaptions
     }
 

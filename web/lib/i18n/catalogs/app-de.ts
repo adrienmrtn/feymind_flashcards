@@ -597,7 +597,11 @@ export const appDe = {
     charCount: "{count, plural, one {# Zeichen} other {# Zeichen}}",
     seeText: "Text ansehen",
     videoLink: "Videolink",
-    subsRequired: "Untertitel nötig. Ein zu langer Kurs: wir lesen den Anfang.",
+    subsRequired:
+      "Untertitel, wenn es welche gibt, sonst schaut Micabo das Video. Ein zu langer Kurs: wir lesen den Anfang.",
+    watchedVideo:
+      "Die Untertitel dieses Videos sind nicht erreichbar: Micabo schaut es an. Rechne mit einer Minute mehr.",
+    watchingHint: "Micabo schaut das Video. Eine Minute, manchmal zwei.",
     longVideo: "Dieses Video dauert {duration}. Das Blatt entsteht aus den ersten 90 Minuten.",
     seeVideo: "Video ansehen",
     sheetLength: "Länge des Blatts",

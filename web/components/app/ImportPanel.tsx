@@ -46,8 +46,8 @@ import {
   preferredLanguages,
   previewYouTubeInBrowser,
   readYouTubeInBrowser,
-  youtubeBlockingReason,
   youtubeDurationLabel,
+  youtubeNeedsWatching,
   MAX_DURATION_SECONDS,
   type YouTubePreview,
 } from "@/lib/import/youtube";
@@ -221,12 +221,16 @@ export function ImportPanel({
       previewYouTubeInBrowser(link),
       youtubePreview(link, preferredLanguages()),
     ]);
+    // Celui qui a vraiment trouvé des pistes gagne, d'où qu'il vienne. Quand personne n'en
+    // a, on garde l'aperçu du serveur : c'est lui qui porte `canWatch`, donc lui qui sait
+    // si le modèle pourra regarder la vidéo.
     const fromServer = remoteVideo(remote, t);
-    const video = fromServer?.captionsKnown
+    const fromBrowser = local.status === "ok" ? local.video : null;
+    const video = fromServer?.captions.length
       ? fromServer
-      : local.status === "ok"
-        ? local.video
-        : fromServer;
+      : fromBrowser?.captions.length
+        ? fromBrowser
+        : fromServer ?? fromBrowser;
 
     if (video) {
       showDraft({
@@ -312,16 +316,21 @@ export function ImportPanel({
     }
   }
 
-  const videoBlocked = draft?.video ? youtubeBlockingReason(draft.video) : null;
-  const videoNotice =
-    draft?.video && draft.video.durationSeconds > MAX_DURATION_SECONDS
-      ? t("app.import.longVideo", {
-          duration: youtubeDurationLabel(draft.video.durationSeconds) ?? "",
-        })
-      : null;
+  // Sans sous-titres, c'est le modèle qui regarde la vidéo : une minute au lieu de deux
+  // secondes. On l'annonce ici plutôt que de laisser l'attente parler à notre place.
+  const watching = draft?.video ? youtubeNeedsWatching(draft.video) : false;
+  const videoNotice = !draft?.video
+    ? null
+    : watching
+      ? t("app.import.watchedVideo")
+      : draft.video.durationSeconds > MAX_DURATION_SECONDS
+        ? t("app.import.longVideo", {
+            duration: youtubeDurationLabel(draft.video.durationSeconds) ?? "",
+          })
+        : null;
   const canGenerate = previewing && (
     draft.source === "youtube"
-      ? Boolean(draft.video && !videoBlocked)
+      ? Boolean(draft.video)
       : draft.text.trim().length >= 40 || (draft.images?.length ?? 0) > 0
   );
 
@@ -442,9 +451,9 @@ export function ImportPanel({
           t={t}
           draft={draft}
           title={title}
-          blocked={videoBlocked}
           notice={videoNotice}
           reading={phase === "lecture"}
+          watching={watching}
           writing={phase === "ecriture"}
           onChange={() => {
             if (draft.source === "youtube") {
@@ -647,25 +656,30 @@ function Preview({
   t,
   draft,
   title,
-  blocked,
   notice,
   reading,
+  watching,
   writing,
   onChange,
 }: {
   t: Translator;
   draft: Draft;
   title: string;
-  blocked: string | null;
   notice: string | null;
   reading: boolean;
+  watching: boolean;
   writing: boolean;
   onChange: () => void;
 }) {
   if (reading || writing) {
     return (
       <div className="flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-border bg-card px-6 py-10">
-        <Waiting t={t} phase={writing ? "ecriture" : "lecture"} name={draft.sourceName ?? title} />
+        <Waiting
+          t={t}
+          phase={writing ? "ecriture" : "lecture"}
+          name={draft.sourceName ?? title}
+          hint={!writing && watching ? t("app.import.watchingHint") : undefined}
+        />
       </div>
     );
   }
@@ -700,11 +714,7 @@ function Preview({
                 .filter(Boolean)
                 .join(" · ")}
             </p>
-            {blocked ? (
-              <p className="mt-3 text-[13.5px] leading-relaxed text-caution" role="status">
-                {blocked}
-              </p>
-            ) : notice ? (
+            {notice ? (
               <p className="mt-3 text-[13.5px] leading-relaxed text-ink-secondary" role="status">
                 {notice}
               </p>
@@ -754,15 +764,17 @@ function Waiting({
   t,
   phase,
   name,
+  hint,
 }: {
   t: Translator;
   phase: Phase;
   name: string | null;
+  hint?: string;
 }) {
   return (
     <GenerationStatus
       title={phase === "lecture" ? t("app.import.reading") : t("app.import.writing")}
-      hint={name ?? t("app.import.waitHint")}
+      hint={hint ?? name ?? t("app.import.waitHint")}
     />
   );
 }
@@ -781,6 +793,7 @@ function remoteVideo(
     captions?: unknown;
     captionLanguages?: unknown;
     captionsKnown?: unknown;
+    canWatch?: unknown;
   };
   if (typeof raw.id !== "string" || raw.id.length === 0) return null;
   const rawCaptions = Array.isArray(raw.captions)
@@ -808,6 +821,7 @@ function remoteVideo(
     durationSeconds: typeof raw.durationSeconds === "number" ? raw.durationSeconds : 0,
     captions,
     captionsKnown: raw.captionsKnown === true || captions.length > 0,
+    canWatch: raw.canWatch === true,
   };
 }
 

@@ -125,10 +125,12 @@ struct YouTubeImportSection: View {
             }
             .micaboGroup(radius: MicaboRadius.group)
 
-            if let reason = video.blockingReason?.errorDescription {
-                message(reason, systemImage: "exclamationmark.triangle", tint: MicaboColor.caution)
-            } else if let notice = video.durationNotice {
-                message(notice, systemImage: "clock", tint: MicaboColor.inkTertiary)
+            if let notice = video.readingNotice {
+                message(
+                    notice,
+                    systemImage: video.needsWatching ? "eye" : "clock",
+                    tint: MicaboColor.inkTertiary
+                )
             }
 
             Button(L10n.t("ios.changeLink", locale: .resolved()), action: onReset)

@@ -597,7 +597,11 @@ export const appEs = {
     charCount: "{count, plural, one {# carácter} other {# caracteres}}",
     seeText: "Ver el texto",
     videoLink: "Enlace del vídeo",
-    subsRequired: "Subtítulos necesarios. Un curso demasiado largo: leemos el principio.",
+    subsRequired:
+      "Los subtítulos si los hay, y si no Micabo mira el vídeo. Un curso demasiado largo: leemos el principio.",
+    watchedVideo:
+      "Los subtítulos de este vídeo no están accesibles: Micabo lo va a mirar. Cuenta un minuto más.",
+    watchingHint: "Micabo está mirando el vídeo. Un minuto, a veces dos.",
     longVideo: "Este vídeo dura {duration}. La ficha se escribirá a partir de los primeros 90 minutos.",
     seeVideo: "Ver el vídeo",
     sheetLength: "Longitud de la ficha",

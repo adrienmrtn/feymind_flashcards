@@ -64,7 +64,19 @@ const MAX_OUTPUT_TOKENS = 32_768;
 const VIDEO_MODELS = ["gemini-flash-lite-latest", "gemini-flash-latest"];
 
 /** Une lecture de 90 minutes tient largement dedans ; au delà c'est l'amont qui a lâché. */
-const VIDEO_TIMEOUT_MS = 150_000;
+const VIDEO_ATTEMPT_MS = 130_000;
+
+/**
+ * Le temps que la chaîne entière peut prendre, second modèle compris.
+ *
+ * Ce n'est pas une limite technique, c'est la patience du client : l'onglet coupe la Server
+ * Action à 300 secondes, l'app à peu près pareil. Deux essais de 130 secondes tiennent
+ * dedans, un troisième non — et une réponse que personne ne lit ne vaut pas mieux qu'un refus.
+ */
+const VIDEO_BUDGET_MS = 240_000;
+
+/** En deçà, l'essai n'a pas le temps d'aboutir : autant rendre le refus tout de suite. */
+const MINIMUM_ATTEMPT_MS = 25_000;
 
 const PROMPT = [
   "Écris le compte rendu complet de cette vidéo, dans la langue parlée dans la vidéo.",
@@ -152,9 +164,16 @@ export async function readVideoWithGemini(videoId: string): Promise<VideoReading
     throw new YouTubeError("no_captions", "Cette vidéo n'a pas de piste de sous-titres.");
   }
 
+  const startedAt = Date.now();
   let lastReason = "";
 
   for (const model of VIDEO_MODELS) {
+    const left = VIDEO_BUDGET_MS - (Date.now() - startedAt);
+    if (left < MINIMUM_ATTEMPT_MS) {
+      console.error(JSON.stringify({ youtube: "gemini_budget_epuise", model }));
+      break;
+    }
+
     const body = {
       contents: [{
         parts: [
@@ -177,7 +196,7 @@ export async function readVideoWithGemini(videoId: string): Promise<VideoReading
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(VIDEO_TIMEOUT_MS),
+        signal: AbortSignal.timeout(Math.min(VIDEO_ATTEMPT_MS, left)),
       });
     } catch (error) {
       lastReason = error instanceof DOMException && error.name === "TimeoutError"

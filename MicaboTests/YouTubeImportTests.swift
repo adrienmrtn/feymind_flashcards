@@ -121,12 +121,12 @@ final class YouTubeImportErrorTests: XCTestCase {
         XCTAssertEqual(error.errorDescription, "Panne inattendue.")
     }
 
-    /// « Réessayer » ne s'affiche que quand réessayer peut marcher. Une vidéo sans
-    /// sous-titres n'en aura pas plus au second essai.
+    /// « Réessayer » ne s'affiche que quand réessayer peut marcher. Une vidéo que le modèle
+    /// n'a pas su lire en fait partie : le refus vient souvent d'une file d'attente.
     func testRetryIsOnlyOfferedWhenItCanWork() {
         XCTAssertTrue(YouTubeImportError.network("délai dépassé").allowsRetry)
         XCTAssertTrue(YouTubeImportError.unavailable.allowsRetry)
-        XCTAssertFalse(YouTubeImportError.noCaptions.allowsRetry)
+        XCTAssertTrue(YouTubeImportError.noCaptions.allowsRetry)
         XCTAssertFalse(YouTubeImportError.transcriptTooShort.allowsRetry)
         XCTAssertFalse(YouTubeImportError.tooLong(duration: 0, limit: 90 * 60).allowsRetry)
         XCTAssertFalse(YouTubeImportError.invalidLink.allowsRetry)
@@ -154,15 +154,18 @@ final class YouTubeVideoTests: XCTestCase {
     }
 
     /// Un cours trop long n'est plus un refus à l'aperçu : on lit le début.
-    func testATooLongVideoIsNotBlockedFromThePreview() {
-        XCTAssertNil(video(duration: 134 * 60).blockingReason)
-        XCTAssertNotNil(video(duration: 134 * 60).durationNotice)
-        XCTAssertNil(video(duration: 42 * 60).blockingReason)
-        XCTAssertNil(video(duration: 42 * 60).durationNotice)
+    func testATooLongVideoIsAnnouncedNotRefused() {
+        XCTAssertNotNil(video(duration: 134 * 60).readingNotice)
+        XCTAssertNil(video(duration: 42 * 60).readingNotice)
     }
 
-    func testAVideoWithoutCaptionsIsBlockedFromThePreview() {
-        XCTAssertEqual(video(duration: 600, captions: []).blockingReason, .noCaptions)
+    /// Une vidéo sans piste n'est plus refusée : le serveur la fait regarder par le modèle,
+    /// et l'aperçu annonce l'attente au lieu de fermer la porte.
+    func testAVideoWithoutCaptionsIsWatchedInstead() {
+        let bare = video(duration: 600, captions: [])
+        XCTAssertTrue(bare.needsWatching)
+        XCTAssertEqual(bare.readingNotice, L10n.t("ios.yt.watched", locale: .resolved()))
+        XCTAssertFalse(video(duration: 600).needsWatching)
     }
 
     /// La limite vient du serveur quand il l'envoie, de la constante locale sinon : un
@@ -299,6 +302,25 @@ final class YouTubeDocumentTests: XCTestCase {
 
         XCTAssertTrue(note.contains("automatiques"), note)
         XCTAssertTrue(note.contains("12 min"), note)
+    }
+
+    /// Une vidéo lue par le modèle n'a pas de langue à annoncer : le serveur ne la nomme pas,
+    /// et « Sous-titres  » se lirait comme un bug. La note dit d'où vient le texte.
+    func testAWatchedVideoIsAnnouncedWithoutALanguage() {
+        let watched = YouTubeTranscript(
+            text: "Le cycle de l'eau commence par l'évaporation.",
+            languageCode: "",
+            languageName: "",
+            isAutomatic: true,
+            source: "model"
+        )
+
+        let note = YouTubeImportService
+            .document(video: video, transcript: watched, cover: nil)
+            .extractionNote ?? ""
+
+        XCTAssertTrue(note.contains("lue par Micabo"), note)
+        XCTAssertFalse(note.contains("Sous-titres"), note)
     }
 
     /// Le titre de la vidéo tient lieu de nom de fichier ; sans titre, il reste un nom.

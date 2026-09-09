@@ -6,7 +6,7 @@ import {
   YOUTUBE_LIMITS,
   YouTubeError,
 } from "../_shared/youtube.ts";
-import { readTranscript } from "../_shared/youtube-video.ts";
+import { canReadVideo, readTranscript } from "../_shared/youtube-video.ts";
 
 interface RequestBody {
   url?: string;
@@ -71,6 +71,10 @@ Deno.serve((request: Request) =>
           name: stripEmDashes(track.languageName),
           isAutomatic: track.isAutomatic,
         })),
+        // Sans piste de sous-titres, l'aperçu ne suffit plus à décider : c'est cette
+        // clé qui dit si le modèle peut regarder la vidéo. L'écran annonce alors une
+        // lecture plus longue au lieu d'un refus.
+        canWatch: canReadVideo(),
       };
 
       if (body.metadataOnly === true) {
