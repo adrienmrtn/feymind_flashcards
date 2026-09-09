@@ -28,6 +28,17 @@ export {
 export { stripEmDashes } from "./sheet/em-dashes";
 export { latexCommandsToUnicode, latexToUnicode } from "./formula";
 
+// La bibliothèque : les dossiers, et l'arborescence qu'on en tire.
+export {
+  FOLDER_MAX_DEPTH,
+  buildLibrary,
+  canMoveFolder,
+  folderPath,
+  type FolderNode,
+  type FolderTree,
+  type Library,
+} from "./library/folders";
+
 // La répétition espacée.
 export {
   MATURE_INTERVAL_DAYS,

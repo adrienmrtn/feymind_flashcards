@@ -449,9 +449,8 @@ export const es: Catalog = {
       appHint: "Su idioma y su aspecto.",
       account: "Tu cuenta",
       accountHint: "Suscripción, datos, sesión.",
-    },
-    help: {
-      title: "Ayuda y repetir los recorridos",
+      help: "Ayuda",
+      helpHint: "Volver a ver una guía, o escribirnos.",
     },
   },
   nav: {

@@ -50,6 +50,8 @@ const courses = [
   source: index % 2 ? "pdf" : "text",
   visibility: index === 0 ? "school" : "private",
   is_from_library: false,
+  // Le rangement : deux cours de SVT dans un dossier, le reste à la racine.
+  folder_id: index === 0 || index === 3 ? uuid(700) : null,
   view_count: 0,
   adopt_count: 0,
   user_id: USER_ID,
@@ -229,8 +231,20 @@ const availability_exceptions = [
 
 export const USER = { id: USER_ID, email: "camille@micabo.test" };
 
+const course_folders = [
+  { id: uuid(700), user_id: USER_ID, parent_id: null, name: "SVT", emoji: "🧬", position: 0 },
+  { id: uuid(701), user_id: USER_ID, parent_id: uuid(700), name: "Terminale", emoji: null, position: 0 },
+  { id: uuid(702), user_id: USER_ID, parent_id: null, name: "Langues", emoji: "🗣️", position: 1 },
+].map((folder) => ({
+  ...folder,
+  deleted_at: null,
+  created_at: iso(day(-30)),
+  updated_at: iso(day(-2)),
+}));
+
 export const tables = {
   courses,
+  course_folders,
   flashcards: cards,
   exams,
   review_logs,

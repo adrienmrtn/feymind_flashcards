@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
@@ -52,13 +52,29 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
   ];
   const stepLabel = (index >= 0 ? stepLabels[index] : undefined) ?? "";
 
+  /**
+   * Le sens du mouvement : on avance vers la droite, on revient vers la gauche.
+   *
+   * Il se calcule **pendant le rendu**, contre l'écran précédent, et la mémoire ne se met à
+   * jour qu'après. Le faire dans l'effet donnerait une première image dans le mauvais sens :
+   * l'effet passe après la peinture, et l'animation a déjà commencé.
+   */
+  const previousIndex = useRef(index);
+  const direction = index >= previousIndex.current ? "forward" : "back";
+  useEffect(() => {
+    previousIndex.current = index;
+  }, [index]);
+
   return (
     <OnboardingStore>
       <Suspense fallback={null}>
         <LoggedInBounce />
       </Suspense>
       <div className="flex min-h-svh items-center justify-center bg-canvas-sage px-3 py-3 sm:px-6 sm:py-6">
-        <div className="flex h-[min(760px,calc(100svh-1.5rem))] w-full max-w-[1120px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-floating sm:h-[min(760px,calc(100svh-3rem))]">
+        <div
+          data-step-dir={direction}
+          className="flex h-[min(760px,calc(100svh-1.5rem))] w-full max-w-[1120px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-floating sm:h-[min(760px,calc(100svh-3rem))]"
+        >
           {/*
             La jauge tient toute la largeur de la carte, et non un moignon de 72 px calé dans
             un coin. Un avancement se lit à la proportion : un trait court laisse deviner, un

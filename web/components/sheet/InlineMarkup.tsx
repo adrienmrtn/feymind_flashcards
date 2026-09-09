@@ -5,7 +5,7 @@ import { MathInline } from "./Math";
 /**
  * Le balisage en ligne d'une fiche, rendu.
  *
- * Quatre marques et pas une de plus, exactement comme sur l'iPhone. Le surlignage est une
+ * Cinq marques et pas une de plus, exactement comme sur l'iPhone. Le surlignage est une
  * **bande jaune** : elle l'a été, puis a laissé place à de l'encre bleue parce qu'un fond de
  * texte se battait avec l'interligne, et elle est revenue parce que du texte bleu au milieu
  * d'un paragraphe se lit comme un lien. L'épaisseur de la bande est tenue en `em` par
@@ -26,6 +26,10 @@ export function InlineMarkup({ text }: { text: string }) {
         const className = [
           span.bold ? "font-semibold text-ink" : "",
           span.italic ? "italic" : "",
+          // Le barré est porté par une classe et non par `<s>` : il se cumule avec le gras,
+          // l'italique et le surlignage, et un élément par marque ferait un arbre différent
+          // selon l'ordre d'écriture.
+          span.strike ? "line-through decoration-[1.5px] text-ink-tertiary" : "",
         ]
           .filter(Boolean)
           .join(" ");

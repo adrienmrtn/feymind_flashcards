@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
+import { ROW_GHOST, SettingsRow } from "@/components/app/settings/Rows";
 import { useI18n } from "@/lib/i18n/client";
 import { clearPaywallDismissal } from "@/lib/onboarding/persist";
 
@@ -17,18 +18,21 @@ export function ReplayPaywallOnboarding() {
   const router = useRouter();
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        clearPaywallDismissal();
-        router.push("/app?debug=paywall");
-      }}
-      className="pressable hover-row w-full px-7 py-5 text-left"
-    >
-      <p className="section-title">{t("app.settings.replayPaywall.title")}</p>
-      <p className="mt-1 text-[13px] leading-relaxed text-ink-tertiary">
-        {t("app.settings.replayPaywall.body")}
-      </p>
-    </button>
+    <SettingsRow
+      label={t("app.settings.replayPaywall.title")}
+      hint={t("app.settings.replayPaywall.body")}
+      control={
+        <button
+          type="button"
+          onClick={() => {
+            clearPaywallDismissal();
+            router.push("/app?debug=paywall");
+          }}
+          className={ROW_GHOST}
+        >
+          {t("app.settings.replay.go")}
+        </button>
+      }
+    />
   );
 }

@@ -79,6 +79,13 @@ final class Course {
     /// Compteurs publics, lus depuis le cloud. Ils ne se poussent pas.
     var viewCount: Int = 0
     var adoptCount: Int = 0
+    /// Le dossier qui range ce cours, ou `nil` à la racine de la bibliothèque.
+    ///
+    /// C'est un identifiant et non une relation SwiftData, pour la même raison que côté
+    /// serveur : un dossier effacé pendant qu'un autre appareil y déposait un cours ne doit
+    /// pas casser le graphe, il doit rendre le cours à la racine. Un identifiant qui ne
+    /// correspond à rien se lit comme « nulle part » ; une relation cassée, non.
+    var folderID: UUID?
 
     @Relationship(deleteRule: .cascade, inverse: \Flashcard.course)
     var flashcards: [Flashcard]? = []

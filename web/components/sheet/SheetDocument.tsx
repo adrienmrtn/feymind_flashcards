@@ -9,8 +9,11 @@ import { Button } from "@/components/ui/button";
 import { saveSheet } from "@/lib/actions/sheet";
 import { useI18n } from "@/lib/i18n/client";
 import { blocksToHtml, htmlToBlocks } from "@/lib/sheet/document";
+import { READING_SIZES, readingStyle, type ReadingSize } from "@/lib/sheet/reading-size";
+import { useReadingSize } from "@/lib/sheet/use-reading-size";
 
-import { currentBlock, toggleHighlight, toggleMark } from "./marks";
+import { FormulaEditor, type FormulaDraft } from "./FormulaEditor";
+import { currentBlock, toggleHighlight, toggleMark, type Mark } from "./marks";
 import { MathBlock } from "./Math";
 
 /**
@@ -38,6 +41,12 @@ const HIGHLIGHT_LABEL: Record<SheetHighlight, string> = {
   bleu: "app.sheet.hl.bleu",
   rose: "app.sheet.hl.rose",
   lilas: "app.sheet.hl.lilas",
+};
+
+const SIZE_LABEL: Record<ReadingSize, string> = {
+  petit: "app.sheet.size.petit",
+  normal: "app.sheet.size.normal",
+  grand: "app.sheet.size.grand",
 };
 
 type Style = "h1" | "h2" | "p" | "ul" | "ol";
@@ -77,6 +86,19 @@ export function SheetDocument({
   const [style, setStyle] = useState<Style>("p");
   const [saved, setSaved] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  const [size, setSize] = useReadingSize();
+  /**
+   * La formule ouverte dans son éditeur.
+   *
+   * `node` est le `div` du document : c'est lui qui porte le LaTeX, et c'est lui qu'on
+   * réécrit à l'application. `null` quand la formule vient d'être posée et n'existe pas
+   * encore dans le document.
+   */
+  const [editing, setEditing] = useState<{ node: HTMLElement | null; draft: FormulaDraft } | null>(
+    null,
+  );
+  /** Change quand une formule est posée, corrigée ou retirée : les portails se refont. */
+  const [formulaKey, setFormulaKey] = useState(0);
   const [pending, startTransition] = useTransition();
 
   // Le document est monté **une seule fois**, à la main. React ne doit jamais reprendre la
@@ -103,7 +125,7 @@ export function SheetDocument({
     setSaved(false);
   }
 
-  function mark(kind: "bold" | "italic") {
+  function mark(kind: Mark) {
     if (!editor.current || readOnly) return;
     if (toggleMark(editor.current, kind)) touched();
   }
@@ -155,6 +177,50 @@ export function SheetDocument({
     touched();
   }
 
+  /** Ouvre l'éditeur sur la formule cliquée. */
+  function openFormula(node: HTMLElement) {
+    if (readOnly) return;
+    setEditing({
+      node,
+      draft: { latex: node.dataset.latex ?? "", caption: node.dataset.caption ?? "" },
+    });
+  }
+
+  /** Pose une formule vide après le bloc courant, et l'ouvre aussitôt. */
+  function addFormula() {
+    if (readOnly) return;
+    setEditing({ node: null, draft: { latex: "", caption: "" } });
+  }
+
+  function applyFormula(draft: FormulaDraft) {
+    const root = editor.current;
+    if (!root || !editing) return;
+
+    let node = editing.node;
+    if (!node) {
+      node = document.createElement("div");
+      node.setAttribute("data-formula", "");
+      node.setAttribute("contenteditable", "false");
+      const anchor = currentBlock(root);
+      if (anchor && anchor.parentElement === root) anchor.after(node);
+      else root.appendChild(node);
+    }
+    node.dataset.latex = draft.latex;
+    node.dataset.caption = draft.caption;
+
+    setEditing(null);
+    touched();
+    // Le portail qui compose la formule se remonte sur le nouvel attribut.
+    setFormulaKey((key) => key + 1);
+  }
+
+  function removeFormula() {
+    editing?.node?.remove();
+    setEditing(null);
+    touched();
+    setFormulaKey((key) => key + 1);
+  }
+
   function save() {
     const root = editor.current;
     if (!root) return;
@@ -189,6 +255,12 @@ export function SheetDocument({
     if (key === "i") {
       event.preventDefault();
       mark("italic");
+      return;
+    }
+    // Cmd+Maj+X : le raccourci du barré partout ailleurs.
+    if (key === "x" && event.shiftKey) {
+      event.preventDefault();
+      mark("strike");
     }
   }
 
@@ -220,6 +292,9 @@ export function SheetDocument({
           <ToolButton label={t("app.sheet.italic")} onPress={() => mark("italic")}>
             <span className="text-[15px] font-serif italic">I</span>
           </ToolButton>
+          <ToolButton label={t("app.sheet.strike")} onPress={() => mark("strike")}>
+            <span className="text-[15px] line-through">S</span>
+          </ToolButton>
 
           <span aria-hidden className="mx-1 h-5 w-px bg-stroke" />
 
@@ -235,6 +310,38 @@ export function SheetDocument({
               style={{ backgroundColor: `var(--color-hl-${color})` }}
             />
           ))}
+
+          <span aria-hidden className="mx-1 h-5 w-px bg-stroke" />
+
+          <ToolButton label={t("app.formula.add")} onPress={addFormula}>
+            <span className="text-[15px] font-serif">∑</span>
+          </ToolButton>
+
+          {/* La taille de lecture : elle n'entre pas dans la fiche, elle reste sur
+              l'appareil. Elle est donc à droite des marques, séparée d'elles. */}
+          <div
+            role="group"
+            aria-label={t("app.sheet.size.label")}
+            className="flex items-center gap-0.5 rounded-button bg-surface-muted p-0.5"
+          >
+            {READING_SIZES.map((value, index) => (
+              <button
+                key={value}
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setSize(value)}
+                aria-pressed={value === size}
+                title={t(SIZE_LABEL[value])}
+                aria-label={t(SIZE_LABEL[value])}
+                className={`pressable flex h-8 w-8 items-center justify-center rounded-[calc(var(--radius-button)-2px)] font-semibold transition-colors duration-hover ${
+                  value === size ? "bg-surface text-ink shadow-paper" : "text-ink-tertiary"
+                }`}
+                style={{ fontSize: `${11 + index * 2}px` }}
+              >
+                A
+              </button>
+            ))}
+          </div>
 
           {tool ? (
             <>
@@ -264,6 +371,11 @@ export function SheetDocument({
       <div
         ref={editor}
         className="sheet-doc text-ink-reading"
+        style={readingStyle(size)}
+        onClick={(event) => {
+          const formula = (event.target as HTMLElement).closest?.("[data-formula]");
+          if (formula instanceof HTMLElement) openFormula(formula);
+        }}
         contentEditable={!readOnly}
         suppressContentEditableWarning
         spellCheck={false}
@@ -276,7 +388,16 @@ export function SheetDocument({
         aria-label={readOnly ? undefined : t("app.sheet.aria")}
       />
 
-      <Formulas root={editor} blocks={blocks} />
+      <Formulas key={formulaKey} root={editor} blocks={blocks} />
+
+      {editing ? (
+        <FormulaEditor
+          initial={editing.draft}
+          onSave={applyFormula}
+          onDelete={editing.node ? removeFormula : undefined}
+          onClose={() => setEditing(null)}
+        />
+      ) : null}
     </div>
   );
 }

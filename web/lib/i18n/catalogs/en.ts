@@ -451,9 +451,8 @@ export const en: Catalog = {
       appHint: "Its language and its look.",
       account: "Your account",
       accountHint: "Subscription, data, session.",
-    },
-    help: {
-      title: "Help and replaying the tours",
+      help: "Help",
+      helpHint: "Replay a tour, or write to us.",
     },
   },
   nav: {

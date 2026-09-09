@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { ROW_BUTTON, SettingsRow } from "@/components/app/settings/Rows";
 import { manageSubscription } from "@/lib/actions/checkout";
 import { useI18n } from "@/lib/i18n/client";
 import { requestPaywall } from "@/lib/paywall";
@@ -45,34 +46,31 @@ export function SubscriptionCard(view: SubscriptionView) {
   }
 
   return (
-    <section id="abonnement" className="saas-card scroll-mt-6 px-7 py-7">
-      <p className="section-title">{t("app.settings.subscription")}</p>
-      <p className="mt-1.5 text-[13.5px] font-medium text-ink">
-        {headline}
-        {plan && view.paid ? (
-          <span className="font-normal text-ink-tertiary"> · {plan}</span>
-        ) : null}
-      </p>
-      <p className="mt-1.5 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-secondary">
-        {subscriptionDetail(t, locale, view)}
-      </p>
-
-      {action ? (
-        <button
-          type="button"
-          onClick={run}
-          disabled={pending}
-          className="pressable mt-5 rounded-button bg-accent px-4 py-2.5 text-[14px] font-semibold text-on-ink disabled:opacity-40"
-        >
-          {pending ? t("app.subscription.opening") : action}
-        </button>
-      ) : null}
-
-      {failure ? (
-        <p className="mt-3 text-[13px] text-negative" role="alert">
-          {failure}
-        </p>
-      ) : null}
-    </section>
+    <SettingsRow
+      label={t("app.settings.subscription")}
+      hint={
+        <>
+          <span className="font-medium text-ink">{headline}</span>
+          {plan && view.paid ? <span> · {plan}</span> : null}
+          <br />
+          {subscriptionDetail(t, locale, view)}
+          {failure ? (
+            <>
+              <br />
+              <span className="text-negative" role="alert">
+                {failure}
+              </span>
+            </>
+          ) : null}
+        </>
+      }
+      control={
+        action ? (
+          <button type="button" onClick={run} disabled={pending} className={ROW_BUTTON}>
+            {pending ? t("app.subscription.opening") : action}
+          </button>
+        ) : null
+      }
+    />
   );
 }

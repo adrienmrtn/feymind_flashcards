@@ -13,6 +13,7 @@ struct CoursesListView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
+    @Query private var folders: [CourseFolder]
 
     @State private var searchText = ""
     @State private var sortOrder: SortOrder = .recent
@@ -27,6 +28,27 @@ struct CoursesListView: View {
     @State private var coursePendingDelete: Course?
     /// Totaux par cours, lus **une fois**. Le corps ne touche plus `course.cards`.
     @State private var census: [UUID: CourseStats] = [:]
+    /// Le dossier ouvert, ou `nil` à la racine.
+    @State private var openFolder: UUID?
+    /// Ce qu'on est en train de ranger, quand le sélecteur est ouvert.
+    @State private var moving: MovingItem?
+    @State private var folderPendingDelete: CourseFolder?
+    @State private var renamingFolder: CourseFolder?
+    @State private var folderName = ""
+    @State private var namingNewFolder = false
+
+    /// Ce qu'on déplace : un cours, ou un dossier avec tout ce qu'il contient.
+    private enum MovingItem: Identifiable {
+        case course(Course)
+        case folder(CourseFolder)
+
+        var id: UUID {
+            switch self {
+            case .course(let course): course.id
+            case .folder(let folder): folder.id
+            }
+        }
+    }
 
     enum SortOrder: String, CaseIterable, Identifiable {
         case due
@@ -52,10 +74,19 @@ struct CoursesListView: View {
         Set(sheets.compactMap { $0.subject?.nilIfBlank }).sorted()
     }
 
+    /// Ce qu'on liste.
+    ///
+    /// **Une recherche traverse les dossiers.** Chercher « Krebs » et ne rien trouver parce
+    /// que le cours est rangé deux niveaux plus bas serait le contraire d'un rangement : on
+    /// range pour retrouver, pas pour cacher. Sans recherche, on ne voit que le niveau ouvert.
     private var filtered: [Course] {
+        let scope = searchText.isEmpty
+            ? sheets.filter { $0.folderID == openFolder || (openFolder == nil && !isKnownFolder($0.folderID)) }
+            : sheets
+
         var base = searchText.isEmpty
-            ? sheets
-            : sheets.filter {
+            ? scope
+            : scope.filter {
                 $0.title.localizedCaseInsensitiveContains(searchText)
                     || ($0.subject ?? "").localizedCaseInsensitiveContains(searchText)
                     || $0.summary.localizedCaseInsensitiveContains(searchText)
@@ -73,6 +104,37 @@ struct CoursesListView: View {
         case .due:
             return base.sorted { (census[$0.id]?.dueCount ?? 0) > (census[$1.id]?.dueCount ?? 0) }
         }
+    }
+
+    /// Vrai quand l'identifiant désigne un dossier qui existe encore. Un cours rangé dans un
+    /// dossier effacé ailleurs revient à la racine plutôt que de disparaître.
+    private func isKnownFolder(_ id: UUID?) -> Bool {
+        guard let id else { return false }
+        return folders.contains { $0.id == id }
+    }
+
+    /// L'arborescence, recomposée à chaque rendu. C'est la même fonction que le site.
+    private var library: (tree: [FolderTree], loose: [Course]) {
+        CourseLibrary.build(folders: folders, courses: sheets)
+    }
+
+    /// Le chemin jusqu'au dossier ouvert : c'est le fil d'Ariane, et le bouton de remontée.
+    private var trail: [CourseFolder] {
+        CourseLibrary.path(folders, to: openFolder)
+    }
+
+    /// Les dossiers posés au niveau ouvert.
+    private var foldersHere: [FolderTree] {
+        guard let openFolder else { return library.tree }
+        return node(openFolder, in: library.tree)?.children ?? []
+    }
+
+    private func node(_ id: UUID, in tree: [FolderTree]) -> FolderTree? {
+        for branch in tree {
+            if branch.folder.id == id { return branch }
+            if let found = node(id, in: branch.children) { return found }
+        }
+        return nil
     }
 
     private var cardCount: Int? {
@@ -134,6 +196,73 @@ struct CoursesListView: View {
                 // veut lire avant de décider si on en fait des cartes.
                 path = NavigationPath([course])
             }
+        }
+        .sheet(item: $moving) { item in
+            FolderPickerSheet(
+                movingFolder: {
+                    if case .folder(let folder) = item { return folder.id }
+                    return nil
+                }(),
+                current: {
+                    switch item {
+                    case .course(let course): course.folderID
+                    case .folder(let folder): folder.parentID
+                    }
+                }()
+            ) { target in
+                switch item {
+                case .course(let course): move(course, to: target)
+                case .folder(let folder): move(folder, to: target)
+                }
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(MicaboRadius.sheet)
+        }
+        .alert(
+            i18n?.t("app.folders.new") ?? "Nouveau dossier",
+            isPresented: $namingNewFolder
+        ) {
+            TextField(i18n?.t("app.folders.namePlaceholder") ?? "Nom du dossier", text: $folderName)
+            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { folderName = "" }
+            Button(i18n?.t("app.folders.create") ?? "Créer") { createFolder() }
+        }
+        .alert(
+            i18n?.t("app.folders.rename") ?? "Renommer",
+            isPresented: Binding(
+                get: { renamingFolder != nil },
+                set: { if !$0 { renamingFolder = nil } }
+            )
+        ) {
+            TextField(i18n?.t("app.folders.namePlaceholder") ?? "Nom du dossier", text: $folderName)
+            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { renamingFolder = nil }
+            Button(i18n?.t("app.common.save") ?? "Enregistrer") {
+                let name = folderName.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let folder = renamingFolder, !name.isEmpty {
+                    folder.name = name
+                    folder.updatedAt = Date()
+                    try? modelContext.save()
+                }
+                renamingFolder = nil
+            }
+        }
+        .confirmationDialog(
+            i18n?.t("app.folders.deleteQ") ?? "Supprimer ce dossier ?",
+            isPresented: Binding(
+                get: { folderPendingDelete != nil },
+                set: { if !$0 { folderPendingDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(i18n?.t("app.folders.delete") ?? "Supprimer", role: .destructive) {
+                if let folder = folderPendingDelete {
+                    withAnimation { deleteFolder(folder) }
+                }
+                folderPendingDelete = nil
+            }
+            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { folderPendingDelete = nil }
+        } message: {
+            Text(i18n?.t("app.folders.deleteMsg") ?? "Ce qu'il contient remonte d'un cran, rien n'est supprimé.")
         }
         .micaboPaywall($paywall)
         .confirmationDialog(
@@ -225,6 +354,8 @@ struct CoursesListView: View {
             MicaboSearchField(text: $searchText, placeholder: i18n?.t("app.courses.search") ?? "Rechercher un cours ou une carte")
                 .padding(.horizontal, MicaboSpacing.screen)
 
+            folderTrail
+
             filterRow
         }
 
@@ -280,12 +411,38 @@ struct CoursesListView: View {
             .padding(.horizontal, MicaboSpacing.screen)
         } else {
             let items = filtered
+            let branches = searchText.isEmpty ? foldersHere : []
             LazyVStack(spacing: 0) {
+                ForEach(branches) { branch in
+                    MicaboRow.folder(branch.folder, total: branch.total) {
+                        withAnimation(.easeOut(duration: 0.2)) { openFolder = branch.folder.id }
+                    }
+                    .contextMenu { folderMenu(branch.folder) }
+                    // Le glisser-déposer existe aussi sur le téléphone, pour qui le connaît :
+                    // une rangée se prend et se lâche sur un dossier. Ce n'est pas la voie
+                    // principale - « Déplacer vers » l'est - mais elle ne coûte rien.
+                    .dropDestination(for: String.self) { items, _ in
+                        drop(items, into: branch.folder.id)
+                    }
+
+                    MicaboHairline(inset: MicaboSpacing.md, onCanvas: true)
+                        .padding(.trailing, MicaboSpacing.xxs)
+                }
+
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, course in
                     MicaboRow.course(course, stats: census[course.id]) {
                         path.append(course)
                     }
+                    .draggable(course.id.uuidString)
                     .contextMenu {
+                        Button {
+                            moving = .course(course)
+                        } label: {
+                            Label(
+                                i18n?.t("app.folders.moveTo") ?? "Déplacer vers",
+                                systemImage: "folder"
+                            )
+                        }
                         Button(role: .destructive) {
                             coursePendingDelete = course
                         } label: {
@@ -301,6 +458,145 @@ struct CoursesListView: View {
             }
             .padding(.horizontal, MicaboSpacing.xxs)
         }
+    }
+
+    /// Ce qu'on peut faire d'un dossier : y entrer, le renommer, le déplacer, le supprimer.
+    @ViewBuilder
+    private func folderMenu(_ folder: CourseFolder) -> some View {
+        Button {
+            renamingFolder = folder
+            folderName = folder.name
+        } label: {
+            Label(i18n?.t("app.folders.rename") ?? "Renommer", systemImage: "pencil")
+        }
+        Button {
+            moving = .folder(folder)
+        } label: {
+            Label(i18n?.t("app.folders.moveTo") ?? "Déplacer vers", systemImage: "folder")
+        }
+        Button(role: .destructive) {
+            folderPendingDelete = folder
+        } label: {
+            Label(i18n?.t("app.common.delete") ?? "Supprimer", systemImage: "trash")
+        }
+    }
+
+    /// Le fil d'Ariane, et la barre où l'on crée un dossier.
+    @ViewBuilder
+    private var folderTrail: some View {
+        HStack(spacing: MicaboSpacing.xs) {
+            if openFolder != nil {
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        openFolder = trail.count > 1 ? trail[trail.count - 2].id : nil
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text(
+                            trail.count > 1
+                                ? trail[trail.count - 2].name
+                                : (i18n?.t("app.folders.root") ?? "Mes cours")
+                        )
+                        .font(MicaboFont.hanken(14, weight: .medium))
+                    }
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                }
+                // Lâcher un cours ici le sort du dossier : c'est le `..` d'un gestionnaire
+                // de fichiers, et le même geste que sur le site.
+                .dropDestination(for: String.self) { items, _ in
+                    drop(items, into: trail.count > 1 ? trail[trail.count - 2].id : nil)
+                }
+
+                if let current = trail.last {
+                    Text(current.name)
+                        .font(MicaboFont.hanken(14, weight: .semibold))
+                        .foregroundStyle(MicaboColor.ink)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            Button {
+                folderName = ""
+                namingNewFolder = true
+            } label: {
+                Label(
+                    i18n?.t("app.folders.new") ?? "Nouveau dossier",
+                    systemImage: "folder.badge.plus"
+                )
+                .font(MicaboFont.hanken(13.5, weight: .medium))
+                .labelStyle(.titleAndIcon)
+                .foregroundStyle(MicaboColor.accent)
+            }
+        }
+        .padding(.horizontal, MicaboSpacing.screen)
+    }
+
+    // MARK: - Ranger
+
+    /// Le lâcher : on ne transporte qu'un identifiant, et on retrouve ce qu'il désigne.
+    private func drop(_ items: [String], into target: UUID?) -> Bool {
+        guard let raw = items.first, let id = UUID(uuidString: raw) else { return false }
+
+        if let course = sheets.first(where: { $0.id == id }) {
+            move(course, to: target)
+            return true
+        }
+        if let folder = folders.first(where: { $0.id == id }) {
+            move(folder, to: target)
+            return true
+        }
+        return false
+    }
+
+    private func move(_ course: Course, to folder: UUID?) {
+        guard course.folderID != folder else { return }
+        withAnimation(.easeOut(duration: 0.2)) {
+            course.folderID = folder
+            course.updatedAt = Date()
+        }
+        try? modelContext.save()
+    }
+
+    private func move(_ folder: CourseFolder, to parent: UUID?) {
+        guard folder.parentID != parent,
+              CourseLibrary.canMove(folders, folder: folder.id, into: parent)
+        else { return }
+        withAnimation(.easeOut(duration: 0.2)) {
+            folder.parentID = parent
+            folder.updatedAt = Date()
+        }
+        try? modelContext.save()
+    }
+
+    private func createFolder() {
+        let name = folderName.trimmingCharacters(in: .whitespacesAndNewlines)
+        folderName = ""
+        guard !name.isEmpty else { return }
+        let folder = CourseFolder(parentID: openFolder, name: name)
+        modelContext.insert(folder)
+        try? modelContext.save()
+    }
+
+    /// Supprimer un dossier **rend son contenu d'un cran**, il ne l'emporte pas. Un clic de
+    /// trop sur « Physique » ne doit pas effacer le semestre.
+    private func deleteFolder(_ folder: CourseFolder) {
+        let parent = folder.parentID
+        for course in courses where course.folderID == folder.id {
+            course.folderID = parent
+            course.updatedAt = Date()
+        }
+        for child in folders where child.parentID == folder.id {
+            child.parentID = parent
+            child.updatedAt = Date()
+        }
+        if openFolder == folder.id { openFolder = parent }
+        CloudTombstones.mark(CloudTable.courseFolders, id: folder.id)
+        modelContext.delete(folder)
+        try? modelContext.save()
     }
 
     /// Change quand la liste des cours, le jour ou une synchro bougent. Les notes

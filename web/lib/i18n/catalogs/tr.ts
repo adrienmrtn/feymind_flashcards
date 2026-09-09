@@ -449,9 +449,8 @@ export const tr: Catalog = {
       appHint: "Dili ve görünümü.",
       account: "Hesabın",
       accountHint: "Abonelik, veriler, oturum.",
-    },
-    help: {
-      title: "Yardım ve turları yeniden izleme",
+      help: "Yardım",
+      helpHint: "Bir turu yeniden izle ya da bize yaz.",
     },
   },
   nav: {

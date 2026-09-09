@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { ROW_FIELD, SettingsRow } from "@/components/app/settings/Rows";
 import { setUiLocale } from "@/lib/actions/locale";
 import { useI18n } from "@/lib/i18n/client";
 import { UI_LOCALES, UI_LOCALE_META, type UiLocale } from "@/lib/i18n/locales";
@@ -17,7 +18,7 @@ import { localeSwitchHref } from "@/lib/i18n/paths";
 export function LanguageSwitcher({
   variant = "compact",
 }: {
-  variant?: "compact" | "card";
+  variant?: "compact" | "row";
 }) {
   const { locale, t, pick } = useI18n();
   const router = useRouter();
@@ -41,36 +42,31 @@ export function LanguageSwitcher({
     });
   }
 
-  if (variant === "card") {
+  // Cinq gros boutons à drapeau tenaient une carte entière pour un réglage qu'on touche
+  // une fois. Dans une ligne, la liste déroulante dit la même chose sur un dixième de la
+  // hauteur, et le drapeau reste devant le nom.
+  if (variant === "row") {
     return (
-      <section className="saas-card p-7">
-        <p className="text-[13px] text-ink-tertiary">{t("settings.siteLanguage")}</p>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {UI_LOCALES.map((code) => (
-            <button
-              key={code}
-              type="button"
-              onClick={() => choose(code)}
-              disabled={pending}
-              aria-pressed={code === locale}
-              aria-label={UI_LOCALE_META[code].native}
-              className={`pressable flex min-h-11 items-center justify-center gap-2 rounded-button px-3 text-[14px] font-medium leading-tight ${
-                code === locale
-                  ? "bg-accent-soft text-accent"
-                  : "bg-surface-muted text-ink shadow-[inset_0_0_0_1px_var(--color-stroke-strong)]"
-              }`}
-            >
-              <span aria-hidden className="text-[18px] leading-none">
-                {UI_LOCALE_META[code].flag}
-              </span>
-              {UI_LOCALE_META[code].native}
-            </button>
-          ))}
-        </div>
-        <p className="mt-3 text-[13px] leading-relaxed text-ink-tertiary">
-          {t("settings.siteLanguageHelp")}
-        </p>
-      </section>
+      <SettingsRow
+        label={t("settings.siteLanguage")}
+        htmlFor="site-language"
+        hint={t("settings.siteLanguageHelp")}
+        control={
+          <select
+            id="site-language"
+            value={locale}
+            disabled={pending}
+            onChange={(event) => choose(event.target.value as UiLocale)}
+            className={`${ROW_FIELD} w-[15rem] max-w-full font-medium`}
+          >
+            {UI_LOCALES.map((code) => (
+              <option key={code} value={code}>
+                {UI_LOCALE_META[code].flag} {UI_LOCALE_META[code].native}
+              </option>
+            ))}
+          </select>
+        }
+      />
     );
   }
 

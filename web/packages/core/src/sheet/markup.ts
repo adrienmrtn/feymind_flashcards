@@ -7,6 +7,7 @@
  * | --- | --- | --- |
  * | `**terme**` | gras | le mot que l'examen attend |
  * | `*nuance*` | italique | une réserve, un mot étranger, un titre d'œuvre |
+ * | `~~faux~~` | barré | ce qu'on avait noté et qui s'est révélé faux |
  * | `==l'essentiel==` | surligné en jaune | ce qu'on relit la veille, et rien d'autre |
  * | `==menthe\|l'essentiel==` | surligné en menthe | la même marque, dans une autre couleur |
  * | `$E = mc^2$` | formule | rendue à part |
@@ -28,6 +29,15 @@ export interface MarkupSpan {
   text: string;
   bold: boolean;
   italic: boolean;
+  /**
+   * Barré.
+   *
+   * Sur une fiche, ce n'est pas une coquetterie de traitement de texte : c'est la ligne
+   * qu'on tire sur une définition apprise de travers, et qu'on veut garder sous les yeux
+   * pour ne plus la refaire. La supprimer perdrait l'erreur ; la laisser telle quelle la
+   * réviserait.
+   */
+  strike: boolean;
   highlighted: boolean;
   /**
    * La teinte du surlignage, quand il y en a un.
@@ -45,6 +55,7 @@ export interface MarkupSpan {
 
 const BOLD = "**";
 const HIGHLIGHT = "==";
+const STRIKE = "~~";
 const ITALIC = "*";
 const MATH = "$";
 const COLOR = "|";
@@ -57,12 +68,21 @@ export function parseInlineMarkup(source: string): MarkupSpan[] {
   let buffer = "";
   let bold = false;
   let italic = false;
+  let strike = false;
   let highlight: SheetHighlight | null = null;
   let index = 0;
 
   const flush = () => {
     if (buffer.length === 0) return;
-    spans.push({ text: buffer, bold, italic, highlighted: highlight !== null, highlight, math: false });
+    spans.push({
+      text: buffer,
+      bold,
+      italic,
+      strike,
+      highlighted: highlight !== null,
+      highlight,
+      math: false,
+    });
     buffer = "";
   };
 
@@ -79,6 +99,7 @@ export function parseInlineMarkup(source: string): MarkupSpan[] {
             text: latex,
             bold,
             italic,
+            strike,
             highlighted: highlight !== null,
             highlight,
             math: true,
@@ -100,6 +121,21 @@ export function parseInlineMarkup(source: string): MarkupSpan[] {
         flush();
         bold = true;
         index += BOLD.length;
+        continue;
+      }
+    }
+
+    if (matches(STRIKE, characters, index)) {
+      if (strike) {
+        flush();
+        strike = false;
+        index += STRIKE.length;
+        continue;
+      }
+      if (nextIndex(STRIKE, characters, index + STRIKE.length) !== null) {
+        flush();
+        strike = true;
+        index += STRIKE.length;
         continue;
       }
     }
@@ -166,7 +202,7 @@ function namedColor(
 /** Vrai si le texte porte au moins une marque exploitable. */
 export function containsInlineMarkup(source: string): boolean {
   return parseInlineMarkup(source).some(
-    (span) => span.bold || span.italic || span.highlighted || span.math,
+    (span) => span.bold || span.italic || span.strike || span.highlighted || span.math,
   );
 }
 
@@ -195,6 +231,7 @@ export function toInlineMarkup(spans: readonly MarkupSpan[]): string {
         ? `${HIGHLIGHT}${text}${HIGHLIGHT}`
         : `${HIGHLIGHT}${span.highlight}${COLOR}${text}${HIGHLIGHT}`;
     }
+    if (span.strike) text = `${STRIKE}${text}${STRIKE}`;
     if (span.italic) text = `${ITALIC}${text}${ITALIC}`;
     if (span.bold) text = `${BOLD}${text}${BOLD}`;
     out += text;

@@ -67,7 +67,7 @@ export function Scaffold({
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6 pb-6 pt-6 sm:px-14 sm:pb-8">
       {eyebrow || skip ? (
-        <div className={`flex shrink-0 items-baseline justify-between gap-4 ${column}`}>
+        <div className={`step-part flex shrink-0 items-baseline justify-between gap-4 ${column}`}>
           {eyebrow ? <p className="eyebrow text-ink-tertiary">{eyebrow}</p> : <span />}
           {skip ? (
             <Link
@@ -80,10 +80,12 @@ export function Scaffold({
         </div>
       ) : null}
 
-      {lead ? <div className={`rise mt-3 shrink-0 ${column}`}>{lead}</div> : null}
+      {lead ? (
+        <div className={`step-part mt-3 shrink-0 ${column}`}>{lead}</div>
+      ) : null}
 
       <h1
-        className={`rise mt-4 shrink-0 text-center font-bold leading-[1.14] tracking-tight-title text-ink ${
+        className={`step-part mt-4 shrink-0 text-center font-bold leading-[1.14] tracking-tight-title text-ink ${
           titleClassName || "text-balance text-[26px] sm:text-[32px]"
         }`}
       >
@@ -91,14 +93,18 @@ export function Scaffold({
       </h1>
 
       <div
-        className={`rise mt-9 min-h-0 flex-1 overflow-y-auto overscroll-contain ${
+        className={`step-part mt-9 min-h-0 flex-1 overflow-y-auto overscroll-contain ${
           center ? "flex flex-col" : ""
         }`}
+        style={{ animationDelay: "45ms" }}
       >
         <div className={`${column} ${center ? "my-auto" : ""}`}>{children}</div>
       </div>
 
-      <div className="rise flex shrink-0 items-center justify-between gap-3 pt-6">
+      <div
+        className="step-part flex shrink-0 items-center justify-between gap-3 pt-6"
+        style={{ animationDelay: "90ms" }}
+      >
         {back ? (
           <Link
             href={back as Route}

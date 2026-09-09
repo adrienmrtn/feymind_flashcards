@@ -138,10 +138,6 @@ export function SchoolField({
         <p className="mt-2 text-[12.5px] text-ink-tertiary">
           {t("app.settings.schoolTypeMore")}
         </p>
-      ) : !typing ? (
-        <p className="mt-2 text-[12.5px] text-ink-tertiary">
-          {t("app.settings.schoolSearchHint")}
-        </p>
       ) : null}
     </div>
   );

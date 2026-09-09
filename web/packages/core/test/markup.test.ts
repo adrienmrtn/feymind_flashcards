@@ -168,3 +168,27 @@ describe("les couleurs de surlignage", () => {
     expect(toInlineMarkup(parseInlineMarkup(source))).toBe(source);
   });
 });
+
+describe("le barré", () => {
+  it("se lit comme les autres marques et se cumule avec elles", () => {
+    const spans = parseInlineMarkup("On avait noté ~~**mille**~~ et c'était faux.");
+
+    expect(spans.find((span) => span.strike)?.text).toBe("mille");
+    expect(spans.find((span) => span.strike)?.bold).toBe(true);
+  });
+
+  it("laisse un tilde seul tranquille", () => {
+    // « ~ » est un opérateur en statistiques et une approximation partout ailleurs ; une
+    // marque sans fermeture reste un caractère, comme pour l'astérisque.
+    expect(parseInlineMarkup("x ~ N(0, 1)").some((span) => span.strike)).toBe(false);
+    expect(containsInlineMarkup("environ ~~ deux")).toBe(false);
+  });
+
+  it("revient au texte balisé qu'il avait", () => {
+    // L'ordre d'écriture est celui du module : gras dehors, puis italique, puis barré,
+    // puis surlignage. C'est ce que l'éditeur réécrit à chaque enregistrement.
+    const source = "On disait *~~ceci~~* avant.";
+
+    expect(toInlineMarkup(parseInlineMarkup(source))).toBe(source);
+  });
+});

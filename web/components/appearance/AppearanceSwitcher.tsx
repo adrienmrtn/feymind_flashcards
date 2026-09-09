@@ -1,5 +1,6 @@
 "use client";
 
+import { SettingsRow } from "@/components/app/settings/Rows";
 import { APPEARANCES, type Appearance } from "@/lib/appearance";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -21,7 +22,7 @@ const LABEL_KEY: Record<Appearance, "settings.appearanceDay" | "settings.appeara
 /**
  * Jour, nuit, crépuscule. Large dans les réglages, compact dans la barre.
  */
-export function AppearanceSwitcher({ variant = "card" }: { variant?: "card" | "compact" }) {
+export function AppearanceSwitcher({ variant = "row" }: { variant?: "row" | "compact" }) {
   const { t } = useI18n();
   const { appearance, setAppearance } = useAppearance();
 
@@ -54,34 +55,34 @@ export function AppearanceSwitcher({ variant = "card" }: { variant?: "card" | "c
     );
   }
 
+  // Trois tuiles empilées dans une carte pour un choix à trois valeurs : c'est un segmenté,
+  // et un segmenté tient sur une ligne.
   return (
-    <section className="saas-card p-7">
-      <p className="text-[13px] text-ink-tertiary">{t("settings.appearance")}</p>
-      <div className="mt-3 grid grid-cols-3 gap-2">
+    <SettingsRow label={t("settings.appearance")} hint={t("settings.appearanceHelp")}>
+      <div
+        role="group"
+        aria-label={t("settings.appearance")}
+        className="grid grid-cols-3 gap-1 rounded-button bg-surface-muted p-1"
+      >
         {APPEARANCES.map((value) => (
           <button
             key={value}
             type="button"
             onClick={() => setAppearance(value)}
             aria-pressed={value === appearance}
-            className={`pressable flex min-h-11 flex-col items-center justify-center gap-1.5 rounded-button px-2 py-2.5 text-[13.5px] font-medium leading-tight ${
-              value === appearance
-                ? "bg-accent-soft text-accent"
-                : "bg-surface-muted text-ink shadow-[inset_0_0_0_1px_var(--color-stroke-strong)]"
+            className={`pressable flex h-9 items-center justify-center gap-2 rounded-[calc(var(--radius-button)-3px)] text-[13.5px] font-medium transition-colors duration-hover ${
+              value === appearance ? "bg-surface text-ink shadow-paper" : "text-ink-secondary"
             }`}
           >
             <span
               aria-hidden
-              className="block size-4 rounded-full border border-stroke-strong"
+              className="block size-3.5 rounded-full border border-stroke-strong"
               style={{ background: SWATCH[value] }}
             />
             {t(LABEL_KEY[value])}
           </button>
         ))}
       </div>
-      <p className="mt-3 text-[13px] leading-relaxed text-ink-tertiary">
-        {t("settings.appearanceHelp")}
-      </p>
-    </section>
+    </SettingsRow>
   );
 }
