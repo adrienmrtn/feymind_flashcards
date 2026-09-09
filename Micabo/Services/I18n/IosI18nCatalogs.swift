@@ -1,6 +1,13 @@
 /// Phrases propres à l'iPhone. Les clés partagées vivent dans `SharedI18nCatalogs`.
 enum IosI18nCatalogs {
     static let fr: [String: String] = [
+        // L'examen blanc, sur le téléphone.
+        "ios.mock.resume": "Reprendre la copie",
+        "ios.mock.writing": "On écrit ta copie sur ton programme. Une trentaine de secondes.",
+        "ios.mock.leaveQ": "Quitter la copie ? Elle reste ouverte, tu pourras la reprendre depuis l'épreuve.",
+        "ios.mock.leave": "Quitter",
+        "ios.mock.stay": "Rester",
+        "ios.mock.dictateUnavailable": "La dictée n'est pas disponible : écris ta réponse.",
         // La fiche qu'on corrige, bloc par bloc.
         "ios.sheetEdit.start": "Corriger la fiche",
         "ios.sheetEdit.done": "Terminer",
@@ -564,6 +571,13 @@ enum IosI18nCatalogs {
     ]
 
     static let de: [String: String] = [
+        // L'examen blanc, sur le téléphone.
+        "ios.mock.resume": "Prüfung fortsetzen",
+        "ios.mock.writing": "Deine Prüfung wird aus deinem Stoff geschrieben. Etwa dreißig Sekunden.",
+        "ios.mock.leaveQ": "Prüfung verlassen? Sie bleibt offen, du kannst sie von der Prüfung aus fortsetzen.",
+        "ios.mock.leave": "Verlassen",
+        "ios.mock.stay": "Bleiben",
+        "ios.mock.dictateUnavailable": "Diktat ist nicht verfügbar: schreib deine Antwort.",
         // La fiche qu'on corrige, bloc par bloc.
         "ios.sheetEdit.start": "Lernzettel bearbeiten",
         "ios.sheetEdit.done": "Fertig",
@@ -1127,6 +1141,13 @@ enum IosI18nCatalogs {
     ]
 
     static let es: [String: String] = [
+        // L'examen blanc, sur le téléphone.
+        "ios.mock.resume": "Retomar el examen",
+        "ios.mock.writing": "Estamos escribiendo tu examen a partir de tu programa. Unos treinta segundos.",
+        "ios.mock.leaveQ": "¿Salir del examen? Queda abierto, podrás retomarlo desde la prueba.",
+        "ios.mock.leave": "Salir",
+        "ios.mock.stay": "Quedarme",
+        "ios.mock.dictateUnavailable": "El dictado no está disponible: escribe tu respuesta.",
         // La fiche qu'on corrige, bloc par bloc.
         "ios.sheetEdit.start": "Corregir la ficha",
         "ios.sheetEdit.done": "Listo",
@@ -1690,6 +1711,13 @@ enum IosI18nCatalogs {
     ]
 
     static let tr: [String: String] = [
+        // L'examen blanc, sur le téléphone.
+        "ios.mock.resume": "Sınava devam et",
+        "ios.mock.writing": "Sınavın müfredatından yazılıyor. Yaklaşık otuz saniye.",
+        "ios.mock.leaveQ": "Sınavdan çıkılsın mı? Açık kalır, sınav sayfasından devam edebilirsin.",
+        "ios.mock.leave": "Çık",
+        "ios.mock.stay": "Kal",
+        "ios.mock.dictateUnavailable": "Dikte kullanılamıyor: cevabını yaz.",
         // La fiche qu'on corrige, bloc par bloc.
         "ios.sheetEdit.start": "Özeti düzenle",
         "ios.sheetEdit.done": "Bitti",
@@ -2259,6 +2287,13 @@ enum IosI18nCatalogs {
     /// est pas encore retombe sur le catalogue partagé, puis sur le français - le
     /// comportement d'avant, ni meilleur ni pire. Chaque écran retouché ajoute les siennes.
     static let en: [String: String] = [
+        // L'examen blanc, sur le téléphone.
+        "ios.mock.resume": "Resume the paper",
+        "ios.mock.writing": "Writing your paper from your programme. About thirty seconds.",
+        "ios.mock.leaveQ": "Leave the paper? It stays open, you can resume it from the exam.",
+        "ios.mock.leave": "Leave",
+        "ios.mock.stay": "Stay",
+        "ios.mock.dictateUnavailable": "Dictation isn't available: type your answer.",
         // La fiche qu'on corrige, bloc par bloc.
         "ios.sheetEdit.start": "Edit the sheet",
         "ios.sheetEdit.done": "Done",

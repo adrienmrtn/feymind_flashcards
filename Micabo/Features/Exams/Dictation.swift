@@ -1,0 +1,153 @@
+import AVFoundation
+import Foundation
+import Observation
+import Speech
+
+/// **Dicter une explication.**
+///
+/// La reconnaissance vocale du téléphone transcrit en direct, et le texte reste modifiable :
+/// une transcription qui écorche un terme technique ferait perdre des points sur un mot que
+/// l'étudiant a dit juste. C'est le pendant de la dictée du site, avec `SFSpeechRecognizer` à
+/// la place de celle du navigateur.
+///
+/// Les deux autorisations - micro et reconnaissance - se demandent **avant** d'ouvrir la
+/// copie, dans la question « as-tu un micro ? » : une autorisation demandée au milieu de
+/// l'épreuve arrête le chronomètre dans la tête de l'étudiant.
+@Observable
+@MainActor
+final class Dictation {
+    enum Availability {
+        case unknown
+        case ready
+        /// Le téléphone ne sait pas transcrire dans cette langue, ou pas hors ligne.
+        case unavailable
+        /// L'étudiant a refusé le micro ou la reconnaissance.
+        case denied
+    }
+
+    private(set) var availability: Availability = .unknown
+    private(set) var isListening = false
+
+    private let recognizer: SFSpeechRecognizer?
+    private let engine = AVAudioEngine()
+    private var request: SFSpeechAudioBufferRecognitionRequest?
+    private var task: SFSpeechRecognitionTask?
+    /// Ce qui était écrit avant de reprendre la dictée, pour ne pas l'effacer.
+    private var committed = ""
+    private var onText: ((String) -> Void)?
+
+    /// `nonisolated` : la vue crée sa dictée dans un initialiseur de propriété, hors acteur.
+    nonisolated init(locale: Locale = UiLocale.resolved().foundation) {
+        recognizer = SFSpeechRecognizer(locale: locale) ?? SFSpeechRecognizer()
+    }
+
+    /// Demande le micro et la reconnaissance, pour de vrai. Rend `true` quand les deux sont
+    /// accordés et qu'on saura transcrire.
+    func prepare() async -> Bool {
+        let microphone = await Self.requestMicrophone()
+        guard microphone else {
+            availability = .denied
+            return false
+        }
+
+        let status = await withCheckedContinuation { continuation in
+            SFSpeechRecognizer.requestAuthorization { continuation.resume(returning: $0) }
+        }
+        guard status == .authorized else {
+            availability = .denied
+            return false
+        }
+
+        guard let recognizer, recognizer.isAvailable else {
+            availability = .unavailable
+            return false
+        }
+        availability = .ready
+        return true
+    }
+
+    /// Le micro seul. Ce qui compte ici est l'autorisation, pas l'enregistrement.
+    static func requestMicrophone() async -> Bool {
+        if #available(iOS 17, *) {
+            return await AVAudioApplication.requestRecordPermission()
+        }
+        return await withCheckedContinuation { continuation in
+            AVAudioSession.sharedInstance().requestRecordPermission { continuation.resume(returning: $0) }
+        }
+    }
+
+    /// Démarre ou arrête la dictée. `current` est le texte déjà écrit : la dictée s'y ajoute.
+    func toggle(current: String, onText: @escaping (String) -> Void) {
+        if isListening {
+            stop()
+        } else {
+            start(current: current, onText: onText)
+        }
+    }
+
+    private func start(current: String, onText: @escaping (String) -> Void) {
+        guard let recognizer, recognizer.isAvailable else {
+            availability = .unavailable
+            return
+        }
+        committed = current.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.onText = onText
+
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.record, mode: .measurement, options: .duckOthers)
+            try session.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            availability = .unavailable
+            return
+        }
+
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
+        self.request = request
+
+        let input = engine.inputNode
+        let format = input.outputFormat(forBus: 0)
+        input.removeTap(onBus: 0)
+        input.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
+            request.append(buffer)
+        }
+
+        engine.prepare()
+        do {
+            try engine.start()
+        } catch {
+            input.removeTap(onBus: 0)
+            availability = .unavailable
+            return
+        }
+
+        isListening = true
+        task = recognizer.recognitionTask(with: request) { [weak self] result, error in
+            Task { @MainActor in
+                guard let self else { return }
+                if let result {
+                    let heard = result.bestTranscription.formattedString
+                    let text = [self.committed, heard].filter { !$0.isEmpty }.joined(separator: " ")
+                    self.onText?(text)
+                    if result.isFinal { self.committed = text }
+                }
+                if error != nil || result?.isFinal == true {
+                    self.stop()
+                }
+            }
+        }
+    }
+
+    func stop() {
+        guard isListening || engine.isRunning else { return }
+        engine.stop()
+        engine.inputNode.removeTap(onBus: 0)
+        request?.endAudio()
+        task?.cancel()
+        request = nil
+        task = nil
+        isListening = false
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+}

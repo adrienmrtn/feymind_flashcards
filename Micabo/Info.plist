@@ -6,6 +6,10 @@
 	<string>Micabo utilise l'appareil photo pour scanner vos pages de cours.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Micabo accède à vos photos pour importer un cours ou un schéma.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Micabo utilise le micro pour que tu répondes à voix haute aux questions d'un examen blanc.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Micabo transcrit ce que tu dis pendant un examen blanc pour le corriger.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>HankenGrotesk-Regular.ttf</string>
