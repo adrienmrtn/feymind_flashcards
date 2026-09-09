@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 struct CourseGenerationRequest {
@@ -182,6 +183,46 @@ enum SheetPreferences {
 
     private static var storedLength: SheetLength? {
         UserDefaults.standard.string(forKey: lengthKey).flatMap(SheetLength.init(rawValue:))
+    }
+
+    // MARK: - La taille de lecture
+
+    /// La même clé que le site dans son `localStorage` : ce n'est pas un réglage du compte,
+    /// il ne part pas en base. Il appartient à l'œil qui lit et à l'écran qui affiche.
+    static let readingSizeKey = "micabo.sheet.size"
+
+    static var readingSize: SheetReadingSize {
+        get {
+            UserDefaults.standard.string(forKey: readingSizeKey)
+                .flatMap(SheetReadingSize.init(rawValue:)) ?? .normal
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: readingSizeKey) }
+    }
+
+    /// Ce que la taille retenue fait à chaque fragment de fiche.
+    static var readingScale: CGFloat { readingSize.scale }
+}
+
+/// **La taille de lecture d'une fiche.** Trois crans, pas un curseur : entre 0,95 et 1,05
+/// personne ne voit la différence. Les facteurs sont ceux du site (`reading-size.ts`), pour
+/// qu'une fiche « grande » soit aussi grande ici que là-bas.
+enum SheetReadingSize: String, CaseIterable, Identifiable {
+    case petit
+    case normal
+    case grand
+
+    var id: String { rawValue }
+
+    var scale: CGFloat {
+        switch self {
+        case .petit: 0.9
+        case .normal: 1
+        case .grand: 1.18
+        }
+    }
+
+    func title(locale: UiLocale = .resolved()) -> String {
+        L10n.t("app.sheet.size.\(rawValue)", locale: locale)
     }
 }
 

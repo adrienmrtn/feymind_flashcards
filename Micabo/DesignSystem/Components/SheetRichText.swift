@@ -112,6 +112,8 @@ struct SheetTextStyle {
 struct SheetInlineText: View {
     let markup: String
     var style: SheetTextStyle = .prose
+    /// Lue pour que la vue se recompose quand la taille de lecture change dans les réglages.
+    @AppStorage(SheetPreferences.readingSizeKey) private var readingSize = SheetReadingSize.normal.rawValue
 
     var body: some View {
         Text(SheetAttributedText.attributedString(markup, style: style))
@@ -138,6 +140,8 @@ struct SheetProse: UIViewRepresentable {
     var style: SheetTextStyle = .prose
     /// Appelé avec le passage sélectionné quand l'utilisateur choisit « Expliquer ».
     var onExplain: ((String) -> Void)?
+    /// Lue pour que le paragraphe se recompose quand la taille de lecture change.
+    @AppStorage(SheetPreferences.readingSizeKey) private var readingSize = SheetReadingSize.normal.rawValue
 
     func makeCoordinator() -> Coordinator {
         Coordinator(onExplain: onExplain)
@@ -330,9 +334,13 @@ enum SheetAttributedText {
     /// La taille d'un fragment : celle de son bloc, multipliée par sa marque s'il en porte
     /// une. Un facteur et non une valeur absolue, pour qu'un mot mis en avant dans un titre
     /// reste plus gros que le même mot mis en avant dans un paragraphe.
+    ///
+    /// Le tout passe par la **taille de lecture** de l'appareil : un réglage de l'œil, pas de
+    /// la fiche, qui grossit tout d'un même facteur et ne part jamais en base.
     private static func pointSize(for span: SheetMarkup.Span, style: SheetTextStyle) -> CGFloat {
-        guard let size = span.size else { return style.size }
-        return (style.size * size.scale).rounded()
+        let base = style.size * SheetPreferences.readingScale
+        guard let size = span.size else { return base.rounded() }
+        return (base * size.scale).rounded()
     }
 
     private static func uiFont(for span: SheetMarkup.Span, style: SheetTextStyle) -> UIFont {

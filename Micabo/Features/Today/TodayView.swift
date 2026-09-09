@@ -18,8 +18,13 @@ import SwiftUI
 /// qui porte le chiffre, la durée, la barre et sa légende. La barre devient lisible parce
 /// qu'elle est légendée juste dessous, et le bloc « Répartition » disparaît puisque c'est
 /// exactement ce que la légende dit.
+///
+/// **Le titre est la salutation du site**, avec le prénom et la date en sur-titre : l'accueil
+/// dit la même chose sur les deux écrans. Et la prochaine épreuve a sa carte, avec ce qu'on en
+/// sait aujourd'hui posé contre l'objectif - c'est ce qui oriente la file du jour.
 struct TodayView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(AuthController.self) private var auth: AuthController?
 
     @Query(sort: \Flashcard.updatedAt, order: .reverse) private var allCards: [Flashcard]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
@@ -102,15 +107,16 @@ struct TodayView: View {
             .prefix(4)
             .map { $0 }
 
+            // « Appris à x % » : la même maîtrise que la fiche d'épreuve et que le site, pas
+            // la part de cartes commencées.
             var progress: [UUID: Int] = [:]
-            for exam in exams {
+            for exam in exams where !exam.isPast(from: now) {
                 let relevant = allCards.filter { card in
                     guard !card.isSuspended, let courseID = card.course?.id else { return false }
                     return exam.courseIDs.contains(courseID)
                 }
                 guard !relevant.isEmpty else { continue }
-                let started = relevant.filter { $0.state != .new }.count
-                progress[exam.id] = Int((Double(started) / Double(relevant.count) * 100).rounded())
+                progress[exam.id] = ExamReadiness.masteryPercent(of: relevant, now: now)
             }
             examProgress = progress
         }
@@ -252,6 +258,9 @@ struct TodayView: View {
             .navigationDestination(for: CourseCardsRoute.self) { route in
                 FlashcardsView(course: route.course)
             }
+            .navigationDestination(for: Exam.self) { exam in
+                ExamDetailView(exam: exam)
+            }
         }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
             ImportChoiceSheet(
@@ -283,16 +292,36 @@ struct TodayView: View {
 
     // MARK: - En-tête
 
-    /// Le titre de l'écran, et la série à sa droite. Pas de salutation : c'est le seul
-    /// endroit de l'app où l'on ouvre, et ce qu'on vient y chercher est le chiffre juste
-    /// dessous.
+    /// La salutation du site, avec le prénom quand on en a un, la date en sur-titre, et la
+    /// série à droite. Le chiffre du jour reste juste dessous : on ouvre, on lit, on lance.
     private func header(streak: Int) -> some View {
-        MicaboScreenHeader(title: i18n?.t("nav.review") ?? "Réviser") {
+        MicaboScreenHeader(title: greeting, eyebrow: MicaboCalendar.dayLabel(Date())) {
             if streak > 0 {
                 streakPill(streak)
             }
         }
         .padding(.top, MicaboSpacing.xs)
+    }
+
+    private var greeting: String {
+        let hour = MicaboCalendar.shared.component(.hour, from: Date())
+        let key = hour < 6 ? "app.home.greeting.night"
+            : hour < 12 ? "app.home.greeting.morning"
+            : hour < 18 ? "app.home.greeting.afternoon"
+            : "app.home.greeting.evening"
+        let word = i18n?.t(key) ?? "Bonjour"
+        guard let name = firstName else { return word }
+        return "\(word), \(name)"
+    }
+
+    /// Le prénom, tel que le site le lit : le premier mot du nom affiché.
+    private var firstName: String? {
+        auth?.user?.displayName?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: " ")
+            .first
+            .map(String.init)?
+            .nilIfBlank
     }
 
     /// La série est la seule chose que l'utilisateur risque de perdre : elle mérite d'être
@@ -430,16 +459,36 @@ struct TodayView: View {
 
     // MARK: - Examens
 
-    /// L'entrée vers l'onglet Examens, et le compte à rebours du prochain.
-    ///
-    /// Elle reste ici parce qu'un examen oriente la file du jour. Un appui ouvre l'onglet,
-    /// plus un écran poussé : le calendrier a sa propre place dans la barre.
-    /// **La rangée des examens est toujours là**, même sans un seul cours.
+    /// **La prochaine épreuve a sa carte**, comme sur le site : le nom, le compte à rebours,
+    /// et ce qu'on en sait aujourd'hui posé contre l'objectif. Les suivantes se lisent en
+    /// dessous, sur une ligne chacune. Un appui ouvre la fiche de l'épreuve, où l'on trouve
+    /// l'examen blanc et ce qui résiste ; le calendrier garde sa place dans la barre.
+    /// **La section est toujours là**, même sans un seul cours.
     private func examSection(_ load: DayLoad) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n?.t("app.today.upcoming") ?? "Prochains examens")
+            HStack(alignment: .firstTextBaseline) {
+                MicaboSectionCaption(text: i18n?.t("app.today.nextExam") ?? "Prochaine épreuve")
+                Spacer(minLength: MicaboSpacing.xs)
+                if !upcomingExams.isEmpty {
+                    Button(i18n?.t("app.today.seeExams") ?? "Toutes les épreuves") {
+                        openExams()
+                    }
+                    .font(MicaboFont.hanken(13, weight: .semibold))
+                    .foregroundStyle(MicaboColor.accent)
+                    .buttonStyle(MicaboPressableButtonStyle())
+                }
+            }
 
-            if upcomingExams.isEmpty {
+            if let next = nextExam {
+                nextExamCard(next, mastery: load.examProgress[next.id] ?? 0)
+
+                let others = Array(upcomingExams.dropFirst().prefix(3))
+                if !others.isEmpty {
+                    MicaboSectionCaption(text: i18n?.t("app.today.otherExams") ?? "Ensuite")
+                        .padding(.top, MicaboSpacing.xs)
+                    otherExams(others, load)
+                }
+            } else {
                 Button {
                     openExams()
                 } label: {
@@ -456,33 +505,96 @@ struct TodayView: View {
                 }
                 .buttonStyle(MicaboRowButtonStyle())
                 .micaboGroup()
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(upcomingExams.enumerated()), id: \.element.id) { index, exam in
-                        Button {
-                            openExams()
-                        } label: {
-                            MicaboRow(
-                                tile: MicaboTile(
-                                    glyph: .symbol("calendar"),
-                                    background: MicaboColor.cautionSoft,
-                                    tint: MicaboColor.caution
-                                ),
-                                title: exam.name,
-                                subtitle: examLine(exam, progress: load.examProgress[exam.id] ?? 0),
-                                accessory: .badge(exam.countdownLabel(), .warm)
-                            )
-                        }
-                        .buttonStyle(MicaboRowButtonStyle())
-
-                        if index < upcomingExams.count - 1 {
-                            MicaboHairline(inset: 71)
-                        }
-                    }
-                }
-                .micaboGroup()
             }
         }
+    }
+
+    /// Le nom, le compte à rebours, et la jauge : ce qu'on sait contre ce qu'on vise.
+    private func nextExamCard(_ exam: Exam, mastery: Int) -> some View {
+        let target = TargetScore.percent(from: exam.targetScore)
+
+        return Button {
+            path.append(exam)
+        } label: {
+            VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
+                HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.sm) {
+                    Text(exam.name)
+                        .font(MicaboFont.hanken(16, weight: .semibold))
+                        .foregroundStyle(MicaboColor.ink)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    Spacer(minLength: MicaboSpacing.xs)
+                    MicaboBadge(text: exam.countdownLabel(), tone: exam.daysRemaining() <= 3 ? .warm : .neutral)
+                }
+
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text("\(mastery)")
+                            .font(MicaboFont.number(30, weight: .bold))
+                            .foregroundStyle(MicaboColor.ink)
+                            .monospacedDigit()
+                        Text("%")
+                            .font(MicaboFont.hanken(15, weight: .semibold))
+                            .foregroundStyle(MicaboColor.inkSecondary)
+                    }
+                    Text(i18n?.t("app.chart.readiness.now") ?? "aujourd'hui")
+                        .font(MicaboFont.micro)
+                        .foregroundStyle(MicaboColor.inkTertiary)
+                }
+
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(MicaboColor.surfaceMuted)
+                        Capsule()
+                            .fill(MicaboColor.accent)
+                            .frame(width: proxy.size.width * CGFloat(max(2, mastery)) / 100)
+                        Rectangle()
+                            .fill(MicaboColor.ink)
+                            .frame(width: 2, height: 12)
+                            .offset(x: proxy.size.width * CGFloat(target) / 100 - 1)
+                    }
+                }
+                .frame(height: 8)
+
+                Text(i18n?.t("app.chart.readiness.target", ["percent": "\(target)"]) ?? "objectif : \(target) %")
+                    .font(MicaboFont.micro)
+                    .foregroundStyle(MicaboColor.inkTertiary)
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .soft))
+        .micaboGroup()
+        .accessibilityLabel("\(exam.name), \(exam.countdownLabel()). \(mastery) %, \(i18n?.t("app.chart.readiness.target", ["percent": "\(target)"]) ?? "objectif : \(target) %")")
+    }
+
+    private func otherExams(_ exams: [Exam], _ load: DayLoad) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(exams.enumerated()), id: \.element.id) { index, exam in
+                Button {
+                    path.append(exam)
+                } label: {
+                    MicaboRow(
+                        tile: MicaboTile(
+                            glyph: .symbol("calendar"),
+                            background: MicaboColor.cautionSoft,
+                            tint: MicaboColor.caution
+                        ),
+                        title: exam.name,
+                        subtitle: i18n?.t("app.today.known", ["percent": "\(load.examProgress[exam.id] ?? 0)"])
+                            ?? "appris à \(load.examProgress[exam.id] ?? 0) %",
+                        accessory: .badge(exam.countdownLabel(), .neutral)
+                    )
+                }
+                .buttonStyle(MicaboRowButtonStyle())
+
+                if index < exams.count - 1 {
+                    MicaboHairline(inset: 71)
+                }
+            }
+        }
+        .micaboGroup()
     }
 
     private func openExams() {
@@ -493,12 +605,6 @@ struct TodayView: View {
         allCards.isEmpty
             ? (i18n?.t("app.today.whenYouHaveCards") ?? "Quand tu auras des cartes")
             : (i18n?.t("app.today.addDate") ?? "Ajouter une date")
-    }
-
-    private func examLine(_ exam: Exam, progress: Int) -> String {
-        let grade = DesiredGradeScale.for(OnboardingPreferences.schoolingCountry).label(for: exam.targetScore)
-        return i18n?.t("app.today.examLine", ["grade": grade, "pct": "\(progress)"])
-            ?? "\(grade) souhaitée · \(progress) % d'avancée"
     }
 
     // MARK: - La barre et sa légende

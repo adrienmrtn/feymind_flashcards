@@ -25,6 +25,7 @@ struct SettingsView: View {
     /// Le format, et pas le nombre de blocs : un menu ne fait pas un curseur. L'écrire
     /// replace le curseur de l'import au milieu de la plage choisie.
     @State private var sheetLength = SheetPreferences.length
+    @State private var readingSize = SheetPreferences.readingSize
     @State private var showResetConfirmation = false
     @State private var showDeleteAccountConfirmation = false
     @State private var showSignOutConfirmation = false
@@ -383,6 +384,25 @@ struct SettingsView: View {
                         accessory: .value(sheetLength.title)
                     )
                 }
+
+                MicaboHairline(inset: 71)
+
+                // La taille du texte des fiches, comme sur le site : sur cet appareil
+                // seulement, parce qu'elle appartient à l'œil qui lit, pas au cours.
+                Menu {
+                    Picker(i18n?.t("app.settings.readingSize") ?? "Taille du texte des fiches", selection: $readingSize) {
+                        ForEach(SheetReadingSize.allCases) { size in
+                            Text(size.title(locale: i18n?.locale ?? .resolved())).tag(size)
+                        }
+                    }
+                } label: {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("🔍"), background: MicaboColor.tilePastels[1]),
+                        title: i18n?.t("app.settings.readingSize") ?? "Taille du texte des fiches",
+                        subtitle: i18n?.t("app.settings.readingSizeHint") ?? "Sur cet appareil seulement.",
+                        accessory: .value(readingSize.title(locale: i18n?.locale ?? .resolved()))
+                    )
+                }
             }
             .micaboGroup()
         }
@@ -405,6 +425,10 @@ struct SettingsView: View {
         }
         .onChange(of: sheetLength) { _, newValue in
             SheetPreferences.length = newValue
+            Haptics.selection()
+        }
+        .onChange(of: readingSize) { _, newValue in
+            SheetPreferences.readingSize = newValue
             Haptics.selection()
         }
         .sheet(isPresented: $showSubjects, onDismiss: { subjects = OnboardingPreferences.subjects }) {

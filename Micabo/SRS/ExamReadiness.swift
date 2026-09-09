@@ -43,13 +43,19 @@ enum ExamReadiness {
     /// Le journal d'une carte sur la fenêtre. `nil` en dessous de deux passages, comme la
     /// fonction SQL du site : une carte vue une fois n'a pas de difficulté, elle a une vue.
     static func difficulty(of card: Flashcard, now: Date = Date()) -> Difficulty? {
+        difficulty(from: card.logs ?? [], now: now)
+    }
+
+    /// La même chose à partir d'un journal déjà en main : le recensement de la bibliothèque
+    /// lit tous les journaux en une requête plutôt que de faulter la relation carte par carte.
+    static func difficulty(from logs: [ReviewLog], now: Date = Date()) -> Difficulty? {
         let since = now.addingTimeInterval(-Double(sinceDays) * 86_400)
-        let logs = (card.logs ?? []).filter { $0.reviewedAt >= since }
-        guard logs.count >= 2 else { return nil }
+        let recent = logs.filter { $0.reviewedAt >= since }
+        guard recent.count >= 2 else { return nil }
         return Difficulty(
-            reviews: logs.count,
-            againCount: logs.filter { $0.rating == .again }.count,
-            hardCount: logs.filter { $0.rating == .hard }.count
+            reviews: recent.count,
+            againCount: recent.filter { $0.rating == .again }.count,
+            hardCount: recent.filter { $0.rating == .hard }.count
         )
     }
 
