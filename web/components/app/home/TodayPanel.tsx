@@ -15,8 +15,17 @@ import type { PlanTodayBlock } from "@/lib/term-plan";
  * Le travail du jour, et le bouton qui le lance.
  *
  * C'est le premier panneau de l'app, et il ne fait qu'une chose : dire ce qu'il y a à faire
- * et permettre de le faire. Les blocs viennent du plan quand il y en a un ; sinon ce sont les
- * cartes dues, et le bouton dit la même chose dans les deux cas : réviser.
+ * et permettre de le faire.
+ *
+ * **Le nombre affiché est celui que le bouton sert.** Ça paraît évident ; ça ne l'était pas.
+ * Le compte venait des blocs du plan - ce que la période prévoit pour aujourd'hui - tandis que
+ * le bouton ouvrait la file, qui sert tout ce qui est dû. Les deux ne disaient pas la même
+ * chose : l'écran annonçait neuf cartes, la session en servait cent trente, et finir « les
+ * neuf » laissait un compte qui n'avait pas bougé. Un chiffre qu'on ne peut pas ramener à zéro
+ * en faisant ce qu'il demande est pire qu'un chiffre absent.
+ *
+ * Les blocs restent dessous : ils disent **d'où vient** ce travail, cours par cours et épreuve
+ * par épreuve. Ce sont deux questions différentes, et une seule des deux commande le bouton.
  */
 export function TodayPanel({
   blocks,
@@ -27,14 +36,23 @@ export function TodayPanel({
 }: {
   blocks: PlanTodayBlock[];
   minutes: number;
+  /** Ce que le plan prévoit pour aujourd'hui. Sert aux blocs, pas au grand chiffre. */
   cards: number;
-  /** Les cartes dues aujourd'hui hors plan, quand aucune épreuve ne pilote. */
+  /** Les cartes réellement dues : c'est ce que « Réviser » sert, donc c'est ce qui s'affiche. */
   dueCards: number;
   hasCards: boolean;
 }) {
   const { t } = useI18n();
   const planned = blocks.length > 0;
-  const total = planned ? cards : dueCards;
+  const total = dueCards;
+  /**
+   * Les minutes ne s'affichent que si elles parlent du même travail.
+   *
+   * Elles viennent du plan, qui compte ce qu'il a posé pour aujourd'hui. Quand la file en
+   * contient plus - du retard, un cours sans épreuve - annoncer « 13 min » devant 92 cartes
+   * promet un quart d'heure pour une heure de travail.
+   */
+  const sameWork = planned && cards === total;
   const reviewBlocks = blocks.filter((block) => block.kind === "review");
   const mockBlocks = blocks.filter((block) => block.kind === "mock");
 
@@ -68,7 +86,7 @@ export function TodayPanel({
           <p className="mt-1.5 flex items-baseline gap-2">
             <span className="hero-value">{total}</span>
             <span className="text-[14px] text-ink-secondary">
-              {planned
+              {sameWork
                 ? t("app.today.cardsMinutes", { count: total, minutes })
                 : t("app.today.cardsDue", { count: total })}
             </span>
@@ -76,7 +94,7 @@ export function TodayPanel({
         </div>
         {total > 0 ? (
           <Button className="h-11 px-5" render={<Link href={"/app/reviser?go=1" as never} />}>
-            {planned ? t("app.today.start", { minutes }) : t("app.today.startCards", { count: total })}
+            {sameWork ? t("app.today.start", { minutes }) : t("app.today.startCards", { count: total })}
           </Button>
         ) : null}
       </div>

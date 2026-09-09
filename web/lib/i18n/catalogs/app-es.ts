@@ -713,6 +713,8 @@ export const appEs = {
     changePace: "Cambiar el ritmo",
     subscription: "Suscripción",
     readFeedback: "Leer los comentarios",
+    readingSize: "Tamaño del texto de las fichas",
+    readingSizeHint: "Solo en este dispositivo. Una ficha compartida conserva el suyo.",
     saved: {
       ok: "Guardado",
       error: "No guardado",

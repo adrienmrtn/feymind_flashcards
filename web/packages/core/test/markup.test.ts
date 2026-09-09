@@ -192,3 +192,36 @@ describe("le barré", () => {
     expect(toInlineMarkup(parseInlineMarkup(source))).toBe(source);
   });
 });
+
+describe("la taille d'un fragment", () => {
+  it("se lit et se réécrit", () => {
+    const spans = parseInlineMarkup("Le ^^grand|point clé^^ et un ^^petit|aparté^^.");
+    expect(spans.map((span) => [span.text, span.size])).toEqual([
+      ["Le ", null],
+      ["point clé", "grand"],
+      [" et un ", null],
+      ["aparté", "petit"],
+      [".", null],
+    ]);
+    expect(toInlineMarkup(spans)).toBe("Le ^^grand|point clé^^ et un ^^petit|aparté^^.");
+  });
+
+  it("se cumule avec les autres marques", () => {
+    const spans = parseInlineMarkup("^^grand|**très** important^^");
+    expect(spans[0]).toMatchObject({ text: "très", bold: true, size: "grand" });
+    expect(spans[1]).toMatchObject({ text: " important", bold: false, size: "grand" });
+  });
+
+  it("laisse tranquilles deux accents circonflexes qui ne disent rien", () => {
+    // Un cours de maths écrit « a^^2 » à la main : ce n'est pas une marque, et rien ne doit
+    // disparaître du texte.
+    expect(parseInlineMarkup("a^^2 vaut b").map((span) => span.text)).toEqual(["a^^2 vaut b"]);
+    expect(parseInlineMarkup("x^^inconnu|y^^").map((span) => span.text)).toEqual([
+      "x^^inconnu|y^^",
+    ]);
+  });
+
+  it("ne part pas dans le texte envoyé au modèle", () => {
+    expect(stripInlineMarkup("Le ^^grand|point clé^^ compte.")).toBe("Le point clé compte.");
+  });
+});

@@ -13,6 +13,7 @@ import { ProfileSettings } from "@/components/app/ProfileSettings";
 import { ReplayOnboarding } from "@/components/app/ReplayOnboarding";
 import { ReplayPaywallOnboarding } from "@/components/app/ReplayPaywallOnboarding";
 import { ReplayTour } from "@/components/app/ReplayTour";
+import { ReadingSizeRow } from "@/components/app/settings/ReadingSizeRow";
 import { SettingsGroup, SettingsRow } from "@/components/app/settings/Rows";
 import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
@@ -84,6 +85,7 @@ export default async function SettingsPage() {
       >
         <LanguageSwitcher variant="row" />
         <AppearanceSwitcher />
+        <ReadingSizeRow />
       </SettingsGroup>
 
       <SettingsGroup

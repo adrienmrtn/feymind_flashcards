@@ -713,6 +713,8 @@ export const appFr = {
     changePace: "Changer le rythme",
     subscription: "Abonnement",
     readFeedback: "Lire les retours",
+    readingSize: "Taille du texte des fiches",
+    readingSizeHint: "Sur cet appareil seulement. Une fiche partagée garde la sienne.",
     saved: {
       ok: "Enregistré",
       error: "Non enregistré",

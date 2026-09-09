@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 /// La fiche d'un cours : ce que Micabo écrit à partir du document importé.
@@ -113,6 +114,29 @@ enum SheetHighlight: String, Codable, Equatable, CaseIterable, Sendable {
 
     /// Ce que vaut un `==texte==` sans couleur écrite.
     static let fallback: SheetHighlight = .jaune
+}
+
+/// La taille d'un fragment de texte, quand elle n'est pas celle de son bloc.
+///
+/// Deux valeurs de part et d'autre du corps courant, et pas une de plus : un passage qu'on
+/// veut voir de loin en feuilletant, un aparté qu'on garde sans qu'il encombre. Une échelle
+/// plus fine ferait de la fiche une mise en page, et une fiche dont on règle la typographie
+/// est une fiche qu'on ne révise plus.
+///
+/// À ne pas confondre avec la taille de lecture, qui grossit toute la page sur un appareil :
+/// celle-ci appartient à la fiche et suit le cours d'un écran à l'autre.
+enum SheetTextSize: String, Codable, Equatable, CaseIterable, Sendable {
+    case petit
+    case grand
+
+    /// Le facteur appliqué à la taille du bloc. Voir `.sheet-doc [data-size]` côté site :
+    /// les deux rendus doivent donner la même page.
+    var scale: CGFloat {
+        switch self {
+        case .petit: return 0.85
+        case .grand: return 1.22
+        }
+    }
 }
 
 // MARK: - Blocs

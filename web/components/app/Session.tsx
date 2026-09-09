@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   DETERMINISTIC_CONFIG,
@@ -98,6 +99,23 @@ export function Session({
   const [serverPaywall, setServerPaywall] = useState(false);
   const [startedAt] = useState(() => Date.now());
 
+  /**
+   * En quittant la session, on demande à l'app de se relire.
+   *
+   * Les notes sont écrites en base au fil de l'eau et le cache serveur est invalidé à chaque
+   * note ; le cache **du navigateur**, lui, garde la page d'accueil trente secondes. Quelqu'un
+   * qui révise vingt cartes puis clique sur « Aujourd'hui » retrouvait donc son compte
+   * d'avant, intact, et concluait que réviser ne servait à rien. L'écran de fin le faisait
+   * déjà ; sortir par la barre latérale, non.
+   */
+  const router = useRouter();
+  const graded = useRef(false);
+  useEffect(() => {
+    return () => {
+      if (graded.current) router.refresh();
+    };
+  }, [router]);
+
   const card = loop.current;
   const remaining = (card ? 1 : 0) + loop.pending.length;
 
@@ -132,6 +150,7 @@ export function Session({
         now,
       );
 
+      graded.current = true;
       setTally((current) => ({
         ...current,
         answered: current.answered + 1,

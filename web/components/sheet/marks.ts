@@ -1,4 +1,4 @@
-import type { SheetHighlight } from "@micabo/core";
+import type { SheetHighlight, SheetTextSize } from "@micabo/core";
 
 /**
  * Poser et retirer une marque sur ce qui est sélectionné.
@@ -49,12 +49,52 @@ export function toggleHighlight(root: HTMLElement, color: SheetHighlight): boole
   });
 }
 
+/**
+ * La taille d'un passage. Elle se pose comme le surligneur, et pour la même raison : deux
+ * tailles ne s'empilent pas, donc la nouvelle **remplace** l'ancienne, et repasser la même
+ * la retire.
+ *
+ * C'est une marque de la sélection, et non un réglage de la page. Les trois « A » de la barre
+ * changeaient la fiche entière, ce qui n'est jamais ce qu'on demande en ayant d'abord
+ * sélectionné trois mots.
+ */
+export function toggleTextSize(root: HTMLElement, size: SheetTextSize): boolean {
+  return applyToSelection(root, {
+    matches: (element) => element.dataset.size === size,
+    replaces: (element) => element.dataset.size !== undefined,
+    wrap: () => {
+      const span = document.createElement("span");
+      span.dataset.size = size;
+      return span;
+    },
+  });
+}
+
+/**
+ * Rendre le passage choisi à la taille de son bloc.
+ *
+ * C'est le bouton du milieu, et il ne peut pas être une bascule : on ne sait pas laquelle des
+ * deux tailles est posée, et repasser « petit » sur du « grand » le remplacerait au lieu de le
+ * retirer.
+ */
+export function clearTextSize(root: HTMLElement): boolean {
+  return applyToSelection(root, {
+    matches: (element) => element.dataset.size !== undefined,
+    wrap: () => document.createElement("span"),
+    // Rien à poser : on ne veut que le déballage, que `applyToSelection` fait quand tout ce
+    // qui est choisi porte déjà la marque.
+    removeOnly: true,
+  });
+}
+
 function applyToSelection(
   root: HTMLElement,
   rule: {
     matches: (element: HTMLElement) => boolean;
     replaces?: (element: HTMLElement) => boolean;
     wrap: () => HTMLElement;
+    /** Ne fait que retirer : voir `clearTextSize`. */
+    removeOnly?: boolean;
   },
 ): boolean {
   const selection = window.getSelection();
@@ -67,12 +107,15 @@ function applyToSelection(
 
   // Tout est déjà marqué : le bouton retire. Sinon il pose, y compris sur ce qui l'était
   // déjà à moitié - c'est ce qu'on attend en repassant un feutre sur un mot déjà souligné.
-  const marked = nodes.every((node) => ancestorMatching(node, root, rule.matches) !== null);
+  const marked =
+    rule.removeOnly || nodes.every((node) => ancestorMatching(node, root, rule.matches) !== null);
 
+  let changed = false;
   for (const node of nodes) {
     const existing = ancestorMatching(node, root, rule.matches);
     if (marked && existing) {
       unwrap(existing);
+      changed = true;
       continue;
     }
     if (marked) continue;
@@ -82,10 +125,11 @@ function applyToSelection(
     const wrapper = rule.wrap();
     node.parentNode?.insertBefore(wrapper, node);
     wrapper.appendChild(node);
+    changed = true;
   }
 
   root.normalize();
-  return true;
+  return changed;
 }
 
 /**

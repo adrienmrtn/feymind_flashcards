@@ -713,6 +713,8 @@ export const appTr = {
     changePace: "Tempo değiştir",
     subscription: "Abonelik",
     readFeedback: "Geri bildirimleri oku",
+    readingSize: "Özet metin boyutu",
+    readingSizeHint: "Yalnızca bu cihazda. Paylaşılan bir özet kendi boyutunu korur.",
     saved: {
       ok: "Kaydedildi",
       error: "Kaydedilmedi",

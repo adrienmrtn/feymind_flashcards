@@ -713,6 +713,8 @@ export const appDe = {
     changePace: "Tempo ändern",
     subscription: "Abo",
     readFeedback: "Rückmeldungen lesen",
+    readingSize: "Textgröße der Lernzettel",
+    readingSizeHint: "Nur auf diesem Gerät. Ein geteilter Lernzettel behält seine eigene.",
     saved: {
       ok: "Gespeichert",
       error: "Nicht gespeichert",

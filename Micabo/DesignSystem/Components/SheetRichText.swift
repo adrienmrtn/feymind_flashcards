@@ -261,6 +261,13 @@ enum SheetAttributedText {
             if let highlight = span.highlight {
                 attributes[.backgroundColor] = UIColor(MicaboColor.sheetHighlight(highlight))
             }
+            // Barré : le trait reste fin et l'encre à peine reculée, parce qu'une définition
+            // fausse se relit - c'est même tout son intérêt.
+            if span.isStruck {
+                attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
+                attributes[.strikethroughColor] = UIColor(MicaboColor.inkTertiary)
+                attributes[.foregroundColor] = UIColor(MicaboColor.inkTertiary)
+            }
             result.append(NSAttributedString(string: span.text, attributes: attributes))
         }
 
@@ -280,6 +287,10 @@ enum SheetAttributedText {
             // `SheetProse`, où la bande est dessinée à la bonne épaisseur.
             if let highlight = span.highlight {
                 piece.backgroundColor = MicaboColor.sheetHighlight(highlight)
+            }
+            if span.isStruck {
+                piece.strikethroughStyle = .single
+                piece.foregroundColor = MicaboColor.inkTertiary
             }
             result.append(piece)
         }
@@ -303,21 +314,30 @@ enum SheetAttributedText {
     /// pas cette contrainte, donc il compose aussi les formules en ligne. C'est la seule
     /// différence de rendu assumée entre les deux plateformes.
     private static func font(for span: SheetMarkup.Span, style: SheetTextStyle) -> Font {
+        let size = pointSize(for: span, style: style)
         if span.isMath {
             return .system(
-                size: style.size + 1,
+                size: size + 1,
                 weight: span.isBold ? .semibold : style.weight,
                 design: .serif
             ).italic()
         }
 
-        let base = MicaboFont.hanken(style.size, weight: span.isBold ? .semibold : style.weight)
+        let base = MicaboFont.hanken(size, weight: span.isBold ? .semibold : style.weight)
         return span.isItalic ? base.italic() : base
+    }
+
+    /// La taille d'un fragment : celle de son bloc, multipliée par sa marque s'il en porte
+    /// une. Un facteur et non une valeur absolue, pour qu'un mot mis en avant dans un titre
+    /// reste plus gros que le même mot mis en avant dans un paragraphe.
+    private static func pointSize(for span: SheetMarkup.Span, style: SheetTextStyle) -> CGFloat {
+        guard let size = span.size else { return style.size }
+        return (style.size * size.scale).rounded()
     }
 
     private static func uiFont(for span: SheetMarkup.Span, style: SheetTextStyle) -> UIFont {
         if span.isMath {
-            let size = style.size + 1
+            let size = pointSize(for: span, style: style) + 1
             let serifDescriptor = UIFont.systemFont(ofSize: size, weight: span.isBold ? .semibold : .regular)
                 .fontDescriptor
                 .withDesign(.serif)
@@ -327,7 +347,7 @@ enum SheetAttributedText {
         }
 
         return MicaboFont.uiFont(
-            style.size,
+            pointSize(for: span, style: style),
             weight: span.isBold ? .semibold : style.weight,
             italic: span.isItalic
         )
