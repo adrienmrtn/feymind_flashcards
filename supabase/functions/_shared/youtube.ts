@@ -252,21 +252,31 @@ export async function fetchVideoMetadata(videoId: string, language: string): Pro
   }
 }
 
+/**
+ * Le lecteur, par le premier client qui répond quelque chose d'exploitable.
+ *
+ * **Les trois sont interrogées en même temps, et l'ordre reste celui-ci.** En série, chacune
+ * coûtait son délai d'attente entier à l'autre : depuis l'exécution edge, où les trois sont
+ * bloquées, l'aperçu mettait seize secondes à annoncer un « non » connu d'avance. En parallèle
+ * il coûte le plus lent des trois, soit `SOURCE_TIMEOUT_MS`.
+ *
+ * On attend quand même les trois avant de choisir, plutôt que de prendre la première arrivée :
+ * la préférence pour iOS n'est pas un détail de vitesse, c'est le client qui rend encore les
+ * pistes de sous-titres quand la page HTML n'en donne plus.
+ */
 async function fetchPlayer(videoId: string, language: string): Promise<Record<string, unknown>> {
-  const attempts = [
-    () => fetchFromInnerTube(videoId, language, IOS_CLIENT),
-    () => fetchFromInnerTube(videoId, language, ANDROID_CLIENT),
-    () => fetchFromWatchPage(videoId, language),
-  ];
+  const attempts = await Promise.all([
+    fetchFromInnerTube(videoId, language, IOS_CLIENT),
+    fetchFromInnerTube(videoId, language, ANDROID_CLIENT),
+    fetchFromWatchPage(videoId, language),
+  ]);
 
   let blocked = false;
 
-  for (const attempt of attempts) {
-    const player = await attempt();
+  for (const player of attempts) {
     if (!player) continue;
 
-    const state = playability(player);
-    if (state === "LOGIN_REQUIRED") {
+    if (playability(player) === "LOGIN_REQUIRED") {
       blocked = true;
       continue;
     }
