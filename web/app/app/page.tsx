@@ -1,467 +1,87 @@
-import Link from "next/link";
-
 import {
-  addDays,
   adherenceFrom,
-  asExamKind,
   capacityFor,
-  courseAccent,
-  examCountdownLabel,
+  dayDifference,
+  examReadiness,
   feasibility,
-  isDue,
   isMockBlock,
-  masteryOf,
-  minutesForCards,
+  levers,
+  loadBars,
+  masteryForCourses,
   planTerm,
   resolveEmoji,
+  asExamKind,
   startOfDay,
-  studyStats,
   todayBlocks,
   todayCardCount,
-  weakCards,
-  weekStrip,
-  WEEK_STRIP_RADIUS,
+  weeklyTotal,
   type TermCard,
   type TermExam,
 } from "@micabo/core";
 
-import { MasteryCard } from "@/components/app/home/MasteryCard";
-import { StatsRow } from "@/components/app/home/StatsRow";
-import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardHeader, CardPanel, CardTitle } from "@/components/ui/card";
-import { WeekStrip } from "@/components/app/WeekStrip";
+import { PlanWorkspace, type PlanExam, type PlanTodayBlock } from "@/components/app/plan/PlanWorkspace";
 import { readAvailability } from "@/lib/data/availability";
-import {
-  listCardSnapshots,
-  listCourses,
-  listExams,
-  type CardSnapshotRow,
-  type CourseRow,
-} from "@/lib/data/courses";
+import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { loadCardDifficulty, loadDailyReviews } from "@/lib/data/difficulty";
 import { listMockResults, loadThroughput } from "@/lib/data/mocks";
 import { readProfile } from "@/lib/data/profile";
-import { loadNewCardBudget, loadReviewDatesSince } from "@/lib/data/reviews";
 import { getTranslator } from "@/lib/i18n/server";
-import type { UiLocale } from "@/lib/i18n/locales";
-import type { Translator } from "@/lib/i18n/copy";
 
 /**
- * Le tableau de bord : **le travail du jour, puis la mesure.**
+ * **La page centrale du produit : le plan.**
  *
- * Trois changements de fond par rapport à la version qui listait des cartes dues.
+ * L'accueil listait des cartes dues, c'est-à-dire une file d'attente. Il répond maintenant à
+ * la question qui amène l'étudiant ici - « est-ce que je vais y arriver » - parce que c'est
+ * elle qui distingue ce produit d'un jeu de flashcards. Les cartes, les cours et les
+ * statistiques n'ont pas disparu : ils sont devenus les moyens, et ils vivent derrière.
  *
- * - **Le travail vient du plan**, pas de la file de révision seule. Ce sont les mêmes cartes,
- *   mais l'ordre est celui de la période : ce que trois épreuves se disputent ne se décide pas
- *   en regardant aujourd'hui isolément.
- * - **Chaque bloc dit pour quelle épreuve il existe.** « Biologie, 24 cartes » ne motive
- *   personne ; « Biologie pour le partiel du 14 » si.
- * - **Le social descend.** Le classement et les demandes d'amis vivent sur leur page. Ils
- *   étaient au même niveau visuel que le travail, ce qui n'a jamais été vrai.
  *
- * Sans aucune épreuve déclarée, le plan est vide et l'écran retombe sur les cartes dues :
- * personne n'est bloqué derrière la déclaration d'un examen.
+ * Tout est calculé ici, à chaque rendu, et rien n'est stocké. Un plan est une **fonction** des
+ * épreuves, des cartes, du journal de révision et du temps disponible : le mettre en table
+ * obligerait à l'invalider à chaque note donnée, c'est-à-dire des dizaines de fois par
+ * session, pour économiser un calcul qui tient dans quelques millisecondes. Le jour où le
+ * volume l'exigera, `plan_days` existe pour ça - pas avant.
+ *
+ * Les quatre lectures sont déjà en cache et partagées avec le tableau de bord : ouvrir le
+ * Plan après l'accueil ne touche pas la base.
  */
-export default async function DashboardPage() {
+export default async function PlanPage() {
   const now = new Date();
   const today = startOfDay(now);
-  const { t, locale } = await getTranslator();
+  const { t } = await getTranslator();
 
   const [
-    courses,
-    cards,
     exams,
-    profile,
-    budget,
-    reviewDates,
+    courses,
+    snapshots,
     availability,
     difficulties,
-    daily,
+    profile,
     throughput,
     mocks,
+    daily,
   ] = await Promise.all([
+    listExams(),
     listCourses(),
     listCardSnapshots(),
-    listExams(),
-    readProfile(),
-    loadNewCardBudget(),
-    loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
     readAvailability(),
     loadCardDifficulty(),
-    loadDailyReviews(),
+    readProfile(),
     loadThroughput(),
     listMockResults(),
+    loadDailyReviews(30),
   ]);
 
-  const week = weekStrip(
-    cards.map((card) => ({
-      dueDate: new Date(card.due_date),
-      isSuspended: card.is_suspended,
-      state: card.state,
-    })),
-    reviewDates,
-    now,
-    { newRemaining: budget.remaining },
-  );
-
-  const plan = planTerm({
-    exams: exams.map(toTermExam),
-    cards: cards.map(toTermCard),
-    availability,
-    now,
+  // Le plan se règle sur ce que cet étudiant fait réellement : son débit, et la part de son
+  // temps déclaré qu'il tient. Sans mesure, les deux retombent sur le comportement d'avant.
+  const adherence = adherenceFrom(
+    daily,
+    (date) => capacityFor(availability, date),
     throughput,
-    mocks,
-    difficulties,
-    adherence: adherenceFrom(
-      daily,
-      (date) => capacityFor(availability, date),
-      throughput,
-      now,
-    ),
-  });
-  const verdict = feasibility(plan);
-
-  const mastery = masteryOf(
-    cards.map((card) => ({
-      id: card.id,
-      courseId: card.course_id,
-      state: card.state,
-      intervalDays: card.interval_days,
-      isSuspended: card.is_suspended,
-    })),
-    difficulties,
+    now,
   );
 
-  const stats = studyStats(daily, now);
-  const titles = new Map(courses.map((course) => [course.id, course]));
-  const planned = todayBlocks(plan);
-  const plannedCards = todayCardCount(plan);
-
-  const tasks = planned.length > 0
-    ? planned.map((block) => {
-        if (isMockBlock(block)) {
-          return {
-            key: `mock:${block.examId}`,
-            courseId: null,
-            title: t("app.mock.blockTitle"),
-            emoji: "⏱",
-            count: block.questionCount,
-            minutes: block.minutes,
-            examName: block.examName,
-          };
-        }
-        const course = block.courseId ? titles.get(block.courseId) : undefined;
-        return {
-          key: `${block.examId}:${block.courseId ?? "sans"}`,
-          courseId: block.courseId,
-          title: course?.title || t("app.course.untitled"),
-          emoji: course ? resolveEmoji(course.emoji, course.subject, course.title) : "📘",
-          count: block.cardIds.length,
-          minutes: block.minutes,
-          examName: block.examName,
-        };
-      })
-    : dueByCourse(cards, courses, now, t);
-
-  const weak = weakCards(
-    cards.map((card) => ({
-      id: card.id,
-      courseId: card.course_id,
-      front: card.front,
-      kind: card.kind,
-      state: card.state,
-      intervalDays: card.interval_days,
-      lapses: card.lapses,
-      isSuspended: card.is_suspended,
-    })),
-    difficulties,
-    { limit: 3 },
-  );
-
-  const nextExam = exams
-    .map((exam) => ({
-      id: exam.id,
-      name: exam.name,
-      days: Math.round(
-        (startOfDay(new Date(`${exam.exam_date}T12:00:00`)).getTime() - today.getTime()) /
-          86_400_000,
-      ),
-    }))
-    .filter((exam) => exam.days >= 0)
-    .sort((left, right) => left.days - right.days)[0];
-
-  const name = profile?.display_name?.trim().split(/\s+/)[0];
-  const totalMinutes = plan.days[0]?.minutes ?? 0;
-
-  return (
-    <>
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight text-foreground">
-            {name ? name : t("app.home.titleFallback")}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{greetingFor(now, t)}</p>
-        </div>
-        {nextExam ? (
-          <Link
-            href={"/app/plan" as never}
-            className="hover-tile flex items-center gap-2 rounded-pill bg-caution-soft px-3 py-1.5"
-          >
-            <span className="truncate text-[13px] font-medium text-caution">{nextExam.name}</span>
-            <span className="numeral text-[13px] font-semibold text-caution">
-              {examCountdownLabel(nextExam.days)}
-            </span>
-          </Link>
-        ) : null}
-      </header>
-
-      <TodayCard
-        tasks={tasks}
-        cardCount={cards.length}
-        minutes={totalMinutes}
-        fromPlan={planned.length > 0}
-        tight={verdict.level === "short"}
-        t={t}
-      />
-
-      <MasteryCard mastery={mastery} />
-
-      <div className="grid min-w-0 items-stretch gap-4 lg:grid-cols-2">
-        <div className="h-full min-w-0" data-tour="semaine">
-          <WeekStrip days={week} locale={locale as UiLocale} t={t} />
-        </div>
-        <WeakCard weak={weak} t={t} />
-      </div>
-
-      <StatsRow stats={stats} daily={daily} />
-    </>
-  );
-}
-
-interface TodayTask {
-  key: string;
-  courseId: string | null;
-  title: string;
-  emoji: string;
-  count: number;
-  minutes: number;
-  examName: string | null;
-}
-
-function TodayCard({
-  tasks,
-  cardCount,
-  minutes,
-  fromPlan,
-  tight,
-  t,
-}: {
-  tasks: TodayTask[];
-  cardCount: number;
-  minutes: number;
-  fromPlan: boolean;
-  tight: boolean;
-  t: Translator;
-}) {
-  return (
-    <Card data-tour="taches">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-[15px] font-semibold text-ink">
-          {t("app.home.tasks.title")}
-        </CardTitle>
-        {tasks.length > 0 ? (
-          <CardAction>
-            <Button size="sm" render={<Link href={"/app/reviser?go=1" as never} />}>
-              {minutes > 0
-                ? t("app.home.tasks.startMinutes", { minutes })
-                : t("app.home.tasks.reviewAll")}
-            </Button>
-          </CardAction>
-        ) : null}
-      </CardHeader>
-      <CardPanel className="pt-0">
-        {tasks.length === 0 ? (
-          <TodayEmpty cardCount={cardCount} t={t} />
-        ) : (
-          <>
-            <ul className="divide-y divide-hairline">
-              {tasks.map((task) => (
-                <li key={task.key} className="flex items-center gap-3 py-3 first:pt-1 last:pb-0">
-                  <Link
-                    href={
-                      (task.courseId ? `/app/c/${task.courseId}` : "/app/cours") as never
-                    }
-                    className="hover-row -mx-2 flex min-w-0 flex-1 items-center gap-3 rounded-tile px-2 py-1"
-                  >
-                    <span
-                      aria-hidden
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-tile text-[18px]"
-                      style={{
-                        backgroundColor: `${courseAccent(task.courseId ?? task.key)}1f`,
-                      }}
-                    >
-                      {task.emoji}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-medium text-ink">
-                        <span className="underline-draw">{task.title}</span>
-                      </span>
-                      <span className="numeral mt-0.5 block truncate text-[13px] text-ink-tertiary">
-                        {task.examName
-                          ? t("app.home.tasks.forExam", {
-                              cards: task.count,
-                              minutes: task.minutes,
-                              exam: task.examName,
-                            })
-                          : t("app.home.tasks.dueCards", { count: task.count })}
-                      </span>
-                    </span>
-                  </Link>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    render={
-                      <Link
-                        href={
-                          (task.courseId
-                            ? `/app/reviser?cours=${task.courseId}`
-                            : "/app/reviser") as never
-                        }
-                      />
-                    }
-                  >
-                    {t("app.review.verb")}
-                  </Button>
-                </li>
-              ))}
-            </ul>
-
-            {fromPlan ? (
-              <p className="mt-3 text-[12.5px] text-ink-tertiary">
-                {tight ? (
-                  <Link href={"/app/plan" as never} className="underline-draw text-caution">
-                    {t("app.home.tasks.planTight")}
-                  </Link>
-                ) : (
-                  t("app.home.tasks.fromPlan")
-                )}
-              </p>
-            ) : null}
-          </>
-        )}
-      </CardPanel>
-    </Card>
-  );
-}
-
-function TodayEmpty({ cardCount, t }: { cardCount: number; t: Translator }) {
-  if (cardCount === 0) {
-    return (
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-[15px] font-semibold text-ink">{t("app.home.empty.noCardsTitle")}</p>
-          <p className="mt-0.5 text-[13px] text-ink-tertiary">{t("app.home.empty.noCardsBody")}</p>
-        </div>
-        <Button size="sm" render={<Link href={"/app/importer" as never} />}>
-          {t("nav.import")}
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <p className="text-[15px] font-semibold text-ink">{t("app.home.empty.doneTitle")}</p>
-        <p className="mt-0.5 text-[13px] text-ink-tertiary">{t("app.home.empty.doneTomorrow")}</p>
-      </div>
-      <Button variant="outline" size="sm" render={<Link href={"/app/reviser" as never} />}>
-        {t("app.home.empty.reviewAgain")}
-      </Button>
-    </div>
-  );
-}
-
-/**
- * Ce qui résiste, sur l'accueil.
- *
- * Trois cartes au plus : c'est une invitation à corriger, pas un rapport d'échec. La liste
- * complète vit sur la fiche de l'épreuve, là où on peut agir dessus.
- */
-function WeakCard({
-  weak,
-  t,
-}: {
-  weak: { id: string; front: string; againCount: number; reviews: number }[];
-  t: Translator;
-}) {
-  return (
-    <section className="flex h-full min-w-0 flex-col rounded-group border border-border bg-card p-5">
-      <h2 className="text-[15px] font-semibold text-ink">{t("app.home.weak.title")}</h2>
-      {weak.length === 0 ? (
-        <p className="mt-2 text-[13.5px] text-ink-secondary">{t("app.home.weak.none")}</p>
-      ) : (
-        <>
-          <p className="mt-1 text-[13px] text-ink-secondary">{t("app.home.weak.lead")}</p>
-          <ul className="mt-3 space-y-2">
-            {weak.map((card) => (
-              <li key={card.id} className="rounded-button bg-surface-muted px-3 py-2.5">
-                <p className="line-clamp-2 text-[13.5px] text-ink">{card.front}</p>
-                <p className="numeral mt-1 text-[12px] text-ink-tertiary">
-                  {t("app.home.weak.line", {
-                    again: card.againCount,
-                    reviews: card.reviews,
-                  })}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </section>
-  );
-}
-
-/** Sans épreuve déclarée, on retombe sur les cartes dues, groupées par cours. */
-function dueByCourse(
-  cards: CardSnapshotRow[],
-  courses: CourseRow[],
-  now: Date,
-  t: Translator,
-): TodayTask[] {
-  const counts = new Map<string, number>();
-  for (const card of cards) {
-    if (!card.course_id) continue;
-    const due = isDue(
-      {
-        id: card.id,
-        state: card.state,
-        dueDate: new Date(card.due_date),
-        position: card.position,
-        createdAt: new Date(card.created_at),
-        isSuspended: card.is_suspended,
-      },
-      now,
-    );
-    if (due) counts.set(card.course_id, (counts.get(card.course_id) ?? 0) + 1);
-  }
-
-  return courses
-    .filter((course) => (counts.get(course.id) ?? 0) > 0)
-    .map((course) => ({
-      key: course.id,
-      courseId: course.id,
-      title: course.title || t("app.course.untitled"),
-      emoji: resolveEmoji(course.emoji, course.subject, course.title),
-      count: counts.get(course.id) ?? 0,
-      minutes: minutesForCards(counts.get(course.id) ?? 0),
-      examName: null,
-    }))
-    .sort((left, right) => right.count - left.count);
-}
-
-function toTermCard(card: CardSnapshotRow): TermCard {
-  return {
+  const termCards: TermCard[] = snapshots.map((card) => ({
     id: card.id,
     courseId: card.course_id,
     kind: card.kind,
@@ -469,34 +89,155 @@ function toTermCard(card: CardSnapshotRow): TermCard {
     intervalDays: card.interval_days,
     dueDate: new Date(card.due_date),
     isSuspended: card.is_suspended,
-  };
-}
+  }));
 
-function toTermExam(exam: {
-  id: string;
-  name: string;
-  exam_date: string;
-  intensity: string;
-  course_ids: string[] | null;
-  formats: string[] | null;
-  kind: string;
-}): TermExam {
-  return {
+  const termExams: TermExam[] = exams.map((exam) => ({
     id: exam.id,
     name: exam.name,
     examDate: new Date(`${exam.exam_date}T12:00:00`),
-    intensity:
-      exam.intensity === "light" || exam.intensity === "intense" ? exam.intensity : "standard",
+    intensity: asIntensity(exam.intensity),
     courseIds: exam.course_ids ?? [],
     formats: exam.formats ?? [],
     kind: asExamKind(exam.kind),
-  };
+  }));
+
+  const plan = planTerm({
+    exams: termExams,
+    cards: termCards,
+    availability,
+    now,
+    throughput,
+    adherence,
+    mocks,
+    difficulties,
+  });
+  const verdict = feasibility(plan);
+  const bars = loadBars(plan);
+
+  const titles = new Map(courses.map((course) => [course.id, course]));
+  const cardCounts = new Map<string, number>();
+  for (const card of snapshots) {
+    if (!card.course_id || card.is_suspended) continue;
+    cardCounts.set(card.course_id, (cardCounts.get(card.course_id) ?? 0) + 1);
+  }
+
+  const planExams: PlanExam[] = exams
+    .map((exam) => {
+      const courseIds = exam.course_ids ?? [];
+      const mastery = masteryForCourses(
+        snapshots.map((card) => ({
+          id: card.id,
+          courseId: card.course_id,
+          state: card.state,
+          intervalDays: card.interval_days,
+          isSuspended: card.is_suspended,
+        })),
+        difficulties,
+        courseIds,
+      );
+
+      // Un blanc passé l'emporte sur la projection : une formule qui annonce 88 % contre un
+      // score mesuré à 54 a tort, et c'est le score qu'il faut croire.
+      const readiness = examReadiness({
+        masteryPercent: mastery.percent,
+        projectedPercent: projectedMastery(
+          mastery.percent,
+          plan.passesByExam.get(exam.id) ?? 0,
+          mastery.cardCount,
+        ),
+        mocks,
+        examId: exam.id,
+        now,
+      });
+
+      return {
+        id: exam.id,
+        name: exam.name,
+        examDate: exam.exam_date,
+        daysRemaining: dayDifference(today, new Date(`${exam.exam_date}T12:00:00`)),
+        courseIds,
+        masteryPercent: mastery.percent,
+        projectedPercent: readiness.percent,
+        measured: readiness.measured,
+        mockScore: readiness.mockScore,
+        cardCount: mastery.cardCount,
+        isPlanned: exam.is_planned,
+      };
+    })
+    .sort((left, right) => left.daysRemaining - right.daysRemaining);
+
+  const blocks: PlanTodayBlock[] = todayBlocks(plan).map((block) => {
+    if (isMockBlock(block)) {
+      return {
+        kind: "mock" as const,
+        courseId: null,
+        courseTitle: t("app.mock.blockTitle"),
+        emoji: "⏱",
+        examId: block.examId,
+        examName: block.examName,
+        cards: block.questionCount,
+        minutes: block.minutes,
+      };
+    }
+    const course = block.courseId ? titles.get(block.courseId) : undefined;
+    return {
+      kind: "review" as const,
+      courseId: block.courseId,
+      courseTitle: course?.title || t("app.course.untitled"),
+      emoji: course ? resolveEmoji(course.emoji, course.subject, course.title) : "📘",
+      examId: block.examId,
+      examName: block.examName,
+      cards: block.cardIds.length,
+      minutes: block.minutes,
+    };
+  });
+
+  const todayCards = todayCardCount(plan);
+  const mine = courses.filter((course) => !course.is_from_library);
+  const greeting = profile?.display_name?.trim().split(/\s+/)[0] ?? null;
+
+  return (
+    <>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight text-foreground">
+            {greeting ? greeting : t("app.plan.title")}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("app.plan.lead")}</p>
+        </div>
+      </header>
+
+      <PlanWorkspace
+        bars={bars}
+        verdict={verdict}
+        levers={levers(plan, verdict)}
+        exams={planExams}
+        todayBlocks={blocks}
+        todayMinutes={plan.days[0]?.minutes ?? 0}
+        adherence={adherence}
+        throughput={throughput}
+        todayCards={todayCards}
+        weeklyMinutes={weeklyTotal(availability.weekly)}
+        courses={mine.map((course) => ({ id: course.id, title: course.title }))}
+      />
+    </>
+  );
 }
 
-function greetingFor(now: Date, t: Translator): string {
-  const hour = now.getHours();
-  if (hour < 6) return t("app.home.greeting.night");
-  if (hour < 12) return t("app.home.greeting.morning");
-  if (hour < 18) return t("app.home.greeting.afternoon");
-  return t("app.home.greeting.evening");
+/**
+ * Où la maîtrise arrivera le jour J, si le plan est suivi.
+ *
+ * Chaque passage prévu rapproche le programme de son plafond, avec un rendement décroissant :
+ * le premier passage sur une carte neuve vaut beaucoup, le quatrième presque rien. On ne
+ * promet jamais 100 % - il resterait toujours des cartes que l'étudiant rate.
+ */
+function projectedMastery(current: number, passes: number, cardCount: number): number {
+  if (cardCount === 0) return current;
+  const perCard = passes / cardCount;
+  const gain = (100 - current) * (1 - Math.exp(-perCard / 1.8));
+  return Math.min(97, Math.round(current + gain));
+}
+
+function asIntensity(value: string): "light" | "standard" | "intense" {
+  return value === "light" || value === "intense" ? value : "standard";
 }

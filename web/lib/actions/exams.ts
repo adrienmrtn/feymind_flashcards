@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 import {
   addDays,
   asExamKind,
+  asStartingPoint,
   capacityWindow,
+  intensityFor,
   clampTargetScore,
   dayDifference,
   intensityFromTargetScore,
@@ -17,6 +19,7 @@ import {
   type CardState,
   type ExamIntensity,
   type ExamKind,
+  type StartingPoint,
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
@@ -64,6 +67,7 @@ export async function saveExam(input: {
   kind?: string;
   formats?: string[];
   chapterIds?: string[];
+  startingPoint?: string;
 }): Promise<ExamWriteResult> {
   const supabase = await createClient();
   const {
@@ -88,10 +92,16 @@ export async function saveExam(input: {
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
   // Ce que l'épreuve demandait déjà, quand on la modifie sans passer par sa fiche.
-  let kept: { kind: ExamKind; formats: string[]; chapterIds: string[] } = {
+  let kept: {
+    kind: ExamKind;
+    formats: string[];
+    chapterIds: string[];
+    startingPoint: StartingPoint;
+  } = {
     kind: "exam",
     formats: [],
     chapterIds: [],
+    startingPoint: "seen",
   };
   const day = new Date(`${examDate}T12:00:00`);
   day.setHours(0, 0, 0, 0);
@@ -102,7 +112,7 @@ export async function saveExam(input: {
   if (input.id) {
     const { data: existing } = await supabase
       .from("exams")
-      .select("id, is_planned, schedule_backup, kind, formats, chapter_ids")
+      .select("id, is_planned, schedule_backup, kind, formats, chapter_ids, starting_point")
       .eq("user_id", user.id)
       .eq("id", input.id)
       .is("deleted_at", null)
@@ -114,6 +124,7 @@ export async function saveExam(input: {
       kind: asExamKind((existing as { kind?: string }).kind),
       formats: (existing as { formats?: string[] }).formats ?? [],
       chapterIds: (existing as { chapter_ids?: string[] }).chapter_ids ?? [],
+      startingPoint: asStartingPoint((existing as { starting_point?: string }).starting_point),
     };
 
     if (existing.is_planned) {
@@ -165,7 +176,17 @@ export async function saveExam(input: {
         dueDate: new Date(card.due_date),
       })),
       day,
-      { now, intensity, capacities },
+      {
+        now,
+        // Le même décalage que `planTerm` : découvrir un programme demande un passage de
+        // plus par carte. Sans ça, la replanification initiale et le plan de la période se
+        // contrediraient dès la création.
+        intensity: intensityFor(
+          intensity,
+          asStartingPoint(input.startingPoint ?? kept.startingPoint),
+        ),
+        capacities,
+      },
     );
 
     for (const card of usable) {
@@ -197,6 +218,9 @@ export async function saveExam(input: {
     kind: input.kind ? asExamKind(input.kind) : kept.kind,
     formats: input.formats ?? kept.formats,
     chapter_ids: input.chapterIds ?? kept.chapterIds,
+    starting_point: input.startingPoint
+      ? asStartingPoint(input.startingPoint)
+      : kept.startingPoint,
     is_planned: planned,
     planned_at: planned ? now.toISOString() : null,
     schedule_backup: backup,
@@ -311,6 +335,7 @@ export async function saveExamDetails(input: {
   kind?: string;
   formats?: string[];
   chapterIds?: string[];
+  startingPoint?: string;
 }): Promise<ExamWriteResult> {
   const supabase = await createClient();
   const {

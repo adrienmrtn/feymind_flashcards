@@ -33,7 +33,7 @@ describe("tourFor", () => {
       "/app",
       "/app/reviser",
       "/app/cours",
-      "/app/plan",
+      "/app/progres",
       "/app/amis",
       "/app/profil",
       "/app/reglages",
@@ -58,7 +58,8 @@ describe("tourFor", () => {
 
   it("supporte la barre oblique finale", () => {
     expect(tourFor({ pathname: "/app/cours/", inSession: false })?.id).toBe("cours");
-    expect(tourFor({ pathname: "/app/plan/", inSession: false })?.id).toBe("plan");
+    expect(tourFor({ pathname: "/app", inSession: false })?.id).toBe("plan");
+    expect(tourFor({ pathname: "/app/progres/", inSession: false })?.id).toBe("accueil");
   });
 
   it("ne visite pas le profil public d'un ami ni un cours repris", () => {
@@ -118,18 +119,18 @@ describe("le catalogue des visites", () => {
 
 describe("stepsForWidth", () => {
   it("saute la barre latérale sur téléphone", () => {
-    const home = tourFor({ pathname: "/app", inSession: false })!;
+    const home = tourFor({ pathname: "/app/progres", inSession: false })!;
     const wide = stepsForWidth(home, 1280).map((step) => step.anchor);
     const narrow = stepsForWidth(home, 420).map((step) => step.anchor);
 
     expect(wide).toContain("nav");
     expect(narrow).not.toContain("nav");
     expect(narrow).not.toContain("nav-importer");
-    expect(narrow).toContain("taches");
+    expect(narrow).toContain("maitrise");
   });
 
   it("garde toutes les bulles dès 1024 px", () => {
-    const home = tourFor({ pathname: "/app", inSession: false })!;
+    const home = tourFor({ pathname: "/app/progres", inSession: false })!;
     expect(stepsForWidth(home, 1024)).toHaveLength(home.steps.length);
   });
 });

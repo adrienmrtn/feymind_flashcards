@@ -10,6 +10,7 @@ import {
   cardsIn,
   drawMock,
   examReadiness,
+  intensityFor,
   isMockBlock,
   isReviewBlock,
   minutesFor,
@@ -389,6 +390,52 @@ describe("ce qui résiste revient plus souvent", () => {
       const ids = day.blocks.filter(isReviewBlock).flatMap((block) => block.cardIds);
       expect(new Set(ids).size).toBe(ids.length);
     }
+  });
+});
+
+describe("le point de départ", () => {
+  it("décale l'intensité d'un cran, sans sortir de l'échelle", () => {
+    expect(intensityFor("standard", "cold")).toBe("intense");
+    expect(intensityFor("standard", "seen")).toBe("standard");
+    expect(intensityFor("standard", "solid")).toBe("light");
+    // Les bouts de l'échelle tiennent.
+    expect(intensityFor("intense", "cold")).toBe("intense");
+    expect(intensityFor("light", "solid")).toBe("light");
+    expect(intensityFor("standard", undefined)).toBe("standard");
+  });
+
+  it("fait travailler plus quelqu'un qui découvre le programme", () => {
+    const cards = Array.from({ length: 30 }, (_, index) => card(`c${index}`));
+    const froid = planTerm({
+      exams: [exam("bio", 20, { startingPoint: "cold" })],
+      cards,
+      availability: open(120),
+      now,
+    });
+    const revision = planTerm({
+      exams: [exam("bio", 20, { startingPoint: "solid" })],
+      cards,
+      availability: open(120),
+      now,
+    });
+    expect(froid.totalPasses).toBeGreaterThan(revision.totalPasses);
+  });
+
+  it("garde le plan d'avant sans réponse", () => {
+    const cards = Array.from({ length: 30 }, (_, index) => card(`c${index}`));
+    const sansReponse = planTerm({
+      exams: [exam("bio", 20)],
+      cards,
+      availability: open(120),
+      now,
+    });
+    const dejaVu = planTerm({
+      exams: [exam("bio", 20, { startingPoint: "seen" })],
+      cards,
+      availability: open(120),
+      now,
+    });
+    expect(sansReponse.totalPasses).toBe(dejaVu.totalPasses);
   });
 });
 

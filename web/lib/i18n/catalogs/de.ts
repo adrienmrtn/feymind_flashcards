@@ -430,6 +430,8 @@ export const de: Catalog = {
     feedback: "Rückmeldungen",
     openCourses: "Geöffnet",
       plan: "Plan",
+      material: "Material",
+    progress: "Fortschritt",
   },
   app: appDe,
   copy: copyDe,

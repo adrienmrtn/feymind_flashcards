@@ -168,11 +168,14 @@ export {
 // Le plan de la période : plusieurs épreuves, un seul emploi du temps.
 export {
   EXAM_KINDS,
+  STARTING_POINTS,
   TERM_HORIZON_DAYS,
   asExamKind,
+  asStartingPoint,
   defaultFormatsFor,
   examPriority,
   feasibility,
+  intensityFor,
   levers,
   loadBars,
   isMockBlock,
@@ -189,6 +192,7 @@ export {
   type PlanDay,
   type ReviewBlock,
   type PlannedPass,
+  type StartingPoint,
   type TermCard,
   type TermExam,
   type TermInput,

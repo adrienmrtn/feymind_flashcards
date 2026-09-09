@@ -17,9 +17,7 @@ import {
 } from "@micabo/core";
 
 import { Button } from "@/components/ui/button";
-import { Toast } from "@/components/app/Toast";
 import { ExamCalendar, isoDay, type CalendarExam } from "@/components/app/exams/ExamCalendar";
-import { ExamEditor, type EditorCard, type EditorCourse, type EditorExam } from "@/components/app/exams/ExamEditor";
 import { startMockSession } from "@/lib/actions/mocks";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -73,8 +71,6 @@ export function PlanWorkspace({
   todayMinutes,
   todayCards,
   courses,
-  cards,
-  countryCode,
   weeklyMinutes,
   adherence,
   throughput,
@@ -86,16 +82,13 @@ export function PlanWorkspace({
   todayBlocks: PlanTodayBlock[];
   todayMinutes: number;
   todayCards: number;
-  courses: EditorCourse[];
-  cards: EditorCard[];
-  countryCode?: string | null;
+  courses: { id: string; title: string }[];
   weeklyMinutes: number;
   adherence: Adherence;
   throughput: Throughput;
 }) {
   const { t } = useI18n();
-  const [editing, setEditing] = useState<{ exam: EditorExam | null; date: Date } | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const router = useRouter();
   const [showMonth, setShowMonth] = useState(false);
   const [month, setMonth] = useState(() => {
     const now = new Date();
@@ -122,33 +115,8 @@ export function PlanWorkspace({
     isPast: exam.daysRemaining < 0,
   }));
 
-  function openNew(date?: Date) {
-    setEditing({ exam: null, date: date ?? new Date() });
-  }
-
   if (upcoming.length === 0) {
-    return (
-      <>
-        <EmptyPlan
-          hasCourses={courses.length > 0}
-          onAdd={() => openNew()}
-        />
-        {editing ? (
-          <ExamEditor
-            exam={editing.exam}
-            date={editing.date}
-            courses={courses}
-            cards={cards}
-            countryCode={countryCode}
-            onClose={(outcome) => {
-              setEditing(null);
-              if (outcome === "created") setNotice(t("app.exams.toast.created"));
-            }}
-          />
-        ) : null}
-        {notice ? <Toast message={notice} onGone={() => setNotice(null)} /> : null}
-      </>
-    );
+    return <EmptyPlan hasCourses={courses.length > 0} />;
   }
 
   return (
@@ -177,8 +145,12 @@ export function PlanWorkspace({
       <section>
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
           <h2 className="text-[15px] font-semibold text-ink">{t("app.plan.exams.title")}</h2>
-          <Button size="sm" onClick={() => openNew()} data-tour="examens-ajouter">
-            {t("app.exams.add")}
+          <Button
+            size="sm"
+            data-tour="examens-ajouter"
+            render={<Link href={"/app/plan/nouveau" as never} />}
+          >
+            {t("app.newPlan.add")}
           </Button>
         </div>
         <ul className="space-y-2">
@@ -208,14 +180,12 @@ export function PlanWorkspace({
               exams={calendarExams}
               onMonth={setMonth}
               onSelect={(day) => {
-                const key = isoDay(day);
-                const existing = exams.find((exam) => exam.examDate === key);
-                if (existing) return;
-                openNew(day);
+                const existing = exams.find((exam) => exam.examDate === isoDay(day));
+                if (existing) router.push(`/app/plan/${existing.id}` as never);
               }}
             />
             <p className="mt-3 text-center text-[12.5px] text-ink-secondary">
-              {t("app.exams.pickDayHint")}
+              {t("app.plan.month.hint")}
             </p>
           </div>
         ) : null}
@@ -244,21 +214,6 @@ export function PlanWorkspace({
         </section>
       ) : null}
 
-      {editing ? (
-        <ExamEditor
-          exam={editing.exam}
-          date={editing.date}
-          courses={courses}
-          cards={cards}
-          countryCode={countryCode}
-          onClose={(outcome) => {
-            setEditing(null);
-            if (outcome === "created") setNotice(t("app.exams.toast.created"));
-          }}
-        />
-      ) : null}
-
-      {notice ? <Toast message={notice} onGone={() => setNotice(null)} /> : null}
     </>
   );
 }
@@ -464,22 +419,28 @@ function ExamRow({ exam }: { exam: PlanExam }) {
   );
 }
 
-function EmptyPlan({ hasCourses, onAdd }: { hasCourses: boolean; onAdd: () => void }) {
+/**
+ * L'écran sans plan : **la seule chose à faire y est de s'en créer un.**
+ *
+ * Il n'envoie plus vers l'import quand il n'y a pas de cours : le parcours de création
+ * commence justement par le matériel, donc y aller sans rien est le chemin normal et pas un
+ * cas dégradé.
+ */
+function EmptyPlan({ hasCourses }: { hasCourses: boolean }) {
   const { t } = useI18n();
 
   return (
     <section className="rounded-group border border-border bg-card p-8 text-center">
-      <p className="text-[17px] font-semibold text-ink">{t("app.plan.empty.title")}</p>
-      <p className="mx-auto mt-2 max-w-[46ch] text-[14px] leading-relaxed text-ink-secondary">
-        {hasCourses ? t("app.plan.empty.body") : t("app.exams.empty.needCourse")}
+      <p className="text-[19px] font-semibold text-ink">{t("app.plan.empty.title")}</p>
+      <p className="mx-auto mt-2 max-w-[48ch] text-[14.5px] leading-relaxed text-ink-secondary">
+        {hasCourses ? t("app.plan.empty.body") : t("app.plan.empty.bodyFresh")}
       </p>
-      <div className="mt-5 flex flex-wrap justify-center gap-2">
-        {hasCourses ? (
-          <Button onClick={onAdd}>{t("app.exams.add")}</Button>
-        ) : (
-          <Button render={<Link href={"/app/importer" as never} />}>{t("nav.import")}</Button>
-        )}
+      <div className="mt-6">
+        <Button className="h-12 px-6" render={<Link href={"/app/plan/nouveau" as never} />}>
+          {t("app.newPlan.add")}
+        </Button>
       </div>
+      <p className="mt-3 text-[12.5px] text-ink-tertiary">{t("app.newPlan.emptyHint")}</p>
     </section>
   );
 }

@@ -58,6 +58,8 @@ export interface TermExam {
   formats?: readonly string[];
   /** Type d'épreuve. Décide si un blanc a un sens, et lequel. */
   kind?: ExamKind;
+  /** D'où l'étudiant part. Décale l'intensité d'un cran. */
+  startingPoint?: StartingPoint;
 }
 
 export interface TermCard extends ExamCard {
@@ -253,7 +255,7 @@ export function planTerm(input: TermInput): TermPlan {
 
     const plan = planExam(concerned, exam.examDate, {
       now,
-      intensity: exam.intensity,
+      intensity: intensityFor(exam.intensity, exam.startingPoint),
       capacities,
     });
     const priority = examPriority(exam, concerned, today);
@@ -617,6 +619,40 @@ export function loadBars(plan: TermPlan): LoadBar[] {
     isOver: day.capacityMinutes > 0 && day.minutes > day.capacityMinutes,
     examIds: day.examIds,
   }));
+}
+
+/**
+ * D'où l'étudiant part sur cette épreuve.
+ *
+ * La seule chose que le plan a besoin de savoir et qu'il ne peut pas déduire. Le journal dit
+ * ce qui a été travaillé **dans l'app** ; il ne sait rien d'un cours suivi en amphi toute
+ * l'année. Deux étudiants avec les mêmes cartes neuves peuvent être à des distances très
+ * différentes de leur épreuve.
+ */
+export type StartingPoint = "cold" | "seen" | "solid";
+
+export const STARTING_POINTS: readonly StartingPoint[] = ["cold", "seen", "solid"];
+
+export function asStartingPoint(value: string | null | undefined): StartingPoint {
+  return STARTING_POINTS.includes(value as StartingPoint) ? (value as StartingPoint) : "seen";
+}
+
+/**
+ * L'intensité corrigée du point de départ.
+ *
+ * Découvrir un programme demande un passage de plus par carte, le réviser un de moins. On
+ * décale l'intensité plutôt que d'ajouter un paramètre à l'échelle : c'est la même grandeur -
+ * combien de fois chaque carte repasse - et un second réglage qui dit la même chose finirait
+ * par la contredire.
+ */
+export function intensityFor(
+  intensity: ExamIntensity,
+  startingPoint: StartingPoint | undefined,
+): ExamIntensity {
+  const ladder: ExamIntensity[] = ["light", "standard", "intense"];
+  const index = ladder.indexOf(intensity);
+  const shift = startingPoint === "cold" ? 1 : startingPoint === "solid" ? -1 : 0;
+  return ladder[Math.max(0, Math.min(ladder.length - 1, index + shift))] ?? intensity;
 }
 
 /** Type d'épreuve : il choisit les formats proposés, pas la replanification. */
