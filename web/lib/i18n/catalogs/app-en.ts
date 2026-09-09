@@ -185,6 +185,12 @@ export const appEn = {
     deleteMsg: "{title} and {cards} will be gone.",
   },
   review: {
+    setup: {
+      newTitle: "New cards",
+      cards: "{count, plural, one {card} other {cards}}",
+      mix: "{due} to review · {fresh} new",
+      newHint: "{max} available today",
+    },
     verb: "Review",
     again: "Review again",
     thisCourse: "Review this course",
@@ -281,6 +287,12 @@ export const appEn = {
     todayCards: "{cards} today.",
   },
   exams: {
+    hub: {
+      title: "Exams",
+      lead: "Your exams, the time left, and whether it fits.",
+      timeline: "Coming up",
+      load: "The load, week by week",
+    },
     title: "Exams",
     lead: "Your dates, your cards.",
     add: "Add an exam",
@@ -483,6 +495,8 @@ export const appEn = {
   },
   exam: {
     schedule: {
+      examShort: "Exam day",
+      offShort: "off",
       title: "Your plan, day by day",
       summary: "{cards} cards over {days} working days, {off} days off",
       cards: "{cards} cards · {minutes} min",
@@ -553,6 +567,7 @@ export const appEn = {
     projection: "{cards} cards over {days} days: about {daily} a day, {peak} on the busiest.",
     projectionMock: "Two mock exams of {questions} questions will be set before the day.",
     hint: {
+      epreuve: "You can move the date later, the plan will be rebuilt.",
       materiel: "Everything you add here becomes the exam's syllabus.",
       jour: "You can move the date later; the plan rebuilds.",
       type: "The kind decides which formats are worked and whether mocks are set.",
@@ -561,7 +576,47 @@ export const appEn = {
       note: "The projection moves with the target grade. Nothing is saved yet.",
     },
   },
+  chart: {
+    table: {
+      day: "Day",
+      passes: "Passes",
+      again: "Missed",
+      exam: "Exam",
+      days: "Days left",
+      readiness: "Learned",
+      score: "Score",
+    },
+    timeline: {
+      aria: "Upcoming exams over the period",
+      hint: "The bar is the time left; its filled part, what you already know.",
+    },
+    load: {
+      aria: "Minutes planned per week, against minutes available",
+      week: "Week of {day}",
+      tooltip: "{minutes} min planned · {capacity} min available",
+      thisWeek: "this week",
+      planned: "planned",
+      capacity: "available",
+      over: "over",
+      exam: "exam",
+    },
+    readiness: {
+      now: "today",
+      measured: "at the last mock",
+      day: "on exam day",
+      target: "target: {percent} %",
+      aria: "{now} % today, {projected} % expected on exam day",
+    },
+    mock: {
+      aria: "Mock exam scores, in order",
+      point: "{score} % on {day} ({total} questions)",
+    },
+  },
   progress: {
+    masteryLead: "What's solid, what's still shaky, what hasn't been seen.",
+    activity: "Activity",
+    activityLead: "One bar per day, over the last six weeks.",
+    days: "{count, plural, one {# day} other {# days}}",
     title: "Progress",
     lead: "What you know, and what it took.",
   },
@@ -962,6 +1017,26 @@ export const appEn = {
     reopenOffer: "Reopen the offer, {time}",
   },
   today: {
+    cardsMinutes: "{count, plural, one {card planned} other {cards planned}} · about {minutes} min",
+    cardsDue: "{count, plural, one {card to review} other {cards to review}}",
+    start: "Review · {minutes} min",
+    startCards: "Review {count, plural, one {# card} other {# cards}}",
+    forExam: "for {exam}",
+    block: "{cards} cards · {minutes} min",
+    mockTitle: "Mock exam · {exam}",
+    mock: "{questions} questions · {minutes} min",
+    done: "You're done for today.",
+    doneBody: "Your cards will come back when they're due. You can reread a sheet or work on a course.",
+    doneEmpty: "Drop a course: Micabo writes the sheet, then the cards.",
+    streak: "{count, plural, one {# day in a row} other {# days in a row}}",
+    fix: "Adjust",
+    nextExam: "Next exam",
+    noExam: "No exam planned",
+    noExamBody: "Set a date and Micabo spreads the work until exam day.",
+    otherExams: "Then",
+    seeExams: "All exams",
+    noOtherExam: "Nothing else on the horizon.",
+    known: "{percent} % learned",
     agenda: "On the agenda",
     dueOne: "card to review",
     dueMany: "cards to review",
@@ -1067,6 +1142,26 @@ export const appEn = {
     },
   },
   tour: {
+    today: {
+      work: {
+        title: "What there is to do",
+        body: "Today's cards, spread by your plan. One button, and you review.",
+      },
+      next: {
+        title: "Your next exam",
+        body: "Where you stand today, and where the plan takes you on exam day.",
+      },
+    },
+    exams: {
+      timeline: {
+        title: "Your exams",
+        body: "One row per exam, the bar is the time left. Tap a row to open the exam.",
+      },
+      load: {
+        title: "The load",
+        body: "What the plan schedules each week, against the time you gave. Red when it overflows.",
+      },
+    },
     skipPage: "Skip this page's tour",
     skipAll: "Skip the tour",
     next: "Next",

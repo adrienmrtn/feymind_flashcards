@@ -44,10 +44,10 @@ export default async function NewDeckPage() {
         </Link>
 
         <div className="mt-3">
-          <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          <h1 className="page-title">
             {t("app.deck.title")}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("app.deck.lead")}</p>
+          <p className="page-lead">{t("app.deck.lead")}</p>
         </div>
       </header>
 

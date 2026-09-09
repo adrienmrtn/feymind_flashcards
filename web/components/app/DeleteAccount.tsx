@@ -43,7 +43,7 @@ export function DeleteAccount({ email }: { email: string }) {
   return (
     <section className="saas-card relative mt-4 px-7 py-7">
       <div>
-        <p className="text-[15px] font-semibold text-ink">{t("app.settings.delete.title")}</p>
+        <p className="section-title">{t("app.settings.delete.title")}</p>
         <p className="mt-1.5 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-secondary">
           {t("app.settings.delete.body")}
           {email ? (

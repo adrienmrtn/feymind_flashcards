@@ -38,7 +38,7 @@ export interface Tour {
   steps: readonly TourStep[];
 }
 
-const HOME: Tour = {
+const TODAY: Tour = {
   id: "accueil",
   mode: "guided",
   steps: [
@@ -55,10 +55,22 @@ const HOME: Tour = {
       body: "app.tour.home.import.body",
     },
     {
-      anchor: "semaine",
-      title: "app.tour.home.week.title",
-      body: "app.tour.home.week.body",
+      anchor: "aujourdhui",
+      title: "app.tour.today.work.title",
+      body: "app.tour.today.work.body",
     },
+    {
+      anchor: "prochaine-epreuve",
+      title: "app.tour.today.next.title",
+      body: "app.tour.today.next.body",
+    },
+  ],
+};
+
+const PROGRESS: Tour = {
+  id: "progres",
+  mode: "guided",
+  steps: [
     {
       anchor: "maitrise",
       title: "app.tour.home.mastery.title",
@@ -68,6 +80,11 @@ const HOME: Tour = {
       anchor: "statistiques",
       title: "app.tour.home.stats.title",
       body: "app.tour.home.stats.body",
+    },
+    {
+      anchor: "profil-passees",
+      title: "app.tour.profile.top.title",
+      body: "app.tour.profile.top.body",
     },
   ],
 };
@@ -175,14 +192,14 @@ const PLAN: Tour = {
   mode: "guided",
   steps: [
     {
-      anchor: "plan-frise",
-      title: "app.tour.plan.strip.title",
-      body: "app.tour.plan.strip.body",
+      anchor: "examens-frise",
+      title: "app.tour.exams.timeline.title",
+      body: "app.tour.exams.timeline.body",
     },
     {
-      anchor: "plan-aujourdhui",
-      title: "app.tour.plan.today.title",
-      body: "app.tour.plan.today.body",
+      anchor: "examens-charge",
+      title: "app.tour.exams.load.title",
+      body: "app.tour.exams.load.body",
     },
     {
       anchor: "examens-ajouter",
@@ -208,28 +225,6 @@ const FRIENDS: Tour = {
       anchor: "amis-recherche",
       title: "app.tour.friends.search.title",
       body: "app.tour.friends.search.body",
-    },
-  ],
-};
-
-const PROFILE: Tour = {
-  id: "profil",
-  mode: "guided",
-  steps: [
-    {
-      anchor: "profil-chiffres",
-      title: "app.tour.profile.streak.title",
-      body: "app.tour.profile.streak.body",
-    },
-    {
-      anchor: "profil-maitrise",
-      title: "app.tour.profile.mastery.title",
-      body: "app.tour.profile.mastery.body",
-    },
-    {
-      anchor: "profil-passees",
-      title: "app.tour.profile.top.title",
-      body: "app.tour.profile.top.body",
     },
   ],
 };
@@ -264,7 +259,7 @@ const IMPORT: Tour = {
 };
 
 export const TOURS: readonly Tour[] = [
-  HOME,
+  TODAY,
   REVIEW,
   SESSION,
   COURSES,
@@ -272,7 +267,7 @@ export const TOURS: readonly Tour[] = [
   CARDS,
   PLAN,
   FRIENDS,
-  PROFILE,
+  PROGRESS,
   SETTINGS,
   IMPORT,
 ];
@@ -293,13 +288,13 @@ export function tourFor(input: { pathname: string; inSession: boolean }): Tour |
   const path = input.pathname.replace(/\/+$/, "") || "/app";
 
   if (path === "/app/reviser") return input.inSession ? SESSION : REVIEW;
-  if (path === "/app") return PLAN;
+  if (path === "/app") return TODAY;
+  if (path === "/app/plan") return PLAN;
   if (path === "/app/cours") return COURSES;
-  if (path === "/app/progres") return HOME;
+  if (path === "/app/progres") return PROGRESS;
   if (path === "/app/amis") return FRIENDS;
   if (path === "/app/reglages") return SETTINGS;
   if (path === "/app/importer") return IMPORT;
-  if (path.startsWith("/app/profil")) return PROFILE;
 
   // L'atelier des cartes est sous la fiche : le plus spécifique se lit d'abord.
   if (/^\/app\/c\/[^/]+\/cartes$/.test(path)) return CARDS;

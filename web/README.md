@@ -55,6 +55,22 @@ pnpm build
 pnpm verify       # les trois d'un coup, dans l'ordre où ils échouent le mieux
 ```
 
+## Regarder l'app connectée sans compte
+
+`scripts/demo/` est un faux Supabase : un serveur HTTP qui répond au jeton par mot de passe, à
+l'utilisateur, aux lectures PostgREST (`eq`, `is`, `in`, `gte`, `order`, `limit`…) et aux huit
+RPC, sur un jeu de données fictif mais réaliste (cinq cours, cent quatre-vingt-dix cartes, quatre
+épreuves, quarante-cinq jours de journal). Les écritures sont acceptées et oubliées. C'est ce
+qui permet de regarder chaque écran de `/app` et de faire des captures sans toucher au projet.
+
+```bash
+node scripts/demo/server.mjs                                   # écoute sur 54329
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54329 pnpm dev
+open "http://localhost:3000/auth/dev?email=camille@micabo.test&password=demo"
+```
+
+La route `/auth/dev` est inerte en production et n'accepte que les adresses `@micabo.test`.
+
 ## Aucune variable d'environnement n'est nécessaire
 
 L'URL du projet Supabase et la clé publiable sont dans [`lib/config.ts`](lib/config.ts), en

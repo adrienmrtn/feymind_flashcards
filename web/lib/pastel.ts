@@ -13,7 +13,7 @@ import { TILE_PASTELS } from "@micabo/core";
 type Appearance = "day" | "night" | "twilight";
 
 /** Mettre à `false` pour retirer le pastel de l'app. */
-export const WEBSITE_PASTEL = true;
+export const WEBSITE_PASTEL = false;
 
 export const PASTEL_MINT = TILE_PASTELS[0]!;
 export const PASTEL_SAGE = TILE_PASTELS[1]!;

@@ -8,30 +8,23 @@ import { startMockSession } from "@/lib/actions/mocks";
 import { useI18n } from "@/lib/i18n/client";
 import { localeBcp47 } from "@/lib/i18n/copy";
 
-/**
- * **Le plan de cette épreuve, jour par jour, jusqu'au jour J.**
- *
- * La frise de l'accueil montre la période entière en un cran par jour : elle répond à « est-ce
- * que ça tient ». Elle ne répond pas à « qu'est-ce que je fais mardi », et c'est pourtant la
- * question de quelqu'un qui vient de créer un plan et veut savoir ce qu'il a signé.
- *
- * Ici chaque jour est une ligne lisible : les cartes prévues, les blancs posés, les jours de
- * pause en creux, et le jour de l'épreuve au bout. Rien n'est arrondi ni masqué - un plan qui
- * ne montre pas ses jours creux ne se vérifie pas.
- */
-
 export interface ScheduleDay {
-  /** Décalage depuis aujourd'hui. */
   offset: number;
   date: string;
   cards: number;
   minutes: number;
   capacityMinutes: number;
-  /** Un examen blanc posé ce jour-là, avec son volume. */
   mock: { questionCount: number; minutes: number } | null;
   isExamDay: boolean;
 }
 
+/**
+ * Le plan de cette épreuve, jour par jour, **en une rangée par semaine.**
+ *
+ * L'ancienne liste alignait quatorze lignes « rien de prévu » : on la faisait défiler sans
+ * rien lire. Ici chaque jour est une case, la hauteur du remplissage dit la charge, et le
+ * détail vient au survol. Une semaine tient sur une ligne, l'épreuve se voit tout de suite.
+ */
 export function ExamSchedule({
   examId,
   days,
@@ -42,105 +35,109 @@ export function ExamSchedule({
   canRunMock: boolean;
 }) {
   const { t, locale } = useI18n();
+  const bcp = localeBcp47(locale);
   const [expanded, setExpanded] = useState(false);
-
   if (days.length === 0) return null;
 
   const open = days.filter((day) => day.capacityMinutes > 0 && !day.isExamDay);
   const off = days.filter((day) => day.capacityMinutes === 0 && !day.isExamDay);
   const mocks = days.filter((day) => day.mock);
   const totalCards = days.reduce((sum, day) => sum + day.cards, 0);
+  const max = Math.max(1, ...days.map((day) => Math.max(day.minutes, day.capacityMinutes)));
+  const shown = expanded ? days : days.slice(0, 21);
+  const todayMock = days.find((day) => day.offset === 0 && day.mock);
 
-  // Les quatorze premiers jours suffisent à comprendre le rythme ; au-delà on déplie.
-  const shown = expanded ? days : days.slice(0, 14);
+  const weeks: ScheduleDay[][] = [];
+  for (const day of shown) {
+    const index = Math.floor(day.offset / 7);
+    (weeks[index] ??= []).push(day);
+  }
 
   return (
-    <section className="rounded-group border border-border bg-card p-5" data-tour="epreuve-calendrier">
+    <section className="panel p-5" data-tour="epreuve-calendrier">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="text-[15px] font-semibold text-ink">{t("app.exam.schedule.title")}</h2>
-        <p className="numeral text-[12.5px] text-ink-tertiary">
-          {t("app.exam.schedule.summary", {
-            cards: totalCards,
-            days: open.length,
-            off: off.length,
-          })}
-        </p>
+        <div>
+          <h2 className="section-title">{t("app.exam.schedule.title")}</h2>
+          <p className="section-lead numeral">
+            {t("app.exam.schedule.summary", { cards: totalCards, days: open.length, off: off.length })}
+          </p>
+        </div>
+        {todayMock && canRunMock ? <StartMock examId={examId} /> : null}
       </div>
 
-      <ul className="mt-4 divide-y divide-hairline">
-        {shown.map((day) => (
-          <li key={day.offset} className="flex items-center gap-3 py-2.5">
-            <span
-              className={`numeral w-24 shrink-0 text-[12.5px] capitalize ${
-                day.offset === 0 ? "font-semibold text-ink" : "text-ink-secondary"
-              }`}
-            >
-              {day.offset === 0
-                ? t("app.plan.strip.today")
-                : new Date(`${day.date}T12:00:00`).toLocaleDateString(localeBcp47(locale), {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                  })}
-            </span>
-
-            {day.isExamDay ? (
-              <span className="flex-1 rounded-button bg-caution-soft px-3 py-1.5 text-[13px] font-semibold text-caution">
-                {t("app.exam.schedule.examDay")}
-              </span>
-            ) : day.capacityMinutes === 0 ? (
-              <span className="flex-1 text-[13px] text-ink-tertiary">
-                {t("app.exam.schedule.off")}
-              </span>
-            ) : (
-              <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-                {day.cards > 0 ? (
-                  <span className="numeral rounded-pill bg-accent-soft px-2.5 py-1 text-[12.5px] font-medium text-accent">
-                    {t("app.exam.schedule.cards", {
-                      cards: day.cards,
-                      minutes: day.minutes,
-                    })}
+      <ol className="mt-4 space-y-2">
+        {weeks.map((week, weekIndex) => (
+          <li key={weekIndex} className="grid grid-cols-7 gap-1.5">
+            {week.map((day) => {
+              const date = new Date(`${day.date}T12:00:00`);
+              const label = date.toLocaleDateString(bcp, { weekday: "short" }).replace(".", "");
+              const title = day.isExamDay
+                ? t("app.exam.schedule.examDay")
+                : day.capacityMinutes === 0
+                  ? t("app.exam.schedule.off")
+                  : `${t("app.exam.schedule.cards", { cards: day.cards, minutes: day.minutes })}${day.mock ? ` · ${t("app.exam.schedule.mock", { questions: day.mock.questionCount, minutes: day.mock.minutes })}` : ""}`;
+              const fill = day.capacityMinutes === 0 ? 0 : Math.min(1, day.minutes / max);
+              return (
+                <div
+                  key={day.offset}
+                  title={`${date.toLocaleDateString(bcp, { weekday: "long", day: "numeric", month: "long" })} · ${title}`}
+                  className={`relative flex h-16 flex-col justify-between overflow-hidden rounded-[10px] border p-1.5 text-[10.5px] ${
+                    day.isExamDay
+                      ? "border-caution/40 bg-caution-soft"
+                      : day.offset === 0
+                        ? "border-ink/40 bg-surface"
+                        : day.capacityMinutes === 0
+                          ? "border-transparent bg-surface-muted/60"
+                          : "border-hairline bg-surface"
+                  }`}
+                >
+                  <span className={`flex items-baseline justify-between ${day.offset === 0 ? "font-semibold text-ink" : "text-ink-tertiary"}`}>
+                    <span className="uppercase tracking-wide">{label}</span>
+                    <span className="numeral">{date.getDate()}</span>
                   </span>
-                ) : null}
-                {day.mock ? (
-                  <span className="numeral rounded-pill bg-caution-soft px-2.5 py-1 text-[12.5px] font-semibold text-caution">
-                    {t("app.exam.schedule.mock", {
-                      questions: day.mock.questionCount,
-                      minutes: day.mock.minutes,
-                    })}
-                  </span>
-                ) : null}
-                {day.cards === 0 && !day.mock ? (
-                  <span className="text-[13px] text-ink-tertiary">
-                    {t("app.exam.schedule.free")}
-                  </span>
-                ) : null}
-              </span>
-            )}
-
-            {day.mock && day.offset === 0 && canRunMock ? <StartMock examId={examId} /> : null}
+                  {day.isExamDay ? (
+                    <span className="text-[10px] font-semibold text-caution">{t("app.exam.schedule.examShort")}</span>
+                  ) : day.capacityMinutes === 0 ? (
+                    <span className="text-[10px] text-ink-tertiary">{t("app.exam.schedule.offShort")}</span>
+                  ) : (
+                    <span className="flex items-end gap-1">
+                      <span className="relative h-5 w-1.5 shrink-0 overflow-hidden rounded-full bg-surface-sunken">
+                        <span
+                          aria-hidden
+                          className="absolute inset-x-0 bottom-0 rounded-full"
+                          style={{ height: `${Math.max(day.cards > 0 ? 12 : 0, fill * 100)}%`, backgroundColor: "var(--chart-work)" }}
+                        />
+                      </span>
+                      <span className="numeral truncate text-[10.5px] text-ink-secondary">
+                        {day.cards > 0 ? `${day.minutes} min` : ""}
+                      </span>
+                      {day.mock ? (
+                        <span aria-hidden className="ml-auto size-1.5 shrink-0 rounded-full" style={{ backgroundColor: "var(--chart-fragile)" }} />
+                      ) : null}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </li>
         ))}
-      </ul>
+      </ol>
 
-      {days.length > 14 ? (
-        <button
-          type="button"
-          onClick={() => setExpanded((open) => !open)}
-          aria-expanded={expanded}
-          className="pressable mt-3 text-[13px] font-medium text-ink-secondary underline-draw"
-        >
-          {expanded
-            ? t("app.exam.schedule.less")
-            : t("app.exam.schedule.more", { count: days.length - 14 })}
-        </button>
-      ) : null}
-
-      {mocks.length > 0 ? (
-        <p className="mt-4 text-[12.5px] leading-relaxed text-ink-tertiary">
-          {t("app.exam.schedule.mockHint", { count: mocks.length })}
-        </p>
-      ) : null}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-[12px] text-ink-tertiary">
+        <span>
+          {mocks.length > 0 ? t("app.exam.schedule.mockHint", { count: mocks.length }) : ""}
+        </span>
+        {days.length > 21 ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((open) => !open)}
+            aria-expanded={expanded}
+            className="pressable underline-draw font-medium text-ink-secondary"
+          >
+            {expanded ? t("app.exam.schedule.less") : t("app.exam.schedule.more", { count: days.length - 21 })}
+          </button>
+        ) : null}
+      </div>
     </section>
   );
 }

@@ -23,10 +23,10 @@ export default async function WeeklyAvailabilityPage() {
   return (
     <>
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+        <h1 className="page-title">
           {t("app.plan.weekly.pageTitle")}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("app.plan.weekly.pageLead")}</p>
+        <p className="page-lead">{t("app.plan.weekly.pageLead")}</p>
       </header>
 
       <WeeklyAvailability

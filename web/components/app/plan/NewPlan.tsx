@@ -58,7 +58,7 @@ import { localeBcp47 } from "@/lib/i18n/copy";
  * du journal ; on ne demande ici que ce que la base ne saura jamais.
  */
 
-const STEPS = ["materiel", "jour", "type", "depart", "temps", "note"] as const;
+const STEPS = ["materiel", "epreuve", "temps"] as const;
 type Step = (typeof STEPS)[number];
 
 export interface PlanCourse {
@@ -151,11 +151,9 @@ export function NewPlan({
   const canContinue =
     step === "materiel"
       ? picked.length > 0
-      : step === "jour"
+      : step === "epreuve"
         ? daysRemaining >= 0
-        : step === "temps"
-          ? weekly.some((minutes) => minutes > 0)
-          : true;
+        : weekly.some((minutes) => minutes > 0);
 
   function next() {
     if (!canContinue) return;
@@ -237,25 +235,27 @@ export function NewPlan({
           />
         ) : null}
 
-        {step === "jour" ? (
-          <DayStep
-            picked={chosenDay}
-            month={month}
-            daysRemaining={daysRemaining}
-            onMonth={setMonth}
-            onSelect={(day) => {
-              const start = startOfDay(day);
-              if (start.getTime() < today.getTime()) return;
-              setExamDate(isoDay(start));
-              setMonth(new Date(start.getFullYear(), start.getMonth(), 1));
-            }}
-          />
+        {step === "epreuve" ? (
+          <>
+            <DayStep
+              picked={chosenDay}
+              month={month}
+              daysRemaining={daysRemaining}
+              onMonth={setMonth}
+              onSelect={(day) => {
+                const start = startOfDay(day);
+                if (start.getTime() < today.getTime()) return;
+                setExamDate(isoDay(start));
+                setMonth(new Date(start.getFullYear(), start.getMonth(), 1));
+              }}
+            />
+            <KindStep kind={kind} onPick={setKind} />
+            <StartStep start={start} onPick={setStart} />
+          </>
         ) : null}
 
-        {step === "type" ? <KindStep kind={kind} onPick={setKind} /> : null}
-        {step === "depart" ? <StartStep start={start} onPick={setStart} /> : null}
-
         {step === "temps" ? (
+          <>
           <TimeStep
             weekly={weekly}
             offDays={offDays}
@@ -270,9 +270,6 @@ export function NewPlan({
               )
             }
           />
-        ) : null}
-
-        {step === "note" ? (
           <ScoreStep
             targetScore={targetScore}
             countryCode={countryCode}
@@ -285,6 +282,7 @@ export function NewPlan({
             empty={isProjectionEmpty(plan.projection)}
             mockQuestions={wantsMock(kind) ? mockQuestionCount(scoped.length) : 0}
           />
+          </>
         ) : null}
       </div>
 
@@ -305,7 +303,7 @@ export function NewPlan({
               <ThinkingOrb state="connecting" size={20} theme="dark" />
               {t("app.exams.wait")}
             </>
-          ) : step === "note" ? (
+          ) : step === "temps" ? (
             t("app.newPlan.create")
           ) : (
             t("app.common.continue")
@@ -356,10 +354,10 @@ function MaterialStep({
   return (
     <div>
       <p className="eyebrow text-ink-tertiary">{t("app.newPlan.materialEyebrow")}</p>
-      <h1 className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
+      <h1 className="page-title mt-2">
         {t("app.newPlan.materialTitle")}
       </h1>
-      <p className="mt-3 text-[14.5px] leading-relaxed text-ink-secondary">
+      <p className="mt-2 text-[14px] leading-relaxed text-ink-secondary">
         {t("app.newPlan.materialLead")}
       </p>
 
@@ -380,7 +378,7 @@ function MaterialStep({
       ) : null}
 
       {adding ? (
-        <div className="mt-6 rounded-group border border-border bg-card p-5">
+        <div className="mt-6 panel p-5">
           <ImportPanel
             initialLength={sheetLength as never}
             onImported={(id) => {
@@ -417,10 +415,10 @@ function DayStep({
   return (
     <div>
       <p className="eyebrow text-ink-tertiary">{t("app.exams.examEyebrow")}</p>
-      <h1 className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
+      <h1 className="page-title mt-2">
         {t("app.exams.whichDay")}
       </h1>
-      <p className="mt-3 text-[18px] font-semibold capitalize text-ink">
+      <p className="mt-3 text-[16px] font-semibold capitalize text-ink">
         {picked.toLocaleDateString(localeBcp47(locale), {
           weekday: "long",
           day: "numeric",
@@ -464,18 +462,15 @@ function KindStep({ kind, onPick }: { kind: ExamKind; onPick: (next: ExamKind) =
   const options: ExamKind[] = ["exam", "midterm", "final", "quiz", "oral", "mock"];
 
   return (
-    <div>
-      <p className="eyebrow text-ink-tertiary">{t("app.newPlan.kindEyebrow")}</p>
-      <h1 className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
-        {t("app.newPlan.kindTitle")}
-      </h1>
-      <ul className="mt-6 space-y-2">
+    <div className="mt-8 border-t border-hairline pt-6">
+      <h2 className="section-title">{t("app.newPlan.kindTitle")}</h2>
+      <p className="section-lead">{t(`app.newPlan.kindDetail.${kind}`)}</p>
+      <ul className="mt-3 flex flex-wrap gap-1.5">
         {options.map((option) => (
           <li key={option}>
-            <ChoiceRow
+            <Pill
               emoji={KIND_EMOJI[option]}
-              title={t(`app.plan.kind.${option}`)}
-              detail={t(`app.newPlan.kindDetail.${option}`)}
+              label={t(`app.plan.kind.${option}`)}
               selected={kind === option}
               onSelect={() => onPick(asExamKind(option))}
             />
@@ -503,18 +498,15 @@ function StartStep({
   const options: StartingPoint[] = ["cold", "seen", "solid"];
 
   return (
-    <div>
-      <p className="eyebrow text-ink-tertiary">{t("app.newPlan.startEyebrow")}</p>
-      <h1 className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
-        {t("app.newPlan.startTitle")}
-      </h1>
-      <ul className="mt-6 space-y-2">
+    <div className="mt-8 border-t border-hairline pt-6">
+      <h2 className="section-title">{t("app.newPlan.startTitle")}</h2>
+      <p className="section-lead">{t(`app.newPlan.startDetail.${start}`)}</p>
+      <ul className="mt-3 flex flex-wrap gap-1.5">
         {options.map((option) => (
           <li key={option}>
-            <ChoiceRow
+            <Pill
               emoji={START_EMOJI[option]}
-              title={t(`app.newPlan.start.${option}`)}
-              detail={t(`app.newPlan.startDetail.${option}`)}
+              label={t(`app.newPlan.start.${option}`)}
               selected={start === option}
               onSelect={() => onPick(option)}
             />
@@ -559,7 +551,7 @@ function TimeStep({
   return (
     <div>
       <p className="eyebrow text-ink-tertiary">{t("app.newPlan.timeEyebrow")}</p>
-      <h1 className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
+      <h1 className="page-title mt-2">
         {t("app.newPlan.timeTitle")}
       </h1>
       <p className="numeral mt-2 text-[13.5px] text-ink-secondary">
@@ -669,16 +661,14 @@ function ScoreStep({
   const scale = desiredGradeScale(countryCode);
 
   return (
-    <div>
-      <p className="eyebrow text-ink-tertiary">{t("app.exams.gradeEyebrow")}</p>
-      <h1 className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
-        {t("app.exams.desiredGrade")}
-      </h1>
-
-      <p className="mt-6 text-center text-[32px] font-bold leading-none text-ink">
-        {desiredGradeLabel(targetScore, countryCode)}
-      </p>
-      <div className="mt-6 flex items-center gap-3">
+    <div className="mt-8 border-t border-hairline pt-6">
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="section-title">{t("app.exams.desiredGrade")}</h2>
+        <p className="numeral text-[20px] font-semibold leading-none text-ink">
+          {desiredGradeLabel(targetScore, countryCode)}
+        </p>
+      </div>
+      <div className="mt-4 flex items-center gap-3">
         <span className="numeral w-12 shrink-0 text-[12.5px] text-ink-tertiary">{scale.min}</span>
         <Slider
           className="min-w-0 flex-1"
@@ -713,16 +703,18 @@ function ScoreStep({
               {t("app.newPlan.projectionMock", { questions: mockQuestions })}
             </p>
           ) : null}
-          <div className="mt-3 flex h-10 items-end gap-0.5">
+          <div className="mt-3 flex h-10 items-end gap-[2px]">
             {load.map((count, position) => {
               const max = Math.max(1, ...load);
               return (
                 <span
                   key={position}
-                  className={`min-w-0 flex-1 rounded-t-sm ${
-                    peak && position === peak.offset ? "bg-caution" : "bg-ink/40"
-                  }`}
-                  style={{ height: `${Math.max(6, (count / max) * 100)}%` }}
+                  className="min-w-0 flex-1 rounded-t-[2px]"
+                  style={{
+                    height: `${Math.max(4, (count / max) * 100)}%`,
+                    backgroundColor: peak && position === peak.offset ? "var(--chart-fragile)" : "var(--chart-work)",
+                    opacity: count === 0 ? 0.25 : 1,
+                  }}
                 />
               );
             })}
@@ -730,6 +722,36 @@ function ScoreStep({
         </div>
       )}
     </div>
+  );
+}
+
+function Pill({
+  emoji,
+  label,
+  selected,
+  onSelect,
+}: {
+  emoji: string;
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={`pressable flex h-9 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition-colors duration-hover ${
+        selected
+          ? "border-ink bg-ink text-on-ink"
+          : "border-stroke-strong bg-surface text-ink hover:bg-surface-muted"
+      }`}
+    >
+      <span aria-hidden className="emoji text-[13px]">
+        {emoji}
+      </span>
+      {label}
+    </button>
   );
 }
 

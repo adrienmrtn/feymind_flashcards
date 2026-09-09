@@ -153,7 +153,7 @@ export function DeckPanel() {
   if (phase === "creation" && failure && opened) {
     return (
       <div className="rounded-2xl border border-border bg-card p-5">
-        <p className="text-[15px] font-semibold text-ink">{t("app.deck.partial")}</p>
+        <p className="section-title">{t("app.deck.partial")}</p>
         <p className="mt-1.5 text-[14px] leading-relaxed text-ink-secondary" role="alert">
           {failure}
         </p>
@@ -351,7 +351,7 @@ function ImportedPreview({
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold text-ink">
+          <p className="truncate section-title">
             {fileName ?? t("app.deck.ankiFile")}
           </p>
           <p className="numeral mt-0.5 text-[13px] text-ink-tertiary">

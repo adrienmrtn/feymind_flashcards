@@ -33,7 +33,7 @@ export default async function UserPage({ params }: { params: Promise<{ username:
           {person.institutionName ?? t("app.friends.classmate")}
         </p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
-          <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          <h1 className="page-title">
             {displayUsername(person.username)}
           </h1>
           <FriendActions personId={person.id} relation={person.relation} />

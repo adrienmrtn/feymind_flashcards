@@ -372,14 +372,59 @@ le référencement profite au produit.
 ```
 micabo.app/                 accueil, prix, questions
 micabo.app/f/<id>           une fiche partagée, lisible sans compte
-micabo.app/app              Cours — l'écran d'ouverture du web
+micabo.app/app              Aujourd'hui — ce qu'il y a à faire, et le bouton pour le faire
+micabo.app/app/reviser      la session, au clavier
+micabo.app/app/cours        les cours
 micabo.app/app/c/<id>       la fiche d'un cours
 micabo.app/app/c/<id>/cartes
-micabo.app/app/reviser      la session, au clavier
-micabo.app/app/examens
-micabo.app/app/profil
+micabo.app/app/plan         Examens — la frise, la charge par semaine, les épreuves
+micabo.app/app/plan/<id>    une épreuve : préparation, plan jour par jour, blancs
+micabo.app/app/progres      Progrès — la seule page de mesure
+micabo.app/app/reglages     le compte (l'ancien /app/profil y renvoie)
 micabo.app/auth/callback    l'échange du code OAuth
 ```
+
+### Cinq destinations, dans l'ordre de la journée
+
+La barre latérale dit **Aujourd'hui · Réviser · Cours · Examens · Progrès**, puis Amis et
+Réglages à part. C'est l'ordre dans lequel une journée se passe, et chaque page ne répond qu'à
+une question :
+
+| Page | La question | Ce qui n'y est pas, et où c'est |
+| --- | --- | --- |
+| Aujourd'hui | qu'est-ce que j'ai à faire, et je le lance | le verdict du plan (Examens), la maîtrise (Progrès) |
+| Examens | lesquelles, quand, et est-ce que ça tient | le travail du jour (Aujourd'hui) |
+| Progrès | qu'est-ce que je sais, et qu'est-ce que je fais | la série et les cartes les plus passées y vivent, l'ancien Profil n'existe plus |
+
+Il n'y a plus d'en-tête sur grand écran : la page porte son titre, et une barre qui répète le
+nom de l'onglet courant ne disait rien de plus que la barre latérale juste à côté.
+
+### Une seule façon de dessiner
+
+Les graphes vivent dans `components/app/charts/` et partagent une palette de cinq couleurs,
+une par sens et jamais réattribuée : **bleu** = ce qui se travaille, **vert** = acquis,
+**ocre** = fragile ou à surveiller, **rouge** = dépassement, **gris** = pas encore vu. Elles
+sont posées en jetons `--chart-*` sur `.app-shell` (jour et nuit), et validées ensemble pour
+le daltonisme avec le validateur du skill dataviz (ΔE ≥ 8 sur chaque paire adjacente).
+
+| Graphe | Ce qu'il montre | Ce qu'il remplace |
+| --- | --- | --- |
+| `MasteryBar` | ce que je sais, en une barre segmentée, la même sur Progrès, un cours, une épreuve | la barre de Progrès, le camembert du Profil (autres parts, autres couleurs) |
+| `ExamTimeline` | une ligne par épreuve, une échelle de temps commune, la barre est le temps qu'il reste | la frise à un bâton par jour, aux points sans nom |
+| `WeeklyLoad` | les minutes prévues par semaine devant les minutes disponibles, rouge quand ça déborde | la même frise, lue à la semaine |
+| `ActivityChart` | un trait par jour sur six semaines, avec un axe et des dates | la semaine glissante et les 42 barres sans échelle |
+| `ReadinessBar` | aujourd'hui, le jour J et l'objectif sur une seule échelle | deux pourcentages de 34 points côte à côte |
+| `MockTrend` | les scores des blancs dans l'ordre, sur une ligne | une liste de barres |
+
+Les textes ne portent jamais la couleur d'une série ; chaque graphe a une légende dès deux
+séries, un survol qui donne la valeur, et un tableau caché pour un lecteur d'écran.
+
+### L'échelle typographique
+
+Cinq crans, écrits une fois dans `globals.css` et employés partout : `page-title` (22 px),
+`page-lead`, `section-title` (14 px), `section-lead`, et pour les nombres `stat-value` (22 px)
+et `hero-value` (36 px, un seul par écran). Un chiffre en 44 points gras n'est pas plus lisible
+qu'en 36 points demi-gras ; il est seulement plus bruyant.
 
 Le vocabulaire de `MicaboCopy.swift` vaut ici **sans exception** : un contenu importé est un
 *cours*, ce que Micabo en écrit est sa *fiche*, une question-réponse est une *carte*, un passage

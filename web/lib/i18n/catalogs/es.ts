@@ -417,6 +417,7 @@ export const es: Catalog = {
   nav: {
     study: "Estudiar",
     home: "Inicio",
+    today: "Hoy",
     review: "Repasar",
     library: "Biblioteca",
     courses: "Cursos",

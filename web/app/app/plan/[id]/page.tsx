@@ -31,6 +31,7 @@ import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { loadCardDifficulty, loadDailyReviews } from "@/lib/data/difficulty";
 import { listMockResults, loadThroughput } from "@/lib/data/mocks";
 import { getTranslator } from "@/lib/i18n/server";
+import { projectedMastery } from "@/lib/term-plan";
 
 /** Combien de points faibles on montre : au-delà, la liste cesse d'être une liste d'actions. */
 const WEAK_SHOWN = 6;
@@ -146,7 +147,7 @@ export default async function ExamSheetPage({
 
   const readiness = examReadiness({
     masteryPercent: overall.percent,
-    projectedPercent: projectedFor(overall.percent, plan.passesByExam.get(exam.id) ?? 0, overall.cardCount),
+    projectedPercent: projectedMastery(overall.percent, plan.passesByExam.get(exam.id) ?? 0, overall.cardCount),
     mocks,
     examId: exam.id,
     now,
@@ -190,18 +191,18 @@ export default async function ExamSheetPage({
   return (
     <>
       <header>
-        <p className="eyebrow text-ink-tertiary">
+        <p className="text-[12.5px] font-medium text-ink-tertiary">
           <Link href={"/app/plan" as never} className="underline-draw">
-            {t("app.plan.title")}
+            {t("nav.exams")}
           </Link>
         </p>
-        <div className="mt-1 flex flex-wrap items-baseline justify-between gap-3">
-          <h1 className="text-lg font-semibold tracking-tight text-foreground">{exam.name}</h1>
-          <span className="numeral rounded-pill bg-caution-soft px-2.5 py-1 text-[12px] font-semibold text-caution">
+        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="page-title">{exam.name}</h1>
+          <span className="numeral rounded-full bg-caution-soft px-2.5 py-1 text-[12px] font-semibold text-caution">
             {examCountdownLabel(daysRemaining)}
           </span>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="page-lead">
           {t("app.plan.sheet.lead", {
             percent: overall.percent,
             cards: overall.cardCount,
@@ -216,7 +217,8 @@ export default async function ExamSheetPage({
         mockScore={readiness.mockScore}
         cardCount={overall.cardCount}
         daysRemaining={daysRemaining}
-        mocks={mine.slice(0, 6).map((mock) => ({
+        targetScore={exam.target_score}
+        mocks={mine.slice(0, 8).map((mock) => ({
           id: mock.id,
           score: mockScore(mock),
           questionCount: mock.questionCount,
@@ -253,15 +255,3 @@ export default async function ExamSheetPage({
   );
 }
 
-/**
- * Où la maîtrise arrivera le jour J, si le plan est suivi.
- *
- * Même courbe que sur l'accueil : rendement décroissant, et jamais 100 % promis - il restera
- * toujours des cartes qu'on rate.
- */
-function projectedFor(current: number, passes: number, cardCount: number): number {
-  if (cardCount === 0) return current;
-  const perCard = passes / cardCount;
-  const gain = (100 - current) * (1 - Math.exp(-perCard / 1.8));
-  return Math.min(97, Math.round(current + gain));
-}

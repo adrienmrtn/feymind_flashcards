@@ -39,7 +39,7 @@ export function ExportData() {
 
   return (
     <section className="saas-card px-7 py-7">
-      <p className="text-[15px] font-semibold text-ink">{t("app.settings.export.title")}</p>
+      <p className="section-title">{t("app.settings.export.title")}</p>
       <p className="mt-1.5 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-secondary">
         {t("app.settings.export.body")}
       </p>

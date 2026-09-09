@@ -118,8 +118,8 @@ export function ExamSheet({
 
   return (
     <div className="space-y-5">
-      <section className="rounded-group border border-border bg-card p-5">
-        <h2 className="text-[15px] font-semibold text-ink">{t("app.plan.sheet.programTitle")}</h2>
+      <section className="panel p-5">
+        <h2 className="section-title">{t("app.plan.sheet.programTitle")}</h2>
         <ul className="mt-3 divide-y divide-hairline">
           {courses.map((course) => (
             <li key={course.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
@@ -139,11 +139,12 @@ export function ExamSheet({
               </span>
               <span
                 aria-hidden
-                className="h-1.5 w-16 shrink-0 overflow-hidden rounded-pill bg-surface-sunken"
+                className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full"
+                style={{ backgroundColor: "var(--color-surface-sunken)" }}
               >
                 <span
-                  className="block h-full rounded-pill bg-accent"
-                  style={{ width: `${Math.max(2, course.masteryPercent)}%` }}
+                  className="block h-full rounded-full"
+                  style={{ width: `${Math.max(2, course.masteryPercent)}%`, backgroundColor: "var(--chart-work)" }}
                 />
               </span>
             </li>
@@ -159,18 +160,15 @@ export function ExamSheet({
       />
 
       {weak.length > 0 ? (
-        <section className="rounded-group border border-caution/40 bg-caution-soft p-5">
-          <h2 className="text-[15px] font-semibold text-ink">{t("app.plan.sheet.weakTitle")}</h2>
-          <p className="mt-1 text-[13px] text-ink-secondary">{t("app.plan.sheet.weakLead")}</p>
-          <ul className="mt-4 space-y-2">
+        <section className="panel p-5">
+          <h2 className="section-title">{t("app.plan.sheet.weakTitle")}</h2>
+          <p className="section-lead">{t("app.plan.sheet.weakLead")}</p>
+          <ul className="mt-3 divide-y divide-hairline">
             {weak.map((card) => (
-              <li
-                key={card.id}
-                className="flex items-start justify-between gap-3 rounded-button bg-surface px-4 py-3"
-              >
+              <li key={card.id} className="flex items-start justify-between gap-3 py-2.5">
                 <span className="min-w-0">
-                  <span className="line-clamp-2 text-[14px] text-ink">{card.front}</span>
-                  <span className="numeral mt-1 block text-[12px] text-ink-tertiary">
+                  <span className="line-clamp-2 text-[13.5px] text-ink">{card.front}</span>
+                  <span className="numeral mt-0.5 block text-[12px] text-ink-tertiary">
                     {t("app.plan.sheet.weakLine", {
                       again: card.againCount,
                       reviews: card.reviews,
@@ -178,20 +176,20 @@ export function ExamSheet({
                   </span>
                 </span>
                 {card.isStubborn ? (
-                  <span className="shrink-0 rounded-pill bg-negative-soft px-2 py-0.5 text-[11.5px] font-semibold text-negative">
+                  <span className="shrink-0 rounded-full bg-negative-soft px-2 py-0.5 text-[11.5px] font-semibold text-negative">
                     {t("app.plan.sheet.stubborn")}
                   </span>
                 ) : null}
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-[12.5px] leading-relaxed text-ink-secondary">
+          <p className="mt-3 text-[12.5px] leading-relaxed text-ink-tertiary">
             {t("app.plan.sheet.weakHint")}
           </p>
         </section>
       ) : null}
 
-      <section className="overflow-hidden rounded-group border border-border bg-card">
+      <section className="panel overflow-hidden">
         <Fold
           title={t("app.plan.sheet.formatsTitle")}
           detail={
@@ -294,9 +292,9 @@ function MockPanel({
   if (!wantsMock(kind)) return null;
 
   return (
-    <section className="rounded-group border border-border bg-card p-5">
+    <section className="panel p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="text-[15px] font-semibold text-ink">{t("app.mock.panelTitle")}</h2>
+        <h2 className="section-title">{t("app.mock.panelTitle")}</h2>
         {canRun ? (
           <Button
             size="sm"
@@ -320,25 +318,11 @@ function MockPanel({
 
       <p className="mt-1 text-[13px] text-ink-secondary">{t("app.mock.panelLead")}</p>
 
-      {mocks.length > 0 ? (
-        <ul className="mt-4 divide-y divide-hairline">
-          {mocks.map((mock) => (
-            <li key={mock.id} className="flex items-center justify-between gap-3 py-2.5">
-              <span className="numeral text-[13px] text-ink-tertiary">{mock.finishedAt}</span>
-              <span className="numeral text-[15px] font-semibold text-ink">
-                {t("app.mock.scoreLine", {
-                  score: mock.score,
-                  total: mock.questionCount,
-                })}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-3 text-[13.5px] text-ink-tertiary">
+      {mocks.length === 0 ? (
+        <p className="mt-3 text-[13px] text-ink-tertiary">
           {canRun ? t("app.mock.none") : t("app.mock.tooFew")}
         </p>
-      )}
+      ) : null}
 
       {failed ? (
         <p className="mt-3 text-[13px] text-negative" role="alert">
@@ -371,7 +355,7 @@ function Fold({
         className="hover-row flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
       >
         <span className="min-w-0">
-          <span className="block text-[15px] font-semibold text-ink">{title}</span>
+          <span className="block section-title">{title}</span>
           <span className="mt-0.5 block truncate text-[12.5px] text-ink-tertiary">{detail}</span>
         </span>
         <svg

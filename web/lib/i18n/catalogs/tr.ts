@@ -417,6 +417,7 @@ export const tr: Catalog = {
   nav: {
     study: "Çalış",
     home: "Ana sayfa",
+    today: "Bugün",
     review: "Tekrar",
     library: "Kitaplık",
     courses: "Dersler",

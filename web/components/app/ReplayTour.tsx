@@ -34,7 +34,7 @@ export function ReplayTour() {
       }}
       className="pressable hover-row w-full px-7 py-5 text-left"
     >
-      <p className="text-[15px] font-semibold text-ink">{t("app.settings.replayTour.title")}</p>
+      <p className="section-title">{t("app.settings.replayTour.title")}</p>
       <p className="mt-1 text-[13px] leading-relaxed text-ink-tertiary">
         {pending ? t("app.settings.replayTour.pending") : t("app.settings.replayTour.body")}
       </p>

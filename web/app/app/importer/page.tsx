@@ -41,10 +41,10 @@ export default async function ImportPage() {
   return (
     <>
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+        <h1 className="page-title">
           {t("nav.import")}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="page-lead">
           {canImport ? t("app.import.lead.canImport") : t("app.import.lead.firstFree")}
         </p>
       </header>

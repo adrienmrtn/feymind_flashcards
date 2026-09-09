@@ -185,6 +185,12 @@ export const appTr = {
     deleteMsg: "{title} ve {cards} gider.",
   },
   review: {
+    setup: {
+      newTitle: "Yeni kartlar",
+      cards: "{count, plural, one {kart} other {kart}}",
+      mix: "{due} tekrar · {fresh} yeni",
+      newHint: "bugün {max} uygun",
+    },
     verb: "Tekrar et",
     again: "Bir daha tekrar et",
     thisCourse: "Bu dersi tekrar et",
@@ -281,6 +287,12 @@ export const appTr = {
     todayCards: "bugün {cards}.",
   },
   exams: {
+    hub: {
+      title: "Sınavlar",
+      lead: "Sınavların, kalan süre ve yetişip yetişmediği.",
+      timeline: "Yaklaşan",
+      load: "Yük, hafta hafta",
+    },
     title: "Sınavlar",
     lead: "Tarihlerin, kartların.",
     add: "Sınav ekle",
@@ -483,6 +495,8 @@ export const appTr = {
   },
   exam: {
     schedule: {
+      examShort: "Sınav günü",
+      offShort: "ara",
       title: "Planın, gün gün",
       summary: "{days} çalışma gününde {cards} kart, {off} mola günü",
       cards: "{cards} kart · {minutes} dk",
@@ -553,6 +567,7 @@ export const appTr = {
     projection: "{days} günde {cards} kart: günde yaklaşık {daily}, en yoğun günde {peak}.",
     projectionMock: "Sınavdan önce {questions} soruluk iki deneme konulacak.",
     hint: {
+      epreuve: "Tarihi sonra taşıyabilirsin, plan yeniden kurulur.",
       materiel: "Buraya eklediğin her şey sınavın kapsamı olur.",
       jour: "Tarihi sonra değiştirebilirsin, plan yeniden kurulur.",
       type: "Tür, çalışılan biçimleri ve denemeleri belirler.",
@@ -561,7 +576,47 @@ export const appTr = {
       note: "Tahmin hedef notla birlikte değişir. Henüz hiçbir şey kaydedilmedi.",
     },
   },
+  chart: {
+    table: {
+      day: "Gün",
+      passes: "Geçiş",
+      again: "Kaçırılan",
+      exam: "Sınav",
+      days: "Kalan gün",
+      readiness: "Öğrenilen",
+      score: "Puan",
+    },
+    timeline: {
+      aria: "Dönemdeki yaklaşan sınavlar",
+      hint: "Çubuk kalan süredir; dolu kısmı, zaten bildiklerin.",
+    },
+    load: {
+      aria: "Haftalık planlanan dakikalar, uygun dakikalara karşı",
+      week: "{day} haftası",
+      tooltip: "{minutes} dk planlandı · {capacity} dk uygun",
+      thisWeek: "bu hafta",
+      planned: "planlanan",
+      capacity: "uygun",
+      over: "fazla",
+      exam: "sınav",
+    },
+    readiness: {
+      now: "bugün",
+      measured: "son denemede",
+      day: "sınav günü",
+      target: "hedef: % {percent}",
+      aria: "Bugün % {now}, sınav günü beklenen % {projected}",
+    },
+    mock: {
+      aria: "Deneme sınavı puanları, sırayla",
+      point: "{day} tarihinde % {score} ({total} soru)",
+    },
+  },
   progress: {
+    masteryLead: "Oturmuş olan, hâlâ sallanan ve henüz görülmemiş olan.",
+    activity: "Etkinlik",
+    activityLead: "Son altı haftada, günde bir çubuk.",
+    days: "{count, plural, one {# gün} other {# gün}}",
     title: "İlerleme",
     lead: "Bildiklerin ve bunun bedeli.",
   },
@@ -963,6 +1018,26 @@ export const appTr = {
     reopenOffer: "Teklifi yeniden aç, {time}",
   },
   today: {
+    cardsMinutes: "{count, plural, one {kart planlandı} other {kart planlandı}} · yaklaşık {minutes} dk",
+    cardsDue: "{count, plural, one {kart tekrar edilecek} other {kart tekrar edilecek}}",
+    start: "Tekrar et · {minutes} dk",
+    startCards: "{count, plural, one {# kartı} other {# kartı}} tekrar et",
+    forExam: "{exam} için",
+    block: "{cards} kart · {minutes} dk",
+    mockTitle: "Deneme sınavı · {exam}",
+    mock: "{questions} soru · {minutes} dk",
+    done: "Bugünlük bitti.",
+    doneBody: "Kartların zamanı gelince geri gelecek. Bir özeti yeniden okuyabilir veya bir derste ilerleyebilirsin.",
+    doneEmpty: "Bir ders bırak: Micabo önce özetini, sonra kartlarını yazar.",
+    streak: "{count, plural, one {üst üste # gün} other {üst üste # gün}}",
+    fix: "Ayarla",
+    nextExam: "Sıradaki sınav",
+    noExam: "Planlanmış sınav yok",
+    noExamBody: "Bir tarih belirle, Micabo işi sınav gününe kadar dağıtsın.",
+    otherExams: "Sonra",
+    seeExams: "Tüm sınavlar",
+    noOtherExam: "Ufukta başka bir şey yok.",
+    known: "% {percent} öğrenildi",
     agenda: "Programda",
     dueOne: "tekrarlanacak kart",
     dueMany: "tekrarlanacak kart",
@@ -1068,6 +1143,26 @@ export const appTr = {
     },
   },
   tour: {
+    today: {
+      work: {
+        title: "Yapılacak olan",
+        body: "Planının dağıttığı bugünkü kartların. Bir düğme, ve tekrar ediyorsun.",
+      },
+      next: {
+        title: "Sıradaki sınavın",
+        body: "Bugün neredesin, plan seni sınav günü nereye götürüyor.",
+      },
+    },
+    exams: {
+      timeline: {
+        title: "Sınavların",
+        body: "Her sınav için bir satır, çubuk kalan süre. Sınavı açmak için satıra dokun.",
+      },
+      load: {
+        title: "Yük",
+        body: "Planın her hafta öngördüğü, verdiğin süreye karşı. Taşarsa kırmızı.",
+      },
+    },
     skipPage: "Bu sayfanın turunu atla",
     skipAll: "Turu atla",
     next: "İleri",

@@ -23,10 +23,10 @@ export default async function FriendsPage() {
   return (
     <div className="mx-auto max-w-[560px]">
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+        <h1 className="page-title">
           {t("app.friends.title")}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="page-lead">
           {graph.me ? displayUsername(graph.me.username) : t("app.friends.yourAccount")}
         </p>
       </header>

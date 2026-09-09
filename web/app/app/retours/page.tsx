@@ -36,8 +36,8 @@ export default async function InboxPage({
   return (
     <div className="mx-auto max-w-[640px]">
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">{t("app.inbox.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="page-title">{t("app.inbox.title")}</h1>
+        <p className="page-lead">
           {unread === 0
             ? t("app.inbox.unread.none")
             : unread === 1

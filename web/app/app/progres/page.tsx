@@ -1,119 +1,42 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import {
-  addDays,
-  adherenceFrom,
-  asExamKind,
-  asStartingPoint,
-  capacityFor,
-  examCountdownLabel,
-  feasibility,
+  currentStreak,
+  longestStreak,
   masteryOf,
-  planTerm,
-  startOfDay,
+  rankReviewedCards,
   studyStats,
   weakCards,
-  weekStrip,
-  WEEK_STRIP_RADIUS,
-  type TermCard,
-  type TermExam,
 } from "@micabo/core";
 
-import { MasteryCard } from "@/components/app/home/MasteryCard";
-import { StatsRow } from "@/components/app/home/StatsRow";
-import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardHeader, CardPanel, CardTitle } from "@/components/ui/card";
-import { WeekStrip } from "@/components/app/WeekStrip";
-import { readAvailability } from "@/lib/data/availability";
-import {
-  listCardSnapshots,
-  listCourses,
-  listExams,
-  type CardSnapshotRow,
-  type CourseRow,
-} from "@/lib/data/courses";
+import { ActivityChart } from "@/components/app/charts/ActivityChart";
+import { MasteryBar } from "@/components/app/charts/MasteryBar";
+import { Bar } from "@/components/app/Skeleton";
+import { listCardSnapshots, listCourses, type CardSnapshotRow } from "@/lib/data/courses";
 import { loadCardDifficulty, loadDailyReviews } from "@/lib/data/difficulty";
-import { listMockResults, loadThroughput } from "@/lib/data/mocks";
-import { readProfile } from "@/lib/data/profile";
-import { loadNewCardBudget, loadReviewDatesSince } from "@/lib/data/reviews";
+import { loadProfileStats } from "@/lib/data/reviews";
 import { getTranslator } from "@/lib/i18n/server";
-import type { UiLocale } from "@/lib/i18n/locales";
 import type { Translator } from "@/lib/i18n/copy";
 
 /**
- * **Les progrès : la mesure, une fois que le plan a la charge du travail.**
+ * **Les progrès : la seule page de mesure.**
  *
- * Trois changements de fond par rapport à la version qui listait des cartes dues.
- *
- * - **Le travail vient du plan**, pas de la file de révision seule. Ce sont les mêmes cartes,
- *   mais l'ordre est celui de la période : ce que trois épreuves se disputent ne se décide pas
- *   en regardant aujourd'hui isolément.
- * - **Chaque bloc dit pour quelle épreuve il existe.** « Biologie, 24 cartes » ne motive
- *   personne ; « Biologie pour le partiel du 14 » si.
- * - **Le social descend.** Le classement et les demandes d'amis vivent sur leur page. Ils
- *   étaient au même niveau visuel que le travail, ce qui n'a jamais été vrai.
- *
- * Sans aucune épreuve déclarée, le plan est vide et l'écran retombe sur les cartes dues :
- * personne n'est bloqué derrière la déclaration d'un examen.
+ * Avant, trois écrans mesuraient : Progrès (maîtrise, semaine, statistiques), Profil (série,
+ * camembert, cartes les plus passées) et la fiche d'épreuve. Chacun avec son vocabulaire.
+ * Il n'en reste qu'un, et il lit dans l'ordre : ce que je sais (la maîtrise), ce que je fais
+ * (l'activité), ce qui résiste. Le camembert est parti : il découpait les mêmes cartes en
+ * quatre parts qui ne recoupaient pas celles de la maîtrise.
  */
 export default async function ProgressPage() {
   const now = new Date();
-  const today = startOfDay(now);
-  const { t, locale } = await getTranslator();
-
-  const [
-    courses,
-    cards,
-    exams,
-    profile,
-    budget,
-    reviewDates,
-    availability,
-    difficulties,
-    daily,
-    throughput,
-    mocks,
-  ] = await Promise.all([
+  const [{ t }, courses, cards, difficulties, daily] = await Promise.all([
+    getTranslator(),
     listCourses(),
     listCardSnapshots(),
-    listExams(),
-    readProfile(),
-    loadNewCardBudget(),
-    loadReviewDatesSince(addDays(today, -WEEK_STRIP_RADIUS)),
-    readAvailability(),
     loadCardDifficulty(),
     loadDailyReviews(),
-    loadThroughput(),
-    listMockResults(),
   ]);
-
-  const week = weekStrip(
-    cards.map((card) => ({
-      dueDate: new Date(card.due_date),
-      isSuspended: card.is_suspended,
-      state: card.state,
-    })),
-    reviewDates,
-    now,
-    { newRemaining: budget.remaining },
-  );
-
-  const plan = planTerm({
-    exams: exams.map(toTermExam),
-    cards: cards.map(toTermCard),
-    availability,
-    now,
-    throughput,
-    mocks,
-    difficulties,
-    adherence: adherenceFrom(
-      daily,
-      (date) => capacityFor(availability, date),
-      throughput,
-      now,
-    ),
-  });
-  const verdict = feasibility(plan);
 
   const mastery = masteryOf(
     cards.map((card) => ({
@@ -125,10 +48,7 @@ export default async function ProgressPage() {
     })),
     difficulties,
   );
-
   const stats = studyStats(daily, now);
-
-
   const weak = weakCards(
     cards.map((card) => ({
       id: card.id,
@@ -141,91 +61,167 @@ export default async function ProgressPage() {
       isSuspended: card.is_suspended,
     })),
     difficulties,
-    { limit: 3 },
+    { limit: 5 },
   );
-
-  const nextExam = exams
-    .map((exam) => ({
-      id: exam.id,
-      name: exam.name,
-      days: Math.round(
-        (startOfDay(new Date(`${exam.exam_date}T12:00:00`)).getTime() - today.getTime()) /
-          86_400_000,
-      ),
-    }))
-    .filter((exam) => exam.days >= 0)
-    .sort((left, right) => left.days - right.days)[0];
-
+  const titles = new Map(courses.map((course) => [course.id, course.title]));
 
   return (
     <>
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight text-foreground">
-            {t("app.progress.title")}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("app.progress.lead")}</p>
-        </div>
-        {nextExam ? (
-          <Link
-            href={"/app" as never}
-            className="hover-tile flex items-center gap-2 rounded-pill bg-caution-soft px-3 py-1.5"
-          >
-            <span className="truncate text-[13px] font-medium text-caution">{nextExam.name}</span>
-            <span className="numeral text-[13px] font-semibold text-caution">
-              {examCountdownLabel(nextExam.days)}
-            </span>
-          </Link>
-        ) : null}
+      <header>
+        <h1 className="page-title">{t("app.progress.title")}</h1>
+        <p className="page-lead">{t("app.progress.lead")}</p>
       </header>
 
-      <MasteryCard mastery={mastery} />
+      <Suspense fallback={<StatsPending />}>
+        <StatTiles stats={stats} cardCount={cards.length} courseCount={courses.length} t={t} />
+      </Suspense>
 
-      <div className="grid min-w-0 items-stretch gap-4 lg:grid-cols-2">
-        <div className="h-full min-w-0" data-tour="semaine">
-          <WeekStrip days={week} locale={locale as UiLocale} t={t} />
+      <section className="panel p-5" data-tour="maitrise">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <div>
+            <h2 className="section-title">{t("app.home.mastery.title")}</h2>
+            <p className="section-lead">{t("app.progress.masteryLead")}</p>
+          </div>
+          <Link href={"/app/cours" as never} className="underline-draw text-[12.5px] font-medium text-ink-secondary">
+            {t("app.home.mastery.byCourse")}
+          </Link>
         </div>
-        <WeakCard weak={weak} t={t} />
-      </div>
+        {mastery.cardCount === 0 ? (
+          <p className="mt-3 text-[13.5px] text-ink-secondary">{t("app.home.mastery.empty")}</p>
+        ) : (
+          <>
+            <p className="mt-4 flex items-baseline gap-2">
+              <span className="hero-value">
+                {mastery.percent}
+                <span className="text-[20px] text-ink-secondary"> %</span>
+              </span>
+              <span className="text-[13px] text-ink-tertiary">
+                {t("app.home.mastery.of", { count: mastery.cardCount })}
+              </span>
+            </p>
+            <MasteryBar mastery={mastery} className="mt-4" />
+          </>
+        )}
+      </section>
 
-      <StatsRow stats={stats} daily={daily} />
+      <section className="panel p-5" data-tour="statistiques">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <div>
+            <h2 className="section-title">{t("app.progress.activity")}</h2>
+            <p className="section-lead">{t("app.progress.activityLead")}</p>
+          </div>
+          {stats.best ? (
+            <p className="numeral text-[12.5px] text-ink-tertiary">
+              {t("app.home.stats.averageDetail", { best: stats.best.passes })}
+            </p>
+          ) : null}
+        </div>
+        <div className="mt-4">
+          <ActivityChart daily={daily} now={now} />
+        </div>
+      </section>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <WeakPanel weak={weak} titles={titles} t={t} />
+        <Suspense fallback={<TopCardsPending />}>
+          <TopCards cards={cards} t={t} />
+        </Suspense>
+      </div>
     </>
   );
 }
 
-
-
-
-/**
- * Ce qui résiste, sur l'accueil.
- *
- * Trois cartes au plus : c'est une invitation à corriger, pas un rapport d'échec. La liste
- * complète vit sur la fiche de l'épreuve, là où on peut agir dessus.
- */
-function WeakCard({
-  weak,
+async function StatTiles({
+  stats,
+  cardCount,
+  courseCount,
   t,
 }: {
-  weak: { id: string; front: string; againCount: number; reviews: number }[];
+  stats: ReturnType<typeof studyStats>;
+  cardCount: number;
+  courseCount: number;
+  t: Translator;
+}) {
+  const { reviewDays } = await loadProfileStats();
+  const dates = reviewDays.map((day) => new Date(day));
+  const streak = currentStreak(dates);
+  const record = Math.max(longestStreak(dates), stats.bestStreak);
+
+  return (
+    <dl className="grid grid-cols-2 gap-3 md:grid-cols-4" data-tour="profil-chiffres">
+      <Stat
+        label={t("app.home.stats.streak")}
+        value={t("app.progress.days", { count: streak })}
+        detail={t("app.home.stats.streakDetail", { best: record })}
+      />
+      <Stat
+        label={t("app.home.stats.passes")}
+        value={stats.totalPasses.toLocaleString()}
+        detail={t("app.home.stats.passesDetail", { days: stats.activeDays })}
+      />
+      <Stat
+        label={t("app.home.stats.accuracy")}
+        value={`${stats.accuracyPercent} %`}
+        detail={t("app.home.stats.accuracyDetail")}
+      />
+      <Stat
+        label={t("app.profile.cards.label")}
+        value={cardCount.toLocaleString()}
+        detail={t("app.profile.courseCount", { count: courseCount })}
+      />
+    </dl>
+  );
+}
+
+function Stat({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="panel min-w-0 px-4 py-3.5">
+      <dt className="stat-label truncate">{label}</dt>
+      <dd className="stat-value mt-2">{value}</dd>
+      <p className="mt-1.5 truncate text-[12px] text-ink-tertiary">{detail}</p>
+    </div>
+  );
+}
+
+function StatsPending() {
+  return (
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      {Array.from({ length: 4 }, (_, index) => (
+        <div key={index} className="panel px-4 py-3.5">
+          <Bar className="h-3 w-16" />
+          <Bar className="mt-3 h-6 w-12" />
+          <Bar className="mt-2 h-3 w-24" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function WeakPanel({
+  weak,
+  titles,
+  t,
+}: {
+  weak: { id: string; courseId: string | null; front: string; againCount: number; reviews: number }[];
+  titles: Map<string, string>;
   t: Translator;
 }) {
   return (
-    <section className="flex h-full min-w-0 flex-col rounded-group border border-border bg-card p-5">
-      <h2 className="text-[15px] font-semibold text-ink">{t("app.home.weak.title")}</h2>
+    <section className="panel flex min-w-0 flex-col p-5">
+      <h2 className="section-title">{t("app.home.weak.title")}</h2>
       {weak.length === 0 ? (
-        <p className="mt-2 text-[13.5px] text-ink-secondary">{t("app.home.weak.none")}</p>
+        <p className="section-lead">{t("app.home.weak.none")}</p>
       ) : (
         <>
-          <p className="mt-1 text-[13px] text-ink-secondary">{t("app.home.weak.lead")}</p>
-          <ul className="mt-3 space-y-2">
+          <p className="section-lead">{t("app.home.weak.lead")}</p>
+          <ul className="mt-3 divide-y divide-hairline">
             {weak.map((card) => (
-              <li key={card.id} className="rounded-button bg-surface-muted px-3 py-2.5">
+              <li key={card.id} className="py-2.5">
                 <p className="line-clamp-2 text-[13.5px] text-ink">{card.front}</p>
-                <p className="numeral mt-1 text-[12px] text-ink-tertiary">
-                  {t("app.home.weak.line", {
-                    again: card.againCount,
-                    reviews: card.reviews,
-                  })}
+                <p className="numeral mt-0.5 text-[12px] text-ink-tertiary">
+                  {[card.courseId ? titles.get(card.courseId) : null, t("app.home.weak.line", { again: card.againCount, reviews: card.reviews })]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </p>
               </li>
             ))}
@@ -236,46 +232,40 @@ function WeakCard({
   );
 }
 
+async function TopCards({ cards, t }: { cards: CardSnapshotRow[]; t: Translator }) {
+  const { topCards } = await loadProfileStats();
+  const ranked = rankReviewedCards(
+    topCards,
+    cards.map((card) => ({ id: card.id, front: card.front })),
+  ).slice(0, 5);
 
-function toTermCard(card: CardSnapshotRow): TermCard {
-  return {
-    id: card.id,
-    courseId: card.course_id,
-    kind: card.kind,
-    state: card.state,
-    intervalDays: card.interval_days,
-    dueDate: new Date(card.due_date),
-    isSuspended: card.is_suspended,
-  };
+  return (
+    <section className="panel flex min-w-0 flex-col p-5" data-tour="profil-passees">
+      <h2 className="section-title">{t("app.profile.topCards.label")}</h2>
+      {ranked.length === 0 ? (
+        <p className="section-lead">{t("app.profile.topCards.empty")}</p>
+      ) : (
+        <ol className="mt-3 divide-y divide-hairline">
+          {ranked.map((card, index) => (
+            <li key={card.id} className="flex items-baseline gap-3 py-2.5">
+              <span className="numeral w-4 shrink-0 text-[12px] text-ink-tertiary">{index + 1}</span>
+              <span className="min-w-0 flex-1 truncate text-[13.5px] text-ink">{card.front}</span>
+              <span className="numeral shrink-0 text-[12.5px] font-medium text-ink">{card.passes}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
 }
 
-function toTermExam(exam: {
-  id: string;
-  name: string;
-  exam_date: string;
-  intensity: string;
-  course_ids: string[] | null;
-  formats: string[] | null;
-  kind: string;
-  starting_point: string;
-}): TermExam {
-  return {
-    id: exam.id,
-    name: exam.name,
-    examDate: new Date(`${exam.exam_date}T12:00:00`),
-    intensity:
-      exam.intensity === "light" || exam.intensity === "intense" ? exam.intensity : "standard",
-    courseIds: exam.course_ids ?? [],
-    formats: exam.formats ?? [],
-    kind: asExamKind(exam.kind),
-    startingPoint: asStartingPoint(exam.starting_point),
-  };
-}
-
-function greetingFor(now: Date, t: Translator): string {
-  const hour = now.getHours();
-  if (hour < 6) return t("app.home.greeting.night");
-  if (hour < 12) return t("app.home.greeting.morning");
-  if (hour < 18) return t("app.home.greeting.afternoon");
-  return t("app.home.greeting.evening");
+function TopCardsPending() {
+  return (
+    <div className="panel p-5">
+      <Bar className="h-4 w-40" />
+      {Array.from({ length: 4 }, (_, index) => (
+        <Bar key={index} className="mt-3.5 h-4 w-[62%]" />
+      ))}
+    </div>
+  );
 }

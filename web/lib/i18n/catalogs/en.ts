@@ -419,6 +419,7 @@ export const en: Catalog = {
   nav: {
     study: "Study",
     home: "Home",
+    today: "Today",
     review: "Review",
     library: "Library",
     courses: "Courses",
