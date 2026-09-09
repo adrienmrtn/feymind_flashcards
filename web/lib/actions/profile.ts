@@ -9,7 +9,6 @@ import {
   isSheetLength,
   isChoosableVisibility,
   lengthContaining,
-  nearestStep,
   type ContentLanguage,
   type CourseVisibility,
   type SheetLength,
@@ -38,7 +37,6 @@ export interface SavedSettings {
 
 export async function updateSettings(input: {
   displayName?: string;
-  dailyMinutes?: number;
   sheetLength?: SheetLength;
   sheetBlocks?: number;
   subjects?: string[];
@@ -57,12 +55,6 @@ export async function updateSettings(input: {
   if (input.displayName !== undefined) {
     const name = input.displayName.trim().slice(0, 60);
     patch.display_name = name.length > 0 ? name : null;
-  }
-
-  // Le rythme se cale sur un palier connu : la file d'étude compte les cartes neuves à partir de
-  // ces valeurs-là, et une durée arbitraire donnerait un plan que rien ne sait tenir.
-  if (input.dailyMinutes !== undefined) {
-    patch.daily_minutes = nearestStep(input.dailyMinutes);
   }
 
   // Le nombre de blocs commande, et le format n'en est que le nom : c'est ce que l'app a tranché en

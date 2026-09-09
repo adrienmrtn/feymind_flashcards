@@ -1,5 +1,4 @@
 import {
-  DEFAULT_DAILY_MINUTES,
   DEFAULT_SHEET_LENGTH,
   entitlement,
   isSheetLength,
@@ -45,7 +44,6 @@ export default async function SettingsPage() {
     readEntitlement(),
   ]);
 
-  const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
   const handle = profile?.username ?? "";
 
   return (
@@ -64,7 +62,6 @@ export default async function SettingsPage() {
           <ProfileSettings
             initialName={profile?.display_name ?? ""}
             initialUsername={handle}
-            initialMinutes={minutes}
             initialLength={
               isSheetLength(profile?.sheet_length) ? profile.sheet_length : DEFAULT_SHEET_LENGTH
             }
@@ -75,28 +72,6 @@ export default async function SettingsPage() {
           />
         </div>
 
-        <Link
-          href={"/app/plan/semaines" as never}
-          className="hover-tile flex items-center justify-between gap-4 rounded-group border border-border bg-card px-5 py-4"
-        >
-          <span className="min-w-0">
-            <span className="block section-title">
-              <T k="settings.weekly.title" />
-            </span>
-            <span className="mt-0.5 block text-[13px] text-ink-tertiary">
-              <T k="settings.weekly.detail" />
-            </span>
-          </span>
-          <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-ink-tertiary">
-            <path
-              d="M7 4l6 6-6 6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            />
-          </svg>
-        </Link>
       </Section>
 
       <Section titleKey="settings.section.app" hintKey="settings.section.appHint">

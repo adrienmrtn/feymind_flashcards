@@ -34,13 +34,10 @@ export const articlesTr = {
       "Aralık, basmadan **önce** düğmenin üstündedir. Kendi köşesinde karar veren bir planlayıcıya çabuk uyulmaz: hızlanmak için « kolay » dersin, kart üç hafta gider, sınav günü yeniden keşfedersin.",
     stepMinutes: "{n} dk",
     stepJoin: ", sonra ",
-    paceTitle: "Tempo: dakika, kart kotası değil",
-    pace1:
-      "Micabo'nun sorduğu, günde bir süre, kart sayısı değil. {minutes} dakikada — varsayılan — yaklaşık {seen} kart görürsün, ürün yalnız **{perDay} yeni** kart sokar.",
-    pace2:
-      "İkisinin arası ayarın özüdür: yeni bir kart bir geçiş değil, oturana kadar yaklaşık {reps} geçiş eder. Bugün vakit var diye elli kart sokmak, sonraki üç haftaya oturum borcu yazmaktır — bir destenin bırakılışı da böyle olur.",
-    paceNote:
-      "Günün tavanı vadesi gelen tekrarları durdurmaz: hepsi geçer. Yalnız yeni kartların girişini kısıtlar. Kaçırılan bir gün delik açmaz, kaydırır.",
+    paceTitle: "Tempo: kotanın değil, yükün istediği",
+    pace1: "Micabo ne günde kaç kart ne de kaç dakika sorar. Bugün son tarihlerin ne istediğine bakar, hepsini sunar ve ne kadar süreceğini söyler. Bir öğrenci bir saatte yaklaşık {seen} kart görür.",
+    pace2: "Burada bir zamanlar yeni kart tavanı vardı, bir kartın oturması için gereken {reps} geçişe göre ayarlanmıştı. Belirleyici bir kusuru vardı: bir sınava üç gün kala, günün temposu adına o sınavın kartlarını geri çeviriyordu. En çok gerektiği gün işi tutmak, yanlış meslektir.",
+    paceNote: "Planın dağıttığı şey, sınav gününe kadarki geçişlerdir. Kaçırılan bir gün bu yüzden delik bırakmaz: kaydırır, ve plan bir sonraki hesapta yeniden kurulur.",
     sheetTitle: "Önce özet kâğıdı, sonra kartlar",
     sheet1:
       "Bir flashcard, anlamış olmayı varsayar. Okumadığın bir fikri sınamak, neyden söz ettiğini bilmeden bir yanıt ezberlemektir — kart tutar, sınav tutmaz.",

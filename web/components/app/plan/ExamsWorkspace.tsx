@@ -5,13 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
-  adherenceLevel,
+  dailyMinutesLabel,
   examCountdownLabel,
   examUrgency,
-  type Adherence,
   type LoadBar,
-  type TermLever,
-  type TermVerdict,
+  type TermLoad,
   type Throughput,
 } from "@micabo/core";
 
@@ -22,32 +20,23 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
 import type { PlanExam } from "@/lib/term-plan";
 
-import { Verdict } from "./Verdict";
-
 /**
  * Le hub des examens : **lesquelles, quand, et est-ce que ça tient.**
  *
- * D'abord la frise (une ligne par épreuve, une échelle de temps commune), puis la charge
- * semaine par semaine contre le temps donné, puis les épreuves une à une. Le verdict n'est
- * un bloc à part que quand il a quelque chose à demander ; sinon il tient en une ligne sous
- * la charge.
+ * D'abord la frise (une ligne par épreuve, une échelle de temps commune), puis ce que la
+ * période demande semaine par semaine, puis les épreuves une à une. Rien ici ne juge la
+ * charge : le plan la calcule sur ce qu'il y a à apprendre, et l'écran la montre.
  */
 export function ExamsWorkspace({
   bars,
-  verdict,
-  levers,
+  load,
   exams,
-  weeklyMinutes,
-  adherence,
   throughput,
   hasCourses,
 }: {
   bars: LoadBar[];
-  verdict: TermVerdict;
-  levers: TermLever[];
+  load: TermLoad;
   exams: PlanExam[];
-  weeklyMinutes: number;
-  adherence: Adherence;
   throughput: Throughput;
   hasCourses: boolean;
 }) {
@@ -122,18 +111,13 @@ export function ExamsWorkspace({
         <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <h2 className="section-title">{t("app.exams.hub.load")}</h2>
-            {verdict.level !== "short" ? <p className="section-lead">{verdictLine(verdict, t)}</p> : null}
+            <p className="section-lead">{loadLine(load, t)}</p>
           </div>
-          <Link href={"/app/plan/semaines" as never} className="underline-draw text-[12.5px] font-medium text-ink-secondary">
-            {t("app.plan.weekly.open", { minutes: weeklyMinutes })}
-          </Link>
         </div>
         <WeeklyLoad bars={bars} examNames={names} />
       </section>
 
-      {verdict.level === "short" ? <Verdict verdict={verdict} levers={levers} exams={upcoming} /> : null}
-
-      <Calibration adherence={adherence} throughput={throughput} />
+      <Calibration throughput={throughput} />
 
       <section>
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
@@ -153,10 +137,24 @@ export function ExamsWorkspace({
   );
 }
 
-function verdictLine(verdict: TermVerdict, t: (key: string, values?: Record<string, string | number>) => string): string {
-  if (verdict.level === "short") return t("app.plan.verdict.short", { minutes: verdict.deficitMinutes });
-  if (verdict.level === "tight") return t("app.plan.verdict.tight", { minutes: verdict.averageMinutes });
-  return t("app.plan.verdict.clear", { minutes: verdict.averageMinutes });
+/**
+ * Une phrase, et rien qu'une : ce que la période demande par jour, et son pic.
+ *
+ * Elle remplace le verdict d'avant, qui annonçait « ça tient » ou « il te manque 12 min »
+ * contre un budget déclaré. Elle ne juge pas, elle chiffre - c'est l'étudiant qui sait si
+ * quarante minutes par jour sont tenables dans sa vie.
+ */
+function loadLine(
+  load: TermLoad,
+  t: (key: string, values?: Record<string, string | number>) => string,
+): string {
+  if (load.workingDays === 0) return t("app.exams.hub.loadEmpty");
+  const daily = t("app.exams.hub.loadDaily", { minutes: dailyMinutesLabel(load.averageMinutes) });
+  if (!load.busiest || load.busiest.offset === 0) return daily;
+  return `${daily} ${t("app.exams.hub.loadPeak", {
+    minutes: dailyMinutesLabel(load.busiest.minutes),
+    days: load.busiest.offset,
+  })}`;
 }
 
 function ExamRow({ exam }: { exam: PlanExam }) {
@@ -212,37 +210,31 @@ function PastExams({ exams }: { exams: PlanExam[] }) {
 }
 
 /**
- * Le débit et l'observance, dits une fois.
+ * Le débit mesuré, dit une fois.
  *
- * Le bloc ne s'affiche que quand il y a quelque chose à dire : tant que rien n'est mesuré,
- * le plan tourne sur ses valeurs par défaut. De même quand tout va bien.
+ * Le bloc ne s'affiche que quand il y a quelque chose à dire : tant que rien n'est mesuré, le
+ * plan tourne sur la constante et annoncer « débit standard » n'apprendrait rien à personne.
+ * L'observance vivait ici aussi, et elle est partie avec le temps déclaré : on ne peut pas
+ * reprocher à quelqu'un de ne pas tenir une promesse qu'on ne lui fait plus faire.
  */
-function Calibration({ adherence, throughput }: { adherence: Adherence; throughput: Throughput }) {
+function Calibration({ throughput }: { throughput: Throughput }) {
   const { t } = useI18n();
-  const level = adherenceLevel(adherence);
-  const drifted = throughput.measured && Math.abs(throughput.driftPercent) >= 15;
-  if (level === "steady" && !drifted) return null;
+  if (!throughput.measured || Math.abs(throughput.driftPercent) < 15) return null;
 
   return (
     <section className="rounded-group border border-border bg-surface-muted px-5 py-4">
       <h2 className="section-title">{t("app.plan.calibration.title")}</h2>
-      <ul className="mt-1.5 space-y-1 text-[13px] leading-relaxed text-ink-secondary">
-        {drifted ? (
-          <li>
-            {throughput.driftPercent < 0
-              ? t("app.plan.calibration.slower", { rate: throughput.cardsPerMinute, percent: Math.abs(throughput.driftPercent) })
-              : t("app.plan.calibration.faster", { rate: throughput.cardsPerMinute, percent: throughput.driftPercent })}
-          </li>
-        ) : null}
-        {level !== "steady" ? (
-          <li>
-            {t(level === "behind" ? "app.plan.calibration.behind" : "app.plan.calibration.slipping", {
-              percent: Math.round(adherence.ratio * 100),
-              days: adherence.missedDays,
+      <p className="mt-1.5 text-[13px] leading-relaxed text-ink-secondary">
+        {throughput.driftPercent < 0
+          ? t("app.plan.calibration.slower", {
+              rate: throughput.cardsPerMinute,
+              percent: Math.abs(throughput.driftPercent),
+            })
+          : t("app.plan.calibration.faster", {
+              rate: throughput.cardsPerMinute,
+              percent: throughput.driftPercent,
             })}
-          </li>
-        ) : null}
-      </ul>
+      </p>
     </section>
   );
 }

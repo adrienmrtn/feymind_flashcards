@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 
-import { UNLIMITED, entitlement, studyCounts, type QueueCard } from "@micabo/core";
+import { entitlement, studyCounts, type QueueCard } from "@micabo/core";
 
 import { CardList } from "@/components/app/CardList";
 import { GenerateCards } from "@/components/app/GenerateCards";
@@ -36,7 +36,7 @@ export function CardWorkshop({
   heading?: string;
 }) {
   const exam = examMarkForCourse(exams, course.id);
-  const counts = studyCounts(cards.map(toQueueCard), { limits: UNLIMITED });
+  const counts = studyCounts(cards.map(toQueueCard));
 
   return (
     <div className="pb-24">

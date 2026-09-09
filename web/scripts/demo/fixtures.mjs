@@ -26,6 +26,17 @@ function rand() {
   return (seed - 1) / 2147483646;
 }
 
+/** Assez de matière pour qu'un examen blanc se compose sur le mode démonstration. */
+const CONTEXT = [
+  "L'eau circule en permanence entre les océans, l'atmosphère et les continents.",
+  "Ce cycle est alimenté par l'énergie du Soleil, qui provoque l'évaporation de l'eau des océans.",
+  "La vapeur se condense en altitude et forme les nuages, puis retombe en précipitations.",
+  "Sur les continents, l'eau ruisselle vers les rivières ou s'infiltre pour rejoindre les nappes phréatiques.",
+  "Les océans portent 97 % de l'eau de la planète, les glaciers 2 %, les eaux souterraines 0,7 %.",
+  "Le temps de résidence va de quelques jours dans l'atmosphère à trois mille ans dans les océans.",
+  "La quantité totale d'eau sur Terre ne change pas : elle change seulement d'état et de réservoir.",
+].join(" ");
+
 const courses = [
   { id: uuid(1), title: "Le cycle de l'eau", subject: "SVT", emoji: "💧", cards: 42, done: 0.85 },
   { id: uuid(2), title: "La Révolution française", subject: "Histoire", emoji: "🏛️", cards: 58, done: 0.55 },
@@ -46,7 +57,7 @@ const courses = [
   created_at: iso(day(-40 + index * 6)),
   updated_at: iso(day(-3 - index)),
   raw_text: "Texte brut du cours importé.",
-  context_text: "",
+  context_text: CONTEXT,
   sheet: sheetFor(course.title),
 }));
 
@@ -169,7 +180,15 @@ const mock_sessions = [
   { id: uuid(700), exam_id: exams[0].id, planned_for: dateOnly(day(-6)), minutes: 12, question_count: 20, correct_count: 11, started_at: iso(day(-6)), finished_at: iso(new Date(day(-6).getTime() + 12 * 60_000)) },
   { id: uuid(701), exam_id: exams[0].id, planned_for: dateOnly(day(-2)), minutes: 12, question_count: 20, correct_count: 14, started_at: iso(day(-2)), finished_at: iso(new Date(day(-2).getTime() + 11 * 60_000)) },
   { id: uuid(702), exam_id: exams[3].id, planned_for: dateOnly(day(-15)), minutes: 10, question_count: 15, correct_count: 12, started_at: iso(day(-15)), finished_at: iso(new Date(day(-15).getTime() + 10 * 60_000)) },
-].map((row) => ({ ...row, user_id: USER_ID, answers: [] }));
+].map((row) => ({
+  ...row,
+  user_id: USER_ID,
+  answers: [],
+  questions: [],
+  grades: [],
+  debrief: null,
+  with_audio: false,
+}));
 
 const profiles = [{
   id: USER_ID,
@@ -272,3 +291,139 @@ export function rpc(name, args) {
       return [];
   }
 }
+
+/**
+ * Les fonctions Edge, en dur.
+ *
+ * Le mode démonstration ne parle à aucun modèle : il rend une copie d'examen blanc et un
+ * débriefing écrits à la main, assez réalistes pour que les écrans se regardent.
+ */
+export function edgeFunction(name, body) {
+  if (name === "generate-mock") {
+    const quota = body?.quota ?? { choice: 9, truefalse: 5, gap: 3, feynman: 3 };
+    const questions = [];
+    for (let i = 0; i < (quota.choice ?? 0); i++) {
+      questions.push({
+        kind: "choice",
+        prompt: CHOICES[i % CHOICES.length].prompt,
+        choices: CHOICES[i % CHOICES.length].choices,
+        answerIndex: CHOICES[i % CHOICES.length].answerIndex,
+        why: CHOICES[i % CHOICES.length].why,
+      });
+    }
+    for (let i = 0; i < (quota.truefalse ?? 0); i++) {
+      questions.push({ kind: "truefalse", ...TRUEFALSE[i % TRUEFALSE.length] });
+    }
+    for (let i = 0; i < (quota.gap ?? 0); i++) {
+      questions.push({ kind: "gap", ...GAPS[i % GAPS.length] });
+    }
+    for (let i = 0; i < (quota.feynman ?? 0); i++) {
+      questions.push({ kind: "feynman", ...FEYNMAN[i % FEYNMAN.length] });
+    }
+    return { questions };
+  }
+
+  if (name === "grade-mock") {
+    return {
+      grades: (body?.spoken ?? []).map((answer, index) => ({
+        id: answer.id,
+        score: [80, 45, 100][index % 3],
+        comment:
+          "Tu nommes bien les étapes, mais tu ne dis pas ce qui fournit l'énergie du cycle.",
+      })),
+      debrief: {
+        headline: "Le vocabulaire est là ; les mécanismes tiennent moins bien.",
+        strengths: [
+          "Les quatre étapes du cycle sont sues dans l'ordre.",
+          "Les proportions des réservoirs sont acquises.",
+        ],
+        gaps: [
+          "Le moteur du cycle : l'énergie solaire n'est jamais citée.",
+          "Condensation et précipitation sont confondues.",
+        ],
+        advice:
+          "Reprends la page « les étapes du cycle » et redis-la à voix haute sans la fiche. Repasse un blanc dans trois jours.",
+      },
+    };
+  }
+
+  if (name === "generate-flashcards") {
+    return {
+      cards: Array.from({ length: 12 }, (_, index) => ({
+        kind: index % 3 === 0 ? "choice" : index % 3 === 1 ? "cloze" : "basic",
+        front: FRONTS[index % FRONTS.length],
+        back: "Réponse de la carte, en une ou deux phrases.",
+        choices: index % 3 === 0 ? ["Réponse A", "Réponse B", "Réponse C", "Réponse D"] : undefined,
+        answerIndex: index % 3 === 0 ? 0 : undefined,
+      })),
+    };
+  }
+
+  return {};
+}
+
+const CHOICES = [
+  {
+    prompt: "Quelle part de l'eau terrestre est contenue dans les océans ?",
+    choices: ["Environ 50 %", "Environ 72 %", "Environ 97 %", "Environ 99,5 %"],
+    answerIndex: 2,
+    why: "Les océans portent 97 % de l'eau de la planète ; les glaciers 2 %.",
+  },
+  {
+    prompt: "Qu'est-ce qui fournit l'énergie du cycle de l'eau ?",
+    choices: ["La rotation terrestre", "Le rayonnement solaire", "Le magnétisme", "Les marées"],
+    answerIndex: 1,
+    why: "C'est le Soleil qui provoque l'évaporation, donc tout le reste du cycle.",
+  },
+  {
+    prompt: "Où l'eau réside-t-elle le plus longtemps ?",
+    choices: ["Dans l'atmosphère", "Dans les rivières", "Dans les lacs", "Dans les océans"],
+    answerIndex: 3,
+    why: "Le temps de résidence océanique est de l'ordre de trois mille ans.",
+  },
+];
+
+const TRUEFALSE = [
+  {
+    prompt: "La quantité totale d'eau sur Terre augmente chaque année.",
+    answer: false,
+    why: "Elle ne change pas : l'eau change d'état et de réservoir, pas de quantité.",
+  },
+  {
+    prompt: "La condensation transforme la vapeur d'eau en gouttelettes.",
+    answer: true,
+    why: "C'est l'étape qui forme les nuages, juste après l'évaporation.",
+  },
+  {
+    prompt: "Les eaux souterraines représentent plus du dixième de l'eau terrestre.",
+    answer: false,
+    why: "Elles en représentent environ 0,7 %.",
+  },
+];
+
+const GAPS = [
+  {
+    prompt: "Le passage de l'eau de l'état liquide à l'état gazeux s'appelle l'…",
+    answer: "évaporation",
+    accepts: ["vaporisation"],
+    why: "C'est la première étape du cycle, provoquée par la chaleur du Soleil.",
+  },
+  {
+    prompt: "L'eau qui s'infiltre dans le sol rejoint les nappes …",
+    answer: "phréatiques",
+    accepts: [],
+    why: "Le reste des précipitations ruisselle vers les rivières.",
+  },
+];
+
+const FEYNMAN = [
+  {
+    prompt: "Explique le cycle de l'eau à quelqu'un qui ne l'a jamais vu.",
+    expected:
+      "Le Soleil évapore l'eau des océans, la vapeur se condense en nuages, retombe en précipitations, puis ruisselle ou s'infiltre avant de rejoindre les océans.",
+  },
+  {
+    prompt: "Pourquoi la quantité d'eau sur Terre ne change-t-elle pas ?",
+    expected: "C'est un cycle fermé : l'eau change d'état et de réservoir, jamais de quantité.",
+  },
+];

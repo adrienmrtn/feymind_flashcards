@@ -77,9 +77,34 @@ interface Draft {
   images?: string[];
 }
 
+/**
+ * Un document accepté mais **pas encore fiché**.
+ *
+ * C'est ce que le parcours de création d'un plan met de côté : on dépose trois polycopiés à
+ * la suite, et les trois fiches s'écrivent au clic sur Continuer, l'une après l'autre. Écrire
+ * à chaque dépôt obligerait à attendre trente secondes entre deux fichiers, debout devant un
+ * écran qui ne demande rien.
+ */
+export interface QueuedDocument {
+  /** Ce qu'on affiche pendant l'attente. */
+  label: string;
+  text: string;
+  hintTitle?: string;
+  sourceName?: string;
+  source?: SourceKind;
+  visibility?: string;
+  blocks?: number;
+  length?: string;
+  language?: string;
+  instructions?: string;
+  images?: string[];
+}
+
 export function ImportPanel({
   initialLength = DEFAULT_SHEET_LENGTH,
   onImported,
+  onQueue,
+  queueLabel,
 }: {
   initialLength?: SheetLength;
   /**
@@ -90,6 +115,13 @@ export function ImportPanel({
    * quitter le parcours pour montrer la fiche ferait perdre le fil.
    */
   onImported?: (courseId: string) => void;
+  /**
+   * Mettre de côté au lieu d'écrire. Le panneau se vide et redevient disponible pour le
+   * document suivant ; c'est l'appelant qui décidera quand lancer les écritures.
+   */
+  onQueue?: (document: QueuedDocument) => void;
+  /** Le nom du bouton quand on met de côté. */
+  queueLabel?: string;
 }) {
   const { t } = useI18n();
   const [extra, setExtra] = useState<Extra>(null);
@@ -176,6 +208,30 @@ export function ImportPanel({
 
   async function generate(payload: Draft) {
     const name = title.trim() || payload.sourceName || payload.title;
+
+    // En mode file d'attente, rien ne part sur le réseau : le document est noté et le panneau
+    // se vide pour le suivant.
+    if (onQueue) {
+      onQueue({
+        label: name.trim() || t("app.import.waitHint"),
+        text: payload.text,
+        hintTitle: title.trim() || payload.title,
+        sourceName: payload.sourceName,
+        source: payload.source,
+        blocks,
+        length,
+        visibility,
+        language,
+        instructions: instructions.trim() || undefined,
+        images: payload.images,
+      });
+      resetDraft();
+      setText("");
+      setTitle("");
+      setUrl("");
+      setInstructions("");
+      return;
+    }
     // On quitte Next **avant** le POST. Tant que React peint l'import, un
     // vol RSC avorté affiche « This page couldn't load » pendant l'écriture.
     const left = beginStandaloneWrite(
@@ -654,7 +710,7 @@ export function ImportPanel({
               ? t("app.import.writing")
               : phase === "lecture"
                 ? t("app.import.readingSubs")
-                : t("app.import.writeSheet")}
+                : (queueLabel ?? t("app.import.writeSheet"))}
           </Button>
         </div>
       ) : null}

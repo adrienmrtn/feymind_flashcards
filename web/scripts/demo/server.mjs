@@ -11,7 +11,7 @@
 import { createServer } from "node:http";
 import { createHmac } from "node:crypto";
 
-import { USER, rpc, tables } from "./fixtures.mjs";
+import { USER, edgeFunction, rpc, tables } from "./fixtures.mjs";
 
 const PORT = Number(process.env.DEMO_SUPABASE_PORT ?? 54329);
 const SECRET = "demo-secret";
@@ -150,6 +150,12 @@ createServer(async (req, res) => {
     return send(res, 200, session());
   }
 
+  if (path.startsWith("/functions/v1/")) {
+    const name = path.slice("/functions/v1/".length);
+    const body = await readBody(req);
+    return send(res, 200, edgeFunction(name, body));
+  }
+
   if (path.startsWith("/rest/v1/rpc/")) {
     const name = path.slice("/rest/v1/rpc/".length);
     const args = await readBody(req);
@@ -174,10 +180,30 @@ createServer(async (req, res) => {
       }
       return send(res, 200, out, headers);
     }
+    // Les écritures sont gardées en mémoire : sans ça, un examen blanc ouvert ne se
+    // relirait pas, et la moitié des écrans de démonstration seraient inaccessibles.
     const body = await readBody(req);
-    console.log(`  écriture ignorée : ${req.method} ${table}`);
-    if (accept.includes("vnd.pgrst.object")) return send(res, 200, Array.isArray(body) ? body[0] : body ?? {});
-    return send(res, prefer.includes("return=representation") ? 200 : 204, prefer.includes("return=representation") ? (Array.isArray(body) ? body : [body]) : undefined);
+    const written = Array.isArray(body) ? body : body ? [body] : [];
+
+    if (req.method === "POST") {
+      for (const row of written) rows.push({ ...row, deleted_at: row.deleted_at ?? null });
+    } else if (req.method === "PATCH") {
+      const targets = applyFilters(rows, url.searchParams);
+      for (const row of targets) Object.assign(row, written[0] ?? {});
+    } else if (req.method === "DELETE") {
+      for (const row of applyFilters(rows, url.searchParams)) {
+        const index = rows.indexOf(row);
+        if (index >= 0) rows.splice(index, 1);
+      }
+    }
+
+    console.log(`  ${req.method} ${table} (${written.length})`);
+    if (accept.includes("vnd.pgrst.object")) return send(res, 200, written[0] ?? {});
+    return send(
+      res,
+      prefer.includes("return=representation") ? 200 : 204,
+      prefer.includes("return=representation") ? written : undefined,
+    );
   }
 
   return send(res, 404, { message: "Introuvable" });

@@ -22,13 +22,9 @@
  * minutes et les leviers qui le comblent. Un plan qui ment est pire qu'un plan absent.
  */
 
-import { capacityWindow, type Availability } from "./availability";
 import {
   DEFAULT_THROUGHPUT,
-  cardsIn,
   minutesFor,
-  realisticCapacity,
-  type Adherence,
   type Throughput,
 } from "./calibration";
 import { planMocks, type MockResult, type PlannedMock } from "./mock";
@@ -80,7 +76,6 @@ export interface PlanDay {
   /** Décalage depuis aujourd'hui. 0 est aujourd'hui. */
   offset: number;
   date: Date;
-  capacityMinutes: number;
   cardCount: number;
   minutes: number;
   blocks: PlanBlock[];
@@ -127,8 +122,6 @@ export interface TermPlan {
   days: PlanDay[];
   /** Par épreuve, le nombre de passages que le plan lui a réellement accordés. */
   passesByExam: Map<string, number>;
-  /** Les passages qui n'ont trouvé aucun jour avant leur échéance. */
-  overflow: PlannedPass[];
   totalPasses: number;
   horizonDays: number;
   /** Les examens blancs posés, dans l'ordre des jours. */
@@ -140,12 +133,9 @@ export interface TermPlan {
 export interface TermInput {
   exams: readonly TermExam[];
   cards: readonly TermCard[];
-  availability: Availability;
   now?: Date;
   /** Le débit de cet étudiant. Absent, on retombe sur la constante d'avant. */
   throughput?: Throughput;
-  /** Ce qu'il tient réellement de son temps déclaré. Absente, on croit le déclaré. */
-  adherence?: Adherence;
   /** Les blancs déjà passés : le plan ne repose pas celui qui est fait. */
   mocks?: readonly MockResult[];
   /**
@@ -174,17 +164,12 @@ export function planTerm(input: TermInput): TermPlan {
   const horizon = Math.min(TERM_HORIZON_DAYS, Math.max(1, lastDay + 1));
   const throughput = input.throughput ?? DEFAULT_THROUGHPUT;
 
-  // La capacité déclarée dit ce qu'on s'est promis ; l'observance dit ce qu'on tient. On
-  // planifie sur le second, pour que le déficit se voie pendant qu'il est absorbable.
-  const declared = capacityWindow(input.availability, today, horizon);
-  const capacities = input.adherence
-    ? declared.map((minutes) => realisticCapacity(minutes, input.adherence!))
-    : declared;
-
-  const days: PlanDay[] = capacities.map((capacityMinutes, offset) => ({
+  // Tous les jours d'ici la dernière épreuve sont utilisables. Il n'y a plus de budget
+  // déclaré : la journée vaut ce que les échéances lui demandent, et le plan dit ensuite
+  // combien de temps ça prend.
+  const days: PlanDay[] = Array.from({ length: horizon }, (_, offset) => ({
     offset,
     date: addDays(today, offset),
-    capacityMinutes,
     cardCount: 0,
     minutes: 0,
     blocks: [],
@@ -196,9 +181,6 @@ export function planTerm(input: TermInput): TermPlan {
     if (offset >= 0 && offset < days.length) days[offset]!.examIds.push(exam.id);
   }
 
-  // Les blancs se posent **avant** les révisions, et leur temps est retiré du budget du jour.
-  // L'inverse - caler le blanc dans ce qui reste - reviendrait à le sacrifier dès que la
-  // période est chargée, c'est-à-dire exactement quand il sert le plus.
   const cardsByCourse = new Map<string, number>();
   for (const card of input.cards) {
     if (card.isSuspended || !card.courseId) continue;
@@ -217,11 +199,10 @@ export function planTerm(input: TermInput): TermPlan {
       ),
     })),
     done: input.mocks ?? [],
-    capacities,
+    horizonDays: horizon,
     now,
   });
 
-  const reserved = capacities.map(() => 0);
   for (const mock of mocks) {
     const day = days[mock.offset];
     if (!day) continue;
@@ -233,7 +214,6 @@ export function planTerm(input: TermInput): TermPlan {
       questionCount: mock.questionCount,
       minutes: mock.minutes,
     });
-    reserved[mock.offset] = (reserved[mock.offset] ?? 0) + mock.minutes;
   }
 
   // Chaque épreuve produit ses passages, puis on les fusionne. On garde l'épreuve d'origine
@@ -256,7 +236,6 @@ export function planTerm(input: TermInput): TermPlan {
     const plan = planExam(concerned, exam.examDate, {
       now,
       intensity: intensityFor(exam.intensity, exam.startingPoint),
-      capacities,
     });
     const priority = examPriority(exam, concerned, today);
     passesByExam.set(exam.id, 0);
@@ -290,38 +269,20 @@ export function planTerm(input: TermInput): TermPlan {
     }
   }
 
-  // L'ordre de service décide qui garde sa place quand un jour déborde : priorité d'épreuve
-  // d'abord, puis le jour demandé, pour que le début de fenêtre se remplisse en premier.
+  // L'ordre ne sert plus à arbitrer une pénurie de place - il n'y en a plus - mais à rendre
+  // le plan stable : deux calculs successifs doivent poser les mêmes cartes aux mêmes jours.
   wanted.sort((left, right) => {
     if (left.priority !== right.priority) return right.priority - left.priority;
     if (left.offset !== right.offset) return left.offset - right.offset;
     return left.pass.cardId < right.pass.cardId ? -1 : 1;
   });
 
-  // Ce qui reste aux révisions une fois les blancs servis. Jamais négatif : un jour dont le
-  // blanc dépasse la capacité ne reçoit simplement plus de révision.
-  const budget = capacities.map((minutes, offset) =>
-    Math.max(0, minutes - (reserved[offset] ?? 0)),
-  );
-  const spent = capacities.map(() => 0);
   const seen = new Map<number, Set<string>>();
-  const overflow: PlannedPass[] = [];
   const placed: { pass: PlannedPass; offset: number }[] = [];
 
   for (const item of wanted) {
-    const offset = placeOn(
-      item.offset,
-      item.deadline,
-      item.pass.cardId,
-      budget,
-      spent,
-      seen,
-      throughput,
-    );
-    if (offset == null) {
-      overflow.push(item.pass);
-      continue;
-    }
+    const offset = placeOn(item.offset, item.deadline, item.pass.cardId, days.length, seen);
+    if (offset == null) continue;
     placed.push({ pass: item.pass, offset });
     passesByExam.set(item.pass.examId, (passesByExam.get(item.pass.examId) ?? 0) + 1);
   }
@@ -351,7 +312,6 @@ export function planTerm(input: TermInput): TermPlan {
   return {
     days,
     passesByExam,
-    overflow,
     totalPasses: placed.length,
     horizonDays: horizon,
     mocks,
@@ -369,33 +329,27 @@ function midpoint(offsets: readonly number[], step: number): number | null {
 }
 
 /**
- * Où poser ce passage : le jour demandé, sinon le plus proche qui reste ouvert.
+ * Où poser ce passage : le jour demandé, sinon le plus proche avant l'épreuve.
  *
- * On cherche d'abord **avant** la date voulue, parce qu'un passage anticipé garde sa valeur,
- * puis après jusqu'à la veille de l'épreuve. Une carte ne se voit pas deux fois le même jour :
- * c'est ce que `seen` protège.
+ * Il n'y a plus de budget à respecter, donc un passage tombe presque toujours pile sur le
+ * jour que l'échelle a choisi. La seule raison de bouger reste la même qu'avant : **une carte
+ * ne se voit pas deux fois le même jour.** On cherche alors d'abord avant la date voulue,
+ * parce qu'un passage anticipé garde sa valeur, puis après jusqu'à la veille de l'épreuve.
  */
 function placeOn(
   wanted: number,
   deadline: number,
   cardId: string,
-  budget: number[],
-  spent: number[],
+  horizon: number,
   seen: Map<number, Set<string>>,
-  throughput: Throughput,
 ): number | null {
-  const limit = Math.min(deadline, budget.length - 1);
-  const cost = 1;
+  const limit = Math.min(deadline, horizon - 1);
 
-  for (let distance = 0; distance <= budget.length; distance += 1) {
+  for (let distance = 0; distance <= horizon; distance += 1) {
     for (const offset of distance === 0 ? [wanted] : [wanted - distance, wanted + distance]) {
       if (offset < 0 || offset > limit) continue;
-      const capacityCards = cardsIn(budget[offset] ?? 0, throughput);
-      if (capacityCards <= 0) continue;
-      if ((spent[offset] ?? 0) + cost > capacityCards) continue;
       const already = seen.get(offset);
       if (already?.has(cardId)) continue;
-      spent[offset] = (spent[offset] ?? 0) + cost;
       if (already) already.add(cardId);
       else seen.set(offset, new Set([cardId]));
       return offset;
@@ -452,133 +406,46 @@ export function matchesFormat(kind: string, formats: readonly string[] | undefin
   return formats.includes(kind);
 }
 
-// MARK: - Le verdict
-
-export type VerdictLevel = "clear" | "tight" | "short";
-
-export interface TermVerdict {
-  level: VerdictLevel;
-  /** Minutes qu'il faudrait ajouter pour que tout rentre. Zéro quand ça tient. */
-  deficitMinutes: number;
-  /** Charge moyenne des jours ouverts, en minutes. */
-  averageMinutes: number;
-  /** Le jour le plus chargé, en décalage depuis aujourd'hui. */
-  busiest: { offset: number; minutes: number } | null;
-  /** Le premier jour où la capacité est saturée. */
-  firstSaturated: number | null;
-  /** Passages qui n'ont trouvé aucune place avant leur échéance. */
-  overflowPasses: number;
-  /** Épreuves concernées par le débordement, pour nommer le problème. */
-  examIds: string[];
-}
+// MARK: - Ce que la période demande
 
 /**
- * Ce que le plan vaut, en une lecture.
+ * Ce que le plan réclame, en temps. **Ce n'est plus un verdict.**
  *
- * `short` signifie que des passages n'ont trouvé aucune place avant leur échéance : ce n'est
- * pas un avertissement de confort, c'est une promesse que le produit ne peut pas tenir, et
- * l'écran doit proposer les arbitrages plutôt que d'afficher un plan complet imaginaire.
+ * L'écran affichait avant « ça tient » ou « il te manque 12 min », comparé à un budget que
+ * l'étudiant avait déclaré une fois pour toutes. Un budget déclaré est faux le lendemain, et
+ * le déficit qu'il produisait poussait à mentir au réglage plutôt qu'à travailler. Ce qui
+ * reste est la seule chose vraie : voilà le temps que la période demande, en moyenne par jour
+ * et le jour le plus chargé. L'étudiant sait mieux que le produit si c'est tenable pour lui.
  */
-export function feasibility(plan: TermPlan): TermVerdict {
-  const open = plan.days.filter((day) => day.capacityMinutes > 0);
-  const usedMinutes = plan.days.reduce((sum, day) => sum + day.minutes, 0);
-  const averageMinutes = open.length === 0 ? 0 : Math.round(usedMinutes / open.length);
+export interface TermLoad {
+  /** Charge moyenne des jours qui reçoivent du travail, en minutes. */
+  averageMinutes: number;
+  /** Le total de la période, en minutes. */
+  totalMinutes: number;
+  /** Le jour le plus chargé, en décalage depuis aujourd'hui. */
+  busiest: { offset: number; minutes: number } | null;
+  /** Jours de la période qui reçoivent au moins une carte. */
+  workingDays: number;
+}
+
+export function termLoad(plan: TermPlan): TermLoad {
+  const working = plan.days.filter((day) => day.minutes > 0);
+  const totalMinutes = working.reduce((sum, day) => sum + day.minutes, 0);
 
   let busiest: { offset: number; minutes: number } | null = null;
-  let firstSaturated: number | null = null;
   for (const day of plan.days) {
     if (!busiest || day.minutes > busiest.minutes) {
       busiest = { offset: day.offset, minutes: day.minutes };
     }
-    if (
-      firstSaturated == null &&
-      day.capacityMinutes > 0 &&
-      day.minutes >= day.capacityMinutes
-    ) {
-      firstSaturated = day.offset;
-    }
   }
   if (busiest && busiest.minutes === 0) busiest = null;
 
-  const deficitMinutes = minutesFor(plan.overflow.length, plan.throughput);
-  const examIds = [...new Set(plan.overflow.map((pass) => pass.examId))];
-
-  const level: VerdictLevel =
-    plan.overflow.length > 0 ? "short" : firstSaturated != null ? "tight" : "clear";
-
   return {
-    level,
-    deficitMinutes,
-    averageMinutes,
+    averageMinutes: working.length === 0 ? 0 : Math.round(totalMinutes / working.length),
+    totalMinutes,
     busiest,
-    firstSaturated,
-    overflowPasses: plan.overflow.length,
-    examIds,
+    workingDays: working.length,
   };
-}
-
-// MARK: - Les leviers
-
-export type LeverKind = "capacity" | "target" | "scope";
-
-export interface TermLever {
-  kind: LeverKind;
-  /** Minutes que ce levier récupère, estimées. */
-  recoveredMinutes: number;
-  /** L'épreuve visée, quand le levier en vise une. */
-  examId?: string;
-}
-
-/**
- * Les trois façons de combler un déficit, chiffrées.
- *
- * Elles ne sont pas décoratives : chacune correspond à une écriture que l'écran sait faire -
- * ouvrir du temps, baisser une note visée, retirer des cartes du programme. On les rend
- * ordonnées par ce qu'elles rapportent, et l'écran n'a qu'à les afficher.
- */
-export function levers(plan: TermPlan, verdict: TermVerdict): TermLever[] {
-  if (verdict.deficitMinutes <= 0) return [];
-
-  const openDays = plan.days.filter((day) => day.capacityMinutes > 0).length || 1;
-  const perDay = Math.max(5, Math.ceil(verdict.deficitMinutes / openDays / 5) * 5);
-
-  const list: TermLever[] = [
-    { kind: "capacity", recoveredMinutes: perDay * openDays },
-  ];
-
-  // Baisser la note visée retire un passage par carte de l'épreuve la plus en débordement.
-  const worst = mostOverflowing(plan);
-  if (worst) {
-    const passes = plan.passesByExam.get(worst) ?? 0;
-    list.push({
-      kind: "target",
-      recoveredMinutes: minutesFor(Math.round(passes / 3), plan.throughput),
-      examId: worst,
-    });
-    list.push({
-      kind: "scope",
-      recoveredMinutes: minutesFor(Math.round(passes / 4), plan.throughput),
-      examId: worst,
-    });
-  }
-
-  return list.sort((left, right) => right.recoveredMinutes - left.recoveredMinutes);
-}
-
-function mostOverflowing(plan: TermPlan): string | null {
-  const counts = new Map<string, number>();
-  for (const pass of plan.overflow) {
-    counts.set(pass.examId, (counts.get(pass.examId) ?? 0) + 1);
-  }
-  let best: string | null = null;
-  let bestCount = 0;
-  for (const [examId, count] of counts) {
-    if (count > bestCount) {
-      best = examId;
-      bestCount = count;
-    }
-  }
-  return best;
 }
 
 // MARK: - Lecture du plan
@@ -594,16 +461,12 @@ export function todayCardCount(plan: TermPlan): number {
 }
 
 
-/** La charge de chaque jour, pour la frise : ce qui est demandé et ce qui est disponible. */
+/** La charge de chaque jour : ce que la période demande, jour par jour. */
 export interface LoadBar {
   offset: number;
   date: Date;
   minutes: number;
-  capacityMinutes: number;
-  /** Part de la capacité consommée, bornée à 1. Zéro quand le jour est fermé. */
-  fill: number;
-  isClosed: boolean;
-  isOver: boolean;
+  cardCount: number;
   examIds: string[];
 }
 
@@ -612,11 +475,7 @@ export function loadBars(plan: TermPlan): LoadBar[] {
     offset: day.offset,
     date: day.date,
     minutes: day.minutes,
-    capacityMinutes: day.capacityMinutes,
-    fill:
-      day.capacityMinutes <= 0 ? 0 : Math.min(1, day.minutes / Math.max(1, day.capacityMinutes)),
-    isClosed: day.capacityMinutes <= 0,
-    isOver: day.capacityMinutes > 0 && day.minutes > day.capacityMinutes,
+    cardCount: day.cardCount,
     examIds: day.examIds,
   }));
 }

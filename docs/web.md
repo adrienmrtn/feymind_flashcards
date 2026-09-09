@@ -363,6 +363,53 @@ devant un travail qu'on ne voyait pas ». Mettre un orbe abstrait là où l'app 
 s'écrit contredirait sa propre décision. Donc : **les orbes pour les attentes courtes, la page
 qui se construit pour la longue.**
 
+## Ce qui a été retiré, et pourquoi
+
+Deux mécanismes ont disparu de l'app connectée. Ils sont notés ici parce qu'ils reviendront à
+l'esprit de quelqu'un qui relit le schéma et y trouve encore leurs colonnes.
+
+### Le plafond quotidien
+
+`profiles.daily_minutes`, `profiles.weekly_minutes` et `availability_exceptions` ne sont plus
+lus. Le produit demandait combien de minutes par jour l'étudiant comptait donner, en déduisait
+un nombre de cartes neuves autorisées, puis défendait ce chiffre contre lui.
+
+Trois choses n'allaient pas.
+
+- **Le budget est faux le lendemain.** Personne ne révise le même nombre de minutes deux jours
+  de suite, et une réponse au jugé donnée une fois pour toutes pilotait ensuite tout le plan.
+- **Le plafond retenait du travail au pire moment.** À trois jours d'un partiel, il refusait
+  des cartes *de ce partiel* parce que le rythme du jour était atteint.
+- **Le déficit poussait à mentir au réglage.** « Il te manque 12 min » se réglait en montant le
+  curseur, pas en travaillant.
+
+Ce qui reste est une conséquence et non une contrainte : le plan répartit les passages jusqu'au
+jour J, et l'écran annonce le temps que ça prendra, converti au **débit mesuré** de cet étudiant.
+Les colonnes restent en base : elles ne coûtent rien, l'iPhone les écrit encore, et les
+supprimer casserait la synchronisation d'une version installée.
+
+### L'auto-notation de l'examen blanc
+
+Le blanc tirait N cartes et demandait à l'étudiant de se déclarer juste ou faux, une carte à la
+fois, la réponse retournée juste après. Il mesurait la confiance en soi, toujours dans le sens
+qui rassure - donc la seule mesure honnête du produit mentait.
+
+C'est devenu **une copie** : le modèle écrit vingt questions sur le programme de l'épreuve (QCM,
+vrai ou faux, mot caché), posées d'un coup, sans aucune réponse avant la remise. Les questions
+fermées se corrigent à la comparaison, côté serveur : le socle du score est reproductible et ne
+dépend d'aucun modèle.
+
+**Le micro décide de la quatrième famille.** Si l'étudiant l'accorde, la copie contient aussi des
+questions Feynman - « explique ce mécanisme comme à quelqu'un qui ne l'a jamais vu » - dictées et
+corrigées par le modèle, qui dit à quel point la réponse est juste. C'est la seule question qu'on
+ne peut pas deviner : un QCM se devine, un texte à trou se retrouve, une explication à voix haute
+ne se bluffe pas. Sans micro, la copie garde ses vingt questions fermées, et le score reste
+comparable d'une fois sur l'autre.
+
+Deux fonctions Edge : `generate-mock` écrit la copie, `grade-mock` note les explications et rend
+le débriefing. La migration `20260909160000_mock_paper.sql` ajoute `questions`, `grades`,
+`debrief` et `with_audio` à `mock_sessions`.
+
 ## Le site connecté
 
 Un seul domaine, et ce n'est pas un détail de goût : le lien de partage d'une fiche, la page

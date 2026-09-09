@@ -30,11 +30,8 @@ export default async function ExamsPage() {
 
       <ExamsWorkspace
         bars={snapshot.bars}
-        verdict={snapshot.verdict}
-        levers={snapshot.levers}
+        load={snapshot.load}
         exams={snapshot.exams}
-        weeklyMinutes={snapshot.weeklyMinutes}
-        adherence={snapshot.adherence}
         throughput={snapshot.throughput}
         hasCourses={mine.length > 0}
       />

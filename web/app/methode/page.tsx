@@ -1,11 +1,9 @@
 import {
   CARDS_PER_MINUTE,
   DEFAULT_CONFIG,
-  DEFAULT_DAILY_MINUTES,
   REPETITIONS_PER_CARD,
   REVIEW_RATINGS,
   newCardSnapshot,
-  newCardsPerDay,
 } from "@micabo/core";
 
 import { RetentionChart } from "@/components/landing/RetentionChart";
@@ -29,8 +27,7 @@ export async function generateMetadata() {
 export default async function MethodPage() {
   const { t, locale } = await getTranslator();
   const steps = DEFAULT_CONFIG.learningStepsMinutes;
-  const perDay = newCardsPerDay(DEFAULT_DAILY_MINUTES);
-  const seenPerDay = Math.round(DEFAULT_DAILY_MINUTES * CARDS_PER_MINUTE);
+  const seenPerHour = Math.round(60 * CARDS_PER_MINUTE);
   const stepsLabel = steps
     .map((minutes) => t("articles.method.stepMinutes", { n: minutes }))
     .join(t("articles.method.stepJoin"));
@@ -72,10 +69,7 @@ export default async function MethodPage() {
       </ArticleSection>
 
       <ArticleSection id="rythme" title={t("articles.method.paceTitle")}>
-        <ArticleP
-          k="articles.method.pace1"
-          vars={{ minutes: DEFAULT_DAILY_MINUTES, seen: seenPerDay, perDay }}
-        />
+        <ArticleP k="articles.method.pace1" vars={{ seen: seenPerHour }} />
         <ArticleP k="articles.method.pace2" vars={{ reps: REPETITIONS_PER_CARD }} />
         <ArticleNote>
           <ArticleMarkup text={t("articles.method.paceNote")} />

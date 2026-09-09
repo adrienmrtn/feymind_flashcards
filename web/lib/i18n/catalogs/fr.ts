@@ -407,10 +407,6 @@ export const fr = {
       account: "Ton compte",
       accountHint: "Abonnement, données, session.",
     },
-    weekly: {
-      title: "Mes semaines",
-      detail: "Le temps disponible chaque jour, qui pilote ton plan.",
-    },
     help: {
       title: "Aide et rejouer les parcours",
     },

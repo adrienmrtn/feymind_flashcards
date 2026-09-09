@@ -406,10 +406,6 @@ export const de: Catalog = {
       account: "Dein Konto",
       accountHint: "Abo, Daten, Sitzung.",
     },
-    weekly: {
-      title: "Meine Wochen",
-      detail: "Die Zeit, die täglich zur Verfügung steht und deinen Plan steuert.",
-    },
     help: {
       title: "Hilfe und Touren erneut ansehen",
     },

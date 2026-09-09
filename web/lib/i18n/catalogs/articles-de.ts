@@ -34,13 +34,10 @@ export const articlesDe = {
       "Der Abstand steht **vor** dem Tippen auf dem Knopf. Ein Planer, der im Verborgenen entscheidet, wird schnell manuell überstimmt: man tippt « leicht », um schneller fertig zu sein, die Karte wandert drei Wochen weg, und man entdeckt sie am Prüfungstag neu.",
     stepMinutes: "{n} Min.",
     stepJoin: ", dann ",
-    paceTitle: "Das Tempo: Minuten, kein Kartenkontingent",
-    pace1:
-      "Micabo fragt nach einer Zeit pro Tag, nicht nach einer Kartenzahl. Bei {minutes} Minuten — der Vorgabe — siehst du etwa {seen} Karten, und das Produkt führt nur **{perDay} neue** ein.",
-    pace2:
-      "Die Lücke dazwischen ist der Kern: eine neue Karte kostet nicht einen Durchgang, sondern etwa {reps}, bis sie sitzt. Heute fünfzig neue, weil Zeit ist, heißt drei Wochen Schulden in den Sitzungen — und so lässt man ein Deck liegen.",
-    paceNote:
-      "Die Tagesgrenze hält fällige Wiederholungen nicht auf: die laufen alle. Sie rationiert nur das Einführen neuer Karten. Ein verpasster Tag reißt also kein Loch, er verschiebt.",
+    paceTitle: "Das Tempo: was die Last verlangt, keine Quote",
+    pace1: "Micabo fragt weder nach einer Anzahl Karten pro Tag noch nach einem Minutenbudget. Es sieht, was die Termine heute verlangen, bedient alles davon und sagt, wie lange es dauern wird. Ein Studierender sieht etwa {seen} Karten in einer Stunde.",
+    pace2: "Hier gab es einmal eine Obergrenze für neue Karten, kalibriert auf die {reps} Durchgänge, die eine Karte bis zum Sitzen braucht. Sie hatte einen entscheidenden Fehler: drei Tage vor einer Klausur lehnte sie Karten genau dieser Klausur im Namen des Tagestempos ab. Arbeit an dem Tag zurückzuhalten, an dem sie am meisten zählt, ist der falsche Beruf.",
+    paceNote: "Was der Plan verteilt, sind die Durchgänge bis zum Prüfungstag. Ein verpasster Tag hinterlässt also kein Loch: er verschiebt, und der Plan wird bei der nächsten Berechnung neu gebaut.",
     sheetTitle: "Zuerst das Merkblatt, dann die Karten",
     sheet1:
       "Eine Karteikarte setzt voraus, dass man schon verstanden hat. Sich zu einer ungelesenen Idee zu prüfen heißt, eine Antwort auswendig zu lernen, ohne zu wissen, wovon sie handelt — die Karte sitzt, die Prüfung nicht.",

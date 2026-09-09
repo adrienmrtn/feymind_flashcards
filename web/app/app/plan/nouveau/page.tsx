@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { resolveEmoji, weeklyFromRow } from "@micabo/core";
+import { resolveEmoji } from "@micabo/core";
 
 import { NewPlan } from "@/components/app/plan/NewPlan";
 import { listCardSnapshots, listCourses } from "@/lib/data/courses";
@@ -39,7 +39,6 @@ export default async function NewPlanPage() {
       <NewPlan
         countryCode={profile?.country_code}
         sheetLength={profile?.sheet_length ?? undefined}
-        initialWeekly={weeklyFromRow(profile?.weekly_minutes, profile?.daily_minutes ?? undefined)}
         courses={courses
           .filter((course) => !course.is_from_library)
           .map((course) => ({

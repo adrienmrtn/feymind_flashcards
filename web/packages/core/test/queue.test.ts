@@ -1,24 +1,14 @@
 /**
  * L'ordre d'une session.
  *
- * Les cartes d'examen passent **devant** les autres neuves, mais elles restent dans le
- * plafond du jour. Une session depuis un cours et la session globale partagent ce budget :
- * les faits `state_before === "new"` d'aujourd'hui en déduisent le reste.
+ * Il n'y a plus de plafond : ce qui est dû est servi en entier, et l'ordre est tout ce qui
+ * reste pour que la file soit utile. Les cartes d'un examen déclaré passent devant les autres
+ * neuves, et une révision dont l'échéance d'examen est la plus proche passe devant.
  */
 
 import { describe, expect, it } from "vitest";
 
-import {
-  DEFAULT_LIMITS,
-  buildQueue,
-  countNewIntroducedToday,
-  dailyLimits,
-  isDue,
-  remainingNewCards,
-  sessionNewLimit,
-  sessionNewSliderMax,
-  studyCounts,
-} from "../src/srs/queue";
+import { buildQueue, isDue, studyCounts } from "../src/srs/queue";
 import type { QueueCard } from "../src/srs/queue";
 import { addDays, startOfDay } from "../src/srs/exam";
 import type { CardState } from "../src/srs/types";
@@ -94,96 +84,40 @@ describe("l'ordre", () => {
   });
 });
 
-describe("les plafonds", () => {
-  it("borne les cartes neuves au rythme quotidien", () => {
+describe("ce qui est dû est servi", () => {
+  it("ne retient plus aucune carte neuve", () => {
     const cards = Array.from({ length: 30 }, (_, index) =>
       card(`n${index}`, "new", { position: index }),
     );
 
-    // 15 minutes par jour valent huit cartes neuves.
-    const queue = buildQueue(cards, { now, limits: dailyLimits(15) });
-
-    expect(queue).toHaveLength(8);
+    expect(buildQueue(cards, { now })).toHaveLength(30);
   });
 
-  it("ne rationne pas les révisions dues en mode quotidien", () => {
+  it("ne rationne pas non plus les révisions", () => {
     const cards = Array.from({ length: 300 }, (_, index) => card(`r${index}`, "review"));
 
-    const queue = buildQueue(cards, { now, limits: dailyLimits(15) });
-
-    expect(queue).toHaveLength(300);
-  });
-
-  it("borne les révisions au défaut hors mode quotidien", () => {
-    const cards = Array.from({ length: 300 }, (_, index) => card(`r${index}`, "review"));
-
-    const queue = buildQueue(cards, { now, limits: DEFAULT_LIMITS });
-
-    expect(queue).toHaveLength(DEFAULT_LIMITS.reviewsPerSession);
-  });
-});
-
-describe("le budget du jour", () => {
-  it("compte les introductions d'aujourd'hui, pas celles de la veille", () => {
-    const count = countNewIntroducedToday(
-      [
-        { stateBefore: "new", reviewedAt: now },
-        { stateBefore: "new", reviewedAt: addDays(now, -1) },
-        { stateBefore: "review", reviewedAt: now },
-      ],
-      now,
-    );
-
-    expect(count).toBe(1);
-  });
-
-  it("retire du rythme ce qui a déjà été introduit", () => {
-    // 15 minutes → 8 neuves. Huit déjà vues depuis un cours : plus rien à servir.
-    expect(remainingNewCards(8, 15)).toBe(0);
-    expect(remainingNewCards(3, 15)).toBe(5);
-  });
-
-  it("laisse le curseur outrepasser le reste du jour", () => {
-    expect(sessionNewLimit({ dailyMinutes: 15, introducedToday: 8 })).toBe(0);
-    expect(sessionNewLimit({ dailyMinutes: 15, introducedToday: 8, override: 5 })).toBe(5);
-  });
-
-  it("sert le reste, pas un second plafond, quand on reconstruit la file", () => {
-    const cards = Array.from({ length: 20 }, (_, index) =>
-      card(`n${index}`, "new", { position: index }),
-    );
-
-    const leftover = buildQueue(cards, {
-      now,
-      limits: { newPerSession: remainingNewCards(8, 15), reviewsPerSession: Number.MAX_SAFE_INTEGER },
-    });
-
-    expect(leftover).toHaveLength(0);
-  });
-
-  it("borne le curseur au-dessus du rythme, sans monter dans les centaines", () => {
-    expect(sessionNewSliderMax(8)).toBe(20);
-    expect(sessionNewSliderMax(30)).toBe(60);
+    expect(buildQueue(cards, { now })).toHaveLength(300);
   });
 });
 
 describe("l'examen dans la file", () => {
   const examDay = startOfDay(addDays(now, 5));
 
-  it("sert d'abord les cartes neuves sous échéance, sans casser le plafond", () => {
+  it("sert d'abord les cartes neuves sous échéance, puis les autres", () => {
     const cards = Array.from({ length: 30 }, (_, index) =>
       card(`n${index}`, "new", { position: index }),
     );
-    // Les vingt premières sont couvertes par un examen.
-    const deadlines = new Map(cards.slice(0, 20).map((item) => [item.id, examDay]));
+    // Les vingt dernières sont couvertes par un examen : elles doivent remonter.
+    const deadlines = new Map(cards.slice(10).map((item) => [item.id, examDay]));
 
-    const queue = buildQueue(cards, { now, limits: dailyLimits(15), deadlines });
+    const queue = buildQueue(cards, { now, deadlines });
 
-    expect(queue).toHaveLength(8);
-    expect(queue.every((item) => deadlines.has(item.id))).toBe(true);
-    expect(queue.map((item) => item.id)).toEqual(
-      cards.slice(0, 8).map((item) => item.id),
-    );
+    expect(queue).toHaveLength(30);
+    expect(queue.slice(0, 20).every((item) => deadlines.has(item.id))).toBe(true);
+    expect(queue.map((item) => item.id)).toEqual([
+      ...cards.slice(10).map((item) => item.id),
+      ...cards.slice(0, 10).map((item) => item.id),
+    ]);
   });
 
   it("fait passer l'échéance la plus proche devant, en révision", () => {

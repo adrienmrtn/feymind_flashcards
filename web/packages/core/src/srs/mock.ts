@@ -103,8 +103,8 @@ export interface MockPlanInput {
   }[];
   /** Les blancs déjà passés : on ne repose pas celui qui est fait. */
   done: readonly MockResult[];
-  /** Capacités par décalage, en minutes. Un jour fermé ne reçoit pas de blanc. */
-  capacities: readonly number[];
+  /** Longueur de la fenêtre planifiée, en jours. */
+  horizonDays: number;
   now?: Date;
 }
 
@@ -142,7 +142,7 @@ export function planMocks(input: MockPlanInput): PlannedMock[] {
       // Un blanc par palier : celui de J-7 fait, on ne le repose pas.
       if (alreadyDone.length > index) continue;
 
-      const offset = openDayFor(wanted, input.capacities, daysRemaining, taken);
+      const offset = openDayFor(wanted, input.horizonDays, daysRemaining, taken);
       if (offset == null) continue;
 
       taken.add(offset);
@@ -167,17 +167,16 @@ export function planMocks(input: MockPlanInput): PlannedMock[] {
  */
 function openDayFor(
   wanted: number,
-  capacities: readonly number[],
+  horizonDays: number,
   deadline: number,
   taken: ReadonlySet<number>,
 ): number | null {
-  const last = Math.min(Math.max(0, deadline - 1), capacities.length - 1);
+  const last = Math.min(Math.max(0, deadline - 1), horizonDays - 1);
 
-  for (let distance = 0; distance <= capacities.length; distance += 1) {
+  for (let distance = 0; distance <= horizonDays; distance += 1) {
     for (const offset of distance === 0 ? [wanted] : [wanted - distance, wanted + distance]) {
       if (offset < 0 || offset > last) continue;
       if (taken.has(offset)) continue;
-      if ((capacities[offset] ?? 0) <= 0) continue;
       return offset;
     }
   }

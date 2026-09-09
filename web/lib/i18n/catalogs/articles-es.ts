@@ -34,13 +34,10 @@ export const articlesEs = {
       "El intervalo está escrito en el botón **antes** de pulsar. Un planificador que decide a solas se desobedece pronto: se marca « fácil » para ir más rápido, la tarjeta se va tres semanas y se redescubre el día del examen.",
     stepMinutes: "{n} min",
     stepJoin: ", luego ",
-    paceTitle: "El ritmo: minutos, no un cupo de tarjetas",
-    pace1:
-      "El ajuste que pide Micabo es un tiempo al día, no un número de tarjetas. A {minutes} minutos — el valor por defecto — se ven unas {seen} tarjetas, y el producto solo introduce **{perDay} nuevas**.",
-    pace2:
-      "La diferencia entre las dos es el núcleo del ajuste: una tarjeta nueva no cuesta un paso, cuesta unos {reps} antes de quedar. Meter cincuenta hoy porque hay tiempo es pedirse una deuda de sesiones para las tres semanas siguientes — y así se abandona un mazo.",
-    paceNote:
-      "El tope del día no bloquea los repasos debidos: esos pasan todos. Solo raciona la introducción de tarjetas nuevas. Un día perdido no abre un agujero, desplaza.",
+    paceTitle: "El ritmo: lo que pide la carga, no una cuota",
+    pace1: "Micabo no pide ni un número de tarjetas al día ni un presupuesto de minutos. Mira lo que exigen tus fechas hoy, lo sirve entero y dice cuánto va a costar. Un estudiante ve unas {seen} tarjetas en una hora.",
+    pace2: "Aquí hubo un tope de tarjetas nuevas, calibrado sobre los {reps} pases que una tarjeta necesita para quedarse. Tenía un fallo decisivo: a tres días de un parcial, rechazaba tarjetas de ese mismo parcial en nombre del ritmo del día. Retener trabajo el día en que más hace falta es equivocarse de oficio.",
+    paceNote: "Lo que el plan reparte son los pases hasta el día del examen. Un día perdido no deja hueco: desplaza, y el plan se rehace en el cálculo siguiente.",
     sheetTitle: "La ficha primero, las tarjetas después",
     sheet1:
       "Una flashcard supone que ya se ha entendido. Ponerse a prueba sobre una idea no leída es aprender de memoria una respuesta sin saber de qué habla — la tarjeta acertará, el examen no.",

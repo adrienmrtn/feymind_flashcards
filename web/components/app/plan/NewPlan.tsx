@@ -5,60 +5,74 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import {
+  CARD_KINDS,
+  DEFAULT_QUOTA,
+  PER_FORMAT_RANGE,
   TARGET_SCORE_MAX,
   TARGET_SCORE_MIN,
+  TOTAL_RANGE,
   asExamKind,
   averageDailyLoad,
   busiestDay,
-  capacityWindow,
-  clampMinutes,
   clampTargetScore,
-  dailyMinutesLabel,
   dayDifference,
   defaultFormatsFor,
   desiredGradeLabel,
   desiredGradeScale,
   intensityFor,
   intensityFromTargetScore,
+  isAtCap,
   isProjectionEmpty,
   mockQuestionCount,
   planExam,
+  quotaTotal,
   startOfDay,
   wantsMock,
-  weeklyTotal,
+  type CardKind,
   type ExamKind,
+  type QuestionQuota,
   type StartingPoint,
-  type WeeklyMinutes,
 } from "@micabo/core";
-
 import { ThinkingOrb } from "thinking-orbs";
 
-import { ImportPanel } from "@/components/app/ImportPanel";
+import { CountStepper } from "@/components/app/CountStepper";
+import { GenerationStatus } from "@/components/app/GenerationStatus";
+import { ImportPanel, type QueuedDocument } from "@/components/app/ImportPanel";
 import { ChoiceRow } from "@/components/onboarding/Scaffold";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ExamDayPicker, isoDay } from "@/components/app/exams/ExamCalendar";
+import { generateCards } from "@/lib/actions/course";
 import { createPlan } from "@/lib/actions/plan";
 import { useI18n } from "@/lib/i18n/client";
+import { writeSheetFromBrowser } from "@/lib/import/write-sheet";
 import { localeBcp47 } from "@/lib/i18n/copy";
 
 /**
- * **Créer un plan** : le parcours qui remplace « ajouter un examen ».
+ * **Créer un plan, du document brut jusqu'à la date.**
  *
- * Le produit ne part plus des cartes mais de l'épreuve, et ce parcours est l'endroit où ce
- * renversement se voit. Il commence donc par **le matériel** - importer un cours, coller une
- * vidéo, cocher ce qu'on a déjà - parce que c'est le premier geste réel de quelqu'un qui
- * prépare un partiel, et pas par une date, qu'on ne peut rien faire de seule.
+ * Le parcours partait du principe que le matériel existait déjà : on cochait des cours, on
+ * posait une date, et si le cours n'avait pas de cartes le plan était vide sans le dire. Il
+ * commence maintenant plus tôt et va plus loin, dans un seul fil :
  *
- * Six questions, une par écran, dans l'ordre où on se les pose. Trois d'entre elles - le type,
- * le point de départ, le temps - sont celles qui manquaient : sans elles le plan supposait un
- * étudiant moyen sur un programme moyen avec des journées identiques, c'est-à-dire personne.
+ * ```
+ * matériel -> (écriture des fiches) -> (cartes, un cours à la fois) -> épreuve -> note
+ * ```
  *
- * Rien n'est demandé qui puisse être mesuré. Le débit, l'observance et ce qui résiste sortent
- * du journal ; on ne demande ici que ce que la base ne saura jamais.
+ * **Les fiches s'écrivent toutes au clic sur Continuer**, pas à chaque dépôt. On pose trois
+ * polycopiés à la suite sans attendre entre les deux, et l'attente arrive une seule fois, à
+ * un moment où l'on sait pourquoi on attend.
+ *
+ * **Puis une page par cours nouvellement importé**, pour en demander les cartes. Seulement les
+ * nouveaux : un cours déjà dans la bibliothèque a déjà eu son tour, et reposer la question
+ * ferait de la création d'un plan un inventaire.
+ *
+ * Ce qui a disparu : l'étape « de combien de temps disposes-tu ». Elle produisait un budget
+ * que le plan ensuite défendait contre l'étudiant. Le plan répartit le travail jusqu'au jour J
+ * et annonce ce que ça coûte ; c'est tout ce qu'il a le droit de dire.
  */
 
-const STEPS = ["materiel", "epreuve", "temps"] as const;
+const STEPS = ["materiel", "cartes", "epreuve", "note"] as const;
 type Step = (typeof STEPS)[number];
 
 export interface PlanCourse {
@@ -78,17 +92,22 @@ export interface PlanCard {
   isSuspended: boolean;
 }
 
+/** Un cours arrivé par ce parcours, et ce qu'on en sait au fil des étapes. */
+interface FreshCourse {
+  id: string;
+  title: string;
+  cardCount: number;
+}
+
 export function NewPlan({
   courses,
   cards,
   countryCode,
-  initialWeekly,
   sheetLength,
 }: {
   courses: PlanCourse[];
   cards: PlanCard[];
   countryCode?: string | null;
-  initialWeekly: WeeklyMinutes;
   sheetLength?: string;
 }) {
   const { t, locale } = useI18n();
@@ -97,44 +116,45 @@ export function NewPlan({
 
   const [step, setStep] = useState<Step>("materiel");
   const [picked, setPicked] = useState<string[]>([]);
+  const [queue, setQueue] = useState<QueuedDocument[]>([]);
+  const [fresh, setFresh] = useState<FreshCourse[]>([]);
+  const [freshIndex, setFreshIndex] = useState(0);
+  const [writing, setWriting] = useState<{ done: number; total: number; label: string } | null>(null);
+
   const [examDate, setExamDate] = useState(isoDay(addWeeks(today, 3)));
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [kind, setKind] = useState<ExamKind>("exam");
   const [start, setStart] = useState<StartingPoint>("seen");
-  const [weekly, setWeekly] = useState<number[]>([...initialWeekly]);
-  const [offDays, setOffDays] = useState<string[]>([]);
   const [targetScore, setTargetScore] = useState(15);
+
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const index = STEPS.indexOf(step);
+  /** Les cours du programme : ceux qu'on a cochés, plus ceux qu'on vient de ficher. */
+  const known = useMemo(() => {
+    const all = new Map(courses.map((course) => [course.id, course]));
+    for (const course of fresh) {
+      all.set(course.id, {
+        id: course.id,
+        title: course.title,
+        emoji: "📄",
+        cardCount: course.cardCount,
+      });
+    }
+    return all;
+  }, [courses, fresh]);
+
   const chosenDay = startOfDay(new Date(`${examDate}T12:00:00`));
   const daysRemaining = dayDifference(today, chosenDay);
   const intensity = intensityFor(intensityFromTargetScore(targetScore), start);
 
   const scoped = useMemo(
-    () =>
-      cards.filter(
-        (card) => !card.isSuspended && card.courseId && picked.includes(card.courseId),
-      ),
+    () => cards.filter((card) => !card.isSuspended && card.courseId && picked.includes(card.courseId)),
     [cards, picked],
   );
 
   const plan = useMemo(() => {
-    const window = Math.max(1, daysRemaining);
-    const capacities = capacityWindow(
-      {
-        weekly: weekly as unknown as WeeklyMinutes,
-        exceptions: offDays.map((day) => ({
-          day: new Date(`${day}T12:00:00`),
-          minutes: 0,
-        })),
-      },
-      today,
-      window,
-    );
-
     return planExam(
       scoped.map((card) => ({
         id: card.id,
@@ -143,61 +163,140 @@ export function NewPlan({
         dueDate: new Date(card.dueDate),
       })),
       chosenDay,
-      { intensity, capacities },
+      { intensity },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scoped, daysRemaining, intensity, offDays, weekly, examDate]);
+  }, [scoped, intensity, examDate]);
+
+  const visible = STEPS.filter((item) => item !== "cartes" || fresh.length > 0);
+  const index = Math.max(0, visible.indexOf(step));
 
   const canContinue =
-    step === "materiel"
-      ? picked.length > 0
-      : step === "epreuve"
-        ? daysRemaining >= 0
-        : weekly.some((minutes) => minutes > 0);
+    step === "materiel" ? picked.length > 0 || queue.length > 0 : step === "epreuve" ? daysRemaining >= 0 : true;
 
-  function next() {
-    if (!canContinue) return;
-    const following = STEPS[index + 1];
-    if (following) {
-      setFailure(null);
-      setStep(following);
+  /**
+   * Écrire les fiches en attente, l'une après l'autre.
+   *
+   * En série et non en parallèle : trois appels de modèle lancés ensemble finissent par se
+   * gêner, et surtout la barre d'attente ne voudrait plus rien dire. Un document qui échoue
+   * n'arrête pas les autres - on le dit à la fin, et le plan se fait avec le reste.
+   */
+  async function writeQueued(): Promise<FreshCourse[]> {
+    const written: FreshCourse[] = [];
+    const failed: string[] = [];
+
+    for (const [position, document] of queue.entries()) {
+      setWriting({ done: position, total: queue.length, label: document.label });
+      const result = await writeSheetFromBrowser(document);
+      if (result.status === "ok" && result.courseId) {
+        written.push({ id: result.courseId, title: document.label, cardCount: 0 });
+      } else {
+        failed.push(document.label);
+      }
+    }
+
+    setWriting(null);
+    setQueue([]);
+    if (failed.length > 0) {
+      setFailure(t("app.newPlan.writeFailed", { names: failed.join(", ") }));
+    }
+    return written;
+  }
+
+  async function next() {
+    if (!canContinue || busy) return;
+    setFailure(null);
+
+    if (step === "materiel") {
+      if (queue.length === 0) {
+        setStep(fresh.length > 0 ? "cartes" : "epreuve");
+        return;
+      }
+      setBusy(true);
+      const written = await writeQueued();
+      setBusy(false);
+      const all = [...fresh, ...written];
+      setFresh(all);
+      setPicked((current) => [...new Set([...current, ...written.map((course) => course.id)])]);
+      setFreshIndex(0);
+      setStep(all.length > 0 ? "cartes" : "epreuve");
       return;
     }
+
+    if (step === "cartes") {
+      if (freshIndex + 1 < fresh.length) {
+        setFreshIndex(freshIndex + 1);
+        return;
+      }
+      setStep("epreuve");
+      return;
+    }
+
+    if (step === "epreuve") {
+      setStep("note");
+      return;
+    }
+
     void confirm();
+  }
+
+  function back() {
+    setFailure(null);
+    if (step === "note") {
+      setStep("epreuve");
+      return;
+    }
+    if (step === "epreuve") {
+      if (fresh.length > 0) {
+        setFreshIndex(fresh.length - 1);
+        setStep("cartes");
+        return;
+      }
+      setStep("materiel");
+      return;
+    }
+    if (step === "cartes") {
+      if (freshIndex > 0) {
+        setFreshIndex(freshIndex - 1);
+        return;
+      }
+      setStep("materiel");
+    }
   }
 
   async function confirm() {
     setBusy(true);
     setFailure(null);
+
     const result = await createPlan({
       courseIds: picked,
       examDate,
       kind,
       startingPoint: start,
       targetScore,
-      weeklyMinutes: weekly.map(clampMinutes),
-      offDays,
       formats: defaultFormatsFor(kind),
-      name: planName(picked, courses),
+      name: planName(picked, [...known.values()]),
     });
+
     setBusy(false);
     if (result.status === "error") {
-      setFailure(result.message ?? t("app.plan.verdict.failed"));
+      setFailure(result.message ?? t("app.common.errorGeneric"));
       return;
     }
-    // On atterrit sur l'épreuve, pas sur l'accueil : quelqu'un qui vient de répondre à six
-    // questions veut voir ce qu'il a signé - le calendrier jour par jour, les blancs posés,
-    // ses jours de pause. L'accueil, lui, montre la période entière et répond à autre chose.
-    startTransition(() =>
-      router.push((result.examId ? `/app/plan/${result.examId}` : "/app") as never),
-    );
+    startTransition(() => router.push((result.examId ? `/app/plan/${result.examId}` : "/app") as never));
   }
+
+  if (writing) {
+    return <WritingSheets state={writing} />;
+  }
+
+  const current = fresh[freshIndex];
 
   return (
     <div className="mx-auto w-full max-w-[620px]">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-1.5" aria-hidden>
-          {STEPS.map((item, position) => (
+          {visible.map((item, position) => (
             <span
               key={item}
               className={`h-1.5 rounded-pill transition-all duration-menu ${
@@ -210,28 +309,45 @@ export function NewPlan({
             />
           ))}
         </div>
-        <Link
-          href={"/app" as never}
-          className="text-[13px] font-medium text-ink-tertiary underline-draw"
-        >
+        <Link href={"/app" as never} className="text-[13px] font-medium text-ink-tertiary underline-draw">
           {t("app.newPlan.leave")}
         </Link>
       </div>
 
-      <div key={step} className="rise mt-7">
+      <div key={`${step}:${freshIndex}`} className="rise mt-7">
         {step === "materiel" ? (
           <MaterialStep
             courses={courses}
             picked={picked}
+            queue={queue}
             sheetLength={sheetLength}
             onToggle={(id) =>
               setPicked((current) =>
-                current.includes(id)
-                  ? current.filter((item) => item !== id)
-                  : [...current, id],
+                current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
               )
             }
-            onImported={(id) => setPicked((current) => [...new Set([...current, id])])}
+            onQueue={(document) => setQueue((current) => [...current, document])}
+            onDrop={(position) =>
+              setQueue((current) => current.filter((_, index) => index !== position))
+            }
+          />
+        ) : null}
+
+        {step === "cartes" && current ? (
+          <CardsStep
+            key={current.id}
+            course={current}
+            position={freshIndex + 1}
+            total={fresh.length}
+            onWritten={(count) =>
+              setFresh((all) =>
+                all.map((course) =>
+                  course.id === current.id
+                    ? { ...course, cardCount: course.cardCount + count }
+                    : course,
+                ),
+              )
+            }
           />
         ) : null}
 
@@ -254,22 +370,7 @@ export function NewPlan({
           </>
         ) : null}
 
-        {step === "temps" ? (
-          <>
-          <TimeStep
-            weekly={weekly}
-            offDays={offDays}
-            daysRemaining={daysRemaining}
-            examDate={examDate}
-            onWeekly={setWeekly}
-            onToggleOff={(day) =>
-              setOffDays((current) =>
-                current.includes(day)
-                  ? current.filter((item) => item !== day)
-                  : [...current, day],
-              )
-            }
-          />
+        {step === "note" ? (
           <ScoreStep
             targetScore={targetScore}
             countryCode={countryCode}
@@ -282,7 +383,6 @@ export function NewPlan({
             empty={isProjectionEmpty(plan.projection)}
             mockQuestions={wantsMock(kind) ? mockQuestionCount(scoped.length) : 0}
           />
-          </>
         ) : null}
       </div>
 
@@ -295,7 +395,7 @@ export function NewPlan({
       <div className="mt-8">
         <Button
           className="h-14 w-full text-[16px]"
-          onClick={next}
+          onClick={() => void next()}
           disabled={busy || pending || !canContinue}
         >
           {busy || pending ? (
@@ -303,19 +403,19 @@ export function NewPlan({
               <ThinkingOrb state="connecting" size={20} theme="dark" />
               {t("app.exams.wait")}
             </>
-          ) : step === "temps" ? (
+          ) : step === "note" ? (
             t("app.newPlan.create")
+          ) : step === "materiel" && queue.length > 0 ? (
+            t("app.newPlan.writeQueue", { count: queue.length })
+          ) : step === "cartes" ? (
+            t("app.newPlan.cardsNext")
           ) : (
             t("app.common.continue")
           )}
         </Button>
-        {index > 0 ? (
-          <Button
-            variant="ghost"
-            className="mt-2 w-full"
-            onClick={() => setStep(STEPS[index - 1] ?? "materiel")}
-            disabled={busy || pending}
-          >
+
+        {index > 0 || (step === "cartes" && freshIndex > 0) ? (
+          <Button variant="ghost" className="mt-2 w-full" onClick={back} disabled={busy || pending}>
             {t("app.common.back")}
           </Button>
         ) : null}
@@ -329,24 +429,48 @@ export function NewPlan({
 }
 
 /**
- * Le matériel, en premier.
+ * L'attente pendant que les fiches s'écrivent.
  *
- * C'est le renversement du produit dans un seul écran : on ne demande pas une date à quelqu'un
- * qui n'a encore rien à réviser. L'import vit ici, dans le contexte où il sert, et ce qu'on
- * importe entre directement au programme de l'épreuve.
+ * Elle nomme le document en cours et son rang. C'est la seule attente longue du parcours, et
+ * une attente qu'on ne sait pas lire est une attente qu'on abandonne.
+ */
+function WritingSheets({ state }: { state: { done: number; total: number; label: string } }) {
+  const { t } = useI18n();
+  return (
+    <div className="mx-auto w-full max-w-[620px] py-10">
+      <div className="panel flex items-center gap-4 p-6">
+        <GenerationStatus
+          title={t("app.newPlan.writingOne", { name: state.label })}
+          hint={t("app.newPlan.writingCount", { done: state.done + 1, total: state.total })}
+        />
+      </div>
+      <p className="mt-4 text-center text-[12px] text-ink-tertiary">{t("app.newPlan.hint.ecriture")}</p>
+    </div>
+  );
+}
+
+/**
+ * Le matériel : ce qui existe déjà, et ce qu'on ajoute.
+ *
+ * Un document déposé ici **n'est pas encore fiché**. Il attend dans une liste, on peut le
+ * retirer, et l'écriture part au clic sur Continuer.
  */
 function MaterialStep({
   courses,
   picked,
+  queue,
   sheetLength,
   onToggle,
-  onImported,
+  onQueue,
+  onDrop,
 }: {
   courses: PlanCourse[];
   picked: string[];
+  queue: QueuedDocument[];
   sheetLength?: string;
   onToggle: (id: string) => void;
-  onImported: (id: string) => void;
+  onQueue: (document: QueuedDocument) => void;
+  onDrop: (position: number) => void;
 }) {
   const { t } = useI18n();
   const [adding, setAdding] = useState(courses.length === 0);
@@ -354,10 +478,10 @@ function MaterialStep({
   return (
     <div>
       <p className="eyebrow text-ink-tertiary">{t("app.newPlan.materialEyebrow")}</p>
-      <h1 className="page-title mt-2">
+      <h1 className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
         {t("app.newPlan.materialTitle")}
       </h1>
-      <p className="mt-2 text-[14px] leading-relaxed text-ink-secondary">
+      <p className="mt-3 text-[14.5px] leading-relaxed text-ink-secondary">
         {t("app.newPlan.materialLead")}
       </p>
 
@@ -377,12 +501,43 @@ function MaterialStep({
         </ul>
       ) : null}
 
+      {queue.length > 0 ? (
+        <ul className="mt-4 space-y-2">
+          {queue.map((document, position) => (
+            <li
+              key={`${document.label}:${position}`}
+              className="flex items-center gap-3 rounded-button border border-dashed border-stroke-strong px-4 py-3"
+            >
+              <span aria-hidden className="emoji text-[18px]">
+                📄
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14.5px] font-medium text-ink">
+                  {document.label}
+                </span>
+                <span className="mt-0.5 block text-[12.5px] text-ink-tertiary">
+                  {t("app.newPlan.queued")}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => onDrop(position)}
+                className="pressable shrink-0 text-[12.5px] font-medium text-ink-tertiary underline-draw"
+              >
+                {t("app.common.remove")}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       {adding ? (
         <div className="mt-6 panel p-5">
           <ImportPanel
             initialLength={sheetLength as never}
-            onImported={(id) => {
-              onImported(id);
+            queueLabel={t("app.newPlan.queueAdd")}
+            onQueue={(document) => {
+              onQueue(document);
               setAdding(false);
             }}
           />
@@ -392,6 +547,144 @@ function MaterialStep({
           {t("app.newPlan.addMaterial")}
         </Button>
       )}
+    </div>
+  );
+}
+
+/**
+ * Les cartes d'un cours qui vient d'arriver, **dans le parcours**.
+ *
+ * On y demande les mêmes formats et les mêmes nombres qu'ailleurs, et on valide pour passer au
+ * cours suivant. Sans cette étape, un plan se créait sur des cours sans cartes : le plan était
+ * alors vide, et rien ne disait pourquoi.
+ */
+function CardsStep({
+  course,
+  position,
+  total,
+  onWritten,
+}: {
+  course: FreshCourse;
+  position: number;
+  total: number;
+  onWritten: (count: number) => void;
+}) {
+  const { t } = useI18n();
+  const [quota, setQuota] = useState<QuestionQuota>(DEFAULT_QUOTA);
+  const [writing, setWriting] = useState(false);
+  const [written, setWritten] = useState(0);
+  const [failure, setFailure] = useState<string | null>(null);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+
+  const count = quotaTotal(quota);
+  const capped = isAtCap(quota);
+
+  function step(kind: CardKind, delta: number) {
+    setQuota((current) => ({
+      ...current,
+      [kind]: Math.min(
+        PER_FORMAT_RANGE.max,
+        Math.max(PER_FORMAT_RANGE.min, current[kind] + delta),
+      ),
+    }));
+  }
+
+  async function ask() {
+    setFailure(null);
+    setStartedAt(Date.now());
+    setWriting(true);
+    const result = await generateCards(course.id, quota);
+    setWriting(false);
+    if (result.status === "error") {
+      setFailure(result.message ?? t("app.common.errorGeneric"));
+      return;
+    }
+    setWritten((current) => current + result.count);
+    onWritten(result.count);
+  }
+
+  return (
+    <div>
+      <p className="eyebrow text-ink-tertiary">
+        {total > 1
+          ? t("app.newPlan.cardsEyebrowOf", { position, total })
+          : t("app.newPlan.cardsEyebrow")}
+      </p>
+      <h1 className="mt-2 text-[26px] font-bold leading-[1.12] text-ink">
+        {t("app.newPlan.cardsTitle", { name: course.title })}
+      </h1>
+      <p className="mt-3 text-[14.5px] leading-relaxed text-ink-secondary">
+        {written > 0 ? t("app.newPlan.cardsDone", { count: written }) : t("app.newPlan.cardsLead")}
+      </p>
+
+      {writing ? (
+        <div className="mt-6 panel flex items-center gap-4 p-5">
+          <GenerationStatus
+            compact
+            title={t("app.generate.writing")}
+            hint={t("app.generate.requested", { count })}
+            startedAt={startedAt ?? undefined}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="mt-6 panel divide-y divide-hairline px-5">
+            {CARD_KINDS.map((format) => (
+              <div key={format.kind} className="flex items-center gap-4 py-3.5">
+                <span aria-hidden className="emoji text-[22px]">
+                  {format.emoji}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[15px] font-medium text-ink">
+                    {t(format.kind === "cloze" ? "app.cardKind.gap" : `app.cardKind.${format.kind}`)}
+                  </p>
+                  <p className="mt-0.5 text-[12.5px] text-ink-tertiary">
+                    {t(
+                      format.kind === "cloze"
+                        ? "app.generate.kindDetail.gap"
+                        : `app.generate.kindDetail.${format.kind}`,
+                    )}
+                  </p>
+                </div>
+                <CountStepper
+                  size="sm"
+                  value={quota[format.kind]}
+                  min={PER_FORMAT_RANGE.min}
+                  max={capped ? quota[format.kind] : PER_FORMAT_RANGE.max}
+                  onChange={(next) => step(format.kind, next - quota[format.kind])}
+                  minusLabel={t("app.generate.lessAria", {
+                    kind: t(
+                      format.kind === "cloze" ? "app.cardKind.gap" : `app.cardKind.${format.kind}`,
+                    ),
+                  })}
+                  plusLabel={t("app.generate.moreAria", {
+                    kind: t(
+                      format.kind === "cloze" ? "app.cardKind.gap" : `app.cardKind.${format.kind}`,
+                    ),
+                  })}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="numeral text-[13px] text-ink-tertiary">
+              {capped
+                ? t("app.generate.totalMax", { count, max: TOTAL_RANGE.max })
+                : t("app.generate.total", { count })}
+            </p>
+            <Button variant={written > 0 ? "outline" : "default"} disabled={count === 0} onClick={() => void ask()}>
+              {written > 0 ? t("app.generate.addToDeck") : t("app.generate.generateThese")}
+            </Button>
+          </div>
+        </>
+      )}
+
+      {failure ? (
+        <p className="mt-4 rounded-button bg-negative-soft px-4 py-3 text-[13.5px] text-negative" role="alert">
+          {failure}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -518,121 +811,6 @@ function StartStep({
 }
 
 /** Les paliers du curseur de temps : cinq minutes ne sont pas une soirée. */
-const TIME_STEPS = [0, 15, 20, 30, 45, 60, 90, 120, 180] as const;
-
-function TimeStep({
-  weekly,
-  offDays,
-  daysRemaining,
-  examDate,
-  onWeekly,
-  onToggleOff,
-}: {
-  weekly: number[];
-  offDays: string[];
-  daysRemaining: number;
-  examDate: string;
-  onWeekly: (next: number[]) => void;
-  onToggleOff: (day: string) => void;
-}) {
-  const { t, locale } = useI18n();
-  const today = startOfDay(new Date());
-  const names = useMemo(() => weekdayNames(locale), [locale]);
-  const total = weeklyTotal(weekly as unknown as WeeklyMinutes);
-
-  // Les jours à venir jusqu'à l'épreuve, pour poser les pauses à la main. Au-delà d'un mois,
-  // pointer chaque jour n'a plus de sens : la semaine type fait le travail.
-  const upcoming = Array.from({ length: Math.min(28, Math.max(0, daysRemaining)) }, (_, offset) => {
-    const day = new Date(today.getTime());
-    day.setDate(day.getDate() + offset);
-    return day;
-  });
-
-  return (
-    <div>
-      <p className="eyebrow text-ink-tertiary">{t("app.newPlan.timeEyebrow")}</p>
-      <h1 className="page-title mt-2">
-        {t("app.newPlan.timeTitle")}
-      </h1>
-      <p className="numeral mt-2 text-[13.5px] text-ink-secondary">
-        {t("app.plan.weekly.total", {
-          total: dailyMinutesLabel(total),
-          days: weekly.filter((minutes) => minutes > 0).length,
-        })}
-      </p>
-
-      <ul className="mt-5 divide-y divide-hairline">
-        {weekly.map((minutes, index) => (
-          <li key={index} className="flex items-center gap-4 py-2.5">
-            <span className="w-20 shrink-0 text-[14px] font-medium capitalize text-ink">
-              {names[index]}
-            </span>
-            <Slider
-              className="min-w-0 flex-1"
-              min={0}
-              max={TIME_STEPS.length - 1}
-              step={1}
-              value={nearestTimeStep(minutes)}
-              onValueChange={(value) =>
-                onWeekly(
-                  weekly.map((current, position) =>
-                    position === index ? (TIME_STEPS[Number(value)] ?? 0) : current,
-                  ),
-                )
-              }
-              aria-label={names[index]}
-            />
-            <span
-              className={`numeral w-14 shrink-0 text-right text-[13px] ${
-                minutes === 0 ? "text-ink-tertiary" : "text-ink"
-              }`}
-            >
-              {minutes === 0 ? t("app.plan.weekly.off") : dailyMinutesLabel(minutes)}
-            </span>
-          </li>
-        ))}
-      </ul>
-
-      {upcoming.length > 0 ? (
-        <div className="mt-7">
-          <p className="text-[14px] font-semibold text-ink">{t("app.newPlan.pausesTitle")}</p>
-          <p className="mt-1 text-[13px] text-ink-secondary">{t("app.newPlan.pausesLead")}</p>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {upcoming.map((day) => {
-              const key = isoDay(day);
-              const off = offDays.includes(key);
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => onToggleOff(key)}
-                  aria-pressed={off}
-                  className={`pressable numeral rounded-pill px-2.5 py-1.5 text-[12.5px] font-medium ${
-                    off
-                      ? "bg-ink text-on-ink line-through"
-                      : "bg-surface-muted text-ink-secondary"
-                  }`}
-                >
-                  {day.toLocaleDateString(localeBcp47(locale), {
-                    day: "numeric",
-                    month: "short",
-                  })}
-                </button>
-              );
-            })}
-          </div>
-          <p className="mt-2 text-[12px] text-ink-tertiary">
-            {t("app.newPlan.pausesCount", { count: offDays.length })}
-          </p>
-        </div>
-      ) : null}
-
-      <p className="mt-5 text-[12px] text-ink-tertiary">
-        {t("app.newPlan.examDay", { day: examDate })}
-      </p>
-    </div>
-  );
-}
 
 function ScoreStep({
   targetScore,
@@ -755,6 +933,7 @@ function Pill({
   );
 }
 
+
 function planName(courseIds: string[], courses: PlanCourse[]): string {
   const titles = courseIds
     .map((id) => courses.find((course) => course.id === id)?.title.trim())
@@ -762,22 +941,6 @@ function planName(courseIds: string[], courses: PlanCourse[]): string {
   return titles.slice(0, 2).join(" · ");
 }
 
-function nearestTimeStep(minutes: number): number {
-  let best = 0;
-  TIME_STEPS.forEach((step, index) => {
-    if (Math.abs(step - minutes) < Math.abs((TIME_STEPS[best] ?? 0) - minutes)) best = index;
-  });
-  return best;
-}
-
-function weekdayNames(locale: string): string[] {
-  const monday = new Date(2024, 0, 1);
-  return Array.from({ length: 7 }, (_, index) => {
-    const day = new Date(monday.getTime());
-    day.setDate(day.getDate() + index);
-    return day.toLocaleDateString(localeBcp47(locale as never), { weekday: "long" });
-  });
-}
 
 function addWeeks(date: Date, weeks: number): Date {
   const result = new Date(date.getTime());
