@@ -232,10 +232,8 @@ export default async function ExamSheetPage({
       <ExamSheet
         examId={exam.id}
         kind={asExamKind(exam.kind)}
-        formats={exam.formats ?? []}
         courses={sheetCourses}
         weak={weak}
-        availableKinds={[...kinds]}
         canRunMock={mockQuestionCount(overall.cardCount) > 0}
         mocks={mocks
           .filter((mock) => mock.examId === exam.id)

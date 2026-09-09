@@ -429,6 +429,8 @@ export const appDe = {
     micNo: "Nein, ohne",
     micHint: "Ohne Mikrofon behält die Arbeit ihre zwanzig Fragen: Multiple Choice, wahr oder falsch, fehlendes Wort.",
     micDenied: "Das Mikrofon wurde abgelehnt. Du kannst die Arbeit ohne schreiben oder es im Browser erlauben.",
+    micMissing: "Kein Mikrofon auf diesem Gerät gefunden. Du kannst die Arbeit ohne schreiben.",
+    micBroken: "Das Mikrofon ließ sich nicht öffnen. Schreib die Arbeit ohne, oder versuch es noch einmal.",
     paperLead: "{count} Fragen, keine Antworten vor der Abgabe. Du kannst überspringen und zurückkommen.",
     paperLeadAudio: "{count} Fragen, keine Antworten vor der Abgabe. Die letzten werden laut beantwortet.",
     answered: "{done} von {total} ausgefüllt",

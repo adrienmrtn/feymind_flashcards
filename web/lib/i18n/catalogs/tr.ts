@@ -383,7 +383,6 @@ export const tr: Catalog = {
     targetFrom: "Bugün: {grade}",
     togetherTitle: "Bunu birlikte başaracağız.",
     togetherLead: "Bu yolu ilk yürüyen sen olmayacaksın.",
-    togetherGoal: "{grade}: başkaları da tam senin durduğun yerden başladı.",
     reviewsAria: "Diğer öğrenciler ne diyor",
     reviewsGo: "{n}. yorumu göster",
     review1Gain: "Ortalamada +4 puan",

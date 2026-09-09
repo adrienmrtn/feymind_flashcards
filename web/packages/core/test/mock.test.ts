@@ -15,6 +15,7 @@ import {
   mockMinutes,
   mockQuestionCount,
   mockScore,
+  mockSlotFor,
   planMocks,
   planTerm,
   readinessGap,
@@ -106,17 +107,40 @@ describe("l'examen blanc", () => {
     expect(mocks.map((mock) => mock.offset)).toEqual([13, 18]);
   });
 
-  it("ne repose pas un blanc déjà passé", () => {
+  it("ne repose pas le blanc de J-7 quand il a été passé à J-7", () => {
     const mocks = planMocks({
       exams: [
         { id: "bio", name: "Bio", examDate: addDays(today, 20), kind: "final", cardCount: 80 },
       ],
-      done: [result({ examId: "bio" })],
+      // Passé il y a un instant, mais l'épreuve est dans vingt jours : ce blanc-là n'honore
+      // aucun rendez-vous. On le repasse donc à J-7, puis à J-2.
+      done: [result({ examId: "bio", finishedAt: today })],
       horizonDays: 21,
       now,
     });
-    expect(mocks).toHaveLength(1);
-    expect(mocks[0]!.offset).toBe(18);
+    expect(mocks.map((mock) => mock.offset)).toEqual([13, 18]);
+
+    // Le même blanc, passé le jour où le plan le posait : celui-là remplit le rendez-vous.
+    const after = planMocks({
+      exams: [
+        { id: "bio", name: "Bio", examDate: addDays(today, 20), kind: "final", cardCount: 80 },
+      ],
+      done: [result({ examId: "bio", finishedAt: addDays(today, 13) })],
+      horizonDays: 21,
+      now,
+    });
+    expect(after.map((mock) => mock.offset)).toEqual([18]);
+  });
+
+  it("un entraînement lancé loin de l'épreuve n'efface aucun blanc du plan", () => {
+    // Le geste réel : quelqu'un essaie la fonctionnalité trois semaines avant, pour voir. Il
+    // n'a pas le droit d'y perdre les deux blancs qui mesurent sa préparation.
+    expect(mockSlotFor(25)).toBeNull();
+    expect(mockSlotFor(7)).toBe(0);
+    expect(mockSlotFor(9)).toBe(0);
+    expect(mockSlotFor(2)).toBe(1);
+    expect(mockSlotFor(0)).toBe(1);
+    expect(mockSlotFor(11)).toBeNull();
   });
 
   it("saute le palier dont le jour est déjà passé", () => {

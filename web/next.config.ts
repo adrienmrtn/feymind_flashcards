@@ -47,8 +47,18 @@ const config: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           {
+            // **`microphone=(self)`, et pas `microphone=()`.**
+            //
+            // Cette parenthèse vide coupait le micro pour tout le site, y compris pour le site
+            // lui-même : le navigateur ne posait même pas la question, `getUserMedia` rendait
+            // un refus immédiat, et l'examen blanc annonçait « le micro a été refusé » à
+            // quelqu'un qui n'avait jamais rien refusé. Une politique de permissions dit ce
+            // que les **tiers** ont le droit de faire ; ce que la page elle-même demande reste
+            // arbitré par l'utilisateur, une fois, dans sa barre d'adresse.
+            //
+            // La caméra, elle, reste fermée : rien ici ne la demande.
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), payment=(self)",
+            value: "camera=(), microphone=(self), geolocation=(), payment=(self)",
           },
           // La `Content-Security-Policy` arrive quand la liste des tiers sera arrêtée : posée
           // trop tôt, elle se relâche à chaque ajout et finit par tout autoriser.

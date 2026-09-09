@@ -35,7 +35,7 @@ export default function RestDaysStep() {
   return (
     <Scaffold
       title={t("onboarding.reposTitle")}
-      footer={<ContinueButton enabled={ready} href="/commencer/moyenne" />}
+      footer={<ContinueButton enabled={ready} />}
       width="wide"
       center
     >
@@ -54,9 +54,11 @@ export default function RestDaysStep() {
               aria-pressed={off}
               aria-label={day.full}
               title={day.full}
-              className={`pressable flex h-[104px] flex-col items-center justify-center gap-1.5 rounded-[14px] border transition-colors duration-hover ${
+              /* Le jour choisi est **doux**, pas noir : sept cases pleines en encre font une
+                 grille de deuil, alors qu'on parle de repos. L'accent le dit mieux. */
+              className={`pressable flex h-[92px] flex-col items-center justify-center gap-1.5 rounded-[14px] border transition-colors duration-hover ${
                 off
-                  ? "border-ink bg-ink text-on-ink"
+                  ? "border-accent bg-accent-soft text-accent"
                   : "border-hairline bg-surface-muted text-ink hover:bg-surface"
               }`}
             >

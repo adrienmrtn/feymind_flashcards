@@ -1944,3 +1944,112 @@ html:not([data-appearance]) .app-shell {
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
 }
+
+/**
+ * **Le curseur de moyenne.**
+ *
+ * Un `input[type=range]` nu ne se ressemble pas d'un navigateur à l'autre : Safari lui donne un
+ * rail bleu système, Firefox un autre, et aucun des deux n'est de la charte. Tout est donc
+ * redessiné, des deux côtés du préfixe, parce qu'un sélecteur `-webkit-` inconnu de Firefox
+ * annule toute la règle qui le contient - il faut deux règles séparées, pas une liste.
+ *
+ * Le rempli s'arrête sous le pouce : `--fill` est posé par le composant, qui seul connaît le
+ * rang de la valeur.
+ */
+.grade-slider {
+  --thumb: 28px;
+  appearance: none;
+  width: 100%;
+  height: var(--thumb);
+  background: transparent;
+  cursor: pointer;
+}
+
+.grade-slider:focus-visible {
+  outline: none;
+}
+
+/* Le rail, en deux morceaux : ce qui est atteint, et ce qui reste. */
+.grade-slider::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    to right,
+    var(--color-accent) var(--fill, 50%),
+    var(--color-surface-sunken) var(--fill, 50%)
+  );
+}
+
+.grade-slider::-moz-range-track {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-sunken);
+}
+
+.grade-slider::-moz-range-progress {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+}
+
+.grade-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin-top: calc((10px - var(--thumb)) / 2);
+  border: 3px solid var(--color-accent);
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-paper);
+  transition: transform var(--duration-hover) var(--ease-out-strong);
+}
+
+.grade-slider::-moz-range-thumb {
+  width: var(--thumb);
+  height: var(--thumb);
+  border: 3px solid var(--color-accent);
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-paper);
+  transition: transform var(--duration-hover) var(--ease-out-strong);
+}
+
+.grade-slider:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+}
+
+.grade-slider:active::-moz-range-thumb {
+  transform: scale(1.12);
+}
+
+.grade-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px var(--color-accent-soft);
+}
+
+.grade-slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px var(--color-accent-soft);
+}
+
+/**
+ * **Le rail des avis : on le fait glisser.**
+ *
+ * L'accrochage est natif. Une reconstruction au `pointermove` refait moins bien l'inertie du
+ * doigt, le rebond du bord et le respect du sens de lecture, et se trompe une fois sur dix sur
+ * un pavé tactile. La barre de défilement, elle, n'a rien à faire là : le rail fait la largeur
+ * d'une carte et les pastilles disent déjà où l'on en est.
+ */
+.slider-rail {
+  scrollbar-width: none;
+}
+
+.slider-rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* Voir `StoryScaffold` : la vignette d'un écran de démonstration se réduit pour tenir dans la
+   carte d'un téléphone, en emportant sa place avec elle. */
+@media (max-width: 639px) {
+  .story-figure > * {
+    zoom: 0.84;
+  }
+}

@@ -41,6 +41,34 @@ export async function listOffDays(): Promise<string[]> {
 }
 
 /**
+ * Les jours de repos **de toutes les semaines**, en décalage depuis aujourd'hui.
+ *
+ * `weekly_minutes` porte sept valeurs, lundi en premier, et un zéro veut dire « ce jour-là,
+ * rien ». C'est l'habitude déclarée à l'inscription - « jamais le dimanche » - et elle vaut
+ * pour toutes les semaines à venir, là où `availability_exceptions` ne parle que de dates
+ * précises. Les deux se cumulent : une habitude, plus les exceptions qu'on pose à la main.
+ *
+ * Une colonne absente, ou qui n'a pas sept valeurs, ne dit rien : le rythme quotidien
+ * s'applique partout, comme avant.
+ */
+export function weeklyOffOffsets(
+  weekly: readonly number[] | null,
+  today: Date,
+  window: number,
+): number[] {
+  if (!weekly || weekly.length !== 7) return [];
+
+  const offsets: number[] = [];
+  for (let offset = 0; offset < window; offset += 1) {
+    const day = new Date(today.getTime() + offset * 86_400_000);
+    // `getDay()` compte à partir de dimanche ; la colonne compte à partir de lundi.
+    const index = (day.getDay() + 6) % 7;
+    if (weekly[index] === 0) offsets.push(offset);
+  }
+  return offsets;
+}
+
+/**
  * Les jours off, en décalage depuis aujourd'hui, dans une fenêtre donnée.
  *
  * C'est la forme que le noyau attend : il ne connaît pas les dates, seulement des rangs de

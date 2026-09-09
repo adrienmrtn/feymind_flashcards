@@ -35,7 +35,7 @@ export default function LevelStep() {
   return (
     <Scaffold
       title={t("onboarding.niveauTitle")}
-      footer={<ContinueButton enabled={Boolean(selectedId) && ready} href="/commencer/matieres" />}
+      footer={<ContinueButton enabled={Boolean(selectedId) && ready} />}
       center
     >
       <div className="space-y-2 pr-1">

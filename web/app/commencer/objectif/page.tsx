@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 
 import { ContinueButton, Scaffold } from "@/components/onboarding/Scaffold";
-import { GradePicker } from "@/components/onboarding/GradePicker";
+import { GradeSlider } from "@/components/onboarding/GradeSlider";
 import { useI18n } from "@/lib/i18n/client";
 import { gradeLabel, targetChoices } from "@/lib/onboarding/grades";
 import { useOnboarding } from "@/lib/onboarding/store";
@@ -42,13 +42,7 @@ export default function TargetAverageStep() {
   return (
     <Scaffold
       title={t("onboarding.targetTitle")}
-      footer={
-        <ContinueButton
-          enabled={(atTop || selected !== undefined) && ready}
-          href="/commencer/ensemble"
-        />
-      }
-      width="wide"
+      footer={<ContinueButton enabled={(atTop || selected !== undefined) && ready} />}
       center
     >
       <p className="text-center text-[15px] leading-relaxed text-ink-secondary">
@@ -57,11 +51,14 @@ export default function TargetAverageStep() {
 
       {atTop ? null : (
         <div className="mt-7">
-          <GradePicker
+          <GradeSlider
             choices={choices}
             selected={selected}
             onSelect={(score) => set({ targetScore: score })}
             label={t("onboarding.targetAria")}
+            // Deux crans au-dessus d'où l'on part : un objectif qui s'ouvre sur la valeur
+            // juste au-dessus de la sienne ne ressemble pas à un objectif.
+            fallbackIndex={1}
           />
         </div>
       )}

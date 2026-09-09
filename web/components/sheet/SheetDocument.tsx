@@ -112,11 +112,22 @@ export function SheetDocument({
   const [formulaKey, setFormulaKey] = useState(0);
   const [pending, startTransition] = useTransition();
 
-  // Le document est monté **une seule fois**, à la main. React ne doit jamais reprendre la
-  // main sur ces nœuds : il les remplacerait à chaque frappe, et le curseur repartirait au
-  // début du paragraphe.
+  /**
+   * Le document est monté **une seule fois**, à la main.
+   *
+   * React ne doit jamais reprendre la main sur ces nœuds : il les remplacerait à chaque
+   * frappe, et le curseur repartirait au début du paragraphe.
+   *
+   * Le compteur de formules est poussé juste après, et ce n'est pas une précaution : les
+   * effets d'un enfant s'exécutent **avant** ceux de son parent. Le portail qui compose les
+   * formules cherchait donc ses `[data-math]` dans un document encore vide, n'en trouvait
+   * aucune, et le LaTeX d'une fiche rouverte restait en texte brut - alors qu'une formule
+   * qu'on venait d'écrire s'affichait bien, puisque l'application du LaTeX remontait déjà ce
+   * compteur. C'est exactement ce qu'on voyait : correct à l'écriture, cassé au retour.
+   */
   useEffect(() => {
     if (editor.current) editor.current.innerHTML = blocksToHtml(blocks);
+    setFormulaKey((key) => key + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 

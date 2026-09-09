@@ -16,7 +16,6 @@ export default function PlanStep() {
         </>
       }
       lead={t("onboarding.planLead")}
-      next="/commencer/ia"
     >
       <PlanStory />
     </StoryScaffold>

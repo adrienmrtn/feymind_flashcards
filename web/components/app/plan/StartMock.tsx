@@ -61,8 +61,19 @@ export function StartMock({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       for (const track of stream.getTracks()) track.stop();
       open(true);
-    } catch {
-      setFailed(t("app.mock.micDenied"));
+    } catch (error) {
+      // **Trois refus différents, trois phrases.** Ils étaient dits d'une seule voix - « le
+      // micro a été refusé » - ce qui envoyait chercher une autorisation dans les réglages du
+      // navigateur à quelqu'un dont l'ordinateur n'a tout simplement pas de micro, et faisait
+      // passer pour un choix de l'étudiant un en-tête du site qui coupait tout.
+      const name = error instanceof DOMException ? error.name : "";
+      if (name === "NotFoundError" || name === "OverconstrainedError") {
+        setFailed(t("app.mock.micMissing"));
+      } else if (name === "NotAllowedError" || name === "SecurityError") {
+        setFailed(t("app.mock.micDenied"));
+      } else {
+        setFailed(t("app.mock.micBroken"));
+      }
       setAsking(false);
     }
   }

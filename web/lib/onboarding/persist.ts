@@ -35,6 +35,8 @@ export function hasStoredAnswers(): boolean {
   return Boolean(
     answers.country ||
       answers.studyLevel ||
+      answers.restDays?.length ||
+      answers.currentScore !== undefined ||
       (answers.subjects && answers.subjects.length > 0) ||
       answers.examDate ||
       answers.institutionId ||
@@ -141,6 +143,9 @@ export async function persistStoredAnswers(): Promise<SaveResult> {
     institutionName: answers.institutionName,
     examDate: answers.examDate,
     examName: answers.examName,
+    restDays: answers.restDays,
+    currentScore: answers.currentScore,
+    targetScore: answers.targetScore,
   });
 
   if (result.status === "saved") {

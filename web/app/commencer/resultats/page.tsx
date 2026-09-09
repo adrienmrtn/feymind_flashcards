@@ -17,7 +17,6 @@ export default function ResultsStep() {
         </>
       }
       lead={t("onboarding.resultatsLead")}
-      next="/commencer/personnaliser"
     >
       <ResultsStory />
     </StoryScaffold>

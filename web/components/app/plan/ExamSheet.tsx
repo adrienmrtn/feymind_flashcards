@@ -4,13 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-import {
-  EXAM_KINDS,
-  defaultFormatsFor,
-  wantsMock,
-  type ExamKind,
-  type WeakCard,
-} from "@micabo/core";
+import { EXAM_KINDS, wantsMock, type ExamKind, type WeakCard } from "@micabo/core";
 
 import { StartMock } from "@/components/app/plan/StartMock";
 import { Button } from "@/components/ui/button";
@@ -21,12 +15,11 @@ import { useI18n } from "@/lib/i18n/client";
  * La fiche d'une épreuve : **tout ce qui n'a pas sa place dans les trois questions.**
  *
  * Déclarer une épreuve reste un geste court - le jour, les matières, la note visée - parce que
- * c'est ce qu'on fait en marchant entre deux amphis. Ce qui demande de la réflexion vit ici,
- * et **replié** : le type d'épreuve et les formats à travailler. Quelqu'un qui n'ouvre jamais
- * ce pli a exactement le produit d'avant.
+ * c'est ce qu'on fait en marchant entre deux amphis. Ce qui demande de la réflexion vit ici :
+ * le programme, ce qui résiste, les examens blancs, et le type d'épreuve.
  *
- * Chaque case cochée change ce que le plan pose, donc chaque enregistrement refait le plan.
- * Une case qui ne changerait rien serait une décoration, et le produit en a déjà assez.
+ * Le type change ce que le plan pose, donc l'enregistrer refait le plan. Un réglage qui ne
+ * changerait rien serait une décoration, et le produit en a déjà assez.
  */
 
 export interface PastMock {
@@ -44,73 +37,35 @@ export interface SheetCourse {
   masteryPercent: number;
 }
 
-const FORMATS: readonly { kind: string; labelKey: string; effectKey: string }[] = [
-  { kind: "basic", labelKey: "app.cardKind.basic", effectKey: "app.plan.sheet.effect.basic" },
-  { kind: "choice", labelKey: "app.cardKind.choice", effectKey: "app.plan.sheet.effect.choice" },
-  { kind: "cloze", labelKey: "app.cardKind.gap", effectKey: "app.plan.sheet.effect.cloze" },
-];
-
 export function ExamSheet({
   examId,
   kind,
-  formats,
   courses,
   weak,
-  availableKinds,
   mocks,
   canRunMock,
 }: {
   examId: string;
   kind: ExamKind;
-  formats: string[];
   courses: SheetCourse[];
   weak: WeakCard[];
-  availableKinds: string[];
   mocks: PastMock[];
   canRunMock: boolean;
 }) {
   const { t } = useI18n();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [openFormats, setOpenFormats] = useState(false);
   const [draftKind, setDraftKind] = useState<ExamKind>(kind);
-  const [draftFormats, setDraftFormats] = useState<string[]>(formats);
   const [failed, setFailed] = useState(false);
 
-  const dirty = draftKind !== kind || !sameSet(draftFormats, formats);
-
-  /**
-   * Changer de type propose les formats de ce type, sans écraser un choix déjà fait.
-   *
-   * Un QCM se prépare avec des QCM, un oral avec des questions ouvertes. Mais quelqu'un qui a
-   * coché ses formats à la main a une raison de l'avoir fait, et le type ne doit pas la lui
-   * retirer dans son dos.
-   */
-  function pickKind(option: ExamKind) {
-    setDraftKind(option);
-    if (draftFormats.length > 0) return;
-    const suggested = defaultFormatsFor(option).filter((format) =>
-      availableKinds.includes(format),
-    );
-    if (suggested.length > 0) setDraftFormats(suggested);
-  }
-
-  function toggleFormat(value: string) {
-    setDraftFormats((current) =>
-      current.includes(value)
-        ? current.filter((item) => item !== value)
-        : [...current, value],
-    );
-  }
+  const dirty = draftKind !== kind;
 
   function save() {
     setFailed(false);
     startTransition(async () => {
-      const result = await saveExamDetails({
-        id: examId,
-        kind: draftKind,
-        formats: draftFormats,
-      });
+      // Les formats partent vides, ce qui veut dire « tous » : c'est déjà ce que la base
+      // lit, et ce que le plan applique pour les épreuves déclarées avant ce changement.
+      const result = await saveExamDetails({ id: examId, kind: draftKind, formats: [] });
       if (result.status === "error") setFailed(true);
       else router.refresh();
     });
@@ -189,55 +144,35 @@ export function ExamSheet({
         </section>
       ) : null}
 
-      <section className="panel overflow-hidden">
-        <Fold
-          title={t("app.plan.sheet.formatsTitle")}
-          detail={
-            draftFormats.length === 0
-              ? t("app.plan.sheet.formatsAll")
-              : t("app.plan.sheet.formatsSome", { count: draftFormats.length })
-          }
-          open={openFormats}
-          onToggle={() => setOpenFormats((open) => !open)}
-        >
-          <fieldset className="mt-1">
-            <legend className="sr-only">{t("app.plan.sheet.formatsTitle")}</legend>
-            <ul className="space-y-1.5">
-              {FORMATS.filter((format) => availableKinds.includes(format.kind)).map((format) => (
-                <li key={format.kind}>
-                  <CheckRow
-                    checked={draftFormats.includes(format.kind)}
-                    title={t(format.labelKey)}
-                    detail={t(format.effectKey)}
-                    onToggle={() => toggleFormat(format.kind)}
-                  />
-                </li>
-              ))}
-            </ul>
-          </fieldset>
+      {/*
+        **Les formats ne se choisissent plus.** Trois cases - questions-réponses, QCM, textes à
+        trous - qu'il fallait déplier pour découvrir qu'elles étaient toutes cochées, et qui le
+        restaient chez tout le monde. Une épreuve se prépare avec ce qu'on a écrit dessus, pas
+        avec une moitié de ses cartes, et une case que personne ne décoche n'est pas un
+        réglage : c'est une question de plus posée à quelqu'un qui voulait réviser.
 
-          <div className="mt-4">
-            <p className="eyebrow mb-2 text-ink-tertiary">{t("app.plan.sheet.kindTitle")}</p>
-            <div className="flex flex-wrap gap-1.5">
-              {EXAM_KINDS.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => pickKind(option)}
-                  aria-pressed={draftKind === option}
-                  className={`pressable rounded-pill px-3 py-1.5 text-[13px] font-medium ${
-                    draftKind === option
-                      ? "bg-ink text-on-ink"
-                      : "bg-surface-muted text-ink-secondary"
-                  }`}
-                >
-                  {t(`app.plan.kind.${option}`)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </Fold>
-
+        Reste le type d'épreuve, qui décide des examens blancs et de la façon dont le plan
+        monte. Il n'a plus besoin d'un pli pour lui tout seul.
+      */}
+      <section className="panel p-5">
+        <h2 className="section-title">{t("app.plan.sheet.kindTitle")}</h2>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {EXAM_KINDS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setDraftKind(option)}
+              aria-pressed={draftKind === option}
+              className={`pressable rounded-pill px-3 py-1.5 text-[13px] font-medium ${
+                draftKind === option
+                  ? "bg-ink text-on-ink"
+                  : "bg-surface-muted text-ink-secondary"
+              }`}
+            >
+              {t(`app.plan.kind.${option}`)}
+            </button>
+          ))}
+        </div>
       </section>
 
       {dirty ? (
@@ -307,106 +242,3 @@ function MockPanel({
   );
 }
 
-function Fold({
-  title,
-  detail,
-  open,
-  onToggle,
-  children,
-}: {
-  title: string;
-  detail: string;
-  open: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        className="hover-row flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
-      >
-        <span className="min-w-0">
-          <span className="block section-title">{title}</span>
-          <span className="mt-0.5 block truncate text-[12.5px] text-ink-tertiary">{detail}</span>
-        </span>
-        <svg
-          aria-hidden
-          viewBox="0 0 20 20"
-          className={`h-4 w-4 shrink-0 text-ink-tertiary transition-transform duration-menu ${
-            open ? "rotate-180" : ""
-          }`}
-        >
-          <path
-            d="M5 8l5 5 5-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </svg>
-      </button>
-      {open ? <div className="px-5 pb-5">{children}</div> : null}
-    </div>
-  );
-}
-
-function CheckRow({
-  checked,
-  title,
-  detail,
-  onToggle,
-}: {
-  checked: boolean;
-  title: string;
-  detail?: string;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="checkbox"
-      aria-checked={checked}
-      onClick={onToggle}
-      className={`hover-tile flex w-full items-start gap-3 rounded-button border px-4 py-3 text-left ${
-        checked ? "border-accent/40 bg-accent-soft/40" : "border-border bg-surface"
-      }`}
-    >
-      <span
-        aria-hidden
-        className={`mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border ${
-          checked ? "border-accent bg-accent text-on-ink" : "border-stroke-strong bg-surface"
-        }`}
-      >
-        {checked ? (
-          <svg viewBox="0 0 16 16" className="h-3 w-3">
-            <path
-              d="M3.5 8.5l3 3 6-7"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ) : null}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-[14.5px] font-medium text-ink">{title}</span>
-        {detail ? (
-          <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-tertiary">
-            {detail}
-          </span>
-        ) : null}
-      </span>
-    </button>
-  );
-}
-
-function sameSet(left: string[], right: string[]): boolean {
-  if (left.length !== right.length) return false;
-  const set = new Set(right);
-  return left.every((value) => set.has(value));
-}
