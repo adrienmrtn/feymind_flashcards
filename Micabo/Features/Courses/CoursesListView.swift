@@ -142,171 +142,81 @@ struct CoursesListView: View {
         return sheets.reduce(0) { $0 + (census[$1.id]?.cardCount ?? 0) }
     }
 
+    /// Le compilateur n'arrive pas à typer d'un seul coup la pile, les feuilles et les
+    /// dialogues. Chaque morceau se type de son côté, comme `WelcomeDeck` vis-à-vis de
+    /// l'écran d'accueil.
     var body: some View {
-        NavigationStack(path: $path) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                    header
-                        .padding(.horizontal, MicaboSpacing.screen)
+        lifecycle
+    }
 
-                    myCourses
-                }
-                .padding(.top, MicaboSpacing.xs)
-                .padding(.bottom, MicaboSpacing.md)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .scrollIndicators(.hidden)
-            .micaboScreenBackground()
-            // Le « + » se pose juste au-dessus de la barre d'onglets —
-            // voir `tabBarClearance`.
-            .tabBarClearance { importButton }
-            .toolbar(.hidden, for: .navigationBar)
-            .reportsNavigationDepth(for: .courses, depth: path.count)
-            .returnsHome(path: $path)
-            .navigationDestination(for: Course.self) { course in
-                CourseSheetView(course: course)
-            }
-            .navigationDestination(for: CourseCardsRoute.self) { route in
-                FlashcardsView(course: route.course)
-            }
-            // Reprendre un cours partagé atterrit sur **sa** fiche, dans sa propre pile : le
-            // chemin est remplacé, donc le retour ramène à la liste de ses cours et non à la
-            // bibliothèque. Un cours qu'on vient de s'approprier n'est plus un cours partagé.
-            .navigationDestination(for: SharedCourseRoute.self) { route in
-                SharedCourseView(route: route) { adopted in
-                    path = NavigationPath([adopted])
-                }
-            }
-        }
-        .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
-            ImportChoiceSheet(
-                onSelect: { kind in
-                    pendingImport = kind
-                    showImportChoice = false
-                }
+    private var lifecycle: some View {
+        dialogs
+            .task(id: censusTaskID, refreshCensusIfVisible)
+            .onChange(of: path.count, handlePathDepth)
+            .onChange(of: router?.courseImportRequests ?? 0, handleImportRequest)
+    }
+
+    private var dialogs: some View {
+        covers
+            .alert(newFolderTitle, isPresented: $namingNewFolder, actions: newFolderActions)
+            .alert(renameTitle, isPresented: renamingPresented, actions: renameActions)
+            .confirmationDialog(
+                deleteFolderTitle,
+                isPresented: folderDeletePresented,
+                titleVisibility: .visible,
+                actions: folderDeleteActions,
+                message: folderDeleteMessage
             )
-            .presentationDetents([.height(520)])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(MicaboRadius.sheet)
-        }
-        .fullScreenCover(item: $activeImport) { kind in
-            ImportView(kind: kind) { course in
-                activeImport = nil
-                // Un import se termine sur la fiche : c'est le résultat, et c'est ce qu'on
-                // veut lire avant de décider si on en fait des cartes.
-                path = NavigationPath([course])
-            }
-        }
-        .sheet(item: $moving) { item in
-            FolderPickerSheet(
-                movingFolder: {
-                    if case .folder(let folder) = item { return folder.id }
-                    return nil
-                }(),
-                current: {
-                    switch item {
-                    case .course(let course): course.folderID
-                    case .folder(let folder): folder.parentID
-                    }
-                }()
-            ) { target in
-                switch item {
-                case .course(let course): move(course, to: target)
-                case .folder(let folder): move(folder, to: target)
-                }
-            }
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(MicaboRadius.sheet)
-        }
-        .alert(
-            i18n?.t("app.folders.new") ?? "Nouveau dossier",
-            isPresented: $namingNewFolder
-        ) {
-            TextField(i18n?.t("app.folders.namePlaceholder") ?? "Nom du dossier", text: $folderName)
-            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { folderName = "" }
-            Button(i18n?.t("app.folders.create") ?? "Créer") { createFolder() }
-        }
-        .alert(
-            i18n?.t("app.folders.rename") ?? "Renommer",
-            isPresented: Binding(
-                get: { renamingFolder != nil },
-                set: { if !$0 { renamingFolder = nil } }
+            .micaboPaywall($paywall)
+            .confirmationDialog(
+                deleteCourseTitle,
+                isPresented: courseDeletePresented,
+                titleVisibility: .visible,
+                actions: courseDeleteActions,
+                message: courseDeleteMessage
             )
-        ) {
-            TextField(i18n?.t("app.folders.namePlaceholder") ?? "Nom du dossier", text: $folderName)
-            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { renamingFolder = nil }
-            Button(i18n?.t("app.common.save") ?? "Enregistrer") {
-                let name = folderName.trimmingCharacters(in: .whitespacesAndNewlines)
-                if let folder = renamingFolder, !name.isEmpty {
-                    folder.name = name
-                    folder.updatedAt = Date()
-                    try? modelContext.save()
-                }
-                renamingFolder = nil
-            }
+    }
+
+    private var covers: some View {
+        stack
+            .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport, content: importChoice)
+            .fullScreenCover(item: $activeImport, content: importCover)
+            .sheet(item: $moving, content: folderPicker)
+    }
+
+    private var stack: some View {
+        NavigationStack(path: $path) {
+            libraryScroll
+                .toolbar(.hidden, for: .navigationBar)
+                .reportsNavigationDepth(for: .courses, depth: path.count)
+                .returnsHome(path: $path)
+                .navigationDestination(for: Course.self, destination: openCourse)
+                .navigationDestination(for: CourseCardsRoute.self, destination: openCards)
+                // Reprendre un cours partagé atterrit sur **sa** fiche, dans sa propre pile :
+                // le chemin est remplacé, donc le retour ramène à la liste de ses cours et
+                // non à la bibliothèque. Un cours qu'on vient de s'approprier n'est plus un
+                // cours partagé.
+                .navigationDestination(for: SharedCourseRoute.self, destination: openShared)
         }
-        .confirmationDialog(
-            i18n?.t("app.folders.deleteQ") ?? "Supprimer ce dossier ?",
-            isPresented: Binding(
-                get: { folderPendingDelete != nil },
-                set: { if !$0 { folderPendingDelete = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button(i18n?.t("app.folders.delete") ?? "Supprimer", role: .destructive) {
-                if let folder = folderPendingDelete {
-                    withAnimation { deleteFolder(folder) }
-                }
-                folderPendingDelete = nil
+    }
+
+    private var libraryScroll: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                header
+                    .padding(.horizontal, MicaboSpacing.screen)
+
+                myCourses
             }
-            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { folderPendingDelete = nil }
-        } message: {
-            Text(i18n?.t("app.folders.deleteMsg") ?? "Ce qu'il contient remonte d'un cran, rien n'est supprimé.")
+            .padding(.top, MicaboSpacing.xs)
+            .padding(.bottom, MicaboSpacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .micaboPaywall($paywall)
-        .confirmationDialog(
-            i18n?.t("app.courses.deleteQ") ?? "Supprimer ce cours ?",
-            isPresented: Binding(
-                get: { coursePendingDelete != nil },
-                set: { if !$0 { coursePendingDelete = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button(i18n?.t("app.courses.deleteCourse") ?? "Supprimer le cours", role: .destructive) {
-                if let course = coursePendingDelete {
-                    withAnimation {
-                        try? CourseRepository.delete(course, in: modelContext)
-                    }
-                }
-                coursePendingDelete = nil
-            }
-            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { coursePendingDelete = nil }
-        } message: {
-            if let course = coursePendingDelete {
-                Text(i18n?.t("app.courses.deleteMsg", [
-                    "title": course.title,
-                    "cards": MicaboCopy.cards(census[course.id]?.cardCount ?? course.cards.count)
-                ]) ?? "\(course.title) et \(MicaboCopy.cards(course.cards.count)) disparaissent.")
-            }
-        }
-        .task(id: "\(router?.selection == .courses)-\(censusKey)") {
-            guard router?.selection == .courses || path.count > 0 else { return }
-            census = LibraryCensus.load(in: modelContext, key: censusKey)
-        }
-        .onChange(of: path.count) { _, depth in
-            if depth == 0, router?.selection == .courses {
-                census = LibraryCensus.load(in: modelContext, key: censusKey)
-            }
-        }
-        .onChange(of: router?.courseImportRequests ?? 0) { oldValue, newValue in
-            guard newValue > oldValue else { return }
-            // Le prochain tour de boucle : la feuille doit s'ouvrir après que Cours
-            // soit déjà l'onglet visible, pas pendant le même rendu.
-            Task { @MainActor in
-                requestImport()
-            }
-        }
+        .scrollIndicators(.hidden)
+        .micaboScreenBackground()
+        // Le « + » se pose juste au-dessus de la barre d'onglets —
+        // voir `tabBarClearance`.
+        .tabBarClearance { importButton }
     }
 
     private var header: some View {
@@ -393,70 +303,99 @@ struct CoursesListView: View {
     @ViewBuilder
     private var content: some View {
         if sheets.isEmpty {
-            MicaboEmptyState(
-                systemImage: "books.vertical",
-                title: i18n?.t("app.courses.emptyTitle") ?? "Aucun cours",
-                message: i18n?.t("app.courses.emptyBody") ?? "Importe un polycopié pour commencer.",
-                actionTitle: i18n?.t("ios.importAction") ?? "Importer"
-            ) {
-                requestImport()
-            }
-            .padding(.horizontal, MicaboSpacing.screen)
+            emptyLibrary
         } else if filtered.isEmpty {
-            MicaboEmptyState(
-                systemImage: "magnifyingglass",
-                title: i18n?.t("app.courses.noResults") ?? "Aucun résultat",
-                message: i18n?.t("app.courses.noResultsBody") ?? "Essaie un autre mot."
-            )
-            .padding(.horizontal, MicaboSpacing.screen)
+            noResults
         } else {
-            let items = filtered
-            let branches = searchText.isEmpty ? foldersHere : []
-            LazyVStack(spacing: 0) {
-                ForEach(branches) { branch in
-                    MicaboRow.folder(branch.folder, total: branch.total) {
-                        withAnimation(.easeOut(duration: 0.2)) { openFolder = branch.folder.id }
-                    }
-                    .contextMenu { folderMenu(branch.folder) }
-                    // Le glisser-déposer existe aussi sur le téléphone, pour qui le connaît :
-                    // une rangée se prend et se lâche sur un dossier. Ce n'est pas la voie
-                    // principale - « Déplacer vers » l'est - mais elle ne coûte rien.
-                    .dropDestination(for: String.self) { items, _ in
-                        drop(items, into: branch.folder.id)
-                    }
+            libraryList
+        }
+    }
 
-                    MicaboHairline(inset: MicaboSpacing.md, onCanvas: true)
-                        .padding(.trailing, MicaboSpacing.xxs)
-                }
+    private var emptyLibrary: some View {
+        MicaboEmptyState(
+            systemImage: "books.vertical",
+            title: i18n?.t("app.courses.emptyTitle") ?? "Aucun cours",
+            message: i18n?.t("app.courses.emptyBody") ?? "Importe un polycopié pour commencer.",
+            actionTitle: i18n?.t("ios.importAction") ?? "Importer"
+        ) {
+            requestImport()
+        }
+        .padding(.horizontal, MicaboSpacing.screen)
+    }
 
-                ForEach(Array(items.enumerated()), id: \.element.id) { index, course in
-                    MicaboRow.course(course, stats: census[course.id]) {
-                        path.append(course)
-                    }
-                    .draggable(course.id.uuidString)
-                    .contextMenu {
-                        Button {
-                            moving = .course(course)
-                        } label: {
-                            Label(
-                                i18n?.t("app.folders.moveTo") ?? "Déplacer vers",
-                                systemImage: "folder"
-                            )
-                        }
-                        Button(role: .destructive) {
-                            coursePendingDelete = course
-                        } label: {
-                            Label(i18n?.t("app.common.delete") ?? "Supprimer", systemImage: "trash")
-                        }
-                    }
+    private var noResults: some View {
+        MicaboEmptyState(
+            systemImage: "magnifyingglass",
+            title: i18n?.t("app.courses.noResults") ?? "Aucun résultat",
+            message: i18n?.t("app.courses.noResultsBody") ?? "Essaie un autre mot."
+        )
+        .padding(.horizontal, MicaboSpacing.screen)
+    }
 
-                    if index < items.count - 1 {
-                        MicaboHairline(inset: MicaboSpacing.md, onCanvas: true)
-                            .padding(.trailing, MicaboSpacing.xxs)
-                    }
-                }
+    /// Les dossiers du niveau ouvert, sauf pendant une recherche : une recherche traverse.
+    private var listedFolders: [FolderTree] {
+        searchText.isEmpty ? foldersHere : []
+    }
+
+    private var libraryList: some View {
+        let items = filtered
+        return LazyVStack(spacing: 0) {
+            ForEach(listedFolders) { branch in
+                folderRow(branch)
             }
-            .padding(.horizontal, MicaboSpacing.xxs)
+
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, course in
+                courseRow(course, isLast: index == items.count - 1)
+            }
+        }
+        .padding(.horizontal, MicaboSpacing.xxs)
+    }
+
+    @ViewBuilder
+    private func folderRow(_ branch: FolderTree) -> some View {
+        MicaboRow.folder(branch.folder, total: branch.total) {
+            withAnimation(.easeOut(duration: 0.2)) { openFolder = branch.folder.id }
+        }
+        .contextMenu { folderMenu(branch.folder) }
+        // Le glisser-déposer existe aussi sur le téléphone, pour qui le connaît :
+        // une rangée se prend et se lâche sur un dossier. Ce n'est pas la voie
+        // principale - « Déplacer vers » l'est - mais elle ne coûte rien.
+        .dropDestination(for: String.self) { items, _ in
+            drop(items, into: branch.folder.id)
+        }
+
+        MicaboHairline(inset: MicaboSpacing.md, onCanvas: true)
+            .padding(.trailing, MicaboSpacing.xxs)
+    }
+
+    @ViewBuilder
+    private func courseRow(_ course: Course, isLast: Bool) -> some View {
+        MicaboRow.course(course, stats: census[course.id]) {
+            path.append(course)
+        }
+        .draggable(course.id.uuidString)
+        .contextMenu { courseMenu(course) }
+
+        if !isLast {
+            MicaboHairline(inset: MicaboSpacing.md, onCanvas: true)
+                .padding(.trailing, MicaboSpacing.xxs)
+        }
+    }
+
+    @ViewBuilder
+    private func courseMenu(_ course: Course) -> some View {
+        Button {
+            moving = .course(course)
+        } label: {
+            Label(
+                i18n?.t("app.folders.moveTo") ?? "Déplacer vers",
+                systemImage: "folder"
+            )
+        }
+        Button(role: .destructive) {
+            coursePendingDelete = course
+        } label: {
+            Label(i18n?.t("app.common.delete") ?? "Supprimer", systemImage: "trash")
         }
     }
 
@@ -533,6 +472,205 @@ struct CoursesListView: View {
             }
         }
         .padding(.horizontal, MicaboSpacing.screen)
+    }
+
+    // MARK: - Feuilles et dialogues
+
+    private func importChoice() -> some View {
+        ImportChoiceSheet(
+            onSelect: { kind in
+                pendingImport = kind
+                showImportChoice = false
+            }
+        )
+        .presentationDetents([.height(520)])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(MicaboRadius.sheet)
+    }
+
+    private func importCover(_ kind: ImportKind) -> some View {
+        ImportView(kind: kind) { course in
+            activeImport = nil
+            // Un import se termine sur la fiche : c'est le résultat, et c'est ce qu'on
+            // veut lire avant de décider si on en fait des cartes.
+            path = NavigationPath([course])
+        }
+    }
+
+    private func folderPicker(_ item: MovingItem) -> some View {
+        FolderPickerSheet(
+            movingFolder: movingFolderID(of: item),
+            current: currentFolderID(of: item),
+            onPick: { target in applyMove(item, to: target) }
+        )
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(MicaboRadius.sheet)
+    }
+
+    private func openCourse(_ course: Course) -> some View {
+        CourseSheetView(course: course)
+    }
+
+    private func openCards(_ route: CourseCardsRoute) -> some View {
+        FlashcardsView(course: route.course)
+    }
+
+    private func openShared(_ route: SharedCourseRoute) -> some View {
+        SharedCourseView(route: route) { adopted in
+            path = NavigationPath([adopted])
+        }
+    }
+
+    private func movingFolderID(of item: MovingItem) -> UUID? {
+        if case .folder(let folder) = item { return folder.id }
+        return nil
+    }
+
+    private func currentFolderID(of item: MovingItem) -> UUID? {
+        switch item {
+        case .course(let course): course.folderID
+        case .folder(let folder): folder.parentID
+        }
+    }
+
+    private func applyMove(_ item: MovingItem, to target: UUID?) {
+        switch item {
+        case .course(let course): move(course, to: target)
+        case .folder(let folder): move(folder, to: target)
+        }
+    }
+
+    private var newFolderTitle: String {
+        i18n?.t("app.folders.new") ?? "Nouveau dossier"
+    }
+
+    private var renameTitle: String {
+        i18n?.t("app.folders.rename") ?? "Renommer"
+    }
+
+    private var deleteFolderTitle: String {
+        i18n?.t("app.folders.deleteQ") ?? "Supprimer ce dossier ?"
+    }
+
+    private var deleteCourseTitle: String {
+        i18n?.t("app.courses.deleteQ") ?? "Supprimer ce cours ?"
+    }
+
+    private var folderNamePlaceholder: String {
+        i18n?.t("app.folders.namePlaceholder") ?? "Nom du dossier"
+    }
+
+    private var renamingPresented: Binding<Bool> {
+        Binding(
+            get: { renamingFolder != nil },
+            set: { if !$0 { renamingFolder = nil } }
+        )
+    }
+
+    private var folderDeletePresented: Binding<Bool> {
+        Binding(
+            get: { folderPendingDelete != nil },
+            set: { if !$0 { folderPendingDelete = nil } }
+        )
+    }
+
+    private var courseDeletePresented: Binding<Bool> {
+        Binding(
+            get: { coursePendingDelete != nil },
+            set: { if !$0 { coursePendingDelete = nil } }
+        )
+    }
+
+    @ViewBuilder
+    private func newFolderActions() -> some View {
+        TextField(folderNamePlaceholder, text: $folderName)
+        Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { folderName = "" }
+        Button(i18n?.t("app.folders.create") ?? "Créer") { createFolder() }
+    }
+
+    @ViewBuilder
+    private func renameActions() -> some View {
+        TextField(folderNamePlaceholder, text: $folderName)
+        Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { renamingFolder = nil }
+        Button(i18n?.t("app.common.save") ?? "Enregistrer") { saveRenamedFolder() }
+    }
+
+    private func saveRenamedFolder() {
+        let name = folderName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let folder = renamingFolder, !name.isEmpty {
+            folder.name = name
+            folder.updatedAt = Date()
+            try? modelContext.save()
+        }
+        renamingFolder = nil
+    }
+
+    @ViewBuilder
+    private func folderDeleteActions() -> some View {
+        Button(i18n?.t("app.folders.delete") ?? "Supprimer", role: .destructive) {
+            if let folder = folderPendingDelete {
+                withAnimation { deleteFolder(folder) }
+            }
+            folderPendingDelete = nil
+        }
+        Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { folderPendingDelete = nil }
+    }
+
+    private func folderDeleteMessage() -> some View {
+        Text(i18n?.t("app.folders.deleteMsg") ?? "Ce qu'il contient remonte d'un cran, rien n'est supprimé.")
+    }
+
+    @ViewBuilder
+    private func courseDeleteActions() -> some View {
+        Button(i18n?.t("app.courses.deleteCourse") ?? "Supprimer le cours", role: .destructive) {
+            if let course = coursePendingDelete {
+                withAnimation {
+                    try? CourseRepository.delete(course, in: modelContext)
+                }
+            }
+            coursePendingDelete = nil
+        }
+        Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { coursePendingDelete = nil }
+    }
+
+    @ViewBuilder
+    private func courseDeleteMessage() -> some View {
+        if let course = coursePendingDelete {
+            Text(courseDeleteCopy(course))
+        }
+    }
+
+    private func courseDeleteCopy(_ course: Course) -> String {
+        let cards = MicaboCopy.cards(census[course.id]?.cardCount ?? course.cards.count)
+        return i18n?.t("app.courses.deleteMsg", [
+            "title": course.title,
+            "cards": cards
+        ]) ?? "\(course.title) et \(MicaboCopy.cards(course.cards.count)) disparaissent."
+    }
+
+    private var censusTaskID: String {
+        "\(router?.selection == .courses)-\(censusKey)"
+    }
+
+    private func refreshCensusIfVisible() async {
+        guard router?.selection == .courses || path.count > 0 else { return }
+        census = LibraryCensus.load(in: modelContext, key: censusKey)
+    }
+
+    private func handlePathDepth(_: Int, _ depth: Int) {
+        if depth == 0, router?.selection == .courses {
+            census = LibraryCensus.load(in: modelContext, key: censusKey)
+        }
+    }
+
+    private func handleImportRequest(_ oldValue: Int, _ newValue: Int) {
+        guard newValue > oldValue else { return }
+        // Le prochain tour de boucle : la feuille doit s'ouvrir après que Cours
+        // soit déjà l'onglet visible, pas pendant le même rendu.
+        Task { @MainActor in
+            requestImport()
+        }
     }
 
     // MARK: - Ranger
