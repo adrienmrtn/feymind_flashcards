@@ -58,7 +58,17 @@ enum CourseRowLabels {
     static func meta(for course: Course, stats: CourseStats?) -> String {
         var parts: [String] = []
         if let subject = course.subject?.nilIfBlank { parts.append(subject) }
-        if let stats { parts.append(MicaboCopy.cards(stats.cardCount)) }
+        if let stats {
+            parts.append(MicaboCopy.cards(stats.cardCount))
+            // « Appris à x % », comme l'étagère du site : le volume dit ce qu'il y a, la
+            // maîtrise dit où l'on en est.
+            if stats.readinessCount > 0 {
+                parts.append(L10n.t("app.courses.mastery", locale: .resolved(), vars: [
+                    "percent": "\(stats.masteryPercent)",
+                    "cards": "\(stats.cardCount)"
+                ]))
+            }
+        }
         parts.append(MicaboCopy.audience(of: course))
         return parts.joined(separator: " · ")
     }
