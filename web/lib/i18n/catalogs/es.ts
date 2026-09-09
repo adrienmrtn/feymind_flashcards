@@ -406,10 +406,6 @@ export const es: Catalog = {
       account: "Tu cuenta",
       accountHint: "Suscripción, datos, sesión.",
     },
-    weekly: {
-      title: "Mis semanas",
-      detail: "El tiempo disponible cada día, que gobierna tu plan.",
-    },
     help: {
       title: "Ayuda y repetir los recorridos",
     },

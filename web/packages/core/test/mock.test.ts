@@ -5,8 +5,6 @@ import {
   MIN_MOCK_QUESTIONS,
   MIN_PASSES_FOR_THROUGHPUT,
   addDays,
-  adherenceFrom,
-  adherenceLevel,
   cardsIn,
   drawMock,
   examReadiness,
@@ -20,12 +18,9 @@ import {
   planMocks,
   planTerm,
   readinessGap,
-  realisticCapacity,
   startOfDay,
   throughputFrom,
-  uniformWeek,
   wantsMock,
-  type Availability,
   type CardDifficulty,
   type DrawCandidate,
   type MockResult,
@@ -58,10 +53,6 @@ function exam(id: string, days: number, over: Partial<TermExam> = {}): TermExam 
     courseIds: ["bio"],
     ...over,
   };
-}
-
-function open(minutes = 120): Availability {
-  return { weekly: uniformWeek(minutes), exceptions: [] };
 }
 
 function result(over: Partial<MockResult> = {}): MockResult {
@@ -109,24 +100,10 @@ describe("l'examen blanc", () => {
         { id: "bio", name: "Bio", examDate: addDays(today, 20), kind: "final", cardCount: 80 },
       ],
       done: [],
-      capacities: new Array(21).fill(120),
+      horizonDays: 21,
       now,
     });
     expect(mocks.map((mock) => mock.offset)).toEqual([13, 18]);
-  });
-
-  it("décale un blanc tombé sur un jour fermé, vers l'avant", () => {
-    const capacities = new Array(21).fill(120);
-    capacities[13] = 0;
-    const mocks = planMocks({
-      exams: [
-        { id: "bio", name: "Bio", examDate: addDays(today, 20), kind: "final", cardCount: 80 },
-      ],
-      done: [],
-      capacities,
-      now,
-    });
-    expect(mocks[0]!.offset).toBe(12);
   });
 
   it("ne repose pas un blanc déjà passé", () => {
@@ -135,7 +112,7 @@ describe("l'examen blanc", () => {
         { id: "bio", name: "Bio", examDate: addDays(today, 20), kind: "final", cardCount: 80 },
       ],
       done: [result({ examId: "bio" })],
-      capacities: new Array(21).fill(120),
+      horizonDays: 21,
       now,
     });
     expect(mocks).toHaveLength(1);
@@ -148,7 +125,7 @@ describe("l'examen blanc", () => {
         { id: "bio", name: "Bio", examDate: addDays(today, 3), kind: "final", cardCount: 80 },
       ],
       done: [],
-      capacities: new Array(4).fill(120),
+      horizonDays: 4,
       now,
     });
     // J-7 est derrière nous ; seul J-2 reste posable.
@@ -163,7 +140,7 @@ describe("l'examen blanc", () => {
         { id: "b", name: "B", examDate: addDays(today, 10), kind: "final", cardCount: 80 },
       ],
       done: [],
-      capacities: new Array(11).fill(120),
+      horizonDays: 11,
       now,
     });
     expect(new Set(mocks.map((mock) => mock.offset)).size).toBe(mocks.length);
@@ -325,7 +302,6 @@ describe("le blanc dans le plan", () => {
     const plan = planTerm({
       exams: [exam("bio", 14, { kind: "final" })],
       cards,
-      availability: open(90),
       now,
     });
 
@@ -336,24 +312,23 @@ describe("le blanc dans le plan", () => {
     expect(plan.mocks.length).toBe(mockBlocks.length);
   });
 
-  it("retire le temps du blanc du budget de révision du jour", () => {
+  it("compte le temps du blanc dans la charge de son jour", () => {
     const plan = planTerm({
       exams: [exam("bio", 14, { kind: "final" })],
       cards,
-      availability: open(90),
       now,
     });
 
-    for (const day of plan.days) {
-      expect(day.minutes).toBeLessThanOrEqual(day.capacityMinutes);
-    }
+    const mockDay = plan.days.find((day) => day.blocks.some(isMockBlock));
+    expect(mockDay).toBeDefined();
+    const mockBlock = mockDay!.blocks.find(isMockBlock)!;
+    expect(mockDay!.minutes).toBeGreaterThanOrEqual(mockBlock.minutes);
   });
 
   it("met le blanc en tête du jour", () => {
     const plan = planTerm({
       exams: [exam("bio", 14, { kind: "final" })],
       cards,
-      availability: open(90),
       now,
     });
     const withMock = plan.days.find((day) => day.blocks.some(isMockBlock));
@@ -365,7 +340,6 @@ describe("le blanc dans le plan", () => {
     const plan = planTerm({
       exams: [exam("bio", 14, { kind: "oral" })],
       cards,
-      availability: open(90),
       now,
     });
     expect(plan.mocks).toEqual([]);
@@ -376,7 +350,6 @@ describe("le blanc dans le plan", () => {
     const plan = planTerm({
       exams: [exam("bio", 14)],
       cards,
-      availability: open(90),
       now,
     });
     expect(plan.mocks.length).toBeGreaterThan(0);
@@ -402,13 +375,11 @@ describe("ce qui résiste revient plus souvent", () => {
     const plain = planTerm({
       exams: [exam("bio", 20)],
       cards,
-      availability: open(120),
       now,
     });
     const withWeak = planTerm({
       exams: [exam("bio", 20)],
       cards,
-      availability: open(120),
       now,
       difficulties: new Map([
         ["c0", difficulty("c0", 5)],
@@ -437,7 +408,6 @@ describe("ce qui résiste revient plus souvent", () => {
     const plan = planTerm({
       exams: [exam("bio", 20)],
       cards,
-      availability: open(120),
       now,
       difficulties: new Map(cards.map((c) => [c.id, difficulty(c.id, 5)])),
     });
@@ -465,13 +435,11 @@ describe("le point de départ", () => {
     const froid = planTerm({
       exams: [exam("bio", 20, { startingPoint: "cold" })],
       cards,
-      availability: open(120),
       now,
     });
     const revision = planTerm({
       exams: [exam("bio", 20, { startingPoint: "solid" })],
       cards,
-      availability: open(120),
       now,
     });
     expect(froid.totalPasses).toBeGreaterThan(revision.totalPasses);
@@ -482,13 +450,11 @@ describe("le point de départ", () => {
     const sansReponse = planTerm({
       exams: [exam("bio", 20)],
       cards,
-      availability: open(120),
       now,
     });
     const dejaVu = planTerm({
       exams: [exam("bio", 20, { startingPoint: "seen" })],
       cards,
-      availability: open(120),
       now,
     });
     expect(sansReponse.totalPasses).toBe(dejaVu.totalPasses);
@@ -523,96 +489,16 @@ describe("le débit mesuré", () => {
 
   it("fait payer au plan le débit réel", () => {
     const cards = Array.from({ length: 200 }, (_, index) => card(`c${index}`));
-    const fast = planTerm({ exams: [exam("bio", 8)], cards, availability: open(25), now });
+    const fast = planTerm({ exams: [exam("bio", 8)], cards, now });
     const slow = planTerm({
       exams: [exam("bio", 8)],
       cards,
-      availability: open(25),
       now,
       throughput: throughputFrom({ cards: 100, cardsPerMinute: 2 }),
     });
-    expect(slow.totalPasses).toBeLessThan(fast.totalPasses);
-    expect(slow.overflow.length).toBeGreaterThan(fast.overflow.length);
+    // Le débit ne retire plus de passages : il change ce que la même journée coûte.
+    expect(slow.totalPasses).toBe(fast.totalPasses);
+    expect(slow.days[0]!.minutes).toBeGreaterThan(fast.days[0]!.minutes);
     expect(slow.throughput.measured).toBe(true);
-  });
-});
-
-describe("l'observance", () => {
-  const capacity = () => 60;
-
-  function daysDone(perDay: number, count: number) {
-    return Array.from({ length: count }, (_, index) => {
-      const day = new Date(today.getTime());
-      day.setDate(day.getDate() - (index + 1));
-      return { day, passes: perDay, againCount: 0 };
-    });
-  }
-
-  it("ne conclut rien quand trop peu de jours sont ouverts", () => {
-    // Deux jours ouverts sur la fenêtre : pas de quoi juger une observance.
-    let opened = 0;
-    const rare = () => (opened++ < 2 ? 60 : 0);
-    const adherence = adherenceFrom(daysDone(240, 21), rare, DEFAULT_THROUGHPUT, now);
-    expect(adherence.measured).toBe(false);
-    expect(adherence.ratio).toBe(1);
-  });
-
-  it("mesure la part du temps déclaré réellement utilisée", () => {
-    // 240 cartes rentrent dans 60 min ; en faire 120 est la moitié.
-    const adherence = adherenceFrom(daysDone(120, 21), capacity, DEFAULT_THROUGHPUT, now);
-    expect(adherence.measured).toBe(true);
-    expect(adherence.ratio).toBeCloseTo(0.5, 1);
-    expect(adherence.missedDays).toBe(0);
-  });
-
-  it("ne compte pas les jours fermés comme des jours manqués", () => {
-    const closed = () => 0;
-    const adherence = adherenceFrom([], closed, DEFAULT_THROUGHPUT, now);
-    expect(adherence.observedDays).toBe(0);
-    expect(adherence.measured).toBe(false);
-  });
-
-  it("ne compte pas le jour en cours", () => {
-    const adherence = adherenceFrom(
-      [{ day: today, passes: 0, againCount: 0 }, ...daysDone(240, 21)],
-      capacity,
-      DEFAULT_THROUGHPUT,
-      now,
-    );
-    expect(adherence.ratio).toBe(1);
-  });
-
-  it("rabat la capacité sans jamais l'effondrer ni la gonfler", () => {
-    const half = adherenceFrom(daysDone(120, 21), capacity, DEFAULT_THROUGHPUT, now);
-    expect(realisticCapacity(60, half)).toBe(30);
-
-    const none = adherenceFrom(daysDone(0, 21), capacity, DEFAULT_THROUGHPUT, now);
-    // Une mauvaise passe resserre le plan, elle ne le supprime pas.
-    expect(realisticCapacity(60, none)).toBe(30);
-
-    const over = adherenceFrom(daysDone(600, 21), capacity, DEFAULT_THROUGHPUT, now);
-    expect(realisticCapacity(60, over)).toBe(60);
-  });
-
-  it("nomme le niveau sans juger", () => {
-    expect(adherenceLevel(adherenceFrom(daysDone(240, 21), capacity, DEFAULT_THROUGHPUT, now)))
-      .toBe("steady");
-    expect(adherenceLevel(adherenceFrom(daysDone(150, 21), capacity, DEFAULT_THROUGHPUT, now)))
-      .toBe("slipping");
-    expect(adherenceLevel(adherenceFrom(daysDone(30, 21), capacity, DEFAULT_THROUGHPUT, now)))
-      .toBe("behind");
-  });
-
-  it("fait apparaître le déficit plus tôt quand l'étudiant décroche", () => {
-    const cards = Array.from({ length: 300 }, (_, index) => card(`c${index}`));
-    const trusting = planTerm({ exams: [exam("bio", 8)], cards, availability: open(40), now });
-    const realistic = planTerm({
-      exams: [exam("bio", 8)],
-      cards,
-      availability: open(40),
-      now,
-      adherence: adherenceFrom(daysDone(120, 21), capacity, DEFAULT_THROUGHPUT, now),
-    });
-    expect(realistic.overflow.length).toBeGreaterThan(trusting.overflow.length);
   });
 });

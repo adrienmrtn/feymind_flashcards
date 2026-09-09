@@ -2,9 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { asExamKind, asStartingPoint, clampMinutes, clampTargetScore } from "@micabo/core";
+import { asExamKind, asStartingPoint, clampTargetScore } from "@micabo/core";
 
-import { revalidateUserData } from "@/lib/data/cache";
 import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,8 +33,6 @@ export async function createPlan(input: {
   kind: string;
   startingPoint: string;
   targetScore: number;
-  weeklyMinutes: number[];
-  offDays: string[];
   formats: string[];
   name: string;
 }): Promise<CreatePlanResult> {
@@ -51,27 +48,6 @@ export async function createPlan(input: {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.examDate)) {
     return { status: "error", message: await actionT("app.errors.unknownDate") };
   }
-  if (input.weeklyMinutes.length !== 7) {
-    return { status: "error", message: await actionT("app.errors.badWeek") };
-  }
-
-  // 1. Le temps disponible, d'abord : c'est lui que la replanification va lire.
-  const { error: weekError } = await supabase
-    .from("profiles")
-    .update({ weekly_minutes: input.weeklyMinutes.map(clampMinutes) })
-    .eq("id", user.id);
-  if (weekError) return { status: "error", message: await actionT("app.errors.saveFailed") };
-
-  const pauses = input.offDays.filter((day) => /^\d{4}-\d{2}-\d{2}$/.test(day));
-  if (pauses.length > 0) {
-    const { error: pauseError } = await supabase.from("availability_exceptions").upsert(
-      pauses.map((day) => ({ user_id: user.id, day, minutes: 0 })),
-      { onConflict: "user_id,day" },
-    );
-    if (pauseError) return { status: "error", message: await actionT("app.errors.saveFailed") };
-  }
-
-  revalidateUserData(user.id, "profile");
 
   // 2. L'épreuve ensuite, sur des disponibilités à jour.
   const saved = await saveExam({

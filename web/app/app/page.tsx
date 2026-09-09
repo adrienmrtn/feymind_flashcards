@@ -5,7 +5,7 @@ import { examCountdownLabel, examUrgency, studyCounts, currentStreak } from "@mi
 import { TodayPanel } from "@/components/app/home/TodayPanel";
 import { ReadinessBar } from "@/components/app/charts/ReadinessBar";
 import { Button } from "@/components/ui/button";
-import { loadNewCardBudget, loadProfileStats } from "@/lib/data/reviews";
+import { loadProfileStats } from "@/lib/data/reviews";
 import { getTranslator } from "@/lib/i18n/server";
 import { localeBcp47, type Translator } from "@/lib/i18n/copy";
 import { loadTermSnapshot, type PlanExam } from "@/lib/term-plan";
@@ -14,19 +14,18 @@ import { loadTermSnapshot, type PlanExam } from "@/lib/term-plan";
  * **L'accueil : aujourd'hui.**
  *
  * L'écran répond à une seule question, celle qu'on se pose en ouvrant l'app : qu'est-ce que
- * j'ai à faire, et je le lance. Le plan de la période, ses verdicts et ses réglages ont leur
+ * j'ai à faire, et je le lance. Le plan de la période et ses réglages ont leur
  * page (Examens) ; la mesure a la sienne (Progrès). Ici : le travail du jour, la prochaine
  * épreuve, et un mot si le plan ne tient plus.
  */
 export default async function TodayPage() {
-  const [{ t, locale }, snapshot, budget, stats] = await Promise.all([
+  const [{ t, locale }, snapshot, stats] = await Promise.all([
     getTranslator(),
     loadTermSnapshot(),
-    loadNewCardBudget(),
     loadProfileStats(),
   ]);
 
-  const { now, blocks, todayCards, todayMinutes, upcoming, verdict, snapshots, profile } = snapshot;
+  const { now, blocks, todayCards, todayMinutes, upcoming, snapshots, profile } = snapshot;
 
   const due = studyCounts(
     snapshots.map((card) => ({
@@ -37,7 +36,6 @@ export default async function TodayPage() {
       createdAt: new Date(card.created_at),
       isSuspended: card.is_suspended,
     })),
-    { limits: { newPerSession: budget.remaining, reviewsPerSession: Number.MAX_SAFE_INTEGER } },
   ).total;
 
   const streak = currentStreak(stats.reviewDays.map((day) => new Date(day)), now);
@@ -61,18 +59,6 @@ export default async function TodayPage() {
           </p>
         </div>
       </header>
-
-      {verdict.level === "short" ? (
-        <Link
-          href={"/app/plan" as never}
-          className="hover-tile flex items-center justify-between gap-4 rounded-group border border-caution/40 bg-caution-soft px-5 py-3.5"
-        >
-          <span className="text-[13.5px] font-medium text-ink">
-            {t("app.plan.verdict.short", { minutes: verdict.deficitMinutes })}
-          </span>
-          <span className="shrink-0 text-[13px] font-medium text-caution">{t("app.today.fix")}</span>
-        </Link>
-      ) : null}
 
       <TodayPanel
         blocks={blocks}

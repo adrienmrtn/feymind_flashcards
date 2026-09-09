@@ -6,7 +6,6 @@ import {
   addDays,
   asExamKind,
   asStartingPoint,
-  capacityWindow,
   intensityFor,
   clampTargetScore,
   dayDifference,
@@ -14,8 +13,6 @@ import {
   planExam,
   startOfDay,
   targetScoreFromIntensity,
-  weeklyFromRow,
-  type Availability,
   type CardState,
   type ExamIntensity,
   type ExamKind,
@@ -159,15 +156,6 @@ export async function saveExam(input: {
       })),
     };
 
-    // Le plan ne pose plus rien sur un jour déclaré indisponible : sans ça, la première
-    // échéance retomberait un samedi off et le planning serait faux dès la première carte.
-    const availability = await readAvailabilityFor(supabase, user.id);
-    const capacities = capacityWindow(
-      availability,
-      today,
-      Math.max(1, dayDifference(today, day)),
-    );
-
     const plan = planExam(
       usable.map((card) => ({
         id: card.id,
@@ -185,7 +173,6 @@ export async function saveExam(input: {
           intensity,
           asStartingPoint(input.startingPoint ?? kept.startingPoint),
         ),
-        capacities,
       },
     );
 
@@ -374,40 +361,3 @@ export async function saveExamDetails(input: {
   });
 }
 
-/**
- * La disponibilité, lue depuis l'action.
- *
- * `lib/data/availability.ts` fait la même lecture pour les écrans, mais en passant par le
- * cache de Next, qu'une action serveur n'a aucune raison de remplir : elle écrit juste après
- * et l'invaliderait dans la foulée.
- */
-async function readAvailabilityFor(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-): Promise<Availability> {
-  const since = new Date();
-  since.setDate(since.getDate() - 7);
-
-  const [{ data: profile }, { data: exceptions }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("daily_minutes, weekly_minutes")
-      .eq("id", userId)
-      .maybeSingle(),
-    supabase
-      .from("availability_exceptions")
-      .select("day, minutes")
-      .eq("user_id", userId)
-      .gte("day", since.toISOString().slice(0, 10)),
-  ]);
-
-  const row = profile as { daily_minutes: number | null; weekly_minutes: number[] | null } | null;
-
-  return {
-    weekly: weeklyFromRow(row?.weekly_minutes, row?.daily_minutes ?? undefined),
-    exceptions: ((exceptions as { day: string; minutes: number }[] | null) ?? []).map((entry) => ({
-      day: new Date(`${entry.day}T12:00:00`),
-      minutes: entry.minutes,
-    })),
-  };
-}

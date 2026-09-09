@@ -2,15 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
-import {
-  DEFAULT_DAILY_MINUTES,
-  newCardsPerDay,
-  remainingNewCards,
-  startOfDay,
-} from "@micabo/core";
-
 import { cachedRead, cardsTag, dataClient, profileTag, userTag } from "@/lib/data/cache";
-import { readProfile } from "@/lib/data/profile";
 import { currentAccessToken, currentUserId } from "@/lib/data/user";
 import { createClient } from "@/lib/supabase/server";
 
@@ -33,60 +25,6 @@ async function reader(): Promise<{ userId: string; token: string } | null> {
   const token = await currentAccessToken();
   if (!userId || !token) return null;
   return { userId, token };
-}
-
-/**
- * Le budget de cartes neuves **du jour**, partagé par toutes les sessions.
- *
- * Une révision depuis un cours et la page Réviser lisent les mêmes faits
- * (`review_logs.state_before = new` aujourd'hui). Sans ça, chaque écran se
- * servirait un plafond neuf.
- *
- * **On compte, on ne rapatrie plus.** La requête ramenait chaque ligne pour n'en garder que
- * le nombre - le filtre `state_before = 'new'` et la borne du jour étant déjà dans le `where`,
- * il n'y avait rien à recompter côté serveur. `head: true` laisse le compte à Postgres et ne
- * fait plus voyager les lignes.
- */
-export async function loadNewCardBudget(): Promise<{
-  minutes: number;
-  rhythmNew: number;
-  introducedToday: number;
-  remaining: number;
-}> {
-  const profile = await readProfile();
-  const minutes = profile?.daily_minutes ?? DEFAULT_DAILY_MINUTES;
-  const introducedToday = await countNewCardsToday();
-
-  return {
-    minutes,
-    rhythmNew: newCardsPerDay(minutes),
-    introducedToday,
-    remaining: remainingNewCards(introducedToday, minutes),
-  };
-}
-
-async function countNewCardsToday(): Promise<number> {
-  const auth = await reader();
-  if (!auth) return 0;
-
-  const dayStart = startOfDay(new Date()).toISOString();
-
-  return cachedRead(
-    auth.userId,
-    // Le jour fait partie de la clé : passé minuit, le budget d'hier n'est plus le bon, et
-    // il ne faut pas attendre qu'une note vienne l'effacer.
-    `new-today:${dayStart.slice(0, 10)}`,
-    [userTag(auth.userId), cardsTag(auth.userId)],
-    async () => {
-      const { count } = await dataClient(auth.token)
-        .from("review_logs")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", auth.userId)
-        .eq("state_before", "new")
-        .gte("reviewed_at", dayStart);
-      return count ?? 0;
-    },
-  );
 }
 
 /**

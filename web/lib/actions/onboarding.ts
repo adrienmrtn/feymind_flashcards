@@ -4,7 +4,7 @@ import type { Route } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { countryFor, newCardsPerDay, DEFAULT_DAILY_MINUTES } from "@micabo/core";
+import { countryFor } from "@micabo/core";
 
 import { shouldPreserveRemoteProfile } from "@/lib/auth/existing-account";
 import { ONBOARDING_CREATE_COOKIE } from "@/lib/auth/onboarding-create";
@@ -116,18 +116,6 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
   return { status: "saved", examCreated };
 }
 
-/**
- * Ce que le rythme par défaut donne, pour l'annoncer sans mentir.
- *
- * Le parcours ne demande pas les minutes, donc il ne peut pas promettre un chiffre choisi par
- * l'étudiant - mais il peut dire ce que le défaut produit.
- */
-export async function defaultPace(): Promise<{ minutes: number; newCards: number }> {
-  return {
-    minutes: DEFAULT_DAILY_MINUTES,
-    newCards: newCardsPerDay(DEFAULT_DAILY_MINUTES),
-  };
-}
 
 /** Le nom du pays, pour l'afficher côté serveur si besoin. */
 export async function countryName(code: string): Promise<string> {

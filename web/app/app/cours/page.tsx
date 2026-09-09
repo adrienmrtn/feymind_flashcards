@@ -12,8 +12,7 @@ import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { canImportNow } from "@/lib/data/entitlement";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
 import { loadCardDifficulty } from "@/lib/data/difficulty";
-import { loadNewCardBudget } from "@/lib/data/reviews";
-import { copyCourseSource, copyHeldBackNew, copyReviewButton } from "@/lib/i18n/copy";
+import { copyCourseSource, copyReviewButton } from "@/lib/i18n/copy";
 import { getTranslator } from "@/lib/i18n/server";
 import type { Translator } from "@/lib/i18n/copy";
 
@@ -29,11 +28,10 @@ export default async function CoursesPage({
   const params = await searchParams;
   if (params.vue === "decouvrir") redirect("/app/cours");
 
-  const [{ t }, courses, cards, budget, exams, canImport, difficulties] = await Promise.all([
+  const [{ t }, courses, cards, exams, canImport, difficulties] = await Promise.all([
     getTranslator(),
     listCourses(),
     listCardSnapshots(),
-    loadNewCardBudget(),
     listExams(),
     canImportNow(),
     loadCardDifficulty(),
@@ -52,7 +50,6 @@ export default async function CoursesPage({
     difficulties,
   );
 
-  const now = new Date();
   const counts = studyCounts(
     cards.map((card) => ({
       id: card.id,
@@ -62,28 +59,13 @@ export default async function CoursesPage({
       createdAt: new Date(card.created_at),
       isSuspended: card.is_suspended,
     })),
-    {
-      limits: {
-        newPerSession: budget.remaining,
-        reviewsPerSession: Number.MAX_SAFE_INTEGER,
-      },
-    },
   );
-  const dueNow = cards.filter(
-    (card) => !card.is_suspended && new Date(card.due_date) <= now,
-  ).length;
-  const heldBack = Math.max(0, dueNow - counts.total);
-
   return (
     <CoursesExplore
       revise={
         counts.total > 0 ? (
           <Button render={<Link href={"/app/reviser" as never} />}>
             {copyReviewButton(t, counts.total)}
-          </Button>
-        ) : heldBack > 0 ? (
-          <Button variant="outline" render={<Link href={"/app/reviser" as never} />}>
-            {t("app.review.again")}
           </Button>
         ) : null
       }
@@ -92,7 +74,6 @@ export default async function CoursesPage({
         t={t}
         courses={courses}
         emptyReviews={counts.total === 0 && cards.length > 0}
-        heldBack={heldBack}
         exams={exams}
         canImport={canImport}
         mastery={mastery}
@@ -105,7 +86,6 @@ function Shelf({
   t,
   courses,
   emptyReviews,
-  heldBack,
   exams,
   canImport,
   mastery,
@@ -113,7 +93,6 @@ function Shelf({
   t: Translator;
   courses: Awaited<ReturnType<typeof listCourses>>;
   emptyReviews: boolean;
-  heldBack: number;
   exams: Awaited<ReturnType<typeof listExams>>;
   canImport: boolean;
   mastery: Map<string, Mastery>;
@@ -124,11 +103,7 @@ function Shelf({
   return (
     <>
       {emptyReviews ? (
-        <p className="text-[13px] text-muted-foreground">
-          {heldBack > 0
-            ? t("app.courses.doneHeldBack", { message: copyHeldBackNew(t, heldBack) })
-            : t("app.courses.doneTomorrow")}
-        </p>
+        <p className="text-[13px] text-muted-foreground">{t("app.courses.doneTomorrow")}</p>
       ) : null}
 
       {sheets.length === 0 ? (

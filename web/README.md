@@ -58,10 +58,11 @@ pnpm verify       # les trois d'un coup, dans l'ordre où ils échouent le mieux
 ## Regarder l'app connectée sans compte
 
 `scripts/demo/` est un faux Supabase : un serveur HTTP qui répond au jeton par mot de passe, à
-l'utilisateur, aux lectures PostgREST (`eq`, `is`, `in`, `gte`, `order`, `limit`…) et aux huit
-RPC, sur un jeu de données fictif mais réaliste (cinq cours, cent quatre-vingt-dix cartes, quatre
-épreuves, quarante-cinq jours de journal). Les écritures sont acceptées et oubliées. C'est ce
-qui permet de regarder chaque écran de `/app` et de faire des captures sans toucher au projet.
+l'utilisateur, aux lectures PostgREST (`eq`, `is`, `in`, `gte`, `order`, `limit`…), aux huit RPC
+et aux fonctions Edge, sur un jeu de données fictif mais réaliste (cinq cours, cent quatre-vingt-dix
+cartes, quatre épreuves, quarante-cinq jours de journal). Les écritures sont gardées **en mémoire**,
+donc un examen blanc ouvert se relit et se remet. C'est ce qui permet de regarder chaque écran de
+`/app` et de faire des captures sans toucher au projet.
 
 ```bash
 node scripts/demo/server.mjs                                   # écoute sur 54329

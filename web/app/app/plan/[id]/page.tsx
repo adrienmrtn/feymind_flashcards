@@ -2,10 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 import {
-  adherenceFrom,
   asExamKind,
   asStartingPoint,
-  capacityFor,
   dayDifference,
   examCountdownLabel,
   examReadiness,
@@ -26,9 +24,8 @@ import {
 import { ExamProgress } from "@/components/app/plan/ExamProgress";
 import { ExamSchedule, type ScheduleDay } from "@/components/app/plan/ExamSchedule";
 import { ExamSheet, type SheetCourse } from "@/components/app/plan/ExamSheet";
-import { readAvailability } from "@/lib/data/availability";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
-import { loadCardDifficulty, loadDailyReviews } from "@/lib/data/difficulty";
+import { loadCardDifficulty } from "@/lib/data/difficulty";
 import { listMockResults, loadThroughput } from "@/lib/data/mocks";
 import { getTranslator } from "@/lib/i18n/server";
 import { projectedMastery } from "@/lib/term-plan";
@@ -52,17 +49,14 @@ export default async function ExamSheetPage({
   const { id } = await params;
   const { t } = await getTranslator();
 
-  const [exams, courses, snapshots, difficulties, mocks, availability, throughput, daily] =
-    await Promise.all([
-      listExams(),
-      listCourses(),
-      listCardSnapshots(),
-      loadCardDifficulty(),
-      listMockResults(),
-      readAvailability(),
-      loadThroughput(),
-      loadDailyReviews(30),
-    ]);
+  const [exams, courses, snapshots, difficulties, mocks, throughput] = await Promise.all([
+    listExams(),
+    listCourses(),
+    listCardSnapshots(),
+    loadCardDifficulty(),
+    listMockResults(),
+    loadThroughput(),
+  ]);
 
   const exam = exams.find((row) => row.id === id);
   if (!exam) notFound();
@@ -113,12 +107,10 @@ export default async function ExamSheetPage({
         isSuspended: card.is_suspended,
       }),
     ),
-    availability,
     now,
     throughput,
     difficulties,
     mocks,
-    adherence: adherenceFrom(daily, (date) => capacityFor(availability, date), throughput, now),
   });
 
   const schedule: ScheduleDay[] = plan.days
@@ -135,7 +127,6 @@ export default async function ExamSheetPage({
         date: day.date.toISOString().slice(0, 10),
         cards,
         minutes: mine.filter(isReviewBlock).reduce((sum, block) => sum + block.minutes, 0),
-        capacityMinutes: day.capacityMinutes,
         mock: mock ? { questionCount: mock.questionCount, minutes: mock.minutes } : null,
         isExamDay: day.offset === daysRemaining,
       };

@@ -53,37 +53,14 @@ export {
 } from "./srs/sm2";
 export {
   CARDS_PER_MINUTE,
-  DAILY_MINUTES_STEPS,
-  DAYS_PER_YEAR,
-  DEFAULT_DAILY_MINUTES,
-  MAXIMUM_DAILY_MINUTES,
-  MINIMUM_DAILY_MINUTES,
-  PACE_LABELS,
   REPETITIONS_PER_CARD,
-  cardsPerYear,
   dailyMinutesLabel,
-  minutesAtStepIndex,
-  nearestStep,
-  newCardsPerDay,
-  paceFor,
-  stepIndexFor,
-  type Pace,
 } from "./srs/daily-load";
 export {
-  DEFAULT_LIMITS,
-  SESSION_NEW_SLIDER_CAP,
-  UNLIMITED,
   buildQueue,
-  countNewIntroducedToday,
-  dailyLimits,
   isDue,
-  remainingNewCards,
-  sessionNewLimit,
-  sessionNewSliderMax,
   studyCounts,
-  type NewIntroductionEvent,
   type QueueCard,
-  type QueueLimits,
   type StudyCounts,
 } from "./srs/queue";
 export {
@@ -147,24 +124,6 @@ export {
   type ExamProjection,
 } from "./srs/exam";
 
-// Le temps réellement disponible, jour par jour.
-export {
-  MAX_DAILY_MINUTES,
-  WEEKDAY_ORDER,
-  capacityFor,
-  capacityWindow,
-  clampMinutes,
-  minutesForCards,
-  uniformWeek,
-  usableDaysUntil,
-  weeklyFromRow,
-  weeklyTotal,
-  weekdayIndex,
-  type Availability,
-  type AvailabilityException,
-  type WeeklyMinutes,
-} from "./srs/availability";
-
 // Le plan de la période : plusieurs épreuves, un seul emploi du temps.
 export {
   EXAM_KINDS,
@@ -174,10 +133,9 @@ export {
   asStartingPoint,
   defaultFormatsFor,
   examPriority,
-  feasibility,
   intensityFor,
-  levers,
   loadBars,
+  termLoad,
   isMockBlock,
   isReviewBlock,
   matchesFormat,
@@ -185,7 +143,6 @@ export {
   todayBlocks,
   todayCardCount,
   type ExamKind,
-  type LeverKind,
   type LoadBar,
   type MockBlock,
   type PlanBlock,
@@ -196,11 +153,37 @@ export {
   type TermCard,
   type TermExam,
   type TermInput,
-  type TermLever,
+  type TermLoad,
   type TermPlan,
-  type TermVerdict,
-  type VerdictLevel,
 } from "./srs/term";
+
+// La copie d'examen blanc : vingt questions, aucune auto-notation.
+export {
+  MOCK_GAP,
+  MOCK_PAPER_SIZE,
+  PASS_MARK,
+  clampScore,
+  correctCount,
+  gradeClosed,
+  isClosedQuestion,
+  isMockDebrief,
+  normalizeAnswer,
+  paperMinutes,
+  paperQuota,
+  paperScore,
+  quotaSize,
+  sameAnswer,
+  type MockAnswer,
+  type MockChoiceQuestion,
+  type MockDebrief,
+  type MockFeynmanQuestion,
+  type MockGapQuestion,
+  type MockGrade,
+  type MockQuestion,
+  type MockQuestionKind,
+  type MockTrueFalseQuestion,
+  type PaperQuota,
+} from "./srs/mock-paper";
 
 // L'examen blanc : la seule mesure en conditions d'épreuve.
 export {
@@ -224,23 +207,15 @@ export {
   type PlannedMock,
 } from "./srs/mock";
 
-// Le débit réellement mesuré, et ce que l'étudiant tient de son temps déclaré.
+// Le débit réellement mesuré : ce que cet étudiant fait vraiment en une minute.
 export {
-  ADHERENCE_WINDOW_DAYS,
   DEFAULT_THROUGHPUT,
-  FULL_ADHERENCE,
   MAX_THROUGHPUT,
-  MIN_DAYS_FOR_ADHERENCE,
   MIN_PASSES_FOR_THROUGHPUT,
   MIN_THROUGHPUT,
-  adherenceFrom,
-  adherenceLevel,
   cardsIn,
   minutesFor,
-  realisticCapacity,
   throughputFrom,
-  type Adherence,
-  type AdherenceLevel,
   type Throughput,
   type ThroughputSample,
 } from "./srs/calibration";

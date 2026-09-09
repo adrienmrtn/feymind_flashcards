@@ -25,7 +25,7 @@ KEY="${SUPABASE_ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 
 FUNCTIONS=("$@")
 if [ ${#FUNCTIONS[@]} -eq 0 ]; then
-  FUNCTIONS=(generate-course generate-flashcards explain-selection youtube-transcript)
+  FUNCTIONS=(generate-course generate-flashcards generate-mock grade-mock explain-selection youtube-transcript)
 fi
 
 failed=0

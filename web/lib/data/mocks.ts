@@ -2,6 +2,10 @@ import "server-only";
 
 import {
   throughputFrom,
+  type MockAnswer,
+  type MockDebrief,
+  type MockGrade,
+  type MockQuestion,
   type MockResult,
   type Throughput,
   type ThroughputSample,
@@ -25,13 +29,20 @@ export interface MockSessionRow {
   minutes: number;
   question_count: number;
   correct_count: number;
-  answers: { card: string; correct: boolean }[];
+  /** La copie posée à l'ouverture. Immuable pendant la passation. */
+  questions: MockQuestion[] | null;
+  /** Ce que l'étudiant a posé. */
+  answers: MockAnswer[] | null;
+  /** La correction, une fois la copie remise. */
+  grades: MockGrade[] | null;
+  debrief: MockDebrief | null;
+  with_audio: boolean;
   started_at: string;
   finished_at: string | null;
 }
 
 const MOCK_COLUMNS =
-  "id, exam_id, planned_for, minutes, question_count, correct_count, answers, started_at, finished_at";
+  "id, exam_id, planned_for, minutes, question_count, correct_count, questions, answers, grades, debrief, with_audio, started_at, finished_at";
 
 /** Les blancs terminés. Une session ouverte ne mesure encore rien. */
 export async function listMockResults(): Promise<MockResult[]> {

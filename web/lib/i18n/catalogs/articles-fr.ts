@@ -34,13 +34,10 @@ export const articlesFr = {
       "L'intervalle est écrit sur le bouton **avant** qu'on appuie. Un planificateur qui décide dans son coin se fait vite désobéir : on note « facile » pour aller plus vite, la carte repart à trois semaines, et on la redécouvre le jour de l'épreuve.",
     stepMinutes: "{n} min",
     stepJoin: ", puis ",
-    paceTitle: "Le rythme : des minutes, pas un quota de cartes",
-    pace1:
-      "Le réglage que Micabo demande est un temps par jour, pas un nombre de cartes. À {minutes} minutes — le défaut — on voit environ {seen} cartes, et le produit n'en introduit que **{perDay} neuves**.",
-    pace2:
-      "L'écart entre les deux est le cœur du réglage : une carte neuve ne coûte pas un passage, elle en coûte environ {reps} avant d'être acquise. Introduire cinquante cartes aujourd'hui parce qu'on a le temps, c'est se poser une dette de sessions pour les trois semaines suivantes — et c'est comme ça qu'on abandonne un paquet.",
-    paceNote:
-      "Le plafond du jour ne bloque pas les révisions dues : celles-là passent toutes. Il ne rationne que l'introduction de nouvelles cartes. Une journée manquée ne crée donc pas de trou, elle décale.",
+    paceTitle: "Le rythme : ce que la charge demande, pas un quota",
+    pace1: "Micabo ne demande ni un nombre de cartes par jour, ni un budget de minutes. Il regarde ce que les échéances réclament aujourd'hui, le sert en entier, et annonce le temps que ça prendra. Un étudiant voit environ {seen} cartes en une heure.",
+    pace2: "Un plafond de cartes neuves existait ici, calibré sur les {reps} passages qu'une carte demande avant d'être acquise. Il avait un défaut décisif : à trois jours d'un partiel, il refusait des cartes de ce partiel au nom du rythme du jour. Retenir du travail le jour où il en faut le plus, c'est se tromper de métier.",
+    paceNote: "Ce que le plan répartit, ce sont les passages jusqu'au jour J. Une journée manquée ne crée donc pas de trou : elle décale, et le plan se refait au calcul suivant.",
     sheetTitle: "La fiche d'abord, les cartes ensuite",
     sheet1:
       "Une flashcard suppose qu'on a déjà compris. Se tester sur une notion qu'on n'a pas lue, c'est apprendre une réponse par cœur sans savoir de quoi elle parle — la carte tombera juste, et l'examen non.",

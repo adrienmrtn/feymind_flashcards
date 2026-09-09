@@ -408,10 +408,6 @@ export const en: Catalog = {
       account: "Your account",
       accountHint: "Subscription, data, session.",
     },
-    weekly: {
-      title: "My weeks",
-      detail: "The time available each day, which drives your plan.",
-    },
     help: {
       title: "Help and replaying the tours",
     },

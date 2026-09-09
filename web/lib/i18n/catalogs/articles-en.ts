@@ -34,13 +34,10 @@ export const articlesEn = {
       "The interval is written on the button **before** you press it. A scheduler that decides on its own is quickly disobeyed: you rate “easy” to go faster, the card leaves for three weeks, and you rediscover it on exam day.",
     stepMinutes: "{n} min",
     stepJoin: ", then ",
-    paceTitle: "The pace: minutes, not a card quota",
-    pace1:
-      "The setting Micabo asks for is a time per day, not a number of cards. At {minutes} minutes — the default — you see about {seen} cards, and the product only introduces **{perDay} new ones**.",
-    pace2:
-      "The gap between the two is the heart of the setting: a new card does not cost one pass, it costs about {reps} before it is learned. Introducing fifty cards today because you have the time is taking on a debt of sessions for the next three weeks — and that is how a deck gets abandoned.",
-    paceNote:
-      "The day's cap does not block due reviews: those all go through. It only rations the introduction of new cards. A missed day therefore does not create a hole, it shifts.",
+    paceTitle: "Pace: what the workload asks for, not a quota",
+    pace1: "Micabo asks neither for a number of cards per day nor for a budget of minutes. It looks at what your deadlines require today, serves all of it, and tells you how long it will take. A student sees about {seen} cards in an hour.",
+    pace2: "There used to be a cap on new cards, calibrated on the {reps} passes a card needs before it sticks. It had one decisive flaw: three days before a midterm, it turned down cards from that very midterm in the name of the day's pace. Holding back work on the day it matters most is the wrong job.",
+    paceNote: "What the plan spreads out are the passes until exam day. A missed day therefore leaves no hole: it shifts, and the plan is rebuilt on the next calculation.",
     sheetTitle: "The sheet first, the cards after",
     sheet1:
       "A flashcard assumes you already understood. Testing yourself on a notion you have not read is learning an answer by heart without knowing what it is about — the card will be right, and the exam will not.",

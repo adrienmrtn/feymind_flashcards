@@ -140,7 +140,7 @@ export function examUrgency(daysRemaining: number): ExamUrgency {
 export function planExam(
   cards: ExamCard[],
   examDate: Date,
-  options: { now?: Date; intensity?: ExamIntensity; capacities?: readonly number[] } = {},
+  options: { now?: Date; intensity?: ExamIntensity } = {},
 ): ExamPlan {
   const now = options.now ?? new Date();
   const intensity = options.intensity ?? "standard";
@@ -153,7 +153,7 @@ export function planExam(
   // aujourd'hui ou demain ne laisse qu'une journée, celle-ci.
   const window = Math.max(1, daysRemaining);
   const lastReviewDay = addDays(today, window - 1);
-  const usable = usableDays(options.capacities, window);
+  const usable = Array.from({ length: window }, (_, offset) => offset);
 
   const days = new Map<string, number[]>();
   const load = new Array<number>(window).fill(0);
@@ -178,20 +178,6 @@ export function planExam(
   };
 }
 
-/**
- * Les décalages sur lesquels on a le droit de poser un passage.
- *
- * Sans capacités, ce sont tous les jours de la fenêtre - le comportement d'avant. Avec, on
- * retire les jours à zéro minute. Si l'étudiant a déclaré la fenêtre entière indisponible, on
- * lui rend quand même la fenêtre : un plan vide ne l'aiderait pas, et c'est `feasibility` qui
- * a le rôle de dire que ça ne tient pas.
- */
-function usableDays(capacities: readonly number[] | undefined, window: number): number[] {
-  const all = Array.from({ length: window }, (_, offset) => offset);
-  if (!capacities || capacities.length === 0) return all;
-  const open = all.filter((offset) => (capacities[offset] ?? 0) > 0);
-  return open.length > 0 ? open : all;
-}
 
 /**
  * L'ordre décide du décalage de chaque carte, donc du lissage de la charge. Les cartes en

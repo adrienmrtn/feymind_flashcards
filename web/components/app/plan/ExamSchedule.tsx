@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { startMockSession } from "@/lib/actions/mocks";
+import { StartMock } from "@/components/app/plan/StartMock";
 import { useI18n } from "@/lib/i18n/client";
 import { localeBcp47 } from "@/lib/i18n/copy";
 
@@ -13,7 +11,6 @@ export interface ScheduleDay {
   date: string;
   cards: number;
   minutes: number;
-  capacityMinutes: number;
   mock: { questionCount: number; minutes: number } | null;
   isExamDay: boolean;
 }
@@ -39,11 +36,11 @@ export function ExamSchedule({
   const [expanded, setExpanded] = useState(false);
   if (days.length === 0) return null;
 
-  const open = days.filter((day) => day.capacityMinutes > 0 && !day.isExamDay);
-  const off = days.filter((day) => day.capacityMinutes === 0 && !day.isExamDay);
+  const working = days.filter((day) => !day.isExamDay && (day.cards > 0 || day.mock));
+  const free = days.filter((day) => !day.isExamDay && day.cards === 0 && !day.mock);
   const mocks = days.filter((day) => day.mock);
   const totalCards = days.reduce((sum, day) => sum + day.cards, 0);
-  const max = Math.max(1, ...days.map((day) => Math.max(day.minutes, day.capacityMinutes)));
+  const max = Math.max(1, ...days.map((day) => day.minutes));
   const shown = expanded ? days : days.slice(0, 21);
   const todayMock = days.find((day) => day.offset === 0 && day.mock);
 
@@ -59,7 +56,11 @@ export function ExamSchedule({
         <div>
           <h2 className="section-title">{t("app.exam.schedule.title")}</h2>
           <p className="section-lead numeral">
-            {t("app.exam.schedule.summary", { cards: totalCards, days: open.length, off: off.length })}
+            {t("app.exam.schedule.summary", {
+              cards: totalCards,
+              days: working.length,
+              free: free.length,
+            })}
           </p>
         </div>
         {todayMock && canRunMock ? <StartMock examId={examId} /> : null}
@@ -73,10 +74,10 @@ export function ExamSchedule({
               const label = date.toLocaleDateString(bcp, { weekday: "short" }).replace(".", "");
               const title = day.isExamDay
                 ? t("app.exam.schedule.examDay")
-                : day.capacityMinutes === 0
-                  ? t("app.exam.schedule.off")
+                : day.cards === 0 && !day.mock
+                  ? t("app.exam.schedule.free")
                   : `${t("app.exam.schedule.cards", { cards: day.cards, minutes: day.minutes })}${day.mock ? ` · ${t("app.exam.schedule.mock", { questions: day.mock.questionCount, minutes: day.mock.minutes })}` : ""}`;
-              const fill = day.capacityMinutes === 0 ? 0 : Math.min(1, day.minutes / max);
+              const fill = Math.min(1, day.minutes / max);
               return (
                 <div
                   key={day.offset}
@@ -86,8 +87,8 @@ export function ExamSchedule({
                       ? "border-caution/40 bg-caution-soft"
                       : day.offset === 0
                         ? "border-ink/40 bg-surface"
-                        : day.capacityMinutes === 0
-                          ? "border-transparent bg-surface-muted/60"
+                        : day.cards === 0 && !day.mock
+                          ? "border-transparent bg-surface-muted/50"
                           : "border-hairline bg-surface"
                   }`}
                 >
@@ -96,9 +97,13 @@ export function ExamSchedule({
                     <span className="numeral">{date.getDate()}</span>
                   </span>
                   {day.isExamDay ? (
-                    <span className="text-[10px] font-semibold text-caution">{t("app.exam.schedule.examShort")}</span>
-                  ) : day.capacityMinutes === 0 ? (
-                    <span className="text-[10px] text-ink-tertiary">{t("app.exam.schedule.offShort")}</span>
+                    <span className="text-[10px] font-semibold text-caution">
+                      {t("app.exam.schedule.examShort")}
+                    </span>
+                  ) : day.cards === 0 && !day.mock ? (
+                    <span className="text-[10px] text-ink-tertiary">
+                      {t("app.exam.schedule.freeShort")}
+                    </span>
                   ) : (
                     <span className="flex items-end gap-1">
                       <span className="relative h-5 w-1.5 shrink-0 overflow-hidden rounded-full bg-surface-sunken">
@@ -139,28 +144,5 @@ export function ExamSchedule({
         ) : null}
       </div>
     </section>
-  );
-}
-
-function StartMock({ examId }: { examId: string }) {
-  const { t } = useI18n();
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-
-  return (
-    <Button
-      size="sm"
-      disabled={pending}
-      onClick={() =>
-        startTransition(async () => {
-          const result = await startMockSession(examId);
-          if (result.status === "ok" && result.sessionId) {
-            router.push(`/app/plan/blanc/${result.sessionId}` as never);
-          }
-        })
-      }
-    >
-      {pending ? t("app.exams.wait") : t("app.mock.start")}
-    </Button>
   );
 }

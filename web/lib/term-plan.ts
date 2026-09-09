@@ -1,34 +1,27 @@
 import "server-only";
 
 import {
-  adherenceFrom,
   asExamKind,
   asStartingPoint,
-  capacityFor,
   dayDifference,
   examReadiness,
-  feasibility,
   isMockBlock,
-  levers,
   loadBars,
   masteryForCourses,
   planTerm,
   resolveEmoji,
   startOfDay,
+  termLoad,
   todayBlocks,
   todayCardCount,
-  weeklyTotal,
-  type Adherence,
   type LoadBar,
   type TermCard,
   type TermExam,
-  type TermLever,
+  type TermLoad,
   type TermPlan,
-  type TermVerdict,
   type Throughput,
 } from "@micabo/core";
 
-import { readAvailability } from "@/lib/data/availability";
 import {
   listCardSnapshots,
   listCourses,
@@ -37,7 +30,7 @@ import {
   type CourseRow,
   type ExamRow,
 } from "@/lib/data/courses";
-import { loadCardDifficulty, loadDailyReviews } from "@/lib/data/difficulty";
+import { loadCardDifficulty } from "@/lib/data/difficulty";
 import { listMockResults, loadThroughput } from "@/lib/data/mocks";
 import { readProfile, type ProfileRow } from "@/lib/data/profile";
 import { getTranslator } from "@/lib/i18n/server";
@@ -80,17 +73,14 @@ export interface TermSnapshot {
   now: Date;
   today: Date;
   plan: TermPlan;
-  verdict: TermVerdict;
-  levers: TermLever[];
+  load: TermLoad;
   bars: LoadBar[];
   exams: PlanExam[];
   upcoming: PlanExam[];
   blocks: PlanTodayBlock[];
   todayCards: number;
   todayMinutes: number;
-  adherence: Adherence;
   throughput: Throughput;
-  weeklyMinutes: number;
   courses: CourseRow[];
   snapshots: CardSnapshotRow[];
   rawExams: ExamRow[];
@@ -102,20 +92,16 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
   const today = startOfDay(now);
   const { t } = await getTranslator();
 
-  const [exams, courses, snapshots, availability, difficulties, profile, throughput, mocks, daily] =
+  const [exams, courses, snapshots, difficulties, profile, throughput, mocks] =
     await Promise.all([
       listExams(),
       listCourses(),
       listCardSnapshots(),
-      readAvailability(),
       loadCardDifficulty(),
       readProfile(),
       loadThroughput(),
       listMockResults(),
-      loadDailyReviews(30),
     ]);
-
-  const adherence = adherenceFrom(daily, (date) => capacityFor(availability, date), throughput, now);
 
   const termCards: TermCard[] = snapshots.map((card) => ({
     id: card.id,
@@ -141,14 +127,12 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
   const plan = planTerm({
     exams: termExams,
     cards: termCards,
-    availability,
     now,
     throughput,
-    adherence,
     mocks,
     difficulties,
   });
-  const verdict = feasibility(plan);
+  const load = termLoad(plan);
   const bars = loadBars(plan);
   const titles = new Map(courses.map((course) => [course.id, course]));
 
@@ -222,17 +206,14 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
     now,
     today,
     plan,
-    verdict,
-    levers: levers(plan, verdict),
+    load,
     bars,
     exams: planExams,
     upcoming: planExams.filter((exam) => exam.daysRemaining >= 0),
     blocks,
     todayCards: todayCardCount(plan),
     todayMinutes: plan.days[0]?.minutes ?? 0,
-    adherence,
     throughput,
-    weeklyMinutes: weeklyTotal(availability.weekly),
     courses,
     snapshots,
     rawExams: exams,

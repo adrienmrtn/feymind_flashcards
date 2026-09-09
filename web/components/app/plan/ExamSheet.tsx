@@ -12,9 +12,9 @@ import {
   type WeakCard,
 } from "@micabo/core";
 
+import { StartMock } from "@/components/app/plan/StartMock";
 import { Button } from "@/components/ui/button";
 import { saveExamDetails } from "@/lib/actions/exams";
-import { startMockSession } from "@/lib/actions/mocks";
 import { useI18n } from "@/lib/i18n/client";
 
 /**
@@ -285,9 +285,6 @@ function MockPanel({
   canRun: boolean;
 }) {
   const { t } = useI18n();
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [failed, setFailed] = useState(false);
 
   if (!wantsMock(kind)) return null;
 
@@ -295,25 +292,7 @@ function MockPanel({
     <section className="panel p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 className="section-title">{t("app.mock.panelTitle")}</h2>
-        {canRun ? (
-          <Button
-            size="sm"
-            disabled={pending}
-            onClick={() =>
-              startTransition(async () => {
-                setFailed(false);
-                const result = await startMockSession(examId);
-                if (result.status === "ok" && result.sessionId) {
-                  router.push(`/app/plan/blanc/${result.sessionId}` as never);
-                } else {
-                  setFailed(true);
-                }
-              })
-            }
-          >
-            {pending ? t("app.exams.wait") : t("app.mock.start")}
-          </Button>
-        ) : null}
+        {canRun ? <StartMock examId={examId} /> : null}
       </div>
 
       <p className="mt-1 text-[13px] text-ink-secondary">{t("app.mock.panelLead")}</p>
@@ -324,11 +303,6 @@ function MockPanel({
         </p>
       ) : null}
 
-      {failed ? (
-        <p className="mt-3 text-[13px] text-negative" role="alert">
-          {t("app.mock.failed")}
-        </p>
-      ) : null}
     </section>
   );
 }

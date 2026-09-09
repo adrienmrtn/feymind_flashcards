@@ -1,17 +1,14 @@
 import {
   COURSE_ACCENTS,
-  DAILY_MINUTES_STEPS,
+  CARDS_PER_MINUTE,
   HORIZON_DAYS,
   REVIEW_DAYS,
   REVIEW_RATINGS,
   REVIEW_RATING_LABELS,
-  cardsPerYear,
   curveWithMicabo,
   curveWithoutReview,
-  dailyMinutesLabel,
   entitlement,
   newCardSnapshot,
-  newCardsPerDay,
   previewLabels,
   pricing,
   type CardSnapshot,
@@ -315,41 +312,26 @@ function SchedulerSection() {
 function DailyLoadSection() {
   return (
     <Section
-      eyebrow="Rythme quotidien"
-      title="Ce que le temps donné décide."
-      note="Le plafond de cartes neuves n'est pas un réglage de plus : c'est ce qui empêche les
-      sessions des jours suivants de déborder. Une carte neuve revient huit fois avant d'être
-      acquise."
+      eyebrow="Charge quotidienne"
+      title="La journée vaut ce que les échéances demandent."
+      note="Il n'y a plus de plafond de cartes neuves, et plus de budget de minutes à déclarer.
+      Les deux servaient la même idée fausse : qu'un étudiant sait à l'avance combien de temps
+      il donnera, et que le produit a le droit de lui refuser du travail au nom de ce chiffre."
     >
-      <div className="paper overflow-hidden rounded-group bg-surface">
-        <table className="w-full text-left text-[13px]">
-          <thead>
-            <tr className="border-b border-hairline text-ink-tertiary">
-              <th className="px-5 py-3 font-medium">Par jour</th>
-              <th className="px-5 py-3 font-medium">Cartes neuves</th>
-              <th className="px-5 py-3 font-medium">Dans un an</th>
-            </tr>
-          </thead>
-          <tbody>
-            {DAILY_MINUTES_STEPS.filter((step) => [5, 15, 30, 60, 120].includes(step)).map(
-              (step) => (
-                <tr key={step} className="border-b border-hairline last:border-0">
-                  <td className="px-5 py-3 text-ink-secondary">{dailyMinutesLabel(step)}</td>
-                  <td className="numeral px-5 py-3 font-bold text-ink">{newCardsPerDay(step)}</td>
-                  <td className="numeral px-5 py-3 text-ink-secondary">
-                    {cardsPerYear(step).toLocaleString("fr-FR")}
-                  </td>
-                </tr>
-              ),
-            )}
-          </tbody>
-        </table>
+      <div className="paper overflow-hidden rounded-group bg-surface px-5 py-5">
+        <p className="max-w-reading text-[13.5px] leading-relaxed text-ink-secondary">
+          Le plafond avait un défaut décisif : à trois jours d&apos;un partiel, il refusait des
+          cartes <em>de ce partiel</em> parce que le rythme du jour était atteint. Un produit qui
+          retient du travail le jour où il en faut le plus se trompe de métier.
+        </p>
+        <p className="mt-3 max-w-reading text-[13.5px] leading-relaxed text-ink-secondary">
+          Ce qui reste est une conséquence, pas une contrainte : le plan répartit les passages
+          jusqu&apos;au jour J, et l&apos;écran annonce le temps que ça prendra, converti au débit
+          mesuré de cet étudiant plutôt qu&apos;à la constante de {CARDS_PER_MINUTE} cartes par
+          minute. L&apos;étudiant sait mieux que nous si quarante minutes par jour sont tenables
+          dans sa vie.
+        </p>
       </div>
-      <p className="mt-4 max-w-reading text-[13px] text-ink-tertiary">
-        Le défaut est 15 minutes, soit huit cartes neuves par jour. Le parcours d&apos;accueil du
-        web ne pose pas la question - la date d&apos;examen est une meilleure question - donc un
-        compte né sur le web arrive avec ce défaut.
-      </p>
     </Section>
   );
 }

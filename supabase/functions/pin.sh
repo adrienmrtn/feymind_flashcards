@@ -48,7 +48,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-FUNCTIONS=(generate-course generate-flashcards explain-selection youtube-transcript)
+FUNCTIONS=(generate-course generate-flashcards generate-mock grade-mock explain-selection youtube-transcript)
 REPO="adrienmrtn/feymind_flashcards"
 COMMIT="${1:-$(git rev-parse HEAD)}"
 OUT="dist"

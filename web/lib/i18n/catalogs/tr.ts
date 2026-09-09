@@ -406,10 +406,6 @@ export const tr: Catalog = {
       account: "Hesabın",
       accountHint: "Abonelik, veriler, oturum.",
     },
-    weekly: {
-      title: "Haftalarım",
-      detail: "Her gün mevcut olan ve planını yöneten süre.",
-    },
     help: {
       title: "Yardım ve turları yeniden izleme",
     },

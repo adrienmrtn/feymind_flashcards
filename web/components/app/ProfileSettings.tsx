@@ -4,13 +4,10 @@ import { useState, useTransition } from "react";
 
 import {
   BLOCK_BOUNDS,
-  DAILY_MINUTES_STEPS,
   SUBJECT_FAMILIES,
   clampBlocks,
-  dailyMinutesLabel,
   defaultBlocks,
   lengthContaining,
-  newCardsPerDay,
   readingHint,
   sheetLengthTitle,
   subjectEmoji,
@@ -34,7 +31,6 @@ export function ProfileSettings({
   heading,
   initialName,
   initialUsername,
-  initialMinutes,
   initialLength,
   initialSubjects,
   initialSchool,
@@ -44,7 +40,6 @@ export function ProfileSettings({
   heading?: string;
   initialName: string;
   initialUsername: string;
-  initialMinutes: number;
   initialLength: SheetLength;
   initialSubjects: string[];
   initialSchool: string;
@@ -53,7 +48,6 @@ export function ProfileSettings({
 }) {
   const { locale, t } = useI18n();
   const [name, setName] = useState(initialName);
-  const [minutes, setMinutes] = useState(initialMinutes);
   const [blocks, setBlocks] = useState(() => defaultBlocks(initialLength));
   const [subjects, setSubjects] = useState(initialSubjects);
   const [saved, setSaved] = useState<"repos" | "ok" | "erreur">("repos");
@@ -157,35 +151,7 @@ export function ProfileSettings({
         />
       </div>
 
-      <div className="mt-7 grid min-w-0 gap-7 lg:grid-cols-2">
-        <div>
-          <div className="flex items-baseline justify-between gap-3">
-            <label htmlFor="profile-minutes" className="text-[13px] text-ink-tertiary">
-              {t("app.settings.dailyPace")}
-            </label>
-            <p className="text-[13px] font-medium text-ink">
-              {dailyMinutesLabel(minutes)}{" "}
-              <span className="text-ink-tertiary">
-                · {t("app.settings.newCardsPerDay", { count: newCardsPerDay(minutes) })}
-              </span>
-            </p>
-          </div>
-          <input
-            id="profile-minutes"
-            type="range"
-            min={0}
-            max={DAILY_MINUTES_STEPS.length - 1}
-            value={Math.max(0, DAILY_MINUTES_STEPS.indexOf(minutes))}
-            onChange={(event) => {
-              const next = DAILY_MINUTES_STEPS[Number(event.target.value)] ?? minutes;
-              setMinutes(next);
-            }}
-            onPointerUp={() => save({ dailyMinutes: minutes })}
-            onKeyUp={() => save({ dailyMinutes: minutes })}
-            className="mt-4 w-full accent-[var(--color-accent)]"
-          />
-        </div>
-
+      <div className="mt-7 min-w-0">
         <div>
           <div className="flex items-baseline justify-between gap-3">
             <label htmlFor="profile-blocks" className="text-[13px] text-ink-tertiary">

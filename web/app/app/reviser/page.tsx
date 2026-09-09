@@ -2,7 +2,6 @@ import {
   LEARN_AHEAD_SECONDS,
   activeDeadlines,
   buildQueue,
-  sessionNewLimit,
   weakFirst,
 } from "@micabo/core";
 
@@ -21,7 +20,6 @@ import {
 import { examMarksFor } from "@/lib/data/exam-marks";
 import { loadCardDifficulty } from "@/lib/data/difficulty";
 import { readEntitlement } from "@/lib/data/entitlement";
-import { loadNewCardBudget } from "@/lib/data/reviews";
 
 /**
  * La session, **et l'écran qui la précède.**
@@ -31,9 +29,8 @@ import { loadNewCardBudget } from "@/lib/data/reviews";
  * date. Ce qui est au programme d'une épreuve est servi par le plan, dans son ordre à lui.
  *
  * `?cours=<id>` restreint la session à un cours. La file reste construite par le
- * **même `buildQueue`**, seulement sur un sous-ensemble de cartes. Le plafond de
- * neuves est celui du **jour** : une session depuis un cours consomme le même
- * budget que Réviser.
+ * **même `buildQueue`**, seulement sur un sous-ensemble de cartes. Il n'y a plus de plafond
+ * de cartes neuves : ce qui est dû est servi, et c'est l'ordre qui fait le travail.
  *
  * L'anticipation d'Anki (dix minutes) ne s'applique **que** si la session a
  * déjà commencé (`?go=1`). Sans ça, refermer une session rouvrait tout de suite
@@ -53,15 +50,13 @@ export default async function ReviewPage({
   const params = await searchParams;
   const courseId = typeof params.cours === "string" ? params.cours : null;
   const started = params.go === "1";
-  const override = parseNewOverride(params.neuves);
 
   if (!started) {
-    const [snapshots, courses, exams, right, budget] = await Promise.all([
+    const [snapshots, courses, exams, right] = await Promise.all([
       listCardSnapshots(),
       listCourses(),
       listExams(),
       readEntitlement(),
-      loadNewCardBudget(),
     ]);
 
     return (
@@ -70,28 +65,21 @@ export default async function ReviewPage({
         cards={courseId ? snapshots.filter((card) => card.course_id === courseId) : snapshots}
         courses={courses}
         exams={exams}
-        budget={budget}
         isPro={right.isPro}
       />
     );
   }
 
-  const [allCards, courses, exams, right, budget, difficulties] = await Promise.all([
+  const [allCards, courses, exams, right, difficulties] = await Promise.all([
     courseId ? listCards(courseId) : listAllCards(),
     listCourses(),
     listExams(),
     readEntitlement(),
-    loadNewCardBudget(),
     loadCardDifficulty(),
   ]);
 
   const cards = courseId ? allCards.filter((card) => card.course_id === courseId) : allCards;
   const now = new Date();
-  const newPerSession = sessionNewLimit({
-    dailyMinutes: budget.minutes,
-    introducedToday: budget.introducedToday,
-    override,
-  });
 
   // Une session en cours doit survivre à un rechargement : les cartes notées
   // « 1 min » ou « 10 min » restent dans **cette** file. Ce n'est pas une
@@ -120,11 +108,7 @@ export default async function ReviewPage({
       createdAt: new Date(card.created_at),
       isSuspended: card.is_suspended,
     })),
-    {
-      now: horizon,
-      limits: { newPerSession, reviewsPerSession: Number.MAX_SAFE_INTEGER },
-      deadlines,
-    },
+    { now: horizon, deadlines },
   );
 
   const byId = new Map(cards.map((card) => [card.id, card]));
@@ -171,23 +155,12 @@ export default async function ReviewPage({
         cards={cards}
         courses={courses}
         exams={exams}
-        budget={budget}
         isPro={right.isPro}
       />
     );
   }
 
-  const dueNew = cards.filter(
-    (card) => !card.is_suspended && card.state === "new" && new Date(card.due_date) <= now,
-  ).length;
-
-  return (
-    <Session
-      cards={ordered}
-      isPro={right.isPro}
-      leftoverNew={Math.max(0, dueNew - newPerSession)}
-    />
-  );
+  return <Session cards={ordered} isPro={right.isPro} leftoverNew={0} />;
 }
 
 /**
@@ -201,14 +174,12 @@ function Setup({
   cards,
   courses,
   exams,
-  budget,
   isPro,
 }: {
   courseId: string | null;
   cards: readonly CardSnapshotRow[];
   courses: readonly CourseRow[];
   exams: readonly ExamRow[];
-  budget: { rhythmNew: number; introducedToday: number; remaining: number };
   isPro: boolean;
 }) {
   // L'enveloppe porte la zone que montre la visite guidée : elle tient aussi
@@ -237,18 +208,9 @@ function Setup({
           isPlanned: exam.is_planned,
           courseIds: exam.course_ids ?? [],
         }))}
-        rhythmNew={budget.rhythmNew}
-        introducedToday={budget.introducedToday}
-        remaining={budget.remaining}
         isPro={isPro}
       />
     </div>
   );
 }
 
-function parseNewOverride(raw: string | string[] | undefined): number | null {
-  if (typeof raw !== "string" || raw === "") return null;
-  const value = Number(raw);
-  if (!Number.isFinite(value)) return null;
-  return Math.max(0, Math.round(value));
-}
