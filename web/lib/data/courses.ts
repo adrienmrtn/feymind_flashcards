@@ -269,6 +269,8 @@ export interface ExamRow {
   formats: string[];
   /** Blocs de fiche au programme. Vide signifie « le cours entier ». */
   chapter_ids: string[];
+  /** D'où l'étudiant part : cold, seen, solid. Décale l'intensité d'un cran. */
+  starting_point: string;
 }
 
 export interface FriendRequestRow {
@@ -321,7 +323,7 @@ export async function listExams(): Promise<ExamRow[]> {
     const { data } = await dataClient(auth.token)
       .from("exams")
       .select(
-        "id, name, exam_date, intensity, target_score, course_ids, is_planned, kind, formats, chapter_ids",
+        "id, name, exam_date, intensity, target_score, course_ids, is_planned, kind, formats, chapter_ids, starting_point",
       )
       .eq("user_id", auth.userId)
       .is("deleted_at", null)

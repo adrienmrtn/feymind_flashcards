@@ -11,6 +11,7 @@ import {
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
+import { loadCardDifficulty } from "@/lib/data/difficulty";
 import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
@@ -82,6 +83,10 @@ export async function startMockSession(examId: string): Promise<MockResultAction
   }
 
   const sessionId = crypto.randomUUID();
+
+  // Le tirage se fait **maintenant**, sur le journal tel qu'il est aujourd'hui : la moitié
+  // des questions sort de ce que l'étudiant rate le plus à cet instant. Un blanc passé la
+  // semaine prochaine ne posera pas les mêmes, parce qu'entre-temps il aura corrigé.
   const drawn = drawMock(
     usable.map((card) => ({
       id: card.id,
@@ -92,6 +97,7 @@ export async function startMockSession(examId: string): Promise<MockResultAction
     courseIds,
     questionCount,
     sessionId,
+    await loadCardDifficulty(),
   );
 
   const { error } = await supabase.from("mock_sessions").insert({

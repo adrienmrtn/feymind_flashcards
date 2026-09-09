@@ -19,6 +19,7 @@
 
 import { dayDifference, startOfDay } from "./exam";
 import type { ExamKind } from "./term";
+import { isWeak, weakness, type CardDifficulty } from "./weakness";
 
 /** Les jours avant l'épreuve où un blanc a un sens. */
 export const MOCK_OFFSETS: readonly number[] = [7, 2];
@@ -34,11 +35,17 @@ export const MINUTES_PER_MOCK_QUESTION = 0.75;
 /**
  * Les types d'épreuve qui méritent un blanc.
  *
- * Un contrôle de routine n'en demande pas - c'est du temps pris à la révision pour mesurer un
- * enjeu faible. Un oral non plus : on ne s'entraîne pas à parler avec des cartes.
+ * **Toutes celles qui s'écrivent.** La première version excluait `exam`, le type le plus
+ * courant et surtout la valeur par défaut de la colonne : le résultat est que vingt épreuves
+ * sur vingt-deux n'ont jamais reçu de blanc, et que la seule mesure honnête du produit est
+ * restée invisible. Faire dépendre une fonctionnalité d'un réglage que personne ne change est
+ * une façon de ne pas la livrer.
+ *
+ * Reste l'oral, et lui seul : on ne s'entraîne pas à parler devant un jury avec des cartes,
+ * et lui en poser deux prendrait du temps de révision pour ne rien mesurer d'utile.
  */
 export function wantsMock(kind: ExamKind): boolean {
-  return kind === "final" || kind === "mock" || kind === "midterm" || kind === "quiz";
+  return kind !== "oral";
 }
 
 /** Un blanc déjà passé, tel que le calcul le lit. */
@@ -187,19 +194,35 @@ export interface DrawCandidate {
   isSuspended: boolean;
 }
 
+/** Part du tirage réservée à ce qui résiste, le reste échantillonnant tout le programme. */
+export const WEAK_SHARE = 0.5;
+
 /**
  * Les cartes d'un blanc.
  *
- * **Un tirage, pas une file de révision.** La file sert ce qui est dû ; ici on veut un
- * échantillon de tout le programme, y compris ce qui est acquis - c'est justement ce qu'on
- * prétend savoir qu'il faut vérifier. L'ordre est déterministe pour une graine donnée, parce
- * qu'un blanc rechargé au milieu doit rendre les mêmes questions.
+ * **Un tirage, pas une file de révision.** La file sert ce qui est dû ; ici on veut vérifier
+ * ce qu'on prétend savoir, y compris ce qui est acquis.
+ *
+ * Le tirage est **fait le jour où le blanc se passe**, sur le journal tel qu'il est à cet
+ * instant, et il est coupé en deux moitiés qui ne mesurent pas la même chose.
+ *
+ * - La moitié **fragile** part de ce que l'étudiant rate le plus. C'est là que la note se
+ *   perd, donc c'est là qu'il faut regarder ; un blanc uniforme sur trois cents cartes a une
+ *   chance sur dix de tomber sur celle qui pose problème.
+ * - La moitié **représentative** est tirée dans le reste, uniformément. Sans elle, le score
+ *   ne dirait plus « où j'en suis » mais « à quel point mes pires cartes sont pires », et il
+ *   s'effondrerait à mesure que l'étudiant progresse - exactement l'inverse de ce qu'on veut
+ *   d'une mesure.
+ *
+ * L'ordre reste déterministe pour une graine donnée : un blanc rechargé au milieu doit rendre
+ * les mêmes questions, dans le même ordre.
  */
 export function drawMock(
   cards: readonly DrawCandidate[],
   courseIds: readonly string[],
   questionCount: number,
   seed: string,
+  difficulties: ReadonlyMap<string, CardDifficulty> = new Map(),
 ): string[] {
   const scope = new Set(courseIds);
   const usable = cards.filter(
@@ -207,11 +230,44 @@ export function drawMock(
   );
   if (usable.length === 0) return [];
 
-  const ranked = usable
-    .map((card) => ({ id: card.id, rank: hash(`${seed}:${card.id}`) }))
-    .sort((left, right) => (left.rank - right.rank) || (left.id < right.id ? -1 : 1));
+  const wanted = Math.min(questionCount, usable.length);
+  const shuffled = (pool: readonly DrawCandidate[]) =>
+    [...pool]
+      .map((card) => ({ id: card.id, rank: hash(`${seed}:${card.id}`) }))
+      .sort((left, right) => left.rank - right.rank || (left.id < right.id ? -1 : 1))
+      .map((entry) => entry.id);
 
-  return ranked.slice(0, Math.min(questionCount, ranked.length)).map((entry) => entry.id);
+  const weakPool = usable.filter((card) => {
+    const difficulty = difficulties.get(card.id);
+    return difficulty ? isWeak(difficulty) : false;
+  });
+
+  // Les plus fragiles d'abord, pour que la moitié réservée serve les pires et pas les
+  // premières venues. À fragilité égale, la graine tranche : deux blancs ne se ressemblent pas.
+  const weakFirst = [...weakPool]
+    .sort((left, right) => {
+      const gap =
+        weakness(difficulties.get(right.id)!) - weakness(difficulties.get(left.id)!);
+      if (gap !== 0) return gap;
+      return hash(`${seed}:${left.id}`) - hash(`${seed}:${right.id}`);
+    })
+    .map((card) => card.id);
+
+  const weakTake = Math.min(weakFirst.length, Math.round(wanted * WEAK_SHARE));
+  const picked = weakFirst.slice(0, weakTake);
+  const taken = new Set(picked);
+
+  for (const id of shuffled(usable)) {
+    if (picked.length >= wanted) break;
+    if (taken.has(id)) continue;
+    picked.push(id);
+    taken.add(id);
+  }
+
+  // On rend l'ensemble mélangé : servir les fragiles en premier annoncerait la couleur, et
+  // un blanc qui commence par ses pires questions ne se passe pas dans les mêmes conditions.
+  const chosen = new Set(picked);
+  return shuffled(usable.filter((card) => chosen.has(card.id)));
 }
 
 /**

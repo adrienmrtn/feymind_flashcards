@@ -120,7 +120,7 @@ export function clearPaywallDismissal(): void {
   }
 }
 
-export { shouldOpenPaywall } from "./paywall";
+export { isHardPaywall, shouldOpenPaywall } from "./paywall";
 
 /**
  * Écrit les réponses en base si une session existe, et prépare le paywall.

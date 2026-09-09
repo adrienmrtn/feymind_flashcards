@@ -4,6 +4,7 @@ import {
   addDays,
   adherenceFrom,
   asExamKind,
+  asStartingPoint,
   capacityFor,
   examCountdownLabel,
   feasibility,
@@ -256,6 +257,7 @@ function toTermExam(exam: {
   course_ids: string[] | null;
   formats: string[] | null;
   kind: string;
+  starting_point: string;
 }): TermExam {
   return {
     id: exam.id,
@@ -266,6 +268,7 @@ function toTermExam(exam: {
     courseIds: exam.course_ids ?? [],
     formats: exam.formats ?? [],
     kind: asExamKind(exam.kind),
+    startingPoint: asStartingPoint(exam.starting_point),
   };
 }
 

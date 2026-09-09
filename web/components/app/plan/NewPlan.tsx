@@ -187,7 +187,12 @@ export function NewPlan({
       setFailure(result.message ?? t("app.plan.verdict.failed"));
       return;
     }
-    startTransition(() => router.push("/app" as never));
+    // On atterrit sur l'épreuve, pas sur l'accueil : quelqu'un qui vient de répondre à six
+    // questions veut voir ce qu'il a signé - le calendrier jour par jour, les blancs posés,
+    // ses jours de pause. L'accueil, lui, montre la période entière et répond à autre chose.
+    startTransition(() =>
+      router.push((result.examId ? `/app/plan/${result.examId}` : "/app") as never),
+    );
   }
 
   return (

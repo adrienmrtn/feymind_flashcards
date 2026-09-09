@@ -2,22 +2,34 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 import {
+  adherenceFrom,
   asExamKind,
+  asStartingPoint,
+  capacityFor,
   dayDifference,
   examCountdownLabel,
+  examReadiness,
+  isMockBlock,
+  isReviewBlock,
   masteryByCourse,
   masteryForCourses,
   mockQuestionCount,
   mockScore,
+  planTerm,
   resolveEmoji,
   startOfDay,
   weakCards,
+  type TermCard,
+  type TermExam,
 } from "@micabo/core";
 
+import { ExamProgress } from "@/components/app/plan/ExamProgress";
+import { ExamSchedule, type ScheduleDay } from "@/components/app/plan/ExamSchedule";
 import { ExamSheet, type SheetCourse } from "@/components/app/plan/ExamSheet";
+import { readAvailability } from "@/lib/data/availability";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
-import { loadCardDifficulty } from "@/lib/data/difficulty";
-import { listMockResults } from "@/lib/data/mocks";
+import { loadCardDifficulty, loadDailyReviews } from "@/lib/data/difficulty";
+import { listMockResults, loadThroughput } from "@/lib/data/mocks";
 import { getTranslator } from "@/lib/i18n/server";
 
 /** Combien de points faibles on montre : au-delà, la liste cesse d'être une liste d'actions. */
@@ -39,13 +51,17 @@ export default async function ExamSheetPage({
   const { id } = await params;
   const { t } = await getTranslator();
 
-  const [exams, courses, snapshots, difficulties, mocks] = await Promise.all([
-    listExams(),
-    listCourses(),
-    listCardSnapshots(),
-    loadCardDifficulty(),
-    listMockResults(),
-  ]);
+  const [exams, courses, snapshots, difficulties, mocks, availability, throughput, daily] =
+    await Promise.all([
+      listExams(),
+      listCourses(),
+      listCardSnapshots(),
+      loadCardDifficulty(),
+      listMockResults(),
+      readAvailability(),
+      loadThroughput(),
+      loadDailyReviews(30),
+    ]);
 
   const exam = exams.find((row) => row.id === id);
   if (!exam) notFound();
@@ -66,6 +82,75 @@ export default async function ExamSheetPage({
 
   const overall = masteryForCourses(masteryCards, difficulties, courseIds);
   const byCourse = masteryByCourse(masteryCards, difficulties);
+
+  // Le plan complet, puis la part qui concerne cette épreuve : les jours se lisent dans le
+  // même emploi du temps que le reste, sinon la page promettrait un temps déjà pris ailleurs.
+  const now = new Date();
+  const today = startOfDay(now);
+  const plan = planTerm({
+    exams: exams.map(
+      (row): TermExam => ({
+        id: row.id,
+        name: row.name,
+        examDate: new Date(`${row.exam_date}T12:00:00`),
+        intensity:
+          row.intensity === "light" || row.intensity === "intense" ? row.intensity : "standard",
+        courseIds: row.course_ids ?? [],
+        formats: row.formats ?? [],
+        kind: asExamKind(row.kind),
+        startingPoint: asStartingPoint(row.starting_point),
+      }),
+    ),
+    cards: snapshots.map(
+      (card): TermCard => ({
+        id: card.id,
+        courseId: card.course_id,
+        kind: card.kind,
+        state: card.state,
+        intervalDays: card.interval_days,
+        dueDate: new Date(card.due_date),
+        isSuspended: card.is_suspended,
+      }),
+    ),
+    availability,
+    now,
+    throughput,
+    difficulties,
+    mocks,
+    adherence: adherenceFrom(daily, (date) => capacityFor(availability, date), throughput, now),
+  });
+
+  const schedule: ScheduleDay[] = plan.days
+    .filter((day) => day.offset <= Math.max(0, daysRemaining))
+    .map((day) => {
+      const mine = day.blocks.filter((block) => block.examId === exam.id);
+      const mock = mine.find(isMockBlock);
+      const cards = mine
+        .filter(isReviewBlock)
+        .reduce((sum, block) => sum + block.cardIds.length, 0);
+
+      return {
+        offset: day.offset,
+        date: day.date.toISOString().slice(0, 10),
+        cards,
+        minutes: mine.filter(isReviewBlock).reduce((sum, block) => sum + block.minutes, 0),
+        capacityMinutes: day.capacityMinutes,
+        mock: mock ? { questionCount: mock.questionCount, minutes: mock.minutes } : null,
+        isExamDay: day.offset === daysRemaining,
+      };
+    });
+
+  const mine = mocks
+    .filter((mock) => mock.examId === exam.id)
+    .sort((left, right) => right.finishedAt.getTime() - left.finishedAt.getTime());
+
+  const readiness = examReadiness({
+    masteryPercent: overall.percent,
+    projectedPercent: projectedFor(overall.percent, plan.passesByExam.get(exam.id) ?? 0, overall.cardCount),
+    mocks,
+    examId: exam.id,
+    now,
+  });
 
   const counts = new Map<string, number>();
   const kinds = new Set<string>();
@@ -124,6 +209,29 @@ export default async function ExamSheetPage({
         </p>
       </header>
 
+      <ExamProgress
+        masteryPercent={overall.percent}
+        projectedPercent={readiness.percent}
+        measured={readiness.measured}
+        mockScore={readiness.mockScore}
+        cardCount={overall.cardCount}
+        daysRemaining={daysRemaining}
+        mocks={mine.slice(0, 6).map((mock) => ({
+          id: mock.id,
+          score: mockScore(mock),
+          questionCount: mock.questionCount,
+          finishedAt: mock.finishedAt.toISOString().slice(0, 10),
+        }))}
+      />
+
+      {daysRemaining >= 0 ? (
+        <ExamSchedule
+          examId={exam.id}
+          days={schedule}
+          canRunMock={mockQuestionCount(overall.cardCount) > 0}
+        />
+      ) : null}
+
       <ExamSheet
         examId={exam.id}
         kind={asExamKind(exam.kind)}
@@ -143,4 +251,17 @@ export default async function ExamSheetPage({
       />
     </>
   );
+}
+
+/**
+ * Où la maîtrise arrivera le jour J, si le plan est suivi.
+ *
+ * Même courbe que sur l'accueil : rendement décroissant, et jamais 100 % promis - il restera
+ * toujours des cartes qu'on rate.
+ */
+function projectedFor(current: number, passes: number, cardCount: number): number {
+  if (cardCount === 0) return current;
+  const perCard = passes / cardCount;
+  const gain = (100 - current) * (1 - Math.exp(-perCard / 1.8));
+  return Math.min(97, Math.round(current + gain));
 }

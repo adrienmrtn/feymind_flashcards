@@ -209,6 +209,7 @@ export {
   MINUTES_PER_MOCK_QUESTION,
   MIN_MOCK_QUESTIONS,
   MOCK_OFFSETS,
+  WEAK_SHARE,
   drawMock,
   examReadiness,
   mockMinutes,

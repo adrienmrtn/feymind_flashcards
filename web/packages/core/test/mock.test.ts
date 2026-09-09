@@ -76,14 +76,16 @@ function result(over: Partial<MockResult> = {}): MockResult {
 }
 
 describe("l'examen blanc", () => {
-  it("ne concerne que les épreuves où il a un sens", () => {
+  it("concerne toutes les épreuves écrites, y compris le type par défaut", () => {
+    // `exam` est la valeur par défaut de la colonne : l'exclure revenait à ne livrer le blanc
+    // à personne. Vingt épreuves sur vingt-deux en base sont de ce type.
+    expect(wantsMock("exam")).toBe(true);
     expect(wantsMock("final")).toBe(true);
     expect(wantsMock("midterm")).toBe(true);
     expect(wantsMock("mock")).toBe(true);
     expect(wantsMock("quiz")).toBe(true);
     // On ne s'entraîne pas à un oral avec des cartes.
     expect(wantsMock("oral")).toBe(false);
-    expect(wantsMock("exam")).toBe(false);
   });
 
   it("ne se pose pas sur un programme trop maigre pour être échantillonné", () => {
@@ -187,6 +189,60 @@ describe("le tirage", () => {
   it("rend le même tirage pour la même graine", () => {
     expect(drawMock(cards, ["bio"], 10, "g")).toEqual(drawMock(cards, ["bio"], 10, "g"));
     expect(drawMock(cards, ["bio"], 10, "g")).not.toEqual(drawMock(cards, ["bio"], 10, "h"));
+  });
+
+  it("réserve la moitié du tirage à ce qui résiste", () => {
+    const difficulties = new Map<string, CardDifficulty>(
+      // Cinq cartes franchement ratées, le reste sain.
+      ["c0", "c1", "c2", "c3", "c4"].map((id) => [
+        id,
+        {
+          cardId: id,
+          reviews: 8,
+          againCount: 6,
+          hardCount: 0,
+          lastRating: 1,
+          lastReviewedAt: today,
+        },
+      ]),
+    );
+
+    const drawn = drawMock(cards, ["bio"], 10, "graine", difficulties);
+    const weakDrawn = drawn.filter((id) => difficulties.has(id));
+
+    expect(drawn).toHaveLength(10);
+    expect(weakDrawn).toHaveLength(5);
+    // Et le reste échantillonne le programme : le score reste une mesure d'ensemble.
+    expect(drawn.length - weakDrawn.length).toBe(5);
+  });
+
+  it("ne sert pas les fragiles en premier, ce qui annoncerait la couleur", () => {
+    const difficulties = new Map<string, CardDifficulty>(
+      ["c0", "c1", "c2", "c3", "c4"].map((id) => [
+        id,
+        {
+          cardId: id,
+          reviews: 8,
+          againCount: 6,
+          hardCount: 0,
+          lastRating: 1,
+          lastReviewedAt: today,
+        },
+      ]),
+    );
+    const drawn = drawMock(cards, ["bio"], 10, "graine", difficulties);
+    const positions = drawn
+      .map((id, index) => (difficulties.has(id) ? index : -1))
+      .filter((index) => index >= 0);
+    // Si les fragiles étaient servies en tête, elles occuperaient les cinq premières places.
+    expect(positions).not.toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it("reste un tirage uniforme quand rien ne résiste", () => {
+    const sansJournal = drawMock(cards, ["bio"], 10, "graine");
+    const avecJournalVide = drawMock(cards, ["bio"], 10, "graine", new Map());
+    expect(sansJournal).toEqual(avecJournalVide);
+    expect(sansJournal).toHaveLength(10);
   });
 
   it("écarte les cartes suspendues et se limite au disponible", () => {
@@ -316,14 +372,14 @@ describe("le blanc dans le plan", () => {
     expect(plan.days.flatMap((day) => day.blocks.filter(isMockBlock))).toEqual([]);
   });
 
-  it("garde le comportement d'avant sans type d'épreuve", () => {
+  it("pose un blanc même sans type déclaré, puisque le défaut est une épreuve écrite", () => {
     const plan = planTerm({
       exams: [exam("bio", 14)],
       cards,
       availability: open(90),
       now,
     });
-    expect(plan.mocks).toEqual([]);
+    expect(plan.mocks.length).toBeGreaterThan(0);
     expect(plan.days.flatMap((day) => day.blocks.filter(isReviewBlock)).length).toBeGreaterThan(0);
   });
 });
