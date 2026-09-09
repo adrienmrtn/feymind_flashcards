@@ -167,7 +167,7 @@ export function MockRun({
         </p>
 
         {revealed ? (
-          <div className="mt-6 rounded-group border border-border bg-card p-5">
+          <div className="mt-6 panel p-5">
             <p className="text-[16px] leading-relaxed text-ink-reading">{question.back}</p>
           </div>
         ) : null}
@@ -238,8 +238,8 @@ function MockDone({
         {t("app.mock.outOf", { correct, total })}
       </p>
 
-      <div className="mt-7 rounded-group border border-border bg-card p-5">
-        <p className="text-[15px] font-semibold text-ink">{t("app.mock.gapTitle")}</p>
+      <div className="mt-7 panel p-5">
+        <p className="section-title">{t("app.mock.gapTitle")}</p>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-secondary">
           {gap >= 15
             ? t("app.mock.gapWide", { mastery: masteryPercent, score })

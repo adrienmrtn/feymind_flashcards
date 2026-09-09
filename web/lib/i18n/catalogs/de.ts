@@ -417,6 +417,7 @@ export const de: Catalog = {
   nav: {
     study: "Lernen",
     home: "Start",
+    today: "Heute",
     review: "Wiederholen",
     library: "Bibliothek",
     courses: "Kurse",

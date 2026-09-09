@@ -46,7 +46,7 @@ export function SubscriptionCard(view: SubscriptionView) {
 
   return (
     <section id="abonnement" className="saas-card scroll-mt-6 px-7 py-7">
-      <p className="text-[15px] font-semibold text-ink">{t("app.settings.subscription")}</p>
+      <p className="section-title">{t("app.settings.subscription")}</p>
       <p className="mt-1.5 text-[13.5px] font-medium text-ink">
         {headline}
         {plan && view.paid ? (

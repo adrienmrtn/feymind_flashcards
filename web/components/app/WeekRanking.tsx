@@ -30,7 +30,7 @@ export function WeekRanking({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-[15px] font-semibold text-ink">
+        <CardTitle className="section-title">
           {t("app.home.ranking.title")}
         </CardTitle>
       </CardHeader>

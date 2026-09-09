@@ -44,7 +44,7 @@ export function SignOutButton({ compact = false }: { compact?: boolean }) {
       disabled={pending}
       className="pressable hover-row w-full px-7 py-5 text-left"
     >
-      <p className="text-[15px] font-semibold text-ink">
+      <p className="section-title">
         {pending ? t("app.auth.signingOut") : t("app.auth.signOut")}
       </p>
       <p className="mt-1 text-[13px] leading-relaxed text-ink-tertiary">

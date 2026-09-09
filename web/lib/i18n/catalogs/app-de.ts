@@ -185,6 +185,12 @@ export const appDe = {
     deleteMsg: "{title} und {cards} verschwinden.",
   },
   review: {
+    setup: {
+      newTitle: "Neue Karten",
+      cards: "{count, plural, one {Karte} other {Karten}}",
+      mix: "{due} fällig · {fresh} neu",
+      newHint: "{max} heute verfügbar",
+    },
     verb: "Wiederholen",
     again: "Noch einmal wiederholen",
     thisCourse: "Diesen Kurs wiederholen",
@@ -281,6 +287,12 @@ export const appDe = {
     todayCards: "{cards} heute.",
   },
   exams: {
+    hub: {
+      title: "Prüfungen",
+      lead: "Deine Prüfungen, die verbleibende Zeit, und ob es passt.",
+      timeline: "Demnächst",
+      load: "Die Last, Woche für Woche",
+    },
     title: "Prüfungen",
     lead: "Deine Termine, deine Karten.",
     add: "Prüfung hinzufügen",
@@ -483,6 +495,8 @@ export const appDe = {
   },
   exam: {
     schedule: {
+      examShort: "Prüfung",
+      offShort: "Pause",
       title: "Dein Plan, Tag für Tag",
       summary: "{cards} Karten an {days} Arbeitstagen, {off} freie Tage",
       cards: "{cards} Karten · {minutes} Min.",
@@ -553,6 +567,7 @@ export const appDe = {
     projection: "{cards} Karten auf {days} Tage: etwa {daily} pro Tag, {peak} am vollsten Tag.",
     projectionMock: "Zwei Probeprüfungen mit {questions} Fragen werden vorher angesetzt.",
     hint: {
+      epreuve: "Du kannst das Datum später verschieben, der Plan wird neu gebaut.",
       materiel: "Alles, was du hier hinzufügst, wird zum Stoff der Prüfung.",
       jour: "Du kannst das Datum später verschieben, der Plan wird neu gebaut.",
       type: "Die Art entscheidet über die geübten Formate und die Probeprüfungen.",
@@ -561,7 +576,47 @@ export const appDe = {
       note: "Die Prognose bewegt sich mit der Zielnote. Noch ist nichts gespeichert.",
     },
   },
+  chart: {
+    table: {
+      day: "Tag",
+      passes: "Durchgänge",
+      again: "Verpasst",
+      exam: "Prüfung",
+      days: "Tage übrig",
+      readiness: "Gelernt",
+      score: "Ergebnis",
+    },
+    timeline: {
+      aria: "Anstehende Prüfungen im Zeitraum",
+      hint: "Der Balken ist die verbleibende Zeit; sein gefüllter Teil, was du schon weißt.",
+    },
+    load: {
+      aria: "Geplante Minuten pro Woche, gegen verfügbare Minuten",
+      week: "Woche vom {day}",
+      tooltip: "{minutes} Min. geplant · {capacity} Min. verfügbar",
+      thisWeek: "diese Woche",
+      planned: "geplant",
+      capacity: "verfügbar",
+      over: "zu viel",
+      exam: "Prüfung",
+    },
+    readiness: {
+      now: "heute",
+      measured: "bei der letzten Probe",
+      day: "am Prüfungstag",
+      target: "Ziel: {percent} %",
+      aria: "{now} % heute, {projected} % am Prüfungstag erwartet",
+    },
+    mock: {
+      aria: "Ergebnisse der Probeprüfungen, der Reihe nach",
+      point: "{score} % am {day} ({total} Fragen)",
+    },
+  },
   progress: {
+    masteryLead: "Was sitzt, was noch wackelt, was noch nicht gesehen wurde.",
+    activity: "Aktivität",
+    activityLead: "Ein Balken pro Tag, über die letzten sechs Wochen.",
+    days: "{count, plural, one {# Tag} other {# Tage}}",
     title: "Fortschritt",
     lead: "Was du kannst, und was es gekostet hat.",
   },
@@ -965,6 +1020,26 @@ export const appDe = {
     reopenOffer: "Angebot wieder öffnen, {time}",
   },
   today: {
+    cardsMinutes: "{count, plural, one {Karte geplant} other {Karten geplant}} · etwa {minutes} Min.",
+    cardsDue: "{count, plural, one {Karte fällig} other {Karten fällig}}",
+    start: "Lernen · {minutes} Min.",
+    startCards: "{count, plural, one {# Karte} other {# Karten}} lernen",
+    forExam: "für {exam}",
+    block: "{cards} Karten · {minutes} Min.",
+    mockTitle: "Probeprüfung · {exam}",
+    mock: "{questions} Fragen · {minutes} Min.",
+    done: "Für heute bist du fertig.",
+    doneBody: "Deine Karten kommen zurück, wenn sie fällig sind. Du kannst ein Blatt lesen oder an einem Kurs arbeiten.",
+    doneEmpty: "Lege einen Kurs ab: Micabo schreibt das Blatt, dann die Karten.",
+    streak: "{count, plural, one {# Tag in Folge} other {# Tage in Folge}}",
+    fix: "Anpassen",
+    nextExam: "Nächste Prüfung",
+    noExam: "Keine Prüfung geplant",
+    noExamBody: "Setze ein Datum, und Micabo verteilt die Arbeit bis zum Prüfungstag.",
+    otherExams: "Danach",
+    seeExams: "Alle Prüfungen",
+    noOtherExam: "Sonst nichts in Sicht.",
+    known: "{percent} % gelernt",
     agenda: "Auf dem Plan",
     dueOne: "Karte zu wiederholen",
     dueMany: "Karten zu wiederholen",
@@ -1070,6 +1145,26 @@ export const appDe = {
     },
   },
   tour: {
+    today: {
+      work: {
+        title: "Was zu tun ist",
+        body: "Deine Karten von heute, verteilt durch deinen Plan. Ein Knopf, und du lernst.",
+      },
+      next: {
+        title: "Deine nächste Prüfung",
+        body: "Wo du heute stehst, und wohin dich der Plan am Prüfungstag bringt.",
+      },
+    },
+    exams: {
+      timeline: {
+        title: "Deine Prüfungen",
+        body: "Eine Zeile pro Prüfung, der Balken ist die verbleibende Zeit. Tippe eine Zeile an, um die Prüfung zu öffnen.",
+      },
+      load: {
+        title: "Die Last",
+        body: "Was der Plan jede Woche vorsieht, gegen die Zeit, die du gegeben hast. Rot, wenn es überläuft.",
+      },
+    },
     skipPage: "Die Tour dieser Seite überspringen",
     skipAll: "Tour überspringen",
     next: "Weiter",

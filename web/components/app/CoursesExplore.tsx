@@ -19,10 +19,10 @@ export async function CoursesExplore({
     <>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          <h1 className="page-title">
             {t("app.courses.title")}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("app.courses.lead")}</p>
+          <p className="page-lead">{t("app.courses.lead")}</p>
         </div>
         {revise}
       </header>

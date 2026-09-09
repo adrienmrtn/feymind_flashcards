@@ -185,6 +185,12 @@ export const appFr = {
     deleteMsg: "{title} et {cards} disparaissent.",
   },
   review: {
+    setup: {
+      newTitle: "Cartes neuves",
+      cards: "{count, plural, one {carte} other {cartes}}",
+      mix: "{due} à revoir · {fresh} neuves",
+      newHint: "{max} disponibles aujourd'hui",
+    },
     verb: "Réviser",
     again: "Réviser encore",
     thisCourse: "Réviser ce cours",
@@ -281,6 +287,12 @@ export const appFr = {
     todayCards: "{cards} aujourd'hui.",
   },
   exams: {
+    hub: {
+      title: "Examens",
+      lead: "Tes épreuves, le temps qu'il reste, et si ça tient.",
+      timeline: "À venir",
+      load: "La charge, semaine par semaine",
+    },
     title: "Examens",
     lead: "Tes dates, tes cartes.",
     add: "Ajouter un examen",
@@ -483,6 +495,8 @@ export const appFr = {
   },
   exam: {
     schedule: {
+      examShort: "Jour J",
+      offShort: "pause",
       title: "Ton plan, jour par jour",
       summary: "{cards} cartes sur {days} jours de travail, {off} jours de pause",
       cards: "{cards} cartes · {minutes} min",
@@ -553,6 +567,7 @@ export const appFr = {
     projection: "{cards} cartes sur {days} jours : environ {daily} par jour, {peak} le jour le plus chargé.",
     projectionMock: "Deux examens blancs de {questions} questions seront posés avant le jour J.",
     hint: {
+      epreuve: "Tu pourras déplacer la date plus tard, le plan se refera.",
       materiel: "Tout ce que tu ajoutes ici devient le programme de l'épreuve.",
       jour: "Tu pourras déplacer la date plus tard, le plan se refera.",
       type: "Le type décide des formats travaillés et des examens blancs.",
@@ -561,7 +576,47 @@ export const appFr = {
       note: "La projection bouge avec la note visée. Rien n'est encore enregistré.",
     },
   },
+  chart: {
+    table: {
+      day: "Jour",
+      passes: "Passages",
+      again: "Ratés",
+      exam: "Épreuve",
+      days: "Jours restants",
+      readiness: "Appris",
+      score: "Score",
+    },
+    timeline: {
+      aria: "Les épreuves à venir sur la période",
+      hint: "La barre est le temps qu'il reste ; sa part pleine, ce qui est déjà su.",
+    },
+    load: {
+      aria: "Minutes prévues par semaine, contre les minutes disponibles",
+      week: "Semaine du {day}",
+      tooltip: "{minutes} min prévues · {capacity} min disponibles",
+      thisWeek: "cette sem.",
+      planned: "prévu",
+      capacity: "disponible",
+      over: "en trop",
+      exam: "épreuve",
+    },
+    readiness: {
+      now: "aujourd'hui",
+      measured: "au dernier blanc",
+      day: "le jour J",
+      target: "objectif : {percent} %",
+      aria: "{now} % aujourd'hui, {projected} % attendus le jour J",
+    },
+    mock: {
+      aria: "Scores des examens blancs, dans l'ordre",
+      point: "{score} % le {day} ({total} questions)",
+    },
+  },
   progress: {
+    masteryLead: "Ce qui est acquis, ce qui tient encore mal, ce qui n'a pas été vu.",
+    activity: "Activité",
+    activityLead: "Un trait par jour, sur les six dernières semaines.",
+    days: "{count, plural, one {# jour} other {# jours}}",
     title: "Progrès",
     lead: "Ce que tu sais, et ce que ça a coûté.",
   },
@@ -963,6 +1018,26 @@ export const appFr = {
     reopenOffer: "Rouvrir l'offre, {time}",
   },
   today: {
+    cardsMinutes: "{count, plural, one {carte prévue} other {cartes prévues}} · environ {minutes} min",
+    cardsDue: "{count, plural, one {carte à revoir} other {cartes à revoir}}",
+    start: "Réviser · {minutes} min",
+    startCards: "Réviser {count, plural, one {# carte} other {# cartes}}",
+    forExam: "pour {exam}",
+    block: "{cards} cartes · {minutes} min",
+    mockTitle: "Examen blanc · {exam}",
+    mock: "{questions} questions · {minutes} min",
+    done: "C'est fait pour aujourd'hui.",
+    doneBody: "Tes cartes reviendront quand il faudra. Tu peux relire une fiche ou avancer sur un cours.",
+    doneEmpty: "Dépose un cours : Micabo en écrit la fiche, puis les cartes.",
+    streak: "{count, plural, one {# jour d'affilée} other {# jours d'affilée}}",
+    fix: "Ajuster",
+    nextExam: "Prochaine épreuve",
+    noExam: "Aucune épreuve prévue",
+    noExamBody: "Pose une date et Micabo répartit le travail jusqu'au jour J.",
+    otherExams: "Ensuite",
+    seeExams: "Toutes les épreuves",
+    noOtherExam: "Rien d'autre à l'horizon.",
+    known: "appris à {percent} %",
     agenda: "Au programme",
     dueOne: "carte à réviser",
     dueMany: "cartes à réviser",
@@ -1068,6 +1143,26 @@ export const appFr = {
     },
   },
   tour: {
+    today: {
+      work: {
+        title: "Ce qu'il y a à faire",
+        body: "Tes cartes du jour, réparties par ton plan. Un bouton, et tu révises.",
+      },
+      next: {
+        title: "Ta prochaine épreuve",
+        body: "Où tu en es aujourd'hui, et où le plan t'amène le jour J.",
+      },
+    },
+    exams: {
+      timeline: {
+        title: "Tes épreuves",
+        body: "Une ligne par épreuve, la barre est le temps qu'il reste. Touche une ligne pour ouvrir l'épreuve.",
+      },
+      load: {
+        title: "La charge",
+        body: "Ce que le plan prévoit chaque semaine, devant le temps que tu as donné. Rouge quand ça déborde.",
+      },
+    },
     skipPage: "Passer la visite de cette page",
     skipAll: "Passer la visite",
     next: "Suivant",

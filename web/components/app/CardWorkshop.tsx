@@ -61,10 +61,10 @@ export function CardWorkshop({
         </Link>
 
         <div className="mt-3">
-          <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          <h1 className="page-title">
             {cards.length === 0 ? t("app.workshop.emptyTitle") : (heading ?? t("app.workshop.title"))}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="page-lead">
             {cards.length === 0
               ? course.source === "deck"
                 ? t("app.deck.emptyHint")

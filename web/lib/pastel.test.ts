@@ -21,7 +21,7 @@ const appChrome = readFileSync(resolve(here, "../components/app/AppChrome.tsx"),
 
 describe("le pastel de l'app", () => {
   it("s'allume et s'éteint depuis un seul interrupteur", () => {
-    expect(WEBSITE_PASTEL).toBe(true);
+    expect(WEBSITE_PASTEL).toBe(false);
   });
 
   it("reprend les pastels des tuiles, pas une crème générique", () => {

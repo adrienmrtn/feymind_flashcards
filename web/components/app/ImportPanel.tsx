@@ -406,7 +406,7 @@ export function ImportPanel({
               <p className="mt-4 text-base font-semibold text-foreground">
                 {dragging ? t("app.import.dropHere") : t("app.import.drop")}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">{t("app.import.formatsHint")}</p>
+              <p className="page-lead">{t("app.import.formatsHint")}</p>
 
               <Button
                 type="button"
@@ -454,7 +454,7 @@ export function ImportPanel({
       {ankiFile ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
           <div className="min-w-0">
-            <p className="text-[15px] font-semibold text-ink">{t("app.import.ankiTitle")}</p>
+            <p className="section-title">{t("app.import.ankiTitle")}</p>
             <p className="mt-1 text-[13.5px] leading-relaxed text-ink-secondary">
               {t("app.import.ankiHint", { name: ankiFile })}
             </p>
@@ -762,7 +762,7 @@ function Preview({
       )}
       <div className="flex items-center justify-between gap-4 border-t border-border px-5 py-4">
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold text-ink">
+          <p className="truncate section-title">
             {title.trim() || draft.title}
           </p>
           <p className="mt-0.5 text-[13px] text-ink-tertiary">

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { courseAccent, masteryByCourse, resolveEmoji, studyCounts, type Mastery } from "@micabo/core";
+import { EMPTY_MASTERY, courseAccent, masteryByCourse, resolveEmoji, studyCounts, type Mastery } from "@micabo/core";
 
+import { MasteryBar } from "@/components/app/charts/MasteryBar";
 import { CourseExamBadge } from "@/components/app/CourseExamBadge";
 import { CoursesExplore } from "@/components/app/CoursesExplore";
 import { LockedAddCourseCard } from "@/components/app/SecondCourseCard";
@@ -141,7 +142,7 @@ function Shelf({
             <Link
               key={course.id}
               href={`/app/c/${course.id}` as never}
-              className="relative flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs/5 transition-[scale] duration-press ease-out-strong active:scale-[0.96]"
+              className="hover-tile relative flex flex-col gap-4 rounded-group border border-border bg-card p-5 transition-[border-color] duration-hover"
             >
               {exam ? (
                 <span className="absolute right-3 top-3">
@@ -173,19 +174,9 @@ function Shelf({
                 </span>
               </span>
 
-              <span className="mt-auto flex items-center gap-2.5">
-                <span
-                  aria-hidden
-                  className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-pill bg-surface-sunken"
-                >
-                  <span
-                    className="block h-full rounded-pill bg-accent"
-                    style={{
-                      width: `${Math.max(2, mastery.get(course.id)?.percent ?? 0)}%`,
-                    }}
-                  />
-                </span>
-                <span className="numeral shrink-0 text-[12.5px] text-ink-secondary">
+              <span className="mt-auto block">
+                <MasteryBar mastery={mastery.get(course.id) ?? EMPTY_MASTERY} size="sm" legend={false} />
+                <span className="numeral mt-2 block text-[12.5px] text-ink-secondary">
                   {t("app.courses.mastery", {
                     percent: mastery.get(course.id)?.percent ?? 0,
                     cards: mastery.get(course.id)?.cardCount ?? 0,
@@ -207,7 +198,7 @@ function AddCourseCard({ t }: { t: Translator }) {
     <Link
       href={"/app/importer" as never}
       data-tour="cours-ajouter"
-      className="relative flex flex-col gap-4 rounded-2xl border border-dashed border-border bg-card p-5 transition-[scale,background-color,border-color] duration-press ease-out-strong hover:border-stroke-strong hover:bg-surface-muted active:scale-[0.96]"
+      className="relative flex flex-col gap-4 rounded-group border border-dashed border-stroke-strong bg-transparent p-5 transition-[background-color,border-color] duration-hover hover:bg-surface-muted"
     >
       <span
         aria-hidden

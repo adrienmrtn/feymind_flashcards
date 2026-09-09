@@ -68,10 +68,10 @@ export function SessionDone({
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+        <h1 className="page-title">
           {t("app.session.done.title")}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="page-lead">
           {capped
             ? t("app.session.done.capped", {
                 limit: entitlement.FREE_TIER.cardsPerSession,

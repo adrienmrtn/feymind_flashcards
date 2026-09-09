@@ -51,10 +51,10 @@ export default async function SettingsPage() {
   return (
     <>
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+        <h1 className="page-title">
           <T k="settings.title" />
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="page-lead">
           <T k="settings.lead" />
         </p>
       </header>
@@ -80,7 +80,7 @@ export default async function SettingsPage() {
           className="hover-tile flex items-center justify-between gap-4 rounded-group border border-border bg-card px-5 py-4"
         >
           <span className="min-w-0">
-            <span className="block text-[15px] font-semibold text-ink">
+            <span className="block section-title">
               <T k="settings.weekly.title" />
             </span>
             <span className="mt-0.5 block text-[13px] text-ink-tertiary">
@@ -173,7 +173,7 @@ function Section({
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-[15px] font-semibold text-ink">
+        <h2 className="section-title">
           <T k={titleKey} />
         </h2>
         <p className="mt-0.5 text-[13px] text-muted-foreground">

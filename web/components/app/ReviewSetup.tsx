@@ -3,12 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import {
-  activeDeadlines,
-  buildQueue,
-  resolveEmoji,
-  type CardState,
-} from "@micabo/core";
+import { activeDeadlines, buildQueue, resolveEmoji, type CardState } from "@micabo/core";
 
 import { CountStepper } from "@/components/app/CountStepper";
 import { Button } from "@/components/ui/button";
@@ -42,10 +37,12 @@ export interface ReviewSetupExam {
 }
 
 /**
- * L'écran avant la session : le chiffre, les cours, un bouton.
+ * L'écran avant la session : **un chiffre, un bouton.**
  *
- * Si la file est vide, on le dit en deux mots. Les paragraphes sur le rythme
- * n'aident pas à décider.
+ * Il tenait en quatre blocs séparés (deux compteurs, une liste, un bouton), qu'on lisait
+ * comme un formulaire. C'est une seule carte : combien de cartes, d'où elles viennent, et
+ * le bouton pour y aller. Le réglage des cartes neuves reste, replié dans la carte, parce
+ * que c'est le seul choix qu'on fait ici.
  */
 export function ReviewSetup({
   courseId,
@@ -79,11 +76,7 @@ export function ReviewSetup({
           isPlanned: exam.isPlanned,
           courseIds: exam.courseIds,
         })),
-        cards.map((card) => ({
-          id: card.id,
-          courseId: card.courseId,
-          isSuspended: card.isSuspended,
-        })),
+        cards.map((card) => ({ id: card.id, courseId: card.courseId, isSuspended: card.isSuspended })),
         now,
       ),
     [cards, exams, now],
@@ -111,17 +104,14 @@ export function ReviewSetup({
 
   const fresh = queue.filter((card) => card.state === "new").length;
   const again = queue.length - fresh;
-  // Le plafond se joue **pendant** la session, pas ici : on annonce la
-  // vraie file. Sinon on ouvre cinq cartes, on les finit, et on rentre
-  // — le paywall n'a plus rien à couper.
   const served = queue.length;
-
-  const involved = courses.filter((course) =>
-    queue.some((item) => {
-      const row = cards.find((card) => card.id === item.id);
-      return row?.courseId === course.id;
-    }),
-  );
+  const courseOf = new Map(cards.map((card) => [card.id, card.courseId]));
+  const perCourse = courses
+    .map((course) => ({
+      course,
+      count: queue.filter((item) => courseOf.get(item.id) === course.id).length,
+    }))
+    .filter((entry) => entry.count > 0);
 
   const href =
     courseId != null
@@ -142,13 +132,9 @@ export function ReviewSetup({
         }
         action={
           empty ? (
-            <Button render={<Link href={"/app/importer" as never} />}>
-              {t("app.import.importCourse")}
-            </Button>
+            <Button render={<Link href={"/app/importer" as never} />}>{t("app.import.importCourse")}</Button>
           ) : isPro ? (
-            <Button render={<Link href={"/app/cours" as never} />}>
-              {t("app.review.seeCourses")}
-            </Button>
+            <Button render={<Link href={"/app/cours" as never} />}>{t("app.review.seeCourses")}</Button>
           ) : (
             <Button onClick={requestPaywall}>{copyPracticeReview(t)}</Button>
           )
@@ -160,14 +146,10 @@ export function ReviewSetup({
   const leftoverOnly = served === 0 && dueNew > 0;
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-[560px]" data-tour="reviser-panneau">
       <header>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">
-          {leftoverOnly
-            ? t("app.review.done.title")
-            : t("app.review.queueCount", { count: served })}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="page-title">{t("nav.review")}</h1>
+        <p className="page-lead">
           {leftoverOnly
             ? copyHeldBackNew(t, dueNew)
             : courseId
@@ -176,57 +158,61 @@ export function ReviewSetup({
         </p>
       </header>
 
-      {served > 0 || dueNew > 0 ? (
-        <dl className="grid grid-cols-2 gap-3">
-          <Stat value={again} label={t("app.review.stats.due")} />
-          {dueNew > 0 ? (
-            <NewCardsControl
-              t={t}
-              value={Math.min(freshCap, dueNew)}
-              max={dueNew}
-              planned={remaining}
-              onChange={setFreshCap}
-            />
-          ) : (
-            <Stat value={fresh} label={t("app.review.stats.new", { count: fresh })} />
-          )}
-        </dl>
-      ) : null}
+      <section className="panel mt-5 overflow-hidden">
+        <div className="p-6">
+          <p className="flex items-baseline gap-2">
+            <span className="hero-value">{served}</span>
+            <span className="text-[14px] text-ink-secondary">
+              {t("app.review.setup.cards", { count: served })}
+            </span>
+          </p>
+          <p className="numeral mt-2 text-[13px] text-ink-tertiary">
+            {t("app.review.setup.mix", { due: again, fresh })}
+          </p>
 
-      {involved.length > 0 ? (
-        <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
-          {involved.map((course) => {
-            const count = queue.filter((item) => {
-              const row = cards.find((card) => card.id === item.id);
-              return row?.courseId === course.id;
-            }).length;
-            return (
-              <li key={course.id} className="flex items-center gap-3 px-4 py-3">
-                <span aria-hidden className="emoji text-[16px]">
-                  {resolveEmoji(course.emoji, course.subject, course.title)}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">{course.title}</span>
-                <span className="numeral text-sm text-muted-foreground">{count}</span>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
+          {perCourse.length > 0 ? (
+            <ul className="mt-4 flex flex-wrap gap-1.5">
+              {perCourse.map(({ course, count }) => (
+                <li
+                  key={course.id}
+                  className="flex items-center gap-1.5 rounded-full bg-surface-muted py-1 pl-2 pr-2.5 text-[12.5px] text-ink"
+                >
+                  <span aria-hidden className="emoji text-[13px]">
+                    {resolveEmoji(course.emoji, course.subject, course.title)}
+                  </span>
+                  <span className="max-w-[18ch] truncate">{course.title}</span>
+                  <span className="numeral text-ink-tertiary">{count}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
-      {served > 0 ? (
-        <Button className="w-full sm:w-auto" render={<Link href={href as never} />}>
-          {leftoverOnly
-            ? t("app.review.startFresh", { count: fresh })
-            : t("app.review.start")}
-        </Button>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          {t("app.review.paceReached")}{" "}
-          <Link href={"/app/reglages" as never} className="underline-draw font-medium text-ink">
-            {t("app.home.empty.changePace")}
-          </Link>
-        </p>
-      )}
+          <div className="mt-6">
+            {served > 0 ? (
+              <Button className="h-12 w-full text-[15px]" render={<Link href={href as never} />}>
+                {leftoverOnly ? t("app.review.startFresh", { count: fresh }) : t("app.review.start")}
+              </Button>
+            ) : (
+              <p className="text-[13.5px] text-ink-secondary">
+                {t("app.review.paceReached")}{" "}
+                <Link href={"/app/reglages" as never} className="underline-draw font-medium text-ink">
+                  {t("app.home.empty.changePace")}
+                </Link>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {dueNew > 0 ? (
+          <NewCardsControl
+            t={t}
+            value={Math.min(freshCap, dueNew)}
+            max={dueNew}
+            planned={remaining}
+            onChange={setFreshCap}
+          />
+        ) : null}
+      </section>
     </div>
   );
 }
@@ -254,31 +240,21 @@ function NewCardsControl({
   const tone = relation === "at" ? "info" : relation === "above" ? "caution" : "ink";
 
   return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-4">
-      <dd>
-        <CountStepper
-          value={value}
-          min={0}
-          max={max}
-          onChange={onChange}
-          minusLabel={t("app.review.newCards.minusAria")}
-          plusLabel={t("app.review.newCards.plusAria")}
-          tone={tone}
-          info={info}
-        />
-      </dd>
-      <dt className="mt-2 text-[13px] text-muted-foreground">
-        {t("app.review.stats.new", { count: value })}
-      </dt>
-    </div>
-  );
-}
-
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-4">
-      <dd className="numeral text-2xl font-semibold leading-none text-foreground">{value}</dd>
-      <dt className="mt-1.5 text-[13px] text-muted-foreground">{label}</dt>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline bg-surface-muted/50 px-6 py-4">
+      <div>
+        <p className="text-[13.5px] font-medium text-ink">{t("app.review.setup.newTitle")}</p>
+        <p className="mt-0.5 text-[12px] text-ink-tertiary">{t("app.review.setup.newHint", { max })}</p>
+      </div>
+      <CountStepper
+        value={value}
+        min={0}
+        max={max}
+        onChange={onChange}
+        minusLabel={t("app.review.newCards.minusAria")}
+        plusLabel={t("app.review.newCards.plusAria")}
+        tone={tone}
+        info={info}
+      />
     </div>
   );
 }

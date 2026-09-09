@@ -1,245 +1,204 @@
-import {
-  adherenceFrom,
-  capacityFor,
-  dayDifference,
-  examReadiness,
-  feasibility,
-  isMockBlock,
-  levers,
-  loadBars,
-  masteryForCourses,
-  planTerm,
-  resolveEmoji,
-  asExamKind,
-  asStartingPoint,
-  startOfDay,
-  todayBlocks,
-  todayCardCount,
-  weeklyTotal,
-  type TermCard,
-  type TermExam,
-} from "@micabo/core";
+import Link from "next/link";
 
-import { PlanWorkspace, type PlanExam, type PlanTodayBlock } from "@/components/app/plan/PlanWorkspace";
-import { readAvailability } from "@/lib/data/availability";
-import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
-import { loadCardDifficulty, loadDailyReviews } from "@/lib/data/difficulty";
-import { listMockResults, loadThroughput } from "@/lib/data/mocks";
-import { readProfile } from "@/lib/data/profile";
+import { examCountdownLabel, examUrgency, studyCounts, currentStreak } from "@micabo/core";
+
+import { TodayPanel } from "@/components/app/home/TodayPanel";
+import { ReadinessBar } from "@/components/app/charts/ReadinessBar";
+import { Button } from "@/components/ui/button";
+import { loadNewCardBudget, loadProfileStats } from "@/lib/data/reviews";
 import { getTranslator } from "@/lib/i18n/server";
+import { localeBcp47, type Translator } from "@/lib/i18n/copy";
+import { loadTermSnapshot, type PlanExam } from "@/lib/term-plan";
 
 /**
- * **La page centrale du produit : le plan.**
+ * **L'accueil : aujourd'hui.**
  *
- * L'accueil listait des cartes dues, c'est-à-dire une file d'attente. Il répond maintenant à
- * la question qui amène l'étudiant ici - « est-ce que je vais y arriver » - parce que c'est
- * elle qui distingue ce produit d'un jeu de flashcards. Les cartes, les cours et les
- * statistiques n'ont pas disparu : ils sont devenus les moyens, et ils vivent derrière.
- *
- *
- * Tout est calculé ici, à chaque rendu, et rien n'est stocké. Un plan est une **fonction** des
- * épreuves, des cartes, du journal de révision et du temps disponible : le mettre en table
- * obligerait à l'invalider à chaque note donnée, c'est-à-dire des dizaines de fois par
- * session, pour économiser un calcul qui tient dans quelques millisecondes. Le jour où le
- * volume l'exigera, `plan_days` existe pour ça - pas avant.
- *
- * Les quatre lectures sont déjà en cache et partagées avec le tableau de bord : ouvrir le
- * Plan après l'accueil ne touche pas la base.
+ * L'écran répond à une seule question, celle qu'on se pose en ouvrant l'app : qu'est-ce que
+ * j'ai à faire, et je le lance. Le plan de la période, ses verdicts et ses réglages ont leur
+ * page (Examens) ; la mesure a la sienne (Progrès). Ici : le travail du jour, la prochaine
+ * épreuve, et un mot si le plan ne tient plus.
  */
-export default async function PlanPage() {
-  const now = new Date();
-  const today = startOfDay(now);
-  const { t } = await getTranslator();
-
-  const [
-    exams,
-    courses,
-    snapshots,
-    availability,
-    difficulties,
-    profile,
-    throughput,
-    mocks,
-    daily,
-  ] = await Promise.all([
-    listExams(),
-    listCourses(),
-    listCardSnapshots(),
-    readAvailability(),
-    loadCardDifficulty(),
-    readProfile(),
-    loadThroughput(),
-    listMockResults(),
-    loadDailyReviews(30),
+export default async function TodayPage() {
+  const [{ t, locale }, snapshot, budget, stats] = await Promise.all([
+    getTranslator(),
+    loadTermSnapshot(),
+    loadNewCardBudget(),
+    loadProfileStats(),
   ]);
 
-  // Le plan se règle sur ce que cet étudiant fait réellement : son débit, et la part de son
-  // temps déclaré qu'il tient. Sans mesure, les deux retombent sur le comportement d'avant.
-  const adherence = adherenceFrom(
-    daily,
-    (date) => capacityFor(availability, date),
-    throughput,
-    now,
-  );
+  const { now, blocks, todayCards, todayMinutes, upcoming, verdict, snapshots, profile } = snapshot;
 
-  const termCards: TermCard[] = snapshots.map((card) => ({
-    id: card.id,
-    courseId: card.course_id,
-    kind: card.kind,
-    state: card.state,
-    intervalDays: card.interval_days,
-    dueDate: new Date(card.due_date),
-    isSuspended: card.is_suspended,
-  }));
+  const due = studyCounts(
+    snapshots.map((card) => ({
+      id: card.id,
+      state: card.state,
+      dueDate: new Date(card.due_date),
+      position: card.position,
+      createdAt: new Date(card.created_at),
+      isSuspended: card.is_suspended,
+    })),
+    { limits: { newPerSession: budget.remaining, reviewsPerSession: Number.MAX_SAFE_INTEGER } },
+  ).total;
 
-  const termExams: TermExam[] = exams.map((exam) => ({
-    id: exam.id,
-    name: exam.name,
-    examDate: new Date(`${exam.exam_date}T12:00:00`),
-    intensity: asIntensity(exam.intensity),
-    courseIds: exam.course_ids ?? [],
-    formats: exam.formats ?? [],
-    kind: asExamKind(exam.kind),
-    startingPoint: asStartingPoint(exam.starting_point),
-  }));
-
-  const plan = planTerm({
-    exams: termExams,
-    cards: termCards,
-    availability,
-    now,
-    throughput,
-    adherence,
-    mocks,
-    difficulties,
-  });
-  const verdict = feasibility(plan);
-  const bars = loadBars(plan);
-
-  const titles = new Map(courses.map((course) => [course.id, course]));
-  const cardCounts = new Map<string, number>();
-  for (const card of snapshots) {
-    if (!card.course_id || card.is_suspended) continue;
-    cardCounts.set(card.course_id, (cardCounts.get(card.course_id) ?? 0) + 1);
-  }
-
-  const planExams: PlanExam[] = exams
-    .map((exam) => {
-      const courseIds = exam.course_ids ?? [];
-      const mastery = masteryForCourses(
-        snapshots.map((card) => ({
-          id: card.id,
-          courseId: card.course_id,
-          state: card.state,
-          intervalDays: card.interval_days,
-          isSuspended: card.is_suspended,
-        })),
-        difficulties,
-        courseIds,
-      );
-
-      // Un blanc passé l'emporte sur la projection : une formule qui annonce 88 % contre un
-      // score mesuré à 54 a tort, et c'est le score qu'il faut croire.
-      const readiness = examReadiness({
-        masteryPercent: mastery.percent,
-        projectedPercent: projectedMastery(
-          mastery.percent,
-          plan.passesByExam.get(exam.id) ?? 0,
-          mastery.cardCount,
-        ),
-        mocks,
-        examId: exam.id,
-        now,
-      });
-
-      return {
-        id: exam.id,
-        name: exam.name,
-        examDate: exam.exam_date,
-        daysRemaining: dayDifference(today, new Date(`${exam.exam_date}T12:00:00`)),
-        courseIds,
-        masteryPercent: mastery.percent,
-        projectedPercent: readiness.percent,
-        measured: readiness.measured,
-        mockScore: readiness.mockScore,
-        cardCount: mastery.cardCount,
-        isPlanned: exam.is_planned,
-      };
-    })
-    .sort((left, right) => left.daysRemaining - right.daysRemaining);
-
-  const blocks: PlanTodayBlock[] = todayBlocks(plan).map((block) => {
-    if (isMockBlock(block)) {
-      return {
-        kind: "mock" as const,
-        courseId: null,
-        courseTitle: t("app.mock.blockTitle"),
-        emoji: "⏱",
-        examId: block.examId,
-        examName: block.examName,
-        cards: block.questionCount,
-        minutes: block.minutes,
-      };
-    }
-    const course = block.courseId ? titles.get(block.courseId) : undefined;
-    return {
-      kind: "review" as const,
-      courseId: block.courseId,
-      courseTitle: course?.title || t("app.course.untitled"),
-      emoji: course ? resolveEmoji(course.emoji, course.subject, course.title) : "📘",
-      examId: block.examId,
-      examName: block.examName,
-      cards: block.cardIds.length,
-      minutes: block.minutes,
-    };
-  });
-
-  const todayCards = todayCardCount(plan);
-  const mine = courses.filter((course) => !course.is_from_library);
-  const greeting = profile?.display_name?.trim().split(/\s+/)[0] ?? null;
+  const streak = currentStreak(stats.reviewDays.map((day) => new Date(day)), now);
+  const next = upcoming[0] ?? null;
+  const firstName = profile?.display_name?.trim().split(/\s+/)[0] ?? null;
 
   return (
     <>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold tracking-tight text-foreground">
-            {greeting ? greeting : t("app.plan.title")}
+          <h1 className="page-title">
+            {firstName ? `${greetingFor(now, t)}, ${firstName}` : greetingFor(now, t)}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("app.plan.lead")}</p>
+          <p className="page-lead">
+            {now.toLocaleDateString(localeBcp47(locale), {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
+            {streak > 1 ? ` · ${t("app.today.streak", { count: streak })}` : ""}
+          </p>
         </div>
       </header>
 
-      <PlanWorkspace
-        bars={bars}
-        verdict={verdict}
-        levers={levers(plan, verdict)}
-        exams={planExams}
-        todayBlocks={blocks}
-        todayMinutes={plan.days[0]?.minutes ?? 0}
-        adherence={adherence}
-        throughput={throughput}
-        todayCards={todayCards}
-        weeklyMinutes={weeklyTotal(availability.weekly)}
-        courses={mine.map((course) => ({ id: course.id, title: course.title }))}
+      {verdict.level === "short" ? (
+        <Link
+          href={"/app/plan" as never}
+          className="hover-tile flex items-center justify-between gap-4 rounded-group border border-caution/40 bg-caution-soft px-5 py-3.5"
+        >
+          <span className="text-[13.5px] font-medium text-ink">
+            {t("app.plan.verdict.short", { minutes: verdict.deficitMinutes })}
+          </span>
+          <span className="shrink-0 text-[13px] font-medium text-caution">{t("app.today.fix")}</span>
+        </Link>
+      ) : null}
+
+      <TodayPanel
+        blocks={blocks}
+        minutes={todayMinutes}
+        cards={todayCards}
+        dueCards={due}
+        hasCards={snapshots.length > 0}
       />
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <NextExam exam={next} t={t} />
+        <UpcomingList exams={upcoming.slice(1, 4)} count={upcoming.length} t={t} />
+      </div>
     </>
   );
 }
 
-/**
- * Où la maîtrise arrivera le jour J, si le plan est suivi.
- *
- * Chaque passage prévu rapproche le programme de son plafond, avec un rendement décroissant :
- * le premier passage sur une carte neuve vaut beaucoup, le quatrième presque rien. On ne
- * promet jamais 100 % - il resterait toujours des cartes que l'étudiant rate.
- */
-function projectedMastery(current: number, passes: number, cardCount: number): number {
-  if (cardCount === 0) return current;
-  const perCard = passes / cardCount;
-  const gain = (100 - current) * (1 - Math.exp(-perCard / 1.8));
-  return Math.min(97, Math.round(current + gain));
+function NextExam({
+  exam,
+  t,
+}: {
+  exam: PlanExam | null;
+  t: Translator;
+}) {
+  if (!exam) {
+    return (
+      <section className="panel p-5">
+        <p className="section-title">{t("app.today.noExam")}</p>
+        <p className="section-lead max-w-[44ch]">{t("app.today.noExamBody")}</p>
+        <div className="mt-4">
+          <Button size="sm" render={<Link href={"/app/plan/nouveau" as never} />} data-tour="examens-ajouter">
+            {t("app.newPlan.add")}
+          </Button>
+        </div>
+      </section>
+    );
+  }
+  const urgency = examUrgency(exam.daysRemaining);
+  const chip =
+    urgency === "critical"
+      ? "bg-negative-soft text-negative"
+      : urgency === "soon"
+        ? "bg-caution-soft text-caution"
+        : "bg-surface-muted text-ink-secondary";
+
+  return (
+    <section className="panel p-5" data-tour="prochaine-epreuve">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="stat-label">{t("app.today.nextExam")}</p>
+          <Link href={`/app/plan/${exam.id}` as never} className="underline-draw mt-0.5 block truncate text-[16px] font-semibold text-ink">
+            {exam.name}
+          </Link>
+        </div>
+        <span className={`numeral shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold ${chip}`}>
+          {examCountdownLabel(exam.daysRemaining)}
+        </span>
+      </div>
+      <div className="mt-4">
+        <ReadinessBar
+          now={exam.measured && exam.mockScore != null ? exam.mockScore : exam.masteryPercent}
+          projected={exam.projectedPercent}
+          target={exam.targetScore}
+          measured={exam.measured}
+        />
+      </div>
+    </section>
+  );
 }
 
-function asIntensity(value: string): "light" | "standard" | "intense" {
-  return value === "light" || value === "intense" ? value : "standard";
+function UpcomingList({
+  exams,
+  count,
+  t,
+}: {
+  exams: { id: string; name: string; daysRemaining: number; masteryPercent: number }[];
+  count: number;
+  t: Translator;
+}) {
+  return (
+    <section className="panel flex flex-col p-5">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="section-title">{t("app.today.otherExams")}</p>
+        <Link href={"/app/plan" as never} className="underline-draw text-[12.5px] font-medium text-ink-secondary">
+          {t("app.today.seeExams")}
+        </Link>
+      </div>
+      {exams.length === 0 ? (
+        <p className="section-lead">
+          {count <= 1 ? t("app.today.noOtherExam") : ""}
+        </p>
+      ) : (
+        <ul className="mt-2 divide-y divide-hairline">
+          {exams.map((exam) => (
+            <li key={exam.id}>
+              <Link
+                href={`/app/plan/${exam.id}` as never}
+                className="flex items-center justify-between gap-3 py-2.5"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-[13.5px] font-medium text-ink">{exam.name}</span>
+                  <span className="numeral block text-[12px] text-ink-tertiary">
+                    {t("app.today.known", { percent: exam.masteryPercent })}
+                  </span>
+                </span>
+                <span className="numeral shrink-0 text-[12.5px] font-semibold text-ink-secondary">
+                  {examCountdownLabel(exam.daysRemaining)}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-auto pt-3">
+        <Button variant="outline" size="sm" render={<Link href={"/app/plan/nouveau" as never} />}>
+          {t("app.newPlan.add")}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+function greetingFor(now: Date, t: Translator): string {
+  const hour = now.getHours();
+  if (hour < 6) return t("app.home.greeting.night");
+  if (hour < 12) return t("app.home.greeting.morning");
+  if (hour < 18) return t("app.home.greeting.afternoon");
+  return t("app.home.greeting.evening");
 }

@@ -88,9 +88,9 @@ export function WeeklyAvailability({
 
   return (
     <div className="space-y-5">
-      <section className="rounded-group border border-border bg-card p-5">
+      <section className="panel p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-[15px] font-semibold text-ink">{t("app.plan.weekly.title")}</h2>
+          <h2 className="section-title">{t("app.plan.weekly.title")}</h2>
           <p className="numeral text-[13px] text-ink-secondary">
             {t("app.plan.weekly.total", {
               total: dailyMinutesLabel(total),
@@ -139,8 +139,8 @@ export function WeeklyAvailability({
         </p>
       </section>
 
-      <section className="rounded-group border border-border bg-card p-5">
-        <h2 className="text-[15px] font-semibold text-ink">
+      <section className="panel p-5">
+        <h2 className="section-title">
           {t("app.plan.exceptions.title")}
         </h2>
         <p className="mt-1 text-[13px] text-ink-secondary">

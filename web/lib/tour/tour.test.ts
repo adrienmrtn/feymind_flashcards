@@ -35,7 +35,7 @@ describe("tourFor", () => {
       "/app/cours",
       "/app/progres",
       "/app/amis",
-      "/app/profil",
+      "/app/plan",
       "/app/reglages",
       "/app/importer",
       "/app/c/abc",
@@ -58,8 +58,9 @@ describe("tourFor", () => {
 
   it("supporte la barre oblique finale", () => {
     expect(tourFor({ pathname: "/app/cours/", inSession: false })?.id).toBe("cours");
-    expect(tourFor({ pathname: "/app", inSession: false })?.id).toBe("plan");
-    expect(tourFor({ pathname: "/app/progres/", inSession: false })?.id).toBe("accueil");
+    expect(tourFor({ pathname: "/app", inSession: false })?.id).toBe("accueil");
+    expect(tourFor({ pathname: "/app/plan/", inSession: false })?.id).toBe("plan");
+    expect(tourFor({ pathname: "/app/progres/", inSession: false })?.id).toBe("progres");
   });
 
   it("ne visite pas le profil public d'un ami ni un cours repris", () => {
@@ -119,18 +120,18 @@ describe("le catalogue des visites", () => {
 
 describe("stepsForWidth", () => {
   it("saute la barre latérale sur téléphone", () => {
-    const home = tourFor({ pathname: "/app/progres", inSession: false })!;
+    const home = tourFor({ pathname: "/app", inSession: false })!;
     const wide = stepsForWidth(home, 1280).map((step) => step.anchor);
     const narrow = stepsForWidth(home, 420).map((step) => step.anchor);
 
     expect(wide).toContain("nav");
     expect(narrow).not.toContain("nav");
     expect(narrow).not.toContain("nav-importer");
-    expect(narrow).toContain("maitrise");
+    expect(narrow).toContain("aujourdhui");
   });
 
   it("garde toutes les bulles dès 1024 px", () => {
-    const home = tourFor({ pathname: "/app/progres", inSession: false })!;
+    const home = tourFor({ pathname: "/app", inSession: false })!;
     expect(stepsForWidth(home, 1024)).toHaveLength(home.steps.length);
   });
 });

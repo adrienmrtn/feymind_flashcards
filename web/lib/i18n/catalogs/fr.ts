@@ -418,6 +418,7 @@ export const fr = {
   nav: {
     study: "Étudier",
     home: "Accueil",
+    today: "Aujourd'hui",
     review: "Réviser",
     library: "Bibliothèque",
     courses: "Cours",
