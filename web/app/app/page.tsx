@@ -11,6 +11,7 @@ import {
   planTerm,
   resolveEmoji,
   asExamKind,
+  asStartingPoint,
   startOfDay,
   todayBlocks,
   todayCardCount,
@@ -99,6 +100,7 @@ export default async function PlanPage() {
     courseIds: exam.course_ids ?? [],
     formats: exam.formats ?? [],
     kind: asExamKind(exam.kind),
+    startingPoint: asStartingPoint(exam.starting_point),
   }));
 
   const plan = planTerm({
