@@ -41,6 +41,12 @@ struct CourseSheetView: View {
     /// parcours qui aboutit, plutôt qu'une opération dont il faut aller chercher le résultat.
     @State private var generatedCards: CourseCardsRoute?
     @State private var paywall: PaywallTrigger?
+    /// Le bloc ouvert dans son éditeur : son rang dans la partie lisible, et son contenu.
+    /// `-1` pour un bloc qu'on ajoute en fin de fiche.
+    @State private var editingBlock: EditedBlock?
+    /// Vrai pendant qu'on corrige : les blocs se touchent pour s'ouvrir, et « Expliquer »
+    /// se tait le temps de l'édition - les deux gestes se disputeraient le même passage.
+    @State private var isEditingSheet = false
     /// Le cadeau du premier cours. Il se présente ici, sur la fiche qu'on vient d'obtenir :
     /// une offre posée avant qu'on ait vu le produit tourner n'a rien à récompenser.
     @State private var giftOffer: DiscountPresentation?
@@ -65,6 +71,12 @@ struct CourseSheetView: View {
     private enum Work: Equatable {
         case sheet
         case cards
+    }
+
+    struct EditedBlock: Identifiable {
+        var index: Int
+        var block: SheetBlock
+        var id: Int { index }
     }
 
     private var cards: [Flashcard] { loadedCards ?? [] }
@@ -113,6 +125,16 @@ struct CourseSheetView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(MicaboRadius.sheet)
+        }
+        .sheet(item: $editingBlock) { edited in
+            SheetBlockEditorSheet(
+                initial: edited.block,
+                isNew: edited.index < 0,
+                onSave: { block in replaceBlock(at: edited.index, with: block) },
+                onDelete: edited.index < 0 ? nil : { replaceBlock(at: edited.index, with: nil) }
+            )
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(MicaboRadius.sheet)
         }
         .sheet(isPresented: $showCardOptions) {
             GenerateCardsSheet(course: course) { options in
@@ -228,6 +250,20 @@ struct CourseSheetView: View {
             }
             .disabled(course.rawText.nilIfBlank == nil || !course.source.expectsSheet)
 
+            // **Corriger la fiche**, comme sur le site. Le téléphone le fait bloc par bloc :
+            // on entre en mode correction, chaque paragraphe se touche et s'ouvre.
+            if sheet != nil {
+                Button {
+                    Haptics.selection()
+                    withAnimation(.easeOut(duration: 0.2)) { isEditingSheet.toggle() }
+                } label: {
+                    Label(
+                        isEditingSheet ? (i18n?.t("ios.sheetEdit.done") ?? "Terminer la correction") : (i18n?.t("ios.sheetEdit.start") ?? "Corriger la fiche"),
+                        systemImage: isEditingSheet ? "checkmark" : "pencil"
+                    )
+                }
+            }
+
             // Le partage se règle là où le cours se lit, et pas dans les réglages : c'est en
             // ayant sa fiche sous les yeux qu'on sait si on veut la laisser voir.
             Menu {
@@ -332,9 +368,17 @@ struct CourseSheetView: View {
 
             // Pas de `VStack` ici : les blocs sont des enfants du `LazyVStack` parent, pour
             // que seuls ceux à l'écran deviennent des `UITextView`.
+            if isEditingSheet {
+                editingBanner
+            }
+
             ForEach(Array(parts.readable.enumerated()), id: \.offset) { index, block in
-                SheetBlockView(block: block, tint: tint, onExplain: explain)
+                editableBlock(block, at: index)
                     .padding(.top, index == 0 ? MicaboSpacing.md : SheetBlockView.spacing(before: block))
+            }
+
+            if isEditingSheet {
+                addBlockButton
             }
 
             if !parts.locked.isEmpty {
@@ -357,6 +401,105 @@ struct CourseSheetView: View {
         } else {
             missingSheet
         }
+    }
+
+    /// Un bloc en mode correction se touche pour s'ouvrir ; hors correction, il se lit et se
+    /// sélectionne comme avant. Le texte n'est pas rendu deux fois : c'est la même vue, avec
+    /// un cadre et une touche en plus.
+    @ViewBuilder
+    private func editableBlock(_ block: SheetBlock, at index: Int) -> some View {
+        if isEditingSheet {
+            Button {
+                Haptics.selection()
+                editingBlock = EditedBlock(index: index, block: block)
+            } label: {
+                SheetBlockView(block: block, tint: tint)
+                    .padding(MicaboSpacing.sm)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(MicaboColor.surface.opacity(0.6), in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
+                            .strokeBorder(MicaboColor.strokeStrong, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    }
+                    // Le texte composé garde sa sélection ; ici on veut un appui, pas une
+                    // sélection, donc c'est le cadre qui prend le doigt.
+                    .allowsHitTesting(false)
+                    .contentShape(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+            }
+            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
+            .accessibilityHint(i18n?.t("ios.sheetEdit.tapHint") ?? "Touche pour corriger ce bloc")
+        } else {
+            SheetBlockView(block: block, tint: tint, onExplain: explain)
+        }
+    }
+
+    private var editingBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "pencil")
+                .font(.system(size: 11, weight: .semibold))
+            Text(i18n?.t("ios.sheetEdit.banner") ?? "Touche un bloc pour le corriger.")
+                .font(MicaboFont.micro)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: MicaboSpacing.xs)
+            Button {
+                withAnimation(.easeOut(duration: 0.2)) { isEditingSheet = false }
+            } label: {
+                Text(i18n?.t("ios.sheetEdit.done") ?? "Terminer")
+                    .font(MicaboFont.hanken(12.5, weight: .semibold))
+            }
+            .buttonStyle(.plain)
+        }
+        .foregroundStyle(MicaboColor.accent)
+        .padding(.vertical, 9)
+        .padding(.horizontal, 12)
+        .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+        .padding(.top, MicaboSpacing.md)
+    }
+
+    private var addBlockButton: some View {
+        Button {
+            Haptics.selection()
+            editingBlock = EditedBlock(index: -1, block: .paragraph(text: ""))
+        } label: {
+            HStack(spacing: MicaboSpacing.xs) {
+                Image(systemName: "plus")
+                    .font(.system(size: 12, weight: .semibold))
+                Text(i18n?.t("ios.sheetEdit.addBlock") ?? "Ajouter un paragraphe")
+            }
+        }
+        .buttonStyle(MicaboSecondaryButtonStyle())
+        .padding(.top, MicaboSpacing.md)
+    }
+
+    /// Écrit un bloc corrigé, ou le retire (`nil`), et enregistre la fiche.
+    ///
+    /// **Les blocs verrouillés sont recollés derrière.** Ils ne sont pas affichés, donc pas
+    /// modifiables, donc ils ne doivent pas disparaître à l'enregistrement : c'est la même
+    /// règle que sur le site, et sans elle un compte gratuit effacerait la moitié de sa fiche
+    /// en corrigeant une faute de frappe. Le texte de référence des cartes est refait à partir
+    /// de la fiche entière, comme le fait le serveur.
+    private func replaceBlock(at index: Int, with block: SheetBlock?) {
+        guard let current = sheet else { return }
+        let parts = SheetGate.split(current.blocks, isPro: isPro)
+        var readable = parts.readable
+
+        if index < 0 {
+            if let block { readable.append(block) }
+        } else if readable.indices.contains(index) {
+            if let block {
+                readable[index] = block
+            } else {
+                readable.remove(at: index)
+            }
+        }
+
+        let next = CourseSheet(blocks: readable + parts.locked)
+        course.apply(next)
+        course.contextText = next.plainText()
+        course.updatedAt = Date()
+        try? modelContext.save()
+        sheet = next
+        Task { await sync.sync(context: modelContext) }
     }
 
     /// Un cours sans fiche : un paquet de cartes, un import fait avant que la fiche n'existe,

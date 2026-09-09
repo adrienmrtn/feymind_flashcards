@@ -105,6 +105,9 @@ struct ExamsView: View {
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
+            .navigationDestination(for: Exam.self) { exam in
+                ExamDetailView(exam: exam)
+            }
             // Le bouton d'ajout se pose juste au-dessus de la barre d'onglets —
             // voir `tabBarClearance`.
             .tabBarClearance {
@@ -223,8 +226,11 @@ struct ExamsView: View {
     private func row(_ exam: Exam) -> some View {
         let isPast = exam.isPast(from: today, calendar: calendar)
 
+        // Toucher une épreuve ouvre **sa fiche** - où j'en suis, l'examen blanc, ce qui
+        // résiste - comme sur le site. Le formulaire reste derrière le crayon de la fiche et
+        // dans le menu contextuel : on ne modifie pas une épreuve tous les jours.
         return Button {
-            editing = ExamEdition(exam: exam, date: exam.date)
+            path.append(exam)
         } label: {
             HStack(spacing: 13) {
                 MicaboTile(

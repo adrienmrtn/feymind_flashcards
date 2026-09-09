@@ -10,6 +10,8 @@ struct MicaboApp: App {
     @State private var auth = AuthController()
     @State private var sync: CloudSync
     @State private var social: SocialService
+    /// L'examen blanc : la copie s'écrit et se corrige sur le serveur, avec le compte.
+    @State private var mocks: MockExamService
     /// L'abonnement, créé une fois pour toute l'app : tout ce qui se ferme lui pose la
     /// même question, et personne n'y répond de son côté.
     @State private var pro: ProAccess
@@ -31,6 +33,7 @@ struct MicaboApp: App {
         _auth = State(initialValue: auth)
         _sync = State(initialValue: CloudSync(auth: auth))
         _social = State(initialValue: SocialService(auth: auth))
+        _mocks = State(initialValue: MockExamService(auth: auth))
         _pro = State(initialValue: ProAccess(
             accessToken: { await auth.validAccessToken() },
             userID: { auth.user?.id },
@@ -48,6 +51,7 @@ struct MicaboApp: App {
                 .environment(auth)
                 .environment(sync)
                 .environment(social)
+                .environment(mocks)
                 .environment(pro)
                 .environment(uiLocale)
                 .environment(appearance)
