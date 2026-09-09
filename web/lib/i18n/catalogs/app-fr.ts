@@ -1142,6 +1142,26 @@ export const appFr = {
     broken: "Cette écriture ne se compose pas. Vérifie les accolades.",
   },
 
+  folders: {
+    root: "Mes cours",
+    new: "Nouveau dossier",
+    namePlaceholder: "Nom du dossier",
+    rename: "Renommer",
+    delete: "Supprimer",
+    up: "Sortir du dossier",
+    upHint: "Glisse un cours ici pour l'en sortir.",
+    empty: "Ce dossier est vide. Glisse un cours dedans.",
+    breadcrumb: "Où tu es dans tes dossiers",
+    count: "{count, plural, one {# cours} other {# cours}}",
+    needName: "Donne un nom au dossier.",
+    missing: "Ce dossier n'existe plus.",
+    cannotNest: "Un dossier ne peut pas entrer dans son propre contenu.",
+    create: "Créer",
+    moveTo: "Déplacer vers",
+    deleteQ: "Supprimer ce dossier ?",
+    deleteMsg: "Ce qu'il contient remonte d'un cran. Rien n'est supprimé.",
+  },
+
   generate: {
     timeout: "L'écriture a pris trop longtemps. Réessaie.",
     writing: "Micabo écrit les cartes…",

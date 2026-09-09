@@ -1142,6 +1142,26 @@ export const appTr = {
     broken: "Bu dizilmiyor. Süslü parantezleri kontrol et.",
   },
 
+  folders: {
+    root: "Derslerim",
+    new: "Yeni klasör",
+    namePlaceholder: "Klasör adı",
+    rename: "Yeniden adlandır",
+    delete: "Sil",
+    up: "Klasörden çık",
+    upHint: "Bir dersi buraya bırakarak dışarı çıkar.",
+    empty: "Bu klasör boş. İçine bir ders sürükle.",
+    breadcrumb: "Klasörlerinde neredesin",
+    count: "{count, plural, one {# ders} other {# ders}}",
+    needName: "Klasöre bir ad ver.",
+    missing: "Bu klasör artık yok.",
+    cannotNest: "Bir klasör kendi içeriğine giremez.",
+    create: "Oluştur",
+    moveTo: "Şuraya taşı",
+    deleteQ: "Bu klasör silinsin mi?",
+    deleteMsg: "İçindekiler bir üst seviyeye çıkar. Hiçbir şey silinmez.",
+  },
+
   generate: {
     timeout: "Yazmak çok uzun sürdü. Yeniden dene.",
     writing: "Micabo kartları yazıyor…",

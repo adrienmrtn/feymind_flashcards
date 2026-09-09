@@ -1144,6 +1144,26 @@ export const appEs = {
     broken: "Esto no se compone. Revisa las llaves.",
   },
 
+  folders: {
+    root: "Mis cursos",
+    new: "Nueva carpeta",
+    namePlaceholder: "Nombre de la carpeta",
+    rename: "Renombrar",
+    delete: "Eliminar",
+    up: "Salir de la carpeta",
+    upHint: "Suelta un curso aquí para sacarlo.",
+    empty: "Esta carpeta está vacía. Arrastra un curso dentro.",
+    breadcrumb: "Dónde estás en tus carpetas",
+    count: "{count, plural, one {# curso} other {# cursos}}",
+    needName: "Ponle un nombre a la carpeta.",
+    missing: "Esa carpeta ya no existe.",
+    cannotNest: "Una carpeta no puede entrar en su propio contenido.",
+    create: "Crear",
+    moveTo: "Mover a",
+    deleteQ: "¿Eliminar esta carpeta?",
+    deleteMsg: "Lo que contiene sube un nivel. No se borra nada.",
+  },
+
   generate: {
     timeout: "La escritura ha tardado demasiado. Inténtalo de nuevo.",
     writing: "Micabo escribe las tarjetas…",

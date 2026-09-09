@@ -19,6 +19,25 @@ extension MicaboRow {
         )
     }
 
+    /// Rangée d'un dossier : son emoji, son nom, ce qu'il contient.
+    ///
+    /// Le compte porte **tout** le dossier, sous-dossiers compris. Un dossier « Physique »
+    /// qui annoncerait zéro parce que ses cours sont rangés un cran plus bas serait un
+    /// mensonge exact et inutile.
+    static func folder(_ folder: CourseFolder, total: Int, action: (() -> Void)? = nil) -> MicaboRow {
+        MicaboRow(
+            tile: MicaboTile(
+                glyph: .emoji(folder.emoji ?? "📁"),
+                background: MicaboColor.surfaceMuted,
+                tint: MicaboColor.inkSecondary,
+                size: 42
+            ),
+            title: folder.name,
+            subtitle: MicaboCopy.courses(total),
+            action: action
+        )
+    }
+
     /// Rangée d'un cours qui a des cartes à réviser aujourd'hui.
     static func courseDue(_ course: Course, dueCount: Int, action: (() -> Void)? = nil) -> MicaboRow {
         MicaboRow(

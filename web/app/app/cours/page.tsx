@@ -1,24 +1,33 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { EMPTY_MASTERY, courseAccent, masteryByCourse, resolveEmoji, studyCounts, type Mastery } from "@micabo/core";
+import {
+  courseAccent,
+  masteryByCourse,
+  resolveEmoji,
+  studyCounts,
+  type FolderNode,
+} from "@micabo/core";
 
-import { MasteryBar } from "@/components/app/charts/MasteryBar";
-import { CourseExamBadge } from "@/components/app/CourseExamBadge";
 import { CoursesExplore } from "@/components/app/CoursesExplore";
-import { LockedAddCourseCard } from "@/components/app/SecondCourseCard";
+import { Shelf, type ShelfCourse } from "@/components/app/library/Shelf";
 import { Button } from "@/components/ui/button";
-import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
+import { listCardSnapshots, listCourses, listExams, listFolders } from "@/lib/data/courses";
 import { canImportNow } from "@/lib/data/entitlement";
 import { examMarkForCourse } from "@/lib/data/exam-marks";
 import { loadCardDifficulty } from "@/lib/data/difficulty";
 import { copyCourseSource, copyReviewButton } from "@/lib/i18n/copy";
 import { getTranslator } from "@/lib/i18n/server";
-import type { Translator } from "@/lib/i18n/copy";
 
 /**
- * L'étagère. Les cours des amis se lisent encore sur leur profil, selon
- * la visibilité qu'ils ont choisie.
+ * L'étagère, et son classeur.
+ *
+ * La page assemble ce que la grille a besoin de savoir - la maîtrise, l'épreuve à venir, la
+ * tuile - et le passe **déjà calculé** au composant qui glisse. Le rangement se fait au doigt,
+ * donc dans le navigateur ; la maîtrise se calcule sur toutes les cartes, donc sur le serveur.
+ * Mélanger les deux ferait descendre le paquet de cartes entier dans la page.
+ *
+ * Les cours des amis se lisent encore sur leur profil, selon la visibilité qu'ils ont choisie.
  */
 export default async function CoursesPage({
   searchParams,
@@ -28,9 +37,10 @@ export default async function CoursesPage({
   const params = await searchParams;
   if (params.vue === "decouvrir") redirect("/app/cours");
 
-  const [{ t }, courses, cards, exams, canImport, difficulties] = await Promise.all([
+  const [{ t }, courses, folders, cards, exams, canImport, difficulties] = await Promise.all([
     getTranslator(),
     listCourses(),
+    listFolders(),
     listCardSnapshots(),
     listExams(),
     canImportNow(),
@@ -60,6 +70,41 @@ export default async function CoursesPage({
       isSuspended: card.is_suspended,
     })),
   );
+
+  const tiles: ShelfCourse[] = courses.map((course) => {
+    const exam = examMarkForCourse(exams, course.id);
+    const own = mastery.get(course.id) ?? null;
+    return {
+      id: course.id,
+      title: course.title,
+      subtitle: [
+        course.subject,
+        course.is_from_library
+          ? t("app.course.source.adopted")
+          : copyCourseSource(t, course.source),
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      emoji: resolveEmoji(course.emoji, course.subject, course.title),
+      accent: course.accent_hex ?? courseAccent(course.id),
+      folder_id: course.folder_id,
+      mastery: own,
+      masteryLabel: t("app.courses.mastery", {
+        percent: own?.percent ?? 0,
+        cards: own?.cardCount ?? 0,
+      }),
+      exam: exam ? { name: exam.name, daysRemaining: exam.daysRemaining } : null,
+    };
+  });
+
+  const nodes: FolderNode[] = folders.map((folder) => ({
+    id: folder.id,
+    parentId: folder.parent_id,
+    name: folder.name,
+    emoji: folder.emoji,
+    position: folder.position,
+  }));
+
   return (
     <CoursesExplore
       revise={
@@ -71,133 +116,11 @@ export default async function CoursesPage({
       }
     >
       <Shelf
-        t={t}
-        courses={courses}
-        emptyReviews={counts.total === 0 && cards.length > 0}
-        exams={exams}
+        folders={nodes}
+        courses={tiles}
         canImport={canImport}
-        mastery={mastery}
+        emptyReviews={counts.total === 0 && cards.length > 0}
       />
     </CoursesExplore>
   );
 }
-
-function Shelf({
-  t,
-  courses,
-  emptyReviews,
-  exams,
-  canImport,
-  mastery,
-}: {
-  t: Translator;
-  courses: Awaited<ReturnType<typeof listCourses>>;
-  emptyReviews: boolean;
-  exams: Awaited<ReturnType<typeof listExams>>;
-  canImport: boolean;
-  mastery: Map<string, Mastery>;
-}) {
-  // Une seule étagère : un paquet Anki est un cours sans fiche, pas une autre espèce.
-  const sheets = courses;
-
-  return (
-    <>
-      {emptyReviews ? (
-        <p className="text-[13px] text-muted-foreground">{t("app.courses.doneTomorrow")}</p>
-      ) : null}
-
-      {sheets.length === 0 ? (
-        <p className="text-[15px] text-ink-secondary">{t("app.courses.emptyLead")}</p>
-      ) : null}
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-tour="cours-etagere">
-        {sheets.map((course) => {
-          const exam = examMarkForCourse(exams, course.id);
-          return (
-            <Link
-              key={course.id}
-              href={`/app/c/${course.id}` as never}
-              className="hover-tile relative flex flex-col gap-4 rounded-group border border-border bg-card p-5 transition-[border-color] duration-hover"
-            >
-              {exam ? (
-                <span className="absolute right-3 top-3">
-                  <CourseExamBadge name={exam.name} daysRemaining={exam.daysRemaining} />
-                </span>
-              ) : null}
-
-              <span
-                aria-hidden
-                className="flex h-12 w-12 items-center justify-center rounded-tile text-[22px]"
-                style={{ backgroundColor: `${course.accent_hex ?? courseAccent(course.id)}1f` }}
-              >
-                {resolveEmoji(course.emoji, course.subject, course.title)}
-              </span>
-
-              <span className="min-w-0">
-                <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
-                  {course.title || t("app.course.untitled")}
-                </span>
-                <span className="mt-1.5 line-clamp-1 block text-[13px] text-ink-tertiary">
-                  {[
-                    course.subject,
-                    course.is_from_library
-                      ? t("app.course.source.adopted")
-                      : copyCourseSource(t, course.source),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
-              </span>
-
-              <span className="mt-auto block">
-                <MasteryBar mastery={mastery.get(course.id) ?? EMPTY_MASTERY} size="sm" legend={false} />
-                <span className="numeral mt-2 block text-[12.5px] text-ink-secondary">
-                  {t("app.courses.mastery", {
-                    percent: mastery.get(course.id)?.percent ?? 0,
-                    cards: mastery.get(course.id)?.cardCount ?? 0,
-                  })}
-                </span>
-              </span>
-            </Link>
-          );
-        })}
-        {canImport ? <AddCourseCard t={t} /> : <LockedAddCourseCard />}
-      </div>
-    </>
-  );
-}
-
-/** Même gabarit qu'un cours, posé à la fin : un + pour en ajouter un. */
-function AddCourseCard({ t }: { t: Translator }) {
-  return (
-    <Link
-      href={"/app/importer" as never}
-      data-tour="cours-ajouter"
-      className="relative flex flex-col gap-4 rounded-group border border-dashed border-stroke-strong bg-transparent p-5 transition-[background-color,border-color] duration-hover hover:bg-surface-muted"
-    >
-      <span
-        aria-hidden
-        className="flex h-12 w-12 items-center justify-center rounded-tile bg-surface-muted text-ink-secondary"
-      >
-        <svg viewBox="0 0 24 24" className="h-6 w-6">
-          <path
-            d="M12 5v14M5 12h14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-      </span>
-      <span className="min-w-0">
-        <span className="line-clamp-2 block text-[16px] font-semibold leading-snug text-ink">
-          {t("app.courses.addTitle")}
-        </span>
-        <span className="mt-1.5 line-clamp-2 block text-[13px] text-ink-tertiary">
-          {t("app.courses.addFormats")}
-        </span>
-      </span>
-    </Link>
-  );
-}
-

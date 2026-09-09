@@ -14,6 +14,7 @@ import Foundation
 enum CloudTable {
     static let profiles = "profiles"
     static let courses = "courses"
+    static let courseFolders = "course_folders"
     static let flashcards = "flashcards"
     static let reviewLogs = "review_logs"
     static let exams = "exams"
@@ -195,12 +196,14 @@ struct CourseRecord: Codable {
     /// les compteurs publics que seuls les RPC incrémentent.
     var view_count: Int? = nil
     var adopt_count: Int? = nil
+    /// Le dossier qui range le cours. `nil` = à la racine.
+    var folder_id: UUID?
 
     enum CodingKeys: String, CodingKey {
         case id, user_id, title, subject, summary, emoji, accent_hex, source
         case source_file_name, fingerprint, raw_text, sheet, context_text
         case is_from_library, visibility, created_at, updated_at, deleted_at
-        case view_count, adopt_count
+        case view_count, adopt_count, folder_id
     }
 
     func encode(to encoder: Encoder) throws {
@@ -220,6 +223,46 @@ struct CourseRecord: Codable {
         try container.encode(context_text, forKey: .context_text)
         try container.encode(is_from_library, forKey: .is_from_library)
         try container.encode(visibility, forKey: .visibility)
+        try container.encode(created_at, forKey: .created_at)
+        try container.encode(updated_at, forKey: .updated_at)
+        try container.encodeIfPresent(deleted_at, forKey: .deleted_at)
+        // Toujours écrit, y compris à `null` : c'est ce qui fait qu'un cours sorti de son
+        // dossier sur l'iPhone y ressort aussi sur le site. Un `encodeIfPresent` laisserait
+        // la colonne telle quelle et le rangement ne se déferait jamais.
+        try container.encode(folder_id, forKey: .folder_id)
+    }
+}
+
+/// Un dossier de la bibliothèque, tel qu'il voyage.
+///
+/// Il ne porte que ce qui range : ni cours, ni compte. Le contenu se déduit des cours, qui
+/// pointent vers lui - c'est la même relation des deux côtés, et elle n'est stockée qu'une
+/// fois.
+struct CourseFolderRecord: Codable {
+    var id: UUID
+    var user_id: UUID
+    var parent_id: UUID?
+    var name: String
+    var emoji: String?
+    var position: Int
+    var created_at: Date
+    var updated_at: Date
+    var deleted_at: Date?
+
+    enum CodingKeys: String, CodingKey {
+        case id, user_id, parent_id, name, emoji, position
+        case created_at, updated_at, deleted_at
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(user_id, forKey: .user_id)
+        // Écrit même à `null` : sortir un dossier de son parent doit se propager.
+        try container.encode(parent_id, forKey: .parent_id)
+        try container.encode(name, forKey: .name)
+        try container.encodeIfPresent(emoji, forKey: .emoji)
+        try container.encode(position, forKey: .position)
         try container.encode(created_at, forKey: .created_at)
         try container.encode(updated_at, forKey: .updated_at)
         try container.encodeIfPresent(deleted_at, forKey: .deleted_at)

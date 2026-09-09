@@ -1506,6 +1506,17 @@ video {
   animation-name: micabo-step-back;
 }
 
+/* La cible d'un glisser-déposer, pendant qu'on survole avec quelque chose en main.
+
+   Un liseré et un fond, pas un agrandissement : la grille ne doit pas bouger sous la tuile
+   qu'on tient, sinon la cible se dérobe au moment de lâcher. */
+.drop-target[data-over] {
+  background-color: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
 /* Les nombres qui se lisent comme un résultat, et eux seuls. */
 @utility numeral {
   font-family: var(--font-number);

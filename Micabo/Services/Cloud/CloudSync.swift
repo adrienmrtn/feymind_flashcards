@@ -119,6 +119,19 @@ final class CloudSync {
 
         await flushTombstones()
 
+        // **Les dossiers montent avant les cours.** `courses.folder_id` référence
+        // `course_folders` : un cours qui arriverait en pointant vers un dossier que le
+        // serveur ne connaît pas encore serait refusé par la clé étrangère, et toute la
+        // montée avec lui.
+        let folders = try fetchChangedFolders(in: context, since: since)
+            .filter {
+                !CloudTombstones.contains(CloudTable.courseFolders, id: $0.id)
+            }
+        try await database.upsert(
+            folders.map { record(for: $0, userID: userID) },
+            into: CloudTable.courseFolders
+        )
+
         let courses = try fetchChangedCourses(in: context, since: since)
             .filter {
                 !CloudTombstones.contains(CloudTable.courses, id: $0.id)
@@ -150,6 +163,12 @@ final class CloudSync {
     /// Les prédicats sont posés **dans SQLite**, pas après un `fetch` complet. C'est ce qui
     /// évite de matérialiser des milliers de modèles sur l'acteur principal juste pour les
     /// jeter aussitôt.
+    private func fetchChangedFolders(in context: ModelContext, since: Date?) throws -> [CourseFolder] {
+        guard let since else { return try context.fetch(FetchDescriptor<CourseFolder>()) }
+        let descriptor = FetchDescriptor<CourseFolder>(predicate: #Predicate { $0.updatedAt > since })
+        return try context.fetch(descriptor)
+    }
+
     private func fetchChangedCourses(in context: ModelContext, since: Date?) throws -> [Course] {
         guard let since else { return try context.fetch(FetchDescriptor<Course>()) }
         let descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.updatedAt > since })
@@ -213,6 +232,38 @@ final class CloudSync {
         // son identifiant et **son** `user_id` : réécrire ainsi la ligne d'un camarade est
         // refusé par la politique d'écriture, la synchro échouait, le repère n'avançait pas, et
         // les mêmes lignes revenaient à chaque lancement.
+        // Les dossiers descendent avant les cours, pour la raison inverse de la montée : un
+        // cours dont le dossier n'est pas encore là se rangerait à la racine, et y resterait
+        // jusqu'à la synchro suivante.
+        let remoteFolders = try await database.fetch(
+            CourseFolderRecord.self,
+            from: CloudTable.courseFolders,
+            updatedSince: since,
+            filters: [mine]
+        )
+        let localFolders = try keyedFolders(
+            in: context,
+            matching: remoteFolders.map(\.id),
+            loadAll: since == nil
+        )
+
+        for remote in remoteFolders {
+            if CloudTombstones.contains(CloudTable.courseFolders, id: remote.id) {
+                if let local = localFolders[remote.id] { context.delete(local) }
+                continue
+            }
+            guard let local = localFolders[remote.id] else {
+                if remote.deleted_at == nil { context.insert(make(from: remote)) }
+                continue
+            }
+            if let deleted = remote.deleted_at, deleted > local.updatedAt {
+                CloudTombstones.mark(CloudTable.courseFolders, id: remote.id)
+                context.delete(local)
+            } else if remote.updated_at > local.updatedAt {
+                apply(remote, to: local)
+            }
+        }
+
         let remoteCourses = try await database.fetch(
             CourseRecord.self,
             from: CloudTable.courses,
@@ -376,6 +427,27 @@ final class CloudSync {
         }
     }
 
+    private func keyedFolders(
+        in context: ModelContext,
+        matching ids: [UUID],
+        loadAll: Bool
+    ) throws -> [UUID: CourseFolder] {
+        if loadAll || ids.count > 80 {
+            return Dictionary(
+                try context.fetch(FetchDescriptor<CourseFolder>()).map { ($0.id, $0) },
+                uniquingKeysWith: { first, _ in first }
+            )
+        }
+        var result: [UUID: CourseFolder] = [:]
+        for id in Set(ids) {
+            let target = id
+            var descriptor = FetchDescriptor<CourseFolder>(predicate: #Predicate { $0.id == target })
+            descriptor.fetchLimit = 1
+            if let row = try context.fetch(descriptor).first { result[id] = row }
+        }
+        return result
+    }
+
     private func keyedCourses(in context: ModelContext, matching ids: [UUID], loadAll: Bool) throws -> [UUID: Course] {
         if loadAll || ids.count > 80 {
             return Dictionary(
@@ -463,8 +535,44 @@ final class CloudSync {
             visibility: course.visibilityRaw,
             created_at: course.createdAt,
             updated_at: course.updatedAt,
+            deleted_at: nil,
+            folder_id: course.folderID
+        )
+    }
+
+    private func record(for folder: CourseFolder, userID: UUID) -> CourseFolderRecord {
+        CourseFolderRecord(
+            id: folder.id,
+            user_id: userID,
+            parent_id: folder.parentID,
+            name: folder.name,
+            emoji: folder.emoji,
+            position: folder.position,
+            created_at: folder.createdAt,
+            updated_at: folder.updatedAt,
             deleted_at: nil
         )
+    }
+
+    private func make(from remote: CourseFolderRecord) -> CourseFolder {
+        let folder = CourseFolder(
+            id: remote.id,
+            parentID: remote.parent_id,
+            name: remote.name,
+            emoji: remote.emoji,
+            position: remote.position
+        )
+        folder.createdAt = remote.created_at
+        folder.updatedAt = remote.updated_at
+        return folder
+    }
+
+    private func apply(_ remote: CourseFolderRecord, to folder: CourseFolder) {
+        folder.parentID = remote.parent_id
+        folder.name = remote.name
+        folder.emoji = remote.emoji
+        folder.position = remote.position
+        folder.updatedAt = remote.updated_at
     }
 
     private func make(from remote: CourseRecord) -> Course {
@@ -511,6 +619,7 @@ final class CloudSync {
         course.updatedAt = remote.updated_at
         if let views = remote.view_count { course.viewCount = views }
         if let adopts = remote.adopt_count { course.adoptCount = adopts }
+        course.folderID = remote.folder_id
     }
 
     private func record(for card: Flashcard, userID: UUID) -> FlashcardRecord {

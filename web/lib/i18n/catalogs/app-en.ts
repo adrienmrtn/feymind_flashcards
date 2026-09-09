@@ -1141,6 +1141,26 @@ export const appEn = {
     broken: "This does not typeset. Check the braces.",
   },
 
+  folders: {
+    root: "My courses",
+    new: "New folder",
+    namePlaceholder: "Folder name",
+    rename: "Rename",
+    delete: "Delete",
+    up: "Out of the folder",
+    upHint: "Drop a course here to take it out.",
+    empty: "This folder is empty. Drag a course into it.",
+    breadcrumb: "Where you are in your folders",
+    count: "{count, plural, one {# course} other {# courses}}",
+    needName: "Give the folder a name.",
+    missing: "That folder is gone.",
+    cannotNest: "A folder cannot go inside its own contents.",
+    create: "Create",
+    moveTo: "Move to",
+    deleteQ: "Delete this folder?",
+    deleteMsg: "What is inside moves up one level. Nothing is deleted.",
+  },
+
   generate: {
     timeout: "Writing took too long. Try again.",
     writing: "Micabo is writing the cards…",

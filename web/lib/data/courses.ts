@@ -50,6 +50,16 @@ export interface CourseRow {
   adopt_count: number;
   created_at: string;
   updated_at: string;
+  /** Le dossier qui range ce cours, ou `null` à la racine de la bibliothèque. */
+  folder_id: string | null;
+}
+
+export interface FolderRow {
+  id: string;
+  parent_id: string | null;
+  name: string;
+  emoji: string | null;
+  position: number;
 }
 
 export interface CourseDetail extends CourseRow {
@@ -104,7 +114,7 @@ export type CardSnapshotRow = Pick<
 >;
 
 const COURSE_COLUMNS =
-  "id, title, subject, summary, emoji, accent_hex, source, visibility, is_from_library, view_count, adopt_count, created_at, updated_at";
+  "id, title, subject, summary, emoji, accent_hex, source, visibility, is_from_library, view_count, adopt_count, created_at, updated_at, folder_id";
 
 const CARD_COLUMNS =
   "id, course_id, front, back, hint, position, kind, choices, correct_choice_index, is_suspended, state, due_date, interval_days, ease_factor, repetitions, lapses, step_index, created_at, mask_x, mask_y, mask_width, mask_height, group_id, image_path, is_reversed";
@@ -135,6 +145,35 @@ export async function listCourses(): Promise<CourseRow[]> {
         .is("deleted_at", null)
         .order("updated_at", { ascending: false });
       return (data as CourseRow[] | null) ?? [];
+    },
+  );
+}
+
+/**
+ * Les dossiers de la bibliothèque, à plat.
+ *
+ * L'arborescence se recompose à l'écran, pas en base : une liste de cinquante lignes se
+ * range en mémoire en un tour de boucle, là où une requête récursive coûterait un aller-
+ * retour par niveau. Le tri est celui qu'on veut voir - le rang voulu, puis le nom - donc
+ * l'écran n'a plus à trier.
+ */
+export async function listFolders(): Promise<FolderRow[]> {
+  const auth = await reader();
+  if (!auth) return [];
+
+  return cachedRead(
+    auth.userId,
+    "folders",
+    [userTag(auth.userId), coursesTag(auth.userId)],
+    async () => {
+      const { data } = await dataClient(auth.token)
+        .from("course_folders")
+        .select("id, parent_id, name, emoji, position")
+        .eq("user_id", auth.userId)
+        .is("deleted_at", null)
+        .order("position", { ascending: true })
+        .order("name", { ascending: true });
+      return (data as FolderRow[] | null) ?? [];
     },
   );
 }

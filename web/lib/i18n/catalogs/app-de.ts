@@ -1144,6 +1144,26 @@ export const appDe = {
     broken: "Das lässt sich nicht setzen. Prüf die Klammern.",
   },
 
+  folders: {
+    root: "Meine Kurse",
+    new: "Neuer Ordner",
+    namePlaceholder: "Ordnername",
+    rename: "Umbenennen",
+    delete: "Löschen",
+    up: "Aus dem Ordner",
+    upHint: "Zieh einen Kurs hierher, um ihn herauszunehmen.",
+    empty: "Dieser Ordner ist leer. Zieh einen Kurs hinein.",
+    breadcrumb: "Wo du in deinen Ordnern bist",
+    count: "{count, plural, one {# Kurs} other {# Kurse}}",
+    needName: "Gib dem Ordner einen Namen.",
+    missing: "Diesen Ordner gibt es nicht mehr.",
+    cannotNest: "Ein Ordner kann nicht in seinen eigenen Inhalt.",
+    create: "Anlegen",
+    moveTo: "Verschieben nach",
+    deleteQ: "Diesen Ordner löschen?",
+    deleteMsg: "Der Inhalt rückt eine Ebene hoch. Nichts wird gelöscht.",
+  },
+
   generate: {
     timeout: "Das Schreiben hat zu lange gedauert. Versuch es erneut.",
     writing: "Micabo schreibt die Karten…",

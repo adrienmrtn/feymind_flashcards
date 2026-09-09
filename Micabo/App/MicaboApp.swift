@@ -16,7 +16,7 @@ struct MicaboApp: App {
     @State private var uiLocale = UiLocaleStore()
     @State private var appearance = AppearanceStore.shared
 
-    private static let schema = Schema([Course.self, Flashcard.self, ReviewLog.self, Exam.self])
+    private static let schema = Schema([Course.self, CourseFolder.self, Flashcard.self, ReviewLog.self, Exam.self])
 
     init() {
         FontLoader.registerFonts()
