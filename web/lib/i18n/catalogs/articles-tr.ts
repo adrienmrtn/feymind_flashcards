@@ -4,7 +4,7 @@ export const articlesTr = {
     navAria: "Sayfalar",
     nextTitle: "Sırada oku",
     ctaTitle: "Bir ders bırak, neye dönüştüğüne bak.",
-    ctaBody: "İlki ücretsiz, sitede de iPhone'da da.",
+    ctaBody: "Sitede de iPhone'da da, aynı hesap ve aynı planla.",
   },
   method: {
     metaTitle: "Yöntem: aralıklı tekrar ve aktif hatırlama",
@@ -30,6 +30,7 @@ export const articlesTr = {
       "Micabo **SM-2** ile planlar, Anki'nin varsayılan kuralıdır. Yeni bir kart kısa basamaklardan — {steps} — geçer, sonra günlere çıkar. Sonra her not, {ease} ile başlayan ve yanıtlarına göre kımıldayan bir kolaylıkla aralığı çarpar.",
     planner2:
       "Dört düğme, iki değil: « biliyorum / bilmiyorum » zor hatırlanan kartı kendiliğinden gelenden ayırmaz — sonraki tarihi de tam bu fark kararlaştırır. Yeni bir kartta dört düğmenin duyurduğu budur:",
+    buttonsCaption: "Aralıklar uygulamanın planlayıcısı tarafından hesaplanır, elle yazılmaz.",
     planner3:
       "Aralık, basmadan **önce** düğmenin üstündedir. Kendi köşesinde karar veren bir planlayıcıya çabuk uyulmaz: hızlanmak için « kolay » dersin, kart üç hafta gider, sınav günü yeniden keşfedersin.",
     stepMinutes: "{n} dk",
@@ -41,10 +42,14 @@ export const articlesTr = {
     sheetTitle: "Önce özet kâğıdı, sonra kartlar",
     sheet1:
       "Bir flashcard, anlamış olmayı varsayar. Okumadığın bir fikri sınamak, neyden söz ettiğini bilmeden bir yanıt ezberlemektir — kart tutar, sınav tutmaz.",
+    sheetFigure: "Bırakılan belge **bir özet kâğıdı** olur: ders sıraya konur, önemli yerler işaretlenir. Kartlar sonra buradan çıkar. Uygulamadaki özet bileşeninin aynısı, demo ders üzerinde.",
     sheet2:
       "Bu yüzden Micabo belgenden önce **özet kâğıdını** yazar: ders sıraya konur, önemli yerler işaretlenir. Kartlar bu kâğıttan çıkar, ham belgeden değil. Okursun, sonra kendini sınarsın.",
     sheet3:
       "Micabo, belgenin konuşmadığı bir terimi asla tanımlamaz. Bağlam karar vermezse kuşkulu söz kâğıtta görünmez: uydurma bir tanım inandırıcıdır, tehlikeli olmasının nedeni de budur.",
+    formatsTitle: "Aynı özet üzerinden sorgulanmanın dört yolu",
+    formats1: "Aktif hatırlama ön-arka yüzle sınırlı değildir. Aynı özet üzerinden Micabo testler, boşluk doldurmalar ve kartlar sorar, puanlı deneme sınavları oluşturur. Sorular senin belgelerinden gelir ve planlayıcı hepsine aynı davranır: hatırlanan bir cevap bir sonrakini ileri iter.",
+    formatsFigure: "Bir test maddelerinden, bir boşluk doldurma boş satırından, bir kart sessiz ön yüzünden tanınır. **Dört format da aynı özetten çıkar** ve aynı ölçekte puanlanır.",
     limitsTitle: "Yöntemin yapmadığı",
     limits1:
       "Aralıklı tekrar, tekrarları yerleştirir. Senin yerine anlamaz, kompozisyon yazmaz, dün başlanan bir bölümü kurtarmaz — bir gecelik aralık yoktur.",
@@ -76,6 +81,9 @@ export const articlesTr = {
       "Micabo projeksiyonu bir şeyi **kaydırmadan önce** gösterir: kaç kart kapsandı, kaç geçiş kondu, kaç güne yayıldı. Sonradan keşfedilen bir yeniden planlama, iptal edilen bir yeniden planlamadır.",
     plan2:
       "Yük sona doğru sıkışır, akşamüstüne yığılmaz: son geçişler son {days} güne yayılır, karttan karta kaydırılır.",
+    dailyTitle: "Her gün adı konmuş bir iş taşır",
+    daily1: "„30 dakika tekrar et“ diyen bir plan bir zamanlayıcıdan farksızdır. Micabo'nunki ne yapılacağını söyler: 3. bölüm üzerine bir test, bir deneme sınavı, sesli bir anlatım, bir mola günü. Uygulamayı açarsın ve gün zaten yazılmıştır.",
+    dailyFigure: "Plan zamanın yönünde okunur ve son satır sınavdır. **Kaçırılan bir gün işi kaydırır, boşluk açmaz**: plan bir sonraki hesaplamada yeniden kurulur.",
     intensityTitle: "Üç yoğunluk, istediğin nota göre",
     intensityLead:
       "Her kartın sınavdan önce kaç kez geçeceği, « geçmek istiyorum » ile « birincilik istiyorum » için aynı soru değildir. Hedef notu koyarsın, Micabo yoğunluğu çıkarır:",
@@ -100,17 +108,14 @@ export const articlesTr = {
   },
   anki: {
     metaTitle: "Micabo ya da Anki: asıl değişen",
-    metaDescription:
-      "Anki ücretsiz, açık ve çok iyidir. Micabo kartları dersinden yazar ve her şeyi bir sınav tarihinin etrafında yeniden planlar. Dürüst karşılaştırma — Anki'nin kazandığı yerler dahil.",
+    metaDescription: "Anki açık, kanıtlanmış ve mükemmel. Micabo kartları dersinden yazar ve her şeyi bir sınav tarihinin etrafında yeniden planlar. Anki'nin kazandığı yerler dahil dürüst bir karşılaştırma.",
     eyebrow: "Karşılaştırma",
     h1: "Micabo ya da Anki: asıl değişen",
-    lead1:
-      "Anki çok iyi bir yazılımdır. Ücretsizdir, açıktır, yirmi yıllık mesafesi ve her şeyi belgelemiş bir topluluğu vardır. Zaten kullanıyorsan ve işine geliyorsa değiştirmek için bir nedenin yoktur.",
+    lead1: "Anki çok iyi bir program. Açık, yirmi yıllık geçmişi ve her şeyi belgelemiş bir topluluğu var. Zaten kullanıyorsan ve sana uyuyorsa, değiştirmek için hiçbir neden yok.",
     lead2:
       "Fark planlamada değildir — **aynı SM-2'dir**. Öndedir, kartlara sahip olmanın sürdüğü zamanda; ve arkadadır, bir sınav tarihi düşünce olan bitende.",
     tableTitle: "Satır satır",
-    tableLead:
-      "Üç satır Anki'nindir; birçoğu için en önemlisi: hiçbir şey tutmaz.",
+    tableLead: "Üç satır Anki'ye gidiyor ve oldukları gibi yazıldılar.",
     tableCaption: "Micabo ile Anki karşılaştırması, ölçüt ölçüt.",
     colCriterion: "Ölçüt",
     rowAlgo: "Algoritma",
@@ -123,10 +128,9 @@ export const articlesTr = {
     rowDate: "Bir sınav tarihi",
     rowDateMicabo: "Deste J gününün etrafında yeniden planlanır, hiçbiri ötesine gitmez.",
     rowDateAnki: "Son tarih diye bir fikir yoktur. Deste elle öne alınır.",
-    rowPrice: "Fiyat",
-    rowPriceMicabo:
-      "Bir ders ücretsiz, oturumda {cards} kart. Ötesinde yılda {price}.",
-    rowPriceAnki: "Ücretsiz ve açık kaynak, iPhone uygulaması hariç.",
+    rowQuestions: "Sorgulanma biçimleri",
+    rowQuestionsMicabo: "Kartlar, testler, boşluk doldurma, puanlı deneme sınavları, sesli anlatım.",
+    rowQuestionsAnki: "Ön-arka yüz ve kendi kurduğun kart türleri.",
     rowPlatforms: "Platformlar",
     rowPlatformsMicabo: "iPhone ve tarayıcı, iki yanda aynı hesap.",
     rowPlatformsAnki: "Bilgisayar, Android, iPhone, tarayıcı.",
@@ -139,9 +143,10 @@ export const articlesTr = {
     rowStart: "Başlangıç",
     rowStartMicabo: "Bırakılan bir belge, okunacak bir kâğıt, o akşam bir oturum.",
     rowStartAnki: "İlk karttan önce anlaşılacak ayarlar.",
-    costTitle: "Anki'nin maliyeti fiyatı değildir",
+    costTitle: "Anki'nin gerçek maliyeti: zaman",
     cost1:
       "Bir fakülte dersi için işe yarar bir Anki destesi, bölüm başına iki dört saat yazımdır: kesmek, fikir başına bir soru, bir karta beş öğe yığmamak. Bu iş öğreticidir — inkâr etmek dürüst olmaz — ama Anki'yi eylülde açıp kasımda bırakmanın nedeni de bu iştir.",
+    costFigure: "Ders notu, fotoğraflar, Word, PowerPoint, video, ses: **her şey olduğu gibi girer**, bir Anki destesi de. Yazma işi gider, yeniden okuma kalır.",
     cost2:
       "Micabo bu adımı alır. Ders sıraya konmuş bir kâğıt olur, sonra o kâğıttan kartlar. Yeniden okur, yanlışı düzeltir, işe yaramayanı silersin. İş yine senindir, ama boş sayfada değil, yeniden okumada başlar.",
     costNote:
@@ -153,8 +158,7 @@ export const articlesTr = {
       "Anki'de desteyi elle öne alarak veya akşamdan hepsini tekrar ederek idare edilir. Micabo'da tarihi koyarsın, deste etrafında yeniden planlanır; bir tavan kartın J gününün ötesine gitmesini engeller. Nasıl olduğunu [[exam]] anlatır.",
     examLink: "Sınav kipi",
     pickTitle: "Hangisini almak",
-    pickAnki:
-      "**Anki'de kal** planlayıcıyı ayarlamayı seviyorsan, FSRS istiyorsan, Android'deysen veya dosyaları sana ait ücretsiz, açık bir araç istiyorsan.",
+    pickAnki: "**Anki'de kal**: planlayıcını ayarlamayı seviyorsan, FSRS istiyorsan, Android kullanıyorsan ya da dosyaları sana ait açık bir araca önem veriyorsan.",
     pickMicabo:
       "**Micabo'yu dene** seni durduran tekrar değil de kart üretmekse, ya da tekrarların sürekli bir akış değil sınav tarihleri etrafındaysa.",
     pickBoth:

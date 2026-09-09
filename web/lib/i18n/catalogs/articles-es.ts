@@ -4,7 +4,7 @@ export const articlesEs = {
     navAria: "Páginas",
     nextTitle: "Para leer después",
     ctaTitle: "Deja un curso y mira en qué se convierte.",
-    ctaBody: "El primero es gratis, en el sitio y en el iPhone.",
+    ctaBody: "En el sitio y en el iPhone, con la misma cuenta y el mismo plan.",
   },
   method: {
     metaTitle: "El método: repetición espaciada y recuerdo activo",
@@ -30,6 +30,7 @@ export const articlesEs = {
       "Micabo planifica con **SM-2**, la regla de Anki en sus ajustes por defecto. Una tarjeta nueva pasa por peldaños cortos — {steps} — antes de salir a días. Luego cada nota multiplica el intervalo por una facilidad propia de la tarjeta, que parte de {ease} y se mueve según tus respuestas.",
     planner2:
       "Cuatro botones, no dos: « lo sé / no lo sé » no distingue la tarjeta recuperada con esfuerzo de la que vino sola, y es justo ese margen el que decide la fecha siguiente. Esto es lo que anuncian los cuatro botones en una tarjeta nueva:",
+    buttonsCaption: "Los intervalos los calcula el planificador de la app, no están escritos a mano.",
     planner3:
       "El intervalo está escrito en el botón **antes** de pulsar. Un planificador que decide a solas se desobedece pronto: se marca « fácil » para ir más rápido, la tarjeta se va tres semanas y se redescubre el día del examen.",
     stepMinutes: "{n} min",
@@ -41,10 +42,14 @@ export const articlesEs = {
     sheetTitle: "La ficha primero, las tarjetas después",
     sheet1:
       "Una flashcard supone que ya se ha entendido. Ponerse a prueba sobre una idea no leída es aprender de memoria una respuesta sin saber de qué habla — la tarjeta acertará, el examen no.",
+    sheetFigure: "El documento depositado se convierte en **una ficha**: el curso en orden, los pasajes que importan marcados. De ahí salen después las tarjetas. Es el mismo componente de ficha que en la app, sobre el curso de demostración.",
     sheet2:
       "Por eso Micabo escribe primero **la ficha** a partir de tu documento: el curso en orden, los pasajes que importan marcados. Las tarjetas salen de esa ficha, no del documento bruto. Lees, luego te pones a prueba.",
     sheet3:
       "Micabo no define nunca un término del que el documento no hable. Cuando el contexto no decide, la palabra dudosa no aparece en la ficha: una definición inventada es perfectamente creíble, y por eso es peligrosa.",
+    formatsTitle: "Cuatro formas de preguntarte sobre la misma ficha",
+    formats1: "El recuerdo activo no se limita al anverso y el reverso. Sobre una misma ficha, Micabo plantea tests, textos con hueco y tarjetas, y compone simulacros puntuados. Las preguntas salen de tus documentos, y el planificador las trata todas igual: una respuesta recuperada aleja la siguiente.",
+    formatsFigure: "Un test se reconoce por sus viñetas, un texto con hueco por su línea vacía, una tarjeta por su anverso mudo. **Los cuatro formatos salen de la misma ficha**, y se puntúan en la misma escala.",
     limitsTitle: "Lo que el método no hace",
     limits1:
       "La repetición espaciada coloca los repasos. No entiende por ti, no redacta un ensayo y no recupera un capítulo empezado la víspera: no hay espaciado posible en una noche.",
@@ -76,6 +81,9 @@ export const articlesEs = {
       "Micabo muestra la proyección **antes** de mover nada: cuántas tarjetas están cubiertas, cuántos pasos colocados, en cuántos días. Una replanificación que se descubre después es una que se cancela.",
     plan2:
       "La carga se aprieta hacia el final sin amontonarse en la víspera: los últimos pasos se reparten en los {days} últimos días, desfasados de una tarjeta a otra.",
+    dailyTitle: "Cada jornada lleva un trabajo con nombre",
+    daily1: "Un plan que dice «repasar 30 minutos» no se distingue de un temporizador. El de Micabo dice lo que hay que hacer: un test sobre el capítulo 3, un simulacro, una explicación en voz alta, un día de descanso. Abres la app y la jornada ya está escrita.",
+    dailyFigure: "El plan se lee en el sentido del tiempo, y la última línea es el examen. **Un día perdido desplaza el trabajo, no abre un agujero**: el plan se rehace en el siguiente cálculo.",
     intensityTitle: "Tres intensidades, según la nota que quieres",
     intensityLead:
       "Cuántas veces debe volver cada tarjeta antes de la prueba no es la misma pregunta para « quiero aprobar » y para « quiero la máxima ». Pones la nota objetivo, Micabo deduce la intensidad:",
@@ -100,17 +108,14 @@ export const articlesEs = {
   },
   anki: {
     metaTitle: "Micabo o Anki: lo que cambia de verdad",
-    metaDescription:
-      "Anki es gratis, abierto y excelente. Micabo escribe las tarjetas a partir de tu curso y replanifica todo alrededor de una fecha de examen. Comparación honesta, también donde Anki gana.",
+    metaDescription: "Anki es abierto, probado y excelente. Micabo escribe las tarjetas a partir de tu curso y replanifica todo alrededor de una fecha de examen. Una comparación honesta, incluso donde gana Anki.",
     eyebrow: "Comparación",
     h1: "Micabo o Anki: lo que cambia de verdad",
-    lead1:
-      "Anki es un muy buen programa. Es gratis, abierto, tiene veinte años de recorrido y una comunidad que lo ha documentado todo. Si ya lo usas y te vale, no tienes ninguna razón para cambiar.",
+    lead1: "Anki es un programa muy bueno. Es abierto, tiene veinte años de recorrido y una comunidad que lo ha documentado todo. Si ya lo usas y te va bien, no tienes ninguna razón para cambiar.",
     lead2:
       "La diferencia no está en la planificación — **es el mismo SM-2**. Está antes, en el tiempo que hace falta para tener tarjetas, y después, en lo que ocurre cuando cae una fecha de examen.",
     tableTitle: "Línea a línea",
-    tableLead:
-      "Tres líneas se las lleva Anki, entre ellas la más importante para mucha gente: no cuesta nada.",
+    tableLead: "Tres líneas van para Anki, y están escritas tal cual.",
     tableCaption: "Comparación de Micabo y Anki, criterio a criterio.",
     colCriterion: "Criterio",
     rowAlgo: "El algoritmo",
@@ -123,10 +128,9 @@ export const articlesEs = {
     rowDate: "Una fecha de examen",
     rowDateMicabo: "El mazo se replanifica alrededor del día D, y nada se va más allá.",
     rowDateAnki: "No hay idea de fecha tope. Se adelanta el mazo a mano.",
-    rowPrice: "El precio",
-    rowPriceMicabo:
-      "Un curso gratis, {cards} tarjetas por sesión. Más allá, {price} al año.",
-    rowPriceAnki: "Gratis y de código abierto, salvo la app de iPhone.",
+    rowQuestions: "Las formas de preguntar",
+    rowQuestionsMicabo: "Tarjetas, tests, textos con hueco, simulacros puntuados, explicación en voz alta.",
+    rowQuestionsAnki: "El anverso y el reverso, y los tipos de tarjeta que uno construye por su cuenta.",
     rowPlatforms: "Las plataformas",
     rowPlatformsMicabo: "iPhone y navegador, la misma cuenta en los dos lados.",
     rowPlatformsAnki: "Ordenador, Android, iPhone, navegador.",
@@ -139,9 +143,10 @@ export const articlesEs = {
     rowStart: "La puesta en marcha",
     rowStartMicabo: "Un documento dejado, una ficha que leer, una sesión esa misma noche.",
     rowStartAnki: "Ajustes que entender antes de la primera tarjeta.",
-    costTitle: "El coste de Anki no es su precio",
+    costTitle: "Lo que Anki cuesta de verdad: tiempo",
     cost1:
       "Un mazo de Anki útil para un curso de facultad son dos a cuatro horas de tecleo por capítulo: cortar, formular una pregunta por idea, no apilar cinco elementos en una tarjeta. Ese trabajo enseña — negarlo sería deshonesto — pero es el trabajo que hace que se abra Anki en septiembre y ya no en noviembre.",
+    costFigure: "Apuntes, fotos, Word, PowerPoint, vídeo, audio: **todo entra tal cual**, y un mazo de Anki también. Desaparece el tecleo, queda la relectura.",
     cost2:
       "Micabo asume ese paso. El curso se vuelve una ficha ordenada, luego tarjetas sacadas de esa ficha. Lees, corriges lo falso, borras lo que no sirve. Sigue siendo tu trabajo, pero empieza en la relectura en vez de en la página en blanco.",
     costNote:
@@ -153,8 +158,7 @@ export const articlesEs = {
       "En Anki se sale adelantando el mazo a mano, o repasándolo todo la víspera. En Micabo pones la fecha y el mazo se replanifica alrededor, con un tope que impide que una tarjeta se vaya más allá del día D. [[exam]] detalla cómo.",
     examLink: "El modo examen",
     pickTitle: "Cuál coger",
-    pickAnki:
-      "**Quédate en Anki** si te gusta ajustar el planificador, si quieres FSRS, si estás en Android, o si quieres una herramienta gratis y abierta cuyos archivos te pertenecen.",
+    pickAnki: "**Quédate en Anki** si te gusta ajustar tu planificador, si quieres FSRS, si estás en Android, o si te importa una herramienta abierta cuyos archivos te pertenecen.",
     pickMicabo:
       "**Prueba Micabo** si lo que te frena no es el repaso sino fabricar las tarjetas, o si tus repasos giran en torno a fechas de examen y no a un flujo continuo.",
     pickBoth:

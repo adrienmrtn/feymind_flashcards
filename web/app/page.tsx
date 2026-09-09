@@ -7,10 +7,12 @@ import { DemoCards } from "@/components/landing/DemoCards";
 import { ExamMode } from "@/components/landing/ExamMode";
 import { Footer } from "@/components/landing/Footer";
 import { Hero } from "@/components/landing/Hero";
-import { LandingHeader } from "@/components/landing/LandingHeader";
+import { Proof } from "@/components/landing/Proof";
 import { Questions } from "@/components/landing/Questions";
 import { RetentionChart } from "@/components/landing/RetentionChart";
 import { Reveal } from "@/components/landing/Reveal";
+import { Steps } from "@/components/landing/Steps";
+import { SiteHeader } from "@/components/site/SiteHeader";
 import { currentUser } from "@/lib/data/user";
 import { T } from "@/components/i18n/T";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
@@ -40,7 +42,9 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * La vitrine. Elle montre le produit. Elle ne pose aucune question.
  *
- * Elle se lit d'un seul défilement : le document devient une fiche, des cartes, puis un examen.
+ * Elle se lit dans l'ordre du produit : l'app telle qu'elle s'ouvre, puis les six étapes qui
+ * y mènent, les cartes qu'on retourne, la raison pour laquelle ça tient, le mode examen, ce
+ * que ça donne, et les questions qu'on se pose avant de commencer.
  *
  * Un lien de confirmation qui retombe ici (Site URL) n'y reste pas : s'il y a un code,
  * on reprend le callback. Une session déjà ouverte laisse la vitrine : le bouton
@@ -65,14 +69,29 @@ export default async function LandingPage({
     redirect(`${callback.pathname}${callback.search}` as Route);
   }
 
-  const [{ locale }, user] = await Promise.all([getTranslator(), currentUser()]);
+  const [{ t, locale }, user] = await Promise.all([getTranslator(), currentUser()]);
   const signedIn = Boolean(user);
+  const nav = [
+    { href: `#${LANDING_SECTIONS.how}`, label: t("site.how") },
+    { href: `#${LANDING_SECTIONS.method}`, label: t("site.method") },
+    { href: `#${LANDING_SECTIONS.exam}`, label: t("site.exam") },
+    { href: `#${LANDING_SECTIONS.questions}`, label: t("site.questions") },
+  ];
 
   return (
     <>
-      <LandingHeader signedIn={signedIn} />
+      <SiteHeader nav={nav} signedIn={signedIn} />
       <main id="contenu">
         <Hero signedIn={signedIn} />
+
+        <Section
+          id={LANDING_SECTIONS.how}
+          eyebrow="landing.howEyebrow"
+          title="landing.howTitle"
+          note="landing.howNote"
+        >
+          <Steps />
+        </Section>
 
         <Section
           id={LANDING_SECTIONS.cards}
@@ -103,11 +122,15 @@ export default async function LandingPage({
           <ExamMode />
         </Section>
 
+        <section id={LANDING_SECTIONS.results} className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36">
+          <Proof />
+        </section>
+
         <Section
           id={LANDING_SECTIONS.questions}
           eyebrow="landing.questionsEyebrow"
           title="landing.questionsTitle"
-          note=""
+          note="landing.questionsNote"
           more={{ href: localizedHref(locale, ANKI_PAGE.path), label: "landing.questionsMore" }}
         >
           <Questions />
@@ -121,6 +144,12 @@ export default async function LandingPage({
   );
 }
 
+/**
+ * Une section de la vitrine : un sur-titre, un titre centré, une phrase, et ce qu'elle montre.
+ *
+ * Le titre est centré comme ceux du parcours d'inscription : sur 1100 px, un titre calé à
+ * gauche fait chercher la suite à droite, et il n'y a rien.
+ */
 function Section({
   id,
   eyebrow,
@@ -146,24 +175,21 @@ function Section({
     // `scroll-mt` : la barre de la vitrine est collante, et une ancre sans marge
     // dépose le titre derrière elle.
     <section id={id} className="mx-auto mt-28 max-w-page scroll-mt-20 px-screen sm:mt-36">
-      <Reveal>
+      <Reveal className="mx-auto max-w-[60ch] text-center">
         <p className="eyebrow text-ink-tertiary">
           <T k={eyebrow} />
         </p>
-        <h2 className="mt-2.5 max-w-[26ch] text-[30px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[40px]">
+        <h2 className="mt-2.5 text-balance text-[30px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[40px]">
           <T k={title} />
         </h2>
         {note ? (
-          <p className="mt-4 max-w-reading text-[16px] leading-relaxed text-ink-secondary">
+          <p className="mx-auto mt-4 max-w-reading text-[16px] leading-relaxed text-ink-secondary">
             <T k={note} />
           </p>
         ) : null}
         {more ? (
           <p className="mt-4">
-            <Link
-              href={more.href}
-              className="underline-draw text-[14.5px] font-medium text-ink"
-            >
+            <Link href={more.href} className="underline-draw text-[14.5px] font-medium text-ink">
               <T k={more.label} />
             </Link>
           </p>

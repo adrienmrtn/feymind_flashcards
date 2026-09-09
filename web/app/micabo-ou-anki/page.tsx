@@ -1,7 +1,6 @@
-import { entitlement, pricing } from "@micabo/core";
-
+import { FormatsStory } from "@/components/onboarding/stories/FormatsStory";
 import { ArticleMarkup, ArticleP } from "@/components/pages/ArticleMarkup";
-import { ArticleNote, ArticleSection, ArticleShell } from "@/components/pages/ArticleShell";
+import { ArticleFigure, ArticleNote, ArticleSection, ArticleShell } from "@/components/pages/ArticleShell";
 import { articleMetadata } from "@/lib/articles";
 import { getTranslator } from "@/lib/i18n/server";
 import { ANKI_PAGE } from "@/lib/site-pages";
@@ -20,16 +19,12 @@ interface Row {
 /**
  * **La comparaison avec Anki, écrite honnêtement.**
  *
- * Trois lignes vont à Anki, dont la plus importante — il est gratuit.
- * Les phrases viennent des catalogues ; les nombres (prix, cartes) restent
- * lus dans `@micabo/core`.
+ * Trois lignes vont à Anki, et elles sont écrites telles quelles. La page ne parle pas
+ * d'argent : elle compare ce que les deux outils font, et ce qu'ils demandent de faire à
+ * la main. Les phrases viennent des catalogues.
  */
 export default async function AnkiComparisonPage() {
-  const { t, locale } = await getTranslator();
-  const price = new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: "EUR",
-  }).format(pricing.YEARLY.price);
+  const { t } = await getTranslator();
 
   const rows: Row[] = [
     {
@@ -51,13 +46,10 @@ export default async function AnkiComparisonPage() {
       edge: "micabo",
     },
     {
-      criterion: t("articles.anki.rowPrice"),
-      micabo: t("articles.anki.rowPriceMicabo", {
-        cards: entitlement.FREE_TIER.cardsPerSession,
-        price,
-      }),
-      anki: t("articles.anki.rowPriceAnki"),
-      edge: "anki",
+      criterion: t("articles.anki.rowQuestions"),
+      micabo: t("articles.anki.rowQuestionsMicabo"),
+      anki: t("articles.anki.rowQuestionsAnki"),
+      edge: "micabo",
     },
     {
       criterion: t("articles.anki.rowPlatforms"),
@@ -98,7 +90,7 @@ export default async function AnkiComparisonPage() {
       }
     >
       <ArticleSection id="tableau" title={t("articles.anki.tableTitle")} wide>
-        <ArticleP k="articles.anki.tableLead" className="max-w-reading" />
+        <ArticleP k="articles.anki.tableLead" className="mx-auto max-w-reading" />
         <ComparisonTable
           rows={rows}
           caption={t("articles.anki.tableCaption")}
@@ -106,9 +98,12 @@ export default async function AnkiComparisonPage() {
         />
       </ArticleSection>
 
-      <ArticleSection id="le-vrai-cout" title={t("articles.anki.costTitle")}>
-        <ArticleP k="articles.anki.cost1" />
-        <ArticleP k="articles.anki.cost2" />
+      <ArticleSection id="le-vrai-cout" title={t("articles.anki.costTitle")} wide>
+        <ArticleP k="articles.anki.cost1" className="mx-auto max-w-reading" />
+        <ArticleFigure caption={<ArticleMarkup text={t("articles.anki.costFigure")} />}>
+          <FormatsStory />
+        </ArticleFigure>
+        <ArticleP k="articles.anki.cost2" className="mx-auto mt-6 max-w-reading" />
         <ArticleNote>
           <ArticleMarkup text={t("articles.anki.costNote")} />
         </ArticleNote>
@@ -139,7 +134,7 @@ function ComparisonTable({
 }) {
   return (
     <>
-      <div className="not-prose mt-8 hidden overflow-hidden rounded-group border border-stroke sm:block">
+      <div className="not-prose paper mt-8 hidden overflow-hidden rounded-sheet bg-surface sm:block">
         <table className="w-full border-collapse text-left text-[14.5px]">
           <caption className="sr-only">{caption}</caption>
           <thead>
@@ -171,20 +166,16 @@ function ComparisonTable({
 
       <ul className="not-prose mt-8 space-y-3 sm:hidden">
         {rows.map((row) => (
-          <li key={row.criterion} className="rounded-group border border-stroke bg-surface p-5">
+          <li key={row.criterion} className="paper rounded-group bg-surface p-5">
             <p className="text-[13px] font-semibold text-ink">{row.criterion}</p>
             <dl className="mt-3 space-y-2.5 text-[14px]">
               <div>
                 <dt className="text-[12px] font-medium text-ink-tertiary">Micabo</dt>
-                <dd className={row.edge === "micabo" ? "text-ink" : "text-ink-secondary"}>
-                  {row.micabo}
-                </dd>
+                <dd className={row.edge === "micabo" ? "text-ink" : "text-ink-secondary"}>{row.micabo}</dd>
               </div>
               <div>
                 <dt className="text-[12px] font-medium text-ink-tertiary">Anki</dt>
-                <dd className={row.edge === "anki" ? "text-ink" : "text-ink-secondary"}>
-                  {row.anki}
-                </dd>
+                <dd className={row.edge === "anki" ? "text-ink" : "text-ink-secondary"}>{row.anki}</dd>
               </div>
             </dl>
           </li>
@@ -196,11 +187,7 @@ function ComparisonTable({
 
 function Cell({ text, leading }: { text: string; leading: boolean }) {
   return (
-    <td
-      className={`px-5 py-4 align-top leading-relaxed ${
-        leading ? "font-medium text-ink" : "text-ink-secondary"
-      }`}
-    >
+    <td className={`px-5 py-4 align-top leading-relaxed ${leading ? "font-medium text-ink" : "text-ink-secondary"}`}>
       {text}
     </td>
   );
