@@ -145,6 +145,8 @@ export {
   todayCardCount,
   type ExamKind,
   type LoadBar,
+  type LoadMock,
+  type LoadShare,
   type MockBlock,
   type PlanBlock,
   type PlanDay,

@@ -347,6 +347,40 @@ export function edgeFunction(name, body) {
     };
   }
 
+  // La fiche d'un document importé. Sans elle, tout le parcours de création d'un plan
+  // s'arrêtait au premier document : la fiche revenait vide et l'écriture échouait.
+  if (name === "generate-course") {
+    const title = (body?.title ?? "").trim() || "Cours importé";
+    return {
+      course: {
+        title,
+        emoji: "📘",
+        subject: "svt",
+        summary: `Fiche de démonstration : ${title.toLowerCase()}.`,
+        sheet: {
+          blocks: [
+            { type: "heading", text: title },
+            {
+              type: "paragraph",
+              text: "Ce paragraphe vient du faux Supabase : il tient lieu de fiche pour que le parcours aille jusqu'au bout.",
+            },
+            {
+              type: "definition",
+              term: "Notion clé",
+              text: "La définition que le modèle aurait écrite, en une phrase.",
+            },
+            {
+              type: "list",
+              title: "Dans l'ordre",
+              items: ["Première étape", "Deuxième étape", "Troisième étape"],
+              ordered: true,
+            },
+          ],
+        },
+      },
+    };
+  }
+
   if (name === "generate-flashcards") {
     return {
       cards: Array.from({ length: 12 }, (_, index) => ({

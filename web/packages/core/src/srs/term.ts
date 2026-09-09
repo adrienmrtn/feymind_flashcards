@@ -482,13 +482,45 @@ export function termLoad(plan: TermPlan): TermLoad {
 // MARK: - Lecture du plan
 
 /** Ce que le plan pose aujourd'hui, dans l'ordre où l'écran doit le montrer. */
-export function todayBlocks(plan: TermPlan): PlanBlock[] {
-  return plan.days[0]?.blocks ?? [];
+/**
+ * Ce que le plan demande aujourd'hui, **moins ce qui est déjà fait.**
+ *
+ * Le compte rendait le nombre de passages que le plan avait posés sur la journée. C'est le
+ * bon chiffre pour dessiner une charge, et le mauvais pour l'accueil : il ne bougeait pas
+ * d'un pouce quand on révisait, si bien que « 42 cartes aujourd'hui » restait affiché après
+ * les avoir toutes faites. Un compteur qui ne descend jamais se lit comme une panne, et il
+ * ne disait pas non plus la même chose que la session, qui ne sert que ce qui est dû.
+ *
+ * `pending` répond « cette carte est-elle encore à faire ». Sans lui, on retrouve l'ancien
+ * total, celui dont les graphes ont besoin.
+ */
+export function todayBlocks(
+  plan: TermPlan,
+  pending?: (cardId: string) => boolean,
+): PlanBlock[] {
+  const blocks = plan.days[0]?.blocks ?? [];
+  if (!pending) return blocks;
+  const left: PlanBlock[] = [];
+  for (const block of blocks) {
+    if (!isReviewBlock(block)) {
+      left.push(block);
+      continue;
+    }
+    const cardIds = block.cardIds.filter(pending);
+    if (cardIds.length === 0) continue;
+    left.push({ ...block, cardIds });
+  }
+  return left;
 }
 
-/** Le total de cartes posées aujourd'hui par le plan. */
-export function todayCardCount(plan: TermPlan): number {
-  return plan.days[0]?.cardCount ?? 0;
+/** Le total de cartes que la journée demande encore. */
+export function todayCardCount(plan: TermPlan, pending?: (cardId: string) => boolean): number {
+  if (!pending) return plan.days[0]?.cardCount ?? 0;
+  let count = 0;
+  for (const block of todayBlocks(plan, pending)) {
+    if (isReviewBlock(block)) count += block.cardIds.length;
+  }
+  return count;
 }
 
 
@@ -501,17 +533,69 @@ export interface LoadBar {
   examIds: string[];
   /** Un jour posé off : vide par choix, pas par manque de travail. */
   isOff: boolean;
+  /**
+   * Les examens blancs posés ce jour-là, et la charge par épreuve.
+   *
+   * Le graphe de charge ne rendait qu'un total de minutes et une liste d'identifiants
+   * d'épreuves. On pouvait donc dessiner une hauteur, et rien dire de plus : ni ce qu'il y a
+   * dedans, ni pourquoi cette semaine-là est la plus haute. Ces deux champs portent de quoi
+   * répondre au survol, sans refaire le calcul dans l'écran.
+   */
+  mocks: LoadMock[];
+  byExam: LoadShare[];
+}
+
+export interface LoadMock {
+  examId: string;
+  examName: string;
+  questionCount: number;
+  minutes: number;
+}
+
+export interface LoadShare {
+  examId: string;
+  examName: string;
+  cardCount: number;
+  minutes: number;
 }
 
 export function loadBars(plan: TermPlan): LoadBar[] {
-  return plan.days.map((day) => ({
-    offset: day.offset,
-    date: day.date,
-    minutes: day.minutes,
-    cardCount: day.cardCount,
-    examIds: day.examIds,
-    isOff: day.isOff,
-  }));
+  return plan.days.map((day) => {
+    const shares = new Map<string, LoadShare>();
+    const mocks: LoadMock[] = [];
+
+    for (const block of day.blocks) {
+      if (isMockBlock(block)) {
+        mocks.push({
+          examId: block.examId,
+          examName: block.examName,
+          questionCount: block.questionCount,
+          minutes: block.minutes,
+        });
+        continue;
+      }
+      const share = shares.get(block.examId) ?? {
+        examId: block.examId,
+        examName: block.examName,
+        cardCount: 0,
+        minutes: 0,
+      };
+      share.cardCount += block.cardIds.length;
+      share.minutes += block.minutes;
+      shares.set(block.examId, share);
+    }
+
+    return {
+      offset: day.offset,
+      date: day.date,
+      minutes: day.minutes,
+      cardCount: day.cardCount,
+      examIds: day.examIds,
+      isOff: day.isOff,
+      mocks,
+      byExam: [...shares.values()].sort((left, right) => right.cardCount - left.cardCount),
+    };
+  });
 }
 
 /**

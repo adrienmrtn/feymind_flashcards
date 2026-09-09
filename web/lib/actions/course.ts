@@ -231,27 +231,27 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
 
   const start = (existing?.[0]?.position ?? -1) + 1;
 
-  const { error: insertError } = await supabase.from("flashcards").insert(
-    cards.map((card, index) => ({
-      id: crypto.randomUUID(),
-      user_id: user.id,
-      course_id: courseId,
-      front: latexCommandsToUnicode(card.front ?? ""),
-      back: latexCommandsToUnicode(card.back ?? ""),
-      hint: card.hint ? latexCommandsToUnicode(card.hint) : null,
-      position: start + index,
-      kind: card.kind ?? "basic",
-      choices:
-        card.kind === "choice"
-          ? (card.choices ?? []).map((choice) => latexCommandsToUnicode(choice))
-          : [],
-      correct_choice_index: card.answerIndex ?? 0,
-      // Une carte neuve part due tout de suite : c'est la file d'étude qui décide combien on en
-      // introduit par jour, pas la date d'échéance.
-      state: "new",
-      due_date: new Date().toISOString(),
-    })),
-  );
+  const rows = cards.map((card, index) => ({
+    id: crypto.randomUUID(),
+    user_id: user.id,
+    course_id: courseId,
+    front: latexCommandsToUnicode(card.front ?? ""),
+    back: latexCommandsToUnicode(card.back ?? ""),
+    hint: card.hint ? latexCommandsToUnicode(card.hint) : null,
+    position: start + index,
+    kind: card.kind ?? "basic",
+    choices:
+      card.kind === "choice"
+        ? (card.choices ?? []).map((choice) => latexCommandsToUnicode(choice))
+        : [],
+    correct_choice_index: card.answerIndex ?? 0,
+    // Une carte neuve part due tout de suite : c'est la file d'étude qui décide combien on en
+    // introduit par jour, pas la date d'échéance.
+    state: "new",
+    due_date: new Date().toISOString(),
+  }));
+
+  const { error: insertError } = await supabase.from("flashcards").insert(rows);
 
   if (insertError) return { status: "error" as const, message: insertError.message };
 
@@ -260,7 +260,28 @@ export async function generateCards(courseId: string, requested?: QuestionQuota)
   revalidatePath("/app");
   revalidatePath("/app/cours");
   revalidatePath("/app/paquets");
-  return { status: "ok" as const, count: cards.length };
+
+  // Les cartes reviennent avec le compte. Écrire quelque chose sans jamais le montrer oblige
+  // l'étudiant à faire confiance à un nombre ; c'est ce qui rendait l'étape opaque dans la
+  // création d'un plan, où l'on ne quittait pas le parcours pour aller voir le paquet.
+  return {
+    status: "ok" as const,
+    count: rows.length,
+    cards: rows.map((row) => ({
+      id: row.id,
+      front: row.front,
+      back: row.back,
+      kind: row.kind,
+    })),
+  };
+}
+
+/** Une carte telle que l'écran qui vient de la demander l'affiche. */
+export interface WrittenCard {
+  id: string;
+  front: string;
+  back: string;
+  kind: string;
 }
 
 interface RawCard {

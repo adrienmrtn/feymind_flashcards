@@ -98,6 +98,7 @@ export function ImportPanel({
   onImported,
   onQueue,
   queueLabel,
+  queueHandle,
 }: {
   initialLength?: SheetLength;
   /**
@@ -115,6 +116,18 @@ export function ImportPanel({
   onQueue?: (document: QueuedDocument) => void;
   /** Le nom du bouton quand on met de côté. */
   queueLabel?: string;
+  /**
+   * Confier la mise de côté à l'appelant, au lieu de la demander ici.
+   *
+   * Le panneau posait un bouton « Ajouter au programme » sous l'aperçu. Depuis la création
+   * d'un plan, ce bouton n'était pas un choix : **tout ce qu'on dépose là est au programme**,
+   * c'est le sens de l'écran. Le rendre cliquable posait donc une question dont la réponse
+   * était déjà connue, et ajoutait un clic entre le document et la suite.
+   *
+   * Le panneau annonce à la place ce qu'il ferait, et c'est le « Continuer » de l'écran qui
+   * l'exécute. `null` veut dire qu'il n'y a rien à mettre de côté pour le moment.
+   */
+  queueHandle?: (queue: (() => void) | null) => void;
 }) {
   const { t } = useI18n();
   const [extra, setExtra] = useState<Extra>(null);
@@ -147,6 +160,7 @@ export function ImportPanel({
       if (draft?.fileUrl) URL.revokeObjectURL(draft.fileUrl);
     };
   }, [draft?.fileUrl]);
+
 
   function finish(result: { status: string; courseId?: string; message?: string }) {
     if (result.status === "ok" && result.courseId) {
@@ -371,6 +385,17 @@ export function ImportPanel({
       ? Boolean(draft.video)
       : draft.text.trim().length >= 40 || (draft.images?.length ?? 0) > 0
   );
+  // Ce que l'écran d'accueil du plan exécutera à sa place. On le ré-enregistre à chaque
+  // changement de l'aperçu ou des réglages, sinon il mettrait de côté un document périmé.
+  const handleRef = useRef(queueHandle);
+  handleRef.current = queueHandle;
+  const readyToQueue = Boolean(onQueue && draft && canGenerate && !busy);
+  useEffect(() => {
+    if (!handleRef.current) return;
+    handleRef.current(readyToQueue && draft ? () => generate(draft) : null);
+    return () => handleRef.current?.(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readyToQueue, draft, title, blocks, visibility, language, instructions]);
 
   // **L'attente reste dans la page.** Elle occupait tout l'écran : un voile noir sur l'app,
   // le défilement bloqué, et sur le chemin le plus courant un document HTML autonome écrit
@@ -672,7 +697,7 @@ export function ImportPanel({
         </div>
       </div>
 
-      {previewing ? (
+      {previewing && !queueHandle ? (
         <div className="mt-4 flex justify-end">
           <Button
             type="button"

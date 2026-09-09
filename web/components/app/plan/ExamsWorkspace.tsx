@@ -176,8 +176,8 @@ function ExamRow({ exam }: { exam: PlanExam }) {
         <span className="block truncate text-[14px] font-medium text-ink">{exam.name}</span>
         <span className="numeral mt-0.5 block truncate text-[12.5px] text-ink-tertiary">
           {exam.measured && exam.mockScore != null
-            ? t("app.plan.exams.measured", { score: exam.mockScore, projected: exam.projectedPercent })
-            : t("app.plan.exams.readiness", { now: exam.masteryPercent, projected: exam.projectedPercent })}
+            ? t("app.plan.exams.measured", { score: exam.mockScore })
+            : t("app.plan.exams.readiness", { now: exam.masteryPercent })}
         </span>
       </span>
       <span className={`numeral shrink-0 rounded-full px-2.5 py-1 text-[12px] font-semibold ${tone}`}>

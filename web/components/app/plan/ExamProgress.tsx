@@ -17,7 +17,6 @@ export type { MockPoint } from "@/components/app/charts/MockTrend";
  */
 export function ExamProgress({
   masteryPercent,
-  projectedPercent,
   measured,
   mockScore,
   cardCount,
@@ -26,7 +25,6 @@ export function ExamProgress({
   mocks,
 }: {
   masteryPercent: number;
-  projectedPercent: number;
   measured: boolean;
   mockScore: number | null;
   cardCount: number;
@@ -51,7 +49,6 @@ export function ExamProgress({
       <div className="mt-4">
         <ReadinessBar
           now={measured && mockScore != null ? mockScore : masteryPercent}
-          projected={projectedPercent}
           target={targetScore}
           measured={measured}
         />

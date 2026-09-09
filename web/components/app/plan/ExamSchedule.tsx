@@ -86,23 +86,40 @@ export function ExamSchedule({
                 <div
                   key={day.offset}
                   title={`${date.toLocaleDateString(bcp, { weekday: "long", day: "numeric", month: "long" })} · ${title}`}
+                  /*
+                    Un examen blanc se voyait à une pastille de deux pixels dans un coin, la
+                    même que le jour de l'épreuve. Or ce n'est pas une nuance de charge :
+                    c'est le seul jour de la période où l'on est mesuré, et il faut le voir
+                    venir de loin pour ne pas le découvrir le matin même. Il prend donc la
+                    couleur du produit et écrit son nom.
+                  */
                   className={`relative flex h-16 flex-col justify-between overflow-hidden rounded-[10px] border p-1.5 text-[10.5px] ${
                     day.isExamDay
                       ? "border-caution/40 bg-caution-soft"
-                      : day.offset === 0
-                        ? "border-ink/40 bg-surface"
-                        : day.cards === 0 && !day.mock
-                          ? "border-transparent bg-surface-muted/50"
-                          : "border-hairline bg-surface"
+                      : day.mock
+                        ? "border-accent/50 bg-accent-soft"
+                        : day.offset === 0
+                          ? "border-ink/40 bg-surface"
+                          : day.cards === 0 && !day.mock
+                            ? "border-transparent bg-surface-muted/50"
+                            : "border-hairline bg-surface"
                   }`}
                 >
-                  <span className={`flex items-baseline justify-between ${day.offset === 0 ? "font-semibold text-ink" : "text-ink-tertiary"}`}>
+                  <span
+                    className={`flex items-baseline justify-between ${
+                      day.mock ? "font-semibold text-accent" : day.offset === 0 ? "font-semibold text-ink" : "text-ink-tertiary"
+                    }`}
+                  >
                     <span className="uppercase tracking-wide">{label}</span>
                     <span className="numeral">{date.getDate()}</span>
                   </span>
                   {day.isExamDay ? (
                     <span className="text-[10px] font-semibold text-caution">
                       {t("app.exam.schedule.examShort")}
+                    </span>
+                  ) : day.mock ? (
+                    <span className="truncate text-[9.5px] font-semibold uppercase tracking-wide text-accent">
+                      {t("app.exam.schedule.mockShort")}
                     </span>
                   ) : day.isOff && day.cards === 0 && !day.mock ? (
                     <span aria-hidden className="emoji text-[11px] leading-none">

@@ -3,20 +3,26 @@
 import Link from "next/link";
 
 import { Float, useFloatDock } from "@/components/app/Float";
+import { buttonVariants } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/client";
 
 /** Hauteur du bouton flottant (h-14) + 12 px d'écart pour la pastille d'offre. */
 const FLOATING_CTA_DOCK = 68;
 
 const shell =
-  "flex w-full flex-col gap-4 rounded-2xl bg-accent px-6 py-5 text-left text-on-ink transition-[scale,background-color] duration-press ease-out-strong hover:bg-accent/90 active:scale-[0.96] sm:flex-row sm:items-center sm:gap-5";
+  "panel group flex w-full flex-col gap-4 p-5 text-left transition-[border-color] duration-press ease-out-strong hover:border-stroke-strong sm:flex-row sm:items-center sm:gap-5";
 
 /**
  * Le bouton de révision.
  *
- * Dans la fiche, c'est le même geste que « générer les cartes » : une carte
- * pleine largeur, puis un bouton ancré en bas pour le retrouver après le
- * défilement. Ailleurs, il reste une amorce de session posée dans le flux.
+ * Dans la fiche, c'est le même geste que « générer les cartes », et il prend donc la même
+ * forme : un **panneau**, comme tout le reste de la page, avec l'action en vrai bouton
+ * primaire à droite. Il était un pavé bleu pleine largeur à encre inversée, posé sous une
+ * fiche qui ne parle qu'en surfaces claires cernées d'un trait ; deux pavés pleins l'un sous
+ * l'autre - générer, puis réviser - donnaient une page qui crie deux fois.
+ *
+ * Le bouton flottant, lui, reste plein : il est posé **par-dessus** le texte, il n'a rien qui
+ * le cerne, et un panneau clair qui flotte sur une fiche claire ne se verrait pas.
  */
 export function ReviewCta({
   href,
@@ -58,16 +64,22 @@ export function ReviewCta({
       <span className="flex min-w-0 flex-1 items-center gap-4">
         <span
           aria-hidden
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-tile bg-on-ink/10 sm:h-14 sm:w-14"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-tile bg-surface-muted text-ink-secondary"
         >
           <ReviewGlyph />
         </span>
         <span className="min-w-0">
-          <span className="block text-[18px] font-bold leading-tight">{label}</span>
-          <span className="mt-1 block text-[14px] text-on-ink-muted">{subtitle}</span>
+          <span className="section-title block">{label}</span>
+          <span className="section-lead block max-w-[46ch]">{subtitle}</span>
         </span>
       </span>
-      <span className="inline-flex h-11 w-full shrink-0 items-center justify-center rounded-button bg-on-ink px-4 text-[15px] font-semibold text-ink sm:h-10 sm:w-auto">
+      <span
+        aria-hidden
+        className={buttonVariants({
+          className: "w-full shrink-0 group-active:scale-[0.96] sm:w-auto",
+          size: "lg",
+        })}
+      >
         {t("copy.review")}
       </span>
     </Link>
@@ -76,7 +88,7 @@ export function ReviewCta({
 
 function ReviewGlyph() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6">
+    <svg viewBox="0 0 24 24" className="h-5 w-5">
       <rect
         x="3.5"
         y="6.5"

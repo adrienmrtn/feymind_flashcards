@@ -160,7 +160,7 @@ export function StoryScaffold({
       center
     >
       <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-14">
-        <div className="flex w-full shrink-0 items-center justify-center rounded-[22px] bg-surface-muted p-6 sm:p-8 lg:w-[46%]">
+        <div className="flex w-full shrink-0 items-center justify-center rounded-[22px] bg-surface-muted p-5 sm:p-6 lg:w-[44%]">
           {children}
         </div>
         <div className="flex min-w-0 flex-1 justify-center">
