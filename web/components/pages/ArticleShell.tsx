@@ -1,11 +1,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
-import { BrandLockup } from "@/components/BrandMark";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Footer } from "@/components/landing/Footer";
 import { StartButton } from "@/components/landing/StartButton";
+import { SiteHeader } from "@/components/site/SiteHeader";
 import { CANONICAL_URL, IS_INDEXABLE } from "@/lib/config";
 import { localizedHref, localizedPath } from "@/lib/i18n/paths";
 import { getTranslator } from "@/lib/i18n/server";
@@ -20,97 +18,78 @@ import {
 } from "@/lib/site-pages";
 
 /**
- * **La coquille des pages de contenu.**
+ * **La coquille des pages de fond.**
  *
- * Elle n'emprunte pas la barre de la vitrine : cette barre navigue par ancres
- * (`#methode`), et une ancre pointe dans la page courante. Ici la barre mène
- * aux autres pages, ce que Google explore.
+ * Elle porte la même barre que la vitrine, avec les autres pages en guise de liens : ici on
+ * navigue entre pages, ce que Google explore. Le titre est centré, comme ceux du parcours et
+ * de la vitrine : une page de fond n'est pas un article de blog, c'est une page du produit
+ * qui explique une chose, et elle se présente comme telle.
+ *
+ * `figure` pose sous le chapeau une vraie partie du produit : la vignette du parcours qui
+ * montre ce dont la page parle. Une page qui explique la méthode sans montrer les quatre
+ * boutons parle dans le vide.
  *
  * Titres, extraits et appels à l'action viennent des catalogues. Une langue
  * figée ici remettrait le français dans l'index dès que le robot passe.
+ *
+ * La coquille ne lit pas la session : une page de fond doit rester statique et se mettre
+ * en cache, et le bouton dit « Commencer » à tout le monde. Une session ouverte retombe de
+ * toute façon sur l'app depuis le parcours.
  */
 export async function ArticleShell({
   page,
   eyebrow,
   title,
   lead,
+  figure,
   children,
 }: {
   page: SitePage;
   eyebrow: string;
   title: string;
   lead: ReactNode;
+  figure?: ReactNode;
   children: ReactNode;
 }) {
   const { t, locale } = await getTranslator();
+  const nav = SITE_PAGES.map((item) => ({
+    href: localizedHref(locale, item.path),
+    label: t(siteNavKey(item.id)),
+    current: item.path === page.path,
+  }));
 
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-border/80 bg-background/70 backdrop-blur-md">
-        <a
-          href="#contenu"
-          className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-screen focus-visible:top-3 focus-visible:z-30 focus-visible:rounded-button focus-visible:bg-accent focus-visible:px-3 focus-visible:py-2 focus-visible:text-[13px] focus-visible:font-medium focus-visible:text-on-ink"
-        >
-          {t("common.skipToContent")}
-        </a>
-        <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-3 px-screen sm:gap-6">
-          <BrandLockup
-            href={localizedHref(locale, "/")}
-            size={28}
-            className="shrink-0 text-foreground"
-            wordClassName="hidden text-[15px] font-bold tracking-tight text-foreground sm:inline"
-          />
+      <SiteHeader nav={nav} ariaLabel={t("articles.shared.navAria")} />
 
-          <nav aria-label={t("articles.shared.navAria")} className="hidden items-center gap-7 md:flex">
-            {SITE_PAGES.map((item) => {
-              const current = item.path === page.path;
-              return (
-                <Link
-                  key={item.path}
-                  href={localizedHref(locale, item.path)}
-                  aria-current={current ? "page" : undefined}
-                  className={
-                    current
-                      ? "text-[13.5px] font-semibold text-ink"
-                      : "underline-draw text-[13.5px] font-medium text-ink-secondary"
-                  }
-                >
-                  {t(siteNavKey(item.id))}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="flex min-w-0 items-center justify-end gap-1 sm:gap-2">
-            <div className="hidden shrink-0 sm:block">
-              <AppearanceSwitcher variant="compact" />
-            </div>
-            <LanguageSwitcher />
-            <StartButton size="compact" />
-          </div>
-        </div>
-      </header>
-
-      <main id="contenu" className="mx-auto w-full max-w-page px-screen pb-4 pt-12 sm:pt-16">
-        <div className="max-w-reading">
+      <main id="contenu" className="mx-auto w-full max-w-page px-screen pb-4 pt-14 sm:pt-20">
+        <header className="mx-auto max-w-[62ch] text-center">
           <p className="eyebrow text-ink-tertiary">{eyebrow}</p>
-          <h1 className="mt-3 text-[32px] font-bold leading-[1.06] tracking-tight-title text-ink sm:text-[44px]">
+          <h1 className="mt-3 text-balance text-[34px] font-bold leading-[1.06] tracking-tight-title text-ink sm:text-[48px]">
             {title}
           </h1>
-          <div className="mt-5 space-y-4 text-[16.5px] leading-relaxed text-ink-secondary">
+          <div className="mx-auto mt-6 max-w-reading space-y-4 text-left text-[16.5px] leading-relaxed text-ink-secondary sm:text-center">
             {lead}
           </div>
-        </div>
+        </header>
 
-        {children}
+        {figure ? (
+          <div className="paper mx-auto mt-12 max-w-[860px] rounded-sheet bg-surface p-4 sm:p-6">
+            <div className="flex min-h-[300px] items-center justify-center rounded-[22px] bg-surface-muted p-6 sm:p-8">
+              {figure}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mx-auto mt-6 max-w-[860px]">{children}</div>
 
         <NextToRead current={page} />
 
-        <section className="mx-auto mt-24 max-w-reading text-center">
-          <h2 className="text-[26px] font-bold leading-tight tracking-tight-title text-ink sm:text-[32px]">
+        <section className="paper mx-auto mt-20 max-w-[860px] rounded-sheet bg-surface px-6 py-12 text-center sm:px-12">
+          <h2 className="mx-auto max-w-[26ch] text-balance text-[26px] font-bold leading-tight tracking-tight-title text-ink sm:text-[34px]">
             {t("articles.shared.ctaTitle")}
           </h2>
-          <p className="mt-3 text-[15px] leading-relaxed text-ink-secondary">
+          <p className="mx-auto mt-3 max-w-[48ch] text-[15px] leading-relaxed text-ink-secondary">
             {t("articles.shared.ctaBody")}
           </p>
           <div className="mt-8 flex justify-center">
@@ -131,7 +110,7 @@ export async function ArticleShell({
   );
 }
 
-/** Une section d'article : un titre qu'on peut lier, et du texte à la largeur de lecture. */
+/** Une section de page : un titre qu'on peut lier, et du texte à la largeur de lecture. */
 export function ArticleSection({
   id,
   title,
@@ -145,12 +124,12 @@ export function ArticleSection({
 }) {
   return (
     <section id={id} className="mt-16 scroll-mt-20">
-      <h2 className="max-w-reading text-[24px] font-bold leading-tight tracking-tight-title text-ink sm:text-[30px]">
+      <h2 className="mx-auto max-w-reading text-[24px] font-bold leading-tight tracking-tight-title text-ink sm:text-[30px]">
         {title}
       </h2>
       <div
         className={`mt-4 space-y-4 text-[16px] leading-relaxed text-ink-secondary ${
-          wide ? "" : "max-w-reading"
+          wide ? "" : "mx-auto max-w-reading"
         }`}
       >
         {children}
@@ -162,9 +141,33 @@ export function ArticleSection({
 /** Un aparté : ce qu'il faut savoir avant d'en attendre trop. */
 export function ArticleNote({ children }: { children: ReactNode }) {
   return (
-    <aside className="mt-8 max-w-reading rounded-group border-l-2 border-accent bg-accent-soft/45 px-5 py-4 text-[15px] leading-relaxed text-ink-secondary">
+    <aside className="mx-auto mt-8 max-w-reading rounded-group border-l-2 border-accent bg-accent-soft/45 px-5 py-4 text-[15px] leading-relaxed text-ink-secondary">
       {children}
     </aside>
+  );
+}
+
+/**
+ * Une vraie partie du produit posée au milieu d'une page : la vignette dans un cadre gris,
+ * la légende à côté. C'est la forme des écrans de démonstration du parcours, reprise telle
+ * quelle pour que les pages de fond montrent ce qu'elles expliquent.
+ */
+export function ArticleFigure({
+  children,
+  caption,
+}: {
+  children: ReactNode;
+  caption?: ReactNode;
+}) {
+  return (
+    <figure className="paper mt-8 grid items-center gap-6 overflow-hidden rounded-sheet bg-surface p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,32ch)] lg:gap-10">
+      <div className="flex min-h-[260px] items-center justify-center rounded-[22px] bg-surface-muted p-6 sm:p-8">
+        {children}
+      </div>
+      {caption ? (
+        <figcaption className="text-[15px] leading-relaxed text-ink-secondary lg:pr-4">{caption}</figcaption>
+      ) : null}
+    </figure>
   );
 }
 
@@ -173,14 +176,14 @@ async function NextToRead({ current }: { current: SitePage }) {
   const rest = otherPages(current);
 
   return (
-    <section className="mt-24 border-t border-hairline-on-canvas pt-10">
+    <section className="mx-auto mt-24 max-w-[860px] border-t border-hairline-on-canvas pt-10">
       <h2 className="eyebrow text-ink-tertiary">{t("articles.shared.nextTitle")}</h2>
       <ul className="mt-5 grid gap-4 sm:grid-cols-2">
         {rest.map((page) => (
           <li key={page.path}>
             <Link
               href={localizedHref(locale, page.path)}
-              className="lift block h-full rounded-group border border-stroke bg-surface p-5 transition-[border-color] duration-hover ease-out-strong hover:border-stroke-strong"
+              className="paper lift block h-full rounded-group bg-surface p-5"
             >
               <p className="text-[16px] font-semibold tracking-tight text-ink">
                 {t(siteNavKey(page.id))}

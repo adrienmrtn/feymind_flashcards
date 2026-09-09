@@ -1,14 +1,18 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n/client";
+import { LANDING_SECTIONS } from "@/lib/landing-sections";
 
-import { CourseTransformation } from "./CourseTransformation";
+import { AppShowcase } from "./AppShowcase";
 import { HeroAura } from "./HeroAura";
 import { StartButton } from "./StartButton";
 
 /**
- * L'accroche : une phrase, puis le trajet entier du document.
+ * L'accroche : une phrase, une ligne de suite, le bouton, **et l'app dessous.**
+ *
+ * Le bandeau ne promet plus dans le vide : ce qui suit le bouton est l'app elle-même, dans
+ * un cadre de navigateur, avec ses onglets qui se cliquent. Une accroche qui montre le
+ * produit dans le premier écran n'a pas besoin d'un second paragraphe pour le décrire.
  */
 export function Hero({ signedIn = false }: { signedIn?: boolean }) {
   const { t } = useI18n();
@@ -16,18 +20,10 @@ export function Hero({ signedIn = false }: { signedIn?: boolean }) {
     <section className="relative overflow-clip">
       <HeroAura />
 
-      <div className="relative mx-auto max-w-page px-screen pt-16 text-center sm:pt-24">
-        <Badge
-          variant="secondary"
-          className="rise h-auto max-w-[36ch] gap-2 rounded-pill px-3.5 py-1.5 text-balance text-[12.5px] font-medium text-ink-secondary"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-accent-vivid" />
-          {t("landing.badge")}
-        </Badge>
-
+      <div className="relative mx-auto max-w-page px-screen pt-14 text-center sm:pt-20">
         <h1
-          className="rise mx-auto mt-7 max-w-[22ch] text-[40px] font-bold leading-[1.03] tracking-display text-ink sm:max-w-[24ch] sm:text-[76px]"
-          style={{ animationDelay: "60ms" }}
+          className="rise mx-auto max-w-[20ch] text-balance text-[40px] font-bold leading-[1.03] tracking-display text-ink sm:text-[72px]"
+          style={{ animationDelay: "40ms" }}
         >
           {t("landing.titleBefore")}{" "}
           <span className="relative whitespace-nowrap text-accent">
@@ -51,18 +47,23 @@ export function Hero({ signedIn = false }: { signedIn?: boolean }) {
         </h1>
 
         <p
-          className="rise mx-auto mt-7 max-w-[52ch] text-[17px] leading-relaxed text-ink-secondary sm:text-[19px]"
-          style={{ animationDelay: "120ms" }}
+          className="rise mx-auto mt-7 max-w-[54ch] text-[17px] leading-relaxed text-ink-secondary sm:text-[19px]"
+          style={{ animationDelay: "100ms" }}
         >
           {t("landing.subtitle")}
         </p>
 
-        <div className="rise mt-9" style={{ animationDelay: "180ms" }}>
+        <div className="rise mt-9" style={{ animationDelay: "160ms" }}>
           <StartButton signedIn={signedIn} />
         </div>
       </div>
 
-      <CourseTransformation />
+      <div id={LANDING_SECTIONS.app} className="relative mx-auto mt-14 max-w-page scroll-mt-20 px-screen sm:mt-20">
+        <div className="rise" style={{ animationDelay: "240ms" }}>
+          <AppShowcase />
+        </div>
+        <p className="mt-4 text-center text-[13px] text-ink-tertiary">{t("landing.showcaseCaption")}</p>
+      </div>
     </section>
   );
 }

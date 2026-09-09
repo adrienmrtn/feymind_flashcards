@@ -1,20 +1,18 @@
 "use client";
 
-import Link from "next/link";
-
-import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
-import { BrandLockup } from "@/components/BrandMark";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Footer } from "@/components/landing/Footer";
+import { SiteHeader } from "@/components/site/SiteHeader";
 import { useI18n } from "@/lib/i18n/client";
-import { useLocalizedHref } from "@/lib/i18n/href";
+import { localizedHref } from "@/lib/i18n/paths";
+import { SITE_PAGES, siteNavKey } from "@/lib/site-pages";
 
 /**
  * Une page de droit, sur le même papier que le reste.
  *
- * Pas la barre marketing : on vient lire, pas commencer. La langue se
- * change ici, parce que l'iPhone ouvre ces adresses hors de la vitrine.
- * Le pied de page reste, pour passer de l'une à l'autre.
+ * La même barre que partout ailleurs, et le texte dans une carte blanche à largeur de
+ * lecture : on vient lire, et un texte de droit posé à même le fond gris se lit comme un
+ * document oublié. Le pied de page reste, pour passer de l'une à l'autre. La langue se
+ * change dans la barre, parce que l'iPhone ouvre ces adresses hors de la vitrine.
  */
 export function LegalShell({
   title,
@@ -23,47 +21,27 @@ export function LegalShell({
   title: string;
   children: React.ReactNode;
 }) {
-  const { t } = useI18n();
-  const homeHref = useLocalizedHref("/");
+  const { t, locale } = useI18n();
+  const nav = SITE_PAGES.map((page) => ({
+    href: localizedHref(locale, page.path),
+    label: t(siteNavKey(page.id)),
+  }));
 
   return (
     <>
-      <a
-        href="#contenu"
-        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-screen focus-visible:top-3 focus-visible:z-30 focus-visible:rounded-button focus-visible:bg-accent focus-visible:px-3 focus-visible:py-2 focus-visible:text-[13px] focus-visible:font-medium focus-visible:text-on-ink"
-      >
-        {t("common.skipToContent")}
-      </a>
-      <header className="border-b border-hairline-on-canvas">
-        <div className="mx-auto flex h-14 max-w-page items-center justify-between gap-3 px-screen">
-          <BrandLockup
-            href={homeHref}
-            size={28}
-            className="text-ink"
-            wordClassName="text-[15px] font-bold tracking-tight text-ink"
-          />
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <AppearanceSwitcher variant="compact" />
-            <LanguageSwitcher />
-            <Link
-              href={homeHref}
-              className="underline-draw shrink-0 text-[13.5px] text-ink-secondary"
-            >
-              {t("legal.backHome")}
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader nav={nav} ariaLabel={t("articles.shared.navAria")} />
 
-      <main id="contenu" className="mx-auto w-full max-w-reading px-screen py-12 sm:py-16">
-        <p className="eyebrow text-ink-tertiary">{t("legal.eyebrow")}</p>
-        <h1 className="mt-3 text-[32px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[40px]">
-          {title}
-        </h1>
-        <p className="mt-3 text-[13.5px] text-ink-tertiary">
-          {t("legal.updated", { date: t("legal.updatedDate") })}
-        </p>
-        <div className="legal-prose mt-10">{children}</div>
+      <main id="contenu" className="mx-auto w-full max-w-page px-screen pt-10 sm:pt-14">
+        <article className="paper mx-auto max-w-[820px] rounded-sheet bg-surface px-6 py-10 sm:px-14 sm:py-14">
+          <p className="eyebrow text-ink-tertiary">{t("legal.eyebrow")}</p>
+          <h1 className="mt-3 text-balance text-[32px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[40px]">
+            {title}
+          </h1>
+          <p className="mt-3 text-[13.5px] text-ink-tertiary">
+            {t("legal.updated", { date: t("legal.updatedDate") })}
+          </p>
+          <div className="legal-prose mt-10 max-w-reading">{children}</div>
+        </article>
       </main>
 
       <Footer />
