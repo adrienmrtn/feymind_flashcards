@@ -37,16 +37,21 @@ export function Steps() {
   return (
     <ol className="mt-12 space-y-6 sm:mt-16 sm:space-y-8">
       {steps.map((step, index) => (
-        <Reveal key={step.key} as="li" className="paper overflow-hidden rounded-sheet bg-surface">
+        <Reveal
+          key={step.key}
+          as="li"
+          soft
+          className="paper overflow-hidden rounded-sheet bg-surface"
+        >
           <div
             className={`grid items-center gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:gap-14 ${
               index % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""
             }`}
           >
-            <div className="flex min-h-[300px] items-center justify-center rounded-[22px] bg-surface-muted p-6 sm:min-h-[340px] sm:p-8">
+            <div className="story-part flex min-h-[300px] items-center justify-center rounded-[22px] bg-surface-muted p-6 sm:min-h-[340px] sm:p-8">
               {step.figure}
             </div>
-            <div className="max-w-[40ch]">
+            <div className="story-part max-w-[40ch]">
               <p className="numeral text-[13px] font-semibold text-accent">
                 {t("landing.stepEyebrow", { n: index + 1 })}
               </p>

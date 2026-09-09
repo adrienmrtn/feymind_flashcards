@@ -775,9 +775,52 @@ video {
   translate: 0 0;
 }
 
+/**
+ * Une entrée plus longue, pour les grandes cartes.
+ *
+ * Une vignette d'étape fait la moitié de l'écran : la faire monter en 620 ms comme une ligne
+ * de texte donne un à-coup, parce que la surface qui bouge est trop grande pour la durée. Elle
+ * part donc de plus loin, avec une échelle à peine réduite, et prend le temps de se poser. Le
+ * cadre entre d'abord, la phrase un souffle après : la carte s'assemble au lieu de surgir.
+ */
+.reveal-soft {
+  translate: 0 26px;
+  scale: 0.985;
+  transition-property: opacity, translate, scale;
+  transition-duration: 920ms;
+}
+
+.reveal-soft[data-shown="true"] {
+  scale: 1;
+}
+
+.reveal-soft .story-part {
+  opacity: 0;
+  translate: 0 12px;
+  transition-property: opacity, translate;
+  transition-duration: 780ms;
+  transition-timing-function: var(--ease-out-strong);
+  transition-delay: 90ms;
+}
+
+.reveal-soft[data-shown="true"] .story-part {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.reveal-soft[data-shown="true"] .story-part:nth-of-type(2) {
+  transition-delay: 220ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     translate: none;
+  }
+
+  .reveal-soft,
+  .reveal-soft .story-part {
+    translate: none;
+    scale: 1;
   }
 
   .hover-flip {

@@ -65,7 +65,12 @@ function blockToHtml(block: SheetBlock): string {
 function inlineToHtml(text: string): string {
   const html = parseInlineMarkup(text)
     .map((span) => {
-      if (span.math) return `<span data-math="${escapeAttribute(span.text)}">${escapeText(span.text)}</span>`;
+      // `contenteditable="false"` : une formule en ligne est **composée**, donc on ne tape
+      // pas dedans - on la rouvre dans son éditeur. Sans ça le curseur se pose au milieu des
+      // symboles rendus et la frappe suivante détruit le LaTeX sans que rien ne le dise.
+      if (span.math) {
+        return `<span data-math="${escapeAttribute(span.text)}" contenteditable="false">${escapeText(span.text)}</span>`;
+      }
       let out = escapeText(span.text);
       if (span.highlight) out = `<mark data-hl="${span.highlight}">${out}</mark>`;
       if (span.strike) out = `<s>${out}</s>`;

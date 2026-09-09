@@ -93,7 +93,7 @@ export function Scaffold({
       </h1>
 
       <div
-        className={`step-part mt-9 min-h-0 flex-1 overflow-y-auto overscroll-contain ${
+        className={`step-part mt-7 min-h-0 flex-1 overflow-y-auto overscroll-contain ${
           center ? "flex flex-col" : ""
         }`}
         style={{ animationDelay: "45ms" }}

@@ -16,9 +16,14 @@ import { createClient } from "@/lib/supabase/client";
  * Elle était étroite, haute de 760 px et large de 720. Ça allait tant que chaque écran ne
  * portait qu'une liste ; ça ne va plus, parce que les écrans de démonstration montrent
  * maintenant une chose à gauche et l'expliquent à droite, et deux colonnes dans 720 px ne
- * sont pas deux colonnes. La carte s'élargit donc à 1120, et **elle garde la même taille
- * partout** : un cadre qui change de forme d'un écran à l'autre donne un parcours qui
- * tremble, et l'étudiant réapprend où regarder à chaque clic.
+ * sont pas deux colonnes. La carte s'élargit donc, et **elle garde la même taille partout** :
+ * un cadre qui change de forme d'un écran à l'autre donne un parcours qui tremble, et
+ * l'étudiant réapprend où regarder à chaque clic.
+ *
+ * 1040 sur 690, et non 1120 sur 760 : la carte remplissait presque tout l'écran d'un portable
+ * posé à l'horizontale, si bien qu'on ne voyait plus qu'elle et plus du tout qu'elle était
+ * posée sur quelque chose. Ce qu'elle perd en surface, les écrans le rendent en marge - à
+ * une condition, tenue écran par écran : que rien, jamais, n'ait besoin de défiler dedans.
  *
  * Deux choses ont quitté l'en-tête. Le **choix jour / nuit** n'a rien à faire dans un tunnel
  * d'inscription : c'est un réglage, il vit dans les réglages, et le poser ici invite à jouer
@@ -34,23 +39,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
   const showChrome = step?.chrome ?? false;
   const isWelcome = pathname === "/commencer/bienvenue";
   const progress = progressFor(pathname);
-  const stepLabels = [
-    t("onboarding.stepBienvenue"),
-    t("onboarding.stepExamen"),
-    t("onboarding.stepImporter"),
-    t("onboarding.stepPlan"),
-    t("onboarding.stepIa"),
-    t("onboarding.stepFeynman"),
-    t("onboarding.stepResultats"),
-    t("onboarding.stepPersonnaliser"),
-    t("onboarding.stepPays"),
-    t("onboarding.stepNiveau"),
-    t("onboarding.stepMatieres"),
-    t("onboarding.stepEcole"),
-    t("onboarding.stepParcours"),
-    t("onboarding.stepCompte"),
-  ];
-  const stepLabel = (index >= 0 ? stepLabels[index] : undefined) ?? "";
+  const stepLabel = step ? t(step.labelKey) : "";
 
   /**
    * Le sens du mouvement : on avance vers la droite, on revient vers la gauche.
@@ -73,7 +62,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
       <div className="flex min-h-svh items-center justify-center bg-canvas-sage px-3 py-3 sm:px-6 sm:py-6">
         <div
           data-step-dir={direction}
-          className="flex h-[min(760px,calc(100svh-1.5rem))] w-full max-w-[1120px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-floating sm:h-[min(760px,calc(100svh-3rem))]"
+          className="flex h-[min(690px,calc(100svh-1.5rem))] w-full max-w-[1040px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-floating sm:h-[min(690px,calc(100svh-3rem))]"
         >
           {/*
             La jauge tient toute la largeur de la carte, et non un moignon de 72 px calé dans

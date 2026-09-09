@@ -33,6 +33,24 @@ export interface Answers {
   institutionName?: string;
   /** Vrai quand on a explicitement passé l'écran de l'école. */
   institutionSkipped?: boolean;
+  /**
+   * Les jours où l'on ne révise pas, en numéros ISO : 1 pour lundi, 7 pour dimanche.
+   *
+   * Des numéros et non des dates : c'est une **habitude** qu'on décrit ici - « jamais le
+   * dimanche » - pas un week-end précis. Les dates, elles, se posent plus tard, à la création
+   * d'un plan, où l'on sait de quelles semaines on parle.
+   */
+  restDays?: number[];
+  /**
+   * La moyenne d'aujourd'hui, sur l'échelle canonique 10-20.
+   *
+   * 9 veut dire « en dessous » : c'est la seule valeur hors barème, et elle existe parce
+   * qu'un parcours qui ne propose que la moyenne et au-dessus dit à celui qui rame qu'il
+   * n'est pas prévu. Ce qui s'affiche est le barème de son pays, jamais ce nombre-là.
+   */
+  currentScore?: number;
+  /** La moyenne visée, sur la même échelle. Toujours strictement au-dessus de l'actuelle. */
+  targetScore?: number;
 }
 
 const KEY = "micabo.onboarding.answers";
