@@ -65,7 +65,7 @@ export function Scaffold({
     width === "full" ? "w-full" : width === "wide" ? "mx-auto w-full max-w-[760px]" : "mx-auto w-full max-w-[560px]";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6 pb-6 pt-6 sm:px-14 sm:pb-8">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-6 pb-5 pt-5 sm:px-12 sm:pb-6">
       {eyebrow || skip ? (
         <div className={`step-part flex shrink-0 items-baseline justify-between gap-4 ${column}`}>
           {eyebrow ? <p className="eyebrow text-ink-tertiary">{eyebrow}</p> : <span />}
@@ -85,15 +85,15 @@ export function Scaffold({
       ) : null}
 
       <h1
-        className={`step-part mt-4 shrink-0 text-center font-bold leading-[1.14] tracking-tight-title text-ink ${
-          titleClassName || "text-balance text-[26px] sm:text-[32px]"
+        className={`step-part mt-3 shrink-0 text-center font-bold leading-[1.14] tracking-tight-title text-ink ${
+          titleClassName || "text-balance text-[25px] sm:text-[29px]"
         }`}
       >
         {title}
       </h1>
 
       <div
-        className={`step-part mt-7 min-h-0 flex-1 overflow-y-auto overscroll-contain ${
+        className={`step-part mt-6 min-h-0 flex-1 overflow-y-auto overscroll-contain ${
           center ? "flex flex-col" : ""
         }`}
         style={{ animationDelay: "45ms" }}
@@ -102,7 +102,7 @@ export function Scaffold({
       </div>
 
       <div
-        className="step-part flex shrink-0 items-center justify-between gap-3 pt-6"
+        className="step-part flex shrink-0 items-center justify-between gap-3 pt-5"
         style={{ animationDelay: "90ms" }}
       >
         {back ? (
@@ -155,7 +155,8 @@ export function StoryScaffold({
   lead: React.ReactNode;
   /** La vignette, posée dans le cadre gris. */
   children: React.ReactNode;
-  next: OnboardingPath;
+  /** Voir `ContinueButton` : à ne donner que pour sortir de l'ordre du parcours. */
+  next?: OnboardingPath;
   nextLabel?: string;
 }) {
   return (
@@ -165,12 +166,18 @@ export function StoryScaffold({
       footer={<ContinueButton label={nextLabel} enabled href={next} />}
       center
     >
-      <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-14">
-        <div className="flex w-full shrink-0 items-center justify-center rounded-[22px] bg-surface-muted p-5 sm:p-6 lg:w-[44%]">
+      {/*
+        Sur un téléphone, les deux moitiés s'empilent, et la carte n'est plus assez haute pour
+        les deux à pleine taille. La vignette rétrécit donc **vraiment** - `zoom`, et non
+        `scale`, parce qu'une mise à l'échelle laisse la place occupée intacte et le
+        débordement avec elle. Elle reste lisible : c'est une démonstration, pas un document.
+      */}
+      <div className="flex flex-col items-center gap-5 sm:gap-8 lg:flex-row lg:items-center lg:gap-14">
+        <div className="story-figure flex w-full shrink-0 items-center justify-center rounded-[22px] bg-surface-muted p-4 sm:p-6 lg:w-[44%]">
           {children}
         </div>
         <div className="flex min-w-0 flex-1 justify-center">
-          <p className="max-w-[32ch] text-center text-[17px] leading-relaxed text-ink-secondary">
+          <p className="max-w-[32ch] text-center text-[15.5px] leading-relaxed text-ink-secondary sm:text-[17px]">
             {lead}
           </p>
         </div>
@@ -194,16 +201,28 @@ export function ContinueButton({
 }: {
   label?: string;
   enabled: boolean;
+  /**
+   * L'écran suivant. **À ne pas donner** : par défaut, c'est celui que `STEPS` place après
+   * celui-ci.
+   *
+   * Chaque écran nommait sa suite en dur, ce qui revient à tenir l'ordre du parcours à
+   * quatorze endroits. Le jour où quatre écrans se sont insérés après les matières, l'écran
+   * des matières a continué d'appeler le chargement : quatre écrans existaient, s'ouvraient
+   * au retour, et personne ne les voyait jamais à l'aller. L'ordre vit dans `STEPS`, et il
+   * n'y a plus qu'un endroit où se tromper.
+   */
   href?: OnboardingPath;
   onPress?: () => void;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useI18n();
   const text = label ?? t("common.continue");
+  const target = href ?? nextPath(pathname);
 
   useEffect(() => {
-    if (href) router.prefetch(href as Route);
-  }, [href, router]);
+    router.prefetch(target as Route);
+  }, [target, router]);
 
   return (
     <Button
@@ -214,7 +233,7 @@ export function ContinueButton({
       onClick={() => {
         if (!enabled) return;
         onPress?.();
-        if (href) router.push(href as Route);
+        router.push(target as Route);
       }}
       className={`h-auto min-h-12 max-w-full whitespace-normal text-balance rounded-pill px-5 text-[15px] leading-tight sm:px-6 sm:text-[15.5px] ${
         enabled ? "border-accent bg-accent text-on-ink hover:bg-accent hover:text-on-ink" : ""
@@ -262,7 +281,7 @@ export function ChoiceRow({
       aria-pressed={selected}
       /* Le fond de la carte est blanc : une réponse blanche dessus ne se voyait
          qu'à son ombre. Le gris la détache, et le filet tient sa forme. */
-      className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-3.5 text-left transition-colors duration-hover ${
+      className={`pressable flex w-full items-center gap-4 rounded-button px-4 py-3 text-left transition-colors duration-hover ${
         selected
           ? "bg-accent-soft"
           : "bg-surface-muted shadow-[inset_0_0_0_1px_var(--color-stroke-strong)]"

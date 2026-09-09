@@ -19,7 +19,7 @@ enum FreeTier {
     /// Sept dixièmes, pas la moitié : il faut que la fiche ait le temps d'être utile avant
     /// de s'arrêter. Une coupure au milieu se lit comme une démonstration, une coupure à la
     /// fin se lit comme un manque — et c'est le manque qui fait payer.
-    static let readableSheetRatio = 0.7
+    static let readableSheetRatio = 0.3
 
     /// Le nombre de cartes qu'une session gratuite sert avant de s'arrêter.
     static let cardsPerSession = 5

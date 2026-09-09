@@ -375,9 +375,6 @@ export function NewPlan({
             />
           ))}
         </div>
-        <Link href={"/app" as never} className="text-[13px] font-medium text-ink-tertiary underline-draw">
-          {t("app.newPlan.leave")}
-        </Link>
       </div>
 
       <div key={`${step}:${freshIndex}`} className="rise mt-7">
@@ -431,7 +428,6 @@ export function NewPlan({
           <DayStep
             picked={chosenDay}
             month={month}
-            daysRemaining={daysRemaining}
             onMonth={setMonth}
             onSelect={(day) => {
               const start = startOfDay(day);
@@ -863,33 +859,25 @@ function CardsStep({
 function DayStep({
   picked,
   month,
-  daysRemaining,
   onMonth,
   onSelect,
 }: {
   picked: Date;
   month: Date;
-  daysRemaining: number;
   onMonth: (next: Date) => void;
   onSelect: (day: Date) => void;
 }) {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const today = startOfDay(new Date());
 
   return (
     <div>
       <p className="eyebrow text-ink-tertiary">{t("app.newPlan.dayEyebrow")}</p>
       <h1 className="page-title mt-2">{t("app.exams.whichDay")}</h1>
-      <p className="mt-3 text-[16px] font-semibold capitalize text-ink">
-        {picked.toLocaleDateString(localeBcp47(locale), {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-        })}
-      </p>
-      <p className="numeral mt-1 text-[13.5px] text-ink-secondary">
-        {t("app.newPlan.daysLeft", { count: Math.max(0, daysRemaining) })}
-      </p>
+      {/* Ni la date écrite en toutes lettres, ni le compte à rebours. Le calendrier juste en
+          dessous montre le jour choisi, en surbrillance, dans son mois : le répéter en
+          français au-dessus ne dit rien de plus, et « 21 jours pour te préparer » met un
+          chronomètre sur un écran où l'on est encore en train de choisir. */}
       <div className="mt-5">
         <ExamDayPicker
           month={month}

@@ -429,6 +429,8 @@ export const appEs = {
     micNo: "No, sin micrófono",
     micHint: "Sin micrófono el examen mantiene sus veinte preguntas: test, verdadero o falso, palabra oculta.",
     micDenied: "Se ha denegado el micrófono. Puedes hacer el examen sin él, o autorizarlo en tu navegador.",
+    micMissing: "No se ha encontrado ningún micrófono en este dispositivo. Puedes hacer el examen sin él.",
+    micBroken: "El micrófono no se ha podido abrir. Puedes hacer el examen sin él, o volver a intentarlo.",
     paperLead: "{count} preguntas, ninguna respuesta antes de entregar. Puedes saltar y volver.",
     paperLeadAudio: "{count} preguntas, ninguna respuesta antes de entregar. Las últimas se responden en voz alta.",
     answered: "{done} de {total} contestadas",

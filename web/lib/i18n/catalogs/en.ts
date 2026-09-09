@@ -383,7 +383,6 @@ export const en: Catalog = {
     targetFrom: "Today: {grade}",
     togetherTitle: "We will get there together.",
     togetherLead: "You will not be the first to walk this road.",
-    togetherGoal: "{grade}: others started exactly where you are.",
     reviewsAria: "What other students say",
     reviewsGo: "Show review {n}",
     review1Gain: "+4 points on my average",

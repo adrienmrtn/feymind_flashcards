@@ -16,7 +16,6 @@ export default function AiStep() {
         </>
       }
       lead={t("onboarding.iaLead")}
-      next="/commencer/feynman"
     >
       <AiStory />
     </StoryScaffold>

@@ -429,6 +429,8 @@ export const appFr = {
     micNo: "Non, sans micro",
     micHint: "Sans micro, la copie garde ses vingt questions : QCM, vrai ou faux, mot caché.",
     micDenied: "Le micro a été refusé. Tu peux passer la copie sans, ou l'autoriser dans ton navigateur.",
+    micMissing: "Aucun micro trouvé sur cet appareil. Tu peux passer la copie sans.",
+    micBroken: "Le micro n'a pas pu s'ouvrir. Tu peux passer la copie sans, ou réessayer.",
     paperLead: "{count} questions, aucune réponse avant la remise. Tu peux sauter et revenir.",
     paperLeadAudio: "{count} questions, aucune réponse avant la remise. Les dernières se répondent à voix haute.",
     answered: "{done} sur {total} remplies",

@@ -382,7 +382,6 @@ export const fr = {
     targetFrom: "Aujourd'hui : {grade}",
     togetherTitle: "On va y arriver ensemble.",
     togetherLead: "Tu ne seras pas le premier à faire ce chemin.",
-    togetherGoal: "{grade} : d'autres sont partis d'où tu pars.",
     reviewsAria: "Ce que disent d'autres étudiants",
     reviewsGo: "Voir l'avis {n}",
     review1Gain: "+4 points de moyenne",

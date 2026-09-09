@@ -111,9 +111,9 @@ describe("le droit", () => {
 });
 
 describe("les limites", () => {
-  it("un cours, sept dixièmes de la fiche, cinq cartes", () => {
+  it("un cours, trois dixièmes de la fiche, cinq cartes", () => {
     expect(FREE_TIER.courses).toBe(1);
-    expect(FREE_TIER.readableSheetRatio).toBeCloseTo(0.7, 4);
+    expect(FREE_TIER.readableSheetRatio).toBeCloseTo(0.3, 4);
     expect(FREE_TIER.cardsPerSession).toBe(5);
     expect(FREE_TIER.allowsPractice).toBe(false);
   });
@@ -124,18 +124,18 @@ describe("les limites", () => {
 });
 
 describe("la coupure de la fiche", () => {
-  it("tombe aux sept dixièmes des blocs", () => {
-    expect(sheetLockIndex(10)).toBe(7);
-    expect(sheetLockIndex(20)).toBe(14);
-    // 9,8 s'arrondit à 10.
-    expect(sheetLockIndex(14)).toBe(10);
+  it("tombe aux trois dixièmes des blocs", () => {
+    expect(sheetLockIndex(10)).toBe(3);
+    expect(sheetLockIndex(20)).toBe(6);
+    // 4,2 s'arrondit à 4.
+    expect(sheetLockIndex(14)).toBe(4);
   });
 
   it("laisse toujours quelque chose à lire d'une fiche courte", () => {
     expect(sheetLockIndex(0)).toBe(0);
     expect(sheetLockIndex(1)).toBe(1);
     expect(sheetLockIndex(2)).toBe(1);
-    expect(sheetLockIndex(3)).toBe(2);
+    expect(sheetLockIndex(3)).toBe(1);
 
     for (let count = 1; count <= 60; count += 1) {
       const index = sheetLockIndex(count);
@@ -167,7 +167,7 @@ describe("la coupure de la fiche", () => {
   });
 
   it("annonce ce qui reste à lire, calculé et non écrit", () => {
-    expect(lockedSheetPercent()).toBe(30);
+    expect(lockedSheetPercent()).toBe(70);
   });
 });
 

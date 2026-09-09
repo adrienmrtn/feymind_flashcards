@@ -33,7 +33,7 @@ import {
 } from "@/lib/data/courses";
 import { loadCardDifficulty } from "@/lib/data/difficulty";
 import { listMockResults, loadThroughput } from "@/lib/data/mocks";
-import { listOffDays, offDayOffsets } from "@/lib/data/off-days";
+import { listOffDays, offDayOffsets, weeklyOffOffsets } from "@/lib/data/off-days";
 import { readProfile, type ProfileRow } from "@/lib/data/profile";
 import { getTranslator } from "@/lib/i18n/server";
 
@@ -134,7 +134,16 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
     throughput,
     mocks,
     difficulties,
-    offDays: offDayOffsets(offDays, today, TERM_HORIZON_DAYS),
+    // L'habitude de la semaine et les dates posées à la main, ensemble. La première vient du
+    // parcours d'inscription : sans cette ligne, répondre « jamais le dimanche » n'aurait
+    // aucune suite, et le plan poserait du travail le dimanche jusqu'à ce qu'on le lui
+    // interdise date par date.
+    offDays: [
+      ...new Set([
+        ...offDayOffsets(offDays, today, TERM_HORIZON_DAYS),
+        ...weeklyOffOffsets(profile?.weekly_minutes ?? null, today, TERM_HORIZON_DAYS),
+      ]),
+    ],
   });
   /**
    * Une carte encore à faire : due, et pas mise de côté.

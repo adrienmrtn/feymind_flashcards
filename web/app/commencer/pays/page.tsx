@@ -57,7 +57,7 @@ function CountryStepBody() {
   return (
     <Scaffold
       title={t("onboarding.paysTitle")}
-      footer={<ContinueButton enabled={answered && ready} href="/commencer/niveau" />}
+      footer={<ContinueButton enabled={answered && ready} />}
       width="wide"
     >
       {/* Vingt-cinq pays en une colonne demandaient trois écrans de défilement. La carte est

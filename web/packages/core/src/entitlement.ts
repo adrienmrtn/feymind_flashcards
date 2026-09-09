@@ -44,12 +44,17 @@ export const FREE_TIER = {
    */
   courses: 1,
   /**
-   * La part de la fiche qui se lit sans payer. Sept dixièmes, pas la moitié : il faut que la
-   * fiche ait le temps d'être utile avant de s'arrêter. Une coupure au milieu se lit comme une
-   * démonstration, une coupure à la fin se lit comme un manque - et c'est le manque qui fait
-   * payer.
+   * La part de la fiche qui se lit sans payer.
+   *
+   * Trois dixièmes, et non plus sept. Sept dixièmes laissaient lire la fiche entière ou
+   * presque : ce qui restait derrière le mur était la fin, c'est-à-dire la partie qu'on
+   * survole de toute façon. La coupure ne se sentait pas, donc elle ne convertissait pas -
+   * et elle rendait le produit gratuit pour qui n'avait qu'un cours.
+   *
+   * Trois dixièmes laissent voir de quoi juger : le titre, la première notion, le ton de
+   * l'écriture. C'est assez pour savoir si la fiche est bonne, et trop peu pour réviser avec.
    */
-  readableSheetRatio: 0.7,
+  readableSheetRatio: 0.3,
   /** Le nombre de cartes qu'une session gratuite sert avant de s'arrêter. */
   cardsPerSession: 5,
   /**

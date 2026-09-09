@@ -429,6 +429,8 @@ export const appEn = {
     micNo: "No, without one",
     micHint: "Without a microphone the paper keeps its twenty questions: multiple choice, true or false, missing word.",
     micDenied: "The microphone was refused. You can take the paper without it, or allow it in your browser.",
+    micMissing: "No microphone found on this device. You can take the paper without it.",
+    micBroken: "The microphone would not open. You can take the paper without it, or try again.",
     paperLead: "{count} questions, no answers until you hand it in. You can skip and come back.",
     paperLeadAudio: "{count} questions, no answers until you hand it in. The last ones are answered out loud.",
     answered: "{done} of {total} filled in",

@@ -24,7 +24,6 @@ export default function ExamDateStep() {
         </>
       }
       lead={t("onboarding.examenLead")}
-      next="/commencer/importer"
     >
       <ExamDateStory />
     </StoryScaffold>

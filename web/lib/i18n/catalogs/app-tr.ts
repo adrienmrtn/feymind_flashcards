@@ -429,6 +429,8 @@ export const appTr = {
     micNo: "Hayır, mikrofonsuz",
     micHint: "Mikrofonsuz kâğıt yirmi sorusunu korur: çoktan seçmeli, doğru yanlış, gizli kelime.",
     micDenied: "Mikrofon reddedildi. Kâğıdı onsuz da verebilir ya da tarayıcında izin verebilirsin.",
+    micMissing: "Bu cihazda mikrofon bulunamadı. Kâğıdı onsuz da verebilirsin.",
+    micBroken: "Mikrofon açılamadı. Kâğıdı onsuz verebilir ya da tekrar deneyebilirsin.",
     paperLead: "{count} soru, teslimden önce hiçbir cevap yok. Atlayıp geri dönebilirsin.",
     paperLeadAudio: "{count} soru, teslimden önce hiçbir cevap yok. Sonuncular yüksek sesle cevaplanır.",
     answered: "{total} sorudan {done} tanesi dolduruldu",

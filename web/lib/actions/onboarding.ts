@@ -38,6 +38,11 @@ export interface OnboardingPayload {
   institutionName?: string;
   examDate?: string;
   examName?: string;
+  /** Les jours sans révision, en numéros ISO : 1 pour lundi, 7 pour dimanche. */
+  restDays?: number[];
+  /** La moyenne d'aujourd'hui et celle qu'on vise, sur l'échelle 10-20 du produit. */
+  currentScore?: number;
+  targetScore?: number;
 }
 
 export interface SaveResult {
@@ -74,6 +79,21 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
   if (payload.subjects?.length) profile.subjects = payload.subjects;
   if (payload.institutionId) profile.institution_id = payload.institutionId;
   if (payload.institutionName) profile.institution_name = payload.institutionName;
+
+  /**
+   * Les jours de repos deviennent une semaine de minutes, lundi en premier.
+   *
+   * La colonne existait et attendait exactement ça : sept valeurs, zéro pour un jour sans
+   * révision. C'est ce qui rend la question du parcours autre chose qu'un décor - le plan lit
+   * cette semaine et ne pose rien sur les zéros. Les autres jours reprennent le rythme
+   * quotidien du profil, qui est aussi ce qu'ils valaient sans cette ligne.
+   */
+  if (payload.restDays?.length) {
+    const daily = await dailyMinutesOf(supabase, user.id);
+    profile.weekly_minutes = Array.from({ length: 7 }, (_, index) =>
+      payload.restDays!.includes(index + 1) ? 0 : daily,
+    );
+  }
 
   const { error: profileError } = await supabase
     .from("profiles")
@@ -116,6 +136,20 @@ export async function saveOnboarding(payload: OnboardingPayload): Promise<SaveRe
   return { status: "saved", examCreated };
 }
 
+
+/** Le rythme quotidien déjà déclaré, ou le défaut de la colonne. */
+async function dailyMinutesOf(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<number> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("daily_minutes")
+    .eq("id", userId)
+    .maybeSingle();
+  const minutes = (data as { daily_minutes?: number } | null)?.daily_minutes;
+  return typeof minutes === "number" && minutes > 0 ? minutes : 15;
+}
 
 /** Le nom du pays, pour l'afficher côté serveur si besoin. */
 export async function countryName(code: string): Promise<string> {

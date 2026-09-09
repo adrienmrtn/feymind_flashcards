@@ -24,6 +24,42 @@ import { isWeak, weakness, type CardDifficulty } from "./weakness";
 /** Les jours avant l'épreuve où un blanc a un sens. */
 export const MOCK_OFFSETS: readonly number[] = [7, 2];
 
+/**
+ * De combien de jours un blanc peut manquer son rendez-vous et compter quand même.
+ *
+ * Trois jours : le blanc de J-7 passé le week-end d'avant, ou le lendemain parce qu'on
+ * n'était pas là, reste le blanc de J-7. Au-delà, c'est autre chose.
+ */
+export const MOCK_SLOT_SLACK = 3;
+
+/**
+ * Le rendez-vous qu'un blanc honore, ou `null` s'il n'en honore aucun.
+ *
+ * **C'est ce qui sépare l'entraînement du blanc du plan.** Le compte suffisait avant : un blanc
+ * passé, c'était le premier palier rempli. Résultat, quelqu'un qui essayait la fonctionnalité
+ * trois semaines avant son épreuve - par curiosité, pour voir à quoi ça ressemble - effaçait le
+ * blanc de J-7 qu'il n'avait pas encore passé. Il perdait la seule mesure sérieuse du produit
+ * pour avoir voulu la regarder.
+ *
+ * Un blanc honore donc le rendez-vous le plus proche du jour où il a été passé, et seulement
+ * s'il en est proche. Passé à J-25, il ne remplit rien : c'est un entraînement, il compte dans
+ * l'estimation de préparation comme tous les autres, et les deux blancs du plan restent posés.
+ */
+export function mockSlotFor(daysBeforeExam: number): number | null {
+  let best: number | null = null;
+  let smallest = Infinity;
+
+  for (const [index, offset] of MOCK_OFFSETS.entries()) {
+    const gap = Math.abs(daysBeforeExam - offset);
+    if (gap < smallest) {
+      smallest = gap;
+      best = index;
+    }
+  }
+
+  return smallest <= MOCK_SLOT_SLACK ? best : null;
+}
+
 /** En deçà, un blanc ne mesure rien : le tirage n'est pas représentatif. */
 export const MIN_MOCK_QUESTIONS = 8;
 export const DEFAULT_MOCK_QUESTIONS = 20;
@@ -133,14 +169,21 @@ export function planMocks(input: MockPlanInput): PlannedMock[] {
     const daysRemaining = dayDifference(today, exam.examDate);
     if (daysRemaining < 0) continue;
 
-    const alreadyDone = input.done.filter((result) => result.examId === exam.id);
+    // Les rendez-vous déjà honorés, et eux seuls : un entraînement lancé loin de l'épreuve
+    // n'en honore aucun, donc il n'en efface aucun.
+    const honoured = new Set<number>();
+    for (const result of input.done) {
+      if (result.examId !== exam.id) continue;
+      const slot = mockSlotFor(dayDifference(startOfDay(result.finishedAt), exam.examDate));
+      if (slot !== null) honoured.add(slot);
+    }
 
     for (const [index, before] of MOCK_OFFSETS.entries()) {
       const wanted = daysRemaining - before;
       // Un blanc dont le jour est passé ne se rattrape pas : le suivant le remplace.
       if (wanted < 0) continue;
-      // Un blanc par palier : celui de J-7 fait, on ne le repose pas.
-      if (alreadyDone.length > index) continue;
+      // Un blanc par palier : celui de J-7 passé, on ne le repose pas.
+      if (honoured.has(index)) continue;
 
       const offset = openDayFor(wanted, input.horizonDays, daysRemaining, taken);
       if (offset == null) continue;

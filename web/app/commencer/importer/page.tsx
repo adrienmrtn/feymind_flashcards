@@ -16,7 +16,6 @@ export default function ImportStep() {
         </>
       }
       lead={t("onboarding.importerLead")}
-      next="/commencer/plan"
     >
       <FormatsStory />
     </StoryScaffold>

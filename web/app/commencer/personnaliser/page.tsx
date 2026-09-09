@@ -25,7 +25,7 @@ export default function PersonalizeIntroStep() {
   return (
     <Scaffold
       title={t("onboarding.personnaliserTitle")}
-      footer={<ContinueButton label={t("onboarding.letsGo")} enabled href="/commencer/pays" />}
+      footer={<ContinueButton label={t("onboarding.letsGo")} enabled />}
       center
     >
       {/* L'orbe ne se dessine qu'en 64 ou en 20 ; ici elle doit tenir l'écran, donc on

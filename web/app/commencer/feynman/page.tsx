@@ -16,7 +16,6 @@ export default function FeynmanStep() {
         </>
       }
       lead={t("onboarding.feynmanLead")}
-      next="/commencer/resultats"
     >
       <FeynmanStory />
     </StoryScaffold>
