@@ -146,6 +146,92 @@ export {
   type ExamPlan,
   type ExamProjection,
 } from "./srs/exam";
+
+// Le temps réellement disponible, jour par jour.
+export {
+  MAX_DAILY_MINUTES,
+  WEEKDAY_ORDER,
+  capacityFor,
+  capacityWindow,
+  cardsForMinutes,
+  clampMinutes,
+  minutesForCards,
+  uniformWeek,
+  usableDaysUntil,
+  usableOffsets,
+  weeklyFromRow,
+  weeklyTotal,
+  weekdayIndex,
+  type Availability,
+  type AvailabilityException,
+  type WeeklyMinutes,
+} from "./srs/availability";
+
+// Le plan de la période : plusieurs épreuves, un seul emploi du temps.
+export {
+  EXAM_KINDS,
+  TERM_HORIZON_DAYS,
+  asExamKind,
+  defaultFormatsFor,
+  examPriority,
+  feasibility,
+  levers,
+  loadBars,
+  matchesFormat,
+  planTerm,
+  todayBlocks,
+  todayCardCount,
+  todayCardIds,
+  type ExamKind,
+  type LeverKind,
+  type LoadBar,
+  type PlanBlock,
+  type PlanDay,
+  type PlannedPass,
+  type TermCard,
+  type TermExam,
+  type TermInput,
+  type TermLever,
+  type TermPlan,
+  type TermVerdict,
+  type VerdictLevel,
+} from "./srs/term";
+
+// Ce qui résiste, et ce qui est acquis.
+export {
+  MIN_REVIEWS_FOR_WEAKNESS,
+  NO_DIFFICULTY,
+  PRIOR_FAILURE_RATE,
+  PRIOR_REVIEWS,
+  SEVERE_THRESHOLD,
+  STUBBORN_LAPSES,
+  WEAK_THRESHOLD,
+  cardReadiness,
+  extraPassesFor,
+  isStubborn,
+  isWeak,
+  weakCards,
+  weakFirst,
+  weakness,
+  type CardDifficulty,
+  type WeakCandidate,
+  type WeakCard,
+} from "./srs/weakness";
+export {
+  EMPTY_MASTERY,
+  EMPTY_STATS,
+  currentStreak,
+  longestStreak,
+  masteryByCourse,
+  masteryForCourses,
+  masteryOf,
+  studyStats,
+  type DailyReview,
+  type Mastery,
+  type MasteryCard,
+  type StudyStats,
+} from "./srs/mastery";
+
 export {
   EXAM_CHART_PAST_DAYS,
   buildExamInsight,

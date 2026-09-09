@@ -398,6 +398,21 @@ export const es: Catalog = {
     sheetLanguage: "Idioma de las fichas",
     sheetLanguageHelp: "Las próximas fichas se escribirán en este idioma. Las que ya están se quedan.",
     sheetLanguageSr: "Idioma de las próximas fichas",
+      section: {
+      study: "Tu estudio",
+      studyHint: "Lo que cambia lo que la app te sirve.",
+      app: "La app",
+      appHint: "Su idioma y su aspecto.",
+      account: "Tu cuenta",
+      accountHint: "Suscripción, datos, sesión.",
+    },
+    weekly: {
+      title: "Mis semanas",
+      detail: "El tiempo disponible cada día, que gobierna tu plan.",
+    },
+    help: {
+      title: "Ayuda y repetir los recorridos",
+    },
   },
   nav: {
     study: "Estudiar",
@@ -414,6 +429,7 @@ export const es: Catalog = {
     import: "Importar",
     feedback: "Comentarios",
     openCourses: "Abiertos",
+      plan: "Plan",
   },
   app: appEs,
   copy: copyEs,

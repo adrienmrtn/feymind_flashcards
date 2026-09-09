@@ -65,14 +65,14 @@ const HOME: Tour = {
       body: "app.tour.home.week.body",
     },
     {
-      anchor: "examens",
-      title: "app.tour.home.exams.title",
-      body: "app.tour.home.exams.body",
+      anchor: "maitrise",
+      title: "app.tour.home.mastery.title",
+      body: "app.tour.home.mastery.body",
     },
     {
-      anchor: "amis",
-      title: "app.tour.home.friends.title",
-      body: "app.tour.home.friends.body",
+      anchor: "statistiques",
+      title: "app.tour.home.stats.title",
+      body: "app.tour.home.stats.body",
     },
   ],
 };
@@ -131,23 +131,6 @@ const COURSES: Tour = {
   ],
 };
 
-const DECKS: Tour = {
-  id: "paquets",
-  mode: "guided",
-  steps: [
-    {
-      anchor: "paquets-etagere",
-      title: "app.tour.decks.shelf.title",
-      body: "app.tour.decks.shelf.body",
-    },
-    {
-      anchor: "paquets-ajouter",
-      title: "app.tour.decks.add.title",
-      body: "app.tour.decks.add.body",
-    },
-  ],
-};
-
 const SHEET: Tour = {
   id: "cours-fiche",
   mode: "guided",
@@ -192,19 +175,24 @@ const CARDS: Tour = {
   ],
 };
 
-const EXAMS: Tour = {
-  id: "examens",
+const PLAN: Tour = {
+  id: "plan",
   mode: "guided",
   steps: [
     {
-      anchor: "examens-calendrier",
-      title: "app.tour.exams.calendar.title",
-      body: "app.tour.exams.calendar.body",
+      anchor: "plan-frise",
+      title: "app.tour.plan.strip.title",
+      body: "app.tour.plan.strip.body",
+    },
+    {
+      anchor: "plan-aujourdhui",
+      title: "app.tour.plan.today.title",
+      body: "app.tour.plan.today.body",
     },
     {
       anchor: "examens-ajouter",
-      title: "app.tour.exams.add.title",
-      body: "app.tour.exams.add.body",
+      title: "app.tour.plan.add.title",
+      body: "app.tour.plan.add.body",
     },
   ],
 };
@@ -285,10 +273,9 @@ export const TOURS: readonly Tour[] = [
   REVIEW,
   SESSION,
   COURSES,
-  DECKS,
   SHEET,
   CARDS,
-  EXAMS,
+  PLAN,
   FRIENDS,
   PROFILE,
   SETTINGS,
@@ -313,8 +300,7 @@ export function tourFor(input: { pathname: string; inSession: boolean }): Tour |
   if (path === "/app/reviser") return input.inSession ? SESSION : REVIEW;
   if (path === "/app") return HOME;
   if (path === "/app/cours") return COURSES;
-  if (path === "/app/paquets") return DECKS;
-  if (path === "/app/examens") return EXAMS;
+  if (path === "/app/plan") return PLAN;
   if (path === "/app/amis") return FRIENDS;
   if (path === "/app/reglages") return SETTINGS;
   if (path === "/app/importer") return IMPORT;

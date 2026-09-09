@@ -400,6 +400,21 @@ export const en: Catalog = {
     sheetLanguageHelp:
       "The next sheets will be written in this language. The ones already there stay.",
     sheetLanguageSr: "Language of the next sheets",
+      section: {
+      study: "Your studying",
+      studyHint: "What changes the work the app hands you.",
+      app: "The app",
+      appHint: "Its language and its look.",
+      account: "Your account",
+      accountHint: "Subscription, data, session.",
+    },
+    weekly: {
+      title: "My weeks",
+      detail: "The time available each day, which drives your plan.",
+    },
+    help: {
+      title: "Help and replaying the tours",
+    },
   },
   nav: {
     study: "Study",
@@ -416,6 +431,7 @@ export const en: Catalog = {
     import: "Import",
     feedback: "Feedback",
     openCourses: "Open",
+      plan: "Plan",
   },
   app: appEn,
   copy: copyEn,

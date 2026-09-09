@@ -31,6 +31,10 @@ export const appTr = {
       title: "Bugünün işleri",
       reviewAll: "Hepsini tekrar et",
       dueCards: "{count, plural, one {# kart tekrar edilecek} other {# kart tekrar edilecek}}",
+          startMinutes: "Başla ({minutes} dk)",
+      forExam: "{cards} kart · {minutes} dk · {exam}",
+      fromPlan: "Sıralamayı planın belirliyor.",
+      planTight: "Planın yetmiyor. Seçenekleri gör.",
     },
     empty: {
       noCardsTitle: "Henüz kart yok",
@@ -66,6 +70,38 @@ export const appTr = {
       title: "Arkadaşlar",
       noPending: "Bekleyen yok",
       someone: "Biri",
+    },
+      mastery: {
+      title: "Hâkimiyet",
+      of: "{count} kart üzerinden",
+      byCourse: "Derse göre",
+      empty: "Ölçmeye başlamak için bir ders içe aktar.",
+      solid: "Oturmuş",
+      fragile: "Kırılgan",
+      learning: "Sürüyor",
+      untouched: "Hiç görülmedi",
+      aria: "% {percent} öğrenildi: {solid} oturmuş, {fragile} kırılgan, {learning} sürüyor, {untouched} hiç görülmedi.",
+    },
+    stats: {
+      title: "İstatistiklerin",
+      passes: "Geçiş",
+      passesDetail: "{days} etkin günde",
+      accuracy: "İsabet",
+      accuracyDetail: "ilk seferde doğru",
+      streak: "Seri",
+      streakDetail: "rekor: {best} gün",
+      average: "Ortalama",
+      averageDetail: "en iyi gün: {best}",
+      averageEmpty: "etkin gün başına",
+      chartAria: "Son altı haftada günlük geçişler.",
+      chartDay: "{passes} geçiş, {again} yanlış",
+      chartLegend: "Günde bir çizgi. Okra renkli olanlar üçte birden fazlasının yanlış olduğu günler.",
+    },
+    weak: {
+      title: "Direnenler",
+      lead: "En çok yanlış yaptığın kartlar. Önce onlar gelir.",
+      none: "Şu an direnen bir şey yok.",
+      line: "{reviews} geçişin {again} tanesinde yanlış",
     },
   },
   course: {
@@ -130,6 +166,7 @@ export const appTr = {
     dueBadge: "{count} tekrar",
     emptyBadge: "boş",
     upToDate: "güncel",
+      mastery: "% {percent} öğrenildi",
   },
   decks: {
     title: "Desteler",
@@ -313,6 +350,103 @@ export const appTr = {
     examEyebrow: "📅 Sınav",
     coursesEyebrow: "📚 Dersler",
     gradeEyebrow: "Not",
+  },
+  plan: {
+    title: "Plan",
+    lead: "Sınavların, zamanın ve bunlardan çıkan sonuç.",
+    strip: {
+      title: "Dönem",
+      today: "Bugün",
+      lastDay: "{day} tarihine kadar",
+      day: "{day} — {capacity} dakikanın {minutes} dakikası",
+      closed: "{day} — uygun değil",
+      inDays: "{count, plural, one {# gün sonra} other {# gün sonra}}",
+      summary: "{days} gün, bunların {closed} tanesi uygun değil.",
+    },
+    verdict: {
+      clear: "Yetişiyor. Günde yaklaşık {minutes} dakika.",
+      tight: "Sığıyor ama dolu: günde yaklaşık {minutes} dakika.",
+      short: "Sınavlarından önce {minutes} dakikan eksik.",
+      shortLead: "Plan şunlar için yetmiyor: {exams}.",
+      busiest: "En yoğun gün: {minutes} dakika, {days} gün sonra.",
+      failed: "Kaydedilemedi.",
+    },
+    lever: {
+      capacity: "Açık olan her güne {minutes} ekle",
+      capacityAction: "Zaman aç",
+      target: "{exam} dersinde hedef notu düşür",
+      scope: "{exam} dersinden biçim çıkar",
+      gain: "Yaklaşık {minutes} dakika kazandırır",
+      open: "Aç",
+    },
+    today: {
+      title: "Bugün",
+      start: "Başla ({minutes} dk)",
+      nothing: "Plan bugün için bir şey öngörmüyor.",
+      forExam: "{cards} kart · {minutes} dk · {exam}",
+      total: "Toplam {cards} kart, yaklaşık {minutes} dakika.",
+    },
+    exams: {
+      title: "Sınavların",
+      readiness: "Bugün % {now} → sınav günü % {projected}",
+    },
+    month: {
+      show: "Ayı göster",
+      hide: "Ayı gizle",
+    },
+    empty: {
+      title: "Henüz sınav yok",
+      body: "Bir tarih koy, uygulama planı kursun: ne tekrar edilecek, hangi gün ve yetişiyor mu.",
+    },
+    weekly: {
+      pageTitle: "Haftalarım",
+      pageLead: "Gerçekten sahip olduğun zaman. Planı dürüst kılan şey bu.",
+      title: "Tipik hafta",
+      total: "{days} günde haftada {total}",
+      open: "Haftada {minutes} dakika",
+      off: "Yok",
+      hint: "Sıfırdaki bir gün hiç tekrar almaz. Plan diğerlerine dağıtır.",
+      saving: "Kaydediliyor…",
+      saved: "Kaydedildi",
+    },
+    exceptions: {
+      title: "Ayrı günler",
+      lead: "Tatil, staj, dolu bir hafta sonu: bu tarihler tipik haftanın önüne geçer.",
+      none: "Ayrı gün yok.",
+      add: "İzin günü koy",
+      remove: "Kaldır",
+      pick: "Bir tarih seç",
+    },
+    kind: {
+      exam: "Sınav",
+      midterm: "Vize",
+      final: "Final",
+      quiz: "Quiz",
+      oral: "Sözlü",
+      mock: "Deneme",
+    },
+    sheet: {
+      lead: "{cards} kart üzerinden % {percent} öğrenildi.",
+      programTitle: "Kapsamda",
+      courseLine: "{cards} kart · % {percent} öğrenildi",
+      weakTitle: "Direnenler",
+      weakLead: "Bunlar rastgele değil, yanlış yaptığın için geri geliyor.",
+      weakLine: "{reviews} geçişin {again} tanesinde yanlış",
+      weakHint: "Oturumlarında önce gelirler. Biri hâlâ direniyorsa, genelde tek yerine iki cevap istiyordur.",
+      stubborn: "Yeniden yaz",
+      formatsTitle: "Çalışılacak biçimler",
+      formatsAll: "Dersteki tüm biçimler",
+      formatsSome: "{count} biçim seçildi",
+      kindTitle: "Sınav türü",
+      effect: {
+        basic: "Soru-cevap kartları plana girer.",
+        choice: "Çoktan seçmeliler plana girer.",
+        cloze: "Boşluk doldurmalar plana girer.",
+      },
+      apply: "Uygula ve planı yeniden kur",
+      applyHint: "Plan kalan günler üzerinden yeniden hesaplanır.",
+      back: "Plana dön",
+    },
   },
   friends: {
     title: "Arkadaşlar",
@@ -839,13 +973,13 @@ export const appTr = {
         title: "Haftan",
         body: "Bir gün, bir sütun. Ne tekrarladığını ve neyin geldiğini görürsün.",
       },
-      exams: {
-        title: "Sınavların",
-        body: "Bir tarih koy, Micabo ders kartlarını sınav gününden önce geçirir.",
+          mastery: {
+        title: "Hâkimiyetin",
+        body: "% 100'e kadar giden tek sayı. Zaman harcadığında değil, bir kart oturduğunda yükselir.",
       },
-      friends: {
-        title: "Arkadaşların",
-        body: "Bu hafta kimin tekrarladığını görmek için arkadaşlarını ekle.",
+      stats: {
+        title: "İstatistiklerin",
+        body: "Hacim ne kadar çalıştığını söyler. İsabet işe yarayıp yaramadığını söyler.",
       },
     },
     review: {
@@ -872,16 +1006,6 @@ export const appTr = {
       add: {
         title: "Ders ekle",
         body: "PDF, Word, yapıştırılan metin veya YouTube videosu. Micabo okur, sonra özeti yazar.",
-      },
-    },
-    decks: {
-      shelf: {
-        title: "Destelerin",
-        body: "Her dersin bir destesi var, bir de elle açtıkların. Hepsi burada.",
-      },
-      add: {
-        title: "Deste aç",
-        body: "Boş deste, kart kart. Ya da hazır bir Anki dosyası.",
       },
     },
     sheet: {
@@ -912,14 +1036,18 @@ export const appTr = {
         body: "Bir soruyu, yanıtını düzeltebilir veya elinle bir tane ekleyebilirsin.",
       },
     },
-    exams: {
-      calendar: {
-        title: "Takvimin",
-        body: "Konan tarihler güne yazılır. Eklemek için bir güne dokun.",
-      },
+    plan: {
       add: {
         title: "Sınav ekle",
         body: "Bir tarih, ilgili dersler, yoğunluk. Micabo kartları sınavdan önce öne alır.",
+      },
+          strip: {
+        title: "Dönem",
+        body: "Son sınavına kadar günde bir çizgi. Çukurlar uygun olmadığın günler.",
+      },
+      today: {
+        title: "Bugün",
+        body: "Planın senden istediği, ders ders, ve hangi sınav için.",
       },
     },
     friends: {
@@ -1050,6 +1178,8 @@ export const appTr = {
     usernameTooShort: "En az üç karakter.",
     usernameTooLong: "En fazla yirmi karakter.",
     usernameInvalid: "Harf, rakam, tire veya alt çizgi.",
+      badWeek: "Bir hafta yedi gündür.",
+    saveFailed: "Kaydedilemedi.",
   },
   common: {
     see: "Gör",

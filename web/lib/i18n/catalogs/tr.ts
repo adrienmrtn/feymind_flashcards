@@ -398,6 +398,21 @@ export const tr: Catalog = {
     sheetLanguage: "Özetlerin dili",
     sheetLanguageHelp: "Sonraki özetler bu dilde yazılır. Öncekiler kalır.",
     sheetLanguageSr: "Sonraki özetlerin dili",
+      section: {
+      study: "Çalışman",
+      studyHint: "Uygulamanın sana verdiğini değiştiren şeyler.",
+      app: "Uygulama",
+      appHint: "Dili ve görünümü.",
+      account: "Hesabın",
+      accountHint: "Abonelik, veriler, oturum.",
+    },
+    weekly: {
+      title: "Haftalarım",
+      detail: "Her gün mevcut olan ve planını yöneten süre.",
+    },
+    help: {
+      title: "Yardım ve turları yeniden izleme",
+    },
   },
   nav: {
     study: "Çalış",
@@ -414,6 +429,7 @@ export const tr: Catalog = {
     import: "İçe aktar",
     feedback: "Geri bildirimler",
     openCourses: "Açık",
+      plan: "Plan",
   },
   app: appTr,
   copy: copyTr,

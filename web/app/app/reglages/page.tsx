@@ -26,12 +26,17 @@ import { currentUser } from "@/lib/data/user";
 import { canReadInbox } from "@/lib/feedback";
 
 /**
- * Les réglages, **à part du profil**.
+ * Les réglages, en **trois sections** et non dix cartes en vrac.
  *
- * Le profil raconte qui l'on est et ce qu'on a révisé. Ici on change le
- * compte : abonnement, nom, rythme, fiches, langue, session, suppression.
- * L'abonnement est en tête : c'est ce qu'on vient chercher, et ça ne doit
- * plus se cacher sous le rythme quotidien.
+ * L'écran alignait abonnement, langue de l'interface, apparence, profil, langue des fiches,
+ * retours, déconnexion, trois « rejouer », export et suppression - au même niveau, sans
+ * ordre, avec deux cartes distinctes portant le mot « langue ». Trouver quoi que ce soit
+ * demandait de tout lire.
+ *
+ * Les trois sections répondent à trois intentions différentes : **ton étude** est ce qui
+ * change ce que l'app te sert, **l'app** est son apparence et sa langue, **ton compte** est
+ * l'abonnement et les données. Les « rejouer » descendent dans un pli d'aide : ce sont des
+ * outils de dépannage, pas des réglages.
  */
 export default async function SettingsPage() {
   const [user, profile, right] = await Promise.all([
@@ -54,21 +59,8 @@ export default async function SettingsPage() {
         </p>
       </header>
 
-      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
-        <SubscriptionCard
-          paid={entitlement.isPaid(right)}
-          store={right.store ?? null}
-          periodType={right.periodType ?? null}
-          expiresAt={right.expiresAt ? right.expiresAt.toISOString() : null}
-          willRenew={Boolean(right.willRenew)}
-          productId={right.productId ?? null}
-        />
-
-        <LanguageSwitcher variant="card" />
-
-        <AppearanceSwitcher />
-
-        <div className="min-w-0 lg:col-span-2" data-tour="reglages-toi">
+      <Section titleKey="settings.section.study" hintKey="settings.section.studyHint">
+        <div className="min-w-0" data-tour="reglages-toi">
           <ProfileSettings
             initialName={profile?.display_name ?? ""}
             initialUsername={handle}
@@ -83,41 +75,112 @@ export default async function SettingsPage() {
           />
         </div>
 
-        <section className="saas-card p-7" data-tour="reglages-langue">
-          <SheetLanguageCard
-            initial={sheetLanguage(profile?.sheet_language, profile?.country_code)}
-            embedded
+        <Link
+          href={"/app/plan/semaines" as never}
+          className="hover-tile flex items-center justify-between gap-4 rounded-group border border-border bg-card px-5 py-4"
+        >
+          <span className="min-w-0">
+            <span className="block text-[15px] font-semibold text-ink">
+              <T k="settings.weekly.title" />
+            </span>
+            <span className="mt-0.5 block text-[13px] text-ink-tertiary">
+              <T k="settings.weekly.detail" />
+            </span>
+          </span>
+          <svg aria-hidden viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-ink-tertiary">
+            <path
+              d="M7 4l6 6-6 6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+          </svg>
+        </Link>
+      </Section>
+
+      <Section titleKey="settings.section.app" hintKey="settings.section.appHint">
+        <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
+          <LanguageSwitcher variant="card" />
+          <section className="saas-card p-7" data-tour="reglages-langue">
+            <SheetLanguageCard
+              initial={sheetLanguage(profile?.sheet_language, profile?.country_code)}
+              embedded
+            />
+          </section>
+          <div className="lg:col-span-2">
+            <AppearanceSwitcher />
+          </div>
+        </div>
+      </Section>
+
+      <Section titleKey="settings.section.account" hintKey="settings.section.accountHint">
+        <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
+          <SubscriptionCard
+            paid={entitlement.isPaid(right)}
+            store={right.store ?? null}
+            periodType={right.periodType ?? null}
+            expiresAt={right.expiresAt ? right.expiresAt.toISOString() : null}
+            willRenew={Boolean(right.willRenew)}
+            productId={right.productId ?? null}
           />
-        </section>
-
-        <FeedbackCard />
-
-        {canReadInbox(user?.email) ? (
-          <p className="px-1 text-[13.5px] lg:col-span-2">
-            <Link href={"/app/retours" as never} className="underline-draw font-medium text-ink">
-              Lire les retours
-            </Link>
-          </p>
-        ) : null}
+          <FeedbackCard />
+          <ExportData />
+          <DeleteAccount email={user?.email ?? ""} />
+        </div>
 
         <section className="saas-card overflow-hidden">
           <SignOutButton />
-          <div className="border-t border-hairline">
-            <ReplayTour />
-          </div>
+        </section>
+      </Section>
+
+      <details className="rounded-group border border-border bg-card">
+        <summary className="cursor-pointer list-none px-5 py-4 text-[14px] font-medium text-ink-secondary">
+          <T k="settings.help.title" />
+        </summary>
+        <div className="border-t border-hairline">
+          <ReplayTour />
           <div className="border-t border-hairline">
             <ReplayOnboarding />
           </div>
           <div className="border-t border-hairline">
             <ReplayPaywallOnboarding />
           </div>
-        </section>
-
-        <div className="grid min-w-0 gap-4">
-          <ExportData />
-          <DeleteAccount email={user?.email ?? ""} />
         </div>
-      </div>
+      </details>
+
+      {canReadInbox(user?.email) ? (
+        <p className="px-1 text-[13.5px]">
+          <Link href={"/app/retours" as never} className="underline-draw font-medium text-ink">
+            <T k="app.settings.readFeedback" />
+          </Link>
+        </p>
+      ) : null}
     </>
+  );
+}
+
+/** Une section de réglages : un titre, une phrase, et ce qu'elle contient. */
+function Section({
+  titleKey,
+  hintKey,
+  children,
+}: {
+  titleKey: string;
+  hintKey: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-4">
+      <div>
+        <h2 className="text-[15px] font-semibold text-ink">
+          <T k={titleKey} />
+        </h2>
+        <p className="mt-0.5 text-[13px] text-muted-foreground">
+          <T k={hintKey} />
+        </p>
+      </div>
+      {children}
+    </section>
   );
 }

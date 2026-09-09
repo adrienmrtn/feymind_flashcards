@@ -25,6 +25,8 @@ export interface ProfileRow {
   institution_name: string | null;
   institution_id: string | null;
   daily_minutes: number | null;
+  /** Sept entiers en minutes, lundi en premier. Nul = le rythme quotidien partout. */
+  weekly_minutes: number[] | null;
   sheet_length: string | null;
   sheet_language: string | null;
   /** Les pages dont la visite guidée s'est déjà présentée. */
@@ -34,7 +36,7 @@ export interface ProfileRow {
 }
 
 const PROFILE_COLUMNS =
-  "display_name, username, country_code, study_level, subjects, institution_name, institution_id, daily_minutes, sheet_length, sheet_language, tour_seen, tour_skipped";
+  "display_name, username, country_code, study_level, subjects, institution_name, institution_id, daily_minutes, weekly_minutes, sheet_length, sheet_language, tour_seen, tour_skipped";
 
 export async function readProfile(): Promise<ProfileRow | null> {
   const userId = await currentUserId();
