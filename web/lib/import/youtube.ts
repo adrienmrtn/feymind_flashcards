@@ -8,6 +8,11 @@
  *
  * L'aperçu ne télécharge pas la transcription. On montre la vidéo, puis on
  * lit les sous-titres seulement quand on écrit la fiche.
+ *
+ * **Une vidéo sans piste de sous-titres n'est plus un refus.** Quand aucun chemin ne
+ * rend de sous-titres, le serveur fait regarder la vidéo par le modèle : voir
+ * `supabase/functions/_shared/youtube-video.ts`. L'aperçu se contente donc d'annoncer
+ * que la lecture sera plus longue, et le bouton reste actif.
  */
 
 const ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
@@ -48,6 +53,12 @@ export interface YouTubePreview {
    * sans liste ne veut pas dire « pas de sous-titres ».
    */
   captionsKnown?: boolean;
+  /**
+   * Vrai quand le serveur sait regarder la vidéo faute de sous-titres. Absent d'un
+   * déploiement antérieur, et absent d'un aperçu fait dans l'onglet : on ne l'affirme
+   * donc que lorsque le serveur l'a dit.
+   */
+  canWatch?: boolean;
 }
 
 export function extractVideoId(raw: string): string | null {
@@ -102,11 +113,16 @@ export function youtubeDurationLabel(seconds: number): string | null {
   return `${Math.max(1, minutes)} min`;
 }
 
-export function youtubeBlockingReason(video: YouTubePreview): string | null {
-  if (video.captionsKnown && video.captions.length === 0) {
-    return "Cette vidéo n'a pas de piste de sous-titres.";
-  }
-  return null;
+/**
+ * Vrai quand il faudra faire regarder la vidéo, faute de piste de sous-titres.
+ *
+ * Ce n'est pas un refus, c'est une attente plus longue : le modèle lit la vidéo chez
+ * Google, ce qui prend une minute là où un fichier de sous-titres arrive en deux secondes.
+ * L'écran le dit avant, pour que la barre d'attente ne ressemble pas à une panne.
+ */
+export function youtubeNeedsWatching(video: YouTubePreview): boolean {
+  if (video.captions.length > 0) return false;
+  return video.captionsKnown === true || video.canWatch === true;
 }
 
 /** Un cours trop long n'est plus un refus : on lit le début. */
@@ -169,13 +185,6 @@ export async function readYouTubeInBrowser(
   const title = preview.status === "ok" ? preview.video.title : "Vidéo YouTube";
 
   if (preview.status === "ok") {
-    const blocked = youtubeBlockingReason(preview.video);
-    if (blocked && preview.video.captions.length === 0) {
-      // On tente quand même les autres pistes : l'aperçu n'a pas toujours la liste.
-    } else if (blocked) {
-      return { status: "error", message: blocked };
-    }
-
     const fromTracks = await transcriptFromTracks(preview.video.captions, languages, id);
     if (fromTracks && fromTracks.length >= MIN_CAPTION_CHARS) {
       return { status: "ok", text: fromTracks, title };
@@ -192,15 +201,8 @@ export async function readYouTubeInBrowser(
     return { status: "ok", text: invidious, title };
   }
 
-  const longest = [timed, invidious].filter((text): text is string => Boolean(text))
-    .sort((a, b) => b.length - a.length)[0];
-  if (longest && longest.length > 0) {
-    return {
-      status: "error",
-      message: "Cette vidéo n'a pas assez de sous-titres exploitables.",
-    };
-  }
-
+  // L'onglet n'a rien trouvé. Ce n'est pas la fin du chemin : l'appelant passe au serveur,
+  // qui a encore les sous-titres signés puis, à défaut, la lecture de la vidéo par le modèle.
   return {
     status: "error",
     message: "Cette vidéo n'a pas assez de sous-titres exploitables.",

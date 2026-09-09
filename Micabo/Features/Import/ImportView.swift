@@ -90,11 +90,11 @@ struct ImportView: View {
         }
     }
 
-    /// Un aperçu obtenu, et rien qui empêche de lire la vidéo. Un cours trop
-    /// long n'empêche plus : on lira le début.
+    /// Un aperçu obtenu suffit. Ni la durée ni l'absence de sous-titres n'empêchent : un
+    /// cours trop long se lit par le début, et une vidéo sans piste se fait regarder par le
+    /// modèle côté serveur.
     private var youtubeIsReady: Bool {
-        guard let youtubeVideo else { return false }
-        return youtubeVideo.blockingReason == nil
+        youtubeVideo != nil
     }
 
     var body: some View {
@@ -755,13 +755,6 @@ struct ImportView: View {
     @MainActor
     private func loadTranscript() async -> Bool {
         guard let video = youtubeVideo else { return false }
-
-        // Le garde qui compte : une vidéo sans sous-titres ne déclenche
-        // aucun appel. Un cours trop long, lui, se lit par le début.
-        if let reason = video.blockingReason {
-            failure = youtubeFailure(reason)
-            return false
-        }
 
         isReading = true
         defer { isReading = false }

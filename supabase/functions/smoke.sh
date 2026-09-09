@@ -55,7 +55,7 @@ Une fonction qui ne se charge pas se redéploie depuis les sources :
 
 Si seule l'API de déploiement est disponible, regénérer l'artefact avant de l'envoyer :
 
-    ./bundle.sh    puis déployer dist/<fonction>.deploy.ts
+    ./pin.sh       puis déployer dist/<fonction>.pin.ts
 
 HINT
   exit 1

@@ -163,7 +163,11 @@ export async function deleteAccount(): Promise<SavedSettings> {
   const { error } = await supabase.rpc("delete_own_account");
   if (error) return { status: "error", message: error.message };
 
-  await supabase.auth.signOut();
+  // Portée locale : il n'y a plus de session à révoquer chez GoTrue, l'utilisateur vient
+  // d'être supprimé. Un `signOut` global rendait ici `user_not_found`, ce qui se lisait dans
+  // les journaux comme un incident d'authentification alors que c'était la suppression qui
+  // avait réussi. Effacer les cookies suffit, et c'est tout ce qui reste à faire.
+  await supabase.auth.signOut({ scope: "local" });
   return { status: "ok" };
 }
 

@@ -111,6 +111,10 @@ enum AuthError: LocalizedError, Equatable {
     case invalidCredentials
     case emailNotConfirmed
     case providerNotEnabled(String)
+    /// Le jeton de rafraîchissement n'existe plus chez GoTrue. Ce refus est définitif : le
+    /// réessayer ne fait que rejouer le même appel, et c'est ce qui a rempli les journaux du
+    /// 8 septembre 2026 de `refresh_token_not_found`.
+    case sessionExpired
     case cancelled
     case server(String)
 
@@ -128,6 +132,8 @@ enum AuthError: LocalizedError, Equatable {
             "Ton adresse n'est pas encore confirmée. Ouvre le lien qu'on vient de t'envoyer."
         case .providerNotEnabled(let provider):
             "La connexion avec \(provider) n'est pas encore activée sur ce projet Supabase."
+        case .sessionExpired:
+            "Ta session a expiré. Reconnecte-toi."
         case .cancelled:
             // Annuler n'est pas une erreur : l'écran ne doit rien afficher.
             nil

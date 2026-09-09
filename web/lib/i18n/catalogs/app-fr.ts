@@ -595,7 +595,11 @@ export const appFr = {
     charCount: "{count, plural, one {# caractère} other {# caractères}}",
     seeText: "Voir le texte",
     videoLink: "Lien de la vidéo",
-    subsRequired: "Sous-titres requis. Un cours trop long : on lit le début.",
+    subsRequired:
+      "Les sous-titres s'il y en a, sinon Micabo regarde la vidéo. Un cours trop long : on lit le début.",
+    watchedVideo:
+      "Les sous-titres de cette vidéo ne sont pas accessibles : Micabo va la regarder. Compte une minute de plus.",
+    watchingHint: "Micabo regarde la vidéo. Une minute, parfois deux.",
     longVideo: "Cette vidéo dure {duration}. On écrira la fiche à partir des 90 premières minutes.",
     seeVideo: "Voir la vidéo",
     sheetLength: "Longueur de la fiche",

@@ -21,8 +21,13 @@ export class CircuitOpenError extends Error {
   }
 }
 
+/** Ouvert ? Le repli veut le savoir sans avoir à rattraper une exception. */
+export function circuitIsOpen(): boolean {
+  return Date.now() < openUntil;
+}
+
 export function checkCircuit(): void {
-  if (Date.now() < openUntil) throw new CircuitOpenError();
+  if (circuitIsOpen()) throw new CircuitOpenError();
 }
 
 export function recordSuccess(): void {

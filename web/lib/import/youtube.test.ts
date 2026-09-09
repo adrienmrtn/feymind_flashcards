@@ -8,8 +8,8 @@ import {
   parseJson3,
   parseVtt,
   youtubeDurationNotice,
-  youtubeBlockingReason,
   youtubeDurationLabel,
+  youtubeNeedsWatching,
 } from "./youtube";
 
 describe("extractVideoId", () => {
@@ -27,7 +27,7 @@ describe("extractVideoId", () => {
   });
 });
 
-describe("youtubeBlockingReason", () => {
+describe("youtubeNeedsWatching", () => {
   const base = {
     id: "dQw4w9WgXcQ",
     title: "Test",
@@ -37,12 +37,22 @@ describe("youtubeBlockingReason", () => {
     captions: [] as { code: string; name: string; isAutomatic: boolean }[],
   };
 
-  it("n'interdit pas une vidéo dont on n'a pas encore lu les pistes", () => {
-    expect(youtubeBlockingReason(base)).toBeNull();
+  it("se tait tant qu'on n'a pas interrogé les pistes", () => {
+    expect(youtubeNeedsWatching(base)).toBe(false);
+  });
+
+  it("annonce la lecture par le modèle quand il n'y a aucune piste", () => {
+    expect(youtubeNeedsWatching({ ...base, captionsKnown: true })).toBe(true);
+    expect(youtubeNeedsWatching({ ...base, canWatch: true })).toBe(true);
+  });
+
+  it("se tait dès qu'une piste existe : les sous-titres passent d'abord", () => {
+    const captions = [{ code: "fr", name: "Français", isAutomatic: false }];
+    expect(youtubeNeedsWatching({ ...base, captions, captionsKnown: true, canWatch: true }))
+      .toBe(false);
   });
 
   it("n'interdit plus une vidéo trop longue : on lit le début", () => {
-    expect(youtubeBlockingReason({ ...base, durationSeconds: 3 * 60 * 60 })).toBeNull();
     expect(youtubeDurationNotice({ ...base, durationSeconds: 3 * 60 * 60 })).toMatch(/90/);
     expect(youtubeDurationNotice(base)).toBeNull();
   });

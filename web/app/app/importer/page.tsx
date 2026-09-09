@@ -2,8 +2,14 @@ import { DEFAULT_SHEET_LENGTH, isSheetLength } from "@micabo/core";
 
 import { ImportPanel } from "@/components/app/ImportPanel";
 
-/** L'écriture d'une fiche appelle le modèle : sans ça, Vercel coupe trop tôt. */
-export const maxDuration = 120;
+/**
+ * L'écriture d'une fiche appelle le modèle : sans ça, Vercel coupe trop tôt.
+ *
+ * Le plafond est celui du plan, et non un chiffre choisi : une vidéo sans sous-titres part
+ * chez Gemini, qui la regarde. Deux minutes ne suffisaient pas, et une action coupée en
+ * plein appel rendait « This page couldn't load » sur une lecture qui aboutissait.
+ */
+export const maxDuration = 300;
 import { SecondCourseCard } from "@/components/app/SecondCourseCard";
 import { canImportNow } from "@/lib/data/entitlement";
 import { readProfile } from "@/lib/data/profile";

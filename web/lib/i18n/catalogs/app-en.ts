@@ -594,7 +594,11 @@ export const appEn = {
     charCount: "{count, plural, one {# character} other {# characters}}",
     seeText: "See the text",
     videoLink: "Video link",
-    subsRequired: "Captions required. A long lecture: we read the beginning.",
+    subsRequired:
+      "Captions when there are any, otherwise Micabo watches the video. A long lecture: we read the beginning.",
+    watchedVideo:
+      "This video's captions are out of reach, so Micabo will watch it. Expect about a minute more.",
+    watchingHint: "Micabo is watching the video. A minute, sometimes two.",
     longVideo: "This video is {duration}. The sheet will be written from the first 90 minutes.",
     seeVideo: "See the video",
     sheetLength: "Sheet length",

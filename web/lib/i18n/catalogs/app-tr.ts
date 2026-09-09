@@ -595,7 +595,11 @@ export const appTr = {
     charCount: "{count, plural, one {# karakter} other {# karakter}}",
     seeText: "Metni gör",
     videoLink: "Videonun bağlantısı",
-    subsRequired: "Altyazı gerekli. Uzun bir ders: başını okuruz.",
+    subsRequired:
+      "Altyazı varsa altyazı, yoksa Micabo videoyu izler. Uzun bir ders: başını okuruz.",
+    watchedVideo:
+      "Bu videonun altyazılarına erişilemiyor: Micabo videoyu izleyecek. Bir dakika daha say.",
+    watchingHint: "Micabo videoyu izliyor. Bir dakika, bazen iki.",
     longVideo: "Bu video {duration} sürüyor. Fiş ilk 90 dakikadan yazılacak.",
     seeVideo: "Videoyu gör",
     sheetLength: "Fişin uzunluğu",
