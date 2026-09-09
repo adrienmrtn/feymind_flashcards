@@ -94,7 +94,7 @@ export function CourseTransformation() {
 
           <Panel slot={1 - travel} label={t("demo.panelSheet")} accent>
             <div className="paper h-full overflow-hidden rounded-group bg-surface p-5">
-              <SheetBlocks blocks={sheet} tint={DEMO_ACCENT} />
+              <SheetBlocks blocks={sheet} />
             </div>
           </Panel>
 

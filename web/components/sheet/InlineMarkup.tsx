@@ -26,10 +26,20 @@ export function InlineMarkup({ text }: { text: string }) {
         const className = [
           span.bold ? "font-semibold text-ink" : "",
           span.italic ? "italic" : "",
-          span.highlighted ? "sheet-marker" : "",
         ]
           .filter(Boolean)
           .join(" ");
+
+        // Le surlignage est un `<mark>` et non une classe : c'est l'élément que le document
+        // modifiable pose et relit, et les deux rendus doivent produire le même arbre pour
+        // que la couture ne se voie pas entre une fiche lue et une fiche écrite.
+        if (span.highlight) {
+          return (
+            <mark key={index} data-hl={span.highlight} className={className || undefined}>
+              {rendered}
+            </mark>
+          );
+        }
 
         if (!className) return <span key={index}>{rendered}</span>;
 

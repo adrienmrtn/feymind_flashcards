@@ -103,9 +103,9 @@ enum SheetLength: String, CaseIterable, Identifiable {
     /// Les bornes de blocs du format, celles-là mêmes que la fonction demande au modèle.
     var blockRange: ClosedRange<Int> {
         switch self {
-        case .brief: 8...12
-        case .standard: 14...22
-        case .deep: 24...34
+        case .brief: 14...20
+        case .standard: 26...38
+        case .deep: 45...70
         }
     }
 
@@ -121,13 +121,18 @@ enum SheetLength: String, CaseIterable, Identifiable {
     /// c'est voulu côté modèle : ce sont des consignes, pas une partition. Le curseur, lui,
     /// est continu, donc il faut décider où bascule le nom. Il bascule au milieu du trou.
     static func containing(blocks: Int) -> SheetLength {
-        if blocks <= 13 { return .brief }
-        if blocks <= 23 { return .standard }
+        if blocks <= 23 { return .brief }
+        if blocks <= 41 { return .standard }
         return .deep
     }
 
     /// Ce que le curseur couvre, d'un bout à l'autre.
-    static let blockBounds = 8...34
+    ///
+    /// L'échelle a doublé avec le format. Une fiche n'a plus de tableaux ni d'encadrés : ce
+    /// qu'ils tenaient en un bloc s'écrit en plusieurs, et une fiche « équilibrée » à vingt
+    /// blocs serait désormais un résumé. Les bornes sont celles de `LENGTH_SPECS`, côté
+    /// serveur.
+    static let blockBounds = 14...70
 }
 
 /// La longueur de fiche retenue, réglée à l'import comme dans les réglages.

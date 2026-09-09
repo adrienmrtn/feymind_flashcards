@@ -15,7 +15,6 @@ import {
   jsonResponse,
 } from "../_shared/fal.ts";
 import { parseModelJSON } from "../_shared/json.ts";
-import { attachFigureImages, figuresBrief, injectUnusedFigures, parseExtractedFigures } from "../_shared/figures.ts";
 import { normalizeSheet, sheetToPlainText, stripInlineMarkup } from "../_shared/sheet.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
 import { languageBrief } from "../_shared/language.ts";
@@ -137,7 +136,6 @@ Deno.serve((request: Request) =>
           visualNotes = "";
         }
       }
-      const extractedFigures = parseExtractedFigures(visualNotes);
 
       // La langue passe en tête, avant même le titre : en queue de message, derrière un
       // document de soixante mille caractères, le modèle la perd et retombe sur le français
@@ -168,8 +166,6 @@ Deno.serve((request: Request) =>
       if (visualNotes) {
         sections.push(wrapUntrusted("DESCRIPTION DES VISUELS DU DOCUMENT", visualNotes));
       }
-      const extracted = figuresBrief(extractedFigures);
-      if (extracted) sections.push(extracted);
       sections.push("JSON compact, une seule ligne, sans indentation.");
       sections.push("Écris maintenant le JSON de la fiche.");
 
@@ -192,11 +188,11 @@ Deno.serve((request: Request) =>
         );
       }
 
-      const drafted = injectUnusedFigures(
-        normalizeSheet(parsed.sheet ?? parsed.blocks),
-        extractedFigures,
-      );
-      const blocks = await attachFigureImages(normalizeSheet(drafted), images);
+      // Les figures ont quitté la fiche. Le modèle voit toujours les pages - c'est ce qui lui
+      // permet de lire un scan - mais rien de ce qu'il en tire n'est recadré ni collé dans le
+      // document : une image de schéma extraite d'un PDF y était décorative et souvent
+      // illisible, et elle n'est de toute façon plus modifiable par celui qui relit.
+      const blocks = normalizeSheet(parsed.sheet ?? parsed.blocks);
 
       if (blocks.length < 3) {
         throw new FalError("Le modèle n'a pas produit de fiche exploitable.", 502);

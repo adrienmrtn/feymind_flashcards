@@ -258,8 +258,8 @@ enum SheetAttributedText {
             }
             // La bande est peinte par `SheetMarkerLayoutManager`, qui remplace le fond de
             // TextKit par un trait d'épaisseur constante.
-            if span.isHighlighted {
-                attributes[.backgroundColor] = UIColor(MicaboColor.sheetMarker)
+            if let highlight = span.highlight {
+                attributes[.backgroundColor] = UIColor(MicaboColor.sheetHighlight(highlight))
             }
             result.append(NSAttributedString(string: span.text, attributes: attributes))
         }
@@ -278,8 +278,8 @@ enum SheetAttributedText {
             // rendu ne compose que des titres, des cellules et des légendes, tous à
             // interligne serré et sur une ou deux lignes. Le paragraphe, lui, passe par
             // `SheetProse`, où la bande est dessinée à la bonne épaisseur.
-            if span.isHighlighted {
-                piece.backgroundColor = MicaboColor.sheetMarker
+            if let highlight = span.highlight {
+                piece.backgroundColor = MicaboColor.sheetHighlight(highlight)
             }
             result.append(piece)
         }

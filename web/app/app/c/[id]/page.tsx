@@ -166,9 +166,9 @@ export default async function CourseSheetPage({ params }: { params: Promise<{ id
 
       {isDeck ? null : (
         <div className="mt-10" data-tour="fiche-texte">
-          <SheetReader courseId={course.id} blocks={readable} tint={tint} />
+          <SheetReader courseId={course.id} blocks={readable} lockedCount={locked.length} />
 
-          {locked.length > 0 ? <LockedSheetTail blocks={locked} tint={tint} /> : null}
+          {locked.length > 0 ? <LockedSheetTail blocks={locked} /> : null}
         </div>
       )}
 

@@ -44,7 +44,7 @@ export default function SubjectsStep() {
                 : undefined
           }
           enabled={chosen.length > 0 && ready}
-          href="/commencer/ecole"
+          href="/commencer/parcours"
         />
       }
       width="wide"

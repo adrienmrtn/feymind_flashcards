@@ -9,7 +9,8 @@ import Foundation
 /// | --- | --- | --- |
 /// | `**terme**` | gras | le mot que l'examen attend |
 /// | `*nuance*` | italique | une réserve, un mot étranger, un titre d'œuvre |
-/// | `==l'essentiel==` | surligné | ce qu'on relit la veille, et rien d'autre |
+/// | `==l'essentiel==` | surligné en jaune | ce qu'on relit la veille, et rien d'autre |
+/// | `==menthe\|l'essentiel==` | surligné en menthe | la même marque, dans une autre couleur |
 /// | `$E = mc^2$` | formule | transposée par `FormulaRenderer`, comme sur les cartes |
 ///
 /// Le balisage est **résolu à l'affichage**, jamais stocké dans un texte destiné aux
@@ -23,6 +24,14 @@ enum SheetMarkup {
         var isBold: Bool = false
         var isItalic: Bool = false
         var isHighlighted: Bool = false
+        /// La teinte du surlignage, quand il y en a un.
+        ///
+        /// La couleur s'écrit avant une barre verticale - `==menthe|texte==` - parce que la
+        /// barre ne se rencontre à peu près jamais dans un cours, là où le deux-points est
+        /// partout. Un nom inconnu n'est pas une couleur : le texte reste tel quel, barre
+        /// comprise, ce qui est le seul comportement acceptable pour un cours
+        /// d'informatique où « a | b » veut dire quelque chose.
+        var highlight: SheetHighlight? = nil
         /// Fragment mathématique, déjà transposé en Unicode.
         var isMath: Bool = false
     }
@@ -32,6 +41,7 @@ enum SheetMarkup {
         static let highlight = "=="
         static let italic = "*"
         static let math = "$"
+        static let color: Character = "|"
     }
 
     /// Découpe un texte balisé en fragments homogènes.
@@ -41,7 +51,7 @@ enum SheetMarkup {
         var buffer = ""
         var bold = false
         var italic = false
-        var highlighted = false
+        var highlight: SheetHighlight?
         var index = 0
 
         func flush() {
@@ -51,7 +61,8 @@ enum SheetMarkup {
                     text: FormulaRenderer.symbolsOnly(buffer),
                     isBold: bold,
                     isItalic: italic,
-                    isHighlighted: highlighted
+                    isHighlighted: highlight != nil,
+                    highlight: highlight
                 )
             )
             buffer = ""
@@ -71,7 +82,8 @@ enum SheetMarkup {
                             text: rendered,
                             isBold: bold,
                             isItalic: italic,
-                            isHighlighted: highlighted,
+                            isHighlighted: highlight != nil,
+                            highlight: highlight,
                             isMath: true
                         )
                     )
@@ -96,16 +108,18 @@ enum SheetMarkup {
             }
 
             if matches(Marker.highlight, in: characters, at: index) {
-                if highlighted {
+                if highlight != nil {
                     flush()
-                    highlighted = false
+                    highlight = nil
                     index += Marker.highlight.count
                     continue
                 }
-                if nextIndex(of: Marker.highlight, in: characters, from: index + Marker.highlight.count) != nil {
+                let opening = index + Marker.highlight.count
+                if let close = nextIndex(of: Marker.highlight, in: characters, from: opening) {
                     flush()
-                    highlighted = true
-                    index += Marker.highlight.count
+                    let named = namedColor(in: characters, from: opening, before: close)
+                    highlight = named?.color ?? SheetHighlight.fallback
+                    index = named?.start ?? opening
                     continue
                 }
             }
@@ -146,6 +160,43 @@ enum SheetMarkup {
     /// aperçus, pas au rendu.
     static func containsMarkup(_ source: String) -> Bool {
         spans(source).contains { $0.isBold || $0.isItalic || $0.isHighlighted || $0.isMath }
+    }
+
+    /// La couleur écrite juste après l'ouverture d'un surlignage, s'il y en a une, et
+    /// l'endroit où le texte reprend derrière la barre.
+    private static func namedColor(
+        in characters: [Character],
+        from start: Int,
+        before close: Int
+    ) -> (color: SheetHighlight, start: Int)? {
+        guard let bar = characters[start..<close].firstIndex(of: Marker.color) else { return nil }
+        let name = String(characters[start..<bar])
+            .trimmingCharacters(in: .whitespaces)
+            .lowercased()
+        guard let color = SheetHighlight(rawValue: name) else { return nil }
+        return (color, bar + 1)
+    }
+
+    /// Le chemin inverse : des fragments vers le texte balisé.
+    ///
+    /// Les marques sont posées **fragment par fragment** et refermées à chaque fois.
+    /// Regrouper les fragments voisins qui partagent une marque donnerait un texte plus
+    /// court d'un caractère ou deux, au prix d'un état à tenir ; et un balisage mal refermé
+    /// se lit ensuite comme du texte.
+    static func markup(from spans: [Span]) -> String {
+        var out = ""
+        for span in spans where !span.text.isEmpty {
+            var text = span.text
+            if let highlight = span.highlight {
+                text = highlight == .fallback
+                    ? "\(Marker.highlight)\(text)\(Marker.highlight)"
+                    : "\(Marker.highlight)\(highlight.rawValue)\(Marker.color)\(text)\(Marker.highlight)"
+            }
+            if span.isItalic { text = "\(Marker.italic)\(text)\(Marker.italic)" }
+            if span.isBold { text = "\(Marker.bold)\(text)\(Marker.bold)" }
+            out += text
+        }
+        return out
     }
 
     // MARK: - Balayage
