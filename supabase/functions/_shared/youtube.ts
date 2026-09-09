@@ -577,7 +577,13 @@ async function fetchJson3(baseUrl: string): Promise<string | null> {
       // précédente et la reprendre doublerait tout le texte.
       if (event?.aAppend === 1) continue;
 
-      const startMs = typeof event?.t === "number" ? event.t : 0;
+      // YouTube sert `tStartMs` ; `t` est le nom du XML `srv3`. En ne lisant que `t`, la
+      // borne des 90 minutes ne coupait rien et un direct de trois heures partait entier.
+      const startMs = typeof event?.tStartMs === "number"
+        ? event.tStartMs
+        : typeof event?.t === "number"
+          ? event.t
+          : 0;
       if (startMs > YOUTUBE_LIMITS.maxDurationSeconds * 1000) break;
 
       const segments = Array.isArray(event?.segs) ? event.segs : [];
