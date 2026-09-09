@@ -112,6 +112,7 @@ export {
   passesFor,
   planExam,
   startOfDay,
+  usableDays,
   type DeadlineCard,
   type DeadlineExam,
   type ExamCard,

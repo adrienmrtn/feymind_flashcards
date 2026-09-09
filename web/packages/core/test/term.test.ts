@@ -134,6 +134,65 @@ describe("planTerm", () => {
   });
 });
 
+describe("les jours off", () => {
+  it("ne pose rien sur un jour posé off", () => {
+    const cards = Array.from({ length: 60 }, (_, index) => card(`c${index}`, "bio"));
+    const plan = planTerm({
+      exams: [exam("bio", 10, ["bio"])],
+      cards,
+      now,
+      offDays: [2, 3, 4],
+    });
+
+    for (const offset of [2, 3, 4]) {
+      expect(plan.days[offset]!.isOff).toBe(true);
+      expect(plan.days[offset]!.cardCount).toBe(0);
+    }
+    // Le travail n'est pas perdu, il est reporté sur les jours ouverts.
+    expect(plan.totalPasses).toBeGreaterThan(0);
+  });
+
+  it("reporte la charge sur les jours ouverts plutôt que de la jeter", () => {
+    const cards = Array.from({ length: 60 }, (_, index) => card(`c${index}`, "bio"));
+    const open = planTerm({ exams: [exam("bio", 10, ["bio"])], cards, now });
+    const withOff = planTerm({
+      exams: [exam("bio", 10, ["bio"])],
+      cards,
+      now,
+      offDays: [2, 3, 4],
+    });
+
+    // À une carte près : une carte ne se voit pas deux fois le même jour, donc quelques
+    // passages ne trouvent plus de place. Le gros du travail, lui, reste.
+    expect(withOff.totalPasses).toBeGreaterThan(open.totalPasses * 0.8);
+  });
+
+  it("ignore des jours off qui couvrent toute la période", () => {
+    const cards = Array.from({ length: 20 }, (_, index) => card(`c${index}`, "bio"));
+    const plan = planTerm({
+      exams: [exam("bio", 5, ["bio"])],
+      cards,
+      now,
+      offDays: [0, 1, 2, 3, 4, 5],
+    });
+
+    // Obéir à la lettre donnerait un plan vide. On préfère un plan.
+    expect(plan.totalPasses).toBeGreaterThan(0);
+    expect(plan.days.every((day) => !day.isOff)).toBe(true);
+  });
+
+  it("porte le jour off jusqu'aux barres de charge", () => {
+    const plan = planTerm({
+      exams: [exam("bio", 6, ["bio"])],
+      cards: [card("c1", "bio")],
+      now,
+      offDays: [1],
+    });
+    expect(loadBars(plan)[1]!.isOff).toBe(true);
+    expect(loadBars(plan)[0]!.isOff).toBe(false);
+  });
+});
+
 describe("ce que la période demande", () => {
   it("dit le temps par jour, sans jamais parler de déficit", () => {
     const plan = planTerm({

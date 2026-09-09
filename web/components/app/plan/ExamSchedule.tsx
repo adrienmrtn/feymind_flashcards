@@ -13,6 +13,8 @@ export interface ScheduleDay {
   minutes: number;
   mock: { questionCount: number; minutes: number } | null;
   isExamDay: boolean;
+  /** Un jour posé off au moment du plan : vide par choix, pas faute de travail. */
+  isOff: boolean;
 }
 
 /**
@@ -74,8 +76,10 @@ export function ExamSchedule({
               const label = date.toLocaleDateString(bcp, { weekday: "short" }).replace(".", "");
               const title = day.isExamDay
                 ? t("app.exam.schedule.examDay")
-                : day.cards === 0 && !day.mock
-                  ? t("app.exam.schedule.free")
+                : day.isOff && day.cards === 0 && !day.mock
+                  ? t("app.exam.schedule.off")
+                  : day.cards === 0 && !day.mock
+                    ? t("app.exam.schedule.free")
                   : `${t("app.exam.schedule.cards", { cards: day.cards, minutes: day.minutes })}${day.mock ? ` · ${t("app.exam.schedule.mock", { questions: day.mock.questionCount, minutes: day.mock.minutes })}` : ""}`;
               const fill = Math.min(1, day.minutes / max);
               return (
@@ -99,6 +103,10 @@ export function ExamSchedule({
                   {day.isExamDay ? (
                     <span className="text-[10px] font-semibold text-caution">
                       {t("app.exam.schedule.examShort")}
+                    </span>
+                  ) : day.isOff && day.cards === 0 && !day.mock ? (
+                    <span aria-hidden className="emoji text-[11px] leading-none">
+                      💤
                     </span>
                   ) : day.cards === 0 && !day.mock ? (
                     <span className="text-[10px] text-ink-tertiary">

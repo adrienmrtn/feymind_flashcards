@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
-import { SignOutButton } from "@/components/app/SignOutButton";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
 import { useI18n } from "@/lib/i18n/client";
@@ -68,7 +67,6 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
               <span className="flex-1" />
               <AppearanceSwitcher variant="compact" />
               <LanguageSwitcher />
-              <OnboardingLogout />
             </header>
           ) : null}
 
@@ -77,20 +75,6 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
       </div>
     </OnboardingStore>
   );
-}
-
-function OnboardingLogout() {
-  const [signedIn, setSignedIn] = useState(false);
-
-  useEffect(() => {
-    const supabase = createClient();
-    void supabase.auth.getUser().then(({ data }) => {
-      setSignedIn(Boolean(data.user));
-    });
-  }, []);
-
-  if (!signedIn) return <span className="h-9 w-9 shrink-0" />;
-  return <SignOutButton compact />;
 }
 
 /** Une session ouverte n'a plus rien à faire dans le tunnel. */

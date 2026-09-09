@@ -65,6 +65,13 @@ export async function saveExam(input: {
   formats?: string[];
   chapterIds?: string[];
   startingPoint?: string;
+  /**
+   * Les jours où l'étudiant a dit qu'il ne réviserait pas, en dates ISO.
+   *
+   * Ils sont écrits **avant** de replanifier : le plan lit les jours ouverts, et poser
+   * l'épreuve d'abord la placerait sur des jours qu'on s'apprête à fermer.
+   */
+  offDays?: readonly string[];
 }): Promise<ExamWriteResult> {
   const supabase = await createClient();
   const {
@@ -133,6 +140,13 @@ export async function saveExam(input: {
     }
   }
 
+  if (input.offDays) {
+    await writeOffDays(supabase, user.id, input.offDays);
+    // Les jours off sont lus avec le profil : sans ça, le plan de la période garderait
+    // l'ancienne semaine jusqu'à expiration du cache.
+    revalidateUserData(user.id, "profile");
+  }
+
   const examId = input.id ?? crypto.randomUUID();
   const { data: cards } = await supabase
     .from("flashcards")
@@ -173,6 +187,7 @@ export async function saveExam(input: {
           intensity,
           asStartingPoint(input.startingPoint ?? kept.startingPoint),
         ),
+        offDays: offsetsOf(input.offDays ?? [], today, Math.max(1, dayDifference(today, day))),
       },
     );
 
@@ -361,3 +376,52 @@ export async function saveExamDetails(input: {
   });
 }
 
+/**
+ * Écrire les jours off de l'étudiant : ceux qu'il vient de poser, et eux seuls.
+ *
+ * On efface d'abord les jours à venir plutôt que de fusionner. Un jour décoché doit
+ * redevenir ouvert, et une écriture qui ne fait qu'ajouter rendrait la case impossible à
+ * décocher : le plan garderait pour toujours le premier dimanche qu'on lui a donné. Le passé
+ * n'est pas touché, il ne sert plus à planifier mais il raconte ce qui s'est passé.
+ */
+async function writeOffDays(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  days: readonly string[],
+): Promise<void> {
+  const today = startOfDay(new Date());
+  const from = isoDate(today);
+  const wanted = [...new Set(days.filter((day) => /^\d{4}-\d{2}-\d{2}$/.test(day) && day >= from))];
+
+  await supabase
+    .from("availability_exceptions")
+    .delete()
+    .eq("user_id", userId)
+    .gte("day", from);
+
+  if (wanted.length === 0) return;
+
+  await supabase
+    .from("availability_exceptions")
+    .insert(wanted.map((day) => ({ user_id: userId, day, minutes: 0 })));
+}
+
+/** Des dates ISO vers des rangs de jours, la forme que le noyau comprend. */
+function offsetsOf(days: readonly string[], today: Date, window: number): number[] {
+  const first = startOfDay(today);
+  const offsets: number[] = [];
+  for (const day of days) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+    const date = startOfDay(new Date(`${day}T12:00:00`));
+    const offset = Math.round((date.getTime() - first.getTime()) / 86_400_000);
+    if (offset >= 0 && offset < window) offsets.push(offset);
+  }
+  return offsets;
+}
+
+function isoDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}

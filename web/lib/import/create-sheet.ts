@@ -21,7 +21,6 @@ import {
 
 import { listCourses } from "@/lib/data/courses";
 import { readEntitlement } from "@/lib/data/entitlement";
-import { attachFigureImages } from "@/lib/import/figures";
 import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
@@ -116,8 +115,15 @@ export async function createSheetFromImport(input: {
   const course = (data as { course?: GeneratedCourse } | null)?.course;
   if (!course) return { status: "error", message: await actionT("app.errors.sheetWriteFailed") };
 
+  // **Aucune image ne rentre dans la fiche.** Les pages du PDF partent encore au modèle,
+  // parce que c'est ce qui rend un scan lisible ; ce qui a été retiré, c'est le recadrage
+  // d'un morceau de page posé dans la fiche à côté de sa légende. Une capture de polycopié
+  // au milieu d'un texte réécrit ne se relit pas : elle est floue, elle porte la mise en
+  // page d'un autre document, et elle est presque toujours moins claire que la phrase qui
+  // la légende. Un bloc de figure sans image ne serait plus qu'une légende orpheline, donc
+  // il s'en va aussi.
   const drafted: SheetBlock[] = normalizeSheet(course.sheet ?? { blocks: [] });
-  const blocks = await attachFigureImages(drafted, images);
+  const blocks = drafted.filter((block) => block.type !== "figure");
   if (blocks.length === 0) {
     return { status: "error", message: await actionT("app.errors.sheetUnusable") };
   }

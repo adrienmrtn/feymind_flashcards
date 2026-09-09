@@ -7,7 +7,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { pricing } from "@micabo/core";
 
 import { PaywallOffer } from "@/components/app/PaywallOffer";
-import { signOut } from "@/lib/actions/profile";
 import { isOfferClaimed } from "@/lib/discount";
 import {
   isHardPaywall,
@@ -188,7 +187,15 @@ export function PaywallCard({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="paywall-card relative flex max-h-[min(780px,92svh)] w-full max-w-[440px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-[0_28px_90px_-20px_rgba(25,23,20,0.5)]"
+        /* Sur la page des formules, la carte prend une hauteur **ferme** et non un plafond.
+           C'est ce qui permet aux arguments de mesurer la hauteur visible et de repousser les
+           prix sous le pli : une hauteur `max-` ne se laisse pas prendre en pourcentage, donc
+           le bloc se contentait de son contenu et le premier prix revenait dans l'écran. Les
+           pages d'accueil gardent le plafond : elles ont peu à dire, et une carte pleine
+           hauteur à moitié vide se remarque. */
+        className={`paywall-card relative flex w-full max-w-[440px] flex-col overflow-hidden rounded-[28px] bg-surface shadow-[0_28px_90px_-20px_rgba(25,23,20,0.5)] ${
+          stage === "plans" ? "h-[min(780px,92svh)]" : "max-h-[min(780px,92svh)]"
+        }`}
       >
         <div className="flex items-center justify-between px-5 pt-4">
           {startAt === "social" ? (
@@ -231,8 +238,6 @@ export function PaywallCard({
           )}
         </div>
 
-        {hard && stage === "plans" ? <HardExit /> : null}
-
         {/*
           Les quatre pages du court accueil partagent la même entrée : `rise`,
           comme un écran de parcours. L'offre se montait à part, sans
@@ -269,34 +274,6 @@ export function PaywallCard({
   );
 }
 
-/**
- * La seule porte d'un mur dur : **se déconnecter**, pas entrer.
- *
- * Un mur sans aucune issue n'est pas un mur, c'est une serrure : il enferme aussi celui qui
- * veut simplement récupérer ou effacer son compte, et la suppression vit derrière l'offre.
- * Ce lien ne donne accès à rien de payant - il rend seulement à l'étudiant la porte de sa
- * propre session.
- */
-function HardExit() {
-  const { t } = useI18n();
-  const [leaving, setLeaving] = useState(false);
-
-  return (
-    <div className="px-6 pb-1 pt-1 text-center">
-      <button
-        type="button"
-        disabled={leaving}
-        onClick={() => {
-          setLeaving(true);
-          void signOut();
-        }}
-        className="pressable text-[12.5px] text-ink-tertiary underline underline-offset-2"
-      >
-        {leaving ? t("app.auth.signingOut") : t("app.auth.signOut")}
-      </button>
-    </div>
-  );
-}
 
 function SocialStep({ headingId }: { headingId: string }) {
   const { t } = useI18n();

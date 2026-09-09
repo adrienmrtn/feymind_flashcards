@@ -20,10 +20,16 @@ import {
 import { usePresentment } from "@/lib/presentment";
 
 /**
- * L'offre, en un écran : ce que Pro ouvre, puis les deux formules.
+ * L'offre, en deux écrans : ce que Pro ouvre, puis les deux formules.
  *
- * Quatre lignes, et seulement ce qui existe : cartes IA, fiches, répétition
- * espacée, mode examen. Pas de mock exam, pas de dictée vocale.
+ * Quatre lignes, et seulement ce qui existe : cartes IA, fiches, répétition espacée, mode
+ * examen. Pas de mock exam, pas de dictée vocale.
+ *
+ * **Les prix sont sous le pli, et c'est délibéré.** Tout tenait sur un écran, donc l'œil
+ * tombait sur « 4,99 » avant d'avoir lu ce qu'on achète, et un prix lu avant sa raison est
+ * toujours trop cher. Les quatre arguments prennent donc la hauteur visible entière - ils sont
+ * la page - et les formules arrivent au défilement, pour qui a fini de lire. Un indicateur
+ * dit qu'elles sont là : cacher le prix ne doit pas donner l'impression qu'on le cache.
  */
 
 export const PAYWALL_FEATURE_ICONS = ["cards", "sheet", "repeat", "exam"] as const;
@@ -66,41 +72,62 @@ export function PaywallOffer({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2">
-        <div className="flex items-center gap-2.5">
-          <BrandMark size={36} />
-          <h2
-            id={headingId}
-            className="flex items-center gap-2 text-[22px] font-bold tracking-tight text-ink"
+        {/* Cette moitié fait la hauteur visible entière : c'est elle qui pousse les prix sous
+            le pli. Sans `min-h-full`, tout remonterait et le chiffre reviendrait en premier. */}
+        <div className="flex min-h-full flex-col pb-4">
+          <div className="flex items-center gap-2.5">
+            <BrandMark size={36} />
+            <h2
+              id={headingId}
+              className="flex items-center gap-2 text-[22px] font-bold tracking-tight text-ink"
+            >
+              Micabo
+              <span className="rounded-pill bg-accent px-2 py-0.5 text-[11px] font-bold tracking-wide text-on-ink">
+                Pro
+              </span>
+            </h2>
+          </div>
+
+          <ul className="mt-7 flex flex-1 flex-col justify-center gap-6">
+            {PAYWALL_FEATURE_ICONS.map((icon) => (
+              <li key={icon} className="flex items-start gap-4">
+                <span
+                  aria-hidden
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent"
+                >
+                  <FeatureIcon name={icon} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[17.5px] font-bold leading-tight text-ink">
+                    {t(`app.paywall.features.${icon}.title`)}
+                  </span>
+                  <span className="mt-1 block text-[14.5px] leading-snug text-ink-secondary">
+                    {t(`app.paywall.features.${icon}.detail`)}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <p
+            aria-hidden
+            className="mt-6 flex items-center justify-center gap-1.5 text-[12.5px] font-medium text-ink-tertiary"
           >
-            Micabo
-            <span className="rounded-pill bg-accent px-2 py-0.5 text-[11px] font-bold tracking-wide text-on-ink">
-              Pro
-            </span>
-          </h2>
+            {t("app.paywall.scrollHint")}
+            <svg viewBox="0 0 16 16" className="h-3.5 w-3.5">
+              <path
+                d="M8 3.5v9M4.5 9l3.5 3.5L11.5 9"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </p>
         </div>
 
-        <ul className="mt-6 space-y-3.5">
-          {PAYWALL_FEATURE_ICONS.map((icon) => (
-            <li key={icon} className="flex items-start gap-3">
-              <span
-                aria-hidden
-                className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent"
-              >
-                <FeatureIcon name={icon} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-[15px] font-semibold leading-tight text-ink">
-                  {t(`app.paywall.features.${icon}.title`)}
-                </span>
-                <span className="mt-0.5 block text-[13px] leading-snug text-ink-tertiary">
-                  {t(`app.paywall.features.${icon}.detail`)}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-6 space-y-2.5">
+        <div className="space-y-2.5 pb-2">
           {pricing.offers().map((plan) => (
             <PlanChoice
               key={plan.productId}
@@ -208,7 +235,7 @@ export function PlanChoice({
 }
 
 function FeatureIcon({ name }: { name: (typeof PAYWALL_FEATURE_ICONS)[number] }) {
-  const className = "h-4 w-4";
+  const className = "h-5 w-5";
   if (name === "cards") {
     return (
       <svg aria-hidden viewBox="0 0 20 20" className={className}>

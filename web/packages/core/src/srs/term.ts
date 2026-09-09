@@ -81,6 +81,8 @@ export interface PlanDay {
   blocks: PlanBlock[];
   /** Les épreuves qui tombent ce jour-là. */
   examIds: string[];
+  /** Un jour posé comme off : l'étudiant a dit qu'il ne réviserait pas. */
+  isOff: boolean;
 }
 
 /**
@@ -146,6 +148,14 @@ export interface TermInput {
    * contenter de le montrer en premier dans la session du jour.
    */
   difficulties?: ReadonlyMap<string, CardDifficulty>;
+  /**
+   * Les jours posés off, en décalage depuis aujourd'hui.
+   *
+   * Le plan n'y pose rien. C'est la seule chose que l'étudiant déclare encore sur son temps,
+   * et c'est la seule qu'il sache dire sans se tromper : un budget de minutes se devine mal,
+   * un dimanche en famille se sait.
+   */
+  offDays?: readonly number[];
 }
 
 // MARK: - Le plan
@@ -167,6 +177,9 @@ export function planTerm(input: TermInput): TermPlan {
   // Tous les jours d'ici la dernière épreuve sont utilisables. Il n'y a plus de budget
   // déclaré : la journée vaut ce que les échéances lui demandent, et le plan dit ensuite
   // combien de temps ça prend.
+  // Les jours off, s'il en reste après le garde-fou : le plan n'y pose aucune révision.
+  const off = usableOffDays(input.offDays, horizon);
+
   const days: PlanDay[] = Array.from({ length: horizon }, (_, offset) => ({
     offset,
     date: addDays(today, offset),
@@ -174,6 +187,7 @@ export function planTerm(input: TermInput): TermPlan {
     minutes: 0,
     blocks: [],
     examIds: [],
+    isOff: off.has(offset),
   }));
 
   for (const exam of upcoming) {
@@ -281,7 +295,7 @@ export function planTerm(input: TermInput): TermPlan {
   const placed: { pass: PlannedPass; offset: number }[] = [];
 
   for (const item of wanted) {
-    const offset = placeOn(item.offset, item.deadline, item.pass.cardId, days.length, seen);
+    const offset = placeOn(item.offset, item.deadline, item.pass.cardId, days.length, seen, off);
     if (offset == null) continue;
     placed.push({ pass: item.pass, offset });
     passesByExam.set(item.pass.examId, (passesByExam.get(item.pass.examId) ?? 0) + 1);
@@ -342,12 +356,14 @@ function placeOn(
   cardId: string,
   horizon: number,
   seen: Map<number, Set<string>>,
+  off: ReadonlySet<number>,
 ): number | null {
   const limit = Math.min(deadline, horizon - 1);
 
   for (let distance = 0; distance <= horizon; distance += 1) {
     for (const offset of distance === 0 ? [wanted] : [wanted - distance, wanted + distance]) {
       if (offset < 0 || offset > limit) continue;
+      if (off.has(offset)) continue;
       const already = seen.get(offset);
       if (already?.has(cardId)) continue;
       if (already) already.add(cardId);
@@ -356,6 +372,21 @@ function placeOn(
     }
   }
   return null;
+}
+
+/**
+ * Les jours qu'on accepte de laisser vides.
+ *
+ * Un seul garde-fou, mais il compte : si l'étudiant a posé toute la période en off, on n'en
+ * garde aucun. Obéir à la lettre donnerait un plan vide, ce qui n'est pas ce qu'on nous
+ * demande. Un passage qui ne trouve aucun jour ouvert avant son échéance est simplement
+ * perdu, comme il l'était déjà quand la place manquait.
+ */
+function usableOffDays(offDays: readonly number[] | undefined, horizon: number): Set<number> {
+  if (!offDays || offDays.length === 0) return new Set();
+  const off = new Set(offDays.filter((offset) => offset >= 0 && offset < horizon));
+  if (off.size >= horizon) return new Set();
+  return off;
 }
 
 function blockFor(day: PlanDay, pass: PlannedPass, examName: string): ReviewBlock {
@@ -468,6 +499,8 @@ export interface LoadBar {
   minutes: number;
   cardCount: number;
   examIds: string[];
+  /** Un jour posé off : vide par choix, pas par manque de travail. */
+  isOff: boolean;
 }
 
 export function loadBars(plan: TermPlan): LoadBar[] {
@@ -477,6 +510,7 @@ export function loadBars(plan: TermPlan): LoadBar[] {
     minutes: day.minutes,
     cardCount: day.cardCount,
     examIds: day.examIds,
+    isOff: day.isOff,
   }));
 }
 

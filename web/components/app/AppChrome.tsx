@@ -16,7 +16,6 @@ import {
   X,
 } from "lucide-react";
 
-import { ImportHandoffOverlay } from "@/components/app/ImportHandoff";
 import { PastelWash } from "@/components/atmosphere/PastelWash";
 import { BrandMark } from "@/components/BrandMark";
 import { useI18n } from "@/lib/i18n/client";
@@ -137,7 +136,6 @@ export function AppChrome({
         <TabBar />
       </div>
 
-      <ImportHandoffOverlay />
     </div>
   );
 }

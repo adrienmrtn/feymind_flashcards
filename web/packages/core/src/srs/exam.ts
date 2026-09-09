@@ -137,10 +137,29 @@ export function examUrgency(daysRemaining: number): ExamUrgency {
 
 // MARK: - Plan
 
+/**
+ * Les jours sur lesquels le plan a le droit de poser du travail.
+ *
+ * Un jour off n'est pas un jour à charge réduite : c'est un jour où l'étudiant a dit qu'il ne
+ * révisera pas, et lui en donner quand même transforme le plan en liste de retards dès la
+ * première semaine. Le travail va donc sur les autres jours, qui en prennent d'autant plus -
+ * c'est le prix, et il est annoncé par la projection.
+ *
+ * Une exception : si tous les jours sont posés off, on les rend tous. Rendre un plan vide
+ * serait obéir à la lettre en trahissant ce qu'on nous demande, qui est de réviser.
+ */
+export function usableDays(window: number, offDays?: readonly number[]): number[] {
+  const all = Array.from({ length: window }, (_, offset) => offset);
+  if (!offDays || offDays.length === 0) return all;
+  const off = new Set(offDays);
+  const open = all.filter((offset) => !off.has(offset));
+  return open.length > 0 ? open : all;
+}
+
 export function planExam(
   cards: ExamCard[],
   examDate: Date,
-  options: { now?: Date; intensity?: ExamIntensity } = {},
+  options: { now?: Date; intensity?: ExamIntensity; offDays?: readonly number[] } = {},
 ): ExamPlan {
   const now = options.now ?? new Date();
   const intensity = options.intensity ?? "standard";
@@ -153,7 +172,7 @@ export function planExam(
   // aujourd'hui ou demain ne laisse qu'une journée, celle-ci.
   const window = Math.max(1, daysRemaining);
   const lastReviewDay = addDays(today, window - 1);
-  const usable = Array.from({ length: window }, (_, offset) => offset);
+  const usable = usableDays(window, options.offDays);
 
   const days = new Map<string, number[]>();
   const load = new Array<number>(window).fill(0);

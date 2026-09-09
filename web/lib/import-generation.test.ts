@@ -1,3 +1,17 @@
+/**
+ * L'écriture d'une fiche : où elle s'affiche, et par où elle passe.
+ *
+ * Ce fichier gardait une décision qui a changé. L'écriture quittait le document App Router pour
+ * afficher son pourcentage en plein écran, hors de Next, et un voile la relayait jusqu'à la fiche
+ * peinte. Elle vit maintenant **dans le panneau d'import**, à la place du panneau : une attente
+ * de trente secondes n'a pas besoin de l'écran entier, et la prendre en entier faisait
+ * disparaître le reste de la page pour rien.
+ *
+ * Ce qui n'a pas changé, et qui reste testé ici : l'appel part en POST JSON hors des Server
+ * Actions - c'est ce qui empêchait le pourcentage d'avancer - et il n'invalide aucune liste
+ * avant que la fiche soit ouverte.
+ */
+
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,10 +26,8 @@ const createSheet = readFileSync(resolve(here, "./import/create-sheet.ts"), "utf
 const writeRoute = readFileSync(resolve(here, "../app/api/import-course/route.ts"), "utf8");
 const openCourse = readFileSync(resolve(here, "../app/api/open-course/route.ts"), "utf8");
 const handoff = readFileSync(resolve(here, "./import-handoff.ts"), "utf8");
-const startWrite = readFileSync(resolve(here, "./import/start-write.ts"), "utf8");
-const writerPage = readFileSync(resolve(here, "./import/writer-page.ts"), "utf8");
 const writeSheet = readFileSync(resolve(here, "./import/write-sheet.ts"), "utf8");
-const handoffUi = readFileSync(resolve(here, "../components/app/ImportHandoff.tsx"), "utf8");
+const chrome = readFileSync(resolve(here, "../components/app/AppChrome.tsx"), "utf8");
 const status = readFileSync(resolve(here, "../components/app/GenerationStatus.tsx"), "utf8");
 
 function functionBody(source: string, name: string): string {
@@ -39,14 +51,9 @@ describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
     expect(createSheet).not.toMatch(/revalidatePath\(/);
     expect(openCourse).toContain("NextResponse.redirect");
     expect(openCourse).toContain("/app/c/");
-    expect(startWrite).toContain("document.write");
-    expect(startWrite).toContain("WRITER_ROOT_ID");
-    expect(writerPage).toContain("XMLHttpRequest");
-    expect(writerPage).toContain("IMPORT_WRITE_PATH");
     expect(handoff).toContain("HTMLFormElement.prototype.submit");
     expect(handoff).not.toContain("/api/open-course");
     const generate = importPanel.slice(importPanel.indexOf("async function generate"));
-    expect(generate).toContain("beginStandaloneWrite");
     expect(generate).toContain("writeSheetFromBrowser");
     expect(generate).not.toMatch(/importFromText\(/);
   });
@@ -54,15 +61,17 @@ describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
   it("n'invalide pas les listes avant d'ouvrir la fiche neuve", () => {
     expect(createSheet).not.toMatch(/revalidatePath\(/);
     expect(createSheet).not.toMatch(/revalidateUserData\(/);
-    expect(createSheet).toContain("return { status: \"ok\", courseId: id }");
+    expect(createSheet).toContain('return { status: "ok", courseId: id }');
     expect(courseActions).toContain("export async function refreshLibraryAfterImport");
     expect(functionBody(courseActions, "importFromText")).toContain("createSheetFromImport");
   });
 
-  it("rafraîchit les listes une fois la fiche peinte, sans Server Action", () => {
-    expect(handoffUi).not.toMatch(/refreshLibraryAfterImport/);
-    expect(handoffUi).not.toMatch(/refreshLibraryInBackground/);
-    expect(handoffUi).toContain("releaseImportHandoff");
+  it("attend dans le panneau, pas en plein écran", () => {
+    expect(importPanel).toContain('if (phase === "ecriture")');
+    expect(importPanel).toContain("data-writing-sheet");
+    expect(importPanel).not.toContain("document.write");
+    expect(importPanel).not.toContain("beginStandaloneWrite");
+    expect(chrome).not.toContain("ImportHandoff");
   });
 
   it("écrit le pourcentage dans le DOM, même si React ne commit pas", () => {
@@ -78,12 +87,5 @@ describe("l'écriture d'une fiche ne gèle plus l'écran", () => {
     const beforeCall = ask.slice(0, ask.indexOf("generateCards("));
     expect(beforeCall).toContain("waitForPaint");
     expect(beforeCall).not.toMatch(/startTransition\(/);
-  });
-
-  it("garde le voile jusqu'à la fiche peinte", () => {
-    const finish = importPanel.slice(importPanel.indexOf("function finish"));
-    const success = finish.slice(0, finish.indexOf("openGeneratedPage"));
-    expect(success).toContain("rememberWrittenCourse");
-    expect(success).toContain("releaseImportHandoff");
   });
 });

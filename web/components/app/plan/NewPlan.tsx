@@ -56,8 +56,14 @@ import { localeBcp47 } from "@/lib/i18n/copy";
  * commence maintenant plus tôt et va plus loin, dans un seul fil :
  *
  * ```
- * matériel -> (écriture des fiches) -> (cartes, un cours à la fois) -> épreuve -> note
+ * matériel -> (fiches) -> (cartes, un cours à la fois)
+ *          -> jour -> type -> nom -> point de départ -> jours off -> note
  * ```
+ *
+ * **Une question par page.** Les trois questions sur l'épreuve avaient été empilées sur un
+ * seul écran pour raccourcir le parcours ; il n'a pas raccourci, il est devenu un formulaire.
+ * Un écran qui pose trois choses se lit trois fois plus lentement que trois écrans qui en
+ * posent une, parce qu'on doit d'abord démêler laquelle on répond.
  *
  * **Les fiches s'écrivent toutes au clic sur Continuer**, pas à chaque dépôt. On pose trois
  * polycopiés à la suite sans attendre entre les deux, et l'attente arrive une seule fois, à
@@ -72,7 +78,16 @@ import { localeBcp47 } from "@/lib/i18n/copy";
  * et annonce ce que ça coûte ; c'est tout ce qu'il a le droit de dire.
  */
 
-const STEPS = ["materiel", "cartes", "epreuve", "note"] as const;
+const STEPS = [
+  "materiel",
+  "cartes",
+  "jour",
+  "type",
+  "nom",
+  "depart",
+  "pauses",
+  "note",
+] as const;
 type Step = (typeof STEPS)[number];
 
 export interface PlanCourse {
@@ -124,7 +139,10 @@ export function NewPlan({
   const [examDate, setExamDate] = useState(isoDay(addWeeks(today, 3)));
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [kind, setKind] = useState<ExamKind>("exam");
+  const [name, setName] = useState("");
   const [start, setStart] = useState<StartingPoint>("seen");
+  /** Les jours où l'étudiant a dit qu'il ne réviserait pas, en dates ISO. */
+  const [offDays, setOffDays] = useState<string[]>([]);
   const [targetScore, setTargetScore] = useState(15);
 
   const [busy, setBusy] = useState(false);
@@ -154,6 +172,14 @@ export function NewPlan({
     [cards, picked],
   );
 
+  // Les jours off, en rangs de jours : c'est la forme que le noyau comprend, et c'est la
+  // même conversion que fera le serveur au moment d'écrire le plan.
+  const offOffsets = useMemo(
+    () => offsetsUntil(offDays, today, Math.max(1, daysRemaining)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [offDays, examDate],
+  );
+
   const plan = useMemo(() => {
     return planExam(
       scoped.map((card) => ({
@@ -163,16 +189,24 @@ export function NewPlan({
         dueDate: new Date(card.dueDate),
       })),
       chosenDay,
-      { intensity },
+      { intensity, offDays: offOffsets },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scoped, intensity, examDate]);
+  }, [scoped, intensity, examDate, offOffsets]);
 
   const visible = STEPS.filter((item) => item !== "cartes" || fresh.length > 0);
   const index = Math.max(0, visible.indexOf(step));
 
+  /** Le nom retenu : celui qu'on a tapé, sinon les cours du programme. */
+  const suggestedName = planName(picked, [...known.values()]);
+  const finalName = name.trim() || suggestedName;
+
   const canContinue =
-    step === "materiel" ? picked.length > 0 || queue.length > 0 : step === "epreuve" ? daysRemaining >= 0 : true;
+    step === "materiel"
+      ? picked.length > 0 || queue.length > 0
+      : step === "jour"
+        ? daysRemaining >= 0
+        : true;
 
   /**
    * Écrire les fiches en attente, l'une après l'autre.
@@ -203,13 +237,25 @@ export function NewPlan({
     return written;
   }
 
+  /**
+   * L'étape suivante dans le fil, en tenant compte de ce qui n'existe pas encore.
+   *
+   * `visible` est calculé avec les cours fraîchement fichés, qui n'existent pas au moment où
+   * on quitte le matériel. On passe donc la liste explicitement quand elle vient de changer.
+   */
+  function stepAfter(from: Step, freshCount: number): Step {
+    const list = STEPS.filter((item) => item !== "cartes" || freshCount > 0);
+    const at = list.indexOf(from);
+    return list[Math.min(list.length - 1, at + 1)] ?? "note";
+  }
+
   async function next() {
     if (!canContinue || busy) return;
     setFailure(null);
 
     if (step === "materiel") {
       if (queue.length === 0) {
-        setStep(fresh.length > 0 ? "cartes" : "epreuve");
+        setStep(stepAfter("materiel", fresh.length));
         return;
       }
       setBusy(true);
@@ -219,49 +265,36 @@ export function NewPlan({
       setFresh(all);
       setPicked((current) => [...new Set([...current, ...written.map((course) => course.id)])]);
       setFreshIndex(0);
-      setStep(all.length > 0 ? "cartes" : "epreuve");
+      setStep(stepAfter("materiel", all.length));
       return;
     }
 
-    if (step === "cartes") {
-      if (freshIndex + 1 < fresh.length) {
-        setFreshIndex(freshIndex + 1);
-        return;
-      }
-      setStep("epreuve");
+    // Les cartes ne sont pas une étape mais autant d'étapes qu'il y a de cours neufs.
+    if (step === "cartes" && freshIndex + 1 < fresh.length) {
+      setFreshIndex(freshIndex + 1);
       return;
     }
 
-    if (step === "epreuve") {
-      setStep("note");
+    if (step === "note") {
+      void confirm();
       return;
     }
 
-    void confirm();
+    setStep(stepAfter(step, fresh.length));
   }
 
   function back() {
     setFailure(null);
-    if (step === "note") {
-      setStep("epreuve");
+
+    if (step === "cartes" && freshIndex > 0) {
+      setFreshIndex(freshIndex - 1);
       return;
     }
-    if (step === "epreuve") {
-      if (fresh.length > 0) {
-        setFreshIndex(fresh.length - 1);
-        setStep("cartes");
-        return;
-      }
-      setStep("materiel");
-      return;
-    }
-    if (step === "cartes") {
-      if (freshIndex > 0) {
-        setFreshIndex(freshIndex - 1);
-        return;
-      }
-      setStep("materiel");
-    }
+
+    const previous = visible[index - 1];
+    if (!previous) return;
+    if (previous === "cartes") setFreshIndex(Math.max(0, fresh.length - 1));
+    setStep(previous);
   }
 
   async function confirm() {
@@ -275,7 +308,8 @@ export function NewPlan({
       startingPoint: start,
       targetScore,
       formats: defaultFormatsFor(kind),
-      name: planName(picked, [...known.values()]),
+      name: finalName,
+      offDays,
     });
 
     setBusy(false);
@@ -351,23 +385,45 @@ export function NewPlan({
           />
         ) : null}
 
-        {step === "epreuve" ? (
-          <>
-            <DayStep
-              picked={chosenDay}
-              month={month}
-              daysRemaining={daysRemaining}
-              onMonth={setMonth}
-              onSelect={(day) => {
-                const start = startOfDay(day);
-                if (start.getTime() < today.getTime()) return;
-                setExamDate(isoDay(start));
-                setMonth(new Date(start.getFullYear(), start.getMonth(), 1));
-              }}
-            />
-            <KindStep kind={kind} onPick={setKind} />
-            <StartStep start={start} onPick={setStart} />
-          </>
+        {step === "jour" ? (
+          <DayStep
+            picked={chosenDay}
+            month={month}
+            daysRemaining={daysRemaining}
+            onMonth={setMonth}
+            onSelect={(day) => {
+              const start = startOfDay(day);
+              if (start.getTime() < today.getTime()) return;
+              setExamDate(isoDay(start));
+              setMonth(new Date(start.getFullYear(), start.getMonth(), 1));
+              // Une date qui recule laisse des jours off derrière elle : ils ne veulent
+              // plus rien dire, et les garder ferait mentir le compteur de pauses.
+              setOffDays((current) => current.filter((iso) => iso <= isoDay(start)));
+            }}
+          />
+        ) : null}
+
+        {step === "type" ? <KindStep kind={kind} onPick={setKind} /> : null}
+
+        {step === "nom" ? (
+          <NameStep name={name} suggestion={suggestedName} onChange={setName} />
+        ) : null}
+
+        {step === "depart" ? <StartStep start={start} onPick={setStart} /> : null}
+
+        {step === "pauses" ? (
+          <PausesStep
+            today={today}
+            daysRemaining={daysRemaining}
+            offDays={offDays}
+            onToggle={(iso) =>
+              setOffDays((current) =>
+                current.includes(iso)
+                  ? current.filter((item) => item !== iso)
+                  : [...current, iso].sort(),
+              )
+            }
+          />
         ) : null}
 
         {step === "note" ? (
@@ -382,6 +438,7 @@ export function NewPlan({
             load={plan.projection.load}
             empty={isProjectionEmpty(plan.projection)}
             mockQuestions={wantsMock(kind) ? mockQuestionCount(scoped.length) : 0}
+            offCount={offOffsets.length}
           />
         ) : null}
       </div>
@@ -707,10 +764,8 @@ function DayStep({
 
   return (
     <div>
-      <p className="eyebrow text-ink-tertiary">{t("app.exams.examEyebrow")}</p>
-      <h1 className="page-title mt-2">
-        {t("app.exams.whichDay")}
-      </h1>
+      <p className="eyebrow text-ink-tertiary">{t("app.newPlan.dayEyebrow")}</p>
+      <h1 className="page-title mt-2">{t("app.exams.whichDay")}</h1>
       <p className="mt-3 text-[16px] font-semibold capitalize text-ink">
         {picked.toLocaleDateString(localeBcp47(locale), {
           weekday: "long",
@@ -755,10 +810,11 @@ function KindStep({ kind, onPick }: { kind: ExamKind; onPick: (next: ExamKind) =
   const options: ExamKind[] = ["exam", "midterm", "final", "quiz", "oral", "mock"];
 
   return (
-    <div className="mt-8 border-t border-hairline pt-6">
-      <h2 className="section-title">{t("app.newPlan.kindTitle")}</h2>
-      <p className="section-lead">{t(`app.newPlan.kindDetail.${kind}`)}</p>
-      <ul className="mt-3 flex flex-wrap gap-1.5">
+    <div>
+      <p className="eyebrow text-ink-tertiary">{t("app.newPlan.kindEyebrow")}</p>
+      <h1 className="page-title mt-2">{t("app.newPlan.kindTitle")}</h1>
+      <p className="page-lead">{t(`app.newPlan.kindDetail.${kind}`)}</p>
+      <ul className="mt-6 flex flex-wrap gap-2">
         {options.map((option) => (
           <li key={option}>
             <Pill
@@ -791,10 +847,11 @@ function StartStep({
   const options: StartingPoint[] = ["cold", "seen", "solid"];
 
   return (
-    <div className="mt-8 border-t border-hairline pt-6">
-      <h2 className="section-title">{t("app.newPlan.startTitle")}</h2>
-      <p className="section-lead">{t(`app.newPlan.startDetail.${start}`)}</p>
-      <ul className="mt-3 flex flex-wrap gap-1.5">
+    <div>
+      <p className="eyebrow text-ink-tertiary">{t("app.newPlan.startEyebrow")}</p>
+      <h1 className="page-title mt-2">{t("app.newPlan.startTitle")}</h1>
+      <p className="page-lead">{t(`app.newPlan.startDetail.${start}`)}</p>
+      <ul className="mt-6 flex flex-wrap gap-2">
         {options.map((option) => (
           <li key={option}>
             <Pill
@@ -810,8 +867,160 @@ function StartStep({
   );
 }
 
-/** Les paliers du curseur de temps : cinq minutes ne sont pas une soirée. */
+/**
+ * Le nom de l'épreuve.
+ *
+ * Le plan s'appelait par ses cours : « Histoire · Géographie ». Ça marche tant qu'on n'a
+ * qu'un plan, et ça devient illisible dès qu'on en a trois sur le même programme - un bac
+ * blanc, le vrai bac, un contrôle de chapitre, tous nommés pareil. Le nom est donc
+ * demandé, et la suggestion reste là pour ceux qui n'ont rien à dire de plus.
+ */
+function NameStep({
+  name,
+  suggestion,
+  onChange,
+}: {
+  name: string;
+  suggestion: string;
+  onChange: (next: string) => void;
+}) {
+  const { t } = useI18n();
 
+  return (
+    <div>
+      <p className="eyebrow text-ink-tertiary">{t("app.newPlan.nameEyebrow")}</p>
+      <h1 className="page-title mt-2">{t("app.newPlan.nameTitle")}</h1>
+      <p className="page-lead">{t("app.newPlan.nameLead")}</p>
+
+      <input
+        type="text"
+        value={name}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={suggestion || t("app.newPlan.namePlaceholder")}
+        maxLength={80}
+        autoComplete="off"
+        aria-label={t("app.newPlan.nameTitle")}
+        className="mt-6 h-14 w-full rounded-group border border-stroke-strong bg-surface px-4 text-[17px] font-semibold text-ink outline-none transition-colors duration-hover placeholder:font-normal placeholder:text-ink-tertiary focus:border-ink"
+      />
+
+      {suggestion && name.trim().length === 0 ? (
+        <p className="mt-3 text-[12.5px] text-ink-tertiary">
+          {t("app.newPlan.nameSuggestion", { name: suggestion })}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Les jours off : la seule chose que l'étudiant déclare encore sur son temps.
+ *
+ * On demandait avant, jour de semaine par jour de semaine, combien de minutes seraient
+ * consacrées à réviser. Personne ne le sait, et le plan passait ensuite son temps à défendre
+ * un budget inventé contre celui qui l'avait inventé. La charge de travail décide de la
+ * journée ; ce qui reste à demander, c'est le dimanche où l'on ne sera pas là, parce que
+ * celui-là ne se devine pas.
+ *
+ * Un jour touché prend un 💤 et sort du plan. C'est un état, pas une nuance : il n'y a pas de
+ * demi-journée, parce qu'une demi-journée ne se tient pas.
+ */
+function PausesStep({
+  today,
+  daysRemaining,
+  offDays,
+  onToggle,
+}: {
+  today: Date;
+  daysRemaining: number;
+  offDays: string[];
+  onToggle: (iso: string) => void;
+}) {
+  const { t, locale } = useI18n();
+  const bcp = localeBcp47(locale);
+
+  // Jusqu'à la veille de l'épreuve, et pas au-delà de quatre semaines : pointer chaque jour
+  // d'un semestre n'a plus de sens, et une grille de cent cases ne se lit pas.
+  const days = Array.from({ length: Math.min(28, Math.max(0, daysRemaining)) }, (_, offset) => {
+    const day = new Date(today.getTime());
+    day.setDate(day.getDate() + offset);
+    return day;
+  });
+
+  return (
+    <div>
+      <p className="eyebrow text-ink-tertiary">{t("app.newPlan.timeEyebrow")}</p>
+      <h1 className="page-title mt-2">{t("app.newPlan.pausesTitle")}</h1>
+      <p className="page-lead">{t("app.newPlan.pausesLead")}</p>
+
+      {days.length === 0 ? (
+        <p className="mt-6 text-[13.5px] text-ink-secondary">{t("app.newPlan.pausesNone")}</p>
+      ) : (
+        <>
+          <div className="mt-6 grid grid-cols-7 gap-1.5">
+            {days.map((day) => {
+              const iso = isoDay(day);
+              const off = offDays.includes(iso);
+              return (
+                <button
+                  key={iso}
+                  type="button"
+                  onClick={() => onToggle(iso)}
+                  aria-pressed={off}
+                  aria-label={day.toLocaleDateString(bcp, {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  })}
+                  className={`pressable flex h-16 flex-col items-center justify-center gap-0.5 rounded-[10px] border transition-colors duration-hover ${
+                    off
+                      ? "border-ink bg-ink text-on-ink"
+                      : "border-hairline bg-surface text-ink hover:bg-surface-muted"
+                  }`}
+                >
+                  <span
+                    className={`text-[10px] uppercase tracking-wide ${off ? "text-on-ink-muted" : "text-ink-tertiary"}`}
+                  >
+                    {day.toLocaleDateString(bcp, { weekday: "short" }).replace(".", "")}
+                  </span>
+                  <span className="numeral text-[15px] font-semibold leading-none">
+                    {day.getDate()}
+                  </span>
+                  <span className="flex h-4 items-center">
+                    {off ? (
+                      <span aria-hidden className="emoji emoji-pop text-[12px] leading-none">
+                        💤
+                      </span>
+                    ) : null}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Rien à dire quand rien n'est posé : « 0 jour de pause » occupe une ligne pour
+              répéter ce que la grille montre déjà. */}
+          {offDays.length > 0 ? (
+            <p className="mt-3 text-[12.5px] text-ink-tertiary">
+              {t("app.newPlan.pausesCount", { count: offDays.length })}
+            </p>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * La note visée, seule sur sa page.
+ *
+ * C'était un bloc de fin de formulaire : un curseur, un chiffre, une phrase. Or c'est la
+ * seule question du parcours dont la réponse **change ce que le produit va demander** - viser
+ * deux points de plus, c'est accepter un passage de plus par carte, tous les jours, jusqu'au
+ * jour J. Elle mérite donc son écran, et une réponse qui se voit : le chiffre grossit d'un
+ * cran à chaque cran gagné, l'anneau se remplit, et la projection en dessous se recalcule
+ * pendant qu'on tient encore le curseur. C'est la seule promesse que le parcours puisse
+ * tenir tout de suite.
+ */
 function ScoreStep({
   targetScore,
   countryCode,
@@ -823,6 +1032,7 @@ function ScoreStep({
   load,
   empty,
   mockQuestions,
+  offCount,
 }: {
   targetScore: number;
   countryCode?: string | null;
@@ -834,19 +1044,57 @@ function ScoreStep({
   load: number[];
   empty: boolean;
   mockQuestions: number;
+  offCount: number;
 }) {
   const { t } = useI18n();
   const scale = desiredGradeScale(countryCode);
+  const fraction =
+    (targetScore - TARGET_SCORE_MIN) / Math.max(1, TARGET_SCORE_MAX - TARGET_SCORE_MIN);
+
+  // La clé change à chaque cran : c'est ce qui relance l'animation, sans quoi React garderait
+  // le même nœud et le chiffre se contenterait de changer.
+  const RADIUS = 52;
+  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
   return (
-    <div className="mt-8 border-t border-hairline pt-6">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="section-title">{t("app.exams.desiredGrade")}</h2>
-        <p className="numeral text-[20px] font-semibold leading-none text-ink">
-          {desiredGradeLabel(targetScore, countryCode)}
-        </p>
+    <div>
+      <p className="eyebrow text-ink-tertiary">{t("app.newPlan.gradeEyebrow")}</p>
+      <h1 className="page-title mt-2">{t("app.exams.desiredGrade")}</h1>
+      <p className="page-lead">{t("app.newPlan.gradeLead")}</p>
+
+      <div className="mt-7 flex justify-center">
+        <div className="relative flex h-[148px] w-[148px] items-center justify-center">
+          <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full -rotate-90">
+            <circle
+              cx="60"
+              cy="60"
+              r={RADIUS}
+              fill="none"
+              stroke="var(--color-surface-sunken)"
+              strokeWidth="8"
+            />
+            <circle
+              cx="60"
+              cy="60"
+              r={RADIUS}
+              fill="none"
+              stroke="var(--chart-work)"
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={CIRCUMFERENCE * (1 - Math.max(0.02, fraction))}
+              style={{
+                transition: "stroke-dashoffset 520ms var(--ease-out-strong)",
+              }}
+            />
+          </svg>
+          <span key={targetScore} className="grade-pop numeral hero-value text-[40px]">
+            {desiredGradeLabel(targetScore, countryCode)}
+          </span>
+        </div>
       </div>
-      <div className="mt-4 flex items-center gap-3">
+
+      <div className="mt-6 flex items-center gap-3">
         <span className="numeral w-12 shrink-0 text-[12.5px] text-ink-tertiary">{scale.min}</span>
         <Slider
           className="min-w-0 flex-1"
@@ -863,11 +1111,11 @@ function ScoreStep({
       </div>
 
       {empty ? (
-        <p className="mt-6 text-[13.5px] leading-relaxed text-caution">
+        <p className="mt-7 text-[13.5px] leading-relaxed text-caution">
           {t("app.exams.missingCards")}
         </p>
       ) : (
-        <div className="mt-6 rounded-group bg-canvas p-4">
+        <div className="panel mt-7 p-4">
           <p className="text-[13.5px] leading-relaxed text-ink-secondary">
             {t("app.newPlan.projection", {
               cards: cardCount,
@@ -881,6 +1129,11 @@ function ScoreStep({
               {t("app.newPlan.projectionMock", { questions: mockQuestions })}
             </p>
           ) : null}
+          {offCount > 0 ? (
+            <p className="mt-2 text-[13px] leading-relaxed text-ink-secondary">
+              {t("app.newPlan.projectionOff", { count: offCount })}
+            </p>
+          ) : null}
           <div className="mt-3 flex h-10 items-end gap-[2px]">
             {load.map((count, position) => {
               const max = Math.max(1, ...load);
@@ -890,8 +1143,12 @@ function ScoreStep({
                   className="min-w-0 flex-1 rounded-t-[2px]"
                   style={{
                     height: `${Math.max(4, (count / max) * 100)}%`,
-                    backgroundColor: peak && position === peak.offset ? "var(--chart-fragile)" : "var(--chart-work)",
+                    backgroundColor:
+                      peak && position === peak.offset
+                        ? "var(--chart-fragile)"
+                        : "var(--chart-work)",
                     opacity: count === 0 ? 0.25 : 1,
+                    transition: "height 420ms var(--ease-out-strong)",
                   }}
                 />
               );
@@ -946,4 +1203,16 @@ function addWeeks(date: Date, weeks: number): Date {
   const result = new Date(date.getTime());
   result.setDate(result.getDate() + weeks * 7);
   return result;
+}
+
+/** Des dates ISO vers des rangs de jours : la forme que `planExam` attend. */
+function offsetsUntil(days: readonly string[], today: Date, window: number): number[] {
+  const first = startOfDay(today);
+  const offsets: number[] = [];
+  for (const day of days) {
+    const date = startOfDay(new Date(`${day}T12:00:00`));
+    const offset = Math.round((date.getTime() - first.getTime()) / 86_400_000);
+    if (offset >= 0 && offset < window) offsets.push(offset);
+  }
+  return offsets;
 }
