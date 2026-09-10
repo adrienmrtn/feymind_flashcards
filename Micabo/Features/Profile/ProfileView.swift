@@ -135,25 +135,34 @@ struct ProfileView: View {
             let logs = (try? context.fetch(FetchDescriptor<ReviewLog>())) ?? []
             let now = Date()
             let usable = cards.filter { !$0.isSuspended }
+
+            // Deux lectures de table, puis tout se range en mémoire : ni `course.cards` sur
+            // chaque cours ni `card.logs` sur chaque carte, qui rouvrent une requête à chaque
+            // fois et faisaient attendre le Profil dès qu'on avait plusieurs cours.
+            var cardsByCourse: [UUID: [Flashcard]] = [:]
+            for card in usable {
+                guard let courseID = card.course?.id else { continue }
+                cardsByCourse[courseID, default: []].append(card)
+            }
+            let logsByCard = ExamReadiness.group(logs)
+
             let byCourse: [CourseMastery] = courses.compactMap { course in
-                let own = course.cards.filter { !$0.isSuspended }
-                guard !own.isEmpty else { return nil }
+                guard let own = cardsByCourse[course.id], !own.isEmpty else { return nil }
                 return CourseMastery(
                     id: course.id,
                     title: course.title,
                     emoji: course.emoji,
-                    percent: ExamReadiness.masteryPercent(of: own, now: now),
+                    percent: ExamReadiness.masteryPercent(of: own, logs: logsByCard, now: now),
                     cards: own.count
                 )
             }
             .sorted { $0.percent == $1.percent ? $0.title < $1.title : $0.percent > $1.percent }
             let again = logs.filter { $0.rating == .again }.count
+            let frontByID = Dictionary(cards.map { ($0.id, $0.front) }, uniquingKeysWith: { first, _ in first })
             var counts: [UUID: (front: String, passes: Int)] = [:]
-            for log in logs {
-                guard let card = log.card else { continue }
-                var entry = counts[card.id] ?? (front: card.front, passes: 0)
-                entry.passes += 1
-                counts[card.id] = entry
+            for (cardID, own) in logsByCard {
+                guard let front = frontByID[cardID] else { continue }
+                counts[cardID] = (front: front, passes: own.count)
             }
             let top = counts.values
                 .sorted { $0.passes == $1.passes ? $0.front < $1.front : $0.passes > $1.passes }
@@ -164,9 +173,9 @@ struct ProfileView: View {
                 reviewDates: logs.map(\.reviewedAt),
                 knowledge: cards.map { ($0.state, $0.intervalDays) },
                 mostReviewed: Array(top),
-                masteryPercent: ExamReadiness.masteryPercent(of: usable, now: now),
+                masteryPercent: ExamReadiness.masteryPercent(of: usable, logs: logsByCard, now: now),
                 byCourse: byCourse,
-                weak: ExamReadiness.weakCards(in: usable, now: now, limit: 5),
+                weak: ExamReadiness.weakCards(in: usable, logs: logsByCard, now: now, limit: 5),
                 accuracyPercent: logs.isEmpty ? 0 : Int((Double(logs.count - again) / Double(logs.count) * 100).rounded())
             )
         }

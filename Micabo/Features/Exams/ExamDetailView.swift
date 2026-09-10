@@ -17,9 +17,25 @@ struct ExamDetailView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(MockExamService.self) private var mocks: MockExamService?
     @Environment(AuthController.self) private var auth: AuthController?
+    @Environment(CloudSync.self) private var sync: CloudSync?
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
+    /// Ce que la fiche affiche, **calculé une fois** par ouverture et par synchro.
+    ///
+    /// La première version le calculait dans des propriétés lues par le corps : chaque rendu
+    /// reparcourait `course.cards` sur chaque cours et `card.logs` sur chaque carte, une
+    /// requête à chaque fois. Sur un compte de plusieurs cours, la fiche bégayait au moindre
+    /// appui.
+    private struct Figures {
+        var masteryPercent = 0
+        var cardCount = 0
+        var programme: [(course: Course, cards: Int, percent: Int)] = []
+        var weak: [ExamReadiness.WeakCard] = []
+        var canRunMock = false
+    }
+
+    @State private var figures = Figures()
     @State private var sessions: [MockSessionRecord] = []
     @State private var sessionsLoaded = false
     @State private var editing = false
@@ -40,25 +56,12 @@ struct ExamDetailView: View {
 
     // MARK: - Ce qu'on lit
 
-    private var programme: [Course] {
-        let wanted = Set(exam.courseIDs)
-        return courses.filter { wanted.contains($0.id) }
-    }
-
-    private var cards: [Flashcard] {
-        programme.flatMap(\.cards).filter { !$0.isSuspended }
-    }
-
-    private var masteryPercent: Int {
-        ExamReadiness.masteryPercent(of: cards, now: today)
-    }
+    private var masteryPercent: Int { figures.masteryPercent }
+    private var weak: [ExamReadiness.WeakCard] { figures.weak }
+    private var canRunMock: Bool { figures.canRunMock }
 
     private var targetPercent: Int {
         TargetScore.percent(from: exam.targetScore)
-    }
-
-    private var weak: [ExamReadiness.WeakCard] {
-        ExamReadiness.weakCards(in: cards, now: today)
     }
 
     private var finished: [MockSessionRecord] {
@@ -70,8 +73,34 @@ struct ExamDetailView: View {
         sessions.first { !$0.isFinished && !$0.questions.isEmpty }
     }
 
-    private var canRunMock: Bool {
-        MockExamService.canRun(exam: exam, in: courses)
+    /// Ce qui fait recalculer les chiffres : l'épreuve, ses cours, une synchro.
+    private var figuresKey: String {
+        "\(exam.id)-\(exam.updatedAt.timeIntervalSince1970)-\(courses.count)-\(sync?.epoch ?? 0)"
+    }
+
+    /// Deux lectures de table - les cartes, le journal - puis tout se range en mémoire.
+    private func loadFigures() {
+        let wanted = Set(exam.courseIDs)
+        let programme = courses.filter { wanted.contains($0.id) }
+        let all = CourseRepository.allCards(in: modelContext)
+        var byCourse: [UUID: [Flashcard]] = [:]
+        for card in all where !card.isSuspended {
+            guard let courseID = card.course?.id, wanted.contains(courseID) else { continue }
+            byCourse[courseID, default: []].append(card)
+        }
+        let cards = programme.flatMap { byCourse[$0.id] ?? [] }
+        let logs = ExamReadiness.recentLogsByCard(in: modelContext, now: today)
+
+        figures = Figures(
+            masteryPercent: ExamReadiness.masteryPercent(of: cards, logs: logs, now: today),
+            cardCount: cards.count,
+            programme: programme.map { course in
+                let own = byCourse[course.id] ?? []
+                return (course: course, cards: own.count, percent: ExamReadiness.masteryPercent(of: own, logs: logs, now: today))
+            },
+            weak: ExamReadiness.weakCards(in: cards, logs: logs, now: today),
+            canRunMock: MockExamService.canRun(exam: exam, in: programme)
+        )
     }
 
     private var isSignedIn: Bool {
@@ -97,6 +126,7 @@ struct ExamDetailView: View {
         .scrollIndicators(.hidden)
         .micaboScreenBackground()
         .toolbar(.hidden, for: .navigationBar)
+        .task(id: figuresKey) { loadFigures() }
         .task(id: exam.id) { await loadSessions() }
         .overlay {
             if writing {
@@ -244,7 +274,7 @@ struct ExamDetailView: View {
     }
 
     private var progressNote: String {
-        let mastery = t("app.plan.sheet.lead", ["percent": "\(masteryPercent)", "cards": "\(cards.count)"])
+        let mastery = t("app.plan.sheet.lead", ["percent": "\(masteryPercent)", "cards": "\(figures.cardCount)"])
         if finished.isEmpty {
             return "\(mastery) \(t("app.exam.progress.noMock"))"
         }
@@ -367,13 +397,13 @@ struct ExamDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             MicaboSectionCaption(text: t("app.plan.sheet.programTitle"))
 
-            if programme.isEmpty {
+            if figures.programme.isEmpty {
                 MicaboSectionFootnote(text: t("app.errors.pickACourse"))
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(programme.enumerated()), id: \.element.id) { index, course in
-                        courseRow(course)
-                        if index < programme.count - 1 {
+                    ForEach(Array(figures.programme.enumerated()), id: \.element.course.id) { index, entry in
+                        courseRow(entry.course, cards: entry.cards, percent: entry.percent)
+                        if index < figures.programme.count - 1 {
                             MicaboHairline(inset: 71)
                         }
                     }
@@ -383,11 +413,8 @@ struct ExamDetailView: View {
         }
     }
 
-    private func courseRow(_ course: Course) -> some View {
-        let usable = course.cards.filter { !$0.isSuspended }
-        let percent = ExamReadiness.masteryPercent(of: usable, now: today)
-
-        return HStack(spacing: 13) {
+    private func courseRow(_ course: Course, cards: Int, percent: Int) -> some View {
+        HStack(spacing: 13) {
             MicaboTile.course(course)
 
             VStack(alignment: .leading, spacing: 3) {
@@ -396,7 +423,7 @@ struct ExamDetailView: View {
                     .foregroundStyle(MicaboColor.ink)
                     .lineLimit(2)
 
-                Text(t("app.plan.sheet.courseLine", ["cards": "\(usable.count)", "percent": "\(percent)"]))
+                Text(t("app.plan.sheet.courseLine", ["cards": "\(cards)", "percent": "\(percent)"]))
                     .font(MicaboFont.rowSubtitle)
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .lineLimit(1)

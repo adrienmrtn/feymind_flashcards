@@ -28,11 +28,7 @@ enum LibraryCensus {
         let cards = (try? context.fetch(FetchDescriptor<Flashcard>())) ?? []
         // Le journal des quatre derniers mois, en une requête : c'est lui qui corrige ce que
         // l'algorithme croit d'une carte par ce que l'étudiant a réellement répondu.
-        let since = now.addingTimeInterval(-Double(ExamReadiness.sinceDays) * 86_400)
-        let logs = (try? context.fetch(FetchDescriptor<ReviewLog>(
-            predicate: #Predicate { $0.reviewedAt >= since }
-        ))) ?? []
-        let value = summarize(cards, logs: logs, now: now)
+        let value = summarize(cards, logs: ExamReadiness.recentLogsByCard(in: context, now: now), now: now)
         if let key { cache = (key, value) }
         return value
     }
@@ -42,13 +38,7 @@ enum LibraryCensus {
         cache = nil
     }
 
-    static func summarize(_ cards: [Flashcard], logs: [ReviewLog] = [], now: Date = Date()) -> [UUID: CourseStats] {
-        var logsByCard: [UUID: [ReviewLog]] = [:]
-        for log in logs {
-            guard let cardID = log.card?.id else { continue }
-            logsByCard[cardID, default: []].append(log)
-        }
-
+    static func summarize(_ cards: [Flashcard], logs logsByCard: ExamReadiness.LogsByCard = [:], now: Date = Date()) -> [UUID: CourseStats] {
         var byCourse: [UUID: CourseStats] = [:]
         for card in cards {
             guard let courseID = card.course?.id else { continue }

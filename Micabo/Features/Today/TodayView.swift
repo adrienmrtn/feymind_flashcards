@@ -26,7 +26,6 @@ struct TodayView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(AuthController.self) private var auth: AuthController?
 
-    @Query(sort: \Flashcard.updatedAt, order: .reverse) private var allCards: [Flashcard]
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
 
@@ -42,14 +41,23 @@ struct TodayView: View {
     @State private var activeImport: ImportKind?
     @State private var paywall: PaywallTrigger?
 
-    /// Dernière file calculée. Une bascule de feuille, de paywall ou de navigation ne change
-    /// aucune échéance : elle ne doit pas reconstruire toutes les cartes du jour.
-    @State private var loadBox = DayLoadBox()
+    /// La file du jour, **lue à la demande et non observée**.
+    ///
+    /// L'écran tenait toutes les cartes dans un `@Query`. SwiftData rematérialisait alors la
+    /// table entière sur l'acteur principal à chaque écriture - une carte notée, une ligne
+    /// descendue par la synchro - et redessinait l'onglet, même quand on n'était pas dessus.
+    /// Avec quelques cours, c'est des milliers d'objets reconstruits plusieurs fois par
+    /// seconde pendant une session ou une synchro : c'est ça qui faisait ramer l'app.
+    ///
+    /// Les cartes se lisent maintenant en une requête, quand quelque chose a pu changer la
+    /// file : l'onglet qui revient, une synchro finie, une session fermée, un cours ou un
+    /// examen ajouté, le jour qui tourne. Entre deux, rien ne bouge et rien n'est relu.
+    @State private var load: DayLoad?
+    /// Compte les sessions fermées depuis cet écran : chacune change la file.
+    @State private var studyRuns = 0
 
-    /// File du jour, calculée **une fois** par rendu. Sans ça, `StudyQueueBuilder.build`
-    /// tournait à chaque lecture de `dueCards` — une dizaine de fois par frame, y compris
-    /// quand l'onglet n'est pas celui qu'on regarde.
     private struct DayLoad {
+        let totalCards: Int
         let dueCards: [Flashcard]
         let heldBackNewCards: Int
         let newCount: Int
@@ -63,8 +71,18 @@ struct TodayView: View {
 
         let streak: Int
 
-        init(allCards: [Flashcard], courses: [Course], exams: [Exam], todayLogs: [ReviewLog], streak: Int) {
+        static let empty = DayLoad(allCards: [], courses: [], exams: [], todayLogs: [], logs: [:], streak: 0)
+
+        init(
+            allCards: [Flashcard],
+            courses: [Course],
+            exams: [Exam],
+            todayLogs: [ReviewLog],
+            logs: ExamReadiness.LogsByCard,
+            streak: Int
+        ) {
             self.streak = streak
+            totalCards = allCards.count
             let due = StudyQueueBuilder.build(
                 from: allCards,
                 limits: .daily(newRemaining: DailyNewQuota.remaining(logs: todayLogs)),
@@ -116,60 +134,35 @@ struct TodayView: View {
                     return exam.courseIDs.contains(courseID)
                 }
                 guard !relevant.isEmpty else { continue }
-                progress[exam.id] = ExamReadiness.masteryPercent(of: relevant, now: now)
+                progress[exam.id] = ExamReadiness.masteryPercent(of: relevant, logs: logs, now: now)
             }
             examProgress = progress
         }
     }
 
-    private final class DayLoadBox {
-        var key: DayLoadKey?
-        var value: DayLoad?
+    /// Ce qui fait relire la file. Le jour y est : une carte qui devient due à minuit ne
+    /// prévient personne.
+    private var reloadKey: String {
+        let day = MicaboCalendar.shared.startOfDay(for: Date()).timeIntervalSince1970
+        let examStamp = exams.map(\.updatedAt.timeIntervalSince1970).max() ?? 0
+        return "\(router?.selection == .today)-\(sync?.epoch ?? 0)-\(courses.count)-\(exams.count)-\(examStamp)-\(day)-\(studyRuns)"
     }
 
-    private struct DayLoadKey: Equatable {
-        let day: Date
-        let cardCount: Int
-        let cardStamp: Date?
-        let courseCount: Int
-        let courseStamp: Date?
-        let examCount: Int
-        let examStamp: Date?
-        let syncEpoch: Int
-    }
-
-    private func dayLoadKey(now: Date = Date()) -> DayLoadKey {
-        DayLoadKey(
-            day: MicaboCalendar.shared.startOfDay(for: now),
-            cardCount: allCards.count,
-            cardStamp: allCards.first?.updatedAt,
-            courseCount: courses.count,
-            courseStamp: courses.first?.updatedAt,
-            examCount: exams.count,
-            examStamp: exams.map(\.updatedAt).max(),
-            syncEpoch: sync?.epoch ?? 0
-        )
-    }
-
-    private func resolvedLoad() -> DayLoad {
-        let key = dayLoadKey()
-        if let cached = loadBox.value {
-            if loadBox.key == key { return cached }
-            // L'onglet n'est pas visible, ou la synchro écrit encore : on attend la fin du
-            // lot au lieu de reconstruire après chaque ligne descendue.
-            if router?.selection != .today { return cached }
-            if sync?.state == .syncing { return cached }
-        }
-        let built = DayLoad(
-            allCards: allCards,
+    /// Deux lectures de table - les cartes, le journal récent - et la file est prête.
+    private func reload() {
+        // L'onglet qu'on ne regarde pas attend qu'on y revienne ; la première ouverture, elle,
+        // charge quoi qu'il arrive pour que la barre d'onglets ait un chiffre à montrer.
+        guard load == nil || router?.selection == .today else { return }
+        guard sync?.state != .syncing || load == nil else { return }
+        let cards = CourseRepository.allCards(in: modelContext)
+        load = DayLoad(
+            allCards: cards,
             courses: courses,
             exams: exams,
             todayLogs: todayLogs(),
+            logs: ExamReadiness.recentLogsByCard(in: modelContext),
             streak: currentStreak()
         )
-        loadBox.key = key
-        loadBox.value = built
-        return built
     }
 
     private var nextExam: Exam? {
@@ -199,7 +192,8 @@ struct TodayView: View {
     }
 
     var body: some View {
-        today(resolvedLoad())
+        today(load ?? .empty)
+            .task(id: reloadKey) { reload() }
     }
 
     @ViewBuilder
@@ -279,7 +273,7 @@ struct TodayView: View {
                 path = NavigationPath([course])
             }
         }
-        .fullScreenCover(isPresented: $showStudy) {
+        .fullScreenCover(isPresented: $showStudy, onDismiss: { studyRuns += 1 }) {
             // Le rythme du jour est atteint mais il reste des neuves : on ouvre quand
             // même une session réglable, pas un entraînement libre.
             StudyView(
@@ -602,7 +596,7 @@ struct TodayView: View {
     }
 
     private var examEmptySubtitle: String {
-        allCards.isEmpty
+        (load?.totalCards ?? 0) == 0
             ? (i18n?.t("app.today.whenYouHaveCards") ?? "Quand tu auras des cartes")
             : (i18n?.t("app.today.addDate") ?? "Ajouter une date")
     }
@@ -683,7 +677,7 @@ struct TodayView: View {
 
     @ViewBuilder
     private func restState(_ load: DayLoad) -> some View {
-        if allCards.isEmpty {
+        if load.totalCards == 0 {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
                 title: i18n?.t("app.home.empty.noCardsTitle") ?? "Pas encore de cartes",
@@ -760,7 +754,7 @@ struct TodayView: View {
 
     /// Un seul bouton de session dans l'app, et il garde son nom d'un écran à l'autre.
     private var hasSessionButton: Bool {
-        !allCards.isEmpty
+        (load?.totalCards ?? 0) > 0
     }
 
     private func sessionButtonTitle(_ load: DayLoad) -> String {
@@ -774,7 +768,7 @@ struct TodayView: View {
     /// Réviser ce qui est dû reste gratuit. Prendre de l'avance sur tout un paquet, non :
     /// c'est ce qu'on fait la veille d'un partiel, et c'est ce que Pro ouvre.
     private func startSession() {
-        let load = resolvedLoad()
+        let load = load ?? .empty
         guard !load.dueCards.isEmpty || load.heldBackNewCards > 0 || canPractice else {
             paywall = .practice
             return

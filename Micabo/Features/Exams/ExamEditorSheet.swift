@@ -33,6 +33,11 @@ struct ExamEditorSheet: View {
     @State private var didLoad = false
     @State private var showDeleteConfirmation = false
     @FocusState private var nameFocused: Bool
+    /// Les cartes actives, rangées par cours, lues **une fois** à l'ouverture. Avant, chaque
+    /// rendu faultait `course.cards` sur chaque cours et replanifiait tout : taper le nom de
+    /// l'examen recalculait un planning à chaque lettre.
+    @State private var cardsByCourse: [UUID: [Flashcard]] = [:]
+    @State private var plan: ExamPlan?
 
     private let calendar = MicaboCalendar.shared
 
@@ -43,11 +48,16 @@ struct ExamEditorSheet: View {
     }
 
     private var selectedCards: [Flashcard] {
-        selectedCourses.flatMap(\.cards).filter { !$0.isSuspended }
+        selection.flatMap { cardsByCourse[$0] ?? [] }
     }
 
-    private var plan: ExamPlan {
-        ExamRepository.plan(cards: selectedCards, date: date, intensity: intensity, calendar: calendar)
+    /// Le planning se refait quand un choix change, jamais parce que l'écran se redessine.
+    private func replan() {
+        guard isEditing, canConfirm else {
+            plan = nil
+            return
+        }
+        plan = ExamRepository.plan(cards: selectedCards, date: date, intensity: intensity, calendar: calendar)
     }
 
     private var canConfirm: Bool {
@@ -85,7 +95,7 @@ struct ExamEditorSheet: View {
 
                         // La projection reste à la modification, où l'on retouche tout
                         // d'un coup. À la création, la deuxième étape n'est que la note.
-                        if isEditing, canConfirm {
+                        if isEditing, canConfirm, let plan {
                             ExamProjectionView(plan: plan)
                         }
                     }
@@ -118,6 +128,9 @@ struct ExamEditorSheet: View {
             }
         }
         .task { load() }
+        .onChange(of: selection) { _, _ in replan() }
+        .onChange(of: date) { _, _ in replan() }
+        .onChange(of: intensity) { _, _ in replan() }
         .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(errorMessage != nil)) {
             Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { errorMessage = nil }
         } message: {
@@ -243,7 +256,7 @@ struct ExamEditorSheet: View {
 
     private func courseRow(_ course: Course) -> some View {
         let isSelected = selection.contains(course.id)
-        let count = course.cards.filter { !$0.isSuspended }.count
+        let count = cardsByCourse[course.id]?.count ?? 0
 
         return Button {
             if isSelected {
@@ -418,6 +431,14 @@ struct ExamEditorSheet: View {
         guard !didLoad else { return }
         didLoad = true
 
+        // Une lecture de la table des cartes, puis un rangement par cours.
+        var byCourse: [UUID: [Flashcard]] = [:]
+        for card in CourseRepository.allCards(in: modelContext) where !card.isSuspended {
+            guard let courseID = card.course?.id else { continue }
+            byCourse[courseID, default: []].append(card)
+        }
+        cardsByCourse = byCourse
+
         guard let exam else {
             date = calendar.startOfDay(for: max(suggestedDate, Date()))
             return
@@ -427,6 +448,7 @@ struct ExamEditorSheet: View {
         selection = Set(exam.courseIDs)
         intensity = exam.intensity
         targetScore = Double(exam.targetScore)
+        replan()
     }
 
     private func confirm() {
