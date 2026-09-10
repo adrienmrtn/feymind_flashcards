@@ -517,17 +517,16 @@ struct ExamEditorSheet: View {
         .accessibilityAddTraits(picked ? .isSelected : [])
     }
 
-    /// **La note qu'on vise, choisie au doigt.**
+    /// **La note qu'on vise, glissée au pouce.**
     ///
-    /// C'était un curseur système : gris, sans retour, et sans rapport avec le reste de
-    /// l'app. On vise une note une fois par épreuve, et ce geste-là décide de toute
-    /// l'intensité du plan - il mérite mieux qu'un rail de réglages.
+    /// Un rail, et non une rangée de pastilles : on ne compare pas onze notes entre elles,
+    /// on pousse un curseur vers le haut jusqu'à ce que le chiffre affiché soit celui qu'on
+    /// veut. Le geste est continu, la note se lit en grand au-dessus, et c'est tout.
     ///
-    /// Les crans sont donc **des pastilles qu'on touche**, prises dans `scale.choices` : le
-    /// barème du pays, sans doublon, donc onze notes en France et neuf lettres ailleurs. La
-    /// pastille choisie grossit, la note s'écrit en grand au-dessus et **se transforme
-    /// chiffre par chiffre**, et chaque cran franchi rend un petit coup. On sait ce qu'on
-    /// vient de choisir sans lire.
+    /// Ce n'est pas le curseur du système pour autant : celui-là est gris, ne rend rien sous
+    /// le doigt, et glisse entre les notes. Le nôtre s'arrête sur chaque **note proposable**
+    /// - `scale.choices`, donc le barème du pays sans ses doublons - et rend un coup à chaque
+    /// cran franchi. On sait ce qu'on vient de choisir sans lire.
     private var intensitySection: some View {
         let scale = DesiredGradeScale.for(OnboardingPreferences.schoolingCountry)
         let score = Int(targetScore.rounded())
@@ -554,68 +553,33 @@ struct ExamEditorSheet: View {
                 .contentTransition(.opacity)
                 .animation(.easeOut(duration: 0.2), value: intensity)
 
-            gradeDial(scale, score: score)
+            VStack(spacing: 6) {
+                GradeSlider(
+                    choices: scale.choices,
+                    score: Binding(
+                        get: { Int(targetScore.rounded()) },
+                        set: { next in
+                            targetScore = Double(next)
+                            intensity = TargetScore.intensity(from: next)
+                        }
+                    )
+                )
+
+                // Les deux bouts du barème, et son milieu : sans eux, un rail nu ne dit pas
+                // dans quel sens on monte.
+                HStack {
+                    Text(scale.min)
+                    Spacer()
+                    Text(scale.mid)
+                    Spacer()
+                    Text(scale.max)
+                }
+                .font(MicaboFont.caption)
+                .foregroundStyle(MicaboColor.inkTertiary)
+            }
+            .padding(.top, 2)
         }
         .accessibilityElement(children: .contain)
-    }
-
-    /// Le cadran : une pastille par note, la choisie en accent.
-    ///
-    /// Il défile à l'horizontale et **se recentre tout seul** sur la note retenue : ouvrir la
-    /// fiche d'une épreuve déjà réglée sur 18 doit montrer 18, pas le début du barème.
-    private func gradeDial(_ scale: DesiredGradeScale, score: Int) -> some View {
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal) {
-                HStack(spacing: 7) {
-                    ForEach(scale.choices) { tick in
-                        gradeTick(tick, isPicked: tick.score == score)
-                            .id(tick.score)
-                    }
-                }
-                .padding(.horizontal, 2)
-                .padding(.vertical, 4)
-            }
-            .scrollIndicators(.hidden)
-            .onAppear {
-                proxy.scrollTo(score, anchor: .center)
-            }
-            .onChange(of: score) { _, next in
-                withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(next, anchor: .center) }
-            }
-        }
-        .accessibilityLabel(L10n.t("ios.desiredGrade", locale: .resolved()))
-        .accessibilityValue(scale.label(for: score))
-    }
-
-    private func gradeTick(_ tick: GradeTick, isPicked: Bool) -> some View {
-        Button {
-            guard Int(targetScore.rounded()) != tick.score else { return }
-            // Le coup part **avant** l'animation : un retour qui suit la peinture se sent en
-            // retard, et c'est ce décalage qui rend un réglage mou.
-            Haptics.selection()
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                targetScore = Double(tick.score)
-                intensity = TargetScore.intensity(from: tick.score)
-            }
-        } label: {
-            Text(tick.label)
-                .font(MicaboFont.hanken(isPicked ? 17 : 15, weight: isPicked ? .bold : .medium))
-                .monospacedDigit()
-                .foregroundStyle(isPicked ? MicaboColor.onInk : MicaboColor.ink)
-                .frame(minWidth: 46)
-                .frame(height: isPicked ? 46 : 40)
-                .background(
-                    isPicked ? MicaboColor.accent : MicaboColor.surfaceMuted,
-                    in: RoundedRectangle(cornerRadius: 13, style: .continuous)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(isPicked ? Color.clear : MicaboColor.hairline, lineWidth: 1)
-                }
-        }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .accessibilityLabel(tick.label)
-        .accessibilityAddTraits(isPicked ? .isSelected : [])
     }
 
     private var intensityDetail: String {
@@ -824,5 +788,90 @@ struct ExamEditorSheet: View {
 
     private func describe(_ error: Error) -> String {
         (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+    }
+}
+
+/// **Le rail des notes.**
+///
+/// Un curseur à crans, dessiné plutôt qu'emprunté. `Slider` glisse entre les valeurs, se
+/// peint en gris système et ne rend rien sous le pouce ; ici chaque cran est une note
+/// proposable, le pouce s'y pose franchement, et le coup part **avant** l'animation - un
+/// retour qui suit la peinture se sent en retard, et c'est ce décalage qui rend un réglage
+/// mou.
+///
+/// `choices` porte le barème du pays sans ses doublons : onze crans en France, neuf ailleurs.
+/// La note enregistrée peut tomber sur un cran fusionné - deux « C- » de suite, dont un seul
+/// survit -, auquel cas le pouce se pose sur le cran proposable immédiatement en dessous
+/// plutôt que de sauter au début du barème.
+private struct GradeSlider: View {
+    let choices: [GradeTick]
+    @Binding var score: Int
+
+    @State private var isDragging = false
+
+    private static let knob: CGFloat = 28
+    private static let track: CGFloat = 8
+
+    private var index: Int {
+        choices.lastIndex { $0.score <= score } ?? 0
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            let travel = max(geo.size.width - Self.knob, 1)
+            let step = choices.count > 1 ? travel / CGFloat(choices.count - 1) : travel
+            let x = step * CGFloat(index)
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(MicaboColor.surfaceMuted)
+                    .frame(height: Self.track)
+
+                Capsule()
+                    .fill(MicaboColor.accent)
+                    .frame(width: x + Self.knob / 2, height: Self.track)
+
+                Circle()
+                    .fill(MicaboColor.surface)
+                    .overlay {
+                        Circle().strokeBorder(MicaboColor.hairline, lineWidth: 1)
+                    }
+                    .shadow(color: MicaboColor.ink.opacity(0.16), radius: 5, y: 2)
+                    .frame(width: Self.knob, height: Self.knob)
+                    .scaleEffect(isDragging ? 1.14 : 1)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isDragging)
+                    .offset(x: x)
+            }
+            .frame(height: Self.knob)
+            // Le rail entier prend le geste, pas seulement le pouce : viser un disque de
+            // vingt-huit points pour régler une note est un jeu d'adresse, pas un réglage.
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        isDragging = true
+                        pick(at: value.location.x - Self.knob / 2, step: step)
+                    }
+                    .onEnded { _ in isDragging = false }
+            )
+        }
+        .frame(height: Self.knob)
+        .accessibilityElement()
+        .accessibilityLabel(L10n.t("ios.desiredGrade", locale: .resolved()))
+        .accessibilityValue(choices.indices.contains(index) ? choices[index].label : "")
+        .accessibilityAdjustableAction { direction in
+            let next = index + (direction == .increment ? 1 : -1)
+            guard choices.indices.contains(next) else { return }
+            score = choices[next].score
+        }
+    }
+
+    private func pick(at x: CGFloat, step: CGFloat) {
+        guard step > 0, !choices.isEmpty else { return }
+        let raw = Int((x / step).rounded())
+        let next = choices[min(max(raw, 0), choices.count - 1)].score
+        guard next != score else { return }
+        Haptics.selection()
+        withAnimation(.snappy(duration: 0.18)) { score = next }
     }
 }

@@ -77,13 +77,15 @@ struct FlashcardsView: View {
                 }
             }
         }
-        .sheet(item: $editingCard) { card in
+        // Chaque feuille écrit dans le modèle, et la liste est une photo : sans ce
+        // rechargement à la fermeture, une carte écrite à la main n'apparaît pas non plus.
+        .sheet(item: $editingCard, onDismiss: reload) { card in
             FlashcardEditorSheet(card: card)
         }
-        .sheet(isPresented: $isCreating) {
+        .sheet(isPresented: $isCreating, onDismiss: reload) {
             FlashcardCreatorSheet(course: course)
         }
-        .sheet(isPresented: $isMasking) {
+        .sheet(isPresented: $isMasking, onDismiss: reload) {
             OcclusionEditorSheet(course: course)
         }
         .sheet(isPresented: $showCardOptions) {
@@ -97,16 +99,7 @@ struct FlashcardsView: View {
             StudyView(source: .course(course), mode: studyMode)
         }
         .micaboPaywall($paywall)
-        .task(id: course.id) {
-            let ordered = course.orderedCards
-            loadedCards = ordered
-            duePreview = CourseDuePreview.immediate(from: ordered)
-            duePreview = CourseDuePreview.scheduled(
-                from: ordered,
-                courseID: course.id,
-                in: modelContext
-            )
-        }
+        .task(id: course.id) { reload() }
         .overlay {
             if isGenerating {
                 GenerationOverlay(
@@ -356,25 +349,44 @@ struct FlashcardsView: View {
     }
 
     private func addReverseCards() {
-        withAnimation {
-            _ = try? CourseRepository.addReverseCards(for: course, in: modelContext)
-        }
+        _ = try? CourseRepository.addReverseCards(for: course, in: modelContext)
+        withAnimation { reload() }
         Haptics.success()
     }
 
     // MARK: - Actions
 
     private func delete(_ card: Flashcard) {
-        withAnimation {
-            _ = try? CourseRepository.delete(card, in: modelContext)
-        }
+        _ = try? CourseRepository.delete(card, in: modelContext)
+        withAnimation { reload() }
     }
 
     private func resetProgress() {
-        withAnimation {
-            course.cards.forEach { $0.resetScheduling() }
-            _ = try? modelContext.save()
-        }
+        course.cards.forEach { $0.resetScheduling() }
+        _ = try? modelContext.save()
+        withAnimation { reload() }
+    }
+
+    /// **Reprendre la liste depuis le modèle.**
+    ///
+    /// `loadedCards` est une photo, et c'est voulu : la relation d'un cours ne prévient pas
+    /// SwiftUI quand elle change, et la relire à chaque image ferait payer le tri et le
+    /// calcul des échéances à chaque défilement. Mais une photo se démode dès qu'on écrit -
+    /// et c'est ce qui donnait l'impression que la génération n'avait rien produit : les
+    /// cartes étaient là, l'écran montrait encore l'état d'avant, et il fallait sortir puis
+    /// revenir pour que la vue se reconstruise.
+    ///
+    /// Toute écriture passe donc par ici. Le `nil` de départ, lui, garde son sens : « pas
+    /// encore lu », d'où la roue plutôt que « aucune carte ».
+    private func reload() {
+        let ordered = course.orderedCards
+        loadedCards = ordered
+        duePreview = CourseDuePreview.immediate(from: ordered)
+        duePreview = CourseDuePreview.scheduled(
+            from: ordered,
+            courseID: course.id,
+            in: modelContext
+        )
     }
 
     @MainActor
@@ -385,6 +397,7 @@ struct FlashcardsView: View {
 
         do {
             try await CardGeneration.run(for: course, options: options, using: aiService, in: modelContext)
+            withAnimation { reload() }
             Haptics.success()
         } catch {
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
