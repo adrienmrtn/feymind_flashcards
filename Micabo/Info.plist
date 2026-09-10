@@ -2,6 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!--
+	Le commit d'où vient ce binaire, gravé par `ci_scripts/ci_post_clone.sh`.
+
+	`dev` sur une construction locale, sept caractères sur une construction Xcode Cloud. Les
+	Réglages l'affichent sous la version : c'est la seule façon de répondre à « est-ce que ce
+	téléphone a bien le code de tel lot », puisque `MARKETING_VERSION` ne bouge pas d'un lot à
+	l'autre et qu'un numéro de build ne nomme aucun commit.
+	-->
+	<key>MicaboCommit</key>
+	<string>dev</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Micabo utilise l'appareil photo pour scanner vos pages de cours.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

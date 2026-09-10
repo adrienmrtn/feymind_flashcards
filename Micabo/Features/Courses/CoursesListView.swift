@@ -366,8 +366,8 @@ struct CoursesListView: View {
         let isTargeted = dropTarget == branch.folder.id
 
         MicaboRow.folder(branch.folder, total: branch.total) {
-            // Un lâcher n'est pas un appui : voir `lastDrop`.
-            guard Date().timeIntervalSince(lastDrop) > 0.4 else { return }
+            // Un lâcher n'est pas un appui : voir `lastDrop`, armé dès le survol.
+            guard Date().timeIntervalSince(lastDrop) > 0.6 else { return }
             withAnimation(.easeOut(duration: 0.2)) { openFolder = branch.folder.id }
         }
         .contextMenu { folderMenu(branch.folder) }
@@ -386,6 +386,14 @@ struct CoursesListView: View {
             lastDrop = Date()
             return drop(items, into: branch.folder.id)
         } isTargeted: { targeted in
+            // **Le survol arme le garde, pas seulement le lâcher.** Un doigt qui survole cette
+            // rangée transporte déjà quelque chose : c'est vrai bien avant que le lâcher
+            // n'arrive. Ne poser `lastDrop` que dans le lâcher laissait passer le cas qui a
+            // remis le bug debout - le système fait parfois suivre l'appui **avant** l'action
+            // de dépôt, et le garde arrivait alors trop tard : le dossier s'ouvrait, on
+            // voyait son intérieur vide, et de l'extérieur le cours et le dossier avaient
+            // tous les deux disparu.
+            if targeted { lastDrop = Date() }
             dropTarget = targeted ? branch.folder.id : nil
         }
 
