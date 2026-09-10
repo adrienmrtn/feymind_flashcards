@@ -158,7 +158,7 @@ struct ExamDetailView: View {
             }
             // Une hauteur taillée sur le contenu, pas `.medium` : la question tient en une
             // ligne et deux boutons, et un demi-écran la coupait au milieu d'un paragraphe.
-            .presentationDetents([.height(300)])
+            .presentationDetents([.height(300), .large])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
@@ -570,47 +570,51 @@ struct StartMockSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                // **Une ligne, pas deux paragraphes.** Le titre pose la question ; ce qui
-                // reste à dire est ce que « non » change, et ça tient en une phrase.
-                Text(t("app.mock.micHint"))
-                    .font(MicaboFont.caption)
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Button {
-                    askMicrophone()
-                } label: {
-                    HStack(spacing: MicaboSpacing.xs) {
-                        Image(systemName: "mic.fill")
-                            .font(.system(size: 13, weight: .semibold))
-                        Text(asking ? t("app.exams.wait") : t("app.mock.micYes"))
-                    }
-                }
-                .buttonStyle(MicaboPrimaryButtonStyle())
-                .disabled(asking)
-
-                Button {
-                    choose(false)
-                } label: {
-                    Text(t("app.mock.micNo"))
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(MicaboSecondaryButtonStyle())
-                .disabled(asking)
-
-                if let failed {
-                    Text(failed)
+            // Le contenu **défile**, même court : c'est ce qui garantit qu'une traduction plus
+            // longue ou un corps de texte agrandi ne se coupe pas au bas de la feuille. La
+            // hauteur du cran est taillée pour qu'on n'ait jamais à s'en servir.
+            ScrollView {
+                VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                    Text(t("app.mock.micHint"))
                         .font(MicaboFont.caption)
-                        .foregroundStyle(MicaboColor.negative)
+                        .foregroundStyle(MicaboColor.inkSecondary)
                         .fixedSize(horizontal: false, vertical: true)
-                }
 
-                Spacer(minLength: 0)
+                    Button {
+                        askMicrophone()
+                    } label: {
+                        HStack(spacing: MicaboSpacing.xs) {
+                            Image(systemName: "mic.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                            Text(asking ? t("app.exams.wait") : t("app.mock.micYes"))
+                        }
+                    }
+                    .buttonStyle(MicaboPrimaryButtonStyle())
+                    .disabled(asking)
+
+                    Button {
+                        choose(false)
+                    } label: {
+                        Text(t("app.mock.micNo"))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(MicaboSecondaryButtonStyle())
+                    .disabled(asking)
+
+                    if let failed {
+                        Text(failed)
+                            .font(MicaboFont.caption)
+                            .foregroundStyle(MicaboColor.negative)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                }
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, MicaboSpacing.md)
+                .padding(.bottom, MicaboSpacing.lg)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.md)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .scrollBounceBehavior(.basedOnSize)
             .micaboScreenBackground()
             .navigationTitle(t("app.mock.micTitle"))
             .navigationBarTitleDisplayMode(.inline)

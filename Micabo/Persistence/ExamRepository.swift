@@ -43,6 +43,8 @@ enum ExamRepository {
         courseIDs: [UUID],
         intensity: ExamIntensity,
         targetScore: Int? = nil,
+        kind: ExamKind = .exam,
+        startingPoint: ExamStartingPoint = .seen,
         in context: ModelContext,
         calendar: Calendar = MicaboCalendar.shared
     ) throws -> Exam {
@@ -51,7 +53,9 @@ enum ExamRepository {
             date: calendar.startOfDay(for: date),
             courseIDs: courseIDs,
             intensity: intensity,
-            targetScore: targetScore
+            targetScore: targetScore,
+            kind: kind,
+            startingPoint: startingPoint
         )
         context.insert(exam)
         try context.save()
@@ -68,6 +72,8 @@ enum ExamRepository {
         courseIDs: [UUID],
         intensity: ExamIntensity,
         targetScore: Int? = nil,
+        kind: ExamKind? = nil,
+        startingPoint: ExamStartingPoint? = nil,
         in context: ModelContext,
         now: Date = Date(),
         calendar: Calendar = MicaboCalendar.shared
@@ -80,6 +86,8 @@ enum ExamRepository {
         exam.name = TextSanitizer.clean(name).nilIfBlank ?? L10n.t("app.exams.defaultName", locale: .resolved())
         exam.date = calendar.startOfDay(for: date)
         exam.courseIDs = courseIDs
+        if let kind { exam.kind = kind }
+        if let startingPoint { exam.startingPoint = startingPoint }
         if let targetScore {
             exam.targetScore = TargetScore.clamp(targetScore)
             exam.intensity = TargetScore.intensity(from: exam.targetScore)
@@ -137,7 +145,13 @@ enum ExamRepository {
         plan(
             cards: cards(of: exam, in: context),
             date: exam.date,
-            intensity: exam.intensity,
+            intensity: exam.plannedIntensity,
+            offDays: offDayOffsets(
+                until: exam.date,
+                stamps: OffDays.stamps(in: context),
+                now: now,
+                calendar: calendar
+            ),
             now: now,
             calendar: calendar
         )
@@ -147,6 +161,7 @@ enum ExamRepository {
         cards: [Flashcard],
         date: Date,
         intensity: ExamIntensity,
+        offDays: [Int] = [],
         now: Date = Date(),
         calendar: Calendar = MicaboCalendar.shared
     ) -> ExamPlan {
@@ -155,8 +170,23 @@ enum ExamRepository {
             examDate: date,
             now: now,
             intensity: intensity,
+            offDays: offDays,
             calendar: calendar
         )
+    }
+
+    /// Les décalages fermés entre aujourd'hui et une épreuve. C'est la traduction des jours de
+    /// pause - des dates, globales - dans la fenêtre d'un plan, qui compte en décalages.
+    static func offDayOffsets(
+        until date: Date,
+        stamps: Set<String>,
+        now: Date = Date(),
+        calendar: Calendar = MicaboCalendar.shared
+    ) -> [Int] {
+        let today = calendar.startOfDay(for: now)
+        let day = calendar.startOfDay(for: date)
+        let remaining = calendar.dateComponents([.day], from: today, to: day).day ?? 0
+        return OffDays.offsets(from: today, window: max(1, remaining), stamps: stamps, calendar: calendar)
     }
 
     /// Applique le plan : photographie des échéances, puis écriture des nouvelles.
@@ -171,7 +201,15 @@ enum ExamRepository {
         let plan = plan(
             cards: cards,
             date: exam.date,
-            intensity: exam.intensity,
+            // L'intensité **effective** : celle qu'on a choisie, décalée d'un cran par le
+            // point de départ. Un programme qu'on découvre demande un passage de plus.
+            intensity: exam.plannedIntensity,
+            offDays: offDayOffsets(
+                until: exam.date,
+                stamps: OffDays.stamps(in: context),
+                now: now,
+                calendar: calendar
+            ),
             now: now,
             calendar: calendar
         )

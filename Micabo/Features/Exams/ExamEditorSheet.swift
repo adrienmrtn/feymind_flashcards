@@ -3,9 +3,16 @@ import SwiftUI
 
 /// Déclarer ou modifier un examen.
 ///
-/// **La création tient en deux questions.** D'abord le nom, le jour et les cours : ce
-/// qu'on passe. Ensuite la note seule, puis « Planifier l'examen ». Mélanger les quatre
-/// champs sur un seul écran faisait lire un formulaire avant d'avoir compris la question.
+/// **La création suit le site, question par question.** Le nom, le jour et les cours ; le
+/// type d'épreuve ; d'où l'on part sur ce programme ; les jours où l'on ne révisera pas ; la
+/// note visée. Cinq écrans, une question chacun : mélanger ces champs sur une page faisait
+/// lire un formulaire avant d'avoir compris ce qu'on demandait.
+///
+/// Les trois questions du milieu manquaient au téléphone, et elles ne sont pas décoratives :
+/// le **point de départ** décale l'intensité d'un cran, les **pauses** retirent des jours de
+/// la fenêtre, et le **type** décide de l'examen blanc. Sans elles, deux comptes identiques
+/// recevaient le même plan sur le site et sur l'iPhone - et un seul des deux était juste.
+///
 /// La modification reste sur une page : on y retouche une valeur, pas un parcours.
 struct ExamEditorSheet: View {
     /// Nul pour un nouvel examen.
@@ -18,8 +25,14 @@ struct ExamEditorSheet: View {
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
-    private enum CreationStep: Equatable {
+    /// Les étapes, dans l'ordre du site. `pauses` s'efface quand l'épreuve est trop proche
+    /// pour qu'on ait des jours à poser : une question sans réponse possible n'est pas une
+    /// étape, c'est un écran qu'on traverse en soupirant.
+    private enum CreationStep: Int, Equatable, CaseIterable {
         case details
+        case kind
+        case start
+        case pauses
         case grade
     }
 
@@ -28,6 +41,11 @@ struct ExamEditorSheet: View {
     @State private var selection: Set<UUID> = []
     @State private var intensity: ExamIntensity = .standard
     @State private var targetScore: Double = Double(TargetScore.default)
+    @State private var kind: ExamKind = .exam
+    @State private var startingPoint: ExamStartingPoint = .seen
+    /// Les journées fermées, en `yyyy-MM-dd`. Globales : un samedi pris n'est pas pris « pour
+    /// la biologie ». On les lit à l'ouverture et on les réécrit au moment de confirmer.
+    @State private var offDays: Set<String> = []
     @State private var creationStep: CreationStep = .details
     @State private var errorMessage: String?
     @State private var didLoad = false
@@ -57,7 +75,41 @@ struct ExamEditorSheet: View {
             plan = nil
             return
         }
-        plan = ExamRepository.plan(cards: selectedCards, date: date, intensity: intensity, calendar: calendar)
+        plan = ExamRepository.plan(
+            cards: selectedCards,
+            date: date,
+            intensity: startingPoint.intensity(from: intensity),
+            offDays: ExamRepository.offDayOffsets(until: date, stamps: offDays, calendar: calendar),
+            calendar: calendar
+        )
+    }
+
+    // MARK: - Les étapes
+
+    private var daysRemaining: Int {
+        calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: Date()),
+            to: calendar.startOfDay(for: date)
+        ).day ?? 0
+    }
+
+    /// Les jours proposés : d'aujourd'hui à la veille, quatre semaines au plus.
+    private var pauseWindow: [Date] {
+        OffDays.window(from: Date(), daysRemaining: daysRemaining, calendar: calendar)
+    }
+
+    /// Les étapes réellement posées. On saute `pauses` quand il n'y a pas un jour à cocher.
+    private var steps: [CreationStep] {
+        CreationStep.allCases.filter { $0 != .pauses || !pauseWindow.isEmpty }
+    }
+
+    private var stepIndex: Int {
+        steps.firstIndex(of: creationStep) ?? 0
+    }
+
+    private var isLastStep: Bool {
+        creationStep == steps.last
     }
 
     private var canConfirm: Bool {
@@ -68,15 +120,14 @@ struct ExamEditorSheet: View {
         calendar.startOfDay(for: date) < calendar.startOfDay(for: Date())
     }
 
-    /// L'étape des détails : toujours en modification, et d'abord à la création.
-    private var showsDetails: Bool {
-        isEditing || creationStep == .details
+    /// En modification, tout est sur une page : on y retouche une valeur. À la création,
+    /// une étape montre sa question et rien d'autre.
+    private func shows(_ step: CreationStep) -> Bool {
+        isEditing || creationStep == step
     }
 
-    /// L'étape de la note : toujours en modification, et ensuite à la création.
-    private var showsGrade: Bool {
-        isEditing || creationStep == .grade
-    }
+    private var showsDetails: Bool { shows(.details) }
+    private var showsGrade: Bool { shows(.grade) }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -90,11 +141,23 @@ struct ExamEditorSheet: View {
                         coursesSection
                     }
 
+                    if shows(.kind) {
+                        kindSection
+                    }
+
+                    if shows(.start) {
+                        startSection
+                    }
+
+                    if shows(.pauses), !pauseWindow.isEmpty {
+                        pausesSection
+                    }
+
                     if showsGrade {
                         intensitySection
 
                         // La projection reste à la modification, où l'on retouche tout
-                        // d'un coup. À la création, la deuxième étape n'est que la note.
+                        // d'un coup. À la création, la dernière étape n'est que la note.
                         if isEditing, canConfirm, let plan {
                             ExamProjectionView(plan: plan)
                         }
@@ -131,6 +194,8 @@ struct ExamEditorSheet: View {
         .onChange(of: selection) { _, _ in replan() }
         .onChange(of: date) { _, _ in replan() }
         .onChange(of: intensity) { _, _ in replan() }
+        .onChange(of: startingPoint) { _, _ in replan() }
+        .onChange(of: offDays) { _, _ in replan() }
         .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(errorMessage != nil)) {
             Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { errorMessage = nil }
         } message: {
@@ -155,14 +220,20 @@ struct ExamEditorSheet: View {
 
     private var headerTitle: String {
         if isEditing { return L10n.t("ios.editExam", locale: .resolved()) }
-        return creationStep == .grade
-            ? L10n.t("ios.desiredGrade", locale: .resolved())
-            : L10n.t("ios.newExam", locale: .resolved())
+        switch creationStep {
+        case .details: return L10n.t("ios.newExam", locale: .resolved())
+        case .kind: return L10n.t("app.newPlan.kindTitle", locale: .resolved())
+        case .start: return L10n.t("app.newPlan.startTitle", locale: .resolved())
+        case .pauses: return L10n.t("app.newPlan.pausesTitle", locale: .resolved())
+        case .grade: return L10n.t("ios.desiredGrade", locale: .resolved())
+        }
     }
 
+    /// Passé la première étape, le sur-titre porte le nom de l'épreuve : on sait à quoi on
+    /// répond, sans le relire dans le titre.
     private var headerEyebrow: String {
         if isEditing { return L10n.t("ios.examMode", locale: .resolved()) }
-        if creationStep == .grade {
+        if creationStep != .details {
             let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
             return trimmed.isEmpty ? L10n.t("ios.newExam", locale: .resolved()) : trimmed
         }
@@ -170,23 +241,24 @@ struct ExamEditorSheet: View {
     }
 
     private var headerBack: MicaboHeaderBack {
-        if !isEditing, creationStep == .grade {
-            return .back(goBackToDetails)
+        if !isEditing, creationStep != .details {
+            return .back(goBack)
         }
         return .close { dismiss() }
     }
 
-    /// Deux pastilles, comme le parcours web : on sait où l'on est sans lire « 1 / 2 ».
+    /// Une pastille par étape, comme le parcours web : on sait où l'on est sans lire « 2 / 5 ».
     private var stepPips: some View {
         HStack(spacing: 5) {
-            pip(isCurrent: creationStep == .details, isDone: creationStep == .grade)
-            pip(isCurrent: creationStep == .grade, isDone: false)
+            ForEach(Array(steps.enumerated()), id: \.element) { index, step in
+                pip(isCurrent: step == creationStep, isDone: index < stepIndex)
+            }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(L10n.t(
             "ios.stepOf",
             locale: .resolved(),
-            vars: ["current": creationStep == .details ? "1" : "2", "total": "2"]
+            vars: ["current": "\(stepIndex + 1)", "total": "\(steps.count)"]
         ))
     }
 
@@ -293,6 +365,158 @@ struct ExamEditorSheet: View {
         .buttonStyle(MicaboRowButtonStyle(feedback: .selection))
     }
 
+    // MARK: - Le type d'épreuve
+
+    /// **Il ne change pas la replanification.** Il décide de l'examen blanc - on ne s'entraîne
+    /// pas à un oral avec un QCM - et des formats proposés.
+    private var kindSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if isEditing {
+                MicaboSectionCaption(text: L10n.t("app.plan.sheet.kindTitle", locale: .resolved()))
+            }
+
+            MicaboFlowLayout(spacing: 7, lineSpacing: 7) {
+                ForEach(ExamKind.allCases) { option in
+                    let picked = kind == option
+                    Button {
+                        Haptics.selection()
+                        kind = option
+                    } label: {
+                        Text(option.title())
+                            .font(MicaboFont.hanken(14, weight: .medium))
+                            .foregroundStyle(picked ? MicaboColor.onInk : MicaboColor.ink)
+                            .padding(.vertical, 9)
+                            .padding(.horizontal, 14)
+                            .background(picked ? MicaboColor.ink : MicaboColor.surface, in: Capsule())
+                    }
+                    .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
+                    .accessibilityAddTraits(picked ? .isSelected : [])
+                }
+            }
+        }
+    }
+
+    // MARK: - Le point de départ
+
+    /// **Ce que l'app ne peut pas deviner.** Micabo ne voit que ce qui a été travaillé chez
+    /// lui ; il ne sait rien d'un cours suivi en amphi toute l'année. La réponse décale
+    /// l'intensité d'un cran, dans un sens ou dans l'autre.
+    private var startSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if isEditing {
+                MicaboSectionCaption(text: L10n.t("app.newPlan.startTitle", locale: .resolved()))
+            }
+
+            VStack(spacing: 0) {
+                ForEach(Array(ExamStartingPoint.allCases.enumerated()), id: \.element) { index, option in
+                    let picked = startingPoint == option
+                    Button {
+                        Haptics.selection()
+                        startingPoint = option
+                    } label: {
+                        HStack(spacing: 13) {
+                            MicaboTile(
+                                glyph: .emoji(option.emoji),
+                                background: picked ? MicaboColor.accentSoft : MicaboColor.surfaceMuted
+                            )
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(option.title())
+                                    .font(MicaboFont.rowTitle)
+                                    .foregroundStyle(MicaboColor.ink)
+                                Text(option.detail())
+                                    .font(MicaboFont.rowSubtitle)
+                                    .foregroundStyle(MicaboColor.inkTertiary)
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+
+                            Spacer(minLength: MicaboSpacing.xs)
+
+                            Image(systemName: picked ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 19, weight: .regular))
+                                .foregroundStyle(picked ? MicaboColor.accent : MicaboColor.strokeStrong)
+                        }
+                        .padding(.vertical, 11)
+                        .padding(.horizontal, MicaboSpacing.md)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(MicaboRowButtonStyle(feedback: .selection))
+
+                    if index < ExamStartingPoint.allCases.count - 1 {
+                        MicaboHairline(inset: 71)
+                    }
+                }
+            }
+            .micaboGroup()
+        }
+    }
+
+    // MARK: - Les jours de pause
+
+    /// **Toucher les jours où l'on ne révisera pas.**
+    ///
+    /// Sans eux, le plan pose du travail le dimanche où l'on ne touchera pas au téléphone :
+    /// on prend un jour de retard dès la première semaine, et le plan qui devait rassurer
+    /// devient une dette. Les jours fermés ne disparaissent pas, ils se reportent sur les
+    /// autres - c'est le prix, et la projection l'annonce.
+    private var pausesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if isEditing {
+                MicaboSectionCaption(text: L10n.t("app.newPlan.pausesTitle", locale: .resolved()))
+            }
+
+            Text(L10n.t("app.newPlan.pausesLead", locale: .resolved()))
+                .font(MicaboFont.caption)
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            MicaboFlowLayout(spacing: 7, lineSpacing: 7) {
+                ForEach(pauseWindow, id: \.self) { day in
+                    pauseCell(day)
+                }
+            }
+
+            if !offDays.isEmpty {
+                Text(L10n.t("app.newPlan.pausesCount", locale: .resolved(), vars: ["count": "\(offDays.count)"]))
+                    .font(MicaboFont.micro)
+                    .foregroundStyle(MicaboColor.inkTertiary)
+            }
+        }
+    }
+
+    private func pauseCell(_ day: Date) -> some View {
+        let stamp = OffDays.stamp(day, in: calendar)
+        let picked = offDays.contains(stamp)
+        let weekday = calendar.component(.weekday, from: day)
+        // `weekdayInitials` commence au lundi, `Calendar` au dimanche : d'où le décalage.
+        let initials = MicaboCalendar.weekdayInitials
+        let initial = initials.indices.contains((weekday + 5) % 7) ? initials[(weekday + 5) % 7] : ""
+
+        return Button {
+            Haptics.selection()
+            if picked { offDays.remove(stamp) } else { offDays.insert(stamp) }
+        } label: {
+            VStack(spacing: 2) {
+                Text(initial)
+                    .font(MicaboFont.hanken(10.5, weight: .medium))
+                    .foregroundStyle(picked ? MicaboColor.onInk.opacity(0.8) : MicaboColor.inkTertiary)
+                Text("\(calendar.component(.day, from: day))")
+                    .font(MicaboFont.number(15, weight: .semibold))
+                    .foregroundStyle(picked ? MicaboColor.onInk : MicaboColor.ink)
+                    .monospacedDigit()
+            }
+            .frame(width: 44, height: 46)
+            .background(
+                picked ? MicaboColor.ink : MicaboColor.surface,
+                in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
+            )
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
+        .accessibilityLabel(MicaboCalendar.dayLabel(day))
+        .accessibilityAddTraits(picked ? .isSelected : [])
+    }
+
     private var intensitySection: some View {
         let scale = DesiredGradeScale.for(OnboardingPreferences.schoolingCountry)
         let score = Int(targetScore.rounded())
@@ -392,7 +616,7 @@ struct ExamEditorSheet: View {
     // MARK: - Actions
 
     private var primaryTitle: String {
-        if !isEditing, creationStep == .details {
+        if !isEditing, !isLastStep {
             return L10n.t("app.common.continue", locale: .resolved())
         }
         return isEditing
@@ -401,29 +625,34 @@ struct ExamEditorSheet: View {
     }
 
     private var showsPrimaryIcon: Bool {
-        isEditing || creationStep == .grade
+        isEditing || isLastStep
     }
 
     private func primaryAction() {
-        if !isEditing, creationStep == .details {
-            goToGrade()
+        if !isEditing, !isLastStep {
+            goForward()
             return
         }
         confirm()
     }
 
-    private func goToGrade() {
+    private func goForward() {
+        // Seule la première étape a de quoi être invalide : les trois suivantes ont toutes
+        // une réponse par défaut, et la note aussi.
         guard canConfirm else { return }
-        nameFocused = false
-        withAnimation(.easeOut(duration: 0.22)) {
-            creationStep = .grade
-        }
+        move(to: stepIndex + 1)
     }
 
-    private func goBackToDetails() {
+    private func goBack() {
+        move(to: stepIndex - 1)
+    }
+
+    private func move(to index: Int) {
+        guard steps.indices.contains(index) else { return }
         nameFocused = false
+        Haptics.selection()
         withAnimation(.easeOut(duration: 0.22)) {
-            creationStep = .details
+            creationStep = steps[index]
         }
     }
 
@@ -438,6 +667,9 @@ struct ExamEditorSheet: View {
             byCourse[courseID, default: []].append(card)
         }
         cardsByCourse = byCourse
+        // Les journées fermées sont globales : on part de celles du compte, pas d'une page
+        // blanche, et ce qu'on coche ici vaut pour les autres épreuves aussi.
+        offDays = OffDays.stamps(in: modelContext)
 
         guard let exam else {
             date = calendar.startOfDay(for: max(suggestedDate, Date()))
@@ -447,12 +679,33 @@ struct ExamEditorSheet: View {
         date = exam.date
         selection = Set(exam.courseIDs)
         intensity = exam.intensity
+        kind = exam.kind
+        startingPoint = exam.startingPoint
         targetScore = Double(exam.targetScore)
         replan()
     }
 
+    /// Écrit les journées cochées dans la base. Elles ne suivent pas l'examen : elles sont à
+    /// l'étudiant, et la synchro les remonte avec le reste.
+    private func saveOffDays() {
+        let known = OffDays.stamps(in: modelContext)
+        for stamp in offDays.subtracting(known) {
+            modelContext.insert(OffDay(stamp: stamp))
+        }
+        for stale in known.subtracting(offDays) {
+            if let row = OffDays.all(in: modelContext).first(where: { $0.stamp == stale }) {
+                modelContext.delete(row)
+            }
+        }
+        try? modelContext.save()
+    }
+
     private func confirm() {
         guard canConfirm else { return }
+
+        // **Les pauses s'écrivent avant le plan**, parce que c'est le plan qui les lit. Les
+        // enregistrer après aurait posé un planning sur des jours qu'on venait de fermer.
+        saveOffDays()
 
         do {
             if let exam {
@@ -463,6 +716,8 @@ struct ExamEditorSheet: View {
                     courseIDs: Array(selection),
                     intensity: intensity,
                     targetScore: Int(targetScore.rounded()),
+                    kind: kind,
+                    startingPoint: startingPoint,
                     in: modelContext
                 )
                 if !exam.isPlanned {
@@ -475,6 +730,8 @@ struct ExamEditorSheet: View {
                     courseIDs: Array(selection),
                     intensity: intensity,
                     targetScore: Int(targetScore.rounded()),
+                    kind: kind,
+                    startingPoint: startingPoint,
                     in: modelContext
                 )
                 try ExamRepository.plan(created, in: modelContext)

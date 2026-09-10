@@ -18,6 +18,8 @@ enum CloudTable {
     static let flashcards = "flashcards"
     static let reviewLogs = "review_logs"
     static let exams = "exams"
+    /// Les journées où l'on ne révise pas. Clé primaire `(user_id, day)`, `day` en date nue.
+    static let availability = "availability_exceptions"
     /// La vitrine d'un profil : le nom d'utilisateur et l'établissement, et rien d'autre.
     ///
     /// `profiles` reste cloisonné au propriétaire. Une politique de lecture dessus aurait
@@ -472,6 +474,10 @@ struct ExamRecord: Codable {
     var exam_date: Date
     var intensity: String
     var target_score: Int?
+    /// Type d'épreuve et point de départ : les deux réglages que le site demande à la
+    /// création. Facultatifs à la lecture - une ligne écrite avant qu'ils existent n'en a pas.
+    var kind: String?
+    var starting_point: String?
     var course_ids: [UUID]
     var is_planned: Bool
     var planned_at: Date?
@@ -483,6 +489,7 @@ struct ExamRecord: Codable {
 
     enum CodingKeys: String, CodingKey {
         case id, user_id, name, exam_date, intensity, target_score, course_ids
+        case kind, starting_point
         case is_planned, planned_at, created_at, updated_at, deleted_at, schedule_backup
     }
 
@@ -494,6 +501,8 @@ struct ExamRecord: Codable {
         try container.encode(exam_date, forKey: .exam_date)
         try container.encode(intensity, forKey: .intensity)
         try container.encodeIfPresent(target_score, forKey: .target_score)
+        try container.encodeIfPresent(kind, forKey: .kind)
+        try container.encodeIfPresent(starting_point, forKey: .starting_point)
         try container.encode(course_ids, forKey: .course_ids)
         try container.encode(is_planned, forKey: .is_planned)
         try container.encodeIfPresent(planned_at, forKey: .planned_at)
@@ -502,6 +511,17 @@ struct ExamRecord: Codable {
         try container.encodeIfPresent(deleted_at, forKey: .deleted_at)
         try container.encodeIfPresent(schedule_backup, forKey: .schedule_backup)
     }
+}
+
+/// **Une journée fermée**, telle que le serveur la range.
+///
+/// `day` est une chaîne `yyyy-MM-dd` et non une `Date` : la colonne est un `date` nu, sans
+/// instant ni fuseau, et lui envoyer un horodatage ferait glisser la journée d'un fuseau à
+/// l'autre. `minutes` reste à zéro - le téléphone ne pose que des journées entières.
+struct AvailabilityRecord: Codable {
+    var user_id: UUID
+    var day: String
+    var minutes: Int = 0
 }
 
 /// Un morceau de JSON transporté sans être interprété.
