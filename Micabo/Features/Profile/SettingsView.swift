@@ -657,6 +657,7 @@ struct SettingsView: View {
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("📦"), background: MicaboColor.tilePastels[4]),
                     title: i18n?.t("ios.version") ?? "Version",
+                    subtitle: buildCommit,
                     accessory: .value(appVersion)
                 ),
                 MicaboRow(
@@ -712,6 +713,16 @@ struct SettingsView: View {
     }
 
     // MARK: - Actions
+
+    /// **Le commit d'où vient ce binaire.**
+    ///
+    /// Le numéro de version ne bouge pas d'un lot à l'autre et le numéro de build est un
+    /// compteur : ni l'un ni l'autre ne dit quel code tourne. Sept caractères le disent, et
+    /// ils se comparent à `git log` sans discuter. Gravés par `ci_scripts/ci_post_clone.sh` ;
+    /// `dev` sur une construction faite à la main.
+    private var buildCommit: String {
+        Bundle.main.infoDictionary?["MicaboCommit"] as? String ?? "dev"
+    }
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"

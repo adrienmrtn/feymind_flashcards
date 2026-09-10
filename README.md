@@ -1871,3 +1871,16 @@ la fiche se dégrade d'un aller-retour à l'autre, personne ne le voit avant des
 ```bash
 xcodebuild test -project Micabo.xcodeproj -scheme Micabo -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
+
+## Quel commit tourne sur ce téléphone
+
+**Réglages → À propos → Version.** La ligne porte `0.1.0 (12)` et, dessous, sept caractères :
+le commit d'où vient le binaire. Ils se comparent à `git log --oneline -1 origin/main` sans
+discuter.
+
+`dev` veut dire construction locale. Sur une construction Xcode Cloud, c'est
+`ci_scripts/ci_post_clone.sh` qui grave `CI_COMMIT` dans `Info.plist`.
+
+Cette ligne existe parce que la question s'est posée et que personne ne pouvait y répondre :
+`MARKETING_VERSION` ne bouge pas d'un lot à l'autre, et un numéro de build est un compteur qui
+ne nomme aucun code. Deux binaires très différents s'annonçaient tous les deux « 0.1.0 ».
