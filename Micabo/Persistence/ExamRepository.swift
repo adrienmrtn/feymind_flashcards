@@ -186,7 +186,18 @@ enum ExamRepository {
         let today = calendar.startOfDay(for: now)
         let day = calendar.startOfDay(for: date)
         let remaining = calendar.dateComponents([.day], from: today, to: day).day ?? 0
-        return OffDays.offsets(from: today, window: max(1, remaining), stamps: stamps, calendar: calendar)
+        let window = max(1, remaining)
+        // Les pauses posées à la main **et** l'habitude de la semaine : les deux se cumulent,
+        // comme sur le site, sinon l'iPhone posait du travail le dimanche que le site laissait
+        // libre.
+        let exceptions = OffDays.offsets(from: today, window: window, stamps: stamps, calendar: calendar)
+        let weekly = OffDays.weeklyOffsets(
+            from: today,
+            window: window,
+            weekly: OnboardingPreferences.weeklyMinutes,
+            calendar: calendar
+        )
+        return Array(Set(exceptions).union(weekly)).sorted()
     }
 
     /// Applique le plan : photographie des échéances, puis écriture des nouvelles.

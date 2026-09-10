@@ -328,6 +328,7 @@ enum OnboardingPreferences {
         static let institutionId = "micabo.onboarding.institutionId"
         static let institutionName = "micabo.onboarding.institutionName"
         static let dailyMinutes = "micabo.onboarding.dailyMinutes"
+        static let weeklyMinutes = "micabo.onboarding.weeklyMinutes"
         /// Écrite par la demande de note du système, qui n'existe plus. Elle reste listée
         /// pour que la remise à zéro l'efface sur les appareils qui ont fait l'ancien
         /// parcours : une clé oubliée dans les réglages est une clé qu'on retrouve un jour
@@ -345,7 +346,7 @@ enum OnboardingPreferences {
             completed, level, stage, tier, country, customCountryCode,
             goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
-            dailyMinutes, retiredRatingAsked, retiredNotificationsOptIn, completedAt,
+            dailyMinutes, weeklyMinutes, retiredRatingAsked, retiredNotificationsOptIn, completedAt,
             sheetLanguage
         ]
     }
@@ -566,6 +567,35 @@ enum OnboardingPreferences {
             } else {
                 defaults.removeObject(forKey: Key.institutionName)
             }
+        }
+    }
+
+    /// Les minutes de chaque jour de la semaine, lundi en premier, telles que le profil les
+    /// porte. Un zéro est un jour de repos. `nil` tant que la question n'a pas été posée : le
+    /// rythme quotidien s'applique alors partout, comme avant.
+    static var weeklyMinutes: [Int]? {
+        get {
+            guard let stored = defaults.array(forKey: Key.weeklyMinutes) as? [Int], stored.count == 7 else { return nil }
+            return stored
+        }
+        set {
+            if let newValue, newValue.count == 7 {
+                defaults.set(newValue, forKey: Key.weeklyMinutes)
+            } else {
+                defaults.removeObject(forKey: Key.weeklyMinutes)
+            }
+        }
+    }
+
+    /// Les jours de repos, **1 = lundi … 7 = dimanche**, comme `restDays` du site. Écrire
+    /// l'ensemble réécrit la semaine entière : un jour décoché reçoit le rythme quotidien.
+    static var restWeekdays: Set<Int> {
+        get {
+            Set((weeklyMinutes ?? []).enumerated().compactMap { $0.element == 0 ? $0.offset + 1 : nil })
+        }
+        set {
+            let daily = dailyMinutes
+            weeklyMinutes = (1...7).map { newValue.contains($0) ? 0 : daily }
         }
     }
 

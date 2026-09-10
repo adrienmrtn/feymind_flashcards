@@ -162,19 +162,17 @@ final class CloudSync {
         try await pushOffDays(context: context, userID: userID)
     }
 
-    /// **Les journées fermées : l'appareil fait foi.**
+    /// **Les journées fermées montent, et les décochées s'effacent.**
     ///
-    /// Cette table n'a pas d'`updated_at` et sa clé est `(user_id, day)` : il n'y a rien pour
-    /// arbitrer deux versions d'une même journée, et une journée n'a pas de « version » de
-    /// toute façon - elle est cochée ou elle ne l'est pas. On envoie donc l'état local et on
-    /// efface au serveur ce qui n'y est plus.
-    ///
-    /// C'est tenable parce qu'on ne règle pas ses disponibilités sur deux téléphones à la
-    /// fois. La descente, elle, ne sert qu'à **adopter** les journées du compte sur une
-    /// installation neuve : voir `pullOffDays`.
+    /// Cette table n'a pas d'`updated_at` et sa clé est `(user_id, day)` : une journée n'a
+    /// pas de version, elle est cochée ou elle ne l'est pas. La montée écrit donc tout ce qui
+    /// est coché ici, et efface au serveur ce qu'on a décoché ici - **et rien d'autre**. Une
+    /// journée absente en local n'est pas forcément une journée retirée : elle peut avoir été
+    /// posée sur le site après notre dernier passage. C'est la pierre tombale qui distingue
+    /// les deux, et la première version de cette fonction, qui effaçait tout ce qu'elle ne
+    /// connaissait pas, retirait les pauses posées sur le site à chaque synchro de l'iPhone.
     private func pushOffDays(context: ModelContext, userID: UUID) async throws {
         let local = Set(OffDays.all(in: context).map(\.stamp))
-
         if !local.isEmpty {
             try await database.upsert(
                 local.map { AvailabilityRecord(user_id: userID, day: $0) },
@@ -182,71 +180,23 @@ final class CloudSync {
             )
         }
 
-        let remote = try await database.rows(
-            AvailabilityRecord.self,
-            from: CloudTable.availability,
-            select: "user_id,day,minutes",
-            filters: [URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")],
-            limit: 500
-        )
-        for stale in remote.map(\.day) where !local.contains(stale) {
-            try? await database.remove(
-                from: CloudTable.availability,
-                matching: [
-                    URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())"),
-                    URLQueryItem(name: "day", value: "eq.\(stale)")
-                ]
-            )
-        }
-    }
-
-    /// Les prédicats sont posés **dans SQLite**, pas après un `fetch` complet. C'est ce qui
-    /// évite de matérialiser des milliers de modèles sur l'acteur principal juste pour les
-    /// jeter aussitôt.
-    private func fetchChangedFolders(in context: ModelContext, since: Date?) throws -> [CourseFolder] {
-        guard let since else { return try context.fetch(FetchDescriptor<CourseFolder>()) }
-        let descriptor = FetchDescriptor<CourseFolder>(predicate: #Predicate { $0.updatedAt > since })
-        return try context.fetch(descriptor)
-    }
-
-    private func fetchChangedCourses(in context: ModelContext, since: Date?) throws -> [Course] {
-        guard let since else { return try context.fetch(FetchDescriptor<Course>()) }
-        let descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.updatedAt > since })
-        return try context.fetch(descriptor)
-    }
-
-    private func fetchChangedCards(in context: ModelContext, since: Date?) throws -> [Flashcard] {
-        guard let since else { return try context.fetch(FetchDescriptor<Flashcard>()) }
-        let descriptor = FetchDescriptor<Flashcard>(predicate: #Predicate { $0.updatedAt > since })
-        return try context.fetch(descriptor)
-    }
-
-    private func fetchChangedLogs(in context: ModelContext, since: Date?) throws -> [ReviewLog] {
-        guard let since else { return try context.fetch(FetchDescriptor<ReviewLog>()) }
-        let descriptor = FetchDescriptor<ReviewLog>(predicate: #Predicate { $0.reviewedAt > since })
-        return try context.fetch(descriptor)
-    }
-
-    private func fetchChangedExams(in context: ModelContext, since: Date?) throws -> [Exam] {
-        guard let since else { return try context.fetch(FetchDescriptor<Exam>()) }
-        let descriptor = FetchDescriptor<Exam>(predicate: #Predicate { $0.updatedAt > since })
-        return try context.fetch(descriptor)
-    }
-
-    /// Pose `deleted_at` sur ce qu'on a effacé ici. L'échec n'arrête pas la synchro : on
-    /// réessaiera au prochain passage, et le tombstone local empêche déjà la résurrection.
-    private func flushTombstones() async {
-        let now = Date()
-        let patch = TombstonePatch(deleted_at: now, updated_at: now)
-        for (table, ids) in CloudTombstones.all() {
-            for id in ids {
-                try? await database.patch(
-                    patch,
-                    in: table,
-                    matching: [URLQueryItem(name: "id", value: "eq.\(id.uuidString.lowercased())")]
+        let removed = OffDayTombstones.all().subtracting(local)
+        var erased: Set<String> = []
+        for stamp in removed {
+            do {
+                try await database.remove(
+                    from: CloudTable.availability,
+                    matching: [
+                        URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())"),
+                        URLQueryItem(name: "day", value: "eq.\(stamp)")
+                    ]
                 )
+                erased.insert(stamp)
+            } catch {
+                // La pierre reste : on réessaiera au prochain passage.
             }
         }
+        OffDayTombstones.clear(erased)
     }
 
     // MARK: - Descente
@@ -458,21 +408,27 @@ final class CloudSync {
             context.insert(log)
         }
 
-        // Les journées fermées ne descendent qu'au **premier** passage. Ensuite, c'est
-        // l'appareil qui fait foi (voir `pushOffDays`) : redescendre à chaque synchro
-        // ressusciterait une journée qu'on vient de décocher, entre la descente et la montée.
-        if since == nil {
-            let remoteDays = try await database.rows(
-                AvailabilityRecord.self,
-                from: CloudTable.availability,
-                select: "user_id,day,minutes",
-                filters: [mine],
-                limit: 500
-            )
-            let known = OffDays.stamps(in: context)
-            for record in remoteDays where !known.contains(record.day) {
-                context.insert(OffDay(stamp: record.day))
-            }
+        // **Les journées fermées, à double sens.** Ce qui est au serveur et pas ici arrive,
+        // sauf si on vient de le décocher - la pierre tombale le sait. Ce qui est ici et pas
+        // au serveur repart, sauf si on vient de le cocher - sa date de création le dit : une
+        // journée posée après notre dernier passage n'a simplement pas encore été envoyée.
+        // Sans ce second cas, une pause retirée sur le site restait cochée ici pour toujours.
+        let remoteDays = try await database.rows(
+            AvailabilityRecord.self,
+            from: CloudTable.availability,
+            select: "user_id,day,minutes",
+            filters: [mine],
+            limit: 500
+        )
+        let remote = Set(remoteDays.filter { $0.minutes == 0 }.map(\.day))
+        let tombstones = OffDayTombstones.all()
+        let watermark = since ?? .distantPast
+        for row in OffDays.all(in: context) where !remote.contains(row.stamp) && row.createdAt <= watermark {
+            context.delete(row)
+        }
+        let known = OffDays.stamps(in: context)
+        for stamp in remote where !known.contains(stamp) && !tombstones.contains(stamp) {
+            context.insert(OffDay(stamp: stamp))
         }
 
         // Une écriture locale ratée doit faire échouer le passage. Avancer le repère après
