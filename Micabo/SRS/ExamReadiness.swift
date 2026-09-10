@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 /// **Où l'on en est devant une épreuve, et sur quoi l'on se plante.**
 ///
@@ -40,14 +41,39 @@ enum ExamReadiness {
         var isStubborn: Bool
     }
 
-    /// Le journal d'une carte sur la fenêtre. `nil` en dessous de deux passages, comme la
-    /// fonction SQL du site : une carte vue une fois n'a pas de difficulté, elle a une vue.
+    /// Le journal des quatre derniers mois, **en une requête**, rangé par carte.
+    ///
+    /// C'est la seule façon de lire le journal qui tienne à l'échelle : `card.logs` sur chaque
+    /// carte rouvre une requête SQLite par carte, et un compte de dix cours en a des milliers.
+    /// Tout ce qui calcule une maîtrise ou une fragilité sur plusieurs cartes passe par ici.
+    typealias LogsByCard = [UUID: [ReviewLog]]
+
+    static func recentLogsByCard(in context: ModelContext, now: Date = Date()) -> LogsByCard {
+        let since = now.addingTimeInterval(-Double(sinceDays) * 86_400)
+        let logs = (try? context.fetch(FetchDescriptor<ReviewLog>(
+            predicate: #Predicate { $0.reviewedAt >= since }
+        ))) ?? []
+        return group(logs)
+    }
+
+    /// Range un journal déjà lu par carte.
+    static func group(_ logs: [ReviewLog]) -> LogsByCard {
+        var byCard: LogsByCard = [:]
+        for log in logs {
+            guard let cardID = log.card?.id else { continue }
+            byCard[cardID, default: []].append(log)
+        }
+        return byCard
+    }
+
+    /// Le journal d'**une** carte, par sa relation. Réservé à une carte seule - une fiche, un
+    /// détail - jamais à une liste : voir `recentLogsByCard`.
     static func difficulty(of card: Flashcard, now: Date = Date()) -> Difficulty? {
         difficulty(from: card.logs ?? [], now: now)
     }
 
-    /// La même chose à partir d'un journal déjà en main : le recensement de la bibliothèque
-    /// lit tous les journaux en une requête plutôt que de faulter la relation carte par carte.
+    /// Ce que le journal dit d'une carte. `nil` en dessous de deux passages, comme la
+    /// fonction SQL du site : une carte vue une fois n'a pas de difficulté, elle a une vue.
     static func difficulty(from logs: [ReviewLog], now: Date = Date()) -> Difficulty? {
         let since = now.addingTimeInterval(-Double(sinceDays) * 86_400)
         let recent = logs.filter { $0.reviewedAt >= since }
@@ -93,19 +119,22 @@ enum ExamReadiness {
 
     /// La moyenne des solidités, sur cent. Pas la part de cartes acquises : une carte à
     /// mi-chemin compte pour la moitié, sinon la barre reste à zéro deux semaines puis saute.
-    static func masteryPercent(of cards: [Flashcard], now: Date = Date()) -> Int {
+    ///
+    /// `logs` vient de `recentLogsByCard` : une requête pour toutes les cartes, pas une par
+    /// carte.
+    static func masteryPercent(of cards: [Flashcard], logs: LogsByCard, now: Date = Date()) -> Int {
         let usable = cards.filter { !$0.isSuspended }
         guard !usable.isEmpty else { return 0 }
-        let sum = usable.reduce(0.0) { $0 + readiness(of: $1, difficulty: difficulty(of: $1, now: now)) }
+        let sum = usable.reduce(0.0) { $0 + readiness(of: $1, difficulty: difficulty(from: logs[$1.id] ?? [], now: now)) }
         return Int((sum / Double(usable.count) * 100).rounded())
     }
 
     /// Les cartes qui résistent, de la pire à la moins pire. On garde celles réellement
     /// passées plusieurs fois : une carte neuve n'est pas fragile, elle est neuve.
-    static func weakCards(in cards: [Flashcard], now: Date = Date(), limit: Int = 6) -> [WeakCard] {
+    static func weakCards(in cards: [Flashcard], logs: LogsByCard, now: Date = Date(), limit: Int = 6) -> [WeakCard] {
         var found: [WeakCard] = []
         for card in cards where !card.isSuspended {
-            guard let difficulty = difficulty(of: card, now: now), isWeak(difficulty) else { continue }
+            guard let difficulty = difficulty(from: logs[card.id] ?? [], now: now), isWeak(difficulty) else { continue }
             found.append(WeakCard(
                 id: card.id,
                 front: card.front,

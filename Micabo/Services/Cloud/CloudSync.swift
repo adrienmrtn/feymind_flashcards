@@ -316,7 +316,11 @@ final class CloudSync {
             loadAll: since == nil
         )
 
-        for remote in remoteCards {
+        // La descente écrit dans le contexte principal, donc sur le fil de l'interface. On
+        // rend la main tous les deux cents enregistrements : un premier passage sur un compte
+        // de plusieurs cours en applique des milliers, et sans ça l'écran gèle le temps du lot.
+        for (index, remote) in remoteCards.enumerated() {
+            if index % 200 == 199 { await Task.yield() }
             if CloudTombstones.contains(CloudTable.flashcards, id: remote.id) {
                 if let local = localCards[remote.id] { context.delete(local) }
                 continue
@@ -395,7 +399,8 @@ final class CloudSync {
             among: remoteLogs.map(\.id),
             loadAll: since == nil
         )
-        for remote in remoteLogs {
+        for (index, remote) in remoteLogs.enumerated() {
+            if index % 200 == 199 { await Task.yield() }
             guard !knownLogIDs.contains(remote.id),
                   let cardID = remote.card_id,
                   let card = cardsForLogs[cardID]
