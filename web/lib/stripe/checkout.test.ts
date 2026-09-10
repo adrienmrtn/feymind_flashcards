@@ -139,6 +139,19 @@ describe("checkoutSessionFields", () => {
     expect(fields["custom_text[submit][message]"]).toHaveLength(1200);
   });
 
+  it("décline Managed Payments, qui refuse la phrase et rendait 400 à chaque checkout", () => {
+    const fields = checkoutSessionFields({
+      price: "price_year",
+      userId: "user-1",
+      trialDays: 0,
+      successUrl: "https://micabo.app/ok",
+      cancelUrl: "https://micabo.app",
+      note: "Micabo Pro · 3 gün ücretsiz, sonra yılda 3.899,99 ₺.",
+    });
+    // À chaque requête, phrase ou non : le résultat ne doit pas dépendre d'un réglage Stripe.
+    expect(fields["managed_payments[enabled]"]).toBe("false");
+  });
+
   it("dit la langue et la devise plutôt que de les laisser deviner", () => {
     // Sans `currency`, Checkout la déduit de l'adresse IP : un Turc en
     // déplacement paierait des euros après avoir lu des livres.

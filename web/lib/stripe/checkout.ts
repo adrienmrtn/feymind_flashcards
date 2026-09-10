@@ -85,6 +85,11 @@ export function checkoutSessionFields(input: {
     client_reference_id: input.userId,
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
+    // Stripe active Managed Payments par défaut sur le compte : il devient alors le vendeur
+    // officiel, contrôle la page, et refuse `custom_text` — chaque checkout rendait 400.
+    // On décline explicitement plutôt que de dépendre du réglage du compte : c'est Micabo
+    // qui vend, RevenueCat qui suit l'abonnement, et notre phrase reste au-dessus du bouton.
+    "managed_payments[enabled]": "false",
   };
 
   // Une locale absente vaut mieux qu'un « en » écrit en dur : Stripe la déduit alors de
