@@ -517,46 +517,105 @@ struct ExamEditorSheet: View {
         .accessibilityAddTraits(picked ? .isSelected : [])
     }
 
+    /// **La note qu'on vise, choisie au doigt.**
+    ///
+    /// C'était un curseur système : gris, sans retour, et sans rapport avec le reste de
+    /// l'app. On vise une note une fois par épreuve, et ce geste-là décide de toute
+    /// l'intensité du plan - il mérite mieux qu'un rail de réglages.
+    ///
+    /// Les crans sont donc **des pastilles qu'on touche**, prises dans `scale.choices` : le
+    /// barème du pays, sans doublon, donc onze notes en France et neuf lettres ailleurs. La
+    /// pastille choisie grossit, la note s'écrit en grand au-dessus et **se transforme
+    /// chiffre par chiffre**, et chaque cran franchi rend un petit coup. On sait ce qu'on
+    /// vient de choisir sans lire.
     private var intensitySection: some View {
         let scale = DesiredGradeScale.for(OnboardingPreferences.schoolingCountry)
         let score = Int(targetScore.rounded())
 
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: 10) {
             // À la création, le titre d'écran dit déjà « Note souhaitée ».
             if isEditing {
                 MicaboSectionCaption(text: L10n.t("ios.desiredGrade", locale: .resolved()))
             }
 
             Text(scale.label(for: score))
-                .font(MicaboFont.hanken(28, weight: .bold))
+                .font(MicaboFont.number(40))
                 .foregroundStyle(MicaboColor.ink)
+                .tracking(MicaboTracking.tight)
+                .monospacedDigit()
+                .contentTransition(.numericText())
                 .frame(maxWidth: .infinity)
+                .animation(.snappy(duration: 0.22), value: score)
 
             Text(intensityDetail)
                 .font(MicaboFont.caption)
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .frame(maxWidth: .infinity)
+                .contentTransition(.opacity)
+                .animation(.easeOut(duration: 0.2), value: intensity)
 
-            HStack {
-                Text(scale.min)
-                    .font(MicaboFont.caption)
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                Slider(
-                    value: $targetScore,
-                    in: Double(TargetScore.min)...Double(TargetScore.max),
-                    step: 1
-                )
-                .tint(MicaboColor.ink)
-                .accessibilityLabel(L10n.t("ios.desiredGrade", locale: .resolved()))
-                .accessibilityValue(scale.label(for: score))
-                .onChange(of: targetScore) { _, next in
-                    intensity = TargetScore.intensity(from: Int(next.rounded()))
+            gradeDial(scale, score: score)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    /// Le cadran : une pastille par note, la choisie en accent.
+    ///
+    /// Il défile à l'horizontale et **se recentre tout seul** sur la note retenue : ouvrir la
+    /// fiche d'une épreuve déjà réglée sur 18 doit montrer 18, pas le début du barème.
+    private func gradeDial(_ scale: DesiredGradeScale, score: Int) -> some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal) {
+                HStack(spacing: 7) {
+                    ForEach(scale.choices) { tick in
+                        gradeTick(tick, isPicked: tick.score == score)
+                            .id(tick.score)
+                    }
                 }
-                Text(scale.max)
-                    .font(MicaboFont.caption)
-                    .foregroundStyle(MicaboColor.inkTertiary)
+                .padding(.horizontal, 2)
+                .padding(.vertical, 4)
+            }
+            .scrollIndicators(.hidden)
+            .onAppear {
+                proxy.scrollTo(score, anchor: .center)
+            }
+            .onChange(of: score) { _, next in
+                withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(next, anchor: .center) }
             }
         }
+        .accessibilityLabel(L10n.t("ios.desiredGrade", locale: .resolved()))
+        .accessibilityValue(scale.label(for: score))
+    }
+
+    private func gradeTick(_ tick: GradeTick, isPicked: Bool) -> some View {
+        Button {
+            guard Int(targetScore.rounded()) != tick.score else { return }
+            // Le coup part **avant** l'animation : un retour qui suit la peinture se sent en
+            // retard, et c'est ce décalage qui rend un réglage mou.
+            Haptics.selection()
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                targetScore = Double(tick.score)
+                intensity = TargetScore.intensity(from: tick.score)
+            }
+        } label: {
+            Text(tick.label)
+                .font(MicaboFont.hanken(isPicked ? 17 : 15, weight: isPicked ? .bold : .medium))
+                .monospacedDigit()
+                .foregroundStyle(isPicked ? MicaboColor.onInk : MicaboColor.ink)
+                .frame(minWidth: 46)
+                .frame(height: isPicked ? 46 : 40)
+                .background(
+                    isPicked ? MicaboColor.accent : MicaboColor.surfaceMuted,
+                    in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .strokeBorder(isPicked ? Color.clear : MicaboColor.hairline, lineWidth: 1)
+                }
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
+        .accessibilityLabel(tick.label)
+        .accessibilityAddTraits(isPicked ? .isSelected : [])
     }
 
     private var intensityDetail: String {

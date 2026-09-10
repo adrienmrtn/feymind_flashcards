@@ -310,15 +310,49 @@ struct CoursesListView: View {
         .scrollClipDisabled()
     }
 
+    /// **Ce qu'on affiche, et le piège qu'il y avait ici.**
+    ///
+    /// `libraryList` est le seul endroit qui rend les dossiers. Tester `filtered.isEmpty` -
+    /// c'est-à-dire les *cours* du niveau ouvert - le court-circuitait donc entièrement :
+    /// glisser le dernier cours de la racine dans un dossier vidait `filtered`, l'écran
+    /// basculait sur « Aucun résultat », et **le dossier disparaissait avec le cours**. Deux
+    /// objets évanouis pour un rangement réussi : c'est le bug qu'on a mis trois fois à
+    /// attribuer à une course de gestes, alors qu'il tenait dans cette condition.
+    ///
+    /// Un niveau est vide quand il n'a **ni cours ni dossier**. Et un dossier vide n'est pas
+    /// une recherche infructueuse : il a sa propre phrase, qui dit comment le remplir.
     @ViewBuilder
     private var content: some View {
-        if sheets.isEmpty {
+        if sheets.isEmpty && folders.isEmpty {
             emptyLibrary
-        } else if filtered.isEmpty {
-            noResults
+        } else if filtered.isEmpty && listedFolders.isEmpty {
+            emptyHere
         } else {
             libraryList
         }
+    }
+
+    /// Rien à ce niveau : une recherche sans résultat, un dossier vide, ou une bibliothèque
+    /// dont tout est rangé ailleurs.
+    @ViewBuilder
+    private var emptyHere: some View {
+        if !searchText.isEmpty || subjectFilter != nil {
+            noResults
+        } else if openFolder != nil {
+            emptyFolder
+        } else {
+            emptyLibrary
+        }
+    }
+
+    private var emptyFolder: some View {
+        MicaboEmptyState(
+            systemImage: "folder",
+            title: i18n?.t("app.folders.emptyTitle") ?? "Ce dossier est vide",
+            message: i18n?.t("app.folders.emptyBody")
+                ?? "Glisse un cours dessus, ou range-le depuis son menu « Déplacer vers »."
+        )
+        .padding(.horizontal, MicaboSpacing.screen)
     }
 
     private var emptyLibrary: some View {

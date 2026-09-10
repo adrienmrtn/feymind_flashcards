@@ -55,7 +55,10 @@ enum SheetTextViewFactory {
 /// fonte du passage, pas sur celle de la ligne : elle fait la même épaisseur partout dans la
 /// fiche, quelle que soit la façon dont le paragraphe est interligné, et elle descend juste
 /// assez sous la ligne de base pour passer derrière les jambages du p et du g.
-final class SheetMarkerLayoutManager: NSLayoutManager {
+/// `SheetEditorLayoutManager` en hérite pour y ajouter les puces : le surlignage est le même
+/// en lecture et en écriture, et deux copies de ce calcul finiraient par ne plus peindre la
+/// même bande.
+class SheetMarkerLayoutManager: NSLayoutManager {
     /// Ce qui dépasse du texte, au-dessus des capitales et sous la ligne de base.
     private static let padding = CGFloat(1.5)
     /// Un trait de feutre a les bouts émoussés, pas un angle droit.
