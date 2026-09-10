@@ -16,7 +16,12 @@ Rappel de ce qu'on vend :
 | Hebdomadaire | `com.micabo.app.pro.weekly` | 7,99 € / semaine | aucun | oui |
 | Annuel discount | `com.micabo.app.pro.yearly.discount` | 39,99 € / an — annoncé 3,30 € / mois | aucun | **non** sur le paywall ordinaire — il a son propre écran, l'offre cadeau (§13) |
 
-Identifiant de l'app : `com.micabo.app`.
+Identifiant de l'app : `com.micabo.ios`.
+
+**Les identifiants produits gardent le préfixe `com.micabo.app.pro.`**, et c'est voulu : un
+identifiant produit n'a pas à partager le préfixe du bundle, il est libre et unique sur tout le
+compte. Les trois abonnements existent sous ces noms-là dans App Store Connect ; les renommer
+pour « faire propre » casserait RevenueCat et les achats déjà passés.
 
 **Stripe encaisse sur le web, Apple encaisse sur iOS, RevenueCat détient le droit.** Chez
 RevenueCat ce n'est pas trois produits : c'est **six**. Trois offres × deux magasins, chacun
@@ -48,7 +53,7 @@ sable renvoie des erreurs sans rapport avec le code.
 1. **Contrat Paid Applications** — Business → Agreements, signer *Paid Apps*.
 2. **Coordonnées bancaires et fiscales** — Business → Bank / Tax, remplir la fiche fiscale du
    pays d'établissement. Le contrat reste « en attente » tant qu'elle manque.
-3. **La fiche de l'app existe** — une app `com.micabo.app` créée dans Apps, même sans build
+3. **La fiche de l'app existe** — une app `com.micabo.ios` créée dans Apps, même sans build
    envoyé.
 
 ## 2. App Store Connect — créer les trois abonnements
@@ -108,7 +113,7 @@ sur l'appareil.
 
 1. **Créer le projet** `Micabo`.
 2. **Ajouter l'app** : Project Settings → Apps → App Store.
-   - Bundle ID : `com.micabo.app`
+   - Bundle ID : `com.micabo.ios`
    - Envoyer le `.p8`, le Key ID et l'Issuer ID de l'étape 3.
    - Récupérer la **clé publique iOS** (`appl_…`). C'est celle-là qui va dans le code, pas la
      clé secrète.
