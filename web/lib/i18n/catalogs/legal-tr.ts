@@ -12,7 +12,7 @@ export const legalTr = {
     intro1:
       "Bu politika, [[site]] sitesini veya iPhone uygulamasını (tanımlayıcı {bundle}) kullandığınızda Micabo'nun işlediği verileri anlatır. İki istemci aynı hesabı ve aynı veritabanını paylaşır. Henüz hesabınız yokken siteye bakıyorsanız da geçerlidir.",
     intro2:
-      "Veri sorumlusu, Micabo'yu yayımlayan {editor}'dir. Soru, düzeltme veya silme için: [[contact]].",
+      "Veri sorumlusu {editor}'dur. Soru, düzeltme veya silme için: [[contact]].",
     whatTitle: "Micabo nedir",
     whatBody:
       "Micabo bir dersi (PDF, fotoğraf, belge, video) özet kâğıdına ve kartlara dönüştürür, sonra unutmadan önce geri getirir. Sınav modu, bir tarihe yaklaşırken tekrarları sıkılaştırır. Bir dersi arkadaşlarınızla paylaşabilir veya kendinize saklayabilirsiniz.",
@@ -104,7 +104,7 @@ export const legalTr = {
     linkLabel: "kullanım koşulları",
     intro1:
       "Bu koşullar Micabo'nun kullanımını düzenler — [[site]] sitesi ve iPhone uygulaması ({bundle}). Hesap açarak veya hizmeti kullanarak bunları kabul edersiniz. Katılmıyorsanız hesap açmayın.",
-    intro2: "Yayımcı {editor}'dir. İletişim: [[contact]].",
+    intro2: "Yayımcı {editor}'dur. İletişim: [[contact]].",
     serviceTitle: "Hizmet",
     serviceBody:
       "Micabo yüklediğiniz bir ders belgesini okur ve bir özet kâğıdı ile kartlar yazar. Bunları aralıklı tekrar ile geri getirir (iPhone'da ve sitede aynı SM-2 kuralı). Bir sınav tarihi koyabilirsiniz: tekrar planı o güne doğru sıkılaşır. Aynı hesap iki istemciyi de açar.",
