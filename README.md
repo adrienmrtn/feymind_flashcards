@@ -1881,6 +1881,12 @@ discuter.
 `dev` veut dire construction locale. Sur une construction Xcode Cloud, c'est
 `ci_scripts/ci_post_clone.sh` qui grave `CI_COMMIT` dans `Info.plist`.
 
+**Le numéro de build monte à la main**, dans `CURRENT_PROJECT_VERSION` (les deux
+configurations de la cible Micabo). App Store Connect **refuse** un envoi dont le numéro n'est
+pas strictement supérieur au dernier reçu : tant qu'il reste figé, la construction réussit et
+le binaire n'arrive jamais dans TestFlight. C'est un échec silencieux, en aval du build, et
+c'est pour ça qu'il vaut la peine d'être écrit ici.
+
 Cette ligne existe parce que la question s'est posée et que personne ne pouvait y répondre :
 `MARKETING_VERSION` ne bouge pas d'un lot à l'autre, et un numéro de build est un compteur qui
 ne nomme aucun code. Deux binaires très différents s'annonçaient tous les deux « 0.1.0 ».
