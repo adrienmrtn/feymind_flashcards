@@ -12,7 +12,7 @@ export const legalDe = {
     intro1:
       "Diese Richtlinie beschreibt die Daten, die Micabo verarbeitet, wenn Sie die Website [[site]] oder die iPhone-App (Kennung {bundle}) nutzen. Beide Clients teilen dasselbe Konto und dieselbe Datenbank. Sie gilt auch, wenn Sie noch kein Konto haben und die Website nur ansehen.",
     intro2:
-      "Verantwortlich für die Verarbeitung ist {editor}, der Herausgeber von Micabo. Für Fragen, Berichtigungen oder Löschungen: [[contact]].",
+      "Verantwortlich für die Verarbeitung ist {editor}. Für Fragen, Berichtigungen oder Löschungen: [[contact]].",
     whatTitle: "Was Micabo ist",
     whatBody:
       "Micabo verwandelt einen Kurs (PDF, Foto, Dokument, Video) in ein Merkblatt und in Karteikarten und lässt sie wiederkehren, bevor Sie sie vergessen. Ein Prüfungsmodus verdichtet die Wiederholungen vor einem Termin. Sie können einen Kurs mit Freunden teilen oder für sich behalten.",

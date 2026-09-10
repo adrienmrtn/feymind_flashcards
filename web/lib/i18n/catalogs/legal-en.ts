@@ -14,7 +14,7 @@ export const legalEn = {
     intro1:
       "This policy describes the data Micabo processes when you use the site [[site]] or the iPhone app (identifier {bundle}). Both clients share the same account and the same database. It also applies if you do not yet have an account and are only browsing the site.",
     intro2:
-      "The controller is {editor}, who publishes Micabo. For any question, correction or deletion: [[contact]].",
+      "The controller is {editor}. For any question, correction or deletion: [[contact]].",
     whatTitle: "What Micabo is",
     whatBody:
       "Micabo turns a course (PDF, photo, document, video) into a sheet and flashcards, then brings them back before you forget them. An exam mode tightens revision as a date approaches. You can share a course with friends, or keep it to yourself.",

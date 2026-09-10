@@ -14,7 +14,7 @@ export const legalFr = {
     intro1:
       "Cette politique décrit les données que Micabo traite lorsque vous utilisez le site [[site]] ou l'application iPhone (identifiant {bundle}). Les deux clients partagent le même compte et la même base. Elle s'applique aussi si vous n'avez pas encore de compte et que vous consultez le site.",
     intro2:
-      "Le responsable du traitement est {editor}, qui édite Micabo. Pour toute question, correction ou suppression : [[contact]].",
+      "Le responsable du traitement est {editor}. Pour toute question, correction ou suppression : [[contact]].",
     whatTitle: "Ce que Micabo est",
     whatBody:
       "Micabo transforme un cours (PDF, photo, document, vidéo) en fiche et en flashcards, puis les fait revenir avant que vous les oubliiez. Un mode examen resserre les révisions à l'approche d'une date. Vous pouvez partager un cours avec des amis, ou le garder pour vous.",
