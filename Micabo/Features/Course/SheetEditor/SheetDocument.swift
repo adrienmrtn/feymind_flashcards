@@ -134,23 +134,23 @@ enum SheetDocument {
         var location = 0
         while location < string.length {
             let paragraphRange = string.paragraphRange(for: NSRange(location: location, length: 0))
-            let contentRange = contentRange(of: paragraphRange, in: string)
-            let kind = kind(at: paragraphRange, in: text)
+            let content = Self.contentRange(of: paragraphRange, in: string)
+            let paragraphKind = Self.kind(at: paragraphRange, in: text)
 
-            if kind == .formula, let attachment = blockAttachment(in: contentRange, of: text) {
+            if paragraphKind == .formula, let attachment = blockAttachment(in: content, of: text) {
                 closeList()
                 if let latex = attachment.latex.nilIfBlank {
                     drafted.append(.formula(latex: latex, caption: attachment.caption?.nilIfBlank))
                 }
             } else {
-                let markup = inlineMarkup(in: contentRange, of: text)
+                let markup = inlineMarkup(in: content, of: text)
                 if !markup.isEmpty {
-                    switch kind {
+                    switch paragraphKind {
                     case .heading1: closeList(); drafted.append(.heading(level: 1, text: markup))
                     case .heading2: closeList(); drafted.append(.heading(level: 2, text: markup))
                     case .paragraph, .formula: closeList(); drafted.append(.paragraph(text: markup))
                     case .bullet, .number:
-                        let ordered = kind == .number
+                        let ordered = paragraphKind == .number
                         if pendingList?.ordered != ordered { closeList(); pendingList = (ordered, []) }
                         pendingList?.items.append(markup)
                     }

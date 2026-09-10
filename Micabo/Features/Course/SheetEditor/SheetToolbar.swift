@@ -117,12 +117,12 @@ struct SheetToolbar: View {
         .accessibilityLabel(t("app.sheet.style"))
     }
 
-    private func tool<Label: View>(
+    private func tool<Content: View>(
         _ title: String,
         active: Bool,
         enabled: Bool = true,
         action: @escaping () -> Void,
-        @ViewBuilder label: () -> Label
+        @ViewBuilder label: () -> Content
     ) -> some View {
         Button {
             Haptics.selection()
