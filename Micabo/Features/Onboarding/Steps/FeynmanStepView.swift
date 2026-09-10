@@ -17,7 +17,6 @@ struct FeynmanStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n?.t("ios.feynmanTitle") ?? "Explique-le à voix haute.\nTu sauras si tu sais.",
-            subtitle: i18n?.t("ios.feynmanLead"),
             titleSize: 28
         ) {
             FeynmanDemo()
@@ -36,6 +35,7 @@ private struct FeynmanDemo: View {
     private let words = ["L'eau", "s'évapore", "des", "océans", "parce", "que…"]
 
     @State private var spoken = 0
+    @State private var isSpeaking = false
     @State private var hesitates = false
     @State private var showsGap = false
     @State private var didStart = false
@@ -55,19 +55,24 @@ private struct FeynmanDemo: View {
         .padding(MicaboSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
-        .onAppear(perform: run)
+        .task { await run() }
     }
 
     private var question: some View {
-        HStack(spacing: 8) {
+        HStack(alignment: .top, spacing: 8) {
             Image(systemName: "mic.fill")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
+                .padding(.top, 2)
 
             Text(t("ios.feynmanQuestion"))
                 .font(MicaboFont.hanken(13.5, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 6)
+
+            VoiceBars(isSpeaking: isSpeaking)
         }
     }
 
@@ -79,8 +84,9 @@ private struct FeynmanDemo: View {
                     .font(MicaboFont.hanken(15, weight: .regular))
                     .foregroundStyle(MicaboColor.inkReading)
                     .opacity(index < spoken ? 1 : 0)
-                    .offset(y: index < spoken ? 0 : 4)
-                    .animation(.easeOut(duration: 0.22), value: spoken)
+                    .offset(y: index < spoken ? 0 : 5)
+                    .blur(radius: index < spoken ? 0 : 1.5)
+                    .animation(.spring(response: 0.34, dampingFraction: 0.72), value: spoken)
             }
 
             // Le curseur qui clignote pendant l'hésitation : c'est le silence, rendu visible.
@@ -117,25 +123,64 @@ private struct FeynmanDemo: View {
         .animation(.timingCurve(0.2, 0.8, 0.2, 1, duration: 0.45), value: showsGap)
     }
 
-    private func run() {
+    /// **On ne parle pas au métronome.**
+    ///
+    /// Les mots tombaient tous les 260 millisecondes, ce qui s'entend à l'œil : c'est une
+    /// machine qui débite, pas quelqu'un qui explique. Un mot long tient plus longtemps, et la
+    /// phrase **ralentit** sur les deux derniers - juste avant l'endroit où elle va casser.
+    /// C'est ce ralentissement qui rend l'hésitation crédible quand elle arrive.
+    private func run() async {
         guard !didStart else { return }
         didStart = true
 
+        try? await Task.sleep(for: .milliseconds(380))
+        isSpeaking = true
+
         for index in words.indices {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4 + Double(index) * 0.26) {
-                spoken = index + 1
-            }
+            spoken = index + 1
+            let held = 120 + words[index].count * 28
+            let braking = index >= words.count - 2 ? 170 : 0
+            try? await Task.sleep(for: .milliseconds(held + braking))
         }
 
-        let end = 0.4 + Double(words.count) * 0.26
-        DispatchQueue.main.asyncAfter(deadline: .now() + end) {
-            hesitates = true
-            Haptics.warning()
+        // Le silence : la voix s'arrête, les barres retombent à plat, le curseur clignote.
+        isSpeaking = false
+        hesitates = true
+        Haptics.warning()
+
+        try? await Task.sleep(for: .milliseconds(1_250))
+        hesitates = false
+        showsGap = true
+        Haptics.success()
+    }
+}
+
+/// **Le niveau du micro**, six barres qui vivent tant qu'on parle.
+///
+/// Elles retombent à plat dans l'hésitation, et c'est tout leur intérêt : un silence ne se lit
+/// pas sur du texte qui a simplement cessé d'avancer. Là, on le voit.
+private struct VoiceBars: View {
+    let isSpeaking: Bool
+
+    @State private var lively = false
+
+    private let heights: [CGFloat] = [7, 14, 19, 10, 16, 8]
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 3) {
+            ForEach(heights.indices, id: \.self) { index in
+                Capsule(style: .continuous)
+                    .fill(isSpeaking ? MicaboColor.accent : MicaboColor.strokeStrong)
+                    .frame(width: 3, height: isSpeaking && lively ? heights[index] : 3)
+                    .animation(
+                        .easeInOut(duration: 0.3 + Double(index) * 0.07).repeatForever(autoreverses: true),
+                        value: lively
+                    )
+            }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + end + 1.1) {
-            hesitates = false
-            showsGap = true
-            Haptics.success()
-        }
+        .frame(height: 20)
+        .animation(.easeOut(duration: 0.3), value: isSpeaking)
+        .onAppear { lively = true }
+        .accessibilityHidden(true)
     }
 }

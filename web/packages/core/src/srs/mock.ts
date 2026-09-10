@@ -335,12 +335,51 @@ function hash(value: string): number {
 // MARK: - Ce que le score change
 
 /**
- * La préparation d'une épreuve : **le blanc l'emporte sur la formule.**
+ * Ce qu'un blanc pèse sur la lecture de la préparation, **au mieux**.
+ *
+ * Il pesait quatre cinquièmes : un blanc raté à J-20 effondrait la préparation, un blanc
+ * réussi la faisait bondir, et le chiffre changeait de sens du jour au lendemain sans qu'une
+ * seule carte ait bougé. C'était un contresens sur ce qu'est un examen blanc.
+ *
+ * **Un blanc est un entraînement, pas un examen.** On en passe pour découvrir ce qu'on ne sait
+ * pas, donc on le passe volontairement en terrain hostile, et sur vingt questions tirées d'un
+ * programme entier. Le laisser dicter la note de maîtrise décourage exactement le geste qu'on
+ * veut encourager : personne ne s'entraîne sur une mesure qui le punit.
+ *
+ * Un cinquième, donc. Assez pour qu'un blanc qui déçoit se voie et fasse réviser autrement ;
+ * pas assez pour effacer ce que des semaines de cartes ont établi. Le détail du blanc, lui,
+ * reste entier à côté - son score, son débriefing, question par question.
+ */
+export const MOCK_READING_WEIGHT = 0.2;
+
+/**
+ * Une maîtrise, poussée par le dernier blanc. C'est **la** lecture affichée partout : jauge de
+ * l'accueil, fiche d'épreuve, iPhone comme site.
+ *
+ * Le poids décroît avec l'âge du blanc - à trois semaines il ne reste presque rien - parce
+ * qu'un score d'il y a trois semaines dit moins de la préparation d'aujourd'hui que les cartes
+ * révisées depuis.
+ */
+export function blendMock(
+  masteryPercent: number,
+  score: number | null | undefined,
+  finishedAt?: Date | null,
+  now: Date = new Date(),
+): number {
+  if (score == null) return Math.round(masteryPercent);
+  const age = finishedAt
+    ? Math.max(0, dayDifference(startOfDay(finishedAt), startOfDay(now)))
+    : 0;
+  const weight = MOCK_READING_WEIGHT * Math.exp(-age / 14);
+  return Math.round(masteryPercent * (1 - weight) + score * weight);
+}
+
+/**
+ * La préparation d'une épreuve : **la maîtrise, poussée par le blanc.**
  *
  * Sans blanc, on ne peut que projeter - la maîtrise des cartes plus ce que le plan promet
- * d'ajouter. Dès qu'un blanc existe, on tient une mesure, et une mesure ne se discute pas
- * contre une estimation. Le mélange penche vers le blanc à mesure qu'il est récent : un score
- * d'il y a trois semaines a moins de valeur qu'une maîtrise d'aujourd'hui.
+ * d'ajouter. Un blanc ne remplace pas cette lecture, il l'infléchit : voir
+ * `MOCK_READING_WEIGHT` pour pourquoi un cinquième et pas quatre.
  */
 export function examReadiness(input: {
   masteryPercent: number;
@@ -360,12 +399,9 @@ export function examReadiness(input: {
   }
 
   const score = mockScore(latest);
-  const age = Math.max(0, dayDifference(startOfDay(latest.finishedAt), startOfDay(now)));
-  // Un blanc du jour pèse quatre cinquièmes ; à trois semaines il ne pèse presque plus.
-  const weight = 0.8 * Math.exp(-age / 14);
 
   return {
-    percent: Math.round(score * weight + input.projectedPercent * (1 - weight)),
+    percent: blendMock(input.projectedPercent, score, latest.finishedAt, now),
     measured: true,
     mockScore: score,
   };

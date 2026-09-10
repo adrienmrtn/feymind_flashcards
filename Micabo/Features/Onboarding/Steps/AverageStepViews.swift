@@ -131,7 +131,6 @@ struct TogetherStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n?.t("ios.togetherTitle") ?? "On va t'aider\nà y arriver.",
-            subtitle: i18n?.t("ios.togetherLead"),
             titleSize: 28
         ) {
             GradeJourney(
@@ -229,36 +228,65 @@ private struct GradeSlider: View {
 
 // MARK: - Le chemin
 
-/// D'où l'on part, où l'on va, et le trait entre les deux.
+/// **D'où l'on part, où l'on va, et le chemin parcouru sous les yeux.**
+///
+/// La première version remplissait un trait de gauche à droite et s'arrêtait là : une barre de
+/// chargement, sur un écran qui ne charge rien. Ici quelque chose **voyage** - un point part du
+/// chiffre d'aujourd'hui, remonte le trait, et l'objectif s'allume à son arrivée. C'est la
+/// seule page du parcours qui promet quelque chose ; elle doit se regarder jusqu'au bout.
 private struct GradeJourney: View {
     let from: String
     let to: String
 
     @State private var drawn = false
+    @State private var arrived = false
 
     var body: some View {
         HStack(spacing: MicaboSpacing.sm) {
             marker(value: from, tint: MicaboColor.inkTertiary, background: MicaboColor.surfaceMuted)
 
-            // Le trait se remplit de gauche à droite : c'est le chemin, pas une flèche posée.
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(MicaboColor.surfaceMuted)
-                    .frame(height: 5)
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(MicaboColor.surfaceMuted)
+                        .frame(height: 5)
 
-                Capsule()
-                    .fill(MicaboColor.accent)
-                    .frame(height: 5)
-                    .scaleEffect(x: drawn ? 1 : 0, anchor: .leading)
+                    Capsule()
+                        .fill(MicaboColor.accent)
+                        .frame(width: drawn ? proxy.size.width : 0, height: 5)
+
+                    // Le point qui remonte le trait. Il est en tête du remplissage, pas
+                    // dessus : c'est lui qui tire, le trait est sa trace.
+                    Circle()
+                        .fill(MicaboColor.accent)
+                        .frame(width: 11, height: 11)
+                        .overlay(
+                            Circle()
+                                .stroke(MicaboColor.accent.opacity(0.28), lineWidth: arrived ? 0 : 7)
+                                .scaleEffect(arrived ? 1 : 1.4)
+                        )
+                        .offset(x: (drawn ? proxy.size.width : 0) - 5.5)
+                        .opacity(arrived ? 0 : 1)
+                }
+                .frame(maxHeight: .infinity, alignment: .center)
             }
+            .frame(height: 16)
 
             marker(value: to, tint: MicaboColor.onInk, background: MicaboColor.accent)
+                // L'objectif s'allume quand le point arrive : un petit sursaut, et c'est fini.
+                .scaleEffect(arrived ? 1 : 0.88)
+                .opacity(arrived ? 1 : 0.45)
         }
         .padding(MicaboSpacing.lg)
         .frame(maxWidth: .infinity)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
-        .onAppear {
-            withAnimation(.timingCurve(0.2, 0.8, 0.2, 1, duration: 0.9).delay(0.25)) { drawn = true }
+        .animation(.timingCurve(0.25, 0.9, 0.25, 1, duration: 1.05).delay(0.3), value: drawn)
+        .animation(.spring(response: 0.42, dampingFraction: 0.6), value: arrived)
+        .task {
+            drawn = true
+            try? await Task.sleep(for: .milliseconds(1_280))
+            arrived = true
+            Haptics.success()
         }
     }
 

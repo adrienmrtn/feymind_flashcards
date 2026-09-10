@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { blendMock } from "@micabo/core";
+
 import { MockTrend, type MockPoint } from "@/components/app/charts/MockTrend";
 import { ReadinessBar } from "@/components/app/charts/ReadinessBar";
 import { useI18n } from "@/lib/i18n/client";
@@ -49,7 +51,7 @@ export function ExamProgress({
 
       <div className="mt-4">
         <ReadinessBar
-          now={measured && mockScore != null ? mockScore : masteryPercent}
+          now={blendMock(masteryPercent, measured ? mockScore : null)}
           target={targetScore}
           measured={measured}
         />

@@ -27,6 +27,10 @@ final class Dictation {
 
     private(set) var availability: Availability = .unknown
     private(set) var isListening = false
+    /// **Quelle question écoute.** Une copie porte plusieurs questions orales et une seule
+    /// dictée : sans cette identité, toutes les questions affichaient « Arrêter » dès qu'on
+    /// dictait sur l'une d'elles, et il n'y avait plus moyen de savoir où partait la voix.
+    private(set) var listeningTo: String?
 
     private let recognizer: SFSpeechRecognizer?
     private let engine = AVAudioEngine()
@@ -76,16 +80,27 @@ final class Dictation {
         }
     }
 
-    /// Démarre ou arrête la dictée. `current` est le texte déjà écrit : la dictée s'y ajoute.
-    func toggle(current: String, onText: @escaping (String) -> Void) {
-        if isListening {
-            stop()
-        } else {
-            start(current: current, onText: onText)
-        }
+    /// Vrai quand c'est **cette** question qui écoute.
+    func isListening(to id: String) -> Bool {
+        isListening && listeningTo == id
     }
 
-    private func start(current: String, onText: @escaping (String) -> Void) {
+    /// Démarre ou arrête la dictée sur une question. `current` est le texte déjà écrit : la
+    /// dictée s'y ajoute.
+    ///
+    /// Dicter sur une autre question **déplace** le micro : on ne peut pas parler à deux
+    /// endroits, et laisser la première écouter en fond enverrait la suite de la phrase dans
+    /// la mauvaise réponse.
+    func toggle(id: String, current: String, onText: @escaping (String) -> Void) {
+        if isListening, listeningTo == id {
+            stop()
+            return
+        }
+        if isListening { stop() }
+        start(id: id, current: current, onText: onText)
+    }
+
+    private func start(id: String, current: String, onText: @escaping (String) -> Void) {
         guard let recognizer, recognizer.isAvailable else {
             availability = .unavailable
             return
@@ -123,6 +138,7 @@ final class Dictation {
         }
 
         isListening = true
+        listeningTo = id
         task = recognizer.recognitionTask(with: request) { [weak self] result, error in
             Task { @MainActor in
                 guard let self else { return }
@@ -148,6 +164,7 @@ final class Dictation {
         request = nil
         task = nil
         isListening = false
+        listeningTo = nil
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }

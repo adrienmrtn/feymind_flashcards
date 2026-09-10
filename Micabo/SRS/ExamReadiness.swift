@@ -152,6 +152,25 @@ enum ExamReadiness {
         return Array(found.prefix(limit))
     }
 
+    // MARK: - Ce qu'un blanc pèse
+
+    /// Le poids maximal d'un examen blanc sur la lecture de la préparation.
+    ///
+    /// Le même cinquième que `MOCK_READING_WEIGHT` côté noyau, et pour la même raison : **un
+    /// blanc est un entraînement, pas un examen.** On le passe pour découvrir ce qu'on ne sait
+    /// pas, sur vingt questions tirées d'un programme entier ; le laisser dicter la maîtrise
+    /// découragerait exactement le geste qu'on veut encourager.
+    static let mockReadingWeight = 0.2
+
+    /// Une maîtrise, poussée par le dernier blanc. Le poids décroît avec l'âge du blanc : à
+    /// trois semaines, les cartes révisées depuis en disent plus que ce score-là.
+    static func blend(mastery: Int, score: Int?, finishedAt: Date?, now: Date = Date()) -> Int {
+        guard let score else { return mastery }
+        let days = max(0, now.timeIntervalSince(finishedAt ?? now) / 86_400)
+        let weight = mockReadingWeight * exp(-days / 14)
+        return Int((Double(mastery) * (1 - weight) + Double(score) * weight).rounded())
+    }
+
     private static func clamp01(_ value: Double) -> Double {
         guard value.isFinite else { return 0 }
         return max(0, min(1, value))

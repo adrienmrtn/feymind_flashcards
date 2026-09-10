@@ -7,7 +7,9 @@ import {
   addDays,
   cardsIn,
   drawMock,
+  blendMock,
   examReadiness,
+  MOCK_READING_WEIGHT,
   intensityFor,
   isMockBlock,
   isReviewBlock,
@@ -270,7 +272,7 @@ describe("ce que le score change", () => {
     expect(readiness.mockScore).toBeNull();
   });
 
-  it("fait pencher la préparation vers un blanc récent qui déçoit", () => {
+  it("infléchit la préparation sans la remplacer quand un blanc déçoit", () => {
     const readiness = examReadiness({
       masteryPercent: 80,
       projectedPercent: 88,
@@ -280,8 +282,17 @@ describe("ce que le score change", () => {
     });
     expect(readiness.measured).toBe(true);
     expect(readiness.mockScore).toBe(50);
-    // La mesure l'emporte largement sur la formule.
-    expect(readiness.percent).toBeLessThan(70);
+    // Un blanc est un entraînement : il pousse la lecture vers le bas, il ne l'effondre pas.
+    expect(readiness.percent).toBeLessThan(88);
+    expect(readiness.percent).toBeGreaterThan(78);
+    // Au plus un cinquième de l'écart, jamais davantage.
+    expect(88 - readiness.percent).toBeLessThanOrEqual(Math.ceil((88 - 50) * MOCK_READING_WEIGHT));
+  });
+
+  it("garde le score du blanc entier à côté de la lecture", () => {
+    // Le détail ne se mélange pas : c'est la lecture qui s'infléchit, pas la copie.
+    expect(blendMock(80, 50, today, now)).toBeGreaterThan(50);
+    expect(blendMock(80, null)).toBe(80);
   });
 
   it("laisse un vieux blanc s'effacer devant la projection", () => {

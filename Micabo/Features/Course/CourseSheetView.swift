@@ -204,7 +204,10 @@ struct CourseSheetView: View {
                 tile: MicaboTile.course(course, size: 52),
                 back: MicaboHeaderBack.back { dismiss() }
             ) {
-                courseMenu
+                HStack(spacing: MicaboSpacing.xs) {
+                    if sheet != nil { editSheetButton }
+                    courseMenu
+                }
             }
 
             if dueCount > 0 {
@@ -232,6 +235,27 @@ struct CourseSheetView: View {
         return parts.isEmpty ? MicaboCopy.cards(cards.count) : parts.joined(separator: " · ")
     }
 
+    /// **Corriger sa fiche se voit.**
+    ///
+    /// Le site laisse écrire dans la page. Le téléphone ne peut pas - un paragraphe y est
+    /// composé dans un `UITextView` en lecture, pour la sélection et « Expliquer » - mais ce
+    /// n'est pas une raison pour cacher le geste au troisième niveau d'un menu, où personne
+    /// ne l'a trouvé. Un crayon à côté du titre, comme sur la fiche d'épreuve.
+    private var editSheetButton: some View {
+        Button {
+            Haptics.selection()
+            withAnimation(.easeOut(duration: 0.2)) { isEditingSheet.toggle() }
+        } label: {
+            MicaboCircleIcon(systemImage: isEditingSheet ? "checkmark" : "pencil", size: 38)
+        }
+        .buttonStyle(MicaboPressableButtonStyle())
+        .accessibilityLabel(
+            isEditingSheet
+                ? (i18n?.t("ios.sheetEdit.done") ?? "Terminer")
+                : (i18n?.t("ios.sheetEdit.start") ?? "Corriger la fiche")
+        )
+    }
+
     private var courseMenu: some View {
         Menu {
             Button { showCardOptions = true } label: {
@@ -249,20 +273,6 @@ struct CourseSheetView: View {
                 Label(sheet == nil ? (i18n?.t("ios.makeSheet") ?? "Ficher ce cours") : (i18n?.t("ios.rewriteSheet") ?? "Refaire la fiche"), systemImage: "text.book.closed")
             }
             .disabled(course.rawText.nilIfBlank == nil || !course.source.expectsSheet)
-
-            // **Corriger la fiche**, comme sur le site. Le téléphone le fait bloc par bloc :
-            // on entre en mode correction, chaque paragraphe se touche et s'ouvre.
-            if sheet != nil {
-                Button {
-                    Haptics.selection()
-                    withAnimation(.easeOut(duration: 0.2)) { isEditingSheet.toggle() }
-                } label: {
-                    Label(
-                        isEditingSheet ? (i18n?.t("ios.sheetEdit.done") ?? "Terminer la correction") : (i18n?.t("ios.sheetEdit.start") ?? "Corriger la fiche"),
-                        systemImage: isEditingSheet ? "checkmark" : "pencil"
-                    )
-                }
-            }
 
             // Le partage se règle là où le cours se lit, et pas dans les réglages : c'est en
             // ayant sa fiche sous les yeux qu'on sait si on veut la laisser voir.

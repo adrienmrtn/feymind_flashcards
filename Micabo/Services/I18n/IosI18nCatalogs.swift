@@ -11,7 +11,7 @@ enum IosI18nCatalogs {
         // La fiche qu'on corrige, bloc par bloc.
         "ios.sheetEdit.start": "Corriger la fiche",
         "ios.sheetEdit.done": "Terminer",
-        "ios.sheetEdit.banner": "Touche un bloc pour le corriger. Ce que tu changes suit le cours sur le site.",
+        "ios.sheetEdit.banner": "Touche un bloc pour le corriger.",
         "ios.sheetEdit.tapHint": "Touche pour corriger ce bloc",
         "ios.sheetEdit.title": "Corriger",
         "ios.sheetEdit.addTitle": "Ajouter",
@@ -581,7 +581,7 @@ enum IosI18nCatalogs {
         // La fiche qu'on corrige, bloc par bloc.
         "ios.sheetEdit.start": "Lernzettel bearbeiten",
         "ios.sheetEdit.done": "Fertig",
-        "ios.sheetEdit.banner": "Tippe auf einen Block, um ihn zu bearbeiten. Deine Änderungen folgen dem Kurs auf der Website.",
+        "ios.sheetEdit.banner": "Tippe auf einen Block, um ihn zu bearbeiten.",
         "ios.sheetEdit.tapHint": "Tippen, um diesen Block zu bearbeiten",
         "ios.sheetEdit.title": "Bearbeiten",
         "ios.sheetEdit.addTitle": "Hinzufügen",
@@ -1151,7 +1151,7 @@ enum IosI18nCatalogs {
         // La fiche qu'on corrige, bloc par bloc.
         "ios.sheetEdit.start": "Corregir la ficha",
         "ios.sheetEdit.done": "Listo",
-        "ios.sheetEdit.banner": "Toca un bloque para corregirlo. Lo que cambies sigue al curso en la web.",
+        "ios.sheetEdit.banner": "Toca un bloque para corregirlo.",
         "ios.sheetEdit.tapHint": "Toca para corregir este bloque",
         "ios.sheetEdit.title": "Corregir",
         "ios.sheetEdit.addTitle": "Añadir",
@@ -1721,7 +1721,7 @@ enum IosI18nCatalogs {
         // La fiche qu'on corrige, bloc par bloc.
         "ios.sheetEdit.start": "Özeti düzenle",
         "ios.sheetEdit.done": "Bitti",
-        "ios.sheetEdit.banner": "Düzenlemek için bir bloğa dokun. Değişikliklerin web sitesindeki derse de yansır.",
+        "ios.sheetEdit.banner": "Düzenlemek için bir bloğa dokun.",
         "ios.sheetEdit.tapHint": "Bu bloğu düzenlemek için dokun",
         "ios.sheetEdit.title": "Düzenle",
         "ios.sheetEdit.addTitle": "Ekle",
@@ -2297,7 +2297,7 @@ enum IosI18nCatalogs {
         // La fiche qu'on corrige, bloc par bloc.
         "ios.sheetEdit.start": "Edit the sheet",
         "ios.sheetEdit.done": "Done",
-        "ios.sheetEdit.banner": "Tap a block to edit it. Your changes follow the course on the website.",
+        "ios.sheetEdit.banner": "Tap a block to edit it.",
         "ios.sheetEdit.tapHint": "Tap to edit this block",
         "ios.sheetEdit.title": "Edit",
         "ios.sheetEdit.addTitle": "Add",

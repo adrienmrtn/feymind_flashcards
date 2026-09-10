@@ -68,13 +68,8 @@ struct MockPaperView: View {
     private var paper: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                Text(session.with_audio
-                    ? t("app.mock.paperLeadAudio", ["count": "\(questions.count)"])
-                    : t("app.mock.paperLead", ["count": "\(questions.count)"]))
-                    .font(MicaboFont.caption)
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
+                // Pas de consigne en tête : l'en-tête collé compte déjà les réponses et le
+                // temps, et les questions sont là. Une copie ne s'ouvre pas sur un mode d'emploi.
                 ForEach(Array(questions.enumerated()), id: \.element.id) { index, question in
                     questionCard(question, position: index + 1)
                 }
@@ -84,7 +79,13 @@ struct MockPaperView: View {
             .padding(.horizontal, MicaboSpacing.screen)
             .padding(.top, MicaboSpacing.md)
             .padding(.bottom, MicaboSpacing.xxl)
+            // **La copie ne part pas de travers.** Un `ScrollView` vertical défile quand même
+            // en largeur dès qu'un enfant dépasse la largeur proposée - une longue réponse
+            // dictée, un intitulé sans espace - et une copie qu'on pousse de côté pendant
+            // l'épreuve fait perdre la question qu'on lisait. Borner la pile l'en empêche.
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         .scrollDismissesKeyboard(.interactively)
         .micaboScreenBackground()
         .safeAreaInset(edge: .top, spacing: 0) { stickyHeader }
@@ -292,22 +293,27 @@ struct MockPaperView: View {
 
             if session.with_audio {
                 HStack(spacing: MicaboSpacing.sm) {
+                    // L'état est celui de **cette** question : `dictation.isListening` seul
+                    // mettait les trois questions orales en « Arrêter » dès qu'on dictait sur
+                    // l'une d'elles.
+                    let listening = dictation.isListening(to: id)
+
                     Button {
-                        dictation.toggle(current: answers[id]?.text ?? "") { text in
+                        dictation.toggle(id: id, current: answers[id]?.text ?? "") { text in
                             set(id) { $0.text = text }
                         }
                     } label: {
                         HStack(spacing: 7) {
                             Circle()
-                                .fill(dictation.isListening ? MicaboColor.negative : MicaboColor.inkTertiary)
+                                .fill(listening ? MicaboColor.negative : MicaboColor.inkTertiary)
                                 .frame(width: 8, height: 8)
-                            Text(dictation.isListening ? t("app.mock.dictateStop") : t("app.mock.dictate"))
+                            Text(listening ? t("app.mock.dictateStop") : t("app.mock.dictate"))
                                 .font(MicaboFont.hanken(13, weight: .medium))
                         }
-                        .foregroundStyle(dictation.isListening ? MicaboColor.negative : MicaboColor.ink)
+                        .foregroundStyle(listening ? MicaboColor.negative : MicaboColor.ink)
                         .padding(.vertical, 7)
                         .padding(.horizontal, 13)
-                        .background(dictation.isListening ? MicaboColor.negativeSoft : MicaboColor.surfaceMuted, in: Capsule())
+                        .background(listening ? MicaboColor.negativeSoft : MicaboColor.surfaceMuted, in: Capsule())
                     }
                     .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
                     .disabled(dictation.availability == .denied || dictation.availability == .unavailable)
