@@ -74,17 +74,43 @@ describe("checkoutSessionFields", () => {
     expect(fields["subscription_data[metadata][supabase_user_id]"]).toBe("user-1");
   });
 
-  it("pose une clé d'idempotence stable sur l'heure", () => {
+  it("pose une clé d'idempotence stable sur l'heure, et sur le corps entier", () => {
     const now = Date.parse("2026-08-31T16:10:00Z");
-    expect(checkoutIdempotencyKey("user-1", "weekly", now)).toBe(
-      checkoutIdempotencyKey("user-1", "weekly", now + 60_000),
+    const base = {
+      price: "price_year",
+      userId: "user-1",
+      trialDays: 0,
+      successUrl: "https://micabo.app/ok",
+      cancelUrl: "https://micabo.app",
+      locale: "fr",
+      currency: "eur",
+      note: "Micabo Pro · 39,99 € par an.",
+    };
+    const fr = checkoutSessionFields(base);
+
+    // Un double-clic : le même corps dans la même heure, la même clé.
+    expect(checkoutIdempotencyKey(fr, now)).toBe(checkoutIdempotencyKey(fr, now + 60_000));
+    expect(checkoutIdempotencyKey(fr, now)).not.toBe(
+      checkoutIdempotencyKey(fr, now + 60 * 60_000),
     );
-    expect(checkoutIdempotencyKey("user-1", "weekly", now)).not.toBe(
-      checkoutIdempotencyKey("user-1", "yearly", now),
-    );
-    expect(checkoutIdempotencyKey("user-1", "weekly", now, "EUR")).not.toBe(
-      checkoutIdempotencyKey("user-1", "weekly", now, "TRY"),
-    );
+
+    // Passer le site en espagnol change la locale et la phrase. Stripe refuse une clé
+    // réutilisée avec d'autres paramètres : la clé doit donc changer avec eux.
+    const es = checkoutSessionFields({
+      ...base,
+      locale: "es",
+      note: "Micabo Pro · 39,99 € al año.",
+    });
+    expect(checkoutIdempotencyKey(es, now)).not.toBe(checkoutIdempotencyKey(fr, now));
+
+    const weekly = checkoutSessionFields({ ...base, price: "price_week" });
+    expect(checkoutIdempotencyKey(weekly, now)).not.toBe(checkoutIdempotencyKey(fr, now));
+
+    const lira = checkoutSessionFields({ ...base, currency: "try" });
+    expect(checkoutIdempotencyKey(lira, now)).not.toBe(checkoutIdempotencyKey(fr, now));
+
+    // Lisible dans les journaux Stripe, et loin de la limite de 255 caractères.
+    expect(checkoutIdempotencyKey(fr, now)).toMatch(/^checkout-user-1-\d+-[0-9a-f]{32}$/);
   });
 
   it("pose l'essai seulement quand il y en a un", () => {

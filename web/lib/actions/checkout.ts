@@ -122,26 +122,28 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
     return { status: "error", message: `${badPrice} Offre : ${plan.title}.` };
   }
 
+  const fields = checkoutSessionFields({
+    price,
+    userId: user.id,
+    email: user.email,
+    trialDays: pricing.hasTrial(plan) ? plan.trialDays : 0,
+    successUrl: checkoutReturnUrl(SITE_URL, "/app?abonnement=ok"),
+    cancelUrl: checkoutReturnUrl(SITE_URL, "/app"),
+    locale: stripeLocale,
+    currency: pricing.checkoutCurrency(currency),
+    note: checkoutNote(translatorFor(noteLocale), plan, currency),
+  });
+
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/x-www-form-urlencoded",
-      "Idempotency-Key": checkoutIdempotencyKey(user.id, kind, Date.now(), currency),
+      // La clé couvre le corps entier : la même requête deux fois, une session ; une autre
+      // langue ou une autre devise, une autre session.
+      "Idempotency-Key": checkoutIdempotencyKey(fields),
     },
-    body: new URLSearchParams(
-      checkoutSessionFields({
-        price,
-        userId: user.id,
-        email: user.email,
-        trialDays: pricing.hasTrial(plan) ? plan.trialDays : 0,
-        successUrl: checkoutReturnUrl(SITE_URL, "/app?abonnement=ok"),
-        cancelUrl: checkoutReturnUrl(SITE_URL, "/app"),
-        locale: stripeLocale,
-        currency: pricing.checkoutCurrency(currency),
-        note: checkoutNote(translatorFor(noteLocale), plan, currency),
-      }),
-    ),
+    body: new URLSearchParams(fields),
   });
 
   if (!response.ok) {

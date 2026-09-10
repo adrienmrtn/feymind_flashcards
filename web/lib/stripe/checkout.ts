@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import type { pricing } from "@micabo/core";
 
 /**
@@ -117,15 +119,25 @@ export function checkoutSessionFields(input: {
   return fields;
 }
 
-/** Une clé stable sur l'heure : un double-clic ne crée pas deux sessions. */
+/**
+ * Une clé stable sur l'heure **et sur le corps** : un double-clic ne crée pas deux sessions,
+ * mais changer de langue, d'offre ou de devise est une autre requête.
+ *
+ * Stripe refuse une clé réutilisée avec d'autres paramètres, et s'en souvient une journée.
+ * La clé ne portait que l'utilisateur, l'offre et la devise : passer le site en espagnol
+ * changeait la locale et la phrase au-dessus du bouton, pas la clé - et Stripe rendait 400
+ * pendant une heure à qui avait d'abord ouvert la page en français. Le corps entier entre
+ * désormais dans la clé : deux corps identiques, une clé ; un caractère d'écart, une autre.
+ */
 export function checkoutIdempotencyKey(
-  userId: string,
-  plan: string,
+  fields: Record<string, string>,
   now = Date.now(),
-  currency = "EUR",
 ): string {
   const hour = Math.floor(now / (60 * 60 * 1000));
-  return `checkout-${userId}-${plan}-${currency}-${hour}`;
+  const body = new URLSearchParams(fields);
+  body.sort();
+  const digest = createHash("sha256").update(body.toString()).digest("hex").slice(0, 32);
+  return `checkout-${fields.client_reference_id ?? "anon"}-${hour}-${digest}`;
 }
 
 export function extractStripeMessage(payload: unknown): string {
