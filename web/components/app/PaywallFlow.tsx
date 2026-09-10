@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { pricing } from "@micabo/core";
 
 import { PaywallOffer } from "@/components/app/PaywallOffer";
+import { trackCheckoutSuccess, trackPaywallView } from "@/lib/analytics/funnel";
 import { isOfferClaimed } from "@/lib/discount";
 import {
   isHardPaywall,
@@ -54,6 +55,17 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
     window.addEventListener(PAYWALL_EVENT, onRequest);
     return () => window.removeEventListener(PAYWALL_EVENT, onRequest);
   }, [debugReplay, isPaid]);
+
+  /**
+   * Le retour de Stripe : `/app?abonnement=ok`. C'est la dernière marche de l'entonnoir, et
+   * la seule qu'on ne peut pas poser côté client avant le paiement. L'adresse est nettoyée
+   * aussitôt, pour qu'un rechargement ne recompte pas un abonnement.
+   */
+  useEffect(() => {
+    if (params.get("abonnement") !== "ok") return;
+    trackCheckoutSuccess();
+    router.replace(pathname as Route);
+  }, [params, pathname, router]);
 
   useEffect(() => {
     if (isPaid && !debugReplay) {
@@ -147,6 +159,12 @@ export function PaywallCard({
    * En mur dur, elle n'apparaît jamais.
    */
   const [canClose, setCanClose] = useState(false);
+
+  // Les pages du court accueil (preuve, essai, rappel) n'ont pas d'adresse non plus : chacune
+  // est une marche, et l'offre elle-même se signale depuis `PaywallOffer`.
+  useEffect(() => {
+    if (stage !== "plans") trackPaywallView("home", stage);
+  }, [stage]);
 
   useEffect(() => {
     if (hard || stage !== "plans") {

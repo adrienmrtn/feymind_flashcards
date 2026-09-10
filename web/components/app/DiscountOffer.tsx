@@ -8,6 +8,7 @@ import { discount, pricing } from "@micabo/core";
 
 import { Float } from "@/components/app/Float";
 import { startCheckout } from "@/lib/actions/checkout";
+import { trackCheckoutStart, trackPaywallView } from "@/lib/analytics/funnel";
 import {
   claimOffer,
   isDiscountSeen,
@@ -176,9 +177,14 @@ export function DiscountCard({
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
+  useEffect(() => {
+    trackPaywallView("discount");
+  }, []);
+
   async function subscribe() {
     setPending(true);
     setFailure(null);
+    trackCheckoutStart("yearly_discount", "discount");
     const result = await startCheckout("yearly_discount");
     setPending(false);
 

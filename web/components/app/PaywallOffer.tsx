@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ThinkingOrb } from "thinking-orbs";
 
@@ -8,6 +8,7 @@ import { pricing } from "@micabo/core";
 
 import { BrandMark } from "@/components/BrandMark";
 import { startCheckout } from "@/lib/actions/checkout";
+import { trackCheckoutStart, trackPaywallView, type PaywallSurface } from "@/lib/analytics/funnel";
 import { PRIVACY_PATH, TERMS_PATH } from "@/lib/legal";
 import { useI18n } from "@/lib/i18n/client";
 import { useLocalizedHref } from "@/lib/i18n/href";
@@ -38,10 +39,13 @@ export function PaywallOffer({
   headingId,
   onSubscribed,
   extraAction,
+  surface = "home",
 }: {
   headingId: string;
   onSubscribed?: () => void;
   extraAction?: ReactNode;
+  /** La porte par laquelle l'offre s'est ouverte, pour l'entonnoir. */
+  surface?: PaywallSurface;
 }) {
   const { t } = useI18n();
   const termsHref = useLocalizedHref(TERMS_PATH);
@@ -52,9 +56,16 @@ export function PaywallOffer({
 
   const selected = pricing.planFor(chosen);
 
+  // L'offre est la dernière marche de l'entonnoir, et elle n'a pas d'adresse : sans cet
+  // événement, Vercel ne voit qu'un chargement de `/app` de plus.
+  useEffect(() => {
+    trackPaywallView(surface);
+  }, [surface]);
+
   async function subscribe() {
     setPending(true);
     setCheckout(null);
+    trackCheckoutStart(chosen, surface);
     const result = await startCheckout(chosen);
     setPending(false);
     if (result.status === "redirect" && result.url) {

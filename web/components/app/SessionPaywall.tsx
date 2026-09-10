@@ -97,6 +97,7 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
 
           <PaywallOffer
             headingId={`${titleId}-offer`}
+            surface="session"
             onSubscribed={() => router.refresh()}
             extraAction={
               <button

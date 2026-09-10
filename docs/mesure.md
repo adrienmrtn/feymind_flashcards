@@ -72,9 +72,35 @@ plan Hobby, **la collecte se met en pause** une fois les 50 000 atteints (trois 
 grâce), elle ne se facture pas. La fenêtre d'un mois est la vraie limite : elle interdit de
 comparer septembre à juin.
 
-`track()` — les événements personnalisés, qui permettraient de marquer « a cliqué sur
-S'abonner » — demande le plan Pro. Tant qu'on est sur Hobby, il ne sert à rien de l'appeler :
-ce serait du code mort.
+`track()` — les événements personnalisés — demande le plan Pro. L'équipe y est, et le
+parcours les envoie : voir juste en dessous.
+
+### L'entonnoir événement par événement, jusqu'au paiement
+
+Les pages vues s'arrêtent au compte : le paywall n'a pas d'adresse, c'est une carte posée
+sur `/app`, et Vercel ne voit qu'un chargement de `/app` de plus. Quatre événements
+(`web/lib/analytics/funnel.ts`) prolongent l'entonnoir jusqu'à Stripe :
+
+| Événement | Quand | Propriétés |
+|---|---|---|
+| `onboarding_step` | à chaque écran de `/commencer/*` (`web/app/commencer/layout.tsx`) | `step` (`bienvenue`, `repos`, `compte`…), `index` (1…17), `of` |
+| `paywall_view` | la carte de l'offre s'ouvre | `surface` : `home` (mur de l'accueil), `session` (fin de séance), `discount` (offre cadeau) ; `stage` : `social`, `trial`, `reminder`, `plans` |
+| `checkout_start` | clic sur « S'abonner », avant le départ vers Stripe | `plan` : `yearly`, `weekly`, `yearly_discount` ; `surface` |
+| `checkout_success` | retour de Stripe sur `/app?abonnement=ok` | — |
+
+**Le lire dans Vercel** : projet → Analytics → onglet **Events**. Cliquer `onboarding_step`
+puis grouper par `index` (ou `step`) donne les dix-sept marches dans l'ordre, avec un nombre
+chacune ; la marche où le nombre s'effondre est l'écran qui perd les gens. En dessous,
+`paywall_view` (filtrer `stage = plans` pour ne compter que l'offre, pas ses trois pages
+d'amorce), `checkout_start`, `checkout_success` font les trois dernières marches. Si le
+projet a **Web Analytics Plus**, l'onglet **Funnels** enchaîne ces événements en un seul
+graphe à taux de passage ; sans lui, on pose les quatre nombres côte à côte, ce qui prend
+une minute.
+
+Deux réserves. Un événement compte une *vue*, pas une personne : revenir en arrière recompte
+une marche, et l'offre rouverte recompte un `paywall_view`. Et les bloqueurs de publicité
+avalent le script : les nombres sont un plancher, pas un compte exact - les pages vues ont
+le même biais, les rapports entre marches restent justes.
 
 ### Speed Insights, à ne pas confondre
 
