@@ -5,7 +5,9 @@ import { entitlement, pricing } from "@micabo/core";
 import { SITE_URL } from "@/lib/config";
 import { readEntitlement } from "@/lib/data/entitlement";
 import { actionT } from "@/lib/i18n/action";
-import { readUiLocale } from "@/lib/i18n/server";
+import { DEFAULT_UI_LOCALE, isUiLocale } from "@/lib/i18n/locales";
+import { readLocaleSignals, readUiLocale, translatorFor } from "@/lib/i18n/server";
+import { checkoutNote } from "@/lib/pricing-copy";
 import {
   checkoutIdempotencyKey,
   checkoutReturnUrl,
@@ -95,7 +97,14 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
     .select("country_code")
     .eq("id", user.id)
     .maybeSingle();
-  const currency = pricing.presentmentCurrencyFor(locale, profile?.country_code);
+  const country = profile?.country_code;
+  const currency = pricing.presentmentCurrencyFor(locale, country);
+
+  // La langue de la page de paiement se décide à part : elle a le pays à consulter là où
+  // l'interface, elle, doit bien afficher quelque chose et retombe sur l'anglais.
+  const signals = await readLocaleSignals();
+  const stripeLocale = pricing.checkoutLocale({ ...signals, country });
+  const noteLocale = isUiLocale(stripeLocale) ? stripeLocale : DEFAULT_UI_LOCALE;
 
   const key = stripeKey();
   const price = priceId(kind);
@@ -128,8 +137,9 @@ export async function startCheckout(kind: pricing.CatalogPlan): Promise<Checkout
         trialDays: pricing.hasTrial(plan) ? plan.trialDays : 0,
         successUrl: checkoutReturnUrl(SITE_URL, "/app?abonnement=ok"),
         cancelUrl: checkoutReturnUrl(SITE_URL, "/app"),
-        locale,
+        locale: stripeLocale,
         currency: pricing.checkoutCurrency(currency),
+        note: checkoutNote(translatorFor(noteLocale), plan, currency),
       }),
     ),
   });

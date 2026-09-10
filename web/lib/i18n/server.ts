@@ -7,7 +7,7 @@ import {
   DEFAULT_UI_LOCALE,
   UI_LOCALE_COOKIE,
   isUiLocale,
-  localeFromAcceptLanguage,
+  matchAcceptLanguage,
   type UiLocale,
 } from "./locales";
 import { LOCALE_HEADER } from "./paths";
@@ -24,14 +24,39 @@ import type { MessageTree } from "./format";
  *    le navigateur, comme avant.
  */
 export const readUiLocale = cache(async (): Promise<UiLocale> => {
-  const fromUrl = (await headers()).get(LOCALE_HEADER);
-  if (isUiLocale(fromUrl)) return fromUrl;
-  const store = await cookies();
-  const fromCookie = store.get(UI_LOCALE_COOKIE)?.value;
-  if (isUiLocale(fromCookie)) return fromCookie;
-  const accept = (await headers()).get("accept-language");
-  return localeFromAcceptLanguage(accept) ?? DEFAULT_UI_LOCALE;
+  const { chosen, navigator } = await readLocaleSignals();
+  return chosen ?? navigator ?? DEFAULT_UI_LOCALE;
 });
+
+/**
+ * **Ce que la requête dit vraiment de la langue**, avant qu'on tranche.
+ *
+ * `readUiLocale` doit rendre une langue : une page s'affiche toujours dans quelque chose.
+ * Mais ce faisant elle écrase la différence entre « anglais choisi » et « anglais faute de
+ * mieux » — et c'est précisément celle dont la page de paiement a besoin pour aller chercher
+ * le pays plutôt que de servir un checkout anglais à un étudiant turc.
+ */
+export const readLocaleSignals = cache(
+  async (): Promise<{ chosen: UiLocale | null; navigator: UiLocale | null }> => {
+    const head = await headers();
+    const fromUrl = head.get(LOCALE_HEADER);
+    if (isUiLocale(fromUrl)) return { chosen: fromUrl, navigator: null };
+
+    const store = await cookies();
+    const fromCookie = store.get(UI_LOCALE_COOKIE)?.value;
+    const chosen = isUiLocale(fromCookie) ? fromCookie : null;
+    return { chosen, navigator: matchAcceptLanguage(head.get("accept-language")) };
+  },
+);
+
+/** Un traducteur dans une langue **dite**, quand ce n'est pas celle de la page. */
+export function translatorFor(locale: UiLocale) {
+  return makeTranslator(
+    locale,
+    catalogFor(locale) as unknown as MessageTree,
+    en as unknown as MessageTree,
+  );
+}
 
 export const getTranslator = cache(async () => {
   const locale = await readUiLocale();

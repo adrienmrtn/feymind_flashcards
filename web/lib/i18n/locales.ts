@@ -29,14 +29,25 @@ export function isUiLocale(value: string | undefined | null): value is UiLocale 
   return UI_LOCALES.includes(value as UiLocale);
 }
 
-/** `Accept-Language` → une de nos langues, sinon l'anglais. */
-export function localeFromAcceptLanguage(header: string | null): UiLocale {
-  if (!header) return DEFAULT_UI_LOCALE;
+/**
+ * `Accept-Language` → une de nos langues, ou **rien**.
+ *
+ * Le `null` porte une information que le repli efface : le navigateur n'a désigné aucune
+ * langue qu'on sache parler. Ailleurs on affiche l'anglais et c'est très bien ; mais la page
+ * de paiement, elle, a encore le pays à consulter avant de conclure quoi que ce soit.
+ */
+export function matchAcceptLanguage(header: string | null): UiLocale | null {
+  if (!header) return null;
   for (const part of header.split(",")) {
     const tag = part.split(";")[0]?.trim().toLowerCase();
     if (!tag) continue;
     const primary = tag.split("-")[0];
     if (isUiLocale(primary)) return primary;
   }
-  return DEFAULT_UI_LOCALE;
+  return null;
+}
+
+/** `Accept-Language` → une de nos langues, sinon l'anglais. */
+export function localeFromAcceptLanguage(header: string | null): UiLocale {
+  return matchAcceptLanguage(header) ?? DEFAULT_UI_LOCALE;
 }

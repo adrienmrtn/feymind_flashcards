@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { pricing } from "@micabo/core";
+
+import { checkoutNote } from "../pricing-copy";
 import {
   checkoutIdempotencyKey,
   checkoutReturnUrl,
@@ -95,7 +98,45 @@ describe("checkoutSessionFields", () => {
     });
     expect(yearly.customer_email).toBe("a@b.c");
     expect(yearly["subscription_data[trial_period_days]"]).toBe("3");
-    expect(yearly.locale).toBe("en");
+    // Plus de locale par défaut : « en » écrit en dur servait des pages anglaises à des
+    // gens qui payaient en livres. Sans le champ, Stripe lit l'en-tête du navigateur.
+    expect(yearly.locale).toBeUndefined();
+  });
+
+  it("écrit notre phrase au-dessus du bouton, et rien quand on n'a rien à dire", () => {
+    const withNote = checkoutSessionFields({
+      price: "price_year",
+      userId: "user-1",
+      trialDays: 3,
+      successUrl: "https://micabo.app/ok",
+      cancelUrl: "https://micabo.app",
+      note: "Micabo Pro · 3 gün ücretsiz, sonra yılda 3.899,99 ₺.",
+    });
+    expect(withNote["custom_text[submit][message]"]).toBe(
+      "Micabo Pro · 3 gün ücretsiz, sonra yılda 3.899,99 ₺.",
+    );
+
+    const silent = checkoutSessionFields({
+      price: "price_year",
+      userId: "user-1",
+      trialDays: 0,
+      successUrl: "https://micabo.app/ok",
+      cancelUrl: "https://micabo.app",
+      note: "   ",
+    });
+    expect(silent["custom_text[submit][message]"]).toBeUndefined();
+  });
+
+  it("tronque la phrase à la limite de Stripe plutôt que de se faire refuser", () => {
+    const fields = checkoutSessionFields({
+      price: "price_year",
+      userId: "user-1",
+      trialDays: 0,
+      successUrl: "https://micabo.app/ok",
+      cancelUrl: "https://micabo.app",
+      note: "a".repeat(1500),
+    });
+    expect(fields["custom_text[submit][message]"]).toHaveLength(1200);
   });
 
   it("dit la langue et la devise plutôt que de les laisser deviner", () => {
@@ -181,6 +222,62 @@ describe("stripeRefusalMessage", () => {
   it("garde le repli si Stripe n'a rien dit", () => {
     expect(stripeRefusalMessage(400, {}, "Hebdomadaire")).toBe(
       "Stripe a refusé (400). Offre : Hebdomadaire.",
+    );
+  });
+});
+
+describe("checkoutLocale", () => {
+  it("suit le choix, où qu'on se trouve", () => {
+    // Qui lit Micabo en français paie en français, même depuis la Turquie : la page
+    // Stripe continue la page d'où l'on vient, elle n'en ouvre pas une autre.
+    expect(pricing.checkoutLocale({ chosen: "fr", navigator: "tr", country: "tr" })).toBe("fr");
+  });
+
+  it("écoute le navigateur quand personne n'a choisi", () => {
+    expect(pricing.checkoutLocale({ chosen: null, navigator: "tr", country: "fr" })).toBe("tr");
+    expect(pricing.checkoutLocale({ navigator: "es-ES" })).toBe("es");
+  });
+
+  it("va chercher le pays plutôt que de retomber sur l'anglais", () => {
+    // Les trois sessions perdues : navigateur en une langue qu'on ne parle pas, pays turc,
+    // prix en livres — et une page Stripe en anglais.
+    expect(pricing.checkoutLocale({ chosen: null, navigator: null, country: "TR" })).toBe("tr");
+    expect(pricing.checkoutLocale({ country: "at" })).toBe("de");
+    expect(pricing.checkoutLocale({ country: "mx" })).toBe("es");
+  });
+
+  it("préfère se taire que d'inventer", () => {
+    // Rien de dit, pays qu'on ne sait pas traduire : Stripe lira l'en-tête du navigateur,
+    // ce qui reste une meilleure supposition que la nôtre.
+    expect(pricing.checkoutLocale({})).toBeUndefined();
+    expect(pricing.checkoutLocale({ chosen: "  ", navigator: null, country: "jp" })).toBeUndefined();
+  });
+
+  it("laisse la devise décider seule de son côté", () => {
+    // Deux règles distinctes, et c'est voulu : un Turc qui lit Micabo en anglais voit une
+    // page anglaise, et il paie quand même en livres.
+    expect(pricing.checkoutLocale({ navigator: "en", country: "tr" })).toBe("en");
+    expect(pricing.presentmentCurrencyFor("en", "tr")).toBe("TRY");
+  });
+});
+
+describe("checkoutNote", () => {
+  const t = ((key: string, vars?: Record<string, string | number>) =>
+    `${key}|${JSON.stringify(vars)}`) as Parameters<typeof checkoutNote>[0];
+
+  it("annonce l'essai, puis la somme réellement prélevée", () => {
+    const note = checkoutNote(t, pricing.YEARLY, "TRY");
+    expect(note).toContain("app.paywall.stripeNote.trialYearly");
+    expect(note).toContain('"days":3');
+    // Le prix annuel, pas le mensuel équivalent affiché sur la carte : c'est le montant
+    // que Stripe va prélever, et l'écart entre les deux est ce qui fait fermer l'onglet.
+    expect(note).toContain(pricing.priceText(3899.99, "TRY"));
+  });
+
+  it("ne promet pas d'essai là où il n'y en a pas", () => {
+    expect(checkoutNote(t, pricing.WEEKLY, "EUR")).toContain("app.paywall.stripeNote.weekly");
+    expect(checkoutNote(t, pricing.DISCOUNT_YEARLY, "EUR")).toContain(
+      "app.paywall.stripeNote.yearly",
     );
   });
 });

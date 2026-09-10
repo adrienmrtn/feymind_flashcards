@@ -1028,6 +1028,13 @@ export const appEn = {
     trialBadge: "{days} days free",
     cancelAnytime: "Cancel anytime",
     renewalYearly: "Then {price} per year, cancel anytime",
+    // Notre phrase sur la page Stripe, juste au-dessus du bouton de paiement.
+    stripeNote: {
+      trialYearly: "Micabo Pro · {days} days free, then {price} a year. Cancel anytime.",
+      yearly: "Micabo Pro · {price} a year. Cancel anytime.",
+      trialWeekly: "Micabo Pro · {days} days free, then {price} a week. Cancel anytime.",
+      weekly: "Micabo Pro · {price} a week. Cancel anytime.",
+    },
     perMonthSlash: "/ month",
     perWeekSlash: "/ week",
     billedEach: "billed each {unit}",

@@ -65,6 +65,17 @@ export function checkoutSessionFields(input: {
    * lu des livres. Elle doit exister dans les `currency_options` du prix.
    */
   currency?: string;
+  /**
+   * **Notre phrase sur leur page.**
+   *
+   * Stripe Checkout est une page blanche à bouton bleu : on quitte une carte Micabo pour
+   * quelque chose qui pourrait appartenir à n'importe qui. `custom_text[submit][message]`
+   * est le seul endroit où l'on peut écrire, dans la langue du lecteur, ce qu'il achète et
+   * ce qui sera prélevé - juste au-dessus du bouton, à l'instant où il hésite.
+   *
+   * Mille deux cents caractères au plus, texte brut. On en écrit une phrase.
+   */
+  note?: string;
 }): Record<string, string> {
   const fields: Record<string, string> = {
     mode: "subscription",
@@ -74,8 +85,15 @@ export function checkoutSessionFields(input: {
     client_reference_id: input.userId,
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
-    locale: input.locale ?? "en",
   };
+
+  // Une locale absente vaut mieux qu'un « en » écrit en dur : Stripe la déduit alors de
+  // l'en-tête du navigateur, ce qui est encore la meilleure supposition disponible.
+  const locale = input.locale?.trim();
+  if (locale) fields.locale = locale;
+
+  const note = input.note?.trim();
+  if (note) fields["custom_text[submit][message]"] = note.slice(0, 1200);
 
   const currency = input.currency?.trim().toLowerCase();
   if (currency) fields.currency = currency;
