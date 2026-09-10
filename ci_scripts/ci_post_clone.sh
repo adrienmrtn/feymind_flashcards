@@ -1,11 +1,6 @@
 #!/bin/sh
 #
-# **Ce que Xcode Cloud fixe avant de construire : le numéro de build, et le commit.**
-#
-# Deux choses qu'on ne peut pas décider depuis le dépôt, parce qu'elles dépendent de la
-# construction elle-même. Chacune a sa section plus bas.
-#
-# ## Le commit
+# **Graver le commit dans l'app.**
 #
 # Xcode Cloud construit ce qu'on lui donne et l'envoie dans TestFlight, où deux versions se
 # ressemblent : `MARKETING_VERSION` ne bouge pas d'un lot à l'autre, et le numéro de build est
@@ -22,34 +17,24 @@
 
 set -e
 
-ROOT="${CI_PRIMARY_REPOSITORY_PATH:-..}"
-PLIST="$ROOT/Micabo/Info.plist"
-PBXPROJ="$ROOT/Micabo.xcodeproj/project.pbxproj"
+PLIST="${CI_PRIMARY_REPOSITORY_PATH:-..}/Micabo/Info.plist"
 
-# ---------------------------------------------------------------------------
-# **Un numéro de build qui monte tout seul.**
+# **Le numéro de build ne se décide pas ici.** Une tentative précédente le calculait dans ce
+# script, en patchant `CURRENT_PROJECT_VERSION` avant la construction. Elle ne pouvait pas
+# marcher, et le rejet d'App Store Connect est revenu à l'identique : Xcode Cloud **impose son
+# propre compteur**, qui part de 1 à la première construction du flux et monte d'une unité à
+# chaque suivante. C'est ce nombre-là que TestFlight et l'App Store affichent, quoi que dise le
+# projet - d'où des builds numérotés 11 pendant que le dépôt annonçait 67.
 #
-# App Store Connect refuse un téléversement dont le numéro de build n'est pas strictement
-# supérieur au précédent - « The bundle version must be higher than the previously uploaded
-# version ». Tant que ce numéro vivait dans le dépôt, il ne montait qu'à la main : relancer
-# un lot, corriger une erreur de compilation, reconstruire la même branche renvoyaient le
-# même numéro, et le téléversement était rejeté après vingt minutes de construction.
+# Ce que le dépôt garde (`CURRENT_PROJECT_VERSION`) ne sert donc qu'aux archives faites à la
+# main. Rien ne demande de le monter à chaque lot ; le commit gravé plus bas identifie le
+# binaire bien mieux qu'un compteur.
 #
-# Xcode Cloud compte déjà ses constructions, et ce compteur ne redescend jamais :
-# `CI_BUILD_NUMBER`. On le décale au-dessus du dernier numéro téléversé à la main, et le
-# problème disparaît pour de bon. Le dépôt garde sa valeur pour les constructions locales -
-# elle ne part plus jamais chez Apple, donc plus personne n'a à y penser.
-#
-# `BASE` ne bouge que dans un cas : si l'on repart d'un flux Xcode Cloud neuf, où le
-# compteur redémarre à 1. Il vaut alors le plus haut numéro déjà téléversé.
-# ---------------------------------------------------------------------------
-BASE=67
-
-if [ -n "$CI_BUILD_NUMBER" ] && [ -f "$PBXPROJ" ]; then
-  BUILD=$((BASE + CI_BUILD_NUMBER))
-  sed -i '' -E "s/CURRENT_PROJECT_VERSION = [0-9]+;/CURRENT_PROJECT_VERSION = $BUILD;/g" "$PBXPROJ"
-  echo "Numéro de build : $BUILD (base $BASE + construction Xcode Cloud $CI_BUILD_NUMBER)"
-fi
+# Le seul remède aux collisions - « The bundle version must be higher than the previously
+# uploaded version », quand d'anciens téléversements occupent déjà les petits numéros - est
+# côté App Store Connect : onglet Xcode Cloud → Réglages → Build Number → Next Build Number.
+# Rôle Admin ou App Manager requis. Voir
+# https://developer.apple.com/documentation/xcode/setting-the-next-build-number-for-xcode-cloud-builds
 
 if [ -z "$CI_COMMIT" ]; then
   echo "Pas de CI_COMMIT : rien à graver, le plist garde sa valeur de dépôt."
