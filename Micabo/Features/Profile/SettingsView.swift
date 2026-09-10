@@ -36,6 +36,14 @@ struct SettingsView: View {
     @State private var subjects = OnboardingPreferences.subjects
     @State private var schoolName = OnboardingPreferences.institutionName
 
+    @Environment(ProAccess.self) private var pro: ProAccess?
+    /// Les cours de l'appareil : ils décident si l'offre de bienvenue est méritée.
+    @Query private var allCourses: [Course]
+    @State private var paywall: PaywallTrigger?
+    @State private var discountOffer: DiscountPresentation?
+    /// Relues pour que la rangée de l'offre suive son décompte sans qu'on rouvre l'écran.
+    @AppStorage(DiscountOffer.Key.startedAt) private var discountStartedAt: Double = 0
+
     private let models = [
         "google/gemini-2.5-flash-lite",
         "google/gemini-2.5-flash",
@@ -47,6 +55,7 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                 header
+                proSection
                 accountSection
                 identitySection
                 studiesSection
@@ -109,6 +118,8 @@ struct SettingsView: View {
         } message: {
             Text(i18n?.t("ios.signOutMsg") ?? "Tes cours restent sur cet appareil et sur ton compte. Tu les retrouveras à la prochaine connexion.")
         }
+        .micaboPaywall($paywall)
+        .micaboDiscountOffer($discountOffer)
         .sheet(isPresented: $showFeedback) {
             FeedbackView()
                 .presentationCornerRadius(MicaboRadius.sheet)
@@ -136,6 +147,94 @@ struct SettingsView: View {
                 .buttonStyle(MicaboPressableButtonStyle())
         }
         .padding(.top, MicaboSpacing.xs)
+    }
+
+    /// **L'abonnement, en tête des Réglages.**
+    ///
+    /// Il n'y avait aucun endroit stable pour voir son abonnement ni pour retrouver un prix :
+    /// le paywall ne s'ouvrait qu'en butant sur une porte fermée, et le tarif réduit n'existait
+    /// que dans un cadeau qui surgit une fois. Un prix qu'on ne peut pas aller chercher est un
+    /// prix qu'on ne paie pas — et, pour App Review, un achat « introuvable dans l'app ».
+    ///
+    /// Deux rangées au plus. L'offre de bienvenue n'apparaît qu'une fois méritée (un cours
+    /// importé) ; l'ouvrir d'ici **relance sa fenêtre**, de sorte qu'elle soit toujours
+    /// achetable, y compris pendant son repos.
+    @ViewBuilder
+    private var proSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            MicaboSectionCaption(text: i18n?.t("ios.pro.section") ?? "Abonnement")
+
+            VStack(spacing: 0) {
+                if isSubscribed {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("⭐️"), background: MicaboColor.accentSoft),
+                        title: i18n?.t("ios.pro.title") ?? "Micabo Pro",
+                        subtitle: i18n?.t("ios.pro.active") ?? "Abonnement actif",
+                        accessory: .none
+                    )
+
+                    MicaboHairline(inset: 71)
+
+                    // La gestion d'un abonnement App Store se fait chez Apple, et nulle part
+                    // ailleurs : une app qui prétendrait résilier à sa place mentirait.
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("🧾"), background: MicaboColor.surfaceMuted),
+                        title: i18n?.t("ios.pro.manage") ?? "Gérer l'abonnement",
+                        subtitle: i18n?.t("ios.pro.manageHelp") ?? "Chez Apple, dans tes réglages d'App Store",
+                        accessory: .chevron,
+                        action: openStoreSubscriptions
+                    )
+                } else {
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .emoji("⭐️"), background: MicaboColor.accentSoft),
+                        title: i18n?.t("ios.pro.upgrade") ?? "Passer à Micabo Pro",
+                        subtitle: i18n?.t("ios.pro.upgradeHelp") ?? "Cours illimités, fiches entières, révision sans limite",
+                        accessory: .chevron,
+                        action: { paywall = .upgrade }
+                    )
+
+                    if DiscountOffer.isReachable(isPro: isSubscribed, courseCount: ownedCourseCount) {
+                        MicaboHairline(inset: 71)
+
+                        MicaboRow(
+                            tile: MicaboTile(glyph: .emoji("🎁"), background: MicaboColor.tilePastels[1]),
+                            title: i18n?.t("ios.pro.offer") ?? "Ton offre de bienvenue",
+                            subtitle: discountSubtitle,
+                            accessory: .chevron,
+                            action: { discountOffer = .paywall }
+                        )
+                    }
+                }
+            }
+            .micaboGroup()
+        }
+    }
+
+    /// Vrai seulement si le droit est connu **et** ouvert : un environnement sans `ProAccess`
+    /// doit montrer le prix, pas le cacher.
+    private var isSubscribed: Bool { pro?.isPro ?? false }
+
+    /// Les cours importés ici. Ceux repris de la bibliothèque ne comptent pas : on n'a rien
+    /// fait pour eux.
+    private var ownedCourseCount: Int {
+        allCourses.filter { !$0.isFromLibrary }.count
+    }
+
+    /// « -43 % sur l'année » et, quand la fenêtre court, le temps qu'il reste.
+    private var discountSubtitle: String {
+        let percent = i18n?.t("ios.pro.offerHelp", ["percent": "\(DiscountOffer.savingsPercent)"])
+            ?? "-\(DiscountOffer.savingsPercent) % sur l'année"
+        guard discountStartedAt > 0 else { return percent }
+        let startedAt = Date(timeIntervalSince1970: discountStartedAt)
+        let left = DiscountOffer.windowRemaining(startedAt: startedAt)
+        guard left > 0 else { return percent }
+        return "\(percent) · \(DiscountOffer.countdown(left))"
+    }
+
+    /// La page des abonnements de l'App Store. L'adresse est celle d'Apple, pas la nôtre.
+    private func openStoreSubscriptions() {
+        guard let url = URL(string: "https://apps.apple.com/account/subscriptions") else { return }
+        UIApplication.shared.open(url)
     }
 
     /// Le compte, et l'état de la synchro.

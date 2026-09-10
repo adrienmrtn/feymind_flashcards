@@ -14,6 +14,8 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
     case practice
     /// La cinquième carte d'une session.
     case sessionLimit
+    /// Depuis les Réglages, sans rien avoir buté : on vient voir le prix.
+    case upgrade
 
     var id: String { rawValue }
 
@@ -23,6 +25,7 @@ enum PaywallTrigger: String, Identifiable, CaseIterable {
         case .secondCourse: L10n.t("app.import.secondCourse.title", locale: .resolved())
         case .practice: L10n.t("ios.paywallPracticeHeadline", locale: .resolved())
         case .sessionLimit: L10n.t("ios.paywallSessionHeadline", locale: .resolved())
+        case .upgrade: L10n.t("ios.paywallUpgradeHeadline", locale: .resolved())
         }
     }
 }

@@ -78,7 +78,9 @@ export function DiscountHost({
   }, [courseCount, debug, isPaid]);
 
   const close = useCallback(() => {
-    markDiscountSeen();
+    // L'instant vient de `markDiscountSeen` : fermer la carte démarre la fenêtre si elle
+    // n'avait pas commencé, et la pastille a besoin de cet instant pour s'afficher.
+    setStartedAt(markDiscountSeen());
     releaseOffer();
     setSeen(true);
     setOpen(false);

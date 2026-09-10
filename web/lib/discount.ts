@@ -30,17 +30,20 @@ export function readDiscountStart(): number | null {
 }
 
 /**
- * Ouvre l'offre, et **ne la rouvre jamais.**
+ * Ouvre la fenêtre de l'offre, ou rend celle qui court déjà.
  *
- * L'instant est écrit une seule fois : sans ce garde, chaque affichage
- * repousserait la fin des vingt-quatre heures et le décompte ne descendrait
- * plus. Renvoie l'instant retenu, ancien ou neuf.
+ * Deux règles, et elles tirent en sens contraire. Une fenêtre **en cours** ne se
+ * remet pas à zéro : sans ce garde, chaque affichage repousserait la fin des
+ * vingt-quatre heures et le décompte ne descendrait plus. Une fenêtre **finie**,
+ * elle, ouvre la suivante : l'offre revient, elle ne meurt pas. Le « déjà vue »
+ * repart alors, puisqu'on parle d'une nouvelle fenêtre.
  */
 export function startDiscount(now = Date.now()): number {
   const existing = readDiscountStart();
-  if (existing) return existing;
+  if (existing !== null && discount.isLive(existing, now)) return existing;
   try {
     window.localStorage.setItem(DISCOUNT_STARTED_KEY, String(now));
+    window.localStorage.removeItem(DISCOUNT_SEEN_KEY);
   } catch {
     // Un stockage refusé ne doit pas empêcher de voir l'offre.
   }
@@ -56,12 +59,22 @@ export function isDiscountSeen(): boolean {
   }
 }
 
-export function markDiscountSeen(): void {
+/**
+ * La carte a été montrée. **Et la fenêtre démarre ici aussi.**
+ *
+ * Sans ce démarrage, fermer la carte avant qu'elle n'ait posé son instant laissait
+ * un « déjà vue » sans décompte : la pop-up ne se représentait plus (déjà vue) et la
+ * pastille ne s'affichait pas (pas d'instant). Le tarif réduit devenait alors
+ * introuvable dans tout le produit, sans que rien ne le signale.
+ */
+export function markDiscountSeen(now = Date.now()): number {
+  const startedAt = startDiscount(now);
   try {
     window.localStorage.setItem(DISCOUNT_SEEN_KEY, "1");
   } catch {
     // Voir plus haut.
   }
+  return startedAt;
 }
 
 export function forgetDiscount(): void {
@@ -93,9 +106,14 @@ export function shouldOpenDiscount(input: {
   // Le cadeau vient après le premier cours. Sans cours importé, il n'y a rien à
   // récompenser et l'offre passe pour une réclame.
   if (input.courseCount < 1) return false;
-  if (input.seen) return false;
-  if (input.startedAt !== null && !discount.isLive(input.startedAt, input.now)) return false;
-  return true;
+  // Un « déjà vue » sans instant d'ouverture est un état bâtard, laissé par une
+  // version qui marquait la carte vue sans démarrer son décompte. On la représente :
+  // rien n'a jamais été chronométré, donc rien n'a été offert.
+  if (input.startedAt === null) return true;
+  // Fenêtre en cours : une seule fois, la pastille prend ensuite le relais.
+  if (discount.isLive(input.startedAt, input.now)) return !input.seen;
+  // Fenêtre finie : l'offre revient, après son repos.
+  return discount.hasRested(input.startedAt, input.now);
 }
 
 /**
