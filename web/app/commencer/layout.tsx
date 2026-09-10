@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { trackOnboardingStep } from "@/lib/analytics/funnel";
 import { ONBOARDING_REPLAY_STORAGE } from "@/lib/auth/onboarding-replay";
 import { useI18n } from "@/lib/i18n/client";
 import { OnboardingStore } from "@/lib/onboarding/store";
@@ -53,6 +54,16 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
   useEffect(() => {
     previousIndex.current = index;
   }, [index]);
+
+  /**
+   * **Une marche de l'entonnoir par écran.** Les pages vues de Vercel comptent déjà les
+   * adresses, mais elles ne se lisent pas comme un parcours ; l'événement porte le numéro
+   * de la marche, et le tableau des événements se lit alors dans l'ordre, jusqu'au paywall
+   * qui, lui, n'a pas d'adresse.
+   */
+  useEffect(() => {
+    trackOnboardingStep(pathname);
+  }, [pathname]);
 
   return (
     <OnboardingStore>

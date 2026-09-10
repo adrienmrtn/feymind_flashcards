@@ -108,6 +108,11 @@ struct ProfileRecord: Codable {
     var institution_id: String?
     var institution_name: String?
     var daily_minutes: Int
+    /// Sept valeurs, lundi en premier ; un zéro est un jour de repos. C'est ce que le site
+    /// écrit à l'inscription, et **le plan du site le lit** : sans cette colonne ici, l'iPhone
+    /// posait du travail le dimanche que le site laissait libre, et deux appareils du même
+    /// compte n'avaient pas le même plan. Absente tant que la question n'a pas été posée.
+    var weekly_minutes: [Int]?
     var sheet_length: String
     /// Langue des prochaines fiches, quand elle n'est plus celle du pays.
     var sheet_language: String?
@@ -125,6 +130,7 @@ struct ProfileRecord: Codable {
             institution_id: OnboardingPreferences.institutionId,
             institution_name: OnboardingPreferences.institutionName,
             daily_minutes: OnboardingPreferences.dailyMinutes,
+            weekly_minutes: OnboardingPreferences.weeklyMinutes,
             sheet_length: SheetPreferences.length.rawValue,
             sheet_language: OnboardingPreferences.contentLanguage.rawValue,
             onboarding_completed_at: OnboardingPreferences.isCompleted ? Date() : nil
@@ -154,6 +160,9 @@ struct ProfileRecord: Codable {
         if let institution_id { OnboardingPreferences.institutionId = institution_id }
         if let institution_name { OnboardingPreferences.institutionName = institution_name }
         OnboardingPreferences.dailyMinutes = daily_minutes
+        if let weekly_minutes, weekly_minutes.count == 7 {
+            OnboardingPreferences.weeklyMinutes = weekly_minutes
+        }
         if let length = SheetLength(rawValue: sheet_length) { SheetPreferences.length = length }
         if let sheet_language, let language = ContentLanguage(rawValue: sheet_language) {
             OnboardingPreferences.sheetLanguage = language

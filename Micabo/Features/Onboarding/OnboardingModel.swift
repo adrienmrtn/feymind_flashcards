@@ -19,6 +19,9 @@ final class OnboardingModel {
     var subjects: Set<String> = []
     var institutionId: String?
     var institutionName: String?
+    /// Les jours de repos de la semaine, **1 = lundi … 7 = dimanche**, comme `restDays` sur
+    /// le site. Vide veut dire « je révise tous les jours », et c'est une réponse.
+    var restDays: Set<Int> = []
     /// La moyenne d'aujourd'hui, sur l'échelle 10-20. `TargetScore.min - 1` veut dire « en
     /// dessous du barème » : c'est le seul cran hors échelle, et il existe parce qu'un
     /// parcours qui ne propose que la moyenne et au-dessus dit à celui qui rame qu'il n'est
@@ -98,6 +101,11 @@ final class OnboardingModel {
         OnboardingPreferences.institutionName = institutionName
         OnboardingPreferences.currentScore = currentScore
         OnboardingPreferences.targetScore = targetScore
+        // La semaine ne s'écrit qu'une fois la question posée : avant, un profil vierge
+        // reçoit ses sept minutes quotidiennes et l'on croirait la question répondue.
+        if step.rawValue >= OnboardingStep.restDays.rawValue {
+            OnboardingPreferences.restWeekdays = restDays
+        }
     }
 }
 

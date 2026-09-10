@@ -67,6 +67,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case results
     case subjects
     case school
+    /// Les jours de la semaine où l'on ne révise pas. C'est `/commencer/repos` du site, et
+    /// la réponse part dans le même champ du profil : les deux plateformes construisent
+    /// leur plan sur la même semaine.
+    case restDays
     // Le point de départ, l'objectif, et la promesse de les relier. Ils arrivent juste avant
     // la construction du parcours parce que c'est elle qui s'en sert.
     case currentAverage

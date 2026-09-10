@@ -690,12 +690,10 @@ struct ExamEditorSheet: View {
     private func saveOffDays() {
         let known = OffDays.stamps(in: modelContext)
         for stamp in offDays.subtracting(known) {
-            modelContext.insert(OffDay(stamp: stamp))
+            OffDays.insert(stamp, in: modelContext)
         }
         for stale in known.subtracting(offDays) {
-            if let row = OffDays.all(in: modelContext).first(where: { $0.stamp == stale }) {
-                modelContext.delete(row)
-            }
+            OffDays.remove(stale, in: modelContext)
         }
         try? modelContext.save()
     }

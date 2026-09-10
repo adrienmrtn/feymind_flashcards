@@ -50,18 +50,55 @@ enum OffDays {
         Set(all(in: context).map(\.stamp))
     }
 
+    /// Pose une journée. Une journée qu'on remet efface sa pierre tombale : elle n'est plus
+    /// « à effacer au serveur », elle est à y écrire.
+    static func insert(_ stamp: String, in context: ModelContext) {
+        guard !all(in: context).contains(where: { $0.stamp == stamp }) else { return }
+        context.insert(OffDay(stamp: stamp))
+        OffDayTombstones.unmark(stamp)
+    }
+
+    /// Retire une journée, et **s'en souvient** : la prochaine synchro doit l'effacer au
+    /// serveur, et la descente ne doit pas la ramener entre-temps.
+    static func remove(_ stamp: String, in context: ModelContext) {
+        for row in all(in: context) where row.stamp == stamp {
+            context.delete(row)
+        }
+        OffDayTombstones.mark(stamp)
+    }
+
     /// Pose ou retire une journée. Rend l'état **après** le geste, pour que l'appelant n'ait
     /// pas à relire la base pour savoir ce qu'il vient de faire.
     @discardableResult
     static func toggle(_ stamp: String, in context: ModelContext) -> Bool {
-        if let existing = all(in: context).first(where: { $0.stamp == stamp }) {
-            context.delete(existing)
-            try? context.save()
-            return false
-        }
-        context.insert(OffDay(stamp: stamp))
+        let present = all(in: context).contains { $0.stamp == stamp }
+        if present { remove(stamp, in: context) } else { insert(stamp, in: context) }
         try? context.save()
-        return true
+        return !present
+    }
+
+    /// **Les jours de repos de toutes les semaines**, en décalage depuis aujourd'hui.
+    ///
+    /// `weekly` porte sept valeurs, lundi en premier, et un zéro veut dire « ce jour-là,
+    /// rien ». C'est l'habitude déclarée à l'inscription - « jamais le dimanche » - et elle
+    /// vaut pour toutes les semaines à venir, là où les pauses ne parlent que de dates. Les
+    /// deux se cumulent, exactement comme `weeklyOffOffsets` sur le site.
+    static func weeklyOffsets(
+        from start: Date,
+        window: Int,
+        weekly: [Int]?,
+        calendar: Calendar = MicaboCalendar.shared
+    ) -> [Int] {
+        guard let weekly, weekly.count == 7, window > 0 else { return [] }
+        let first = calendar.startOfDay(for: start)
+        var offsets: [Int] = []
+        for offset in 0..<window {
+            guard let date = calendar.date(byAdding: .day, value: offset, to: first) else { continue }
+            // `weekday` compte à partir de dimanche (1) ; la colonne compte à partir de lundi.
+            let index = (calendar.component(.weekday, from: date) + 5) % 7
+            if weekly[index] == 0 { offsets.append(offset) }
+        }
+        return offsets
     }
 
     /// **Les décalages fermés dans une fenêtre de plan.**
@@ -94,5 +131,38 @@ enum OffDays {
         guard count > 0 else { return [] }
         let first = calendar.startOfDay(for: start)
         return (0..<count).compactMap { calendar.date(byAdding: .day, value: $0, to: first) }
+    }
+}
+
+/// **Les journées décochées depuis la dernière synchro.**
+///
+/// Sans elles, la synchro ne saurait pas distinguer « cette journée n'existe pas ici parce
+/// qu'on l'a retirée » de « cette journée n'existe pas ici parce qu'on ne l'a pas encore
+/// reçue ». Le premier cas doit effacer au serveur, le second doit écrire en local, et une
+/// ligne absente ne dit pas lequel. La pierre tombale le dit.
+enum OffDayTombstones {
+    private static let key = "micabo.offDays.tombstones"
+
+    static var defaults: UserDefaults = .standard
+
+    static func mark(_ stamp: String) {
+        var stamps = all()
+        stamps.insert(stamp)
+        defaults.set(Array(stamps), forKey: key)
+    }
+
+    static func unmark(_ stamp: String) {
+        var stamps = all()
+        stamps.remove(stamp)
+        defaults.set(Array(stamps), forKey: key)
+    }
+
+    static func all() -> Set<String> {
+        Set(defaults.stringArray(forKey: key) ?? [])
+    }
+
+    /// Une fois effacées au serveur, les pierres tombales ont fait leur travail.
+    static func clear(_ stamps: Set<String>) {
+        defaults.set(Array(all().subtracting(stamps)), forKey: key)
     }
 }

@@ -60,6 +60,7 @@ struct OnboardingFlowView: View {
         case .results: ResultsStepView()
         case .subjects: SubjectsStepView()
         case .school: SchoolStepView()
+        case .restDays: RestDaysStepView()
         case .currentAverage: CurrentAverageStepView()
         case .targetAverage: TargetAverageStepView()
         case .together: TogetherStepView()
