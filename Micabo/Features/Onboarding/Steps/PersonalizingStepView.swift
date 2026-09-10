@@ -59,8 +59,39 @@ struct PersonalizingStepView: View {
     /// Statique : recréé à chaque `body`, le publisher s'annulait et l'anneau restait à zéro.
     private static let ticker = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
 
+    /// **Le chargement ne monte pas au métronome.**
+    ///
+    /// Une barre parfaitement linéaire se lit comme une animation, pas comme un travail : l'œil
+    /// repère la vitesse constante en une seconde et cesse d'y croire. Un vrai calcul avance
+    /// par à-coups - une lecture instantanée, un palier où quelque chose attend, un saut quand
+    /// le lot tombe, et une fin qui traîne. C'est ce profil-là qu'on rejoue.
+    ///
+    /// On déforme le **chemin**, pas la durée : le total reste `duration`, et la dernière
+    /// image est toujours 100 %.
+    private static let curve: [(at: Double, reached: Double)] = [
+        (0.00, 0.00),
+        (0.07, 0.19),   // le profil est déjà là : rien à attendre
+        (0.21, 0.24),   // premier palier
+        (0.33, 0.51),   // le lot des cartes tombe d'un coup
+        (0.45, 0.56),
+        (0.61, 0.79),
+        (0.80, 0.84),   // le palier le plus long : c'est là qu'un vrai calcul rame
+        (0.93, 0.97),
+        (1.00, 1.00),
+    ]
+
     private var progress: Double {
-        min(1, elapsed / Self.duration)
+        let time = min(1, elapsed / Self.duration)
+        var previous = Self.curve[0]
+        for point in Self.curve.dropFirst() {
+            if time <= point.at {
+                let span = point.at - previous.at
+                let ratio = span > 0 ? (time - previous.at) / span : 1
+                return previous.reached + (point.reached - previous.reached) * ratio
+            }
+            previous = point
+        }
+        return 1
     }
 
     private var isDone: Bool {

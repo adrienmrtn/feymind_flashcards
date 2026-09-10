@@ -19,7 +19,6 @@ struct ExamPlanStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n?.t("ios.examPlanTitle") ?? "Ton plan se pose\njusqu'au jour J.",
-            subtitle: i18n?.t("ios.examPlanLead"),
             titleSize: 26
         ) {
             ExamCountdownCalendar()

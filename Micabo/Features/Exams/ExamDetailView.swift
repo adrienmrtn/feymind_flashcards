@@ -156,7 +156,9 @@ struct ExamDetailView: View {
             StartMockSheet { withAudio in
                 startMock(withAudio: withAudio)
             }
-            .presentationDetents([.medium, .large])
+            // Une hauteur taillée sur le contenu, pas `.medium` : la question tient en une
+            // ligne et deux boutons, et un demi-écran la coupait au milieu d'un paragraphe.
+            .presentationDetents([.height(300)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
@@ -230,13 +232,18 @@ struct ExamDetailView: View {
                     .padding(.top, MicaboSpacing.sm)
                     .padding(.bottom, MicaboSpacing.md)
 
-                MicaboHairline(inset: MicaboSpacing.md)
+                // Le mot n'apparaît que tant qu'aucun blanc n'a été passé : c'est alors une
+                // invitation. Une fois le second chiffre là, il ne dirait plus que ce que les
+                // deux chiffres disent déjà.
+                if finished.isEmpty {
+                    MicaboHairline(inset: MicaboSpacing.md)
 
-                Text(progressNote)
-                    .font(MicaboFont.caption)
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(MicaboSpacing.md)
+                    Text(t("app.exam.progress.noMock"))
+                        .font(MicaboFont.caption)
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(MicaboSpacing.md)
+                }
             }
             .micaboGroup()
         }
@@ -284,16 +291,6 @@ struct ExamDetailView: View {
         }
     }
 
-    private var progressNote: String {
-        let mastery = t("app.plan.sheet.lead", ["percent": "\(masteryPercent)", "cards": "\(figures.cardCount)"])
-        if finished.isEmpty {
-            return "\(mastery) \(t("app.exam.progress.noMock"))"
-        }
-        if finished.count == 1, let only = finished.first {
-            return "\(mastery) \(t("app.exam.progress.single", ["score": "\(only.score)", "day": MicaboCalendar.shortDayLabel(only.finished_at ?? only.started_at)]))"
-        }
-        return mastery
-    }
 
     // MARK: - L'examen blanc
 
@@ -303,11 +300,6 @@ struct ExamDetailView: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-                    Text(t("app.mock.panelLead"))
-                        .font(MicaboFont.caption)
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
                     if let open {
                         Button {
                             paper = open
@@ -461,28 +453,12 @@ struct ExamDetailView: View {
             MicaboSectionCaption(text: t("app.plan.sheet.weakTitle"))
 
             VStack(alignment: .leading, spacing: 0) {
-                Text(t("app.plan.sheet.weakLead"))
-                    .font(MicaboFont.caption)
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(MicaboSpacing.md)
-
-                MicaboHairline(inset: MicaboSpacing.md)
-
                 ForEach(Array(weak.enumerated()), id: \.element.id) { index, card in
                     weakRow(card)
                     if index < weak.count - 1 {
                         MicaboHairline(inset: MicaboSpacing.md)
                     }
                 }
-
-                MicaboHairline(inset: MicaboSpacing.md)
-
-                Text(t("app.plan.sheet.weakHint"))
-                    .font(MicaboFont.micro)
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(MicaboSpacing.md)
             }
             .micaboGroup()
         }
@@ -594,50 +570,47 @@ struct StartMockSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                    Text(t("app.mock.micLead"))
-                        .font(MicaboFont.body)
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+                // **Une ligne, pas deux paragraphes.** Le titre pose la question ; ce qui
+                // reste à dire est ce que « non » change, et ça tient en une phrase.
+                Text(t("app.mock.micHint"))
+                    .font(MicaboFont.caption)
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                    Button {
-                        askMicrophone()
-                    } label: {
-                        HStack(spacing: MicaboSpacing.xs) {
-                            Image(systemName: "mic.fill")
-                                .font(.system(size: 13, weight: .semibold))
-                            Text(asking ? t("app.exams.wait") : t("app.mock.micYes"))
-                        }
-                    }
-                    .buttonStyle(MicaboPrimaryButtonStyle())
-                    .disabled(asking)
-
-                    Button {
-                        choose(false)
-                    } label: {
-                        Text(t("app.mock.micNo"))
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(MicaboSecondaryButtonStyle())
-                    .disabled(asking)
-
-                    Text(t("app.mock.micHint"))
-                        .font(MicaboFont.micro)
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    if let failed {
-                        Text(failed)
-                            .font(MicaboFont.caption)
-                            .foregroundStyle(MicaboColor.negative)
-                            .fixedSize(horizontal: false, vertical: true)
+                Button {
+                    askMicrophone()
+                } label: {
+                    HStack(spacing: MicaboSpacing.xs) {
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text(asking ? t("app.exams.wait") : t("app.mock.micYes"))
                     }
                 }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, MicaboSpacing.md)
-                .padding(.bottom, MicaboSpacing.xxl)
+                .buttonStyle(MicaboPrimaryButtonStyle())
+                .disabled(asking)
+
+                Button {
+                    choose(false)
+                } label: {
+                    Text(t("app.mock.micNo"))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(MicaboSecondaryButtonStyle())
+                .disabled(asking)
+
+                if let failed {
+                    Text(failed)
+                        .font(MicaboFont.caption)
+                        .foregroundStyle(MicaboColor.negative)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
             }
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, MicaboSpacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .micaboScreenBackground()
             .navigationTitle(t("app.mock.micTitle"))
             .navigationBarTitleDisplayMode(.inline)

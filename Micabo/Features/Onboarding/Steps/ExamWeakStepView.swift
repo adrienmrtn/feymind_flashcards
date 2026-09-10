@@ -17,7 +17,6 @@ struct ExamWeakStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n?.t("ios.examWeakTitle") ?? "Et ce qui résiste\npasse devant.",
-            subtitle: i18n?.t("ios.examWeakLead"),
             titleSize: 28
         ) {
             WeakCardsDemo()

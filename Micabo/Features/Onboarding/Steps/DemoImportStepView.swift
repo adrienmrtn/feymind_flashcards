@@ -50,8 +50,10 @@ struct DemoImportStepView: View {
                     .zIndex(1)
 
                 trail
+                // La zone prend **tout ce qui reste** sous la carte. À 136 points elle était
+                // une bande, et une bande se vise : on lâchait à côté. Une surface qui occupe
+                // le bas de l'écran ne se rate pas, et c'est le seul geste de cette page.
                 dropZone
-                Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
@@ -170,7 +172,7 @@ struct DemoImportStepView: View {
             }
             .foregroundStyle(labelTint)
         }
-        .frame(height: 136)
+        .frame(maxWidth: .infinity, minHeight: 190, maxHeight: .infinity)
         .animation(OnboardingMotion.tap, value: isOverZone)
         .animation(OnboardingMotion.shift, value: isDropped)
     }

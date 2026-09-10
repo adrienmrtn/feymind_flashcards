@@ -18,7 +18,6 @@ struct ExamMockStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n?.t("ios.examMockTitle") ?? "Un examen blanc,\nà J-7 et à J-2.",
-            subtitle: i18n?.t("ios.examMockLead"),
             titleSize: 28
         ) {
             MockPaperDemo()

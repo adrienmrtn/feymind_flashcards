@@ -68,13 +68,8 @@ struct MockPaperView: View {
     private var paper: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                Text(session.with_audio
-                    ? t("app.mock.paperLeadAudio", ["count": "\(questions.count)"])
-                    : t("app.mock.paperLead", ["count": "\(questions.count)"]))
-                    .font(MicaboFont.caption)
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
+                // Pas de consigne en tête : l'en-tête collé compte déjà les réponses et le
+                // temps, et les questions sont là. Une copie ne s'ouvre pas sur un mode d'emploi.
                 ForEach(Array(questions.enumerated()), id: \.element.id) { index, question in
                     questionCard(question, position: index + 1)
                 }
