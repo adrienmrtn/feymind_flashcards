@@ -64,6 +64,17 @@ struct ExamDetailView: View {
         TargetScore.percent(from: exam.targetScore)
     }
 
+    /// Ce que la jauge montre : la maîtrise des cartes, **poussée** par le dernier blanc et
+    /// non remplacée par lui. Les deux chiffres du haut restent entiers à côté.
+    private var readingPercent: Int {
+        ExamReadiness.blend(
+            mastery: figures.masteryPercent,
+            score: finished.first?.score,
+            finishedAt: finished.first?.finished_at,
+            now: today
+        )
+    }
+
     private var finished: [MockSessionRecord] {
         sessions.filter(\.isFinished)
     }
@@ -258,7 +269,7 @@ struct ExamDetailView: View {
                     Capsule().fill(MicaboColor.surfaceMuted)
                     Capsule()
                         .fill(MicaboColor.accent)
-                        .frame(width: proxy.size.width * CGFloat(max(2, masteryPercent)) / 100)
+                        .frame(width: proxy.size.width * CGFloat(max(2, readingPercent)) / 100)
                     Rectangle()
                         .fill(MicaboColor.ink)
                         .frame(width: 2, height: 12)

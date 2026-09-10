@@ -1,6 +1,13 @@
 import Link from "next/link";
 
-import { examCountdownLabel, examUrgency, studyCounts, currentStreak, targetPercent } from "@micabo/core";
+import {
+  blendMock,
+  examCountdownLabel,
+  examUrgency,
+  studyCounts,
+  currentStreak,
+  targetPercent,
+} from "@micabo/core";
 
 import { TodayPanel } from "@/components/app/home/TodayPanel";
 import { ReadinessBar } from "@/components/app/charts/ReadinessBar";
@@ -119,7 +126,7 @@ function NextExam({
       </div>
       <div className="mt-4">
         <ReadinessBar
-          now={exam.measured && exam.mockScore != null ? exam.mockScore : exam.masteryPercent}
+          now={blendMock(exam.masteryPercent, exam.measured ? exam.mockScore : null)}
           target={targetPercent(exam.targetScore)}
           measured={exam.measured}
         />
