@@ -199,6 +199,55 @@ final class CloudSync {
         OffDayTombstones.clear(erased)
     }
 
+    /// Les prédicats sont posés **dans SQLite**, pas après un `fetch` complet. C'est ce qui
+    /// évite de matérialiser des milliers de modèles sur l'acteur principal juste pour les
+    /// jeter aussitôt.
+    private func fetchChangedFolders(in context: ModelContext, since: Date?) throws -> [CourseFolder] {
+        guard let since else { return try context.fetch(FetchDescriptor<CourseFolder>()) }
+        let descriptor = FetchDescriptor<CourseFolder>(predicate: #Predicate { $0.updatedAt > since })
+        return try context.fetch(descriptor)
+    }
+
+    private func fetchChangedCourses(in context: ModelContext, since: Date?) throws -> [Course] {
+        guard let since else { return try context.fetch(FetchDescriptor<Course>()) }
+        let descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.updatedAt > since })
+        return try context.fetch(descriptor)
+    }
+
+    private func fetchChangedCards(in context: ModelContext, since: Date?) throws -> [Flashcard] {
+        guard let since else { return try context.fetch(FetchDescriptor<Flashcard>()) }
+        let descriptor = FetchDescriptor<Flashcard>(predicate: #Predicate { $0.updatedAt > since })
+        return try context.fetch(descriptor)
+    }
+
+    private func fetchChangedLogs(in context: ModelContext, since: Date?) throws -> [ReviewLog] {
+        guard let since else { return try context.fetch(FetchDescriptor<ReviewLog>()) }
+        let descriptor = FetchDescriptor<ReviewLog>(predicate: #Predicate { $0.reviewedAt > since })
+        return try context.fetch(descriptor)
+    }
+
+    private func fetchChangedExams(in context: ModelContext, since: Date?) throws -> [Exam] {
+        guard let since else { return try context.fetch(FetchDescriptor<Exam>()) }
+        let descriptor = FetchDescriptor<Exam>(predicate: #Predicate { $0.updatedAt > since })
+        return try context.fetch(descriptor)
+    }
+
+    /// Pose `deleted_at` sur ce qu'on a effacé ici. L'échec n'arrête pas la synchro : on
+    /// réessaiera au prochain passage, et le tombstone local empêche déjà la résurrection.
+    private func flushTombstones() async {
+        let now = Date()
+        let patch = TombstonePatch(deleted_at: now, updated_at: now)
+        for (table, ids) in CloudTombstones.all() {
+            for id in ids {
+                try? await database.patch(
+                    patch,
+                    in: table,
+                    matching: [URLQueryItem(name: "id", value: "eq.\(id.uuidString.lowercased())")]
+                )
+            }
+        }
+    }
+
     // MARK: - Descente
 
     /// Fait descendre ce qui a changé côté serveur depuis le dernier passage.
