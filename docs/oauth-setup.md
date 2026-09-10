@@ -16,7 +16,7 @@ de l'app.
 | --- | --- | --- |
 | Schéma de retour iOS | `Micabo/Info.plist`, `AuthRedirect.scheme` | `micabo://auth-callback` |
 | Entitlement Apple | `Micabo/Micabo.entitlements` | `com.apple.developer.applesignin` |
-| Identifiant d'app | `project.pbxproj` | `com.micabo.app` |
+| Identifiant d'app | `project.pbxproj` | `com.micabo.ios` |
 | Bouton Apple | `AuthView` | `SignInWithAppleButton`, nonce haché en SHA-256 |
 | Flux Google | `OAuthFlows.swift` | `ASWebAuthenticationSession` + PKCE |
 | Détection des fournisseurs | `SupabaseAuthClient.providers()` | lue au lancement |
@@ -82,7 +82,7 @@ prévisualisation. Côté site, le flux est le même à un détail près : la bi
 > **Un client « iOS » chez Google n'est pas nécessaire.** Il ne sert qu'au SDK Google Sign-In
 > natif, qui rend un `id_token` échangeable en `grant_type=id_token`. C'est plus rapide d'un
 > aller-retour, mais ça ajoute une dépendance externe à l'app. Le jour où ce gain compte, il
-> faudra créer un client de type **iOS** avec le bundle `com.micabo.app`, l'ajouter dans le
+> faudra créer un client de type **iOS** avec le bundle `com.micabo.ios`, l'ajouter dans le
 > champ « Authorized Client IDs » du fournisseur Google de Supabase, et appeler
 > `SupabaseAuthClient.signIn(idToken:provider:nonce:)` — la méthode existe déjà, c'est celle
 > qu'utilise Apple.
@@ -100,19 +100,35 @@ vérifie le jeton.
 
 1. [developer.apple.com](https://developer.apple.com/account) → **Certificates, Identifiers &
    Profiles → Identifiers**.
-2. Ouvrir l'App ID `com.micabo.app` (ou le créer).
+2. Ouvrir l'App ID `com.micabo.ios` (ou le créer).
 3. Cocher la capacité **Sign in with Apple**, puis **Save**.
 4. Dans Xcode, la capacité doit apparaître dans **Signing & Capabilities** de la cible.
    `Micabo/Micabo.entitlements` est déjà en place et déjà référencé par les deux
    configurations de build : il ne reste qu'à laisser Xcode régénérer le profil.
 
-> **Xcode Cloud ne coche pas cette case à votre place.** La signature gérée dans le cloud ne
-> fait que créer certificats et profils à partir de ce que l'App ID déclare déjà. Tant que
-> **Sign in with Apple** n'est pas activé sur `com.micabo.app` dans le portail, l'archive se
-> construit mais **l'export échoue** (`xcodebuild -exportArchive`, code 70, pour ad-hoc,
-> development et app-store à la fois) : le profil généré ne porte pas l'entitlement
-> `com.apple.developer.applesignin` que `Micabo.entitlements` demande. Le journal exact est
-> dans les artefacts du build, `*-export-archive-logs/IDEDistribution.standard.log`.
+> **L'export d'archive échoue quand le profil ne peut pas être fabriqué.** Le symptôme est
+> toujours le même et ne dit rien de lui-même : `xcodebuild -exportArchive` sort en **code
+> 70**, pour ad-hoc, development et app-store **à la fois**. Trois méthodes qui échouent
+> ensemble, c'est la signature, jamais le code — l'archive, elle, s'est construite. Deux
+> causes, dans cet ordre :
+>
+> 1. **Le bundle ne correspond à aucun App ID enregistré.** `PRODUCT_BUNDLE_IDENTIFIER` doit
+>    être exactement l'App ID du portail — `com.micabo.ios`. La signature gérée ne crée pas
+>    l'App ID manquant, elle cherche celui qu'on lui demande et ne le trouve pas.
+> 2. **La capacité n'est pas activée sur cet App ID.** La signature gérée ne fait que fabriquer
+>    certificats et profils à partir de ce que l'App ID **déclare déjà** : Xcode Cloud ne coche
+>    pas la case à votre place. Sans **Sign in with Apple** sur `com.micabo.ios`, le profil ne
+>    porte pas l'entitlement `com.apple.developer.applesignin` que `Micabo.entitlements`
+>    demande, et l'export refuse.
+>
+> Le journal qui nomme la cause exacte est dans les artefacts du build :
+> `*-export-archive-logs/IDEDistribution.standard.log`.
+
+> **Changer le bundle change d'app aux yeux d'iOS.** Une installation portant l'ancien
+> identifiant n'est pas mise à jour : elle reste à côté, avec son propre conteneur. Les données
+> locales de cette installation-là ne suivent pas — elles redescendent à la connexion, par la
+> synchro. Sans conséquence tant que rien n'est publié ; à ne plus faire une fois l'app sur
+> l'App Store.
 
 ### 2.2 Le Service ID
 
@@ -121,16 +137,17 @@ C'est l'identifiant que Supabase présente à Apple. Il est distinct de l'App ID
 1. **Identifiers → +  → Services IDs**.
 2. Description `Micabo Web`, identifiant `com.micabo.app.service` (n'importe quel identifiant
    distinct de l'App ID convient — il faut juste s'en souvenir, c'est le « Client ID » côté
-   Supabase).
+   Supabase). Il s'écrit `.app.` là où l'App ID s'écrit `.ios` : **ce n'est pas une faute de
+   frappe**, ce sont deux identifiants sans rapport, et celui-ci est déjà déclaré chez Apple.
 3. Une fois créé, l'ouvrir → **Sign in with Apple → Configure** :
-   - **Primary App ID** : `com.micabo.app`
+   - **Primary App ID** : `com.micabo.ios`
    - **Domains and Subdomains** : `<REF>.supabase.co`
    - **Return URLs** : `https://<REF>.supabase.co/auth/v1/callback`
 
 ### 2.3 La clé de signature
 
 1. **Keys → +**, nom `Micabo Sign in with Apple`, cocher **Sign in with Apple**, choisir
-   `com.micabo.app` comme Primary App ID.
+   `com.micabo.ios` comme Primary App ID.
 2. Télécharger le fichier `.p8`. **Il ne peut être téléchargé qu'une fois.**
 3. Noter le **Key ID** (10 caractères) et le **Team ID** (en haut à droite du portail).
 
@@ -154,7 +171,7 @@ iOS n'a pas besoin de ce secret (il envoie un `id_token` natif). Le site, si.
 3. Coller le JWT généré dans **Secret Key (for OAuth)** — pas le fichier `.p8`.
 4. Client IDs, **Service ID en premier** :
    ```
-   com.micabo.app.service, com.micabo.app
+   com.micabo.app.service, com.micabo.ios
    ```
 5. Enregistrer. Réessayer le bouton Apple sur le site. Aucun redéploiement.
 
@@ -164,16 +181,16 @@ Tableau de bord → **Authentication → Sign In / Providers → Apple** :
 
 | Champ | Valeur |
 | --- | --- |
-| Client IDs | `com.micabo.app.service, com.micabo.app` |
+| Client IDs | `com.micabo.app.service, com.micabo.ios` |
 | Secret Key (for OAuth) | le secret **généré** depuis le `.p8` (outil sur la page Apple de Supabase), pas le fichier brut |
 | Key ID | le Key ID de l'étape 2.3 |
 | Team ID | le Team ID du compte |
 
 **Le Service ID en premier.** Supabase présente le premier Client ID à Apple pour le flux
-web (`signInWithOAuth`). Si `com.micabo.app` est devant, iOS marche et le site échoue.
+web (`signInWithOAuth`). Si `com.micabo.ios` est devant, iOS marche et le site échoue.
 
 **Les deux identifiants**, séparés par une virgule. Le jeton du bouton natif porte le
-**bundle de l'app** (`com.micabo.app`) ; celui d'un retour web porte le Service ID. Si un
+**bundle de l'app** (`com.micabo.ios`) ; celui d'un retour web porte le Service ID. Si un
 seul des deux est déclaré, l'un des deux chemins échoue avec « Unacceptable audience in
 id_token », un message qui ne dit pas lequel.
 
@@ -190,7 +207,7 @@ erreur — c'est presque toujours ça, pas le code.
 
 | Champ | Valeur |
 | --- | --- |
-| Primary App ID | `com.micabo.app` |
+| Primary App ID | `com.micabo.ios` |
 | Domains and Subdomains | `khuzodsrznanzhwlbjbx.supabase.co` |
 | Return URLs | `https://khuzodsrznanzhwlbjbx.supabase.co/auth/v1/callback` |
 
@@ -209,7 +226,7 @@ https://micabo.app/auth/callback
 Et le fournisseur Apple (étape 2.4) doit lister **les deux** Client IDs :
 
 ```
-com.micabo.app.service, com.micabo.app
+com.micabo.app.service, com.micabo.ios
 ```
 
 Le premier est le jeton du **web**. S'il manque, iOS marche et le site affiche
