@@ -9,9 +9,15 @@ const HOUR = 3_600_000;
 describe("shouldOpenDiscount", () => {
   const base = { isPaid: false, courseCount: 1, seen: false, startedAt: null, now: 0 };
 
-  it("s'ouvre au premier cours, une seule fois", () => {
+  it("s'ouvre au premier cours, une seule fois par fenêtre", () => {
     expect(shouldOpenDiscount(base)).toBe(true);
-    expect(shouldOpenDiscount({ ...base, seen: true })).toBe(false);
+    expect(shouldOpenDiscount({ ...base, seen: true, startedAt: 0, now: HOUR })).toBe(false);
+  });
+
+  it("se représente quand « déjà vue » n'a jamais démarré de décompte", () => {
+    // L'état bâtard d'une version qui marquait la carte vue sans poser son instant :
+    // ni pop-up, ni pastille, et le tarif réduit devenait introuvable.
+    expect(shouldOpenDiscount({ ...base, seen: true, startedAt: null })).toBe(true);
   });
 
   it("ne s'ouvre pas sans cours importé", () => {
@@ -23,9 +29,17 @@ describe("shouldOpenDiscount", () => {
     expect(shouldOpenDiscount({ ...base, isPaid: true, debug: false })).toBe(false);
   });
 
-  it("laisse tomber une offre commencée il y a plus de vingt-quatre heures", () => {
+  it("se retire à la fin de la fenêtre, puis revient après son repos", () => {
+    // Fenêtre en cours : la carte peut encore s'ouvrir tant qu'on ne l'a pas vue.
     expect(shouldOpenDiscount({ ...base, startedAt: 0, now: 23 * HOUR })).toBe(true);
+    // Fenêtre finie : l'offre se tait pendant le repos.
     expect(shouldOpenDiscount({ ...base, startedAt: 0, now: 25 * HOUR })).toBe(false);
+    expect(shouldOpenDiscount({ ...base, startedAt: 0, now: 71 * HOUR })).toBe(false);
+    // Repos passé : elle revient, vue ou pas vue.
+    expect(shouldOpenDiscount({ ...base, startedAt: 0, now: 72 * HOUR })).toBe(true);
+    expect(shouldOpenDiscount({ ...base, seen: true, startedAt: 0, now: 72 * HOUR })).toBe(true);
+    // Un abonné n'en revoit jamais, quel que soit le temps passé.
+    expect(shouldOpenDiscount({ ...base, isPaid: true, startedAt: 0, now: 72 * HOUR })).toBe(false);
   });
 });
 
@@ -44,6 +58,15 @@ describe("shouldShowDiscountBadge", () => {
 
   it("n'apparaît jamais pour un abonné", () => {
     expect(shouldShowDiscountBadge({ ...base, isPaid: true })).toBe(false);
+  });
+});
+
+describe("le repos", () => {
+  it("sépare deux fenêtres de quarante-huit heures", () => {
+    expect(discount.restSeconds).toBe(48 * 3600);
+    expect(discount.hasRested(0, 24 * HOUR)).toBe(false);
+    expect(discount.hasRested(0, 71 * HOUR)).toBe(false);
+    expect(discount.hasRested(0, 72 * HOUR)).toBe(true);
   });
 });
 

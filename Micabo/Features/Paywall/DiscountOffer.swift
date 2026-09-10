@@ -25,6 +25,17 @@ enum DiscountOffer {
     /// Même nombre que `windowSeconds` : le pop-up ne peut pas dire autre chose que la pastille.
     static let urgencySeconds = 86400
 
+    /// **Le repos entre deux fenêtres.** Quarante-huit heures.
+    ///
+    /// L'offre ne meurt pas au bout de vingt-quatre heures : elle se retire, puis elle
+    /// revient. Une offre qui disparaît pour toujours parce qu'on a fermé un cadeau un soir
+    /// de semaine est une offre qu'on a perdue sans l'avoir refusée - et, plus gênant, un
+    /// tarif que plus rien dans le produit ne permet d'atteindre.
+    ///
+    /// Deux jours, parce que le repos doit se sentir : une urgence qui repart le lendemain
+    /// matin n'est plus une urgence, c'est un prix affiché.
+    static let restSeconds = 172800
+
     enum Key {
         /// L'instant d'ouverture, en secondes depuis 1970. Zéro : jamais ouvert ici.
         static let startedAt = "micabo.discount.startedAt"
@@ -73,6 +84,14 @@ enum DiscountOffer {
     /// L'offre est encore achetable. Passé vingt-quatre heures, la pastille disparaît.
     static func isLive(startedAt: Date, now: Date = Date()) -> Bool {
         windowRemaining(startedAt: startedAt, now: now) > 0
+    }
+
+    /// L'offre peut se relancer : la fenêtre est finie **et** le repos est passé.
+    ///
+    /// C'est ce qui fait revenir le cadeau. Sans cette règle, une fenêtre expirée fermait
+    /// définitivement le tarif réduit : ni cadeau, ni pastille, et aucun autre chemin.
+    static func hasRested(startedAt: Date, now: Date = Date()) -> Bool {
+        Int(now.timeIntervalSince(startedAt)) >= windowSeconds + restSeconds
     }
 
     /// « 59:59 » sous l'heure, « 23:14:07 » au-dessus.
@@ -139,18 +158,30 @@ enum DiscountOffer {
         return Date(timeIntervalSince1970: stored)
     }
 
-    /// Ouvre l'offre, et **ne la rouvre jamais.**
+    /// Ouvre la fenêtre de l'offre, ou rend celle qui court déjà.
     ///
-    /// L'instant s'écrit une seule fois : sans ce garde, chaque affichage repousserait la
-    /// fin des vingt-quatre heures et le décompte ne descendrait plus.
+    /// Deux règles, et elles tirent en sens contraire. Une fenêtre **en cours** ne se remet
+    /// pas à zéro : sans ce garde, chaque affichage repousserait la fin des vingt-quatre
+    /// heures et le décompte ne descendrait plus. Une fenêtre **finie**, elle, ouvre la
+    /// suivante : l'offre revient, elle ne meurt pas. Le « déjà vu » repart alors, puisqu'on
+    /// parle d'une nouvelle fenêtre.
     @discardableResult
     static func begin(now: Date = Date(), in defaults: UserDefaults = .standard) -> Date {
-        if let existing = start(in: defaults) { return existing }
+        if let existing = start(in: defaults), isLive(startedAt: existing, now: now) { return existing }
         defaults.set(now.timeIntervalSince1970, forKey: Key.startedAt)
+        defaults.set(false, forKey: Key.seen)
         return now
     }
 
-    static func markSeen(in defaults: UserDefaults = .standard) {
+    /// Le cadeau a été montré. **Et la fenêtre démarre ici aussi.**
+    ///
+    /// Sans ce démarrage, refermer le cadeau avant le troisième appui laissait un « déjà vu »
+    /// sans décompte : le cadeau ne se représentait plus (déjà vu) et la pastille ne
+    /// s'affichait pas (pas d'instant). Le tarif réduit devenait alors introuvable dans tout
+    /// le produit, sans que rien ne le signale — et c'est exactement ce qu'App Review a
+    /// constaté le 10 septembre.
+    static func markSeen(now: Date = Date(), in defaults: UserDefaults = .standard) {
+        begin(now: now, in: defaults)
         defaults.set(true, forKey: Key.seen)
     }
 
@@ -181,9 +212,24 @@ enum DiscountOffer {
         // Le cadeau vient après le premier cours. Sans cours importé, il n'y a rien à
         // récompenser et l'offre passe pour une réclame.
         guard courseCount >= FreeTier.courses else { return false }
-        guard !seen else { return false }
-        if let startedAt, !isLive(startedAt: startedAt, now: now) { return false }
-        return true
+        // Un « déjà vu » sans instant d'ouverture est un état bâtard, laissé par une version
+        // qui marquait le cadeau vu sans démarrer son décompte. On le représente : rien n'a
+        // jamais été chronométré, donc rien n'a été offert.
+        guard let startedAt else { return true }
+        // Fenêtre en cours : une seule fois, la pastille prend ensuite le relais.
+        if isLive(startedAt: startedAt, now: now) { return !seen }
+        // Fenêtre finie : l'offre revient, après son repos.
+        return hasRested(startedAt: startedAt, now: now)
+    }
+
+    /// **Le tarif réduit est-il atteignable ?**
+    ///
+    /// C'est la question des Réglages, et elle n'est pas celle du cadeau : le cadeau surgit
+    /// une fois, la rangée des Réglages reste. Elle ne demande donc ni que la fenêtre coure
+    /// ni que le cadeau n'ait pas été vu — l'ouvrir depuis là relance une fenêtre. Sans ce
+    /// chemin, une offre en repos n'était atteignable nulle part.
+    static func isReachable(isPro: Bool, courseCount: Int) -> Bool {
+        !isPro && courseCount >= FreeTier.courses
     }
 
     /// Faut-il garder la pastille et son décompte ?

@@ -24,6 +24,19 @@ export const windowSeconds = 86400;
 export const urgencySeconds = 86400;
 
 /**
+ * **Le repos entre deux fenêtres.** Quarante-huit heures.
+ *
+ * L'offre ne meurt pas au bout de vingt-quatre heures : elle se retire, puis elle
+ * revient. Une offre qui disparaît pour toujours parce qu'on a fermé une carte un
+ * soir de semaine est une offre qu'on a perdue sans l'avoir refusée - et, plus
+ * gênant, un tarif que plus rien dans le produit ne permet d'atteindre.
+ *
+ * Deux jours, parce que le repos doit se sentir : une urgence qui repart le
+ * lendemain matin n'est plus une urgence, c'est un prix affiché.
+ */
+export const restSeconds = 172800;
+
+/**
  * Combien de secondes restent sur `span`, depuis `startedAt`.
  *
  * Jamais négatif, et jamais plus que `span` : une horloge locale en avance sur
@@ -72,6 +85,18 @@ export function windowRemaining(startedAt: number, now: number): number {
 /** L'offre est encore achetable. Passé vingt-quatre heures, la pastille disparaît. */
 export function isLive(startedAt: number, now: number): boolean {
   return windowRemaining(startedAt, now) > 0;
+}
+
+/**
+ * L'offre peut se relancer : la fenêtre est finie **et** le repos est passé.
+ *
+ * C'est ce qui fait revenir le cadeau. Sans cette règle, une fenêtre expirée fermait
+ * définitivement le tarif réduit : ni pop-up, ni pastille, et aucun autre chemin.
+ */
+export function hasRested(startedAt: number, now: number): boolean {
+  const elapsed = Math.floor((now - startedAt) / 1000);
+  if (!Number.isFinite(elapsed)) return false;
+  return elapsed >= windowSeconds + restSeconds;
 }
 
 /**

@@ -103,6 +103,7 @@ describe("l'offre cadeau, des deux côtés", () => {
     expect(swiftConstant(discountOffer, "taps")).toBe(String(discount.taps));
     expect(swiftConstant(discountOffer, "urgencySeconds")).toBe(String(discount.urgencySeconds));
     expect(swiftConstant(discountOffer, "windowSeconds")).toBe(String(discount.windowSeconds));
+    expect(swiftConstant(discountOffer, "restSeconds")).toBe(String(discount.restSeconds));
     expect(discount.urgencySeconds).toBe(discount.windowSeconds);
   });
 
