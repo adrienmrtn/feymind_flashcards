@@ -60,6 +60,8 @@ struct ImportView: View {
 
     @State private var isReading = false
     @State private var isGenerating = false
+    /// La génération en cours, pour pouvoir l'interrompre depuis l'écran d'attente.
+    @State private var generationTask: Task<Void, Never>?
     /// Échec raconté à l'utilisateur, avec ce qu'il peut faire.
     @State private var failure: ImportFailure?
     /// Cours déjà importé qui ressemble à celui-ci : on demande avant de doubler.
@@ -126,7 +128,7 @@ struct ImportView: View {
 
                 MicaboBottomBar {
                     Button {
-                        Task { await start(offline: false) }
+                        generationTask = Task { await start(offline: false) }
                     } label: {
                         HStack(spacing: MicaboSpacing.xs) {
                             Image(systemName: "sparkles")
@@ -171,7 +173,8 @@ struct ImportView: View {
                 } else if isGenerating {
                     GenerationOverlay(
                         title: L10n.t("ios.writingSheet", locale: .resolved()),
-                        steps: SheetGenerationSteps.all(reading: readingStepTitle)
+                        steps: SheetGenerationSteps.all(reading: readingStepTitle),
+                        onCancel: { generationTask?.cancel() }
                     )
                 }
             }
@@ -194,7 +197,7 @@ struct ImportView: View {
                 Button(L10n.t("ios.importAnyway", locale: .resolved())) {
                     duplicate = nil
                     ignoresDuplicate = true
-                    Task { await start(offline: false) }
+                    generationTask = Task { await start(offline: false) }
                 }
                 Button(L10n.t("app.common.cancel", locale: .resolved()), role: .cancel) { duplicate = nil }
             } message: { existing in
@@ -213,20 +216,20 @@ struct ImportView: View {
         case .buildOffline:
             Button(L10n.t("ios.createWithoutAI", locale: .resolved())) {
                 failure = nil
-                Task { await start(offline: true) }
+                generationTask = Task { await start(offline: true) }
             }
         case .enableVision:
             Button(L10n.t("ios.analyzeFigures", locale: .resolved())) {
                 failure = nil
                 analyzeVisuals = true
-                Task { await start(offline: false) }
+                generationTask = Task { await start(offline: false) }
             }
         case .retry:
             // Reprise, pas reprise à zéro : ce qui a déjà été obtenu est gardé, donc une
             // transcription réussie ne repart pas sur le réseau parce que l'analyse a lâché.
             Button(L10n.t("ios.retry", locale: .resolved())) {
                 failure = nil
-                Task { await start(offline: false) }
+                generationTask = Task { await start(offline: false) }
             }
         }
     }
@@ -870,6 +873,10 @@ struct ImportView: View {
             do {
                 generated = try await aiService.generateCourse(request)
             } catch {
+                // L'utilisateur a abandonné depuis l'écran d'attente : rien à raconter. La
+                // couche réseau a déjà traduit l'annulation en panne ordinaire, d'où ce test
+                // sur la tâche plutôt que sur l'erreur.
+                if Task.isCancelled { return }
                 failure = ImportFailure(
                     title: L10n.t("ios.err.analysisFailed", locale: .resolved()),
                     message: "\(describe(error)) \(L10n.t("ios.err.notImported", locale: .resolved()))",

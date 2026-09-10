@@ -18,6 +18,11 @@ import SwiftUI
 struct GenerationOverlay: View {
     let title: String
     let steps: [String]
+    /// **Une porte de sortie, tard.** Un appel réseau qui traîne ne se voit pas d'ici : la
+    /// jauge plafonne à 94 % et l'écran paraît figé. Après quarante secondes - le double
+    /// d'une génération ordinaire - un bouton permet d'abandonner sans tuer l'app. Absent
+    /// quand l'appelant ne sait pas interrompre (la lecture d'un PDF par Vision, par exemple).
+    var onCancel: (() -> Void)? = nil
 
     @State private var currentStep = 0
     @State private var laidBlocks = 0
@@ -87,7 +92,19 @@ struct GenerationOverlay: View {
                 }
 
                 Spacer(minLength: 0)
+
+                if let onCancel, elapsed > 40 {
+                    Button(L10n.t("ios.cancelGeneration", locale: .resolved()), action: onCancel)
+                        .font(MicaboFont.hanken(15, weight: .semibold))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 18)
+                        .background(MicaboColor.surface, in: Capsule())
+                        .overlay { Capsule().strokeBorder(MicaboColor.hairline, lineWidth: 1) }
+                        .transition(.opacity)
+                }
             }
+            .animation(.easeOut(duration: 0.3), value: elapsed > 40)
             .padding(MicaboSpacing.lg)
         }
         .onAppear(perform: start)

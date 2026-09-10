@@ -26,6 +26,9 @@ final class CloudSync {
         case failed(String)
     }
 
+    /// Les cours dont les cartes ont été refusées pendant la montée en cours.
+    private var refusedCourses: [String] = []
+
     private(set) var state: State = .idle
     /// Incrémenté à chaque aller-retour réussi. Les écrans s'en servent pour
     /// savoir qu'il faut relire leurs totaux, sans s'abonner à chaque ligne écrite.
@@ -82,6 +85,7 @@ final class CloudSync {
         guard state != .syncing else { return }
 
         state = .syncing
+        refusedCourses = []
         let since = lastSyncedAt
         // Le nouveau repère est pris **avant** les requêtes. Si une carte est notée pendant
         // qu'un envoi réseau est suspendu, sa date sera postérieure à ce repère et le passage
@@ -98,7 +102,15 @@ final class CloudSync {
             lastSyncedAt = checkpoint
             epoch += 1
             LibraryCensus.forget()
-            state = .done(Date())
+            // Un cours dont les cartes ont été refusées ne bloque plus le reste, mais il ne
+            // doit pas passer pour synchronisé : on le nomme, et le prochain passage retentera.
+            if refusedCourses.isEmpty {
+                state = .done(Date())
+            } else {
+                state = .failed(
+                    L10n.t("ios.syncRefused", locale: .resolved(), vars: ["titles": refusedCourses.joined(separator: ", ")])
+                )
+            }
         } catch {
             // Une panne de synchro ne casse rien : les données locales sont intactes et le
             // prochain passage renverra tout. On la garde visible dans les réglages, sans
@@ -145,7 +157,7 @@ final class CloudSync {
             .filter {
                 !CloudTombstones.contains(CloudTable.flashcards, id: $0.id)
             }
-        try await database.upsert(cards.map { record(for: $0, userID: userID) }, into: CloudTable.flashcards)
+        try await pushCards(cards, userID: userID)
 
         // L'historique est en ajout seul. Renvoyer les milliers d'anciennes lignes à chaque
         // ouverture ne les dupliquait pas, mais faisait encoder et transférer tout le passé
@@ -160,6 +172,52 @@ final class CloudSync {
         try await database.upsert(exams.map { record(for: $0, userID: userID) }, into: CloudTable.exams)
 
         try await pushOffDays(context: context, userID: userID)
+    }
+
+    private struct IDRow: Decodable {
+        var id: UUID
+    }
+
+    /// **Les cartes montent cours par cours, et jamais avant leur cours.**
+    ///
+    /// Le serveur refuse une carte dont le cours n'est pas à lui (`flashcards_course_owner`),
+    /// et un envoi groupé est tout ou rien : **une** carte orpheline faisait rejeter le lot
+    /// entier, à chaque passage, sans fin - le compte n'avait alors aucune carte sur le site,
+    /// et une réinstallation les perdait pour de bon. C'est arrivé le 10 septembre.
+    ///
+    /// D'où trois précautions. On relit d'abord les cours que le serveur connaît ; un cours
+    /// absent est envoyé avant ses cartes (il a pu échapper au tri par date, ou être né sous
+    /// un autre compte). Les cartes partent ensuite **par cours**, pour qu'un cours refusé
+    /// n'entraîne que les siennes. Et un refus ne coupe pas la montée : les autres tables
+    /// suivent, et le refus est dit à la fin, dans les Réglages, au lieu d'être avalé.
+    private func pushCards(_ cards: [Flashcard], userID: UUID) async throws {
+        guard !cards.isEmpty else { return }
+        let mine = URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")
+        let known = Set(
+            try await database.rows(IDRow.self, from: CloudTable.courses, select: "id", filters: [mine], limit: 5000)
+                .map(\.id)
+        )
+
+        var groups: [UUID: [Flashcard]] = [:]
+        for card in cards {
+            // Une carte sans cours n'a plus de place nulle part : le cours a été effacé et
+            // la cascade n'est pas encore passée. Elle ne monte pas.
+            guard let courseID = card.course?.id else { continue }
+            groups[courseID, default: []].append(card)
+        }
+
+        for (courseID, group) in groups {
+            guard let course = group.first?.course else { continue }
+            if CloudTombstones.contains(CloudTable.courses, id: courseID) { continue }
+            do {
+                if !known.contains(courseID) {
+                    try await database.upsert([record(for: course, userID: userID)], into: CloudTable.courses)
+                }
+                try await database.upsert(group.map { record(for: $0, userID: userID) }, into: CloudTable.flashcards)
+            } catch {
+                refusedCourses.append(course.title)
+            }
+        }
     }
 
     /// **Les journées fermées montent, et les décochées s'effacent.**
