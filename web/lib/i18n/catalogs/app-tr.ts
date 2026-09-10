@@ -1029,6 +1029,15 @@ export const appTr = {
     trialBadge: "{days} gün ücretsiz",
     cancelAnytime: "İstediğin an iptal",
     renewalYearly: "Sonra yılda {price}, istediğin an iptal",
+    // Notre phrase sur la page Stripe, juste au-dessus du bouton de paiement.
+    stripeNote: {
+      trialYearly:
+        "Micabo Pro · {days} gün ücretsiz, sonra yılda {price}. İstediğin an iptal edebilirsin.",
+      yearly: "Micabo Pro · yılda {price}. İstediğin an iptal edebilirsin.",
+      trialWeekly:
+        "Micabo Pro · {days} gün ücretsiz, sonra haftada {price}. İstediğin an iptal edebilirsin.",
+      weekly: "Micabo Pro · haftada {price}. İstediğin an iptal edebilirsin.",
+    },
     perMonthSlash: "/ ay",
     perWeekSlash: "/ hafta",
     billedEach: "her {unit} faturalanır",

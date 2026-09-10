@@ -20,6 +20,7 @@ import {
 import { PAYWALL_EVENT } from "@/lib/paywall";
 import { useI18n } from "@/lib/i18n/client";
 import { requestTourRecheck } from "@/lib/tour/signal";
+import { usePresentment } from "@/lib/presentment";
 
 /**
  * Le paywall, **posé sur le tableau de bord**.
@@ -148,6 +149,14 @@ export function PaywallCard({
   hard?: boolean;
 }) {
   const { t } = useI18n();
+  /**
+   * **Le zéro se dit dans la devise du lecteur.**
+   *
+   * « Continuer pour 0,00 € » sur un écran turc : le montant était juste, la devise venait
+   * du réglage d'usine. C'est le premier prix que voit quelqu'un qui paiera en livres, et il
+   * annonçait une monnaie qu'on ne lui prélèvera jamais.
+   */
+  const currency = usePresentment();
   const titleId = useId();
   const [stage, setStage] = useState<Stage>(startAt);
   const index = STAGES.indexOf(stage);
@@ -280,7 +289,7 @@ export function PaywallCard({
                   {stage === "social"
                     ? t("app.common.continue")
                     : stage === "trial"
-                      ? t("app.paywall.continueFor", { price: pricing.priceText(0) })
+                      ? t("app.paywall.continueFor", { price: pricing.priceText(0, currency) })
                       : t("app.paywall.continueFree")}
                 </button>
               </div>

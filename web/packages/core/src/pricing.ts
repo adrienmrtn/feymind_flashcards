@@ -61,6 +61,62 @@ export function presentmentCurrencyFor(
   return "EUR";
 }
 
+/**
+ * Le pays d'où l'on vient, ramené à une de nos langues. Rien d'exhaustif : seulement les
+ * pays où l'on sait dire quelque chose, et où la langue ne se discute pas.
+ */
+const COUNTRY_LANGUAGE: Record<string, string> = {
+  tr: "tr",
+  fr: "fr",
+  mc: "fr",
+  de: "de",
+  at: "de",
+  es: "es",
+  mx: "es",
+  ar: "es",
+  co: "es",
+  cl: "es",
+  pe: "es",
+};
+
+/**
+ * **La langue de la page de paiement.**
+ *
+ * Ce qu'on répare : la locale envoyée à Checkout retombait sur « en » écrit en dur dès que la
+ * requête ne disait rien de clair. Trois sessions turques sur trente-trois sont parties comme
+ * ça - page **en anglais, prix en livres**, personne n'a payé. Un prix qu'on ne sait pas lire
+ * à côté d'une langue qu'on n'a pas choisie, c'est deux raisons de fermer l'onglet.
+ *
+ * L'ordre, du plus dit au plus deviné :
+ *
+ * 1. **Le choix** - segment d'URL ou cookie. Qui lit Micabo en français paie en français, où
+ *    qu'il soit. La page Stripe doit continuer la page d'où l'on vient, sinon le changement de
+ *    langue au moment de sortir la carte se lit comme un changement de site.
+ * 2. **Le navigateur**, quand il désigne une de nos langues. C'est un signal réel : la
+ *    personne lit déjà Micabo dans cette langue-là.
+ * 3. **Le pays**, en dernier - mais avant tout repli. C'est déjà lui qui décide de la devise ;
+ *    un checkout en livres a plus de raisons d'être en turc qu'en anglais.
+ *
+ * Rend `undefined` quand rien ne parle : Stripe déduit alors la langue de l'en-tête du
+ * navigateur, ce qui reste une meilleure supposition que la nôtre.
+ */
+export function checkoutLocale(input: {
+  /** La langue choisie - URL ou cookie -, et non celle qu'on a supposée. */
+  chosen?: string | null;
+  /** La langue du navigateur, seulement si elle tombe sur une des nôtres. */
+  navigator?: string | null;
+  /** Le pays de scolarisation, `profiles.country_code`. */
+  country?: string | null;
+}): string | undefined {
+  const said = [input.chosen, input.navigator]
+    .map((value) => value?.trim().toLowerCase().split("-")[0])
+    .find((value) => Boolean(value));
+  if (said) return said;
+
+  const land = input.country?.trim().toLowerCase();
+  return land ? COUNTRY_LANGUAGE[land] : undefined;
+}
+
 /** Combien de fois par an la somme est prélevée. Sans ce ramené à l'année, « 7,99 € » a
  * l'air moins cher que « 69,99 € ». */
 const OCCURRENCES_PER_YEAR: Record<BillingPeriod, number> = { year: 1, week: 52 };

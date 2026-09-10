@@ -60,3 +60,27 @@ export function planCaption(
   const unit = t(plan.period === "year" ? "app.paywall.periodYear" : "app.paywall.periodWeek");
   return t("app.paywall.billedEach", { unit });
 }
+
+/**
+ * **La phrase qu'on écrit sur la page Stripe**, au-dessus du bouton de paiement.
+ *
+ * Checkout est une page blanche à bouton bleu : on y arrive depuis une carte Micabo qui
+ * annonçait « 325 ₺ / ay », et on y lit « 3 899,99 ₺ » sans transition. Les deux chiffres sont
+ * vrais - l'un est le mensuel équivalent, l'autre ce qui sera prélevé -, mais celui qui les
+ * découvre à cet instant-là n'a aucune raison de le savoir.
+ *
+ * Cette phrase dit les deux, dans la langue du lecteur : ce qu'il achète, ce qui est gratuit,
+ * ce qui sera prélevé et quand. C'est le seul endroit de Checkout où l'on a le droit de parler.
+ */
+export function checkoutNote(
+  t: Translator,
+  plan: pricing.Plan,
+  currency: pricing.PresentmentCurrency,
+): string {
+  const period = plan.period === "year" ? "Yearly" : "Weekly";
+  const key = pricing.hasTrial(plan) ? `trial${period}` : period.toLowerCase();
+  return t(`app.paywall.stripeNote.${key}`, {
+    price: pricing.priceText(pricing.presentmentAmount(plan, currency), currency),
+    days: plan.trialDays,
+  });
+}
