@@ -120,11 +120,25 @@ enum ExamPlanner {
     /// jour J tout en gardant des sessions faisables.
     static let closingDays = 3
 
+    /// **Les jours sur lesquels on a le droit de poser un passage.**
+    ///
+    /// Une exception, et elle compte : si *tous* les jours sont fermés, on les rend tous.
+    /// Rendre un plan vide serait obéir à la lettre en trahissant ce qu'on nous demande, qui
+    /// est de réviser. C'est `usableDays` du noyau, à la lettre.
+    static func usableDays(window: Int, offDays: [Int]) -> [Int] {
+        let all = Array(0..<max(0, window))
+        guard !offDays.isEmpty else { return all }
+        let closed = Set(offDays)
+        let open = all.filter { !closed.contains($0) }
+        return open.isEmpty ? all : open
+    }
+
     static func plan(
         cards: [ExamCard],
         examDate: Date,
         now: Date = Date(),
         intensity: ExamIntensity = .standard,
+        offDays: [Int] = [],
         calendar: Calendar = MicaboCalendar.shared
     ) -> ExamPlan {
         let today = calendar.startOfDay(for: now)
@@ -135,6 +149,7 @@ enum ExamPlanner {
         // examen aujourd'hui ou demain ne laisse qu'une journée, celle-ci.
         let window = max(1, daysRemaining)
         let lastReviewDay = calendar.date(byAdding: .day, value: window - 1, to: today) ?? today
+        let usable = usableDays(window: window, offDays: offDays)
 
         var days: [UUID: [Int]] = [:]
         var load = Array(repeating: 0, count: window)
@@ -144,7 +159,8 @@ enum ExamPlanner {
             let offsets = ladder(
                 passes: passes(for: card, intensity: intensity),
                 window: window,
-                phase: index
+                phase: index,
+                usable: usable
             )
             days[card.id] = offsets
             total += offsets.count
@@ -199,28 +215,37 @@ enum ExamPlanner {
     /// veille. Le **premier** est échelonné lui aussi, pour que le premier jour ne prenne
     /// pas tout. Entre les deux, les passages sont **régulièrement espacés**, ce qui donne
     /// une charge quotidienne à peu près constante, la seule qu'on puisse tenir.
-    static func ladder(passes: Int, window: Int, phase: Int) -> [Int] {
+    /// `usable` : les décalages ouverts. L'échelle raisonne sur des **rangs** dans cette
+    /// liste, pas sur des jours, et traduit à la fin. Sans liste, ce sont tous les jours de la
+    /// fenêtre et l'échelle est exactement celle d'avant les disponibilités.
+    static func ladder(passes: Int, window: Int, phase: Int, usable: [Int] = []) -> [Int] {
         guard window > 0 else { return [] }
 
-        let closing = max(1, min(window, closingDays))
-        let last = max(0, (window - 1) - (phase % closing))
+        let days = usable.isEmpty
+            ? Array(0..<window)
+            : usable.filter { $0 >= 0 && $0 < window }.sorted()
+        guard !days.isEmpty else { return [] }
+
+        let count = days.count
+        let closing = max(1, min(count, closingDays))
+        let last = max(0, (count - 1) - (phase % closing))
 
         // On ne peut pas voir une carte deux fois le même jour : le nombre de passages est
         // borné par le nombre de jours disponibles avant son dernier.
         let wanted = max(1, min(passes, last + 1))
-        guard wanted > 1 else { return [last] }
+        guard wanted > 1 else { return [days[last]] }
 
-        let span = max(1, window - wanted + 1)
+        let span = max(1, count - wanted + 1)
         let first = min(last, phase % span)
-        guard last > first else { return [last] }
+        guard last > first else { return [days[last]] }
 
-        var offsets: [Int] = []
+        var ranks: [Int] = []
         for step in 0..<wanted {
             let position = Double(first) + Double(last - first) * Double(step) / Double(wanted - 1)
-            let day = Int(position.rounded())
-            if offsets.last != day { offsets.append(day) }
+            let rank = Int(position.rounded())
+            if ranks.last != rank { ranks.append(rank) }
         }
-        if offsets.last != last { offsets.append(last) }
-        return offsets
+        if ranks.last != last { ranks.append(last) }
+        return ranks.compactMap { days.indices.contains($0) ? days[$0] : nil }
     }
 }

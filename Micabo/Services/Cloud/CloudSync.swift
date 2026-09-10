@@ -158,6 +158,46 @@ final class CloudSync {
                 !CloudTombstones.contains(CloudTable.exams, id: $0.id)
             }
         try await database.upsert(exams.map { record(for: $0, userID: userID) }, into: CloudTable.exams)
+
+        try await pushOffDays(context: context, userID: userID)
+    }
+
+    /// **Les journées fermées : l'appareil fait foi.**
+    ///
+    /// Cette table n'a pas d'`updated_at` et sa clé est `(user_id, day)` : il n'y a rien pour
+    /// arbitrer deux versions d'une même journée, et une journée n'a pas de « version » de
+    /// toute façon - elle est cochée ou elle ne l'est pas. On envoie donc l'état local et on
+    /// efface au serveur ce qui n'y est plus.
+    ///
+    /// C'est tenable parce qu'on ne règle pas ses disponibilités sur deux téléphones à la
+    /// fois. La descente, elle, ne sert qu'à **adopter** les journées du compte sur une
+    /// installation neuve : voir `pullOffDays`.
+    private func pushOffDays(context: ModelContext, userID: UUID) async throws {
+        let local = Set(OffDays.all(in: context).map(\.stamp))
+
+        if !local.isEmpty {
+            try await database.upsert(
+                local.map { AvailabilityRecord(user_id: userID, day: $0) },
+                into: CloudTable.availability
+            )
+        }
+
+        let remote = try await database.rows(
+            AvailabilityRecord.self,
+            from: CloudTable.availability,
+            select: "user_id,day,minutes",
+            filters: [URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())")],
+            limit: 500
+        )
+        for stale in remote.map(\.day) where !local.contains(stale) {
+            try? await database.remove(
+                from: CloudTable.availability,
+                matching: [
+                    URLQueryItem(name: "user_id", value: "eq.\(userID.uuidString.lowercased())"),
+                    URLQueryItem(name: "day", value: "eq.\(stale)")
+                ]
+            )
+        }
     }
 
     /// Les prédicats sont posés **dans SQLite**, pas après un `fetch` complet. C'est ce qui
@@ -416,6 +456,23 @@ final class CloudSync {
             log.id = remote.id
             log.card = card
             context.insert(log)
+        }
+
+        // Les journées fermées ne descendent qu'au **premier** passage. Ensuite, c'est
+        // l'appareil qui fait foi (voir `pushOffDays`) : redescendre à chaque synchro
+        // ressusciterait une journée qu'on vient de décocher, entre la descente et la montée.
+        if since == nil {
+            let remoteDays = try await database.rows(
+                AvailabilityRecord.self,
+                from: CloudTable.availability,
+                select: "user_id,day,minutes",
+                filters: [mine],
+                limit: 500
+            )
+            let known = OffDays.stamps(in: context)
+            for record in remoteDays where !known.contains(record.day) {
+                context.insert(OffDay(stamp: record.day))
+            }
         }
 
         // Une écriture locale ratée doit faire échouer le passage. Avancer le repère après
@@ -716,6 +773,8 @@ final class CloudSync {
             exam_date: exam.date,
             intensity: exam.intensityRaw,
             target_score: exam.targetScore,
+            kind: exam.kindRaw,
+            starting_point: exam.startingPointRaw,
             course_ids: exam.courseIDs,
             is_planned: exam.isPlanned,
             planned_at: exam.plannedAt,
@@ -733,7 +792,9 @@ final class CloudSync {
             date: remote.exam_date,
             courseIDs: remote.course_ids,
             intensity: ExamIntensity(rawValue: remote.intensity) ?? .standard,
-            targetScore: remote.target_score
+            targetScore: remote.target_score,
+            kind: ExamKind.from(remote.kind),
+            startingPoint: ExamStartingPoint.from(remote.starting_point)
         )
         apply(remote, to: exam)
         return exam
@@ -744,6 +805,10 @@ final class CloudSync {
         exam.date = remote.exam_date
         exam.intensityRaw = remote.intensity
         if let score = remote.target_score { exam.targetScore = score }
+        // Une ligne écrite avant que ces colonnes existent ne les porte pas : on garde alors
+        // ce qu'on a, plutôt que de tout ramener au défaut à chaque descente.
+        if let kind = remote.kind { exam.kindRaw = kind }
+        if let start = remote.starting_point { exam.startingPointRaw = start }
         exam.courseIDs = remote.course_ids
         exam.isPlanned = remote.is_planned
         exam.plannedAt = remote.planned_at

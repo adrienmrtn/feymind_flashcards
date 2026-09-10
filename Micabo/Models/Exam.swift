@@ -53,6 +53,12 @@ final class Exam {
     var intensityRaw: String = ExamIntensity.standard.rawValue
     /// Note visée, sur la droite 10–20. L'intensité s'en déduit.
     var targetScore: Int = 15
+    /// Le type d'épreuve. Il ne change pas la replanification : il décide de l'examen blanc
+    /// et des formats. Défaut `exam`, comme la colonne du serveur.
+    var kindRaw: String = ExamKind.exam.rawValue
+    /// D'où l'on part sur ce programme. Il **décale l'intensité** d'un cran : découvrir
+    /// demande un passage de plus par carte, entretenir un de moins.
+    var startingPointRaw: String = ExamStartingPoint.seen.rawValue
     /// Identifiants des cours au programme.
     var courseIDs: [UUID] = []
     /// Vrai quand la replanification a été appliquée aux cartes.
@@ -71,11 +77,15 @@ final class Exam {
         date: Date,
         courseIDs: [UUID] = [],
         intensity: ExamIntensity = .standard,
-        targetScore: Int? = nil
+        targetScore: Int? = nil,
+        kind: ExamKind = .exam,
+        startingPoint: ExamStartingPoint = .seen
     ) {
         self.id = id
         self.name = name
         self.date = date
+        self.kindRaw = kind.rawValue
+        self.startingPointRaw = startingPoint.rawValue
         self.createdAt = Date()
         self.updatedAt = Date()
         let score = TargetScore.clamp(targetScore ?? TargetScore.score(from: intensity))
@@ -88,6 +98,22 @@ final class Exam {
     var intensity: ExamIntensity {
         get { ExamIntensity(rawValue: intensityRaw) ?? .standard }
         set { intensityRaw = newValue.rawValue }
+    }
+
+    var kind: ExamKind {
+        get { ExamKind.from(kindRaw) }
+        set { kindRaw = newValue.rawValue }
+    }
+
+    var startingPoint: ExamStartingPoint {
+        get { ExamStartingPoint.from(startingPointRaw) }
+        set { startingPointRaw = newValue.rawValue }
+    }
+
+    /// L'intensité **effective** : celle qu'on a choisie, corrigée du point de départ. C'est
+    /// elle que le planificateur reçoit, jamais `intensity` seule.
+    var plannedIntensity: ExamIntensity {
+        startingPoint.intensity(from: intensity)
     }
 
     /// Jours restants, en journées entières. Négatif une fois l'examen passé.
