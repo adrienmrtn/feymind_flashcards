@@ -168,7 +168,7 @@ enum SheetDocument {
     static func inlineMarkup(in range: NSRange, of text: NSAttributedString) -> String {
         guard range.length > 0 else { return "" }
         var out = ""
-        text.enumerateAttributes(in: range, options: []) { attributes, runRange in
+        text.enumerateAttributes(in: range, options: []) { attributes, runRange, _ in
             if let attachment = attributes[.attachment] as? SheetMathAttachment {
                 if let latex = attachment.latex.nilIfBlank { out += "$\(latex)$" }
                 return

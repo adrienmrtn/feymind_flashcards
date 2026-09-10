@@ -397,7 +397,7 @@ struct SheetEditorView: UIViewRepresentable {
             }
             let next: SheetTextSize? = (size == nil || allSame) ? nil : size
             edit(range) { storage in
-                storage.enumerateAttributes(in: range, options: []) { attributes, runRange in
+                storage.enumerateAttributes(in: range, options: []) { attributes, runRange, _ in
                     if attributes[.attachment] != nil { return }
                     if let next { storage.addAttribute(SheetDocument.sizeKey, value: next.rawValue, range: runRange) }
                     else { storage.removeAttribute(SheetDocument.sizeKey, range: runRange) }
@@ -449,7 +449,7 @@ struct SheetEditorView: UIViewRepresentable {
             }
             storage.addAttribute(SheetDocument.kindKey, value: kind.rawValue, range: paragraph)
             storage.addAttribute(.paragraphStyle, value: SheetDocument.paragraphStyle(kind: kind), range: paragraph)
-            storage.enumerateAttributes(in: paragraph, options: []) { attributes, runRange in
+            storage.enumerateAttributes(in: paragraph, options: []) { attributes, runRange, _ in
                 if attributes[.attachment] != nil { return }
                 let struck = (attributes[.strikethroughStyle] as? Int ?? 0) != 0
                 storage.addAttribute(.foregroundColor, value: struck ? UIColor(MicaboColor.inkTertiary) : kind.color, range: runRange)

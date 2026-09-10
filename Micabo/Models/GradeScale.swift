@@ -40,9 +40,12 @@ enum TargetScore {
     }
 }
 
-struct GradeTick: Equatable {
+struct GradeTick: Equatable, Identifiable {
     var score: Int
     var label: String
+
+    /// La note **est** l'identité : deux crans du même barème ne peuvent pas la partager.
+    var id: Int { score }
 }
 
 /// La note qu'on vise, à la place d'une intensité abstraite.
