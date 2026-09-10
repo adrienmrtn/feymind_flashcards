@@ -41,12 +41,10 @@ struct CourseSheetView: View {
     /// parcours qui aboutit, plutôt qu'une opération dont il faut aller chercher le résultat.
     @State private var generatedCards: CourseCardsRoute?
     @State private var paywall: PaywallTrigger?
-    /// Le bloc ouvert dans son éditeur : son rang dans la partie lisible, et son contenu.
-    /// `-1` pour un bloc qu'on ajoute en fin de fiche.
-    @State private var editingBlock: EditedBlock?
-    /// Vrai pendant qu'on corrige : les blocs se touchent pour s'ouvrir, et « Expliquer »
-    /// se tait le temps de l'édition - les deux gestes se disputeraient le même passage.
-    @State private var isEditingSheet = false
+    /// L'état de l'éditeur de fiche, partagé avec sa barre d'outils.
+    @StateObject private var editorState = SheetEditorState()
+    /// La formule ouverte dans son éditeur, ou l'endroit où l'on en pose une.
+    @State private var formulaTarget: SheetFormulaTarget?
     /// Le cadeau du premier cours. Il se présente ici, sur la fiche qu'on vient d'obtenir :
     /// une offre posée avant qu'on ait vu le produit tourner n'a rien à récompenser.
     @State private var giftOffer: DiscountPresentation?
@@ -71,12 +69,6 @@ struct CourseSheetView: View {
     private enum Work: Equatable {
         case sheet
         case cards
-    }
-
-    struct EditedBlock: Identifiable {
-        var index: Int
-        var block: SheetBlock
-        var id: Int { index }
     }
 
     private var cards: [Flashcard] { loadedCards ?? [] }
@@ -126,12 +118,11 @@ struct CourseSheetView: View {
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(MicaboRadius.sheet)
         }
-        .sheet(item: $editingBlock) { edited in
-            SheetBlockEditorSheet(
-                initial: edited.block,
-                isNew: edited.index < 0,
-                onSave: { block in replaceBlock(at: edited.index, with: block) },
-                onDelete: edited.index < 0 ? nil : { replaceBlock(at: edited.index, with: nil) }
+        .sheet(item: $formulaTarget) { target in
+            FormulaEditorSheet(
+                initial: target.draft,
+                onDelete: target.isExisting ? { editorState.actions?.removeFormula(target) } : nil,
+                onApply: { draft in editorState.actions?.apply(draft, to: target) }
             )
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
@@ -204,10 +195,7 @@ struct CourseSheetView: View {
                 tile: MicaboTile.course(course, size: 52),
                 back: MicaboHeaderBack.back { dismiss() }
             ) {
-                HStack(spacing: MicaboSpacing.xs) {
-                    if sheet != nil { editSheetButton }
-                    courseMenu
-                }
+                courseMenu
             }
 
             if dueCount > 0 {
@@ -233,27 +221,6 @@ struct CourseSheetView: View {
         }
         parts.append(MicaboCopy.audience(of: course))
         return parts.isEmpty ? MicaboCopy.cards(cards.count) : parts.joined(separator: " · ")
-    }
-
-    /// **Corriger sa fiche se voit.**
-    ///
-    /// Le site laisse écrire dans la page. Le téléphone ne peut pas - un paragraphe y est
-    /// composé dans un `UITextView` en lecture, pour la sélection et « Expliquer » - mais ce
-    /// n'est pas une raison pour cacher le geste au troisième niveau d'un menu, où personne
-    /// ne l'a trouvé. Un crayon à côté du titre, comme sur la fiche d'épreuve.
-    private var editSheetButton: some View {
-        Button {
-            Haptics.selection()
-            withAnimation(.easeOut(duration: 0.2)) { isEditingSheet.toggle() }
-        } label: {
-            MicaboCircleIcon(systemImage: isEditingSheet ? "checkmark" : "pencil", size: 38)
-        }
-        .buttonStyle(MicaboPressableButtonStyle())
-        .accessibilityLabel(
-            isEditingSheet
-                ? (i18n?.t("ios.sheetEdit.done") ?? "Terminer")
-                : (i18n?.t("ios.sheetEdit.start") ?? "Corriger la fiche")
-        )
     }
 
     private var courseMenu: some View {
@@ -366,30 +333,27 @@ struct CourseSheetView: View {
         isLoadingSheet = false
     }
 
-    /// La fiche, coupée aux sept dixièmes tant qu'on n'est pas abonné.
+    /// La fiche, coupée tant qu'on n'est pas abonné.
     ///
-    /// La coupure se compte en blocs (`SheetGate`) et non en caractères : couper un
-    /// paragraphe en plein milieu d'un mot ressemble à un bug d'affichage, pas à une limite
-    /// assumée.
+    /// La partie lisible est **un document qu'on écrit** : on touche le texte, le clavier
+    /// monte, la barre d'outils se pose au-dessus, et la fiche s'enregistre toute seule. La
+    /// coupure se compte en blocs (`SheetGate`) et non en caractères : couper un paragraphe
+    /// en plein milieu d'un mot ressemble à un bug d'affichage, pas à une limite assumée.
     @ViewBuilder
     private var content: some View {
         if let sheet {
             let parts = SheetGate.split(sheet.blocks, isPro: isPro)
 
-            // Pas de `VStack` ici : les blocs sont des enfants du `LazyVStack` parent, pour
-            // que seuls ceux à l'écran deviennent des `UITextView`.
-            if isEditingSheet {
-                editingBanner
-            }
-
-            ForEach(Array(parts.readable.enumerated()), id: \.offset) { index, block in
-                editableBlock(block, at: index)
-                    .padding(.top, index == 0 ? MicaboSpacing.md : SheetBlockView.spacing(before: block))
-            }
-
-            if isEditingSheet {
-                addBlockButton
-            }
+            SheetEditorView(
+                blocks: parts.readable,
+                revision: course.updatedAt,
+                tint: tint,
+                state: editorState,
+                onSave: { readable in saveSheet(readable: readable) },
+                onExplain: explain,
+                onFormula: { target in formulaTarget = target }
+            )
+            .padding(.top, MicaboSpacing.md)
 
             if !parts.locked.isEmpty {
                 LockedSheetTail(blocks: parts.locked, tint: tint) {
@@ -413,97 +377,18 @@ struct CourseSheetView: View {
         }
     }
 
-    /// Un bloc en mode correction se touche pour s'ouvrir ; hors correction, il se lit et se
-    /// sélectionne comme avant. Le texte n'est pas rendu deux fois : c'est la même vue, avec
-    /// un cadre et une touche en plus.
-    @ViewBuilder
-    private func editableBlock(_ block: SheetBlock, at index: Int) -> some View {
-        if isEditingSheet {
-            Button {
-                Haptics.selection()
-                editingBlock = EditedBlock(index: index, block: block)
-            } label: {
-                SheetBlockView(block: block, tint: tint)
-                    .padding(MicaboSpacing.sm)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(MicaboColor.surface.opacity(0.6), in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-                            .strokeBorder(MicaboColor.strokeStrong, style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
-                    }
-                    // Le texte composé garde sa sélection ; ici on veut un appui, pas une
-                    // sélection, donc c'est le cadre qui prend le doigt.
-                    .allowsHitTesting(false)
-                    .contentShape(RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-            }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-            .accessibilityHint(i18n?.t("ios.sheetEdit.tapHint") ?? "Touche pour corriger ce bloc")
-        } else {
-            SheetBlockView(block: block, tint: tint, onExplain: explain)
-        }
-    }
-
-    private var editingBanner: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "pencil")
-                .font(.system(size: 11, weight: .semibold))
-            Text(i18n?.t("ios.sheetEdit.banner") ?? "Touche un bloc pour le corriger.")
-                .font(MicaboFont.micro)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: MicaboSpacing.xs)
-            Button {
-                withAnimation(.easeOut(duration: 0.2)) { isEditingSheet = false }
-            } label: {
-                Text(i18n?.t("ios.sheetEdit.done") ?? "Terminer")
-                    .font(MicaboFont.hanken(12.5, weight: .semibold))
-            }
-            .buttonStyle(.plain)
-        }
-        .foregroundStyle(MicaboColor.accent)
-        .padding(.vertical, 9)
-        .padding(.horizontal, 12)
-        .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
-        .padding(.top, MicaboSpacing.md)
-    }
-
-    private var addBlockButton: some View {
-        Button {
-            Haptics.selection()
-            editingBlock = EditedBlock(index: -1, block: .paragraph(text: ""))
-        } label: {
-            HStack(spacing: MicaboSpacing.xs) {
-                Image(systemName: "plus")
-                    .font(.system(size: 12, weight: .semibold))
-                Text(i18n?.t("ios.sheetEdit.addBlock") ?? "Ajouter un paragraphe")
-            }
-        }
-        .buttonStyle(MicaboSecondaryButtonStyle())
-        .padding(.top, MicaboSpacing.md)
-    }
-
-    /// Écrit un bloc corrigé, ou le retire (`nil`), et enregistre la fiche.
+    /// Écrit la partie lisible et enregistre la fiche.
     ///
     /// **Les blocs verrouillés sont recollés derrière.** Ils ne sont pas affichés, donc pas
     /// modifiables, donc ils ne doivent pas disparaître à l'enregistrement : c'est la même
     /// règle que sur le site, et sans elle un compte gratuit effacerait la moitié de sa fiche
     /// en corrigeant une faute de frappe. Le texte de référence des cartes est refait à partir
     /// de la fiche entière, comme le fait le serveur.
-    private func replaceBlock(at index: Int, with block: SheetBlock?) {
+    private func saveSheet(readable: [SheetBlock]) {
         guard let current = sheet else { return }
         let parts = SheetGate.split(current.blocks, isPro: isPro)
-        var readable = parts.readable
-
-        if index < 0 {
-            if let block { readable.append(block) }
-        } else if readable.indices.contains(index) {
-            if let block {
-                readable[index] = block
-            } else {
-                readable.remove(at: index)
-            }
-        }
-
         let next = CourseSheet(blocks: readable + parts.locked)
+        guard next != current else { return }
         course.apply(next)
         course.contextText = next.plainText()
         course.updatedAt = Date()
