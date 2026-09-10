@@ -106,6 +106,14 @@ vérifie le jeton.
    `Micabo/Micabo.entitlements` est déjà en place et déjà référencé par les deux
    configurations de build : il ne reste qu'à laisser Xcode régénérer le profil.
 
+> **Xcode Cloud ne coche pas cette case à votre place.** La signature gérée dans le cloud ne
+> fait que créer certificats et profils à partir de ce que l'App ID déclare déjà. Tant que
+> **Sign in with Apple** n'est pas activé sur `com.micabo.app` dans le portail, l'archive se
+> construit mais **l'export échoue** (`xcodebuild -exportArchive`, code 70, pour ad-hoc,
+> development et app-store à la fois) : le profil généré ne porte pas l'entitlement
+> `com.apple.developer.applesignin` que `Micabo.entitlements` demande. Le journal exact est
+> dans les artefacts du build, `*-export-archive-logs/IDEDistribution.standard.log`.
+
 ### 2.2 Le Service ID
 
 C'est l'identifiant que Supabase présente à Apple. Il est distinct de l'App ID.
