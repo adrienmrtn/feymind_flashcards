@@ -1,6 +1,6 @@
 /** Consignes de rédaction de la fiche d'un cours. */
 
-export const PROMPT_VERSION = "course-v2.3.0";
+export const PROMPT_VERSION = "course-v2.4.0";
 
 /** Longueur max d'une consigne libre. Au-delà, ce n'est plus un prompt, c'est un cours. */
 export const MAX_INSTRUCTIONS = 2_000;
