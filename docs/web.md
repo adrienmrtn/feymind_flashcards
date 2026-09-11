@@ -1421,7 +1421,7 @@ Vérifié le 26 août 2026, après le déploiement des Edge Functions et le rég
 | `youtube-transcript` | **déployée** en version 2, CORS resserré vérifié en direct | rien |
 | `explain-selection` | **déployée** en version 3 : JWT, quota, CORS resserré. Vérifié : `localhost` passe, `evil.test` n'a pas d'`Allow-Origin` | rien |
 | `generate-flashcards` | **déployée** en version 7, même contrôle, bundle complet. Vérifié : un cours trop court rend 400 | rien |
-| `generate-course` | **déployée** en version 24 : même pipeline (authorize, fiche, quota, CORS). Le **prompt système est raccourci** — l'API de déploiement ne passe pas les 23 Ko du fichier d'un coup | `supabase functions deploy generate-course` depuis le dépôt, pour renvoyer le prompt entier |
+| `generate-course` | **déployée** en version 59, épinglée sur le commit du dépôt (`pin.sh`), donc avec le prompt **entier** : le raccourci de la version 24 tenait à l'API de déploiement, qui ne passait pas les 23 Ko du fichier d'un coup | rien |
 | Le site sur Vercel | **un seul projet, `micabo`**. Les poussées git compilent Next.js (20 routes, ~24 s) — plus l'arbre iOS en 180 ms | fusionner pour que `micabo.vercel.app` reçoive le site (la production est encore l'ancien déploiement, 404) ; puis les Redirect URLs Supabase |
 | Stripe | rien | les trois variables |
 
@@ -1429,9 +1429,11 @@ Le CORS des quatre fonctions web a le même verdict, vérifié en direct : `http
 `https://micabo.vercel.app` reçoivent `Access-Control-Allow-Origin`, `https://evil.test` non, et
 un client sans `Origin` (l'app) n'est pas touché.
 
-Pour renvoyer le prompt entier de `generate-course` — vingt secondes, et le code qui tourne est
-alors exactement celui du dépôt :
+Le prompt entier est servi depuis que les six fonctions sont **épinglées sur un commit** : le
+point d'entrée déployé est un import de six lignes vers le dépôt, la construction inline le
+graphe, et le code qui tourne est exactement celui qu'on relit avec `git show`. Voir
+« Déployer sans terminal, depuis le web » dans le README. Le réépinglage après une fusion :
 
 ```bash
-supabase functions deploy generate-course
+cd supabase/functions && ./pin.sh && ./smoke.sh
 ```
