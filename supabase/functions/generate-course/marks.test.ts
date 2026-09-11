@@ -69,13 +69,20 @@ Deno.test("le message de la passe chiffre ce qu'il attend de CE lot", () => {
   assertEquals(prompt.includes(`${target.highlight} passages`), true);
 });
 
-Deno.test("les textes partent par lots de dix", () => {
+Deno.test("les textes partent par petits lots, sans en perdre", () => {
   const textes = Array.from({ length: 45 }, (_, index) => `texte ${index}`);
   const lots = batched(textes);
-  assertEquals(lots.length, 5);
-  assertEquals(lots[0]!.length, 10);
-  assertEquals(lots[4]!.length, 5);
+  assertEquals(lots.length, 8);
+  assertEquals(lots[0]!.length, 6);
+  assertEquals(lots[7]!.length, 3);
   assertEquals(lots.flat(), textes);
+});
+
+Deno.test("la consigne refuse le texte rendu tel quel", () => {
+  // Mesuré : quinze textes sur quinze recopiés à l'identique. Le modèle relisait au lieu
+  // de marquer, et rien dans la consigne ne disait que c'était un échec.
+  assertEquals(MARK_SYSTEM_PROMPT.includes("RENDU À L'IDENTIQUE EST UNE ERREUR"), true);
+  assertEquals(MARK_SYSTEM_PROMPT.includes("EXEMPLE"), true);
 });
 
 Deno.test("cleanBlockMarks passe sur tous les textes d'une fiche", () => {
