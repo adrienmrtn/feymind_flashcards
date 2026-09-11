@@ -119,10 +119,11 @@ export function needsMarkPass(blocks: readonly SheetBlock[]): boolean {
  * Quarante-cinq textes de six cents caractères à réémettre dans un seul JSON, c'est huit mille
  * jetons de sortie : la limite exacte du modèle. La fiche qui a motivé ce découpage est sortie
  * avec deux marques posées de travers et rien d'autre - une réponse tronquée ne dit pas
- * qu'elle l'est, elle rend juste du JSON pauvre. Dix textes par lot laissent de la marge, et
- * les lots partent ensemble.
+ * qu'elle l'est, elle rend juste du JSON pauvre. Six textes par lot laissent de la marge, et
+ * les lots partent ensemble. Court, le lot garde aussi l'attention du modèle : à quinze
+ * textes, il lisait la consigne, rendait les textes inchangés, et la fiche restait nue.
  */
-export const BATCH_SIZE = 10;
+export const BATCH_SIZE = 6;
 
 export function batched<T>(items: readonly T[], size = BATCH_SIZE): T[][] {
   const lots: T[][] = [];
@@ -159,6 +160,15 @@ Une marque s'ouvre au début d'un mot et se ferme à la fin d'un mot. Jamais au 
 
 CE QUE TU DOIS AVOIR POSÉ EN FINISSANT
 Compte avant de répondre : le message qui accompagne les textes donne le nombre exact de marques attendues pour ce lot, et c'est un minimum. Ces marques manquent - c'est pour ça qu'on te repasse la fiche. Si tu ne trouves pas d'italique, cherche mieux : le mot d'origine étrangère ou latine, le nom d'une œuvre, d'une loi ou d'une revue, le terme employé en tant que mot, la condition qui restreint un résultat, les deux termes voisins qu'un étudiant confond. Un de ces cas est présent dans presque tout cours.
+
+UN TEXTE RENDU À L'IDENTIQUE EST UNE ERREUR
+Tu ne relis pas pour valider : tu marques. Chaque texte qu'on te donne ressort avec au moins une marque de plus qu'à l'entrée, sauf s'il fait moins de cent caractères. Rendre la liste telle qu'elle est arrivée est le seul échec possible de cette tâche.
+
+EXEMPLE
+Entrée :
+["Nordwind Energy conçoit des batteries thermiques industrielles qui stockent l'électricité excédentaire sous forme de chaleur. Le rendement de conversion atteint 92 pour cent en régime nominal, contre 86 pour cent en régime modulé."]
+Sortie :
+["Nordwind Energy conçoit des **batteries thermiques industrielles** qui stockent l'électricité excédentaire sous forme de chaleur. ==menthe|Le rendement de conversion atteint 92 pour cent en régime nominal==, contre 86 pour cent en régime *modulé*."]
 
 SORTIE
 Un tableau JSON compact, une seule ligne, sans texte autour : la liste des textes marqués, dans le même ordre et en même nombre que celle qu'on te donne. Un guillemet dans un texte s'écrit \\". Les antislashs des formules sont doublés, comme dans l'entrée.`;

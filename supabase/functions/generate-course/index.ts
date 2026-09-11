@@ -99,8 +99,20 @@ async function repaintMarks(
       const output = await callModel({
         prompt: markPrompt(lot),
         systemPrompt: MARK_SYSTEM_PROMPT,
-        // Froid : on ne demande pas d'imagination, on demande des marques au bon endroit.
-        temperature: 0.1,
+        /**
+         * **Le modèle de la repasse n'est pas celui de l'écriture.**
+         *
+         * Par défaut, les fonctions appellent Flash-Lite : c'est le bon choix pour écrire une
+         * fiche, où le volume coûte. Sur cette tâche-ci, il a rendu quinze textes sur quinze
+         * **inchangés** — il lit la consigne, la trouve satisfaite, et recopie. Flash tient
+         * l'instruction « ajoute au moins une marque à chaque texte », et la repasse ne
+         * tourne que sur les fiches qui en ont besoin.
+         *
+         * La température n'est pas au plancher non plus : à 0,1, recopier l'entrée est la
+         * réponse la plus probable, et c'est exactement ce qu'on veut éviter.
+         */
+        model: "google/gemini-2.5-flash",
+        temperature: 0.4,
         maxTokens: OUTPUT_TOKEN_LIMIT,
       });
       const parsed = deepStripEmDashes(parseModelJSON<unknown>(output));
