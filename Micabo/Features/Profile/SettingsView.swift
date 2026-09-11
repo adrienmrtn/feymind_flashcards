@@ -41,8 +41,6 @@ struct SettingsView: View {
     @Query private var allCourses: [Course]
     @State private var paywall: PaywallTrigger?
     @State private var discountOffer: DiscountPresentation?
-    /// Relues pour que la rangée de l'offre suive son décompte sans qu'on rouvre l'écran.
-    @AppStorage(DiscountOffer.Key.startedAt) private var discountStartedAt: Double = 0
 
     private let models = [
         "google/gemini-2.5-flash-lite",
@@ -220,15 +218,15 @@ struct SettingsView: View {
         allCourses.filter { !$0.isFromLibrary }.count
     }
 
-    /// « -43 % sur l'année » et, quand la fenêtre court, le temps qu'il reste.
+    /// « -43 % sur l'année », et rien de plus.
+    ///
+    /// La rangée portait aussi le temps qu'il restait sur la fenêtre. La fenêtre court
+    /// toujours — c'est elle qui décide si l'offre est atteignable — mais elle ne s'écrit
+    /// nulle part : un décompte dans les Réglages presse quelqu'un qui était venu régler
+    /// autre chose.
     private var discountSubtitle: String {
-        let percent = i18n?.t("ios.pro.offerHelp", ["percent": "\(DiscountOffer.savingsPercent)"])
+        i18n?.t("ios.pro.offerHelp", ["percent": "\(DiscountOffer.savingsPercent)"])
             ?? "-\(DiscountOffer.savingsPercent) % sur l'année"
-        guard discountStartedAt > 0 else { return percent }
-        let startedAt = Date(timeIntervalSince1970: discountStartedAt)
-        let left = DiscountOffer.windowRemaining(startedAt: startedAt)
-        guard left > 0 else { return percent }
-        return "\(percent) · \(DiscountOffer.countdown(left))"
     }
 
     /// La page des abonnements de l'App Store. L'adresse est celle d'Apple, pas la nôtre.

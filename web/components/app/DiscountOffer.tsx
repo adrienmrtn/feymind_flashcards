@@ -27,12 +27,13 @@ import { requestTourRecheck } from "@/lib/tour/signal";
  * **L'offre cadeau du web**, et sa pastille.
  *
  * Elle se présente une fois, dès le premier cours importé, en grand. Refermée,
- * elle ne disparaît pas : une pastille garde le décompte des vingt-quatre
- * heures et la rouvre d'un clic. C'est la différence entre une offre qu'on
- * refuse et une offre qu'on remet à plus tard, et seule la seconde se vend.
+ * elle ne disparaît pas : une pastille la rouvre d'un clic. C'est la différence
+ * entre une offre qu'on refuse et une offre qu'on remet à plus tard, et seule
+ * la seconde se vend.
  *
- * Une minuterie, un seul instant d'origine — voir `@micabo/core/discount`.
- * Le pop-up et la pastille montrent les mêmes vingt-quatre heures.
+ * La fenêtre de vingt-quatre heures court toujours — voir `@micabo/core/discount` —
+ * mais elle ne s'affiche nulle part : elle décide de ce qui reste à l'écran, pas
+ * de ce qu'on lit dessus.
  *
  * `isPaid`, pas `isPro` : sans ligne d'abonnement, tout le monde serait traité
  * comme abonné et ce cadeau ne s'ouvrirait jamais.
@@ -103,7 +104,7 @@ export function DiscountHost({
   }, []);
 
   if (open && startedAt !== null) {
-    return <DiscountCard startedAt={startedAt} onClose={close} />;
+    return <DiscountCard onClose={close} />;
   }
 
   if (
@@ -115,75 +116,45 @@ export function DiscountHost({
   return null;
 }
 
-/** Une seconde qui tombe, et rien d'autre. Le rendu suit, le calcul est ailleurs. */
-function useCountdown(startedAt: number, span: number): number {
-  const [left, setLeft] = useState(() => discount.remaining(startedAt, Date.now(), span));
-
-  useEffect(() => {
-    setLeft(discount.remaining(startedAt, Date.now(), span));
-    const tick = window.setInterval(() => {
-      setLeft(discount.remaining(startedAt, Date.now(), span));
-    }, 1000);
-    return () => window.clearInterval(tick);
-  }, [span, startedAt]);
-
-  return left;
-}
-
 /**
- * **Le même décompte, au centième.**
+ * L'offre court-elle encore ? C'est tout ce que la pastille a besoin de savoir.
  *
- * Soixante millisecondes entre deux images : assez pour que les centièmes
- * défilent, pas assez pour que ça coûte quelque chose. Le battement s'arrête à
- * zéro — une minuterie terminée qui continue de réveiller le navigateur est du
- * travail que personne ne regarde.
+ * Un seul réveil, à la fermeture de la fenêtre. Plus rien ne s'affiche à la
+ * seconde : battre une fois par seconde pour un changement qui n'arrive qu'une
+ * fois est du travail que personne ne regarde.
  */
-function usePreciseCountdown(startedAt: number, span: number): number {
-  const [left, setLeft] = useState(() =>
-    discount.remainingMillis(startedAt, Date.now(), span),
-  );
+function useOfferLive(startedAt: number): boolean {
+  const [live, setLive] = useState(() => discount.isLive(startedAt, Date.now()));
 
   useEffect(() => {
-    let tick = 0;
+    const left = discount.windowRemaining(startedAt, Date.now());
+    setLive(left > 0);
+    if (left <= 0) return;
+    const end = window.setTimeout(() => setLive(false), left * 1000);
+    return () => window.clearTimeout(end);
+  }, [startedAt]);
 
-    function beat() {
-      const value = discount.remainingMillis(startedAt, Date.now(), span);
-      setLeft(value);
-      if (value <= 0) window.clearInterval(tick);
-    }
-
-    beat();
-    tick = window.setInterval(beat, 60);
-    return () => window.clearInterval(tick);
-  }, [span, startedAt]);
-
-  return left;
+  return live;
 }
 
 /**
- * **La carte de l'offre.** Une minuterie, un pourcentage, un prix, un bouton.
+ * **La carte de l'offre.** Un pourcentage, un prix, un bouton.
  *
  * Ce qu'elle ne fait pas est ce qui la fait marcher. Pas de liste d'avantages,
  * pas d'illustration, pas de sur-titre : l'offre a déjà été annoncée, et ce
  * qu'on doit lire pour décider tient en quatre lignes. Une carte d'offre qui
  * argumente encore est une carte qui n'a pas confiance en son prix.
  *
- * Le fond va du bleu ciel au blanc, du haut vers le bas : la minuterie et le
- * pourcentage sont dans la couleur, le prix et le bouton sont sur le blanc, là
- * où on les lit sans effort.
+ * Le fond va du bleu ciel au blanc, du haut vers le bas : le pourcentage est
+ * dans la couleur, le prix et le bouton sont sur le blanc, là où on les lit
+ * sans effort.
  */
-export function DiscountCard({
-  startedAt,
-  onClose,
-}: {
-  startedAt: number;
-  onClose: () => void;
-}) {
+export function DiscountCard({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
   const currency = usePresentment();
   const plan = pricing.DISCOUNT_YEARLY;
   const full = pricing.DISCOUNT_REFERENCE;
-  const monthly = pricing.monthlyEquivalent(plan, currency);
+  const price = pricing.priceText(pricing.presentmentAmount(plan, currency), currency);
   const saved = pricing.discountSavingsPercent();
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -243,11 +214,9 @@ export function DiscountCard({
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <UrgencyPill startedAt={startedAt} />
-
           <h2
             id="cadeau-title"
-            className="mt-5 text-[28px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[36px]"
+            className="text-[28px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[36px]"
           >
             {t("app.paywall.discountTitle", { pct: saved })}
             <br />
@@ -264,10 +233,10 @@ export function DiscountCard({
 
               <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
                 <span className="numeral text-[26px] font-bold leading-none text-ink">
-                  {monthly}
+                  {price}
                 </span>
                 <span className="text-[15px] font-medium text-ink-secondary">
-                  {t("app.paywall.perMonth")}
+                  {t("app.paywall.perYear")}
                 </span>
               </p>
 
@@ -295,54 +264,15 @@ export function DiscountCard({
               {failure}
             </p>
           ) : (
-            // Le mensuel vend, l'annuel engage : le montant réellement prélevé est écrit
-            // sous le bouton, jamais ailleurs qu'à côté de lui.
+            // Le rythme du prélèvement et la sortie, sous le bouton : le prix est déjà
+            // écrit au-dessus, il n'a pas besoin d'être répété pour être tenu.
             <p className="mt-3 text-[12.5px] text-ink-tertiary">
-              {t("app.paywall.discountYearly", {
-                price: pricing.priceText(pricing.presentmentAmount(plan, currency), currency),
-              })}
+              {t("app.paywall.discountYearly")}
             </p>
           )}
         </div>
       </div>
     </div>
-  );
-}
-
-/**
- * La minuterie de l'offre, en pastille violette.
- *
- * Elle vit dans son propre composant : elle se redessine dix-sept fois par
- * seconde, et le reste de la carte n'a aucune raison de la suivre. Elle compte
- * la même fenêtre que la pastille — vingt-quatre heures — pour que refermer
- * puis rouvrir ne change pas le temps affiché.
- */
-function UrgencyPill({ startedAt }: { startedAt: number }) {
-  const { t } = useI18n();
-  const left = usePreciseCountdown(startedAt, discount.windowSeconds);
-  const over = left <= 0;
-
-  return (
-    <p
-      className="inline-flex items-baseline gap-2 rounded-pill bg-offer-urgency px-4 py-2 text-white"
-      role="timer"
-      aria-label={
-        over
-          ? t("app.paywall.offerEnded")
-          : t("app.paywall.offerLeft", {
-              time: discount.countdownLabel(Math.floor(left / 1000)),
-            })
-      }
-    >
-      {/* La police des nombres, comme partout dans Micabo, et des chiffres de largeur fixe :
-          un décompte qui change de largeur à chaque centième ferait trembler la pastille. */}
-      <span className="font-number text-[15px] font-semibold tabular-nums" aria-hidden>
-        {discount.preciseCountdown(left)}
-      </span>
-      <span className="text-[13px] font-medium text-white/85">
-        {over ? t("app.paywall.ended") : t("app.paywall.remaining")}
-      </span>
-    </p>
   );
 }
 
@@ -418,13 +348,12 @@ function scallopedDisc(scallops: number, radius: number, bump: number): string {
 /**
  * La pastille, quand la carte s'est refermée.
  *
- * Elle porte le décompte des vingt-quatre heures et rien d'autre : un clic
- * rouvre l'offre. En bas à droite, hors du flux — et au-dessus du bouton
- * « Réviser ce cours » quand il flotte, pour que les deux pastilles ne se
- * mordent pas.
+ * Elle dit qu'une offre attend, et rien d'autre : un clic la rouvre. En bas à
+ * droite, hors du flux — et au-dessus du bouton « Réviser ce cours » quand il
+ * flotte, pour que les deux pastilles ne se mordent pas.
  *
- * Elle compte en secondes, pas en centièmes : sur vingt-quatre heures, des
- * centièmes qui défilent dans un coin de l'écran sont un clignotant.
+ * Elle suit quand même la fenêtre, sans la montrer : à zéro elle s'efface, pour
+ * ne pas rouvrir un prix qui n'est plus vendu.
  */
 export function DiscountBadge({
   startedAt,
@@ -434,27 +363,22 @@ export function DiscountBadge({
   onOpen: () => void;
 }) {
   const { t } = useI18n();
-  const left = useCountdown(startedAt, discount.windowSeconds);
-  if (left <= 0) return null;
+  const live = useOfferLive(startedAt);
+  if (!live) return null;
 
   return (
     <Float>
       <button
         type="button"
         onClick={onOpen}
-        aria-label={t("app.paywall.reopenOffer", { time: discount.countdownLabel(left) })}
+        aria-label={t("app.paywall.reopenOffer")}
         className="app-offer-badge pressable fixed right-4 z-40 flex items-center gap-2.5 rounded-pill bg-offer-sky px-4 py-3 text-white shadow-[0_16px_40px_-12px_rgba(11,143,220,0.6)] lg:right-8"
       >
         <span aria-hidden className="text-white">
           <GiftGlyph />
         </span>
-        <span className="text-left">
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80">
-            {t("app.paywall.yourOffer")}
-          </span>
-          <span className="block font-number text-[15px] font-bold tabular-nums" aria-hidden>
-            {discount.countdown(left)}
-          </span>
+        <span className="block text-left text-[13px] font-semibold text-white">
+          {t("app.paywall.yourOffer")}
         </span>
       </button>
     </Float>

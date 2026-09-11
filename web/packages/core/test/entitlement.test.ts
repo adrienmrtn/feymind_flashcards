@@ -45,7 +45,6 @@ import {
   checkoutCurrency,
   discountSavingsPercent,
   hasTrial,
-  monthlyEquivalent,
   offers,
   planCaption,
   planDisplayedPrice,
@@ -54,7 +53,6 @@ import {
   planRenewalCopy,
   presentmentAmount,
   presentmentCurrencyFor,
-  presentmentMonthly,
   priceText,
   savingsPercent,
   stripePriceId,
@@ -269,27 +267,24 @@ describe("les offres", () => {
     expect(DISCOUNT_REFERENCE).toBe(YEARLY);
   });
 
-  it("ramènent l'annuel au mois, et rien d'autre", () => {
+  it("affichent le prix prélevé, dans la période où il l'est", () => {
     // L'espace avant l'euro est **insécable**, comme la typographie française l'exige : un prix
     // ne se coupe pas en fin de ligne entre le nombre et son symbole. Elle est normalisée à
     // U+00A0 par `priceText`, parce que `Intl` rend tantôt U+00A0 tantôt U+202F selon la version
     // d'ICU - et un prix qui ne s'espace pas pareil selon la machine est une différence qu'on
     // finit par chercher longtemps.
-    const yearlyPerMonth = "5,83\u00a0€";
-    // Le discount **écrit** son mensuel au lieu de le diviser : 39,99 ÷ 12 fait 3,3325, que
-    // le calcul rendrait « 3,33 € ». C'est 3,30 € qu'annonce l'offre cadeau, et le paywall
-    // affiche l'annuel prélevé juste à côté pour que rien ne soit sous-entendu.
-    const discountPerMonth = "3,30\u00a0€";
-
-    expect(monthlyEquivalent(YEARLY)).toBe(yearlyPerMonth);
-    expect(monthlyEquivalent(DISCOUNT_YEARLY)).toBe(discountPerMonth);
-    expect(monthlyEquivalent(WEEKLY)).toBeNull();
-    expect(planCaption(WEEKLY)).toBe("facturé chaque semaine");
-    expect(planCaption(YEARLY)).toBe(`${yearlyPerMonth} / mois`);
-    expect(planDisplayedPrice(YEARLY)).toBe(yearlyPerMonth);
+    //
+    // Plus de mensuel équivalent : « 5,83 € / mois » à côté d'un prélèvement annuel de
+    // 69,99 € demandait deux lectures, et obligeait le discount à traîner sa somme annuelle
+    // sous le mensuel pour ne rien sous-entendre.
+    expect(planDisplayedPrice(YEARLY)).toBe(priceText(YEARLY.price));
+    expect(planDisplayedPrice(DISCOUNT_YEARLY)).toBe(priceText(DISCOUNT_YEARLY.price));
     expect(planDisplayedPrice(WEEKLY)).toBe(priceText(WEEKLY.price));
-    expect(planDisplayedUnit(YEARLY)).toBe("/ mois");
+    expect(planDisplayedUnit(YEARLY)).toBe("/ an");
+    expect(planDisplayedUnit(DISCOUNT_YEARLY)).toBe("/ an");
     expect(planDisplayedUnit(WEEKLY)).toBe("/ semaine");
+    expect(planCaption(YEARLY)).toBe("facturé une fois par an");
+    expect(planCaption(WEEKLY)).toBe("facturé chaque semaine");
     expect(planRenewalCopy(YEARLY)).toBe(
       `Puis ${priceText(YEARLY.price)} par an, résiliable à tout moment`,
     );
@@ -321,9 +316,9 @@ describe("les offres", () => {
     expect(presentmentCurrencyFor("de")).toBe("EUR");
     expect(presentmentAmount(YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly);
     expect(presentmentAmount(WEEKLY, "TRY")).toBe(TRY_AMOUNTS.weekly);
-    expect(presentmentMonthly(DISCOUNT_YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly_discount_monthly);
+    expect(presentmentAmount(DISCOUNT_YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly_discount);
     expect(priceText(TRY_AMOUNTS.weekly, "TRY")).toMatch(/₺|TRY/);
-    expect(planDisplayedPrice(YEARLY, "TRY")).toBe(monthlyEquivalent(YEARLY, "TRY"));
+    expect(planDisplayedPrice(YEARLY, "TRY")).toBe(priceText(TRY_AMOUNTS.yearly, "TRY"));
     expect(YEARLY.price).toBe(69.99);
   });
 
