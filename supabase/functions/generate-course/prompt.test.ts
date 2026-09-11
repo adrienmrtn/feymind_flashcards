@@ -12,7 +12,7 @@ import {
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v2.4.0");
+  assertEquals(PROMPT_VERSION, "course-v2.5.0");
 });
 
 Deno.test("le prompt demande les trois marques de texte", () => {
@@ -31,6 +31,10 @@ Deno.test("le prompt montre un paragraphe marqué plutôt que de le décrire", (
   // L'exemple a déteint une fois : le modèle a repris ses deux italiques mot pour mot sur un
   // document qui parlait d'autre chose. Il dit maintenant qu'il ne montre qu'une forme.
   assertEquals(COURSE_SYSTEM_PROMPT.includes("Cet exemple montre une FORME"), true);
+  // La densité se compte en caractères : « par paragraphe » ne veut rien dire quand un
+  // paragraphe fait six cents caractères.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("DEUX CENT CINQUANTE CARACTÈRES"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("LA POSE D'UNE MARQUE"), true);
 });
 
 Deno.test("le code couleur ne nomme que des surligneurs qui existent", () => {

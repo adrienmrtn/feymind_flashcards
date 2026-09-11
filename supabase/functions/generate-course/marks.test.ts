@@ -2,8 +2,12 @@ import { assertEquals } from "jsr:@std/assert@1";
 
 import type { SheetBlock } from "../_shared/sheet.ts";
 import {
+  batched,
+  cleanBlockMarks,
   countMarks,
   MARK_SYSTEM_PROMPT,
+  markPrompt,
+  markTargets,
   mergeMarked,
   needsMarkPass,
   textsToMark,
@@ -29,22 +33,70 @@ Deno.test("countMarks compte les surlignages et les formules", () => {
   assertEquals(marks.math, 2);
 });
 
-Deno.test("la seconde passe se déclenche sur le zéro, pas sur la rareté", () => {
+Deno.test("la seconde passe se déclenche sur la densité, pas sur le zéro", () => {
+  // Un paragraphe court et bien marqué : rien à redemander.
   const marked = [
-    PARAGRAPH("La **Rubisco** fixe le carbone, ==jaune|et c'est l'étape limitante==."),
-    PARAGRAPH("Le terme *stroma* désigne le compartiment, pas la membrane."),
+    PARAGRAPH("La **Rubisco** fixe le carbone, ==jaune|et c'est l'étape limitante== du cycle."),
+    PARAGRAPH("Le terme *stroma* désigne le compartiment, pas la membrane du thylakoïde."),
   ];
   assertEquals(needsMarkPass(marked), false);
 
-  // Une seule sorte manquante suffit : c'est la page sans relief que les étudiants signalent.
-  assertEquals(needsMarkPass([PARAGRAPH("La **Rubisco** fixe le carbone, sans plus.")]), true);
+  // Le cas qui échappait au contrôle d'avant : un pavé de six cents caractères portant un
+  // seul terme en gras. Zéro nulle part, et pourtant une page sans relief.
+  const pavé = PARAGRAPH(
+    "Les **forces** de l'entreprise tiennent à ses fondateurs, à sa technologie brevetée et à une licence exclusive. " +
+      "Le plan de financement détaille chaque poste de dépense sur trois ans. ".repeat(7),
+  );
+  assertEquals(needsMarkPass([pavé]), true);
   assertEquals(needsMarkPass([]), false);
+});
+
+Deno.test("les cibles suivent la longueur des textes", () => {
+  const court = markTargets(["Une phrase de cinquante caractères environ, pas plus."]);
+  assertEquals(court.bold, 1);
+  // Jamais zéro : même un texte minuscule mérite un repère.
+  assertEquals(court.highlight, 1);
+
+  const long = markTargets([("Un texte de mille caractères. ").repeat(60)]);
+  assertEquals(long.bold > court.bold, true);
+  assertEquals(long.highlight > court.highlight, true);
+});
+
+Deno.test("le message de la passe chiffre ce qu'il attend de CE lot", () => {
+  const prompt = markPrompt([("Un paragraphe de fiche, assez long pour compter. ").repeat(12)]);
+  const target = markTargets([("Un paragraphe de fiche, assez long pour compter. ").repeat(12)]);
+  assertEquals(prompt.includes(`${target.bold} termes`), true);
+  assertEquals(prompt.includes(`${target.highlight} passages`), true);
+});
+
+Deno.test("les textes partent par lots de dix", () => {
+  const textes = Array.from({ length: 45 }, (_, index) => `texte ${index}`);
+  const lots = batched(textes);
+  assertEquals(lots.length, 5);
+  assertEquals(lots[0]!.length, 10);
+  assertEquals(lots[4]!.length, 5);
+  assertEquals(lots.flat(), textes);
+});
+
+Deno.test("cleanBlockMarks passe sur tous les textes d'une fiche", () => {
+  const blocks: SheetBlock[] = [
+    PARAGRAPH("Une entreprise fondée en 2017, issue de==rose| trente-cinq ans de recherche=="),
+    { type: "list", ordered: false, items: ["Un **point** net", "Un point **abîmé"] },
+  ];
+  const cleaned = cleanBlockMarks(blocks);
+  assertEquals(cleaned[0], PARAGRAPH("Une entreprise fondée en 2017, issue de trente-cinq ans de recherche"));
+  assertEquals(cleaned[1], {
+    type: "list",
+    ordered: false,
+    items: ["Un **point** net", "Un point abîmé"],
+  });
 });
 
 Deno.test("la consigne de la seconde passe chiffre ce qu'elle doit poser", () => {
   // Mesuré : la passe reposait les surlignages et laissait l'italique à zéro. Elle compte
   // maintenant, et on lui dit où chercher.
-  assertEquals(MARK_SYSTEM_PROMPT.includes("Compte avant de répondre"), true);
+  assertEquals(MARK_SYSTEM_PROMPT.includes("le nombre exact de marques attendues"), true);
+  assertEquals(MARK_SYSTEM_PROMPT.includes("LA POSE"), true);
   assertEquals(MARK_SYSTEM_PROMPT.includes("IDENTIQUE"), true);
 });
 
