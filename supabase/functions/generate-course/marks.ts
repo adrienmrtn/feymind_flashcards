@@ -17,6 +17,7 @@
  */
 
 import { stripInlineMarkup, type SheetBlock } from "../_shared/sheet.ts";
+import { cleanMarks } from "./mark-shape.ts";
 
 /** Ce que porte une fiche, par sorte de marque. */
 export interface MarkCount {
@@ -59,21 +60,76 @@ export function countMarks(blocks: readonly SheetBlock[]): MarkCount {
 }
 
 /**
+ * **Combien de marques une fiche devrait porter**, en caractères et non en blocs.
+ *
+ * « Un à trois termes en gras par paragraphe » ne veut rien dire quand un paragraphe fait six
+ * cents caractères : sur un mémo d'investissement, la fiche portait un seul gras par pavé, ce
+ * qui se lit exactement comme une page sans gras. Un paragraphe de fiche de cours en fait
+ * cent cinquante ; le même prompt donne donc quatre fois moins de relief sur un document long,
+ * et c'est invisible tant qu'on ne mesure que des documents courts.
+ *
+ * Les seuils sont donc des **densités**. Ils valent pour une fiche de dix blocs comme pour une
+ * de quatre-vingt-dix.
+ */
+export const CHARS_PER = {
+  /** Un terme en gras tous les deux cent cinquante caractères, soit un ou deux par paragraphe. */
+  bold: 250,
+  /** Un passage surligné tous les huit cents caractères : un par paragraphe long. */
+  highlight: 800,
+  /** Une nuance en italique tous les deux mille caractères. C'est rare, et ça doit l'être. */
+  italic: 2_000,
+} as const;
+
+/** Ce qu'on attend d'un lot de textes, arrondi, jamais zéro. */
+export function markTargets(texts: readonly string[]): MarkCount {
+  const chars = texts.reduce((total, text) => total + text.length, 0);
+  return {
+    bold: Math.max(1, Math.round(chars / CHARS_PER.bold)),
+    highlight: Math.max(1, Math.round(chars / CHARS_PER.highlight)),
+    italic: Math.max(1, Math.round(chars / CHARS_PER.italic)),
+    math: 0,
+  };
+}
+
+/**
  * Faut-il une seconde passe ?
  *
- * Sur le zéro, et sur lui seul. Une fiche qui porte trois surlignages là où le prompt en
- * demandait cinq est une fiche marquée : redemander pour trois marques de plus coûterait un
- * appel à chaque import pour une différence que personne ne voit. Une fiche qui n'en porte
- * **aucun** est l'autre chose : c'est le défaut que les étudiants signalent, et le rendu leur
- * donne raison, une page sans relief ne se relit pas.
+ * Quand la fiche porte **moins de la moitié** de ce que sa longueur appelle. Le déclenchement
+ * était sur le zéro absolu : une fiche de dix-huit mille caractères avec vingt-quatre gras et
+ * deux surlignages y échappait, alors que c'est précisément la page sans relief que l'étudiant
+ * signale. La moitié plutôt que le compte plein, parce qu'une fiche déjà correctement marquée
+ * ne doit pas payer un appel de plus pour trois marques.
  *
  * Les formules ne déclenchent rien : un cours de droit n'en a pas, et exiger du LaTeX sur un
  * chapitre de littérature produirait exactement ce qu'on ne veut pas.
  */
 export function needsMarkPass(blocks: readonly SheetBlock[]): boolean {
   if (blocks.length === 0) return false;
+  const texts = textsToMark(blocks);
   const marks = countMarks(blocks);
-  return marks.highlight === 0 || marks.italic === 0 || marks.bold === 0;
+  const target = markTargets(texts);
+  return marks.bold * 2 < target.bold ||
+    marks.highlight * 2 < target.highlight ||
+    marks.italic * 2 < target.italic;
+}
+
+/**
+ * Les textes, par petits paquets.
+ *
+ * Quarante-cinq textes de six cents caractères à réémettre dans un seul JSON, c'est huit mille
+ * jetons de sortie : la limite exacte du modèle. La fiche qui a motivé ce découpage est sortie
+ * avec deux marques posées de travers et rien d'autre - une réponse tronquée ne dit pas
+ * qu'elle l'est, elle rend juste du JSON pauvre. Dix textes par lot laissent de la marge, et
+ * les lots partent ensemble.
+ */
+export const BATCH_SIZE = 10;
+
+export function batched<T>(items: readonly T[], size = BATCH_SIZE): T[][] {
+  const lots: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    lots.push(items.slice(index, index + size));
+  }
+  return lots;
 }
 
 export const MARK_SYSTEM_PROMPT =
@@ -98,17 +154,31 @@ Les marques ne se disputent pas la même chaîne : on surligne une phrase, on me
 
 Un fragment entre $ et $ est une formule : tu n'y touches pas, tu ne marques rien à l'intérieur.
 
+LA POSE
+Une marque s'ouvre au début d'un mot et se ferme à la fin d'un mot. Jamais au milieu : « issue de==rose| 35 ans » est faux, il fallait « issue de ==rose|35 ans de recherche== ». Une marque ouverte se ferme dans le MÊME texte. Un surlignage couvre une phrase courte ou un fragment, deux cent quarante caractères au plus ; un gras couvre un terme, quatre-vingt-dix au plus. Une marque mal posée est retirée à l'arrivée : elle est perdue pour tout le monde.
+
 CE QUE TU DOIS AVOIR POSÉ EN FINISSANT
-Compte avant de répondre. Sur l'ensemble des textes : au moins un surlignage tous les trois textes, et au moins un italique tous les cinq. Ces marques manquent - c'est pour ça qu'on te repasse la fiche. Si tu ne trouves pas d'italique, cherche mieux : le mot d'origine étrangère ou latine, le nom d'une œuvre, d'une loi ou d'une revue, le terme employé en tant que mot, la condition qui restreint un résultat, les deux termes voisins qu'un étudiant confond. Un de ces cas est présent dans presque tout cours.
+Compte avant de répondre : le message qui accompagne les textes donne le nombre exact de marques attendues pour ce lot, et c'est un minimum. Ces marques manquent - c'est pour ça qu'on te repasse la fiche. Si tu ne trouves pas d'italique, cherche mieux : le mot d'origine étrangère ou latine, le nom d'une œuvre, d'une loi ou d'une revue, le terme employé en tant que mot, la condition qui restreint un résultat, les deux termes voisins qu'un étudiant confond. Un de ces cas est présent dans presque tout cours.
 
 SORTIE
 Un tableau JSON compact, une seule ligne, sans texte autour : la liste des textes marqués, dans le même ordre et en même nombre que celle qu'on te donne. Un guillemet dans un texte s'écrit \\". Les antislashs des formules sont doublés, comme dans l'entrée.`;
 
-/** Ce qu'on envoie à la seconde passe : les textes, numérotés, et rien d'autre. */
+/**
+ * Ce qu'on envoie à la seconde passe : les textes, et le compte attendu **pour ce lot-là**.
+ *
+ * Le compte est calculé sur la longueur réelle des textes, pas récité depuis une règle
+ * générale. Un modèle à qui l'on dit « pose au moins six termes en gras dans ces huit textes »
+ * les pose ; le même, à qui l'on dit « un à trois par paragraphe », en pose un et passe au
+ * suivant.
+ */
 export function markPrompt(texts: readonly string[]): string {
-  return `Voici ${texts.length} textes de la fiche, dans l'ordre. Rends-les marqués, en JSON.\n\n${
-    JSON.stringify(texts)
-  }`;
+  const target = markTargets(texts);
+  const chars = texts.reduce((total, text) => total + text.length, 0);
+  return `Voici ${texts.length} textes de la fiche, dans l'ordre, ${chars} caractères en tout.
+
+À poser sur ce lot, au minimum : ${target.bold} termes en **gras**, ${target.highlight} passages ==surlignés== et ${target.italic} passages en *italique*. Rends les mêmes textes, marqués, en JSON.
+
+${JSON.stringify(texts)}`;
 }
 
 /** Les textes d'une fiche, à plat, dans l'ordre où la fusion les redistribue. */
@@ -166,6 +236,27 @@ export function mergeMarked(
         return { ...block, items: block.items.map((item) => next(item)) };
       case "formula":
         return block.caption ? { ...block, caption: next(block.caption) } : block;
+    }
+  });
+}
+
+/**
+ * Retire les marques mal posées de toute une fiche.
+ *
+ * Appliqué aux **deux** passes : celle qui écrit la fiche pose parfois un surligneur au milieu
+ * d'un mot, exactement comme celle qui la repasse. Voir `mark-shape.ts` pour ce qui est jugé.
+ */
+export function cleanBlockMarks(blocks: readonly SheetBlock[]): SheetBlock[] {
+  return blocks.map((block) => {
+    switch (block.type) {
+      case "heading":
+        return { ...block, text: cleanMarks(block.text) };
+      case "paragraph":
+        return { ...block, text: cleanMarks(block.text) };
+      case "list":
+        return { ...block, items: block.items.map(cleanMarks) };
+      case "formula":
+        return block.caption ? { ...block, caption: cleanMarks(block.caption) } : block;
     }
   });
 }

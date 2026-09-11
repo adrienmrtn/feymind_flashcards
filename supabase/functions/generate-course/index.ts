@@ -22,6 +22,8 @@ import {
   type SheetBlock,
 } from "../_shared/sheet.ts";
 import {
+  batched,
+  cleanBlockMarks,
   markPrompt,
   MARK_SYSTEM_PROMPT,
   mergeMarked,
@@ -45,32 +47,6 @@ import {
 
 const OUTPUT_TOKEN_LIMIT = 8_192;
 
-/**
- * Repose les marques quand la fiche en a perdu une sorte entière.
- *
- * Voir `marks.ts` : le déclenchement est sur le zéro, la seconde passe ne peut que marquer, et
- * tout texte qui a bougé est écarté à la fusion. Un échec ici n'est pas une panne de fiche :
- * on rend la fiche telle qu'elle était écrite, sans marque, comme avant.
- */
-async function repaintMarks(blocks: SheetBlock[]): Promise<SheetBlock[]> {
-  if (!needsMarkPass(blocks)) return blocks;
-
-  try {
-    const output = await callModel({
-      prompt: markPrompt(textsToMark(blocks)),
-      systemPrompt: MARK_SYSTEM_PROMPT,
-      // Froid : on ne demande pas d'imagination, on demande des marques posées au bon endroit.
-      temperature: 0.1,
-      maxTokens: OUTPUT_TOKEN_LIMIT,
-    });
-    const marked = deepStripEmDashes(parseModelJSON<unknown>(output));
-    if (!Array.isArray(marked)) return blocks;
-    return normalizeSheet(mergeMarked(blocks, marked));
-  } catch (_error) {
-    return blocks;
-  }
-}
-
 async function writeSheet(
   prompt: string,
   model: string | undefined,
@@ -91,6 +67,44 @@ async function writeSheet(
     if (error instanceof FalError || error instanceof CircuitOpenError) throw error;
     return null;
   }
+}
+
+/**
+ * Repose les marques quand la fiche en porte trop peu pour sa longueur.
+ *
+ * Voir `marks.ts` : le déclenchement est sur la **densité**, la seconde passe ne peut que
+ * marquer, elle travaille par lots de dix textes, et tout texte qui a bougé ou qui perd une
+ * marque est écarté à la fusion. Un échec ici n'est pas une panne de fiche : on rend la fiche
+ * telle qu'elle était écrite.
+ *
+ * Les lots partent **ensemble**. En file, quarante-cinq textes feraient cinq allers-retours à
+ * la suite, soit une vingtaine de secondes ajoutées à un import qui en prend déjà trente.
+ */
+async function repaintMarks(blocks: SheetBlock[]): Promise<SheetBlock[]> {
+  if (!needsMarkPass(blocks)) return blocks;
+
+  const lots = batched(textsToMark(blocks));
+
+  const marked = await Promise.all(lots.map(async (lot) => {
+    try {
+      const output = await callModel({
+        prompt: markPrompt(lot),
+        systemPrompt: MARK_SYSTEM_PROMPT,
+        // Froid : on ne demande pas d'imagination, on demande des marques au bon endroit.
+        temperature: 0.1,
+        maxTokens: OUTPUT_TOKEN_LIMIT,
+      });
+      const parsed = deepStripEmDashes(parseModelJSON<unknown>(output));
+      // Un lot dont la réponse n'a pas la bonne taille est un lot tronqué : ses textes
+      // repartent tels quels plutôt que de décaler tous les suivants d'un cran.
+      if (!Array.isArray(parsed) || parsed.length !== lot.length) return lot;
+      return parsed;
+    } catch (_error) {
+      return lot;
+    }
+  }));
+
+  return normalizeSheet(mergeMarked(blocks, marked.flat()));
 }
 
 interface RequestBody {
@@ -234,7 +248,10 @@ Deno.serve((request: Request) =>
 
       // Les marques d'abord, la mise à plat ensuite : `context_text` se calcule sur la fiche
       // telle qu'elle sera lue, même si les marques n'y survivent pas.
-      const blocks = await repaintMarks(written);
+      // La forme des marques est vérifiée **avant** de compter : une fiche dont les deux
+      // surlignages sont posés au milieu d'un mot n'est pas une fiche marquée, et le
+      // déclenchement de la repasse doit le savoir.
+      const blocks = cleanBlockMarks(await repaintMarks(cleanBlockMarks(written)));
 
       if (blocks.length < 3) {
         throw new FalError("Le modèle n'a pas produit de fiche exploitable.", 502);
