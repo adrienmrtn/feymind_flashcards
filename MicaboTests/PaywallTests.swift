@@ -27,14 +27,33 @@ final class PaywallTests: XCTestCase {
         )
     }
 
-    /// Le mois est la seule unité qu'on compare de tête. L'annuel doit donc dire
-    /// son prix mensuel, et l'hebdomadaire ne doit pas en inventer un.
-    func testOnlyTheYearlyIsRestatedPerMonth() throws {
-        let monthly = try XCTUnwrap(PaywallCatalog.yearly.monthlyEquivalent)
-        XCTAssertTrue(monthly.hasPrefix("5,83"), "69,99 € par an font 5,83 € par mois, pas \(monthly)")
-        XCTAssertNil(PaywallCatalog.weekly.monthlyEquivalent)
-
+    /// La ligne sous le nom de l'offre dit le **rythme**, jamais un second prix : le prix,
+    /// la carte l'écrit déjà en face, et un mensuel équivalent posé à côté d'un prélèvement
+    /// annuel faisait retenir un chiffre qui n'était pas celui qui part.
+    func testTheCaptionSaysTheRhythmAndNotASecondPrice() {
+        XCTAssertEqual(PaywallCatalog.yearly.caption, "facturé une fois par an")
         XCTAssertEqual(PaywallCatalog.weekly.caption, "facturé chaque semaine")
+
+        for plan in PaywallCatalog.all + [PaywallCatalog.discount] {
+            XCTAssertFalse(plan.caption.contains("/ mois"), "\(plan.caption) ramène encore au mois")
+        }
+    }
+
+    /// La phrase du premier paywall dit **une** somme, celle qui sera prélevée. Elle en
+    /// disait deux — le mensuel équivalent puis l'annuel entre parenthèses — et le plus gros
+    /// des deux arrivait en second, ce qui se lit comme un rattrapage.
+    ///
+    /// L'espace avant l'euro n'est pas comparé : `Intl` et `NumberFormatter` rendent tantôt
+    /// U+00A0 tantôt U+202F selon la version d'ICU.
+    func testTheFirstPaywallAnnouncesTheChargedPrice() {
+        let yearly = PaywallPitch.sentence(for: PaywallCatalog.yearly, locale: .fr)
+        XCTAssertTrue(yearly.hasPrefix("puis 69,99"), yearly)
+        XCTAssertTrue(yearly.hasSuffix("par an."), yearly)
+        XCTAssertFalse(yearly.contains("mois"), "La phrase ramène encore au mois : \(yearly)")
+
+        let weekly = PaywallPitch.sentence(for: PaywallCatalog.weekly, locale: .fr)
+        XCTAssertTrue(weekly.hasPrefix("puis 7,99"), weekly)
+        XCTAssertTrue(weekly.hasSuffix("par semaine."), weekly)
     }
 
     /// La remise est calculée, jamais écrite à la main : un pourcentage qui contredit les

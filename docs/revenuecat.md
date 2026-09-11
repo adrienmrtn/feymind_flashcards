@@ -14,7 +14,7 @@ Rappel de ce qu'on vend :
 | --- | --- | --- | --- | --- |
 | Annuel | `com.micabo.app.pro.yearly` | 69,99 € / an | 3 jours offerts | oui |
 | Hebdomadaire | `com.micabo.app.pro.weekly` | 7,99 € / semaine | aucun | oui |
-| Annuel discount | `com.micabo.app.pro.yearly.discount` | 39,99 € / an — annoncé 3,30 € / mois | aucun | **non** sur le paywall ordinaire — il a son propre écran, l'offre cadeau (§13) |
+| Annuel discount | `com.micabo.app.pro.yearly.discount` | 39,99 € / an | aucun | **non** sur le paywall ordinaire — il a son propre écran, l'offre cadeau (§13) |
 
 Identifiant de l'app : `com.micabo.ios`.
 
@@ -355,44 +355,49 @@ paywall ordinaire. Le critère d'éligibilité est le premier cours importé.
 | Déclencheur | La fiche du premier cours | La première page d'app chargée après l'import |
 | Ce qui s'ouvre | Un cadeau plein écran, **trois appuis** pour le déballer | La carte de l'offre, directement |
 | Le paywall | Une languette posée en bas, l'écran d'où l'on vient reste visible dessous | Une carte de 500 px, posée sur le tableau de bord |
-| Minuterie affichée | 24 heures, **au centième** | 24 heures, **au centième** |
-| Après fermeture | Languette avec le même décompte 24 h, un appui rouvre | Pastille en bas à droite, idem |
+| Minuterie affichée | aucune | aucune |
+| Après fermeture | Languette « Offre », un appui rouvre | Pastille en bas à droite, idem |
 
-**Une seule mise en page, des deux côtés** : minuterie violette, le pourcentage en bleu
-ciel, « Révise plus vite avec Pro », la carte de prix avec son sceau festonné, le bouton
-bleu pleine largeur, et la somme réellement prélevée juste dessous. Pas de liste
-d'avantages : le cadeau a déjà annoncé l'offre, et un écran qui argumente encore au moment
-du prix est un écran qui n'a pas confiance en son prix.
+**Une seule mise en page, des deux côtés** : le pourcentage en bleu ciel, « Révise plus vite
+avec Pro », la carte de prix avec son sceau festonné, le bouton bleu pleine largeur, et le
+rythme du prélèvement juste dessous. Pas de liste d'avantages : le cadeau a déjà annoncé
+l'offre, et un écran qui argumente encore au moment du prix est un écran qui n'a pas
+confiance en son prix.
 
 **Le bleu ciel n'existe nulle part ailleurs dans le produit**, et c'est le point. L'offre
 est un événement, pas un écran de plus : peinte dans le vert de Micabo, elle se lirait comme
 une fonctionnalité — donc comme quelque chose qui sera encore là demain. Les valeurs sont
-dans `web/app/globals.css` et `MicaboColor` (`offerSky`, `offerWash`, `offerUrgency`).
+dans `web/app/globals.css` et `MicaboColor` (`offerSky`, `offerWash`).
 
-**Une seule durée, un seul instant d'origine.** Pop-up et pastille montrent les mêmes
-vingt-quatre heures, calculées depuis l'instant où le cadeau a été ouvert — pas depuis
-l'import. Deux horloges se contrediraient : le pop-up dirait « terminé » alors que
-l'offre courrait encore.
+**Une seule durée, un seul instant d'origine.** Vingt-quatre heures depuis l'instant où le
+cadeau a été ouvert — pas depuis l'import. Deux horloges se contrediraient, et un prix qui
+revient après avoir expiré ne se croit plus.
 
-**La minuterie descend au centième**, et ce n'est pas de la précision : une minuterie qui
-bouge à chaque image se regarde, une minuterie qui saute d'une seconde à l'autre se lit une
-fois puis s'oublie. Le web bat toutes les 60 ms, l'app passe par un `TimelineView` à 20
-images par seconde. La pastille des vingt-quatre heures, elle, reste à la seconde : des
-centièmes qui défilent dans un coin de l'écran sont un clignotant.
+**La fenêtre est invisible.** Elle court toujours : elle décide si l'offre est encore
+achetable, si la languette reste et quand le cadeau revient. Mais aucun écran ne montre le
+temps qui reste — ni la pastille violette au centième sur le paywall, ni le décompte de la
+languette, ni la rangée des Réglages. Un décompte posé sur un prix demande de décider vite
+plutôt que de décider ; l'offre tient sur ce qu'elle vaut. Les deux clients n'exportent plus
+un seul formateur de décompte, et `freemium-parity.test.ts` le vérifie des deux côtés : un
+formateur qui survit finit par retrouver une vue.
+
+Conséquence de forme : plus rien ne bat à la seconde. La languette et la pastille ne se
+réveillent qu'une fois, à la fermeture de la fenêtre — un battement par seconde pour un
+changement qui n'arrive qu'une fois est du travail que personne ne regarde.
 
 Les nombres vivent à deux endroits qui ne peuvent pas diverger :
 
 - `web/packages/core/src/discount.ts`
 - `Micabo/Features/Paywall/DiscountOffer.swift`
 
-`web/packages/core/test/freemium-parity.test.ts` relit le Swift et compare. Trois appuis,
-3600 s, 86 400 s, 3,30 €, et la même écriture du décompte — « 00 : 29 : 48 . 69 ».
+`web/packages/core/test/freemium-parity.test.ts` relit le Swift et compare : trois appuis,
+86 400 s, 172 800 s, 39,99 €, et aucun décompte affiché d'un côté ni de l'autre.
 
-**Le prix mensuel est écrit, pas calculé.** 39,99 ÷ 12 fait 3,3325, que les formateurs
-rendraient « 3,33 € ». Les deux clients écrivent 3,30 € / mois **et** affichent
-« 39,99 € facturés une fois par an » juste à côté : un mensuel sans son annuel serait une
-allégation qu'on ne facture pas. Le 69,99 € barré est l'annuel plein, pas la somme de
-cinquante-deux semaines — d'où 43 % et non 90 %.
+**Un prix, celui qui est prélevé : 39,99 € / an.** Les deux clients l'écrivent tel quel, et
+le mensuel équivalent a disparu — il était écrit à la main (39,99 ÷ 12 fait 3,3325, que les
+formateurs rendraient « 3,33 € ») et devait traîner sa somme annuelle juste en dessous pour
+ne rien sous-entendre. Une ligne dit maintenant ce que deux disaient. Le 69,99 € barré reste
+l'annuel plein, pas la somme de cinquante-deux semaines — d'où 43 % et non 90 %.
 
 **Ce que l'appareil retient**, et rien de plus : `micabo.discount.startedAt` et
 `micabo.discount.seen`, en `localStorage` sur le web, en `UserDefaults` sur l'app. Aucune
@@ -460,9 +465,9 @@ false`) ; rien ne les référence.
 
 | Offre | EUR (défaut) | TRY (`currency_options`) |
 | --- | --- | --- |
-| Annuel | 69,99 € / an → 5,83 € / mois | 3 899,99 ₺ / an |
+| Annuel | 69,99 € / an | 3 899,99 ₺ / an |
 | Hebdomadaire | 7,99 € / semaine | 449,99 ₺ / semaine |
-| Annuel discount | 39,99 € / an → 3,30 € / mois | 2 199,99 ₺ / an → 183,30 ₺ / mois |
+| Annuel discount | 39,99 € / an | 2 199,99 ₺ / an |
 
 Les trois montants sont posés sur `price_1UAqB5…`, `price_1UAqBI…` et
 `price_1UAqBJ…`, TVA incluse dans les deux devises.

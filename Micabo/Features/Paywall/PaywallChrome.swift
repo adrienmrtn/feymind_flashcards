@@ -124,7 +124,11 @@ struct PaywallLegalFooter: View {
 
 /// La phrase qui dit le prix, et la seule de l'app qui le dise.
 enum PaywallPitch {
-    /// « Essaie 3 jours gratuitement, puis 5,83 € / mois (facturé 69,99 € par an). »
+    /// « Essaie 3 jours gratuitement, puis 69,99 € par an. »
+    ///
+    /// **Un prix, celui qui est prélevé.** La phrase disait avant le mensuel équivalent et
+    /// l'annuel entre parenthèses : deux chiffres pour une seule somme, dont le plus gros
+    /// arrivait en second et se lisait comme un rattrapage.
     ///
     /// Le vert ne porte que la partie gratuite. Colorer la phrase entière n'aurait mis en
     /// avant que le prix, colorer le prix aurait mis en avant ce qu'on demande.
@@ -138,14 +142,7 @@ enum PaywallPitch {
     }
 
     static func sentence(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
-        if let monthly = plan.monthlyEquivalent {
-            return L10n.t(
-                "ios.paywallThenYear",
-                locale: locale,
-                vars: ["monthly": monthly, "yearly": plan.displayPrice]
-            )
-        }
-        return L10n.t(
+        L10n.t(
             "ios.paywallThenPeriod",
             locale: locale,
             vars: ["price": plan.displayPrice, "unit": plan.period.unit]

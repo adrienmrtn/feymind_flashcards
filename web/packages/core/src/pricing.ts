@@ -13,6 +13,12 @@
  * Une remise annoncée à côté de deux prix qui la contredisent est une allégation commerciale
  * fausse, et sur un site public elle est indexée.
  *
+ * **Un prix, une période : celle qui est prélevée.** Les paywalls n'affichent plus de
+ * mensuel équivalent. Un « 5,83 € / mois » à côté d'un prélèvement annuel de 69,99 € oblige
+ * à deux lectures — le chiffre qu'on retient n'est pas celui qu'on paie — et le mensuel
+ * du discount devait alors traîner sa somme annuelle juste en dessous pour ne rien
+ * sous-entendre. Écrire « 69,99 € / an » dit la même chose en une ligne.
+ *
  * Les prix sont ici et pas lus depuis une boutique : aucun produit n'est encore publié. Quand
  * RevenueCat sera branché, ce sont ces objets-là qui se construiront depuis un `Package`.
  */
@@ -43,7 +49,6 @@ export const TRY_AMOUNTS = {
   yearly: 3899.99,
   weekly: 449.99,
   yearly_discount: 2199.99,
-  yearly_discount_monthly: 183.3,
 } as const;
 
 const CURRENCY_LOCALE: Record<PresentmentCurrency, string> = {
@@ -121,7 +126,7 @@ export function checkoutLocale(input: {
  * l'air moins cher que « 69,99 € ». */
 const OCCURRENCES_PER_YEAR: Record<BillingPeriod, number> = { year: 1, week: 52 };
 
-/** Le mot qui suit la barre oblique : « 7,99 € / semaine ». */
+/** Le mot qui suit la barre oblique : « 69,99 € / an ». */
 const PERIOD_UNIT: Record<BillingPeriod, string> = { year: "an", week: "semaine" };
 
 export interface Plan {
@@ -131,11 +136,6 @@ export interface Plan {
   title: string;
   price: number;
   period: BillingPeriod;
-  /**
-   * Le prix ramené au mois, **écrit** seulement si le calcul arrondirait autrement que
-   * ce qu'on annonce. 69,99 ÷ 12 fait 5,8325, que `Intl` rend « 5,83 € » : rien à forcer.
-   */
-  monthlyPrice?: number;
   /** Jours d'essai. Zéro : rien n'est offert, et le bouton ne doit pas le dire. */
   trialDays: number;
 }
@@ -153,10 +153,8 @@ export const YEARLY: Plan = {
  * Le tarif réduit, celui de l'offre cadeau.
  *
  * Il n'est **pas** sur le paywall ordinaire : on y entre par le cadeau posé
- * après le premier cours, et par lui seul. `monthlyPrice` est écrit et non
- * calculé — 39,99 ÷ 12 fait 3,3325, qu'`Intl` rendrait « 3,33 € ». Le paywall
- * affiche donc 3,30 € / mois **et** la somme réellement prélevée juste à côté :
- * un prix mensuel sans son annuel serait une allégation qu'on ne facture pas.
+ * après le premier cours, et par lui seul. Le paywall affiche 39,99 € / an —
+ * la somme réellement prélevée, et la seule écrite.
  */
 export const DISCOUNT_YEARLY: Plan = {
   kind: "yearly",
@@ -164,7 +162,6 @@ export const DISCOUNT_YEARLY: Plan = {
   title: "Annuel",
   price: 39.99,
   period: "year",
-  monthlyPrice: 3.3,
   trialDays: 0,
 };
 
@@ -302,16 +299,6 @@ export function presentmentAmount(
   return plan.kind === "weekly" ? TRY_AMOUNTS.weekly : TRY_AMOUNTS.yearly;
 }
 
-export function presentmentMonthly(
-  plan: Plan,
-  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
-): number | null {
-  if (plan.period !== "year") return null;
-  if (currency === "EUR") return plan.monthlyPrice ?? plan.price / 12;
-  if (plan.productId === DISCOUNT_YEARLY.productId) return TRY_AMOUNTS.yearly_discount_monthly;
-  return TRY_AMOUNTS.yearly / 12;
-}
-
 export function priceText(
   amount: number,
   currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
@@ -326,44 +313,27 @@ export function priceText(
     .replace(/[\u202f\u2009]/g, "\u00a0");
 }
 
-/**
- * Le prix ramené au mois, pour les offres qui se paient d'un bloc.
- *
- * C'est **le seul chiffre qu'on sait comparer** : personne ne divise mentalement 69,99
- * par douze devant un paywall, et personne ne multiplie 7,99 par cinquante-deux. Le mois est
- * l'unité dans laquelle un budget se pense.
- */
-export function monthlyEquivalent(
-  plan: Plan,
-  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
-): string | null {
-  const amount = presentmentMonthly(plan, currency);
-  return amount == null ? null : priceText(amount, currency);
-}
-
 /** La ligne posée sous le nom de l'offre, dans la liste des plans. */
-export function planCaption(
-  plan: Plan,
-  currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
-): string {
-  const monthly = monthlyEquivalent(plan, currency);
-  return monthly ? `${monthly} / mois` : `facturé chaque ${PERIOD_UNIT[plan.period]}`;
+export function planCaption(plan: Plan): string {
+  return plan.period === "year"
+    ? "facturé une fois par an"
+    : `facturé chaque ${PERIOD_UNIT[plan.period]}`;
 }
 
 /**
- * Le prix affiché à droite de la carte : le mois pour l'annuel, la semaine
- * pour l'hebdomadaire. C'est l'unité dans laquelle on compare.
+ * Le prix affiché à droite de la carte : **celui qui est prélevé**, dans la période
+ * où il l'est. Pas de ramené au mois — le chiffre qu'on lit est celui qui part.
  */
 export function planDisplayedPrice(
   plan: Plan,
   currency: PresentmentCurrency = DEFAULT_PRESENTMENT,
 ): string {
-  return monthlyEquivalent(plan, currency) ?? priceText(presentmentAmount(plan, currency), currency);
+  return priceText(presentmentAmount(plan, currency), currency);
 }
 
-/** L'unité collée sous ce prix : « / mois » ou « / semaine ». */
+/** L'unité collée sous ce prix : « / an » ou « / semaine ». */
 export function planDisplayedUnit(plan: Plan): string {
-  return monthlyEquivalent(plan) ? "/ mois" : `/ ${PERIOD_UNIT[plan.period]}`;
+  return `/ ${PERIOD_UNIT[plan.period]}`;
 }
 
 /**
