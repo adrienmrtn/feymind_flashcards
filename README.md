@@ -1265,6 +1265,42 @@ même prompt et les mêmes champs : `test/generation-parity.test.ts` relit le Sw
 TypeScript et échoue si l'un envoie un champ que l'autre ignore. C'est ce qui s'était produit
 avec les consignes libres de l'étudiant, envoyées par le site et pas par l'app.
 
+**Le marquage se mesure, il ne se demande pas.** Le prompt réclame ces marques depuis
+`course-v2.0.0` ; pendant des semaines, les fiches sortaient nues et personne ne savait où ça
+cassait. Trois causes, trouvées en instrumentant plutôt qu'en réécrivant la consigne :
+
+1. **Les seuils étaient comptés par paragraphe.** « Un à trois termes en gras par paragraphe »
+   ne veut rien dire quand un paragraphe de mémo fait six cents caractères. Un cours court était
+   correctement marqué, un document long ne l'était pas, et les deux respectaient la consigne à
+   la lettre. Les seuils sont donc des densités : un gras tous les 250 caractères, un surlignage
+   tous les 800, un italique tous les 2 000.
+2. **La seconde passe recopiait.** Elle tourne quand la fiche porte moins de la moitié de ce que
+   sa longueur appelle, et repose les marques sans droit de toucher au texte. Appelée sur
+   Flash-Lite à température 0,1, elle rendait quinze textes sur quinze **inchangés** : recopier
+   l'entrée était la réponse la plus probable. Flash à 0,4, par lots de six, avec « un texte
+   rendu à l'identique est une erreur » et un exemple avant/après.
+3. **La forme n'était pas vérifiée.** Un surligneur peut s'ouvrir au milieu d'un mot et se
+   fermer deux cents caractères plus loin : au rendu c'est une bande de couleur sur trois
+   phrases, et le contrôle qui comparait les textes *marques retirées* ne pouvait pas le voir.
+   `mark-shape.ts` juge la pose - ouverture et fermeture au bord d'un mot, dans le même bloc, sur
+   une longueur plausible - et retire les marqueurs fautifs sans toucher au texte.
+
+Deux garde-fous encadrent la repasse, et ils sont la raison pour laquelle on peut laisser un
+modèle repasser sur une fiche déjà écrite : un texte dont le contenu a bougé d'un caractère est
+écarté, et un texte qui **perd** une marque l'est aussi. Le pire cas d'une repasse ratée est la
+fiche d'avant. La réponse porte les compteurs de chaque étape (`meta.marks`, `meta.repaint`,
+`meta.shape`) : c'est ce qui a permis de séparer les trois causes en trois appels au lieu de
+trois déploiements à l'aveugle.
+
+Mesuré après correction, six fiches, deux formats de document :
+
+| | gras | densité | surlignages | italiques |
+| --- | --- | --- | --- | --- |
+| Mémo long (6 500 caractères) | 27 à 32 | un tous les 204 à 241 caractères | 4 à 7 | 2 à 3 |
+| Chapitre court (3 200 caractères) | 13 à 21 | un tous les 152 à 251 caractères | 3 à 6 | 1 à 2 |
+
+Avant : un gras tous les 770 caractères, deux surlignages malformés, aucun italique.
+
 **Le surligneur est une bande jaune, et il a fait un aller-retour.** Un fond de texte posé par
 TextKit prend toute la hauteur de la ligne, interligne compris : sur un paragraphe de fiche, où
 l'interligne vaut près de la moitié du corps, la bande touchait celle de la ligne du dessus et
