@@ -50,11 +50,12 @@ export interface MarkupSpan {
   /**
    * La teinte du surlignage, quand il y en a un.
    *
-   * Le code couleur d'une fiche n'appartient qu'à celui qui la relit : le modèle marque en
-   * jaune ce qui compte, et l'étudiant recolore. La couleur s'écrit avant une barre verticale
-   * - `==menthe|texte==` - parce que la barre ne se rencontre à peu près jamais dans un cours,
-   * là où le deux-points est partout. Un nom inconnu n'est pas une couleur : le texte reste
-   * tel quel, barre comprise.
+   * Le modèle pose ces couleurs selon un code écrit dans le prompt de `generate-course` : la
+   * définition en jaune, le chiffre en menthe, le mécanisme en bleu, l'exception en rose, le
+   * repère en lilas. L'étudiant recolore par-dessus, parce que la fiche reste la sienne. La
+   * couleur s'écrit avant une barre verticale - `==menthe|texte==` - parce que la barre ne se
+   * rencontre à peu près jamais dans un cours, là où le deux-points est partout. Un nom
+   * inconnu n'est pas une couleur : le texte reste tel quel, barre comprise.
    */
   highlight: SheetHighlight | null;
   /**

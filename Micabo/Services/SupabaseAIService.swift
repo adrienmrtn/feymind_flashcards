@@ -27,7 +27,10 @@ struct SupabaseAIService: AIService {
             "length": request.sheetLength.rawValue,
             "blocks": request.sheetBlocks,
             "subject": request.subject ?? "",
-            "source": request.sourceKind?.rawValue ?? ""
+            "source": request.sourceKind?.rawValue ?? "",
+            // Même clé, même borne et même nom que sur le site : la fonction lit un seul
+            // champ, et les deux clients doivent le remplir pareil.
+            "instructions": String((request.instructions ?? "").prefix(2_000))
         ]
 
         let envelope = try await post("generate-course", payload: payload)

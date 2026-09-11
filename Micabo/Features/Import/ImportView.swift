@@ -43,6 +43,9 @@ struct ImportView: View {
     /// Le volume de fiche demandé, en blocs. Écrit dans les réglages à chaque cran, pour
     /// que le prochain import reparte de là où on avait laissé le curseur.
     @State private var sheetBlocks = SheetPreferences.blocks
+    /// Le prompt libre de cette fiche. Il ne se garde pas d'un import à l'autre : une consigne
+    /// écrite pour un chapitre de droit n'a rien à faire sur le cours de physique d'après.
+    @State private var instructions = ""
     /// Qui pourra retrouver le cours. Gardé d'un import à l'autre pour la même raison.
     @AppStorage(CourseVisibility.importKey) private var visibility = CourseVisibility.standard
     /// `nil` = langue du document. Une valeur force la fiche dans cette langue.
@@ -116,6 +119,7 @@ struct ImportView: View {
                         }
 
                         lengthSection
+                        instructionsField
                         languageSection
                         visibilitySection
                     }
@@ -286,6 +290,43 @@ struct ImportView: View {
                 .font(MicaboFont.body)
                 .padding(MicaboSpacing.sm)
                 .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+        }
+    }
+
+    /// Les consignes particulières, comme sur le site.
+    ///
+    /// Elles pèsent sur le **contenu** - ce qu'on privilégie, ce qu'on laisse, le vocabulaire -
+    /// jamais sur le format : la fonction écarte d'elle-même une consigne qui demanderait du
+    /// markdown ou un chapitre inventé. Deux mille caractères, la borne du serveur.
+    private var instructionsField: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(L10n.t("app.import.instructionsLabel", locale: .resolved()))
+                .font(MicaboFont.captionEmphasis)
+                .foregroundStyle(MicaboColor.ink)
+
+            ZStack(alignment: .topLeading) {
+                TextEditor(text: $instructions)
+                    .font(MicaboFont.body)
+                    .scrollContentBackground(.hidden)
+                    .padding(MicaboSpacing.sm)
+                    .frame(minHeight: 88, alignment: .topLeading)
+
+                if instructions.isEmpty {
+                    Text(L10n.t("app.import.instructionsPlaceholder", locale: .resolved()))
+                        .font(MicaboFont.body)
+                        .foregroundStyle(MicaboColor.inkTertiary)
+                        .padding(MicaboSpacing.sm + 4)
+                        .allowsHitTesting(false)
+                }
+            }
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+
+            Text(L10n.t("app.import.instructionsHint", locale: .resolved()))
+                .font(MicaboFont.micro)
+                .foregroundStyle(MicaboColor.inkTertiary)
+        }
+        .onChange(of: instructions) { _, newValue in
+            if newValue.count > 2_000 { instructions = String(newValue.prefix(2_000)) }
         }
     }
 
@@ -858,7 +899,8 @@ struct ImportView: View {
             sheetBlocks: sheetBlocks,
             // La matière n'est pas encore connue : c'est le modèle qui la trouve, et la
             // fonction la devine sur le texte pour choisir ses consignes de rédaction.
-            sourceKind: source
+            sourceKind: source,
+            instructions: instructions.nilIfBlank
         )
 
         // Étape 1 : la fiche. Si elle échoue, rien n'a été créé.

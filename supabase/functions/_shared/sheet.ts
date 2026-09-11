@@ -35,9 +35,15 @@ export type SheetBlock =
  *
  * Cinq pastels, et pas une de plus. Le surlignage sert à retrouver un passage d'un coup
  * d'œil ; au-delà de cinq teintes on ne les distingue plus en diagonale, et une page qui en
- * porte huit n'a plus rien de mis en avant. Le modèle n'en choisit aucune - il marque ce qui
- * compte, en jaune - et c'est l'étudiant qui recolore, parce que le code couleur d'une fiche
- * n'appartient qu'à celui qui la relit.
+ * porte huit n'a plus rien de mis en avant.
+ *
+ * **Le modèle les emploie, et selon un code.** Il marquait tout en jaune, à charge pour
+ * l'étudiant de recolorer : personne ne recolore une fiche de soixante blocs, et une page
+ * d'un seul feutre ne dit rien de plus qu'une page sans feutre. Une couleur porte donc une
+ * sorte d'information - la définition, le chiffre, le mécanisme, l'exception, le repère -
+ * et le code est écrit dans `generate-course/prompt.ts`, qui nomme ces cinq teintes. Un
+ * test du prompt compare les deux listes : une couleur inventée laisserait « framboise| »
+ * dans la phrase. L'étudiant recolore toujours ce qu'il veut par-dessus.
  */
 export const SHEET_HIGHLIGHTS = ["jaune", "menthe", "bleu", "rose", "lilas"] as const;
 

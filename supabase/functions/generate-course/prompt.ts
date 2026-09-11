@@ -1,6 +1,6 @@
 /** Consignes de rédaction de la fiche d'un cours. */
 
-export const PROMPT_VERSION = "course-v2.0.0";
+export const PROMPT_VERSION = "course-v2.1.0";
 
 /** Longueur max d'une consigne libre. Au-delà, ce n'est plus un prompt, c'est un cours. */
 export const MAX_INSTRUCTIONS = 2_000;
@@ -24,15 +24,24 @@ LA LONGUEUR
 Une fiche trop courte est le défaut le plus grave, avant même la maladresse d'écriture : une notion expédiée en une ligne ne se révise pas, et l'étudiant retourne à son cours. La consigne de longueur qui accompagne le document donne le volume, et tu la remplis. Si tu hésites entre deux blocs de plus et deux de moins, tu en écris deux de plus, à condition qu'ils portent du contenu du document.
 
 MISE EN FORME DU TEXTE
-Une fiche sans marques ne se relit pas : c'est le gras et le surligneur qui font qu'on retrouve l'essentiel en dix secondes, la veille au soir. Quatre marques, et rien d'autre :
-- **terme** met en gras. Le vocabulaire exact que l'examen attend. UN À TROIS termes par paragraphe, et jamais zéro dans un paragraphe qui introduit une notion.
-- *nuance* met en italique. Pour un mot étranger, un titre d'œuvre, une réserve.
-- ==passage== pose un surligneur sous le passage. L'encre reste noire : ce n'est pas une autre couleur de texte, pas un lien, pas du bleu. C'est un trait de feutre sous une phrase qu'on doit pouvoir réciter. DIX À VINGT passages sur toute la fiche, jamais deux dans le même paragraphe. Un passage surligné est une phrase courte ou un fragment de phrase : pas trois mots isolés, pas un paragraphe entier. Tu ne choisis pas la couleur, c'est le lecteur qui recolore.
+Une fiche sans marques ne se relit pas : c'est le gras, l'italique et le surligneur qui font qu'on retrouve l'essentiel en dix secondes, la veille au soir. Une fiche en texte nu est un défaut au même titre qu'une fiche trop courte. Quatre marques, et rien d'autre :
+- **terme** met en gras. Le vocabulaire exact que l'examen attend. UN À TROIS termes par paragraphe, et jamais zéro dans un paragraphe qui introduit une notion. Le gras porte sur un mot ou un groupe nominal, jamais sur une phrase entière.
+- *nuance* met en italique. Il y en a sur toute fiche, et il y a toujours de quoi : un mot étranger ou latin (*in vivo*, *a priori*, *de facto*), un titre d'œuvre, de loi ou de revue, un terme cité en tant que mot, une réserve ou une condition qui change le résultat, le terme voisin avec lequel on ne doit pas confondre celui qu'on vient de définir. CINQ À DIX passages en italique sur toute la fiche, chacun d'un mot à quelques mots, jamais une phrase entière.
+- ==couleur|passage== pose un surligneur pastel sous le passage. L'encre reste noire : ce n'est pas une autre couleur de texte, pas un lien, pas du bleu. C'est un trait de feutre sous une phrase qu'on doit pouvoir réciter. La couleur s'écrit avant une barre verticale et vaut jaune si on l'omet : ==menthe|71 % de l'évaporation vient des océans== ou ==une phrase en jaune==. DIX À VINGT passages sur toute la fiche, jamais deux dans le même paragraphe. Un passage surligné est une phrase courte ou un fragment de phrase : pas trois mots isolés, pas un paragraphe entier.
 - $E = mc^2$ compose une formule dans une phrase. Reste simple ici : exposants, indices, fractions courtes, lettres grecques. Une formule qui doit se déployer va dans un bloc formula. Hors de $…$ et hors d'un bloc formula, jamais de commande nue : une flèche s'écrit →, pas \\rightarrow.
 Pas de markdown en dehors de ça : ni #, ni -, ni tableaux en pipes.
 
+LE CODE COULEUR DU SURLIGNEUR
+Cinq feutres pastel, et une couleur dit une SORTE d'information, la même d'un bout à l'autre de la fiche. C'est ce qui permet de retrouver tous les chiffres d'un chapitre en diagonale, et c'est la seule raison d'avoir cinq feutres plutôt qu'un. Un nom de couleur hors de cette liste n'est pas une couleur, et la barre se lirait alors dans le texte.
+- jaune : la définition, la thèse, la phrase que l'étudiant devra pouvoir réciter.
+- menthe : un résultat chiffré, un seuil, un ordre de grandeur, une date de valeur, avec son unité.
+- bleu : un mécanisme, un enchaînement de causes, la condition d'application d'un résultat.
+- rose : une exception, une limite, une confusion classique, ce qui se rate à l'examen.
+- lilas : un repère : un nom propre, un auteur, une œuvre, une loi, un événement daté.
+Le jaune reste le plus fréquent. Sur une fiche entière, AU MOINS TROIS couleurs différentes sont employées, et aucune n'est posée pour varier : une couleur sans information de sa sorte ne se pose pas.
+
 OÙ POSER LE SURLIGNEUR
-Dans cet ordre de priorité : la phrase qui donne l'enjeu du sujet ; dans chaque partie, la phrase que l'étudiant devra pouvoir réciter ; le résultat chiffré, le seuil ou l'ordre de grandeur qu'un correcteur attend ; la conclusion d'un mécanisme. Le gras et le surligneur ne se disputent pas la même chaîne de caractères : on surligne une phrase, on met en gras un terme, et un terme en gras peut se trouver dans une phrase surlignée.
+Dans cet ordre de priorité : la phrase qui donne l'enjeu du sujet ; dans chaque partie, la phrase que l'étudiant devra pouvoir réciter ; le résultat chiffré, le seuil ou l'ordre de grandeur qu'un correcteur attend ; la conclusion d'un mécanisme. Le gras, l'italique et le surligneur ne se disputent pas la même chaîne de caractères : on surligne une phrase, on met en gras un terme, on met en italique une nuance, et un terme en gras peut se trouver dans une phrase surlignée.
 
 STRUCTURE
 Tu produis UNIQUEMENT un objet JSON compact, une seule ligne, sans indentation ni saut de ligne, sans texte autour, sans balises de code.
@@ -66,8 +75,9 @@ COMMENT COMPOSER LA FICHE
 AVANT DE RÉPONDRE, RELIS TA FICHE ET VÉRIFIE
 - Le nombre de blocs correspond à la longueur demandée. Dans le doute, allonge.
 - Les paragraphes sont largement plus nombreux que les listes.
-- Dix à vingt passages portent la marque ==, jamais deux dans le même paragraphe.
+- Dix à vingt passages portent la marque ==, jamais deux dans le même paragraphe, et au moins trois couleurs différentes sont employées selon le code ci-dessus.
 - Chaque paragraphe qui introduit une notion porte au moins un terme en **gras**.
+- Cinq à dix passages sont en *italique*.
 - Aucune phrase ne s'adresse au lecteur.
 - Aucun tiret cadratin.
 Si l'un de ces points manque, corrige-le avant de répondre.

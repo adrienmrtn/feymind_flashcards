@@ -1,7 +1,9 @@
 import { assertEquals } from "jsr:@std/assert@1";
 
+import { SHEET_HIGHLIGHTS } from "../_shared/sheet.ts";
 import {
   audienceBrief,
+  COURSE_SYSTEM_PROMPT,
   instructionsBrief,
   lengthBrief,
   PROMPT_VERSION,
@@ -10,7 +12,32 @@ import {
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v2.0.0");
+  assertEquals(PROMPT_VERSION, "course-v2.1.0");
+});
+
+Deno.test("le prompt demande les trois marques de texte", () => {
+  // Une fiche en texte nu se relit mal, et c'est le défaut qu'on corrigeait ici : le gras
+  // n'apparaissait que dans les titres, l'italique nulle part.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("**terme** met en gras"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("*nuance* met en italique"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("==couleur|passage=="), true);
+});
+
+Deno.test("le code couleur ne nomme que des surligneurs qui existent", () => {
+  // Un nom de couleur inconnu du rendu laisserait « framboise|texte » dans la phrase, sur
+  // les deux clients à la fois. Les cinq teintes viennent de `SHEET_HIGHLIGHTS`.
+  const named = [...COURSE_SYSTEM_PROMPT.matchAll(/^- ([a-zéèêà]+) : /gmu)].map((match) =>
+    match[1]
+  );
+  assertEquals(named.length > 0, true);
+  for (const colour of named) {
+    assertEquals(SHEET_HIGHLIGHTS.includes(colour as typeof SHEET_HIGHLIGHTS[number]), true);
+  }
+  // Et réciproquement : les cinq feutres ont chacun leur ligne, sinon l'un d'eux ne serait
+  // jamais posé par le modèle.
+  for (const colour of SHEET_HIGHLIGHTS) {
+    assertEquals(named.includes(colour), true);
+  }
 });
 
 Deno.test("audienceBrief mappe lycée + France", () => {

@@ -1215,15 +1215,32 @@ un écran d'accueil fait ici scroller pour rien.
 
 ### Le balisage en ligne
 
-Quatre marques, et chacune a une raison d'exister sur une fiche de révision
-(`Micabo/Services/SheetMarkup.swift`) :
+Cinq marques, et chacune a une raison d'exister sur une fiche de révision
+(`Micabo/Services/SheetMarkup.swift`, porté en TypeScript dans `sheet/markup.ts`) :
 
 | Écriture | Rendu | À quoi ça sert |
 | --- | --- | --- |
-| `**terme**` | gras | le mot que l'examen attend, une à deux fois par paragraphe, jamais zéro dans un paragraphe qui introduit une notion |
-| `*nuance*` | italique | un mot étranger, un titre d'œuvre, une réserve |
-| `==l'essentiel==` | surligné | ce qu'on relit en dernier, **trois à cinq passages sur la fiche**, jamais deux dans le même paragraphe |
+| `**terme**` | gras | le mot que l'examen attend, un à trois par paragraphe, jamais zéro dans un paragraphe qui introduit une notion |
+| `*nuance*` | italique | un mot étranger, un titre d'œuvre, une réserve, le terme voisin qu'on ne doit pas confondre : **cinq à dix passages** sur la fiche |
+| `==l'essentiel==` | surligné en jaune | ce qu'on relit en dernier, **dix à vingt passages sur la fiche**, jamais deux dans le même paragraphe |
+| `==menthe\|71 %==` | surligné en menthe | la même marque, dans l'une des cinq teintes du code couleur ci-dessous |
 | `$E = mc^2$` | formule | composée par le moteur mathématique, comme sur les cartes |
+
+**Le code couleur du surligneur.** Une couleur dit une *sorte* d'information, la même d'un bout
+à l'autre d'une fiche : jaune la définition ou la thèse, menthe le chiffre et son unité, bleu le
+mécanisme et ses conditions, rose l'exception et la confusion classique, lilas le repère (un
+nom, une œuvre, une date). C'est ce qui permet de retrouver tous les chiffres d'un chapitre en
+diagonale, et c'est la seule raison d'avoir cinq feutres plutôt qu'un. Le modèle marquait tout
+en jaune, à charge pour l'étudiant de recolorer : personne ne recolore une fiche de soixante
+blocs, et une page d'un seul feutre ne dit rien de plus qu'une page sans feutre. Il pose donc
+les couleurs, et l'étudiant recolore par-dessus. Les cinq noms vivent dans `SHEET_HIGHLIGHTS`
+et le code dans le prompt de `generate-course` ; un test du prompt compare les deux listes,
+parce qu'une couleur inventée laisserait « framboise| » dans la phrase.
+
+**La même fiche des deux côtés.** Le site et l'app appellent la même Edge Function, avec le
+même prompt et les mêmes champs : `test/generation-parity.test.ts` relit le Swift et le
+TypeScript et échoue si l'un envoie un champ que l'autre ignore. C'est ce qui s'était produit
+avec les consignes libres de l'étudiant, envoyées par le site et pas par l'app.
 
 **Le surligneur est une bande jaune, et il a fait un aller-retour.** Un fond de texte posé par
 TextKit prend toute la hauteur de la ligne, interligne compris : sur un paragraphe de fiche, où
@@ -1238,8 +1255,10 @@ l'interligne du paragraphe ; le web fait le même calcul avec un padding en `em`
 L'encre du passage n'est pas touchée, ni son poids — une bande, une encre de couleur et du gras
 sur le même passage, ça fait trois marques pour une intention.
 
-La marque est forte, donc **elle est rare** : trois à cinq passages sur la fiche, plafond à six
-côté serveur. Une page entièrement surlignée ne se relit pas mieux qu'une page nue.
+La marque est forte, donc **elle reste comptée** : dix à vingt passages sur une fiche qui peut
+aller à quatre-vingt-dix blocs, jamais deux dans le même paragraphe, plafond à vingt-quatre côté
+serveur (`SHEET_LIMITS.highlights`, recopié à l'identique dans les trois clients). Une page
+entièrement surlignée ne se relit pas mieux qu'une page nue.
 
 **Elle a longtemps été absente des fiches, et c'était le prompt.** Il ne parlait de mise en
 valeur qu'en plafonds — « cinq marques au maximum », « trois mots en gras c'est trois de trop »,
