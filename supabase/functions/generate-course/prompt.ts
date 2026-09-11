@@ -1,6 +1,6 @@
 /** Consignes de rédaction de la fiche d'un cours. */
 
-export const PROMPT_VERSION = "course-v2.1.0";
+export const PROMPT_VERSION = "course-v2.2.0";
 
 /** Longueur max d'une consigne libre. Au-delà, ce n'est plus un prompt, c'est un cours. */
 export const MAX_INSTRUCTIONS = 2_000;
@@ -40,6 +40,15 @@ Cinq feutres pastel, et une couleur dit une SORTE d'information, la même d'un b
 - lilas : un repère : un nom propre, un auteur, une œuvre, une loi, un événement daté.
 Le jaune reste le plus fréquent. Sur une fiche entière, AU MOINS TROIS couleurs différentes sont employées, et aucune n'est posée pour varier : une couleur sans information de sa sorte ne se pose pas.
 
+LES FORMULES DANS LA PHRASE
+Une grandeur, un symbole, un ion, un exposant, une unité composée, une formule courte : ça s'écrit DANS la phrase, entre $ et $, et pas dans un bloc à part. « la vitesse $v = d/t$ augmente » se lit d'un trait ; la même chose posée en bloc coupe le raisonnement en deux et oblige à faire l'aller-retour. Écris $C_6H_{12}O_6$ et non C6H12O6, $10^{-3}$ et non 10-3, $\\Delta G < 0$ et non delta G inférieur à 0, $\\lambda$ et non lambda, $m \\cdot s^{-1}$ et non m.s-1.
+Le bloc formula est réservé à ce qui se DÉPLOIE et qu'on veut isoler pour le retenir : une intégrale avec ses bornes, une somme, une limite, une matrice, un système d'équations, une fraction à plusieurs étages, l'équation-bilan d'une réaction. Deux ou trois sur une fiche, pas davantage.
+Sur un cours de sciences, plusieurs $…$ par partie est normal ; zéro est un défaut, au même titre qu'un paragraphe sans gras. Sur un cours de lettres ou de droit, il n'y en a pas, et c'est très bien.
+
+UN PARAGRAPHE CORRECTEMENT MARQUÉ, POUR L'EXEMPLE
+{"type":"paragraph","text":"La **phase photochimique** se déroule dans les **thylakoïdes** : les photons excitent la chlorophylle, l'eau est oxydée et libère du dioxygène. ==menthe|Elle fournit l'ATP et le NADPH que le cycle de Calvin consomme, pour un rendement réel de $1$ à $2$ % de l'énergie incidente.== Ce rendement est dit *apparent*, à ne pas confondre avec le rendement *quantique*, qui rapporte la matière produite aux seuls photons absorbés."}
+Deux termes en gras, un passage surligné et un seul, la couleur menthe parce que le passage porte un chiffre, une formule dans la phrase, deux italiques qui séparent deux notions voisines. C'est la densité attendue sur un paragraphe de fiche, et elle vaut pour TOUS les paragraphes, pas pour le premier.
+
 OÙ POSER LE SURLIGNEUR
 Dans cet ordre de priorité : la phrase qui donne l'enjeu du sujet ; dans chaque partie, la phrase que l'étudiant devra pouvoir réciter ; le résultat chiffré, le seuil ou l'ordre de grandeur qu'un correcteur attend ; la conclusion d'un mécanisme. Le gras, l'italique et le surligneur ne se disputent pas la même chaîne de caractères : on surligne une phrase, on met en gras un terme, on met en italique une nuance, et un terme en gras peut se trouver dans une phrase surlignée.
 
@@ -77,7 +86,8 @@ AVANT DE RÉPONDRE, RELIS TA FICHE ET VÉRIFIE
 - Les paragraphes sont largement plus nombreux que les listes.
 - Dix à vingt passages portent la marque ==, jamais deux dans le même paragraphe, et au moins trois couleurs différentes sont employées selon le code ci-dessus.
 - Chaque paragraphe qui introduit une notion porte au moins un terme en **gras**.
-- Cinq à dix passages sont en *italique*.
+- Cinq à dix passages sont en *italique*. Zéro est une erreur : relis, il y a toujours un mot étranger, un titre, une réserve ou deux notions voisines à distinguer.
+- Les grandeurs, symboles et formules courtes sont dans la phrase, entre $ et $, et non recopiés en texte brut ni renvoyés en bloc.
 - Aucune phrase ne s'adresse au lecteur.
 - Aucun tiret cadratin.
 Si l'un de ces points manque, corrige-le avant de répondre.
