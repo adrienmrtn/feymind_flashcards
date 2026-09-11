@@ -25,6 +25,7 @@ import {
   batched,
   cleanBlockMarks,
   countMarks,
+  emptyMergeReport,
   markPrompt,
   MARK_SYSTEM_PROMPT,
   mergeMarked,
@@ -81,10 +82,15 @@ async function writeSheet(
  * Les lots partent **ensemble**. En file, quarante-cinq textes feraient cinq allers-retours à
  * la suite, soit une vingtaine de secondes ajoutées à un import qui en prend déjà trente.
  */
-async function repaintMarks(blocks: SheetBlock[]): Promise<SheetBlock[]> {
-  if (!needsMarkPass(blocks)) return blocks;
+async function repaintMarks(
+  blocks: SheetBlock[],
+): Promise<{ blocks: SheetBlock[]; report: Record<string, number> }> {
+  const report = { ...emptyMergeReport(), batches: 0, failed: 0, ragged: 0, ran: 0 };
+  if (!needsMarkPass(blocks)) return { blocks, report };
 
+  report.ran = 1;
   const lots = batched(textsToMark(blocks));
+  report.batches = lots.length;
 
   const marked = await Promise.all(lots.map(async (lot) => {
     try {
@@ -98,14 +104,18 @@ async function repaintMarks(blocks: SheetBlock[]): Promise<SheetBlock[]> {
       const parsed = deepStripEmDashes(parseModelJSON<unknown>(output));
       // Un lot dont la réponse n'a pas la bonne taille est un lot tronqué : ses textes
       // repartent tels quels plutôt que de décaler tous les suivants d'un cran.
-      if (!Array.isArray(parsed) || parsed.length !== lot.length) return lot;
+      if (!Array.isArray(parsed) || parsed.length !== lot.length) {
+        report.ragged += 1;
+        return lot;
+      }
       return parsed;
     } catch (_error) {
+      report.failed += 1;
       return lot;
     }
   }));
 
-  return normalizeSheet(mergeMarked(blocks, marked.flat()));
+  return { blocks: normalizeSheet(mergeMarked(blocks, marked.flat(), report)), report };
 }
 
 interface RequestBody {
@@ -253,8 +263,8 @@ Deno.serve((request: Request) =>
       // surlignages sont posés au milieu d'un mot n'est pas une fiche marquée, et le
       // déclenchement de la repasse doit le savoir.
       const cleaned = cleanBlockMarks(written);
-      const repainted = await repaintMarks(cleaned);
-      const blocks = cleanBlockMarks(repainted);
+      const repaint = await repaintMarks(cleaned);
+      const blocks = cleanBlockMarks(repaint.blocks);
 
       if (blocks.length < 3) {
         throw new FalError("Le modèle n'a pas produit de fiche exploitable.", 502);
@@ -293,9 +303,10 @@ Deno.serve((request: Request) =>
           marks: {
             written: countMarks(written),
             cleaned: countMarks(cleaned),
-            repainted: countMarks(repainted),
+            repainted: countMarks(repaint.blocks),
             final: countMarks(blocks),
           },
+          repaint: repaint.report,
         },
       });
     } catch (error) {

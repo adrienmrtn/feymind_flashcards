@@ -207,22 +207,61 @@ function countTextMarks(text: string): MarkCount {
   return countMarks([{ type: "paragraph", text }]);
 }
 
+/**
+ * Ce que la fusion a accepté, et ce qu'elle a refusé.
+ *
+ * Sans ce compte, une repasse qui ne change rien ne se distingue pas d'une repasse dont tous
+ * les textes sont refusés : les deux rendent la fiche d'avant. C'est exactement l'ambiguïté
+ * qui a coûté deux déploiements.
+ */
+export interface MergeReport {
+  /** Textes remplacés par leur version marquée. */
+  changed: number;
+  /** Textes identiques à l'entrée : le modèle n'a rien posé dessus. */
+  same: number;
+  /** Refusés parce que le texte nu avait bougé. */
+  moved: number;
+  /** Refusés parce qu'une marque y avait disparu. */
+  lost: number;
+  /** Refusés parce que la réponse n'était pas une chaîne. */
+  absent: number;
+}
+
+export function emptyMergeReport(): MergeReport {
+  return { changed: 0, same: 0, moved: 0, lost: 0, absent: 0 };
+}
+
 export function mergeMarked(
   blocks: readonly SheetBlock[],
   marked: readonly unknown[],
+  report: MergeReport = emptyMergeReport(),
 ): SheetBlock[] {
   let cursor = 0;
 
   const next = (original: string): string => {
     const candidate = marked[cursor++];
-    if (typeof candidate !== "string") return original;
-    if (stripInlineMarkup(candidate) !== stripInlineMarkup(original)) return original;
+    if (typeof candidate !== "string") {
+      report.absent += 1;
+      return original;
+    }
+    if (candidate === original) {
+      report.same += 1;
+      return original;
+    }
+    if (stripInlineMarkup(candidate) !== stripInlineMarkup(original)) {
+      report.moved += 1;
+      return original;
+    }
     // **Une repasse n'efface pas.** Mesuré : sur une fiche de neuf blocs, la seconde passe a
     // rendu les mêmes phrases au caractère près en ayant **retiré** dix-sept termes en gras.
     // Le texte étant identique une fois les marques ôtées, la fusion l'acceptait, et le
     // remède était pire que le mal. Un candidat qui perd une marque est donc écarté comme
     // un candidat qui perd un mot.
-    if (losesMarks(original, candidate)) return original;
+    if (losesMarks(original, candidate)) {
+      report.lost += 1;
+      return original;
+    }
+    report.changed += 1;
     return candidate;
   };
 
