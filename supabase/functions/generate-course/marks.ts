@@ -124,6 +124,19 @@ export function textsToMark(blocks: readonly SheetBlock[]): string[] {
  * son texte d'origine. C'est ce qui permet de laisser un modèle repasser sur une fiche déjà
  * écrite sans qu'il puisse la réécrire en douce.
  */
+/** Le candidat porte-t-il moins de marques que le texte d'origine ? */
+function losesMarks(original: string, candidate: string): boolean {
+  const before = countTextMarks(original);
+  const after = countTextMarks(candidate);
+  return after.bold < before.bold || after.italic < before.italic ||
+    after.highlight < before.highlight || after.math < before.math;
+}
+
+/** Les marques d'un texte seul. Le comptage vit dans `countMarks`, qui lit des blocs. */
+function countTextMarks(text: string): MarkCount {
+  return countMarks([{ type: "paragraph", text }]);
+}
+
 export function mergeMarked(
   blocks: readonly SheetBlock[],
   marked: readonly unknown[],
@@ -134,6 +147,12 @@ export function mergeMarked(
     const candidate = marked[cursor++];
     if (typeof candidate !== "string") return original;
     if (stripInlineMarkup(candidate) !== stripInlineMarkup(original)) return original;
+    // **Une repasse n'efface pas.** Mesuré : sur une fiche de neuf blocs, la seconde passe a
+    // rendu les mêmes phrases au caractère près en ayant **retiré** dix-sept termes en gras.
+    // Le texte étant identique une fois les marques ôtées, la fusion l'acceptait, et le
+    // remède était pire que le mal. Un candidat qui perd une marque est donc écarté comme
+    // un candidat qui perd un mot.
+    if (losesMarks(original, candidate)) return original;
     return candidate;
   };
 
