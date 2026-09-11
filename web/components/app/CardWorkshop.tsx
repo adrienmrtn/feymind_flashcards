@@ -101,9 +101,9 @@ export function CardWorkshop({
         <CardList courseId={course.id} cards={cards} exam={exam} />
       </div>
 
-      {cards.length > entitlement.FREE_TIER.cardsPerSession ? (
+      {cards.length > entitlement.WEB_FREE_TIER.cardsPerSession ? (
         <p className="mt-4 text-[12.5px] leading-relaxed text-ink-tertiary">
-          {t("app.workshop.freeCap", { limit: entitlement.FREE_TIER.cardsPerSession })}
+          {t("app.workshop.freeCap", { limit: entitlement.WEB_FREE_TIER.cardsPerSession })}
         </p>
       ) : null}
 

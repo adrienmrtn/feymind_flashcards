@@ -9,7 +9,7 @@ import { PaywallOffer } from "@/components/app/PaywallOffer";
 import { useI18n } from "@/lib/i18n/client";
 
 /**
- * Le paywall qui **coupe une session au bout de cinq cartes**.
+ * Le paywall qui **coupe une session au bout de quatre cartes**.
  *
  * Comme sur iOS : il s'ouvre par-dessus la carte suivante, pas à la
  * place de la session. S'abonner, ou rentrer. La croix demande
@@ -82,7 +82,7 @@ export function SessionPaywall({ reviewedCount }: { reviewedCount: number }) {
                 <span className="numeral">
                   {t("app.paywall.session.progress", {
                     reviewed: reviewedCount,
-                    limit: entitlement.FREE_TIER.cardsPerSession,
+                    limit: entitlement.WEB_FREE_TIER.cardsPerSession,
                   })}
                 </span>
               </p>

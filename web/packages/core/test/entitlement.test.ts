@@ -16,6 +16,7 @@ import {
   ENTITLEMENT_ID,
   FREE,
   FREE_TIER,
+  WEB_FREE_TIER,
   LIFETIME_PRO,
   LIFETIME_PRO_EMAILS,
   PRO,
@@ -121,6 +122,13 @@ describe("les limites", () => {
   it("le premier cours est gratuit", () => {
     expect(FREE_TIER.courses).toBeGreaterThan(0);
   });
+
+  it("le web coupe la session une carte plus tôt, et ne change rien d'autre", () => {
+    expect(WEB_FREE_TIER.cardsPerSession).toBe(4);
+    expect(WEB_FREE_TIER.courses).toBe(FREE_TIER.courses);
+    expect(WEB_FREE_TIER.readableSheetRatio).toBe(FREE_TIER.readableSheetRatio);
+    expect(WEB_FREE_TIER.allowsPractice).toBe(FREE_TIER.allowsPractice);
+  });
 });
 
 describe("la coupure de la fiche", () => {
@@ -186,6 +194,15 @@ describe("les portes", () => {
     expect(shouldInterruptSession(FREE, 5, true)).toBe(false);
     expect(shouldInterruptSession(FREE, 4, false)).toBe(false);
     expect(shouldInterruptSession(PRO, 5, false)).toBe(false);
+  });
+
+  it("accepte un plafond donné, celui du web par exemple", () => {
+    const limit = WEB_FREE_TIER.cardsPerSession;
+    expect(hasReachedSessionLimit(FREE, 3, limit)).toBe(false);
+    expect(hasReachedSessionLimit(FREE, 4, limit)).toBe(true);
+    expect(hasReachedSessionLimit(PRO, 4, limit)).toBe(false);
+    expect(shouldInterruptSession(FREE, 4, false, limit)).toBe(true);
+    expect(shouldInterruptSession(FREE, 4, true, limit)).toBe(false);
   });
 
   it("le deuxième import est refusé, le premier non", () => {

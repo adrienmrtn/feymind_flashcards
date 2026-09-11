@@ -74,7 +74,7 @@ export function SessionDone({
         <p className="page-lead">
           {capped
             ? t("app.session.done.capped", {
-                limit: entitlement.FREE_TIER.cardsPerSession,
+                limit: entitlement.WEB_FREE_TIER.cardsPerSession,
                 remaining,
               })
             : leftoverNew > 0
