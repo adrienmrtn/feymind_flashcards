@@ -45,8 +45,9 @@ describe("shouldOpenPaywall", () => {
 });
 
 describe("isHardPaywall", () => {
-  it("ne se referme pas quand il clôt l'accueil", () => {
-    expect(isHardPaywall({ force: false })).toBe(true);
+  it("laisse une croix sur le mur de l'accueil", () => {
+    // Le mur dur a été retiré du site : plus aucune porte n'enferme.
+    expect(isHardPaywall({ force: false })).toBe(false);
   });
 
   it("garde sa croix sur une demande explicite de l'offre", () => {
@@ -59,14 +60,6 @@ describe("isHardPaywall", () => {
 
   it("laisse le rejeu de démonstration se refermer", () => {
     expect(isHardPaywall({ force: false, debug: true })).toBe(false);
-    // Le rejeu prime, même sur une porte.
     expect(isHardPaywall({ force: false, demand: true, debug: true })).toBe(false);
-  });
-
-  it("ne dépend pas du stockage local, qui se vide", () => {
-    // Ni `pending` ni `welcome` n'entrent dans la décision : les lire aurait
-    // laissé une sortie triviale.
-    expect(isHardPaywall({ force: false })).toBe(true);
-    expect(isHardPaywall({ force: false })).toBe(true);
   });
 });

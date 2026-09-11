@@ -42,7 +42,7 @@ export function PaywallHost({ isPaid }: { isPaid: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [startAt, setStartAt] = useState<Stage>("social");
-  /** Voir `isHardPaywall` : le mur de l'accueil n'a pas de croix, les portes en gardent une. */
+  /** Voir `isHardPaywall` : plus aucun mur n'enferme, la croix est partout. */
   const [hard, setHard] = useState(false);
   const debugReplay = params.get("debug") === "paywall";
 
@@ -145,7 +145,7 @@ export function PaywallCard({
 }: {
   onClose: () => void;
   startAt?: Stage;
-  /** Aucune sortie vers l'app : l'offre se règle ou la session se ferme. */
+  /** Gardé pour le jour où un mur sans sortie reviendrait ; `isHardPaywall` rend `false`. */
   hard?: boolean;
 }) {
   const { t } = useI18n();
@@ -161,11 +161,8 @@ export function PaywallCard({
   const [stage, setStage] = useState<Stage>(startAt);
   const index = STAGES.indexOf(stage);
   /**
-   * Les trois premières pages n'ont pas de sortie. La croix n'apparaît que sur
-   * l'offre, et seulement après deux secondes : avant ça, un geste nerveux
-   * fermait le court accueil avant d'avoir vu Pro.
-   *
-   * En mur dur, elle n'apparaît jamais.
+   * La croix est sur **toutes** les pages, après deux secondes : avant ça, un geste
+   * nerveux fermait le court accueil avant d'avoir vu Pro.
    */
   const [canClose, setCanClose] = useState(false);
 
@@ -176,10 +173,8 @@ export function PaywallCard({
   }, [stage]);
 
   useEffect(() => {
-    if (hard || stage !== "plans") {
-      setCanClose(false);
-      return;
-    }
+    setCanClose(false);
+    if (hard) return;
     const timer = window.setTimeout(() => setCanClose(true), 2_000);
     return () => window.clearTimeout(timer);
   }, [hard, stage]);

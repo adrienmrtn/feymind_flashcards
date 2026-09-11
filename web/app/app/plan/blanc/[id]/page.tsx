@@ -5,6 +5,7 @@ import { isMockDebrief, paperScore, type MockAnswer, type MockGrade, type MockQu
 import { MockPaper } from "@/components/app/plan/MockPaper";
 import { MockReport } from "@/components/app/plan/MockReport";
 import { listExams } from "@/lib/data/courses";
+import { readEntitlement } from "@/lib/data/entitlement";
 import { readMockSession } from "@/lib/data/mocks";
 import { getTranslator } from "@/lib/i18n/server";
 
@@ -18,7 +19,11 @@ import { getTranslator } from "@/lib/i18n/server";
 export default async function MockPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const [session, { t }] = await Promise.all([readMockSession(id), getTranslator()]);
+  const [session, { t }, right] = await Promise.all([
+    readMockSession(id),
+    getTranslator(),
+    readEntitlement(),
+  ]);
   if (!session) notFound();
 
   const questions = (session.questions ?? []) as MockQuestion[];
@@ -36,6 +41,7 @@ export default async function MockPage({ params }: { params: Promise<{ id: strin
         minutes={session.minutes}
         questions={questions}
         withAudio={session.with_audio}
+        isPro={right.isPro}
       />
     );
   }

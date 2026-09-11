@@ -65,6 +65,24 @@ export const FREE_TIER = {
   allowsPractice: false,
 } as const;
 
+/**
+ * Ce que le **site** laisse faire, quand il s'écarte de l'app.
+ *
+ * Un seul nombre s'en écarte aujourd'hui : la session gratuite s'arrête une carte plus tôt
+ * sur le web. Les deux clients n'ont pas la même porte de sortie — sur le téléphone, la
+ * boutique est à un geste ; sur le site, il faut un moyen de paiement sous la main, donc
+ * l'offre doit arriver pendant que la session tient encore l'attention.
+ *
+ * Le reste du gratuit reste **commun**, et `FREE_TIER` demeure le contrat que
+ * `freemium-parity.test.ts` compare au Swift : un chiffre qui diverge ici doit être écrit
+ * ici, pas glissé dans la constante partagée.
+ */
+export const WEB_FREE_TIER = {
+  ...FREE_TIER,
+  /** Quatre cartes, puis le paywall — et la session ne reprend pas. */
+  cardsPerSession: 4,
+} as const;
+
 /** Ce que le webhook RevenueCat écrira dans `entitlements`, à l'étape 5. */
 export interface Entitlement {
   isPro: boolean;
@@ -166,8 +184,12 @@ export function canPractice(entitlement: Entitlement): boolean {
 }
 
 /** Vrai à partir de la carte qui doit rester derrière le paywall. */
-export function hasReachedSessionLimit(entitlement: Entitlement, answered: number): boolean {
-  return !entitlement.isPro && answered >= FREE_TIER.cardsPerSession;
+export function hasReachedSessionLimit(
+  entitlement: Entitlement,
+  answered: number,
+  limit: number = FREE_TIER.cardsPerSession,
+): boolean {
+  return !entitlement.isPro && answered >= limit;
 }
 
 /**
@@ -179,8 +201,9 @@ export function shouldInterruptSession(
   right: Entitlement,
   answered: number,
   sessionDone: boolean,
+  limit: number = FREE_TIER.cardsPerSession,
 ): boolean {
-  return !sessionDone && hasReachedSessionLimit(right, answered);
+  return !sessionDone && hasReachedSessionLimit(right, answered, limit);
 }
 
 // MARK: - La coupure de la fiche

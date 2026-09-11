@@ -70,11 +70,20 @@ export function DiscountHost({
       return;
     }
 
-    // L'instant se pose à l'ouverture, pas au premier cours : le décompte doit
-    // commencer quand l'offre a été vue, sinon il a déjà couru sans témoin.
+    // **Le drapeau se lève tout de suite, la carte arrive deux secondes plus tard.**
+    //
+    // Deux secondes après l'ouverture du premier cours : le temps de voir la fiche
+    // s'afficher et de comprendre ce qu'on vient d'obtenir. Une offre posée sur un écran
+    // encore vide se lit comme une réclame, pas comme une récompense.
+    //
+    // Le drapeau, lui, ne peut pas attendre : le paywall ordinaire s'ouvre à 980 ms et le
+    // lit dans sa propre minuterie. Levé trop tard, les deux cartes se superposeraient.
     claimOffer();
-    setStartedAt(startDiscount());
-    setOpen(true);
+    const timer = window.setTimeout(() => {
+      setStartedAt(startDiscount());
+      setOpen(true);
+    }, 2_000);
+    return () => window.clearTimeout(timer);
   }, [courseCount, debug, isPaid]);
 
   const close = useCallback(() => {

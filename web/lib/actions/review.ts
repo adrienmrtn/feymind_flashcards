@@ -65,7 +65,13 @@ export async function gradeCard(input: {
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .gte("reviewed_at", windowStart);
-    if (entitlement.hasReachedSessionLimit(right, count ?? 0)) {
+    if (
+      entitlement.hasReachedSessionLimit(
+        right,
+        count ?? 0,
+        entitlement.WEB_FREE_TIER.cardsPerSession,
+      )
+    ) {
       return { status: "paywall" };
     }
   }

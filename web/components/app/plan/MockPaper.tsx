@@ -8,6 +8,7 @@ import { MOCK_GAP, type MockAnswer, type MockQuestion } from "@micabo/core";
 import { Button } from "@/components/ui/button";
 import { finishMockSession } from "@/lib/actions/mocks";
 import { useI18n } from "@/lib/i18n/client";
+import { requestPaywall } from "@/lib/paywall";
 
 /**
  * **La copie.** Toutes les questions posées d'un coup, aucune réponse avant la remise.
@@ -22,6 +23,12 @@ import { useI18n } from "@/lib/i18n/client";
  *
  * Le chronomètre est affiché mais ne ferme rien de force jusqu'à zéro, où il remet la copie
  * telle quelle - comme un surveillant qui ramasse.
+ *
+ * **La remise est la porte du gratuit.** Passer la copie ne coûte rien ; la correction, si.
+ * Pour qui n'est pas abonné, « Remettre la copie » ouvre donc le paywall et la copie reste
+ * ouverte derrière - rien n'est envoyé, rien n'est perdu, et l'offre arrive au moment précis
+ * où ce qu'elle vend vient d'être gagné. Le serveur refuse de son côté : voir
+ * `finishMockSession`.
  */
 export function MockPaper({
   sessionId,
@@ -29,12 +36,14 @@ export function MockPaper({
   minutes,
   questions,
   withAudio,
+  isPro,
 }: {
   sessionId: string;
   examName: string;
   minutes: number;
   questions: MockQuestion[];
   withAudio: boolean;
+  isPro: boolean;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -52,19 +61,32 @@ export function MockPaper({
   );
 
   const hand = useCallback(async () => {
+    // Le gratuit s'arrête ici : la copie reste à l'écran, l'offre passe devant.
+    if (!isPro) {
+      setConfirming(false);
+      requestPaywall();
+      return;
+    }
+
     setSaving(true);
     setFailed(false);
     const result = await finishMockSession(
       sessionId,
       questions.map((question) => answers[question.id] ?? { id: question.id }),
     );
+    if (result.status === "paywall") {
+      setSaving(false);
+      setConfirming(false);
+      requestPaywall();
+      return;
+    }
     if (result.status === "error") {
       setSaving(false);
       setFailed(true);
       return;
     }
     router.refresh();
-  }, [answers, questions, router, sessionId]);
+  }, [answers, isPro, questions, router, sessionId]);
 
   useEffect(() => {
     const timer = setInterval(() => {

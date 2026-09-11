@@ -865,8 +865,20 @@ dixièmes sur le téléphone et à la moitié sur le web serait le même produit
 | --- | --- | --- |
 | **Cours importés** | **un**, et un seul. Un cours *repris* dans la bibliothèque ne consomme pas le quota : il n'a rien coûté à produire | sans limite |
 | **Fiche** | les **sept dixièmes de ses blocs**. La suite est composée, puis floutée et fondue dans le papier, avec le cadenas posé au bas du fondu | entière |
-| **Session** | **cinq cartes**, la cinquième comprise | sans limite |
+| **Session** | **quatre cartes sur le web** (cinq sur l'app), puis le paywall — la session ne reprend pas | sans limite |
+| **Examen blanc** | la copie se passe, **la correction non** : « Remettre la copie » ouvre le paywall, et `finishMockSession` refuse de son côté | copie et correction |
 | **Entraînement libre** | fermé | ouvert |
+
+Le seul chiffre où le site s'écarte de l'app est le plafond de session, et il est écrit là où on
+le voit : `WEB_FREE_TIER` dans `packages/core/src/entitlement.ts`. `FREE_TIER` reste le contrat
+que `freemium-parity.test.ts` compare au Swift ; un écart du web ne s'y glisse pas en douce.
+
+**Plus aucun mur n'enferme.** `isHardPaywall` rend `false` : toutes les portes du paywall, celle
+de l'accueil comprise, gardent une croix — après deux secondes, le temps que l'offre soit lue.
+Un mur sans sortie fait fermer l'onglet, et on perd alors la session *et* la vente.
+
+**Le cadeau arrive deux secondes après l'ouverture du premier cours**, pas à la seconde où la
+page se monte : le temps de voir la fiche s'afficher et de comprendre ce qu'on vient d'obtenir.
 
 La forme est celle qui convertit, et elle est déjà en place : **on génère, puis on floute.** Les
 blocs restants sont *bel et bien composés* avant d'être brouillés — c'est ce qui fait la

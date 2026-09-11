@@ -20,6 +20,7 @@ import {
 } from "@micabo/core";
 
 import { revalidateUserData } from "@/lib/data/cache";
+import { readEntitlement } from "@/lib/data/entitlement";
 import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
@@ -37,7 +38,7 @@ import { createClient } from "@/lib/supabase/server";
  */
 
 export interface MockResultAction {
-  status: "ok" | "error";
+  status: "ok" | "error" | "paywall";
   message?: string;
   sessionId?: string;
 }
@@ -186,6 +187,15 @@ export async function finishMockSession(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
+
+  /**
+   * **La correction est la marchandise.** Composer la copie et la passer sont offerts ; lire
+   * ce qu'elle vaut ne l'est pas. Le garde est ici et pas seulement dans le bouton : la
+   * correction coûte un appel au modèle, et une action serveur s'appelle sans passer par
+   * l'écran qui la déclenche.
+   */
+  const right = await readEntitlement();
+  if (!right.isPro) return { status: "paywall" };
 
   const { data: sessionRow } = await supabase
     .from("mock_sessions")

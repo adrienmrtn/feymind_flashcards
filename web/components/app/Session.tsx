@@ -120,10 +120,18 @@ export function Session({
   const remaining = (card ? 1 : 0) + loop.pending.length;
 
   // Le plafond coupe **pendant** la session : la carte suivante reste
-  // dessous, le paywall s'ouvre dessus. Une file qui se termine pile à
-  // cinq cartes a été révisée en entier — pas de paywall sur l'écran de fin.
+  // dessous, le paywall s'ouvre dessus. Une file qui se termine pile au
+  // plafond a été révisée en entier — pas de paywall sur l'écran de fin.
+  //
+  // Le web s'arrête une carte plus tôt que l'app : voir `WEB_FREE_TIER`.
   const gated =
-    serverPaywall || entitlement.shouldInterruptSession({ isPro }, tally.answered, loop.done);
+    serverPaywall ||
+    entitlement.shouldInterruptSession(
+      { isPro },
+      tally.answered,
+      loop.done,
+      entitlement.WEB_FREE_TIER.cardsPerSession,
+    );
   const finished = loop.done;
 
   const labels = useMemo(
@@ -137,7 +145,14 @@ export function Session({
   const grade = useCallback(
     (rating: number) => {
       if (!card) return;
-      if (entitlement.hasReachedSessionLimit({ isPro }, tally.answered)) return;
+      if (
+        entitlement.hasReachedSessionLimit(
+          { isPro },
+          tally.answered,
+          entitlement.WEB_FREE_TIER.cardsPerSession,
+        )
+      )
+        return;
       const typed = rating as ReviewRating;
       const now = new Date();
       const outcome = clampedToDeadline(
