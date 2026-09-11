@@ -98,6 +98,9 @@ Les marques ne se disputent pas la même chaîne : on surligne une phrase, on me
 
 Un fragment entre $ et $ est une formule : tu n'y touches pas, tu ne marques rien à l'intérieur.
 
+CE QUE TU DOIS AVOIR POSÉ EN FINISSANT
+Compte avant de répondre. Sur l'ensemble des textes : au moins un surlignage tous les trois textes, et au moins un italique tous les cinq. Ces marques manquent - c'est pour ça qu'on te repasse la fiche. Si tu ne trouves pas d'italique, cherche mieux : le mot d'origine étrangère ou latine, le nom d'une œuvre, d'une loi ou d'une revue, le terme employé en tant que mot, la condition qui restreint un résultat, les deux termes voisins qu'un étudiant confond. Un de ces cas est présent dans presque tout cours.
+
 SORTIE
 Un tableau JSON compact, une seule ligne, sans texte autour : la liste des textes marqués, dans le même ordre et en même nombre que celle qu'on te donne. Un guillemet dans un texte s'écrit \\". Les antislashs des formules sont doublés, comme dans l'entrée.`;
 

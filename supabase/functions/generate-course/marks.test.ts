@@ -1,7 +1,13 @@
 import { assertEquals } from "jsr:@std/assert@1";
 
 import type { SheetBlock } from "../_shared/sheet.ts";
-import { countMarks, mergeMarked, needsMarkPass, textsToMark } from "./marks.ts";
+import {
+  countMarks,
+  MARK_SYSTEM_PROMPT,
+  mergeMarked,
+  needsMarkPass,
+  textsToMark,
+} from "./marks.ts";
 
 const PARAGRAPH = (text: string): SheetBlock => ({ type: "paragraph", text });
 
@@ -33,6 +39,13 @@ Deno.test("la seconde passe se déclenche sur le zéro, pas sur la rareté", () 
   // Une seule sorte manquante suffit : c'est la page sans relief que les étudiants signalent.
   assertEquals(needsMarkPass([PARAGRAPH("La **Rubisco** fixe le carbone, sans plus.")]), true);
   assertEquals(needsMarkPass([]), false);
+});
+
+Deno.test("la consigne de la seconde passe chiffre ce qu'elle doit poser", () => {
+  // Mesuré : la passe reposait les surlignages et laissait l'italique à zéro. Elle compte
+  // maintenant, et on lui dit où chercher.
+  assertEquals(MARK_SYSTEM_PROMPT.includes("Compte avant de répondre"), true);
+  assertEquals(MARK_SYSTEM_PROMPT.includes("IDENTIQUE"), true);
 });
 
 Deno.test("textsToMark rend les textes dans l'ordre où la fusion les attend", () => {
