@@ -24,6 +24,13 @@ struct CourseGenerationRequest {
     /// Comment le texte a été obtenu. Une photo passée à l'OCR ne se relit pas comme un
     /// document Word, et c'est ce qui permet de se méfier des mots mal lus.
     var sourceKind: CourseSource? = nil
+    /// Le prompt libre de l'étudiant pour **cette** fiche : insister sur les formules, laisser
+    /// les anecdotes, garder le vocabulaire du prof.
+    ///
+    /// Le site l'envoyait, l'application non : à consigne égale, les deux clients n'écrivaient
+    /// donc pas la même fiche, et c'est la seule chose qui différait encore entre eux. La
+    /// fonction borne le texte et refuse ce qui toucherait au format : voir `instructionsBrief`.
+    var instructions: String? = nil
 }
 
 struct FlashcardGenerationRequest {

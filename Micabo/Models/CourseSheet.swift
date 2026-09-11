@@ -102,9 +102,12 @@ struct CourseSheet: Codable, Equatable, Sendable {
 
 /// Les couleurs de surligneur, dans l'ordre de la barre d'outils.
 ///
-/// Le code couleur d'une fiche n'appartient qu'à celui qui la relit : le modèle marque en
-/// jaune ce qui compte, et l'étudiant recolore. Cinq teintes, pas plus - au delà, une page
-/// surlignée devient un nuancier et plus rien n'y ressort.
+/// Cinq teintes, pas plus : au delà, une page surlignée devient un nuancier et plus rien n'y
+/// ressort. **Le modèle les emploie selon un code** - la définition en jaune, le chiffre en
+/// menthe, le mécanisme en bleu, l'exception en rose, le repère en lilas - parce qu'une fiche
+/// d'un seul feutre ne dit rien de plus qu'une fiche sans feutre, et que personne ne recolore
+/// soixante blocs à la main. Le code est écrit une seule fois, dans le prompt de
+/// `generate-course`, et vaut pour les deux clients. L'étudiant recolore par-dessus.
 enum SheetHighlight: String, Codable, Equatable, CaseIterable, Sendable {
     case jaune
     case menthe
