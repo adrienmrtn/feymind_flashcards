@@ -69,6 +69,22 @@ Deno.test("mergeMarked accepte les marques et rien d'autre", () => {
   assertEquals(merged[1], PARAGRAPH("Le stroma est liquide."));
 });
 
+Deno.test("mergeMarked refuse une repasse qui efface des marques", () => {
+  // Le cas qui a coûté une fiche : mêmes phrases au caractère près, dix-sept gras en moins.
+  const blocks = [PARAGRAPH("La **Rubisco** fixe le **carbone** : ==jaune|c'est l'étape lente==.")];
+  const merged = mergeMarked(blocks, ["La Rubisco fixe le carbone : c'est l'étape lente."]);
+  assertEquals(merged, blocks);
+
+  // Ajouter est permis, y compris sur un texte déjà marqué.
+  const enriched = mergeMarked(blocks, [
+    "La **Rubisco** fixe le **carbone** : ==jaune|c'est l'étape *lente*==.",
+  ]);
+  assertEquals(
+    enriched[0],
+    PARAGRAPH("La **Rubisco** fixe le **carbone** : ==jaune|c'est l'étape *lente*==."),
+  );
+});
+
 Deno.test("mergeMarked garde l'original quand la réponse est courte ou mal typée", () => {
   const blocks = [PARAGRAPH("Premier texte."), PARAGRAPH("Second texte.")];
   assertEquals(mergeMarked(blocks, [42]), blocks);
