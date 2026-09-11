@@ -727,6 +727,29 @@ supabase functions deploy explain-selection
 supabase functions deploy youtube-transcript
 ```
 
+#### Déployer sans terminal, depuis le web
+
+Le déploiement par l'API — celui du tableau de bord Supabase, ou d'un agent branché dessus —
+ne veut pas des sources : il exige que **toutes les dépendances relatives** arrivent avec le
+point d'entrée, soit deux cents kilo-octets de modules par fonction. D'où `pin.sh` : il écrit
+un point d'entrée de six lignes qui **importe le dépôt sur un commit**, et la construction
+inline le graphe entier au déploiement. Rien n'appelle GitHub à l'exécution.
+
+```bash
+cd supabase/functions
+./pin.sh                 # les six fonctions, sur HEAD
+./pin.sh <commit>        # sur un autre commit, déjà poussé
+deno check --allow-import --no-lock dist/generate-course.pin.ts
+```
+
+Le contenu de `dist/<fonction>.pin.ts` se colle ensuite dans l'éditeur du tableau de bord
+(Edge Functions → la fonction → Deploy a new version), en gardant `verify_jwt` activé. Deux
+conditions, et elles ne se devinent pas : **le commit doit être poussé** et lisible sans jeton,
+sinon la construction ne peut pas le lire ; et le fichier déployé n'est pas le code, c'est le
+commit qui le nomme — un déploiement qui pointe un vieux commit sert du vieux code sans qu'aucun
+message ne le dise. Après coup, `./smoke.sh` répond en trois secondes : une fonction dont le
+module ne charge pas rend `WORKER_ERROR` avant d'entrer dans le moindre `try`.
+
 **`deno task verify` d'abord, et ce n'est pas une politesse.** Une fonction qui ne passe pas
 la vérification de types n'est pas déployée, et l'application ne le sait pas : elle reçoit un
 404 et affiche « Fonction Supabase introuvable ». C'est exactement ce qui est arrivé à
