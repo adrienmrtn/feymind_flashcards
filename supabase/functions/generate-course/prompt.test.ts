@@ -12,7 +12,7 @@ import {
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v2.3.0");
+  assertEquals(PROMPT_VERSION, "course-v2.4.0");
 });
 
 Deno.test("le prompt demande les trois marques de texte", () => {

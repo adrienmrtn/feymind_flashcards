@@ -15,7 +15,19 @@ import {
   jsonResponse,
 } from "../_shared/fal.ts";
 import { parseModelJSON } from "../_shared/json.ts";
-import { normalizeSheet, sheetToPlainText, stripInlineMarkup } from "../_shared/sheet.ts";
+import {
+  normalizeSheet,
+  sheetToPlainText,
+  stripInlineMarkup,
+  type SheetBlock,
+} from "../_shared/sheet.ts";
+import {
+  markPrompt,
+  MARK_SYSTEM_PROMPT,
+  mergeMarked,
+  needsMarkPass,
+  textsToMark,
+} from "./marks.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
 import { languageBrief } from "../_shared/language.ts";
 import { sanitizeInstructions, sanitizeMeta, wrapUntrusted } from "../_shared/prompt-boundary.ts";
@@ -32,6 +44,32 @@ import {
 } from "./prompt.ts";
 
 const OUTPUT_TOKEN_LIMIT = 8_192;
+
+/**
+ * Repose les marques quand la fiche en a perdu une sorte entière.
+ *
+ * Voir `marks.ts` : le déclenchement est sur le zéro, la seconde passe ne peut que marquer, et
+ * tout texte qui a bougé est écarté à la fusion. Un échec ici n'est pas une panne de fiche :
+ * on rend la fiche telle qu'elle était écrite, sans marque, comme avant.
+ */
+async function repaintMarks(blocks: SheetBlock[]): Promise<SheetBlock[]> {
+  if (!needsMarkPass(blocks)) return blocks;
+
+  try {
+    const output = await callModel({
+      prompt: markPrompt(textsToMark(blocks)),
+      systemPrompt: MARK_SYSTEM_PROMPT,
+      // Froid : on ne demande pas d'imagination, on demande des marques posées au bon endroit.
+      temperature: 0.1,
+      maxTokens: OUTPUT_TOKEN_LIMIT,
+    });
+    const marked = deepStripEmDashes(parseModelJSON<unknown>(output));
+    if (!Array.isArray(marked)) return blocks;
+    return normalizeSheet(mergeMarked(blocks, marked));
+  } catch (_error) {
+    return blocks;
+  }
+}
 
 async function writeSheet(
   prompt: string,
@@ -192,7 +230,11 @@ Deno.serve((request: Request) =>
       // permet de lire un scan - mais rien de ce qu'il en tire n'est recadré ni collé dans le
       // document : une image de schéma extraite d'un PDF y était décorative et souvent
       // illisible, et elle n'est de toute façon plus modifiable par celui qui relit.
-      const blocks = normalizeSheet(parsed.sheet ?? parsed.blocks);
+      const written = normalizeSheet(parsed.sheet ?? parsed.blocks);
+
+      // Les marques d'abord, la mise à plat ensuite : `context_text` se calcule sur la fiche
+      // telle qu'elle sera lue, même si les marques n'y survivent pas.
+      const blocks = await repaintMarks(written);
 
       if (blocks.length < 3) {
         throw new FalError("Le modèle n'a pas produit de fiche exploitable.", 502);
