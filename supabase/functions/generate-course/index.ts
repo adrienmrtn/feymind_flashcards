@@ -24,6 +24,7 @@ import {
 import {
   batched,
   cleanBlockMarks,
+  countMarks,
   markPrompt,
   MARK_SYSTEM_PROMPT,
   mergeMarked,
@@ -251,7 +252,9 @@ Deno.serve((request: Request) =>
       // La forme des marques est vérifiée **avant** de compter : une fiche dont les deux
       // surlignages sont posés au milieu d'un mot n'est pas une fiche marquée, et le
       // déclenchement de la repasse doit le savoir.
-      const blocks = cleanBlockMarks(await repaintMarks(cleanBlockMarks(written)));
+      const cleaned = cleanBlockMarks(written);
+      const repainted = await repaintMarks(cleaned);
+      const blocks = cleanBlockMarks(repainted);
 
       if (blocks.length < 3) {
         throw new FalError("Le modèle n'a pas produit de fiche exploitable.", 502);
@@ -276,7 +279,24 @@ Deno.serve((request: Request) =>
       return jsonResponse({
         course,
         usedVision: images.length > 0 && visualNotes.length > 0,
-        meta: { promptVersion: PROMPT_VERSION },
+        /**
+         * **Le marquage se compte à chaque étape, et le compte sort avec la fiche.**
+         *
+         * Trois jours à corriger un marquage absent sans savoir *où* il disparaissait : le
+         * modèle n'en posait-il pas, la repasse les effaçait-elle, la vérification de forme
+         * les retirait-elle ? Chacune de ces trois hypothèses demandait un déploiement pour
+         * être écartée. Quatre compteurs dans la réponse les départagent en un appel, et ils
+         * ne coûtent rien à personne : aucun client ne les lit, ils ne touchent pas la fiche.
+         */
+        meta: {
+          promptVersion: PROMPT_VERSION,
+          marks: {
+            written: countMarks(written),
+            cleaned: countMarks(cleaned),
+            repainted: countMarks(repainted),
+            final: countMarks(blocks),
+          },
+        },
       });
     } catch (error) {
       return errorResponse(error);
