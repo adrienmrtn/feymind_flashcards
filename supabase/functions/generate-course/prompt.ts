@@ -1,6 +1,6 @@
 /** Consignes de rédaction de la fiche d'un cours. */
 
-export const PROMPT_VERSION = "course-v2.2.0";
+export const PROMPT_VERSION = "course-v2.3.0";
 
 /** Longueur max d'une consigne libre. Au-delà, ce n'est plus un prompt, c'est un cours. */
 export const MAX_INSTRUCTIONS = 2_000;
@@ -26,8 +26,8 @@ Une fiche trop courte est le défaut le plus grave, avant même la maladresse d'
 MISE EN FORME DU TEXTE
 Une fiche sans marques ne se relit pas : c'est le gras, l'italique et le surligneur qui font qu'on retrouve l'essentiel en dix secondes, la veille au soir. Une fiche en texte nu est un défaut au même titre qu'une fiche trop courte. Quatre marques, et rien d'autre :
 - **terme** met en gras. Le vocabulaire exact que l'examen attend. UN À TROIS termes par paragraphe, et jamais zéro dans un paragraphe qui introduit une notion. Le gras porte sur un mot ou un groupe nominal, jamais sur une phrase entière.
-- *nuance* met en italique. Il y en a sur toute fiche, et il y a toujours de quoi : un mot étranger ou latin (*in vivo*, *a priori*, *de facto*), un titre d'œuvre, de loi ou de revue, un terme cité en tant que mot, une réserve ou une condition qui change le résultat, le terme voisin avec lequel on ne doit pas confondre celui qu'on vient de définir. CINQ À DIX passages en italique sur toute la fiche, chacun d'un mot à quelques mots, jamais une phrase entière.
-- ==couleur|passage== pose un surligneur pastel sous le passage. L'encre reste noire : ce n'est pas une autre couleur de texte, pas un lien, pas du bleu. C'est un trait de feutre sous une phrase qu'on doit pouvoir réciter. La couleur s'écrit avant une barre verticale et vaut jaune si on l'omet : ==menthe|71 % de l'évaporation vient des océans== ou ==une phrase en jaune==. DIX À VINGT passages sur toute la fiche, jamais deux dans le même paragraphe. Un passage surligné est une phrase courte ou un fragment de phrase : pas trois mots isolés, pas un paragraphe entier.
+- *nuance* met en italique. Il y en a sur toute fiche, et il y a toujours de quoi : un mot étranger ou latin (*in vivo*, *a priori*, *de facto*), un titre d'œuvre, de loi ou de revue, un terme cité en tant que mot, une réserve ou une condition qui change le résultat, le terme voisin avec lequel on ne doit pas confondre celui qu'on vient de définir. AU MOINS UN par partie, cinq à dix sur une fiche complète, chacun d'un mot à quelques mots, jamais une phrase entière.
+- ==couleur|passage== pose un surligneur pastel sous le passage. L'encre reste noire : ce n'est pas une autre couleur de texte, pas un lien, pas du bleu. C'est un trait de feutre sous une phrase qu'on doit pouvoir réciter. La couleur s'écrit avant une barre verticale et vaut jaune si on l'omet : ==menthe|71 % de l'évaporation vient des océans== ou ==une phrase en jaune==. UN passage tous les deux ou trois blocs, jamais deux dans le même paragraphe : dix à vingt sur une fiche complète, trois ou quatre sur une fiche courte. Un passage surligné est une phrase courte ou un fragment de phrase : pas trois mots isolés, pas un paragraphe entier.
 - $E = mc^2$ compose une formule dans une phrase. Reste simple ici : exposants, indices, fractions courtes, lettres grecques. Une formule qui doit se déployer va dans un bloc formula. Hors de $…$ et hors d'un bloc formula, jamais de commande nue : une flèche s'écrit →, pas \\rightarrow.
 Pas de markdown en dehors de ça : ni #, ni -, ni tableaux en pipes.
 
@@ -46,8 +46,9 @@ Le bloc formula est réservé à ce qui se DÉPLOIE et qu'on veut isoler pour le
 Sur un cours de sciences, plusieurs $…$ par partie est normal ; zéro est un défaut, au même titre qu'un paragraphe sans gras. Sur un cours de lettres ou de droit, il n'y en a pas, et c'est très bien.
 
 UN PARAGRAPHE CORRECTEMENT MARQUÉ, POUR L'EXEMPLE
-{"type":"paragraph","text":"La **phase photochimique** se déroule dans les **thylakoïdes** : les photons excitent la chlorophylle, l'eau est oxydée et libère du dioxygène. ==menthe|Elle fournit l'ATP et le NADPH que le cycle de Calvin consomme, pour un rendement réel de $1$ à $2$ % de l'énergie incidente.== Ce rendement est dit *apparent*, à ne pas confondre avec le rendement *quantique*, qui rapporte la matière produite aux seuls photons absorbés."}
-Deux termes en gras, un passage surligné et un seul, la couleur menthe parce que le passage porte un chiffre, une formule dans la phrase, deux italiques qui séparent deux notions voisines. C'est la densité attendue sur un paragraphe de fiche, et elle vaut pour TOUS les paragraphes, pas pour le premier.
+{"type":"paragraph","text":"Dans un conducteur ohmique, la tension est proportionnelle à l'intensité : c'est la **loi d'Ohm**, $U = RI$, où $R$ est la **résistance**, mesurée en ohms. ==menthe|Un résistor de $220$ ohms parcouru par $0,05$ A dissipe une puissance $P = RI^2$ de $0,55$ W, dégagée en chaleur.== Le mot *résistance* désigne ici la grandeur, à ne pas confondre avec le *résistor*, qui est le composant."}
+Deux termes en gras, un passage surligné et un seul, la couleur menthe parce que ce passage porte des chiffres, trois formules dans la phrase, deux italiques qui séparent deux mots voisins. C'est la densité attendue sur un paragraphe, et elle vaut pour TOUS les paragraphes, pas seulement le premier.
+Cet exemple montre une FORME. Son contenu ne vient pas du document que tu vas lire : n'en reprends ni les mots, ni la matière, ni les exemples.
 
 OÙ POSER LE SURLIGNEUR
 Dans cet ordre de priorité : la phrase qui donne l'enjeu du sujet ; dans chaque partie, la phrase que l'étudiant devra pouvoir réciter ; le résultat chiffré, le seuil ou l'ordre de grandeur qu'un correcteur attend ; la conclusion d'un mécanisme. Le gras, l'italique et le surligneur ne se disputent pas la même chaîne de caractères : on surligne une phrase, on met en gras un terme, on met en italique une nuance, et un terme en gras peut se trouver dans une phrase surlignée.
@@ -84,9 +85,9 @@ COMMENT COMPOSER LA FICHE
 AVANT DE RÉPONDRE, RELIS TA FICHE ET VÉRIFIE
 - Le nombre de blocs correspond à la longueur demandée. Dans le doute, allonge.
 - Les paragraphes sont largement plus nombreux que les listes.
-- Dix à vingt passages portent la marque ==, jamais deux dans le même paragraphe, et au moins trois couleurs différentes sont employées selon le code ci-dessus.
+- Un passage tous les deux ou trois blocs porte la marque ==, jamais deux dans le même paragraphe, et au moins trois couleurs différentes sont employées dès que la fiche en porte quatre selon le code ci-dessus.
 - Chaque paragraphe qui introduit une notion porte au moins un terme en **gras**.
-- Cinq à dix passages sont en *italique*. Zéro est une erreur : relis, il y a toujours un mot étranger, un titre, une réserve ou deux notions voisines à distinguer.
+- Chaque partie porte au moins un passage en *italique*. Zéro sur la fiche est une erreur : relis, il y a toujours un mot étranger, un titre, une réserve ou deux notions voisines à distinguer.
 - Les grandeurs, symboles et formules courtes sont dans la phrase, entre $ et $, et non recopiés en texte brut ni renvoyés en bloc.
 - Aucune phrase ne s'adresse au lecteur.
 - Aucun tiret cadratin.
