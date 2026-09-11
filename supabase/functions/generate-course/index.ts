@@ -26,10 +26,12 @@ import {
   cleanBlockMarks,
   countMarks,
   emptyMergeReport,
+  emptyShapeReport,
   markPrompt,
   MARK_SYSTEM_PROMPT,
   mergeMarked,
   needsMarkPass,
+  readMarkedTexts,
   textsToMark,
 } from "./marks.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
@@ -102,13 +104,14 @@ async function repaintMarks(
         maxTokens: OUTPUT_TOKEN_LIMIT,
       });
       const parsed = deepStripEmDashes(parseModelJSON<unknown>(output));
-      // Un lot dont la réponse n'a pas la bonne taille est un lot tronqué : ses textes
-      // repartent tels quels plutôt que de décaler tous les suivants d'un cran.
-      if (!Array.isArray(parsed) || parsed.length !== lot.length) {
+      // Un lot dont la réponse n'a ni la bonne taille ni une forme lisible est un lot
+      // perdu : ses textes repartent tels quels plutôt que de décaler tous les suivants.
+      const texts = readMarkedTexts(parsed, lot.length);
+      if (!texts) {
         report.ragged += 1;
         return lot;
       }
-      return parsed;
+      return texts;
     } catch (_error) {
       report.failed += 1;
       return lot;
@@ -262,9 +265,10 @@ Deno.serve((request: Request) =>
       // La forme des marques est vérifiée **avant** de compter : une fiche dont les deux
       // surlignages sont posés au milieu d'un mot n'est pas une fiche marquée, et le
       // déclenchement de la repasse doit le savoir.
-      const cleaned = cleanBlockMarks(written);
+      const shape = emptyShapeReport();
+      const cleaned = cleanBlockMarks(written, shape);
       const repaint = await repaintMarks(cleaned);
-      const blocks = cleanBlockMarks(repaint.blocks);
+      const blocks = cleanBlockMarks(repaint.blocks, shape);
 
       if (blocks.length < 3) {
         throw new FalError("Le modèle n'a pas produit de fiche exploitable.", 502);
@@ -307,6 +311,7 @@ Deno.serve((request: Request) =>
             final: countMarks(blocks),
           },
           repaint: repaint.report,
+          shape,
         },
       });
     } catch (error) {

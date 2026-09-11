@@ -17,7 +17,7 @@
  */
 
 import { stripInlineMarkup, type SheetBlock } from "../_shared/sheet.ts";
-import { cleanMarks } from "./mark-shape.ts";
+import { cleanMarks, emptyShapeReport, type ShapeReport } from "./mark-shape.ts";
 
 /** Ce que porte une fiche, par sorte de marque. */
 export interface MarkCount {
@@ -285,17 +285,58 @@ export function mergeMarked(
  * Appliqué aux **deux** passes : celle qui écrit la fiche pose parfois un surligneur au milieu
  * d'un mot, exactement comme celle qui la repasse. Voir `mark-shape.ts` pour ce qui est jugé.
  */
-export function cleanBlockMarks(blocks: readonly SheetBlock[]): SheetBlock[] {
+export function cleanBlockMarks(
+  blocks: readonly SheetBlock[],
+  report: ShapeReport = emptyShapeReport(),
+): SheetBlock[] {
+  const clean = (text: string) => cleanMarks(text, report);
   return blocks.map((block) => {
     switch (block.type) {
       case "heading":
-        return { ...block, text: cleanMarks(block.text) };
+        return { ...block, text: clean(block.text) };
       case "paragraph":
-        return { ...block, text: cleanMarks(block.text) };
+        return { ...block, text: clean(block.text) };
       case "list":
-        return { ...block, items: block.items.map(cleanMarks) };
+        return { ...block, items: block.items.map(clean) };
       case "formula":
-        return block.caption ? { ...block, caption: cleanMarks(block.caption) } : block;
+        return block.caption ? { ...block, caption: clean(block.caption) } : block;
     }
   });
+}
+
+export { emptyShapeReport, type ShapeReport };
+
+/**
+ * Les textes marqués, quelle que soit la forme que le modèle leur a donnée.
+ *
+ * Mesuré : un lot sur deux revient en objets - `[{"id":1,"texte":"..."}]` - ou enveloppé dans
+ * une propriété. La fusion n'y voyait que des candidats « absents » et gardait tout l'original,
+ * donc la repasse ne changeait rien sans que rien ne le dise. On accepte donc les trois formes
+ * et on refuse le reste.
+ */
+export function readMarkedTexts(parsed: unknown, expected: number): string[] | null {
+  const array = Array.isArray(parsed) ? parsed : unwrapArray(parsed);
+  if (!array || array.length !== expected) return null;
+
+  const texts = array.map((entry) => {
+    if (typeof entry === "string") return entry;
+    if (entry && typeof entry === "object") {
+      const record = entry as Record<string, unknown>;
+      for (const key of ["texte", "text", "marked", "value", "contenu"]) {
+        const found = record[key];
+        if (typeof found === "string") return found;
+      }
+    }
+    return null;
+  });
+
+  return texts.every((text): text is string => text !== null) ? texts : null;
+}
+
+/** Un tableau caché sous une propriété unique : `{"textes": [...]}`. */
+function unwrapArray(parsed: unknown): unknown[] | null {
+  if (!parsed || typeof parsed !== "object") return null;
+  const values = Object.values(parsed as Record<string, unknown>);
+  const arrays = values.filter(Array.isArray);
+  return arrays.length === 1 ? arrays[0] as unknown[] : null;
 }
