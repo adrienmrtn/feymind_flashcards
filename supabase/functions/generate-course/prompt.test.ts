@@ -12,7 +12,7 @@ import {
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v2.1.0");
+  assertEquals(PROMPT_VERSION, "course-v2.2.0");
 });
 
 Deno.test("le prompt demande les trois marques de texte", () => {
@@ -21,6 +21,13 @@ Deno.test("le prompt demande les trois marques de texte", () => {
   assertEquals(COURSE_SYSTEM_PROMPT.includes("**terme** met en gras"), true);
   assertEquals(COURSE_SYSTEM_PROMPT.includes("*nuance* met en italique"), true);
   assertEquals(COURSE_SYSTEM_PROMPT.includes("==couleur|passage=="), true);
+});
+
+Deno.test("le prompt montre un paragraphe marqué plutôt que de le décrire", () => {
+  // Les consignes seules donnaient du gras et rien d'autre : ni italique, ni formule dans la
+  // phrase. Un exemple travaillé porte la densité attendue mieux qu'un plancher chiffré.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("UN PARAGRAPHE CORRECTEMENT MARQUÉ"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("LES FORMULES DANS LA PHRASE"), true);
 });
 
 Deno.test("le code couleur ne nomme que des surligneurs qui existent", () => {
