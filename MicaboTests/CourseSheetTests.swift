@@ -370,6 +370,128 @@ final class SheetRenderingTests: XCTestCase {
             "À un point près, un sous-titre ne se distinguerait plus d'un paragraphe"
         )
     }
+
+    /// **Les formules à l'envers, tenues par un test.**
+    ///
+    /// La fiche pose chaque formule en image, et l'image sortait en miroir vertical : SwiftMath
+    /// dessine les y vers le haut, et le rendu d'un calque n'appliquait pas le retournement que
+    /// la vue n'obtient qu'à l'écran. Retournées, les lettres en imitaient d'autres, si bien
+    /// qu'on a d'abord cru à une fonte mélangée.
+    ///
+    /// `x^{2}` tranche sans ambiguïté : l'exposant est **au-dessus** de la lettre. À l'endroit,
+    /// l'encre de sa colonne est plus haute que celle du `x` ; en miroir, plus basse.
+    func testAFormulaImageIsDrawnRightSideUp() throws {
+        try XCTSkipUnless(MathTypesetter.isAvailable, "Sans le moteur, la formule reste du texte transposé")
+
+        for isDisplayMode in [false, true] {
+            let image = try XCTUnwrap(SheetFormulaImage.render(
+                latex: "x^{2}",
+                caption: nil,
+                fontSize: 40,
+                color: .black,
+                isDisplayMode: isDisplayMode
+            ))
+            let ink = try InkMap(image)
+            let letter = try XCTUnwrap(ink.meanRow(inColumns: 0...0.35))
+            let exponent = try XCTUnwrap(ink.meanRow(inColumns: 0.7...1))
+
+            XCTAssertLessThan(
+                exponent,
+                letter,
+                "L'exposant est passé sous la lettre : la formule est en miroir (display : \(isDisplayMode))"
+            )
+        }
+    }
+
+    /// Une formule en ligne se pose **sur la ligne de base de la phrase**, qu'elle descende
+    /// dessous ou non. Un décalage fixe d'un tiers de l'image ne tombait juste que pour une
+    /// formule à parenthèses : une lettre seule pendait sous la ligne.
+    func testAnInlineFormulaSitsOnTheTextBaseline() throws {
+        try XCTSkipUnless(MathTypesetter.isAvailable, "Sans le moteur, la formule reste du texte transposé")
+
+        // Sans jambage, le bas de l'encre est la ligne de base, au dépassement de la lettre près.
+        let letter = SheetMathAttachment(latex: "a", caption: nil, isBlock: false)
+        XCTAssertTrue(letter.render(fontSize: 40))
+        let letterInk = try XCTUnwrap(InkMap(XCTUnwrap(letter.image)).inkBottomFromBottom)
+        XCTAssertEqual(letterInk, -Self.inlineBounds(of: letter).minY, accuracy: 1.5)
+
+        // Les parenthèses descendent sous la ligne, et la ligne ne bouge pas pour autant.
+        let grouped = SheetMathAttachment(latex: "(a)", caption: nil, isBlock: false)
+        XCTAssertTrue(grouped.render(fontSize: 40))
+        let groupedInk = try XCTUnwrap(InkMap(XCTUnwrap(grouped.image)).inkBottomFromBottom)
+        XCTAssertGreaterThan(
+            -Self.inlineBounds(of: grouped).minY - groupedInk,
+            4,
+            "Les parenthèses doivent descendre sous la ligne de base de la phrase"
+        )
+    }
+
+    private static func inlineBounds(of attachment: SheetMathAttachment) -> CGRect {
+        attachment.attachmentBounds(
+            for: nil,
+            proposedLineFragment: CGRect(x: 0, y: 0, width: 300, height: 40),
+            glyphPosition: .zero,
+            characterIndex: 0
+        )
+    }
+}
+
+/// L'encre d'une image rendue, pixel par pixel : de quoi dire où une formule a posé ses traits
+/// sans avoir à la regarder.
+private struct InkMap {
+    private let width: Int
+    private let height: Int
+    private let scale: CGFloat
+    private let alpha: [UInt8]
+
+    init(_ image: UIImage) throws {
+        let cgImage = try XCTUnwrap(image.cgImage)
+        width = cgImage.width
+        height = cgImage.height
+        scale = image.scale
+        let context = try XCTUnwrap(CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        let pixels = try XCTUnwrap(context.data).bindMemory(to: UInt8.self, capacity: width * height * 4)
+        alpha = (0..<(width * height)).map { pixels[$0 * 4 + 3] }
+    }
+
+    /// Un pixel franchement encré : l'anticrénelage du bord d'un trait ne compte pas.
+    private func isInked(row: Int, column: Int) -> Bool {
+        alpha[row * width + column] > 96
+    }
+
+    /// La ligne moyenne de l'encre, 0 en haut de l'image, dans une tranche prise en fraction
+    /// de la largeur encrée.
+    func meanRow(inColumns slice: ClosedRange<Double>) -> Double? {
+        let inked = (0..<width).filter { column in (0..<height).contains { isInked(row: $0, column: column) } }
+        guard let first = inked.first, let last = inked.last else { return nil }
+        let span = Double(last - first)
+        let columns = (first + Int(span * slice.lowerBound))...(first + Int(span * slice.upperBound))
+
+        var count = 0
+        var total = 0
+        for column in columns {
+            for row in 0..<height where isInked(row: row, column: column) {
+                count += 1
+                total += row
+            }
+        }
+        return count > 0 ? Double(total) / Double(count) : nil
+    }
+
+    /// Le bas de l'encre, en points depuis le bas de l'image.
+    var inkBottomFromBottom: CGFloat? {
+        let lowest = (0..<height).last { row in (0..<width).contains { isInked(row: row, column: $0) } }
+        return lowest.map { CGFloat(height - $0 - 1) / scale }
+    }
 }
 
 /// La fiche à plat : c'est ce texte qui part au modèle pour écrire des cartes ou expliquer

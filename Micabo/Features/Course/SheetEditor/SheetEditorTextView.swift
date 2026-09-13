@@ -131,10 +131,21 @@ final class SheetEditorLayoutManager: SheetMarkerLayoutManager {
 /// La formule, composée en image par le moteur.
 ///
 /// `MTMathUILabel` est une vue ; le document, lui, veut une image à poser sur la ligne. On
-/// compose donc hors écran et on dessine la vue dans un contexte. Sans le paquet, ou quand
-/// le LaTeX ne s'analyse pas, on rend `nil` et l'appelant retombe sur du texte transposé :
-/// une fiche écrite par un modèle contiendra du LaTeX incomplet, et le choix est entre un
-/// cadre vide et une formule un peu moins belle.
+/// compose donc hors écran, puis on dessine **la formule composée** dans un contexte - pas la
+/// vue. Sans le paquet, ou quand le LaTeX ne s'analyse pas, on rend `nil` et l'appelant
+/// retombe sur du texte transposé : une fiche écrite par un modèle contiendra du LaTeX
+/// incomplet, et le choix est entre un cadre vide et une formule un peu moins belle.
+///
+/// **Pourquoi pas `label.layer.render(in:)`.** SwiftMath dessine dans le repère de Quartz,
+/// l'origine en bas et les y vers le haut. À l'écran, c'est le `isGeometryFlipped` que la vue
+/// pose sur son calque qui remet la formule à l'endroit, au moment où Core Animation compose
+/// l'écran. `render(in:)` ne l'applique pas, et le contexte d'un `UIGraphicsImageRenderer` a
+/// les y vers le bas : chaque formule de la fiche sortait en miroir vertical. Retournées, les
+/// lettres en imitaient d'autres - un `b` devenait un `ρ`, un `/` un `\`, l'exposant passait
+/// sous la ligne - et ça se lisait comme des glyphes pris dans une mauvaise fonte, alors que
+/// la fonte était la bonne. Le retournement est donc écrit ici, une fois et explicitement,
+/// comme le fait `MTMathImage` dans le paquet ; il ne dépend plus de ce qu'un rendu de
+/// calque veut bien appliquer.
 enum SheetFormulaImage {
     static func render(latex: String, caption: String?, fontSize: CGFloat, color: UIColor, isDisplayMode: Bool) -> UIImage? {
         #if canImport(SwiftMath)
@@ -157,13 +168,19 @@ enum SheetFormulaImage {
         let width = ceil(size.width) + padding * 2
         let height = ceil(size.height) + padding * 2 + captionHeight
         label.frame = CGRect(x: padding, y: padding, width: ceil(size.width), height: ceil(size.height))
+        // La mise en page de la vue compose la formule et la place dans ses bornes : c'est
+        // cette liste qu'on dessine, exactement comme la vue la dessinerait à l'écran.
         label.layoutIfNeeded()
+        guard let display = label.displayList else { return nil }
 
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height))
-        return renderer.image { context in
+        let image = renderer.image { context in
             context.cgContext.saveGState()
-            context.cgContext.translateBy(x: padding, y: padding)
-            label.layer.render(in: context.cgContext)
+            // Le repère de la vue, les y vers le haut : l'origine descend au bas de la formule,
+            // puis l'axe vertical se retourne. Voir plus haut pourquoi ce n'est pas le calque.
+            context.cgContext.translateBy(x: padding, y: padding + label.bounds.height)
+            context.cgContext.scaleBy(x: CGFloat(1), y: CGFloat(-1))
+            display.draw(context.cgContext)
             context.cgContext.restoreGState()
             if !captionText.isEmpty {
                 let attributes: [NSAttributedString.Key: Any] = [
@@ -178,6 +195,12 @@ enum SheetFormulaImage {
                 )
             }
         }
+        // La ligne de base de la formule, depuis le bas de l'image : c'est sur elle qu'une
+        // formule en ligne se pose. La vue centre la formule dans sa hauteur, sans la tasser
+        // sous une demi-taille de fonte ; la même règle, relue ici, dit où tombe la ligne.
+        let typesetHeight = max(display.ascent + display.descent, fontSize / CGFloat(2))
+        let baseline = captionHeight + padding + (label.bounds.height - typesetHeight) / CGFloat(2) + display.descent
+        return image.withBaselineOffset(fromBottom: baseline)
         #else
         return nil
         #endif
