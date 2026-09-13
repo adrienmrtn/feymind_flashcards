@@ -3,6 +3,21 @@
 Recherche du 13 septembre 2026. Rien n'a été modifié dans l'app ni sur le site. Ce document
 sert à voir le terrain, pas à en copier le ton.
 
+## Comment lire ce fichier (gras, listes, tableaux)
+
+Un `.md` est du **Markdown**. Dans un éditeur de texte brut, on voit les `**étoiles**` et les
+`# titres`. Pour voir le gras, les listes et les tableaux rendus :
+
+1. **Sur GitHub** (le plus simple) — ouvrir le fichier rendu :
+   [docs/recherche-concurrents-apps-tiktok.md](https://github.com/adrienmrtn/feymind_flashcards/blob/cursor/recherche-concurrents-tiktok-a5f4/docs/recherche-concurrents-apps-tiktok.md)
+   ou l'onglet *Files changed* de la [PR #277](https://github.com/adrienmrtn/feymind_flashcards/pull/277).
+2. **Dans Cursor / VS Code** — ouvrir le fichier, puis aperçu Markdown :
+   `Cmd+Shift+V` (Mac) ou `Ctrl+Shift+V` (Windows/Linux). Palette : « Markdown: Open Preview ».
+3. **En local** — `npx --yes marked -o /tmp/concurrents.html docs/recherche-concurrents-apps-tiktok.md`
+   puis ouvrir le HTML dans un navigateur.
+
+Les liens TikTok et App Store sont cliquables une fois le fichier rendu.
+
 **Méthode.** Fiches App Store via l'API iTunes Search (vitrines FR, US, DE, ES, BR) et un
 scraper App Store. TikTok via le scraper Clockworks (profils et vidéos récentes), recoupé avec
 les enquêtes publiques (Social Growth Engineers, Virengine, Pipiads, offres d'ambassadeurs).
@@ -177,7 +192,306 @@ confiance.
 
 ---
 
-## 3. Fiches TikTok — stratégie par concurrent
+## 3. Inventaire TikTok — qui fait du carrousel, qui fait de l'UGC
+
+Chiffres d'abonnés / vidéos / cœurs : instantané 13 septembre 2026 (pages profil TikTok +
+scraper Clockworks). Un compte listé **404** a existé dans une enquête 2025 et n'existe plus
+sous ce handle.
+
+### 3.0 Matrice rapide
+
+| App | Machine de distribution | Carrousel ? | UGC visage | UGC faceless | Spark Ads | Langues TikTok |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Flashka** | Armée ~51 comptes, 6 langues | Oui, **appoint** (PL officiel + 1 post EN) | Oui, moteur (reveal 30 s) | Oui | Peu sur l'officiel | EN ES IT FR SV PL |
+| **Retain** | Armée 49→90+ comptes, DE puis FR/EN | Non (pas le levier) | Oui, mix | **Oui, les plus gros posts** | **Oui, l'officiel est 100 % ads** | DE, puis FR, EN |
+| **Wilgo** | 13 comptes `prénom.wilgo`, pas de @wilgo | **Oui, jambe** (`@jeanne.wilgo`) | **Oui, format n°1** | Ranking faceless | Ads Meta/TikTok en plus (équipe growth) | **FR bac** → AP US |
+| **Knowunity** | 1 compte vérifié / pays | Non dominant | Oui | — | **Oui** | EN ES DE FR |
+| **StudyFetch** | Officiel + Spark + 1 ambassadrice | Non | Angela = moteur | Ancien UGC | **Oui, @studyfetch** | EN |
+| **Quizlet** | 1 compte marque 618 k fans | **Oui, et ça ne convertit plus** (~600 vues) | Oui, court | — | Un ad 6 s | EN |
+| **Knowt** | 1 compte `@getknowt` 249 k, 1 post/jour | Annoncé (guides AP) | **Oui, lycée AP / mèmes** | — | — | EN |
+| **Gizmo** | 1 compte `@gizmo.ai` 101 k, 1 354 posts | Non documenté comme levier | UGC StudyTok UK/US | Oui (aesthetic) | « As seen on TikTok » | EN |
+| **StudySmarter / Vaia** | Officiel DE + `@vaiaapp` EN | Non | Mèmes 5–12 s | Aesthetic Vaia | — | DE / EN |
+| **Parkeur** | 1 compte `@parkeur.app` 14,5 k / 997 k cœurs | Non audité post par post | Probable (ratio cœurs élevé) | — | Pubs vues sur le handle | FR |
+| **Eliott** | 1 compte `@eliott.app` 7,2 k, 353 posts | Non audité | Volume tuteur FR | — | — | FR |
+| **Revyze** | Produit = TikTok ; compte externe minuscule | Le feed *in-app* est un scroll | — | Capsules | — | FR / EN-UK |
+| **Nomad** | Marque contenu 149 k vérifié | Possible (marque éducation) | Marque, pas armée UGC | — | — | FR |
+| **Noji / Anki / Atom / Wellnotes / Plume / Mindgrasp** | Pas de machine StudyTok | — | — | — | — | — |
+
+---
+
+### Flashka — stratégie complète
+
+**Machine.** Pas un compte : une **illusion d'adoption organique** dans six langues, nichée
+médecine / fac, fenêtre de 3 mois, 51 comptes (Virengine). 197 M de vues, ~70 k downloads,
+~40 k$ MRR. Le produit n'apparaît pas dans les 30 premières secondes.
+
+**Opérations.** Affiliés Premium (coupon −20 %, commission 20 %, Rewardful). 4 personnes
+marketing « Professor Ka across Europe » (Alma, Andrea, Van, Filip). CTA bio `flashka.ai`.
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@flashka_ai](https://www.tiktok.com/@flashka_ai) | Officiel | 3 906 | 347 | 280 k | UGC talking-head + clip 5 s + **1 carousel** « 10/10 student » (9 k vues) | EN |
+| [@flashka_ai_pl](https://www.tiktok.com/@flashka_ai_pl) | Satellite PL / med | **12 500** | 33 | 330 k | **Carrousel 4/4** dans l'échantillon (188 k / 79 k / 9 k / 7 k) | PL |
+| [@notes.by.eliii](https://www.tiktok.com/@notes.by.eliii) | Ambassadeur ES | 16 300 | 353 | **3,8 M** | UGC visage, reveal tardif. 1 post **5,3 M** (« deleting ChatGPT ») | ES |
+| [@struggling_founder](https://www.tiktok.com/@struggling_founder) | Fondateur (lien site) | — | — | — | **404** aujourd'hui | — |
+| `@flashka` | Collision de nom | 7 | 4 | 124 | Hors sujet | — |
+
+**Posts concrets, officiel EN :** « best flashcard app… spaced repetition » 227 k / 12 s
+UGC ; clip esthétique 5 s **294 k** ; carousel 9 k ; street interview 2,5 k. Le carrousel
+officiel **sous-performe** le talking-head. Le carrousel **PL** sur-performe.
+
+**Ce n'est pas une stratégie carrousel.** Le moteur = UGC localisé + reveal tardif. Le
+carrousel est le format du satellite polonais (tips med, listes, visages IA).
+
+---
+
+### Retain Cards — stratégie complète
+
+**Machine.** Site d'abord, puis armée TikTok/Reels. App iOS mai 2025. J+19 : 28 M vues,
+7 k$ revenu, 49 comptes, 40 ambassadeurs. Six mois plus tard : **90+ comptes**, 72,4 M
+vues lifetime, 50 k$ MRR, 30 k downloads, 8,4 M vues / 30 j. Un format qui marche est
+**traduit** DE → FR → EN, même ironie. Recrutement : `recruiting.retain.cards`. CTA forcé :
+**« Suche Retain Cards im App Store »** (ASO). Collection Shortimize (paywall) :
+`app.shortimize.com/c/2b10SjQbehv9ta`.
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@retain.cards](https://www.tiktok.com/@retain.cards) | Officiel | 8 829 | **26** | 158 k | **4/4 Spark Ads** dans l'échantillon. Pas de carrousel | **DE** |
+| [@retain_cards_official](https://www.tiktok.com/@retain_cards_official) | Recrutement | 958 | 7 | 6 | Carrousels vides PL/ES/PT | EN |
+| [@study.with.fey](https://www.tiktok.com/@study.with.fey) | Ambassadeur (ex `@fey.retain.cards`) | 1 780 | 292 | 261 k | UGC StudyTok, Master WiWi | DE |
+| [@retain.cards.offi](https://www.tiktok.com/@retain.cards.offi) | Clone EN **mort** | 19 | 23 | 222 | ~400 plays | EN |
+| [@retain.cards8](https://www.tiktok.com/@retain.cards8) | Test | 4 | 3 | 136 | Talking-head college | EN |
+| `@fey.retain.cards` | Listé SGE juin 2025 | — | — | — | **404** (renommé Fey) | DE |
+| `@anastasia.retain.cards` | Listé SGE | — | — | — | **404** | DE |
+| IG `@nele.retain.cards` | Ambassadeur IG | — | — | — | Selfie study vlogs (pas TikTok) | DE |
+| [@laure._study](https://www.tiktok.com/@laure._study) | UGC FR `#retaincardapp` | 594 | 118 | 173 k | Tips études. 1 post 246 k, hashtag 1,3 M / 6 vidéos | FR |
+
+**Ads officiels concrets (tous `isAd: true`, DE, pas carousel) :**
+
+| Hook | Vues | Durée |
+| --- | ---: | ---: |
+| Klingt verboten… zu einfach | **4,5 M** | 26 s |
+| Lernen war noch nie so einfach | **3,4 M** | 8 s |
+| Ist das wirklich erlaubt!? | **1,4 M** | 26 s |
+| Bro...wo war das vor 6 Jahren? | 21 k | 10 s |
+
+**Carrousel : non.** L'officiel est de la pub faceless / démo. Les gros organiques SGE
+étaient faceless bureau. La FR passe par des UGC type `@laure._study` + traduction du
+même hook, pas par un `@retain.cards.fr`.
+
+---
+
+### Wilgo — stratégie complète
+
+**Machine.** Pas de `@wilgo`. Pattern **`prénom.wilgo`**. 13 comptes FR-only depuis 2026,
+dont de l'UGC IA. 4,8 M vues / 30 j. Cible unique : bac / brevet. L'app est vendue comme
+**méthode**, pas comme feature. Cadence ambassadeurs : ~25 vidéos / mois, formats gagnants
+envoyés chaque semaine (`ambassadors.wilgo.ai`). Growth interne : organique + social ads
+(Meta, TikTok, Google) — LinkedIn de l'équipe.
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@paloma.wilgo](https://www.tiktok.com/@paloma.wilgo) | Ambassadeur (le plus gros mesuré) | **25 400** | 156 | 217 k | **UGC visage** | FR |
+| [@jeanne.wilgo](https://www.tiktok.com/@jeanne.wilgo) | Ambassadeur **carrousel** | 8 829 | 148 | 164 k | **Slideshow faceless** ranking ChatGPT / Gemini / Wilgo dernière slide. Hit 252,7 k | FR |
+| [@laura.wilgo](https://www.tiktok.com/@laura.wilgo) | Ambassadeur | 5 506 | 167 | **353 k** | UGC conseils `#wilgo` | FR |
+| [@mailine.wilgo](https://www.tiktok.com/@mailine.wilgo) | Ambassadeur petit | 2 | 8 | 653 | UGC « 18 de moyenne » | FR |
+| `@wilgo` / `@wilgo.ai` / `@wilgo.app` | — | — | — | — | **404** | — |
+| 9 autres `*.wilgo` | Annoncés SGE (13 − 4) | ? | — | — | UGC visage et/ou IA | FR |
+| 1 compte UGC IA (non nommé SGE) | Synthétique | — | — | — | Visage IA, **1,4 M / 2 mois** | FR |
+
+**Format n°1 :** close-up visage, hook une phrase trop longue. Ex. « ma sœur a eu 18,5 au
+bac blanc… 30 min au lieu de 3 h » — 431 k. **Carrousel = test qui marche** chez Jeanne,
+pas le réseau entier. **UGC IA = test qui marche** (1,4 M). Distribution = volume de
+comptes FR × templates hebdo, pas un compte marque.
+
+---
+
+### Knowunity — stratégie complète
+
+**Machine.** Un handle **vérifié par pays**, Spark Ads, smart-link unique
+`a.knowunity.de/app`. Pas une armée de 90. Le dialecte est local (EVA-U, A-levels, bac).
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@knowunity.uk](https://www.tiktok.com/@knowunity.uk) | Satellite UK | **92 200** | 178 | **24,2 M** | Spark + talking-head « how I use Knowunity » + origin story | EN |
+| [@knowunity.es](https://www.tiktok.com/@knowunity.es) | Satellite ES | 67 000 | 172 | 2,7 M | Spark « subo mi media » + quiz | ES |
+| [@knowunity.fr](https://www.tiktok.com/@knowunity.fr) | Satellite FR vérifié | **48 800** | 129 | 1,1 M | Ads FR dès 2022 (Pipiads) | FR |
+| [@knowunity.de](https://www.tiktok.com/@knowunity.de) | Satellite DE | 21 400 | 54 | 261 k | — | DE |
+| [@knowunity](https://www.tiktok.com/@knowunity) | Officiel US | 18 200 | 17 | 270 k | Spark « it's free ». Organique récent 348 vues | EN |
+| [@knowunity.us](https://www.tiktok.com/@knowunity.us) | US alt, sparse | 1 299 | 4 | 39 k | Ads 2024 : 704 k / 152 k | EN |
+
+**Carrousel : non dominant.** Talking-head + ads 52–86 s. CTA = download via bio, pas
+recherche App Store.
+
+---
+
+### StudyFetch — stratégie complète
+
+**Machine.** Le compte de marque a fait le travail en 2023–24 (posts 4–6,4 M) puis est
+mort (174 vues en sept. 2026). La distribution actuelle = **Spark Ads** sur `@studyfetch`
+(même caption collée) + **une** ambassadrice campus.
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@studyfetchai](https://www.tiktok.com/@studyfetchai) | Officiel | 85 200 | 609 | 3,6 M | UGC ancien viral ; récent mort | EN |
+| [@studyfetch](https://www.tiktok.com/@studyfetch) | Ads | 14 000 | 102 | 1,2 M | **4/4 Spark Ads**, caption identique, 317 k–2,4 M | EN |
+| [@studyfetchangela](https://www.tiktok.com/@studyfetchangela) | Ambassadeur | 6 848 | 280 | 1,4 M | Talking-head med vlog. Pic **9,1 M** | EN |
+| [@studyfetchana](https://www.tiktok.com/@studyfetchana) | Satellite faible | 54 | 29 | 730 | Campus 150–327 vues | EN |
+
+**Carrousel : non.** UGC + ads. CTA `studyfetch.com`.
+
+---
+
+### Quizlet — stratégie complète (et pourquoi ça ne marche plus)
+
+**Machine.** Un compte vérifié énorme, satellites langues abandonnés en 2020. Pas
+d'armée. TikTok n'est plus un canal d'acquisition (1,1 M d'avis US suffisent).
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@quizlet](https://www.tiktok.com/@quizlet) | Officiel vérifié | **618 400** | 721 | 13,5 M | **Carrousel mèmes** + talking-head 6–7 s. Vues récentes **619 / 618 / 854 / 949** | EN |
+| [@quizlet_languages](https://www.tiktok.com/@quizlet_languages) | Satellite mort 2020 | 123 | 20 | 294 | Vocab | EN |
+| [@quizlet_iq](https://www.tiktok.com/@quizlet_iq) | Satellite mort 2020 | 416 | 20 | 3 381 | Tips | EN |
+
+**Carrousel : oui, et c'est le compte qui en fait le plus — avec le plus mauvais reach
+actuel.** Preuve que le format ne sauve pas une marque qui a arrêté l'UGC frais.
+
+Sœur : **Coconote** (même vendeur Quizlet Inc), pas de machine TikTok documentée ici.
+
+---
+
+### Knowt — stratégie complète
+
+**Machine.** Un social lead interne, **un post par jour**, TikTok + IG `@getknowt`.
+Calendrier AP / SAT / ACT. KPI = abonnements **web**, pas seulement les vues. CTA
+comment-to-DM (« comment lang and I’ll send the guide ») + carrousels de guides AP
+annoncés.
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@getknowt](https://www.tiktok.com/@getknowt) | Officiel | **248 800** | **1 384** | **11 M** | UGC lycée / mèmes AP. Carrousel annoncé (APHUG, AP Lang), pas mesuré `isSlideshow` (cap Apify) | EN |
+| `@knowt` / `@useknowt` | Collision / mort | 6 / 9 | 0 | 0 | — | — |
+
+**Carrousel : format secondaire annoncé**, le quotidien est UGC/mème. 10 573 avis US vs
+90 FR : toute cette machine est américaine.
+
+---
+
+### Gizmo — stratégie complète
+
+**Machine.** Un gros compte unique, cadence industrielle (1 354 posts). Le produit se
+fait taguer par des élèves GCSE/A-level. Positionnement « Get addicted to learning » =
+habitude TikTok retournée vers le quiz. CTA `app.gizmo.ai/auto-redirect/tiktok`. L'App
+Store dit « As seen on TikTok and Instagram ».
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@gizmo.ai](https://www.tiktok.com/@gizmo.ai) | Officiel | **100 600** | **1 354** | **4,1 M** | Volume StudyTok (faceless aesthetic + UGC, A-level dans le profil) | EN |
+| `@gizmoai` | Collision | 20 | 1 | 44 | Hors sujet | — |
+
+**Carrousel : non établi comme levier.** C'est du volume de compte unique, pas une armée.
+Pas de posts scrapés (login wall + cap).
+
+---
+
+### StudySmarter / Vaia — stratégie complète
+
+**Machine.** Rebrand : FR/DE = StudySmarter, US/BR = Vaia. Deux comptes, pas une armée.
+Reach organique officiel actuel : 362–1 040 vues.
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@studysmarter.official](https://www.tiktok.com/@studysmarter.official) | Officiel vérifié | 36 400 | 206 | 454 k | Talking-head / mèmes 5–12 s | DE |
+| [@vaiaapp](https://www.tiktok.com/@vaiaapp) | Satellite EN | 393 | 106 | 10 k | Aesthetic « study less get better grades » | EN |
+
+**Carrousel : non.** Brand posting. Compte DE encore vivant (août 2026), reach faible.
+
+---
+
+### Parkeur — stratégie complète
+
+**Machine.** Un compte de marque FR, ratio cœurs/fans très haut (997 k cœurs / 14,5 k
+fans ≈ 18 k cœurs/vidéo en moyenne de compte). Le site dit « la méthode est devenue
+virale ». Pas d'armée `prénom.parkeur` trouvée. 16 200 avis App Store FR = ASO + ce
+compte, pas un playbook Flashka.
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@parkeur.app](https://www.tiktok.com/@parkeur.app) | Officiel | **14 500** | 54 | **996 700** | UGC / démo fiches. Bio : « Meilleure app de révision · Cartes mémos & Quiz IA » | FR |
+| `@parkeur` | Collision | 1 052 | 19 | 569 | Hors sujet | — |
+
+**Carrousel : non audité post par post** (login wall). Compte réel, pas mort.
+
+---
+
+### Eliott — stratégie complète
+
+**Machine.** Confiance familles / établissements (Pronote, RGPD). Un compte volume, pas
+une armée. 353 posts, 7,2 k fans : cadence de marque, pas StudyTok viral.
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@eliott.app](https://www.tiktok.com/@eliott.app) | Officiel | 7 200 | 353 | 185 k | Volume tuteur FR, CTA `app.eliott.app` | FR |
+
+**Carrousel : non établi.** Distribution secondaire vs Wilgo/Parkeur.
+
+---
+
+### Revyze — stratégie complète
+
+**Machine.** Le produit *est* un feed TikTok (capsules + quiz). Le compte externe
+[@learnwithrevyze](https://www.tiktok.com/@learnwithrevyze) : 177 fans, 128 vidéos,
+11,5 k cœurs. 27 221 avis FR viennent de l'app, pas de ce handle. UK : GCSE/A-level.
+
+**Carrousel : le scroll in-app**, pas un slideshow TikTok de marque.
+
+---
+
+### Nomad Education — stratégie complète
+
+**Machine.** Marque contenu historique (brevet/bac), compte vérifié gros. Pas le playbook
+2025 UGC-armée.
+
+| Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| [@nomad_education](https://www.tiktok.com/@nomad_education) | Officiel vérifié | **149 300** | 867 | 3,4 M | Marque contenu FR, app gratuite CP→Bac+3 | FR |
+
+---
+
+### Les autres (peu ou pas de StudyTok)
+
+| App | Handle | Fans | Vidéos | Cœurs | Lecture |
+| --- | --- | ---: | ---: | ---: | --- |
+| **Studyflash** | [@studyflash](https://www.tiktok.com/@studyflash) | 10 400 | 243 | 193 k | Brand UGC EN, « 1M+ students ». Pas une armée. |
+| **Quizgecko** | [@quizgecko](https://www.tiktok.com/@quizgecko) | 2 227 | 153 | **383 k** | Petit compte, ratio cœurs élevé. EN. |
+| **Turbo AI** | [@turbolearn](https://www.tiktok.com/@turbolearn) | 291 | 130 | 12,5 k | Notes IA. 33 k avis US : l'acquisition n'est pas ce compte. |
+| **Noji** | [@noji.io](https://www.tiktok.com/@noji.io) | 923 | 38 | 19 k | ASO + SEO decks, pas TikTok. |
+| **Anki** | — | — | — | — | Pas de compte. Forums / médecine. |
+| **Mindgrasp** | `@mindgrasp` | 1 | 0 | 0 | Mort |
+| **Atom AI / Wellnotes / Plume** | collisions ou 404 | — | — | — | **Pas de compte étude** |
+
+---
+
+### Qui fait vraiment du carrousel (liste fermée)
+
+Pas « un peu de slideshow quelque part ». Les seuls où le carrousel est **un levier
+mesuré** :
+
+| Compte | App | Preuve | Vues |
+| --- | --- | --- | ---: |
+| [@flashka_ai_pl](https://www.tiktok.com/@flashka_ai_pl) | Flashka | 4/4 posts échantillon `isSlideshow=true` | 7 k–188 k |
+| [@flashka_ai](https://www.tiktok.com/@flashka_ai) | Flashka | 1 carousel « 10/10 student » | 9 k (**sous le talking-head**) |
+| [@jeanne.wilgo](https://www.tiktok.com/@jeanne.wilgo) | Wilgo | Ranking ChatGPT/Gemini/Wilgo, dernière slide | **253 k** |
+| [@quizlet](https://www.tiktok.com/@quizlet) | Quizlet | Carrousels mèmes récents | **600–850** |
+| [@getknowt](https://www.tiktok.com/@getknowt) | Knowt | Carrousels AP **annoncés** (APHUG, AP Lang), non scrapés | — |
+| [@retain_cards_official](https://www.tiktok.com/@retain_cards_official) | Retain | Carrousels de recrutement, 6 cœurs au total | ~0 |
+
+**Tous les autres gros posts de la catégorie sont de la vidéo** (visage, faceless, ads),
+pas du carrousel.
+
+---
+
+## 4. Fiches TikTok — stratégie par concurrent (détail narratif)
 
 Légende des formats, telle qu'on les voit vraiment sur StudyTok en 2025–2026 :
 
@@ -191,7 +505,7 @@ Légende des formats, telle qu'on les voit vraiment sur StudyTok en 2025–2026 
 | **Compte officiel** | Marque unique, CTA bio | Un handle, souvent faible reach récent |
 | **Armée de comptes** | 13 à 90+ comptes localisés, même formule | Le vrai moteur Flashka / Retain / Wilgo |
 
-### 3.1 Flashka — armée localisée, reveal tardif, six langues
+### 4.1 Flashka — armée localisée, reveal tardif, six langues
 
 | | |
 | --- | --- |
@@ -220,7 +534,7 @@ France. Le binaire EN-only n'empêche pas de vendre en ES/IT/FR/PL via le conten
 
 Niche : étudiants de médecine et fac, mémorisation lourde. Pas le bac français.
 
-### 3.2 Retain Cards — UGC Allemagne puis traduction, 90+ comptes
+### 4.2 Retain Cards — UGC Allemagne puis traduction, 90+ comptes
 
 | | |
 | --- | --- |
@@ -255,7 +569,7 @@ une acquisition DE→FR→EN que Micabo n'a pas.
 **Pas une stratégie carrousel.** Faceless + talking-head. Le carrousel n'est pas le levier
 documenté.
 
-### 3.3 Wilgo — StudyTok français, bac only, 13 comptes
+### 4.3 Wilgo — StudyTok français, bac only, 13 comptes
 
 | | |
 | --- | --- |
@@ -277,7 +591,7 @@ produit n'est pas le même : Wilgo vend le programme, Micabo vend *ton* cours.
 Ici, **oui, il y a une vraie jambe carrousel** (ranking d'outils IA, faceless), mais le
 moteur reste l'UGC visage + la méthode.
 
-### 3.4 Knowunity — un compte par pays, Spark Ads, « c'est gratuit »
+### 4.4 Knowunity — un compte par pays, Spark Ads, « c'est gratuit »
 
 | | |
 | --- | --- |
@@ -295,7 +609,7 @@ l'échantillon sont modestes (348–10 k) ; les ads US plus anciens 152 k–704 
 Pas une armée de 90 UGC. Une **marque localisée**. Le carrousel n'est pas le format
 dominant dans l'échantillon ; talking-head + ads.
 
-### 3.5 StudyFetch — Spark Ads + ambassadrice, pas le compte officiel
+### 4.5 StudyFetch — Spark Ads + ambassadrice, pas le compte officiel
 
 | | |
 | --- | --- |
@@ -310,7 +624,7 @@ visage campus, plutôt qu'un fondateur qui parle.
 
 Pas de carrousel dominant. UGC + ads.
 
-### 3.6 Quizlet — un million d'avis, un compte TikTok qui ne convertit plus
+### 4.6 Quizlet — un million d'avis, un compte TikTok qui ne convertit plus
 
 | | |
 | --- | --- |
@@ -325,7 +639,7 @@ une relique de marque. **Le carrousel est là, et il ne sauve pas le reach.** C'
 preuve que « faire des carrousels » n'est pas une stratégie, c'est un format. Sans UGC
 frais et sans ads, 618 k followers ne font rien.
 
-### 3.7 Knowt — un social lead, lycée US, AP, @getknowt
+### 4.7 Knowt — un social lead, lycée US, AP, @getknowt
 
 Pas de hit sur la recherche utilisateur Clockworks (le handle n'est pas `@knowt`).
 L'app elle-même pointe vers [tiktok.com/@getknowt](https://www.tiktok.com/@getknowt) et
@@ -342,7 +656,7 @@ Le carrousel est un format secondaire annoncé, le quotidien est UGC/mème lycé
 génération IA gratuite est l'arme produit contre Quizlet Plus ; TikTok sert à ramener
 vers le web, où Knowt est plus fort que sur mobile FR.
 
-### 3.8 Gizmo — « addicted to learning », UGC esthétique, EN
+### 4.8 Gizmo — « addicted to learning », UGC esthétique, EN
 
 Pas de compte officiel propre dans la recherche Clockworks. Le produit se fait taguer
 `@gizmo` / `#gizmoai` par des élèves UK (GCSE, A-level) : faceless, active recall, « the
@@ -350,7 +664,7 @@ app that makes my studies bearable ». Positionnement interne : habitude TikTok 
 vers l'Anki loop (vies, XP, ligues). Langue : **EN**. Acquisition US/UK. 13 780 avis US,
 1 645 FR. Wrapper GoNative : l'app iOS n'est pas native au sens Micabo.
 
-### 3.9 StudySmarter / Vaia — DE memes, rebrand EN
+### 4.9 StudySmarter / Vaia — DE memes, rebrand EN
 
 | | |
 | --- | --- |
@@ -363,7 +677,7 @@ Rebrand : FR/DE gardent StudySmarter, US/BR deviennent Vaia. 8 944 avis DE, 2 01
 Toujours en train de poster (août 2026 dans l'échantillon). Reach organique officiel
 faible. Ce n'est pas une machine UGC à la Retain.
 
-### 3.10 Revyze — le produit *est* un TikTok
+### 4.10 Revyze — le produit *est* un TikTok
 
 | | |
 | --- | --- |
@@ -375,7 +689,7 @@ faible. Ce n'est pas une machine UGC à la Retain.
 de *tes* cartes. C'est un concurrent du temps d'écran. Si Micabo se met à faire des
 carrousels pédagogiques, il se compare à Revyze, pas à Anki.
 
-### 3.11 Les silencieux
+### 4.11 Les silencieux
 
 | App | TikTok | Lecture |
 | --- | --- | --- |
@@ -388,7 +702,7 @@ carrousels pédagogiques, il se compare à Revyze, pas à Anki.
 
 ---
 
-## 4. Les cinq playbooks TikTok de la catégorie
+## 5. Les cinq playbooks TikTok de la catégorie
 
 Tout ce qui marche en 2025–2026 se range dans cinq machines. Micabo n'a besoin d'en
 choisir qu'une pour commencer ; en mixer trois trop tôt, c'est le compte officiel Quizlet
@@ -440,7 +754,7 @@ gratuite à une marque Education.
 
 ---
 
-## 5. Langues — ce que les vitrines disent, ce que TikTok fait
+## 6. Langues — ce que les vitrines disent, ce que TikTok fait
 
 Deux couches distinctes, souvent en désaccord.
 
@@ -472,7 +786,7 @@ Lecture pour Micabo :
 
 ---
 
-## 6. Ce que font les hooks qui convertissent
+## 7. Ce que font les hooks qui convertissent
 
 Hors feature list. Tous les gros posts de cette recherche évitent « spaced repetition
 algorithm » et « import PDF in one tap » en ouverture.
@@ -502,9 +816,9 @@ CTA qui marchent :
 
 ---
 
-## 7. Lecture pour Micabo — sans toucher au produit
+## 8. Lecture pour Micabo — sans toucher au produit
 
-### 7.1 Qui est vraiment en face
+### 8.1 Qui est vraiment en face
 
 - **Sur le geste** (ton PDF → fiche + cartes) : Flashka, Retain, Parkeur, Atom AI,
   Wellnotes, Studyflash, Plume. Retain est le plus dangereux en Europe (avis DE+FR,
@@ -518,7 +832,7 @@ CTA qui marchent :
   PACES / médecine / langues sur les forums. Micabo a l'argument (vrai SM-2 +
   génération) ; personne sur TikTok ne le raconte, et ce n'est pas le hook qui marche.
 
-### 7.2 Ce qu'il ne faut pas faire
+### 8.2 Ce qu'il ne faut pas faire
 
 - Un compte `@micabo` qui poste des carrousels de features. Quizlet a 618 k followers
   et 700 vues. StudySmarter poste encore, 400 vues.
@@ -530,7 +844,7 @@ CTA qui marchent :
 - Copier l'armée 90 comptes le premier mois. Retain a commencé par l'Allemagne et un
   format. Flashka a niché médecine. Wilgo a niché le bac.
 
-### 7.3 Ce qui est cohérent avec Micabo
+### 8.3 Ce qui est cohérent avec Micabo
 
 Micabo refuse déjà la mascotte Duolingo et la preuve sociale inventée
 (`docs/plan-amelioration.md`). L'armée UGC Flashka/Retain **joue** l'organicité. Une
@@ -556,7 +870,7 @@ Pistes, pas un plan d'exécution produit :
    jour DE : c'est le marché Retain, déjà saturé en UGC. L'anglais TikTok sans binaire
    EN, c'est Flashka à l'envers — possible, mais second.
 
-### 7.4 Carte mentale — qui gagne quoi
+### 8.4 Carte mentale — qui gagne quoi
 
 ```
 TikTok StudyTok 2026
@@ -578,7 +892,7 @@ TikTok StudyTok 2026
 
 ---
 
-## 8. Limites de cette recherche
+## 9. Limites de cette recherche
 
 - App Store Connect concurrent : inaccessible. IAP SKU par SKU non listés (l'API
   iTunes ne les donne pas). Les abonnements se déduisent des descriptions (Quizlet Plus,
