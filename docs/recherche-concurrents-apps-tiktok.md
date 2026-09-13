@@ -209,7 +209,7 @@ sous ce handle.
 | **StudyFetch** | Officiel + Spark + 1 ambassadrice | Non | Angela = moteur | Ancien UGC | **Oui, @studyfetch** | EN |
 | **Quizlet** | 1 compte marque 618 k fans | **Oui, et ça ne convertit plus** (~600 vues) | Oui, court | — | Un ad 6 s | EN |
 | **Knowt** | 1 compte `@getknowt` 249 k, 1 post/jour | Annoncé (guides AP) | **Oui, lycée AP / mèmes** | — | — | EN |
-| **Gizmo** | 1 compte `@gizmo.ai` 101 k, 1 354 posts | Non documenté comme levier | UGC StudyTok UK/US | Oui (aesthetic) | « As seen on TikTok » | EN |
+| **Gizmo** | Phase 1 : 30+ faceless (`@gizmo.ai`, `@dnldsz`). Phase 2 : +30 visages | Non | Phase 2 | **Phase 1, 44,5 M sur l'officiel** | « As seen on TikTok » | EN |
 | **StudySmarter / Vaia** | Officiel DE + `@vaiaapp` EN | Non | Mèmes 5–12 s | Aesthetic Vaia | — | DE / EN |
 | **Parkeur** | 1 compte `@parkeur.app` 14,5 k / 997 k cœurs | Non audité post par post | Probable (ratio cœurs élevé) | — | Pubs vues sur le handle | FR |
 | **Eliott** | 1 compte `@eliott.app` 7,2 k, 353 posts | Non audité | Volume tuteur FR | — | — | FR |
@@ -488,6 +488,293 @@ mesuré** :
 
 **Tous les autres gros posts de la catégorie sont de la vidéo** (visage, faceless, ads),
 pas du carrousel.
+
+---
+
+### Deep-dive — anatomie du UGC faceless
+
+« Faceless » n'est pas un format. C'est une **famille de formats** dont le point commun
+est : pas de visage (ou un visage que personne ne reconnaîtra comme une personne réelle).
+Sur StudyTok, c'est le canal qui scale le moins cher, et — chez Retain et Gizmo — celui
+qui a **ouvert** la machine. Les visages convertissent mieux ensuite. Les deux ne se
+remplacent pas.
+
+Les chiffres d'enquêtes (SGE, Virengine) sont des ordres de grandeur, pas des filings.
+Les recettes, elles, se recoupent d'une source à l'autre.
+
+#### Les six sous-formats, et qui les tient
+
+| # | Sous-format | Ce qu'on voit | Coût | Qui |
+| --- | --- | --- | --- | --- |
+| **F1** | **Screen-record overlay** | Quiz / cartes de l'app, posés sur un bureau (notes fluo, MacBook, AirPods) | Bas | **Retain** (les 3 M+), ads `@retain.cards` |
+| **F2** | **Mains + notes, reveal app** | Mains qui gribouillent (glycolyse, 822 pages de cardio), puis l'écran de l'app | Bas | **Flashka** (ouverture 30 s), **Gizmo** (loop 8 h → 1 h) |
+| **F3** | **Aesthetic StudyTok** | Bureau « joli » (fleurs, highlighter, B-roll cascade/forêt), slow-mo, texte gras | Moyen | **Gizmo** `@gizmo.ai` (9,8 M), ambassadeurs type `@dnldsz` (7,2 M) |
+| **F4** | **Slideshow / carrousel** | Images + texte, une slide nomme l'app | Très bas | **Flashka PL**, **Wilgo** `@jeanne.wilgo`, **ScrollToStudy** (adjacent, 17 M / 5 comptes) |
+| **F5** | **Visage IA / UGC synthétique** | Talking-head qui n'existe pas, ou listes « med school » en face générée | Très bas | **Flashka PL** (~183 k / vidéo), **Wilgo** (1,4 M / 2 mois), **Retain** (tests Fey) |
+| **F6** | **Split-screen / ranking** | A+ vs C, ChatGPT vs Gemini vs l'app, 7pm vs 2am | Bas | **Gizmo** ambassadeurs, **Wilgo** Jeanne |
+| **F7** | **Uninstall / breakup** | Swipe qui vire l'icône ChatGPT, pivot vers l'app | Bas | Adjacent (**Fabric**), même hook que Flashka/Retain « deleting ChatGPT » |
+
+Retain Virengine : les démos faceless **font 2× les talking-heads en vues**. Gizmo SGE
+octobre 2025 : une fois les hooks validés, les **visages** font plus d'installs. Les deux
+phrases ne se contredisent pas. Le faceless **trouve** le hook. Le visage **encaisse**.
+
+#### Recette commune (8–26 secondes)
+
+Presque tous les posts faceless de cette catégorie tiennent dans la même colonne
+vertébrale. Ce qui change, c'est la langue et l'objet de la honte.
+
+```
+0–3 s   HOOK visuel + texte plein écran
+        douleur (notes infinies, « faulen Lerner », ChatGPT générique)
+        ou envie (« how does she ace without grinding »)
+
+3–8 s   PREUVE sans l'app, ou avec à peine
+        mains, highlighter, photo du cours, loop de grind
+
+8–20 s  PIVOT
+        screen-record : photo → cartes / quiz / streak / note visée
+        3 étapes numérotées (Retain) ou ranking dernière slide (Wilgo)
+
+20–26 s CTA mou
+        « Suche X im App Store »  |  « this app SAVED me » + bio
+        |  commentaire planté « c'est quoi l'app ? »
+```
+
+Le produit **ne s'appelle pas** dans les 3 premières secondes, sauf les ads Retain
+(« trop facile / interdit ») qui assument d'être de la pub et compensent par le
+hook d'interdit. Les organiques Flashka / Gizmo / ScrollToStudy **retarde** le nom.
+Le commentaire « quelle app ?? » est un CTA : Gizmo répond par un copier-coller
+préparé, ScrollToStudy a un top comment 6 k likes qui nomme le produit.
+
+#### Retain — le faceless qui a ouvert l'Allemagne
+
+**Thèse.** 60 % faceless / 40 % visage, consigne Virengine pour reproduire. Les trois
+posts les plus vus sont faceless, **mention directe de l'app**. L'officiel
+`@retain.cards` n'est plus de l'organique : 4/4 Spark Ads, DE, 8–26 s, Originalton.
+
+**Le format qui a fait 3 M (organique, ~60 j avant l'enquête juin 2025) :**
+
+```
+Texte plein écran, allemand :
+  An alle faulen Lerner
+  1. Foto machen
+  2. Note angeben
+  3. Abfragen lassen
+Image : screen-record du quiz, overlay bureau.
+CTA : Retain Cards, App Store.
+```
+
+C'est une **liste numérotée de soulagement**, pas une démo feature. La photo du cours
+est le geste Micabo. La note visée est le différenciateur Retain (plan d'examen). Le
+« faulen Lerner » est de la honte douce : ça autorise le viewer à vouloir la solution
+sans se sentir un bon élève.
+
+**Production, compte par compte :**
+
+| Compte | Sous-format | Plan de caméra | Audio | CTA |
+| --- | --- | --- | --- | --- |
+| `@fey.retain.cards` → [@study.with.fey](https://www.tiktok.com/@study.with.fey) | Mix ; tests **visage IA** | Bureau + parfois face synthétique | Original / StudyTok | `"Retain Cards" im AppStore` |
+| `@anastasia.retain.cards` (404) | **F2** desk study faceless | Mains, bureau, active recall | — | Mention app |
+| IG `@nele.retain.cards` | Visage (Reels) | Selfie study vlog, scan de notes | — | 26,5 M de vues **sur un compte IG** — Reels > TikTok pour eux au lancement |
+| Ads `@retain.cards` | **F1** démo | Screen-record, `isAd: true` | Originalton Retain | Recherche App Store |
+
+**Hooks faceless DE, collés ensuite en FR/EN (même ironie, pas mot à mot) :**
+
+- « Klingt verboten… zu einfach » — 4,5 M (ad, 26 s)
+- « Ist das wirklich erlaubt!? » — 1,4 M
+- « POV: Du hast es entdeckt »
+- « I've been studying for four years and only discover this now »
+- « POV: you just figured out why everyone's deleting ChatGPT »
+
+**Pourquoi ça scale.** Un VA peut tourner F1 en 20 minutes : iPhone en screen-record,
+CapCut, texte jaune, musique. Pas de créateur, pas de visage à briefer, pas de burnout.
+Retain a ensuite **traduit** le même F1. Le réseau 90+ n'est pas 90 visages : c'est 90
+points de publication du même soulagement.
+
+**Limite.** L'ad assumée (`isAd`) marche en DE parce que le hook « interdit » est plus fort
+que le label pub. En FR, `@laure._study` est plutôt tips + hashtag, plus proche du
+talking-head / tips que du F1 bureau. Le faceless FR de Retain est moins documenté que
+le DE.
+
+#### Gizmo — le faceless comme phase 1, puis abandon partiel
+
+C'est le dossier le plus complet de la catégorie, et le plus important pour ne pas
+idéaliser le faceless.
+
+**Phase 1 (jusqu'à janv. 2025, SGE).** 30+ comptes faceless. 70 M de vues. 59 k$ MRR,
+200 k downloads / mois. Le compte [@gizmo.ai](https://www.tiktok.com/@gizmo.ai) à lui
+seul : **44,5 M de vues, 100 % faceless**. 3 à 5 personnes tournaient probablement tout
+le réseau, payées au CPM. Les usernames **ne disent pas Gizmo**. Lien unique en bio.
+
+**Le format qui a marché 10+ fois sur le compte principal :**
+
+```
+Gros plan de notes fluo + highlighter
+Laptop derrière, fond qui bouge (parfois cascade / forêt en B-roll)
+Texte gras + sparkles / unicorn emojis
+Hook : grind 8 h vs active recall 1 h
+9,8 M vues, 702 k likes, 141 k saves
+```
+
+**Ambassadeur [@dnldsz](https://www.tiktok.com/@dnldsz/video/7403738347287416071) :**
+même recette, **7,2 M / 543 k likes / 190 k saves**. L'app est **à l'écran**, le nom
+n'est **pas** dans le username ni forcément à l'image. Caption : « This study app SAVED
+me ». Les commentaires « what app?? » reçoivent une réponse template + bio.
+
+**Variantes F2/F3/F6 documentées :**
+
+- Loop de mains sur Krebs / glycolyse → quiz + streak (5,6 M)
+- Split-screen A+ (app, 19h) vs C (2h du mat, bouquins) — `@dnldsz`
+- Envy-bait sarcastique sur B-roll cascade : « all-day studying »
+- Textbook overload + post-its → reveal 30 min / jour
+- Hook question : « Your grades are so much better now! What happened? » (4,7 M),
+  mains sur notes roses, *diary reveal* du SRS à la fin
+
+**Hashtags :** `#StudyTok` `#SpacedRepetition` `#ActiveRecall` — communauté, pas marque.
+
+**Phase 2 (oct. 2025, SGE).** Ils n'ont **pas** doublé le faceless. Ils ont ajouté
+**30+ visages**, 70+ comptes au total. 100 k$ MRR, 500 k downloads / mois. De nouveaux
+comptes visage font 6,3–6,8 M en un mois. Le faceless **plateau** : l'algo veut de
+l'humain, les installs veulent un visage qui dit « j'ai eu ma note ».
+
+Playbook Gizmo, en une ligne : **faceless pour miner les hooks à bas coût, visage pour
+convertir.** Collection : `app.shortimize.com/c/2a10E5Ud9IYUiT`.
+
+#### Flashka — faceless = coût, pas le moteur ES
+
+Le moteur documenté (Virengine) est le **reveal tardif**, souvent avec un visage réel
+(`@notes.by.eliii`, 5,3 M). Le faceless est l'arme de **localisation cheap** :
+
+- **Pologne** : visage IA + listes « craziest things in med school ». Un compte
+  synthétique à **183 k vues / vidéo** en moyenne — au niveau des humains. L'authenticité
+  est le **scénario** (scrubs, notes, spécialités), pas la peau.
+- **`@flashka_ai_pl`** : **F4 carrousel**, 4/4 dans l'échantillon. Tips med, hashtags
+  `#nauka` `#flashka`. 7 k–188 k. C'est du faceless slideshow, pas du screen-record.
+- **Italie** : minutes de prépa **avant** le reveal — plutôt talking-head long que
+  faceless, mais la colonne vertébrale (empathie → preuve → outil) est la même.
+- **Clip officiel 5 s, 294 k** : esthétique, pas de visage nécessaire. Hook « share for
+  luck » / exam vibes. Trop court pour une démo : c'est de l'atmosphère, pas F1.
+
+Flashka n'a pas publié de playbook « 60 % faceless ». Ils ont publié une **illusion
+d'organicité simultanée** en six langues. Le faceless (IA + carousel PL) est ce qui rend
+cette illusion **finançable**. Le talking-head ES est ce qui a fait le post à 5 M.
+
+#### Wilgo — le faceless est une jambe, pas la machine
+
+Format n°1 = **visage close-up**, hook une phrase. Le faceless est un **test qui a
+marché**, pas le réseau.
+
+**`@jeanne.wilgo` — F4 ranking (252,7 k) :**
+
+```
+Slide 1–n : sites IA (ChatGPT, Gemini, …) notés
+Dernière slide : Wilgo, plus haute note
+Pas de visage, pas de voix
+Preuve scolaire implicite (brevet / bac dans la bio)
+```
+
+C'est le même geste que « deleting ChatGPT », en **tableau**. Le viewer swipe, donc il
+s'engage. Save-friendly (classement). L'app arrive **quand** la curiosité a déjà payé.
+
+**UGC IA 1,4 M / 2 mois :** un compte **100 % synthétique**. Techniquement ce n'est plus
+« faceless » (il y a un visage), mais c'est la même économie : pas de créateur, pas de
+briefing, templates hebdo. TikTok labellise l'IA réaliste depuis 2024 ; ça n'a pas tué
+le reach dans ce cas.
+
+Wilgo envoie chaque semaine **les formats déjà viraux** à recoller (`ambassadors.wilgo.ai`).
+Un ambassadeur faceless n'improvise pas Jeanne : il recopie le ranking.
+
+#### ScrollToStudy (adjacent) — le faceless slideshow à l'état pur
+
+Pas un concurrent frontal de Micabo, mais c'est le **contrôle** : 5 comptes, 17 M de
+vues, 10 k downloads, **uniquement** du slideshow. Hook recopié 3 fois :
+
+> « Toxic exam advice my professor gave us… and I hate that it actually works »
+
+Une slide au milieu : « I started using ScrollToStudy every time instead of scrolling on
+TikTok ». Meilleure version : **5 M, ~300 k bookmarks** (17 mars 2026). Deuxième CTA :
+top comment « Wow scroll to study sounds genius! » (6 k likes).
+
+Ça dit trois choses utilisables :
+
+1. Le carrousel **seul** peut faire des vues et des **saves** (intent).
+2. Sans armée, sans visage, les **downloads** restent petits (10 k) vs Retain 30 k
+   avec 90 comptes mix faceless/visage, ou Gizmo 200 k / mois.
+3. Le commentaire planté / amplifié est une couche de conversion, pas un luxe.
+
+#### Knowunity, StudyFetch, Quizlet, Parkeur — presque pas
+
+- **Knowunity** : Spark Ads talking-head, « it's free ». Pas de réseau faceless
+  documenté. Le produit est social (fiches des autres) : un visage d'élève est le
+  message.
+- **StudyFetch** : l'organique ancien (« freshman showed me this », 4–6 M) est du
+  **récit**, souvent visage. Les Spark Ads `@studyfetch` sont de la **démo produit**
+  (notes from lectures) — F1 payant, caption identique collée. Angela = visage.
+- **Quizlet** : carrousel mèmes, reach mort. Pas une machine F1.
+- **Parkeur** `@parkeur.app` : 997 k cœurs / 54 vidéos, ratio de compte qui a **marché**.
+  Login wall : on n'a pas classé F1 vs visage post par post. Le site vend « la méthode
+  est devenue virale ». À ouvrir à la main avant de copier.
+
+#### Pourquoi le faceless convertit (et où il casse)
+
+**Il convertit les vues** parce que StudyTok est déjà une esthétique sans visage
+(highlighter, desk, notes). Le viewer se projette. Les **saves** (Gizmo 141 k / 190 k,
+ScrollToStudy 300 k) sont le KPI d'intent : on bookmark une méthode, pas une pub.
+
+**Il casse les installs** quand :
+
+- le nom de l'app n'est jamais dit et le bio link se noie (Gizmo a dû répondre en
+  commentaires) ;
+- tous les comptes ont la même main, le même bureau, le même CapCut — l'algo et
+  l'élève finissent par voir une pub ;
+- on reste en phase 1 trop longtemps (Gizmo : plateau, puis visages → 2× MRR).
+
+**Il scale** parce que :
+
+- 3–5 personnes tiennent 30 comptes (Gizmo) ;
+- un template DE devient un template FR (Retain) ;
+- l'IA (Flashka PL, Wilgo) enlève le casting.
+
+#### Stack de prod, tel qu'on le voit
+
+Rien d'exotique. C'est volontairement cheap.
+
+- **F1** : enregistrement d'écran iPhone / iPad (l'élève croit que c'est *son* écran).
+  CapCut, crop 9:16, zoom sur le quiz, texte auto-caption, musique à 20 %.
+- **F2** : téléphone au-dessus du bureau (trépied), mains seulement, 2–4 plans, jump
+  cuts.
+- **F3** : B-roll (cascade, forêt, « Soda Pop » / tracks StudyTok) sous les notes.
+- **F4** : Canva / CapCut Photo Mode, 5–10 slides, hook slide 1, nom de l'app **au
+  milieu ou à la fin**, jamais en slide 1.
+- **F5** : visage synthétique (Arcads et équivalents dans la pub générale ; Flashka PL
+  et Wilgo l'ont fait marcher en étude). Label IA TikTok à assumer.
+- **CTA** : recherche App Store (Retain, ASO) > lien bio (Gizmo, Flashka) > commentaire
+  (ScrollToStudy, Gizmo replies).
+
+Cadence documentée : 5–10 posts / compte / semaine (armée Virengine) ; Wilgo 25 / mois
+par ambassadeur. Staggered : on ne poste pas les 13 comptes à la même minute.
+
+#### Ce que ça veut dire pour Micabo (toujours sans toucher au produit)
+
+Le geste à montrer en faceless, c'est **déjà** le produit : une photo / un PDF, une fiche
+qui se pose, éventuellement des cartes. C'est le F1 de Retain et l'ouverture Flashka,
+sans le « 10× faster ».
+
+Cohérent avec la marque (pas de mascotte, pas de preuve sociale inventée) :
+
+- **F1 bureau + screen-record**, tutoiement à l'écran, français, cours *à toi* pas le
+  programme officiel (Wilgo) ni la fiche des autres (Knowunity).
+- Hook de soulagement numéroté, pas de honte « faulen » si ça sonne pub. « J'ai arrêté
+  de recopier » est plus Micabo que « c'est interdit ».
+- CTA recherche App Store « Micabo », à la Retain, dès que le nom tient.
+- Un carrousel ranking (Jeanne) en **appoint**, une fois qu'un F1 a marché.
+- Ne pas construire 30 comptes faceless comme stratégie finale : Gizmo a montré que
+  ça **trouve** et que ça **plateau**. Phase 1 = 3–8 comptes pour miner 4 hooks. Phase 2
+  = des visages d'élèves réels, pas 90 clones CapCut.
+
+À refuser : le visage IA comme identité de marque (Wilgo peut, Micabo non — tutoiement
+et sobriété) ; le commentaire planté « wow ça a l'air génial » ; le B-roll cascade +
+unicorn qui est déjà le cliché Gizmo 2025.
 
 ---
 
@@ -918,6 +1205,12 @@ TikTok StudyTok 2026
 - [SGE — Retain, 3 langues, 72 M](https://www.socialgrowthengineers.com/one-viral-format-three-languages-72m-views)
 - [SGE — Wilgo, French StudyTok](https://www.socialgrowthengineers.com/how-a-study-app-took-over-french-studytok)
 - [Virengine — Flashka, 197 M, 50 créateurs](https://virengine.com/flashka-s-silent-empire-how-one-app-orchestrated-197m-views-through-50-localized-creators-c9c8ab)
+- [Virengine — Retain, UGC DE, faceless 2×](https://virengine.com/how-retain-ai-conquered-germany-s-study-market-with-hyper-local-ugc-blitz-da480b)
+- [Virengine — Gizmo faceless network](https://virengine.com/unlocking-studytok-gold-how-one-ai-app-built-a-faceless-network-for-explosive-growth-709f4c)
+- [Virengine — Gizmo pivot faceless → visages](https://virengine.com/unlocking-explosive-growth-gizmo-ai-s-pivot-from-faceless-automation-to-humanized-ugc-armies-18bc39)
+- [SGE — Gizmo 30+ comptes faceless, 70 M](https://www.socialgrowthengineers.com/ai-study-app-running-30-faceless-accounts-to-70m-views-and-59k-mrr)
+- [SGE — Gizmo phase 2, visages](https://www.socialgrowthengineers.com/faceless-vs-ugc-100k-mrr-500k-monthly-downloads)
+- [SGE — ScrollToStudy, slideshow 17 M](https://www.socialgrowthengineers.com/the-faceless-slideshow-format-behind-17m-organic-study-views)
 - Pipiads Knowunity.fr / Knowunity.es
 - Fiches App Store et sites (flashka.ai, retain.cards, wilgo.ai, parkeur.app, knowt.com,
   gizmo.ai, eliott.app)
