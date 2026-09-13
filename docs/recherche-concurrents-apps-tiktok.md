@@ -283,7 +283,9 @@ même hook, pas par un `@retain.cards.fr`.
 
 ### Wilgo — stratégie complète
 
-**Machine.** Pas de `@wilgo`. Pattern **`prénom.wilgo`**. 13 comptes FR-only depuis 2026,
+**Machine.** Pas de `@wilgo` / `@wilgo.app` (404). Le compte « appli » qui existe
+est [@wilgoapp](https://www.tiktok.com/@wilgoapp) (23,9 k, 422 posts, vidéo).
+Le réseau qui scale, c'est **`prénom.wilgo`**. 13 comptes FR-only depuis 2026,
 dont de l'UGC IA. 4,8 M vues / 30 j. Cible unique : bac / brevet. L'app est vendue comme
 **méthode**, pas comme feature. Cadence ambassadeurs : ~25 vidéos / mois, formats gagnants
 envoyés chaque semaine (`ambassadors.wilgo.ai`). Growth interne : organique + social ads
@@ -292,17 +294,24 @@ envoyés chaque semaine (`ambassadors.wilgo.ai`). Growth interne : organique + s
 | Handle | Rôle | Fans | Vidéos | Cœurs | Format | Langue |
 | --- | --- | ---: | ---: | ---: | --- | --- |
 | [@paloma.wilgo](https://www.tiktok.com/@paloma.wilgo) | Ambassadeur (le plus gros mesuré) | **25 400** | 156 | 217 k | **UGC visage** | FR |
+| [@wilgoapp](https://www.tiktok.com/@wilgoapp) | Compte « appli » (pas `prénom.wilgo`) | **23 900** | **422** | 831 k | Bio Duolingo × ChatGPT. Volume = **vidéo**, pas une jambe Photo Mode | FR |
 | [@jeanne.wilgo](https://www.tiktok.com/@jeanne.wilgo) | Ambassadeur **carrousel** | 8 829 | 148 | 164 k | **Slideshow faceless** ranking ChatGPT / Gemini / Wilgo dernière slide. Hit 252,7 k | FR |
-| [@laura.wilgo](https://www.tiktok.com/@laura.wilgo) | Ambassadeur | 5 506 | 167 | **353 k** | UGC conseils `#wilgo` | FR |
+| [@laura.wilgo](https://www.tiktok.com/@laura.wilgo) | Ambassadeur | 5 508 | 167 | **353 k** | UGC conseils `#wilgo` | FR |
+| [@ella.wilgo](https://www.tiktok.com/@ella.wilgo) | Ambassadeur | 2 479 | 83 | 159 k | **UGC visage** (0/10 Photo Mode) | FR |
+| [@lena.wilgo](https://www.tiktok.com/@lena.wilgo) | Ambassadeur (3 posts seulement) | 1 166 | 3 | 29 k | Trop petit pour classer le format | FR |
+| [@alice.wilgo](https://www.tiktok.com/@alice.wilgo) | Ambassadeur **carrousel** | 426 | 101 | 62 k | **10/10** Photo Mode, même machine que Jeanne | FR |
+| [@ines.wilgo](https://www.tiktok.com/@ines.wilgo) | Ambassadeur mixte | 79 | 27 | 3,7 k | **2/10** carrousel, le reste vidéo | FR |
+| [@julie.wilgo](https://www.tiktok.com/@julie.wilgo) | Ambassadeur | 56 | 30 | 15 k | **UGC visage** | FR |
 | [@mailine.wilgo](https://www.tiktok.com/@mailine.wilgo) | Ambassadeur petit | 2 | 8 | 653 | UGC « 18 de moyenne » | FR |
-| `@wilgo` / `@wilgo.ai` / `@wilgo.app` | — | — | — | — | **404** | — |
-| 9 autres `*.wilgo` | Annoncés SGE (13 − 4) | ? | — | — | UGC visage et/ou IA | FR |
+| `@camille.wilgo` | Stub | 18 | **0** | 0 | Vide | FR |
+| `@wilgo` / `@wilgo.ai` / `@wilgo.app` | — | — | — | — | **404** (le vrai handle « appli » est `@wilgoapp`) | — |
 | 1 compte UGC IA (non nommé SGE) | Synthétique | — | — | — | Visage IA, **1,4 M / 2 mois** | FR |
 
 **Format n°1 :** close-up visage, hook une phrase trop longue. Ex. « ma sœur a eu 18,5 au
-bac blanc… 30 min au lieu de 3 h » — 431 k. **Carrousel = test qui marche** chez Jeanne,
-pas le réseau entier. **UGC IA = test qui marche** (1,4 M). Distribution = volume de
-comptes FR × templates hebdo, pas un compte marque.
+bac blanc… 30 min au lieu de 3 h » — 431 k. **Carrousel = jambe**, pas le réseau entier :
+Jeanne + Alice en 10/10 Photo Mode, Ines en mix, Paloma / Ella / Julie / Laura en visage.
+**UGC IA = test qui marche** (1,4 M). Distribution = volume de comptes FR × templates
+hebdo, pas un compte marque.
 
 ---
 
@@ -488,6 +497,69 @@ mesuré** :
 
 **Tous les autres gros posts de la catégorie sont de la vidéo** (visage, faceless, ads),
 pas du carrousel.
+
+### Tableau complet — comptes **carrousel / Photo Mode** (FR, ALL, ESP, TR)
+
+Niche : apps de fiches / flashcards / révision IA. Preuve = posts récents avec
+`imagePost` / CDN `photomode` / durée 0. Instantané 13 sept. 2026. **ALL** = allemand.
+
+**Légende.** Machine = le compte *est* du Photo Mode. Mix = un ou deux posts photo
+dans un feed vidéo. Les lignes vides ne sont pas un oubli : les handles de la
+niche ont été ouverts, ils ne font pas de carrousel.
+
+#### Une table, les quatre langues
+
+| Langue | Compte | App | Rôle carrousel | Preuve | Fans | Ce qu'ils swipent |
+| --- | --- | --- | --- | --- | ---: | --- |
+| **FR** | [@jeanne.wilgo](https://www.tiktok.com/@jeanne.wilgo) | Wilgo | **Machine** | **10/10**, 5–8 slides | 8 828 | Ranking ChatGPT / Gemini / **Wilgo dernière slide**. Hit SGE **253 k** |
+| **FR** | [@alice.wilgo](https://www.tiktok.com/@alice.wilgo) | Wilgo | **Machine** | **10/10**, 5–8 slides | 426 | Bac, HGGSP, « secret des profs ». Même canevas que Jeanne, plus petit |
+| **FR** | [@ines.wilgo](https://www.tiktok.com/@ines.wilgo) | Wilgo | Mix | **2/10** (1× 5 slides philo/bac) | 79 | Surtout UGC vidéo. Carrousel occasionnel |
+| **FR** | [@knowunity.fr](https://www.tiktok.com/@knowunity.fr) | Knowunity | Mix | **2/10** (9 slides + 5 slides `#fiches`) | **48 800** vérifié | Un post photo à **260 k**. Le reste = vidéo / Spark |
+| **ALL** | — | — | **Aucun** | — | — | Aucune machine carrousel d'app dans cette niche en allemand |
+| **ESP** | [@flashka_es](https://www.tiktok.com/@flashka_es) | Flashka | **Machine** (seed) | **10/10**, **5 slides** | 34 | Medicina / universidad. Plays 12–18 k malgré 34 fans = seeding. `@flashka_ai_es` n'existe pas |
+| **ESP** | [@knowunity.es](https://www.tiktok.com/@knowunity.es) | Knowunity | Mix | **1/10** (5 slides « apuntes… a un click ») | **67 000** vérifié | Spark + organique = **vidéo**. Carrousel exception |
+| **TR** | [@knowunity.tr](https://www.tiktok.com/@knowunity.tr) | Knowunity | Mix mince | **2/9** photo, **2 images** seulement | 4 540 | Bio TR, YKS/LGS. Le gros = **vidéo**. Ads Spark Pipiads = vidéo |
+
+Hors des quatre langues, le carrousel Flashka qui **marche** reste le polonais
+[@flashka_ai_pl](https://www.tiktok.com/@flashka_ai_pl) (**10/10**, 12,5 k fans,
+7 k–188 k vues).
+
+#### Vérifiés dans la niche, **pas** du carrousel
+
+Pour ne pas laisser un trou : ces comptes existent, ils ont été ouverts, ils ne
+rentrent pas dans la table du dessus.
+
+| Langue | Compte | App | Fans | À la place du carrousel |
+| --- | --- | --- | ---: | --- |
+| FR | [@paloma.wilgo](https://www.tiktok.com/@paloma.wilgo) | Wilgo | **25 400** | UGC visage. Plus gros `prénom.wilgo` mesuré |
+| FR | [@wilgoapp](https://www.tiktok.com/@wilgoapp) | Wilgo | **23 900** | 422 posts, bio Duolingo × ChatGPT. Compte « appli », pas Photo Mode |
+| FR | [@laura.wilgo](https://www.tiktok.com/@laura.wilgo) | Wilgo | 5 508 | UGC conseils, 353 k cœurs |
+| FR | [@ella.wilgo](https://www.tiktok.com/@ella.wilgo) | Wilgo | 2 479 | UGC visage |
+| FR | [@parkeur.app](https://www.tiktok.com/@parkeur.app) | Parkeur | 14 500 | Vidéo, dont un hit **4,7 M** |
+| FR | [@schoolmouv](https://www.tiktok.com/@schoolmouv) | SchoolMouv | 23 700 | Vidéo cours |
+| FR | [@eliott.app](https://www.tiktok.com/@eliott.app) | Eliott | 7 159 | Vidéo |
+| FR | [@flashka.fr](https://www.tiktok.com/@flashka.fr) | Flashka | 3 788 | « Officiel France », **0 post**. Coquille / réserve |
+| FR | `@wilgo` | Wilgo | 25 | Stub |
+| ALL | [@retain.cards](https://www.tiktok.com/@retain.cards) | Retain | 8 829 | **0/10** photo. Spark Ads 8–26 s. C'est *le* levier DE |
+| ALL | [@simpleclub](https://www.tiktok.com/@simpleclub) | simpleclub | **420 500** vérifié | **1/10** = 1 image pub, le reste YouTube-style |
+| ALL | [@knowunity.de](https://www.tiktok.com/@knowunity.de) | Knowunity | 21 400 | **0/10** photo |
+| ALL | [@studysmarter.official](https://www.tiktok.com/@studysmarter.official) | StudySmarter | 36 400 | Talking-head / mèmes 5–12 s |
+| ALL | [@sofatutor](https://www.tiktok.com/@sofatutor) | sofatutor | 10 400 | Vidéo plateforme |
+| ALL | [@studyflash](https://www.tiktok.com/@studyflash) | Studyflash | 10 400 | EN global, pas une jambe DE Photo Mode |
+| ALL | `@flashka_de` / `@flashka_ai_de` | Flashka | — | **N'existent pas** |
+| ESP | [@notes.by.eliii](https://www.tiktok.com/@notes.by.eliii) | Flashka partner | 16 300 | Talking-head, hit **5,3 M**. 1/10 photo à 2 images |
+| ESP | `@flashka_ai_es` | Flashka | — | **N'existe pas** (le seed est `@flashka_es`) |
+| TR | — | Flashka / Quizlet / Flazzy / Masterup / Tonguç | — | Handles introuvables ou stubs vides |
+| TR | Programme créateurs Knowunity TR | Knowunity | — | 16–22 ans, 3–5 posts/semaine, **talking-head** exigé — pas du Photo Mode |
+
+#### Synthèse une ligne
+
+| Langue | Machine carrousel dans la niche ? | Compte à ouvrir en premier |
+| --- | --- | --- |
+| **FR** | **Oui** — jambe Wilgo (`@jeanne` + `@alice`) | `@jeanne.wilgo` puis `@alice.wilgo` |
+| **ALL** | **Non** côté apps | Aucun. Retain a choisi le screen-record, pas le swipe |
+| **ESP** | **Oui, minuscule** — Flashka vient de l'allumer | `@flashka_es` (10/10, 34 fans) |
+| **TR** | **Non** | `@knowunity.tr` est de la vidéo YKS, pas du swipe |
 
 ---
 
