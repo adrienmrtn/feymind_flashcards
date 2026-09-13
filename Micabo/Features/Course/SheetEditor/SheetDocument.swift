@@ -395,6 +395,8 @@ final class SheetMathAttachment: NSTextAttachment {
     let caption: String?
     let isBlock: Bool
     private var renderedSize: CGSize = .zero
+    /// La ligne de base de la formule dans son image, depuis le bas.
+    private var renderedBaseline: CGFloat = 0
 
     init(latex: String, caption: String?, isBlock: Bool) {
         self.latex = latex
@@ -430,6 +432,7 @@ final class SheetMathAttachment: NSTextAttachment {
         ) else { return false }
         image = rendered
         renderedSize = rendered.size
+        renderedBaseline = rendered.baselineOffsetFromBottom ?? 0
         return true
     }
 
@@ -445,9 +448,10 @@ final class SheetMathAttachment: NSTextAttachment {
             let scale = min(CGFloat(1), width / renderedSize.width)
             return CGRect(x: 0, y: 0, width: renderedSize.width * scale, height: renderedSize.height * scale)
         }
-        // La formule en ligne se pose sur la ligne de base du texte, à mi-hauteur des
-        // minuscules : ni flottante au-dessus, ni pendue dessous.
-        let descent = -renderedSize.height * 0.3
-        return CGRect(x: 0, y: descent, width: renderedSize.width, height: renderedSize.height)
+        // La formule en ligne se pose sur la ligne de base du texte : la sienne, celle que le
+        // moteur a composée, tombe sur celle de la phrase. Un décalage fixe - un tiers de la
+        // hauteur de l'image - ne tombait juste que pour une formule qui descend sous la
+        // ligne, `f(x)` et ses parenthèses ; `a`, `b` ou `a > 0` pendaient dessous.
+        return CGRect(x: 0, y: -renderedBaseline, width: renderedSize.width, height: renderedSize.height)
     }
 }
