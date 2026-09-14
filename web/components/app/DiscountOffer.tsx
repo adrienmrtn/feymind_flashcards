@@ -24,15 +24,16 @@ import { usePresentment } from "@/lib/presentment";
 import { requestTourRecheck } from "@/lib/tour/signal";
 
 /**
- * **L'offre cadeau du web**, et sa pastille.
+ * **L'offre cadeau du web**, et sa languette.
  *
  * Elle se présente une fois, dès le premier cours importé, en grand. Refermée,
- * elle ne disparaît pas : une pastille garde le décompte des vingt-quatre
- * heures et la rouvre d'un clic. C'est la différence entre une offre qu'on
- * refuse et une offre qu'on remet à plus tard, et seule la seconde se vend.
+ * elle ne disparaît pas : une languette la rouvre d'un clic. C'est la différence
+ * entre une offre qu'on refuse et une offre qu'on remet à plus tard, et seule
+ * la seconde se vend.
  *
- * Une minuterie, un seul instant d'origine — voir `@micabo/core/discount`.
- * Le pop-up et la pastille montrent les mêmes vingt-quatre heures.
+ * La fenêtre de vingt-quatre heures court toujours — voir `@micabo/core/discount` —
+ * mais elle ne s'affiche nulle part : elle décide de ce qui reste à l'écran, pas
+ * de ce qu'on lit dessus.
  *
  * `isPaid`, pas `isPro` : sans ligne d'abonnement, tout le monde serait traité
  * comme abonné et ce cadeau ne s'ouvrirait jamais.
@@ -115,19 +116,25 @@ export function DiscountHost({
   return null;
 }
 
-/** Une seconde qui tombe, et rien d'autre. Le rendu suit, le calcul est ailleurs. */
-function useCountdown(startedAt: number, span: number): number {
-  const [left, setLeft] = useState(() => discount.remaining(startedAt, Date.now(), span));
+/**
+ * L'offre court-elle encore ? C'est tout ce que la languette a besoin de savoir.
+ *
+ * Un seul réveil, à la fermeture de la fenêtre. Plus rien ne s'affiche à la
+ * seconde : battre une fois par seconde pour un changement qui n'arrive qu'une
+ * fois est du travail que personne ne regarde.
+ */
+function useOfferLive(startedAt: number): boolean {
+  const [live, setLive] = useState(() => discount.isLive(startedAt, Date.now()));
 
   useEffect(() => {
-    setLeft(discount.remaining(startedAt, Date.now(), span));
-    const tick = window.setInterval(() => {
-      setLeft(discount.remaining(startedAt, Date.now(), span));
-    }, 1000);
-    return () => window.clearInterval(tick);
-  }, [span, startedAt]);
+    const left = discount.windowRemaining(startedAt, Date.now());
+    setLive(left > 0);
+    if (left <= 0) return;
+    const end = window.setTimeout(() => setLive(false), left * 1000);
+    return () => window.clearTimeout(end);
+  }, [startedAt]);
 
-  return left;
+  return live;
 }
 
 /**
@@ -340,15 +347,14 @@ function scallopedDisc(scallops: number, radius: number, bump: number): string {
 }
 
 /**
- * La pastille, quand la carte s'est refermée.
+ * La languette, quand la carte s'est refermée.
  *
- * Elle porte le décompte des vingt-quatre heures et rien d'autre : un clic
- * rouvre l'offre. En bas à droite, hors du flux — et au-dessus du bouton
- * « Réviser ce cours » quand il flotte, pour que les deux pastilles ne se
- * mordent pas.
+ * Elle dit qu'une offre attend, et rien d'autre : un clic la rouvre. En bas à
+ * droite, hors du flux — et au-dessus du bouton « Réviser ce cours » quand il
+ * flotte, pour que les deux pastilles ne se mordent pas.
  *
- * Elle compte en secondes, pas en centièmes : sur vingt-quatre heures, des
- * centièmes qui défilent dans un coin de l'écran sont un clignotant.
+ * Elle suit quand même la fenêtre, sans la montrer : à zéro elle s'efface, pour
+ * ne pas rouvrir un prix qui n'est plus vendu.
  */
 export function DiscountBadge({
   startedAt,
@@ -358,27 +364,22 @@ export function DiscountBadge({
   onOpen: () => void;
 }) {
   const { t } = useI18n();
-  const left = useCountdown(startedAt, discount.windowSeconds);
-  if (left <= 0) return null;
+  const live = useOfferLive(startedAt);
+  if (!live) return null;
 
   return (
     <Float>
       <button
         type="button"
         onClick={onOpen}
-        aria-label={t("app.paywall.reopenOffer", { time: discount.countdownLabel(left) })}
+        aria-label={t("app.paywall.reopenOffer")}
         className="app-offer-badge pressable fixed right-4 z-40 flex items-center gap-2.5 rounded-pill bg-offer-sky px-4 py-3 text-white shadow-[0_16px_40px_-12px_rgba(11,143,220,0.6)] lg:right-8"
       >
         <span aria-hidden className="text-white">
           <GiftGlyph />
         </span>
-        <span className="text-left">
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-white/80">
-            {t("app.paywall.yourOffer")}
-          </span>
-          <span className="block font-number text-[15px] font-bold tabular-nums" aria-hidden>
-            {discount.countdown(left)}
-          </span>
+        <span className="block text-left text-[13px] font-semibold text-white">
+          {t("app.paywall.yourOffer")}
         </span>
       </button>
     </Float>

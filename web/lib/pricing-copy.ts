@@ -47,18 +47,14 @@ export function planRenewalCopy(
 }
 
 export function planDisplayedUnit(t: Translator, plan: pricing.Plan): string {
-  return pricing.monthlyEquivalent(plan) ? t("app.paywall.perMonthSlash") : t("app.paywall.perWeekSlash");
+  return plan.period === "year"
+    ? t("app.paywall.perYearSlash")
+    : t("app.paywall.perWeekSlash");
 }
 
-export function planCaption(
-  t: Translator,
-  plan: pricing.Plan,
-  currency: pricing.PresentmentCurrency,
-): string {
-  const monthly = pricing.monthlyEquivalent(plan, currency);
-  if (monthly) return `${monthly} ${t("app.paywall.perMonthSlash")}`;
-  const unit = t(plan.period === "year" ? "app.paywall.periodYear" : "app.paywall.periodWeek");
-  return t("app.paywall.billedEach", { unit });
+export function planCaption(t: Translator, plan: pricing.Plan): string {
+  if (plan.period === "year") return t("app.paywall.billedYearly");
+  return t("app.paywall.billedEach", { unit: t("app.paywall.periodWeek") });
 }
 
 /**
