@@ -1969,18 +1969,25 @@ xcodebuild test -project Micabo.xcodeproj -scheme Micabo -destination 'platform=
 
 ## Quel commit tourne sur ce téléphone
 
-**Réglages → À propos → Version.** La ligne porte `0.1.0 (12)` et, dessous, sept caractères :
+**Réglages → À propos → Version.** La ligne porte `1.1 (12)` et, dessous, sept caractères :
 le commit d'où vient le binaire. Ils se comparent à `git log --oneline -1 origin/main` sans
 discuter.
 
 `dev` veut dire construction locale. Sur une construction Xcode Cloud, c'est
 `ci_scripts/ci_post_clone.sh` qui grave `CI_COMMIT` dans `Info.plist`.
 
-**Le numéro de build monte à la main**, dans `CURRENT_PROJECT_VERSION` (les deux
-configurations de la cible Micabo). App Store Connect **refuse** un envoi dont le numéro n'est
-pas strictement supérieur au dernier reçu : tant qu'il reste figé, la construction réussit et
-le binaire n'arrive jamais dans TestFlight. C'est un échec silencieux, en aval du build, et
-c'est pour ça qu'il vaut la peine d'être écrit ici.
+**Le numéro de build ne se décide pas dans le dépôt.** Xcode Cloud impose son propre
+compteur, qui part de 1 à la première construction du flux et monte d'une unité à chaque
+suivante : c'est ce nombre-là que TestFlight et l'App Store affichent, quoi que dise
+`CURRENT_PROJECT_VERSION`. Le réglage du dépôt ne sert donc plus qu'aux archives faites à la
+main, et rien ne demande de le monter à chaque lot.
+
+Le seul cas qui demande une intervention est la collision — « The bundle version must be higher
+than the previously uploaded version », quand d'anciens téléversements occupent déjà les petits
+numéros. Elle se règle dans App Store Connect : onglet Xcode Cloud → Réglages → Build Number →
+Next Build Number, avec le rôle Admin ou App Manager. `ci_scripts/ci_post_clone.sh` raconte la
+tentative qui a échoué avant, celle qui patchait `CURRENT_PROJECT_VERSION` avant la
+construction.
 
 Cette ligne existe parce que la question s'est posée et que personne ne pouvait y répondre :
 `MARKETING_VERSION` ne bouge pas d'un lot à l'autre, et un numéro de build est un compteur qui
