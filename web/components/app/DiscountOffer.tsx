@@ -225,7 +225,7 @@ export function DiscountCard({ onClose }: { onClose: () => void }) {
 
               <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
                 <span className="numeral text-[26px] font-bold leading-none text-ink">
-                  {pricing.priceText(pricing.presentmentAmount(plan.price, currency), currency)}
+                  {pricing.priceText(pricing.presentmentAmount(plan, currency), currency)}
                 </span>
                 <span className="text-[15px] font-medium text-ink-secondary">
                   {t("app.paywall.perYear")}
