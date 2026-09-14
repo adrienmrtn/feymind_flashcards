@@ -70,29 +70,23 @@ describe("le repos", () => {
   });
 });
 
-describe("les deux minuteries", () => {
-  it("montrent le même temps restant : vingt-quatre heures, pop-up et pastille", () => {
-    expect(discount.urgencySeconds).toBe(discount.windowSeconds);
-    expect(discount.urgencyRemaining(0, 0)).toBe(86_400);
+describe("le décompte de la languette", () => {
+  it("comptent les vingt-quatre heures de la fenêtre", () => {
     expect(discount.windowRemaining(0, 0)).toBe(86_400);
 
-    // Au bout de dix minutes, les deux ont perdu dix minutes.
-    expect(discount.urgencyRemaining(0, 600_000)).toBe(85_800);
+    // Au bout de dix minutes, la fenêtre a perdu dix minutes.
     expect(discount.windowRemaining(0, 600_000)).toBe(85_800);
 
-    // Deux heures plus tard, l'offre court encore : les deux horloges le disent.
-    expect(discount.urgencyRemaining(0, 2 * HOUR)).toBe(79_200);
+    // Deux heures plus tard, l'offre court encore.
     expect(discount.windowRemaining(0, 2 * HOUR)).toBe(79_200);
     expect(discount.isLive(0, 2 * HOUR)).toBe(true);
 
-    // Elles s'éteignent ensemble, à la fin des vingt-quatre heures.
-    expect(discount.urgencyRemaining(0, 24 * HOUR)).toBe(0);
+    // Elle s'éteint à la fin des vingt-quatre heures.
     expect(discount.windowRemaining(0, 24 * HOUR)).toBe(0);
     expect(discount.isLive(0, 24 * HOUR)).toBe(false);
   });
 
   it("n'inventent jamais du temps quand l'horloge locale est en avance", () => {
-    expect(discount.urgencyRemaining(1000, 0)).toBe(86_400);
     expect(discount.windowRemaining(1000, 0)).toBe(86_400);
   });
 
@@ -104,21 +98,14 @@ describe("les deux minuteries", () => {
     expect(discount.countdown(-40)).toBe("00:00");
   });
 
-  it("descendent au centième sur le paywall, et gardent leur ponctuation", () => {
-    // Compter en secondes ferait bégayer un affichage à deux décimales : deux images de
-    // suite tomberaient dans la même seconde, et la minuterie aurait l'air arrêtée.
-    expect(discount.urgencyMillisRemaining(0, 0)).toBe(86_400_000);
-    expect(discount.windowMillisRemaining(0, 0)).toBe(86_400_000);
-    expect(discount.urgencyMillisRemaining(0, 310)).toBe(86_399_690);
-    expect(discount.urgencyMillisRemaining(5000, 0)).toBe(86_400_000);
-    expect(discount.urgencyMillisRemaining(0, 2 * HOUR)).toBe(79_200_000);
-    expect(discount.urgencyMillisRemaining(0, 24 * HOUR)).toBe(0);
-
-    expect(discount.preciseCountdown(86_400_000)).toBe("24 : 00 : 00 . 00");
-    expect(discount.preciseCountdown(3_600_000)).toBe("01 : 00 : 00 . 00");
-    expect(discount.preciseCountdown(1_788_690)).toBe("00 : 29 : 48 . 69");
-    expect(discount.preciseCountdown(0)).toBe("00 : 00 : 00 . 00");
-    expect(discount.preciseCountdown(-500)).toBe("00 : 00 : 00 . 00");
+  it("n'exposent plus de formateur au centième", () => {
+    // Le paywall du cadeau ne compte plus : un décompte posé sur un prix demande de
+    // décider vite plutôt que de décider. Seule la languette compte encore, à la seconde.
+    // Le garde porte sur le module, pas sur la vue : un formateur qui survit finit par
+    // retrouver un écran.
+    expect(discount).not.toHaveProperty("preciseCountdown");
+    expect(discount).not.toHaveProperty("remainingMillis");
+    expect(discount).not.toHaveProperty("urgencySeconds");
   });
 
   it("se lisent à voix haute, sans faute d'accord", () => {
