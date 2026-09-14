@@ -1,4 +1,5 @@
 import Combine
+import StoreKit
 import SwiftUI
 
 /// La preuve sociale, juste après la génération du parcours.
@@ -10,9 +11,22 @@ import SwiftUI
 ///
 /// Les avis défilent seuls, et on peut les faire défiler à la main. Trois secondes et demie
 /// par avis : le temps de lire une phrase, pas celui de s'installer.
+///
+/// **C'est ici que Micabo demande sa note**, et c'est le seul endroit où il la demande. Un
+/// écran qui montre quatre avis cinq étoiles est le seul moment du parcours où l'on a
+/// vraiment en tête l'idée de noter une app — la demander ailleurs, c'est la poser sur
+/// quelqu'un qui pensait à autre chose. La boîte s'ouvre après que le premier avis a été
+/// lu, pas à l'apparition : arriver en même temps que l'écran, c'est recouvrir la preuve
+/// par la demande.
+///
+/// iOS décide seul si la boîte s'affiche — trois fois par an au plus, et jamais deux fois
+/// pour la même version. On ne peut donc ni savoir si elle est apparue, ni ce qui a été
+/// répondu : `OnboardingPreferences.ratingAsked` ne note pas une réponse, il note qu'on a
+/// demandé, pour ne pas dépenser le quota à chaque passage.
 struct SocialProofStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.requestReview) private var requestReview
 
     private struct Review: Identifiable {
         let id: Int
@@ -77,6 +91,24 @@ struct SocialProofStepView: View {
         .onReceive(ticker) { _ in
             advanceCarousel()
         }
+        .task {
+            await askForRating()
+        }
+    }
+
+    /// Demande la note, une fois, et après le premier avis.
+    ///
+    /// Le délai est celui d'un avis affiché : la boîte du système recouvre l'écran, et la
+    /// faire arriver avant qu'on ait lu quoi que ce soit remplacerait la preuve par la
+    /// demande. Rien n'est attendu en retour — `requestReview` ne dit pas si la boîte s'est
+    /// ouverte, et le parcours ne s'arrête pas pour elle.
+    @MainActor
+    private func askForRating() async {
+        guard !OnboardingPreferences.ratingAsked else { return }
+        try? await Task.sleep(for: .seconds(2.5))
+        guard !Task.isCancelled else { return }
+        OnboardingPreferences.ratingAsked = true
+        requestReview()
     }
 
     private var carousel: some View {

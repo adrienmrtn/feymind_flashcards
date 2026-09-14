@@ -5,7 +5,7 @@ enum PaywallPeriod {
     case week
     case year
 
-    /// Le mot qui suit la barre oblique : « 69,99 € / an ».
+    /// Le mot qui suit la barre oblique : « 7,99 € / semaine ».
     var unit: String {
         switch self {
         case .week: L10n.t("ios.unitWeek", locale: .resolved())
@@ -65,14 +65,20 @@ struct PaywallPlan: Identifiable, Equatable {
         price * period.occurrencesPerYear
     }
 
-    /// La ligne posée sous le nom de l'offre, dans la liste des plans.
+    /// Le prix ramené au mois, pour les offres qui se paient d'un bloc.
     ///
-    /// Elle dit le **rythme**, pas un second prix : le prix, la carte l'écrit déjà en
-    /// face. Un mensuel équivalent posé à côté d'un prélèvement annuel demandait deux
-    /// lectures, et le chiffre qu'on retenait n'était pas celui qui partait.
+    /// C'est **le seul chiffre qu'un étudiant sait comparer**. Personne ne divise
+    /// mentalement 69,99 par douze devant un paywall, et personne ne multiplie 7,99 par
+    /// cinquante-deux : le mois est l'unité dans laquelle un budget se pense.
+    var monthlyEquivalent: String? {
+        guard period == .year else { return nil }
+        return PaywallPrice.text(price / 12)
+    }
+
+    /// La ligne posée sous le nom de l'offre, dans la liste des plans.
     var caption: String {
-        if period == .year {
-            return L10n.t("ios.billedYearly", locale: .resolved())
+        if let monthlyEquivalent {
+            return L10n.t("ios.pricePerMonth", locale: .resolved(), vars: ["price": monthlyEquivalent])
         }
         return L10n.t("ios.billedEach", locale: .resolved(), vars: ["unit": period.unit])
     }

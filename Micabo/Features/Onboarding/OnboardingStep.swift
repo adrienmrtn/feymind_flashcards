@@ -23,12 +23,13 @@ import Foundation
 /// toujours (`DailyLoad`), sur sa valeur par défaut, et se règle dans les Réglages — là où
 /// l'on va quand on sait vraiment ce qu'on veut.
 ///
-/// **L'écran des rappels a disparu.** Il demandait « on te rappelle au bon moment ? » sans
-/// rien demander au système : il notait une intention que rien ne lisait, et il la
-/// demandait juste avant l'écran qui construit le parcours, c'est-à-dire au moment où l'on
-/// est le plus près d'entrer dans l'app. Une autorisation de notification se demande quand
-/// elle sert — la première fois qu'il y a des cartes à rappeler — et pas au milieu d'une
-/// inscription.
+/// **L'écran des rappels est revenu, et il fait ce que l'ancien ne faisait pas.** Le
+/// premier demandait « on te rappelle au bon moment ? » sans rien demander au système : il
+/// notait une intention que rien ne lisait, et il la posait juste avant la construction du
+/// parcours, au moment où l'on est le plus près d'entrer dans l'app. `notifications` ouvre
+/// **la vraie** boîte d'iOS, et il la pose après la preuve sociale : l'étudiant vient de
+/// voir que d'autres s'y tiennent, on lui montre ce qui l'aidera à s'y tenir, puis on lui
+/// passe la main.
 ///
 /// **Trois écrans nouveaux avant la construction du parcours** : la moyenne d'aujourd'hui,
 /// celle qu'on vise, et la promesse de les relier. Ce sont les deux seuls chiffres que
@@ -78,6 +79,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case together
     case personalizing
     case socialProof
+    /// Le rappel quotidien, montré puis demandé pour de bon. Voir `NotificationsStepView`.
+    case notifications
     case yourTurn
     case signIn
     case trialOffer

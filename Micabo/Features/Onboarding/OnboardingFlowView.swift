@@ -66,6 +66,7 @@ struct OnboardingFlowView: View {
         case .together: TogetherStepView()
         case .personalizing: PersonalizingStepView()
         case .socialProof: SocialProofStepView()
+        case .notifications: NotificationsStepView()
         case .yourTurn: YourTurnStepView()
         case .signIn: SignInStepView()
         case .trialOffer: TrialOfferStepView()

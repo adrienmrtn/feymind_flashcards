@@ -329,15 +329,16 @@ enum OnboardingPreferences {
         static let institutionName = "micabo.onboarding.institutionName"
         static let dailyMinutes = "micabo.onboarding.dailyMinutes"
         static let weeklyMinutes = "micabo.onboarding.weeklyMinutes"
-        /// Écrite par la demande de note du système, qui n'existe plus. Elle reste listée
-        /// pour que la remise à zéro l'efface sur les appareils qui ont fait l'ancien
-        /// parcours : une clé oubliée dans les réglages est une clé qu'on retrouve un jour
-        /// en croyant qu'elle veut encore dire quelque chose.
-        static let retiredRatingAsked = "micabo.onboarding.ratingAsked"
-        /// Écrite par l'écran des rappels, qui n'existe plus. Elle reste listée pour que la
-        /// remise à zéro l'efface sur les appareils qui ont fait l'ancien parcours : une clé
-        /// oubliée dans les réglages est une clé qu'on retrouve un jour en croyant qu'elle
-        /// veut encore dire quelque chose.
+        /// **La demande de note a été posée.** iOS n'affiche sa boîte que trois fois par
+        /// an et décide seul si elle s'ouvre : sans ce drapeau, on la redemanderait à
+        /// chaque passage sur la preuve sociale, et le quota serait dépensé en silence
+        /// avant le premier vrai moment de satisfaction.
+        static let ratingAsked = "micabo.onboarding.ratingAsked"
+        /// Écrite par l'ancien écran des rappels. **Elle reste retirée alors même que
+        /// l'écran est revenu** : le nouveau ne note aucune intention, il ouvre la boîte du
+        /// système, qui est seul à savoir ce qui a été répondu. Une préférence locale à
+        /// côté de cette réponse-là finirait par la contredire. Elle reste listée pour que
+        /// la remise à zéro l'efface sur les appareils qui ont fait l'ancien parcours.
         static let retiredNotificationsOptIn = "micabo.onboarding.notificationsOptIn"
         static let completedAt = "micabo.onboarding.completedAt"
         static let sheetLanguage = "micabo.onboarding.sheetLanguage"
@@ -346,7 +347,7 @@ enum OnboardingPreferences {
             completed, level, stage, tier, country, customCountryCode,
             goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
-            dailyMinutes, weeklyMinutes, retiredRatingAsked, retiredNotificationsOptIn, completedAt,
+            dailyMinutes, weeklyMinutes, ratingAsked, retiredNotificationsOptIn, completedAt,
             sheetLanguage
         ]
     }
@@ -606,6 +607,12 @@ enum OnboardingPreferences {
             return stored == 0 ? 15 : stored
         }
         set { defaults.set(newValue, forKey: Key.dailyMinutes) }
+    }
+
+    /// Vrai dès que la boîte de note a été proposée une fois. Voir `Key.ratingAsked`.
+    static var ratingAsked: Bool {
+        get { defaults.bool(forKey: Key.ratingAsked) }
+        set { defaults.set(newValue, forKey: Key.ratingAsked) }
     }
 
     static func markCompleted() {
