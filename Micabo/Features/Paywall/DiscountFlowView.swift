@@ -62,6 +62,7 @@ struct DiscountFlowView: View {
             }
         }
         .animation(OnboardingMotion.page, value: stage)
+        .task { await PaywallPurchases.refreshPrices() }
         .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(failure != nil)) {
             Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { failure = nil }
         } message: {

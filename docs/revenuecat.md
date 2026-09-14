@@ -1,8 +1,9 @@
 # Brancher les abonnements sur RevenueCat
 
 Le paywall de Micabo est **entièrement natif** : c'est du SwiftUI écrit à la main, pas
-`SubscriptionStoreView`, pas le template RevenueCat. Il affiche aujourd'hui des prix écrits en
-dur dans `PaywallCatalog`, et tout achat passe par un seul point : `PaywallPurchases`.
+`SubscriptionStoreView`, pas le template RevenueCat. Il affiche les prix **de la boutique du
+pays** (§8), avec ceux du catalogue en repli tant que l'offering n'a pas répondu, et tout
+achat passe par un seul point : `PaywallPurchases`.
 
 Ce document décrit la totalité du branchement, dans l'ordre où il faut le faire. Les trois
 premières parties se passent hors de Xcode et sont **bloquantes** : tant qu'un produit n'existe
@@ -203,33 +204,42 @@ local, donc il sait hors ligne et il sait avant le webhook ; la table vaut pour 
 sur le web. Aucune des deux ne répond ? On ne devine pas : `assumeProWithoutRow` est à `false`,
 comme `ASSUME_PRO_WITHOUT_ROW` sur le web, et le test de parité relit les deux.
 
-## 8. Xcode — afficher les prix de la boutique et non ceux du code
+## 8. Les prix affichés sont ceux de la boutique
 
-Les prix écrits dans `PaywallCatalog` sont ceux de la France. Un utilisateur suisse ou canadien
-doit voir les siens, et un changement de tarif ne doit pas demander une mise à jour de l'app.
+**C'est branché.** Les six prix écrits dans `PaywallCatalog` sont ceux de la France ; tant
+qu'ils étaient les seuls affichés, un étudiant turc lisait « 39,99 € » pendant qu'Apple lui
+prélevait des livres turques. Un prix faux à côté d'un bouton d'achat se refuse à la
+relecture App Store autant qu'il se mérite.
 
-```swift
-extension PaywallPlan {
-    init?(package: Package, kind: Kind) {
-        guard let price = package.storeProduct.price as Decimal? else { return nil }
-        self.init(
-            kind: kind,
-            productID: package.storeProduct.productIdentifier,
-            title: kind == .yearly ? "Annuel" : "Hebdomadaire",
-            price: price,
-            period: kind == .yearly ? .year : .week,
-            trialDays: kind == .yearly ? PaywallCatalog.freeTrialDays : 0
-        )
-    }
-}
-```
+`PaywallPurchases.refreshPrices()` relit les offerings et pose dans `PaywallStorePrices` ce
+que chaque produit annonce : `localizedPriceString`, `price`, `currencyCode` et le
+`priceFormatter` du produit. `PaywallPlan.displayPrice` lit ce cache, et ne retombe sur le
+nombre écrit que s'il est vide.
 
-Et remplacer `PaywallPrice.text(_:)` par `storeProduct.localizedPriceString`, qui rend déjà la
-somme dans la devise et le format du pays. Le calcul de la remise (`savingsPercent`) continue de
-fonctionner : il ne lit que `annualCost`, donc les prix réels.
+Elle est appelée trois fois, et c'est voulu :
 
-Tant que l'offering n'a pas répondu, l'écran garde les valeurs écrites en dur : c'est ce qui
-évite un paywall vide pendant la seconde d'attente du réseau.
+| Où | Pourquoi |
+| --- | --- |
+| `MicaboApp`, au lancement | pour qu'un paywall ne s'ouvre jamais sur les prix français puis change de chiffre sous les yeux |
+| `PaywallFlowView` et `DiscountFlowView`, à l'ouverture | un premier appel tombé sans réseau laisserait ces écrans-là en euros |
+| `SessionPaywallView`, à l'ouverture | il écrit son prix lui-même, hors de `PaywallFlowView` |
+
+Deux nombres restent **calculés sur le prix écrit**, et chacun pour une raison :
+
+- `annualCost`, donc `savingsPercent`. La remise est imprimée dans un sceau festonné
+  (« −43 % ») : elle ne peut pas changer de quelques points selon le pays, sinon le sceau
+  ment dans la moitié du monde ;
+- `DiscountOffer.monthlyPrice`, le « 3,30 € / mois » du cadeau. C'est une promesse
+  commerciale alignée sur le site, pas une conversion — 39,99 ÷ 12 rendrait « 3,33 € ». Elle
+  ne vaut que **tant que la somme d'à côté est en euros** : dès que la boutique vend dans
+  une autre monnaie, `monthlyText` divise le prix réellement pratiqué, parce qu'un
+  « 3,30 € » posé sous un annuel en livres turques ne dit plus rien de vrai.
+
+Le mensuel de l'annuel plein (`monthlyEquivalent`), lui, se divise toujours sur le prix
+affiché : deux nombres sur une même carte doivent parler de la même somme.
+
+`MicaboTests/PaywallTests.swift` continue de vérifier les prix français : un test ne
+contacte aucune boutique, le cache y est donc vide et c'est le repli qui répond.
 
 ## 9. Les portes sont fermées
 

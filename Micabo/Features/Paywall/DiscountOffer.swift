@@ -252,10 +252,27 @@ enum DiscountOffer {
     /// **Écrit et non calculé** — 39,99 ÷ 12 fait 3,3325, que le formateur rendrait
     /// « 3,33 € ». Le paywall affiche donc ce mensuel **et** la somme réellement prélevée
     /// juste à côté : un prix mensuel sans son annuel serait une allégation qu'on ne
-    /// facture pas.
+    /// facture pas. Le site écrit le même nombre, et `freemium-parity.test.ts` relit les
+    /// deux : un mensuel qui se calculerait d'un côté et s'écrirait de l'autre ferait deux
+    /// prix pour une seule offre.
     static let monthlyPrice: Decimal = 3.30
 
-    static var monthlyText: String { PaywallPrice.text(monthlyPrice) }
+    /// Le mensuel affiché. **Écrit en zone euro, calculé ailleurs.**
+    ///
+    /// C'est la seule exception du catalogue, et elle tient à ce que ce nombre-là est une
+    /// promesse commerciale alignée sur le site, pas une conversion. Elle ne vaut que tant
+    /// que la somme d'à côté est en euros : dès que la boutique vend en livres turques ou
+    /// en dollars canadiens, un « 3,30 € » posé sous un annuel dans une autre monnaie ne
+    /// dit plus rien de vrai, et le mensuel se divise alors sur le prix réellement pratiqué.
+    static var monthlyText: String {
+        let productID = PaywallCatalog.discount.productID
+        if PaywallStorePrices.isForeignCurrency(productID),
+           let store = PaywallStorePrices.price(for: productID),
+           let text = store.formatted(store.amount / 12) {
+            return text
+        }
+        return PaywallPrice.text(monthlyPrice)
+    }
 
     /// L'offre vendue par ce paywall.
     static var plan: PaywallPlan { PaywallCatalog.discount }

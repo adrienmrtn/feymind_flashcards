@@ -24,6 +24,46 @@ enum PaywallPurchases {
         #endif
     }
 
+    /// **Relit les prix de la boutique** et les pose dans `PaywallStorePrices`.
+    ///
+    /// Appelée au lancement et à l'ouverture de chaque paywall. Elle ne rend rien et
+    /// n'échoue jamais bruyamment : sans réseau, sans SDK ou sans produit publié, les
+    /// écrans gardent les prix écrits en dur, ce qui vaut mieux qu'un paywall vide.
+    ///
+    /// C'est le même parcours d'offerings que `buy` — l'offering courant puis tous les
+    /// autres — pour que le tarif du cadeau, qui vit dans son propre offering, soit lu
+    /// comme les deux offres ordinaires.
+    @MainActor
+    static func refreshPrices() async {
+        #if canImport(RevenueCat)
+        guard PurchasesBridge.isConfigured else { return }
+
+        do {
+            let offerings = try await Purchases.shared.offerings()
+            let packages = (offerings.current?.availablePackages ?? [])
+                + offerings.all.values.flatMap(\.availablePackages)
+
+            var prices: [String: PaywallStorePrices.StorePrice] = [:]
+            for package in packages {
+                let product = package.storeProduct
+                let formatter = product.priceFormatter
+                prices[product.productIdentifier] = PaywallStorePrices.StorePrice(
+                    localized: product.localizedPriceString,
+                    amount: product.price,
+                    // La devise se lit sur le formateur du produit, celui d'Apple pour ce
+                    // pays : c'est la même information que sur le produit, par une porte de
+                    // Foundation plutôt qu'une de plus du SDK.
+                    currencyCode: formatter?.currencyCode,
+                    formatter: formatter
+                )
+            }
+            PaywallStorePrices.store(prices)
+        } catch {
+            // Rien à dire : les prix écrits restent affichés.
+        }
+        #endif
+    }
+
     static func buy(_ plan: PaywallPlan) async -> PaywallOutcome {
         #if canImport(RevenueCat)
         guard PurchasesBridge.isConfigured else { return .unavailable }

@@ -116,6 +116,9 @@ struct SessionPaywallView: View {
             .padding(.bottom, MicaboSpacing.sm)
             .onboardingAppear(index: 3)
         }
+        // Cet écran écrit son prix lui-même, hors de `PaywallFlowView` : il lui faut donc
+        // son propre appel, sinon il serait le seul à parler en euros au Canada.
+        .task { await PaywallPurchases.refreshPrices() }
     }
 
     private var counter: some View {
