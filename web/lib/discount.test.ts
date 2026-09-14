@@ -70,8 +70,8 @@ describe("le repos", () => {
   });
 });
 
-describe("le décompte de la languette", () => {
-  it("comptent les vingt-quatre heures de la fenêtre", () => {
+describe("la fenêtre, comptée sans être montrée", () => {
+  it("compte les vingt-quatre heures de la fenêtre", () => {
     expect(discount.windowRemaining(0, 0)).toBe(86_400);
 
     // Au bout de dix minutes, la fenêtre a perdu dix minutes.
@@ -86,34 +86,34 @@ describe("le décompte de la languette", () => {
     expect(discount.isLive(0, 24 * HOUR)).toBe(false);
   });
 
-  it("n'inventent jamais du temps quand l'horloge locale est en avance", () => {
+  it("n'invente jamais du temps quand l'horloge locale est en avance", () => {
     expect(discount.windowRemaining(1000, 0)).toBe(86_400);
   });
 
-  it("écrivent le décompte sur une largeur qui ne bouge pas", () => {
+  it("ne s'écrit plus sur un prix : ni languette, ni paywall", () => {
+    // Le cadeau et sa languette ont arrêté de compter : un décompte posé sur un prix
+    // demande de décider vite plutôt que de décider. Le garde porte sur le module, pas
+    // sur la vue — un formateur qui survit finit par retrouver un écran.
+    for (const gone of [
+      "preciseCountdown",
+      "countdownLabel",
+      "remainingMillis",
+      "urgencySeconds",
+      "urgencyRemaining",
+      "urgencyMillisRemaining",
+      "windowMillisRemaining",
+    ]) {
+      expect(discount).not.toHaveProperty(gone);
+    }
+  });
+
+  it("garde une seule écriture du décompte, pour la rangée des Réglages iOS", () => {
+    // `DiscountOffer.countdown` l'écrit encore là-bas ; les deux modules doivent le
+    // rendre de la même façon, sur une largeur qui ne bouge pas.
     expect(discount.countdown(3600)).toBe("01:00:00");
     expect(discount.countdown(3599)).toBe("59:59");
     expect(discount.countdown(65)).toBe("01:05");
     expect(discount.countdown(0)).toBe("00:00");
     expect(discount.countdown(-40)).toBe("00:00");
-  });
-
-  it("n'exposent plus de formateur au centième", () => {
-    // Le paywall du cadeau ne compte plus : un décompte posé sur un prix demande de
-    // décider vite plutôt que de décider. Seule la languette compte encore, à la seconde.
-    // Le garde porte sur le module, pas sur la vue : un formateur qui survit finit par
-    // retrouver un écran.
-    expect(discount).not.toHaveProperty("preciseCountdown");
-    expect(discount).not.toHaveProperty("remainingMillis");
-    expect(discount).not.toHaveProperty("urgencySeconds");
-  });
-
-  it("se lisent à voix haute, sans faute d'accord", () => {
-    expect(discount.countdownLabel(0)).toBe("offre terminée");
-    expect(discount.countdownLabel(30)).toBe("il reste moins d'une minute");
-    expect(discount.countdownLabel(90)).toBe("il reste 1 minute");
-    expect(discount.countdownLabel(3600)).toBe("il reste 1 heure");
-    expect(discount.countdownLabel(86_400)).toBe("il reste 24 heures");
-    expect(discount.countdownLabel(3600 + 120)).toBe("il reste 1 heure et 2 minutes");
   });
 });

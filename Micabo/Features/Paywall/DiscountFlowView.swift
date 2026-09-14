@@ -715,20 +715,21 @@ extension View {
     }
 }
 
-// MARK: - La pastille, quand le paywall s'est refermé
+// MARK: - La languette, quand le paywall s'est refermé
 
-/// **Le décompte des vingt-quatre heures**, collé au bord droit.
+/// **Le rappel de l'offre**, collé au bord droit.
 ///
 /// Une languette, pas une pastille dans le coin : elle ne recouvre plus le bouton de
 /// session. Un appui rouvre le paywall — pas le cadeau : on ne fait pas déballer deux fois.
 ///
-/// Elle compte en secondes, pas en centièmes : sur vingt-quatre heures, des centièmes qui
-/// défilent dans un coin de l'écran sont un clignotant.
+/// Elle dit qu'une offre attend, et rien de plus. Elle suit quand même la fenêtre sans la
+/// montrer : à zéro elle s'efface, pour ne pas rouvrir un prix qui n'est plus vendu.
 struct DiscountBadge: View {
     let startedAt: Date
     var onOpen: () -> Void
 
-    @State private var left: Int = DiscountOffer.windowSeconds
+    /// L'offre court-elle encore ? C'est tout ce que la languette a besoin de savoir.
+    @State private var isLive = true
 
     var body: some View {
         Button(action: onOpen) {
@@ -740,12 +741,6 @@ struct DiscountBadge: View {
                     .font(MicaboFont.ui(9, weight: .bold))
                     .tracking(MicaboTracking.caps)
                     .foregroundStyle(Color.white.opacity(0.82))
-
-                Text(DiscountOffer.countdown(left))
-                    .font(MicaboFont.number(11, weight: .bold))
-                    .monospacedDigit()
-                    .minimumScaleFactor(0.7)
-                    .lineLimit(1)
             }
             .foregroundStyle(Color.white)
             .padding(.top, 14)
@@ -766,19 +761,18 @@ struct DiscountBadge: View {
             .micaboSoftShadow(strength: 0.18)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .soft))
-        .accessibilityLabel(L10n.t("ios.reopenOffer", locale: .resolved(), vars: ["left": DiscountOffer.countdownLabel(left)]))
-        .opacity(left > 0 ? 1 : 0)
-        .allowsHitTesting(left > 0)
-        .onAppear { refresh() }
-        .task {
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
-                refresh()
-            }
+        .accessibilityLabel(L10n.t("ios.reopenOffer", locale: .resolved()))
+        .opacity(isLive ? 1 : 0)
+        .allowsHitTesting(isLive)
+        .task(id: startedAt) {
+            // Un seul réveil, à la fermeture de la fenêtre. Plus rien ne s'affiche à la
+            // seconde : battre une fois par seconde pour un changement qui n'arrive qu'une
+            // fois réveillerait l'app pour rien.
+            isLive = DiscountOffer.isLive(startedAt: startedAt)
+            guard isLive else { return }
+            try? await Task.sleep(for: .seconds(DiscountOffer.windowRemaining(startedAt: startedAt)))
+            guard !Task.isCancelled else { return }
+            isLive = DiscountOffer.isLive(startedAt: startedAt)
         }
-    }
-
-    private func refresh() {
-        left = DiscountOffer.windowRemaining(startedAt: startedAt)
     }
 }

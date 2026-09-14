@@ -441,7 +441,7 @@ rien du tout tant qu'App Store Connect n'a pas répondu.
 
 | Écran | Ce qu'il montre | Ce que fait la croix |
 | --- | --- | --- |
-| Premier paywall (`PaywallOfferView`) | Une seule offre, une seule phrase : « Essaie 3 jours gratuitement, puis 5,83 € / mois (facturé 69,99 € par an) », et un lien « Voir toutes les offres » | Ouvre le second |
+| Premier paywall (`PaywallOfferView`) | Une seule offre, une seule phrase : « Essaie 3 jours gratuitement, puis 69,99 € par an » — **la somme prélevée, et elle seule** —, et un lien « Voir toutes les offres » | Ouvre le second |
 | Second paywall (`PaywallPlansView`) | La grille Gratuit / Pro en six lignes, puis les deux offres à choisir, l'annuelle cochée d'avance avec sa remise | Entre dans l'app |
 
 **Une croix ne ment jamais** : elle est présente dès la première image, elle réagit au premier

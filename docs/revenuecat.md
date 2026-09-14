@@ -230,8 +230,9 @@ Un seul nombre reste **calculé sur le prix écrit** :
   (« −43 % ») : elle ne peut pas changer de quelques points selon le pays, sinon le sceau
   ment dans la moitié du monde ;
 
-Le mensuel de l'annuel plein (`monthlyEquivalent`), lui, se divise toujours sur le prix
-affiché : deux nombres sur une même carte doivent parler de la même somme.
+Plus aucun écran ne divise un prix : le mensuel équivalent de l'annuel a disparu des deux
+clients. Chaque carte écrit la somme prélevée dans la période où elle l'est — « 69,99 € /
+an » — et un seul nombre par carte ne peut pas parler d'une autre somme que celle qui part.
 
 `MicaboTests/PaywallTests.swift` continue de vérifier les prix français : un test ne
 contacte aucune boutique, le cache y est donc vide et c'est le repli qui répond.
@@ -361,7 +362,7 @@ paywall ordinaire. Le critère d'éligibilité est le premier cours importé.
 | Ce qui s'ouvre | Un cadeau plein écran, **trois appuis** pour le déballer | La carte de l'offre, directement |
 | Le paywall | Une languette posée en bas, l'écran d'où l'on vient reste visible dessous | Une carte de 500 px, posée sur le tableau de bord |
 | Minuterie sur le paywall | aucune | aucune |
-| Après fermeture | Languette avec le décompte 24 h à la seconde, un appui rouvre | Pastille en bas à droite, idem |
+| Après fermeture | Languette « Ton offre », sans décompte, un appui rouvre | Languette en bas à droite, idem |
 
 **Une seule mise en page, des deux côtés** : le pourcentage en bleu ciel, « Révise plus
 vite avec Pro », la carte de prix avec son sceau festonné, le bouton bleu pleine largeur,
@@ -378,12 +379,13 @@ dans `web/app/globals.css` et `MicaboColor` (`offerSky`, `offerWash`).
 cadeau a été ouvert — pas depuis l'import. Deux horloges se contrediraient, et un prix qui
 revient après avoir expiré ne se croit plus.
 
-**Le paywall ne compte plus.** Il affichait les vingt-quatre heures au centième : un
-décompte posé sur un prix demande de décider vite plutôt que de décider, et l'offre tient
-sur ce qu'elle vaut. La languette, elle, garde son décompte **à la seconde** — elle ne vend
-rien, elle rappelle seulement que la fenêtre court encore. Les deux clients n'exportent
-plus un seul formateur au millième, et `freemium-parity.test.ts` le vérifie des deux côtés :
-un formateur qui survit finit par retrouver une vue.
+**Plus rien ne compte à l'écran.** Le paywall affichait les vingt-quatre heures au
+centième, la languette les affichait à la seconde : un décompte posé sur un prix demande de
+décider vite plutôt que de décider, et l'offre tient sur ce qu'elle vaut. La fenêtre court
+toujours — c'est elle qui décide de ce qui reste affiché — mais elle ne se lit plus nulle
+part, sauf dans la rangée des Réglages de l'app, où l'on vient voir ce qu'on a encore.
+`freemium-parity.test.ts` le vérifie des deux côtés : un formateur qui survit finit par
+retrouver une vue.
 
 Les nombres vivent à deux endroits qui ne peuvent pas diverger :
 
@@ -465,7 +467,7 @@ false`) ; rien ne les référence.
 
 | Offre | EUR (défaut) | TRY (`currency_options`) |
 | --- | --- | --- |
-| Annuel | 69,99 € / an → 5,83 € / mois | 3 899,99 ₺ / an |
+| Annuel | 69,99 € / an | 3 899,99 ₺ / an |
 | Hebdomadaire | 7,99 € / semaine | 449,99 ₺ / semaine |
 | Annuel discount | 39,99 € / an | 2 199,99 ₺ / an |
 
