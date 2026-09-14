@@ -13,7 +13,7 @@ struct MicaboTile: View {
     let glyph: Glyph
     var background: Color = MicaboColor.surfaceMuted
     var tint: Color = MicaboColor.inkSecondary
-    var size: CGFloat = 42
+    var size: CGFloat = 44
 
     var body: some View {
         ZStack {
@@ -32,7 +32,7 @@ struct MicaboTile: View {
     }
 
     /// Tuile d'un cours : son emoji sur un pastel dérivé de sa teinte.
-    static func course(_ course: Course, size: CGFloat = 42) -> MicaboTile {
+    static func course(_ course: Course, size: CGFloat = 44) -> MicaboTile {
         let tint = Color(hexString: course.accentHex)
         return MicaboTile(
             glyph: .emoji(CourseEmoji.resolve(for: course)),
@@ -80,7 +80,7 @@ struct MicaboBadge: View {
 
     var body: some View {
         Text(text)
-            .font(MicaboFont.hanken(11, weight: .semibold))
+            .font(MicaboFont.ui(11, weight: .semibold))
             .foregroundStyle(tone.foreground)
             .padding(.vertical, 5)
             .padding(.horizontal, 9)
@@ -154,8 +154,8 @@ struct MicaboRow: View {
 
             accessoryView
         }
-        .padding(.vertical, 11)
-        .padding(.horizontal, MicaboSpacing.md)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 15)
         .contentShape(Rectangle())
     }
 
@@ -170,7 +170,7 @@ struct MicaboRow: View {
                 .foregroundStyle(MicaboColor.inkTertiary.opacity(0.8))
         case .value(let text):
             Text(text)
-                .font(MicaboFont.hanken(14, weight: .regular))
+                .font(MicaboFont.ui(14, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .lineLimit(1)
         case .badge(let text, let tone):
@@ -206,23 +206,54 @@ struct MicaboRowButtonStyle: ButtonStyle {
 
 // MARK: - Regroupements
 
-/// Bloc blanc de rangées, filets posés automatiquement entre elles.
+/// Une suite de rangées, dans l'une des deux mises en page de l'app.
+///
+/// **Une liste d'objets est faite de cartes.** Un cours, un paquet, ce qu'il y a au
+/// programme : chacun est une chose distincte, qu'on ouvre, qu'on range, qu'on supprime.
+/// Un bloc unique coupé par des filets les présente comme les lignes d'un même formulaire,
+/// et c'est faux — d'où la carte par rangée, avec son ombre et son air autour.
+///
+/// **Une liste de réglages reste un bloc.** Douze lignes qui appartiennent au même sujet,
+/// et dont aucune ne s'ouvre : là, le filet dit la bonne chose, et douze cartes
+/// indépendantes se liraient comme douze décisions. C'est `.grouped`, et les Réglages, les
+/// feuilles et les listes de choix le gardent.
 struct MicaboRowGroup: View {
+    enum Layout {
+        /// Une carte par rangée, posées avec de l'air entre elles.
+        case cards
+        /// Un seul bloc blanc, filets entre les rangées.
+        case grouped
+    }
+
     let rows: [MicaboRow]
-    /// Entaille du filet : par défaut il démarre après la tuile.
-    var dividerInset: CGFloat = 71
+    /// Entaille du filet : par défaut il démarre après la tuile. Sans effet en `.cards`.
+    var dividerInset: CGFloat = 72
     var radius: CGFloat = MicaboRadius.group
+    var layout: Layout = .cards
+
+    /// L'air entre deux cartes. Assez pour qu'on voie deux objets, assez peu pour qu'on
+    /// voie une liste : au-delà, les cours cessent d'avoir l'air de tenir ensemble.
+    private static let cardSpacing: CGFloat = 9
 
     var body: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
-                row
-                if index < rows.count - 1 {
-                    MicaboHairline(inset: dividerInset)
+        switch layout {
+        case .cards:
+            VStack(spacing: Self.cardSpacing) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    row.micaboGroup(radius: MicaboRadius.lg)
                 }
             }
+        case .grouped:
+            VStack(spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+                    row
+                    if index < rows.count - 1 {
+                        MicaboHairline(inset: dividerInset)
+                    }
+                }
+            }
+            .micaboGroup(radius: radius)
         }
-        .micaboGroup(radius: radius)
     }
 }
 
@@ -245,7 +276,7 @@ struct MicaboSectionFootnote: View {
 
     var body: some View {
         Text(text)
-            .font(MicaboFont.hanken(12, weight: .regular))
+            .font(MicaboFont.ui(12, weight: .regular))
             .foregroundStyle(MicaboColor.inkTertiary)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, MicaboSpacing.xxs)
@@ -253,6 +284,9 @@ struct MicaboSectionFootnote: View {
 }
 
 /// Section complète : intitulé, bloc de rangées, note facultative.
+///
+/// C'est **la** mise en page groupée de l'app : un réglage n'est pas un objet, et douze
+/// réglages en douze cartes se liraient comme douze décisions à prendre.
 struct MicaboSettingsSection: View {
     let caption: String
     let rows: [MicaboRow]
@@ -261,7 +295,7 @@ struct MicaboSettingsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             MicaboSectionCaption(text: caption)
-            MicaboRowGroup(rows: rows)
+            MicaboRowGroup(rows: rows, layout: .grouped)
             if let footnote {
                 MicaboSectionFootnote(text: footnote)
                     .padding(.top, 2)

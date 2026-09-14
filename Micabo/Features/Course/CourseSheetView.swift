@@ -365,7 +365,7 @@ struct CourseSheetView: View {
                 ProgressView()
                     .tint(MicaboColor.accent)
                 Text(i18n?.t("ios.openingSheet") ?? "Ouverture de la fiche…")
-                    .font(MicaboFont.hanken(13.5, weight: .medium))
+                    .font(MicaboFont.ui(13.5, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

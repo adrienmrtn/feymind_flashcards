@@ -64,6 +64,10 @@ struct MicaboApp: App {
                     await PurchasesBridge.identify(auth.user?.id)
                     await pro.refresh()
                     pro.observePurchases()
+                    // Les prix du pays, une fois par lancement : un paywall qui les
+                    // demanderait à son ouverture s'afficherait d'abord avec ceux de la
+                    // France, puis changerait de chiffre sous les yeux.
+                    await PaywallPurchases.refreshPrices()
                     // La première image se pose avant le premier encodage des fiches :
                     // c'est ça, pas le réseau, qui figeait l'ouverture.
                     await Task.yield()

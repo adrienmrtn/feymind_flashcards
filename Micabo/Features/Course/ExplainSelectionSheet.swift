@@ -55,7 +55,7 @@ struct ExplainSelectionSheet: View {
             VStack(alignment: .leading, spacing: 4) {
                 MicaboEyebrow(text: course.title)
                 Text(L10n.t("ios.explanation", locale: .resolved()))
-                    .font(MicaboFont.hanken(26, weight: .bold))
+                    .font(MicaboFont.ui(26, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(MicaboTracking.tight)
             }
@@ -76,7 +76,7 @@ struct ExplainSelectionSheet: View {
     /// fiche qui le porte, comme tout ce qu'elle met en avant.
     private var quote: some View {
         Text(FormulaRenderer.stripped(quoted))
-            .font(MicaboFont.hanken(15, weight: .medium))
+            .font(MicaboFont.ui(15, weight: .medium))
             .foregroundStyle(MicaboColor.ink)
             .lineSpacing(4)
             .fixedSize(horizontal: false, vertical: true)
@@ -155,7 +155,7 @@ struct ExplainSelectionSheet: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(FormulaRenderer.stripped(card.front))
-                    .font(MicaboFont.hanken(15, weight: .semibold))
+                    .font(MicaboFont.ui(15, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -247,7 +247,7 @@ private struct LoadingLines: View {
     var body: some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.md) {
             Text(L10n.t("ios.rereadingCourse", locale: .resolved()))
-                .font(MicaboFont.hanken(15, weight: .medium))
+                .font(MicaboFont.ui(15, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
 
             VStack(alignment: .leading, spacing: 11) {

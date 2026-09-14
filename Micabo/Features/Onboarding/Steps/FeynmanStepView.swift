@@ -66,7 +66,7 @@ private struct FeynmanDemo: View {
                 .padding(.top, 2)
 
             Text(t("ios.feynmanQuestion"))
-                .font(MicaboFont.hanken(13.5, weight: .semibold))
+                .font(MicaboFont.ui(13.5, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -81,7 +81,7 @@ private struct FeynmanDemo: View {
         HStack(spacing: 5) {
             ForEach(words.indices, id: \.self) { index in
                 Text(words[index])
-                    .font(MicaboFont.hanken(15, weight: .regular))
+                    .font(MicaboFont.ui(15, weight: .regular))
                     .foregroundStyle(MicaboColor.inkReading)
                     .opacity(index < spoken ? 1 : 0)
                     .offset(y: index < spoken ? 0 : 5)
@@ -108,7 +108,7 @@ private struct FeynmanDemo: View {
                 .foregroundStyle(MicaboColor.accent)
 
             Text(t("ios.feynmanGap"))
-                .font(MicaboFont.hanken(12.5, weight: .medium))
+                .font(MicaboFont.ui(12.5, weight: .medium))
                 .foregroundStyle(MicaboColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
 

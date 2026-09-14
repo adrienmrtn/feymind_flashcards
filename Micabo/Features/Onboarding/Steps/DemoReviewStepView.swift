@@ -165,7 +165,7 @@ private struct DemoOutputTile: View {
                 .font(.system(size: 8.5, weight: .bold))
 
             Text(output.label.uppercased())
-                .font(MicaboFont.hanken(8, weight: .bold))
+                .font(MicaboFont.ui(8, weight: .bold))
                 .tracking(0.9)
                 .lineLimit(1)
         }
@@ -189,7 +189,7 @@ private struct DemoOutputTile: View {
 
         return VStack(alignment: .leading, spacing: 6) {
             Text(card.front)
-                .font(MicaboFont.hanken(10.5, weight: .semibold))
+                .font(MicaboFont.ui(10.5, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -198,7 +198,7 @@ private struct DemoOutputTile: View {
                 .frame(height: 1)
 
             Text(isSolved ? card.back : "…")
-                .font(MicaboFont.hanken(10, weight: .medium))
+                .font(MicaboFont.ui(10, weight: .medium))
                 .foregroundStyle(isSolved ? OnboardingDemo.accent : MicaboColor.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.opacity)
@@ -213,7 +213,7 @@ private struct DemoOutputTile: View {
 
         return VStack(alignment: .leading, spacing: 5) {
             Text(card.front)
-                .font(MicaboFont.hanken(9.5, weight: .semibold))
+                .font(MicaboFont.ui(9.5, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -222,7 +222,7 @@ private struct DemoOutputTile: View {
 
                 HStack(spacing: 4) {
                     Text(choice)
-                        .font(MicaboFont.hanken(8.5, weight: .medium))
+                        .font(MicaboFont.ui(8.5, weight: .medium))
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
 
@@ -252,7 +252,7 @@ private struct DemoOutputTile: View {
     /// place, sans que le paragraphe se recompose autour.
     private var gap: some View {
         gapText
-            .font(MicaboFont.hanken(10.5, weight: .medium))
+            .font(MicaboFont.ui(10.5, weight: .medium))
             .foregroundStyle(MicaboColor.inkReading)
             .lineSpacing(2)
             .fixedSize(horizontal: false, vertical: true)
@@ -262,11 +262,11 @@ private struct DemoOutputTile: View {
 
     private var gapText: Text {
         let filled = Text(OnboardingDemo.gapAnswer)
-            .font(MicaboFont.hanken(10.5, weight: .bold))
+            .font(MicaboFont.ui(10.5, weight: .bold))
             .foregroundStyle(OnboardingDemo.accent)
 
         let blank = Text("________")
-            .font(MicaboFont.hanken(10.5, weight: .bold))
+            .font(MicaboFont.ui(10.5, weight: .bold))
             .foregroundStyle(MicaboColor.inkTertiary)
 
         return Text(OnboardingDemo.gapBefore + " ")
@@ -305,7 +305,7 @@ private struct DemoSchemaMini: View {
                         .frame(width: 13)
 
                     Text(stage.label)
-                        .font(MicaboFont.hanken(9, weight: .semibold))
+                        .font(MicaboFont.ui(9, weight: .semibold))
                         .foregroundStyle(MicaboColor.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.65)
@@ -324,7 +324,7 @@ private struct DemoSchemaMini: View {
                     .font(.system(size: 7, weight: .bold))
 
                 Text(i18n?.t("ios.demo.backToSea") ?? L10n.t("ios.demo.backToSea", locale: locale))
-                    .font(MicaboFont.hanken(8, weight: .semibold))
+                    .font(MicaboFont.ui(8, weight: .semibold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             }

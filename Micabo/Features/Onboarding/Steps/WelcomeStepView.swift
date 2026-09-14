@@ -69,13 +69,13 @@ struct WelcomeStepView: View {
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("MICABO")
-                .font(MicaboFont.hanken(11, weight: .semibold))
+                .font(MicaboFont.ui(11, weight: .semibold))
                 .tracking(2)
                 .foregroundStyle(surface.eyebrow)
                 .onboardingAppear(index: 1, stagger: 0.1)
 
             Text(i18n?.t("ios.welcomeTitle") ?? "Apprends tout,\nplus vite.")
-                .font(MicaboFont.hanken(40, weight: .bold))
+                .font(MicaboFont.ui(40, weight: .bold))
                 .foregroundStyle(surface.title)
                 .tracking(-1.2)
                 .lineSpacing(-3)
@@ -97,7 +97,7 @@ struct WelcomeStepView: View {
                     showLogin = true
                 } label: {
                     Text(i18n?.t("common.alreadyAccount") ?? "J'ai déjà un compte")
-                        .font(MicaboFont.hanken(14.5, weight: .medium))
+                        .font(MicaboFont.ui(14.5, weight: .medium))
                         .foregroundStyle(surface.prose)
                         .underline()
                 }

@@ -294,7 +294,7 @@ struct ProfileView: View {
     private func streakPanel(_ metrics: Metrics) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(identityLabel)
-                .font(MicaboFont.hanken(13, weight: .semibold))
+                .font(MicaboFont.ui(13, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .lineLimit(1)
                 .truncationMode(.middle)
@@ -326,7 +326,7 @@ struct ProfileView: View {
                 .animation(.easeOut(duration: 0.3), value: metrics.streak)
 
             Text(streakCaption(metrics))
-                .font(MicaboFont.hanken(14, weight: .medium))
+                .font(MicaboFont.ui(14, weight: .medium))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
@@ -349,12 +349,12 @@ struct ProfileView: View {
     private var firstReviewInvitation: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(i18n?.t("app.profile.noReviews") ?? "Aucune révision")
-                .font(MicaboFont.hanken(19, weight: .bold))
+                .font(MicaboFont.ui(19, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
                 .tracking(MicaboTracking.tight)
 
             Text(i18n?.t("app.profile.streak.empty") ?? "Ta première carte notée lance la série.")
-                .font(MicaboFont.hanken(13.5, weight: .regular))
+                .font(MicaboFont.ui(13.5, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -398,14 +398,14 @@ struct ProfileView: View {
     private func masteryPanel(_ metrics: Metrics) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(i18n?.t("app.home.mastery.title") ?? "Maîtrise")
-                .font(MicaboFont.hanken(12, weight: .semibold))
+                .font(MicaboFont.ui(12, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .textCase(.uppercase)
                 .tracking(0.6)
 
             if metrics.cardCount == 0 {
                 Text(i18n?.t("app.home.mastery.empty") ?? "Importe un cours pour commencer à mesurer.")
-                    .font(MicaboFont.hanken(13.5, weight: .regular))
+                    .font(MicaboFont.ui(13.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
@@ -416,11 +416,11 @@ struct ProfileView: View {
                             .foregroundStyle(MicaboColor.ink)
                             .monospacedDigit()
                         Text("%")
-                            .font(MicaboFont.hanken(16, weight: .semibold))
+                            .font(MicaboFont.ui(16, weight: .semibold))
                             .foregroundStyle(MicaboColor.inkSecondary)
                     }
                     Text(i18n?.t("app.home.mastery.of", ["count": "\(metrics.cardCount)"]) ?? "sur \(metrics.cardCount) cartes")
-                        .font(MicaboFont.hanken(12.5, weight: .medium))
+                        .font(MicaboFont.ui(12.5, weight: .medium))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
 
@@ -428,7 +428,7 @@ struct ProfileView: View {
 
                 if !metrics.byCourse.isEmpty {
                     Text(i18n?.t("app.home.mastery.byCourse") ?? "Par cours")
-                        .font(MicaboFont.hanken(12, weight: .semibold))
+                        .font(MicaboFont.ui(12, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .padding(.top, 4)
 
@@ -438,7 +438,7 @@ struct ProfileView: View {
                                 Text(entry.emoji)
                                     .font(.system(size: 15))
                                 Text(entry.title)
-                                    .font(MicaboFont.hanken(13.5, weight: .medium))
+                                    .font(MicaboFont.ui(13.5, weight: .medium))
                                     .foregroundStyle(MicaboColor.ink)
                                     .lineLimit(1)
                                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
@@ -480,13 +480,13 @@ struct ProfileView: View {
         if !metrics.weak.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 Text(i18n?.t("app.home.weak.title") ?? "Ce qui résiste")
-                    .font(MicaboFont.hanken(12, weight: .semibold))
+                    .font(MicaboFont.ui(12, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .textCase(.uppercase)
                     .tracking(0.6)
 
                 Text(i18n?.t("app.home.weak.lead") ?? "Tes cartes les plus ratées. Elles passent en premier.")
-                    .font(MicaboFont.hanken(13, weight: .regular))
+                    .font(MicaboFont.ui(13, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -495,12 +495,12 @@ struct ProfileView: View {
                         HStack(alignment: .top, spacing: 12) {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(FormulaRenderer.stripped(card.front))
-                                    .font(MicaboFont.hanken(14, weight: .medium))
+                                    .font(MicaboFont.ui(14, weight: .medium))
                                     .foregroundStyle(MicaboColor.ink)
                                     .lineLimit(2)
                                 Text(i18n?.t("app.home.weak.line", ["again": "\(card.againCount)", "reviews": "\(card.reviews)"])
                                     ?? "Ratée \(card.againCount) fois sur \(card.reviews) passages")
-                                    .font(MicaboFont.hanken(12.5, weight: .regular))
+                                    .font(MicaboFont.ui(12.5, weight: .regular))
                                     .foregroundStyle(MicaboColor.inkTertiary)
                             }
                             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
@@ -529,14 +529,14 @@ struct ProfileView: View {
 
         return VStack(alignment: .leading, spacing: 12) {
             Text(i18n?.t("app.profile.mastery.label") ?? "Niveau de connaissance")
-                .font(MicaboFont.hanken(12, weight: .semibold))
+                .font(MicaboFont.ui(12, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .textCase(.uppercase)
                 .tracking(0.6)
 
             if metrics.cardCount == 0 {
                 Text(i18n?.t("app.profile.mastery.empty") ?? "Tes cartes se rangeront ici dès que tu commences à réviser.")
-                    .font(MicaboFont.hanken(13.5, weight: .regular))
+                    .font(MicaboFont.ui(13.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
@@ -553,7 +553,7 @@ struct ProfileView: View {
                                 .frame(height: max(bucket.count > 0 ? 8 : 4, CGFloat(bucket.count) / CGFloat(peak) * 88))
 
                             Text(bucket.level.label(locale: i18n?.locale ?? .resolved()))
-                                .font(MicaboFont.hanken(10.5, weight: .medium))
+                                .font(MicaboFont.ui(10.5, weight: .medium))
                                 .foregroundStyle(MicaboColor.inkTertiary)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(2)
@@ -595,14 +595,14 @@ struct ProfileView: View {
 
         return VStack(alignment: .leading, spacing: 12) {
             Text(i18n?.t("app.profile.topCards.label") ?? "Cartes les plus passées")
-                .font(MicaboFont.hanken(12, weight: .semibold))
+                .font(MicaboFont.ui(12, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .textCase(.uppercase)
                 .tracking(0.6)
 
             if top.isEmpty {
                 Text(i18n?.t("app.profile.topCards.empty") ?? "Note tes premières cartes pour voir celles que tu revois le plus.")
-                    .font(MicaboFont.hanken(13.5, weight: .regular))
+                    .font(MicaboFont.ui(13.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
@@ -616,7 +616,7 @@ struct ProfileView: View {
                                 .frame(width: 18, alignment: .leading)
 
                             Text(FormulaRenderer.stripped(entry.front))
-                                .font(MicaboFont.hanken(14.5, weight: .medium))
+                                .font(MicaboFont.ui(14.5, weight: .medium))
                                 .foregroundStyle(MicaboColor.ink)
                                 .lineLimit(2)
                                 .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
@@ -625,7 +625,7 @@ struct ProfileView: View {
 
                             Text(i18n?.t("app.profile.passes", ["count": "\(entry.passes)"])
                                 ?? "\(entry.passes) passage\(entry.passes > 1 ? "s" : "")")
-                                .font(MicaboFont.hanken(12.5, weight: .medium))
+                                .font(MicaboFont.ui(12.5, weight: .medium))
                                 .foregroundStyle(MicaboColor.inkTertiary)
                                 .monospacedDigit()
                         }
@@ -653,7 +653,7 @@ struct ProfileView: View {
                 .minimumScaleFactor(0.7)
 
             Text(label)
-                .font(MicaboFont.hanken(11.5, weight: .medium))
+                .font(MicaboFont.ui(11.5, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
         }
         .frame(maxWidth: .infinity)
@@ -675,7 +675,7 @@ struct ProfileView: View {
         if WeekReviewRanking.isVisible(rows) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(i18n?.t("ios.weekRanking") ?? "Classement de la semaine")
-                    .font(MicaboFont.hanken(12, weight: .semibold))
+                    .font(MicaboFont.ui(12, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .textCase(.uppercase)
                     .tracking(0.6)
@@ -691,7 +691,7 @@ struct ProfileView: View {
                 }
 
                 Text(i18n?.t("ios.weekRankingHint") ?? "cartes passées depuis lundi")
-                    .font(MicaboFont.hanken(12, weight: .regular))
+                    .font(MicaboFont.ui(12, weight: .regular))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
             .padding(18)
@@ -724,14 +724,14 @@ struct ProfileView: View {
 
             HStack(spacing: 6) {
                 Text(row.handle)
-                    .font(MicaboFont.hanken(14.5, weight: .medium))
+                    .font(MicaboFont.ui(14.5, weight: .medium))
                     .foregroundStyle(MicaboColor.ink)
                     .lineLimit(1)
                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
 
                 if row.isMe {
                     Text(i18n?.t("ios.youLower") ?? "toi")
-                        .font(MicaboFont.hanken(12, weight: .regular))
+                        .font(MicaboFont.ui(12, weight: .regular))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
             }

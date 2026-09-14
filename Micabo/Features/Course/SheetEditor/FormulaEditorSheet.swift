@@ -74,7 +74,7 @@ struct FormulaEditorSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: MicaboSpacing.md) {
                     Text(t("app.formula.lead"))
-                        .font(MicaboFont.hanken(13, weight: .regular))
+                        .font(MicaboFont.ui(13, weight: .regular))
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -121,7 +121,7 @@ struct FormulaEditorSheet: View {
                             dismiss()
                         } label: {
                             Label(t("app.formula.remove"), systemImage: "trash")
-                                .font(MicaboFont.hanken(14, weight: .medium))
+                                .font(MicaboFont.ui(14, weight: .medium))
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(MicaboSecondaryButtonStyle())
@@ -161,7 +161,7 @@ struct FormulaEditorSheet: View {
         Group {
             if trimmed.isEmpty {
                 Text(t("app.formula.empty"))
-                    .font(MicaboFont.hanken(13.5))
+                    .font(MicaboFont.ui(13.5))
                     .foregroundStyle(MicaboColor.inkTertiary)
             } else {
                 MathFormula(
@@ -186,7 +186,7 @@ struct FormulaEditorSheet: View {
                     isInline = value
                 } label: {
                     Text(value ? t("app.formula.inline") : t("app.formula.block"))
-                        .font(MicaboFont.hanken(13.5, weight: .medium))
+                        .font(MicaboFont.ui(13.5, weight: .medium))
                         .foregroundStyle(value == isInline ? MicaboColor.ink : MicaboColor.inkSecondary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 36)
@@ -223,7 +223,7 @@ struct FormulaEditorSheet: View {
 
     private func warning(_ text: String) -> some View {
         Text(text)
-            .font(MicaboFont.hanken(12.5, weight: .medium))
+            .font(MicaboFont.ui(12.5, weight: .medium))
             .foregroundStyle(MicaboColor.caution)
             .fixedSize(horizontal: false, vertical: true)
     }

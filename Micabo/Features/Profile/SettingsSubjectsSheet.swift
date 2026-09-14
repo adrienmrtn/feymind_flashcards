@@ -20,7 +20,7 @@ struct SettingsSubjectsSheet: View {
                     ForEach(SubjectCatalog.families) { family in
                         VStack(alignment: .leading, spacing: 10) {
                             Text(SubjectDisplay.family(family.name, locale: i18n?.locale ?? .resolved()).uppercased())
-                                .font(MicaboFont.hanken(10, weight: .semibold))
+                                .font(MicaboFont.ui(10, weight: .semibold))
                                 .tracking(1.4)
                                 .foregroundStyle(MicaboColor.inkTertiary)
 
@@ -43,7 +43,7 @@ struct SettingsSubjectsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("OK", action: save)
-                        .font(MicaboFont.hanken(15, weight: .semibold))
+                        .font(MicaboFont.ui(15, weight: .semibold))
                 }
             }
         }
@@ -69,7 +69,7 @@ struct SettingsSubjectsSheet: View {
                         .font(.system(size: 13))
                 }
                 Text(SubjectDisplay.subject(subject, locale: i18n?.locale ?? .resolved()))
-                    .font(MicaboFont.hanken(13, weight: .medium))
+                    .font(MicaboFont.ui(13, weight: .medium))
             }
             .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkBody)
             .padding(.vertical, 9)

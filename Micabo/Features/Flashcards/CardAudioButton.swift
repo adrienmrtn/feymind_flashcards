@@ -20,7 +20,7 @@ struct CardAudioButton: View {
                     .contentTransition(.symbolEffect(.replace))
 
                 Text(title)
-                    .font(MicaboFont.hanken(13, weight: .semibold))
+                    .font(MicaboFont.ui(13, weight: .semibold))
             }
             .foregroundStyle(MicaboColor.accent)
             .padding(.vertical, 9)

@@ -19,12 +19,12 @@ import SwiftUI
 /// qu'elle est légendée juste dessous, et le bloc « Répartition » disparaît puisque c'est
 /// exactement ce que la légende dit.
 ///
-/// **Le titre est la salutation du site**, avec le prénom et la date en sur-titre : l'accueil
-/// dit la même chose sur les deux écrans. Et la prochaine épreuve a sa carte, avec ce qu'on en
-/// sait aujourd'hui posé contre l'objectif - c'est ce qui oriente la file du jour.
+/// **Le titre est le nom de l'écran**, avec la date en sur-titre. C'était « Bonsoir,
+/// Adrien » : la plus grosse typographie de la page employée à ne rien dire, et le chiffre
+/// du jour repoussé d'autant. Et la prochaine épreuve a sa carte, avec ce qu'on en sait
+/// aujourd'hui posé contre l'objectif - c'est ce qui oriente la file du jour.
 struct TodayView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(AuthController.self) private var auth: AuthController?
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
@@ -286,36 +286,24 @@ struct TodayView: View {
 
     // MARK: - En-tête
 
-    /// La salutation du site, avec le prénom quand on en a un, la date en sur-titre, et la
-    /// série à droite. Le chiffre du jour reste juste dessous : on ouvre, on lit, on lance.
+    /// Le nom de l'écran, la date en sur-titre, et la série à droite. Le chiffre du jour
+    /// reste juste dessous : on ouvre, on lit, on lance.
+    ///
+    /// **Le titre était une salutation** — « Bonsoir, Adrien », en trente points, tout en
+    /// haut. C'est la plus grosse typographie de l'écran employée à ne rien dire : elle ne
+    /// renseigne sur rien, elle ne mène nulle part, et elle repousse d'autant le seul
+    /// chiffre qu'on est venu voir. Les quatre autres onglets portent leur nom ; celui-ci
+    /// porte maintenant le sien, et l'heure qu'il est se lit dans la date juste au-dessus.
     private func header(streak: Int) -> some View {
-        MicaboScreenHeader(title: greeting, eyebrow: MicaboCalendar.dayLabel(Date())) {
+        MicaboScreenHeader(
+            title: i18n?.t("nav.review") ?? "Réviser",
+            eyebrow: MicaboCalendar.dayLabel(Date())
+        ) {
             if streak > 0 {
                 streakPill(streak)
             }
         }
         .padding(.top, MicaboSpacing.xs)
-    }
-
-    private var greeting: String {
-        let hour = MicaboCalendar.shared.component(.hour, from: Date())
-        let key = hour < 6 ? "app.home.greeting.night"
-            : hour < 12 ? "app.home.greeting.morning"
-            : hour < 18 ? "app.home.greeting.afternoon"
-            : "app.home.greeting.evening"
-        let word = i18n?.t(key) ?? "Bonjour"
-        guard let name = firstName else { return word }
-        return "\(word), \(name)"
-    }
-
-    /// Le prénom, tel que le site le lit : le premier mot du nom affiché.
-    private var firstName: String? {
-        auth?.user?.displayName?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .split(separator: " ")
-            .first
-            .map(String.init)?
-            .nilIfBlank
     }
 
     /// La série est la seule chose que l'utilisateur risque de perdre : elle mérite d'être
@@ -358,7 +346,7 @@ struct TodayView: View {
                     Text(load.dueCards.count > 1
                          ? (i18n?.t("app.today.dueMany") ?? "cartes à réviser")
                          : (i18n?.t("app.today.dueOne") ?? "carte à réviser"))
-                        .font(MicaboFont.hanken(16, weight: .semibold))
+                        .font(MicaboFont.ui(16, weight: .semibold))
                         .foregroundStyle(MicaboColor.ink)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -366,7 +354,7 @@ struct TodayView: View {
                         "minutes": "\(load.estimatedMinutes)",
                         "courses": MicaboCopy.courses(max(load.coursesWithDue, 1))
                     ]) ?? "≈ \(load.estimatedMinutes) min · \(MicaboCopy.courses(max(load.coursesWithDue, 1)))")
-                        .font(MicaboFont.hanken(13, weight: .medium))
+                        .font(MicaboFont.ui(13, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
 
@@ -408,7 +396,7 @@ struct TodayView: View {
                         .frame(width: 7, height: 7)
 
                     Text("\(segment.count) \(segment.label)")
-                        .font(MicaboFont.hanken(12.5, weight: .medium))
+                        .font(MicaboFont.ui(12.5, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .monospacedDigit()
                         .lineLimit(1)
@@ -426,7 +414,7 @@ struct TodayView: View {
                 .foregroundStyle(MicaboColor.inkTertiary)
 
             Text(MicaboCopy.heldBackNew(heldBackNewCards))
-                .font(MicaboFont.hanken(12, weight: .regular))
+                .font(MicaboFont.ui(12, weight: .regular))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .lineSpacing(1.5)
                 .fixedSize(horizontal: false, vertical: true)
@@ -467,7 +455,7 @@ struct TodayView: View {
                     Button(i18n?.t("app.today.seeExams") ?? "Toutes les épreuves") {
                         openExams()
                     }
-                    .font(MicaboFont.hanken(13, weight: .semibold))
+                    .font(MicaboFont.ui(13, weight: .semibold))
                     .foregroundStyle(MicaboColor.accent)
                     .buttonStyle(MicaboPressableButtonStyle())
                 }
@@ -513,7 +501,7 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
                 HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.sm) {
                     Text(exam.name)
-                        .font(MicaboFont.hanken(16, weight: .semibold))
+                        .font(MicaboFont.ui(16, weight: .semibold))
                         .foregroundStyle(MicaboColor.ink)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
@@ -528,7 +516,7 @@ struct TodayView: View {
                             .foregroundStyle(MicaboColor.ink)
                             .monospacedDigit()
                         Text("%")
-                            .font(MicaboFont.hanken(15, weight: .semibold))
+                            .font(MicaboFont.ui(15, weight: .semibold))
                             .foregroundStyle(MicaboColor.inkSecondary)
                     }
                     Text(i18n?.t("app.chart.readiness.now") ?? "aujourd'hui")
@@ -584,7 +572,7 @@ struct TodayView: View {
                 .buttonStyle(MicaboRowButtonStyle())
 
                 if index < exams.count - 1 {
-                    MicaboHairline(inset: 71)
+                    MicaboHairline(inset: 72)
                 }
             }
         }
@@ -732,11 +720,11 @@ struct TodayView: View {
 
             VStack(spacing: 6) {
                 Text(i18n?.t("app.today.doneTitle") ?? "C'est fait")
-                    .font(MicaboFont.hanken(22, weight: .bold))
+                    .font(MicaboFont.ui(22, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
 
                 Text(subtitle)
-                    .font(MicaboFont.hanken(14.5, weight: .regular))
+                    .font(MicaboFont.ui(14.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)

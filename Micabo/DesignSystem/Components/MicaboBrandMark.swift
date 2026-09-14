@@ -32,7 +32,7 @@ struct MicaboBrandLockup: View {
         HStack(spacing: 10) {
             MicaboBrandMark(size: size)
             Text(word)
-                .font(MicaboFont.hanken(16, weight: .bold))
+                .font(MicaboFont.ui(16, weight: .bold))
                 .tracking(-0.3)
                 .foregroundStyle(MicaboColor.ink)
         }
@@ -51,13 +51,13 @@ struct MicaboBrandWordmark: View {
         VStack(spacing: 0) {
             MicaboBrandMark(size: mark)
             Text("micabo")
-                .font(MicaboFont.hanken(22, weight: .bold))
+                .font(MicaboFont.ui(22, weight: .bold))
                 .tracking(-0.4)
                 .foregroundStyle(MicaboColor.ink)
                 .padding(.top, 12)
             if !tagline.isEmpty {
                 Text(tagline)
-                    .font(MicaboFont.hanken(11, weight: .medium))
+                    .font(MicaboFont.ui(11, weight: .medium))
                     .tracking(2.4)
                     .textCase(.uppercase)
                     .foregroundStyle(MicaboColor.inkTertiary)

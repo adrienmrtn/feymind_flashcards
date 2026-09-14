@@ -1,8 +1,9 @@
 # Brancher les abonnements sur RevenueCat
 
 Le paywall de Micabo est **entièrement natif** : c'est du SwiftUI écrit à la main, pas
-`SubscriptionStoreView`, pas le template RevenueCat. Il affiche aujourd'hui des prix écrits en
-dur dans `PaywallCatalog`, et tout achat passe par un seul point : `PaywallPurchases`.
+`SubscriptionStoreView`, pas le template RevenueCat. Il affiche les prix **de la boutique du
+pays** (§8), avec ceux du catalogue en repli tant que l'offering n'a pas répondu, et tout
+achat passe par un seul point : `PaywallPurchases`.
 
 Ce document décrit la totalité du branchement, dans l'ordre où il faut le faire. Les trois
 premières parties se passent hors de Xcode et sont **bloquantes** : tant qu'un produit n'existe
@@ -203,33 +204,37 @@ local, donc il sait hors ligne et il sait avant le webhook ; la table vaut pour 
 sur le web. Aucune des deux ne répond ? On ne devine pas : `assumeProWithoutRow` est à `false`,
 comme `ASSUME_PRO_WITHOUT_ROW` sur le web, et le test de parité relit les deux.
 
-## 8. Xcode — afficher les prix de la boutique et non ceux du code
+## 8. Les prix affichés sont ceux de la boutique
 
-Les prix écrits dans `PaywallCatalog` sont ceux de la France. Un utilisateur suisse ou canadien
-doit voir les siens, et un changement de tarif ne doit pas demander une mise à jour de l'app.
+**C'est branché.** Les six prix écrits dans `PaywallCatalog` sont ceux de la France ; tant
+qu'ils étaient les seuls affichés, un étudiant turc lisait « 39,99 € » pendant qu'Apple lui
+prélevait des livres turques. Un prix faux à côté d'un bouton d'achat se refuse à la
+relecture App Store autant qu'il se mérite.
 
-```swift
-extension PaywallPlan {
-    init?(package: Package, kind: Kind) {
-        guard let price = package.storeProduct.price as Decimal? else { return nil }
-        self.init(
-            kind: kind,
-            productID: package.storeProduct.productIdentifier,
-            title: kind == .yearly ? "Annuel" : "Hebdomadaire",
-            price: price,
-            period: kind == .yearly ? .year : .week,
-            trialDays: kind == .yearly ? PaywallCatalog.freeTrialDays : 0
-        )
-    }
-}
-```
+`PaywallPurchases.refreshPrices()` relit les offerings et pose dans `PaywallStorePrices` ce
+que chaque produit annonce : `localizedPriceString`, `price`, `currencyCode` et le
+`priceFormatter` du produit. `PaywallPlan.displayPrice` lit ce cache, et ne retombe sur le
+nombre écrit que s'il est vide.
 
-Et remplacer `PaywallPrice.text(_:)` par `storeProduct.localizedPriceString`, qui rend déjà la
-somme dans la devise et le format du pays. Le calcul de la remise (`savingsPercent`) continue de
-fonctionner : il ne lit que `annualCost`, donc les prix réels.
+Elle est appelée trois fois, et c'est voulu :
 
-Tant que l'offering n'a pas répondu, l'écran garde les valeurs écrites en dur : c'est ce qui
-évite un paywall vide pendant la seconde d'attente du réseau.
+| Où | Pourquoi |
+| --- | --- |
+| `MicaboApp`, au lancement | pour qu'un paywall ne s'ouvre jamais sur les prix français puis change de chiffre sous les yeux |
+| `PaywallFlowView` et `DiscountFlowView`, à l'ouverture | un premier appel tombé sans réseau laisserait ces écrans-là en euros |
+| `SessionPaywallView`, à l'ouverture | il écrit son prix lui-même, hors de `PaywallFlowView` |
+
+Un seul nombre reste **calculé sur le prix écrit** :
+
+- `annualCost`, donc `savingsPercent`. La remise est imprimée dans un sceau festonné
+  (« −43 % ») : elle ne peut pas changer de quelques points selon le pays, sinon le sceau
+  ment dans la moitié du monde ;
+
+Le mensuel de l'annuel plein (`monthlyEquivalent`), lui, se divise toujours sur le prix
+affiché : deux nombres sur une même carte doivent parler de la même somme.
+
+`MicaboTests/PaywallTests.swift` continue de vérifier les prix français : un test ne
+contacte aucune boutique, le cache y est donc vide et c'est le repli qui répond.
 
 ## 9. Les portes sont fermées
 
@@ -355,14 +360,14 @@ paywall ordinaire. Le critère d'éligibilité est le premier cours importé.
 | Déclencheur | La fiche du premier cours | La première page d'app chargée après l'import |
 | Ce qui s'ouvre | Un cadeau plein écran, **trois appuis** pour le déballer | La carte de l'offre, directement |
 | Le paywall | Une languette posée en bas, l'écran d'où l'on vient reste visible dessous | Une carte de 500 px, posée sur le tableau de bord |
-| Minuterie affichée | aucune | aucune |
-| Après fermeture | Languette « Offre », un appui rouvre | Pastille en bas à droite, idem |
+| Minuterie sur le paywall | aucune | aucune |
+| Après fermeture | Languette avec le décompte 24 h à la seconde, un appui rouvre | Pastille en bas à droite, idem |
 
-**Une seule mise en page, des deux côtés** : le pourcentage en bleu ciel, « Révise plus vite
-avec Pro », la carte de prix avec son sceau festonné, le bouton bleu pleine largeur, et le
-rythme du prélèvement juste dessous. Pas de liste d'avantages : le cadeau a déjà annoncé
-l'offre, et un écran qui argumente encore au moment du prix est un écran qui n'a pas
-confiance en son prix.
+**Une seule mise en page, des deux côtés** : le pourcentage en bleu ciel, « Révise plus
+vite avec Pro », la carte de prix avec son sceau festonné, le bouton bleu pleine largeur,
+et le rythme du prélèvement juste dessous. Pas de liste
+d'avantages : le cadeau a déjà annoncé l'offre, et un écran qui argumente encore au moment
+du prix est un écran qui n'a pas confiance en son prix.
 
 **Le bleu ciel n'existe nulle part ailleurs dans le produit**, et c'est le point. L'offre
 est un événement, pas un écran de plus : peinte dans le vert de Micabo, elle se lirait comme
@@ -373,17 +378,12 @@ dans `web/app/globals.css` et `MicaboColor` (`offerSky`, `offerWash`).
 cadeau a été ouvert — pas depuis l'import. Deux horloges se contrediraient, et un prix qui
 revient après avoir expiré ne se croit plus.
 
-**La fenêtre est invisible.** Elle court toujours : elle décide si l'offre est encore
-achetable, si la languette reste et quand le cadeau revient. Mais aucun écran ne montre le
-temps qui reste — ni la pastille violette au centième sur le paywall, ni le décompte de la
-languette, ni la rangée des Réglages. Un décompte posé sur un prix demande de décider vite
-plutôt que de décider ; l'offre tient sur ce qu'elle vaut. Les deux clients n'exportent plus
-un seul formateur de décompte, et `freemium-parity.test.ts` le vérifie des deux côtés : un
-formateur qui survit finit par retrouver une vue.
-
-Conséquence de forme : plus rien ne bat à la seconde. La languette et la pastille ne se
-réveillent qu'une fois, à la fermeture de la fenêtre — un battement par seconde pour un
-changement qui n'arrive qu'une fois est du travail que personne ne regarde.
+**Le paywall ne compte plus.** Il affichait les vingt-quatre heures au centième : un
+décompte posé sur un prix demande de décider vite plutôt que de décider, et l'offre tient
+sur ce qu'elle vaut. La languette, elle, garde son décompte **à la seconde** — elle ne vend
+rien, elle rappelle seulement que la fenêtre court encore. Les deux clients n'exportent
+plus un seul formateur au millième, et `freemium-parity.test.ts` le vérifie des deux côtés :
+un formateur qui survit finit par retrouver une vue.
 
 Les nombres vivent à deux endroits qui ne peuvent pas diverger :
 
@@ -391,13 +391,13 @@ Les nombres vivent à deux endroits qui ne peuvent pas diverger :
 - `Micabo/Features/Paywall/DiscountOffer.swift`
 
 `web/packages/core/test/freemium-parity.test.ts` relit le Swift et compare : trois appuis,
-86 400 s, 172 800 s, 39,99 €, et aucun décompte affiché d'un côté ni de l'autre.
+86 400 s, 172 800 s, et 39,99 €.
 
-**Un prix, celui qui est prélevé : 39,99 € / an.** Les deux clients l'écrivent tel quel, et
-le mensuel équivalent a disparu — il était écrit à la main (39,99 ÷ 12 fait 3,3325, que les
-formateurs rendraient « 3,33 € ») et devait traîner sa somme annuelle juste en dessous pour
-ne rien sous-entendre. Une ligne dit maintenant ce que deux disaient. Le 69,99 € barré reste
-l'annuel plein, pas la somme de cinquante-deux semaines — d'où 43 % et non 90 %.
+**Le paywall du cadeau annonce le prix prélevé, et rien d'autre.** Il disait « 3,30 € /
+mois » avec l'annuel juste dessous : deux chiffres pour une seule somme, dont celui qu'on
+retenait n'était pas celui qui part. Il écrit maintenant 39,99 € par an — dans la monnaie
+du pays, comme tous les autres prix de l'app (§8). Le 69,99 € barré est l'annuel plein, pas
+la somme de cinquante-deux semaines — d'où 43 % et non 90 %.
 
 **Ce que l'appareil retient**, et rien de plus : `micabo.discount.startedAt` et
 `micabo.discount.seen`, en `localStorage` sur le web, en `UserDefaults` sur l'app. Aucune
@@ -465,7 +465,7 @@ false`) ; rien ne les référence.
 
 | Offre | EUR (défaut) | TRY (`currency_options`) |
 | --- | --- | --- |
-| Annuel | 69,99 € / an | 3 899,99 ₺ / an |
+| Annuel | 69,99 € / an → 5,83 € / mois | 3 899,99 ₺ / an |
 | Hebdomadaire | 7,99 € / semaine | 449,99 ₺ / semaine |
 | Annuel discount | 39,99 € / an | 2 199,99 ₺ / an |
 

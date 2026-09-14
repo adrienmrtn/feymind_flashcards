@@ -1,10 +1,18 @@
 import CoreText
 import UIKit
 
-/// Enregistre les fichiers Hanken Grotesk du bundle (complément de `UIAppFonts`
-/// dans Info.plist) pour qu'ils soient disponibles dès le premier rendu.
+/// Enregistre les fichiers de police du bundle (complément de `UIAppFonts` dans
+/// Info.plist) pour qu'ils soient disponibles dès le premier rendu.
+///
+/// Les deux familles sont enregistrées ensemble parce qu'elles servent ensemble : Outfit
+/// écrit l'interface, Hanken Grotesk écrit le texte qu'on lit. Une seule des deux
+/// manquante, et la moitié de l'app retombe sur San Francisco sans rien dire.
 enum FontLoader {
     private static let fileNames = [
+        "Outfit-Regular",
+        "Outfit-Medium",
+        "Outfit-SemiBold",
+        "Outfit-Bold",
         "HankenGrotesk-Regular",
         "HankenGrotesk-Medium",
         "HankenGrotesk-SemiBold",

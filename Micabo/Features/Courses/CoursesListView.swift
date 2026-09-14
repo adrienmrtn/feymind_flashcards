@@ -505,7 +505,7 @@ struct CoursesListView: View {
                                 ? trail[trail.count - 2].name
                                 : (i18n?.t("app.folders.root") ?? "Mes cours")
                         )
-                        .font(MicaboFont.hanken(14, weight: .medium))
+                        .font(MicaboFont.ui(14, weight: .medium))
                     }
                     .foregroundStyle(MicaboColor.inkSecondary)
                 }
@@ -518,7 +518,7 @@ struct CoursesListView: View {
 
                 if let current = trail.last {
                     Text(current.name)
-                        .font(MicaboFont.hanken(14, weight: .semibold))
+                        .font(MicaboFont.ui(14, weight: .semibold))
                         .foregroundStyle(MicaboColor.ink)
                         .lineLimit(1)
                 }
@@ -534,7 +534,7 @@ struct CoursesListView: View {
                     i18n?.t("app.folders.new") ?? "Nouveau dossier",
                     systemImage: "folder.badge.plus"
                 )
-                .font(MicaboFont.hanken(13.5, weight: .medium))
+                .font(MicaboFont.ui(13.5, weight: .medium))
                 .labelStyle(.titleAndIcon)
                 .foregroundStyle(MicaboColor.accent)
             }

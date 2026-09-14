@@ -72,7 +72,7 @@ struct GenerationOverlay: View {
                         .accessibilityValue("\(percentLabel) %")
 
                     Text(title)
-                        .font(MicaboFont.hanken(20, weight: .bold))
+                        .font(MicaboFont.ui(20, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(MicaboTracking.tight)
                         .multilineTextAlignment(.center)
@@ -95,7 +95,7 @@ struct GenerationOverlay: View {
 
                 if let onCancel, elapsed > 40 {
                     Button(L10n.t("ios.cancelGeneration", locale: .resolved()), action: onCancel)
-                        .font(MicaboFont.hanken(15, weight: .semibold))
+                        .font(MicaboFont.ui(15, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .padding(.vertical, 10)
                         .padding(.horizontal, 18)

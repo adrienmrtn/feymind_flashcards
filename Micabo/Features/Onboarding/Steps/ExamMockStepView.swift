@@ -72,7 +72,7 @@ private struct MockPaperDemo: View {
                 .foregroundStyle(MicaboColor.caution)
 
             Text(t("ios.examMockPaper"))
-                .font(MicaboFont.hanken(13, weight: .semibold))
+                .font(MicaboFont.ui(13, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
 
             Spacer(minLength: MicaboSpacing.xs)
@@ -126,7 +126,7 @@ private struct MockPaperDemo: View {
     private var footer: some View {
         HStack(spacing: 7) {
             Text(t("ios.examMockScore"))
-                .font(MicaboFont.hanken(12.5, weight: .medium))
+                .font(MicaboFont.ui(12.5, weight: .medium))
                 .foregroundStyle(MicaboColor.inkSecondary)
 
             Spacer(minLength: MicaboSpacing.xs)

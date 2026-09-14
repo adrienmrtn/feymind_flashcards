@@ -160,20 +160,28 @@ enum MicaboSpacing {
     static let screen: CGFloat = 20
 }
 
+/// **Le bouton est moins rond que la carte, et c'est voulu.**
+///
+/// Les deux étaient à seize et vingt, assez proches pour que l'œil les range ensemble. Un
+/// écart net — quatorze contre vingt-deux — leur redonne deux natures : une carte est une
+/// **surface** sur laquelle quelque chose est posé, un bouton est une **commande** qu'on
+/// presse. Plus la surface est grande, plus elle peut s'arrondir sans mollir ; un bouton
+/// trop rond, lui, perd ses angles d'appui et se met à ressembler à une pastille.
 enum MicaboRadius {
     /// Tuile pastel d'une rangée : carré arrondi, emoji ou symbole au centre.
-    static let tile: CGFloat = 13
+    static let tile: CGFloat = 14
     /// Même valeur que la tuile, pour les vignettes du parcours d'accueil.
-    static let cover: CGFloat = 13
+    static let cover: CGFloat = 14
     static let sm: CGFloat = 12
-    /// Boutons CTA principaux.
-    static let button: CGFloat = 16
+    /// Boutons CTA principaux, et champs de saisie.
+    static let button: CGFloat = 14
     static let md: CGFloat = 16
+    /// Rangée-carte, encadré d'une fiche, rangée de choix du parcours d'accueil.
     static let lg: CGFloat = 18
     /// Bloc blanc regroupant plusieurs rangées, et cartes d'appel.
-    static let group: CGFloat = 20
-    static let card: CGFloat = 20
-    static let xl: CGFloat = 22
+    static let group: CGFloat = 22
+    static let card: CGFloat = 22
+    static let xl: CGFloat = 24
     static let xxl: CGFloat = 26
     /// Coins des feuilles modales.
     static let sheet: CGFloat = 28
@@ -213,21 +221,79 @@ enum MicaboLayout {
 }
 
 /// Typographie de l'app : San Francisco, la police native d'iOS.
+/// **Deux familles, et chacune a son domaine.**
+///
+/// Outfit écrit l'interface : titres d'écran, intitulés de rangée, libellés de bouton,
+/// sur-titres, onglets, et tous les nombres qui se lisent comme un résultat. C'est une
+/// géométrique large, qui tient le gras sans s'épaissir — ce qu'on veut d'un titre de
+/// trente points et d'un compteur de cinquante-quatre.
+///
+/// Hanken Grotesk écrit **ce qu'on lit vraiment** : le corps d'une fiche de cours, ses
+/// encadrés, le verso d'une carte. Plus étroite, plus sobre, elle tient l'œil d'une ligne
+/// à l'autre sur une page dense — ce qu'une géométrique ne fait pas au-delà de quelques
+/// lignes.
+///
+/// Deux familles sur une page ne tiennent que si chacune a un domaine net. Le partage est
+/// donc celui-là, et pas « la plus jolie pour les titres » : **l'une nomme, l'autre
+/// raconte.**
+///
+/// Les deux étaient déjà dans le dépôt, et aucune des deux ne servait : `hanken()`
+/// renvoyait `.system()`, donc l'app entière était en San Francisco et les quatre fichiers
+/// Hanken voyageaient dans le bundle sans jamais être appelés.
 enum MicaboFont {
-    static func hanken(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .system(size: size, weight: weight)
+    // MARK: Les deux familles
+
+    /// **Outfit** — l'interface. Voir la note de l'énumération pour le partage.
+    static func ui(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        .custom(outfitName(for: weight), size: size)
     }
 
-    /// La même police, côté UIKit : la fiche compose ses paragraphes dans un `UITextView`
-    /// pour que la sélection d'un passage soit celle du système, et il lui faut donc des
-    /// `UIFont`.
+    /// **Hanken Grotesk** — le texte qu'on lit.
+    static func reading(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        .custom(hankenName(for: weight), size: size)
+    }
+
+    /// La police de lecture côté UIKit : la fiche compose ses paragraphes dans un
+    /// `UITextView` pour que la sélection d'un passage soit celle du système, et il lui
+    /// faut donc des `UIFont`.
+    ///
+    /// **Hanken n'a pas d'italique dessiné.** On demande donc l'inclinaison au descripteur,
+    /// et on retombe sur le droit si le système refuse de la synthétiser — un faux italique
+    /// absent vaut mieux qu'une police qui disparaît au milieu d'un paragraphe.
     static func uiFont(_ size: CGFloat, weight: Font.Weight = .regular, italic: Bool = false) -> UIFont {
-        let base = UIFont.systemFont(ofSize: size, weight: uiWeight(for: weight))
+        let base = UIFont(name: hankenName(for: weight), size: size)
+            ?? UIFont.systemFont(ofSize: size, weight: uiWeight(for: weight))
         guard italic else { return base }
-        return UIFont(
-            descriptor: base.fontDescriptor.withSymbolicTraits(.traitItalic) ?? base.fontDescriptor,
-            size: size
-        )
+        guard let descriptor = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
+        return UIFont(descriptor: descriptor, size: size)
+    }
+
+    /// La police d'interface côté UIKit, pour les rares vues qui en sont faites.
+    static func uiDisplayFont(_ size: CGFloat, weight: Font.Weight = .regular) -> UIFont {
+        UIFont(name: outfitName(for: weight), size: size)
+            ?? UIFont.systemFont(ofSize: size, weight: uiWeight(for: weight))
+    }
+
+    // MARK: Noms PostScript
+
+    /// Les quatre coupes embarquées, et rien d'autre : une graisse plus fine ou plus grasse
+    /// retombe sur la plus proche plutôt que sur une police absente.
+    private static func outfitName(for weight: Font.Weight) -> String {
+        switch weight {
+        case .bold, .heavy, .black: "Outfit-Bold"
+        case .semibold: "Outfit-SemiBold"
+        case .medium: "Outfit-Medium"
+        default: "Outfit-Regular"
+        }
+    }
+
+    private static func hankenName(for weight: Font.Weight) -> String {
+        switch weight {
+        case .bold, .heavy, .black: "HankenGrotesk-Bold"
+        case .semibold: "HankenGrotesk-SemiBold"
+        case .medium: "HankenGrotesk-Medium"
+        default: "HankenGrotesk-Regular"
+        }
     }
 
     private static func uiWeight(for weight: Font.Weight) -> UIFont.Weight {
@@ -237,43 +303,40 @@ enum MicaboFont {
         return .regular
     }
 
-    static func postscriptName(for weight: Font.Weight) -> String {
-        if weight == .bold || weight == .heavy || weight == .black {
-            return UIFont.systemFont(ofSize: 17, weight: .bold).fontName
-        }
-        if weight == .semibold {
-            return UIFont.systemFont(ofSize: 17, weight: .semibold).fontName
-        }
-        if weight == .medium {
-            return UIFont.systemFont(ofSize: 17, weight: .medium).fontName
-        }
-        return UIFont.systemFont(ofSize: 17, weight: .regular).fontName
-    }
+    // MARK: Rôles
 
     static func display(_ size: CGFloat) -> Font {
-        hanken(size, weight: .bold)
+        ui(size, weight: .bold)
     }
 
     /// **Les chiffres qu'on lit comme un résultat**, et eux seuls : le compte de cartes du
     /// jour, la série, les statistiques d'une session, les minutes d'un objectif.
+    ///
+    /// Ils sont en Outfit comme le reste de l'interface, et c'est tout l'intérêt d'avoir
+    /// pris une géométrique : un grand nombre y a des chiffres de même largeur et des
+    /// formes assez ouvertes pour se lire comme un score. Poser `.monospacedDigit()` là où
+    /// le nombre bouge reste nécessaire — c'est ce qui empêche un compteur de tressauter.
     static func number(_ size: CGFloat, weight: Font.Weight = .bold) -> Font {
-        .system(size: size, weight: weight)
+        ui(size, weight: weight)
     }
 
     /// Grand titre d'écran, posé à même le fond sous son sur-titre.
-    static let screenTitle = hanken(32, weight: .bold)
-    static let pageTitle = hanken(22, weight: .bold)
-    static let sectionTitle = hanken(18, weight: .semibold)
-    static let cardTitle = hanken(16, weight: .semibold)
-    static let rowTitle = hanken(15, weight: .semibold)
-    static let rowSubtitle = hanken(13, weight: .regular)
-    static let body = hanken(15, weight: .regular)
-    static let bodyEmphasis = hanken(15, weight: .medium)
-    static let caption = hanken(13, weight: .regular)
-    static let captionEmphasis = hanken(13, weight: .medium)
-    static let micro = hanken(11, weight: .medium)
+    ///
+    /// Il perd deux points en passant à Outfit : la géométrique est plus large que San
+    /// Francisco à corps égal, et « Histoire contemporaine » ne tenait plus sur deux lignes.
+    static let screenTitle = ui(30, weight: .bold)
+    static let pageTitle = ui(22, weight: .bold)
+    static let sectionTitle = ui(18, weight: .semibold)
+    static let cardTitle = ui(16, weight: .semibold)
+    static let rowTitle = ui(15.5, weight: .semibold)
+    static let rowSubtitle = ui(13, weight: .regular)
+    static let body = ui(15, weight: .regular)
+    static let bodyEmphasis = ui(15, weight: .medium)
+    static let caption = ui(13, weight: .regular)
+    static let captionEmphasis = ui(13, weight: .medium)
+    static let micro = ui(11, weight: .medium)
     /// Sur-titres et intitulés de section, toujours en capitales.
-    static let eyebrow = hanken(11, weight: .semibold)
+    static let eyebrow = ui(11, weight: .semibold)
 }
 
 /// Le réglage typographique de la fiche d'un cours.
@@ -428,8 +491,72 @@ extension Color {
 
 // MARK: - Modificateurs partagés
 
-/// Surface blanche posée sur le fond gris. Le contraste des deux fonds suffit :
-/// pas de bordure, et une ombre presque invisible juste pour décoller le bloc.
+/// **Les ombres, et elles sont en deux couches.**
+///
+/// Une ombre unique doit choisir : courte, elle pose l'objet mais ne le détache pas du
+/// fond ; longue, elle le détache mais le fait léviter. Deux couches font les deux à la
+/// fois — un contact d'un point juste sous l'objet, et une diffusion large qui le décolle.
+/// C'est ce qui donne leur relief aux cartes sans qu'aucune n'ait l'air de flotter, et
+/// c'est ce qui remplace les bordures : un filet posé pour faire de la profondeur est un
+/// filet qui ment sur ce qu'il sépare.
+///
+/// **Elles sont teintées de l'encre, pas de noir.** Une ombre noire sur un fond bleuté vire
+/// au gris sale ; la même en navy reste dans la famille du fond.
+///
+/// Les valeurs sont celles de la planche de style, converties : le rayon SwiftUI vaut la
+/// moitié du flou CSS, le décalage est le même.
+enum MicaboElevation {
+    /// Une rangée-carte, une tuile, un champ de saisie.
+    case row
+    /// Une carte d'écran, la carte d'une session, une feuille.
+    case card
+    /// Ce qui est réellement au-dessus de la page : le bouton flottant d'import.
+    case floating
+
+    /// La couche de contact : elle dit que l'objet touche le fond.
+    fileprivate var contact: (opacity: Double, radius: CGFloat, y: CGFloat) {
+        switch self {
+        case .row: (0.04, 1, 1)
+        case .card: (0.04, 1, 1)
+        case .floating: (0.06, 3, 2)
+        }
+    }
+
+    /// La couche diffuse : elle dit de combien il est au-dessus.
+    fileprivate var ambient: (radius: CGFloat, y: CGFloat) {
+        switch self {
+        case .row: (8, 6)
+        case .card: (14, 10)
+        case .floating: (16, 12)
+        }
+    }
+
+    /// L'opacité de la couche diffuse suit l'apparence : dans le noir, une ombre à cinq
+    /// pour cent ne se voit pas.
+    fileprivate var ambientOpacity: Double {
+        let palette = AppearanceStore.shared.palette
+        switch self {
+        case .row: return palette.groupShadow
+        case .card: return palette.cardShadow
+        case .floating: return palette.cardShadow * 1.6
+        }
+    }
+}
+
+private struct MicaboElevationStyle: ViewModifier {
+    var level: MicaboElevation
+
+    func body(content: Content) -> some View {
+        let contact = level.contact
+        let ambient = level.ambient
+        return content
+            .shadow(color: MicaboColor.ink.opacity(contact.opacity), radius: contact.radius, x: 0, y: contact.y)
+            .shadow(color: MicaboColor.ink.opacity(level.ambientOpacity), radius: ambient.radius, x: 0, y: ambient.y)
+    }
+}
+
+/// Surface blanche posée sur le fond. Le contraste des deux fonds suffit : pas de bordure,
+/// et l'ombre en deux couches pour décoller le bloc.
 struct MicaboCardStyle: ViewModifier {
     var padding: CGFloat = MicaboSpacing.md
     var radius: CGFloat = MicaboRadius.card
@@ -439,35 +566,35 @@ struct MicaboCardStyle: ViewModifier {
         content
             .padding(padding)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .shadow(
-                color: Color.black.opacity(
-                    elevated
-                        ? AppearanceStore.shared.palette.cardShadow
-                        : AppearanceStore.shared.palette.cardShadow * 0.5
-                ),
-                radius: elevated ? 14 : 6,
-                x: 0,
-                y: elevated ? 7 : 2
-            )
+            .micaboElevation(elevated ? .card : .row)
     }
 }
 
 extension View {
+    /// Pose l'ombre d'un niveau donné, sans toucher au fond ni au rayon.
+    func micaboElevation(_ level: MicaboElevation) -> some View {
+        modifier(MicaboElevationStyle(level: level))
+    }
+
     func micaboCard(padding: CGFloat = MicaboSpacing.md, radius: CGFloat = MicaboRadius.card, elevated: Bool = true) -> some View {
         modifier(MicaboCardStyle(padding: padding, radius: radius, elevated: elevated))
     }
 
     /// Bloc blanc qui regroupe des rangées, à la manière d'une liste encartée.
     /// Le contenu gère ses propres marges pour que les filets aillent d'un bord à l'autre.
+    ///
+    /// Il reste la mise en page des **Réglages** et des feuilles : une douzaine de lignes
+    /// qui appartiennent au même sujet. Les listes d'objets — cours, paquets, ce qu'il y a
+    /// au programme — sont passées à la rangée-carte, voir `MicaboRowGroup`.
     func micaboGroup(radius: CGFloat = MicaboRadius.group) -> some View {
         background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .shadow(color: Color.black.opacity(AppearanceStore.shared.palette.groupShadow), radius: 10, x: 0, y: 4)
+            .micaboElevation(.row)
     }
 
     /// Ombre douce des éléments posés sur le fond, sans passer par une carte complète.
     func micaboSoftShadow(strength: Double = 0.06) -> some View {
-        shadow(color: Color.black.opacity(strength), radius: 16, x: 0, y: 8)
+        shadow(color: MicaboColor.ink.opacity(strength), radius: 16, x: 0, y: 8)
     }
 
     /// Applique le fond de l'application et masque le fond système du conteneur.

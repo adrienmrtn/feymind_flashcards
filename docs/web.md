@@ -120,34 +120,6 @@ Ce qu'on **ne met pas**, et chaque ligne est un tell :
 - pas de mur de consentement aux cookies, parce qu'on ne pose pas de cookie de pistage ;
 - **aucune étoile scintillante, aucun `✨`, aucun dégradé violet.**
 
-### Et sur iPhone, ce n'est pas cette page
-
-Les neuf sections ci-dessus sont celles du **bureau**. Un visiteur qui ouvre `micabo.app`
-depuis un iPhone tient déjà l'appareil sur lequel Micabo est une app native : lui dérouler
-neuf sections pour finir par un badge en bas de page revient à lui démontrer une chose qu'il
-peut installer tout de suite. Alors `/` rend l'autre page — l'icône, une phrase, le bouton
-App Store, l'écran de révision dans un cadre de téléphone, trois raisons, et c'est fini.
-C'est `components/landing/IphoneLanding.tsx`, et c'est la section 6 promue en page entière.
-
-Quatre décisions tiennent dedans, et elles se relisent dans `lib/iphone.ts` :
-
-- **on regarde l'agent, pas la largeur.** Une bascule en CSS enverrait les deux pages dans le
-  même document, et une bascule en JavaScript ferait clignoter l'une avant l'autre. L'iPad
-  reste sur la vitrine : Safari s'y déclare `Macintosh` depuis iPadOS 13, et l'écran est celui
-  d'un bureau ;
-- **rien n'est redirigé.** L'adresse reste `/`, avec ses canoniques et ses `hreflang` : deux
-  pages sous une seule URL, pas une URL de plus à faire indexer ;
-- **les robots gardent la vitrine.** Applebot explore avec un agent d'iPhone ; sans cette
-  porte, l'adresse qui porte tout le référencement ne serait, pour lui, qu'un bouton de
-  téléchargement. Googlebot explore en Android, donc rien de ce qui est indexé ne change ;
-- **`?web` rend la page complète.** Un téléphone n'est pas une raison de refuser une page à
-  quelqu'un qui la demande, et c'est le lien discret en bas de la page de téléchargement. Une
-  session déjà ouverte y lit Ouvrir l'app à la place.
-
-Pas de shader sur cette page-là, contrairement au bandeau du bureau : la lueur est un radial
-CSS. Un contexte WebGL coûte de la batterie et un temps d'affichage sur un appareil qu'on
-tient à la main, et cette page a exactement un travail — mener au bouton.
-
 ## Le design, et comment il n'a pas l'air fait par une IA
 
 Le fond de l'affaire, c'est que Micabo **a déjà une identité visuelle**, et que cette identité est
@@ -954,12 +926,9 @@ Le site fait donc pareil : `packages/core/src/pricing.ts` porte les deux offres 
 paywall du parcours d'accueil n'écrira aucun pourcentage à la main**, et « Économise 60 % » de la
 spec devient « Économise {calcul} % ».
 
-Une conséquence de forme sur l'écran 8 : **chaque offre n'affiche que le prix prélevé, dans la
-période où il l'est** — « 69,99 € / an », « 7,99 € / semaine ». Le « prix ramené au mois » a
-été retiré : 5,83 € / mois à côté d'un prélèvement annuel demandait deux lectures, et le
-chiffre qu'on retenait n'était pas celui qui part. La ligne sous le nom dit le rythme
-— « facturé une fois par an », « facturé chaque semaine » —, jamais un second prix. L'essai de
-**trois jours** ne porte que sur l'annuel.
+Deux conséquences de forme sur l'écran 8 : le « prix ramené au mois » ne vaut que pour l'annuel
+— 5,83 € / mois — et l'hebdomadaire porte « facturé chaque semaine », parce qu'il n'y a pas de
+mois à ramener. L'essai de **trois jours** ne porte que sur l'annuel.
 
 ## Le plan, en cinq étapes
 

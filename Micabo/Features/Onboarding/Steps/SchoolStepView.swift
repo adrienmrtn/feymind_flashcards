@@ -40,13 +40,13 @@ struct SchoolStepView: View {
                             .controlSize(.small)
                             .tint(MicaboColor.progress)
                         Text(i18n?.t("ios.schoolSearching") ?? "Recherche…")
-                            .font(MicaboFont.hanken(13, weight: .medium))
+                            .font(MicaboFont.ui(13, weight: .medium))
                             .foregroundStyle(MicaboColor.inkTertiary)
                     }
                     .padding(.top, 4)
                 } else if normalizedQuery.count >= 2, selected == nil {
                     Text(i18n?.t("ios.schoolNone") ?? "Aucun résultat pour l'instant — tu peux quand même continuer avec ce nom.")
-                        .font(MicaboFont.hanken(12, weight: .regular))
+                        .font(MicaboFont.ui(12, weight: .regular))
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -100,7 +100,7 @@ struct SchoolStepView: View {
                 .foregroundStyle(MicaboColor.inkTertiary)
 
             TextField(i18n?.t("ios.schoolPlaceholder") ?? "Ex. École polytechnique, Louis-le-Grand…", text: $query)
-                .font(MicaboFont.hanken(16, weight: .medium))
+                .font(MicaboFont.ui(16, weight: .medium))
                 .foregroundStyle(MicaboColor.ink)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled()
@@ -144,13 +144,13 @@ struct SchoolStepView: View {
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text(institution.name)
-                                .font(MicaboFont.hanken(14, weight: .semibold))
+                                .font(MicaboFont.ui(14, weight: .semibold))
                                 .foregroundStyle(MicaboColor.ink)
                                 .multilineTextAlignment(.leading)
                                 .fixedSize(horizontal: false, vertical: true)
 
                             Text(institution.subtitle)
-                                .font(MicaboFont.hanken(11, weight: .medium))
+                                .font(MicaboFont.ui(11, weight: .medium))
                                 .foregroundStyle(MicaboColor.inkTertiary)
                         }
 
@@ -183,7 +183,7 @@ struct SchoolStepView: View {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(MicaboColor.positive)
             Text(institution.name)
-                .font(MicaboFont.hanken(13, weight: .semibold))
+                .font(MicaboFont.ui(13, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
                 .lineLimit(2)
             Spacer(minLength: 0)

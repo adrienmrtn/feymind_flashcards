@@ -70,39 +70,50 @@ describe("le repos", () => {
   });
 });
 
-describe("la fenêtre, comptée sans être montrée", () => {
-  it("court sur vingt-quatre heures depuis l'ouverture du cadeau", () => {
-    expect(discount.windowSeconds).toBe(24 * 3600);
+describe("le décompte de la languette", () => {
+  it("comptent les vingt-quatre heures de la fenêtre", () => {
     expect(discount.windowRemaining(0, 0)).toBe(86_400);
+
+    // Au bout de dix minutes, la fenêtre a perdu dix minutes.
     expect(discount.windowRemaining(0, 600_000)).toBe(85_800);
 
-    // Deux heures plus tard, l'offre est toujours achetable.
+    // Deux heures plus tard, l'offre court encore.
     expect(discount.windowRemaining(0, 2 * HOUR)).toBe(79_200);
     expect(discount.isLive(0, 2 * HOUR)).toBe(true);
 
-    // Au bout des vingt-quatre heures, elle se retire.
+    // Elle s'éteint à la fin des vingt-quatre heures.
     expect(discount.windowRemaining(0, 24 * HOUR)).toBe(0);
     expect(discount.isLive(0, 24 * HOUR)).toBe(false);
   });
 
-  it("n'invente jamais du temps quand l'horloge locale est en avance", () => {
+  it("n'inventent jamais du temps quand l'horloge locale est en avance", () => {
     expect(discount.windowRemaining(1000, 0)).toBe(86_400);
   });
 
-  it("ne s'écrit nulle part : plus un seul formateur de décompte", () => {
-    // C'est le garde de la minuterie invisible. Réexporter un « 23:14:07 » suffirait à
-    // le faire réapparaître dans un écran, et l'offre se remettrait à presser.
-    for (const gone of [
-      "countdown",
-      "preciseCountdown",
-      "countdownLabel",
-      "urgencySeconds",
-      "urgencyRemaining",
-      "urgencyMillisRemaining",
-      "windowMillisRemaining",
-      "remainingMillis",
-    ]) {
-      expect(discount).not.toHaveProperty(gone);
-    }
+  it("écrivent le décompte sur une largeur qui ne bouge pas", () => {
+    expect(discount.countdown(3600)).toBe("01:00:00");
+    expect(discount.countdown(3599)).toBe("59:59");
+    expect(discount.countdown(65)).toBe("01:05");
+    expect(discount.countdown(0)).toBe("00:00");
+    expect(discount.countdown(-40)).toBe("00:00");
+  });
+
+  it("n'exposent plus de formateur au centième", () => {
+    // Le paywall du cadeau ne compte plus : un décompte posé sur un prix demande de
+    // décider vite plutôt que de décider. Seule la languette compte encore, à la seconde.
+    // Le garde porte sur le module, pas sur la vue : un formateur qui survit finit par
+    // retrouver un écran.
+    expect(discount).not.toHaveProperty("preciseCountdown");
+    expect(discount).not.toHaveProperty("remainingMillis");
+    expect(discount).not.toHaveProperty("urgencySeconds");
+  });
+
+  it("se lisent à voix haute, sans faute d'accord", () => {
+    expect(discount.countdownLabel(0)).toBe("offre terminée");
+    expect(discount.countdownLabel(30)).toBe("il reste moins d'une minute");
+    expect(discount.countdownLabel(90)).toBe("il reste 1 minute");
+    expect(discount.countdownLabel(3600)).toBe("il reste 1 heure");
+    expect(discount.countdownLabel(86_400)).toBe("il reste 24 heures");
+    expect(discount.countdownLabel(3600 + 120)).toBe("il reste 1 heure et 2 minutes");
   });
 });

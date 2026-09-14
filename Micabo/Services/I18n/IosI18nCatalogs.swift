@@ -1,6 +1,13 @@
 /// Phrases propres à l'iPhone. Les clés partagées vivent dans `SharedI18nCatalogs`.
 enum IosI18nCatalogs {
     static let fr: [String: String] = [
+        "ios.perYear": "par an",
+        // Le rappel quotidien, montré puis demandé pour de bon.
+        "ios.notifTitle": "Ne loupe jamais un jour.",
+        "ios.notifSubtitle": "Un rappel par jour, à l'heure où tu révises. Rien d'autre.",
+        "ios.notifCardTitle": "Il te reste {count} cartes à réviser",
+        "ios.notifCardBody": "Dix minutes, et ta série tient.",
+        "ios.notifNow": "maintenant",
         // L'examen blanc, sur le téléphone.
         "ios.mock.resume": "Reprendre la copie",
         "ios.mock.writing": "On écrit ta copie sur ton programme. Une trentaine de secondes.",
@@ -302,6 +309,7 @@ enum IosI18nCatalogs {
         "ios.paywallRestore": "Restaurer",
         "ios.paywallTerms": "Conditions d'utilisation",
         "ios.paywallTryDays": "Essaie {n} jours gratuitement, ",
+        "ios.paywallThenYear": "puis {monthly} / mois (facturé {yearly} par an).",
         "ios.paywallThenPeriod": "puis {price} par {unit}.",
         "ios.paywallReassurance": "Deux appuis pour commencer, résiliable en quinze secondes.",
         "ios.retry": "Réessayer",
@@ -366,16 +374,16 @@ enum IosI18nCatalogs {
         "ios.rereadingCourse": "Micabo relit ton cours.",
         "ios.giftTitle": "On a un cadeau pour toi",
         "ios.giftBody": "Ton premier cours est écrit. Ouvre-le.",
-        "ios.perYear": "par an",
+        "ios.perMonth": "par mois",
         "ios.startCheaper": "Commencer avec {pct} % de moins",
         "ios.discount": "Remise",
         "ios.offerBadge": "Offre",
         "ios.openGift": "Ouvrir le cadeau",
-        "ios.reopenOffer": "Rouvrir l'offre",
+        "ios.reopenOffer": "Rouvrir l'offre, {left}",
         "ios.unitWeek": "semaine",
         "ios.unitYear": "an",
         "ios.billedEach": "facturé chaque {unit}",
-        "ios.billedYearly": "facturé une fois par an",
+        "ios.pricePerMonth": "{price} / mois",
         "ios.all": "Toutes",
         "ios.fromSchool": "De ton école",
         "ios.libraryEmptySchool": "Personne de {school} n'a encore partagé de cours. Les tiens sont publics par défaut : ce sera peut-être toi le premier.",
@@ -587,6 +595,13 @@ enum IosI18nCatalogs {
     ]
 
     static let de: [String: String] = [
+        "ios.perYear": "pro Jahr",
+        // Le rappel quotidien, montré puis demandé pour de bon.
+        "ios.notifTitle": "Verpass keinen Tag.",
+        "ios.notifSubtitle": "Eine Erinnerung pro Tag, zu deiner Lernzeit. Sonst nichts.",
+        "ios.notifCardTitle": "Dir bleiben {count} Karten zum Wiederholen",
+        "ios.notifCardBody": "Zehn Minuten, und deine Serie hält.",
+        "ios.notifNow": "jetzt",
         // L'examen blanc, sur le téléphone.
         "ios.mock.resume": "Prüfung fortsetzen",
         "ios.mock.writing": "Deine Prüfung wird aus deinem Stoff geschrieben. Etwa dreißig Sekunden.",
@@ -888,6 +903,7 @@ enum IosI18nCatalogs {
         "ios.paywallRestore": "Wiederherstellen",
         "ios.paywallTerms": "Nutzungsbedingungen",
         "ios.paywallTryDays": "Versuch {n} Tage kostenlos, ",
+        "ios.paywallThenYear": "dann {monthly} / Monat (jährlich {yearly}).",
         "ios.paywallThenPeriod": "dann {price} pro {unit}.",
         "ios.paywallReassurance": "Zwei Tipps zum Start, in fünfzehn Sekunden kündbar.",
         "ios.retry": "Nochmal",
@@ -952,16 +968,16 @@ enum IosI18nCatalogs {
         "ios.rereadingCourse": "Micabo liest deinen Kurs.",
         "ios.giftTitle": "Wir haben ein Geschenk für dich",
         "ios.giftBody": "Dein erster Kurs ist geschrieben. Öffne ihn.",
-        "ios.perYear": "pro Jahr",
+        "ios.perMonth": "pro Monat",
         "ios.startCheaper": "Mit {pct} % weniger starten",
         "ios.discount": "Rabatt",
         "ios.offerBadge": "Angebot",
         "ios.openGift": "Geschenk öffnen",
-        "ios.reopenOffer": "Angebot wieder öffnen",
+        "ios.reopenOffer": "Angebot wieder öffnen, {left}",
         "ios.unitWeek": "Woche",
         "ios.unitYear": "Jahr",
         "ios.billedEach": "jede {unit} abgerechnet",
-        "ios.billedYearly": "einmal im Jahr abgerechnet",
+        "ios.pricePerMonth": "{price} / Monat",
         "ios.all": "Alle",
         "ios.fromSchool": "Von deiner Schule",
         "ios.libraryEmptySchool": "Niemand von {school} hat bisher einen Kurs geteilt. Deine sind standardmäßig öffentlich: vielleicht bist du der Erste.",
@@ -1173,6 +1189,13 @@ enum IosI18nCatalogs {
     ]
 
     static let es: [String: String] = [
+        "ios.perYear": "al año",
+        // Le rappel quotidien, montré puis demandé pour de bon.
+        "ios.notifTitle": "No te saltes ni un día.",
+        "ios.notifSubtitle": "Un recordatorio al día, a tu hora de repasar. Nada más.",
+        "ios.notifCardTitle": "Te quedan {count} tarjetas por repasar",
+        "ios.notifCardBody": "Diez minutos, y tu racha aguanta.",
+        "ios.notifNow": "ahora",
         // L'examen blanc, sur le téléphone.
         "ios.mock.resume": "Retomar el examen",
         "ios.mock.writing": "Estamos escribiendo tu examen a partir de tu programa. Unos treinta segundos.",
@@ -1474,6 +1497,7 @@ enum IosI18nCatalogs {
         "ios.paywallRestore": "Restaurar",
         "ios.paywallTerms": "Condiciones de uso",
         "ios.paywallTryDays": "Prueba {n} días gratis, ",
+        "ios.paywallThenYear": "luego {monthly} / mes (facturado {yearly} al año).",
         "ios.paywallThenPeriod": "luego {price} por {unit}.",
         "ios.paywallReassurance": "Dos toques para empezar, se cancela en quince segundos.",
         "ios.retry": "Reintentar",
@@ -1538,16 +1562,16 @@ enum IosI18nCatalogs {
         "ios.rereadingCourse": "Micabo relee tu curso.",
         "ios.giftTitle": "Tenemos un regalo para ti",
         "ios.giftBody": "Tu primer curso está escrito. Ábrelo.",
-        "ios.perYear": "al año",
+        "ios.perMonth": "al mes",
         "ios.startCheaper": "Empezar con un {pct} % menos",
         "ios.discount": "Descuento",
         "ios.offerBadge": "Oferta",
         "ios.openGift": "Abrir el regalo",
-        "ios.reopenOffer": "Reabrir la oferta",
+        "ios.reopenOffer": "Reabrir la oferta, {left}",
         "ios.unitWeek": "semana",
         "ios.unitYear": "año",
         "ios.billedEach": "cobrado cada {unit}",
-        "ios.billedYearly": "facturado una vez al año",
+        "ios.pricePerMonth": "{price} / mes",
         "ios.all": "Todas",
         "ios.fromSchool": "De tu escuela",
         "ios.libraryEmptySchool": "Nadie de {school} ha compartido un curso todavía. Los tuyos son públicos por defecto: quizá seas el primero.",
@@ -1759,6 +1783,13 @@ enum IosI18nCatalogs {
     ]
 
     static let tr: [String: String] = [
+        "ios.perYear": "yılda",
+        // Le rappel quotidien, montré puis demandé pour de bon.
+        "ios.notifTitle": "Hiçbir günü kaçırma.",
+        "ios.notifSubtitle": "Günde bir hatırlatma, çalıştığın saatte. Başka bir şey yok.",
+        "ios.notifCardTitle": "Gözden geçirecek {count} kartın kaldı",
+        "ios.notifCardBody": "On dakika, ve serin bozulmaz.",
+        "ios.notifNow": "şimdi",
         // L'examen blanc, sur le téléphone.
         "ios.mock.resume": "Sınava devam et",
         "ios.mock.writing": "Sınavın müfredatından yazılıyor. Yaklaşık otuz saniye.",
@@ -2060,6 +2091,7 @@ enum IosI18nCatalogs {
         "ios.paywallRestore": "Geri yükle",
         "ios.paywallTerms": "Kullanım koşulları",
         "ios.paywallTryDays": "{n} gün ücretsiz dene, ",
+        "ios.paywallThenYear": "sonra ayda {monthly} (yılda {yearly}).",
         "ios.paywallThenPeriod": "sonra {unit} başına {price}.",
         "ios.paywallReassurance": "Başlamak için iki dokunuş, on beş saniyede iptal.",
         "ios.retry": "Yeniden dene",
@@ -2124,16 +2156,16 @@ enum IosI18nCatalogs {
         "ios.rereadingCourse": "Micabo dersini yeniden okuyor.",
         "ios.giftTitle": "Sana bir hediyemiz var",
         "ios.giftBody": "İlk dersin yazıldı. Aç.",
-        "ios.perYear": "yılda",
+        "ios.perMonth": "ayda",
         "ios.startCheaper": "%{pct} daha ucuza başla",
         "ios.discount": "İndirim",
         "ios.offerBadge": "Teklif",
         "ios.openGift": "Hediyeyi aç",
-        "ios.reopenOffer": "Teklifi yeniden aç",
+        "ios.reopenOffer": "Teklifi yeniden aç, {left}",
         "ios.unitWeek": "hafta",
         "ios.unitYear": "yıl",
         "ios.billedEach": "her {unit} tahsil",
-        "ios.billedYearly": "yılda bir kez faturalanır",
+        "ios.pricePerMonth": "{price} / ay",
         "ios.all": "Tümü",
         "ios.fromSchool": "Okulundan",
         "ios.libraryEmptySchool": "{school} içinde henüz kimse ders paylaşmadı. Seninkiler varsayılan olarak herkese açık: belki ilk sen olursun.",
@@ -2351,6 +2383,13 @@ enum IosI18nCatalogs {
     /// est pas encore retombe sur le catalogue partagé, puis sur le français - le
     /// comportement d'avant, ni meilleur ni pire. Chaque écran retouché ajoute les siennes.
     static let en: [String: String] = [
+        "ios.perYear": "per year",
+        // Le rappel quotidien, montré puis demandé pour de bon.
+        "ios.notifTitle": "Never miss a day.",
+        "ios.notifSubtitle": "One reminder a day, when you study. Nothing else.",
+        "ios.notifCardTitle": "You have {count} cards left to review",
+        "ios.notifCardBody": "Ten minutes, and your streak holds.",
+        "ios.notifNow": "now",
         // L'examen blanc, sur le téléphone.
         "ios.mock.resume": "Resume the paper",
         "ios.mock.writing": "Writing your paper from your programme. About thirty seconds.",

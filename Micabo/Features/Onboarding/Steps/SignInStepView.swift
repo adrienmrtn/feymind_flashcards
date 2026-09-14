@@ -28,11 +28,15 @@ struct SignInStepView: View {
     @State private var didAdvance = false
 
     var body: some View {
+        // La création d'un compte et la reconnexion sont **le même écran**, à la copie près :
+        // c'est le même `SignInScreen`, et c'est la seule façon de garantir que deux
+        // compositions qui demandent la même chose ne finissent pas par la demander
+        // différemment. La marque et le sous-titre y sont maintenant comme ailleurs — un
+        // écran de compte sans rien pour ancrer l'œil était le plus nu de l'app.
         SignInScreen(
             placement: .page,
             titleKey: "onboarding.compteTitle",
-            showsBrand: false,
-            showsSubtitle: false,
+            subtitleKey: "onboarding.compteSubtitle",
             showsLanguageSwitcher: false,
             onSkip: skip
         )

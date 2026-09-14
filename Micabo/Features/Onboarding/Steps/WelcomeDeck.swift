@@ -190,13 +190,13 @@ struct WelcomeDeck: View {
                 Image(systemName: face.symbol)
                     .font(.system(size: 9, weight: .semibold))
                 Text(badge.uppercased())
-                    .font(MicaboFont.hanken(9.5, weight: .bold))
+                    .font(MicaboFont.ui(9.5, weight: .bold))
                     .tracking(1.1)
 
                 Spacer(minLength: MicaboSpacing.xs)
 
                 Text(subject.uppercased())
-                    .font(MicaboFont.hanken(9.5, weight: .semibold))
+                    .font(MicaboFont.ui(9.5, weight: .semibold))
                     .tracking(1.1)
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
@@ -217,7 +217,7 @@ struct WelcomeDeck: View {
 
         private func questionBlock(_ question: String) -> Text {
             Text(question)
-                .font(MicaboFont.hanken(19, weight: .semibold))
+                .font(MicaboFont.ui(19, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
                 .tracking(-0.3)
         }
@@ -225,7 +225,7 @@ struct WelcomeDeck: View {
         private func choiceBlock(question: String, options: [String], answer: Int) -> some View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(question)
-                    .font(MicaboFont.hanken(15, weight: .semibold))
+                    .font(MicaboFont.ui(15, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
                 VStack(alignment: .leading, spacing: 5) {
                     ForEach(Array(options.enumerated()), id: \.offset) { index, option in
@@ -238,7 +238,7 @@ struct WelcomeDeck: View {
         private func gapBlock(before: String, after: String, answer: String) -> some View {
             VStack(alignment: .leading, spacing: 10) {
                 Text(gapSentence(before: before, after: after))
-                    .font(MicaboFont.hanken(17, weight: .semibold))
+                    .font(MicaboFont.ui(17, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
                 Text(answer)
                     .font(.system(size: 13, weight: .semibold, design: .serif).italic())
@@ -264,7 +264,7 @@ struct WelcomeDeck: View {
                     .strokeBorder(isAnswer ? tint : MicaboColor.strokeStrong, lineWidth: isAnswer ? 3.5 : 1.5)
                     .frame(width: 10, height: 10)
                 Text(option)
-                    .font(MicaboFont.hanken(12.5, weight: isAnswer ? .semibold : .regular))
+                    .font(MicaboFont.ui(12.5, weight: isAnswer ? .semibold : .regular))
                     .foregroundStyle(isAnswer ? MicaboColor.ink : MicaboColor.inkSecondary)
                     .lineLimit(1)
             }

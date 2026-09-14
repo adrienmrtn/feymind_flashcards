@@ -61,6 +61,7 @@ struct DiscountFlowView: View {
             }
         }
         .animation(OnboardingMotion.page, value: stage)
+        .task { await PaywallPurchases.refreshPrices() }
         .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(failure != nil)) {
             Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { failure = nil }
         } message: {
@@ -164,7 +165,7 @@ private struct DiscountGiftStage: View {
 
             VStack(spacing: MicaboSpacing.sm) {
                 Text(L10n.t("ios.giftTitle", locale: .resolved()))
-                    .font(MicaboFont.hanken(26, weight: .bold))
+                    .font(MicaboFont.ui(26, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(MicaboTracking.tight)
                     .multilineTextAlignment(.center)
@@ -172,7 +173,7 @@ private struct DiscountGiftStage: View {
                     .onboardingAppear(index: 0)
 
                 Text(L10n.t("ios.giftBody", locale: .resolved()))
-                    .font(MicaboFont.hanken(15, weight: .regular))
+                    .font(MicaboFont.ui(15, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.center)
                     .onboardingAppear(index: 1)
@@ -202,7 +203,7 @@ private struct DiscountGiftStage: View {
                 .animation(OnboardingMotion.tap, value: taps)
 
                 Text(remainingTaps == 0 ? "Ça s'ouvre…" : "Encore \(remainingTaps)")
-                    .font(MicaboFont.hanken(14, weight: .semibold))
+                    .font(MicaboFont.ui(14, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .contentTransition(.numericText())
             }
@@ -394,10 +395,10 @@ private struct DiscountPaywallStage: View {
                 .padding(.top, MicaboSpacing.md)
                 .onboardingAppear(index: 2)
 
-            // Le rythme du prélèvement et la sortie, sous le bouton : le prix est déjà
-            // écrit au-dessus, il n'a pas besoin d'être répété pour être tenu.
+            // Le rythme du prélèvement et la sortie : le prix est déjà écrit au-dessus, il
+            // n'a pas besoin d'être répété pour être tenu.
             Text("Facturé une fois par an, résiliable sur l'App Store.")
-                .font(MicaboFont.hanken(11.5, weight: .regular))
+                .font(MicaboFont.ui(11.5, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -427,7 +428,7 @@ private struct DiscountPaywallStage: View {
                 + Text(" de moins\nRévise plus vite avec Pro")
                 .foregroundStyle(MicaboColor.ink)
         )
-        .font(MicaboFont.hanken(29, weight: .bold))
+        .font(MicaboFont.ui(29, weight: .bold))
         .tracking(MicaboTracking.tight)
         .multilineTextAlignment(.center)
         .lineSpacing(1)
@@ -444,7 +445,7 @@ private struct DiscountPaywallStage: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(plan.title)
-                    .font(MicaboFont.hanken(14.5, weight: .semibold))
+                    .font(MicaboFont.ui(14.5, weight: .semibold))
                     .foregroundStyle(MicaboColor.offerSky)
 
                 HStack(alignment: .lastTextBaseline, spacing: 6) {
@@ -453,12 +454,12 @@ private struct DiscountPaywallStage: View {
                         .foregroundStyle(MicaboColor.ink)
 
                     Text(L10n.t("ios.perYear", locale: .resolved()))
-                        .font(MicaboFont.hanken(15, weight: .medium))
+                        .font(MicaboFont.ui(15, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
 
                 Text(DiscountOffer.reference.displayPrice)
-                    .font(MicaboFont.hanken(15.5, weight: .medium))
+                    .font(MicaboFont.ui(15.5, weight: .medium))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .strikethrough(true, color: MicaboColor.inkTertiary)
             }
@@ -518,14 +519,14 @@ private struct DiscountSeal: View {
 
             VStack(spacing: 1) {
                 Text(L10n.t("ios.discount", locale: .resolved()))
-                    .font(MicaboFont.hanken(9.5, weight: .semibold))
+                    .font(MicaboFont.ui(9.5, weight: .semibold))
 
                 HStack(alignment: .top, spacing: 0) {
                     Text("\(percent)")
                         .font(MicaboFont.number(20, weight: .bold))
 
                     Text("%")
-                        .font(MicaboFont.hanken(10, weight: .bold))
+                        .font(MicaboFont.ui(10, weight: .bold))
                         .padding(.top, 2)
                 }
             }
@@ -716,19 +717,18 @@ extension View {
 
 // MARK: - La pastille, quand le paywall s'est refermé
 
-/// **Le rappel de l'offre**, collé au bord droit.
+/// **Le décompte des vingt-quatre heures**, collé au bord droit.
 ///
 /// Une languette, pas une pastille dans le coin : elle ne recouvre plus le bouton de
 /// session. Un appui rouvre le paywall — pas le cadeau : on ne fait pas déballer deux fois.
 ///
-/// Elle dit qu'une offre attend, et rien de plus. Elle suit quand même la fenêtre sans la
-/// montrer : à zéro elle s'efface, pour ne pas rouvrir un prix qui n'est plus vendu.
+/// Elle compte en secondes, pas en centièmes : sur vingt-quatre heures, des centièmes qui
+/// défilent dans un coin de l'écran sont un clignotant.
 struct DiscountBadge: View {
     let startedAt: Date
     var onOpen: () -> Void
 
-    /// L'offre court-elle encore ? C'est tout ce que la languette a besoin de savoir.
-    @State private var isLive = true
+    @State private var left: Int = DiscountOffer.windowSeconds
 
     var body: some View {
         Button(action: onOpen) {
@@ -737,9 +737,15 @@ struct DiscountBadge: View {
                     .font(.system(size: 16, weight: .semibold))
 
                 Text(L10n.t("ios.offerBadge", locale: .resolved()).uppercased())
-                    .font(MicaboFont.hanken(9, weight: .bold))
+                    .font(MicaboFont.ui(9, weight: .bold))
                     .tracking(MicaboTracking.caps)
                     .foregroundStyle(Color.white.opacity(0.82))
+
+                Text(DiscountOffer.countdown(left))
+                    .font(MicaboFont.number(11, weight: .bold))
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
             }
             .foregroundStyle(Color.white)
             .padding(.top, 14)
@@ -760,18 +766,19 @@ struct DiscountBadge: View {
             .micaboSoftShadow(strength: 0.18)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .soft))
-        .accessibilityLabel(L10n.t("ios.reopenOffer", locale: .resolved()))
-        .opacity(isLive ? 1 : 0)
-        .allowsHitTesting(isLive)
-        .task(id: startedAt) {
-            // Un seul réveil, à la fermeture de la fenêtre. Plus rien ne s'affiche à la
-            // seconde : battre une fois par seconde pour un changement qui n'arrive qu'une
-            // fois réveillerait l'app pour rien.
-            isLive = DiscountOffer.isLive(startedAt: startedAt)
-            guard isLive else { return }
-            try? await Task.sleep(for: .seconds(DiscountOffer.windowRemaining(startedAt: startedAt)))
-            guard !Task.isCancelled else { return }
-            isLive = DiscountOffer.isLive(startedAt: startedAt)
+        .accessibilityLabel(L10n.t("ios.reopenOffer", locale: .resolved(), vars: ["left": DiscountOffer.countdownLabel(left)]))
+        .opacity(left > 0 ? 1 : 0)
+        .allowsHitTesting(left > 0)
+        .onAppear { refresh() }
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                refresh()
+            }
         }
+    }
+
+    private func refresh() {
+        left = DiscountOffer.windowRemaining(startedAt: startedAt)
     }
 }

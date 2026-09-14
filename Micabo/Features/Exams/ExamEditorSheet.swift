@@ -317,7 +317,7 @@ struct ExamEditorSheet: View {
                     ForEach(Array(courses.enumerated()), id: \.element.id) { index, course in
                         courseRow(course)
                         if index < courses.count - 1 {
-                            MicaboHairline(inset: 71)
+                            MicaboHairline(inset: 72)
                         }
                     }
                 }
@@ -383,7 +383,7 @@ struct ExamEditorSheet: View {
                         kind = option
                     } label: {
                         Text(option.title())
-                            .font(MicaboFont.hanken(14, weight: .medium))
+                            .font(MicaboFont.ui(14, weight: .medium))
                             .foregroundStyle(picked ? MicaboColor.onInk : MicaboColor.ink)
                             .padding(.vertical, 9)
                             .padding(.horizontal, 14)
@@ -444,7 +444,7 @@ struct ExamEditorSheet: View {
                     .buttonStyle(MicaboRowButtonStyle(feedback: .selection))
 
                     if index < ExamStartingPoint.allCases.count - 1 {
-                        MicaboHairline(inset: 71)
+                        MicaboHairline(inset: 72)
                     }
                 }
             }
@@ -499,7 +499,7 @@ struct ExamEditorSheet: View {
         } label: {
             VStack(spacing: 2) {
                 Text(initial)
-                    .font(MicaboFont.hanken(10.5, weight: .medium))
+                    .font(MicaboFont.ui(10.5, weight: .medium))
                     .foregroundStyle(picked ? MicaboColor.onInk.opacity(0.8) : MicaboColor.inkTertiary)
                 Text("\(calendar.component(.day, from: day))")
                     .font(MicaboFont.number(15, weight: .semibold))
@@ -610,7 +610,7 @@ struct ExamEditorSheet: View {
                         action: unplan
                     )
 
-                    MicaboHairline(inset: 71)
+                    MicaboHairline(inset: 72)
                 }
 
                 MicaboRow(

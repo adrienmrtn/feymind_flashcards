@@ -1,3 +1,4 @@
+import SwiftUI
 import UIKit
 
 #if canImport(SwiftMath)
@@ -66,7 +67,7 @@ final class SheetEditorLayoutManager: SheetMarkerLayoutManager {
             guard let kind = raw.flatMap(SheetParagraphKind.init(rawValue:)), kind.isList else { continue }
 
             let font = (storage.attribute(NSAttributedString.Key.font, at: paragraph.location, effectiveRange: nil) as? UIFont)
-                ?? UIFont.systemFont(ofSize: SheetTypography.body)
+                ?? MicaboFont.uiFont(SheetTypography.body)
             let glyph = glyphIndexForCharacter(at: paragraph.location)
             let line = lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
             let baseline = origin.y + line.minY + font.ascender
@@ -91,7 +92,7 @@ final class SheetEditorLayoutManager: SheetMarkerLayoutManager {
                 let number = ordinal(of: paragraph, in: string, storage: storage, cache: &numbering)
                 let label = "\(number)." as NSString
                 let attributes: [NSAttributedString.Key: Any] = [
-                    NSAttributedString.Key.font: UIFont.systemFont(ofSize: font.pointSize, weight: UIFont.Weight.semibold),
+                    NSAttributedString.Key.font: MicaboFont.uiFont(font.pointSize, weight: .semibold),
                     NSAttributedString.Key.foregroundColor: markerColor
                 ]
                 let size = label.size(withAttributes: attributes)
@@ -162,7 +163,7 @@ enum SheetFormulaImage {
         guard size.width > 0, size.height > 0, size.width < 4000, size.height < 4000 else { return nil }
 
         let padding = isDisplayMode ? CGFloat(16) : CGFloat(1)
-        let captionFont = UIFont.systemFont(ofSize: SheetTypography.caption * SheetPreferences.readingScale)
+        let captionFont = MicaboFont.uiFont(SheetTypography.caption * SheetPreferences.readingScale)
         let captionText = caption?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let captionHeight = captionText.isEmpty ? CGFloat(0) : ceil(captionFont.lineHeight) + CGFloat(8)
         let width = ceil(size.width) + padding * 2

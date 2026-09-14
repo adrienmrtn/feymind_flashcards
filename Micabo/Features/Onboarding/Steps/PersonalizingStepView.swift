@@ -154,7 +154,7 @@ struct PersonalizingStepView: View {
                 .foregroundStyle(surface.eyebrow)
 
             Text(isDone ? (i18n?.t("onboarding.parcoursDone") ?? "Ton parcours est prêt.") : current.headline)
-                .font(MicaboFont.hanken(30, weight: .bold))
+                .font(MicaboFont.ui(30, weight: .bold))
                 .foregroundStyle(surface.title)
                 .tracking(-0.7)
                 .fixedSize(horizontal: false, vertical: true)
@@ -162,7 +162,7 @@ struct PersonalizingStepView: View {
                 .animation(.easeOut(duration: 0.28), value: current.headline)
 
             Text(isDone ? (i18n?.t("ios.whenYouWant") ?? "Quand tu veux.") : current.detail)
-                .font(MicaboFont.hanken(15, weight: .regular))
+                .font(MicaboFont.ui(15, weight: .regular))
                 .foregroundStyle(surface.prose)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
@@ -200,7 +200,7 @@ struct PersonalizingStepView: View {
                     .minimumScaleFactor(0.6)
 
                 Text(isDone ? (i18n?.t("onboarding.parcoursFinished") ?? "Terminé") : (i18n?.t("onboarding.parcoursBusy") ?? "Micabo travaille"))
-                    .font(MicaboFont.hanken(12, weight: .medium))
+                    .font(MicaboFont.ui(12, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .lineLimit(1)
             }
@@ -222,7 +222,7 @@ struct PersonalizingStepView: View {
                     marker(isDone: index < completed, isActive: index == completed)
 
                     Text(phase.step)
-                        .font(MicaboFont.hanken(15, weight: index <= completed ? .medium : .regular))
+                        .font(MicaboFont.ui(15, weight: index <= completed ? .medium : .regular))
                         .foregroundStyle(index <= completed ? MicaboColor.ink : MicaboColor.inkTertiary)
 
                     Spacer(minLength: 0)

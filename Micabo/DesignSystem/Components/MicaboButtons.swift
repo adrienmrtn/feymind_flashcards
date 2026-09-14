@@ -60,8 +60,12 @@ extension Binding {
     }
 }
 
-/// Bouton d'action principal : bloc bleu à coins 16 pt, qui s'enfonce à l'appui.
+/// Bouton d'action principal : bloc bleu à coins 14 pt, qui s'enfonce à l'appui.
 /// Sur un écran sombre, on inverse : surface claire, texte encre.
+///
+/// **Son ombre est de sa propre couleur.** Une ombre grise sous un aplat bleu le salit ;
+/// la même en bleu le fait rayonner un peu au lieu de le tacher, et c'est le seul objet de
+/// l'app qui a le droit de rayonner — il n'y en a qu'un par écran.
 struct MicaboPrimaryButtonStyle: ButtonStyle {
     var tint: Color = MicaboColor.accent
     var foreground: Color = MicaboColor.onInk
@@ -79,7 +83,7 @@ struct MicaboPrimaryButtonStyle: ButtonStyle {
     var isProminent: Bool = false
 
     private var font: Font {
-        isProminent ? MicaboFont.hanken(19, weight: .semibold) : MicaboFont.cardTitle
+        isProminent ? MicaboFont.ui(19, weight: .semibold) : MicaboFont.cardTitle
     }
 
     private var verticalPadding: CGFloat {
@@ -98,12 +102,14 @@ struct MicaboPrimaryButtonStyle: ButtonStyle {
             .padding(.vertical, verticalPadding)
             .padding(.horizontal, fullWidth ? 0 : 24)
             .background(tint, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .shadow(color: tint.opacity(0.22), radius: 3, x: 0, y: 2)
+            .shadow(color: tint.opacity(0.20), radius: 12, x: 0, y: 10)
             .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
             .hoverEffect(.highlight)
     }
 }
 
-/// Bouton secondaire : surface blanche sans bordure, le fond ivoire suffit à la détacher.
+/// Bouton secondaire : surface blanche, filet discret, le fond suffit à la détacher.
 struct MicaboSecondaryButtonStyle: ButtonStyle {
     var fullWidth: Bool = true
     var feedback: Haptics.Press = .light
@@ -116,7 +122,10 @@ struct MicaboSecondaryButtonStyle: ButtonStyle {
             .padding(.vertical, 16)
             .padding(.horizontal, fullWidth ? 0 : 24)
             .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
-            .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 3)
+            .overlay {
+                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1.5)
+            }
             .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
             .hoverEffect(.highlight)
     }

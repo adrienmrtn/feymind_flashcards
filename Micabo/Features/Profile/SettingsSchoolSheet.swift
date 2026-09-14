@@ -26,7 +26,7 @@ struct SettingsSchoolSheet: View {
                             .foregroundStyle(MicaboColor.inkTertiary)
 
                         TextField(L10n.t("app.settings.schoolPlaceholder", locale: .resolved()), text: $query)
-                            .font(MicaboFont.hanken(16, weight: .medium))
+                            .font(MicaboFont.ui(16, weight: .medium))
                             .foregroundStyle(MicaboColor.ink)
                             .textInputAutocapitalization(.words)
                             .autocorrectionDisabled()
@@ -66,10 +66,10 @@ struct SettingsSchoolSheet: View {
                         } label: {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(institution.name)
-                                    .font(MicaboFont.hanken(14, weight: .semibold))
+                                    .font(MicaboFont.ui(14, weight: .semibold))
                                     .foregroundStyle(MicaboColor.ink)
                                 Text(institution.subtitle)
-                                    .font(MicaboFont.hanken(11, weight: .medium))
+                                    .font(MicaboFont.ui(11, weight: .medium))
                                     .foregroundStyle(MicaboColor.inkTertiary)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -92,7 +92,7 @@ struct SettingsSchoolSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("OK", action: save)
-                        .font(MicaboFont.hanken(15, weight: .semibold))
+                        .font(MicaboFont.ui(15, weight: .semibold))
                 }
             }
         }

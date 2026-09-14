@@ -29,23 +29,14 @@ const purchases = readFileSync(
   resolve(repoRoot, "Micabo/Features/Paywall/PaywallPurchases.swift"),
   "utf8",
 );
+const catalog = readFileSync(
+  resolve(repoRoot, "Micabo/Features/Paywall/PaywallCatalog.swift"),
+  "utf8",
+);
 const discountOffer = readFileSync(
   resolve(repoRoot, "Micabo/Features/Paywall/DiscountOffer.swift"),
   "utf8",
 );
-const paywallCatalog = readFileSync(
-  resolve(repoRoot, "Micabo/Features/Paywall/PaywallCatalog.swift"),
-  "utf8",
-);
-
-/** Le prix d'une offre du catalogue Swift, tel qu'il est écrit. */
-function swiftPlanPrice(name: string): string {
-  const found = paywallCatalog.match(
-    new RegExp(`static let ${name} = PaywallPlan\\([\\s\\S]*?price: ([0-9.]+)`),
-  );
-  if (!found?.[1]) throw new Error(`Prix de \`${name}\` introuvable dans le catalogue Swift`);
-  return found[1];
-}
 
 /** La valeur d'un `static let` Swift, telle qu'elle est écrite. */
 function swiftConstant(source: string, name: string): string {
@@ -110,31 +101,34 @@ describe("le branchement RevenueCat de l'app", () => {
 
 describe("l'offre cadeau, des deux côtés", () => {
   it("compte les mêmes appuis et la même durée d'offre", () => {
-    // Une offre qui durerait 12 h sur le site et 24 h sur le téléphone ferait douter du
+    // Une pastille qui dirait 12 h sur le site et 24 h sur le téléphone ferait douter du
     // prix lui-même : ce sont les nombres d'une promesse, pas d'un réglage.
     expect(swiftConstant(discountOffer, "taps")).toBe(String(discount.taps));
     expect(swiftConstant(discountOffer, "windowSeconds")).toBe(String(discount.windowSeconds));
     expect(swiftConstant(discountOffer, "restSeconds")).toBe(String(discount.restSeconds));
   });
 
-  it("ne montre la minuterie ni d'un côté ni de l'autre", () => {
-    // La fenêtre décide de ce qui reste à l'écran, jamais de ce qu'on lit dessus. Un
-    // décompte réapparu d'un seul côté, c'est une offre qui presse sur un client et pas
-    // sur l'autre — et le garde tient des deux côtés parce qu'un formateur qui survit
-    // finit par retrouver une vue.
+  it("ne pose plus de minuterie sur le paywall, ni d'un côté ni de l'autre", () => {
+    // Le décompte au centième a quitté les deux paywalls : posé sur un prix, il demande de
+    // décider vite plutôt que de décider. Le garde tient des deux côtés parce qu'un
+    // formateur qui survit finit par retrouver une vue.
+    //
+    // La languette, elle, garde son décompte à la seconde (`countdown`) : elle ne vend
+    // rien, elle rappelle que la fenêtre court encore.
     expect(discountOffer).not.toContain("preciseCountdown");
-    expect(discountOffer).not.toContain("countdownLabel");
     expect(discountOffer).not.toContain('"%02d : %02d : %02d . %02d"');
     expect(discount).not.toHaveProperty("preciseCountdown");
-    expect(discount).not.toHaveProperty("countdown");
+    expect(discount).not.toHaveProperty("remainingMillis");
   });
 
-  it("annonce le même prix, celui qui est prélevé", () => {
-    // 39,99 € par an, des deux côtés. Plus de mensuel écrit à la main pour éviter que
-    // 39,99 ÷ 12 s'affiche « 3,33 € » : le chiffre qu'on lit est celui qui part.
-    expect(swiftPlanPrice("discount")).toBe("39.99");
-    expect(discountOffer).not.toContain("monthlyPrice");
+  it("annonce le prix prélevé, et pas un mensuel, sur l'offre cadeau", () => {
+    // Le cadeau disait « 3,30 € / mois » avec l'annuel juste dessous : deux chiffres pour
+    // une seule somme, dont celui qu'on retenait n'était pas celui qui part. Les deux
+    // clients écrivent 39,99 € par an, et rien d'autre.
+    expect(catalog).toContain("price: 39.99");
     expect(DISCOUNT_YEARLY.price).toBe(39.99);
+    expect(discountOffer).not.toContain("monthlyPrice");
+    expect(DISCOUNT_YEARLY).not.toHaveProperty("monthlyPrice");
   });
 
   it("vend le même produit, sur le même entitlement", () => {

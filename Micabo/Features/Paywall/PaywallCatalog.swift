@@ -5,7 +5,7 @@ enum PaywallPeriod {
     case week
     case year
 
-    /// Le mot qui suit la barre oblique : « 69,99 € / an ».
+    /// Le mot qui suit la barre oblique : « 7,99 € / semaine ».
     var unit: String {
         switch self {
         case .week: L10n.t("ios.unitWeek", locale: .resolved())
@@ -55,24 +55,48 @@ struct PaywallPlan: Identifiable, Equatable {
 
     var hasTrial: Bool { trialDays > 0 }
 
-    /// « 69,99 € »
+    /// « 69,99 € », ou ce que la boutique du pays annonce.
+    ///
+    /// **Le prix écrit n'est plus qu'un repli.** Il est celui de la France, et un étudiant
+    /// turc à qui l'on annonce des euros pendant qu'Apple lui prélève des livres lit un
+    /// chiffre faux — pas approximatif, faux. `PaywallStorePrices` garde ce que
+    /// l'offering a répondu, dans la devise et le format du pays ; le nombre d'ici ne sert
+    /// plus qu'avant la réponse du réseau, pour qu'un paywall ne s'ouvre jamais vide.
     var displayPrice: String {
-        PaywallPrice.text(price)
+        PaywallStorePrices.price(for: productID)?.localized ?? PaywallPrice.text(price)
     }
 
     /// Ce que l'offre coûte sur douze mois, quel que soit son rythme de prélèvement.
+    ///
+    /// Il reste calculé sur le prix **écrit**, et c'est voulu : `savingsPercent` compare
+    /// l'annuel à l'hebdomadaire, et une remise qui changerait de quelques points selon le
+    /// pays ferait mentir le sceau « −43 % » imprimé à côté.
     var annualCost: Decimal {
         price * period.occurrencesPerYear
     }
 
-    /// La ligne posée sous le nom de l'offre, dans la liste des plans.
+    /// Le prix ramené au mois, pour les offres qui se paient d'un bloc.
     ///
-    /// Elle dit le **rythme**, pas un second prix : le prix, la carte l'écrit déjà en
-    /// face. Un mensuel équivalent posé à côté d'un prélèvement annuel demandait deux
-    /// lectures, et le chiffre qu'on retenait n'était pas celui qui partait.
+    /// C'est **le seul chiffre qu'un étudiant sait comparer**. Personne ne divise
+    /// mentalement 69,99 par douze devant un paywall, et personne ne multiplie 7,99 par
+    /// cinquante-deux : le mois est l'unité dans laquelle un budget se pense.
+    ///
+    /// Il se divise dans la même monnaie que l'annuel affiché juste à côté. Deux nombres
+    /// sur une même carte doivent parler de la même somme : un mensuel en euros posé sous
+    /// un annuel en livres turques est pire que pas de mensuel du tout.
+    var monthlyEquivalent: String? {
+        guard period == .year else { return nil }
+        if let store = PaywallStorePrices.price(for: productID),
+           let text = store.formatted(store.amount / 12) {
+            return text
+        }
+        return PaywallPrice.text(price / 12)
+    }
+
+    /// La ligne posée sous le nom de l'offre, dans la liste des plans.
     var caption: String {
-        if period == .year {
-            return L10n.t("ios.billedYearly", locale: .resolved())
+        if let monthlyEquivalent {
+            return L10n.t("ios.pricePerMonth", locale: .resolved(), vars: ["price": monthlyEquivalent])
         }
         return L10n.t("ios.billedEach", locale: .resolved(), vars: ["unit": period.unit])
     }
@@ -147,6 +171,58 @@ enum PaywallPrice {
 
     static func text(_ amount: Decimal) -> String {
         formatter.string(from: amount as NSDecimalNumber) ?? "\(amount) €"
+    }
+}
+
+/// **Ce que la boutique a répondu**, et la seule source d'un prix affiché dès qu'elle a
+/// répondu.
+///
+/// Les six prix du catalogue sont ceux de la France. Tant qu'ils étaient les seuls, un
+/// étudiant turc lisait « 39,99 € » pendant qu'Apple lui prélevait des livres turques :
+/// un prix faux affiché à côté d'un bouton d'achat, ce qui se refuse à la relecture
+/// App Store autant que ça se mérite.
+///
+/// Le cache est rempli une fois par lancement et à l'ouverture de chaque paywall, jamais
+/// pendant le rendu : une vue qui déclencherait un appel réseau pour s'afficher clignoterait
+/// à chaque image. Tant qu'il est vide, tout retombe sur les prix écrits — c'est ce qui
+/// évite un paywall aux prix manquants pendant la seconde d'attente du réseau.
+///
+/// **Il n'est pas isolé sur l'acteur principal**, et c'est délibéré : `displayPrice` est lu
+/// par les tests hors de tout acteur, et l'isoler obligerait à faire remonter `@MainActor`
+/// jusqu'à `PaywallPitch`. Les écritures viennent toutes de `PaywallPurchases.refreshPrices()`,
+/// qui est `@MainActor`.
+enum PaywallStorePrices {
+    /// Un prix tel que la boutique le donne : la somme, sa mise en forme locale, et de quoi
+    /// en dériver un mensuel dans la même monnaie.
+    struct StorePrice {
+        let localized: String
+        let amount: Decimal
+        let currencyCode: String?
+        /// Le formateur du produit, celui d'Apple pour ce pays. Absent sur certains
+        /// produits : on retombe alors sur la somme telle quelle.
+        let formatter: NumberFormatter?
+
+        func formatted(_ value: Decimal) -> String? {
+            formatter?.string(from: value as NSDecimalNumber)
+        }
+    }
+
+    private static var byProduct: [String: StorePrice] = [:]
+
+    static func price(for productID: String) -> StorePrice? {
+        byProduct[productID]
+    }
+
+    /// Vrai quand la boutique a répondu et qu'elle vend dans une autre monnaie que l'euro.
+    /// Sert au seul endroit où un prix reste écrit à la main : le mensuel du cadeau.
+    static func isForeignCurrency(_ productID: String) -> Bool {
+        guard let code = byProduct[productID]?.currencyCode else { return false }
+        return code.uppercased() != "EUR"
+    }
+
+    static func store(_ prices: [String: StorePrice]) {
+        guard !prices.isEmpty else { return }
+        byProduct.merge(prices) { _, fresh in fresh }
     }
 }
 

@@ -85,6 +85,9 @@ struct PaywallFlowView: View {
         }
         .animation(OnboardingMotion.page, value: stage)
         .micaboScreenBackground()
+        // Le lancement les a déjà demandés ; on repasse ici parce qu'un premier appel
+        // tombé sans réseau laisserait ce paywall-là sur les prix de la France.
+        .task { await PaywallPurchases.refreshPrices() }
         .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(failure != nil)) {
             Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { failure = nil }
         } message: {

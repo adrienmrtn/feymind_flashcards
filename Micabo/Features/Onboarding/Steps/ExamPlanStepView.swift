@@ -89,7 +89,7 @@ private struct ExamCountdownCalendar: View {
             HStack(spacing: 0) {
                 ForEach(Array(MicaboCalendar.weekdayInitials(locale: i18n?.locale ?? .resolved()).enumerated()), id: \.offset) { _, initial in
                     Text(initial)
-                        .font(MicaboFont.hanken(10, weight: .semibold))
+                        .font(MicaboFont.ui(10, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .frame(maxWidth: .infinity)
                 }
@@ -124,7 +124,7 @@ private struct ExamCountdownCalendar: View {
 
             VStack(spacing: 3) {
                 Text("\(index + 1)")
-                    .font(MicaboFont.hanken(12, weight: isExam ? .bold : .regular))
+                    .font(MicaboFont.ui(12, weight: isExam ? .bold : .regular))
                     .foregroundStyle(dayTint(isExam: isExam, isLit: isLit))
                     .monospacedDigit()
                     .scaleEffect(isExam ? examScale : 1)
@@ -177,12 +177,12 @@ private struct ExamCountdownCalendar: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(t("ios.examBadge").uppercased())
-                    .font(MicaboFont.hanken(9, weight: .bold))
+                    .font(MicaboFont.ui(9, weight: .bold))
                     .tracking(1.2)
                     .foregroundStyle(MicaboColor.negative)
 
                 Text(t("ios.examDemoName"))
-                    .font(MicaboFont.hanken(14, weight: .semibold))
+                    .font(MicaboFont.ui(14, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
             }
 
@@ -212,7 +212,7 @@ private struct ExamCountdownCalendar: View {
                 .font(.system(size: 12, weight: .semibold))
 
             Text(t("ios.examReviewsPlaced", ["n": "\(reviewDays.count)"]))
-                .font(MicaboFont.hanken(12, weight: .semibold))
+                .font(MicaboFont.ui(12, weight: .semibold))
         }
         .foregroundStyle(MicaboColor.accent)
         .padding(.vertical, 8)

@@ -189,7 +189,7 @@ struct DemoRawPage: View {
     private var fileBar: some View {
         HStack(spacing: 6) {
             Text("PDF")
-                .font(MicaboFont.hanken(8, weight: .bold))
+                .font(MicaboFont.ui(8, weight: .bold))
                 .tracking(0.6)
                 .foregroundStyle(MicaboColor.onInk)
                 .padding(.vertical, 2)
@@ -197,7 +197,7 @@ struct DemoRawPage: View {
                 .background(Color(hex: 0xB5573C), in: RoundedRectangle(cornerRadius: 3, style: .continuous))
 
             Text(OnboardingDemo.fileName)
-                .font(MicaboFont.hanken(9, weight: .medium))
+                .font(MicaboFont.ui(9, weight: .medium))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .lineLimit(1)
 
@@ -214,7 +214,7 @@ struct DemoRawPage: View {
         VStack(alignment: .leading, spacing: 5) {
             ForEach(Array(OnboardingDemo.rawLines.enumerated()), id: \.offset) { index, line in
                 Text(line)
-                    .font(MicaboFont.hanken(6.5, weight: index == 0 ? .semibold : .regular))
+                    .font(MicaboFont.ui(6.5, weight: index == 0 ? .semibold : .regular))
                     .foregroundStyle(MicaboColor.inkReading)
                     .lineSpacing(1.5)
                     .fixedSize(horizontal: false, vertical: true)
@@ -298,7 +298,7 @@ struct DemoSheetPage: View {
                 .frame(width: 18, height: 2.5)
 
             Text(OnboardingDemo.sheetHeading)
-                .font(MicaboFont.hanken(13, weight: .bold))
+                .font(MicaboFont.ui(13, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
                 .tracking(-0.3)
         }
@@ -306,7 +306,7 @@ struct DemoSheetPage: View {
 
     private var paragraph: some View {
         Text(OnboardingDemo.sheetParagraph)
-            .font(MicaboFont.hanken(7.5, weight: .regular))
+            .font(MicaboFont.ui(7.5, weight: .regular))
             .foregroundStyle(MicaboColor.inkReading)
             .lineSpacing(2.5)
             .fixedSize(horizontal: false, vertical: true)
@@ -320,11 +320,11 @@ struct DemoSheetPage: View {
     private var definition: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(OnboardingDemo.sheetTerm)
-                .font(MicaboFont.hanken(8, weight: .semibold))
+                .font(MicaboFont.ui(8, weight: .semibold))
                 .foregroundStyle(OnboardingDemo.accent)
 
             Text(OnboardingDemo.sheetDefinition)
-                .font(MicaboFont.hanken(7, weight: .regular))
+                .font(MicaboFont.ui(7, weight: .regular))
                 .foregroundStyle(MicaboColor.inkReading)
                 .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -346,7 +346,7 @@ struct DemoSheetPage: View {
     /// points n'a pas d'interligne à ménager.
     private var highlight: some View {
         Text(OnboardingDemo.sheetHighlight)
-            .font(MicaboFont.hanken(8, weight: .semibold))
+            .font(MicaboFont.ui(8, weight: .semibold))
             .foregroundStyle(MicaboColor.inkReading)
             .padding(.horizontal, 2)
             .padding(.vertical, 0.5)
@@ -379,7 +379,7 @@ struct DemoWaterCycleFigure: View {
                     .font(.system(size: 8, weight: .bold))
 
                 Text(L10n.t("demo.rivers", locale: .resolved()))
-                    .font(MicaboFont.hanken(8, weight: .semibold))
+                    .font(MicaboFont.ui(8, weight: .semibold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             }
@@ -416,7 +416,7 @@ struct DemoWaterCycleFigure: View {
                 .frame(height: 17)
 
             Text(label)
-                .font(MicaboFont.hanken(8, weight: .semibold))
+                .font(MicaboFont.ui(8, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)

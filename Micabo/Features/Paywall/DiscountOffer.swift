@@ -6,11 +6,14 @@ import Foundation
 /// présente sur la fiche : trois appuis l'ouvrent, et le paywall qui suit vend le tarif.
 /// Refermé, il laisse une languette qui le rouvre d'un appui.
 ///
-/// **La fenêtre ne s'affiche plus.** Vingt-quatre heures courent toujours depuis
-/// l'ouverture du cadeau — elles décident si l'offre est encore achetable, si la languette
-/// reste et quand le cadeau revient — mais aucun écran ne montre le temps qui reste. Un
-/// décompte au centième posé sur un prix demande de décider vite plutôt que de décider ;
-/// l'offre tient sur ce qu'elle vaut, pas sur l'horloge qu'on regarde.
+/// **Le paywall ne compte plus.** Il affichait les vingt-quatre heures au centième, et un
+/// décompte posé sur un prix demande de décider vite plutôt que de décider : l'offre tient
+/// sur ce qu'elle vaut. La languette, elle, garde son décompte à la seconde — elle ne vend
+/// rien, elle rappelle seulement que la fenêtre court encore.
+///
+/// **Le paywall n'annonce plus de mensuel non plus.** Il disait « 3,30 € / mois » avec la
+/// somme annuelle juste dessous : deux chiffres pour une seule somme, dont celui qu'on
+/// retenait n'était pas celui qui part. Il écrit le prix prélevé, dans la monnaie du pays.
 ///
 /// Une seule durée, **un seul instant d'origine** : celui où le cadeau a été ouvert. Deux
 /// horloges différentes finiraient par se contredire, et un prix qui revient après avoir
@@ -22,7 +25,7 @@ enum DiscountOffer {
     /// Appuis sur le cadeau avant qu'il s'ouvre. Trois : un geste, pas un accident.
     static let taps = 3
 
-    /// La durée de l'offre. Vingt-quatre heures, comptées sans être montrées.
+    /// La durée de l'offre. Vingt-quatre heures, comptées sur la languette seulement.
     static let windowSeconds = 86400
 
     /// **Le repos entre deux fenêtres.** Quarante-huit heures.
@@ -54,7 +57,6 @@ enum DiscountOffer {
         return min(span, max(0, span - elapsed))
     }
 
-    /// Ce qui reste de la fenêtre. Compté, jamais affiché.
     static func windowRemaining(startedAt: Date, now: Date = Date()) -> Int {
         remaining(startedAt: startedAt, now: now, span: windowSeconds)
     }
@@ -72,6 +74,43 @@ enum DiscountOffer {
         Int(now.timeIntervalSince(startedAt)) >= windowSeconds + restSeconds
     }
 
+    /// « 59:59 » sous l'heure, « 23:14:07 » au-dessus.
+    ///
+    /// Deux chiffres partout : un décompte qui passe de « 9:5 » à « 10:04 » change de
+    /// largeur à chaque seconde, et une pastille qui tremble attire l'œil pour rien.
+    static func countdown(_ seconds: Int) -> String {
+        let total = max(0, seconds)
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        let rest = total % 60
+        if hours > 0 {
+            return String(format: "%02d:%02d:%02d", hours, minutes, rest)
+        }
+        return String(format: "%02d:%02d", minutes, rest)
+    }
+
+    /// Ce que lit VoiceOver, où « 23:14:07 » ne veut rien dire.
+    ///
+    /// La phrase commence par « il reste » : l'accord du participe suivrait sinon le
+    /// nombre, et « 1 heure restantes » se lit comme une faute.
+    static func countdownLabel(_ seconds: Int) -> String {
+        let total = max(0, seconds)
+        guard total > 0 else { return "offre terminée" }
+
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+
+        if hours > 0 {
+            let heures = hours == 1 ? "1 heure" : "\(hours) heures"
+            guard minutes > 0 else { return "il reste \(heures)" }
+            let mots = minutes == 1 ? "1 minute" : "\(minutes) minutes"
+            return "il reste \(heures) et \(mots)"
+        }
+
+        guard minutes > 0 else { return "il reste moins d'une minute" }
+        return minutes == 1 ? "il reste 1 minute" : "il reste \(minutes) minutes"
+    }
+
     // MARK: - Ce que l'appareil retient
 
     /// L'instant d'ouverture, ou `nil` si personne ne l'a ouvert ici.
@@ -85,7 +124,7 @@ enum DiscountOffer {
     ///
     /// Deux règles, et elles tirent en sens contraire. Une fenêtre **en cours** ne se remet
     /// pas à zéro : sans ce garde, chaque affichage repousserait la fin des vingt-quatre
-    /// heures et l'offre ne se retirerait jamais. Une fenêtre **finie**, elle, ouvre la
+    /// heures et le décompte ne descendrait plus. Une fenêtre **finie**, elle, ouvre la
     /// suivante : l'offre revient, elle ne meurt pas. Le « déjà vu » repart alors, puisqu'on
     /// parle d'une nouvelle fenêtre.
     @discardableResult
@@ -99,7 +138,7 @@ enum DiscountOffer {
     /// Le cadeau a été montré. **Et la fenêtre démarre ici aussi.**
     ///
     /// Sans ce démarrage, refermer le cadeau avant le troisième appui laissait un « déjà vu »
-    /// sans fenêtre : le cadeau ne se représentait plus (déjà vu) et la pastille ne
+    /// sans décompte : le cadeau ne se représentait plus (déjà vu) et la pastille ne
     /// s'affichait pas (pas d'instant). Le tarif réduit devenait alors introuvable dans tout
     /// le produit, sans que rien ne le signale — et c'est exactement ce qu'App Review a
     /// constaté le 10 septembre.
@@ -170,8 +209,7 @@ enum DiscountOffer {
 
     // MARK: - Le prix
 
-    /// L'offre vendue par ce paywall. Le paywall en écrit le prix annuel — 39,99 € — et
-    /// rien d'autre : c'est la somme prélevée, et la seule qu'on ait à lire.
+    /// L'offre vendue par ce paywall.
     static var plan: PaywallPlan { PaywallCatalog.discount }
 
     /// Le prix barré à côté : l'annuel plein, pas la somme de cinquante-deux semaines.

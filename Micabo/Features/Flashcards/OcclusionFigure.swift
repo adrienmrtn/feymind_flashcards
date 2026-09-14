@@ -36,7 +36,7 @@ struct OcclusionFigure: View {
                                     .fill(MicaboColor.accent)
                                     .overlay {
                                         Text("?")
-                                            .font(MicaboFont.hanken(min(frame.height * 0.6, 22), weight: .bold))
+                                            .font(MicaboFont.ui(min(frame.height * 0.6, 22), weight: .bold))
                                             .foregroundStyle(MicaboColor.onInk)
                                     }
                                     .frame(width: frame.width, height: frame.height)

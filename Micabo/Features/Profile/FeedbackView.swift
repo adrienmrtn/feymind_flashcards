@@ -19,7 +19,7 @@ struct FeedbackView: View {
         VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
             MicaboScreenHeader(title: i18n?.t("app.feedback.title") ?? "Faire un retour", back: MicaboHeaderBack.close { dismiss() }) {
                 Button(i18n?.t("app.feedback.send") ?? "Envoyer", action: send)
-                    .font(MicaboFont.hanken(15, weight: .semibold))
+                    .font(MicaboFont.ui(15, weight: .semibold))
                     .foregroundStyle(ready ? MicaboColor.accent : MicaboColor.inkTertiary)
                     .disabled(!ready)
                     .buttonStyle(MicaboPressableButtonStyle())
@@ -27,6 +27,7 @@ struct FeedbackView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 MicaboSectionCaption(text: i18n?.t("ios.aboutTopic") ?? "C'est à propos de")
+                // Un choix entre deux réponses, pas deux objets : le bloc groupé.
                 MicaboRowGroup(rows: MicaboMail.Kind.allCases.map { option in
                     MicaboRow(
                         tile: MicaboTile(
@@ -37,7 +38,7 @@ struct FeedbackView: View {
                         accessory: kind == option ? .symbol("checkmark") : .none,
                         action: { kind = option }
                     )
-                })
+                }, layout: .grouped)
             }
 
             VStack(alignment: .leading, spacing: 8) {

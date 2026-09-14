@@ -164,7 +164,7 @@ private struct RetentionChart: View {
     /// posés sur les points ; l'écran suivant les reprend en liste.
     private var heading: some View {
         Text(t("ios.retentionHeading"))
-            .font(MicaboFont.hanken(14, weight: .semibold))
+            .font(MicaboFont.ui(14, weight: .semibold))
             .foregroundStyle(MicaboColor.ink)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -199,7 +199,7 @@ private struct RetentionChart: View {
             .frame(width: 19, alignment: .leading)
 
             Text(label)
-                .font(MicaboFont.hanken(12, weight: .medium))
+                .font(MicaboFont.ui(12, weight: .medium))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -212,7 +212,7 @@ private struct RetentionChart: View {
             let isVisible = progress >= x
 
             Text(RetentionCurve.intervalLabel(forDay: day, locale: i18n?.locale ?? .resolved()))
-                .font(MicaboFont.hanken(9.5, weight: .bold))
+                .font(MicaboFont.ui(9.5, weight: .bold))
                 .foregroundStyle(MicaboColor.accent)
                 .monospacedDigit()
                 .fixedSize()
@@ -258,7 +258,7 @@ private struct RetentionChart: View {
 
         return ZStack(alignment: .topLeading) {
             Text(t("ios.retentionRemember"))
-                .font(MicaboFont.hanken(10, weight: .semibold))
+                .font(MicaboFont.ui(10, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
                 .padding(.vertical, 3)
                 .padding(.horizontal, 7)
@@ -267,7 +267,7 @@ private struct RetentionChart: View {
                 .opacity(opacity)
 
             Text(t("ios.retentionForgot"))
-                .font(MicaboFont.hanken(10, weight: .semibold))
+                .font(MicaboFont.ui(10, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .padding(.vertical, 3)
                 .padding(.horizontal, 7)
@@ -283,7 +283,7 @@ private struct RetentionChart: View {
             Spacer()
             Text(t("ios.retentionInOneMonth"))
         }
-        .font(MicaboFont.hanken(10, weight: .medium))
+        .font(MicaboFont.ui(10, weight: .medium))
         .foregroundStyle(MicaboColor.inkTertiary)
     }
 

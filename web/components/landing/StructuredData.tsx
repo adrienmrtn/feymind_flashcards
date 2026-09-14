@@ -53,7 +53,7 @@ export async function SiteStructuredData() {
         "@id": `${CANONICAL_URL}/#app`,
         name: "Micabo",
         applicationCategory: "EducationalApplication",
-        operatingSystem: "Web, iOS",
+        operatingSystem: "Web",
         url: `${CANONICAL_URL}/`,
         publisher: { "@id": `${CANONICAL_URL}/#organization` },
         description: t("landing.metaDescription"),

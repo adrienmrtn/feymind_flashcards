@@ -327,7 +327,9 @@ enum SheetAttributedText {
             ).italic()
         }
 
-        let base = MicaboFont.hanken(size, weight: span.isBold ? .semibold : style.weight)
+        // La fiche est composée dans la police de lecture, pas dans celle de l'interface :
+        // c'est le seul endroit de l'app où l'on tient trente lignes d'affilée.
+        let base = MicaboFont.reading(size, weight: span.isBold ? .semibold : style.weight)
         return span.isItalic ? base.italic() : base
     }
 

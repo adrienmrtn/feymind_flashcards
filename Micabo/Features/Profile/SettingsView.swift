@@ -41,6 +41,8 @@ struct SettingsView: View {
     @Query private var allCourses: [Course]
     @State private var paywall: PaywallTrigger?
     @State private var discountOffer: DiscountPresentation?
+    /// Relues pour que la rangée de l'offre suive son décompte sans qu'on rouvre l'écran.
+    @AppStorage(DiscountOffer.Key.startedAt) private var discountStartedAt: Double = 0
 
     private let models = [
         "google/gemini-2.5-flash-lite",
@@ -140,7 +142,7 @@ struct SettingsView: View {
     private var header: some View {
         MicaboScreenHeader(title: i18n?.t("settings.title") ?? "Réglages", back: MicaboHeaderBack.back(saveAndClose)) {
             Button(i18n?.t("ios.done") ?? "Terminé", action: saveAndClose)
-                .font(MicaboFont.hanken(15, weight: .semibold))
+                .font(MicaboFont.ui(15, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
                 .buttonStyle(MicaboPressableButtonStyle())
         }
@@ -171,7 +173,7 @@ struct SettingsView: View {
                         accessory: .none
                     )
 
-                    MicaboHairline(inset: 71)
+                    MicaboHairline(inset: 72)
 
                     // La gestion d'un abonnement App Store se fait chez Apple, et nulle part
                     // ailleurs : une app qui prétendrait résilier à sa place mentirait.
@@ -192,7 +194,7 @@ struct SettingsView: View {
                     )
 
                     if DiscountOffer.isReachable(isPro: isSubscribed, courseCount: ownedCourseCount) {
-                        MicaboHairline(inset: 71)
+                        MicaboHairline(inset: 72)
 
                         MicaboRow(
                             tile: MicaboTile(glyph: .emoji("🎁"), background: MicaboColor.tilePastels[1]),
@@ -218,15 +220,15 @@ struct SettingsView: View {
         allCourses.filter { !$0.isFromLibrary }.count
     }
 
-    /// « -43 % sur l'année », et rien de plus.
-    ///
-    /// La rangée portait aussi le temps qu'il restait sur la fenêtre. La fenêtre court
-    /// toujours — c'est elle qui décide si l'offre est atteignable — mais elle ne s'écrit
-    /// nulle part : un décompte dans les Réglages presse quelqu'un qui était venu régler
-    /// autre chose.
+    /// « -43 % sur l'année » et, quand la fenêtre court, le temps qu'il reste.
     private var discountSubtitle: String {
-        i18n?.t("ios.pro.offerHelp", ["percent": "\(DiscountOffer.savingsPercent)"])
+        let percent = i18n?.t("ios.pro.offerHelp", ["percent": "\(DiscountOffer.savingsPercent)"])
             ?? "-\(DiscountOffer.savingsPercent) % sur l'année"
+        guard discountStartedAt > 0 else { return percent }
+        let startedAt = Date(timeIntervalSince1970: discountStartedAt)
+        let left = DiscountOffer.windowRemaining(startedAt: startedAt)
+        guard left > 0 else { return percent }
+        return "\(percent) · \(DiscountOffer.countdown(left))"
     }
 
     /// La page des abonnements de l'App Store. L'adresse est celle d'Apple, pas la nôtre.
@@ -254,7 +256,7 @@ struct SettingsView: View {
                         accessory: .none
                     )
 
-                    MicaboHairline(inset: 71)
+                    MicaboHairline(inset: 72)
 
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("☁️"), background: MicaboColor.tilePastels[3]),
@@ -264,7 +266,7 @@ struct SettingsView: View {
                         action: { Task { await sync.sync(context: modelContext) } }
                     )
 
-                    MicaboHairline(inset: 71)
+                    MicaboHairline(inset: 72)
 
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("🚪"), background: MicaboColor.surfaceMuted),
@@ -323,7 +325,7 @@ struct SettingsView: View {
 
                 HStack(spacing: 11) {
                     Text("@")
-                        .font(MicaboFont.hanken(16, weight: .semibold))
+                        .font(MicaboFont.ui(16, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkTertiary)
 
                     TextField(i18n?.t("ios.usernamePlaceholder") ?? "nom d'utilisateur", text: $username)
@@ -341,7 +343,7 @@ struct SettingsView: View {
                             .tint(MicaboColor.progress)
                     } else if hasUsernameChange {
                         Button(i18n?.t("app.common.save") ?? "Enregistrer", action: commitUsername)
-                            .font(MicaboFont.hanken(13, weight: .semibold))
+                            .font(MicaboFont.ui(13, weight: .semibold))
                             .foregroundStyle(MicaboColor.accent)
                             .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
                     }
@@ -427,7 +429,7 @@ struct SettingsView: View {
                     )
                 }
 
-                MicaboHairline(inset: 71)
+                MicaboHairline(inset: 72)
 
                 Menu {
                     Picker(i18n?.t("ios.stage") ?? "Stade d'étude", selection: $stage) {
@@ -445,7 +447,7 @@ struct SettingsView: View {
                     )
                 }
 
-                MicaboHairline(inset: 71)
+                MicaboHairline(inset: 72)
 
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("📚"), background: MicaboColor.tilePastels[4]),
@@ -455,7 +457,7 @@ struct SettingsView: View {
                     action: { showSubjects = true }
                 )
 
-                MicaboHairline(inset: 71)
+                MicaboHairline(inset: 72)
 
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("🏫"), background: MicaboColor.tilePastels[5]),
@@ -465,7 +467,7 @@ struct SettingsView: View {
                     action: { showSchool = true }
                 )
 
-                MicaboHairline(inset: 71)
+                MicaboHairline(inset: 72)
 
                 Menu {
                     Picker(i18n?.t("ios.sheetLength") ?? "Longueur des fiches", selection: $sheetLength) {
@@ -482,7 +484,7 @@ struct SettingsView: View {
                     )
                 }
 
-                MicaboHairline(inset: 71)
+                MicaboHairline(inset: 72)
 
                 // La taille du texte des fiches, comme sur le site : sur cet appareil
                 // seulement, parce qu'elle appartient à l'œil qui lit, pas au cours.
@@ -583,7 +585,7 @@ struct SettingsView: View {
                     )
                 }
 
-                MicaboHairline(inset: 71)
+                MicaboHairline(inset: 72)
 
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("🆕"), background: MicaboColor.accentSoft),
@@ -636,7 +638,7 @@ struct SettingsView: View {
                     text: $supabaseURL
                 )
 
-                MicaboHairline(inset: 71)
+                MicaboHairline(inset: 72)
 
                 fieldRow(
                     emoji: "🔑",
@@ -796,7 +798,7 @@ struct SettingsView: View {
                     .foregroundStyle(MicaboColor.ink)
 
                 TextField(placeholder, text: text)
-                    .font(MicaboFont.hanken(13, weight: .regular))
+                    .font(MicaboFont.ui(13, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .tint(MicaboColor.accent)
                     .textInputAutocapitalization(.never)

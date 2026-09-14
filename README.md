@@ -441,7 +441,7 @@ rien du tout tant qu'App Store Connect n'a pas répondu.
 
 | Écran | Ce qu'il montre | Ce que fait la croix |
 | --- | --- | --- |
-| Premier paywall (`PaywallOfferView`) | Une seule offre, une seule phrase : « Essaie 3 jours gratuitement, puis 69,99 € par an », et un lien « Voir toutes les offres » | Ouvre le second |
+| Premier paywall (`PaywallOfferView`) | Une seule offre, une seule phrase : « Essaie 3 jours gratuitement, puis 5,83 € / mois (facturé 69,99 € par an) », et un lien « Voir toutes les offres » | Ouvre le second |
 | Second paywall (`PaywallPlansView`) | La grille Gratuit / Pro en six lignes, puis les deux offres à choisir, l'annuelle cochée d'avance avec sa remise | Entre dans l'app |
 
 **Une croix ne ment jamais** : elle est présente dès la première image, elle réagit au premier
@@ -450,11 +450,9 @@ fermant l'app, ce qui ne fait pas un abonné de plus mais un utilisateur de moin
 
 Les deux offres, leurs prix et la remise vivent dans `PaywallCatalog` : **annuel à 69,99 €**
 (trois jours offerts) et **hebdomadaire à 7,99 €** (sans essai). Un annuel discount à
-**39,99 €** existe dans le catalogue, hors paywall. **Chaque offre n'affiche qu'un prix, celui
-qui est prélevé** — plus de mensuel équivalent : « 5,83 € / mois » à côté d'un prélèvement
-annuel de 69,99 € demandait deux lectures, et le chiffre qu'on retenait n'était pas celui qui
-part. La remise, elle, reste **calculée** et jamais écrite à la main — un pourcentage qui
-contredit les deux prix affichés juste en dessous ne se remarque qu'en production. `MicaboTests/PaywallTests.swift`
+**39,99 €** existe dans le catalogue, hors paywall. Le prix mensuel équivalent et la remise
+sont **calculés**, jamais écrits à la main — un pourcentage qui contredit les deux prix
+affichés juste en dessous ne se remarque qu'en production. `MicaboTests/PaywallTests.swift`
 verrouille les prix, la remise et la date de premier prélèvement.
 
 Rien n'est encore branché sur une boutique. `PaywallPurchases` est le seul point de passage d'un
@@ -535,61 +533,78 @@ de la fiche.
 
 ## Direction visuelle
 
-Du papier, pas des cartes empilées. Le fond ivoire est assez marqué pour que le blanc se
-détache seul : les surfaces n'ont donc ni bordure ni ombre appuyée. Tout ce qui se liste est
-une **rangée** — une tuile pastel, un intitulé, un sous-titre, puis un accessoire à droite.
+Du fond, des cartes, et de l'air entre elles. Le fond est assez marqué pour que le blanc se
+détache seul : les surfaces n'ont donc pas de bordure, mais une ombre en deux couches qui les
+pose sans les faire léviter. Tout ce qui se liste est une **rangée** — une tuile pastel, un
+intitulé, un sous-titre, puis un accessoire à droite.
 
-**L'accent est le vert de Micabo, et non plus l'indigo.** L'indigo était le violet d'une app de
-productivité : sérieux, un peu froid, et sans rapport avec le logo, qui porte un rond vert
-menthe depuis le premier jour. Une app qu'on ouvre pour réviser gagne à être vive, et le vert
-dit « c'est acquis » dans la même langue que les boutons de notation. Deux verts, et la
-distinction est fonctionnelle, pas décorative : `accent` (`#0B8A66`) est assez sombre pour
-porter du texte de onze points sur un fond pastel et pour qu'un filet de quatre points se
-détache de sa piste, `accentVivid` (`#16C08C`) est celui du logo et ne remplit que de **grandes**
-surfaces posées sur du blanc — les colonnes de l'histogramme du profil. C'est la raison pour
-laquelle ni la jauge ni le curseur du rythme quotidien ne sont au vert vif : sur le crème, on ne
-verrait pas où ils en sont.
-`positive` reste un vert plus forestier : deux verts qui veulent dire deux choses ne peuvent
-pas être le même vert. Les pastels des tuiles et les teintes de couverture des cours sont
-remontés d'un cran, parce que six gris teintés ne donnaient pas de couleur à un écran, ils lui
-donnaient une brume.
+**Une liste d'objets est faite de cartes ; une liste de réglages reste un bloc.** C'est la
+seule distinction de mise en page de l'app, et elle est fonctionnelle. Un cours, un paquet,
+ce qu'il y a au programme : chacun est une chose qu'on ouvre, qu'on range, qu'on supprime, et
+un bloc unique coupé par des filets les présentait comme les lignes d'un même formulaire.
+Chaque rangée est donc devenue une carte, avec son ombre et son air autour
+(`MicaboRowGroup`, mise en page `.cards`). Les Réglages, eux, gardent le bloc : douze lignes
+qui appartiennent au même sujet et dont aucune ne s'ouvre — là, le filet dit la bonne chose,
+et douze cartes indépendantes se liraient comme douze décisions à prendre (`.grouped`).
 
-**Les nombres qui se lisent comme un résultat sont en SF Rounded** (`MicaboFont.number`) : le
-compte de cartes du jour, la série, les statistiques d'une session, les minutes d'un objectif.
-Un grand nombre en grotesque serré ressemble à un indicateur de tableau de bord ; le même en
-arrondi ressemble à un score, et un élève doit avoir envie de le faire monter. Le texte reste
-en Hanken Grotesk : deux familles sur une page ne tiennent que si chacune a un domaine net,
-l'une écrit les mots, l'autre les nombres.
+**L'encre n'est plus noire.** `#111827` est un noir de texte imprimé : posé sur du gris clair
+il durcit chaque rangée, et les listes avaient l'air gravées. Le navy désaturé qui le remplace
+garde tout son contraste et rend l'écran respirable. Les encres secondaires suivent, et
+`inkTertiary` cesse d'être la copie exacte d'`inkSecondary` — deux niveaux de gris qui
+portaient le même code hexadécimal ne hiérarchisaient rien.
 
-- Fond ivoire (`#F6F4ED`), surfaces blanches, encre `#191714`, **accent vert `#0B8A66`** et
-  vert vif `#16C08C` pour les remplissages
-- Typographie Hanken Grotesk embarquée (Regular / Medium / SemiBold / Bold), et **SF Rounded
-  pour les nombres** qui se lisent comme un résultat (`MicaboFont.number`)
-- Coins : 13 pt (tuiles), 16 pt (boutons, recherche), 20 pt (blocs et cartes), 28 pt (feuilles)
-- **Un seul en-tête pour toute l'app** : `MicaboScreenHeader`, sur fond crème, sur-titre en
+**L'accent est le bleu de Micabo, `#2563EB`.** Il ne sert qu'à ce qui est actif ou
+sélectionné : onglet courant, filtre choisi, cartes à réviser, bouton d'action. Deux bleus, et
+la distinction compte : `accent` est assez sombre pour porter du texte de onze points sur un
+fond pastel, `accentVivid` ne remplit que de **grandes** surfaces sur lesquelles rien n'est
+écrit. Un ambre (`cautionVivid`, `#FFC53D`) le complète pour la série et les échéances : ce
+sont les seules choses de l'app qu'on peut perdre, et elles méritent de ne pas être bleues
+comme le reste.
+
+**Deux familles de caractères, et chacune a son domaine** (`MicaboFont`). Outfit écrit
+l'interface — titres d'écran, intitulés de rangée, libellés de bouton, sur-titres, onglets, et
+tous les nombres qui se lisent comme un résultat : c'est une géométrique large, qui tient le
+gras sans s'épaissir. Hanken Grotesk écrit **ce qu'on lit vraiment** : le corps d'une fiche,
+ses encadrés, le verso d'une carte, les propositions d'un QCM. Plus étroite et plus sobre,
+elle tient l'œil d'une ligne à l'autre là où une géométrique fatigue au-delà de quelques
+lignes. Le partage n'est pas « la plus jolie pour les titres » : **l'une nomme, l'autre
+raconte**. Les deux étaient déjà dans le dépôt et aucune ne servait — `MicaboFont.hanken()`
+renvoyait `.system()`, donc l'app entière était en San Francisco et les quatre fichiers Hanken
+voyageaient dans le bundle sans jamais être appelés.
+
+- Fond `#F4F6FA`, surfaces blanches, encre `#232B3E`, **accent bleu `#2563EB`**, bleu vif
+  `#3B82F6` pour les remplissages, ambre `#FFC53D` pour la série et les échéances
+- Typographie **Outfit** (Regular / Medium / SemiBold / Bold) pour l'interface et les nombres,
+  **Hanken Grotesk** (mêmes coupes) pour le texte de lecture. Les deux sont embarquées et
+  déclarées dans `UIAppFonts` ; `FontLoader` les enregistre avant le premier rendu
+- Coins : 14 pt (tuiles, boutons, champs), 18 pt (rangées-cartes, encadrés), 22 pt (blocs et
+  cartes), 28 pt (feuilles). **Le bouton est volontairement moins rond que la carte** : une
+  carte est une surface sur laquelle on pose, un bouton est une commande qu'on presse, et un
+  bouton trop rond perd ses angles d'appui
+- Ombres en deux couches (`MicaboElevation`) : un contact d'un point sous l'objet, et une
+  diffusion large qui le décolle. Elles sont teintées de l'encre et non du noir — une ombre
+  noire sur un fond bleuté vire au gris sale. Le seul bouton d'action principal porte une
+  ombre de sa propre couleur, et c'est le seul objet de l'app qui a le droit de rayonner
+- **Un seul en-tête pour toute l'app** : `MicaboScreenHeader`, posé à même le fond, sur-titre en
   capitales grises puis grand titre serré (32 pt). Aucun écran n'a droit à son bandeau : un
   écran poussé ou une feuille ajoute un bouton rond au-dessus du sur-titre, et une page qui
   doit porter une couleur — le détail d'un cours — la porte dans sa **tuile**. Plus de barre
   de navigation système nulle part : les titres système ont tous été remplacés.
-- Deux mises en page de liste : posée à même le fond avec un filet entre les rangées (Cours),
-  ou regroupée dans un bloc blanc sous un intitulé en capitales (Réglages, Au programme)
 - Pastilles d'état au bout d'une rangée : vert pour ce qui attend, ocre pour une échéance,
   gris pour « à jour »
-- Le vert de l'accent ne sert qu'à ce qui est actif : onglet courant, filtre choisi, cartes à
-  réviser
 - Le seul aplat d'encre est le bouton d'action principal, ancré en bas de l'écran
-- Barre de trois onglets en pied d'écran, symbole plein sur l'onglet actif. Elle est dessinée
+- Barre de cinq onglets en pied d'écran, symbole plein sur l'onglet actif. Elle est dessinée
   par `RootTabView`, **hors des pages** : elles se remplacent sous elle, elle ne bouge pas
   d'un pixel. Depuis que le balayage entre onglets a disparu, c'est le seul moyen de changer
   de page. Elle s'efface sur les écrans poussés, où changer d'onglet depuis le fond d'une pile
   ne voudrait rien dire
-- **La barre est en verre, et elle flotte.** C'était une bande pleine largeur collée au bas de
-  l'écran, avec un flou noyé sous un aplat crème à 72 % : autant dire un bandeau opaque, et un
-  bandeau opaque qui touche ce qu'une page ancre au-dessus de lui donne un bouton qu'on croit
-  coupé. C'est maintenant une pastille posée à distance des bords, sur un flou franc, un filet
-  clair et sa propre ombre. Sa hauteur est déclarée (`MicaboLayout.tabBarHeight`) et non mesurée
-  sur ses libellés, parce que c'est cette hauteur que les pages réservent, et l'air qu'elle
-  laisse au-dessus d'elle l'est aussi (`MicaboLayout.tabBarGap`)
+- **La barre est plate, opaque, et collée au bas.** Elle a été une pastille en verre qui
+  flottait : un flou noyé sous un aplat à 72 %, autant dire un bandeau opaque, et un bandeau
+  opaque qui touche ce qu'une page ancre au-dessus de lui donne un bouton qu'on croit coupé.
+  C'est maintenant une bande pleine largeur, un filet du dessus, le fond de la page qui
+  continue sous l'indicateur d'accueil. Sa hauteur est déclarée (`MicaboLayout.tabBarHeight`)
+  et non mesurée sur ses libellés, parce que c'est cette hauteur que les pages réservent, et
+  l'air qu'elle laisse au-dessus d'elle l'est aussi (`MicaboLayout.tabBarGap`)
 - Un seul bouton flottant dans l'app : le « + » d'import, en bas à droite de Cours, là où le
   pouce tombe. Il n'apparaît pas quand la liste est vide, où l'écran d'accueil porte déjà son
   propre appel à importer
@@ -604,16 +619,16 @@ l'une écrit les mots, l'autre les nombres.
   sa propre zone sûre, c'est-à-dire exactement là où la barre est peinte. Le modificateur fait
   les deux choses du bon côté de la frontière : il pose l'accessoire de la page et laisse la
   hauteur de la barre en creux sous lui (`MicaboLayout.tabBarSpace`), sans prendre les appuis —
-  une surface transparente qui les avalerait rendrait les trois onglets inertes. Le Profil, qui
-  n'ancre rien, la réserve aussi : sa dernière rangée se lisait à travers le verre. Les écrans
+  une surface transparente qui les avalerait rendrait les cinq onglets inertes. Le Profil, qui
+  n'ancre rien, la réserve aussi : sa dernière rangée se collait à la barre. Les écrans
   qui masquent la barre — une fiche, ses cartes, les examens, une feuille — gardent l'`overlay`
   et la constante `bottomBarClearance` : sous eux, il n'y a que le repose-doigt
-- Balayage horizontal natif (pages qui suivent le doigt) pour changer d'onglet ; geste de retour du système sur les écrans poussés
-- Réviser : le nombre de cartes à réviser posé à même le fond ivoire, puis les cours au programme et la répartition
+- Geste de retour du système sur les écrans poussés. **On ne balaye plus d'une page à l'autre** : les onglets s'atteignent par la barre du bas, et elle seule
+- Réviser porte le nom de l'écran, la date en sur-titre et la série en pastille ; puis une carte unique qui donne le chiffre du jour, sa durée, sa répartition et sa légende. Le titre était une salutation — « Bonsoir, Adrien » — c'est-à-dire la plus grosse typographie de la page employée à ne rien dire, et le chiffre du jour repoussé d'autant
 - Un cours a deux écrans : sa **fiche**, qui est l'écran du cours, et ses **cartes**, un cran
   plus loin. Les deux portent le même en-tête que le reste de l'app — tuile du cours, matière
   et durée de lecture en sur-titre, titre — et se distinguent par leur sur-titre, pas par un
-  bandeau. La fiche pose son texte à même l'ivoire et n'encadre que les objets : définitions,
+  bandeau. La fiche pose son texte à même le fond et n'encadre que les objets : définitions,
   encadrés, tableaux, graphes, formules
 - Ce que la fiche met en avant porte **une bande jaune** (`MicaboColor.sheetMarker`), et garde
   son encre. Le passage marqué a été du texte bleu pendant une version, parce qu'un fond de

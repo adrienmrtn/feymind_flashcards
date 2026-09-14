@@ -90,7 +90,7 @@ struct SheetBlockView: View {
     private func marker(ordered: Bool, index: Int) -> some View {
         if ordered {
             Text("\(index + 1).")
-                .font(MicaboFont.hanken(SheetTypography.body, weight: .semibold))
+                .font(MicaboFont.ui(SheetTypography.body, weight: .semibold))
                 .foregroundStyle(tint)
                 .monospacedDigit()
                 // Deux chiffres tiennent dans la même gouttière que la puce : sans largeur
