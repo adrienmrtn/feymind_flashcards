@@ -103,7 +103,7 @@ export function DiscountHost({
   }, []);
 
   if (open && startedAt !== null) {
-    return <DiscountCard startedAt={startedAt} onClose={close} />;
+    return <DiscountCard onClose={close} />;
   }
 
   if (
@@ -131,59 +131,22 @@ function useCountdown(startedAt: number, span: number): number {
 }
 
 /**
- * **Le même décompte, au centième.**
- *
- * Soixante millisecondes entre deux images : assez pour que les centièmes
- * défilent, pas assez pour que ça coûte quelque chose. Le battement s'arrête à
- * zéro — une minuterie terminée qui continue de réveiller le navigateur est du
- * travail que personne ne regarde.
- */
-function usePreciseCountdown(startedAt: number, span: number): number {
-  const [left, setLeft] = useState(() =>
-    discount.remainingMillis(startedAt, Date.now(), span),
-  );
-
-  useEffect(() => {
-    let tick = 0;
-
-    function beat() {
-      const value = discount.remainingMillis(startedAt, Date.now(), span);
-      setLeft(value);
-      if (value <= 0) window.clearInterval(tick);
-    }
-
-    beat();
-    tick = window.setInterval(beat, 60);
-    return () => window.clearInterval(tick);
-  }, [span, startedAt]);
-
-  return left;
-}
-
-/**
- * **La carte de l'offre.** Une minuterie, un pourcentage, un prix, un bouton.
+ * **La carte de l'offre.** Un pourcentage, un prix, un bouton.
  *
  * Ce qu'elle ne fait pas est ce qui la fait marcher. Pas de liste d'avantages,
  * pas d'illustration, pas de sur-titre : l'offre a déjà été annoncée, et ce
  * qu'on doit lire pour décider tient en quatre lignes. Une carte d'offre qui
  * argumente encore est une carte qui n'a pas confiance en son prix.
  *
- * Le fond va du bleu ciel au blanc, du haut vers le bas : la minuterie et le
- * pourcentage sont dans la couleur, le prix et le bouton sont sur le blanc, là
- * où on les lit sans effort.
+ * Le fond va du bleu ciel au blanc, du haut vers le bas : le pourcentage est
+ * dans la couleur, le prix et le bouton sont sur le blanc, là où on les lit
+ * sans effort.
  */
-export function DiscountCard({
-  startedAt,
-  onClose,
-}: {
-  startedAt: number;
-  onClose: () => void;
-}) {
+export function DiscountCard({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
   const currency = usePresentment();
   const plan = pricing.DISCOUNT_YEARLY;
   const full = pricing.DISCOUNT_REFERENCE;
-  const monthly = pricing.monthlyEquivalent(plan, currency);
   const saved = pricing.discountSavingsPercent();
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -243,8 +206,6 @@ export function DiscountCard({
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <UrgencyPill startedAt={startedAt} />
-
           <h2
             id="cadeau-title"
             className="mt-5 text-[28px] font-bold leading-[1.08] tracking-tight-title text-ink sm:text-[36px]"
@@ -264,10 +225,10 @@ export function DiscountCard({
 
               <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
                 <span className="numeral text-[26px] font-bold leading-none text-ink">
-                  {monthly}
+                  {pricing.priceText(pricing.presentmentAmount(plan.price, currency), currency)}
                 </span>
                 <span className="text-[15px] font-medium text-ink-secondary">
-                  {t("app.paywall.perMonth")}
+                  {t("app.paywall.perYear")}
                 </span>
               </p>
 
@@ -306,43 +267,6 @@ export function DiscountCard({
         </div>
       </div>
     </div>
-  );
-}
-
-/**
- * La minuterie de l'offre, en pastille violette.
- *
- * Elle vit dans son propre composant : elle se redessine dix-sept fois par
- * seconde, et le reste de la carte n'a aucune raison de la suivre. Elle compte
- * la même fenêtre que la pastille — vingt-quatre heures — pour que refermer
- * puis rouvrir ne change pas le temps affiché.
- */
-function UrgencyPill({ startedAt }: { startedAt: number }) {
-  const { t } = useI18n();
-  const left = usePreciseCountdown(startedAt, discount.windowSeconds);
-  const over = left <= 0;
-
-  return (
-    <p
-      className="inline-flex items-baseline gap-2 rounded-pill bg-offer-urgency px-4 py-2 text-white"
-      role="timer"
-      aria-label={
-        over
-          ? t("app.paywall.offerEnded")
-          : t("app.paywall.offerLeft", {
-              time: discount.countdownLabel(Math.floor(left / 1000)),
-            })
-      }
-    >
-      {/* La police des nombres, comme partout dans Micabo, et des chiffres de largeur fixe :
-          un décompte qui change de largeur à chaque centième ferait trembler la pastille. */}
-      <span className="font-number text-[15px] font-semibold tabular-nums" aria-hidden>
-        {discount.preciseCountdown(left)}
-      </span>
-      <span className="text-[13px] font-medium text-white/85">
-        {over ? t("app.paywall.ended") : t("app.paywall.remaining")}
-      </span>
-    </p>
   );
 }
 

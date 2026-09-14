@@ -1026,6 +1026,7 @@ export const appDe = {
     discountCta: "Starten mit {pct} % weniger",
     discountYearly: "{price} einmal im Jahr, jederzeit kündbar.",
     perMonth: "pro Monat",
+    perYear: "pro Jahr",
     yearly: "Jährlich",
     weekly: "Wöchentlich",
     trialBadge: "{days} Tage gratis",

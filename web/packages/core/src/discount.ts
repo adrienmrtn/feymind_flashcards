@@ -20,8 +20,6 @@ export const taps = 3;
 /** La durée de l'offre, sur le pop-up comme sur la pastille. Vingt-quatre heures. */
 export const windowSeconds = 86400;
 
-/** Même nombre que `windowSeconds` : le pop-up ne peut pas dire autre chose que la pastille. */
-export const urgencySeconds = 86400;
 
 /**
  * **Le repos entre deux fenêtres.** Quarante-huit heures.
@@ -48,34 +46,9 @@ export function remaining(startedAt: number, now: number, span: number): number 
   return Math.min(span, Math.max(0, span - elapsed));
 }
 
-/**
- * La même durée, **au millième**, pour la minuterie qui affiche des centièmes.
- *
- * `remaining` arrondit à la seconde, ce qui suffit à une pastille mais fait
- * bégayer un affichage qui montre deux chiffres après la virgule : deux images
- * de suite tombent dans la même seconde, et le décompte a l'air arrêté.
- */
-export function remainingMillis(startedAt: number, now: number, span: number): number {
-  const total = span * 1000;
-  const left = total - (now - startedAt);
-  if (!Number.isFinite(left)) return 0;
-  return Math.min(total, Math.max(0, left));
-}
 
-/** Ce que le pop-up et la pastille décomptent, au millième. */
-export function windowMillisRemaining(startedAt: number, now: number): number {
-  return remainingMillis(startedAt, now, windowSeconds);
-}
 
-/** Ce que la minuterie du paywall décompte, au millième — la même fenêtre. */
-export function urgencyMillisRemaining(startedAt: number, now: number): number {
-  return windowMillisRemaining(startedAt, now);
-}
 
-/** Ce que la minuterie du paywall affiche — la même fenêtre que la pastille. */
-export function urgencyRemaining(startedAt: number, now: number): number {
-  return windowRemaining(startedAt, now);
-}
 
 /** Ce que la pastille affiche. */
 export function windowRemaining(startedAt: number, now: number): number {
@@ -116,28 +89,6 @@ export function countdown(seconds: number): string {
   return `${pad(minutes)}:${pad(rest)}`;
 }
 
-/**
- * **Le décompte du paywall : « 00 : 29 : 48 . 69 ».**
- *
- * Les centièmes sont là pour une raison, et ce n'est pas la précision : une
- * minuterie qui bouge à chaque image se regarde, une minuterie qui saute d'une
- * seconde à l'autre se lit une fois puis s'oublie. C'est le seul endroit du
- * produit où l'on demande de décider maintenant.
- *
- * Les séparateurs sont espacés — « 00 : 29 » et non « 00:29 » — parce qu'à cette
- * taille deux-points collés entre deux chiffres se lisent comme une faute de
- * frappe. Tous les nombres sont sur deux chiffres : un décompte qui change de
- * largeur à chaque centième ferait trembler la pastille qui le porte.
- */
-export function preciseCountdown(millis: number): string {
-  const total = Math.max(0, Math.floor(millis));
-  const pad = (value: number) => String(value).padStart(2, "0");
-  const hours = Math.floor(total / 3_600_000);
-  const minutes = Math.floor((total % 3_600_000) / 60_000);
-  const seconds = Math.floor((total % 60_000) / 1000);
-  const hundredths = Math.floor((total % 1000) / 10);
-  return `${pad(hours)} : ${pad(minutes)} : ${pad(seconds)} . ${pad(hundredths)}`;
-}
 
 /**
  * Ce que lit un lecteur d'écran, où « 23:14:07 » ne veut rien dire.

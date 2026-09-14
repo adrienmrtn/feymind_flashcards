@@ -1024,6 +1024,7 @@ export const appFr = {
     discountCta: "Commencer avec {pct} % de moins",
     discountYearly: "{price} facturés une fois par an, résiliable à tout moment.",
     perMonth: "par mois",
+    perYear: "par an",
     yearly: "Annuel",
     weekly: "Hebdomadaire",
     trialBadge: "{days} jours gratuits",

@@ -276,10 +276,11 @@ describe("les offres", () => {
     // d'ICU - et un prix qui ne s'espace pas pareil selon la machine est une différence qu'on
     // finit par chercher longtemps.
     const yearlyPerMonth = "5,83\u00a0€";
-    // Le discount **écrit** son mensuel au lieu de le diviser : 39,99 ÷ 12 fait 3,3325, que
-    // le calcul rendrait « 3,33 € ». C'est 3,30 € qu'annonce l'offre cadeau, et le paywall
-    // affiche l'annuel prélevé juste à côté pour que rien ne soit sous-entendu.
-    const discountPerMonth = "3,30\u00a0€";
+    // Le cadeau **n'annonce plus de mensuel** : son paywall écrit le prix prélevé, 39,99 €
+    // par an. Le plan ne porte donc plus de `monthlyPrice` écrit, et la division ordinaire
+    // reprend ses droits — 39,99 ÷ 12 fait 3,3325, soit « 3,33 € ». Personne ne l'affiche ;
+    // ce que ce test tient, c'est qu'aucun nombre écrit à la main ne traîne derrière.
+    const discountPerMonth = "3,33\u00a0€";
 
     expect(monthlyEquivalent(YEARLY)).toBe(yearlyPerMonth);
     expect(monthlyEquivalent(DISCOUNT_YEARLY)).toBe(discountPerMonth);

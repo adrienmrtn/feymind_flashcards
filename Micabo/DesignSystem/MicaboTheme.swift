@@ -126,9 +126,6 @@ enum MicaboColor {
     static let offerSkyDeep = Color(hex: 0x0B8FDC)
     static var offerWash: Color { palette.offerWash }
     static var offerWashSoft: Color { palette.offerWashSoft }
-    /// Le violet de la minuterie, et rien d'autre : c'est la seule chose de la carte qui
-    /// compte à rebours, et elle ne doit pas se confondre avec le bleu qui vend.
-    static let offerUrgency = Color(hex: 0x5B46E5)
 
     /// Teintes de couverture attribuées aux cours, lisibles avec du texte blanc.
     ///

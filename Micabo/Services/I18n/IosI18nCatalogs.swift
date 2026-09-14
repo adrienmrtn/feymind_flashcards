@@ -1,6 +1,7 @@
 /// Phrases propres à l'iPhone. Les clés partagées vivent dans `SharedI18nCatalogs`.
 enum IosI18nCatalogs {
     static let fr: [String: String] = [
+        "ios.perYear": "par an",
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Ne loupe jamais un jour.",
         "ios.notifSubtitle": "Un rappel par jour, à l'heure où tu révises. Rien d'autre.",
@@ -594,6 +595,7 @@ enum IosI18nCatalogs {
     ]
 
     static let de: [String: String] = [
+        "ios.perYear": "pro Jahr",
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Verpass keinen Tag.",
         "ios.notifSubtitle": "Eine Erinnerung pro Tag, zu deiner Lernzeit. Sonst nichts.",
@@ -1187,6 +1189,7 @@ enum IosI18nCatalogs {
     ]
 
     static let es: [String: String] = [
+        "ios.perYear": "al año",
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "No te saltes ni un día.",
         "ios.notifSubtitle": "Un recordatorio al día, a tu hora de repasar. Nada más.",
@@ -1780,6 +1783,7 @@ enum IosI18nCatalogs {
     ]
 
     static let tr: [String: String] = [
+        "ios.perYear": "yılda",
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Hiçbir günü kaçırma.",
         "ios.notifSubtitle": "Günde bir hatırlatma, çalıştığın saatte. Başka bir şey yok.",
@@ -2379,6 +2383,7 @@ enum IosI18nCatalogs {
     /// est pas encore retombe sur le catalogue partagé, puis sur le français - le
     /// comportement d'avant, ni meilleur ni pire. Chaque écran retouché ajoute les siennes.
     static let en: [String: String] = [
+        "ios.perYear": "per year",
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Never miss a day.",
         "ios.notifSubtitle": "One reminder a day, when you study. Nothing else.",

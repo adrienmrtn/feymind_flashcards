@@ -1026,6 +1026,7 @@ export const appEs = {
     discountCta: "Empezar con {pct} % menos",
     discountYearly: "{price} cobrados una vez al año, cancelable cuando quieras.",
     perMonth: "al mes",
+    perYear: "al año",
     yearly: "Anual",
     weekly: "Semanal",
     trialBadge: "{days} días gratis",

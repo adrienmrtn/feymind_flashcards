@@ -29,6 +29,10 @@ const purchases = readFileSync(
   resolve(repoRoot, "Micabo/Features/Paywall/PaywallPurchases.swift"),
   "utf8",
 );
+const catalog = readFileSync(
+  resolve(repoRoot, "Micabo/Features/Paywall/PaywallCatalog.swift"),
+  "utf8",
+);
 const discountOffer = readFileSync(
   resolve(repoRoot, "Micabo/Features/Paywall/DiscountOffer.swift"),
   "utf8",
@@ -99,26 +103,32 @@ describe("l'offre cadeau, des deux côtés", () => {
   it("compte les mêmes appuis et la même durée d'offre", () => {
     // Une pastille qui dirait 12 h sur le site et 24 h sur le téléphone ferait douter du
     // prix lui-même : ce sont les nombres d'une promesse, pas d'un réglage.
-    // Pop-up et pastille partagent cette durée : deux horloges se contrediraient.
     expect(swiftConstant(discountOffer, "taps")).toBe(String(discount.taps));
-    expect(swiftConstant(discountOffer, "urgencySeconds")).toBe(String(discount.urgencySeconds));
     expect(swiftConstant(discountOffer, "windowSeconds")).toBe(String(discount.windowSeconds));
     expect(swiftConstant(discountOffer, "restSeconds")).toBe(String(discount.restSeconds));
-    expect(discount.urgencySeconds).toBe(discount.windowSeconds);
   });
 
-  it("écrit la minuterie de la même façon, centièmes comprises", () => {
-    // La minuterie est ce que l'œil suit pendant qu'on décide : « 00 : 29 : 48 . 69 » sur le
-    // téléphone et « 00:29:48 » sur le site, ce sont deux offres qui n'ont pas la même
-    // urgence.
-    expect(discount.preciseCountdown(1_788_690)).toBe("00 : 29 : 48 . 69");
-    expect(discountOffer).toContain('"%02d : %02d : %02d . %02d"');
+  it("ne pose plus de minuterie sur le paywall, ni d'un côté ni de l'autre", () => {
+    // Le décompte au centième a quitté les deux paywalls : posé sur un prix, il demande de
+    // décider vite plutôt que de décider. Le garde tient des deux côtés parce qu'un
+    // formateur qui survit finit par retrouver une vue.
+    //
+    // La languette, elle, garde son décompte à la seconde (`countdown`) : elle ne vend
+    // rien, elle rappelle que la fenêtre court encore.
+    expect(discountOffer).not.toContain("preciseCountdown");
+    expect(discountOffer).not.toContain('"%02d : %02d : %02d . %02d"');
+    expect(discount).not.toHaveProperty("preciseCountdown");
+    expect(discount).not.toHaveProperty("remainingMillis");
   });
 
-  it("annonce le même prix mensuel, écrit et non calculé", () => {
-    // 39,99 ÷ 12 fait 3,3325. Les deux clients écrivent 3,30, et affichent l'annuel à côté.
-    expect(swiftConstant(discountOffer, "monthlyPrice")).toBe("3.30");
-    expect(DISCOUNT_YEARLY.monthlyPrice).toBe(3.3);
+  it("annonce le prix prélevé, et pas un mensuel, sur l'offre cadeau", () => {
+    // Le cadeau disait « 3,30 € / mois » avec l'annuel juste dessous : deux chiffres pour
+    // une seule somme, dont celui qu'on retenait n'était pas celui qui part. Les deux
+    // clients écrivent 39,99 € par an, et rien d'autre.
+    expect(catalog).toContain("price: 39.99");
+    expect(DISCOUNT_YEARLY.price).toBe(39.99);
+    expect(discountOffer).not.toContain("monthlyPrice");
+    expect(DISCOUNT_YEARLY).not.toHaveProperty("monthlyPrice");
   });
 
   it("vend le même produit, sur le même entitlement", () => {

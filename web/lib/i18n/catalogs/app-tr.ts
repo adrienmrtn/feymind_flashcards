@@ -1024,6 +1024,7 @@ export const appTr = {
     discountCta: "%{pct} daha azla başla",
     discountYearly: "{price} yılda bir kez, istediğin an iptal.",
     perMonth: "ayda",
+    perYear: "yılda",
     yearly: "Yıllık",
     weekly: "Haftalık",
     trialBadge: "{days} gün ücretsiz",

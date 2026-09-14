@@ -1023,6 +1023,7 @@ export const appEn = {
     discountCta: "Start with {pct} % off",
     discountYearly: "{price} billed once a year, cancel anytime.",
     perMonth: "per month",
+    perYear: "per year",
     yearly: "Yearly",
     weekly: "Weekly",
     trialBadge: "{days} days free",

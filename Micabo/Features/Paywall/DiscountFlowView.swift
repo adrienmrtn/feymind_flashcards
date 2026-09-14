@@ -4,13 +4,13 @@ import SwiftUI
 ///
 /// Deux temps, et l'ordre compte. D'abord un cadeau posé sur la fiche qu'on vient
 /// d'obtenir : il ne dit pas de prix, il dit qu'il y a quelque chose à ouvrir, et il
-/// demande trois appuis. Ensuite le tarif réduit, avec sa minuterie.
+/// demande trois appuis. Ensuite le tarif réduit, et rien qu'un prix.
 ///
 /// Pourquoi trois appuis plutôt qu'un bouton « Voir mon cadeau » : un paywall qui s'ouvre
 /// tout seul se referme tout seul. Trois appuis, c'est une seconde et demie où la main
 /// participe — et une offre qu'on a déballée se lit avant de se fermer.
 ///
-/// Les nombres — trois appuis, vingt-quatre heures, 3,30 € — sont tous dans
+/// Les nombres — trois appuis, vingt-quatre heures, 39,99 € — sont tous dans
 /// `DiscountOffer`, qui est le miroir du module partagé avec le web.
 struct DiscountFlowView: View {
     /// Vrai quand on rouvre depuis la pastille : le cadeau ne se déballe qu'une fois.
@@ -52,7 +52,6 @@ struct DiscountFlowView: View {
 
             case .paywall:
                 DiscountPaywallStage(
-                    startedAt: startedAt ?? Date(),
                     isPurchasing: isPurchasing,
                     onClose: onDismiss,
                     onSubscribe: { Task { await buy() } },
@@ -370,7 +369,6 @@ private struct DiscountRibbons: View {
 /// pour décider tient en quatre lignes. Un écran d'offre qui argumente encore est un écran
 /// qui n'a pas confiance en son prix.
 private struct DiscountPaywallStage: View {
-    let startedAt: Date
     var isPurchasing: Bool
     var onClose: () -> Void
     var onSubscribe: () -> Void
@@ -385,25 +383,21 @@ private struct DiscountPaywallStage: View {
                 DiscountCloseButton(action: onClose)
             }
 
-            DiscountCountdownPill(startedAt: startedAt)
-                .padding(.top, MicaboSpacing.xxs)
-                .onboardingAppear(index: 0)
-
             headline
-                .padding(.top, MicaboSpacing.md)
-                .onboardingAppear(index: 1)
+                .padding(.top, MicaboSpacing.sm)
+                .onboardingAppear(index: 0)
 
             priceCard
                 .padding(.top, MicaboSpacing.lg)
-                .onboardingAppear(index: 2)
+                .onboardingAppear(index: 1)
 
             callToAction
                 .padding(.top, MicaboSpacing.md)
-                .onboardingAppear(index: 3)
+                .onboardingAppear(index: 2)
 
-            // Le mensuel vend, l'annuel engage : la somme réellement prélevée est écrite
-            // sous le bouton, jamais ailleurs qu'à côté de lui.
-            Text("\(plan.displayPrice) facturés une fois par an, résiliable sur l'App Store.")
+            // Le rythme du prélèvement et la sortie : le prix est déjà écrit au-dessus, il
+            // n'a pas besoin d'être répété pour être tenu.
+            Text("Facturé une fois par an, résiliable sur l'App Store.")
                 .font(MicaboFont.ui(11.5, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .multilineTextAlignment(.center)
@@ -455,11 +449,11 @@ private struct DiscountPaywallStage: View {
                     .foregroundStyle(MicaboColor.offerSky)
 
                 HStack(alignment: .lastTextBaseline, spacing: 6) {
-                    Text(DiscountOffer.monthlyText)
+                    Text(plan.displayPrice)
                         .font(MicaboFont.number(26, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
 
-                    Text(L10n.t("ios.perMonth", locale: .resolved()))
+                    Text(L10n.t("ios.perYear", locale: .resolved()))
                         .font(MicaboFont.ui(15, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
@@ -501,49 +495,6 @@ private struct DiscountPaywallStage: View {
             )
         )
         .disabled(isPurchasing)
-    }
-}
-
-/// **La minuterie de l'offre**, en pastille violette.
-///
-/// Les centièmes défilent, et ce n'est pas de la précision : une minuterie qui bouge à chaque
-/// image se regarde, une minuterie qui saute d'une seconde à l'autre se lit une fois puis
-/// s'oublie. Elle compte la même fenêtre que la languette — vingt-quatre heures — pour que
-/// refermer puis rouvrir ne change pas le temps affiché.
-private struct DiscountCountdownPill: View {
-    let startedAt: Date
-
-    var body: some View {
-        // Vingt images par seconde, cadencées par `TimelineView` : un `Timer` retenu par la
-        // vue continuerait de battre après sa disparition.
-        TimelineView(.periodic(from: .now, by: 0.05)) { context in
-            pill(DiscountOffer.windowMillisRemaining(startedAt: startedAt, now: context.date))
-        }
-    }
-
-    private func pill(_ left: Int) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 7) {
-            // La police des nombres, comme partout dans Micabo, et des chiffres de largeur
-            // fixe : un décompte qui change de largeur à chaque centième ferait trembler la
-            // pastille qui le porte.
-            Text(DiscountOffer.preciseCountdown(left))
-                .font(MicaboFont.number(15, weight: .semibold))
-                .monospacedDigit()
-
-            Text(left > 0 ? "restant" : "terminé")
-                .font(MicaboFont.ui(13, weight: .medium))
-                .foregroundStyle(Color.white.opacity(0.85))
-        }
-        .foregroundStyle(Color.white)
-        .padding(.vertical, 9)
-        .padding(.horizontal, 15)
-        .background(MicaboColor.offerUrgency, in: Capsule())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            left > 0
-                ? "Offre réservée, \(DiscountOffer.countdownLabel(left / 1000))"
-                : "Offre terminée"
-        )
     }
 }
 

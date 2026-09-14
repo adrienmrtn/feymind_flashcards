@@ -164,7 +164,6 @@ export const DISCOUNT_YEARLY: Plan = {
   title: "Annuel",
   price: 39.99,
   period: "year",
-  monthlyPrice: 3.3,
   trialDays: 0,
 };
 
