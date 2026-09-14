@@ -117,7 +117,7 @@ export const fr = {
     resultsNote: "Sur les étudiants qui suivent leur plan jusqu'au jour J. C'est le même chiffre que celui du parcours d'inscription, et il n'y en a pas d'autre sur cette page.",
     questionsEyebrow: "Questions",
     questionsTitle: "Ce qu'on nous demande.",
-    questionsNote: "Six questions, celles qu'on se pose avant de déposer son premier cours.",
+    questionsNote: "Cinq questions, celles qu'on se pose avant de déposer son premier cours.",
     questionsMore: "Micabo ou Anki : la comparaison",
     closingTitle: "Ton prochain examen a une date. Ton plan commence maintenant.",
     footerTagline: "Tes cours deviennent un plan jour par jour, des cartes et des examens blancs, jusqu'au jour J.",

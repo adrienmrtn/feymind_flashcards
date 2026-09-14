@@ -118,7 +118,7 @@ export const en: Catalog = {
     resultsNote: "Among students who follow their plan all the way to exam day. It is the same figure as in the sign-up flow, and there is no other one on this page.",
     questionsEyebrow: "Questions",
     questionsTitle: "What we get asked.",
-    questionsNote: "Six questions, the ones you ask before dropping a first course.",
+    questionsNote: "Five questions, the ones you ask before dropping a first course.",
     questionsMore: "Micabo or Anki: the comparison",
     closingTitle: "Your next exam has a date. Your plan starts now.",
     footerTagline: "Your courses become a day-by-day plan, cards and mock exams, right up to exam day.",

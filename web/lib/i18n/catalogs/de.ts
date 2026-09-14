@@ -118,7 +118,7 @@ export const de: Catalog = {
     resultsNote: "Bei Lernenden, die ihrem Plan bis zum Prüfungstag folgen. Es ist dieselbe Zahl wie bei der Anmeldung, und es gibt keine andere auf dieser Seite.",
     questionsEyebrow: "Fragen",
     questionsTitle: "Was uns gefragt wird.",
-    questionsNote: "Sechs Fragen, die man sich stellt, bevor man den ersten Kurs ablegt.",
+    questionsNote: "Fünf Fragen, die man sich stellt, bevor man den ersten Kurs ablegt.",
     questionsMore: "Micabo oder Anki: der Vergleich",
     closingTitle: "Deine nächste Prüfung hat ein Datum. Dein Plan beginnt jetzt.",
     footerTagline: "Aus deinen Unterlagen werden ein Plan Tag für Tag, Karten und Probeprüfungen, bis zum Prüfungstag.",

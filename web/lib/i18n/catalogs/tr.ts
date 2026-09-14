@@ -118,7 +118,7 @@ export const tr: Catalog = {
     resultsNote: "Planını sınav gününe kadar izleyen öğrenciler arasında. Kayıttaki rakamın aynısı ve bu sayfada başka rakam yok.",
     questionsEyebrow: "Sorular",
     questionsTitle: "Bize sorulanlar.",
-    questionsNote: "Altı soru, ilk dersini bırakmadan önce sorduğun sorular.",
+    questionsNote: "Beş soru, ilk dersini bırakmadan önce sorduğun sorular.",
     questionsMore: "Micabo veya Anki: karşılaştırma",
     closingTitle: "Bir sonraki sınavının tarihi var. Planın şimdi başlıyor.",
     footerTagline: "Derslerin gün gün bir plana, kartlara ve deneme sınavlarına dönüşür, sınav gününe kadar.",

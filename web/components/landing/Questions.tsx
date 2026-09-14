@@ -12,10 +12,13 @@ import {
 /**
  * Les questions, et de vraies questions.
  *
- * Six, pas quinze. Une foire aux questions qui répond à des questions que personne ne pose est
+ * Cinq, pas quinze. Une foire aux questions qui répond à des questions que personne ne pose est
  * un bloc de texte pour le référencement, et ça se lit. Celles-ci sont celles qu'on se pose
  * devant un outil qui lit ses cours : est-ce que c'est privé, est-ce que ça invente, est-ce
- * que ça marche dans ma langue, combien de temps par jour, et sur mon téléphone.
+ * que ça marche dans ma langue, combien de temps par jour, et ce que devient Anki.
+ *
+ * La liste saute `faq5` : c'était « Ça marche sur iPhone ? », retirée avec les mentions de
+ * l'app. Les suivantes gardent leur numéro pour que le retour en arrière soit une addition.
  */
 export function Questions() {
   const { t } = useI18n();

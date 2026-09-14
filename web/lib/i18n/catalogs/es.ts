@@ -118,7 +118,7 @@ export const es: Catalog = {
     resultsNote: "Entre los estudiantes que siguen su plan hasta el día del examen. Es la misma cifra que en el registro, y no hay otra en esta página.",
     questionsEyebrow: "Preguntas",
     questionsTitle: "Lo que nos preguntan.",
-    questionsNote: "Seis preguntas, las que uno se hace antes de dejar su primera clase.",
+    questionsNote: "Cinco preguntas, las que uno se hace antes de dejar su primera clase.",
     questionsMore: "Micabo o Anki: la comparación",
     closingTitle: "Tu próximo examen tiene fecha. Tu plan empieza ahora.",
     footerTagline: "Tus apuntes se convierten en un plan día a día, tarjetas y simulacros, hasta el día del examen.",
