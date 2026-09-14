@@ -57,7 +57,7 @@ struct OcclusionEditorSheet: View {
             back: MicaboHeaderBack.close { dismiss() }
         ) {
             Button(L10n.t("ios.create", locale: .resolved()), action: save)
-                .font(MicaboFont.hanken(15, weight: .semibold))
+                .font(MicaboFont.ui(15, weight: .semibold))
                 .foregroundStyle(canSave ? MicaboColor.accent : MicaboColor.inkTertiary)
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
                 .disabled(!canSave)
@@ -129,7 +129,7 @@ struct OcclusionEditorSheet: View {
                 .micaboGroup(radius: MicaboRadius.md)
 
             Text(L10n.t("ios.occlusionHint", locale: .resolved()))
-                .font(MicaboFont.hanken(12, weight: .regular))
+                .font(MicaboFont.ui(12, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -140,7 +140,7 @@ struct OcclusionEditorSheet: View {
             .fill(MicaboColor.accent.opacity(isDraft ? 0.45 : 0.85))
             .overlay {
                 Text("\(index)")
-                    .font(MicaboFont.hanken(12, weight: .bold))
+                    .font(MicaboFont.ui(12, weight: .bold))
                     .foregroundStyle(MicaboColor.onInk)
             }
             .frame(width: rect.width, height: rect.height)
@@ -206,7 +206,7 @@ struct OcclusionEditorSheet: View {
                     ForEach(Array(zones.enumerated()), id: \.element.id) { index, zone in
                         HStack(spacing: 12) {
                             Text("\(index + 1)")
-                                .font(MicaboFont.hanken(12, weight: .bold))
+                                .font(MicaboFont.ui(12, weight: .bold))
                                 .foregroundStyle(MicaboColor.onInk)
                                 .frame(width: 24, height: 24)
                                 .background(MicaboColor.accent, in: Circle())

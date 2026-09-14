@@ -635,13 +635,15 @@ private extension UIFont {
     func withTrait(_ trait: UIFontDescriptor.SymbolicTraits, enabled: Bool) -> UIFont {
         var traits = fontDescriptor.symbolicTraits
         if enabled { traits.insert(trait) } else { traits.remove(trait) }
-        // Le gras d'une fiche est un demi-gras : la fonte système passe par le poids, pas par
-        // le trait, donc on reconstruit depuis le poids voulu.
+        // Le gras d'une fiche est un demi-gras, et il se demande **par le poids** : Hanken
+        // est une famille de quatre fichiers distincts, et lui poser le trait gras ne ferait
+        // qu'épaissir le Regular au lieu de charger le SemiBold.
         if trait == .traitBold {
-            let weight: UIFont.Weight = enabled ? .semibold : .regular
-            let base = UIFont.systemFont(ofSize: pointSize, weight: weight)
-            guard traits.contains(.traitItalic), let italic = base.fontDescriptor.withSymbolicTraits(.traitItalic) else { return base }
-            return UIFont(descriptor: italic, size: pointSize)
+            return MicaboFont.uiFont(
+                pointSize,
+                weight: enabled ? .semibold : .regular,
+                italic: traits.contains(.traitItalic)
+            )
         }
         guard let descriptor = fontDescriptor.withSymbolicTraits(traits) else { return self }
         return UIFont(descriptor: descriptor, size: pointSize)

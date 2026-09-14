@@ -90,7 +90,7 @@ struct RootTabView: View {
         navigationBar.shadowColor = .clear
         navigationBar.titleTextAttributes = [
             .foregroundColor: UIColor(MicaboColor.ink),
-            .font: UIFont.systemFont(ofSize: 16, weight: .semibold)
+            .font: MicaboFont.uiDisplayFont(16, weight: .semibold)
         ]
         UINavigationBar.appearance().standardAppearance = navigationBar
         UINavigationBar.appearance().scrollEdgeAppearance = navigationBar

@@ -101,14 +101,14 @@ struct PaywallLegalFooter: View {
 
     private var separator: some View {
         Text("·")
-            .font(MicaboFont.hanken(11.5, weight: .regular))
+            .font(MicaboFont.ui(11.5, weight: .regular))
             .foregroundStyle(MicaboColor.inkTertiary)
     }
 
     private func entry(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(MicaboFont.hanken(11.5, weight: .regular))
+                .font(MicaboFont.ui(11.5, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)

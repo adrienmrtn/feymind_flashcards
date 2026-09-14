@@ -38,7 +38,7 @@ struct MicaboTabBar: View {
                         Image(systemName: isSelected ? tab.selectedSystemImage : tab.systemImage)
                             .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
                         Text(label)
-                            .font(MicaboFont.hanken(10, weight: isSelected ? .semibold : .medium))
+                            .font(MicaboFont.ui(10, weight: isSelected ? .semibold : .medium))
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
                     }

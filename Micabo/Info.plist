@@ -20,8 +20,16 @@
 	<string>Micabo utilise le micro pour que tu répondes à voix haute aux questions d'un examen blanc.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Micabo transcrit ce que tu dis pendant un examen blanc pour le corriger.</string>
+	<!--
+	Les deux familles, et le partage est net : Outfit écrit l'interface, Hanken Grotesk
+	écrit le texte qu'on lit. Voir `MicaboFont`.
+	-->
 	<key>UIAppFonts</key>
 	<array>
+		<string>Outfit-Regular.ttf</string>
+		<string>Outfit-Medium.ttf</string>
+		<string>Outfit-SemiBold.ttf</string>
+		<string>Outfit-Bold.ttf</string>
 		<string>HankenGrotesk-Regular.ttf</string>
 		<string>HankenGrotesk-Medium.ttf</string>
 		<string>HankenGrotesk-SemiBold.ttf</string>

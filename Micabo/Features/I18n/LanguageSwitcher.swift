@@ -37,7 +37,7 @@ struct LanguageSwitcher: View {
                     .font(.system(size: 16))
                     .accessibilityHidden(true)
                 Text(i18n.locale.nativeName)
-                    .font(MicaboFont.hanken(14, weight: .medium))
+                    .font(MicaboFont.ui(14, weight: .medium))
                     .lineLimit(1)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 11, weight: .semibold))
@@ -80,7 +80,7 @@ struct LanguageSwitcher: View {
                     .font(.system(size: 17))
                     .accessibilityHidden(true)
                 Text(i18n.locale.nativeName)
-                    .font(MicaboFont.hanken(13, weight: .medium))
+                    .font(MicaboFont.ui(13, weight: .medium))
                     .foregroundStyle(surface.isDark ? Color.white.opacity(0.78) : MicaboColor.inkSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -93,7 +93,7 @@ struct LanguageSwitcher: View {
     private var card: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(i18n.t("ios.appLanguage"))
-                .font(MicaboFont.hanken(13, weight: .regular))
+                .font(MicaboFont.ui(13, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
@@ -106,7 +106,7 @@ struct LanguageSwitcher: View {
                                 .font(.system(size: 22))
                                 .accessibilityHidden(true)
                             Text(code.nativeName)
-                                .font(MicaboFont.hanken(14, weight: .medium))
+                                .font(MicaboFont.ui(14, weight: .medium))
                                 .multilineTextAlignment(.leading)
                                 .lineLimit(2)
                                 .minimumScaleFactor(0.85)
@@ -126,7 +126,7 @@ struct LanguageSwitcher: View {
             }
 
             Text(i18n.t("ios.appLanguageHelp"))
-                .font(MicaboFont.hanken(13, weight: .regular))
+                .font(MicaboFont.ui(13, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -137,7 +137,7 @@ struct LanguageSwitcher: View {
     private var flags: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(i18n.t("locale.choose"))
-                .font(MicaboFont.hanken(13, weight: .medium))
+                .font(MicaboFont.ui(13, weight: .medium))
                 .foregroundStyle(surface.isDark ? Color.white.opacity(0.7) : MicaboColor.inkTertiary)
 
             HStack(spacing: 8) {
@@ -150,7 +150,7 @@ struct LanguageSwitcher: View {
                                 .font(.system(size: 28))
                                 .accessibilityHidden(true)
                             Text(code.nativeName)
-                                .font(MicaboFont.hanken(11.5, weight: .medium))
+                                .font(MicaboFont.ui(11.5, weight: .medium))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.75)
                         }

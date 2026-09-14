@@ -303,7 +303,7 @@ struct StudyView: View {
             Image(systemName: systemImage)
                 .font(.system(size: 12, weight: .semibold))
             Text(text)
-                .font(MicaboFont.hanken(12, weight: .semibold))
+                .font(MicaboFont.ui(12, weight: .semibold))
         }
         .foregroundStyle(tint)
         .padding(.vertical, 8)
@@ -426,7 +426,7 @@ struct StudyView: View {
     private var gradeCluster: some View {
         VStack(spacing: 14) {
             Text(t("app.session.howAnswered", "Comment as-tu répondu ?"))
-                .font(MicaboFont.hanken(11, weight: .medium))
+                .font(MicaboFont.ui(11, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
 
             GradeButtons(intervals: session.previewLabels, onSelect: gradeCurrent)
@@ -482,7 +482,7 @@ struct StudyView: View {
                 Image(systemName: systemImage)
                     .font(.system(size: 11, weight: .semibold))
                 Text(title)
-                    .font(MicaboFont.hanken(13, weight: .medium))
+                    .font(MicaboFont.ui(13, weight: .medium))
             }
             .foregroundStyle(MicaboColor.inkTertiary)
         }
@@ -697,7 +697,7 @@ struct StudyCardFace: View {
     private var answerFace: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text((i18n?.t("app.session.answerEyebrow") ?? "Réponse").uppercased())
-                .font(MicaboFont.hanken(11, weight: .semibold))
+                .font(MicaboFont.ui(11, weight: .semibold))
                 .tracking(1.4)
                 .foregroundStyle(MicaboColor.accent)
 
@@ -725,7 +725,8 @@ struct StudyCardFace: View {
             FormulaText(
                 source: card.back,
                 size: 15,
-                color: MicaboColor.inkBody
+                color: MicaboColor.inkBody,
+                family: .reading
             )
             .frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
@@ -753,7 +754,7 @@ struct StudyCardFace: View {
     private var promptEyebrow: some View {
         if let label = frontEyebrow {
             Text(label.uppercased())
-                .font(MicaboFont.hanken(11, weight: .semibold))
+                .font(MicaboFont.ui(11, weight: .semibold))
                 .tracking(1.4)
                 .foregroundStyle(MicaboColor.inkTertiary)
         }
@@ -827,7 +828,7 @@ struct StudyCardFace: View {
                     .foregroundStyle(MicaboColor.caution)
 
                 Text(hint)
-                    .font(MicaboFont.hanken(13, weight: .medium))
+                    .font(MicaboFont.ui(13, weight: .medium))
                     .foregroundStyle(MicaboColor.inkBody)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
@@ -846,7 +847,7 @@ struct StudyCardFace: View {
                     Image(systemName: "lightbulb")
                         .font(.system(size: 12, weight: .semibold))
                     Text(i18n?.t("app.session.hint") ?? "Indice")
-                        .font(MicaboFont.hanken(13, weight: .semibold))
+                        .font(MicaboFont.ui(13, weight: .semibold))
                 }
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .padding(.vertical, 8)
@@ -891,12 +892,12 @@ private struct ChoiceList: View {
 
         return HStack(alignment: .top, spacing: 10) {
             Text(letter(index))
-                .font(MicaboFont.hanken(12, weight: .bold))
+                .font(MicaboFont.ui(12, weight: .bold))
                 .foregroundStyle(style.markForeground)
                 .frame(width: 22, height: 22)
                 .background(style.markBackground, in: Circle())
 
-            FormulaText(source: choice, size: 15, weight: .medium, color: style.text)
+            FormulaText(source: choice, size: 15, weight: .medium, color: style.text, family: .reading)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer(minLength: 0)
@@ -1018,7 +1019,7 @@ struct GradeButtons: View {
                 } label: {
                     VStack(spacing: 2) {
                         Text(rating.label(locale: i18n?.locale ?? .resolved()))
-                            .font(MicaboFont.hanken(14, weight: .semibold))
+                            .font(MicaboFont.ui(14, weight: .semibold))
 
                         if let interval = intervals[rating] {
                             Text(interval)
@@ -1142,7 +1143,7 @@ private struct SessionSetupView: View {
                             : (i18n?.t("app.review.scope.course") ?? "Ce cours"))
 
                         Text(title)
-                            .font(MicaboFont.hanken(22, weight: .bold))
+                            .font(MicaboFont.ui(22, weight: .bold))
                             .foregroundStyle(MicaboColor.ink)
                             .tracking(-0.4)
                             .fixedSize(horizontal: false, vertical: true)
@@ -1164,7 +1165,7 @@ private struct SessionSetupView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(alignment: .firstTextBaseline) {
                             Text(i18n?.t("app.session.newCardsLabel") ?? "Neuves")
-                                .font(MicaboFont.hanken(13, weight: .medium))
+                                .font(MicaboFont.ui(13, weight: .medium))
                                 .foregroundStyle(MicaboColor.inkTertiary)
 
                             Spacer(minLength: MicaboSpacing.xs)
@@ -1196,7 +1197,7 @@ private struct SessionSetupView: View {
                                     ? (i18n?.t("app.session.alreadyToday", ["count": "\(introducedToday)"]) ?? "\(introducedToday) déjà aujourd'hui")
                                     : (i18n?.t("app.session.plannedCount", ["count": "\(rhythmNew)"]) ?? "\(rhythmNew) prévues")
                             )
-                            .font(MicaboFont.hanken(12.5, weight: .regular))
+                            .font(MicaboFont.ui(12.5, weight: .regular))
                             .foregroundStyle(MicaboColor.inkTertiary)
                         }
                     }
@@ -1213,7 +1214,7 @@ private struct SessionSetupView: View {
                         .buttonStyle(MicaboPrimaryButtonStyle())
                 } else {
                     Text(i18n?.t("app.session.addNewOrTomorrow") ?? "Ajoute des neuves, ou reviens demain.")
-                        .font(MicaboFont.hanken(14, weight: .medium))
+                        .font(MicaboFont.ui(14, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
@@ -1237,7 +1238,7 @@ private struct SessionSetupView: View {
                 .foregroundStyle(accent ? MicaboColor.accent : MicaboColor.ink)
                 .monospacedDigit()
             Text(label)
-                .font(MicaboFont.hanken(13, weight: .medium))
+                .font(MicaboFont.ui(13, weight: .medium))
                 .foregroundStyle(accent ? MicaboColor.accent : MicaboColor.inkTertiary)
         }
         .padding(18)
@@ -1281,7 +1282,7 @@ private struct ResumePromptView: View {
                     "position": "\(snapshot.position)",
                     "total": "\(max(snapshot.initialCount, snapshot.position))"
                 ]) ?? "Tu en étais à la carte \(snapshot.position) sur \(max(snapshot.initialCount, snapshot.position)).")
-                    .font(MicaboFont.hanken(28, weight: .bold))
+                    .font(MicaboFont.ui(28, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(-0.6)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1332,7 +1333,7 @@ private struct NothingDueView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 Text(i18n?.t("app.session.done.title") ?? "C'est fait")
-                    .font(MicaboFont.hanken(22, weight: .bold))
+                    .font(MicaboFont.ui(22, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(-0.4)
 
@@ -1492,7 +1493,7 @@ private struct CompletionView: View {
 
             VStack(spacing: 10) {
                 Text(title)
-                    .font(MicaboFont.hanken(26, weight: .bold))
+                    .font(MicaboFont.ui(26, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(MicaboTracking.tight)
                     .multilineTextAlignment(.center)
@@ -1543,7 +1544,7 @@ private struct CompletionView: View {
         return VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.xs) {
                 Text(rating.label(locale: i18n?.locale ?? .resolved()))
-                    .font(MicaboFont.hanken(14, weight: .semibold))
+                    .font(MicaboFont.ui(14, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
 
                 Spacer(minLength: 0)
@@ -1624,7 +1625,7 @@ private struct CompletionView: View {
                 .minimumScaleFactor(0.7)
 
             Text(label)
-                .font(MicaboFont.hanken(11, weight: .medium))
+                .font(MicaboFont.ui(11, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -1648,7 +1649,7 @@ private struct CompletionView: View {
                 .foregroundStyle(MicaboColor.accent)
 
             Text(comebackText(delay: delay, today: today))
-                .font(MicaboFont.hanken(13, weight: .regular))
+                .font(MicaboFont.ui(13, weight: .regular))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)

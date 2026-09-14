@@ -120,7 +120,7 @@ struct MockPaperView: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(examName)
-                        .font(MicaboFont.hanken(14, weight: .semibold))
+                        .font(MicaboFont.ui(14, weight: .semibold))
                         .foregroundStyle(MicaboColor.ink)
                         .lineLimit(1)
                     Text(t("app.mock.answered", ["done": "\(answered)", "total": "\(questions.count)"]))
@@ -175,7 +175,7 @@ struct MockPaperView: View {
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .frame(width: 18, alignment: .leading)
                 Text(displayPrompt(question))
-                    .font(MicaboFont.hanken(15, weight: .medium))
+                    .font(MicaboFont.ui(15, weight: .medium))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -220,7 +220,7 @@ struct MockPaperView: View {
                             .font(.system(size: 17, weight: .regular))
                             .foregroundStyle(picked ? MicaboColor.accent : MicaboColor.strokeStrong)
                         Text(choice)
-                            .font(MicaboFont.hanken(14, weight: .regular))
+                            .font(MicaboFont.ui(14, weight: .regular))
                             .foregroundStyle(MicaboColor.ink)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
@@ -246,7 +246,7 @@ struct MockPaperView: View {
                     set(id) { $0.truth = value }
                 } label: {
                     Text(value ? t("app.mock.true") : t("app.mock.false"))
-                        .font(MicaboFont.hanken(14, weight: .semibold))
+                        .font(MicaboFont.ui(14, weight: .semibold))
                         .foregroundStyle(picked ? MicaboColor.onInk : MicaboColor.ink)
                         .padding(.vertical, 9)
                         .padding(.horizontal, 18)
@@ -308,7 +308,7 @@ struct MockPaperView: View {
                                 .fill(listening ? MicaboColor.negative : MicaboColor.inkTertiary)
                                 .frame(width: 8, height: 8)
                             Text(listening ? t("app.mock.dictateStop") : t("app.mock.dictate"))
-                                .font(MicaboFont.hanken(13, weight: .medium))
+                                .font(MicaboFont.ui(13, weight: .medium))
                         }
                         .foregroundStyle(listening ? MicaboColor.negative : MicaboColor.ink)
                         .padding(.vertical, 7)

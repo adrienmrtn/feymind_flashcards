@@ -109,7 +109,7 @@ struct CountryStepView: View {
                     resultsList
                 } else if query.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 {
                     Text(i18n?.t("ios.countryNone") ?? "Aucun pays de ce nom.")
-                        .font(MicaboFont.hanken(12, weight: .regular))
+                        .font(MicaboFont.ui(12, weight: .regular))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
             }
@@ -123,7 +123,7 @@ struct CountryStepView: View {
                 .foregroundStyle(MicaboColor.inkTertiary)
 
             TextField(i18n?.t("ios.countryPlaceholder") ?? "Ex. Brésil, Japon, Sénégal…", text: $query)
-                .font(MicaboFont.hanken(16, weight: .medium))
+                .font(MicaboFont.ui(16, weight: .medium))
                 .foregroundStyle(MicaboColor.ink)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled()
@@ -161,7 +161,7 @@ struct CountryStepView: View {
                             .font(.system(size: 20))
 
                         Text(country.name)
-                            .font(MicaboFont.hanken(15, weight: .medium))
+                            .font(MicaboFont.ui(15, weight: .medium))
                             .foregroundStyle(MicaboColor.ink)
                             .multilineTextAlignment(.leading)
 
@@ -195,7 +195,7 @@ struct CountryStepView: View {
                 .font(.system(size: 20))
 
             Text(country.name)
-                .font(MicaboFont.hanken(15, weight: .semibold))
+                .font(MicaboFont.ui(15, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
 
             Spacer(minLength: 0)
@@ -209,7 +209,7 @@ struct CountryStepView: View {
                 isSearching = true
             } label: {
                 Text(i18n?.t("ios.countryChange") ?? "Changer")
-                    .font(MicaboFont.hanken(13, weight: .semibold))
+                    .font(MicaboFont.ui(13, weight: .semibold))
                     .foregroundStyle(MicaboColor.accent)
             }
             .buttonStyle(MicaboPressableButtonStyle())

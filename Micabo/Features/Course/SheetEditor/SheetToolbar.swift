@@ -104,7 +104,7 @@ struct SheetToolbar: View {
         } label: {
             HStack(spacing: 4) {
                 Text(state.kind.title(locale: locale))
-                    .font(MicaboFont.hanken(13.5, weight: .medium))
+                    .font(MicaboFont.ui(13.5, weight: .medium))
                     .lineLimit(1)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 9, weight: .bold))

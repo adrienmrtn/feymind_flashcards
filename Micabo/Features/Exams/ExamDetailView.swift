@@ -261,7 +261,7 @@ struct ExamDetailView: View {
                     .monospacedDigit()
                     .contentTransition(.numericText())
                 Text("%")
-                    .font(MicaboFont.hanken(15, weight: .semibold))
+                    .font(MicaboFont.ui(15, weight: .semibold))
                     .foregroundStyle(tint)
             }
         }
@@ -348,7 +348,7 @@ struct ExamDetailView: View {
                     ForEach(Array(finished.enumerated()), id: \.element.id) { index, session in
                         mockRow(session)
                         if index < finished.count - 1 {
-                            MicaboHairline(inset: 71)
+                            MicaboHairline(inset: 72)
                         }
                     }
                 }
@@ -407,7 +407,7 @@ struct ExamDetailView: View {
                     ForEach(Array(figures.programme.enumerated()), id: \.element.course.id) { index, entry in
                         courseRow(entry.course, cards: entry.cards, percent: entry.percent)
                         if index < figures.programme.count - 1 {
-                            MicaboHairline(inset: 71)
+                            MicaboHairline(inset: 72)
                         }
                     }
                 }
@@ -468,7 +468,7 @@ struct ExamDetailView: View {
         HStack(alignment: .top, spacing: MicaboSpacing.sm) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(card.front)
-                    .font(MicaboFont.hanken(14, weight: .medium))
+                    .font(MicaboFont.ui(14, weight: .medium))
                     .foregroundStyle(MicaboColor.ink)
                     .lineLimit(2)
                 Text(t("app.plan.sheet.weakLine", ["again": "\(card.againCount)", "reviews": "\(card.reviews)"]))

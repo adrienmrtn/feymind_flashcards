@@ -38,7 +38,7 @@ struct RestDaysStepView: View {
                 // La ligne garde sa hauteur vide ou pleine : sans ça, la grille saute d'un
                 // cran dès qu'on touche une case.
                 Text(countLabel)
-                    .font(MicaboFont.hanken(13, weight: .medium))
+                    .font(MicaboFont.ui(13, weight: .medium))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .frame(height: 20)
                     .animation(OnboardingMotion.tap, value: model.restDays)
@@ -70,7 +70,7 @@ struct RestDaysStepView: View {
         } label: {
             VStack(spacing: 6) {
                 Text(initials.indices.contains(iso - 1) ? initials[iso - 1] : "")
-                    .font(MicaboFont.hanken(19, weight: .semibold))
+                    .font(MicaboFont.ui(19, weight: .semibold))
                     .foregroundStyle(off ? MicaboColor.accent : MicaboColor.ink)
                 Text("💤")
                     .font(.system(size: 20))

@@ -164,7 +164,7 @@ private struct DiscountGiftStage: View {
 
             VStack(spacing: MicaboSpacing.sm) {
                 Text(L10n.t("ios.giftTitle", locale: .resolved()))
-                    .font(MicaboFont.hanken(26, weight: .bold))
+                    .font(MicaboFont.ui(26, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(MicaboTracking.tight)
                     .multilineTextAlignment(.center)
@@ -172,7 +172,7 @@ private struct DiscountGiftStage: View {
                     .onboardingAppear(index: 0)
 
                 Text(L10n.t("ios.giftBody", locale: .resolved()))
-                    .font(MicaboFont.hanken(15, weight: .regular))
+                    .font(MicaboFont.ui(15, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.center)
                     .onboardingAppear(index: 1)
@@ -202,7 +202,7 @@ private struct DiscountGiftStage: View {
                 .animation(OnboardingMotion.tap, value: taps)
 
                 Text(remainingTaps == 0 ? "Ça s'ouvre…" : "Encore \(remainingTaps)")
-                    .font(MicaboFont.hanken(14, weight: .semibold))
+                    .font(MicaboFont.ui(14, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .contentTransition(.numericText())
             }
@@ -397,7 +397,7 @@ private struct DiscountPaywallStage: View {
             // Le rythme du prélèvement et la sortie, sous le bouton : le prix est déjà
             // écrit au-dessus, il n'a pas besoin d'être répété pour être tenu.
             Text("Facturé une fois par an, résiliable sur l'App Store.")
-                .font(MicaboFont.hanken(11.5, weight: .regular))
+                .font(MicaboFont.ui(11.5, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -427,7 +427,7 @@ private struct DiscountPaywallStage: View {
                 + Text(" de moins\nRévise plus vite avec Pro")
                 .foregroundStyle(MicaboColor.ink)
         )
-        .font(MicaboFont.hanken(29, weight: .bold))
+        .font(MicaboFont.ui(29, weight: .bold))
         .tracking(MicaboTracking.tight)
         .multilineTextAlignment(.center)
         .lineSpacing(1)
@@ -444,7 +444,7 @@ private struct DiscountPaywallStage: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(plan.title)
-                    .font(MicaboFont.hanken(14.5, weight: .semibold))
+                    .font(MicaboFont.ui(14.5, weight: .semibold))
                     .foregroundStyle(MicaboColor.offerSky)
 
                 HStack(alignment: .lastTextBaseline, spacing: 6) {
@@ -453,12 +453,12 @@ private struct DiscountPaywallStage: View {
                         .foregroundStyle(MicaboColor.ink)
 
                     Text(L10n.t("ios.perYear", locale: .resolved()))
-                        .font(MicaboFont.hanken(15, weight: .medium))
+                        .font(MicaboFont.ui(15, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
 
                 Text(DiscountOffer.reference.displayPrice)
-                    .font(MicaboFont.hanken(15.5, weight: .medium))
+                    .font(MicaboFont.ui(15.5, weight: .medium))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .strikethrough(true, color: MicaboColor.inkTertiary)
             }
@@ -518,14 +518,14 @@ private struct DiscountSeal: View {
 
             VStack(spacing: 1) {
                 Text(L10n.t("ios.discount", locale: .resolved()))
-                    .font(MicaboFont.hanken(9.5, weight: .semibold))
+                    .font(MicaboFont.ui(9.5, weight: .semibold))
 
                 HStack(alignment: .top, spacing: 0) {
                     Text("\(percent)")
                         .font(MicaboFont.number(20, weight: .bold))
 
                     Text("%")
-                        .font(MicaboFont.hanken(10, weight: .bold))
+                        .font(MicaboFont.ui(10, weight: .bold))
                         .padding(.top, 2)
                 }
             }
@@ -737,7 +737,7 @@ struct DiscountBadge: View {
                     .font(.system(size: 16, weight: .semibold))
 
                 Text(L10n.t("ios.offerBadge", locale: .resolved()).uppercased())
-                    .font(MicaboFont.hanken(9, weight: .bold))
+                    .font(MicaboFont.ui(9, weight: .bold))
                     .tracking(MicaboTracking.caps)
                     .foregroundStyle(Color.white.opacity(0.82))
             }

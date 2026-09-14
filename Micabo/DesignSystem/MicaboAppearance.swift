@@ -65,20 +65,35 @@ struct MicaboPalette: Equatable {
     var cardShadow: Double
     var groupShadow: Double
 
+    /// **Le jour, refait.** L'accent bleu ne bouge pas ; ce qui change tient en trois gestes.
+    ///
+    /// **L'encre n'est plus noire.** `#111827` est un noir de texte imprimé, et posé sur du
+    /// gris clair il durcit chaque rangée : les listes avaient l'air gravées. Le navy
+    /// désaturé qui le remplace garde tout son contraste (11:1 sur le blanc, très au-delà
+    /// de ce qu'il faut) et rend l'écran respirable. Les trois encres secondaires suivent,
+    /// et `inkTertiary` **cesse d'être la même valeur que `inkSecondary`** — deux niveaux
+    /// de gris qui portaient le même code hexadécimal ne hiérarchisaient rien.
+    ///
+    /// **Le fond tire vers le bleu.** Un gris parfaitement neutre sous des cartes blanches
+    /// fait grisâtre ; un fond très légèrement bleuté les fait paraître plus blanches
+    /// qu'elles ne sont, sans qu'on sache dire pourquoi.
+    ///
+    /// **Les pastels remontent d'un demi-ton**, parce que les ombres sont maintenant plus
+    /// présentes : un filet qui allait bien sur un fond plat disparaît sous une ombre.
     static let day = MicaboPalette(
-        canvas: Color(hex: 0xF2F4F7),
+        canvas: Color(hex: 0xF4F6FA),
         surface: .white,
-        surfaceMuted: Color(hex: 0xE8ECF1),
-        surfaceSunken: Color(hex: 0xDEE3EA),
-        stroke: Color(hex: 0xE5E7EB),
-        strokeStrong: Color(hex: 0xD1D5DB),
-        hairline: Color(hex: 0xE5E7EB),
-        hairlineOnCanvas: Color(hex: 0xD8DCE3),
-        ink: Color(hex: 0x111827),
-        inkSecondary: Color(hex: 0x6B7280),
-        inkTertiary: Color(hex: 0x6B7280),
-        inkReading: Color(hex: 0x1F2937),
-        inkBody: Color(hex: 0x4B5563),
+        surfaceMuted: Color(hex: 0xEDF0F7),
+        surfaceSunken: Color(hex: 0xE3E7F0),
+        stroke: Color(hex: 0xE3E7F0),
+        strokeStrong: Color(hex: 0xD7DCE6),
+        hairline: Color(hex: 0xE9ECF3),
+        hairlineOnCanvas: Color(hex: 0xDFE4EE),
+        ink: Color(hex: 0x232B3E),
+        inkSecondary: Color(hex: 0x656E85),
+        inkTertiary: Color(hex: 0x939CB0),
+        inkReading: Color(hex: 0x303A52),
+        inkBody: Color(hex: 0x4E5870),
         sheetMarker: Color(hex: 0xF5D76E),
         sheetHighlights: [
             Color(hex: 0xF8E08E),
@@ -88,34 +103,39 @@ struct MicaboPalette: Equatable {
             Color(hex: 0xDCD0F5)
         ],
         onInk: .white,
-        onInkMuted: Color(hex: 0x9CA3AF),
-        canvasSage: Color(hex: 0xF2F4F7),
+        onInkMuted: Color(hex: 0xA7B0C4),
+        canvasSage: Color(hex: 0xF4F6FA),
         accent: Color(hex: 0x2563EB),
-        accentSoft: Color(hex: 0xDBEAFE),
+        accentSoft: Color(hex: 0xE4ECFE),
         accentVivid: Color(hex: 0x3B82F6),
-        progressTrack: Color(hex: 0xE5E7EB),
-        positive: Color(hex: 0x3F7D53),
-        caution: Color(hex: 0xB3872B),
-        cautionVivid: Color(hex: 0xE8B23C),
+        progressTrack: Color(hex: 0xEDF0F7),
+        positive: Color(hex: 0x2F7D57),
+        // L'ambre porte maintenant du texte de onze points sur `cautionSoft` : la série, le
+        // compte à rebours d'une épreuve, la note « difficile ». `#B3872B` y passait tout
+        // juste, celui-ci passe largement.
+        caution: Color(hex: 0x8A6410),
+        cautionVivid: Color(hex: 0xFFC53D),
         negative: Color(hex: 0xC93B2B),
         ratingAgain: Color(hex: 0xB5573C),
         info: Color(hex: 0x3A6FC4),
-        positiveSoft: Color(hex: 0xDCFCE7),
-        cautionSoft: Color(hex: 0xFEF3C7),
-        negativeSoft: Color(hex: 0xFEE2E2),
-        infoSoft: Color(hex: 0xDBEAFE),
+        positiveSoft: Color(hex: 0xDEF5E7),
+        cautionSoft: Color(hex: 0xFDF1D6),
+        negativeSoft: Color(hex: 0xFDE8E2),
+        infoSoft: Color(hex: 0xE3EDFC),
         offerWash: Color(hex: 0xC4E7FA),
         offerWashSoft: Color(hex: 0xEAF7FE),
         tilePastels: [
-            Color(hex: 0xDBEAFE),
-            Color(hex: 0xE0E7FF),
-            Color(hex: 0xE5E7EB),
-            Color(hex: 0xE0F2FE),
-            Color(hex: 0xF3E8FF),
-            Color(hex: 0xF1F5F9)
+            Color(hex: 0xDEEBFB),
+            Color(hex: 0xE4F2EA),
+            Color(hex: 0xFDEBE4),
+            Color(hex: 0xEDE6FA),
+            Color(hex: 0xFBEDF3),
+            Color(hex: 0xEDF0F7)
         ],
-        cardShadow: 0.04,
-        groupShadow: 0.03
+        // Les ombres deviennent celles du navy, pas du noir, et elles portent plus loin :
+        // voir `MicaboShadow`, qui les pose en deux couches.
+        cardShadow: 0.07,
+        groupShadow: 0.05
     )
 
     static let night = MicaboPalette(

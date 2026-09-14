@@ -29,7 +29,7 @@ struct PaywallOfferView: View {
             VStack(spacing: 20) {
                 if let headline {
                     Text(headline)
-                        .font(MicaboFont.hanken(12.5, weight: .semibold))
+                        .font(MicaboFont.ui(12.5, weight: .semibold))
                         .foregroundStyle(MicaboColor.accent)
                         .multilineTextAlignment(.center)
                         .padding(.vertical, 7)
@@ -44,7 +44,7 @@ struct PaywallOfferView: View {
                     .onboardingAppear(index: 1)
 
                 PaywallPitch.text(for: plan)
-                    .font(MicaboFont.hanken(21, weight: .bold))
+                    .font(MicaboFont.ui(21, weight: .bold))
                     .tracking(-0.4)
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
@@ -53,7 +53,7 @@ struct PaywallOfferView: View {
 
                 Button(action: onSeeAllPlans) {
                     Text(L10n.t("ios.paywallSeeAll", locale: .resolved()))
-                        .font(MicaboFont.hanken(15, weight: .medium))
+                        .font(MicaboFont.ui(15, weight: .medium))
                         .foregroundStyle(MicaboColor.info)
                 }
                 .buttonStyle(MicaboPressableButtonStyle(dimming: true))
@@ -66,7 +66,7 @@ struct PaywallOfferView: View {
 
             VStack(spacing: 14) {
                 Text(PaywallPitch.reassurance)
-                    .font(MicaboFont.hanken(12.5, weight: .regular))
+                    .font(MicaboFont.ui(12.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .multilineTextAlignment(.center)
 
@@ -107,7 +107,7 @@ struct PaywallPlansView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 26) {
                     Text(L10n.t("ios.paywallPlansTitle", locale: .resolved()))
-                        .font(MicaboFont.hanken(26, weight: .bold))
+                        .font(MicaboFont.ui(26, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(-0.7)
                         .fixedSize(horizontal: false, vertical: true)
@@ -183,12 +183,12 @@ private struct PaywallComparisonTable: View {
             Spacer(minLength: 0)
 
             Text(L10n.t("ios.paywallFree", locale: .resolved()))
-                .font(MicaboFont.hanken(13, weight: .medium))
+                .font(MicaboFont.ui(13, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .frame(width: columnWidth)
 
             Text("PRO")
-                .font(MicaboFont.hanken(11.5, weight: .bold))
+                .font(MicaboFont.ui(11.5, weight: .bold))
                 .tracking(1)
                 .foregroundStyle(MicaboColor.onInk)
                 .frame(width: columnWidth, height: 26)
@@ -199,14 +199,14 @@ private struct PaywallComparisonTable: View {
     private func row(_ feature: String) -> some View {
         HStack(spacing: 0) {
             Text(feature)
-                .font(MicaboFont.hanken(14.5, weight: .medium))
+                .font(MicaboFont.ui(14.5, weight: .medium))
                 .foregroundStyle(MicaboColor.ink)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.trailing, MicaboSpacing.xs)
 
             Text("—")
-                .font(MicaboFont.hanken(15, weight: .regular))
+                .font(MicaboFont.ui(15, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .frame(width: columnWidth)
 
@@ -233,11 +233,11 @@ private struct PaywallPlanCard: View {
             HStack(alignment: .center, spacing: MicaboSpacing.sm) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(plan.title)
-                        .font(MicaboFont.hanken(17, weight: .bold))
+                        .font(MicaboFont.ui(17, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
 
                     Text(plan.caption)
-                        .font(MicaboFont.hanken(13, weight: .regular))
+                        .font(MicaboFont.ui(13, weight: .regular))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
 
@@ -245,11 +245,11 @@ private struct PaywallPlanCard: View {
 
                 VStack(alignment: .trailing, spacing: 3) {
                     Text(plan.displayPrice)
-                        .font(MicaboFont.hanken(17, weight: .bold))
+                        .font(MicaboFont.ui(17, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
 
                     Text(plan.hasTrial ? "\(plan.trialDays) jours offerts" : "sans essai")
-                        .font(MicaboFont.hanken(13, weight: .medium))
+                        .font(MicaboFont.ui(13, weight: .medium))
                         .foregroundStyle(plan.hasTrial ? MicaboColor.accent : MicaboColor.inkTertiary)
                 }
             }
@@ -270,7 +270,7 @@ private struct PaywallPlanCard: View {
             .overlay(alignment: .topTrailing) {
                 if let badge {
                     Text(badge)
-                        .font(MicaboFont.hanken(11, weight: .bold))
+                        .font(MicaboFont.ui(11, weight: .bold))
                         .foregroundStyle(MicaboColor.onInk)
                         .padding(.vertical, 4)
                         .padding(.horizontal, 9)

@@ -52,14 +52,14 @@ struct ExamProjectionView: View {
     private func figure(label: String, value: String, tone: MicaboBadgeTone = .neutral) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.xs) {
             Text(label)
-                .font(MicaboFont.hanken(14, weight: .regular))
+                .font(MicaboFont.ui(14, weight: .regular))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer(minLength: MicaboSpacing.xs)
 
             Text(value)
-                .font(MicaboFont.hanken(14, weight: .semibold))
+                .font(MicaboFont.ui(14, weight: .semibold))
                 .foregroundStyle(tone == .warm ? MicaboColor.caution : MicaboColor.ink)
                 .multilineTextAlignment(.trailing)
         }
@@ -95,7 +95,7 @@ struct ExamProjectionView: View {
                     Spacer(minLength: MicaboSpacing.xs)
                     Text("veille de l'examen")
                 }
-                .font(MicaboFont.hanken(10, weight: .medium))
+                .font(MicaboFont.ui(10, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
             }
             .padding(MicaboSpacing.md)

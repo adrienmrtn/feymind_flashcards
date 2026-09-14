@@ -35,7 +35,7 @@ struct ExamCalendarView: View {
     private var monthHeader: some View {
         HStack(spacing: MicaboSpacing.xs) {
             Text(MicaboCalendar.monthLabel(month))
-                .font(MicaboFont.hanken(17, weight: .semibold))
+                .font(MicaboFont.ui(17, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
 
             Spacer(minLength: 0)
@@ -63,7 +63,7 @@ struct ExamCalendarView: View {
         HStack(spacing: 0) {
             ForEach(Array(MicaboCalendar.weekdayInitials.enumerated()), id: \.offset) { _, initial in
                 Text(initial)
-                    .font(MicaboFont.hanken(11, weight: .semibold))
+                    .font(MicaboFont.ui(11, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .frame(maxWidth: .infinity)
             }
@@ -95,7 +95,7 @@ struct ExamCalendarView: View {
         } label: {
             VStack(spacing: 3) {
                 Text("\(calendar.component(.day, from: day))")
-                    .font(MicaboFont.hanken(14, weight: isToday || isSelected ? .semibold : .regular))
+                    .font(MicaboFont.ui(14, weight: isToday || isSelected ? .semibold : .regular))
                     .foregroundStyle(numberColor(isSelected: isSelected, isOutside: isOutside))
                     .monospacedDigit()
 

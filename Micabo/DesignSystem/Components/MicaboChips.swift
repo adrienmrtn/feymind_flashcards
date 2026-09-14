@@ -46,7 +46,7 @@ struct MicaboSelectChip: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(MicaboFont.hanken(14, weight: .medium))
+                .font(MicaboFont.ui(14, weight: .medium))
                 .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkSecondary)
                 .padding(.vertical, 9)
                 .padding(.horizontal, 16)
@@ -80,7 +80,7 @@ struct MicaboSectionHeader: View {
             Spacer(minLength: MicaboSpacing.xs)
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .font(MicaboFont.hanken(13, weight: .semibold))
+                    .font(MicaboFont.ui(13, weight: .semibold))
                     .foregroundStyle(MicaboColor.accent)
                     .buttonStyle(MicaboPressableButtonStyle())
             }
@@ -105,12 +105,12 @@ struct MicaboEmptyState: View {
                 .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
             Text(title)
-                .font(MicaboFont.hanken(17, weight: .semibold))
+                .font(MicaboFont.ui(17, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
                 .multilineTextAlignment(.center)
 
             Text(message)
-                .font(MicaboFont.hanken(13.5, weight: .regular))
+                .font(MicaboFont.ui(13.5, weight: .regular))
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 280)

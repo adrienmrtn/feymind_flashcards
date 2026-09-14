@@ -111,7 +111,7 @@ struct TrialOfferStepView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 34) {
                     Text(i18n?.t("ios.trialHow") ?? "Comment marche\nton essai gratuit")
-                        .font(MicaboFont.hanken(34, weight: .bold))
+                        .font(MicaboFont.ui(34, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(-0.9)
                         .lineSpacing(-2)
@@ -200,12 +200,12 @@ private struct TrialMilestoneRow: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(milestone.title)
-                    .font(MicaboFont.hanken(17, weight: .bold))
+                    .font(MicaboFont.ui(17, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(milestone.detail)
-                    .font(MicaboFont.hanken(14.5, weight: .regular))
+                    .font(MicaboFont.ui(14.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)

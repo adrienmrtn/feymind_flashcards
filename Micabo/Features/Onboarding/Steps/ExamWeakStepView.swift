@@ -71,7 +71,7 @@ private struct WeakCardsDemo: View {
                     .frame(maxWidth: isUp ? .infinity : 140, alignment: .leading)
 
                 Text(t("ios.examWeakLine", ["again": "\(cards[index].again)", "reviews": "\(cards[index].reviews)"]))
-                    .font(MicaboFont.hanken(11.5, weight: .medium))
+                    .font(MicaboFont.ui(11.5, weight: .medium))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .monospacedDigit()
             }
@@ -79,7 +79,7 @@ private struct WeakCardsDemo: View {
             Spacer(minLength: MicaboSpacing.xs)
 
             Text(t("ios.examWeakBadge"))
-                .font(MicaboFont.hanken(10.5, weight: .bold))
+                .font(MicaboFont.ui(10.5, weight: .bold))
                 .foregroundStyle(MicaboColor.negative)
                 .padding(.vertical, 4)
                 .padding(.horizontal, 8)

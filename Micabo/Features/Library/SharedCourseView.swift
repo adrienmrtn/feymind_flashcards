@@ -165,11 +165,11 @@ struct SharedCourseView: View {
                     ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(FormulaRenderer.stripped(card.front))
-                                .font(MicaboFont.hanken(14, weight: .medium))
+                                .font(MicaboFont.ui(14, weight: .medium))
                                 .foregroundStyle(MicaboColor.ink)
                                 .multilineTextAlignment(.leading)
                             Text(FormulaRenderer.stripped(card.back))
-                                .font(MicaboFont.hanken(13, weight: .regular))
+                                .font(MicaboFont.ui(13, weight: .regular))
                                 .foregroundStyle(MicaboColor.inkSecondary)
                                 .multilineTextAlignment(.leading)
                         }

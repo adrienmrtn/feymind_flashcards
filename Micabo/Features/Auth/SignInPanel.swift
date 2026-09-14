@@ -37,14 +37,14 @@ struct SignInFailureNote: View {
             switch message {
             case .error(let detail) where includeError:
                 Text(detail)
-                    .font(MicaboFont.hanken(13.5, weight: .medium))
+                    .font(MicaboFont.ui(13.5, weight: .medium))
                     .foregroundStyle(MicaboColor.negative)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isStaticText)
                     .transition(.opacity)
             case .sent(let email) where includeSent:
                 Text(i18n?.t("onboarding.linkSent", ["email": email]) ?? "Ouvre le lien envoyé à \(email)")
-                    .font(MicaboFont.hanken(14.5, weight: .medium))
+                    .font(MicaboFont.ui(14.5, weight: .medium))
                     .foregroundStyle(MicaboColor.accent)
                     .fixedSize(horizontal: false, vertical: true)
                     .transition(.opacity)
@@ -126,40 +126,50 @@ struct SignInScreen: View {
         .allowsHitTesting(!isResolving)
     }
 
+    /// **L'écran est centré, et les portes sont dans une carte.**
+    ///
+    /// Il était aligné à gauche, et il s'ouvrait sur quatre commandes avant le premier mot :
+    /// un logo de vingt-huit points coincé entre le sélecteur d'apparence, celui de langue
+    /// et la croix. Puis un titre, puis deux boutons, un séparateur, un champ, un second
+    /// bouton, une ligne légale — le tout posé à même le fond, sans rien pour dire où ça
+    /// commence ni où ça finit. Ça se lisait comme un formulaire administratif.
+    ///
+    /// Trois choses le réparent, et aucune ne change ce qu'on y fait :
+    ///
+    /// - **la marque prend le centre, à soixante-quatre points.** Un écran de connexion est
+    ///   le seul endroit où l'on regarde un logo ; l'y mettre en vignette de barre d'outils
+    ///   était le mettre partout sauf là où il sert ;
+    /// - **les portes entrent dans une carte blanche.** Apple, Google et le courriel sont
+    ///   une seule question posée de trois façons : ils appartiennent au même objet ;
+    /// - **le sélecteur d'apparence s'en va.** Choisir entre le jour et la nuit avant même
+    ///   d'avoir un compte est un réglage qui arrive trop tôt, et il vit déjà dans les
+    ///   Réglages. La langue reste : elle change la page qu'on est en train de lire.
     private var content: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(spacing: 0) {
             toolbar
+            if showsBrand {
+                MicaboBrandMark(size: 64)
+                    .padding(.top, 18)
+            }
             titleBlock
-                .padding(.top, showsBrand ? 28 : 20)
+                .padding(.top, showsBrand ? 16 : 24)
             SignInProviderButtons()
-                .padding(.top, showsSubtitle ? 28 : 22)
+                .micaboCard(padding: 18, radius: MicaboRadius.card)
+                .padding(.top, 26)
             SignInFailureNote(includeSent: false, includeError: true)
                 .padding(.top, MicaboSpacing.sm)
             legalLine
-                .padding(.top, 28)
+                .padding(.top, 22)
             if let onCreateAccount {
                 createAccountLine(action: onCreateAccount)
-                    .padding(.top, 20)
+                    .padding(.top, 18)
             }
         }
     }
 
+    /// Ce qui reste en haut : la langue, et la sortie quand il y en a une.
     private var toolbar: some View {
         HStack(spacing: 10) {
-            if showsBrand {
-                MicaboBrandLockup(size: 28)
-            }
-            Spacer(minLength: 8)
-            AppearanceSwitcher(variant: .compact)
-            if showsLanguageSwitcher {
-                LanguageSwitcher(variant: .compact)
-            }
-            if let onSkip {
-                Button(t("common.skip"), action: onSkip)
-                    .font(MicaboFont.hanken(14.5, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .accessibilityLabel(t("ios.skipNoAccount"))
-            }
             if let onDismiss {
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
@@ -173,33 +183,51 @@ struct SignInScreen: View {
                 .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
                 .accessibilityLabel(t("app.a11y.close"))
             }
+            Spacer(minLength: 8)
+            if showsLanguageSwitcher {
+                LanguageSwitcher(variant: .compact)
+            }
+            if let onSkip {
+                Button(t("common.skip"), action: onSkip)
+                    .font(MicaboFont.ui(14.5, weight: .medium))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                    .accessibilityLabel(t("ios.skipNoAccount"))
+            }
         }
+        // La barre garde sa hauteur même vide : sans elle, la marque remonterait sous
+        // l'encoche sur l'écran qui n'a ni croix ni langue.
+        .frame(minHeight: 44)
     }
 
     private var titleBlock: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(spacing: 8) {
             Text(t(titleKey))
-                .font(MicaboFont.display(showsSubtitle ? 32 : 28))
+                .font(MicaboFont.ui(26, weight: .bold))
                 .tracking(MicaboTracking.display)
                 .foregroundStyle(MicaboColor.ink)
+                .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader)
             if showsSubtitle {
                 Text(t(subtitleKey))
-                    .font(MicaboFont.hanken(15))
+                    .font(MicaboFont.ui(15))
                     .foregroundStyle(MicaboColor.inkSecondary)
+                    .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 300)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
     }
 
     private var legalLine: some View {
         Text(legalAttributed)
-            .font(MicaboFont.hanken(12.5))
+            .font(MicaboFont.ui(12.5))
             .foregroundStyle(MicaboColor.inkTertiary)
             .tint(MicaboColor.inkSecondary)
+            .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity)
     }
 
     private var legalAttributed: AttributedString {
@@ -227,12 +255,12 @@ struct SignInScreen: View {
             Text(t("onboarding.noAccount"))
                 .foregroundStyle(MicaboColor.inkTertiary)
             Button(t("onboarding.createIt"), action: action)
-                .font(MicaboFont.hanken(13.5, weight: .semibold))
+                .font(MicaboFont.ui(14, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
                 .underline()
         }
-        .font(MicaboFont.hanken(13.5))
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .font(MicaboFont.ui(14))
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -302,7 +330,7 @@ struct SignInProviderButtons: View {
                     Task { await auth.deliverMagicLink(to: corrected) }
                 } label: {
                     Text(corrected)
-                        .font(MicaboFont.hanken(14, weight: .bold))
+                        .font(MicaboFont.ui(14, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .underline()
                 }
@@ -313,13 +341,13 @@ struct SignInProviderButtons: View {
             } label: {
                 Text(i18n?.t("onboarding.emailSuggestionKeep", ["email": typed])
                     ?? L10n.t("onboarding.emailSuggestionKeep", locale: .resolved(), vars: ["email": typed]))
-                    .font(MicaboFont.hanken(13, weight: .medium))
+                    .font(MicaboFont.ui(13, weight: .medium))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .underline()
                     .multilineTextAlignment(.leading)
             }
         }
-        .font(MicaboFont.hanken(14, weight: .medium))
+        .font(MicaboFont.ui(14, weight: .medium))
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 4)
         .transition(.opacity)
@@ -402,7 +430,7 @@ struct SignInProviderButtons: View {
                 .fill(MicaboColor.hairline)
                 .frame(height: 1)
             Text(t("onboarding.or"))
-                .font(MicaboFont.hanken(12, weight: .medium))
+                .font(MicaboFont.ui(12, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
             Rectangle()
                 .fill(MicaboColor.hairline)
@@ -411,52 +439,66 @@ struct SignInProviderButtons: View {
         .accessibilityHidden(true)
     }
 
+    /// **Le champ a avalé son bouton.**
+    ///
+    /// Le courriel était un champ de cinquante-six points surmontant un bouton de
+    /// cinquante-six points : cent vingt points pour la troisième façon de faire la même
+    /// chose que les deux boutons du dessus, et l'écran finissait plus bas que l'écran.
+    /// L'envoi est maintenant dans le champ, à droite, là où le pouce arrive en sortant du
+    /// clavier.
     private var emailForm: some View {
-        VStack(spacing: 10) {
-            TextField(t("onboarding.emailPlaceholder"), text: $email)
-                .font(MicaboFont.hanken(16, weight: .medium))
-                .foregroundStyle(MicaboColor.ink)
-                .tint(MicaboColor.accent)
-                .keyboardType(.emailAddress)
-                .textContentType(.username)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .submitLabel(.go)
-                .padding(.horizontal, 16)
-                .frame(minHeight: 56)
-                .background(
-                    MicaboColor.surface,
-                    in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                )
-                .overlay {
-                    RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                        .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
-                }
-                .disabled(auth.isWorking)
-                .onSubmit { sendLink() }
-                .onChange(of: email) {
-                    // Corriger l'adresse répond déjà à la question : la garder affichée
-                    // proposerait une correction pour un texte qui n'est plus là.
-                    if auth.message != nil { auth.clearMessage() }
-                }
-                .accessibilityLabel(t("onboarding.emailLabel"))
+        let canSend = !auth.isWorking && EmailAddress.isPlausible(email)
 
-            Button {
-                sendLink()
-            } label: {
-                Text(t("onboarding.sendLink"))
-                    .font(MicaboFont.cardTitle)
-                    .foregroundStyle(MicaboColor.onInk)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: 56)
-                    .background(
-                        MicaboColor.ink,
-                        in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
-                    )
+        return VStack(spacing: 10) {
+            HStack(spacing: 8) {
+                TextField(t("onboarding.emailPlaceholder"), text: $email)
+                    .font(MicaboFont.ui(15.5, weight: .medium))
+                    .foregroundStyle(MicaboColor.ink)
+                    .tint(MicaboColor.accent)
+                    .keyboardType(.emailAddress)
+                    .textContentType(.username)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .submitLabel(.go)
+                    .disabled(auth.isWorking)
+                    .onSubmit { sendLink() }
+                    .onChange(of: email) {
+                        // Corriger l'adresse répond déjà à la question : la garder affichée
+                        // proposerait une correction pour un texte qui n'est plus là.
+                        if auth.message != nil { auth.clearMessage() }
+                    }
+                    .accessibilityLabel(t("onboarding.emailLabel"))
+
+                Button(action: sendLink) {
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(MicaboColor.onInk)
+                        .frame(width: 42, height: 42)
+                        .background(
+                            MicaboColor.accent,
+                            in: RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        )
+                }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
+                .disabled(!canSend)
+                .opacity(canSend ? 1 : 0.4)
+                .accessibilityLabel(t("onboarding.sendLink"))
             }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .medium))
-            .disabled(auth.isWorking || !EmailAddress.isPlausible(email))
-            .opacity(auth.isWorking || !EmailAddress.isPlausible(email) ? 0.5 : 1)
+            .padding(.leading, 16)
+            .padding(.trailing, 7)
+            .frame(minHeight: 56)
+            .background(
+                MicaboColor.canvas,
+                in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+            )
+
+            // Ce que fait le bouton, puisque rien dans une flèche ne dit qu'il n'y aura pas
+            // de mot de passe à choisir derrière.
+            Text(t("onboarding.emailNote"))
+                .font(MicaboFont.ui(12.5))
+                .foregroundStyle(MicaboColor.inkTertiary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
         }
     }
 

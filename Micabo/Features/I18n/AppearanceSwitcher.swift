@@ -58,7 +58,7 @@ struct AppearanceSwitcher: View {
     private var card: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(i18n.t("ios.appearance"))
-                .font(MicaboFont.hanken(13, weight: .regular))
+                .font(MicaboFont.ui(13, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
 
             HStack(spacing: 8) {
@@ -74,7 +74,7 @@ struct AppearanceSwitcher: View {
                                     Circle().strokeBorder(MicaboColor.strokeStrong, lineWidth: 1)
                                 }
                             Text(label(value))
-                                .font(MicaboFont.hanken(13.5, weight: .medium))
+                                .font(MicaboFont.ui(13.5, weight: .medium))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                         }
@@ -93,7 +93,7 @@ struct AppearanceSwitcher: View {
             }
 
             Text(i18n.t("ios.appearanceHelp"))
-                .font(MicaboFont.hanken(13, weight: .regular))
+                .font(MicaboFont.ui(13, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }

@@ -168,7 +168,7 @@ struct DemoImportStepView: View {
                 Text(isDropped
                      ? (i18n?.t("demo.dropped") ?? "Cours déposé")
                      : (i18n?.t("demo.dropHere") ?? "Dépose-le ici"))
-                    .font(MicaboFont.hanken(18, weight: .semibold))
+                    .font(MicaboFont.ui(18, weight: .semibold))
             }
             .foregroundStyle(labelTint)
         }

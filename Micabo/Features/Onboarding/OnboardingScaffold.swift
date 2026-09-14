@@ -255,7 +255,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.sm) {
                         if let eyebrow {
                             Text(eyebrow.uppercased())
-                                .font(MicaboFont.hanken(11, weight: .semibold))
+                                .font(MicaboFont.ui(11, weight: .semibold))
                                 .tracking(1.6)
                                 .foregroundStyle(surface.eyebrow)
                         }
@@ -273,7 +273,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
                     OnboardingWordByWordTitle(text: title, size: titleSize)
                 } else {
                     Text(title)
-                        .font(MicaboFont.hanken(titleSize, weight: .bold))
+                        .font(MicaboFont.ui(titleSize, weight: .bold))
                         .foregroundStyle(surface.title)
                         .tracking(-0.7)
                         .lineSpacing(-1)
@@ -283,7 +283,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(MicaboFont.hanken(15, weight: .regular))
+                        .font(MicaboFont.ui(15, weight: .regular))
                         .foregroundStyle(surface.prose)
                         .lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
@@ -320,7 +320,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         return Button(action: skip.action) {
             HStack(spacing: 3) {
                 Text(title)
-                    .font(MicaboFont.hanken(13.5, weight: .semibold))
+                    .font(MicaboFont.ui(13.5, weight: .semibold))
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 9, weight: .bold))
@@ -476,18 +476,18 @@ struct OnboardingWordByWordTitle: View {
     /// croisent par-dessus, calées à gauche.
     private func word(_ word: String, isBold: Bool) -> some View {
         Text(word)
-            .font(MicaboFont.hanken(size, weight: .bold))
+            .font(MicaboFont.ui(size, weight: .bold))
             .tracking(-0.7)
             .opacity(0)
             .overlay(alignment: .leading) {
                 ZStack(alignment: .leading) {
                     Text(word)
-                        .font(MicaboFont.hanken(size, weight: .regular))
+                        .font(MicaboFont.ui(size, weight: .regular))
                         .foregroundStyle(surface.title.opacity(0.3))
                         .opacity(isBold ? 0 : 1)
 
                     Text(word)
-                        .font(MicaboFont.hanken(size, weight: .bold))
+                        .font(MicaboFont.ui(size, weight: .bold))
                         .foregroundStyle(surface.title)
                         .opacity(isBold ? 1 : 0)
                 }
@@ -637,7 +637,7 @@ struct OnboardingHint: View {
 
     var body: some View {
         Text(text)
-            .font(MicaboFont.hanken(12, weight: .medium))
+            .font(MicaboFont.ui(12, weight: .medium))
             .foregroundStyle(surface.isDark ? Color.white.opacity(0.6) : MicaboColor.inkTertiary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
@@ -679,14 +679,14 @@ struct OnboardingChoiceRow: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(MicaboFont.hanken(16, weight: .medium))
+                        .font(MicaboFont.ui(16, weight: .medium))
                         .foregroundStyle(MicaboColor.ink)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
                     if let subtitle {
                         Text(subtitle)
-                            .font(MicaboFont.hanken(12.5, weight: .regular))
+                            .font(MicaboFont.ui(12.5, weight: .regular))
                             .foregroundStyle(MicaboColor.inkTertiary)
                             .multilineTextAlignment(.leading)
                     }
@@ -761,7 +761,7 @@ struct OnboardingChoiceTile: View {
                 }
 
                 Text(title)
-                    .font(MicaboFont.hanken(16, weight: .semibold))
+                    .font(MicaboFont.ui(16, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -801,7 +801,7 @@ struct OnboardingChoiceChip: View {
                 }
 
                 Text(title)
-                    .font(MicaboFont.hanken(15, weight: .medium))
+                    .font(MicaboFont.ui(15, weight: .medium))
                     .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.ink)
             }
             .padding(.vertical, 12)

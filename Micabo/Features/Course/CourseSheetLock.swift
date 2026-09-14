@@ -67,14 +67,14 @@ struct LockedSheetTail: View {
                     .background(MicaboColor.accent, in: Circle())
 
                 Text(i18n?.t("ios.sheetLockedTitle") ?? "La suite de la fiche est dans Pro")
-                    .font(MicaboFont.hanken(16.5, weight: .bold))
+                    .font(MicaboFont.ui(16.5, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(-0.3)
                     .multilineTextAlignment(.center)
 
                 HStack(spacing: 6) {
                     Text(i18n?.t("ios.unlockSheet") ?? "Débloquer la fiche")
-                        .font(MicaboFont.hanken(14.5, weight: .semibold))
+                        .font(MicaboFont.ui(14.5, weight: .semibold))
 
                     Image(systemName: "arrow.right")
                         .font(.system(size: 11, weight: .bold))

@@ -47,7 +47,7 @@ struct FlashcardEditorSheet: View {
             back: MicaboHeaderBack.close(save)
         ) {
             Button(L10n.t("ios.done", locale: .resolved()), action: save)
-                .font(MicaboFont.hanken(15, weight: .semibold))
+                .font(MicaboFont.ui(15, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
         }
     }
@@ -250,7 +250,7 @@ struct FlashcardCreatorSheet: View {
             back: MicaboHeaderBack.close { dismiss() }
         ) {
             Button(L10n.t("app.common.add", locale: .resolved()), action: save)
-                .font(MicaboFont.hanken(15, weight: .semibold))
+                .font(MicaboFont.ui(15, weight: .semibold))
                 .foregroundStyle(canSave ? MicaboColor.accent : MicaboColor.inkTertiary)
                 .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
                 .disabled(!canSave)

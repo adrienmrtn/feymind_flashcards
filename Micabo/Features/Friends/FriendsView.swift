@@ -99,7 +99,7 @@ struct FriendsView: View {
 
             HStack(spacing: 9) {
                 Text("@")
-                    .font(MicaboFont.hanken(15, weight: .semibold))
+                    .font(MicaboFont.ui(15, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkTertiary)
 
                 TextField(i18n?.t("app.friends.usernamePlaceholder") ?? "nom d'utilisateur", text: $search)
@@ -281,7 +281,7 @@ private struct FriendRow: View {
     private func compact(_ title: String, isProminent: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(MicaboFont.hanken(13, weight: .semibold))
+                .font(MicaboFont.ui(13, weight: .semibold))
                 .foregroundStyle(isProminent ? MicaboColor.onInk : MicaboColor.inkSecondary)
                 .padding(.vertical, 7)
                 .padding(.horizontal, 12)

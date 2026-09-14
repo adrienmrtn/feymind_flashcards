@@ -95,7 +95,7 @@ struct GenerateCardsSheet: View {
                     value: $basic
                 )
 
-                MicaboHairline(inset: 71)
+                MicaboHairline(inset: 72)
 
                 counterRow(
                     emoji: "✏️",
@@ -105,7 +105,7 @@ struct GenerateCardsSheet: View {
                     value: $cloze
                 )
 
-                MicaboHairline(inset: 71)
+                MicaboHairline(inset: 72)
 
                 counterRow(
                     emoji: "🔤",
@@ -134,7 +134,7 @@ struct GenerateCardsSheet: View {
                     .font(MicaboFont.rowTitle)
                     .foregroundStyle(MicaboColor.ink)
                 Text(detail)
-                    .font(MicaboFont.hanken(12, weight: .regular))
+                    .font(MicaboFont.ui(12, weight: .regular))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }

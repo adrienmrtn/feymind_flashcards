@@ -18,7 +18,7 @@ struct SubjectsStepView: View {
                 ForEach(SubjectCatalog.families) { family in
                     VStack(alignment: .leading, spacing: 10) {
                         Text(SubjectDisplay.family(family.name, locale: i18n?.locale ?? .resolved()).uppercased())
-                            .font(MicaboFont.hanken(10, weight: .semibold))
+                            .font(MicaboFont.ui(10, weight: .semibold))
                             .tracking(1.4)
                             .foregroundStyle(MicaboColor.inkTertiary)
 
@@ -88,7 +88,7 @@ private struct SubjectChip: View {
                         .font(.system(size: 13))
                 }
                 Text(title)
-                    .font(MicaboFont.hanken(13, weight: .medium))
+                    .font(MicaboFont.ui(13, weight: .medium))
             }
             .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.ink)
             .padding(.vertical, 9)

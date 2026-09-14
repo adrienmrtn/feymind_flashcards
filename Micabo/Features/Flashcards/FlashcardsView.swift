@@ -284,7 +284,7 @@ struct FlashcardsView: View {
                                 // Le recto d'une occlusion est toujours le même : dans une
                                 // liste, c'est le nom de la zone qui distingue les cartes.
                                 Text(FormulaRenderer.stripped(card.isOcclusion ? card.back : card.front))
-                                    .font(MicaboFont.hanken(14, weight: .medium))
+                                    .font(MicaboFont.ui(14, weight: .medium))
                                     .foregroundStyle(MicaboColor.ink)
                                     .multilineTextAlignment(.leading)
                                     .lineLimit(2)

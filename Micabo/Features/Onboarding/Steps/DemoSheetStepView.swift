@@ -84,7 +84,7 @@ struct DemoSheetStepView: View {
         Text(isFinished
              ? (i18n?.t("ios.sheetReady") ?? "Plan, définitions, schémas. Prêt à réviser.")
              : (i18n?.t("ios.sheetReading") ?? "Lecture du cours…"))
-            .font(MicaboFont.hanken(13, weight: .medium))
+            .font(MicaboFont.ui(13, weight: .medium))
             .foregroundStyle(isFinished ? MicaboColor.ink : MicaboColor.inkTertiary)
             .frame(maxWidth: .infinity)
             .animation(OnboardingMotion.tap, value: isFinished)

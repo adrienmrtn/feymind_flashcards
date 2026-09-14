@@ -186,7 +186,7 @@ struct ExamsView: View {
                 Button(i18n?.t("app.a11y.close") ?? "Fermer") {
                     withAnimation(.easeOut(duration: 0.2)) { selectedDay = nil }
                 }
-                .font(MicaboFont.hanken(13, weight: .semibold))
+                .font(MicaboFont.ui(13, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
                 .buttonStyle(MicaboPressableButtonStyle())
             }
@@ -214,7 +214,7 @@ struct ExamsView: View {
             ForEach(Array(exams.enumerated()), id: \.element.id) { index, exam in
                 row(exam)
                 if index < exams.count - 1 {
-                    MicaboHairline(inset: 71)
+                    MicaboHairline(inset: 72)
                 }
             }
         }

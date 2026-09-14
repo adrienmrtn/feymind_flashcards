@@ -125,7 +125,7 @@ struct CreateDeckView: View {
                     field: .title
                 )
 
-                MicaboHairline(inset: 71)
+                MicaboHairline(inset: 72)
 
                 field(
                     emoji: "🏷️",
@@ -370,7 +370,7 @@ private struct FlexibleChips: View {
                         Text("\(deck.cards)")
                             .opacity(0.7)
                     }
-                    .font(MicaboFont.hanken(13, weight: .medium))
+                    .font(MicaboFont.ui(13, weight: .medium))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .foregroundStyle(on ? MicaboColor.onInk : MicaboColor.inkTertiary)

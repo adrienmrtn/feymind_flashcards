@@ -13,11 +13,24 @@ import SwiftUI
 ///   du fil du texte pour l'empiler ligne par ligne. Une phrase hachée en trois morceaux
 ///   se lit moins bien qu'un `x²`.
 struct FormulaText: View {
+    /// La famille dans laquelle le texte est composé.
+    ///
+    /// Une carte porte les deux : le recto **nomme** — une question d'une ligne, qu'on lit
+    /// d'un regard — et le verso **explique**, sur trois ou quatre lignes qu'on relit. C'est
+    /// exactement le partage entre les deux polices de l'app, à l'intérieur d'un même objet.
+    enum Family {
+        /// Outfit : le recto d'une carte, un intitulé.
+        case display
+        /// Hanken Grotesk : le verso d'une carte, une proposition de QCM.
+        case reading
+    }
+
     let source: String
     var size: CGFloat = 15
     var weight: Font.Weight = .regular
     var color: Color = MicaboColor.ink
     var alignment: TextAlignment = .leading
+    var family: Family = .display
 
     var body: some View {
         if let formula = MathTypesetter.soleFormula(in: source), MathTypesetter.canTypeset(formula) {
@@ -42,7 +55,10 @@ struct FormulaText: View {
     }
 
     private var proseFont: Font {
-        MicaboFont.hanken(size, weight: weight)
+        switch family {
+        case .display: MicaboFont.ui(size, weight: weight)
+        case .reading: MicaboFont.reading(size, weight: weight)
+        }
     }
 
     /// Empattements et italique : la convention typographique des mathématiques, et de

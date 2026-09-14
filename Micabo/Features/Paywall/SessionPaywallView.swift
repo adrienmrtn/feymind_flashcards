@@ -71,14 +71,14 @@ struct SessionPaywallView: View {
                 VStack(spacing: 10) {
                     Text(i18n?.t("app.paywall.session.title", ["reviewed": "\(reviewedCount)"])
                         ?? "Tes \(reviewedCount) cartes gratuites\nsont faites.")
-                        .font(MicaboFont.hanken(26, weight: .bold))
+                        .font(MicaboFont.ui(26, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(-0.6)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(i18n?.t("ios.paywallSessionBody")
                         ?? "La session s'arrête là. Micabo Pro la laisse aller jusqu'au bout, tous les jours, sur tous tes cours.")
-                        .font(MicaboFont.hanken(14.5, weight: .regular))
+                        .font(MicaboFont.ui(14.5, weight: .regular))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
@@ -87,7 +87,7 @@ struct SessionPaywallView: View {
                 .onboardingAppear(index: 1)
 
                 PaywallPitch.text(for: plan)
-                    .font(MicaboFont.hanken(15, weight: .semibold))
+                    .font(MicaboFont.ui(15, weight: .semibold))
                     .multilineTextAlignment(.center)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -127,7 +127,7 @@ struct SessionPaywallView: View {
                 "reviewed": "\(reviewedCount)",
                 "limit": "\(FreeTier.cardsPerSession)"
             ]) ?? "\(reviewedCount) / \(FreeTier.cardsPerSession) cartes révisées")
-                .font(MicaboFont.hanken(13, weight: .semibold))
+                .font(MicaboFont.ui(13, weight: .semibold))
                 .monospacedDigit()
         }
         .foregroundStyle(MicaboColor.accent)
@@ -206,14 +206,14 @@ private struct AbandonConfirmation: View {
 
                 VStack(spacing: 8) {
                     Text(i18n?.t("app.paywall.session.abandonTitle") ?? "Tu es sûr d'abandonner\nta progression ?")
-                        .font(MicaboFont.hanken(20, weight: .bold))
+                        .font(MicaboFont.ui(20, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(-0.4)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text(i18n?.t("app.paywall.session.abandonBody")
                         ?? "Les cartes déjà notées sont enregistrées. Les suivantes attendront ta prochaine session.")
-                        .font(MicaboFont.hanken(13.5, weight: .regular))
+                        .font(MicaboFont.ui(13.5, weight: .regular))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -228,7 +228,7 @@ private struct AbandonConfirmation: View {
 
                     Button(action: onAbandon) {
                         Text(i18n?.t("app.paywall.session.abandonConfirm") ?? "Abandonner la session")
-                            .font(MicaboFont.hanken(14, weight: .semibold))
+                            .font(MicaboFont.ui(14, weight: .semibold))
                             .foregroundStyle(MicaboColor.negative)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)

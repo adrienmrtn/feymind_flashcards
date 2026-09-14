@@ -100,7 +100,7 @@ struct SocialProofStepView: View {
             stars
 
             Text(review.quote)
-                .font(MicaboFont.hanken(16, weight: .medium))
+                .font(MicaboFont.ui(16, weight: .medium))
                 .foregroundStyle(MicaboColor.ink)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
@@ -111,11 +111,11 @@ struct SocialProofStepView: View {
             // pas, et sur un avis elle a en plus l'air d'un client inventé.
             VStack(alignment: .leading, spacing: 1) {
                 Text(review.name)
-                    .font(MicaboFont.hanken(14, weight: .semibold))
+                    .font(MicaboFont.ui(14, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
 
                 Text(review.level)
-                    .font(MicaboFont.hanken(12, weight: .regular))
+                    .font(MicaboFont.ui(12, weight: .regular))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

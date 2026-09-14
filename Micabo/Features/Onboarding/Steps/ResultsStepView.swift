@@ -143,7 +143,7 @@ private struct ResultsCurve: View {
     private func bound(label: String, value: String, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
-                .font(MicaboFont.hanken(11, weight: .medium))
+                .font(MicaboFont.ui(11, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
             Text(value)
                 .font(MicaboFont.number(18, weight: .bold))

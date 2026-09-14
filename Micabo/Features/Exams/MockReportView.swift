@@ -69,13 +69,13 @@ struct MockReportView: View {
     private var headline: some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
             Text(t("app.mock.doneEyebrow").uppercased())
-                .font(MicaboFont.hanken(11.5, weight: .semibold))
+                .font(MicaboFont.ui(11.5, weight: .semibold))
                 .tracking(0.6)
                 .foregroundStyle(MicaboColor.inkTertiary)
 
             if let line = session.debrief?.headline.nilIfBlank {
                 Text(line)
-                    .font(MicaboFont.hanken(21, weight: .semibold))
+                    .font(MicaboFont.ui(21, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -86,7 +86,7 @@ struct MockReportView: View {
                         .font(MicaboFont.number(40, weight: .bold))
                         .monospacedDigit()
                     Text("%")
-                        .font(MicaboFont.hanken(20, weight: .semibold))
+                        .font(MicaboFont.ui(20, weight: .semibold))
                 }
                 .foregroundStyle(tone)
 
@@ -170,7 +170,7 @@ struct MockReportView: View {
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .frame(width: 18, alignment: .leading)
                 Text(displayPrompt(question))
-                    .font(MicaboFont.hanken(14.5, weight: .medium))
+                    .font(MicaboFont.ui(14.5, weight: .medium))
                     .foregroundStyle(MicaboColor.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: MicaboSpacing.xs)

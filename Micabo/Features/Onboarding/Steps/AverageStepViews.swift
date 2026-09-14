@@ -192,7 +192,7 @@ private struct GradeSlider: View {
                 Spacer(minLength: MicaboSpacing.sm)
                 Text(choices.last?.label ?? "")
             }
-            .font(MicaboFont.hanken(12, weight: .medium))
+            .font(MicaboFont.ui(12, weight: .medium))
             .foregroundStyle(MicaboColor.inkTertiary)
         }
         .frame(maxWidth: .infinity)
