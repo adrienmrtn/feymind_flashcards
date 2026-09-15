@@ -1,4 +1,5 @@
 import type { Metadata, Route } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -7,6 +8,7 @@ import { DemoCards } from "@/components/landing/DemoCards";
 import { ExamMode } from "@/components/landing/ExamMode";
 import { Footer } from "@/components/landing/Footer";
 import { Hero } from "@/components/landing/Hero";
+import { IphoneLanding } from "@/components/landing/IphoneLanding";
 import { Proof } from "@/components/landing/Proof";
 import { Questions } from "@/components/landing/Questions";
 import { RetentionChart } from "@/components/landing/RetentionChart";
@@ -20,6 +22,7 @@ import { indexableAlternates } from "@/lib/i18n/alternates";
 import { UI_LOCALE_META } from "@/lib/i18n/locales";
 import { localizedHref, localizedPath } from "@/lib/i18n/paths";
 import { getTranslator } from "@/lib/i18n/server";
+import { wantsIphoneLanding } from "@/lib/iphone";
 import { ANKI_PAGE, EXAM_PAGE, METHOD_PAGE } from "@/lib/site-pages";
 
 /**
@@ -49,6 +52,11 @@ export async function generateMetadata(): Promise<Metadata> {
  * Un lien de confirmation qui retombe ici (Site URL) n'y reste pas : s'il y a un code,
  * on reprend le callback. Une session déjà ouverte laisse la vitrine : le bouton
  * dit Ouvrir l'app, et mène au tableau de bord.
+ *
+ * **Sur iPhone, ce n'est pas cette page qui s'affiche.** L'appareil qui arrive est déjà celui
+ * sur lequel Micabo est une app native : la vitrine y cède la place à la page de
+ * téléchargement (`IphoneLanding`), et `?web` la redonne à qui la demande. Rien n'est
+ * redirigé — l'adresse reste `/`, et les robots continuent d'y trouver la vitrine.
  */
 export default async function LandingPage({
   searchParams,
@@ -69,8 +77,17 @@ export default async function LandingPage({
     redirect(`${callback.pathname}${callback.search}` as Route);
   }
 
-  const [{ t, locale }, user] = await Promise.all([getTranslator(), currentUser()]);
+  const [{ t, locale }, user, head] = await Promise.all([
+    getTranslator(),
+    currentUser(),
+    headers(),
+  ]);
   const signedIn = Boolean(user);
+
+  if (wantsIphoneLanding(head.get("user-agent"), params)) {
+    return <IphoneLanding signedIn={signedIn} />;
+  }
+
   const nav = [
     { href: `#${LANDING_SECTIONS.how}`, label: t("site.how") },
     { href: `#${LANDING_SECTIONS.method}`, label: t("site.method") },
