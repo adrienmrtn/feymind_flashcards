@@ -33,6 +33,7 @@ struct MockSessionRecord: Codable, Identifiable, Equatable {
         id: UUID,
         user_id: UUID,
         exam_id: UUID?,
+        kind: String? = nil,
         planned_for: String?,
         minutes: Int,
         question_count: Int,
@@ -48,6 +49,7 @@ struct MockSessionRecord: Codable, Identifiable, Equatable {
         self.id = id
         self.user_id = user_id
         self.exam_id = exam_id
+        self.kind = kind
         self.planned_for = planned_for
         self.minutes = minutes
         self.question_count = question_count
@@ -73,6 +75,7 @@ struct MockSessionRecord: Codable, Identifiable, Equatable {
         id = try container.decode(UUID.self, forKey: .id)
         user_id = try container.decode(UUID.self, forKey: .user_id)
         exam_id = try container.decodeIfPresent(UUID.self, forKey: .exam_id)
+        kind = try container.decodeIfPresent(String.self, forKey: .kind)
         planned_for = try container.decodeIfPresent(String.self, forKey: .planned_for)
         minutes = try container.decodeIfPresent(Int.self, forKey: .minutes) ?? 20
         question_count = try container.decodeIfPresent(Int.self, forKey: .question_count) ?? 0
@@ -107,17 +110,34 @@ private struct MockSessionClosing: Encodable {
     var updated_at: Date
 }
 
-/// **Ouvrir une copie, la remettre, la faire corriger.**
+/// **Les dates nues de la base, lues et écrites.**
 ///
-/// Le même parcours que `lib/actions/mocks.ts` sur le site, aux mêmes fonctions Edge :
-/// `generate-mock` écrit la copie sur le programme de l'épreuve, `grade-mock` note les
-/// explications orales et rend le débriefing. Les questions fermées se corrigent ici, à la
-/// comparaison, avant d'appeler le modèle : c'est le socle du score, et il ne dépend de rien.
+/// Hors de `MockExamService`, qui est `@MainActor` : une ligne comme `ExamPlanOverrideRecord`
+/// se décode là où la requête revient, et doit pouvoir lire sa propre date sans passer par
+/// l'acteur principal. Rien ici ne touche à un état partagé.
 ///
-/// Si la correction du modèle échoue, la copie est quand même fermée avec le score des
-/// questions fermées : une note incomplète vaut mieux qu'une épreuve passée pour rien.
-@Observable
-@MainActor
+/// Grégorien et `en_US_POSIX` : une colonne `date` ne parle ni la langue de l'utilisateur ni
+/// son calendrier, et un appareil réglé sur le calendrier bouddhiste écrirait 2569.
+enum ExamDayStamp {
+    private static let formatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone.current
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
+    static func string(from date: Date) -> String {
+        formatter.string(from: date)
+    }
+
+    /// Le jour d'une date nue, ramené au début de la journée locale.
+    static func date(from stamp: String) -> Date? {
+        formatter.date(from: stamp).map { MicaboCalendar.shared.startOfDay(for: $0) }
+    }
+}
+
 /// **Une ligne de `exam_plan_overrides` : un rendez-vous que l'étudiant a déplacé.**
 ///
 /// Elle ne porte pas de date d'origine, et c'est voulu : la dérivation la redonne à chaque
@@ -136,11 +156,22 @@ struct ExamPlanOverrideRecord: Codable, Equatable {
 
     var asOverride: AgendaOverride? {
         guard let kind = AgendaKind(rawValue: kind),
-              let date = MockExamService.day(from: scheduled_for) else { return nil }
+              let date = ExamDayStamp.date(from: scheduled_for) else { return nil }
         return AgendaOverride(examId: exam_id, kind: kind, slot: slot, date: date)
     }
 }
 
+/// **Ouvrir une copie, la remettre, la faire corriger.**
+///
+/// Le même parcours que `lib/actions/mocks.ts` sur le site, aux mêmes fonctions Edge :
+/// `generate-mock` écrit la copie sur le programme de l'épreuve, `grade-mock` note les
+/// explications orales et rend le débriefing. Les questions fermées se corrigent ici, à la
+/// comparaison, avant d'appeler le modèle : c'est le socle du score, et il ne dépend de rien.
+///
+/// Si la correction du modèle échoue, la copie est quand même fermée avec le score des
+/// questions fermées : une note incomplète vaut mieux qu'une épreuve passée pour rien.
+@Observable
+@MainActor
 final class MockExamService {
     enum Failure: LocalizedError {
         case notSignedIn
@@ -218,7 +249,7 @@ final class MockExamService {
                 exam_id: event.examId,
                 kind: event.kind.rawValue,
                 slot: event.slot,
-                scheduled_for: Self.dayStamp(date)
+                scheduled_for: ExamDayStamp.string(from: date)
             )
         ], into: Self.overridesTable)
     }
@@ -319,7 +350,7 @@ final class MockExamService {
             user_id: userID,
             exam_id: exam.id,
             kind: kind.rawValue,
-            planned_for: Self.dayStamp(Date()),
+            planned_for: ExamDayStamp.string(from: Date()),
             minutes: MockPaper.minutes(for: questions),
             question_count: questions.count,
             correct_count: 0,
@@ -425,25 +456,4 @@ final class MockExamService {
         return questions
     }
 
-    /// Le formateur des dates nues de la base.
-    ///
-    /// Grégorien et `en_US_POSIX` : une colonne `date` ne parle ni la langue de l'utilisateur
-    /// ni son calendrier, et un appareil réglé sur le calendrier bouddhiste écrirait 2569.
-    private static let stamp: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone.current
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
-
-    static func dayStamp(_ date: Date) -> String {
-        stamp.string(from: date)
-    }
-
-    /// Le jour d'une date nue, ramené au début de la journée locale.
-    static func day(from stampValue: String) -> Date? {
-        stamp.date(from: stampValue).map { MicaboCalendar.shared.startOfDay(for: $0) }
-    }
 }
