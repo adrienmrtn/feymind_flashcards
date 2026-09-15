@@ -1,19 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+
+import type { AgendaKind, AgendaStatus } from "@micabo/core";
 
 import { StartMock } from "@/components/app/plan/StartMock";
+import { Button } from "@/components/ui/button";
+import { moveMeasure } from "@/lib/actions/exam-plan";
 import { useI18n } from "@/lib/i18n/client";
 import { localeBcp47 } from "@/lib/i18n/copy";
+
+/** Le rendez-vous de mesure qui tombe ce jour-là. Au plus un : l'agenda les écarte. */
+export interface ScheduleMeasure {
+  kind: AgendaKind;
+  /** Son rang dans sa série, compté depuis l'épreuve. C'est ce qu'un déplacement désigne. */
+  slot: number;
+  status: AgendaStatus;
+  questionCount: number;
+  minutes: number;
+  /** La date qu'aurait donnée la dérivation, quand ce rendez-vous a été déplacé. */
+  plannedDate: string | null;
+}
 
 export interface ScheduleDay {
   offset: number;
   date: string;
   cards: number;
   minutes: number;
-  mock: { questionCount: number; minutes: number } | null;
-  /** Le test de parcours du jour : cinq minutes, entre deux blancs. */
-  parcours: { questionCount: number; minutes: number } | null;
+  measure: ScheduleMeasure | null;
   isExamDay: boolean;
   /** Un jour posé off au moment du plan : vide par choix, pas faute de travail. */
   isOff: boolean;
@@ -25,6 +40,11 @@ export interface ScheduleDay {
  * L'ancienne liste alignait quatorze lignes « rien de prévu » : on la faisait défiler sans
  * rien lire. Ici chaque jour est une case, la hauteur du remplissage dit la charge, et le
  * détail vient au survol. Une semaine tient sur une ligne, l'épreuve se voit tout de suite.
+ *
+ * **Une case qui porte un rendez-vous se touche.** Elle ouvre de quoi le déplacer : un examen
+ * blanc tombe un jour où l'on travaille, un test de parcours un jour de match, et un plan
+ * qu'on ne peut pas ajuster est un plan qu'on abandonne. Ce qui se déplace est le
+ * rendez-vous, pas la mesure : c'est son rang qui part au serveur, jamais sa date.
  */
 export function ExamSchedule({
   examId,
@@ -38,32 +58,37 @@ export function ExamSchedule({
   const { t, locale } = useI18n();
   const bcp = localeBcp47(locale);
   const [expanded, setExpanded] = useState(false);
+  const [picked, setPicked] = useState<ScheduleDay | null>(null);
   if (days.length === 0) return null;
 
-  /**
-   * Un jour porte au plus une mesure, et le blanc l'emporte.
-   *
-   * L'agenda écarte déjà les parcours des blancs, donc les deux ne tombent ensemble que si
-   * l'étudiant a déplacé un rendez-vous à la main. Dans ce cas c'est le blanc qui donne sa
-   * couleur : c'est le rendez-vous qui compte.
-   */
-  const measureOf = (day: ScheduleDay) => day.mock ?? day.parcours;
-  const working = days.filter((day) => !day.isExamDay && (day.cards > 0 || measureOf(day)));
-  const free = days.filter((day) => !day.isExamDay && day.cards === 0 && !measureOf(day));
-  const mocks = days.filter((day) => day.mock);
-  const parcours = days.filter((day) => !day.mock && day.parcours);
+  const working = days.filter((day) => !day.isExamDay && (day.cards > 0 || day.measure));
+  const free = days.filter((day) => !day.isExamDay && day.cards === 0 && !day.measure);
+  const mocks = days.filter((day) => day.measure?.kind === "mock");
+  const parcours = days.filter((day) => day.measure?.kind === "parcours");
   const totalCards = days.reduce((sum, day) => sum + day.cards, 0);
   // La barre parle du **nombre de cartes**, comme le chiffre au-dessus d'elle. Elle mesurait
   // des minutes tandis que la case en affichait aussi : deux échelles pour une seule case.
   const max = Math.max(1, ...days.map((day) => day.cards));
   const shown = expanded ? days : days.slice(0, 21);
-  const todayMock = days.find((day) => day.offset === 0 && day.mock);
-  const todayParcours = days.find((day) => day.offset === 0 && !day.mock && day.parcours);
+  const today = days.find((day) => day.offset === 0);
+  const todayMeasure = today?.measure?.status === "upcoming" ? today.measure : null;
 
   const weeks: ScheduleDay[][] = [];
   for (const day of shown) {
     const index = Math.floor(day.offset / 7);
     (weeks[index] ??= []).push(day);
+  }
+
+  /** Ce que porte la case, en une ligne : c'est l'infobulle et la moitié de l'étiquette. */
+  function measureLine(measure: ScheduleMeasure): string {
+    return t(measure.kind === "mock" ? "app.exam.schedule.mock" : "app.exam.schedule.parcours", {
+      questions: measure.questionCount,
+      minutes: measure.minutes,
+    });
+  }
+
+  function kindLabel(kind: AgendaKind): string {
+    return t(kind === "mock" ? "app.mock.blockTitle" : "app.parcours.blockTitle");
   }
 
   return (
@@ -79,12 +104,13 @@ export function ExamSchedule({
             })}
           </p>
         </div>
-        {todayMock && canRunMock ? <StartMock examId={examId} /> : null}
         {/*
           Un parcours se lance même quand la copie de vingt questions n'a pas de quoi se
           composer : il en demande dix, et il n'est pas tiré des cartes mais du programme.
         */}
-        {todayParcours && !todayMock ? <StartMock examId={examId} kind="parcours" /> : null}
+        {todayMeasure && (todayMeasure.kind === "parcours" || canRunMock) ? (
+          <StartMock examId={examId} kind={todayMeasure.kind} />
+        ) : null}
       </div>
 
       <ol className="mt-4 space-y-2">
@@ -93,26 +119,20 @@ export function ExamSchedule({
             {week.map((day) => {
               const date = new Date(`${day.date}T12:00:00`);
               const label = date.toLocaleDateString(bcp, { weekday: "short" }).replace(".", "");
-              const measure = measureOf(day);
-              const measureLine = day.mock
-                ? t("app.exam.schedule.mock", {
-                    questions: day.mock.questionCount,
-                    minutes: day.mock.minutes,
-                  })
-                : day.parcours
-                  ? t("app.exam.schedule.parcours", {
-                      questions: day.parcours.questionCount,
-                      minutes: day.parcours.minutes,
-                    })
-                  : "";
+              const measure = day.measure;
+              const line = measure ? measureLine(measure) : "";
               const title = day.isExamDay
                 ? t("app.exam.schedule.examDay")
                 : day.isOff && day.cards === 0 && !measure
                   ? t("app.exam.schedule.off")
                   : day.cards === 0 && !measure
-                    ? measureLine || t("app.exam.schedule.free")
-                  : `${t("app.exam.schedule.cards", { cards: day.cards, minutes: day.minutes })}${measureLine ? ` · ${measureLine}` : ""}`;
+                    ? t("app.exam.schedule.free")
+                    : day.cards === 0
+                      ? line
+                      : `${t("app.exam.schedule.cards", { cards: day.cards, minutes: day.minutes })}${line ? ` · ${line}` : ""}`;
               const fill = Math.min(1, day.cards / max);
+              const movable = Boolean(measure) && measure?.status !== "done" && !day.isExamDay;
+
               return (
                 <div
                   key={day.offset}
@@ -133,26 +153,30 @@ export function ExamSchedule({
                   className={`relative flex h-16 flex-col justify-between overflow-hidden rounded-[10px] border p-1.5 text-[10.5px] ${
                     day.isExamDay
                       ? "border-ink/40 bg-ink/[0.07]"
-                      : day.mock
-                        ? "border-accent/50 bg-accent-soft"
-                        : day.parcours
-                          ? "border-caution/45 bg-caution-soft"
-                          : day.offset === 0
-                            ? "border-ink/40 bg-surface"
-                            : day.cards === 0
-                              ? "border-transparent bg-surface-muted/50"
-                              : "border-hairline bg-surface"
-                  }`}
+                      : measure?.status === "done"
+                        ? "border-positive/40 bg-positive-soft"
+                        : measure?.kind === "mock"
+                          ? "border-accent/50 bg-accent-soft"
+                          : measure
+                            ? "border-caution/45 bg-caution-soft"
+                            : day.offset === 0
+                              ? "border-ink/40 bg-surface"
+                              : day.cards === 0
+                                ? "border-transparent bg-surface-muted/50"
+                                : "border-hairline bg-surface"
+                  } ${picked?.offset === day.offset ? "ring-2 ring-ink/30" : ""}`}
                 >
                   <span
                     className={`flex items-baseline justify-between ${
-                      day.mock
-                        ? "font-semibold text-accent"
-                        : day.parcours
-                          ? "font-semibold text-caution"
-                          : day.offset === 0
-                            ? "font-semibold text-ink"
-                            : "text-ink-tertiary"
+                      measure?.status === "done"
+                        ? "font-semibold text-positive"
+                        : measure?.kind === "mock"
+                          ? "font-semibold text-accent"
+                          : measure
+                            ? "font-semibold text-caution"
+                            : day.offset === 0
+                              ? "font-semibold text-ink"
+                              : "text-ink-tertiary"
                     }`}
                   >
                     <span className="uppercase tracking-wide">{label}</span>
@@ -162,13 +186,21 @@ export function ExamSchedule({
                     <span className="text-[10px] font-semibold text-ink">
                       {t("app.exam.schedule.examShort")}
                     </span>
-                  ) : day.mock ? (
-                    <span className="truncate text-[9.5px] font-semibold uppercase tracking-wide text-accent">
-                      {t("app.exam.schedule.mockShort")}
-                    </span>
-                  ) : day.parcours ? (
-                    <span className="truncate text-[9.5px] font-semibold uppercase tracking-wide text-caution">
-                      {t("app.exam.schedule.parcoursShort")}
+                  ) : measure ? (
+                    <span
+                      className={`truncate text-[9.5px] font-semibold uppercase tracking-wide ${
+                        measure.status === "done"
+                          ? "text-positive"
+                          : measure.kind === "mock"
+                            ? "text-accent"
+                            : "text-caution"
+                      }`}
+                    >
+                      {t(
+                        measure.kind === "mock"
+                          ? "app.exam.schedule.mockShort"
+                          : "app.exam.schedule.parcoursShort",
+                      )}
                     </span>
                   ) : day.isOff && day.cards === 0 ? (
                     <span aria-hidden className="emoji text-[11px] leading-none">
@@ -216,12 +248,38 @@ export function ExamSchedule({
                       />
                     </span>
                   ) : null}
+
+                  {/*
+                    Le bouton couvre la case au lieu de l'être : la case est déjà une pile de
+                    trois éléments et d'un filet, et les mettre dans un <button> ferait
+                    hériter chacun de ses styles de contrôle.
+                  */}
+                  {movable && measure ? (
+                    <button
+                      type="button"
+                      onClick={() => setPicked(picked?.offset === day.offset ? null : day)}
+                      className="pressable absolute inset-0 cursor-pointer rounded-[10px]"
+                      aria-label={`${kindLabel(measure.kind)} · ${date.toLocaleDateString(bcp, { day: "numeric", month: "long" })} · ${t("app.agenda.moveTitle")}`}
+                    />
+                  ) : null}
                 </div>
               );
             })}
           </li>
         ))}
       </ol>
+
+      {picked?.measure ? (
+        <MoveMeasure
+          examId={examId}
+          days={days}
+          day={picked}
+          measure={picked.measure}
+          title={kindLabel(picked.measure.kind)}
+          line={measureLine(picked.measure)}
+          onDone={() => setPicked(null)}
+        />
+      ) : null}
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-[12px] text-ink-tertiary">
         <span>
@@ -245,5 +303,118 @@ export function ExamSchedule({
         ) : null}
       </div>
     </section>
+  );
+}
+
+/**
+ * **Ce qu'est ce rendez-vous, et quand on le veut.**
+ *
+ * Elle ne propose pas de lancer le test : le plan d'une épreuve dit ce qui est prévu, pas où
+ * l'on travaille. On passe la mesure depuis le bandeau du jour, quand le jour est venu.
+ *
+ * Le sélecteur est borné à aujourd'hui et à la veille de l'épreuve, et le serveur tient les
+ * mêmes bornes : un rendez-vous posé hier naîtrait manqué, et un posé le jour J révélerait une
+ * lacune qu'il n'y a plus le temps de corriger.
+ */
+function MoveMeasure({
+  examId,
+  days,
+  day,
+  measure,
+  title,
+  line,
+  onDone,
+}: {
+  examId: string;
+  /** Les jours du plan, dont les bornes sortent : ce sont des dates du serveur. */
+  days: ScheduleDay[];
+  day: ScheduleDay;
+  measure: ScheduleMeasure;
+  title: string;
+  line: string;
+  onDone: () => void;
+}) {
+  const { t, locale } = useI18n();
+  const bcp = localeBcp47(locale);
+  const router = useRouter();
+  const [chosen, setChosen] = useState(day.date);
+  const [pending, startTransition] = useTransition();
+  const [failed, setFailed] = useState<string | null>(null);
+
+  /**
+   * Les bornes viennent du plan, **pas de l'horloge du navigateur**.
+   *
+   * Le plan est daté par le serveur ; recalculer « aujourd'hui » ici ferait diverger les deux
+   * d'un jour entier pour qui ouvre le site à une heure du matin, et le sélecteur refuserait
+   * la case que la grille vient de proposer.
+   */
+  const first = days[0]?.date ?? day.date;
+  // La veille de l'épreuve : le jour J appartient à l'épreuve, pas à sa préparation.
+  const last = [...days].reverse().find((candidate) => !candidate.isExamDay)?.date ?? first;
+
+  function submit(date: string | null) {
+    setFailed(null);
+    startTransition(async () => {
+      const result = await moveMeasure({ examId, kind: measure.kind, slot: measure.slot, date });
+      if (result.status === "ok") {
+        router.refresh();
+        onDone();
+        return;
+      }
+      setFailed(result.message ?? t("app.mock.failed"));
+    });
+  }
+
+  const readable = (iso: string) =>
+    new Date(`${iso}T12:00:00`).toLocaleDateString(bcp, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+
+  return (
+    <div className="mt-4 rounded-group border border-hairline bg-surface-muted/60 p-4">
+      <p className="text-[13.5px] font-semibold text-ink">{title}</p>
+      <p className="numeral mt-0.5 text-[12.5px] text-ink-secondary">
+        {readable(day.date)} · {line}
+      </p>
+      {measure.plannedDate ? (
+        <p className="mt-0.5 text-[12px] text-ink-tertiary">
+          {t("app.agenda.movedFrom", { date: readable(measure.plannedDate) })}
+        </p>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <label className="sr-only" htmlFor="move-measure-date">
+          {t("app.agenda.moveTitle")}
+        </label>
+        <input
+          id="move-measure-date"
+          type="date"
+          value={chosen}
+          min={first}
+          max={last}
+          onChange={(event) => setChosen(event.target.value)}
+          className="numeral h-9 rounded-[10px] border border-hairline bg-surface px-2.5 text-[13px] text-ink"
+        />
+        <Button size="sm" disabled={pending || chosen === day.date} onClick={() => submit(chosen)}>
+          {pending ? t("app.exams.wait") : t("app.agenda.move")}
+        </Button>
+        {measure.plannedDate ? (
+          <Button size="sm" variant="outline" disabled={pending} onClick={() => submit(null)}>
+            {t("app.agenda.reset")}
+          </Button>
+        ) : null}
+        <Button size="sm" variant="ghost" disabled={pending} onClick={onDone}>
+          {t("app.common.cancel")}
+        </Button>
+      </div>
+
+      {failed ? (
+        <p className="mt-2 text-[12.5px] text-negative" role="alert">
+          {failed}
+        </p>
+      ) : null}
+    </div>
   );
 }

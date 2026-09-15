@@ -11,10 +11,19 @@
  */
 
 import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { HEADER, SOURCE, TARGET, canonicalBody } from "../scripts/sync-sheet";
-import { SHEET_LIMITS, normalizeSheet, sheetToPlainText } from "../src/sheet/canonical";
+import {
+  SHEET_LIMITS,
+  SUMMARY_MAX_WORDS,
+  clampSummary,
+  normalizeSheet,
+  sheetToPlainText,
+} from "../src/sheet/canonical";
 
 describe("la copie du module de fiche", () => {
   it("est identique à l'original du serveur", () => {
@@ -40,6 +49,52 @@ describe("les plafonds tiennent", () => {
     expect(SHEET_LIMITS.blocks).toBe(90);
     expect(SHEET_LIMITS.listItems).toBe(10);
     expect(SHEET_LIMITS.highlights).toBe(24);
+  });
+});
+
+/**
+ * **Le chapeau se coupe des deux côtés, et il doit se couper pareil.**
+ *
+ * Le serveur borne ce qu'il écrit ; l'app borne ce qu'elle affiche, parce que les fiches déjà
+ * en base portent leurs deux phrases et que personne ne va les réécrire. Deux coupes qui ne
+ * tombent pas au même endroit donneraient deux chapeaux pour une seule fiche.
+ *
+ * On ne peut pas exécuter le Swift depuis ici. On vérifie ce qui se vérifie de l'extérieur :
+ * le plafond, et la forme de la règle qui l'applique.
+ */
+describe("la coupe du chapeau, des deux côtés", () => {
+  const swift = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), "../../../..", "Micabo/Models/CourseSheet.swift"),
+    "utf8",
+  );
+
+  it("s'arrête au même nombre de mots", () => {
+    expect(SUMMARY_MAX_WORDS).toBe(20);
+    expect(swift).toContain(`static let summaryWords = ${SUMMARY_MAX_WORDS}`);
+  });
+
+  it("garde les phrases entières tant qu'elles tiennent", () => {
+    const deux =
+      "La révolution industrielle transforme l'Angleterre entre 1760 et 1840. " +
+      "Elle déplace les campagnes vers les villes et invente le salariat moderne.";
+    expect(clampSummary(deux)).toBe(
+      "La révolution industrielle transforme l'Angleterre entre 1760 et 1840.",
+    );
+
+    // Côté Swift : mêmes bornes de phrase, même comparaison, même repli au mot.
+    expect(swift).toContain('guard ".!?…".contains(character) else { continue }');
+    expect(swift).toContain("if count + size > limit { break }");
+    expect(swift).toContain("if words.count <= limit { return clean }");
+  });
+
+  it("coupe au mot et pose des points de suspension quand aucune phrase ne tient", () => {
+    const longue =
+      "Le droit administratif règle les rapports entre l'administration et les administrés, " +
+      "organise le contentieux devant le juge administratif et fixe les conditions de légalité.";
+    expect(clampSummary(longue).endsWith("…")).toBe(true);
+
+    expect(swift).toContain('while let last = cut.last, " ,;:.!?…".contains(last) { cut.removeLast() }');
+    expect(swift).toContain('return cut + "…"');
   });
 });
 

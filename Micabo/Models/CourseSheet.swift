@@ -466,6 +466,8 @@ enum SheetLimits {
     static let listItems = 10
     /// Ce qu'on surligne sur une fiche entière. Au-delà, plus rien ne ressort.
     static let highlights = 24
+    /// Le chapeau, en mots. Voir `SheetText.lead` : deux lignes de téléphone, pas plus.
+    static let summaryWords = 20
 }
 
 /// Nettoyage des textes de la fiche.
@@ -492,5 +494,58 @@ enum SheetText {
             result = result.replacingOccurrences(of: "  ", with: " ")
         }
         return result.trimmingCharacters(in: .whitespacesAndNewlines).nilIfBlank
+    }
+
+    /// **Le chapeau d'une fiche : vingt mots, jamais plus.**
+    ///
+    /// Il se lit entre le titre et la première partie, composé plus grand que le corps du
+    /// texte. À cette taille, deux phrases pleines occupent le haut de l'écran et repoussent
+    /// la fiche sous la ligne de flottaison : on ouvre un cours et on lit d'abord un résumé
+    /// du cours. Or ce n'est pas ce qu'on vient chercher — le chapeau sert à reconnaître la
+    /// fiche, pas à la remplacer.
+    ///
+    /// La coupe est faite **ici, à l'affichage**, et pas seulement à la génération. Le
+    /// serveur borne ce qu'il écrit désormais, mais toutes les fiches déjà en base portent
+    /// leurs deux phrases, et personne ne va les réécrire.
+    ///
+    /// **Elle respecte les phrases.** On garde les phrases entières tant qu'elles tiennent
+    /// dans le compte ; une phrase coupée en son milieu se lit comme une panne. Quand pas une
+    /// seule ne tient — le modèle en écrit parfois une, plus longue que la limite — on coupe
+    /// au vingtième mot et on pose des points de suspension.
+    ///
+    /// Jumeau de `clampSummary` dans `supabase/functions/_shared/sheet.ts`.
+    static func lead(_ text: String, limit: Int = SheetLimits.summaryWords) -> String {
+        let clean = text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+        if clean.isEmpty { return "" }
+
+        let words = clean.split(separator: " ")
+        if words.count <= limit { return clean }
+
+        var kept = ""
+        var count = 0
+        var current = ""
+
+        for character in clean {
+            current.append(character)
+            guard ".!?…".contains(character) else { continue }
+            // Une fin de phrase : on sait enfin combien de mots elle pesait.
+            let size = current.split(whereSeparator: \.isWhitespace).count
+            if count + size > limit { break }
+            kept += current
+            count += size
+            current = ""
+        }
+
+        let trimmed = kept.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty { return trimmed }
+
+        // Pas une seule phrase ne tient : on coupe au mot, sans ponctuation pendante.
+        // « …des actes, … » se lit comme une panne d'affichage.
+        var cut = words.prefix(limit).joined(separator: " ")
+        while let last = cut.last, " ,;:.!?…".contains(last) { cut.removeLast() }
+        return cut + "…"
     }
 }

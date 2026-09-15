@@ -426,6 +426,7 @@ export const appDe = {
     examDay: "Prüfungstag",
     cards: "{count} Karten",
     moveTitle: "Diesen Termin verschieben",
+    outOfRange: "Ein Termin liegt zwischen heute und dem Tag vor der Prüfung.",
     move: "Hierhin verschieben",
     reset: "Zurück zum geplanten Datum",
     movedFrom: "verschoben vom {date}",

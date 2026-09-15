@@ -426,6 +426,7 @@ export const appEs = {
     examDay: "Día del examen",
     cards: "{count} tarjetas",
     moveTitle: "Mover esta cita",
+    outOfRange: "Una cita va entre hoy y la víspera del examen.",
     move: "Mover aquí",
     reset: "Volver a la fecha prevista",
     movedFrom: "movido del {date}",

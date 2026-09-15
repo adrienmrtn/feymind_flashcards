@@ -5,10 +5,9 @@ import {
   asExamKind,
   asStartingPoint,
   dayDifference,
+  examAgenda,
   examCountdownLabel,
   examReadiness,
-  isMockBlock,
-  isParcoursBlock,
   isReviewBlock,
   masteryByCourse,
   masteryForCourses,
@@ -20,6 +19,7 @@ import {
   targetPercent,
   weakCards,
   TERM_HORIZON_DAYS,
+  type AgendaEvent,
   type TermCard,
   type TermExam,
 } from "@micabo/core";
@@ -131,24 +131,63 @@ export default async function ExamSheetPage({
     offDays: offDayOffsets(offDays, today, TERM_HORIZON_DAYS),
   });
 
+  /**
+   * Les rendez-vous de cette épreuve, lus depuis l'agenda plutôt que depuis les blocs du plan.
+   *
+   * Le plan ne porte que les rendez-vous **à venir** - c'est tout ce dont il a besoin pour
+   * remplir une journée - alors que la case doit aussi savoir le rang du rendez-vous, s'il a
+   * déjà été honoré, et s'il a été déplacé. L'agenda dit les quatre, et c'est lui que l'app
+   * lit : les deux écrans posent donc les mêmes jours.
+   */
+  const agendaExam = {
+    id: exam.id,
+    name: exam.name,
+    examDate: new Date(`${exam.exam_date}T12:00:00`),
+    kind: asExamKind(exam.kind),
+    cardCount: overall.cardCount,
+  };
+  const events = examAgenda({ exams: [agendaExam], done: measures, overrides, now });
+
+  /**
+   * Où la dérivation aurait posé chaque rendez-vous, sans les choix de l'étudiant.
+   *
+   * Sert au seul « remettre à la date prévue » : sans ce second calcul, on saurait qu'un
+   * rendez-vous a été déplacé sans pouvoir dire d'où, et le bouton promettrait un retour vers
+   * une date que personne ne connaît.
+   */
+  const derived = new Map(
+    examAgenda({ exams: [agendaExam], done: measures, now }).map(
+      (event) => [`${event.kind}:${event.slot}`, event] as const,
+    ),
+  );
+
+  const measureOn = (day: Date): AgendaEvent | undefined =>
+    events.find((event) => event.date.getTime() === day.getTime());
+
   const schedule: ScheduleDay[] = plan.days
     .filter((day) => day.offset <= Math.max(0, daysRemaining))
     .map((day) => {
-      const mine = day.blocks.filter((block) => block.examId === exam.id);
-      const mock = mine.find(isMockBlock);
-      const parcours = mine.find(isParcoursBlock);
-      const cards = mine
-        .filter(isReviewBlock)
-        .reduce((sum, block) => sum + block.cardIds.length, 0);
+      const mine = day.blocks
+        .filter((block) => block.examId === exam.id)
+        .filter(isReviewBlock);
+      const event = measureOn(day.date);
+      const planned = event ? derived.get(`${event.kind}:${event.slot}`) : undefined;
 
       return {
         offset: day.offset,
         date: day.date.toISOString().slice(0, 10),
-        cards,
-        minutes: mine.filter(isReviewBlock).reduce((sum, block) => sum + block.minutes, 0),
-        mock: mock ? { questionCount: mock.questionCount, minutes: mock.minutes } : null,
-        parcours: parcours
-          ? { questionCount: parcours.questionCount, minutes: parcours.minutes }
+        cards: mine.reduce((sum, block) => sum + block.cardIds.length, 0),
+        minutes: mine.reduce((sum, block) => sum + block.minutes, 0),
+        measure: event
+          ? {
+              kind: event.kind,
+              slot: event.slot,
+              status: event.status,
+              questionCount: event.questionCount,
+              minutes: event.minutes,
+              plannedDate:
+                event.moved && planned ? planned.date.toISOString().slice(0, 10) : null,
+            }
           : null,
         isExamDay: day.offset === daysRemaining,
         isOff: day.isOff,

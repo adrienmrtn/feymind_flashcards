@@ -15,7 +15,15 @@ import {
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v2.8.0");
+  assertEquals(PROMPT_VERSION, "course-v2.9.0");
+});
+
+Deno.test("le chapeau est commandé en une phrase de vingt mots", () => {
+  // Le plafond est tenu de toute façon à la lecture de la réponse - voir `clampSummary` -
+  // mais une phrase écrite pour vingt mots se lit mieux qu'une phrase de trente coupée à
+  // vingt. La consigne sert à ce que la coupe n'ait rien à faire.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("VINGT MOTS AU PLUS"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Deux phrases qui disent l'enjeu"), false);
 });
 
 Deno.test("le prompt d'écriture ne demande plus de mise en relief", () => {

@@ -15,7 +15,7 @@ enum OfflineCourseBuilder {
         return GeneratedCourse(
             title: title,
             emoji: "📝",
-            summary: String(cleaned.prefix(200)),
+            summary: SheetText.lead(String(cleaned.prefix(200))),
             sheet: OfflineSheetBuilder.build(from: cleaned, title: title),
             contextText: String(cleaned.prefix(12_000))
         )

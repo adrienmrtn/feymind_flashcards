@@ -128,7 +128,7 @@ extension GeneratedCourse {
             title: TextSanitizer.clean(title),
             subject: subject.map(TextSanitizer.subject),
             emoji: emoji,
-            summary: TextSanitizer.clean(summary),
+            summary: SheetText.lead(TextSanitizer.clean(summary)),
             sheet: (cleanSheet?.isEmpty == false) ? cleanSheet : nil,
             contextText: TextSanitizer.clean(contextText)
         )

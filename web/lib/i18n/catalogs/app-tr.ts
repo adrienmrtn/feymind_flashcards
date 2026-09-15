@@ -426,6 +426,7 @@ export const appTr = {
     examDay: "Sınav günü",
     cards: "{count} kart",
     moveTitle: "Bu randevuyu taşı",
+    outOfRange: "Bir randevu bugün ile sınavın bir gün öncesi arasına konur.",
     move: "Buraya taşı",
     reset: "Planlanan tarihe dön",
     movedFrom: "{date} tarihinden taşındı",

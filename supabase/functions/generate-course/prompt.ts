@@ -1,6 +1,6 @@
 /** Consignes de rédaction de la fiche d'un cours. */
 
-export const PROMPT_VERSION = "course-v2.8.0";
+export const PROMPT_VERSION = "course-v2.9.0";
 
 /** Longueur max d'une consigne libre. Au-delà, ce n'est plus un prompt, c'est un cours. */
 export const MAX_INSTRUCTIONS = 2_000;
@@ -47,7 +47,7 @@ Virgule entre chaque propriété, jamais après la dernière. Un guillemet dans 
   "title": "Titre court et précis",
   "subject": "Matière en capitalisation normale : Histoire, Mathématiques, Physique-chimie. Jamais tout en capitales, même si le document est titré ainsi. Les sigles gardent les leurs : SVT, SES, STAPS",
   "emoji": "un seul emoji représentatif",
-  "summary": "Deux phrases qui disent l'enjeu du cours, sans balisage",
+  "summary": "UNE phrase de VINGT MOTS AU PLUS qui dit l'enjeu du cours, sans balisage. Au-delà elle est coupée, donc compte tes mots",
   "sheet": { "blocks": [ ... ] }
 }
 

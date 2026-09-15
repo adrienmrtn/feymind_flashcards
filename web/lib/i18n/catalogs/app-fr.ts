@@ -426,6 +426,7 @@ export const appFr = {
     examDay: "Jour de l'épreuve",
     cards: "{count} cartes",
     moveTitle: "Déplacer ce rendez-vous",
+    outOfRange: "Un rendez-vous se pose entre aujourd'hui et la veille de l'épreuve.",
     move: "Déplacer ici",
     reset: "Remettre à la date prévue",
     movedFrom: "déplacé du {date}",

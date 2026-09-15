@@ -426,6 +426,7 @@ export const appEn = {
     examDay: "Exam day",
     cards: "{count} cards",
     moveTitle: "Move this appointment",
+    outOfRange: "A session goes between today and the day before the exam.",
     move: "Move here",
     reset: "Back to the planned date",
     movedFrom: "moved from {date}",
