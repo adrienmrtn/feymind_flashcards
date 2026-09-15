@@ -1,6 +1,6 @@
 import { assertEquals } from "jsr:@std/assert@1";
 
-import { SHEET_HIGHLIGHTS } from "../_shared/sheet.ts";
+import { normalizeSheet, SHEET_HIGHLIGHTS } from "../_shared/sheet.ts";
 import {
   audienceBrief,
   COURSE_SYSTEM_PROMPT,
@@ -15,7 +15,7 @@ import {
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v2.7.0");
+  assertEquals(PROMPT_VERSION, "course-v2.8.0");
 });
 
 Deno.test("le prompt d'écriture ne demande plus de mise en relief", () => {
@@ -160,4 +160,67 @@ Deno.test("le prompt système reste au-dessus du seuil de mise en cache", () => 
     true,
     `${COURSE_SYSTEM_PROMPT.length} caractères, plancher ${FLOOR}`,
   );
+});
+
+// MARK: - Les listes
+
+/**
+ * **Le bloc `list` existait, et ne sortait jamais de la génération.**
+ *
+ * Rien ne le jetait en chemin : `normalizeSheet` l'accepte, les deux clients le rendent. Le
+ * prompt portait cinq découragements contre une permission sous condition, et surtout la seule
+ * porte ouverte était « quand le document énumère **vraiment** ». Or un cours énumère en
+ * prose - « on distingue trois types de… » - et la fiche avait donc l'interdiction d'en faire
+ * une liste. L'étudiant les reposait à la main, après coup.
+ */
+Deno.test("la consigne dit QUAND une liste vaut mieux qu'un paragraphe", () => {
+  // Une liste est une forme que la fiche choisit, pas une forme qu'elle hérite du document.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("même si le document l'écrit en phrases"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Tu n'attends donc pas que le document mette des puces"), true);
+
+  // Des cas nommés, et non une condition à remplir.
+  for (const cas of ["une procédure", "une classification", "les conditions qui doivent", "les critères"]) {
+    assertEquals(COURSE_SYSTEM_PROMPT.includes(cas), true, cas);
+  }
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Trois membres ou plus, c'est une liste"), true);
+
+  // Les deux garde-fous qui valaient la peine restent, l'absolu qui étouffait tout part.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Jamais deux listes de suite"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("découper une idée unique"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("MAJORITAIRES"), false);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("largement plus nombreux que les listes"), false);
+});
+
+Deno.test("la consigne n'interdit plus les puces en interdisant le markdown", () => {
+  // « ni #, ni -, ni tableaux en pipes » : le tiret est la puce du markdown, et le modèle
+  // lisait l'interdiction du caractère comme l'interdiction de la forme.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("ni #, ni -,"), false);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes('une liste est un bloc "list", pas du texte'), true);
+});
+
+/**
+ * Les exemples du prompt sont du JSON que le modèle recopiera dans sa forme. S'ils ne
+ * survivaient pas à `normalizeSheet`, on lui enseignerait une forme que le serveur jette.
+ */
+Deno.test("les blocs donnés en exemple sont du JSON qui survit à la normalisation", () => {
+  const lines = COURSE_SYSTEM_PROMPT.split("\n").filter((line) => line.startsWith('{"type":'));
+  // Le paragraphe, la liste, et les cinq blocs du catalogue.
+  assertEquals(lines.length >= 3, true, `${lines.length} exemples trouvés`);
+
+  const blocks = normalizeSheet(lines.map((line) => JSON.parse(line)));
+  assertEquals(blocks.length, lines.length, "un exemple a été jeté à la normalisation");
+
+  // Deux listes en exemple : celle du catalogue des blocs, et celle de l'exemple travaillé.
+  const lists = blocks.filter((block) => block.type === "list");
+  assertEquals(lists.length, 2);
+
+  const worked = lists.find((block) =>
+    block.type === "list" && block.items.some((item) => item.includes("hélicase"))
+  );
+  assertEquals(worked?.type === "list" ? worked.items.length : 0, 3);
+  // `ordered` à true : l'exemple porte des étapes, et leur ordre compte.
+  assertEquals(worked?.type === "list" ? worked.ordered : null, true);
+  // Le gras tient dans un point de liste, et c'est le rédacteur qui le pose : la passe de
+  // marquage ne descend pas sous cent caractères, donc un point court ne sera jamais marqué.
+  assertEquals(worked?.type === "list" ? worked.items[0]!.includes("**hélicase**") : false, true);
 });

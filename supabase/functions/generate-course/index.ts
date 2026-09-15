@@ -380,6 +380,18 @@ Deno.serve((request: Request) =>
             asked: typeof body.blocks === "number" ? body.blocks : null,
             written: written.length,
             final: blocks.length,
+            /**
+             * La fiche par sorte de bloc.
+             *
+             * Les listes ne sortaient jamais de la génération : le prompt ne les autorisait
+             * que si le document en portait déjà, or un cours énumère en prose. Savoir si la
+             * consigne réécrite y change quelque chose demande de compter, et rien ne le
+             * faisait - on n'aurait su que ce qu'on croit voir sur les fiches qu'on ouvre.
+             */
+            kinds: blocks.reduce((tally, block) => {
+              tally[block.type] = (tally[block.type] ?? 0) + 1;
+              return tally;
+            }, {} as Record<string, number>),
           },
           marks: {
             written: countMarks(written),
