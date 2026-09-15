@@ -422,6 +422,14 @@ export const appEn = {
       faster: "You get through {rate} cards a minute, {percent} % above the default estimate. The plan now counts with your number.",
     },
   },
+  parcours: {
+    blockTitle: "Progress check",
+    short: "Check",
+    chartLabel: "progress check",
+    line: "Progress check · {exam} · {questions} questions, {minutes} min",
+    lead: "Five multiple choice and five spoken questions. Five minutes to see where you stand, between two mocks.",
+  },
+
   mock: {
     micTitle: "Do you have a microphone?",
     micLead: "With a microphone, the paper includes questions where you explain a notion out loud, as if to someone who has never seen it. That is the one thing you cannot fake: a multiple choice can be guessed, an explanation cannot.",

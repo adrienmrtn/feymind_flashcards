@@ -157,7 +157,12 @@ describe("ce qu'il reste aujourd'hui", () => {
       now,
     });
     expect(todayBlocks(plan).length).toBeGreaterThan(0);
-    expect(todayBlocks(plan, () => false)).toHaveLength(0);
+
+    // Les blocs de révision partent avec leurs cartes. Les mesures restent : un blanc ou un
+    // parcours ne se termine pas parce que les cartes sont faites, mais parce qu'on l'a passé.
+    const left = todayBlocks(plan, () => false);
+    expect(left.filter(isReviewBlock)).toHaveLength(0);
+    expect(left.every((block) => !isReviewBlock(block))).toBe(true);
     expect(todayCardCount(plan, () => false)).toBe(0);
   });
 

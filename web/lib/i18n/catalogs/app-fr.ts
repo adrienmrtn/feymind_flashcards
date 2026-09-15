@@ -422,6 +422,14 @@ export const appFr = {
       faster: "Tu passes {rate} cartes par minute, soit {percent} % de plus que l'estimation par défaut. Le plan compte désormais avec ton chiffre.",
     },
   },
+  parcours: {
+    blockTitle: "Test de parcours",
+    short: "Parcours",
+    chartLabel: "test de parcours",
+    line: "Test de parcours · {exam} · {questions} questions, {minutes} min",
+    lead: "Cinq QCM et cinq questions à voix haute. Cinq minutes pour savoir où tu en es, entre deux blancs.",
+  },
+
   mock: {
     micTitle: "As-tu un micro ?",
     micLead: "Avec un micro, la copie contient des questions où tu expliques une notion à voix haute, comme à quelqu'un qui ne l'a jamais vue. C'est la seule chose qu'on ne peut pas deviner : un QCM se devine, une explication non.",

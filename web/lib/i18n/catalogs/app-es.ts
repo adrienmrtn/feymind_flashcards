@@ -422,6 +422,14 @@ export const appEs = {
       faster: "Haces {rate} tarjetas por minuto, un {percent} % más que la estimación por defecto. El plan ya cuenta con tu cifra.",
     },
   },
+  parcours: {
+    blockTitle: "Prueba de seguimiento",
+    short: "Seguimiento",
+    chartLabel: "prueba de seguimiento",
+    line: "Prueba de seguimiento · {exam} · {questions} preguntas, {minutes} min",
+    lead: "Cinco preguntas tipo test y cinco en voz alta. Cinco minutos para saber dónde estás, entre dos simulacros.",
+  },
+
   mock: {
     micTitle: "¿Tienes micrófono?",
     micLead: "Con micrófono, el examen incluye preguntas en las que explicas una noción en voz alta, como a alguien que no la ha visto nunca. Es lo único que no se puede fingir: un test se adivina, una explicación no.",

@@ -27,6 +27,7 @@ import {
   minutesFor,
   type Throughput,
 } from "./calibration";
+import { examAgenda, type AgendaDone, type AgendaOverride } from "./exam-agenda";
 import { planMocks, type MockResult, type PlannedMock } from "./mock";
 import {
   addDays,
@@ -88,11 +89,12 @@ export interface PlanDay {
 /**
  * Un bloc de travail.
  *
- * Deux formes, et c'est le changement de fond : un plan n'est plus une suite de « révise N
+ * Trois formes, et c'est le changement de fond : un plan n'est plus une suite de « révise N
  * cartes ». Une **révision** travaille une matière ; un **blanc** mesure tout le programme en
- * temps imparti. Le champ `type` les sépare pour que l'écran n'ait pas à deviner.
+ * temps imparti ; un **parcours** prend la température en cinq minutes, entre deux blancs. Le
+ * champ `type` les sépare pour que l'écran n'ait pas à deviner.
  */
-export type PlanBlock = ReviewBlock | MockBlock;
+export type PlanBlock = ReviewBlock | MockBlock | ParcoursBlock;
 
 export interface ReviewBlock {
   type: "review";
@@ -112,8 +114,34 @@ export interface MockBlock {
   minutes: number;
 }
 
+/**
+ * Le test de parcours : cinq QCM et cinq questions orales, cinq minutes.
+ *
+ * Il porte son rang pour que l'écran sache lequel il propose, et qu'un déplacement puisse le
+ * désigner. Voir `exam-agenda.ts` : c'est le rang, et non la date, qui identifie un
+ * rendez-vous.
+ */
+export interface ParcoursBlock {
+  type: "parcours";
+  courseId: null;
+  examId: string;
+  examName: string;
+  slot: number;
+  questionCount: number;
+  minutes: number;
+}
+
 export function isMockBlock(block: PlanBlock): block is MockBlock {
   return block.type === "mock";
+}
+
+export function isParcoursBlock(block: PlanBlock): block is ParcoursBlock {
+  return block.type === "parcours";
+}
+
+/** Les deux blocs qui mesurent, par opposition à ceux qui révisent. */
+export function isMeasureBlock(block: PlanBlock): block is MockBlock | ParcoursBlock {
+  return block.type === "mock" || block.type === "parcours";
 }
 
 export function isReviewBlock(block: PlanBlock): block is ReviewBlock {
@@ -140,6 +168,10 @@ export interface TermInput {
   throughput?: Throughput;
   /** Les blancs déjà passés : le plan ne repose pas celui qui est fait. */
   mocks?: readonly MockResult[];
+  /** Les tests de parcours déjà passés, pour ne pas reposer un rendez-vous honoré. */
+  parcours?: readonly AgendaDone[];
+  /** Les rendez-vous que l'étudiant a déplacés lui-même. */
+  overrides?: readonly AgendaOverride[];
   /**
    * Ce que le journal dit de chaque carte.
    *
@@ -227,6 +259,40 @@ export function planTerm(input: TermInput): TermPlan {
       examName: mock.examName,
       questionCount: mock.questionCount,
       minutes: mock.minutes,
+    });
+  }
+
+  /**
+   * Les parcours viennent de l'agenda, pas d'un second planificateur.
+   *
+   * L'agenda sait déjà écarter un parcours d'un blanc, appliquer les déplacements de
+   * l'étudiant et reconnaître ce qui a été fait. Le recalculer ici donnerait deux vérités sur
+   * la même journée, et c'est le calendrier de la page d'examen qui aurait raison.
+   */
+  const parcours = examAgenda({
+    exams: upcoming.map((exam) => ({
+      id: exam.id,
+      name: exam.name,
+      examDate: exam.examDate,
+      kind: exam.kind ?? "exam",
+      cardCount: input.cards.filter((card) => exam.courseIds.includes(card.courseId ?? "")).length,
+    })),
+    done: input.parcours ?? [],
+    overrides: input.overrides ?? [],
+    now,
+  }).filter((event) => event.kind === "parcours" && event.status === "upcoming");
+
+  for (const event of parcours) {
+    const day = days[event.offset];
+    if (!day) continue;
+    day.blocks.push({
+      type: "parcours",
+      courseId: null,
+      examId: event.examId,
+      examName: event.examName,
+      slot: event.slot,
+      questionCount: event.questionCount,
+      minutes: event.minutes,
     });
   }
 
@@ -545,9 +611,16 @@ export interface LoadBar {
   byExam: LoadShare[];
 }
 
+/**
+ * Une mesure posée sur une barre de charge.
+ *
+ * `kind` la distingue : la barre porte un blanc et un parcours différemment, parce qu'un quart
+ * d'heure d'épreuve et cinq minutes de température ne se lisent pas pareil.
+ */
 export interface LoadMock {
   examId: string;
   examName: string;
+  kind: "mock" | "parcours";
   questionCount: number;
   minutes: number;
 }
@@ -565,10 +638,13 @@ export function loadBars(plan: TermPlan): LoadBar[] {
     const mocks: LoadMock[] = [];
 
     for (const block of day.blocks) {
-      if (isMockBlock(block)) {
+      // Le test est positif : « pas un blanc » recouvrait la révision **et** le parcours, et
+      // un parcours compté comme révision aurait cherché des cartes qu'il n'a pas.
+      if (isMeasureBlock(block)) {
         mocks.push({
           examId: block.examId,
           examName: block.examName,
+          kind: block.type,
           questionCount: block.questionCount,
           minutes: block.minutes,
         });

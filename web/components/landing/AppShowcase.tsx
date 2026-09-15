@@ -554,9 +554,9 @@ function demoLoad(exams: DemoExam[]): LoadBar[] {
     const cardCount = weekend ? 0 : shares.reduce((sum, share) => sum + share.cardCount, 0);
     const mocks =
       offset === 2
-        ? [{ examId: exams[0]!.id, examName: exams[0]!.name, questionCount: 20, minutes: 25 }]
+        ? [{ examId: exams[0]!.id, examName: exams[0]!.name, kind: "mock" as const, questionCount: 20, minutes: 25 }]
         : offset === 9
-          ? [{ examId: exams[1]!.id, examName: exams[1]!.name, questionCount: 30, minutes: 40 }]
+          ? [{ examId: exams[1]!.id, examName: exams[1]!.name, kind: "mock" as const, questionCount: 30, minutes: 40 }]
           : [];
     bars.push({
       offset,

@@ -6,6 +6,7 @@ import {
   dayDifference,
   examReadiness,
   isMockBlock,
+  isParcoursBlock,
   loadBars,
   masteryForCourses,
   planTerm,
@@ -61,7 +62,7 @@ export interface PlanExam {
 }
 
 export interface PlanTodayBlock {
-  kind: "review" | "mock";
+  kind: "review" | "mock" | "parcours";
   courseId: string | null;
   courseTitle: string;
   emoji: string;
@@ -209,6 +210,18 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
         courseId: null,
         courseTitle: t("app.mock.blockTitle"),
         emoji: "⏱",
+        examId: block.examId,
+        examName: block.examName,
+        cards: block.questionCount,
+        minutes: block.minutes,
+      };
+    }
+    if (isParcoursBlock(block)) {
+      return {
+        kind: "parcours" as const,
+        courseId: null,
+        courseTitle: t("app.parcours.blockTitle"),
+        emoji: "🎯",
         examId: block.examId,
         examName: block.examName,
         cards: block.questionCount,

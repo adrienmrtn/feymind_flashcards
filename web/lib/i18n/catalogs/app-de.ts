@@ -422,6 +422,14 @@ export const appDe = {
       faster: "Du schaffst {rate} Karten pro Minute, {percent} % über der Standardschätzung. Der Plan rechnet jetzt mit deiner Zahl.",
     },
   },
+  parcours: {
+    blockTitle: "Zwischencheck",
+    short: "Check",
+    chartLabel: "Zwischencheck",
+    line: "Zwischencheck · {exam} · {questions} Fragen, {minutes} Min.",
+    lead: "Fünf Multiple-Choice-Fragen und fünf mündliche. Fünf Minuten, um zwischen zwei Probeprüfungen zu sehen, wo du stehst.",
+  },
+
   mock: {
     micTitle: "Hast du ein Mikrofon?",
     micLead: "Mit Mikrofon enthält die Arbeit Fragen, bei denen du einen Begriff laut erklärst, wie jemandem, der ihn nie gesehen hat. Das ist das Einzige, was sich nicht vortäuschen lässt: ein Multiple Choice lässt sich raten, eine Erklärung nicht.",

@@ -422,6 +422,14 @@ export const appTr = {
       faster: "Dakikada {rate} kart yapıyorsun, varsayılan tahminden % {percent} daha fazla. Plan artık senin sayınla hesaplıyor.",
     },
   },
+  parcours: {
+    blockTitle: "Ara değerlendirme",
+    short: "Ara test",
+    chartLabel: "ara değerlendirme",
+    line: "Ara değerlendirme · {exam} · {questions} soru, {minutes} dk",
+    lead: "Beş çoktan seçmeli, beş sözlü soru. İki deneme arasında nerede olduğunu görmek için beş dakika.",
+  },
+
   mock: {
     micTitle: "Mikrofonun var mı?",
     micLead: "Mikrofonla birlikte kâğıtta bir kavramı, hiç görmemiş birine anlatır gibi yüksek sesle açıkladığın sorular yer alır. Uydurulamayacak tek şey budur: çoktan seçmeli tahmin edilir, açıklama edilemez.",
