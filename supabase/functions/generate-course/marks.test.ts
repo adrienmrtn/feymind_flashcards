@@ -9,9 +9,11 @@ import {
   emptyApplyReport,
   type MarkAnchor,
   MARK_SYSTEM_PROMPT,
+  type MarkCandidate,
   markPrompt,
   markTargets,
-  needsMarkPass,
+  type MarkWish,
+  planMarkPass,
   readAnchors,
   textsToMark,
 } from "./marks.ts";
@@ -31,6 +33,19 @@ const HIGHLIGHT = (text: number, colour: string, quote: string): MarkAnchor => (
   colour,
   quote,
 });
+
+const WISH = (wish: Partial<MarkWish> = {}): MarkWish => ({
+  bold: false,
+  highlight: false,
+  italic: false,
+  ...wish,
+});
+
+/** Un paragraphe de fiche : assez long pour porter des marques, et nu. */
+const NU =
+  "La phase photochimique se déroule dans les thylakoïdes et produit l'ATP ainsi que le NADPH. " +
+  "Le rendement de conversion réel atteint 2 pour cent sur une feuille bien exposée, très loin " +
+  "du maximum théorique de 11 pour cent, et cet écart tient aux pertes par photorespiration.";
 
 Deno.test("countMarks ne prend pas le gras pour de l'italique", () => {
   const marks = countMarks([
@@ -56,7 +71,7 @@ Deno.test("la seconde passe se déclenche sur la densité, pas sur le zéro", ()
     PARAGRAPH("La **Rubisco** fixe le carbone, ==jaune|et c'est l'étape limitante== du cycle."),
     PARAGRAPH("Le terme *stroma* désigne le compartiment, pas la membrane du thylakoïde."),
   ];
-  assertEquals(needsMarkPass(marked), false);
+  assertEquals(planMarkPass(marked), null);
 
   // Le cas qui échappait au contrôle d'avant : un pavé de six cents caractères portant un
   // seul terme en gras. Zéro nulle part, et pourtant une page sans relief.
@@ -64,8 +79,47 @@ Deno.test("la seconde passe se déclenche sur la densité, pas sur le zéro", ()
     "Les **forces** de l'entreprise tiennent à ses fondateurs, à sa technologie brevetée et à une licence exclusive. " +
       "Le plan de financement détaille chaque poste de dépense sur trois ans. ".repeat(7),
   );
-  assertEquals(needsMarkPass([pavé]), true);
-  assertEquals(needsMarkPass([]), false);
+  assertEquals(planMarkPass([pavé])?.candidates.length, 1);
+  assertEquals(planMarkPass([]), null);
+});
+
+Deno.test("la passe ne reçoit que les textes qui ont la place d'une marque", () => {
+  // Mesuré sur une fiche courante : quarante-deux textes partaient, dont six titres et seize
+  // points de liste, tous trop courts pour porter quoi que ce soit. On payait leur place dans
+  // la consigne, et le modèle y cherchait des marques qui n'avaient nulle part où se poser.
+  const blocks: SheetBlock[] = [
+    { type: "heading", level: 1, text: "Le cycle de Calvin" },
+    PARAGRAPH(NU),
+    { type: "list", ordered: false, items: ["La fixation", "La réduction"] },
+    PARAGRAPH(NU.replace("photochimique", "sombre")),
+  ];
+
+  // textsToMark rend cinq textes ; seuls les deux paragraphes ont la place.
+  assertEquals(textsToMark(blocks).length, 5);
+  assertEquals(planMarkPass(blocks)?.candidates.map((c) => c.index), [1, 4]);
+});
+
+Deno.test("une fiche qui n'a nulle part où poser une marque ne déclenche aucun appel", () => {
+  // Des marques manquent - le déclenchement le dit - mais rien n'est assez long pour en
+  // porter. Le seul appel dont on soit certain qu'il ne servirait à rien.
+  const blocks: SheetBlock[] = [
+    { type: "heading", level: 1, text: "Premier titre de partie" },
+    { type: "heading", level: 1, text: "Deuxième titre de partie" },
+    { type: "list", ordered: false, items: ["Un point court", "Un autre point"] },
+  ];
+  assertEquals(planMarkPass(blocks), null);
+});
+
+Deno.test("le plan ne retient que les sortes de marques qui manquent", () => {
+  // Assez de gras et de surlignage pour leur densité, pas un seul italique : c'est le cas le
+  // plus fréquent, et il faisait jusqu'ici rejuger tout le gras de la fiche.
+  const riche = PARAGRAPH(
+    "La **Rubisco** catalyse la fixation du carbone dans le stroma du chloroplaste. ".repeat(5) +
+      "==jaune|Le rendement de conversion reste faible sur une feuille exposée.== ".repeat(2) +
+      "Le reste du texte tient sans marque et sert surtout à porter du volume utile. ".repeat(10),
+  );
+
+  assertEquals(planMarkPass([riche])?.wish, WISH({ italic: true }));
 });
 
 Deno.test("les cibles suivent la longueur des textes", () => {
@@ -81,44 +135,82 @@ Deno.test("les cibles suivent la longueur des textes", () => {
 
 Deno.test("le message de la passe chiffre ce qu'il attend de CE lot", () => {
   const texts = [("Un paragraphe de fiche, assez long pour compter. ").repeat(12)];
-  const prompt = markPrompt(texts);
+  const prompt = markPrompt(texts, WISH({ bold: true, highlight: true, italic: true }));
   const target = markTargets(texts);
-  assertEquals(prompt.includes(`${target.bold} marques "gras"`), true);
-  assertEquals(prompt.includes(`${target.highlight} surligneurs`), true);
+  assertEquals([target.bold, target.highlight, target.italic], [2, 1, 1]);
+
+  // Les comptes viennent de la longueur du lot, et l'accord suit le compte : « 1 surligneurs »
+  // se lit comme une consigne bâclée, et une consigne bâclée s'applique bâclée.
+  assertEquals(prompt.includes('2 marques "gras", 1 surligneur et 1 marque "italique"'), true);
 });
 
 Deno.test("le message numérote les textes : c'est ce numéro que la réponse renvoie", () => {
-  const prompt = markPrompt(["Le premier texte.", "Le second texte."]);
+  const both = WISH({ bold: true });
+  const prompt = markPrompt(["Le premier texte.", "Le second texte."], both);
   assertEquals(prompt.includes("[0] Le premier texte."), true);
   assertEquals(prompt.includes("[1] Le second texte."), true);
   // L'accord suit le nombre : « 1 textes » se lit comme une consigne bâclée.
-  assertEquals(markPrompt(["Seul."]).includes("1 texte de la fiche, numéroté,"), true);
+  assertEquals(markPrompt(["Seul."], both).includes("1 texte de la fiche, numéroté,"), true);
 });
+
+Deno.test("le message ne nomme que les sortes qui manquent", () => {
+  const texts = [NU];
+
+  const italique = markPrompt(texts, WISH({ italic: true }));
+  assertEquals(italique.includes('"gras"'), false);
+  assertEquals(italique.includes("surligneur"), false);
+  assertEquals(italique.includes('marque "italique"'), true);
+  assertEquals(italique.includes("Ce sont les seules sortes qui manquent"), true);
+
+  // La chasse à l'italique est longue et ne sert qu'à l'italique : ailleurs elle prend de la
+  // place et de l'attention pour une marque dont on ne veut pas.
+  assertEquals(italique.includes("cherche mieux"), true);
+  assertEquals(markPrompt(texts, WISH({ bold: true })).includes("cherche mieux"), false);
+
+  // Quand les trois manquent, il n'y a rien à restreindre.
+  const toutes = markPrompt(texts, WISH({ bold: true, highlight: true, italic: true }));
+  assertEquals(toutes.includes("Ce sont les seules sortes"), false);
+});
+
+const CANDIDATES = (texts: readonly string[], from = 0): MarkCandidate[] =>
+  texts.map((text, index) => ({ index: from + index, text }));
 
 Deno.test("les lots tiennent le plafond de textes, et gardent leur rang", () => {
   const textes = Array.from({ length: 45 }, (_, index) => `texte ${index}`);
-  const lots = batched(textes);
+  const lots = batched(CANDIDATES(textes));
 
   // Deux appels là où l'ancien découpage en lots de six en demandait huit.
   assertEquals(lots.length, 2);
   assertEquals(lots[0]!.texts.length, 24);
-  assertEquals(lots[0]!.offset, 0);
-  assertEquals(lots[1]!.offset, 24);
+  assertEquals(lots[0]!.indices[0], 0);
+  assertEquals(lots[1]!.indices[0], 24);
   assertEquals(lots.flatMap((lot) => lot.texts), textes);
+});
+
+Deno.test("le lot garde le rang réel de chaque texte, pas un décalage", () => {
+  // La sélection saute les textes trop courts : les rangs d'un lot ne se suivent plus, et un
+  // décalage recollerait les marques sur les mauvais blocs.
+  const lots = batched(
+    [{ index: 1, text: "un" }, { index: 4, text: "deux" }, { index: 9, text: "trois" }],
+    { texts: 2, chars: 10_000 },
+  );
+  assertEquals(lots.length, 2);
+  assertEquals(lots[0]!.indices, [1, 4]);
+  assertEquals(lots[1]!.indices, [9]);
 });
 
 Deno.test("les lots tiennent aussi le plafond de caractères", () => {
   const gros = Array.from({ length: 6 }, () => "x".repeat(5_000));
-  const lots = batched(gros);
+  const lots = batched(CANDIDATES(gros));
   assertEquals(lots.length, 3);
   assertEquals(lots[0]!.texts.length, 2);
-  assertEquals(lots[2]!.offset, 4);
+  assertEquals(lots[2]!.indices[0], 4);
 
   // Un texte plus gros que le plafond à lui seul part quand même : le retenir le perdrait.
-  const énorme = batched(["x".repeat(20_000), "court"]);
+  const énorme = batched(CANDIDATES(["x".repeat(20_000), "court"]));
   assertEquals(énorme.length, 2);
   assertEquals(énorme[0]!.texts.length, 1);
-  assertEquals(énorme[1]!.offset, 1);
+  assertEquals(énorme[1]!.indices, [1]);
 });
 
 Deno.test("la consigne demande des marques, pas des textes", () => {

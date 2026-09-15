@@ -34,6 +34,19 @@
  * Ce qui reste à vérifier n'est plus le texte mais **le passage** : présent une seule fois,
  * posé au bord d'un mot, d'une longueur plausible, hors des formules et sans croiser une marque
  * déjà là. Tout est dans `mark-shape.ts`, et un passage refusé ne coûte qu'une marque.
+ *
+ * ## Et elle ne demande que ce qui manque, qu'à qui peut le porter
+ *
+ * Le déclenchement se décide sur la fiche entière, mais le manque est local et il a une sorte.
+ * La passe envoyait pourtant tous les textes - titres et points de liste compris, trop courts
+ * pour porter quoi que ce soit - en réclamant les trois sortes de marques, y compris celles qui
+ * ne manquaient pas. Une fiche à qui il ne manquait que des italiques se faisait rejuger tout
+ * son gras.
+ *
+ * `planMarkPass` tranche les deux : quelles sortes manquent, et lesquels des textes ont la place
+ * d'en accueillir une. Mesuré sur une fiche courante, dix-huit textes partent au lieu de
+ * trente-quatre, en un appel au lieu de deux. Et quand rien n'a la place - une fiche qui n'est
+ * faite que de titres et de listes courtes - l'appel ne part pas du tout.
  */
 
 import { SHEET_HIGHLIGHTS, type SheetBlock } from "../_shared/sheet.ts";
@@ -121,38 +134,116 @@ export function markTargets(texts: readonly string[]): MarkCount {
   };
 }
 
-/**
- * Faut-il une seconde passe ?
- *
- * Quand la fiche porte **moins de la moitié** de ce que sa longueur appelle. Le déclenchement
- * était sur le zéro absolu : une fiche de dix-huit mille caractères avec vingt-quatre gras et
- * deux surlignages y échappait, alors que c'est précisément la page sans relief que l'étudiant
- * signale. La moitié plutôt que le compte plein, parce qu'une fiche déjà correctement marquée
- * ne doit pas payer un appel de plus pour trois marques.
- *
- * Les formules ne déclenchent rien : un cours de droit n'en a pas, et exiger du LaTeX sur un
- * chapitre de littérature produirait exactement ce qu'on ne veut pas.
- */
-export function needsMarkPass(blocks: readonly SheetBlock[]): boolean {
-  if (blocks.length === 0) return false;
-  const texts = textsToMark(blocks);
-  const marks = countMarks(blocks);
-  const target = markTargets(texts);
-  return marks.bold * 2 < target.bold ||
-    marks.highlight * 2 < target.highlight ||
-    marks.italic * 2 < target.italic;
-}
-
 /** Les textes d'une fiche, à plat, dans l'ordre où la pose les redistribue. */
 export function textsToMark(blocks: readonly SheetBlock[]): string[] {
   return blocks.flatMap(textsOf);
 }
 
-/** Un lot de textes, et son rang de départ dans la fiche. */
+/** Les sortes de marques qui manquent à une fiche. */
+export interface MarkWish {
+  bold: boolean;
+  highlight: boolean;
+  italic: boolean;
+}
+
+/** Un texte retenu pour la repasse, et son rang dans la fiche. */
+export interface MarkCandidate {
+  index: number;
+  text: string;
+}
+
+/** Ce que la repasse doit demander : à quels textes, et quelles marques. */
+export interface MarkPlan {
+  candidates: MarkCandidate[];
+  wish: MarkWish;
+}
+
+/**
+ * En dessous, un texte n'accueille pas de marque.
+ *
+ * Un titre de partie fait quarante caractères, un point de liste soixante. Le surligneur en
+ * demande douze au minimum et couvre « une phrase courte ou un fragment » : sur une ligne de
+ * cette taille, il couvre la ligne, ce qui ne met rien en avant. Le gras y tiendrait, mais un
+ * titre est déjà distinct sans lui.
+ */
+const MIN_MARKABLE = 100;
+
+/**
+ * **Quelles sortes de marques manquent**, sur la fiche entière.
+ *
+ * Le seuil est celui d'avant, la moitié de la cible, mais son résultat n'est plus écrasé par
+ * un `ou` : on retient *lesquelles* manquent, parce que c'est ce que la consigne du lot va
+ * nommer. Une fiche à qui il ne manque que des italiques se faisait jusqu'ici rejuger tout
+ * son gras.
+ */
+function wishFor(blocks: readonly SheetBlock[]): MarkWish {
+  const marks = countMarks(blocks);
+  const target = markTargets(textsToMark(blocks));
+  return {
+    bold: marks.bold * 2 < target.bold,
+    highlight: marks.highlight * 2 < target.highlight,
+    italic: marks.italic * 2 < target.italic,
+  };
+}
+
+/**
+ * **Ce texte-ci a-t-il de la place pour une des marques qui manquent ?**
+ *
+ * Le déclenchement se décide sur la fiche, mais le manque, lui, est local : une fiche bien
+ * marquée dans sa première moitié et nue dans la seconde envoyait quand même ses quarante-deux
+ * textes, titres et points de liste compris, dont vingt-deux trop courts pour porter quoi que
+ * ce soit. On payait leur place dans la consigne, et le modèle y cherchait des marques qui
+ * n'avaient nulle part où se poser.
+ *
+ * Le gras et le surligneur se jugent sur la densité du texte lui-même : c'est ce que le prompt
+ * d'écriture demande, un gras tous les deux cent cinquante caractères, un surlignage tous les
+ * huit cents. L'italique, non - il se compte sur la fiche entière, et un paragraphe de six
+ * cents caractères n'en « mérite » que trois dixièmes. À ce compte-là aucun texte ne serait
+ * jamais candidat, et la marque la plus souvent absente ne serait jamais reposée. Tout texte
+ * qui n'en porte pas peut en accueillir un.
+ */
+function hasRoom(text: string, wish: MarkWish): boolean {
+  if (text.length < MIN_MARKABLE) return false;
+
+  const own = countMarks([{ type: "paragraph", text }]);
+  if (wish.bold && own.bold < Math.round(text.length / CHARS_PER.bold)) return true;
+  if (wish.highlight && own.highlight < Math.round(text.length / CHARS_PER.highlight)) return true;
+  if (wish.italic && own.italic === 0) return true;
+  return false;
+}
+
+/**
+ * Ce que la repasse doit demander, ou `null` s'il n'y a rien à demander.
+ *
+ * Deux façons de ne rien faire, et elles sont différentes : la fiche est correctement marquée,
+ * ou il lui manque des marques mais aucun de ses textes n'a la place d'en porter une - une
+ * fiche qui n'est faite que de titres et de listes courtes, par exemple. Dans les deux cas
+ * l'appel ne part pas, ce qui est le seul appel dont on soit certain qu'il ne servait à rien.
+ */
+export function planMarkPass(blocks: readonly SheetBlock[]): MarkPlan | null {
+  if (blocks.length === 0) return null;
+
+  const wish = wishFor(blocks);
+  if (!wish.bold && !wish.highlight && !wish.italic) return null;
+
+  const candidates: MarkCandidate[] = [];
+  textsToMark(blocks).forEach((text, index) => {
+    if (hasRoom(text, wish)) candidates.push({ index, text });
+  });
+
+  return candidates.length === 0 ? null : { candidates, wish };
+}
+
+/** Un lot de textes, et le rang de chacun dans la fiche. */
 export interface Lot {
   texts: string[];
-  /** Rang du premier texte du lot. C'est ce qui recolle un `t` de réponse au bon bloc. */
-  offset: number;
+  /**
+   * Rang de chaque texte du lot dans la fiche, dans le même ordre.
+   *
+   * Un rang et non un décalage : la sélection saute les textes qui n'ont pas de place pour
+   * une marque, donc les rangs d'un lot ne se suivent plus.
+   */
+  indices: number[];
 }
 
 /**
@@ -165,8 +256,9 @@ export interface Lot {
  *
  * Depuis que la réponse est une liste de marques, sa taille ne suit plus celle des textes
  * mais celle des marques : quelques centaines de jetons quel que soit le lot. Le plafond
- * redevient donc l'**entrée**, et une fiche courante tient en un ou deux appels au lieu de
- * sept — autant de fois le prompt système de mille jetons qu'on ne paie plus.
+ * redevient donc l'**entrée**, et une fiche courante tient en un seul appel au lieu de sept —
+ * autant de fois le prompt système de mille jetons qu'on ne paie plus. La sélection de
+ * `planMarkPass` y est pour beaucoup : elle n'envoie que la moitié des textes.
  *
  * Vingt-quatre et non « tout », parce que l'autre raison des petits lots tenait, elle, à
  * l'attention : à quinze textes, l'ancienne passe lisait la consigne et recopiait. Cet
@@ -177,29 +269,30 @@ export interface Lot {
 export const LOT_LIMITS = { texts: 24, chars: 12_000 } as const;
 
 export function batched(
-  texts: readonly string[],
+  candidates: readonly MarkCandidate[],
   limits: { texts: number; chars: number } = LOT_LIMITS,
 ): Lot[] {
   const lots: Lot[] = [];
-  let current: string[] = [];
+  let texts: string[] = [];
+  let indices: number[] = [];
   let chars = 0;
-  let offset = 0;
 
-  for (const text of texts) {
+  for (const candidate of candidates) {
     // Un texte seul plus gros que le plafond part quand même : le laisser de côté le perdrait,
     // et un paragraphe de douze mille caractères n'existe pas sur une fiche.
-    const full = current.length >= limits.texts || chars + text.length > limits.chars;
-    if (current.length > 0 && full) {
-      lots.push({ texts: current, offset });
-      offset += current.length;
-      current = [];
+    const full = texts.length >= limits.texts || chars + candidate.text.length > limits.chars;
+    if (texts.length > 0 && full) {
+      lots.push({ texts, indices });
+      texts = [];
+      indices = [];
       chars = 0;
     }
-    current.push(text);
-    chars += text.length;
+    texts.push(candidate.text);
+    indices.push(candidate.index);
+    chars += candidate.text.length;
   }
 
-  if (current.length > 0) lots.push({ texts: current, offset });
+  if (texts.length > 0) lots.push({ texts, indices });
   return lots;
 }
 
@@ -242,10 +335,10 @@ OÙ NE PAS MARQUER
 - Un gras peut se trouver dans un passage surligné, à condition d'y être ENTIÈREMENT.
 
 CE QUE TU DOIS AVOIR POSÉ EN FINISSANT
-Le message qui accompagne les textes donne le nombre de marques attendues pour ce lot, et c'est un MINIMUM. Ces marques manquent : c'est la raison pour laquelle on te repasse la fiche. Si tu ne trouves pas d'italique, cherche mieux - le mot d'origine étrangère ou latine, le nom d'une œuvre ou d'une loi, le terme employé en tant que mot, la condition qui restreint un résultat, les deux termes voisins qu'un étudiant confond : un de ces cas est présent dans presque tout cours.
+Le message qui accompagne les textes dit quelles sortes de marques manquent et combien il en faut sur ce lot, et ces nombres sont un MINIMUM. Il ne nomme que les sortes qui manquent, et c'est la raison pour laquelle on te repasse la fiche.
 
 UNE LISTE VIDE EST UNE ERREUR
-Tu ne relis pas pour valider, tu marques. Chaque texte de plus de cent caractères ressort avec au moins une marque. Rendre un tableau vide est le seul échec possible de cette tâche.
+Tu ne relis pas pour valider, tu marques. Les textes qu'on te donne ont tous été retenus parce qu'il leur manque une marque : chacun ressort avec au moins une. Rendre un tableau vide est le seul échec possible de cette tâche.
 
 EXEMPLE
 Textes :
@@ -268,18 +361,46 @@ Réponds uniquement par le tableau JSON.`;
  * un numéro de texte, et un crochet devant la ligne se lit mieux qu'un rang implicite dans un
  * tableau. Ça épargne aussi l'échappement, donc quelques jetons par texte.
  */
-export function markPrompt(texts: readonly string[]): string {
+export function markPrompt(texts: readonly string[], wish: MarkWish): string {
   const target = markTargets(texts);
   const chars = texts.reduce((total, text) => total + text.length, 0);
   const numbered = texts.map((text, index) => `[${index}] ${text}`).join("\n");
 
   const plural = texts.length > 1 ? "s" : "";
 
-  return `Voici ${texts.length} texte${plural} de la fiche, numéroté${plural}, ${chars} caractères en tout.
+  const asked: string[] = [];
+  if (wish.bold) asked.push(agree(target.bold, 'marque "gras"', 'marques "gras"'));
+  if (wish.highlight) asked.push(agree(target.highlight, "surligneur", "surligneurs"));
+  if (wish.italic) asked.push(agree(target.italic, 'marque "italique"', 'marques "italique"'));
 
-À poser sur ce lot, au minimum : ${target.bold} marques "gras", ${target.highlight} surligneurs et ${target.italic} marques "italique". Rends la liste JSON des marques, et rien d'autre.
+  // Nommer une sorte qui ne manque pas, c'est faire rejuger du gras correct pour obtenir des
+  // italiques. La consigne ne parle donc que du déficit, et elle le dit.
+  const only = asked.length < 3
+    ? " Ce sont les seules sortes qui manquent à cette fiche : n'en pose pas d'autres."
+    : "";
+
+  // Cette recherche-là ne sert que si l'italique manque, et elle est longue : ailleurs, elle
+  // prend de la place et de l'attention pour une marque dont on ne veut pas.
+  const hunt = wish.italic
+    ? `\n\nSi tu ne trouves pas d'italique, cherche mieux : le mot d'origine étrangère ou latine, le nom d'une œuvre ou d'une loi, le terme employé en tant que mot, la condition qui restreint un résultat, les deux termes voisins qu'un étudiant confond. Un de ces cas est présent dans presque tout cours.`
+    : "";
+
+  return `Voici ${texts.length} texte${plural} de la fiche, numéroté${plural}, ${chars} caractères en tout. Ils ont été retenus parce qu'il leur manque une marque.
+
+À poser sur ce lot, au minimum : ${enumerate(asked)}.${only} Rends la liste JSON des marques, et rien d'autre.${hunt}
 
 ${numbered}`;
+}
+
+/** « 1 surligneur », « 3 surligneurs ». */
+function agree(count: number, singular: string, plural: string): string {
+  return `${count} ${count > 1 ? plural : singular}`;
+}
+
+/** « a, b et c ». */
+function enumerate(items: readonly string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  return `${items.slice(0, -1).join(", ")} et ${items[items.length - 1]}`;
 }
 
 /** Une marque à poser : où, laquelle, et sur quel passage. */

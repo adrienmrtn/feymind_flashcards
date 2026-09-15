@@ -30,7 +30,7 @@ import {
   emptyShapeReport,
   markPrompt,
   MARK_SYSTEM_PROMPT,
-  needsMarkPass,
+  planMarkPass,
   readAnchors,
   textsToMark,
 } from "./marks.ts";
@@ -87,11 +87,14 @@ async function writeSheet(
 /**
  * Repose les marques quand la fiche en porte trop peu pour sa longueur.
  *
- * Voir `marks.ts` : le déclenchement est sur la **densité**, et la seconde passe ne rend pas
- * la fiche marquée mais la **liste des marques à poser** - un numéro de texte, une sorte de
- * marque, un passage recopié. Le serveur retrouve le passage et pose les marqueurs lui-même,
- * donc le modèle ne peut plus toucher au texte. Un échec ici n'est pas une panne de fiche :
- * on rend la fiche telle qu'elle était écrite.
+ * Voir `marks.ts` : la seconde passe ne rend pas la fiche marquée mais la **liste des marques
+ * à poser** - un numéro de texte, une sorte de marque, un passage recopié. Le serveur retrouve
+ * le passage et pose les marqueurs lui-même, donc le modèle ne peut plus toucher au texte. Un
+ * échec ici n'est pas une panne de fiche : on rend la fiche telle qu'elle était écrite.
+ *
+ * `planMarkPass` décide de tout : quelles sortes de marques manquent, et lesquels des textes
+ * de la fiche ont la place d'en porter une. Il peut ne rien rendre, et alors l'appel ne part
+ * pas du tout.
  *
  * Les lots partent **ensemble**. En file, ils ajouteraient une dizaine de secondes à un import
  * qui en prend déjà trente.
@@ -99,17 +102,24 @@ async function writeSheet(
 async function repaintMarks(
   blocks: SheetBlock[],
 ): Promise<{ blocks: SheetBlock[]; report: Record<string, number> }> {
-  const report = { ...emptyApplyReport(), batches: 0, failed: 0, ragged: 0, ran: 0 };
-  if (!needsMarkPass(blocks)) return { blocks, report };
+  const report = { ...emptyApplyReport(), batches: 0, failed: 0, ragged: 0, ran: 0, sent: 0, texts: 0 };
+
+  const plan = planMarkPass(blocks);
+  if (!plan) return { blocks, report };
 
   report.ran = 1;
-  const lots = batched(textsToMark(blocks));
+  // Combien de textes la fiche compte, et combien en ont reçu la consigne. L'écart est ce que
+  // la sélection épargne, et il ne se devine pas depuis le nombre de lots.
+  report.texts = textsToMark(blocks).length;
+  report.sent = plan.candidates.length;
+
+  const lots = batched(plan.candidates);
   report.batches = lots.length;
 
   const anchors = await Promise.all(lots.map(async (lot) => {
     try {
       const output = await callModel({
-        prompt: markPrompt(lot.texts),
+        prompt: markPrompt(lot.texts, plan.wish),
         systemPrompt: MARK_SYSTEM_PROMPT,
         /**
          * **Le modèle de la repasse n'est pas celui de l'écriture.**
@@ -135,8 +145,9 @@ async function repaintMarks(
         report.ragged += 1;
         return [];
       }
-      // Le lot ne connaît que ses propres rangs ; la fiche les attend décalés du sien.
-      return read.map((anchor) => ({ ...anchor, text: anchor.text + lot.offset }));
+      // Le lot numérote ses textes de zéro ; la fiche les attend à leur rang à elle, et la
+      // sélection en a sauté, donc c'est une table de correspondance et non un décalage.
+      return read.map((anchor) => ({ ...anchor, text: lot.indices[anchor.text]! }));
     } catch (_error) {
       report.failed += 1;
       return [];
