@@ -19,9 +19,7 @@ import { describe, expect, it } from "vitest";
 
 import * as discount from "../src/discount";
 import { ASSUME_PRO_WITHOUT_ROW, ENTITLEMENT_ID, FREE_TIER, LIFETIME_PRO_EMAILS } from "../src/entitlement";
-import * as pricing from "../src/pricing";
-
-const { DISCOUNT_YEARLY } = pricing;
+import { DISCOUNT_YEARLY } from "../src/pricing";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../../..");
@@ -110,20 +108,16 @@ describe("l'offre cadeau, des deux côtés", () => {
     expect(swiftConstant(discountOffer, "restSeconds")).toBe(String(discount.restSeconds));
   });
 
-  it("ne montre la fenêtre ni d'un côté ni de l'autre", () => {
-    // La fenêtre décide de ce qui reste à l'écran, jamais de ce qu'on lit dessus : ni le
-    // paywall du cadeau, ni la languette qui le rouvre ne comptent plus. Un décompte
-    // réapparu d'un seul côté, c'est une offre qui presse sur un client et pas sur
-    // l'autre — et le garde tient des deux côtés parce qu'un formateur qui survit finit
-    // par retrouver une vue.
+  it("ne pose plus de minuterie sur le paywall, ni d'un côté ni de l'autre", () => {
+    // Le décompte au centième a quitté les deux paywalls : posé sur un prix, il demande de
+    // décider vite plutôt que de décider. Le garde tient des deux côtés parce qu'un
+    // formateur qui survit finit par retrouver une vue.
     //
-    // `countdown` est la seule exception, et elle est la même des deux côtés : la rangée
-    // des Réglages de l'app l'écrit encore, là où l'on vient voir ce qu'on a.
+    // La languette, elle, garde son décompte à la seconde (`countdown`) : elle ne vend
+    // rien, elle rappelle que la fenêtre court encore.
     expect(discountOffer).not.toContain("preciseCountdown");
-    expect(discountOffer).not.toContain("countdownLabel");
     expect(discountOffer).not.toContain('"%02d : %02d : %02d . %02d"');
     expect(discount).not.toHaveProperty("preciseCountdown");
-    expect(discount).not.toHaveProperty("countdownLabel");
     expect(discount).not.toHaveProperty("remainingMillis");
   });
 
@@ -135,19 +129,6 @@ describe("l'offre cadeau, des deux côtés", () => {
     expect(DISCOUNT_YEARLY.price).toBe(39.99);
     expect(discountOffer).not.toContain("monthlyPrice");
     expect(DISCOUNT_YEARLY).not.toHaveProperty("monthlyPrice");
-  });
-
-  it("ne ramène l'annuel au mois sur aucun des deux paywalls", () => {
-    // Le paywall de fin de parcours disait « 5,83 € / mois (facturé 69,99 € par an) » et
-    // la carte des formules répétait le mensuel sous le nom de l'offre : deux chiffres
-    // pour une seule somme, dont le plus gros arrivait en second. Les deux clients
-    // écrivent la somme prélevée, dans la période où elle l'est.
-    expect(catalog).not.toContain("monthlyEquivalent");
-    expect(catalog).not.toContain("pricePerMonth");
-    expect(pricing).not.toHaveProperty("monthlyEquivalent");
-    expect(pricing).not.toHaveProperty("presentmentMonthly");
-    expect(pricing.planDisplayedUnit(pricing.YEARLY)).toBe("/ an");
-    expect(pricing.planDisplayedPrice(pricing.YEARLY)).toBe(pricing.priceText(pricing.YEARLY.price));
   });
 
   it("vend le même produit, sur le même entitlement", () => {

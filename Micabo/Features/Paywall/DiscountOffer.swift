@@ -6,11 +6,10 @@ import Foundation
 /// présente sur la fiche : trois appuis l'ouvrent, et le paywall qui suit vend le tarif.
 /// Refermé, il laisse une languette qui le rouvre d'un appui.
 ///
-/// **Plus rien ne compte à l'écran.** Le paywall affichait les vingt-quatre heures au
-/// centième, la languette les affichait à la seconde ; un décompte posé sur un prix demande
-/// de décider vite plutôt que de décider, et l'offre tient sur ce qu'elle vaut. La fenêtre
-/// court toujours — elle décide de ce qui reste affiché — mais elle ne se lit plus nulle
-/// part, sauf dans la rangée des Réglages où l'on vient voir ce qu'on a encore.
+/// **Le paywall ne compte plus.** Il affichait les vingt-quatre heures au centième, et un
+/// décompte posé sur un prix demande de décider vite plutôt que de décider : l'offre tient
+/// sur ce qu'elle vaut. La languette, elle, garde son décompte à la seconde — elle ne vend
+/// rien, elle rappelle seulement que la fenêtre court encore.
 ///
 /// **Le paywall n'annonce plus de mensuel non plus.** Il disait « 3,30 € / mois » avec la
 /// somme annuelle juste dessous : deux chiffres pour une seule somme, dont celui qu'on
@@ -26,7 +25,7 @@ enum DiscountOffer {
     /// Appuis sur le cadeau avant qu'il s'ouvre. Trois : un geste, pas un accident.
     static let taps = 3
 
-    /// La durée de l'offre. Vingt-quatre heures, comptées sans être montrées.
+    /// La durée de l'offre. Vingt-quatre heures, comptées sur la languette seulement.
     static let windowSeconds = 86400
 
     /// **Le repos entre deux fenêtres.** Quarante-huit heures.
@@ -62,7 +61,7 @@ enum DiscountOffer {
         remaining(startedAt: startedAt, now: now, span: windowSeconds)
     }
 
-    /// L'offre est encore achetable. Passé vingt-quatre heures, la languette disparaît.
+    /// L'offre est encore achetable. Passé vingt-quatre heures, la pastille disparaît.
     static func isLive(startedAt: Date, now: Date = Date()) -> Bool {
         windowRemaining(startedAt: startedAt, now: now) > 0
     }
@@ -77,12 +76,8 @@ enum DiscountOffer {
 
     /// « 59:59 » sous l'heure, « 23:14:07 » au-dessus.
     ///
-    /// **Un seul écran l'écrit encore** : la rangée des Réglages, où l'on vient regarder ce
-    /// qu'on a. Aucun paywall ne le porte, et la languette non plus : un décompte posé à
-    /// côté d'un prix presse au lieu d'informer.
-    ///
     /// Deux chiffres partout : un décompte qui passe de « 9:5 » à « 10:04 » change de
-    /// largeur à chaque seconde, et une rangée qui tremble attire l'œil pour rien.
+    /// largeur à chaque seconde, et une pastille qui tremble attire l'œil pour rien.
     static func countdown(_ seconds: Int) -> String {
         let total = max(0, seconds)
         let hours = total / 3600
@@ -92,6 +87,28 @@ enum DiscountOffer {
             return String(format: "%02d:%02d:%02d", hours, minutes, rest)
         }
         return String(format: "%02d:%02d", minutes, rest)
+    }
+
+    /// Ce que lit VoiceOver, où « 23:14:07 » ne veut rien dire.
+    ///
+    /// La phrase commence par « il reste » : l'accord du participe suivrait sinon le
+    /// nombre, et « 1 heure restantes » se lit comme une faute.
+    static func countdownLabel(_ seconds: Int) -> String {
+        let total = max(0, seconds)
+        guard total > 0 else { return "offre terminée" }
+
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+
+        if hours > 0 {
+            let heures = hours == 1 ? "1 heure" : "\(hours) heures"
+            guard minutes > 0 else { return "il reste \(heures)" }
+            let mots = minutes == 1 ? "1 minute" : "\(minutes) minutes"
+            return "il reste \(heures) et \(mots)"
+        }
+
+        guard minutes > 0 else { return "il reste moins d'une minute" }
+        return minutes == 1 ? "il reste 1 minute" : "il reste \(minutes) minutes"
     }
 
     // MARK: - Ce que l'appareil retient
