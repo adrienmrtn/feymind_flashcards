@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import { addDays, startOfDay } from "../src/srs/exam";
+import {
+  examReadiness,
+  MOCK_READING_WEIGHT,
+  PARCOURS_READING_WEIGHT,
+} from "../src/srs/mock";
 import {
   PARCOURS_FIRST_OFFSET,
   PARCOURS_MAX,
@@ -7,6 +13,8 @@ import {
   PARCOURS_TIGHT_WINDOW,
   parcoursOffsets,
 } from "../src/srs/parcours";
+
+const TODAY = startOfDay(new Date(2026, 8, 1));
 
 describe("la cadence des tests de parcours", () => {
   it("se resserre dans les dix derniers jours", () => {
@@ -72,5 +80,55 @@ describe("la cadence des tests de parcours", () => {
   it("garde le format fixe : cinq QCM et cinq questions orales", () => {
     // C'est ce qui rend deux tests comparables d'une semaine à l'autre.
     expect(PARCOURS_QUESTION_COUNT).toBe(10);
+  });
+});
+
+describe("le poids d'un parcours dans la préparation", () => {
+  const base = { masteryPercent: 80, projectedPercent: 80, examId: "e1", now: TODAY };
+  const result = (kind: "mock" | "parcours", correct: number, day: number) => ({
+    id: `${kind}-${day}`,
+    examId: "e1",
+    kind,
+    questionCount: kind === "mock" ? 20 : 10,
+    correctCount: correct,
+    finishedAt: addDays(TODAY, -day),
+  });
+
+  it("pèse moitié moins qu'un blanc", () => {
+    // Il mesure pour de vrai - dix questions notées - mais il mesure moins large. Une
+    // mauvaise après-midi sur dix questions ne doit pas effacer un blanc entier.
+    expect(PARCOURS_READING_WEIGHT * 2).toBe(MOCK_READING_WEIGHT);
+
+    const withMock = examReadiness({ ...base, mocks: [result("mock", 10, 0)] });
+    const withParcours = examReadiness({ ...base, mocks: [result("parcours", 5, 0)] });
+
+    // Les deux scores valent 50 % ; le blanc tire la lecture deux fois plus bas.
+    expect(80 - withMock.percent).toBeGreaterThan(80 - withParcours.percent);
+  });
+
+  it("ne laisse pas un parcours effacer le blanc de la veille", () => {
+    // Les parcours sont fréquents et les blancs rares : ne garder que la mesure la plus
+    // récente remplacerait la mesure large par l'étroite.
+    const both = examReadiness({ ...base, mocks: [result("mock", 8, 2), result("parcours", 9, 0)] });
+    const onlyParcours = examReadiness({ ...base, mocks: [result("parcours", 9, 0)] });
+
+    expect(both.percent).toBeLessThan(onlyParcours.percent);
+    expect(both.measured).toBe(true);
+  });
+
+  it("annonce le score du blanc quand il y en a un", () => {
+    // Un parcours ne s'annonce pas comme une note d'examen blanc : ce n'est pas la mesure que
+    // l'étudiant reconnaît.
+    const both = examReadiness({ ...base, mocks: [result("mock", 12, 1), result("parcours", 3, 0)] });
+    expect(both.mockScore).toBe(60);
+  });
+
+  it("traite une session sans sorte comme un blanc", () => {
+    // Tout ce qui existait en base en est un, et aucune ligne n'a été réécrite.
+    const legacy = examReadiness({
+      ...base,
+      mocks: [{ id: "x", examId: "e1", questionCount: 20, correctCount: 10, finishedAt: TODAY }],
+    });
+    expect(legacy.percent).toBe(examReadiness({ ...base, mocks: [result("mock", 10, 0)] }).percent);
   });
 });
