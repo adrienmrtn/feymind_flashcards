@@ -15,6 +15,7 @@ import { callGemini, readGeminiKey, upstreamReason } from "./gemini.ts";
 import { parseModelJSON } from "./json.ts";
 import { FalError } from "./model-error.ts";
 import { DEFAULT_MODEL, resolveModel } from "./models.ts";
+import { type ModelUsage, noteUsage, readUsage } from "./usage.ts";
 
 const TEXT_ENDPOINT = "https://fal.run/fal-ai/any-llm";
 const VISION_ENDPOINT = "https://fal.run/fal-ai/any-llm/vision";
@@ -39,6 +40,14 @@ export interface CallOptions {
   imageUrls?: string[];
   temperature?: number;
   maxTokens?: number;
+  /**
+   * Où déposer ce que chaque appel a consommé.
+   *
+   * Le tableau s'accumule : une fonction qui écrit une fiche en trois appels - la passe
+   * visuelle, l'écriture, le marquage - en ressort trois lignes, et sait laquelle a coûté
+   * quoi. Facultatif, et les journaux reçoivent la ligne dans tous les cas.
+   */
+  meter?: ModelUsage[];
 }
 
 /**
@@ -173,12 +182,17 @@ async function callFalOnce(
     );
   }
 
-  let parsed: { output?: string; error?: string };
+  let parsed: { output?: string; error?: string; model?: string; usage?: unknown };
   try {
     parsed = JSON.parse(raw);
   } catch {
     throw new FalError("Réponse illisible de fal.ai.", 502);
   }
+
+  // fal ne documente pas de décompte sur `any-llm`. On le lit quand même : s'il en renvoie un,
+  // il apparaît ; sinon les compteurs restent à `null`, ce qui est la mesure honnête de « on ne
+  // sait pas » et distingue une absence de décompte d'un cache resté froid.
+  noteUsage(readUsage(parsed, "fal", model), options.meter);
 
   if (parsed.error) {
     console.error(JSON.stringify({ fal: "model_error", model }));

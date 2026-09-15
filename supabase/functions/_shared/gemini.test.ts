@@ -1,6 +1,7 @@
 import { assertEquals, assertRejects, assertStringIncludes } from "jsr:@std/assert@1";
 
 import { callGemini, flattenContent, resolveGeminiModel, upstreamReason } from "./gemini.ts";
+import type { ModelUsage } from "./usage.ts";
 
 /**
  * Google ferme ses versions numérotées aux clés récentes. Mesuré le 8 septembre 2026 sur la
@@ -91,4 +92,33 @@ Deno.test("callGemini n'insiste pas quand le refus vient de nous", async () => {
       },
     );
   }
+});
+
+/**
+ * L'alias `-latest` est délibéré et ne sera pas épinglé : Google ferme ses versions
+ * numérotées, et c'est ce qui rendait le repli inutile le 8 septembre. Mais un alias suit les
+ * montées de génération, qui ne se facturent pas au même tarif. Le nom servi est donc lu et
+ * consigné : c'est ce qui rend un changement de tarif visible sans changer une ligne ici.
+ */
+Deno.test("callGemini consigne le modèle servi et ce que l'appel a coûté", async () => {
+  await withGemini(
+    () =>
+      new Response(JSON.stringify({
+        model: "gemini-2.5-flash-lite",
+        choices: [{ message: { content: "ok" } }],
+        usage: {
+          prompt_tokens: 3_400,
+          completion_tokens: 900,
+          prompt_tokens_details: { cached_tokens: 2_048 },
+        },
+      })),
+    async () => {
+      const meter: ModelUsage[] = [];
+      assertEquals(await callGemini({ prompt: "écris", meter }, "clé"), "ok");
+      assertEquals(meter.length, 1);
+      assertEquals(meter[0]!.asked, "gemini-flash-lite-latest");
+      assertEquals(meter[0]!.served, "gemini-2.5-flash-lite");
+      assertEquals(meter[0]!.cached, 2_048);
+    },
+  );
 });

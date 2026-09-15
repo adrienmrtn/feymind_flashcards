@@ -1,19 +1,51 @@
 import { assertEquals } from "jsr:@std/assert@1";
 
-import type { SheetBlock } from "../_shared/sheet.ts";
+import { SHEET_HIGHLIGHTS, type SheetBlock, stripInlineMarkup } from "../_shared/sheet.ts";
 import {
+  applyAnchors,
   batched,
   cleanBlockMarks,
   countMarks,
+  emptyApplyReport,
+  type MarkAnchor,
   MARK_SYSTEM_PROMPT,
+  type MarkCandidate,
   markPrompt,
   markTargets,
-  mergeMarked,
-  needsMarkPass,
+  type MarkWish,
+  planMarkPass,
+  readAnchors,
   textsToMark,
 } from "./marks.ts";
 
 const PARAGRAPH = (text: string): SheetBlock => ({ type: "paragraph", text });
+
+const BOLD = (text: number, quote: string): MarkAnchor => ({
+  text,
+  kind: "bold",
+  colour: null,
+  quote,
+});
+
+const HIGHLIGHT = (text: number, colour: string, quote: string): MarkAnchor => ({
+  text,
+  kind: "highlight",
+  colour,
+  quote,
+});
+
+const WISH = (wish: Partial<MarkWish> = {}): MarkWish => ({
+  bold: false,
+  highlight: false,
+  italic: false,
+  ...wish,
+});
+
+/** Un paragraphe de fiche : assez long pour porter des marques, et nu. */
+const NU =
+  "La phase photochimique se déroule dans les thylakoïdes et produit l'ATP ainsi que le NADPH. " +
+  "Le rendement de conversion réel atteint 2 pour cent sur une feuille bien exposée, très loin " +
+  "du maximum théorique de 11 pour cent, et cet écart tient aux pertes par photorespiration.";
 
 Deno.test("countMarks ne prend pas le gras pour de l'italique", () => {
   const marks = countMarks([
@@ -39,7 +71,7 @@ Deno.test("la seconde passe se déclenche sur la densité, pas sur le zéro", ()
     PARAGRAPH("La **Rubisco** fixe le carbone, ==jaune|et c'est l'étape limitante== du cycle."),
     PARAGRAPH("Le terme *stroma* désigne le compartiment, pas la membrane du thylakoïde."),
   ];
-  assertEquals(needsMarkPass(marked), false);
+  assertEquals(planMarkPass(marked), null);
 
   // Le cas qui échappait au contrôle d'avant : un pavé de six cents caractères portant un
   // seul terme en gras. Zéro nulle part, et pourtant une page sans relief.
@@ -47,8 +79,47 @@ Deno.test("la seconde passe se déclenche sur la densité, pas sur le zéro", ()
     "Les **forces** de l'entreprise tiennent à ses fondateurs, à sa technologie brevetée et à une licence exclusive. " +
       "Le plan de financement détaille chaque poste de dépense sur trois ans. ".repeat(7),
   );
-  assertEquals(needsMarkPass([pavé]), true);
-  assertEquals(needsMarkPass([]), false);
+  assertEquals(planMarkPass([pavé])?.candidates.length, 1);
+  assertEquals(planMarkPass([]), null);
+});
+
+Deno.test("la passe ne reçoit que les textes qui ont la place d'une marque", () => {
+  // Mesuré sur une fiche courante : quarante-deux textes partaient, dont six titres et seize
+  // points de liste, tous trop courts pour porter quoi que ce soit. On payait leur place dans
+  // la consigne, et le modèle y cherchait des marques qui n'avaient nulle part où se poser.
+  const blocks: SheetBlock[] = [
+    { type: "heading", level: 1, text: "Le cycle de Calvin" },
+    PARAGRAPH(NU),
+    { type: "list", ordered: false, items: ["La fixation", "La réduction"] },
+    PARAGRAPH(NU.replace("photochimique", "sombre")),
+  ];
+
+  // textsToMark rend cinq textes ; seuls les deux paragraphes ont la place.
+  assertEquals(textsToMark(blocks).length, 5);
+  assertEquals(planMarkPass(blocks)?.candidates.map((c) => c.index), [1, 4]);
+});
+
+Deno.test("une fiche qui n'a nulle part où poser une marque ne déclenche aucun appel", () => {
+  // Des marques manquent - le déclenchement le dit - mais rien n'est assez long pour en
+  // porter. Le seul appel dont on soit certain qu'il ne servirait à rien.
+  const blocks: SheetBlock[] = [
+    { type: "heading", level: 1, text: "Premier titre de partie" },
+    { type: "heading", level: 1, text: "Deuxième titre de partie" },
+    { type: "list", ordered: false, items: ["Un point court", "Un autre point"] },
+  ];
+  assertEquals(planMarkPass(blocks), null);
+});
+
+Deno.test("le plan ne retient que les sortes de marques qui manquent", () => {
+  // Assez de gras et de surlignage pour leur densité, pas un seul italique : c'est le cas le
+  // plus fréquent, et il faisait jusqu'ici rejuger tout le gras de la fiche.
+  const riche = PARAGRAPH(
+    "La **Rubisco** catalyse la fixation du carbone dans le stroma du chloroplaste. ".repeat(5) +
+      "==jaune|Le rendement de conversion reste faible sur une feuille exposée.== ".repeat(2) +
+      "Le reste du texte tient sans marque et sert surtout à porter du volume utile. ".repeat(10),
+  );
+
+  assertEquals(planMarkPass([riche])?.wish, WISH({ italic: true }));
 });
 
 Deno.test("les cibles suivent la longueur des textes", () => {
@@ -63,26 +134,108 @@ Deno.test("les cibles suivent la longueur des textes", () => {
 });
 
 Deno.test("le message de la passe chiffre ce qu'il attend de CE lot", () => {
-  const prompt = markPrompt([("Un paragraphe de fiche, assez long pour compter. ").repeat(12)]);
-  const target = markTargets([("Un paragraphe de fiche, assez long pour compter. ").repeat(12)]);
-  assertEquals(prompt.includes(`${target.bold} termes`), true);
-  assertEquals(prompt.includes(`${target.highlight} passages`), true);
+  const texts = [("Un paragraphe de fiche, assez long pour compter. ").repeat(12)];
+  const prompt = markPrompt(texts, WISH({ bold: true, highlight: true, italic: true }));
+  const target = markTargets(texts);
+  assertEquals([target.bold, target.highlight, target.italic], [2, 1, 1]);
+
+  // Les comptes viennent de la longueur du lot, et l'accord suit le compte : « 1 surligneurs »
+  // se lit comme une consigne bâclée, et une consigne bâclée s'applique bâclée.
+  assertEquals(prompt.includes('2 marques "gras", 1 surligneur et 1 marque "italique"'), true);
 });
 
-Deno.test("les textes partent par petits lots, sans en perdre", () => {
+Deno.test("le message numérote les textes : c'est ce numéro que la réponse renvoie", () => {
+  const both = WISH({ bold: true });
+  const prompt = markPrompt(["Le premier texte.", "Le second texte."], both);
+  assertEquals(prompt.includes("[0] Le premier texte."), true);
+  assertEquals(prompt.includes("[1] Le second texte."), true);
+  // L'accord suit le nombre : « 1 textes » se lit comme une consigne bâclée.
+  assertEquals(markPrompt(["Seul."], both).includes("1 texte de la fiche, numéroté,"), true);
+});
+
+Deno.test("le message ne nomme que les sortes qui manquent", () => {
+  const texts = [NU];
+
+  const italique = markPrompt(texts, WISH({ italic: true }));
+  assertEquals(italique.includes('"gras"'), false);
+  assertEquals(italique.includes("surligneur"), false);
+  assertEquals(italique.includes('marque "italique"'), true);
+  assertEquals(italique.includes("Ce sont les seules sortes qui manquent"), true);
+
+  // La chasse à l'italique est longue et ne sert qu'à l'italique : ailleurs elle prend de la
+  // place et de l'attention pour une marque dont on ne veut pas.
+  assertEquals(italique.includes("cherche mieux"), true);
+  assertEquals(markPrompt(texts, WISH({ bold: true })).includes("cherche mieux"), false);
+
+  // Quand les trois manquent, il n'y a rien à restreindre.
+  const toutes = markPrompt(texts, WISH({ bold: true, highlight: true, italic: true }));
+  assertEquals(toutes.includes("Ce sont les seules sortes"), false);
+});
+
+const CANDIDATES = (texts: readonly string[], from = 0): MarkCandidate[] =>
+  texts.map((text, index) => ({ index: from + index, text }));
+
+Deno.test("les lots tiennent le plafond de textes, et gardent leur rang", () => {
   const textes = Array.from({ length: 45 }, (_, index) => `texte ${index}`);
-  const lots = batched(textes);
-  assertEquals(lots.length, 8);
-  assertEquals(lots[0]!.length, 6);
-  assertEquals(lots[7]!.length, 3);
-  assertEquals(lots.flat(), textes);
+  const lots = batched(CANDIDATES(textes));
+
+  // Deux appels là où l'ancien découpage en lots de six en demandait huit.
+  assertEquals(lots.length, 2);
+  assertEquals(lots[0]!.texts.length, 24);
+  assertEquals(lots[0]!.indices[0], 0);
+  assertEquals(lots[1]!.indices[0], 24);
+  assertEquals(lots.flatMap((lot) => lot.texts), textes);
 });
 
-Deno.test("la consigne refuse le texte rendu tel quel", () => {
-  // Mesuré : quinze textes sur quinze recopiés à l'identique. Le modèle relisait au lieu
-  // de marquer, et rien dans la consigne ne disait que c'était un échec.
-  assertEquals(MARK_SYSTEM_PROMPT.includes("RENDU À L'IDENTIQUE EST UNE ERREUR"), true);
+Deno.test("le lot garde le rang réel de chaque texte, pas un décalage", () => {
+  // La sélection saute les textes trop courts : les rangs d'un lot ne se suivent plus, et un
+  // décalage recollerait les marques sur les mauvais blocs.
+  const lots = batched(
+    [{ index: 1, text: "un" }, { index: 4, text: "deux" }, { index: 9, text: "trois" }],
+    { texts: 2, chars: 10_000 },
+  );
+  assertEquals(lots.length, 2);
+  assertEquals(lots[0]!.indices, [1, 4]);
+  assertEquals(lots[1]!.indices, [9]);
+});
+
+Deno.test("les lots tiennent aussi le plafond de caractères", () => {
+  const gros = Array.from({ length: 6 }, () => "x".repeat(5_000));
+  const lots = batched(CANDIDATES(gros));
+  assertEquals(lots.length, 3);
+  assertEquals(lots[0]!.texts.length, 2);
+  assertEquals(lots[2]!.indices[0], 4);
+
+  // Un texte plus gros que le plafond à lui seul part quand même : le retenir le perdrait.
+  const énorme = batched(CANDIDATES(["x".repeat(20_000), "court"]));
+  assertEquals(énorme.length, 2);
+  assertEquals(énorme[0]!.texts.length, 1);
+  assertEquals(énorme[1]!.indices, [1]);
+});
+
+Deno.test("la consigne demande des marques, pas des textes", () => {
+  assertEquals(MARK_SYSTEM_PROMPT.includes("SE RETROUVE DANS SON TEXTE, UNE SEULE FOIS"), true);
+  assertEquals(MARK_SYSTEM_PROMPT.includes("UNE LISTE VIDE EST UNE ERREUR"), true);
   assertEquals(MARK_SYSTEM_PROMPT.includes("EXEMPLE"), true);
+});
+
+Deno.test("la consigne ne nomme que des surligneurs qui existent", () => {
+  // Ce contrôle vivait sur le prompt d'écriture ; c'est cette consigne-ci qui porte
+  // désormais le code couleur, et elle seule. Un nom de teinte inconnu du rendu laisserait
+  // « framboise|texte » se lire dans la phrase, sur les deux clients à la fois - et
+  // `readAnchors` le refuserait, donc la marque serait cherchée puis jetée en silence.
+  const named = [...MARK_SYSTEM_PROMPT.matchAll(/^- ([a-zéèêà]+) : /gmu)].map((m) => m[1]!);
+  assertEquals(named.length, SHEET_HIGHLIGHTS.length);
+  for (const colour of named) {
+    assertEquals(SHEET_HIGHLIGHTS.includes(colour as typeof SHEET_HIGHLIGHTS[number]), true);
+  }
+
+  // Et réciproquement : les cinq feutres ont chacun leur ligne et leur nom entre guillemets
+  // dans la description de "m", sinon l'un d'eux ne serait jamais posé.
+  for (const colour of SHEET_HIGHLIGHTS) {
+    assertEquals(named.includes(colour), true);
+    assertEquals(MARK_SYSTEM_PROMPT.includes(`"${colour}"`), true);
+  }
 });
 
 Deno.test("cleanBlockMarks passe sur tous les textes d'une fiche", () => {
@@ -91,7 +244,10 @@ Deno.test("cleanBlockMarks passe sur tous les textes d'une fiche", () => {
     { type: "list", ordered: false, items: ["Un **point** net", "Un point **abîmé"] },
   ];
   const cleaned = cleanBlockMarks(blocks);
-  assertEquals(cleaned[0], PARAGRAPH("Une entreprise fondée en 2017, issue de trente-cinq ans de recherche"));
+  assertEquals(
+    cleaned[0],
+    PARAGRAPH("Une entreprise fondée en 2017, issue de trente-cinq ans de recherche"),
+  );
   assertEquals(cleaned[1], {
     type: "list",
     ordered: false,
@@ -99,15 +255,7 @@ Deno.test("cleanBlockMarks passe sur tous les textes d'une fiche", () => {
   });
 });
 
-Deno.test("la consigne de la seconde passe chiffre ce qu'elle doit poser", () => {
-  // Mesuré : la passe reposait les surlignages et laissait l'italique à zéro. Elle compte
-  // maintenant, et on lui dit où chercher.
-  assertEquals(MARK_SYSTEM_PROMPT.includes("le nombre exact de marques attendues"), true);
-  assertEquals(MARK_SYSTEM_PROMPT.includes("LA POSE"), true);
-  assertEquals(MARK_SYSTEM_PROMPT.includes("IDENTIQUE"), true);
-});
-
-Deno.test("textsToMark rend les textes dans l'ordre où la fusion les attend", () => {
+Deno.test("textsToMark rend les textes dans l'ordre où la pose les attend", () => {
   const blocks: SheetBlock[] = [
     { type: "heading", level: 1, text: "Titre" },
     PARAGRAPH("Un paragraphe."),
@@ -117,54 +265,159 @@ Deno.test("textsToMark rend les textes dans l'ordre où la fusion les attend", (
   assertEquals(textsToMark(blocks), ["Titre", "Un paragraphe.", "Un", "Deux", "La légende"]);
 });
 
-Deno.test("mergeMarked accepte les marques et rien d'autre", () => {
-  const blocks = [PARAGRAPH("La Rubisco fixe le carbone."), PARAGRAPH("Le stroma est liquide.")];
-  const merged = mergeMarked(blocks, [
-    "La **Rubisco** fixe le carbone.",
-    // Un mot changé au passage : le bloc garde son texte d'origine.
-    "Le **cytoplasme** est liquide.",
+// MARK: - La lecture de la réponse
+
+Deno.test("readAnchors accepte les formes voisines d'une même réponse", () => {
+  const report = emptyApplyReport();
+
+  assertEquals(readAnchors([{ t: 0, m: "gras", q: "un terme" }], 1, report), [
+    { text: 0, kind: "bold", colour: null, quote: "un terme" },
   ]);
-  assertEquals(merged[0], PARAGRAPH("La **Rubisco** fixe le carbone."));
-  assertEquals(merged[1], PARAGRAPH("Le stroma est liquide."));
+
+  // Un tableau enveloppé, des clés françaises, un numéro rendu en chaîne : mesuré, un lot
+  // sur deux revenait ainsi du temps où la passe rendait des textes.
+  assertEquals(
+    readAnchors({ marques: [{ t: "1", marque: "menthe", passage: "un passage" }] }, 2, report),
+    [{ text: 1, kind: "highlight", colour: "menthe", quote: "un passage" }],
+  );
+
+  // Une réponse qui n'est pas une liste est un lot perdu, et se distingue d'une liste vide.
+  assertEquals(readAnchors("pas du JSON", 1, report), null);
+  assertEquals(readAnchors([], 1, report), []);
 });
 
-Deno.test("mergeMarked refuse une repasse qui efface des marques", () => {
-  // Le cas qui a coûté une fiche : mêmes phrases au caractère près, dix-sept gras en moins.
-  const blocks = [PARAGRAPH("La **Rubisco** fixe le **carbone** : ==jaune|c'est l'étape lente==.")];
-  const merged = mergeMarked(blocks, ["La Rubisco fixe le carbone : c'est l'étape lente."]);
-  assertEquals(merged, blocks);
+Deno.test("readAnchors refuse une teinte inventée et un numéro hors du lot", () => {
+  const report = emptyApplyReport();
 
-  // Ajouter est permis, y compris sur un texte déjà marqué.
-  const enriched = mergeMarked(blocks, [
-    "La **Rubisco** fixe le **carbone** : ==jaune|c'est l'étape *lente*==.",
-  ]);
+  // Une couleur hors des cinq laisserait « framboise| » se lire dans la phrase.
+  assertEquals(readAnchors([{ t: 0, m: "framboise", q: "un passage" }], 1, report), []);
+  assertEquals(report.malformed, 1);
+
+  assertEquals(readAnchors([{ t: 9, m: "gras", q: "un terme" }], 2, report), []);
+  assertEquals(report.stray, 1);
+});
+
+// MARK: - La pose
+
+Deno.test("applyAnchors pose les marques que le modèle a désignées", () => {
+  const blocks = [PARAGRAPH("La Rubisco fixe le carbone, et c'est l'étape limitante du cycle.")];
+  const report = emptyApplyReport();
+
+  const marked = applyAnchors(blocks, [
+    BOLD(0, "Rubisco"),
+    HIGHLIGHT(0, "jaune", "c'est l'étape limitante du cycle"),
+  ], report);
+
   assertEquals(
-    enriched[0],
-    PARAGRAPH("La **Rubisco** fixe le **carbone** : ==jaune|c'est l'étape *lente*==."),
+    marked[0],
+    PARAGRAPH("La **Rubisco** fixe le carbone, et ==jaune|c'est l'étape limitante du cycle==."),
+  );
+  assertEquals(report.placed, 2);
+});
+
+Deno.test("le texte nu ne bouge jamais, quoi que le modèle ait renvoyé", () => {
+  // C'est la propriété que tout le protocole existe pour garantir : le modèle ne rend plus de
+  // texte, donc il ne peut plus en changer un mot au passage. L'ancienne passe devait le
+  // vérifier caractère par caractère à l'arrivée ; ici c'est vrai par construction.
+  const original = "La Rubisco fixe le carbone, et c'est l'étape limitante du cycle de Calvin.";
+  const marked = applyAnchors([PARAGRAPH(original)], [
+    BOLD(0, "Rubisco"),
+    BOLD(0, "carbone"),
+    HIGHLIGHT(0, "bleu", "c'est l'étape limitante du cycle de Calvin"),
+    // Celles-ci seront refusées, et ne doivent rien laisser derrière elles.
+    BOLD(0, "chlorophylle"),
+    BOLD(0, "cycl"),
+  ]);
+
+  assertEquals(stripInlineMarkup((marked[0] as { text: string }).text), original);
+});
+
+Deno.test("un passage introuvable ou ambigu ne pose rien, et se compte", () => {
+  const report = emptyApplyReport();
+
+  const absent = applyAnchors([PARAGRAPH("La Rubisco fixe le carbone.")], [
+    BOLD(0, "chlorophylle"),
+  ], report);
+  assertEquals(absent, [PARAGRAPH("La Rubisco fixe le carbone.")]);
+  assertEquals(report.absent, 1);
+
+  // Deux occurrences : on ne sait pas laquelle le modèle visait, et marquer la première
+  // serait marquer au hasard une fois sur deux.
+  const ambigu = applyAnchors(
+    [PARAGRAPH("Le cycle commence, puis le cycle se referme sur lui-même.")],
+    [BOLD(0, "cycle")],
+    report,
+  );
+  assertEquals(ambigu, [PARAGRAPH("Le cycle commence, puis le cycle se referme sur lui-même.")]);
+  assertEquals(report.ambiguous, 1);
+  assertEquals(report.placed, 0);
+});
+
+Deno.test("une marque posée au milieu d'un mot est refusée avant d'être écrite", () => {
+  const report = emptyApplyReport();
+  const blocks = [PARAGRAPH("La photosynthèse convertit l'énergie lumineuse en sucre.")];
+
+  assertEquals(applyAnchors(blocks, [BOLD(0, "synthèse")], report), blocks);
+  assertEquals(report.shape, 1);
+});
+
+Deno.test("une marque ne coupe pas une formule", () => {
+  const report = emptyApplyReport();
+  const blocks = [PARAGRAPH("La vitesse $v = d/t$ augmente avec la distance parcourue.")];
+
+  assertEquals(applyAnchors(blocks, [BOLD(0, "$v = d/t$")], report), blocks);
+  assertEquals(report.shape, 1);
+});
+
+Deno.test("une marque à cheval sur une marque existante est refusée", () => {
+  // Le rendu ne sait pas lire des marqueurs entrelacés : `==menthe|Le **rendement== atteint**`
+  // n'est ni un surlignage ni un gras.
+  const report = emptyApplyReport();
+  const blocks = [PARAGRAPH("Le rendement réel atteint **92 pour cent** en régime nominal.")];
+
+  const marked = applyAnchors(blocks, [
+    HIGHLIGHT(0, "menthe", "Le rendement réel atteint **92 pour"),
+  ], report);
+
+  assertEquals(marked, blocks);
+  assertEquals(report.crossing, 1);
+});
+
+Deno.test("un gras se pose à l'intérieur d'un surligneur, dans le bon ordre", () => {
+  const blocks = [
+    PARAGRAPH("Le rendement de conversion atteint 92 pour cent en régime nominal."),
+  ];
+
+  const marked = applyAnchors(blocks, [
+    HIGHLIGHT(0, "menthe", "Le rendement de conversion atteint 92 pour cent"),
+    BOLD(0, "rendement de conversion"),
+  ]);
+
+  assertEquals(
+    marked[0],
+    PARAGRAPH(
+      "==menthe|Le **rendement de conversion** atteint 92 pour cent== en régime nominal.",
+    ),
   );
 });
 
-Deno.test("mergeMarked garde l'original quand la réponse est courte ou mal typée", () => {
-  const blocks = [PARAGRAPH("Premier texte."), PARAGRAPH("Second texte.")];
-  assertEquals(mergeMarked(blocks, [42]), blocks);
-  assertEquals(mergeMarked(blocks, []), blocks);
-});
+Deno.test("applyAnchors marque les points d'une liste un à un", () => {
+  const blocks: SheetBlock[] = [
+    { type: "heading", level: 1, text: "Le cycle de Calvin" },
+    { type: "list", ordered: true, items: ["La fixation du carbone", "La réduction du glycérate"] },
+  ];
 
-Deno.test("mergeMarked marque les points d'une liste un à un", () => {
-  const blocks: SheetBlock[] = [{ type: "list", ordered: true, items: ["Oxydation", "Réduction"] }];
-  const merged = mergeMarked(blocks, ["**Oxydation**", "Réduction *partielle*"]);
-  assertEquals(merged[0], {
+  const marked = applyAnchors(blocks, [BOLD(1, "fixation"), BOLD(2, "réduction")]);
+
+  assertEquals(marked[0], { type: "heading", level: 1, text: "Le cycle de Calvin" });
+  assertEquals(marked[1], {
     type: "list",
     ordered: true,
-    // Le second a bougé : « partielle » n'était pas dans le texte, il est écarté.
-    items: ["**Oxydation**", "Réduction"],
+    items: ["La **fixation** du carbone", "La **réduction** du glycérate"],
   });
 });
 
-Deno.test("mergeMarked laisse la couleur d'un surligneur passer", () => {
-  // `stripInlineMarkup` retire `==menthe|` : sans ça, toute couleur serait vue comme un mot
-  // ajouté et chaque passage coloré serait écarté.
-  const blocks = [PARAGRAPH("Le rendement réel atteint 2 % au mieux.")];
-  const merged = mergeMarked(blocks, ["==menthe|Le rendement réel atteint 2 % au mieux.=="]);
-  assertEquals(merged[0], PARAGRAPH("==menthe|Le rendement réel atteint 2 % au mieux.=="));
+Deno.test("applyAnchors rend la fiche telle quelle quand il n'y a rien à poser", () => {
+  const blocks = [PARAGRAPH("Un paragraphe sans marque à poser.")];
+  assertEquals(applyAnchors(blocks, []), blocks);
 });

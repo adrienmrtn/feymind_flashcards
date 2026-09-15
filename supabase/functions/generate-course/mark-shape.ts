@@ -47,6 +47,31 @@ const RULES: Rule[] = [
   { marker: "*", min: 1, max: 70 },
 ];
 
+/** Les trois sortes de marques, nommées. La repasse les désigne, elle ne les écrit plus. */
+export type MarkKind = "highlight" | "bold" | "italic";
+
+/**
+ * La sorte, et la règle qui la juge.
+ *
+ * L'ordre compte et c'est celui de `RULES` : le gras se lit avant l'italique, sans quoi
+ * chaque `**` compterait pour deux astérisques et tout le gras serait démonté.
+ */
+const KIND_RULE: Record<MarkKind, Rule> = {
+  highlight: RULES[0]!,
+  bold: RULES[1]!,
+  italic: RULES[2]!,
+};
+
+/** Le marqueur d'ouverture d'une sorte, couleur comprise pour le surligneur. */
+export function openerFor(kind: MarkKind, colour: string): string {
+  return kind === "highlight" ? `==${colour}|` : KIND_RULE[kind].marker;
+}
+
+/** Le marqueur de fermeture : le même pour les trois, sans la couleur. */
+export function closerFor(kind: MarkKind): string {
+  return KIND_RULE[kind].marker;
+}
+
 /** Ce qui peut précéder une ouverture : un début, une espace, une ponctuation ouvrante. */
 const BEFORE_OPEN = /[\s(\[«"'’‘“\-—:;,.!?]/;
 /** Ce qui peut suivre une fermeture : une fin, une espace, une ponctuation fermante. */
@@ -199,6 +224,75 @@ function placement(text: string, open: number, close: number, rule: Rule): strin
   if (marker !== "==" && /[.!?]\s/.test(inner)) return "deux-phrases";
 
   return "ok";
+}
+
+/**
+ * **Une marque peut-elle se poser sur `[from, to)` ?** Sinon, pourquoi.
+ *
+ * Mêmes bornes et mêmes bords de mot que `cleanMarks`, mais jugés **avant** la pose. La
+ * repasse ancienne posait d'abord et laissait le nettoyage retirer : chaque marque mal placée
+ * était alors payée en jetons de sortie pour finir à la poubelle. Maintenant que le modèle
+ * désigne un passage au lieu de réécrire le texte, le serveur peut refuser sans rien perdre.
+ */
+export function placeable(text: string, from: number, to: number, kind: MarkKind): string {
+  const rule = KIND_RULE[kind];
+  if (from < 0 || to > text.length || to <= from) return "hors-texte";
+
+  const before = from === 0 ? " " : text[from - 1]!;
+  if (!BEFORE_OPEN.test(before)) return "collée";
+
+  const after = to >= text.length ? " " : text[to]!;
+  if (!AFTER_CLOSE.test(after)) return "fermeture-collée";
+
+  const inner = text.slice(from, to);
+  const length = inner.trim().length;
+  if (length < rule.min) return "trop-court";
+  if (length > rule.max) return "trop-long";
+  if (inner.includes("\n")) return "multiligne";
+  if (kind !== "highlight" && /[.!?]\s/.test(inner)) return "deux-phrases";
+
+  // Un exposant s'écrit `a^*`, une multiplication `2*3` : poser une marque à cheval sur une
+  // formule la casserait, et le rendu LaTeX échouerait sur toute la fiche.
+  if (mathRanges(text).some(([open, close]) => from <= close && to > open)) return "formule";
+
+  return "ok";
+}
+
+/** Une marque déjà posée : ce qu'elle occupe, marqueurs compris. */
+export interface MarkedRange {
+  kind: MarkKind;
+  /** Bornes marqueurs compris, `[début, fin)`. */
+  outer: [number, number];
+}
+
+/**
+ * **Où sont les marques que le texte porte déjà.**
+ *
+ * La repasse ne travaille pas sur une page blanche : la fiche arrive marquée, mal ou peu, et
+ * une marque nouvelle qui couperait une ancienne en deux produirait des marqueurs croisés -
+ * `==menthe|Le **rendement== atteint**` - que le rendu ne sait pas lire. On relève donc les
+ * anciennes avant de poser les nouvelles.
+ */
+export function markedRanges(text: string): MarkedRange[] {
+  const math = mathRanges(text);
+  const ranges: MarkedRange[] = [];
+  const taken = new Set<number>();
+
+  for (const kind of ["highlight", "bold", "italic"] as const) {
+    const rule = KIND_RULE[kind];
+    const positions = markerPositions(text, rule, math, taken);
+
+    for (let index = 0; index + 1 < positions.length; index += 2) {
+      const open = positions[index]!;
+      const close = positions[index + 1]!;
+      taken.add(open);
+      taken.add(close);
+
+      ranges.push({ kind, outer: [open, close + rule.marker.length] });
+    }
+  }
+
+  return ranges;
 }
 
 /** Reconstruit le texte sans les marqueurs condamnés, et sans leur nom de couleur. */

@@ -15,6 +15,7 @@ import {
   jsonResponse,
 } from "../_shared/fal.ts";
 import { parseModelJSON } from "../_shared/json.ts";
+import { type ModelUsage, totalUsage } from "../_shared/usage.ts";
 import {
   normalizeSheet,
   sheetToPlainText,
@@ -22,16 +23,16 @@ import {
   type SheetBlock,
 } from "../_shared/sheet.ts";
 import {
+  applyAnchors,
   batched,
   cleanBlockMarks,
   countMarks,
-  emptyMergeReport,
+  emptyApplyReport,
   emptyShapeReport,
   markPrompt,
   MARK_SYSTEM_PROMPT,
-  mergeMarked,
-  needsMarkPass,
-  readMarkedTexts,
+  planMarkPass,
+  readAnchors,
   textsToMark,
 } from "./marks.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
@@ -43,18 +44,30 @@ import {
   instructionsBrief,
   lengthBrief,
   MAX_INSTRUCTIONS,
+  outputTokenLimit,
   PROMPT_VERSION,
   readingBrief,
   retryBrief,
+  retryTokenLimit,
   VISION_SYSTEM_PROMPT,
 } from "./prompt.ts";
 
-const OUTPUT_TOKEN_LIMIT = 8_192;
+/**
+ * Le plafond de la passe de marquage, et c'est un tout autre ordre de grandeur.
+ *
+ * Elle rendait les textes marqués, donc sa sortie suivait la longueur de la fiche et frôlait
+ * les huit mille jetons. Elle ne rend plus qu'une liste de marques : une trentaine d'objets
+ * d'une quinzaine de jetons. Deux mille laissent largement la place, et bornent ce qu'un
+ * modèle parti en digression peut coûter.
+ */
+const ANCHOR_TOKEN_LIMIT = 2_048;
 
 async function writeSheet(
   prompt: string,
   model: string | undefined,
   temperature: number,
+  maxTokens: number,
+  meter: ModelUsage[],
 ): Promise<Record<string, unknown> | null> {
   try {
     const output = await callModel({
@@ -62,7 +75,8 @@ async function writeSheet(
       systemPrompt: COURSE_SYSTEM_PROMPT,
       model,
       temperature,
-      maxTokens: OUTPUT_TOKEN_LIMIT,
+      maxTokens,
+      meter,
     });
     return deepStripEmDashes(parseModelJSON<Record<string, unknown>>(output));
   } catch (error) {
@@ -76,28 +90,40 @@ async function writeSheet(
 /**
  * Repose les marques quand la fiche en porte trop peu pour sa longueur.
  *
- * Voir `marks.ts` : le déclenchement est sur la **densité**, la seconde passe ne peut que
- * marquer, elle travaille par lots de dix textes, et tout texte qui a bougé ou qui perd une
- * marque est écarté à la fusion. Un échec ici n'est pas une panne de fiche : on rend la fiche
- * telle qu'elle était écrite.
+ * Voir `marks.ts` : la seconde passe ne rend pas la fiche marquée mais la **liste des marques
+ * à poser** - un numéro de texte, une sorte de marque, un passage recopié. Le serveur retrouve
+ * le passage et pose les marqueurs lui-même, donc le modèle ne peut plus toucher au texte. Un
+ * échec ici n'est pas une panne de fiche : on rend la fiche telle qu'elle était écrite.
  *
- * Les lots partent **ensemble**. En file, quarante-cinq textes feraient cinq allers-retours à
- * la suite, soit une vingtaine de secondes ajoutées à un import qui en prend déjà trente.
+ * `planMarkPass` décide de tout : quelles sortes de marques manquent, et lesquels des textes
+ * de la fiche ont la place d'en porter une. Il peut ne rien rendre, et alors l'appel ne part
+ * pas du tout.
+ *
+ * Les lots partent **ensemble**. En file, ils ajouteraient une dizaine de secondes à un import
+ * qui en prend déjà trente.
  */
 async function repaintMarks(
   blocks: SheetBlock[],
+  meter: ModelUsage[],
 ): Promise<{ blocks: SheetBlock[]; report: Record<string, number> }> {
-  const report = { ...emptyMergeReport(), batches: 0, failed: 0, ragged: 0, ran: 0 };
-  if (!needsMarkPass(blocks)) return { blocks, report };
+  const report = { ...emptyApplyReport(), batches: 0, failed: 0, ragged: 0, ran: 0, sent: 0, texts: 0 };
+
+  const plan = planMarkPass(blocks);
+  if (!plan) return { blocks, report };
 
   report.ran = 1;
-  const lots = batched(textsToMark(blocks));
+  // Combien de textes la fiche compte, et combien en ont reçu la consigne. L'écart est ce que
+  // la sélection épargne, et il ne se devine pas depuis le nombre de lots.
+  report.texts = textsToMark(blocks).length;
+  report.sent = plan.candidates.length;
+
+  const lots = batched(plan.candidates);
   report.batches = lots.length;
 
-  const marked = await Promise.all(lots.map(async (lot) => {
+  const anchors = await Promise.all(lots.map(async (lot) => {
     try {
       const output = await callModel({
-        prompt: markPrompt(lot),
+        prompt: markPrompt(lot.texts, plan.wish),
         systemPrompt: MARK_SYSTEM_PROMPT,
         /**
          * **Le modèle de la repasse n'est pas celui de l'écriture.**
@@ -113,24 +139,27 @@ async function repaintMarks(
          */
         model: "google/gemini-2.5-flash",
         temperature: 0.4,
-        maxTokens: OUTPUT_TOKEN_LIMIT,
+        maxTokens: ANCHOR_TOKEN_LIMIT,
+        meter,
       });
       const parsed = deepStripEmDashes(parseModelJSON<unknown>(output));
-      // Un lot dont la réponse n'a ni la bonne taille ni une forme lisible est un lot
-      // perdu : ses textes repartent tels quels plutôt que de décaler tous les suivants.
-      const texts = readMarkedTexts(parsed, lot.length);
-      if (!texts) {
+      // Une réponse qui n'est pas une liste de marques est un lot perdu : ses textes
+      // repartent nus plutôt que de recevoir des marques prises dans le mauvais texte.
+      const read = readAnchors(parsed, lot.texts.length, report);
+      if (!read) {
         report.ragged += 1;
-        return lot;
+        return [];
       }
-      return texts;
+      // Le lot numérote ses textes de zéro ; la fiche les attend à leur rang à elle, et la
+      // sélection en a sauté, donc c'est une table de correspondance et non un décalage.
+      return read.map((anchor) => ({ ...anchor, text: lot.indices[anchor.text]! }));
     } catch (_error) {
       report.failed += 1;
-      return lot;
+      return [];
     }
   }));
 
-  return { blocks: normalizeSheet(mergeMarked(blocks, marked.flat(), report)), report };
+  return { blocks: normalizeSheet(applyAnchors(blocks, anchors.flat(), report)), report };
 }
 
 interface RequestBody {
@@ -196,6 +225,10 @@ Deno.serve((request: Request) =>
 
       await consumeQuota(caller, "generate-course");
 
+      // Un compteur pour toute la requête : la passe visuelle, l'écriture, son second essai
+      // s'il a lieu, et chaque lot de marquage y déposent leur ligne.
+      const meter: ModelUsage[] = [];
+
       // Passe visuelle : le modèle décrit les schémas que l'extraction texte ne voit pas, et
       // relève leurs valeurs, sans quoi la fiche ne pourrait pas porter de graphe.
       let visualNotes = "";
@@ -208,6 +241,7 @@ Deno.serve((request: Request) =>
             imageUrls: images,
             temperature: 0.2,
             maxTokens: 1600,
+            meter,
           });
         } catch (_error) {
           // Un échec de la passe visuelle ne doit pas bloquer l'écriture de la fiche.
@@ -248,7 +282,13 @@ Deno.serve((request: Request) =>
       sections.push("Écris maintenant le JSON de la fiche.");
 
       const prompt = sections.join("\n\n");
-      let parsed = await writeSheet(prompt, undefined, 0.3);
+      let parsed = await writeSheet(
+        prompt,
+        undefined,
+        0.3,
+        outputTokenLimit(body.length, body.blocks),
+        meter,
+      );
 
       // Une fiche coupée ou illisible : on redemande plus court plutôt que d'abandonner.
       if (!parsed || normalizeSheet(parsed.sheet ?? parsed.blocks).length < 3) {
@@ -256,6 +296,8 @@ Deno.serve((request: Request) =>
           `${prompt}\n\n${retryBrief(body.length)}`,
           undefined,
           0.15,
+          retryTokenLimit(body.length),
+          meter,
         );
       }
 
@@ -279,7 +321,7 @@ Deno.serve((request: Request) =>
       // déclenchement de la repasse doit le savoir.
       const shape = emptyShapeReport();
       const cleaned = cleanBlockMarks(written, shape);
-      const repaint = await repaintMarks(cleaned);
+      const repaint = await repaintMarks(cleaned, meter);
       const blocks = cleanBlockMarks(repaint.blocks, shape);
 
       if (blocks.length < 3) {
@@ -316,6 +358,29 @@ Deno.serve((request: Request) =>
          */
         meta: {
           promptVersion: PROMPT_VERSION,
+          /**
+           * **Ce que la fiche a coûté, et qui l'a servie.**
+           *
+           * `served` nomme les modèles qui ont réellement répondu : c'est la seule façon de
+           * voir qu'un alias `-latest` est monté d'une génération, donc de tarif, sans qu'une
+           * ligne du code ait bougé. `cached` dit si le préfixe commun est mis en cache à
+           * travers fal, ce qu'aucune documentation ne tranche. Et `reported` dit combien des
+           * appels ont daigné compter, sans quoi un total partiel se lirait comme un total.
+           */
+          usage: totalUsage(meter),
+          /**
+           * **Le volume demandé et le volume obtenu, côte à côte.**
+           *
+           * Une fiche coupée au plafond de jetons ne se signale pas : le JSON est recollé,
+           * la fiche reste valide, et seul son nombre de blocs dit qu'elle s'arrête trop tôt.
+           * Ces deux nombres suffisent à le voir, et à vérifier qu'un plafond relevé a bien
+           * réglé la chose plutôt qu'à le supposer.
+           */
+          blocks: {
+            asked: typeof body.blocks === "number" ? body.blocks : null,
+            written: written.length,
+            final: blocks.length,
+          },
           marks: {
             written: countMarks(written),
             cleaned: countMarks(cleaned),
