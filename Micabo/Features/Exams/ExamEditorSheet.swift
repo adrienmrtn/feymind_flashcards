@@ -19,6 +19,9 @@ struct ExamEditorSheet: View {
     let exam: Exam?
     /// Jour proposé à l'ouverture, quand on part d'une case du calendrier.
     var suggestedDate: Date = Date()
+    /// Appelé quand le formulaire vient de **créer** une épreuve, jamais quand il en modifie
+    /// une. La feuille se referme ensuite, et c'est l'écran appelant qui ouvre la fiche.
+    var onCreated: ((Exam) -> Void)?
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -756,6 +759,11 @@ struct ExamEditorSheet: View {
                     in: modelContext
                 )
                 try ExamRepository.plan(created, in: modelContext)
+                // On sort du formulaire **sur la fiche de l'épreuve**, et pas sur la liste.
+                // Quelqu'un qui vient de planifier veut voir ce qu'il a planifié : le
+                // calendrier, les jours chargés, les rendez-vous. La liste, elle, ne lui
+                // apprend que le nom qu'il vient d'écrire.
+                onCreated?(created)
             }
             Haptics.success()
             dismiss()

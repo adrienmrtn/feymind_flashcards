@@ -218,9 +218,9 @@ struct ExamAgendaCalendar: View {
 
     private func label(day: Date, event: AgendaEvent?, cards: Int, isExamDay: Bool) -> String {
         var parts = [day.formatted(date: .long, time: .omitted)]
-        if isExamDay { parts.append(L10n.t("app.agenda.examDay")) }
-        if cards > 0 { parts.append(L10n.t("app.agenda.cards", ["count": "\(cards)"])) }
-        if let event { parts.append(L10n.t("app.agenda.kind.\(event.kind.rawValue)")) }
+        if isExamDay { parts.append(L10n.t("app.agenda.examDay", locale: .resolved())) }
+        if cards > 0 { parts.append(L10n.t("app.agenda.cards", locale: .resolved(), vars: ["count": "\(cards)"])) }
+        if let event { parts.append(L10n.t("app.agenda.kind.\(event.kind.rawValue)", locale: .resolved())) }
         return parts.joined(separator: ", ")
     }
 
@@ -232,8 +232,8 @@ struct ExamAgendaCalendar: View {
     /// différence entre une mesure de cinq minutes et une de vingt-cinq.
     private var legend: some View {
         HStack(spacing: MicaboSpacing.sm) {
-            legendItem(MicaboColor.accentSoft, MicaboColor.accent, L10n.t("app.mock.blockTitle"))
-            legendItem(MicaboColor.cautionSoft, MicaboColor.caution, L10n.t("app.parcours.blockTitle"))
+            legendItem(MicaboColor.accentSoft, MicaboColor.accent, L10n.t("app.mock.blockTitle", locale: .resolved()))
+            legendItem(MicaboColor.cautionSoft, MicaboColor.caution, L10n.t("app.parcours.blockTitle", locale: .resolved()))
             Spacer(minLength: 0)
         }
     }
@@ -291,7 +291,7 @@ struct AgendaEventSheet: View {
     }
 
     private func t(_ key: String, _ vars: [String: String] = [:]) -> String {
-        i18n?.t(key, vars) ?? L10n.t(key, vars, locale: .resolved())
+        i18n?.t(key, vars) ?? L10n.t(key, locale: .resolved(), vars: vars)
     }
 
     private var title: String {

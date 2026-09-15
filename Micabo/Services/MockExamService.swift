@@ -263,7 +263,17 @@ final class MockExamService {
     }
 
     /// Compose la copie et l'écrit. Le micro est déjà accordé - ou refusé - avant d'arriver ici.
-    func start(exam: Exam, courses: [Course], withAudio: Bool) async throws -> MockSessionRecord {
+    /// Ouvre une mesure : un examen blanc, ou un test de parcours.
+    ///
+    /// Les deux passent par `generate-mock` : son `quota` accepte un compte par format depuis
+    /// le début, et un parcours n'est que cinq QCM et cinq questions orales. Aucune fonction
+    /// de plus à déployer, à tester ni à payer.
+    func start(
+        exam: Exam,
+        courses: [Course],
+        withAudio: Bool,
+        kind: AgendaKind = .mock
+    ) async throws -> MockSessionRecord {
         guard let userID = auth.user?.id else { throw Failure.notSignedIn }
         let wanted = Set(exam.courseIDs)
         let matter = courses.filter { wanted.contains($0.id) }
@@ -272,7 +282,19 @@ final class MockExamService {
         let context = Self.material(for: exam, in: courses)
         guard context.count >= Self.minContext else { throw Failure.tooLittleMaterial }
 
-        let quota = MockPaper.quota(withAudio: withAudio)
+        // Le parcours a un format fixe, et c'est ce qui rend deux tests comparables d'une
+        // semaine à l'autre. Sans micro, ses cinq questions orales deviennent des QCM :
+        // mieux vaut dix questions fermées qu'une mesure amputée de moitié.
+        let quota = kind == .parcours
+            ? MockPaper.Quota(
+                choice: withAudio
+                    ? ExamAgenda.parcoursChoiceCount
+                    : ExamAgenda.parcoursQuestionCount,
+                trueFalse: 0,
+                gap: 0,
+                feynman: withAudio ? ExamAgenda.parcoursOralCount : 0
+            )
+            : MockPaper.quota(withAudio: withAudio)
         var payload: [String: Any] = [
             "title": exam.name,
             "context": context,
@@ -296,6 +318,7 @@ final class MockExamService {
             id: UUID(),
             user_id: userID,
             exam_id: exam.id,
+            kind: kind.rawValue,
             planned_for: Self.dayStamp(Date()),
             minutes: MockPaper.minutes(for: questions),
             question_count: questions.count,

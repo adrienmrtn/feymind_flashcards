@@ -111,3 +111,29 @@ struct StartMockSheet: View {
         onChoose(withAudio)
     }
 }
+
+// MARK: - Le temps d'écrire la copie
+
+/// La copie s'écrit sur le serveur, et ça prend le temps d'une génération. On le dit, et on
+/// couvre l'écran : un bouton qu'on pourrait toucher deux fois ouvrirait deux copies.
+struct MockWritingOverlay: View {
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    var body: some View {
+        ZStack {
+            MicaboColor.ink.opacity(0.18).ignoresSafeArea()
+            VStack(spacing: MicaboSpacing.sm) {
+                ProgressView()
+                    .tint(MicaboColor.accent)
+                Text(i18n?.t("ios.mock.writing") ?? L10n.t("ios.mock.writing", locale: .resolved()))
+                    .font(MicaboFont.captionEmphasis)
+                    .foregroundStyle(MicaboColor.ink)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(MicaboSpacing.lg)
+            .frame(maxWidth: 260)
+            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
+        }
+        .transition(.opacity)
+    }
+}
