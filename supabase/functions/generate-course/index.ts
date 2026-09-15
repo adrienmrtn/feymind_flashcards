@@ -15,6 +15,7 @@ import {
   jsonResponse,
 } from "../_shared/fal.ts";
 import { parseModelJSON } from "../_shared/json.ts";
+import { type ModelUsage, totalUsage } from "../_shared/usage.ts";
 import {
   normalizeSheet,
   sheetToPlainText,
@@ -66,6 +67,7 @@ async function writeSheet(
   model: string | undefined,
   temperature: number,
   maxTokens: number,
+  meter: ModelUsage[],
 ): Promise<Record<string, unknown> | null> {
   try {
     const output = await callModel({
@@ -74,6 +76,7 @@ async function writeSheet(
       model,
       temperature,
       maxTokens,
+      meter,
     });
     return deepStripEmDashes(parseModelJSON<Record<string, unknown>>(output));
   } catch (error) {
@@ -101,6 +104,7 @@ async function writeSheet(
  */
 async function repaintMarks(
   blocks: SheetBlock[],
+  meter: ModelUsage[],
 ): Promise<{ blocks: SheetBlock[]; report: Record<string, number> }> {
   const report = { ...emptyApplyReport(), batches: 0, failed: 0, ragged: 0, ran: 0, sent: 0, texts: 0 };
 
@@ -136,6 +140,7 @@ async function repaintMarks(
         model: "google/gemini-2.5-flash",
         temperature: 0.4,
         maxTokens: ANCHOR_TOKEN_LIMIT,
+        meter,
       });
       const parsed = deepStripEmDashes(parseModelJSON<unknown>(output));
       // Une réponse qui n'est pas une liste de marques est un lot perdu : ses textes
@@ -220,6 +225,10 @@ Deno.serve((request: Request) =>
 
       await consumeQuota(caller, "generate-course");
 
+      // Un compteur pour toute la requête : la passe visuelle, l'écriture, son second essai
+      // s'il a lieu, et chaque lot de marquage y déposent leur ligne.
+      const meter: ModelUsage[] = [];
+
       // Passe visuelle : le modèle décrit les schémas que l'extraction texte ne voit pas, et
       // relève leurs valeurs, sans quoi la fiche ne pourrait pas porter de graphe.
       let visualNotes = "";
@@ -232,6 +241,7 @@ Deno.serve((request: Request) =>
             imageUrls: images,
             temperature: 0.2,
             maxTokens: 1600,
+            meter,
           });
         } catch (_error) {
           // Un échec de la passe visuelle ne doit pas bloquer l'écriture de la fiche.
@@ -277,6 +287,7 @@ Deno.serve((request: Request) =>
         undefined,
         0.3,
         outputTokenLimit(body.length, body.blocks),
+        meter,
       );
 
       // Une fiche coupée ou illisible : on redemande plus court plutôt que d'abandonner.
@@ -286,6 +297,7 @@ Deno.serve((request: Request) =>
           undefined,
           0.15,
           retryTokenLimit(body.length),
+          meter,
         );
       }
 
@@ -309,7 +321,7 @@ Deno.serve((request: Request) =>
       // déclenchement de la repasse doit le savoir.
       const shape = emptyShapeReport();
       const cleaned = cleanBlockMarks(written, shape);
-      const repaint = await repaintMarks(cleaned);
+      const repaint = await repaintMarks(cleaned, meter);
       const blocks = cleanBlockMarks(repaint.blocks, shape);
 
       if (blocks.length < 3) {
@@ -346,6 +358,16 @@ Deno.serve((request: Request) =>
          */
         meta: {
           promptVersion: PROMPT_VERSION,
+          /**
+           * **Ce que la fiche a coûté, et qui l'a servie.**
+           *
+           * `served` nomme les modèles qui ont réellement répondu : c'est la seule façon de
+           * voir qu'un alias `-latest` est monté d'une génération, donc de tarif, sans qu'une
+           * ligne du code ait bougé. `cached` dit si le préfixe commun est mis en cache à
+           * travers fal, ce qu'aucune documentation ne tranche. Et `reported` dit combien des
+           * appels ont daigné compter, sans quoi un total partiel se lirait comme un total.
+           */
+          usage: totalUsage(meter),
           /**
            * **Le volume demandé et le volume obtenu, côte à côte.**
            *

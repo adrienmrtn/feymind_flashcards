@@ -2,6 +2,7 @@ import { assertEquals, assertRejects } from "jsr:@std/assert@1";
 
 import { resetCircuit } from "./circuit.ts";
 import { callModel, falRetry } from "./fal.ts";
+import type { ModelUsage } from "./usage.ts";
 
 /** Rejoue un tour de `callModel` avec un faux `fetch`, sans attendre les pauses. */
 async function withProviders(
@@ -146,4 +147,56 @@ Deno.test("sans clé fal, Gemini est appelé directement", async () => {
       assertEquals(geminiCalls(calls), 1);
     },
   );
+});
+
+/**
+ * Le compteur suit le chemin réellement pris, et pas celui qu'on espérait.
+ *
+ * fal ne documente pas de décompte sur `any-llm` : ses lignes peuvent rester à `null`, et
+ * c'est une information, pas un échec. Ce qui compte est qu'un repli laisse deux lignes - une
+ * par fournisseur - de sorte qu'une facture inattendue se lise au bon endroit.
+ */
+Deno.test("le compteur garde une ligne par appel, repli compris", async () => {
+  const meter: ModelUsage[] = [];
+
+  await withProviders(
+    { falKey: "fal", geminiKey: "gemini" },
+    (url) =>
+      url.includes("fal.run")
+        ? new Response(JSON.stringify({ detail: "forbidden" }), { status: 403 })
+        : geminiOk(),
+    async () => {
+      assertEquals(await callModel({ prompt: "écris", meter }), "ok-gemini");
+    },
+  );
+
+  // Un seul appel fal - le 403 est un refus de compte, il ne se retente pas - puis Gemini.
+  assertEquals(meter.length, 1);
+  assertEquals(meter[0]!.provider, "gemini");
+  // Gemini n'a rien compté dans cette réponse : `null`, et surtout pas zéro.
+  assertEquals(meter[0]!.input, null);
+});
+
+Deno.test("le compteur lit le décompte de fal quand fal en rend un", async () => {
+  const meter: ModelUsage[] = [];
+
+  await withProviders(
+    { falKey: "fal" },
+    () =>
+      new Response(JSON.stringify({
+        output: "une fiche",
+        model: "google/gemini-2.5-flash-lite",
+        usage: { prompt_tokens: 8_000, completion_tokens: 4_000 },
+      })),
+    async () => {
+      assertEquals(await callModel({ prompt: "écris", meter }), "une fiche");
+    },
+  );
+
+  assertEquals(meter.length, 1);
+  assertEquals(meter[0]!.provider, "fal");
+  assertEquals(meter[0]!.input, 8_000);
+  assertEquals(meter[0]!.output, 4_000);
+  // Rien sur le cache : fal ne l'a pas dit, on ne conclut pas qu'il est froid.
+  assertEquals(meter[0]!.cached, null);
 });

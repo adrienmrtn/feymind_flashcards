@@ -131,3 +131,33 @@ Deno.test("le plafond suit le volume demandé, et reste borné", () => {
   // Le second essai écrit plus court : son plafond suit, sinon il ne bornerait rien.
   assertEquals(retryTokenLimit("deep") < outputTokenLimit("deep"), true);
 });
+
+/**
+ * **Le prompt système doit rester assez long pour être mis en cache.**
+ *
+ * Gemini met en cache, tout seul, un préfixe commun placé en tête de la requête - et le prompt
+ * système l'est, des deux côtés, chez fal comme sur l'endpoint compatible. Le préfixe doit
+ * atteindre deux mille quarante-huit jetons sur Gemini 2.5. En dessous, il n'est plus mis en
+ * cache du tout, et chaque fiche repaie son entrée au tarif plein.
+ *
+ * Ce n'est pas théorique : en sortant la typographie d'ici, on a retiré 28 % de ce prompt d'un
+ * coup. Un second geste de cette ampleur le ferait passer sous le seuil, et la perte ne se
+ * verrait nulle part - juste une ligne de facture un peu plus haute.
+ *
+ * Le plancher est écrit en caractères parce que c'est ce qu'on peut compter ici, et au pire
+ * taux : quatre caractères par jeton est ce que le français donne de plus économe, donc le cas
+ * où le prompt vaut le moins de jetons.
+ *
+ * À noter, et c'est la raison pour laquelle `meta.usage.served` existe : les générations 3.x
+ * demandent quatre mille quatre-vingt-seize jetons. Ce prompt ne les atteint à aucun taux. Si
+ * un alias `-latest` du chemin de repli est monté d'une génération, le cache y est perdu en
+ * plus du tarif, et seul le nom du modèle servi le dira.
+ */
+Deno.test("le prompt système reste au-dessus du seuil de mise en cache", () => {
+  const FLOOR = 2_048 * 4;
+  assertEquals(
+    COURSE_SYSTEM_PROMPT.length >= FLOOR,
+    true,
+    `${COURSE_SYSTEM_PROMPT.length} caractères, plancher ${FLOOR}`,
+  );
+});

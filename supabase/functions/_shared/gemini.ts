@@ -7,6 +7,7 @@
 
 import { FalError } from "./model-error.ts";
 import { resolveModel } from "./models.ts";
+import { type ModelUsage, noteUsage, readUsage } from "./usage.ts";
 
 const GEMINI_CHAT = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 const GEMINI_TIMEOUT_MS = 120_000;
@@ -53,6 +54,7 @@ export async function callGemini(options: {
   imageUrls?: string[];
   temperature?: number;
   maxTokens?: number;
+  meter?: ModelUsage[];
 }, key: string): Promise<string> {
   const first = resolveGeminiModel(options.model);
 
@@ -74,6 +76,7 @@ async function callGeminiOnce(options: {
   imageUrls?: string[];
   temperature?: number;
   maxTokens?: number;
+  meter?: ModelUsage[];
 }, key: string, model: string): Promise<string> {
   const images = Array.isArray(options.imageUrls) ? options.imageUrls : [];
   const messages: Array<Record<string, unknown>> = [];
@@ -135,6 +138,10 @@ async function callGeminiOnce(options: {
   } catch {
     throw new FalError("Réponse illisible de Gemini.", 502);
   }
+
+  // Le `model` que Google renvoie est la seule façon de savoir sur quelle génération l'alias
+  // `-latest` a atterri, et donc à quel tarif ce repli se facture.
+  noteUsage(readUsage(parsed, "gemini", model), options.meter);
 
   const content = flattenContent(parsed.choices?.[0]?.message?.content);
   if (!content) throw new FalError("Le modèle n'a renvoyé aucun contenu.", 502);
