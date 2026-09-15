@@ -22,16 +22,16 @@ import {
   type SheetBlock,
 } from "../_shared/sheet.ts";
 import {
+  applyAnchors,
   batched,
   cleanBlockMarks,
   countMarks,
-  emptyMergeReport,
+  emptyApplyReport,
   emptyShapeReport,
   markPrompt,
   MARK_SYSTEM_PROMPT,
-  mergeMarked,
   needsMarkPass,
-  readMarkedTexts,
+  readAnchors,
   textsToMark,
 } from "./marks.ts";
 import { detectDiscipline, disciplineBrief } from "../_shared/discipline.ts";
@@ -50,6 +50,16 @@ import {
 } from "./prompt.ts";
 
 const OUTPUT_TOKEN_LIMIT = 8_192;
+
+/**
+ * Le plafond de la passe de marquage, et c'est un tout autre ordre de grandeur.
+ *
+ * Elle rendait les textes marqués, donc sa sortie suivait la longueur de la fiche et frôlait
+ * les huit mille jetons. Elle ne rend plus qu'une liste de marques : une trentaine d'objets
+ * d'une quinzaine de jetons. Deux mille laissent largement la place, et bornent ce qu'un
+ * modèle parti en digression peut coûter.
+ */
+const ANCHOR_TOKEN_LIMIT = 2_048;
 
 async function writeSheet(
   prompt: string,
@@ -76,28 +86,29 @@ async function writeSheet(
 /**
  * Repose les marques quand la fiche en porte trop peu pour sa longueur.
  *
- * Voir `marks.ts` : le déclenchement est sur la **densité**, la seconde passe ne peut que
- * marquer, elle travaille par lots de dix textes, et tout texte qui a bougé ou qui perd une
- * marque est écarté à la fusion. Un échec ici n'est pas une panne de fiche : on rend la fiche
- * telle qu'elle était écrite.
+ * Voir `marks.ts` : le déclenchement est sur la **densité**, et la seconde passe ne rend pas
+ * la fiche marquée mais la **liste des marques à poser** - un numéro de texte, une sorte de
+ * marque, un passage recopié. Le serveur retrouve le passage et pose les marqueurs lui-même,
+ * donc le modèle ne peut plus toucher au texte. Un échec ici n'est pas une panne de fiche :
+ * on rend la fiche telle qu'elle était écrite.
  *
- * Les lots partent **ensemble**. En file, quarante-cinq textes feraient cinq allers-retours à
- * la suite, soit une vingtaine de secondes ajoutées à un import qui en prend déjà trente.
+ * Les lots partent **ensemble**. En file, ils ajouteraient une dizaine de secondes à un import
+ * qui en prend déjà trente.
  */
 async function repaintMarks(
   blocks: SheetBlock[],
 ): Promise<{ blocks: SheetBlock[]; report: Record<string, number> }> {
-  const report = { ...emptyMergeReport(), batches: 0, failed: 0, ragged: 0, ran: 0 };
+  const report = { ...emptyApplyReport(), batches: 0, failed: 0, ragged: 0, ran: 0 };
   if (!needsMarkPass(blocks)) return { blocks, report };
 
   report.ran = 1;
   const lots = batched(textsToMark(blocks));
   report.batches = lots.length;
 
-  const marked = await Promise.all(lots.map(async (lot) => {
+  const anchors = await Promise.all(lots.map(async (lot) => {
     try {
       const output = await callModel({
-        prompt: markPrompt(lot),
+        prompt: markPrompt(lot.texts),
         systemPrompt: MARK_SYSTEM_PROMPT,
         /**
          * **Le modèle de la repasse n'est pas celui de l'écriture.**
@@ -113,24 +124,25 @@ async function repaintMarks(
          */
         model: "google/gemini-2.5-flash",
         temperature: 0.4,
-        maxTokens: OUTPUT_TOKEN_LIMIT,
+        maxTokens: ANCHOR_TOKEN_LIMIT,
       });
       const parsed = deepStripEmDashes(parseModelJSON<unknown>(output));
-      // Un lot dont la réponse n'a ni la bonne taille ni une forme lisible est un lot
-      // perdu : ses textes repartent tels quels plutôt que de décaler tous les suivants.
-      const texts = readMarkedTexts(parsed, lot.length);
-      if (!texts) {
+      // Une réponse qui n'est pas une liste de marques est un lot perdu : ses textes
+      // repartent nus plutôt que de recevoir des marques prises dans le mauvais texte.
+      const read = readAnchors(parsed, lot.texts.length, report);
+      if (!read) {
         report.ragged += 1;
-        return lot;
+        return [];
       }
-      return texts;
+      // Le lot ne connaît que ses propres rangs ; la fiche les attend décalés du sien.
+      return read.map((anchor) => ({ ...anchor, text: anchor.text + lot.offset }));
     } catch (_error) {
       report.failed += 1;
-      return lot;
+      return [];
     }
   }));
 
-  return { blocks: normalizeSheet(mergeMarked(blocks, marked.flat(), report)), report };
+  return { blocks: normalizeSheet(applyAnchors(blocks, anchors.flat(), report)), report };
 }
 
 interface RequestBody {
