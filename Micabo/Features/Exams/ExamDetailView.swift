@@ -38,7 +38,6 @@ struct ExamDetailView: View {
 
     @State private var figures = Figures()
     @State private var sessions: [MockSessionRecord] = []
-    @State private var sessionsLoaded = false
     @State private var editing = false
     /// Les rendez-vous déplacés, tels qu'ils reviennent du serveur.
     @State private var overrides: [AgendaOverride] = []
@@ -141,7 +140,7 @@ struct ExamDetailView: View {
         .micaboScreenBackground()
         .toolbar(.hidden, for: .navigationBar)
         .task(id: figuresKey) { loadFigures() }
-        .task(id: exam.id) { await loadSessions() }
+        .task(id: exam.id) { await loadAgenda() }
         .sheet(isPresented: $editing, onDismiss: {
             // L'épreuve supprimée depuis le formulaire n'a plus de fiche à montrer.
             if exam.isDeleted { dismiss() }
@@ -356,6 +355,27 @@ struct ExamDetailView: View {
         )
         .first { $0.kind == event.kind && $0.slot == event.slot }?
         .date
+    }
+
+    /// **Ce que l'agenda ne peut pas dériver : ce qui a été fait, et ce qui a été déplacé.**
+    ///
+    /// Le reste - quels rendez-vous existent et quand ils tombent - se recalcule depuis la
+    /// date de l'épreuve à chaque rendu. Ces deux lectures-là ne se devinent pas.
+    ///
+    /// Les deux partent ensemble : en file, la grille se dessinerait une première fois sans
+    /// les déplacements, et les rendez-vous sauteraient d'un jour sous les yeux de l'étudiant.
+    ///
+    /// Une lecture qui échoue laisse la grille sur ses rendez-vous dérivés plutôt que sur une
+    /// page vide : c'est encore le bon calendrier, moins l'état de ce qui est passé.
+    private func loadAgenda() async {
+        guard let mocks else { return }
+        do {
+            async let passed = mocks.sessions(for: exam.id)
+            async let moved = mocks.overrides(for: exam.id)
+            (sessions, overrides) = try await (passed, moved)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func move(_ event: AgendaEvent, to date: Date?) {
