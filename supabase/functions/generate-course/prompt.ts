@@ -1,6 +1,6 @@
 /** Consignes de rédaction de la fiche d'un cours. */
 
-export const PROMPT_VERSION = "course-v2.7.0";
+export const PROMPT_VERSION = "course-v2.8.0";
 
 /** Longueur max d'une consigne libre. Au-delà, ce n'est plus un prompt, c'est un cours. */
 export const MAX_INSTRUCTIONS = 2_000;
@@ -27,7 +27,7 @@ MISE EN FORME DU TEXTE
 Tu écris le texte, pas sa mise en relief. Le surligneur et l'italique sont posés après toi, par une relecture qui ne fait que ça et qui les place mieux que toi : n'en écris aucun, et ne compte aucune marque. Deux notations te restent :
 - $E = mc^2$ compose une formule dans une phrase. Reste simple ici : exposants, indices, fractions courtes, lettres grecques. Une formule qui doit se déployer va dans un bloc formula. Hors de $…$ et hors d'un bloc formula, jamais de commande nue : une flèche s'écrit →, pas \\rightarrow.
 - **terme** met en gras le vocabulaire exact que l'examen attend, sur un mot ou un groupe nominal, jamais sur une phrase entière. Écris-le quand un terme s'impose, sans te fixer de compte.
-Rien d'autre : ni ==surlignage==, ni *italique*, ni #, ni -, ni tableaux en pipes.
+Rien d'autre : ni ==surlignage==, ni *italique*, ni #, ni tableaux en pipes, et jamais un tiret en début de ligne pour faire une puce - une liste est un bloc "list", pas du texte.
 
 LES FORMULES DANS LA PHRASE
 Une grandeur, un symbole, un ion, un exposant, une unité composée, une formule courte : ça s'écrit DANS la phrase, entre $ et $, et pas dans un bloc à part. « la vitesse $v = d/t$ augmente » se lit d'un trait ; la même chose posée en bloc coupe le raisonnement en deux et oblige à faire l'aller-retour. Écris $C_6H_{12}O_6$ et non C6H12O6, $10^{-3}$ et non 10-3, $\\Delta G < 0$ et non delta G inférieur à 0, $\\lambda$ et non lambda, $m \\cdot s^{-1}$ et non m.s-1.
@@ -62,15 +62,24 @@ Il n'y en a pas d'autres. Les définitions encadrées, les encadrés de ton, les
 
 COMMENT COMPOSER LA FICHE
 - Ouvre sur un paragraphe, jamais sur un titre : on doit entrer dans le sujet dès la première ligne.
-- Le texte porte tout. Les paragraphes sont MAJORITAIRES, largement.
+- Le texte porte l'essentiel, et les paragraphes restent la forme la plus fréquente : une fiche qui n'est qu'une suite de listes n'explique rien.
 - 3 à 6 titres de partie (level 1), et des sous-parties quand une partie est longue. Suis le découpage du document plutôt que d'en inventer un.
-- "list" : seulement quand le document énumère vraiment, ou quand un ordre compte. ordered vaut true pour une suite d'étapes, false pour une énumération. Deux à dix points, chacun une ligne courte. Jamais deux listes de suite, et jamais une liste pour découper une idée en morceaux : ça, c'est un paragraphe.
+- "list" : quand le contenu EST une liste, même si le document l'écrit en phrases. C'est le cas le plus fréquent et le plus raté : un cours dit « on distingue trois types de… », « la procédure se déroule en quatre temps », « il faut que les trois conditions soient réunies », et le laisser en paragraphe oblige l'étudiant à recompter les membres de tête à chaque relecture. Tu n'attends donc pas que le document mette des puces : tu reconnais l'énumération et tu lui donnes sa forme. Les cas qui la demandent : une procédure, une chronologie ou un cycle, et alors ordered vaut true ; une classification, ses types, ses familles, ses catégories ; les conditions qui doivent TOUTES être réunies pour qu'un résultat vaille ; les critères, les symptômes ou les causes reconnues d'un phénomène ; une comparaison dont chaque point oppose deux choses. Trois membres ou plus, c'est une liste ; deux, c'est une phrase. Deux à dix points, chacun une ligne courte qui se tient seule, et la phrase qui précède dit de quoi la liste est la liste. Jamais deux listes de suite, et jamais une liste pour découper une idée unique en morceaux : ça, c'est un paragraphe.
 - "formula" : pour une formule qui se retient, écrite en LaTeX sans les $ autour. C'est le seul endroit où le LaTeX peut être ambitieux, parce que l'application le compose vraiment : intégrale avec ses bornes, somme, limite, matrice, système d'équations, fraction à plusieurs étages. Écris la formule comme elle s'écrit au tableau. La légende dit ce que désigne chaque symbole.
 - Ferme sur un paragraphe qui tient le chapitre entier, sans l'annoncer comme tel.
 
+UNE LISTE BIEN PLACÉE, POUR L'EXEMPLE
+Le document écrit en prose : « La réplication de l'ADN se fait en trois temps. L'hélicase ouvre la double hélice, la primase pose une amorce d'ARN, puis l'ADN polymérase allonge le brin dans le sens 5' vers 3'. »
+La fiche en fait deux blocs :
+{"type":"paragraph","text":"La **réplication** de l'ADN se déroule en trois temps, chacun porté par une **enzyme** différente."}
+{"type":"list","ordered":true,"items":["L'**hélicase** ouvre la double hélice","La **primase** pose une amorce d'ARN","L'**ADN polymérase** allonge le brin de 5' vers 3'"]}
+Le document ne portait aucune puce, et c'est pourtant une liste : trois membres, un ordre, chacun tenant sur une ligne. La phrase qui précède dit de quoi la liste est la liste, et ordered vaut true parce que l'ordre des étapes compte.
+Cet exemple montre une FORME. Son contenu ne vient pas du document que tu vas lire : n'en reprends ni les mots, ni la matière, ni les exemples.
+
 AVANT DE RÉPONDRE, RELIS TA FICHE ET VÉRIFIE
 - Le nombre de blocs correspond à la longueur demandée. Dans le doute, allonge.
-- Les paragraphes sont largement plus nombreux que les listes.
+- Une énumération du document est-elle restée coincée dans un paragraphe ? Trois membres ou plus, c'est une liste.
+- Aucune suite de deux listes, et aucune liste qui découpe une seule idée.
 - Les grandeurs, symboles et formules courtes sont dans la phrase, entre $ et $, et non recopiés en texte brut ni renvoyés en bloc.
 - Aucun surlignage et aucun italique : ils ne sont pas de ton ressort.
 - Aucune phrase ne s'adresse au lecteur.
