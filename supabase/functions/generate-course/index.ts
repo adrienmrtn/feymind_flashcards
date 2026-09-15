@@ -43,13 +43,13 @@ import {
   instructionsBrief,
   lengthBrief,
   MAX_INSTRUCTIONS,
+  outputTokenLimit,
   PROMPT_VERSION,
   readingBrief,
   retryBrief,
+  retryTokenLimit,
   VISION_SYSTEM_PROMPT,
 } from "./prompt.ts";
-
-const OUTPUT_TOKEN_LIMIT = 8_192;
 
 /**
  * Le plafond de la passe de marquage, et c'est un tout autre ordre de grandeur.
@@ -65,6 +65,7 @@ async function writeSheet(
   prompt: string,
   model: string | undefined,
   temperature: number,
+  maxTokens: number,
 ): Promise<Record<string, unknown> | null> {
   try {
     const output = await callModel({
@@ -72,7 +73,7 @@ async function writeSheet(
       systemPrompt: COURSE_SYSTEM_PROMPT,
       model,
       temperature,
-      maxTokens: OUTPUT_TOKEN_LIMIT,
+      maxTokens,
     });
     return deepStripEmDashes(parseModelJSON<Record<string, unknown>>(output));
   } catch (error) {
@@ -260,7 +261,12 @@ Deno.serve((request: Request) =>
       sections.push("Écris maintenant le JSON de la fiche.");
 
       const prompt = sections.join("\n\n");
-      let parsed = await writeSheet(prompt, undefined, 0.3);
+      let parsed = await writeSheet(
+        prompt,
+        undefined,
+        0.3,
+        outputTokenLimit(body.length, body.blocks),
+      );
 
       // Une fiche coupée ou illisible : on redemande plus court plutôt que d'abandonner.
       if (!parsed || normalizeSheet(parsed.sheet ?? parsed.blocks).length < 3) {
@@ -268,6 +274,7 @@ Deno.serve((request: Request) =>
           `${prompt}\n\n${retryBrief(body.length)}`,
           undefined,
           0.15,
+          retryTokenLimit(body.length),
         );
       }
 
@@ -328,6 +335,19 @@ Deno.serve((request: Request) =>
          */
         meta: {
           promptVersion: PROMPT_VERSION,
+          /**
+           * **Le volume demandé et le volume obtenu, côte à côte.**
+           *
+           * Une fiche coupée au plafond de jetons ne se signale pas : le JSON est recollé,
+           * la fiche reste valide, et seul son nombre de blocs dit qu'elle s'arrête trop tôt.
+           * Ces deux nombres suffisent à le voir, et à vérifier qu'un plafond relevé a bien
+           * réglé la chose plutôt qu'à le supposer.
+           */
+          blocks: {
+            asked: typeof body.blocks === "number" ? body.blocks : null,
+            written: written.length,
+            final: blocks.length,
+          },
           marks: {
             written: countMarks(written),
             cleaned: countMarks(cleaned),

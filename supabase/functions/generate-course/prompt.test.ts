@@ -6,13 +6,16 @@ import {
   COURSE_SYSTEM_PROMPT,
   instructionsBrief,
   lengthBrief,
+  outputTokenLimit,
   PROMPT_VERSION,
   readingBrief,
   retryBrief,
+  retryTokenLimit,
+  VISION_SYSTEM_PROMPT,
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v2.5.0");
+  assertEquals(PROMPT_VERSION, "course-v2.6.0");
 });
 
 Deno.test("le prompt demande les trois marques de texte", () => {
@@ -83,4 +86,47 @@ Deno.test("instructionsBrief encadre le prompt de l'étudiant", () => {
   assertEquals(brief.includes("CONSIGNES PARTICULIÈRES"), true);
   assertEquals(brief.includes("Insiste sur les formules."), true);
   assertEquals(brief.includes("inventer"), true);
+});
+
+// MARK: - La passe visuelle
+
+Deno.test("la passe visuelle ne demande plus de données que personne ne lit", () => {
+  // Elle réclamait des lignes « FIGURE page=N x=… y=… », les coordonnées d'un recadrage.
+  // Les figures ont quitté la fiche, plus rien ne parsait ces lignes, et le modèle a continué
+  // à mesurer des cadres pendant des mois. Un grep de tout le dépôt le confirme : personne.
+  assertEquals(VISION_SYSTEM_PROMPT.includes("FIGURE"), false);
+  assertEquals(VISION_SYSTEM_PROMPT.includes("x=0.08"), false);
+
+  // Même chose pour la raison donnée aux valeurs chiffrées : il n'y a plus de bloc graphe à
+  // reconstruire. Elles vont dans les phrases, et la consigne le dit maintenant.
+  assertEquals(VISION_SYSTEM_PROMPT.includes("reconstruire un graphe"), false);
+  assertEquals(VISION_SYSTEM_PROMPT.includes("Relève les valeurs chiffrées"), true);
+});
+
+// MARK: - Le plafond de sortie
+
+Deno.test("le plafond de sortie couvre la fiche la plus longue", () => {
+  // Mesuré : une fiche approfondie de 70 blocs, paragraphes de 600 caractères, fait 36 595
+  // caractères de JSON, soit 9 100 à 11 400 jetons selon ce que le tokeniseur fait du
+  // français. L'ancien plafond unique de 8 192 tombait au milieu, et la fiche coupée passait
+  // pour bonne : 51 blocs rendus sur 70, sans erreur ni second essai.
+  assertEquals(outputTokenLimit("deep") >= 12_000, true);
+  assertEquals(outputTokenLimit("deep", 70) >= 12_000, true);
+
+  // Sans volume explicite, c'est la borne haute du format qui décide : une fiche écrite au
+  // plafond de son format est exactement le cas qu'on coupait.
+  assertEquals(outputTokenLimit("standard") > outputTokenLimit("brief"), true);
+  assertEquals(outputTokenLimit("deep") > outputTokenLimit("standard"), true);
+});
+
+Deno.test("le plafond suit le volume demandé, et reste borné", () => {
+  assertEquals(outputTokenLimit("deep", 70) > outputTokenLimit("deep", 20), true);
+
+  // Un curseur poussé au maximum ne doit pas laisser écrire sans fin, et une fiche minuscule
+  // garde de quoi finir sa dernière phrase.
+  assertEquals(outputTokenLimit("deep", 999) <= 24_576, true);
+  assertEquals(outputTokenLimit("brief", 1) >= 4_096, true);
+
+  // Le second essai écrit plus court : son plafond suit, sinon il ne bornerait rien.
+  assertEquals(retryTokenLimit("deep") < outputTokenLimit("deep"), true);
 });
