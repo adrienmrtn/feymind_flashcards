@@ -558,11 +558,7 @@ struct TodayView: View {
                     path.append(exam)
                 } label: {
                     MicaboRow(
-                        tile: MicaboTile(
-                            glyph: .symbol("calendar"),
-                            background: MicaboColor.cautionSoft,
-                            tint: MicaboColor.caution
-                        ),
+                        tile: MicaboTile.exam(exam.date),
                         title: exam.name,
                         subtitle: i18n?.t("app.today.known", ["percent": "\(load.examProgress[exam.id] ?? 0)"])
                             ?? "appris à \(load.examProgress[exam.id] ?? 0) %",

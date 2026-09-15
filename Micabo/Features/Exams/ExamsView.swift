@@ -233,11 +233,9 @@ struct ExamsView: View {
             path.append(exam)
         } label: {
             HStack(spacing: 13) {
-                MicaboTile(
-                    glyph: .symbol("calendar"),
-                    background: isPast ? MicaboColor.surfaceMuted : MicaboColor.cautionSoft,
-                    tint: isPast ? MicaboColor.inkTertiary : MicaboColor.caution
-                )
+                // La date, pas une icône de calendrier : c'est ce qu'on cherche sur cette
+                // liste, et la teinte y porte l'urgence. Voir `MicaboTile.exam`.
+                MicaboTile.exam(exam.date, from: today, calendar: calendar)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(exam.name)
