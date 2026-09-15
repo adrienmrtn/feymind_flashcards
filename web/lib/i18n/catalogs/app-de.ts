@@ -422,6 +422,17 @@ export const appDe = {
       faster: "Du schaffst {rate} Karten pro Minute, {percent} % über der Standardschätzung. Der Plan rechnet jetzt mit deiner Zahl.",
     },
   },
+  agenda: {
+    examDay: "Prüfungstag",
+    cards: "{count} Karten",
+    moveTitle: "Diesen Termin verschieben",
+    move: "Hierhin verschieben",
+    reset: "Zurück zum geplanten Datum",
+    movedFrom: "verschoben vom {date}",
+    kind: { mock: "Probeprüfung", parcours: "Zwischencheck" },
+    status: { done: "Erledigt", missed: "Verpasst", upcoming: "Steht an" },
+  },
+
   parcours: {
     blockTitle: "Zwischencheck",
     short: "Check",

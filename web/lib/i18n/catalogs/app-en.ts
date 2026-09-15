@@ -422,6 +422,17 @@ export const appEn = {
       faster: "You get through {rate} cards a minute, {percent} % above the default estimate. The plan now counts with your number.",
     },
   },
+  agenda: {
+    examDay: "Exam day",
+    cards: "{count} cards",
+    moveTitle: "Move this appointment",
+    move: "Move here",
+    reset: "Back to the planned date",
+    movedFrom: "moved from {date}",
+    kind: { mock: "Mock exam", parcours: "Progress check" },
+    status: { done: "Done", missed: "Missed", upcoming: "Coming up" },
+  },
+
   parcours: {
     blockTitle: "Progress check",
     short: "Check",

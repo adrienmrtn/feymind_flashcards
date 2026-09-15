@@ -422,6 +422,17 @@ export const appTr = {
       faster: "Dakikada {rate} kart yapıyorsun, varsayılan tahminden % {percent} daha fazla. Plan artık senin sayınla hesaplıyor.",
     },
   },
+  agenda: {
+    examDay: "Sınav günü",
+    cards: "{count} kart",
+    moveTitle: "Bu randevuyu taşı",
+    move: "Buraya taşı",
+    reset: "Planlanan tarihe dön",
+    movedFrom: "{date} tarihinden taşındı",
+    kind: { mock: "Deneme sınavı", parcours: "Ara değerlendirme" },
+    status: { done: "Yapıldı", missed: "Kaçırıldı", upcoming: "Yaklaşıyor" },
+  },
+
   parcours: {
     blockTitle: "Ara değerlendirme",
     short: "Ara test",

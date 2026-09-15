@@ -422,6 +422,17 @@ export const appFr = {
       faster: "Tu passes {rate} cartes par minute, soit {percent} % de plus que l'estimation par défaut. Le plan compte désormais avec ton chiffre.",
     },
   },
+  agenda: {
+    examDay: "Jour de l'épreuve",
+    cards: "{count} cartes",
+    moveTitle: "Déplacer ce rendez-vous",
+    move: "Déplacer ici",
+    reset: "Remettre à la date prévue",
+    movedFrom: "déplacé du {date}",
+    kind: { mock: "Examen blanc", parcours: "Test de parcours" },
+    status: { done: "Fait", missed: "Manqué", upcoming: "À venir" },
+  },
+
   parcours: {
     blockTitle: "Test de parcours",
     short: "Parcours",

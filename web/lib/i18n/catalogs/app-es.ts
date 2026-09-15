@@ -422,6 +422,17 @@ export const appEs = {
       faster: "Haces {rate} tarjetas por minuto, un {percent} % más que la estimación por defecto. El plan ya cuenta con tu cifra.",
     },
   },
+  agenda: {
+    examDay: "Día del examen",
+    cards: "{count} tarjetas",
+    moveTitle: "Mover esta cita",
+    move: "Mover aquí",
+    reset: "Volver a la fecha prevista",
+    movedFrom: "movido del {date}",
+    kind: { mock: "Simulacro", parcours: "Prueba de seguimiento" },
+    status: { done: "Hecho", missed: "Perdido", upcoming: "Próximo" },
+  },
+
   parcours: {
     blockTitle: "Prueba de seguimiento",
     short: "Seguimiento",
