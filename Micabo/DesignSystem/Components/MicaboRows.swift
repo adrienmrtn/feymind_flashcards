@@ -8,6 +8,8 @@ struct MicaboTile: View {
     enum Glyph {
         case emoji(String)
         case symbol(String)
+        /// Le jour et le mois, empilés. Voir ``MicaboTile/exam(_:from:size:calendar:)``.
+        case date(Date)
     }
 
     let glyph: Glyph
@@ -25,10 +27,72 @@ struct MicaboTile: View {
                 Image(systemName: name)
                     .font(.system(size: size * 0.40, weight: .medium))
                     .foregroundStyle(tint)
+            case .date(let value):
+                VStack(spacing: 1) {
+                    Text(Self.day(of: value))
+                        .font(MicaboFont.ui(size * 0.34, weight: .bold))
+                    Text(Self.month(of: value))
+                        .font(MicaboFont.ui(size * 0.215, weight: .semibold))
+                        .tracking(0.5)
+                }
+                .foregroundStyle(tint)
+                // Le chiffre et le mois se lisent comme un bloc : ni l'un ni l'autre ne doit
+                // déborder parce que la taille du texte système a été montée.
+                .minimumScaleFactor(0.75)
+                .lineLimit(1)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(value.formatted(date: .long, time: .omitted))
             }
         }
         .frame(width: size, height: size)
         .background(background, in: RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous))
+    }
+
+    /// **La tuile d'une épreuve : sa date, à la place d'une icône.**
+    ///
+    /// Toutes les lignes d'examen portaient la même icône de calendrier. Elle dit « ceci est
+    /// un examen », ce que l'écran annonce déjà, et elle ne distingue aucune ligne d'une
+    /// autre : sur une liste de six épreuves, l'œil devait lire six sous-titres pour trouver
+    /// la prochaine. La date, elle, est ce qu'on y cherche.
+    ///
+    /// La teinte porte l'urgence plutôt que de la répéter en mots : l'ambre pour ce qui
+    /// presse, le bleu pour ce qui est posé, le gris pour ce qui est derrière.
+    static func exam(
+        _ date: Date,
+        from now: Date = Date(),
+        size: CGFloat = 44,
+        calendar: Calendar = MicaboCalendar.shared
+    ) -> MicaboTile {
+        let days = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: now),
+            to: calendar.startOfDay(for: date)
+        ).day ?? 0
+
+        // Une semaine est l'horizon sur lequel on peut encore changer sa façon de réviser ;
+        // au-delà, l'urgence n'est qu'un décor.
+        let background: Color = days < 0
+            ? MicaboColor.surfaceMuted
+            : (days <= 7 ? MicaboColor.cautionSoft : MicaboColor.accentSoft)
+        let tint: Color = days < 0
+            ? MicaboColor.inkTertiary
+            : (days <= 7 ? MicaboColor.caution : MicaboColor.accent)
+
+        return MicaboTile(glyph: .date(date), background: background, tint: tint, size: size)
+    }
+
+    private static func day(of date: Date, calendar: Calendar = MicaboCalendar.shared) -> String {
+        String(calendar.component(.day, from: date))
+    }
+
+    /// Le mois en trois lettres, dans la langue de l'interface et sans point final.
+    private static func month(of date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: UiLocale.resolved().rawValue)
+        formatter.setLocalizedDateFormatFromTemplate("MMM")
+        return formatter.string(from: date)
+            .replacingOccurrences(of: ".", with: "")
+            .uppercased()
     }
 
     /// Tuile d'un cours : son emoji sur un pastel dérivé de sa teinte.

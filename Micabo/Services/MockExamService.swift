@@ -10,6 +10,9 @@ struct MockSessionRecord: Codable, Identifiable, Equatable {
     var id: UUID
     var user_id: UUID
     var exam_id: UUID?
+    /// Ce que la session mesure. Absent d'une ligne écrite avant les parcours : c'est un blanc,
+    /// et c'est tout ce qui existait.
+    var kind: String?
     /// Le jour, en `yyyy-MM-dd` : la colonne est une date nue.
     var planned_for: String?
     var minutes: Int
@@ -59,7 +62,7 @@ struct MockSessionRecord: Codable, Identifiable, Equatable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, user_id, exam_id, planned_for, minutes, question_count, correct_count
+        case id, user_id, exam_id, kind, planned_for, minutes, question_count, correct_count
         case questions, answers, grades, debrief, with_audio, started_at, finished_at
     }
 
@@ -115,6 +118,29 @@ private struct MockSessionClosing: Encodable {
 /// questions fermées : une note incomplète vaut mieux qu'une épreuve passée pour rien.
 @Observable
 @MainActor
+/// **Une ligne de `exam_plan_overrides` : un rendez-vous que l'étudiant a déplacé.**
+///
+/// Elle ne porte pas de date d'origine, et c'est voulu : la dérivation la redonne à chaque
+/// lecture depuis la date de l'épreuve. Ce qui est écrit ici est la seule chose que le calcul
+/// ne peut pas retrouver — le choix de quelqu'un.
+struct ExamPlanOverrideRecord: Codable, Equatable {
+    var user_id: UUID
+    var exam_id: UUID
+    /// « mock » ou « parcours ». Une chaîne parce que la colonne en est une, et qu'une valeur
+    /// inconnue doit pouvoir se lire sans faire échouer le décodage de toute la liste.
+    var kind: String
+    /// Le rang du rendez-vous dans sa série, compté depuis l'épreuve. C'est son identité.
+    var slot: Int
+    /// Le jour choisi, en `yyyy-MM-dd` : la colonne est une date nue.
+    var scheduled_for: String
+
+    var asOverride: AgendaOverride? {
+        guard let kind = AgendaKind(rawValue: kind),
+              let date = MockExamService.day(from: scheduled_for) else { return nil }
+        return AgendaOverride(examId: exam_id, kind: kind, slot: slot, date: date)
+    }
+}
+
 final class MockExamService {
     enum Failure: LocalizedError {
         case notSignedIn
@@ -148,6 +174,67 @@ final class MockExamService {
         database = SupabaseDatabase(accessToken: { await auth.validAccessToken() })
     }
 
+    static let overridesTable = "exam_plan_overrides"
+
+    // MARK: - Les rendez-vous déplacés
+
+    /// Les rendez-vous d'une épreuve que l'étudiant a déplacés lui-même.
+    ///
+    /// Rien d'autre n'est stocké : l'agenda se dérive de la date de l'épreuve, et seule
+    /// l'exception s'écrit. Voir `ExamAgenda` et la table `exam_plan_overrides`.
+    func overrides(for examID: UUID) async throws -> [AgendaOverride] {
+        let rows = try await database.rows(
+            ExamPlanOverrideRecord.self,
+            from: Self.overridesTable,
+            filters: [URLQueryItem(name: "exam_id", value: "eq.\(examID.uuidString)")],
+            order: "slot.asc",
+            limit: 64
+        )
+        return rows.compactMap(\.asOverride)
+    }
+
+    /// Déplace un rendez-vous, ou remet celui de la dérivation quand `date` est `nil`.
+    ///
+    /// La clé est (utilisateur, épreuve, sorte, rang) : déplacer deux fois le même rendez-vous
+    /// écrase, ce qui est le comportement voulu. Le rang se compte depuis l'épreuve, donc il ne
+    /// bouge pas quand les jours passent.
+    func move(_ event: AgendaEvent, to date: Date?) async throws {
+        guard let userID = auth.user?.id else { throw Failure.notSignedIn }
+
+        let filters = [
+            URLQueryItem(name: "exam_id", value: "eq.\(event.examId.uuidString)"),
+            URLQueryItem(name: "kind", value: "eq.\(event.kind.rawValue)"),
+            URLQueryItem(name: "slot", value: "eq.\(event.slot)"),
+        ]
+
+        guard let date else {
+            try await database.remove(from: Self.overridesTable, matching: filters)
+            return
+        }
+
+        try await database.upsert([
+            ExamPlanOverrideRecord(
+                user_id: userID,
+                exam_id: event.examId,
+                kind: event.kind.rawValue,
+                slot: event.slot,
+                scheduled_for: Self.dayStamp(date)
+            )
+        ], into: Self.overridesTable)
+    }
+
+    /// Les mesures passées d'une épreuve, telles que l'agenda les lit.
+    static func done(from sessions: [MockSessionRecord]) -> [AgendaDone] {
+        sessions.compactMap { session in
+            guard let examID = session.exam_id, let finished = session.finished_at else { return nil }
+            return AgendaDone(
+                examId: examID,
+                kind: AgendaKind(rawValue: session.kind ?? "mock") ?? .mock,
+                finishedAt: finished
+            )
+        }
+    }
+
     /// Les blancs d'une épreuve, du plus récent au plus ancien, en cours compris.
     func sessions(for examID: UUID) async throws -> [MockSessionRecord] {
         try await database.rows(
@@ -176,7 +263,17 @@ final class MockExamService {
     }
 
     /// Compose la copie et l'écrit. Le micro est déjà accordé - ou refusé - avant d'arriver ici.
-    func start(exam: Exam, courses: [Course], withAudio: Bool) async throws -> MockSessionRecord {
+    /// Ouvre une mesure : un examen blanc, ou un test de parcours.
+    ///
+    /// Les deux passent par `generate-mock` : son `quota` accepte un compte par format depuis
+    /// le début, et un parcours n'est que cinq QCM et cinq questions orales. Aucune fonction
+    /// de plus à déployer, à tester ni à payer.
+    func start(
+        exam: Exam,
+        courses: [Course],
+        withAudio: Bool,
+        kind: AgendaKind = .mock
+    ) async throws -> MockSessionRecord {
         guard let userID = auth.user?.id else { throw Failure.notSignedIn }
         let wanted = Set(exam.courseIDs)
         let matter = courses.filter { wanted.contains($0.id) }
@@ -185,7 +282,19 @@ final class MockExamService {
         let context = Self.material(for: exam, in: courses)
         guard context.count >= Self.minContext else { throw Failure.tooLittleMaterial }
 
-        let quota = MockPaper.quota(withAudio: withAudio)
+        // Le parcours a un format fixe, et c'est ce qui rend deux tests comparables d'une
+        // semaine à l'autre. Sans micro, ses cinq questions orales deviennent des QCM :
+        // mieux vaut dix questions fermées qu'une mesure amputée de moitié.
+        let quota = kind == .parcours
+            ? MockPaper.Quota(
+                choice: withAudio
+                    ? ExamAgenda.parcoursChoiceCount
+                    : ExamAgenda.parcoursQuestionCount,
+                trueFalse: 0,
+                gap: 0,
+                feynman: withAudio ? ExamAgenda.parcoursOralCount : 0
+            )
+            : MockPaper.quota(withAudio: withAudio)
         var payload: [String: Any] = [
             "title": exam.name,
             "context": context,
@@ -209,6 +318,7 @@ final class MockExamService {
             id: UUID(),
             user_id: userID,
             exam_id: exam.id,
+            kind: kind.rawValue,
             planned_for: Self.dayStamp(Date()),
             minutes: MockPaper.minutes(for: questions),
             question_count: questions.count,
@@ -315,11 +425,25 @@ final class MockExamService {
         return questions
     }
 
-    private static func dayStamp(_ date: Date) -> String {
+    /// Le formateur des dates nues de la base.
+    ///
+    /// Grégorien et `en_US_POSIX` : une colonne `date` ne parle ni la langue de l'utilisateur
+    /// ni son calendrier, et un appareil réglé sur le calendrier bouddhiste écrirait 2569.
+    private static let stamp: DateFormatter = {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone.current
         formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: date)
+        return formatter
+    }()
+
+    static func dayStamp(_ date: Date) -> String {
+        stamp.string(from: date)
+    }
+
+    /// Le jour d'une date nue, ramené au début de la journée locale.
+    static func day(from stampValue: String) -> Date? {
+        stamp.date(from: stampValue).map { MicaboCalendar.shared.startOfDay(for: $0) }
     }
 }

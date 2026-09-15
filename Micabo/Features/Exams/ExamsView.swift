@@ -24,6 +24,9 @@ struct ExamsView: View {
     @State private var pendingDeletion: Exam?
     @State private var errorMessage: String?
 
+    /// L'épreuve qu'on vient de créer, en attente que la feuille soit refermée.
+    @State private var justCreated: Exam?
+
     private let calendar = MicaboCalendar.shared
     private let today = Date()
 
@@ -137,10 +140,20 @@ struct ExamsView: View {
                 key: "exams-\(courses.count)-\(sync?.epoch ?? 0)"
             )
         }
-        .sheet(item: $editing) { edition in
-            ExamEditorSheet(exam: edition.exam, suggestedDate: edition.date)
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(MicaboRadius.sheet)
+        .sheet(item: $editing, onDismiss: {
+            // On pousse **après** la fermeture, et pas pendant : une navigation lancée
+            // depuis la fermeture d'une feuille se perd une fois sur deux, la pile n'étant
+            // pas encore rendue à l'écran.
+            if let created = justCreated {
+                justCreated = nil
+                path.append(created)
+            }
+        }) { edition in
+            ExamEditorSheet(exam: edition.exam, suggestedDate: edition.date) { created in
+                justCreated = created
+            }
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(MicaboRadius.sheet)
         }
         .alert(i18n?.t("app.common.oops") ?? "Oups", isPresented: .constant(errorMessage != nil)) {
             Button(i18n?.t("app.a11y.close") ?? "Fermer", role: .cancel) { errorMessage = nil }
@@ -233,11 +246,9 @@ struct ExamsView: View {
             path.append(exam)
         } label: {
             HStack(spacing: 13) {
-                MicaboTile(
-                    glyph: .symbol("calendar"),
-                    background: isPast ? MicaboColor.surfaceMuted : MicaboColor.cautionSoft,
-                    tint: isPast ? MicaboColor.inkTertiary : MicaboColor.caution
-                )
+                // La date, pas une icône de calendrier : c'est ce qu'on cherche sur cette
+                // liste, et la teinte y porte l'urgence. Voir `MicaboTile.exam`.
+                MicaboTile.exam(exam.date, from: today, calendar: calendar)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(exam.name)

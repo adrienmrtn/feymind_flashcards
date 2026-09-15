@@ -17,6 +17,7 @@ import {
 import { parseModelJSON } from "../_shared/json.ts";
 import { type ModelUsage, totalUsage } from "../_shared/usage.ts";
 import {
+  clampSummary,
   normalizeSheet,
   sheetToPlainText,
   stripInlineMarkup,
@@ -339,7 +340,11 @@ Deno.serve((request: Request) =>
         title: typeof parsed.title === "string" ? parsed.title : "",
         subject: typeof parsed.subject === "string" ? parsed.subject : undefined,
         emoji: typeof parsed.emoji === "string" ? parsed.emoji : undefined,
-        summary: typeof parsed.summary === "string" ? stripInlineMarkup(parsed.summary) : "",
+        // Le plafond est tenu ici et pas seulement dans la consigne : le modèle écrit deux
+        // phrases dès que le cours l'inspire, et un chapeau long repousse la fiche sous la
+        // ligne de flottaison. Voir `clampSummary`.
+        summary:
+          typeof parsed.summary === "string" ? clampSummary(stripInlineMarkup(parsed.summary)) : "",
         sheet: { blocks },
         contextText,
       };

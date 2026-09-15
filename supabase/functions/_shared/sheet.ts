@@ -321,6 +321,51 @@ export function stripInlineMarkup(text: string): string {
 }
 
 /**
+ * **Le chapeau d'une fiche : vingt mots, jamais plus.**
+ *
+ * Il se lit entre le titre et la première partie, dans un corps plus grand que le texte. À
+ * cette taille, deux phrases pleines occupent le haut de l'écran et repoussent la fiche sous
+ * la ligne de flottaison : on ouvre un cours et on lit d'abord un résumé du cours. Or ce n'est
+ * pas ce qu'on vient chercher - le résumé sert à reconnaître la fiche, pas à la remplacer.
+ *
+ * Vingt mots tiennent sur deux lignes de téléphone. C'est assez pour dire l'enjeu, et trop peu
+ * pour raconter le cours : la contrainte fait le travail que la consigne seule ne fait pas.
+ *
+ * **La coupe respecte les phrases.** On garde les phrases entières tant qu'elles tiennent dans
+ * le compte ; une phrase coupée en son milieu se lit comme une panne, et le modèle en écrit
+ * régulièrement une seule, plus longue que la limite. Dans ce cas seulement, on coupe au
+ * vingtième mot et on pose des points de suspension : mieux vaut une phrase visiblement
+ * écourtée qu'une phrase qui s'arrête sans raison.
+ */
+export const SUMMARY_MAX_WORDS = 20;
+
+export function clampSummary(text: string, limit = SUMMARY_MAX_WORDS): string {
+  const clean = text.trim().replace(/\s+/g, " ");
+  if (clean.length === 0) return "";
+
+  const words = clean.split(" ");
+  if (words.length <= limit) return clean;
+
+  // Les phrases, bornes comprises : c'est le point qui décide où l'on peut s'arrêter.
+  const sentences = clean.match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g) ?? [clean];
+
+  let kept = "";
+  let count = 0;
+  for (const sentence of sentences) {
+    const size = sentence.trim().split(" ").filter(Boolean).length;
+    if (count + size > limit) break;
+    kept += sentence;
+    count += size;
+  }
+
+  const trimmed = kept.trim();
+  if (trimmed.length > 0) return trimmed;
+
+  // Pas une seule phrase ne tient : on coupe au mot, sans laisser de ponctuation pendante.
+  return words.slice(0, limit).join(" ").replace(/[\s,;:.!?…]+$/, "") + "…";
+}
+
+/**
  * La fiche à plat, une notion par ligne.
  *
  * C'est le contexte envoyé au modèle quand il faut écrire des cartes ou expliquer un

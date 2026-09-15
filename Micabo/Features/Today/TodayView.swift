@@ -33,6 +33,8 @@ struct TodayView: View {
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(TabRouter.self) private var router: TabRouter?
     @Environment(CloudSync.self) private var sync: CloudSync?
+    @Environment(MockExamService.self) private var mocks: MockExamService?
+    @Environment(AuthController.self) private var auth: AuthController?
 
     @State private var showStudy = false
     @State private var path = NavigationPath()
@@ -53,6 +55,15 @@ struct TodayView: View {
     /// file : l'onglet qui revient, une synchro finie, une session fermée, un cours ou un
     /// examen ajouté, le jour qui tourne. Entre deux, rien ne bouge et rien n'est relu.
     @State private var load: DayLoad?
+    /// Les mesures qui tombent aujourd'hui, toutes épreuves confondues.
+    @State private var measuresToday: [AgendaEvent] = []
+    /// La copie ouverte en plein écran, qu'on vienne de l'ouvrir ou qu'on la reprenne, et le
+    /// nom de son épreuve : `MockPaperView` les veut séparés.
+    @State private var paper: MockSessionRecord?
+    @State private var paperExamName = ""
+    /// Le rendez-vous dont on attend la réponse sur le micro.
+    @State private var starting: AgendaEvent?
+    @State private var writingMock = false
     /// Compte les sessions fermées depuis cet écran : chacune change la file.
     @State private var studyRuns = 0
 
@@ -194,6 +205,90 @@ struct TodayView: View {
     var body: some View {
         today(load ?? .empty)
             .task(id: reloadKey) { reload() }
+            .task(id: "\(reloadKey)-measures") { await loadMeasures() }
+            .sheet(item: $starting) { event in
+                StartMockSheet { withAudio in
+                    start(event, withAudio: withAudio)
+                }
+                .presentationDetents([.height(300), .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(MicaboRadius.sheet)
+            }
+            .fullScreenCover(item: $paper) { session in
+                MockPaperView(session: session, examName: paperExamName) { _ in
+                    paper = nil
+                    Task { await loadMeasures() }
+                }
+            }
+            .overlay {
+                if writingMock { MockWritingOverlay() }
+            }
+    }
+
+    /// **Les mesures qui tombent aujourd'hui, et la copie qu'on aurait laissée ouverte.**
+    ///
+    /// Trois épreuves au plus. Au-delà, on paierait des requêtes pour des rendez-vous qui ne
+    /// tomberont pas aujourd'hui : l'agenda d'une épreuve à deux mois est vide de ce côté-ci.
+    private func loadMeasures() async {
+        guard let mocks, auth?.user != nil else {
+            measuresToday = []
+            return
+        }
+
+        var found: [AgendaEvent] = []
+        let today = MicaboCalendar.shared.startOfDay(for: Date())
+
+        for exam in upcomingExams.prefix(3) {
+            do {
+                let sessions = try await mocks.sessions(for: exam.id)
+
+                // Une copie laissée ouverte se reprend d'ici : c'est le seul écran qui la
+                // propose maintenant, et l'abandonner en silence perdrait le temps déjà passé.
+                if let open = sessions.first(where: { !$0.isFinished }), paper == nil {
+                    paperExamName = exam.name
+                    paper = open
+                }
+
+                let cards = ExamRepository.cards(of: exam, in: modelContext).count
+                let events = ExamAgenda.events(
+                    for: exam,
+                    cardCount: cards,
+                    done: MockExamService.done(from: sessions),
+                    overrides: try await mocks.overrides(for: exam.id),
+                    now: today
+                )
+                found += events.filter {
+                    $0.status == .upcoming && MicaboCalendar.shared.startOfDay(for: $0.date) == today
+                }
+            } catch {
+                // Une mesure qu'on ne peut pas lire n'est pas une panne à annoncer : la
+                // journée reste utile sans elle, et la prochaine ouverture réessaiera.
+            }
+        }
+
+        measuresToday = found
+    }
+
+    private func start(_ event: AgendaEvent, withAudio: Bool) {
+        guard let mocks, !writingMock,
+              let exam = exams.first(where: { $0.id == event.examId }) else { return }
+        withAnimation(.easeOut(duration: 0.2)) { writingMock = true }
+        Task {
+            do {
+                let session = try await mocks.start(
+                    exam: exam,
+                    courses: courses,
+                    withAudio: withAudio,
+                    kind: event.kind
+                )
+                withAnimation(.easeOut(duration: 0.2)) { writingMock = false }
+                paperExamName = exam.name
+                paper = session
+            } catch {
+                withAnimation(.easeOut(duration: 0.2)) { writingMock = false }
+                Haptics.warning()
+            }
+        }
     }
 
     @ViewBuilder
@@ -422,14 +517,23 @@ struct TodayView: View {
         .padding(.top, 2)
     }
 
+    /// **Ce que la journée demande, cartes et mesures ensemble.**
+    ///
+    /// Un examen blanc ou un test de parcours est un travail du jour au même titre qu'un
+    /// paquet de cartes à revoir, et il se lance d'ici. Les séparer aurait laissé l'étudiant
+    /// finir ses cartes en croyant sa journée faite, puis découvrir la mesure ailleurs - ou
+    /// pas du tout.
+    ///
+    /// Les mesures passent **en tête** : une fois les cartes revues, le tirage n'a plus la
+    /// même valeur, puisqu'il porte sur ce qu'on vient de relire.
     @ViewBuilder
     private func dueCoursesSection(_ entries: [(course: Course, count: Int)]) -> some View {
-        if !entries.isEmpty {
+        if !entries.isEmpty || !measuresToday.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 MicaboSectionCaption(text: i18n?.t("app.today.agenda") ?? "Au programme")
 
                 MicaboRowGroup(
-                    rows: entries.map { entry in
+                    rows: measuresToday.map { measureRow($0) } + entries.map { entry in
                         MicaboRow.courseDue(entry.course, dueCount: entry.count) {
                             path.append(entry.course)
                         }
@@ -437,6 +541,25 @@ struct TodayView: View {
                 )
             }
         }
+    }
+
+    /// La ligne d'une mesure : ce que c'est, pour quelle épreuve, et ce qu'elle coûte.
+    private func measureRow(_ event: AgendaEvent) -> MicaboRow {
+        let isMock = event.kind == .mock
+        return MicaboRow(
+            tile: MicaboTile(
+                glyph: .symbol(isMock ? "doc.text" : "target"),
+                background: isMock ? MicaboColor.accentSoft : MicaboColor.cautionSoft,
+                tint: isMock ? MicaboColor.accent : MicaboColor.caution
+            ),
+            title: i18n?.t(isMock ? "app.mock.blockTitle" : "app.parcours.blockTitle")
+                ?? (isMock ? "Examen blanc" : "Test de parcours"),
+            subtitle: "\(event.examName) · " + (i18n?.t(
+                "app.today.mock",
+                ["questions": "\(event.questionCount)", "minutes": "\(event.minutes)"]
+            ) ?? "\(event.questionCount) questions · \(event.minutes) min"),
+            action: { starting = event }
+        )
     }
 
     // MARK: - Examens
@@ -558,11 +681,7 @@ struct TodayView: View {
                     path.append(exam)
                 } label: {
                     MicaboRow(
-                        tile: MicaboTile(
-                            glyph: .symbol("calendar"),
-                            background: MicaboColor.cautionSoft,
-                            tint: MicaboColor.caution
-                        ),
+                        tile: MicaboTile.exam(exam.date),
                         title: exam.name,
                         subtitle: i18n?.t("app.today.known", ["percent": "\(load.examProgress[exam.id] ?? 0)"])
                             ?? "appris à \(load.examProgress[exam.id] ?? 0) %",

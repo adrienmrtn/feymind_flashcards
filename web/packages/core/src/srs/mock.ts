@@ -88,6 +88,8 @@ export function wantsMock(kind: ExamKind): boolean {
 export interface MockResult {
   id: string;
   examId: string | null;
+  /** Ce que la session mesure. Absent, c'est un blanc : c'est tout ce qui existait. */
+  kind?: "mock" | "parcours";
   questionCount: number;
   correctCount: number;
   finishedAt: Date;
@@ -353,6 +355,22 @@ function hash(value: string): number {
 export const MOCK_READING_WEIGHT = 0.2;
 
 /**
+ * Le poids d'un test de parcours, et pourquoi c'est la moitié.
+ *
+ * Il mesure pour de vrai, donc il compte : c'est tout l'intérêt de l'avoir posé entre deux
+ * blancs plutôt que de laisser la projection parler seule. Mais il mesure **moins** - dix
+ * questions contre vingt, et un tirage plus étroit - donc il ne peut pas peser autant.
+ *
+ * Un dixième laisse un parcours raté faire réviser autrement, sans qu'une mauvaise
+ * après-midi sur dix questions efface ce qu'un blanc entier a établi.
+ */
+export const PARCOURS_READING_WEIGHT = 0.1;
+
+export function readingWeightFor(kind: MockResult["kind"]): number {
+  return kind === "parcours" ? PARCOURS_READING_WEIGHT : MOCK_READING_WEIGHT;
+}
+
+/**
  * Une maîtrise, poussée par le dernier blanc. C'est **la** lecture affichée partout : jauge de
  * l'accueil, fiche d'épreuve, iPhone comme site.
  *
@@ -365,12 +383,13 @@ export function blendMock(
   score: number | null | undefined,
   finishedAt?: Date | null,
   now: Date = new Date(),
+  kind: MockResult["kind"] = "mock",
 ): number {
   if (score == null) return Math.round(masteryPercent);
   const age = finishedAt
     ? Math.max(0, dayDifference(startOfDay(finishedAt), startOfDay(now)))
     : 0;
-  const weight = MOCK_READING_WEIGHT * Math.exp(-age / 14);
+  const weight = readingWeightFor(kind) * Math.exp(-age / 14);
   return Math.round(masteryPercent * (1 - weight) + score * weight);
 }
 
@@ -393,18 +412,35 @@ export function examReadiness(input: {
     .filter((result) => result.examId === input.examId)
     .sort((left, right) => right.finishedAt.getTime() - left.finishedAt.getTime());
 
-  const latest = mine[0];
-  if (!latest) {
+  /**
+   * La dernière mesure **de chaque sorte**, et non la dernière tout court.
+   *
+   * Les parcours sont fréquents et les blancs rares : ne garder que la plus récente ferait
+   * effacer le blanc de J-7 par le parcours du lendemain, c'est-à-dire remplacer la mesure
+   * large par la mesure étroite. Les deux comptent, chacune à son poids et avec sa décroissance.
+   */
+  const latestOf = (kind: MockResult["kind"]) =>
+    mine.find((result) => (result.kind ?? "mock") === kind);
+
+  const measures = [latestOf("mock"), latestOf("parcours")]
+    .filter((result): result is MockResult => result !== undefined)
+    // La plus ancienne d'abord : la plus fraîche a le dernier mot.
+    .sort((left, right) => left.finishedAt.getTime() - right.finishedAt.getTime());
+
+  if (measures.length === 0) {
     return { percent: input.projectedPercent, measured: false, mockScore: null };
   }
 
-  const score = mockScore(latest);
+  let percent = input.projectedPercent;
+  for (const measure of measures) {
+    percent = blendMock(percent, mockScore(measure), measure.finishedAt, now, measure.kind);
+  }
 
-  return {
-    percent: blendMock(input.projectedPercent, score, latest.finishedAt, now),
-    measured: true,
-    mockScore: score,
-  };
+  // Le score affiché reste celui du blanc quand il y en a un : c'est la mesure que l'étudiant
+  // reconnaît, et un parcours ne s'annonce pas comme une note d'examen blanc.
+  const headline = latestOf("mock") ?? measures[measures.length - 1]!;
+
+  return { percent, measured: true, mockScore: mockScore(headline) };
 }
 
 /**

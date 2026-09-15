@@ -32,17 +32,18 @@ struct ExamDetailView: View {
         var cardCount = 0
         var programme: [(course: Course, cards: Int, percent: Int)] = []
         var weak: [ExamReadiness.WeakCard] = []
-        var canRunMock = false
+        /// Cartes prévues par décalage depuis aujourd'hui. C'est ce que porte chaque case.
+        var load: [Int] = []
     }
 
     @State private var figures = Figures()
     @State private var sessions: [MockSessionRecord] = []
     @State private var sessionsLoaded = false
     @State private var editing = false
-    @State private var askingMicrophone = false
-    @State private var writing = false
-    /// La copie ouverte en plein écran.
-    @State private var paper: MockSessionRecord?
+    /// Les rendez-vous déplacés, tels qu'ils reviennent du serveur.
+    @State private var overrides: [AgendaOverride] = []
+    /// Le rendez-vous dont on a ouvert la fiche pour le déplacer.
+    @State private var moving: AgendaEvent?
     /// Un blanc passé qu'on relit.
     @State private var report: MockSessionRecord?
     @State private var errorMessage: String?
@@ -58,7 +59,6 @@ struct ExamDetailView: View {
 
     private var masteryPercent: Int { figures.masteryPercent }
     private var weak: [ExamReadiness.WeakCard] { figures.weak }
-    private var canRunMock: Bool { figures.canRunMock }
 
     private var targetPercent: Int {
         TargetScore.percent(from: exam.targetScore)
@@ -80,11 +80,6 @@ struct ExamDetailView: View {
     }
 
     /// Une copie ouverte et jamais remise : on la reprend, on n'en ouvre pas une deuxième.
-    private var open: MockSessionRecord? {
-        sessions.first { !$0.isFinished && !$0.questions.isEmpty }
-    }
-
-    /// Ce qui fait recalculer les chiffres : l'épreuve, ses cours, une synchro.
     private var figuresKey: String {
         "\(exam.id)-\(exam.updatedAt.timeIntervalSince1970)-\(courses.count)-\(sync?.epoch ?? 0)"
     }
@@ -110,7 +105,15 @@ struct ExamDetailView: View {
                 return (course: course, cards: own.count, percent: ExamReadiness.masteryPercent(of: own, logs: logs, now: today))
             },
             weak: ExamReadiness.weakCards(in: cards, logs: logs, now: today),
-            canRunMock: MockExamService.canRun(exam: exam, in: programme)
+            // La même projection que la page de plan : le calendrier ne recalcule pas sa
+            // charge de son côté, sinon deux écrans annonceraient deux journées différentes.
+            load: ExamRepository.plan(
+                cards: cards,
+                date: exam.date,
+                intensity: exam.intensity,
+                offDays: ExamRepository.offDayOffsets(until: exam.date, stamps: OffDays.stamps(in: modelContext), now: today),
+                now: today
+            ).projection.load
         )
     }
 
@@ -123,7 +126,7 @@ struct ExamDetailView: View {
             VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                 header
                 progressSection
-                mockSection
+                agendaSection
                 programmeSection
                 if !weak.isEmpty {
                     weakSection
@@ -139,11 +142,6 @@ struct ExamDetailView: View {
         .toolbar(.hidden, for: .navigationBar)
         .task(id: figuresKey) { loadFigures() }
         .task(id: exam.id) { await loadSessions() }
-        .overlay {
-            if writing {
-                writingOverlay
-            }
-        }
         .sheet(isPresented: $editing, onDismiss: {
             // L'épreuve supprimée depuis le formulaire n'a plus de fiche à montrer.
             if exam.isDeleted { dismiss() }
@@ -152,23 +150,16 @@ struct ExamDetailView: View {
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(MicaboRadius.sheet)
         }
-        .sheet(isPresented: $askingMicrophone) {
-            StartMockSheet { withAudio in
-                startMock(withAudio: withAudio)
+        .sheet(item: $moving) { event in
+            AgendaEventSheet(
+                event: event,
+                examDay: calendar.startOfDay(for: exam.date),
+                plannedDate: plannedDate(of: event)
+            ) { date in
+                move(event, to: date)
             }
-            // Une hauteur taillée sur le contenu, pas `.medium` : la question tient en une
-            // ligne et deux boutons, et un demi-écran la coupait au milieu d'un paragraphe.
-            .presentationDetents([.height(300), .large])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
-        }
-        .fullScreenCover(item: $paper) { session in
-            MockPaperView(session: session, examName: exam.name) { closed in
-                paper = nil
-                if let closed {
-                    sessions = [closed] + sessions.filter { $0.id != closed.id }
-                }
-            }
         }
         .sheet(item: $report) { session in
             NavigationStack {
@@ -292,59 +283,35 @@ struct ExamDetailView: View {
     }
 
 
-    // MARK: - L'examen blanc
+    // MARK: - L'agenda
 
-    private var mockSection: some View {
+    /// **Le calendrier de l'épreuve, et les mesures déjà passées.**
+    ///
+    /// La page portait un bouton « passer un examen blanc ». Il n'y est plus, et c'est
+    /// délibéré : cette page dit **ce qui est prévu**, le travail se lance depuis « Au
+    /// programme » le jour venu, avec le reste de la journée. Deux écrans qui proposent la même
+    /// chose obligent l'étudiant à se demander lequel est le bon, et celui qui la propose hors
+    /// de son jour casse la cadence que le plan vient de poser.
+    ///
+    /// L'historique reste : c'est par lui qu'on relit un débriefing, et le calendrier ne dit
+    /// que l'état d'un rendez-vous, pas ce qu'on y a répondu.
+    private var agendaSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: t("app.mock.panelTitle"))
+            MicaboSectionCaption(text: t("app.exam.schedule.title"))
 
-            VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-                    if let open {
-                        Button {
-                            paper = open
-                        } label: {
-                            HStack(spacing: MicaboSpacing.xs) {
-                                Image(systemName: "arrow.forward.circle.fill")
-                                    .font(.system(size: 13, weight: .semibold))
-                                Text(t("ios.mock.resume"))
-                            }
-                        }
-                        .buttonStyle(MicaboPrimaryButtonStyle())
-                    } else {
-                        Button {
-                            askingMicrophone = true
-                        } label: {
-                            HStack(spacing: MicaboSpacing.xs) {
-                                Image(systemName: "doc.text")
-                                    .font(.system(size: 13, weight: .semibold))
-                                Text(t("app.mock.start"))
-                            }
-                        }
-                        .buttonStyle(MicaboPrimaryButtonStyle(tint: canRunMock && isSignedIn ? MicaboColor.accent : MicaboColor.strokeStrong))
-                        .disabled(!canRunMock || !isSignedIn || writing)
-                    }
+            ExamAgendaCalendar(
+                exam: exam,
+                events: agenda,
+                load: figures.load,
+                onPick: { moving = $0 },
+                now: today
+            )
 
-                    if !isSignedIn {
-                        Text(t("app.errors.signIn"))
-                            .font(MicaboFont.micro)
-                            .foregroundStyle(MicaboColor.inkTertiary)
-                    } else if !canRunMock {
-                        Text(t("app.mock.tooFew"))
-                            .font(MicaboFont.micro)
-                            .foregroundStyle(MicaboColor.inkTertiary)
-                    }
-                }
-                .padding(MicaboSpacing.md)
+            if !finished.isEmpty {
+                MicaboSectionCaption(text: t("app.exam.progress.mocks"))
+                    .padding(.top, MicaboSpacing.xs)
 
-                MicaboHairline(inset: MicaboSpacing.md)
-
-                if finished.isEmpty {
-                    Text(sessionsLoaded ? t("app.mock.none") : t("app.exams.wait"))
-                        .font(MicaboFont.caption)
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                        .padding(MicaboSpacing.md)
-                } else {
+                VStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(finished.enumerated()), id: \.element.id) { index, session in
                         mockRow(session)
                         if index < finished.count - 1 {
@@ -352,8 +319,54 @@ struct ExamDetailView: View {
                         }
                     }
                 }
+                .micaboGroup()
             }
-            .micaboGroup()
+        }
+    }
+
+    /// Les rendez-vous de l'épreuve, dérivés à chaque rendu.
+    ///
+    /// Le calcul est court - deux blancs et huit parcours au plus - et le dériver ici plutôt
+    /// que de le garder en état évite qu'il vieillisse : une session qui se ferme ou une date
+    /// qu'on déplace doit changer la grille tout de suite.
+    private var agenda: [AgendaEvent] {
+        ExamAgenda.events(
+            for: exam,
+            cardCount: figures.cardCount,
+            done: MockExamService.done(from: sessions),
+            overrides: overrides,
+            now: today,
+            calendar: calendar
+        )
+    }
+
+    /// La date que la dérivation donnerait à un rendez-vous, sans les déplacements.
+    ///
+    /// C'est ce que la fiche affiche à côté de « déplacé » : sans elle, le mot ne dit pas de
+    /// combien ni depuis quand.
+    private func plannedDate(of event: AgendaEvent) -> Date? {
+        guard event.moved else { return nil }
+        return ExamAgenda.events(
+            for: exam,
+            cardCount: figures.cardCount,
+            done: [],
+            overrides: [],
+            now: today,
+            calendar: calendar
+        )
+        .first { $0.kind == event.kind && $0.slot == event.slot }?
+        .date
+    }
+
+    private func move(_ event: AgendaEvent, to date: Date?) {
+        guard let mocks else { return }
+        Task {
+            do {
+                try await mocks.move(event, to: date)
+                overrides = try await mocks.overrides(for: exam.id)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 
@@ -364,7 +377,7 @@ struct ExamDetailView: View {
         } label: {
             HStack(spacing: 13) {
                 MicaboTile(
-                    glyph: .symbol("doc.text"),
+                    glyph: .symbol(session.kind == AgendaKind.parcours.rawValue ? "target" : "doc.text"),
                     background: soft(for: session.score),
                     tint: tone(for: session.score)
                 )
@@ -486,168 +499,11 @@ struct ExamDetailView: View {
         .padding(.horizontal, MicaboSpacing.md)
     }
 
-    // MARK: - Le temps d'écrire la copie
-
-    /// La copie s'écrit sur le serveur, et ça prend le temps d'une génération. On le dit, et
-    /// on couvre l'écran : un bouton qu'on pourrait toucher deux fois ouvrirait deux copies.
-    private var writingOverlay: some View {
-        ZStack {
-            MicaboColor.ink.opacity(0.18).ignoresSafeArea()
-            VStack(spacing: MicaboSpacing.sm) {
-                ProgressView()
-                    .tint(MicaboColor.accent)
-                Text(t("ios.mock.writing"))
-                    .font(MicaboFont.captionEmphasis)
-                    .foregroundStyle(MicaboColor.ink)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(MicaboSpacing.lg)
-            .frame(maxWidth: 260)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
-        }
-        .transition(.opacity)
-    }
-
-    // MARK: - Actions
-
-    private func loadSessions() async {
-        guard let mocks, isSignedIn else {
-            sessionsLoaded = true
-            return
-        }
-        do {
-            sessions = try await mocks.sessions(for: exam.id)
-        } catch {
-            // Une liste qu'on ne peut pas lire n'est pas une panne à annoncer : la fiche
-            // reste utile sans elle, et la prochaine ouverture réessaiera.
-        }
-        sessionsLoaded = true
-    }
-
-    private func startMock(withAudio: Bool) {
-        guard let mocks, !writing else { return }
-        withAnimation(.easeOut(duration: 0.2)) { writing = true }
-        Task {
-            do {
-                let session = try await mocks.start(exam: exam, courses: courses, withAudio: withAudio)
-                sessions = [session] + sessions
-                withAnimation(.easeOut(duration: 0.2)) { writing = false }
-                paper = session
-            } catch {
-                withAnimation(.easeOut(duration: 0.2)) { writing = false }
-                Haptics.warning()
-                errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            }
-        }
-    }
-
     private func tone(for score: Int) -> Color {
         score >= 75 ? MicaboColor.positive : score >= 50 ? MicaboColor.caution : MicaboColor.negative
     }
 
     private func soft(for score: Int) -> Color {
         score >= 75 ? MicaboColor.positiveSoft : score >= 50 ? MicaboColor.cautionSoft : MicaboColor.negativeSoft
-    }
-}
-
-// MARK: - As-tu un micro ?
-
-/// **La seule question qui change la copie.** Répondre oui ajoute des questions Feynman,
-/// répondues à l'oral. Elle est posée avant l'ouverture, et pas au milieu : une autorisation
-/// demandée pendant l'épreuve arrête le chronomètre dans la tête de l'étudiant.
-struct StartMockSheet: View {
-    var onChoose: (Bool) -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    @State private var asking = false
-    @State private var failed: String?
-
-    private func t(_ key: String) -> String {
-        i18n?.t(key) ?? L10n.t(key, locale: .resolved())
-    }
-
-    var body: some View {
-        NavigationStack {
-            // Le contenu **défile**, même court : c'est ce qui garantit qu'une traduction plus
-            // longue ou un corps de texte agrandi ne se coupe pas au bas de la feuille. La
-            // hauteur du cran est taillée pour qu'on n'ait jamais à s'en servir.
-            ScrollView {
-                VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                    Text(t("app.mock.micHint"))
-                        .font(MicaboFont.caption)
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Button {
-                        askMicrophone()
-                    } label: {
-                        HStack(spacing: MicaboSpacing.xs) {
-                            Image(systemName: "mic.fill")
-                                .font(.system(size: 13, weight: .semibold))
-                            Text(asking ? t("app.exams.wait") : t("app.mock.micYes"))
-                        }
-                    }
-                    .buttonStyle(MicaboPrimaryButtonStyle())
-                    .disabled(asking)
-
-                    Button {
-                        choose(false)
-                    } label: {
-                        Text(t("app.mock.micNo"))
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(MicaboSecondaryButtonStyle())
-                    .disabled(asking)
-
-                    if let failed {
-                        Text(failed)
-                            .font(MicaboFont.caption)
-                            .foregroundStyle(MicaboColor.negative)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, MicaboSpacing.md)
-                .padding(.bottom, MicaboSpacing.lg)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .scrollBounceBehavior(.basedOnSize)
-            .micaboScreenBackground()
-            .navigationTitle(t("app.mock.micTitle"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(t("app.common.cancel")) { dismiss() }
-                }
-            }
-        }
-    }
-
-    /// Demander le micro **et** la reconnaissance pour de vrai, avant de composer la copie.
-    /// Sans ça, on écrirait trois questions orales à quelqu'un qui a refusé l'accès, et il le
-    /// découvrirait une fois le chronomètre lancé.
-    private func askMicrophone() {
-        asking = true
-        failed = nil
-        Task {
-            let dictation = Dictation()
-            let ready = await dictation.prepare()
-            asking = false
-            if ready {
-                choose(true)
-            } else {
-                Haptics.warning()
-                failed = dictation.availability == .denied ? t("app.mock.micDenied") : t("app.mock.micBroken")
-            }
-        }
-    }
-
-    private func choose(_ withAudio: Bool) {
-        Haptics.selection()
-        dismiss()
-        onChoose(withAudio)
     }
 }

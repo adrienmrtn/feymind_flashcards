@@ -154,7 +154,10 @@ export {
   intensityFor,
   loadBars,
   termLoad,
+  isMeasureBlock,
   isMockBlock,
+  isParcoursBlock,
+  type ParcoursBlock,
   isReviewBlock,
   matchesFormat,
   planTerm,
@@ -230,6 +233,30 @@ export {
   type MockResult,
   type PlannedMock,
 } from "./srs/mock";
+
+export {
+  PARCOURS_CHOICE_COUNT,
+  PARCOURS_FIRST_OFFSET,
+  PARCOURS_MAX,
+  PARCOURS_MINUTES,
+  PARCOURS_ORAL_COUNT,
+  PARCOURS_QUESTION_COUNT,
+  PARCOURS_TIGHT_WINDOW,
+  parcoursOffsets,
+  parcoursQuota,
+} from "./srs/parcours";
+
+export {
+  agendaOn,
+  type AgendaDone,
+  type AgendaEvent,
+  type AgendaExam,
+  type AgendaInput,
+  type AgendaKind,
+  type AgendaOverride,
+  type AgendaStatus,
+  examAgenda,
+} from "./srs/exam-agenda";
 
 // Le débit réellement mesuré : ce que cet étudiant fait vraiment en une minute.
 export {

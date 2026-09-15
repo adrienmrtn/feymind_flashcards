@@ -115,7 +115,7 @@ struct SharedCourseView: View {
 
     @ViewBuilder
     private var lead: some View {
-        if let summary = course.summary.nilIfBlank {
+        if let summary = SheetText.lead(course.summary).nilIfBlank {
             SheetInlineText(markup: summary, style: .lead)
                 .padding(.top, MicaboSpacing.md)
         }

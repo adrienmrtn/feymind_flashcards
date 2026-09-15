@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import type { AgendaKind } from "@micabo/core";
+
 import { Button } from "@/components/ui/button";
 import { startMockSession } from "@/lib/actions/mocks";
 import { useI18n } from "@/lib/i18n/client";
@@ -18,14 +20,21 @@ import { useI18n } from "@/lib/i18n/client";
  *
  * La question est posée **avant** l'ouverture, et pas au milieu : une autorisation de micro
  * demandée pendant l'épreuve arrête le chronomètre dans la tête de l'étudiant.
+ *
+ * **Le test de parcours passe par le même bouton**, parce qu'il pose la même question : la
+ * moitié de ses dix questions se répond à voix haute, et sans micro elles deviennent des QCM.
+ * Deux boutons qui demandent la même autorisation de deux façons différentes n'apprendraient
+ * rien de plus à l'étudiant.
  */
 export function StartMock({
   examId,
+  kind = "mock",
   variant = "default",
   size = "sm",
   className,
 }: {
   examId: string;
+  kind?: AgendaKind;
   variant?: "default" | "outline";
   size?: "sm" | "default";
   className?: string;
@@ -39,7 +48,7 @@ export function StartMock({
   function open(withAudio: boolean) {
     setFailed(null);
     startTransition(async () => {
-      const result = await startMockSession(examId, withAudio);
+      const result = await startMockSession(examId, withAudio, kind);
       if (result.status === "ok" && result.sessionId) {
         router.push(`/app/plan/blanc/${result.sessionId}` as never);
         return;
@@ -82,7 +91,9 @@ export function StartMock({
     return (
       <span className={className}>
         <Button size={size} variant={variant} disabled={pending} onClick={() => setAsking(true)}>
-          {pending ? t("app.exams.wait") : t("app.mock.start")}
+          {pending
+            ? t("app.exams.wait")
+            : t(kind === "parcours" ? "app.parcours.start" : "app.mock.start")}
         </Button>
         {failed ? (
           <span className="mt-2 block text-[12.5px] text-negative" role="alert">
@@ -97,6 +108,9 @@ export function StartMock({
     <div className="panel w-full p-5">
       <p className="section-title">{t("app.mock.micTitle")}</p>
       <p className="section-lead max-w-[52ch]">{t("app.mock.micLead")}</p>
+      {kind === "parcours" ? (
+        <p className="mt-2 max-w-[52ch] text-[12.5px] text-ink-tertiary">{t("app.parcours.lead")}</p>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Button disabled={pending} onClick={() => void askMicrophone()}>
@@ -110,7 +124,9 @@ export function StartMock({
         </Button>
       </div>
 
-      <p className="mt-3 text-[12px] text-ink-tertiary">{t("app.mock.micHint")}</p>
+      <p className="mt-3 text-[12px] text-ink-tertiary">
+        {t(kind === "parcours" ? "app.parcours.micHint" : "app.mock.micHint")}
+      </p>
 
       {failed ? (
         <p className="mt-3 text-[12.5px] text-negative" role="alert">
