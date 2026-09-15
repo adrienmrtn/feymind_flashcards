@@ -1,7 +1,8 @@
 import XCTest
 @testable import Micabo
 
-/// Verrouille l'offre cadeau : la fenêtre, les règles d'affichage, et le prix.
+/// Verrouille l'offre cadeau : la minuterie de la languette, les règles d'affichage, et le
+/// prix.
 ///
 /// Les mêmes vérifications existent côté web dans `web/lib/discount.test.ts`, et
 /// `freemium-parity.test.ts` relit `DiscountOffer.swift` pour que les constantes ne
@@ -9,8 +10,9 @@ import XCTest
 final class DiscountOfferTests: XCTestCase {
     // MARK: - Le temps
 
-    /// Vingt-quatre heures depuis l'ouverture du cadeau, et une seule horloge : une
-    /// seconde origine finirait par contredire la première.
+    /// Vingt-quatre heures depuis l'ouverture du cadeau, et **une seule horloge**. Le
+    /// paywall en portait une seconde, au centième ; elle est partie, et avec elle le
+    /// risque que deux décomptes se contredisent.
     func testTheWindowRunsFromTheMomentTheGiftOpened() {
         let start = Date(timeIntervalSince1970: 1_000_000)
 
@@ -21,7 +23,7 @@ final class DiscountOfferTests: XCTestCase {
         XCTAssertEqual(DiscountOffer.windowRemaining(startedAt: start, now: tenMinutesLater), 85_800)
     }
 
-    /// La fenêtre se retire à la fin des vingt-quatre heures, et l'offre avec elle.
+    /// La fenêtre se retire à la fin des vingt-quatre heures, et la languette avec elle.
     func testTheWindowExpiresAfterTwentyFourHours() {
         let start = Date(timeIntervalSince1970: 0)
 
@@ -40,14 +42,25 @@ final class DiscountOfferTests: XCTestCase {
         XCTAssertEqual(DiscountOffer.windowRemaining(startedAt: start, now: before), 86_400)
     }
 
-    /// Deux chiffres partout : la rangée des Réglages, seule à écrire ce décompte, ne doit
-    /// pas changer de largeur à chaque seconde.
+    /// Deux chiffres partout : une pastille qui change de largeur à chaque seconde attire
+    /// l'œil pour rien.
     func testTheCountdownKeepsItsWidth() {
         XCTAssertEqual(DiscountOffer.countdown(3600), "01:00:00")
         XCTAssertEqual(DiscountOffer.countdown(3599), "59:59")
         XCTAssertEqual(DiscountOffer.countdown(65), "01:05")
         XCTAssertEqual(DiscountOffer.countdown(0), "00:00")
         XCTAssertEqual(DiscountOffer.countdown(-40), "00:00")
+    }
+
+    /// « 1 heure restantes » se lirait comme une faute : la phrase commence donc par
+    /// « il reste ».
+    func testVoiceOverReadsAFrenchSentence() {
+        XCTAssertEqual(DiscountOffer.countdownLabel(0), "offre terminée")
+        XCTAssertEqual(DiscountOffer.countdownLabel(30), "il reste moins d'une minute")
+        XCTAssertEqual(DiscountOffer.countdownLabel(90), "il reste 1 minute")
+        XCTAssertEqual(DiscountOffer.countdownLabel(3600), "il reste 1 heure")
+        XCTAssertEqual(DiscountOffer.countdownLabel(3720), "il reste 1 heure et 2 minutes")
+        XCTAssertEqual(DiscountOffer.countdownLabel(86_400), "il reste 24 heures")
     }
 
     // MARK: - Quand l'offre se montre
@@ -135,8 +148,9 @@ final class DiscountOfferTests: XCTestCase {
 
     // MARK: - Le prix
 
-    /// 39,99 € par an, et l'annuel plein barré à côté. **Une somme, celle qui est
-    /// prélevée** : un mensuel équivalent en faisait lire deux pour un seul paiement.
+    /// 39,99 € par an, et l'annuel plein barré à côté. **Le cadeau écrit la somme
+    /// prélevée** : il annonçait un mensuel avec l'annuel juste dessous, et le chiffre
+    /// qu'on retenait n'était pas celui qui part.
     func testTheOfferShowsTheChargedYearAgainstTheFullYear() {
         XCTAssertTrue(
             DiscountOffer.plan.displayPrice.hasPrefix("39,99"),

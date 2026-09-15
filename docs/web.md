@@ -954,10 +954,9 @@ Le site fait donc pareil : `packages/core/src/pricing.ts` porte les deux offres 
 paywall du parcours d'accueil n'écrira aucun pourcentage à la main**, et « Économise 60 % » de la
 spec devient « Économise {calcul} % ».
 
-Deux conséquences de forme sur l'écran 8 : **chaque offre écrit la somme prélevée dans la
-période où elle l'est** — 69,99 € / an, 7,99 € / semaine — et aucune ne ramène au mois, parce
-qu'un second chiffre à côté du premier fait retenir celui qui ne part pas. L'essai de **trois
-jours** ne porte que sur l'annuel.
+Deux conséquences de forme sur l'écran 8 : le « prix ramené au mois » ne vaut que pour l'annuel
+— 5,83 € / mois — et l'hebdomadaire porte « facturé chaque semaine », parce qu'il n'y a pas de
+mois à ramener. L'essai de **trois jours** ne porte que sur l'annuel.
 
 ## Le plan, en cinq étapes
 

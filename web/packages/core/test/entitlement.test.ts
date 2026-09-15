@@ -45,6 +45,7 @@ import {
   checkoutCurrency,
   discountSavingsPercent,
   hasTrial,
+  monthlyEquivalent,
   offers,
   planCaption,
   planDisplayedPrice,
@@ -53,6 +54,7 @@ import {
   planRenewalCopy,
   presentmentAmount,
   presentmentCurrencyFor,
+  presentmentMonthly,
   priceText,
   savingsPercent,
   stripePriceId,
@@ -267,24 +269,28 @@ describe("les offres", () => {
     expect(DISCOUNT_REFERENCE).toBe(YEARLY);
   });
 
-  it("affichent le prix prélevé, dans la période où il l'est", () => {
+  it("ramènent l'annuel au mois, et rien d'autre", () => {
     // L'espace avant l'euro est **insécable**, comme la typographie française l'exige : un prix
     // ne se coupe pas en fin de ligne entre le nombre et son symbole. Elle est normalisée à
     // U+00A0 par `priceText`, parce que `Intl` rend tantôt U+00A0 tantôt U+202F selon la version
     // d'ICU - et un prix qui ne s'espace pas pareil selon la machine est une différence qu'on
     // finit par chercher longtemps.
-    //
-    // Plus de mensuel équivalent : « 5,83 € / mois » à côté d'un prélèvement annuel de
-    // 69,99 € demandait deux lectures, et obligeait le discount à traîner sa somme annuelle
-    // sous le mensuel pour ne rien sous-entendre.
-    expect(planDisplayedPrice(YEARLY)).toBe(priceText(YEARLY.price));
-    expect(planDisplayedPrice(DISCOUNT_YEARLY)).toBe(priceText(DISCOUNT_YEARLY.price));
-    expect(planDisplayedPrice(WEEKLY)).toBe(priceText(WEEKLY.price));
-    expect(planDisplayedUnit(YEARLY)).toBe("/ an");
-    expect(planDisplayedUnit(DISCOUNT_YEARLY)).toBe("/ an");
-    expect(planDisplayedUnit(WEEKLY)).toBe("/ semaine");
-    expect(planCaption(YEARLY)).toBe("facturé une fois par an");
+    const yearlyPerMonth = "5,83\u00a0€";
+    // Le cadeau **n'annonce plus de mensuel** : son paywall écrit le prix prélevé, 39,99 €
+    // par an. Le plan ne porte donc plus de `monthlyPrice` écrit, et la division ordinaire
+    // reprend ses droits — 39,99 ÷ 12 fait 3,3325, soit « 3,33 € ». Personne ne l'affiche ;
+    // ce que ce test tient, c'est qu'aucun nombre écrit à la main ne traîne derrière.
+    const discountPerMonth = "3,33\u00a0€";
+
+    expect(monthlyEquivalent(YEARLY)).toBe(yearlyPerMonth);
+    expect(monthlyEquivalent(DISCOUNT_YEARLY)).toBe(discountPerMonth);
+    expect(monthlyEquivalent(WEEKLY)).toBeNull();
     expect(planCaption(WEEKLY)).toBe("facturé chaque semaine");
+    expect(planCaption(YEARLY)).toBe(`${yearlyPerMonth} / mois`);
+    expect(planDisplayedPrice(YEARLY)).toBe(yearlyPerMonth);
+    expect(planDisplayedPrice(WEEKLY)).toBe(priceText(WEEKLY.price));
+    expect(planDisplayedUnit(YEARLY)).toBe("/ mois");
+    expect(planDisplayedUnit(WEEKLY)).toBe("/ semaine");
     expect(planRenewalCopy(YEARLY)).toBe(
       `Puis ${priceText(YEARLY.price)} par an, résiliable à tout moment`,
     );
@@ -316,9 +322,9 @@ describe("les offres", () => {
     expect(presentmentCurrencyFor("de")).toBe("EUR");
     expect(presentmentAmount(YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly);
     expect(presentmentAmount(WEEKLY, "TRY")).toBe(TRY_AMOUNTS.weekly);
-    expect(presentmentAmount(DISCOUNT_YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly_discount);
+    expect(presentmentMonthly(DISCOUNT_YEARLY, "TRY")).toBe(TRY_AMOUNTS.yearly_discount_monthly);
     expect(priceText(TRY_AMOUNTS.weekly, "TRY")).toMatch(/₺|TRY/);
-    expect(planDisplayedPrice(YEARLY, "TRY")).toBe(priceText(TRY_AMOUNTS.yearly, "TRY"));
+    expect(planDisplayedPrice(YEARLY, "TRY")).toBe(monthlyEquivalent(YEARLY, "TRY"));
     expect(YEARLY.price).toBe(69.99);
   });
 
