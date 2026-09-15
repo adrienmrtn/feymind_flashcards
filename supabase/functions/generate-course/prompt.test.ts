@@ -15,46 +15,47 @@ import {
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v2.6.0");
+  assertEquals(PROMPT_VERSION, "course-v2.7.0");
 });
 
-Deno.test("le prompt demande les trois marques de texte", () => {
-  // Une fiche en texte nu se relit mal, et c'est le défaut qu'on corrigeait ici : le gras
-  // n'apparaissait que dans les titres, l'italique nulle part.
-  assertEquals(COURSE_SYSTEM_PROMPT.includes("**terme** met en gras"), true);
-  assertEquals(COURSE_SYSTEM_PROMPT.includes("*nuance* met en italique"), true);
-  assertEquals(COURSE_SYSTEM_PROMPT.includes("==couleur|passage=="), true);
-});
+Deno.test("le prompt d'écriture ne demande plus de mise en relief", () => {
+  // Le rédacteur jonglait entre fidélité, plan, longueur ET typographie, et c'est la
+  // typographie qu'il ratait une fois sur deux. Elle appartient maintenant à la passe de
+  // marquage, qui ne fait que ça et qui vérifie ce qu'elle pose.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("ne compte aucune marque"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("LE CODE COULEUR"), false);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("LA POSE D'UNE MARQUE"), false);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("OÙ POSER LE SURLIGNEUR"), false);
 
-Deno.test("le prompt montre un paragraphe marqué plutôt que de le décrire", () => {
-  // Les consignes seules donnaient du gras et rien d'autre : ni italique, ni formule dans la
-  // phrase. Un exemple travaillé porte la densité attendue mieux qu'un plancher chiffré.
-  assertEquals(COURSE_SYSTEM_PROMPT.includes("UN PARAGRAPHE CORRECTEMENT MARQUÉ"), true);
-  assertEquals(COURSE_SYSTEM_PROMPT.includes("LES FORMULES DANS LA PHRASE"), true);
-  // L'exemple a déteint une fois : le modèle a repris ses deux italiques mot pour mot sur un
-  // document qui parlait d'autre chose. Il dit maintenant qu'il ne montre qu'une forme.
-  assertEquals(COURSE_SYSTEM_PROMPT.includes("Cet exemple montre une FORME"), true);
-  // La densité se compte en caractères : « par paragraphe » ne veut rien dire quand un
-  // paragraphe fait six cents caractères.
-  assertEquals(COURSE_SYSTEM_PROMPT.includes("DEUX CENT CINQUANTE CARACTÈRES"), true);
-  assertEquals(COURSE_SYSTEM_PROMPT.includes("LA POSE D'UNE MARQUE"), true);
-});
+  // Les densités chiffrées vivaient ici et dans `marks.ts`, en deux exemplaires qui
+  // pouvaient diverger. Il n'en reste qu'un, et c'est `CHARS_PER`.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("DEUX CENT CINQUANTE CARACTÈRES"), false);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("HUIT CENTS CARACTÈRES"), false);
 
-Deno.test("le code couleur ne nomme que des surligneurs qui existent", () => {
-  // Un nom de couleur inconnu du rendu laisserait « framboise|texte » dans la phrase, sur
-  // les deux clients à la fois. Les cinq teintes viennent de `SHEET_HIGHLIGHTS`.
-  const named = [...COURSE_SYSTEM_PROMPT.matchAll(/^- ([a-zéèêà]+) : /gmu)].map((match) =>
-    match[1]
-  );
-  assertEquals(named.length > 0, true);
-  for (const colour of named) {
-    assertEquals(SHEET_HIGHLIGHTS.includes(colour as typeof SHEET_HIGHLIGHTS[number]), true);
-  }
-  // Et réciproquement : les cinq feutres ont chacun leur ligne, sinon l'un d'eux ne serait
-  // jamais posé par le modèle.
+  // Aucune teinte n'y est plus nommée : c'est la passe de marquage qui les connaît.
   for (const colour of SHEET_HIGHLIGHTS) {
-    assertEquals(named.includes(colour), true);
+    assertEquals(COURSE_SYSTEM_PROMPT.includes(`${colour}|`), false);
   }
+});
+
+Deno.test("le prompt garde ce qui touche à la sortie, et ça seul", () => {
+  // Le gras reste : c'est la seule marque que le rédacteur posait de façon fiable, et la
+  // consigne lui dit maintenant de la poser sans se fixer de compte.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("**terme** met en gras"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("sans te fixer de compte"), true);
+
+  // Le surlignage et l'italique, non : posés au jugé par le rédacteur, ils seraient comptés
+  // comme déjà présents et la passe ne les reposerait pas.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("ni ==surlignage==, ni *italique*"), true);
+
+  // Les formules dans la phrase restent : c'est la sortie elle-même, pas du relief. Une
+  // commande LaTeX nue hors de $…$ casse le rendu sur les deux clients.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("LES FORMULES DANS LA PHRASE"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("$E = mc^2$ compose une formule"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("UN PARAGRAPHE CORRECTEMENT ÉCRIT"), true);
+  // L'exemple a déteint une fois : le modèle a repris ses italiques mot pour mot sur un
+  // document qui parlait d'autre chose. Il dit toujours qu'il ne montre qu'une forme.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Cet exemple montre une FORME"), true);
 });
 
 Deno.test("audienceBrief mappe lycée + France", () => {

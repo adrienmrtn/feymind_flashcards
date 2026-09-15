@@ -220,9 +220,20 @@ Deno.test("la consigne demande des marques, pas des textes", () => {
 });
 
 Deno.test("la consigne ne nomme que des surligneurs qui existent", () => {
-  // `readAnchors` refuse une teinte hors de cette liste : si la consigne en nommait une de
-  // plus, chacune de ses marques serait posée puis jetée, sans que rien ne le dise.
+  // Ce contrôle vivait sur le prompt d'écriture ; c'est cette consigne-ci qui porte
+  // désormais le code couleur, et elle seule. Un nom de teinte inconnu du rendu laisserait
+  // « framboise|texte » se lire dans la phrase, sur les deux clients à la fois - et
+  // `readAnchors` le refuserait, donc la marque serait cherchée puis jetée en silence.
+  const named = [...MARK_SYSTEM_PROMPT.matchAll(/^- ([a-zéèêà]+) : /gmu)].map((m) => m[1]!);
+  assertEquals(named.length, SHEET_HIGHLIGHTS.length);
+  for (const colour of named) {
+    assertEquals(SHEET_HIGHLIGHTS.includes(colour as typeof SHEET_HIGHLIGHTS[number]), true);
+  }
+
+  // Et réciproquement : les cinq feutres ont chacun leur ligne et leur nom entre guillemets
+  // dans la description de "m", sinon l'un d'eux ne serait jamais posé.
   for (const colour of SHEET_HIGHLIGHTS) {
+    assertEquals(named.includes(colour), true);
     assertEquals(MARK_SYSTEM_PROMPT.includes(`"${colour}"`), true);
   }
 });
