@@ -2,6 +2,9 @@ import "server-only";
 
 import {
   throughputFrom,
+  type AgendaDone,
+  type AgendaKind,
+  type AgendaOverride,
   type MockAnswer,
   type MockDebrief,
   type MockGrade,
@@ -25,6 +28,8 @@ import { currentAccessToken, currentUserId } from "@/lib/data/user";
 export interface MockSessionRow {
   id: string;
   exam_id: string | null;
+  /** Ce que la session mesure. Null sur les lignes écrites avant les parcours : c'est un blanc. */
+  kind: string | null;
   planned_for: string | null;
   minutes: number;
   question_count: number;
@@ -42,7 +47,18 @@ export interface MockSessionRow {
 }
 
 const MOCK_COLUMNS =
-  "id, exam_id, planned_for, minutes, question_count, correct_count, questions, answers, grades, debrief, with_audio, started_at, finished_at";
+  "id, exam_id, kind, planned_for, minutes, question_count, correct_count, questions, answers, grades, debrief, with_audio, started_at, finished_at";
+
+/**
+ * La sorte d'une session, telle qu'on ose la lire.
+ *
+ * Toutes les lignes antérieures aux parcours sont des blancs et n'ont pas de colonne `kind` -
+ * la migration leur en donne une avec `default 'mock'`, mais une lecture faite pendant le
+ * déploiement peut encore rendre `null`.
+ */
+export function asAgendaKind(value: string | null | undefined): AgendaKind {
+  return value === "parcours" ? "parcours" : "mock";
+}
 
 /** Les blancs terminés. Une session ouverte ne mesure encore rien. */
 export async function listMockResults(): Promise<MockResult[]> {
@@ -52,10 +68,92 @@ export async function listMockResults(): Promise<MockResult[]> {
     .map((row) => ({
       id: row.id,
       examId: row.exam_id,
+      kind: asAgendaKind(row.kind),
       questionCount: row.question_count,
       correctCount: row.correct_count,
       finishedAt: new Date(row.finished_at as string),
     }));
+}
+
+/**
+ * Les mesures passées, sous la forme que l'agenda lit.
+ *
+ * Trois colonnes et sa propre requête, plutôt que `listMockSessions` : celle-ci ramène les
+ * copies entières - questions, réponses, corrections - et se borne à soixante lignes pour ne
+ * pas peser. L'agenda n'a besoin d'aucun de ces champs, et il en a besoin de **toutes** les
+ * lignes : une session tombée hors de la fenêtre ferait passer pour manqué un rendez-vous
+ * honoré, et le site contredirait le téléphone sur un test que l'étudiant a bien passé.
+ *
+ * Contrairement à `listMockResults`, une copie où rien n'a été juste compte : elle a été
+ * passée, donc le rendez-vous l'a été aussi.
+ */
+export async function listMeasuresDone(): Promise<AgendaDone[]> {
+  const userId = await currentUserId();
+  const token = await currentAccessToken();
+  if (!userId || !token) return [];
+
+  const rows = await cachedRead(
+    userId,
+    "measures-done",
+    [userTag(userId), examsTag(userId)],
+    async () => {
+      const { data } = await dataClient(token)
+        .from("mock_sessions")
+        .select("exam_id, kind, finished_at")
+        .eq("user_id", userId)
+        .not("exam_id", "is", null)
+        .not("finished_at", "is", null)
+        .order("finished_at", { ascending: false })
+        .limit(500);
+      return (
+        (data as { exam_id: string; kind: string | null; finished_at: string }[] | null) ?? []
+      );
+    },
+  );
+
+  return rows.map((row) => ({
+    examId: row.exam_id,
+    kind: asAgendaKind(row.kind),
+    finishedAt: new Date(row.finished_at),
+  }));
+}
+
+/**
+ * Les rendez-vous que l'étudiant a déplacés lui-même.
+ *
+ * C'est la seule part de l'agenda qui soit écrite : le reste se dérive de la date de l'épreuve
+ * à chaque lecture. Sans cette lecture, le site reposerait les rendez-vous à leur date de
+ * dérivation et l'étudiant verrait sa semaine bouger en passant du téléphone au navigateur.
+ */
+export async function listExamOverrides(): Promise<AgendaOverride[]> {
+  const userId = await currentUserId();
+  const token = await currentAccessToken();
+  if (!userId || !token) return [];
+
+  const rows = await cachedRead(
+    userId,
+    "exam-plan-overrides",
+    [userTag(userId), examsTag(userId)],
+    async () => {
+      const { data } = await dataClient(token)
+        .from("exam_plan_overrides")
+        .select("exam_id, kind, slot, scheduled_for")
+        .eq("user_id", userId)
+        .limit(200);
+      return (
+        (data as { exam_id: string; kind: string; slot: number; scheduled_for: string }[] | null) ??
+        []
+      );
+    },
+  );
+
+  return rows.map((row) => ({
+    examId: row.exam_id,
+    kind: asAgendaKind(row.kind),
+    slot: row.slot,
+    // Midi : une date nue se lit en UTC, et minuit UTC retombe la veille à l'ouest de Greenwich.
+    date: new Date(`${row.scheduled_for}T12:00:00`),
+  }));
 }
 
 export async function listMockSessions(): Promise<MockSessionRow[]> {

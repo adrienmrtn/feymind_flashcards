@@ -33,7 +33,12 @@ import {
   type ExamRow,
 } from "@/lib/data/courses";
 import { loadCardDifficulty } from "@/lib/data/difficulty";
-import { listMockResults, loadThroughput } from "@/lib/data/mocks";
+import {
+  listExamOverrides,
+  listMeasuresDone,
+  listMockResults,
+  loadThroughput,
+} from "@/lib/data/mocks";
 import { listOffDays, offDayOffsets, weeklyOffOffsets } from "@/lib/data/off-days";
 import { readProfile, type ProfileRow } from "@/lib/data/profile";
 import { getTranslator } from "@/lib/i18n/server";
@@ -95,17 +100,29 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
   const today = startOfDay(now);
   const { t } = await getTranslator();
 
-  const [exams, courses, snapshots, difficulties, profile, throughput, mocks, offDays] =
-    await Promise.all([
-      listExams(),
-      listCourses(),
-      listCardSnapshots(),
-      loadCardDifficulty(),
-      readProfile(),
-      loadThroughput(),
-      listMockResults(),
-      listOffDays(),
-    ]);
+  const [
+    exams,
+    courses,
+    snapshots,
+    difficulties,
+    profile,
+    throughput,
+    mocks,
+    offDays,
+    measures,
+    overrides,
+  ] = await Promise.all([
+    listExams(),
+    listCourses(),
+    listCardSnapshots(),
+    loadCardDifficulty(),
+    readProfile(),
+    loadThroughput(),
+    listMockResults(),
+    listOffDays(),
+    listMeasuresDone(),
+    listExamOverrides(),
+  ]);
 
   const termCards: TermCard[] = snapshots.map((card) => ({
     id: card.id,
@@ -135,6 +152,10 @@ export async function loadTermSnapshot(): Promise<TermSnapshot> {
     throughput,
     mocks,
     difficulties,
+    // Les parcours déjà passés et les rendez-vous déplacés à la main : sans eux, le site
+    // reposerait un test honoré hier et ignorerait les dates choisies depuis le téléphone.
+    parcours: measures,
+    overrides,
     // L'habitude de la semaine et les dates posées à la main, ensemble. La première vient du
     // parcours d'inscription : sans cette ligne, répondre « jamais le dimanche » n'aurait
     // aucune suite, et le plan poserait du travail le dimanche jusqu'à ce qu'on le lui

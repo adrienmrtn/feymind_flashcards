@@ -243,6 +243,7 @@ export {
   PARCOURS_QUESTION_COUNT,
   PARCOURS_TIGHT_WINDOW,
   parcoursOffsets,
+  parcoursQuota,
 } from "./srs/parcours";
 
 export {

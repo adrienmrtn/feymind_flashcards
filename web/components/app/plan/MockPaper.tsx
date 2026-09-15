@@ -24,26 +24,34 @@ import { requestPaywall } from "@/lib/paywall";
  * Le chronomètre est affiché mais ne ferme rien de force jusqu'à zéro, où il remet la copie
  * telle quelle - comme un surveillant qui ramasse.
  *
- * **La remise est la porte du gratuit.** Passer la copie ne coûte rien ; la correction, si.
- * Pour qui n'est pas abonné, « Remettre la copie » ouvre donc le paywall et la copie reste
- * ouverte derrière - rien n'est envoyé, rien n'est perdu, et l'offre arrive au moment précis
- * où ce qu'elle vend vient d'être gagné. Le serveur refuse de son côté : voir
+ * **La remise est la porte du gratuit.** Passer la copie ne coûte rien ; la correction d'un
+ * examen blanc, si. Pour qui n'est pas abonné, « Remettre la copie » ouvre donc le paywall et
+ * la copie reste ouverte derrière - rien n'est envoyé, rien n'est perdu, et l'offre arrive au
+ * moment précis où ce qu'elle vend vient d'être gagné. Le serveur refuse de son côté : voir
  * `finishMockSession`.
+ *
+ * Un **test de parcours** n'est pas derrière cette porte : il revient tous les deux ou trois
+ * jours, et un test dont on ne voit jamais le résultat n'est pas un test. C'est la page qui
+ * tranche, avec `gated`, parce que c'est elle qui sait ce que la session mesure.
  */
 export function MockPaper({
   sessionId,
   examName,
+  kindLabel,
   minutes,
   questions,
   withAudio,
-  isPro,
+  gated,
 }: {
   sessionId: string;
   examName: string;
+  /** Ce que la copie mesure : « Examen blanc » ou « Test de parcours ». */
+  kindLabel: string;
   minutes: number;
   questions: MockQuestion[];
   withAudio: boolean;
-  isPro: boolean;
+  /** Vrai quand la remise demande Pro. Un parcours se corrige pour tout le monde. */
+  gated: boolean;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -62,7 +70,7 @@ export function MockPaper({
 
   const hand = useCallback(async () => {
     // Le gratuit s'arrête ici : la copie reste à l'écran, l'offre passe devant.
-    if (!isPro) {
+    if (gated) {
       setConfirming(false);
       requestPaywall();
       return;
@@ -86,7 +94,7 @@ export function MockPaper({
       return;
     }
     router.refresh();
-  }, [answers, isPro, questions, router, sessionId]);
+  }, [answers, gated, questions, router, sessionId]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -109,6 +117,9 @@ export function MockPaper({
       <header className="sticky top-14 z-20 -mx-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md lg:top-0 lg:mx-0 lg:rounded-b-group lg:px-5">
         <div className="flex items-center justify-between gap-4">
           <span className="min-w-0">
+            <span className="block truncate text-[11px] font-semibold uppercase tracking-wide text-ink-tertiary">
+              {kindLabel}
+            </span>
             <span className="block truncate text-[14px] font-semibold text-ink">{examName}</span>
             <span className="numeral block text-[12px] text-ink-tertiary">
               {t("app.mock.answered", { done: answered, total: questions.length })}

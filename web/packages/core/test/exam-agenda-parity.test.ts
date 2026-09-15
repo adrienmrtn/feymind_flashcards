@@ -36,6 +36,12 @@ const swift = readFileSync(
   "utf8",
 );
 
+/** Là où l'app compose la copie d'un parcours : c'est l'autre moitié du format. */
+const service = readFileSync(
+  resolve(here, "../../../..", "Micabo/Services/MockExamService.swift"),
+  "utf8",
+);
+
 /** La valeur d'un `static let` du fichier Swift. */
 function constant(name: string): string {
   const match = swift.match(new RegExp(`static let ${name}\\s*(?::[^=]+)?=\\s*([^\\n]+)`));
@@ -84,6 +90,20 @@ describe("l'agenda, des deux côtés", () => {
     // test coché en effacerait trois.
     expect(number("parcoursSlack")).toBe(1);
     expect(number("parcoursSlack")).toBeLessThan(number("mockSlack"));
+  });
+
+  it("compose la copie d'un parcours de la même façon", () => {
+    // Le format fixe ne sert à rien si les deux clients ne demandent pas la même copie : un
+    // parcours web à cinq questions et un parcours iOS à dix ne se comparent plus entre eux.
+    // Côté Swift, la composition est écrite à l'appel ; on vérifie qu'elle dit la même chose
+    // que `parcoursQuota` - les orales deviennent des QCM sans micro, et rien ne part en
+    // vrai-faux ni en texte à trou.
+    const quota = service.slice(service.indexOf("kind == .parcours"));
+    expect(quota).toContain("? ExamAgenda.parcoursChoiceCount");
+    expect(quota).toContain(": ExamAgenda.parcoursQuestionCount");
+    expect(quota).toContain("feynman: withAudio ? ExamAgenda.parcoursOralCount : 0");
+    expect(quota).toContain("trueFalse: 0");
+    expect(quota).toContain("gap: 0");
   });
 
   it("écarte le parcours du blanc dans le même sens", () => {

@@ -1,13 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { courseAccent } from "@micabo/core";
 
+import { StartMock } from "@/components/app/plan/StartMock";
 import { Button } from "@/components/ui/button";
-import { startMockSession } from "@/lib/actions/mocks";
 import { useI18n } from "@/lib/i18n/client";
 import type { PlanTodayBlock } from "@/lib/term-plan";
 
@@ -54,9 +52,19 @@ export function TodayPanel({
    */
   const sameWork = planned && cards === total;
   const reviewBlocks = blocks.filter((block) => block.kind === "review");
-  const mockBlocks = blocks.filter((block) => block.kind === "mock");
+  /**
+   * Les mesures du jour : l'examen blanc et le test de parcours, dans l'ordre où ils tombent.
+   *
+   * Ils partagent une rangée parce qu'ils demandent la même chose à l'étudiant - s'asseoir et
+   * répondre - et parce que l'agenda garantit qu'il n'y en a qu'un par jour, sauf déplacement
+   * fait à la main.
+   */
+  const measureBlocks = blocks.filter(
+    (block): block is PlanTodayBlock & { kind: "mock" | "parcours" } =>
+      block.kind === "mock" || block.kind === "parcours",
+  );
 
-  if (total === 0 && mockBlocks.length === 0) {
+  if (total === 0 && measureBlocks.length === 0) {
     return (
       <section className="panel p-6" data-tour="aujourdhui">
         <p className="section-title">{t("app.today.done")}</p>
@@ -121,23 +129,34 @@ export function TodayPanel({
               </span>
             </li>
           ))}
-          {mockBlocks.map((block) => (
-            <li key={`mock:${block.examId}`} className="flex items-center gap-3 px-6 py-3">
+          {measureBlocks.map((block) => (
+            <li
+              key={`${block.kind}:${block.examId}`}
+              /*
+                `flex-wrap` : le lanceur demande d'abord « as-tu un micro ? », et sa question
+                s'ouvre en panneau. Sans quoi la rangée l'écraserait contre le bord droit.
+              */
+              className="flex flex-wrap items-center gap-3 px-6 py-3"
+            >
               <span
                 aria-hidden
-                className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-caution-soft text-[17px]"
+                className={`flex size-9 shrink-0 items-center justify-center rounded-[10px] text-[17px] ${
+                  block.kind === "mock" ? "bg-accent-soft" : "bg-caution-soft"
+                }`}
               >
-                ⏱
+                {block.emoji}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[14px] font-medium text-ink">
-                  {t("app.today.mockTitle", { exam: block.examName })}
+                  {t(block.kind === "mock" ? "app.today.mockTitle" : "app.today.parcoursTitle", {
+                    exam: block.examName,
+                  })}
                 </span>
                 <span className="numeral block truncate text-[12.5px] text-ink-tertiary">
                   {t("app.today.mock", { questions: block.cards, minutes: block.minutes })}
                 </span>
               </span>
-              <StartMock examId={block.examId} />
+              <StartMock examId={block.examId} kind={block.kind} variant="outline" />
             </li>
           ))}
         </ul>
@@ -146,26 +165,3 @@ export function TodayPanel({
   );
 }
 
-function StartMock({ examId }: { examId: string }) {
-  const { t } = useI18n();
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-
-  return (
-    <Button
-      size="sm"
-      variant="outline"
-      disabled={pending}
-      onClick={() =>
-        startTransition(async () => {
-          const result = await startMockSession(examId);
-          if (result.status === "ok" && result.sessionId) {
-            router.push(`/app/plan/blanc/${result.sessionId}` as never);
-          }
-        })
-      }
-    >
-      {pending ? t("app.exams.wait") : t("app.mock.start")}
-    </Button>
-  );
-}

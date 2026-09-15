@@ -10,9 +10,11 @@ import {
   paperMinutes,
   paperQuota,
   paperScore,
+  parcoursQuota,
   quotaSize,
   sheetLanguage,
   wantsMock,
+  type AgendaKind,
   type MockAnswer,
   type MockDebrief,
   type MockGrade,
@@ -21,6 +23,7 @@ import {
 
 import { revalidateUserData } from "@/lib/data/cache";
 import { readEntitlement } from "@/lib/data/entitlement";
+import { asAgendaKind } from "@/lib/data/mocks";
 import { actionT } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
 
@@ -54,9 +57,17 @@ interface CourseMatter {
 
 const MAX_CONTEXT = 40_000;
 
+/**
+ * Ouvre une mesure : un examen blanc, ou un test de parcours.
+ *
+ * Les deux passent par `generate-mock`. Son `quota` accepte un compte par format depuis le
+ * début, et un parcours n'est que cinq QCM et cinq explications : aucune fonction de plus à
+ * déployer, à tester ni à payer.
+ */
 export async function startMockSession(
   examId: string,
   withAudio = false,
+  kind: AgendaKind = "mock",
 ): Promise<MockResultAction> {
   const supabase = await createClient();
   const {
@@ -76,7 +87,10 @@ export async function startMockSession(
     | { name: string | null; kind: string | null; course_ids: string[] | null }
     | null;
   if (!exam) return { status: "error", message: await actionT("app.errors.examMissing") };
-  if (!wantsMock(asExamKind(exam.kind))) {
+  // Le garde ne vaut que pour le blanc : on ne s'entraîne pas à un oral avec vingt QCM en
+  // temps imparti. Un parcours, lui, sert un oral autant qu'un écrit - la moitié de ses
+  // questions se répond à voix haute.
+  if (kind === "mock" && !wantsMock(asExamKind(exam.kind))) {
     return { status: "error", message: await actionT("app.errors.mockNotForKind") };
   }
 
@@ -117,7 +131,7 @@ export async function startMockSession(
     return { status: "error", message: await actionT("app.errors.mockTooFewCards") };
   }
 
-  const quota = paperQuota(withAudio);
+  const quota = kind === "parcours" ? parcoursQuota(withAudio) : paperQuota(withAudio);
   const { data, error } = await supabase.functions.invoke("generate-mock", {
     body: {
       title: exam.name ?? matter[0]?.title ?? "",
@@ -141,6 +155,7 @@ export async function startMockSession(
     id: sessionId,
     user_id: user.id,
     exam_id: examId,
+    kind,
     planned_for: new Date().toISOString().slice(0, 10),
     minutes: paperMinutes(questions),
     question_count: questions.length,
@@ -188,26 +203,39 @@ export async function finishMockSession(
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", message: await actionT("app.errors.signIn") };
 
-  /**
-   * **La correction est la marchandise.** Composer la copie et la passer sont offerts ; lire
-   * ce qu'elle vaut ne l'est pas. Le garde est ici et pas seulement dans le bouton : la
-   * correction coûte un appel au modèle, et une action serveur s'appelle sans passer par
-   * l'écran qui la déclenche.
-   */
-  const right = await readEntitlement();
-  if (!right.isPro) return { status: "paywall" };
-
   const { data: sessionRow } = await supabase
     .from("mock_sessions")
-    .select("id, exam_id, questions, question_count, finished_at")
+    .select("id, exam_id, kind, questions, question_count, finished_at")
     .eq("user_id", user.id)
     .eq("id", sessionId)
     .maybeSingle();
 
   const session = sessionRow as
-    | { exam_id: string | null; questions: MockQuestion[] | null; finished_at: string | null }
+    | {
+        exam_id: string | null;
+        kind: string | null;
+        questions: MockQuestion[] | null;
+        finished_at: string | null;
+      }
     | null;
   if (!session) return { status: "error", message: await actionT("app.errors.mockMissing") };
+
+  /**
+   * **La correction du blanc est la marchandise ; celle du parcours ne l'est pas.**
+   *
+   * Composer la copie et la passer sont offerts ; lire ce que vaut un examen blanc ne l'est
+   * pas. Le garde est ici et pas seulement dans le bouton : la correction coûte un appel au
+   * modèle, et une action serveur s'appelle sans passer par l'écran qui la déclenche.
+   *
+   * Le parcours en est exempté parce qu'il est **la mesure ordinaire** de la préparation : il
+   * revient tous les deux ou trois jours, et un test qu'on peut passer sans jamais voir son
+   * résultat n'est pas un test. Il coûte d'ailleurs bien moins cher - cinq explications à
+   * noter au lieu de vingt questions et trois explications.
+   */
+  if (asAgendaKind(session.kind) === "mock") {
+    const right = await readEntitlement();
+    if (!right.isPro) return { status: "paywall" };
+  }
   if (session.finished_at) return { status: "ok", sessionId };
 
   const questions = session.questions ?? [];

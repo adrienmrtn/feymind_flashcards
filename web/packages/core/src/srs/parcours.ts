@@ -68,3 +68,29 @@ export function parcoursOffsets(daysRemaining: number, max = PARCOURS_MAX): numb
 
   return offsets;
 }
+
+/**
+ * La composition d'un test de parcours, telle qu'elle part à `generate-mock`.
+ *
+ * Elle ne se déduit pas de `paperQuota` : celui-ci répartit vingt questions entre quatre
+ * familles pour imiter une épreuve, alors qu'un parcours a un format arrêté - cinq QCM, cinq
+ * explications - et c'est ce format fixe qui rend deux tests comparables d'une semaine à
+ * l'autre.
+ *
+ * **Sans micro, les cinq orales deviennent cinq QCM.** Le test garde ses dix questions notées
+ * plutôt que d'en perdre la moitié : une mesure amputée ne se compare à aucune autre. Ce n'est
+ * pas tout à fait la même mesure - un QCM se devine, une explication non - mais c'en est une.
+ */
+export function parcoursQuota(withAudio: boolean): {
+  choice: number;
+  truefalse: number;
+  gap: number;
+  feynman: number;
+} {
+  return {
+    choice: withAudio ? PARCOURS_CHOICE_COUNT : PARCOURS_QUESTION_COUNT,
+    truefalse: 0,
+    gap: 0,
+    feynman: withAudio ? PARCOURS_ORAL_COUNT : 0,
+  };
+}

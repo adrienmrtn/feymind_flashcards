@@ -12,6 +12,7 @@ import {
   PARCOURS_QUESTION_COUNT,
   PARCOURS_TIGHT_WINDOW,
   parcoursOffsets,
+  parcoursQuota,
 } from "../src/srs/parcours";
 
 const TODAY = startOfDay(new Date(2026, 8, 1));
@@ -80,6 +81,27 @@ describe("la cadence des tests de parcours", () => {
   it("garde le format fixe : cinq QCM et cinq questions orales", () => {
     // C'est ce qui rend deux tests comparables d'une semaine à l'autre.
     expect(PARCOURS_QUESTION_COUNT).toBe(10);
+    expect(parcoursQuota(true)).toEqual({ choice: 5, truefalse: 0, gap: 0, feynman: 5 });
+  });
+
+  it("remplace les orales par des QCM quand il n'y a pas de micro, sans rien perdre", () => {
+    // Dix questions notées valent mieux qu'une mesure amputée de moitié : un test à cinq
+    // questions ne se compare à aucun autre. Ce n'est pas tout à fait la même mesure - un QCM
+    // se devine, une explication non - mais c'en est une.
+    const sansMicro = parcoursQuota(false);
+    expect(sansMicro.feynman).toBe(0);
+    expect(
+      sansMicro.choice + sansMicro.truefalse + sansMicro.gap + sansMicro.feynman,
+    ).toBe(PARCOURS_QUESTION_COUNT);
+  });
+
+  it("ne demande ni vrai-faux ni texte à trou", () => {
+    // Le parcours mesure deux choses : reconnaître, et expliquer. Un texte à trou mesure la
+    // mémoire d'un mot, ce que les cartes font déjà mieux et tous les jours.
+    for (const quota of [parcoursQuota(true), parcoursQuota(false)]) {
+      expect(quota.truefalse).toBe(0);
+      expect(quota.gap).toBe(0);
+    }
   });
 });
 

@@ -6,11 +6,15 @@ import { MockPaper } from "@/components/app/plan/MockPaper";
 import { MockReport } from "@/components/app/plan/MockReport";
 import { listExams } from "@/lib/data/courses";
 import { readEntitlement } from "@/lib/data/entitlement";
-import { readMockSession } from "@/lib/data/mocks";
+import { asAgendaKind, readMockSession } from "@/lib/data/mocks";
 import { getTranslator } from "@/lib/i18n/server";
 
 /**
- * Une copie d'examen blanc : la passation, puis le débriefing.
+ * Une copie : la passation, puis le débriefing.
+ *
+ * Un examen blanc et un test de parcours passent par la même page. Ils ne diffèrent que par
+ * ce qu'on y trouve - vingt questions en temps imparti contre dix en cinq minutes - et par la
+ * porte de la remise : la correction d'un blanc s'achète, celle d'un parcours non.
  *
  * Les deux vivent sur la même adresse, et c'est voulu. Une copie remise n'est pas une page
  * qu'on quitte : c'est le moment où elle devient lisible. Rediriger vers l'épreuve, comme
@@ -32,16 +36,18 @@ export default async function MockPage({ params }: { params: Promise<{ id: strin
   const exams = await listExams();
   const exam = exams.find((row) => row.id === session.exam_id);
   const examName = exam?.name ?? t("app.mock.panelTitle");
+  const kind = asAgendaKind(session.kind);
 
   if (!session.finished_at) {
     return (
       <MockPaper
         sessionId={session.id}
         examName={examName}
+        kindLabel={t(kind === "parcours" ? "app.parcours.blockTitle" : "app.mock.blockTitle")}
         minutes={session.minutes}
         questions={questions}
         withAudio={session.with_audio}
-        isPro={right.isPro}
+        gated={kind === "mock" && !right.isPro}
       />
     );
   }

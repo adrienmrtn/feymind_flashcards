@@ -8,6 +8,7 @@ import {
   examCountdownLabel,
   examReadiness,
   isMockBlock,
+  isParcoursBlock,
   isReviewBlock,
   masteryByCourse,
   masteryForCourses,
@@ -28,7 +29,12 @@ import { ExamSchedule, type ScheduleDay } from "@/components/app/plan/ExamSchedu
 import { ExamSheet, type SheetCourse } from "@/components/app/plan/ExamSheet";
 import { listCardSnapshots, listCourses, listExams } from "@/lib/data/courses";
 import { loadCardDifficulty } from "@/lib/data/difficulty";
-import { listMockResults, loadThroughput } from "@/lib/data/mocks";
+import {
+  listExamOverrides,
+  listMeasuresDone,
+  listMockResults,
+  loadThroughput,
+} from "@/lib/data/mocks";
 import { listOffDays, offDayOffsets } from "@/lib/data/off-days";
 import { getTranslator } from "@/lib/i18n/server";
 import { projectedMastery } from "@/lib/term-plan";
@@ -52,15 +58,18 @@ export default async function ExamSheetPage({
   const { id } = await params;
   const { t } = await getTranslator();
 
-  const [exams, courses, snapshots, difficulties, mocks, throughput, offDays] = await Promise.all([
-    listExams(),
-    listCourses(),
-    listCardSnapshots(),
-    loadCardDifficulty(),
-    listMockResults(),
-    loadThroughput(),
-    listOffDays(),
-  ]);
+  const [exams, courses, snapshots, difficulties, mocks, throughput, offDays, measures, overrides] =
+    await Promise.all([
+      listExams(),
+      listCourses(),
+      listCardSnapshots(),
+      loadCardDifficulty(),
+      listMockResults(),
+      loadThroughput(),
+      listOffDays(),
+      listMeasuresDone(),
+      listExamOverrides(),
+    ]);
 
   const exam = exams.find((row) => row.id === id);
   if (!exam) notFound();
@@ -115,6 +124,10 @@ export default async function ExamSheetPage({
     throughput,
     difficulties,
     mocks,
+    // Le même agenda que l'accueil et que le téléphone : les tests honorés ne se reposent pas,
+    // et une date choisie à la main tient d'un écran à l'autre.
+    parcours: measures,
+    overrides,
     offDays: offDayOffsets(offDays, today, TERM_HORIZON_DAYS),
   });
 
@@ -123,6 +136,7 @@ export default async function ExamSheetPage({
     .map((day) => {
       const mine = day.blocks.filter((block) => block.examId === exam.id);
       const mock = mine.find(isMockBlock);
+      const parcours = mine.find(isParcoursBlock);
       const cards = mine
         .filter(isReviewBlock)
         .reduce((sum, block) => sum + block.cardIds.length, 0);
@@ -133,6 +147,9 @@ export default async function ExamSheetPage({
         cards,
         minutes: mine.filter(isReviewBlock).reduce((sum, block) => sum + block.minutes, 0),
         mock: mock ? { questionCount: mock.questionCount, minutes: mock.minutes } : null,
+        parcours: parcours
+          ? { questionCount: parcours.questionCount, minutes: parcours.minutes }
+          : null,
         isExamDay: day.offset === daysRemaining,
         isOff: day.isOff,
       };
