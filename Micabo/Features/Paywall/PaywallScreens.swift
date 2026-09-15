@@ -6,10 +6,9 @@ import SwiftUI
 ///
 /// Il ne montre **qu'une offre et qu'un prix**, et c'est tout son intérêt : à l'instant où
 /// l'on sort du parcours, une grille de comparaison demande de choisir avant d'avoir décidé
-/// d'acheter. La phrase dit les deux choses qu'on veut savoir — c'est gratuit trois jours,
-/// puis c'est tant par an — et « Voir toutes les offres » ouvre la grille à ceux qui la
-/// cherchent. **Une seule somme, celle qui est prélevée** : le mensuel équivalent en
-/// annonçait une seconde, et le chiffre qu'on retenait n'était pas celui qui part.
+/// d'acheter. La phrase dit les trois choses qu'on veut savoir — c'est gratuit trois jours,
+/// ça coûtera tant par mois, c'est prélevé une fois par an — et « Voir toutes les offres »
+/// ouvre la grille à ceux qui la cherchent.
 struct PaywallOfferView: View {
     let plan: PaywallPlan
     /// Ce qui a ouvert l'écran, en une ligne. Absent à la sortie du parcours d'accueil : on
