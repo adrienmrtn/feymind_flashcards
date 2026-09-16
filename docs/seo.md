@@ -24,6 +24,72 @@ l'exploration ne peut pas être lue, donc son `noindex` ne peut pas être vu. C'
 pour laquelle les écrans privés sont maintenant fermés par en-tête `X-Robots-Tag` et laissés
 explorables : sans exploration, la consigne n'arriverait jamais.
 
+## Les trois causes du rapport « Pourquoi les pages ne sont pas indexées »
+
+La Search Console rangeait les pages sous trois motifs. Chacun avait sa cause dans le code,
+et les trois sont corrigées.
+
+### « Exclue par une balise `noindex` » — et c'est voulu
+
+`/connexion` est lié depuis le pied de page et depuis le bouton **Commencer** : Google le
+suit, lit `X-Robots-Tag: noindex, follow`, et le range ici. C'est exactement ce qu'on
+demande. **Cette ligne n'est pas un problème à faire disparaître** : la faire disparaître
+voudrait dire indexer un écran de connexion, ce qui est un mauvais résultat de recherche.
+
+Ce qui était cassé, c'est l'autre moitié. `robots.txt` portait quatre lignes :
+
+```
+Disallow: /app/
+Disallow: /auth/
+Disallow: /commencer/
+Disallow: /fondations
+```
+
+qui visaient **précisément** les chemins que `next.config.ts` marque `noindex`. La consigne
+était écrite dans une pièce dont on venait de fermer la porte : Google ne pouvait pas entrer
+la lire, donc ces adresses ne sortaient jamais de l'index — elles y restaient nues, sans
+titre ni extrait. Le fichier se contredisait lui-même, son propre commentaire disait le
+contraire de son code, et cette page-ci disait déjà pourquoi.
+
+Les quatre lignes sont retirées. `web/lib/robots.test.ts` reprend l'invariant et le tient :
+aucun chemin marqué `noindex` ne peut être interdit d'exploration.
+
+L'économie d'exploration qu'elles cherchaient était de toute façon illusoire. Un écran privé
+est vu une fois, rend `noindex`, et le robot cesse d'y revenir. Une adresse bloquée, elle, se
+retente indéfiniment : rien ne lui a jamais dit non.
+
+### « Détectée, actuellement non indexée » — les 24 adresses traduites étaient orphelines
+
+Le sélecteur de langue est un `<select>` qui navigue sur un `onChange`. Un robot ne déclenche
+pas d'`onChange`, et un `<option>` n'est pas un lien. Résultat : `/fr/methode`, `/de/conditions`
+et leurs vingt-deux sœurs n'étaient **citées dans le HTML d'aucune page du site**. Elles
+n'existaient que dans `sitemap.xml` et dans les annotations `hreflang`.
+
+`hreflang` ne fait pas découvrir une page. Il regroupe des adresses que Google connaît déjà ;
+il ne les recommande pas, et ne leur transmet rien. Une page que rien ne lie est orpheline, et
+une orpheline trouvée dans un sitemap est la définition de « détectée, actuellement non
+indexée » : l'adresse est connue, mais rien dans le site ne dit qu'elle vaut le déplacement.
+
+`web/components/i18n/LanguageLinks.tsx` pose dans le pied de page les quatre autres langues
+**de la page courante**, en vraies balises `<a>`. Chacune des 30 adresses reçoit quatre liens
+entrants, et le maillage devient complet. Le `<select>` reste pour qui navigue à la souris.
+
+### « Explorée, actuellement non indexée » — un `lastmod` que Google finit par ignorer
+
+Le sitemap portait une date unique, écrite en dur, pour les trente adresses, et jamais
+retouchée. C'est pire que pas de date : `lastmod` est ce sur quoi Google s'appuie pour décider
+quand repasser, et il annonce explicitement qu'il ignore le `lastmod` d'un sitemap dès qu'il
+le juge peu fiable. Un sitemap ignoré perd le seul levier qui ramène le robot sur une page
+qu'il a laissée de côté.
+
+`web/lib/i18n/sitemap.ts` porte maintenant **une date par page**, celle du dernier commit qui
+a touché son texte. Le type rend la liste obligatoire : une page ajoutée à `INDEXABLE_PATHS`
+sans date ne compile pas.
+
+> **En changeant le texte d'une page**, avancer sa date dans `PAGE_UPDATED`, dans le même
+> commit. Une refonte visuelle qui ne change pas un mot ne se compte pas : `lastmod` parle du
+> contenu, pas du code. Mentir ici ramène au point de départ, en plus coûteux.
+
 ## Ce qui est en place
 
 | Élément | Fichier |
@@ -35,6 +101,8 @@ explorables : sans exploration, la consigne n'arriverait jamais.
 | Titres, descriptions, Open Graph, canoniques | `web/app/layout.tsx` + chaque `page.tsx` |
 | `Organization`, `WebSite`, `SoftwareApplication` | `web/components/landing/StructuredData.tsx` |
 | `noindex` des écrans privés | `web/next.config.ts`, `X-Robots-Tag` |
+| Liens internes entre les langues | `web/components/i18n/LanguageLinks.tsx` |
+| Date de dernière modification par page | `web/lib/i18n/sitemap.ts`, `PAGE_UPDATED` |
 | Manifeste et icônes | `web/app/manifest.ts`, `web/public/icon.svg`, `BrandMark` |
 | Ancres de la vitrine | `web/lib/landing-sections.ts` |
 
@@ -129,6 +197,10 @@ redirige en 302 vers `/app` et pose le cookie : l'app n'a pas de préfixe.
 Chaque page indexable pose le même jeu `hreflang` dans le HTML et dans
 `sitemap.xml` : les cinq langues plus `x-default` → anglais. Un oubli
 d'un côté, Google jette le jeu entier.
+
+Et elle **lie** les quatre autres, en balises `<a>`, dans son pied de page.
+`hreflang` annote, il ne fait pas découvrir : sans ces liens, les 24 adresses
+traduites ne sont citées nulle part et restent « détectées, non indexées ».
 
 Ne **jamais** rediriger `/` vers `/tr` d'après `Accept-Language`. Le robot
 arriverait en turc, ou pire : il verrait une redirection et n'indexerait

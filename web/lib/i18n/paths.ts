@@ -29,6 +29,9 @@ export const INDEXABLE_PATHS = [
   "/conditions",
 ] as const;
 
+/** Une page publique, sans son préfixe de langue. `PAGE_UPDATED` la veut datée. */
+export type IndexablePath = (typeof INDEXABLE_PATHS)[number];
+
 const PRIVATE_PREFIXES = ["/app", "/commencer", "/connexion", "/auth", "/fondations"] as const;
 
 const LOCALE_BLIND = [
