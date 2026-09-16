@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { AppearanceSwitcher } from "@/components/appearance/AppearanceSwitcher";
 import { BrandLockup } from "@/components/BrandMark";
+import { LanguageLinks } from "@/components/i18n/LanguageLinks";
 import { useI18n } from "@/lib/i18n/client";
 import { localizedHref } from "@/lib/i18n/paths";
 import { LANDING_SECTIONS } from "@/lib/landing-sections";
@@ -20,6 +21,11 @@ import { SITE_PAGES, siteNavKey } from "@/lib/site-pages";
  *
  * Les sections de la vitrine sont écrites en adresse complète (`/#comment-ca-marche`) : le
  * pied de page vit aussi sur les pages de fond, où une ancre nue ne mènerait nulle part.
+ *
+ * La dernière colonne porte les quatre autres langues **de la page courante**, en vrais
+ * liens : c'est le seul endroit du site où les adresses traduites sont citées dans le HTML
+ * (voir `LanguageLinks`). Le reste du pied de page, lui, reste dans la langue où l'on est —
+ * un lien qui change de langue sans le dire est un lien cassé pour qui le suit.
  */
 export function Footer({ signedIn = false }: { signedIn?: boolean }) {
   const { t, locale } = useI18n();
@@ -126,6 +132,10 @@ export function Footer({ signedIn = false }: { signedIn?: boolean }) {
                 </li>
               </ul>
             </div>
+
+            {/* Les quatre autres langues de cette page. Sans elles, `/fr/methode` et ses
+                vingt-trois sœurs ne sont liées depuis aucune page du site. */}
+            <LanguageLinks />
           </div>
         </div>
 

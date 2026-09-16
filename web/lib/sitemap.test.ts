@@ -74,4 +74,30 @@ describe("sitemap", () => {
       expect(languages["x-default"]).toBe(languages.en);
     }
   });
+
+  // Une seule date, écrite en dur pour les trente adresses, est ce que Google finit par
+  // ignorer : c'est ce qu'il y avait ici, et c'est ce qui laisse une page « détectée,
+  // actuellement non indexée » sans moyen de rappeler le robot. Une date par page, la vraie.
+  it("date chaque page pour elle-même, et pas toutes pareil", () => {
+    const entries = indexableSitemap();
+    for (const entry of entries) {
+      expect(entry.lastModified).toBeInstanceOf(Date);
+      expect(Number.isNaN(entry.lastModified.getTime())).toBe(false);
+    }
+
+    const distinct = new Set(entries.map((entry) => entry.lastModified.toISOString()));
+    expect(distinct.size).toBeGreaterThan(1);
+
+    // Les cinq langues d'une page changent dans le même commit : elles partagent sa date.
+    const byPath = (suffix: string) =>
+      entries.filter((entry) => entry.url.endsWith(suffix)).map((e) => e.lastModified.getTime());
+    const method = byPath("/methode");
+    expect(method).toHaveLength(5);
+    expect(new Set(method).size).toBe(1);
+
+    // Et une page n'emprunte pas la date d'une autre : la méthode et l'accueil ont bougé
+    // des jours différents.
+    const home = entries.find((entry) => entry.url === "https://www.micabo.app/");
+    expect(home?.lastModified.getTime()).not.toBe(method[0]);
+  });
 });
