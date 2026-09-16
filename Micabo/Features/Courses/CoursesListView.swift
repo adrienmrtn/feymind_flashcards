@@ -69,9 +69,9 @@ struct CoursesListView: View {
 
         func label(_ i18n: UiLocaleStore?) -> String {
             switch self {
-            case .recent: i18n?.t("app.courses.sortRecent") ?? "Récents"
-            case .alphabetical: i18n?.t("app.courses.sortAlpha") ?? "A à Z"
-            case .due: i18n?.t("app.courses.sortDue") ?? "À réviser"
+            case .recent: i18n.t("app.courses.sortRecent")
+            case .alphabetical: i18n.t("app.courses.sortAlpha")
+            case .due: i18n.t("app.courses.sortDue")
             }
         }
     }
@@ -230,7 +230,7 @@ struct CoursesListView: View {
     }
 
     private var header: some View {
-        MicaboScreenHeader(title: i18n?.t("nav.courses") ?? "Cours", eyebrow: countLabel)
+        MicaboScreenHeader(title: i18n.t("nav.courses"), eyebrow: countLabel)
             .padding(.top, MicaboSpacing.xs)
     }
 
@@ -250,7 +250,7 @@ struct CoursesListView: View {
                 systemImage: "plus",
                 style: .dark,
                 size: 56,
-                accessibilityTitle: i18n?.t("app.import.importCourse") ?? "Importer un cours"
+                accessibilityTitle: i18n.t("app.import.importCourse")
             ) {
                 requestImport()
             }
@@ -261,7 +261,7 @@ struct CoursesListView: View {
     }
 
     private var countLabel: String {
-        guard !sheets.isEmpty else { return i18n?.t("app.courses.none") ?? "Aucun cours" }
+        guard !sheets.isEmpty else { return i18n.t("app.courses.none") }
         if let cardCount {
             return "\(MicaboCopy.courses(sheets.count)) · \(MicaboCopy.cards(cardCount))"
         }
@@ -271,7 +271,7 @@ struct CoursesListView: View {
     @ViewBuilder
     private var myCourses: some View {
         if !sheets.isEmpty {
-            MicaboSearchField(text: $searchText, placeholder: i18n?.t("app.courses.search") ?? "Rechercher un cours ou une carte")
+            MicaboSearchField(text: $searchText, placeholder: i18n.t("app.courses.search"))
                 .padding(.horizontal, MicaboSpacing.screen)
 
             folderTrail
@@ -348,9 +348,8 @@ struct CoursesListView: View {
     private var emptyFolder: some View {
         MicaboEmptyState(
             systemImage: "folder",
-            title: i18n?.t("app.folders.emptyTitle") ?? "Ce dossier est vide",
-            message: i18n?.t("app.folders.emptyBody")
-                ?? "Glisse un cours dessus, ou range-le depuis son menu « Déplacer vers »."
+            title: i18n.t("app.folders.emptyTitle"),
+            message: i18n.t("app.folders.emptyBody")
         )
         .padding(.horizontal, MicaboSpacing.screen)
     }
@@ -358,9 +357,9 @@ struct CoursesListView: View {
     private var emptyLibrary: some View {
         MicaboEmptyState(
             systemImage: "books.vertical",
-            title: i18n?.t("app.courses.emptyTitle") ?? "Aucun cours",
-            message: i18n?.t("app.courses.emptyBody") ?? "Importe un polycopié pour commencer.",
-            actionTitle: i18n?.t("ios.importAction") ?? "Importer"
+            title: i18n.t("app.courses.emptyTitle"),
+            message: i18n.t("app.courses.emptyBody"),
+            actionTitle: i18n.t("ios.importAction")
         ) {
             requestImport()
         }
@@ -370,8 +369,8 @@ struct CoursesListView: View {
     private var noResults: some View {
         MicaboEmptyState(
             systemImage: "magnifyingglass",
-            title: i18n?.t("app.courses.noResults") ?? "Aucun résultat",
-            message: i18n?.t("app.courses.noResultsBody") ?? "Essaie un autre mot."
+            title: i18n.t("app.courses.noResults"),
+            message: i18n.t("app.courses.noResultsBody")
         )
         .padding(.horizontal, MicaboSpacing.screen)
     }
@@ -455,14 +454,14 @@ struct CoursesListView: View {
             moving = .course(course)
         } label: {
             Label(
-                i18n?.t("app.folders.moveTo") ?? "Déplacer vers",
+                i18n.t("app.folders.moveTo"),
                 systemImage: "folder"
             )
         }
         Button(role: .destructive) {
             coursePendingDelete = course
         } label: {
-            Label(i18n?.t("app.common.delete") ?? "Supprimer", systemImage: "trash")
+            Label(i18n.t("app.common.delete"), systemImage: "trash")
         }
     }
 
@@ -473,17 +472,17 @@ struct CoursesListView: View {
             renamingFolder = folder
             folderName = folder.name
         } label: {
-            Label(i18n?.t("app.folders.rename") ?? "Renommer", systemImage: "pencil")
+            Label(i18n.t("app.folders.rename"), systemImage: "pencil")
         }
         Button {
             moving = .folder(folder)
         } label: {
-            Label(i18n?.t("app.folders.moveTo") ?? "Déplacer vers", systemImage: "folder")
+            Label(i18n.t("app.folders.moveTo"), systemImage: "folder")
         }
         Button(role: .destructive) {
             folderPendingDelete = folder
         } label: {
-            Label(i18n?.t("app.common.delete") ?? "Supprimer", systemImage: "trash")
+            Label(i18n.t("app.common.delete"), systemImage: "trash")
         }
     }
 
@@ -503,7 +502,7 @@ struct CoursesListView: View {
                         Text(
                             trail.count > 1
                                 ? trail[trail.count - 2].name
-                                : (i18n?.t("app.folders.root") ?? "Mes cours")
+                                : i18n.t("app.folders.root")
                         )
                         .font(MicaboFont.ui(14, weight: .medium))
                     }
@@ -531,7 +530,7 @@ struct CoursesListView: View {
                 namingNewFolder = true
             } label: {
                 Label(
-                    i18n?.t("app.folders.new") ?? "Nouveau dossier",
+                    i18n.t("app.folders.new"),
                     systemImage: "folder.badge.plus"
                 )
                 .font(MicaboFont.ui(13.5, weight: .medium))
@@ -610,23 +609,23 @@ struct CoursesListView: View {
     }
 
     private var newFolderTitle: String {
-        i18n?.t("app.folders.new") ?? "Nouveau dossier"
+        i18n.t("app.folders.new")
     }
 
     private var renameTitle: String {
-        i18n?.t("app.folders.rename") ?? "Renommer"
+        i18n.t("app.folders.rename")
     }
 
     private var deleteFolderTitle: String {
-        i18n?.t("app.folders.deleteQ") ?? "Supprimer ce dossier ?"
+        i18n.t("app.folders.deleteQ")
     }
 
     private var deleteCourseTitle: String {
-        i18n?.t("app.courses.deleteQ") ?? "Supprimer ce cours ?"
+        i18n.t("app.courses.deleteQ")
     }
 
     private var folderNamePlaceholder: String {
-        i18n?.t("app.folders.namePlaceholder") ?? "Nom du dossier"
+        i18n.t("app.folders.namePlaceholder")
     }
 
     private var renamingPresented: Binding<Bool> {
@@ -653,15 +652,15 @@ struct CoursesListView: View {
     @ViewBuilder
     private func newFolderActions() -> some View {
         TextField(folderNamePlaceholder, text: $folderName)
-        Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { folderName = "" }
-        Button(i18n?.t("app.folders.create") ?? "Créer") { createFolder() }
+        Button(i18n.t("app.common.cancel"), role: .cancel) { folderName = "" }
+        Button(i18n.t("app.folders.create")) { createFolder() }
     }
 
     @ViewBuilder
     private func renameActions() -> some View {
         TextField(folderNamePlaceholder, text: $folderName)
-        Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { renamingFolder = nil }
-        Button(i18n?.t("app.common.save") ?? "Enregistrer") { saveRenamedFolder() }
+        Button(i18n.t("app.common.cancel"), role: .cancel) { renamingFolder = nil }
+        Button(i18n.t("app.common.save")) { saveRenamedFolder() }
     }
 
     private func saveRenamedFolder() {
@@ -676,22 +675,22 @@ struct CoursesListView: View {
 
     @ViewBuilder
     private func folderDeleteActions() -> some View {
-        Button(i18n?.t("app.folders.delete") ?? "Supprimer", role: .destructive) {
+        Button(i18n.t("app.folders.delete"), role: .destructive) {
             if let folder = folderPendingDelete {
                 withAnimation { deleteFolder(folder) }
             }
             folderPendingDelete = nil
         }
-        Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { folderPendingDelete = nil }
+        Button(i18n.t("app.common.cancel"), role: .cancel) { folderPendingDelete = nil }
     }
 
     private func folderDeleteMessage() -> some View {
-        Text(i18n?.t("app.folders.deleteMsg") ?? "Ce qu'il contient remonte d'un cran, rien n'est supprimé.")
+        Text(i18n.t("app.folders.deleteMsg"))
     }
 
     @ViewBuilder
     private func courseDeleteActions() -> some View {
-        Button(i18n?.t("app.courses.deleteCourse") ?? "Supprimer le cours", role: .destructive) {
+        Button(i18n.t("app.courses.deleteCourse"), role: .destructive) {
             if let course = coursePendingDelete {
                 withAnimation {
                     try? CourseRepository.delete(course, in: modelContext)
@@ -699,7 +698,7 @@ struct CoursesListView: View {
             }
             coursePendingDelete = nil
         }
-        Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { coursePendingDelete = nil }
+        Button(i18n.t("app.common.cancel"), role: .cancel) { coursePendingDelete = nil }
     }
 
     @ViewBuilder
@@ -711,10 +710,10 @@ struct CoursesListView: View {
 
     private func courseDeleteCopy(_ course: Course) -> String {
         let cards = MicaboCopy.cards(census[course.id]?.cardCount ?? course.cards.count)
-        return i18n?.t("app.courses.deleteMsg", [
+        return i18n.t("app.courses.deleteMsg", [
             "title": course.title,
             "cards": cards
-        ]) ?? "\(course.title) et \(MicaboCopy.cards(course.cards.count)) disparaissent."
+        ])
     }
 
     private var censusTaskID: String {

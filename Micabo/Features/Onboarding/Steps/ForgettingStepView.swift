@@ -17,7 +17,7 @@ struct ForgettingStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.forgettingTitle") ?? "En général, oublies-tu\nce que tu apprends ?",
+            title: i18n.t("ios.forgettingTitle"),
             titleSize: 28,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,
@@ -26,7 +26,7 @@ struct ForgettingStepView: View {
         ) {
             OnboardingAnswerList(ForgettingHabit.allCases, spacing: 8) { habit in
                 OnboardingChoiceRow(
-                    title: habit.title(locale: i18n?.locale ?? .resolved()),
+                    title: habit.title(locale: i18n.locale),
                     emoji: habit.emoji,
                     isSelected: selection == habit,
                     fillsHeight: true
@@ -35,7 +35,7 @@ struct ForgettingStepView: View {
                 }
             }
         } footer: {
-            OnboardingHint(text: i18n?.t("ios.tapToContinue") ?? "Appuie sur une réponse pour continuer")
+            OnboardingHint(text: i18n.t("ios.tapToContinue"))
         }
     }
 

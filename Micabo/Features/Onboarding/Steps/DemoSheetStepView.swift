@@ -29,7 +29,7 @@ struct DemoSheetStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.sheetTitle") ?? "Micabo le met au propre.",
+            title: i18n.t("ios.sheetTitle"),
             titleSize: 30,
             contentSpacing: MicaboSpacing.xxl,
             scrolls: false,
@@ -43,7 +43,7 @@ struct DemoSheetStepView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } footer: {
-            OnboardingContinueButton(title: i18n?.t("ios.train") ?? "S'entraîner", isEnabled: isFinished, isShiny: true) {
+            OnboardingContinueButton(title: i18n.t("ios.train"), isEnabled: isFinished, isShiny: true) {
                 model.advance()
             }
         }
@@ -82,8 +82,8 @@ struct DemoSheetStepView: View {
     /// d'étapes qui se cochent : l'écran montre déjà où il en est.
     private var caption: some View {
         Text(isFinished
-             ? (i18n?.t("ios.sheetReady") ?? "Plan, définitions, schémas. Prêt à réviser.")
-             : (i18n?.t("ios.sheetReading") ?? "Lecture du cours…"))
+             ? i18n.t("ios.sheetReady")
+             : i18n.t("ios.sheetReading"))
             .font(MicaboFont.ui(13, weight: .medium))
             .foregroundStyle(isFinished ? MicaboColor.ink : MicaboColor.inkTertiary)
             .frame(maxWidth: .infinity)

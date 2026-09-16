@@ -126,7 +126,7 @@ struct ImportChoiceSheet: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-                MicaboScreenHeader(title: i18n?.t("ios.importWhere") ?? "D'où part-on ?")
+                MicaboScreenHeader(title: i18n.t("ios.importWhere"))
                     .padding(.top, 24)
 
                 MicaboRowGroup(rows: kinds.map(row(for:)))

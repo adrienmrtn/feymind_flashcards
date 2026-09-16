@@ -252,7 +252,7 @@ enum SchoolingCountry: String, CaseIterable, Identifiable {
     func institutionSearchIso(uiLocale: UiLocale? = nil, custom: WorldCountry? = nil) -> String? {
         if self == .other { return custom?.code }
         if institutionCountryIso == "FR", let uiLocale, uiLocale != .fr {
-            return uiLocale.rawValue.uppercased()
+            return uiLocale.institutionCountryIso
         }
         return institutionCountryIso
     }

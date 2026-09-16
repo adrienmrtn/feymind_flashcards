@@ -285,6 +285,7 @@ private struct GeneratingPage: View {
 #Preview {
     GenerationOverlay(
         title: L10n.t("ios.writingSheet", locale: .resolved()),
-        steps: ["Lecture du document", "Repérage du plan", "Rédaction de la fiche", "Mise en page"]
+        steps: ["ios.genStepDoc", "ios.genStepPlan", "ios.genStepWrite", "ios.genStepLayout"]
+            .map { L10n.t($0, locale: .resolved()) }
     )
 }

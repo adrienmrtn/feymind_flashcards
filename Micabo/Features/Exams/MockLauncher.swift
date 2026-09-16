@@ -25,7 +25,7 @@ struct StartMockSheet: View {
     @State private var failed: String?
 
     private func t(_ key: String) -> String {
-        i18n?.t(key) ?? L10n.t(key, locale: .resolved())
+        i18n.t(key)
     }
 
     var body: some View {
@@ -125,7 +125,7 @@ struct MockWritingOverlay: View {
             VStack(spacing: MicaboSpacing.sm) {
                 ProgressView()
                     .tint(MicaboColor.accent)
-                Text(i18n?.t("ios.mock.writing") ?? L10n.t("ios.mock.writing", locale: .resolved()))
+                Text(i18n.t("ios.mock.writing"))
                     .font(MicaboFont.captionEmphasis)
                     .foregroundStyle(MicaboColor.ink)
                     .multilineTextAlignment(.center)

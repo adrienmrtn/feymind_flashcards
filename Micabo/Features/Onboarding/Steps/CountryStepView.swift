@@ -27,12 +27,12 @@ struct CountryStepView: View {
 
     private var matches: [WorldCountry] {
         guard model.customCountry == nil else { return [] }
-        return WorldCountries.matches(query, locale: i18n?.locale ?? .resolved())
+        return WorldCountries.matches(query, locale: i18n.locale)
     }
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.countryTitle") ?? "Tu étudies où ?",
+            title: i18n.t("ios.countryTitle"),
             titleSize: 32,
             // Vingt-cinq pays en pastilles ne tiennent pas sur un écran : il défile plutôt
             // que de rogner une réponse.
@@ -70,7 +70,7 @@ struct CountryStepView: View {
     /// alors d'être une catégorie pour devenir une réponse.
     private func title(for country: SchoolingCountry) -> String {
         guard country == .other, let custom = model.customCountry else {
-            return country.localizedName(locale: i18n?.locale ?? .resolved())
+            return country.localizedName(locale: i18n.locale)
         }
         return custom.name
     }
@@ -108,7 +108,7 @@ struct CountryStepView: View {
                 if !matches.isEmpty {
                     resultsList
                 } else if query.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 {
-                    Text(i18n?.t("ios.countryNone") ?? "Aucun pays de ce nom.")
+                    Text(i18n.t("ios.countryNone"))
                         .font(MicaboFont.ui(12, weight: .regular))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
@@ -122,7 +122,7 @@ struct CountryStepView: View {
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
 
-            TextField(i18n?.t("ios.countryPlaceholder") ?? "Ex. Brésil, Japon, Sénégal…", text: $query)
+            TextField(i18n.t("ios.countryPlaceholder"), text: $query)
                 .font(MicaboFont.ui(16, weight: .medium))
                 .foregroundStyle(MicaboColor.ink)
                 .textInputAutocapitalization(.words)
@@ -208,7 +208,7 @@ struct CountryStepView: View {
                 query = ""
                 isSearching = true
             } label: {
-                Text(i18n?.t("ios.countryChange") ?? "Changer")
+                Text(i18n.t("ios.countryChange"))
                     .font(MicaboFont.ui(13, weight: .semibold))
                     .foregroundStyle(MicaboColor.accent)
             }

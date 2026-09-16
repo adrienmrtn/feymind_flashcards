@@ -46,7 +46,7 @@ struct FolderPickerSheet: View {
                 LazyVStack(spacing: 0) {
                     MicaboRow(
                         tile: MicaboTile(glyph: .symbol("tray"), size: 42),
-                        title: i18n?.t("app.folders.root") ?? "Mes cours",
+                        title: i18n.t("app.folders.root"),
                         subtitle: nil,
                         accessory: current == nil ? .symbol("checkmark") : .none
                     ) {
@@ -80,11 +80,11 @@ struct FolderPickerSheet: View {
                 .padding(.vertical, MicaboSpacing.xs)
             }
             .micaboScreenBackground()
-            .navigationTitle(i18n?.t("app.folders.moveTo") ?? "Déplacer vers")
+            .navigationTitle(i18n.t("app.folders.moveTo"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(i18n?.t("app.common.cancel") ?? "Annuler") { dismiss() }
+                    Button(i18n.t("app.common.cancel")) { dismiss() }
                 }
             }
         }

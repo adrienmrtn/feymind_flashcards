@@ -10,14 +10,14 @@ struct SubjectsStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.subjectsTitle") ?? "Tu révises quoi ?",
+            title: i18n.t("ios.subjectsTitle"),
             titleSize: 28,
             animatesTitle: true
         ) {
             VStack(alignment: .leading, spacing: 20) {
                 ForEach(SubjectCatalog.families) { family in
                     VStack(alignment: .leading, spacing: 10) {
-                        Text(SubjectDisplay.family(family.name, locale: i18n?.locale ?? .resolved()).uppercased())
+                        Text(SubjectDisplay.family(family.name, locale: i18n.locale).uppercased())
                             .font(MicaboFont.ui(10, weight: .semibold))
                             .tracking(1.4)
                             .foregroundStyle(MicaboColor.inkTertiary)
@@ -25,7 +25,7 @@ struct SubjectsStepView: View {
                         MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
                             ForEach(family.subjects, id: \.self) { subject in
                                 SubjectChip(
-                                    title: SubjectDisplay.subject(subject, locale: i18n?.locale ?? .resolved()),
+                                    title: SubjectDisplay.subject(subject, locale: i18n.locale),
                                     // L'emoji d'une matière vient d'où viennent ceux des
                                     // cours : une table unique, et pas une deuxième liste à
                                     // maintenir en parallèle de celle-ci.
@@ -51,13 +51,12 @@ struct SubjectsStepView: View {
 
     private var subjectsContinueTitle: String {
         if model.subjects.isEmpty {
-            return i18n?.t("ios.subjectsNeedOne") ?? "Choisis au moins une matière"
+            return i18n.t("ios.subjectsNeedOne")
         }
         if model.subjects.count == 1 {
-            return i18n?.t("onboarding.continueOne") ?? "Continuer avec 1 matière"
+            return i18n.t("onboarding.continueOne")
         }
-        return i18n?.t("onboarding.continueMany", ["n": "\(model.subjects.count)"])
-            ?? "Continuer avec \(model.subjects.count) matières"
+        return i18n.t("onboarding.continueMany", ["n": "\(model.subjects.count)"])
     }
 
     private func toggle(_ subject: String) {

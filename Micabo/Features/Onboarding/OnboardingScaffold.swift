@@ -316,7 +316,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private func skipButton(_ skip: OnboardingSkip) -> some View {
-        let title = skip.title ?? i18n?.t("common.skip") ?? "Passer"
+        let title = skip.title ?? i18n.t("common.skip")
         return Button(action: skip.action) {
             HStack(spacing: 3) {
                 Text(title)
@@ -557,7 +557,7 @@ struct OnboardingContinueButton: View {
                         .tint(surface.buttonForeground)
                 }
 
-                Text(isLoading ? (loadingTitle ?? i18n?.t("ios.instant") ?? "Un instant…") : (title ?? i18n?.t("common.continue") ?? "Continuer"))
+                Text(isLoading ? (loadingTitle ?? i18n.t("ios.instant")) : (title ?? i18n.t("common.continue")))
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .minimumScaleFactor(0.82)

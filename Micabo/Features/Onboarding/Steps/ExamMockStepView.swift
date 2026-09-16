@@ -17,7 +17,7 @@ struct ExamMockStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.examMockTitle") ?? "Un examen blanc,\nà J-7 et à J-2.",
+            title: i18n.t("ios.examMockTitle"),
             titleSize: 28
         ) {
             MockPaperDemo()
@@ -42,7 +42,7 @@ private struct MockPaperDemo: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private func t(_ key: String, _ vars: [String: String] = [:]) -> String {
-        i18n?.t(key, vars) ?? L10n.t(key, locale: .fr, vars: vars)
+        i18n.t(key, vars)
     }
 
     /// Le score de la copie, calculé sur ce qui est corrigé. Il n'est écrit nulle part : il

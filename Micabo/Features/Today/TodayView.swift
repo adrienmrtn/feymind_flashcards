@@ -391,7 +391,7 @@ struct TodayView: View {
     /// porte maintenant le sien, et l'heure qu'il est se lit dans la date juste au-dessus.
     private func header(streak: Int) -> some View {
         MicaboScreenHeader(
-            title: i18n?.t("nav.review") ?? "Réviser",
+            title: i18n.t("nav.review"),
             eyebrow: MicaboCalendar.dayLabel(Date())
         ) {
             if streak > 0 {
@@ -408,7 +408,7 @@ struct TodayView: View {
             Image(systemName: "flame.fill")
                 .font(.system(size: 12, weight: .semibold))
 
-            Text(i18n?.t("app.today.streakShort", ["count": "\(streak)"]) ?? "\(streak) j")
+            Text(i18n.t("app.today.streakShort", ["count": "\(streak)"]))
                 .font(MicaboFont.number(14, weight: .semibold))
                 .monospacedDigit()
         }
@@ -416,7 +416,7 @@ struct TodayView: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 13)
         .background(MicaboColor.cautionSoft, in: Capsule())
-        .accessibilityLabel(i18n?.t("app.today.streakAria", ["count": "\(streak)"]) ?? "Série de \(streak) jour\(streak > 1 ? "s" : "")")
+        .accessibilityLabel(i18n.t("app.today.streakAria", ["count": "\(streak)"]))
     }
 
     // MARK: - Le chiffre du jour
@@ -439,16 +439,16 @@ struct TodayView: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(load.dueCards.count > 1
-                         ? (i18n?.t("app.today.dueMany") ?? "cartes à réviser")
-                         : (i18n?.t("app.today.dueOne") ?? "carte à réviser"))
+                         ? i18n.t("app.today.dueMany")
+                         : i18n.t("app.today.dueOne"))
                         .font(MicaboFont.ui(16, weight: .semibold))
                         .foregroundStyle(MicaboColor.ink)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text(i18n?.t("app.today.minutesCourses", [
+                    Text(i18n.t("app.today.minutesCourses", [
                         "minutes": "\(load.estimatedMinutes)",
                         "courses": MicaboCopy.courses(max(load.coursesWithDue, 1))
-                    ]) ?? "≈ \(load.estimatedMinutes) min · \(MicaboCopy.courses(max(load.coursesWithDue, 1)))")
+                    ]))
                         .font(MicaboFont.ui(13, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
@@ -474,12 +474,7 @@ struct TodayView: View {
 
     private func dueCardAccessibility(_ load: DayLoad) -> String {
         let parts = visibleSegments(load).map { "\($0.count) \($0.label)" }
-        var label = i18n?.t("ios.dueReviewAria", ["cards": MicaboCopy.cards(load.dueCards.count)])
-            ?? L10n.t(
-                "ios.dueReviewAria",
-                locale: .resolved(),
-                vars: ["cards": MicaboCopy.cards(load.dueCards.count)]
-            )
+        var label = i18n.t("ios.dueReviewAria", ["cards": MicaboCopy.cards(load.dueCards.count)])
         if !parts.isEmpty { label += ". " + parts.joined(separator: ", ") }
         if load.heldBackNewCards > 0 { label += ". " + MicaboCopy.heldBackNew(load.heldBackNewCards) }
         return label
@@ -535,7 +530,7 @@ struct TodayView: View {
     private func dueCoursesSection(_ entries: [(course: Course, count: Int)]) -> some View {
         if !entries.isEmpty || !measuresToday.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: i18n?.t("app.today.agenda") ?? "Au programme")
+                MicaboSectionCaption(text: i18n.t("app.today.agenda"))
 
                 MicaboRowGroup(
                     rows: measuresToday.map { measureRow($0) } + entries.map { entry in
@@ -557,12 +552,11 @@ struct TodayView: View {
                 background: isMock ? MicaboColor.accentSoft : MicaboColor.cautionSoft,
                 tint: isMock ? MicaboColor.accent : MicaboColor.caution
             ),
-            title: i18n?.t(isMock ? "app.mock.blockTitle" : "app.parcours.blockTitle")
-                ?? (isMock ? "Examen blanc" : "Test de parcours"),
-            subtitle: "\(event.examName) · " + (i18n?.t(
+            title: i18n.t(isMock ? "app.mock.blockTitle" : "app.parcours.blockTitle"),
+            subtitle: "\(event.examName) · " + i18n.t(
                 "app.today.mock",
                 ["questions": "\(event.questionCount)", "minutes": "\(event.minutes)"]
-            ) ?? "\(event.questionCount) questions · \(event.minutes) min"),
+            ),
             action: { starting = event }
         )
     }
@@ -577,10 +571,10 @@ struct TodayView: View {
     private func examSection(_ load: DayLoad) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
-                MicaboSectionCaption(text: i18n?.t("app.today.nextExam") ?? "Prochaine épreuve")
+                MicaboSectionCaption(text: i18n.t("app.today.nextExam"))
                 Spacer(minLength: MicaboSpacing.xs)
                 if !upcomingExams.isEmpty {
-                    Button(i18n?.t("app.today.seeExams") ?? "Toutes les épreuves") {
+                    Button(i18n.t("app.today.seeExams")) {
                         openExams()
                     }
                     .font(MicaboFont.ui(13, weight: .semibold))
@@ -594,7 +588,7 @@ struct TodayView: View {
 
                 let others = Array(upcomingExams.dropFirst().prefix(3))
                 if !others.isEmpty {
-                    MicaboSectionCaption(text: i18n?.t("app.today.otherExams") ?? "Ensuite")
+                    MicaboSectionCaption(text: i18n.t("app.today.otherExams"))
                         .padding(.top, MicaboSpacing.xs)
                     otherExams(others, load)
                 }
@@ -608,7 +602,7 @@ struct TodayView: View {
                             background: MicaboColor.surfaceMuted,
                             tint: MicaboColor.inkSecondary
                         ),
-                        title: i18n?.t("app.today.planExam") ?? "Planifier un examen",
+                        title: i18n.t("app.today.planExam"),
                         subtitle: examEmptySubtitle,
                         accessory: .chevron
                     )
@@ -647,7 +641,7 @@ struct TodayView: View {
                             .font(MicaboFont.ui(15, weight: .semibold))
                             .foregroundStyle(MicaboColor.inkSecondary)
                     }
-                    Text(i18n?.t("app.chart.readiness.now") ?? "aujourd'hui")
+                    Text(i18n.t("app.chart.readiness.now"))
                         .font(MicaboFont.micro)
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
@@ -666,7 +660,7 @@ struct TodayView: View {
                 }
                 .frame(height: 8)
 
-                Text(i18n?.t("app.chart.readiness.target", ["percent": "\(target)"]) ?? "objectif : \(target) %")
+                Text(i18n.t("app.chart.readiness.target", ["percent": "\(target)"]))
                     .font(MicaboFont.micro)
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
@@ -676,7 +670,7 @@ struct TodayView: View {
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .soft))
         .micaboGroup()
-        .accessibilityLabel("\(exam.name), \(exam.countdownLabel()). \(mastery) %, \(i18n?.t("app.chart.readiness.target", ["percent": "\(target)"]) ?? "objectif : \(target) %")")
+        .accessibilityLabel("\(exam.name), \(exam.countdownLabel()). \(mastery) %, \(i18n.t("app.chart.readiness.target", ["percent": "\(target)"]))")
     }
 
     private func otherExams(_ exams: [Exam], _ load: DayLoad) -> some View {
@@ -688,8 +682,7 @@ struct TodayView: View {
                     MicaboRow(
                         tile: MicaboTile.exam(exam.date),
                         title: exam.name,
-                        subtitle: i18n?.t("app.today.known", ["percent": "\(load.examProgress[exam.id] ?? 0)"])
-                            ?? "appris à \(load.examProgress[exam.id] ?? 0) %",
+                        subtitle: i18n.t("app.today.known", ["percent": "\(load.examProgress[exam.id] ?? 0)"]),
                         accessory: .badge(exam.countdownLabel(), .neutral)
                     )
                 }
@@ -709,8 +702,8 @@ struct TodayView: View {
 
     private var examEmptySubtitle: String {
         (load?.totalCards ?? 0) == 0
-            ? (i18n?.t("app.today.whenYouHaveCards") ?? "Quand tu auras des cartes")
-            : (i18n?.t("app.today.addDate") ?? "Ajouter une date")
+            ? i18n.t("app.today.whenYouHaveCards")
+            : i18n.t("app.today.addDate")
     }
 
     // MARK: - La barre et sa légende
@@ -735,9 +728,9 @@ struct TodayView: View {
 
     private func visibleSegments(_ load: DayLoad) -> [Segment] {
         [
-            Segment(label: i18n?.t("app.today.segReview") ?? "en révision", color: MicaboColor.caution, count: load.reviewCount),
-            Segment(label: i18n?.t("app.today.segLearning") ?? "en apprentissage", color: MicaboColor.accent, count: load.learningCount),
-            Segment(label: i18n?.t("app.today.segNew") ?? "nouvelles", color: MicaboColor.inkTertiary, count: load.newCount)
+            Segment(label: i18n.t("app.today.segReview"), color: MicaboColor.caution, count: load.reviewCount),
+            Segment(label: i18n.t("app.today.segLearning"), color: MicaboColor.accent, count: load.learningCount),
+            Segment(label: i18n.t("app.today.segNew"), color: MicaboColor.inkTertiary, count: load.newCount)
         ]
         .filter { $0.count > 0 }
     }
@@ -792,9 +785,9 @@ struct TodayView: View {
         if load.totalCards == 0 {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
-                title: i18n?.t("app.home.empty.noCardsTitle") ?? "Pas encore de cartes",
-                message: i18n?.t("app.home.empty.noCardsBody") ?? "Importe un cours pour commencer.",
-                actionTitle: i18n?.t("ios.importAction") ?? "Importer"
+                title: i18n.t("app.home.empty.noCardsTitle"),
+                message: i18n.t("app.home.empty.noCardsBody"),
+                actionTitle: i18n.t("ios.importAction")
             ) {
                 requestImport()
             }
@@ -804,16 +797,16 @@ struct TodayView: View {
 
                 if !load.nextDue.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        MicaboSectionCaption(text: i18n?.t("app.today.nextDue") ?? "Prochaines échéances")
+                        MicaboSectionCaption(text: i18n.t("app.today.nextDue"))
 
                         MicaboRowGroup(
                             rows: load.nextDue.map { entry in
                                 MicaboRow(
                                     tile: MicaboTile.course(entry.course),
                                     title: entry.course.title,
-                                    subtitle: i18n?.t("app.today.inDelay", [
+                                    subtitle: i18n.t("app.today.inDelay", [
                                         "delay": SM2Scheduler.format(delay: entry.due.timeIntervalSinceNow)
-                                    ]) ?? ("Dans " + SM2Scheduler.format(delay: entry.due.timeIntervalSinceNow)),
+                                    ]),
                                     accessory: .none
                                 )
                             }
@@ -831,7 +824,7 @@ struct TodayView: View {
     }
 
     private var doneState: some View {
-        reviewDoneCard(subtitle: i18n?.t("app.today.dayDone") ?? "Ta révision du jour est terminée.")
+        reviewDoneCard(subtitle: i18n.t("app.today.dayDone"))
     }
 
     /// Le tick vert est le sujet : sans lui, « C'est fait » se lisait comme une légende.
@@ -843,7 +836,7 @@ struct TodayView: View {
                 .accessibilityHidden(true)
 
             VStack(spacing: 6) {
-                Text(i18n?.t("app.today.doneTitle") ?? "C'est fait")
+                Text(i18n.t("app.today.doneTitle"))
                     .font(MicaboFont.ui(22, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
 
@@ -859,7 +852,7 @@ struct TodayView: View {
         .padding(.horizontal, 18)
         .micaboGroup()
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(i18n?.t("app.today.doneTitle") ?? "C'est fait"). \(subtitle)")
+        .accessibilityLabel("\(i18n.t("app.today.doneTitle")). \(subtitle)")
     }
 
     // MARK: - Session
@@ -871,7 +864,7 @@ struct TodayView: View {
 
     private func sessionButtonTitle(_ load: DayLoad) -> String {
         if !load.dueCards.isEmpty { return MicaboCopy.reviewButton(count: load.dueCards.count) }
-        if load.heldBackNewCards > 0 { return i18n?.t("app.review.verb") ?? "Réviser" }
+        if load.heldBackNewCards > 0 { return i18n.t("app.review.verb") }
         return MicaboCopy.practiceReview()
     }
 

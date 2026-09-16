@@ -79,33 +79,33 @@ struct SettingsView: View {
         .scrollDismissesKeyboard(.interactively)
         .micaboScreenBackground()
         .confirmationDialog(
-            i18n?.t("ios.deleteAccountQ") ?? "Supprimer le compte ?",
+            i18n.t("ios.deleteAccountQ"),
             isPresented: $showDeleteAccountConfirmation,
             titleVisibility: .visible
         ) {
-            Button(i18n?.t("ios.deleteAccount") ?? "Supprimer le compte", role: .destructive) {
+            Button(i18n.t("ios.deleteAccount"), role: .destructive) {
                 Task { await auth.deleteAccount() }
             }
-            Button(i18n?.t("ios.cancel") ?? "Annuler", role: .cancel) {}
+            Button(i18n.t("ios.cancel"), role: .cancel) {}
         } message: {
-            Text(i18n?.t("ios.deleteAccountMsg") ?? "Tes cours, tes cartes et ton historique seront effacés. L'abonnement déjà encaissé se gère chez Apple ou Stripe.")
+            Text(i18n.t("ios.deleteAccountMsg"))
         }
         .confirmationDialog(
-            i18n?.t("ios.eraseAllQ") ?? "Effacer toutes les données ?",
+            i18n.t("ios.eraseAllQ"),
             isPresented: $showResetConfirmation,
             titleVisibility: .visible
         ) {
-            Button(i18n?.t("ios.eraseAll") ?? "Tout effacer", role: .destructive, action: eraseEverything)
-            Button(i18n?.t("ios.cancel") ?? "Annuler", role: .cancel) {}
+            Button(i18n.t("ios.eraseAll"), role: .destructive, action: eraseEverything)
+            Button(i18n.t("ios.cancel"), role: .cancel) {}
         } message: {
-            Text(i18n?.t("ios.eraseAllMsg") ?? "Tes cours, tes cartes et ton historique de révision seront supprimés.")
+            Text(i18n.t("ios.eraseAllMsg"))
         }
         .confirmationDialog(
-            i18n?.t("ios.signOutQ") ?? "Se déconnecter ?",
+            i18n.t("ios.signOutQ"),
             isPresented: $showSignOutConfirmation,
             titleVisibility: .visible
         ) {
-            Button(i18n?.t("common.signOut") ?? "Se déconnecter", role: .destructive) {
+            Button(i18n.t("common.signOut"), role: .destructive) {
                 Task {
                     // On remonte une dernière fois avant de partir : une révision faite dans
                     // la minute qui précède ne doit pas être le prix d'une déconnexion.
@@ -114,9 +114,9 @@ struct SettingsView: View {
                     sync.forget()
                 }
             }
-            Button(i18n?.t("ios.cancel") ?? "Annuler", role: .cancel) {}
+            Button(i18n.t("ios.cancel"), role: .cancel) {}
         } message: {
-            Text(i18n?.t("ios.signOutMsg") ?? "Tes cours restent sur cet appareil et sur ton compte. Tu les retrouveras à la prochaine connexion.")
+            Text(i18n.t("ios.signOutMsg"))
         }
         .micaboPaywall($paywall)
         .micaboDiscountOffer($discountOffer)
@@ -140,8 +140,8 @@ struct SettingsView: View {
     // MARK: - Sections
 
     private var header: some View {
-        MicaboScreenHeader(title: i18n?.t("settings.title") ?? "Réglages", back: MicaboHeaderBack.back(saveAndClose)) {
-            Button(i18n?.t("ios.done") ?? "Terminé", action: saveAndClose)
+        MicaboScreenHeader(title: i18n.t("settings.title"), back: MicaboHeaderBack.back(saveAndClose)) {
+            Button(i18n.t("ios.done"), action: saveAndClose)
                 .font(MicaboFont.ui(15, weight: .semibold))
                 .foregroundStyle(MicaboColor.accent)
                 .buttonStyle(MicaboPressableButtonStyle())
@@ -162,14 +162,14 @@ struct SettingsView: View {
     @ViewBuilder
     private var proSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n?.t("ios.pro.section") ?? "Abonnement")
+            MicaboSectionCaption(text: i18n.t("ios.pro.section"))
 
             VStack(spacing: 0) {
                 if isSubscribed {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("⭐️"), background: MicaboColor.accentSoft),
-                        title: i18n?.t("ios.pro.title") ?? "Micabo Pro",
-                        subtitle: i18n?.t("ios.pro.active") ?? "Abonnement actif",
+                        title: i18n.t("ios.pro.title"),
+                        subtitle: i18n.t("ios.pro.active"),
                         accessory: .none
                     )
 
@@ -179,16 +179,16 @@ struct SettingsView: View {
                     // ailleurs : une app qui prétendrait résilier à sa place mentirait.
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("🧾"), background: MicaboColor.surfaceMuted),
-                        title: i18n?.t("ios.pro.manage") ?? "Gérer l'abonnement",
-                        subtitle: i18n?.t("ios.pro.manageHelp") ?? "Chez Apple, dans tes réglages d'App Store",
+                        title: i18n.t("ios.pro.manage"),
+                        subtitle: i18n.t("ios.pro.manageHelp"),
                         accessory: .chevron,
                         action: openStoreSubscriptions
                     )
                 } else {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("⭐️"), background: MicaboColor.accentSoft),
-                        title: i18n?.t("ios.pro.upgrade") ?? "Passer à Micabo Pro",
-                        subtitle: i18n?.t("ios.pro.upgradeHelp") ?? "Cours illimités, fiches entières, révision sans limite",
+                        title: i18n.t("ios.pro.upgrade"),
+                        subtitle: i18n.t("ios.pro.upgradeHelp"),
                         accessory: .chevron,
                         action: { paywall = .upgrade }
                     )
@@ -198,7 +198,7 @@ struct SettingsView: View {
 
                         MicaboRow(
                             tile: MicaboTile(glyph: .emoji("🎁"), background: MicaboColor.tilePastels[1]),
-                            title: i18n?.t("ios.pro.offer") ?? "Ton offre de bienvenue",
+                            title: i18n.t("ios.pro.offer"),
                             subtitle: discountSubtitle,
                             accessory: .chevron,
                             action: { discountOffer = .paywall }
@@ -222,8 +222,7 @@ struct SettingsView: View {
 
     /// « -43 % sur l'année » et, quand la fenêtre court, le temps qu'il reste.
     private var discountSubtitle: String {
-        let percent = i18n?.t("ios.pro.offerHelp", ["percent": "\(DiscountOffer.savingsPercent)"])
-            ?? "-\(DiscountOffer.savingsPercent) % sur l'année"
+        let percent = i18n.t("ios.pro.offerHelp", ["percent": "\(DiscountOffer.savingsPercent)"])
         guard discountStartedAt > 0 else { return percent }
         let startedAt = Date(timeIntervalSince1970: discountStartedAt)
         let left = DiscountOffer.windowRemaining(startedAt: startedAt)
@@ -245,14 +244,14 @@ struct SettingsView: View {
     @ViewBuilder
     private var accountSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n?.t("ios.account") ?? "Compte")
+            MicaboSectionCaption(text: i18n.t("ios.account"))
 
             VStack(spacing: 0) {
                 if let user = auth.user {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("👤"), background: MicaboColor.accentSoft),
                         title: user.label,
-                        subtitle: user.email ?? i18n?.t("ios.connected") ?? "Connecté",
+                        subtitle: user.email ?? i18n.t("ios.connected"),
                         accessory: .none
                     )
 
@@ -260,7 +259,7 @@ struct SettingsView: View {
 
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("☁️"), background: MicaboColor.tilePastels[3]),
-                        title: i18n?.t("ios.backup") ?? "Sauvegarde",
+                        title: i18n.t("ios.backup"),
                         subtitle: syncSubtitle,
                         accessory: .none,
                         action: { Task { await sync.sync(context: modelContext) } }
@@ -270,7 +269,7 @@ struct SettingsView: View {
 
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("🚪"), background: MicaboColor.surfaceMuted),
-                        title: i18n?.t("common.signOut") ?? "Se déconnecter",
+                        title: i18n.t("common.signOut"),
                         accessory: .none,
                         titleColor: MicaboColor.negative,
                         action: { showSignOutConfirmation = true }
@@ -278,8 +277,8 @@ struct SettingsView: View {
                 } else {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("☁️"), background: MicaboColor.tilePastels[3]),
-                        title: i18n?.t("ios.createOrSignIn") ?? "Créer un compte ou se connecter",
-                        subtitle: i18n?.t("ios.createOrSignInHelp") ?? "Retrouver tes cours sur tes autres appareils",
+                        title: i18n.t("ios.createOrSignIn"),
+                        subtitle: i18n.t("ios.createOrSignInHelp"),
                         accessory: .chevron,
                         action: { showAuth = true }
                     )
@@ -291,21 +290,26 @@ struct SettingsView: View {
 
     private var syncSubtitle: String {
         switch sync.state {
-        case .idle: i18n?.t("ios.tapToSync") ?? "Toucher pour synchroniser"
-        case .syncing: i18n?.t("ios.syncing") ?? "Synchronisation…"
+        case .idle: i18n.t("ios.tapToSync")
+        case .syncing: i18n.t("ios.syncing")
         case .done(let date):
-            i18n?.t("ios.upToDate", ["time": Self.timeFormatter.string(from: date)])
-                ?? "À jour · \(Self.timeFormatter.string(from: date))"
+            i18n.t("ios.upToDate", ["time": Self.timeText(date, locale: i18n.locale)])
         case .failed(let message): message
         }
     }
 
-    private static let timeFormatter: DateFormatter = {
+    /// L'heure de la dernière synchro, écrite comme la langue l'écrit.
+    ///
+    /// Le formateur était figé sur `fr_FR` et sur « HH:mm » : un lecteur anglophone lisait
+    /// « 15:42 » au milieu d'un écran par ailleurs en anglais. Le gabarit `j:mm` laisse
+    /// ICU choisir les douze ou les vingt-quatre heures, et le formateur se refait à chaque
+    /// appel parce qu'un `static let` aurait gardé la langue du premier lancement.
+    private static func timeText(_ date: Date, locale: UiLocale) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "HH:mm"
-        return formatter
-    }()
+        formatter.locale = locale.foundation
+        formatter.setLocalizedDateFormatFromTemplate("j:mm")
+        return formatter.string(from: date)
+    }
 
     /// Le nom d'utilisateur, et rien d'autre dans cette section.
     ///
@@ -321,14 +325,14 @@ struct SettingsView: View {
     private var identitySection: some View {
         if auth.isSignedIn {
             VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: i18n?.t("ios.usernameLabel") ?? "Nom d'utilisateur")
+                MicaboSectionCaption(text: i18n.t("ios.usernameLabel"))
 
                 HStack(spacing: 11) {
                     Text("@")
                         .font(MicaboFont.ui(16, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkTertiary)
 
-                    TextField(i18n?.t("ios.usernamePlaceholder") ?? "nom d'utilisateur", text: $username)
+                    TextField(i18n.t("ios.usernamePlaceholder"), text: $username)
                         .font(MicaboFont.rowTitle)
                         .foregroundStyle(MicaboColor.ink)
                         .tint(MicaboColor.accent)
@@ -342,7 +346,7 @@ struct SettingsView: View {
                             .controlSize(.small)
                             .tint(MicaboColor.progress)
                     } else if hasUsernameChange {
-                        Button(i18n?.t("app.common.save") ?? "Enregistrer", action: commitUsername)
+                        Button(i18n.t("app.common.save"), action: commitUsername)
                             .font(MicaboFont.ui(13, weight: .semibold))
                             .foregroundStyle(MicaboColor.accent)
                             .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
@@ -379,8 +383,8 @@ struct SettingsView: View {
             let preview = Username.normalize(username)
             MicaboSectionFootnote(
                 text: preview.isEmpty
-                    ? (i18n?.t("ios.usernameRules") ?? "Trois à vingt caractères, en commençant par une lettre ou un chiffre.")
-                    : (i18n?.t("ios.usernameSavedAs", ["name": Username.display(preview)]) ?? "Sera enregistré sous \(Username.display(preview)).")
+                    ? i18n.t("ios.usernameRules")
+                    : i18n.t("ios.usernameSavedAs", ["name": Username.display(preview)])
             )
         }
     }
@@ -409,41 +413,41 @@ struct SettingsView: View {
     /// trente secondes le premier jour ne doit pas se payer pendant deux ans.
     private var studiesSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n?.t("ios.yourStudies") ?? "Tes études")
+            MicaboSectionCaption(text: i18n.t("ios.yourStudies"))
 
             VStack(spacing: 0) {
                 // Le pays passe avant le stade, comme dans le parcours d'accueil : c'est lui
                 // qui décide des paliers proposés juste en dessous.
                 Menu {
-                    Picker(i18n?.t("ios.country") ?? "Pays", selection: $country) {
+                    Picker(i18n.t("ios.country"), selection: $country) {
                         ForEach(SchoolingCountry.allCases) { value in
-                            Text("\(value.flag) \(value.localizedName(locale: i18n?.locale ?? .resolved()))").tag(value)
+                            Text("\(value.flag) \(value.localizedName(locale: i18n.locale))").tag(value)
                         }
                     }
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji(country.flag), background: MicaboColor.tilePastels[2]),
-                        title: i18n?.t("ios.country") ?? "Pays",
-                        subtitle: i18n?.t("ios.writesIn", ["language": country.language.label]) ?? "Micabo écrit en \(country.language.label)",
-                        accessory: .value(country.localizedName(locale: i18n?.locale ?? .resolved()))
+                        title: i18n.t("ios.country"),
+                        subtitle: i18n.t("ios.writesIn", ["language": country.language.label]),
+                        accessory: .value(country.localizedName(locale: i18n.locale))
                     )
                 }
 
                 MicaboHairline(inset: 72)
 
                 Menu {
-                    Picker(i18n?.t("ios.stage") ?? "Stade d'étude", selection: $stage) {
+                    Picker(i18n.t("ios.stage"), selection: $stage) {
                         ForEach(country.stages) { value in
                             Text("\(value.emoji) \(value.localizedTitle)").tag(Optional(value))
                         }
-                        Text(i18n?.t("ios.unspecified") ?? "Non précisé").tag(Optional<EducationStage>.none)
+                        Text(i18n.t("ios.unspecified")).tag(Optional<EducationStage>.none)
                     }
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji(stage?.emoji ?? "🎓"), background: MicaboColor.tilePastels[0]),
-                        title: i18n?.t("ios.stage") ?? "Stade d'étude",
-                        subtitle: stage?.level.detail ?? i18n?.t("ios.balancedCopy") ?? "Rédaction équilibrée, sans niveau supposé.",
-                        accessory: .value(stage?.localizedTitle ?? i18n?.t("ios.unspecified") ?? "Non précisé")
+                        title: i18n.t("ios.stage"),
+                        subtitle: stage?.level.detail ?? i18n.t("ios.balancedCopy"),
+                        accessory: .value(stage?.localizedTitle ?? i18n.t("ios.unspecified"))
                     )
                 }
 
@@ -451,7 +455,7 @@ struct SettingsView: View {
 
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("📚"), background: MicaboColor.tilePastels[4]),
-                    title: i18n?.t("ios.subjects") ?? "Matières",
+                    title: i18n.t("ios.subjects"),
                     subtitle: subjectsSubtitle,
                     accessory: .chevron,
                     action: { showSubjects = true }
@@ -461,8 +465,8 @@ struct SettingsView: View {
 
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("🏫"), background: MicaboColor.tilePastels[5]),
-                    title: i18n?.t("ios.school") ?? "École",
-                    subtitle: schoolName?.nilIfBlank ?? i18n?.t("ios.schoolEmpty") ?? "Non renseignée",
+                    title: i18n.t("ios.school"),
+                    subtitle: schoolName?.nilIfBlank ?? i18n.t("ios.schoolEmpty"),
                     accessory: .chevron,
                     action: { showSchool = true }
                 )
@@ -470,7 +474,7 @@ struct SettingsView: View {
                 MicaboHairline(inset: 72)
 
                 Menu {
-                    Picker(i18n?.t("ios.sheetLength") ?? "Longueur des fiches", selection: $sheetLength) {
+                    Picker(i18n.t("ios.sheetLength"), selection: $sheetLength) {
                         ForEach(SheetLength.allCases) { length in
                             Text("\(length.title) · \(readingHint(for: length))").tag(length)
                         }
@@ -478,8 +482,8 @@ struct SettingsView: View {
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("📄"), background: MicaboColor.tilePastels[3]),
-                        title: i18n?.t("ios.sheetLength") ?? "Longueur des fiches",
-                        subtitle: readingHint(for: sheetLength) + " de lecture",
+                        title: i18n.t("ios.sheetLength"),
+                        subtitle: i18n.t("ios.readingOf", ["hint": readingHint(for: sheetLength)]),
                         accessory: .value(sheetLength.title)
                     )
                 }
@@ -489,17 +493,17 @@ struct SettingsView: View {
                 // La taille du texte des fiches, comme sur le site : sur cet appareil
                 // seulement, parce qu'elle appartient à l'œil qui lit, pas au cours.
                 Menu {
-                    Picker(i18n?.t("app.settings.readingSize") ?? "Taille du texte des fiches", selection: $readingSize) {
+                    Picker(i18n.t("app.settings.readingSize"), selection: $readingSize) {
                         ForEach(SheetReadingSize.allCases) { size in
-                            Text(size.title(locale: i18n?.locale ?? .resolved())).tag(size)
+                            Text(size.title(locale: i18n.locale)).tag(size)
                         }
                     }
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("🔍"), background: MicaboColor.tilePastels[1]),
-                        title: i18n?.t("app.settings.readingSize") ?? "Taille du texte des fiches",
-                        subtitle: i18n?.t("app.settings.readingSizeHint") ?? "Sur cet appareil seulement.",
-                        accessory: .value(readingSize.title(locale: i18n?.locale ?? .resolved()))
+                        title: i18n.t("app.settings.readingSize"),
+                        subtitle: i18n.t("app.settings.readingSizeHint"),
+                        accessory: .value(readingSize.title(locale: i18n.locale))
                     )
                 }
             }
@@ -545,8 +549,8 @@ struct SettingsView: View {
     }
 
     private var subjectsSubtitle: String {
-        if subjects.isEmpty { return i18n?.t("ios.noSubjects") ?? "Aucune matière" }
-        let locale = i18n?.locale ?? .resolved()
+        if subjects.isEmpty { return i18n.t("ios.noSubjects") }
+        let locale = i18n.locale
         let shown = subjects.map { SubjectDisplay.subject($0, locale: locale) }
         if shown.count <= 3 { return shown.joined(separator: ", ") }
         return "\(shown.prefix(3).joined(separator: ", ")) +\(shown.count - 3)"
@@ -568,11 +572,11 @@ struct SettingsView: View {
     /// lisent ensemble, et la seconde n'est qu'une conséquence de la première.
     private var reviewSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n?.t("ios.reviewSection") ?? "Révision")
+            MicaboSectionCaption(text: i18n.t("ios.reviewSection"))
 
             VStack(spacing: 0) {
                 Menu {
-                    Picker(i18n?.t("ios.dailyGoal") ?? "Objectif quotidien", selection: $dailyMinutes) {
+                    Picker(i18n.t("ios.dailyGoal"), selection: $dailyMinutes) {
                         ForEach(DailyLoad.steps, id: \.self) { minutes in
                             Text(DailyLoad.label(forMinutes: minutes)).tag(minutes)
                         }
@@ -580,7 +584,7 @@ struct SettingsView: View {
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("⏱️"), background: MicaboColor.tilePastels[1]),
-                        title: i18n?.t("ios.dailyGoal") ?? "Objectif quotidien",
+                        title: i18n.t("ios.dailyGoal"),
                         accessory: .value(DailyLoad.label(forMinutes: dailyMinutes))
                     )
                 }
@@ -589,8 +593,8 @@ struct SettingsView: View {
 
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("🆕"), background: MicaboColor.accentSoft),
-                    title: i18n?.t("ios.newCards") ?? "Nouvelles cartes / jour",
-                    accessory: .value(i18n?.t("ios.newCardsMax", ["n": "\(DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes))"]) ?? "\(DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes)) max")
+                    title: i18n.t("ios.newCards"),
+                    accessory: .value(i18n.t("ios.newCardsMax", ["n": "\(DailyLoad.newCardsPerDay(dailyMinutes: dailyMinutes))"]))
                 )
             }
             .micaboGroup()
@@ -603,11 +607,11 @@ struct SettingsView: View {
 
     private var intelligenceSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n?.t("ios.debug.intelligence") ?? "Intelligence")
+            MicaboSectionCaption(text: i18n.t("ios.debug.intelligence"))
 
             VStack(spacing: 0) {
                 Menu {
-                    Picker(i18n?.t("ios.debug.model") ?? "Modèle", selection: $model) {
+                    Picker(i18n.t("ios.debug.model"), selection: $model) {
                         ForEach(models, id: \.self) { name in
                             Text(name).tag(name)
                         }
@@ -615,7 +619,7 @@ struct SettingsView: View {
                 } label: {
                     MicaboRow(
                         tile: MicaboTile(glyph: .emoji("🧠"), background: MicaboColor.accentSoft),
-                        title: i18n?.t("ios.debug.model") ?? "Modèle",
+                        title: i18n.t("ios.debug.model"),
                         subtitle: model,
                         accessory: .symbol("chevron.up.chevron.down")
                     )
@@ -627,13 +631,13 @@ struct SettingsView: View {
 
     private var connectionSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n?.t("ios.debug.connection") ?? "Connexion")
+            MicaboSectionCaption(text: i18n.t("ios.debug.connection"))
 
             VStack(spacing: 0) {
                 fieldRow(
                     emoji: "☁️",
                     background: MicaboColor.tilePastels[3],
-                    title: i18n?.t("ios.debug.supabaseURL") ?? "URL Supabase",
+                    title: i18n.t("ios.debug.supabaseURL"),
                     placeholder: "https://your-project.supabase.co",
                     text: $supabaseURL
                 )
@@ -643,7 +647,7 @@ struct SettingsView: View {
                 fieldRow(
                     emoji: "🔑",
                     background: MicaboColor.tilePastels[5],
-                    title: i18n?.t("ios.debug.publicKey") ?? "Clé publique",
+                    title: i18n.t("ios.debug.publicKey"),
                     placeholder: "sb_publishable_…",
                     text: $anonKey
                 )
@@ -656,13 +660,13 @@ struct SettingsView: View {
         var rows = [
             MicaboRow(
                 tile: MicaboTile(glyph: .emoji("♻️"), background: MicaboColor.tilePastels[1]),
-                title: i18n?.t("ios.restoreDefaults") ?? "Rétablir les valeurs par défaut",
+                title: i18n.t("ios.restoreDefaults"),
                 accessory: .none,
                 action: restoreDefaults
             ),
             MicaboRow(
                 tile: MicaboTile(glyph: .emoji("🗑️"), background: MicaboColor.negativeSoft),
-                title: i18n?.t("ios.eraseAllCourses") ?? "Effacer tous mes cours",
+                title: i18n.t("ios.eraseAllCourses"),
                 accessory: .none,
                 titleColor: MicaboColor.negative,
                 action: { showResetConfirmation = true }
@@ -672,7 +676,7 @@ struct SettingsView: View {
             rows.append(
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("🚪"), background: MicaboColor.negativeSoft),
-                    title: i18n?.t("ios.deleteAccount") ?? "Supprimer mon compte",
+                    title: i18n.t("ios.deleteAccount"),
                     accessory: .none,
                     titleColor: MicaboColor.negative,
                     action: { showDeleteAccountConfirmation = true }
@@ -680,9 +684,9 @@ struct SettingsView: View {
             )
         }
         return MicaboSettingsSection(
-            caption: i18n?.t("ios.dataSection") ?? "Données",
+            caption: i18n.t("ios.dataSection"),
             rows: rows,
-            footnote: i18n?.t("ios.dataFootnote") ?? "Effacer tes cours les efface aussi de ton compte à la prochaine synchronisation. Supprimer le compte les efface partout."
+            footnote: i18n.t("ios.dataFootnote")
         )
     }
 
@@ -690,7 +694,7 @@ struct SettingsView: View {
     /// sur l'abonnement, même en `DEBUG`, se prend pour le vrai droit.
     private var testSection: some View {
         MicaboSettingsSection(
-            caption: i18n?.t("ios.debug.test") ?? "Test",
+            caption: i18n.t("ios.debug.test"),
             rows: testRows,
             footnote: testFootnote
         )
@@ -705,8 +709,8 @@ struct SettingsView: View {
         rows.append(
             MicaboRow(
                 tile: MicaboTile(glyph: .emoji("🎁"), background: MicaboColor.infoSoft),
-                title: i18n?.t("ios.debug.replayGift") ?? "Rejouer le cadeau",
-                subtitle: i18n?.t("ios.debug.replayGiftHelp") ?? "Ouvre la boîte sur la prochaine fiche",
+                title: i18n.t("ios.debug.replayGift"),
+                subtitle: i18n.t("ios.debug.replayGiftHelp"),
                 accessory: .chevron,
                 action: { DiscountOffer.forget() }
             )
@@ -716,7 +720,7 @@ struct SettingsView: View {
         rows.append(
             MicaboRow(
                 tile: MicaboTile(glyph: .emoji("🔁"), background: MicaboColor.tilePastels[2]),
-                title: i18n?.t("ios.debug.replayOnboarding") ?? "Refaire l'onboarding",
+                title: i18n.t("ios.debug.replayOnboarding"),
                 accessory: .chevron,
                 action: replayOnboarding
             )
@@ -727,52 +731,52 @@ struct SettingsView: View {
 
     private var testFootnote: String {
         #if DEBUG
-        return i18n?.t("ios.debug.footnoteDebug") ?? "Rejouer le cadeau n'existe qu'en développement. Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
+        return i18n.t("ios.debug.footnoteDebug")
         #else
-        return i18n?.t("ios.debug.footnote") ?? "Refaire l'onboarding efface les réponses de l'inscription, pas tes cours."
+        return i18n.t("ios.debug.footnote")
         #endif
     }
 
     private var feedbackSection: some View {
         MicaboSettingsSection(
-            caption: i18n?.t("ios.feedbackSection") ?? "Retour",
+            caption: i18n.t("ios.feedbackSection"),
             rows: [
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("✉️"), background: MicaboColor.infoSoft),
-                    title: i18n?.t("app.feedback.title") ?? "Faire un retour",
-                    subtitle: i18n?.t("ios.feedbackIdea") ?? "Un bug, une idée",
+                    title: i18n.t("app.feedback.title"),
+                    subtitle: i18n.t("ios.feedbackIdea"),
                     accessory: .chevron,
                     action: { showFeedback = true }
                 )
             ],
-            footnote: i18n?.t("ios.feedbackArrives", ["team": MicaboMail.team]) ?? "Ça arrive chez \(MicaboMail.team)."
+            footnote: i18n.t("ios.feedbackArrives", ["team": MicaboMail.team])
         )
     }
 
     private var aboutSection: some View {
         MicaboSettingsSection(
-            caption: i18n?.t("ios.about") ?? "À propos",
+            caption: i18n.t("ios.about"),
             rows: [
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("📦"), background: MicaboColor.tilePastels[4]),
-                    title: i18n?.t("ios.version") ?? "Version",
+                    title: i18n.t("ios.version"),
                     subtitle: buildCommit,
                     accessory: .value(appVersion)
                 ),
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("📈"), background: MicaboColor.tilePastels[0]),
-                    title: i18n?.t("ios.spacedRep") ?? "Répétition espacée",
+                    title: i18n.t("ios.spacedRep"),
                     accessory: .value("SM-2")
                 ),
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("🔒"), background: MicaboColor.tilePastels[3]),
-                    title: i18n?.t("common.privacy") ?? "Confidentialité",
+                    title: i18n.t("common.privacy"),
                     accessory: .chevron,
                     action: { openLegal(PaywallLinks.privacy) }
                 ),
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("📜"), background: MicaboColor.tilePastels[5]),
-                    title: i18n?.t("common.terms") ?? "Conditions",
+                    title: i18n.t("common.terms"),
                     accessory: .chevron,
                     action: { openLegal(PaywallLinks.terms) }
                 )

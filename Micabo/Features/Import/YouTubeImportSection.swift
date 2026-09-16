@@ -173,7 +173,11 @@ struct YouTubeImportSection: View {
     /// la machine n'est pas ponctué, et les cartes qui en sortent s'en ressentent.
     private func captionLabel(_ caption: YouTubeCaptionLanguage) -> String {
         let name = caption.name.nilIfBlank ?? caption.code
-        return caption.isAutomatic ? "Sous-titres automatiques · \(name)" : "Sous-titres · \(name)"
+        return L10n.t(
+            caption.isAutomatic ? "ios.yt.captionAuto" : "ios.yt.caption",
+            locale: .resolved(),
+            vars: ["language": name]
+        )
     }
 
     private func message(_ text: String, systemImage: String, tint: Color) -> some View {

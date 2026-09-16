@@ -13,14 +13,14 @@ struct GoalStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.goalTitle") ?? "Quels sont tes objectifs ?",
-            subtitle: i18n?.t("ios.goalSubtitle") ?? "Plusieurs réponses possibles.",
+            title: i18n.t("ios.goalTitle"),
+            subtitle: i18n.t("ios.goalSubtitle"),
             animatesTitle: true
         ) {
             VStack(spacing: 8) {
                 ForEach(LearningGoal.allCases) { goal in
                     OnboardingChoiceRow(
-                        title: goal.title(locale: i18n?.locale ?? .resolved()),
+                        title: goal.title(locale: i18n.locale),
                         emoji: goal.emoji,
                         isSelected: selection.contains(goal)
                     ) {

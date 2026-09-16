@@ -97,7 +97,7 @@ struct TrialOfferStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private var milestones: [TrialTimeline.Milestone] {
-        TrialTimeline.milestones(locale: i18n?.locale ?? .fr)
+        TrialTimeline.milestones(locale: i18n.locale)
     }
 
     @State private var revealedCount = 0
@@ -110,7 +110,7 @@ struct TrialOfferStepView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 34) {
-                    Text(i18n?.t("ios.trialHow") ?? "Comment marche\nton essai gratuit")
+                    Text(i18n.t("ios.trialHow"))
                         .font(MicaboFont.ui(34, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(-0.9)
@@ -140,7 +140,7 @@ struct TrialOfferStepView: View {
             .scrollIndicators(.hidden)
 
             MicaboBottomBar {
-                OnboardingContinueButton(title: i18n?.t("ios.ready") ?? "Je suis prêt") {
+                OnboardingContinueButton(title: i18n.t("ios.ready")) {
                     model.advance()
                 }
                 .opacity(showsAction ? 1 : 0)
@@ -260,7 +260,7 @@ struct TrialReminderStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             OnboardingWordByWordTitle(
-                text: i18n?.t("ios.trialReminder") ?? "Tu recevras un rappel\n1 jour avant la fin\nde ton essai.",
+                text: i18n.t("ios.trialReminder"),
                 size: 29,
                 alignment: .center,
                 wordDelay: 0.13,
@@ -285,7 +285,7 @@ struct TrialReminderStepView: View {
             Spacer(minLength: 0)
 
             MicaboBottomBar {
-                OnboardingContinueButton(title: i18n?.t("ios.tryFree") ?? "Essayer gratuitement") {
+                OnboardingContinueButton(title: i18n.t("ios.tryFree")) {
                     model.advance()
                 }
                 .opacity(showsAction ? 1 : 0)

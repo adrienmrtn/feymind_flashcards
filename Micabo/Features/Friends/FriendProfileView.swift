@@ -58,7 +58,7 @@ struct FriendProfileView: View {
     private var header: some View {
         MicaboScreenHeader(
             title: person.handle,
-            eyebrow: person.institutionName?.nilIfBlank ?? (i18n?.t("ios.friend") ?? "Ami"),
+            eyebrow: person.institutionName?.nilIfBlank ?? i18n.t("ios.friend"),
             back: MicaboHeaderBack.back { dismiss() }
         )
         .padding(.top, MicaboSpacing.xs)
@@ -87,15 +87,14 @@ struct FriendProfileView: View {
     }
 
     private var countLabel: String {
-        if isLoading { return i18n?.t("app.friends.loadingCourses") ?? "On regarde ses cours…" }
-        if courses.isEmpty { return i18n?.t("ios.noSharedCourses") ?? "Aucun cours partagé" }
-        let locale = i18n?.locale ?? .resolved()
-        return L10n.t("ios.sharedCount", locale: locale, vars: ["courses": MicaboCopy.courses(courses.count)])
+        if isLoading { return i18n.t("app.friends.loadingCourses") }
+        if courses.isEmpty { return i18n.t("ios.noSharedCourses") }
+        return i18n.t("ios.sharedCount", ["courses": MicaboCopy.courses(courses.count)])
     }
 
     private var list: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n?.t("app.friends.theirCourses") ?? "Ses cours")
+            MicaboSectionCaption(text: i18n.t("app.friends.theirCourses"))
 
             MicaboRowGroup(rows: courses.map { course in
                 MicaboRow(
@@ -121,7 +120,7 @@ struct FriendProfileView: View {
             parts.append(MicaboCopy.cards(count))
         }
         parts.append(MicaboCopy.audience(of: course))
-        return parts.isEmpty ? (i18n?.t("ios.sharedCourse") ?? "Cours partagé") : parts.joined(separator: " · ")
+        return parts.isEmpty ? i18n.t("ios.sharedCourse") : parts.joined(separator: " · ")
     }
 
     private func tint(for course: SharedCourseRecord) -> Color {
@@ -134,7 +133,7 @@ struct FriendProfileView: View {
             ProgressView()
                 .controlSize(.small)
                 .tint(MicaboColor.progress)
-            Text(i18n?.t("app.friends.loadingCourses") ?? "On regarde ses cours…")
+            Text(i18n.t("app.friends.loadingCourses"))
                 .font(MicaboFont.caption)
                 .foregroundStyle(MicaboColor.inkTertiary)
         }
@@ -143,11 +142,11 @@ struct FriendProfileView: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-            Text(i18n?.t("app.friends.nothingToSee") ?? "Rien à voir pour l'instant")
+            Text(i18n.t("app.friends.nothingToSee"))
                 .font(MicaboFont.cardTitle)
                 .foregroundStyle(MicaboColor.ink)
 
-            Text(i18n?.t("app.friends.noShared", ["handle": person.handle]) ?? "\(person.handle) n'a pas de cours partagé.")
+            Text(i18n.t("app.friends.noShared", ["handle": person.handle]))
                 .font(MicaboFont.body)
                 .foregroundStyle(MicaboColor.inkSecondary)
                 .fixedSize(horizontal: false, vertical: true)

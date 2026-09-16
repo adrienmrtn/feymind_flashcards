@@ -611,6 +611,8 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(SchoolingCountry.fr.institutionSearchIso(uiLocale: nil), "FR")
         XCTAssertEqual(SchoolingCountry.fr.institutionSearchIso(uiLocale: .de), "DE")
         XCTAssertEqual(SchoolingCountry.us.institutionSearchIso(uiLocale: .de), "US")
+        // « EN » n'est pas un pays : l'annuaire aurait filtré sur rien.
+        XCTAssertEqual(SchoolingCountry.fr.institutionSearchIso(uiLocale: .en), "US")
     }
 
     /// **L'ordre des pastilles est celui des marchés visés**, et il est verrouillé : c'est un

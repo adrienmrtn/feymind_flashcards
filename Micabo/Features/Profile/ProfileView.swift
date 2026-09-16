@@ -261,14 +261,14 @@ struct ProfileView: View {
     /// tuile pastel de la rangée : une roue crantée grise en glyphe système était le seul
     /// endroit de l'app où une icône n'avait pas sa pastille.
     private var header: some View {
-        MicaboScreenHeader(title: i18n?.t("nav.profile") ?? "Profil") {
+        MicaboScreenHeader(title: i18n.t("nav.profile")) {
             Button {
                 showSettings = true
             } label: {
                 MicaboTile(glyph: .emoji("⚙️"), background: MicaboColor.tilePastels[0], size: 44)
             }
             .buttonStyle(MicaboPressableButtonStyle())
-            .accessibilityLabel(i18n?.t("nav.settings") ?? "Réglages")
+            .accessibilityLabel(i18n.t("nav.settings"))
         }
         .padding(.top, MicaboSpacing.xs)
     }
@@ -282,8 +282,8 @@ struct ProfileView: View {
     private var identityLabel: String {
         if let username = social.username { return Username.display(username) }
         if let name = auth.user?.label.nilIfBlank { return name }
-        if auth.isSignedIn { return i18n?.t("app.profile.signedIn") ?? "Compte connecté" }
-        return i18n?.t("app.profile.offline") ?? "Sans compte · tout reste sur cet appareil"
+        if auth.isSignedIn { return i18n.t("app.profile.signedIn") }
+        return i18n.t("app.profile.offline")
     }
 
     // MARK: - Le panneau du haut
@@ -340,20 +340,20 @@ struct ProfileView: View {
     /// telle.
     private func streakCaption(_ metrics: Metrics) -> String {
         let unit = metrics.streak == 1
-            ? (i18n?.t("app.profile.streakUnitOne") ?? "jour de série")
-            : (i18n?.t("app.profile.streakUnitMany") ?? "jours de série")
+            ? i18n.t("app.profile.streakUnitOne")
+            : i18n.t("app.profile.streakUnitMany")
         guard metrics.bestStreak > metrics.streak else { return unit }
-        return "\(unit) \(i18n?.t("app.profile.streak.record", ["record": "\(metrics.bestStreak)"]) ?? "· record \(metrics.bestStreak)")"
+        return "\(unit) \(i18n.t("app.profile.streak.record", ["record": "\(metrics.bestStreak)"]))"
     }
 
     private var firstReviewInvitation: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(i18n?.t("app.profile.noReviews") ?? "Aucune révision")
+            Text(i18n.t("app.profile.noReviews"))
                 .font(MicaboFont.ui(19, weight: .bold))
                 .foregroundStyle(MicaboColor.ink)
                 .tracking(MicaboTracking.tight)
 
-            Text(i18n?.t("app.profile.streak.empty") ?? "Ta première carte notée lance la série.")
+            Text(i18n.t("app.profile.streak.empty"))
                 .font(MicaboFont.ui(13.5, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -368,20 +368,19 @@ struct ProfileView: View {
         HStack(spacing: 0) {
             total(
                 "\(metrics.cardCount)",
-                i18n?.t("app.profile.mastery.centerLabel", ["count": "\(metrics.cardCount)"])
-                    ?? (metrics.cardCount == 1 ? "carte" : "cartes")
+                i18n.t("app.profile.mastery.centerLabel", ["count": "\(metrics.cardCount)"])
             )
             columnDivider
             total(
                 "\(metrics.courseCount)",
-                i18n?.t("ios.courseUnit", ["count": "\(metrics.courseCount)"]) ?? "cours"
+                i18n.t("ios.courseUnit", ["count": "\(metrics.courseCount)"])
             )
             // La justesse, comme sur la page Progrès du site : ce qu'on a su du premier coup.
             if metrics.hasReviews {
                 columnDivider
                 total(
                     "\(metrics.accuracyPercent) %",
-                    i18n?.t("app.home.stats.accuracy") ?? "Justesse"
+                    i18n.t("app.home.stats.accuracy")
                 )
             }
         }
@@ -397,14 +396,14 @@ struct ProfileView: View {
     /// compte pour la moitié, sinon la barre reste à zéro deux semaines puis saute.
     private func masteryPanel(_ metrics: Metrics) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(i18n?.t("app.home.mastery.title") ?? "Maîtrise")
+            Text(i18n.t("app.home.mastery.title"))
                 .font(MicaboFont.ui(12, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .textCase(.uppercase)
                 .tracking(0.6)
 
             if metrics.cardCount == 0 {
-                Text(i18n?.t("app.home.mastery.empty") ?? "Importe un cours pour commencer à mesurer.")
+                Text(i18n.t("app.home.mastery.empty"))
                     .font(MicaboFont.ui(13.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -419,7 +418,7 @@ struct ProfileView: View {
                             .font(MicaboFont.ui(16, weight: .semibold))
                             .foregroundStyle(MicaboColor.inkSecondary)
                     }
-                    Text(i18n?.t("app.home.mastery.of", ["count": "\(metrics.cardCount)"]) ?? "sur \(metrics.cardCount) cartes")
+                    Text(i18n.t("app.home.mastery.of", ["count": "\(metrics.cardCount)"]))
                         .font(MicaboFont.ui(12.5, weight: .medium))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
@@ -427,7 +426,7 @@ struct ProfileView: View {
                 masteryBar(metrics.masteryPercent, height: 8)
 
                 if !metrics.byCourse.isEmpty {
-                    Text(i18n?.t("app.home.mastery.byCourse") ?? "Par cours")
+                    Text(i18n.t("app.home.mastery.byCourse"))
                         .font(MicaboFont.ui(12, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .padding(.top, 4)
@@ -479,13 +478,13 @@ struct ProfileView: View {
     private func weakPanel(_ metrics: Metrics) -> some View {
         if !metrics.weak.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
-                Text(i18n?.t("app.home.weak.title") ?? "Ce qui résiste")
+                Text(i18n.t("app.home.weak.title"))
                     .font(MicaboFont.ui(12, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .textCase(.uppercase)
                     .tracking(0.6)
 
-                Text(i18n?.t("app.home.weak.lead") ?? "Tes cartes les plus ratées. Elles passent en premier.")
+                Text(i18n.t("app.home.weak.lead"))
                     .font(MicaboFont.ui(13, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -498,15 +497,14 @@ struct ProfileView: View {
                                     .font(MicaboFont.ui(14, weight: .medium))
                                     .foregroundStyle(MicaboColor.ink)
                                     .lineLimit(2)
-                                Text(i18n?.t("app.home.weak.line", ["again": "\(card.againCount)", "reviews": "\(card.reviews)"])
-                                    ?? "Ratée \(card.againCount) fois sur \(card.reviews) passages")
+                                Text(i18n.t("app.home.weak.line", ["again": "\(card.againCount)", "reviews": "\(card.reviews)"]))
                                     .font(MicaboFont.ui(12.5, weight: .regular))
                                     .foregroundStyle(MicaboColor.inkTertiary)
                             }
                             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
 
                             if card.isStubborn {
-                                MicaboBadge(text: i18n?.t("app.plan.sheet.stubborn") ?? "À revoir", tone: .warm)
+                                MicaboBadge(text: i18n.t("app.plan.sheet.stubborn"), tone: .warm)
                             }
                         }
                         .padding(.vertical, 11)
@@ -528,14 +526,14 @@ struct ProfileView: View {
         let peak = max(buckets.map(\.count).max() ?? 1, 1)
 
         return VStack(alignment: .leading, spacing: 12) {
-            Text(i18n?.t("app.profile.mastery.label") ?? "Niveau de connaissance")
+            Text(i18n.t("app.profile.mastery.label"))
                 .font(MicaboFont.ui(12, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .textCase(.uppercase)
                 .tracking(0.6)
 
             if metrics.cardCount == 0 {
-                Text(i18n?.t("app.profile.mastery.empty") ?? "Tes cartes se rangeront ici dès que tu commences à réviser.")
+                Text(i18n.t("app.profile.mastery.empty"))
                     .font(MicaboFont.ui(13.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -552,7 +550,7 @@ struct ProfileView: View {
                                 .fill(knowledgeColor(bucket.level, empty: bucket.count == 0))
                                 .frame(height: max(bucket.count > 0 ? 8 : 4, CGFloat(bucket.count) / CGFloat(peak) * 88))
 
-                            Text(bucket.level.label(locale: i18n?.locale ?? .resolved()))
+                            Text(bucket.level.label(locale: i18n.locale))
                                 .font(MicaboFont.ui(10.5, weight: .medium))
                                 .foregroundStyle(MicaboColor.inkTertiary)
                                 .multilineTextAlignment(.center)
@@ -566,10 +564,10 @@ struct ProfileView: View {
                 .frame(height: 132, alignment: .bottom)
                 .accessibilityElement()
                 .accessibilityLabel(buckets.map {
-                    i18n?.t("app.profile.mastery.sliceAria", [
+                    i18n.t("app.profile.mastery.sliceAria", [
                         "count": "\($0.count)",
-                        "label": $0.level.label(locale: i18n?.locale ?? .resolved())
-                    ]) ?? "\($0.count) \($0.level.label)"
+                        "label": $0.level.label(locale: i18n.locale)
+                    ])
                 }.joined(separator: ", "))
             }
         }
@@ -594,14 +592,14 @@ struct ProfileView: View {
         let top = metrics.mostReviewed
 
         return VStack(alignment: .leading, spacing: 12) {
-            Text(i18n?.t("app.profile.topCards.label") ?? "Cartes les plus passées")
+            Text(i18n.t("app.profile.topCards.label"))
                 .font(MicaboFont.ui(12, weight: .semibold))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .textCase(.uppercase)
                 .tracking(0.6)
 
             if top.isEmpty {
-                Text(i18n?.t("app.profile.topCards.empty") ?? "Note tes premières cartes pour voir celles que tu revois le plus.")
+                Text(i18n.t("app.profile.topCards.empty"))
                     .font(MicaboFont.ui(13.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -623,8 +621,7 @@ struct ProfileView: View {
 
                             Spacer(minLength: 8)
 
-                            Text(i18n?.t("app.profile.passes", ["count": "\(entry.passes)"])
-                                ?? "\(entry.passes) passage\(entry.passes > 1 ? "s" : "")")
+                            Text(i18n.t("app.profile.passes", ["count": "\(entry.passes)"]))
                                 .font(MicaboFont.ui(12.5, weight: .medium))
                                 .foregroundStyle(MicaboColor.inkTertiary)
                                 .monospacedDigit()
@@ -674,7 +671,7 @@ struct ProfileView: View {
         let rows = social.weekRanking
         if WeekReviewRanking.isVisible(rows) {
             VStack(alignment: .leading, spacing: 12) {
-                Text(i18n?.t("ios.weekRanking") ?? "Classement de la semaine")
+                Text(i18n.t("ios.weekRanking"))
                     .font(MicaboFont.ui(12, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .textCase(.uppercase)
@@ -690,7 +687,7 @@ struct ProfileView: View {
                     }
                 }
 
-                Text(i18n?.t("ios.weekRankingHint") ?? "cartes passées depuis lundi")
+                Text(i18n.t("ios.weekRankingHint"))
                     .font(MicaboFont.ui(12, weight: .regular))
                     .foregroundStyle(MicaboColor.inkTertiary)
             }
@@ -730,7 +727,7 @@ struct ProfileView: View {
                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
 
                 if row.isMe {
-                    Text(i18n?.t("ios.youLower") ?? "toi")
+                    Text(i18n.t("ios.youLower"))
                         .font(MicaboFont.ui(12, weight: .regular))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
@@ -751,13 +748,13 @@ struct ProfileView: View {
     }
 
     private func rankingLabel(_ row: WeekReviewRanking.Row, rank: Int) -> String {
-        let who = row.isMe ? (i18n?.t("ios.youLower") ?? "toi") : row.handle
+        let who = row.isMe ? i18n.t("ios.youLower") : row.handle
         let cards = MicaboCopy.cards(row.passes)
-        return i18n?.t("ios.rankingAria", [
+        return i18n.t("ios.rankingAria", [
             "rank": "\(rank)",
             "who": who,
             "cards": cards
-        ]) ?? "\(rank). \(who), \(cards)"
+        ])
     }
 
     private func person(for row: WeekReviewRanking.Row) -> SocialService.Person {
@@ -785,7 +782,7 @@ struct ProfileView: View {
             rows: [
                 MicaboRow(
                     tile: MicaboTile(glyph: .emoji("👋"), background: MicaboColor.tilePastels[2]),
-                    title: i18n?.t("nav.friends") ?? "Amis",
+                    title: i18n.t("nav.friends"),
                     subtitle: friendsSubtitle,
                     accessory: friendsAccessory
                 ) {
@@ -800,12 +797,11 @@ struct ProfileView: View {
     }
 
     private var friendsSubtitle: String {
-        guard auth.isSignedIn else { return i18n?.t("app.friends.needAccount") ?? "Il faut un compte pour ajouter quelqu'un" }
+        guard auth.isSignedIn else { return i18n.t("app.friends.needAccount") }
         if !social.friends.isEmpty {
-            return i18n?.t("app.friends.friendCount", ["count": "\(social.friends.count)"])
-                ?? (social.friends.count == 1 ? "1 ami" : "\(social.friends.count) amis")
+            return i18n.t("app.friends.friendCount", ["count": "\(social.friends.count)"])
         }
-        return i18n?.t("app.friends.findClassmates") ?? "Retrouve les cours de tes camarades"
+        return i18n.t("app.friends.findClassmates")
     }
 
     private var friendsAccessory: MicaboRowAccessory {

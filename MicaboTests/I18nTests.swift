@@ -138,18 +138,88 @@ final class I18nTests: XCTestCase {
     /// est le signe d'une ligne recopiée et oubliée.
     func testNothingFallsBackToFrench() {
         // Ce qui s'écrit pareil dans les deux langues : des jetons seuls, un nom propre,
-        // un objet de courriel, et un pluriel dont les deux branches se ressemblent.
+        // un objet de courriel, des abréviations que l'anglais partage avec le français,
+        // et un pluriel dont les deux branches se ressemblent.
         let sameEverywhere: Set<String> = [
             "ios.rankingAria", "ios.photo.scanName", "ios.mail.subject.bug", "ios.offer.minutes",
+            "ios.durationHm", "ios.readingApprox",
         ]
+        assertNotCopiedFromFrench(
+            french: IosI18nCatalogs.fr,
+            english: IosI18nCatalogs.en,
+            exempt: sameEverywhere,
+            table: "IosI18nCatalogs"
+        )
+    }
+
+    /// La même garantie sur la table partagée, celle que le site écrit.
+    ///
+    /// Elle est générée, donc jamais relue ici — et c'est exactement pourquoi le test
+    /// existe : une clé ajoutée côté site sans sa traduction descendrait jusqu'à l'iPhone
+    /// sans que rien ne l'arrête.
+    func testSharedCatalogIsNotFrenchInEnglish() {
+        // Des chiffres, des abréviations communes, et trois références bibliographiques.
+        let sameEverywhere: Set<String> = [
+            "app.session.underOneMin", "app.mock.blockLine", "app.mock.progress",
+            "app.profile.streak.record", "app.deck.pouringCount", "app.import.readingMins",
+            "app.paywall.study1Source", "app.paywall.study2Source", "app.paywall.study3Source",
+            "app.today.mock", "app.today.minutesCourses", "app.common.delayUnderMin",
+        ]
+        assertNotCopiedFromFrench(
+            french: SharedI18nCatalogs.fr,
+            english: SharedI18nCatalogs.en,
+            exempt: sameEverywhere,
+            table: "SharedI18nCatalogs"
+        )
+    }
+
+    private func assertNotCopiedFromFrench(
+        french: [String: String],
+        english: [String: String],
+        exempt: Set<String>,
+        table: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
         var copied: [String] = []
-        for (key, french) in IosI18nCatalogs.fr {
-            guard !sameEverywhere.contains(key) else { continue }
+        for (key, value) in french {
+            guard !exempt.contains(key) else { continue }
             // Un mot isolé peut légitimement s'écrire pareil dans deux langues.
-            guard french.split(separator: " ").count > 2 else { continue }
-            if IosI18nCatalogs.en[key] == french { copied.append(key) }
+            guard value.split(separator: " ").count > 2 else { continue }
+            if english[key] == value { copied.append(key) }
         }
-        XCTAssertTrue(copied.isEmpty, "clés restées en français : \(copied.sorted())")
+        XCTAssertTrue(
+            copied.isEmpty,
+            "\(table) : clés restées en français — \(copied.sorted())",
+            file: file,
+            line: line
+        )
+    }
+
+    /// **Aucun écran ne doit écrire sa propre phrase de repli.**
+    ///
+    /// L'environnement rend `UiLocaleStore?`, et il est nil pour de bon dans une barre
+    /// d'outils posée en accessoire de clavier. Chaque appel portait donc son repli écrit à
+    /// la main, en français : l'app basculait de langue au milieu d'un écran sans que rien
+    /// ne plante. L'extension sur l'optionnel rend la langue résolue à la place.
+    func testTheOptionalStoreStillSpeaksTheChosenLanguage() {
+        let absent: UiLocaleStore? = nil
+        let defaults = UserDefaults.standard
+        let previous = defaults.string(forKey: UiLocale.storageKey)
+        defer {
+            if let previous { defaults.set(previous, forKey: UiLocale.storageKey) }
+            else { defaults.removeObject(forKey: UiLocale.storageKey) }
+        }
+
+        defaults.set(UiLocale.en.rawValue, forKey: UiLocale.storageKey)
+        XCTAssertEqual(absent.locale, .en)
+        XCTAssertEqual(absent.t("ios.done"), "Done")
+
+        defaults.set(UiLocale.de.rawValue, forKey: UiLocale.storageKey)
+        XCTAssertEqual(absent.t("ios.done"), "Fertig")
+
+        let present: UiLocaleStore? = UiLocaleStore(locale: .es)
+        XCTAssertEqual(present.t("ios.done"), IosI18nCatalogs.es["ios.done"])
     }
 
     func testTokenReplacementAndPlurals() {

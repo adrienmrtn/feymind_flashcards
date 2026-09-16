@@ -39,7 +39,7 @@ struct MockPaperView: View {
     }
 
     private func t(_ key: String, _ vars: [String: String] = [:]) -> String {
-        i18n?.t(key, vars) ?? L10n.t(key, locale: .resolved(), vars: vars)
+        i18n.t(key, vars)
     }
 
     private var questions: [MockQuestion] { session.questions }

@@ -15,7 +15,7 @@ struct LevelStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.levelTitle") ?? "Tu en es où ?",
+            title: i18n.t("ios.levelTitle"),
             titleSize: 32,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,

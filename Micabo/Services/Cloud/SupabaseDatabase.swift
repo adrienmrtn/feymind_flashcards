@@ -264,7 +264,8 @@ struct SupabaseDatabase {
             // une phrase anglaise.
             throw Failure.server(
                 status: http.statusCode,
-                message: (payload?["message"] as? String) ?? "Le serveur a répondu \(http.statusCode).",
+                message: (payload?["message"] as? String)
+                    ?? L10n.t("ios.ai.serverStatus", locale: .resolved(), vars: ["status": "\(http.statusCode)"]),
                 code: payload?["code"] as? String
             )
         }

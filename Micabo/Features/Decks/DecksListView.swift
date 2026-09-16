@@ -35,7 +35,7 @@ struct DecksListView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: MicaboSpacing.md) {
                     MicaboScreenHeader(
-                        title: i18n?.t("nav.decks") ?? "Paquets",
+                        title: i18n.t("nav.decks"),
                         eyebrow: countLabel
                     )
                     .padding(.horizontal, MicaboSpacing.screen)
@@ -64,14 +64,14 @@ struct DecksListView: View {
         }
         .micaboPaywall($paywall)
         .confirmationDialog(
-            i18n?.t("app.decks.deleteQ") ?? "Supprimer ce paquet ?",
+            i18n.t("app.decks.deleteQ"),
             isPresented: Binding(
                 get: { deckPendingDelete != nil },
                 set: { if !$0 { deckPendingDelete = nil } }
             ),
             titleVisibility: .visible
         ) {
-            Button(i18n?.t("app.decks.deleteDeck") ?? "Supprimer le paquet", role: .destructive) {
+            Button(i18n.t("app.decks.deleteDeck"), role: .destructive) {
                 if let course = deckPendingDelete {
                     withAnimation {
                         try? CourseRepository.delete(course, in: modelContext)
@@ -79,13 +79,13 @@ struct DecksListView: View {
                 }
                 deckPendingDelete = nil
             }
-            Button(i18n?.t("app.common.cancel") ?? "Annuler", role: .cancel) { deckPendingDelete = nil }
+            Button(i18n.t("app.common.cancel"), role: .cancel) { deckPendingDelete = nil }
         } message: {
             if let course = deckPendingDelete {
-                Text(i18n?.t("app.decks.deleteMsg", [
+                Text(i18n.t("app.decks.deleteMsg", [
                     "title": course.title,
                     "cards": MicaboCopy.cards(census[course.id]?.cardCount ?? course.cards.count)
-                ]) ?? "\(course.title) et \(MicaboCopy.cards(course.cards.count)) disparaissent.")
+                ]))
             }
         }
         .task(id: "\(router?.selection == .decks)-\(censusKey)") {
@@ -100,7 +100,7 @@ struct DecksListView: View {
     }
 
     private var countLabel: String {
-        guard !courses.isEmpty else { return i18n?.t("app.decks.none") ?? "Aucun paquet" }
+        guard !courses.isEmpty else { return i18n.t("app.decks.none") }
         return MicaboCopy.cards(LibraryCensus.totalCards(in: census))
     }
 
@@ -111,7 +111,7 @@ struct DecksListView: View {
                 systemImage: "plus",
                 style: .dark,
                 size: 56,
-                accessibilityTitle: i18n?.t("app.decks.addTitle") ?? "Ouvrir un paquet"
+                accessibilityTitle: i18n.t("app.decks.addTitle")
             ) {
                 requestCreate()
             }
@@ -126,7 +126,7 @@ struct DecksListView: View {
         if !courses.isEmpty {
             MicaboSearchField(
                 text: $searchText,
-                placeholder: i18n?.t("app.decks.search") ?? "Rechercher un paquet"
+                placeholder: i18n.t("app.decks.search")
             )
             .padding(.horizontal, MicaboSpacing.screen)
         }
@@ -140,9 +140,9 @@ struct DecksListView: View {
         if courses.isEmpty {
             MicaboEmptyState(
                 systemImage: "rectangle.on.rectangle.angled",
-                title: i18n?.t("app.decks.emptyTitle") ?? "Aucun paquet",
-                message: i18n?.t("app.decks.emptyBody") ?? "Ouvre-en un pour commencer, vide ou depuis Anki.",
-                actionTitle: i18n?.t("app.decks.addTitle") ?? "Ouvrir un paquet"
+                title: i18n.t("app.decks.emptyTitle"),
+                message: i18n.t("app.decks.emptyBody"),
+                actionTitle: i18n.t("app.decks.addTitle")
             ) {
                 requestCreate()
             }
@@ -150,8 +150,8 @@ struct DecksListView: View {
         } else if filtered.isEmpty {
             MicaboEmptyState(
                 systemImage: "magnifyingglass",
-                title: i18n?.t("app.courses.noResults") ?? "Aucun résultat",
-                message: i18n?.t("app.courses.noResultsBody") ?? "Essaie un autre mot."
+                title: i18n.t("app.courses.noResults"),
+                message: i18n.t("app.courses.noResultsBody")
             )
             .padding(.horizontal, MicaboSpacing.screen)
         } else {
@@ -165,7 +165,7 @@ struct DecksListView: View {
                         Button(role: .destructive) {
                             deckPendingDelete = course
                         } label: {
-                            Label(i18n?.t("app.common.delete") ?? "Supprimer", systemImage: "trash")
+                            Label(i18n.t("app.common.delete"), systemImage: "trash")
                         }
                     }
 

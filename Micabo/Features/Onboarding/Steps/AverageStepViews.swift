@@ -28,16 +28,15 @@ struct CurrentAverageStepView: View {
     private var choices: [GradeTick] {
         let below = GradeTick(
             score: DesiredGradeScale.belowScore,
-            label: i18n?.t("ios.averageBelow", ["grade": scale.choices.first?.label ?? ""])
-                ?? "Moins de \(scale.choices.first?.label ?? "")"
+            label: i18n.t("ios.averageBelow", ["grade": scale.choices.first?.label ?? ""])
         )
         return [below] + scale.choices
     }
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.averageTitle") ?? "Quelle est ta moyenne\nen ce moment ?",
-            subtitle: i18n?.t("ios.averageLead"),
+            title: i18n.t("ios.averageTitle"),
+            subtitle: i18n.t("ios.averageLead"),
             titleSize: 28,
             animatesTitle: true,
             expandsContent: true
@@ -55,7 +54,7 @@ struct CurrentAverageStepView: View {
                         }
                     }
                 ),
-                label: i18n?.t("ios.averageTitle") ?? "Ta moyenne"
+                label: i18n.t("ios.averageTitle")
             )
         } footer: {
             OnboardingContinueButton(isEnabled: model.currentScore != nil) {
@@ -83,8 +82,8 @@ struct TargetAverageStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.targetTitle") ?? "Et tu vises\ncombien ?",
-            subtitle: isAtTop ? i18n?.t("ios.targetAtTop") : i18n?.t("ios.targetLead"),
+            title: i18n.t("ios.targetTitle"),
+            subtitle: isAtTop ? i18n.t("ios.targetAtTop") : i18n.t("ios.targetLead"),
             titleSize: 28,
             animatesTitle: true,
             expandsContent: true
@@ -99,7 +98,7 @@ struct TargetAverageStepView: View {
                     // Deux crans au-dessus du départ : un objectif qui s'ouvre sur la valeur
                     // juste au-dessus de la sienne ne ressemble pas à un objectif.
                     fallbackIndex: 1,
-                    label: i18n?.t("ios.targetTitle") ?? "Ta moyenne visée"
+                    label: i18n.t("ios.targetTitle")
                 )
             }
         } footer: {
@@ -130,11 +129,11 @@ struct TogetherStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.togetherTitle") ?? "On va t'aider\nà y arriver.",
+            title: i18n.t("ios.togetherTitle"),
             titleSize: 28
         ) {
             GradeJourney(
-                from: label(for: model.currentScore) ?? (i18n?.t("ios.averageBelowShort") ?? "Aujourd'hui"),
+                from: label(for: model.currentScore) ?? i18n.t("ios.averageBelowShort"),
                 to: label(for: model.targetScore) ?? scale.max
             )
         } footer: {

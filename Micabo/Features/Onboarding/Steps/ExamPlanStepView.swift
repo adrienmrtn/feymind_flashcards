@@ -18,7 +18,7 @@ struct ExamPlanStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.examPlanTitle") ?? "Ton plan se pose\njusqu'au jour J.",
+            title: i18n.t("ios.examPlanTitle"),
             titleSize: 26
         ) {
             ExamCountdownCalendar()
@@ -69,7 +69,7 @@ private struct ExamCountdownCalendar: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private func t(_ key: String, _ vars: [String: String] = [:]) -> String {
-        i18n?.t(key, vars) ?? L10n.t(key, locale: .fr, vars: vars)
+        i18n.t(key, vars)
     }
 
     var body: some View {
@@ -87,7 +87,7 @@ private struct ExamCountdownCalendar: View {
     private var grid: some View {
         VStack(spacing: 7) {
             HStack(spacing: 0) {
-                ForEach(Array(MicaboCalendar.weekdayInitials(locale: i18n?.locale ?? .resolved()).enumerated()), id: \.offset) { _, initial in
+                ForEach(Array(MicaboCalendar.weekdayInitials(locale: i18n.locale).enumerated()), id: \.offset) { _, initial in
                     Text(initial)
                         .font(MicaboFont.ui(10, weight: .semibold))
                         .foregroundStyle(MicaboColor.inkTertiary)

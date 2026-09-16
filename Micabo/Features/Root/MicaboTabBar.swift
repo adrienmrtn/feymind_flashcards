@@ -27,7 +27,7 @@ struct MicaboTabBar: View {
     private func bar(_ router: TabRouter) -> some View {
         HStack(spacing: 0) {
             ForEach(RootTab.allCases) { tab in
-                let label = tab.label(t: { i18n?.t($0) ?? L10n.t($0, locale: .resolved()) })
+                let label = tab.label(t: { i18n.t($0) })
                 Button {
                     // Sans `withAnimation` : animer `selection` faisait fondre les quatre
                     // pages, et l'onglet touché n'était lisible qu'après 280 ms.

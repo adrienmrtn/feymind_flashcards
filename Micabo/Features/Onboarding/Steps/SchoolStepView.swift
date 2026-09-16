@@ -25,7 +25,7 @@ struct SchoolStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.schoolTitle") ?? "Tu étudies où ?",
+            title: i18n.t("ios.schoolTitle"),
             titleSize: 28,
             skip: OnboardingSkip(action: skipAndAdvance)
         ) {
@@ -39,13 +39,13 @@ struct SchoolStepView: View {
                         ProgressView()
                             .controlSize(.small)
                             .tint(MicaboColor.progress)
-                        Text(i18n?.t("ios.schoolSearching") ?? "Recherche…")
+                        Text(i18n.t("ios.schoolSearching"))
                             .font(MicaboFont.ui(13, weight: .medium))
                             .foregroundStyle(MicaboColor.inkTertiary)
                     }
                     .padding(.top, 4)
                 } else if normalizedQuery.count >= 2, selected == nil {
-                    Text(i18n?.t("ios.schoolNone") ?? "Aucun résultat pour l'instant — tu peux quand même continuer avec ce nom.")
+                    Text(i18n.t("ios.schoolNone"))
                         .font(MicaboFont.ui(12, weight: .regular))
                         .foregroundStyle(MicaboColor.inkTertiary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -83,14 +83,12 @@ struct SchoolStepView: View {
 
     private var continueTitle: String {
         if let selected {
-            return i18n?.t("ios.continueWith", ["name": shortName(selected.name)])
-                ?? "Continuer avec \(shortName(selected.name))"
+            return i18n.t("ios.continueWith", ["name": shortName(selected.name)])
         }
         if normalizedQuery.isEmpty {
-            return i18n?.t("ios.schoolPrompt") ?? "Indique ton établissement"
+            return i18n.t("ios.schoolPrompt")
         }
-        return i18n?.t("ios.continueWith", ["name": shortName(normalizedQuery)])
-            ?? "Continuer avec « \(shortName(normalizedQuery)) »"
+        return i18n.t("ios.continueWith", ["name": shortName(normalizedQuery)])
     }
 
     private var searchField: some View {
@@ -99,7 +97,7 @@ struct SchoolStepView: View {
                 .font(.system(size: 15, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)
 
-            TextField(i18n?.t("ios.schoolPlaceholder") ?? "Ex. École polytechnique, Louis-le-Grand…", text: $query)
+            TextField(i18n.t("ios.schoolPlaceholder"), text: $query)
                 .font(MicaboFont.ui(16, weight: .medium))
                 .foregroundStyle(MicaboColor.ink)
                 .textInputAutocapitalization(.words)

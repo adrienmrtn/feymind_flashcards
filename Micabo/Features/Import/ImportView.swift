@@ -272,8 +272,8 @@ struct ImportView: View {
 
     private var header: some View {
         MicaboScreenHeader(
-            title: kind.title(locale: i18n?.locale ?? .resolved()),
-            eyebrow: i18n?.t("ios.newCourse") ?? "Nouveau cours",
+            title: kind.title(locale: i18n.locale),
+            eyebrow: i18n.t("ios.newCourse"),
             back: MicaboHeaderBack.close { dismiss() }
         )
         .padding(.top, MicaboSpacing.xs)

@@ -118,7 +118,7 @@ struct WelcomeDeck: View {
     }
 
     private func translate(_ key: String) -> String {
-        i18n?.t(key) ?? L10n.t(key, locale: .fr)
+        i18n.t(key)
     }
 
     private static func makeItems(t: (String) -> String) -> [Item] {

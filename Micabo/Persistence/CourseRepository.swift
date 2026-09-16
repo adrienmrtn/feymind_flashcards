@@ -109,7 +109,8 @@ enum CourseRepository {
         cards: [SharedCardRecord] = [],
         in context: ModelContext
     ) throws -> Course {
-        let title = TextSanitizer.clean(shared.title).nilIfBlank ?? "Cours repris"
+        let title = TextSanitizer.clean(shared.title).nilIfBlank
+            ?? L10n.t("ios.adoptedCourse", locale: .resolved())
         let index = title.hashValue.magnitude % UInt(MicaboColor.courseAccents.count)
 
         let course = Course(
@@ -240,7 +241,8 @@ enum CourseRepository {
         visibility: CourseVisibility = .standard,
         in context: ModelContext
     ) throws -> Course {
-        let cleanTitle = TextSanitizer.clean(title).nilIfBlank ?? "Nouveau paquet"
+        let cleanTitle = TextSanitizer.clean(title).nilIfBlank
+            ?? L10n.t("ios.newDeck", locale: .resolved())
         let cleanSubject = subject.flatMap { TextSanitizer.subject($0).nilIfBlank }
         let index = abs(cleanTitle.hashValue) % MicaboColor.courseAccents.count
 

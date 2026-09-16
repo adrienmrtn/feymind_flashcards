@@ -16,7 +16,7 @@ struct FeynmanStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.feynmanTitle") ?? "Explique-le à voix haute.\nTu sauras si tu sais.",
+            title: i18n.t("ios.feynmanTitle"),
             titleSize: 28
         ) {
             FeynmanDemo()
@@ -39,7 +39,7 @@ private struct FeynmanDemo: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private func t(_ key: String) -> String {
-        i18n?.t(key) ?? L10n.t(key, locale: .resolved())
+        i18n.t(key)
     }
 
     /// L'explication, mot à mot. Elle s'arrête sur « parce que » : c'est toujours là que ça

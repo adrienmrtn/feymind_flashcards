@@ -182,10 +182,18 @@ enum YouTubeDuration {
         let hours = total / 3600
         let minutes = (total % 3600) / 60
 
+        let locale = UiLocale.resolved()
         if hours > 0 {
-            return minutes > 0 ? "\(hours) h \(String(format: "%02d", minutes))" : "\(hours) h"
+            guard minutes > 0 else {
+                return L10n.t("app.common.delayHours", locale: locale, vars: ["n": "\(hours)"])
+            }
+            return L10n.t(
+                "ios.durationHm",
+                locale: locale,
+                vars: ["hours": "\(hours)", "minutes": String(format: "%02d", minutes)]
+            )
         }
-        return "\(max(1, minutes)) min"
+        return L10n.t("app.common.delayMinutes", locale: locale, vars: ["n": "\(max(1, minutes))"])
     }
 }
 
@@ -287,7 +295,8 @@ enum YouTubeImportError: LocalizedError, Equatable {
     /// La limite est **toujours** annoncée : un refus qui ne dit pas jusqu'où on peut aller
     /// laisse l'utilisateur essayer au hasard.
     static func noticeForLongVideo(duration: TimeInterval, limit: TimeInterval) -> String {
-        let ceiling = YouTubeDuration.label(for: limit) ?? "1 h 30"
+        let ceiling = YouTubeDuration.label(for: limit)
+            ?? L10n.t("app.common.delayMinutes", locale: .resolved(), vars: ["n": "\(Int(limit / 60))"])
         guard let measured = YouTubeDuration.label(for: duration) else {
             return L10n.t("ios.yt.tooLong", locale: .resolved(), vars: ["limit": ceiling])
         }
@@ -415,7 +424,7 @@ extension YouTubeImportService {
             pageImages: [],
             coverImage: cover,
             pageCount: 1,
-            fileName: video.title.nilIfBlank ?? "Vidéo YouTube",
+            fileName: video.title.nilIfBlank ?? L10n.t("ios.import.youtube", locale: .resolved()),
             source: .youtube,
             extractionNote: note(video: video, transcript: transcript)
         )
@@ -535,7 +544,8 @@ enum YouTubeOnDevice {
         let seconds = Int(details["lengthSeconds"] as? String ?? "") ?? 0
         return YouTubeVideo(
             id: videoID,
-            title: (details["title"] as? String).flatMap { $0.nilIfBlank } ?? "Vidéo YouTube",
+            title: (details["title"] as? String).flatMap { $0.nilIfBlank }
+                ?? L10n.t("ios.import.youtube", locale: .resolved()),
             author: details["author"] as? String ?? "",
             durationSeconds: seconds,
             thumbnailUrl: "https://i.ytimg.com/vi/\(videoID)/hqdefault.jpg",

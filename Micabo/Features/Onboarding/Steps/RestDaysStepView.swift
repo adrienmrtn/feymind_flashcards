@@ -19,7 +19,7 @@ struct RestDaysStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    private var locale: UiLocale { i18n?.locale ?? .resolved() }
+    private var locale: UiLocale { i18n.locale }
 
     var body: some View {
         OnboardingScaffold(

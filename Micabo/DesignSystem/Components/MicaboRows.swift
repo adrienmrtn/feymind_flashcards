@@ -88,7 +88,7 @@ struct MicaboTile: View {
     /// Le mois en trois lettres, dans la langue de l'interface et sans point final.
     private static func month(of date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: UiLocale.resolved().rawValue)
+        formatter.locale = UiLocale.resolved().foundation
         formatter.setLocalizedDateFormatFromTemplate("MMM")
         return formatter.string(from: date)
             .replacingOccurrences(of: ".", with: "")

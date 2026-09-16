@@ -66,14 +66,14 @@ struct LockedSheetTail: View {
                     .frame(width: 48, height: 48)
                     .background(MicaboColor.accent, in: Circle())
 
-                Text(i18n?.t("ios.sheetLockedTitle") ?? "La suite de la fiche est dans Pro")
+                Text(i18n.t("ios.sheetLockedTitle"))
                     .font(MicaboFont.ui(16.5, weight: .bold))
                     .foregroundStyle(MicaboColor.ink)
                     .tracking(-0.3)
                     .multilineTextAlignment(.center)
 
                 HStack(spacing: 6) {
-                    Text(i18n?.t("ios.unlockSheet") ?? "Débloquer la fiche")
+                    Text(i18n.t("ios.unlockSheet"))
                         .font(MicaboFont.ui(14.5, weight: .semibold))
 
                     Image(systemName: "arrow.right")
@@ -89,7 +89,7 @@ struct LockedSheetTail: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false))
-        .accessibilityLabel(i18n?.t("ios.sheetLockedTitle") ?? "La suite de la fiche est dans Pro")
+        .accessibilityLabel(i18n.t("ios.sheetLockedTitle"))
         .accessibilityAddTraits(.isButton)
     }
 }

@@ -25,7 +25,7 @@ struct YourTurnStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             OnboardingWordByWordTitle(
-                text: i18n?.t("ios.yourTurn") ?? "C'est maintenant à ton tour de découvrir la méthode d'apprentissage que tous les meilleurs élèves utilisent.",
+                text: i18n.t("ios.yourTurn"),
                 size: 28,
                 wordDelay: 0.1
             ) {
@@ -38,7 +38,7 @@ struct YourTurnStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             MicaboBottomBar(background: surface.background) {
-                OnboardingContinueButton(title: i18n?.t("ios.letsWork") ?? "Je m'y mets") {
+                OnboardingContinueButton(title: i18n.t("ios.letsWork")) {
                     model.advance()
                 }
                 .opacity(isTitleWritten ? 1 : 0)

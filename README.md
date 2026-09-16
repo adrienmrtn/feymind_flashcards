@@ -1940,11 +1940,20 @@ node --experimental-strip-types --import ./scripts/ts-extensions.mjs \
 **Le repli est le piège, pas la clé manquante.** `L10n.t` cherche la clé dans la table iOS de
 la langue, puis dans la table partagée, puis dans le français — et rend donc toujours *une*
 phrase. Une app à moitié traduite ne plante pas : elle bascule de langue au milieu d'un
-écran, et personne ne le voit passer en revue de code. C'est pourquoi deux tests tiennent la
+écran, et personne ne le voit passer en revue de code. C'est pourquoi trois tests tiennent la
 table plutôt qu'un : `testIosCatalogsHaveTheSameKeys` vérifie que les cinq tables ont les
-mêmes clés, et `testNothingFallsBackToFrench` vérifie qu'aucune phrase anglaise n'est le
-français recopié. La parité des clés prouve qu'une entrée existe ; elle ne prouve pas qu'elle
-a été traduite.
+mêmes clés, `testNothingFallsBackToFrench` et `testSharedCatalogIsNotFrenchInEnglish` que
+l'anglais n'est pas le français recopié. La parité des clés prouve qu'une entrée existe ;
+elle ne prouve pas qu'elle a été traduite.
+
+**Un écran n'écrit jamais sa propre phrase de repli.** `@Environment(UiLocaleStore.self)`
+rend un optionnel, et il est nil pour de bon : une barre d'outils posée dans un
+`UIHostingController` n'hérite pas de l'environnement SwiftUI de l'écran qui la présente.
+Chaque appel portait donc son repli écrit à la main — `i18n?.t("app.common.delete") ??
+"Supprimer"` — quatre cent cinquante-huit fois, en français. L'extension sur
+`Optional<UiLocaleStore>` répond à sa place : `i18n.t("app.common.delete")` rend la langue
+résolue, store ou pas. `testTheOptionalStoreStillSpeaksTheChosenLanguage` le vérifie sans
+store du tout.
 
 Trois choses **ne se traduisent pas**, et c'est délibéré :
 

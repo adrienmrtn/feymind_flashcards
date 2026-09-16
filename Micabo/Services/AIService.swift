@@ -185,7 +185,11 @@ enum SheetPreferences {
     /// La durée de lecture annoncée à côté du format, tirée du volume demandé et non d'une
     /// estimation d'ambiance.
     static func readingHint(forBlocks blocks: Int) -> String {
-        "≈ \(max(1, Int((Double(blocks) / 4.5).rounded()))) min"
+        L10n.t(
+            "ios.readingApprox",
+            locale: .resolved(),
+            vars: ["minutes": "\(max(1, Int((Double(blocks) / 4.5).rounded())))"]
+        )
     }
 
     private static var storedLength: SheetLength? {

@@ -35,7 +35,7 @@ struct DemoImportStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.importTitle") ?? "Glisse ton cours ici.",
+            title: i18n.t("ios.importTitle"),
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,
@@ -81,8 +81,8 @@ struct DemoImportStepView: View {
             .animation(OnboardingMotion.tap, value: isDragging)
             .accessibilityElement()
             .accessibilityAddTraits(.isButton)
-            .accessibilityLabel(i18n?.t("demo.exampleCourseAria", ["file": OnboardingDemo.fileName]) ?? "Cours d'exemple, \(OnboardingDemo.fileName)")
-            .accessibilityHint(i18n?.t("demo.tapToDrop") ?? "Appuie pour le déposer")
+            .accessibilityLabel(i18n.t("demo.exampleCourseAria", ["file": OnboardingDemo.fileName]))
+            .accessibilityHint(i18n.t("demo.tapToDrop"))
     }
 
     private var dragGesture: some Gesture {
@@ -166,8 +166,8 @@ struct DemoImportStepView: View {
                     .font(.system(size: 30, weight: .medium))
 
                 Text(isDropped
-                     ? (i18n?.t("demo.dropped") ?? "Cours déposé")
-                     : (i18n?.t("demo.dropHere") ?? "Dépose-le ici"))
+                     ? i18n.t("demo.dropped")
+                     : i18n.t("demo.dropHere"))
                     .font(MicaboFont.ui(18, weight: .semibold))
             }
             .foregroundStyle(labelTint)

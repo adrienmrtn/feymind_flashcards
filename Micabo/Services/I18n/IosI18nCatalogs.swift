@@ -666,6 +666,20 @@ enum IosI18nCatalogs {
         // La démonstration de Feynman : l'explication qui bute, mot à mot. Les mots sont
         // séparés par des virgules parce que c'est la vue qui les fait tomber un par un.
         "ios.feynman.words": "L'eau,s'évapore,des,océans,parce,que…",
+        // Les derniers restes : l'heure de la synchro, les jours offerts d'une offre, les
+        // sous-titres d'une vidéo, et ce que VoiceOver lit sur une case du calendrier.
+        "ios.dayExamsAria": "{date}, {count, plural, one {# examen} other {# examens}}",
+        "ios.noTrial": "sans essai",
+        "ios.yt.captionAuto": "Sous-titres automatiques · {language}",
+        "ios.yt.caption": "Sous-titres · {language}",
+        // Une durée en heures et minutes : « 1 h 05 ». L'abréviation n'est pas la même partout,
+        // et « 1 h 05 » se lisait en allemand au milieu d'une phrase en « Std. ».
+        "ios.durationHm": "{hours} h {minutes}",
+        "ios.readingApprox": "≈ {minutes} min",
+        // Les deux titres que l'app écrit quand personne n'en a donné : un cours repris de la
+        // bibliothèque, et un paquet créé sans nom.
+        "ios.adoptedCourse": "Cours repris",
+        "ios.newDeck": "Nouveau paquet",
     ]
 
     static let de: [String: String] = [
@@ -1334,6 +1348,20 @@ enum IosI18nCatalogs {
         // La démonstration de Feynman : l'explication qui bute, mot à mot. Les mots sont
         // séparés par des virgules parce que c'est la vue qui les fait tomber un par un.
         "ios.feynman.words": "Wasser,verdunstet,aus,den,Meeren,weil…",
+        // Les derniers restes : l'heure de la synchro, les jours offerts d'une offre, les
+        // sous-titres d'une vidéo, et ce que VoiceOver lit sur une case du calendrier.
+        "ios.dayExamsAria": "{date}, {count, plural, one {# Prüfung} other {# Prüfungen}}",
+        "ios.noTrial": "ohne Testzeit",
+        "ios.yt.captionAuto": "Automatische Untertitel · {language}",
+        "ios.yt.caption": "Untertitel · {language}",
+        // Une durée en heures et minutes : « 1 h 05 ». L'abréviation n'est pas la même partout,
+        // et « 1 h 05 » se lisait en allemand au milieu d'une phrase en « Std. ».
+        "ios.durationHm": "{hours} Std. {minutes}",
+        "ios.readingApprox": "≈ {minutes} Min.",
+        // Les deux titres que l'app écrit quand personne n'en a donné : un cours repris de la
+        // bibliothèque, et un paquet créé sans nom.
+        "ios.adoptedCourse": "Übernommener Kurs",
+        "ios.newDeck": "Neues Kartenpaket",
     ]
 
     static let es: [String: String] = [
@@ -2002,6 +2030,20 @@ enum IosI18nCatalogs {
         // La démonstration de Feynman : l'explication qui bute, mot à mot. Les mots sont
         // séparés par des virgules parce que c'est la vue qui les fait tomber un par un.
         "ios.feynman.words": "El agua,se evapora,de,los,océanos,porque…",
+        // Les derniers restes : l'heure de la synchro, les jours offerts d'une offre, les
+        // sous-titres d'une vidéo, et ce que VoiceOver lit sur une case du calendrier.
+        "ios.dayExamsAria": "{date}, {count, plural, one {# examen} other {# exámenes}}",
+        "ios.noTrial": "sin prueba",
+        "ios.yt.captionAuto": "Subtítulos automáticos · {language}",
+        "ios.yt.caption": "Subtítulos · {language}",
+        // Une durée en heures et minutes : « 1 h 05 ». L'abréviation n'est pas la même partout,
+        // et « 1 h 05 » se lisait en allemand au milieu d'une phrase en « Std. ».
+        "ios.durationHm": "{hours} h {minutes}",
+        "ios.readingApprox": "≈ {minutes} min",
+        // Les deux titres que l'app écrit quand personne n'en a donné : un cours repris de la
+        // bibliothèque, et un paquet créé sans nom.
+        "ios.adoptedCourse": "Curso adoptado",
+        "ios.newDeck": "Paquete nuevo",
     ]
 
     static let tr: [String: String] = [
@@ -2670,6 +2712,20 @@ enum IosI18nCatalogs {
         // La démonstration de Feynman : l'explication qui bute, mot à mot. Les mots sont
         // séparés par des virgules parce que c'est la vue qui les fait tomber un par un.
         "ios.feynman.words": "Su,okyanuslardan,buharlaşır,çünkü…",
+        // Les derniers restes : l'heure de la synchro, les jours offerts d'une offre, les
+        // sous-titres d'une vidéo, et ce que VoiceOver lit sur une case du calendrier.
+        "ios.dayExamsAria": "{date}, {count, plural, one {# sınav} other {# sınav}}",
+        "ios.noTrial": "deneme yok",
+        "ios.yt.captionAuto": "Otomatik altyazı · {language}",
+        "ios.yt.caption": "Altyazı · {language}",
+        // Une durée en heures et minutes : « 1 h 05 ». L'abréviation n'est pas la même partout,
+        // et « 1 h 05 » se lisait en allemand au milieu d'une phrase en « Std. ».
+        "ios.durationHm": "{hours} sa {minutes}",
+        "ios.readingApprox": "≈ {minutes} dk",
+        // Les deux titres que l'app écrit quand personne n'en a donné : un cours repris de la
+        // bibliothèque, et un paquet créé sans nom.
+        "ios.adoptedCourse": "Alınan ders",
+        "ios.newDeck": "Yeni deste",
     ]
 
     /// **L'anglais, au complet.**
@@ -3346,6 +3402,20 @@ enum IosI18nCatalogs {
         // La démonstration de Feynman : l'explication qui bute, mot à mot. Les mots sont
         // séparés par des virgules parce que c'est la vue qui les fait tomber un par un.
         "ios.feynman.words": "Water,evaporates,from,the,oceans,because…",
+        // Les derniers restes : l'heure de la synchro, les jours offerts d'une offre, les
+        // sous-titres d'une vidéo, et ce que VoiceOver lit sur une case du calendrier.
+        "ios.dayExamsAria": "{date}, {count, plural, one {# exam} other {# exams}}",
+        "ios.noTrial": "no trial",
+        "ios.yt.captionAuto": "Automatic subtitles · {language}",
+        "ios.yt.caption": "Subtitles · {language}",
+        // Une durée en heures et minutes : « 1 h 05 ». L'abréviation n'est pas la même partout,
+        // et « 1 h 05 » se lisait en allemand au milieu d'une phrase en « Std. ».
+        "ios.durationHm": "{hours} h {minutes}",
+        "ios.readingApprox": "≈ {minutes} min",
+        // Les deux titres que l'app écrit quand personne n'en a donné : un cours repris de la
+        // bibliothèque, et un paquet créé sans nom.
+        "ios.adoptedCourse": "Adopted course",
+        "ios.newDeck": "New deck",
     ]
 
     static func table(for locale: String) -> [String: String] {

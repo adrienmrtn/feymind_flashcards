@@ -16,7 +16,7 @@ struct ExamWeakStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.examWeakTitle") ?? "Et ce qui résiste\npasse devant.",
+            title: i18n.t("ios.examWeakTitle"),
             titleSize: 28
         ) {
             WeakCardsDemo()
@@ -40,7 +40,7 @@ private struct WeakCardsDemo: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private func t(_ key: String, _ vars: [String: String] = [:]) -> String {
-        i18n?.t(key, vars) ?? L10n.t(key, locale: .fr, vars: vars)
+        i18n.t(key, vars)
     }
 
     var body: some View {

@@ -43,7 +43,7 @@ struct GenerateCardsSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                     MicaboScreenHeader(
-                        title: existingCount > 0 ? (i18n?.t("ios.newCardsTitle") ?? "Nouvelles cartes") : MicaboCopy.cardsButton(),
+                        title: existingCount > 0 ? i18n.t("ios.newCardsTitle") : MicaboCopy.cardsButton(),
                         eyebrow: course.title,
                         back: MicaboHeaderBack.close { dismiss() }
                     )
@@ -84,14 +84,14 @@ struct GenerateCardsSheet: View {
     /// diminue en dernier.
     private var formatSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n?.t("ios.howManyFormats") ?? "Combien de cartes, par format")
+            MicaboSectionCaption(text: i18n.t("ios.howManyFormats"))
 
             VStack(spacing: 0) {
                 counterRow(
                     emoji: "🗂️",
                     background: MicaboColor.tilePastels[0],
-                    title: CardKind.basic.label(locale: i18n?.locale ?? .resolved()),
-                    detail: i18n?.t("ios.kindBasicDetail") ?? "Une question, une réponse.",
+                    title: CardKind.basic.label(locale: i18n.locale),
+                    detail: i18n.t("ios.kindBasicDetail"),
                     value: $basic
                 )
 
@@ -100,8 +100,8 @@ struct GenerateCardsSheet: View {
                 counterRow(
                     emoji: "✏️",
                     background: MicaboColor.tilePastels[2],
-                    title: CardKind.cloze.label(locale: i18n?.locale ?? .resolved()),
-                    detail: i18n?.t("ios.kindClozeDetail") ?? "Une phrase du cours, un terme à retrouver.",
+                    title: CardKind.cloze.label(locale: i18n.locale),
+                    detail: i18n.t("ios.kindClozeDetail"),
                     value: $cloze
                 )
 
@@ -110,8 +110,8 @@ struct GenerateCardsSheet: View {
                 counterRow(
                     emoji: "🔤",
                     background: MicaboColor.tilePastels[4],
-                    title: CardKind.choice.label(locale: i18n?.locale ?? .resolved()),
-                    detail: i18n?.t("ios.kindChoiceDetail") ?? "Une question, trois ou quatre propositions.",
+                    title: CardKind.choice.label(locale: i18n.locale),
+                    detail: i18n.t("ios.kindChoiceDetail"),
                     value: $choice
                 )
             }

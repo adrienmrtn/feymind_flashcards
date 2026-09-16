@@ -61,7 +61,7 @@ struct ExamCalendarView: View {
 
     private var weekdayHeader: some View {
         HStack(spacing: 0) {
-            ForEach(Array(MicaboCalendar.weekdayInitials.enumerated()), id: \.offset) { _, initial in
+            ForEach(Array(MicaboCalendar.weekdayInitials().enumerated()), id: \.offset) { _, initial in
                 Text(initial)
                     .font(MicaboFont.ui(11, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkTertiary)
@@ -151,7 +151,11 @@ struct ExamCalendarView: View {
     private func accessibilityLabel(for day: Date, exams: [Exam]) -> String {
         let date = MicaboCalendar.dayLabel(day)
         guard !exams.isEmpty else { return date }
-        return "\(date), \(exams.count) examen\(exams.count > 1 ? "s" : "")"
+        return L10n.t(
+            "ios.dayExamsAria",
+            locale: .resolved(),
+            vars: ["date": date, "count": "\(exams.count)"]
+        )
     }
 
     /// Les semaines affichées, débords des mois voisins compris pour que la grille soit

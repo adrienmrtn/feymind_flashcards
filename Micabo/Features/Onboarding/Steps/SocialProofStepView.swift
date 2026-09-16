@@ -47,7 +47,7 @@ struct SocialProofStepView: View {
     }
 
     private func t(_ key: String) -> String {
-        i18n?.t(key) ?? L10n.t(key, locale: .fr)
+        i18n.t(key)
     }
 
     /// L'avis posé au milieu de l'écran. Le carrousel est un `ScrollView` horizontal qui
@@ -67,7 +67,7 @@ struct SocialProofStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.socialProof") ?? "Nous avons aidé\n500 000 étudiants.",
+            title: i18n.t("ios.socialProof"),
             titleSize: 30,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,

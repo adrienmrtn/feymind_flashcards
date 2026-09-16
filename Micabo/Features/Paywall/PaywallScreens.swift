@@ -248,7 +248,9 @@ private struct PaywallPlanCard: View {
                         .font(MicaboFont.ui(17, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
 
-                    Text(plan.hasTrial ? "\(plan.trialDays) jours offerts" : "sans essai")
+                    Text(plan.hasTrial
+                        ? L10n.t("app.paywall.trialBadge", locale: .resolved(), vars: ["days": "\(plan.trialDays)"])
+                        : L10n.t("ios.noTrial", locale: .resolved()))
                         .font(MicaboFont.ui(13, weight: .medium))
                         .foregroundStyle(plan.hasTrial ? MicaboColor.accent : MicaboColor.inkTertiary)
                 }

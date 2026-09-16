@@ -47,8 +47,8 @@ struct SessionPaywallView: View {
             }
         }
         .micaboScreenBackground()
-        .alert(i18n?.t("app.common.oops") ?? "Oups", isPresented: .constant(failure != nil)) {
-            Button(i18n?.t("app.a11y.close") ?? "Fermer", role: .cancel) { failure = nil }
+        .alert(i18n.t("app.common.oops"), isPresented: .constant(failure != nil)) {
+            Button(i18n.t("app.a11y.close"), role: .cancel) { failure = nil }
         } message: {
             Text(failure ?? "")
         }
@@ -69,15 +69,13 @@ struct SessionPaywallView: View {
                     .onboardingAppear(index: 0)
 
                 VStack(spacing: 10) {
-                    Text(i18n?.t("app.paywall.session.title", ["reviewed": "\(reviewedCount)"])
-                        ?? "Tes \(reviewedCount) cartes gratuites\nsont faites.")
+                    Text(i18n.t("app.paywall.session.title", ["reviewed": "\(reviewedCount)"]))
                         .font(MicaboFont.ui(26, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(-0.6)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text(i18n?.t("ios.paywallSessionBody")
-                        ?? "La session s'arrête là. Micabo Pro la laisse aller jusqu'au bout, tous les jours, sur tous tes cours.")
+                    Text(i18n.t("ios.paywallSessionBody"))
                         .font(MicaboFont.ui(14.5, weight: .regular))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineSpacing(3)
@@ -106,7 +104,7 @@ struct SessionPaywallView: View {
                 // La sortie est un vrai bouton, pas un lien gris en bas de page : c'est
                 // l'une des deux issues de l'écran, elle ne se murmure pas.
                 Button(action: onGoHome) {
-                    Text(i18n?.t("app.paywall.session.home") ?? "Revenir à l'accueil")
+                    Text(i18n.t("app.paywall.session.home"))
                 }
                 .buttonStyle(MicaboSecondaryButtonStyle())
 
@@ -126,10 +124,10 @@ struct SessionPaywallView: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 14, weight: .semibold))
 
-            Text(i18n?.t("app.paywall.session.progress", [
+            Text(i18n.t("app.paywall.session.progress", [
                 "reviewed": "\(reviewedCount)",
                 "limit": "\(FreeTier.cardsPerSession)"
-            ]) ?? "\(reviewedCount) / \(FreeTier.cardsPerSession) cartes révisées")
+            ]))
                 .font(MicaboFont.ui(13, weight: .semibold))
                 .monospacedDigit()
         }
@@ -159,8 +157,8 @@ struct SessionPaywallView: View {
             onSubscribed()
         case .unavailable:
             failure = PaywallPurchases.isReady
-                ? (i18n?.t("ios.paywallBuyFail") ?? "L'achat n'a pas abouti. Réessaie dans un instant.")
-                : (i18n?.t("app.paywall.checkoutClosed") ?? "L'abonnement n'est pas encore ouvert.")
+                ? i18n.t("ios.paywallBuyFail")
+                : i18n.t("app.paywall.checkoutClosed")
         case .cancelled:
             break
         }
@@ -176,7 +174,7 @@ struct SessionPaywallView: View {
         isPurchasing = false
 
         guard outcome == .purchased else {
-            failure = i18n?.t("ios.paywallNoRestore") ?? "Aucun abonnement à restaurer sur ce compte."
+            failure = i18n.t("ios.paywallNoRestore")
             return
         }
         pro?.unlock()
@@ -208,14 +206,13 @@ private struct AbandonConfirmation: View {
                     .background(MicaboColor.cautionSoft, in: Circle())
 
                 VStack(spacing: 8) {
-                    Text(i18n?.t("app.paywall.session.abandonTitle") ?? "Tu es sûr d'abandonner\nta progression ?")
+                    Text(i18n.t("app.paywall.session.abandonTitle"))
                         .font(MicaboFont.ui(20, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
                         .tracking(-0.4)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text(i18n?.t("app.paywall.session.abandonBody")
-                        ?? "Les cartes déjà notées sont enregistrées. Les suivantes attendront ta prochaine session.")
+                    Text(i18n.t("app.paywall.session.abandonBody"))
                         .font(MicaboFont.ui(13.5, weight: .regular))
                         .foregroundStyle(MicaboColor.inkSecondary)
                         .lineSpacing(2)
@@ -225,12 +222,12 @@ private struct AbandonConfirmation: View {
 
                 VStack(spacing: 10) {
                     Button(action: onReturn) {
-                        Text(i18n?.t("ios.paywallBack") ?? "Revenir")
+                        Text(i18n.t("ios.paywallBack"))
                     }
                     .buttonStyle(MicaboPrimaryButtonStyle())
 
                     Button(action: onAbandon) {
-                        Text(i18n?.t("app.paywall.session.abandonConfirm") ?? "Abandonner la session")
+                        Text(i18n.t("app.paywall.session.abandonConfirm"))
                             .font(MicaboFont.ui(14, weight: .semibold))
                             .foregroundStyle(MicaboColor.negative)
                             .frame(maxWidth: .infinity)

@@ -61,7 +61,7 @@ struct FormulaEditorSheet: View {
     }
 
     private func t(_ key: String) -> String {
-        i18n?.t(key) ?? L10n.t(key, locale: .resolved())
+        i18n.t(key)
     }
 
     private var trimmed: String { latex.trimmingCharacters(in: .whitespacesAndNewlines) }

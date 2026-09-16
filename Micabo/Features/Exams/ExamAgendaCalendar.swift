@@ -120,7 +120,7 @@ struct ExamAgendaCalendar: View {
 
     private func monthLabel(_ month: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: UiLocale.resolved().rawValue)
+        formatter.locale = UiLocale.resolved().foundation
         formatter.setLocalizedDateFormatFromTemplate("MMMM yyyy")
         return formatter.string(from: month).capitalized
     }
@@ -291,7 +291,7 @@ struct AgendaEventSheet: View {
     }
 
     private func t(_ key: String, _ vars: [String: String] = [:]) -> String {
-        i18n?.t(key, vars) ?? L10n.t(key, locale: .resolved(), vars: vars)
+        i18n.t(key, vars)
     }
 
     private var title: String {

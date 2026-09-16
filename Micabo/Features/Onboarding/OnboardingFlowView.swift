@@ -33,7 +33,7 @@ struct OnboardingFlowView: View {
         }
         .environment(model)
         .environment(\.onboardingSurface, surface)
-        .environment(\.locale, (i18n?.locale ?? .resolved()).foundation)
+        .environment(\.locale, i18n.locale.foundation)
         // Sur fond sombre, l'heure et la batterie doivent passer en clair : sinon elles
         // disparaissent dans l'encre.
         .preferredColorScheme(surface.isDark ? .dark : AppearanceStore.shared.appearance.colorScheme)
@@ -124,7 +124,7 @@ private struct OnboardingProgressBar: View {
         .padding(.bottom, MicaboSpacing.xs)
         .animation(.easeInOut(duration: 0.38), value: step)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(i18n?.t("ios.progress") ?? "Progression du parcours")
+        .accessibilityLabel(i18n.t("ios.progress"))
         .accessibilityValue("\(Int(step.progress * 100)) %")
     }
 }

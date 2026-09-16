@@ -43,7 +43,7 @@ struct SignInFailureNote: View {
                     .accessibilityAddTraits(.isStaticText)
                     .transition(.opacity)
             case .sent(let email) where includeSent:
-                Text(i18n?.t("onboarding.linkSent", ["email": email]) ?? "Ouvre le lien envoyé à \(email)")
+                Text(i18n.t("onboarding.linkSent", ["email": email]))
                     .font(MicaboFont.ui(14.5, weight: .medium))
                     .foregroundStyle(MicaboColor.accent)
                     .fixedSize(horizontal: false, vertical: true)
@@ -84,7 +84,7 @@ struct SignInScreen: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private var t: (String) -> String {
-        { key in i18n?.t(key) ?? L10n.t(key, locale: .resolved()) }
+        { key in i18n.t(key) }
     }
 
     var body: some View {
@@ -105,7 +105,7 @@ struct SignInScreen: View {
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.top, placement == .sheet ? MicaboSpacing.sm : 0)
                 .padding(.bottom, MicaboSpacing.xl)
-                .environment(\.locale, (i18n?.locale ?? .resolved()).foundation)
+                .environment(\.locale, i18n.locale.foundation)
             }
             .scrollDismissesKeyboard(.interactively)
             .scrollBounceBehavior(.basedOnSize)
@@ -279,7 +279,7 @@ struct SignInProviderButtons: View {
     @State private var email = ""
 
     private var t: (String) -> String {
-        { key in i18n?.t(key) ?? L10n.t(key, locale: .resolved()) }
+        { key in i18n.t(key) }
     }
 
     private var linkWasSent: Bool {
@@ -339,8 +339,7 @@ struct SignInProviderButtons: View {
             Button {
                 Task { await auth.deliverMagicLink(to: typed) }
             } label: {
-                Text(i18n?.t("onboarding.emailSuggestionKeep", ["email": typed])
-                    ?? L10n.t("onboarding.emailSuggestionKeep", locale: .resolved(), vars: ["email": typed]))
+                Text(i18n.t("onboarding.emailSuggestionKeep", ["email": typed]))
                     .font(MicaboFont.ui(13, weight: .medium))
                     .foregroundStyle(MicaboColor.inkTertiary)
                     .underline()

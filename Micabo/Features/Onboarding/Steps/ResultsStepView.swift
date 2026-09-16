@@ -17,8 +17,8 @@ struct ResultsStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.resultsTitle") ?? "En moyenne, les notes\nmontent de 17 %.",
-            subtitle: i18n?.t("ios.resultsLead"),
+            title: i18n.t("ios.resultsTitle"),
+            subtitle: i18n.t("ios.resultsLead"),
             titleSize: 28
         ) {
             ResultsCurve()
@@ -42,7 +42,7 @@ private struct ResultsCurve: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private func t(_ key: String, _ vars: [String: String] = [:]) -> String {
-        i18n?.t(key, vars) ?? L10n.t(key, locale: .fr, vars: vars)
+        i18n.t(key, vars)
     }
 
     private var lowest: Double { weeks.min() ?? 0 }

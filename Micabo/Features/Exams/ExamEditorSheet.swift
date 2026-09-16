@@ -493,7 +493,7 @@ struct ExamEditorSheet: View {
         let picked = offDays.contains(stamp)
         let weekday = calendar.component(.weekday, from: day)
         // `weekdayInitials` commence au lundi, `Calendar` au dimanche : d'où le décalage.
-        let initials = MicaboCalendar.weekdayInitials
+        let initials = MicaboCalendar.weekdayInitials()
         let initial = initials.indices.contains((weekday + 5) % 7) ? initials[(weekday + 5) % 7] : ""
 
         return Button {

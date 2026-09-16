@@ -17,7 +17,7 @@ struct PersonalizeIntroStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             OnboardingWordByWordTitle(
-                text: i18n?.t("ios.personalizeIntro") ?? "Quelques questions\npour personnaliser\nton expérience.",
+                text: i18n.t("ios.personalizeIntro"),
                 size: 32
             ) {
                 withAnimation(OnboardingMotion.enter) {
@@ -29,7 +29,7 @@ struct PersonalizeIntroStepView: View {
             Spacer(minLength: MicaboSpacing.lg)
 
             MicaboBottomBar {
-                OnboardingContinueButton(title: i18n?.t("onboarding.letsGo") ?? "C'est parti") {
+                OnboardingContinueButton(title: i18n.t("onboarding.letsGo")) {
                     model.advance()
                 }
                 .opacity(isTitleWritten ? 1 : 0)

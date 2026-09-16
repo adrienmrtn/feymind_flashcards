@@ -74,7 +74,7 @@ struct WelcomeStepView: View {
                 .foregroundStyle(surface.eyebrow)
                 .onboardingAppear(index: 1, stagger: 0.1)
 
-            Text(i18n?.t("ios.welcomeTitle") ?? "Apprends tout,\nplus vite.")
+            Text(i18n.t("ios.welcomeTitle"))
                 .font(MicaboFont.ui(40, weight: .bold))
                 .foregroundStyle(surface.title)
                 .tracking(-1.2)
@@ -90,13 +90,13 @@ struct WelcomeStepView: View {
     private var continueBar: some View {
         MicaboBottomBar(background: surface.background) {
             VStack(spacing: 12) {
-                OnboardingContinueButton(title: i18n?.t("common.start") ?? "Commencer") {
+                OnboardingContinueButton(title: i18n.t("common.start")) {
                     model.advance()
                 }
                 Button {
                     showLogin = true
                 } label: {
-                    Text(i18n?.t("common.alreadyAccount") ?? "J'ai déjà un compte")
+                    Text(i18n.t("common.alreadyAccount"))
                         .font(MicaboFont.ui(14.5, weight: .medium))
                         .foregroundStyle(surface.prose)
                         .underline()

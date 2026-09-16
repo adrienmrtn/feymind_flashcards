@@ -12,10 +12,12 @@ struct SheetToolbar: View {
 
     static let height: CGFloat = 52
 
-    private var locale: UiLocale { i18n?.locale ?? .resolved() }
-
+    /// **L'environnement est nil ici, et ce n'est pas un oubli** : la barre est posée dans
+    /// un `UIHostingController` en accessoire du clavier, et un contrôleur créé à la main
+    /// n'hérite pas de l'environnement SwiftUI de l'écran qui le présente. C'est
+    /// l'extension sur l'optionnel qui rattrape la langue, en relisant le réglage.
     private func t(_ key: String) -> String {
-        L10n.t(key, locale: locale)
+        i18n.t(key)
     }
 
     var body: some View {

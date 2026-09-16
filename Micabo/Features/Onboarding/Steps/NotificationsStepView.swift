@@ -33,8 +33,8 @@ struct NotificationsStepView: View {
     /// décor.
     @State private var hasLanded = false
 
-    private func t(_ key: String, _ fallback: String) -> String {
-        i18n?.t(key) ?? fallback
+    private func t(_ key: String) -> String {
+        i18n.t(key)
     }
 
     /// Ce que l'étudiant verra vraiment, et non un nombre d'exemple.
@@ -44,8 +44,8 @@ struct NotificationsStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: t("ios.notifTitle", "Ne loupe jamais un jour."),
-            subtitle: t("ios.notifSubtitle", "Un rappel par jour, à l'heure où tu révises. Rien d'autre."),
+            title: t("ios.notifTitle"),
+            subtitle: t("ios.notifSubtitle"),
             animatesTitle: true,
             expandsContent: true
         ) {
@@ -118,19 +118,18 @@ struct NotificationsStepView: View {
 
                     Spacer(minLength: 0)
 
-                    Text(t("ios.notifNow", "maintenant"))
+                    Text(t("ios.notifNow"))
                         .font(MicaboFont.ui(11.5, weight: .regular))
                         .foregroundStyle(MicaboColor.inkTertiary)
                 }
 
-                Text(i18n?.t("ios.notifCardTitle", ["count": "\(dueCount)"])
-                    ?? "Il te reste \(dueCount) cartes à réviser")
+                Text(i18n.t("ios.notifCardTitle", ["count": "\(dueCount)"]))
                     .font(MicaboFont.ui(15, weight: .semibold))
                     .foregroundStyle(MicaboColor.ink)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(t("ios.notifCardBody", "Dix minutes, et ta série tient."))
+                Text(t("ios.notifCardBody"))
                     .font(MicaboFont.reading(14, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.leading)

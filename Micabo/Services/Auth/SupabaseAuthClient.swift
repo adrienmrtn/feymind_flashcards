@@ -172,7 +172,7 @@ struct SupabaseAuthClient {
         let message = (payload["msg"] as? String)
             ?? (payload["error_description"] as? String)
             ?? (payload["message"] as? String)
-            ?? "Le serveur a répondu \(status)."
+            ?? L10n.t("ios.ai.serverStatus", locale: .resolved(), vars: ["status": "\(status)"])
 
         switch code {
         case "refresh_token_not_found", "refresh_token_already_used",

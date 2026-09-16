@@ -12,7 +12,7 @@ struct RetentionChartStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.retentionTitle") ?? "Relire ne suffit pas.\nSe souvenir, oui.",
+            title: i18n.t("ios.retentionTitle"),
             titleSize: 28,
             contentSpacing: MicaboSpacing.xxl
         ) {
@@ -95,7 +95,7 @@ private struct RetentionChart: View {
     private let ticker = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
 
     private func t(_ key: String, _ vars: [String: String] = [:]) -> String {
-        i18n?.t(key, vars) ?? L10n.t(key, locale: .fr, vars: vars)
+        i18n.t(key, vars)
     }
 
     var body: some View {
@@ -211,7 +211,7 @@ private struct RetentionChart: View {
             let x = day / RetentionCurve.horizonDays
             let isVisible = progress >= x
 
-            Text(RetentionCurve.intervalLabel(forDay: day, locale: i18n?.locale ?? .resolved()))
+            Text(RetentionCurve.intervalLabel(forDay: day, locale: i18n.locale))
                 .font(MicaboFont.ui(9.5, weight: .bold))
                 .foregroundStyle(MicaboColor.accent)
                 .monospacedDigit()

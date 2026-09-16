@@ -33,25 +33,25 @@ struct FriendsView: View {
                 }
 
                 if !social.incoming.isEmpty {
-                    section(i18n?.t("app.friends.incoming") ?? "Demandes reçues", people: social.incoming)
+                    section(i18n.t("app.friends.incoming"), people: social.incoming)
                 }
 
                 searchField
 
                 if !results.isEmpty {
-                    section(i18n?.t("app.friends.results") ?? "Résultats", people: results)
+                    section(i18n.t("app.friends.results"), people: results)
                 } else if !schoolmates.isEmpty, search.isEmpty {
                     section(schoolmatesCaption, people: schoolmates)
                 }
 
                 if !social.friends.isEmpty {
-                    section(i18n?.t("app.friends.list") ?? "Tes amis", people: social.friends)
+                    section(i18n.t("app.friends.list"), people: social.friends)
                 } else if search.isEmpty, results.isEmpty {
                     emptyState
                 }
 
                 if !social.outgoing.isEmpty {
-                    section(i18n?.t("app.friends.outgoing") ?? "Demandes envoyées", people: social.outgoing)
+                    section(i18n.t("app.friends.outgoing"), people: social.outgoing)
                 }
             }
             .padding(.horizontal, MicaboSpacing.screen)
@@ -72,7 +72,7 @@ struct FriendsView: View {
 
     private var header: some View {
         MicaboScreenHeader(
-            title: i18n?.t("nav.friends") ?? "Amis",
+            title: i18n.t("nav.friends"),
             eyebrow: headerEyebrow,
             back: MicaboHeaderBack.back { dismiss() }
         )
@@ -81,28 +81,28 @@ struct FriendsView: View {
 
     private var headerEyebrow: String {
         if let username = social.username { return Username.display(username) }
-        return i18n?.t("app.friends.yourAccount") ?? "Ton compte"
+        return i18n.t("app.friends.yourAccount")
     }
 
     private var schoolmatesCaption: String {
         guard let school = OnboardingPreferences.institutionName?.nilIfBlank else {
-            return i18n?.t("ios.yourSchool") ?? "Ton école"
+            return i18n.t("ios.yourSchool")
         }
-        return i18n?.t("app.friends.atSchool", ["school": school]) ?? "À \(school)"
+        return i18n.t("app.friends.atSchool", ["school": school])
     }
 
     // MARK: - Recherche
 
     private var searchField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n?.t("app.friends.addSomeone") ?? "Ajouter quelqu'un")
+            MicaboSectionCaption(text: i18n.t("app.friends.addSomeone"))
 
             HStack(spacing: 9) {
                 Text("@")
                     .font(MicaboFont.ui(15, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkTertiary)
 
-                TextField(i18n?.t("app.friends.usernamePlaceholder") ?? "nom d'utilisateur", text: $search)
+                TextField(i18n.t("app.friends.usernamePlaceholder"), text: $search)
                     .font(MicaboFont.body)
                     .foregroundStyle(MicaboColor.ink)
                     .tint(MicaboColor.accent)
@@ -176,8 +176,8 @@ struct FriendsView: View {
     private var emptyState: some View {
         MicaboEmptyState(
             systemImage: "person.2",
-            title: i18n?.t("app.friends.emptyTitle") ?? "Personne pour l'instant",
-            message: i18n?.t("app.friends.emptyBody") ?? "Cherche un nom d'utilisateur pour ajouter quelqu'un."
+            title: i18n.t("app.friends.emptyTitle"),
+            message: i18n.t("app.friends.emptyBody")
         )
     }
 
@@ -239,29 +239,29 @@ private struct FriendRow: View {
     private var action: some View {
         switch person.relation {
         case .unknown:
-            compact(i18n?.t("app.common.add") ?? "Ajouter", isProminent: true) {
+            compact(i18n.t("app.common.add"), isProminent: true) {
                 Task { await social.request(person) }
             }
 
         case .awaitingMe:
             HStack(spacing: 6) {
-                compact(i18n?.t("app.friends.accept") ?? "Accepter", isProminent: true) {
+                compact(i18n.t("app.friends.accept"), isProminent: true) {
                     Task { await social.accept(person) }
                 }
-                compact(i18n?.t("app.friends.decline") ?? "Refuser", isProminent: false) {
+                compact(i18n.t("app.friends.decline"), isProminent: false) {
                     Task { await social.remove(person) }
                 }
             }
 
         case .requested:
-            compact(i18n?.t("app.common.cancel") ?? "Annuler", isProminent: false) {
+            compact(i18n.t("app.common.cancel"), isProminent: false) {
                 Task { await social.remove(person) }
             }
 
         case .friends:
             Menu {
-                Button(i18n?.t("app.friends.seeCourses") ?? "Voir ses cours", systemImage: "books.vertical", action: open)
-                Button(i18n?.t("app.friends.removeFriend") ?? "Retirer de mes amis", systemImage: "person.badge.minus", role: .destructive) {
+                Button(i18n.t("app.friends.seeCourses"), systemImage: "books.vertical", action: open)
+                Button(i18n.t("app.friends.removeFriend"), systemImage: "person.badge.minus", role: .destructive) {
                     Task { await social.remove(person) }
                 }
             } label: {
@@ -272,7 +272,7 @@ private struct FriendRow: View {
             }
 
         case .me:
-            Text(i18n?.t("app.friends.you") ?? "Toi")
+            Text(i18n.t("app.friends.you"))
                 .font(MicaboFont.micro)
                 .foregroundStyle(MicaboColor.inkTertiary)
         }

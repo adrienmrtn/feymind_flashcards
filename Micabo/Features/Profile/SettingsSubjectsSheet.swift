@@ -19,7 +19,7 @@ struct SettingsSubjectsSheet: View {
                 VStack(alignment: .leading, spacing: 20) {
                     ForEach(SubjectCatalog.families) { family in
                         VStack(alignment: .leading, spacing: 10) {
-                            Text(SubjectDisplay.family(family.name, locale: i18n?.locale ?? .resolved()).uppercased())
+                            Text(SubjectDisplay.family(family.name, locale: i18n.locale).uppercased())
                                 .font(MicaboFont.ui(10, weight: .semibold))
                                 .tracking(1.4)
                                 .foregroundStyle(MicaboColor.inkTertiary)
@@ -38,11 +38,11 @@ struct SettingsSubjectsSheet: View {
             }
             .scrollIndicators(.hidden)
             .micaboScreenBackground()
-            .navigationTitle(i18n?.t("ios.subjects") ?? "Matières")
+            .navigationTitle(i18n.t("ios.subjects"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(i18n?.t("ios.ok") ?? L10n.t("ios.ok", locale: .resolved()), action: save)
+                    Button(i18n.t("ios.ok"), action: save)
                         .font(MicaboFont.ui(15, weight: .semibold))
                 }
             }
@@ -68,7 +68,7 @@ struct SettingsSubjectsSheet: View {
                     Text(SubjectCatalog.emoji(for: subject))
                         .font(.system(size: 13))
                 }
-                Text(SubjectDisplay.subject(subject, locale: i18n?.locale ?? .resolved()))
+                Text(SubjectDisplay.subject(subject, locale: i18n.locale))
                     .font(MicaboFont.ui(13, weight: .medium))
             }
             .foregroundStyle(isSelected ? MicaboColor.onInk : MicaboColor.inkBody)

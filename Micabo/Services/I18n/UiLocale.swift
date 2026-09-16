@@ -56,6 +56,24 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
 
     var foundation: Locale { Locale(identifier: bcp47) }
 
+    /// Le pays de l'annuaire d'établissements que cette langue désigne, faute de mieux.
+    ///
+    /// **Une langue n'est pas un pays, et l'anglais le rappelle** : `EN` n'est pas un code
+    /// ISO 3166, et le renvoyer filtrait l'annuaire sur un pays qui n'existe pas — donc sur
+    /// rien du tout. Les États-Unis, comme `SchoolingCountry.guessed` le fait déjà pour les
+    /// préférences système : c'est le pays anglophone le plus peuplé, et la question du
+    /// pays de scolarisation a été posée juste avant, donc ce repli ne sert qu'aux comptes
+    /// qui ont laissé la France cochée.
+    var institutionCountryIso: String {
+        switch self {
+        case .en: "US"
+        case .fr: "FR"
+        case .de: "DE"
+        case .es: "ES"
+        case .tr: "TR"
+        }
+    }
+
     static func isKnown(_ value: String?) -> Bool {
         guard let value else { return false }
         return UiLocale(rawValue: value) != nil

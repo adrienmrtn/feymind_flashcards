@@ -40,7 +40,7 @@ struct DemoReviewStepView: View {
 
     var body: some View {
         OnboardingScaffold(
-            title: i18n?.t("ios.reviewTitle") ?? "Tes cours sont transformés\nen contenus interactifs.",
+            title: i18n.t("ios.reviewTitle"),
             titleSize: 26,
             contentSpacing: MicaboSpacing.xxl,
             scrolls: false
@@ -285,7 +285,7 @@ private struct DemoSchemaMini: View {
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    private var locale: UiLocale { i18n?.locale ?? .resolved() }
+    private var locale: UiLocale { i18n.locale }
 
     private var stages: [(symbol: String, label: String, tint: Color)] {
         [
@@ -323,7 +323,7 @@ private struct DemoSchemaMini: View {
                 Image(systemName: "arrow.uturn.left")
                     .font(.system(size: 7, weight: .bold))
 
-                Text(i18n?.t("ios.demo.backToSea") ?? L10n.t("ios.demo.backToSea", locale: locale))
+                Text(i18n.t("ios.demo.backToSea"))
                     .font(MicaboFont.ui(8, weight: .semibold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)

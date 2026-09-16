@@ -206,9 +206,13 @@ enum MicaboCalendar {
     }()
 
     /// Initiales des jours, dans l'ordre de la grille.
-    static let weekdayInitials = weekdayInitials(locale: .resolved())
-
-    static func weekdayInitials(locale: UiLocale) -> [String] {
+    ///
+    /// **Une fonction, et plus une constante.** La table était calculée une fois au premier
+    /// accès, donc figée pour la durée du lancement : changer de langue dans les réglages
+    /// laissait « L M M J V S D » en tête du calendrier des examens jusqu'au relancement
+    /// suivant. C'est le genre de reste qu'on ne voit pas, parce qu'on ne change pas de
+    /// langue deux fois.
+    static func weekdayInitials(locale: UiLocale = .resolved()) -> [String] {
         L10n.t("ios.weekdays", locale: locale)
             .split(separator: ",")
             .map { String($0) }
