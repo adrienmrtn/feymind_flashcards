@@ -244,9 +244,19 @@ private struct PaywallPlanCard: View {
                 Spacer(minLength: 0)
 
                 VStack(alignment: .trailing, spacing: 3) {
-                    Text(plan.displayPrice)
-                        .font(MicaboFont.ui(17, weight: .bold))
-                        .foregroundStyle(MicaboColor.ink)
+                    // Le mois en gras, son unité juste à côté sur la même ligne de base :
+                    // c'est le chiffre qu'on compare, et il ne se lit qu'avec son unité.
+                    HStack(alignment: .lastTextBaseline, spacing: 3) {
+                        Text(plan.headlinePrice)
+                            .font(MicaboFont.ui(17, weight: .bold))
+                            .foregroundStyle(MicaboColor.ink)
+
+                        Text(plan.headlineUnit)
+                            .font(MicaboFont.ui(12, weight: .medium))
+                            .foregroundStyle(MicaboColor.inkSecondary)
+                    }
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
 
                     Text(plan.hasTrial
                         ? L10n.t("app.paywall.trialBadge", locale: .resolved(), vars: ["days": "\(plan.trialDays)"])
@@ -282,7 +292,7 @@ private struct PaywallPlanCard: View {
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .accessibilityLabel("\(plan.title), \(plan.displayPrice)")
+        .accessibilityLabel("\(plan.title), \(plan.headlinePrice) \(plan.headlineUnit), \(plan.caption)")
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }

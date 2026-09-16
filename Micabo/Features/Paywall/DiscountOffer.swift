@@ -11,9 +11,12 @@ import Foundation
 /// sur ce qu'elle vaut. La languette, elle, garde son décompte à la seconde — elle ne vend
 /// rien, elle rappelle seulement que la fenêtre court encore.
 ///
-/// **Le paywall n'annonce plus de mensuel non plus.** Il disait « 3,30 € / mois » avec la
-/// somme annuelle juste dessous : deux chiffres pour une seule somme, dont celui qu'on
-/// retenait n'était pas celui qui part. Il écrit le prix prélevé, dans la monnaie du pays.
+/// **Le mensuel est revenu, et cette fois c'est lui le grand chiffre.** Il avait disparu
+/// parce que deux nombres pour une seule somme laissaient retenir celui qui ne part pas.
+/// La réponse n'était pas de l'effacer mais de trancher la hiérarchie : le mois en grand,
+/// parce que c'est l'unité dans laquelle un budget se pense, et juste dessous ce qui est
+/// réellement prélevé — « facturé 34,99 € par an », suivi du tarif barré d'où l'on vient.
+/// Les deux chiffres sont là, mais on sait lequel on lit d'abord.
 ///
 /// Une seule durée, **un seul instant d'origine** : celui où le cadeau a été ouvert. Deux
 /// horloges différentes finiraient par se contredire, et un prix qui revient après avoir

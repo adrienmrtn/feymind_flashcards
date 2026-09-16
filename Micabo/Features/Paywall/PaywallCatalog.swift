@@ -93,12 +93,35 @@ struct PaywallPlan: Identifiable, Equatable {
         return PaywallPrice.text(price / 12)
     }
 
-    /// La ligne posée sous le nom de l'offre, dans la liste des plans.
-    var caption: String {
-        if let monthlyEquivalent {
-            return L10n.t("ios.pricePerMonth", locale: .resolved(), vars: ["price": monthlyEquivalent])
+    /// **Le grand chiffre du paywall, et c'est le mois.**
+    ///
+    /// Les deux nombres d'une offre annuelle ne pèsent pas pareil : « 69,99 € » est la
+    /// somme prélevée, « 5,83 € » est celle qu'on compare. Personne ne divise soixante-dix
+    /// par douze devant un paywall, et une offre annoncée à son prix annuel se lit comme
+    /// chère avant d'être lue comme avantageuse. Le mois passe donc en grand, et l'annuel
+    /// descend dans `caption` — il n'est pas caché, il n'est plus ce qu'on lit en premier.
+    ///
+    /// Une offre qui n'a pas de mensuel — l'hebdomadaire — garde son propre prix : il est
+    /// déjà dans l'unité où on le compare.
+    var headlinePrice: String { monthlyEquivalent ?? displayPrice }
+
+    /// L'unité du grand chiffre, qui doit toujours l'accompagner : « 5,83 € » posé sous un
+    /// titre « Annuel » se lit comme le prix de l'année.
+    var headlineUnit: String {
+        switch period {
+        case .year: L10n.t("app.paywall.perMonthSlash", locale: .resolved())
+        case .week: L10n.t("app.paywall.perWeekSlash", locale: .resolved())
         }
-        return L10n.t("ios.billedEach", locale: .resolved(), vars: ["unit": period.unit])
+    }
+
+    /// La ligne posée sous le nom de l'offre : **ce qui part vraiment du compte**, et à
+    /// quel rythme. C'est la contrepartie du mois affiché en grand — annoncer un mensuel
+    /// sans dire qu'il est prélevé d'un bloc une fois l'an serait le maquiller.
+    var caption: String {
+        guard period == .year else {
+            return L10n.t("ios.billedEach", locale: .resolved(), vars: ["unit": period.unit])
+        }
+        return L10n.t("ios.billedYearly", locale: .resolved(), vars: ["price": displayPrice])
     }
 }
 

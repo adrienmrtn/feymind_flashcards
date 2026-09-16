@@ -1,7 +1,6 @@
 /// Phrases propres à l'iPhone. Les clés partagées vivent dans `SharedI18nCatalogs`.
 enum IosI18nCatalogs {
     static let fr: [String: String] = [
-        "ios.perYear": "par an",
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Ne loupe jamais un jour.",
         "ios.notifSubtitle": "Un rappel par jour, à l'heure où tu révises. Rien d'autre.",
@@ -383,7 +382,6 @@ enum IosI18nCatalogs {
         "ios.unitWeek": "semaine",
         "ios.unitYear": "an",
         "ios.billedEach": "facturé chaque {unit}",
-        "ios.pricePerMonth": "{price} / mois",
         "ios.all": "Toutes",
         "ios.fromSchool": "De ton école",
         "ios.libraryEmptySchool": "Personne de {school} n'a encore partagé de cours. Les tiens sont publics par défaut : ce sera peut-être toi le premier.",
@@ -680,10 +678,11 @@ enum IosI18nCatalogs {
         // bibliothèque, et un paquet créé sans nom.
         "ios.adoptedCourse": "Cours repris",
         "ios.newDeck": "Nouveau paquet",
+        // Ce qui part vraiment du compte, écrit en petit sous le prix au mois.
+        "ios.billedYearly": "facturé {price} par an",
     ]
 
     static let de: [String: String] = [
-        "ios.perYear": "pro Jahr",
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Verpass keinen Tag.",
         "ios.notifSubtitle": "Eine Erinnerung pro Tag, zu deiner Lernzeit. Sonst nichts.",
@@ -1065,7 +1064,6 @@ enum IosI18nCatalogs {
         "ios.unitWeek": "Woche",
         "ios.unitYear": "Jahr",
         "ios.billedEach": "jede {unit} abgerechnet",
-        "ios.pricePerMonth": "{price} / Monat",
         "ios.all": "Alle",
         "ios.fromSchool": "Von deiner Schule",
         "ios.libraryEmptySchool": "Niemand von {school} hat bisher einen Kurs geteilt. Deine sind standardmäßig öffentlich: vielleicht bist du der Erste.",
@@ -1362,10 +1360,11 @@ enum IosI18nCatalogs {
         // bibliothèque, et un paquet créé sans nom.
         "ios.adoptedCourse": "Übernommener Kurs",
         "ios.newDeck": "Neues Kartenpaket",
+        // Ce qui part vraiment du compte, écrit en petit sous le prix au mois.
+        "ios.billedYearly": "{price} pro Jahr abgerechnet",
     ]
 
     static let es: [String: String] = [
-        "ios.perYear": "al año",
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "No te saltes ni un día.",
         "ios.notifSubtitle": "Un recordatorio al día, a tu hora de repasar. Nada más.",
@@ -1747,7 +1746,6 @@ enum IosI18nCatalogs {
         "ios.unitWeek": "semana",
         "ios.unitYear": "año",
         "ios.billedEach": "cobrado cada {unit}",
-        "ios.pricePerMonth": "{price} / mes",
         "ios.all": "Todas",
         "ios.fromSchool": "De tu escuela",
         "ios.libraryEmptySchool": "Nadie de {school} ha compartido un curso todavía. Los tuyos son públicos por defecto: quizá seas el primero.",
@@ -2044,10 +2042,11 @@ enum IosI18nCatalogs {
         // bibliothèque, et un paquet créé sans nom.
         "ios.adoptedCourse": "Curso adoptado",
         "ios.newDeck": "Paquete nuevo",
+        // Ce qui part vraiment du compte, écrit en petit sous le prix au mois.
+        "ios.billedYearly": "facturado {price} al año",
     ]
 
     static let tr: [String: String] = [
-        "ios.perYear": "yılda",
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Hiçbir günü kaçırma.",
         "ios.notifSubtitle": "Günde bir hatırlatma, çalıştığın saatte. Başka bir şey yok.",
@@ -2429,7 +2428,6 @@ enum IosI18nCatalogs {
         "ios.unitWeek": "hafta",
         "ios.unitYear": "yıl",
         "ios.billedEach": "her {unit} tahsil",
-        "ios.pricePerMonth": "{price} / ay",
         "ios.all": "Tümü",
         "ios.fromSchool": "Okulundan",
         "ios.libraryEmptySchool": "{school} içinde henüz kimse ders paylaşmadı. Seninkiler varsayılan olarak herkese açık: belki ilk sen olursun.",
@@ -2726,6 +2724,8 @@ enum IosI18nCatalogs {
         // bibliothèque, et un paquet créé sans nom.
         "ios.adoptedCourse": "Alınan ders",
         "ios.newDeck": "Yeni deste",
+        // Ce qui part vraiment du compte, écrit en petit sous le prix au mois.
+        "ios.billedYearly": "yılda {price} faturalanır",
     ]
 
     /// **L'anglais, au complet.**
@@ -2737,7 +2737,6 @@ enum IosI18nCatalogs {
     /// **toutes les clés du français**, dans le même ordre et sous les mêmes commentaires —
     /// et le test de parité (`testIosCatalogsHaveTheSameKeys`) le garde ainsi.
     static let en: [String: String] = [
-        "ios.perYear": "per year",
         // Le rappel quotidien, montré puis demandé pour de bon.
         "ios.notifTitle": "Never miss a day.",
         "ios.notifSubtitle": "One reminder a day, when you study. Nothing else.",
@@ -2777,33 +2776,33 @@ enum IosI18nCatalogs {
         "ios.sheetEdit.preview": "Preview",
         // Le parcours d'accueil : l'épreuve en trois écrans, Feynman, les résultats,
         // et les deux moyennes qui précèdent la construction du parcours.
-        "ios.examPlanTitle": "Your plan runs\\nall the way to the exam.",
+        "ios.examPlanTitle": "Your plan runs\nall the way to the exam.",
         "ios.examPlanLead": "You give the date. Micabo spreads the work, and tightens as it nears.",
-        "ios.examMockTitle": "A mock exam,\\nat D-7 and D-2.",
+        "ios.examMockTitle": "A mock exam,\nat D-7 and D-2.",
         "ios.examMockLead": "Twenty questions on the whole syllabus, against the clock. The one moment Micabo measures instead of estimating.",
         "ios.examMockPaper": "Your paper",
         "ios.examMockMinutes": "{n} min",
         "ios.examMockScore": "Your score on this paper",
-        "ios.examWeakTitle": "And what resists\\ncomes first.",
+        "ios.examWeakTitle": "And what resists\ncomes first.",
         "ios.examWeakLead": "The cards you miss most move to the front of the queue. That is where the marks go.",
         "ios.examWeakLine": "Missed {again} times out of {reviews}",
         "ios.examWeakBadge": "To redo",
-        "ios.feynmanTitle": "Say it out loud.\\nThen you will know.",
+        "ios.feynmanTitle": "Say it out loud.\nThen you will know.",
         "ios.feynmanLead": "A multiple choice can be guessed, a gap can be filled in. An explanation spoken aloud cannot.",
         "ios.feynmanQuestion": "Explain the water cycle, as if to someone who has never seen it.",
         "ios.feynmanGap": "That is exactly where your sheet has the answer.",
-        "ios.resultsTitle": "On average, grades\\nrise by 17 %.",
+        "ios.resultsTitle": "On average, grades\nrise by 17 %.",
         "ios.resultsLead": "Among students who follow their plan to exam day.",
         "ios.resultsBefore": "Week 1",
         "ios.resultsAfter": "Week 12",
-        "ios.averageTitle": "What is your average\\nright now?",
+        "ios.averageTitle": "What is your average\nright now?",
         "ios.averageLead": "Nobody is judging. This is a starting point, not a report card.",
         "ios.averageBelow": "Below {grade}",
         "ios.averageBelowShort": "Today",
-        "ios.targetTitle": "And what are you\\naiming for?",
+        "ios.targetTitle": "And what are you\naiming for?",
         "ios.targetLead": "Aim at what would genuinely make you happy, not at what sounds reasonable.",
         "ios.targetAtTop": "You are already at the top of the scale. We will keep you there.",
-        "ios.togetherTitle": "We will help you\\nget there.",
+        "ios.togetherTitle": "We will help you\nget there.",
         "ios.togetherLead": "Others started where you are. Here is the road.",
         "ios.welcomeTitle": "Learn everything,\nfaster.",
         "ios.countryTitle": "Where do you study?",
@@ -3119,7 +3118,6 @@ enum IosI18nCatalogs {
         "ios.unitWeek": "week",
         "ios.unitYear": "year",
         "ios.billedEach": "billed every {unit}",
-        "ios.pricePerMonth": "{price} / month",
         "ios.all": "All",
         "ios.fromSchool": "From your school",
         "ios.libraryEmptySchool": "Nobody from {school} has shared a course yet. Yours are public by default: you might be the first.",
@@ -3416,6 +3414,8 @@ enum IosI18nCatalogs {
         // bibliothèque, et un paquet créé sans nom.
         "ios.adoptedCourse": "Adopted course",
         "ios.newDeck": "New deck",
+        // Ce qui part vraiment du compte, écrit en petit sous le prix au mois.
+        "ios.billedYearly": "billed {price} a year",
     ]
 
     static func table(for locale: String) -> [String: String] {

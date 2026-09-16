@@ -222,6 +222,27 @@ final class I18nTests: XCTestCase {
         XCTAssertEqual(present.t("ios.done"), IosI18nCatalogs.es["ios.done"])
     }
 
+    /// **Un retour à la ligne doit en être un, pas deux caractères à l'écran.**
+    ///
+    /// Huit titres d'accueil anglais portaient un antislash suivi d'un `n` au lieu du saut
+    /// de ligne : la table avait été reconstruite en ré-encodant des valeurs déjà
+    /// échappées. L'écran affichait « Say it out loud.\nThen you will know. » en toutes
+    /// lettres. Rien ne plantait, et la parité des clés était verte — la clé existait, sa
+    /// valeur était juste fausse d'un caractère.
+    func testNoEscapedBackslashesInCopy() {
+        for locale in UiLocale.allCases {
+            for (key, value) in IosI18nCatalogs.table(for: locale.rawValue) {
+                XCTAssertFalse(
+                    value.contains("\\n"),
+                    "\(locale.rawValue) \(key) : un antislash et un n, au lieu d'un retour à la ligne"
+                )
+            }
+            for (key, value) in SharedI18nCatalogs.table(for: locale.rawValue) {
+                XCTAssertFalse(value.contains("\\n"), "\(locale.rawValue) \(key)")
+            }
+        }
+    }
+
     func testTokenReplacementAndPlurals() {
         XCTAssertEqual(
             L10n.format("Ouvre le lien envoyé à {email}", locale: .fr, vars: ["email": "a@b.fr"]),

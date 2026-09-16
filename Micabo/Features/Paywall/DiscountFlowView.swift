@@ -458,19 +458,29 @@ private struct DiscountPaywallStage: View {
                     .foregroundStyle(MicaboColor.offerSky)
 
                 HStack(alignment: .lastTextBaseline, spacing: 6) {
-                    Text(plan.displayPrice)
+                    Text(plan.headlinePrice)
                         .font(MicaboFont.number(26, weight: .bold))
                         .foregroundStyle(MicaboColor.ink)
 
-                    Text(L10n.t("ios.perYear", locale: .resolved()))
+                    Text(plan.headlineUnit)
                         .font(MicaboFont.ui(15, weight: .medium))
                         .foregroundStyle(MicaboColor.inkSecondary)
                 }
 
-                Text(DiscountOffer.reference.displayPrice)
-                    .font(MicaboFont.ui(15.5, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-                    .strikethrough(true, color: MicaboColor.inkTertiary)
+                // Ce qui part du compte, et le tarif d'où l'on vient. Les deux sur une
+                // ligne : le barré ne vaut que posé contre le prix qu'il remplace.
+                HStack(spacing: 7) {
+                    Text(plan.caption)
+                        .font(MicaboFont.ui(14, weight: .medium))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+
+                    Text(DiscountOffer.reference.displayPrice)
+                        .font(MicaboFont.ui(14, weight: .medium))
+                        .foregroundStyle(MicaboColor.inkTertiary)
+                        .strikethrough(true, color: MicaboColor.inkTertiary)
+                }
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
             }
 
             Spacer(minLength: 0)

@@ -37,6 +37,32 @@ final class PaywallTests: XCTestCase {
         XCTAssertEqual(PaywallCatalog.weekly.caption, "facturé chaque semaine")
     }
 
+    /// **Le grand chiffre est le mois, la petite ligne est ce qui part du compte.**
+    ///
+    /// L'inverse — l'annuel en gras, le mensuel en gris — faisait lire « 69,99 € » avant
+    /// « 5,83 € », c'est-à-dire la somme qu'on ne compare pas avant celle qu'on compare.
+    /// Les deux restent affichés : annoncer un mensuel sans dire qu'il est prélevé d'un
+    /// bloc une fois l'an serait le maquiller.
+    func testTheHeadlineIsTheMonthAndTheCaptionIsWhatIsCharged() {
+        XCTAssertTrue(
+            PaywallCatalog.yearly.headlinePrice.hasPrefix("5,83"),
+            "L'annuel doit s'annoncer au mois, pas à l'année : \(PaywallCatalog.yearly.headlinePrice)"
+        )
+        XCTAssertEqual(PaywallCatalog.yearly.headlineUnit, "/ mois")
+        XCTAssertTrue(
+            PaywallCatalog.yearly.caption.contains(PaywallCatalog.yearly.displayPrice),
+            "La petite ligne doit porter la somme prélevée : \(PaywallCatalog.yearly.caption)"
+        )
+
+        // L'hebdomadaire est déjà dans l'unité où on le compare : il garde son prix.
+        XCTAssertTrue(PaywallCatalog.weekly.headlinePrice.hasPrefix("7,99"))
+        XCTAssertEqual(PaywallCatalog.weekly.headlineUnit, "/ semaine")
+
+        // Le tarif réduit suit la même règle, sinon les deux paywalls se contrediraient.
+        XCTAssertNotEqual(PaywallCatalog.discount.headlinePrice, PaywallCatalog.discount.displayPrice)
+        XCTAssertEqual(PaywallCatalog.discount.headlineUnit, "/ mois")
+    }
+
     /// La remise est calculée, jamais écrite à la main : un pourcentage qui contredit les
     /// deux prix affichés juste en dessous ne se remarque qu'en production.
     func testTheSavingsComeFromTheTwoPrices() {
