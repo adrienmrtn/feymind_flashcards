@@ -20,6 +20,10 @@ struct SheetToolbar: View {
         i18n.t(key)
     }
 
+    /// La langue en toutes lettres, pour les appels qui la prennent en paramètre plutôt
+    /// qu'une clé — `SheetBlockKind.title(locale:)`, dans le menu des styles.
+    private var locale: UiLocale { i18n.locale }
+
     var body: some View {
         HStack(spacing: 0) {
             ScrollView(.horizontal) {
