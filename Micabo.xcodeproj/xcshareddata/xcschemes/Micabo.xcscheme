@@ -22,10 +22,19 @@
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
+   <!--
+      Les tests tournent en français parce que leurs attentes sont écrites en français.
+      Depuis que l'anglais est une langue de l'app, un simulateur en anglais fait rendre
+      « Untitled course » là où le test attend « Cours sans titre » : ce n'est pas une
+      régression, c'est la langue du simulateur. Les langues sont vérifiées explicitement
+      dans `I18nTests`, qui passe la locale au lieu de la subir.
+   -->
    <TestAction
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      language = "fr"
+      region = "FR"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
          <TestableReference

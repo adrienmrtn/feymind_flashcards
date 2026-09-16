@@ -65,7 +65,7 @@ enum PDFImportService {
             fileName: opened.fileName,
             source: .pdf,
             extractionNote: text.count >= 200
-                ? "Texte extrait du PDF, sans OCR ni appel réseau."
+                ? L10n.t("ios.pdf.extractedNote", locale: .resolved())
                 : L10n.t("ios.pdf.scanNote", locale: .resolved())
         )
     }
@@ -91,8 +91,8 @@ enum PDFImportService {
         if ocrText.count > document.text.count {
             document.text = ocrText
             document.extractionNote = ocrText.count >= 200
-                ? "PDF scanné : texte lu sur l'appareil (OCR), sans frais."
-                : "OCR incomplet : tu peux activer l'analyse des schémas."
+                ? L10n.t("ios.pdf.ocrNote", locale: .resolved())
+                : L10n.t("ios.pdf.ocrPartial", locale: .resolved())
         }
 
         guard document.hasUsableText || !document.pageImages.isEmpty else {

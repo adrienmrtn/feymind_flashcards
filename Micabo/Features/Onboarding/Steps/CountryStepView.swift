@@ -27,7 +27,7 @@ struct CountryStepView: View {
 
     private var matches: [WorldCountry] {
         guard model.customCountry == nil else { return [] }
-        return WorldCountries.matches(query)
+        return WorldCountries.matches(query, locale: i18n?.locale ?? .resolved())
     }
 
     var body: some View {

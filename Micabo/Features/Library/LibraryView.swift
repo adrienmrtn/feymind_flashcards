@@ -142,8 +142,7 @@ struct LibraryView: View {
     }
 
     private var heading: String {
-        let count = visible.count
-        return count == 1 ? "1 cours partagé" : "\(count) cours partagés"
+        L10n.t("app.friends.sharedCount", locale: .resolved(), vars: ["count": "\(visible.count)"])
     }
 
     /// Qui l'a écrit, et de quoi il parle. L'auteur passe devant la matière : dans une

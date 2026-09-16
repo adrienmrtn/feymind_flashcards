@@ -314,7 +314,7 @@ struct ExamEditorSheet: View {
             MicaboSectionCaption(text: L10n.t("ios.coursesOnProgram", locale: .resolved()))
 
             if courses.isEmpty {
-                MicaboSectionFootnote(text: "Aucun cours importé. Il faut au moins un cours avec des cartes pour planifier un examen.")
+                MicaboSectionFootnote(text: L10n.t("ios.examNeedCourse", locale: .resolved()))
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(courses.enumerated()), id: \.element.id) { index, course in
@@ -350,7 +350,7 @@ struct ExamEditorSheet: View {
                         .multilineTextAlignment(.leading)
                         .lineLimit(2)
 
-                    Text(count > 0 ? MicaboCopy.cards(count) : "aucune carte")
+                    Text(count > 0 ? MicaboCopy.cards(count) : L10n.t("ios.noCardsShort", locale: .resolved()))
                         .font(MicaboFont.rowSubtitle)
                         .foregroundStyle(count > 0 ? MicaboColor.inkTertiary : MicaboColor.caution)
                 }

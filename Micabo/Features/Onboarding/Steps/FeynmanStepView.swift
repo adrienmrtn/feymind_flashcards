@@ -30,10 +30,6 @@ struct FeynmanStepView: View {
 
 /// L'explication qui bute : les mots se posent, puis l'hésitation, puis ce qui manquait.
 private struct FeynmanDemo: View {
-    /// L'explication, mot à mot. Elle s'arrête sur « parce que » : c'est toujours là que ça
-    /// casse, au moment de dire *pourquoi* plutôt que *quoi*.
-    private let words = ["L'eau", "s'évapore", "des", "océans", "parce", "que…"]
-
     @State private var spoken = 0
     @State private var isSpeaking = false
     @State private var hesitates = false
@@ -43,7 +39,17 @@ private struct FeynmanDemo: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private func t(_ key: String) -> String {
-        i18n?.t(key) ?? L10n.t(key, locale: .fr)
+        i18n?.t(key) ?? L10n.t(key, locale: .resolved())
+    }
+
+    /// L'explication, mot à mot. Elle s'arrête sur « parce que » : c'est toujours là que ça
+    /// casse, au moment de dire *pourquoi* plutôt que *quoi*.
+    ///
+    /// Le catalogue la porte en une chaîne à virgules, parce que le découpage d'une phrase
+    /// en mots n'est pas le même d'une langue à l'autre : « s'évapore » est un mot, « se
+    /// evapora » en fait deux, et une liste écrite en Swift aurait figé le français.
+    private var words: [String] {
+        t("ios.feynman.words").components(separatedBy: ",")
     }
 
     var body: some View {
@@ -136,10 +142,11 @@ private struct FeynmanDemo: View {
         try? await Task.sleep(for: .milliseconds(380))
         isSpeaking = true
 
-        for index in words.indices {
+        let spokenWords = words
+        for index in spokenWords.indices {
             spoken = index + 1
-            let held = 120 + words[index].count * 28
-            let braking = index >= words.count - 2 ? 170 : 0
+            let held = 120 + spokenWords[index].count * 28
+            let braking = index >= spokenWords.count - 2 ? 170 : 0
             try? await Task.sleep(for: .milliseconds(held + braking))
         }
 

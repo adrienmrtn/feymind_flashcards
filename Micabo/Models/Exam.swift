@@ -15,9 +15,9 @@ enum ExamIntensity: String, Codable, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .light: "Légère"
-        case .standard: "Normale"
-        case .intense: "Intensive"
+        case .light: L10n.t("articles.exam.intensityLight", locale: .resolved())
+        case .standard: L10n.t("articles.exam.intensityStandard", locale: .resolved())
+        case .intense: L10n.t("articles.exam.intensityIntense", locale: .resolved())
         }
     }
 

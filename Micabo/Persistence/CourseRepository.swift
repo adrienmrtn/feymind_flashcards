@@ -384,7 +384,7 @@ enum CourseRepository {
             guard !label.isEmpty, zone.rect.width > 0, zone.rect.height > 0 else { continue }
 
             let card = Flashcard(
-                front: "Quelle zone est masquée ?",
+                front: L10n.t("ios.occlusionFront", locale: .resolved()),
                 back: label,
                 position: startPosition,
                 course: course

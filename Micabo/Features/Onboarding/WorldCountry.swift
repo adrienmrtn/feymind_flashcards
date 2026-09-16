@@ -8,7 +8,7 @@ import Foundation
 /// conservé tel quel.
 ///
 /// Il n'est **pas écrit à la main** : il est construit depuis les régions ISO du système, et
-/// les noms sont ceux de la langue du téléphone. Une liste de deux cents pays recopiée dans
+/// les noms sont ceux de la **langue de l'app**. Une liste de deux cents pays recopiée dans
 /// un fichier Swift serait fausse dans l'année et intraduisible.
 struct WorldCountry: Identifiable, Hashable {
     /// Code ISO 3166-1 alpha-2, en majuscules.
@@ -32,33 +32,49 @@ struct WorldCountry: Identifiable, Hashable {
 }
 
 enum WorldCountries {
-    /// Tous les pays, triés par nom dans la langue de l'appareil.
+    /// Tous les pays, triés par nom dans la langue de l'app.
     ///
-    /// Calculé une fois : la construction fait deux cents recherches de nom localisé, et la
-    /// refaire à chaque frappe dans le champ de recherche se sentirait.
-    static let all: [WorldCountry] = {
-        let locale = Locale.current
+    /// C'est la **langue choisie dans Micabo** qui nomme les pays, et pas celle du
+    /// téléphone : un lecteur qui a mis l'app en anglais cherche « Brazil », pas
+    /// « Brésil », même si son iPhone est en français.
+    ///
+    /// Calculé une fois par langue : la construction fait deux cents recherches de nom
+    /// localisé, et la refaire à chaque frappe dans le champ de recherche se sentirait.
+    static func all(locale: UiLocale = .resolved()) -> [WorldCountry] {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        if let cached = cache[locale] { return cached }
+        let built = build(locale: locale)
+        cache[locale] = built
+        return built
+    }
+
+    private static let cacheLock = NSLock()
+    private nonisolated(unsafe) static var cache: [UiLocale: [WorldCountry]] = [:]
+
+    private static func build(locale: UiLocale) -> [WorldCountry] {
+        let foundation = locale.foundation
         return Locale.Region.isoRegions
             .filter { $0.subRegions.isEmpty && $0.identifier.count == 2 }
             .compactMap { region -> WorldCountry? in
-                guard let name = locale.localizedString(forRegionCode: region.identifier)?.nilIfBlank else {
+                guard let name = foundation.localizedString(forRegionCode: region.identifier)?.nilIfBlank else {
                     return nil
                 }
                 return WorldCountry(code: region.identifier.uppercased(), name: name)
             }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-    }()
+    }
 
     /// Les pays qui correspondent à ce qu'on a tapé, les plus proches d'abord.
     ///
     /// Un pays dont le nom **commence** par la recherche passe devant un pays qui la contient
     /// au milieu : « Mali » doit arriver avant « Somalie » quand on tape « mal ». Les accents
     /// et la casse sont ignorés — personne ne tape « Émirats » avec son accent.
-    static func matches(_ query: String, limit: Int = 6) -> [WorldCountry] {
+    static func matches(_ query: String, limit: Int = 6, locale: UiLocale = .resolved()) -> [WorldCountry] {
         let needle = query.folded
         guard !needle.isEmpty else { return [] }
 
-        let scored = all.compactMap { country -> (country: WorldCountry, rank: Int)? in
+        let scored = all(locale: locale).compactMap { country -> (country: WorldCountry, rank: Int)? in
             let name = country.name.folded
             if name.hasPrefix(needle) { return (country, 0) }
             if name.contains(needle) { return (country, 1) }
@@ -76,9 +92,9 @@ enum WorldCountries {
             .map(\.country)
     }
 
-    static func country(code: String?) -> WorldCountry? {
+    static func country(code: String?, locale: UiLocale = .resolved()) -> WorldCountry? {
         guard let code = code?.nilIfBlank?.uppercased() else { return nil }
-        return all.first { $0.code == code }
+        return all(locale: locale).first { $0.code == code }
     }
 }
 

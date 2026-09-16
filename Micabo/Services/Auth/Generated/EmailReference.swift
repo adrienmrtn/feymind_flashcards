@@ -1,5 +1,6 @@
 // Généré depuis web/lib/auth/email.ts. Ne pas éditer à la main.
-// Relancer : node --experimental-strip-types scripts/export-i18n-catalogs.ts
+// Relancer : node --experimental-strip-types --import ./scripts/ts-extensions.mjs \
+//            scripts/export-i18n-catalogs.ts
 
 enum EmailReference {
     static let knownDomains: [String] = [

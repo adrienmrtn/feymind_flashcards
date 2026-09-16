@@ -655,12 +655,12 @@ final class OnboardingFlowTests: XCTestCase {
     /// Le catalogue vient des régions du système, pas d'une liste recopiée : il doit couvrir
     /// le monde, et chaque entrée doit porter son drapeau.
     func testTheWorldCatalogueIsBuiltFromTheSystem() throws {
-        XCTAssertGreaterThan(WorldCountries.all.count, 150, "Le catalogue doit couvrir le monde")
+        XCTAssertGreaterThan(WorldCountries.all().count, 150, "Le catalogue doit couvrir le monde")
 
         let france = try XCTUnwrap(WorldCountries.country(code: "fr"))
         XCTAssertEqual(france.flag, "🇫🇷", "Le drapeau se déduit du code, il ne s'écrit pas")
 
-        for country in WorldCountries.all.prefix(20) {
+        for country in WorldCountries.all().prefix(20) {
             XCTAssertEqual(country.code.count, 2, "\(country.code) n'est pas un code ISO à deux lettres")
             XCTAssertFalse(country.name.isEmpty)
         }
@@ -669,14 +669,14 @@ final class OnboardingFlowTests: XCTestCase {
     /// Un pays dont le nom **commence** par la recherche passe devant un pays qui la contient
     /// au milieu, et les accents ne comptent pas : personne ne tape « Émirats » accentué.
     ///
-    /// Les noms viennent de la langue de l'appareil : le test les prend donc **dans le
+    /// Les noms viennent de la langue de l'app : le test les prend donc **dans le
     /// catalogue lui-même** plutôt que de les écrire, sans quoi il tomberait le jour où on
-    /// le lance sur un simulateur en anglais.
+    /// le lance avec l'app en anglais.
     func testTheSearchPutsThePrefixMatchFirstAndIgnoresAccents() throws {
         let brazil = try XCTUnwrap(WorldCountries.country(code: "BR"))
         XCTAssertEqual(WorldCountries.matches(brazil.name).first?.code, "BR")
 
-        let accented = WorldCountries.all.first { $0.name != $0.name.unaccented }
+        let accented = WorldCountries.all().first { $0.name != $0.name.unaccented }
         if let accented {
             XCTAssertTrue(
                 WorldCountries.matches(accented.name.unaccented).contains { $0.code == accented.code },

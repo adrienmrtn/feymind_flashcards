@@ -61,12 +61,12 @@ enum DailyLoad {
         case solid
         case intense
 
-        var label: String {
+        func label(locale: UiLocale = .resolved()) -> String {
             switch self {
-            case .gentle: "le rythme tranquille"
-            case .cruising: "le rythme de croisière"
-            case .solid: "le rythme soutenu"
-            case .intense: "le rythme intensif"
+            case .gentle: L10n.t("ios.pace.gentle", locale: locale)
+            case .cruising: L10n.t("ios.pace.cruising", locale: locale)
+            case .solid: L10n.t("ios.pace.solid", locale: locale)
+            case .intense: L10n.t("ios.pace.intense", locale: locale)
             }
         }
 

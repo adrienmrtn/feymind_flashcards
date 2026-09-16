@@ -474,7 +474,12 @@ struct TodayView: View {
 
     private func dueCardAccessibility(_ load: DayLoad) -> String {
         let parts = visibleSegments(load).map { "\($0.count) \($0.label)" }
-        var label = "\(MicaboCopy.cards(load.dueCards.count)) à réviser"
+        var label = i18n?.t("ios.dueReviewAria", ["cards": MicaboCopy.cards(load.dueCards.count)])
+            ?? L10n.t(
+                "ios.dueReviewAria",
+                locale: .resolved(),
+                vars: ["cards": MicaboCopy.cards(load.dueCards.count)]
+            )
         if !parts.isEmpty { label += ". " + parts.joined(separator: ", ") }
         if load.heldBackNewCards > 0 { label += ". " + MicaboCopy.heldBackNew(load.heldBackNewCards) }
         return label

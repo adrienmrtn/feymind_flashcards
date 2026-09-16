@@ -22,8 +22,8 @@ enum MicaboMail {
 
         var subject: String {
             switch self {
-            case .bug: "Bug — Micabo"
-            case .idea: "Idée — Micabo"
+            case .bug: L10n.t("ios.mail.subject.bug", locale: .resolved())
+            case .idea: L10n.t("ios.mail.subject.idea", locale: .resolved())
             }
         }
 

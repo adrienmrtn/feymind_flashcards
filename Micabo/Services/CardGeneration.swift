@@ -87,7 +87,7 @@ enum CardGenerationError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noUsableCards(let title):
-            "Rien dans « \(title) » n'a pu être transformé en carte. Ouvre la fiche pour vérifier son contenu, ou écris une carte à la main."
+            L10n.t("ios.cards.noneUsable", locale: .resolved(), vars: ["title": title])
         }
     }
 }

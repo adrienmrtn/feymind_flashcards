@@ -427,14 +427,20 @@ extension YouTubeImportService {
         // il n'y a donc pas de langue à annoncer, et « Sous-titres  » se lirait mal.
         let language = transcript.languageName.nilIfBlank ?? transcript.languageCode.nilIfBlank
         if transcript.isWatched || language == nil {
-            parts.append("Vidéo lue par Micabo")
+            parts.append(L10n.t("ios.yt.watchedNote", locale: .resolved()))
         } else if let language {
-            parts.append(transcript.isAutomatic
-                ? "Sous-titres automatiques (\(language))"
-                : "Sous-titres \(language)")
+            parts.append(L10n.t(
+                transcript.isAutomatic ? "ios.yt.autoCaptions" : "ios.yt.captionsIn",
+                locale: .resolved(),
+                vars: ["language": language]
+            ))
         }
         if let duration = video.durationLabel { parts.append(duration) }
-        parts.append("\(transcript.text.count) caractères lus")
+        parts.append(L10n.t(
+            "ios.yt.charsRead",
+            locale: .resolved(),
+            vars: ["count": "\(transcript.text.count)"]
+        ))
         return parts.joined(separator: " · ")
     }
 }

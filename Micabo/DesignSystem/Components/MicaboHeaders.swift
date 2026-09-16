@@ -14,9 +14,13 @@ struct MicaboEyebrow: View {
 }
 
 /// Bouton de sortie d'un en-tête : chevron sur un écran poussé, croix sur une feuille.
+///
+/// Les deux libellés sont ceux que VoiceOver lit, et ils suivent la langue de l'app comme
+/// le reste : un bouton dont l'étiquette reste en français sur une app en anglais n'est
+/// pas un détail pour qui ne voit que cette étiquette.
 struct MicaboHeaderBack {
     var systemImage: String = "chevron.left"
-    var accessibilityTitle: String = "Retour"
+    var accessibilityTitle: String = L10n.t("app.common.back", locale: .resolved())
     var action: () -> Void
 
     static func back(_ action: @escaping () -> Void) -> MicaboHeaderBack {
@@ -24,7 +28,11 @@ struct MicaboHeaderBack {
     }
 
     static func close(_ action: @escaping () -> Void) -> MicaboHeaderBack {
-        MicaboHeaderBack(systemImage: "xmark", accessibilityTitle: "Fermer", action: action)
+        MicaboHeaderBack(
+            systemImage: "xmark",
+            accessibilityTitle: L10n.t("app.a11y.close", locale: .resolved()),
+            action: action
+        )
     }
 }
 

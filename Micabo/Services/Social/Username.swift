@@ -22,9 +22,9 @@ enum Username {
 
         var errorDescription: String? {
             switch self {
-            case .empty: "Choisis un nom d'utilisateur."
-            case .tooShort: "Trois caractères au minimum."
-            case .tooLong: "Vingt caractères au maximum."
+            case .empty: L10n.t("ios.username.empty", locale: .resolved())
+            case .tooShort: L10n.t("ios.username.tooShort", locale: .resolved())
+            case .tooLong: L10n.t("ios.username.tooLong", locale: .resolved())
             }
         }
     }

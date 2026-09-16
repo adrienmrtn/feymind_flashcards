@@ -103,7 +103,10 @@ struct AuthTokenResponse: Decodable {
 ///
 /// Deux cas méritent leur phrase parce que l'utilisateur peut agir : le courriel à confirmer,
 /// et le fournisseur qui n'est pas branché côté Supabase. Les autres retombent sur le message
-/// du serveur, qui est déjà en français dans les cas courants.
+/// du serveur.
+///
+/// Ces phrases passent par le catalogue : l'écran de connexion est le premier de l'app, et
+/// c'est exactement là qu'un message resté en français faisait basculer de langue.
 enum AuthError: LocalizedError, Equatable {
     case notConfigured
     case network(String)
@@ -121,19 +124,19 @@ enum AuthError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .notConfigured:
-            "La connexion n'est pas configurée. Renseigne l'URL Supabase dans Profil, Réglages."
+            L10n.t("ios.auth.notConfigured", locale: .resolved())
         case .network(let detail):
             L10n.t("ios.ai.network", locale: .resolved(), vars: ["detail": detail])
         case .invalidResponse:
-            "La réponse du serveur n'a pas pu être lue. Réessaie."
+            L10n.t("ios.auth.invalidResponse", locale: .resolved())
         case .invalidCredentials:
-            "Adresse ou mot de passe incorrect."
+            L10n.t("ios.auth.invalidCredentials", locale: .resolved())
         case .emailNotConfirmed:
-            "Ton adresse n'est pas encore confirmée. Ouvre le lien qu'on vient de t'envoyer."
+            L10n.t("ios.auth.emailNotConfirmed", locale: .resolved())
         case .providerNotEnabled(let provider):
-            "La connexion avec \(provider) n'est pas encore activée sur ce projet Supabase."
+            L10n.t("ios.auth.providerNotEnabled", locale: .resolved(), vars: ["provider": provider])
         case .sessionExpired:
-            "Ta session a expiré. Reconnecte-toi."
+            L10n.t("ios.auth.sessionExpired", locale: .resolved())
         case .cancelled:
             // Annuler n'est pas une erreur : l'écran ne doit rien afficher.
             nil

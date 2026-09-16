@@ -174,7 +174,7 @@ struct ExplainSelectionSheet: View {
                 HStack(spacing: MicaboSpacing.xs) {
                     Image(systemName: savedCard ? "checkmark" : "plus")
                         .font(.system(size: 12, weight: .semibold))
-                    Text(savedCard ? "Carte ajoutée au cours" : "En faire une carte")
+                    Text(L10n.t(savedCard ? "ios.explainSaved" : "ios.explainMakeCard", locale: .resolved()))
                 }
             }
             .buttonStyle(MicaboSecondaryButtonStyle())

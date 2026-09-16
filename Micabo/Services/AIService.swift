@@ -102,9 +102,9 @@ enum SheetLength: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .brief: "L'essentiel"
-        case .standard: "Équilibrée"
-        case .deep: "Approfondie"
+        case .brief: L10n.t("app.import.lengthBrief", locale: .resolved())
+        case .standard: L10n.t("app.import.lengthStandard", locale: .resolved())
+        case .deep: L10n.t("app.import.lengthDeep", locale: .resolved())
         }
     }
 

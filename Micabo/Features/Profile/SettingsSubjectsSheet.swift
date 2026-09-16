@@ -42,7 +42,7 @@ struct SettingsSubjectsSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("OK", action: save)
+                    Button(i18n?.t("ios.ok") ?? L10n.t("ios.ok", locale: .resolved()), action: save)
                         .font(MicaboFont.ui(15, weight: .semibold))
                 }
             }

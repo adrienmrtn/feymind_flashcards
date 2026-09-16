@@ -32,13 +32,17 @@ enum OfflineCourseBuilder {
             if isLikelyHeading(line) {
                 currentSection = line
                 cards.append(GeneratedFlashcard(
-                    front: "Qu'as-tu retenu sur « \(line) » ?",
-                    back: "Reformule cette partie du cours avec tes mots.",
+                    front: L10n.t("ios.offline.headingFront", locale: .resolved(), vars: ["heading": line]),
+                    back: L10n.t("ios.offline.headingBack", locale: .resolved()),
                     hint: nil
                 ))
             } else if line.count >= 60 {
                 cards.append(GeneratedFlashcard(
-                    front: "Complète : \(shortened(line))",
+                    front: L10n.t(
+                        "ios.offline.clozeFront",
+                        locale: .resolved(),
+                        vars: ["text": shortened(line)]
+                    ),
                     back: line,
                     hint: currentSection
                 ))
@@ -47,8 +51,14 @@ enum OfflineCourseBuilder {
 
         if cards.isEmpty {
             cards.append(GeneratedFlashcard(
-                front: "Résume « \(course.title) » en trois phrases.",
-                back: course.summary.isEmpty ? "Reformule le cours avec tes mots." : course.summary,
+                front: L10n.t(
+                    "ios.offline.summarizeFront",
+                    locale: .resolved(),
+                    vars: ["title": course.title]
+                ),
+                back: course.summary.isEmpty
+                    ? L10n.t("ios.offline.summarizeBack", locale: .resolved())
+                    : course.summary,
                 hint: nil
             ))
         }
@@ -69,8 +79,12 @@ enum OfflineCourseBuilder {
 
         guard let first = matching.first else {
             return SelectionExplanation(
-                headline: "« \(selection) » n'a pas pu être expliqué hors ligne.",
-                body: "Micabo n'a pas trouvé ce passage dans le cours et n'a pas pu joindre l'IA. Vérifie ta connexion, puis réessaie.",
+                headline: L10n.t(
+                    "ios.offline.noExplainTitle",
+                    locale: .resolved(),
+                    vars: ["selection": selection]
+                ),
+                body: L10n.t("ios.offline.noExplainBody", locale: .resolved()),
                 example: nil,
                 watchOut: nil,
                 card: nil
@@ -78,11 +92,18 @@ enum OfflineCourseBuilder {
         }
 
         return SelectionExplanation(
-            headline: "**\(selection)** apparaît dans « \(request.courseTitle) ».",
+            headline: L10n.t(
+                "ios.offline.appearsIn",
+                locale: .resolved(),
+                vars: ["selection": selection, "title": request.courseTitle]
+            ),
             body: matching.prefix(3).joined(separator: ". ") + ".",
             example: nil,
             watchOut: nil,
-            card: GeneratedFlashcard(front: "Que dit ton cours sur « \(selection) » ?", back: first + ".")
+            card: GeneratedFlashcard(
+                front: L10n.t("ios.offline.whatSays", locale: .resolved(), vars: ["selection": selection]),
+                back: first + "."
+            )
         )
     }
 

@@ -77,81 +77,88 @@ enum CourseEmoji {
     /// l'intérêt de l'ordre : « code de la route » contenait « code », donc il sortait un
     /// ordinateur portable. Les mots les plus généraux — « langue », « genie », « arts » —
     /// ferment donc la liste, derrière les matières qu'ils englobent.
+    ///
+    /// **Chaque entrée porte aussi son radical anglais.** Les titres de cours sont écrits
+    /// dans la langue de l'étudiant, et une table qui ne connaissait que le français rendait
+    /// le livre générique à tout un catalogue anglophone : « Chemistry », « Nursing » et
+    /// « Driving theory » n'ont pas une lettre commune avec « chimie », « soins » et « code
+    /// de la route ». Les radicaux ajoutés ne changent aucune sortie française — c'est ce
+    /// que vérifient les tests d'ordre juste à côté.
     private static let table: [(String, [String])] = [
         // Langues vivantes : un drapeau se reconnaît sans lire, et c'est justement à ça que
         // sert un emoji sur une pastille de quarante points.
         ("🇬🇧", ["anglais", "english"]),
-        ("🇪🇸", ["espagnol"]),
-        ("🇩🇪", ["allemand"]),
-        ("🇮🇹", ["italien"]),
-        ("🇵🇹", ["portugais"]),
-        ("🇯🇵", ["japonais"]),
-        ("🇨🇳", ["chinois", "mandarin"]),
-        ("🇷🇺", ["russe"]),
-        ("🇸🇦", ["arabe"]),
+        ("🇪🇸", ["espagnol", "spanish"]),
+        ("🇩🇪", ["allemand", "german"]),
+        ("🇮🇹", ["italien", "italian"]),
+        ("🇵🇹", ["portugais", "portuguese"]),
+        ("🇯🇵", ["japonais", "japanese"]),
+        ("🇨🇳", ["chinois", "chinese", "mandarin"]),
+        ("🇷🇺", ["russe", "russian"]),
+        ("🇸🇦", ["arabe", "arabic"]),
         // Les langues anciennes n'ont pas de drapeau : l'amphore dit l'antiquité mieux que
         // le drapeau d'un pays qui n'existait pas.
-        ("🏺", ["latin", "grec"]),
+        ("🏺", ["latin", "grec", "greek"]),
 
         // Sciences
-        ("🧪", ["chimie", "molecul", "reaction"]),
-        ("🧬", ["biolog", "genet", "cellul", "svt", "adn"]),
-        ("🌿", ["botan", "ecolog", "plante", "photosynth", "environnement"]),
+        ("🧪", ["chimie", "chemistr", "molecul", "reaction"]),
+        ("🧬", ["biolog", "genet", "cellul", "svt", "adn", "dna"]),
+        ("🌿", ["botan", "ecolog", "plante", "photosynth", "environnement", "environment"]),
         ("🔭", ["astronom", "astrophys", "cosmolog"]),
-        ("🪨", ["geolog", "mineral", "tectoniq"]),
-        ("📊", ["statistique", "probabilit", "econometr"]),
-        ("📐", ["math", "geometr", "algebr", "analyse", "trigonom"]),
-        ("⚛️", ["physique", "quantique", "thermodynam", "optique"]),
+        ("🪨", ["geolog", "mineral", "tectoniq", "tectonic"]),
+        ("📊", ["statistique", "statistic", "probabilit", "econometr"]),
+        ("📐", ["math", "geometr", "algebr", "analyse", "calculus", "trigonom"]),
+        ("⚛️", ["physique", "physics", "quantique", "quantum", "thermodynam", "optique", "optics"]),
 
         // Santé
-        ("🫀", ["anatomie", "physiolog", "cardio"]),
-        ("💊", ["pharmac", "posolog"]),
-        ("🥗", ["nutrition", "dietet"]),
-        ("🦴", ["kinesi", "osteo", "orthoped", "rhumatolog"]),
-        ("🏥", ["infirm", "soins", "hospital"]),
-        ("🩺", ["medecine", "sante", "clinique", "semiolog"]),
+        ("🫀", ["anatomie", "anatomy", "physiolog", "cardio"]),
+        ("💊", ["pharmac", "posolog", "dosage"]),
+        ("🥗", ["nutrition", "dietet", "dietar"]),
+        ("🦴", ["kinesi", "osteo", "orthoped", "physiother", "rhumatolog", "rheumatolog"]),
+        ("🏥", ["infirm", "soins", "hospital", "nursing"]),
+        ("🩺", ["medecine", "medicine", "sante", "clinique", "clinical", "semiolog"]),
 
         // Technique
-        ("🧩", ["algorithm", "complexite", "structures de donnees"]),
-        ("🌐", ["reseau", "internet", "protocole"]),
-        ("🔌", ["electron", "electricite", "circuit"]),
-        ("⚙️", ["mecanique", "cinematique", "statique"]),
-        ("💻", ["informat", "programm", "logiciel", "donnees", "python", "java"]),
-        ("🏢", ["architecture", "urbanis"]),
-        ("🏗️", ["genie civil", "materiaux", "construction", "beton", "ingenier", "genie"]),
+        ("🧩", ["algorithm", "complexite", "complexity", "structures de donnees", "data structures"]),
+        ("🌐", ["reseau", "network", "internet", "protocole", "protocol"]),
+        ("🔌", ["electron", "electricite", "electricity", "circuit"]),
+        ("⚙️", ["mecanique", "mechanic", "cinematique", "kinematic", "statique"]),
+        ("💻", ["informat", "comput", "programm", "logiciel", "software", "donnees", "python", "java"]),
+        ("🏢", ["architecture", "urbanis", "urban plan"]),
+        ("🏗️", ["genie civil", "civil engineering", "materiaux", "construction", "beton", "concrete", "ingenier", "engineering", "genie"]),
 
         // Sciences humaines
-        ("🏛️", ["histoire", "antiquite", "revolution", "guerre", "civilisation"]),
-        ("🗳️", ["sciences politiques", "science politique", "institution", "electoral"]),
+        ("🏛️", ["histoire", "history", "antiquite", "antiquity", "revolution", "guerre", "civilisation", "civilization"]),
+        ("🗳️", ["sciences politiques", "science politique", "political science", "politics", "institution", "electoral"]),
         ("👥", ["sociolog", "anthropolog", "demograph"]),
-        ("🤔", ["philo", "epistemolog", "metaphysiq", "ethique"]),
+        ("🤔", ["philo", "epistemolog", "metaphysi", "ethique", "ethics"]),
         ("🧠", ["psycho", "cognit", "neuro"]),
-        ("🗺️", ["geograph", "territoire", "climat"]),
+        ("🗺️", ["geograph", "territoire", "territor", "climat"]),
         ("🌍", ["geopolit", "international", "europe"]),
 
         // Droit et économie
-        ("⚖️", ["droit", "juridique", "constitution", "penal", "civil"]),
-        ("🧾", ["comptab", "bilan", "fiscal"]),
-        ("📈", ["finance", "boursier", "investissement"]),
-        ("📣", ["marketing", "communication", "publicite"]),
-        ("🧑‍💼", ["management", "gestion", "ressources humaines", "entrepreneur"]),
-        ("💰", ["economie", "monetaire", "commerce"]),
+        ("⚖️", ["droit", "juridique", "legal", "law", "constitution", "penal", "criminal", "civil"]),
+        ("🧾", ["comptab", "accounting", "bilan", "fiscal"]),
+        ("📈", ["finance", "boursier", "investissement", "investment"]),
+        ("📣", ["marketing", "communication", "publicite", "advertis"]),
+        ("🧑‍💼", ["management", "gestion", "ressources humaines", "human resources", "entrepreneur"]),
+        ("💰", ["economie", "economic", "monetaire", "monetar", "commerce"]),
 
         // Et le reste
-        ("🚗", ["code de la route", "permis", "conduite"]),
-        ("🏃", ["sport", "staps", "athletisme", "entrainement physique"]),
-        ("🎬", ["cinema", "audiovisuel", "montage"]),
-        ("🎵", ["musique", "solfege", "harmonie"]),
-        ("🎭", ["theatre"]),
-        ("💃", ["danse"]),
+        ("🚗", ["code de la route", "driving theory", "highway code", "permis", "conduite"]),
+        ("🏃", ["sport", "staps", "athletisme", "athletic", "entrainement physique"]),
+        ("🎬", ["cinema", "film", "audiovisuel", "montage"]),
+        ("🎵", ["musique", "music", "solfege", "harmonie", "harmony"]),
+        ("🎭", ["theatre", "theater", "drama"]),
+        ("💃", ["danse", "dance"]),
         ("📷", ["photographie", "photo"]),
-        ("📰", ["journalisme"]),
-        ("🎒", ["pedagogie", "education"]),
-        ("🌾", ["agronomie", "agriculture"]),
-        ("✈️", ["aeronautique", "aviation"]),
-        ("🎨", ["arts", "dessin", "design", "peinture"]),
-        ("📖", ["litterature", "francais", "poesie", "roman"]),
-        ("💡", ["culture generale", "actualite"]),
+        ("📰", ["journalisme", "journalism"]),
+        ("🎒", ["pedagogie", "pedagog", "education", "teaching"]),
+        ("🌾", ["agronomie", "agronom", "agriculture"]),
+        ("✈️", ["aeronautique", "aeronautic", "aviation"]),
+        ("🎨", ["arts", "dessin", "drawing", "design", "peinture", "painting"]),
+        ("📖", ["litterature", "literature", "francais", "french", "poesie", "poetry", "roman"]),
+        ("💡", ["culture generale", "general knowledge", "actualite", "current affairs"]),
         // Le filet de sécurité des langues : il attrape « LV2 », « vocabulaire », « thème
         // grammatical » — tout ce qui parle de langue sans nommer laquelle.
         //
@@ -160,6 +167,6 @@ enum CourseEmoji {
         // depuis le début retombait sur le livre générique — et le test qui le vérifie
         // (`testEachLivingLanguageCarriesItsFlag`) échouait. Un mot-clé écrit en entier ne
         // rattrape pas ses dérivés ; c'est pour ça que le reste de la table est en radicaux.
-        ("🗣️", ["langue", "vocabulaire", "grammat", "conjugaison"])
+        ("🗣️", ["langue", "language", "vocabulaire", "vocabular", "grammat", "conjugaison", "conjugation"])
     ]
 }

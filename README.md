@@ -1912,6 +1912,62 @@ l'app lui sert — sans ce lien, le curseur de l'onboarding ne serait qu'un déc
   quand il y a une date à tenir
 - `MicaboTests/DailyLoadTests.swift` verrouille les paliers, les libellés et le plafond
 
+## Les langues de l'app
+
+Cinq : **anglais, français, allemand, espagnol, turc.** Elles se choisissent dans les
+réglages et au premier écran du parcours, et le choix vit dans `UserDefaults` sous
+`micabo.ui_locale` — le même contrat que le cookie du site, à ceci près que les deux clients
+ne se synchronisent pas encore.
+
+C'est la **langue de l'interface**, et pas celle des fiches. Une fiche écrite en allemand le
+reste quand l'app passe en anglais : `ContentLanguage` se déduit du pays de scolarisation, et
+elle se décide à l'import.
+
+Deux catalogues, et la frontière est nette :
+
+| Table | Où | Ce qu'elle porte |
+| --- | --- | --- |
+| `SharedI18nCatalogs` | `Services/I18n/Generated/` | Les clés communes au site et à l'iPhone. **Générée**, jamais éditée à la main. |
+| `IosI18nCatalogs` | `Services/I18n/` | Ce qui n'existe que sur le téléphone : le parcours d'accueil, l'import, les pannes du cloud. Écrite à la main, dans les cinq langues. |
+
+La table partagée se régénère depuis `web/lib/i18n/catalogs` :
+
+```bash
+node --experimental-strip-types --import ./scripts/ts-extensions.mjs \
+  scripts/export-i18n-catalogs.ts
+```
+
+**Le repli est le piège, pas la clé manquante.** `L10n.t` cherche la clé dans la table iOS de
+la langue, puis dans la table partagée, puis dans le français — et rend donc toujours *une*
+phrase. Une app à moitié traduite ne plante pas : elle bascule de langue au milieu d'un
+écran, et personne ne le voit passer en revue de code. C'est pourquoi deux tests tiennent la
+table plutôt qu'un : `testIosCatalogsHaveTheSameKeys` vérifie que les cinq tables ont les
+mêmes clés, et `testNothingFallsBackToFrench` vérifie qu'aucune phrase anglaise n'est le
+français recopié. La parité des clés prouve qu'une entrée existe ; elle ne prouve pas qu'elle
+a été traduite.
+
+Trois choses **ne se traduisent pas**, et c'est délibéré :
+
+- **les paliers d'études d'un pays**, écrits dans la langue du pays. Un lycéen polonais
+  cherche « Liceum », pas « Lycée » — même règle que pour « A-Levels » ou « Cégep ». Seuls
+  les paliers francophones passent par le catalogue, parce qu'un lecteur anglophone qui étudie
+  en France lit « Lycée » sans avoir à deviner ;
+- **les matières stockées**, qui restent le français du catalogue. `SubjectDisplay` traduit à
+  l'affichage ; la valeur enregistrée, elle, ne bouge jamais, sinon un cours changerait de
+  matière en changeant de langue ;
+- **les noms propres** : « Micabo », « PASS », « LaTeX », les prénoms des témoignages.
+
+Les pays, eux, suivent l'app et non le téléphone : `WorldCountries` construit sa liste depuis
+les régions ISO avec la locale **choisie dans Micabo**, parce qu'un lecteur qui a mis l'app en
+anglais tape « Brazil », pas « Brésil ».
+
+**Une seule copie échappe au catalogue** : les quatre phrases d'autorisation (appareil photo,
+photothèque, micro, dictée). iOS les affiche lui-même, avant qu'une ligne de Swift ne tourne,
+et il les lit dans `Micabo/Resources/<langue>.lproj/InfoPlist.strings`. Elles suivent donc la
+langue du **téléphone**, pas le sélecteur de l'app — c'est iOS qui décide, et rien dans le
+bundle ne peut le lui faire changer d'avis. `Info.plist` garde la version française, qui sert
+de repli quand le téléphone ne parle aucune des cinq.
+
 ## Structure
 
 ```
@@ -1956,6 +2012,14 @@ serveur, le choix de la piste de sous-titres et ce que l'aperçu décide sans ri
 `MicaboTests/ExamPlannerTests.swift` verrouille le mode examen : l'échelle de passages et ses
 cas limites, les quatre chiffres de la projection, la réversibilité d'une replanification, le
 plafond d'intervalle et la levée du plafond de cartes neuves.
+
+`MicaboTests/I18nTests.swift` verrouille les cinq langues : la parité des clés entre les
+tables, l'absence de repli sur le français, le branchement de chaque code dans
+`table(for:)`, les noms de pays, les matières, et le compte à rebours de l'offre — qui se
+compose au lieu de s'écrire, parce que le turc pose le signe du pourcentage devant le nombre.
+Les tests tournent **en français** (`language = "fr"` dans le schéma) : leurs attentes sont
+écrites en français, et un simulateur en anglais ferait rendre « Untitled course » là où le
+test attend « Cours sans titre ».
 
 `MicaboTests/AuthAndSyncTests.swift` verrouille les comptes et la synchro sur des charges
 utiles GoTrue réelles : le décodage d'une session, l'échéance calculée à la réception, le nom

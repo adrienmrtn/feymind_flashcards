@@ -146,7 +146,7 @@ final class SocialService {
     @discardableResult
     func setUsername(_ raw: String) async -> Bool {
         guard let me = auth.user?.id else {
-            failure = "Il faut un compte pour choisir un nom d'utilisateur."
+            failure = L10n.t("ios.username.needAccount", locale: .resolved())
             return false
         }
 
@@ -174,7 +174,11 @@ final class SocialService {
                 failure = nil
                 return true
             } catch let error as SupabaseDatabase.Failure where error.isDuplicate {
-                failure = "\(Username.display(candidate)) est déjà pris."
+                failure = L10n.t(
+                    "ios.username.taken",
+                    locale: .resolved(),
+                    vars: ["name": Username.display(candidate)]
+                )
                 return false
             } catch {
                 failure = describe(error)
@@ -532,7 +536,7 @@ final class SocialService {
         do {
             try await work()
         } catch let error as SupabaseDatabase.Failure where error.isDuplicate {
-            raised = "Cette demande existe déjà."
+            raised = L10n.t("ios.friends.requestExists", locale: .resolved())
         } catch {
             raised = describe(error)
         }

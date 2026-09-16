@@ -4,7 +4,14 @@ import Foundation
 ///
 /// UserDefaults, pas colonne : c'est le même contrat que le cookie web
 /// `micabo.ui_locale`. Les deux clients ne se synchronisent pas encore.
+///
+/// **L'anglais vient en premier** parce que c'est la langue du plus grand nombre de
+/// lecteurs, et parce que c'est déjà la langue de base du site. Sur l'iPhone, le repli
+/// reste le français : c'est la langue de la quasi-totalité des comptes existants, et un
+/// utilisateur qui n'a jamais touché au sélecteur ne doit pas voir son app changer de
+/// langue du jour au lendemain.
 enum UiLocale: String, CaseIterable, Identifiable, Sendable {
+    case en
     case fr
     case de
     case es
@@ -17,6 +24,7 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
 
     var nativeName: String {
         switch self {
+        case .en: "English"
         case .fr: "Français"
         case .de: "Deutsch"
         case .es: "Español"
@@ -25,9 +33,10 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
     }
 
     /// Drapeau du pays de référence de la langue. Une langue n'est pas un pays,
-    /// mais quatre drapeaux se lisent avant quatre noms — surtout à l'accueil.
+    /// mais cinq drapeaux se lisent avant cinq noms — surtout à l'accueil.
     var flag: String {
         switch self {
+        case .en: "🇬🇧"
         case .fr: "🇫🇷"
         case .de: "🇩🇪"
         case .es: "🇪🇸"
@@ -37,6 +46,7 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
 
     var bcp47: String {
         switch self {
+        case .en: "en-US"
         case .fr: "fr-FR"
         case .de: "de-DE"
         case .es: "es-ES"

@@ -91,24 +91,34 @@ enum DiscountOffer {
 
     /// Ce que lit VoiceOver, où « 23:14:07 » ne veut rien dire.
     ///
-    /// La phrase commence par « il reste » : l'accord du participe suivrait sinon le
-    /// nombre, et « 1 heure restantes » se lit comme une faute.
-    static func countdownLabel(_ seconds: Int) -> String {
+    /// La durée se compose au lieu de s'écrire : `ios.offer.left` porte la tournure de la
+    /// langue — « il reste deux heures », « two hours left » — et `ios.offer.and` la
+    /// conjonction. Écrire la phrase entière en Swift revenait à écrire l'ordre des mots
+    /// du français dans les cinq langues.
+    static func countdownLabel(_ seconds: Int, locale: UiLocale = .resolved()) -> String {
         let total = max(0, seconds)
-        guard total > 0 else { return "offre terminée" }
+        guard total > 0 else { return L10n.t("app.paywall.offerEnded", locale: locale) }
 
         let hours = total / 3600
         let minutes = (total % 3600) / 60
 
-        if hours > 0 {
-            let heures = hours == 1 ? "1 heure" : "\(hours) heures"
-            guard minutes > 0 else { return "il reste \(heures)" }
-            let mots = minutes == 1 ? "1 minute" : "\(minutes) minutes"
-            return "il reste \(heures) et \(mots)"
+        func left(_ time: String) -> String {
+            L10n.t("ios.offer.left", locale: locale, vars: ["time": time])
         }
 
-        guard minutes > 0 else { return "il reste moins d'une minute" }
-        return minutes == 1 ? "il reste 1 minute" : "il reste \(minutes) minutes"
+        if hours > 0 {
+            let spelledHours = L10n.t("ios.offer.hours", locale: locale, vars: ["n": "\(hours)"])
+            guard minutes > 0 else { return left(spelledHours) }
+            let spelledMinutes = L10n.t("ios.offer.minutes", locale: locale, vars: ["n": "\(minutes)"])
+            return left(L10n.t(
+                "ios.offer.and",
+                locale: locale,
+                vars: ["first": spelledHours, "second": spelledMinutes]
+            ))
+        }
+
+        guard minutes > 0 else { return L10n.t("ios.offer.underMinute", locale: locale) }
+        return left(L10n.t("ios.offer.minutes", locale: locale, vars: ["n": "\(minutes)"]))
     }
 
     // MARK: - Ce que l'appareil retient

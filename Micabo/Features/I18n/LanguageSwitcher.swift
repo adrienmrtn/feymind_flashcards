@@ -11,7 +11,8 @@ struct LanguageSwitcher: View {
     enum Variant {
         case compact
         case card
-        /// Rangée de drapeaux, pour le premier écran du parcours.
+        /// Rangée de drapeaux, pour le premier écran du parcours. Cinq tiennent sur la
+        /// largeur d'un iPhone : les noms se resserrent, les drapeaux ne bougent pas.
         case flags
         /// Le même menu que `compact`, mais habillé en champ : un fond, un chevron, une
         /// zone de touche franche. C'est ce qu'il faut sur le premier écran, où le contrôle
@@ -140,19 +141,19 @@ struct LanguageSwitcher: View {
                 .font(MicaboFont.ui(13, weight: .medium))
                 .foregroundStyle(surface.isDark ? Color.white.opacity(0.7) : MicaboColor.inkTertiary)
 
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 ForEach(UiLocale.allCases) { code in
                     Button {
                         i18n.pick(code)
                     } label: {
                         VStack(spacing: 6) {
                             Text(code.flag)
-                                .font(.system(size: 28))
+                                .font(.system(size: 26))
                                 .accessibilityHidden(true)
                             Text(code.nativeName)
                                 .font(MicaboFont.ui(11.5, weight: .medium))
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.75)
+                                .minimumScaleFactor(0.65)
                         }
                         .frame(maxWidth: .infinity, minHeight: 64)
                         .foregroundStyle(code == i18n.locale ? MicaboColor.accent : MicaboColor.ink)

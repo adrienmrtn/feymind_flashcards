@@ -1,0 +1,16 @@
+/*
+  InfoPlist.strings — les quatre phrases que **le système** affiche, et pas l'app.
+
+  Elles sortent des boîtes de dialogue d'iOS (appareil photo, photothèque, micro, dictée),
+  qui suivent la langue du **téléphone** et non le sélecteur de Micabo : iOS les lit dans le
+  bundle avant que la moindre ligne de Swift ne tourne. C'est la seule copie de l'app qui
+  échappe à `L10n`, et c'est pour ça qu'elle est écrite ici plutôt que dans un catalogue.
+
+  Le `Info.plist` reste la version française : c'est la langue de développement du projet, et
+  ce qui s'affiche quand le téléphone ne parle aucune des cinq.
+*/
+
+"NSCameraUsageDescription" = "Micabo usa la cámara para escanear tus páginas de curso.";
+"NSPhotoLibraryUsageDescription" = "Micabo accede a tus fotos para importar un curso o un esquema.";
+"NSMicrophoneUsageDescription" = "Micabo usa el micrófono para que respondas en voz alta a las preguntas de un examen de prueba.";
+"NSSpeechRecognitionUsageDescription" = "Micabo transcribe lo que dices durante un examen de prueba para corregirlo.";

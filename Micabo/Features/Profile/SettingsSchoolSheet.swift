@@ -87,11 +87,11 @@ struct SettingsSchoolSheet: View {
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
             .micaboScreenBackground()
-            .navigationTitle("École")
+            .navigationTitle(L10n.t("ios.school", locale: .resolved()))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("OK", action: save)
+                    Button(L10n.t("ios.ok", locale: .resolved()), action: save)
                         .font(MicaboFont.ui(15, weight: .semibold))
                 }
             }

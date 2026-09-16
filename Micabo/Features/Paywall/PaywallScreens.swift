@@ -217,7 +217,7 @@ private struct PaywallComparisonTable: View {
         }
         .padding(.vertical, 13)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(feature) : réservé à Pro")
+        .accessibilityLabel(L10n.t("ios.featureLockedAria", locale: .resolved(), vars: ["feature": feature]))
     }
 }
 

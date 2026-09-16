@@ -55,12 +55,12 @@ final class DiscountOfferTests: XCTestCase {
     /// « 1 heure restantes » se lirait comme une faute : la phrase commence donc par
     /// « il reste ».
     func testVoiceOverReadsAFrenchSentence() {
-        XCTAssertEqual(DiscountOffer.countdownLabel(0), "offre terminée")
-        XCTAssertEqual(DiscountOffer.countdownLabel(30), "il reste moins d'une minute")
-        XCTAssertEqual(DiscountOffer.countdownLabel(90), "il reste 1 minute")
-        XCTAssertEqual(DiscountOffer.countdownLabel(3600), "il reste 1 heure")
-        XCTAssertEqual(DiscountOffer.countdownLabel(3720), "il reste 1 heure et 2 minutes")
-        XCTAssertEqual(DiscountOffer.countdownLabel(86_400), "il reste 24 heures")
+        XCTAssertEqual(DiscountOffer.countdownLabel(0, locale: .fr), "offre terminée")
+        XCTAssertEqual(DiscountOffer.countdownLabel(30, locale: .fr), "il reste moins d'une minute")
+        XCTAssertEqual(DiscountOffer.countdownLabel(90, locale: .fr), "il reste 1 minute")
+        XCTAssertEqual(DiscountOffer.countdownLabel(3600, locale: .fr), "il reste 1 heure")
+        XCTAssertEqual(DiscountOffer.countdownLabel(3720, locale: .fr), "il reste 1 heure et 2 minutes")
+        XCTAssertEqual(DiscountOffer.countdownLabel(86_400, locale: .fr), "il reste 24 heures")
     }
 
     // MARK: - Quand l'offre se montre

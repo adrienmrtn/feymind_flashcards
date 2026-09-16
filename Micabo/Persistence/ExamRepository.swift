@@ -293,7 +293,7 @@ enum ExamError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .nothingToPlan:
-            "Aucune carte à replanifier. Choisis au moins un cours qui a des cartes."
+            L10n.t("ios.exam.nothingToPlan", locale: .resolved())
         }
     }
 }

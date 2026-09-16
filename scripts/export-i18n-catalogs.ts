@@ -9,6 +9,7 @@ import {
   UNDELIVERABLE_TLDS,
 } from "../web/lib/auth/email.ts";
 import { de } from "../web/lib/i18n/catalogs/de.ts";
+import { en } from "../web/lib/i18n/catalogs/en.ts";
 import { es } from "../web/lib/i18n/catalogs/es.ts";
 import { fr } from "../web/lib/i18n/catalogs/fr.ts";
 import { tr } from "../web/lib/i18n/catalogs/tr.ts";
@@ -31,7 +32,7 @@ function swiftString(value: string) {
 }
 
 function emitSwift(catalogs: Record<string, Record<string, string>>) {
-  const locales = ["fr", "de", "es", "tr"] as const;
+  const locales = ["en", "fr", "de", "es", "tr"] as const;
   const blocks = locales.map((locale) => {
     const entries = Object.entries(catalogs[locale])
       .map(([key, value]) => `        ${swiftString(key)}: ${swiftString(value)},`)
@@ -40,7 +41,8 @@ function emitSwift(catalogs: Record<string, Record<string, string>>) {
   });
 
   return `// Généré depuis web/lib/i18n/catalogs. Ne pas éditer à la main.
-// Relancer : node --experimental-strip-types scripts/export-i18n-catalogs.ts
+// Relancer : node --experimental-strip-types --import ./scripts/ts-extensions.mjs \\
+//            scripts/export-i18n-catalogs.ts
 
 enum SharedI18nCatalogs {
 ${blocks.join("\n\n")}
@@ -48,6 +50,7 @@ ${blocks.join("\n\n")}
     static func table(for locale: String) -> [String: String] {
         switch locale {
         case "de": de
+        case "en": en
         case "es": es
         case "tr": tr
         default: fr
@@ -73,7 +76,8 @@ function emitEmailSwift() {
     .join("\n");
 
   return `// Généré depuis web/lib/auth/email.ts. Ne pas éditer à la main.
-// Relancer : node --experimental-strip-types scripts/export-i18n-catalogs.ts
+// Relancer : node --experimental-strip-types --import ./scripts/ts-extensions.mjs \\
+//            scripts/export-i18n-catalogs.ts
 
 enum EmailReference {
     static let knownDomains: [String] = [
@@ -98,6 +102,7 @@ ${pairs}
 }
 
 const catalogs = {
+  en: flatten(en as unknown as Record<string, unknown>),
   fr: flatten(fr as unknown as Record<string, unknown>),
   de: flatten(de as unknown as Record<string, unknown>),
   es: flatten(es as unknown as Record<string, unknown>),

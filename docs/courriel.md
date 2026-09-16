@@ -66,10 +66,15 @@ extensions ratées et les domaines réservés vivent dans le TypeScript et sont 
 Swift par `scripts/export-i18n-catalogs.ts` :
 
 ```bash
-node --experimental-strip-types scripts/export-i18n-catalogs.ts
+node --experimental-strip-types --import ./scripts/ts-extensions.mjs \
+  scripts/export-i18n-catalogs.ts
 # ou, si le node local est plus ancien que la v22.15 :
 ./web/node_modules/.bin/tsx scripts/export-i18n-catalogs.ts
 ```
+
+Le crochet `ts-extensions.mjs` n'est pas décoratif : les catalogues du site s'importent
+entre eux à la mode des bundlers — `./app-fr` et non `./app-fr.ts` — et Node exige
+l'extension. Sans lui, la commande échoue avant d'écrire une ligne.
 
 C'est délibéré. La dérive entre les deux plateformes est précisément ce qui a coûté le
 premier rebond : le site et l'iPhone tenaient chacun leur idée de l'adresse des relecteurs

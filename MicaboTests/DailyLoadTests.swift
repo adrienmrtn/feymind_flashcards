@@ -36,10 +36,13 @@ final class DailyLoadTests: XCTestCase {
     }
 
     func testPaceChangesAlongTheRange() {
-        XCTAssertEqual(DailyLoad.pace(forDailyMinutes: 5).label, "le rythme tranquille")
-        XCTAssertEqual(DailyLoad.pace(forDailyMinutes: 20).label, "le rythme de croisière")
-        XCTAssertEqual(DailyLoad.pace(forDailyMinutes: 45).label, "le rythme soutenu")
-        XCTAssertEqual(DailyLoad.pace(forDailyMinutes: 120).label, "le rythme intensif")
+        XCTAssertEqual(DailyLoad.pace(forDailyMinutes: 5).label(locale: .fr), "le rythme tranquille")
+        XCTAssertEqual(DailyLoad.pace(forDailyMinutes: 20).label(locale: .fr), "le rythme de croisière")
+        XCTAssertEqual(DailyLoad.pace(forDailyMinutes: 45).label(locale: .fr), "le rythme soutenu")
+        XCTAssertEqual(DailyLoad.pace(forDailyMinutes: 120).label(locale: .fr), "le rythme intensif")
+
+        XCTAssertEqual(DailyLoad.pace(forDailyMinutes: 5).label(locale: .en), "a gentle pace")
+        XCTAssertEqual(DailyLoad.pace(forDailyMinutes: 120).label(locale: .en), "an intense pace")
     }
 
     // MARK: - Plafond de cartes neuves

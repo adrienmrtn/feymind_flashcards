@@ -89,8 +89,8 @@ struct FriendProfileView: View {
     private var countLabel: String {
         if isLoading { return i18n?.t("app.friends.loadingCourses") ?? "On regarde ses cours…" }
         if courses.isEmpty { return i18n?.t("ios.noSharedCourses") ?? "Aucun cours partagé" }
-        return i18n?.t("ios.sharedCount", ["courses": MicaboCopy.courses(courses.count)])
-            ?? (MicaboCopy.courses(courses.count) + " partagés")
+        let locale = i18n?.locale ?? .resolved()
+        return L10n.t("ios.sharedCount", locale: locale, vars: ["courses": MicaboCopy.courses(courses.count)])
     }
 
     private var list: some View {

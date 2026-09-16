@@ -69,15 +69,15 @@ struct ExamProjectionView: View {
 
     private var daysLabel: String {
         switch projection.daysRemaining {
-        case ..<0: "examen passé"
-        case 0: "aujourd'hui"
-        case 1: "demain"
-        default: "\(projection.daysRemaining) jours"
+        case ..<0: L10n.t("ios.examPast", locale: .resolved())
+        case 0: L10n.t("ios.examToday", locale: .resolved())
+        case 1: L10n.t("ios.examTomorrow", locale: .resolved())
+        default: L10n.t("ios.examDaysLeft", locale: .resolved(), vars: ["n": "\(projection.daysRemaining)"])
         }
     }
 
     private var busiestLabel: String {
-        guard let busiest = projection.busiest else { return "aucun" }
+        guard let busiest = projection.busiest else { return L10n.t("ios.nothing", locale: .resolved()) }
         let date = plan.date(atOffset: busiest.offset)
         return "\(MicaboCalendar.shortDayLabel(date)), \(busiest.count)"
     }
@@ -91,9 +91,9 @@ struct ExamProjectionView: View {
                 ExamLoadChart(plan: plan)
 
                 HStack {
-                    Text("aujourd'hui")
+                    Text(L10n.t("ios.examToday", locale: .resolved()))
                     Spacer(minLength: MicaboSpacing.xs)
-                    Text("veille de l'examen")
+                    Text(L10n.t("ios.examEve", locale: .resolved()))
                 }
                 .font(MicaboFont.ui(10, weight: .medium))
                 .foregroundStyle(MicaboColor.inkTertiary)

@@ -40,7 +40,8 @@ struct GeneratedCourse: Codable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        title = (try? container.decode(String.self, forKey: .title)) ?? "Cours sans titre"
+        title = (try? container.decode(String.self, forKey: .title))
+            ?? L10n.t("ios.untitledCourse", locale: .resolved())
         subject = try? container.decodeIfPresent(String.self, forKey: .subject)
         emoji = try? container.decodeIfPresent(String.self, forKey: .emoji)
         summary = (try? container.decode(String.self, forKey: .summary)) ?? ""

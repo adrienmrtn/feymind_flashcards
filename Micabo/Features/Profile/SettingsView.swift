@@ -634,7 +634,7 @@ struct SettingsView: View {
                     emoji: "☁️",
                     background: MicaboColor.tilePastels[3],
                     title: i18n?.t("ios.debug.supabaseURL") ?? "URL Supabase",
-                    placeholder: "https://votre-projet.supabase.co",
+                    placeholder: "https://your-project.supabase.co",
                     text: $supabaseURL
                 )
 

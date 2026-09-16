@@ -93,9 +93,10 @@ struct DiscountFlowView: View {
             Haptics.success()
             onSubscribed()
         case .unavailable:
-            failure = PaywallPurchases.isReady
-                ? "L'achat n'a pas abouti. Réessaie dans un instant."
-                : "L'abonnement n'est pas encore ouvert."
+            failure = L10n.t(
+                PaywallPurchases.isReady ? "ios.paywallBuyFail" : "ios.paywallNotOpen",
+                locale: .resolved()
+            )
         case .cancelled:
             break
         }
@@ -111,7 +112,7 @@ struct DiscountFlowView: View {
         isPurchasing = false
 
         guard outcome == .purchased else {
-            failure = "Aucun abonnement à restaurer sur ce compte."
+            failure = L10n.t("ios.paywallNoRestore", locale: .resolved())
             return
         }
         pro?.unlock()
@@ -202,7 +203,9 @@ private struct DiscountGiftStage: View {
                 }
                 .animation(OnboardingMotion.tap, value: taps)
 
-                Text(remainingTaps == 0 ? "Ça s'ouvre…" : "Encore \(remainingTaps)")
+                Text(remainingTaps == 0
+                    ? L10n.t("ios.giftOpening", locale: .resolved())
+                    : L10n.t("ios.giftTapsLeft", locale: .resolved(), vars: ["n": "\(remainingTaps)"]))
                     .font(MicaboFont.ui(14, weight: .semibold))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .contentTransition(.numericText())
@@ -397,7 +400,7 @@ private struct DiscountPaywallStage: View {
 
             // Le rythme du prélèvement et la sortie : le prix est déjà écrit au-dessus, il
             // n'a pas besoin d'être répété pour être tenu.
-            Text("Facturé une fois par an, résiliable sur l'App Store.")
+            Text(L10n.t("ios.billedYearlyApple", locale: .resolved()))
                 .font(MicaboFont.ui(11.5, weight: .regular))
                 .foregroundStyle(MicaboColor.inkTertiary)
                 .multilineTextAlignment(.center)
@@ -421,11 +424,17 @@ private struct DiscountPaywallStage: View {
 
     /// Le pourcentage porte la couleur, la promesse porte l'encre : ce qu'on retient d'un
     /// coup d'œil est le nombre, et le colorer entièrement le noierait dans une ligne bleue.
+    ///
+    /// La coupure ne peut pas être écrite en dur : le turc pose le signe **avant** le
+    /// nombre (« %30 »), et un découpage qui supposait « 30 % » d'abord aurait coloré la
+    /// mauvaise moitié. C'est donc le gabarit traduit qui dit où est le taux, et le reste
+    /// de la phrase tombe dans l'encre quelle que soit sa place.
     private var headline: some View {
-        (
-            Text("\(DiscountOffer.savingsPercent)\u{00a0}%")
+        let split = DiscountHeadline.split(percent: DiscountOffer.savingsPercent)
+        return (
+            Text(split.rate)
                 .foregroundStyle(MicaboColor.offerSky)
-                + Text(" de moins\nRévise plus vite avec Pro")
+                + Text(split.rest + "\n" + L10n.t("app.paywall.discountSubtitle", locale: .resolved()))
                 .foregroundStyle(MicaboColor.ink)
         )
         .font(MicaboFont.ui(29, weight: .bold))
@@ -780,5 +789,43 @@ struct DiscountBadge: View {
 
     private func refresh() {
         left = DiscountOffer.windowRemaining(startedAt: startedAt)
+    }
+}
+
+/// Le titre de la remise, coupé entre le taux et ce qui le suit.
+///
+/// Le gabarit du catalogue porte `{pct}`, et le signe `%` se range de part et d'autre
+/// selon la langue. On rend donc la phrase avec un jeton qu'aucune traduction n'emploie :
+/// ce qui le précède et ce qui le suit disent où est le taux, et où commence la promesse.
+enum DiscountHeadline {
+    private static let marker = "\u{fffc}"
+    private static let key = "app.paywall.discountTitle"
+
+    static func split(percent: Int, locale: UiLocale = .resolved()) -> (rate: String, rest: String) {
+        let probed = L10n.t(key, locale: locale, vars: ["pct": marker])
+        let parts = probed.components(separatedBy: marker)
+
+        // Pas de jeton : le gabarit n'a pas de taux à isoler, tout part dans l'encre.
+        guard parts.count == 2 else {
+            return ("", L10n.t(key, locale: locale, vars: ["pct": "\(percent)"]))
+        }
+
+        var before = parts[0]
+        var after = parts[1]
+
+        // « 30 % » : le signe suit le nombre, séparé ou non par une espace.
+        let trailing = after.drop { $0 == " " || $0 == "\u{00a0}" }
+        if trailing.first == "%" {
+            after = String(trailing.dropFirst())
+            return ("\(percent)\u{00a0}%", before + after)
+        }
+
+        // « %30 » : le turc pose le signe devant, et sans espace.
+        if before.hasSuffix("%") {
+            before = String(before.dropLast())
+            return ("%\(percent)", before + after)
+        }
+
+        return ("\(percent)", before + after)
     }
 }

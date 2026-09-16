@@ -16,8 +16,8 @@ struct SupabaseDatabase {
 
         var errorDescription: String? {
             switch self {
-            case .notConfigured: "L'accès au cloud n'est pas configuré."
-            case .notSignedIn: "Aucun compte connecté."
+            case .notConfigured: L10n.t("ios.cloud.notConfigured", locale: .resolved())
+            case .notSignedIn: L10n.t("ios.cloud.notSignedIn", locale: .resolved())
             case .network(let detail): L10n.t("ios.ai.network", locale: .resolved(), vars: ["detail": detail])
             case .server(_, let message, _): message
             }
@@ -123,7 +123,10 @@ struct SupabaseDatabase {
         do {
             return try decoder.decode([T].self, from: data)
         } catch {
-            throw Failure.server(status: 200, message: "Réponse illisible pour \(table).")
+            throw Failure.server(
+                status: 200,
+                message: L10n.t("ios.cloud.unreadableFor", locale: .resolved(), vars: ["what": table])
+            )
         }
     }
 
@@ -158,7 +161,10 @@ struct SupabaseDatabase {
             do {
                 batch = try decoder.decode([T].self, from: data)
             } catch {
-                throw Failure.server(status: 200, message: "Réponse illisible pour \(table).")
+                throw Failure.server(
+                    status: 200,
+                    message: L10n.t("ios.cloud.unreadableFor", locale: .resolved(), vars: ["what": table])
+                )
             }
 
             collected.append(contentsOf: batch)
@@ -190,7 +196,10 @@ struct SupabaseDatabase {
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
-            throw Failure.server(status: 200, message: "Réponse illisible pour \(name).")
+            throw Failure.server(
+                status: 200,
+                message: L10n.t("ios.cloud.unreadableFor", locale: .resolved(), vars: ["what": name])
+            )
         }
     }
 
@@ -246,7 +255,7 @@ struct SupabaseDatabase {
         }
 
         guard let http = response as? HTTPURLResponse else {
-            throw Failure.server(status: 0, message: "Réponse inattendue.")
+            throw Failure.server(status: 0, message: L10n.t("ios.cloud.unexpected", locale: .resolved()))
         }
         guard (200..<300).contains(http.statusCode) else {
             let payload = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]

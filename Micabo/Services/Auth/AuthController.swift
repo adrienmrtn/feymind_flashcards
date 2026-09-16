@@ -273,7 +273,7 @@ final class AuthController {
         do {
             try await database.rpc("delete_own_account")
         } catch {
-            message = .error("Le compte n'a pas pu être supprimé.")
+            message = .error(L10n.t("app.settings.delete.error", locale: .resolved()))
             return
         }
         // Pas de `logout` : l'utilisateur vient d'être supprimé, et GoTrue répond alors
