@@ -58,6 +58,17 @@ struct MicaboApp: App {
                 .environment(\.locale, uiLocale.locale.foundation)
                 .preferredColorScheme(appearance.appearance.colorScheme)
                 .task {
+                    #if DEBUG
+                    // Un vrai cours en PDF, posé au premier lancement d'une construction de
+                    // développement : la fiche ne se travaille pas sans cours à ficher, et
+                    // retrouver un document dans le sélecteur de fichiers à chaque
+                    // réinstallation du simulateur coûtait plus que le cycle qu'on voulait
+                    // mesurer. Voir `DebugSampleCourse`.
+                    //
+                    // Dans sa propre tâche : l'extraction du PDF n'a aucune raison de
+                    // retarder la restauration de la session, qui suit juste en dessous.
+                    Task { await DebugSampleCourse.seedIfNeeded(in: container.mainContext) }
+                    #endif
                     await auth.restore()
                     // L'identité RevenueCat **avant** de lire le droit, et avant tout achat :
                     // `app_user_id` doit être l'`auth.users.id`, sinon le webhook refuse.
