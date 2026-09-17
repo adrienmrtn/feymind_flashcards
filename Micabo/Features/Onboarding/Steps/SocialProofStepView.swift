@@ -105,7 +105,7 @@ struct SocialProofStepView: View {
     @MainActor
     private func askForRating() async {
         guard !OnboardingPreferences.ratingAsked else { return }
-        try? await Task.sleep(for: .seconds(2.5))
+        try? await Task.sleep(for: .seconds(1))
         guard !Task.isCancelled else { return }
         OnboardingPreferences.ratingAsked = true
         requestReview()
