@@ -1306,7 +1306,14 @@ video {
   line-height: 1.25;
   letter-spacing: -0.2px;
   margin-top: calc(38px * var(--sheet-scale));
-  color: var(--sheet-tint);
+  /* **La teinte, ramenée vers l'encre du papier courant.**
+
+     Les teintes de cours sont choisies pour *porter du texte blanc* : elles sont donc
+     sombres, et deux d'entre elles — le bleu nuit, l'indigo — disparaîtraient purement et
+     simplement sur le papier de la nuit. Mélanger la teinte à `--color-ink`, qui bascule
+     avec le thème, la fonce sur le papier clair et l'éclaircit sur le papier sombre : une
+     seule règle, juste sur les trois apparences, sans rien calculer en JavaScript. */
+  color: color-mix(in oklab, var(--sheet-tint) 70%, var(--color-ink) 30%);
 }
 
 /* La capsule teintée d'un titre de partie : le même signe que celui dessiné par

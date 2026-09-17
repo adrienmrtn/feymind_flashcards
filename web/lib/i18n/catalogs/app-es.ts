@@ -1171,6 +1171,11 @@ export const appEs = {
     saving: "Guardando…",
     saved: "Guardado",
     aria: "Tu ficha, editable",
+    outline: "Índice",
+    backToTop: "Volver arriba",
+    chapter: "Cap. {number}",
+    collapse: "Contraer este capítulo",
+    expand: "Desplegar este capítulo",
   },
   formula: {
     title: "La fórmula",

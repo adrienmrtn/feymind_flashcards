@@ -32,10 +32,13 @@ export function SheetReader({
   courseId,
   blocks,
   lockedCount,
+  tint,
 }: {
   courseId: string;
   blocks: SheetBlock[];
   lockedCount: number;
+  /** La teinte du cours, portée jusqu'aux titres de partie. */
+  tint?: string | null;
 }) {
   const { t } = useI18n();
   const container = useRef<HTMLDivElement>(null);
@@ -165,6 +168,7 @@ export function SheetReader({
           courseId={courseId}
           blocks={blocks}
           lockedCount={lockedCount}
+          tint={tint}
           tool={
             <button
               type="button"

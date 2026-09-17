@@ -1170,6 +1170,11 @@ export const appFr = {
     saving: "Enregistrement…",
     saved: "Enregistré",
     aria: "Ta fiche, modifiable",
+    outline: "Sommaire",
+    backToTop: "Revenir en haut",
+    chapter: "Chap. {number}",
+    collapse: "Replier ce chapitre",
+    expand: "Déplier ce chapitre",
   },
   formula: {
     title: "La formule",
