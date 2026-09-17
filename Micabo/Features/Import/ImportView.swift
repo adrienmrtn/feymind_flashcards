@@ -1,3 +1,4 @@
+import AVFoundation
 import PhotosUI
 import SwiftData
 import SwiftUI
@@ -28,6 +29,7 @@ struct ImportView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.aiService) private var aiService
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @State private var title = ""
@@ -53,6 +55,10 @@ struct ImportView: View {
     @State private var showFileImporter = false
     @State private var showPhotoPicker = false
     @State private var showScanner = false
+    /// Ce que le système répond pour l'appareil photo. Relu à l'ouverture de l'écran et au
+    /// retour d'arrière-plan : quelqu'un qui rouvre la caméra dans les Réglages de lui-même
+    /// retrouve la tuile « Scanner » sans relancer l'app, et personne ne l'y a envoyé.
+    @State private var cameraStatus = CameraAccess.status
     @State private var photoItems: [PhotosPickerItem] = []
 
     // Vidéo YouTube. Le lien, son aperçu, puis sa transcription : les trois sont gardés le
@@ -170,6 +176,11 @@ struct ImportView: View {
                     showScanner = false
                 }
                 .ignoresSafeArea()
+            }
+            .onAppear { cameraStatus = CameraAccess.status }
+            .onChange(of: scenePhase) { _, phase in
+                guard phase == .active else { return }
+                cameraStatus = CameraAccess.status
             }
             .overlay {
                 if isReading {
@@ -393,7 +404,7 @@ struct ImportView: View {
             }
         } else {
             VStack(spacing: MicaboSpacing.sm) {
-                if VNDocumentCameraViewController.isSupported {
+                if canScan {
                     dropZone(
                         icon: "camera.viewfinder",
                         tint: kind.swatchTint,
@@ -401,7 +412,7 @@ struct ImportView: View {
                         title: L10n.t("ios.scanPages", locale: .resolved()),
                         subtitle: L10n.t("ios.scanHelp", locale: .resolved(), vars: ["n": "\(OnDeviceOCR.pageLimit)"])
                     ) {
-                        showScanner = true
+                        startScan()
                     }
 
                     Button {
@@ -428,8 +439,43 @@ struct ImportView: View {
                         photoItems = []
                         showPhotoPicker = true
                     }
+
+                    if CameraAccess.isRefused(cameraStatus), VNDocumentCameraViewController.isSupported {
+                        // Une ligne, pas une insistance : elle dit pourquoi le scanner n'est
+                        // pas là et que la photothèque fait le même travail. Aucun bouton ne
+                        // mène aux Réglages, et la question n'est pas reposée.
+                        Text(L10n.t("ios.scanCameraOff", locale: .resolved()))
+                            .font(MicaboFont.caption)
+                            .foregroundStyle(MicaboColor.inkTertiary)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, MicaboSpacing.sm)
+                    }
                 }
             }
+        }
+    }
+
+    /// La tuile « Scanner des pages » n'existe que si l'iPhone sait scanner **et** que la
+    /// caméra reste ouvrable. Refusée ou verrouillée, elle laisse la place à la photothèque :
+    /// c'est ce qui évite d'ouvrir un scanner qui ne verrait rien et afficherait sa propre
+    /// porte vers les Réglages.
+    private var canScan: Bool {
+        VNDocumentCameraViewController.isSupported && CameraAccess.allowsScanner(cameraStatus)
+    }
+
+    /// L'appui sur « Scanner des pages » demande la caméra avant d'ouvrir quoi que ce soit.
+    ///
+    /// Accordée, le scanner s'ouvre. Refusée, il ne s'ouvre pas — et comme l'état vient de
+    /// changer, l'écran se redessine sur la photothèque avec sa ligne d'explication. Le refus
+    /// est donc suivi d'effet à l'écran, sans que personne soit renvoyé dans les Réglages.
+    @MainActor
+    private func startScan() {
+        Task {
+            let granted = await CameraAccess.request()
+            cameraStatus = CameraAccess.status
+            guard granted else { return }
+            showScanner = true
         }
     }
 

@@ -1068,6 +1068,20 @@ propose comme sortie quand un scan n'a rien rendu d'exploitable.
 
 Les anciens `.doc` binaires ne sont pas lus : exporte-les en `.docx` depuis Word.
 
+**Un refus d'appareil photo est un refus.** La tuile « Scanner des pages » ne s'affiche que
+si l'iPhone sait scanner *et* que la caméra n'a pas été refusée ou verrouillée par le
+contrôle parental (`CameraAccess`). Le premier appui pose la question système, celle qui
+porte `NSCameraUsageDescription` ; un « Refuser » fait disparaître la tuile au profit de la
+photothèque, avec une ligne qui dit pourquoi et rappelle que les photos se lisent pareil.
+Le scanner de VisionKit n'est **jamais** présenté sans autorisation : présenté à vide, il
+affiche sa propre boîte « Camera Unavailable » et son bouton **Réglages**, c'est-à-dire le
+renvoi vers les Réglages après un refus que la règle 5.1.1(iv) de l'App Store interdit — et
+ce bouton appartient au contrôleur d'Apple, il ne s'enlève pas. Rien dans l'app n'ouvre les
+Réglages, et la question n'est jamais posée deux fois. L'état se relit au retour
+d'arrière-plan, de sorte que quelqu'un qui rouvre la caméra de lui-même retrouve la tuile
+sans relancer l'app. `MicaboTests/CameraAccessTests.swift` verrouille la règle, dans les
+cinq langues.
+
 ## Importer une vidéo YouTube
 
 On colle un lien, on voit la vidéo, on confirme, et on obtient une fiche. Le parcours est
@@ -2029,6 +2043,12 @@ compose au lieu de s'écrire, parce que le turc pose le signe du pourcentage dev
 Les tests tournent **en français** (`language = "fr"` dans le schéma) : leurs attentes sont
 écrites en français, et un simulateur en anglais ferait rendre « Untitled course » là où le
 test attend « Cours sans titre ».
+
+`MicaboTests/CameraAccessTests.swift` verrouille la seule règle de l'appareil photo : une
+caméra refusée, ou verrouillée par le contrôle parental, n'ouvre plus le scanner — c'est ce
+qui empêche VisionKit d'afficher sa boîte « Camera Unavailable » et sa porte vers les
+Réglages, que l'App Store a refusée au titre de la règle 5.1.1(iv). Le test vérifie aussi
+que la ligne de repli n'envoie personne dans les Réglages, dans les cinq langues.
 
 `MicaboTests/AuthAndSyncTests.swift` verrouille les comptes et la synchro sur des charges
 utiles GoTrue réelles : le décodage d'une session, l'échéance calculée à la réception, le nom
