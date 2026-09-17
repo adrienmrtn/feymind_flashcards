@@ -715,6 +715,24 @@ struct SettingsView: View {
                 action: { DiscountOffer.forget() }
             )
         )
+
+        // Le cours d'essai arrive au premier lancement. Ce bouton le remet : après l'avoir
+        // supprimé, ou pour en avoir deux et comparer deux fiches du même document écrites
+        // avec deux réglages de longueur.
+        rows.append(
+            MicaboRow(
+                tile: MicaboTile(glyph: .emoji("🌿"), background: MicaboColor.tilePastels[0]),
+                title: i18n.t("ios.debug.sampleCourse"),
+                subtitle: i18n.t("ios.debug.sampleCourseHelp"),
+                accessory: .chevron,
+                action: {
+                    Task { @MainActor in
+                        try? await DebugSampleCourse.importNow(in: modelContext)
+                        Haptics.success()
+                    }
+                }
+            )
+        )
         #endif
 
         rows.append(
