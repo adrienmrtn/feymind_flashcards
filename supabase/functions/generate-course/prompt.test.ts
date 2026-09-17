@@ -6,16 +6,62 @@ import {
   COURSE_SYSTEM_PROMPT,
   instructionsBrief,
   lengthBrief,
+  listRetryBrief,
+  listTarget,
   outputTokenLimit,
   PROMPT_VERSION,
   readingBrief,
+  readsLikeACourse,
   retryBrief,
   retryTokenLimit,
   VISION_SYSTEM_PROMPT,
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v2.10.0");
+  assertEquals(PROMPT_VERSION, "course-v3.0.0");
+});
+
+Deno.test("la liste est la forme par défaut, et le prompt le dit en toutes lettres", () => {
+  // C'est LA consigne qui décidait de tout, et elle disait l'inverse : « les paragraphes
+  // restent la forme la plus fréquente : une fiche qui n'est qu'une suite de listes
+  // n'explique rien ». Les fiches sortaient donc en prose, et une fiche en prose est le
+  // cours qu'on a déjà.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("LA LISTE EST LA FORME PAR DÉFAUT"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("les paragraphes restent la forme la plus fréquente"), false);
+  // Deux listes de suite étaient interdites, ce qui plafonnait mécaniquement leur nombre.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Jamais deux listes de suite"), false);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("DEUX LISTES PEUVENT SE SUIVRE"), true);
+  // Trois membres exigés, c'était écarter la moitié des énumérations d'un cours.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("DEUX MEMBRES SUFFISENT"), true);
+  // Fermer chaque partie sur une synthèse rédigée ramenait un pavé par chapitre.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Ferme sur un paragraphe qui tient le chapitre"), false);
+});
+
+Deno.test("la consigne de longueur donne un COMPTE de listes, pas une préférence", () => {
+  // La leçon est celle de `marks.ts` : un modèle à qui l'on donne un nombre le tient ; le
+  // même, à qui l'on dit « privilégie les listes », en pose une et passe au suivant.
+  const brief = lengthBrief("standard", false, 30);
+  assertEquals(brief.includes("AU MOINS 10 sont des listes"), true);
+  assertEquals(listTarget(30), 10);
+  // Jamais zéro, même sur la fiche la plus courte.
+  assertEquals(listTarget(1), 2);
+
+  // Sans volume envoyé par l'application, la consigne reste une proportion.
+  assertEquals(lengthBrief("standard", false).includes("UN BLOC SUR TROIS"), true);
+});
+
+Deno.test("une fiche sans une seule liste est un cours recopié", () => {
+  const prose = Array.from({ length: 10 }, () => ({ type: "paragraph" }));
+  assertEquals(readsLikeACourse(prose), true);
+
+  // Une seule liste suffit à sortir du cas dégénéré : le reste est l'affaire de la consigne,
+  // pas d'une seconde génération.
+  assertEquals(readsLikeACourse([...prose.slice(1), { type: "list" }]), false);
+
+  // Une fiche courte n'est pas jugée : trois blocs peuvent légitimement n'énumérer rien.
+  assertEquals(readsLikeACourse([{ type: "paragraph" }, { type: "paragraph" }]), false);
+
+  assertEquals(listRetryBrief(12).includes("4 blocs"), true);
 });
 
 Deno.test("le prompt borne la longueur d'un paragraphe", () => {
@@ -23,8 +69,9 @@ Deno.test("le prompt borne la longueur d'un paragraphe", () => {
   // phrases de plus. La seconde ne lui coûte rien, alors il la prend — d'où des paragraphes
   // de six cents caractères, treize lignes d'iPhone d'un seul tenant, qu'on ne relit pas.
   assertEquals(COURSE_SYSTEM_PROMPT.includes("EN BLOCS, JAMAIS EN PHRASES"), true);
-  assertEquals(COURSE_SYSTEM_PROMPT.includes("quatre cents caractères au plus"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("trois cents caractères"), true);
   assertEquals(COURSE_SYSTEM_PROMPT.includes("Deux à cinq phrases"), false);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Deux à quatre phrases"), false);
 });
 
 Deno.test("le chapeau est commandé en une phrase de vingt mots", () => {
@@ -199,10 +246,14 @@ Deno.test("la consigne dit QUAND une liste vaut mieux qu'un paragraphe", () => {
   for (const cas of ["une procédure", "une classification", "les conditions qui doivent", "les critères"]) {
     assertEquals(COURSE_SYSTEM_PROMPT.includes(cas), true, cas);
   }
-  assertEquals(COURSE_SYSTEM_PROMPT.includes("Trois membres ou plus, c'est une liste"), true);
+  // Le seuil descend de trois membres à deux : à trois, la moitié des énumérations d'un
+  // cours - « deux conditions », « deux effets » - restaient coincées en prose.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Trois membres ou plus, c'est une liste"), false);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("DEUX MEMBRES SUFFISENT"), true);
 
-  // Les deux garde-fous qui valaient la peine restent, l'absolu qui étouffait tout part.
-  assertEquals(COURSE_SYSTEM_PROMPT.includes("Jamais deux listes de suite"), true);
+  // Le seul garde-fou qui valait la peine reste ; celui qui plafonnait le nombre de listes
+  // part, parce qu'une fiche est faite de listes qui se suivent.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Jamais deux listes de suite"), false);
   assertEquals(COURSE_SYSTEM_PROMPT.includes("découper une idée unique"), true);
   assertEquals(COURSE_SYSTEM_PROMPT.includes("MAJORITAIRES"), false);
   assertEquals(COURSE_SYSTEM_PROMPT.includes("largement plus nombreux que les listes"), false);

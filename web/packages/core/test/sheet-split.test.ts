@@ -139,7 +139,7 @@ describe("le plafond du paragraphe, des deux côtés", () => {
   );
 
   it("vaut la même chose sur l'iPhone", () => {
-    expect(SHEET_LIMITS.paragraphChars).toBe(500);
+    expect(SHEET_LIMITS.paragraphChars).toBe(320);
     expect(swift).toContain(`static let paragraphChars = ${SHEET_LIMITS.paragraphChars}`);
   });
 

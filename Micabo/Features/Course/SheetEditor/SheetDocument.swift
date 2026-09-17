@@ -67,8 +67,15 @@ enum SheetDocument {
                 previous = .paragraph
             case .list(let ordered, let items):
                 let kind: SheetParagraphKind = ordered ? .number : .bullet
-                for item in items {
+                for (offset, item) in items.enumerated() {
+                    let start = result.length + (previous == nil ? 0 : 1)
                     append(paragraph(item, kind: kind), after: previous, to: result)
+                    // Le premier point se colle à la phrase qui amène la liste ; les suivants
+                    // prennent l'air que `listItemSpacing` leur donne. Les deux valeurs
+                    // étaient confondues, et des puces serrées se lisent comme un pavé.
+                    if offset == 0 {
+                        setSpaceBefore(SheetTypography.spaceBeforeList, from: start, in: result)
+                    }
                     previous = kind
                 }
             case .formula(let latex, let caption):
@@ -87,6 +94,22 @@ enum SheetDocument {
     /// tant qu'un seul `UITextView` portait toute la fiche, sous un chapeau : ça l'est devenu
     /// quand chaque chapitre a pris le sien, chacun ouvrant sur son titre juste sous
     /// l'en-tête de son accordéon. C'est la règle `.sheet-doc > :first-child` du site.
+    /// Change l'air au-dessus du paragraphe qui commence à `location`, jusqu'à la fin de ce
+    /// qui a été composé.
+    private static func setSpaceBefore(
+        _ value: CGFloat,
+        from location: Int,
+        in result: NSMutableAttributedString
+    ) {
+        guard location >= 0, location < result.length else { return }
+        let range = NSRange(location: location, length: result.length - location)
+        guard let style = result.attribute(.paragraphStyle, at: location, effectiveRange: nil) as? NSParagraphStyle,
+              let copy = style.mutableCopy() as? NSMutableParagraphStyle
+        else { return }
+        copy.paragraphSpacingBefore = value
+        result.addAttribute(.paragraphStyle, value: copy, range: range)
+    }
+
     private static func removeLeadingSpace(from result: NSMutableAttributedString) {
         guard result.length > 0 else { return }
         let range = (result.string as NSString).paragraphRange(for: NSRange(location: 0, length: 0))
@@ -402,7 +425,7 @@ enum SheetParagraphKind: String, CaseIterable {
         switch self {
         case .heading1: SheetTypography.spaceBeforeLargeHeading
         case .heading2: SheetTypography.spaceBeforeSmallHeading
-        case .bullet, .number: SheetTypography.spaceBeforeList
+        case .bullet, .number: SheetTypography.listItemSpacing
         default: SheetTypography.blockSpacing
         }
     }

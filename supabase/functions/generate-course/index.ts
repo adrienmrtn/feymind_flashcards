@@ -44,10 +44,12 @@ import {
   COURSE_SYSTEM_PROMPT,
   instructionsBrief,
   lengthBrief,
+  listRetryBrief,
   MAX_INSTRUCTIONS,
   outputTokenLimit,
   PROMPT_VERSION,
   readingBrief,
+  readsLikeACourse,
   retryBrief,
   retryTokenLimit,
   VISION_SYSTEM_PROMPT,
@@ -292,7 +294,8 @@ Deno.serve((request: Request) =>
       );
 
       // Une fiche coupée ou illisible : on redemande plus court plutôt que d'abandonner.
-      if (!parsed || normalizeSheet(parsed.sheet ?? parsed.blocks).length < 3) {
+      const first = parsed ? normalizeSheet(parsed.sheet ?? parsed.blocks) : [];
+      if (!parsed || first.length < 3) {
         parsed = await writeSheet(
           `${prompt}\n\n${retryBrief(body.length)}`,
           undefined,
@@ -300,6 +303,19 @@ Deno.serve((request: Request) =>
           retryTokenLimit(body.length),
           meter,
         );
+      } else if (readsLikeACourse(first)) {
+        // **Pas une seule liste sur toute la fiche.** La consigne donne un compte et ne suffit
+        // pourtant pas toujours : c'est la seule forme d'échec qui rend la fiche inutile sans
+        // rien casser de visible, donc la seule qui vaut une seconde génération. Si elle
+        // échoue, on garde la première : une fiche en prose vaut mieux que pas de fiche.
+        const again = await writeSheet(
+          `${prompt}\n\n${listRetryBrief(first.length)}`,
+          undefined,
+          0.2,
+          outputTokenLimit(body.length, body.blocks),
+          meter,
+        );
+        if (again && normalizeSheet(again.sheet ?? again.blocks).length >= 3) parsed = again;
       }
 
       if (!parsed) {

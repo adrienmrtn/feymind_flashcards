@@ -476,9 +476,13 @@ enum SheetLimits {
     /// plus, ou des phrases de plus — et que la seconde ne coûte rien. Six cents caractères,
     /// c'est treize lignes d'iPhone d'un seul tenant : on ne les relit pas, on les saute.
     ///
+    /// Il descend de cinq cents à trois cent vingt, la valeur que le prompt demande, plus une
+    /// phrase de marge : cinq cents laissait passer des blocs de onze lignes, et un pavé
+    /// coupé en deux pavés n'est toujours pas une fiche.
+    ///
     /// Recopié dans `SHEET_LIMITS.paragraphChars` côté serveur, où `splitParagraph` fait le
     /// même découpage. Un test compare les deux.
-    static let paragraphChars = 500
+    static let paragraphChars = 320
     /// Le chapeau, en mots. Voir `SheetText.lead` : deux lignes de téléphone, pas plus.
     static let summaryWords = 20
 }
