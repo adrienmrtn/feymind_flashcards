@@ -264,9 +264,8 @@ enum SheetBlock: Codable, Equatable, Sendable {
         case .formula:
             let raw = (try? container.decode(String.self, forKey: .latex)) ?? text
             let trimmed = raw.trimmingCharacters(in: CharacterSet(charactersIn: "$ \n"))
-            let latex = SheetText.restoringLatexCommands(trimmed)
-            guard latex.count >= 2 else { return [] }
-            return [.formula(latex: latex, caption: caption)]
+            guard let formula = SheetText.normalizedFormula(trimmed, caption: caption) else { return [] }
+            return [.formula(latex: formula.latex, caption: formula.caption)]
 
         // MARK: Les blocs d'avant, convertis plutôt que jetés
 
@@ -484,6 +483,12 @@ enum SheetLimits {
     /// Recopié dans `SHEET_LIMITS.paragraphChars` côté serveur, où `splitParagraph` fait le
     /// même découpage. Un test compare les deux.
     static let paragraphChars = 320
+    /// **Ce qu'une formule pèse au plus, en caractères.**
+    ///
+    /// Les formules d'une fiche font entre six et cent trente caractères. Au delà de deux
+    /// cent quarante, ce n'est plus une formule : c'est un paragraphe écrit en LaTeX, ou une
+    /// boucle du modèle. Recopié dans `FORMULA_MAX_CHARS` côté serveur.
+    static let formulaChars = 240
     /// Le chapeau, en mots. Voir `SheetText.lead` : deux lignes de téléphone, pas plus.
     static let summaryWords = 20
 }
@@ -548,6 +553,85 @@ enum SheetText {
             }
         }
         return out
+    }
+
+    /// **Une formule répétée est une boucle, pas une formule.**
+    ///
+    /// Relevé tel quel : l'équation de la photosynthèse écrite quatorze fois de suite dans
+    /// un seul bloc, sans séparateur. Un modèle qui se répète le fait jusqu'à sa limite de
+    /// jetons, et le rendu en fait un pavé de mille caractères là où une ligne suffisait.
+    ///
+    /// **Un motif long, répété au moins trois fois.** Les deux bornes existent pour la même
+    /// raison : `x + x + x + x` est une somme, pas une boucle. La dernière répétition a le
+    /// droit d'être tronquée, puisque c'est la limite de jetons qui a arrêté le modèle.
+    ///
+    /// Jumeau de `collapseRepeatedFormula` dans `supabase/functions/_shared/sheet.ts`.
+    static func collapsingRepeatedFormula(_ latex: String) -> String {
+        let text = latex.trimmingCharacters(in: .whitespaces)
+        let characters = Array(text)
+        guard characters.count >= 60 else { return text }
+
+        var unit = 20
+        while unit <= characters.count / 3 {
+            let head = Array(characters[0..<unit])
+            var repeated = true
+            var at = unit
+            while at < characters.count {
+                let chunk = Array(characters[at..<min(at + unit, characters.count)])
+                if !head.starts(with: chunk) {
+                    repeated = false
+                    break
+                }
+                at += unit
+            }
+            if repeated { return String(head) }
+            unit += 1
+        }
+        return text
+    }
+
+    /// **La formule, ramenée à ce que l'application sait composer.**
+    ///
+    /// `\xrightarrow{Lumière}` est de l'amsmath ; le moteur ne l'analyse pas, la composition
+    /// échoue, et le repli en Unicode affichait « xrightarrowLumière » en toutes lettres au
+    /// milieu de l'équation. La flèche redevient une flèche ordinaire, que le moteur compose,
+    /// et **l'étiquette part dans la légende** plutôt qu'à la poubelle.
+    ///
+    /// Rend `nil` quand il ne reste rien de composable, ou quand la formule dépasse le
+    /// plafond : un bloc absent se remarque moins qu'un mur de LaTeX.
+    ///
+    /// Jumeau de `normalizeFormula` côté serveur.
+    static func normalizedFormula(_ latex: String, caption: String?) -> (latex: String, caption: String?)? {
+        var labels: [String] = []
+        var source = collapsingRepeatedFormula(restoringLatexCommands(latex))
+
+        if let arrows = try? NSRegularExpression(
+            pattern: "\\\\x(right|left)arrow\\s*(?:\\[[^\\]]*\\])?\\s*\\{([^{}]*)\\}"
+        ) {
+            let full = NSRange(source.startIndex..., in: source)
+            var out = ""
+            var cursor = source.startIndex
+            for match in arrows.matches(in: source, range: full) {
+                guard let whole = Range(match.range, in: source),
+                      let sideRange = Range(match.range(at: 1), in: source),
+                      let labelRange = Range(match.range(at: 2), in: source)
+                else { continue }
+                out += source[cursor..<whole.lowerBound]
+                out += source[sideRange] == "right" ? "\\rightarrow" : "\\leftarrow"
+                let clean = source[labelRange].trimmingCharacters(in: .whitespaces)
+                if !clean.isEmpty { labels.append(clean) }
+                cursor = whole.upperBound
+            }
+            out += source[cursor...]
+            source = out
+        }
+
+        source = source.trimmingCharacters(in: .whitespaces)
+        guard source.count >= 2, source.count <= SheetLimits.formulaChars else { return nil }
+
+        let parts = ([caption?.trimmingCharacters(in: .whitespaces)].compactMap { $0 } + labels)
+            .filter { !$0.isEmpty }
+        return (source, parts.isEmpty ? nil : parts.joined(separator: " · "))
     }
 
     /// **Un paragraphe trop long, coupé à une fin de phrase.**

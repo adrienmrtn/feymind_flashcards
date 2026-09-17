@@ -116,6 +116,14 @@ export const SHEET_LIMITS = {
    * ça reste un pavé, et un pavé coupé en deux pavés n'est pas une fiche.
    */
   paragraphChars: 320,
+  /**
+   * **Ce qu'une formule pèse au plus, en caractères.**
+   *
+   * Les formules d'une fiche font entre six et cent trente caractères ; mesuré sur celles
+   * déjà en base, la plus longue en fait cent vingt-huit. Au delà de deux cent quarante, ce
+   * n'est plus une formule : c'est un paragraphe écrit en LaTeX, ou une boucle du modèle.
+   */
+  formulaChars: 240,
 } as const;
 
 export function normalizeSheet(raw: unknown): SheetBlock[] {
@@ -188,9 +196,9 @@ function normalizeBlock(type: string, record: Record<string, unknown>): SheetBlo
       const raw = typeof record.latex === "string"
         ? record.latex.trim().replace(/^\$+|\$+$/g, "").trim()
         : cleanText(record.text);
-      const latex = restoreLatexCommands(raw);
-      if (latex.length < 2) return [];
-      return [{ type: "formula", latex, caption: cleanOptional(record.caption) }];
+      const formula = normalizeFormula(raw, cleanOptional(record.caption));
+      if (!formula) return [];
+      return [{ type: "formula", latex: formula.latex, caption: formula.caption }];
     }
 
     // MARK: - Les blocs d'avant, convertis plutôt que jetés
@@ -355,6 +363,75 @@ export function restoreLatexCommands(latex: string): string {
     /[\b\f\n\r\t](?=[A-Za-z])/g,
     (control) => "\\" + CONTROL_TO_COMMAND[control],
   );
+}
+
+/**
+ * **Une formule répétée est une boucle, pas une formule.**
+ *
+ * Relevé tel quel : l'équation de la photosynthèse écrite quatorze fois de suite dans un
+ * seul bloc, sans séparateur, `… + 6 H_2O6 CO_2 + 12 H_2O …`. Un modèle qui se répète le
+ * fait jusqu'à sa limite de jetons, et le rendu en fait un pavé de mille caractères là où
+ * une ligne suffisait.
+ *
+ * On garde la première occurrence. Le motif doit couvrir tout le reste — la dernière
+ * répétition a le droit d'être tronquée, puisque c'est la limite de jetons qui a arrêté le
+ * modèle. Une formule légitime n'est jamais sa propre répétition : il n'y a rien à perdre.
+ */
+export function collapseRepeatedFormula(latex: string): string {
+  const text = latex.trim();
+  if (text.length < 60) return text;
+
+  // **Un motif long, répété au moins trois fois.** Les deux bornes existent pour la même
+  // raison : `x + x + x + x` est une somme, pas une boucle. Un motif de vingt caractères
+  // répété trois fois ne s'écrit pas par accident, alors qu'un terme court qui revient est
+  // le quotidien d'une équation.
+  for (let unit = 20; unit <= Math.floor(text.length / 3); unit += 1) {
+    const head = text.slice(0, unit);
+    let repeated = true;
+    for (let at = unit; at < text.length; at += unit) {
+      if (!head.startsWith(text.slice(at, at + unit))) {
+        repeated = false;
+        break;
+      }
+    }
+    if (repeated) return head;
+  }
+  return text;
+}
+
+/** Les flèches étiquetées d'amsmath, avec leur étiquette. */
+const LABELLED_ARROW = /\\x(right|left)arrow\s*(?:\[[^\]]*\])?\s*\{([^{}]*)\}/g;
+
+/**
+ * **La formule, ramenée à ce que l'application sait composer.**
+ *
+ * Deux réparations, et la seconde demande un mot. `\xrightarrow{Lumière}` est de l'amsmath ;
+ * le moteur de l'application ne l'analyse pas, la composition échoue, et le repli en Unicode
+ * affichait « xrightarrowLumière » en toutes lettres au milieu de l'équation. La flèche
+ * redevient donc une flèche ordinaire, que le moteur compose, et **l'étiquette part dans la
+ * légende** plutôt qu'à la poubelle : « Lumière » dit quelque chose de la réaction.
+ *
+ * Rend `null` quand il ne reste rien de composable, ou quand la formule dépasse le plafond :
+ * un bloc absent se remarque moins qu'un mur de LaTeX, et le texte de la fiche porte de
+ * toute façon ce que l'équation disait.
+ */
+export function normalizeFormula(
+  latex: string,
+  caption?: string,
+): { latex: string; caption?: string } | null {
+  const labels: string[] = [];
+  const source = collapseRepeatedFormula(restoreLatexCommands(latex))
+    .replace(LABELLED_ARROW, (_match, side: string, label: string) => {
+      const clean = label.trim();
+      if (clean) labels.push(clean);
+      return side === "right" ? "\\rightarrow" : "\\leftarrow";
+    })
+    .trim();
+
+  if (source.length < 2 || source.length > SHEET_LIMITS.formulaChars) return null;
+
+  const parts = [caption?.trim(), ...labels].filter((part) => Boolean(part)) as string[];
+  return { latex: source, caption: parts.length > 0 ? parts.join(" · ") : undefined };
 }
 
 /**
