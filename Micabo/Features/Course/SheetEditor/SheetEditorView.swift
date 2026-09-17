@@ -126,7 +126,17 @@ struct SheetEditorView: UIViewRepresentable {
             textView.attributedText = SheetDocument.attributed(from: blocks)
             textView.typingAttributes = SheetDocument.baseAttributes(kind: .paragraph)
             textView.undoManager?.removeAllActions()
-            refreshState()
+            // La barre d'outils se relit **après** la passe d'affichage, et pas dedans.
+            //
+            // `load` est appelé depuis `makeUIView` et `updateUIView`, c'est-à-dire pendant que
+            // SwiftUI met la vue à jour ; `refreshState` y écrit onze valeurs d'un
+            // `SheetEditorState` que cette même vue observe. SwiftUI le refuse — « Publishing
+            // changes from within view updates is not allowed » — et en rendait une par
+            // chapitre à l'ouverture d'une fiche. Ce que la barre affiche n'a aucune raison
+            // d'être décidé dans la même passe que le texte qu'on vient de poser.
+            DispatchQueue.main.async { [weak self] in
+                self?.refreshState()
+            }
         }
 
         // MARK: Enregistrement
