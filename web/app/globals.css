@@ -1280,27 +1280,54 @@ video {
      Toute l'échelle en dépend, corps comme titres : agrandir le seul corps rapprocherait
      les titres du texte et effacerait le plan. */
   --sheet-scale: 1;
+  /* La teinte du cours, posée par le lecteur. Elle ne sert qu'aux titres de partie et à la
+     capsule qui les précède : c'est elle qui donne son rythme à une page qu'on feuillette.
+     Sans teinte fournie, on retombe sur l'encre — un titre reste un titre. */
+  --sheet-tint: var(--color-ink);
   font-size: calc(15px * var(--sheet-scale));
-  line-height: 1.6;
+  line-height: 1.75;
 }
 
 .sheet-doc > * + * {
-  margin-top: calc(11px * var(--sheet-scale));
+  margin-top: calc(14px * var(--sheet-scale));
 }
 
+/* **Le rapport entre ces trois marges est tout le plan de la fiche.**
+
+   Un titre de sous-partie recevait vingt-huit points quand un changement de paragraphe en
+   recevait onze, et un titre de partie trente-six. Sur l'iPhone les mêmes écarts valaient
+   quinze et onze — un rapport de 1,36, que l'œil ne distingue pas d'un paragraphe de plus,
+   et la fiche s'y lisait comme un pavé. Les deux rendus sont maintenant sur la même échelle,
+   et le rapport qui compte, air avant une sous-partie sur air entre deux paragraphes, vaut
+   1,85. */
 .sheet-doc h1 {
-  font-size: calc(21px * var(--sheet-scale));
+  font-size: calc(22px * var(--sheet-scale));
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.2px;
-  margin-top: calc(36px * var(--sheet-scale));
+  margin-top: calc(38px * var(--sheet-scale));
+  color: var(--sheet-tint);
+}
+
+/* La capsule teintée d'un titre de partie : le même signe que celui dessiné par
+   `SheetEditorLayoutManager` sur l'iPhone, aux mêmes dimensions. Elle est posée en
+   `::before` et non en bordure, parce qu'une bordure ferait toute la largeur du titre. */
+.sheet-doc h1::before {
+  content: "";
+  display: block;
+  width: 26px;
+  height: 3px;
+  border-radius: 1.5px;
+  background-color: var(--sheet-tint);
+  margin-bottom: calc(7px * var(--sheet-scale));
 }
 
 .sheet-doc h2 {
   font-size: calc(17px * var(--sheet-scale));
   font-weight: 600;
   line-height: 1.3;
-  margin-top: calc(28px * var(--sheet-scale));
+  margin-top: calc(26px * var(--sheet-scale));
+  color: var(--color-ink);
 }
 
 /* Barré : ce qu'on avait noté et qui s'est révélé faux. Il reste lisible - c'est même tout

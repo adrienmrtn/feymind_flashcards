@@ -1,6 +1,6 @@
 import { assertEquals } from "jsr:@std/assert@1";
 
-import { cleanMarks } from "./mark-shape.ts";
+import { cleanMarks, opensClause } from "./mark-shape.ts";
 
 Deno.test("retire le surlignage posé au milieu d'un mot", () => {
   // Relevé tel quel dans une fiche de production : l'ouverture est collée à « de », la
@@ -59,4 +59,28 @@ Deno.test("un texte sans marque ressort identique", () => {
   const texte = "Une phrase ordinaire, sans la moindre marque de relecture.";
   assertEquals(cleanMarks(texte), texte);
   assertEquals(cleanMarks(""), "");
+});
+
+Deno.test("un surligneur de plus de trois lignes n'est plus un trait de feutre", () => {
+  // Cent quarante caractères, soit trois lignes d'iPhone : au delà, la bande avale le
+  // paragraphe au lieu d'en désigner un passage.
+  const trois = "Le rendement de conversion atteint quatre-vingt-douze pour cent en régime nominal, " +
+    "contre quatre-vingt-six en modulé.";
+  assertEquals(trois.length <= 140, true);
+  assertEquals(cleanMarks(`==menthe|${trois}==`), `==menthe|${trois}==`);
+
+  const quatre = `${trois} Les pertes thermiques expliquent l'essentiel de l'écart mesuré.`;
+  assertEquals(quatre.length > 140, true);
+  assertEquals(cleanMarks(`==menthe|${quatre}==`).includes("=="), false);
+});
+
+Deno.test("un surligneur ouvre une proposition, jamais le milieu d'une phrase", () => {
+  const texte = "La Rubisco fixe le carbone, et c'est l'étape limitante du cycle de Calvin.";
+
+  // Après un point : oui. Après une virgule, ou au milieu d'un membre de phrase : non.
+  assertEquals(opensClause("Une phrase. Une autre.", 12), true);
+  assertEquals(opensClause(texte, 0), true);
+  assertEquals(opensClause(texte, texte.indexOf("c'est")), false);
+  assertEquals(opensClause(texte, texte.indexOf("et c'est")), false);
+  assertEquals(opensClause("Il conclut : le rendement plafonne.", 13), true);
 });

@@ -358,8 +358,8 @@ enum MicaboFont {
 enum SheetTypography {
     // MARK: Tailles
 
-    /// Corps du texte courant.
-    static let body: CGFloat = 14.85
+    /// Corps du texte courant. La même valeur que `.sheet-doc` côté site.
+    static let body: CGFloat = 15
     /// Chapeau posé sous le titre du cours.
     static let lead: CGFloat = 15.75
     /// Corps d'un objet : encadré, définition, étape. Un cran sous la page, pour qu'un
@@ -374,17 +374,27 @@ enum SheetTypography {
     /// Légende sous un tableau, un graphe ou une formule.
     static let caption: CGFloat = 11.5
     /// Titre de partie.
-    static let headingLarge: CGFloat = 19.8
-    /// Titre de sous-partie. C'est la taille du corps : un sous-titre se distingue par son
-    /// poids et par l'air au-dessus de lui, pas en grossissant.
-    static let headingSmall: CGFloat = 14.85
+    ///
+    /// Une fois et demie le corps, et pas un tiers de plus comme avant. Un titre à 1,33 fois
+    /// le corps ne se voit pas en feuilletant au pouce : c'est la taille qui fait qu'une
+    /// partie commence, avant même la capsule teintée qui la précède.
+    static let headingLarge: CGFloat = 22
+    /// Titre de sous-partie.
+    ///
+    /// Il a longtemps eu **exactement la taille du corps**, au motif qu'un sous-titre se
+    /// distingue par son poids et par l'air au-dessus de lui. Les deux manquaient : le
+    /// demi-gras d'Hanken est discret, et l'air valait quatre points de plus qu'un simple
+    /// changement de paragraphe. Une sous-partie ne se voyait donc pas, et la fiche se lisait
+    /// d'un bloc. Un cran au-dessus du corps suffit à la faire exister.
+    static let headingSmall: CGFloat = 17
     /// Formule mise en valeur dans son bloc.
     static let formula: CGFloat = 18
 
     // MARK: Espaces
 
-    /// Interligne ajouté aux paragraphes.
-    static let lineSpacing: CGFloat = 6
+    /// Interligne ajouté aux paragraphes. Rend une hauteur de ligne d'environ 1,75 fois le
+    /// corps, ce que `.sheet-doc` pose en `line-height` côté site.
+    static let lineSpacing: CGFloat = 7
     /// Interligne d'un objet, dont le corps est déjà plus petit.
     static let secondaryLineSpacing: CGFloat = 4.5
     /// Interligne d'une cellule, d'une légende, d'un titre.
@@ -392,13 +402,18 @@ enum SheetTypography {
 
     /// Espace au-dessus d'un titre de partie, et d'un titre de sous-partie.
     ///
-    /// Un sous-titre a la taille du corps : c'est **l'air au-dessus de lui** qui dit qu'une
-    /// sous-partie commence, avec son demi-gras. Il lui faut donc nettement plus que
-    /// l'espace entre deux blocs ordinaires — à un point près, il n'y aurait plus de plan.
-    static let spaceBeforeLargeHeading: CGFloat = 20
-    static let spaceBeforeSmallHeading: CGFloat = 15
+    /// **Le rapport à `blockSpacing` est tout ce qui compte ici.** Un titre de sous-partie
+    /// recevait quinze points là où un simple changement de paragraphe en recevait onze :
+    /// un rapport de 1,36, que l'œil ne distingue pas d'un paragraphe de plus. La fiche
+    /// n'avait donc pas de plan visible, seulement un ruban de texte. À vingt-six contre
+    /// quatorze, le rapport passe à 1,85 et la sous-partie se voit en feuilletant.
+    ///
+    /// Ce sont les valeurs de `.sheet-doc h1` et `.sheet-doc h2` côté site : les deux rendus
+    /// doivent donner la même page.
+    static let spaceBeforeLargeHeading: CGFloat = 38
+    static let spaceBeforeSmallHeading: CGFloat = 26
     /// Espace entre deux blocs de même nature.
-    static let blockSpacing: CGFloat = 11
+    static let blockSpacing: CGFloat = 14
     /// Espace au-dessus d'une énumération à puces.
     ///
     /// Une liste est **la suite du paragraphe qui l'amène**, et non un bloc de plus : à onze
@@ -407,6 +422,14 @@ enum SheetTypography {
     static let spaceBeforeList: CGFloat = 6
     /// Marge intérieure d'un objet encarté.
     static let objectPadding: CGFloat = 13
+
+    /// Ce que la capsule d'un titre de partie occupe au-dessus de lui : sa hauteur, plus
+    /// l'air qui la sépare du titre.
+    ///
+    /// Un document ne pose rien au-dessus de son premier bloc — sauf celui-ci : un chapitre
+    /// ouvre sur son titre de partie, et sans cette réserve la capsule se dessinerait hors
+    /// de la page.
+    static let headingRuleClearance: CGFloat = 12
 
     /// Inclinaison de l'italique synthétique, Hanken Grotesk n'ayant pas de fonte penchée.
     static let obliqueSlant: CGFloat = 0.19
@@ -484,6 +507,33 @@ extension Color {
             hue: Double(hue),
             saturation: Double(saturation),
             brightness: Double(max(0, brightness * CGFloat(1 - amount))),
+            opacity: Double(alpha)
+        )
+    }
+
+    /// **La même teinte, mais posée en encre.**
+    ///
+    /// Les teintes de cours sont choisies pour *porter du texte blanc* : elles sont donc
+    /// sombres, et deux d'entre elles — le bleu nuit, l'indigo — disparaissent purement et
+    /// simplement sur le papier de la nuit. Les employer telles quelles pour un titre de
+    /// partie donnerait un plan lisible le jour et invisible le soir, ce qui est pire que
+    /// pas de couleur du tout.
+    ///
+    /// On garde donc **la nuance** et on impose **la clarté** : plafonnée sur le papier
+    /// clair pour qu'un bleu vif ne pâlisse pas, relevée sur le papier sombre, où l'on
+    /// retire aussi de la saturation parce qu'une couleur pure y vibre. Les huit teintes
+    /// de `courseAccents` passent alors le seuil de contraste des trois apparences.
+    func readableInk() -> Color {
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var alpha: CGFloat = 0
+        UIColor(self).getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        let dark = AppearanceStore.shared.appearance.isDark
+        return Color(
+            hue: Double(hue),
+            saturation: Double(dark ? min(saturation, CGFloat(0.55)) : saturation),
+            brightness: Double(dark ? max(brightness, CGFloat(0.86)) : min(brightness, CGFloat(0.72))),
             opacity: Double(alpha)
         )
     }

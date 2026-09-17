@@ -99,6 +99,19 @@ export const SHEET_LIMITS = {
    * phrase d'à côté.
    */
   highlights: 24,
+  /**
+   * **Ce qu'un paragraphe pèse au plus, en caractères.**
+   *
+   * Un paragraphe de fiche fait cent cinquante caractères ; la consigne de longueur en fait
+   * écrire de six cents, parce que le modèle n'a que deux façons d'allonger — des blocs de
+   * plus, ou des phrases de plus — et que la seconde ne coûte rien. Six cents caractères,
+   * c'est treize lignes d'iPhone d'un seul tenant : l'étudiant ne les relit pas, il les
+   * saute, et c'est exactement le « pavé » qu'on lui reproche.
+   *
+   * Le prompt le dit maintenant, et ce plafond le tient. Il ne réécrit rien : il coupe à une
+   * **fin de phrase**, ce qui rend deux paragraphes dont chacun est de la prose valide.
+   */
+  paragraphChars: 500,
 } as const;
 
 export function normalizeSheet(raw: unknown): SheetBlock[] {
@@ -158,7 +171,7 @@ function normalizeBlock(type: string, record: Record<string, unknown>): SheetBlo
       // paragraphes courts, et couper la ligne que l'étudiant vient d'écrire serait pire que
       // tout ce que ce plancher protège.
       if (text.length < 12) return [];
-      return [{ type: "paragraph", text }];
+      return splitParagraph(text).map((part) => ({ type: "paragraph", text: part }));
     }
 
     case "list": {
@@ -311,6 +324,115 @@ function removeHighlights(block: SheetBlock): SheetBlock {
 }
 
 /** Retire le balisage en ligne : c'est la version qui part au modèle pour les cartes. */
+/**
+ * **Un paragraphe trop long, coupé à une fin de phrase.**
+ *
+ * C'est un filet, pas une réécriture : on ne change pas un mot, on ne résume pas, on ne
+ * recompose pas. On cherche les fins de phrase et on empile les phrases jusqu'au plafond.
+ * Deux paragraphes de prose valide valent mieux qu'un pavé de treize lignes, et l'étudiant
+ * peut de toute façon les recoller à la main — l'inverse lui demandait de retrouver où la
+ * phrase s'arrête.
+ *
+ * **On ne coupe jamais au milieu d'une phrase.** Quand une seule phrase dépasse le plafond,
+ * elle sort telle quelle : une phrase tranchée en deux blocs se lit comme un bug d'affichage,
+ * et le remède serait pire que le mal.
+ *
+ * Jumeau de `SheetText.split` côté iPhone. Les deux doivent découper la même fiche de la
+ * même façon, sinon elle se lit différemment selon l'appareil.
+ */
+export function splitParagraph(
+  text: string,
+  limit: number = SHEET_LIMITS.paragraphChars,
+): string[] {
+  if (text.length <= limit) return [text];
+
+  const pieces = sentences(text);
+  if (pieces.length < 2) return [text];
+
+  const parts: string[] = [];
+  let current = "";
+  for (const piece of pieces) {
+    const merged = current ? `${current} ${piece}` : piece;
+    if (current && merged.length > limit) {
+      parts.push(current);
+      current = piece;
+    } else {
+      current = merged;
+    }
+  }
+  if (current) parts.push(current);
+
+  // Une queue d'une demi-ligne se lit comme une coupure ratée, pas comme un paragraphe.
+  // Elle repart avec celui qui la précède, quitte à lui faire dépasser le plafond.
+  if (parts.length > 1 && parts[parts.length - 1]!.length < 60) {
+    const tail = parts.pop()!;
+    parts[parts.length - 1] = `${parts[parts.length - 1]} ${tail}`;
+  }
+
+  return parts.length > 0 ? parts : [text];
+}
+
+/** Les fins de phrase d'un texte, hors formules et hors marques. */
+function sentences(text: string): string[] {
+  const closed = protectedSpans(text);
+  const inside = (index: number) =>
+    closed.some(([from, to]) => index >= from && index < to);
+
+  const out: string[] = [];
+  let start = 0;
+
+  for (let index = 0; index < text.length; index += 1) {
+    if (!".!?…".includes(text[index]!)) continue;
+    if (inside(index)) continue;
+
+    // Une initiale n'est pas une fin de phrase : « M. Dupont », « J. Monod ».
+    const before = index >= 2 ? text[index - 1]! : "";
+    const beforeThat = index >= 2 ? text[index - 2]! : " ";
+    if (before.length === 1 && before === before.toLocaleUpperCase() && before !== before.toLocaleLowerCase() && /\s/.test(beforeThat)) {
+      continue;
+    }
+
+    const after = /^(\s+)(\S)/.exec(text.slice(index + 1));
+    if (!after) continue;
+    // Ce qui ouvre la phrase suivante : une capitale, un chiffre, un guillemet, ou le
+    // marqueur d'un terme en gras — « **La réplication** … » commence par une étoile.
+    if (!/[\p{Lu}\p{Nd}*=$«"(\[]/u.test(after[2]!)) continue;
+
+    const sentence = text.slice(start, index + 1).trim();
+    // Trop court pour être une phrase : c'est une abréviation qu'on a prise pour un point.
+    if (sentence.length < 40) continue;
+
+    out.push(sentence);
+    start = index + 1 + after[1]!.length;
+  }
+
+  const rest = text.slice(start).trim();
+  if (rest) out.push(rest);
+  return out;
+}
+
+/**
+ * Les portions qu'une coupure ne doit pas traverser : les formules et les marques.
+ *
+ * Un point dans `$3.14$` n'est pas une fin de phrase, et une coupure au milieu d'un
+ * `**terme**` laisserait deux étoiles orphelines dans chaque moitié.
+ */
+function protectedSpans(text: string): [number, number][] {
+  const spans: [number, number][] = [];
+  for (const marker of ["$", "**", "=="]) {
+    let index = 0;
+    while (index < text.length) {
+      const open = text.indexOf(marker, index);
+      if (open < 0) break;
+      const close = text.indexOf(marker, open + marker.length);
+      if (close < 0) break;
+      spans.push([open, close + marker.length]);
+      index = close + marker.length;
+    }
+  }
+  return spans;
+}
+
 export function stripInlineMarkup(text: string): string {
   return text
     // La couleur d'un surligneur s'écrit à l'ouverture de la marque - `==menthe|texte==` -

@@ -56,7 +56,11 @@ struct SheetBlockView: View {
                     .fill(tint)
                     .frame(width: 26, height: 3)
 
-                SheetInlineText(markup: text, style: .heading(level: 1))
+                // Le titre porte la teinte du cours, comme dans l'éditeur : c'est elle qui
+                // donne son rythme à une page qu'on feuillette au pouce. `readableInk`
+                // remonte la clarté sur le papier sombre, où les teintes de couverture -
+                // choisies pour porter du texte blanc - disparaîtraient.
+                SheetInlineText(markup: text, style: .heading(level: 1).with(color: tint.readableInk()))
             }
         } else {
             SheetInlineText(markup: text, style: .heading(level: 2))

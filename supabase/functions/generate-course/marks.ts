@@ -117,8 +117,16 @@ export function countMarks(blocks: readonly SheetBlock[]): MarkCount {
 export const CHARS_PER = {
   /** Un terme en gras tous les deux cent cinquante caractères, soit un ou deux par paragraphe. */
   bold: 250,
-  /** Un passage surligné tous les huit cents caractères : un par paragraphe long. */
-  highlight: 800,
+  /**
+   * Un passage surligné tous les mille deux cents caractères.
+   *
+   * C'était huit cents, soit un par paragraphe : une fiche de douze mille caractères visait
+   * quinze bandes, et comme chacune pouvait courir sur six lignes, près d'un tiers de la page
+   * finissait en aplat. Une page entièrement surlignée ne met rien en avant - c'est le défaut
+   * qu'on corrige, et il se corrige des deux côtés : moins de bandes ici, des bandes plus
+   * courtes dans `mark-shape.ts`.
+   */
+  highlight: 1_200,
   /** Une nuance en italique tous les deux mille caractères. C'est rare, et ça doit l'être. */
   italic: 2_000,
 } as const;
@@ -317,16 +325,17 @@ Le serveur cherche ton passage dans le texte numéroté "t" et pose les marqueur
 LES MARQUES
 - "gras" : le vocabulaire exact que l'examen attend. Un mot ou un groupe nominal, jamais une phrase. Quatre-vingt-dix caractères au plus.
 - "italique" : une nuance. Un mot étranger ou latin, un titre d'œuvre, de loi ou de revue, un terme cité en tant que mot, une réserve qui change le résultat, le terme voisin qu'on ne doit pas confondre avec celui qu'on vient de définir. Soixante-dix caractères au plus.
-- un surligneur : le trait de feutre sous une phrase courte ou un fragment qu'on doit pouvoir réciter. Entre douze et deux cent quarante caractères. Pas trois mots isolés, pas un texte entier, et un seul par texte.
+- un surligneur : le trait de feutre sous une phrase courte ou un fragment qu'on doit pouvoir réciter. Entre douze et CENT QUARANTE caractères, soit trois lignes de téléphone au plus. Pas trois mots isolés, pas un texte entier, et UN SEUL PAR TEXTE : un second est refusé, et deux textes qui se suivent ne peuvent pas en porter chacun un.
+- un surligneur COMMENCE UNE PROPOSITION : au début du texte, ou juste après un point, un deux-points, un point-virgule, un point d'interrogation ou d'exclamation. JAMAIS après une virgule ni au milieu d'une phrase. « Cependant, une tendance différente a émergé » mal ouvert donne une bande qui démarre en plein milieu d'une ligne : ça se lit comme une sélection ratée, pas comme un passage retenu. Si le passage que tu vises commence après une virgule, recule jusqu'au début de la phrase, ou choisis un autre passage.
 
 LE CODE COULEUR
-Une couleur dit une SORTE d'information, la même d'un bout à l'autre de la fiche. C'est ce qui permet de retrouver tous les chiffres d'un chapitre en diagonale.
+Une couleur dit une SORTE d'information, la même d'un bout à l'autre de la fiche.
 - jaune : la définition, la thèse, la phrase que l'étudiant devra pouvoir réciter.
 - menthe : un résultat chiffré, un seuil, un ordre de grandeur, avec son unité.
 - bleu : un mécanisme, un enchaînement de causes, une condition d'application.
 - rose : une exception, une limite, une confusion classique, ce qui se rate à l'examen.
 - lilas : un repère : un nom propre, un auteur, une œuvre, une loi, un événement daté.
-Le jaune reste le plus fréquent. Au moins trois couleurs différentes dès que tu poses quatre surligneurs.
+LE JAUNE EST LE FEUTRE PAR DÉFAUT, et une autre couleur ne sort que quand le sens l'impose : un chiffre pour la menthe, une exception pour le rose. Ne cherche pas à varier. Une fiche où les cinq teintes se succèdent n'est pas mieux repérée qu'une fiche d'un seul feutre, elle est seulement plus bruyante.
 
 OÙ NE PAS MARQUER
 - Entre $ et $ : c'est une formule, tu n'y touches pas et tu ne marques rien à l'intérieur.
@@ -565,11 +574,22 @@ export function applyAnchors(
     else byText.set(anchor.text, [anchor]);
   }
 
+  // **Deux bandes ne se touchent pas.** Un texte ne porte qu'un surligneur (`fits`), mais
+  // rien n'empêchait deux points de liste consécutifs d'en porter chacun un : au rendu, les
+  // deux bandes se suivent à une interligne d'écart et se lisent comme une seule, plus
+  // épaisse. Un texte qui suit un texte surligné ne reçoit donc pas de bande.
   let cursor = 0;
+  let previousHighlighted = false;
   const next = (original: string): string => {
     const own = byText.get(cursor);
     cursor += 1;
-    return own ? applyToText(original, own, report) : original;
+    if (!own) {
+      previousHighlighted = original.includes("==");
+      return original;
+    }
+    const written = applyToText(original, own, report, !previousHighlighted);
+    previousHighlighted = written.includes("==");
+    return written;
   };
 
   return blocks.map((block) => {
@@ -598,6 +618,7 @@ function applyToText(
   text: string,
   anchors: readonly MarkAnchor[],
   report: ApplyReport,
+  allowHighlight: boolean,
 ): string {
   const existing = markedRanges(text);
   const placed: Placed[] = [];
@@ -622,6 +643,10 @@ function applyToText(
     }
 
     const to = from + quote.length;
+    if (anchor.kind === "highlight" && !allowHighlight) {
+      report.crossing += 1;
+      continue;
+    }
     if (placeable(text, from, to, anchor.kind) !== "ok") {
       report.shape += 1;
       continue;
@@ -665,6 +690,15 @@ function fits(
   existing: readonly MarkedRange[],
   placed: readonly Placed[],
 ): boolean {
+  // **Un seul surligneur par texte.** Le prompt le demandait déjà, et rien ne le vérifiait :
+  // sur une fiche courante, deux bandes de couleurs différentes se retrouvaient collées dans
+  // le même paragraphe, une jaune puis une lilas, sans blanc entre les deux. Le code couleur
+  // ne veut plus rien dire à cette densité - c'est du confetti, pas un repérage.
+  if (kind === "highlight") {
+    if (existing.some((mark) => mark.kind === "highlight")) return false;
+    if (placed.some((mark) => mark.kind === "highlight")) return false;
+  }
+
   for (const mark of existing) {
     if (!compatible(range, mark.outer)) return false;
     if (mark.kind === kind && overlaps(range, mark.outer)) return false;
