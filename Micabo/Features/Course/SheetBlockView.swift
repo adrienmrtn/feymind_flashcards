@@ -78,7 +78,7 @@ struct SheetBlockView: View {
     /// la seule différence, et elle est portée par le seul repère de gauche : le texte, lui,
     /// est composé pareil.
     private func list(ordered: Bool, items: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: SheetTypography.listItemSpacing) {
             ForEach(Array(items.enumerated()), id: \.offset) { entry in
                 HStack(alignment: .top, spacing: 9) {
                     marker(ordered: ordered, index: entry.offset)

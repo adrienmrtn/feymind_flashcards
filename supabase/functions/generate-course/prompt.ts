@@ -1,6 +1,6 @@
 /** Consignes de rédaction de la fiche d'un cours. */
 
-export const PROMPT_VERSION = "course-v2.10.0";
+export const PROMPT_VERSION = "course-v3.0.0";
 
 /** Longueur max d'une consigne libre. Au-delà, ce n'est plus un prompt, c'est un cours. */
 export const MAX_INSTRUCTIONS = 2_000;
@@ -54,19 +54,22 @@ Virgule entre chaque propriété, jamais après la dernière. Un guillemet dans 
 LES QUATRE BLOCS DISPONIBLES
 {"type":"heading","level":1,"text":"Titre de partie"}
 {"type":"heading","level":2,"text":"Titre de sous-partie"}
-{"type":"paragraph","text":"Deux à quatre phrases rédigées, quatre cents caractères au plus."}
+{"type":"paragraph","text":"Deux à trois phrases, trois cents caractères au plus."}
 {"type":"list","ordered":true,"items":["Première étape","Deuxième étape"]}
 {"type":"formula","latex":"6 CO_2 + 6 H_2O \\rightarrow C_6H_{12}O_6 + 6 O_2","caption":"Ce que chaque terme désigne"}
 
 Il n'y en a pas d'autres. Les définitions encadrées, les encadrés de ton, les tableaux, les graphes et les figures n'existent plus : ce qu'ils portaient s'écrit maintenant dans le texte. Une définition est un paragraphe qui ouvre sur **le terme** en gras. Une comparaison est un paragraphe, ou une liste dont chaque point oppose deux choses. Un chiffre est dans la phrase.
 
 COMMENT COMPOSER LA FICHE
-- Ouvre sur un paragraphe, jamais sur un titre : on doit entrer dans le sujet dès la première ligne.
-- Le texte porte l'essentiel, et les paragraphes restent la forme la plus fréquente : une fiche qui n'est qu'une suite de listes n'explique rien.
+TU ÉCRIS UNE FICHE, PAS UN COURS RECOPIÉ. Une fiche se parcourt à l'œil la veille de l'épreuve : elle est faite de titres, de listes courtes, et de phrases isolées qui les amènent. Un pavé de six lignes n'est pas une fiche, c'est le cours qu'on a déjà, et l'étudiant le saute.
+- LA LISTE EST LA FORME PAR DÉFAUT. Un cours s'énumère à peu près partout, et chaque fois qu'il s'énumère, tu écris une liste, même si le document l'écrit en phrases. Tu n'attends donc pas que le document mette des puces : tu reconnais l'énumération et tu lui donnes sa forme. Les cas, et ils couvrent l'essentiel d'un cours : une procédure, une chronologie ou un cycle, et alors ordered vaut true ; une classification, ses types, ses familles, ses catégories ; les conditions qui doivent TOUTES être réunies pour qu'un résultat vaille ; les critères, les symptômes ou les causes d'un phénomène ; ses conséquences ; les caractéristiques d'une notion ; les propriétés d'un objet ; les arguments d'une thèse ; une comparaison dont chaque point oppose deux choses.
+- DEUX MEMBRES SUFFISENT à faire une liste. De deux à huit points, et CHAQUE POINT TIENT SUR UNE LIGNE : quinze mots au plus, pas de seconde phrase. Un point de liste qui fait trois lignes est un paragraphe déguisé, donc un pavé de plus. Le seul cas qui reste un paragraphe : découper une idée unique en morceaux ne fait pas une liste, ça fait une idée en miettes.
+- LE PARAGRAPHE NE SERT QU'À DEUX CHOSES : amener une liste par une phrase qui dit de quoi elle est la liste, ou porter ce qui ne s'énumère pas : une définition, un enchaînement de causes. DEUX PHRASES, TROIS AU GRAND MAXIMUM, et jamais plus de trois cents caractères. Au-delà, coupe : ou bien c'était deux idées, ou bien c'était une liste que tu n'as pas vue.
+- DEUX LISTES PEUVENT SE SUIVRE, séparées par une phrase ou par un sous-titre. C'est même le rythme normal d'une fiche : un titre, une phrase, une liste, un sous-titre, une phrase, une liste.
+- Ouvre une partie par une phrase, jamais par une liste nue : on doit savoir de quoi on parle avant de lire des puces. Et n'ouvre pas la fiche entière par un titre : on entre dans le sujet dès la première ligne.
 - 3 à 6 titres de partie (level 1), et des sous-parties quand une partie est longue. Suis le découpage du document plutôt que d'en inventer un.
-- "list" : quand le contenu EST une liste, même si le document l'écrit en phrases. C'est le cas le plus fréquent et le plus raté : un cours dit « on distingue trois types de… », « la procédure se déroule en quatre temps », « il faut que les trois conditions soient réunies », et le laisser en paragraphe oblige l'étudiant à recompter les membres de tête à chaque relecture. Tu n'attends donc pas que le document mette des puces : tu reconnais l'énumération et tu lui donnes sa forme. Les cas qui la demandent : une procédure, une chronologie ou un cycle, et alors ordered vaut true ; une classification, ses types, ses familles, ses catégories ; les conditions qui doivent TOUTES être réunies pour qu'un résultat vaille ; les critères, les symptômes ou les causes reconnues d'un phénomène ; une comparaison dont chaque point oppose deux choses. Trois membres ou plus, c'est une liste ; deux, c'est une phrase. Deux à dix points, chacun une ligne courte qui se tient seule, et la phrase qui précède dit de quoi la liste est la liste. Jamais deux listes de suite, et jamais une liste pour découper une idée unique en morceaux : ça, c'est un paragraphe.
 - "formula" : pour une formule qui se retient, écrite en LaTeX sans les $ autour. C'est le seul endroit où le LaTeX peut être ambitieux, parce que l'application le compose vraiment : intégrale avec ses bornes, somme, limite, matrice, système d'équations, fraction à plusieurs étages. Écris la formule comme elle s'écrit au tableau. La légende dit ce que désigne chaque symbole.
-- Ferme sur un paragraphe qui tient le chapitre entier, sans l'annoncer comme tel.
+- Ne ferme pas la partie par un paragraphe de synthèse : une fiche ne se résume pas elle-même, elle s'arrête quand elle a tout dit.
 
 UNE LISTE BIEN PLACÉE, POUR L'EXEMPLE
 Le document écrit en prose : « La réplication de l'ADN se fait en trois temps. L'hélicase ouvre la double hélice, la primase pose une amorce d'ARN, puis l'ADN polymérase allonge le brin dans le sens 5' vers 3'. »
@@ -78,9 +81,10 @@ Cet exemple montre une FORME. Son contenu ne vient pas du document que tu vas li
 
 AVANT DE RÉPONDRE, RELIS TA FICHE ET VÉRIFIE
 - Le nombre de blocs correspond à la longueur demandée. Dans le doute, allonge.
-- Une énumération du document est-elle restée coincée dans un paragraphe ? Trois membres ou plus, c'est une liste.
-- Aucune suite de deux listes, et aucune liste qui découpe une seule idée.
-- Aucun paragraphe ne dépasse quatre phrases ni quatre cents caractères. Celui qui les dépasse porte deux idées : coupe-le en deux paragraphes, ou donne à la seconde son propre titre.
+- Combien de blocs sont des listes ? Si c'est moins d'un sur trois, tu as écrit un cours : relis chaque paragraphe et sors-en les énumérations.
+- Une énumération du document est-elle restée coincée dans un paragraphe ? Deux membres suffisent à faire une liste.
+- Un point de liste tient-il sur une ligne ? Au-delà de quinze mots, coupe-le ou remonte-le en paragraphe.
+- Aucun paragraphe ne dépasse trois phrases ni trois cents caractères. Celui qui les dépasse porte deux idées, ou bien cache une liste.
 - Les grandeurs, symboles et formules courtes sont dans la phrase, entre $ et $, et non recopiés en texte brut ni renvoyés en bloc.
 - Aucun surlignage et aucun italique : ils ne sont pas de ton ressort.
 - Aucune phrase ne s'adresse au lecteur.
@@ -278,13 +282,56 @@ export function lengthBrief(
     const note = isLongDocument
       ? ` Le document est long : reste à la borne basse, ${chosen.blocks[0]} blocs.`
       : "";
-    return `LONGUEUR DEMANDÉE\n${chosen.brief}${note}`;
+    return `LONGUEUR DEMANDÉE\n${chosen.brief}${note}\n${LIST_SHARE_BRIEF}`;
   }
 
   // Sur un document long, viser la borne haute produit du remplissage : on redescend d'un
   // cinquième plutôt que d'ignorer la demande.
   const aimed = isLongDocument ? Math.max(MIN_BLOCKS, Math.round(target * 0.8)) : target;
-  return `LONGUEUR DEMANDÉE\n${chosen.brief}\nVolume visé : ${aimed} blocs, à deux près. C'est le réglage explicite de l'étudiant, et il prime sur les bornes ci-dessus.`;
+  return `LONGUEUR DEMANDÉE\n${chosen.brief}\nVolume visé : ${aimed} blocs, à deux près. C'est le réglage explicite de l'étudiant, et il prime sur les bornes ci-dessus.\nSur ces ${aimed} blocs, AU MOINS ${listTarget(aimed)} sont des listes. ${LIST_SHARE_REASON}`;
+}
+
+/**
+ * **Un compte, pas une recommandation.**
+ *
+ * La leçon est déjà écrite dans `marks.ts`, et elle vaut ici : un modèle à qui l'on dit
+ * « pose au moins six marques dans ces huit textes » les pose ; le même, à qui l'on dit
+ * « une à trois par paragraphe », en pose une et passe au suivant. « Privilégie les listes »
+ * appartient à la seconde catégorie, et c'est pour ça que les fiches sortaient en prose.
+ *
+ * Un tiers, et pas la moitié : une fiche a besoin de ses phrases d'introduction, et un plan
+ * qui n'est que des puces ne dit plus de quoi elles sont les puces.
+ */
+export function listTarget(blocks: number): number {
+  return Math.max(2, Math.round(blocks / 3));
+}
+
+const LIST_SHARE_REASON =
+  "Une fiche dont moins d'un bloc sur trois est une liste n'est pas une fiche, c'est le cours recopié en paragraphes.";
+
+const LIST_SHARE_BRIEF = `AU MOINS UN BLOC SUR TROIS est une liste. ${LIST_SHARE_REASON}`;
+
+/**
+ * **La fiche est-elle un cours recopié ?**
+ *
+ * Le critère est volontairement grossier : pas une seule liste sur une fiche qui en compte
+ * assez de blocs pour en mériter. C'est le cas qu'on a vu en production — un chapitre entier
+ * de mathématiques rendu en six paragraphes pleins — et il ne se confond avec rien : un
+ * document qui n'énumère vraiment jamais n'existe pas sur une fiche de dix blocs.
+ *
+ * Volontairement grossier, parce que le remède coûte une génération entière. Une fiche
+ * seulement pauvre en listes n'est pas réécrite : elle est rattrapée par la consigne, qui
+ * donne un compte, et par le découpage des pavés à la lecture.
+ */
+export function readsLikeACourse(blocks: readonly { type: string }[]): boolean {
+  return blocks.length >= 8 && !blocks.some((block) => block.type === "list");
+}
+
+/** Ce qu'on redemande à une fiche rendue tout en prose. */
+export function listRetryBrief(blocks: number): string {
+  return `Ta fiche n'a pas une seule liste : c'est le cours recopié, pas une fiche. Réécris-la en donnant leur forme aux énumérations qu'elle contient déjà, sans rien inventer et sans rien retirer : au moins ${
+    listTarget(blocks)
+  } blocs doivent être des "list" de deux à huit points, chacun tenant sur une ligne. Garde le même plan, le même contenu et le même volume. JSON compact sur une seule ligne.`;
 }
 
 const MIN_BLOCKS = 12;

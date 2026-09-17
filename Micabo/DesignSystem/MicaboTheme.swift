@@ -416,10 +416,19 @@ enum SheetTypography {
     static let blockSpacing: CGFloat = 14
     /// Espace au-dessus d'une énumération à puces.
     ///
-    /// Une liste est **la suite du paragraphe qui l'amène**, et non un bloc de plus : à onze
-    /// points, elle s'en détachait et se lisait comme un objet posé après. À six, elle reste
-    /// accrochée à sa phrase d'introduction.
-    static let spaceBeforeList: CGFloat = 6
+    /// Une liste est **la suite du paragraphe qui l'amène**, et non un bloc de plus : à
+    /// quatorze points, elle s'en détacherait et se lirait comme un objet posé après. Elle
+    /// reste accrochée à sa phrase d'introduction.
+    static let spaceBeforeList: CGFloat = 8
+
+    /// Espace **entre deux points** d'une même liste.
+    ///
+    /// C'est un réglage différent de celui du dessus, et les deux étaient confondus : chaque
+    /// point d'une liste est un paragraphe, donc tous recevaient les six points prévus pour
+    /// coller la liste à sa phrase d'introduction. Des puces serrées à six points forment un
+    /// bloc gris qu'on lit comme un paragraphe — exactement ce qu'une liste est censée
+    /// éviter. Une fiche se parcourt à l'œil : ses puces doivent se compter de loin.
+    static let listItemSpacing: CGFloat = 9
     /// Marge intérieure d'un objet encarté.
     static let objectPadding: CGFloat = 13
 

@@ -1384,8 +1384,24 @@ video {
   list-style: decimal;
 }
 
+/* **Deux espaces, et ils ne disent pas la même chose.**
+
+   Une liste est la suite du paragraphe qui l'amène, donc elle s'y colle : huit points, et non
+   les quatorze qui séparent deux blocs ordinaires. Ses points, eux, doivent se compter de
+   loin — à trois points d'écart ils forment un bloc gris qu'on lit comme un paragraphe, ce
+   qu'une liste est précisément censée éviter. Ce sont les valeurs de `spaceBeforeList` et
+   `listItemSpacing` sur l'iPhone. */
+.sheet-doc p + ul,
+.sheet-doc p + ol {
+  margin-top: calc(8px * var(--sheet-scale));
+}
+
 .sheet-doc li {
-  margin-top: calc(3px * var(--sheet-scale));
+  margin-top: calc(8px * var(--sheet-scale));
+}
+
+.sheet-doc li:first-child {
+  margin-top: 0;
 }
 
 .sheet-doc li::marker {

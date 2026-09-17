@@ -100,8 +100,12 @@ export const SHEET_LIMITS = {
    *
    * Le prompt le dit maintenant, et ce plafond le tient. Il ne réécrit rien : il coupe à une
    * **fin de phrase**, ce qui rend deux paragraphes dont chacun est de la prose valide.
+   *
+   * Il descend de cinq cents à trois cent vingt, la valeur que le prompt demande, plus une
+   * phrase de marge. Cinq cents laissait passer des blocs de onze lignes : sur un téléphone
+   * ça reste un pavé, et un pavé coupé en deux pavés n'est pas une fiche.
    */
-  paragraphChars: 500,
+  paragraphChars: 320,
 } as const;
 
 export function normalizeSheet(raw: unknown): SheetBlock[] {
