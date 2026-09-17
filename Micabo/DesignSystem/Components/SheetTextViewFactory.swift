@@ -75,11 +75,51 @@ class SheetMarkerLayoutManager: NSLayoutManager {
             return
         }
 
+        let widths = markedWidths(forCharacterRange: charRange)
+
         color.setFill()
         for index in 0..<rectCount {
-            let band = Self.band(in: rectArray[index], font: font)
+            var rect = rectArray[index]
+            // **La bande s'arrête au dernier mot, pas au bord de la colonne.**
+            //
+            // TextKit rend, pour chaque ligne d'un fond de texte, un rectangle qui court
+            // jusqu'à la fin du fragment de ligne, c'est-à-dire jusqu'à la marge. Sur un
+            // passage qui court sur trois lignes, les deux premières étaient donc surlignées
+            // jusqu'au bord même quand le dernier mot s'arrêtait bien avant : au rendu, une
+            // langue de couleur dépassait dans le blanc et le trait de feutre ressemblait à
+            // une sélection mal relâchée.
+            if index < widths.count, widths[index] > 0 {
+                rect.size.width = min(rect.width, widths[index])
+            }
+            let band = Self.band(in: rect, font: font)
             UIBezierPath(roundedRect: band, cornerRadius: Self.radius).fill()
         }
+    }
+
+    /// Ce que le passage marqué occupe **réellement** sur chaque ligne, dans l'ordre.
+    ///
+    /// Des largeurs et non des rectangles : les rectangles de `fillBackgroundRectArray` sont
+    /// déjà décalés par l'origine du dessin, ceux d'un parcours de fragments ne le sont pas,
+    /// et comparer les deux en absolu ferait dépendre le résultat de la position du texte
+    /// dans sa vue. Une largeur, elle, est la même dans les deux repères.
+    ///
+    /// La borne est la plus courte des deux : la fin des glyphes marqués, et la fin du texte
+    /// de la ligne. La seconde écarte l'espace de fin de ligne, qui appartient au passage
+    /// quand il s'y termine mais ne se voit pas.
+    private func markedWidths(forCharacterRange charRange: NSRange) -> [CGFloat] {
+        guard let container = textContainers.first else { return [] }
+        let glyphs = glyphRange(forCharacterRange: charRange, actualCharacterRange: nil)
+        guard glyphs.length > 0 else { return [] }
+
+        var widths: [CGFloat] = []
+        enumerateLineFragments(forGlyphRange: glyphs) { [weak self] _, used, _, lineGlyphs, _ in
+            guard let self else { return }
+            let shared = NSIntersectionRange(lineGlyphs, glyphs)
+            guard shared.length > 0 else { return }
+            let marked = self.boundingRect(forGlyphRange: shared, in: container)
+            widths.append(max(CGFloat(0), min(marked.maxX, used.maxX) - marked.minX))
+        }
+        return widths
     }
 
     /// La bande, dans le rectangle de ligne que TextKit propose.

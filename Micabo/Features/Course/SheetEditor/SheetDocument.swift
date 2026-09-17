@@ -154,11 +154,45 @@ enum SheetDocument {
     }
 
     /// Une formule posée seule : un paragraphe qui ne contient que sa pièce jointe.
+    ///
+    /// **Le résultat de la composition est lu**, et c'est tout l'objet de ce commentaire. Il
+    /// était ignoré : quand le moteur refusait le LaTeX — une commande qu'il ne connaît pas
+    /// suffit — la pièce jointe restait sans image, donc sans taille, et le paragraphe ne
+    /// contenait plus qu'un caractère invisible. Au rendu, une ligne vide et son air
+    /// au-dessus : un trou au milieu de la fiche, là où l'équation aurait dû être, et rien
+    /// pour dire qu'il manquait quelque chose.
+    ///
+    /// La formule en ligne, elle, lisait déjà ce résultat et retombait sur du texte
+    /// transposé. Le bloc fait maintenant pareil, et la légende le suit.
     static func formulaParagraph(latex: String, caption: String?) -> NSAttributedString {
         let attachment = SheetMathAttachment(latex: latex, caption: caption, isBlock: true)
-        attachment.render(fontSize: SheetTypography.formula * SheetPreferences.readingScale)
-        let result = NSMutableAttributedString(attachment: attachment)
-        result.addAttributes(baseAttributes(kind: .formula), range: NSRange(location: 0, length: result.length))
+        if attachment.render(fontSize: SheetTypography.formula * SheetPreferences.readingScale) {
+            let result = NSMutableAttributedString(attachment: attachment)
+            result.addAttributes(baseAttributes(kind: .formula), range: NSRange(location: 0, length: result.length))
+            return result
+        }
+
+        // Sans moteur, ou sur un LaTeX qu'il refuse : la formule reste lisible, transposée en
+        // Unicode, et garde son LaTeX en attribut pour que l'enregistrement ne le perde pas.
+        var attributes = baseAttributes(kind: .formula)
+        attributes[.font] = mathFont(size: SheetTypography.formula * SheetPreferences.readingScale)
+        attributes[mathKey] = latex
+        let result = NSMutableAttributedString(
+            string: FormulaRenderer.plain(latex),
+            attributes: attributes
+        )
+
+        // La légende sur la MÊME ligne, entre parenthèses, et pas sur la sienne : un
+        // paragraphe de plus se relirait comme un bloc de plus à l'enregistrement, et la
+        // fiche gagnerait un bloc à chaque ouverture. C'est la forme que `plainLines` donne
+        // déjà à une formule légendée.
+        if let caption = caption?.nilIfBlank {
+            var legend = attributes
+            legend.removeValue(forKey: mathKey)
+            legend[.font] = MicaboFont.uiFont(SheetTypography.caption * SheetPreferences.readingScale)
+            legend[.foregroundColor] = UIColor(MicaboColor.inkTertiary)
+            result.append(NSAttributedString(string: " (\(caption))", attributes: legend))
+        }
         return result
     }
 

@@ -1280,10 +1280,10 @@ video {
      Toute l'échelle en dépend, corps comme titres : agrandir le seul corps rapprocherait
      les titres du texte et effacerait le plan. */
   --sheet-scale: 1;
-  /* La teinte du cours, posée par le lecteur. Elle ne sert qu'aux titres de partie et à la
-     capsule qui les précède : c'est elle qui donne son rythme à une page qu'on feuillette.
-     Sans teinte fournie, on retombe sur l'encre — un titre reste un titre. */
-  --sheet-tint: var(--color-ink);
+  /* La teinte du cours voyage par `--sheet-tint`, et elle n'est **pas** déclarée ici : une
+     déclaration sur l'élément l'emporte sur l'héritage, et l'en-tête du chapitre, qui est
+     au-dessus du document, ne pourrait plus la lire. Chaque usage porte donc son repli —
+     sans teinte fournie, on retombe sur l'encre, et un titre reste un titre. */
   font-size: calc(15px * var(--sheet-scale));
   line-height: 1.75;
 }
@@ -1313,7 +1313,7 @@ video {
      simplement sur le papier de la nuit. Mélanger la teinte à `--color-ink`, qui bascule
      avec le thème, la fonce sur le papier clair et l'éclaircit sur le papier sombre : une
      seule règle, juste sur les trois apparences, sans rien calculer en JavaScript. */
-  color: color-mix(in oklab, var(--sheet-tint) 70%, var(--color-ink) 30%);
+  color: color-mix(in oklab, var(--sheet-tint, var(--color-ink)) 70%, var(--color-ink) 30%);
 }
 
 /* La capsule teintée d'un titre de partie : le même signe que celui dessiné par
@@ -1325,7 +1325,7 @@ video {
   width: 26px;
   height: 3px;
   border-radius: 1.5px;
-  background-color: var(--sheet-tint);
+  background-color: var(--sheet-tint, var(--color-ink));
   margin-bottom: calc(7px * var(--sheet-scale));
 }
 

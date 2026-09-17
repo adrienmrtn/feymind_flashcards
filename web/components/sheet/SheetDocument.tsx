@@ -734,10 +734,7 @@ function Chapter({
     // Le filet sépare les chapitres, et il appartient donc à la section : posé sur le
     // bouton, son `first:` aurait désigné la première position **dans** la section, où le
     // bouton se trouve toujours, et aucun chapitre n'aurait eu de filet.
-    <section
-      data-chapter={chapter.index}
-      className="scroll-mt-24 border-t border-hairline-on-canvas first:border-t-0"
-    >
+    <section data-chapter={chapter.index} className="scroll-mt-24" style={style}>
       {preamble ? null : (
         <button
           type="button"
@@ -757,9 +754,26 @@ function Chapter({
             </span>
           </span>
 
+          {/* **Le même titre que dans le texte, au point près.** Il était en encre pleine
+              ici et en teinte du cours dans le document : déplier un chapitre faisait
+              changer son titre de couleur sous les yeux. La capsule vient avec, comme le
+              `::before` de `.sheet-doc h1`. */}
           {folded ? (
-            <span className="text-[22px] font-bold leading-tight tracking-[-0.2px] text-ink">
-              {chapter.title}
+            <span className="block">
+              <span
+                aria-hidden
+                className="mb-[7px] block h-[3px] w-[26px] rounded-full"
+                style={{ backgroundColor: "var(--sheet-tint, var(--color-ink))" }}
+              />
+              <span
+                className="text-[22px] font-bold leading-tight tracking-[-0.2px]"
+                style={{
+                  color:
+                    "color-mix(in oklab, var(--sheet-tint, var(--color-ink)) 70%, var(--color-ink) 30%)",
+                }}
+              >
+                {chapter.title}
+              </span>
             </span>
           ) : null}
         </button>

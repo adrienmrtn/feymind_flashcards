@@ -423,13 +423,14 @@ struct CourseSheetView: View {
     private var content: some View {
         if !chapters.isEmpty {
             LazyVStack(alignment: .leading, spacing: 0) {
+                // **Pas de filet entre les chapitres.**
+                //
+                // Il y en avait un, sur toute la largeur, et la capsule teintée d'un titre de
+                // partie arrive vingt points plus bas : deux barres horizontales coup sur
+                // coup, dont une qui ne dit rien que l'air ne disait déjà. L'air et la
+                // capsule séparent les parties ; un filet en plus les encadre, et une fiche
+                // encadrée redevient une brochure.
                 ForEach(chapters) { chapter in
-                    if chapter.index > 0 {
-                        Rectangle()
-                            .fill(MicaboColor.hairlineOnCanvas)
-                            .frame(height: 1)
-                    }
-
                     SheetChapterView(
                         chapter: chapter,
                         number: partNumber(of: chapter),
@@ -639,12 +640,23 @@ struct CourseSheetView: View {
     /// est à la lecture.
     private func readScroll(_ metrics: SheetScrollMetrics, viewport: CGFloat) {
         let offset = metrics.top
-        let atTop = offset > -90
+        // **Dix points, et pas quatre-vingt-dix.**
+        //
+        // Le seuil décidait de deux choses à la fois, et il n'était bon que pour l'une : il
+        // fallait beaucoup de défilement avant que l'en-tête collant ne vienne, et pendant
+        // ces quatre-vingt-dix points le texte passait sous la barre d'état, par-dessus
+        // l'heure et le réseau, sans rien derrière lui. La matière arrive maintenant dès que
+        // la page a bougé.
+        let atTop = offset > -10
         let atBottom = viewport > 0 && metrics.height + offset <= viewport + 60
 
         if showSticky == atTop {
             withAnimation(.easeOut(duration: 0.18)) { showSticky = !atTop }
         }
+
+        // La barre d'action, elle, garde sa marge : elle ne doit pas réapparaître au moindre
+        // frémissement du pouce en haut de la fiche.
+        let nearTop = offset > -90
 
         var bar = showBar
         let delta = offset - lastOffset
@@ -654,7 +666,7 @@ struct CourseSheetView: View {
             bar = delta > 0
             lastOffset = offset
         }
-        if atTop || atBottom { bar = true }
+        if nearTop || atBottom { bar = true }
         if bar != showBar {
             withAnimation(.easeOut(duration: 0.2)) { showBar = bar }
         }
