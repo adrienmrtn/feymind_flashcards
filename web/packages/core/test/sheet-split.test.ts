@@ -19,6 +19,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   SHEET_LIMITS,
+  collapseRepeatedFormula,
+  normalizeFormula,
   normalizeSheet,
   restoreLatexCommands,
   splitParagraph,
@@ -174,6 +176,72 @@ describe("restoreLatexCommands", () => {
   });
 });
 
+/** L'équation de la photosynthèse, telle que le modèle l'écrit quand il va bien. */
+const PHOTOSYNTHESE = "6 CO_2 + 12 H_2O \\xrightarrow{Light Energy} C_6H_{12}O_6 + 6 O_2 + 6 H_2O";
+
+describe("la formule, ramenée à ce qui se compose", () => {
+  it("garde une seule occurrence d'une équation que le modèle a bouclée", () => {
+    // Relevé tel quel : quatorze fois l'équation dans un seul bloc, sans séparateur.
+    const boucle = PHOTOSYNTHESE.repeat(14);
+    expect(collapseRepeatedFormula(boucle)).toBe(PHOTOSYNTHESE);
+  });
+
+  it("garde une seule occurrence même quand la dernière est tronquée", () => {
+    // C'est la limite de jetons qui arrête le modèle, pas la fin d'une répétition.
+    const coupe = PHOTOSYNTHESE.repeat(3) + PHOTOSYNTHESE.slice(0, 20);
+    expect(collapseRepeatedFormula(coupe)).toBe(PHOTOSYNTHESE);
+  });
+
+  it("ne touche pas à une formule qui ne se répète pas", () => {
+    expect(collapseRepeatedFormula(PHOTOSYNTHESE)).toBe(PHOTOSYNTHESE);
+    expect(collapseRepeatedFormula("C_6H_{12}O_6")).toBe("C_6H_{12}O_6");
+  });
+
+  it("ne prend pas une somme pour une boucle", () => {
+    // `x_1 + x_1 + …` a un motif, court, et c'est une formule parfaitement légitime. Le
+    // plancher de vingt caractères et les trois répétitions exigées l'épargnent.
+    const somme = "x_1 + x_1 + x_1 + x_1 + x_1 + x_1 + x_1 + x_1";
+    expect(collapseRepeatedFormula(somme)).toBe(somme);
+    expect(collapseRepeatedFormula("a + a + b + a + a + b + a + a + b")).toBe(
+      "a + a + b + a + a + b + a + a + b",
+    );
+  });
+
+  it("rend la flèche étiquetée composable, et sauve l'étiquette", () => {
+    const rendu = normalizeFormula(PHOTOSYNTHESE, "Overall equation");
+
+    expect(rendu?.latex).toBe("6 CO_2 + 12 H_2O \\rightarrow C_6H_{12}O_6 + 6 O_2 + 6 H_2O");
+    expect(rendu?.latex.includes("xrightarrow")).toBe(false);
+    // L'étiquette dit quelque chose de la réaction : elle descend dans la légende.
+    expect(rendu?.caption).toBe("Overall equation · Light Energy");
+  });
+
+  it("garde l'étiquette même sans légende", () => {
+    expect(normalizeFormula(PHOTOSYNTHESE)?.caption).toBe("Light Energy");
+  });
+
+  it("écarte ce qui n'est plus une formule", () => {
+    // Long, et sans période : un paragraphe écrit en LaTeX, pas une formule.
+    const pave = Array.from({ length: 60 }, (_, index) => `a_{${index}}`).join(" + ");
+    expect(pave.length).toBeGreaterThan(SHEET_LIMITS.formulaChars);
+    expect(normalizeFormula(pave)).toBeNull();
+    expect(normalizeFormula("x")).toBeNull();
+  });
+
+  it("répare le bloc au moment de normaliser la fiche", () => {
+    const blocks = normalizeSheet({
+      blocks: [{ type: "formula", latex: PHOTOSYNTHESE.repeat(14), caption: "Bilan" }],
+    });
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatchObject({
+      type: "formula",
+      latex: "6 CO_2 + 12 H_2O \\rightarrow C_6H_{12}O_6 + 6 O_2 + 6 H_2O",
+      caption: "Bilan · Light Energy",
+    });
+  });
+});
+
 /**
  * Le plafond vit dans trois fichiers, et un plafond appliqué d'un seul côté donne deux
  * découpages pour une seule fiche. Le Swift ne s'exécute pas d'ici : on lit sa constante.
@@ -195,6 +263,20 @@ describe("le plafond du paragraphe, des deux côtés", () => {
 
   it("rend aussi son antislash à une commande LaTeX enregistrée", () => {
     expect(swift).toContain("static func restoringLatexCommands");
-    expect(swift).toContain("SheetText.restoringLatexCommands(trimmed)");
+    expect(swift).toContain("restoringLatexCommands(latex)");
+  });
+
+  /**
+   * Une fiche enregistrée avant ce correctif porte encore la boucle et le `\xrightarrow`
+   * dans sa base locale : le serveur ne la relira jamais, l'iPhone la relit à chaque
+   * ouverture. La réparation doit donc exister des deux côtés, sinon la même fiche s'affiche
+   * autrement selon l'appareil.
+   */
+  it("ramène la formule à ce qui se compose, du même côté du plafond", () => {
+    expect(SHEET_LIMITS.formulaChars).toBe(240);
+    expect(swift).toContain(`static let formulaChars = ${SHEET_LIMITS.formulaChars}`);
+    expect(swift).toContain("static func collapsingRepeatedFormula");
+    expect(swift).toContain("static func normalizedFormula");
+    expect(swift).toContain("SheetText.normalizedFormula(trimmed, caption: caption)");
   });
 });
