@@ -263,7 +263,8 @@ enum SheetBlock: Codable, Equatable, Sendable {
 
         case .formula:
             let raw = (try? container.decode(String.self, forKey: .latex)) ?? text
-            let latex = raw.trimmingCharacters(in: CharacterSet(charactersIn: "$ \n"))
+            let trimmed = raw.trimmingCharacters(in: CharacterSet(charactersIn: "$ \n"))
+            let latex = SheetText.restoringLatexCommands(trimmed)
             guard latex.count >= 2 else { return [] }
             return [.formula(latex: latex, caption: caption)]
 
@@ -511,6 +512,42 @@ enum SheetText {
             result = result.replacingOccurrences(of: "  ", with: " ")
         }
         return result.trimmingCharacters(in: .whitespacesAndNewlines).nilIfBlank
+    }
+
+    /// **Rend son antislash à une commande LaTeX déjà enregistrée.**
+    ///
+    /// Le mal est réparé à la lecture du modèle, côté serveur, mais les fiches écrites avant
+    /// portent la cicatrice : `\rightarrow` mal échappé est une échappée JSON **valide**,
+    /// donc `2H_2O\rightarrow4H^+` a été enregistré comme un retour chariot suivi de
+    /// « ightarrow ». Rien ne le signale, et l'équation s'affiche amputée de sa flèche.
+    ///
+    /// Un caractère de contrôle collé à une lettre n'a aucun sens dans une formule : il n'y a
+    /// donc rien à deviner. Les cinq concernés sont exactement les cinq échappées JSON d'une
+    /// seule lettre qui commencent aussi des commandes courantes.
+    ///
+    /// Jumeau de `restoreLatexCommands` dans `supabase/functions/_shared/sheet.ts`.
+    static func restoringLatexCommands(_ latex: String) -> String {
+        let commands: [Character: Character] = [
+            "\u{08}": "b",
+            "\u{0C}": "f",
+            "\n": "n",
+            "\r": "r",
+            "\t": "t"
+        ]
+        let characters = Array(latex)
+        var out = ""
+        for (index, character) in characters.enumerated() {
+            let followed = index + 1 < characters.count
+                && characters[index + 1].isASCII
+                && characters[index + 1].isLetter
+            if let command = commands[character], followed {
+                out.append("\\")
+                out.append(command)
+            } else {
+                out.append(character)
+            }
+        }
+        return out
     }
 
     /// **Un paragraphe trop long, coupé à une fin de phrase.**
