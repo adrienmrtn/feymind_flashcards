@@ -17,6 +17,7 @@ struct MicaboApp: App {
     @State private var pro: ProAccess
     @State private var uiLocale = UiLocaleStore()
     @State private var appearance = AppearanceStore.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     private static let schema = Schema([Course.self, CourseFolder.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self])
 
@@ -40,6 +41,10 @@ struct MicaboApp: App {
             email: { auth.user?.email }
         ))
         SupabaseFunctions.accessToken = { await auth.validAccessToken() }
+        // Les statistiques partent avec le jeton du compte quand il y en a un, et sous la
+        // clé publique sinon : le parcours d'accueil se mesure **avant** qu'il y ait
+        // quelqu'un de connecté, et c'est justement la moitié qui intéresse.
+        Analytics.accessToken = { await auth.validAccessToken() }
     }
 
     var body: some Scene {
@@ -57,6 +62,18 @@ struct MicaboApp: App {
                 .environment(appearance)
                 .environment(\.locale, uiLocale.locale.foundation)
                 .preferredColorScheme(appearance.appearance.colorScheme)
+                // Avant le reste de la tâche : ouvrir la session de statistiques est
+                // quelques microsecondes, et tout ce qui suit peut vouloir tracer.
+                .onAppear { Analytics.start() }
+                // Vider la file en partant à l'arrière-plan, et l'écrire sur disque : c'est
+                // le seul moment où l'on sait que l'app risque de ne pas revenir.
+                .onChange(of: scenePhase) { _, phase in
+                    switch phase {
+                    case .background: Analytics.flushForBackground()
+                    case .active: Analytics.enterForeground()
+                    default: break
+                    }
+                }
                 .task {
                     #if DEBUG
                     // Un vrai cours en PDF, posé au premier lancement d'une construction de
@@ -96,6 +113,7 @@ struct MicaboApp: App {
                 // c'est ici qu'on apprend qu'il y a un compte. Sans elle, se connecter
                 // depuis le parcours n'apportait ses cours qu'au lancement suivant.
                 .onChange(of: auth.user?.id) { _, userID in
+                    Analytics.account(changedTo: userID)
                     Task {
                         await PurchasesBridge.identify(userID)
                         await pro.refresh()

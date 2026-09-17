@@ -546,8 +546,15 @@ struct StudyView: View {
     private func start() {
         guard !didStart else { return }
         didStart = true
+        // Résolu une seule fois : `resolveCards` peut déclencher une lecture SwiftData, et
+        // la relire pour compter aurait fait payer la statistique au démarrage de session.
+        let cards = resolveCards()
+        Analytics.track(.reviewStarted, [
+            "mode": .text(String(describing: mode)),
+            "cards": .number(Double(cards.count)),
+        ])
         session.start(
-            with: resolveCards(),
+            with: cards,
             context: modelContext,
             mode: mode,
             sourceKey: source.persistenceKey,
@@ -653,6 +660,10 @@ struct StudyView: View {
     /// Fermer en cours de route ne perd rien : le planning encore en mémoire est
     /// posé ici, à l'instant où plus personne n'attend une carte.
     private func finish() {
+        Analytics.track(.reviewFinished, [
+            "mode": .text(String(describing: mode)),
+            "answered": .number(Double(session.answeredCount)),
+        ])
         session.end()
 
         if isEmbedded {

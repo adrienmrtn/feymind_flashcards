@@ -177,7 +177,10 @@ struct ImportView: View {
                 }
                 .ignoresSafeArea()
             }
-            .onAppear { cameraStatus = CameraAccess.status }
+            .onAppear {
+                cameraStatus = CameraAccess.status
+                Analytics.track(.importOpened, ["kind": .text(kind.rawValue)])
+            }
             .onChange(of: scenePhase) { _, phase in
                 guard phase == .active else { return }
                 cameraStatus = CameraAccess.status
@@ -773,6 +776,14 @@ struct ImportView: View {
     private func applyImported(_ document: ImportedDocument) {
         imported = document
         if title.isEmpty { title = document.fileName }
+        // Le document est lu : c'est le cran entre « a ouvert l'import » et « a lancé la
+        // génération », et c'est là que se perdent les PDF illisibles. La longueur part
+        // avec, en caractères — jamais le texte.
+        Analytics.track(.importDocumentRead, [
+            "source": .text(document.source.rawValue),
+            "chars": .number(Double(document.text.count)),
+            "pages": .number(Double(document.pageImages.count)),
+        ])
         // Une fiche extraite d'un PDF ou d'une photo sans les pages ne peut pas recadrer
         // les schémas. La passe visuelle coûte un appel, et c'est le prix d'une figure
         // réelle plutôt que d'un dessin inventé.
@@ -915,6 +926,10 @@ struct ImportView: View {
             canEnableVision: supportsVisionAnalysis && !analyzeVisuals,
             kind: kind
         ) {
+            Analytics.track(.courseGenerationFailed, [
+                "source": .text(source.rawValue),
+                "reason": "texte_illisible",
+            ])
             failure = unreadable
             return
         }
@@ -926,12 +941,24 @@ struct ImportView: View {
                rawText: rawText,
                in: modelContext
            ) {
+            Analytics.track(.courseGenerationFailed, [
+                "source": .text(source.rawValue),
+                "reason": "doublon",
+            ])
             duplicate = existing
             return
         }
 
         isGenerating = true
         defer { isGenerating = false }
+
+        Analytics.track(.courseGenerationStarted, [
+            "source": .text(source.rawValue),
+            "offline": .flag(offline),
+            "vision": .flag(!images.isEmpty),
+            "length": .text(sheetFormat.rawValue),
+            "chars": .number(Double(rawText.count)),
+        ])
 
         let request = CourseGenerationRequest(
             rawText: rawText,
@@ -965,6 +992,10 @@ struct ImportView: View {
                 // couche réseau a déjà traduit l'annulation en panne ordinaire, d'où ce test
                 // sur la tâche plutôt que sur l'erreur.
                 if Task.isCancelled { return }
+                Analytics.track(.courseGenerationFailed, [
+                    "source": .text(source.rawValue),
+                    "reason": "modele",
+                ])
                 failure = ImportFailure(
                     title: L10n.t("ios.err.analysisFailed", locale: .resolved()),
                     message: "\(describe(error)) \(L10n.t("ios.err.notImported", locale: .resolved()))",
@@ -986,8 +1017,19 @@ struct ImportView: View {
                 visibility: visibility.asChoice,
                 in: modelContext
             )
+            // Le seul événement qui compte vraiment de tout cet écran : tout ce qui
+            // précède n'est qu'une tentative.
+            Analytics.track(.courseImported, [
+                "source": .text(source.rawValue),
+                "offline": .flag(offline),
+                "chars": .number(Double(rawText.count)),
+            ])
             onCreated(course)
         } catch {
+            Analytics.track(.courseGenerationFailed, [
+                "source": .text(source.rawValue),
+                "reason": "enregistrement",
+            ])
             failure = ImportFailure(
                 title: L10n.t("ios.err.saveFailed", locale: .resolved()),
                 message: "\(describe(error)) \(L10n.t("ios.err.retrySoon", locale: .resolved()))",
@@ -997,6 +1039,7 @@ struct ImportView: View {
     }
 
     private func report(_ error: Error, title: String) {
+        Analytics.track(.importDocumentFailed, ["kind": .text(kind.rawValue)])
         failure = ImportFailure(title: title, message: describe(error), recovery: .none)
     }
 

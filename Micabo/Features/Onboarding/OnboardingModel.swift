@@ -9,7 +9,16 @@ final class OnboardingModel {
 
     /// Le palier d'études, dans les termes du pays choisi. Il n'est proposé qu'après le
     /// pays, faute de quoi il n'y aurait rien de juste à proposer.
-    var stage: EducationStage?
+    ///
+    /// Le `didSet` marque la réponse plutôt que l'écran : « a vu l'écran du palier » et
+    /// « a choisi un palier » sont deux chiffres différents, et c'est leur écart qui dit
+    /// qu'une liste de choix ne parle pas.
+    var stage: EducationStage? {
+        didSet {
+            guard let stage, stage != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "stage", "value": .text(stage.id)])
+        }
+    }
     private(set) var country: SchoolingCountry = .guessed()
     /// Le pays nommé à la main, quand la réponse est « Autre pays ». Il n'a de sens que dans
     /// ce cas-là, et il est effacé dès qu'on revient sur une pastille.
@@ -26,9 +35,19 @@ final class OnboardingModel {
     /// dessous du barème » : c'est le seul cran hors échelle, et il existe parce qu'un
     /// parcours qui ne propose que la moyenne et au-dessus dit à celui qui rame qu'il n'est
     /// pas prévu.
-    var currentScore: Int?
+    var currentScore: Int? {
+        didSet {
+            guard let currentScore, currentScore != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "currentScore", "value": .number(Double(currentScore))])
+        }
+    }
     /// La moyenne visée. Toujours au-dessus de l'actuelle.
-    var targetScore: Int?
+    var targetScore: Int? {
+        didSet {
+            guard let targetScore, targetScore != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "targetScore", "value": .number(Double(targetScore))])
+        }
+    }
     /// Le registre de rédaction, seule forme sous laquelle le niveau sort du parcours.
     var level: StudyLevel? {
         stage?.level
@@ -58,6 +77,7 @@ final class OnboardingModel {
         // Repartir sur une pastille efface le pays tapé à la main : le garder ferait dire à
         // l'écran « France » et « Brésil » en même temps.
         if newCountry != .other { customCountry = nil }
+        Analytics.track(.onboardingAnswer, ["field": "country", "value": .text(newCountry.rawValue)])
     }
 
     /// Vrai quand la question du pays a une réponse complète. « Autre pays » n'en est une

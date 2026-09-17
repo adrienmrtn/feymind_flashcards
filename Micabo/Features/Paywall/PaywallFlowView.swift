@@ -55,6 +55,12 @@ struct PaywallFlowView: View {
 
     @State private var stage: Stage = .offer
     @State private var isPurchasing = false
+    /// Quand le paywall s'est ouvert, et s'il a abouti. Les deux servent la même ligne :
+    /// un paywall refermé en deux secondes et un paywall lu pendant une minute ne se
+    /// corrigent pas de la même façon, et un paywall qui a vendu ne se compte pas comme
+    /// une fermeture.
+    @State private var openedAt = Date()
+    @State private var didSubscribe = false
     /// Ce que la boutique n'a pas pu faire. Un bouton qui ne répond rien passe pour cassé.
     @State private var failure: String?
 
@@ -88,6 +94,20 @@ struct PaywallFlowView: View {
         // Le lancement les a déjà demandés ; on repasse ici parce qu'un premier appel
         // tombé sans réseau laisserait ce paywall-là sur les prix de la France.
         .task { await PaywallPurchases.refreshPrices() }
+        .onAppear {
+            openedAt = Date()
+            Analytics.track(.paywallOpened, ["trigger": .text(trigger?.rawValue ?? "inconnu")])
+        }
+        // `onDisappear` et non le bouton de fermeture : la feuille se referme aussi d'un
+        // balayage, et une sortie qui ne se compte pas fait un entonnoir qui fuit.
+        .onDisappear {
+            guard !didSubscribe else { return }
+            Analytics.track(.paywallDismissed, [
+                "trigger": .text(trigger?.rawValue ?? "inconnu"),
+                "stage": .text(stage == .plans ? "plans" : "offre"),
+                "seconds": .number((Date().timeIntervalSince(openedAt) * 10).rounded() / 10),
+            ])
+        }
         .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(failure != nil)) {
             Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { failure = nil }
         } message: {
@@ -98,6 +118,7 @@ struct PaywallFlowView: View {
     private func showPlans() {
         guard stage != .plans else { return }
         stage = .plans
+        Analytics.track(.paywallPlansSeen, ["trigger": .text(trigger?.rawValue ?? "inconnu")])
     }
 
     /// **Seul un achat confirmé ouvre l'app.** `unavailable` veut dire « je n'ai pas pu
@@ -110,21 +131,37 @@ struct PaywallFlowView: View {
         guard !isPurchasing else { return }
         isPurchasing = true
         failure = nil
+        Analytics.track(.paywallPurchaseStarted, [
+            "trigger": .text(trigger?.rawValue ?? "inconnu"),
+            "plan": .text(plan.productID),
+        ])
 
         let outcome = await PaywallPurchases.buy(plan)
         isPurchasing = false
 
         switch outcome {
         case .purchased:
+            didSubscribe = true
+            Analytics.track(.paywallPurchased, [
+                "trigger": .text(trigger?.rawValue ?? "inconnu"),
+                "plan": .text(plan.productID),
+            ])
             pro?.unlock()
             Haptics.success()
             onSubscribed()
         case .unavailable:
+            // Le motif distingue « la boutique a dit non » de « la boutique n'a pas
+            // répondu » : le premier est un problème d'offre, le second de configuration,
+            // et confondre les deux fait chercher au mauvais endroit.
+            Analytics.track(.paywallPurchaseFailed, [
+                "plan": .text(plan.productID),
+                "reason": .text(PaywallPurchases.isReady ? "refus" : "boutique_fermee"),
+            ])
             failure = PaywallPurchases.isReady
                 ? L10n.t("ios.paywallBuyFail", locale: .resolved())
                 : L10n.t("ios.paywallNotOpen", locale: .resolved())
         case .cancelled:
-            break
+            Analytics.track(.paywallPurchaseCancelled, ["plan": .text(plan.productID)])
         }
     }
 
@@ -142,6 +179,8 @@ struct PaywallFlowView: View {
             failure = L10n.t("ios.paywallNoRestore", locale: .resolved())
             return
         }
+        didSubscribe = true
+        Analytics.track(.paywallRestored)
         pro?.unlock()
         Haptics.success()
         onSubscribed()
