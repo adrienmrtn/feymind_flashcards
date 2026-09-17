@@ -34,11 +34,17 @@ export function extractJSONCandidate(output: string): string {
 
 export function parseModelJSON<T>(output: string): T {
   const candidate = extractJSONCandidate(output);
+  // **La réparation du LaTeX passe en premier**, et c'est tout l'objet de son commentaire :
+  // un JSON qui porte du LaTeX mal échappé est souvent un JSON *valide*, donc la tentative
+  // brute réussissait et rendait un texte abîmé sans que rien ne le signale.
+  const latex = repairLatexEscapes(candidate);
   const attempts = [
+    latex,
     candidate,
+    repairModelJSON(latex),
     repairModelJSON(candidate),
-    closeOpenStructures(candidate),
-    closeOpenStructures(repairModelJSON(candidate)),
+    closeOpenStructures(latex),
+    closeOpenStructures(repairModelJSON(latex)),
   ];
 
   let lastError: Error = new Error("JSON invalide.");
@@ -50,6 +56,87 @@ export function parseModelJSON<T>(output: string): T {
     }
   }
   throw lastError;
+}
+
+/**
+ * **Rend son antislash à une commande LaTeX.**
+ *
+ * Le prompt demande de les doubler ; le modèle ne le fait pas toujours. Et quand il ne le
+ * fait pas, le JSON reste le plus souvent **valide** — c'est ce qui rend la faute si longue
+ * à voir. `\r`, `\n`, `\t`, `\b` et `\f` sont des échappées JSON légitimes, et ce sont
+ * aussi les premières lettres de `\rightarrow`, `\nabla`, `\times`, `\beta`, `\frac`.
+ * `JSON.parse` réussit donc du premier coup et rend un retour chariot suivi de
+ * « ightarrow » : sur la fiche, l'équation de la photolyse de l'eau s'affichait
+ * « 2H₂O ightarrow 4H⁺ », et la réparation de `repairModelJSON`, qui ne se déclenche que
+ * sur un JSON refusé, n'était jamais atteinte.
+ *
+ * ## Là où l'antislash est du LaTeX, et nulle part ailleurs
+ *
+ * Doubler tous les antislashs abîmerait le texte : un `\n` écrit dans un paragraphe est un
+ * saut de ligne, et il deviendrait deux caractères lisibles au milieu d'une phrase. Or le
+ * prompt ne place du LaTeX qu'à deux endroits, et cette réparation ne regarde que ceux-là :
+ * la valeur d'un champ `latex`, et ce qui se trouve entre deux `$` dans n'importe quelle
+ * chaîne. Partout ailleurs, un antislash garde le sens que JSON lui donne.
+ *
+ * `\uXXXX` est épargné, parce que `u` est une lettre et que la séquence est une vraie
+ * échappée ; `\\` aussi, parce que le modèle a déjà fait ce qu'on lui demandait.
+ */
+export function repairLatexEscapes(source: string): string {
+  let out = "";
+  let index = 0;
+
+  while (index < source.length) {
+    if (source[index] !== "\"") {
+      out += source[index];
+      index += 1;
+      continue;
+    }
+
+    // Une chaîne s'ouvre. Ce qui précède dit si c'est la valeur d'un champ `latex`.
+    const isLatexValue = /"latex"\s*:\s*$/.test(out);
+    let inMath = false;
+    out += "\"";
+    index += 1;
+
+    while (index < source.length) {
+      const ch = source[index];
+
+      if (ch === "\\") {
+        const next = source[index + 1] ?? "";
+        if (next === "\\") {
+          out += "\\\\";
+          index += 2;
+          continue;
+        }
+        if (next === "u" && /^[0-9a-fA-F]{4}$/.test(source.slice(index + 2, index + 6))) {
+          out += source.slice(index, index + 6);
+          index += 6;
+          continue;
+        }
+        if ((isLatexValue || inMath) && /[A-Za-z]/.test(next)) {
+          out += "\\\\" + next;
+          index += 2;
+          continue;
+        }
+        out += ch + next;
+        index += 2;
+        continue;
+      }
+
+      if (ch === "$") inMath = !inMath;
+
+      if (ch === "\"") {
+        out += ch;
+        index += 1;
+        break;
+      }
+
+      out += ch;
+      index += 1;
+    }
+  }
+
+  return out;
 }
 
 /** Répare les fautes que les modèles font le plus souvent dans un JSON. */

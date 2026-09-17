@@ -17,7 +17,12 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { SHEET_LIMITS, normalizeSheet, splitParagraph } from "../src/sheet/canonical";
+import {
+  SHEET_LIMITS,
+  normalizeSheet,
+  restoreLatexCommands,
+  splitParagraph,
+} from "../src/sheet/canonical";
 
 /** Huit phrases d'environ quatre-vingt-dix caractères : le pavé type d'une fiche. */
 const PAVE = [
@@ -129,6 +134,47 @@ describe("la fiche normalisée", () => {
 });
 
 /**
+ * **La cicatrice des fiches déjà écrites.**
+ *
+ * `\rightarrow` mal échappé est une échappée JSON *valide* : `JSON.parse` réussissait et
+ * rendait un retour chariot suivi de « ightarrow ». Les fiches de cette époque sont en base,
+ * et personne ne va les réécrire.
+ */
+describe("restoreLatexCommands", () => {
+  it("rend sa flèche à une équation enregistrée de travers", () => {
+    expect(restoreLatexCommands("2H_2O\rightarrow 4H^+")).toBe("2H_2O\\rightarrow 4H^+");
+  });
+
+  it("rend les cinq échappées d'une seule lettre", () => {
+    expect(restoreLatexCommands("\frac{a}{b}")).toBe("\\frac{a}{b}");
+    expect(restoreLatexCommands("\times")).toBe("\\times");
+    expect(restoreLatexCommands("\beta")).toBe("\\beta");
+    expect(restoreLatexCommands("\nabla")).toBe("\\nabla");
+    expect(restoreLatexCommands("\bH")).toBe("\\bH");
+  });
+
+  it("ne touche pas à une formule saine", () => {
+    const saine = "6 CO_2 + 12 H_2O \\rightarrow C_6H_{12}O_6 + 6 O_2";
+    expect(restoreLatexCommands(saine)).toBe(saine);
+  });
+
+  it("laisse un caractère de contrôle qui ne précède pas une lettre", () => {
+    // Il ne commence alors aucune commande : le restituer inventerait un antislash.
+    expect(restoreLatexCommands("a\n 2")).toBe("a\n 2");
+    expect(restoreLatexCommands("a\n")).toBe("a\n");
+  });
+
+  it("répare la formule au moment de normaliser la fiche", () => {
+    const blocks = normalizeSheet({
+      blocks: [{ type: "formula", latex: "2H_2O\rightarrow 4H^+ + 4e^- + O_2" }],
+    });
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatchObject({ type: "formula", latex: "2H_2O\\rightarrow 4H^+ + 4e^- + O_2" });
+  });
+});
+
+/**
  * Le plafond vit dans trois fichiers, et un plafond appliqué d'un seul côté donne deux
  * découpages pour une seule fiche. Le Swift ne s'exécute pas d'ici : on lit sa constante.
  */
@@ -145,5 +191,10 @@ describe("le plafond du paragraphe, des deux côtés", () => {
 
   it("y est appliqué par le même découpage", () => {
     expect(swift).toContain("SheetText.split(text).map { .paragraph(text: $0) }");
+  });
+
+  it("rend aussi son antislash à une commande LaTeX enregistrée", () => {
+    expect(swift).toContain("static func restoringLatexCommands");
+    expect(swift).toContain("SheetText.restoringLatexCommands(trimmed)");
   });
 });

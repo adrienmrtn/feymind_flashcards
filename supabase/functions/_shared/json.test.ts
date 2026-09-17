@@ -138,3 +138,44 @@ describe("closeOpenStructures", () => {
     assert.equal(parsed.sheet.blocks[0].type, "paragraph");
   });
 });
+
+describe("l'antislash du LaTeX", () => {
+  it("survit au décodage d'une échappée JSON valide", () => {
+    // **Le cas qui ne se voyait pas.** `\r` est une échappée JSON légitime : le JSON
+    // ci-dessous se lit sans erreur et rendait un retour chariot suivi de « ightarrow ».
+    // Sur la fiche, l'équation de la photolyse s'affichait « 2H₂O ightarrow 4H⁺ ».
+    const rendu = parseModelJSON<{ blocks: { latex: string }[] }>(
+      '{"blocks":[{"type":"formula","latex":"2H_2O\\rightarrow 4H^+ + 4e^- + O_2"}]}',
+    );
+    assert.equal(rendu.blocks[0].latex, "2H_2O\\rightarrow 4H^+ + 4e^- + O_2");
+  });
+
+  it("rend les cinq échappées d'une lettre à leurs commandes", () => {
+    // `\b`, `\f`, `\n`, `\r`, `\t` sont les cinq échappées JSON d'une seule lettre, et ce
+    // sont aussi les initiales des commandes les plus courantes.
+    const rendu = parseModelJSON<{ blocks: { latex: string }[] }>(
+      '{"blocks":[{"latex":"\\frac{a}{b} \\times \\beta \\nabla"}]}',
+    );
+    assert.equal(rendu.blocks[0].latex, "\\frac{a}{b} \\times \\beta \\nabla");
+  });
+
+  it("répare entre deux dollars, et laisse le texte tranquille", () => {
+    const rendu = parseModelJSON<{ blocks: { text: string }[] }>(
+      '{"blocks":[{"text":"La variation $\\Delta G < 0$ et le taux $\\theta$ comptent.\\nLa suite."}]}',
+    );
+    assert.ok(rendu.blocks[0].text.includes("$\\Delta G < 0$"));
+    assert.ok(rendu.blocks[0].text.includes("$\\theta$"));
+    // Hors des `$`, un `\n` reste un saut de ligne : le réparer poserait deux caractères
+    // lisibles au milieu d'une phrase.
+    assert.ok(rendu.blocks[0].text.includes("\n"));
+    assert.ok(!rendu.blocks[0].text.includes("\\nLa suite"));
+  });
+
+  it("laisse tranquilles un antislash déjà doublé et un \\uXXXX", () => {
+    const rendu = parseModelJSON<{ a: string; b: string }>(
+      '{"a":"\\\\frac{1}{2}","b":"caf\\u00e9"}',
+    );
+    assert.equal(rendu.a, "\\frac{1}{2}");
+    assert.equal(rendu.b, "café");
+  });
+});

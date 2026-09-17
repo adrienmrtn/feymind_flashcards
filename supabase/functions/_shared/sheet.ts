@@ -175,9 +175,10 @@ function normalizeBlock(type: string, record: Record<string, unknown>): SheetBlo
     }
 
     case "formula": {
-      const latex = typeof record.latex === "string"
+      const raw = typeof record.latex === "string"
         ? record.latex.trim().replace(/^\$+|\$+$/g, "").trim()
         : cleanText(record.text);
+      const latex = restoreLatexCommands(raw);
       if (latex.length < 2) return [];
       return [{ type: "formula", latex, caption: cleanOptional(record.caption) }];
     }
@@ -318,6 +319,34 @@ function removeHighlights(block: SheetBlock): SheetBlock {
 }
 
 /** Retire le balisage en ligne : c'est la version qui part au modèle pour les cartes. */
+/**
+ * **Rend son antislash à une commande LaTeX déjà enregistrée.**
+ *
+ * Le mal est réparé à la lecture du modèle (`repairLatexEscapes`), mais les fiches écrites
+ * avant lui portent la cicatrice : `\rightarrow` mal échappé est une échappée JSON valide,
+ * donc `2H_2O\rightarrow4H^+` a été enregistré comme un **retour chariot** suivi de
+ * « ightarrow ». Rien ne le signale, et l'équation s'affiche amputée de sa flèche.
+ *
+ * Un caractère de contrôle collé à une lettre n'a aucun sens dans une formule : la
+ * restitution n'a donc rien à deviner. Les cinq concernés sont exactement les cinq échappées
+ * JSON d'une seule lettre qui commencent aussi des commandes courantes : `\b`, `\f`,
+ * `\n`, `\r`, `\t` pour `\beta`, `\frac`, `\nabla`, `\rightarrow`, `\times`.
+ */
+const CONTROL_TO_COMMAND: Record<string, string> = {
+  "\b": "b",
+  "\f": "f",
+  "\n": "n",
+  "\r": "r",
+  "\t": "t",
+};
+
+export function restoreLatexCommands(latex: string): string {
+  return latex.replace(
+    /[\b\f\n\r\t](?=[A-Za-z])/g,
+    (control) => "\\" + CONTROL_TO_COMMAND[control],
+  );
+}
+
 /**
  * **Un paragraphe trop long, coupé à une fin de phrase.**
  *
