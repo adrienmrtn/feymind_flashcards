@@ -107,6 +107,7 @@ final class AuthController {
     /// lui-même : c'est la seule façon de l'utiliser, et ses règles d'interface imposent ce
     /// bouton-là dès qu'on propose la connexion Apple.
     func signInWithApple(result: Result<ASAuthorization, Error>, nonce: String) async {
+        Analytics.track(.signInStarted, ["provider": "apple"])
         await perform {
             switch result {
             case .failure(let error):
@@ -135,6 +136,7 @@ final class AuthController {
     }
 
     func signInWithGoogle() async {
+        Analytics.track(.signInStarted, ["provider": "google"])
         await perform {
             let result = try await OAuthWebFlow().authorize(provider: "google")
             self.adopt(try await self.client.exchange(code: result.code, verifier: result.verifier))
@@ -164,6 +166,7 @@ final class AuthController {
         case .suspicious(let address, let suggestion):
             message = .suggestion(typed: address, corrected: suggestion)
         case .ok(let address):
+            Analytics.track(.signInStarted, ["provider": "lien"])
             await deliverMagicLink(to: address)
         }
     }
@@ -315,10 +318,16 @@ final class AuthController {
         do {
             try await work()
         } catch let error as AuthError {
+            // Annuler n'est pas échouer, ici non plus : le compter ferait passer chaque
+            // retour en arrière pour une panne de connexion.
+            if case .cancelled = error {} else {
+                Analytics.track(.signInFailed, ["reason": "refus"])
+            }
             if let description = error.errorDescription {
                 message = .error(description)
             }
         } catch {
+            Analytics.track(.signInFailed, ["reason": "panne"])
             message = .error(error.localizedDescription)
         }
     }

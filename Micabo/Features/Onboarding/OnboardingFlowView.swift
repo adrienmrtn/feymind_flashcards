@@ -37,7 +37,23 @@ struct OnboardingFlowView: View {
         // Sur fond sombre, l'heure et la batterie doivent passer en clair : sinon elles
         // disparaissent dans l'encre.
         .preferredColorScheme(surface.isDark ? .dark : AppearanceStore.shared.appearance.colorScheme)
-        .onAppear { Haptics.prepare() }
+        .onAppear {
+            Haptics.prepare()
+            Analytics.track(.onboardingStarted)
+            Analytics.track(.onboardingStep, [
+                "step": .text(model.step.analyticsName),
+                "index": .number(Double(model.step.rawValue)),
+            ])
+        }
+        // Chaque écran atteint, avec son rang : c'est de ces lignes que se tire
+        // l'entonnoir, et le rang voyage avec pour que le serveur n'ait pas à tenir une
+        // copie de l'ordre des écrans.
+        .onChange(of: model.step) { _, step in
+            Analytics.track(.onboardingStep, [
+                "step": .text(step.analyticsName),
+                "index": .number(Double(step.rawValue)),
+            ])
+        }
     }
 
     @ViewBuilder
@@ -76,6 +92,7 @@ struct OnboardingFlowView: View {
     }
 
     private func finish() {
+        Analytics.track(.onboardingFinished)
         OnboardingPreferences.markCompleted()
         onFinish()
     }

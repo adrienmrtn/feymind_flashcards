@@ -89,6 +89,17 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
 
     var id: Int { rawValue }
 
+    /// **Le nom de l'étape dans les statistiques.**
+    ///
+    /// Tiré du nom du cas plutôt que recopié dans une liste : une liste parallèle se
+    /// désynchronise au premier écran ajouté, et un entonnoir dont un cran porte le nom
+    /// d'un autre écran est pire qu'un entonnoir incomplet. En échange, **renommer un cas
+    /// coupe la courbe en deux** — c'est le prix, et il est assumé : ces noms ne bougent
+    /// pas plus souvent que les écrans eux-mêmes.
+    var analyticsName: String {
+        String(describing: self)
+    }
+
     var next: OnboardingStep? {
         OnboardingStep(rawValue: rawValue + 1)
     }

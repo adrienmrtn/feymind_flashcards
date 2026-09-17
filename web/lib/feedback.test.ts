@@ -13,6 +13,13 @@ import {
 } from "./feedback";
 
 const mail = readFileSync(resolve(__dirname, "../../Micabo/Services/MicaboMail.swift"), "utf8");
+// Les sujets ont quitté `MicaboMail` pour le catalogue de traductions le jour où l'app a
+// parlé cinq langues. Ils restent les mêmes en français, et c'est cette égalité-là que le
+// test vérifie — il la cherchait juste au mauvais endroit depuis.
+const catalogs = readFileSync(
+  resolve(__dirname, "../../Micabo/Services/I18n/IosI18nCatalogs.swift"),
+  "utf8",
+);
 
 describe("feedback", () => {
   it("réserve la boîte à team@micabo.app", () => {
@@ -34,7 +41,7 @@ describe("feedback", () => {
     expect(isFeedbackKind("idea")).toBe(true);
     expect(isFeedbackKind("other")).toBe(false);
     expect(mail).toContain(`static let team = "${LEGAL_CONTACT}"`);
-    expect(mail).toContain(`"${feedbackSubject("bug")}"`);
-    expect(mail).toContain(`"${feedbackSubject("idea")}"`);
+    expect(catalogs).toContain(`"ios.mail.subject.bug": "${feedbackSubject("bug")}"`);
+    expect(catalogs).toContain(`"ios.mail.subject.idea": "${feedbackSubject("idea")}"`);
   });
 });

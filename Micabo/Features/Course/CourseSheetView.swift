@@ -206,6 +206,14 @@ struct CourseSheetView: View {
         .fullScreenCover(isPresented: $showStudy) {
             StudyView(source: .course(course), mode: studyMode)
         }
+        // La fiche ouverte, avec ou sans fiche écrite : l'écart entre les deux dit
+        // combien de cours importés restent sans fiche.
+        .onAppear {
+            Analytics.track(.sheetOpened, [
+                "written": .flag(CourseSheet.decode(from: course.sheetData) != nil),
+                "source": .text(course.source.rawValue),
+            ])
+        }
         .micaboPaywall($paywall)
         .micaboDiscountOffer($giftOffer)
         .alert(i18n.t("app.common.oops"), isPresented: .constant(errorMessage != nil)) {
@@ -885,6 +893,15 @@ struct CourseSheetView: View {
         isWorking = .sheet
         defer { isWorking = nil }
 
+        // « Refaire » compte à part : c'est le geste qui dit qu'une fiche n'a pas plu, et
+        // c'est celui qu'on veut voir baisser.
+        let again = CourseSheet.decode(from: course.sheetData) != nil
+        Analytics.track(.sheetWriteStarted, [
+            "length": .text(length.rawValue),
+            "again": .flag(again),
+            "source": .text(course.source.rawValue),
+        ])
+
         let request = CourseGenerationRequest(
             rawText: rawText,
             pageImages: [],
@@ -904,8 +921,14 @@ struct CourseSheetView: View {
         do {
             let generated = try await aiService.generateCourse(request)
             try CourseRepository.updateSheet(of: course, with: generated, in: modelContext)
+            Analytics.track(.sheetWritten, [
+                "length": .text(length.rawValue),
+                "again": .flag(again),
+                "blocks": .number(Double(generated.sheet?.blocks.count ?? 0)),
+            ])
             Haptics.success()
         } catch {
+            Analytics.track(.sheetWriteFailed, ["length": .text(length.rawValue)])
             errorMessage = describe(error)
         }
     }
@@ -919,15 +942,18 @@ struct CourseSheetView: View {
     private func generateCards(_ options: CardGeneration.Options) async {
         guard isWorking == nil else { return }
         isWorking = .cards
+        Analytics.track(.cardsGenerationStarted)
 
         do {
             try await CardGeneration.run(for: course, options: options, using: aiService, in: modelContext)
+            Analytics.track(.cardsGenerated, ["cards": .number(Double(course.flashcards?.count ?? 0))])
             Haptics.success()
             // Le voile tombe avant la poussée : pousser un écran par-dessus un plein écran
             // opaque montrerait la transition à travers lui.
             isWorking = nil
             generatedCards = CourseCardsRoute(course: course)
         } catch {
+            Analytics.track(.cardsGenerationFailed)
             isWorking = nil
             errorMessage = describe(error)
         }
