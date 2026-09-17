@@ -15,7 +15,16 @@ import {
 } from "./prompt.ts";
 
 Deno.test("la version de prompt est stable", () => {
-  assertEquals(PROMPT_VERSION, "course-v2.9.0");
+  assertEquals(PROMPT_VERSION, "course-v2.10.0");
+});
+
+Deno.test("le prompt borne la longueur d'un paragraphe", () => {
+  // Le modèle n'a que deux façons d'atteindre le volume demandé : des blocs de plus, ou des
+  // phrases de plus. La seconde ne lui coûte rien, alors il la prend — d'où des paragraphes
+  // de six cents caractères, treize lignes d'iPhone d'un seul tenant, qu'on ne relit pas.
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("EN BLOCS, JAMAIS EN PHRASES"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("quatre cents caractères au plus"), true);
+  assertEquals(COURSE_SYSTEM_PROMPT.includes("Deux à cinq phrases"), false);
 });
 
 Deno.test("le chapeau est commandé en une phrase de vingt mots", () => {

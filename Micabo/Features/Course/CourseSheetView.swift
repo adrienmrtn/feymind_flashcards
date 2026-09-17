@@ -79,8 +79,14 @@ struct CourseSheetView: View {
     /// Le repère de défilement de cet écran.
     private static let scrollSpace = "micabo.sheet"
 
-    /// Ce à quoi le sommaire fait sauter.
+    /// Ce à quoi le sommaire et le retour en haut font sauter.
+    ///
+    /// Le haut de la fiche n'est **pas** le premier chapitre : le titre du cours, son chapeau
+    /// et l'invitation à sélectionner un passage sont au-dessus de lui. Sans cette ancre-là,
+    /// « revenir en haut » se posait sur la première partie et laissait croire que l'écran
+    /// s'était arrêté trop tôt.
     private enum SheetAnchor: Hashable {
+        case top
         case chapter(Int)
     }
 
@@ -114,6 +120,7 @@ struct CourseSheetView: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         header
+                            .id(SheetAnchor.top)
                         lead
                         content
                         cardsSection
@@ -719,25 +726,30 @@ struct CourseSheetView: View {
     /// Le sommaire et le retour en haut, posés là où le pouce arrive.
     @ViewBuilder
     private func cluster(_ scroller: ScrollViewProxy) -> some View {
-        if hasOutline, !editorState.isEditing {
+        if (hasOutline || showSticky), !editorState.isEditing {
             VStack(spacing: 10) {
+                // Le retour en haut vaut pour **toute** fiche qu'on a fait défiler, plan ou
+                // pas : c'est le geste qu'on cherche après avoir lu, et il n'existait nulle
+                // part. Le sommaire, lui, n'a de sens qu'avec plusieurs parties.
                 if showSticky {
                     MicaboCircleButton(
                         systemImage: "arrow.up",
                         size: 40,
                         accessibilityTitle: i18n.t("ios.backToTop")
                     ) {
-                        jump(to: 0, using: scroller)
+                        goToTop(using: scroller)
                     }
                     .transition(.scale.combined(with: .opacity))
                 }
 
-                MicaboCircleButton(
-                    systemImage: "list.bullet",
-                    size: 46,
-                    accessibilityTitle: i18n.t("ios.sheetOutline")
-                ) {
-                    showOutline = true
+                if hasOutline {
+                    MicaboCircleButton(
+                        systemImage: "list.bullet",
+                        size: 46,
+                        accessibilityTitle: i18n.t("ios.sheetOutline")
+                    ) {
+                        showOutline = true
+                    }
                 }
             }
             .padding(.trailing, MicaboSpacing.screen)
@@ -758,6 +770,13 @@ struct CourseSheetView: View {
             withAnimation(.easeInOut(duration: 0.3)) {
                 scroller.scrollTo(SheetAnchor.chapter(index), anchor: .top)
             }
+        }
+    }
+
+    /// Le haut de la fiche : son titre, pas sa première partie.
+    private func goToTop(using scroller: ScrollViewProxy) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            scroller.scrollTo(SheetAnchor.top, anchor: .top)
         }
     }
 
