@@ -716,6 +716,38 @@ struct SettingsView: View {
             )
         )
 
+        // Le mur d'abonnement se règle en le regardant : la moitié floutée d'une fiche, le
+        // cadenas sur l'entraînement libre, le cadeau du premier cours. Sans cet
+        // interrupteur, les voir demandait deux comptes et un webhook coopératif.
+        rows.append(
+            MicaboRow(
+                tile: MicaboTile(glyph: .emoji("👑"), background: MicaboColor.cautionSoft),
+                title: i18n.t("ios.debug.forcePro"),
+                subtitle: i18n.t(pro?.debugProOverride == nil ? "ios.debug.forceProOff" : "ios.debug.forceProOn"),
+                accessory: .toggle(Binding(
+                    get: { pro?.isPro ?? false },
+                    set: { value in pro?.debugProOverride = value }
+                ))
+            )
+        )
+
+        // Rendre la main au compte. C'est ce qui manque à un interrupteur à deux positions :
+        // une fois touché, il n'y a plus moyen de redemander la vérité de l'abonnement, et
+        // on finit par tester un mur qu'on a soi-même posé.
+        if pro?.debugProOverride != nil {
+            rows.append(
+                MicaboRow(
+                    tile: MicaboTile(glyph: .emoji("↩️"), background: MicaboColor.surfaceMuted),
+                    title: i18n.t("ios.debug.forceProClear"),
+                    accessory: .chevron,
+                    action: {
+                        pro?.debugProOverride = nil
+                        Task { await pro?.refresh() }
+                    }
+                )
+            )
+        }
+
         // Le cours d'essai arrive au premier lancement. Ce bouton le remet : après l'avoir
         // supprimé, ou pour en avoir deux et comparer deux fiches du même document écrites
         // avec deux réglages de longueur.

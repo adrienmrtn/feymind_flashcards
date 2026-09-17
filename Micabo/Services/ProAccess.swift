@@ -114,8 +114,43 @@ final class ProAccess {
     }
 
     func setPro(_ value: Bool) {
+        #if DEBUG
+        // Un forçage tient contre tout le reste. Sans ce passage obligé, l'interrupteur des
+        // réglages se défaisait tout seul : `refresh()` relit le SDK et la table à chaque
+        // lancement et à chaque retour au premier plan, et remettait l'abonnement réel.
+        if let forced = debugProOverride {
+            forced ? unlock() : lock()
+            return
+        }
+        #endif
         value ? unlock() : lock()
     }
+
+    #if DEBUG
+    /// **L'interrupteur Pro des constructions de développement.**
+    ///
+    /// Un mur d'abonnement se règle en le regardant : la moitié floutée d'une fiche, le
+    /// cadenas sur l'entraînement libre, le cadeau du premier cours. Les voir demandait de
+    /// se connecter à un compte gratuit, puis à un compte payant, et de croiser les doigts
+    /// pour que le webhook suive.
+    ///
+    /// `nil` veut dire « rien n'est forcé » : l'abonnement réel décide, comme partout
+    /// ailleurs. C'est bien un triple état, et pas un booléen, sans quoi on ne pourrait
+    /// plus revenir à la vérité du compte une fois l'interrupteur touché.
+    static let debugProOverrideKey = "micabo.debug.proOverride"
+
+    var debugProOverride: Bool? {
+        get { defaults.object(forKey: Self.debugProOverrideKey) as? Bool }
+        set {
+            if let newValue {
+                defaults.set(newValue, forKey: Self.debugProOverrideKey)
+                newValue ? unlock() : lock()
+            } else {
+                defaults.removeObject(forKey: Self.debugProOverrideKey)
+            }
+        }
+    }
+    #endif
 
     /// Relit l'état de l'abonnement.
     ///

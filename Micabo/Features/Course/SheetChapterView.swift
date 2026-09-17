@@ -73,13 +73,28 @@ struct SheetChapterView: View {
                 }
 
                 if isCollapsed {
-                    Text(title)
-                        .font(MicaboFont.ui(SheetTypography.headingLarge, weight: .bold))
-                        .kerning(MicaboTracking.tight)
-                        .foregroundStyle(MicaboColor.ink)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    // **Le même titre que dans le texte, au point près.**
+                    //
+                    // Il était composé ici en SwiftUI avec un resserrement de lettres, et
+                    // dans le corps par le moteur de texte sans resserrement, en teinte du
+                    // cours plutôt qu'en encre. Déplier un chapitre faisait donc changer son
+                    // titre de couleur et de chasse sous les yeux : on lisait un défaut de
+                    // police là où il n'y avait que deux réglages qui ne s'étaient jamais
+                    // parlé. Pas de `kerning`, la teinte, la capsule : ce que
+                    // `SheetEditorLayoutManager` dessine au-dessus d'un titre de partie.
+                    VStack(alignment: .leading, spacing: 7) {
+                        Capsule()
+                            .fill(tint.readableInk())
+                            .frame(width: 26, height: 3)
+
+                        Text(title)
+                            .font(MicaboFont.ui(SheetTypography.headingLarge, weight: .bold))
+                            .foregroundStyle(tint.readableInk())
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.top, 2)
                 }
             }
             .padding(.top, MicaboSpacing.lg)
