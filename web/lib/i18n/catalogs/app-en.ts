@@ -1167,6 +1167,11 @@ export const appEn = {
     saving: "Saving…",
     saved: "Saved",
     aria: "Your sheet, editable",
+    outline: "Contents",
+    backToTop: "Back to top",
+    chapter: "Ch. {number}",
+    collapse: "Collapse this chapter",
+    expand: "Expand this chapter",
   },
   formula: {
     title: "The formula",

@@ -59,6 +59,12 @@ export function writeReadingSize(size: ReadingSize): void {
 }
 
 /** Le style à poser sur un `.sheet-doc`. */
-export function readingStyle(size: ReadingSize): React.CSSProperties {
-  return { "--sheet-scale": READING_SCALE[size] } as React.CSSProperties;
+export function readingStyle(size: ReadingSize, tint?: string | null): React.CSSProperties {
+  // La teinte du cours n'est pas un réglage de lecture : elle appartient à la fiche, et c'est
+  // elle que prennent les titres de partie et la capsule qui les précède. Elle voyage par la
+  // même variable pour la même raison que l'échelle — c'est le seul endroit où les deux
+  // rendus d'une fiche, celui qu'on écrit et celui qu'on regarde, se recoupent.
+  const style: Record<string, string | number> = { "--sheet-scale": READING_SCALE[size] };
+  if (tint) style["--sheet-tint"] = tint;
+  return style as React.CSSProperties;
 }

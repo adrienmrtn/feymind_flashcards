@@ -1170,6 +1170,11 @@ export const appDe = {
     saving: "Wird gespeichert…",
     saved: "Gespeichert",
     aria: "Deine Lernzettel, bearbeitbar",
+    outline: "Inhalt",
+    backToTop: "Nach oben",
+    chapter: "Kap. {number}",
+    collapse: "Kapitel einklappen",
+    expand: "Kapitel ausklappen",
   },
   formula: {
     title: "Die Formel",

@@ -21,14 +21,21 @@ import { MathBlock } from "./Math";
  * tableaux, graphes, figures. Ils sont partis avec le format ; ce qu'ils disaient s'écrit
  * maintenant dans le texte.
  */
-export function SheetBlocks({ blocks }: { blocks: readonly SheetBlock[] }) {
+export function SheetBlocks({
+  blocks,
+  tint,
+}: {
+  blocks: readonly SheetBlock[];
+  /** La teinte du cours, quand on en a une : voir `readingStyle`. */
+  tint?: string | null;
+}) {
   // La taille de lecture est celle de l'appareil, pas celle de la fiche : une fiche
   // verrouillée, un cours partagé et le document qu'on écrit doivent grossir ensemble,
   // sinon la couture entre les deux moitiés d'une même page se voit.
   const [size] = useReadingSize();
 
   return (
-    <div className="sheet-doc text-ink-reading" style={readingStyle(size)}>
+    <div className="sheet-doc text-ink-reading" style={readingStyle(size, tint)}>
       {blocks.map((block, index) => (
         <Block key={index} block={block} />
       ))}

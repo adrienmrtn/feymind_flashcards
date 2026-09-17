@@ -43,13 +43,24 @@ enum SheetEditorTextViewFactory {
     }
 }
 
-/// Le surligneur de la fiche, **et les puces**.
+/// Le surligneur de la fiche, **les puces, et la capsule des titres de partie**.
 ///
 /// Une puce ou un numéro n'est pas un caractère du texte : si c'en était un, un retour
 /// arrière en début d'entrée l'effacerait, et il partirait dans la fiche enregistrée. Ils
 /// sont dessinés ici, dans la gouttière que le retrait de paragraphe laisse à gauche, et
 /// le texte n'en sait rien.
+///
+/// La capsule teintée posée au-dessus d'un titre de partie relève du même raisonnement :
+/// c'est un signe, pas du texte. Elle existait déjà dans `SheetBlockView`, le rendu qui sert
+/// aux cours **des autres** et à la queue verrouillée d'une fiche — de sorte que le cours du
+/// voisin était mieux mis en page que le sien. Elle est donc redessinée ici, dans l'air que
+/// `spaceBeforeLargeHeading` laisse au-dessus du titre.
 final class SheetEditorLayoutManager: SheetMarkerLayoutManager {
+    /// Largeur, hauteur et distance au titre de la capsule d'un titre de partie. Ce sont les
+    /// valeurs de `SheetBlockView.heading`, pour que les deux rendus donnent la même page.
+    private static let ruleSize = CGSize(width: 26, height: 3)
+    private static let ruleGap = CGFloat(7)
+
     override func drawBackground(forGlyphRange glyphsToShow: NSRange, at origin: CGPoint) {
         super.drawBackground(forGlyphRange: glyphsToShow, at: origin)
         guard let storage = textStorage, storage.length > 0 else { return }
@@ -64,7 +75,13 @@ final class SheetEditorLayoutManager: SheetMarkerLayoutManager {
             defer { location = max(NSMaxRange(paragraph), location + 1) }
             guard paragraph.location < storage.length else { break }
             let raw = storage.attribute(SheetDocument.kindKey, at: paragraph.location, effectiveRange: nil) as? String
-            guard let kind = raw.flatMap(SheetParagraphKind.init(rawValue:)), kind.isList else { continue }
+            guard let kind = raw.flatMap(SheetParagraphKind.init(rawValue:)) else { continue }
+
+            if kind == .heading1 {
+                drawRule(above: paragraph, in: storage, at: origin)
+                continue
+            }
+            guard kind.isList else { continue }
 
             let font = (storage.attribute(NSAttributedString.Key.font, at: paragraph.location, effectiveRange: nil) as? UIFont)
                 ?? MicaboFont.uiFont(SheetTypography.body)
@@ -103,6 +120,33 @@ final class SheetEditorLayoutManager: SheetMarkerLayoutManager {
 
     /// La teinte des puces : celle du cours, posée par l'éditeur.
     var markerColor: UIColor = UIColor.label
+
+    /// La teinte de la capsule d'un titre de partie. C'est celle du titre lui-même, plus
+    /// sombre que celle des puces : une capsule et son titre forment un seul signe, et une
+    /// puce se contente d'exister.
+    var headingColor: UIColor = UIColor.label
+
+    /// La capsule d'un titre de partie, dessinée dans l'air laissé au-dessus de lui.
+    ///
+    /// Elle se cale sur le **rectangle occupé par les glyphes** et non sur le fragment de
+    /// ligne : le fragment de la première ligne d'un paragraphe porte aussi son
+    /// `paragraphSpacingBefore`, et une capsule calée dessus se retrouverait trente-huit
+    /// points plus bas, c'est-à-dire sur le titre qu'elle annonce.
+    private func drawRule(above paragraph: NSRange, in storage: NSTextStorage, at origin: CGPoint) {
+        let font = (storage.attribute(NSAttributedString.Key.font, at: paragraph.location, effectiveRange: nil) as? UIFont)
+            ?? MicaboFont.uiFont(SheetTypography.headingLarge, weight: .bold)
+        let glyph = glyphIndexForCharacter(at: paragraph.location)
+        let used = lineFragmentUsedRect(forGlyphAt: glyph, effectiveRange: nil)
+        let capTop = origin.y + used.minY + font.ascender - font.capHeight
+        let rule = CGRect(
+            x: origin.x + used.minX,
+            y: capTop - Self.ruleGap - Self.ruleSize.height,
+            width: Self.ruleSize.width,
+            height: Self.ruleSize.height
+        )
+        headingColor.setFill()
+        UIBezierPath(roundedRect: rule, cornerRadius: Self.ruleSize.height / 2).fill()
+    }
 
     /// Le rang d'une entrée numérotée : on remonte les paragraphes numérotés qui la
     /// précèdent sans interruption.

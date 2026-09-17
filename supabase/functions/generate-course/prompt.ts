@@ -1,6 +1,6 @@
 /** Consignes de rédaction de la fiche d'un cours. */
 
-export const PROMPT_VERSION = "course-v2.9.0";
+export const PROMPT_VERSION = "course-v2.10.0";
 
 /** Longueur max d'une consigne libre. Au-delà, ce n'est plus un prompt, c'est un cours. */
 export const MAX_INSTRUCTIONS = 2_000;
@@ -21,7 +21,7 @@ Neutre et direct. Tu n'es le professeur particulier de personne, tu n'encourages
 - Les paragraphes qui commencent tous pareil, et les phrases qui font toutes la même longueur.
 
 LA LONGUEUR
-Une fiche trop courte est le défaut le plus grave, avant même la maladresse d'écriture : une notion expédiée en une ligne ne se révise pas, et l'étudiant retourne à son cours. La consigne de longueur qui accompagne le document donne le volume, et tu la remplis. Si tu hésites entre deux blocs de plus et deux de moins, tu en écris deux de plus, à condition qu'ils portent du contenu du document.
+Une fiche trop courte est le défaut le plus grave, avant même la maladresse d'écriture : une notion expédiée en une ligne ne se révise pas, et l'étudiant retourne à son cours. La consigne de longueur qui accompagne le document donne le volume, et tu la remplis. Tu l'atteins EN BLOCS, JAMAIS EN PHRASES : si tu hésites entre deux blocs de plus et deux de moins, tu en écris deux de plus, à condition qu'ils portent du contenu du document. Un paragraphe qui enfle jusqu'à remplir un écran de téléphone ne se révise pas, il se saute : c'est une partie de plus qu'il fallait écrire, pas trois phrases de plus dans celle-ci.
 
 MISE EN FORME DU TEXTE
 Tu écris le texte, pas sa mise en relief. Le surligneur et l'italique sont posés après toi, par une relecture qui ne fait que ça et qui les place mieux que toi : n'en écris aucun, et ne compte aucune marque. Deux notations te restent :
@@ -54,7 +54,7 @@ Virgule entre chaque propriété, jamais après la dernière. Un guillemet dans 
 LES QUATRE BLOCS DISPONIBLES
 {"type":"heading","level":1,"text":"Titre de partie"}
 {"type":"heading","level":2,"text":"Titre de sous-partie"}
-{"type":"paragraph","text":"Deux à cinq phrases rédigées."}
+{"type":"paragraph","text":"Deux à quatre phrases rédigées, quatre cents caractères au plus."}
 {"type":"list","ordered":true,"items":["Première étape","Deuxième étape"]}
 {"type":"formula","latex":"6 CO_2 + 6 H_2O \\rightarrow C_6H_{12}O_6 + 6 O_2","caption":"Ce que chaque terme désigne"}
 
@@ -80,6 +80,7 @@ AVANT DE RÉPONDRE, RELIS TA FICHE ET VÉRIFIE
 - Le nombre de blocs correspond à la longueur demandée. Dans le doute, allonge.
 - Une énumération du document est-elle restée coincée dans un paragraphe ? Trois membres ou plus, c'est une liste.
 - Aucune suite de deux listes, et aucune liste qui découpe une seule idée.
+- Aucun paragraphe ne dépasse quatre phrases ni quatre cents caractères. Celui qui les dépasse porte deux idées : coupe-le en deux paragraphes, ou donne à la seconde son propre titre.
 - Les grandeurs, symboles et formules courtes sont dans la phrase, entre $ et $, et non recopiés en texte brut ni renvoyés en bloc.
 - Aucun surlignage et aucun italique : ils ne sont pas de ton ressort.
 - Aucune phrase ne s'adresse au lecteur.

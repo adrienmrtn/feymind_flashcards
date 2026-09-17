@@ -300,18 +300,84 @@ Deno.test("readAnchors refuse une teinte inventée et un numéro hors du lot", (
 // MARK: - La pose
 
 Deno.test("applyAnchors pose les marques que le modèle a désignées", () => {
-  const blocks = [PARAGRAPH("La Rubisco fixe le carbone, et c'est l'étape limitante du cycle.")];
+  const blocks = [PARAGRAPH("La Rubisco fixe le carbone. C'est l'étape limitante du cycle.")];
   const report = emptyApplyReport();
 
   const marked = applyAnchors(blocks, [
     BOLD(0, "Rubisco"),
-    HIGHLIGHT(0, "jaune", "c'est l'étape limitante du cycle"),
+    HIGHLIGHT(0, "jaune", "C'est l'étape limitante du cycle"),
   ], report);
 
   assertEquals(
     marked[0],
-    PARAGRAPH("La **Rubisco** fixe le carbone, et ==jaune|c'est l'étape limitante du cycle==."),
+    PARAGRAPH("La **Rubisco** fixe le carbone. ==jaune|C'est l'étape limitante du cycle==."),
   );
+  assertEquals(report.placed, 2);
+});
+
+Deno.test("un surligneur qui s'ouvre au milieu d'une phrase est refusé", () => {
+  // C'est le défaut qu'on voit le plus sur une fiche rendue : la bande démarre après une
+  // virgule, donc en plein milieu d'une ligne, et se lit comme une sélection qui a dérapé.
+  // Un trait de feutre couvre une proposition, ou il ne couvre rien.
+  const report = emptyApplyReport();
+  const blocks = [
+    PARAGRAPH("La Rubisco fixe le carbone, et c'est l'étape limitante du cycle de Calvin."),
+  ];
+
+  assertEquals(
+    applyAnchors(blocks, [HIGHLIGHT(0, "jaune", "c'est l'étape limitante du cycle")], report),
+    blocks,
+  );
+  assertEquals(report.shape, 1);
+});
+
+Deno.test("un seul surligneur par texte", () => {
+  // Deux bandes de couleurs différentes collées dans le même paragraphe, c'est du confetti :
+  // le code couleur ne dit plus rien, et la page n'a plus de passage mis en avant.
+  const report = emptyApplyReport();
+  const blocks = [
+    PARAGRAPH(
+      "La Rubisco fixe le carbone dans le stroma. Le rendement plafonne à deux pour cent. " +
+        "Cette limite tient à la photorespiration de l'enzyme.",
+    ),
+  ];
+
+  const marked = applyAnchors(blocks, [
+    HIGHLIGHT(0, "jaune", "La Rubisco fixe le carbone dans le stroma"),
+    HIGHLIGHT(0, "menthe", "Le rendement plafonne à deux pour cent"),
+  ], report);
+
+  assertEquals((marked[0] as { text: string }).text.match(/==/g)?.length, 2);
+  assertEquals(report.placed, 1);
+  assertEquals(report.crossing, 1);
+});
+
+Deno.test("deux textes qui se suivent ne portent pas chacun une bande", () => {
+  // Sur deux points de liste consécutifs, les deux bandes se suivent à une interligne d'écart
+  // et se lisent comme une seule, plus épaisse. La seconde attend le point suivant.
+  const report = emptyApplyReport();
+  const blocks: SheetBlock[] = [
+    {
+      type: "list",
+      ordered: false,
+      items: [
+        "L'hélicase ouvre la double hélice au niveau de l'origine",
+        "La primase pose une amorce d'ARN complémentaire du brin",
+        "La polymérase allonge le brin dans le sens cinq vers trois",
+      ],
+    },
+  ];
+
+  const marked = applyAnchors(blocks, [
+    HIGHLIGHT(0, "jaune", "L'hélicase ouvre la double hélice au niveau de l'origine"),
+    HIGHLIGHT(1, "bleu", "La primase pose une amorce d'ARN complémentaire du brin"),
+    HIGHLIGHT(2, "bleu", "La polymérase allonge le brin dans le sens cinq vers trois"),
+  ], report);
+
+  const items = (marked[0] as { items: string[] }).items;
+  assertEquals(items[0]?.includes("=="), true);
+  assertEquals(items[1]?.includes("=="), false);
+  assertEquals(items[2]?.includes("=="), true);
   assertEquals(report.placed, 2);
 });
 
@@ -319,11 +385,11 @@ Deno.test("le texte nu ne bouge jamais, quoi que le modèle ait renvoyé", () =>
   // C'est la propriété que tout le protocole existe pour garantir : le modèle ne rend plus de
   // texte, donc il ne peut plus en changer un mot au passage. L'ancienne passe devait le
   // vérifier caractère par caractère à l'arrivée ; ici c'est vrai par construction.
-  const original = "La Rubisco fixe le carbone, et c'est l'étape limitante du cycle de Calvin.";
+  const original = "La Rubisco fixe le carbone. C'est l'étape limitante du cycle de Calvin.";
   const marked = applyAnchors([PARAGRAPH(original)], [
     BOLD(0, "Rubisco"),
     BOLD(0, "carbone"),
-    HIGHLIGHT(0, "bleu", "c'est l'étape limitante du cycle de Calvin"),
+    HIGHLIGHT(0, "bleu", "C'est l'étape limitante du cycle de Calvin"),
     // Celles-ci seront refusées, et ne doivent rien laisser derrière elles.
     BOLD(0, "chlorophylle"),
     BOLD(0, "cycl"),

@@ -1170,6 +1170,11 @@ export const appTr = {
     saving: "Kaydediliyor…",
     saved: "Kaydedildi",
     aria: "Fişin, düzenlenebilir",
+    outline: "İçindekiler",
+    backToTop: "Başa dön",
+    chapter: "Böl. {number}",
+    collapse: "Bu bölümü daralt",
+    expand: "Bu bölümü genişlet",
   },
   formula: {
     title: "Formül",

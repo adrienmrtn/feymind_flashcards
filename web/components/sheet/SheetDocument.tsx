@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 
 import {
@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { saveSheet } from "@/lib/actions/sheet";
 import { useI18n } from "@/lib/i18n/client";
+import { splitChapters, type SheetChapter } from "@/lib/sheet/chapters";
 import { blocksToHtml, htmlToBlocks } from "@/lib/sheet/document";
 import { READING_SIZES, readingStyle, type ReadingSize } from "@/lib/sheet/reading-size";
 import { useReadingSize } from "@/lib/sheet/use-reading-size";
@@ -78,6 +79,7 @@ export function SheetDocument({
   courseId,
   blocks,
   lockedCount,
+  tint,
   readOnly = false,
   tool,
 }: {
@@ -92,6 +94,11 @@ export function SheetDocument({
    * faute de frappe.
    */
   lockedCount: number;
+  /**
+   * La teinte du cours. Elle ne sert qu'aux titres de partie et à la capsule qui les
+   * précède : c'est elle qui donne son rythme à une page qu'on feuillette.
+   */
+  tint?: string | null;
   readOnly?: boolean;
   /**
    * Un outil de plus dans la barre, posé par le parent.
@@ -104,7 +111,31 @@ export function SheetDocument({
   tool?: React.ReactNode;
 }) {
   const { t } = useI18n();
+  /**
+   * L'enveloppe de tous les chapitres.
+   *
+   * Ce n'était qu'un `contenteditable` ; c'est maintenant le conteneur qui en porte un par
+   * chapitre. Deux choses continuent de s'y accrocher parce qu'elles ne regardent pas qui
+   * écrit mais ce que le document contient : les portails qui composent les formules, et
+   * l'écouteur natif qui rouvre une formule au clic.
+   */
   const editor = useRef<HTMLDivElement>(null);
+  /**
+   * **Un `contenteditable` par chapitre**, et non plus un seul pour toute la fiche.
+   *
+   * Le chapitre est une lecture des blocs, pas un niveau de plus dans le modèle : on découpe
+   * à chaque titre de partie au moment d'afficher, et l'enregistrement recolle dans l'ordre.
+   *
+   * Les chapitres repliés sont **cachés, pas démontés**. C'est ce qui garantit qu'une
+   * correction faite puis repliée avant d'enregistrer ne se perd pas : le texte est toujours
+   * dans le DOM, `save` le relit, et les formules gardent leurs portails.
+   */
+  const chapters = useMemo(() => splitChapters(blocks), [blocks]);
+  const surfaces = useRef(new Map<number, HTMLDivElement>());
+  /** Le chapitre qui a le curseur : c'est sur lui que la barre d'outils agit. */
+  const [active, setActive] = useState(0);
+  const [collapsed, setCollapsed] = useState<ReadonlySet<number>>(() => new Set<number>());
+  const [outline, setOutline] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [style, setStyle] = useState<Style>("p");
   const [saved, setSaved] = useState(false);
@@ -141,16 +172,36 @@ export function SheetDocument({
    * compteur. C'est exactement ce qu'on voyait : correct à l'écriture, cassé au retour.
    */
   useEffect(() => {
-    if (editor.current) editor.current.innerHTML = blocksToHtml(blocks);
+    setCollapsed(new Set<number>());
+    setActive(0);
     setFormulaKey((key) => key + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
+  const register = useCallback((index: number, node: HTMLDivElement | null) => {
+    if (node) surfaces.current.set(index, node);
+    else surfaces.current.delete(index);
+  }, []);
+
+  /**
+   * Le chapitre sur lequel la barre d'outils agit.
+   *
+   * Le premier tant que rien n'a eu le curseur : une barre qui ne ferait rien du tout avant
+   * le premier clic serait pire qu'une barre qui agit sur le début de la fiche.
+   */
+  const activeRoot = useCallback((): HTMLDivElement | null => {
+    const own = surfaces.current.get(active);
+    if (own) return own;
+    for (const node of surfaces.current.values()) return node;
+    return null;
+  }, [active]);
+
   const readStyle = useCallback(() => {
-    const node = editor.current ? currentBlock(editor.current) : null;
+    const root = activeRoot();
+    const node = root ? currentBlock(root) : null;
     const name = node?.tagName.toLowerCase();
     setStyle(name === "h1" || name === "h2" || name === "ul" || name === "ol" ? name : "p");
-  }, []);
+  }, [activeRoot]);
 
   useEffect(() => {
     document.addEventListener("selectionchange", readStyle);
@@ -188,18 +239,20 @@ export function SheetDocument({
   }
 
   function mark(kind: Mark) {
-    if (!editor.current || readOnly) return;
-    if (toggleMark(editor.current, kind)) touched();
+    const root = activeRoot();
+    if (!root || readOnly) return;
+    if (toggleMark(root, kind)) touched();
   }
 
   function highlight(color: SheetHighlight) {
-    if (!editor.current || readOnly) return;
-    if (toggleHighlight(editor.current, color)) touched();
+    const root = activeRoot();
+    if (!root || readOnly) return;
+    if (toggleHighlight(root, color)) touched();
   }
 
   /** La taille du passage choisi. `null` la retire et rend le texte à son bloc. */
   function resize(size: SheetTextSize | null) {
-    const root = editor.current;
+    const root = activeRoot();
     if (!root || readOnly) return;
     if (size === null ? clearTextSize(root) : toggleTextSize(root, size)) touched();
   }
@@ -212,7 +265,7 @@ export function SheetDocument({
    * entier dans un point unique ; en sortir le rend au paragraphe.
    */
   function setBlockStyle(next: Style) {
-    const root = editor.current;
+    const root = activeRoot();
     if (!root || readOnly) return;
     const node = currentBlock(root);
     if (!node || node.parentElement !== root) {
@@ -279,7 +332,7 @@ export function SheetDocument({
    */
   function addFormula() {
     if (readOnly) return;
-    const root = editor.current;
+    const root = activeRoot();
     const selection = window.getSelection();
     const live =
       selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
@@ -304,7 +357,7 @@ export function SheetDocument({
    * sont pas les mêmes balises, et une formule en ligne dans un `div` ne se lirait pas.
    */
   function applyFormula(draft: FormulaDraft) {
-    const root = editor.current;
+    const root = activeRoot();
     if (!root || readOnly || !editing) return;
 
     const previous = editing.node;
@@ -341,10 +394,16 @@ export function SheetDocument({
   }
 
   function save() {
-    const root = editor.current;
-    if (!root) return;
+    if (surfaces.current.size === 0) return;
     setFailure(null);
-    const next = htmlToBlocks(root);
+    // Les chapitres sont relus **dans l'ordre de la fiche**, et non dans celui du DOM :
+    // un chapitre replié est caché, donc toujours là, mais rien ne garantirait l'ordre
+    // d'une itération sur la table des surfaces.
+    const next: SheetBlock[] = [];
+    for (const chapter of chapters) {
+      const node = surfaces.current.get(chapter.index);
+      next.push(...(node ? htmlToBlocks(node) : chapter.blocks));
+    }
     startTransition(async () => {
       const result = await saveSheet(courseId, next, lockedCount);
       if (result.status === "error") {
@@ -355,6 +414,46 @@ export function SheetDocument({
       setSaved(true);
     });
   }
+
+  /**
+   * Replie ou déplie un chapitre.
+   *
+   * Le chapitre replié est **caché**, pas démonté : voir `surfaces`. Le déplier depuis le
+   * sommaire passe par `jump`, qui l'ouvre avant de s'y rendre.
+   */
+  function toggle(index: number) {
+    setCollapsed((set) => {
+      const next = new Set(set);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
+
+  /** Ouvre une partie et s'y rend. */
+  function jump(index: number) {
+    setCollapsed((set) => {
+      const next = new Set(set);
+      next.delete(index);
+      return next;
+    });
+    setOutline(false);
+    // Une image d'attente : viser un en-tête replié reviendrait à viser une hauteur qui
+    // change juste après, et la page se poserait au milieu du chapitre précédent.
+    requestAnimationFrame(() => {
+      editor.current
+        ?.querySelector(`[data-chapter="${index}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  function toTop() {
+    setOutline(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /** Les parties de la fiche. Une fiche d'une seule partie n'a pas de sommaire à montrer. */
+  const parts = chapters.filter((chapter) => chapter.title !== null);
 
   // Cmd+S enregistre, Cmd+B et Cmd+I marquent. Un document qui ne répond pas aux raccourcis
   // d'un traitement de texte n'est pas un document.
@@ -465,6 +564,51 @@ export function SheetDocument({
             ))}
           </div>
 
+          {parts.length >= 2 ? (
+            <>
+              <span aria-hidden className="mx-1 h-5 w-px bg-stroke" />
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setOutline((open) => !open)}
+                  aria-expanded={outline}
+                  aria-label={t("app.sheet.outline")}
+                  title={t("app.sheet.outline")}
+                  className="pressable h-9 rounded-button px-3 text-[13.5px] font-semibold text-ink transition-colors duration-hover hover:bg-surface-muted"
+                >
+                  {t("app.sheet.outline")}
+                </button>
+
+                {outline ? (
+                  <div className="panel absolute left-0 top-11 z-30 max-h-[60vh] w-[min(320px,80vw)] overflow-y-auto p-1.5">
+                    {parts.map((chapter, index) => (
+                      <button
+                        key={chapter.index}
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => jump(chapter.index)}
+                        className="pressable flex w-full items-baseline gap-2.5 rounded-button px-2.5 py-2 text-left transition-colors duration-hover hover:bg-surface-muted"
+                      >
+                        <span className="w-4 shrink-0 text-right text-[12px] font-bold tabular-nums text-ink-tertiary">
+                          {index + 1}
+                        </span>
+                        <span className="text-[14px] font-medium text-ink-secondary">
+                          {chapter.title}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              <ToolButton label={t("app.sheet.backToTop")} onPress={toTop}>
+                <span className="text-[15px] font-semibold">↑</span>
+              </ToolButton>
+            </>
+          ) : null}
+
           {tool ? (
             <>
               <span aria-hidden className="mx-1 h-5 w-px bg-stroke" />
@@ -490,21 +634,25 @@ export function SheetDocument({
         </div>
       )}
 
-      <div
-        ref={editor}
-        className="sheet-doc text-ink-reading"
-        style={readingStyle(size)}
-        contentEditable={!readOnly}
-        suppressContentEditableWarning
-        spellCheck={false}
-        onInput={touched}
-        onKeyDown={onKeyDown}
-        onKeyUp={readStyle}
-        onMouseUp={readStyle}
-        role={readOnly ? undefined : "textbox"}
-        aria-multiline={readOnly ? undefined : true}
-        aria-label={readOnly ? undefined : t("app.sheet.aria")}
-      />
+      <div ref={editor}>
+        {chapters.map((chapter) => (
+          <Chapter
+            key={`${courseId}:${chapter.index}`}
+            chapter={chapter}
+            number={partNumber(chapters, chapter)}
+            collapsed={collapsed.has(chapter.index)}
+            readOnly={readOnly}
+            style={readingStyle(size, tint)}
+            ariaLabel={readOnly ? undefined : t("app.sheet.aria")}
+            register={register}
+            onToggle={() => toggle(chapter.index)}
+            onFocus={() => setActive(chapter.index)}
+            onInput={touched}
+            onKeyDown={onKeyDown}
+            onReadStyle={readStyle}
+          />
+        ))}
+      </div>
 
       <Formulas key={formulaKey} root={editor} blocks={blocks} />
 
@@ -517,6 +665,126 @@ export function SheetDocument({
         />
       ) : null}
     </div>
+  );
+}
+
+/** Le rang affiché d'une partie, compté parmi les chapitres titrés. */
+function partNumber(chapters: readonly SheetChapter[], chapter: SheetChapter): number {
+  return chapters
+    .slice(0, chapter.index + 1)
+    .reduce((count, entry) => count + (entry.title === null ? 0 : 1), 0);
+}
+
+/**
+ * **Un chapitre de la fiche, avec son en-tête et son texte.**
+ *
+ * L'en-tête porte le titre **quand le chapitre est replié**, et seulement alors. Déplié, il
+ * ne garde que son numéro et son chevron, parce que le titre est dans le texte juste en
+ * dessous : la fiche est un document qu'on écrit, et un titre monté dans un en-tête
+ * d'accordéon serait devenu la seule ligne de la page qu'on ne peut plus corriger.
+ *
+ * Le texte est monté **une seule fois**, à la main, comme il l'était quand toute la fiche
+ * tenait dans un seul `contenteditable` : React ne doit jamais reprendre la main sur ces
+ * nœuds, il les remplacerait à chaque frappe et le curseur repartirait au début du
+ * paragraphe. La clé du composant porte le cours, donc changer de cours remonte tout.
+ */
+function Chapter({
+  chapter,
+  number,
+  collapsed,
+  readOnly,
+  style,
+  ariaLabel,
+  register,
+  onToggle,
+  onFocus,
+  onInput,
+  onKeyDown,
+  onReadStyle,
+}: {
+  chapter: SheetChapter;
+  number: number;
+  collapsed: boolean;
+  readOnly: boolean;
+  style: React.CSSProperties;
+  ariaLabel?: string;
+  register: (index: number, node: HTMLDivElement | null) => void;
+  onToggle: () => void;
+  onFocus: () => void;
+  onInput: () => void;
+  onKeyDown: (event: React.KeyboardEvent) => void;
+  onReadStyle: () => void;
+}) {
+  const { t } = useI18n();
+  const surface = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const node = surface.current;
+    if (node) node.innerHTML = blocksToHtml(chapter.blocks);
+    register(chapter.index, node);
+    return () => register(chapter.index, null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** L'entrée en matière n'est pas une partie : pas d'en-tête, et rien à replier. */
+  const preamble = chapter.title === null;
+  const folded = collapsed && !preamble;
+
+  return (
+    // Le filet sépare les chapitres, et il appartient donc à la section : posé sur le
+    // bouton, son `first:` aurait désigné la première position **dans** la section, où le
+    // bouton se trouve toujours, et aucun chapitre n'aurait eu de filet.
+    <section
+      data-chapter={chapter.index}
+      className="scroll-mt-24 border-t border-hairline-on-canvas first:border-t-0"
+    >
+      {preamble ? null : (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={!folded}
+          aria-label={chapter.title ?? ""}
+          title={t(folded ? "app.sheet.expand" : "app.sheet.collapse")}
+          className="group flex w-full flex-col items-start gap-2 pb-1 pt-7 text-left"
+        >
+          <span className="flex w-full items-center gap-3">
+            <span className="rounded-full bg-accent-soft px-2.5 py-1 text-[12.5px] font-bold text-accent">
+              {t("app.sheet.chapter", { number: String(number) })}
+            </span>
+            <span className="flex-1" />
+            <span className="text-[13px] font-semibold text-ink-tertiary transition-colors duration-hover group-hover:text-ink">
+              {folded ? "▾" : "▴"}
+            </span>
+          </span>
+
+          {folded ? (
+            <span className="text-[22px] font-bold leading-tight tracking-[-0.2px] text-ink">
+              {chapter.title}
+            </span>
+          ) : null}
+        </button>
+      )}
+
+      <div
+        ref={surface}
+        hidden={folded}
+        // L'attribut suffit en théorie ; la classe le dit aussi en CSS, pour qu'aucune
+        // règle d'un thème ne vienne redonner un `display` au document replié.
+        className={`sheet-doc text-ink-reading${folded ? " hidden" : ""}`}
+        style={style}
+        contentEditable={!readOnly}
+        suppressContentEditableWarning
+        spellCheck={false}
+        onFocus={onFocus}
+        onInput={onInput}
+        onKeyDown={onKeyDown}
+        onKeyUp={onReadStyle}
+        onMouseUp={onReadStyle}
+        role={readOnly ? undefined : "textbox"}
+        aria-multiline={readOnly ? undefined : true}
+        aria-label={ariaLabel}
+      />
+    </section>
   );
 }
 

@@ -235,6 +235,13 @@ struct MicaboCircleButton: View {
 /// toujours collé au bas de la zone sûre, quel que soit le fond de l'écran.
 struct MicaboBottomBar<Content: View>: View {
     var background: Color = MicaboColor.canvas
+    /// La hauteur du fondu qui amène la barre.
+    ///
+    /// Vingt-huit points suffisent sous une liste, où le fondu tombe entre deux rangées. Sous
+    /// un texte, il tombe **au milieu d'une ligne** : sur une fiche, la dernière ligne
+    /// lisible était systématiquement à moitié effacée, ce qui se lit comme un défaut
+    /// d'affichage et pas comme une limite. Les écrans de lecture l'allongent.
+    var fade: CGFloat = 28
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -244,7 +251,7 @@ struct MicaboBottomBar<Content: View>: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .frame(height: 28)
+            .frame(height: fade)
 
             content
                 .padding(.horizontal, MicaboSpacing.screen)

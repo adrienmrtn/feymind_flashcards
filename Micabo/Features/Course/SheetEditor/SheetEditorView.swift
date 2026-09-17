@@ -11,9 +11,17 @@ import UIKit
 /// surligneurs, la taille du passage, la formule, et « Expliquer », qui prend la même
 /// sélection que le gras au lieu de se disputer l'écran avec lui.
 ///
-/// Un seul `UITextView` porte toute la partie lisible de la fiche. Les blocs derrière le mur
-/// d'abonnement ne sont pas dedans : ils sont recollés derrière ce qui a été écrit, comme sur
-/// le site.
+/// **Un `UITextView` par chapitre**, et non plus un seul pour toute la fiche. Une fiche de
+/// dix-sept minutes était un ruban de texte continu : rien ne disait combien de parties elle
+/// contenait, ni où elles commençaient, et l'application composait quatre-vingt-dix blocs
+/// d'un coup pour afficher les six premiers. Découpée, elle se replie, se parcourt par son
+/// sommaire, et ne compose que ce qui est ouvert.
+///
+/// Ce que ça coûte tient en une ligne, et elle est ici : la barre d'outils est **partagée**,
+/// et c'est le chapitre qui prend le focus qui la reprend (voir `textViewDidBeginEditing`).
+///
+/// Les blocs derrière le mur d'abonnement ne sont dans aucun chapitre : ils sont recollés
+/// derrière ce qui a été écrit, comme sur le site.
 struct SheetEditorView: UIViewRepresentable {
     let blocks: [SheetBlock]
     /// Change quand la fiche a été réécrite ailleurs (synchro, nouvelle fiche) : le document
@@ -36,6 +44,7 @@ struct SheetEditorView: UIViewRepresentable {
         view.tintColor = UIColor(MicaboColor.accent)
         view.delegate = context.coordinator
         context.coordinator.attach(view)
+        applyTint(to: view)
         context.coordinator.load(blocks, revision: revision, readingSize: readingSize)
         return view
     }
@@ -45,8 +54,17 @@ struct SheetEditorView: UIViewRepresentable {
         coordinator.onSave = onSave
         coordinator.onExplain = onExplain
         coordinator.onFormula = onFormula
-        (view.layoutManager as? SheetEditorLayoutManager)?.markerColor = UIColor(tint)
+        applyTint(to: view)
         coordinator.load(blocks, revision: revision, readingSize: readingSize)
+    }
+
+    /// La teinte du cours, posée **avant** que le document ne se compose : c'est elle que
+    /// prennent les titres de partie et la capsule qui les précède.
+    private func applyTint(to view: UITextView) {
+        let ink = UIColor(tint.readableInk())
+        SheetDocument.tint = ink
+        (view.layoutManager as? SheetEditorLayoutManager)?.markerColor = UIColor(tint)
+        (view.layoutManager as? SheetEditorLayoutManager)?.headingColor = ink
     }
 
     static func dismantleUIView(_ view: UITextView, coordinator: Coordinator) {
@@ -85,7 +103,6 @@ struct SheetEditorView: UIViewRepresentable {
 
         func attach(_ view: UITextView) {
             textView = view
-            state.actions = self
             // La barre au-dessus du clavier : une vue SwiftUI hébergée, dont la hauteur est
             // fixée à la main, parce qu'un accessoire de clavier ne se mesure pas tout seul.
             let host = UIHostingController(rootView: SheetToolbar(state: state))
@@ -150,7 +167,15 @@ struct SheetEditorView: UIViewRepresentable {
             if textView.isFirstResponder { scrollCaretIntoView() }
         }
 
+        /// **C'est ici que la barre d'outils change de main.**
+        ///
+        /// Elle était donnée au montage : tant qu'un seul `UITextView` portait la fiche, le
+        /// seul coordinateur qui existât était forcément le bon. Depuis que chaque chapitre a
+        /// le sien, le montage ne dit plus rien — c'est le dernier chapitre affiché qui
+        /// gagnait, et le gras se posait dans un texte qu'on ne regardait pas. Le focus, lui,
+        /// est unique par construction : un seul champ répond au clavier.
         func textViewDidBeginEditing(_ textView: UITextView) {
+            state.actions = self
             state.isEditing = true
             refreshState()
         }
@@ -227,7 +252,15 @@ struct SheetEditorView: UIViewRepresentable {
 
         // MARK: L'état pour la barre
 
+        /// Le coordinateur tient-il la barre d'outils ?
+        ///
+        /// Un chapitre se recharge dès que la fiche est enregistrée, donc pendant qu'on écrit
+        /// dans un autre : sans ce garde-fou, son chargement remettrait dans la barre le
+        /// style de son propre premier paragraphe, sous les doigts de celui qui tape.
+        private var holdsToolbar: Bool { state.actions === self }
+
         private func refreshState() {
+            guard state.actions == nil || holdsToolbar else { return }
             guard let textView else { return }
             let storage = textView.textStorage
             let selected = textView.selectedRange

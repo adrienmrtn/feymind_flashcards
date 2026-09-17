@@ -40,9 +40,15 @@ interface Rule {
  * une phrase, et une phrase en gras ne met rien en valeur. L'italique est une nuance, plus
  * court encore. Le surligneur couvre une phrase courte ou un fragment : le plancher écarte les
  * trois mots isolés, le plafond écarte le paragraphe entier.
+ *
+ * **Le plafond du surligneur passe de deux cent quarante à cent quarante caractères.** Le
+ * prompt disait « une phrase courte » et autorisait dans la même ligne deux cent quarante
+ * caractères, ce qui fait cinq à six lignes d'iPhone : au rendu, ce n'est plus un trait de
+ * feutre mais un aplat qui avale le paragraphe. Cent quarante caractères, c'est trois lignes,
+ * et trois lignes se relisent d'un coup d'œil - ce qu'un surlignage est censé permettre.
  */
 const RULES: Rule[] = [
-  { marker: "==", min: 12, max: 240, colour: true },
+  { marker: "==", min: 12, max: 140, colour: true },
   { marker: "**", min: 1, max: 90 },
   { marker: "*", min: 1, max: 70 },
 ];
@@ -74,6 +80,17 @@ export function closerFor(kind: MarkKind): string {
 
 /** Ce qui peut précéder une ouverture : un début, une espace, une ponctuation ouvrante. */
 const BEFORE_OPEN = /[\s(\[«"'’‘“\-—:;,.!?]/;
+/**
+ * Ce qui ferme la proposition d'avant, et autorise donc un surligneur à s'ouvrir.
+ *
+ * **La virgule n'en est pas.** C'est tout l'objet de la règle : une bande qui s'ouvre sur
+ * « Cependant, ==une tendance différente a émergé… » ne se lit pas comme un passage retenu
+ * mais comme une sélection ratée, parce qu'elle commence au milieu de la phrase qu'elle
+ * prétend mettre en avant. Un trait de feutre se pose sur une proposition entière.
+ */
+const CLAUSE_END = /[.:;!?…]/;
+/** Ce qu'on saute en remontant vers la fin de la proposition précédente. */
+const BEFORE_CLAUSE = /[\s"'«»“”‘’(\[]/;
 /** Ce qui peut suivre une fermeture : une fin, une espace, une ponctuation fermante. */
 const AFTER_CLOSE = /[\s).,;:!?\]»"'’’”…\-]/;
 
@@ -250,12 +267,26 @@ export function placeable(text: string, from: number, to: number, kind: MarkKind
   if (length > rule.max) return "trop-long";
   if (inner.includes("\n")) return "multiligne";
   if (kind !== "highlight" && /[.!?]\s/.test(inner)) return "deux-phrases";
+  if (kind === "highlight" && !opensClause(text, from)) return "milieu-de-phrase";
 
   // Un exposant s'écrit `a^*`, une multiplication `2*3` : poser une marque à cheval sur une
   // formule la casserait, et le rendu LaTeX échouerait sur toute la fiche.
   if (mathRanges(text).some(([open, close]) => from <= close && to > open)) return "formule";
 
   return "ok";
+}
+
+/**
+ * Le passage ouvre-t-il une proposition ?
+ *
+ * On remonte les espaces et les guillemets ouvrants, et on regarde ce qui reste : le début du
+ * texte, ou une ponctuation qui ferme ce qui précède. Une virgule, un tiret, un mot : non.
+ */
+export function opensClause(text: string, from: number): boolean {
+  let index = from - 1;
+  while (index >= 0 && BEFORE_CLAUSE.test(text[index]!)) index -= 1;
+  if (index < 0) return true;
+  return CLAUSE_END.test(text[index]!);
 }
 
 /** Une marque déjà posée : ce qu'elle occupe, marqueurs compris. */

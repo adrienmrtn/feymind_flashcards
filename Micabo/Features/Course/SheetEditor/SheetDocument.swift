@@ -34,6 +34,23 @@ enum SheetDocument {
     /// Le caractère d'une pièce jointe.
     static let attachmentCharacter = "\u{FFFC}"
 
+    /// **La teinte du cours ouvert**, celle que prennent ses titres de partie.
+    ///
+    /// C'est ce qui donne son rythme à une fiche : on la feuillette au pouce et les titres
+    /// accrochent l'œil, comme les repères de couleur d'un manuel. Le noir seul ne le fait
+    /// pas, quelle que soit la taille du titre.
+    ///
+    /// Elle est posée ici, hors de l'arbre des vues, et non passée en argument à travers la
+    /// dizaine d'appels de `baseAttributes` que compte l'éditeur : chacun de ces appels est
+    /// un endroit où l'oubli remettrait un titre en noir sans que rien ne le signale. C'est
+    /// le même arrangement que `SheetPreferences.readingScale`, pour la même raison, et il
+    /// tient à la même condition : **une seule fiche est ouverte à la fois**. Pendant la
+    /// poussée de navigation d'une fiche à l'autre, les deux coexistent le temps de
+    /// l'animation, et les titres de celle qui sort empruntent la teinte de celle qui
+    /// entre. C'est le prix, il dure trois dixièmes de seconde, et il se paie sur un écran
+    /// qu'on quitte.
+    static var tint: UIColor = UIColor(MicaboColor.ink)
+
     // MARK: - Des blocs vers le document
 
     static func attributed(from blocks: [SheetBlock]) -> NSAttributedString {
@@ -59,7 +76,29 @@ enum SheetDocument {
                 previous = .formula
             }
         }
+        removeLeadingSpace(from: result)
         return result
+    }
+
+    /// **Rien ne se pose au-dessus du premier bloc.**
+    ///
+    /// L'air d'un bloc est porté par `paragraphSpacingBefore`, donc un document qui ouvre sur
+    /// un titre de partie commence par trente-huit points de vide. C'était sans conséquence
+    /// tant qu'un seul `UITextView` portait toute la fiche, sous un chapeau : ça l'est devenu
+    /// quand chaque chapitre a pris le sien, chacun ouvrant sur son titre juste sous
+    /// l'en-tête de son accordéon. C'est la règle `.sheet-doc > :first-child` du site.
+    private static func removeLeadingSpace(from result: NSMutableAttributedString) {
+        guard result.length > 0 else { return }
+        let range = (result.string as NSString).paragraphRange(for: NSRange(location: 0, length: 0))
+        guard range.length > 0,
+              let style = result.attribute(.paragraphStyle, at: 0, effectiveRange: nil) as? NSParagraphStyle,
+              let flush = style.mutableCopy() as? NSMutableParagraphStyle
+        else { return }
+        // Un titre de partie garde de quoi loger sa capsule, et rien de plus.
+        let kind = (result.attribute(kindKey, at: 0, effectiveRange: nil) as? String)
+            .flatMap(SheetParagraphKind.init(rawValue:))
+        flush.paragraphSpacingBefore = kind == .heading1 ? SheetTypography.headingRuleClearance : 0
+        result.addAttribute(.paragraphStyle, value: flush, range: range)
     }
 
     /// Le retour à la ligne porte les attributs du paragraphe qu'il ferme - **sans** sa pièce
@@ -340,9 +379,14 @@ enum SheetParagraphKind: String, CaseIterable {
         }
     }
 
+    /// Trois encres, et l'écart entre elles fait le plan : la partie porte la teinte du
+    /// cours, la sous-partie l'encre pleine, le texte l'encre de lecture. Teinter aussi les
+    /// sous-parties donnerait une page où plus rien ne ressort — c'est la faute qu'on
+    /// reproche aux fiches d'un seul feutre.
     var color: UIColor {
         switch self {
-        case .heading1, .heading2: UIColor(MicaboColor.ink)
+        case .heading1: SheetDocument.tint
+        case .heading2: UIColor(MicaboColor.ink)
         default: UIColor(MicaboColor.inkReading)
         }
     }

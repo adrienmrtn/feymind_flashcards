@@ -250,7 +250,10 @@ enum SheetBlock: Codable, Equatable, Sendable {
 
         case .paragraph:
             guard text.count >= 2 else { return [] }
-            return [.paragraph(text: text)]
+            // Un pavé se coupe à une fin de phrase, ici comme sur le serveur : c'est une
+            // conversion de lecture, au même titre qu'un ancien tableau devenu ses lignes,
+            // et les fiches déjà en base en profitent sans qu'on les réécrive.
+            return SheetText.split(text).map { .paragraph(text: $0) }
 
         case .list:
             let items = Self.strings(container, .items)
@@ -466,6 +469,16 @@ enum SheetLimits {
     static let listItems = 10
     /// Ce qu'on surligne sur une fiche entière. Au-delà, plus rien ne ressort.
     static let highlights = 24
+    /// **Ce qu'un paragraphe pèse au plus, en caractères.**
+    ///
+    /// Un paragraphe de fiche en fait cent cinquante ; la consigne de longueur en faisait
+    /// écrire de six cents, parce que le modèle n'a que deux façons d'allonger — des blocs de
+    /// plus, ou des phrases de plus — et que la seconde ne coûte rien. Six cents caractères,
+    /// c'est treize lignes d'iPhone d'un seul tenant : on ne les relit pas, on les saute.
+    ///
+    /// Recopié dans `SHEET_LIMITS.paragraphChars` côté serveur, où `splitParagraph` fait le
+    /// même découpage. Un test compare les deux.
+    static let paragraphChars = 500
     /// Le chapeau, en mots. Voir `SheetText.lead` : deux lignes de téléphone, pas plus.
     static let summaryWords = 20
 }
@@ -494,6 +507,120 @@ enum SheetText {
             result = result.replacingOccurrences(of: "  ", with: " ")
         }
         return result.trimmingCharacters(in: .whitespacesAndNewlines).nilIfBlank
+    }
+
+    /// **Un paragraphe trop long, coupé à une fin de phrase.**
+    ///
+    /// C'est un filet, pas une réécriture : pas un mot changé, rien de résumé, rien de
+    /// recomposé. On relève les fins de phrase et on empile les phrases jusqu'au plafond.
+    /// Deux paragraphes de prose valide valent mieux qu'un pavé de treize lignes, et
+    /// l'étudiant peut les recoller d'une touche — l'inverse lui demandait de retrouver à
+    /// l'œil où la phrase s'arrête.
+    ///
+    /// **On ne coupe jamais au milieu d'une phrase.** Une phrase plus longue que le plafond
+    /// à elle seule sort telle quelle : tranchée en deux blocs, elle se lirait comme un bug
+    /// d'affichage, et le remède serait pire que le mal.
+    ///
+    /// Jumeau de `splitParagraph` dans `supabase/functions/_shared/sheet.ts`.
+    static func split(_ text: String, limit: Int = SheetLimits.paragraphChars) -> [String] {
+        guard text.count > limit else { return [text] }
+        let flat = text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        guard flat.count > limit else { return [text] }
+
+        let pieces = sentences(of: flat)
+        guard pieces.count > 1 else { return [text] }
+
+        var parts: [String] = []
+        var current = ""
+        for piece in pieces {
+            let merged = current.isEmpty ? piece : current + " " + piece
+            if !current.isEmpty, merged.count > limit {
+                parts.append(current)
+                current = piece
+            } else {
+                current = merged
+            }
+        }
+        if !current.isEmpty { parts.append(current) }
+
+        // Une queue d'une demi-ligne se lit comme une coupure ratée, pas comme un paragraphe.
+        // Elle repart avec celui qui la précède, quitte à lui faire dépasser le plafond.
+        if parts.count > 1, let last = parts.last, last.count < 60 {
+            parts.removeLast()
+            parts[parts.count - 1] = parts[parts.count - 1] + " " + last
+        }
+
+        return parts.isEmpty ? [text] : parts
+    }
+
+    /// Les phrases d'un texte, relevées hors des formules et hors des marques.
+    private static func sentences(of text: String) -> [String] {
+        let characters = Array(text)
+        let spans = protectedSpans(characters)
+        var out: [String] = []
+        var start = 0
+        var index = 0
+
+        while index < characters.count {
+            defer { index += 1 }
+            guard ".!?…".contains(characters[index]) else { continue }
+            if spans.contains(where: { index >= $0.lowerBound && index < $0.upperBound }) { continue }
+
+            // Une initiale n'est pas une fin de phrase : « M. Dupont », « J. Monod ».
+            if index >= 2, characters[index - 1].isUppercase, characters[index - 2].isWhitespace {
+                continue
+            }
+
+            var after = index + 1
+            while after < characters.count, characters[after].isWhitespace { after += 1 }
+            guard after > index + 1, after < characters.count else { continue }
+
+            // Ce qui ouvre la phrase suivante : une capitale, un chiffre, un guillemet, ou
+            // le marqueur d'un terme en gras — « **La réplication** … » ouvre sur une étoile.
+            let opener = characters[after]
+            guard opener.isUppercase || opener.isNumber || "*=$«\"([".contains(opener) else { continue }
+
+            let sentence = String(characters[start...index]).trimmingCharacters(in: .whitespaces)
+            // Trop court pour être une phrase : c'est une abréviation prise pour un point.
+            guard sentence.count >= 40 else { continue }
+
+            out.append(sentence)
+            start = after
+        }
+
+        let rest = String(characters[start...]).trimmingCharacters(in: .whitespaces)
+        if !rest.isEmpty { out.append(rest) }
+        return out
+    }
+
+    /// Les portions qu'une coupure ne doit pas traverser : les formules et les marques.
+    ///
+    /// Un point dans `$3.14$` n'est pas une fin de phrase, et une coupure au milieu d'un
+    /// `**terme**` laisserait deux étoiles orphelines dans chaque moitié.
+    private static func protectedSpans(_ characters: [Character]) -> [Range<Int>] {
+        var spans: [Range<Int>] = []
+        for marker in ["$", "**", "=="] {
+            let glyphs = Array(marker)
+            var index = 0
+            while index < characters.count {
+                guard let open = position(of: glyphs, in: characters, from: index),
+                      let close = position(of: glyphs, in: characters, from: open + glyphs.count)
+                else { break }
+                spans.append(open..<(close + glyphs.count))
+                index = close + glyphs.count
+            }
+        }
+        return spans
+    }
+
+    private static func position(of glyphs: [Character], in characters: [Character], from: Int) -> Int? {
+        guard !glyphs.isEmpty, from >= 0 else { return nil }
+        var index = from
+        while index + glyphs.count <= characters.count {
+            if Array(characters[index..<(index + glyphs.count)]) == glyphs { return index }
+            index += 1
+        }
+        return nil
     }
 
     /// **Le chapeau d'une fiche : vingt mots, jamais plus.**
