@@ -14,9 +14,21 @@ struct ExamsView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
-    @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
 
     @State private var census: [UUID: CourseStats] = [:]
+
+    /// Les identifiants des cours, **relus et non observés**.
+    ///
+    /// L'écran tenait un `@Query` sur `Course` pour trois choses : savoir s'il existe un
+    /// cours, compter ceux d'une épreuve, et faire bouger la clé du recensement. Aucune ne
+    /// demande une ligne `Course` — trente kilo-octets de texte que SwiftData rematérialise
+    /// sur l'acteur principal à chaque écriture, une fois par requête vivante, tant que
+    /// l'onglet vit. Il ne reste que les identifiants, copiés en valeurs : aucun objet managé
+    /// ne survit à la lecture.
+    ///
+    /// `nil` tant que rien n'a été lu. Un ensemble vide veut dire « aucun cours », et l'état
+    /// vide en tire une conclusion : il ne faut pas la tirer avant d'avoir regardé.
+    @State private var courseIDs: Set<UUID>?
     @State private var path = NavigationPath()
     @State private var month = Date()
     @State private var selectedDay: Date?
@@ -58,17 +70,26 @@ struct ExamsView: View {
         return examsByDay[calendar.startOfDay(for: selectedDay)] ?? []
     }
 
-    /// Les cours qui ont de quoi être replanifiés.
+    /// Y a-t-il de quoi replanifier ?
     ///
     /// C'est **la même condition que celle du bouton de la feuille** (`canConfirm` demande
     /// au moins une carte active) : un cours sans carte ne se planifie pas, et compter les
     /// cours plutôt que les cartes laissait proposer un examen qu'on ne pouvait pas
     /// confirmer.
-    private var plannableCourses: [Course] {
-        courses.filter { census[$0.id]?.hasUnsuspended == true }
+    ///
+    /// Le recensement se bâtit depuis les cartes, et une carte dont le cours a disparu n'y
+    /// entre pas (`LibraryCensus.summarize` saute `card.course == nil`) : croiser avec la
+    /// liste des cours ne retirait rien, et la liste n'a donc plus à être tenue pour ça.
+    private var canPlan: Bool {
+        census.values.contains { $0.hasUnsuspended }
     }
 
-    private var canPlan: Bool { !plannableCourses.isEmpty }
+    /// Ce qui fait relire : la liste des cours a bougé (`CourseLedger`), ou une passe de
+    /// synchro est descendue (`CloudSync.epoch`). C'est exactement ce que `courses.count`
+    /// disait ici, sans tenir la table pour le dire.
+    private var libraryKey: String {
+        "\(CourseLedger.shared.stamp)-\(sync?.epoch ?? 0)"
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -133,12 +154,15 @@ struct ExamsView: View {
             .reportsNavigationDepth(for: .exams, depth: path.count)
             .returnsHome(path: $path)
         }
-        .task(id: "\(router?.selection == .exams)-\(courses.count)-\(sync?.epoch ?? 0)") {
+        .task(id: "\(router?.selection == .exams)-\(libraryKey)") {
             guard router?.selection == .exams else { return }
-            census = LibraryCensus.load(
-                in: modelContext,
-                key: "exams-\(courses.count)-\(sync?.epoch ?? 0)"
-            )
+            // Les objets ne dépassent pas cette ligne : seuls les identifiants sont gardés,
+            // et ce sont des valeurs. Un `[Course]` en `@State` retiendrait le contexte et
+            // rouvrirait exactement le problème qu'on ferme ici.
+            courseIDs = Set(CourseRepository.allCourses(in: modelContext).map(\.id))
+            // La clé garde son préfixe : `LibraryCensus` n'a qu'un seul emplacement de
+            // cache, que Cours et Paquets renseignent aussi avec leurs propres clés.
+            census = LibraryCensus.load(in: modelContext, key: "exams-\(libraryKey)")
         }
         .sheet(item: $editing, onDismiss: {
             // On pousse **après** la fermeture, et pas pendant : une navigation lancée
@@ -328,9 +352,13 @@ struct ExamsView: View {
         return parts.joined(separator: " · ")
     }
 
+    /// Combien des cours de cette épreuve existent encore.
+    ///
+    /// L'intersection se fait sur les identifiants : un examen peut citer un cours supprimé
+    /// depuis, et c'est précisément ce que ce compte écarte.
     private func courseCount(of exam: Exam) -> Int {
-        let wanted = Set(exam.courseIDs)
-        return courses.filter { wanted.contains($0.id) }.count
+        guard let courseIDs else { return 0 }
+        return exam.courseIDs.filter { courseIDs.contains($0) }.count
     }
 
     /// **Deux états vides, parce qu'il y a deux situations**, et qu'elles ne demandent pas la
@@ -352,7 +380,9 @@ struct ExamsView: View {
                 title: i18n.t("app.exams.emptyTitle"),
                 message: i18n.t("app.exams.emptyBody")
             )
-        } else if courses.isEmpty {
+        // `courseIDs == nil` veut dire « pas encore lu », pas « aucun cours » : conclure
+        // avant d'avoir regardé montrerait « importe un cours » à quelqu'un qui en a.
+        } else if courseIDs?.isEmpty == true {
             MicaboEmptyState(
                 systemImage: "calendar.badge.plus",
                 title: i18n.t("app.exams.needCourseTitle"),

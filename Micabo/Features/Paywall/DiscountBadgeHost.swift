@@ -27,8 +27,27 @@ struct DiscountBadgeHost: View {
     @AppStorage(DiscountOffer.Key.seen) private var seen = false
 
     @Environment(ProAccess.self) private var pro: ProAccess?
+    @Environment(CloudSync.self) private var sync: CloudSync?
     @Environment(\.scenePhase) private var scenePhase
-    @Query private var courses: [Course]
+    @Environment(\.modelContext) private var modelContext
+
+    /// **Le nombre de cours, compté et non observé.**
+    ///
+    /// Cette vue est montée en permanence par-dessus les onglets (`RootTabView`), donc tout ce
+    /// qu'elle observe vit tant que l'app vit. Elle tenait ici un `@Query` sur `Course` — la
+    /// table entière, trente kilo-octets de texte par ligne, rematérialisée sur l'acteur
+    /// principal à chaque écriture SwiftData — pour en tirer un entier et le comparer à un.
+    ///
+    /// Le compte se relit donc quand il a pu changer : un cours créé ou supprimé
+    /// (`CourseLedger`), une descente de synchro (`CloudSync.epoch`). Entre les deux, rien
+    /// n'est lu.
+    ///
+    /// Il est gardé d'un lancement à l'autre, et ce n'est pas de l'optimisation : la première
+    /// image se peint avant toute lecture de base. Un compte qui partirait de zéro rendrait
+    /// `shows` faux à la première passe, et la languette **arriverait en fondu** à chaque
+    /// ouverture chez quelqu'un qui a déjà des cours — `.animation(_:value:)` est posée juste
+    /// en dessous. La valeur d'hier est juste, et la lecture qui suit la corrige.
+    @AppStorage(DiscountOffer.Key.ownedCourses) private var ownedCourses = 0
 
     @State private var presentation: DiscountPresentation?
     /// L'instant où l'app est passée en arrière-plan. Revenir d'un basculement d'une seconde
@@ -40,8 +59,10 @@ struct DiscountBadgeHost: View {
         startedAtStamp > 0 ? Date(timeIntervalSince1970: startedAtStamp) : nil
     }
 
-    private var ownedCourses: Int {
-        courses.filter { !$0.isFromLibrary }.count
+    /// Ce qui fait recompter. Le tampon des cours couvre l'import, la reprise et la
+    /// suppression ; l'époque de synchro couvre ce qui descend du serveur.
+    private var countKey: String {
+        "\(CourseLedger.shared.stamp)-\(sync?.epoch ?? 0)"
     }
 
     private var shows: Bool {
@@ -69,6 +90,12 @@ struct DiscountBadgeHost: View {
         }
         .animation(OnboardingMotion.enter, value: shows)
         .micaboDiscountOffer($presentation)
+        // Le compte n'est réécrit que s'il a changé : `@AppStorage` écrit dans les réglages et
+        // invalide la vue à chaque affectation, même quand la valeur est la même.
+        .task(id: countKey) {
+            let count = CourseRepository.ownedCount(in: modelContext)
+            if count != ownedCourses { ownedCourses = count }
+        }
         .task {
             guard !didOfferOnLaunch else { return }
             didOfferOnLaunch = true

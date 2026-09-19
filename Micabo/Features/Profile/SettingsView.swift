@@ -37,8 +37,6 @@ struct SettingsView: View {
     @State private var schoolName = OnboardingPreferences.institutionName
 
     @Environment(ProAccess.self) private var pro: ProAccess?
-    /// Les cours de l'appareil : ils décident si l'offre de bienvenue est méritée.
-    @Query private var allCourses: [Course]
     @State private var paywall: PaywallTrigger?
     @State private var discountOffer: DiscountPresentation?
     /// Relues pour que la rangée de l'offre suive son décompte sans qu'on rouvre l'écran.
@@ -78,6 +76,9 @@ struct SettingsView: View {
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
         .micaboScreenBackground()
+        // Les cours de l'appareil décident si l'offre de bienvenue est méritée. Un compte
+        // suffit, et il se prend à l'ouverture : rien ne crée de cours depuis cette feuille.
+        .task { ownedCourseCount = CourseRepository.ownedCount(in: modelContext) }
         .confirmationDialog(
             i18n.t("ios.deleteAccountQ"),
             isPresented: $showDeleteAccountConfirmation,
@@ -216,9 +217,12 @@ struct SettingsView: View {
 
     /// Les cours importés ici. Ceux repris de la bibliothèque ne comptent pas : on n'a rien
     /// fait pour eux.
-    private var ownedCourseCount: Int {
-        allCourses.filter { !$0.isFromLibrary }.count
-    }
+    ///
+    /// Compté une fois à l'ouverture de la feuille, et non observé : une seule rangée le lit
+    /// (la ligne de l'offre, plus haut), et rien ne crée de cours pendant qu'on est dans les
+    /// Réglages. Un `@Query` tenait ici la table entière des cours — trente kilo-octets de
+    /// texte par ligne — pour cet entier.
+    @State private var ownedCourseCount = 0
 
     /// « -43 % sur l'année » et, quand la fenêtre court, le temps qu'il reste.
     private var discountSubtitle: String {
@@ -917,6 +921,10 @@ struct SettingsView: View {
         try? modelContext.delete(model: Flashcard.self)
         try? modelContext.delete(model: Course.self)
         try? modelContext.save()
+        // La suppression en masse ne passe pas par `CourseRepository` : sans ce signal, les
+        // écrans qui ne tiennent plus la table des cours resteraient sur leurs anciens
+        // totaux derrière la feuille qui se referme.
+        CourseLedger.noteChange()
         dismiss()
     }
 }
