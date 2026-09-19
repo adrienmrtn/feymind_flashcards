@@ -154,12 +154,25 @@ struct ExamsView: View {
             .reportsNavigationDepth(for: .exams, depth: path.count)
             .returnsHome(path: $path)
         }
-        .task(id: "\(router?.selection == .exams)-\(libraryKey)") {
-            guard router?.selection == .exams else { return }
+        // **Deux tâches, et deux clés différentes — c'est le point.**
+        //
+        // Le recensement se relit au retour sur l'onglet : il est bon marché, `LibraryCensus`
+        // rend son cache quand la clé n'a pas bougé, et il doit suivre les cartes révisées
+        // ailleurs.
+        //
+        // Les identifiants, eux, ne portent **pas** l'onglet dans leur clé. Une première
+        // version les relisait à chaque visite, et c'était une régression : on visite un
+        // onglet bien plus souvent qu'on n'écrit en base, donc cette lecture-là serait
+        // devenue plus fréquente que le `@Query` qu'elle remplace. Elle ne repart maintenant
+        // que lorsque la liste des cours a réellement changé.
+        .task(id: libraryKey) {
             // Les objets ne dépassent pas cette ligne : seuls les identifiants sont gardés,
             // et ce sont des valeurs. Un `[Course]` en `@State` retiendrait le contexte et
             // rouvrirait exactement le problème qu'on ferme ici.
             courseIDs = Set(CourseRepository.allCourses(in: modelContext).map(\.id))
+        }
+        .task(id: "\(router?.selection == .exams)-\(libraryKey)") {
+            guard router?.selection == .exams else { return }
             // La clé garde son préfixe : `LibraryCensus` n'a qu'un seul emplacement de
             // cache, que Cours et Paquets renseignent aussi avec leurs propres clés.
             census = LibraryCensus.load(in: modelContext, key: "exams-\(libraryKey)")

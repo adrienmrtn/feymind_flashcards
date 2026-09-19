@@ -143,11 +143,18 @@ struct ProfileView: View {
             // chaque cours ni `card.logs` sur chaque carte, qui rouvrent une requête à chaque
             // fois et faisaient attendre le Profil dès qu'on avait plusieurs cours.
             //
-            // Le titre et l'emoji se prennent **au passage**, sur la première carte qui
-            // désigne le cours : ce sont les trois seuls champs dont ce panneau ait besoin.
-            // Les relire depuis un `@Query` sur `Course` tenait la table entière vivante —
-            // trente kilo-octets de texte par ligne, rematérialisés à chaque écriture — pour
-            // un identifiant, un titre et un emoji.
+            // Le titre et l'emoji se prennent au passage, sur la première carte qui désigne
+            // le cours.
+            //
+            // **Ce que ça économise, et ce que ça n'économise pas.** Toucher `card.course`
+            // faulte la ligne entière — Core Data ne faulte pas par attribut — donc chaque
+            // cours ayant au moins une carte active est bel et bien matérialisé, texte
+            // compris. Le gain n'est pas là. Il est dans la **fréquence** : le `@Query` qui
+            // vivait en tête de ce fichier rematérialisait **toute** la table à **chaque**
+            // écriture SwiftData, y compris pendant une session, y compris quand le Profil
+            // n'était pas regardé. Cette lecture-ci ne se fait que lorsque le Profil est
+            // actif et qu'une de ses clés a bougé, et elle ne touche que les cours qui ont
+            // des cartes.
             var cardsByCourse: [UUID: [Flashcard]] = [:]
             var courseOrder: [(id: UUID, title: String, emoji: String)] = []
             for card in usable {

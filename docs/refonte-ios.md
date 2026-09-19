@@ -477,11 +477,18 @@ avec vingt cours importés :
 - **Hitches** dans Instruments (gabarit *Animation Hitches*) au défilement de `CoursesListView`
   et au changement d'onglet. C'est la seule mesure qui corresponde à « ça rame ».
 - **Temps jusqu'à la première image** (`os_signpost` autour de `MicaboApp.init`).
-- **Nombre de matérialisations de `Course` par seconde** pendant un import et pendant une
-  synchro qui rapporte des lignes — un compteur temporaire dans `Course.init` suffit à prouver
-  le §3.1 avant de le corriger. C'est la mesure qui départage « six observateurs » de « trente
-  kilo-octets par ligne » : si le compteur s'affole mais que les temps restent bons, le poids
-  n'est pas le problème et seul le nombre d'observateurs compte.
+- **Nombre de matérialisations de `Course`** pendant un import et pendant une synchro qui
+  rapporte des lignes. C'est la mesure qui départage « six observateurs » de « trente
+  kilo-octets par ligne ».
+
+  **Attention à l'instrument.** Une première version de ce document proposait un compteur dans
+  `Course.init`. Il ne mesure rien de ce qu'on cherche : SwiftData n'appelle pas l'initialiseur
+  Swift quand il rend une ligne **existante** — il construit l'instance depuis le stockage.
+  Le compteur afficherait 1 sur un import, 0 sur une synchro de vingt cours descendus, et 0 sur
+  les six requêtes qu'on veut précisément compter. Il faut instrumenter la **lecture d'un
+  attribut lourd** — un point d'arrêt ou un compteur sur l'accesseur de `rawText` — ou lire
+  directement les allocations dans Instruments. Un instrument qui répond zéro pour la mauvaise
+  raison est pire que pas d'instrument.
 
 Sans ces trois nombres, on ne saura pas si le correctif a marché, et le prochain document
 répétera le même diagnostic.
@@ -867,6 +874,19 @@ masse des Réglages. `CloudSync.epoch` couvrait déjà la descente de synchro.
 Les quatre restantes sont `CoursesListView` et `DecksListView` — qui affichent des cours et
 doivent donc les tenir — et `ExamDetailView` et `ExamEditorSheet`, deux écrans poussés qui ne
 vivent que le temps qu'on les regarde.
+
+**Ce que ce chiffre ne dit pas, et qu'il faut dire.** Ce qui a été retiré, ce sont des
+*requêtes*, pas toute *observation*. `TodayView` garde des objets `Course` managés dans son
+`DayLoad` et lit leurs propriétés dans son corps : un `@Model` est `Observable`, donc l'écran
+reste invalidé quand un cours **qu'il affiche** change. C'est voulu — c'est ce qui fait qu'un
+cours renommé se renomme à l'écran — mais ce n'est pas « zéro observation ». De même, le Profil
+faulte chaque cours ayant des cartes, parce que Core Data ne faulte pas par attribut.
+
+Le gain réel n'est donc pas « plus rien n'est matérialisé ». Il est de **fréquence** : la
+table entière n'est plus reconstruite à chaque écriture SwiftData, y compris pendant une
+session et y compris pour des écrans qu'on ne regarde pas. **Et ce gain n'est pas mesuré** :
+la mesure du §3.5 devait être prise avant le correctif, elle ne l'a pas été. C'est un correctif
+raisonné, pas un correctif constaté.
 
 Aussi fait : `DecodedImageCache`, et les deux `body` qui décodaient un JPEG à chaque évaluation.
 
