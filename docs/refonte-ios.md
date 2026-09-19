@@ -290,19 +290,40 @@ réseau au point d'appel.
 
 Il reste ceci.
 
-### 3.1 La cause principale : `Course` est observé par les cinq onglets, avec 24 Ko par ligne
+### 3.1 La cause principale : `Course` est observé par cinq à huit vues, avec 30 Ko par ligne
 
-`Course` porte deux charges lourdes qui ne sont **pas** marquées `@Attribute(.externalStorage)` :
+`Course` porte **trois** charges de texte, toutes stockées en ligne : *(lu + mesuré)*
 
 | Attribut | Déclaration | Poids mesuré en base |
 | --- | --- | --- |
 | `rawText: String` | `Course.swift:63` | **16 Ko en moyenne, 76 Ko au maximum** |
-| `sheetData: Data?` | `Course.swift:70` | **7,8 Ko en moyenne, 35 Ko au maximum** |
-| `coverImageData` | `Course.swift:72` | *déjà en `.externalStorage`* |
+| `contextText: String` | `Course.swift:65` | **6,7 Ko en moyenne, 33 Ko au maximum** |
+| `sheetData: Data?` | `Course.swift:70` | **7,9 Ko en moyenne, 35 Ko au maximum** |
+| `coverImageData` | `Course.swift:72` | *en `.externalStorage` — le seul qui puisse l'être* |
 
-La précaution a été prise pour l'image de couverture et oubliée pour les deux autres. SwiftData
-ne fait pas de chargement paresseux sur les attributs scalaires : **matérialiser un `Course`
-charge le texte brut entier et la fiche entière.**
+Soit **environ 30 Ko de texte par ligne**, chargés avec elle à chaque matérialisation.
+
+**Et `.externalStorage` n'est pas le remède — je me suis trompé en le proposant.** Trois
+raisons, chacune suffisante :
+
+1. **L'option ne s'applique pas à un `String`.** `.externalStorage` traduit
+   `allowsExternalBinaryDataStorage` de Core Data, réservé aux attributs *Binary Data*. Les
+   quatre usages du dépôt portent tous sur un `Data?` (`Course.swift:72`,
+   `Flashcard.swift:140` et `:152`, `Exam.swift:72`). Or `rawText` et `contextText` — les
+   deux tiers du poids — sont des `String`.
+2. **Sur `sheetData`, elle serait inerte.** L'externalisation est conditionnelle à la taille,
+   et aucune fiche de production n'approche le seuil : médiane 6,3 Ko, p99 26 Ko, maximum
+   34,6 Ko, **zéro ligne au-dessus de 128 Ko** sur 164 cours. Core Data garderait tout en
+   ligne.
+3. **Il n'y a jamais eu d'oubli.** `git log --follow` sur `Course.swift` ne rend qu'un
+   commit, et cette version porte déjà les deux états côte à côte. L'attribut est sur les
+   `Data` partout et nulle part ailleurs : c'est exactement ce que l'API autorise.
+
+Au passage, l'idée que `.externalStorage` rendrait le chargement paresseux est une
+extrapolation : Apple documente un stockage hors base, pas un chargement différé.
+
+Le poids par ligne est donc à prendre tel quel, et **le levier est ailleurs** : le nombre
+d'observateurs, et ce qu'on leur fait porter.
 
 Or `Course` est dans un `@Query` dans les cinq onglets : *(lu)*
 
@@ -315,10 +336,15 @@ ProfileView.swift:30       @Query private var courses: [Course]     ← ni tri n
 ```
 
 `propertiesToFetch` : **zéro usage dans tout le dépôt.** Les onglets d'un `TabView` système
-restent vivants après la première visite. Et la synchronisation écrit dans SwiftData à chaque
-passage au premier plan (`MicaboApp.swift:103`, `:120`, `:131`).
+sont créés paresseusement mais **restent vivants après la première visite**.
 
-Donc : **chaque écriture SwiftData réveille jusqu'à cinq `@Query`, dont chacune rematérialise la
+Et il y en a un sixième, que j'avais manqué : `DiscountBadgeHost` porte lui aussi un `@Query`
+et il est monté en permanence par-dessus les onglets (`RootTabView.swift:66-72`). En régime
+normal, ce sont donc **six** requêtes `Course` vivantes, et **sept ou huit** quand
+`SettingsView.swift:41`, `ExamDetailView.swift:22` ou `ExamEditorSheet.swift:29` sont ouverts
+par-dessus. *(lu)*
+
+Donc : **chaque écriture SwiftData réveille six `@Query` ou plus, dont chacune rematérialise la
 table `Course` entière sur l'acteur principal, texte brut compris.**
 
 Ce mécanisme est déjà décrit, mot pour mot, dans le dépôt — pour les cartes, à
@@ -328,25 +354,51 @@ Ce mécanisme est déjà décrit, mot pour mot, dans le dépôt — pour les car
 > […] Avec quelques cours, c'est des milliers d'objets reconstruits plusieurs fois par seconde
 > pendant une session ou une synchro : **c'est ça qui faisait ramer l'app.** »
 
-Le diagnostic était juste. Il a été appliqué à `Flashcard` et pas à `Course`, qui pèse vingt
-fois plus par ligne.
+Le diagnostic était juste. Il a été appliqué à `Flashcard` — plus aucun `@Query` sur
+`Flashcard` dans tout le dépôt — et pas à `Course`, dont le `@Query` est toujours là, à
+`TodayView.swift:29`, **dans le fichier même qui documente le problème**. *(lu)*
 
-**Et c'est pour ça que la fluidité passe avant tout le reste.** À 3 cours, c'est 72 Ko × 5. À
-40 cours — « importe tous tes cours », l'objectif même de la partie 5 — c'est **1 Mo décodé cinq
-fois, à chaque écriture, sur le fil qui dessine**. Le lag n'est pas à côté du repositionnement :
-il est proportionnel à son succès.
+Et l'écart entre les deux modèles est plus grand que je ne l'avais écrit : **de 40 fois**
+(poids Postgres, où le texte long est compressé) **à 97 fois sur l'appareil**, où SQLite ne
+compresse pas — et c'est ce chiffre-là qui compte, puisque c'est ce que SwiftData décode.
+*(mesuré)*
+
+**Ce qui déclenche ces écritures, en revanche, n'est pas ce que je croyais.** La
+synchronisation ne tourne **pas** à chaque passage au premier plan. Les trois appels de
+`MicaboApp.swift:103`, `:120` et `:131` sont, dans l'ordre : un `.task` qui ne joue qu'une fois
+par lancement de processus, un changement de compte, et l'ouverture d'un lien `micabo://`. Le
+seul `onChange(of: scenePhase)` du fichier (`:70-76`) ne fait que vider la file d'analytics. Et
+une descente sans changement n'écrit rien : `context.save()` est un no-op sur un contexte
+propre. *(lu)*
+
+Les réveils viennent donc d'ailleurs : une synchro qui rapporte effectivement quelque chose, un
+import, la fin d'une session, un examen créé. C'est moins fréquent que « à chaque retour dans
+l'app » — mais c'est exactement pendant ces moments-là qu'on regarde l'écran.
+
+**Et c'est pour ça que la fluidité passe avant tout le reste.** Une précision qui change la
+lecture : aujourd'hui, **94,8 % des comptes qui ont un cours en ont exactement un** (moyenne
+1,19 ; médiane 1 ; p90 1). *(mesuré)* Le parc actuel pèse donc ~30 Ko × 6, pas « 72 Ko × 5 » —
+et personne ne rame encore beaucoup. À 40 cours, c'est **1,2 Mo décodé six fois, à chaque
+écriture, sur le fil qui dessine**. Le lag n'est pas à côté du repositionnement : il est
+proportionnel à son succès, et il n'a pas encore commencé.
 
 **Ce qu'il faut faire**, dans cet ordre :
 
-1. **Sortir le texte brut et la fiche de la ligne.** `@Attribute(.externalStorage)` sur
-   `rawText` et `sheetData`. Une migration légère, et SwiftData cesse de les charger avec la
-   ligne. C'est le correctif à un caractère près qui rapporte le plus.
-2. **Un seul observateur de `Course`.** Les listes (`CoursesListView`, `DecksListView`) gardent
-   leur `@Query` ; `TodayView`, `ExamsView` et `ProfileView` passent au motif `DayLoad` déjà
-   écrit à `TodayView.swift:46-57` — lecture à la demande, sur événement, pas d'observation.
-3. **Une projection légère pour les listes.** Un `CourseRow` (id, titre, matière, emoji, accent,
-   nombre de cartes dues, date) construit une fois et gardé en `@State`, au lieu de promener des
-   `Course` complets dans la hiérarchie de vues.
+1. **Réduire le nombre d'observateurs.** C'est le levier principal, et il est gratuit. Les
+   listes (`CoursesListView`, `DecksListView`) gardent leur `@Query` ; `TodayView`,
+   `ExamsView` et `ProfileView` passent au motif `DayLoad` déjà écrit à
+   `TodayView.swift:46-57` — lecture à la demande, sur événement, pas d'observation. Et
+   `DiscountBadgeHost`, qui est monté en permanence par-dessus les onglets
+   (`RootTabView.swift:66-72`), ne doit pas observer `Course` du tout.
+2. **Une projection légère pour les listes.** Un `CourseRow` (id, titre, matière, emoji,
+   accent, nombre de cartes dues, date) construit une fois et gardé en `@State`, au lieu de
+   promener des `Course` complets dans la hiérarchie de vues. C'est ce qui empêche les 30 Ko
+   de circuler.
+3. **Sortir les trois textes du modèle observé.** Le seul mécanisme SwiftData qui donne
+   vraiment un chargement différé est la relation : un `@Model CourseBody` portant `rawText`,
+   `contextText` et `sheetData`, relié à `Course` par une relation à un, n'est matérialisé
+   que lorsqu'on ouvre la fiche. C'est plus lourd qu'un attribut à changer — une migration
+   réelle — mais c'est le seul qui allège la ligne pour de bon.
 4. **`ProfileView.swift:30` n'a besoin que d'un compte**, pas de la table.
 
 ### 3.2 Le décodage d'image dans un `body`
@@ -398,8 +450,11 @@ avec vingt cours importés :
 - **Hitches** dans Instruments (gabarit *Animation Hitches*) au défilement de `CoursesListView`
   et au changement d'onglet. C'est la seule mesure qui corresponde à « ça rame ».
 - **Temps jusqu'à la première image** (`os_signpost` autour de `MicaboApp.init`).
-- **Nombre de matérialisations de `Course` par seconde** pendant une synchro — un compteur
-  temporaire dans `Course.init` suffit à prouver le §3.1 avant de le corriger.
+- **Nombre de matérialisations de `Course` par seconde** pendant un import et pendant une
+  synchro qui rapporte des lignes — un compteur temporaire dans `Course.init` suffit à prouver
+  le §3.1 avant de le corriger. C'est la mesure qui départage « six observateurs » de « trente
+  kilo-octets par ligne » : si le compteur s'affole mais que les temps restent bons, le poids
+  n'est pas le problème et seul le nombre d'observateurs compte.
 
 Sans ces trois nombres, on ne saura pas si le correctif a marché, et le prochain document
 répétera le même diagnostic.
@@ -417,11 +472,20 @@ paywall ne rattrape ça.
 58 comptes sur 77 (§1.3), dont 39 parce que la synchronisation ne revient jamais. L'ordre de
 travail découle directement de ce partage :
 
-1. **Faire revenir `CloudSync`** — les deux tiers du problème. Aujourd'hui la montée est
-   déclenchée au lancement et au retour au premier plan (`MicaboApp.swift:103`, `:120`, `:131`).
-   Il manque le déclencheur qui compte : **la fin d'un import.** Un cours qui vient d'être écrit
-   doit monter dans la seconde, pas au prochain retour d'arrière-plan — parce qu'il n'y a pas
-   toujours de prochain retour.
+1. **Faire revenir `CloudSync`** — les deux tiers du problème, et on sait maintenant
+   pourquoi. La synchronisation part à **trois moments seulement** : un `.task` qui ne joue
+   qu'une fois par lancement de processus (`MicaboApp.swift:103`), un changement de compte
+   (`:120`), et l'ouverture d'un lien `micabo://` (`:131`). **Pas au retour au premier plan** —
+   le seul `onChange(of: scenePhase)` du fichier (`:70-76`) ne fait que vider la file
+   d'analytics. *(lu)*
+
+   Le scénario qui produit les 39 comptes se lit alors tout seul : on ouvre l'app (synchro, à
+   vide, avant l'import), on importe, on lit sa fiche, on ferme. **Il n'y a aucun déclencheur
+   entre l'import et la prochaine ouverture de l'app** — et pour la moitié de ces gens, il n'y
+   a jamais de prochaine ouverture. Le cours reste sur le téléphone.
+
+   Il manque donc le déclencheur qui compte : **la fin d'un import**, et à défaut le passage
+   à l'arrière-plan. Un cours qui vient d'être écrit doit monter dans la seconde.
 2. **Dire quand la montée échoue.** `pushCards` a déjà appris à ne pas avaler un refus
    (`CloudSync.swift:186-191`). Il faut la même chose sur `courses`, et une ligne dans les
    Réglages qui dit « 3 cours ne sont pas encore sauvegardés », avec un bouton qui réessaie.
