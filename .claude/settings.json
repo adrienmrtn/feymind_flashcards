@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Appllama",
+      "mcp__Appllama__get_credits",
+      "mcp__Appllama__search_apps",
+      "mcp__Appllama__get_app",
+      "mcp__Appllama__list_app_screens",
+      "mcp__Appllama__get_screen",
+      "mcp__Appllama__search_screens",
+      "mcp__Appllama__list_ui_elements",
+      "mcp__Appllama__list_flows",
+      "mcp__Appllama__get_flow_apps",
+      "mcp__Appllama__get_board",
+      "mcp__Appllama__list_my_boards",
+      "mcp__Appllama__get_element_screens"
+    ]
+  }
+}
