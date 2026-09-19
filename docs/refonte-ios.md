@@ -847,7 +847,38 @@ sur la branche. Poser les six événements du §8.
 *Critère de sortie :* `app_events` se remplit, et on sait enfin où partent les 25 premières
 étapes.
 
-### Lot 1 — La fluidité (semaines 1 à 3)
+### Lot 1 — La fluidité (semaines 1 à 3) — *entamé*
+
+**Fait**, commit `d22228f` :
+
+| Écran | Ce qu'il tenait | Ce qu'il lit maintenant |
+| --- | --- | --- |
+| `DiscountBadgeHost` *(monté en permanence)* | la table entière | un `fetchCount`, gardé entre deux lancements |
+| `TodayView` | la table entière | `allCourses(in:)` dans `reload()`, même tri |
+| `ExamsView` | la table entière | un `Set<UUID>` d'identifiants |
+| `ProfileView` | la table entière | un `COUNT` + trois champs pris sur les cartes |
+| `SettingsView` | la table entière | un `fetchCount` à l'ouverture |
+
+Le signal qui manquait pour s'en passer est `CourseLedger` : un entier qui monte quand la liste
+des cours bouge, posé par `CourseRepository` après l'enregistrement et par la suppression en
+masse des Réglages. `CloudSync.epoch` couvrait déjà la descente de synchro.
+
+**Requêtes vivantes sur `Course` : de neuf à quatre, et de six à zéro en régime permanent.**
+Les quatre restantes sont `CoursesListView` et `DecksListView` — qui affichent des cours et
+doivent donc les tenir — et `ExamDetailView` et `ExamEditorSheet`, deux écrans poussés qui ne
+vivent que le temps qu'on les regarde.
+
+Aussi fait : `DecodedImageCache`, et les deux `body` qui décodaient un JPEG à chaque évaluation.
+
+**Reste à faire** : la projection légère pour `ExamDetailView` et `ExamEditorSheet`. Elle
+demande une surcharge de `MicaboTile.course` dans le design system, donc elle touche du code
+partagé — à faire avec un compilateur sous la main, pas sans.
+
+**Rien de tout ça n'a été compilé** : la machine qui l'a écrit n'a pas de chaîne Swift. Le diff
+a été relu par cinq lectures adversariales, ce qui n'est pas la même chose qu'une construction
+verte.
+
+#### Ce qui était prévu et qui reste à faire
 
 `.externalStorage` sur `rawText` et `sheetData`. Un seul observateur de `Course`. La projection
 `CourseRow`. Le cache d'images. Le lancement allégé. Les trois mesures du §3.5, avant et après.
