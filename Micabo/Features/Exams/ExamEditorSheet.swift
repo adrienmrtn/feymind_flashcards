@@ -25,8 +25,19 @@ struct ExamEditorSheet: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(CloudSync.self) private var sync: CloudSync?
 
-    @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
+    /// **La liste de sélection, lue une fois à l'ouverture.**
+    ///
+    /// C'est une liste de cases à cocher : elle ne veut d'un cours que son identifiant, son
+    /// titre et sa tuile. Un `@Query` tenait ici la table entière — trente kilo-octets de
+    /// texte par ligne, rematérialisés à chaque écriture SwiftData tant que la feuille est
+    /// présentée — pour dessiner ça.
+    ///
+    /// Aucune clé de rechargement n'est nécessaire : on ne crée pas de cours depuis ce
+    /// formulaire, et une feuille est reconstruite à chaque présentation, donc `load()` la
+    /// remplit à chaque ouverture.
+    @State private var courses: [CourseBadge] = []
 
     /// Les étapes, dans l'ordre du site. `pauses` s'efface quand l'épreuve est trop proche
     /// pour qu'on ait des jours à poser : une question sans réponse possible n'est pas une
@@ -63,10 +74,6 @@ struct ExamEditorSheet: View {
     private let calendar = MicaboCalendar.shared
 
     private var isEditing: Bool { exam != nil }
-
-    private var selectedCourses: [Course] {
-        courses.filter { selection.contains($0.id) }
-    }
 
     private var selectedCards: [Flashcard] {
         selection.flatMap { cardsByCourse[$0] ?? [] }
@@ -193,7 +200,7 @@ struct ExamEditorSheet: View {
                 .disabled(!canConfirm)
             }
         }
-        .task { load() }
+        .task(id: libraryKey) { load() }
         .onChange(of: selection) { _, _ in replan() }
         .onChange(of: date) { _, _ in replan() }
         .onChange(of: intensity) { _, _ in replan() }
@@ -313,7 +320,13 @@ struct ExamEditorSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             MicaboSectionCaption(text: L10n.t("ios.coursesOnProgram", locale: .resolved()))
 
-            if courses.isEmpty {
+            if !didLoad {
+                // **Rien tant qu'on n'a pas lu.** `load()` s'exécute dans un `.task`, donc
+                // après le premier rendu : une liste vide ne veut pas encore dire « aucun
+                // cours ». Sans cette garde, quelqu'un qui en a vingt verrait passer
+                // « il te faut un cours » le temps d'une image.
+                EmptyView()
+            } else if courses.isEmpty {
                 MicaboSectionFootnote(text: L10n.t("ios.examNeedCourse", locale: .resolved()))
             } else {
                 VStack(spacing: 0) {
@@ -329,7 +342,7 @@ struct ExamEditorSheet: View {
         }
     }
 
-    private func courseRow(_ course: Course) -> some View {
+    private func courseRow(_ course: CourseBadge) -> some View {
         let isSelected = selection.contains(course.id)
         let count = cardsByCourse[course.id]?.count ?? 0
 
@@ -341,7 +354,7 @@ struct ExamEditorSheet: View {
             }
         } label: {
             HStack(spacing: 13) {
-                MicaboTile.course(course)
+                MicaboTile.course(badge: course)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(course.title)
@@ -682,10 +695,15 @@ struct ExamEditorSheet: View {
         }
     }
 
-    private func load() {
-        guard !didLoad else { return }
-        didLoad = true
-
+    /// **La bibliothèque, relue ; l'état éditable, non.**
+    ///
+    /// Les deux parties de cette feuille n'ont pas le même cycle. Ce qui vient de la base —
+    /// les cours, leurs cartes — doit suivre : une synchro peut en faire descendre un pendant
+    /// que le formulaire est ouvert, et le `@Query` retiré le montrait tout seul. Ce que
+    /// l'utilisateur est en train de saisir, lui, ne doit **jamais** être réécrit : recharger
+    /// `name` ou `selection` effacerait ce qu'il vient de taper. D'où la garde `didLoad`, qui
+    /// ne protège plus que la seconde moitié.
+    private func loadLibrary() {
         // Une lecture de la table des cartes, puis un rangement par cours.
         var byCourse: [UUID: [Flashcard]] = [:]
         for card in CourseRepository.allCards(in: modelContext) where !card.isSuspended {
@@ -693,6 +711,30 @@ struct ExamEditorSheet: View {
             byCourse[courseID, default: []].append(card)
         }
         cardsByCourse = byCourse
+        // Les cours, dans le même ordre que le `@Query` qu'ils remplacent (`updatedAt`
+        // décroissant, cf. `CourseRepository.allCourses`). Les objets ne sortent pas de cette
+        // ligne : seules leurs projections entrent dans l'état de la feuille.
+        courses = CourseRepository.allCourses(in: modelContext).map(CourseBadge.init)
+    }
+
+    /// Ce qui fait relire la bibliothèque : un cours créé ou supprimé (`CourseLedger`), une
+    /// passe de synchro descendue (`CloudSync.epoch`). La synchro est le seul endroit du
+    /// dépôt qui réécrive le titre, l'emoji ou la teinte d'un cours — donc la seule qui
+    /// puisse périmer une projection déjà lue.
+    private var libraryKey: String {
+        "\(CourseLedger.shared.stamp)-\(sync?.epoch ?? 0)"
+    }
+
+    private func load() {
+        loadLibrary()
+
+        guard !didLoad else {
+            // Rechargement : les cartes ont pu changer, donc le plan aussi.
+            replan()
+            return
+        }
+        didLoad = true
+
         // Les journées fermées sont globales : on part de celles du compte, pas d'une page
         // blanche, et ce qu'on coche ici vaut pour les autres épreuves aussi.
         offDays = OffDays.stamps(in: modelContext)

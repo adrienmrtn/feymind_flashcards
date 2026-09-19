@@ -96,10 +96,23 @@ struct MicaboTile: View {
     }
 
     /// Tuile d'un cours : son emoji sur un pastel dérivé de sa teinte.
+    ///
+    /// `Self.` n'est pas décoratif : le paramètre `course` masque le nom de la fonction dans
+    /// cette portée, et l'appel ne compilerait pas sans lui.
     static func course(_ course: Course, size: CGFloat = 44) -> MicaboTile {
-        let tint = Color(hexString: course.accentHex)
+        Self.course(badge: CourseBadge(course), size: size)
+    }
+
+    /// La même tuile, **depuis une projection**.
+    ///
+    /// Un écran qui a cessé de tenir ses cours n'en garde que des valeurs ; lui redemander un
+    /// `Course` pour dessiner une tuile ferait rematérialiser la ligne — et ses trente
+    /// kilo-octets de texte — juste pour un emoji et six caractères de couleur. Voir
+    /// `CourseBadge`.
+    static func course(badge: CourseBadge, size: CGFloat = 44) -> MicaboTile {
+        let tint = Color(hexString: badge.accentHex)
         return MicaboTile(
-            glyph: .emoji(CourseEmoji.resolve(for: course)),
+            glyph: .emoji(badge.emoji),
             background: tint.lightened(by: 0.80),
             tint: tint.darkened(by: 0.25),
             size: size

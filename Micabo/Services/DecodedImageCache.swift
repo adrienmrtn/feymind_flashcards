@@ -54,6 +54,24 @@ enum DecodedImageCache {
         "card-\(id.uuidString)"
     }
 
+    /// La clé d'une couverture d'import. Un document importé n'a pas d'identité propre ; son
+    /// nom de fichier et le poids de sa couverture suffisent à la distinguer d'une autre.
+    static func coverKey(fileName: String, bytes: Int) -> String {
+        "cover-\(fileName)-\(bytes)"
+    }
+
+    /// **Décode et garde avant que la vue n'existe.**
+    ///
+    /// Pour les images dont la première apparition ne doit pas clignoter. Une vue qui trouve
+    /// le cache froid dessine son repli, puis bascule — et cette bascule se voit. En amorçant
+    /// ici, le décodage a lieu pendant que l'utilisateur attend **déjà** autre chose (la
+    /// lecture d'un PDF, une transcription), et la vue qui suit trouve le cache chaud.
+    ///
+    /// Le décodage reste hors du fil principal : c'est `image(for:data:)` qui travaille.
+    static func prime(_ key: String, data: Data?) async {
+        _ = await image(for: key, data: data)
+    }
+
     /// Ce que le cache a déjà, sans rien décoder. Rendu **synchronement** : c'est ce qui
     /// permet à une vue qui revient de dessiner son image dès la première passe, au lieu de
     /// clignoter le temps d'une tâche.

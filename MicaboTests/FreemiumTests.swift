@@ -1,3 +1,4 @@
+import SwiftData
 import XCTest
 @testable import Micabo
 
@@ -141,6 +142,44 @@ final class FreemiumTests: XCTestCase {
         let adopted = Course(title: "Cours partagé", isFromLibrary: true)
 
         XCTAssertTrue(pro.canImportCourse(existingCourses: [adopted]))
+    }
+
+    /// **La même règle, par le chemin que l'écran Aujourd'hui emprunte désormais.**
+    ///
+    /// La porte du gratuit ne se franchit plus en filtrant une liste de cours tenue par un
+    /// `@Query` : elle se franchit sur un entier rendu par `CourseRepository.ownedCount(in:)`,
+    /// qui compte en base avec un prédicat. Le test ci-dessus verrouille la règle sur
+    /// l'ancienne surcharge, que cet écran n'appelle plus — il aurait donc continué de passer
+    /// alors même que le prédicat aurait cessé d'écarter les cours de la bibliothèque.
+    ///
+    /// Celui-ci verrouille le prédicat lui-même, sur un conteneur en mémoire.
+    @MainActor
+    func testTheCountedGateAlsoIgnoresLibraryCourses() throws {
+        let container = try ModelContainer(
+            for: Course.self,
+            Flashcard.self,
+            ReviewLog.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        let context = ModelContext(container)
+        let pro = ProAccess(defaults: isolatedDefaults())
+
+        XCTAssertEqual(CourseRepository.ownedCount(in: context), 0)
+        XCTAssertTrue(pro.canImportCourse(ownedCourses: CourseRepository.ownedCount(in: context)))
+
+        context.insert(Course(title: "Cours partagé", isFromLibrary: true))
+        XCTAssertEqual(
+            CourseRepository.ownedCount(in: context), 0,
+            "Un cours repris de la bibliothèque ne consomme pas l'import gratuit"
+        )
+        XCTAssertTrue(pro.canImportCourse(ownedCourses: CourseRepository.ownedCount(in: context)))
+
+        context.insert(Course(title: "Photosynthèse"))
+        XCTAssertEqual(CourseRepository.ownedCount(in: context), 1)
+        XCTAssertFalse(pro.canImportCourse(ownedCourses: CourseRepository.ownedCount(in: context)))
+
+        pro.unlock()
+        XCTAssertTrue(pro.canImportCourse(ownedCourses: CourseRepository.ownedCount(in: context)))
     }
 
     @MainActor

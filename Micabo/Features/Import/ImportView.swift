@@ -576,9 +576,10 @@ struct ImportView: View {
     private func coverPreview(_ document: ImportedDocument) -> some View {
         CoverThumbnail(
             data: document.coverImage,
-            // Le nom du fichier et le poids suffisent à distinguer deux couvertures : un
-            // `ImportedDocument` n'a pas d'identité propre, et il n'en a pas besoin pour ça.
-            key: "cover-\(document.fileName)-\(document.coverImage?.count ?? 0)",
+            key: DecodedImageCache.coverKey(
+                fileName: document.fileName,
+                bytes: document.coverImage?.count ?? 0
+            ),
             fallback: kind.systemImage
         )
     }
@@ -727,7 +728,7 @@ struct ImportView: View {
             case .text, .photo, .youtube, .cards:
                 return
             }
-            applyImported(parsed)
+            await applyImported(parsed)
         } catch {
             report(error, title: L10n.t("ios.err.readFailed", locale: .resolved()))
         }
@@ -760,14 +761,27 @@ struct ImportView: View {
 
         do {
             let parsed = try await PhotoImportService.importImages(images)
-            applyImported(parsed)
+            await applyImported(parsed)
         } catch {
             report(error, title: L10n.t("ios.err.readFailed", locale: .resolved()))
         }
     }
 
     @MainActor
-    private func applyImported(_ document: ImportedDocument) {
+    private func applyImported(_ document: ImportedDocument) async {
+        // **La couverture est décodée avant que la carte n'existe.**
+        //
+        // Sans ça, la vignette apparaît sur le symbole générique du format, puis bascule sur
+        // la photo une image plus tard — et cette bascule se voit. Ici, on est encore dans le
+        // temps d'attente de la lecture du document : quelques millisecondes de plus ne se
+        // remarquent pas, et la vue qui suit trouve le cache chaud.
+        await DecodedImageCache.prime(
+            DecodedImageCache.coverKey(
+                fileName: document.fileName,
+                bytes: document.coverImage?.count ?? 0
+            ),
+            data: document.coverImage
+        )
         imported = document
         if title.isEmpty { title = document.fileName }
         // Le document est lu : c'est le cran entre « a ouvert l'import » et « a lancé la
@@ -857,7 +871,7 @@ struct ImportView: View {
         do {
             let transcript = try await youtube.transcript(link: youtubeLink)
             let cover = await youtube.cover(for: video)
-            applyImported(
+            await applyImported(
                 YouTubeImportService.document(video: video, transcript: transcript, cover: cover)
             )
             return true
