@@ -870,10 +870,16 @@ Le signal qui manquait pour s'en passer est `CourseLedger` : un entier qui monte
 des cours bouge, posé par `CourseRepository` après l'enregistrement et par la suppression en
 masse des Réglages. `CloudSync.epoch` couvrait déjà la descente de synchro.
 
-**Requêtes vivantes sur `Course` : de neuf à quatre, et de six à zéro en régime permanent.**
-Les quatre restantes sont `CoursesListView` et `DecksListView` — qui affichent des cours et
-doivent donc les tenir — et `ExamDetailView` et `ExamEditorSheet`, deux écrans poussés qui ne
-vivent que le temps qu'on les regarde.
+| `ExamDetailView` | la table | `ExamRepository.courses(of:in:)`, projeté en `CourseBadge` |
+| `ExamEditorSheet` | la table | une liste de `CourseBadge`, lue à l'ouverture |
+
+**Requêtes vivantes sur `Course` : de neuf à deux.** Les deux restantes sont
+`CoursesListView` et `DecksListView` — qui affichent des cours et doivent donc les tenir.
+
+`CourseBadge` est la projection que les écrans voulaient vraiment : quatre champs, quelques
+dizaines d'octets, contre trente kilo-octets par ligne. Son seul point subtil est l'emoji,
+**résolu à la construction** — `CourseEmoji.resolve(for:)` lit l'emoji, le sujet *et* le titre,
+et un écran qui ne garde que la projection n'a plus le sujet sous la main.
 
 **Ce que ce chiffre ne dit pas, et qu'il faut dire.** Ce qui a été retiré, ce sont des
 *requêtes*, pas toute *observation*. `TodayView` garde des objets `Course` managés dans son
@@ -890,13 +896,18 @@ raisonné, pas un correctif constaté.
 
 Aussi fait : `DecodedImageCache`, et les deux `body` qui décodaient un JPEG à chaque évaluation.
 
-**Reste à faire** : la projection légère pour `ExamDetailView` et `ExamEditorSheet`. Elle
-demande une surcharge de `MicaboTile.course` dans le design system, donc elle touche du code
-partagé — à faire avec un compilateur sous la main, pas sans.
+**Reste à faire, et c'est la suite naturelle** : `TodayView` tient encore des `Course` managés
+dans son `DayLoad`, et c'est l'écran qui vit le plus longtemps. La surcharge
+`MicaboTile.course(badge:)` le rend convertible sans changer un pixel. Deux autres dettes
+notées au passage — `ProfileView.CourseMastery` prend l'emoji **brut** au lieu de le résoudre,
+donc un même cours peut porter 📘 au Profil et son emoji dérivé partout ailleurs ; et
+`CourseEmoji` vit dans le design system alors qu'il ne touche à aucun type SwiftUI, ce qui fait
+regarder `Models/` vers le haut.
 
-**Rien de tout ça n'a été compilé** : la machine qui l'a écrit n'a pas de chaîne Swift. Le diff
-a été relu par cinq lectures adversariales, ce qui n'est pas la même chose qu'une construction
-verte.
+**Rien de tout ça n'a été compilé** : la machine qui l'a écrit n'a pas de chaîne Swift. Les
+diffs ont été relus par huit lectures adversariales — la lecture « compilation » a vérifié
+chaque symbole, chaque import, chaque surcharge et chaque `#Preview` sans rien trouver — ce qui
+n'est toujours pas la même chose qu'une construction verte.
 
 #### Ce qui était prévu et qui reste à faire
 
