@@ -380,8 +380,12 @@ struct ExamsView: View {
                 title: i18n.t("app.exams.emptyTitle"),
                 message: i18n.t("app.exams.emptyBody")
             )
-        // `courseIDs == nil` veut dire « pas encore lu », pas « aucun cours » : conclure
-        // avant d'avoir regardé montrerait « importe un cours » à quelqu'un qui en a.
+        } else if courseIDs == nil {
+            // **Rien tant qu'on n'a pas lu.** `nil` veut dire « pas encore regardé », pas
+            // « aucun cours » : les deux messages ci-dessous s'excluent, et en choisir un
+            // avant de savoir lequel est vrai, c'est en montrer un faux le temps d'une image.
+            // L'attente dure une passe, et elle est muette plutôt que fausse.
+            EmptyView()
         } else if courseIDs?.isEmpty == true {
             MicaboEmptyState(
                 systemImage: "calendar.badge.plus",

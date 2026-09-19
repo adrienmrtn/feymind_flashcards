@@ -37,11 +37,43 @@ enum DecodedImageCache {
         return cache
     }()
 
+    /// Ce que l'objet gardé pèse **réellement** en mémoire.
+    ///
+    /// Le premier jet déclarait la taille de la source compressée. C'était faux d'un ordre de
+    /// grandeur — une photo de 300 Ko en JPEG occupe une dizaine de mégaoctets une fois
+    /// décompressée — et le plafond ne mordait donc jamais : seul `countLimit` tenait
+    /// vraiment. Quatre octets par pixel, à l'échelle de l'écran.
+    private static func cost(of image: UIImage) -> Int {
+        let pixels = image.size.width * image.scale * image.size.height * image.scale
+        return Int(pixels.rounded()) * 4
+    }
+
+    /// La clé d'un schéma de carte. Elle vit ici pour que les deux vues qui lisent et les
+    /// deux endroits qui invalident ne puissent pas l'écrire différemment.
+    static func cardKey(_ id: UUID) -> String {
+        "card-\(id.uuidString)"
+    }
+
     /// Ce que le cache a déjà, sans rien décoder. Rendu **synchronement** : c'est ce qui
     /// permet à une vue qui revient de dessiner son image dès la première passe, au lieu de
     /// clignoter le temps d'une tâche.
     static func cached(_ key: String) -> UIImage? {
         cache.object(forKey: key as NSString)
+    }
+
+    /// **À appeler quand l'image derrière une clé a changé.**
+    ///
+    /// Sans ça, un schéma remplacé n'est jamais redessiné : la clé est la même, le cache
+    /// répond, et l'ancienne image reste jusqu'au relancement de l'app. C'est arrivé au
+    /// premier jet de ce fichier, et c'est la raison de cette fonction.
+    ///
+    /// L'invalidation est explicite plutôt que déduite d'une date de modification. Une clé
+    /// qui porterait `updatedAt` se renouvellerait à **chaque note** — `Flashcard.review`
+    /// écrit `updatedAt` (Flashcard.swift:272) — donc en pleine session, sur le geste que ce
+    /// cache existe précisément pour rendre gratuit. Les deux endroits qui remplacent une
+    /// image, eux, se comptent sur une main.
+    static func forget(_ key: String) {
+        cache.removeObject(forKey: key as NSString)
     }
 
     /// Décode hors du fil principal, garde, et rend.
@@ -57,7 +89,7 @@ enum DecodedImageCache {
         }.value
 
         guard let decoded else { return nil }
-        cache.setObject(decoded, forKey: key as NSString, cost: data.count)
+        cache.setObject(decoded, forKey: key as NSString, cost: cost(of: decoded))
         return decoded
     }
 }

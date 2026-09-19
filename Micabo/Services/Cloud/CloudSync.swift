@@ -811,6 +811,10 @@ final class CloudSync {
         // avant la synchro garderait sinon une zone masquée sans dessin.
         if let image = CloudImage.data(from: remote.image_path) {
             card.imageData = image
+            // Le schéma décodé de cette carte est périmé. Sans cette ligne, la vue continue
+            // de dessiner l'ancienne image : la clé du cache est l'identifiant de la carte,
+            // qui n'a pas changé.
+            DecodedImageCache.forget(DecodedImageCache.cardKey(card.id))
         }
     }
 

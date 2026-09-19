@@ -76,9 +76,12 @@ struct SettingsView: View {
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
         .micaboScreenBackground()
-        // Les cours de l'appareil décident si l'offre de bienvenue est méritée. Un compte
-        // suffit, et il se prend à l'ouverture : rien ne crée de cours depuis cette feuille.
-        .task { ownedCourseCount = CourseRepository.ownedCount(in: modelContext) }
+        // Les cours de l'appareil décident si l'offre de bienvenue est méritée. Recompté à
+        // l'ouverture et après chaque synchro lancée d'ici, qui peut en faire descendre.
+        .task(id: "\(CourseLedger.shared.stamp)-\(sync.epoch)") {
+            let count = CourseRepository.ownedCount(in: modelContext)
+            if count != ownedCourseCount { ownedCourseCount = count }
+        }
         .confirmationDialog(
             i18n.t("ios.deleteAccountQ"),
             isPresented: $showDeleteAccountConfirmation,
@@ -218,11 +221,18 @@ struct SettingsView: View {
     /// Les cours importés ici. Ceux repris de la bibliothèque ne comptent pas : on n'a rien
     /// fait pour eux.
     ///
-    /// Compté une fois à l'ouverture de la feuille, et non observé : une seule rangée le lit
-    /// (la ligne de l'offre, plus haut), et rien ne crée de cours pendant qu'on est dans les
-    /// Réglages. Un `@Query` tenait ici la table entière des cours — trente kilo-octets de
-    /// texte par ligne — pour cet entier.
-    @State private var ownedCourseCount = 0
+    /// Compté et non observé : une seule rangée le lit — la ligne de l'offre, plus haut — et
+    /// un `@Query` tenait pour ça la table entière des cours, trente kilo-octets de texte par
+    /// ligne.
+    ///
+    /// Il est relu après une synchronisation, parce que **cette feuille en lance une**
+    /// (« Synchroniser maintenant », plus bas) : un compte connecté qui reçoit ses cours
+    /// depuis le serveur doit voir la rangée de l'offre apparaître sans refermer les Réglages.
+    ///
+    /// La valeur de départ est celle qu'a laissée la languette de l'offre, qui compte la même
+    /// chose : la première image de la feuille est donc juste, au lieu de montrer une liste
+    /// sans la rangée puis de l'y insérer.
+    @AppStorage(DiscountOffer.Key.ownedCourses) private var ownedCourseCount = 0
 
     /// « -43 % sur l'année » et, quand la fenêtre court, le temps qu'il reste.
     private var discountSubtitle: String {

@@ -1151,7 +1151,12 @@ private struct CoverThumbnail: View {
     var body: some View {
         content
             .task(id: key) {
-                image = await DecodedImageCache.image(for: key, data: data)
+                let decoded = await DecodedImageCache.image(for: key, data: data)
+                // `Task.detached` n'hérite pas de l'annulation de cette tâche : sans ce test,
+                // une couverture décodée après un changement de document se poserait sur le
+                // suivant.
+                guard !Task.isCancelled else { return }
+                image = decoded
             }
     }
 
