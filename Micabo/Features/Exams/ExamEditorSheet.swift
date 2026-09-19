@@ -200,7 +200,17 @@ struct ExamEditorSheet: View {
                 .disabled(!canConfirm)
             }
         }
-        .task(id: libraryKey) { load() }
+        // **`onAppear`, pas `task` — et ce n'est pas un détail de style.** `load()` est
+        // entièrement synchrone : un `.task` ne lui apporterait aucune asynchronie, il ne
+        // ferait que la repousser après la première image. La section « Cours au programme »
+        // ne pèserait alors que son intitulé le temps d'une passe, et tout ce qui la suit en
+        // modification — type d'épreuve, point de départ, pauses, note visée — serait posé
+        // trop haut puis redescendrait d'un coup. `onAppear` pose l'état avant que l'image ne
+        // soit présentée.
+        .onAppear { load() }
+        // Et la bibliothèque suit ensuite : une synchro peut faire descendre un cours pendant
+        // que le formulaire est ouvert.
+        .onChange(of: libraryKey) { _, _ in load() }
         .onChange(of: selection) { _, _ in replan() }
         .onChange(of: date) { _, _ in replan() }
         .onChange(of: intensity) { _, _ in replan() }
@@ -321,10 +331,11 @@ struct ExamEditorSheet: View {
             MicaboSectionCaption(text: L10n.t("ios.coursesOnProgram", locale: .resolved()))
 
             if !didLoad {
-                // **Rien tant qu'on n'a pas lu.** `load()` s'exécute dans un `.task`, donc
-                // après le premier rendu : une liste vide ne veut pas encore dire « aucun
-                // cours ». Sans cette garde, quelqu'un qui en a vingt verrait passer
-                // « il te faut un cours » le temps d'une image.
+                // **Rien tant qu'on n'a pas lu.** `load()` part maintenant d'un `onAppear`,
+                // donc avant la première image : en pratique on ne passe plus ici. La garde
+                // reste parce qu'une liste vide ne veut pas dire « aucun cours » tant que la
+                // lecture n'a pas eu lieu, et que déplacer `load()` ailleurs un jour ferait
+                // sinon afficher « il te faut un cours » à quelqu'un qui en a vingt.
                 EmptyView()
             } else if courses.isEmpty {
                 MicaboSectionFootnote(text: L10n.t("ios.examNeedCourse", locale: .resolved()))

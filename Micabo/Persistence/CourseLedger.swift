@@ -35,8 +35,20 @@ final class CourseLedger {
     /// chacun de leur côté finiraient par ne pas être d'accord sur le même instant.
     static let shared = CourseLedger()
 
-    /// Monte d'une unité à chaque changement de la liste. Sa valeur ne veut rien dire ; seul
-    /// le fait qu'elle ait changé en veut une.
+    /// Monte d'une unité à chaque changement de **la liste**. Sa valeur ne veut rien dire ;
+    /// seul le fait qu'elle ait changé en veut une.
+    ///
+    /// **Ce qu'il couvre, et ce qu'il ne couvre pas.** Il couvre l'apparition et la
+    /// disparition d'un cours — création, reprise, suppression, effacement en masse. Il ne
+    /// couvre **pas** la modification d'un cours existant : renommer, changer l'emoji ou la
+    /// teinte ne le fait pas bouger. C'est sans conséquence aujourd'hui, parce que l'app
+    /// n'offre aucun renommage de cours — celui de l'interface porte sur les dossiers — et
+    /// que le seul écrivain de ces champs est `CloudSync` (`:725`, `:728`, `:729`), dont
+    /// `epoch` accompagne ce tampon dans toutes les clés de rechargement.
+    ///
+    /// Le jour où l'app apprendra à renommer un cours, ce sera faux : les écrans qui tiennent
+    /// des `CourseBadge` garderont l'ancien titre. Il faudra alors appeler `noteChange()`
+    /// depuis ce chemin-là aussi.
     private(set) var stamp = 0
 
     private init() {}
