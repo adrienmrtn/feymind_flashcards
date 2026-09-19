@@ -399,7 +399,11 @@ proportionnel à son succès, et il n'a pas encore commencé.
    `contextText` et `sheetData`, relié à `Course` par une relation à un, n'est matérialisé
    que lorsqu'on ouvre la fiche. C'est plus lourd qu'un attribut à changer — une migration
    réelle — mais c'est le seul qui allège la ligne pour de bon.
-4. **`ProfileView.swift:30` n'a besoin que d'un compte**, pas de la table.
+4. **`ProfileView.swift:30` n'a pas besoin de la table** — mais pas non plus d'un simple
+   compte, contrairement à ce que ce document affirmait. Il lui faut **deux choses** : un
+   cardinal sur tous les cours (la bande « N cours »), et **trois champs par cours ayant au
+   moins une carte** — identifiant, titre, emoji — pour le panneau « par cours ». Les trois se
+   prennent au passage sur les cartes déjà lues, sans toucher à `Course`.
 
 ### 3.2 Le décodage d'image dans un `body`
 
@@ -412,11 +416,21 @@ var body: some View {
 
 `UIImage(data:)` est synchrone, il décode le JPEG, et il est dans le `body` — donc à chaque
 évaluation, sans cache. Sur iPhone 13, un décodage de photo coûte 10 à 40 ms : des images
-perdues garanties au retournement d'une carte à occlusion. Même motif à `ImportView.swift:577`
-et `:750`, et `OcclusionEditorSheet.swift:258`.
+perdues garanties au retournement d'une carte à occlusion.
 
-**Correctif** : un petit `NSCache<NSUUID, UIImage>` partagé, alimenté hors du fil principal,
-et une `Image` qui arrive quand elle est prête.
+**Correction d'une première rédaction de ce document.** J'avais cité trois autres sites du même
+motif. Vérification faite, deux n'en sont pas : `ImportView.swift:750` et
+`OcclusionEditorSheet.swift:258` sont **déjà dans des fonctions `async`**, donc hors du fil
+principal. Il n'en reste qu'un, et il compte : `ImportView.swift:577`, la vignette de
+couverture, qui vit sur le même écran que le curseur de longueur de fiche — **chaque cran du
+doigt redécodait la couverture en pleine résolution** pour la réduire à 44 points de large.
+
+**Correctif appliqué** (`DecodedImageCache`) : le décodage part hors du fil principal, passe par
+`preparingForDisplay()` — sans quoi `UIImage(data:)` rend une image paresseuse dont la vraie
+décompression aurait lieu au premier dessin, c'est-à-dire sur l'acteur principal, c'est-à-dire
+là où on ne la veut pas — et le résultat est gardé dans un `NSCache`. Les deux vues relisent le
+cache **synchronement** avant de dessiner, pour qu'une image déjà décodée n'attende pas une
+passe.
 
 ### 3.3 Le lancement
 
@@ -430,9 +444,22 @@ SampleContentPurge.purgeIfNeeded(in: container.mainContext)   // une passe Swift
 SubjectCasePass.runIfNeeded(in: container.mainContext)        // une seconde passe
 ```
 
-Les deux dernières sont gardées par un drapeau « une fois », mais la lecture a lieu quand
-même, deux fois, avant que quoi que ce soit ne s'affiche. Les polices peuvent passer par
-`UIAppFonts` dans l'`Info.plist` — le système les charge alors sans boucle synchrone.
+**Correction, après lecture des deux dernières.** J'avais écrit que la lecture avait lieu quand
+même. C'est faux : `SampleContentPurge.purgeIfNeeded` et `SubjectCasePass.runIfNeeded`
+commencent toutes deux par `guard !defaults.bool(forKey: key) else { return }` — le drapeau est
+lu **avant** le contexte, et sur un lancement normal elles rendent la main sans toucher à
+SwiftData. Elles ne coûtent qu'une fois, à la mise à jour qui les introduit. *(lu)*
+
+Il ne reste donc, à chaque lancement, que l'enregistrement des polices et la configuration du
+SDK d'abonnement. **Et je recommande de ne toucher ni à l'une ni à l'autre pour l'instant.**
+Les polices doivent être enregistrées avant le premier texte, sous peine de repli visible sur
+la police système ; `UIAppFonts` est la voie documentée mais déplace le coût sans forcément le
+réduire, et une erreur ici casse toute la typographie de l'app. Le SDK porte un commentaire
+explicite : il doit être configuré avant qu'un écran puisse demander une offre.
+
+C'est la partie du §3 qui **demande une mesure avant un correctif**, pas l'inverse. Sans la
+trace Instruments du §3.5, changer l'un des deux revient à déplacer du code sans savoir si on
+déplace du temps.
 
 ### 3.4 Les catalogues de langue
 
