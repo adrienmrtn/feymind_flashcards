@@ -497,6 +497,7 @@ struct StudyView: View {
 
     private var setupCourseTitle: String? {
         if case .course(let course) = source { return course.title }
+        if case .chapter(let chapter) = source { return chapter.title }
         return nil
     }
 
@@ -605,6 +606,7 @@ struct StudyView: View {
     private func loadCards() -> [Flashcard] {
         switch source {
         case .course(let course): course.cards
+        case .chapter(let chapter): chapter.orderedCards
         case .allDue: CourseRepository.allCards(in: modelContext)
         case .cards(let cards): cards
         }

@@ -122,6 +122,7 @@ struct CourseSheetView: View {
                         header
                             .id(SheetAnchor.top)
                         lead
+                        chaptersSection
                         content
                         cardsSection
                     }
@@ -202,6 +203,11 @@ struct CourseSheetView: View {
         // rangée « Cartes » plus bas, donc le chevron de retour ramène bien à la fiche.
         .navigationDestination(item: $generatedCards) { route in
             FlashcardsView(course: route.course)
+        }
+        // Un chapitre s'ouvre comme une page à lui, et non comme une ancre dans la fiche :
+        // c'est ce qui permet de le réviser seul depuis son propre écran.
+        .navigationDestination(for: Chapter.self) { chapter in
+            ChapterSheetView(chapter: chapter)
         }
         .fullScreenCover(isPresented: $showStudy) {
             StudyView(source: .course(course), mode: studyMode)
@@ -560,6 +566,26 @@ struct CourseSheetView: View {
                 generatedCards = CourseCardsRoute(course: course)
             }
             .padding(.top, MicaboSpacing.md)
+        }
+    }
+
+    // MARK: - Le plan du deck
+
+    /// **Le plan, avec ce qu'on en sait, avant la fiche elle-même.**
+    ///
+    /// Le sommaire du bouton flottant et cette liste ne font pas le même travail : le
+    /// premier déplace le regard à l'intérieur d'une lecture en cours, celle-ci dit où en
+    /// est chaque partie et permet de n'en réviser qu'une. C'est la seule des deux qui
+    /// répond à « je n'ai que la guerre froide à revoir pour jeudi ».
+    ///
+    /// Elle ne s'affiche que si le deck a des chapitres. Un cours sans fiche écrite n'en a
+    /// pas encore, et lui annoncer qu'il n'a pas de plan à l'endroit même où on lui propose
+    /// d'en écrire une serait lui dire deux fois la même chose.
+    @ViewBuilder
+    private var chaptersSection: some View {
+        if !course.orderedChapters.isEmpty {
+            DeckChaptersView(course: course)
+                .padding(.top, MicaboSpacing.xl)
         }
     }
 
