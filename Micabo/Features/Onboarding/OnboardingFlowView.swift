@@ -36,7 +36,7 @@ struct OnboardingFlowView: View {
         .environment(\.locale, i18n.locale.foundation)
         // Sur fond sombre, l'heure et la batterie doivent passer en clair : sinon elles
         // disparaissent dans l'encre.
-        .preferredColorScheme(surface.isDark ? .dark : AppearanceStore.shared.appearance.colorScheme)
+        .preferredColorScheme(surface.isDark ? .dark : .light)
         .onAppear {
             Haptics.prepare()
             Analytics.track(.onboardingStarted)
@@ -59,32 +59,26 @@ struct OnboardingFlowView: View {
     @ViewBuilder
     private var stepView: some View {
         switch model.step {
-        case .welcome: WelcomeStepView()
+        case .howItWorks: WelcomeStepView()
+        case .upload: UploadStepView()
+        case .dates: DatesStepView()
+        case .turnsInto: TurnsIntoStepView()
+        case .smartFeatures: SmartFeaturesStepView()
+        case .name: NameStepView()
+        case .greeting: GreetingStepView()
         case .country: CountryStepView()
-        case .level: LevelStepView()
-        case .personalizeIntro: PersonalizeIntroStepView()
+        case .schoolType: SchoolTypeStepView()
+        case .year: SchoolYearStepView()
         case .goal: GoalStepView()
-        case .forgetting: ForgettingStepView()
-        case .retentionChart: RetentionChartStepView()
-        case .demoImport: DemoImportStepView()
-        case .demoSheet: DemoSheetStepView()
-        case .demoReview: DemoReviewStepView()
-        case .examPlan: ExamPlanStepView()
-        case .examMock: ExamMockStepView()
-        case .examWeak: ExamWeakStepView()
-        case .feynman: FeynmanStepView()
-        case .results: ResultsStepView()
-        case .subjects: SubjectsStepView()
-        case .school: SchoolStepView()
-        case .restDays: RestDaysStepView()
         case .currentAverage: CurrentAverageStepView()
         case .targetAverage: TargetAverageStepView()
         case .together: TogetherStepView()
-        case .personalizing: PersonalizingStepView()
-        case .socialProof: SocialProofStepView()
         case .notifications: NotificationsStepView()
-        case .yourTurn: YourTurnStepView()
+        case .subjects: SubjectsStepView()
+        case .personalizing: PersonalizingStepView()
         case .signIn: SignInStepView()
+        case .socialProof: SocialProofStepView()
+        case .yourTurn: YourTurnStepView()
         case .trialOffer: TrialOfferStepView()
         case .trialReminder: TrialReminderStepView()
         case .paywall: PaywallStepView(onFinish: finish)
@@ -131,7 +125,7 @@ private struct OnboardingProgressBar: View {
             // **Le thème a quitté le parcours.** Jour ou nuit n'est pas une question
             // d'inscription : c'est un réglage, il vit dans les Réglages, et le poser au-dessus
             // de chaque écran invitait à jouer avec au lieu de répondre.
-            if step != .welcome {
+            if step != .howItWorks {
                 LanguageSwitcher()
                     .layoutPriority(1)
             }

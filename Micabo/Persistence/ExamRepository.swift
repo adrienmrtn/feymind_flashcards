@@ -146,12 +146,6 @@ enum ExamRepository {
             cards: cards(of: exam, in: context),
             date: exam.date,
             intensity: exam.plannedIntensity,
-            offDays: offDayOffsets(
-                until: exam.date,
-                stamps: OffDays.stamps(in: context),
-                now: now,
-                calendar: calendar
-            ),
             now: now,
             calendar: calendar
         )
@@ -175,30 +169,17 @@ enum ExamRepository {
         )
     }
 
-    /// Les décalages fermés entre aujourd'hui et une épreuve. C'est la traduction des jours de
-    /// pause - des dates, globales - dans la fenêtre d'un plan, qui compte en décalages.
-    static func offDayOffsets(
-        until date: Date,
-        stamps: Set<String>,
-        now: Date = Date(),
-        calendar: Calendar = MicaboCalendar.shared
-    ) -> [Int] {
-        let today = calendar.startOfDay(for: now)
-        let day = calendar.startOfDay(for: date)
-        let remaining = calendar.dateComponents([.day], from: today, to: day).day ?? 0
-        let window = max(1, remaining)
-        // Les pauses posées à la main **et** l'habitude de la semaine : les deux se cumulent,
-        // comme sur le site, sinon l'iPhone posait du travail le dimanche que le site laissait
-        // libre.
-        let exceptions = OffDays.offsets(from: today, window: window, stamps: stamps, calendar: calendar)
-        let weekly = OffDays.weeklyOffsets(
-            from: today,
-            window: window,
-            weekly: OnboardingPreferences.weeklyMinutes,
-            calendar: calendar
-        )
-        return Array(Set(exceptions).union(weekly)).sorted()
-    }
+    // **Les jours de repos ont quitté le plan.**
+    //
+    // Ils retiraient des jours de la fenêtre avant l'épreuve : un étudiant qui déclarait ne
+    // pas réviser le dimanche voyait ses cartes du dimanche reportées sur les autres jours.
+    // C'est l'inverse de ce qu'il demandait — sauter un jour n'allège rien, ça reporte — et
+    // c'est ce qui rendait un plan plus lourd chaque fois qu'on déclarait une pause.
+    //
+    // La table `OffDay` reste, et la synchronisation continue de la porter : le site s'en
+    // sert encore, et effacer les jours posés là-bas depuis un téléphone qui ne les lit plus
+    // serait détruire une donnée qu'on a simplement cessé d'utiliser.
+
 
     /// Applique le plan : photographie des échéances, puis écriture des nouvelles.
     @discardableResult
@@ -215,12 +196,6 @@ enum ExamRepository {
             // L'intensité **effective** : celle qu'on a choisie, décalée d'un cran par le
             // point de départ. Un programme qu'on découvre demande un passage de plus.
             intensity: exam.plannedIntensity,
-            offDays: offDayOffsets(
-                until: exam.date,
-                stamps: OffDays.stamps(in: context),
-                now: now,
-                calendar: calendar
-            ),
             now: now,
             calendar: calendar
         )

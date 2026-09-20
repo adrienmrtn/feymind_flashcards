@@ -304,6 +304,13 @@ enum CourseRepository {
         var startPosition = (course.cards.map(\.position).max() ?? -1) + 1
         var inserted: [Flashcard] = []
 
+        // Le plan, indexé par rang. Vide sur un deck sans chapitres — un import Anki, un
+        // cours d'avant la refonte — et les cartes restent alors non classées.
+        let chaptersByPosition = Dictionary(
+            course.orderedChapters.map { ($0.position, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
         for candidate in generated {
             // Le trou est normalisé avant le nettoyage : celui-ci mange les tirets bas
             // avec le reste du balisage, et emporterait le blanc avec eux.
@@ -322,6 +329,12 @@ enum CourseRepository {
                 course: course
             )
             applyFormat(of: candidate, to: card)
+            // Le rang vient du modèle et a déjà été borné au plan par la fonction serveur.
+            // Un rang absent laisse la carte non classée : c'est un état légitime, qui se
+            // voit à l'écran, et non un défaut à rattraper en devinant.
+            if let position = candidate.chapter {
+                card.chapter = chaptersByPosition[position]
+            }
 
             context.insert(card)
             inserted.append(card)

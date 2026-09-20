@@ -37,10 +37,15 @@ struct TodayView: View {
 
     @State private var showStudy = false
     @State private var path = NavigationPath()
-    @State private var showImportChoice = false
-    @State private var pendingImport: ImportKind?
-    @State private var activeImport: ImportKind?
+    /// Créer un deck depuis l'accueil : le même parcours que depuis la page Decks, pas une
+    /// variante. Deux chemins de création qui ne posent pas les mêmes questions produiraient
+    /// deux sortes de decks, dont une sans plan.
+    @State private var creatingDeck = false
     @State private var paywall: PaywallTrigger?
+    /// **La création d'une épreuve se fait d'ici.** L'onglet Examens a disparu de la barre,
+    /// et c'est cet écran qui montre déjà les prochaines dates : la porte qui menait au
+    /// calendrier ouvre maintenant le formulaire, sans écran intermédiaire.
+    @State private var creatingExam = false
 
     /// La file du jour, **lue à la demande et non observée**.
     ///
@@ -349,7 +354,7 @@ struct TodayView: View {
             .reportsNavigationDepth(for: .today, depth: path.count)
             .returnsHome(path: $path)
             .navigationDestination(for: Course.self) { course in
-                CourseSheetView(course: course)
+                DeckView(course: course)
             }
             .navigationDestination(for: CourseCardsRoute.self) { route in
                 FlashcardsView(course: route.course)
@@ -358,21 +363,19 @@ struct TodayView: View {
                 ExamDetailView(exam: exam)
             }
         }
-        .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
-            ImportChoiceSheet(
-                onSelect: { kind in
-                    pendingImport = kind
-                    showImportChoice = false
-                }
-            )
-            .presentationDetents([.height(520)])
+        .sheet(isPresented: $creatingExam) {
+            ExamEditorSheet(exam: nil) { created in
+                path.append(created)
+            }
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
-        .fullScreenCover(item: $activeImport) { kind in
-            ImportView(kind: kind) { course in
-                activeImport = nil
+        .fullScreenCover(isPresented: $creatingDeck) {
+            DeckSetupFlowView { course in
+                creatingDeck = false
                 path = NavigationPath([course])
+            } onCancel: {
+                creatingDeck = false
             }
         }
         .fullScreenCover(isPresented: $showStudy, onDismiss: { studyRuns += 1 }) {
@@ -580,14 +583,6 @@ struct TodayView: View {
             HStack(alignment: .firstTextBaseline) {
                 MicaboSectionCaption(text: i18n.t("app.today.nextExam"))
                 Spacer(minLength: MicaboSpacing.xs)
-                if !upcomingExams.isEmpty {
-                    Button(i18n.t("app.today.seeExams")) {
-                        openExams()
-                    }
-                    .font(MicaboFont.ui(13, weight: .semibold))
-                    .foregroundStyle(MicaboColor.accent)
-                    .buttonStyle(MicaboPressableButtonStyle())
-                }
             }
 
             if let next = nextExam {
@@ -704,7 +699,7 @@ struct TodayView: View {
     }
 
     private func openExams() {
-        router?.selection = .exams
+        creatingExam = true
     }
 
     private var examEmptySubtitle: String {
@@ -900,14 +895,6 @@ struct TodayView: View {
             paywall = .secondCourse
             return
         }
-        showImportChoice = true
-    }
-
-    private func launchPendingImport() {
-        guard let kind = pendingImport else { return }
-        pendingImport = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            activeImport = kind
-        }
+        creatingDeck = true
     }
 }

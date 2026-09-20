@@ -77,7 +77,7 @@ enum DebugSampleCourse {
             return nil
         }
 
-        // Les pages ne sont pas rendues en JPEG : `CourseSheetView.writeSheet` envoie une
+        // Les pages ne sont pas rendues en JPEG : la génération de fiche envoie une
         // liste d'images vide quand on refait une fiche, donc les produire ici coûterait
         // une seconde de lancement pour quelque chose que personne ne lira. La couverture,
         // elle, se voit dans la bibliothèque.

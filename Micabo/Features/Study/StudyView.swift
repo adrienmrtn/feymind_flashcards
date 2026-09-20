@@ -205,7 +205,40 @@ struct StudyView: View {
     }
 
     private var donePane: some View {
-        CompletionView(session: session, isEmbedded: isEmbedded, onFinish: finish)
+        CompletionView(
+            session: session,
+            isEmbedded: isEmbedded,
+            onFinish: finish,
+            remainingNew: remainingNewCards,
+            onContinue: continueSession
+        )
+    }
+
+    /// Les cartes neuves que la source n'a pas encore servies.
+    ///
+    /// Ce n'est pas « ce qui est dû » : une carte neuve n'a pas d'échéance à rattraper, elle
+    /// attend d'être découverte. C'est exactement ce dont on dispose pour prolonger.
+    private var remainingNewCards: Int {
+        resolveCards().reduce(0) { $0 + (($1.state == .new && !$1.isSuspended) ? 1 : 0) }
+    }
+
+    /// **Repartir pour un tour, avec des cartes neuves en plus.**
+    ///
+    /// Une session neuve sur les mêmes cartes, et non une reprise : la précédente est finie,
+    /// ses journaux sont écrits, et la rouvrir pour y pousser des cartes donnerait un
+    /// compteur qui repart de douze sur douze. Le plafond du jour est délibérément ignoré —
+    /// c'est l'étudiant qui vient de demander à le dépasser, en connaissance de cause.
+    private func continueSession(_ count: Int) {
+        StudySessionStore.clear()
+        session = StudySession()
+        didStart = true
+        session.start(
+            with: resolveCards(),
+            context: modelContext,
+            mode: mode,
+            sourceKey: source.persistenceKey,
+            limits: StudyQueueBuilder.Limits(newPerSession: count, reviewsPerSession: .max)
+        )
     }
 
     // MARK: - En-tête (X · barre · 4/12 · annuler)
@@ -497,6 +530,7 @@ struct StudyView: View {
 
     private var setupCourseTitle: String? {
         if case .course(let course) = source { return course.title }
+        if case .chapter(let chapter) = source { return chapter.title }
         return nil
     }
 
@@ -605,6 +639,7 @@ struct StudyView: View {
     private func loadCards() -> [Flashcard] {
         switch source {
         case .course(let course): course.cards
+        case .chapter(let chapter): chapter.orderedCards
         case .allDue: CourseRepository.allCards(in: modelContext)
         case .cards(let cards): cards
         }
@@ -1410,6 +1445,13 @@ private struct CompletionView: View {
     let session: StudySession
     let isEmbedded: Bool
     var onFinish: () -> Void
+    /// **Combien de cartes neuves restent à découvrir dans cette source.**
+    ///
+    /// Zéro cache le bouton « continuer » : proposer d'en faire plus quand il n'y en a plus
+    /// est une promesse qu'on ne tient pas, et l'étudiant qui appuie tombe sur le même écran.
+    var remainingNew: Int = 0
+    /// Repart pour un tour, avec `count` cartes neuves de plus.
+    var onContinue: (Int) -> Void = { _ in }
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
@@ -1419,6 +1461,14 @@ private struct CompletionView: View {
 
     private var isPractice: Bool {
         !session.mode.affectsSchedule
+    }
+
+    /// Ce qu'un « continuer » servirait : un lot de la taille de celui qu'on vient de faire,
+    /// borné par ce qui reste. Proposer les quatre-vingts cartes restantes d'un deck entier
+    /// serait proposer autre chose qu'une session.
+    private var continueCount: Int {
+        guard session.mode.affectsSchedule else { return 0 }
+        return min(remainingNew, 10)
     }
 
     /// Ce que valent les chiffres tant que l'écran n'est pas arrivé : zéro, pour qu'ils aient
@@ -1447,10 +1497,31 @@ private struct CompletionView: View {
         .scrollIndicators(.hidden)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             MicaboBottomBar {
-                Button(isEmbedded
-                    ? i18n.t("app.session.reload")
-                    : i18n.t("app.session.finish"), action: onFinish)
-                    .buttonStyle(MicaboPrimaryButtonStyle())
+                VStack(spacing: 2) {
+                    // **Continuer passe devant terminer**, et c'est l'ordre qui compte : la
+                    // session du jour est faite, donc l'action par défaut est de s'arrêter.
+                    // Mais celui qui veut pousser vient de finir quelque chose, c'est le
+                    // meilleur moment pour lui proposer, et le lui faire chercher dans un
+                    // menu reviendrait à ne pas le proposer.
+                    if continueCount > 0 {
+                        Button(
+                            i18n.t("ios.session.continue", ["count": "\(continueCount)"])
+                        ) {
+                            onContinue(continueCount)
+                        }
+                        .buttonStyle(MicaboPrimaryButtonStyle())
+
+                        Button(isEmbedded
+                            ? i18n.t("app.session.reload")
+                            : i18n.t("app.session.finish"), action: onFinish)
+                            .buttonStyle(MicaboQuietButtonStyle())
+                    } else {
+                        Button(isEmbedded
+                            ? i18n.t("app.session.reload")
+                            : i18n.t("app.session.finish"), action: onFinish)
+                            .buttonStyle(MicaboPrimaryButtonStyle())
+                    }
+                }
             }
             .opacity(isRevealed ? 1 : 0)
             .animation(.easeOut(duration: 0.3).delay(Timing.button), value: isRevealed)

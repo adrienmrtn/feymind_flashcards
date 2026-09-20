@@ -429,6 +429,49 @@ export function readingBrief(source: string | undefined, textLength: number): st
   return `D'OÙ VIENT CE TEXTE\n${lines.join("\n")}`;
 }
 
+/** Longueur max du sujet demandé : c'est une phrase, pas un cahier des charges. */
+export const MAX_TOPIC = 400;
+
+/**
+ * **Écrire un cours sans document.**
+ *
+ * L'étudiant n'a rien à déposer : il donne une matière, un niveau, et au mieux le morceau
+ * de programme qui l'intéresse. Le modèle écrit alors depuis ce qu'il sait, ce qui est un
+ * tout autre exercice que mettre au propre un document — et il faut le lui dire, sans quoi
+ * il se met à décrire le sujet au lieu de l'enseigner.
+ *
+ * Trois consignes, et elles sont là pour les trois façons dont cette génération rate :
+ *
+ * 1. **Le programme, pas l'encyclopédie.** Sans garde-fou, « la chute de Napoléon » produit
+ *    un article : une biographie, des dates, une postérité. Ce qui est demandé est ce qui
+ *    est interrogé à ce niveau-là, dans ce pays-là.
+ * 2. **L'aveu plutôt que l'invention.** Un modèle qui ne connaît pas le détail d'un
+ *    programme local le comble — et il le comble avec des faits qui n'en sont pas. Une
+ *    partie en moins vaut mieux qu'une partie fausse : l'étudiant réviserait des cartes
+ *    tirées d'un cours inventé sans aucun moyen de s'en apercevoir.
+ * 3. **Le même format que tout le reste.** La fiche produite ici est lue par le même écran,
+ *    découpée par le même `ChapterBuilder`, et sert de contexte aux mêmes cartes. Un cours
+ *    écrit sans document qui sortirait dans une autre forme casserait tout ce qui suit.
+ */
+export function scratchBrief(topic: string | undefined, subject?: string): string {
+  const focus = (topic ?? "").trim().slice(0, MAX_TOPIC);
+  const matter = (subject ?? "").trim().slice(0, 120);
+
+  const scope = focus
+    ? `L'étudiant veut travailler précisément ceci : « ${focus} ». Traite ce point et ce qui est strictement nécessaire pour le comprendre. N'élargis pas au reste du programme.`
+    : matter
+    ? `L'étudiant veut le programme de ${matter} à son niveau, dans son ensemble. Couvre les grandes parties attendues, sans t'attarder sur une seule.`
+    : `L'étudiant veut le programme de sa matière à son niveau, dans son ensemble.`;
+
+  return [
+    "IL N'Y A PAS DE DOCUMENT",
+    "Aucun texte ne t'est fourni. Tu écris le cours toi-même, depuis ce que tu sais, et la fiche que tu produis sera le seul cours que cet étudiant aura. Tiens-t'en aux trois règles qui suivent.",
+    scope,
+    "Écris le COURS tel qu'il est enseigné et interrogé à ce niveau et dans ce pays : les notions au programme, les définitions exactes, les mécanismes, les exemples qu'un professeur donnerait. Pas un article d'encyclopédie, pas une biographie, pas une histoire des idées sur le sujet.",
+    "Si une partie du programme t'est inconnue ou si tu n'es pas certain d'un fait, d'une date, d'un chiffre ou d'une définition, ÉCRIS-EN MOINS. Une fiche plus courte est sans conséquence ; une fiche qui affirme une chose fausse sera apprise par cœur telle quelle, puis récitée le jour de l'épreuve. N'invente ni référence, ni citation, ni statistique.",
+  ].join("\n");
+}
+
 /**
  * Ce que l'étudiant a demandé en plus, pour cette fiche.
  *

@@ -21,9 +21,13 @@ struct CoursesListView: View {
     /// Un cours mène à sa fiche, un `CourseCardsRoute` à ses cartes : deux destinations
     /// pour le même cours, donc un chemin hétérogène.
     @State private var path = NavigationPath()
-    @State private var showImportChoice = false
-    @State private var pendingImport: ImportKind?
-    @State private var activeImport: ImportKind?
+    /// **La création d'un deck a remplacé l'écran d'import.**
+    ///
+    /// L'ancien demandait un format — PDF, photos, YouTube — puis un document, et rendait la
+    /// main sur une fiche. Le nouveau demande ce qu'il faut pour poser un plan de travail, et
+    /// le format n'est plus la première question : on le choisit case par case, au moment de
+    /// remplir un support, ce qui permet d'en mélanger plusieurs dans le même deck.
+    @State private var creatingDeck = false
     @State private var paywall: PaywallTrigger?
     @State private var coursePendingDelete: Course?
     /// Totaux par cours, lus **une fois**. Le corps ne touche plus `course.cards`.
@@ -189,8 +193,7 @@ struct CoursesListView: View {
 
     private var covers: some View {
         stack
-            .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport, content: importChoice)
-            .fullScreenCover(item: $activeImport, content: importCover)
+            .fullScreenCover(isPresented: $creatingDeck, content: deckSetup)
             .sheet(item: $moving, content: folderPicker)
     }
 
@@ -198,7 +201,7 @@ struct CoursesListView: View {
         NavigationStack(path: $path) {
             libraryScroll
                 .toolbar(.hidden, for: .navigationBar)
-                .reportsNavigationDepth(for: .courses, depth: path.count)
+                .reportsNavigationDepth(for: .decks, depth: path.count)
                 .returnsHome(path: $path)
                 .navigationDestination(for: Course.self, destination: openCourse)
                 .navigationDestination(for: CourseCardsRoute.self, destination: openCards)
@@ -543,24 +546,15 @@ struct CoursesListView: View {
 
     // MARK: - Feuilles et dialogues
 
-    private func importChoice() -> some View {
-        ImportChoiceSheet(
-            onSelect: { kind in
-                pendingImport = kind
-                showImportChoice = false
-            }
-        )
-        .presentationDetents([.height(520)])
-        .presentationDragIndicator(.visible)
-        .presentationCornerRadius(MicaboRadius.sheet)
-    }
-
-    private func importCover(_ kind: ImportKind) -> some View {
-        ImportView(kind: kind) { course in
-            activeImport = nil
-            // Un import se termine sur la fiche : c'est le résultat, et c'est ce qu'on
-            // veut lire avant de décider si on en fait des cartes.
+    private func deckSetup() -> some View {
+        DeckSetupFlowView { course in
+            creatingDeck = false
+            // Un deck construit se termine sur **son plan**, pas sur sa fiche. C'est la
+            // différence de fond avec l'ancien import : ce qu'on vient de fabriquer est un
+            // programme de travail, et c'est lui qu'il faut voir en premier.
             path = NavigationPath([course])
+        } onCancel: {
+            creatingDeck = false
         }
     }
 
@@ -576,7 +570,7 @@ struct CoursesListView: View {
     }
 
     private func openCourse(_ course: Course) -> some View {
-        CourseSheetView(course: course)
+        DeckView(course: course)
     }
 
     private func openCards(_ route: CourseCardsRoute) -> some View {
@@ -834,14 +828,6 @@ struct CoursesListView: View {
             paywall = .secondCourse
             return
         }
-        showImportChoice = true
-    }
-
-    private func launchPendingImport() {
-        guard let kind = pendingImport else { return }
-        pendingImport = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            activeImport = kind
-        }
+        creatingDeck = true
     }
 }

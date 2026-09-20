@@ -25,6 +25,15 @@ interface RequestBody {
   subject?: string;
   /** Langue des cartes, la même que celle de la fiche : « fr » ou « en ». */
   language?: string;
+  /**
+   * Le plan du deck, dans l'ordre. Les titres seuls : le modèle a déjà le texte entier
+   * dans `context`, et lui renvoyer les blocs chapitre par chapitre doublerait la charge
+   * utile pour lui apprendre ce qu'il vient de lire.
+   *
+   * Absent sur un paquet sans plan — un import Anki, un cours d'avant la refonte — et les
+   * cartes sortent alors sans chapitre.
+   */
+  chapters?: string[];
 }
 
 interface GeneratedCard {
@@ -34,6 +43,8 @@ interface GeneratedCard {
   kind?: string;
   choices?: string[];
   answerIndex?: number;
+  /** Rang du chapitre d'où vient la carte, à partir de zéro. */
+  chapter?: number;
 }
 
 const SYSTEM_PROMPT =
@@ -78,6 +89,7 @@ Réponds uniquement par un tableau JSON compact, une seule ligne, sans texte aut
 
 interface OutputCard {
   kind: string;
+  chapter?: number;
   front: string;
   back: string;
   hint?: string;
@@ -104,14 +116,23 @@ function normalizeGap(text: string): string {
  * exploitables, ou un texte à trou sans trou, repasse en recto verso. Une carte
  * bancale n'est pas jetée pour autant : sa question et sa réponse restent bonnes.
  */
-function normalizeCard(card: GeneratedCard, allowed: Set<string>): OutputCard {
+function normalizeCard(card: GeneratedCard, allowed: Set<string>, chapterCount: number): OutputCard {
   const back = card.back!.trim();
   const hint = card.hint?.trim() || undefined;
   const kind = typeof card.kind === "string" ? card.kind.trim().toLowerCase() : "basic";
   const front = kind === "cloze" ? normalizeGap(card.front!.trim()) : card.front!.trim();
+  // Un rang hors plan est jeté, pas ramené au plus proche : un modèle qui annonce le
+  // chapitre 12 d'un deck qui en a 9 ne s'est pas trompé d'une unité, il a inventé. Mieux
+  // vaut une carte non classée — qui se voit — qu'une carte classée au hasard.
+  const chapter = typeof card.chapter === "number" &&
+      Number.isInteger(card.chapter) &&
+      card.chapter >= 0 &&
+      card.chapter < chapterCount
+    ? card.chapter
+    : undefined;
 
   if (kind === "cloze" && allowed.has("cloze") && front.includes(GAP)) {
-    return { kind, front, back, hint };
+    return { kind, chapter, front, back, hint };
   }
 
   if (kind === "choice" && allowed.has("choice")) {
@@ -130,11 +151,11 @@ function normalizeCard(card: GeneratedCard, allowed: Set<string>): OutputCard {
       : choices.findIndex((choice) => choice.toLowerCase() === back.toLowerCase());
 
     if (choices.length >= 2 && answerIndex >= 0) {
-      return { kind, front, back, hint, choices, answerIndex };
+      return { kind, chapter, front, back, hint, choices, answerIndex };
     }
   }
 
-  return { kind: "basic", front, back, hint };
+  return { kind: "basic", chapter, front, back, hint };
 }
 
 const FORMATS = ["basic", "cloze", "choice"] as const;
@@ -270,6 +291,15 @@ Deno.serve((request: Request) =>
       // d'application en droit, un mot dans sa langue en langue vivante.
       const subjectBrief = disciplineBrief(detectDiscipline(context, title, body.subject));
 
+      // Le plan, borné : trente chapitres de cent caractères suffisent largement à un deck
+      // de terminale, et une liste non bornée venue du client entrerait telle quelle dans
+      // la consigne.
+      const chapterTitles = (Array.isArray(body.chapters) ? body.chapters : [])
+        .filter((entry): entry is string => typeof entry === "string")
+        .map((entry) => entry.trim().slice(0, 100))
+        .filter((entry) => entry.length > 0)
+        .slice(0, 30);
+
       const sections = [
         languageBrief(body.language),
         `Cours : ${title || "Sans titre"}`,
@@ -282,6 +312,11 @@ Deno.serve((request: Request) =>
           ? `Ces questions existent déjà, ne les répète pas et ne les reformule pas :\n${
             existing.map((item) => `- ${item}`).join("\n")
           }`
+          : "",
+        chapterTitles.length > 0
+          ? `PLAN DU COURS\nCe cours est découpé en ${chapterTitles.length} chapitres :\n${
+            chapterTitles.map((chapterTitle, index) => `${index} — ${chapterTitle}`).join("\n")
+          }\n\nChaque carte porte un champ "chapter" : le NUMÉRO du chapitre d'où vient ce qu'elle demande, tel qu'il est écrit ci-dessus. Répartis les cartes sur l'ensemble du plan, à peu près au prorata de la longueur de chaque chapitre : un plan dont seul le premier chapitre est couvert ne sert à rien. Si une carte ne relève clairement d'aucun chapitre, omets le champ plutôt que de deviner.`
           : "",
         wrapUntrusted("CONTENU DU COURS", context),
       ].filter(Boolean);
@@ -298,7 +333,7 @@ Deno.serve((request: Request) =>
 
       const normalized = deepStripEmDashes(rawCards)
         .filter((card) => typeof card?.front === "string" && typeof card?.back === "string")
-        .map((card) => normalizeCard(card, allowedKinds))
+        .map((card) => normalizeCard(card, allowedKinds, chapterTitles.length))
         .filter((card) => card.front.length > 0 && card.back.length > 0);
 
       const cards = selectByQuota(normalized, quota);

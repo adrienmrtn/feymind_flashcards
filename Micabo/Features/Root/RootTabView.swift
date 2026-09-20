@@ -1,8 +1,9 @@
 import SwiftUI
 import UIKit
 
-/// Les pages de l'app, avec **Réviser** à côté de **Examens**, et la barre du bas qui les
-/// commande.
+/// Les trois pages de l'app — **Decks**, **Réviser**, **Profil** — et la barre du bas qui
+/// les commande. Réviser est au milieu : c'est le geste quotidien, donc celui qui doit
+/// tomber sous le pouce.
 ///
 /// **On ne balaye plus d'une page à l'autre.** Le carrousel qui vivait ici était un
 /// `TabView` en style page : les écrans montés côte à côte, qui suivaient le doigt. Ça
@@ -34,16 +35,10 @@ struct RootTabView: View {
             TabView(selection: $router.selection) {
                 CoursesListView()
                     .toolbar(.hidden, for: .tabBar)
-                    .tag(RootTab.courses)
-                DecksListView()
-                    .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.decks)
                 TodayView()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.today)
-                ExamsView()
-                    .toolbar(.hidden, for: .tabBar)
-                    .tag(RootTab.exams)
                 ProfileView()
                     .toolbar(.hidden, for: .tabBar)
                     .tag(RootTab.profile)
@@ -78,9 +73,6 @@ struct RootTabView: View {
         }
         .tint(MicaboColor.accent)
         .environment(router)
-        .onChange(of: AppearanceStore.shared.appearance) { _, _ in
-            Self.configureChrome()
-        }
     }
 
     private static func configureChrome() {

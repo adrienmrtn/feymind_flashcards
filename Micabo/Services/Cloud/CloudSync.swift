@@ -150,6 +150,18 @@ final class CloudSync {
             }
         try await database.upsert(courses.map { record(for: $0, userID: userID) }, into: CloudTable.courses)
 
+        // **Les chapitres montent entre les cours et les cartes.** Ils référencent un cours
+        // (`chapters.course_id`, en `cascade`) et sont référencés par les cartes
+        // (`flashcards.chapter_id`) : arriver plus tôt serait refusé par la clé étrangère,
+        // arriver plus tard ferait monter des cartes dont le chapitre n'existe pas encore,
+        // qui se retrouveraient non classées côté serveur jusqu'à la synchro suivante.
+        let chapters = try fetchChangedChapters(in: context, since: since)
+            .filter { !CloudTombstones.contains(CloudTable.chapters, id: $0.id) }
+        try await database.upsert(
+            chapters.compactMap { record(for: $0, userID: userID) },
+            into: CloudTable.chapters
+        )
+
         // Les cartes changent indépendamment de leur cours : noter une carte ne touche pas
         // `Course.updatedAt`. Il faut donc les lire directement, pas seulement sous les cours
         // retenus ci-dessus.
@@ -269,6 +281,12 @@ final class CloudSync {
     private func fetchChangedCourses(in context: ModelContext, since: Date?) throws -> [Course] {
         guard let since else { return try context.fetch(FetchDescriptor<Course>()) }
         let descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.updatedAt > since })
+        return try context.fetch(descriptor)
+    }
+
+    private func fetchChangedChapters(in context: ModelContext, since: Date?) throws -> [Chapter] {
+        guard let since else { return try context.fetch(FetchDescriptor<Chapter>()) }
+        let descriptor = FetchDescriptor<Chapter>(predicate: #Predicate { $0.updatedAt > since })
         return try context.fetch(descriptor)
     }
 
@@ -393,6 +411,52 @@ final class CloudSync {
             }
         }
 
+        // **Les chapitres descendent entre les cours et les cartes**, pour la même raison
+        // qu'ils montent entre les deux : un chapitre arrivé avant son deck se rattacherait
+        // à rien, et une carte arrivée avant son chapitre resterait non classée jusqu'à la
+        // synchro suivante.
+        let remoteChapters = try await database.fetch(
+            ChapterRecord.self,
+            from: CloudTable.chapters,
+            updatedSince: since,
+            filters: [mine]
+        )
+        if !remoteChapters.isEmpty {
+            let decksByID = try keyedCourses(
+                in: context,
+                matching: remoteChapters.map(\.course_id),
+                loadAll: since == nil
+            )
+            let localChapters = try keyedChapters(
+                in: context,
+                matching: remoteChapters.map(\.id),
+                loadAll: since == nil
+            )
+
+            for remote in remoteChapters {
+                if CloudTombstones.contains(CloudTable.chapters, id: remote.id) {
+                    if let local = localChapters[remote.id] { context.delete(local) }
+                    continue
+                }
+                let deck = decksByID[remote.course_id]
+                guard let local = localChapters[remote.id] else {
+                    // Un chapitre dont le deck n'est pas encore là n'est pas inséré : il
+                    // redescendra à la passe suivante, une fois le cours posé. L'insérer
+                    // orphelin le rendrait invisible et non montable.
+                    if remote.deleted_at == nil, let deck {
+                        context.insert(make(from: remote, course: deck))
+                    }
+                    continue
+                }
+                if let deleted = remote.deleted_at, deleted > local.updatedAt {
+                    CloudTombstones.mark(CloudTable.chapters, id: remote.id)
+                    context.delete(local)
+                } else if remote.updated_at > local.updatedAt {
+                    apply(remote, to: local, course: deck)
+                }
+            }
+        }
+
         // Les cartes n'ont qu'une politique de lecture, la sienne, mais le filtre est posé de la
         // même façon : une synchro qui dépend d'un cloisonnement pour ne pas ramasser les
         // lignes des autres est une synchro qu'une politique ajoutée un jour recasse.
@@ -405,6 +469,11 @@ final class CloudSync {
         let coursesByID = try keyedCourses(
             in: context,
             matching: remoteCards.compactMap(\.course_id),
+            loadAll: since == nil
+        )
+        let chaptersByID = try keyedChapters(
+            in: context,
+            matching: remoteCards.compactMap(\.chapter_id),
             loadAll: since == nil
         )
         let localCards = try keyedCards(
@@ -428,6 +497,7 @@ final class CloudSync {
                 card.id = remote.id
                 apply(remote, to: card)
                 card.course = remote.course_id.flatMap { coursesByID[$0] }
+                card.chapter = remote.chapter_id.flatMap { chaptersByID[$0] }
                 context.insert(card)
                 continue
             }
@@ -436,6 +506,13 @@ final class CloudSync {
                 context.delete(local)
             } else if remote.updated_at > local.updatedAt {
                 apply(remote, to: local)
+                // Le rattachement se rejoue à chaque descente : c'est lui qui rattrape les
+                // cartes montées avant que leur chapitre n'existe côté serveur.
+                if let chapterID = remote.chapter_id, let chapter = chaptersByID[chapterID] {
+                    local.chapter = chapter
+                } else if remote.chapter_id == nil {
+                    local.chapter = nil
+                }
             }
         }
 
@@ -573,6 +650,23 @@ final class CloudSync {
         return result
     }
 
+    private func keyedChapters(in context: ModelContext, matching ids: [UUID], loadAll: Bool) throws -> [UUID: Chapter] {
+        if loadAll || ids.count > 80 {
+            return Dictionary(
+                try context.fetch(FetchDescriptor<Chapter>()).map { ($0.id, $0) },
+                uniquingKeysWith: { first, _ in first }
+            )
+        }
+        var result: [UUID: Chapter] = [:]
+        for id in Set(ids) {
+            let target = id
+            var descriptor = FetchDescriptor<Chapter>(predicate: #Predicate { $0.id == target })
+            descriptor.fetchLimit = 1
+            if let row = try context.fetch(descriptor).first { result[id] = row }
+        }
+        return result
+    }
+
     private func keyedCourses(in context: ModelContext, matching ids: [UUID], loadAll: Bool) throws -> [UUID: Course] {
         if loadAll || ids.count > 80 {
             return Dictionary(
@@ -700,6 +794,48 @@ final class CloudSync {
         folder.updatedAt = remote.updated_at
     }
 
+    /// **Nul quand le chapitre n'a plus de deck.** Un chapitre orphelin ne peut pas monter :
+    /// `chapters.course_id` est `not null`, et l'envoi groupé est tout ou rien — une seule
+    /// ligne sans cours ferait rejeter tout le plan.
+    private func record(for chapter: Chapter, userID: UUID) -> ChapterRecord? {
+        guard let courseID = chapter.course?.id else { return nil }
+        return ChapterRecord(
+            id: chapter.id,
+            user_id: userID,
+            course_id: courseID,
+            position: chapter.position,
+            title: chapter.title,
+            sheet: chapter.sheetData.flatMap(JSONCodable.init(data:)),
+            created_at: chapter.createdAt,
+            updated_at: chapter.updatedAt,
+            deleted_at: nil
+        )
+    }
+
+    private func make(from remote: ChapterRecord, course: Course?) -> Chapter {
+        let chapter = Chapter(
+            id: remote.id,
+            position: remote.position,
+            title: remote.title,
+            course: course
+        )
+        chapter.sheetData = remote.sheet?.data
+        chapter.createdAt = remote.created_at
+        chapter.updatedAt = remote.updated_at
+        return chapter
+    }
+
+    private func apply(_ remote: ChapterRecord, to chapter: Chapter, course: Course?) {
+        chapter.position = remote.position
+        chapter.title = remote.title
+        chapter.sheetData = remote.sheet?.data
+        // Un chapitre ne change pas de deck en pratique, mais une ligne descendue avant son
+        // cours arrive avec `course` à nul : le rattachement se rattrape à la passe suivante
+        // plutôt que d'écraser un lien correct par rien.
+        if let course { chapter.course = course }
+        chapter.updatedAt = remote.updated_at
+    }
+
     private func make(from remote: CourseRecord) -> Course {
         let course = Course(
             id: remote.id,
@@ -752,6 +888,7 @@ final class CloudSync {
             id: card.id,
             user_id: userID,
             course_id: card.course?.id,
+            chapter_id: card.chapter?.id,
             front: card.front,
             back: card.back,
             hint: card.hint,

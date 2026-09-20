@@ -15,6 +15,8 @@ enum CloudTable {
     static let profiles = "profiles"
     static let courses = "courses"
     static let courseFolders = "course_folders"
+    /// Les parties d'un deck. Elles montent **après** les cours, dont elles dépendent.
+    static let chapters = "chapters"
     static let flashcards = "flashcards"
     static let reviewLogs = "review_logs"
     static let exams = "exams"
@@ -244,6 +246,25 @@ struct CourseRecord: Codable {
     }
 }
 
+/// Un chapitre, tel qu'il voyage.
+///
+/// Il ne porte que le plan : son rang, son titre, ses blocs. Les cartes ne sont pas
+/// dedans — c'est la carte qui pointe vers son chapitre (`FlashcardRecord.chapter_id`),
+/// et la relation n'est donc stockée qu'une fois, du côté qui change le plus souvent.
+struct ChapterRecord: Codable {
+    var id: UUID
+    var user_id: UUID
+    var course_id: UUID
+    var position: Int
+    var title: String
+    /// Les blocs, transportés tels quels. Ils sont déjà du JSON côté app : les décoder
+    /// pour les réencoder ne ferait que risquer de les perdre.
+    var sheet: JSONCodable?
+    var created_at: Date
+    var updated_at: Date
+    var deleted_at: Date?
+}
+
 /// Un dossier de la bibliothèque, tel qu'il voyage.
 ///
 /// Il ne porte que ce qui range : ni cours, ni compte. Le contenu se déduit des cours, qui
@@ -340,6 +361,9 @@ struct SharedCardRecord: Codable, Identifiable, Equatable {
 
 struct SharedCardCountRow: Codable {
     var course_id: UUID?
+    /// Le chapitre dont la carte est née. `nil` sur une carte importée, écrite à la main,
+    /// ou produite avant la refonte.
+    var chapter_id: UUID?
 }
 
 /// Une entrée de l'annuaire : de quoi désigner quelqu'un et le reconnaître.
@@ -417,7 +441,7 @@ struct FlashcardRecord: Codable {
     var image_path: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, user_id, course_id, front, back, hint, position, kind, choices
+        case id, user_id, course_id, chapter_id, front, back, hint, position, kind, choices
         case correct_choice_index, mask_x, mask_y, mask_width, mask_height, group_id
         case is_reversed, is_suspended, state, due_date, interval_days, ease_factor
         case repetitions, lapses, step_index, last_reviewed_at, created_at, updated_at
@@ -429,6 +453,10 @@ struct FlashcardRecord: Codable {
         try container.encode(id, forKey: .id)
         try container.encode(user_id, forKey: .user_id)
         try container.encodeIfPresent(course_id, forKey: .course_id)
+        // Toujours écrit, y compris à `null` : une carte détachée de son chapitre ici doit
+        // se détacher partout. Un `encodeIfPresent` laisserait la colonne telle quelle et
+        // le rattachement ne se déferait jamais.
+        try container.encode(chapter_id, forKey: .chapter_id)
         try container.encode(front, forKey: .front)
         try container.encode(back, forKey: .back)
         try container.encodeIfPresent(hint, forKey: .hint)

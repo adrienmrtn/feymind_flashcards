@@ -116,8 +116,21 @@ enum StudyQueueBuilder {
             .sorted { byDeadline(deadlines.deadline(for: $0), $0.dueDate, deadlines.deadline(for: $1), $1.dueDate) }
             .prefix(limits.reviewsPerSession)
 
+        // **Les cartes neuves entrent dans l'ordre du plan.**
+        //
+        // Le rang du chapitre passe devant celui de la carte : on n'ouvre pas le chapitre
+        // quatre tant que le deux n'est pas entamé, même si une carte du quatre porte une
+        // position plus basse — ce qui arrive dès qu'un chapitre a été régénéré. C'est ce
+        // qui fait qu'un deck se découvre comme un cours se lit, et non comme un paquet se
+        // mélange.
+        //
+        // Une carte sans chapitre passe en dernier (`Int.max`) : importée d'Anki, écrite à
+        // la main, ou produite avant la refonte, elle n'a pas de place dans le plan, et la
+        // pousser au début du premier chapitre serait lui en inventer une.
         let byPosition: (Flashcard, Flashcard) -> Bool = {
-            ($0.position, $0.createdAt) < ($1.position, $1.createdAt)
+            let left = ($0.chapter?.position ?? Int.max, $0.position, $0.createdAt)
+            let right = ($1.chapter?.position ?? Int.max, $1.position, $1.createdAt)
+            return left < right
         }
         let newCards = due.filter { $0.state == .new }
         let examNewCards = newCards.filter { deadlines.covers($0) }.sorted(by: byPosition)
@@ -200,9 +213,13 @@ struct CourseDuePreview: Equatable {
     }
 
     /// La file réelle, une fois la page déjà à l'écran.
+    /// Le deck lui-même est passé en plus de son identifiant : c'est lui qui porte le
+    /// plafond du jour. Il reste facultatif pour les appelants qui n'ont qu'un identifiant
+    /// sous la main, et ceux-là retombent alors sur le rythme du compte.
     static func scheduled(
         from cards: [Flashcard],
         courseID: UUID,
+        course: Course? = nil,
         in context: ModelContext,
         now: Date = Date()
     ) -> CourseDuePreview {
@@ -218,10 +235,18 @@ struct CourseDuePreview: Equatable {
         // SwiftData portable. On les lit, mais on ne relit plus **tous les cours et toutes
         // leurs cartes** pour construire la date butoir de celui qui est déjà sous nos yeux.
         let exams = (try? context.fetch(FetchDescriptor<Exam>())) ?? []
+
+        // **Le plafond du jour est celui du deck**, et non celui du compte, dès qu'une
+        // échéance porte dessus. C'est la seule chose qu'une date change : voir `DeckPace`.
+        // Sans échéance, `remainingToday` rend le rythme ordinaire, et rien ne bouge.
+        let newRemaining = course.map {
+            DeckPace.remainingToday(for: $0, exams: exams, logs: logs, now: now)
+        } ?? DailyNewQuota.remaining(logs: logs, now: now)
+
         let due = StudyQueueBuilder.build(
             from: cards,
             now: now,
-            limits: .daily(newRemaining: DailyNewQuota.remaining(logs: logs, now: now)),
+            limits: .daily(newRemaining: newRemaining),
             deadlines: ExamDeadlines.active(
                 exams: exams,
                 cards: cards,

@@ -1,26 +1,36 @@
 import Observation
 import SwiftUI
 
-/// Jour, nuit, crépuscule. Le même choix que le site, sur cet appareil.
+/// **Une seule apparence, et c'est le jour.**
+///
+/// Il y en avait trois — jour, nuit, crépuscule — soit trois palettes complètes à tenir
+/// pour un sélecteur que presque personne n'ouvrait, et trois fois le travail à chaque
+/// jeton ajouté. La refonte n'en garde qu'une et la règle au pixel. Le mode sombre
+/// reviendra quand la palette claire aura cessé de bouger : une palette qu'on retouche
+/// chaque semaine ne se décline pas.
+///
+/// Le type survit à un seul cas parce que `AppearanceStore` est lu depuis le thème, et
+/// qu'un jeton de couleur qui s'appellerait `MicaboPalette.day` en dur dans trente fichiers
+/// serait exactement ce qu'il faudrait défaire le jour où la nuit revient.
 enum MicaboAppearance: String, CaseIterable, Identifiable {
     case day
-    case night
-    case twilight
 
     var id: String { rawValue }
 
-    var isDark: Bool { self != .day }
+    var isDark: Bool { false }
 
-    var colorScheme: ColorScheme { isDark ? .dark : .light }
+    var colorScheme: ColorScheme { .light }
 
     static let storageKey = "micabo.appearance"
 
+    /// Les anciens appareils ont « night » ou « twilight » en réglage. Ils retombent sur le
+    /// jour sans erreur, et la clé est réécrite au premier enregistrement.
     static func fromUnknown(_ value: String?) -> MicaboAppearance {
         MicaboAppearance(rawValue: value ?? "") ?? .day
     }
 }
 
-/// Palettes des trois apparences. Le jour garde les jetons d'origine de l'iPhone.
+/// Les jetons de couleur de l'app, en une seule palette.
 struct MicaboPalette: Equatable {
     var canvas: Color
     var surface: Color
@@ -37,10 +47,6 @@ struct MicaboPalette: Equatable {
     var inkBody: Color
     var sheetMarker: Color
     /// Les cinq surligneurs d'une fiche, dans l'ordre de `SheetHighlight.allCases`.
-    ///
-    /// Ce sont des pastels : ils passent **sous** le texte sans le noyer, et c'est ce qui
-    /// permet d'en avoir cinq sur la même page sans qu'elle devienne un nuancier. Ce sont
-    /// les mêmes valeurs que les jetons `--color-hl-*` du site.
     var sheetHighlights: [Color]
     var onInk: Color
     var onInkMuted: Color
@@ -65,54 +71,61 @@ struct MicaboPalette: Equatable {
     var cardShadow: Double
     var groupShadow: Double
 
-    /// **Le jour, refait.** L'accent bleu ne bouge pas ; ce qui change tient en trois gestes.
+    /// **Le jour, refait pour la refonte.** Quatre décisions, et elles se voient toutes.
     ///
-    /// **L'encre n'est plus noire.** `#111827` est un noir de texte imprimé, et posé sur du
-    /// gris clair il durcit chaque rangée : les listes avaient l'air gravées. Le navy
-    /// désaturé qui le remplace garde tout son contraste (11:1 sur le blanc, très au-delà
-    /// de ce qu'il faut) et rend l'écran respirable. Les trois encres secondaires suivent,
-    /// et `inkTertiary` **cesse d'être la même valeur que `inkSecondary`** — deux niveaux
-    /// de gris qui portaient le même code hexadécimal ne hiérarchisaient rien.
+    /// **Le fond devient blanc.** Il était gris-bleu, et les cartes blanches posées dessus
+    /// se détachaient par leur clarté. La nouvelle direction fait l'inverse : un fond blanc,
+    /// des surfaces blanches, et ce qui se détache se détache par un filet d'un pixel ou par
+    /// un aplat de couleur — jamais par une ombre. C'est ce qui laisse les tuiles de matière
+    /// porter la couleur de l'écran sans que rien ne leur dispute l'attention.
     ///
-    /// **Le fond tire vers le bleu.** Un gris parfaitement neutre sous des cartes blanches
-    /// fait grisâtre ; un fond très légèrement bleuté les fait paraître plus blanches
-    /// qu'elles ne sont, sans qu'on sache dire pourquoi.
+    /// **L'accent passe du bleu au violet.** `#6442EF` est un violet franc, qui porte du
+    /// blanc à 7,5:1 et qui ne ressemble à aucun bleu système. Il ne dit qu'une chose :
+    /// ce qui est actif, sélectionné, ou en cours de progression.
     ///
-    /// **Les pastels remontent d'un demi-ton**, parce que les ombres sont maintenant plus
-    /// présentes : un filet qui allait bien sur un fond plat disparaît sous une ombre.
+    /// **Les couleurs des notes de révision ne bougent pas.** `ratingAgain`, `caution`,
+    /// `positive`, `info` et leurs quatre fonds pastel sont ceux d'avant, au code
+    /// hexadécimal près. La direction artistique des cartes est la seule partie de l'app
+    /// que la refonte conserve, et un vert ou un ambre déplacé d'un demi-ton rendrait
+    /// illisible le bilan de fin de session, qui rejoue les mêmes couleurs.
+    ///
+    /// **Les ombres tombent presque à zéro.** Il n'en reste qu'une, sur la carte de
+    /// révision, et elle est déjà écrite dans `StudyView`. Partout ailleurs, c'est `stroke`.
     static let day = MicaboPalette(
-        canvas: Color(hex: 0xF4F6FA),
+        canvas: .white,
         surface: .white,
-        surfaceMuted: Color(hex: 0xEDF0F7),
-        surfaceSunken: Color(hex: 0xE3E7F0),
-        stroke: Color(hex: 0xE3E7F0),
-        strokeStrong: Color(hex: 0xD7DCE6),
-        hairline: Color(hex: 0xE9ECF3),
-        hairlineOnCanvas: Color(hex: 0xDFE4EE),
-        ink: Color(hex: 0x232B3E),
-        inkSecondary: Color(hex: 0x656E85),
-        inkTertiary: Color(hex: 0x939CB0),
-        inkReading: Color(hex: 0x303A52),
-        inkBody: Color(hex: 0x4E5870),
-        sheetMarker: Color(hex: 0xF5D76E),
+        surfaceMuted: Color(hex: 0xF7F7FA),
+        surfaceSunken: Color(hex: 0xF2F2F5),
+        stroke: Color(hex: 0xECECF1),
+        strokeStrong: Color(hex: 0xE5E5EA),
+        hairline: Color(hex: 0xECECF1),
+        hairlineOnCanvas: Color(hex: 0xECECF1),
+        // L'encre n'est ni noire ni navy : un gris très sombre à peine violacé, qui
+        // s'accorde à l'accent sans jamais le concurrencer. 17,3:1 sur le blanc.
+        ink: Color(hex: 0x16151A),
+        // 4,9:1 sur blanc — au-dessus du seuil, y compris à onze points.
+        inkSecondary: Color(hex: 0x6E6E78),
+        inkTertiary: Color(hex: 0xA2A2AC),
+        inkReading: Color(hex: 0x2E2D36),
+        inkBody: Color(hex: 0x4E4D57),
+        sheetMarker: Color(hex: 0xFFF0A6),
         sheetHighlights: [
-            Color(hex: 0xF8E08E),
-            Color(hex: 0xBFE6CF),
-            Color(hex: 0xC3DDF7),
-            Color(hex: 0xF7CDDA),
-            Color(hex: 0xDCD0F5)
+            Color(hex: 0xFFF0A6),
+            Color(hex: 0xC9EBD3),
+            Color(hex: 0xD6E7FB),
+            Color(hex: 0xFBD9E4),
+            Color(hex: 0xDCC9FB)
         ],
         onInk: .white,
-        onInkMuted: Color(hex: 0xA7B0C4),
-        canvasSage: Color(hex: 0xF4F6FA),
-        accent: Color(hex: 0x2563EB),
-        accentSoft: Color(hex: 0xE4ECFE),
-        accentVivid: Color(hex: 0x3B82F6),
-        progressTrack: Color(hex: 0xEDF0F7),
+        onInkMuted: Color(hex: 0x9D95C0),
+        canvasSage: .white,
+        accent: Color(hex: 0x6442EF),
+        accentSoft: Color(hex: 0xEFECFD),
+        accentVivid: Color(hex: 0x6442EF),
+        progressTrack: Color(hex: 0xE5E5EA),
+        // À partir d'ici, et jusqu'à `infoSoft` : les couleurs des notes de révision,
+        // reprises telles quelles de l'ancienne palette. Voir le commentaire du type.
         positive: Color(hex: 0x2F7D57),
-        // L'ambre porte maintenant du texte de onze points sur `cautionSoft` : la série, le
-        // compte à rebours d'une épreuve, la note « difficile ». `#B3872B` y passait tout
-        // juste, celui-ci passe largement.
         caution: Color(hex: 0x8A6410),
         cautionVivid: Color(hex: 0xFFC53D),
         negative: Color(hex: 0xC93B2B),
@@ -122,160 +135,41 @@ struct MicaboPalette: Equatable {
         cautionSoft: Color(hex: 0xFDF1D6),
         negativeSoft: Color(hex: 0xFDE8E2),
         infoSoft: Color(hex: 0xE3EDFC),
-        offerWash: Color(hex: 0xC4E7FA),
-        offerWashSoft: Color(hex: 0xEAF7FE),
+        offerWash: Color(hex: 0xDCC9FB),
+        offerWashSoft: Color(hex: 0xF4EEFE),
+        // Les teintes de matière. Elles sont franches et non pastel-pâles : à 112 points
+        // de côté sur un fond blanc, une teinte trop lavée ne tient pas la tuile.
         tilePastels: [
-            Color(hex: 0xDEEBFB),
-            Color(hex: 0xE4F2EA),
-            Color(hex: 0xFDEBE4),
-            Color(hex: 0xEDE6FA),
-            Color(hex: 0xFBEDF3),
-            Color(hex: 0xEDF0F7)
+            Color(hex: 0xFFE2A8),
+            Color(hex: 0xC9EBD3),
+            Color(hex: 0xDCC9FB),
+            Color(hex: 0xBCD8FA),
+            Color(hex: 0xFBD9E4),
+            Color(hex: 0xF2F2F5)
         ],
-        // Les ombres deviennent celles du navy, pas du noir, et elles portent plus loin :
-        // voir `MicaboShadow`, qui les pose en deux couches.
-        cardShadow: 0.07,
-        groupShadow: 0.05
-    )
-
-    static let night = MicaboPalette(
-        canvas: Color(hex: 0x101216),
-        surface: Color(hex: 0x1A1D24),
-        surfaceMuted: Color(hex: 0x252830),
-        surfaceSunken: Color(hex: 0x0C0D10),
-        stroke: Color.white.opacity(0.08),
-        strokeStrong: Color.white.opacity(0.14),
-        hairline: Color.white.opacity(0.08),
-        hairlineOnCanvas: Color.white.opacity(0.06),
-        ink: Color(hex: 0xE8EAEE),
-        inkSecondary: Color(hex: 0x9AA1AB),
-        inkTertiary: Color(hex: 0x8B919A),
-        inkReading: Color(hex: 0xD5D8DE),
-        inkBody: Color(hex: 0x9AA1AB),
-        sheetMarker: Color(hex: 0xC9A227),
-        sheetHighlights: [
-            Color(hex: 0x55491C),
-            Color(hex: 0x1F4034),
-            Color(hex: 0x1E3A56),
-            Color(hex: 0x4D2733),
-            Color(hex: 0x382F57)
-        ],
-        onInk: Color(hex: 0x101216),
-        onInkMuted: Color(hex: 0x6B7280),
-        canvasSage: Color(hex: 0x141A16),
-        accent: Color(hex: 0x60A5FA),
-        accentSoft: Color(hex: 0x1E3A5F),
-        accentVivid: Color(hex: 0x3B82F6),
-        progressTrack: Color(hex: 0x2A2E36),
-        positive: Color(hex: 0x6FBF86),
-        caution: Color(hex: 0xD4A84B),
-        cautionVivid: Color(hex: 0xE8B23C),
-        negative: Color(hex: 0xE06A5A),
-        ratingAgain: Color(hex: 0xE07A68),
-        info: Color(hex: 0x7EB0E8),
-        positiveSoft: Color(hex: 0x1A2A1E),
-        cautionSoft: Color(hex: 0x2E2614),
-        negativeSoft: Color(hex: 0x2F1A16),
-        infoSoft: Color(hex: 0x182433),
-        offerWash: Color(hex: 0x163247),
-        offerWashSoft: Color(hex: 0x12202C),
-        tilePastels: [
-            Color(hex: 0x1E3A5F),
-            Color(hex: 0x252830),
-            Color(hex: 0x2A2E36),
-            Color(hex: 0x182433),
-            Color(hex: 0x2A2438),
-            Color(hex: 0x1A1D24)
-        ],
-        cardShadow: 0.45,
-        groupShadow: 0.35
-    )
-
-    static let twilight = MicaboPalette(
-        canvas: Color(hex: 0x1C1612),
-        surface: Color(hex: 0x2A211B),
-        surfaceMuted: Color(hex: 0x362B23),
-        surfaceSunken: Color(hex: 0x15110E),
-        stroke: Color(hex: 0xF3E6D4).opacity(0.10),
-        strokeStrong: Color(hex: 0xF3E6D4).opacity(0.16),
-        hairline: Color(hex: 0xF3E6D4).opacity(0.10),
-        hairlineOnCanvas: Color(hex: 0xF3E6D4).opacity(0.08),
-        ink: Color(hex: 0xF3E6D4),
-        inkSecondary: Color(hex: 0xC4B09A),
-        inkTertiary: Color(hex: 0xA89480),
-        inkReading: Color(hex: 0xEAD9C4),
-        inkBody: Color(hex: 0xC4B09A),
-        sheetMarker: Color(hex: 0xC9A227),
-        sheetHighlights: [
-            Color(hex: 0x55491C),
-            Color(hex: 0x1F4034),
-            Color(hex: 0x1E3A56),
-            Color(hex: 0x4D2733),
-            Color(hex: 0x382F57)
-        ],
-        onInk: Color(hex: 0x1C1612),
-        onInkMuted: Color(hex: 0x8A7A68),
-        canvasSage: Color(hex: 0x1F1A14),
-        accent: Color(hex: 0x8BB0FF),
-        accentSoft: Color(hex: 0x2A3348),
-        accentVivid: Color(hex: 0x7AA2FF),
-        progressTrack: Color(hex: 0x3A3028),
-        positive: Color(hex: 0x8FBF8A),
-        caution: Color(hex: 0xE0B84A),
-        cautionVivid: Color(hex: 0xE8B23C),
-        negative: Color(hex: 0xE07A68),
-        ratingAgain: Color(hex: 0xE07A68),
-        info: Color(hex: 0x8BB0FF),
-        positiveSoft: Color(hex: 0x24301F),
-        cautionSoft: Color(hex: 0x3A2E16),
-        negativeSoft: Color(hex: 0x3A1E18),
-        infoSoft: Color(hex: 0x222838),
-        offerWash: Color(hex: 0x243040),
-        offerWashSoft: Color(hex: 0x1C222C),
-        tilePastels: [
-            Color(hex: 0x2A3348),
-            Color(hex: 0x362B23),
-            Color(hex: 0x3A3028),
-            Color(hex: 0x222838),
-            Color(hex: 0x3A2E48),
-            Color(hex: 0x2A211B)
-        ],
-        cardShadow: 0.45,
-        groupShadow: 0.35
+        cardShadow: 0.04,
+        groupShadow: 0.0
     )
 
     static func of(_ appearance: MicaboAppearance) -> MicaboPalette {
         switch appearance {
         case .day: .day
-        case .night: .night
-        case .twilight: .twilight
         }
     }
 }
 
-/// L'apparence en cours. Cookie du site, `UserDefaults` ici : l'iPhone et le
-/// navigateur ne se synchronisent pas, et c'est voulu — pas de colonne tant
-/// que les deux côtés n'ont pas le même sélecteur depuis assez longtemps.
+/// L'apparence en cours.
+///
+/// Elle n'a plus qu'une valeur, et le type reste pour une seule raison : c'est lui que
+/// `MicaboColor` interroge. Le jour où la nuit revient, elle revient ici, et nulle part
+/// ailleurs.
 @Observable
 final class AppearanceStore {
     static let shared = AppearanceStore()
 
-    var appearance: MicaboAppearance {
-        didSet {
-            guard appearance != oldValue else { return }
-            UserDefaults.standard.set(appearance.rawValue, forKey: MicaboAppearance.storageKey)
-        }
-    }
+    let appearance: MicaboAppearance = .day
 
     var palette: MicaboPalette { MicaboPalette.of(appearance) }
 
-    init(appearance: MicaboAppearance = MicaboAppearance.fromUnknown(
-        UserDefaults.standard.string(forKey: MicaboAppearance.storageKey)
-    )) {
-        self.appearance = appearance
-    }
-
-    func pick(_ next: MicaboAppearance) {
-        appearance = next
-    }
+    init() {}
 }

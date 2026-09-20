@@ -4,17 +4,24 @@ import SwiftData
 
 enum StudySource {
     case course(Course)
+    /// **Un seul chapitre.** C'est la révision ciblée : le contrôle de jeudi ne porte que
+    /// sur la guerre froide, et faire repasser les huit autres chapitres du deck pour
+    /// atteindre celui-là est exactement ce qui fait renoncer.
+    case chapter(Chapter)
     case allDue
     case cards([Flashcard])
 
     /// Clé de reprise. Une sélection ponctuelle de cartes ne se reprend pas : on ne
-    /// saurait pas la reconstituer de façon fiable au lancement suivant.
+    /// saurait pas la reconstituer de façon fiable au lancement suivant. Un chapitre, si :
+    /// il a une identité stable, donc une session interrompue s'y retrouve.
     var persistenceKey: String? {
         switch self {
         case .allDue:
             return "allDue"
         case .course(let course):
             return "course:\(course.id.uuidString)"
+        case .chapter(let chapter):
+            return "chapter:\(chapter.id.uuidString)"
         case .cards:
             return nil
         }

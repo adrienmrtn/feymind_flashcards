@@ -2,25 +2,32 @@ import SwiftUI
 
 /// Les destinations de la barre d'onglets, dans l'ordre où elles s'y présentent.
 ///
-/// **Réviser** reste l'écran d'ouverture : c'est le quotidien, donc celui qui doit être
-/// sous le pouce. **Cours** regroupe tout ce qui est importé. **Examens** ouvre le
-/// calendrier directement, sans passer par Réviser. Les cours des amis se voient encore
-/// sur leur profil, si leur visibilité le permet.
+/// **Trois, et Réviser au milieu.** Il y en avait cinq — Cours, Paquets, Réviser, Examens,
+/// Profil — ce qui posait deux problèmes. Une barre à cinq n'a plus de milieu, donc plus de
+/// place sous le pouce pour le geste quotidien. Et deux de ces cinq onglets montraient la
+/// même table sous deux angles : *Cours* listait ce qui était importé, *Paquets* listait
+/// les cartes de ces mêmes cours. Un utilisateur devait savoir laquelle des deux portes
+/// ouvrir pour un objet unique.
+///
+/// **Decks remplace Cours**, et c'est le même écran : `CoursesListView`. Le renommage suit
+/// le modèle — on n'importe plus un document mais tout le matériel d'une matière — et
+/// l'ancien onglet *Paquets* disparaît avec sa vue.
+///
+/// **Examens disparaît de la barre, pas de l'app.** Les épreuves se lisent sur Réviser, qui
+/// les affiche déjà, et la fiche d'une épreuve s'ouvre de là. Le calendrier plein écran,
+/// lui, ne revient pas : une date d'examen se pose sur un deck, et c'est tout ce qu'elle
+/// fait — elle règle le nombre de cartes neuves par jour.
 enum RootTab: Int, CaseIterable, Identifiable, Hashable {
-    case courses
     case decks
     case today
-    case exams
     case profile
 
     var id: Int { rawValue }
 
     func label(t: (String) -> String) -> String {
         switch self {
-        case .courses: t("nav.courses")
         case .decks: t("nav.decks")
         case .today: t("nav.review")
-        case .exams: t("nav.exams")
         case .profile: t("nav.profile")
         }
     }
@@ -31,25 +38,21 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
 
     var systemImage: String {
         switch self {
-        case .courses: "books.vertical"
         case .decks: "rectangle.on.rectangle.angled"
         case .today: "arrow.triangle.2.circlepath"
-        case .exams: "calendar"
         case .profile: "person"
         }
     }
 
     /// Variante pleine, affichée quand l'onglet est actif.
     ///
-    /// **Examens garde `calendar`.** `calendar.fill` disparaît sur la barre : le glyphe
-    /// plein n'a plus de traits assez denses, à vingt points et en semibold, pour se
-    /// dessiner. L'onglet actif se lit déjà par la couleur.
+    /// **Réviser garde son glyphe creux.** Les deux flèches circulaires n'ont pas de
+    /// variante pleine qui se dessine à vingt points ; l'onglet actif se lit déjà par la
+    /// couleur.
     var selectedSystemImage: String {
         switch self {
-        case .courses: "books.vertical.fill"
         case .decks: "rectangle.on.rectangle.angled.fill"
         case .today: "arrow.triangle.2.circlepath"
-        case .exams: "calendar"
         case .profile: "person.fill"
         }
     }
@@ -79,26 +82,24 @@ final class TabRouter {
     /// drapeau qu'il faut remettre à faux se fait forcément oublier une fois.
     private(set) var homeRequests = 0
 
-    /// Compteur de demandes d'import depuis un autre onglet. Cours l'observe et ouvre sa
-    /// feuille : l'état vide des examens a besoin de cette porte, et la feuille d'import
-    /// vit déjà là.
+    /// Compteur de demandes d'import depuis un autre onglet. Decks l'observe et ouvre sa
+    /// feuille : la feuille d'import vit là, et dupliquer cette porte ferait deux chemins
+    /// pour le même geste.
     private(set) var courseImportRequests = 0
 
     /// **Ramène l'app à son écran d'accueil**, quelle que soit la profondeur d'où l'on part.
     ///
-    /// Une session lancée depuis la fiche d'un cours est deux écrans plus loin que
+    /// Une session lancée depuis la fiche d'un deck est deux écrans plus loin que
     /// « Réviser » : changer d'onglet sans vider les piles laisserait l'utilisateur devant
-    /// le cours qu'il vient de quitter dès qu'il retourne dans Cours.
+    /// le deck qu'il vient de quitter dès qu'il y retourne.
     func goHome() {
         homeRequests += 1
         selection = .today
     }
 
-    /// Ouvre Cours et demande l'import. L'état vide des examens n'a pas sa propre feuille :
-    /// dupliquer l'import ici ferait deux chemins pour le même geste.
+    /// Ouvre Decks et demande l'import.
     func requestCourseImport() {
         courseImportRequests += 1
-        selection = .courses
+        selection = .decks
     }
-
 }
