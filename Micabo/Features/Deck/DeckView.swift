@@ -73,8 +73,10 @@ struct DeckView: View {
         .navigationDestination(item: $cardsRoute) { route in
             FlashcardsView(course: route.course)
         }
-        .navigationDestination(for: Exam.self) { exam in
-            ExamDetailView(exam: exam)
+        // Un type à soi plutôt que `Exam` : l'accueil déclare déjà cette destination-là à la
+        // racine de sa pile, et cet écran s'y empile. Voir `DeckExamRoute`.
+        .navigationDestination(for: DeckExamRoute.self) { route in
+            ExamDetailView(exam: route.exam)
         }
         .fullScreenCover(isPresented: $studying, onDismiss: { studyRuns += 1 }) {
             StudyView(source: .course(course), mode: studyMode)
@@ -275,7 +277,7 @@ struct DeckView: View {
                 if let exam = facts.exam {
                     MicaboHairline(inset: 72)
 
-                    NavigationLink(value: exam) {
+                    NavigationLink(value: DeckExamRoute(exam: exam)) {
                         MicaboRow(
                             tile: MicaboTile.exam(exam.date),
                             title: i18n.t("ios.deck.exam"),
