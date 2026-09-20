@@ -50,42 +50,50 @@ struct DeckView: View {
     @State private var facts = DeckFacts.empty
     @State private var studyRuns = 0
     @State private var showMenu = false
+    /// L'épreuve du deck, ouverte en correction depuis le menu. C'est le seul endroit d'où
+    /// l'on règle encore une date et une note visée : la fiche d'épreuve qui le faisait
+    /// n'existe plus, et sa date se lit désormais ici, sur la carte d'état.
+    @State private var editingExam: Exam?
     /// Entre 0 (bandeau déplié) et 1 (réduit en barre). Piloté par le défilement.
     @State private var collapse: Double = 0
 
     private static let scrollSpace = "micabo.deck"
 
+    private var safeTop: CGFloat { MicaboScreen.safeTop }
+
     var body: some View {
-        MicaboSafeTopReader { safeTop in
-            ScrollView {
-                // **Le bandeau est ancré, et c'est le contenu qui passe dessous.**
-                //
-                // L'autre montage — un bandeau qui défile avec le contenu, doublé d'une barre
-                // posée par-dessus — demandait deux exemplaires du même objet en fondu l'un
-                // sur l'autre, et la maquette n'en décrit qu'un : sur `DeckScroll`, la barre
-                // repliée coupe la première rangée de chapitres au milieu. C'est exactement ce
-                // que fait un bandeau fixe au-dessus d'un contenu qui remonte.
-                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                    identity
-                    statusCard
-                    DeckChaptersView(course: course)
-                }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, MicaboDeckBanner.expandedHeight(safeTop: safeTop) + 22)
-                .padding(.bottom, MicaboLayout.bottomBarClearance)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .micaboScrollProbe(space: Self.scrollSpace)
+        ScrollView {
+            // **Le bandeau est ancré, et c'est le contenu qui passe dessous.**
+            //
+            // L'autre montage — un bandeau qui défile avec le contenu, doublé d'une barre
+            // posée par-dessus — demandait deux exemplaires du même objet en fondu l'un sur
+            // l'autre, et la maquette n'en décrit qu'un : sur `DeckScroll`, la barre repliée
+            // coupe la première rangée de chapitres au milieu. C'est exactement ce que fait
+            // un bandeau fixe au-dessus d'un contenu qui remonte.
+            VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                identity
+                statusCard
+                DeckChaptersView(course: course)
             }
-            .coordinateSpace(name: Self.scrollSpace)
-            .scrollIndicators(.hidden)
-            .ignoresSafeArea(edges: .top)
-            .onPreferenceChange(MicaboScrollOffsetKey.self) { top in
-                collapse = min(1, max(0, -top / MicaboDeckBanner.travel))
-            }
-            .overlay(alignment: .top) {
-                banner(safeTop: safeTop)
-            }
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, MicaboDeckBanner.expandedHeight(safeTop: safeTop) + 22)
+            .padding(.bottom, MicaboLayout.bottomBarClearance)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .micaboScrollProbe(space: Self.scrollSpace)
         }
+        .coordinateSpace(name: Self.scrollSpace)
+        .scrollIndicators(.hidden)
+        .onPreferenceChange(MicaboScrollOffsetKey.self) { top in
+            collapse = min(1, max(0, -top / MicaboDeckBanner.travel))
+        }
+        .overlay(alignment: .top) {
+            banner(safeTop: safeTop)
+        }
+        // **Après la superposition, pas avant.** Posé avant, il n'étend que le défilement :
+        // le bandeau reste aligné sur le haut de la zone sûre, une bande blanche subsiste
+        // au-dessus de lui, et le contenu qui défile passe dedans par-dessus l'heure. Posé
+        // ici, il étend l'ensemble — défilement **et** bandeau — jusqu'au bord de l'écran.
+        .ignoresSafeArea(edges: .top)
         .micaboScreenBackground()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -115,6 +123,11 @@ struct DeckView: View {
             ])
             await presentGiftIfEarned()
         }
+        .sheet(item: $editingExam) { exam in
+            ExamEditorSheet(exam: exam, suggestedDate: exam.date) { _ in reload() }
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(MicaboRadius.sheet)
+        }
         .micaboPaywall($paywall)
         .micaboDiscountOffer($giftOffer)
         .confirmationDialog(course.title, isPresented: $showMenu, titleVisibility: .visible) {
@@ -124,6 +137,9 @@ struct DeckView: View {
             }
             Button(MicaboCopy.cards(course.cards.count)) {
                 cardsRoute = CourseCardsRoute(course: course)
+            }
+            if let exam = facts.exam {
+                Button(i18n.t("ios.editExam")) { editingExam = exam }
             }
             Button(i18n.t("app.common.delete"), role: .destructive) {
                 showDeleteConfirmation = true
@@ -221,7 +237,24 @@ struct DeckView: View {
     /// m'attend » — et les séparer obligeait à les rapprocher de tête. Le compte à rebours
     /// n'est pas une décoration : c'est lui qui explique pourquoi le nombre de cartes neuves
     /// du jour est ce qu'il est.
+    /// **L'encadré ouvre les cartes.**
+    ///
+    /// Il annonce un pourcentage de cartes apprises et un nombre de cartes neuves : c'est du
+    /// stock, et il n'y avait aucun moyen d'aller le voir depuis la page qui le chiffre. Le
+    /// menu du bandeau y menait, ce qui est l'endroit où l'on va pour renommer ou supprimer —
+    /// pas pour regarder ce qu'on apprend.
     private var statusCard: some View {
+        Button {
+            cardsRoute = CourseCardsRoute(course: course)
+        } label: {
+            statusCardBody
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
+        .accessibilityHint(MicaboCopy.cards(course.cards.count))
+    }
+
+    private var statusCardBody: some View {
         MicaboOutlineCard {
             VStack(alignment: .leading, spacing: 13) {
                 HStack(alignment: .center, spacing: 10) {

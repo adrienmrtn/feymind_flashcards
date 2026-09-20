@@ -81,7 +81,11 @@ struct DeckMaterialsStepView: View {
                 showChoice = false
                 choose(source)
             }
-            .presentationDetents([.height(392)])
+            // Trois cent quatre-vingt-douze points coupaient la dernière rangée et
+            // serraient le titre contre la poignée : le titre, cinq rangées de soixante-quatre
+            // et les marges font quatre cent soixante-dix, plus ce que le téléphone prend en
+            // bas. Le détent est mesuré, pas estimé.
+            .presentationDetents([.height(504)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
@@ -524,7 +528,10 @@ struct DeckSourcePickerSheet: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, MicaboSpacing.lg)
+        // Vingt-huit en haut pour dégager la poignée, qui se pose à huit du bord et passait
+        // sinon dans le titre.
+        .padding(.top, 28)
+        .padding(.bottom, MicaboSpacing.lg)
         .frame(maxHeight: .infinity, alignment: .top)
         .background(MicaboColor.canvas.ignoresSafeArea())
     }

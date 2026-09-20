@@ -237,13 +237,15 @@ struct ExamEditorSheet: View {
 
     /// Passé la première étape, le sur-titre porte le nom de l'épreuve : on sait à quoi on
     /// répond, sans le relire dans le titre.
-    private var headerEyebrow: String {
-        if isEditing { return L10n.t("ios.examMode", locale: .resolved()) }
-        if creationStep != .details {
-            let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-            return trimmed.isEmpty ? L10n.t("ios.newExam", locale: .resolved()) : trimmed
-        }
-        return L10n.t("ios.examMode", locale: .resolved())
+    ///
+    /// **« Mode examen » n'y figure plus.** C'était le nom d'une fonctionnalité, affiché en
+    /// pastille au-dessus d'un formulaire qui ne demande ni d'activer ni de désactiver quoi
+    /// que ce soit : on y pose une date et une note visée. Un sur-titre doit dire de quoi
+    /// parle l'écran ; celui-là nommait une notion de la page de vente.
+    private var headerEyebrow: String? {
+        guard creationStep != .details else { return nil }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? L10n.t("ios.newExam", locale: .resolved()) : trimmed
     }
 
     private var headerBack: MicaboHeaderBack {

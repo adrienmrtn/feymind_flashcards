@@ -34,6 +34,29 @@ struct DeckBuildingStepView: View {
     @State private var failure: String?
     @State private var didStart = false
 
+    /// **Ce que la jauge affiche, qui n'est pas ce que l'étape vaut.**
+    ///
+    /// Les quatre étapes ne rendent la main que lorsqu'elles ont fini : la jauge restait donc
+    /// vingt secondes sur quarante-cinq pour cent, puis sautait à quatre-vingt-quinze. Quatre
+    /// bonds et trois longs arrêts, ce qui est exactement ce qu'on lit comme « ça a planté ».
+    ///
+    /// Elle rampe maintenant vers la fin de l'étape en cours pendant qu'elle dure, sans
+    /// jamais l'atteindre — le dernier dixième reste pour le vrai passage à l'étape suivante.
+    /// C'est une progression honnête : elle ne prétend pas savoir où en est le modèle, elle
+    /// dit que le travail continue, ce qui est vrai tant qu'aucune erreur n'est remontée.
+    @State private var shown: Double = 0
+
+    /// La part du chemin déjà faite quand l'étape en cours commence.
+    private var floorOfStage: Double {
+        switch stage {
+        case .reading: 0
+        case .writingSheet: DeckBuilder.Stage.reading.progress
+        case .splitting: DeckBuilder.Stage.writingSheet.progress
+        case .writingCards: DeckBuilder.Stage.splitting.progress
+        case .done: DeckBuilder.Stage.writingCards.progress
+        }
+    }
+
     var body: some View {
         VStack(spacing: MicaboSpacing.xl) {
             Spacer(minLength: 0)
@@ -54,6 +77,7 @@ struct DeckBuildingStepView: View {
             didStart = true
             await build()
         }
+        .task(id: stage) { await creep() }
     }
 
     // MARK: - Pendant
@@ -96,11 +120,10 @@ struct DeckBuildingStepView: View {
             }
 
             MicaboSlimProgress(
-                percent: Int((stage.progress * 100).rounded()),
+                percent: Int((shown * 100).rounded()),
                 showsLabel: false,
                 height: 6
             )
-            .animation(.easeInOut(duration: 0.5), value: stage)
         }
     }
 
@@ -179,6 +202,31 @@ struct DeckBuildingStepView: View {
     }
 
     // MARK: - Le travail
+
+    /// **La reptation de la jauge à l'intérieur d'une étape.**
+    ///
+    /// Elle rattrape d'abord le plancher de l'étape — c'est le seul saut, et il correspond à
+    /// un vrai franchissement — puis avance par pas de trois centièmes de seconde vers la
+    /// borne haute, en s'arrêtant à quatre-vingt-dix pour cent du chemin restant. Ce qui
+    /// manque est ce qu'on ne sait pas : le dixième final n'est comblé que par l'étape
+    /// suivante.
+    @MainActor
+    private func creep() async {
+        let ceiling = floorOfStage + (stage.progress - floorOfStage) * 0.9
+
+        if shown < floorOfStage {
+            withAnimation(.easeOut(duration: 0.4)) { shown = floorOfStage }
+            try? await Task.sleep(for: .milliseconds(400))
+        }
+
+        while !Task.isCancelled, shown < ceiling {
+            // Un vingtième du chemin qui reste : le début avance vite, la fin s'approche
+            // sans jamais toucher, ce qui est la forme d'une attente dont on ignore la durée.
+            let step = (ceiling - shown) / 20
+            withAnimation(.linear(duration: 0.3)) { shown += max(0.0015, step) }
+            try? await Task.sleep(for: .milliseconds(300))
+        }
+    }
 
     @MainActor
     private func build() async {

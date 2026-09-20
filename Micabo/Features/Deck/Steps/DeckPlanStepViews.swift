@@ -285,9 +285,24 @@ struct VerticalGradePicker: View {
     let ticks: [GradeTick]
     @Binding var score: Int
 
-    private var selectedIndex: Int {
-        ticks.firstIndex { $0.score == score } ?? ticks.firstIndex { $0.score >= score } ?? 0
-    }
+    /// Toutes les rangées font la même hauteur, y compris celle qu'on a choisie.
+    ///
+    /// C'est ce qui permet au calage du système de tomber juste : un rouleau dont la rangée
+    /// centrale serait plus haute que les autres n'a pas de pas constant, et le point d'arrêt
+    /// dérive d'un cran tous les trois tours. C'est donc le **texte** qui grossit au centre,
+    /// pas la rangée.
+    private static let rowHeight: CGFloat = 52
+
+    /// La note au centre du rouleau, telle que le défilement la rapporte.
+    ///
+    /// Elle est distincte de `score` parce qu'elle appartient au `ScrollView` : c'est lui qui
+    /// l'écrit pendant qu'on fait tourner la roue, et on la recopie dans la réponse. Les
+    /// tenir dans la même variable ferait écrire la réponse par le défilement et repositionner
+    /// le défilement par la réponse, en boucle.
+    @State private var centred: Int?
+
+    /// La note la plus haute en haut, comme sur la maquette.
+    private var ordered: [GradeTick] { ticks.reversed() }
 
     /// L'encre d'un cran selon sa distance à celui qu'on a choisi.
     private func ink(distance: Int) -> Color {
@@ -299,46 +314,67 @@ struct VerticalGradePicker: View {
         }
     }
 
+    private func distance(of tick: GradeTick) -> Int {
+        guard
+            let here = ordered.firstIndex(where: { $0.score == tick.score }),
+            let there = ordered.firstIndex(where: { $0.score == score })
+        else { return 3 }
+        return abs(here - there)
+    }
+
     var body: some View {
         GeometryReader { proxy in
-            let rowHeight = max(34, proxy.size.height / CGFloat(max(1, ticks.count)))
+            // Le rembourrage qui met la première et la dernière note au centre : sans lui, le
+            // barème ne peut pas se placer au milieu de l'écran et la roue s'arrête en butée.
+            let inset = max(0, (proxy.size.height - Self.rowHeight) / 2)
 
-            VStack(spacing: 2) {
-                ForEach(Array(ticks.enumerated().reversed()), id: \.element.id) { index, tick in
-                    row(tick, distance: abs(index - selectedIndex))
-                        .frame(height: rowHeight)
+            ScrollView(.vertical) {
+                LazyVStack(spacing: 0) {
+                    ForEach(ordered) { tick in
+                        row(tick)
+                            .frame(height: Self.rowHeight)
+                    }
                 }
+                .scrollTargetLayout()
+            }
+            .scrollIndicators(.hidden)
+            .safeAreaPadding(.vertical, inset)
+            .scrollTargetBehavior(.viewAligned)
+            .scrollPosition(id: $centred, anchor: .center)
+            .onAppear { centred = score }
+            .onChange(of: centred) { _, value in
+                guard let value, value != score else { return }
+                Haptics.selection()
+                score = value
+            }
+            .onChange(of: score) { _, value in
+                // La réponse a changé ailleurs — on repositionne la roue sans la faire
+                // réécrire la réponse : `centred` vaut déjà `value` quand c'est elle qui
+                // vient de l'écrire, et la garde du dessus s'arrête là.
+                if centred != value { centred = value }
             }
             .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
-                        // Le haut de la pile est la note la plus haute : on inverse.
-                        let fromTop = value.location.y / (rowHeight + 2)
-                        let index = ticks.count - 1 - Int(fromTop.rounded(.down))
-                        guard ticks.indices.contains(index), ticks[index].score != score else { return }
-                        score = ticks[index].score
-                        Haptics.selection()
-                    }
-            )
         }
     }
 
-    private func row(_ tick: GradeTick, distance: Int) -> some View {
-        let isSelected = distance == 0
+    private func row(_ tick: GradeTick) -> some View {
+        let gap = distance(of: tick)
+        let isSelected = gap == 0
+
         return Text(tick.label)
             .font(MicaboFont.ui(isSelected ? 38 : 27, weight: isSelected ? .heavy : .bold))
             .tracking(isSelected ? -1.4 : -0.8)
-            .foregroundStyle(ink(distance: distance))
+            .foregroundStyle(ink(distance: gap))
             .monospacedDigit()
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             .frame(maxWidth: .infinity)
+            .frame(height: Self.rowHeight)
             .background {
                 if isSelected {
                     RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
                         .fill(MicaboColor.accentWash)
+                        .padding(.vertical, 2)
                 }
             }
             .animation(OnboardingMotion.tap, value: isSelected)

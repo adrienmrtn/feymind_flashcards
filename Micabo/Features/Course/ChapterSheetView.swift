@@ -85,34 +85,37 @@ struct ChapterSheetView: View {
         CourseSheet(blocks: blocks).readingMinutes
     }
 
+    private var safeTop: CGFloat { MicaboScreen.safeTop }
+
     var body: some View {
-        MicaboSafeTopReader { safeTop in
-            GeometryReader { page in
-                ScrollView {
-                    // Le bandeau est ancré : c'est le texte qui remonte dessous, et la barre
-                    // repliée coupe la ligne en cours, comme sur `ChapitreScroll`.
-                    reading
-                        .padding(.horizontal, Self.margin)
-                        .padding(.top, MicaboChapterBanner.expandedHeight(safeTop: safeTop) + 20)
-                        .padding(.bottom, MicaboLayout.bottomBarClearance)
-                        .background(contentProbe)
-                        .micaboScrollProbe(space: Self.scrollSpace)
-                }
-                .coordinateSpace(name: Self.scrollSpace)
-                .scrollIndicators(.hidden)
-                .ignoresSafeArea(edges: .top)
-                .onPreferenceChange(MicaboScrollOffsetKey.self) { top in
-                    readScroll(top, viewport: page.size.height)
-                }
-                .onPreferenceChange(MicaboContentHeightKey.self) { height in
-                    contentHeight = max(1, height)
-                    viewportHeight = page.size.height
-                }
+        GeometryReader { page in
+            ScrollView {
+                // Le bandeau est ancré : c'est le texte qui remonte dessous, et la barre
+                // repliée coupe la ligne en cours, comme sur `ChapitreScroll`.
+                reading
+                    .padding(.horizontal, Self.margin)
+                    .padding(.top, MicaboChapterBanner.expandedHeight(safeTop: safeTop) + 20)
+                    .padding(.bottom, MicaboLayout.bottomBarClearance)
+                    .background(contentProbe)
+                    .micaboScrollProbe(space: Self.scrollSpace)
+            }
+            .coordinateSpace(name: Self.scrollSpace)
+            .scrollIndicators(.hidden)
+            .onPreferenceChange(MicaboScrollOffsetKey.self) { top in
+                readScroll(top, viewport: page.size.height)
+            }
+            .onPreferenceChange(MicaboContentHeightKey.self) { height in
+                contentHeight = max(1, height)
+                viewportHeight = page.size.height
             }
             .overlay(alignment: .top) {
                 banner(safeTop: safeTop)
             }
         }
+        // Sur le `GeometryReader` lui-même : il couvre alors l'écran entier, `page.size`
+        // mesure la vraie hauteur visible — dont dépend la barre de lecture — et la
+        // superposition du bandeau s'aligne sur le bord de l'écran, pas sur la zone sûre.
+        .ignoresSafeArea(edges: .top)
         .micaboScreenBackground()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
