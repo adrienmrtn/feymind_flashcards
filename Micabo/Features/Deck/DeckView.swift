@@ -45,31 +45,56 @@ struct DeckView: View {
     /// referait à chaque image de défilement.
     @State private var facts = DeckFacts.empty
     @State private var studyRuns = 0
+    @State private var showMenu = false
+    /// Entre 0 (bandeau déplié) et 1 (réduit en barre). Piloté par le défilement.
+    @State private var collapse: Double = 0
+
+    private static let scrollSpace = "micabo.deck"
 
     private var tint: Color { Color(hexString: course.accentHex) }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                header
-                statusCard
-                DeckChaptersView(course: course)
-                extras
+            VStack(alignment: .leading, spacing: 0) {
+                // Le bandeau défile **avec** le contenu, et la barre réduite se pose
+                // par-dessus. Un bandeau ancré qui rétrécirait en place laisserait le contenu
+                // remonter dessous sans jamais le toucher : le mouvement doit venir du
+                // contenu, sinon il ne se lit pas comme un défilement.
+                banner
+                    .micaboScrollProbe(space: Self.scrollSpace)
+
+                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                    identity
+                    statusCard
+                    DeckChaptersView(course: course)
+                    extras
+                }
+                .padding(.horizontal, MicaboSpacing.screen)
+                .padding(.top, 22)
+                .padding(.bottom, MicaboLayout.bottomBarClearance)
             }
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.xs)
-            .padding(.bottom, MicaboLayout.bottomBarClearance)
         }
+        .coordinateSpace(name: Self.scrollSpace)
         .scrollIndicators(.hidden)
+        .ignoresSafeArea(edges: .top)
+        .onPreferenceChange(MicaboScrollOffsetKey.self) { top in
+            let travel = MicaboDeckBanner.expandedHeight - MicaboDeckBanner.collapsedHeight
+            collapse = min(1, max(0, -top / travel))
+        }
+        .overlay(alignment: .top) {
+            // La barre réduite se pose par-dessus dès que le bandeau a commencé à sortir de
+            // l'écran : c'est elle qui garde le titre et les deux boutons à portée.
+            if collapse > 0.02 {
+                banner.transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: collapse > 0.02)
         .micaboScreenBackground()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .enablesSwipeBack()
         .overlay(alignment: .bottom) { bottomBar }
-        .navigationDestination(for: Chapter.self) { chapter in
-            ChapterSheetView(chapter: chapter)
-        }
         .navigationDestination(item: $cardsRoute) { route in
             FlashcardsView(course: route.course)
         }
@@ -97,6 +122,19 @@ struct DeckView: View {
         }
         .micaboPaywall($paywall)
         .micaboDiscountOffer($giftOffer)
+        .confirmationDialog(course.title, isPresented: $showMenu, titleVisibility: .visible) {
+            Button(i18n.t("ios.deck.rename")) {
+                draftTitle = course.title
+                showRename = true
+            }
+            Button(MicaboCopy.cards(course.cards.count)) {
+                cardsRoute = CourseCardsRoute(course: course)
+            }
+            Button(i18n.t("app.common.delete"), role: .destructive) {
+                showDeleteConfirmation = true
+            }
+            Button(i18n.t("app.common.cancel"), role: .cancel) {}
+        }
         .alert(i18n.t("ios.deck.rename"), isPresented: $showRename) {
             TextField(i18n.t("ios.deckSetup.name.placeholder"), text: $draftTitle)
             Button(i18n.t("app.common.save")) { applyRename() }
@@ -119,47 +157,64 @@ struct DeckView: View {
 
     // MARK: - En-tête
 
-    private var header: some View {
-        MicaboScreenHeader(
+    /// **Le bandeau pleine largeur, dans le pastel de la matière.**
+    ///
+    /// C'est le seul endroit de l'app où une couleur occupe toute la largeur, et c'est
+    /// délibéré : elle dit de quel deck il s'agit avant qu'on ait lu le titre, et elle fait
+    /// le lien avec la tuile de la grille sur laquelle on vient d'appuyer. Les deux boutons
+    /// sont posés dessus en pastilles translucides plutôt qu'au-dessus : une barre blanche
+    /// par-dessus la couleur couperait le bandeau en deux.
+    private var banner: some View {
+        MicaboDeckBanner(
+            emoji: course.emoji,
+            pastel: MicaboColor.pastel(for: course.id),
             title: course.title,
-            eyebrow: course.subject?.nilIfBlank ?? course.source.label,
-            tile: MicaboTile.course(course, size: 52),
-            back: MicaboHeaderBack.back { dismiss() }
-        ) {
-            deckMenu
-        }
-        .padding(.top, MicaboSpacing.xs)
+            collapse: collapse,
+            onBack: { dismiss() },
+            onMenu: { showMenu = true }
+        )
     }
 
-    private var deckMenu: some View {
-        Menu {
-            Button {
-                draftTitle = course.title
-                showRename = true
-            } label: {
-                Label(i18n.t("ios.deck.rename"), systemImage: "pencil")
-            }
+    /// Le titre et sa ligne de faits, sous le bandeau.
+    ///
+    /// Les séparateurs sont des points de trois points, pas des barres verticales : trois
+    /// faits séparés par des barres se lisent comme un tableau, et ce n'en est pas un.
+    private var identity: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(course.title)
+                .font(MicaboFont.ui(25, weight: .bold))
+                .tracking(-0.5)
+                .foregroundStyle(MicaboColor.ink)
+                .fixedSize(horizontal: false, vertical: true)
 
-            Button {
-                cardsRoute = CourseCardsRoute(course: course)
-            } label: {
-                Label(MicaboCopy.cards(course.cards.count), systemImage: "rectangle.on.rectangle.angled")
-            }
+            HStack(spacing: 9) {
+                if let subject = course.subject?.nilIfBlank {
+                    Text(subject.uppercased())
+                        .font(MicaboFont.ui(11, weight: .bold))
+                        .tracking(1.2)
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                    dot
+                }
 
-            Divider()
+                Text(i18n.t("ios.deck.chapterCount", ["count": "\(course.orderedChapters.count)"]))
+                    .font(MicaboFont.ui(13, weight: .medium))
+                    .foregroundStyle(MicaboColor.inkSecondary)
 
-            Button(role: .destructive) {
-                showDeleteConfirmation = true
-            } label: {
-                Label(i18n.t("app.common.delete"), systemImage: "trash")
+                dot
+
+                Text(MicaboCopy.cards(course.cards.count))
+                    .font(MicaboFont.ui(13, weight: .medium))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+
+                Spacer(minLength: 0)
             }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .frame(width: 34, height: 34)
-                .background(MicaboColor.surfaceMuted, in: Circle())
         }
+    }
+
+    private var dot: some View {
+        Circle()
+            .fill(MicaboColor.inkTertiary)
+            .frame(width: 3, height: 3)
     }
 
     // MARK: - Où j'en suis
@@ -171,49 +226,31 @@ struct DeckView: View {
     /// n'est pas une décoration : c'est lui qui explique pourquoi le nombre de cartes neuves
     /// du jour est ce qu'il est.
     private var statusCard: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .center, spacing: MicaboSpacing.md) {
-                VStack(alignment: .leading, spacing: 2) {
+        MicaboOutlineCard {
+            VStack(alignment: .leading, spacing: 13) {
+                HStack(alignment: .center, spacing: 10) {
                     Text("\(facts.percent) %")
-                        .font(MicaboFont.number(34, weight: .bold))
-                        .foregroundStyle(MicaboColor.ink)
+                        .font(MicaboFont.ui(26, weight: .heavy))
+                        .tracking(-0.8)
+                        .foregroundStyle(MicaboColor.accent)
                         .monospacedDigit()
                         .contentTransition(.numericText())
+                        .fixedSize()
 
                     Text(i18n.t("ios.deck.globalMastery"))
-                        .font(MicaboFont.ui(12.5, weight: .medium))
-                        .foregroundStyle(MicaboColor.inkTertiary)
+                        .font(MicaboFont.ui(13, weight: .regular))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    if let deadline = facts.deadline {
+                        MicaboCountdownPill(days: DeckPace.daysUntil(deadline))
+                    }
                 }
 
-                Spacer(minLength: MicaboSpacing.xs)
+                MicaboSlimProgress(percent: facts.percent, showsLabel: false, height: 7)
 
-                if let deadline = facts.deadline {
-                    deadlineBadge(deadline)
-                }
+                paceRow
             }
-            .padding(MicaboSpacing.md)
-
-            MicaboHairline()
-
-            paceRow
-                .padding(.horizontal, MicaboSpacing.md)
-                .padding(.vertical, 12)
-        }
-        .micaboGroup()
-    }
-
-    private func deadlineBadge(_ deadline: Date) -> some View {
-        let days = DeckPace.daysUntil(deadline)
-        return VStack(alignment: .trailing, spacing: 2) {
-            Text(days <= 0
-                ? i18n.t("app.exams.countdown.today")
-                : i18n.t("ios.examDaysLeft", ["n": "\(days)"]))
-                .font(MicaboFont.ui(15, weight: .bold))
-                .foregroundStyle(days < DeckPace.crunchDays ? MicaboColor.ratingAgain : MicaboColor.ink)
-
-            Text(deadline.formatted(date: .abbreviated, time: .omitted))
-                .font(MicaboFont.ui(12, weight: .regular))
-                .foregroundStyle(MicaboColor.inkTertiary)
         }
     }
 
@@ -223,26 +260,22 @@ struct DeckView: View {
     /// côté d'elle. Un étudiant qui trouve sa session trop lourde doit pouvoir remonter en
     /// une lecture jusqu'à la cause, qui est sa propre réponse à « c'est quand ? ».
     private var paceRow: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "bolt.fill")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(MicaboColor.accent)
+        HStack(spacing: 8) {
+            Image(systemName: facts.deadline == nil ? "bolt.fill" : "calendar")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(MicaboColor.inkSecondary)
 
-            Text(
-                facts.newRemaining > 0
-                    ? i18n.t("ios.deck.newToday", ["count": "\(facts.newRemaining)"])
-                    : i18n.t("ios.deck.newDone")
-            )
-            .font(MicaboFont.ui(13, weight: .medium))
+            Group {
+                if facts.newRemaining > 0 {
+                    Text(i18n.t("ios.deck.newToday", ["count": "\(facts.newRemaining)"]))
+                } else {
+                    Text(i18n.t("ios.deck.newDone"))
+                }
+            }
+            .font(MicaboFont.ui(13, weight: .regular))
             .foregroundStyle(MicaboColor.inkSecondary)
 
             Spacer(minLength: 0)
-
-            if facts.undiscovered > 0 {
-                Text(i18n.t("ios.deck.leftToDiscover", ["count": "\(facts.undiscovered)"]))
-                    .font(MicaboFont.ui(12, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
-            }
         }
     }
 
@@ -307,12 +340,12 @@ struct DeckView: View {
                         Text(MicaboCopy.cardsButton())
                     }
                 }
-                .buttonStyle(MicaboPrimaryButtonStyle())
+                .buttonStyle(MicaboActionButtonStyle())
             } else {
                 Button(action: startSession) {
                     Text(sessionButtonTitle)
                 }
-                .buttonStyle(MicaboPrimaryButtonStyle())
+                .buttonStyle(MicaboActionButtonStyle())
             }
         }
     }

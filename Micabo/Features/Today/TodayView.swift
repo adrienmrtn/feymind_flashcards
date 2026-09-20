@@ -333,8 +333,11 @@ struct TodayView: View {
             .micaboScreenBackground()
             // Le bouton de session se pose juste au-dessus de la barre d'onglets —
             // voir `tabBarClearance`.
+            // **Le bouton du bas ne double plus celui de la carte.** Il ne reste que pour les
+            // états où la carte du jour ne s'affiche pas — le repos, le rythme atteint — et où
+            // il faut quand même pouvoir ouvrir un entraînement.
             .tabBarClearance {
-                if hasSessionButton {
+                if hasSessionButton, load.dueCards.isEmpty {
                     MicaboBottomBar {
                         Button(action: startSession) {
                             HStack(spacing: MicaboSpacing.xs) {
@@ -399,87 +402,68 @@ struct TodayView: View {
     /// renseigne sur rien, elle ne mène nulle part, et elle repousse d'autant le seul
     /// chiffre qu'on est venu voir. Les quatre autres onglets portent leur nom ; celui-ci
     /// porte maintenant le sien, et l'heure qu'il est se lit dans la date juste au-dessus.
+    /// **« Aujourd'hui », et la date en dessous.**
+    ///
+    /// Le titre de l'onglet disait « Réviser », qui est un verbe et une promesse. La page ne
+    /// promet rien : elle montre un jour, celui-ci. C'est aussi ce qui permet à la flamme de
+    /// se poser à côté sans se battre avec un sur-titre en capitales.
     private func header(streak: Int) -> some View {
-        MicaboScreenHeader(
-            title: i18n.t("nav.review"),
-            eyebrow: MicaboCalendar.dayLabel(Date())
+        MicaboPageHeading(
+            title: i18n.t("ios.today.title"),
+            subtitle: MicaboCalendar.dayLabel(Date())
         ) {
             if streak > 0 {
-                streakPill(streak)
+                MicaboStreakPill(days: streak)
             }
         }
         .padding(.top, MicaboSpacing.xs)
     }
 
-    /// La série est la seule chose que l'utilisateur risque de perdre : elle mérite d'être
-    /// visible, pas d'être un sur-titre gris au-dessus du titre.
-    private func streakPill(_ streak: Int) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: "flame.fill")
-                .font(.system(size: 12, weight: .semibold))
-
-            Text(i18n.t("app.today.streakShort", ["count": "\(streak)"]))
-                .font(MicaboFont.number(14, weight: .semibold))
-                .monospacedDigit()
-        }
-        .foregroundStyle(MicaboColor.caution)
-        .padding(.vertical, 8)
-        .padding(.horizontal, 13)
-        .background(MicaboColor.cautionSoft, in: Capsule())
-        .accessibilityLabel(i18n.t("app.today.streakAria", ["count": "\(streak)"]))
-    }
 
     // MARK: - Le chiffre du jour
 
     /// **Une seule carte pour tout ce qui décrit la file du jour** : le chiffre, ce qu'il
     /// coûte en temps, et de quoi il est fait. Les quatre blocs qui se succédaient à même le
     /// fond donnaient trois gris à lire de haut en bas ; là, il y a un objet à regarder.
+    /// **La séance du jour, et c'est la seule chose de l'écran sur laquelle on appuie.**
+    ///
+    /// Elle passe du blanc encarté au lavis à motif, et le bouton entre dedans. C'est le
+    /// changement de fond : la carte n'est plus un résumé qu'on lit avant d'aller chercher un
+    /// bouton ailleurs, elle **est** l'action. Le chiffre descend de cinquante-huit à
+    /// quarante-six points — il n'a plus besoin de crier, la carte le porte.
     private func dueCard(_ load: DayLoad) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .center, spacing: 14) {
-                Text("\(load.dueCards.count)")
-                    .font(MicaboFont.number(58))
-                    .tracking(-1.5)
-                    .foregroundStyle(MicaboColor.ink)
-                    .monospacedDigit()
-                    .minimumScaleFactor(0.6)
-                    .lineLimit(1)
-                    .contentTransition(.numericText(value: Double(load.dueCards.count)))
-                    .animation(.easeOut(duration: 0.3), value: load.dueCards.count)
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(load.dueCards.count > 1
-                         ? i18n.t("app.today.dueMany")
-                         : i18n.t("app.today.dueOne"))
-                        .font(MicaboFont.ui(16, weight: .semibold))
-                        .foregroundStyle(MicaboColor.ink)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(i18n.t("app.today.minutesCourses", [
-                        "minutes": "\(load.estimatedMinutes)",
-                        "courses": MicaboCopy.courses(max(load.coursesWithDue, 1))
-                    ]))
-                        .font(MicaboFont.ui(13, weight: .medium))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                }
-
-                Spacer(minLength: 0)
+        let counts = visibleCounts(load)
+        return MicaboTodayCard(
+            total: load.dueCards.count,
+            learning: counts.learning,
+            newCards: counts.newCards,
+            unitLabel: load.dueCards.count > 1
+                ? i18n.t("app.today.dueMany")
+                : i18n.t("app.today.dueOne"),
+            durationLabel: i18n.t("ios.today.approxMinutes", ["minutes": "\(load.estimatedMinutes)"]),
+            learningLabel: i18n.t("ios.today.learningCount", ["count": "\(counts.learning)"]),
+            newLabel: i18n.t("ios.today.newCount", ["count": "\(counts.newCards)"])
+        ) {
+            Button(action: startSession) {
+                Text(i18n.t("app.today.start"))
             }
-
-            VStack(alignment: .leading, spacing: 11) {
-                progressSegments(load)
-                legend(load)
-            }
-
-            if load.heldBackNewCards > 0 {
-                heldBackNote(load.heldBackNewCards)
-            }
+            .buttonStyle(MicaboActionButtonStyle(height: 52))
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .micaboGroup()
         .accessibilityElement(children: .combine)
         .accessibilityLabel(dueCardAccessibility(load))
+    }
+
+    /// Les deux parts de la jauge. Les cartes en apprentissage et en révision comptent
+    /// ensemble : ce sont toutes des cartes déjà vues, et les séparer en trois couleurs
+    /// faisait lire un camembert là où il n'y a qu'une question — combien de neuf, combien
+    /// de déjà-vu.
+    private func visibleCounts(_ load: DayLoad) -> (learning: Int, newCards: Int) {
+        var fresh = 0
+        var seen = 0
+        for card in load.dueCards {
+            if card.state == .new { fresh += 1 } else { seen += 1 }
+        }
+        return (seen, fresh)
     }
 
     private func dueCardAccessibility(_ load: DayLoad) -> String {

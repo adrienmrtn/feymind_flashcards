@@ -14,6 +14,9 @@ struct CoursesListView: View {
 
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
     @Query private var folders: [CourseFolder]
+    /// Les épreuves, pour le compte à rebours posé sur les tuiles. Elles sont peu nombreuses
+    /// et la requête est bien moins chère que de relire les cartes de chaque deck.
+    @Query private var exams: [Exam]
 
     @State private var searchText = ""
     @State private var sortOrder: SortOrder = .recent
@@ -232,8 +235,14 @@ struct CoursesListView: View {
         .tabBarClearance { importButton }
     }
 
+    /// **Le titre de la page, et rien au-dessus.**
+    ///
+    /// `MicaboScreenHeader` portait un sur-titre en capitales grises et réservait la place
+    /// d'un bouton de retour qui n'existe pas ici : on arrive sur cette page par la barre du
+    /// bas, il n'y a nulle part d'où revenir. La maquette pose un titre de vingt-et-un points
+    /// et son compte en dessous, et laisse la place au reste.
     private var header: some View {
-        MicaboScreenHeader(title: i18n.t("nav.courses"), eyebrow: countLabel)
+        MicaboPageHeading(title: i18n.t("nav.decks"), subtitle: countLabel)
             .padding(.top, MicaboSpacing.xs)
     }
 
@@ -291,7 +300,7 @@ struct CoursesListView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: MicaboSpacing.xs) {
                 ForEach(SortOrder.allCases) { order in
-                    MicaboSelectChip(title: order.label(i18n), isSelected: order == sortOrder && subjectFilter == nil) {
+                    MicaboFilterChip(title: order.label(i18n), isSelected: order == sortOrder && subjectFilter == nil) {
                         withAnimation(.easeOut(duration: 0.2)) {
                             sortOrder = order
                             subjectFilter = nil
@@ -300,7 +309,7 @@ struct CoursesListView: View {
                 }
 
                 ForEach(subjects, id: \.self) { subject in
-                    MicaboSelectChip(title: subject, isSelected: subjectFilter == subject) {
+                    MicaboFilterChip(title: subject, isSelected: subjectFilter == subject) {
                         withAnimation(.easeOut(duration: 0.2)) {
                             subjectFilter = subjectFilter == subject ? nil : subject
                         }
@@ -383,18 +392,77 @@ struct CoursesListView: View {
         searchText.isEmpty ? foldersHere : []
     }
 
+    /// **La grille remplace la liste, et c'est le cœur du changement de forme.**
+    ///
+    /// Une liste range ; une grille montre. Un étudiant qui ouvre l'app voit quatre carrés
+    /// colorés et reconnaît ses matières à l'emoji avant d'avoir lu un mot — ce qu'une
+    /// colonne de six rangées grises séparées par des filets ne permet jamais. C'est aussi
+    /// ce qui donne à la page un objet propre : les decks sont la seule chose de l'app qui
+    /// s'affiche comme ça, et ils sont la seule chose qui appartient à l'étudiant.
+    ///
+    /// **Les dossiers restent des rangées**, au-dessus de la grille. Ce sont des
+    /// contenants, pas du contenu : leur donner la même tuile que les decks ferait
+    /// disparaître la différence entre « ouvrir une matière » et « ouvrir un tiroir ».
     private var libraryList: some View {
         let items = filtered
-        return LazyVStack(spacing: 0) {
-            ForEach(listedFolders) { branch in
-                folderRow(branch)
+        return VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+            if !listedFolders.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(listedFolders) { branch in
+                        folderRow(branch)
+                    }
+                }
             }
 
-            ForEach(Array(items.enumerated()), id: \.element.id) { index, course in
-                courseRow(course, isLast: index == items.count - 1)
+            LazyVGrid(columns: MicaboDeckGrid.columns, spacing: MicaboDeckGrid.rowSpacing) {
+                ForEach(items, id: \.id) { course in
+                    deckTile(course)
+                }
+
+                // La tuile de création ferme la grille plutôt que de flotter dans un coin :
+                // elle se lit comme l'emplacement suivant, ce qu'elle est.
+                MicaboAddDeckTile(
+                    title: i18n.t("ios.deck.add"),
+                    meta: i18n.t("ios.deckSetup.materials.formats"),
+                    action: requestImport
+                )
             }
         }
-        .padding(.horizontal, MicaboSpacing.xxs)
+        .padding(.horizontal, MicaboSpacing.screen)
+    }
+
+    /// Une tuile de deck, alimentée par le recensement quand il est arrivé.
+    ///
+    /// Le nombre de chapitres se lit sur la relation, pas sur le recensement : il ne coûte
+    /// rien une fois le deck matérialisé, et l'ajouter au recensement aurait fait payer une
+    /// requête de plus à chaque ouverture pour un nombre qui ne bouge presque jamais.
+    private func deckTile(_ course: Course) -> some View {
+        let stats = census[course.id]
+        return MicaboDeckTile(
+            emoji: course.emoji,
+            pastel: MicaboColor.pastel(for: course.id),
+            title: course.title,
+            meta: deckMeta(course, stats: stats),
+            percent: stats.map(\.masteryPercent),
+            countdownDays: countdownDays(for: course)
+        ) {
+            path.append(course)
+        }
+        .draggable(CourseDrag.payload(for: course))
+        .contextMenu { courseMenu(course) }
+    }
+
+    private func deckMeta(_ course: Course, stats: CourseStats?) -> String {
+        let chapters = course.orderedChapters.count
+        let cards = stats?.cardCount ?? course.cards.count
+        guard chapters > 0 else { return MicaboCopy.cards(cards) }
+        return "\(i18n.t("ios.deck.chapterCount", ["count": "\(chapters)"])) · \(MicaboCopy.cards(cards))"
+    }
+
+    /// Les jours qui restent avant l'épreuve la plus proche de ce deck, s'il y en a une.
+    private func countdownDays(for course: Course) -> Int? {
+        guard let deadline = DeckPace.deadline(for: course.id, exams: exams) else { return nil }
+        return DeckPace.daysUntil(deadline)
     }
 
     @ViewBuilder

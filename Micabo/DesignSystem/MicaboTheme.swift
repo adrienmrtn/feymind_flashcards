@@ -145,6 +145,32 @@ enum MicaboColor {
 
     /// Pastels des tuiles d'icône, quand aucune teinte de cours n'est disponible.
     static var tilePastels: [Color] { palette.tilePastels }
+    static var accentWash: Color { palette.accentWash }
+    static var accentPale: Color { palette.accentPale }
+    static var track: Color { palette.track }
+    static var flame: Color { palette.flame }
+    static var flameInk: Color { palette.flameInk }
+    static var flameSoft: Color { palette.flameSoft }
+    static var dayWashStart: Color { palette.dayWashStart }
+    static var dayWashMid: Color { palette.dayWashMid }
+    static var dayWashEnd: Color { palette.dayWashEnd }
+    static var dayWashStroke: Color { palette.dayWashStroke }
+
+    /// **Le pastel d'un deck**, tiré de son identité et non de sa teinte d'accent.
+    ///
+    /// Les six pastels sont ceux de la maquette, et le choix est déterministe : le même deck
+    /// garde sa couleur d'un lancement à l'autre, et deux decks voisins dans la grille en
+    /// ont presque toujours deux différentes. Tirer la teinte de `accentHex` aurait donné
+    /// des carrés délavés, parce que cette teinte a été choisie pour un filet de fiche.
+    static func pastel(for id: UUID) -> Color {
+        let slot = abs(id.uuidString.hashValue) % tilePastels.count
+        return tilePastels[slot]
+    }
+
+    static func pastel(forName name: String) -> Color {
+        let slot = abs(name.hashValue) % tilePastels.count
+        return tilePastels[slot]
+    }
 }
 
 enum MicaboSpacing {

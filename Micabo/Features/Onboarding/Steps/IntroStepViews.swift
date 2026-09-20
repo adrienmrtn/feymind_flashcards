@@ -36,7 +36,6 @@ struct UploadStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.intro.upload"),
-            subtitle: i18n.t("ios.intro.upload.body"),
             expandsContent: true
         ) {
             VStack(spacing: 10) {
@@ -83,7 +82,6 @@ struct DatesStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.intro.dates"),
-            subtitle: i18n.t("ios.intro.dates.body"),
             expandsContent: true
         ) {
             VStack(spacing: MicaboSpacing.md) {
@@ -105,7 +103,6 @@ struct TurnsIntoStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.intro.turnsInto"),
-            subtitle: i18n.t("ios.intro.turnsInto.body"),
             expandsContent: true
         ) {
             VStack(spacing: MicaboSpacing.md) {
@@ -139,7 +136,6 @@ struct SmartFeaturesStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.intro.features"),
-            subtitle: i18n.t("ios.intro.features.body"),
             expandsContent: true
         ) {
             VStack(spacing: 10) {

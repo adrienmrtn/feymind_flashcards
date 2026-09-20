@@ -145,7 +145,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     var eyebrow: String?
     var title: String
     var subtitle: String?
-    var titleSize: CGFloat = 30
+    var titleSize: CGFloat = 26
     var contentSpacing: CGFloat = MicaboSpacing.xl
     var scrolls: Bool = true
     /// Le titre s'écrit mot à mot au lieu d'apparaître d'un bloc.
@@ -177,7 +177,7 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         eyebrow: String? = nil,
         title: String,
         subtitle: String? = nil,
-        titleSize: CGFloat = 30,
+        titleSize: CGFloat = 26,
         contentSpacing: CGFloat = MicaboSpacing.xl,
         scrolls: Bool = true,
         animatesTitle: Bool = false,
@@ -343,7 +343,7 @@ extension OnboardingScaffold where Footer == EmptyView {
         eyebrow: String? = nil,
         title: String,
         subtitle: String? = nil,
-        titleSize: CGFloat = 30,
+        titleSize: CGFloat = 26,
         contentSpacing: CGFloat = MicaboSpacing.lg,
         scrolls: Bool = true,
         animatesTitle: Bool = false,
@@ -669,18 +669,22 @@ struct OnboardingChoiceRow: View {
     var fillsHeight: Bool = false
     var action: () -> Void
 
+    /// Soixante points de haut au minimum, dix-sept de rembourrage : une réponse doit se
+    /// viser au pouce sans regarder, et une rangée de quarante-quatre se rate.
+    private static let minHeight: CGFloat = 60
+
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: 13) {
                 if let emoji {
                     Text(emoji)
-                        .font(.system(size: 22))
+                        .font(.system(size: 21))
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(MicaboFont.ui(16, weight: .medium))
-                        .foregroundStyle(MicaboColor.ink)
+                        .font(MicaboFont.ui(16, weight: isSelected ? .semibold : .medium))
+                        .foregroundStyle(isSelected ? MicaboColor.accent : MicaboColor.ink)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
 
@@ -694,17 +698,42 @@ struct OnboardingChoiceRow: View {
 
                 Spacer(minLength: MicaboSpacing.xs)
 
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 19, weight: .regular))
-                    .foregroundStyle(isSelected ? MicaboColor.ink : MicaboColor.strokeStrong)
+                // **La coche n'apparaît que sur la réponse choisie.**
+                //
+                // Il y avait ici un cercle vide sur chaque ligne non choisie, et c'était un
+                // formulaire : six ronds gris alignés font lire une case à cocher avant de
+                // lire une réponse. Le violet du texte et le filet épaissi disent déjà ce qui
+                // est choisi ; la coche le confirme, elle n'a pas à le demander.
+                if isSelected {
+                    ZStack {
+                        Circle().fill(MicaboColor.accent)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 11, weight: .heavy))
+                            .foregroundStyle(MicaboColor.onInk)
+                    }
+                    .frame(width: 22, height: 22)
+                    .transition(.scale.combined(with: .opacity))
+                }
             }
-            .padding(.vertical, 15)
-            .padding(.horizontal, 16)
-            .frame(maxWidth: .infinity, maxHeight: fillsHeight ? CGFloat.infinity : nil, alignment: .leading)
-            .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+            // Le rembourrage recule d'un point quand le filet en prend deux : sans ça, la
+            // rangée choisie grandirait d'un point et la liste tressauterait à chaque choix.
+            .padding(isSelected ? 16 : 17)
+            .frame(
+                maxWidth: .infinity,
+                minHeight: Self.minHeight,
+                maxHeight: fillsHeight ? CGFloat.infinity : nil,
+                alignment: .leading
+            )
+            .background(
+                isSelected ? MicaboColor.accentWash : MicaboColor.canvas,
+                in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+            )
             .overlay {
-                RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-                    .strokeBorder(isSelected ? MicaboColor.ink : Color.clear, lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+                    .strokeBorder(
+                        isSelected ? MicaboColor.accent : MicaboColor.stroke,
+                        lineWidth: isSelected ? 2 : 1
+                    )
             }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
