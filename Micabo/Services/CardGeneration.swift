@@ -37,6 +37,13 @@ enum CardGeneration {
             throw CardGenerationError.noUsableCards(courseTitle: course.title)
         }
 
+        // **Le plan avant les cartes.** Les cartes sont souvent demandées juste après
+        // l'import, avant que la fiche n'ait été ouverte une seule fois — et c'est son
+        // ouverture qui matérialise les chapitres. Sans ce rattrapage, le premier paquet
+        // d'un deck sortirait systématiquement non classé, ce qui est précisément le cas
+        // qu'on cherche à faire disparaître.
+        ChapterBuilder.migrate(course, in: modelContext)
+
         let quota = options.quota.clamped()
         let request = FlashcardGenerationRequest(
             courseTitle: course.title,
@@ -46,7 +53,11 @@ enum CardGeneration {
             // Une carte de droit ne demande pas la même chose qu'une carte de langue : la
             // matière du cours décide de ce qu'il faut interroger.
             subject: course.subject,
-            language: OnboardingPreferences.contentLanguage
+            language: OnboardingPreferences.contentLanguage,
+            // Le plan part avec la demande : c'est ce qui permet au modèle de rattacher
+            // chaque carte à sa partie du cours, et donc à la file de révision d'introduire
+            // les cartes neuves dans l'ordre où le cours se lit.
+            chapterTitles: course.orderedChapters.map(\.title)
         )
 
         var generated: [GeneratedFlashcard]

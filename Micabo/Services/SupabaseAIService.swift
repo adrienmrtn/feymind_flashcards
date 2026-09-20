@@ -55,7 +55,8 @@ struct SupabaseAIService: AIService {
             "existing": request.existingFronts,
             "kinds": request.quota.wireKinds,
             "subject": request.subject ?? "",
-            "language": request.language.rawValue
+            "language": request.language.rawValue,
+            "chapters": request.chapterTitles
         ]
 
         let envelope = try await post("generate-flashcards", payload: payload)

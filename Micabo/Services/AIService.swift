@@ -42,6 +42,13 @@ struct FlashcardGenerationRequest {
     /// Les cartes se posent dans la langue de la fiche : un paquet moitié français moitié
     /// anglais ne se révise pas.
     var language: ContentLanguage = .fr
+    /// **Le plan du deck, dans l'ordre.** Les titres seuls suffisent : le modèle a déjà le
+    /// texte entier dans `courseContext`, et lui renvoyer les blocs chapitre par chapitre
+    /// doublerait la charge utile pour lui apprendre ce qu'il vient de lire.
+    ///
+    /// Vide sur un paquet sans plan — un import Anki, un cours d'avant la refonte — et les
+    /// cartes sortent alors sans chapitre, ce qui est leur état correct.
+    var chapterTitles: [String] = []
 }
 
 /// Un passage de la fiche que l'utilisateur a sélectionné et veut comprendre.
@@ -403,6 +410,10 @@ struct GeneratedFlashcard: Codable, Hashable {
     var choices: [String]? = nil
     /// Index de la bonne proposition dans `choices`.
     var answerIndex: Int? = nil
+    /// **Le rang du chapitre d'où vient la carte**, à partir de zéro, tel que le modèle
+    /// l'annonce. Nul quand aucun plan n'a été envoyé, ou quand le modèle n'a pas su
+    /// trancher — auquel cas la carte reste non classée, ce qui se voit à l'écran.
+    var chapter: Int? = nil
 
     /// Format retenu côté app. Une occlusion ne se génère pas depuis du texte : elle se
     /// dessine sur une image, donc on la refuse ici.
