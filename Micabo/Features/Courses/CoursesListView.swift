@@ -711,16 +711,16 @@ struct CoursesListView: View {
     }
 
     private var censusTaskID: String {
-        "\(router?.selection == .courses)-\(censusKey)"
+        "\(router?.selection == .decks)-\(censusKey)"
     }
 
     private func refreshCensusIfVisible() async {
-        guard router?.selection == .courses || path.count > 0 else { return }
+        guard router?.selection == .decks || path.count > 0 else { return }
         census = LibraryCensus.load(in: modelContext, key: censusKey)
     }
 
     private func handlePathDepth(_: Int, _ depth: Int) {
-        if depth == 0, router?.selection == .courses {
+        if depth == 0, router?.selection == .decks {
             census = LibraryCensus.load(in: modelContext, key: censusKey)
         }
     }
