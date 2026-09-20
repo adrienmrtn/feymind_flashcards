@@ -342,13 +342,23 @@ enum OnboardingPreferences {
         static let retiredNotificationsOptIn = "micabo.onboarding.notificationsOptIn"
         static let completedAt = "micabo.onboarding.completedAt"
         static let sheetLanguage = "micabo.onboarding.sheetLanguage"
+        /// **La filière et l'année**, dans les termes du pays : « lycée général », puis
+        /// « terminale ». Le palier (`stage`) reste écrit à côté et ne les remplace pas : il
+        /// est ce que le cloud synchronise et ce que la fonction Edge comprend, tandis que
+        /// ces deux-ci ne sont connus que des quatre pays décrits en détail. Un élève turc
+        /// qui passe en France garde son palier et perd sa filière, ce qui est la bonne
+        /// réponse : « Fen Lisesi » n'existe pas là où il arrive.
+        static let schoolTrack = "micabo.onboarding.schoolTrack"
+        static let schoolYear = "micabo.onboarding.schoolYear"
+        /// Le prénom, tel qu'il a été donné. Il ne sert qu'à s'adresser à quelqu'un.
+        static let displayName = "micabo.onboarding.displayName"
 
         static let all = [
             completed, level, stage, tier, country, customCountryCode,
             goal, goals, forgetting, forgetsOften, subjects,
             institutionId, institutionName,
             dailyMinutes, weeklyMinutes, ratingAsked, retiredNotificationsOptIn, completedAt,
-            sheetLanguage
+            sheetLanguage, schoolTrack, schoolYear, displayName
         ]
     }
 
@@ -421,6 +431,38 @@ enum OnboardingPreferences {
             educationStageId = newValue?.id
             educationTier = newValue?.tier
             studyLevel = newValue?.level
+        }
+    }
+
+    /// **La filière suivie**, quand le pays est décrit assez finement pour qu'on la demande.
+    ///
+    /// Elle n'est lue que par les écrans qui proposent des matières et des années. Rien
+    /// d'autre n'en dépend, et c'est volontaire : un pays ajouté au catalogue détaillé ne
+    /// doit rien changer pour ceux qui y sont déjà.
+    static var schoolTrackID: String? {
+        get { defaults.string(forKey: Key.schoolTrack) }
+        set { write(newValue, forKey: Key.schoolTrack) }
+    }
+
+    /// L'année dans la filière. Elle ne veut rien dire sans sa filière : changer de filière
+    /// l'efface, plutôt que de laisser « Terminale » accrochée à « Collège ».
+    static var schoolYearID: String? {
+        get { defaults.string(forKey: Key.schoolYear) }
+        set { write(newValue, forKey: Key.schoolYear) }
+    }
+
+    /// Le prénom donné à l'inscription. Il ne sert qu'à une chose, s'adresser à quelqu'un,
+    /// et c'est une raison suffisante.
+    static var displayName: String? {
+        get { defaults.string(forKey: Key.displayName) }
+        set { write(newValue, forKey: Key.displayName) }
+    }
+
+    private static func write(_ value: String?, forKey key: String) {
+        if let value, !value.isEmpty {
+            defaults.set(value, forKey: key)
+        } else {
+            defaults.removeObject(forKey: key)
         }
     }
 

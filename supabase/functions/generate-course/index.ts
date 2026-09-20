@@ -52,6 +52,7 @@ import {
   readsLikeACourse,
   retryBrief,
   retryTokenLimit,
+  scratchBrief,
   VISION_SYSTEM_PROMPT,
 } from "./prompt.ts";
 
@@ -186,6 +187,17 @@ interface RequestBody {
   source?: string;
   /** Prompt libre de l'étudiant, pris en compte à l'écriture de la fiche. */
   instructions?: string;
+  /**
+   * **Le sujet à traiter quand l'étudiant n'a aucun document.**
+   *
+   * Présent — chaîne vide comprise — il fait basculer la fonction : au lieu de mettre au
+   * propre un texte, le modèle écrit le cours depuis ce qu'il sait. La chaîne vide est une
+   * réponse qui veut dire « tout le programme de la matière », et c'est pourquoi le test
+   * porte sur le type et non sur la longueur : `topic: ""` n'est pas `topic` absent.
+   *
+   * Absent, rien ne change pour l'import ordinaire.
+   */
+  topic?: string;
 }
 
 const MAX_TEXT_LENGTH = 60_000;
@@ -222,7 +234,12 @@ Deno.serve((request: Request) =>
       const text = (body.text ?? "").trim().slice(0, MAX_TEXT_LENGTH);
       const images = acceptedImages(body.images);
 
-      if (text.length < 40 && images.length === 0) {
+      // Une génération sans document est un mode, pas un document vide : elle ne passe donc
+      // pas par le garde-fou écrit pour l'import, qui refuserait exactement ce qu'elle
+      // envoie. Le test porte sur le type — `topic: ""` demande tout le programme.
+      const fromScratch = typeof body.topic === "string";
+
+      if (!fromScratch && text.length < 40 && images.length === 0) {
         throw new FalError("Le document ne contient pas assez de contenu à analyser.", 400);
       }
 
@@ -271,8 +288,14 @@ Deno.serve((request: Request) =>
 
       sections.push(lengthBrief(body.length, text.length > LONG_DOCUMENT_LENGTH, body.blocks));
 
-      const reading = readingBrief(body.source, text.length);
-      if (reading) sections.push(reading);
+      // Le mode « sans document » se déclare avant la consigne de lecture, qui n'a alors
+      // rien à décrire : il n'y a pas de texte dont il faudrait se méfier.
+      if (fromScratch) {
+        sections.push(scratchBrief(body.topic, body.subject));
+      } else {
+        const reading = readingBrief(body.source, text.length);
+        if (reading) sections.push(reading);
+      }
 
       const extra = instructionsBrief(sanitizeInstructions(body.instructions, MAX_INSTRUCTIONS));
       if (extra) sections.push(extra);

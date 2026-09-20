@@ -173,6 +173,7 @@ struct CourseSheetView: View {
             duePreview = CourseDuePreview.scheduled(
                 from: ordered,
                 courseID: course.id,
+                course: course,
                 in: modelContext
             )
             await presentGiftIfEarned()

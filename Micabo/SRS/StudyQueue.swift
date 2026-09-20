@@ -213,9 +213,13 @@ struct CourseDuePreview: Equatable {
     }
 
     /// La file réelle, une fois la page déjà à l'écran.
+    /// Le deck lui-même est passé en plus de son identifiant : c'est lui qui porte le
+    /// plafond du jour. Il reste facultatif pour les appelants qui n'ont qu'un identifiant
+    /// sous la main, et ceux-là retombent alors sur le rythme du compte.
     static func scheduled(
         from cards: [Flashcard],
         courseID: UUID,
+        course: Course? = nil,
         in context: ModelContext,
         now: Date = Date()
     ) -> CourseDuePreview {
@@ -231,10 +235,18 @@ struct CourseDuePreview: Equatable {
         // SwiftData portable. On les lit, mais on ne relit plus **tous les cours et toutes
         // leurs cartes** pour construire la date butoir de celui qui est déjà sous nos yeux.
         let exams = (try? context.fetch(FetchDescriptor<Exam>())) ?? []
+
+        // **Le plafond du jour est celui du deck**, et non celui du compte, dès qu'une
+        // échéance porte dessus. C'est la seule chose qu'une date change : voir `DeckPace`.
+        // Sans échéance, `remainingToday` rend le rythme ordinaire, et rien ne bouge.
+        let newRemaining = course.map {
+            DeckPace.remainingToday(for: $0, exams: exams, logs: logs, now: now)
+        } ?? DailyNewQuota.remaining(logs: logs, now: now)
+
         let due = StudyQueueBuilder.build(
             from: cards,
             now: now,
-            limits: .daily(newRemaining: DailyNewQuota.remaining(logs: logs, now: now)),
+            limits: .daily(newRemaining: newRemaining),
             deadlines: ExamDeadlines.active(
                 exams: exams,
                 cards: cards,

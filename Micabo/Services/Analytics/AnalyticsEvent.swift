@@ -67,6 +67,10 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// n'est qu'une tentative.
     case courseImported = "course_imported"
     case courseGenerationFailed = "course_generation_failed"
+    /// Un écran du parcours de création d'un deck. C'est l'entonnoir de l'import : le
+    /// parcours pose sept questions avant la première dépense, et c'est là que se perdent
+    /// les decks qui ne seront jamais créés.
+    case deckSetupStep = "deck_setup_step"
 
     // MARK: Fiche et cartes
 

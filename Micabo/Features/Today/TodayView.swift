@@ -37,9 +37,10 @@ struct TodayView: View {
 
     @State private var showStudy = false
     @State private var path = NavigationPath()
-    @State private var showImportChoice = false
-    @State private var pendingImport: ImportKind?
-    @State private var activeImport: ImportKind?
+    /// Créer un deck depuis l'accueil : le même parcours que depuis la page Decks, pas une
+    /// variante. Deux chemins de création qui ne posent pas les mêmes questions produiraient
+    /// deux sortes de decks, dont une sans plan.
+    @State private var creatingDeck = false
     @State private var paywall: PaywallTrigger?
     /// **La création d'une épreuve se fait d'ici.** L'onglet Examens a disparu de la barre,
     /// et c'est cet écran qui montre déjà les prochaines dates : la porte qui menait au
@@ -369,21 +370,12 @@ struct TodayView: View {
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
-        .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
-            ImportChoiceSheet(
-                onSelect: { kind in
-                    pendingImport = kind
-                    showImportChoice = false
-                }
-            )
-            .presentationDetents([.height(520)])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(MicaboRadius.sheet)
-        }
-        .fullScreenCover(item: $activeImport) { kind in
-            ImportView(kind: kind) { course in
-                activeImport = nil
+        .fullScreenCover(isPresented: $creatingDeck) {
+            DeckSetupFlowView { course in
+                creatingDeck = false
                 path = NavigationPath([course])
+            } onCancel: {
+                creatingDeck = false
             }
         }
         .fullScreenCover(isPresented: $showStudy, onDismiss: { studyRuns += 1 }) {
@@ -903,14 +895,6 @@ struct TodayView: View {
             paywall = .secondCourse
             return
         }
-        showImportChoice = true
-    }
-
-    private func launchPendingImport() {
-        guard let kind = pendingImport else { return }
-        pendingImport = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            activeImport = kind
-        }
+        creatingDeck = true
     }
 }

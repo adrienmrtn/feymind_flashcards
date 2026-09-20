@@ -9,14 +9,19 @@ struct SupabaseAIService: AIService {
 
     func generateCourse(_ request: CourseGenerationRequest) async throws -> GeneratedCourse {
         let trimmed = request.rawText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count >= 40 || !request.pageImages.isEmpty else {
-            throw AIServiceError.emptySource
+        // **Un sujet remplace le document.** Sans cette porte, la création d'un deck « écris
+        // tout pour moi » butait ici, sur un garde-fou écrit pour l'import : il refuse un
+        // document vide, ce qui est exactement ce qu'on envoie quand il n'y en a pas.
+        if request.topic == nil {
+            guard trimmed.count >= 40 || !request.pageImages.isEmpty else {
+                throw AIServiceError.emptySource
+            }
         }
 
         // Le stade d'étude et la longueur partent en clair : c'est la fonction qui sait les
         // traduire en consignes. Deux formulations, une ici et une là, finiraient par se
         // contredire, et celle du serveur est la seule qu'on peut corriger sans mise à jour.
-        let payload: [String: Any] = [
+        var payload: [String: Any] = [
             "text": String(trimmed.prefix(60_000)),
             "images": request.pageImages.map { "data:image/jpeg;base64," + $0.base64EncodedString() },
             "hintTitle": request.hintTitle ?? "",
@@ -32,6 +37,13 @@ struct SupabaseAIService: AIService {
             // champ, et les deux clients doivent le remplir pareil.
             "instructions": String((request.instructions ?? "").prefix(2_000))
         ]
+
+        // Le sujet n'est envoyé **que** quand il y en a un. Une clé toujours présente, vide
+        // à l'import ordinaire, se confondrait côté serveur avec « écris-moi tout le
+        // programme » : là-bas, la chaîne vide est une réponse qui veut dire quelque chose.
+        if let topic = request.topic {
+            payload["topic"] = String(topic.prefix(400))
+        }
 
         let envelope = try await post("generate-course", payload: payload)
         return try decode(GeneratedCourse.self, from: envelope, key: "course")

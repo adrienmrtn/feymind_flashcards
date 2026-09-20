@@ -31,6 +31,16 @@ struct CourseGenerationRequest {
     /// donc pas la même fiche, et c'est la seule chose qui différait encore entre eux. La
     /// fonction borne le texte et refuse ce qui toucherait au format : voir `instructionsBrief`.
     var instructions: String? = nil
+    /// **Le sujet à traiter quand il n'y a aucun document.**
+    ///
+    /// Non nul, il fait basculer la génération : au lieu de lire un texte, le modèle écrit
+    /// le cours depuis ce qu'il sait, au niveau de l'étudiant. Une chaîne vide est une
+    /// réponse valable et veut dire « tout le programme de la matière » — c'est l'option que
+    /// l'écran propose en bas, sous le champ.
+    ///
+    /// `nil` est le cas ordinaire : on lit un document, et ce qu'on en tire ne doit rien
+    /// devoir à ce que le modèle croit savoir sur le titre.
+    var topic: String? = nil
 }
 
 struct FlashcardGenerationRequest {

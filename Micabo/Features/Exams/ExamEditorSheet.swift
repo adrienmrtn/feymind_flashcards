@@ -5,13 +5,11 @@ import SwiftUI
 ///
 /// **La création suit le site, question par question.** Le nom, le jour et les cours ; le
 /// type d'épreuve ; d'où l'on part sur ce programme ; les jours où l'on ne révisera pas ; la
-/// note visée. Cinq écrans, une question chacun : mélanger ces champs sur une page faisait
+/// note visée. Quatre écrans, une question chacun : mélanger ces champs sur une page faisait
 /// lire un formulaire avant d'avoir compris ce qu'on demandait.
 ///
-/// Les trois questions du milieu manquaient au téléphone, et elles ne sont pas décoratives :
-/// le **point de départ** décale l'intensité d'un cran, les **pauses** retirent des jours de
-/// la fenêtre, et le **type** décide de l'examen blanc. Sans elles, deux comptes identiques
-/// recevaient le même plan sur le site et sur l'iPhone - et un seul des deux était juste.
+/// Les deux questions du milieu ne sont pas décoratives : le **point de départ** décale
+/// l'intensité d'un cran, et le **type** décide de l'examen blanc.
 ///
 /// La modification reste sur une page : on y retouche une valeur, pas un parcours.
 struct ExamEditorSheet: View {
@@ -39,14 +37,16 @@ struct ExamEditorSheet: View {
     /// remplit à chaque ouverture.
     @State private var courses: [CourseBadge] = []
 
-    /// Les étapes, dans l'ordre du site. `pauses` s'efface quand l'épreuve est trop proche
-    /// pour qu'on ait des jours à poser : une question sans réponse possible n'est pas une
-    /// étape, c'est un écran qu'on traverse en soupirant.
+    /// Les étapes, dans l'ordre du site.
+    ///
+    /// **`pauses` a disparu.** Elle faisait cocher les jours où l'on ne réviserait pas, et
+    /// le plan les retirait de sa fenêtre — c'est-à-dire qu'il reportait leur travail sur
+    /// les autres jours. Un étudiant qui déclarait se reposer le dimanche obtenait des
+    /// lundis plus lourds : exactement l'inverse de ce qu'il demandait.
     private enum CreationStep: Int, Equatable, CaseIterable {
         case details
         case kind
         case start
-        case pauses
         case grade
     }
 
@@ -59,7 +59,6 @@ struct ExamEditorSheet: View {
     @State private var startingPoint: ExamStartingPoint = .seen
     /// Les journées fermées, en `yyyy-MM-dd`. Globales : un samedi pris n'est pas pris « pour
     /// la biologie ». On les lit à l'ouverture et on les réécrit au moment de confirmer.
-    @State private var offDays: Set<String> = []
     @State private var creationStep: CreationStep = .details
     @State private var errorMessage: String?
     @State private var didLoad = false
@@ -89,7 +88,6 @@ struct ExamEditorSheet: View {
             cards: selectedCards,
             date: date,
             intensity: startingPoint.intensity(from: intensity),
-            offDays: ExamRepository.offDayOffsets(until: date, stamps: offDays, calendar: calendar),
             calendar: calendar
         )
     }
@@ -104,14 +102,8 @@ struct ExamEditorSheet: View {
         ).day ?? 0
     }
 
-    /// Les jours proposés : d'aujourd'hui à la veille, quatre semaines au plus.
-    private var pauseWindow: [Date] {
-        OffDays.window(from: Date(), daysRemaining: daysRemaining, calendar: calendar)
-    }
-
-    /// Les étapes réellement posées. On saute `pauses` quand il n'y a pas un jour à cocher.
     private var steps: [CreationStep] {
-        CreationStep.allCases.filter { $0 != .pauses || !pauseWindow.isEmpty }
+        CreationStep.allCases
     }
 
     private var stepIndex: Int {
@@ -159,10 +151,6 @@ struct ExamEditorSheet: View {
                         startSection
                     }
 
-                    if shows(.pauses), !pauseWindow.isEmpty {
-                        pausesSection
-                    }
-
                     if showsGrade {
                         intensitySection
 
@@ -204,7 +192,7 @@ struct ExamEditorSheet: View {
         // entièrement synchrone : un `.task` ne lui apporterait aucune asynchronie, il ne
         // ferait que la repousser après la première image. La section « Cours au programme »
         // ne pèserait alors que son intitulé le temps d'une passe, et tout ce qui la suit en
-        // modification — type d'épreuve, point de départ, pauses, note visée — serait posé
+        // modification — type d'épreuve, point de départ, note visée — serait posé
         // trop haut puis redescendrait d'un coup. `onAppear` pose l'état avant que l'image ne
         // soit présentée.
         .onAppear { load() }
@@ -215,7 +203,6 @@ struct ExamEditorSheet: View {
         .onChange(of: date) { _, _ in replan() }
         .onChange(of: intensity) { _, _ in replan() }
         .onChange(of: startingPoint) { _, _ in replan() }
-        .onChange(of: offDays) { _, _ in replan() }
         .alert(L10n.t("app.common.oops", locale: .resolved()), isPresented: .constant(errorMessage != nil)) {
             Button(L10n.t("app.a11y.close", locale: .resolved()), role: .cancel) { errorMessage = nil }
         } message: {
@@ -244,7 +231,6 @@ struct ExamEditorSheet: View {
         case .details: return L10n.t("ios.newExam", locale: .resolved())
         case .kind: return L10n.t("app.newPlan.kindTitle", locale: .resolved())
         case .start: return L10n.t("app.newPlan.startTitle", locale: .resolved())
-        case .pauses: return L10n.t("app.newPlan.pausesTitle", locale: .resolved())
         case .grade: return L10n.t("ios.desiredGrade", locale: .resolved())
         }
     }
@@ -483,66 +469,6 @@ struct ExamEditorSheet: View {
 
     /// **Toucher les jours où l'on ne révisera pas.**
     ///
-    /// Sans eux, le plan pose du travail le dimanche où l'on ne touchera pas au téléphone :
-    /// on prend un jour de retard dès la première semaine, et le plan qui devait rassurer
-    /// devient une dette. Les jours fermés ne disparaissent pas, ils se reportent sur les
-    /// autres - c'est le prix, et la projection l'annonce.
-    private var pausesSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if isEditing {
-                MicaboSectionCaption(text: L10n.t("app.newPlan.pausesTitle", locale: .resolved()))
-            }
-
-            Text(L10n.t("app.newPlan.pausesLead", locale: .resolved()))
-                .font(MicaboFont.caption)
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            MicaboFlowLayout(spacing: 7, lineSpacing: 7) {
-                ForEach(pauseWindow, id: \.self) { day in
-                    pauseCell(day)
-                }
-            }
-
-            if !offDays.isEmpty {
-                Text(L10n.t("app.newPlan.pausesCount", locale: .resolved(), vars: ["count": "\(offDays.count)"]))
-                    .font(MicaboFont.micro)
-                    .foregroundStyle(MicaboColor.inkTertiary)
-            }
-        }
-    }
-
-    private func pauseCell(_ day: Date) -> some View {
-        let stamp = OffDays.stamp(day, in: calendar)
-        let picked = offDays.contains(stamp)
-        let weekday = calendar.component(.weekday, from: day)
-        // `weekdayInitials` commence au lundi, `Calendar` au dimanche : d'où le décalage.
-        let initials = MicaboCalendar.weekdayInitials()
-        let initial = initials.indices.contains((weekday + 5) % 7) ? initials[(weekday + 5) % 7] : ""
-
-        return Button {
-            Haptics.selection()
-            if picked { offDays.remove(stamp) } else { offDays.insert(stamp) }
-        } label: {
-            VStack(spacing: 2) {
-                Text(initial)
-                    .font(MicaboFont.ui(10.5, weight: .medium))
-                    .foregroundStyle(picked ? MicaboColor.onInk.opacity(0.8) : MicaboColor.inkTertiary)
-                Text("\(calendar.component(.day, from: day))")
-                    .font(MicaboFont.number(15, weight: .semibold))
-                    .foregroundStyle(picked ? MicaboColor.onInk : MicaboColor.ink)
-                    .monospacedDigit()
-            }
-            .frame(width: 44, height: 46)
-            .background(
-                picked ? MicaboColor.ink : MicaboColor.surface,
-                in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
-            )
-        }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
-        .accessibilityLabel(MicaboCalendar.dayLabel(day))
-        .accessibilityAddTraits(picked ? .isSelected : [])
-    }
 
     /// **La note qu'on vise, glissée au pouce.**
     ///
@@ -746,10 +672,6 @@ struct ExamEditorSheet: View {
         }
         didLoad = true
 
-        // Les journées fermées sont globales : on part de celles du compte, pas d'une page
-        // blanche, et ce qu'on coche ici vaut pour les autres épreuves aussi.
-        offDays = OffDays.stamps(in: modelContext)
-
         guard let exam else {
             date = calendar.startOfDay(for: max(suggestedDate, Date()))
             return
@@ -764,25 +686,9 @@ struct ExamEditorSheet: View {
         replan()
     }
 
-    /// Écrit les journées cochées dans la base. Elles ne suivent pas l'examen : elles sont à
-    /// l'étudiant, et la synchro les remonte avec le reste.
-    private func saveOffDays() {
-        let known = OffDays.stamps(in: modelContext)
-        for stamp in offDays.subtracting(known) {
-            OffDays.insert(stamp, in: modelContext)
-        }
-        for stale in known.subtracting(offDays) {
-            OffDays.remove(stale, in: modelContext)
-        }
-        try? modelContext.save()
-    }
 
     private func confirm() {
         guard canConfirm else { return }
-
-        // **Les pauses s'écrivent avant le plan**, parce que c'est le plan qui les lit. Les
-        // enregistrer après aurait posé un planning sur des jours qu'on venait de fermer.
-        saveOffDays()
 
         do {
             if let exam {

@@ -120,7 +120,6 @@ struct ExamDetailView: View {
                 cards: cards,
                 date: exam.date,
                 intensity: exam.intensity,
-                offDays: ExamRepository.offDayOffsets(until: exam.date, stamps: OffDays.stamps(in: modelContext), now: today),
                 now: today
             ).projection.load
         )
