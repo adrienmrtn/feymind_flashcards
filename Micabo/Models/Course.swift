@@ -90,6 +90,16 @@ final class Course {
     @Relationship(deleteRule: .cascade, inverse: \Flashcard.course)
     var flashcards: [Flashcard]? = []
 
+    /// **Les chapitres du deck**, dans l'ordre du plan.
+    ///
+    /// `.cascade` : un deck supprimé emporte ses chapitres, comme il emporte déjà ses
+    /// cartes. Les cartes, elles, ne meurent pas avec un chapitre — voir `Chapter.cards`.
+    ///
+    /// Vide sur un cours importé avant la refonte, et rempli à la première ouverture par
+    /// `ChapterBuilder.migrate`, qui relit les titres de partie de sa fiche.
+    @Relationship(deleteRule: .cascade, inverse: \Chapter.course)
+    var chapters: [Chapter]? = []
+
     init(
         id: UUID = UUID(),
         title: String,
@@ -139,6 +149,23 @@ final class Course {
 
     var orderedCards: [Flashcard] {
         cards.sorted { $0.position < $1.position }
+    }
+
+    var orderedChapters: [Chapter] {
+        (chapters ?? []).sorted { $0.position < $1.position }
+    }
+
+    /// Les cartes qu'aucun chapitre ne revendique.
+    ///
+    /// Elles existent pour une seule raison, et elle est historique : les cartes écrites
+    /// avant la refonte n'ont pas de chapitre, et **on n'en invente pas un**. Répartir
+    /// mille huit cents cartes réelles au prorata de leur position dans le document serait
+    /// une conjecture silencieuse, qui classerait une partie d'entre elles sous le mauvais
+    /// titre sans que personne ne puisse le voir. L'écran du deck les montre telles
+    /// qu'elles sont, sous les chapitres, et la génération de Lot C les rattache dès le
+    /// départ pour les decks qui arrivent.
+    var looseCards: [Flashcard] {
+        cards.filter { $0.chapter == nil }
     }
 
     var dueCards: [Flashcard] {

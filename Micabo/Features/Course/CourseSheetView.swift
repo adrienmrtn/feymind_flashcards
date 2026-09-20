@@ -209,6 +209,15 @@ struct CourseSheetView: View {
         // La fiche ouverte, avec ou sans fiche écrite : l'écart entre les deux dit
         // combien de cours importés restent sans fiche.
         .onAppear {
+            // **Le plan se matérialise à la première ouverture, pas au lancement.**
+            //
+            // Un deck importé avant la refonte n'a pas de chapitres : ses parties n'étaient
+            // qu'une lecture des titres de sa fiche, refaite à chaque affichage. On la
+            // transforme ici en table, deck par deck. Passer toute la base en revue au
+            // démarrage aurait ouvert cent quarante cours d'un bloc sur l'acteur principal,
+            // ce qui est exactement ce qui fait ramer une app au lancement.
+            ChapterBuilder.migrate(course, in: modelContext)
+
             Analytics.track(.sheetOpened, [
                 "written": .flag(CourseSheet.decode(from: course.sheetData) != nil),
                 "source": .text(course.source.rawValue),

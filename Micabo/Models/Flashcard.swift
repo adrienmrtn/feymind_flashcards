@@ -171,6 +171,14 @@ final class Flashcard {
 
     var course: Course?
 
+    /// **Le chapitre dont cette carte est née.**
+    ///
+    /// Facultatif, et il le restera : une carte importée d'Anki, écrite à la main, ou
+    /// produite avant la refonte n'a pas de chapitre. C'est lui qui ordonne l'introduction
+    /// des cartes neuves — on n'ouvre pas le chapitre 4 tant que le 2 n'est pas entamé —
+    /// et lui qui donne le pourcentage de connaissance d'une partie du cours.
+    var chapter: Chapter?
+
     @Relationship(deleteRule: .cascade, inverse: \ReviewLog.card)
     var logs: [ReviewLog]? = []
 

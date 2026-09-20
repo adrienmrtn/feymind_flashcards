@@ -18,7 +18,7 @@ struct MicaboApp: App {
     @State private var uiLocale = UiLocaleStore()
     @Environment(\.scenePhase) private var scenePhase
 
-    private static let schema = Schema([Course.self, CourseFolder.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self])
+    private static let schema = Schema([Course.self, CourseFolder.self, Chapter.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self])
 
     init() {
         FontLoader.registerFonts()

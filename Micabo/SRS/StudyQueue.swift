@@ -116,8 +116,21 @@ enum StudyQueueBuilder {
             .sorted { byDeadline(deadlines.deadline(for: $0), $0.dueDate, deadlines.deadline(for: $1), $1.dueDate) }
             .prefix(limits.reviewsPerSession)
 
+        // **Les cartes neuves entrent dans l'ordre du plan.**
+        //
+        // Le rang du chapitre passe devant celui de la carte : on n'ouvre pas le chapitre
+        // quatre tant que le deux n'est pas entamé, même si une carte du quatre porte une
+        // position plus basse — ce qui arrive dès qu'un chapitre a été régénéré. C'est ce
+        // qui fait qu'un deck se découvre comme un cours se lit, et non comme un paquet se
+        // mélange.
+        //
+        // Une carte sans chapitre passe en dernier (`Int.max`) : importée d'Anki, écrite à
+        // la main, ou produite avant la refonte, elle n'a pas de place dans le plan, et la
+        // pousser au début du premier chapitre serait lui en inventer une.
         let byPosition: (Flashcard, Flashcard) -> Bool = {
-            ($0.position, $0.createdAt) < ($1.position, $1.createdAt)
+            let left = ($0.chapter?.position ?? Int.max, $0.position, $0.createdAt)
+            let right = ($1.chapter?.position ?? Int.max, $1.position, $1.createdAt)
+            return left < right
         }
         let newCards = due.filter { $0.state == .new }
         let examNewCards = newCards.filter { deadlines.covers($0) }.sorted(by: byPosition)
