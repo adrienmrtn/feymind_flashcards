@@ -1254,3 +1254,27 @@ struct MicaboSessionHeader: View {
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
     }
 }
+
+// MARK: - Le gras dans une phrase traduite
+
+extension Text {
+    /// **Une phrase traduite dont un fragment est en gras.**
+    ///
+    /// `Text(uneChaîne)` ne lit pas le Markdown : seul un littéral le fait, et nos phrases
+    /// viennent d'un catalogue à l'exécution. Couper la phrase en deux clés aurait été
+    /// l'autre solution, et c'est la mauvaise — le fragment en gras n'est pas au même
+    /// endroit d'une langue à l'autre, et « 80 % retenus » n'est pas un morceau de phrase
+    /// traduisible tout seul.
+    ///
+    /// L'analyse échoue, on rend la phrase telle quelle, astérisques comprises : un texte
+    /// légèrement sali vaut mieux qu'un écran vide.
+    static func micaboMarkup(_ value: String) -> Text {
+        guard let attributed = try? AttributedString(
+            markdown: value,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+        ) else {
+            return Text(value)
+        }
+        return Text(attributed)
+    }
+}

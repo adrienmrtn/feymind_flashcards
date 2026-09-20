@@ -22,7 +22,7 @@ struct SubjectsStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.subjectsTitle"),
-            titleSize: 28,
+            titleSize: 26,
             animatesTitle: true
         ) {
             VStack(alignment: .leading, spacing: 20) {

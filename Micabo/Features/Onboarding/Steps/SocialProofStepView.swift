@@ -68,7 +68,7 @@ struct SocialProofStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.socialProof"),
-            titleSize: 30,
+            titleSize: 26,
             contentSpacing: MicaboSpacing.lg,
             scrolls: false,
             expandsContent: true
@@ -154,7 +154,13 @@ struct SocialProofStepView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .micaboGroup()
+        // Un filet plutôt qu'une carte à ombre : c'est la règle de toute la refonte, et cet
+        // écran n'a pas de raison d'y échapper.
+        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
+                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+        }
     }
 
     private var stars: some View {

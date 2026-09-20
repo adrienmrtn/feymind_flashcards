@@ -45,7 +45,6 @@ struct NotificationsStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: t("ios.notifTitle"),
-            subtitle: t("ios.notifSubtitle"),
             animatesTitle: true,
             expandsContent: true
         ) {

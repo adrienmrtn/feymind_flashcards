@@ -108,6 +108,8 @@ enum MicaboColor {
 
     // Fonds doux assortis : notation en session, pastilles d'état.
     static var positiveSoft: Color { palette.positiveSoft }
+    static var positiveWash: Color { palette.positiveWash }
+    static var positiveInk: Color { palette.positiveInk }
     static var cautionSoft: Color { palette.cautionSoft }
     static var negativeSoft: Color { palette.negativeSoft }
     static var infoSoft: Color { palette.infoSoft }
