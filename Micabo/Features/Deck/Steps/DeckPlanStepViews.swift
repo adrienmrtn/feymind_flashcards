@@ -202,11 +202,23 @@ struct DeckConfidenceStepView: View {
         ("ios.deckSetup.confidence.all", 1),
     ]
 
+    /// Le cran le plus proche de la valeur enregistrée.
+    ///
+    /// Une boucle plutôt qu'un `min` à fermeture sur `enumerated()` : la version courte
+    /// faisait résoudre au compilateur un tableau de tuples, deux `abs` sur des membres
+    /// nommés, un chaînage optionnel et un `??`, pour une comparaison de cinq valeurs. Elle
+    /// était plus dense, pas plus claire.
     private var index: Int {
-        Self.steps
-            .enumerated()
-            .min { abs($0.element.confidence - setup.confidence) < abs($1.element.confidence - setup.confidence) }?
-            .offset ?? 0
+        var best = 0
+        var bestGap = Double.infinity
+        for (rank, step) in Self.steps.enumerated() {
+            let gap = abs(step.confidence - setup.confidence)
+            if gap < bestGap {
+                bestGap = gap
+                best = rank
+            }
+        }
+        return best
     }
 
     var body: some View {
@@ -360,10 +372,17 @@ struct VerticalGradePicker: View {
     private func row(_ tick: GradeTick) -> some View {
         let gap = distance(of: tick)
         let isSelected = gap == 0
+        // Nommées et typées plutôt que posées en ternaires dans la chaîne : un littéral
+        // numérique dans un ternaire est une inconnue pour l'inférence, et neuf maillons
+        // plus loin le compilateur renonce. C'est exactement ce qui vient de casser la
+        // scène d'import.
+        let size: CGFloat = isSelected ? 38 : 27
+        let weight: Font.Weight = isSelected ? .heavy : .bold
+        let kerning: CGFloat = isSelected ? -1.4 : -0.8
 
         return Text(tick.label)
-            .font(MicaboFont.ui(isSelected ? 38 : 27, weight: isSelected ? .heavy : .bold))
-            .tracking(isSelected ? -1.4 : -0.8)
+            .font(MicaboFont.ui(size, weight: weight))
+            .tracking(kerning)
             .foregroundStyle(ink(distance: gap))
             .monospacedDigit()
             .lineLimit(1)

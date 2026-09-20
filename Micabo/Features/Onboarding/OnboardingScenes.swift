@@ -38,10 +38,18 @@ struct OnboardingImportScene: View {
 
     var body: some View {
         ZStack {
+            // Les mêmes valeurs nommées que pour les cartes, et pour la même raison : un
+            // littéral multiplié par une phase à l'intérieur d'un `offset` est une inconnue
+            // de plus pour l'inférence.
+            let slideX = CGFloat(-34 * phase)
+            let slideY = CGFloat(6 * phase)
+            let tilt = Double(-7 * phase)
+            let fade = Double(1 - 0.45 * phase)
+
             sheet
-                .offset(x: -34 * phase, y: 6 * phase)
-                .rotationEffect(.degrees(-7 * phase))
-                .opacity(1 - 0.45 * phase)
+                .offset(x: slideX, y: slideY)
+                .rotationEffect(.degrees(tilt))
+                .opacity(fade)
 
             ForEach(0..<3, id: \.self) { index in
                 card(index)
@@ -73,31 +81,71 @@ struct OnboardingImportScene: View {
         .shadow(color: MicaboColor.ink.opacity(0.06), radius: 10, y: 4)
     }
 
+    /// **La place d'une carte à un instant donné**, calculée à part.
+    ///
+    /// Les six valeurs vivaient dans la chaîne de modificateurs, mêlées à des littéraux sans
+    /// type : `38 + spread * share`, `0.86 + 0.14 * share`, `Double(index - 1) * 9 * share`.
+    /// Chacune est une petite énigme pour l'inférence — un littéral peut être `Double`,
+    /// `CGFloat`, ou n'importe quel type numérique — et posées dans une chaîne de dix
+    /// modificateurs elles se multiplient entre elles jusqu'à faire renoncer le compilateur.
+    ///
+    /// Elles sont nommées et typées ici. C'est aussi plus clair à lire : la trajectoire d'une
+    /// carte se lit en cinq lignes au lieu de se deviner dans les marges d'un `offset`.
+    private struct CardPlacement {
+        var share: Double
+        var offsetX: CGFloat
+        var offsetY: CGFloat
+        var angle: Double
+        var scale: CGFloat
+
+        init(index: Int, phase: Double) {
+            let raw: Double = (phase - Double(index) * 0.16) / 0.68
+            share = Swift.max(0, Swift.min(1, raw))
+
+            let spread: Double = 26 * Double(index) - 26
+            offsetX = CGFloat(38 + spread * share)
+            offsetY = CGFloat(-8 * share)
+            angle = Double(index - 1) * 9 * share
+            scale = CGFloat(0.86 + 0.14 * share)
+        }
+    }
+
     /// Une carte du paquet. Elles sortent l'une après l'autre : le décalage sur la phase est
     /// ce qui fait l'éventail plutôt qu'un bloc qui glisse.
     private func card(_ index: Int) -> some View {
-        let share = max(0, min(1, (phase - Double(index) * 0.16) / 0.68))
-        let spread = 26.0 * Double(index) - 26.0
+        let place = CardPlacement(index: index, phase: phase)
 
-        return RoundedRectangle(cornerRadius: 13, style: .continuous)
+        return cardFace
+            .offset(x: place.offsetX, y: place.offsetY)
+            .rotationEffect(.degrees(place.angle))
+            .scaleEffect(place.scale)
+            .opacity(place.share)
+    }
+
+    /// Le dessin d'une carte, sans sa position : un lavis violet, un filet, et deux traits
+    /// qui figurent une question et sa réponse.
+    private var cardFace: some View {
+        let shape = RoundedRectangle(cornerRadius: 13, style: .continuous)
+
+        return shape
             .fill(MicaboColor.accentSoft)
-            .overlay {
-                RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .strokeBorder(MicaboColor.accent.opacity(0.22), lineWidth: 1)
-            }
-            .overlay(alignment: .topLeading) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Capsule().fill(MicaboColor.accent.opacity(0.55)).frame(width: 40, height: 5)
-                    Capsule().fill(MicaboColor.accent.opacity(0.28)).frame(width: 56, height: 5)
-                }
-                .padding(14)
-            }
+            .overlay { shape.strokeBorder(MicaboColor.accent.opacity(0.22), lineWidth: 1) }
+            .overlay(alignment: .topLeading) { cardLines }
             .frame(width: 96, height: 120)
             .shadow(color: MicaboColor.accent.opacity(0.14), radius: 9, y: 4)
-            .offset(x: 38 + spread * share, y: -8 * share)
-            .rotationEffect(.degrees(Double(index - 1) * 9 * share))
-            .scaleEffect(0.86 + 0.14 * share)
-            .opacity(share)
+    }
+
+    private var cardLines: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Capsule()
+                .fill(MicaboColor.accent.opacity(0.55))
+                .frame(width: 40, height: 5)
+
+            Capsule()
+                .fill(MicaboColor.accent.opacity(0.28))
+                .frame(width: 56, height: 5)
+        }
+        .padding(14)
     }
 
     private func start() {
