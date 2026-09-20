@@ -5,7 +5,12 @@ import SwiftUI
 /// dans `OnboardingPreferences` : quitter l'app en cours de route ne les perd pas.
 @Observable
 final class OnboardingModel {
-    private(set) var step: OnboardingStep = .welcome
+    private(set) var step: OnboardingStep = .howItWorks
+
+    /// **Le prénom, et rien d'autre.** Il ne sert qu'à s'adresser à quelqu'un — l'écran
+    /// suivant dit « enchanté », et le parcours cesse de parler à un utilisateur. C'est une
+    /// raison suffisante, et c'est la seule : rien d'autre ne le lit.
+    var displayName: String = ""
 
     /// Le palier d'études, dans les termes du pays choisi. Il n'est proposé qu'après le
     /// pays, faute de quoi il n'y aurait rien de juste à proposer.
@@ -24,13 +29,30 @@ final class OnboardingModel {
     /// ce cas-là, et il est effacé dès qu'on revient sur une pastille.
     var customCountry: WorldCountry?
     var goals: Set<LearningGoal> = []
-    var forgetting: ForgettingHabit?
     var subjects: Set<String> = []
-    var institutionId: String?
-    var institutionName: String?
-    /// Les jours de repos de la semaine, **1 = lundi … 7 = dimanche**, comme `restDays` sur
-    /// le site. Vide veut dire « je révise tous les jours », et c'est une réponse.
-    var restDays: Set<Int> = []
+
+    /// **La filière suivie**, dans les termes du pays. Elle ne se demande qu'aux pays
+    /// décrits en détail ; ailleurs, le palier large (`stage`) est tout ce qu'on sait.
+    var track: SchoolTrack? {
+        didSet {
+            guard let track, track != oldValue else { return }
+            // Changer de filière efface l'année : « Terminale » accrochée à « Collège » est
+            // une réponse que personne n'a donnée.
+            if oldValue != nil { year = nil }
+            // Le palier large suit la filière : c'est lui que la fonction Edge reçoit et que
+            // le cloud synchronise, et il ne doit pas rester sur la réponse d'avant.
+            stage = country.resolvedStage(id: nil, tier: track.tier, level: track.level)
+            Analytics.track(.onboardingAnswer, ["field": "track", "value": .text(track.id)])
+        }
+    }
+
+    /// L'année dans la filière. Elle décide des matières proposées deux écrans plus loin.
+    var year: SchoolYear? {
+        didSet {
+            guard let year, year != oldValue else { return }
+            Analytics.track(.onboardingAnswer, ["field": "year", "value": .text(year.id)])
+        }
+    }
     /// La moyenne d'aujourd'hui, sur l'échelle 10-20. `TargetScore.min - 1` veut dire « en
     /// dessous du barème » : c'est le seul cran hors échelle, et il existe parce qu'un
     /// parcours qui ne propose que la moyenne et au-dessus dit à celui qui rame qu'il n'est
@@ -58,11 +80,6 @@ final class OnboardingModel {
         country.language
     }
 
-    /// Le rapport à l'oubli ramené à un oui ou un non, pour le réglage historique.
-    var forgetsOften: Bool? {
-        forgetting?.forgetsOften
-    }
-
     /// Changer de pays change les réponses de la question suivante.
     ///
     /// Le palier déjà choisi est reporté sur son équivalent dans le nouveau pays — sa marche
@@ -74,6 +91,11 @@ final class OnboardingModel {
         let previous = stage
         country = newCountry
         stage = newCountry.resolvedStage(id: nil, tier: previous?.tier, level: previous?.level)
+        // La filière et l'année appartiennent à un système scolaire : « Fen Lisesi » n'existe
+        // pas en France, et la garder afficherait une réponse introuvable dans la liste. Le
+        // palier, lui, se reporte — c'est tout l'objet de `resolvedStage`.
+        track = nil
+        year = nil
         // Repartir sur une pastille efface le pays tapé à la main : le garder ferait dire à
         // l'écran « France » et « Brésil » en même temps.
         if newCountry != .other { customCountry = nil }
@@ -92,18 +114,22 @@ final class OnboardingModel {
     /// avant d'avoir essayé, et la promesse chiffrée reposait sur une réponse au hasard. Le
     /// plafond garde sa valeur par défaut et se règle dans les Réglages.
 
-    /// Vrai seulement si l'établissement a été choisi dans la liste de résultats.
-    /// Un nom tapé à la main n'a pas d'`id` : on ne connaît alors personne là-bas,
-    /// et on ne prétend pas le contraire.
-    var hasRecognizedInstitution: Bool {
-        institutionId?.nilIfBlank != nil
+    /// Les filières proposées, vides quand le pays n'est pas décrit en détail.
+    var tracks: [SchoolTrack] {
+        SchoolSystem.tracks(for: country)
     }
 
     /// Le parcours est une file droite : chaque écran a quelque chose à demander ou à
     /// montrer, donc aucun ne se saute.
     func advance() {
         persist()
-        guard let next = step.next else { return }
+        var next = step.next
+        // Les écrans sans réponse possible se sautent plutôt que de s'afficher vides : un
+        // pays dont on ne connaît que les paliers larges n'a ni filière ni année à proposer.
+        while let candidate = next, candidate.isSkipped(for: country) {
+            next = candidate.next
+        }
+        guard let next else { return }
         step = next
     }
 
@@ -114,18 +140,12 @@ final class OnboardingModel {
         OnboardingPreferences.customCountry = customCountry
         OnboardingPreferences.educationStage = stage
         OnboardingPreferences.goals = goals.map(\.rawValue).sorted()
-        OnboardingPreferences.forgetting = forgetting
-        OnboardingPreferences.forgetsOften = forgetsOften
         OnboardingPreferences.subjects = subjects.sorted()
-        OnboardingPreferences.institutionId = institutionId
-        OnboardingPreferences.institutionName = institutionName
         OnboardingPreferences.currentScore = currentScore
         OnboardingPreferences.targetScore = targetScore
-        // La semaine ne s'écrit qu'une fois la question posée : avant, un profil vierge
-        // reçoit ses sept minutes quotidiennes et l'on croirait la question répondue.
-        if step.rawValue >= OnboardingStep.restDays.rawValue {
-            OnboardingPreferences.restWeekdays = restDays
-        }
+        OnboardingPreferences.displayName = displayName.nilIfBlank
+        OnboardingPreferences.schoolTrackID = track?.id
+        OnboardingPreferences.schoolYearID = year?.id
     }
 }
 

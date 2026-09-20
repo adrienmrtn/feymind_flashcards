@@ -3,86 +3,77 @@ import Foundation
 /// Les écrans du parcours d'accueil, dans l'ordre. Le parcours est strictement
 /// linéaire : aucun retour en arrière, on n'expose donc jamais d'étape précédente.
 ///
-/// L'ordre raconte quelque chose : on accroche, on demande où étudie l'étudiant puis où il
-/// en est, on explique la méthode, on la lui fait faire, puis on personnalise. La
-/// démonstration suit exactement le parcours réel de l'app — on dépose un cours, il est mis
-/// en fiche, il se décompose en cartes — parce qu'une démonstration qui montre autre chose
-/// que le produit est une promesse qu'il faudra tenir deux fois.
+/// **Le parcours a changé de forme.** Il comptait vingt-huit écrans et racontait une
+/// méthode : la courbe de l'oubli, la répétition espacée, Feynman, trois écrans sur la
+/// préparation d'une épreuve, une démonstration d'import. C'était une leçon avant le
+/// produit. Le nouveau montre ce qu'on va faire ensemble en cinq écrans, puis pose les
+/// questions dont les réponses servent vraiment à quelque chose.
 ///
-/// **Le pays passe avant le niveau**, et ce n'est pas un détail d'ordre : ce sont les
-/// paliers d'études du pays choisi qui deviennent les réponses de « tu en es où ? ». Poser
-/// le niveau d'abord obligeait à proposer les mêmes sept réponses françaises à tout le
-/// monde. La langue se déduit du même écran, et l'écran qui annonçait « Micabo parle
-/// français » a disparu avec : il demandait une réponse qu'on ne pouvait pas donner.
+/// Ce qui a disparu, et pourquoi :
 ///
-/// **Le rythme quotidien et sa projection ont disparu.** Le premier demandait combien de
-/// minutes par jour on comptait réviser, le second annonçait le nombre de cartes que ça
-/// ferait au bout d'un an. Deux écrans, une seule idée, et une idée qu'on ne peut pas tenir :
-/// personne ne connaît son rythme avant d'avoir essayé, et la promesse chiffrée qui suivait
-/// reposait entièrement sur une réponse donnée au hasard. Le plafond de cartes neuves existe
-/// toujours (`DailyLoad`), sur sa valeur par défaut, et se règle dans les Réglages — là où
-/// l'on va quand on sait vraiment ce qu'on veut.
+/// - **La courbe de l'oubli, le graphe de rétention, Feynman, les résultats.** Quatre
+///   écrans pour convaincre que la méthode marche, avant d'avoir montré une seule fois ce
+///   que l'app fait. On convainc en faisant.
+/// - **La démonstration en trois écrans** (déposer, ficher, réviser). Elle rejouait le
+///   produit au ralenti pendant vingt secondes. Les écrans 2 à 4 disent la même chose en
+///   trois phrases, et le vrai import est à quatre écrans de là.
+/// - **Les trois écrans sur l'épreuve.** Ils annonçaient un plan, des examens blancs et un
+///   relevé des faiblesses. C'est une brochure : ces choses se découvrent dans un deck.
+/// - **L'écran des jours de repos.** La réponse ne sert plus à rien : le plan ne retire plus
+///   de jours de sa fenêtre — voir `DeckPace`. Une question dont la réponse n'est lue par
+///   personne est pire qu'une question absente.
+/// - **L'établissement.** Il servait une preuve sociale locale qu'on ne tenait pas.
 ///
-/// **L'écran des rappels est revenu, et il fait ce que l'ancien ne faisait pas.** Le
-/// premier demandait « on te rappelle au bon moment ? » sans rien demander au système : il
-/// notait une intention que rien ne lisait, et il la posait juste avant la construction du
-/// parcours, au moment où l'on est le plus près d'entrer dans l'app. `notifications` ouvre
-/// **la vraie** boîte d'iOS, et il la pose après la preuve sociale : l'étudiant vient de
-/// voir que d'autres s'y tiennent, on lui montre ce qui l'aidera à s'y tenir, puis on lui
-/// passe la main.
+/// Ce qui est arrivé :
 ///
-/// **Trois écrans nouveaux avant la construction du parcours** : la moyenne d'aujourd'hui,
-/// celle qu'on vise, et la promesse de les relier. Ce sont les deux seuls chiffres que
-/// l'étudiant connaît vraiment sur lui-même, et l'écart entre les deux est ce qui règle
-/// l'intensité du plan.
+/// - **Les cinq écrans d'ouverture**, qui disent le parcours réel : tu déposes, tu poses tes
+///   dates, ça devient des fiches et des cartes, et voilà ce qu'il y a autour.
+/// - **Le prénom, puis « enchanté ».** C'est le premier moment où l'app s'adresse à
+///   quelqu'un plutôt qu'à un utilisateur, et il coûte deux écrans.
+/// - **La filière et l'année**, à la place du palier unique. « Lycée » ne dit pas ce qu'on
+///   étudie : un terminale STMG et un terminale générale n'ont ni les mêmes matières ni la
+///   même épreuve. La question ne se pose qu'aux pays décrits assez finement pour qu'elle
+///   ait de vraies réponses (voir `SchoolSystem`) ; ailleurs, le palier large reste.
 ///
-/// La fin du parcours a sa propre progression, et elle est délibérée : le parcours vient
-/// d'être construit sous les yeux (`personalizing`), d'autres l'ont déjà suivi
-/// (`socialProof`), c'est maintenant à cet étudiant-là de s'y mettre (`yourTurn`), et on
-/// ne lui demande de compte (`signIn`) qu'à cet instant. Demander de se connecter avant
-/// d'avoir rien montré, c'est demander un compte pour une app qu'on n'a pas encore vue.
+/// **Le pays passe avant la filière**, et la filière avant l'année : chacune décide des
+/// réponses de la suivante. La langue se déduit du pays, et ne se demande pas.
+///
+/// La fin du parcours garde sa progression, et elle est délibérée : le parcours vient d'être
+/// construit sous les yeux (`personalizing`), on demande un compte (`signIn`), d'autres l'ont
+/// déjà suivi (`socialProof`), et c'est maintenant à cet étudiant-là de s'y mettre
+/// (`yourTurn`).
 enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
-    case welcome
+    // Ce qu'on va faire ensemble, en cinq écrans.
+    case howItWorks
+    case upload
+    case dates
+    case turnsInto
+    case smartFeatures
+
+    // À qui on parle.
+    case name
+    case greeting
+
+    // Où il en est.
     case country
-    case level
-    case personalizeIntro
+    case schoolType
+    case year
     case goal
-    case forgetting
-    case retentionChart
-    case demoImport
-    case demoSheet
-    case demoReview
-    // **La préparation d'une épreuve, en trois écrans et non plus un.**
-    //
-    // Un seul écran disait « on t'aide même à préparer parfaitement ton examen », ce qui est
-    // une promesse et non une explication : il montrait un calendrier, et l'étudiant devait
-    // deviner le reste. Trois écrans disent ce que Micabo fait vraiment - il pose un plan
-    // jusqu'au jour J, il fait passer des examens blancs, et il montre ce qui résiste - et
-    // chacun montre le geste au lieu de l'annoncer.
-    case examPlan
-    case examMock
-    case examWeak
-    /// La méthode Feynman : expliquer à voix haute ce qu'on croit savoir.
-    case feynman
-    /// Ce que ça donne : la moyenne qui monte, semaine après semaine.
-    case results
-    case subjects
-    case school
-    /// Les jours de la semaine où l'on ne révise pas. C'est `/commencer/repos` du site, et
-    /// la réponse part dans le même champ du profil : les deux plateformes construisent
-    /// leur plan sur la même semaine.
-    case restDays
-    // Le point de départ, l'objectif, et la promesse de les relier. Ils arrivent juste avant
-    // la construction du parcours parce que c'est elle qui s'en sert.
+
+    // Où il veut aller.
     case currentAverage
     case targetAverage
     case together
-    case personalizing
-    case socialProof
-    /// Le rappel quotidien, montré puis demandé pour de bon. Voir `NotificationsStepView`.
+
+    // Ce qui l'aidera à s'y tenir.
     case notifications
-    case yourTurn
+    case subjects
+
+    // La construction, puis le compte, puis l'offre.
+    case personalizing
     case signIn
+    case socialProof
+    case yourTurn
     case trialOffer
     case trialReminder
     case paywall
@@ -94,8 +85,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// Tiré du nom du cas plutôt que recopié dans une liste : une liste parallèle se
     /// désynchronise au premier écran ajouté, et un entonnoir dont un cran porte le nom
     /// d'un autre écran est pire qu'un entonnoir incomplet. En échange, **renommer un cas
-    /// coupe la courbe en deux** — c'est le prix, et il est assumé : ces noms ne bougent
-    /// pas plus souvent que les écrans eux-mêmes.
+    /// coupe la courbe en deux** — c'est le prix, et il est assumé.
     var analyticsName: String {
         String(describing: self)
     }
@@ -104,26 +94,30 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         OnboardingStep(rawValue: rawValue + 1)
     }
 
+    /// **L'écran de la filière et celui de l'année se sautent** dans les pays dont on ne
+    /// connaît que les paliers larges.
+    ///
+    /// Inventer des filières pour un pays qu'on ne décrit pas produirait des réponses
+    /// fausses, et un élève à qui l'on propose une année qui n'existe pas chez lui comprend
+    /// tout de suite que l'app n'a pas été écrite pour lui. Le palier large reste alors la
+    /// seule chose qu'on demande, et il suffit à la génération.
+    func isSkipped(for country: SchoolingCountry) -> Bool {
+        switch self {
+        case .schoolType, .year: !SchoolSystem.isDetailed(country)
+        default: false
+        }
+    }
+
     /// Fond de l'étape, et seule source de vérité à ce sujet : l'écran s'y peint, mais
     /// aussi le bandeau qui porte la jauge et la zone d'état au-dessus. Une bande claire
     /// posée au-dessus d'un écran sombre se lit comme un bug d'affichage.
     ///
-    /// Trois écrans seulement quittent le crème : la variété d'un parcours ne vient pas de
-    /// ses fonds, elle vient de ce qu'il y a à regarder.
-    ///
-    /// **L'accroche n'est plus sur l'encre.** Ouvrir sur un écran entièrement noir donne le
-    /// ton d'un outil de développeur, là où Micabo est une app d'école : on posait le
-    /// contraste maximal de l'app avant d'avoir quoi que ce soit à lire, et tout ce qui
-    /// suivait était forcément un repli. Elle est sur la sauge, un crème teinté de vert
-    /// assez discret pour que l'écran suivant ne se lise pas comme une rupture.
-    ///
-    /// Reste un seul écran d'encre, et c'est le bon : le passage de relais, le seul moment
-    /// où le parcours s'arrête de montrer pour s'adresser à quelqu'un. Le menthe, lui, sert
-    /// l'attente — l'écran de génération était sur le vert plein, et un aplat saturé tenu
-    /// cinq secondes derrière du texte blanc fatigue là où l'on demande de patienter.
+    /// Trois écrans seulement quittent le blanc : l'ouverture, le passage de relais et
+    /// l'attente. La variété d'un parcours ne vient pas de ses fonds, elle vient de ce
+    /// qu'il y a à regarder.
     var surface: OnboardingSurface {
         switch self {
-        case .welcome: .sage
+        case .howItWorks: .sage
         case .yourTurn: .ink
         case .personalizing: .accentSoft
         default: .canvas

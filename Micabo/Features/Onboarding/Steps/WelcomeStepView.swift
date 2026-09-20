@@ -1,7 +1,14 @@
 import SwiftData
 import SwiftUI
 
-/// L'accroche. Un paquet de cartes se rebat tout seul, et rien d'autre.
+/// **L'accroche : « laisse-moi te montrer comment ça marche ».**
+///
+/// C'est le premier des cinq écrans d'ouverture, et le seul qui porte une sortie : « j'ai
+/// déjà un compte ». Elle doit rester là et nulle part ailleurs — quelqu'un qui réinstalle
+/// l'app n'a aucune raison de traverser vingt-deux écrans pour retrouver ses decks, et la
+/// reléguer plus loin revient à la cacher.
+///
+/// Un paquet de cartes se rebat tout seul, et rien d'autre.
 ///
 /// Le paragraphe d'explication qui vivait ici est parti. Sur le premier écran d'une app,
 /// personne ne lit trois lignes sur le fonctionnement d'un algorithme : on regarde. Les
@@ -23,7 +30,7 @@ struct WelcomeStepView: View {
     @State private var showLogin = false
     @State private var checkingAccount = false
 
-    private let surface = OnboardingStep.welcome.surface
+    private let surface = OnboardingStep.howItWorks.surface
 
     var body: some View {
         layout
@@ -74,7 +81,7 @@ struct WelcomeStepView: View {
                 .foregroundStyle(surface.eyebrow)
                 .onboardingAppear(index: 1, stagger: 0.1)
 
-            Text(i18n.t("ios.welcomeTitle"))
+            Text(i18n.t("ios.intro.howItWorks"))
                 .font(MicaboFont.ui(40, weight: .bold))
                 .foregroundStyle(surface.title)
                 .tracking(-1.2)
@@ -90,7 +97,7 @@ struct WelcomeStepView: View {
     private var continueBar: some View {
         MicaboBottomBar(background: surface.background) {
             VStack(spacing: 12) {
-                OnboardingContinueButton(title: i18n.t("common.start")) {
+                OnboardingContinueButton(title: i18n.t("ios.intro.show")) {
                     model.advance()
                 }
                 Button {
