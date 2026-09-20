@@ -33,6 +33,8 @@ struct DeckBuildingStepView: View {
     @State private var stage: DeckBuilder.Stage = .reading
     @State private var failure: String?
     @State private var didStart = false
+    /// Le deck construit, en attente que l'étudiant l'ouvre. Voir `build()`.
+    @State private var built: Course?
 
     /// **Ce que la jauge affiche, qui n'est pas ce que l'étape vaut.**
     ///
@@ -58,19 +60,42 @@ struct DeckBuildingStepView: View {
     }
 
     var body: some View {
-        VStack(spacing: MicaboSpacing.xl) {
-            Spacer(minLength: 0)
+        VStack(spacing: 0) {
+            VStack(spacing: MicaboSpacing.xl) {
+                Spacer(minLength: 0)
 
-            if let failure {
-                failureBody(failure)
-            } else {
-                buildingBody
+                if let failure {
+                    failureBody(failure)
+                } else {
+                    buildingBody
+                }
+
+                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, MicaboSpacing.screen)
 
-            Spacer(minLength: 0)
+            // **Le bouton attend que ce soit prêt, et c'est l'étudiant qui ouvre.**
+            //
+            // L'écran passait la main tout seul six dixièmes de seconde après la dernière
+            // étape : le seul moment du parcours où l'on ait attendu quelque chose finissait
+            // par un écran arraché sous les yeux, sans qu'on ait pu lire « c'est prêt ». Le
+            // bouton occupe sa place dès le début, éteint, pour que rien ne saute quand il
+            // s'allume.
+            if failure == nil {
+                MicaboBottomBar(background: MicaboColor.canvas) {
+                    OnboardingContinueButton(
+                        title: i18n.t("ios.deckBuild.seePlan"),
+                        isEnabled: built != nil,
+                        isLoading: built == nil,
+                        loadingTitle: i18n.t("ios.deckBuild.title"),
+                        isShiny: built != nil
+                    ) {
+                        if let built { onCreated(built) }
+                    }
+                }
+            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, MicaboSpacing.screen)
         .background(MicaboColor.canvas.ignoresSafeArea())
         .task {
             guard !didStart else { return }
@@ -97,8 +122,10 @@ struct DeckBuildingStepView: View {
     private var buildingBody: some View {
         VStack(spacing: 26) {
             VStack(spacing: 9) {
-                Text(i18n.t("ios.deckBuild.title"))
+                Text(i18n.t(built == nil ? "ios.deckBuild.title" : "ios.deckBuild.done"))
                     .font(MicaboFont.ui(26, weight: .bold))
+                    .contentTransition(.opacity)
+                    .animation(.easeOut(duration: 0.25), value: built == nil)
                     .tracking(-0.5)
                     .foregroundStyle(MicaboColor.ink)
                     .multilineTextAlignment(.center)
@@ -239,11 +266,9 @@ struct DeckBuildingStepView: View {
                 self.stage = stage
             }
 
-            // Un temps d'arrêt sur « c'est prêt » avant de passer la main. Sans lui, la
-            // dernière étape s'affiche et disparaît dans la même image : on a l'impression
-            // que l'écran a sauté, pas qu'il a fini.
-            try? await Task.sleep(for: .milliseconds(650))
-            onCreated(outcome.course)
+            stage = .done
+            Haptics.success()
+            withAnimation(.easeOut(duration: 0.3)) { built = outcome.course }
         } catch {
             failure = error.localizedDescription
         }

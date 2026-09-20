@@ -181,6 +181,12 @@ enum MicaboColor {
         let slot = abs(name.hashValue) % tilePastels.count
         return tilePastels[slot]
     }
+
+    /// Le pastel d'un rang, pour une grille dont on choisit l'ordre des couleurs. Deux
+    /// tuiles voisines tirées au hasard peuvent tomber sur le même ; par rang, jamais.
+    static func pastel(at index: Int) -> Color {
+        tilePastels[((index % tilePastels.count) + tilePastels.count) % tilePastels.count]
+    }
 }
 
 enum MicaboSpacing {

@@ -251,6 +251,60 @@ struct MicaboDeckTile: View {
     }
 }
 
+/// **Un dossier dans la grille, sous la même forme qu'un deck.**
+///
+/// Même hauteur, même rayon, même titre dessous : on l'ouvre du même geste, il se lit au
+/// même endroit. Ce qui le distingue est le fond — gris à pointillés, pas un pastel — et sa
+/// légende, qui compte des decks et non des cartes. Un dossier n'a ni pourcentage ni
+/// compte à rebours : il ne s'apprend pas, il range.
+struct MicaboFolderTile: View {
+    let emoji: String
+    let title: String
+    let meta: String
+    /// Vrai pendant qu'un deck est survolé au-dessus, pour dire lequel va le recevoir.
+    var isTargeted: Bool = false
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: MicaboRadius.deck, style: .continuous)
+                        .fill(isTargeted ? MicaboColor.accentSoft : MicaboColor.surfaceMuted)
+
+                    RoundedRectangle(cornerRadius: MicaboRadius.deck, style: .continuous)
+                        .strokeBorder(
+                            isTargeted ? MicaboColor.accent : MicaboColor.strokeStrong,
+                            style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])
+                        )
+
+                    Text(emoji)
+                        .font(.system(size: 44))
+                }
+                .frame(height: MicaboDeckTile.tileHeight)
+                .animation(.easeOut(duration: 0.15), value: isTargeted)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(title)
+                        .font(MicaboFont.ui(14.5, weight: .bold))
+                        .foregroundStyle(MicaboColor.ink)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text(meta)
+                        .font(MicaboFont.ui(11.5, weight: .medium))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
+    }
+}
+
 /// La tuile qui n'en est pas une : celle par laquelle on en crée. Trait pointillé et signe
 /// plus, pour qu'elle se lise comme un emplacement libre et non comme un deck de plus.
 struct MicaboAddDeckTile: View {
@@ -672,76 +726,73 @@ struct MicaboOutlineCard<Content: View>: View {
 struct MicaboDeckBanner: View {
     let emoji: String
     let pastel: Color
-    let title: String
-    /// Entre 0 (déplié) et 1 (replié).
-    let collapse: Double
     /// Le creux du haut de l'écran — barre d'état et île dynamique.
     let safeTop: CGFloat
     var onBack: () -> Void
     var onMenu: () -> Void
 
-    /// Ce que le bandeau occupe **sous** la barre d'état.
-    ///
-    /// La maquette mesure cent quarante-huit points du tout premier pixel de l'écran, dont
-    /// une cinquantaine de barre d'état : il reste quatre-vingt-dix-huit de bandeau. C'est
-    /// cette part-là qui est constante, pas la hauteur totale — un téléphone à île dynamique
-    /// n'a pas le même creux qu'un téléphone à encoche, et fixer le total écraserait l'un ou
-    /// laisserait l'autre respirer.
+    /// Ce que le bandeau occupe **sous** la barre d'état. La maquette mesure cent
+    /// quarante-huit points du tout premier pixel, dont une cinquantaine de barre d'état :
+    /// c'est cette part-là qui est constante, pas la hauteur totale.
     static let expandedBody: CGFloat = 98
     /// Trente-six de bouton et douze de marge basse, comme la barre repliée de la maquette.
     static let collapsedBody: CGFloat = 48
 
     static func expandedHeight(safeTop: CGFloat) -> CGFloat { safeTop + expandedBody }
     static func collapsedHeight(safeTop: CGFloat) -> CGFloat { safeTop + collapsedBody }
-    /// Ce que le bandeau perd en se repliant. C'est aussi la distance de défilement qui
-    /// mène de zéro à un — le mouvement suit le doigt au point près.
+    /// La distance de défilement qui mène de zéro à un sur la barre repliée.
     static let travel: CGFloat = expandedBody - collapsedBody
 
-    private var height: CGFloat {
-        Self.expandedHeight(safeTop: safeTop) - Self.travel * collapse
-    }
-
     var body: some View {
-        ZStack(alignment: .top) {
-            expandedContent
-                .opacity(1 - min(1, collapse * 1.6))
-
-            collapsedContent
-                .opacity(max(0, (collapse - 0.45) / 0.55))
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: height)
-        .background(pastel)
-        .clipped()
-        .shadow(color: MicaboColor.ink.opacity(0.10 * collapse), radius: 14, x: 0, y: 2)
-    }
-
-    private var expandedContent: some View {
         ZStack {
             Text(emoji)
                 .font(.system(size: 52))
 
             HStack {
-                circleButton("chevron.left", action: onBack)
+                MicaboBannerButton(style: .circle, action: onBack) {
+                    Image(systemName: "chevron.left").font(.system(size: 16, weight: .semibold))
+                }
                 Spacer(minLength: 0)
-                circleButton("ellipsis", action: onMenu)
+                MicaboBannerButton(style: .circle, action: onMenu) {
+                    Image(systemName: "ellipsis").font(.system(size: 16, weight: .semibold))
+                }
             }
             .padding(.horizontal, 18)
             .frame(maxHeight: .infinity, alignment: .top)
             .padding(.top, safeTop)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity)
+        .frame(height: Self.expandedHeight(safeTop: safeTop))
+        .background(pastel)
     }
+}
 
-    private var collapsedContent: some View {
+/// **La barre repliée d'un deck**, posée par-dessus le défilement.
+///
+/// Elle n'est pas le bandeau qui rétrécit : c'est un second objet, fixe, qui **apparaît**
+/// pendant que le bandeau — lui, dans le contenu — s'en va vers le haut. Les deux montages
+/// précédents faisaient rétrécir un bandeau ancré, et le mouvement dépendait entièrement de
+/// la sonde de défilement : quand elle se trompait de repère, rien ne bougeait. Ici le
+/// bandeau part quoi qu'il arrive, parce que c'est le `ScrollView` qui l'emporte ; la sonde
+/// ne décide plus que du fondu de la barre.
+///
+/// Elle ne prend pas les appuis tant qu'elle est transparente : une superposition à zéro
+/// d'opacité reçoit quand même les touches, et elle volerait ceux du bandeau dessous.
+struct MicaboDeckBar: View {
+    let emoji: String
+    let pastel: Color
+    let title: String
+    let safeTop: CGFloat
+    /// Entre 0 (invisible) et 1.
+    let visible: Double
+    var onBack: () -> Void
+    var onMenu: () -> Void
+
+    var body: some View {
         HStack(spacing: 8) {
-            Button(action: onBack) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .frame(width: 36, height: 36)
+            MicaboBannerButton(style: .flat, action: onBack) {
+                Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
             }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
 
             Text(emoji)
                 .font(.system(size: 17))
@@ -753,28 +804,44 @@ struct MicaboDeckBanner: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            Button(action: onMenu) {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .frame(width: 36, height: 36)
+            MicaboBannerButton(style: .flat, action: onMenu) {
+                Image(systemName: "ellipsis").font(.system(size: 17, weight: .semibold))
             }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
         }
         .frame(height: 36)
         .padding(.horizontal, 14)
         .padding(.top, safeTop)
         .padding(.bottom, 12)
-        .frame(maxHeight: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity)
+        .background(pastel)
+        .shadow(color: MicaboColor.ink.opacity(0.10 * visible), radius: 14, x: 0, y: 2)
+        .opacity(visible)
+        .allowsHitTesting(visible > 0.5)
+    }
+}
+
+/// Un bouton de bandeau : en pastille blanche translucide sur le bandeau déplié, à plat sur
+/// la barre repliée. Le contenu est libre — un chevron, trois points, ou « Aa ».
+struct MicaboBannerButton<Label: View>: View {
+    enum Style {
+        case circle
+        case flat
     }
 
-    private func circleButton(_ symbol: String, action: @escaping () -> Void) -> some View {
+    var style: Style
+    var action: () -> Void
+    @ViewBuilder var label: Label
+
+    var body: some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 16, weight: .semibold))
+            label
                 .foregroundStyle(MicaboColor.ink)
-                .frame(width: 38, height: 38)
-                .background(Color.white.opacity(0.88), in: Circle())
+                .frame(width: style == .circle ? 38 : 36, height: style == .circle ? 38 : 36)
+                .background {
+                    if style == .circle {
+                        Circle().fill(Color.white.opacity(0.88))
+                    }
+                }
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
     }
@@ -1153,11 +1220,6 @@ struct MicaboFactLine: View {
 struct MicaboChapterBanner: View {
     let emoji: String
     let pastel: Color
-    let title: String
-    let collapse: Double
-    /// Entre 0 et 1. Ne s'affiche que sur la barre repliée.
-    let readingProgress: Double
-    /// Le creux du haut de l'écran.
     let safeTop: CGFloat
     var onBack: () -> Void
     var onTextSize: () -> Void
@@ -1171,28 +1233,72 @@ struct MicaboChapterBanner: View {
     static func collapsedHeight(safeTop: CGFloat) -> CGFloat { safeTop + collapsedBody }
     static let travel: CGFloat = expandedBody - collapsedBody
 
-    private var height: CGFloat {
-        Self.expandedHeight(safeTop: safeTop) - Self.travel * collapse
-    }
-
     var body: some View {
-        ZStack(alignment: .top) {
-            expandedContent
-                .opacity(1 - min(1, collapse * 1.6))
+        ZStack {
+            Text(emoji).font(.system(size: 46))
 
-            collapsedContent
-                .opacity(max(0, (collapse - 0.45) / 0.55))
+            HStack {
+                MicaboBannerButton(style: .circle, action: onBack) {
+                    Image(systemName: "chevron.left").font(.system(size: 16, weight: .semibold))
+                }
+                Spacer(minLength: 0)
+                MicaboBannerButton(style: .circle, action: onTextSize) {
+                    Text("Aa").font(MicaboFont.ui(15, weight: .bold))
+                }
+            }
+            .padding(.horizontal, 18)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .padding(.top, safeTop)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: height)
+        .frame(height: Self.expandedHeight(safeTop: safeTop))
         .background(pastel)
-        .clipped()
-        .overlay(alignment: .bottom) {
-            if collapse > 0.45 {
-                readingBar.opacity(max(0, (collapse - 0.45) / 0.55))
+    }
+}
+
+/// **La barre repliée d'un chapitre**, avec la progression de lecture en filet de trois
+/// points sous elle. Même montage que `MicaboDeckBar` : fixe, elle apparaît pendant que le
+/// bandeau s'en va dans le défilement.
+struct MicaboChapterBar: View {
+    let emoji: String
+    let pastel: Color
+    let title: String
+    let safeTop: CGFloat
+    let visible: Double
+    /// Entre 0 et 1.
+    let readingProgress: Double
+    var onBack: () -> Void
+    var onTextSize: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            MicaboBannerButton(style: .flat, action: onBack) {
+                Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
+            }
+
+            Text(emoji).font(.system(size: 17))
+
+            Text(title)
+                .font(MicaboFont.ui(16, weight: .bold))
+                .tracking(-0.2)
+                .foregroundStyle(MicaboColor.ink)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            MicaboBannerButton(style: .flat, action: onTextSize) {
+                Text("Aa").font(MicaboFont.ui(15, weight: .bold))
             }
         }
-        .shadow(color: MicaboColor.ink.opacity(0.10 * collapse), radius: 14, x: 0, y: 2)
+        .frame(height: 36)
+        .padding(.horizontal, 14)
+        .padding(.top, safeTop)
+        .padding(.bottom, 12)
+        .frame(maxWidth: .infinity)
+        .background(pastel)
+        .overlay(alignment: .bottom) { readingBar }
+        .shadow(color: MicaboColor.ink.opacity(0.10 * visible), radius: 14, x: 0, y: 2)
+        .opacity(visible)
+        .allowsHitTesting(visible > 0.5)
     }
 
     private var readingBar: some View {
@@ -1205,76 +1311,6 @@ struct MicaboChapterBanner: View {
             }
         }
         .frame(height: 3)
-    }
-
-    private var expandedContent: some View {
-        ZStack {
-            Text(emoji).font(.system(size: 46))
-
-            HStack {
-                circleButton { onBack() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .semibold))
-                }
-
-                Spacer(minLength: 0)
-
-                circleButton { onTextSize() } label: {
-                    Text("Aa").font(MicaboFont.ui(15, weight: .bold))
-                }
-            }
-            .padding(.horizontal, 18)
-            .frame(maxHeight: .infinity, alignment: .top)
-            .padding(.top, safeTop)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var collapsedContent: some View {
-        HStack(spacing: 8) {
-            Button(action: onBack) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .frame(width: 36, height: 36)
-            }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
-
-            Text(emoji).font(.system(size: 17))
-
-            Text(title)
-                .font(MicaboFont.ui(16, weight: .bold))
-                .tracking(-0.2)
-                .foregroundStyle(MicaboColor.ink)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            Button(action: onTextSize) {
-                Text("Aa")
-                    .font(MicaboFont.ui(15, weight: .bold))
-                    .foregroundStyle(MicaboColor.ink)
-                    .frame(width: 36, height: 36)
-            }
-            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
-        }
-        .frame(height: 36)
-        .padding(.horizontal, 14)
-        .padding(.top, safeTop)
-        .padding(.bottom, 12)
-        .frame(maxHeight: .infinity, alignment: .top)
-    }
-
-    private func circleButton<Label: View>(
-        _ action: @escaping () -> Void,
-        @ViewBuilder label: () -> Label
-    ) -> some View {
-        Button(action: action) {
-            label()
-                .foregroundStyle(MicaboColor.ink)
-                .frame(width: 38, height: 38)
-                .background(Color.white.opacity(0.88), in: Circle())
-        }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
     }
 }
 

@@ -1,335 +1,175 @@
 import SwiftUI
 
-/// **Les scènes animées du parcours d'accueil.**
+/// **Les visuels des écrans d'ouverture.**
 ///
-/// Le parcours n'avait que des animations d'**entrée** : chaque écran posait ses blocs en
-/// fondu, puis s'arrêtait net. Sept pages plus loin, l'étudiant a vu sept images fixes
-/// séparées par sept fondus identiques, et l'app n'a rien montré d'elle-même. Une animation
-/// d'entrée dit « la page est arrivée » ; elle ne dit rien de ce que la page raconte.
+/// La première version de ce fichier portait trois scènes animées — une feuille qui
+/// devenait des cartes, un anneau de compte à rebours, une carte qui se retournait. Elles
+/// bougeaient, et on ne comprenait pas ce qu'elles montraient : trop d'objets, trop de
+/// mouvements en même temps, et aucun ne ressemblait à ce que l'app affiche vraiment.
 ///
-/// Ces scènes-là tournent en boucle pendant qu'on lit. Chacune met en mouvement **ce que son
-/// écran affirme** — un document qui devient des cartes, une carte qu'on retourne, une
-/// courbe d'oubli qu'on rattrape, un compte à rebours qui bat. C'est le seul genre
-/// d'animation qui vaille la place qu'il prend : elle remplace une phrase.
-///
-/// **Toutes s'arrêtent quand le système demande moins de mouvement.** Une boucle infinie est
-/// exactement ce que `Réduire les animations` vise ; la scène rend alors sa dernière image,
-/// qui est composée pour se tenir seule.
+/// Ce qui est là maintenant vient des applications de référence (Growth, Gizmo) : **des
+/// tuiles**, grandes, avec un emoji et trois mots, qui entrent l'une après l'autre. On lit
+/// quatre formats de document en une seconde parce qu'ils sont posés comme quatre objets,
+/// pas racontés. Et elles vivent — chacune respire légèrement, à son rythme — sans que rien
+/// ne demande à être déchiffré.
 enum OnboardingScene {
-    /// La hauteur commune. Les scènes ne se ressemblent pas, mais elles occupent la même
-    /// place : sans ça, le titre monterait et descendrait d'un écran d'intro à l'autre.
-    static let height: CGFloat = 188
+    /// Deux colonnes, comme la grille des decks : les tuiles de l'accueil et celles de l'app
+    /// sont le même objet.
+    static let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12),
+    ]
 }
 
-// MARK: - Le document qui devient des cartes
+// MARK: - Une tuile
 
-/// **Une feuille se transforme en paquet de cartes**, en boucle.
+/// **Une grande tuile pastel, un emoji, un libellé.**
 ///
-/// C'est la promesse de l'écran d'import, littéralement : le document entre par la gauche,
-/// ses lignes se rassemblent, et trois cartes s'en détachent en éventail. Puis tout revient
-/// et recommence.
-struct OnboardingImportScene: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    /// De 0 (la feuille seule) à 1 (les trois cartes déployées).
-    @State private var phase: Double = 0
-
-    private static let lines: [CGFloat] = [1, 0.78, 0.92, 0.64, 0.84]
-
-    var body: some View {
-        ZStack {
-            // Les mêmes valeurs nommées que pour les cartes, et pour la même raison : un
-            // littéral multiplié par une phase à l'intérieur d'un `offset` est une inconnue
-            // de plus pour l'inférence.
-            let slideX = CGFloat(-34 * phase)
-            let slideY = CGFloat(6 * phase)
-            let tilt = Double(-7 * phase)
-            let fade = Double(1 - 0.45 * phase)
-
-            sheet
-                .offset(x: slideX, y: slideY)
-                .rotationEffect(.degrees(tilt))
-                .opacity(fade)
-
-            ForEach(0..<3, id: \.self) { index in
-                card(index)
-            }
-        }
-        .frame(height: OnboardingScene.height)
-        .frame(maxWidth: .infinity)
-        .accessibilityHidden(true)
-        .onAppear(perform: start)
-    }
-
-    private var sheet: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            ForEach(Array(Self.lines.enumerated()), id: \.offset) { _, width in
-                Capsule()
-                    .fill(MicaboColor.inkTertiary.opacity(0.35))
-                    .frame(height: 6)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .scaleEffect(x: width, anchor: .leading)
-            }
-        }
-        .padding(16)
-        .frame(width: 112, height: 138)
-        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
-        .shadow(color: MicaboColor.ink.opacity(0.06), radius: 10, y: 4)
-    }
-
-    /// **La place d'une carte à un instant donné**, calculée à part.
-    ///
-    /// Les six valeurs vivaient dans la chaîne de modificateurs, mêlées à des littéraux sans
-    /// type : `38 + spread * share`, `0.86 + 0.14 * share`, `Double(index - 1) * 9 * share`.
-    /// Chacune est une petite énigme pour l'inférence — un littéral peut être `Double`,
-    /// `CGFloat`, ou n'importe quel type numérique — et posées dans une chaîne de dix
-    /// modificateurs elles se multiplient entre elles jusqu'à faire renoncer le compilateur.
-    ///
-    /// Elles sont nommées et typées ici. C'est aussi plus clair à lire : la trajectoire d'une
-    /// carte se lit en cinq lignes au lieu de se deviner dans les marges d'un `offset`.
-    private struct CardPlacement {
-        var share: Double
-        var offsetX: CGFloat
-        var offsetY: CGFloat
-        var angle: Double
-        var scale: CGFloat
-
-        init(index: Int, phase: Double) {
-            let raw: Double = (phase - Double(index) * 0.16) / 0.68
-            share = Swift.max(0, Swift.min(1, raw))
-
-            let spread: Double = 26 * Double(index) - 26
-            offsetX = CGFloat(38 + spread * share)
-            offsetY = CGFloat(-8 * share)
-            angle = Double(index - 1) * 9 * share
-            scale = CGFloat(0.86 + 0.14 * share)
-        }
-    }
-
-    /// Une carte du paquet. Elles sortent l'une après l'autre : le décalage sur la phase est
-    /// ce qui fait l'éventail plutôt qu'un bloc qui glisse.
-    private func card(_ index: Int) -> some View {
-        let place = CardPlacement(index: index, phase: phase)
-
-        return cardFace
-            .offset(x: place.offsetX, y: place.offsetY)
-            .rotationEffect(.degrees(place.angle))
-            .scaleEffect(place.scale)
-            .opacity(place.share)
-    }
-
-    /// Le dessin d'une carte, sans sa position : un lavis violet, un filet, et deux traits
-    /// qui figurent une question et sa réponse.
-    private var cardFace: some View {
-        let shape = RoundedRectangle(cornerRadius: 13, style: .continuous)
-
-        return shape
-            .fill(MicaboColor.accentSoft)
-            .overlay { shape.strokeBorder(MicaboColor.accent.opacity(0.22), lineWidth: 1) }
-            .overlay(alignment: .topLeading) { cardLines }
-            .frame(width: 96, height: 120)
-            .shadow(color: MicaboColor.accent.opacity(0.14), radius: 9, y: 4)
-    }
-
-    private var cardLines: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Capsule()
-                .fill(MicaboColor.accent.opacity(0.55))
-                .frame(width: 40, height: 5)
-
-            Capsule()
-                .fill(MicaboColor.accent.opacity(0.28))
-                .frame(width: 56, height: 5)
-        }
-        .padding(14)
-    }
-
-    private func start() {
-        guard !reduceMotion else {
-            phase = 1
-            return
-        }
-        withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
-            phase = 1
-        }
-    }
-}
-
-// MARK: - La carte qu'on retourne
-
-/// **Une carte qui se retourne**, question d'un côté, réponse de l'autre.
-///
-/// C'est le geste central de l'app, et il n'était montré nulle part avant la première
-/// session. Le retournement est un vrai `rotation3DEffect` : la carte tourne sur son axe
-/// vertical, et la face arrière n'apparaît qu'une fois passé le quart de tour — sans ça, on
-/// lirait la réponse à l'envers pendant une demi-seconde.
-struct OnboardingFlipScene: View {
-    var question: String
-    var answer: String
+/// Elle respire : un balancement de trois points sur trois secondes, décalé d'une tuile à
+/// l'autre pour que la grille ne monte pas et ne descende pas d'un bloc. C'est assez pour
+/// qu'un écran ne soit pas une image fixe, et pas assez pour qu'on regarde le mouvement
+/// plutôt que le texte.
+struct OnboardingTile: View {
+    let emoji: String
+    let title: String
+    let pastel: Color
+    var badge: String?
+    /// Le rang dans la grille : règle l'entrée en cascade et le décalage de la respiration.
+    var rank: Int = 0
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var flipped = false
-
-    private var angle: Double { flipped ? 180 : 0 }
+    @State private var lifted = false
 
     var body: some View {
-        ZStack {
-            face(text: question, tone: .question)
-                .opacity(flipped ? 0 : 1)
+        let lift: CGFloat = lifted ? -3 : 3
+        let wake: Double = Double(rank) * 0.4
 
-            face(text: answer, tone: .answer)
-                .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                .opacity(flipped ? 1 : 0)
-        }
-        .rotation3DEffect(.degrees(angle), axis: (x: 0, y: 1, z: 0), perspective: 0.42)
-        .frame(height: OnboardingScene.height)
-        .frame(maxWidth: .infinity)
-        .accessibilityHidden(true)
-        .onAppear(perform: start)
-    }
+        return VStack(alignment: .leading, spacing: 12) {
+            Text(emoji)
+                .font(.system(size: 38))
+                .frame(height: 44)
 
-    private enum Tone { case question, answer }
-
-    private func face(text: String, tone: Tone) -> some View {
-        VStack(spacing: 12) {
-            Text(tone == .question ? "?" : "✓")
-                .font(MicaboFont.ui(26, weight: .heavy))
-                .foregroundStyle(tone == .question ? MicaboColor.accent : MicaboColor.positive)
-                .frame(width: 42, height: 42)
-                .background(
-                    tone == .question ? MicaboColor.accentSoft : MicaboColor.positiveSoft,
-                    in: Circle()
-                )
-
-            Text(text)
-                .font(MicaboFont.ui(16, weight: .semibold))
+            Text(title)
+                .font(MicaboFont.ui(14.5, weight: .semibold))
                 .foregroundStyle(MicaboColor.ink)
-                .multilineTextAlignment(.center)
+                .lineSpacing(1)
+                .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(22)
-        .frame(width: 244, height: 158)
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
+        .background(pastel, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(alignment: .topTrailing) {
+            if let badge {
+                Text(badge)
+                    .font(MicaboFont.ui(10, weight: .heavy))
+                    .tracking(0.6)
+                    .foregroundStyle(MicaboColor.accent)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .background(MicaboColor.canvas.opacity(0.85), in: Capsule())
+                    .padding(10)
+            }
+        }
+        .offset(y: lift)
+        .onboardingAppear(index: 3 + rank, stagger: OnboardingMotion.rowStagger)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true).delay(wake)) {
+                lifted = true
+            }
+        }
+    }
+}
+
+// MARK: - Le calendrier
+
+/// **Un mois, un jour entouré, et le compte à rebours qui bat.**
+///
+/// C'est ce que la page des dates affirme — « tu poses tes dates » — montré tel que l'app le
+/// montre : un calendrier, la date de l'épreuve en violet, et la pastille J-12 qu'on
+/// retrouve sur chaque deck. Le trait qui relie aujourd'hui à l'épreuve se trace sous les
+/// yeux, et c'est le seul mouvement de la page : la durée qui sépare les deux.
+struct OnboardingCalendarScene: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @State private var drawn = false
+    @State private var pulse = false
+
+    private var pulseScale: CGFloat { pulse ? 1.06 : 1 }
+
+    /// Un mois qui commence un lundi, avec aujourd'hui le 3 et l'épreuve le 15.
+    private static let today = 3
+    private static let exam = 15
+    private static let days = 28
+
+    var body: some View {
+        VStack(spacing: 14) {
+            HStack {
+                Text(i18n.t("ios.intro.sampleMonth"))
+                    .font(MicaboFont.ui(15, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+                Spacer(minLength: 0)
+                MicaboCountdownPill(days: Self.exam - Self.today)
+                    .scaleEffect(pulseScale)
+            }
+
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 8) {
+                ForEach(1...Self.days, id: \.self) { day in
+                    dayCell(day)
+                }
+            }
+        }
+        .padding(18)
         .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
         }
-        .shadow(color: MicaboColor.ink.opacity(0.07), radius: 14, y: 6)
-    }
-
-    /// Le retournement marque un temps sur chaque face : une carte qui tourne sans arrêt ne
-    /// se lit pas, et c'est justement ce qu'on veut montrer — qu'on a le temps de chercher.
-    private func start() {
-        guard !reduceMotion else { return }
-        Task { @MainActor in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(1900))
-                withAnimation(.timingCurve(0.4, 0, 0.2, 1, duration: 0.7)) { flipped.toggle() }
-            }
-        }
-    }
-}
-
-// MARK: - Le compte à rebours qui bat
-
-/// **Un anneau qui se remplit et un chiffre qui descend.**
-///
-/// L'écran des dates montrait une carte figée. Ce qu'elle affirme — « la date change le
-/// rythme » — est un mouvement : l'anneau se remplit à mesure que l'échéance approche, le
-/// chiffre descend, et la flamme bat. Trois choses qui bougent ensemble et qui disent la
-/// même chose.
-struct OnboardingCountdownScene: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var fill: CGFloat = 0.08
-    @State private var days = 24
-    @State private var beat = false
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .stroke(MicaboColor.track, lineWidth: 13)
-
-            Circle()
-                .trim(from: 0, to: fill)
-                .stroke(
-                    AngularGradient(
-                        colors: [MicaboColor.accent, MicaboColor.flame],
-                        center: .center,
-                        startAngle: .degrees(-90),
-                        endAngle: .degrees(270)
-                    ),
-                    style: StrokeStyle(lineWidth: 13, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-
-            VStack(spacing: 2) {
-                Text("J-\(days)")
-                    .font(MicaboFont.ui(34, weight: .heavy))
-                    .tracking(-1.2)
-                    .foregroundStyle(MicaboColor.ink)
-                    .monospacedDigit()
-                    .contentTransition(.numericText(countsDown: true))
-
-                HStack(spacing: 5) {
-                    Image(systemName: "flame.fill")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(MicaboColor.flame)
-                        .scaleEffect(beat ? 1.22 : 1)
-
-                    Text("\(cardsPerDay)")
-                        .font(MicaboFont.ui(13, weight: .bold))
-                        .foregroundStyle(MicaboColor.inkSecondary)
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
-                }
-            }
-        }
-        .frame(width: 152, height: 152)
-        .frame(height: OnboardingScene.height)
-        .frame(maxWidth: .infinity)
+        .shadow(color: MicaboColor.ink.opacity(0.05), radius: 14, y: 6)
         .accessibilityHidden(true)
         .onAppear(perform: start)
     }
 
-    /// Le rythme que cette date impose. Il monte quand l'échéance approche, ce qui est
-    /// exactement la règle du produit — la même que `DeckPace`, en plus simple.
-    private var cardsPerDay: Int {
-        max(4, Int((120.0 / Double(max(1, days))).rounded()))
+    @ViewBuilder
+    private func dayCell(_ day: Int) -> some View {
+        let isToday = day == Self.today
+        let isExam = day == Self.exam
+        let isBetween = day > Self.today && day < Self.exam
+
+        Text("\(day)")
+            .font(MicaboFont.ui(13, weight: isExam || isToday ? .heavy : .medium))
+            .foregroundStyle(isExam ? MicaboColor.onInk : (isToday ? MicaboColor.accent : MicaboColor.inkSecondary))
+            .monospacedDigit()
+            .frame(maxWidth: .infinity)
+            .frame(height: 32)
+            .background {
+                if isExam {
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .fill(MicaboColor.accent)
+                        .scaleEffect(drawn ? 1 : 0.6)
+                        .opacity(drawn ? 1 : 0)
+                } else if isToday {
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .strokeBorder(MicaboColor.accent, lineWidth: 1.6)
+                } else if isBetween {
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .fill(MicaboColor.accentWash)
+                        .opacity(drawn ? 1 : 0)
+                }
+            }
     }
 
     private func start() {
         guard !reduceMotion else {
-            fill = 0.72
-            days = 7
+            drawn = true
             return
         }
-
-        withAnimation(.easeOut(duration: 0.9).repeatForever(autoreverses: true)) {
-            beat = true
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.7).delay(0.5)) {
+            drawn = true
         }
-
-        Task { @MainActor in
-            while !Task.isCancelled {
-                for step in stride(from: 24, through: 4, by: -4) {
-                    withAnimation(.easeInOut(duration: 0.55)) {
-                        days = step
-                        fill = CGFloat(1 - Double(step) / 26.0)
-                    }
-                    try? await Task.sleep(for: .milliseconds(620))
-                }
-                try? await Task.sleep(for: .milliseconds(700))
-                withAnimation(.easeInOut(duration: 0.5)) {
-                    days = 24
-                    fill = 0.08
-                }
-                try? await Task.sleep(for: .milliseconds(700))
-            }
+        withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true).delay(1.2)) {
+            pulse = true
         }
     }
 }

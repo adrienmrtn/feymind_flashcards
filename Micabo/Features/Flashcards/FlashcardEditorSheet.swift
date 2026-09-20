@@ -279,8 +279,8 @@ private struct FlashcardForm: View {
                 header()
                     .padding(.bottom, MicaboSpacing.xxs)
 
-                field(title: L10n.t("ios.front", locale: .resolved()), text: $front, minHeight: 96)
-                field(title: L10n.t("ios.back", locale: .resolved()), text: $back, minHeight: 140)
+                field(title: L10n.t("ios.front", locale: .resolved()), text: $front, minHeight: 96, allowsFormula: true)
+                field(title: L10n.t("ios.back", locale: .resolved()), text: $back, minHeight: 140, allowsFormula: true)
                 field(
                     title: L10n.t("app.session.hint", locale: .resolved()),
                     subtitle: L10n.t("ios.optional", locale: .resolved()),
@@ -301,11 +301,17 @@ private struct FlashcardForm: View {
     /// Le sous-titre est devenu facultatif, et il ne reste que là où il apprend quelque
     /// chose : « Indice · Facultatif ». Un recto **est** la question et un verso **est** la
     /// réponse, donc « La question posée » sous « Recto » ne faisait que réécrire l'intitulé.
+    /// `allowsFormula` pose un bouton **LaTeX** à droite de l'intitulé. Il écrit une paire
+    /// de dollars à la fin du champ : c'est entre eux que s'écrit la formule, et c'est ce
+    /// que `FormulaText` compose sur la carte — une fraction avec sa barre, une racine
+    /// avec son radical, pas une transcription `a/b`. Le bouton existe parce que personne
+    /// ne devine que les dollars sont la porte.
     private func field(
         title: String,
         subtitle: String? = nil,
         text: Binding<String>,
-        minHeight: CGFloat
+        minHeight: CGFloat,
+        allowsFormula: Bool = false
     ) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 6) {
@@ -316,6 +322,27 @@ private struct FlashcardForm: View {
                     Text(subtitle)
                         .font(MicaboFont.micro)
                         .foregroundStyle(MicaboColor.inkTertiary)
+                }
+
+                Spacer(minLength: 0)
+
+                if allowsFormula {
+                    Button {
+                        let current = text.wrappedValue
+                        let separator = current.isEmpty || current.hasSuffix(" ") || current.hasSuffix("\n") ? "" : " "
+                        text.wrappedValue = current + separator + "$$"
+                        Haptics.selection()
+                    } label: {
+                        Text("LaTeX")
+                            .font(MicaboFont.ui(11, weight: .heavy))
+                            .tracking(0.4)
+                            .foregroundStyle(MicaboColor.accent)
+                            .padding(.vertical, 4)
+                            .padding(.horizontal, 9)
+                            .background(MicaboColor.accentSoft, in: Capsule())
+                    }
+                    .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
+                    .accessibilityLabel("LaTeX")
                 }
             }
 

@@ -79,6 +79,13 @@ struct SignInScreen: View {
     var onCreateAccount: (() -> Void)? = nil
     var onSkip: (() -> Void)? = nil
     var isResolving: Bool = false
+    /// **La mascotte à la place du logo, et les portes sans cadre.** C'est la fin du
+    /// parcours d'accueil : quelqu'un vient de répondre à quinze questions posées par un
+    /// personnage, et l'écran qui lui demande un compte lui montrait soudain un logo dans
+    /// un carré, et trois boutons dans une carte à filet. La même mascotte, qui se réjouit,
+    /// dit que c'est la même conversation ; les boutons posés à même la page disent que ce
+    /// n'est pas un formulaire.
+    var showsMascot: Bool = false
 
     @Environment(AuthController.self) private var auth
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -147,15 +154,22 @@ struct SignInScreen: View {
     private var content: some View {
         VStack(spacing: 0) {
             toolbar
-            if showsBrand {
+            if showsMascot {
+                MicaboMascot(mood: .celebrating, size: 104)
+            } else if showsBrand {
                 MicaboBrandMark(size: 64)
                     .padding(.top, 18)
             }
             titleBlock
-                .padding(.top, showsBrand ? 16 : 24)
-            SignInProviderButtons()
-                .micaboCard(padding: 18, radius: MicaboRadius.card)
-                .padding(.top, 26)
+                .padding(.top, showsMascot ? 4 : (showsBrand ? 16 : 24))
+            if showsMascot {
+                SignInProviderButtons()
+                    .padding(.top, 26)
+            } else {
+                SignInProviderButtons()
+                    .micaboCard(padding: 18, radius: MicaboRadius.card)
+                    .padding(.top, 26)
+            }
             SignInFailureNote(includeSent: false, includeError: true)
                 .padding(.top, MicaboSpacing.sm)
             legalLine

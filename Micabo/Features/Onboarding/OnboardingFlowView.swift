@@ -58,6 +58,7 @@ struct OnboardingFlowView: View {
     private var stepView: some View {
         switch model.step {
         case .howItWorks: WelcomeStepView()
+        case .showMe: ShowMeStepView()
         case .upload: UploadStepView()
         case .dates: DatesStepView()
         case .turnsInto: TurnsIntoStepView()

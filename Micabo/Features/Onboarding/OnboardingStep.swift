@@ -43,8 +43,10 @@ import Foundation
 /// déjà suivi (`socialProof`), et c'est maintenant à cet étudiant-là de s'y mettre
 /// (`yourTurn`).
 enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
-    // Ce qu'on va faire ensemble, en cinq écrans.
+    // Ce qu'on va faire ensemble, en six écrans.
     case howItWorks
+    /// La mascotte se présente et annonce la suite. Voir `ShowMeStepView`.
+    case showMe
     case upload
     case dates
     case turnsInto
@@ -112,14 +114,14 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// aussi le bandeau qui porte la jauge et la zone d'état au-dessus. Une bande claire
     /// posée au-dessus d'un écran sombre se lit comme un bug d'affichage.
     ///
-    /// Trois écrans seulement quittent le blanc : l'ouverture, le passage de relais et
-    /// l'attente. La variété d'un parcours ne vient pas de ses fonds, elle vient de ce
-    /// qu'il y a à regarder.
+    /// Deux écrans seulement quittent le blanc : l'ouverture et le passage de relais.
+    /// L'attente y est revenue — un lavis violet tenu cinq secondes derrière une mascotte
+    /// violette la faisait disparaître. La variété d'un parcours ne vient pas de ses fonds,
+    /// elle vient de ce qu'il y a à regarder.
     var surface: OnboardingSurface {
         switch self {
         case .howItWorks: .sage
         case .yourTurn: .ink
-        case .personalizing: .accentSoft
         default: .canvas
         }
     }

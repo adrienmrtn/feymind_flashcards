@@ -16,12 +16,11 @@ import SwiftUI
 // Le premier des cinq, l'accroche, vit dans `WelcomeStepView` : il porte le paquet de
 // cartes animé et la sortie « j'ai déjà un compte », qui n'a sa place qu'au tout début.
 
-/// « Tu commences par déposer tes supports », avec les formats acceptés.
+/// « Tu déposes tes supports. »
 ///
-/// Les pastilles ne sont pas décoratives : elles répondent à la seule question que se pose
-/// quelqu'un à cet instant, qui est « est-ce que mes trucs à moi rentrent là-dedans ». Un
-/// PDF de prof, des photos du tableau, un cours Word, une vidéo — la réponse est oui, et
-/// elle se lit sans texte.
+/// Quatre tuiles, comme la grille des decks : un PDF, des photos, un Word, une vidéo. On
+/// les lit en une seconde parce qu'elles sont posées comme quatre objets, et elles entrent
+/// l'une après l'autre.
 struct UploadStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -38,35 +37,18 @@ struct UploadStepView: View {
             title: i18n.t("ios.intro.upload"),
             expandsContent: true
         ) {
-            VStack(spacing: 10) {
+            VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
-                OnboardingImportScene()
-                    .onboardingAppear(index: 0)
-
-                ForEach(Array(Self.formats.enumerated()), id: \.offset) { index, format in
-                    HStack(spacing: 14) {
-                        Text(format.emoji)
-                            .font(.system(size: 26))
-
-                        Text(i18n.t(format.key))
-                            .font(MicaboFont.ui(16, weight: .medium))
-                            .foregroundStyle(MicaboColor.ink)
-
-                        Spacer(minLength: 0)
-
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(MicaboColor.positive)
+                LazyVGrid(columns: OnboardingScene.columns, spacing: 12) {
+                    ForEach(Array(Self.formats.enumerated()), id: \.offset) { index, format in
+                        OnboardingTile(
+                            emoji: format.emoji,
+                            title: i18n.t(format.key),
+                            pastel: MicaboColor.pastel(at: index),
+                            rank: index
+                        )
                     }
-                    .padding(.vertical, 15)
-                    .padding(.horizontal, 16)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-                            .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-                    }
-                    .onboardingAppear(index: index)
                 }
 
                 Spacer(minLength: 0)
@@ -77,7 +59,11 @@ struct UploadStepView: View {
     }
 }
 
-/// « Puis tu poses tes dates d'épreuve et tes objectifs. »
+/// « Tu poses tes dates. »
+///
+/// Un calendrier, la date de l'épreuve en violet, la pastille du compte à rebours : ce que
+/// l'app montre vraiment, et rien d'autre. La carte à trois lignes de légende qui vivait ici
+/// expliquait ce que le calendrier montre.
 struct DatesStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -87,10 +73,10 @@ struct DatesStepView: View {
             title: i18n.t("ios.intro.dates"),
             expandsContent: true
         ) {
-            VStack(spacing: MicaboSpacing.md) {
+            VStack(spacing: 0) {
                 Spacer(minLength: 0)
-                OnboardingCountdownScene()
-                IntroCountdownCard()
+                OnboardingCalendarScene()
+                    .onboardingAppear(index: 3)
                 Spacer(minLength: 0)
             }
         } footer: {
@@ -99,7 +85,7 @@ struct DatesStepView: View {
     }
 }
 
-/// « Tes supports deviennent des fiches et des cartes, rangées. »
+/// « Ça devient un cours, rangé. »
 struct TurnsIntoStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -120,7 +106,7 @@ struct TurnsIntoStepView: View {
     }
 }
 
-/// « Avec ce qu'il faut autour pour t'aider. »
+/// « Et ce qu'il faut autour. »
 ///
 /// **Le mode audio est annoncé alors qu'il n'existe pas encore**, et c'est un choix
 /// assumé : il est décidé, il est en construction, et le promettre ici cadre l'attente au
@@ -142,44 +128,19 @@ struct SmartFeaturesStepView: View {
             title: i18n.t("ios.intro.features"),
             expandsContent: true
         ) {
-            VStack(spacing: 10) {
+            VStack(spacing: 0) {
                 Spacer(minLength: 0)
 
-                OnboardingFlipScene(
-                    question: i18n.t("ios.intro.flip.question"),
-                    answer: i18n.t("ios.intro.flip.answer")
-                )
-                .onboardingAppear(index: 0)
-
-                ForEach(Array(Self.features.enumerated()), id: \.offset) { index, feature in
-                    HStack(spacing: 14) {
-                        Text(feature.emoji)
-                            .font(.system(size: 24))
-
-                        Text(i18n.t(feature.key))
-                            .font(MicaboFont.ui(15.5, weight: .medium))
-                            .foregroundStyle(MicaboColor.ink)
-                            .fixedSize(horizontal: false, vertical: true)
-
-                        Spacer(minLength: 0)
-
-                        if feature.soon {
-                            Text(i18n.t("ios.intro.soon"))
-                                .font(MicaboFont.ui(11, weight: .bold))
-                                .foregroundStyle(MicaboColor.accent)
-                                .padding(.vertical, 4)
-                                .padding(.horizontal, 9)
-                                .background(MicaboColor.accentSoft, in: Capsule())
-                        }
+                LazyVGrid(columns: OnboardingScene.columns, spacing: 12) {
+                    ForEach(Array(Self.features.enumerated()), id: \.offset) { index, feature in
+                        OnboardingTile(
+                            emoji: feature.emoji,
+                            title: i18n.t(feature.key),
+                            pastel: MicaboColor.pastel(at: index + 1),
+                            badge: feature.soon ? i18n.t("ios.intro.soon") : nil,
+                            rank: index
+                        )
                     }
-                    .padding(.vertical, 14)
-                    .padding(.horizontal, 16)
-                    .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-                            .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-                    }
-                    .onboardingAppear(index: index)
                 }
 
                 Spacer(minLength: 0)
@@ -193,54 +154,6 @@ struct SmartFeaturesStepView: View {
 }
 
 // MARK: - Les vignettes
-
-/// Un compte à rebours d'épreuve, posé comme il l'est dans un deck.
-private struct IntroCountdownCard: View {
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    @State private var progress: Double = 0
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 12) {
-                Text("🧪")
-                    .font(.system(size: 26))
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(i18n.t("ios.intro.sampleDeck"))
-                        .font(MicaboFont.ui(15, weight: .semibold))
-                        .foregroundStyle(MicaboColor.ink)
-                    Text(i18n.t("ios.intro.sampleExam"))
-                        .font(MicaboFont.ui(12, weight: .regular))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                }
-
-                Spacer(minLength: 0)
-
-                Text("J-12")
-                    .font(MicaboFont.number(17, weight: .bold))
-                    .foregroundStyle(MicaboColor.accent)
-                    .monospacedDigit()
-            }
-
-            MicaboProgressBar(progress: progress, tint: MicaboColor.accent, track: MicaboColor.stroke)
-                .frame(height: 6)
-
-            Text(i18n.t("ios.intro.samplePace"))
-                .font(MicaboFont.ui(12.5, weight: .medium))
-                .foregroundStyle(MicaboColor.inkSecondary)
-        }
-        .padding(MicaboSpacing.md)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
-        }
-        .onAppear {
-            withAnimation(OnboardingMotion.shift.delay(0.3)) { progress = 0.42 }
-        }
-    }
-}
 
 /// Un plan de deck : quatre chapitres, deux sus, un entamé.
 private struct IntroPlanCard: View {
@@ -295,7 +208,7 @@ private struct IntroPlanCard: View {
                 }
             }
         }
-        .onAppear(perform: start)
+        .task { await cycle() }
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
@@ -303,21 +216,22 @@ private struct IntroPlanCard: View {
         }
     }
 
-    private func start() {
+    /// Dans `.task` : annulé avec la vue, pas une boucle qui lui survit.
+    @MainActor
+    private func cycle() async {
         guard !reduceMotion else {
             reached = Self.rows.count
             return
         }
-        Task { @MainActor in
-            while !Task.isCancelled {
-                for step in 0...Self.rows.count {
-                    withAnimation(.easeOut(duration: 0.45)) { reached = step }
-                    try? await Task.sleep(for: .milliseconds(620))
-                }
-                try? await Task.sleep(for: .milliseconds(1400))
-                withAnimation(.easeOut(duration: 0.35)) { reached = 0 }
-                try? await Task.sleep(for: .milliseconds(500))
+        while !Task.isCancelled {
+            for step in 0...Self.rows.count {
+                withAnimation(.easeOut(duration: 0.45)) { reached = step }
+                try? await Task.sleep(for: .milliseconds(620))
+                guard !Task.isCancelled else { return }
             }
+            try? await Task.sleep(for: .milliseconds(1400))
+            withAnimation(.easeOut(duration: 0.35)) { reached = 0 }
+            try? await Task.sleep(for: .milliseconds(500))
         }
     }
 }

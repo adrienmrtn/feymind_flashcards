@@ -4,47 +4,35 @@ import SwiftUI
 /// Génération du parcours. Purement visuel — les réponses sont déjà enregistrées — mais il
 /// ne doit jamais laisser croire que l'app a gelé.
 ///
-/// Sa mise en page tient en trois bandes qui ne bougent plus une fois posées : l'accroche en
-/// haut, l'anneau au centre, les étapes en bas. La version précédente empilait tout en haut
-/// de l'écran derrière un ressort, si bien que la hauteur du bloc changeait à chaque phrase
-/// et que l'écran tremblait pendant qu'il travaillait.
+/// **Ce qu'il y avait, et ce qu'il y a.** L'écran portait un sur-titre en capitales, une
+/// accroche de trente points, une ligne de détail, un anneau avec son propre sous-titre,
+/// une carte de quatre étapes, et un bouton avec son libellé d'attente : six textes pour
+/// dire « ça travaille », sur un lavis violet. Il reste la mascotte qui réfléchit, une
+/// phrase, l'anneau, et les quatre étapes qui se cochent. Sur du blanc.
 ///
 /// **Le chargement dure cinq secondes**, et c'est un plancher, pas une approximation. Un
 /// écran qui annonce qu'il construit un parcours puis disparaît en une seconde n'a rien
-/// construit : on ne lit ni ce qu'il dit ni ce qu'il coche, et la promesse du parcours
-/// personnalisé passe pour du décor. Quatre phases lisibles, un anneau qui fait son tour
-/// complet, et on a vu le travail se faire.
+/// construit. Quatre phases lisibles, un anneau qui fait son tour complet, et on a vu le
+/// travail se faire.
 ///
-/// **La fin ne se saute pas d'elle-même.** L'écran enchaînait tout seul sur le suivant six
-/// dixièmes de seconde après le dernier coche : le seul moment du parcours où l'on ait
-/// attendu quelque chose se terminait par un écran arraché sous les yeux, sans qu'on ait pu
-/// lire « ton parcours est prêt ». C'est maintenant l'étudiant qui appuie. Le bouton occupe
-/// sa place depuis le début, en attente, pour que rien ne saute quand il s'active.
-///
-/// Le fond est passé du vert plein au **vert pastel** : un aplat saturé tenu cinq secondes
-/// derrière du texte blanc fatigue, et c'est précisément l'écran où l'on demande de patienter.
+/// **La fin ne se saute pas d'elle-même.** C'est l'étudiant qui appuie. Le bouton occupe sa
+/// place depuis le début, en attente, pour que rien ne saute quand il s'active.
 struct PersonalizingStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    private let surface = OnboardingStep.personalizing.surface
-
     private struct Phase {
         let headline: String
-        let detail: String
         let step: String
     }
 
     private var phases: [Phase] {
-        func t(_ key: String) -> String {
-            i18n.t(key)
+        (1...4).map { index in
+            Phase(
+                headline: i18n.t("onboarding.parcoursWorking\(index)"),
+                step: i18n.t("onboarding.parcoursStep\(index)")
+            )
         }
-        return [
-            Phase(headline: t("onboarding.parcoursWorking1"), detail: "", step: t("onboarding.parcoursStep1")),
-            Phase(headline: t("onboarding.parcoursWorking2"), detail: "", step: t("onboarding.parcoursStep2")),
-            Phase(headline: t("onboarding.parcoursWorking3"), detail: "", step: t("onboarding.parcoursStep3")),
-            Phase(headline: t("onboarding.parcoursWorking4"), detail: "", step: t("onboarding.parcoursStep4")),
-        ]
     }
 
     /// Durée du chargement, en secondes. Un plancher, et il est verrouillé par un test :
@@ -65,17 +53,14 @@ struct PersonalizingStepView: View {
     /// repère la vitesse constante en une seconde et cesse d'y croire. Un vrai calcul avance
     /// par à-coups - une lecture instantanée, un palier où quelque chose attend, un saut quand
     /// le lot tombe, et une fin qui traîne. C'est ce profil-là qu'on rejoue.
-    ///
-    /// On déforme le **chemin**, pas la durée : le total reste `duration`, et la dernière
-    /// image est toujours 100 %.
     private static let curve: [(at: Double, reached: Double)] = [
         (0.00, 0.00),
-        (0.07, 0.19),   // le profil est déjà là : rien à attendre
-        (0.21, 0.24),   // premier palier
-        (0.33, 0.51),   // le lot des cartes tombe d'un coup
+        (0.07, 0.19),
+        (0.21, 0.24),
+        (0.33, 0.51),
         (0.45, 0.56),
         (0.61, 0.79),
-        (0.80, 0.84),   // le palier le plus long : c'est là qu'un vrai calcul rame
+        (0.80, 0.84),
         (0.93, 0.97),
         (1.00, 1.00),
     ]
@@ -104,23 +89,33 @@ struct PersonalizingStepView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                headline
-
+            VStack(spacing: 22) {
                 Spacer(minLength: 0)
+
+                MicaboMascot(mood: isDone ? .celebrating : .thinking, size: 112)
+
+                // La hauteur est réservée : les quatre phrases n'ont pas le même nombre de
+                // lignes, et un titre qui se recompose fait sauter l'anneau.
+                Text(isDone ? i18n.t("onboarding.parcoursDone") : current.headline)
+                    .font(MicaboFont.ui(24, weight: .bold))
+                    .tracking(-0.5)
+                    .foregroundStyle(MicaboColor.ink)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(minHeight: 64, alignment: .center)
+                    .contentTransition(.opacity)
+                    .animation(.easeOut(duration: 0.28), value: current.headline)
 
                 ring
-                    .frame(maxWidth: .infinity)
-
-                Spacer(minLength: 0)
 
                 stepList
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding(.horizontal, MicaboSpacing.screen)
-            .padding(.top, MicaboSpacing.lg)
 
-            MicaboBottomBar(background: surface.background) {
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, MicaboSpacing.screen)
+
+            MicaboBottomBar(background: MicaboColor.canvas) {
                 OnboardingContinueButton(
                     title: i18n.t("ios.discoverPath"),
                     // Éteint pendant le travail, et pas seulement inerte : un bouton à
@@ -135,79 +130,35 @@ struct PersonalizingStepView: View {
                 }
             }
         }
-        .background(surface.background.ignoresSafeArea(edges: .bottom))
-        .environment(\.onboardingSurface, surface)
+        .background(MicaboColor.canvas.ignoresSafeArea())
+        .environment(\.onboardingSurface, .canvas)
         .onReceive(Self.ticker) { _ in
             tick()
         }
     }
 
-    // MARK: - Accroche
-
-    /// La hauteur du bloc est réservée d'avance : les quatre accroches n'ont pas le même
-    /// nombre de lignes, et un titre qui se recompose à chaque phase fait sauter l'anneau.
-    private var headline: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(i18n.t("ios.personalization").uppercased())
-                .font(MicaboFont.eyebrow)
-                .tracking(MicaboTracking.caps)
-                .foregroundStyle(surface.eyebrow)
-
-            Text(isDone ? i18n.t("onboarding.parcoursDone") : current.headline)
-                .font(MicaboFont.ui(30, weight: .bold))
-                .foregroundStyle(surface.title)
-                .tracking(-0.7)
-                .fixedSize(horizontal: false, vertical: true)
-                .contentTransition(.opacity)
-                .animation(.easeOut(duration: 0.28), value: current.headline)
-
-            Text(isDone ? i18n.t("ios.whenYouWant") : current.detail)
-                .font(MicaboFont.ui(15, weight: .regular))
-                .foregroundStyle(surface.prose)
-                .lineSpacing(3)
-                .fixedSize(horizontal: false, vertical: true)
-                .contentTransition(.opacity)
-                .animation(.easeOut(duration: 0.28), value: current.detail)
-        }
-        .frame(maxWidth: .infinity, minHeight: 118, alignment: .topLeading)
-    }
-
     // MARK: - Anneau
 
-    /// L'anneau fait son tour en même temps que le parcours se construit, et le
-    /// pourcentage compte image par image : deux façons de dire la même chose, parce que
-    /// c'est la seule chose que cet écran a à dire.
-    ///
-    /// Il est plafonné, pas fixé : sur un petit écran, il rend la place à l'accroche et aux
-    /// étapes, qui elles doivent rester lisibles en entier.
+    /// L'anneau fait son tour en même temps que le parcours se construit, et le pourcentage
+    /// compte image par image : c'est la seule chose que cet écran a à dire.
     private var ring: some View {
         ZStack {
             Circle()
-                .stroke(MicaboColor.accent.opacity(0.16), lineWidth: 10)
+                .stroke(MicaboColor.track, lineWidth: 11)
 
             Circle()
                 .trim(from: 0, to: max(0.005, progress))
-                .stroke(MicaboColor.accent, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .stroke(MicaboColor.accent, style: StrokeStyle(lineWidth: 11, lineCap: .round))
                 .rotationEffect(.degrees(-90))
 
-            VStack(spacing: 2) {
-                Text("\(Int(progress * 100)) %")
-                    .font(MicaboFont.number(44))
-                    .foregroundStyle(MicaboColor.ink)
-                    .tracking(-1.4)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-
-                Text(isDone ? i18n.t("onboarding.parcoursFinished") : i18n.t("onboarding.parcoursBusy"))
-                    .font(MicaboFont.ui(12, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .lineLimit(1)
-            }
-            .padding(.horizontal, 24)
+            Text("\(Int(progress * 100)) %")
+                .font(MicaboFont.number(34))
+                .foregroundStyle(MicaboColor.ink)
+                .tracking(-1.2)
+                .monospacedDigit()
+                .lineLimit(1)
         }
-        .aspectRatio(1, contentMode: .fit)
-        .frame(maxWidth: 184, maxHeight: 184)
+        .frame(width: 128, height: 128)
         .accessibilityElement()
         .accessibilityLabel(i18n.t("ios.generatingPath"))
         .accessibilityValue("\(Int(progress * 100)) %")
@@ -216,49 +167,46 @@ struct PersonalizingStepView: View {
     // MARK: - Étapes
 
     private var stepList: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            ForEach(Array(phases.enumerated()), id: \.offset) { index, phase in
-                HStack(spacing: 12) {
-                    marker(isDone: index < completed, isActive: index == completed)
+        MicaboOutlineCard(padding: EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16)) {
+            VStack(spacing: 0) {
+                ForEach(Array(phases.enumerated()), id: \.offset) { index, phase in
+                    HStack(spacing: 13) {
+                        marker(isDone: index < completed, isActive: index == completed)
 
-                    Text(phase.step)
-                        .font(MicaboFont.ui(15, weight: index <= completed ? .medium : .regular))
-                        .foregroundStyle(index <= completed ? MicaboColor.ink : MicaboColor.inkTertiary)
+                        Text(phase.step)
+                            .font(MicaboFont.ui(14.5, weight: index == completed ? .semibold : .regular))
+                            .foregroundStyle(index <= completed ? MicaboColor.ink : MicaboColor.inkTertiary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.vertical, 10)
 
-                    Spacer(minLength: 0)
+                    if index < phases.count - 1 {
+                        MicaboHairline(inset: 41)
+                    }
                 }
             }
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous)
-                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
         }
     }
 
     @ViewBuilder
     private func marker(isDone: Bool, isActive: Bool) -> some View {
         ZStack {
+            Circle()
+                .fill(isDone ? MicaboColor.positiveSoft : (isActive ? MicaboColor.accentSoft : MicaboColor.surfaceMuted))
+
             if isDone {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(MicaboColor.onInk)
-                    .frame(width: 22, height: 22)
-                    .background(MicaboColor.accent, in: Circle())
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(MicaboColor.positive)
                     .transition(.scale(scale: 0.5).combined(with: .opacity))
             } else if isActive {
                 ProgressView()
-                    .controlSize(.small)
+                    .progressViewStyle(.circular)
+                    .scaleEffect(0.62)
                     .tint(MicaboColor.accent)
-            } else {
-                Circle()
-                    .strokeBorder(MicaboColor.strokeStrong, lineWidth: 1.5)
-                    .frame(width: 18, height: 18)
             }
         }
-        .frame(width: 22, height: 22)
+        .frame(width: 28, height: 28)
         .animation(OnboardingMotion.shift, value: isDone)
     }
 
@@ -276,8 +224,6 @@ struct PersonalizingStepView: View {
             Haptics.tick()
         }
 
-        // Le seul rôle qui reste à la fin du compte : dire que c'est prêt. L'écran suivant
-        // attend un appui.
         if elapsed >= Self.duration, !didRing {
             didRing = true
             Haptics.success()

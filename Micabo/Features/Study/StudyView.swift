@@ -274,12 +274,14 @@ struct StudyView: View {
     }
 
 
+    /// Le bandeau « mode examen » qui vivait ici n'y est plus. Il disait, au-dessus de
+    /// chaque carte proche d'une épreuve, qu'aucune carte ne serait programmée après le jour
+    /// J : une règle du planificateur, énoncée à quelqu'un qui est en train de répondre à
+    /// une question. Les intervalles sous les boutons disent déjà ce qu'ils valent.
     @ViewBuilder
     private var sessionBanner: some View {
         if !session.mode.affectsSchedule {
             practiceBanner
-        } else if session.isCurrentUnderExamDeadline {
-            examBanner
         }
     }
 
@@ -306,17 +308,6 @@ struct StudyView: View {
             text: MicaboCopy.practiceReviewHint(),
             tint: MicaboColor.accent,
             background: MicaboColor.accentSoft
-        )
-    }
-
-    /// Dit pourquoi les intervalles annoncés sous les boutons sont plus courts que d'habitude.
-    /// Sans ce bandeau, l'utilisateur croirait le planificateur cassé.
-    private var examBanner: some View {
-        banner(
-            systemImage: "calendar.badge.clock",
-            text: t("app.session.examBanner"),
-            tint: MicaboColor.caution,
-            background: MicaboColor.cautionSoft
         )
     }
 

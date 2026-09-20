@@ -400,21 +400,19 @@ struct CoursesListView: View {
     /// ce qui donne à la page un objet propre : les decks sont la seule chose de l'app qui
     /// s'affiche comme ça, et ils sont la seule chose qui appartient à l'étudiant.
     ///
-    /// **Les dossiers restent des rangées**, au-dessus de la grille. Ce sont des
-    /// contenants, pas du contenu : leur donner la même tuile que les decks ferait
-    /// disparaître la différence entre « ouvrir une matière » et « ouvrir un tiroir ».
+    /// **Les dossiers sont des tuiles aussi**, en tête de grille. Ils étaient des rangées
+    /// au-dessus d'elle, au nom d'une distinction contenant / contenu — et la page s'ouvrait
+    /// sur deux langages visuels superposés, une liste puis une grille, pour des objets
+    /// qu'on ouvre du même geste. La tuile d'un dossier se distingue autrement : un fond
+    /// gris à pointillés au lieu d'un pastel, et le nombre de decks qu'il contient.
     private var libraryList: some View {
         let items = filtered
         return VStack(alignment: .leading, spacing: MicaboSpacing.md) {
-            if !listedFolders.isEmpty {
-                VStack(spacing: 0) {
-                    ForEach(listedFolders) { branch in
-                        folderRow(branch)
-                    }
-                }
-            }
-
             LazyVGrid(columns: MicaboDeckGrid.columns, spacing: MicaboDeckGrid.rowSpacing) {
+                ForEach(listedFolders) { branch in
+                    folderTile(branch)
+                }
+
                 ForEach(items, id: \.id) { course in
                     deckTile(course)
                 }
@@ -466,24 +464,22 @@ struct CoursesListView: View {
     }
 
     @ViewBuilder
-    private func folderRow(_ branch: FolderTree) -> some View {
+    private func folderTile(_ branch: FolderTree) -> some View {
         let isTargeted = dropTarget == branch.folder.id
 
-        MicaboRow.folder(branch.folder, total: branch.total) {
+        MicaboFolderTile(
+            emoji: branch.folder.emoji?.nilIfBlank ?? "📁",
+            title: branch.folder.name,
+            meta: i18n.t("ios.deck.count", ["count": "\(branch.total)"]),
+            isTargeted: isTargeted
+        ) {
             // Un lâcher n'est pas un appui : voir `lastDrop`, armé dès le survol.
             guard Date().timeIntervalSince(lastDrop) > 0.6 else { return }
             withAnimation(.easeOut(duration: 0.2)) { openFolder = branch.folder.id }
         }
         .contextMenu { folderMenu(branch.folder) }
-        // Le dossier visé se colore pendant le survol. Sans ça, on lâche à l'aveugle : rien
-        // ne dit lequel des quatre dossiers de l'écran va recevoir le cours.
-        .background(
-            isTargeted ? MicaboColor.accentSoft : Color.clear,
-            in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
-        )
-        .animation(.easeOut(duration: 0.15), value: isTargeted)
         // Le glisser-déposer existe aussi sur le téléphone, pour qui le connaît :
-        // une rangée se prend et se lâche sur un dossier. Ce n'est pas la voie
+        // une tuile se prend et se lâche sur un dossier. Ce n'est pas la voie
         // principale - « Déplacer vers » l'est - mais elle ne coûte rien.
         .dropDestination(for: String.self) { items, _ in
             dropTarget = nil
@@ -491,18 +487,13 @@ struct CoursesListView: View {
             return drop(items, into: branch.folder.id)
         } isTargeted: { targeted in
             // **Le survol arme le garde, pas seulement le lâcher.** Un doigt qui survole cette
-            // rangée transporte déjà quelque chose : c'est vrai bien avant que le lâcher
+            // tuile transporte déjà quelque chose : c'est vrai bien avant que le lâcher
             // n'arrive. Ne poser `lastDrop` que dans le lâcher laissait passer le cas qui a
             // remis le bug debout - le système fait parfois suivre l'appui **avant** l'action
-            // de dépôt, et le garde arrivait alors trop tard : le dossier s'ouvrait, on
-            // voyait son intérieur vide, et de l'extérieur le cours et le dossier avaient
-            // tous les deux disparu.
+            // de dépôt, et le garde arrivait alors trop tard.
             if targeted { lastDrop = Date() }
             dropTarget = targeted ? branch.folder.id : nil
         }
-
-        MicaboHairline(inset: MicaboSpacing.md, onCanvas: true)
-            .padding(.trailing, MicaboSpacing.xxs)
     }
 
     @ViewBuilder

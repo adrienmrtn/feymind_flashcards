@@ -10,9 +10,12 @@ import SwiftUI
 /// réponse juste. Poser le niveau d'abord obligeait à servir les mêmes sept réponses
 /// françaises à tout le monde.
 ///
-/// Des pastilles à drapeau : un drapeau se reconnaît avant qu'on ait lu le nom. Le pays
-/// de l'appareil est pré-choisi — plus la France pour tout le monde, sans quoi un iPhone
-/// anglais n'ouvrirait que des lycées français à l'écran suivant.
+/// **Un menu déroulant, et le pays de l'appareil déjà dedans.** Vingt-cinq pastilles à
+/// drapeau ne tenaient pas sur un écran : il fallait défiler pour voir la sienne, alors que
+/// dans presque tous les cas la bonne réponse est celle que le téléphone connaît déjà. Le
+/// menu la montre choisie, on appuie sur Continuer, et la liste n'apparaît qu'à qui en a
+/// besoin. Le pays de l'appareil est pré-choisi — plus la France pour tout le monde, sans
+/// quoi un iPhone anglais n'ouvrirait que des lycées français à l'écran suivant.
 ///
 /// **« Autre pays » n'est plus une impasse.** La pastille rendait un « ailleurs » qui ne
 /// disait rien de plus que le silence : on ne savait ni où était l'étudiant, ni combien
@@ -33,24 +36,12 @@ struct CountryStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.countryTitle"),
-            titleSize: 32,
-            // Vingt-cinq pays en pastilles ne tiennent pas sur un écran : il défile plutôt
-            // que de rogner une réponse.
+            titleSize: 26,
             scrolls: true,
             animatesTitle: true
         ) {
             VStack(alignment: .leading, spacing: 14) {
-                MicaboFlowLayout(spacing: 8, lineSpacing: 8) {
-                    ForEach(SchoolingCountry.allCases) { country in
-                        OnboardingChoiceChip(
-                            title: title(for: country),
-                            emoji: flag(for: country),
-                            isSelected: model.country == country
-                        ) {
-                            select(country)
-                        }
-                    }
-                }
+                dropdown
 
                 if model.country == .other {
                     elsewherePicker
@@ -66,7 +57,56 @@ struct CountryStepView: View {
         }
     }
 
-    /// La pastille « Autre pays » porte le pays choisi une fois qu'il l'est : elle cesse
+    /// **Le menu.** Un `Picker` en ligne dans un `Menu` : c'est ce qui donne la liste
+    /// cochée du système sous un bouton qu'on dessine soi-même — la forme d'une réponse
+    /// choisie, filet violet compris, avec le chevron double qui dit qu'elle se change.
+    private var dropdown: some View {
+        Menu {
+            Picker(
+                selection: Binding(
+                    get: { model.country },
+                    set: { select($0) }
+                )
+            ) {
+                ForEach(SchoolingCountry.allCases) { country in
+                    Text("\(country.flag)  \(country.localizedName(locale: i18n.locale))")
+                        .tag(country)
+                }
+            } label: {
+                EmptyView()
+            }
+            .pickerStyle(.inline)
+        } label: {
+            HStack(spacing: 13) {
+                Text(flag(for: model.country))
+                    .font(.system(size: 24))
+
+                Text(title(for: model.country))
+                    .font(MicaboFont.ui(16, weight: .semibold))
+                    .foregroundStyle(MicaboColor.accent)
+                    .lineLimit(1)
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(MicaboColor.accent)
+            }
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+            .background(MicaboColor.accentWash, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
+                    .strokeBorder(MicaboColor.accent, lineWidth: 2)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
+        .accessibilityLabel(i18n.t("ios.countryTitle"))
+        .accessibilityValue(title(for: model.country))
+    }
+
+    /// La ligne « Autre pays » porte le pays choisi une fois qu'il l'est : elle cesse
     /// alors d'être une catégorie pour devenir une réponse.
     private func title(for country: SchoolingCountry) -> String {
         guard country == .other, let custom = model.customCountry else {
