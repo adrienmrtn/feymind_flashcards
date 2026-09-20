@@ -50,6 +50,13 @@ struct ProfileView: View {
         let weak: [ExamReadiness.WeakCard]
         /// Réponses sues du premier coup, sur tous les passages.
         let accuracyPercent: Int
+        /// Cartes revues par jour sur les quinze derniers jours, du plus ancien à
+        /// aujourd'hui. Le dernier bâton est toujours le jour en cours, même s'il est à zéro :
+        /// un graphe qui s'arrêterait à la dernière journée travaillée laisserait croire
+        /// qu'on a révisé aujourd'hui.
+        let recentDays: [Int]
+        /// Total de passages, tous jours confondus.
+        let reviewCount: Int
 
         init(snapshot: ProfileSnapshot) {
             courseCount = snapshot.courseCount
@@ -63,6 +70,8 @@ struct ProfileView: View {
             byCourse = snapshot.byCourse
             weak = snapshot.weak
             accuracyPercent = snapshot.accuracyPercent
+            recentDays = Metrics.daily(from: snapshot.reviewDates)
+            reviewCount = snapshot.reviewDates.count
             ReviewStreakStore.remember(streak: streak, best: bestStreak)
         }
 
@@ -77,8 +86,35 @@ struct ProfileView: View {
             masteryPercent: 0,
             byCourse: [],
             weak: [],
-            accuracyPercent: 0
+            accuracyPercent: 0,
+            recentDays: Array(repeating: 0, count: Metrics.window),
+            reviewCount: 0
         )
+
+    /// Quinze jours : assez pour voir une habitude, assez peu pour que chaque bâton reste
+    /// visible sur la largeur d'un téléphone.
+    static let window = 15
+
+    /// Compte les passages par jour sur la fenêtre, en remplissant les jours vides.
+    static func daily(
+        from dates: [Date],
+        calendar: Calendar = MicaboCalendar.shared,
+        now: Date = Date()
+    ) -> [Int] {
+        let today = calendar.startOfDay(for: now)
+        var counts: [Date: Int] = [:]
+        for date in dates {
+            let day = calendar.startOfDay(for: date)
+            guard let gap = calendar.dateComponents([.day], from: day, to: today).day,
+                  gap >= 0, gap < window
+            else { continue }
+            counts[day, default: 0] += 1
+        }
+        return (0..<window).reversed().compactMap { offset in
+            guard let day = calendar.date(byAdding: .day, value: -offset, to: today) else { return 0 }
+            return counts[day] ?? 0
+        }
+    }
 
         private init(
             courseCount: Int,
@@ -91,8 +127,12 @@ struct ProfileView: View {
             masteryPercent: Int,
             byCourse: [CourseMastery],
             weak: [ExamReadiness.WeakCard],
-            accuracyPercent: Int
+            accuracyPercent: Int,
+            recentDays: [Int],
+            reviewCount: Int
         ) {
+            self.recentDays = recentDays
+            self.reviewCount = reviewCount
             self.courseCount = courseCount
             self.cardCount = cardCount
             self.hasReviews = hasReviews
@@ -215,7 +255,7 @@ struct ProfileView: View {
                     streakPanel(metrics)
                     totalsStrip(metrics)
                     masteryPanel(metrics)
-                    knowledgeChart(metrics)
+                    activityPanel(metrics)
                     weakPanel(metrics)
                     mostReviewed(metrics)
                     weekRanking
@@ -284,14 +324,27 @@ struct ProfileView: View {
     /// leur différence. Reste celui qu'on cherche d'instinct, en haut à droite, mais avec la
     /// tuile pastel de la rangée : une roue crantée grise en glyphe système était le seul
     /// endroit de l'app où une icône n'avait pas sa pastille.
+    /// **« Ta progression », et qui l'on est en dessous.**
+    ///
+    /// Le titre de l'onglet disait « Profil », qui est le nom d'un écran de réglages. Cette
+    /// page-ci ne montre pas un profil : elle montre ce qu'on a appris. Le nom et le niveau
+    /// passent en sous-titre, là où ils informent sans occuper une ligne à eux.
+    ///
+    /// Les réglages reculent dans une pastille à filet. C'était une tuile pastel de
+    /// quarante-quatre points, c'est-à-dire la même forme qu'un deck : elle attirait autant
+    /// l'œil qu'une matière.
     private var header: some View {
-        MicaboScreenHeader(title: i18n.t("nav.profile")) {
+        MicaboPageHeading(title: i18n.t("ios.profile.title"), subtitle: identityLabel) {
             Button {
                 showSettings = true
             } label: {
-                MicaboTile(glyph: .emoji("⚙️"), background: MicaboColor.tilePastels[0], size: 44)
+                Image(systemName: "gearshape")
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(MicaboColor.ink)
+                    .frame(width: 38, height: 38)
+                    .overlay(Circle().strokeBorder(MicaboColor.stroke, lineWidth: 1))
             }
-            .buttonStyle(MicaboPressableButtonStyle())
+            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
             .accessibilityLabel(i18n.t("nav.settings"))
         }
         .padding(.top, MicaboSpacing.xs)
@@ -312,52 +365,44 @@ struct ProfileView: View {
 
     // MARK: - Le panneau du haut
 
-    /// La série, et la courbe qui la porte. Les deux disent la même chose à deux échelles :
-    /// séparées en deux blocs, elles se répétaient ; ensemble, la seconde explique la
-    /// première.
+    /// **La série, en carte chaude.**
+    ///
+    /// C'est la seule carte de l'app qui ne soit ni blanche ni violette. Une série n'est pas
+    /// un compte de cartes, c'est une habitude, et elle se mesure au **record personnel**
+    /// plutôt qu'à un objectif qu'on aurait fixé pour l'étudiant : « ton record est de 18,
+    /// encore six jours et tu le bats » est une phrase qu'on peut se dire, « objectif 30 »
+    /// n'en est pas une.
+    ///
+    /// Le nom de l'étudiant a quitté ce panneau : il est passé en sous-titre de l'en-tête,
+    /// où il informe sans prendre une ligne dans une carte qui parle d'autre chose.
+    @ViewBuilder
     private func streakPanel(_ metrics: Metrics) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(identityLabel)
-                .font(MicaboFont.ui(13, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            if !metrics.hasReviews {
-                firstReviewInvitation
-            } else {
-                streakReadout(metrics)
-            }
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .micaboGroup()
-    }
-
-    private func streakReadout(_ metrics: Metrics) -> some View {
-        HStack(alignment: .lastTextBaseline, spacing: 9) {
-            Image(systemName: "flame.fill")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(metrics.streak > 0 ? MicaboColor.caution : MicaboColor.inkTertiary)
-
-            Text("\(metrics.streak)")
-                .font(MicaboFont.number(46))
-                .foregroundStyle(MicaboColor.ink)
-                .tracking(MicaboTracking.display)
-                .monospacedDigit()
-                .contentTransition(.numericText(value: Double(metrics.streak)))
-                .animation(.easeOut(duration: 0.3), value: metrics.streak)
-
-            Text(streakCaption(metrics))
-                .font(MicaboFont.ui(14, weight: .medium))
-                .foregroundStyle(MicaboColor.inkSecondary)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                .padding(.bottom, 3)
+        if !metrics.hasReviews {
+            MicaboOutlineCard { firstReviewInvitation }
+        } else {
+            MicaboStreakCard(
+                days: metrics.streak,
+                best: max(metrics.bestStreak, metrics.streak),
+                title: i18n.t("ios.profile.streakDays", ["count": "\(metrics.streak)"]),
+                note: streakNote(metrics)
+            )
         }
     }
+
+    /// Ce que la série raconte, selon la distance au record.
+    ///
+    /// Trois phrases et pas une seule : « ton record est de 18 » n'a rien à dire à qui vient
+    /// de le battre, et « encore six jours » n'a pas de sens le premier jour.
+    private func streakNote(_ metrics: Metrics) -> String {
+        let best = max(metrics.bestStreak, metrics.streak)
+        if metrics.streak >= best, best > 1 {
+            return i18n.t("ios.profile.streakBest", ["best": "\(best)"])
+        }
+        let gap = best - metrics.streak
+        guard gap > 0 else { return i18n.t("ios.profile.streakStart") }
+        return i18n.t("ios.profile.streakToBeat", ["best": "\(best)", "days": "\(gap)"])
+    }
+
 
     /// Le record ne s'affiche que s'il dépasse la série en cours : le répéter à l'identique
     /// juste à côté n'apprendrait rien, et une série qui *est* le record se lit déjà comme
@@ -388,112 +433,114 @@ struct ProfileView: View {
 
     /// Le nombre de cartes, et le nombre de cours. Les révisions n'y figurent plus :
     /// elles se lisent déjà dans la série, et dans les cartes les plus passées.
+    /// **Trois chiffres, trois encadrés.**
+    ///
+    /// C'était une seule carte coupée par des filets verticaux, ce qui fait lire un tableau.
+    /// Trois encadrés séparés se comptent d'un regard, et chacun peut porter une unité
+    /// différente sans que la ligne de base ne se décale.
     private func totalsStrip(_ metrics: Metrics) -> some View {
-        HStack(spacing: 0) {
-            total(
-                "\(metrics.cardCount)",
-                i18n.t("app.profile.mastery.centerLabel", ["count": "\(metrics.cardCount)"])
+        HStack(spacing: 9) {
+            MicaboStatBox(
+                value: "\(metrics.reviewCount)",
+                label: i18n.t("ios.profile.reviewedCards")
             )
-            columnDivider
-            total(
-                "\(metrics.courseCount)",
-                i18n.t("ios.courseUnit", ["count": "\(metrics.courseCount)"])
+            MicaboStatBox(
+                value: i18n.t("ios.profile.hours", ["hours": "\(estimatedHours(metrics))"]),
+                label: i18n.t("ios.profile.ofRevision")
             )
-            // La justesse, comme sur la page Progrès du site : ce qu'on a su du premier coup.
-            if metrics.hasReviews {
-                columnDivider
-                total(
-                    "\(metrics.accuracyPercent) %",
-                    i18n.t("app.home.stats.accuracy")
-                )
-            }
+            MicaboStatBox(
+                value: "\(metrics.courseCount)",
+                label: i18n.t("ios.profile.activeDecks")
+            )
         }
-        .padding(.vertical, 15)
-        .frame(maxWidth: .infinity)
-        .micaboGroup(radius: MicaboRadius.md)
     }
+
+    /// Le temps passé, estimé sur le rythme de lecture des cartes plutôt que chronométré.
+    ///
+    /// L'app ne mesure pas la durée d'une session — elle enregistre des passages, pas des
+    /// minutes — et poser un chronomètre pour ce seul chiffre ferait payer une écriture à
+    /// chaque carte. `LearningProjection.cardsPerMinute` est la constante que tout le reste
+    /// de l'app utilise déjà pour convertir des cartes en temps.
+    private func estimatedHours(_ metrics: Metrics) -> Int {
+        max(1, Int((Double(metrics.reviewCount) / LearningProjection.cardsPerMinute / 60).rounded()))
+    }
+
 
     // MARK: - La maîtrise
 
     /// **Ce qu'on sait, en un chiffre, puis cours par cours** - la page Progrès du site.
     /// La moyenne des solidités, pas la part de cartes acquises : une carte à mi-chemin
     /// compte pour la moitié, sinon la barre reste à zéro deux semaines puis saute.
+    /// **« Ce que tu sais », deck par deck.**
+    ///
+    /// Le grand pourcentage global a disparu : une moyenne sur quatre matières ne dit rien
+    /// qu'on puisse utiliser — on ne révise pas « son profil », on révise un deck. Les
+    /// rangées portent la barre sous le titre, parce que le sujet de la ligne n'est pas le
+    /// deck mais sa progression.
+    @ViewBuilder
     private func masteryPanel(_ metrics: Metrics) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(i18n.t("app.home.mastery.title"))
-                .font(MicaboFont.ui(12, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .textCase(.uppercase)
-                .tracking(0.6)
+        VStack(alignment: .leading, spacing: 6) {
+            MicaboSectionHeading(
+                title: i18n.t("ios.profile.whatYouKnow"),
+                subtitle: i18n.t("ios.profile.perDeck")
+            ) {
+                MicaboSeeAllLink(title: i18n.t("ios.profile.seeAll")) {
+                    router?.selection = .decks
+                }
+            }
 
-            if metrics.cardCount == 0 {
+            if metrics.byCourse.isEmpty {
                 Text(i18n.t("app.home.mastery.empty"))
                     .font(MicaboFont.ui(13.5, weight: .regular))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, MicaboSpacing.xs)
             } else {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text("\(metrics.masteryPercent)")
-                            .font(MicaboFont.number(34, weight: .bold))
-                            .foregroundStyle(MicaboColor.ink)
-                            .monospacedDigit()
-                        Text("%")
-                            .font(MicaboFont.ui(16, weight: .semibold))
-                            .foregroundStyle(MicaboColor.inkSecondary)
-                    }
-                    Text(i18n.t("app.home.mastery.of", ["count": "\(metrics.cardCount)"]))
-                        .font(MicaboFont.ui(12.5, weight: .medium))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                }
+                VStack(spacing: 0) {
+                    ForEach(Array(metrics.byCourse.prefix(5).enumerated()), id: \.element.id) { index, deck in
+                        MicaboMasteryRow(
+                            emoji: deck.emoji,
+                            pastel: MicaboColor.pastel(for: deck.id),
+                            title: deck.title,
+                            percent: deck.percent
+                        ) {
+                            router?.selection = .decks
+                        }
 
-                masteryBar(metrics.masteryPercent, height: 8)
-
-                if !metrics.byCourse.isEmpty {
-                    Text(i18n.t("app.home.mastery.byCourse"))
-                        .font(MicaboFont.ui(12, weight: .semibold))
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                        .padding(.top, 4)
-
-                    VStack(spacing: 10) {
-                        ForEach(metrics.byCourse) { entry in
-                            HStack(spacing: 10) {
-                                Text(entry.emoji)
-                                    .font(.system(size: 15))
-                                Text(entry.title)
-                                    .font(MicaboFont.ui(13.5, weight: .medium))
-                                    .foregroundStyle(MicaboColor.ink)
-                                    .lineLimit(1)
-                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                                masteryBar(entry.percent, height: 6)
-                                    .frame(width: 64)
-                                Text("\(entry.percent) %")
-                                    .font(MicaboFont.number(12.5, weight: .semibold))
-                                    .foregroundStyle(MicaboColor.inkSecondary)
-                                    .monospacedDigit()
-                                    .frame(width: 44, alignment: .trailing)
-                            }
+                        if index < min(5, metrics.byCourse.count) - 1 {
+                            MicaboHairline(onCanvas: true)
                         }
                     }
                 }
             }
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .micaboGroup()
     }
 
-    private func masteryBar(_ percent: Int, height: CGFloat) -> some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(MicaboColor.surfaceMuted)
-                Capsule()
-                    .fill(MicaboColor.accent)
-                    .frame(width: proxy.size.width * CGFloat(max(2, min(100, percent))) / 100)
+    /// **Les quinze derniers jours**, en bâtons.
+    ///
+    /// Tous dans le violet pâle sauf le dernier, qui est aujourd'hui. C'est la seule chose
+    /// que ce graphe dit vraiment — est-ce que j'ai travaillé aujourd'hui, et comment ça se
+    /// compare — et une échelle chiffrée ne l'aurait pas rendue plus lisible.
+    @ViewBuilder
+    private func activityPanel(_ metrics: Metrics) -> some View {
+        if metrics.hasReviews {
+            VStack(alignment: .leading, spacing: 12) {
+                MicaboSectionHeading(
+                    title: i18n.t("ios.profile.lastDays", ["count": "\(Metrics.window)"]),
+                    subtitle: i18n.t("ios.profile.averagePerDay", ["count": "\(dailyAverage(metrics))"])
+                )
+
+                MicaboActivityBars(values: metrics.recentDays)
             }
         }
-        .frame(height: height)
     }
+
+    private func dailyAverage(_ metrics: Metrics) -> Int {
+        let worked = metrics.recentDays.filter { $0 > 0 }
+        guard !worked.isEmpty else { return 0 }
+        return worked.reduce(0, +) / worked.count
+    }
+
 
     /// **Ce qui résiste** : les cartes les plus ratées, celles qui passent en premier dans
     /// les sessions. Absent tant que rien ne résiste - une section vide qui dit « rien »
@@ -545,60 +592,6 @@ struct ProfileView: View {
         }
     }
 
-    private func knowledgeChart(_ metrics: Metrics) -> some View {
-        let buckets = metrics.knowledge
-        let peak = max(buckets.map(\.count).max() ?? 1, 1)
-
-        return VStack(alignment: .leading, spacing: 12) {
-            Text(i18n.t("app.profile.mastery.label"))
-                .font(MicaboFont.ui(12, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .textCase(.uppercase)
-                .tracking(0.6)
-
-            if metrics.cardCount == 0 {
-                Text(i18n.t("app.profile.mastery.empty"))
-                    .font(MicaboFont.ui(13.5, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                HStack(alignment: .bottom, spacing: 10) {
-                    ForEach(buckets, id: \.level) { bucket in
-                        VStack(spacing: 6) {
-                            Text("\(bucket.count)")
-                                .font(MicaboFont.number(13, weight: .semibold))
-                                .foregroundStyle(MicaboColor.ink)
-                                .monospacedDigit()
-
-                            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                .fill(knowledgeColor(bucket.level, empty: bucket.count == 0))
-                                .frame(height: max(bucket.count > 0 ? 8 : 4, CGFloat(bucket.count) / CGFloat(peak) * 88))
-
-                            Text(bucket.level.label(locale: i18n.locale))
-                                .font(MicaboFont.ui(10.5, weight: .medium))
-                                .foregroundStyle(MicaboColor.inkTertiary)
-                                .multilineTextAlignment(.center)
-                                .lineLimit(2)
-                                .minimumScaleFactor(0.75)
-                                .frame(maxWidth: .infinity)
-                        }
-                        .frame(minWidth: 0, maxWidth: .infinity)
-                    }
-                }
-                .frame(height: 132, alignment: .bottom)
-                .accessibilityElement()
-                .accessibilityLabel(buckets.map {
-                    i18n.t("app.profile.mastery.sliceAria", [
-                        "count": "\($0.count)",
-                        "label": $0.level.label(locale: i18n.locale)
-                    ])
-                }.joined(separator: ", "))
-            }
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .micaboGroup()
-    }
 
     private func knowledgeColor(_ level: StudyStats.KnowledgeLevel, empty: Bool) -> Color {
         if empty { return MicaboColor.surfaceMuted }

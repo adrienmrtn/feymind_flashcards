@@ -133,6 +133,35 @@ final class OnboardingModel {
         step = next
     }
 
+    /// **Revenir d'un écran.**
+    ///
+    /// Le parcours était strictement linéaire : une réponse donnée ne se corrigeait plus. Ça
+    /// tient sur une démonstration qu'on traverse ; ça ne tient pas sur onze questions dont
+    /// les réponses décident du niveau des cours générés. Quelqu'un qui se trompe de pays au
+    /// troisième écran découvrait son erreur douze écrans plus tard et n'avait que la
+    /// réinstallation pour la corriger.
+    ///
+    /// Les écrans sautés le restent, dans ce sens comme dans l'autre : on ne fait pas
+    /// apparaître au retour une question qu'on n'a pas posée à l'aller.
+    func goBack() {
+        var previous = OnboardingStep(rawValue: step.rawValue - 1)
+        while let candidate = previous, candidate.isSkipped(for: country) {
+            previous = OnboardingStep(rawValue: candidate.rawValue - 1)
+        }
+        guard let previous, previous.rawValue >= OnboardingStep.name.rawValue else { return }
+        step = previous
+    }
+
+    /// Vrai quand il y a un écran en arrière qui accepte qu'on y revienne.
+    ///
+    /// Les cinq écrans d'ouverture et tout ce qui suit la construction du parcours n'en
+    /// sont pas : une démonstration ne se corrige pas, et revenir sur un compte créé ou un
+    /// essai lancé ne défait rien.
+    var canGoBack: Bool {
+        step.rawValue > OnboardingStep.name.rawValue
+            && step.rawValue <= OnboardingStep.subjects.rawValue
+    }
+
     /// Recopie les réponses dans les réglages à chaque changement d'écran :
     /// une sortie en cours de route ne perd que la question en cours.
     private func persist() {

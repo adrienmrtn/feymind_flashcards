@@ -228,10 +228,15 @@ struct DeckConfidenceStepView: View {
 
 /// **Une note qu'on monte, en la montant.**
 ///
-/// Les crans sont empilés du plus bas en bas au plus haut en haut, et le remplissage suit le
-/// pouce. Un curseur horizontal aurait fait le même travail ; celui-ci fait comprendre le
-/// sens de la progression sans une ligne de texte, et c'est la seule raison pour laquelle il
-/// existe.
+/// Les crans sont empilés du plus bas en bas au plus haut en haut, et celui qu'on choisit
+/// grossit. Un curseur horizontal aurait fait le même travail ; celui-ci fait comprendre le
+/// sens de la progression sans une ligne de texte.
+///
+/// **Les voisins s'éteignent par paliers.** Le cran choisi est en violet à trente-huit
+/// points sur son lavis ; celui d'à côté est gris moyen, le suivant plus clair, le
+/// troisième presque blanc. C'est ce dégradé qui donne la profondeur d'un rouleau de
+/// sélection sans avoir à en simuler la perspective — et qui fait qu'on lit trois valeurs
+/// au lieu de onze.
 struct VerticalGradePicker: View {
     let ticks: [GradeTick]
     @Binding var score: Int
@@ -240,13 +245,23 @@ struct VerticalGradePicker: View {
         ticks.firstIndex { $0.score == score } ?? ticks.firstIndex { $0.score >= score } ?? 0
     }
 
+    /// L'encre d'un cran selon sa distance à celui qu'on a choisi.
+    private func ink(distance: Int) -> Color {
+        switch distance {
+        case 0: MicaboColor.accent
+        case 1: MicaboColor.gradeNear
+        case 2: MicaboColor.gradeMid
+        default: MicaboColor.gradeFar
+        }
+    }
+
     var body: some View {
         GeometryReader { proxy in
-            let rowHeight = max(28, proxy.size.height / CGFloat(max(1, ticks.count)))
+            let rowHeight = max(34, proxy.size.height / CGFloat(max(1, ticks.count)))
 
-            VStack(spacing: 0) {
+            VStack(spacing: 2) {
                 ForEach(Array(ticks.enumerated().reversed()), id: \.element.id) { index, tick in
-                    row(tick, isSelected: index == selectedIndex, isFilled: index <= selectedIndex)
+                    row(tick, distance: abs(index - selectedIndex))
                         .frame(height: rowHeight)
                 }
             }
@@ -256,10 +271,9 @@ struct VerticalGradePicker: View {
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
                         // Le haut de la pile est la note la plus haute : on inverse.
-                        let fromTop = value.location.y / rowHeight
+                        let fromTop = value.location.y / (rowHeight + 2)
                         let index = ticks.count - 1 - Int(fromTop.rounded(.down))
-                        guard ticks.indices.contains(index) else { return }
-                        guard ticks[index].score != score else { return }
+                        guard ticks.indices.contains(index), ticks[index].score != score else { return }
                         score = ticks[index].score
                         Haptics.selection()
                     }
@@ -267,21 +281,22 @@ struct VerticalGradePicker: View {
         }
     }
 
-    private func row(_ tick: GradeTick, isSelected: Bool, isFilled: Bool) -> some View {
-        HStack(spacing: 12) {
-            Text(tick.label)
-                .font(MicaboFont.ui(isSelected ? 22 : 15, weight: isSelected ? .bold : .medium))
-                .foregroundStyle(isSelected ? MicaboColor.ink : MicaboColor.inkTertiary)
-                .frame(width: 78, alignment: .trailing)
-                .monospacedDigit()
-
-            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                .fill(isFilled ? MicaboColor.accent : MicaboColor.stroke)
-                .frame(height: isSelected ? 14 : 8)
-                .opacity(isFilled ? 1 : 0.7)
-        }
-        .padding(.horizontal, MicaboSpacing.xs)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .animation(OnboardingMotion.tap, value: isSelected)
+    private func row(_ tick: GradeTick, distance: Int) -> some View {
+        let isSelected = distance == 0
+        return Text(tick.label)
+            .font(MicaboFont.ui(isSelected ? 38 : 27, weight: isSelected ? .heavy : .bold))
+            .tracking(isSelected ? -1.4 : -0.8)
+            .foregroundStyle(ink(distance: distance))
+            .monospacedDigit()
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .frame(maxWidth: .infinity)
+            .background {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
+                        .fill(MicaboColor.accentWash)
+                }
+            }
+            .animation(OnboardingMotion.tap, value: isSelected)
     }
 }

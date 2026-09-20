@@ -804,3 +804,453 @@ struct MicaboActionButtonStyle: ButtonStyle {
             .micaboPressEffect(isPressed: configuration.isPressed, feedback: feedback)
     }
 }
+
+// MARK: - L'intitulé d'un rayon
+
+/// **Le titre d'une section, et son lien.**
+///
+/// Dix-huit points en gras, une ligne grise en dessous quand elle apporte quelque chose, et
+/// « Tout voir › » en violet à droite. C'est le seul violet de la page qui ne soit pas une
+/// progression : un lien qui mène ailleurs, et il n'y en a qu'un par rayon.
+struct MicaboSectionHeading<Trailing: View>: View {
+    let title: String
+    var subtitle: String?
+    @ViewBuilder var trailing: Trailing
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(MicaboFont.ui(18, weight: .bold))
+                    .tracking(-0.2)
+                    .foregroundStyle(MicaboColor.ink)
+
+                if let subtitle {
+                    Text(subtitle)
+                        .font(MicaboFont.ui(13, weight: .regular))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            trailing.padding(.top, 3)
+        }
+    }
+}
+
+extension MicaboSectionHeading where Trailing == EmptyView {
+    init(title: String, subtitle: String? = nil) {
+        self.init(title: title, subtitle: subtitle) { EmptyView() }
+    }
+}
+
+/// « Tout voir › » : le lien de fin de rayon, toujours écrit pareil.
+struct MicaboSeeAllLink: View {
+    let title: String
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text("\(title) ›")
+                .font(MicaboFont.ui(13.5, weight: .bold))
+                .foregroundStyle(MicaboColor.accent)
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+    }
+}
+
+// MARK: - Les chiffres du profil
+
+/// Un chiffre et son intitulé, dans un encadré à filet. Trois de front, à largeur égale.
+struct MicaboStatBox: View {
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(value)
+                .font(MicaboFont.ui(20, weight: .heavy))
+                .tracking(-0.5)
+                .foregroundStyle(MicaboColor.ink)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+
+            Text(label)
+                .font(MicaboFont.ui(11, weight: .regular))
+                .foregroundStyle(MicaboColor.inkSecondary)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 13)
+        .padding(.horizontal, 11)
+        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
+                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+        }
+    }
+}
+
+/// **La série, en carte chaude.**
+///
+/// C'est la seule carte de l'app qui ne soit ni blanche ni violette, et elle le mérite : une
+/// série n'est pas un compte de cartes, c'est une habitude, et elle se mesure au record
+/// personnel plutôt qu'à un objectif qu'on aurait fixé pour l'étudiant.
+///
+/// Les segments montrent la distance jusqu'au record, pas le nombre de jours : six barres
+/// pour dix-huit jours, parce que dix-huit barres de deux points ne se comptent pas.
+struct MicaboStreakCard: View {
+    let days: Int
+    let best: Int
+    let title: String
+    let note: String
+
+    private static let segments = 6
+
+    private var filled: Int {
+        guard best > 0 else { return Self.segments }
+        return max(1, min(Self.segments, Int((Double(days) / Double(best) * Double(Self.segments)).rounded())))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(MicaboColor.flame)
+
+                Text(title)
+                    .font(MicaboFont.ui(16, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+            }
+
+            Text(note)
+                .font(MicaboFont.ui(13.5, weight: .regular))
+                .foregroundStyle(MicaboColor.warmProse)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 7) {
+                ForEach(0..<Self.segments, id: \.self) { index in
+                    Capsule()
+                        .fill(index < filled ? MicaboColor.flame : MicaboColor.flameTrack)
+                        .frame(height: 7)
+                }
+            }
+            .padding(.top, 1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(17)
+        .background {
+            LinearGradient(
+                colors: [MicaboColor.warmWashStart, MicaboColor.warmWashEnd],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
+                .strokeBorder(MicaboColor.warmWashStroke, lineWidth: 1)
+        }
+    }
+}
+
+/// **Une rangée de maîtrise** : la barre est sous le titre, pas à côté.
+///
+/// C'est la différence avec `MicaboFlatRow` : ici le sujet de la ligne n'est pas le deck,
+/// c'est sa progression. La barre prend donc toute la largeur du bloc de texte, et le
+/// pourcentage se lit à droite comme un résultat.
+struct MicaboMasteryRow: View {
+    let emoji: String
+    let pastel: Color
+    let title: String
+    let percent: Int
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 13, style: .continuous).fill(pastel)
+                    Text(emoji).font(.system(size: 19))
+                }
+                .frame(width: 40, height: 40)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title)
+                        .font(MicaboFont.ui(14.5, weight: .semibold))
+                        .foregroundStyle(MicaboColor.ink)
+                        .lineLimit(1)
+
+                    MicaboSlimProgress(percent: percent, showsLabel: false, height: 6)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text("\(percent) %")
+                    .font(MicaboFont.ui(13, weight: .bold))
+                    .foregroundStyle(MicaboColor.accent)
+                    .monospacedDigit()
+                    .fixedSize()
+            }
+            .padding(.vertical, 9)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
+    }
+}
+
+/// **Les barres des derniers jours.**
+///
+/// Toutes dans le violet pâle sauf la dernière, qui est aujourd'hui. C'est la seule
+/// information que ce graphe porte vraiment — est-ce que j'ai travaillé aujourd'hui, et
+/// comment ça se compare — et une échelle chiffrée à côté ne l'aurait pas rendue plus
+/// lisible, juste plus chargée.
+struct MicaboActivityBars: View {
+    /// Une valeur par jour, du plus ancien au plus récent.
+    let values: [Int]
+    var height: CGFloat = 58
+
+    private var peak: Int { max(1, values.max() ?? 1) }
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 5) {
+            ForEach(Array(values.enumerated()), id: \.offset) { index, value in
+                let isToday = index == values.count - 1
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(isToday ? MicaboColor.accent : MicaboColor.accentSoft)
+                    // Un plancher de quatre points : un jour sans rien reste une barre, sinon
+                    // le graphe a des trous qu'on lit comme des jours manquants.
+                    .frame(height: max(4, height * CGFloat(value) / CGFloat(peak)))
+            }
+        }
+        .frame(height: height, alignment: .bottom)
+    }
+}
+
+// MARK: - La ligne de faits
+
+/// **Trois faits séparés par des points.**
+///
+/// Pas par des barres verticales : trois faits séparés par des barres se lisent comme un
+/// tableau, et ce n'en est pas un. Le premier peut porter le violet — c'est un rang, pas un
+/// nombre — et les autres restent gris.
+struct MicaboFactLine: View {
+    struct Fact: Identifiable {
+        let text: String
+        var isLead: Bool = false
+        var id: String { text }
+    }
+
+    let facts: [Fact]
+
+    var body: some View {
+        HStack(spacing: 9) {
+            ForEach(Array(facts.enumerated()), id: \.element.id) { index, fact in
+                if fact.isLead {
+                    Text(fact.text.uppercased())
+                        .font(MicaboFont.ui(11, weight: .bold))
+                        .tracking(1.2)
+                        .foregroundStyle(MicaboColor.accent)
+                } else {
+                    Text(fact.text)
+                        .font(MicaboFont.ui(12.5, weight: .medium))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                }
+
+                if index < facts.count - 1 {
+                    Circle()
+                        .fill(MicaboColor.inkTertiary)
+                        .frame(width: 3, height: 3)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+// MARK: - Le bandeau d'un chapitre
+
+/// **Le bandeau d'un chapitre**, cousin de celui du deck et différent sur trois points.
+///
+/// Il est plus court — cent trente-quatre contre cent quarante-huit — parce qu'un chapitre
+/// est une page de lecture et non une page d'accueil : le texte doit commencer plus haut. Le
+/// bouton de droite n'ouvre pas un menu mais la **taille du texte**, qui est la seule chose
+/// qu'on règle en lisant. Et sa barre repliée porte **la progression de lecture**, un filet
+/// de trois points qui dit où l'on en est dans le chapitre — la seule information qu'on
+/// cherche en levant les yeux au milieu d'une page.
+struct MicaboChapterBanner: View {
+    let emoji: String
+    let pastel: Color
+    let title: String
+    let collapse: Double
+    /// Entre 0 et 1. Ne s'affiche que sur la barre repliée.
+    let readingProgress: Double
+    var onBack: () -> Void
+    var onTextSize: () -> Void
+
+    static let expandedHeight: CGFloat = 134
+    static let collapsedHeight: CGFloat = 84
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            pastel.ignoresSafeArea(edges: .top)
+
+            expandedContent
+                .opacity(1 - min(1, collapse * 1.6))
+
+            collapsedContent
+                .opacity(max(0, (collapse - 0.45) / 0.55))
+        }
+        .frame(height: Self.expandedHeight - (Self.expandedHeight - Self.collapsedHeight) * collapse)
+        .clipped()
+        .overlay(alignment: .bottom) {
+            if collapse > 0.45 {
+                readingBar.opacity(max(0, (collapse - 0.45) / 0.55))
+            }
+        }
+        .shadow(color: MicaboColor.ink.opacity(0.10 * collapse), radius: 14, x: 0, y: 2)
+    }
+
+    private var readingBar: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Rectangle().fill(MicaboColor.ink.opacity(0.10))
+                Rectangle()
+                    .fill(MicaboColor.accent)
+                    .frame(width: max(0, min(1, readingProgress)) * proxy.size.width)
+            }
+        }
+        .frame(height: 3)
+    }
+
+    private var expandedContent: some View {
+        ZStack {
+            Text(emoji).font(.system(size: 46))
+
+            HStack {
+                circleButton { onBack() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .semibold))
+                }
+
+                Spacer(minLength: 0)
+
+                circleButton { onTextSize() } label: {
+                    Text("Aa").font(MicaboFont.ui(15, weight: .bold))
+                }
+            }
+            .padding(.horizontal, 18)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .padding(.top, 6)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var collapsedContent: some View {
+        HStack(spacing: 8) {
+            Button(action: onBack) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .frame(width: 36, height: 36)
+            }
+            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
+
+            Text(emoji).font(.system(size: 17))
+
+            Text(title)
+                .font(MicaboFont.ui(16, weight: .bold))
+                .tracking(-0.2)
+                .foregroundStyle(MicaboColor.ink)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button(action: onTextSize) {
+                Text("Aa")
+                    .font(MicaboFont.ui(15, weight: .bold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .frame(width: 36, height: 36)
+            }
+            .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
+        }
+        .padding(.horizontal, 14)
+        .frame(maxHeight: .infinity, alignment: .bottom)
+        .padding(.bottom, 14)
+    }
+
+    private func circleButton<Label: View>(
+        _ action: @escaping () -> Void,
+        @ViewBuilder label: () -> Label
+    ) -> some View {
+        Button(action: action) {
+            label()
+                .foregroundStyle(MicaboColor.ink)
+                .frame(width: 38, height: 38)
+                .background(Color.white.opacity(0.88), in: Circle())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
+    }
+}
+
+// MARK: - L'en-tête d'une session
+
+/// **L'en-tête d'une session : sortir, savoir où l'on en est, annuler.**
+///
+/// Les deux boutons sont des pastilles grises de trente-deux points et le compteur est au
+/// centre. C'est un en-tête de lecteur, pas d'écran : pendant une session on ne navigue pas,
+/// on avance, et la seule chose qui bouge est la jauge en dessous.
+struct MicaboSessionHeader: View {
+    let counter: String
+    let progress: Double
+    var canUndo: Bool
+    var onClose: () -> Void
+    var onUndo: () -> Void
+
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 10) {
+                pill("xmark", action: onClose)
+                    .accessibilityLabel(i18n.t("app.a11y.close"))
+
+                Text(counter)
+                    .font(MicaboFont.ui(14, weight: .semibold))
+                    .foregroundStyle(MicaboColor.inkSecondary)
+                    .monospacedDigit()
+                    .frame(maxWidth: .infinity)
+
+                pill("arrow.counterclockwise", action: onUndo)
+                    .opacity(canUndo ? 1 : 0)
+                    .disabled(!canUndo)
+                    .accessibilityLabel(i18n.t("app.session.undoAria"))
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(MicaboColor.track)
+                    Capsule()
+                        .fill(MicaboColor.accent)
+                        .frame(width: max(0, min(1, progress)) * proxy.size.width)
+                        .animation(.easeOut(duration: 0.25), value: progress)
+                }
+            }
+            .frame(height: 4)
+        }
+    }
+
+    private func pill(_ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(MicaboColor.ink)
+                .frame(width: 32, height: 32)
+                .background(MicaboColor.surfaceMuted, in: Circle())
+        }
+        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
+    }
+}

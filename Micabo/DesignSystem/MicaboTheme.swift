@@ -146,11 +146,19 @@ enum MicaboColor {
     /// Pastels des tuiles d'icône, quand aucune teinte de cours n'est disponible.
     static var tilePastels: [Color] { palette.tilePastels }
     static var accentWash: Color { palette.accentWash }
+    static var gradeNear: Color { palette.gradeNear }
+    static var gradeMid: Color { palette.gradeMid }
+    static var gradeFar: Color { palette.gradeFar }
     static var accentPale: Color { palette.accentPale }
     static var track: Color { palette.track }
     static var flame: Color { palette.flame }
     static var flameInk: Color { palette.flameInk }
     static var flameSoft: Color { palette.flameSoft }
+    static var flameTrack: Color { palette.flameTrack }
+    static var warmProse: Color { palette.warmProse }
+    static var warmWashStart: Color { palette.warmWashStart }
+    static var warmWashEnd: Color { palette.warmWashEnd }
+    static var warmWashStroke: Color { palette.warmWashStroke }
     static var dayWashStart: Color { palette.dayWashStart }
     static var dayWashMid: Color { palette.dayWashMid }
     static var dayWashEnd: Color { palette.dayWashEnd }
@@ -208,6 +216,9 @@ enum MicaboRadius {
     static let md: CGFloat = 16
     /// Rangée-carte, encadré d'une fiche, rangée de choix du parcours d'accueil.
     static let lg: CGFloat = 18
+    /// **La carte à lavis** : série du profil, et tout encadré qui porte une couleur de fond
+    /// plutôt qu'un filet. Vingt points — entre l'encadré à filet et la grande tuile.
+    static let card: CGFloat = 20
     /// Bloc blanc regroupant plusieurs rangées, et cartes d'appel.
     static let group: CGFloat = 22
     static let card: CGFloat = 22

@@ -244,7 +244,7 @@ struct StudyView: View {
     // MARK: - En-tête (X · barre · 4/12 · annuler)
 
     private var headerBar: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             headerControls
             sessionBanner
         }
@@ -253,37 +253,26 @@ struct StudyView: View {
         .padding(.bottom, 18)
     }
 
+    /// **L'en-tête de la maquette : sortir, savoir où l'on en est, annuler.**
+    ///
+    /// La jauge quitte la ligne des boutons et passe en dessous, pleine largeur. Coincée
+    /// entre une croix, un compteur et une flèche, elle ne mesurait plus rien : elle avait
+    /// la largeur que les trois autres lui laissaient, donc elle changeait de longueur selon
+    /// que le bouton d'annulation était là ou pas.
+    ///
+    /// Le compteur passe au centre, en gris. C'est un repère, pas une information sur
+    /// laquelle agir.
     private var headerControls: some View {
-        HStack(spacing: 14) {
-            if !isEmbedded {
-                MicaboCircleButton(systemImage: "xmark", size: 32, accessibilityTitle: t("app.a11y.close"), action: requestClose)
-            }
-
-            MicaboProgressBar(progress: session.progress)
-                .frame(height: 5)
-
-            Text(totalLabel)
-                .font(MicaboFont.number(12, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .monospacedDigit()
-
-            if session.canUndo {
-                undoButton
-            }
-        }
+        MicaboSessionHeader(
+            counter: totalLabel,
+            progress: session.progress,
+            canUndo: session.canUndo,
+            onClose: requestClose,
+            onUndo: undoLast
+        )
         .animation(.easeOut(duration: 0.2), value: session.canUndo)
     }
 
-    private var undoButton: some View {
-        MicaboCircleButton(
-            systemImage: "arrow.uturn.backward",
-            size: 32,
-            accessibilityTitle: t("app.session.undoAria"),
-            feedback: .rigid,
-            action: undoLast
-        )
-        .transition(.scale(scale: 0.6).combined(with: .opacity))
-    }
 
     @ViewBuilder
     private var sessionBanner: some View {
@@ -955,11 +944,14 @@ private struct ChoiceList: View {
             }
         }
         .padding(.vertical, 11)
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 13)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(style.background, in: RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
+        // Quatorze points, comme les boutons et les rangées de réponse : une proposition de
+        // QCM est une réponse qu'on choisit, et elle n'a pas de raison d'être plus carrée
+        // qu'une réponse du parcours d'accueil.
+        .background(style.background, in: RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous)
+            RoundedRectangle(cornerRadius: MicaboRadius.button, style: .continuous)
                 .strokeBorder(style.border, lineWidth: 1)
         }
     }
