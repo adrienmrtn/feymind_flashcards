@@ -146,7 +146,8 @@ struct DeckSourceStepView: View {
                     title: i18n.t("ios.deckSetup.source.materials"),
                     emoji: "📄",
                     isSelected: setup.source == .materials,
-                    fillsHeight: true
+                    fillsHeight: true,
+                    rank: 0
                 ) {
                     setup.source = .materials
                 }
@@ -155,7 +156,8 @@ struct DeckSourceStepView: View {
                     title: i18n.t("ios.deckSetup.source.ai", ["subject": subject]),
                     emoji: "✨",
                     isSelected: setup.source == .generated,
-                    fillsHeight: true
+                    fillsHeight: true,
+                    rank: 1
                 ) {
                     setup.source = .generated
                 }

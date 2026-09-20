@@ -674,23 +674,43 @@ struct MicaboDeckBanner: View {
     let title: String
     /// Entre 0 (déplié) et 1 (replié).
     let collapse: Double
+    /// Le creux du haut de l'écran — barre d'état et île dynamique.
+    let safeTop: CGFloat
     var onBack: () -> Void
     var onMenu: () -> Void
 
-    static let expandedHeight: CGFloat = 148
-    static let collapsedHeight: CGFloat = 84
+    /// Ce que le bandeau occupe **sous** la barre d'état.
+    ///
+    /// La maquette mesure cent quarante-huit points du tout premier pixel de l'écran, dont
+    /// une cinquantaine de barre d'état : il reste quatre-vingt-dix-huit de bandeau. C'est
+    /// cette part-là qui est constante, pas la hauteur totale — un téléphone à île dynamique
+    /// n'a pas le même creux qu'un téléphone à encoche, et fixer le total écraserait l'un ou
+    /// laisserait l'autre respirer.
+    static let expandedBody: CGFloat = 98
+    /// Trente-six de bouton et douze de marge basse, comme la barre repliée de la maquette.
+    static let collapsedBody: CGFloat = 48
+
+    static func expandedHeight(safeTop: CGFloat) -> CGFloat { safeTop + expandedBody }
+    static func collapsedHeight(safeTop: CGFloat) -> CGFloat { safeTop + collapsedBody }
+    /// Ce que le bandeau perd en se repliant. C'est aussi la distance de défilement qui
+    /// mène de zéro à un — le mouvement suit le doigt au point près.
+    static let travel: CGFloat = expandedBody - collapsedBody
+
+    private var height: CGFloat {
+        Self.expandedHeight(safeTop: safeTop) - Self.travel * collapse
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
-            pastel.ignoresSafeArea(edges: .top)
-
             expandedContent
                 .opacity(1 - min(1, collapse * 1.6))
 
             collapsedContent
                 .opacity(max(0, (collapse - 0.45) / 0.55))
         }
-        .frame(height: Self.expandedHeight - (Self.expandedHeight - Self.collapsedHeight) * collapse)
+        .frame(maxWidth: .infinity)
+        .frame(height: height)
+        .background(pastel)
         .clipped()
         .shadow(color: MicaboColor.ink.opacity(0.10 * collapse), radius: 14, x: 0, y: 2)
     }
@@ -707,7 +727,7 @@ struct MicaboDeckBanner: View {
             }
             .padding(.horizontal, 18)
             .frame(maxHeight: .infinity, alignment: .top)
-            .padding(.top, 8)
+            .padding(.top, safeTop)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -740,9 +760,11 @@ struct MicaboDeckBanner: View {
             }
             .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
         }
+        .frame(height: 36)
         .padding(.horizontal, 14)
-        .frame(maxHeight: .infinity, alignment: .bottom)
+        .padding(.top, safeTop)
         .padding(.bottom, 12)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 
     private func circleButton(_ symbol: String, action: @escaping () -> Void) -> some View {
@@ -754,6 +776,31 @@ struct MicaboDeckBanner: View {
                 .background(Color.white.opacity(0.88), in: Circle())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
+    }
+}
+
+/// **Le creux du haut de l'écran, mesuré plutôt que deviné.**
+///
+/// Un bandeau qui monte jusqu'au bord de l'écran doit savoir où s'arrête la barre d'état,
+/// sinon son bouton de retour se pose sur l'heure. La valeur change d'un téléphone à
+/// l'autre — île dynamique, encoche, rien du tout — et une constante en dur se trompe donc
+/// sur deux appareils sur trois.
+///
+/// Le `GeometryReader` **ne renonce pas** à la zone sûre : c'est précisément ce qui lui
+/// permet de la mesurer. Ce sont les vues à l'intérieur qui y renoncent, une fois la mesure
+/// faite.
+struct MicaboSafeTopReader<Content: View>: View {
+    private let content: (CGFloat) -> Content
+
+    init(@ViewBuilder content: @escaping (CGFloat) -> Content) {
+        self.content = content
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            content(proxy.safeAreaInsets.top)
+                .frame(width: proxy.size.width, height: proxy.size.height)
+        }
     }
 }
 
@@ -909,9 +956,19 @@ struct MicaboStreakCard: View {
 
     private static let segments = 6
 
+    /// **Les six segments disent le chemin vers le record**, pas la série elle-même.
+    ///
+    /// Le cas zéro était pris à l'envers : sans record, la carte remplissait les six — une
+    /// barre pleine affichée à quelqu'un qui n'a jamais révisé deux jours de suite, juste
+    /// sous la phrase qui lui dit que sa série commence demain. Et le `max(1, …)` en allumait
+    /// un dès le premier rendu, série nulle comprise.
+    ///
+    /// Aucun jour, aucun segment. Le record atteint ou dépassé, les six : il n'y a plus de
+    /// chemin à montrer.
     private var filled: Int {
-        guard best > 0 else { return Self.segments }
-        return max(1, min(Self.segments, Int((Double(days) / Double(best) * Double(Self.segments)).rounded())))
+        guard days > 0 else { return 0 }
+        guard best > days else { return Self.segments }
+        return min(Self.segments, max(1, Int((Double(days) / Double(best) * Double(Self.segments)).rounded())))
     }
 
     var body: some View {
@@ -1089,23 +1146,35 @@ struct MicaboChapterBanner: View {
     let collapse: Double
     /// Entre 0 et 1. Ne s'affiche que sur la barre repliée.
     let readingProgress: Double
+    /// Le creux du haut de l'écran.
+    let safeTop: CGFloat
     var onBack: () -> Void
     var onTextSize: () -> Void
 
-    static let expandedHeight: CGFloat = 134
-    static let collapsedHeight: CGFloat = 84
+    /// Quatre-vingt-quatre sous la barre d'état, contre quatre-vingt-dix-huit pour un deck :
+    /// une page de lecture doit commencer plus haut.
+    static let expandedBody: CGFloat = 84
+    static let collapsedBody: CGFloat = 48
+
+    static func expandedHeight(safeTop: CGFloat) -> CGFloat { safeTop + expandedBody }
+    static func collapsedHeight(safeTop: CGFloat) -> CGFloat { safeTop + collapsedBody }
+    static let travel: CGFloat = expandedBody - collapsedBody
+
+    private var height: CGFloat {
+        Self.expandedHeight(safeTop: safeTop) - Self.travel * collapse
+    }
 
     var body: some View {
         ZStack(alignment: .top) {
-            pastel.ignoresSafeArea(edges: .top)
-
             expandedContent
                 .opacity(1 - min(1, collapse * 1.6))
 
             collapsedContent
                 .opacity(max(0, (collapse - 0.45) / 0.55))
         }
-        .frame(height: Self.expandedHeight - (Self.expandedHeight - Self.collapsedHeight) * collapse)
+        .frame(maxWidth: .infinity)
+        .frame(height: height)
+        .background(pastel)
         .clipped()
         .overlay(alignment: .bottom) {
             if collapse > 0.45 {
@@ -1145,7 +1214,7 @@ struct MicaboChapterBanner: View {
             }
             .padding(.horizontal, 18)
             .frame(maxHeight: .infinity, alignment: .top)
-            .padding(.top, 6)
+            .padding(.top, safeTop)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -1177,9 +1246,11 @@ struct MicaboChapterBanner: View {
             }
             .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
         }
+        .frame(height: 36)
         .padding(.horizontal, 14)
-        .frame(maxHeight: .infinity, alignment: .bottom)
-        .padding(.bottom, 14)
+        .padding(.top, safeTop)
+        .padding(.bottom, 12)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 
     private func circleButton<Label: View>(

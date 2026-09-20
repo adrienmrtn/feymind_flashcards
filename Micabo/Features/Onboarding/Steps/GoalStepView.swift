@@ -17,11 +17,12 @@ struct GoalStepView: View {
             animatesTitle: true
         ) {
             VStack(spacing: 8) {
-                ForEach(LearningGoal.allCases) { goal in
+                ForEach(Array(LearningGoal.allCases.enumerated()), id: \.element.id) { rank, goal in
                     OnboardingChoiceRow(
                         title: goal.title(locale: i18n.locale),
                         emoji: goal.emoji,
-                        isSelected: selection.contains(goal)
+                        isSelected: selection.contains(goal),
+                        rank: rank
                     ) {
                         toggle(goal)
                     }

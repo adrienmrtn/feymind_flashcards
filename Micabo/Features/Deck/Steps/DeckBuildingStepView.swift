@@ -58,53 +58,91 @@ struct DeckBuildingStepView: View {
 
     // MARK: - Pendant
 
+    /// **Les quatre étapes, cochées au fur et à mesure.**
+    ///
+    /// L'écran montrait une jauge, une seule ligne de légende qui se remplaçait, et un bloc de
+    /// quatre traits violets qui clignotaient en boucle. Trois objets qui disaient tous « ça
+    /// travaille » et aucun qui disait **où on en est** : la légende effaçait l'étape
+    /// précédente en s'affichant, donc au bout de trente secondes on n'avait vu qu'une phrase
+    /// à la fois et on ne savait pas s'il en restait une ou trois.
+    ///
+    /// La liste garde ce qui est fait. Une coche verte derrière soi, un rond qui tourne
+    /// devant, des ronds vides après : l'attente cesse d'être un temps mort pour devenir une
+    /// progression qu'on peut lire d'un coup d'œil. Et c'est la même façon de dire un état
+    /// que le plan d'un deck — coche pour ce qui est acquis, violet pour ce qui est en cours.
     private var buildingBody: some View {
-        VStack(spacing: MicaboSpacing.lg) {
-            DeckBuildingGlyph()
-
-            VStack(spacing: 8) {
+        VStack(spacing: 26) {
+            VStack(spacing: 9) {
                 Text(i18n.t("ios.deckBuild.title"))
-                    .font(MicaboFont.ui(24, weight: .bold))
+                    .font(MicaboFont.ui(26, weight: .bold))
+                    .tracking(-0.5)
                     .foregroundStyle(MicaboColor.ink)
                     .multilineTextAlignment(.center)
 
-                Text(i18n.t(stage.captionKey))
+                // Ce qu'on a répondu, rappelé pendant l'attente : c'est ce qui fait que
+                // l'écran parle du deck de quelqu'un plutôt que d'un traitement en cours.
+                Text(setup.resolvedTitle)
                     .font(MicaboFont.ui(15, weight: .medium))
                     .foregroundStyle(MicaboColor.inkSecondary)
                     .multilineTextAlignment(.center)
-                    .id(stage)
-                    .transition(.opacity)
-                    .animation(.easeInOut(duration: 0.3), value: stage)
             }
 
-            MicaboProgressBar(
-                progress: stage.progress,
-                tint: MicaboColor.accent,
-                track: MicaboColor.stroke
-            )
-            .frame(height: 6)
-            .padding(.horizontal, MicaboSpacing.xl)
+            MicaboOutlineCard(padding: EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)) {
+                VStack(spacing: 0) {
+                    ForEach(Array(Self.steps.enumerated()), id: \.offset) { index, item in
+                        stepRow(item, isLast: index == Self.steps.count - 1)
+                    }
+                }
+            }
 
-            // Ce qu'on a répondu, rappelé pendant l'attente. Ce n'est pas du remplissage :
-            // c'est ce qui fait que l'écran parle du deck de quelqu'un plutôt que d'un
-            // traitement en cours.
-            summary
+            MicaboSlimProgress(
+                percent: Int((stage.progress * 100).rounded()),
+                showsLabel: false,
+                height: 6
+            )
+            .animation(.easeInOut(duration: 0.5), value: stage)
         }
     }
 
-    private var summary: some View {
-        VStack(spacing: 6) {
-            Text(setup.resolvedTitle)
-                .font(MicaboFont.ui(15, weight: .semibold))
-                .foregroundStyle(MicaboColor.ink)
+    /// Les étapes telles qu'elles se lisent. `done` n'y est pas : « c'est prêt » n'est pas un
+    /// travail qu'on attend, c'est la fin de la liste.
+    private static let steps: [DeckBuilder.Stage] = [.reading, .writingSheet, .splitting, .writingCards]
 
-            if let deadline = setup.deadline {
-                Text(deadline.formatted(date: .long, time: .omitted))
-                    .font(MicaboFont.ui(13, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkTertiary)
+    private func stepRow(_ item: DeckBuilder.Stage, isLast: Bool) -> some View {
+        let isDone = item.progress < stage.progress
+        let isCurrent = item == stage
+
+        return VStack(spacing: 0) {
+            HStack(spacing: 13) {
+                ZStack {
+                    Circle()
+                        .fill(isDone ? MicaboColor.positiveSoft : (isCurrent ? MicaboColor.accentSoft : MicaboColor.surfaceMuted))
+
+                    if isDone {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 12, weight: .heavy))
+                            .foregroundStyle(MicaboColor.positive)
+                    } else if isCurrent {
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .scaleEffect(0.62)
+                            .tint(MicaboColor.accent)
+                    }
+                }
+                .frame(width: 28, height: 28)
+
+                Text(i18n.t(item.captionKey))
+                    .font(MicaboFont.ui(14.5, weight: isCurrent ? .semibold : .regular))
+                    .foregroundStyle(isCurrent ? MicaboColor.ink : MicaboColor.inkSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.vertical, 11)
+            .animation(.easeOut(duration: 0.25), value: stage)
+
+            if !isLast {
+                MicaboHairline(inset: 41)
             }
         }
-        .padding(.top, MicaboSpacing.sm)
     }
 
     // MARK: - Quand ça rate
@@ -161,42 +199,5 @@ struct DeckBuildingStepView: View {
         } catch {
             failure = error.localizedDescription
         }
-    }
-}
-
-/// Trois traits qui se remplissent en boucle : une fiche en train de s'écrire, sans
-/// illustration ni mascotte. L'attente n'a pas besoin d'un personnage, elle a besoin de
-/// quelque chose qui bouge et qui ressemble à ce qui se fabrique.
-private struct DeckBuildingGlyph: View {
-    @State private var phase = 0.0
-
-    private static let widths: [CGFloat] = [1, 0.72, 0.88, 0.55]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            ForEach(Array(Self.widths.enumerated()), id: \.offset) { index, width in
-                Capsule()
-                    .fill(MicaboColor.accent)
-                    .frame(height: 10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .scaleEffect(x: width, anchor: .leading)
-                    .opacity(opacity(for: index))
-            }
-        }
-        .frame(width: 148)
-        .padding(20)
-        .background(MicaboColor.accentSoft, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
-        .onAppear {
-            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
-                phase = 1
-            }
-        }
-    }
-
-    /// Les lignes s'allument en décalé : c'est ce qui donne le sens de l'écriture, de haut
-    /// en bas, plutôt qu'un clignotement d'ensemble.
-    private func opacity(for index: Int) -> Double {
-        let base = 0.25 + Double(index) * 0.12
-        return base + phase * (0.95 - base)
     }
 }

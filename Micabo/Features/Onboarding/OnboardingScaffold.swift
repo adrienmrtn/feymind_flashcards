@@ -95,7 +95,14 @@ enum OnboardingSurface {
 /// qu'un écran ne peut pas se mettre à bouger autrement que ses voisins.
 enum OnboardingMotion {
     /// Entrée d'un élément à l'ouverture d'un écran.
-    static let enter = Animation.timingCurve(0.2, 0.7, 0.2, 1, duration: 0.42)
+    ///
+    /// Un dixième de seconde de plus, et quatorze points de course au lieu de huit. Le
+    /// réglage précédent était si discret qu'on ne voyait rien arriver : à huit points et
+    /// quatre dixièmes, l'œil lit un écran déjà posé, et le parcours entier passait pour une
+    /// succession de pages immobiles.
+    static let enter = Animation.timingCurve(0.2, 0.7, 0.2, 1, duration: 0.52)
+    /// La course d'un élément qui entre.
+    static let rise: CGFloat = 14
     /// Réaction à un appui : elle doit être finie avant qu'on ait relevé le doigt.
     static let tap = Animation.timingCurve(0.3, 0, 0.2, 1, duration: 0.2)
     /// Un élément qui se déplace ou change de forme sous les yeux.
@@ -103,7 +110,11 @@ enum OnboardingMotion {
     /// Passage d'un écran au suivant.
     static let page = Animation.timingCurve(0.32, 0.72, 0.2, 1, duration: 0.36)
     /// Décalage entre deux éléments qui entrent à la suite.
-    static let stagger = 0.075
+    static let stagger = 0.085
+    /// Le décalage **dans** une liste de réponses. Plus serré que celui des blocs : six
+    /// rangées à quatre-vingt-cinq millièmes mettraient une demi-seconde avant que la
+    /// dernière n'arrive, et on aurait le temps d'appuyer sur une réponse absente.
+    static let rowStagger = 0.045
 }
 
 private struct OnboardingSurfaceKey: EnvironmentKey {
@@ -429,7 +440,7 @@ private struct OnboardingAppear: ViewModifier {
     func body(content: Content) -> some View {
         content
             .opacity(isVisible ? 1 : 0)
-            .offset(y: isVisible ? 0 : 8)
+            .offset(y: isVisible ? 0 : OnboardingMotion.rise)
             .onAppear {
                 withAnimation(OnboardingMotion.enter.delay(0.04 + Double(index) * stagger)) {
                     isVisible = true
@@ -711,6 +722,13 @@ struct OnboardingChoiceRow: View {
     var subtitle: String?
     var isSelected: Bool
     var fillsHeight: Bool = false
+    /// Le rang de la rangée dans sa liste, quand elle doit entrer en cascade.
+    ///
+    /// Sans lui, les six réponses d'un écran arrivent **ensemble** : le bloc de contenu est
+    /// un seul élément animé, donc la liste entière apparaît d'un coup et l'écran a l'air
+    /// d'avoir été peint avant qu'on y arrive. Avec lui, chaque réponse se pose après la
+    /// précédente, et c'est ce qui donne au parcours son rythme.
+    var rank: Int?
     var action: () -> Void
 
     /// Soixante points de haut au minimum, dix-sept de rembourrage : une réponse doit se
@@ -782,6 +800,7 @@ struct OnboardingChoiceRow: View {
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         .animation(OnboardingMotion.tap, value: isSelected)
+        .modifier(OnboardingRowAppear(rank: rank))
     }
 }
 
@@ -792,9 +811,11 @@ struct OnboardingChoiceRow: View {
 struct OnboardingAnswerList<Item: Identifiable, Content: View>: View {
     private let items: [Item]
     private let spacing: CGFloat
-    private let row: (Item) -> Content
+    private let row: (Int, Item) -> Content
 
-    init(_ items: [Item], spacing: CGFloat = 10, @ViewBuilder row: @escaping (Item) -> Content) {
+    /// Le rang est donné à la rangée pour qu'elle puisse entrer en cascade : c'est la liste
+    /// qui sait dans quel ordre ses réponses se posent, pas la rangée.
+    init(_ items: [Item], spacing: CGFloat = 10, @ViewBuilder row: @escaping (Int, Item) -> Content) {
         self.items = items
         self.spacing = spacing
         self.row = row
@@ -802,8 +823,8 @@ struct OnboardingAnswerList<Item: Identifiable, Content: View>: View {
 
     var body: some View {
         VStack(spacing: spacing) {
-            ForEach(items) { item in
-                row(item)
+            ForEach(Array(items.enumerated()), id: \.element.id) { rank, item in
+                row(rank, item)
                     .frame(maxHeight: .infinity)
             }
         }
@@ -883,5 +904,21 @@ struct OnboardingChoiceChip: View {
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
         .animation(OnboardingMotion.tap, value: isSelected)
+    }
+}
+
+/// L'entrée en cascade d'une rangée de réponse, ou rien quand elle n'a pas de rang.
+private struct OnboardingRowAppear: ViewModifier {
+    let rank: Int?
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if let rank {
+            // Trois blocs entrent avant la liste — sur-titre, titre, sous-titre — et le
+            // contenu est le quatrième : la première réponse se pose donc juste après lui.
+            content.onboardingAppear(index: 3 + rank, stagger: OnboardingMotion.rowStagger)
+        } else {
+            content
+        }
     }
 }

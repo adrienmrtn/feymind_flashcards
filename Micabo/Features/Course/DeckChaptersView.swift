@@ -52,7 +52,7 @@ struct DeckChaptersView: View {
                 // pile d'objets.
                 VStack(spacing: 0) {
                     ForEach(Array(course.orderedChapters.enumerated()), id: \.element.id) { index, chapter in
-                        chapterRow(chapter, number: index + 1)
+                        chapterRow(chapter, number: index + 1, isNext: index == nextIndex)
                         if index < course.orderedChapters.count - 1 {
                             MicaboHairline(onCanvas: true)
                         }
@@ -102,13 +102,29 @@ struct DeckChaptersView: View {
         return Int((Double(weighted) / Double(cards)).rounded())
     }
 
-    private func chapterRow(_ chapter: Chapter, number: Int) -> some View {
+    /// **Le rang du chapitre où l'on en est** : le premier qui n'est pas su.
+    ///
+    /// Il sert à ne pas griser la suite du travail. Sur un deck qu'on vient de fabriquer,
+    /// aucune carte n'a été vue, donc tous les chapitres sont « pas commencés » et le plan
+    /// entier sort en gris — neuf rangées qui ont l'air éteintes, sur la page même qui doit
+    /// donner envie de commencer. La maquette ne montre jamais ça : le chapitre où l'on en
+    /// est y porte toujours son numéro en violet, et le gris ne commence qu'après lui.
+    ///
+    /// C'est donc une règle de lecture, pas une correction du calcul : l'état réel du
+    /// chapitre est inchangé, et son sous-titre continue d'annoncer « Pas commencé ». Le
+    /// violet dit « c'est ici », le sous-titre dit ce qui y a été fait.
+    private var nextIndex: Int? {
+        course.orderedChapters.firstIndex { progress[$0.id]?.state != .learned }
+    }
+
+    private func chapterRow(_ chapter: Chapter, number: Int, isNext: Bool) -> some View {
         let readout = progress[chapter.id]
+        let state = readout?.state ?? .untouched
         return MicaboChapterRow(
             number: number,
             title: chapter.title.nilIfBlank ?? i18n.t("ios.deck.untitledChapter", ["number": "\(number)"]),
             meta: subtitle(for: readout),
-            state: readout?.state ?? .untouched
+            state: isNext && state == .untouched ? .inProgress : state
         ) {
             opened = chapter
         }

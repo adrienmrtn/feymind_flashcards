@@ -18,12 +18,13 @@ struct DeckPurposeStepView: View {
             animatesTitle: true,
             expandsContent: true
         ) {
-            OnboardingAnswerList(DeckPurpose.allCases) { purpose in
+            OnboardingAnswerList(DeckPurpose.allCases) { rank, purpose in
                 OnboardingChoiceRow(
                     title: i18n.t(purpose.titleKey),
                     emoji: purpose.emoji,
                     isSelected: setup.purpose == purpose,
-                    fillsHeight: true
+                    fillsHeight: true,
+                    rank: rank
                 ) {
                     setup.purpose = purpose
                 }
@@ -182,14 +183,30 @@ struct DeckConfidenceStepView: View {
 
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    private var label: String {
-        switch setup.confidence {
-        case ..<0.2: i18n.t("ios.deckSetup.confidence.none")
-        case ..<0.45: i18n.t("ios.deckSetup.confidence.little")
-        case ..<0.7: i18n.t("ios.deckSetup.confidence.some")
-        case ..<0.9: i18n.t("ios.deckSetup.confidence.most")
-        default: i18n.t("ios.deckSetup.confidence.all")
-        }
+    /// **Cinq réponses, pas cent.**
+    ///
+    /// L'écran affichait un nombre de soixante-quatre points entre zéro et cent, et un
+    /// curseur continu dessous. Personne ne connaît « trente-sept pour cent » d'un cours :
+    /// la question porte sur une impression, et lui demander deux chiffres significatifs la
+    /// rend plus difficile sans la rendre plus juste. Pire, le chiffre était le gros de
+    /// l'écran et la phrase le petit — alors que c'est la phrase qui est la réponse.
+    ///
+    /// Les cinq crans sont ceux que les seuils découpaient déjà. Ils ne perdent donc rien :
+    /// `setup.confidence` valait de toute façon une de ces cinq tranches pour qui devait s'en
+    /// servir.
+    private static let steps: [(key: String, confidence: Double)] = [
+        ("ios.deckSetup.confidence.none", 0),
+        ("ios.deckSetup.confidence.little", 0.25),
+        ("ios.deckSetup.confidence.some", 0.5),
+        ("ios.deckSetup.confidence.most", 0.75),
+        ("ios.deckSetup.confidence.all", 1),
+    ]
+
+    private var index: Int {
+        Self.steps
+            .enumerated()
+            .min { abs($0.element.confidence - setup.confidence) < abs($1.element.confidence - setup.confidence) }?
+            .offset ?? 0
     }
 
     var body: some View {
@@ -201,20 +218,47 @@ struct DeckConfidenceStepView: View {
             VStack(spacing: MicaboSpacing.xl) {
                 Spacer(minLength: 0)
 
-                Text("\(Int((setup.confidence * 100).rounded()))")
-                    .font(MicaboFont.ui(64, weight: .bold))
+                Text(i18n.t(Self.steps[index].key))
+                    .font(MicaboFont.ui(26, weight: .bold))
+                    .tracking(-0.4)
                     .foregroundStyle(MicaboColor.accent)
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-                    .animation(OnboardingMotion.tap, value: setup.confidence)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .id(index)
+                    .transition(.opacity)
+                    .animation(OnboardingMotion.tap, value: index)
 
-                Text(label)
-                    .font(MicaboFont.ui(16, weight: .medium))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-
-                Slider(value: $setup.confidence, in: 0...1)
+                VStack(spacing: 10) {
+                    Slider(
+                        value: Binding(
+                            get: { Double(index) },
+                            set: { value in
+                                let rank = Int(value.rounded())
+                                guard Self.steps.indices.contains(rank) else { return }
+                                guard Self.steps[rank].confidence != setup.confidence else { return }
+                                Haptics.selection()
+                                setup.confidence = Self.steps[rank].confidence
+                            }
+                        ),
+                        in: 0...Double(Self.steps.count - 1),
+                        step: 1
+                    )
                     .tint(MicaboColor.accent)
-                    .padding(.horizontal, MicaboSpacing.xs)
+
+                    // Les deux bouts nommés : un curseur à cinq crans sans bornes écrites
+                    // laisse deviner dans quel sens il monte.
+                    HStack {
+                        Text(i18n.t(Self.steps.first?.key ?? ""))
+                        Spacer(minLength: MicaboSpacing.sm)
+                        Text(i18n.t(Self.steps.last?.key ?? ""))
+                    }
+                    .font(MicaboFont.ui(12, weight: .medium))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+                }
+                .padding(.horizontal, MicaboSpacing.xs)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(i18n.t("ios.deckSetup.confidence"))
+                .accessibilityValue(i18n.t(Self.steps[index].key))
 
                 Spacer(minLength: 0)
             }

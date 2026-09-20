@@ -43,7 +43,6 @@ struct ProfileView: View {
         let streak: Int
         let bestStreak: Int
         let knowledge: [(level: StudyStats.KnowledgeLevel, count: Int)]
-        let mostReviewed: [(front: String, passes: Int)]
         /// La maîtrise, la même que la page Progrès du site : la moyenne des solidités.
         let masteryPercent: Int
         let byCourse: [CourseMastery]
@@ -65,7 +64,6 @@ struct ProfileView: View {
             streak = StudyStats.streak(reviewDates: snapshot.reviewDates)
             bestStreak = StudyStats.bestStreak(reviewDates: snapshot.reviewDates)
             knowledge = StudyStats.knowledgeDistribution(from: snapshot.knowledge)
-            mostReviewed = snapshot.mostReviewed
             masteryPercent = snapshot.masteryPercent
             byCourse = snapshot.byCourse
             weak = snapshot.weak
@@ -82,7 +80,6 @@ struct ProfileView: View {
             streak: 0,
             bestStreak: 0,
             knowledge: [],
-            mostReviewed: [],
             masteryPercent: 0,
             byCourse: [],
             weak: [],
@@ -123,7 +120,6 @@ struct ProfileView: View {
             streak: Int,
             bestStreak: Int,
             knowledge: [(level: StudyStats.KnowledgeLevel, count: Int)],
-            mostReviewed: [(front: String, passes: Int)],
             masteryPercent: Int,
             byCourse: [CourseMastery],
             weak: [ExamReadiness.WeakCard],
@@ -139,7 +135,6 @@ struct ProfileView: View {
             self.streak = streak
             self.bestStreak = bestStreak
             self.knowledge = knowledge
-            self.mostReviewed = mostReviewed
             self.masteryPercent = masteryPercent
             self.byCourse = byCourse
             self.weak = weak
@@ -163,7 +158,6 @@ struct ProfileView: View {
         let cardCount: Int
         let reviewDates: [Date]
         let knowledge: [(state: CardState, intervalDays: Double)]
-        let mostReviewed: [(front: String, passes: Int)]
         let masteryPercent: Int
         let byCourse: [CourseMastery]
         let weak: [ExamReadiness.WeakCard]
@@ -220,21 +214,11 @@ struct ProfileView: View {
             }
             .sorted { $0.percent == $1.percent ? $0.title < $1.title : $0.percent > $1.percent }
             let again = logs.filter { $0.rating == .again }.count
-            let frontByID = Dictionary(cards.map { ($0.id, $0.front) }, uniquingKeysWith: { first, _ in first })
-            var counts: [UUID: (front: String, passes: Int)] = [:]
-            for (cardID, own) in logsByCard {
-                guard let front = frontByID[cardID] else { continue }
-                counts[cardID] = (front: front, passes: own.count)
-            }
-            let top = counts.values
-                .sorted { $0.passes == $1.passes ? $0.front < $1.front : $0.passes > $1.passes }
-                .prefix(5)
             return ProfileSnapshot(
                 courseCount: courseCount,
                 cardCount: cards.count,
                 reviewDates: logs.map(\.reviewedAt),
                 knowledge: cards.map { ($0.state, $0.intervalDays) },
-                mostReviewed: Array(top),
                 masteryPercent: ExamReadiness.masteryPercent(of: usable, logs: logsByCard, now: now),
                 byCourse: byCourse,
                 weak: ExamReadiness.weakCards(in: usable, logs: logsByCard, now: now, limit: 5),
@@ -257,7 +241,6 @@ struct ProfileView: View {
                     masteryPanel(metrics)
                     activityPanel(metrics)
                     weakPanel(metrics)
-                    mostReviewed(metrics)
                     weekRanking
                     friendsRow
                 }
@@ -604,59 +587,6 @@ struct ProfileView: View {
     }
 
     // MARK: - Les plus passées
-
-    private func mostReviewed(_ metrics: Metrics) -> some View {
-        let top = metrics.mostReviewed
-
-        return VStack(alignment: .leading, spacing: 12) {
-            Text(i18n.t("app.profile.topCards.label"))
-                .font(MicaboFont.ui(12, weight: .semibold))
-                .foregroundStyle(MicaboColor.inkTertiary)
-                .textCase(.uppercase)
-                .tracking(0.6)
-
-            if top.isEmpty {
-                Text(i18n.t("app.profile.topCards.empty"))
-                    .font(MicaboFont.ui(13.5, weight: .regular))
-                    .foregroundStyle(MicaboColor.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(top.enumerated()), id: \.offset) { index, entry in
-                        HStack(alignment: .firstTextBaseline, spacing: 12) {
-                            Text("\(index + 1)")
-                                .font(MicaboFont.number(13, weight: .medium))
-                                .foregroundStyle(MicaboColor.inkTertiary)
-                                .monospacedDigit()
-                                .frame(width: 18, alignment: .leading)
-
-                            Text(FormulaRenderer.stripped(entry.front))
-                                .font(MicaboFont.ui(14.5, weight: .medium))
-                                .foregroundStyle(MicaboColor.ink)
-                                .lineLimit(2)
-                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-
-                            Spacer(minLength: 8)
-
-                            Text(i18n.t("app.profile.passes", ["count": "\(entry.passes)"]))
-                                .font(MicaboFont.ui(12.5, weight: .medium))
-                                .foregroundStyle(MicaboColor.inkTertiary)
-                                .monospacedDigit()
-                        }
-                        .padding(.vertical, 12)
-
-                        if index < top.count - 1 {
-                            MicaboHairline()
-                        }
-                    }
-                }
-            }
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .micaboGroup()
-    }
-
     private func total(_ value: String, _ label: String) -> some View {
         VStack(spacing: 3) {
             Text(value)

@@ -70,6 +70,25 @@ struct TodayView: View {
     @State private var writingMock = false
     /// Compte les sessions fermées depuis cet écran : chacune change la file.
     @State private var studyRuns = 0
+    /// Le chapitre où l'on s'était arrêté. Voir `resumeSection`.
+    @State private var resume: ResumePoint?
+
+    /// **Où l'on en est dans un deck** : le deck, le chapitre, et son rang dans le plan.
+    struct ResumePoint: Equatable {
+        let course: Course
+        let chapter: Chapter
+        /// Le rang du chapitre, à partir de 1.
+        let number: Int
+        let total: Int
+
+        /// La part du plan déjà derrière soi, pour la barre. Elle dit la même chose que
+        /// « chapitre 2 sur 9 » juste à côté : une barre et une légende qui donneraient deux
+        /// chiffres différents feraient douter des deux.
+        var fraction: CGFloat {
+            guard total > 0 else { return 0 }
+            return CGFloat(number - 1) / CGFloat(total)
+        }
+    }
 
     private struct DayLoad {
         let totalCards: Int
@@ -78,9 +97,7 @@ struct TodayView: View {
         let newCount: Int
         let learningCount: Int
         let reviewCount: Int
-        let coursesWithDue: Int
         let estimatedMinutes: Int
-        let dueByCourse: [(course: Course, count: Int)]
         let nextDue: [(course: Course, due: Date)]
         let examProgress: [UUID: Int]
 
@@ -109,19 +126,7 @@ struct TodayView: View {
             reviewCount = due.filter { $0.state == .review }.count
             let dueNew = allCards.filter { $0.isDue() && $0.state == .new }.count
             heldBackNewCards = max(0, dueNew - newCount)
-            coursesWithDue = Set(due.compactMap { $0.course?.id }).count
             estimatedMinutes = max(1, Int((Double(due.count) * 30 / 60).rounded(.up)))
-
-            var counts: [UUID: Int] = [:]
-            for card in due {
-                guard let id = card.course?.id else { continue }
-                counts[id, default: 0] += 1
-            }
-            dueByCourse = courses.compactMap { course in
-                guard let count = counts[course.id], count > 0 else { return nil }
-                return (course: course, count: count)
-            }
-            .sorted { $0.count > $1.count }
 
             var earliest: [UUID: Date] = [:]
             for card in allCards where !card.isSuspended {
@@ -172,11 +177,12 @@ struct TodayView: View {
         guard load == nil || router?.selection == .today else { return }
         guard sync?.state != .syncing || load == nil else { return }
         let cards = CourseRepository.allCards(in: modelContext)
+        resume = findResumePoint()
         load = DayLoad(
             allCards: cards,
             // Lus ici plutôt que tenus par un `@Query` : `allCourses` porte le même tri
             // (`updatedAt` décroissant) que la requête qui vivait en tête de fichier, donc
-            // `dueByCourse` et `nextDue` sortent dans le même ordre qu'avant.
+            // `nextDue` sort dans le même ordre qu'avant.
             courses: CourseRepository.allCourses(in: modelContext),
             exams: exams,
             todayLogs: todayLogs(),
@@ -185,8 +191,35 @@ struct TodayView: View {
         )
     }
 
-    private var nextExam: Exam? {
-        upcomingExams.first
+    /// **Le chapitre à reprendre** : le premier qui n'est pas su, dans le deck touché le plus
+    /// récemment.
+    ///
+    /// `allCourses` sort déjà trié par `updatedAt` décroissant, donc le premier deck de la
+    /// liste qui a un plan est celui qu'on a ouvert en dernier. On ne remonte pas plus loin :
+    /// proposer de reprendre un deck laissé il y a trois semaines n'est pas une reprise,
+    /// c'est une suggestion, et ce n'est pas ce que la rangée promet.
+    private func findResumePoint() -> ResumePoint? {
+        let logs = ExamReadiness.recentLogsByCard(in: modelContext)
+        let now = Date()
+
+        for course in CourseRepository.allCourses(in: modelContext) {
+            let chapters = course.orderedChapters
+            guard chapters.count > 1 else { continue }
+
+            let index = chapters.firstIndex { chapter in
+                let percent = ChapterProgress.percent(of: chapter, logs: logs, now: now)
+                return ChapterProgress.state(of: chapter, percent: percent) != .learned
+            }
+            guard let index else { continue }
+
+            return ResumePoint(
+                course: course,
+                chapter: chapters[index],
+                number: index + 1,
+                total: chapters.count
+            )
+        }
+        return nil
     }
 
     private var upcomingExams: [Exam] {
@@ -314,13 +347,13 @@ struct TodayView: View {
                         restState(load)
                     } else if load.dueCards.isEmpty {
                         rhythmReachedCard(held: load.heldBackNewCards)
-                        dueCoursesSection(load.dueByCourse)
                     } else {
                         dueCard(load)
-                        dueCoursesSection(load.dueByCourse)
                     }
 
+                    measuresSection
                     examSection(load)
+                    resumeSection
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
                 .padding(.bottom, MicaboSpacing.md)
@@ -364,6 +397,9 @@ struct TodayView: View {
             }
             .navigationDestination(for: Exam.self) { exam in
                 ExamDetailView(exam: exam)
+            }
+            .navigationDestination(for: Chapter.self) { chapter in
+                ChapterSheetView(chapter: chapter)
             }
         }
         .sheet(isPresented: $creatingExam) {
@@ -445,7 +481,12 @@ struct TodayView: View {
             newLabel: i18n.t("ios.today.newCount", ["count": "\(counts.newCards)"])
         ) {
             Button(action: startSession) {
-                Text(i18n.t("app.today.start"))
+                // **« Commencer », et rien d'autre.** Le libellé portait la durée —
+                // « Réviser · 9 min » — en la tirant d'une clé à trou que cet appel ne
+                // remplissait pas : le bouton affichait « Réviser · {minutes} min », en
+                // toutes lettres. La durée est déjà écrite dans la carte, juste au-dessus,
+                // et la maquette ne la redonne pas sur le bouton.
+                Text(i18n.t("app.review.start"))
             }
             .buttonStyle(MicaboActionButtonStyle(height: 52))
         }
@@ -520,19 +561,24 @@ struct TodayView: View {
     ///
     /// Les mesures passent **en tête** : une fois les cartes revues, le tirage n'a plus la
     /// même valeur, puisqu'il porte sur ce qu'on vient de relire.
+    /// **Les mesures du jour — examen blanc, test de parcours.**
+    ///
+    /// Ce qui reste de « À l'ordre du jour ». La section listait aussi un deck par paquet de
+    /// cartes dues, et c'était le redoublement de la carte du jour juste au-dessus : celle-ci
+    /// annonce trente-quatre cartes, celle-là redisait dix-huit ici et seize là. On lisait
+    /// deux fois le même chiffre découpé autrement, sans pouvoir rien en faire de plus — le
+    /// bouton ouvre la même session.
+    ///
+    /// Une mesure, elle, n'est nulle part ailleurs : c'est un travail à part, qui se lance
+    /// d'ici et qui ne compte pas dans les cartes du jour. Elle garde donc sa rangée, sous
+    /// son propre nom, et seulement les jours où il y en a une.
     @ViewBuilder
-    private func dueCoursesSection(_ entries: [(course: Course, count: Int)]) -> some View {
-        if !entries.isEmpty || !measuresToday.isEmpty {
+    private var measuresSection: some View {
+        if !measuresToday.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                MicaboSectionCaption(text: i18n.t("app.today.agenda"))
+                MicaboSectionHeading(title: i18n.t("ios.today.measures"))
 
-                MicaboRowGroup(
-                    rows: measuresToday.map { measureRow($0) } + entries.map { entry in
-                        MicaboRow.courseDue(entry.course, dueCount: entry.count) {
-                            path.append(entry.course)
-                        }
-                    }
-                )
+                MicaboRowGroup(rows: measuresToday.map { measureRow($0) })
             }
         }
     }
@@ -557,28 +603,25 @@ struct TodayView: View {
 
     // MARK: - Examens
 
-    /// **La prochaine épreuve a sa carte**, comme sur le site : le nom, le compte à rebours,
-    /// et ce qu'on en sait aujourd'hui posé contre l'objectif. Les suivantes se lisent en
-    /// dessous, sur une ligne chacune. Un appui ouvre la fiche de l'épreuve, où l'on trouve
-    /// l'examen blanc et ce qui résiste ; le calendrier garde sa place dans la barre.
-    /// **La section est toujours là**, même sans un seul cours.
+    /// **Les prochaines épreuves, une par rangée**, jusqu'à quatre. La plus proche n'a plus
+    /// de traitement à part : elle était portée par une carte à jauge qui la distinguait des
+    /// autres sans rien en dire de plus, et une section qui change de forme à la première
+    /// ligne se lit deux fois. Un appui ouvre la fiche de l'épreuve, où vivent le détail, la
+    /// jauge et l'examen blanc.
+    ///
+    /// **La section est toujours là**, même sans une seule épreuve : c'est alors la rangée
+    /// qui propose d'en poser une.
     private func examSection(_ load: DayLoad) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
-                MicaboSectionCaption(text: i18n.t("app.today.nextExam"))
-                Spacer(minLength: MicaboSpacing.xs)
+            MicaboSectionHeading(title: i18n.t("app.today.nextExam")) {
+                if !upcomingExams.isEmpty {
+                    MicaboSeeAllLink(title: i18n.t("ios.profile.seeAll")) {
+                        router?.selection = .decks
+                    }
+                }
             }
 
-            if let next = nextExam {
-                nextExamCard(next, mastery: load.examProgress[next.id] ?? 0)
-
-                let others = Array(upcomingExams.dropFirst().prefix(3))
-                if !others.isEmpty {
-                    MicaboSectionCaption(text: i18n.t("app.today.otherExams"))
-                        .padding(.top, MicaboSpacing.xs)
-                    otherExams(others, load)
-                }
-            } else {
+            if upcomingExams.isEmpty {
                 Button {
                     openExams()
                 } label: {
@@ -595,91 +638,105 @@ struct TodayView: View {
                 }
                 .buttonStyle(MicaboRowButtonStyle())
                 .micaboGroup()
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(upcomingExams.prefix(4).enumerated()), id: \.element.id) { index, exam in
+                        examRow(exam, mastery: load.examProgress[exam.id] ?? 0)
+
+                        if index < min(4, upcomingExams.count) - 1 {
+                            MicaboHairline(onCanvas: true)
+                        }
+                    }
+                }
             }
         }
     }
 
-    /// Le nom, le compte à rebours, et la jauge : ce qu'on sait contre ce qu'on vise.
-    private func nextExamCard(_ exam: Exam, mastery: Int) -> some View {
-        let target = TargetScore.percent(from: exam.targetScore)
+    /// **Une épreuve, sur une rangée plate.**
+    ///
+    /// Elle remplace la grande carte à jauge qui ouvrait cette section : un nom, un compte à
+    /// rebours, un pourcentage de trente points et une barre portant un repère d'objectif.
+    /// C'était un graphe — quatre chiffres pour une ligne d'agenda — et la maquette n'en a
+    /// pas : elle aligne les épreuves comme elle aligne les decks, une tuile pastel, un titre,
+    /// une date, une pastille de compte à rebours. Le détail, la jauge et l'examen blanc sont
+    /// derrière la rangée, sur la fiche de l'épreuve.
+    private func examRow(_ exam: Exam, mastery: Int) -> some View {
+        let course = ExamRepository.courses(of: exam, in: modelContext).first
 
-        return Button {
-            path.append(exam)
-        } label: {
-            VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
-                HStack(alignment: .firstTextBaseline, spacing: MicaboSpacing.sm) {
-                    Text(exam.name)
-                        .font(MicaboFont.ui(16, weight: .semibold))
-                        .foregroundStyle(MicaboColor.ink)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                    Spacer(minLength: MicaboSpacing.xs)
-                    MicaboBadge(text: exam.countdownLabel(), tone: exam.daysRemaining() <= 3 ? .warm : .neutral)
-                }
-
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text("\(mastery)")
-                            .font(MicaboFont.number(30, weight: .bold))
-                            .foregroundStyle(MicaboColor.ink)
-                            .monospacedDigit()
-                        Text("%")
-                            .font(MicaboFont.ui(15, weight: .semibold))
-                            .foregroundStyle(MicaboColor.inkSecondary)
-                    }
-                    Text(i18n.t("app.chart.readiness.now"))
-                        .font(MicaboFont.micro)
-                        .foregroundStyle(MicaboColor.inkTertiary)
-                }
-
-                GeometryReader { proxy in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(MicaboColor.surfaceMuted)
-                        Capsule()
-                            .fill(MicaboColor.accent)
-                            .frame(width: proxy.size.width * CGFloat(max(2, mastery)) / 100)
-                        Rectangle()
-                            .fill(MicaboColor.ink)
-                            .frame(width: 2, height: 12)
-                            .offset(x: proxy.size.width * CGFloat(target) / 100 - 1)
-                    }
-                }
-                .frame(height: 8)
-
-                Text(i18n.t("app.chart.readiness.target", ["percent": "\(target)"]))
-                    .font(MicaboFont.micro)
-                    .foregroundStyle(MicaboColor.inkTertiary)
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
+        return MicaboFlatRow(
+            emoji: course?.emoji ?? "📅",
+            pastel: MicaboColor.pastel(for: course?.id ?? exam.id),
+            title: exam.name,
+            subtitle: MicaboCalendar.dayLabel(exam.date)
+                + " · " + i18n.t("ios.deck.learnedPercent", ["percent": "\(mastery)"]),
+            action: { path.append(exam) }
+        ) {
+            MicaboCountdownPill(days: exam.daysRemaining())
         }
-        .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .soft))
-        .micaboGroup()
-        .accessibilityLabel("\(exam.name), \(exam.countdownLabel()). \(mastery) %, \(i18n.t("app.chart.readiness.target", ["percent": "\(target)"]))")
     }
 
-    private func otherExams(_ exams: [Exam], _ load: DayLoad) -> some View {
-        VStack(spacing: 0) {
-            ForEach(Array(exams.enumerated()), id: \.element.id) { index, exam in
+    // MARK: - Reprendre
+
+    /// **Où l'on s'était arrêté**, et c'est la dernière chose de la page.
+    ///
+    /// L'accueil disait ce qu'il y a à faire aujourd'hui et quand tombent les épreuves ; il
+    /// ne disait pas ce qu'on était en train de lire. Un deck de neuf chapitres se reprend
+    /// par son chapitre courant, et le retrouver demandait sinon deux écrans — l'onglet des
+    /// decks, puis le plan — pour une information que l'app connaît déjà.
+    @ViewBuilder
+    private var resumeSection: some View {
+        if let resume {
+            VStack(alignment: .leading, spacing: 10) {
+                MicaboSectionHeading(title: i18n.t("ios.today.resume"))
+
                 Button {
-                    path.append(exam)
+                    path.append(resume.chapter)
                 } label: {
-                    MicaboRow(
-                        tile: MicaboTile.exam(exam.date),
-                        title: exam.name,
-                        subtitle: i18n.t("app.today.known", ["percent": "\(load.examProgress[exam.id] ?? 0)"]),
-                        accessory: .badge(exam.countdownLabel(), .neutral)
-                    )
-                }
-                .buttonStyle(MicaboRowButtonStyle())
+                    MicaboOutlineCard(padding: EdgeInsets(top: 14, leading: 14, bottom: 14, trailing: 14)) {
+                        HStack(spacing: 13) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous)
+                                    .fill(MicaboColor.pastel(for: resume.course.id))
+                                Text(resume.course.emoji)
+                                    .font(.system(size: 22))
+                            }
+                            .frame(width: 46, height: 46)
 
-                if index < exams.count - 1 {
-                    MicaboHairline(inset: 72)
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(resume.chapter.title)
+                                    .font(MicaboFont.ui(14.5, weight: .semibold))
+                                    .foregroundStyle(MicaboColor.ink)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
+
+                                HStack(spacing: 8) {
+                                    ZStack(alignment: .leading) {
+                                        Capsule().fill(MicaboColor.track)
+                                        Capsule()
+                                            .fill(MicaboColor.accent)
+                                            .frame(width: 88 * resume.fraction)
+                                    }
+                                    .frame(width: 88, height: 5)
+
+                                    Text(i18n.t("ios.today.chapterOf", [
+                                        "number": "\(resume.number)",
+                                        "total": "\(resume.total)",
+                                    ]))
+                                    .font(MicaboFont.ui(12, weight: .regular))
+                                    .foregroundStyle(MicaboColor.inkSecondary)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            MicaboRowChevron()
+                        }
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .light))
             }
         }
-        .micaboGroup()
     }
 
     private func openExams() {
