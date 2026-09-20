@@ -72,6 +72,11 @@ struct MicaboPalette: Equatable {
     /// la même chose », là où un second accent aurait dit « deux choses ».
     /// Le fond d'une réponse choisie : un violet si pâle qu'il se lit comme du blanc teinté.
     /// `accentSoft` était trop présent pour six rangées empilées.
+    /// Les trois gris d'un rouleau de notes, du plus proche du choix au plus lointain. Ils
+    /// ne servent qu'à ça : partout ailleurs, `inkTertiary` suffit.
+    var gradeNear: Color
+    var gradeMid: Color
+    var gradeFar: Color
     var accentWash: Color
     var accentPale: Color
     /// Le creux d'une barre de progression fine. Plus sombre que `progressTrack`, qui sert
@@ -82,6 +87,13 @@ struct MicaboPalette: Equatable {
     var flame: Color
     var flameInk: Color
     var flameSoft: Color
+    /// Le creux des segments de série, et la prose sur le lavis chaud : deux teintes tirées
+    /// de l'orange plutôt que du gris, pour que la carte reste d'une seule pièce.
+    var flameTrack: Color
+    var warmProse: Color
+    var warmWashStart: Color
+    var warmWashEnd: Color
+    var warmWashStroke: Color
     /// Le dégradé de la carte du jour, du violet au vert en passant par le bleu, et le filet
     /// qui la ferme. Trois teintes très proches du blanc : c'est un lavis, pas un aplat.
     var dayWashStart: Color
@@ -158,12 +170,20 @@ struct MicaboPalette: Equatable {
         infoSoft: Color(hex: 0xE3EDFC),
         offerWash: Color(hex: 0xDCC9FB),
         offerWashSoft: Color(hex: 0xF4EEFE),
+        gradeNear: Color(hex: 0xB9B9C2),
+        gradeMid: Color(hex: 0xD3D3DA),
+        gradeFar: Color(hex: 0xE6E6EB),
         accentWash: Color(hex: 0xF6F4FE),
         accentPale: Color(hex: 0xCFC4FA),
         track: Color(hex: 0xE5E5EA),
         flame: Color(hex: 0xFF5440),
         flameInk: Color(hex: 0xC0341F),
         flameSoft: Color(hex: 0xFFF0ED),
+        flameTrack: Color(hex: 0xF2D6C9),
+        warmProse: Color(hex: 0x6B5A52),
+        warmWashStart: Color(hex: 0xFFF3E8),
+        warmWashEnd: Color(hex: 0xFDE8EE),
+        warmWashStroke: Color(hex: 0xF3E4DC),
         dayWashStart: Color(hex: 0xF2EEFE),
         dayWashMid: Color(hex: 0xEBF1FC),
         dayWashEnd: Color(hex: 0xE9F5F1),

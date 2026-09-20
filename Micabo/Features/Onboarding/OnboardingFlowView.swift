@@ -20,8 +20,6 @@ struct OnboardingFlowView: View {
                 .animation(.easeInOut(duration: 0.3), value: model.step)
 
             VStack(spacing: 0) {
-                OnboardingProgressBar(step: model.step)
-
                 ZStack {
                     stepView
                         .id(model.step)
@@ -104,38 +102,5 @@ extension AnyTransition {
             insertion: .offset(x: 28).combined(with: .opacity),
             removal: .offset(x: -28).combined(with: .opacity)
         )
-    }
-}
-
-/// Jauge fine en haut de l'écran, présente du premier écran au dernier.
-///
-/// Elle garde le vert de la progression partout où le fond est clair, et s'inverse sur
-/// les écrans sombres : c'est la lisibilité qui décide, pas l'écran.
-private struct OnboardingProgressBar: View {
-    let step: OnboardingStep
-
-    private var surface: OnboardingSurface { step.surface }
-
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    var body: some View {
-        HStack(spacing: MicaboSpacing.sm) {
-            MicaboProgressBar(progress: step.progress, tint: surface.progressTint, track: surface.progressTrack)
-                .frame(height: 4)
-            // **Le thème a quitté le parcours.** Jour ou nuit n'est pas une question
-            // d'inscription : c'est un réglage, il vit dans les Réglages, et le poser au-dessus
-            // de chaque écran invitait à jouer avec au lieu de répondre.
-            if step != .howItWorks {
-                LanguageSwitcher()
-                    .layoutPriority(1)
-            }
-        }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.top, MicaboSpacing.xs)
-        .padding(.bottom, MicaboSpacing.xs)
-        .animation(.easeInOut(duration: 0.38), value: step)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(i18n.t("ios.progress"))
-        .accessibilityValue("\(Int(step.progress * 100)) %")
     }
 }

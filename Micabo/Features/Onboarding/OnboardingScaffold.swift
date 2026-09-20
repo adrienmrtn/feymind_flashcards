@@ -173,6 +173,8 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
     var content: () -> Content
     var footer: () -> Footer
 
+    @Environment(OnboardingModel.self) private var model: OnboardingModel?
+
     init(
         eyebrow: String? = nil,
         title: String,
@@ -205,6 +207,11 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // **La jauge et le retour vivent dans la page**, pas dans une bande au-dessus
+            // d'elle. Posés au-dessus, ils appartenaient à l'app ; posés dans la marge, ils
+            // appartiennent à l'écran, et le titre commence là où l'œil est déjà.
+            chrome
+
             if scrolls {
                 ScrollView {
                     stack(inScrollView: true)
@@ -225,6 +232,40 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
         }
         .background(surface.background.ignoresSafeArea(edges: .bottom))
         .environment(\.onboardingSurface, surface)
+    }
+
+    /// La jauge, puis le chevron de retour quand il a quelque chose à défaire.
+    ///
+    /// Le chevron garde sa place même quand il ne sert pas : sans ça, le titre remonterait
+    /// de quarante points d'un écran à l'autre, et tout le parcours sauterait.
+    @ViewBuilder
+    private var chrome: some View {
+        if let model {
+            VStack(alignment: .leading, spacing: 0) {
+                MicaboProgressBar(
+                    progress: model.step.progress,
+                    tint: surface.progressTint,
+                    track: surface.progressTrack
+                )
+                .frame(height: 4)
+
+                Button {
+                    model.goBack()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(surface.isDark ? MicaboColor.onInkMuted : MicaboColor.inkSecondary)
+                        .frame(width: 40, height: 40, alignment: .leading)
+                }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                .opacity(model.canGoBack ? 1 : 0)
+                .disabled(!model.canGoBack)
+                .padding(.top, 16)
+                .accessibilityLabel(L10n.t("app.common.back", locale: .resolved()))
+            }
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, MicaboSpacing.xs)
+        }
     }
 
     /// Une composition figée **qui défile quand même si elle ne tient pas.**
