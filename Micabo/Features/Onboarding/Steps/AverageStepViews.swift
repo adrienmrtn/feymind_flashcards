@@ -300,9 +300,9 @@ private struct GradeJourney: View {
         .padding(.top, 18)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
+            RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous)
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
         }
         .task {

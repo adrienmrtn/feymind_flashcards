@@ -950,9 +950,9 @@ struct MicaboStreakCard: View {
                 endPoint: .bottomTrailing
             )
         }
-        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
+            RoundedRectangle(cornerRadius: MicaboRadius.wash, style: .continuous)
                 .strokeBorder(MicaboColor.warmWashStroke, lineWidth: 1)
         }
     }
