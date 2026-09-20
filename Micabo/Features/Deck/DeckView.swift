@@ -54,65 +54,39 @@ struct DeckView: View {
     /// l'on règle encore une date et une note visée : la fiche d'épreuve qui le faisait
     /// n'existe plus, et sa date se lit désormais ici, sur la carte d'état.
     @State private var editingExam: Exam?
-    /// Entre 0 (bandeau déplié) et 1 (réduit en barre). Piloté par le défilement.
-    @State private var collapse: Double = 0
-
-    private static let scrollSpace = "micabo.deck"
 
     private var safeTop: CGFloat { MicaboScreen.safeTop }
 
     private var pastel: Color { MicaboColor.pastel(for: course.id) }
 
     var body: some View {
-        ScrollView {
-            // **Le bandeau défile avec le contenu ; la barre repliée apparaît par-dessus.**
-            //
-            // C'est le `ScrollView` qui emporte le bandeau, pas un calcul : il s'en va parce
-            // qu'il est dans le contenu, exactement comme la première rangée de chapitres.
-            // La sonde de défilement ne décide plus que d'une chose, le fondu de la barre —
-            // et si elle se trompait, le bandeau partirait quand même.
-            VStack(alignment: .leading, spacing: 0) {
-                MicaboDeckBanner(
-                    emoji: course.emoji,
-                    pastel: pastel,
-                    safeTop: safeTop,
-                    onBack: { dismiss() },
-                    onMenu: { showMenu = true }
-                )
-
-                VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
-                    identity
-                    statusCard
-                    DeckChaptersView(course: course)
-                }
-                .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, 22)
-                .padding(.bottom, MicaboLayout.bottomBarClearance)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .micaboScrollProbe(space: Self.scrollSpace)
-        }
-        .coordinateSpace(name: Self.scrollSpace)
-        .scrollIndicators(.hidden)
-        .onPreferenceChange(MicaboScrollOffsetKey.self) { top in
-            collapse = min(1, max(0, -top / MicaboDeckBanner.travel))
-        }
-        .overlay(alignment: .top) {
-            MicaboDeckBar(
+        // **Le bandeau se replie en place**, piloté par le défilement lu avec l'API faite
+        // pour ça. Le contenu lui laisse sa hauteur dépliée, puis remonte dessous — voir
+        // `MicaboCollapsingScreen`.
+        MicaboCollapsingScreen(expandedHeight: safeTop + MicaboHeaderBand.deck) { scroll in
+            MicaboCollapsingHeader(
                 emoji: course.emoji,
                 pastel: pastel,
                 title: course.title,
+                band: MicaboHeaderBand.deck,
                 safeTop: safeTop,
-                visible: collapse,
+                offset: scroll.offset,
                 onBack: { dismiss() },
-                onMenu: { showMenu = true }
-            )
+                onTrailing: { showMenu = true }
+            ) {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 16, weight: .semibold))
+            }
+        } content: {
+            VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
+                identity
+                statusCard
+                DeckChaptersView(course: course)
+            }
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.top, 22)
+            .padding(.bottom, MicaboLayout.bottomBarClearance)
         }
-        // **Après la superposition, pas avant.** Posé avant, il n'étend que le défilement :
-        // le bandeau reste aligné sur le haut de la zone sûre, une bande blanche subsiste
-        // au-dessus de lui, et le contenu qui défile passe dedans par-dessus l'heure. Posé
-        // ici, il étend l'ensemble — défilement **et** bandeau — jusqu'au bord de l'écran.
-        .ignoresSafeArea(edges: .top)
         .micaboScreenBackground()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)

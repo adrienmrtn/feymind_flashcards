@@ -278,10 +278,12 @@ struct OnboardingScaffold<Content: View, Footer: View>: View {
 
                     // **La mascotte est sur chaque écran de question**, petite, à droite
                     // du retour — là où Gizmo met la sienne. Elle cligne des yeux, elle
-                    // respire, et c'est ce qui fait qu'une question posée en gras ne se
-                    // lit pas comme un champ de formulaire : quelqu'un la pose.
-                    MicaboMascot(mood: .happy, size: 30)
+                    // respire, elle change de tête d'un écran à l'autre et sursaute quand
+                    // on passe au suivant : c'est ce qui fait qu'une question posée en
+                    // gras ne se lit pas comme un champ de formulaire — quelqu'un la pose.
+                    MicaboMascot(mood: model.step.mascotMood, size: 30)
                         .frame(width: 46, height: 40)
+                        .mascotHop(on: model.step)
                 }
                 .padding(.top, 16)
             }
@@ -914,6 +916,8 @@ struct OnboardingChoiceChip: View {
             .background(isSelected ? MicaboColor.accent : MicaboColor.surface, in: Capsule())
         }
         .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
+        // La puce choisie grandit d'un rien : c'est la réponse qui se détache de la grille.
+        .scaleEffect(isSelected ? 1.05 : 1)
         .animation(OnboardingMotion.tap, value: isSelected)
     }
 }

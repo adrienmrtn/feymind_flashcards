@@ -45,8 +45,10 @@ struct DeckSubjectStepView: View {
                     placeholder: i18n.t("ios.deckSetup.subject.search")
                 )
 
+                // Les puces arrivent l'une après l'autre, serrées : une grille qui se pose
+                // d'un bloc se lit comme une page chargée, pas comme une question posée.
                 MicaboFlowLayout(spacing: 8) {
-                    ForEach(shown, id: \.self) { subject in
+                    ForEach(Array(shown.enumerated()), id: \.element) { rank, subject in
                         OnboardingChoiceChip(
                             title: subject,
                             emoji: SubjectCatalog.emoji(for: subject),
@@ -54,6 +56,7 @@ struct DeckSubjectStepView: View {
                         ) {
                             setup.subject = subject
                         }
+                        .onboardingAppear(index: 4 + rank, stagger: 0.03)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

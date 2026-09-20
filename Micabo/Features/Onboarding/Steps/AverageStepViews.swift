@@ -45,21 +45,26 @@ struct CurrentAverageStepView: View {
             animatesTitle: true,
             expandsContent: true
         ) {
-            GradeWheel(
-                choices: choices,
-                score: Binding(
-                    get: { model.currentScore },
-                    set: { newValue in
-                        model.currentScore = newValue
-                        // Un objectif hérité d'une moyenne plus basse n'a plus cours : le
-                        // laisser afficherait un but déjà atteint sur l'écran suivant.
-                        if let target = model.targetScore, let newValue, target <= newValue {
-                            model.targetScore = nil
+            // La roue a sa hauteur à elle ; les ressorts la posent au milieu de ce qui reste.
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                GradeWheel(
+                    choices: choices,
+                    score: Binding(
+                        get: { model.currentScore },
+                        set: { newValue in
+                            model.currentScore = newValue
+                            // Un objectif hérité d'une moyenne plus basse n'a plus cours : le
+                            // laisser afficherait un but déjà atteint sur l'écran suivant.
+                            if let target = model.targetScore, let newValue, target <= newValue {
+                                model.targetScore = nil
+                            }
                         }
-                    }
-                ),
-                label: i18n.t("ios.averageTitle")
-            )
+                    ),
+                    label: i18n.t("ios.averageTitle")
+                )
+                Spacer(minLength: 0)
+            }
         } footer: {
             OnboardingContinueButton(isEnabled: model.currentScore != nil) {
                 model.advance()
@@ -98,15 +103,18 @@ struct TargetAverageStepView: View {
         ) {
             if !isAtTop {
                 VStack(spacing: 22) {
+                    Spacer(minLength: 0)
+
                     GradeWheel(
                         choices: choices,
                         score: Binding(
                             get: { model.targetScore },
                             set: { model.targetScore = $0 }
                         ),
-                        // Deux crans au-dessus du départ : un objectif qui s'ouvre sur la
-                        // valeur juste au-dessus de la sienne ne ressemble pas à un objectif.
-                        fallbackIndex: 1,
+                        // Le milieu de ce qui reste à viser : la roue s'ouvre avec des notes
+                        // des deux côtés, et un objectif qui n'est ni le cran juste
+                        // au-dessus du sien ni le haut du barème.
+                        fallbackIndex: (choices.count - 1) / 2,
                         label: i18n.t("ios.targetTitle")
                     )
 
@@ -118,6 +126,8 @@ struct TargetAverageStepView: View {
                         )
                         .transition(.opacity)
                     }
+
+                    Spacer(minLength: 0)
                 }
                 .animation(.easeOut(duration: 0.18), value: model.targetScore)
             }
@@ -230,7 +240,6 @@ private struct GradeWheel: View {
                 set: { score = $0 }
             )
         )
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityLabel(label)
         .onAppear {
             // La réponse existe dès l'affichage : voir plus haut.

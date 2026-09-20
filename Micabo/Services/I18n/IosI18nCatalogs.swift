@@ -7,6 +7,8 @@ enum IosI18nCatalogs {
         "ios.notifCardTitle": "Il te reste {count} cartes à réviser",
         "ios.notifCardBody": "Dix minutes, et ta série tient.",
         "ios.notifNow": "maintenant",
+        "ios.notif.streak": "{count} jours de suite",
+        "ios.signIn.email": "Continuer avec un e-mail",
         // L'examen blanc, sur le téléphone.
         "ios.mock.resume": "Reprendre la copie",
         "ios.mock.writing": "On écrit ta copie sur ton programme. Une trentaine de secondes.",
@@ -847,6 +849,8 @@ enum IosI18nCatalogs {
         "ios.notifCardTitle": "Dir bleiben {count} Karten zum Wiederholen",
         "ios.notifCardBody": "Zehn Minuten, und deine Serie hält.",
         "ios.notifNow": "jetzt",
+        "ios.notif.streak": "{count} Tage in Folge",
+        "ios.signIn.email": "Mit E-Mail fortfahren",
         // L'examen blanc, sur le téléphone.
         "ios.mock.resume": "Prüfung fortsetzen",
         "ios.mock.writing": "Deine Prüfung wird aus deinem Stoff geschrieben. Etwa dreißig Sekunden.",
@@ -1565,6 +1569,8 @@ enum IosI18nCatalogs {
         "ios.notifCardTitle": "Te quedan {count} tarjetas por repasar",
         "ios.notifCardBody": "Diez minutos, y tu racha aguanta.",
         "ios.notifNow": "ahora",
+        "ios.notif.streak": "{count} días seguidos",
+        "ios.signIn.email": "Continuar con el correo",
         // L'examen blanc, sur le téléphone.
         "ios.mock.resume": "Retomar el examen",
         "ios.mock.writing": "Estamos escribiendo tu examen a partir de tu programa. Unos treinta segundos.",
@@ -2283,6 +2289,8 @@ enum IosI18nCatalogs {
         "ios.notifCardTitle": "Gözden geçirecek {count} kartın kaldı",
         "ios.notifCardBody": "On dakika, ve serin bozulmaz.",
         "ios.notifNow": "şimdi",
+        "ios.notif.streak": "{count} gün üst üste",
+        "ios.signIn.email": "E-posta ile devam et",
         // L'examen blanc, sur le téléphone.
         "ios.mock.resume": "Sınava devam et",
         "ios.mock.writing": "Sınavın müfredatından yazılıyor. Yaklaşık otuz saniye.",
@@ -3009,6 +3017,8 @@ enum IosI18nCatalogs {
         "ios.notifCardTitle": "You have {count} cards left to review",
         "ios.notifCardBody": "Ten minutes, and your streak holds.",
         "ios.notifNow": "now",
+        "ios.notif.streak": "{count} days in a row",
+        "ios.signIn.email": "Continue with email",
         // L'examen blanc, sur le téléphone.
         "ios.mock.resume": "Resume the paper",
         "ios.mock.writing": "Writing your paper from your programme. About thirty seconds.",
