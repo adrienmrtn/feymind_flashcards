@@ -74,9 +74,18 @@ struct TodayView: View {
     @State private var studyRuns = 0
     /// Le chapitre où l'on s'était arrêté. Voir `resumeSection`.
     @State private var resume: ResumePoint?
+    /// Le chapitre qu'on vient d'ouvrir depuis « Reprendre ».
+    @State private var openedChapter: Chapter?
 
     /// **Où l'on en est dans un deck** : le deck, le chapitre, et son rang dans le plan.
-    struct ResumePoint: Equatable {
+    ///
+    /// **Pas `Equatable`.** Je l'avais déclaré par réflexe, et rien ne compare jamais deux
+    /// points de reprise : `@State` n'en demande pas, aucune animation ni aucun `onChange`
+    /// ne s'appuie dessus. La conformité obligeait en échange le compilateur à synthétiser
+    /// un `==` à partir de `Course` et `Chapter`, qui sont des classes SwiftData — et il ne
+    /// sait pas le faire. Une conformité qu'on n'utilise pas ne coûte jamais rien tant
+    /// qu'elle tient ; celle-ci ne tenait pas.
+    struct ResumePoint {
         let course: Course
         let chapter: Chapter
         /// Le rang du chapitre, à partir de 1.
@@ -397,7 +406,10 @@ struct TodayView: View {
             .navigationDestination(for: CourseCardsRoute.self) { route in
                 FlashcardsView(course: route.course)
             }
-            .navigationDestination(for: Chapter.self) { chapter in
+            // `item:` et non `for:`, comme `DeckChaptersView` : c'est la forme qui ouvre
+            // déjà un chapitre ailleurs dans l'app, et elle n'exige pas de `Chapter` ce que
+            // `for:` lui demandait.
+            .navigationDestination(item: $openedChapter) { chapter in
                 ChapterSheetView(chapter: chapter)
             }
         }
@@ -711,7 +723,7 @@ struct TodayView: View {
                 MicaboSectionHeading(title: i18n.t("ios.today.resume"))
 
                 Button {
-                    path.append(resume.chapter)
+                    openedChapter = resume.chapter
                 } label: {
                     MicaboOutlineCard(padding: EdgeInsets(top: 14, leading: 14, bottom: 14, trailing: 14)) {
                         HStack(spacing: 13) {
