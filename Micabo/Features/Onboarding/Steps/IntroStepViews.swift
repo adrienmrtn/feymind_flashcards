@@ -41,6 +41,9 @@ struct UploadStepView: View {
             VStack(spacing: 10) {
                 Spacer(minLength: 0)
 
+                OnboardingImportScene()
+                    .onboardingAppear(index: 0)
+
                 ForEach(Array(Self.formats.enumerated()), id: \.offset) { index, format in
                     HStack(spacing: 14) {
                         Text(format.emoji)
@@ -86,6 +89,7 @@ struct DatesStepView: View {
         ) {
             VStack(spacing: MicaboSpacing.md) {
                 Spacer(minLength: 0)
+                OnboardingCountdownScene()
                 IntroCountdownCard()
                 Spacer(minLength: 0)
             }
@@ -140,6 +144,12 @@ struct SmartFeaturesStepView: View {
         ) {
             VStack(spacing: 10) {
                 Spacer(minLength: 0)
+
+                OnboardingFlipScene(
+                    question: i18n.t("ios.intro.flip.question"),
+                    answer: i18n.t("ios.intro.flip.answer")
+                )
+                .onboardingAppear(index: 0)
 
                 ForEach(Array(Self.features.enumerated()), id: \.offset) { index, feature in
                     HStack(spacing: 14) {
@@ -235,7 +245,12 @@ private struct IntroCountdownCard: View {
 /// Un plan de deck : quatre chapitres, deux sus, un entamé.
 private struct IntroPlanCard: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    /// Les pourcentages **visés** par l'animation. La carte part de zéro partout et les
+    /// rejoint un chapitre après l'autre, en boucle : un plan de travail qui se remplit sous
+    /// les yeux dit ce qu'une capture d'écran de plan rempli ne dit pas — que c'est le
+    /// travail qui le remplit.
     private static let rows: [(key: String, percent: Int)] = [
         ("ios.intro.chapter1", 100),
         ("ios.intro.chapter2", 100),
@@ -243,13 +258,21 @@ private struct IntroPlanCard: View {
         ("ios.intro.chapter4", 0),
     ]
 
+    /// Le nombre de chapitres déjà remplis. Il monte de zéro à quatre, marque un temps, et
+    /// repart.
+    @State private var reached = 0
+
     var body: some View {
         VStack(spacing: 0) {
             ForEach(Array(Self.rows.enumerated()), id: \.offset) { index, row in
+                let shown = index < reached ? row.percent : 0
+                let isDone = shown >= 90
+
                 HStack(spacing: 12) {
-                    Image(systemName: row.percent >= 90 ? "checkmark.circle.fill" : "\(index + 1).circle")
+                    Image(systemName: isDone ? "checkmark.circle.fill" : "\(index + 1).circle")
                         .font(.system(size: 19, weight: .medium))
-                        .foregroundStyle(row.percent >= 90 ? MicaboColor.positive : MicaboColor.inkTertiary)
+                        .foregroundStyle(isDone ? MicaboColor.positive : MicaboColor.inkTertiary)
+                        .contentTransition(.symbolEffect(.replace))
 
                     Text(i18n.t(row.key))
                         .font(MicaboFont.ui(15, weight: .medium))
@@ -257,10 +280,11 @@ private struct IntroPlanCard: View {
 
                     Spacer(minLength: 0)
 
-                    Text("\(row.percent) %")
+                    Text("\(shown) %")
                         .font(MicaboFont.ui(13, weight: .semibold))
-                        .foregroundStyle(row.percent > 0 ? MicaboColor.accent : MicaboColor.inkTertiary)
+                        .foregroundStyle(shown > 0 ? MicaboColor.accent : MicaboColor.inkTertiary)
                         .monospacedDigit()
+                        .contentTransition(.numericText())
                 }
                 .padding(.vertical, 14)
                 .padding(.horizontal, 16)
@@ -271,10 +295,29 @@ private struct IntroPlanCard: View {
                 }
             }
         }
+        .onAppear(perform: start)
         .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
                 .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+        }
+    }
+
+    private func start() {
+        guard !reduceMotion else {
+            reached = Self.rows.count
+            return
+        }
+        Task { @MainActor in
+            while !Task.isCancelled {
+                for step in 0...Self.rows.count {
+                    withAnimation(.easeOut(duration: 0.45)) { reached = step }
+                    try? await Task.sleep(for: .milliseconds(620))
+                }
+                try? await Task.sleep(for: .milliseconds(1400))
+                withAnimation(.easeOut(duration: 0.35)) { reached = 0 }
+                try? await Task.sleep(for: .milliseconds(500))
+            }
         }
     }
 }

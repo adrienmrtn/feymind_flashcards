@@ -46,6 +46,8 @@ struct TodayView: View {
     /// et c'est cet écran qui montre déjà les prochaines dates : la porte qui menait au
     /// calendrier ouvre maintenant le formulaire, sans écran intermédiaire.
     @State private var creatingExam = false
+    /// L'épreuve qu'on corrige, quand elle n'a pas de deck à ouvrir.
+    @State private var editingExam: Exam?
 
     /// La file du jour, **lue à la demande et non observée**.
     ///
@@ -395,12 +397,14 @@ struct TodayView: View {
             .navigationDestination(for: CourseCardsRoute.self) { route in
                 FlashcardsView(course: route.course)
             }
-            .navigationDestination(for: Exam.self) { exam in
-                ExamDetailView(exam: exam)
-            }
             .navigationDestination(for: Chapter.self) { chapter in
                 ChapterSheetView(chapter: chapter)
             }
+        }
+        .sheet(item: $editingExam) { exam in
+            ExamEditorSheet(exam: exam, suggestedDate: exam.date) { _ in }
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(MicaboRadius.sheet)
         }
         .sheet(isPresented: $creatingExam) {
             ExamEditorSheet(exam: nil) { created in
@@ -669,7 +673,24 @@ struct TodayView: View {
             title: exam.name,
             subtitle: MicaboCalendar.dayLabel(exam.date)
                 + " · " + i18n.t("ios.deck.learnedPercent", ["percent": "\(mastery)"]),
-            action: { path.append(exam) }
+            // **La rangée mène au deck, pas à une fiche d'épreuve.**
+            //
+            // Elle ouvrait `ExamDetailView`, qui était le dernier écran d'avant la refonte :
+            // une jauge avec repère d'objectif, un calendrier de deux mois jour par jour, une
+            // liste de blancs passés, une liste de cartes qui résistent. Tout ce qu'il
+            // apprenait de l'épreuve — la date, le compte à rebours, le pourcentage appris,
+            // le plan — est désormais sur la page du deck, écrit dans la langue du reste de
+            // l'app. Il ne restait qu'un doublon dans l'ancienne.
+            //
+            // Sans deck rattaché, il n'y a rien à ouvrir : on propose alors de corriger
+            // l'épreuve, qui est la seule chose qu'on puisse encore en faire.
+            action: {
+                if let course {
+                    path.append(course)
+                } else {
+                    editingExam = exam
+                }
+            }
         ) {
             MicaboCountdownPill(days: exam.daysRemaining())
         }

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// **Les formes de la nouvelle direction artistique.**
 ///
@@ -779,28 +780,32 @@ struct MicaboDeckBanner: View {
     }
 }
 
-/// **Le creux du haut de l'écran, mesuré plutôt que deviné.**
+/// **Le creux du haut de l'écran, lu sur la fenêtre.**
 ///
 /// Un bandeau qui monte jusqu'au bord de l'écran doit savoir où s'arrête la barre d'état,
 /// sinon son bouton de retour se pose sur l'heure. La valeur change d'un téléphone à
-/// l'autre — île dynamique, encoche, rien du tout — et une constante en dur se trompe donc
-/// sur deux appareils sur trois.
+/// l'autre — île dynamique, encoche, rien du tout — et une constante en dur se trompe sur
+/// deux appareils sur trois.
 ///
-/// Le `GeometryReader` **ne renonce pas** à la zone sûre : c'est précisément ce qui lui
-/// permet de la mesurer. Ce sont les vues à l'intérieur qui y renoncent, une fois la mesure
-/// faite.
-struct MicaboSafeTopReader<Content: View>: View {
-    private let content: (CGFloat) -> Content
-
-    init(@ViewBuilder content: @escaping (CGFloat) -> Content) {
-        self.content = content
-    }
-
-    var body: some View {
-        GeometryReader { proxy in
-            content(proxy.safeAreaInsets.top)
-                .frame(width: proxy.size.width, height: proxy.size.height)
-        }
+/// **Ça n'est pas mesuré par un `GeometryReader`, et c'est la correction.** Un
+/// `GeometryReader` qui respecte la zone sûre la mesure bien, mais il commence en dessous
+/// d'elle : tout ce qu'on pose en superposition à l'intérieur s'aligne alors sur son haut à
+/// lui, pas sur celui de l'écran. Le bandeau se posait donc cinquante points trop bas, une
+/// bande blanche restait au-dessus, et le contenu — qui, lui, renonçait à la zone sûre —
+/// défilait dedans par-dessus la barre d'état. C'est exactement ce qu'on voyait.
+///
+/// La fenêtre, elle, connaît ce creux sans qu'on ait à réserver de place pour le demander.
+/// Il ne change pas pendant la vie de l'app : c'est une propriété de l'appareil, pas de la
+/// mise en page.
+enum MicaboScreen {
+    static var safeTop: CGFloat {
+        let window = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first { $0.isKeyWindow }
+        // Quarante-sept : le creux d'un iPhone à encoche. Ce n'est qu'un dernier recours —
+        // il n'y a pas de fenêtre avant que la scène ne soit attachée.
+        return window?.safeAreaInsets.top ?? 47
     }
 }
 
@@ -956,19 +961,25 @@ struct MicaboStreakCard: View {
 
     private static let segments = 6
 
-    /// **Les six segments disent le chemin vers le record**, pas la série elle-même.
+    /// **Les six segments disent le chemin vers le record.**
     ///
-    /// Le cas zéro était pris à l'envers : sans record, la carte remplissait les six — une
-    /// barre pleine affichée à quelqu'un qui n'a jamais révisé deux jours de suite, juste
-    /// sous la phrase qui lui dit que sa série commence demain. Et le `max(1, …)` en allumait
-    /// un dès le premier rendu, série nulle comprise.
+    /// Deux fois de suite ils ont dit n'importe quoi, pour la même raison : le record servait
+    /// de dénominateur sans qu'on se demande ce qu'il vaut au départ. Sans record, la
+    /// première version remplissait les six. La seconde tombait sur le cas « record atteint »
+    /// — un jour de série, record d'un jour — et remplissait les six aussi, sous la phrase
+    /// qui annonce que la série commence demain. Six barres pleines pour un jour.
     ///
-    /// Aucun jour, aucun segment. Le record atteint ou dépassé, les six : il n'y a plus de
-    /// chemin à montrer.
+    /// Le dénominateur n'est donc pas le record, c'est **l'objectif** : le record quand il
+    /// vaut la peine d'être visé, six jours sinon. Quelqu'un qui n'a jamais tenu plus d'un
+    /// jour ne se compare pas à lui-même, il se compare à une semaine. Un jour de série
+    /// allume un segment, douze jours pour un record de dix-huit en allument quatre — ce que
+    /// la maquette montre — et dépasser son record les allume tous.
+    private var target: Int { Swift.max(best, Self.segments) }
+
     private var filled: Int {
         guard days > 0 else { return 0 }
-        guard best > days else { return Self.segments }
-        return min(Self.segments, max(1, Int((Double(days) / Double(best) * Double(Self.segments)).rounded())))
+        let share = Double(days) / Double(target) * Double(Self.segments)
+        return Swift.min(Self.segments, Swift.max(1, Int(share.rounded())))
     }
 
     var body: some View {
