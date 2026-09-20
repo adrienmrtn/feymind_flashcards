@@ -361,9 +361,6 @@ struct SharedCardRecord: Codable, Identifiable, Equatable {
 
 struct SharedCardCountRow: Codable {
     var course_id: UUID?
-    /// Le chapitre dont la carte est née. `nil` sur une carte importée, écrite à la main,
-    /// ou produite avant la refonte.
-    var chapter_id: UUID?
 }
 
 /// Une entrée de l'annuaire : de quoi désigner quelqu'un et le reconnaître.
@@ -412,6 +409,14 @@ struct FlashcardRecord: Codable {
     var id: UUID
     var user_id: UUID
     var course_id: UUID?
+    /// **Le chapitre dont la carte est née.** `nil` sur une carte importée d'Anki, écrite à
+    /// la main, ou produite avant la refonte : ces cartes-là n'ont pas de place dans un plan,
+    /// et on ne leur en invente pas une.
+    ///
+    /// La colonne est une clé étrangère vers `chapters`, effacée en `null` si le chapitre
+    /// disparaît — d'où l'ordre de la synchro, qui pousse les chapitres entre les cours et
+    /// les cartes.
+    var chapter_id: UUID?
     var front: String
     var back: String
     var hint: String?
