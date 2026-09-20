@@ -218,9 +218,14 @@ enum MicaboRadius {
     static let md: CGFloat = 16
     /// Rangée-carte, encadré d'une fiche, rangée de choix du parcours d'accueil.
     static let lg: CGFloat = 18
-    /// **La carte à lavis** : série du profil, et tout encadré qui porte une couleur de fond
-    /// plutôt qu'un filet. Vingt points — entre l'encadré à filet et la grande tuile.
-    static let card: CGFloat = 20
+    /// **La carte à lavis** : série du profil, graphe de progression, et tout encadré qui
+    /// porte une couleur de fond plutôt qu'un filet. Vingt points — entre l'encadré à filet
+    /// et la grande tuile.
+    ///
+    /// Elle ne se confond pas avec `card`, qui vaut vingt-deux et qui sert aux cartes
+    /// blanches à ombre : deux points d'écart sur deux objets qui ne portent ni le même
+    /// fond ni la même fonction.
+    static let wash: CGFloat = 20
     /// Bloc blanc regroupant plusieurs rangées, et cartes d'appel.
     static let group: CGFloat = 22
     static let card: CGFloat = 22
