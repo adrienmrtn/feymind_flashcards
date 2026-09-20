@@ -19,3 +19,6 @@ node_modules/
 # apparaissent dans des diffs qui ne parlent pas d'elles.
 AGENTS.md
 CLAUDE.md
+
+# Réglages locaux de Claude Code
+.claude/settings.local.json

@@ -37,8 +37,6 @@ struct SettingsView: View {
     @State private var schoolName = OnboardingPreferences.institutionName
 
     @Environment(ProAccess.self) private var pro: ProAccess?
-    /// Les cours de l'appareil : ils décident si l'offre de bienvenue est méritée.
-    @Query private var allCourses: [Course]
     @State private var paywall: PaywallTrigger?
     @State private var discountOffer: DiscountPresentation?
     /// Relues pour que la rangée de l'offre suive son décompte sans qu'on rouvre l'écran.
@@ -78,6 +76,12 @@ struct SettingsView: View {
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
         .micaboScreenBackground()
+        // Les cours de l'appareil décident si l'offre de bienvenue est méritée. Recompté à
+        // l'ouverture et après chaque synchro lancée d'ici, qui peut en faire descendre.
+        .task(id: "\(CourseLedger.shared.stamp)-\(sync.epoch)") {
+            let count = CourseRepository.ownedCount(in: modelContext)
+            if count != ownedCourseCount { ownedCourseCount = count }
+        }
         .confirmationDialog(
             i18n.t("ios.deleteAccountQ"),
             isPresented: $showDeleteAccountConfirmation,
@@ -216,9 +220,19 @@ struct SettingsView: View {
 
     /// Les cours importés ici. Ceux repris de la bibliothèque ne comptent pas : on n'a rien
     /// fait pour eux.
-    private var ownedCourseCount: Int {
-        allCourses.filter { !$0.isFromLibrary }.count
-    }
+    ///
+    /// Compté et non observé : une seule rangée le lit — la ligne de l'offre, plus haut — et
+    /// un `@Query` tenait pour ça la table entière des cours, trente kilo-octets de texte par
+    /// ligne.
+    ///
+    /// Il est relu après une synchronisation, parce que **cette feuille en lance une**
+    /// (« Synchroniser maintenant », plus bas) : un compte connecté qui reçoit ses cours
+    /// depuis le serveur doit voir la rangée de l'offre apparaître sans refermer les Réglages.
+    ///
+    /// La valeur de départ est celle qu'a laissée la languette de l'offre, qui compte la même
+    /// chose : la première image de la feuille est donc juste, au lieu de montrer une liste
+    /// sans la rangée puis de l'y insérer.
+    @AppStorage(DiscountOffer.Key.ownedCourses) private var ownedCourseCount = 0
 
     /// « -43 % sur l'année » et, quand la fenêtre court, le temps qu'il reste.
     private var discountSubtitle: String {
@@ -917,6 +931,10 @@ struct SettingsView: View {
         try? modelContext.delete(model: Flashcard.self)
         try? modelContext.delete(model: Course.self)
         try? modelContext.save()
+        // La suppression en masse ne passe pas par `CourseRepository` : sans ce signal, les
+        // écrans qui ne tiennent plus la table des cours resteraient sur leurs anciens
+        // totaux derrière la feuille qui se referme.
+        CourseLedger.noteChange()
         dismiss()
     }
 }

@@ -574,19 +574,14 @@ struct ImportView: View {
 
     @ViewBuilder
     private func coverPreview(_ document: ImportedDocument) -> some View {
-        if let data = document.coverImage, let image = UIImage(data: data) {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 44, height: 56)
-                .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
-        } else {
-            Image(systemName: kind.systemImage)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(MicaboColor.ink)
-                .frame(width: 44, height: 56)
-                .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
-        }
+        CoverThumbnail(
+            data: document.coverImage,
+            key: DecodedImageCache.coverKey(
+                fileName: document.fileName,
+                bytes: document.coverImage?.count ?? 0
+            ),
+            fallback: kind.systemImage
+        )
     }
 
     /// **Combien de fiche on veut, au curseur.**
@@ -733,7 +728,7 @@ struct ImportView: View {
             case .text, .photo, .youtube, .cards:
                 return
             }
-            applyImported(parsed)
+            await applyImported(parsed)
         } catch {
             report(error, title: L10n.t("ios.err.readFailed", locale: .resolved()))
         }
@@ -766,14 +761,27 @@ struct ImportView: View {
 
         do {
             let parsed = try await PhotoImportService.importImages(images)
-            applyImported(parsed)
+            await applyImported(parsed)
         } catch {
             report(error, title: L10n.t("ios.err.readFailed", locale: .resolved()))
         }
     }
 
     @MainActor
-    private func applyImported(_ document: ImportedDocument) {
+    private func applyImported(_ document: ImportedDocument) async {
+        // **La couverture est décodée avant que la carte n'existe.**
+        //
+        // Sans ça, la vignette apparaît sur le symbole générique du format, puis bascule sur
+        // la photo une image plus tard — et cette bascule se voit. Ici, on est encore dans le
+        // temps d'attente de la lecture du document : quelques millisecondes de plus ne se
+        // remarquent pas, et la vue qui suit trouve le cache chaud.
+        await DecodedImageCache.prime(
+            DecodedImageCache.coverKey(
+                fileName: document.fileName,
+                bytes: document.coverImage?.count ?? 0
+            ),
+            data: document.coverImage
+        )
         imported = document
         if title.isEmpty { title = document.fileName }
         // Le document est lu : c'est le cran entre « a ouvert l'import » et « a lancé la
@@ -863,7 +871,7 @@ struct ImportView: View {
         do {
             let transcript = try await youtube.transcript(link: youtubeLink)
             let cover = await youtube.cover(for: video)
-            applyImported(
+            await applyImported(
                 YouTubeImportService.document(video: video, transcript: transcript, cover: cover)
             )
             return true
@@ -1134,6 +1142,54 @@ enum ImportReadiness {
             )
         case .cards:
             return nil
+        }
+    }
+}
+
+/// **La vignette de couverture, décodée une fois.**
+///
+/// Elle était rendue par un `UIImage(data:)` posé dans le corps de l'écran d'import — donc
+/// refait à **chaque** évaluation de cette vue. Or le curseur de longueur de fiche vit sur le
+/// même écran : chaque cran du doigt redécodait la couverture en pleine résolution pour la
+/// réduire à quarante-quatre points de large. C'est exactement l'endroit où un décodage se
+/// sent, puisqu'on y fait glisser quelque chose.
+private struct CoverThumbnail: View {
+    let data: Data?
+    /// Ce qui distingue cette couverture d'une autre dans le cache.
+    let key: String
+    /// Le symbole montré tant qu'il n'y a pas d'image — et quand il n'y en a pas du tout.
+    let fallback: String
+
+    @State private var image: UIImage?
+
+    var body: some View {
+        content
+            .task(id: key) {
+                let decoded = await DecodedImageCache.image(for: key, data: data)
+                // `Task.detached` n'hérite pas de l'annulation de cette tâche : sans ce test,
+                // une couverture décodée après un changement de document se poserait sur le
+                // suivant.
+                guard !Task.isCancelled else { return }
+                image = decoded
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        // Lecture synchrone du cache, comme `OcclusionFigure` : une couverture déjà décodée
+        // se dessine dès la première passe au lieu de clignoter par le symbole de repli.
+        if let image = image ?? DecodedImageCache.cached(key) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 44, height: 56)
+                .clipShape(RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
+        } else {
+            Image(systemName: fallback)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(MicaboColor.ink)
+                .frame(width: 44, height: 56)
+                .background(MicaboColor.surfaceMuted, in: RoundedRectangle(cornerRadius: MicaboRadius.sm, style: .continuous))
         }
     }
 }

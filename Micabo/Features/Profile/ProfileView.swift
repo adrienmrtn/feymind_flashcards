@@ -27,7 +27,6 @@ struct ProfileView: View {
     @Environment(SocialService.self) private var social
     @Environment(TabRouter.self) private var router: TabRouter?
 
-    @Query private var courses: [Course]
     @Environment(CloudSync.self) private var sync: CloudSync?
 
     @State private var showSettings = false
@@ -130,28 +129,51 @@ struct ProfileView: View {
         let weak: [ExamReadiness.WeakCard]
         let accuracyPercent: Int
 
-        static func load(courses: [Course], in context: ModelContext) -> ProfileSnapshot {
+        static func load(in context: ModelContext) -> ProfileSnapshot {
             let cards = (try? context.fetch(FetchDescriptor<Flashcard>())) ?? []
             let logs = (try? context.fetch(FetchDescriptor<ReviewLog>())) ?? []
+            // Le nombre de cours est un `COUNT` : il ne matérialise aucune ligne. C'est le
+            // seul endroit du Profil qui parle des cours **sans** carte, d'où la lecture
+            // séparée — la boucle ci-dessous, elle, ne voit que les cours qui en ont.
+            let courseCount = (try? context.fetchCount(FetchDescriptor<Course>())) ?? 0
             let now = Date()
             let usable = cards.filter { !$0.isSuspended }
 
             // Deux lectures de table, puis tout se range en mémoire : ni `course.cards` sur
             // chaque cours ni `card.logs` sur chaque carte, qui rouvrent une requête à chaque
             // fois et faisaient attendre le Profil dès qu'on avait plusieurs cours.
+            //
+            // Le titre et l'emoji se prennent au passage, sur la première carte qui désigne
+            // le cours.
+            //
+            // **Ce que ça économise, et ce que ça n'économise pas.** Toucher `card.course`
+            // faulte la ligne entière — Core Data ne faulte pas par attribut — donc chaque
+            // cours ayant au moins une carte active est bel et bien matérialisé, texte
+            // compris. Le gain n'est pas là. Il est dans la **fréquence** : le `@Query` qui
+            // vivait en tête de ce fichier rematérialisait **toute** la table à **chaque**
+            // écriture SwiftData, y compris pendant une session, y compris quand le Profil
+            // n'était pas regardé. Cette lecture-ci ne se fait que lorsque le Profil est
+            // actif et qu'une de ses clés a bougé, et elle ne touche que les cours qui ont
+            // des cartes.
             var cardsByCourse: [UUID: [Flashcard]] = [:]
+            var courseOrder: [(id: UUID, title: String, emoji: String)] = []
             for card in usable {
-                guard let courseID = card.course?.id else { continue }
-                cardsByCourse[courseID, default: []].append(card)
+                guard let course = card.course else { continue }
+                // Le test précède l'ajout : avec `default:`, la clé existerait déjà et le
+                // titre ne serait jamais capté.
+                if cardsByCourse[course.id] == nil {
+                    courseOrder.append((id: course.id, title: course.title, emoji: course.emoji))
+                }
+                cardsByCourse[course.id, default: []].append(card)
             }
             let logsByCard = ExamReadiness.group(logs)
 
-            let byCourse: [CourseMastery] = courses.compactMap { course in
-                guard let own = cardsByCourse[course.id], !own.isEmpty else { return nil }
+            let byCourse: [CourseMastery] = courseOrder.compactMap { entry -> CourseMastery? in
+                guard let own = cardsByCourse[entry.id], !own.isEmpty else { return nil }
                 return CourseMastery(
-                    id: course.id,
-                    title: course.title,
-                    emoji: course.emoji,
+                    id: entry.id,
+                    title: entry.title,
+                    emoji: entry.emoji,
                     percent: ExamReadiness.masteryPercent(of: own, logs: logsByCard, now: now),
                     cards: own.count
                 )
@@ -168,7 +190,7 @@ struct ProfileView: View {
                 .sorted { $0.passes == $1.passes ? $0.front < $1.front : $0.passes > $1.passes }
                 .prefix(5)
             return ProfileSnapshot(
-                courseCount: courses.count,
+                courseCount: courseCount,
                 cardCount: cards.count,
                 reviewDates: logs.map(\.reviewedAt),
                 knowledge: cards.map { ($0.state, $0.intervalDays) },
@@ -210,11 +232,13 @@ struct ProfileView: View {
             // Le Profil n'ancre rien en bas : sans `tabBarClearance`, sa dernière
             // rangée se colle à la barre.
             .tabBarClearance()
-            .task(id: "\(router?.selection == .profile)-\(sync?.epoch ?? 0)-\(courses.count)") {
+            // `CourseLedger.stamp` remplace le `courses.count` qui vivait ici : il dit la
+            // même chose — la liste des cours a bougé — sans tenir la table pour le dire.
+            .task(id: "\(router?.selection == .profile)-\(sync?.epoch ?? 0)-\(CourseLedger.shared.stamp)") {
                 // Le `TabView` peut garder un onglet visité : le classement et les
                 // totaux ne se relisent que lorsque Profil est réellement actif.
                 guard router?.selection == .profile else { return }
-                let snapshot = ProfileSnapshot.load(courses: courses, in: modelContext)
+                let snapshot = ProfileSnapshot.load(in: modelContext)
                 self.metrics = await Task.detached(priority: .utility) {
                     Metrics(snapshot: snapshot)
                 }.value

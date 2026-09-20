@@ -226,8 +226,17 @@ final class ProAccess {
     /// Les cours repris dans la bibliothèque ne comptent pas : ils n'ont rien coûté à
     /// produire, et faire payer un import qu'on n'a pas fait serait incompréhensible.
     func canImportCourse(existingCourses courses: [Course]) -> Bool {
+        canImportCourse(ownedCourses: courses.filter { !$0.isFromLibrary }.count)
+    }
+
+    /// La même porte, à partir du seul nombre qui l'ouvre ou la ferme.
+    ///
+    /// Les écrans qui la posent n'ont pas besoin de tenir la liste des cours pour ça : un
+    /// `CourseRepository.ownedCount(in:)` leur donne l'entier sans matérialiser une ligne.
+    /// La version au-dessus reste pour les appels qui ont déjà la liste sous la main.
+    func canImportCourse(ownedCourses count: Int) -> Bool {
         guard !isPro else { return true }
-        return courses.filter { !$0.isFromLibrary }.count < FreeTier.courses
+        return count < FreeTier.courses
     }
 
     var canPractice: Bool {

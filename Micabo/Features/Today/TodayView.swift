@@ -26,7 +26,6 @@ import SwiftUI
 struct TodayView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
     @Query(sort: \Exam.date, order: .forward) private var exams: [Exam]
 
     @Environment(\.modelContext) private var modelContext
@@ -156,7 +155,9 @@ struct TodayView: View {
     private var reloadKey: String {
         let day = MicaboCalendar.shared.startOfDay(for: Date()).timeIntervalSince1970
         let examStamp = exams.map(\.updatedAt.timeIntervalSince1970).max() ?? 0
-        return "\(router?.selection == .today)-\(sync?.epoch ?? 0)-\(courses.count)-\(exams.count)-\(examStamp)-\(day)-\(studyRuns)"
+        // `CourseLedger.stamp` remplace le `courses.count` qui vivait ici : il dit la même
+        // chose — la liste des cours a bougé — sans tenir la table pour le dire.
+        return "\(router?.selection == .today)-\(sync?.epoch ?? 0)-\(CourseLedger.shared.stamp)-\(exams.count)-\(examStamp)-\(day)-\(studyRuns)"
     }
 
     /// Deux lectures de table - les cartes, le journal récent - et la file est prête.
@@ -168,7 +169,10 @@ struct TodayView: View {
         let cards = CourseRepository.allCards(in: modelContext)
         load = DayLoad(
             allCards: cards,
-            courses: courses,
+            // Lus ici plutôt que tenus par un `@Query` : `allCourses` porte le même tri
+            // (`updatedAt` décroissant) que la requête qui vivait en tête de fichier, donc
+            // `dueByCourse` et `nextDue` sortent dans le même ordre qu'avant.
+            courses: CourseRepository.allCourses(in: modelContext),
             exams: exams,
             todayLogs: todayLogs(),
             logs: ExamReadiness.recentLogsByCard(in: modelContext),
@@ -275,9 +279,12 @@ struct TodayView: View {
         withAnimation(.easeOut(duration: 0.2)) { writingMock = true }
         Task {
             do {
+                // Les cours de l'épreuve, relus ici. `MockExamService` filtrait de toute
+                // façon sur `exam.courseIDs` — deux fois, à `start` et à `material` — donc
+                // lui passer la liste déjà réduite ne change rien à ce qu'il compose.
                 let session = try await mocks.start(
                     exam: exam,
-                    courses: courses,
+                    courses: ExamRepository.courses(of: exam, in: modelContext),
                     withAudio: withAudio,
                     kind: event.kind
                 )
@@ -889,7 +896,7 @@ struct TodayView: View {
     /// fait choisir un PDF, sélectionner des photos et attendre une analyse. Un paywall qui
     /// tombe après le travail est un paywall qui fait désinstaller.
     private func requestImport() {
-        guard pro?.canImportCourse(existingCourses: courses) ?? true else {
+        guard pro?.canImportCourse(ownedCourses: CourseRepository.ownedCount(in: modelContext)) ?? true else {
             paywall = .secondCourse
             return
         }

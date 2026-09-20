@@ -19,8 +19,6 @@ struct ExamDetailView: View {
     @Environment(AuthController.self) private var auth: AuthController?
     @Environment(CloudSync.self) private var sync: CloudSync?
 
-    @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
-
     /// Ce que la fiche affiche, **calculé une fois** par ouverture et par synchro.
     ///
     /// La première version le calculait dans des propriétés lues par le corps : chaque rendu
@@ -30,7 +28,11 @@ struct ExamDetailView: View {
     private struct Figures {
         var masteryPercent = 0
         var cardCount = 0
-        var programme: [(course: Course, cards: Int, percent: Int)] = []
+        /// **Des projections, pas des cours.** Ce tableau vit dans un `@State` pour toute la
+        /// durée de la fiche poussée : y garder des `Course` managés, c'était y garder leurs
+        /// trente kilo-octets de texte, et rester abonné à leurs changements. `CourseBadge`
+        /// n'en retient que ce que les rangées dessinent.
+        var programme: [(course: CourseBadge, cards: Int, percent: Int)] = []
         var weak: [ExamReadiness.WeakCard] = []
         /// Cartes prévues par décalage depuis aujourd'hui. C'est ce que porte chaque case.
         var load: [Int] = []
@@ -80,13 +82,17 @@ struct ExamDetailView: View {
 
     /// Une copie ouverte et jamais remise : on la reprend, on n'en ouvre pas une deuxième.
     private var figuresKey: String {
-        "\(exam.id)-\(exam.updatedAt.timeIntervalSince1970)-\(courses.count)-\(sync?.epoch ?? 0)"
+        // `CourseLedger.stamp` remplace le `courses.count` qui vivait ici : il dit la même
+        // chose — la liste des cours a bougé — sans tenir la table pour le dire.
+        "\(exam.id)-\(exam.updatedAt.timeIntervalSince1970)-\(CourseLedger.shared.stamp)-\(sync?.epoch ?? 0)"
     }
 
     /// Deux lectures de table - les cartes, le journal - puis tout se range en mémoire.
     private func loadFigures() {
         let wanted = Set(exam.courseIDs)
-        let programme = courses.filter { wanted.contains($0.id) }
+        // Les cours de l'épreuve, lus ici plutôt que tenus par un `@Query`. Les objets ne
+        // sortent pas de cette fonction : seules leurs projections entrent dans `figures`.
+        let programme = ExamRepository.courses(of: exam, in: modelContext)
         let all = CourseRepository.allCards(in: modelContext)
         var byCourse: [UUID: [Flashcard]] = [:]
         for card in all where !card.isSuspended {
@@ -101,7 +107,11 @@ struct ExamDetailView: View {
             cardCount: cards.count,
             programme: programme.map { course in
                 let own = byCourse[course.id] ?? []
-                return (course: course, cards: own.count, percent: ExamReadiness.masteryPercent(of: own, logs: logs, now: today))
+                return (
+                    course: CourseBadge(course),
+                    cards: own.count,
+                    percent: ExamReadiness.masteryPercent(of: own, logs: logs, now: today)
+                )
             },
             weak: ExamReadiness.weakCards(in: cards, logs: logs, now: today),
             // La même projection que la page de plan : le calendrier ne recalcule pas sa
@@ -449,9 +459,9 @@ struct ExamDetailView: View {
         }
     }
 
-    private func courseRow(_ course: Course, cards: Int, percent: Int) -> some View {
+    private func courseRow(_ course: CourseBadge, cards: Int, percent: Int) -> some View {
         HStack(spacing: 13) {
-            MicaboTile.course(course)
+            MicaboTile.course(badge: course)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(course.title)

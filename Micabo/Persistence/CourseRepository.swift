@@ -85,6 +85,7 @@ enum CourseRepository {
         context.insert(course)
 
         try context.save()
+        CourseLedger.noteChange()
         return course
     }
 
@@ -139,6 +140,7 @@ enum CourseRepository {
         attach(cards, to: course, in: context)
 
         try context.save()
+        CourseLedger.noteChange()
         return course
     }
 
@@ -262,6 +264,7 @@ enum CourseRepository {
         context.insert(course)
 
         try context.save()
+        CourseLedger.noteChange()
         return course
     }
 
@@ -471,6 +474,7 @@ enum CourseRepository {
         }
         context.delete(course)
         try context.save()
+        CourseLedger.noteChange()
     }
 
     static func delete(_ card: Flashcard, in context: ModelContext) throws {
@@ -482,6 +486,21 @@ enum CourseRepository {
     static func allCourses(in context: ModelContext) -> [Course] {
         let descriptor = FetchDescriptor<Course>(sortBy: [SortDescriptor(\.updatedAt, order: .reverse)])
         return (try? context.fetch(descriptor)) ?? []
+    }
+
+    /// **Combien de cours importés**, sans en matérialiser un seul.
+    ///
+    /// Les cours repris dans la bibliothèque ne comptent pas : c'est la règle de
+    /// `ProAccess.canImportCourse`, et la languette de l'offre lit le même nombre.
+    ///
+    /// `fetchCount` est un `COUNT` SQLite : il ne construit aucun objet, donc aucun des trente
+    /// kilo-octets de texte qu'une ligne `Course` porte. Compter la même chose en filtrant un
+    /// `@Query` coûtait la table entière — c'est le calcul que faisaient quatre écrans pour
+    /// obtenir cet entier.
+    static func ownedCount(in context: ModelContext) -> Int {
+        (try? context.fetchCount(FetchDescriptor<Course>(
+            predicate: #Predicate { !$0.isFromLibrary }
+        ))) ?? 0
     }
 
     static func allCards(in context: ModelContext) -> [Flashcard] {

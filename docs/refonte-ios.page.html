@@ -1,0 +1,1311 @@
+<title>Zéro sur 217</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --canvas:#F4F6FA; --surface:#FFFFFF; --surface-muted:#EDF0F7; --surface-sunken:#E3E7F0;
+    --ink:#232B3E; --ink-reading:#303A52; --ink-body:#4E5870; --ink-2:#656E85; --ink-3:#939CB0;
+    --hairline:#DFE4EE; --hairline-soft:#E9ECF3;
+    --accent:#2563EB; --accent-soft:#E4ECFE;
+    --negative:#C93B2B; --negative-soft:#FDE8E2;
+    --positive:#2F7D57; --positive-soft:#DEF5E7;
+    --caution:#8A6410; --caution-soft:#FDF1D6;
+    --track:#EDF0F7;
+    --shadow:0 1px 2px rgba(35,43,62,.05), 0 8px 24px rgba(35,43,62,.05);
+    --display:"Outfit",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --body:"Hanken Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --canvas:#101216; --surface:#1A1D24; --surface-muted:#252830; --surface-sunken:#0C0D10;
+      --ink:#E8EAEE; --ink-reading:#D5D8DE; --ink-body:#9AA1AB; --ink-2:#9AA1AB; --ink-3:#8B919A;
+      --hairline:#2A2E37; --hairline-soft:#23262E;
+      --accent:#4E90E8; --accent-soft:#1E3A5F;
+      --negative:#D4644F; --negative-soft:#3A211C;
+      --positive:#5FBF8F; --positive-soft:#1F4034;
+      --caution:#C9A227; --caution-soft:#55491C;
+      --track:#252830;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="dark"]{
+    --canvas:#101216; --surface:#1A1D24; --surface-muted:#252830; --surface-sunken:#0C0D10;
+    --ink:#E8EAEE; --ink-reading:#D5D8DE; --ink-body:#9AA1AB; --ink-2:#9AA1AB; --ink-3:#8B919A;
+    --hairline:#2A2E37; --hairline-soft:#23262E;
+    --accent:#4E90E8; --accent-soft:#1E3A5F;
+    --negative:#D4644F; --negative-soft:#3A211C;
+    --positive:#5FBF8F; --positive-soft:#1F4034;
+    --caution:#C9A227; --caution-soft:#55491C;
+    --track:#252830;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.28);
+  }
+
+  body{
+    background:var(--canvas); color:var(--ink-reading);
+    font-family:var(--body); font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:940px; margin:0 auto; padding-inline:20px; padding-block:0 72px; }
+  h1,h2,h3,.num,.eyebrow{ font-family:var(--display); }
+  h1{ font-size:clamp(2.1rem,6vw,3.1rem); line-height:1.04; letter-spacing:-.025em;
+      font-weight:600; color:var(--ink); margin:0; text-wrap:balance; }
+  h2{ font-size:clamp(1.35rem,3.4vw,1.75rem); line-height:1.15; letter-spacing:-.018em;
+      font-weight:600; color:var(--ink); margin:0 0 6px; text-wrap:balance; }
+  h3{ font-size:1.0rem; font-weight:600; letter-spacing:-.008em; color:var(--ink); margin:0 0 6px; }
+  p{ margin:0 0 14px; max-width:66ch; }
+  .lede{ font-size:1.075rem; color:var(--ink-body); max-width:62ch; }
+  strong{ color:var(--ink); font-weight:600; }
+  .num{ font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1; }
+  a{ color:var(--accent); }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:3px; border-radius:4px; }
+
+  .eyebrow{ font-size:.72rem; text-transform:uppercase; letter-spacing:.13em;
+            font-weight:600; color:var(--ink-3); }
+
+  header.top{ padding-block:56px 34px; border-bottom:1px solid var(--hairline); }
+  .meta{ display:flex; flex-wrap:wrap; gap:8px; margin-top:22px; }
+  .chip{ font-family:var(--display); font-size:.74rem; font-weight:500; letter-spacing:.01em;
+         color:var(--ink-2); background:var(--surface-muted); border-radius:999px;
+         padding:5px 11px; white-space:nowrap; }
+
+  section{ padding-block:44px; border-bottom:1px solid var(--hairline); }
+  section:last-of-type{ border-bottom:0; }
+  .sec-head{ margin-bottom:24px; }
+
+  /* Le fait — bloc d'ouverture */
+  .fact{ background:var(--surface); border:1px solid var(--hairline); border-radius:14px;
+         box-shadow:var(--shadow); padding:30px; margin-top:30px;
+         border-left:4px solid var(--negative); }
+  .fact-num{ font-family:var(--display); font-size:clamp(3.4rem,13vw,6rem); line-height:.88;
+             font-weight:700; color:var(--negative); letter-spacing:-.04em;
+             font-variant-numeric:tabular-nums; }
+  .fact-lbl{ font-size:1.05rem; color:var(--ink); font-weight:600; font-family:var(--display);
+             margin-top:10px; letter-spacing:-.01em; }
+  .fact-sub{ color:var(--ink-body); font-size:.94rem; margin-top:8px; max-width:56ch; }
+
+  /* Entonnoir */
+  .funnel{ display:flex; flex-direction:column; gap:2px; margin-top:6px; }
+  .frow{ display:grid; grid-template-columns:minmax(150px,1.1fr) minmax(0,2.4fr) 92px;
+         align-items:center; gap:14px; padding:9px 10px; border-radius:8px;
+         transition:background .12s ease; }
+  .frow:hover,.frow:focus-within{ background:var(--surface-muted); }
+  .fname{ font-size:.9rem; color:var(--ink-body); }
+  .ftrack{ height:26px; background:var(--track); border-radius:5px; position:relative; overflow:hidden; }
+  .fbar{ height:100%; background:var(--accent); border-radius:0 5px 5px 0; }
+  .fbar.zero{ background:var(--negative); width:3px !important; border-radius:0 2px 2px 0; }
+  .fval{ font-family:var(--display); font-weight:600; font-size:1.02rem; color:var(--ink);
+         text-align:right; font-variant-numeric:tabular-nums; }
+  .fpct{ display:block; font-size:.74rem; font-weight:500; color:var(--ink-3); }
+  .frow.dead .fval{ color:var(--negative); }
+  .fnote{ grid-column:1 / -1; font-size:.82rem; color:var(--ink-2); padding-left:10px;
+          margin-top:-2px; }
+
+  /* Bandeau scindé */
+  .split{ margin-top:8px; }
+  .split-bar{ display:flex; height:46px; border-radius:8px; overflow:hidden; gap:2px;
+              background:var(--surface-muted); }
+  .seg{ display:flex; align-items:center; padding-inline:14px; color:#fff;
+        font-family:var(--display); font-weight:600; font-size:.95rem;
+        font-variant-numeric:tabular-nums; }
+  .seg.a{ background:var(--negative); }
+  .seg.b{ background:var(--accent); }
+  .seg.c{ background:var(--track); color:var(--ink-2); }
+  .split-key{ display:flex; flex-wrap:wrap; gap:18px; margin-top:14px; }
+  .key{ display:flex; gap:8px; align-items:flex-start; font-size:.86rem; color:var(--ink-body);
+        max-width:30ch; }
+  .dot{ width:10px; height:10px; border-radius:3px; margin-top:6px; flex:0 0 auto; }
+
+  /* Cartes */
+  .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(248px,1fr)); gap:16px; }
+  .card{ background:var(--surface); border:1px solid var(--hairline); border-radius:12px;
+         padding:20px; box-shadow:var(--shadow); }
+  .card .verdict{ font-family:var(--display); font-size:.72rem; font-weight:600;
+                  text-transform:uppercase; letter-spacing:.1em; color:var(--positive);
+                  background:var(--positive-soft); border-radius:999px; padding:4px 10px;
+                  display:inline-block; margin-bottom:12px; }
+  .card p{ font-size:.9rem; color:var(--ink-body); margin:0; }
+  .card p + p{ margin-top:10px; }
+
+  /* Comparaison onboarding */
+  .cmp{ display:flex; flex-direction:column; gap:3px; margin-top:4px; }
+  .crow{ display:grid; grid-template-columns:minmax(96px,132px) minmax(0,1fr) 34px;
+         align-items:center; gap:12px; font-size:.85rem; }
+  .cname{ color:var(--ink-body); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ctrack{ height:16px; background:var(--track); border-radius:4px; }
+  .cbar{ height:100%; background:var(--ink-3); border-radius:0 4px 4px 0; opacity:.55; }
+  .crow.me .cbar{ background:var(--accent); opacity:1; }
+  .crow.me .cname,.crow.me .cval{ color:var(--accent); font-weight:600; }
+  .cval{ font-family:var(--display); font-weight:500; color:var(--ink-2); text-align:right;
+         font-variant-numeric:tabular-nums; }
+
+  /* Tables */
+  .tw{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin-top:4px; }
+  table{ border-collapse:collapse; width:100%; min-width:460px; font-size:.9rem; }
+  th,td{ text-align:left; padding:11px 14px 11px 0; border-bottom:1px solid var(--hairline-soft);
+         vertical-align:top; }
+  th + th, td + td{ padding-left:18px; }
+  th{ font-family:var(--display); font-size:.72rem; text-transform:uppercase;
+      letter-spacing:.1em; color:var(--ink-3); font-weight:600; }
+  td.n{ text-align:right; font-family:var(--display); font-weight:600; color:var(--ink);
+        font-variant-numeric:tabular-nums; padding-right:0; white-space:nowrap; }
+  td.now{ color:var(--negative); }
+  td.goal{ color:var(--positive); }
+  tr:last-child td{ border-bottom:0; }
+
+  /* Sous-titres de partie */
+  h3.sub{ font-family:var(--display); font-size:1.12rem; font-weight:600; color:var(--ink);
+          letter-spacing:-.012em; margin:36px 0 10px; }
+  h3.sub .n{ color:var(--ink-3); font-weight:500; margin-right:8px;
+             font-variant-numeric:tabular-nums; }
+
+  /* Code */
+  pre{ margin:14px 0; padding:15px 16px; background:var(--surface-sunken);
+       border-radius:10px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+       font-size:.775rem; line-height:1.75; color:var(--ink-body); }
+  pre b{ color:var(--accent); font-weight:600; }
+  pre i{ color:var(--ink-3); font-style:normal; }
+  pre u{ color:var(--negative); text-decoration:none; font-weight:600; }
+  p code,li code,td code,figcaption code{
+       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+       font-size:.88em; color:var(--ink); background:var(--surface-muted);
+       padding:1px 5px; border-radius:4px; }
+
+  /* Ce qui est déjà corrigé */
+  .done{ list-style:none; padding:0; margin:10px 0 0; display:grid; gap:9px 20px;
+         grid-template-columns:repeat(auto-fit,minmax(252px,1fr)); }
+  .done li{ font-size:.855rem; color:var(--ink-2); padding-left:22px; position:relative;
+            line-height:1.5; }
+  .done li::before{ content:"✓"; position:absolute; left:0; top:0; color:var(--positive);
+                    font-weight:700; font-size:.9rem; }
+
+  /* Le mécanisme, en trois temps — se replie à l'étroit */
+  .flow{ display:flex; flex-wrap:nowrap; align-items:stretch; gap:10px; margin:18px 0 0; }
+  .step{ flex:1 1 0; min-width:0; background:var(--surface); border:1px solid var(--hairline);
+         border-radius:11px; padding:15px 16px; box-shadow:var(--shadow); }
+  .step .lbl{ font-family:var(--display); font-size:.65rem; font-weight:600;
+              text-transform:uppercase; letter-spacing:.11em; color:var(--ink-3);
+              display:block; margin-bottom:9px; }
+  .step .big{ font-family:var(--display); font-size:1.9rem; font-weight:700; line-height:1;
+              color:var(--negative); font-variant-numeric:tabular-nums; }
+  .step ul{ margin:0; padding:0; list-style:none; font-family:ui-monospace,Menlo,monospace;
+            font-size:.73rem; color:var(--ink-body); line-height:1.85; }
+  .step p{ margin:0; font-size:.85rem; color:var(--ink-body); }
+  .step p + p{ margin-top:6px; }
+  .step.hot{ background:var(--negative-soft); border-color:var(--negative); }
+  .step.hot p{ color:var(--ink-reading); }
+  .arr{ flex:0 0 auto; display:flex; align-items:center; color:var(--ink-3);
+        font-size:1.15rem; line-height:1; }
+  @media (max-width:720px){
+    .flow{ flex-direction:column; }
+    .arr{ justify-content:center; transform:rotate(90deg); padding-block:2px; }
+  }
+
+  /* Citation du dépôt */
+  blockquote{ margin:18px 0 0; padding:16px 20px; background:var(--surface-muted);
+              border-left:3px solid var(--accent); border-radius:0 10px 10px 0;
+              font-size:.92rem; color:var(--ink-reading); }
+  blockquote p{ margin:0; max-width:none; }
+  blockquote cite{ display:block; margin-top:10px; font-style:normal; font-size:.78rem;
+                   color:var(--ink-3); font-family:ui-monospace,Menlo,monospace; }
+
+  /* Correctifs ordonnés */
+  ol.fixes{ counter-reset:f; list-style:none; padding:0; margin:14px 0 0; }
+  ol.fixes li{ counter-increment:f; position:relative; padding-left:38px;
+               padding-block:12px; border-top:1px solid var(--hairline-soft);
+               font-size:.92rem; color:var(--ink-body); }
+  ol.fixes li:first-child{ border-top:0; }
+  ol.fixes li::before{ content:counter(f); position:absolute; left:0; top:12px;
+                       width:24px; height:24px; border-radius:7px;
+                       background:var(--accent-soft); color:var(--accent);
+                       font-family:var(--display); font-weight:700; font-size:.8rem;
+                       display:flex; align-items:center; justify-content:center;
+                       font-variant-numeric:tabular-nums; }
+  ol.fixes li b{ color:var(--ink); font-weight:600; }
+
+  figcaption{ font-size:.82rem; color:var(--ink-2); margin-top:12px; max-width:62ch; }
+
+  /* Sommaire */
+  .toc{ display:flex; flex-wrap:wrap; gap:6px 8px; margin-top:26px;
+        padding-top:22px; border-top:1px solid var(--hairline); }
+  .toc a{ font-family:var(--display); font-size:.775rem; font-weight:500;
+          color:var(--ink-2); text-decoration:none; background:var(--surface);
+          border:1px solid var(--hairline); border-radius:8px; padding:6px 10px;
+          white-space:nowrap; transition:border-color .12s ease, color .12s ease; }
+  .toc a:hover{ color:var(--accent); border-color:var(--accent); }
+  .toc a .i{ color:var(--ink-3); font-variant-numeric:tabular-nums; margin-right:5px; }
+  .toc a:hover .i{ color:var(--accent); }
+  section[id]{ scroll-margin-top:16px; }
+
+  /* Listes à proscrire */
+  ul.dont{ list-style:none; padding:0; margin:12px 0 0; display:grid; gap:11px; }
+  ul.dont li{ position:relative; padding-left:26px; font-size:.91rem;
+              color:var(--ink-body); }
+  ul.dont li::before{ content:"✕"; position:absolute; left:2px; top:1px;
+                      color:var(--negative); font-weight:700; font-size:.82rem; }
+  ul.dont li b{ color:var(--ink); font-weight:600; }
+
+  /* Listes à faire */
+  ul.do{ list-style:none; padding:0; margin:12px 0 0; display:grid; gap:11px; }
+  ul.do li{ position:relative; padding-left:26px; font-size:.91rem; color:var(--ink-body); }
+  ul.do li::before{ content:"→"; position:absolute; left:0; top:0;
+                    color:var(--accent); font-weight:700; }
+  ul.do li b{ color:var(--ink); font-weight:600; }
+
+  /* Avant / après */
+  .ba{ display:grid; gap:12px; margin-top:16px; }
+  .ba > div{ border-radius:11px; padding:16px 18px; border:1px solid var(--hairline); }
+  .ba .old{ background:var(--surface-muted); }
+  .ba .new{ background:var(--accent-soft); border-color:var(--accent); }
+  .ba .lbl{ font-family:var(--display); font-size:.65rem; font-weight:600;
+            text-transform:uppercase; letter-spacing:.11em; color:var(--ink-3);
+            display:block; margin-bottom:9px; }
+  .ba .new .lbl{ color:var(--accent); }
+  .ba ol{ margin:0; padding-left:1.1em; font-size:.88rem; color:var(--ink-body);
+          line-height:1.75; }
+  .ba ol li::marker{ color:var(--ink-3); font-variant-numeric:tabular-nums; }
+  .ba .new ol li::marker{ color:var(--accent); }
+  .ba b{ color:var(--ink); font-weight:600; }
+
+  /* Décisions ouvertes */
+  .decision{ border-left:3px solid var(--caution); padding:2px 0 2px 18px;
+             margin-top:22px; }
+  .decision h3{ margin-bottom:6px; }
+  .decision p{ font-size:.92rem; color:var(--ink-body); margin:0; }
+
+  /* Plan */
+  .lots{ display:flex; flex-direction:column; gap:0; margin-top:8px; }
+  .lot{ display:grid; grid-template-columns:52px minmax(0,1fr); gap:18px;
+        padding-block:20px; border-top:1px solid var(--hairline); }
+  .lot:first-child{ border-top:0; padding-top:4px; }
+  .lot-n{ font-family:var(--display); font-size:1.5rem; font-weight:700; color:var(--accent);
+          line-height:1; font-variant-numeric:tabular-nums; }
+  .lot-wk{ display:block; font-size:.68rem; font-weight:500; color:var(--ink-3);
+           letter-spacing:.06em; margin-top:6px; text-transform:uppercase; }
+  .lot h3{ margin-bottom:4px; }
+  .lot p{ font-size:.92rem; color:var(--ink-body); margin:0 0 10px; }
+  .exit{ font-size:.85rem; color:var(--ink-2); border-left:2px solid var(--hairline);
+         padding-left:12px; }
+  .exit b{ font-family:var(--display); font-size:.7rem; text-transform:uppercase;
+           letter-spacing:.1em; color:var(--ink-3); display:block; margin-bottom:3px;
+           font-weight:600; }
+
+  .callout{ background:var(--caution-soft); border-radius:12px; padding:20px 22px;
+            margin-top:24px; }
+  .callout h3{ color:var(--caution); }
+  .callout p{ font-size:.92rem; color:var(--ink-reading); margin:0; }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .callout h3{ color:var(--caution); }
+  }
+
+  footer{ padding-block:36px 0; font-size:.85rem; color:var(--ink-3); }
+  footer code{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.92em;
+               background:var(--surface-muted); padding:2px 6px; border-radius:4px;
+               color:var(--ink-2); }
+
+  @media (max-width:560px){
+    .frow{ grid-template-columns:minmax(0,1fr) 78px; }
+    .frow .ftrack{ grid-column:1 / -1; order:3; }
+    .crow{ grid-template-columns:minmax(84px,104px) minmax(0,1fr) 30px; }
+    .lot{ grid-template-columns:40px minmax(0,1fr); gap:12px; }
+  }
+  @media (prefers-reduced-motion:reduce){ *{ transition:none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">Micabo · diagnostic iPhone</div>
+    <h1>Zéro sur 217</h1>
+    <p class="lede" style="margin-top:16px">
+      875 comptes en trois semaines, une acquisition qui monte, et pas un euro encaissé.
+      Voici ce que la base de production dit vraiment de l'app iPhone — et l'ordre dans
+      lequel la réparer d'ici décembre.
+    </p>
+    <div class="meta">
+      <span class="chip num">Relevé le 19 septembre 2026</span>
+      <span class="chip">Supabase, production</span>
+      <span class="chip">Branche <span class="num">claude/micabo-ios-refonte</span></span>
+      <span class="chip num">875 comptes</span>
+    </div>
+    <nav class="toc" aria-label="Sommaire">
+      <a href="#p1"><span class="i">1</span>Les chiffres</a>
+      <a href="#p2"><span class="i">2</span>Vérifié puis écarté</a>
+      <a href="#p3"><span class="i">3</span>Fluidité</a>
+      <a href="#p4"><span class="i">4</span>Livraison</a>
+      <a href="#p5"><span class="i">5</span>Le compagnon</a>
+      <a href="#p6"><span class="i">6</span>L'entonnoir</a>
+      <a href="#p7"><span class="i">7</span>Le paysage</a>
+      <a href="#p8"><span class="i">8</span>Mesure</a>
+      <a href="#p9"><span class="i">9</span>Exécution</a>
+      <a href="#p10"><span class="i">10</span>Décisions ouvertes</a>
+    </nav>
+  </header>
+
+  <section id="p1">
+    <div class="sec-head">
+      <div class="eyebrow">Partie 1 · Les chiffres</div>
+      <h2>Le cœur du produit ne s'est jamais exécuté sur iPhone</h2>
+    </div>
+    <p>
+      217 comptes portent la trace iOS — tous ont donc atteint l'écran d'inscription,
+      l'étape 26 sur 29. Sur ces 217, le nombre qui ont noté une seule carte est&nbsp;:
+    </p>
+
+    <div class="fact">
+      <div class="fact-num">0</div>
+      <div class="fact-lbl">révision enregistrée, sur 217 comptes iOS</div>
+      <p class="fact-sub">
+        Ce n'est pas un trou de synchronisation&nbsp;: <span class="num">CloudSync</span>
+        pousse les journaux de révision sans condition, à chaque montée
+        (<span class="num">CloudSync.swift:165</span>). Les 144 révisions et les
+        26 réviseurs de la base viennent tous du site.
+      </p>
+    </div>
+
+    <p style="margin-top:26px">
+      Tant que ce nombre est zéro, optimiser le paywall revient à repeindre une porte
+      qui ne s'ouvre sur rien. <strong>C'est le palier&nbsp;0, et il vaut plus que tous
+      les autres.</strong>
+    </p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">Mesuré en base</div>
+      <h2>L'entonnoir iOS</h2>
+    </div>
+
+    <div class="funnel" role="list">
+      <div class="frow" role="listitem">
+        <div class="fname">Compte créé (étape 26/29)</div>
+        <div class="ftrack"><div class="fbar" style="width:100%"></div></div>
+        <div class="fval num">217<span class="fpct num">100 %</span></div>
+      </div>
+      <div class="frow" role="listitem">
+        <div class="fname">A appelé le modèle</div>
+        <div class="ftrack"><div class="fbar" style="width:30.9%"></div></div>
+        <div class="fval num">67<span class="fpct num">31 %</span></div>
+      </div>
+      <div class="frow" role="listitem">
+        <div class="fname">A fini le parcours d'accueil</div>
+        <div class="ftrack"><div class="fbar" style="width:21.2%"></div></div>
+        <div class="fval num">46<span class="fpct num">21 %</span></div>
+      </div>
+      <div class="frow" role="listitem">
+        <div class="fname">A un cours en base</div>
+        <div class="ftrack"><div class="fbar" style="width:7.8%"></div></div>
+        <div class="fval num">17<span class="fpct num">7,8 %</span></div>
+      </div>
+      <div class="frow" role="listitem">
+        <div class="fname">A des cartes</div>
+        <div class="ftrack"><div class="fbar" style="width:1.8%"></div></div>
+        <div class="fval num">4<span class="fpct num">1,8 %</span></div>
+      </div>
+      <div class="frow dead" role="listitem">
+        <div class="fname"><strong>A révisé une carte</strong></div>
+        <div class="ftrack"><div class="fbar zero"></div></div>
+        <div class="fval num">0<span class="fpct num">0,0 %</span></div>
+      </div>
+    </div>
+
+    <p style="margin-top:24px">
+      <strong>79 % des comptes iOS s'arrêtent entre l'inscription et la fin du paywall</strong>
+      — c'est-à-dire sur trois écrans&nbsp;: l'offre d'essai, son rappel, le prix. Et avant
+      l'étape 26, on ne sait rien du tout&nbsp;: les 25 premières étapes n'écrivent que
+      dans <span class="num">UserDefaults</span>, et la table
+      <span class="num">app_events</span> contient zéro ligne — le traceur est écrit mais
+      pas encore chez les utilisateurs.
+    </p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">La fuite qui précède tout</div>
+      <h2>Trois générations sur quatre n'arrivent nulle part</h2>
+    </div>
+    <p>
+      Sur les comptes iOS inscrits après le 11 septembre — donc après le correctif
+      de <span class="num">pushCards</span> — <strong>77 ont appelé le modèle et 58
+      n'ont aucun cours en base.</strong> Le quota est décompté, fal.ai est facturé,
+      et il ne reste rien.
+    </p>
+
+    <div class="split">
+      <div class="split-bar" role="img"
+           aria-label="Sur 77 comptes ayant appelé le modèle : 39 n'ont jamais resynchronisé, 19 ont resynchronisé sans cours, 19 ont bien un cours.">
+        <div class="seg a num" style="flex:39">39</div>
+        <div class="seg b num" style="flex:19">19</div>
+        <div class="seg c num" style="flex:19">19</div>
+      </div>
+      <div class="split-key">
+        <div class="key"><span class="dot" style="background:var(--negative)"></span>
+          <span><strong>Profil jamais remonté</strong> depuis l'inscription. La synchro ne
+          revient pas&nbsp;: le cours vit sur le téléphone, invisible, perdu à la
+          réinstallation.</span></div>
+        <div class="key"><span class="dot" style="background:var(--accent)"></span>
+          <span><strong>Profil remonté, toujours aucun cours.</strong> La synchro tourne et
+          le cours n'existe pas&nbsp;: généré côté serveur, jamais posé côté client.</span></div>
+        <div class="key"><span class="dot" style="background:var(--track)"></span>
+          <span><strong>Tout s'est bien passé.</strong> Un compte sur quatre.</span></div>
+      </div>
+    </div>
+
+    <p style="margin-top:24px">
+      Les deux tiers sont donc une <strong>perte de données silencieuse</strong>, pas un
+      échec de génération. C'est la première chose à réparer, et elle ne demande pas de
+      produit neuf&nbsp;: il manque le déclencheur de synchronisation le plus évident —
+      la fin d'un import.
+    </p>
+  </section>
+
+  <section id="p2">
+    <div class="sec-head">
+      <div class="eyebrow">Partie 2 · Vérifié puis écarté</div>
+      <h2>Ce qui n'est pas le problème</h2>
+    </div>
+    <p style="margin-bottom:24px">
+      Trois soupçons raisonnables, trois chantiers évités. Chacun a été testé contre les
+      chiffres du marché avant d'être abandonné.
+    </p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="verdict">À garder</div>
+        <h3>Les 29 écrans d'accueil</h3>
+        <p>La norme de la catégorie est haute, et les meilleurs sont plus longs que Micabo.
+           Couper le parcours ne rapporterait rien et coûterait le profil.</p>
+        <div class="cmp" style="margin-top:16px" role="img"
+             aria-label="Écrans d'accueil : Coconote 38, Vaia 34, Duolingo 32, Micabo 29, Yuno 27, Gizmo 11, Quizlet 6.">
+          <div class="crow"><div class="cname">Coconote</div><div class="ctrack"><div class="cbar" style="width:100%"></div></div><div class="cval num">38</div></div>
+          <div class="crow"><div class="cname">Vaia</div><div class="ctrack"><div class="cbar" style="width:89%"></div></div><div class="cval num">34</div></div>
+          <div class="crow"><div class="cname">Duolingo</div><div class="ctrack"><div class="cbar" style="width:84%"></div></div><div class="cval num">32</div></div>
+          <div class="crow me"><div class="cname">Micabo</div><div class="ctrack"><div class="cbar" style="width:76%"></div></div><div class="cval num">29</div></div>
+          <div class="crow"><div class="cname">Yuno</div><div class="ctrack"><div class="cbar" style="width:71%"></div></div><div class="cval num">27</div></div>
+          <div class="crow"><div class="cname">Gizmo</div><div class="ctrack"><div class="cbar" style="width:29%"></div></div><div class="cval num">11</div></div>
+          <div class="crow"><div class="cname">Quizlet</div><div class="ctrack"><div class="cbar" style="width:16%"></div></div><div class="cval num">6</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="verdict">À garder</div>
+        <h3>Le prix</h3>
+        <p>La médiane annuelle de la catégorie Éducation est de <span class="num">44,99&nbsp;$</span>.
+           Micabo est à <span class="num">39,99&nbsp;€</span>, soit environ
+           <span class="num">43&nbsp;$</span>. Pile dessus.</p>
+        <p>En France, SchoolMouv démarre à <span class="num">14,99&nbsp;€/mois</span> et
+           Kartable facture <span class="num">14,99&nbsp;€/mois</span> sans engagement —
+           deux à quatre fois le prix de Micabo, pour du contenu conforme au programme.</p>
+        <p><strong>Micabo n'est pas cher. Il n'est pas acheté, ce qui n'est pas la même
+           chose.</strong></p>
+      </div>
+
+      <div class="card">
+        <div class="verdict">À garder</div>
+        <h3>La rédaction du paywall</h3>
+        <p>Les deux lignes de confiance du marché sont déjà là, mot pour mot&nbsp;:
+           «&nbsp;Aucun paiement n'est dû aujourd'hui&nbsp;» et «&nbsp;On t'envoie un
+           e-mail avant la fin de l'essai&nbsp;».</p>
+        <p>Et Micabo cite ses trois sources scientifiques avec leurs références.
+           <strong>Aucun concurrent relevé ne le fait.</strong></p>
+        <p>Un seul écart&nbsp;: <span class="num">3</span> jours d'essai contre
+           <span class="num">7</span> chez Vaia et Coconote.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="p3">
+    <div class="sec-head">
+      <div class="eyebrow">Partie 3 · Fluidité</div>
+      <h2>Pourquoi ça rame, et pourquoi ça va empirer</h2>
+    </div>
+    <p>
+      L'iPhone&nbsp;13 n'est pas une machine lente&nbsp;: A15, 4&nbsp;Go, 60&nbsp;Hz.
+      <strong>Une app SwiftUI qui rame dessus a une cause identifiable, pas un problème
+      de budget.</strong>
+    </p>
+
+    <h3 class="sub">Ce qui est déjà corrigé — à ne pas refaire</h3>
+    <ul class="done">
+      <li>Le carrousel <code>TabView</code> en style page est mort — <code>RootTabView.swift:31</code></li>
+      <li>Le <code>ZStack</code> à opacité zéro qui gardait cinq écrans vivants derrière l'actif — <code>RootTabView.swift:18-19</code></li>
+      <li>Les cartes ne sont plus dans un <code>@Query</code> sur l'onglet Réviser — <code>TodayView.swift:46-57</code></li>
+      <li>La session n'écrit plus carte par carte — <code>StudySession.swift:482-505</code></li>
+      <li>Les listes sont paresseuses (<code>LazyVStack</code>)</li>
+      <li>Le traceur ne touche ni disque ni réseau au point d'appel</li>
+    </ul>
+    <p style="margin-top:18px; color:var(--ink-2)">Il reste ceci.</p>
+
+    <h3 class="sub"><span class="n num">3.1</span>La cause principale&nbsp;:
+      <code>Course</code> observé par six vues, 30&nbsp;Ko par ligne</h3>
+    <p>
+      <code>Course</code> porte <strong>trois</strong> charges de texte, toutes stockées en
+      ligne et chargées avec elle&nbsp;:
+    </p>
+
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Attribut</th><th>Déclaration</th><th>Poids mesuré en base</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>rawText: String</code></td><td><code>Course.swift:63</code></td>
+              <td><strong class="num">16 Ko</strong> en moyenne, <span class="num">76 Ko</span> au maximum</td></tr>
+          <tr><td><code>contextText: String</code></td><td><code>Course.swift:65</code></td>
+              <td><strong class="num">6,7 Ko</strong> en moyenne, <span class="num">33 Ko</span> au maximum</td></tr>
+          <tr><td><code>sheetData: Data?</code></td><td><code>Course.swift:70</code></td>
+              <td><strong class="num">7,9 Ko</strong> en moyenne, <span class="num">35 Ko</span> au maximum</td></tr>
+          <tr><td><code>coverImageData</code></td><td><code>Course.swift:72</code></td>
+              <td style="color:var(--positive)">en <code>.externalStorage</code> — le seul qui puisse l'être</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top:18px">
+      Soit <strong>environ 30&nbsp;Ko de texte par ligne.</strong> À titre de comparaison, une
+      ligne <code>Flashcard</code> pèse <strong>quarante à quatre-vingt-dix-sept fois
+      moins</strong> — 40× au poids Postgres, où le texte long est compressé, et
+      <span class="num">97×</span> sur l'appareil, où SQLite ne compresse pas. C'est ce
+      chiffre-là qui compte&nbsp;: c'est ce que SwiftData décode.
+    </p>
+
+    <div class="callout" style="margin-top:20px">
+      <h3>Une correction&nbsp;: <code>.externalStorage</code> n'est pas le remède</h3>
+      <p>
+        J'avais proposé d'ajouter <code>@Attribute(.externalStorage)</code> sur
+        <code>rawText</code> et <code>sheetData</code> comme «&nbsp;le correctif à un
+        caractère près&nbsp;». C'est faux, pour trois raisons. L'option traduit
+        <code>allowsExternalBinaryDataStorage</code> de Core&nbsp;Data, <strong>réservé aux
+        attributs binaires</strong> — elle ne s'applique pas à un <code>String</code>, donc pas
+        aux deux tiers du poids. Sur <code>sheetData</code> elle serait <strong>inerte</strong>&nbsp;:
+        l'externalisation est conditionnelle à la taille et aucune fiche n'approche le seuil
+        (médiane 6,3&nbsp;Ko, maximum 34,6&nbsp;Ko, zéro ligne au-dessus de 128&nbsp;Ko sur 164
+        cours). Et il n'y a jamais eu d'oubli&nbsp;: <code>Course.swift</code> n'a qu'une
+        version dans l'historique, et elle porte déjà les deux états côte à côte — c'est
+        exactement ce que l'API autorise. Le levier est ailleurs.
+      </p>
+    </div>
+
+    <p style="margin-top:20px">
+      Il est ici&nbsp;: <code>Course</code> est dans un <code>@Query</code> dans les cinq
+      onglets&nbsp;—
+    </p>
+
+<pre><b>CoursesListView.swift:15</b>   @Query(sort: \Course.updatedAt, order: .reverse)
+<b>TodayView.swift:29</b>         @Query(sort: \Course.updatedAt, order: .reverse)
+<b>ExamsView.swift:17</b>         @Query(sort: \Course.updatedAt, order: .reverse)
+<b>DecksListView.swift:15</b>     @Query(sort: \Course.updatedAt, order: .reverse)
+<b>ProfileView.swift:30</b>       @Query private var courses: [Course]     <u>← ni tri ni filtre</u></pre>
+
+    <p>
+      <code>propertiesToFetch</code>&nbsp;: <strong>zéro usage dans tout le dépôt.</strong>
+      Les onglets d'un <code>TabView</code> système sont créés paresseusement mais
+      <strong>restent vivants après la première visite</strong>. Et il y en a un
+      <strong>sixième</strong>&nbsp;: <code>DiscountBadgeHost</code> porte lui aussi un
+      <code>@Query</code> et reste monté en permanence par-dessus les onglets
+      (<code>RootTabView.swift:66-72</code>). Sept ou huit quand
+      <code>SettingsView.swift:41</code>, <code>ExamDetailView.swift:22</code> ou
+      <code>ExamEditorSheet.swift:29</code> sont ouverts par-dessus.
+    </p>
+
+    <div class="flow">
+      <div class="step">
+        <span class="lbl">Une écriture SwiftData</span>
+        <p>Un import, la fin d'une session, un examen créé, une synchro qui rapporte
+           effectivement quelque chose.</p>
+        <p style="color:var(--ink-3); font-size:.79rem">Pas au retour au premier plan&nbsp;:
+           la synchro ne part qu'au lancement, au changement de compte, ou sur un lien
+           <code>micabo://</code>.</p>
+      </div>
+      <div class="arr" aria-hidden="true">→</div>
+      <div class="step">
+        <span class="lbl">Réveille 6 requêtes</span>
+        <ul>
+          <li>CoursesListView</li><li>TodayView</li><li>ExamsView</li>
+          <li>DecksListView</li><li>ProfileView</li>
+          <li>DiscountBadgeHost</li>
+        </ul>
+      </div>
+      <div class="arr" aria-hidden="true">→</div>
+      <div class="step hot">
+        <span class="lbl">Sur le fil qui dessine</span>
+        <div class="big num">1,2 Mo</div>
+        <p style="margin-top:8px"><strong>décodé 6 fois</strong>, à 40 cours importés —
+           l'objectif même du repositionnement.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:22px">
+      Donc&nbsp;: <strong>chaque écriture SwiftData réveille six <code>@Query</code> ou plus,
+      dont chacune rematérialise la table <code>Course</code> entière sur l'acteur principal,
+      texte brut compris.</strong>
+    </p>
+    <p>Ce mécanisme est déjà décrit, mot pour mot, dans le dépôt — pour les cartes&nbsp;:</p>
+
+    <blockquote>
+      <p>
+        «&nbsp;SwiftData rematérialisait alors la table entière sur l'acteur principal à
+        chaque écriture […] Avec quelques cours, c'est des milliers d'objets reconstruits
+        plusieurs fois par seconde pendant une session ou une synchro&nbsp;:
+        <strong>c'est ça qui faisait ramer l'app.</strong>&nbsp;»
+      </p>
+      <cite>TodayView.swift:48-52</cite>
+    </blockquote>
+
+    <p style="margin-top:20px">
+      Le diagnostic était juste. Il a été appliqué à <code>Flashcard</code> — plus aucun
+      <code>@Query</code> sur <code>Flashcard</code> dans le dépôt — et pas à
+      <code>Course</code>, dont le <code>@Query</code> est toujours là, à
+      <code>TodayView.swift:29</code>, <strong>dans le fichier même qui documente le
+      problème.</strong>
+    </p>
+    <p>
+      Une précision qui change la lecture&nbsp;: aujourd'hui,
+      <strong>94,8 % des comptes qui ont un cours en ont exactement un</strong> (moyenne 1,19,
+      médiane 1). Le parc actuel pèse donc 30&nbsp;Ko × 6, et personne ne rame encore beaucoup.
+      <strong>Le lag n'est pas à côté du repositionnement&nbsp;: il est proportionnel à son
+      succès, et il n'a pas encore commencé.</strong>
+    </p>
+
+    <h3 class="sub">Ce qu'il faut faire, dans cet ordre</h3>
+    <ol class="fixes">
+      <li><b>Réduire le nombre d'observateurs.</b> C'est le levier principal, et il est
+        gratuit. Les listes (<code>CoursesListView</code>, <code>DecksListView</code>) gardent
+        leur <code>@Query</code>&nbsp;; <code>TodayView</code>, <code>ExamsView</code> et
+        <code>ProfileView</code> passent au motif <code>DayLoad</code> déjà écrit à
+        <code>TodayView.swift:46-57</code> — lecture à la demande, sur événement, pas
+        d'observation. Et <code>DiscountBadgeHost</code>, monté en permanence, ne doit pas
+        observer <code>Course</code> du tout.</li>
+      <li><b>Une projection légère pour les listes.</b> Un <code>CourseRow</code> (id, titre,
+        matière, emoji, accent, nombre de cartes dues, date) construit une fois et gardé en
+        <code>@State</code>, au lieu de promener des <code>Course</code> complets dans la
+        hiérarchie de vues. C'est ce qui empêche les 30&nbsp;Ko de circuler.</li>
+      <li><b>Sortir les trois textes du modèle observé.</b> Le seul mécanisme SwiftData qui
+        donne vraiment un chargement différé est la relation&nbsp;: un
+        <code>@Model CourseBody</code> portant <code>rawText</code>, <code>contextText</code>
+        et <code>sheetData</code>, relié à <code>Course</code> par une relation à un, n'est
+        matérialisé que lorsqu'on ouvre la fiche. Plus lourd qu'un attribut à changer — une
+        vraie migration — mais c'est le seul qui allège la ligne pour de bon.</li>
+      <li><b><code>ProfileView.swift:30</code> n'a besoin que d'un compte</b>, pas de la
+        table.</li>
+    </ol>
+
+    <h3 class="sub"><span class="n num">3.2</span>Le décodage d'image dans un
+      <code>body</code></h3>
+<pre><i>// OcclusionFigure.swift:15</i>
+var body: some View {
+    if let data = card.imageData, let image = <u>UIImage(data: data)</u> {</pre>
+    <p>
+      <code>UIImage(data:)</code> est synchrone, il décode le JPEG, et il est dans le
+      <code>body</code> — donc <strong>à chaque évaluation, sans cache</strong>. Sur
+      iPhone&nbsp;13, un décodage de photo coûte <span class="num">10</span> à
+      <span class="num">40&nbsp;ms</span>&nbsp;: des images perdues garanties au retournement
+      d'une carte à occlusion. Même motif à <code>ImportView.swift:577</code> et
+      <code>:750</code>, et <code>OcclusionEditorSheet.swift:258</code>.
+    </p>
+    <p style="color:var(--ink-2)">
+      <strong style="color:var(--ink)">Correctif&nbsp;:</strong> un petit
+      <code>NSCache&lt;NSUUID, UIImage&gt;</code> partagé, alimenté hors du fil principal,
+      et une <code>Image</code> qui arrive quand elle est prête.
+    </p>
+
+    <h3 class="sub"><span class="n num">3.3</span>Le lancement</h3>
+    <p><code>MicaboApp.init()</code>, avant la première image, sur le fil principal&nbsp;:</p>
+<pre>FontLoader.registerFonts()                                    <i>// 8 TTF, ~420 Ko, en boucle</i>
+PurchasesBridge.configureIfPossible()                         <i>// SDK RevenueCat</i>
+container = Self.makeContainer()                              <i>// conteneur + migrations</i>
+SampleContentPurge.purgeIfNeeded(in: container.mainContext)   <u>// une passe SwiftData</u>
+SubjectCasePass.runIfNeeded(in: container.mainContext)        <u>// une seconde passe</u></pre>
+    <p>
+      Les deux dernières sont gardées par un drapeau «&nbsp;une fois&nbsp;», mais
+      <strong>la lecture a lieu quand même, deux fois, avant que quoi que ce soit ne
+      s'affiche</strong>. Les polices peuvent passer par <code>UIAppFonts</code> dans
+      l'<code>Info.plist</code> — le système les charge alors sans boucle synchrone.
+    </p>
+
+    <div class="callout">
+      <h3>Pourquoi la fluidité passe avant le repositionnement</h3>
+      <p>
+        «&nbsp;Importe tous tes cours&nbsp;» multiplie exactement la grandeur qui fait
+        ramer l'app. Ce n'est pas un lot à faire «&nbsp;aussi&nbsp;»&nbsp;: c'est le
+        préalable, sinon chaque cours ajouté aggrave le problème.
+      </p>
+    </div>
+  </section>
+
+  <section id="p4">
+    <div class="sec-head">
+      <div class="eyebrow">Partie 4 · Livraison</div>
+      <h2>Réparer ce que l'app promet et ne livre pas</h2>
+    </div>
+    <p class="lede">
+      Avant tout repositionnement&nbsp;: aujourd'hui, l'app promet une fiche et ne la livre
+      pas trois fois sur quatre, et n'a jamais fait réviser personne.
+      <strong>Aucun catalogue, aucun planning et aucun paywall ne rattrape ça.</strong>
+    </p>
+
+    <h3 class="sub"><span class="n num">4.1</span>La génération qui n'arrive nulle part</h3>
+    <p>
+      <span class="num">58</span> comptes sur <span class="num">77</span>, dont
+      <span class="num">39</span> parce que la synchronisation ne revient jamais. L'ordre de
+      travail découle directement de ce partage&nbsp;:
+    </p>
+    <ol class="fixes">
+      <li><b>Faire revenir <code>CloudSync</code></b> — les deux tiers du problème, et on
+        sait maintenant pourquoi. La synchronisation part à <b>trois moments seulement</b>&nbsp;:
+        un <code>.task</code> qui ne joue qu'une fois par lancement de processus
+        (<code>MicaboApp.swift:103</code>), un changement de compte (<code>:120</code>), et
+        l'ouverture d'un lien <code>micabo://</code> (<code>:131</code>). <b>Pas au retour au
+        premier plan</b> — le seul <code>onChange(of: scenePhase)</code> du fichier
+        (<code>:70-76</code>) ne fait que vider la file d'analytics.
+        <br><br>
+        Le scénario qui produit les 39 comptes se lit alors tout seul&nbsp;: on ouvre l'app
+        (synchro, à vide, avant l'import), on importe, on lit sa fiche, on ferme.
+        <b>Il n'y a aucun déclencheur entre l'import et la prochaine ouverture de l'app</b> —
+        et pour la moitié de ces gens, il n'y a jamais de prochaine ouverture. Le cours reste
+        sur le téléphone.</li>
+      <li><b>Dire quand la montée échoue.</b> <code>pushCards</code> a déjà appris à ne pas
+        avaler un refus (<code>CloudSync.swift:186-191</code>). Il faut la même chose sur
+        <code>courses</code>, et une ligne dans les Réglages qui dit «&nbsp;3 cours ne sont
+        pas encore sauvegardés&nbsp;», avec un bouton qui réessaie. Aujourd'hui, un
+        utilisateur dont rien ne monte n'a aucun moyen de l'apprendre.</li>
+      <li><b>Ne consommer le quota qu'après une fiche posée.</b> <code>consumeQuota</code>
+        est appelé après la validation du document
+        (<code>generate-course/index.ts:229</code>) — le correctif du 8 septembre est bien
+        là — mais toujours <b>avant</b> l'appel au modèle et avant que le client n'ait rien
+        enregistré. C'est la fenêtre des 19 autres comptes. Un accusé de réception du client,
+        ou un décompte différé, la ferme.</li>
+      <li><b>Un cours sans fiche reste un cours.</b> <code>OfflineSheetBuilder</code> existe
+        déjà (<code>Services/OfflineSheetBuilder.swift</code>)&nbsp;: il sait faire une fiche
+        de repli depuis le texte brut. Mieux vaut une fiche pauvre qu'un écran perdu.</li>
+      <li><b>Livrer <code>#293</code> et <code>#294</code></b> pour la qualité des formules —
+        mais sans en attendre d'effet sur ce tableau.</li>
+    </ol>
+
+    <h3 class="sub"><span class="n num">4.2</span>La première session qui n'a jamais lieu</h3>
+    <p>Zéro révision sur 217 comptes. Le chemin actuel, tel que le README le décrit&nbsp;:</p>
+<pre>import → lecture sur l'appareil → cours fiché → <u>(facultatif)</u> cartes → session</pre>
+    <p>
+      Quatre étapes, dont une facultative, avant la première carte. Et le délai mesuré entre
+      l'inscription et le premier cours est de <strong>18 heures</strong>&nbsp;: la session
+      n'a donc pas lieu dans la séance d'inscription, où l'élan existe. Elle a lieu le
+      lendemain, où il n'existe plus.
+    </p>
+    <p>
+      Le commit <code>#290</code> («&nbsp;Une fiche, pas un cours&nbsp;: la liste devient la
+      forme par défaut&nbsp;») a rendu les cartes facultatives, et l'explique bien. Sur le
+      papier, c'est juste&nbsp;: la fiche est le livrable. Dans les chiffres,
+      <strong>45 % des gens qui importent n'ont jamais de cartes</strong> — donc jamais de
+      session, donc jamais de deuxième jour, donc jamais d'abonnement.
+    </p>
+    <div class="callout">
+      <h3>Ce que ça veut dire, et ce que ça ne veut pas dire</h3>
+      <p>
+        Ce n'est pas un argument pour revenir en arrière. C'est un argument pour que
+        <strong>la première session ne dépende pas d'un import</strong> — ce qui est
+        exactement l'objet du repositionnement.
+      </p>
+    </div>
+  </section>
+
+  <section id="p5">
+    <div class="sec-head">
+      <div class="eyebrow">Partie 5 · Le compagnon</div>
+      <h2>Arrêter de traiter un document, commencer à tenir une année</h2>
+    </div>
+    <p class="lede">
+      Organisation globale, personnalisation par matière, cours découpés en chapitres,
+      plannings, révision passive&nbsp;: ce n'est pas un empilement de fonctionnalités, c'est
+      un <strong>changement d'objet</strong>. Trois choses manquent, dans cet ordre de
+      dépendance&nbsp;: le chapitre, le contenu, le temps.
+    </p>
+
+    <h3 class="sub"><span class="n num">5.1</span>Le chapitre n'existe pas</h3>
+    <p>C'est la découverte structurante du document.</p>
+<pre>select jsonb_object_keys(sheet) from public.courses;   <i>-- une seule clé : "blocks"</i></pre>
+    <p>
+      Les «&nbsp;chapitres repliables&nbsp;» du commit <code>#289</code> sont <strong>une
+      lecture des blocs de type <code>heading</code></strong>, pas une entité.
+      <span class="num">1 205</span> blocs <code>heading</code> sur 143 fiches, soit
+      <span class="num">8,5</span> titres par cours — la matière est là, mais elle n'a ni
+      identité, ni progression, ni échéance, ni carte rattachée.
+    </p>
+    <p>
+      La preuve que ça bloque déjà&nbsp;: <code>exams.chapter_ids</code> existe dans le schéma
+      et <strong>les 31 examens ont tous un tableau vide</strong>. La colonne a été prévue pour
+      une entité qui n'a jamais été créée.
+    </p>
+<pre><b>Chapter</b>
+  id, course_id, position
+  title          <i>← promu depuis le heading de niveau 1</i>
+  block_range    <i>← les blocs de la fiche qui lui appartiennent</i>
+  card_ids       <i>← les cartes nées de ces blocs</i>
+  state          <i>← jamais ouvert / en cours / su</i>
+  mastery        <i>← calculé depuis review_logs, par chapitre</i></pre>
+    <p>
+      Le travail n'est pas énorme&nbsp;: les titres sont déjà là, la découpe est
+      déterministe, la migration se fait à la lecture. Mais <strong>tout le reste de cette
+      partie en dépend</strong> — «&nbsp;les cours se divisent par chapitre&nbsp;», un planning
+      qui dit quoi réviser mardi, une progression par matière, une écoute chapitre par
+      chapitre&nbsp;: tout référence un chapitre.
+    </p>
+    <p style="color:var(--ink-2); font-size:.9rem">
+      C'est aussi la première règle figée du <code>README</code> qui saute&nbsp;: le lexique
+      passe de deux termes à trois — cours, <strong>chapitre</strong>, fiche.
+    </p>
+
+    <h3 class="sub"><span class="n num">5.2</span>Le catalogue&nbsp;: où je choisis à ta place</h3>
+    <p>
+      Tu as demandé les deux — catalogue par programme <em>et</em> génération à la demande.
+      Elles ne coûtent pas la même chose et ne servent pas au même moment. Un catalogue se
+      produit et se tient par pays, par niveau, par matière, et se révise chaque année. Avec
+      428 comptes turcs et 342 français, faire les deux correctement, c'est deux programmes
+      complets — dont un que personne dans l'équipe ne peut relire.
+    </p>
+
+    <div class="ba">
+      <div class="new">
+        <span class="lbl">Ce que je propose</span>
+        <ol>
+          <li><b>Catalogue pré-généré sur un seul périmètre</b>&nbsp;: lycée français, Première
+            et Terminale, les six matières les plus demandées. C'est là que sont les
+            <span class="num">534</span> lycéens, c'est ce que tu peux relire toi-même, et
+            c'est le marché où Kartable et SchoolMouv prouvent qu'on paie pour du contenu
+            conforme au programme — deux à quatre fois ton prix.</li>
+          <li><b>Génération à la demande partout ailleurs.</b> C'est elle qui tient la promesse
+            «&nbsp;même sans rien à importer&nbsp;» pour un étudiant en licence à Istanbul&nbsp;:
+            un champ, un sujet, une fiche et ses cartes en trente secondes.</li>
+          <li><b>Les bonnes fiches générées remontent au catalogue.</b> Il se construit par
+            l'usage au lieu d'être écrit à l'avance — la seule façon de couvrir cinq langues
+            sans cinq équipes éditoriales.</li>
+        </ol>
+      </div>
+    </div>
+
+    <p style="margin-top:18px">
+      <strong>Ce n'est pas un abandon de la Turquie, c'est un ordre.</strong> Le catalogue
+      français valide la mécanique en octobre&nbsp;; la Turquie la reçoit en novembre si elle
+      marche. Un catalogue turc bâclé sur le YKS coûterait sa crédibilité sur le marché le plus
+      gros.
+    </p>
+    <p>
+      Tu acceptes la hausse de coût, donc la question n'est pas le prix unitaire mais le
+      plafond&nbsp;: un compte gratuit doit pouvoir obtenir <strong>assez pour réviser deux
+      jours de suite</strong> — le seuil que personne n'a jamais franchi — et pas plus.
+    </p>
+
+    <h3 class="sub"><span class="n num">5.3</span>Le temps&nbsp;: les plannings</h3>
+    <p>
+      Un planning n'est pas un calendrier. C'est la réponse à «&nbsp;qu'est-ce que je fais
+      maintenant&nbsp;», et Micabo a déjà tout pour la donner&nbsp;: <code>weekly_minutes</code>
+      (sept valeurs, un zéro est un jour de repos, <code>CloudRecords.swift:113-116</code>),
+      <code>daily_minutes</code>, <code>availability_exceptions</code>, les échéances SM-2 et
+      les dates d'examen.
+    </p>
+    <p>
+      Ce qui manque, c'est que ça tienne <strong>sur plusieurs cours et par chapitre</strong>
+      plutôt que par paquet de cartes dues. Concrètement&nbsp;: «&nbsp;mardi&nbsp;: chapitre 3
+      de SVT, 12 minutes, parce que ton contrôle est le 14&nbsp;» — pas «&nbsp;23 cartes
+      dues&nbsp;».
+    </p>
+    <p style="color:var(--ink-2); font-size:.9rem">
+      Seconde règle figée qui saute&nbsp;: le <code>README</code> dit «&nbsp;il n'y aura pas de
+      quatrième onglet&nbsp;». Il y en a déjà cinq (<code>RootTabView.swift:34-46</code>) — la
+      règle était morte avant ce document, il faut juste cesser de l'écrire.
+    </p>
+
+    <h3 class="sub"><span class="n num">5.4</span>L'écoute</h3>
+    <p>
+      La brique que tu as choisie en premier, et celle qui différencie le plus&nbsp;:
+      <strong>aucun des concurrents relevés ne la fait sérieusement.</strong> La fiche est déjà
+      structurée en blocs typés (<code>paragraph</code>, <code>heading</code>,
+      <code>definition</code>, <code>callout</code>, <code>formula</code>, <code>list</code>)&nbsp;:
+      elle se lit à voix haute proprement, ce qu'un PDF ne permet pas.
+    </p>
+    <ul class="do">
+      <li>Une voix par langue, une session audio pilotable depuis l'écran verrouillé.</li>
+      <li>Les <code>heading</code> comme points de chapitrage.</li>
+      <li><b>Une question posée à voix haute toutes les quelques minutes, dont la réponse
+        compte comme une révision.</b> Sans ça, c'est un podcast&nbsp;; avec, c'est du rappel
+        actif, et ça alimente <code>review_logs</code>.</li>
+    </ul>
+    <p style="margin-top:14px">
+      Le coût TTS est réel et récurrent, mais <strong>l'audio se cache par chapitre</strong>&nbsp;:
+      une fiche du catalogue lue une fois sert à tous ceux qui ouvrent le même chapitre.
+    </p>
+
+    <h3 class="sub"><span class="n num">5.5</span>La relecture espacée de la fiche</h3>
+    <p>
+      L'autre brique retenue, et la moins chère de toutes&nbsp;: Micabo sait déjà quand une
+      carte doit revenir. Le même calcul, appliqué aux <strong>blocs</strong> d'un chapitre
+      plutôt qu'aux cartes, donne une relecture espacée du cours — trois paragraphes à relire,
+      pas vingt-trois cartes à noter.
+    </p>
+    <div class="callout">
+      <h3>Pourquoi c'est la marche la plus basse</h3>
+      <p>
+        <strong>46 % des cartes sont ratées ou pénibles au premier passage.</strong> Une
+        session de cartes est un examen&nbsp;; une relecture de trois paragraphes n'en est pas
+        un. Pour quelqu'un qui n'a jamais révisé deux jours de suite — c'est-à-dire, à ce jour,
+        tout le monde — c'est la porte d'entrée la plus facile qu'on puisse poser.
+      </p>
+    </div>
+  </section>
+
+  <section id="p6">
+    <div class="sec-head">
+      <div class="eyebrow">Partie 6 · L'entonnoir</div>
+      <h2>Ce que 10 % peut vouloir dire</h2>
+    </div>
+
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Mesure, catégorie Éducation</th><th style="text-align:right">Médiane</th><th style="text-align:right">Quartile sup.</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Téléchargement → payant, J35</td><td class="n num">2,3 %</td><td class="n num" style="color:var(--ink-2)">&gt; 5,0 %</td></tr>
+          <tr><td>Téléchargement → essai, J30</td><td class="n num">6,5 %</td><td class="n num" style="color:var(--ink-3)">—</td></tr>
+          <tr><td>Essai → payant, <strong>paywall dur</strong> <span style="color:var(--ink-3)">(toutes catégories)</span></td><td class="n num" style="color:var(--positive)">10,7 %</td><td class="n num" style="color:var(--ink-3)">—</td></tr>
+          <tr><td>Essai → payant, <strong>freemium</strong> <span style="color:var(--ink-3)">(toutes catégories)</span></td><td class="n num" style="color:var(--negative)">2,1 %</td><td class="n num" style="color:var(--ink-3)">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top:20px">
+      Très directement&nbsp;: <strong>10 % en installation&nbsp;→&nbsp;payant serait quatre fois
+      la médiane de la catégorie et au-dessus du quartile supérieur.</strong> Ce n'est pas un
+      objectif, c'est un record. <strong>10 % en essai&nbsp;→&nbsp;payant est atteignable</strong> —
+      c'est la médiane des paywalls durs. Micabo est freemium, dont la médiane est 2,1 %.
+    </p>
+    <p>L'objectif utile n'est donc pas un nombre, c'est une échelle&nbsp;:</p>
+
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Palier</th><th>Ce qu'on mesure</th><th style="text-align:right">Aujourd'hui</th><th style="text-align:right">Décembre</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="num">0</td><td><strong>Une seule révision existe sur iOS</strong></td><td class="n now num">0</td><td class="n goal num">&gt; 0</td></tr>
+          <tr><td class="num">1</td><td>Comptes iOS ayant révisé deux jours différents</td><td class="n now num">0 %</td><td class="n goal num">15 %</td></tr>
+          <tr><td class="num">2</td><td>Téléchargement → essai</td><td class="n num" style="color:var(--ink-3)">inconnu</td><td class="n goal num">6,5 %</td></tr>
+          <tr><td class="num">3</td><td>Essai → payant</td><td class="n now num">0 %</td><td class="n goal num">2 – 4 %</td></tr>
+          <tr><td class="num">4</td><td>Téléchargement → payant</td><td class="n now num">0 %</td><td class="n goal num">2,3 %</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:18px">
+      <strong>Le palier 0 vaut plus que tous les autres.</strong> Tant qu'il n'est pas franchi,
+      optimiser le paywall revient à repeindre une porte qui ne s'ouvre sur rien.
+    </p>
+
+    <h3 class="sub"><span class="n num">6.2</span>Le parcours cible</h3>
+    <p>Une seule modification structurelle, et elle ne touche pas à l'offre&nbsp;:</p>
+    <div class="ba">
+      <div class="old">
+        <span class="lbl">Aujourd'hui</span>
+        <ol>
+          <li>25 écrans — <b>rien d'enregistré nulle part</b></li>
+          <li>Inscription (étape 26)</li>
+          <li>Essai, rappel d'essai (27-28)</li>
+          <li><b>Paywall</b> (29)</li>
+          <li>Une application vide</li>
+        </ol>
+      </div>
+      <div class="new">
+        <span class="lbl">Cible</span>
+        <ol>
+          <li>5 écrans — pays, niveau, matières</li>
+          <li><b>Inscription</b>, à l'écran 6</li>
+          <li>Le catalogue répond&nbsp;: première fiche et <b>première session, sur du contenu
+            réel</b></li>
+          <li>Les 20 écrans restants — profil, science, projection, preuves</li>
+          <li><b>Paywall</b>, après la première session</li>
+        </ol>
+      </div>
+    </div>
+
+    <ol class="fixes">
+      <li><b>L'inscription remonte à l'écran 6.</b> C'est la leçon de Vaia. Un abandon devient
+        une donnée au lieu d'un silence, et tu peux écrire à ces gens.</li>
+      <li><b>Le profil déjà collecté sert immédiatement.</b> Un lycéen en terminale spé maths
+        voit ses chapitres au bout de six écrans. C'est le «&nbsp;ton compagnon&nbsp;» que les
+        29 écrans actuels promettent sans le livrer.</li>
+      <li><b>La première session a lieu avant le prix.</b> Pas sur une démo — <code>demoImport</code>,
+        <code>demoSheet</code> et <code>demoReview</code> montrent le produit de quelqu'un
+        d'autre — ni sur un import qui demande de sortir un PDF en pleine inscription&nbsp;:
+        sur un chapitre du catalogue, choisi par le profil.</li>
+      <li><b>Le paywall reste au même endroit</b>, à la fin. Mais il arrive après une session
+        réussie au lieu d'après une promesse.</li>
+    </ol>
+    <p style="margin-top:16px; color:var(--ink-2); font-size:.9rem">
+      Les 20 écrans conservés ne sont pas du remplissage&nbsp;: <code>RetentionChartStepView</code>
+      et <code>ProjectionStepView</code> sont les meilleures pages du produit, et la catégorie
+      supporte cette longueur.
+    </p>
+
+    <h3 class="sub"><span class="n num">6.3</span>Ce qui se fait sans toucher à l'offre</h3>
+    <ul class="do">
+      <li><b>La première session avant le prix</b> — la plus grosse, et elle ne coûte rien à
+        l'offre.</li>
+      <li><b>Remplacer les trois démos</b> par le vrai produit sur du vrai contenu.</li>
+      <li><b>Le cadrage mensuel en évidence</b>&nbsp;: «&nbsp;3,33&nbsp;€ par mois&nbsp;» plus
+        gros que «&nbsp;39,99&nbsp;€/an&nbsp;». <code>app.paywall.perMonth</code> existe déjà.</li>
+      <li><b>Les notifications — la plus rentable de cette liste.</b>
+        <code>NotificationPermission.swift</code> demande bien l'autorisation, et il n'existe
+        dans tout le dépôt <b>ni un seul <code>UNMutableNotificationContent</code>, ni un seul
+        déclencheur, ni un seul <code>add(request:)</code></b>. L'app demande la permission de
+        déranger et n'a jamais envoyé une notification. C'est pire que ne pas demander&nbsp;:
+        l'autorisation est brûlée, et un refus est durable.</li>
+      <li><b>Le widget.</b> Aucun <code>WidgetKit</code> dans le dépôt. Surface de rappel qui ne
+        dépend d'aucune autorisation — donc la seule qui marche sur ceux qui ont refusé.</li>
+    </ul>
+    <p style="margin-top:16px; color:var(--ink-2); font-size:.9rem">
+      À noter, parce que le plan précédent le réclamait&nbsp;: <strong>le nombre de pairs
+      inventé a bien été supprimé.</strong> Plus aucun <code>Int.random</code> dans le parcours
+      d'accueil, et <code>SocialProofStepView</code> montre de vrais avis avec
+      <code>requestReview()</code>. Rien à faire.
+    </p>
+
+    <h3 class="sub"><span class="n num">6.4</span>Ce qu'il ne faut pas faire</h3>
+    <ul class="dont">
+      <li><b>Le nombre de pairs inventé</b>, sous quelque forme que ce soit.</li>
+      <li><b>La mascotte.</b> Vaia en a une sur seize écrans. Elle détonnerait avec la sobriété
+        de Micabo, qui est son seul actif de marque aujourd'hui.</li>
+      <li><b>Cacher le prix jusqu'au dernier moment.</b> L'ancrage clair sert mieux la confiance
+        sur un public étudiant, et le paywall actuel est déjà honnête.</li>
+      <li><b>Réanimer la bibliothèque et les amis.</b> 0 vue, 0 reprise, 1 amitié. Pas d'ici
+        décembre.</li>
+    </ul>
+
+    <h3 class="sub"><span class="n num">6.5</span>Le plafond, dit une fois</h3>
+    <p>
+      L'offre est figée et ce document la respecte partout. Voici ce que la contrainte coûte,
+      avec les chiffres, pour que la décision soit prise en connaissance de cause&nbsp;:
+    </p>
+    <ul class="dont">
+      <li><b>Freemium contre paywall dur&nbsp;: 2,1 % contre 10,7 %</b> d'essai&nbsp;→&nbsp;payant.
+        Un facteur cinq — le seul écart de cette taille dans tout le document.</li>
+      <li><b>3 jours d'essai contre 7</b> chez Vaia et Coconote. En Éducation, 78 % des essais
+        démarrent le jour même&nbsp;: un essai de trois jours se termine avant le premier lundi
+        de révision.</li>
+      <li><b>Pas d'offre hebdomadaire.</b> C'est l'ancre standard de la catégorie — Gizmo
+        6,99&nbsp;$, Coconote 9,99&nbsp;$, et Zutobi ne vend que ça pour 600&nbsp;K$/mois.</li>
+    </ul>
+    <div class="callout" style="margin-top:22px">
+      <h3>Ce n'est pas la contrainte active</h3>
+      <p>
+        Aucune des trois n'est une recommandation&nbsp;: tu as tranché. Ce sont les bornes de ce
+        que la refonte du parcours peut produire. <strong>Et la contrainte qui mord aujourd'hui,
+        c'est le palier&nbsp;0</strong> — pas le prix. Quand une cohorte iOS révisera deux jours
+        de suite et que la conversion plafonnera à 2 %, cette section redeviendra la
+        conversation à avoir.
+      </p>
+    </div>
+  </section>
+
+  <section id="p7">
+    <div class="sec-head">
+      <div class="eyebrow">Partie 7 · Le paysage</div>
+      <h2>Qui vend un outil, qui vend du contenu</h2>
+    </div>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Produit</th><th style="text-align:right">Revenu/mois</th><th>Prix</th><th>Ce qu'il fait mieux</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Vaia</strong> <span style="color:var(--ink-3)">StudySmarter</span></td><td class="n num">70 K$</td><td class="num">31,99–89,99 $/an</td><td>Le concurrent frontal. Même profil collecté, mais un catalogue derrière</td></tr>
+          <tr><td><strong>Coconote</strong> <span style="color:var(--ink-3)">Quizlet</span></td><td class="n num">300 K$</td><td class="num">129,99 $/an · 9,99 $/sem</td><td>38 écrans d'accueil, 1 paywall, rien d'autre. Une machine à convertir</td></tr>
+          <tr><td><strong>Gizmo</strong></td><td class="n num">200 K$</td><td class="num">77,99 $/an · 6,99 $/sem</td><td>Quiz, jeu, progression. 46 écrans de produit</td></tr>
+          <tr><td><strong>Quizlet</strong></td><td class="n num">3 M$</td><td class="num">44,99 $/an</td><td>Le catalogue communautaire, les modes d'étude</td></tr>
+          <tr><td><strong>Brainscape</strong></td><td class="n num">70 K$</td><td class="num">95,99 $/an</td><td>Notation par confiance, statistiques</td></tr>
+          <tr><td><strong>Duolingo</strong></td><td class="n num">52 M$</td><td class="num">83,99 $/an</td><td>La boucle&nbsp;: série, gel, widget, deuxième demande d'autorisation</td></tr>
+          <tr><td><strong>Kartable</strong> <span style="color:var(--ink-3)">FR</span></td><td class="n num" style="color:var(--ink-3)">—</td><td class="num">14,99 €/mois</td><td>Contenu conforme au programme + assistant IA «&nbsp;Alfa&nbsp;»</td></tr>
+          <tr><td><strong>SchoolMouv</strong> <span style="color:var(--ink-3)">FR</span></td><td class="n num" style="color:var(--ink-3)">—</td><td class="num">dès 14,99 €/mois</td><td>3 M d'élèves, CP→Terminale, 7 jours d'essai</td></tr>
+          <tr><td><strong>Knowunity</strong> <span style="color:var(--ink-3)">DE</span></td><td class="n num" style="color:var(--ink-3)">—</td><td class="num">freemium</td><td>Fiches partagées entre élèves, gamification</td></tr>
+          <tr style="background:var(--accent-soft)"><td><strong style="color:var(--accent)">Micabo</strong></td><td class="n num" style="color:var(--negative)">0 €</td><td class="num">39,99 €/an</td><td>SM-2 réglé comme Anki, extraction sur l'appareil, paywall honnête</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:20px">
+      La ligne à retenir&nbsp;: <strong>les trois français vendent du contenu, les anglo-saxons
+      vendent un outil.</strong> Micabo vend un outil au prix d'un outil, sur un marché français
+      qui paie deux à quatre fois plus cher pour du contenu. La partie 5 est ce qui fait passer
+      Micabo de l'une à l'autre.
+    </p>
+  </section>
+
+  <section id="p8">
+    <div class="sec-head">
+      <div class="eyebrow">Partie 8 · Mesure</div>
+      <h2>Rien de tout ça n'est vérifiable aujourd'hui</h2>
+    </div>
+    <p>
+      <code>app_events</code> contient <strong>zéro ligne</strong>&nbsp;: le traceur écrit au
+      commit <code>#295</code> n'est pas encore chez les utilisateurs. <strong>C'est le premier
+      déploiement à faire</strong>, avant tout le reste — sans lui, aucune des parties 3 à 6
+      n'est mesurable.
+    </p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Événement</th><th>Ce qu'il débloque</th></tr></thead>
+        <tbody>
+          <tr><td><code>onboarding_step_view(step)</code></td><td>Les 25 premières étapes, aujourd'hui invisibles</td></tr>
+          <tr><td><code>generation_started</code> / <code>_failed(reason)</code> / <code>_saved</code></td><td>Trancher entre les deux causes de la fuite</td></tr>
+          <tr><td><code>sync_push_failed(table, reason)</code></td><td>L'autre moitié de la même question</td></tr>
+          <tr><td><code>first_session_completed(cards, seconds)</code></td><td><strong>Le palier 0</strong></td></tr>
+          <tr><td><code>session_completed(day_index)</code></td><td>Le palier 1 — le seul qui prédit un abonnement</td></tr>
+          <tr><td><code>paywall_view</code> / <code>trial_started</code> / <code>trial_converted</code></td><td>Les paliers 2 et 3</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:20px">
+      Et une requête à faire tourner chaque lundi — la seule qui compte tant que le palier 0
+      n'est pas franchi&nbsp;:
+    </p>
+<pre>select count(*) filter (where exists (
+         select 1 from public.review_logs r where r.user_id = p.id))
+from public.profiles p
+where coalesce(array_length(p.learning_goals, 1), 0) &gt; 0;</pre>
+    <p style="color:var(--ink-2)">
+      Tant qu'elle renvoie <strong style="color:var(--negative)">0</strong>, rien d'autre n'a
+      d'importance.
+    </p>
+  </section>
+
+  <section id="p9">
+    <div class="sec-head">
+      <div class="eyebrow">Partie 9 · Exécution</div>
+      <h2>Jusqu'à décembre</h2>
+    </div>
+    <p style="margin-bottom:8px">
+      Le pic visé est celui des partiels et des bacs blancs, mi-décembre à mi-janvier. La
+      boucle doit tourner <strong>avant</strong>, pas pendant. Les lots sont numérotés parce
+      que l'ordre porte de l'information&nbsp;: chacun débloque le suivant.
+    </p>
+
+    <div class="lots">
+      <div class="lot">
+        <div><div class="lot-n num">0</div><span class="lot-wk">sem. 1</span></div>
+        <div>
+          <h3>Voir et livrer</h3>
+          <p>Déployer le traceur et les correctifs de formules déjà écrits et retenus sur la
+             branche. Poser les six événements qui manquent.</p>
+          <div class="exit"><b>Critère de sortie</b>
+            <span class="num">app_events</span> se remplit, et on sait enfin où partent les
+            25 premières étapes.</div>
+        </div>
+      </div>
+
+      <div class="lot">
+        <div><div class="lot-n num">1</div><span class="lot-wk">sem. 1–3</span></div>
+        <div>
+          <h3>La fluidité</h3>
+          <p>Réduire le nombre d'observateurs de <code>Course</code> — six aujourd'hui, un ou
+             deux demain. Une projection légère pour les listes. Le cache d'images. Le
+             lancement allégé. Et, si les mesures le demandent, sortir les trois textes dans un
+             <code>CourseBody</code> relié.</p>
+          <div class="exit"><b>Critère de sortie</b>
+            Aucune image perdue au défilement de vingt cours sur iPhone 13, mesuré à
+            Instruments — pas jugé à l'œil.</div>
+        </div>
+      </div>
+
+      <div class="lot">
+        <div><div class="lot-n num">2</div><span class="lot-wk">sem. 2–4</span></div>
+        <div>
+          <h3>La livraison</h3>
+          <p>Faire revenir la synchro après un import. Dire quand la montée échoue. Ne
+             décompter le quota qu'après une fiche posée. Et programmer enfin des
+             notifications — l'app en demande l'autorisation et n'en a jamais envoyé une.</p>
+          <div class="exit"><b>Critère de sortie</b>
+            L'écart entre «&nbsp;a appelé le modèle&nbsp;» et «&nbsp;a un cours en
+            base&nbsp;» passe sous <span class="num">10 %</span>.</div>
+        </div>
+      </div>
+
+      <div class="lot">
+        <div><div class="lot-n num">3</div><span class="lot-wk">sem. 4–8</span></div>
+        <div>
+          <h3>Le chapitre et le catalogue</h3>
+          <p>L'entité <span class="num">Chapter</span>, et la migration des 143 fiches
+             existantes. Le catalogue lycée France, Première et Terminale, six matières. La
+             génération à la demande partout ailleurs. Inscription à l'écran 6, première
+             session avant le prix.</p>
+          <div class="exit"><b>Critère de sortie</b>
+            Un compte créé sans aucun import atteint sa première session révisée en moins de
+            trois minutes.</div>
+        </div>
+      </div>
+
+      <div class="lot">
+        <div><div class="lot-n num">4</div><span class="lot-wk">sem. 8–11</span></div>
+        <div>
+          <h3>Le temps et l'écoute</h3>
+          <p>Le planning par chapitre. La relecture espacée de la fiche — la brique la moins
+             chère, et la marche la plus basse pour quelqu'un qui n'a jamais révisé deux
+             jours de suite. Puis l'écoute, <strong>si et seulement si</strong> les trois
+             lots précédents sont tenus.</p>
+          <div class="exit"><b>Critère de sortie</b>
+            <span class="num">15 %</span> des comptes iOS d'une cohorte hebdomadaire révisent
+            deux jours différents.</div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:28px; color:var(--ink-2); font-size:.92rem">
+      <strong>Ce qui ne se fait pas d'ici décembre&nbsp;:</strong> la bibliothèque partagée
+      (0 vue, 0 reprise), les amis (1 amitié), le catalogue turc, le mode sombre, l'iPad,
+      FSRS. Aucun ne change le palier&nbsp;0.
+    </p>
+  </section>
+  <section id="p10">
+    <div class="sec-head">
+      <div class="eyebrow">Partie 10 · Décisions ouvertes</div>
+      <h2>Les trois choix que je n'ai pas faits</h2>
+    </div>
+    <p class="lede">Ils sont à toi. Chacun change le plan si tu tranches autrement.</p>
+
+    <div class="decision">
+      <h3>1. Le catalogue turc</h3>
+      <p>
+        Je propose de le faire en novembre, après validation du français. C'est
+        <strong>49 % de tes comptes qui attendent</strong>. Si tu trouves quelqu'un qui relit
+        le turc, l'ordre peut s'inverser — mais pas se paralléliser&nbsp;: deux programmes
+        complets en même temps, sur onze semaines, ne tiennent pas.
+      </p>
+    </div>
+
+    <div class="decision">
+      <h3>2. L'écoute en dernier plutôt qu'en premier</h3>
+      <p>
+        C'est la brique dont tu as le plus envie, et c'est exactement pour ça qu'elle est en
+        lot&nbsp;4&nbsp;: elle est la plus visible, et elle ne sert à rien sur une app qui rame
+        et qui ne livre pas ses fiches. Si tu la veux plus tôt, il faut renoncer à autre chose
+        — dis-moi à quoi.
+      </p>
+    </div>
+
+    <div class="decision">
+      <h3>3. Le plafond de l'offre</h3>
+      <p>
+        Freemium, 3 jours d'essai, pas d'hebdomadaire. Tenu partout dans ce document. Quand le
+        palier&nbsp;1 sera franchi et que la conversion plafonnera, ce sera la conversation à
+        rouvrir — pas avant.
+      </p>
+    </div>
+  </section>
+
+
+  <footer>
+    Le document complet — diagnostic ligne à ligne, correctifs par fichier, analyse
+    concurrentielle et ce qu'il faut mesurer — est dans le dépôt&nbsp;:
+    <code>docs/refonte-ios.md</code>.
+    Chiffres relevés le 19 septembre 2026 sur la base de production&nbsp;; repères de marché
+    tirés du rapport <i>State of Subscription Apps 2026</i> de RevenueCat et de relevés
+    App&nbsp;Store.
+  </footer>
+
+</div>

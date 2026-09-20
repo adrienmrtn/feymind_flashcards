@@ -47,6 +47,13 @@ enum DiscountOffer {
         static let startedAt = "micabo.discount.startedAt"
         /// Le paywall s'est déjà présenté ; la pastille prend le relais.
         static let seen = "micabo.discount.seen"
+        /// Le dernier nombre de cours importés connu.
+        ///
+        /// Il est gardé pour une seule raison : la languette est montée avant qu'aucune
+        /// lecture de base n'ait eu lieu, et partir de zéro la ferait **arriver en fondu**
+        /// à chaque lancement chez quelqu'un qui a déjà des cours. La première image se
+        /// peint donc avec le compte de la dernière fois, et la lecture qui suit le corrige.
+        static let ownedCourses = "micabo.discount.ownedCourses"
     }
 
     // MARK: - Le temps
