@@ -58,7 +58,6 @@ struct SettingsView: View {
                 identitySection
                 studiesSection
                 languageSection
-                appearanceSection
                 reviewSection
                 #if DEBUG
                 intelligenceSection
@@ -576,10 +575,6 @@ struct SettingsView: View {
 
     private var languageSection: some View {
         LanguageSwitcher(variant: .card)
-    }
-
-    private var appearanceSection: some View {
-        AppearanceSwitcher(variant: .card)
     }
 
     /// Le rythme quotidien commande le plafond de cartes neuves : les deux rangées se

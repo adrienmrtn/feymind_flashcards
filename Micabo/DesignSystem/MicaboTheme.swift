@@ -170,6 +170,10 @@ enum MicaboSpacing {
 enum MicaboRadius {
     /// Tuile pastel d'une rangée : carré arrondi, emoji ou symbole au centre.
     static let tile: CGFloat = 14
+    /// **La grande tuile d'un deck**, dans la grille à deux colonnes. Elle fait 112 points
+    /// de haut et porte son emoji à quarante-quatre : à ce format, le rayon d'une tuile de
+    /// rangée la ferait paraître carrée.
+    static let deck: CGFloat = 26
     /// Même valeur que la tuile, pour les vignettes du parcours d'accueil.
     static let cover: CGFloat = 14
     static let sm: CGFloat = 12

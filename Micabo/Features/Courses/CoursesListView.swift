@@ -198,7 +198,7 @@ struct CoursesListView: View {
         NavigationStack(path: $path) {
             libraryScroll
                 .toolbar(.hidden, for: .navigationBar)
-                .reportsNavigationDepth(for: .courses, depth: path.count)
+                .reportsNavigationDepth(for: .decks, depth: path.count)
                 .returnsHome(path: $path)
                 .navigationDestination(for: Course.self, destination: openCourse)
                 .navigationDestination(for: CourseCardsRoute.self, destination: openCards)

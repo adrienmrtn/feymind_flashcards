@@ -36,7 +36,7 @@ struct OnboardingFlowView: View {
         .environment(\.locale, i18n.locale.foundation)
         // Sur fond sombre, l'heure et la batterie doivent passer en clair : sinon elles
         // disparaissent dans l'encre.
-        .preferredColorScheme(surface.isDark ? .dark : AppearanceStore.shared.appearance.colorScheme)
+        .preferredColorScheme(surface.isDark ? .dark : .light)
         .onAppear {
             Haptics.prepare()
             Analytics.track(.onboardingStarted)

@@ -16,7 +16,6 @@ struct MicaboApp: App {
     /// même question, et personne n'y répond de son côté.
     @State private var pro: ProAccess
     @State private var uiLocale = UiLocaleStore()
-    @State private var appearance = AppearanceStore.shared
     @Environment(\.scenePhase) private var scenePhase
 
     private static let schema = Schema([Course.self, CourseFolder.self, Flashcard.self, ReviewLog.self, Exam.self, OffDay.self])
@@ -59,9 +58,8 @@ struct MicaboApp: App {
                 .environment(mocks)
                 .environment(pro)
                 .environment(uiLocale)
-                .environment(appearance)
                 .environment(\.locale, uiLocale.locale.foundation)
-                .preferredColorScheme(appearance.appearance.colorScheme)
+                .preferredColorScheme(.light)
                 // Avant le reste de la tâche : ouvrir la session de statistiques est
                 // quelques microsecondes, et tout ce qui suit peut vouloir tracer.
                 .onAppear { Analytics.start() }

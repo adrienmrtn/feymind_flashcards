@@ -41,6 +41,10 @@ struct TodayView: View {
     @State private var pendingImport: ImportKind?
     @State private var activeImport: ImportKind?
     @State private var paywall: PaywallTrigger?
+    /// **La création d'une épreuve se fait d'ici.** L'onglet Examens a disparu de la barre,
+    /// et c'est cet écran qui montre déjà les prochaines dates : la porte qui menait au
+    /// calendrier ouvre maintenant le formulaire, sans écran intermédiaire.
+    @State private var creatingExam = false
 
     /// La file du jour, **lue à la demande et non observée**.
     ///
@@ -358,6 +362,13 @@ struct TodayView: View {
                 ExamDetailView(exam: exam)
             }
         }
+        .sheet(isPresented: $creatingExam) {
+            ExamEditorSheet(exam: nil) { created in
+                path.append(created)
+            }
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(MicaboRadius.sheet)
+        }
         .sheet(isPresented: $showImportChoice, onDismiss: launchPendingImport) {
             ImportChoiceSheet(
                 onSelect: { kind in
@@ -580,14 +591,6 @@ struct TodayView: View {
             HStack(alignment: .firstTextBaseline) {
                 MicaboSectionCaption(text: i18n.t("app.today.nextExam"))
                 Spacer(minLength: MicaboSpacing.xs)
-                if !upcomingExams.isEmpty {
-                    Button(i18n.t("app.today.seeExams")) {
-                        openExams()
-                    }
-                    .font(MicaboFont.ui(13, weight: .semibold))
-                    .foregroundStyle(MicaboColor.accent)
-                    .buttonStyle(MicaboPressableButtonStyle())
-                }
             }
 
             if let next = nextExam {
@@ -704,7 +707,7 @@ struct TodayView: View {
     }
 
     private func openExams() {
-        router?.selection = .exams
+        creatingExam = true
     }
 
     private var examEmptySubtitle: String {
