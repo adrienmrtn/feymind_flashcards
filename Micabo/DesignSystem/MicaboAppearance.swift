@@ -61,6 +61,11 @@ struct MicaboPalette: Equatable {
     var negative: Color
     var ratingAgain: Color
     var info: Color
+    /// Le lavis vert de la zone de maintien, et l'encre lisible dessus. `positiveSoft` est
+    /// déjà pris par les notes de session : le réutiliser ferait qu'un fond de graphe et une
+    /// note « correct » porteraient le même vert.
+    var positiveWash: Color
+    var positiveInk: Color
     var positiveSoft: Color
     var cautionSoft: Color
     var negativeSoft: Color
@@ -164,6 +169,8 @@ struct MicaboPalette: Equatable {
         negative: Color(hex: 0xC93B2B),
         ratingAgain: Color(hex: 0xB5573C),
         info: Color(hex: 0x3A6FC4),
+        positiveWash: Color(hex: 0xE4F6EE),
+        positiveInk: Color(hex: 0x16795A),
         positiveSoft: Color(hex: 0xDEF5E7),
         cautionSoft: Color(hex: 0xFDF1D6),
         negativeSoft: Color(hex: 0xFDE8E2),

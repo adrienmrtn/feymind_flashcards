@@ -14,7 +14,6 @@ struct GoalStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.goalTitle"),
-            subtitle: i18n.t("ios.goalSubtitle"),
             animatesTitle: true
         ) {
             VStack(spacing: 8) {

@@ -605,11 +605,14 @@ struct OnboardingContinueButton: View {
             }
             .frame(maxWidth: .infinity)
         }
+        // **Le bouton de la maquette** : cinquante-six points, rayon quatorze, seize et demi
+        // de texte, et pas d'ombre. Il faisait soixante-quatre points, dix-huit de rayon et
+        // portait deux ombres portées — ce qui tenait sur le fond crème d'avant, et salit sur
+        // du blanc.
         .buttonStyle(
-            MicaboPrimaryButtonStyle(
+            MicaboActionButtonStyle(
                 tint: isEnabled ? surface.buttonTint : surface.disabledButtonTint,
-                foreground: surface.buttonForeground,
-                isProminent: true
+                foreground: surface.buttonForeground
             )
         )
         .disabled(!isEnabled || isLoading)

@@ -36,8 +36,7 @@ struct CurrentAverageStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.averageTitle"),
-            subtitle: i18n.t("ios.averageLead"),
-            titleSize: 28,
+            titleSize: 26,
             animatesTitle: true,
             expandsContent: true
         ) {
@@ -84,7 +83,7 @@ struct TargetAverageStepView: View {
         OnboardingScaffold(
             title: i18n.t("ios.targetTitle"),
             subtitle: isAtTop ? i18n.t("ios.targetAtTop") : i18n.t("ios.targetLead"),
-            titleSize: 28,
+            titleSize: 26,
             animatesTitle: true,
             expandsContent: true
         ) {
@@ -127,17 +126,42 @@ struct TogetherStepView: View {
         return scale.label(for: score)
     }
 
+    /// L'échéance annoncée : la fin de l'année scolaire, pas une date choisie.
+    ///
+    /// Personne n'a demandé à cet étudiant pour quand il visait sa moyenne, et lui faire
+    /// choisir un mois ici serait une douzième question pour un graphe. Juin est la réponse
+    /// pour à peu près tout le monde dans les quatre pays décrits, et c'est le seul repère
+    /// que la courbe a besoin de nommer.
+    private var deadlineLabel: String {
+        let calendar = MicaboCalendar.shared
+        let now = Date()
+        let year = calendar.component(.year, from: now)
+        let month = calendar.component(.month, from: now)
+        // Après juin, l'année scolaire visée est la suivante.
+        var components = DateComponents()
+        components.year = month >= 7 ? year + 1 : year
+        components.month = 6
+        components.day = 1
+        guard let june = calendar.date(from: components) else { return "" }
+        return june.formatted(.dateTime.month(.wide)).localizedCapitalized
+    }
+
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.togetherTitle"),
-            titleSize: 28
+            titleSize: 26
         ) {
-            GradeJourney(
-                from: label(for: model.currentScore) ?? i18n.t("ios.averageBelowShort"),
-                to: label(for: model.targetScore) ?? scale.max
-            )
+            VStack(spacing: 14) {
+                GradeJourney(
+                    from: label(for: model.currentScore) ?? i18n.t("ios.averageBelowShort"),
+                    to: label(for: model.targetScore) ?? scale.max,
+                    deadline: deadlineLabel
+                )
+
+                GradeEvidence()
+            }
         } footer: {
-            OnboardingContinueButton {
+            OnboardingContinueButton(title: i18n.t("ios.journey.commit")) {
                 model.advance()
             }
         }
@@ -233,71 +257,216 @@ private struct GradeSlider: View {
 /// chargement, sur un écran qui ne charge rien. Ici quelque chose **voyage** - un point part du
 /// chiffre d'aujourd'hui, remonte le trait, et l'objectif s'allume à son arrivée. C'est la
 /// seule page du parcours qui promet quelque chose ; elle doit se regarder jusqu'au bout.
+/// **La progression prévue, et la zone de maintien.**
+///
+/// Ce qui vivait ici était une barre horizontale avec un point qui la remonte : « de 11 à
+/// 16 », en une ligne. C'est juste et c'est plat — une barre qui se remplit ne dit pas qu'un
+/// progrès est **lent d'abord, rapide ensuite**, ni qu'il y a un après.
+///
+/// La courbe le dit. Elle part à plat, monte, et s'arrête à la date visée ; au-delà, un
+/// trait vert horizontal sur fond vert pâle, qui est la seule promesse honnête qu'on puisse
+/// faire après l'objectif : **maintenir**. Une courbe qui continuerait de monter après juin
+/// promettrait vingt sur vingt, et personne n'y croit.
+///
+/// **Le tracé est le même quelles que soient les notes.** C'est une forme, pas une
+/// prédiction : on ne sait pas de combien quelqu'un progressera, et faire varier la courbure
+/// selon l'écart entre les deux notes laisserait croire qu'on a calculé quelque chose.
 private struct GradeJourney: View {
     let from: String
     let to: String
+    let deadline: String
 
-    @State private var drawn = false
+    @State private var drawn: CGFloat = 0
     @State private var arrived = false
 
     var body: some View {
-        HStack(spacing: MicaboSpacing.sm) {
-            marker(value: from, tint: MicaboColor.inkTertiary, background: MicaboColor.surfaceMuted)
+        VStack(alignment: .leading, spacing: 14) {
+            Text(L10n.t("ios.journey.title", locale: .resolved()))
+                .font(MicaboFont.ui(15, weight: .bold))
+                .foregroundStyle(MicaboColor.ink)
 
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(MicaboColor.surfaceMuted)
-                        .frame(height: 5)
+            chart
+                .frame(height: 168)
 
-                    Capsule()
-                        .fill(MicaboColor.accent)
-                        .frame(width: drawn ? proxy.size.width : 0, height: 5)
-
-                    // Le point qui remonte le trait. Il est en tête du remplissage, pas
-                    // dessus : c'est lui qui tire, le trait est sa trace.
-                    Circle()
-                        .fill(MicaboColor.accent)
-                        .frame(width: 11, height: 11)
-                        .overlay(
-                            Circle()
-                                .stroke(MicaboColor.accent.opacity(0.28), lineWidth: arrived ? 0 : 7)
-                                .scaleEffect(arrived ? 1 : 1.4)
-                        )
-                        .offset(x: (drawn ? proxy.size.width : 0) - 5.5)
-                        .opacity(arrived ? 0 : 1)
-                }
-                .frame(maxHeight: .infinity, alignment: .center)
+            HStack {
+                Text(L10n.t("ios.journey.today", locale: .resolved()))
+                Spacer(minLength: 0)
+                Text(deadline)
             }
-            .frame(height: 16)
-
-            marker(value: to, tint: MicaboColor.onInk, background: MicaboColor.accent)
-                // L'objectif s'allume quand le point arrive : un petit sursaut, et c'est fini.
-                .scaleEffect(arrived ? 1 : 0.88)
-                .opacity(arrived ? 1 : 0.45)
+            .font(MicaboFont.ui(12.5, weight: .semibold))
+            .foregroundStyle(MicaboColor.inkSecondary)
         }
-        .padding(MicaboSpacing.lg)
-        .frame(maxWidth: .infinity)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
-        .animation(.timingCurve(0.25, 0.9, 0.25, 1, duration: 1.05).delay(0.3), value: drawn)
-        .animation(.spring(response: 0.42, dampingFraction: 0.6), value: arrived)
+        .padding(.horizontal, 16)
+        .padding(.top, 18)
+        .padding(.bottom, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: MicaboRadius.card, style: .continuous)
+                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+        }
         .task {
-            drawn = true
-            try? await Task.sleep(for: .milliseconds(1_280))
-            arrived = true
+            withAnimation(.timingCurve(0.25, 0.9, 0.25, 1, duration: 1.15).delay(0.25)) {
+                drawn = 1
+            }
+            try? await Task.sleep(for: .milliseconds(1_320))
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.6)) { arrived = true }
             Haptics.success()
         }
     }
 
-    private func marker(value: String, tint: Color, background: Color) -> some View {
-        Text(value)
-            .font(MicaboFont.number(17, weight: .bold))
-            .foregroundStyle(tint)
+    /// Les proportions du tracé, en fractions de la boîte. Elles sont écrites une fois ici
+    /// plutôt que dispersées dans les calculs : le point d'arrivée de la courbe, le début de
+    /// la zone de maintien et la position de la pastille doivent tomber au même endroit, et
+    /// trois nombres recopiés finissent toujours par diverger d'un point.
+    private enum Layout {
+        /// L'abscisse où la courbe atteint l'objectif, et où commence le maintien.
+        static let goalX: CGFloat = 0.62
+        /// L'ordonnée de départ et celle de l'objectif.
+        static let startY: CGFloat = 0.86
+        static let goalY: CGFloat = 0.21
+        static let leftInset: CGFloat = 0.06
+    }
+
+    private var chart: some View {
+        GeometryReader { proxy in
+            let w = proxy.size.width
+            let h = proxy.size.height
+            let start = CGPoint(x: w * Layout.leftInset, y: h * Layout.startY)
+            let goal = CGPoint(x: w * Layout.goalX, y: h * Layout.goalY)
+
+            ZStack(alignment: .topLeading) {
+                grid(width: w, height: h)
+
+                // La zone de maintien, posée avant les traits : c'est un fond, pas un objet.
+                Rectangle()
+                    .fill(MicaboColor.positiveWash)
+                    .frame(width: w - goal.x, height: h * 0.72)
+                    .offset(x: goal.x, y: h * 0.14)
+                    .opacity(arrived ? 1 : 0)
+
+                // La montée, tracée au fil de l'animation.
+                curve(from: start, to: goal)
+                    .trim(from: 0, to: drawn)
+                    .stroke(MicaboColor.accentPale, style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
+
+                // Le maintien, qui n'apparaît qu'une fois l'objectif atteint.
+                Path { path in
+                    path.move(to: goal)
+                    path.addLine(to: CGPoint(x: w, y: goal.y))
+                }
+                .trim(from: 0, to: arrived ? 1 : 0)
+                .stroke(MicaboColor.positive, style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
+
+                dot(at: start, stroke: MicaboColor.ink, size: 13)
+                dot(at: goal, stroke: MicaboColor.positive, size: 14)
+                    .opacity(arrived ? 1 : 0)
+                    .scaleEffect(arrived ? 1 : 0.7)
+
+                labels(width: w, height: h, start: start, goal: goal)
+            }
+            .animation(.easeOut(duration: 0.35), value: arrived)
+        }
+    }
+
+    /// Trois filets pointillés. Ils ne portent pas d'échelle : ils donnent une assise à la
+    /// courbe, et une échelle chiffrée sur une forme qui n'est pas une prédiction serait un
+    /// mensonge de précision.
+    private func grid(width: CGFloat, height: CGFloat) -> some View {
+        Path { path in
+            for fraction in [0.2, 0.42, 0.64] {
+                path.move(to: CGPoint(x: width * Layout.leftInset, y: height * fraction))
+                path.addLine(to: CGPoint(x: width * 0.98, y: height * fraction))
+            }
+        }
+        .stroke(MicaboColor.stroke, style: StrokeStyle(lineWidth: 1, dash: [4, 5]))
+    }
+
+    private func curve(from start: CGPoint, to goal: CGPoint) -> Path {
+        Path { path in
+            path.move(to: start)
+            path.addCurve(
+                to: goal,
+                // Plate au départ, redressée à l'arrivée : c'est la forme d'un progrès qui
+                // met du temps à se voir.
+                control1: CGPoint(x: start.x + (goal.x - start.x) * 0.35, y: start.y),
+                control2: CGPoint(x: start.x + (goal.x - start.x) * 0.64, y: goal.y + 12)
+            )
+        }
+    }
+
+    private func dot(at point: CGPoint, stroke: Color, size: CGFloat) -> some View {
+        Circle()
+            .fill(MicaboColor.canvas)
+            .overlay(Circle().strokeBorder(stroke, lineWidth: 3))
+            .frame(width: size, height: size)
+            .position(point)
+    }
+
+    @ViewBuilder
+    private func labels(width: CGFloat, height: CGFloat, start: CGPoint, goal: CGPoint) -> some View {
+        Text(from)
+            .font(MicaboFont.ui(17, weight: .heavy))
+            .foregroundStyle(MicaboColor.ink)
             .monospacedDigit()
             .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .padding(.vertical, 10)
-            .padding(.horizontal, 13)
-            .background(background, in: Capsule())
+            .minimumScaleFactor(0.6)
+            .position(x: width * 0.03, y: start.y - 22)
+
+        Text(to)
+            .font(MicaboFont.ui(13, weight: .heavy))
+            .foregroundStyle(MicaboColor.onInk)
+            .monospacedDigit()
+            .padding(.vertical, 3)
+            .padding(.horizontal, 11)
+            .background(MicaboColor.positive, in: Capsule())
+            .position(x: goal.x, y: goal.y - 22)
+            .opacity(arrived ? 1 : 0)
+
+        Text(L10n.t("ios.journey.hold", locale: .resolved()))
+            .font(MicaboFont.ui(11, weight: .bold))
+            .foregroundStyle(MicaboColor.positiveInk)
+            .position(x: goal.x + (width - goal.x) * 0.42, y: goal.y + 26)
+            .opacity(arrived ? 1 : 0)
+    }
+}
+
+/// **La preuve, sous le graphe.**
+///
+/// Une phrase, un chiffre en gras, et sa source nommée. C'est le seul endroit du parcours qui
+/// cite une étude, et elle est citée parce qu'elle justifie la seule chose que l'app demande
+/// vraiment : se tester plutôt que relire. Sans référence, ce serait un argument de brochure.
+private struct GradeEvidence: View {
+    var body: some View {
+        HStack(alignment: .top, spacing: 13) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .fill(MicaboColor.positiveWash)
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(MicaboColor.positiveInk)
+            }
+            .frame(width: 40, height: 40)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text.micaboMarkup(L10n.t("ios.journey.evidence", locale: .resolved()))
+                    .font(MicaboFont.ui(14.5, weight: .semibold))
+                    .foregroundStyle(MicaboColor.ink)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(L10n.t("ios.journey.source", locale: .resolved()))
+                    .font(MicaboFont.ui(12, weight: .regular))
+                    .foregroundStyle(MicaboColor.inkTertiary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 15)
+        .background(MicaboColor.canvas, in: RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: MicaboRadius.lg, style: .continuous)
+                .strokeBorder(MicaboColor.stroke, lineWidth: 1)
+        }
     }
 }
