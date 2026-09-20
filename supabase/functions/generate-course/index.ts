@@ -300,7 +300,14 @@ Deno.serve((request: Request) =>
       const extra = instructionsBrief(sanitizeInstructions(body.instructions, MAX_INSTRUCTIONS));
       if (extra) sections.push(extra);
 
-      if (text.length > 0) sections.push(wrapUntrusted("TEXTE EXTRAIT DU DOCUMENT", text));
+      // **Le texte n'est pas joint en mode « sans document ».** Le client en envoie un —
+      // la commande énoncée — pour qu'une fonction déployée avant `topic` ait de quoi
+      // travailler plutôt que de refuser. Ici on a mieux : `scratchBrief` dit la même chose
+      // en consigne. Le joindre en plus le ferait lire comme une source à résumer, et la
+      // fiche parlerait de la commande au lieu de la remplir.
+      if (!fromScratch && text.length > 0) {
+        sections.push(wrapUntrusted("TEXTE EXTRAIT DU DOCUMENT", text));
+      }
       if (visualNotes) {
         sections.push(wrapUntrusted("DESCRIPTION DES VISUELS DU DOCUMENT", visualNotes));
       }

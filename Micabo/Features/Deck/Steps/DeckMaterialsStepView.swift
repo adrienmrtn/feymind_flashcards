@@ -47,7 +47,6 @@ struct DeckMaterialsStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.deckSetup.materials"),
-            subtitle: i18n.t("ios.deckSetup.materials.hint"),
             animatesTitle: true
         ) {
             VStack(alignment: .leading, spacing: MicaboSpacing.md) {
@@ -68,13 +67,7 @@ struct DeckMaterialsStepView: View {
             }
             .onAppear(perform: seedSlots)
         } footer: {
-            VStack(spacing: 8) {
-                OnboardingContinueButton(isEnabled: setup.hasMaterials, action: onNext)
-
-                if !setup.hasMaterials {
-                    OnboardingHint(text: i18n.t("ios.deckSetup.materials.need"))
-                }
-            }
+            OnboardingContinueButton(isEnabled: setup.hasMaterials, action: onNext)
         }
         .confirmationDialog(
             i18n.t("ios.deckSetup.materials.add"),

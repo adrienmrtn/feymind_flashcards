@@ -37,7 +37,6 @@ struct DeckSubjectStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.deckSetup.subject"),
-            subtitle: i18n.t("ios.deckSetup.subject.hint"),
             animatesTitle: true
         ) {
             VStack(spacing: MicaboSpacing.sm) {
@@ -66,7 +65,6 @@ struct DeckSubjectStepView: View {
                     OnboardingChoiceRow(
                         title: typed,
                         emoji: "✨",
-                        subtitle: i18n.t("ios.deckSetup.subject.custom"),
                         isSelected: setup.subject == typed
                     ) {
                         setup.subject = typed
@@ -94,7 +92,6 @@ struct DeckNameStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.deckSetup.name"),
-            subtitle: i18n.t("ios.deckSetup.name.hint"),
             animatesTitle: true
         ) {
             VStack(spacing: MicaboSpacing.sm) {
@@ -110,7 +107,6 @@ struct DeckNameStepView: View {
                     OnboardingChoiceRow(
                         title: subject,
                         emoji: SubjectCatalog.emoji(for: subject),
-                        subtitle: i18n.t("ios.deckSetup.name.useSubject"),
                         isSelected: false
                     ) {
                         setup.name = subject
@@ -142,7 +138,6 @@ struct DeckSourceStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.deckSetup.source"),
-            subtitle: i18n.t("ios.deckSetup.source.hint"),
             animatesTitle: true,
             expandsContent: true
         ) {
@@ -150,7 +145,6 @@ struct DeckSourceStepView: View {
                 OnboardingChoiceRow(
                     title: i18n.t("ios.deckSetup.source.materials"),
                     emoji: "📄",
-                    subtitle: i18n.t("ios.deckSetup.source.materials.hint"),
                     isSelected: setup.source == .materials,
                     fillsHeight: true
                 ) {
@@ -160,7 +154,6 @@ struct DeckSourceStepView: View {
                 OnboardingChoiceRow(
                     title: i18n.t("ios.deckSetup.source.ai", ["subject": subject]),
                     emoji: "✨",
-                    subtitle: i18n.t("ios.deckSetup.source.ai.hint"),
                     isSelected: setup.source == .generated,
                     fillsHeight: true
                 ) {
@@ -193,7 +186,6 @@ struct DeckTopicStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.deckSetup.topic", ["subject": subject]),
-            subtitle: i18n.t("ios.deckSetup.topic.hint"),
             animatesTitle: true
         ) {
             VStack(spacing: MicaboSpacing.sm) {
@@ -204,8 +196,6 @@ struct DeckTopicStepView: View {
                     capitalization: .sentences,
                     isFocused: $isFocused
                 )
-
-                OnboardingHint(text: i18n.t("ios.deckSetup.topic.examples"))
             }
             .onAppear { isFocused = true }
         } footer: {

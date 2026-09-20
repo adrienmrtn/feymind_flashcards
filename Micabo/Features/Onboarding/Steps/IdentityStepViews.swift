@@ -21,7 +21,6 @@ struct NameStepView: View {
 
         return OnboardingScaffold(
             title: i18n.t("ios.onb.name"),
-            subtitle: i18n.t("ios.onb.name.hint"),
             animatesTitle: true
         ) {
             HStack(spacing: 10) {

@@ -22,7 +22,6 @@ struct DeckPurposeStepView: View {
                 OnboardingChoiceRow(
                     title: i18n.t(purpose.titleKey),
                     emoji: purpose.emoji,
-                    subtitle: i18n.t(purpose.subtitleKey),
                     isSelected: setup.purpose == purpose,
                     fillsHeight: true
                 ) {
@@ -57,7 +56,6 @@ struct DeckGradeStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.deckSetup.grade"),
-            subtitle: i18n.t("ios.deckSetup.grade.hint"),
             animatesTitle: true,
             expandsContent: true
         ) {

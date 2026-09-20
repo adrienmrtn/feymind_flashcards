@@ -27,6 +27,10 @@ struct DeckChaptersView: View {
     /// défilement d'un deck de deux cents cartes saccadé.
     @State private var progress: [UUID: ChapterReadout] = [:]
     @State private var reviewing: Chapter?
+    /// Le chapitre qu'on vient d'ouvrir. `MicaboChapterRow` est un bouton et non un
+    /// `NavigationLink` : le lien imposait sa propre mise en forme au contenu — un chevron
+    /// système, une surbrillance bleue — qu'il fallait ensuite défaire.
+    @State private var opened: Chapter?
 
     struct ChapterReadout: Equatable {
         var percent: Int
@@ -36,26 +40,32 @@ struct DeckChaptersView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: MicaboSpacing.sm) {
+        VStack(alignment: .leading, spacing: 2) {
             header
 
             if course.orderedChapters.isEmpty {
                 emptyPlan
             } else {
+                // **Des filets, pas des cartes.** Le plan était un groupe blanc arrondi posé
+                // sur un fond blanc : deux rayons et une ombre pour séparer du blanc d'avec
+                // du blanc. Un trait d'un point fait le travail, et la page cesse d'être une
+                // pile d'objets.
                 VStack(spacing: 0) {
                     ForEach(Array(course.orderedChapters.enumerated()), id: \.element.id) { index, chapter in
                         chapterRow(chapter, number: index + 1)
                         if index < course.orderedChapters.count - 1 {
-                            MicaboHairline(inset: 72)
+                            MicaboHairline(onCanvas: true)
                         }
                     }
                 }
-                .micaboGroup()
 
                 looseCardsNote
             }
         }
         .onAppear(perform: reload)
+        .navigationDestination(item: $opened) { chapter in
+            ChapterSheetView(chapter: chapter)
+        }
         .fullScreenCover(item: $reviewing) { chapter in
             StudyView(source: .chapter(chapter), mode: .scheduled)
                 .onDisappear(perform: reload)
@@ -64,14 +74,19 @@ struct DeckChaptersView: View {
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
-            MicaboSectionCaption(text: i18n.t("ios.deck.chapters"))
+            Text(i18n.t("ios.deck.chapters"))
+                .font(MicaboFont.ui(17, weight: .bold))
+                .foregroundStyle(MicaboColor.ink)
+
             Spacer(minLength: MicaboSpacing.xs)
+
             if !course.orderedChapters.isEmpty {
                 Text(i18n.t("ios.deck.learnedPercent", ["percent": "\(deckPercent)"]))
                     .font(MicaboFont.ui(13, weight: .semibold))
                     .foregroundStyle(MicaboColor.accent)
             }
         }
+        .padding(.bottom, 2)
     }
 
     /// Le pourcentage du deck entier.
@@ -89,15 +104,14 @@ struct DeckChaptersView: View {
 
     private func chapterRow(_ chapter: Chapter, number: Int) -> some View {
         let readout = progress[chapter.id]
-        return NavigationLink(value: chapter) {
-            MicaboRow(
-                tile: tile(for: readout?.state ?? .untouched, number: number),
-                title: chapter.title.nilIfBlank ?? i18n.t("ios.deck.untitledChapter", ["number": "\(number)"]),
-                subtitle: subtitle(for: readout),
-                accessory: .chevron
-            )
+        return MicaboChapterRow(
+            number: number,
+            title: chapter.title.nilIfBlank ?? i18n.t("ios.deck.untitledChapter", ["number": "\(number)"]),
+            meta: subtitle(for: readout),
+            state: readout?.state ?? .untouched
+        ) {
+            opened = chapter
         }
-        .buttonStyle(MicaboRowButtonStyle())
         .contextMenu {
             Button {
                 reviewing = chapter
@@ -108,32 +122,6 @@ struct DeckChaptersView: View {
                 )
             }
             .disabled((readout?.cardCount ?? 0) == 0)
-        }
-    }
-
-    /// La tuile dit l'état avant que le sous-titre ne le chiffre : un chapitre su porte une
-    /// coche verte, les autres leur numéro. C'est ce qui permet de lire un plan de neuf
-    /// chapitres d'un coup d'œil, sans lire un seul pourcentage.
-    private func tile(for state: ChapterState, number: Int) -> MicaboTile {
-        switch state {
-        case .learned:
-            MicaboTile(
-                glyph: .symbol("checkmark"),
-                background: MicaboColor.positiveSoft,
-                tint: MicaboColor.positive
-            )
-        case .inProgress:
-            MicaboTile(
-                glyph: .symbol("\(number).circle.fill"),
-                background: MicaboColor.accentSoft,
-                tint: MicaboColor.accent
-            )
-        case .untouched:
-            MicaboTile(
-                glyph: .symbol("\(number).circle"),
-                background: MicaboColor.surfaceMuted,
-                tint: MicaboColor.inkTertiary
-            )
         }
     }
 

@@ -67,6 +67,27 @@ struct MicaboPalette: Equatable {
     var infoSoft: Color
     var offerWash: Color
     var offerWashSoft: Color
+    /// **Le violet pâle des cartes neuves.** Il ne sert qu'à opposer les neuves aux cartes
+    /// en cours dans une même jauge : deux teintes d'un même violet disent « deux parts de
+    /// la même chose », là où un second accent aurait dit « deux choses ».
+    /// Le fond d'une réponse choisie : un violet si pâle qu'il se lit comme du blanc teinté.
+    /// `accentSoft` était trop présent pour six rangées empilées.
+    var accentWash: Color
+    var accentPale: Color
+    /// Le creux d'une barre de progression fine. Plus sombre que `progressTrack`, qui sert
+    /// aux jauges épaisses : à cinq points de haut, un gris trop clair disparaît.
+    var track: Color
+    /// La flamme de la série, son encre lisible et son lavis. C'est la seule chose de l'app
+    /// qui ne se compte pas en cartes, et la seule qui a droit à l'orange.
+    var flame: Color
+    var flameInk: Color
+    var flameSoft: Color
+    /// Le dégradé de la carte du jour, du violet au vert en passant par le bleu, et le filet
+    /// qui la ferme. Trois teintes très proches du blanc : c'est un lavis, pas un aplat.
+    var dayWashStart: Color
+    var dayWashMid: Color
+    var dayWashEnd: Color
+    var dayWashStroke: Color
     var tilePastels: [Color]
     var cardShadow: Double
     var groupShadow: Double
@@ -137,6 +158,16 @@ struct MicaboPalette: Equatable {
         infoSoft: Color(hex: 0xE3EDFC),
         offerWash: Color(hex: 0xDCC9FB),
         offerWashSoft: Color(hex: 0xF4EEFE),
+        accentWash: Color(hex: 0xF6F4FE),
+        accentPale: Color(hex: 0xCFC4FA),
+        track: Color(hex: 0xE5E5EA),
+        flame: Color(hex: 0xFF5440),
+        flameInk: Color(hex: 0xC0341F),
+        flameSoft: Color(hex: 0xFFF0ED),
+        dayWashStart: Color(hex: 0xF2EEFE),
+        dayWashMid: Color(hex: 0xEBF1FC),
+        dayWashEnd: Color(hex: 0xE9F5F1),
+        dayWashStroke: Color(hex: 0xE4DDFA),
         // Les teintes de matière. Elles sont franches et non pastel-pâles : à 112 points
         // de côté sur un fond blanc, une teinte trop lavée ne tient pas la tuile.
         tilePastels: [

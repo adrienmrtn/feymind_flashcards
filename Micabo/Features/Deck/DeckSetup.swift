@@ -40,7 +40,6 @@ enum DeckPurpose: String, CaseIterable, Identifiable, Codable {
     }
 
     var titleKey: String { "ios.deckSetup.purpose.\(rawValue)" }
-    var subtitleKey: String { "ios.deckSetup.purpose.\(rawValue).hint" }
 
     /// **Deux questions pour une même réponse.** « C'est quand, ton épreuve ? » et « tu veux
     /// avoir tout compris pour quand ? » produisent exactement le même effet sur le deck.

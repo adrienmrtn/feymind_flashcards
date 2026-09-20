@@ -162,12 +162,47 @@ enum DeckBuilder {
 
     // MARK: - La fiche
 
+    /// **La commande écrite, quand il n'y a pas de document.**
+    ///
+    /// Le champ `topic` dit au serveur d'écrire le cours depuis ce qu'il sait. Une fonction
+    /// déployée avant lui ne le connaît pas : elle voit un document vide et refuse, avec
+    /// « le document ne contient pas assez de contenu à analyser ». Ce texte-ci lui donne de
+    /// quoi travailler — c'est la commande elle-même, énoncée — et la version qui connaît
+    /// `topic` l'ignore, parce qu'elle a mieux.
+    ///
+    /// Ce n'est pas une rustine honteuse : c'est ce qui fait que l'app marche pendant que la
+    /// fonction attend son déploiement, et qu'elle s'améliore silencieusement une fois
+    /// déployée, sans mise à jour côté téléphone.
+    static func commission(_ setup: DeckSetup) -> String {
+        let subject = setup.subject?.nilIfBlank ?? setup.resolvedTitle
+        let level = OnboardingPreferences.educationStage?.title
+        let topic = setup.topic.nilIfBlank
+
+        var lines = ["Cours de \(subject) à rédiger."]
+        if let level {
+            lines.append("Niveau de l'étudiant : \(level).")
+        }
+        if let topic {
+            lines.append("Sujet précis demandé : \(topic).")
+            lines.append("Traite ce point et ce qui est strictement nécessaire pour le comprendre.")
+        } else {
+            lines.append("Couvre le programme de cette matière à ce niveau, dans son ensemble.")
+        }
+        lines.append(
+            "Écris le cours tel qu'il est enseigné et interrogé à ce niveau : les notions au "
+                + "programme, les définitions exactes, les mécanismes, les exemples qu'un "
+                + "professeur donnerait. Si une partie t'est inconnue ou si tu n'es pas certain "
+                + "d'un fait, d'une date ou d'un chiffre, écris-en moins plutôt que d'inventer."
+        )
+        return lines.joined(separator: "\n")
+    }
+
     @MainActor
     private static func writeSheet(
         _ setup: DeckSetup,
         using service: any AIService
     ) async throws -> GeneratedCourse {
-        let text = setup.source == .materials ? setup.combinedText() : ""
+        let text = setup.source == .materials ? setup.combinedText() : commission(setup)
 
         let request = CourseGenerationRequest(
             rawText: text,
@@ -191,7 +226,9 @@ enum DeckBuilder {
 
         do {
             return try await service.generateCourse(request)
-        } catch let error as AIServiceError where error.allowsOfflineFallback && !text.isEmpty {
+        } catch let error as AIServiceError
+            where error.allowsOfflineFallback && setup.source == .materials && !text.isEmpty
+        {
             // Il y a un document : plutôt que de renvoyer l'étudiant les mains vides après
             // sept questions, on taille la fiche dans son texte. Elle est moins bonne, elle
             // est vraie. Sans document, il n'y a rien à tailler et l'erreur remonte.
