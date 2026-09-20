@@ -354,7 +354,7 @@ struct TodayView: View {
             .reportsNavigationDepth(for: .today, depth: path.count)
             .returnsHome(path: $path)
             .navigationDestination(for: Course.self) { course in
-                CourseSheetView(course: course)
+                DeckView(course: course)
             }
             .navigationDestination(for: CourseCardsRoute.self) { route in
                 FlashcardsView(course: route.course)

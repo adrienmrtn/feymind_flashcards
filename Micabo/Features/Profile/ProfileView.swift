@@ -266,7 +266,7 @@ struct ProfileView: View {
                 }
             }
             .navigationDestination(for: Course.self) { course in
-                CourseSheetView(course: course)
+                DeckView(course: course)
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
