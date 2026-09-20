@@ -84,6 +84,8 @@ struct DeckSetupFlowView: View {
 
     @State private var setup: DeckSetup
     @State private var step: DeckSetupStep
+    /// Les écrans déjà traversés, pour le retour. Voir `goBack`.
+    @State private var history: [DeckSetupStep] = []
 
     init(
         presetSubject: String? = nil,
@@ -125,21 +127,41 @@ struct DeckSetupFlowView: View {
         }
     }
 
-    /// **La jauge, et une sortie.**
+    /// **Un retour, la jauge, et une sortie.**
     ///
-    /// La croix disparaît sur l'écran de construction : à ce moment-là une génération est
-    /// lancée et payée, et un bouton qui laisse croire qu'on peut l'annuler sans rien perdre
-    /// mentirait. L'écran de construction a sa propre façon de finir.
+    /// Le retour manquait : le parcours pose neuf questions d'affilée et ne laissait corriger
+    /// aucune des huit précédentes. Il ne restait qu'à tout annuler par la croix et
+    /// recommencer, ce qui n'est pas la même chose.
+    ///
+    /// **L'en-tête disparaît entièrement pendant la construction.**
+    ///
+    /// Il n'en retirait que la croix. Restait la jauge du parcours, à cent pour cent, juste
+    /// au-dessus de la jauge de la construction qui, elle, avance : deux barres violettes
+    /// empilées dont une ne bougera plus. La première ne mesure plus rien à ce moment-là —
+    /// il n'y a plus de questions derrière — et sa seule action possible vient d'être
+    /// retirée. Un en-tête sans information ni action n'est plus un en-tête.
+    @ViewBuilder
     private var header: some View {
-        HStack(spacing: MicaboSpacing.sm) {
-            MicaboProgressBar(
-                progress: step.progress,
-                tint: MicaboColor.accent,
-                track: MicaboColor.stroke
-            )
-            .frame(height: 4)
+        if step != .building {
+            HStack(spacing: MicaboSpacing.sm) {
+                Button(action: goBack) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(MicaboPressableButtonStyle(dimming: true, feedback: .light))
+                .opacity(history.isEmpty ? 0 : 1)
+                .disabled(history.isEmpty)
+                .accessibilityLabel(i18n.t("app.common.back"))
 
-            if step != .building {
+                MicaboProgressBar(
+                    progress: step.progress,
+                    tint: MicaboColor.accent,
+                    track: MicaboColor.stroke
+                )
+                .frame(height: 4)
+
                 Button(action: onCancel) {
                     Image(systemName: "xmark")
                         .font(.system(size: 13, weight: .semibold))
@@ -150,10 +172,10 @@ struct DeckSetupFlowView: View {
                 .buttonStyle(MicaboPressableButtonStyle(dimming: false, feedback: .selection))
                 .accessibilityLabel(i18n.t("app.a11y.close"))
             }
+            .padding(.horizontal, MicaboSpacing.screen)
+            .padding(.vertical, MicaboSpacing.xs)
+            .animation(.easeInOut(duration: 0.38), value: step)
         }
-        .padding(.horizontal, MicaboSpacing.screen)
-        .padding(.vertical, MicaboSpacing.xs)
-        .animation(.easeInOut(duration: 0.38), value: step)
     }
 
     @ViewBuilder
@@ -169,12 +191,26 @@ struct DeckSetupFlowView: View {
         case .deadline: DeckDeadlineStepView(setup: setup, onNext: advance)
         case .confidence: DeckConfidenceStepView(setup: setup, onNext: advance)
         case .building:
-            DeckBuildingStepView(setup: setup, onCreated: onCreated, onFailed: { step = .source })
+            DeckBuildingStepView(setup: setup, onCreated: onCreated, onFailed: { history.removeAll(); step = .source })
         }
     }
 
     private func advance() {
         guard let next = step.next(for: setup) else { return }
+        history.append(step)
         step = next
+    }
+
+    /// **On revient par où l'on est venu**, et non par un `previous(for:)` symétrique de
+    /// `next(for:)`.
+    ///
+    /// Le parcours a des branches, et une branche ne se remonte pas en la recalculant :
+    /// quelqu'un qui arrive sur l'échéance depuis « j'apprends, c'est tout » doit retomber
+    /// sur le type d'épreuve, pas sur la note visée qu'on ne lui a jamais demandée. Or
+    /// l'écran d'où il vient dépend d'une réponse qu'il est justement en train de défaire.
+    /// La pile, elle, ne se trompe pas : elle ne déduit rien, elle se souvient.
+    private func goBack() {
+        guard let previous = history.popLast() else { return }
+        step = previous
     }
 }

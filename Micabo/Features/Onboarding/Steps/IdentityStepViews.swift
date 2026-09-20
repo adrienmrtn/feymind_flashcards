@@ -164,11 +164,12 @@ struct SchoolTypeStepView: View {
         ) {
             ScrollView {
                 VStack(spacing: 10) {
-                    ForEach(model.tracks) { track in
+                    ForEach(Array(model.tracks.enumerated()), id: \.element.id) { rank, track in
                         OnboardingChoiceRow(
                             title: track.title,
                             emoji: track.emoji,
-                            isSelected: model.track?.id == track.id
+                            isSelected: model.track?.id == track.id,
+                            rank: rank
                         ) {
                             model.track = track
                         }
@@ -202,10 +203,11 @@ struct SchoolYearStepView: View {
         ) {
             ScrollView {
                 VStack(spacing: 10) {
-                    ForEach(years) { year in
+                    ForEach(Array(years.enumerated()), id: \.element.id) { rank, year in
                         OnboardingChoiceRow(
                             title: year.title,
-                            isSelected: model.year?.id == year.id
+                            isSelected: model.year?.id == year.id,
+                            rank: rank
                         ) {
                             model.year = year
                         }

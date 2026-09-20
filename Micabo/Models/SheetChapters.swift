@@ -47,7 +47,23 @@ enum SheetChapters {
     /// Un titre de sous-partie n'ouvre pas de chapitre : c'est le plan **dans** une partie, et
     /// replier à ce niveau-là donnerait vingt accordéons d'une ligne au lieu du plan qu'on
     /// vient chercher.
+    ///
+    /// **Sauf quand il n'y a pas de partie.** Une fiche écrite par le modèle ouvre souvent
+    /// sur un unique titre de niveau un — le nom du cours — et met ses vraies parties en
+    /// niveau deux. Découpée au niveau un, elle rend **un** chapitre qui contient tout : le
+    /// deck s'affiche alors comme un seul bloc de quatre-vingts blocs, ce qui est exactement
+    /// ce que le chapitre devait éviter. Quand le niveau un ne sépare rien, on descend d'un
+    /// cran plutôt que de rendre un plan à une entrée.
     static func split(_ blocks: [SheetBlock]) -> [SheetChapter] {
+        let top = split(blocks, at: 1)
+        guard top.count < 2 else { return top }
+
+        let sub = split(blocks, at: 2)
+        return sub.count > 1 ? sub : top
+    }
+
+    /// Le découpage à un niveau de titre donné.
+    private static func split(_ blocks: [SheetBlock], at level: Int) -> [SheetChapter] {
         var chapters: [SheetChapter] = []
         var current: [SheetBlock] = []
         var title: String?
@@ -59,7 +75,7 @@ enum SheetChapters {
         }
 
         for block in blocks {
-            if case .heading(let level, let text) = block, level == 1 {
+            if case .heading(let headingLevel, let text) = block, headingLevel == level {
                 // On ferme **avant** de retenir le nouveau titre : celui qu'on ferme est
                 // encore celui du chapitre qui s'achève.
                 close()

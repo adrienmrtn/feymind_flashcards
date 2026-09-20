@@ -35,6 +35,9 @@ struct ChapterSheetView: View {
     @State private var blocks: [SheetBlock] = []
     /// La queue cadenassée, pour qui n'est pas abonné. Voir `applyGate`.
     @State private var lockedTail: [SheetBlock] = []
+    /// Le titre de partie retiré du texte parce que la page l'écrit déjà. Voir
+    /// `takeRedundantTitle`.
+    @State private var leadHeading: [SheetBlock] = []
     @State private var studying = false
     @State private var dueCount = 0
     @State private var showRename = false
@@ -83,36 +86,33 @@ struct ChapterSheetView: View {
     }
 
     var body: some View {
-        GeometryReader { page in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    banner
-                        .micaboScrollProbe(space: Self.scrollSpace)
-
+        MicaboSafeTopReader { safeTop in
+            GeometryReader { page in
+                ScrollView {
+                    // Le bandeau est ancré : c'est le texte qui remonte dessous, et la barre
+                    // repliée coupe la ligne en cours, comme sur `ChapitreScroll`.
                     reading
                         .padding(.horizontal, Self.margin)
-                        .padding(.top, 20)
+                        .padding(.top, MicaboChapterBanner.expandedHeight(safeTop: safeTop) + 20)
                         .padding(.bottom, MicaboLayout.bottomBarClearance)
                         .background(contentProbe)
+                        .micaboScrollProbe(space: Self.scrollSpace)
+                }
+                .coordinateSpace(name: Self.scrollSpace)
+                .scrollIndicators(.hidden)
+                .ignoresSafeArea(edges: .top)
+                .onPreferenceChange(MicaboScrollOffsetKey.self) { top in
+                    readScroll(top, viewport: page.size.height)
+                }
+                .onPreferenceChange(MicaboContentHeightKey.self) { height in
+                    contentHeight = max(1, height)
+                    viewportHeight = page.size.height
                 }
             }
-            .coordinateSpace(name: Self.scrollSpace)
-            .scrollIndicators(.hidden)
-            .ignoresSafeArea(edges: .top)
-            .onPreferenceChange(MicaboScrollOffsetKey.self) { top in
-                readScroll(top, viewport: page.size.height)
-            }
-            .onPreferenceChange(MicaboContentHeightKey.self) { height in
-                contentHeight = max(1, height)
-                viewportHeight = page.size.height
+            .overlay(alignment: .top) {
+                banner(safeTop: safeTop)
             }
         }
-        .overlay(alignment: .top) {
-            if collapse > 0.02 {
-                banner.transition(.opacity)
-            }
-        }
-        .animation(.easeOut(duration: 0.15), value: collapse > 0.02)
         .micaboScreenBackground()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -166,13 +166,14 @@ struct ChapterSheetView: View {
 
     // MARK: - Le bandeau
 
-    private var banner: some View {
+    private func banner(safeTop: CGFloat) -> some View {
         MicaboChapterBanner(
             emoji: chapter.course?.emoji ?? "📘",
             pastel: pastel,
             title: chapter.title,
             collapse: collapse,
             readingProgress: readingProgress,
+            safeTop: safeTop,
             onBack: { dismiss() },
             onTextSize: { showTextSize = true }
         )
@@ -267,16 +268,17 @@ struct ChapterSheetView: View {
     /// Ce que le défilement rapporte : de quoi replier le bandeau, et de quoi remplir la
     /// barre de lecture.
     ///
-    /// **La progression se compte sur le texte, pas sur la page.** Le bandeau et la marge du
-    /// bas ne sont pas du chapitre : les inclure ferait afficher vingt pour cent avant
-    /// d'avoir lu une ligne, et quatre-vingts en arrivant au dernier mot.
+    /// **La progression est celle du défilement**, du premier pixel au dernier : zéro quand
+    /// rien n'a bougé, un quand le pouce ne peut plus descendre. Le calcul précédent
+    /// retranchait le bandeau et la marge du bas pour ne compter que le texte ; il dépendait
+    /// donc de hauteurs de bandeau qui varient maintenant d'un téléphone à l'autre, et il
+    /// n'atteignait jamais tout à fait cent. Une barre de lecture qui s'arrête à
+    /// quatre-vingt-seize en bas de page est un bug qu'on regarde tous les jours.
     private func readScroll(_ top: CGFloat, viewport: CGFloat) {
-        let travel = MicaboChapterBanner.expandedHeight - MicaboChapterBanner.collapsedHeight
-        collapse = min(1, max(0, -top / travel))
+        collapse = min(1, max(0, -top / MicaboChapterBanner.travel))
 
-        let readable = max(1, contentHeight - viewport + MicaboChapterBanner.collapsedHeight)
-        let passed = max(0, -top - MicaboChapterBanner.expandedHeight + viewport)
-        readingProgress = min(1, max(0, passed / readable))
+        let maxScroll = max(1, contentHeight - viewport)
+        readingProgress = min(1, max(0, -top / maxScroll))
     }
 
     private var contentProbe: some View {
@@ -300,10 +302,29 @@ struct ChapterSheetView: View {
     /// de cours, et c'est le bon compromis : un chapitre entièrement cadenassé laisserait
     /// croire que le deck n'a pas été écrit, alors qu'il l'a été.
     private func applyGate() {
-        let all = chapter.decodedSheet()?.blocks ?? []
+        var all = chapter.decodedSheet()?.blocks ?? []
+        leadHeading = Self.takeRedundantTitle(from: &all, title: chapter.title)
         let parts = SheetGate.split(all, isPro: isPro)
         blocks = parts.readable
         lockedTail = parts.locked
+    }
+
+    /// **Retire le titre que la page affiche déjà.**
+    ///
+    /// Un chapitre garde son titre de partie dans ses blocs — c'est ce qui permet à
+    /// `SheetChapters.join` de reconstituer la fiche du deck au bloc près. Mais la page
+    /// écrit ce même titre en tête, en vingt-cinq points : le laisser dans le texte le fait
+    /// lire deux fois de suite, une fois en noir et une fois en violet.
+    ///
+    /// Il est mis de côté plutôt que supprimé, et recollé à l'enregistrement. Le sortir pour
+    /// de bon aurait effacé un bloc de la fiche à la première correction de frappe, et le
+    /// découpage du deck n'aurait plus retrouvé ses parties.
+    private static func takeRedundantTitle(from blocks: inout [SheetBlock], title: String) -> [SheetBlock] {
+        guard case .heading(_, let text)? = blocks.first else { return [] }
+        let heading = SheetMarkup.plain(text).trimmingCharacters(in: .whitespacesAndNewlines)
+        let chapter = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !heading.isEmpty, heading.caseInsensitiveCompare(chapter) == .orderedSame else { return [] }
+        return [blocks.removeFirst()]
     }
 
     /// Enregistre le texte corrigé **sur le chapitre**.
@@ -312,7 +333,7 @@ struct ChapterSheetView: View {
     /// n'a pas pu être modifiée, et l'oublier ferait disparaître la moitié d'un chapitre au
     /// premier mot corrigé par quelqu'un qui n'est pas abonné.
     private func save(_ edited: [SheetBlock]) {
-        chapter.apply(CourseSheet(blocks: edited + lockedTail))
+        chapter.apply(CourseSheet(blocks: leadHeading + edited + lockedTail))
         chapter.updatedAt = Date()
         chapter.course?.updatedAt = Date()
         try? modelContext.save()

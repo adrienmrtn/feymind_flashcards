@@ -40,7 +40,7 @@ struct CurrentAverageStepView: View {
             animatesTitle: true,
             expandsContent: true
         ) {
-            GradeSlider(
+            GradeWheel(
                 choices: choices,
                 score: Binding(
                     get: { model.currentScore },
@@ -82,23 +82,38 @@ struct TargetAverageStepView: View {
     var body: some View {
         OnboardingScaffold(
             title: i18n.t("ios.targetTitle"),
-            subtitle: isAtTop ? i18n.t("ios.targetAtTop") : i18n.t("ios.targetLead"),
+            // Rien quand il reste quelque chose à choisir : `ios.targetLead` expliquait
+            // comment répondre à une question qui n'en a pas besoin. La ligne du haut du
+            // barème, elle, n'explique pas — elle remplace la roue.
+            subtitle: isAtTop ? i18n.t("ios.targetAtTop") : nil,
             titleSize: 26,
             animatesTitle: true,
             expandsContent: true
         ) {
             if !isAtTop {
-                GradeSlider(
-                    choices: choices,
-                    score: Binding(
-                        get: { model.targetScore },
-                        set: { model.targetScore = $0 }
-                    ),
-                    // Deux crans au-dessus du départ : un objectif qui s'ouvre sur la valeur
-                    // juste au-dessus de la sienne ne ressemble pas à un objectif.
-                    fallbackIndex: 1,
-                    label: i18n.t("ios.targetTitle")
-                )
+                VStack(spacing: 22) {
+                    GradeWheel(
+                        choices: choices,
+                        score: Binding(
+                            get: { model.targetScore },
+                            set: { model.targetScore = $0 }
+                        ),
+                        // Deux crans au-dessus du départ : un objectif qui s'ouvre sur la
+                        // valeur juste au-dessus de la sienne ne ressemble pas à un objectif.
+                        fallbackIndex: 1,
+                        label: i18n.t("ios.targetTitle")
+                    )
+
+                    if let current = model.currentScore, let target = model.targetScore {
+                        GradeGapCard(
+                            current: current,
+                            target: target,
+                            scale: DesiredGradeScale.for(model.country)
+                        )
+                        .transition(.opacity)
+                    }
+                }
+                .animation(.easeOut(duration: 0.18), value: model.targetScore)
             }
         } footer: {
             OnboardingContinueButton(isEnabled: isAtTop || model.targetScore != nil) {
@@ -168,84 +183,121 @@ struct TogetherStepView: View {
     }
 }
 
-// MARK: - Le curseur
+// MARK: - La roue
 
-/// **Le curseur de moyenne.**
+/// **La roue des notes de l'accueil**, qui est celle du parcours de deck.
 ///
-/// Un curseur, et pas douze boutons : ces douze valeurs sont une seule chose qui monte, et un
-/// curseur le dit d'un trait. On voit tout de suite où l'on est sur l'échelle, et déplacer le
-/// pouce d'un cran est plus rapide que viser un bouton.
+/// C'était un `Slider` du système : un rail, une pastille, la valeur écrite au-dessus en
+/// quarante-huit points, et les deux bornes du barème en petit dessous. Ça marchait, et ça ne
+/// ressemblait à rien de ce que la maquette décrit — elle ne montre pas un rail mais **une
+/// colonne de notes**, celle qu'on a choisie au centre en gros violet sur un lavis, et les
+/// voisines qui s'effacent de chaque côté.
 ///
-/// La valeur est **écrite dès l'arrivée**. Un curseur qui montre 15/20 sans que 15/20 soit la
-/// réponse enregistrée est un piège : le bouton Continuer refuserait d'avancer sans dire
-/// pourquoi. Ce qu'on voit est ce qui compte.
-private struct GradeSlider: View {
+/// La différence n'est pas décorative. Un curseur cache l'échelle : on lit sa valeur et deux
+/// bornes, on ne voit jamais ce qu'il y a juste à côté. La colonne montre les notes voisines
+/// en même temps que la sienne, ce qui est exactement la question posée — non pas « où suis-je
+/// sur une échelle », mais « laquelle de ces notes est la mienne ».
+///
+/// **C'est `VerticalGradePicker`, pas un second exemplaire.** Le parcours de création d'un
+/// deck pose déjà la question de la note visée, et il la pose avec cette colonne-là : en
+/// écrire une deuxième ici aurait donné deux façons de choisir une note dans la même app,
+/// qui auraient cessé de se ressembler au premier réglage. Il ne reste donc de propre à
+/// l'accueil que ce qui lui est vraiment propre : une réponse qui peut être vide, et qu'on
+/// écrit dès l'arrivée — une roue qui montre 15 sans que 15 soit enregistré ferait refuser
+/// le bouton Continuer sans dire pourquoi.
+private struct GradeWheel: View {
     let choices: [GradeTick]
     @Binding var score: Int?
     /// Le cran de départ, quand rien n'a encore été choisi. Le milieu, sauf avis contraire.
     var fallbackIndex: Int?
     let label: String
 
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
     private var start: Int {
         Swift.min(Swift.max(0, fallbackIndex ?? (choices.count - 1) / 2), Swift.max(0, choices.count - 1))
     }
 
-    private var index: Int {
-        guard let score, let found = choices.firstIndex(where: { $0.score == score }) else {
-            return start
-        }
-        return found
+    private var fallbackScore: Int {
+        choices.indices.contains(start) ? choices[start].score : TargetScore.default
     }
 
     var body: some View {
-        VStack(spacing: MicaboSpacing.lg) {
-            Text(choices.indices.contains(index) ? choices[index].label : "")
-                .font(MicaboFont.number(48, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-                .animation(.easeOut(duration: 0.18), value: index)
-
-            slider
-
-            HStack {
-                Text(choices.first?.label ?? "")
-                Spacer(minLength: MicaboSpacing.sm)
-                Text(choices.last?.label ?? "")
-            }
-            .font(MicaboFont.ui(12, weight: .medium))
-            .foregroundStyle(MicaboColor.inkTertiary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(MicaboSpacing.lg)
-        .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: MicaboRadius.group, style: .continuous))
+        VerticalGradePicker(
+            ticks: choices,
+            score: Binding(
+                get: { score ?? fallbackScore },
+                set: { score = $0 }
+            )
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityLabel(label)
         .onAppear {
             // La réponse existe dès l'affichage : voir plus haut.
-            if score == nil, choices.indices.contains(start) { score = choices[start].score }
+            if score == nil { score = fallbackScore }
+        }
+    }
+}
+
+// MARK: - L'écart
+
+/// **Ce qui sépare la note d'aujourd'hui de celle qu'on vise.**
+///
+/// La carte de la maquette, sous la roue : combien de points il y a à prendre, à quel point
+/// c'est ambitieux, et d'où l'on part. Ce n'est pas un sous-titre qui explique l'écran —
+/// c'est un fait sur l'étudiant, produit par les deux réponses qu'il vient de donner, et il
+/// n'a rien à lire tant qu'il n'a pas répondu.
+struct GradeGapCard: View {
+    let current: Int
+    let target: Int
+    let scale: DesiredGradeScale
+
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    private var points: Int { Swift.max(0, target - current) }
+
+    /// Trois paliers, et rien de plus fin : au-delà de quatre points d'écart, personne ne
+    /// distingue « très ambitieux » de « ambitieux », et prétendre le contraire donnerait une
+    /// étiquette qui n'engage rien.
+    private var reachKey: String {
+        switch points {
+        case ...2: "ios.target.reach.near"
+        case ...4: "ios.target.reach.fair"
+        default: "ios.target.reach.bold"
         }
     }
 
-    /// Le `Slider` du système, sur des crans entiers. Le clavier, l'accessibilité et le
-    /// glisser au doigt sont les siens : une reconstruction maison en perd toujours la moitié.
-    private var slider: some View {
-        Slider(
-            value: Binding(
-                get: { Double(index) },
-                set: { newValue in
-                    let rank = Int(newValue.rounded())
-                    guard choices.indices.contains(rank) else { return }
-                    if choices[rank].score != score { Haptics.selection() }
-                    score = choices[rank].score
+    var body: some View {
+        MicaboOutlineCard {
+            HStack(spacing: 13) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: MicaboRadius.tile, style: .continuous)
+                        .fill(MicaboColor.flameSoft)
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 19, weight: .medium))
+                        .foregroundStyle(MicaboColor.flame)
                 }
-            ),
-            in: 0...Double(Swift.max(1, choices.count - 1)),
-            step: 1
-        )
-        .tint(MicaboColor.accent)
-        .accessibilityLabel(label)
-        .accessibilityValue(choices.indices.contains(index) ? choices[index].label : "")
+                .frame(width: 42, height: 42)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 8) {
+                        Text(i18n.t("ios.target.gap", ["count": "\(points)"]))
+                            .font(MicaboFont.ui(15, weight: .bold))
+                            .foregroundStyle(MicaboColor.ink)
+
+                        Text(i18n.t(reachKey))
+                            .font(MicaboFont.ui(11, weight: .heavy))
+                            .foregroundStyle(MicaboColor.flameInk)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 3)
+                            .background(MicaboColor.flameTrack, in: Capsule())
+                    }
+
+                    Text(i18n.t("ios.target.todayAt", ["grade": scale.label(for: current)]))
+                        .font(MicaboFont.ui(13, weight: .regular))
+                        .foregroundStyle(MicaboColor.inkSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
     }
 }
 

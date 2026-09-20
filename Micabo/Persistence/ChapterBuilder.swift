@@ -69,6 +69,37 @@ enum ChapterBuilder {
         return true
     }
 
+    /// **Redécoupe un deck qui n'a qu'un chapitre alors que sa fiche en contient plusieurs.**
+    ///
+    /// C'est la réparation du défaut de découpage : tant que `split` ne coupait qu'aux titres
+    /// de niveau un, une fiche écrite avec un seul titre de niveau un et huit de niveau deux
+    /// rendait **un** chapitre portant tout le cours. `migrate` ne repasse jamais sur un deck
+    /// qui a déjà un chapitre, donc ces decks-là seraient restés plats pour toujours.
+    ///
+    /// **La condition est stricte, et c'est le point important.** On ne redécoupe que si le
+    /// chapitre unique porte *toutes* les cartes du deck, ou aucune. Dans ces deux cas-là,
+    /// l'appartenance au chapitre ne distingue rien — elle ne dit pas dans quelle partie une
+    /// carte se trouve, elle dit seulement qu'elle est dans le deck — et la perdre ne perd
+    /// donc aucune information. Si les cartes sont réparties autrement, quelqu'un les a
+    /// classées et on n'y touche pas.
+    ///
+    /// - Returns: vrai si le plan vient d'être refait.
+    @discardableResult
+    static func resplitIfFlat(_ course: Course, in context: ModelContext) -> Bool {
+        let chapters = course.orderedChapters
+        guard chapters.count == 1, let only = chapters.first else { return false }
+
+        let attached = only.cards?.count ?? 0
+        guard attached == 0 || attached == course.cards.count else { return false }
+
+        guard let sheet = only.decodedSheet(), !sheet.isEmpty else { return false }
+        let parts = split(sheet, deckTitle: course.title)
+        guard parts.count > 1 else { return false }
+
+        replace(chaptersOf: course, with: parts, in: context)
+        return true
+    }
+
     /// La même chose, sur une liste de decks, avec un seul enregistrement à la fin.
     @discardableResult
     static func migrate(_ courses: [Course], in context: ModelContext) -> Int {

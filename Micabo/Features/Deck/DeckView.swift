@@ -15,7 +15,11 @@ import SwiftUI
 /// 2. **Ce que je fais maintenant** — le bouton de révision, en bas, toujours atteignable.
 /// 3. **Le plan** — les chapitres, chacun avec son pourcentage, chacun ouvrable et
 ///    révisable seul.
-/// 4. **Le reste** — les cartes, l'examen blanc, les réglages du deck.
+///
+/// Et rien d'autre. Les cartes et la suppression sont au menu du bandeau, où l'on va quand
+/// on cherche à agir *sur* le deck plutôt qu'à le réviser. L'épreuve n'y a plus sa rangée :
+/// sa date est déjà sur la carte d'état, et une seconde entrée pour la même date faisait
+/// deux endroits à tenir d'accord.
 ///
 /// **La fiche entière n'a pas disparu, elle s'est répartie.** Chaque chapitre porte la
 /// sienne (`Chapter.sheetData`) et s'ouvre comme une page à lui. C'est ce qui permet de
@@ -51,44 +55,37 @@ struct DeckView: View {
 
     private static let scrollSpace = "micabo.deck"
 
-    private var tint: Color { Color(hexString: course.accentHex) }
-
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // Le bandeau défile **avec** le contenu, et la barre réduite se pose
-                // par-dessus. Un bandeau ancré qui rétrécirait en place laisserait le contenu
-                // remonter dessous sans jamais le toucher : le mouvement doit venir du
-                // contenu, sinon il ne se lit pas comme un défilement.
-                banner
-                    .micaboScrollProbe(space: Self.scrollSpace)
-
+        MicaboSafeTopReader { safeTop in
+            ScrollView {
+                // **Le bandeau est ancré, et c'est le contenu qui passe dessous.**
+                //
+                // L'autre montage — un bandeau qui défile avec le contenu, doublé d'une barre
+                // posée par-dessus — demandait deux exemplaires du même objet en fondu l'un
+                // sur l'autre, et la maquette n'en décrit qu'un : sur `DeckScroll`, la barre
+                // repliée coupe la première rangée de chapitres au milieu. C'est exactement ce
+                // que fait un bandeau fixe au-dessus d'un contenu qui remonte.
                 VStack(alignment: .leading, spacing: MicaboSpacing.lg) {
                     identity
                     statusCard
                     DeckChaptersView(course: course)
-                    extras
                 }
                 .padding(.horizontal, MicaboSpacing.screen)
-                .padding(.top, 22)
+                .padding(.top, MicaboDeckBanner.expandedHeight(safeTop: safeTop) + 22)
                 .padding(.bottom, MicaboLayout.bottomBarClearance)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .micaboScrollProbe(space: Self.scrollSpace)
+            }
+            .coordinateSpace(name: Self.scrollSpace)
+            .scrollIndicators(.hidden)
+            .ignoresSafeArea(edges: .top)
+            .onPreferenceChange(MicaboScrollOffsetKey.self) { top in
+                collapse = min(1, max(0, -top / MicaboDeckBanner.travel))
+            }
+            .overlay(alignment: .top) {
+                banner(safeTop: safeTop)
             }
         }
-        .coordinateSpace(name: Self.scrollSpace)
-        .scrollIndicators(.hidden)
-        .ignoresSafeArea(edges: .top)
-        .onPreferenceChange(MicaboScrollOffsetKey.self) { top in
-            let travel = MicaboDeckBanner.expandedHeight - MicaboDeckBanner.collapsedHeight
-            collapse = min(1, max(0, -top / travel))
-        }
-        .overlay(alignment: .top) {
-            // La barre réduite se pose par-dessus dès que le bandeau a commencé à sortir de
-            // l'écran : c'est elle qui garde le titre et les deux boutons à portée.
-            if collapse > 0.02 {
-                banner.transition(.opacity)
-            }
-        }
-        .animation(.easeOut(duration: 0.15), value: collapse > 0.02)
         .micaboScreenBackground()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -97,11 +94,6 @@ struct DeckView: View {
         .overlay(alignment: .bottom) { bottomBar }
         .navigationDestination(item: $cardsRoute) { route in
             FlashcardsView(course: route.course)
-        }
-        // Un type à soi plutôt que `Exam` : l'accueil déclare déjà cette destination-là à la
-        // racine de sa pile, et cet écran s'y empile. Voir `DeckExamRoute`.
-        .navigationDestination(for: DeckExamRoute.self) { route in
-            ExamDetailView(exam: route.exam)
         }
         .fullScreenCover(isPresented: $studying, onDismiss: { studyRuns += 1 }) {
             StudyView(source: .course(course), mode: studyMode)
@@ -112,6 +104,9 @@ struct DeckView: View {
             // de sa fiche, refaite à chaque affichage. On la transforme ici en table, deck
             // par deck, plutôt que de passer toute la base en revue au démarrage.
             ChapterBuilder.migrate(course, in: modelContext)
+            // Et le rattrapage des decks restés plats, quand leur fiche avait ses parties en
+            // titres de niveau deux. Voir `resplitIfFlat`.
+            ChapterBuilder.resplitIfFlat(course, in: modelContext)
             reload()
             Analytics.track(.sheetOpened, [
                 "written": .flag(course.hasSheet),
@@ -164,12 +159,13 @@ struct DeckView: View {
     /// le lien avec la tuile de la grille sur laquelle on vient d'appuyer. Les deux boutons
     /// sont posés dessus en pastilles translucides plutôt qu'au-dessus : une barre blanche
     /// par-dessus la couleur couperait le bandeau en deux.
-    private var banner: some View {
+    private func banner(safeTop: CGFloat) -> some View {
         MicaboDeckBanner(
             emoji: course.emoji,
             pastel: MicaboColor.pastel(for: course.id),
             title: course.title,
             collapse: collapse,
+            safeTop: safeTop,
             onBack: { dismiss() },
             onMenu: { showMenu = true }
         )
@@ -276,52 +272,6 @@ struct DeckView: View {
             .foregroundStyle(MicaboColor.inkSecondary)
 
             Spacer(minLength: 0)
-        }
-    }
-
-    // MARK: - Le reste
-
-    private var extras: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            MicaboSectionCaption(text: i18n.t("ios.deck.more"))
-
-            VStack(spacing: 0) {
-                Button {
-                    cardsRoute = CourseCardsRoute(course: course)
-                } label: {
-                    MicaboRow(
-                        tile: MicaboTile(
-                            glyph: .symbol("rectangle.on.rectangle.angled"),
-                            background: tint.lightened(by: 0.84),
-                            tint: tint.darkened(by: 0.25)
-                        ),
-                        title: MicaboCopy.cards(course.cards.count),
-                        subtitle: i18n.t("ios.deck.cardsHint"),
-                        accessory: .chevron
-                    )
-                }
-                .buttonStyle(MicaboRowButtonStyle())
-
-                // **L'examen blanc a quitté son onglet pour venir ici.** Il ne porte que sur
-                // ce deck ; le chercher dans un écran qui listait toutes les épreuves du
-                // compte n'avait de sens que tant que cet écran existait. La rangée n'existe
-                // que s'il y a une épreuve : proposer un examen blanc à quelqu'un qui révise
-                // sans date, c'est lui proposer de s'entraîner à rien.
-                if let exam = facts.exam {
-                    MicaboHairline(inset: 72)
-
-                    NavigationLink(value: DeckExamRoute(exam: exam)) {
-                        MicaboRow(
-                            tile: MicaboTile.exam(exam.date),
-                            title: i18n.t("ios.deck.exam"),
-                            subtitle: exam.countdownLabel(),
-                            accessory: .chevron
-                        )
-                    }
-                    .buttonStyle(MicaboRowButtonStyle())
-                }
-            }
-            .micaboGroup()
         }
     }
 

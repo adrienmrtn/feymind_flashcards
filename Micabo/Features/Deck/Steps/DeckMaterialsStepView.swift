@@ -69,17 +69,21 @@ struct DeckMaterialsStepView: View {
         } footer: {
             OnboardingContinueButton(isEnabled: setup.hasMaterials, action: onNext)
         }
-        .confirmationDialog(
-            i18n.t("ios.deckSetup.materials.add"),
-            isPresented: $showChoice,
-            titleVisibility: .visible
-        ) {
-            Button(i18n.t("ios.import.pdf")) { showFileImporter = true }
-            Button(i18n.t("ios.import.photo")) { showPhotoPicker = true }
-            Button(i18n.t("ios.scanPages")) { showScanner = true }
-            Button(i18n.t("ios.import.youtube")) { showLinkSheet = true }
-            Button(i18n.t("ios.import.text")) { showTextSheet = true }
-            Button(i18n.t("app.common.cancel"), role: .cancel) { target = nil }
+        // **Une languette, pas une feuille système.**
+        //
+        // C'était un `confirmationDialog` : cinq lignes de texte bleu empilées, au style
+        // d'iOS et non au nôtre, sans une icône pour distinguer « une photo » de « scanner
+        // des pages ». Cinq sources qui ne se ressemblent pas, présentées comme cinq
+        // variantes de la même chose. La languette leur donne chacune sa tuile et sa phrase,
+        // et c'est la même grammaire de rangées que le reste de l'app.
+        .sheet(isPresented: $showChoice, onDismiss: { if !isPicking { target = nil } }) {
+            DeckSourcePickerSheet { source in
+                showChoice = false
+                choose(source)
+            }
+            .presentationDetents([.height(392)])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(MicaboRadius.sheet)
         }
         .fileImporter(
             isPresented: $showFileImporter,
@@ -125,6 +129,22 @@ struct DeckMaterialsStepView: View {
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
+        }
+    }
+
+    /// Vrai entre la fermeture de la languette et l'ouverture du sélecteur choisi : sans ça,
+    /// la fermeture effacerait la case visée juste avant qu'on y dépose le document.
+    private var isPicking: Bool {
+        showFileImporter || showPhotoPicker || showScanner || showLinkSheet || showTextSheet
+    }
+
+    private func choose(_ source: DeckSourcePickerSheet.Source) {
+        switch source {
+        case .document: showFileImporter = true
+        case .photos: showPhotoPicker = true
+        case .scan: showScanner = true
+        case .video: showLinkSheet = true
+        case .text: showTextSheet = true
         }
     }
 
@@ -461,5 +481,64 @@ private struct DeckPastedTextSheet: View {
                 }
                 .onAppear { isFocused = true }
         }
+    }
+}
+
+/// **La languette qui demande d'où vient le support.**
+///
+/// Cinq sources, cinq tuiles, une phrase chacune. Elle remplace une feuille d'action système
+/// dont les cinq lignes se ressemblaient toutes : « Une photo » et « Scanner des pages » sont
+/// deux gestes différents — l'un prend une image qu'on a déjà, l'autre ouvre l'appareil photo
+/// et redresse les pages — et rien dans un empilement de texte bleu ne le disait.
+///
+/// La hauteur est fixée plutôt que laissée au contenu : une languette qui s'ouvre à mi-écran
+/// puis se recale sur sa taille réelle fait sauter les rangées sous le doigt qui vise déjà.
+struct DeckSourcePickerSheet: View {
+    enum Source {
+        case document
+        case photos
+        case scan
+        case video
+        case text
+    }
+
+    var onPick: (Source) -> Void
+
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: MicaboSpacing.md) {
+            Text(i18n.t("ios.deckSetup.materials.add"))
+                .font(MicaboFont.ui(20, weight: .bold))
+                .tracking(-0.3)
+                .foregroundStyle(MicaboColor.ink)
+                .padding(.horizontal, MicaboSpacing.xxs)
+
+            MicaboRowGroup(rows: [
+                row(.document, symbol: "doc.fill", title: "ios.import.pdf", tint: MicaboColor.accent),
+                row(.photos, symbol: "photo.on.rectangle.angled", title: "ios.import.photo", tint: MicaboColor.info),
+                row(.scan, symbol: "doc.viewfinder", title: "ios.scanPages", tint: MicaboColor.positive),
+                row(.video, symbol: "play.rectangle.fill", title: "ios.import.youtube", tint: MicaboColor.flame),
+                row(.text, symbol: "text.alignleft", title: "ios.import.text", tint: MicaboColor.caution),
+            ])
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, MicaboSpacing.screen)
+        .padding(.top, MicaboSpacing.lg)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(MicaboColor.canvas.ignoresSafeArea())
+    }
+
+    private func row(_ source: Source, symbol: String, title: String, tint: Color) -> MicaboRow {
+        MicaboRow(
+            tile: MicaboTile(
+                glyph: .symbol(symbol),
+                background: tint.lightened(by: 0.86),
+                tint: tint
+            ),
+            title: i18n.t(title),
+            accessory: .chevron,
+            action: { onPick(source) }
+        )
     }
 }
